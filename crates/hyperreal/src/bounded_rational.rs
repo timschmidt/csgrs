@@ -1,23 +1,35 @@
-use num_bigint::{BigInt, ToBigInt};
+use num_bigint::Sign::{self, *};
+use num_bigint::{BigUint, ToBigUint};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct BoundedRational {
-    numerator: BigInt,
-    denominator: BigInt,
+    sign: Sign,
+    numerator: BigUint,
+    denominator: BigUint,
 }
 
 impl BoundedRational {
-    pub fn new(n: impl ToBigInt) -> Self {
+    pub fn zero() -> Self {
         Self {
-            numerator: ToBigInt::to_bigint(&n).unwrap(),
-            denominator: ToBigInt::to_bigint(&1).unwrap(),
+            sign: NoSign,
+            numerator: ToBigUint::to_biguint(&0).unwrap(),
+            denominator: ToBigUint::to_biguint(&1).unwrap(),
         }
     }
 
-    pub fn fraction(n: impl ToBigInt, d: impl ToBigInt) -> Self {
+    pub fn new(n: u64) -> Self {
         Self {
-            numerator: ToBigInt::to_bigint(&n).unwrap(),
-            denominator: ToBigInt::to_bigint(&d).unwrap(),
+            sign: Plus,
+            numerator: ToBigUint::to_biguint(&n).unwrap(),
+            denominator: ToBigUint::to_biguint(&1).unwrap(),
+        }
+    }
+
+    pub fn fraction(n: u64, d: u64) -> Self {
+        Self {
+            sign: Plus,
+            numerator: ToBigUint::to_biguint(&n).unwrap(),
+            denominator: ToBigUint::to_biguint(&d).unwrap(),
         }
     }
 
@@ -27,26 +39,61 @@ impl BoundedRational {
     }
 
     fn reduce(self) -> Self {
-        if self.denominator == ToBigInt::to_bigint(&1).unwrap() {
+        if self.denominator == ToBigUint::to_biguint(&1).unwrap() {
             self
         } else {
             let divisor = num::Integer::gcd(&self.numerator, &self.denominator);
             let numerator = self.numerator / &divisor;
             let denominator = self.denominator / &divisor;
-            Self { numerator, denominator }
+            Self {
+                sign: self.sign,
+                numerator,
+                denominator,
+            }
+        }
+    }
+
+    pub fn inverse(self) -> Self {
+        Self {
+            sign: self.sign,
+            numerator: self.denominator,
+            denominator: self.numerator,
         }
     }
 }
 
+impl BoundedRational {
+    pub fn sign(&self) -> Sign {
+        self.sign
+    }
+}
+
+/* TryFrom<f64> for BoundedRational see Java valueOf() */
+
 use core::ops::*;
+use std::cmp::Ordering;
 
 impl Add for BoundedRational {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
         let denominator = &self.denominator * &other.denominator;
-        let numerator = (self.numerator * other.denominator) + (other.numerator * self.denominator);
+        let a = self.numerator * other.denominator;
+        let b = other.numerator * self.denominator;
+        let (sign, numerator) = match (self.sign, other.sign) {
+            (any, NoSign) => (any, a),
+            (Plus, Plus) => (Plus, a + b),
+            (Minus, Minus) => (Minus, a + b),
+            (x, y) => match a.cmp(&b) {
+                Ordering::Greater => (x, a - b),
+                Ordering::Equal => {
+                    return Self::zero();
+                }
+                Ordering::Less => (y, b - a),
+            },
+        };
         Self::maybe_reduce(Self {
+            sign,
             numerator,
             denominator,
         })
@@ -58,8 +105,8 @@ impl Neg for BoundedRational {
 
     fn neg(self) -> Self {
         Self {
-            numerator: -self.numerator,
-            denominator: self.denominator,
+            sign: -self.sign,
+            ..self
         }
     }
 }
@@ -76,9 +123,11 @@ impl Mul for BoundedRational {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
+        let sign = self.sign * other.sign;
         let numerator = self.numerator * other.numerator;
         let denominator = self.denominator * other.denominator;
         Self::maybe_reduce(Self {
+            sign,
             numerator,
             denominator,
         })
@@ -89,20 +138,48 @@ impl Div for BoundedRational {
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
+        let sign = self.sign * other.sign;
         let numerator = self.numerator * other.denominator;
         let denominator = self.denominator * other.numerator;
         Self::maybe_reduce(Self {
+            sign,
             numerator,
             denominator,
         })
     }
 }
 
+impl PartialEq for BoundedRational {
+    fn eq(&self, other: &Self) -> bool {
+        if self.sign != other.sign {
+            return false;
+        }
+        if self.denominator == other.denominator {
+            self.numerator == other.numerator
+        } else {
+            let reduced = (self.clone().reduce(), other.clone().reduce());
+            reduced.0 == reduced.1
+        }
+    }
+}
 
 #[cfg(test)]
 #[test]
+fn signs() {
+    let half = BoundedRational::fraction(4, 8);
+    let one = BoundedRational::new(1);
+    let minus_half = half - one;
+    let two = BoundedRational::new(2);
+    let zero = BoundedRational::zero();
+    let minus_two = zero - two;
+    let i2 = minus_two.inverse();
+    assert_eq!(i2, minus_half);
+}
+
+#[test]
 fn half_plus_one_times_two() {
-    let half = BoundedRational::fraction(1, 2);
+    let two = BoundedRational::new(2);
+    let half = two.inverse();
     let one = BoundedRational::new(1);
     let two = BoundedRational::new(2);
     let three = BoundedRational::new(3);
