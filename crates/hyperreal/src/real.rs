@@ -1,5 +1,11 @@
 use crate::BoundedRational;
 
+#[derive(Copy, Clone, Debug)]
+pub enum RealProblem {
+    SqrtNegative,
+    DivideZero,
+}
+
 #[derive(Clone, Debug)]
 struct Guts {/* This is a stand-in */}
 
@@ -93,11 +99,52 @@ impl Real {
         if other.rational.sign() == Sign::NoSign {
             return self.class.is_non_zero() && self.rational.sign() != Sign::NoSign;
         }
-        true
+        false
         /* ... */
+    }
+
+    pub fn best_sign(&self) -> Sign {
+        match &self.class {
+            Class::One | Class::Pi => self.rational.sign(),
+            other => {
+                todo!("Sign of {other:?} unimplemented")
+            }
+        }
     }
 }
 
+impl Real {
+    pub fn sqrt(self) -> Result<Self, RealProblem> {
+        if self.best_sign() == Sign::Minus {
+            return Err(RealProblem::SqrtNegative);
+        }
+        if self.definitely_zero() {
+            return Ok(Self::zero());
+        }
+        match &self.class {
+            Class::One => {
+                if self.rational.extract_square_will_succeed() {
+                    let (square, rest) = self.rational.extract_square_reduced();
+                    if rest == BoundedRational::new(1) {
+                        return Ok(Self {
+                            rational: square,
+                            class: Class::One,
+                            computable: Guts {},
+                        });
+                    } else {
+                        return Ok(Self {
+                            rational: square,
+                            class: Class::Sqrt(rest),
+                            computable: Guts {},
+                        });
+                    }
+                }
+            }
+            _ => (),
+        }
+        todo!("Square root of {self:?} unimplemented")
+    }
+}
 use std::ops::*;
 
 impl Add for Real {
@@ -212,4 +259,12 @@ fn zero_pi() {
     assert!(z2.definitely_zero());
     let two_pi = Real::pi() + Real::pi();
     assert_eq!(two_pi, Real::new(BoundedRational::new(2)) * Real::pi());
+}
+
+#[test]
+fn sqrt_sixteen() {
+    let sixteen = Real::new(BoundedRational::new(16));
+    let four = Real::new(BoundedRational::new(4));
+    let answer = sixteen.sqrt().expect("Square root of 16 should be 4");
+    assert_eq!(four, answer);
 }

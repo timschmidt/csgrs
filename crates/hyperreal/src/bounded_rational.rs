@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use num_bigint::Sign::{self, *};
 use num_bigint::{BigUint, ToBigUint};
 
@@ -65,6 +66,92 @@ impl BoundedRational {
 impl BoundedRational {
     pub fn sign(&self) -> Sign {
         self.sign
+    }
+}
+
+impl BoundedRational {
+    const EXTRACT_SQUARE_MAX_OPT: u8 = 43;
+    const EXTRACT_SQUARE_MAX_LEN: u64 = 5000;
+
+    fn make_squares() -> Vec<(BigUint, BigUint)> {
+        let mut v = Vec::new();
+        v.push((
+            ToBigUint::to_biguint(&2).unwrap(),
+            ToBigUint::to_biguint(&4).unwrap(),
+        ));
+        v.push((
+            ToBigUint::to_biguint(&3).unwrap(),
+            ToBigUint::to_biguint(&9).unwrap(),
+        ));
+        v.push((
+            ToBigUint::to_biguint(&5).unwrap(),
+            ToBigUint::to_biguint(&25).unwrap(),
+        ));
+        v.push((
+            ToBigUint::to_biguint(&7).unwrap(),
+            ToBigUint::to_biguint(&49).unwrap(),
+        ));
+        v.push((
+            ToBigUint::to_biguint(&11).unwrap(),
+            ToBigUint::to_biguint(&121).unwrap(),
+        ));
+        v.push((
+            ToBigUint::to_biguint(&13).unwrap(),
+            ToBigUint::to_biguint(&169).unwrap(),
+        ));
+        v
+    }
+
+    fn extract_square(n: BigUint) -> (BigUint, BigUint) {
+        lazy_static! {
+            static ref SQUARES: Vec<(BigUint, BigUint)> = BoundedRational::make_squares();
+        }
+
+        let mut square = ToBigUint::to_biguint(&1).unwrap();
+        let mut rest = n;
+        if rest.bits() > Self::EXTRACT_SQUARE_MAX_LEN {
+            return (square, rest);
+        }
+        for (p, s) in &*SQUARES {
+            if &rest == &ToBigUint::to_biguint(&1).unwrap() {
+                break;
+            }
+            while &rest % s == ToBigUint::to_biguint(&0).unwrap() {
+                rest /= s;
+                square *= p;
+            }
+        }
+
+        (square, rest)
+    }
+
+    pub fn extract_square_reduced(self) -> (Self, Self) {
+        if self.sign == NoSign {
+            return (Self::zero(), Self::new(0));
+        }
+        let (nsquare, nrest) = Self::extract_square(self.numerator);
+        let (dsquare, drest) = Self::extract_square(self.denominator);
+        if self.sign == Minus {
+            todo!("Didn't yet implement extract_square_reduced for negative rationals")
+        } else {
+            (
+                Self {
+                    sign: self.sign,
+                    numerator: nsquare,
+                    denominator: dsquare,
+                },
+                Self {
+                    sign: self.sign,
+                    numerator: nrest,
+                    denominator: drest,
+                },
+            )
+        }
+    }
+
+    pub fn extract_square_will_succeed(&self) -> bool {
+        self.numerator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
+            && self.denominator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
     }
 }
 
