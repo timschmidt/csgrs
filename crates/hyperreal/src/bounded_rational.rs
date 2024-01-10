@@ -1,6 +1,10 @@
 use lazy_static::lazy_static;
 use num_bigint::Sign::{self, *};
 use num_bigint::{BigUint, ToBigUint};
+use num_traits::{Zero, One};
+
+#[derive(Clone, Debug)]
+pub struct ParseBRError();
 
 #[derive(Clone, Debug)]
 pub struct BoundedRational {
@@ -13,8 +17,8 @@ impl BoundedRational {
     pub fn zero() -> Self {
         Self {
             sign: NoSign,
-            numerator: ToBigUint::to_biguint(&0).unwrap(),
-            denominator: ToBigUint::to_biguint(&1).unwrap(),
+            numerator: Zero::zero(),
+            denominator: One::one(),
         }
     }
 
@@ -22,7 +26,7 @@ impl BoundedRational {
         Self {
             sign: Plus,
             numerator: ToBigUint::to_biguint(&n).unwrap(),
-            denominator: ToBigUint::to_biguint(&1).unwrap(),
+            denominator: One::one(),
         }
     }
 
@@ -40,7 +44,7 @@ impl BoundedRational {
     }
 
     fn reduce(self) -> Self {
-        if self.denominator == ToBigUint::to_biguint(&1).unwrap() {
+        if self.denominator == One::one() {
             self
         } else {
             let divisor = num::Integer::gcd(&self.numerator, &self.denominator);
@@ -155,6 +159,44 @@ impl BoundedRational {
     }
 }
 
+use std::str::FromStr;
+
+impl FromStr for BoundedRational {
+    type Err = ParseBRError;
+
+    fn from_str(s: &str) -> Result<Self, ParseBRError> {
+        let mut sign: Sign = Plus;
+        let s = match s.strip_prefix('-') {
+            Some(s) => {
+                sign = Minus;
+                s
+            }
+            None => s,
+        };
+        if let Some((n, d)) = s.split_once('/') {
+            let numerator= BigUint::parse_bytes(n.as_bytes(), 10).ok_or(ParseBRError {})?;
+            if numerator.is_zero() {
+                sign = NoSign;
+            }
+            Ok(Self {
+                sign,
+                numerator,
+                denominator: BigUint::parse_bytes(d.as_bytes(), 10).ok_or(ParseBRError {})?,
+            })
+        } else {
+            let numerator= BigUint::parse_bytes(s.as_bytes(), 10).ok_or(ParseBRError {})?;
+            if numerator.is_zero() {
+                sign = NoSign;
+            }
+            Ok(Self {
+                sign,
+                numerator,
+                denominator: One::one(),
+            })
+        }
+    }
+}
+
 /* TryFrom<f64> for BoundedRational see Java valueOf() */
 
 use core::ops::*;
@@ -236,6 +278,18 @@ impl Div for BoundedRational {
     }
 }
 
+impl BoundedRational {
+    fn definitely_equal(&self, other: &Self) -> bool {
+        if self.sign != other.sign {
+            return false;
+        }
+        if self.denominator != other.denominator {
+            return false;
+        }
+        self.numerator == other.numerator
+    }
+}
+
 impl PartialEq for BoundedRational {
     fn eq(&self, other: &Self) -> bool {
         if self.sign != other.sign {
@@ -244,13 +298,32 @@ impl PartialEq for BoundedRational {
         if self.denominator == other.denominator {
             self.numerator == other.numerator
         } else {
-            let reduced = (self.clone().reduce(), other.clone().reduce());
-            reduced.0 == reduced.1
+            Self::definitely_equal(&self.clone().reduce(), &other.clone().reduce())
         }
     }
 }
 
 #[cfg(test)]
+#[test]
+/// See e.g. https://discussions.apple.com/thread/252474975
+/// Apple calculator is not trustworthy if you are a programmer
+fn parse() {
+    let big: BoundedRational = "288230376151711743".parse().unwrap();
+    let small: BoundedRational = "45".parse().unwrap();
+    let expected: BoundedRational = "12970366926827028435".parse().unwrap();
+    assert_eq!(big * small, expected);
+}
+
+#[test]
+fn parse_fractions() {
+    let third: BoundedRational = "1/3".parse().unwrap();
+    let minus_four: BoundedRational = "-4".parse().unwrap();
+    let twelve: BoundedRational = "12/20".parse().unwrap();
+    let answer = third + minus_four * twelve;
+    let expected: BoundedRational = "-31/15".parse().unwrap();
+    assert_eq!(answer, expected);
+}
+
 #[test]
 fn signs() {
     let half = BoundedRational::fraction(4, 8);

@@ -97,4 +97,5 @@ dependencies = [
  "lazy_static",
  "num",
  "num-bigint",
+ "num-traits",
 ]

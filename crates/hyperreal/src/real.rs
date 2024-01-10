@@ -188,6 +188,20 @@ impl Sub for Real {
     }
 }
 
+impl Real {
+    fn multiply_sqrts(x: BoundedRational, y: BoundedRational) -> Self {
+        if x == y {
+            Self {
+                rational: x,
+                class: One,
+                computable: Guts {},
+            }
+        } else {
+            todo!("Multiply unlike square roots is unimplemented")
+        }
+    }
+}
+
 impl Mul for Real {
     type Output = Self;
 
@@ -204,6 +218,13 @@ impl Mul for Real {
             return Self::zero();
         }
         match (self.class, other.class) {
+            (Class::Sqrt(r), Class::Sqrt(s)) => {
+                let square = Self::multiply_sqrts(r, s);
+                Self {
+                    rational: square.rational * self.rational * other.rational,
+                    ..square
+                }
+            }
             (Class::Exp(r), Class::Exp(s)) => {
                 let exp = Class::Exp(r + s);
                 let rational = self.rational * other.rational;
@@ -225,9 +246,7 @@ impl Mul for Real {
 // however it needn't be complete or reflexive
 impl PartialEq for Real {
     fn eq(&self, other: &Self) -> bool {
-        self.rational == other.rational
-            && self.class == other.class
-            && self.class != Class::Irrational
+        self.rational == other.rational && self.class == other.class
     }
 }
 
@@ -262,9 +281,19 @@ fn zero_pi() {
 }
 
 #[test]
-fn sqrt_sixteen() {
-    let sixteen = Real::new(BoundedRational::new(16));
-    let four = Real::new(BoundedRational::new(4));
-    let answer = sixteen.sqrt().expect("Square root of 16 should be 4");
-    assert_eq!(four, answer);
+fn sqrt_exact() {
+    let big = Real::new(BoundedRational::new(40_000));
+    let small = Real::new(BoundedRational::new(200));
+    let answer = big.sqrt().expect("Square root of 100 should be 10");
+    assert_eq!(small, answer);
+}
+
+#[test]
+fn square_sqrt() {
+    let big = Real::new(BoundedRational::new(3));
+    let small = big.sqrt().expect("Should be able to sqrt(n)");
+    let a = small.clone() * Real::new(BoundedRational::new(2));
+    let b = small.clone() * Real::new(BoundedRational::new(3));
+    let answer = a * b;
+    assert_eq!(answer, Real::new(BoundedRational::new(18)));
 }
