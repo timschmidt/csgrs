@@ -2,8 +2,9 @@ use crate::BoundedRational;
 
 #[derive(Copy, Clone, Debug)]
 pub enum RealProblem {
+    ParseError,
     SqrtNegative,
-    DivideZero,
+    DivideByZero,
 }
 
 #[derive(Clone, Debug)]
@@ -114,6 +115,23 @@ impl Real {
 }
 
 impl Real {
+    pub fn inverse(self) -> Result<Self, RealProblem> {
+        if self.definitely_zero() {
+            return Err(RealProblem::DivideByZero);
+        }
+        match &self.class {
+            Class::One => {
+                return Ok(Self {
+                    rational: self.rational.inverse(),
+                    class: Class::One,
+                    computable: Guts {},
+                });
+            }
+            _ => (),
+        }
+        todo!("Inverse of {self:?} unimplemented")
+    }
+
     pub fn sqrt(self) -> Result<Self, RealProblem> {
         if self.best_sign() == Sign::Minus {
             return Err(RealProblem::SqrtNegative);
@@ -145,6 +163,22 @@ impl Real {
         todo!("Square root of {self:?} unimplemented")
     }
 }
+
+use std::str::FromStr;
+
+impl FromStr for Real {
+    type Err = RealProblem;
+
+    fn from_str(s: &str) -> Result<Self, RealProblem> {
+        let rational: BoundedRational = s.parse().map_err(|_| RealProblem::ParseError)?;
+        Ok(Self {
+            rational,
+            class: Class::One,
+            computable: Guts {},
+        })
+    }
+}
+
 use std::ops::*;
 
 impl Add for Real {
@@ -258,14 +292,17 @@ fn zero() {
 
 #[test]
 fn rational() {
-    let two = Real::new(BoundedRational::new(2));
+    let two: Real = "2".parse().unwrap();
     assert_ne!(two, Real::zero());
-    let four = Real::new(BoundedRational::new(4));
-    let answer = four - two;
-    assert_eq!(answer, Real::new(BoundedRational::new(2)));
-    let two = Real::new(BoundedRational::new(2));
+    let four: Real = "4".parse().unwrap();
+    let answer = four - two.clone();
+    assert_eq!(answer, two.clone());
     let zero = answer - two;
     assert_eq!(zero, Real::zero());
+    let six_half: Real = "13/2".parse().unwrap();
+    let opposite = six_half.inverse().unwrap();
+    let expected = "2/13".parse().unwrap();
+    assert_eq!(opposite, expected);
 }
 
 #[test]
@@ -273,27 +310,30 @@ fn zero_pi() {
     let pi = Real::pi();
     let z1 = pi - Real::pi();
     let pi2 = Real::pi() + Real::pi();
-    let z2 = pi2 * Real::new(BoundedRational::zero());
+    let z2 = pi2 * Real::zero();
     assert!(z1.definitely_zero());
     assert!(z2.definitely_zero());
     let two_pi = Real::pi() + Real::pi();
-    assert_eq!(two_pi, Real::new(BoundedRational::new(2)) * Real::pi());
+    let two: Real = "2".parse().unwrap();
+    assert_eq!(two_pi, two * Real::pi());
 }
 
 #[test]
 fn sqrt_exact() {
-    let big = Real::new(BoundedRational::new(40_000));
-    let small = Real::new(BoundedRational::new(200));
-    let answer = big.sqrt().expect("Square root of 100 should be 10");
+    let big: Real = "40000".parse().unwrap();
+    let small: Real = "200".parse().unwrap();
+    let answer = big.sqrt().unwrap();
     assert_eq!(small, answer);
 }
 
 #[test]
 fn square_sqrt() {
-    let big = Real::new(BoundedRational::new(3));
-    let small = big.sqrt().expect("Should be able to sqrt(n)");
-    let a = small.clone() * Real::new(BoundedRational::new(2));
-    let b = small.clone() * Real::new(BoundedRational::new(3));
+    let two: Real = "2".parse().unwrap();
+    let three: Real = "3".parse().unwrap();
+    let small = three.clone().sqrt().expect("Should be able to sqrt(n)");
+    let a = small.clone() * two;
+    let b = small.clone() * three;
     let answer = a * b;
-    assert_eq!(answer, Real::new(BoundedRational::new(18)));
+    let eighteen: Real = "18".parse().unwrap();
+    assert_eq!(answer, eighteen);
 }

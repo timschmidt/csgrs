@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use num_bigint::Sign::{self, *};
 use num_bigint::{BigUint, ToBigUint};
-use num_traits::{Zero, One};
+use num_traits::{One, Zero};
 
 #[derive(Clone, Debug)]
 pub struct ParseBRError();
@@ -174,7 +174,7 @@ impl FromStr for BoundedRational {
             None => s,
         };
         if let Some((n, d)) = s.split_once('/') {
-            let numerator= BigUint::parse_bytes(n.as_bytes(), 10).ok_or(ParseBRError {})?;
+            let numerator = BigUint::parse_bytes(n.as_bytes(), 10).ok_or(ParseBRError {})?;
             if numerator.is_zero() {
                 sign = NoSign;
             }
@@ -184,7 +184,7 @@ impl FromStr for BoundedRational {
                 denominator: BigUint::parse_bytes(d.as_bytes(), 10).ok_or(ParseBRError {})?,
             })
         } else {
-            let numerator= BigUint::parse_bytes(s.as_bytes(), 10).ok_or(ParseBRError {})?;
+            let numerator = BigUint::parse_bytes(s.as_bytes(), 10).ok_or(ParseBRError {})?;
             if numerator.is_zero() {
                 sign = NoSign;
             }
@@ -326,7 +326,7 @@ fn parse_fractions() {
 
 #[test]
 fn signs() {
-    let half = BoundedRational::fraction(4, 8);
+    let half: BoundedRational = "4/8".parse().unwrap();
     let one = BoundedRational::new(1);
     let minus_half = half - one;
     let two = BoundedRational::new(2);
@@ -351,7 +351,7 @@ fn half_plus_one_times_two() {
 fn three_divided_by_six() {
     let three = BoundedRational::new(3);
     let six = BoundedRational::new(6);
-    let half = BoundedRational::fraction(1, 2);
+    let half: BoundedRational = "1/2".parse().unwrap();
     assert_eq!(three / six, half);
 }
 
