@@ -51,6 +51,14 @@ impl Class {
     fn is_non_zero(&self) -> bool {
         true
     }
+
+    fn make_exp(br: BoundedRational) -> Class {
+        if br == BoundedRational::zero() {
+            Class::One
+        } else {
+            Class::Exp(br)
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -81,6 +89,23 @@ impl Real {
         Self {
             rational: BoundedRational::new(1),
             class: Class::Pi,
+            computable: Guts {},
+        }
+    }
+
+    pub fn e() -> Self {
+        let one = BoundedRational::new(1);
+        Self {
+            rational: one.clone(),
+            class: Class::Exp(one),
+            computable: Guts {},
+        }
+    }
+
+    pub fn ln10() -> Self {
+        Self {
+            rational: BoundedRational::new(1),
+            class: Class::Ln(BoundedRational::new(10)),
             computable: Guts {},
         }
     }
@@ -127,6 +152,14 @@ impl Real {
                     computable: Guts {},
                 });
             }
+            Class::Exp(exp) => {
+                let exp = Neg::neg(exp.clone());
+                return Ok(Self {
+                    rational: self.rational.inverse(),
+                    class: Class::Exp(exp),
+                    computable: Guts {},
+                });
+            }
             _ => (),
         }
         todo!("Inverse of {self:?} unimplemented")
@@ -158,9 +191,26 @@ impl Real {
                     }
                 }
             }
+            Class::Exp(exp) => {
+                /*
+                let exp = exp / BoundedRational::new(2);
+                return Ok(Self {
+                    rational: self.rational,
+                    class: Class::Exp(exp),
+                    computable: Guts {},
+                }).inverse(),;
+                */
+            }
             _ => (),
         }
         todo!("Square root of {self:?} unimplemented")
+    }
+
+    pub fn exp(self) -> Result<Self, RealProblem> {
+        if self.definitely_zero() {
+            return Ok(Self::new(BoundedRational::new(1)));
+        }
+        todo!("Exp({self:?}) unimplemented")
     }
 }
 
@@ -231,7 +281,20 @@ impl Real {
                 computable: Guts {},
             }
         } else {
-            todo!("Multiply unlike square roots is unimplemented")
+            let product = x * y;
+            if product == BoundedRational::zero() {
+                return Self {
+                    rational: product,
+                    class: One,
+                    computable: Guts {},
+                };
+            }
+            let (a, b) = product.extract_square_reduced();
+            Self {
+                rational: a,
+                class: Sqrt(b),
+                computable: Guts {},
+            }
         }
     }
 }
@@ -260,11 +323,11 @@ impl Mul for Real {
                 }
             }
             (Class::Exp(r), Class::Exp(s)) => {
-                let exp = Class::Exp(r + s);
+                let class = Class::make_exp(r + s);
                 let rational = self.rational * other.rational;
                 Self {
                     rational,
-                    class: exp,
+                    class,
                     computable: Guts {},
                 }
             }
@@ -303,6 +366,39 @@ fn rational() {
     let opposite = six_half.inverse().unwrap();
     let expected = "2/13".parse().unwrap();
     assert_eq!(opposite, expected);
+}
+
+// https://devblogs.microsoft.com/oldnewthing/?p=93765
+// "Why does the Windows calculator generate tiny errors when calculating the square root of a
+// perfect square?" (fixed in 2018)
+#[test]
+fn perfect_square() {
+    let four: Real = "4".parse().unwrap();
+    let two: Real = "2".parse().unwrap();
+    let calc = four.sqrt().unwrap() - two;
+    assert_eq!(calc, Real::zero());
+}
+
+#[test]
+fn one_over_e() {
+    let one: Real = "1".parse().unwrap();
+    let e = Real::e();
+    let e_inverse = Real::e().inverse().unwrap();
+    let answer = e * e_inverse;
+    assert_eq!(one, answer);
+    let again = answer.sqrt().unwrap();
+    assert_eq!(one, again);
+}
+
+#[test]
+fn unlike_sqrts() {
+    let thirty: Real = "30".parse().unwrap();
+    let ten: Real = "10".parse().unwrap();
+    let answer = thirty.sqrt().unwrap() * ten.sqrt().unwrap();
+    let ten: Real = "10".parse().unwrap();
+    let three: Real = "3".parse().unwrap();
+    let or = ten * three.sqrt().unwrap();
+    assert_eq!(answer, or);
 }
 
 #[test]

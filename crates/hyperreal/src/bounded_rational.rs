@@ -67,6 +67,29 @@ impl BoundedRational {
     }
 }
 
+use core::fmt;
+
+impl fmt::Display for BoundedRational {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.sign == Minus {
+            f.write_str("-")?;
+        }
+        if self.denominator == One::one() {
+            f.write_fmt(format_args!("{}", self.numerator))?;
+        } else {
+            let whole = &self.numerator / &self.denominator;
+            let round = &whole * &self.denominator;
+            let left = &self.numerator - &round;
+            if whole.is_zero() {
+                f.write_fmt(format_args!("{left}/{}", self.denominator))?;
+            } else {
+                f.write_fmt(format_args!("{whole} {left}/{}", self.denominator))?;
+            }
+        }
+        Ok(())
+    }
+}
+
 impl BoundedRational {
     pub fn sign(&self) -> Sign {
         self.sign
@@ -111,16 +134,17 @@ impl BoundedRational {
             static ref SQUARES: Vec<(BigUint, BigUint)> = BoundedRational::make_squares();
         }
 
-        let mut square = ToBigUint::to_biguint(&1).unwrap();
+        let mut square = One::one();
         let mut rest = n;
         if rest.bits() > Self::EXTRACT_SQUARE_MAX_LEN {
             return (square, rest);
         }
         for (p, s) in &*SQUARES {
-            if &rest == &ToBigUint::to_biguint(&1).unwrap() {
+            let one: BigUint = One::one();
+            if rest == one {
                 break;
             }
-            while &rest % s == ToBigUint::to_biguint(&0).unwrap() {
+            while (&rest % s).is_zero() {
                 rest /= s;
                 square *= p;
             }
@@ -304,6 +328,17 @@ impl PartialEq for BoundedRational {
 }
 
 #[cfg(test)]
+#[test]
+fn display() {
+    let many: BoundedRational = "12345".parse().unwrap();
+    let s = format!("{many}");
+    assert_eq!(s, "12345");
+    let five: BoundedRational = "5".parse().unwrap();
+    let third: BoundedRational = "1/3".parse().unwrap();
+    let s = format!("{}", five * third);
+    assert_eq!(s, "1 2/3");
+}
+
 #[test]
 /// See e.g. https://discussions.apple.com/thread/252474975
 /// Apple calculator is not trustworthy if you are a programmer
