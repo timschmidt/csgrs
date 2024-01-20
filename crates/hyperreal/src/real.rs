@@ -1,4 +1,5 @@
 use crate::BoundedRational;
+use crate::Computable;
 
 #[derive(Copy, Clone, Debug)]
 pub enum RealProblem {
@@ -6,9 +7,6 @@ pub enum RealProblem {
     SqrtNegative,
     DivideByZero,
 }
-
-#[derive(Clone, Debug)]
-struct Guts {/* This is a stand-in */}
 
 #[derive(Clone, Debug)]
 enum Class {
@@ -65,7 +63,7 @@ impl Class {
 pub struct Real {
     rational: BoundedRational,
     class: Class,
-    computable: Guts,
+    computable: Computable,
 }
 
 impl Real {
@@ -73,7 +71,7 @@ impl Real {
         Self {
             rational: BoundedRational::zero(),
             class: Class::One,
-            computable: Guts {},
+            computable: Computable::placeholder(),
         }
     }
 
@@ -81,7 +79,7 @@ impl Real {
         Self {
             rational,
             class: Class::One,
-            computable: Guts {},
+            computable: Computable::placeholder(),
         }
     }
 
@@ -89,7 +87,7 @@ impl Real {
         Self {
             rational: BoundedRational::new(1),
             class: Class::Pi,
-            computable: Guts {},
+            computable: Computable::placeholder(),
         }
     }
 
@@ -98,7 +96,7 @@ impl Real {
         Self {
             rational: one.clone(),
             class: Class::Exp(one),
-            computable: Guts {},
+            computable: Computable::placeholder(),
         }
     }
 
@@ -106,7 +104,7 @@ impl Real {
         Self {
             rational: BoundedRational::new(1),
             class: Class::Ln(BoundedRational::new(10)),
-            computable: Guts {},
+            computable: Computable::placeholder(),
         }
     }
 }
@@ -149,7 +147,7 @@ impl Real {
                 return Ok(Self {
                     rational: self.rational.inverse(),
                     class: Class::One,
-                    computable: Guts {},
+                    computable: Computable::placeholder(),
                 });
             }
             Class::Exp(exp) => {
@@ -157,7 +155,7 @@ impl Real {
                 return Ok(Self {
                     rational: self.rational.inverse(),
                     class: Class::Exp(exp),
-                    computable: Guts {},
+                    computable: Computable::placeholder(),
                 });
             }
             _ => (),
@@ -180,13 +178,13 @@ impl Real {
                         return Ok(Self {
                             rational: square,
                             class: Class::One,
-                            computable: Guts {},
+                            computable: Computable::placeholder(),
                         });
                     } else {
                         return Ok(Self {
                             rational: square,
                             class: Class::Sqrt(rest),
-                            computable: Guts {},
+                            computable: Computable::placeholder(),
                         });
                     }
                 }
@@ -197,7 +195,7 @@ impl Real {
                 return Ok(Self {
                     rational: self.rational,
                     class: Class::Exp(exp),
-                    computable: Guts {},
+                    computable: Computable::placeholder(),
                 }).inverse(),;
                 */
             }
@@ -224,7 +222,7 @@ impl FromStr for Real {
         Ok(Self {
             rational,
             class: Class::One,
-            computable: Guts {},
+            computable: Computable::placeholder(),
         })
     }
 }
@@ -278,7 +276,7 @@ impl Real {
             Self {
                 rational: x,
                 class: One,
-                computable: Guts {},
+                computable: Computable::placeholder(),
             }
         } else {
             let product = x * y;
@@ -286,14 +284,14 @@ impl Real {
                 return Self {
                     rational: product,
                     class: One,
-                    computable: Guts {},
+                    computable: Computable::placeholder(),
                 };
             }
             let (a, b) = product.extract_square_reduced();
             Self {
                 rational: a,
                 class: Sqrt(b),
-                computable: Guts {},
+                computable: Computable::placeholder(),
             }
         }
     }
@@ -328,7 +326,7 @@ impl Mul for Real {
                 Self {
                     rational,
                     class,
-                    computable: Guts {},
+                    computable: Computable::placeholder(),
                 }
             }
             (sc, oc) => {
