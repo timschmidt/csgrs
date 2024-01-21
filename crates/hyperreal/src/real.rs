@@ -71,7 +71,7 @@ impl Real {
         Self {
             rational: BoundedRational::zero(),
             class: Class::One,
-            computable: Computable::placeholder(),
+            computable: Computable::one(),
         }
     }
 
@@ -79,7 +79,7 @@ impl Real {
         Self {
             rational,
             class: Class::One,
-            computable: Computable::placeholder(),
+            computable: Computable::one(),
         }
     }
 
@@ -87,7 +87,7 @@ impl Real {
         Self {
             rational: BoundedRational::new(1),
             class: Class::Pi,
-            computable: Computable::placeholder(),
+            computable: Computable::pi(),
         }
     }
 
@@ -147,7 +147,7 @@ impl Real {
                 return Ok(Self {
                     rational: self.rational.inverse(),
                     class: Class::One,
-                    computable: Computable::placeholder(),
+                    computable: Computable::one(),
                 });
             }
             Class::Exp(exp) => {
@@ -178,7 +178,7 @@ impl Real {
                         return Ok(Self {
                             rational: square,
                             class: Class::One,
-                            computable: Computable::placeholder(),
+                            computable: Computable::one(),
                         });
                     } else {
                         return Ok(Self {
@@ -222,7 +222,7 @@ impl FromStr for Real {
         Ok(Self {
             rational,
             class: Class::One,
-            computable: Computable::placeholder(),
+            computable: Computable::one(),
         })
     }
 }
@@ -276,7 +276,7 @@ impl Real {
             Self {
                 rational: x,
                 class: One,
-                computable: Computable::placeholder(),
+                computable: Computable::one(),
             }
         } else {
             let product = x * y;
@@ -284,7 +284,7 @@ impl Real {
                 return Self {
                     rational: product,
                     class: One,
-                    computable: Computable::placeholder(),
+                    computable: Computable::one(),
                 };
             }
             let (a, b) = product.extract_square_reduced();

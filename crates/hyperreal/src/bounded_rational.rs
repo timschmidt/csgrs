@@ -22,6 +22,14 @@ impl BoundedRational {
         }
     }
 
+    pub fn one() -> Self {
+        Self {
+            sign: Plus,
+            numerator: One::one(),
+            denominator: One::one(),
+        }
+    }
+
     pub fn new(n: u64) -> Self {
         Self {
             sign: Plus,
@@ -207,6 +215,33 @@ impl FromStr for BoundedRational {
                 numerator,
                 denominator: BigUint::parse_bytes(d.as_bytes(), 10).ok_or(ParseBRError {})?,
             })
+        } else if let Some((i, d)) = s.split_once('.') {
+            let numerator = BigUint::parse_bytes(i.as_bytes(), 10).ok_or(ParseBRError {})?;
+            let whole = if numerator.is_zero() {
+                Self {
+                    sign: NoSign,
+                    numerator,
+                    denominator: One::one(),
+                }
+            } else {
+                Self {
+                    sign,
+                    numerator,
+                    denominator: One::one(),
+                }
+            };
+            let numerator = BigUint::parse_bytes(d.as_bytes(), 10).ok_or(ParseBRError {})?;
+            if numerator.is_zero() {
+                return Ok(whole);
+            }
+            let ten = BigUint::parse_bytes("10".as_bytes(), 10).unwrap();
+            let denominator = ten.pow(d.len() as u32);
+            let fraction = Self {
+                sign,
+                numerator,
+                denominator,
+            };
+            Ok(whole + fraction)
         } else {
             let numerator = BigUint::parse_bytes(s.as_bytes(), 10).ok_or(ParseBRError {})?;
             if numerator.is_zero() {
@@ -337,6 +372,16 @@ fn display() {
     let third: BoundedRational = "1/3".parse().unwrap();
     let s = format!("{}", five * third);
     assert_eq!(s, "1 2/3");
+}
+
+#[test]
+fn decimals() {
+    let first: BoundedRational = "0.0".parse().unwrap();
+    assert_eq!(first, BoundedRational::zero());
+    let a: BoundedRational = "0.4".parse().unwrap();
+    let b: BoundedRational = "2.5".parse().unwrap();
+    let answer = a * b;
+    assert_eq!(answer, BoundedRational::one());
 }
 
 #[test]

@@ -21,17 +21,40 @@ impl Clone for Computable {
     fn clone(&self) -> Self {
         /* FIXME: this provides a placeholder instead of actually cloning the box */
         let internal = Box::new(Placeholder);
-        Self { internal, cache: RefCell::new(Cache::Invalid) }
+        Self {
+            internal,
+            cache: RefCell::new(Cache::Invalid),
+        }
     }
 }
 
 impl Computable {
+    pub fn one() -> Self {
+        Self {
+            internal: Box::new(Int(BigInt::one())),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
+    pub fn pi() -> Self {
+        Self {
+            internal: Box::new(Pi),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
     pub fn integer(n: BigInt) -> Self {
-        Self { internal: Box::new(Int(n)), cache: RefCell::new(Cache::Invalid) }
+        Self {
+            internal: Box::new(Int(n)),
+            cache: RefCell::new(Cache::Invalid),
+        }
     }
 
     pub fn placeholder() -> Self {
-        Self { internal: Box::new(Placeholder), cache: RefCell::new(Cache::Invalid) }
+        Self {
+            internal: Box::new(Placeholder),
+            cache: RefCell::new(Cache::Invalid),
+        }
     }
 }
 
@@ -98,6 +121,15 @@ trait Approximation: core::fmt::Debug {
 }
 
 #[derive(Clone, Debug)]
+struct Placeholder;
+
+impl Approximation for Placeholder {
+    fn approximate(&self, _p: Precision) -> BigInt {
+        todo!()
+    }
+}
+
+#[derive(Clone, Debug)]
 struct Int(BigInt);
 
 impl Approximation for Int {
@@ -107,9 +139,9 @@ impl Approximation for Int {
 }
 
 #[derive(Clone, Debug)]
-struct Placeholder;
+struct Pi;
 
-impl Approximation for Placeholder {
+impl Approximation for Pi {
     fn approximate(&self, _p: Precision) -> BigInt {
         todo!()
     }
