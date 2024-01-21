@@ -363,96 +363,100 @@ impl PartialEq for BoundedRational {
 }
 
 #[cfg(test)]
-#[test]
-fn display() {
-    let many: BoundedRational = "12345".parse().unwrap();
-    let s = format!("{many}");
-    assert_eq!(s, "12345");
-    let five: BoundedRational = "5".parse().unwrap();
-    let third: BoundedRational = "1/3".parse().unwrap();
-    let s = format!("{}", five * third);
-    assert_eq!(s, "1 2/3");
-}
+mod tests {
+    use super::*;
 
-#[test]
-fn decimals() {
-    let first: BoundedRational = "0.0".parse().unwrap();
-    assert_eq!(first, BoundedRational::zero());
-    let a: BoundedRational = "0.4".parse().unwrap();
-    let b: BoundedRational = "2.5".parse().unwrap();
-    let answer = a * b;
-    assert_eq!(answer, BoundedRational::one());
-}
+    #[test]
+    fn display() {
+        let many: BoundedRational = "12345".parse().unwrap();
+        let s = format!("{many}");
+        assert_eq!(s, "12345");
+        let five: BoundedRational = "5".parse().unwrap();
+        let third: BoundedRational = "1/3".parse().unwrap();
+        let s = format!("{}", five * third);
+        assert_eq!(s, "1 2/3");
+    }
 
-#[test]
-/// See e.g. https://discussions.apple.com/thread/252474975
-/// Apple calculator is not trustworthy if you are a programmer
-fn parse() {
-    let big: BoundedRational = "288230376151711743".parse().unwrap();
-    let small: BoundedRational = "45".parse().unwrap();
-    let expected: BoundedRational = "12970366926827028435".parse().unwrap();
-    assert_eq!(big * small, expected);
-}
+    #[test]
+    fn decimals() {
+        let first: BoundedRational = "0.0".parse().unwrap();
+        assert_eq!(first, BoundedRational::zero());
+        let a: BoundedRational = "0.4".parse().unwrap();
+        let b: BoundedRational = "2.5".parse().unwrap();
+        let answer = a * b;
+        assert_eq!(answer, BoundedRational::one());
+    }
 
-#[test]
-fn parse_fractions() {
-    let third: BoundedRational = "1/3".parse().unwrap();
-    let minus_four: BoundedRational = "-4".parse().unwrap();
-    let twelve: BoundedRational = "12/20".parse().unwrap();
-    let answer = third + minus_four * twelve;
-    let expected: BoundedRational = "-31/15".parse().unwrap();
-    assert_eq!(answer, expected);
-}
+    #[test]
+    /// See e.g. https://discussions.apple.com/thread/252474975
+    /// Apple calculator is not trustworthy if you are a programmer
+    fn parse() {
+        let big: BoundedRational = "288230376151711743".parse().unwrap();
+        let small: BoundedRational = "45".parse().unwrap();
+        let expected: BoundedRational = "12970366926827028435".parse().unwrap();
+        assert_eq!(big * small, expected);
+    }
 
-#[test]
-fn signs() {
-    let half: BoundedRational = "4/8".parse().unwrap();
-    let one = BoundedRational::new(1);
-    let minus_half = half - one;
-    let two = BoundedRational::new(2);
-    let zero = BoundedRational::zero();
-    let minus_two = zero - two;
-    let i2 = minus_two.inverse();
-    assert_eq!(i2, minus_half);
-}
+    #[test]
+    fn parse_fractions() {
+        let third: BoundedRational = "1/3".parse().unwrap();
+        let minus_four: BoundedRational = "-4".parse().unwrap();
+        let twelve: BoundedRational = "12/20".parse().unwrap();
+        let answer = third + minus_four * twelve;
+        let expected: BoundedRational = "-31/15".parse().unwrap();
+        assert_eq!(answer, expected);
+    }
 
-#[test]
-fn half_plus_one_times_two() {
-    let two = BoundedRational::new(2);
-    let half = two.inverse();
-    let one = BoundedRational::new(1);
-    let two = BoundedRational::new(2);
-    let three = BoundedRational::new(3);
-    let sum = half + one;
-    assert_eq!(sum * two, three);
-}
+    #[test]
+    fn signs() {
+        let half: BoundedRational = "4/8".parse().unwrap();
+        let one = BoundedRational::new(1);
+        let minus_half = half - one;
+        let two = BoundedRational::new(2);
+        let zero = BoundedRational::zero();
+        let minus_two = zero - two;
+        let i2 = minus_two.inverse();
+        assert_eq!(i2, minus_half);
+    }
 
-#[test]
-fn three_divided_by_six() {
-    let three = BoundedRational::new(3);
-    let six = BoundedRational::new(6);
-    let half: BoundedRational = "1/2".parse().unwrap();
-    assert_eq!(three / six, half);
-}
+    #[test]
+    fn half_plus_one_times_two() {
+        let two = BoundedRational::new(2);
+        let half = two.inverse();
+        let one = BoundedRational::new(1);
+        let two = BoundedRational::new(2);
+        let three = BoundedRational::new(3);
+        let sum = half + one;
+        assert_eq!(sum * two, three);
+    }
 
-#[test]
-fn one_plus_two() {
-    let one = BoundedRational::new(1);
-    let two = BoundedRational::new(2);
-    let three = BoundedRational::new(3);
-    assert_eq!(one + two, three);
-}
+    #[test]
+    fn three_divided_by_six() {
+        let three = BoundedRational::new(3);
+        let six = BoundedRational::new(6);
+        let half: BoundedRational = "1/2".parse().unwrap();
+        assert_eq!(three / six, half);
+    }
 
-#[test]
-fn two_minus_one() {
-    let two = BoundedRational::new(2);
-    let one = BoundedRational::new(1);
-    assert_eq!(two - one, BoundedRational::new(1));
-}
+    #[test]
+    fn one_plus_two() {
+        let one = BoundedRational::new(1);
+        let two = BoundedRational::new(2);
+        let three = BoundedRational::new(3);
+        assert_eq!(one + two, three);
+    }
 
-#[test]
-fn two_times_three() {
-    let two = BoundedRational::new(2);
-    let three = BoundedRational::new(3);
-    assert_eq!(two * three, BoundedRational::new(6));
+    #[test]
+    fn two_minus_one() {
+        let two = BoundedRational::new(2);
+        let one = BoundedRational::new(1);
+        assert_eq!(two - one, BoundedRational::new(1));
+    }
+
+    #[test]
+    fn two_times_three() {
+        let two = BoundedRational::new(2);
+        let three = BoundedRational::new(3);
+        assert_eq!(two * three, BoundedRational::new(6));
+    }
 }

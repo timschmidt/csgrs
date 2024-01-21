@@ -23,7 +23,7 @@ impl Clone for Computable {
         let internal = Box::new(Placeholder);
         Self {
             internal,
-            cache: RefCell::new(Cache::Invalid),
+            cache: self.cache.clone(),
         }
     }
 }
@@ -43,7 +43,8 @@ impl Computable {
         }
     }
 
-    pub fn integer(n: BigInt) -> Self {
+    #[cfg(test)]
+    fn integer(n: BigInt) -> Self {
         Self {
             internal: Box::new(Int(n)),
             cache: RefCell::new(Cache::Invalid),
@@ -125,7 +126,7 @@ struct Placeholder;
 
 impl Approximation for Placeholder {
     fn approximate(&self, _p: Precision) -> BigInt {
-        todo!()
+        todo!("Placeholder instead of an actual Computable Real")
     }
 }
 
@@ -148,41 +149,45 @@ impl Approximation for Pi {
 }
 
 #[cfg(test)]
-#[test]
-fn bigger() {
-    let six: BigInt = "6".parse().unwrap();
-    let five: BigInt = "5".parse().unwrap();
-    let four: BigInt = "4".parse().unwrap();
-    let a = Computable::integer(six.clone());
-    let b = Computable::integer(five.clone());
-    assert_eq!(a.compare_absolute(&b, 0), Ordering::Greater);
-    let c = Computable::integer(four.clone());
-    assert_eq!(c.compare_absolute(&a, 0), Ordering::Less);
-    assert_eq!(b.compare_absolute(&b, 0), Ordering::Equal);
-}
+mod tests {
+    use super::*;
 
-#[test]
-fn shifted() {
-    let one: BigInt = One::one();
-    let two = one.clone() + one.clone();
-    assert_eq!(one, shift(two, -1));
-}
+    #[test]
+    fn bigger() {
+        let six: BigInt = "6".parse().unwrap();
+        let five: BigInt = "5".parse().unwrap();
+        let four: BigInt = "4".parse().unwrap();
+        let a = Computable::integer(six.clone());
+        let b = Computable::integer(five.clone());
+        assert_eq!(a.compare_absolute(&b, 0), Ordering::Greater);
+        let c = Computable::integer(four.clone());
+        assert_eq!(c.compare_absolute(&a, 0), Ordering::Less);
+        assert_eq!(b.compare_absolute(&b, 0), Ordering::Equal);
+    }
 
-#[test]
-fn prec() {
-    let nine: BigInt = "9".parse().unwrap();
-    let five: BigInt = "5".parse().unwrap();
-    let two: BigInt = "2".parse().unwrap();
-    let one: BigInt = One::one();
-    let a = Computable::integer(nine.clone());
-    assert_eq!(nine, a.approx(0));
-    assert_eq!(five, a.approx(1));
-    assert_eq!(two, a.approx(2));
-    assert_eq!(one, a.approx(3));
-    assert_eq!(Cache::Valid((0, nine)), a.cache.into_inner());
-}
+    #[test]
+    fn shifted() {
+        let one: BigInt = One::one();
+        let two = one.clone() + one.clone();
+        assert_eq!(one, shift(two, -1));
+    }
 
-#[test]
-fn zero() {
-    assert_eq!(0, 0);
+    #[test]
+    fn prec() {
+        let nine: BigInt = "9".parse().unwrap();
+        let five: BigInt = "5".parse().unwrap();
+        let two: BigInt = "2".parse().unwrap();
+        let one: BigInt = One::one();
+        let a = Computable::integer(nine.clone());
+        assert_eq!(nine, a.approx(0));
+        assert_eq!(five, a.approx(1));
+        assert_eq!(two, a.approx(2));
+        assert_eq!(one, a.approx(3));
+        assert_eq!(Cache::Valid((0, nine)), a.cache.into_inner());
+    }
+
+    #[test]
+    fn zero() {
+        assert_eq!(0, 0);
+    }
 }

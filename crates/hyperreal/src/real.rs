@@ -346,88 +346,92 @@ impl PartialEq for Real {
 }
 
 #[cfg(test)]
-#[test]
-fn zero() {
-    assert_eq!(Real::zero(), Real::zero());
-}
+mod tests {
+    use super::*;
 
-#[test]
-fn rational() {
-    let two: Real = "2".parse().unwrap();
-    assert_ne!(two, Real::zero());
-    let four: Real = "4".parse().unwrap();
-    let answer = four - two.clone();
-    assert_eq!(answer, two.clone());
-    let zero = answer - two;
-    assert_eq!(zero, Real::zero());
-    let six_half: Real = "13/2".parse().unwrap();
-    let opposite = six_half.inverse().unwrap();
-    let expected = "2/13".parse().unwrap();
-    assert_eq!(opposite, expected);
-}
+    #[test]
+    fn zero() {
+        assert_eq!(Real::zero(), Real::zero());
+    }
 
-// https://devblogs.microsoft.com/oldnewthing/?p=93765
-// "Why does the Windows calculator generate tiny errors when calculating the square root of a
-// perfect square?" (fixed in 2018)
-#[test]
-fn perfect_square() {
-    let four: Real = "4".parse().unwrap();
-    let two: Real = "2".parse().unwrap();
-    let calc = four.sqrt().unwrap() - two;
-    assert_eq!(calc, Real::zero());
-}
+    #[test]
+    fn rational() {
+        let two: Real = "2".parse().unwrap();
+        assert_ne!(two, Real::zero());
+        let four: Real = "4".parse().unwrap();
+        let answer = four - two.clone();
+        assert_eq!(answer, two.clone());
+        let zero = answer - two;
+        assert_eq!(zero, Real::zero());
+        let six_half: Real = "13/2".parse().unwrap();
+        let opposite = six_half.inverse().unwrap();
+        let expected = "2/13".parse().unwrap();
+        assert_eq!(opposite, expected);
+    }
 
-#[test]
-fn one_over_e() {
-    let one: Real = "1".parse().unwrap();
-    let e = Real::e();
-    let e_inverse = Real::e().inverse().unwrap();
-    let answer = e * e_inverse;
-    assert_eq!(one, answer);
-    let again = answer.sqrt().unwrap();
-    assert_eq!(one, again);
-}
+    // https://devblogs.microsoft.com/oldnewthing/?p=93765
+    // "Why does the Windows calculator generate tiny errors when calculating the square root of a
+    // perfect square?" (fixed in 2018)
+    #[test]
+    fn perfect_square() {
+        let four: Real = "4".parse().unwrap();
+        let two: Real = "2".parse().unwrap();
+        let calc = four.sqrt().unwrap() - two;
+        assert_eq!(calc, Real::zero());
+    }
 
-#[test]
-fn unlike_sqrts() {
-    let thirty: Real = "30".parse().unwrap();
-    let ten: Real = "10".parse().unwrap();
-    let answer = thirty.sqrt().unwrap() * ten.sqrt().unwrap();
-    let ten: Real = "10".parse().unwrap();
-    let three: Real = "3".parse().unwrap();
-    let or = ten * three.sqrt().unwrap();
-    assert_eq!(answer, or);
-}
+    #[test]
+    fn one_over_e() {
+        let one: Real = "1".parse().unwrap();
+        let e = Real::e();
+        let e_inverse = Real::e().inverse().unwrap();
+        let answer = e * e_inverse;
+        assert_eq!(one, answer);
+        let again = answer.sqrt().unwrap();
+        assert_eq!(one, again);
+    }
 
-#[test]
-fn zero_pi() {
-    let pi = Real::pi();
-    let z1 = pi - Real::pi();
-    let pi2 = Real::pi() + Real::pi();
-    let z2 = pi2 * Real::zero();
-    assert!(z1.definitely_zero());
-    assert!(z2.definitely_zero());
-    let two_pi = Real::pi() + Real::pi();
-    let two: Real = "2".parse().unwrap();
-    assert_eq!(two_pi, two * Real::pi());
-}
+    #[test]
+    fn unlike_sqrts() {
+        let thirty: Real = "30".parse().unwrap();
+        let ten: Real = "10".parse().unwrap();
+        let answer = thirty.sqrt().unwrap() * ten.sqrt().unwrap();
+        let ten: Real = "10".parse().unwrap();
+        let three: Real = "3".parse().unwrap();
+        let or = ten * three.sqrt().unwrap();
+        assert_eq!(answer, or);
+    }
 
-#[test]
-fn sqrt_exact() {
-    let big: Real = "40000".parse().unwrap();
-    let small: Real = "200".parse().unwrap();
-    let answer = big.sqrt().unwrap();
-    assert_eq!(small, answer);
-}
+    #[test]
+    fn zero_pi() {
+        let pi = Real::pi();
+        let z1 = pi - Real::pi();
+        let pi2 = Real::pi() + Real::pi();
+        let z2 = pi2 * Real::zero();
+        assert!(z1.definitely_zero());
+        assert!(z2.definitely_zero());
+        let two_pi = Real::pi() + Real::pi();
+        let two: Real = "2".parse().unwrap();
+        assert_eq!(two_pi, two * Real::pi());
+    }
 
-#[test]
-fn square_sqrt() {
-    let two: Real = "2".parse().unwrap();
-    let three: Real = "3".parse().unwrap();
-    let small = three.clone().sqrt().expect("Should be able to sqrt(n)");
-    let a = small.clone() * two;
-    let b = small.clone() * three;
-    let answer = a * b;
-    let eighteen: Real = "18".parse().unwrap();
-    assert_eq!(answer, eighteen);
+    #[test]
+    fn sqrt_exact() {
+        let big: Real = "40000".parse().unwrap();
+        let small: Real = "200".parse().unwrap();
+        let answer = big.sqrt().unwrap();
+        assert_eq!(small, answer);
+    }
+
+    #[test]
+    fn square_sqrt() {
+        let two: Real = "2".parse().unwrap();
+        let three: Real = "3".parse().unwrap();
+        let small = three.clone().sqrt().expect("Should be able to sqrt(n)");
+        let a = small.clone() * two;
+        let b = small.clone() * three;
+        let answer = a * b;
+        let eighteen: Real = "18".parse().unwrap();
+        assert_eq!(answer, eighteen);
+    }
 }
