@@ -15,3 +15,4 @@ On the other hand, if you encounter bugs or inadequacies in this code, chances a
 In some places the natural way to express the API in Rust differs from Java and I intend to explain such deviatione below, but for now the
 hilariously incomplete nature of the work makes that impractical.
 
+`BoundedRational::to_big_integer` has a different name because in Rust `as` signifies that this conversion is cheap

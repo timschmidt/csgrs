@@ -150,6 +150,16 @@ impl Real {
                     computable: Computable::one(),
                 });
             }
+            Class::Sqrt(sqrt) => {
+                if let Some(sqrt) = sqrt.to_big_integer() {
+                    let rational = (self.rational * BoundedRational::from_bigint(sqrt)).inverse();
+                    return Ok(Self {
+                        rational,
+                        class: self.class,
+                        computable: self.computable,
+                    });
+                }
+            }
             Class::Exp(exp) => {
                 let exp = Neg::neg(exp.clone());
                 return Ok(Self {
@@ -352,6 +362,17 @@ mod tests {
     #[test]
     fn zero() {
         assert_eq!(Real::zero(), Real::zero());
+    }
+
+    #[test]
+    fn root_divide() {
+        let twenty: Real = "20".parse().unwrap();
+        let five: Real = "5".parse().unwrap();
+        let a = twenty.sqrt().unwrap();
+        let b = five.sqrt().unwrap().inverse().unwrap();
+        let answer = a * b;
+        let two: Real = "2".parse().unwrap();
+        assert_eq!(answer, two);
     }
 
     #[test]

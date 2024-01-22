@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use num_bigint::Sign::{self, *};
-use num_bigint::{BigUint, ToBigUint};
+use num_bigint::{BigInt, BigUint, ToBigUint};
 use num_traits::{One, Zero};
 
 #[derive(Clone, Debug)]
@@ -34,6 +34,16 @@ impl BoundedRational {
         Self {
             sign: Plus,
             numerator: ToBigUint::to_biguint(&n).unwrap(),
+            denominator: One::one(),
+        }
+    }
+
+    pub fn from_bigint(n: BigInt) -> Self {
+        let sign = n.sign();
+        let numerator = n.magnitude().clone();
+        Self {
+            sign,
+            numerator,
             denominator: One::one(),
         }
     }
@@ -99,6 +109,17 @@ impl fmt::Display for BoundedRational {
 }
 
 impl BoundedRational {
+    pub fn to_big_integer(&self) -> Option<BigInt> {
+        let whole = &self.numerator / &self.denominator;
+        let round = &whole * &self.denominator;
+        let left = &self.numerator - &round;
+        if left.is_zero() {
+            Some(BigInt::from_biguint(self.sign, whole))
+        } else {
+            None
+        }
+    }
+
     pub fn sign(&self) -> Sign {
         self.sign
     }
