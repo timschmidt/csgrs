@@ -105,7 +105,6 @@ impl BoundedRational {
 }
 
 impl BoundedRational {
-    const EXTRACT_SQUARE_MAX_OPT: u8 = 43;
     const EXTRACT_SQUARE_MAX_LEN: u64 = 5000;
 
     fn make_squares() -> Vec<(BigUint, BigUint)> {
@@ -167,22 +166,18 @@ impl BoundedRational {
         }
         let (nsquare, nrest) = Self::extract_square(self.numerator);
         let (dsquare, drest) = Self::extract_square(self.denominator);
-        if self.sign == Minus {
-            todo!("Didn't yet implement extract_square_reduced for negative rationals")
-        } else {
-            (
-                Self {
-                    sign: self.sign,
-                    numerator: nsquare,
-                    denominator: dsquare,
-                },
-                Self {
-                    sign: self.sign,
-                    numerator: nrest,
-                    denominator: drest,
-                },
-            )
-        }
+        (
+            Self {
+                sign: Plus,
+                numerator: nsquare,
+                denominator: dsquare,
+            },
+            Self {
+                sign: self.sign,
+                numerator: nrest,
+                denominator: drest,
+            },
+        )
     }
 
     pub fn extract_square_will_succeed(&self) -> bool {
@@ -408,9 +403,23 @@ mod tests {
     }
 
     #[test]
+    fn square_reduced() {
+        let thirty_two: BoundedRational = "32".parse().unwrap();
+        let (square, rest) = thirty_two.extract_square_reduced();
+        let four: BoundedRational = "4".parse().unwrap();
+        assert_eq!(square, four);
+        let two: BoundedRational = "2".parse().unwrap();
+        assert_eq!(rest, two);
+        let minus_one: BoundedRational = "-1".parse().unwrap();
+        let (square, rest) = minus_one.clone().extract_square_reduced();
+        assert_eq!(square, BoundedRational::one());
+        assert_eq!(rest, minus_one);
+    }
+
+    #[test]
     fn signs() {
         let half: BoundedRational = "4/8".parse().unwrap();
-        let one = BoundedRational::new(1);
+        let one = BoundedRational::one();
         let minus_half = half - one;
         let two = BoundedRational::new(2);
         let zero = BoundedRational::zero();
@@ -423,7 +432,7 @@ mod tests {
     fn half_plus_one_times_two() {
         let two = BoundedRational::new(2);
         let half = two.inverse();
-        let one = BoundedRational::new(1);
+        let one = BoundedRational::one();
         let two = BoundedRational::new(2);
         let three = BoundedRational::new(3);
         let sum = half + one;
@@ -440,7 +449,7 @@ mod tests {
 
     #[test]
     fn one_plus_two() {
-        let one = BoundedRational::new(1);
+        let one = BoundedRational::one();
         let two = BoundedRational::new(2);
         let three = BoundedRational::new(3);
         assert_eq!(one + two, three);
@@ -449,7 +458,7 @@ mod tests {
     #[test]
     fn two_minus_one() {
         let two = BoundedRational::new(2);
-        let one = BoundedRational::new(1);
+        let one = BoundedRational::one();
         assert_eq!(two - one, BoundedRational::new(1));
     }
 

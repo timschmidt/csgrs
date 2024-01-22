@@ -77,8 +77,17 @@ impl Computable {
 use core::cmp::Ordering;
 
 impl Computable {
+    /// Do not call this function if `self` and `other` may be the same
     pub fn compare_to(&self, other: &Self) -> Ordering {
-        todo!()
+        let mut tolerance = -20;
+        while tolerance > Precision::MIN {
+            let order = self.compare_absolute(other, tolerance);
+            if order != Ordering::Equal {
+                return order;
+            }
+            tolerance *= 2;
+        }
+        panic!("Apparently called Computable::compare_to on equal values");
     }
 
     pub fn compare_absolute(&self, other: &Self, tolerance: Precision) -> Ordering {
@@ -151,6 +160,20 @@ impl Approximation for Pi {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn compare() {
+        let six: BigInt = "6".parse().unwrap();
+        let five: BigInt = "5".parse().unwrap();
+        let four: BigInt = "4".parse().unwrap();
+        let six = Computable::integer(six.clone());
+        let five = Computable::integer(five.clone());
+        let four = Computable::integer(four.clone());
+
+        assert_eq!(six.compare_to(&five), Ordering::Greater);
+        assert_eq!(five.compare_to(&six), Ordering::Less);
+        assert_eq!(four.compare_to(&six), Ordering::Less);
+    }
 
     #[test]
     fn bigger() {
