@@ -10,6 +10,7 @@ pub enum RealProblem {
 
 #[derive(Clone, Debug)]
 enum Class {
+    None,
     One,
     Pi,
     Sqrt(BoundedRational),
@@ -25,7 +26,7 @@ enum Class {
 
 use Class::*;
 
-// Irrational is never judged equal to anything here
+// Neither None nor Irrational are judged equal to anything here
 impl PartialEq for Class {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -85,14 +86,14 @@ impl Real {
 
     pub fn pi() -> Self {
         Self {
-            rational: BoundedRational::new(1),
+            rational: BoundedRational::one(),
             class: Class::Pi,
             computable: Computable::pi(),
         }
     }
 
     pub fn e() -> Self {
-        let one = BoundedRational::new(1);
+        let one = BoundedRational::one();
         Self {
             rational: one.clone(),
             class: Class::Exp(one),
@@ -102,7 +103,7 @@ impl Real {
 
     pub fn ln10() -> Self {
         Self {
-            rational: BoundedRational::new(1),
+            rational: BoundedRational::one(),
             class: Class::Ln(BoundedRational::new(10)),
             computable: Computable::placeholder(),
         }
@@ -184,7 +185,7 @@ impl Real {
             Class::One => {
                 if self.rational.extract_square_will_succeed() {
                     let (square, rest) = self.rational.extract_square_reduced();
-                    if rest == BoundedRational::new(1) {
+                    if rest == BoundedRational::one() {
                         return Ok(Self {
                             rational: square,
                             class: Class::One,
@@ -200,14 +201,7 @@ impl Real {
                 }
             }
             Class::Exp(exp) => {
-                /*
-                let exp = exp / BoundedRational::new(2);
-                return Ok(Self {
-                    rational: self.rational,
-                    class: Class::Exp(exp),
-                    computable: Computable::placeholder(),
-                }).inverse(),;
-                */
+                // Implementation originally submitted here doesn't handle the rational component?
             }
             _ => (),
         }
@@ -216,9 +210,25 @@ impl Real {
 
     pub fn exp(self) -> Result<Self, RealProblem> {
         if self.definitely_zero() {
-            return Ok(Self::new(BoundedRational::new(1)));
+            return Ok(Self::new(BoundedRational::one()));
         }
         todo!("Exp({self:?}) unimplemented")
+    }
+}
+
+use core::fmt;
+
+impl fmt::Display for Real {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.class {
+            Class::One => {
+                f.write_fmt(format_args!("{}", self.rational))?;
+            }
+            _ => {
+                f.write_fmt(format_args!("({} x {:?}::{:?})", self.rational, self.class, self.computable))?;
+            }
+        }
+        Ok(())
     }
 }
 
