@@ -1,0 +1,21 @@
+[package]
+name = "ad-altum"
+version = "0.1.0"
+authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+exclude = [".github/**/*"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main", features = [
+] }
+
+# Enable a small amount of optimization in debug mode
+[profile.dev]
+opt-level = 1
+
+# Enable high optimizations for dependencies (incl. Bevy), but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
