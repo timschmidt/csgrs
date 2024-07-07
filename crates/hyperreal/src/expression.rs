@@ -1,34 +1,57 @@
 use crate::{Real, RealProblem};
-use std::str::Chars;
 use std::iter::Peekable;
+use std::str::Chars;
 
 type ExpId = usize;
 
-#[derive (Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
+// We don't handle parentheses yet
+enum Mode {
+    Start,
+    Neg,
+    Op,
+    Plus,
+    Times,
+    Minus,
+    Divide,
+}
+
+#[derive(Clone, Debug)]
 enum ExpNode {
     Literal(Real),
     Plus(ExpId, ExpId),
     Times(ExpId, ExpId),
     Minus(ExpId, ExpId),
-    Sqrt(ExpId)
+    Divide(ExpId, ExpId),
+    Neg(ExpId),
+    Sqrt(ExpId),
 }
 
 type ExpVec = Vec<ExpNode>;
 
-#[derive (Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Expression {
     sub: ExpVec,
+    head: Option<ExpId>,
 }
 
 fn problem(problem: RealProblem) -> &'static str {
+    println!("!!! {problem:?}");
     match problem {
         _ => "Some unknown problem",
     }
 }
 
 impl Expression {
+    pub const fn is_empty(&self) -> bool {
+        self.head.is_none()
+    }
+
     pub fn new() -> Self {
-        Self { sub: Vec::new() }
+        Self {
+            sub: Vec::new(),
+            head: None,
+        }
     }
 
     fn sub_expr(&self, id: ExpId) -> Result<Real, RealProblem> {
@@ -39,39 +62,120 @@ impl Expression {
             ExpNode::Plus(a, b) => Ok(self.sub_expr(a)? + self.sub_expr(b)?),
             ExpNode::Times(a, b) => Ok(self.sub_expr(a)? * self.sub_expr(b)?),
             ExpNode::Minus(a, b) => Ok(self.sub_expr(a)? - self.sub_expr(b)?),
+            ExpNode::Divide(a, b) => Ok(self.sub_expr(a)? * self.sub_expr(b)?.inverse()?),
+            ExpNode::Neg(n) => Ok(-self.sub_expr(n)?),
             ExpNode::Sqrt(n) => self.sub_expr(n)?.sqrt(),
         }
     }
 
     pub fn calculate(&self) -> Result<Real, RealProblem> {
-        self.sub_expr(0)
+        self.sub_expr(self.head.ok_or(RealProblem::ParseError)?)
     }
-
 
     pub fn parse(s: &str) -> Result<Self, &'static str> {
+        let mut mode: Mode = Mode::Start;
+        let mut left: Option<ExpId> = None;
+        let mut sub = Vec::new();
+
         let mut chars = s.chars().peekable();
-        Self::consume_whitespace(&mut chars);
 
-        let mut sub = Self::consume_value(&mut chars).map_err(problem)?;
+        while let Some(c) = chars.peek() {
+            match (mode, c) {
+                (Mode::Start, '-') => {
+                    chars.next();
+                    mode = Mode::Neg;
+                }
+                (Mode::Neg, '0'..='9') => {
+                    let tmp = Self::consume_literal(&mut chars, &mut sub).map_err(problem)?;
+                    left = Some(Self::unary(&mut sub, mode, tmp));
+                    mode = Mode::Op;
+                }
+                (Mode::Start, '0'..='9') => {
+                    left = Some(Self::consume_literal(&mut chars, &mut sub).map_err(problem)?);
+                    mode = Mode::Op;
+                }
+                (_, ' ' | '\t') => {
+                    chars.next();
+                    // Ignore whitespace
+                }
+                (Mode::Op, '+') => {
+                    chars.next();
+                    mode = Mode::Plus;
+                }
+                (Mode::Op, '-') => {
+                    chars.next();
+                    mode = Mode::Minus;
+                }
+                (Mode::Op, '*') => {
+                    chars.next();
+                    mode = Mode::Times;
+                }
+                (Mode::Op, '/') => {
+                    chars.next();
+                    mode = Mode::Divide;
+                }
+                (Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide, '-') => {
+                    chars.next();
+                    let tmp = Self::consume_literal(&mut chars, &mut sub).map_err(problem)?;
+                    let right = Self::unary(&mut sub, Mode::Neg, tmp);
+                    left = Some(Self::binary(&mut sub, mode, left.unwrap(), right));
+                    mode = Mode::Op;
+                }
+                (Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide, '0'..='9') => {
+                    let right = Self::consume_literal(&mut chars, &mut sub).map_err(problem)?;
+                    left = Some(Self::binary(&mut sub, mode, left.unwrap(), right));
+                    mode = Mode::Op;
+                }
+                _ => {
+                    println!("{mode:?} {c:?} ...");
+                    todo!();
+                }
+            }
+        }
 
-        Ok(Expression { sub })
+        // TODO handle parsing just - on its own, that's an error
+
+        Ok(Expression { sub, head: left })
     }
 
-    fn consume_open(c: &mut Peekable<Chars>) {
-        c.next();
+    fn unary(sub: &mut ExpVec, mode: Mode, node: ExpId) -> ExpId {
+        let op = match mode {
+            Mode::Neg => ExpNode::Neg(node),
+            _ => {
+                panic!("Cannot make a unary op in mode {mode:?}");
+            }
+        };
+
+        let n = sub.len();
+        sub.push(op);
+        n
     }
 
-    fn consume_close(c: &mut Peekable<Chars>) {
-        c.next();
+    fn binary(sub: &mut ExpVec, mode: Mode, left: ExpId, right: ExpId) -> ExpId {
+        let op = match mode {
+            Mode::Plus => ExpNode::Plus(left, right),
+            Mode::Minus => ExpNode::Minus(left, right),
+            Mode::Times => ExpNode::Times(left, right),
+            Mode::Divide => ExpNode::Divide(left, right),
+            _ => {
+                panic!("Cannot make a binary op in mode {mode:?}");
+            }
+        };
+
+        let n = sub.len();
+        sub.push(op);
+        n
     }
 
-    // Consume a value, for now presumably a single number
-    fn consume_value(c: &mut Peekable<Chars>) -> Result<ExpVec, RealProblem> {
+    // Consume a literal, for now presumably a single number consisting of:
+    // digits, the decimal point and optionally commas, underscores etc. which are ignored
+    fn consume_literal(c: &mut Peekable<Chars>, sub: &mut ExpVec) -> Result<ExpId, RealProblem> {
         let mut num = String::new();
 
         loop {
             match c.peek() {
                 Some(digit @ '0'..='9') => num.push(*digit),
+                Some('_' | ',' | '\'') => { /* ignore */ }
                 Some('.') => num.push('.'),
                 _ => break,
             }
@@ -80,23 +184,10 @@ impl Expression {
 
         let r: Real = num.parse()?;
 
-        let mut sub = Vec::new();
+        let n = sub.len();
         sub.push(ExpNode::Literal(r));
-        Ok(sub)
+        Ok(n)
     }
-
-    // Consume any whitespace, if anything was consumed return 'true'
-    fn consume_whitespace(c: &mut Peekable<Chars>) -> bool {
-        let mut matched = false;
-
-        while c.peek().is_some_and(|c| c.is_whitespace()) {
-            matched = true;
-            c.next();
-        }
-        matched
-    }
-
-
 }
 
 use std::str::FromStr;
@@ -106,15 +197,4 @@ impl FromStr for Expression {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Expression::parse(s)
     }
-}
-
-pub fn example1(r: Real) -> Expression {
-    let mut sub: Vec<ExpNode> = Vec::new();
-    sub.push(ExpNode::Times(1, 2));
-    let n = ExpNode::Literal(r);
-    sub.push(n.clone());
-    sub.push(ExpNode::Plus(3, 4));
-    sub.push(n.clone());
-    sub.push(n);
-    Expression { sub }
 }

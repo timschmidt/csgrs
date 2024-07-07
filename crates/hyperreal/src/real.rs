@@ -225,7 +225,10 @@ impl fmt::Display for Real {
                 f.write_fmt(format_args!("{}", self.rational))?;
             }
             _ => {
-                f.write_fmt(format_args!("({} x {:?}::{:?})", self.rational, self.class, self.computable))?;
+                f.write_fmt(format_args!(
+                    "({} x {:?}::{:?})",
+                    self.rational, self.class, self.computable
+                ))?;
             }
         }
         Ok(())

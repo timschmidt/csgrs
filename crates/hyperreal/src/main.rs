@@ -13,9 +13,11 @@ pub fn main() {
             .expect("Failed to read calculator input");
 
         let expr = input.trim();
-        println!("input was '{expr}'");
         let expr: Expression = expr.parse().expect("Parsing your input failed");
-//        let expr = example1(Real::new(num));
+        if expr.is_empty() {
+            break;
+        }
+
         println!("expression parsed as: {expr:?}");
 
         let ans = expr.calculate().expect("Calculation should work");
