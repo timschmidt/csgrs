@@ -1,16 +1,16 @@
-[package]
-name = "ad-altum"
-version = "0.1.0"
-authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
-edition = "2021"
-license = "MIT OR Apache-2.0"
-exclude = [".github/**/*"]
+[workspace]
+resolver = "2"
+members = ["ad-altum", "voxelis"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main", features = [
-] }
+[workspace.dependencies]
+voxelis = { path = "voxelis" }
+# bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy = "0.13.0"
+bevy_egui = "0.25.0"
+bevy_panorbit_camera = { version = "0.16.1", features = ["bevy_egui"] }
+bevy_screen_diagnostics = "0.5.0"
+# bevy_screen_diagnostics = { git = "https://github.com/laundmo/bevy_screen_diagnostics.git", branch = "main" }
+egui_extras = "0.26.2"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
