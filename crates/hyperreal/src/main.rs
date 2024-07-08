@@ -1,5 +1,5 @@
-use std::io;
 use realistic::Expression;
+use std::io;
 
 pub fn main() {
     loop {
@@ -19,6 +19,6 @@ pub fn main() {
 
         let ans = expr.calculate().expect("Calculation should work");
 
-        println!("{ans}");
+        println!("{ans} ~= {ans:#}");
     }
 }

@@ -112,7 +112,12 @@ impl Expression {
                                 // Nothing
                             }
                             Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide => {
-                                left = Some(Self::binary(&mut sub, old_mode, old_left.unwrap(), left.unwrap()));
+                                left = Some(Self::binary(
+                                    &mut sub,
+                                    old_mode,
+                                    old_left.unwrap(),
+                                    left.unwrap(),
+                                ));
                             }
                             _ => {
                                 todo!();

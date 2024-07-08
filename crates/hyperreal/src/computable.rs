@@ -125,7 +125,7 @@ fn scale(n: BigInt, p: Precision) -> BigInt {
 }
 
 trait Approximation: core::fmt::Debug {
-    /* maybe provide some mechanism to request computation stops? */
+    /* TODO maybe provide some mechanism to request computation stops? */
 
     fn approximate(&self, p: Precision) -> BigInt;
 }

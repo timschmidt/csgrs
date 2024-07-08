@@ -91,9 +91,18 @@ impl fmt::Display for BoundedRational {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.sign == Minus {
             f.write_str("-")?;
+        } else if f.sign_plus() {
+            f.write_str("+")?;
         }
         if self.denominator == One::one() {
             f.write_fmt(format_args!("{}", self.numerator))?;
+        } else if f.alternate() {
+            let whole = &self.numerator / &self.denominator;
+            let round = &whole * &self.denominator;
+            let left = &self.numerator - &round;
+            let billion = BigUint::parse_bytes("1000000000".as_bytes(), 10).unwrap();
+            let fraction = (left * billion) / &self.denominator;
+            f.write_fmt(format_args!("{whole}.{fraction:09}"))?;
         } else {
             let whole = &self.numerator / &self.denominator;
             let round = &whole * &self.denominator;
