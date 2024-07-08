@@ -1,7 +1,4 @@
-use realistic::BoundedRational;
-use realistic::Real;
 use std::io;
-
 use realistic::Expression;
 
 pub fn main() {

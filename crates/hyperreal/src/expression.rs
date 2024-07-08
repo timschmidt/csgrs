@@ -5,7 +5,6 @@ use std::str::Chars;
 type ExpId = usize;
 
 #[derive(Copy, Clone, Debug)]
-// We don't handle parentheses yet
 enum Mode {
     Start,
     Neg,
@@ -73,6 +72,7 @@ impl Expression {
     }
 
     pub fn parse(s: &str) -> Result<Self, &'static str> {
+        let mut stack: Vec<(Mode, Option<ExpId>)> = Vec::new();
         let mut mode: Mode = Mode::Start;
         let mut left: Option<ExpId> = None;
         let mut sub = Vec::new();
@@ -81,6 +81,12 @@ impl Expression {
 
         while let Some(c) = chars.peek() {
             match (mode, c) {
+                (Mode::Start, '(') => {
+                    chars.next();
+                    stack.push((mode, left));
+                    mode = Mode::Start;
+                    left = None;
+                }
                 (Mode::Start, '-') => {
                     chars.next();
                     mode = Mode::Neg;
@@ -98,6 +104,24 @@ impl Expression {
                     chars.next();
                     // Ignore whitespace
                 }
+                (Mode::Op, ')') => {
+                    chars.next();
+                    if let Some((old_mode, old_left)) = stack.pop() {
+                        match old_mode {
+                            Mode::Start => {
+                                // Nothing
+                            }
+                            Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide => {
+                                left = Some(Self::binary(&mut sub, old_mode, old_left.unwrap(), left.unwrap()));
+                            }
+                            _ => {
+                                todo!();
+                            }
+                        }
+                    } else {
+                        return Err("Mismatched parentheses");
+                    }
+                }
                 (Mode::Op, '+') => {
                     chars.next();
                     mode = Mode::Plus;
@@ -114,6 +138,12 @@ impl Expression {
                     chars.next();
                     mode = Mode::Divide;
                 }
+                (Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide, '(') => {
+                    chars.next();
+                    stack.push((mode, left));
+                    mode = Mode::Start;
+                    left = None;
+                }
                 (Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide, '-') => {
                     chars.next();
                     let tmp = Self::consume_literal(&mut chars, &mut sub).map_err(problem)?;
@@ -127,7 +157,7 @@ impl Expression {
                     mode = Mode::Op;
                 }
                 _ => {
-                    println!("{mode:?} {c:?} ...");
+                    println!("Unexpected {c:?} in {mode:?} ...");
                     todo!();
                 }
             }

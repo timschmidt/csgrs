@@ -200,8 +200,9 @@ impl Real {
                     }
                 }
             }
-            Class::Exp(exp) => {
+            Class::Exp(_exp) => {
                 // Implementation originally submitted here doesn't handle the rational component?
+                todo!()
             }
             _ => (),
         }
