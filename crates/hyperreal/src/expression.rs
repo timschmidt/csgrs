@@ -18,6 +18,7 @@ enum Mode {
 #[derive(Clone, Debug)]
 enum ExpNode {
     Literal(Real),
+    Symbol(String),
     Plus(ExpId, ExpId),
     Times(ExpId, ExpId),
     Minus(ExpId, ExpId),
@@ -58,12 +59,22 @@ impl Expression {
 
         match node {
             ExpNode::Literal(r) => Ok(r),
+            ExpNode::Symbol(s) => self.lookup(&s),
             ExpNode::Plus(a, b) => Ok(self.sub_expr(a)? + self.sub_expr(b)?),
             ExpNode::Times(a, b) => Ok(self.sub_expr(a)? * self.sub_expr(b)?),
             ExpNode::Minus(a, b) => Ok(self.sub_expr(a)? - self.sub_expr(b)?),
             ExpNode::Divide(a, b) => Ok(self.sub_expr(a)? * self.sub_expr(b)?.inverse()?),
             ExpNode::Neg(n) => Ok(-self.sub_expr(n)?),
             ExpNode::Sqrt(n) => self.sub_expr(n)?.sqrt(),
+        }
+    }
+
+    fn lookup(&self, name: &str) -> Result<Real, RealProblem> {
+        match name {
+            "pi" => Ok(Real::pi()),
+            "e" => Ok(Real::e()),
+            "ln10" => Ok(Real::ln10()),
+            _ => Err(RealProblem::NotFound),
         }
     }
 
@@ -96,6 +107,10 @@ impl Expression {
                     left = Some(Self::unary(&mut sub, mode, tmp));
                     mode = Mode::Op;
                 }
+                (Mode::Start, 'A'..='Z' | 'a'..='z') => {
+                    left = Some(Self::consume_symbol(&mut chars, &mut sub).map_err(problem)?);
+                    mode = Mode::Op;
+                }
                 (Mode::Start, '0'..='9') => {
                     left = Some(Self::consume_literal(&mut chars, &mut sub).map_err(problem)?);
                     mode = Mode::Op;
@@ -119,9 +134,7 @@ impl Expression {
                                     left.unwrap(),
                                 ));
                             }
-                            _ => {
-                                todo!();
-                            }
+                            _ => panic!("Unexpected {old_mode:?} on the stack"),
                         }
                     } else {
                         return Err("Mismatched parentheses");
@@ -161,10 +174,12 @@ impl Expression {
                     left = Some(Self::binary(&mut sub, mode, left.unwrap(), right));
                     mode = Mode::Op;
                 }
-                _ => {
-                    println!("Unexpected {c:?} in {mode:?} ...");
-                    todo!();
+                (Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide, 'A'..='Z' | 'a'..='z') => {
+                    let right = Self::consume_symbol(&mut chars, &mut sub).map_err(problem)?;
+                    left = Some(Self::binary(&mut sub, mode, left.unwrap(), right));
+                    mode = Mode::Op;
                 }
+                _ => panic!("Unexpected {c:?} in {mode:?} ..."),
             }
         }
 
@@ -202,16 +217,34 @@ impl Expression {
         n
     }
 
+    // Consume a symbol, starting with a letter and consisting of zero or more:
+    // letters, underscores or digits
+    fn consume_symbol(c: &mut Peekable<Chars>, sub: &mut ExpVec) -> Result<ExpId, RealProblem> {
+        let mut sym = String::new();
+
+        while let Some(item) = c.peek() {
+            match item {
+                'A'..='Z' | 'a'..='z' | '0'..='9' => sym.push(*item),
+                _ => break,
+            }
+            c.next();
+        }
+
+        let n = sub.len();
+        sub.push(ExpNode::Symbol(sym));
+        Ok(n)
+    }
+
+
     // Consume a literal, for now presumably a single number consisting of:
     // digits, the decimal point and optionally commas, underscores etc. which are ignored
     fn consume_literal(c: &mut Peekable<Chars>, sub: &mut ExpVec) -> Result<ExpId, RealProblem> {
         let mut num = String::new();
 
-        loop {
-            match c.peek() {
-                Some(digit @ '0'..='9') => num.push(*digit),
-                Some('_' | ',' | '\'') => { /* ignore */ }
-                Some('.') => num.push('.'),
+        while let Some(item) = c.peek() {
+            match item {
+                '0'..='9' | '.' => num.push(*item),
+                '_' | ',' | '\'' => { /* ignore */ }
                 _ => break,
             }
             c.next();

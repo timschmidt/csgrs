@@ -17,8 +17,11 @@ pub fn main() {
 
         println!("expression parsed as: {expr:?}");
 
-        let ans = expr.calculate().expect("Calculation should work");
-
-        println!("{ans} ~= {ans:#}");
+        let ans = expr.calculate();
+        if let Ok(ans) = ans {
+            println!("{ans} ~= {ans:#}");
+        } else {
+            println!("Calculation failed: {ans:?}");
+        }
     }
 }

@@ -6,6 +6,7 @@ pub enum RealProblem {
     ParseError,
     SqrtNegative,
     DivideByZero,
+    NotFound,
 }
 
 #[derive(Clone, Debug)]

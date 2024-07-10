@@ -100,9 +100,9 @@ impl fmt::Display for BoundedRational {
             let whole = &self.numerator / &self.denominator;
             let round = &whole * &self.denominator;
             let left = &self.numerator - &round;
-            let billion = BigUint::parse_bytes("1000000000".as_bytes(), 10).unwrap();
-            let fraction = (left * billion) / &self.denominator;
-            f.write_fmt(format_args!("{whole}.{fraction:09}"))?;
+            let trillion = BigUint::parse_bytes("1000000000000".as_bytes(), 10).unwrap();
+            let fraction = (left * trillion) / &self.denominator;
+            f.write_fmt(format_args!("{whole}.{fraction:012}"))?;
         } else {
             let whole = &self.numerator / &self.denominator;
             let round = &whole * &self.denominator;
