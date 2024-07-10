@@ -1,4 +1,4 @@
-use realistic::Expression;
+use realistic::{Expression,RealProblem};
 use std::io;
 
 pub fn main() {
@@ -18,10 +18,11 @@ pub fn main() {
         println!("expression parsed as: {expr:?}");
 
         let ans = expr.calculate();
-        if let Ok(ans) = ans {
-            println!("{ans} ~= {ans:#}");
-        } else {
-            println!("Calculation failed: {ans:?}");
+        match ans {
+            Ok(ans) => println!("{ans} ~= {ans:#}"),
+            Err(RealProblem::NotFound) => println!("Symbol not found"),
+            Err(RealProblem::DivideByZero) => println!("Attempted division by zero"),
+            _ => println!("Calculation failed: {ans:?}"),
         }
     }
 }

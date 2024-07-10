@@ -35,10 +35,14 @@ pub struct Expression {
     head: Option<ExpId>,
 }
 
-fn problem(problem: RealProblem) -> &'static str {
-    println!("!!! {problem:?}");
+fn parse_problem(problem: RealProblem) -> &'static str {
     match problem {
-        _ => "Some unknown problem",
+        RealProblem::DivideByZero => "Attempting to divide by zero",
+        RealProblem::NotFound => "Symbol not found",
+        _ => {
+            eprintln!("Specifically the problem is {problem:?}");
+            "Some unknown problem during parsing"
+        }
     }
 }
 
@@ -103,16 +107,16 @@ impl Expression {
                     mode = Mode::Neg;
                 }
                 (Mode::Neg, '0'..='9') => {
-                    let tmp = Self::consume_literal(&mut chars, &mut sub).map_err(problem)?;
+                    let tmp = Self::consume_literal(&mut chars, &mut sub).map_err(parse_problem)?;
                     left = Some(Self::unary(&mut sub, mode, tmp));
                     mode = Mode::Op;
                 }
                 (Mode::Start, 'A'..='Z' | 'a'..='z') => {
-                    left = Some(Self::consume_symbol(&mut chars, &mut sub).map_err(problem)?);
+                    left = Some(Self::consume_symbol(&mut chars, &mut sub).map_err(parse_problem)?);
                     mode = Mode::Op;
                 }
                 (Mode::Start, '0'..='9') => {
-                    left = Some(Self::consume_literal(&mut chars, &mut sub).map_err(problem)?);
+                    left = Some(Self::consume_literal(&mut chars, &mut sub).map_err(parse_problem)?);
                     mode = Mode::Op;
                 }
                 (_, ' ' | '\t') => {
@@ -164,18 +168,18 @@ impl Expression {
                 }
                 (Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide, '-') => {
                     chars.next();
-                    let tmp = Self::consume_literal(&mut chars, &mut sub).map_err(problem)?;
+                    let tmp = Self::consume_literal(&mut chars, &mut sub).map_err(parse_problem)?;
                     let right = Self::unary(&mut sub, Mode::Neg, tmp);
                     left = Some(Self::binary(&mut sub, mode, left.unwrap(), right));
                     mode = Mode::Op;
                 }
                 (Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide, '0'..='9') => {
-                    let right = Self::consume_literal(&mut chars, &mut sub).map_err(problem)?;
+                    let right = Self::consume_literal(&mut chars, &mut sub).map_err(parse_problem)?;
                     left = Some(Self::binary(&mut sub, mode, left.unwrap(), right));
                     mode = Mode::Op;
                 }
                 (Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide, 'A'..='Z' | 'a'..='z') => {
-                    let right = Self::consume_symbol(&mut chars, &mut sub).map_err(problem)?;
+                    let right = Self::consume_symbol(&mut chars, &mut sub).map_err(parse_problem)?;
                     left = Some(Self::binary(&mut sub, mode, left.unwrap(), right));
                     mode = Mode::Op;
                 }
