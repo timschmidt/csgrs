@@ -13,6 +13,7 @@ enum Mode {
     Times,
     Minus,
     Divide,
+    Sqrt,
 }
 
 #[derive(Clone, Debug)]
@@ -102,6 +103,10 @@ impl Expression {
                     mode = Mode::Start;
                     left = None;
                 }
+                (Mode::Start, '√') => {
+                    chars.next();
+                    mode = Mode::Sqrt;
+                }
                 (Mode::Start, '-') => {
                     chars.next();
                     mode = Mode::Neg;
@@ -117,6 +122,11 @@ impl Expression {
                 }
                 (Mode::Start, '0'..='9') => {
                     left = Some(Self::consume_literal(&mut chars, &mut sub).map_err(parse_problem)?);
+                    mode = Mode::Op;
+                }
+                (Mode::Sqrt, '0'..='9') => {
+                    let tmp = Self::consume_literal(&mut chars, &mut sub).map_err(parse_problem)?;
+                    left = Some(Self::unary(&mut sub, mode, tmp));
                     mode = Mode::Op;
                 }
                 (_, ' ' | '\t') => {
@@ -195,6 +205,7 @@ impl Expression {
     fn unary(sub: &mut ExpVec, mode: Mode, node: ExpId) -> ExpId {
         let op = match mode {
             Mode::Neg => ExpNode::Neg(node),
+            Mode::Sqrt => ExpNode::Sqrt(node),
             _ => {
                 panic!("Cannot make a unary op in mode {mode:?}");
             }
