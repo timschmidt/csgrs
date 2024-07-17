@@ -16,3 +16,21 @@ In some places the natural way to express the API in Rust differs from Java and 
 hilariously incomplete nature of the work makes that impractical.
 
 `BoundedRational::to_big_integer` has a different name because in Rust `as` signifies that this conversion is cheap
+
+# Simple Expressions
+
+(+ 1 2 3 4) == 10
+
+(* 1 2 3 4) == 24
+
+(- 1) == -1  negates the number
+
+(- 1 2) == -1  basic subtraction
+
+(= 1 2 3) == -4  all subsequent arguments are also subtracted
+
+(/ 1) == 1  inverts the number
+
+(/ 1 2) == 0.5  basic division
+
+(/ 1 2 3) == a sixth, all subsequent arguments are also divided

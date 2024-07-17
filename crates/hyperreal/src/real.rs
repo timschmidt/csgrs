@@ -222,14 +222,14 @@ use core::fmt;
 
 impl Real {
     // Should we display this as a decimal ?
-    fn prefer_decimal(&self) -> bool {
+    pub fn prefer_decimal(&self) -> bool {
         // For now, prefer to display a decimal when we're not simple enough for Class::One
         // In future also prefer when the rational could be expressed nicely this way
         self.class != Class::One
     }
 
     // Format this Real as a decimal rather than rational
-    fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    pub fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_fmt(format_args!("{:#}", self.rational))?;
         if self.class != Class::One {
             f.write_str(" x ...?")?;

@@ -121,7 +121,8 @@ impl Expression {
                     mode = Mode::Op;
                 }
                 (Mode::Start, '0'..='9') => {
-                    left = Some(Self::consume_literal(&mut chars, &mut sub).map_err(parse_problem)?);
+                    left =
+                        Some(Self::consume_literal(&mut chars, &mut sub).map_err(parse_problem)?);
                     mode = Mode::Op;
                 }
                 (Mode::Sqrt, '0'..='9') => {
@@ -184,12 +185,14 @@ impl Expression {
                     mode = Mode::Op;
                 }
                 (Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide, '0'..='9') => {
-                    let right = Self::consume_literal(&mut chars, &mut sub).map_err(parse_problem)?;
+                    let right =
+                        Self::consume_literal(&mut chars, &mut sub).map_err(parse_problem)?;
                     left = Some(Self::binary(&mut sub, mode, left.unwrap(), right));
                     mode = Mode::Op;
                 }
                 (Mode::Plus | Mode::Minus | Mode::Times | Mode::Divide, 'A'..='Z' | 'a'..='z') => {
-                    let right = Self::consume_symbol(&mut chars, &mut sub).map_err(parse_problem)?;
+                    let right =
+                        Self::consume_symbol(&mut chars, &mut sub).map_err(parse_problem)?;
                     left = Some(Self::binary(&mut sub, mode, left.unwrap(), right));
                     mode = Mode::Op;
                 }
@@ -249,7 +252,6 @@ impl Expression {
         sub.push(ExpNode::Symbol(sym));
         Ok(n)
     }
-
 
     // Consume a literal, for now presumably a single number consisting of:
     // digits, the decimal point and optionally commas, underscores etc. which are ignored

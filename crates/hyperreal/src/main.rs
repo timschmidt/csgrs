@@ -1,4 +1,4 @@
-use realistic::{Expression,RealProblem};
+use realistic::{RealProblem, Simple};
 use std::io;
 
 pub fn main() {
@@ -10,14 +10,21 @@ pub fn main() {
             .expect("Failed to read calculator input");
 
         let expr = input.trim();
-        let expr: Expression = expr.parse().expect("Parsing your input failed");
         if expr.is_empty() {
             break;
         }
 
+        let expr: Simple = match expr.parse() {
+            Ok(parsed) => parsed,
+            Err(text) => {
+                eprintln!("Parsing your input failed: {text}");
+                continue;
+            }
+        };
+
         println!("expression parsed as: {expr:?}");
 
-        let ans = expr.calculate();
+        let ans = expr.evaluate();
         match ans {
             Ok(ans) => println!("{ans} ~= {ans:#}"),
             Err(RealProblem::NotFound) => println!("Symbol not found"),
