@@ -98,11 +98,23 @@ impl fmt::Display for BoundedRational {
             f.write_fmt(format_args!("{}", self.numerator))?;
         } else if f.alternate() {
             let whole = &self.numerator / &self.denominator;
+            f.write_fmt(format_args!("{whole}."))?;
             let round = &whole * &self.denominator;
-            let left = &self.numerator - &round;
-            let trillion = BigUint::parse_bytes("1000000000000".as_bytes(), 10).unwrap();
-            let fraction = (left * trillion) / &self.denominator;
-            f.write_fmt(format_args!("{whole}.{fraction:012}"))?;
+            let mut left = &self.numerator - &round;
+            let mut digits = f.precision().unwrap_or(12);
+            loop {
+                left *= BigUint::parse_bytes("10".as_bytes(), 10).unwrap();
+                let digit = &left / &self.denominator;
+                f.write_fmt(format_args!("{digit}"))?;
+                left -= digit * &self.denominator;
+                if left.is_zero() {
+                    break;
+                }
+                digits -= 1;
+                if digits == 0 {
+                    break;
+                }
+            }
         } else {
             let whole = &self.numerator / &self.denominator;
             let round = &whole * &self.denominator;

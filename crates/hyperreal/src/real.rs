@@ -241,8 +241,7 @@ impl Real {
 impl fmt::Display for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
-            self.decimal(f)?;
-            return Ok(());
+            return self.decimal(f);
         } else {
             f.write_fmt(format_args!("{}", self.rational))?;
         }

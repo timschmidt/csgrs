@@ -114,6 +114,9 @@ fn shift(n: BigInt, p: Precision) -> BigInt {
     }
 }
 
+/// Scale n by p bits, rounding if this makes n smaller
+/// e.g. scale(10, 2) == 40
+///      scale(10, -2) == 3
 fn scale(n: BigInt, p: Precision) -> BigInt {
     if p >= 0 {
         n << p
@@ -127,6 +130,8 @@ fn scale(n: BigInt, p: Precision) -> BigInt {
 trait Approximation: core::fmt::Debug {
     /* TODO maybe provide some mechanism to request computation stops? */
 
+    /// result is within 1 but scaled by 2 ^ p
+    /// So e.g. pi with p=0 is 3, pi with p=2 = 314
     fn approximate(&self, p: Precision) -> BigInt;
 }
 
@@ -152,8 +157,12 @@ impl Approximation for Int {
 struct Pi;
 
 impl Approximation for Pi {
-    fn approximate(&self, _p: Precision) -> BigInt {
-        todo!()
+    fn approximate(&self, p: Precision) -> BigInt {
+        if p < -50 {
+            todo!("Pi representation is not precise enough for this use");
+        }
+        let pi_64: BigInt = "3537118876014219".parse().unwrap();
+        scale(pi_64, -50 -p)
     }
 }
 
@@ -210,7 +219,28 @@ mod tests {
     }
 
     #[test]
-    fn zero() {
-        assert_eq!(0, 0);
+    fn prec_pi() {
+        let three: BigInt = "3".parse().unwrap();
+        let six: BigInt = "6".parse().unwrap();
+        let thirteen: BigInt = "13".parse().unwrap();
+        let four_zero_two: BigInt = "402".parse().unwrap();
+        let a = Computable::pi();
+        assert_eq!(four_zero_two, a.approx(-7));
+        assert_eq!(three, a.approx(0));
+        assert_eq!(six, a.approx(-1));
+        assert_eq!(thirteen, a.approx(-2));
+        assert_eq!(Cache::Valid((-7, four_zero_two)), a.cache.into_inner());
+    }
+
+    #[test]
+    fn scale_up() {
+        let ten: BigInt = "10".parse().unwrap();
+        let three: BigInt = "3".parse().unwrap();
+        assert_eq!(ten, scale(ten.clone(), 0));
+        let a = scale(ten.clone(), -2);
+        assert_eq!(three, a);
+        let forty: BigInt = "40".parse().unwrap();
+        let b = scale(ten.clone(), 2);
+        assert_eq!(forty, b);
     }
 }
