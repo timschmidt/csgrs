@@ -1,3 +1,4 @@
+use crate::Computable;
 use lazy_static::lazy_static;
 use num_bigint::Sign::{self, *};
 use num_bigint::{BigInt, BigUint, ToBigUint};
@@ -53,6 +54,16 @@ impl BoundedRational {
             sign: Plus,
             numerator: ToBigUint::to_biguint(&n).unwrap(),
             denominator: ToBigUint::to_biguint(&d).unwrap(),
+        }
+    }
+
+    pub fn from_bigint_fraction(n: BigInt, denominator: BigUint) -> Self {
+        let sign = n.sign();
+        let numerator = n.magnitude().clone();
+        Self {
+            sign,
+            numerator,
+            denominator,
         }
     }
 
@@ -126,6 +137,31 @@ impl fmt::Display for BoundedRational {
             }
         }
         Ok(())
+    }
+}
+
+use num_bigint::ToBigInt;
+
+impl BoundedRational {
+    pub fn fmt_combine(&self, c: &Computable, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let d = &self.denominator.to_bigint().unwrap();
+        let n = &self.numerator.to_bigint().unwrap();
+        let bits = (n / d).bits() + 32;
+        let factor: i32 = bits
+            .try_into()
+            .expect("The number of bits we care about should fit in a 32-bit integer!");
+
+        let two = BigUint::parse_bytes("2".as_bytes(), 10).unwrap();
+        let divisor = two.pow(factor.try_into().unwrap());
+
+        let r = Self::from_bigint_fraction(c.approx(-factor), divisor);
+        let s = r * self.clone();
+
+        if let Some(precision) = f.precision() {
+            f.write_fmt(format_args!("{s:#.*}...", precision))
+        } else {
+            f.write_fmt(format_args!("{s:#}..."))
+        }
     }
 }
 

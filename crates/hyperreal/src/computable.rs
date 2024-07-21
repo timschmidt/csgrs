@@ -162,7 +162,7 @@ impl Approximation for Pi {
             todo!("Pi representation is not precise enough for this use");
         }
         let pi_64: BigInt = "3537118876014219".parse().unwrap();
-        scale(pi_64, -50 -p)
+        scale(pi_64, -50 - p)
     }
 }
 

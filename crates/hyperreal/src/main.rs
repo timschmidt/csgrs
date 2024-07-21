@@ -26,7 +26,13 @@ pub fn main() {
 
         let ans = expr.evaluate();
         match ans {
-            Ok(ans) => println!("{ans} ~= {ans:#}"),
+            Ok(ans) => {
+                if ans.prefer_decimal() {
+                    println!("{ans:#}");
+                } else {
+                    println!("{ans} ~= {ans:#.5}");
+                }
+            }
             Err(RealProblem::NotFound) => println!("Symbol not found"),
             Err(RealProblem::DivideByZero) => println!("Attempted division by zero"),
             _ => println!("Calculation failed: {ans:?}"),

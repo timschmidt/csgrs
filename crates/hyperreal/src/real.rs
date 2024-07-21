@@ -230,25 +230,33 @@ impl Real {
 
     // Format this Real as a decimal rather than rational
     pub fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("{:#}", self.rational))?;
-        if self.class != Class::One {
-            f.write_str(" x ...?")?;
+        if self.class == Class::One {
+            if let Some(precision) = f.precision() {
+                f.write_fmt(format_args!("{:#.*}", precision, self.rational))
+            } else {
+                f.write_fmt(format_args!("{:#}", self.rational))
+            }
+        } else {
+            self.rational.fmt_combine(&self.computable, f)
         }
-        Ok(())
     }
 }
 
 impl fmt::Display for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if f.alternate() {
-            return self.decimal(f);
-        } else {
-            f.write_fmt(format_args!("{}", self.rational))?;
+        match self.class {
+            Class::One => {
+                if f.alternate() {
+                    return self.decimal(f);
+                } else {
+                    f.write_fmt(format_args!("{}", self.rational))?;
+                }
+            }
+            _ => {
+                return self.decimal(f);
+            }
         }
 
-        if self.class != Class::One {
-            f.write_fmt(format_args!(" x {:?}::{:?}", self.class, self.computable))?;
-        }
         Ok(())
     }
 }
