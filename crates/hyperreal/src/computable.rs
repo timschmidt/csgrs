@@ -1,5 +1,5 @@
-use num_bigint::BigInt;
-use num_traits::One;
+use num_bigint::{BigInt,BigUint};
+use num_traits::{Zero,One};
 
 pub type Precision = i32;
 
@@ -39,6 +39,13 @@ impl Computable {
     pub fn pi() -> Self {
         Self {
             internal: Box::new(Pi),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
+    pub fn atan(n: BigInt) -> Self {
+        Self {
+            internal: Box::new(Atan(n)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
@@ -166,6 +173,93 @@ impl Approximation for Pi {
     }
 }
 
+
+//// static int bound_log2(int n) {
+////	int abs_n = Math.abs(n);
+////	return (int)Math.ceil(Math.log((double)(abs_n + 1))/Math.log(2.0));
+//// }
+
+fn bound_log2(n: i32) -> i32 {
+    let abs_n = n.abs();
+    let ln2 = 2.0_f64.ln();
+    let n_plus_1: f64 = (abs_n + 1).into();
+    let ans: f64 = (n_plus_1.ln()/ln2).ceil();
+    ans as i32
+}
+
+// Atan(n) is the Arctangent of 1/n where n is some small integer > base
+// what is "base" in this context?
+#[derive(Clone, Debug)]
+struct Atan(BigInt);
+
+impl Approximation for Atan {
+    fn approximate(&self, p: Precision) -> BigInt {
+        if p >= 1 {
+            return Zero::zero();
+        }
+
+	let iterations_needed: i32 = -p/2 + 2;  // conservative estimate > 0.
+	  //  Claim: each intermediate term is accurate
+	  //  to 2*base^calc_precision.
+	  //  Total rounding error in series computation is
+	  //  2*iterations_needed*base^calc_precision,
+	  //  exclusive of error in op.
+
+	//// int calc_precision = p - bound_log2(2*iterations_needed)
+	////		       - 2; // for error in op, truncation.
+
+
+        let calc_precision = p - bound_log2(2 * iterations_needed) - 2;
+
+	  // Error in argument results in error of < 3/8 ulp.
+	  // Cumulative arithmetic rounding error is < 1/4 ulp.
+	  // Series truncation error < 1/4 ulp.
+	  // Final rounding error is <= 1/2 ulp.
+	  // Thus final error is < 1 ulp.
+
+
+        //// BigInteger scaled_1 = big1.shiftLeft(-calc_precision);
+        let scaled_1: BigInt = <BigInt as One>::one() << (-calc_precision);
+
+        //// BigInteger big_op = BigInteger.valueOf(op);
+        //// BigInteger big_op_squared = BigInteger.valueOf(op*op);
+        let big_op_squared: BigInt = &self.0 * &self.0;
+
+	//// BigInteger op_inverse = scaled_1.divide(big_op);
+        let op_inverse: BigInt = scaled_1 / &self.0;
+	//// BigInteger current_power = op_inverse;
+        let mut current_power: BigInt = op_inverse.clone();
+
+	//// BigInteger current_term = op_inverse;
+        let mut current_term: BigInt = op_inverse.clone();
+
+	//// BigInteger current_sum = op_inverse;
+        let mut current_sum: BigInt = op_inverse.clone();
+
+	//// int current_sign = 1;
+        let mut current_sign = 1;
+	//// int n = 1;
+        let mut n = 1;
+
+	//// BigInteger max_trunc_error = big1.shiftLeft(p - 2 - calc_precision);
+        let max_trunc_error: BigUint = <BigUint as One>::one() << (p - 2 - calc_precision);
+
+	//// while (current_term.abs().compareTo(max_trunc_error) >= 0) {
+	while *current_term.magnitude() > max_trunc_error {
+
+	  //// if (Thread.interrupted() || please_stop) throw new AbortedError();
+	  n += 2;
+	  current_power = current_power / &big_op_squared;
+	  current_sign = -current_sign;
+          let signed_n: BigInt = (current_sign * n).into();
+	  current_term = &current_power / signed_n;
+          current_sum = current_sum + &current_term;
+	}
+
+        scale(current_sum, calc_precision - p)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -230,6 +324,22 @@ mod tests {
         assert_eq!(six, a.approx(-1));
         assert_eq!(thirteen, a.approx(-2));
         assert_eq!(Cache::Valid((-7, four_zero_two)), a.cache.into_inner());
+    }
+
+    #[test]
+    fn prec_atan_5() {
+        let five: BigInt = "5".parse().unwrap();
+        let atan_5 = Computable::atan(five);
+        let two_zero_two: BigInt = "202".parse().unwrap();
+        assert_eq!(two_zero_two, atan_5.approx(-10));
+    }
+
+    #[test]
+    fn prec_atan_239() {
+        let two_three_nine: BigInt = "239".parse().unwrap();
+        let atan_239 = Computable::atan(two_three_nine);
+        let four: BigInt = "4".parse().unwrap();
+        assert_eq!(four, atan_239.approx(-10));
     }
 
     #[test]

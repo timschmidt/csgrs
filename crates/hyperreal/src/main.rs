@@ -28,7 +28,7 @@ pub fn main() {
         match ans {
             Ok(ans) => {
                 if ans.prefer_decimal() {
-                    println!("{ans:#}");
+                    println!("{ans} ~= {ans:#.20}");
                 } else {
                     println!("{ans} ~= {ans:#.5}");
                 }

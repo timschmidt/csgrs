@@ -252,8 +252,19 @@ impl fmt::Display for Real {
                     f.write_fmt(format_args!("{}", self.rational))?;
                 }
             }
+            Class::Pi => {
+                if f.alternate() {
+                    return self.decimal(f);
+                } else {
+                    f.write_fmt(format_args!("{} Pi", self.rational))?;
+                }
+            }
             _ => {
-                return self.decimal(f);
+                if f.alternate() {
+                    return self.decimal(f);
+                } else {
+                    f.write_fmt(format_args!("{} x {:?}", self.rational, self.class))?;
+                }
             }
         }
 
