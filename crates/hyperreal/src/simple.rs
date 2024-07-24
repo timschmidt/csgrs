@@ -65,7 +65,7 @@ impl Simple {
                 Ok(value)
             }
             Operator::Minus => match self.operands.len() {
-                0 => todo!(),
+                0 => Err(RealProblem::InsufficientParameters),
                 1 => {
                     let operand = self.operands.first().unwrap();
                     let value = -(operand.value()?);
@@ -88,7 +88,7 @@ impl Simple {
                 Ok(value)
             }
             Operator::Slash => match self.operands.len() {
-                0 => todo!(),
+                0 => Err(RealProblem::InsufficientParameters),
                 1 => {
                     let operand = self.operands.first().unwrap();
                     operand.value()?.inverse()

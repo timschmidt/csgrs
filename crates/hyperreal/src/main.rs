@@ -33,6 +33,7 @@ pub fn main() {
                     println!("{ans} ~= {ans:#.5}");
                 }
             }
+            Err(RealProblem::InsufficientParameters) => println!("The operator needs more parameters"),
             Err(RealProblem::NotFound) => println!("Symbol not found"),
             Err(RealProblem::DivideByZero) => println!("Attempted division by zero"),
             _ => println!("Calculation failed: {ans:?}"),

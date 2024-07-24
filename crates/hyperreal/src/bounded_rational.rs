@@ -163,6 +163,23 @@ impl BoundedRational {
 }
 
 impl BoundedRational {
+    pub fn prefer_decimal(&self) -> bool {
+        let ten: BigUint = "10".parse().unwrap();
+        let five: BigUint = "5".parse().unwrap();
+        let two: BigUint = "2".parse().unwrap();
+        let mut rem = self.denominator.clone();
+        while &rem % &ten == Zero::zero() {
+            rem /= &ten;
+        }
+        while &rem % &five == Zero::zero() {
+            rem /= &five;
+        }
+        while &rem % &two == Zero::zero() {
+            rem /= &two;
+        }
+        rem == One::one()
+    }
+
     pub fn to_big_integer(&self) -> Option<BigInt> {
         let whole = &self.numerator / &self.denominator;
         let round = &whole * &self.denominator;
@@ -543,4 +560,13 @@ mod tests {
         let three = BoundedRational::new(3);
         assert_eq!(two * three, BoundedRational::new(6));
     }
+
+    #[test]
+    fn decimal() {
+        let half: BoundedRational = "4/8".parse().unwrap();
+        assert!(half.prefer_decimal());
+        let third: BoundedRational = "2/6".parse().unwrap();
+        assert!(!third.prefer_decimal());
+    }
+
 }

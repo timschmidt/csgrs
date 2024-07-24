@@ -7,6 +7,7 @@ pub enum RealProblem {
     SqrtNegative,
     DivideByZero,
     NotFound,
+    InsufficientParameters,
 }
 
 #[derive(Clone, Debug)]
@@ -223,9 +224,7 @@ use core::fmt;
 impl Real {
     // Should we display this as a decimal ?
     pub fn prefer_decimal(&self) -> bool {
-        // For now, prefer to display a decimal when we're not simple enough for Class::One
-        // In future also prefer when the rational could be expressed nicely this way
-        self.class != Class::One
+        self.class != Class::One || self.rational.prefer_decimal()
     }
 
     // Format this Real as a decimal rather than rational
