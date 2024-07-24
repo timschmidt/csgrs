@@ -1,4 +1,4 @@
-use num_bigint::{BigInt, BigUint};
+use num_bigint::{BigInt, BigUint, Sign};
 use num_traits::{One, Zero};
 
 pub type Precision = i32;
@@ -37,20 +37,48 @@ impl Computable {
     }
 
     pub fn pi() -> Self {
-        Self {
-            internal: Box::new(Pi),
-            cache: RefCell::new(Cache::Invalid),
-        }
+        let five: BigInt = "5".parse().unwrap();
+        let atan5 = Self::atan(five);
+        let two_three_nine: BigInt = "239".parse().unwrap();
+        let atan_239 = Self::atan(two_three_nine);
+        let four: BigInt = "4".parse().unwrap();
+        let four = Self::integer(four);
+        let four_atan5 = Self::multiply(four, atan5);
+        let neg = Self::negate(atan_239);
+        let sum = Self::add(four_atan5, neg);
+        let four: BigInt = "4".parse().unwrap();
+        let four = Self::integer(four);
+        Self::multiply(four, sum)
     }
 
-    pub fn atan(n: BigInt) -> Self {
+    fn atan(n: BigInt) -> Self {
         Self {
             internal: Box::new(Atan(n)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
-    #[cfg(test)]
+    fn negate(n: Computable) -> Self {
+        Self {
+            internal: Box::new(Negate(n)),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
+    fn multiply(a: Computable, b: Computable) -> Self {
+        Self {
+            internal: Box::new(Multiply::new(a, b)),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
+    fn add(a: Computable, b: Computable) -> Self {
+        Self {
+            internal: Box::new(Add::new(a, b)),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
     fn integer(n: BigInt) -> Self {
         Self {
             internal: Box::new(Int(n)),
@@ -78,6 +106,14 @@ impl Computable {
         let result = self.internal.approximate(p);
         self.cache.replace(Cache::Valid((p, result.clone())));
         result
+    }
+
+    fn cached(&self) -> Option<(Precision, BigInt)> {
+        if let Cache::Valid((cache_prec, cache_appr)) = self.cache.clone().into_inner() {
+            Some((cache_prec, cache_appr))
+        } else {
+            None
+        }
     }
 }
 
@@ -111,6 +147,43 @@ impl Computable {
             Ordering::Equal
         }
     }
+
+    /// Most Significant Digit (Bit) ?
+    /// May panic or give incorrect answers if not yet discovered
+    fn known_msd(&self) -> Precision {
+        if let Some((prec, appr)) = self.cached() {
+            let length = appr.magnitude().bits() as Precision;
+            prec + length - 1
+        } else {
+            panic!("Expected valid cache state for known MSD but it's invalid")
+        }
+    }
+
+    /// MSB - but Precision.MIN if as yet undiscovered
+    fn msd(&self, p: Precision) -> Precision {
+        let big1: BigInt = One::one();
+        let bigm1: BigInt = "-1".parse().unwrap();
+
+        let cache = self.cached();
+        let mut try_once = false;
+
+        if cache.is_none() {
+            try_once = true;
+        } else if let Some((_prec, appr)) = cache {
+            if appr > bigm1 && appr < big1 {
+                try_once = true;
+            }
+        }
+
+        if try_once {
+            let appr = self.approx(p - 1);
+            if appr.magnitude() < &<BigUint as One>::one() {
+                return Precision::MIN;
+            }
+        }
+
+        self.known_msd()
+    }
 }
 
 fn shift(n: BigInt, p: Precision) -> BigInt {
@@ -142,7 +215,7 @@ trait Approximation: core::fmt::Debug {
     fn approximate(&self, p: Precision) -> BigInt;
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 struct Placeholder;
 
 impl Approximation for Placeholder {
@@ -151,7 +224,7 @@ impl Approximation for Placeholder {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 struct Int(BigInt);
 
 impl Approximation for Int {
@@ -160,16 +233,71 @@ impl Approximation for Int {
     }
 }
 
-#[derive(Clone, Debug)]
-struct Pi;
+#[derive(Debug)]
+struct Negate(Computable);
 
-impl Approximation for Pi {
+impl Approximation for Negate {
     fn approximate(&self, p: Precision) -> BigInt {
-        if p < -50 {
-            todo!("Pi representation is not precise enough for this use");
+        -self.0.approx(p)
+    }
+}
+
+#[derive(Debug)]
+struct Add {
+    a: Computable,
+    b: Computable,
+}
+
+impl Add {
+    fn new(a: Computable, b: Computable) -> Self {
+        Self { a, b }
+    }
+}
+
+impl Approximation for Add {
+    fn approximate(&self, p: Precision) -> BigInt {
+        scale(self.a.approx(p - 2) + self.b.approx(p - 2), -2)
+    }
+}
+
+#[derive(Debug)]
+struct Multiply {
+    a: Computable,
+    b: Computable,
+}
+
+impl Multiply {
+    fn new(a: Computable, b: Computable) -> Self {
+        Self { a, b }
+    }
+}
+
+impl Approximation for Multiply {
+    fn approximate(&self, p: Precision) -> BigInt {
+        let half_prec = (p >> 1) - 1;
+        let msd_op1 = self.a.msd(half_prec);
+
+        if msd_op1 == Precision::MIN {
+            let msd_op2 = self.b.msd(half_prec);
+            if msd_op2 == Precision::MIN {
+                return Zero::zero();
+            } else {
+                panic!("Multiply(A,B) expects A has larger magnitude than B");
+            }
         }
-        let pi_64: BigInt = "3537118876014219".parse().unwrap();
-        scale(pi_64, -50 - p)
+        let prec2 = p - msd_op1 - 3;
+        let appr2 = self.b.approx(prec2);
+
+        if appr2.sign() == Sign::NoSign {
+            return Zero::zero();
+        }
+
+        let msd_op2 = self.b.known_msd();
+        let prec1 = p - msd_op2 - 3;
+        let appr1 = self.a.approx(prec1);
+
+        let scale_digits = prec1 + prec2 - p;
+        scale(appr1 * appr2, scale_digits)
     }
 }
 
@@ -188,7 +316,7 @@ fn bound_log2(n: i32) -> i32 {
 
 // Atan(n) is the Arctangent of 1/n where n is some small integer > base
 // what is "base" in this context?
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 struct Atan(BigInt);
 
 impl Approximation for Atan {
@@ -328,6 +456,8 @@ mod tests {
         let atan_5 = Computable::atan(five);
         let two_zero_two: BigInt = "202".parse().unwrap();
         assert_eq!(two_zero_two, atan_5.approx(-10));
+        let at_twenty: BigInt = "206984".parse().unwrap();
+        assert_eq!(at_twenty, atan_5.approx(-20));
     }
 
     #[test]
@@ -336,6 +466,58 @@ mod tests {
         let atan_239 = Computable::atan(two_three_nine);
         let four: BigInt = "4".parse().unwrap();
         assert_eq!(four, atan_239.approx(-10));
+        let at_twenty: BigInt = "4387".parse().unwrap();
+        assert_eq!(at_twenty, atan_239.approx(-20));
+    }
+
+    #[test]
+    fn msd() {
+        let one: BigInt = "1".parse().unwrap();
+        let a = Computable::integer(one.clone());
+        assert_eq!(0, a.msd(-4));
+        let three: BigInt = "3".parse().unwrap();
+        let d = Computable::integer(three.clone());
+        assert_eq!(1, d.msd(-4));
+        let five: BigInt = "5".parse().unwrap();
+        let e = Computable::integer(five.clone());
+        assert_eq!(2, e.msd(-4));
+        let seven: BigInt = "7".parse().unwrap();
+        let f = Computable::integer(seven.clone());
+        assert_eq!(2, f.msd(-4));
+        let eight: BigInt = "8".parse().unwrap();
+        let g = Computable::integer(eight.clone());
+        assert_eq!(3, g.msd(-4));
+    }
+
+    #[test]
+    fn negate() {
+        let fifteen: BigInt = "15".parse().unwrap();
+        let a = Computable::integer(fifteen.clone());
+        let b = Computable::negate(a);
+        let answer: BigInt = "-8".parse().unwrap();
+        assert_eq!(answer, b.approx(1));
+    }
+
+    #[test]
+    fn multiply() {
+        let four: BigInt = "4".parse().unwrap();
+        let five: BigInt = "5".parse().unwrap();
+        let a = Computable::integer(four);
+        let b = Computable::atan(five);
+        let m = Computable::multiply(a, b);
+        let answer: BigInt = "809".parse().unwrap();
+        assert_eq!(answer, m.approx(-10));
+    }
+
+    #[test]
+    fn add() {
+        let three: BigInt = "3".parse().unwrap();
+        let five: BigInt = "5".parse().unwrap();
+        let a = Computable::integer(three);
+        let b = Computable::integer(five);
+        let c = Computable::add(a, b);
+        let answer: BigInt = "256".parse().unwrap();
+        assert_eq!(answer, c.approx(-5));
     }
 
     #[test]
