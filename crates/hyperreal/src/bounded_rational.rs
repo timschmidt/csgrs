@@ -146,7 +146,8 @@ impl BoundedRational {
     pub fn fmt_combine(&self, c: &Computable, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let d = &self.denominator.to_bigint().unwrap();
         let n = &self.numerator.to_bigint().unwrap();
-        let bits = (n / d).bits() + 32;
+        let precision = f.precision().unwrap_or(16);
+        let bits = (n / d).bits() + ((precision * 10) as u64 / 3);
         let factor: i32 = bits
             .try_into()
             .expect("The number of bits we care about should fit in a 32-bit integer!");
@@ -157,11 +158,7 @@ impl BoundedRational {
         let r = Self::from_bigint_fraction(c.approx(-factor), divisor);
         let s = r * self.clone();
 
-        if let Some(precision) = f.precision() {
-            f.write_fmt(format_args!("{s:#.*}...", precision))
-        } else {
-            f.write_fmt(format_args!("{s:#}..."))
-        }
+        f.write_fmt(format_args!("{s:#.*}...", precision))
     }
 }
 
