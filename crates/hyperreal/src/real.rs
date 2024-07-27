@@ -395,6 +395,33 @@ impl Mul for Real {
     }
 }
 
+impl Div for Real {
+    type Output = Result<Self,RealProblem>;
+
+    fn div(self, other: Self) -> Result<Self,RealProblem> {
+        if self.class == other.class {
+            let rational = self.rational / other.rational;
+            return Ok(Self::new(rational));
+        }
+        if self.class == One {
+            let rational = self.rational / other.rational;
+            return Ok(Self { rational, ..other });
+        }
+        if other.class == One {
+            let rational = self.rational / other.rational;
+            return Ok(Self { rational, ..self });
+
+        }
+        if self.definitely_zero() || other.definitely_zero() {
+            return Err(RealProblem::DivideByZero);
+        }
+
+        let inverted = other.inverse()?;
+        Ok(self * inverted)
+    }
+}
+
+
 // Best efforts only, definitely not adequate for Eq
 // Requirements: PartialEq should be transitive and symmetric
 // however it needn't be complete or reflexive

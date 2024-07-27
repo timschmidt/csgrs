@@ -97,7 +97,7 @@ impl Simple {
                     let mut value: Real = self.operands.first().unwrap().value()?;
                     let operands = self.operands.iter().skip(1);
                     for operand in operands {
-                        value = value * (operand.value()?.inverse()?);
+                        value = (value / operand.value()?)?;
                     }
                     Ok(value)
                 }
