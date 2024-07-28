@@ -196,8 +196,8 @@ impl Real {
                     } else {
                         return Ok(Self {
                             rational: square,
-                            class: Class::Sqrt(rest),
-                            computable: Computable::placeholder(),
+                            class: Class::Sqrt(rest.clone()),
+                            computable: Computable::sqrt(rest),
                         });
                     }
                 }
@@ -243,7 +243,7 @@ impl Real {
 
 impl fmt::Display for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.class {
+        match &self.class {
             Class::One => {
                 if f.alternate() {
                     return self.decimal(f);
@@ -256,6 +256,13 @@ impl fmt::Display for Real {
                     return self.decimal(f);
                 } else {
                     f.write_fmt(format_args!("{} Pi", self.rational))?;
+                }
+            }
+            Class::Sqrt(n) => {
+                if f.alternate() {
+                    return self.decimal(f);
+                } else {
+                    f.write_fmt(format_args!("{} √({})", self.rational, &n))?;
                 }
             }
             _ => {
@@ -349,8 +356,8 @@ impl Real {
             let (a, b) = product.extract_square_reduced();
             Self {
                 rational: a,
-                class: Sqrt(b),
-                computable: Computable::placeholder(),
+                class: Sqrt(b.clone()),
+                computable: Computable::sqrt(b),
             }
         }
     }

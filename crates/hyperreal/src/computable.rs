@@ -1,5 +1,6 @@
 use num_bigint::{BigInt, BigUint, Sign};
 use num_traits::{One, Zero};
+use crate::BoundedRational;
 
 pub type Precision = i32;
 
@@ -49,6 +50,21 @@ impl Computable {
         let four: BigInt = "4".parse().unwrap();
         let four = Self::integer(four);
         Self::multiply(four, sum)
+    }
+
+    pub fn rational(r: BoundedRational) -> Self {
+        Self {
+            internal: Box::new(Rational(r)),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
+    pub fn sqrt(r: BoundedRational) -> Self {
+        let rational = Self::rational(r);
+        Self {
+            internal: Box::new(Sqrt(rational)),
+            cache: RefCell::new(Cache::Invalid),
+        }
     }
 
     fn atan(n: BigInt) -> Self {
@@ -298,6 +314,79 @@ impl Approximation for Multiply {
 
         let scale_digits = prec1 + prec2 - p;
         scale(appr1 * appr2, scale_digits)
+    }
+}
+
+#[derive(Debug)]
+struct Rational(BoundedRational);
+
+impl Approximation for Rational {
+    fn approximate(&self, p: Precision) -> BigInt {
+        scale(self.0.to_big_integer().unwrap(), -p)
+    }
+}
+
+#[derive(Debug)]
+struct Sqrt(Computable);
+
+impl Approximation for Sqrt {
+    fn approximate(&self, p: Precision) -> BigInt {
+        let fp_prec: i32 = 50;
+        let fp_op_prec: i32 = 60;
+
+        //// int max_prec_needed = 2*p - 1;
+        //// int msd = op.msd(max_prec_needed);
+        //// if (msd <= max_prec_needed) return big0;
+        //// int result_msd = msd/2;			// +- 1
+        //// int result_digits = result_msd - p; 	// +- 2
+        let max_prec_needed = 2 * p - 1;
+        let msd = self.0.msd(max_prec_needed);
+
+        if msd <= max_prec_needed {
+            return Zero::zero();
+        }
+
+        let result_msd = msd / 2;
+        let result_digits = result_msd - p;
+
+        if result_digits > fp_prec {
+            // Compute less precise approximation and use a Newton iter.
+            let appr_digits = result_digits/2 + 6;
+            // This should be conservative.  Is fewer enough?
+            let appr_prec = result_msd - appr_digits;
+
+            //// BigInteger last_appr = get_appr(appr_prec);
+            let last_appr = self.approximate(appr_prec);
+
+            let prod_prec = 2*appr_prec;
+
+            //// BigInteger op_appr = op.get_appr(prod_prec);
+            let op_appr = self.0.approx(prod_prec);
+
+            // Slightly fewer might be enough;
+            // Compute (last_appr * last_appr + op_appr)/(last_appr/2)
+            // while adjusting the scaling to make everything work
+
+            let prod_prec_scaled_numerator = (&last_appr * &last_appr) + op_appr;
+            let scaled_numerator = scale(prod_prec_scaled_numerator, appr_prec - p);
+
+            let shifted_result = scaled_numerator / last_appr;
+
+            let two: BigInt = "2".parse().unwrap();
+            (shifted_result + BigInt::one()) / two
+        } else {
+            // Use an approximation from the Num crate
+            // Make sure all precisions are even
+            let op_prec = (msd - fp_op_prec) & !1;
+            let working_prec = op_prec - fp_op_prec;
+
+            let scaled_bi_appr = self.0.approx(op_prec) << fp_op_prec;
+
+            let scaled_sqrt = scaled_bi_appr.sqrt();
+
+            let shift_count = working_prec/2 - p;
+            shift(scaled_sqrt, shift_count)
+        }
     }
 }
 
