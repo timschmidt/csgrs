@@ -102,7 +102,14 @@ impl Computable {
         }
     }
 
-    pub fn placeholder() -> Self {
+    pub fn todo() -> Self {
+        Self {
+            internal: Box::new(Placeholder),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
+    fn placeholder() -> Self {
         Self {
             internal: Box::new(Placeholder),
             cache: RefCell::new(Cache::Invalid),

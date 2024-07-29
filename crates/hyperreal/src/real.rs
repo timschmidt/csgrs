@@ -99,7 +99,7 @@ impl Real {
         Self {
             rational: one.clone(),
             class: Class::Exp(one),
-            computable: Computable::placeholder(),
+            computable: Computable::todo(),
         }
     }
 
@@ -107,7 +107,7 @@ impl Real {
         Self {
             rational: BoundedRational::one(),
             class: Class::Ln(BoundedRational::new(10)),
-            computable: Computable::placeholder(),
+            computable: Computable::todo(),
         }
     }
 }
@@ -168,7 +168,7 @@ impl Real {
                 return Ok(Self {
                     rational: self.rational.inverse(),
                     class: Class::Exp(exp),
-                    computable: Computable::placeholder(),
+                    computable: Computable::todo(),
                 });
             }
             _ => (),
@@ -392,7 +392,7 @@ impl Mul for Real {
                 Self {
                     rational,
                     class,
-                    computable: Computable::placeholder(),
+                    computable: Computable::todo(),
                 }
             }
             (sc, oc) => {

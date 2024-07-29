@@ -178,7 +178,7 @@ impl Simple {
                     chars.next();
                     return Ok(Simple { op, operands });
                 }
-                _ => panic!("Unexpected {c:?} while looking for operands ..."),
+                _ => return Err("Unexpected character while looking for operands ..."),
             }
         }
 
