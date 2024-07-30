@@ -98,8 +98,8 @@ impl Real {
         let one = BoundedRational::one();
         Self {
             rational: one.clone(),
-            class: Class::Exp(one),
-            computable: Computable::todo(),
+            class: Class::Exp(one.clone()),
+            computable: Computable::e(one),
         }
     }
 
@@ -215,13 +215,27 @@ impl Real {
         if self.definitely_zero() {
             return Ok(Self::new(BoundedRational::one()));
         }
-        todo!("Exp({self:?}) unimplemented")
+        match &self.class {
+            Class::One => {
+                Ok(Self {
+                    rational: BoundedRational::one(),
+                    class: Class::Exp(self.rational.clone()),
+                    computable: Computable::e(self.rational),
+                })
+            }
+            _ => todo!("exp({self:?} unimplemented")
+        }
     }
 }
 
 use core::fmt;
 
 impl Real {
+    // Is this a whole number aka integer ?
+    pub fn whole(&self) -> bool {
+        self.class == Class::One && self.rational.whole()
+    }
+
     // Should we display this as a decimal ?
     pub fn prefer_decimal(&self) -> bool {
         self.class != Class::One || self.rational.prefer_decimal()
@@ -256,6 +270,13 @@ impl fmt::Display for Real {
                     return self.decimal(f);
                 } else {
                     f.write_fmt(format_args!("{} Pi", self.rational))?;
+                }
+            }
+            Class::Exp(n) => {
+                if f.alternate() {
+                    return self.decimal(f);
+                } else {
+                    f.write_fmt(format_args!("{} x e**({})", self.rational, &n))?;
                 }
             }
             Class::Sqrt(n) => {
@@ -393,6 +414,15 @@ impl Mul for Real {
                     rational,
                     class,
                     computable: Computable::todo(),
+                }
+            }
+            (Class::Pi, Class::Pi) => {
+                let class = Class::Irrational;
+                let rational = self.rational * other.rational;
+                Self {
+                    rational,
+                    class,
+                    computable: Computable::square(Computable::pi()),
                 }
             }
             (sc, oc) => {

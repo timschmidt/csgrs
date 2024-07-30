@@ -9,6 +9,7 @@ enum Operator {
     Star,
     Slash,
     Sqrt,
+    Exp,
 }
 
 #[derive(Clone, Debug)]
@@ -102,6 +103,14 @@ impl Simple {
                     Ok(value)
                 }
             },
+            Operator::Exp => {
+                if self.operands.len() != 1 {
+                    return Err(RealProblem::ParseError);
+                }
+                let operand = self.operands.first().unwrap();
+                let value = operand.value()?.exp()?;
+                Ok(value)
+            }
             Operator::Sqrt => {
                 if self.operands.len() != 1 {
                     return Err(RealProblem::ParseError);
@@ -137,6 +146,10 @@ impl Simple {
             Some('/') => {
                 chars.next();
                 Operator::Slash
+            }
+            Some('e') => {
+                chars.next();
+                Operator::Exp
             }
             Some('√' | 's') => {
                 chars.next();

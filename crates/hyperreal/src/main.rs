@@ -27,7 +27,9 @@ pub fn main() {
         let ans = expr.evaluate();
         match ans {
             Ok(ans) => {
-                if ans.prefer_decimal() {
+                if ans.whole() {
+                    println!("{ans}");
+                } else if ans.prefer_decimal() {
                     println!("{ans} ~= {ans:#.20}");
                 } else {
                     println!("{ans} ~= {ans:#.5}");

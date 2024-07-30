@@ -163,6 +163,13 @@ impl BoundedRational {
 }
 
 impl BoundedRational {
+    pub fn whole(&self) -> bool {
+        let whole = &self.numerator / &self.denominator;
+        let round = &whole * &self.denominator;
+        let left = &self.numerator - &round;
+        left.is_zero()
+    }
+
     pub fn prefer_decimal(&self) -> bool {
         let ten: BigUint = "10".parse().unwrap();
         let five: BigUint = "5".parse().unwrap();
@@ -178,6 +185,11 @@ impl BoundedRational {
             rem /= &two;
         }
         rem == One::one()
+    }
+
+    pub fn shifted_big_integer(&self, shift: i32) -> BigInt {
+        let whole = (&self.numerator << shift) / &self.denominator;
+        BigInt::from_biguint(self.sign, whole)
     }
 
     pub fn to_big_integer(&self) -> Option<BigInt> {

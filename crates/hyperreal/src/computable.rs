@@ -59,6 +59,28 @@ impl Computable {
         }
     }
 
+    pub fn e(r: BoundedRational) -> Self {
+        let rational = Self::rational(r);
+        Self::exp(rational)
+    }
+
+    fn exp(self) -> Self {
+        let low_prec: Precision = -10;
+        let rough_appr: BigInt = self.approx(low_prec);
+        if rough_appr.sign() == Sign::Minus {
+            return self.negate().exp().inverse();
+        }
+        if rough_appr > "2".parse().unwrap() {
+            let square_root = self.shift_right(1).exp();
+            square_root.square()
+        } else {
+            Self {
+                internal: Box::new(Exp(self)),
+                cache: RefCell::new(Cache::Invalid),
+            }
+        }
+    }
+
     pub fn sqrt(r: BoundedRational) -> Self {
         let rational = Self::rational(r);
         Self {
@@ -74,9 +96,37 @@ impl Computable {
         }
     }
 
-    fn negate(n: Computable) -> Self {
+    fn negate(self) -> Self {
         Self {
-            internal: Box::new(Negate(n)),
+            internal: Box::new(Negate(self)),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
+    fn inverse(self) -> Self {
+        Self {
+            internal: Box::new(Inverse(self)),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
+    fn shift_left(self, n: i32) -> Self {
+        Self {
+            internal: Box::new(Shift::new(self, n)),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
+    fn shift_right(self, n: i32) -> Self {
+        Self {
+            internal: Box::new(Shift::new(self, -n)),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
+    pub fn square(self) -> Self {
+        Self {
+            internal: Box::new(Square(self)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
@@ -103,13 +153,6 @@ impl Computable {
     }
 
     pub fn todo() -> Self {
-        Self {
-            internal: Box::new(Placeholder),
-            cache: RefCell::new(Cache::Invalid),
-        }
-    }
-
-    fn placeholder() -> Self {
         Self {
             internal: Box::new(Placeholder),
             cache: RefCell::new(Cache::Invalid),
@@ -182,7 +225,7 @@ impl Computable {
         }
     }
 
-    /// MSB - but Precision.MIN if as yet undiscovered
+    /// MSB - but Precision::MIN if as yet undiscovered
     fn msd(&self, p: Precision) -> Precision {
         let big1: BigInt = One::one();
         let bigm1: BigInt = "-1".parse().unwrap();
@@ -257,6 +300,37 @@ impl Approximation for Int {
 }
 
 #[derive(Debug)]
+struct Inverse(Computable);
+
+use num_traits::Signed;
+
+impl Approximation for Inverse {
+    fn approximate(&self, p: Precision) -> BigInt {
+	let msd = self.0.msd(Precision::MIN);
+	let inv_msd = 1 - msd;
+	let digits_needed = inv_msd - p + 3;
+	let prec_needed = msd - digits_needed;
+	let log_scale_factor = -p - prec_needed;
+
+	if log_scale_factor < 0 {
+            return Zero::zero();
+        }
+
+        let dividend = BigInt::one() << log_scale_factor;
+        let scaled_divisor = self.0.approx(prec_needed);
+        let abs_scaled_divisor = scaled_divisor.abs();
+        let adj_dividend = dividend + (&abs_scaled_divisor >> 1);
+        let result: BigInt = adj_dividend / abs_scaled_divisor;
+
+        if scaled_divisor.sign() == Sign::Minus {
+            -result
+        } else {
+            result
+        }
+    }
+}
+
+#[derive(Debug)]
 struct Negate(Computable);
 
 impl Approximation for Negate {
@@ -290,6 +364,8 @@ struct Multiply {
 }
 
 impl Multiply {
+    /// NB: a should have a larger magnitude than b
+    /// if that can't be arranged, we need to swap them to make approximate work as intended
     fn new(a: Computable, b: Computable) -> Self {
         Self { a, b }
     }
@@ -325,13 +401,111 @@ impl Approximation for Multiply {
 }
 
 #[derive(Debug)]
+struct Square(Computable);
+
+impl Approximation for Square {
+    fn approximate(&self, p: Precision) -> BigInt {
+        let half_prec = (p >> 1) - 1;
+        let msd = self.0.msd(half_prec);
+
+        if msd == Precision::MIN {
+            return Zero::zero();
+        }
+
+        let prec2 = p - msd - 3;
+        let appr2 = self.0.approx(prec2);
+
+        if appr2.sign() == Sign::NoSign {
+            return Zero::zero();
+        }
+
+        let msd_op2 = self.0.known_msd();
+        let prec1 = p - msd_op2 - 3;
+        let appr1 = self.0.approx(prec1);
+
+        let scale_digits = prec1 + prec2 - p;
+        scale(appr1 * appr2, scale_digits)
+    }
+}
+
+#[derive(Debug)]
+struct Shift {
+    a: Computable,
+    n: i32,
+}
+
+impl Shift {
+    fn new(a: Computable, n: i32) -> Self {
+        Self { a, n }
+    }
+}
+
+impl Approximation for Shift {
+    fn approximate(&self, p: Precision) -> BigInt {
+        self.a.approx(p - self.n)
+    }
+}
+
+
+#[derive(Debug)]
 struct Rational(BoundedRational);
 
 impl Approximation for Rational {
     fn approximate(&self, p: Precision) -> BigInt {
-        scale(self.0.to_big_integer().unwrap(), -p)
+        if p >= 0 {
+            scale(self.0.shifted_big_integer(0), -p)
+        } else {
+            self.0.shifted_big_integer(-p)
+        }
     }
 }
+
+#[derive(Debug)]
+struct Exp(Computable);
+
+/// Only intended for Computable values < 0.5, others will be pre-scaled
+/// in Computable::exp
+impl Approximation for Exp {
+    fn approximate(&self, p: Precision) -> BigInt {
+        if p >= 1 {
+            return Zero::zero()
+        }
+
+        let iterations_needed = -p/2 + 2;
+        //  Claim: each intermediate term is accurate
+        //  to 2*2^calc_precision.
+        //  Total rounding error in series computation is
+        //  2*iterations_needed*2^calc_precision,
+        //  exclusive of error in op.
+	let calc_precision = p - bound_log2(2*iterations_needed)
+			       - 4; // for error in op, truncation.
+	let op_prec = p - 3;
+
+        let op_appr = self.0.approx(op_prec);
+
+        // Error in argument results in error of < 3/8 ulp.
+        // Sum of term eval. rounding error is < 1/16 ulp.
+        // Series truncation error < 1/16 ulp.
+        // Final rounding error is <= 1/2 ulp.
+        // Thus final error is < 1 ulp.
+        let scaled_1 = BigInt::one() << -calc_precision;
+
+        let max_trunc_error = BigInt::one() << (p - 4 - calc_precision);
+        let mut current_term = scaled_1.clone();
+        let mut current_sum = scaled_1;
+        let mut n = BigInt::zero();
+
+        while current_term.abs() > max_trunc_error {
+            n += BigInt::one();
+            current_term = scale(current_term * &op_appr, op_prec);
+            current_term /= &n;
+            current_sum += &current_term;
+        }
+
+        scale(current_sum, calc_precision - p)
+    }
+}
+
 
 #[derive(Debug)]
 struct Sqrt(Computable);
@@ -341,11 +515,6 @@ impl Approximation for Sqrt {
         let fp_prec: i32 = 50;
         let fp_op_prec: i32 = 60;
 
-        //// int max_prec_needed = 2*p - 1;
-        //// int msd = op.msd(max_prec_needed);
-        //// if (msd <= max_prec_needed) return big0;
-        //// int result_msd = msd/2;			// +- 1
-        //// int result_digits = result_msd - p; 	// +- 2
         let max_prec_needed = 2 * p - 1;
         let msd = self.0.msd(max_prec_needed);
 
@@ -603,6 +772,22 @@ mod tests {
         let m = Computable::multiply(a, b);
         let answer: BigInt = "809".parse().unwrap();
         assert_eq!(answer, m.approx(-10));
+    }
+
+    #[test]
+    fn rational() {
+        let sixth: BoundedRational = "1/6".parse().unwrap();
+        let c = Computable::rational(sixth);
+        let zero = BigInt::zero();
+        let one = BigInt::one();
+        let ten: BigInt = "10".parse().unwrap();
+        let eighty_five: BigInt = "85".parse().unwrap();
+        assert_eq!(zero, c.approx(0));
+        assert_eq!(zero, c.approx(-1));
+        assert_eq!(zero, c.approx(-2));
+        assert_eq!(one, c.approx(-3));
+        assert_eq!(ten, c.approx(-6));
+        assert_eq!(eighty_five, c.approx(-9));
     }
 
     #[test]
