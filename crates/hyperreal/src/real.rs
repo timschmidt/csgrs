@@ -390,6 +390,9 @@ impl Mul for Real {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
+        if self.definitely_zero() || other.definitely_zero() {
+            return Self::zero();
+        }
         if self.class == One {
             let rational = self.rational * other.rational;
             return Self { rational, ..other };
@@ -397,9 +400,6 @@ impl Mul for Real {
         if other.class == One {
             let rational = self.rational * other.rational;
             return Self { rational, ..self };
-        }
-        if self.definitely_zero() || other.definitely_zero() {
-            return Self::zero();
         }
         match (self.class, other.class) {
             (Class::Sqrt(r), Class::Sqrt(s)) => {
@@ -449,7 +449,10 @@ impl Div for Real {
             let rational = self.rational / other.rational;
             return Ok(Self { rational, ..self });
         }
-        if self.definitely_zero() || other.definitely_zero() {
+        if self.definitely_zero() {
+            return Ok(Self::zero());
+        }
+        if other.definitely_zero() {
             return Err(RealProblem::DivideByZero);
         }
 
