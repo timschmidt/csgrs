@@ -53,11 +53,11 @@ impl Class {
         true
     }
 
-    fn make_exp(br: BoundedRational) -> Class {
+    fn make_exp(br: BoundedRational) -> (Class, Computable) {
         if br == BoundedRational::zero() {
-            Class::One
+            (Class::One, Computable::one())
         } else {
-            Class::Exp(br)
+            (Class::Exp(br.clone()), Computable::e(br))
         }
     }
 }
@@ -127,7 +127,7 @@ impl Real {
             return self.class.is_non_zero() && self.rational.sign() != Sign::NoSign;
         }
         false
-        /* ... */
+        /* ... TODO add more cases which definitely aren't equal */
     }
 
     pub fn best_sign(&self) -> Sign {
@@ -408,12 +408,12 @@ impl Mul for Real {
                 }
             }
             (Class::Exp(r), Class::Exp(s)) => {
-                let class = Class::make_exp(r + s);
+                let (class, computable) = Class::make_exp(r + s);
                 let rational = self.rational * other.rational;
                 Self {
                     rational,
                     class,
-                    computable: Computable::todo(),
+                    computable,
                 }
             }
             (Class::Pi, Class::Pi) => {
