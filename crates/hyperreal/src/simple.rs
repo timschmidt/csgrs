@@ -258,7 +258,7 @@ mod tests {
         let xpr: Simple = "(+ 1 (* 2 3) 4)".parse().unwrap();
         let result = xpr.evaluate().unwrap();
         assert!(result.is_whole());
-        let ans = format!("{result:#}");
+        let ans = format!("{result}");
         assert_eq!(ans, "11");
     }
 
@@ -268,6 +268,16 @@ mod tests {
         let result = xpr.evaluate().unwrap();
         let ans = format!("{result}");
         assert_eq!(ans, "1/4");
+        let decimal = format!("{result:#}");
+        assert_eq!(decimal, "0.25");
+    }
+
+    #[test]
+    fn sqrts() {
+        let xpr: Simple = "(* (√ 40) (√ 90))".parse().unwrap();
+        let result = xpr.evaluate().unwrap();
+        let ans = format!("{result}");
+        assert_eq!(ans, "60");
     }
 
     #[test]

@@ -4,7 +4,7 @@ Realistic is an implementation of Hans Boehm's ["Towards an API for the Real Num
 
 ## Unfinished
 
-This library is incomplete, features which were whole and useful in the Java API described in the paper are unfinished or partial here.
+This library is incomplete, some features which were whole and useful in the Java API described in the paper are unfinished or partial here.
 
 ## Unfaithful
 
@@ -18,6 +18,17 @@ hilariously incomplete nature of the work makes that impractical.
 `BoundedRational::to_big_integer` has a different name because in Rust `as` signifies that this conversion is cheap
 
 # Simple Expressions
+
+Parsing for a simple fairly human readable expression syntax is provided, this syntax has a LISP-like structure with each list consisting of
+exactly one operator, then one or more sub-expressions consisting of either another list, a numeric literal or a name.
+
+Currently the provided operators are the + - * and / expected in programming for addition, subtraction, multiplication and division
+plus e for the natural exponenitation, and s or √ for square roots
+
+Numeric literals are written in decimal, 2.75 is exactly two and three quarters.
+
+Today the built-in names are only e (the mathematical constant and base of the natural logarithm) and pi (the mathematical constant π)
+
 
 (+ 1 2 3 4) == 10
 
