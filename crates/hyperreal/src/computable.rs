@@ -225,7 +225,7 @@ impl Computable {
         }
     }
 
-    /// MSB - but Precision::MIN if as yet undiscovered
+    /// MSD - but Precision::MIN if as yet undiscovered
     fn msd(&self, p: Precision) -> Precision {
         let big1: BigInt = One::one();
         let bigm1: BigInt = "-1".parse().unwrap();
@@ -243,12 +243,30 @@ impl Computable {
 
         if try_once {
             let appr = self.approx(p - 1);
-            if appr.magnitude() < &<BigUint as One>::one() {
+            if appr.magnitude() < &BigUint::one() {
                 return Precision::MIN;
             }
         }
 
         self.known_msd()
+    }
+
+    /// MSD but iteratively without a guess as to precision
+    fn iter_msd(&self) -> Precision {
+        let mut prec = 0;
+
+        // prec = 0, -16, -40, -76, etc.
+        loop {
+            let msd = self.msd(prec);
+            if msd != Precision::MIN {
+                return msd
+            }
+            prec = (prec * 3)/2 - 16;
+            if prec <= Precision::MIN + 30 {
+                break;
+            }
+        }
+        self.msd(Precision::MIN)
     }
 }
 
@@ -306,7 +324,7 @@ use num_traits::Signed;
 
 impl Approximation for Inverse {
     fn approximate(&self, p: Precision) -> BigInt {
-	let msd = self.0.msd(Precision::MIN);
+	let msd = self.0.iter_msd();
 	let inv_msd = 1 - msd;
 	let digits_needed = inv_msd - p + 3;
 	let prec_needed = msd - digits_needed;

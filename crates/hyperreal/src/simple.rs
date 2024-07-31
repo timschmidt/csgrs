@@ -215,6 +215,7 @@ impl Simple {
     }
 
     // Consume a literal, for now presumably a single number consisting of:
+    // a possible leading minus symbol, then
     // digits, the decimal point and optionally commas, underscores etc. which are ignored
     fn consume_literal(c: &mut Peekable<Chars>) -> Result<Operand, RealProblem> {
         let mut num = String::new();
@@ -267,5 +268,21 @@ mod tests {
         let result = xpr.evaluate().unwrap();
         let ans = format!("{result}");
         assert_eq!(ans, "1/4");
+    }
+
+    #[test]
+    fn pi() {
+        let xpr: Simple = "(* (+ pi pi) (* 3 pi))".parse().unwrap();
+        let result = xpr.evaluate().unwrap();
+        let ans = format!("{result:#.32}");
+        assert_eq!(ans, "59.21762640653615171300694599925690...");
+    }
+
+    #[test]
+    fn e_minus_one() {
+        let xpr: Simple = "(/ e)".parse().unwrap();
+        let result = xpr.evaluate().unwrap();
+        let ans = format!("{result:#.32}");
+        assert_eq!(ans, "0.36787944117144232159552377016146...");
     }
 }

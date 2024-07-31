@@ -167,8 +167,8 @@ impl Real {
                 let exp = Neg::neg(exp.clone());
                 return Ok(Self {
                     rational: self.rational.inverse(),
-                    class: Class::Exp(exp),
-                    computable: Computable::todo(),
+                    class: Class::Exp(exp.clone()),
+                    computable: Computable::e(exp),
                 });
             }
             _ => (),
