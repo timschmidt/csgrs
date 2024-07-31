@@ -216,14 +216,12 @@ impl Real {
             return Ok(Self::new(BoundedRational::one()));
         }
         match &self.class {
-            Class::One => {
-                Ok(Self {
-                    rational: BoundedRational::one(),
-                    class: Class::Exp(self.rational.clone()),
-                    computable: Computable::e(self.rational),
-                })
-            }
-            _ => todo!("exp({self:?} unimplemented")
+            Class::One => Ok(Self {
+                rational: BoundedRational::one(),
+                class: Class::Exp(self.rational.clone()),
+                computable: Computable::e(self.rational),
+            }),
+            _ => todo!("exp({self:?} unimplemented"),
         }
     }
 }
@@ -432,9 +430,9 @@ impl Mul for Real {
 }
 
 impl Div for Real {
-    type Output = Result<Self,RealProblem>;
+    type Output = Result<Self, RealProblem>;
 
-    fn div(self, other: Self) -> Result<Self,RealProblem> {
+    fn div(self, other: Self) -> Result<Self, RealProblem> {
         if self.class == other.class {
             let rational = self.rational / other.rational;
             return Ok(Self::new(rational));
@@ -446,7 +444,6 @@ impl Div for Real {
         if other.class == One {
             let rational = self.rational / other.rational;
             return Ok(Self { rational, ..self });
-
         }
         if self.definitely_zero() || other.definitely_zero() {
             return Err(RealProblem::DivideByZero);
@@ -456,7 +453,6 @@ impl Div for Real {
         Ok(self * inverted)
     }
 }
-
 
 // Best efforts only, definitely not adequate for Eq
 // Requirements: PartialEq should be transitive and symmetric

@@ -1,6 +1,6 @@
+use crate::BoundedRational;
 use num_bigint::{BigInt, BigUint, Sign};
 use num_traits::{One, Zero};
-use crate::BoundedRational;
 
 pub type Precision = i32;
 
@@ -259,9 +259,9 @@ impl Computable {
         loop {
             let msd = self.msd(prec);
             if msd != Precision::MIN {
-                return msd
+                return msd;
             }
-            prec = (prec * 3)/2 - 16;
+            prec = (prec * 3) / 2 - 16;
             if prec <= Precision::MIN + 30 {
                 break;
             }
@@ -324,13 +324,13 @@ use num_traits::Signed;
 
 impl Approximation for Inverse {
     fn approximate(&self, p: Precision) -> BigInt {
-	let msd = self.0.iter_msd();
-	let inv_msd = 1 - msd;
-	let digits_needed = inv_msd - p + 3;
-	let prec_needed = msd - digits_needed;
-	let log_scale_factor = -p - prec_needed;
+        let msd = self.0.iter_msd();
+        let inv_msd = 1 - msd;
+        let digits_needed = inv_msd - p + 3;
+        let prec_needed = msd - digits_needed;
+        let log_scale_factor = -p - prec_needed;
 
-	if log_scale_factor < 0 {
+        if log_scale_factor < 0 {
             return Zero::zero();
         }
 
@@ -464,7 +464,6 @@ impl Approximation for Shift {
     }
 }
 
-
 #[derive(Debug)]
 struct Rational(BoundedRational);
 
@@ -486,18 +485,17 @@ struct Exp(Computable);
 impl Approximation for Exp {
     fn approximate(&self, p: Precision) -> BigInt {
         if p >= 1 {
-            return Zero::zero()
+            return Zero::zero();
         }
 
-        let iterations_needed = -p/2 + 2;
+        let iterations_needed = -p / 2 + 2;
         //  Claim: each intermediate term is accurate
         //  to 2*2^calc_precision.
         //  Total rounding error in series computation is
         //  2*iterations_needed*2^calc_precision,
         //  exclusive of error in op.
-	let calc_precision = p - bound_log2(2*iterations_needed)
-			       - 4; // for error in op, truncation.
-	let op_prec = p - 3;
+        let calc_precision = p - bound_log2(2 * iterations_needed) - 4; // for error in op, truncation.
+        let op_prec = p - 3;
 
         let op_appr = self.0.approx(op_prec);
 
@@ -524,7 +522,6 @@ impl Approximation for Exp {
     }
 }
 
-
 #[derive(Debug)]
 struct Sqrt(Computable);
 
@@ -545,14 +542,14 @@ impl Approximation for Sqrt {
 
         if result_digits > fp_prec {
             // Compute less precise approximation and use a Newton iter.
-            let appr_digits = result_digits/2 + 6;
+            let appr_digits = result_digits / 2 + 6;
             // This should be conservative.  Is fewer enough?
             let appr_prec = result_msd - appr_digits;
 
             //// BigInteger last_appr = get_appr(appr_prec);
             let last_appr = self.approximate(appr_prec);
 
-            let prod_prec = 2*appr_prec;
+            let prod_prec = 2 * appr_prec;
 
             //// BigInteger op_appr = op.get_appr(prod_prec);
             let op_appr = self.0.approx(prod_prec);
@@ -578,7 +575,7 @@ impl Approximation for Sqrt {
 
             let scaled_sqrt = scaled_bi_appr.sqrt();
 
-            let shift_count = working_prec/2 - p;
+            let shift_count = working_prec / 2 - p;
             shift(scaled_sqrt, shift_count)
         }
     }

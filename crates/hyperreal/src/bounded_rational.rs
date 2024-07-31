@@ -580,5 +580,4 @@ mod tests {
         let third: BoundedRational = "2/6".parse().unwrap();
         assert!(!third.prefer_decimal());
     }
-
 }
