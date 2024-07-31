@@ -132,7 +132,7 @@ impl Real {
 
     pub fn best_sign(&self) -> Sign {
         match &self.class {
-            Class::One | Class::Pi => self.rational.sign(),
+            Class::One | Class::Pi | Class::Exp(_) | Class::Sqrt(_) => self.rational.sign(),
             other => {
                 todo!("Sign of {other:?} unimplemented")
             }
@@ -320,7 +320,11 @@ impl Add for Real {
     fn add(self, other: Self) -> Self {
         if self.class == other.class {
             let rational = self.rational + other.rational;
-            return Self { rational, ..self };
+            if rational.sign() == Sign::NoSign {
+                return Self::zero();
+            } else {
+                return Self { rational, ..self };
+            }
         }
         if self.definitely_zero() {
             return other;
