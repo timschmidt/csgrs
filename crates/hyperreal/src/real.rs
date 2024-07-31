@@ -232,8 +232,8 @@ use core::fmt;
 
 impl Real {
     // Is this a whole number aka integer ?
-    pub fn whole(&self) -> bool {
-        self.class == Class::One && self.rational.whole()
+    pub fn is_whole(&self) -> bool {
+        self.class == Class::One && self.rational.is_whole()
     }
 
     // Should we display this as a decimal ?
@@ -417,11 +417,10 @@ impl Mul for Real {
                 }
             }
             (Class::Pi, Class::Pi) => {
-                let class = Class::Irrational;
                 let rational = self.rational * other.rational;
                 Self {
                     rational,
-                    class,
+                    class: Class::Irrational,
                     computable: Computable::square(Computable::pi()),
                 }
             }

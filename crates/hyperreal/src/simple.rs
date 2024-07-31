@@ -247,3 +247,25 @@ impl FromStr for Simple {
         Simple::parse(&mut chars)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn simple_arithmetic() {
+        let xpr: Simple = "(+ 1 (* 2 3) 4)".parse().unwrap();
+        let result = xpr.evaluate().unwrap();
+        assert!(result.is_whole());
+        let ans = format!("{result:#}");
+        assert_eq!(ans, "11");
+    }
+
+    #[test]
+    fn fractions() {
+        let xpr: Simple = "(/ (+ 1 2) (* 3 4))".parse().unwrap();
+        let result = xpr.evaluate().unwrap();
+        let ans = format!("{result}");
+        assert_eq!(ans, "1/4");
+    }
+}

@@ -163,7 +163,7 @@ impl BoundedRational {
 }
 
 impl BoundedRational {
-    pub fn whole(&self) -> bool {
+    pub fn is_whole(&self) -> bool {
         let whole = &self.numerator / &self.denominator;
         let round = &whole * &self.denominator;
         let left = &self.numerator - &round;
