@@ -100,14 +100,14 @@ impl Computable {
         }
     }
 
-    fn negate(self) -> Self {
+    pub fn negate(self) -> Self {
         Self {
             internal: Box::new(Negate(self)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
-    fn inverse(self) -> Self {
+    pub fn inverse(self) -> Self {
         Self {
             internal: Box::new(Inverse(self)),
             cache: RefCell::new(Cache::Invalid),
@@ -142,9 +142,9 @@ impl Computable {
         }
     }
 
-    fn add(a: Computable, b: Computable) -> Self {
+    pub fn add(self, other: Computable) -> Self {
         Self {
-            internal: Box::new(Add::new(a, b)),
+            internal: Box::new(Add::new(self, other)),
             cache: RefCell::new(Cache::Invalid),
         }
     }

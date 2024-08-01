@@ -51,7 +51,6 @@ impl Simple {
         match name {
             "pi" => Ok(Real::pi()),
             "e" => Ok(Real::e()),
-            "ln10" => Ok(Real::ln10()),
             _ => Err(RealProblem::NotFound),
         }
     }
@@ -294,6 +293,30 @@ mod tests {
         let result = xpr.evaluate().unwrap();
         let ans = format!("{result:#.32}");
         assert_eq!(ans, "59.21762640653615171300694599925690...");
+    }
+
+    #[test]
+    fn pi_e_4() {
+        let xpr: Simple = "(* pi e 4)".parse().unwrap();
+        let result = xpr.evaluate().unwrap();
+        let ans = format!("{result:#.32}");
+        assert_eq!(ans, "34.15893689069426826185420347818629...");
+    }
+
+    #[test]
+    fn div_pi_e_4() {
+        let xpr: Simple = "(/ pi e 4)".parse().unwrap();
+        let result = xpr.evaluate().unwrap();
+        let ans = format!("{result:#.32}");
+        assert_eq!(ans, "0.28893183744773042947752329582817...");
+    }
+
+
+    #[test]
+    fn division_zero() {
+        let xpr: Simple = "(/ 0)".parse().unwrap();
+        let result = xpr.evaluate();
+        assert_eq!(result, Err(RealProblem::DivideByZero))
     }
 
     #[test]

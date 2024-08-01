@@ -78,7 +78,6 @@ impl Expression {
         match name {
             "pi" => Ok(Real::pi()),
             "e" => Ok(Real::e()),
-            "ln10" => Ok(Real::ln10()),
             _ => Err(RealProblem::NotFound),
         }
     }

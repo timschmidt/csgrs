@@ -1,7 +1,7 @@
 use crate::BoundedRational;
 use crate::Computable;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum RealProblem {
     ParseError,
     SqrtNegative,
@@ -91,14 +91,6 @@ impl Real {
             computable: Computable::e(one),
         }
     }
-
-    pub fn ln10() -> Self {
-        Self {
-            rational: BoundedRational::one(),
-            class: Class::Ln(BoundedRational::new(10)),
-            computable: Computable::todo(),
-        }
-    }
 }
 
 use num_bigint::Sign;
@@ -158,6 +150,13 @@ impl Real {
                     rational: self.rational.inverse(),
                     class: Class::Exp(exp.clone()),
                     computable: Computable::e(exp),
+                });
+            }
+            Class::Pi => {
+                return Ok(Self {
+                    rational: self.rational.inverse(),
+                    class: Class::Irrational,
+                    computable: Computable::inverse(self.computable),
                 });
             }
             _ => (),
@@ -446,10 +445,6 @@ impl Div for Real {
         if self.class == other.class {
             let rational = self.rational / other.rational;
             return Ok(Self::new(rational));
-        }
-        if self.class == One {
-            let rational = self.rational / other.rational;
-            return Ok(Self { rational, ..other });
         }
         if other.class == One {
             let rational = self.rational / other.rational;
