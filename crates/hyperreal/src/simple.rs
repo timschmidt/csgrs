@@ -281,6 +281,14 @@ mod tests {
     }
 
     #[test]
+    fn sqrt_pi() {
+        let xpr: Simple = "(√ (+ pi pi pi pi))".parse().unwrap();
+        let result = xpr.evaluate().unwrap();
+        let ans = format!("{result:#.32}");
+        assert_eq!(ans, "3.54490770181103205459633496668229...");
+    }
+
+    #[test]
     fn pi() {
         let xpr: Simple = "(* (+ pi pi) (* 3 pi))".parse().unwrap();
         let result = xpr.evaluate().unwrap();

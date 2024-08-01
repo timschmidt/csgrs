@@ -202,6 +202,18 @@ impl Real {
                     }
                 }
             }
+            Class::Pi => {
+                if self.rational.extract_square_will_succeed() {
+                    let (square, rest) = self.rational.clone().extract_square_reduced();
+                    if rest == BoundedRational::one() {
+                        return Ok(Self {
+                            rational: square,
+                            class: Class::Irrational,
+                            computable: Computable::sqrt_computable(self.computable),
+                        });
+                    }
+                }
+            }
             Class::Exp(_exp) => {
                 // Implementation originally submitted here doesn't handle the rational component?
                 todo!()

@@ -64,7 +64,7 @@ impl Computable {
         Self::exp(rational)
     }
 
-    fn exp(self) -> Self {
+    pub fn exp(self) -> Self {
         let low_prec: Precision = -10;
         let rough_appr: BigInt = self.approx(low_prec);
         if rough_appr.sign() == Sign::Minus {
@@ -83,8 +83,12 @@ impl Computable {
 
     pub fn sqrt(r: BoundedRational) -> Self {
         let rational = Self::rational(r);
+        Self::sqrt_computable(rational)
+    }
+
+    pub fn sqrt_computable(self) -> Self {
         Self {
-            internal: Box::new(Sqrt(rational)),
+            internal: Box::new(Sqrt(self)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
@@ -131,6 +135,7 @@ impl Computable {
         }
     }
 
+    // Caution: currently a > b (or maybe a >= b) or else
     fn multiply(a: Computable, b: Computable) -> Self {
         Self {
             internal: Box::new(Multiply::new(a, b)),
