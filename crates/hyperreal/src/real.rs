@@ -427,8 +427,13 @@ impl Mul for Real {
                     computable: Computable::square(Computable::pi()),
                 }
             }
-            (sc, oc) => {
-                todo!("Multiplying {:?} by {:?} isn't implemented yet", sc, oc);
+            _ => {
+                let rational = self.rational * other.rational;
+                Self {
+                    rational,
+                    class: Class::Irrational,
+                    computable: Computable::multiply(self.computable, other.computable),
+                }
             }
         }
     }

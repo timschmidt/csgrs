@@ -135,10 +135,9 @@ impl Computable {
         }
     }
 
-    // Caution: currently a > b (or maybe a >= b) or else
-    fn multiply(a: Computable, b: Computable) -> Self {
+    pub fn multiply(self, other: Self) -> Self {
         Self {
-            internal: Box::new(Multiply::new(a, b)),
+            internal: Box::new(Multiply::new(self, other)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
@@ -231,17 +230,16 @@ impl Computable {
     }
 
     /// MSD - but Precision::MIN if as yet undiscovered
-    fn msd(&self, p: Precision) -> Precision {
-        let big1: BigInt = One::one();
-        let bigm1: BigInt = "-1".parse().unwrap();
-
+    fn msd(&self, p: Precision) -> Option<Precision> {
         let cache = self.cached();
         let mut try_once = false;
 
         if cache.is_none() {
             try_once = true;
         } else if let Some((_prec, appr)) = cache {
-            if appr > bigm1 && appr < big1 {
+            let minus_1: BigInt = "-1".parse().unwrap();
+
+            if appr > minus_1 && appr < BigInt::one() {
                 try_once = true;
             }
         }
@@ -249,11 +247,11 @@ impl Computable {
         if try_once {
             let appr = self.approx(p - 1);
             if appr.magnitude() < &BigUint::one() {
-                return Precision::MIN;
+                return None;
             }
         }
 
-        self.known_msd()
+        Some(self.known_msd())
     }
 
     /// MSD but iteratively without a guess as to precision
@@ -263,7 +261,7 @@ impl Computable {
         // prec = 0, -16, -40, -76, etc.
         loop {
             let msd = self.msd(prec);
-            if msd != Precision::MIN {
+            if let Some(msd) = msd {
                 return msd;
             }
             prec = (prec * 3) / 2 - 16;
@@ -272,6 +270,7 @@ impl Computable {
             }
         }
         self.msd(Precision::MIN)
+            .expect("Should have a known MSD by now")
     }
 }
 
@@ -387,8 +386,6 @@ struct Multiply {
 }
 
 impl Multiply {
-    /// NB: a should have a larger magnitude than b
-    /// if that can't be arranged, we need to swap them to make approximate work as intended
     fn new(a: Computable, b: Computable) -> Self {
         Self { a, b }
     }
@@ -397,29 +394,44 @@ impl Multiply {
 impl Approximation for Multiply {
     fn approximate(&self, p: Precision) -> BigInt {
         let half_prec = (p >> 1) - 1;
-        let msd_op1 = self.a.msd(half_prec);
 
-        if msd_op1 == Precision::MIN {
-            let msd_op2 = self.b.msd(half_prec);
-            if msd_op2 == Precision::MIN {
-                return Zero::zero();
-            } else {
-                panic!("Multiply(A,B) expects A has larger magnitude than B");
+        match self.a.msd(half_prec) {
+            None => match self.b.msd(half_prec) {
+                None => {
+                    Zero::zero()
+                }
+                Some(msd_op2) => {
+                    let prec1 = p - msd_op2 - 3;
+                    let appr1 = self.a.approx(prec1);
+
+                    if appr1.sign() == Sign::NoSign {
+                        return Zero::zero();
+                    }
+
+                    let msd_op1 = self.a.known_msd();
+                    let prec2 = p - msd_op1 - 3;
+                    let appr2 = self.b.approx(prec2);
+
+                    let scale_digits = prec2 + prec1 - p;
+                    scale(appr2 * appr1, scale_digits)
+                }
+            },
+            Some(msd_op1) => {
+                let prec2 = p - msd_op1 - 3;
+                let appr2 = self.b.approx(prec2);
+
+                if appr2.sign() == Sign::NoSign {
+                    return Zero::zero();
+                }
+
+                let msd_op2 = self.b.known_msd();
+                let prec1 = p - msd_op2 - 3;
+                let appr1 = self.a.approx(prec1);
+
+                let scale_digits = prec1 + prec2 - p;
+                scale(appr1 * appr2, scale_digits)
             }
         }
-        let prec2 = p - msd_op1 - 3;
-        let appr2 = self.b.approx(prec2);
-
-        if appr2.sign() == Sign::NoSign {
-            return Zero::zero();
-        }
-
-        let msd_op2 = self.b.known_msd();
-        let prec1 = p - msd_op2 - 3;
-        let appr1 = self.a.approx(prec1);
-
-        let scale_digits = prec1 + prec2 - p;
-        scale(appr1 * appr2, scale_digits)
     }
 }
 
@@ -429,13 +441,13 @@ struct Square(Computable);
 impl Approximation for Square {
     fn approximate(&self, p: Precision) -> BigInt {
         let half_prec = (p >> 1) - 1;
-        let msd = self.0.msd(half_prec);
+        let prec2 = match self.0.msd(half_prec) {
+            None => {
+                return Zero::zero();
+            }
+            Some(msd) => p - msd - 3,
+        };
 
-        if msd == Precision::MIN {
-            return Zero::zero();
-        }
-
-        let prec2 = p - msd - 3;
         let appr2 = self.0.approx(prec2);
 
         if appr2.sign() == Sign::NoSign {
@@ -536,7 +548,7 @@ impl Approximation for Sqrt {
         let fp_op_prec: i32 = 60;
 
         let max_prec_needed = 2 * p - 1;
-        let msd = self.0.msd(max_prec_needed);
+        let msd = self.0.msd(max_prec_needed).unwrap_or(Precision::MIN);
 
         if msd <= max_prec_needed {
             return Zero::zero();
@@ -759,19 +771,19 @@ mod tests {
     fn msd() {
         let one: BigInt = "1".parse().unwrap();
         let a = Computable::integer(one.clone());
-        assert_eq!(0, a.msd(-4));
+        assert_eq!(Some(0), a.msd(-4));
         let three: BigInt = "3".parse().unwrap();
         let d = Computable::integer(three.clone());
-        assert_eq!(1, d.msd(-4));
+        assert_eq!(Some(1), d.msd(-4));
         let five: BigInt = "5".parse().unwrap();
         let e = Computable::integer(five.clone());
-        assert_eq!(2, e.msd(-4));
+        assert_eq!(Some(2), e.msd(-4));
         let seven: BigInt = "7".parse().unwrap();
         let f = Computable::integer(seven.clone());
-        assert_eq!(2, f.msd(-4));
+        assert_eq!(Some(2), f.msd(-4));
         let eight: BigInt = "8".parse().unwrap();
         let g = Computable::integer(eight.clone());
-        assert_eq!(3, g.msd(-4));
+        assert_eq!(Some(3), g.msd(-4));
     }
 
     #[test]
@@ -790,6 +802,17 @@ mod tests {
         let a = Computable::integer(four);
         let b = Computable::atan(five);
         let m = Computable::multiply(a, b);
+        let answer: BigInt = "809".parse().unwrap();
+        assert_eq!(answer, m.approx(-10));
+    }
+
+    #[test]
+    fn multiply_opposite() {
+        let four: BigInt = "4".parse().unwrap();
+        let five: BigInt = "5".parse().unwrap();
+        let a = Computable::integer(four);
+        let b = Computable::atan(five);
+        let m = Computable::multiply(b, a);
         let answer: BigInt = "809".parse().unwrap();
         assert_eq!(answer, m.approx(-10));
     }
