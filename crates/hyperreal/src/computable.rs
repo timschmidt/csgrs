@@ -81,6 +81,13 @@ impl Computable {
         }
     }
 
+    pub fn ln(self) -> Self {
+        Self {
+            internal: Box::new(Placeholder),
+            cache: RefCell::new(Cache::Invalid),
+        }
+    }
+
     pub fn sqrt(r: BoundedRational) -> Self {
         let rational = Self::rational(r);
         Self::sqrt_computable(rational)

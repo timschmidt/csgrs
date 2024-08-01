@@ -10,6 +10,7 @@ enum Operator {
     Slash,
     Sqrt,
     Exp,
+    Ln,
 }
 
 #[derive(Clone, Debug)]
@@ -110,6 +111,14 @@ impl Simple {
                 let value = operand.value()?.exp()?;
                 Ok(value)
             }
+            Operator::Ln => {
+                if self.operands.len() != 1 {
+                    return Err(RealProblem::ParseError);
+                }
+                let operand = self.operands.first().unwrap();
+                let value = operand.value()?.ln()?;
+                Ok(value)
+            }
             Operator::Sqrt => {
                 if self.operands.len() != 1 {
                     return Err(RealProblem::ParseError);
@@ -145,6 +154,10 @@ impl Simple {
             Some('/') => {
                 chars.next();
                 Operator::Slash
+            }
+            Some('l') => {
+                chars.next();
+                Operator::Ln
             }
             Some('e') => {
                 chars.next();

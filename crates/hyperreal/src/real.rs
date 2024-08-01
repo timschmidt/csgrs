@@ -224,6 +224,30 @@ impl Real {
             _ => todo!("exp({self:?} unimplemented"),
         }
     }
+
+    pub fn ln(self) -> Result<Self, RealProblem> {
+        match &self.class {
+            Class::One => {
+                    let rational = Computable::rational(self.rational.clone());
+                    return Ok(Self {
+                        rational: BoundedRational::one(),
+                        class: Class::Ln(self.rational),
+                        computable: Computable::ln(rational),
+                    });
+            }
+            Class::Exp(exp) => {
+                if self.rational == BoundedRational::one() {
+                    return Ok(Self {
+                        rational: exp.clone(),
+                        class: Class::One,
+                        computable: Computable::one(),
+                    });
+                }
+            }
+            _ => (),
+        }
+        todo!("Natural log of {self:?} unimplemented")
+    }
 }
 
 use core::fmt;
@@ -275,6 +299,13 @@ impl fmt::Display for Real {
                     return self.decimal(f);
                 } else {
                     f.write_fmt(format_args!("{} x e**({})", self.rational, &n))?;
+                }
+            }
+            Class::Ln(n) => {
+                if f.alternate() {
+                    return self.decimal(f);
+                } else {
+                    f.write_fmt(format_args!("{} x ln({})", self.rational, &n))?;
                 }
             }
             Class::Sqrt(n) => {
