@@ -2,7 +2,7 @@ use crate::{BoundedRational, Real, RealProblem};
 use std::iter::Peekable;
 use std::str::Chars;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 enum Operator {
     Plus,
     Minus,
@@ -13,7 +13,7 @@ enum Operator {
     Ln,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 enum Operand {
     Literal(Real),         // e.g. 123_456.789
     Symbol(String),        // e.g. "pi"
@@ -30,7 +30,7 @@ impl Operand {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Simple {
     op: Operator,
     operands: Vec<Operand>,
@@ -266,6 +266,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn missing_close() {
+        let xpr: Result<Simple,&str>  = "(+ (* (e 4) (e 6))".parse();
+        assert_eq!(xpr, Err("Incomplete expression"))
+    }
+
+    #[test]
+    fn division_zero() {
+        let xpr: Simple = "(/ 0)".parse().unwrap();
+        let result = xpr.evaluate();
+        assert_eq!(result, Err(RealProblem::DivideByZero))
+    }
+
+    #[test]
     fn simple_arithmetic() {
         let xpr: Simple = "(+ 1 (* 2 3) 4)".parse().unwrap();
         let result = xpr.evaluate().unwrap();
@@ -317,19 +330,20 @@ mod tests {
     }
 
     #[test]
+    fn ln_e() {
+        let xpr: Simple = "(l (* (e 4) (e 6)))".parse().unwrap();
+        let result = xpr.evaluate().unwrap();
+        assert!(result.is_whole());
+        let ans = format!("{result}");
+        assert_eq!(ans, "10");
+    }
+
+    #[test]
     fn div_pi_e_4() {
         let xpr: Simple = "(/ pi e 4)".parse().unwrap();
         let result = xpr.evaluate().unwrap();
         let ans = format!("{result:#.32}");
         assert_eq!(ans, "0.28893183744773042947752329582817...");
-    }
-
-
-    #[test]
-    fn division_zero() {
-        let xpr: Simple = "(/ 0)".parse().unwrap();
-        let result = xpr.evaluate();
-        assert_eq!(result, Err(RealProblem::DivideByZero))
     }
 
     #[test]
