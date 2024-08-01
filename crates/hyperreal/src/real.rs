@@ -12,17 +12,11 @@ pub enum RealProblem {
 
 #[derive(Clone, Debug)]
 enum Class {
-    None,
     One,
     Pi,
     Sqrt(BoundedRational),
     Exp(BoundedRational),
     Ln(BoundedRational),
-    Log10(BoundedRational),
-    SinPi(BoundedRational),
-    TanPi(BoundedRational),
-    Asin(BoundedRational),
-    Atan(BoundedRational),
     Irrational,
 }
 
@@ -37,11 +31,6 @@ impl PartialEq for Class {
             (Sqrt(r), Sqrt(s)) => r == s,
             (Exp(r), Exp(s)) => r == s,
             (Ln(r), Ln(s)) => r == s,
-            (Log10(r), Log10(s)) => r == s,
-            (SinPi(r), SinPi(s)) => r == s,
-            (TanPi(r), TanPi(s)) => r == s,
-            (Asin(r), Asin(s)) => r == s,
-            (Atan(r), Atan(s)) => r == s,
             (_, _) => false,
         }
     }
