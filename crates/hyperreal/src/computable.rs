@@ -220,13 +220,6 @@ impl Computable {
             cache: RefCell::new(Cache::Invalid),
         }
     }
-
-    pub fn todo() -> Self {
-        Self {
-            internal: Box::new(Placeholder),
-            cache: RefCell::new(Cache::Invalid),
-        }
-    }
 }
 
 impl Computable {
