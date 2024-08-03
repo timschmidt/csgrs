@@ -23,7 +23,11 @@ Parsing for a simple fairly human readable expression syntax is provided, this s
 exactly one operator, then one or more sub-expressions consisting of either another list, a numeric literal or a name.
 
 Currently the provided operators are the + - * and / expected in programming for addition, subtraction, multiplication and division
-plus e for the natural exponenitation, and s or √ for square roots
+plus e for the natural exponenitation, l for the natural log, and s or √ for square roots
+
+(l (e 1)) == (e (l 1)) == 1
+
+(s 9) == 3
 
 Numeric literals are written in decimal, 2.75 is exactly two and three quarters.
 
