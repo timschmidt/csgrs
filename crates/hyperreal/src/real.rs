@@ -213,13 +213,23 @@ impl Real {
             return Ok(Self::new(BoundedRational::one()));
         }
         match &self.class {
-            Class::One => Ok(Self {
+            Class::One => return Ok(Self {
                 rational: BoundedRational::one(),
                 class: Class::Exp(self.rational.clone()),
                 computable: Computable::e(self.rational),
             }),
-            _ => todo!("exp({self:?} unimplemented"),
+            Class::Ln(ln) => {
+                if self.rational == BoundedRational::one() {
+                    return Ok(Self {
+                        rational: ln.clone(),
+                        class: Class::One,
+                        computable: Computable::one(),
+                    });
+                }
+            }
+            _ => (),
         }
+        todo!("exp({self:?} unimplemented")
     }
 
     pub fn ln(self) -> Result<Self, RealProblem> {
