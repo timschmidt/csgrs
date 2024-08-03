@@ -152,16 +152,13 @@ impl Real {
                     computable: Computable::e(exp),
                 });
             }
-            Class::Pi => {
-                return Ok(Self {
-                    rational: self.rational.inverse(),
-                    class: Class::Irrational,
-                    computable: Computable::inverse(self.computable),
-                });
-            }
             _ => (),
         }
-        todo!("Inverse of {self:?} unimplemented")
+        Ok(Self {
+            rational: self.rational.inverse(),
+            class: Class::Irrational,
+            computable: Computable::inverse(self.computable),
+        })
     }
 
     pub fn sqrt(self) -> Result<Self, RealProblem> {
