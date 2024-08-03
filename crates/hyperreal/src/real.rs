@@ -364,11 +364,34 @@ impl Add for Real {
         if other.definitely_zero() {
             return self;
         }
-        todo!(
-            "Adding {:?} to {:?} isn't implemented yet",
-            self.class,
-            other.class
-        )
+        if self.class == Class::One && self.rational == BoundedRational::one() {
+            return other;
+        }
+        if other.class == Class::One && other.rational == BoundedRational::one() {
+            return self;
+        }
+        let left = if self.class == Class::One {
+            Computable::rational(self.rational)
+        } else if self.rational == BoundedRational::one() {
+            self.computable
+        } else {
+            let lr = Computable::rational(self.rational);
+            Computable::multiply(lr, self.computable)
+        };
+        let right = if other.class == Class::One {
+            Computable::rational(other.rational)
+        } else if other.rational == BoundedRational::one() {
+            other.computable
+        } else {
+            let rr = Computable::rational(other.rational);
+            Computable::multiply(rr, other.computable)
+        };
+        let computable = Computable::add(left, right);
+        Self {
+            rational: BoundedRational::one(),
+            class: Class::Irrational,
+            computable,
+        }
     }
 }
 
