@@ -81,9 +81,67 @@ impl Computable {
         }
     }
 
+    fn ln2() -> Self {
+        let ten_ninths: BoundedRational = "10/9".parse().unwrap();
+        let ten_ninths = Self::rational(ten_ninths);
+
+        let twentyfive_twentyfourths: BoundedRational = "25/24".parse().unwrap();
+        let twentyfive_twentyfourths = Self::rational(twentyfive_twentyfourths);
+
+        let eightyone_eightyeths: BoundedRational = "81/80".parse().unwrap();
+        let eightyone_eightyeths = Self::rational(eightyone_eightyeths);
+
+        let seven: BigInt = "7".parse().unwrap();
+        let ln2_1 = Self::integer(seven).multiply(ten_ninths.simple_ln());
+
+        let two: BigInt = "2".parse().unwrap();
+        let ln2_2 = Self::integer(two).multiply(twentyfive_twentyfourths.simple_ln());
+
+        let three: BigInt = "3".parse().unwrap();
+        let ln2_3 = Self::integer(three).multiply(eightyone_eightyeths.simple_ln());
+
+        let neg_ln2_2 = ln2_2.negate();
+
+        ln2_1.add(neg_ln2_2).add(ln2_3)
+    }
+
     pub fn ln(self) -> Self {
+        // Sixteenths, ie 8 == 0.5, 24 == 1.5
+        let low_ln_limit: BigInt = "8".parse().unwrap();
+        let high_ln_limit: BigInt = "24".parse().unwrap();
+
+        let low_prec = -4;
+        let rough_appr = self.approx(low_prec);
+        if rough_appr < BigInt::zero() {
+            panic!("ArithmeticException");
+        }
+        if rough_appr <= low_ln_limit {
+            return self.inverse().ln().negate();
+        }
+        if rough_appr >= high_ln_limit {
+            let sixty_four: BigInt = "64".parse().unwrap();
+            if rough_appr <= sixty_four {
+                let quarter = self.sqrt_computable().sqrt_computable().ln();
+                return quarter.shift_left(2);
+            } else {
+                let extra_bits: i32 = (rough_appr.bits() - 3).try_into().expect(
+                    "Approximation should have few enough bits to fit in a 32-bit signed integer",
+                );
+                let scaled_result = self.shift_right(extra_bits).ln();
+                let extra: BigInt = extra_bits.into();
+                return scaled_result.add(Self::integer(extra).multiply(Self::ln2()));
+            }
+        }
+
+        Self::simple_ln(self)
+    }
+
+    pub fn simple_ln(self) -> Self {
+        let minus_one: BigInt = "-1".parse().unwrap();
+        let minus_one = Self::integer(minus_one);
+        let fraction = Self::add(self, minus_one);
         Self {
-            internal: Box::new(Placeholder),
+            internal: Box::new(PrescaledLn(fraction)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
@@ -404,9 +462,7 @@ impl Approximation for Multiply {
 
         match self.a.msd(half_prec) {
             None => match self.b.msd(half_prec) {
-                None => {
-                    Zero::zero()
-                }
+                None => Zero::zero(),
                 Some(msd_op2) => {
                     let prec1 = p - msd_op2 - 3;
                     let appr1 = self.a.approx(prec1);
@@ -539,6 +595,51 @@ impl Approximation for Exp {
             n += BigInt::one();
             current_term = scale(current_term * &op_appr, op_prec);
             current_term /= &n;
+            current_sum += &current_term;
+        }
+
+        scale(current_sum, calc_precision - p)
+    }
+}
+
+#[derive(Debug)]
+struct PrescaledLn(Computable);
+
+// Compute an approximation of ln(1+x) to precision p.
+// This assumes |x| < 1/2.
+// It uses a Taylor series expansion.
+// Unfortunately there appears to be no way to take
+// advantage of old information.
+// Note: this is known to be a bad algorithm for
+// floating point.  Unfortunately, other alternatives
+// appear to require precomputed tabular information.
+impl Approximation for PrescaledLn {
+    fn approximate(&self, p: Precision) -> BigInt {
+        if p >= 0 {
+            return Zero::zero();
+        }
+
+        let iterations_needed = -p;
+        let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+        let op_prec = p - 3;
+        let op_appr = self.0.approx(op_prec);
+
+        let mut x_nth = scale(op_appr.clone(), op_prec - calc_precision);
+        let mut current_term = x_nth.clone();
+        let mut current_sum = current_term.clone();
+
+        let mut n = 1;
+        let mut current_sign = 1;
+
+        let max_trunc_error = BigInt::one() << (p - 4 - calc_precision);
+
+        while current_term.abs() > max_trunc_error {
+            n += 1;
+            current_sign = -current_sign;
+            x_nth = scale(&x_nth * &op_appr, op_prec);
+
+            let divisor: BigInt = Into::into(n * current_sign);
+            current_term = &x_nth / divisor;
             current_sum += &current_term;
         }
 
@@ -838,6 +939,29 @@ mod tests {
         assert_eq!(one, c.approx(-3));
         assert_eq!(ten, c.approx(-6));
         assert_eq!(eighty_five, c.approx(-9));
+    }
+
+    #[test]
+    fn scaled_ln1() {
+        let zero = Computable::integer(BigInt::zero());
+        let ln = Computable {
+            internal: Box::new(PrescaledLn(zero)),
+            cache: RefCell::new(Cache::Invalid),
+        };
+        let zero = BigInt::zero();
+        assert_eq!(zero, ln.approx(100));
+    }
+
+    #[test]
+    fn scaled_ln1_4() {
+        let zero_4: BoundedRational = "0.4".parse().unwrap();
+        let rational = Computable::rational(zero_4);
+        let ln = Computable {
+            internal: Box::new(PrescaledLn(rational)),
+            cache: RefCell::new(Cache::Invalid),
+        };
+        let five: BigInt = "5".parse().unwrap();
+        assert_eq!(five, ln.approx(-4));
     }
 
     #[test]

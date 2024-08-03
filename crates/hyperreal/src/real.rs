@@ -228,12 +228,16 @@ impl Real {
     pub fn ln(self) -> Result<Self, RealProblem> {
         match &self.class {
             Class::One => {
+                if self.rational == BoundedRational::one() {
+                    return Ok(Self::zero());
+                } else {
                     let rational = Computable::rational(self.rational.clone());
                     return Ok(Self {
                         rational: BoundedRational::one(),
                         class: Class::Ln(self.rational),
                         computable: Computable::ln(rational),
                     });
+                }
             }
             Class::Exp(exp) => {
                 if self.rational == BoundedRational::one() {

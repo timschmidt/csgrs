@@ -267,7 +267,7 @@ mod tests {
 
     #[test]
     fn missing_close() {
-        let xpr: Result<Simple,&str>  = "(+ (* (e 4) (e 6))".parse();
+        let xpr: Result<Simple, &str> = "(+ (* (e 4) (e 6))".parse();
         assert_eq!(xpr, Err("Incomplete expression"))
     }
 
