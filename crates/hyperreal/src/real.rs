@@ -124,6 +124,21 @@ impl Real {
             },
         }
     }
+
+    fn make_computable<F>(self, convert: F) -> Self
+    where
+        F: FnOnce(Computable) -> Computable,
+    {
+        let r = Computable::rational(self.rational);
+        let prev = Computable::multiply(r, self.computable);
+        let computable = convert(prev);
+
+        Self {
+            rational: BoundedRational::one(),
+            class: Class::Irrational,
+            computable,
+        }
+    }
 }
 
 impl Real {
@@ -220,15 +235,7 @@ impl Real {
             _ => (),
         }
 
-        let r = Computable::rational(self.rational);
-        let prev = Computable::multiply(r, self.computable);
-        let computable = Computable::sqrt_computable(prev);
-
-        Ok(Self {
-            rational: BoundedRational::one(),
-            class: Class::Irrational,
-            computable,
-        })
+        Ok(self.make_computable(Computable::sqrt_computable))
     }
 
     pub fn exp(self) -> Result<Self, RealProblem> {
@@ -254,7 +261,8 @@ impl Real {
             }
             _ => (),
         }
-        todo!("exp({self:?} unimplemented")
+
+        Ok(self.make_computable(Computable::exp))
     }
 
     pub fn ln(self) -> Result<Self, RealProblem> {
@@ -282,7 +290,8 @@ impl Real {
             }
             _ => (),
         }
-        todo!("Natural log of {self:?} unimplemented")
+
+        Ok(self.make_computable(Computable::ln))
     }
 }
 
