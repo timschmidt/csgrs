@@ -199,13 +199,31 @@ impl Real {
                     }
                 }
             }
-            Class::Exp(_exp) => {
-                // Implementation originally submitted here doesn't handle the rational component?
-                todo!()
+            Class::Exp(exp) => {
+                if self.rational.extract_square_will_succeed() {
+                    let (square, rest) = self.rational.clone().extract_square_reduced();
+                    if rest == BoundedRational::one() {
+                        let exp = exp.clone() / BoundedRational::new(2);
+                        return Ok(Self {
+                            rational: square,
+                            class: Class::Exp(exp.clone()),
+                            computable: Computable::e(exp),
+                        });
+                    }
+                }
             }
             _ => (),
         }
-        todo!("Square root of {self:?} unimplemented")
+
+        let r = Computable::rational(self.rational);
+        let prev = Computable::multiply(r, self.computable);
+        let computable = Computable::sqrt_computable(prev);
+
+        Ok(Self {
+            rational: BoundedRational::one(),
+            class: Class::Irrational,
+            computable,
+        })
     }
 
     pub fn exp(self) -> Result<Self, RealProblem> {
@@ -238,11 +256,11 @@ impl Real {
                 if self.rational == BoundedRational::one() {
                     return Ok(Self::zero());
                 } else {
-                    let rational = Computable::rational(self.rational.clone());
+                    let new = Computable::rational(self.rational.clone());
                     return Ok(Self {
                         rational: BoundedRational::one(),
                         class: Class::Ln(self.rational),
-                        computable: Computable::ln(rational),
+                        computable: Computable::ln(new),
                     });
                 }
             }
