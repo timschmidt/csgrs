@@ -236,6 +236,23 @@ impl Computable {
         result
     }
 
+    pub fn sign(&self) -> Sign {
+        if let Cache::Valid((_prec, cache_appr)) = self.cache.clone().into_inner() {
+            let sign = cache_appr.sign();
+            if sign != Sign::NoSign {
+                return sign;
+            }
+        }
+        let mut sign = Sign::NoSign;
+        let mut p = 0;
+        while p > -1000 && sign == Sign::NoSign {
+            let appr = self.approx(p);
+            p -= 10;
+            sign = appr.sign();
+        }
+        sign
+    }
+
     fn cached(&self) -> Option<(Precision, BigInt)> {
         if let Cache::Valid((cache_prec, cache_appr)) = self.cache.clone().into_inner() {
             Some((cache_prec, cache_appr))

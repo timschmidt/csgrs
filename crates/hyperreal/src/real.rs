@@ -114,9 +114,14 @@ impl Real {
     pub fn best_sign(&self) -> Sign {
         match &self.class {
             Class::One | Class::Pi | Class::Exp(_) | Class::Sqrt(_) => self.rational.sign(),
-            other => {
-                todo!("Sign of {other:?} unimplemented")
-            }
+            _ => match (self.rational.sign(), self.computable.sign()) {
+                (Sign::NoSign, _) => Sign::NoSign,
+                (_, Sign::NoSign) => Sign::NoSign,
+                (Sign::Plus, Sign::Plus) => Sign::Plus,
+                (Sign::Plus, Sign::Minus) => Sign::Minus,
+                (Sign::Minus, Sign::Plus) => Sign::Minus,
+                (Sign::Minus, Sign::Minus) => Sign::Plus,
+            },
         }
     }
 }
@@ -231,11 +236,13 @@ impl Real {
             return Ok(Self::new(BoundedRational::one()));
         }
         match &self.class {
-            Class::One => return Ok(Self {
-                rational: BoundedRational::one(),
-                class: Class::Exp(self.rational.clone()),
-                computable: Computable::e(self.rational),
-            }),
+            Class::One => {
+                return Ok(Self {
+                    rational: BoundedRational::one(),
+                    class: Class::Exp(self.rational.clone()),
+                    computable: Computable::e(self.rational),
+                })
+            }
             Class::Ln(ln) => {
                 if self.rational == BoundedRational::one() {
                     return Ok(Self {
