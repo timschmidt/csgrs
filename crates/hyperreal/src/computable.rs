@@ -18,17 +18,6 @@ pub struct Computable {
     cache: RefCell<Cache>,
 }
 
-impl Clone for Computable {
-    fn clone(&self) -> Self {
-        /* FIXME: this provides a placeholder instead of actually cloning the box */
-        let internal = Box::new(Placeholder);
-        Self {
-            internal,
-            cache: self.cache.clone(),
-        }
-    }
-}
-
 impl Computable {
     pub fn one() -> Self {
         Self {
@@ -376,15 +365,6 @@ trait Approximation: core::fmt::Debug {
     /// result is within 1 but scaled by 2 ^ p
     /// So e.g. pi with p=0 is 3, pi with p=2 = 314
     fn approximate(&self, p: Precision) -> BigInt;
-}
-
-#[derive(Debug)]
-struct Placeholder;
-
-impl Approximation for Placeholder {
-    fn approximate(&self, _p: Precision) -> BigInt {
-        todo!("Placeholder instead of an actual Computable Real")
-    }
 }
 
 #[derive(Debug)]
