@@ -15,7 +15,7 @@ enum Operator {
 
 #[derive(Clone, Debug, PartialEq)]
 enum Operand {
-    Literal(Real),         // e.g. 123_456.789
+    Literal(BoundedRational),         // e.g. 123_456.789
     Symbol(String),        // e.g. "pi"
     SubExpression(Simple), // e.g. (+ 1 2 3)
 }
@@ -23,7 +23,7 @@ enum Operand {
 impl Operand {
     pub fn value(&self) -> Result<Real, RealProblem> {
         match self {
-            Operand::Literal(r) => Ok(r.clone()),
+            Operand::Literal(n) => Ok(Real::new(n.clone())),
             Operand::Symbol(s) => Simple::lookup(s),
             Operand::SubExpression(xpr) => xpr.evaluate(),
         }
@@ -40,6 +40,7 @@ fn parse_problem(problem: RealProblem) -> &'static str {
     match problem {
         RealProblem::DivideByZero => "Attempting to divide by zero",
         RealProblem::NotFound => "Symbol not found",
+        RealProblem::ParseError => "Unable to parse number",
         _ => {
             eprintln!("Specifically the problem is {problem:?}");
             "Some unknown problem during parsing"
@@ -245,9 +246,9 @@ impl Simple {
             c.next();
         }
 
-        let r: Real = num.parse()?;
+        let n: BoundedRational = num.parse().map_err(|_| RealProblem::ParseError)?;
 
-        Ok(Operand::Literal(r))
+        Ok(Operand::Literal(n))
     }
 }
 
