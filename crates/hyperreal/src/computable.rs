@@ -196,6 +196,7 @@ impl Computable {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn add(self, other: Computable) -> Self {
         Self {
             internal: Box::new(Add::new(self, other)),
@@ -696,11 +697,6 @@ impl Approximation for Sqrt {
     }
 }
 
-//// static int bound_log2(int n) {
-////	int abs_n = Math.abs(n);
-////	return (int)Math.ceil(Math.log((double)(abs_n + 1))/Math.log(2.0));
-//// }
-
 fn bound_log2(n: i32) -> i32 {
     let abs_n = n.abs();
     let ln2 = 2.0_f64.ln();
@@ -768,11 +764,11 @@ impl Approximation for Atan {
         while *current_term.magnitude() > max_trunc_error {
             //// if (Thread.interrupted() || please_stop) throw new AbortedError();
             n += 2;
-            current_power = current_power / &big_op_squared;
+            current_power /= &big_op_squared;
             current_sign = -current_sign;
             let signed_n: BigInt = (current_sign * n).into();
             current_term = &current_power / signed_n;
-            current_sum = current_sum + &current_term;
+            current_sum += &current_term;
         }
 
         scale(current_sum, calc_precision - p)

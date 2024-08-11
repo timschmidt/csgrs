@@ -212,32 +212,32 @@ impl BoundedRational {
     const EXTRACT_SQUARE_MAX_LEN: u64 = 5000;
 
     fn make_squares() -> Vec<(BigUint, BigUint)> {
-        let mut v = Vec::new();
-        v.push((
-            ToBigUint::to_biguint(&2).unwrap(),
-            ToBigUint::to_biguint(&4).unwrap(),
-        ));
-        v.push((
-            ToBigUint::to_biguint(&3).unwrap(),
-            ToBigUint::to_biguint(&9).unwrap(),
-        ));
-        v.push((
-            ToBigUint::to_biguint(&5).unwrap(),
-            ToBigUint::to_biguint(&25).unwrap(),
-        ));
-        v.push((
-            ToBigUint::to_biguint(&7).unwrap(),
-            ToBigUint::to_biguint(&49).unwrap(),
-        ));
-        v.push((
-            ToBigUint::to_biguint(&11).unwrap(),
-            ToBigUint::to_biguint(&121).unwrap(),
-        ));
-        v.push((
-            ToBigUint::to_biguint(&13).unwrap(),
-            ToBigUint::to_biguint(&169).unwrap(),
-        ));
-        v
+        vec![
+            (
+                ToBigUint::to_biguint(&2).unwrap(),
+                ToBigUint::to_biguint(&4).unwrap(),
+            ),
+            (
+                ToBigUint::to_biguint(&3).unwrap(),
+                ToBigUint::to_biguint(&9).unwrap(),
+            ),
+            (
+                ToBigUint::to_biguint(&5).unwrap(),
+                ToBigUint::to_biguint(&25).unwrap(),
+            ),
+            (
+                ToBigUint::to_biguint(&7).unwrap(),
+                ToBigUint::to_biguint(&49).unwrap(),
+            ),
+            (
+                ToBigUint::to_biguint(&11).unwrap(),
+                ToBigUint::to_biguint(&121).unwrap(),
+            ),
+            (
+                ToBigUint::to_biguint(&13).unwrap(),
+                ToBigUint::to_biguint(&169).unwrap(),
+            ),
+        ]
     }
 
     fn extract_square(n: BigUint) -> (BigUint, BigUint) {
