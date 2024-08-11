@@ -355,8 +355,6 @@ impl FromStr for BoundedRational {
     }
 }
 
-/* TryFrom<f64> for BoundedRational see Java valueOf() */
-
 use core::ops::*;
 use std::cmp::Ordering;
 
