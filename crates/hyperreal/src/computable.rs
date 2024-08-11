@@ -28,9 +28,9 @@ impl Computable {
 
     pub fn pi() -> Self {
         let five: BigInt = "5".parse().unwrap();
-        let atan5 = Self::atan(five);
+        let atan5 = Self::prescaled_atan(five);
         let two_three_nine: BigInt = "239".parse().unwrap();
-        let atan_239 = Self::atan(two_three_nine);
+        let atan_239 = Self::prescaled_atan(two_three_nine);
         let four: BigInt = "4".parse().unwrap();
         let four = Self::integer(four);
         let four_atan5 = Self::multiply(four, atan5);
@@ -125,7 +125,7 @@ impl Computable {
         Self::simple_ln(self)
     }
 
-    pub fn simple_ln(self) -> Self {
+    fn simple_ln(self) -> Self {
         let minus_one: BigInt = "-1".parse().unwrap();
         let minus_one = Self::integer(minus_one);
         let fraction = Self::add(self, minus_one);
@@ -147,9 +147,9 @@ impl Computable {
         }
     }
 
-    fn atan(n: BigInt) -> Self {
+    fn prescaled_atan(n: BigInt) -> Self {
         Self {
-            internal: Box::new(Atan(n)),
+            internal: Box::new(PrescaledAtan(n)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
@@ -705,64 +705,50 @@ fn bound_log2(n: i32) -> i32 {
     ans as i32
 }
 
-// Atan(n) is the Arctangent of 1/n where n is some small integer > base
+// PrescaledAtan(n) is the Arctangent of 1/n where n is some small integer > base
 // what is "base" in this context?
 #[derive(Debug)]
-struct Atan(BigInt);
+struct PrescaledAtan(BigInt);
 
-impl Approximation for Atan {
+impl Approximation for PrescaledAtan {
     fn approximate(&self, p: Precision) -> BigInt {
         if p >= 1 {
             return Zero::zero();
         }
 
         let iterations_needed: i32 = -p / 2 + 2; // conservative estimate > 0.
-                                                 //  Claim: each intermediate term is accurate
-                                                 //  to 2*base^calc_precision.
-                                                 //  Total rounding error in series computation is
-                                                 //  2*iterations_needed*base^calc_precision,
-                                                 //  exclusive of error in op.
+                                                 // from Java implementation description:
 
-        //// int calc_precision = p - bound_log2(2*iterations_needed)
-        ////		       - 2; // for error in op, truncation.
+        // Claim: each intermediate term is accurate
+        // to 2*base^calc_precision.
+        // Total rounding error in series computation is
+        // 2*iterations_needed*base^calc_precision,
+        // exclusive of error in op.
 
         let calc_precision = p - bound_log2(2 * iterations_needed) - 2;
-
         // Error in argument results in error of < 3/8 ulp.
         // Cumulative arithmetic rounding error is < 1/4 ulp.
         // Series truncation error < 1/4 ulp.
         // Final rounding error is <= 1/2 ulp.
         // Thus final error is < 1 ulp.
 
-        //// BigInteger scaled_1 = big1.shiftLeft(-calc_precision);
-        let scaled_1: BigInt = <BigInt as One>::one() << (-calc_precision);
+        let scaled_1: BigInt = BigInt::one() << (-calc_precision);
 
-        //// BigInteger big_op = BigInteger.valueOf(op);
-        //// BigInteger big_op_squared = BigInteger.valueOf(op*op);
         let big_op_squared: BigInt = &self.0 * &self.0;
 
-        //// BigInteger op_inverse = scaled_1.divide(big_op);
         let op_inverse: BigInt = scaled_1 / &self.0;
-        //// BigInteger current_power = op_inverse;
         let mut current_power: BigInt = op_inverse.clone();
 
-        //// BigInteger current_term = op_inverse;
         let mut current_term: BigInt = op_inverse.clone();
-
-        //// BigInteger current_sum = op_inverse;
         let mut current_sum: BigInt = op_inverse.clone();
 
-        //// int current_sign = 1;
         let mut current_sign = 1;
-        //// int n = 1;
         let mut n = 1;
 
-        //// BigInteger max_trunc_error = big1.shiftLeft(p - 2 - calc_precision);
-        let max_trunc_error: BigUint = <BigUint as One>::one() << (p - 2 - calc_precision);
+        let max_trunc_error: BigUint = BigUint::one() << (p - 2 - calc_precision);
 
-        //// while (current_term.abs().compareTo(max_trunc_error) >= 0) {
+        // TODO good place to halt computation
         while *current_term.magnitude() > max_trunc_error {
-            //// if (Thread.interrupted() || please_stop) throw new AbortedError();
             n += 2;
             current_power /= &big_op_squared;
             current_sign = -current_sign;
@@ -844,7 +830,7 @@ mod tests {
     #[test]
     fn prec_atan_5() {
         let five: BigInt = "5".parse().unwrap();
-        let atan_5 = Computable::atan(five);
+        let atan_5 = Computable::prescaled_atan(five);
         let two_zero_two: BigInt = "202".parse().unwrap();
         assert_eq!(two_zero_two, atan_5.approx(-10));
         let at_twenty: BigInt = "206984".parse().unwrap();
@@ -854,7 +840,7 @@ mod tests {
     #[test]
     fn prec_atan_239() {
         let two_three_nine: BigInt = "239".parse().unwrap();
-        let atan_239 = Computable::atan(two_three_nine);
+        let atan_239 = Computable::prescaled_atan(two_three_nine);
         let four: BigInt = "4".parse().unwrap();
         assert_eq!(four, atan_239.approx(-10));
         let at_twenty: BigInt = "4387".parse().unwrap();
@@ -894,7 +880,7 @@ mod tests {
         let four: BigInt = "4".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();
         let a = Computable::integer(four);
-        let b = Computable::atan(five);
+        let b = Computable::prescaled_atan(five);
         let m = Computable::multiply(a, b);
         let answer: BigInt = "809".parse().unwrap();
         assert_eq!(answer, m.approx(-10));
@@ -905,7 +891,7 @@ mod tests {
         let four: BigInt = "4".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();
         let a = Computable::integer(four);
-        let b = Computable::atan(five);
+        let b = Computable::prescaled_atan(five);
         let m = Computable::multiply(b, a);
         let answer: BigInt = "809".parse().unwrap();
         assert_eq!(answer, m.approx(-10));
