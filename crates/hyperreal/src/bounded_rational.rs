@@ -1,5 +1,5 @@
 use crate::Computable;
-use lazy_static::lazy_static;
+use std::sync::LazyLock;
 use num_bigint::Sign::{self, *};
 use num_bigint::{BigInt, BigUint, ToBigUint};
 use num_traits::{One, Zero};
@@ -241,9 +241,9 @@ impl BoundedRational {
     }
 
     fn extract_square(n: BigUint) -> (BigUint, BigUint) {
-        lazy_static! {
-            static ref SQUARES: Vec<(BigUint, BigUint)> = BoundedRational::make_squares();
-        }
+        static SQUARES: LazyLock<Vec<(BigUint, BigUint)>> = LazyLock::new(|| {
+            BoundedRational::make_squares()
+        });
 
         let mut square = One::one();
         let mut rest = n;
