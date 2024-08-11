@@ -15,9 +15,9 @@ enum Operator {
 
 #[derive(Clone, Debug, PartialEq)]
 enum Operand {
-    Literal(BoundedRational),         // e.g. 123_456.789
-    Symbol(String),        // e.g. "pi"
-    SubExpression(Simple), // e.g. (+ 1 2 3)
+    Literal(BoundedRational), // e.g. 123_456.789
+    Symbol(String),           // e.g. "pi"
+    SubExpression(Simple),    // e.g. (+ 1 2 3)
 }
 
 impl Operand {
