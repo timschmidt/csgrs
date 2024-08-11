@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 lazy_static = "1.4.0"
 num = { version = "0.4.1", features = ["num-bigint"] }
-num-bigint = "0.4.4"
+num-bigint = "0.4.6"
 num-traits = "0.2.17"

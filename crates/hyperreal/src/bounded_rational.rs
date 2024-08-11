@@ -18,16 +18,16 @@ impl BoundedRational {
     pub fn zero() -> Self {
         Self {
             sign: NoSign,
-            numerator: Zero::zero(),
-            denominator: One::one(),
+            numerator: BigUint::ZERO,
+            denominator: BigUint::one(),
         }
     }
 
     pub fn one() -> Self {
         Self {
             sign: Plus,
-            numerator: One::one(),
-            denominator: One::one(),
+            numerator: BigUint::one(),
+            denominator: BigUint::one(),
         }
     }
 
@@ -35,7 +35,7 @@ impl BoundedRational {
         Self {
             sign: Plus,
             numerator: ToBigUint::to_biguint(&n).unwrap(),
-            denominator: One::one(),
+            denominator: BigUint::one(),
         }
     }
 
@@ -45,7 +45,7 @@ impl BoundedRational {
         Self {
             sign,
             numerator,
-            denominator: One::one(),
+            denominator: BigUint::one(),
         }
     }
 
@@ -172,19 +172,19 @@ impl BoundedRational {
 
     pub fn prefer_decimal(&self) -> bool {
         let ten: BigUint = "10".parse().unwrap();
-        let five: BigUint = "5".parse().unwrap();
-        let two: BigUint = "2".parse().unwrap();
         let mut rem = self.denominator.clone();
-        while &rem % &ten == Zero::zero() {
+        while (&rem % &ten).is_zero() {
             rem /= &ten;
         }
-        while &rem % &five == Zero::zero() {
+        let five: BigUint = "5".parse().unwrap();
+        while (&rem % &five).is_zero() {
             rem /= &five;
         }
-        while &rem % &two == Zero::zero() {
+        let two: BigUint = "2".parse().unwrap();
+        while (&rem % &two).is_zero() {
             rem /= &two;
         }
-        rem == One::one()
+        rem == BigUint::one()
     }
 
     pub fn shifted_big_integer(&self, shift: i32) -> BigInt {
