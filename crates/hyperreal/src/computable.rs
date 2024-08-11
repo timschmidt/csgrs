@@ -579,17 +579,17 @@ impl Approximation for Exp {
 
         let max_trunc_error = BigInt::one() << (p - 4 - calc_precision);
         let mut current_term = scaled_1.clone();
-        let mut current_sum = scaled_1;
+        let mut sum = scaled_1;
         let mut n = BigInt::zero();
 
         while current_term.abs() > max_trunc_error {
             n += BigInt::one();
             current_term = scale(current_term * &op_appr, op_prec);
             current_term /= &n;
-            current_sum += &current_term;
+            sum += &current_term;
         }
 
-        scale(current_sum, calc_precision - p)
+        scale(sum, calc_precision - p)
     }
 }
 
@@ -617,24 +617,24 @@ impl Approximation for PrescaledLn {
 
         let mut x_nth = scale(op_appr.clone(), op_prec - calc_precision);
         let mut current_term = x_nth.clone();
-        let mut current_sum = current_term.clone();
+        let mut sum = current_term.clone();
 
         let mut n = 1;
-        let mut current_sign = 1;
+        let mut sign = 1;
 
         let max_trunc_error = BigInt::one() << (p - 4 - calc_precision);
 
         while current_term.abs() > max_trunc_error {
             n += 1;
-            current_sign = -current_sign;
+            sign = -sign;
             x_nth = scale(&x_nth * &op_appr, op_prec);
 
-            let divisor: BigInt = Into::into(n * current_sign);
+            let divisor: BigInt = (n * sign).into();
             current_term = &x_nth / divisor;
-            current_sum += &current_term;
+            sum += &current_term;
         }
 
-        scale(current_sum, calc_precision - p)
+        scale(sum, calc_precision - p)
     }
 }
 
@@ -662,12 +662,9 @@ impl Approximation for Sqrt {
             // This should be conservative.  Is fewer enough?
             let appr_prec = result_msd - appr_digits;
 
-            //// BigInteger last_appr = get_appr(appr_prec);
             let last_appr = self.approximate(appr_prec);
-
             let prod_prec = 2 * appr_prec;
 
-            //// BigInteger op_appr = op.get_appr(prod_prec);
             let op_appr = self.0.approx(prod_prec);
 
             // Slightly fewer might be enough;
@@ -732,32 +729,30 @@ impl Approximation for PrescaledAtan {
         // Final rounding error is <= 1/2 ulp.
         // Thus final error is < 1 ulp.
 
-        let scaled_1: BigInt = BigInt::one() << (-calc_precision);
-
-        let big_op_squared: BigInt = &self.0 * &self.0;
-
-        let op_inverse: BigInt = scaled_1 / &self.0;
-        let mut current_power: BigInt = op_inverse.clone();
-
-        let mut current_term: BigInt = op_inverse.clone();
-        let mut current_sum: BigInt = op_inverse.clone();
-
-        let mut current_sign = 1;
-        let mut n = 1;
-
         let max_trunc_error: BigUint = BigUint::one() << (p - 2 - calc_precision);
+
+        let scaled_1: BigInt = BigInt::one() << (-calc_precision);
+        let big_op_squared: BigInt = &self.0 * &self.0;
+        let inverse: BigInt = scaled_1 / &self.0;
+
+        let mut current_power = inverse.clone();
+        let mut current_term = inverse.clone();
+        let mut sum = inverse;
+
+        let mut sign = 1;
+        let mut n = 1;
 
         // TODO good place to halt computation
         while *current_term.magnitude() > max_trunc_error {
             n += 2;
             current_power /= &big_op_squared;
-            current_sign = -current_sign;
-            let signed_n: BigInt = (current_sign * n).into();
+            sign = -sign;
+            let signed_n: BigInt = (n * sign).into();
             current_term = &current_power / signed_n;
-            current_sum += &current_term;
+            sum += &current_term;
         }
 
-        scale(current_sum, calc_precision - p)
+        scale(sum, calc_precision - p)
     }
 }
 
