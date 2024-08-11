@@ -51,7 +51,7 @@ impl Class {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Real {
     rational: BoundedRational,
     class: Class,
@@ -595,8 +595,9 @@ mod tests {
         let two: Real = "2".parse().unwrap();
         assert_ne!(two, Real::zero());
         let four: Real = "4".parse().unwrap();
-        let answer = four - two.clone();
-        assert_eq!(answer, two.clone());
+        let answer = four - two;
+        let two: Real = "2".parse().unwrap();
+        assert_eq!(answer, two);
         let zero = answer - two;
         assert_eq!(zero, Real::zero());
         let six_half: Real = "13/2".parse().unwrap();
@@ -663,9 +664,12 @@ mod tests {
     fn square_sqrt() {
         let two: Real = "2".parse().unwrap();
         let three: Real = "3".parse().unwrap();
-        let small = three.clone().sqrt().expect("Should be able to sqrt(n)");
-        let a = small.clone() * two;
-        let b = small.clone() * three;
+        let small = three.sqrt().expect("Should be able to sqrt(n)");
+        let a = small * two;
+        let three: Real = "3".parse().unwrap();
+        let small = three.sqrt().expect("Should be able to sqrt(n)");
+        let three: Real = "3".parse().unwrap();
+        let b = small * three;
         let answer = a * b;
         let eighteen: Real = "18".parse().unwrap();
         assert_eq!(answer, eighteen);
