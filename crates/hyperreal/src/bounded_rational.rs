@@ -1,8 +1,8 @@
 use crate::Computable;
-use std::sync::LazyLock;
 use num_bigint::Sign::{self, *};
 use num_bigint::{BigInt, BigUint, ToBigUint};
 use num_traits::{One, Zero};
+use std::sync::LazyLock;
 
 #[derive(Clone, Debug)]
 pub struct ParseBRError();
@@ -241,9 +241,8 @@ impl BoundedRational {
     }
 
     fn extract_square(n: BigUint) -> (BigUint, BigUint) {
-        static SQUARES: LazyLock<Vec<(BigUint, BigUint)>> = LazyLock::new(|| {
-            BoundedRational::make_squares()
-        });
+        static SQUARES: LazyLock<Vec<(BigUint, BigUint)>> =
+            LazyLock::new(BoundedRational::make_squares);
 
         let mut square = One::one();
         let mut rest = n;
