@@ -265,7 +265,7 @@ impl BoundedRational {
 
     pub fn extract_square_reduced(self) -> (Self, Self) {
         if self.sign == NoSign {
-            return (Self::zero(), Self::new(0));
+            return (Self::zero(), Self::zero());
         }
         let (nsquare, nrest) = Self::extract_square(self.numerator);
         let (dsquare, drest) = Self::extract_square(self.denominator);
@@ -366,6 +366,7 @@ impl Add for BoundedRational {
         let b = other.numerator * self.denominator;
         let (sign, numerator) = match (self.sign, other.sign) {
             (any, NoSign) => (any, a),
+            (NoSign, any) => (any, b),
             (Plus, Plus) => (Plus, a + b),
             (Minus, Minus) => (Minus, a + b),
             (x, y) => match a.cmp(&b) {
