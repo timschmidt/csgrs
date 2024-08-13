@@ -14,6 +14,10 @@ pub struct BoundedRational {
     denominator: BigUint,
 }
 
+static TWO: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&2).unwrap());
+static FIVE: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&5).unwrap());
+static TEN: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&10).unwrap());
+
 impl BoundedRational {
     pub fn zero() -> Self {
         Self {
@@ -114,7 +118,7 @@ impl fmt::Display for BoundedRational {
             let mut left = &self.numerator - &round;
             let mut digits = f.precision().unwrap_or(12);
             loop {
-                left *= BigUint::parse_bytes("10".as_bytes(), 10).unwrap();
+                left *= &*TEN;
                 let digit = &left / &self.denominator;
                 f.write_fmt(format_args!("{digit}"))?;
                 left -= digit * &self.denominator;
@@ -152,8 +156,7 @@ impl BoundedRational {
             .try_into()
             .expect("The number of bits we care about should fit in a 32-bit integer!");
 
-        let two = BigUint::parse_bytes("2".as_bytes(), 10).unwrap();
-        let divisor = two.pow(factor.try_into().unwrap());
+        let divisor = TWO.pow(factor.try_into().unwrap());
 
         let r = Self::from_bigint_fraction(c.approx(-factor), divisor);
         let s = r * self.clone();
@@ -171,18 +174,15 @@ impl BoundedRational {
     }
 
     pub fn prefer_decimal(&self) -> bool {
-        let ten: BigUint = "10".parse().unwrap();
         let mut rem = self.denominator.clone();
-        while (&rem % &ten).is_zero() {
-            rem /= &ten;
+        while (&rem % &*TEN).is_zero() {
+            rem /= &*TEN;
         }
-        let five: BigUint = "5".parse().unwrap();
-        while (&rem % &five).is_zero() {
-            rem /= &five;
+        while (&rem % &*FIVE).is_zero() {
+            rem /= &*FIVE;
         }
-        let two: BigUint = "2".parse().unwrap();
-        while (&rem % &two).is_zero() {
-            rem /= &two;
+        while (&rem % &*TWO).is_zero() {
+            rem /= &*TWO;
         }
         rem == BigUint::one()
     }
@@ -332,8 +332,7 @@ impl FromStr for BoundedRational {
             if numerator.is_zero() {
                 return Ok(whole);
             }
-            let ten = BigUint::parse_bytes("10".as_bytes(), 10).unwrap();
-            let denominator = ten.pow(d.len() as u32);
+            let denominator = TEN.pow(d.len() as u32);
             let fraction = Self {
                 sign,
                 numerator,
@@ -561,7 +560,7 @@ mod tests {
     fn two_minus_one() {
         let two = BoundedRational::new(2);
         let one = BoundedRational::one();
-        assert_eq!(two - one, BoundedRational::new(1));
+        assert_eq!(two - one, BoundedRational::one());
     }
 
     #[test]
@@ -573,6 +572,8 @@ mod tests {
 
     #[test]
     fn decimal() {
+        let decimal: BoundedRational = "7.125".parse().unwrap();
+        assert!(decimal.prefer_decimal());
         let half: BoundedRational = "4/8".parse().unwrap();
         assert!(half.prefer_decimal());
         let third: BoundedRational = "2/6".parse().unwrap();
