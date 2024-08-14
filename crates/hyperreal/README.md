@@ -14,6 +14,8 @@ we can track to take advantage of in further calculations.
 
 This library is incomplete, some features which were whole and useful in the Java API described in the paper are unfinished or partial here.
 
+In particular the trigonometric functions provided in Hans' work are not yet implemented, there is Pi but no Sine etc.
+
 ## Unfaithful
 
 To the extent this implementation reflects the intent of the original paper, credit should go to the author of that paper, Hans Boehm.
@@ -21,9 +23,19 @@ To the extent this implementation reflects the intent of the original paper, cre
 On the other hand, if you encounter bugs or inadequacies in this code, chances are blame for those lies entirely with me as its programmer
 
 In some places the natural way to express the API in Rust differs from Java and I intend to explain such deviatione below, but for now the
-hilariously incomplete nature of the work makes that impractical.
+nature of the work often makes that impractical.
+
+Unlike Java, Rust has "Operator overloading" or rather, we can implement many arithmetic operators for user defined types. This means that
+where the Java API provides named functions, in many cases the Rust API provides operators, such as + (impl Add) and * (impl Multiply)
 
 `BoundedRational::to_big_integer` has a different name because in Rust `as` signifies that this conversion is cheap
+
+## Performance
+
+No attempt has been made to measure the current performance of this Rust, compare it against the Java, or against similar code. Although the
+code was not specifically written with performance in mind, some care was taken to avoid needless re-calculations even beyond the core idea of
+the Computable type.
+
 
 # Simple Expressions
 
