@@ -951,6 +951,15 @@ mod tests {
     }
 
     #[test]
+    fn ln() {
+        let five: BigInt = "5".parse().unwrap();
+        let integer = Computable::integer(five);
+        let ln = Computable::ln(integer);
+        let correct: BigInt = "1769595698905".parse().unwrap();
+        assert_eq!(ln.approx(-40), correct);
+    }
+
+    #[test]
     fn add() {
         let three: BigInt = "3".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();
