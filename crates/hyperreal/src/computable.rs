@@ -960,6 +960,15 @@ mod tests {
     }
 
     #[test]
+    fn ln_sqrt_pi() {
+        let pi = Computable::pi();
+        let sqrt = Computable::sqrt_computable(pi);
+        let ln = Computable::ln(sqrt);
+        let correct: BigInt = "629321910077".parse().unwrap();
+        assert_eq!(ln.approx(-40), correct);
+    }
+
+    #[test]
     fn add() {
         let three: BigInt = "3".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();
