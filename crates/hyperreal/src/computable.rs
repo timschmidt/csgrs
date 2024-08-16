@@ -19,6 +19,18 @@ pub struct Computable {
     cache: RefCell<Cache>,
 }
 
+mod rationals {
+    use crate::BoundedRational;
+    use std::sync::LazyLock;
+
+    pub static LONG_9: LazyLock<BoundedRational> =
+        LazyLock::new(|| BoundedRational::fraction(10, 9));
+    pub static LONG_24: LazyLock<BoundedRational> =
+        LazyLock::new(|| BoundedRational::fraction(25, 24));
+    pub static LONG_80: LazyLock<BoundedRational> =
+        LazyLock::new(|| BoundedRational::fraction(81, 80));
+}
+
 mod bigints {
     use num_bigint::{BigInt, ToBigInt};
     use num_traits::One;
@@ -33,6 +45,9 @@ mod bigints {
     pub static SEVEN: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&7).unwrap());
     pub static EIGHT: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&8).unwrap());
     pub static TWENTY_FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&24).unwrap());
+    pub static SIXTY_FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&64).unwrap());
+    pub static TWO_THREE_NINE: LazyLock<BigInt> =
+        LazyLock::new(|| ToBigInt::to_bigint(&239).unwrap());
 }
 
 impl Computable {
@@ -45,8 +60,7 @@ impl Computable {
 
     pub fn pi() -> Self {
         let atan5 = Self::prescaled_atan(bigints::FIVE.clone());
-        let two_three_nine: BigInt = "239".parse().unwrap();
-        let atan_239 = Self::prescaled_atan(two_three_nine);
+        let atan_239 = Self::prescaled_atan(bigints::TWO_THREE_NINE.clone());
         let four = Self::integer(bigints::FOUR.clone());
         let four_atan5 = Self::multiply(four, atan5);
         let neg = Self::negate(atan_239);
@@ -85,20 +99,13 @@ impl Computable {
     }
 
     fn ln2() -> Self {
-        let ten_ninths: BoundedRational = "10/9".parse().unwrap();
-        let ten_ninths = Self::rational(ten_ninths);
+        let long_9 = Self::rational(rationals::LONG_9.clone());
+        let long_24 = Self::rational(rationals::LONG_24.clone());
+        let long_80 = Self::rational(rationals::LONG_80.clone());
 
-        let twentyfive_twentyfourths: BoundedRational = "25/24".parse().unwrap();
-        let twentyfive_twentyfourths = Self::rational(twentyfive_twentyfourths);
-
-        let eightyone_eightyeths: BoundedRational = "81/80".parse().unwrap();
-        let eightyone_eightyeths = Self::rational(eightyone_eightyeths);
-
-        let ln2_1 = Self::integer(bigints::SEVEN.clone()).multiply(ten_ninths.simple_ln());
-        let ln2_2 =
-            Self::integer(bigints::TWO.clone()).multiply(twentyfive_twentyfourths.simple_ln());
-        let ln2_3 =
-            Self::integer(bigints::THREE.clone()).multiply(eightyone_eightyeths.simple_ln());
+        let ln2_1 = Self::integer(bigints::SEVEN.clone()).multiply(long_9.simple_ln());
+        let ln2_2 = Self::integer(bigints::TWO.clone()).multiply(long_24.simple_ln());
+        let ln2_3 = Self::integer(bigints::THREE.clone()).multiply(long_80.simple_ln());
 
         let neg_ln2_2 = ln2_2.negate();
 
@@ -119,8 +126,10 @@ impl Computable {
             return self.inverse().ln().negate();
         }
         if rough_appr >= *high_ln_limit {
-            let sixty_four: BigInt = "64".parse().unwrap();
-            if rough_appr <= sixty_four {
+            // Sixteenths, ie 64 == 4.0
+            let sixty_four = bigints::SIXTY_FOUR.deref();
+
+            if rough_appr <= *sixty_four {
                 let quarter = self.sqrt_computable().sqrt_computable().ln();
                 return quarter.shift_left(2);
             } else {
