@@ -23,12 +23,12 @@ mod rationals {
     use crate::BoundedRational;
     use std::sync::LazyLock;
 
-    pub static LONG_9: LazyLock<BoundedRational> =
-        LazyLock::new(|| BoundedRational::fraction(10, 9));
-    pub static LONG_24: LazyLock<BoundedRational> =
-        LazyLock::new(|| BoundedRational::fraction(25, 24));
-    pub static LONG_80: LazyLock<BoundedRational> =
-        LazyLock::new(|| BoundedRational::fraction(81, 80));
+    pub static SHORT_9: LazyLock<BoundedRational> =
+        LazyLock::new(|| BoundedRational::fraction(1, 9));
+    pub static SHORT_24: LazyLock<BoundedRational> =
+        LazyLock::new(|| BoundedRational::fraction(1, 24));
+    pub static SHORT_80: LazyLock<BoundedRational> =
+        LazyLock::new(|| BoundedRational::fraction(1, 80));
 }
 
 mod bigints {
@@ -99,13 +99,13 @@ impl Computable {
     }
 
     fn ln2() -> Self {
-        let long_9 = Self::rational(rationals::LONG_9.clone());
-        let long_24 = Self::rational(rationals::LONG_24.clone());
-        let long_80 = Self::rational(rationals::LONG_80.clone());
+        let prescaled_9 = Self::rational(rationals::SHORT_9.clone()).prescaled_ln();
+        let prescaled_24 = Self::rational(rationals::SHORT_24.clone()).prescaled_ln();
+        let prescaled_80 = Self::rational(rationals::SHORT_80.clone()).prescaled_ln();
 
-        let ln2_1 = Self::integer(bigints::SEVEN.clone()).multiply(long_9.simple_ln());
-        let ln2_2 = Self::integer(bigints::TWO.clone()).multiply(long_24.simple_ln());
-        let ln2_3 = Self::integer(bigints::THREE.clone()).multiply(long_80.simple_ln());
+        let ln2_1 = Self::integer(bigints::SEVEN.clone()).multiply(prescaled_9);
+        let ln2_2 = Self::integer(bigints::TWO.clone()).multiply(prescaled_24);
+        let ln2_3 = Self::integer(bigints::THREE.clone()).multiply(prescaled_80);
 
         let neg_ln2_2 = ln2_2.negate();
 
@@ -142,14 +142,14 @@ impl Computable {
             }
         }
 
-        Self::simple_ln(self)
-    }
-
-    fn simple_ln(self) -> Self {
         let minus_one = Self::integer(bigints::MINUS_ONE.clone());
         let fraction = Self::add(self, minus_one);
+        Self::prescaled_ln(fraction)
+    }
+
+    fn prescaled_ln(self) -> Self {
         Self {
-            internal: Box::new(PrescaledLn(fraction)),
+            internal: Box::new(PrescaledLn(self)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
