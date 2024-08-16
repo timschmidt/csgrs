@@ -1,6 +1,7 @@
 use crate::BoundedRational;
 use num_bigint::{BigInt, BigUint, Sign};
 use num_traits::{One, Zero};
+use std::ops::Deref;
 
 pub type Precision = i32;
 
@@ -18,6 +19,22 @@ pub struct Computable {
     cache: RefCell<Cache>,
 }
 
+mod bigints {
+    use num_bigint::{BigInt, ToBigInt};
+    use num_traits::One;
+    use std::sync::LazyLock;
+
+    pub static MINUS_ONE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&-1).unwrap());
+    pub static ONE: LazyLock<BigInt> = LazyLock::new(BigInt::one);
+    pub static TWO: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&2).unwrap());
+    pub static THREE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&3).unwrap());
+    pub static FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&4).unwrap());
+    pub static FIVE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&5).unwrap());
+    pub static SEVEN: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&7).unwrap());
+    pub static EIGHT: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&8).unwrap());
+    pub static TWENTY_FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&24).unwrap());
+}
+
 impl Computable {
     pub fn one() -> Self {
         Self {
@@ -27,17 +44,14 @@ impl Computable {
     }
 
     pub fn pi() -> Self {
-        let five: BigInt = "5".parse().unwrap();
-        let atan5 = Self::prescaled_atan(five);
+        let atan5 = Self::prescaled_atan(bigints::FIVE.clone());
         let two_three_nine: BigInt = "239".parse().unwrap();
         let atan_239 = Self::prescaled_atan(two_three_nine);
-        let four: BigInt = "4".parse().unwrap();
-        let four = Self::integer(four);
+        let four = Self::integer(bigints::FOUR.clone());
         let four_atan5 = Self::multiply(four, atan5);
         let neg = Self::negate(atan_239);
         let sum = Self::add(four_atan5, neg);
-        let four: BigInt = "4".parse().unwrap();
-        let four = Self::integer(four);
+        let four = Self::integer(bigints::FOUR.clone());
         Self::multiply(four, sum)
     }
 
@@ -59,7 +73,7 @@ impl Computable {
         if rough_appr.sign() == Sign::Minus {
             return self.negate().exp().inverse();
         }
-        if rough_appr > "2".parse().unwrap() {
+        if rough_appr > *bigints::TWO {
             let square_root = self.shift_right(1).exp();
             square_root.square()
         } else {
@@ -80,14 +94,11 @@ impl Computable {
         let eightyone_eightyeths: BoundedRational = "81/80".parse().unwrap();
         let eightyone_eightyeths = Self::rational(eightyone_eightyeths);
 
-        let seven: BigInt = "7".parse().unwrap();
-        let ln2_1 = Self::integer(seven).multiply(ten_ninths.simple_ln());
-
-        let two: BigInt = "2".parse().unwrap();
-        let ln2_2 = Self::integer(two).multiply(twentyfive_twentyfourths.simple_ln());
-
-        let three: BigInt = "3".parse().unwrap();
-        let ln2_3 = Self::integer(three).multiply(eightyone_eightyeths.simple_ln());
+        let ln2_1 = Self::integer(bigints::SEVEN.clone()).multiply(ten_ninths.simple_ln());
+        let ln2_2 =
+            Self::integer(bigints::TWO.clone()).multiply(twentyfive_twentyfourths.simple_ln());
+        let ln2_3 =
+            Self::integer(bigints::THREE.clone()).multiply(eightyone_eightyeths.simple_ln());
 
         let neg_ln2_2 = ln2_2.negate();
 
@@ -96,18 +107,18 @@ impl Computable {
 
     pub fn ln(self) -> Self {
         // Sixteenths, ie 8 == 0.5, 24 == 1.5
-        let low_ln_limit: BigInt = "8".parse().unwrap();
-        let high_ln_limit: BigInt = "24".parse().unwrap();
+        let low_ln_limit = bigints::EIGHT.deref();
+        let high_ln_limit = bigints::TWENTY_FOUR.deref();
 
         let low_prec = -4;
         let rough_appr = self.approx(low_prec);
         if rough_appr < BigInt::zero() {
             panic!("ArithmeticException");
         }
-        if rough_appr <= low_ln_limit {
+        if rough_appr <= *low_ln_limit {
             return self.inverse().ln().negate();
         }
-        if rough_appr >= high_ln_limit {
+        if rough_appr >= *high_ln_limit {
             let sixty_four: BigInt = "64".parse().unwrap();
             if rough_appr <= sixty_four {
                 let quarter = self.sqrt_computable().sqrt_computable().ln();
@@ -126,8 +137,7 @@ impl Computable {
     }
 
     fn simple_ln(self) -> Self {
-        let minus_one: BigInt = "-1".parse().unwrap();
-        let minus_one = Self::integer(minus_one);
+        let minus_one = Self::integer(bigints::MINUS_ONE.clone());
         let fraction = Self::add(self, minus_one);
         Self {
             internal: Box::new(PrescaledLn(fraction)),
@@ -302,9 +312,10 @@ impl Computable {
         if cache.is_none() {
             try_once = true;
         } else if let Some((_prec, appr)) = cache {
-            let minus_1: BigInt = "-1".parse().unwrap();
+            let one = bigints::ONE.deref();
+            let minus_one = bigints::MINUS_ONE.deref();
 
-            if appr > minus_1 && appr < BigInt::one() {
+            if appr > *minus_one && appr < *one {
                 try_once = true;
             }
         }
@@ -676,8 +687,7 @@ impl Approximation for Sqrt {
 
             let shifted_result = scaled_numerator / last_appr;
 
-            let two: BigInt = "2".parse().unwrap();
-            (shifted_result + BigInt::one()) / two
+            (shifted_result + BigInt::one()) / bigints::TWO.deref()
         } else {
             // Use an approximation from the Num crate
             // Make sure all precisions are even
