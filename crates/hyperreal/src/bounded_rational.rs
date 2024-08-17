@@ -1,6 +1,6 @@
 use crate::Computable;
 use num_bigint::Sign::{self, *};
-use num_bigint::{BigInt, BigUint, ToBigUint};
+use num_bigint::{BigInt, BigUint, ToBigInt, ToBigUint};
 use num_traits::{One, Zero};
 use std::sync::LazyLock;
 
@@ -9,8 +9,8 @@ pub struct ParseBRError();
 
 /// Ratio of two integers
 ///
-/// This type is functionally a ratio between two [`BigUint`] (the numerator
-/// and denominator) plus a [`Sign`]. The numerator and denominator are finite.
+/// This type is functionally a [`Sign`] with a ratio between two [`BigUint`]
+/// (the numerator and denominator). The numerator and denominator are finite.
 ///
 /// # Examples
 ///
@@ -147,74 +147,7 @@ impl BoundedRational {
             denominator: self.numerator,
         }
     }
-}
 
-use core::fmt;
-
-impl fmt::Display for BoundedRational {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.sign == Minus {
-            f.write_str("-")?;
-        } else if f.sign_plus() {
-            f.write_str("+")?;
-        }
-        if self.denominator == One::one() {
-            f.write_fmt(format_args!("{}", self.numerator))?;
-        } else if f.alternate() {
-            let whole = &self.numerator / &self.denominator;
-            f.write_fmt(format_args!("{whole}."))?;
-            let round = &whole * &self.denominator;
-            let mut left = &self.numerator - &round;
-            let mut digits = f.precision().unwrap_or(12);
-            loop {
-                left *= &*TEN;
-                let digit = &left / &self.denominator;
-                f.write_fmt(format_args!("{digit}"))?;
-                left -= digit * &self.denominator;
-                if left.is_zero() {
-                    break;
-                }
-                digits -= 1;
-                if digits == 0 {
-                    break;
-                }
-            }
-        } else {
-            let whole = &self.numerator / &self.denominator;
-            let round = &whole * &self.denominator;
-            let left = &self.numerator - &round;
-            if whole.is_zero() {
-                f.write_fmt(format_args!("{left}/{}", self.denominator))?;
-            } else {
-                f.write_fmt(format_args!("{whole} {left}/{}", self.denominator))?;
-            }
-        }
-        Ok(())
-    }
-}
-
-use num_bigint::ToBigInt;
-
-impl BoundedRational {
-    pub fn fmt_combine(&self, c: &Computable, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let d = &self.denominator.to_bigint().unwrap();
-        let n = &self.numerator.to_bigint().unwrap();
-        let precision = f.precision().unwrap_or(16);
-        let bits = (n / d).bits() + ((precision * 10) as u64 / 3);
-        let factor: i32 = bits
-            .try_into()
-            .expect("The number of bits we care about should fit in a 32-bit integer!");
-
-        let divisor = TWO.pow(factor.try_into().unwrap());
-
-        let r = Self::from_bigint_fraction(c.approx(-factor), divisor);
-        let s = r * self.clone();
-
-        f.write_fmt(format_args!("{s:#.*}...", precision))
-    }
-}
-
-impl BoundedRational {
     pub fn is_whole(&self) -> bool {
         let whole = &self.numerator / &self.denominator;
         let round = &whole * &self.denominator;
@@ -255,9 +188,7 @@ impl BoundedRational {
     pub fn sign(&self) -> Sign {
         self.sign
     }
-}
 
-impl BoundedRational {
     const EXTRACT_SQUARE_MAX_LEN: u64 = 5000;
 
     fn make_squares() -> Vec<(BigUint, BigUint)> {
@@ -335,6 +266,69 @@ impl BoundedRational {
     pub fn extract_square_will_succeed(&self) -> bool {
         self.numerator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
             && self.denominator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
+    }
+}
+
+impl BoundedRational {
+    pub fn fmt_combine(&self, c: &Computable, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let d = &self.denominator.to_bigint().unwrap();
+        let n = &self.numerator.to_bigint().unwrap();
+        let precision = f.precision().unwrap_or(16);
+        let bits = (n / d).bits() + ((precision * 10) as u64 / 3);
+        let factor: i32 = bits
+            .try_into()
+            .expect("The number of bits we care about should fit in a 32-bit integer!");
+
+        let divisor = TWO.pow(factor.try_into().unwrap());
+
+        let r = Self::from_bigint_fraction(c.approx(-factor), divisor);
+        let s = r * self.clone();
+
+        f.write_fmt(format_args!("{s:#.*}...", precision))
+    }
+}
+
+use core::fmt;
+
+impl fmt::Display for BoundedRational {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.sign == Minus {
+            f.write_str("-")?;
+        } else if f.sign_plus() {
+            f.write_str("+")?;
+        }
+        if self.denominator == One::one() {
+            f.write_fmt(format_args!("{}", self.numerator))?;
+        } else if f.alternate() {
+            let whole = &self.numerator / &self.denominator;
+            f.write_fmt(format_args!("{whole}."))?;
+            let round = &whole * &self.denominator;
+            let mut left = &self.numerator - &round;
+            let mut digits = f.precision().unwrap_or(12);
+            loop {
+                left *= &*TEN;
+                let digit = &left / &self.denominator;
+                f.write_fmt(format_args!("{digit}"))?;
+                left -= digit * &self.denominator;
+                if left.is_zero() {
+                    break;
+                }
+                digits -= 1;
+                if digits == 0 {
+                    break;
+                }
+            }
+        } else {
+            let whole = &self.numerator / &self.denominator;
+            let round = &whole * &self.denominator;
+            let left = &self.numerator - &round;
+            if whole.is_zero() {
+                f.write_fmt(format_args!("{left}/{}", self.denominator))?;
+            } else {
+                f.write_fmt(format_args!("{whole} {left}/{}", self.denominator))?;
+            }
+        }
+        Ok(())
     }
 }
 

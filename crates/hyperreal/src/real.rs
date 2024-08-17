@@ -130,6 +130,7 @@ impl Real {
         self.rational.sign() == Sign::NoSign
     }
 
+    /// Are two Reals definitely unequal?
     pub fn definitely_not_equal(&self, other: &Self) -> bool {
         if self.rational.sign() == Sign::NoSign {
             return other.class.is_non_zero() && other.rational.sign() != Sign::NoSign;
@@ -221,6 +222,8 @@ impl Real {
         })
     }
 
+    /// The square root of this Real, or a [`RealProblem`] if that's impossible,
+    /// in particular RealProblem::SqrtNegative if this Real is negative
     pub fn sqrt(self) -> Result<Self, RealProblem> {
         if self.best_sign() == Sign::Minus {
             return Err(RealProblem::SqrtNegative);
@@ -278,6 +281,7 @@ impl Real {
         Ok(self.make_computable(Computable::sqrt_computable))
     }
 
+    /// The exponential function for this Real parameter
     pub fn exp(self) -> Result<Self, RealProblem> {
         if self.definitely_zero() {
             return Ok(Self::new(BoundedRational::one()));
@@ -305,6 +309,7 @@ impl Real {
         Ok(self.make_computable(Computable::exp))
     }
 
+    /// The Natural Logarithm of this Real
     pub fn ln(self) -> Result<Self, RealProblem> {
         match &self.class {
             Class::One => {
@@ -333,22 +338,22 @@ impl Real {
 
         Ok(self.make_computable(Computable::ln))
     }
+
+    /// Is this Real a whole number aka integer ?
+    pub fn is_whole(&self) -> bool {
+        self.class == Class::One && self.rational.is_whole()
+    }
+
+    /// Should we display this Real as a decimal ?
+    pub fn prefer_decimal(&self) -> bool {
+        self.class != Class::One || self.rational.prefer_decimal()
+    }
 }
 
 use core::fmt;
 
 impl Real {
-    // Is this a whole number aka integer ?
-    pub fn is_whole(&self) -> bool {
-        self.class == Class::One && self.rational.is_whole()
-    }
-
-    // Should we display this as a decimal ?
-    pub fn prefer_decimal(&self) -> bool {
-        self.class != Class::One || self.rational.prefer_decimal()
-    }
-
-    // Format this Real as a decimal rather than rational
+    /// Format this Real as a decimal rather than rational
     pub fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.class == Class::One {
             if let Some(precision) = f.precision() {
