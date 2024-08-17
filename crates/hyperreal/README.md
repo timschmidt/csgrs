@@ -9,6 +9,7 @@ The Real type in this crate represents a number which is a composite of a ration
 real value which we may not be able to compute exactly and so must be approximated for display, but which sometimes has a precise description
 we can track to take advantage of in further calculations.
 
+The built-in example interactive evaluates [Simple Expressions](#simple-expressions) entered by hand
 
 ## Unfinished
 

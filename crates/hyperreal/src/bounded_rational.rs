@@ -7,6 +7,37 @@ use std::sync::LazyLock;
 #[derive(Clone, Debug)]
 pub struct ParseBRError();
 
+/// Ratio of two integers
+///
+/// This type is functionally a ratio between two [`BigUint`] (the numerator
+/// and denominator) plus a [`Sign`]. The numerator and denominator are finite.
+///
+/// # Examples
+///
+/// Parsing a rational from a simple fraction
+/// ```
+/// use realistic::BoundedRational;
+/// let half: BoundedRational = "9/18".parse().unwrap();
+/// ```
+///
+/// Parsing a decimal fraction
+/// ```
+/// use realistic::BoundedRational;
+/// let point_two_five: BoundedRational = "0.25".parse().unwrap();
+/// ```
+///
+/// Simple arithmetic
+///
+/// ```
+/// use realistic::BoundedRational;
+/// let quarter = BoundedRational::fraction(1, 4);
+/// let eighteen = BoundedRational::new(18);
+/// let two = BoundedRational::one() + BoundedRational::one();
+/// let sixteen = eighteen - two;
+/// let four = quarter * sixteen;
+/// assert_eq!(four, BoundedRational::new(4));
+/// ```
+
 #[derive(Clone, Debug)]
 pub struct BoundedRational {
     sign: Sign,
@@ -19,6 +50,7 @@ static FIVE: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&5).unwr
 static TEN: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&10).unwrap());
 
 impl BoundedRational {
+    /// Zero, the additive identity
     pub fn zero() -> Self {
         Self {
             sign: NoSign,
@@ -27,6 +59,7 @@ impl BoundedRational {
         }
     }
 
+    /// One, the multiplicative identity
     pub fn one() -> Self {
         Self {
             sign: Plus,
@@ -35,6 +68,7 @@ impl BoundedRational {
         }
     }
 
+    /// The non-negative BoundedRational corresponding to the provided [`u64`]
     pub fn new(n: u64) -> Self {
         Self {
             sign: Plus,
@@ -43,6 +77,7 @@ impl BoundedRational {
         }
     }
 
+    /// The BoundedRational corresponding to the provided [`BigInt`]
     pub fn from_bigint(n: BigInt) -> Self {
         let sign = n.sign();
         let numerator = n.magnitude().clone();
@@ -53,6 +88,8 @@ impl BoundedRational {
         }
     }
 
+    /// The non-negative BoundedRational corresponding to the provided [`u64`]
+    /// numerator and denominator as a fraction
     pub fn fraction(n: u64, d: u64) -> Self {
         Self {
             sign: Plus,
@@ -61,6 +98,8 @@ impl BoundedRational {
         }
     }
 
+    /// The BoundedRational corresponding to the provided [`BigInt`]
+    /// numerator and [`BigUint`] denominator as a fraction
     pub fn from_bigint_fraction(n: BigInt, denominator: BigUint) -> Self {
         let sign = n.sign();
         let numerator = n.magnitude().clone();
@@ -91,6 +130,17 @@ impl BoundedRational {
         }
     }
 
+    /// The inverse of this BoundedRational
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use realistic::BoundedRational;
+    /// let five = BoundedRational::new(5);
+    /// let a_fifth = BoundedRational::fraction(1, 5);
+    /// assert_eq!(five.clone().inverse(), a_fifth);
+    /// assert_eq!(a_fifth.clone().inverse(), five);
+    /// ```
     pub fn inverse(self) -> Self {
         Self {
             sign: self.sign,
