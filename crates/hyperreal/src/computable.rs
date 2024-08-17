@@ -31,7 +31,7 @@ mod rationals {
         LazyLock::new(|| BoundedRational::fraction(1, 80));
 }
 
-mod bigints {
+mod big {
     use num_bigint::{BigInt, ToBigInt};
     use num_traits::One;
     use std::sync::LazyLock;
@@ -59,13 +59,13 @@ impl Computable {
     }
 
     pub fn pi() -> Self {
-        let atan5 = Self::prescaled_atan(bigints::FIVE.clone());
-        let atan_239 = Self::prescaled_atan(bigints::TWO_THREE_NINE.clone());
-        let four = Self::integer(bigints::FOUR.clone());
+        let atan5 = Self::prescaled_atan(big::FIVE.clone());
+        let atan_239 = Self::prescaled_atan(big::TWO_THREE_NINE.clone());
+        let four = Self::integer(big::FOUR.clone());
         let four_atan5 = Self::multiply(four, atan5);
         let neg = Self::negate(atan_239);
         let sum = Self::add(four_atan5, neg);
-        let four = Self::integer(bigints::FOUR.clone());
+        let four = Self::integer(big::FOUR.clone());
         Self::multiply(four, sum)
     }
 
@@ -87,7 +87,7 @@ impl Computable {
         if rough_appr.sign() == Sign::Minus {
             return self.negate().exp().inverse();
         }
-        if rough_appr > *bigints::TWO {
+        if rough_appr > *big::TWO {
             let square_root = self.shift_right(1).exp();
             square_root.square()
         } else {
@@ -103,9 +103,9 @@ impl Computable {
         let prescaled_24 = Self::rational(rationals::SHORT_24.clone()).prescaled_ln();
         let prescaled_80 = Self::rational(rationals::SHORT_80.clone()).prescaled_ln();
 
-        let ln2_1 = Self::integer(bigints::SEVEN.clone()).multiply(prescaled_9);
-        let ln2_2 = Self::integer(bigints::TWO.clone()).multiply(prescaled_24);
-        let ln2_3 = Self::integer(bigints::THREE.clone()).multiply(prescaled_80);
+        let ln2_1 = Self::integer(big::SEVEN.clone()).multiply(prescaled_9);
+        let ln2_2 = Self::integer(big::TWO.clone()).multiply(prescaled_24);
+        let ln2_3 = Self::integer(big::THREE.clone()).multiply(prescaled_80);
 
         let neg_ln2_2 = ln2_2.negate();
 
@@ -114,8 +114,8 @@ impl Computable {
 
     pub fn ln(self) -> Self {
         // Sixteenths, ie 8 == 0.5, 24 == 1.5
-        let low_ln_limit = bigints::EIGHT.deref();
-        let high_ln_limit = bigints::TWENTY_FOUR.deref();
+        let low_ln_limit = big::EIGHT.deref();
+        let high_ln_limit = big::TWENTY_FOUR.deref();
 
         let low_prec = -4;
         let rough_appr = self.approx(low_prec);
@@ -127,7 +127,7 @@ impl Computable {
         }
         if rough_appr >= *high_ln_limit {
             // Sixteenths, ie 64 == 4.0
-            let sixty_four = bigints::SIXTY_FOUR.deref();
+            let sixty_four = big::SIXTY_FOUR.deref();
 
             if rough_appr <= *sixty_four {
                 let quarter = self.sqrt_computable().sqrt_computable().ln();
@@ -142,7 +142,7 @@ impl Computable {
             }
         }
 
-        let minus_one = Self::integer(bigints::MINUS_ONE.clone());
+        let minus_one = Self::integer(big::MINUS_ONE.clone());
         let fraction = Self::add(self, minus_one);
         Self::prescaled_ln(fraction)
     }
@@ -291,8 +291,8 @@ impl Computable {
         let needed = tolerance - 1;
         let this = self.approx(needed);
         let alt = other.approx(needed);
-        let max = alt.clone() + BigInt::one();
-        let min = alt.clone() - BigInt::one();
+        let max = alt.clone() + big::ONE.deref();
+        let min = alt.clone() - big::ONE.deref();
         if this > max {
             Ordering::Greater
         } else if this < min {
@@ -321,8 +321,8 @@ impl Computable {
         if cache.is_none() {
             try_once = true;
         } else if let Some((_prec, appr)) = cache {
-            let one = bigints::ONE.deref();
-            let minus_one = bigints::MINUS_ONE.deref();
+            let one = big::ONE.deref();
+            let minus_one = big::MINUS_ONE.deref();
 
             if appr > *minus_one && appr < *one {
                 try_once = true;
@@ -374,8 +374,7 @@ fn scale(n: BigInt, p: Precision) -> BigInt {
     if p >= 0 {
         n << p
     } else {
-        let one: BigInt = One::one();
-        let adj = shift(n, p + 1) + one;
+        let adj = shift(n, p + 1) + big::ONE.deref();
         adj >> 1
     }
 }
@@ -414,7 +413,7 @@ impl Approximation for Inverse {
             return Zero::zero();
         }
 
-        let dividend = BigInt::one() << log_scale_factor;
+        let dividend = big::ONE.deref() << log_scale_factor;
         let scaled_divisor = self.0.approx(prec_needed);
         let abs_scaled_divisor = scaled_divisor.abs();
         let adj_dividend = dividend + (&abs_scaled_divisor >> 1);
@@ -595,17 +594,16 @@ impl Approximation for Exp {
         // Series truncation error < 1/16 ulp.
         // Final rounding error is <= 1/2 ulp.
         // Thus final error is < 1 ulp.
-        let scaled_1 = BigInt::one() << -calc_precision;
+        let scaled_1 = big::ONE.deref() << -calc_precision;
 
-        let max_trunc_error = BigInt::one() << (p - 4 - calc_precision);
+        let max_trunc_error = big::ONE.deref() << (p - 4 - calc_precision);
         let mut current_term = scaled_1.clone();
         let mut sum = scaled_1;
         let mut n = BigInt::zero();
 
         while current_term.abs() > max_trunc_error {
-            n += BigInt::one();
-            current_term = scale(current_term * &op_appr, op_prec);
-            current_term /= &n;
+            n += big::ONE.deref();
+            current_term = scale(current_term * &op_appr, op_prec) / &n;
             sum += &current_term;
         }
 
@@ -642,7 +640,7 @@ impl Approximation for PrescaledLn {
         let mut n = 1;
         let mut sign = 1;
 
-        let max_trunc_error = BigInt::one() << (p - 4 - calc_precision);
+        let max_trunc_error = big::ONE.deref() << (p - 4 - calc_precision);
 
         while current_term.abs() > max_trunc_error {
             n += 1;
@@ -696,7 +694,7 @@ impl Approximation for Sqrt {
 
             let shifted_result = scaled_numerator / last_appr;
 
-            (shifted_result + BigInt::one()) / bigints::TWO.deref()
+            (shifted_result + big::ONE.deref()) / big::TWO.deref()
         } else {
             // Use an approximation from the Num crate
             // Make sure all precisions are even
@@ -750,7 +748,7 @@ impl Approximation for PrescaledAtan {
 
         let max_trunc_error: BigUint = BigUint::one() << (p - 2 - calc_precision);
 
-        let scaled_1: BigInt = BigInt::one() << (-calc_precision);
+        let scaled_1 = big::ONE.deref() << (-calc_precision);
         let big_op_squared: BigInt = &self.0 * &self.0;
         let inverse: BigInt = scaled_1 / &self.0;
 
@@ -808,8 +806,8 @@ mod tests {
 
     #[test]
     fn shifted() {
-        let one: BigInt = One::one();
-        let two = one.clone() + one.clone();
+        let one = BigInt::one();
+        let two = &one + &one;
         assert_eq!(one, shift(two, -1));
     }
 
@@ -818,7 +816,7 @@ mod tests {
         let nine: BigInt = "9".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();
         let two: BigInt = "2".parse().unwrap();
-        let one: BigInt = One::one();
+        let one = BigInt::one();
         let a = Computable::integer(nine.clone());
         assert_eq!(nine, a.approx(0));
         assert_eq!(five, a.approx(1));
