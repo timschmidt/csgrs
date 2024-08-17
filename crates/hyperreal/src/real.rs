@@ -1,6 +1,8 @@
 use crate::BoundedRational;
 use crate::Computable;
 
+/// Problems when either parsing or attempting Arithmetic with [`Real`] numbers
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum RealProblem {
     ParseError,
@@ -51,6 +53,30 @@ impl Class {
     }
 }
 
+/// (More) Real numbers
+///
+/// This type is functionally the product of a [`Computable`] number
+/// and a [`BoundedRational`]
+///
+/// # Examples
+///
+/// Even a normal rational can be parsed as a Real
+/// ```
+/// use realistic::Real;
+/// let half: Real = "0.5".parse().unwrap();
+/// ```
+///
+/// Simple arithmetic
+/// ```
+/// use realistic::Real;
+/// let two_pi = Real::pi() + Real::pi();
+/// let four: Real = "4".parse().unwrap();
+/// let four_pi = four * Real::pi();
+/// let answer = (four_pi / two_pi).unwrap();
+/// let two = realistic::BoundedRational::new(2);
+/// assert_eq!(answer, Real::new(two));
+/// ```
+
 #[derive(Debug)]
 pub struct Real {
     rational: BoundedRational,
@@ -59,6 +85,7 @@ pub struct Real {
 }
 
 impl Real {
+    /// Zero, the additive identity
     pub fn zero() -> Self {
         Self {
             rational: BoundedRational::zero(),
@@ -75,6 +102,7 @@ impl Real {
         }
     }
 
+    /// π, the ratio of a circle's circumference to its diameter
     pub fn pi() -> Self {
         Self {
             rational: BoundedRational::one(),
@@ -83,6 +111,7 @@ impl Real {
         }
     }
 
+    /// e, Euler's number and the base of the natural logarithm function
     pub fn e() -> Self {
         let one = BoundedRational::one();
         Self {
@@ -96,6 +125,7 @@ impl Real {
 use num_bigint::Sign;
 
 impl Real {
+    /// Is this Real exactly zero?
     pub fn definitely_zero(&self) -> bool {
         self.rational.sign() == Sign::NoSign
     }
@@ -111,6 +141,8 @@ impl Real {
         /* ... TODO add more cases which definitely aren't equal */
     }
 
+    /// Our best attempt to discern the [`Sign`] of this Real
+    /// this will be accurate for trivial Rationals and some but not all other cases
     pub fn best_sign(&self) -> Sign {
         match &self.class {
             Class::One | Class::Pi | Class::Exp(_) | Class::Sqrt(_) => self.rational.sign(),
@@ -139,9 +171,17 @@ impl Real {
             computable,
         }
     }
-}
 
-impl Real {
+    /// The inverse of this Real, or a [`RealProblem`] if that's impossible,
+    /// in particular RealProblem::DivideByZero if this real is zero
+    ///
+    /// Example
+    /// ```
+    /// use realistic::{BoundedRational,Real};
+    /// let five = Real::new(BoundedRational::new(5));
+    /// let a_fifth = Real::new(BoundedRational::fraction(1, 5));
+    /// assert_eq!(five.inverse(), Ok(a_fifth));
+    /// ```
     pub fn inverse(self) -> Result<Self, RealProblem> {
         if self.definitely_zero() {
             return Err(RealProblem::DivideByZero);

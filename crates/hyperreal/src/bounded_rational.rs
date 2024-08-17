@@ -27,7 +27,6 @@ pub struct ParseBRError();
 /// ```
 ///
 /// Simple arithmetic
-///
 /// ```
 /// use realistic::BoundedRational;
 /// let quarter = BoundedRational::fraction(1, 4);
