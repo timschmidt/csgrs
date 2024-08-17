@@ -86,7 +86,7 @@ pub struct Real {
 
 impl Real {
     /// Zero, the additive identity
-    pub fn zero() -> Self {
+    pub fn zero() -> Real {
         Self {
             rational: BoundedRational::zero(),
             class: Class::One,
@@ -94,7 +94,8 @@ impl Real {
         }
     }
 
-    pub fn new(rational: BoundedRational) -> Self {
+    /// The specified [`BoundedRational`] as a Real
+    pub fn new(rational: BoundedRational) -> Real {
         Self {
             rational,
             class: Class::One,
@@ -103,7 +104,7 @@ impl Real {
     }
 
     /// π, the ratio of a circle's circumference to its diameter
-    pub fn pi() -> Self {
+    pub fn pi() -> Real {
         Self {
             rational: BoundedRational::one(),
             class: Class::Pi,
@@ -112,7 +113,7 @@ impl Real {
     }
 
     /// e, Euler's number and the base of the natural logarithm function
-    pub fn e() -> Self {
+    pub fn e() -> Real {
         let one = BoundedRational::one();
         Self {
             rational: one.clone(),
@@ -224,7 +225,7 @@ impl Real {
 
     /// The square root of this Real, or a [`RealProblem`] if that's impossible,
     /// in particular RealProblem::SqrtNegative if this Real is negative
-    pub fn sqrt(self) -> Result<Self, RealProblem> {
+    pub fn sqrt(self) -> Result<Real, RealProblem> {
         if self.best_sign() == Sign::Minus {
             return Err(RealProblem::SqrtNegative);
         }
@@ -281,8 +282,8 @@ impl Real {
         Ok(self.make_computable(Computable::sqrt_computable))
     }
 
-    /// The exponential function for this Real parameter
-    pub fn exp(self) -> Result<Self, RealProblem> {
+    /// Apply the exponential function to this Real parameter
+    pub fn exp(self) -> Result<Real, RealProblem> {
         if self.definitely_zero() {
             return Ok(Self::new(BoundedRational::one()));
         }
@@ -309,8 +310,8 @@ impl Real {
         Ok(self.make_computable(Computable::exp))
     }
 
-    /// The Natural Logarithm of this Real
-    pub fn ln(self) -> Result<Self, RealProblem> {
+    /// The natural logarithm of this Real
+    pub fn ln(self) -> Result<Real, RealProblem> {
         match &self.class {
             Class::One => {
                 if self.rational == BoundedRational::one() {
