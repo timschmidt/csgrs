@@ -2,6 +2,8 @@ use realistic::{RealProblem, Simple};
 use std::io;
 
 pub fn main() {
+    let debug_parse = false;
+
     loop {
         let mut input = String::new();
 
@@ -22,17 +24,23 @@ pub fn main() {
             }
         };
 
-        println!("expression parsed as: {expr:?}");
+        if debug_parse {
+            eprintln!("expression parsed as: {expr:?}");
+        }
 
         let ans = expr.evaluate();
         match ans {
             Ok(ans) => {
                 if ans.is_whole() {
                     println!("{ans}");
-                } else if ans.prefer_decimal() {
-                    println!("{ans} ~= {ans:#.20}");
+                } else if ans.is_rational() {
+                    if ans.prefer_fraction() {
+                        println!("{ans} ~= {ans:#.10}");
+                    } else {
+                        println!("{ans} = {ans:#}");
+                    }
                 } else {
-                    println!("{ans} ~= {ans:#.5}");
+                    println!("{ans} ~= {ans:#.20}");
                 }
             }
             Err(RealProblem::InsufficientParameters) => {

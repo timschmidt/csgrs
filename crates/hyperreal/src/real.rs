@@ -345,9 +345,14 @@ impl Real {
         self.class == Class::One && self.rational.is_whole()
     }
 
-    /// Should we display this Real as a decimal ?
-    pub fn prefer_decimal(&self) -> bool {
-        self.class != Class::One || self.rational.prefer_decimal()
+    /// Is this Real known to be rational ?
+    pub fn is_rational(&self) -> bool {
+        self.class == Class::One
+    }
+
+    /// Should we display this Real as a fraction ?
+    pub fn prefer_fraction(&self) -> bool {
+        self.class == Class::One && self.rational.prefer_fraction()
     }
 }
 

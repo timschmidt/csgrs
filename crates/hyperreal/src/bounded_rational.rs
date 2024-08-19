@@ -44,6 +44,7 @@ pub struct BoundedRational {
     denominator: BigUint,
 }
 
+static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
 static TWO: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&2).unwrap());
 static FIVE: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&5).unwrap());
 static TEN: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&10).unwrap());
@@ -115,7 +116,7 @@ impl BoundedRational {
     }
 
     fn reduce(self) -> Self {
-        if self.denominator == One::one() {
+        if self.denominator == *ONE.deref() {
             self
         } else {
             let divisor = num::Integer::gcd(&self.numerator, &self.denominator);
@@ -155,7 +156,7 @@ impl BoundedRational {
         left.is_zero()
     }
 
-    pub fn prefer_decimal(&self) -> bool {
+    pub fn prefer_fraction(&self) -> bool {
         let mut rem = self.denominator.clone();
         while (&rem % &*TEN).is_zero() {
             rem /= &*TEN;
@@ -166,7 +167,7 @@ impl BoundedRational {
         while (&rem % &*TWO).is_zero() {
             rem /= &*TWO;
         }
-        rem == BigUint::one()
+        rem != BigUint::one()
     }
 
     pub fn shifted_big_integer(&self, shift: i32) -> BigInt {
@@ -297,14 +298,14 @@ impl fmt::Display for BoundedRational {
         } else if f.sign_plus() {
             f.write_str("+")?;
         }
-        if self.denominator == One::one() {
+        if self.denominator == *ONE.deref() {
             f.write_fmt(format_args!("{}", self.numerator))?;
         } else if f.alternate() {
             let whole = &self.numerator / &self.denominator;
             f.write_fmt(format_args!("{whole}."))?;
             let round = &whole * &self.denominator;
             let mut left = &self.numerator - &round;
-            let mut digits = f.precision().unwrap_or(12);
+            let mut digits = f.precision().unwrap_or(1000);
             loop {
                 left *= &*TEN;
                 let digit = &left / &self.denominator;
@@ -616,10 +617,10 @@ mod tests {
     #[test]
     fn decimal() {
         let decimal: BoundedRational = "7.125".parse().unwrap();
-        assert!(decimal.prefer_decimal());
+        assert!(!decimal.prefer_fraction());
         let half: BoundedRational = "4/8".parse().unwrap();
-        assert!(half.prefer_decimal());
+        assert!(!half.prefer_fraction());
         let third: BoundedRational = "2/6".parse().unwrap();
-        assert!(!third.prefer_decimal());
+        assert!(third.prefer_fraction());
     }
 }
