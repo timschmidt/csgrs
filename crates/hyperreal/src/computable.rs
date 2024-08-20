@@ -13,6 +13,7 @@ enum Cache {
     Valid((Precision, BigInt)),
 }
 
+/// Computable approximation of a Real number
 #[derive(Debug)]
 pub struct Computable {
     internal: Box<dyn Approximation>,
@@ -51,6 +52,7 @@ mod big {
 }
 
 impl Computable {
+    /// Exactly one
     pub fn one() -> Self {
         Self {
             internal: Box::new(Int(BigInt::one())),
@@ -58,6 +60,7 @@ impl Computable {
         }
     }
 
+    /// Approximate π, the ratio of a circle's circumference to its diameter
     pub fn pi() -> Self {
         let atan5 = Self::prescaled_atan(big::FIVE.clone());
         let atan_239 = Self::prescaled_atan(big::TWO_THREE_NINE.clone());
@@ -69,6 +72,7 @@ impl Computable {
         Self::multiply(four, sum)
     }
 
+    /// Any BoundedRational
     pub fn rational(r: BoundedRational) -> Self {
         Self {
             internal: Box::new(Rational(r)),
@@ -79,6 +83,12 @@ impl Computable {
     pub fn e(r: BoundedRational) -> Self {
         let rational = Self::rational(r);
         Self::exp(rational)
+    }
+
+    /// Square root of any BoundedRational
+    pub fn sqrt_rational(r: BoundedRational) -> Self {
+        let rational = Self::rational(r);
+        Self::sqrt(rational)
     }
 
     pub fn exp(self) -> Self {
@@ -130,7 +140,7 @@ impl Computable {
             let sixty_four = big::SIXTY_FOUR.deref();
 
             if rough_appr <= *sixty_four {
-                let quarter = self.sqrt_computable().sqrt_computable().ln();
+                let quarter = self.sqrt().sqrt().ln();
                 return quarter.shift_left(2);
             } else {
                 let extra_bits: i32 = (rough_appr.bits() - 3).try_into().expect(
@@ -154,12 +164,7 @@ impl Computable {
         }
     }
 
-    pub fn sqrt(r: BoundedRational) -> Self {
-        let rational = Self::rational(r);
-        Self::sqrt_computable(rational)
-    }
-
-    pub fn sqrt_computable(self) -> Self {
+    pub fn sqrt(self) -> Self {
         Self {
             internal: Box::new(Sqrt(self)),
             cache: RefCell::new(Cache::Invalid),
@@ -232,6 +237,29 @@ impl Computable {
 }
 
 impl Computable {
+    /// An approximation of this Computable scaled to a specific precision
+    ///
+    /// The approximation is scaled (thus, a larger value for more negative p)
+    /// and should be accurate to within +/- 1 at the scale provided
+    ///
+    /// Example: 0.875 is between 0 and 1 with zero bits of extra precision
+    /// ```
+    /// use realistic::{BoundedRational,Computable};
+    /// use num::{Zero,One};
+    /// use num::bigint::{BigInt,ToBigInt};
+    /// let n = BoundedRational::fraction(7, 8);
+    /// let comp = Computable::rational(n);
+    /// assert!((BigInt::zero() ..= BigInt::one()).contains(&comp.approx(0)));
+    /// ```
+    ///
+    /// Example: π * 2³ is a bit more than 25
+    /// ```
+    /// use realistic::{BoundedRational,Computable};
+    /// use num::{Zero,One};
+    /// use num::bigint::{BigInt,ToBigInt};
+    /// let pi = Computable::pi();
+    /// assert!((ToBigInt::to_bigint(&25).unwrap() ..= ToBigInt::to_bigint(&26).unwrap()).contains(&pi.approx(-3)));
+    /// ```
     pub fn approx(&self, p: Precision) -> BigInt {
         // Check precision is OK?
 
@@ -960,7 +988,7 @@ mod tests {
     #[test]
     fn ln_sqrt_pi() {
         let pi = Computable::pi();
-        let sqrt = Computable::sqrt_computable(pi);
+        let sqrt = Computable::sqrt(pi);
         let ln = Computable::ln(sqrt);
         let correct: BigInt = "629321910077".parse().unwrap();
         assert_eq!(ln.approx(-40), correct);

@@ -246,7 +246,7 @@ impl Real {
                         return Ok(Self {
                             rational: square,
                             class: Class::Sqrt(rest.clone()),
-                            computable: Computable::sqrt(rest),
+                            computable: Computable::sqrt_rational(rest),
                         });
                     }
                 }
@@ -258,7 +258,7 @@ impl Real {
                         return Ok(Self {
                             rational: square,
                             class: Class::Irrational,
-                            computable: Computable::sqrt_computable(self.computable),
+                            computable: Computable::sqrt(self.computable),
                         });
                     }
                 }
@@ -279,7 +279,7 @@ impl Real {
             _ => (),
         }
 
-        Ok(self.make_computable(Computable::sqrt_computable))
+        Ok(self.make_computable(Computable::sqrt))
     }
 
     /// Apply the exponential function to this Real parameter
@@ -530,7 +530,7 @@ impl Real {
             Self {
                 rational: a,
                 class: Sqrt(b.clone()),
-                computable: Computable::sqrt(b),
+                computable: Computable::sqrt_rational(b),
             }
         }
     }
