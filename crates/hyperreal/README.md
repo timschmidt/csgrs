@@ -9,7 +9,7 @@ The Real type in this crate represents a number which is a composite of a ration
 real value which we may not be able to compute exactly and so must be approximated for display, but which sometimes has a precise description
 we can track to take advantage of in further calculations.
 
-The built-in example interactive evaluates [Simple Expressions](#simple-expressions) entered by hand
+The built-in example interactive evaluates [Simple Expressions](#simple-expressions) entered by hand and displays the answer
 
 ## Unfinished
 
@@ -28,6 +28,8 @@ nature of the work often makes that impractical.
 
 Unlike Java, Rust has "Operator overloading" or rather, we can implement many arithmetic operators for user defined types. This means that
 where the Java API provides named functions, in many cases the Rust API provides operators, such as + (impl Add) and * (impl Multiply)
+
+I have chosen not to provide this capability for Computable, this might be revisited later
 
 `BoundedRational::to_big_integer` has a different name because in Rust `as` signifies that this conversion is cheap
 

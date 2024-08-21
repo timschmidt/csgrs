@@ -32,15 +32,15 @@ pub fn main() {
         match ans {
             Ok(ans) => {
                 if ans.is_whole() {
-                    println!("{ans}");
+                    println!("answer: {ans}");
                 } else if ans.is_rational() {
                     if ans.prefer_fraction() {
-                        println!("{ans} ~= {ans:#.10}");
+                        println!("answer: {ans} ~= {ans:#.10}");
                     } else {
-                        println!("{ans} = {ans:#}");
+                        println!("answer: {ans} = {ans:#}");
                     }
                 } else {
-                    println!("{ans} ~= {ans:#.20}");
+                    println!("answer: {ans} ~= {ans:#.20}");
                 }
             }
             Err(RealProblem::InsufficientParameters) => {
