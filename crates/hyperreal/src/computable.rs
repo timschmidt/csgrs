@@ -1,4 +1,4 @@
-use crate::BoundedRational;
+use crate::Rational;
 use num_bigint::{BigInt, BigUint, Sign};
 use num_traits::{One, Zero};
 use std::ops::Deref;
@@ -21,15 +21,12 @@ pub struct Computable {
 }
 
 mod rationals {
-    use crate::BoundedRational;
+    use crate::Rational;
     use std::sync::LazyLock;
 
-    pub static SHORT_9: LazyLock<BoundedRational> =
-        LazyLock::new(|| BoundedRational::fraction(1, 9));
-    pub static SHORT_24: LazyLock<BoundedRational> =
-        LazyLock::new(|| BoundedRational::fraction(1, 24));
-    pub static SHORT_80: LazyLock<BoundedRational> =
-        LazyLock::new(|| BoundedRational::fraction(1, 80));
+    pub(super) static SHORT_9: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 9));
+    pub(super) static SHORT_24: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 24));
+    pub(super) static SHORT_80: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 80));
 }
 
 mod big {
@@ -37,17 +34,20 @@ mod big {
     use num_traits::One;
     use std::sync::LazyLock;
 
-    pub static MINUS_ONE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&-1).unwrap());
-    pub static ONE: LazyLock<BigInt> = LazyLock::new(BigInt::one);
-    pub static TWO: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&2).unwrap());
-    pub static THREE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&3).unwrap());
-    pub static FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&4).unwrap());
-    pub static FIVE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&5).unwrap());
-    pub static SEVEN: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&7).unwrap());
-    pub static EIGHT: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&8).unwrap());
-    pub static TWENTY_FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&24).unwrap());
-    pub static SIXTY_FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&64).unwrap());
-    pub static TWO_THREE_NINE: LazyLock<BigInt> =
+    pub(super) static MINUS_ONE: LazyLock<BigInt> =
+        LazyLock::new(|| ToBigInt::to_bigint(&-1).unwrap());
+    pub(super) static ONE: LazyLock<BigInt> = LazyLock::new(BigInt::one);
+    pub(super) static TWO: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&2).unwrap());
+    pub(super) static THREE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&3).unwrap());
+    pub(super) static FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&4).unwrap());
+    pub(super) static FIVE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&5).unwrap());
+    pub(super) static SEVEN: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&7).unwrap());
+    pub(super) static EIGHT: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&8).unwrap());
+    pub(super) static TWENTY_FOUR: LazyLock<BigInt> =
+        LazyLock::new(|| ToBigInt::to_bigint(&24).unwrap());
+    pub(super) static SIXTY_FOUR: LazyLock<BigInt> =
+        LazyLock::new(|| ToBigInt::to_bigint(&64).unwrap());
+    pub(super) static TWO_THREE_NINE: LazyLock<BigInt> =
         LazyLock::new(|| ToBigInt::to_bigint(&239).unwrap());
 }
 
@@ -72,21 +72,21 @@ impl Computable {
         Self::multiply(four, sum)
     }
 
-    /// Any BoundedRational
-    pub fn rational(r: BoundedRational) -> Self {
+    /// Any Rational
+    pub fn rational(r: Rational) -> Self {
         Self {
-            internal: Box::new(Rational(r)),
+            internal: Box::new(Ratio(r)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
-    pub fn e(r: BoundedRational) -> Self {
+    pub fn e(r: Rational) -> Self {
         let rational = Self::rational(r);
         Self::exp(rational)
     }
 
-    /// Square root of any BoundedRational
-    pub fn sqrt_rational(r: BoundedRational) -> Self {
+    /// Square root of any Rational
+    pub fn sqrt_rational(r: Rational) -> Self {
         let rational = Self::rational(r);
         Self::sqrt(rational)
     }
@@ -244,17 +244,17 @@ impl Computable {
     ///
     /// Example: 0.875 is between 0 and 1 with zero bits of extra precision
     /// ```
-    /// use realistic::{BoundedRational,Computable};
+    /// use realistic::{Rational,Computable};
     /// use num::{Zero,One};
     /// use num::bigint::{BigInt,ToBigInt};
-    /// let n = BoundedRational::fraction(7, 8);
+    /// let n = Rational::fraction(7, 8);
     /// let comp = Computable::rational(n);
     /// assert!((BigInt::zero() ..= BigInt::one()).contains(&comp.approx(0)));
     /// ```
     ///
     /// Example: π * 2³ is a bit more than 25
     /// ```
-    /// use realistic::{BoundedRational,Computable};
+    /// use realistic::{Rational,Computable};
     /// use num::{Zero,One};
     /// use num::bigint::{BigInt,ToBigInt};
     /// let pi = Computable::pi();
@@ -583,9 +583,9 @@ impl Approximation for Shift {
 }
 
 #[derive(Debug)]
-struct Rational(BoundedRational);
+struct Ratio(Rational);
 
-impl Approximation for Rational {
+impl Approximation for Ratio {
     fn approximate(&self, p: Precision) -> BigInt {
         if p >= 0 {
             scale(self.0.shifted_big_integer(0), -p)
@@ -939,7 +939,7 @@ mod tests {
 
     #[test]
     fn rational() {
-        let sixth: BoundedRational = "1/6".parse().unwrap();
+        let sixth: Rational = "1/6".parse().unwrap();
         let c = Computable::rational(sixth);
         let zero = BigInt::zero();
         let one = BigInt::one();
@@ -966,7 +966,7 @@ mod tests {
 
     #[test]
     fn scaled_ln1_4() {
-        let zero_4: BoundedRational = "0.4".parse().unwrap();
+        let zero_4: Rational = "0.4".parse().unwrap();
         let rational = Computable::rational(zero_4);
         let ln = Computable {
             internal: Box::new(PrescaledLn(rational)),

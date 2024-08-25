@@ -1,4 +1,4 @@
-use crate::{BoundedRational, Real, RealProblem};
+use crate::{Rational, Real, RealProblem};
 use std::iter::Peekable;
 use std::str::Chars;
 
@@ -15,9 +15,9 @@ enum Operator {
 
 #[derive(Clone, Debug, PartialEq)]
 enum Operand {
-    Literal(BoundedRational), // e.g. 123_456.789
-    Symbol(String),           // e.g. "pi"
-    SubExpression(Simple),    // e.g. (+ 1 2 3)
+    Literal(Rational),     // e.g. 123_456.789
+    Symbol(String),        // e.g. "pi"
+    SubExpression(Simple), // e.g. (+ 1 2 3)
 }
 
 impl Operand {
@@ -83,7 +83,7 @@ impl Simple {
                 }
             },
             Operator::Star => {
-                let mut value = Real::new(BoundedRational::one());
+                let mut value = Real::new(Rational::one());
                 for operand in &self.operands {
                     value = value * operand.value()?;
                 }
@@ -246,7 +246,7 @@ impl Simple {
             c.next();
         }
 
-        let n: BoundedRational = num.parse().map_err(|_| RealProblem::ParseError)?;
+        let n: Rational = num.parse().map_err(|_| RealProblem::ParseError)?;
 
         Ok(Operand::Literal(n))
     }

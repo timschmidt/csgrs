@@ -1,5 +1,5 @@
-use crate::BoundedRational;
 use crate::Computable;
+use crate::Rational;
 
 /// Problems when either parsing or attempting Arithmetic with [`Real`] numbers
 
@@ -16,9 +16,9 @@ pub enum RealProblem {
 enum Class {
     One,
     Pi,
-    Sqrt(BoundedRational),
-    Exp(BoundedRational),
-    Ln(BoundedRational),
+    Sqrt(Rational),
+    Exp(Rational),
+    Ln(Rational),
     Irrational,
 }
 
@@ -44,8 +44,8 @@ impl Class {
         true
     }
 
-    fn make_exp(br: BoundedRational) -> (Class, Computable) {
-        if br == BoundedRational::zero() {
+    fn make_exp(br: Rational) -> (Class, Computable) {
+        if br == Rational::zero() {
             (Class::One, Computable::one())
         } else {
             (Class::Exp(br.clone()), Computable::e(br))
@@ -56,7 +56,7 @@ impl Class {
 /// (More) Real numbers
 ///
 /// This type is functionally the product of a [`Computable`] number
-/// and a [`BoundedRational`]
+/// and a [`Rational`]
 ///
 /// # Examples
 ///
@@ -73,13 +73,13 @@ impl Class {
 /// let four: Real = "4".parse().unwrap();
 /// let four_pi = four * Real::pi();
 /// let answer = (four_pi / two_pi).unwrap();
-/// let two = realistic::BoundedRational::new(2);
+/// let two = realistic::Rational::new(2);
 /// assert_eq!(answer, Real::new(two));
 /// ```
 
 #[derive(Debug)]
 pub struct Real {
-    rational: BoundedRational,
+    rational: Rational,
     class: Class,
     computable: Computable,
 }
@@ -88,14 +88,14 @@ impl Real {
     /// Zero, the additive identity
     pub fn zero() -> Real {
         Self {
-            rational: BoundedRational::zero(),
+            rational: Rational::zero(),
             class: Class::One,
             computable: Computable::one(),
         }
     }
 
-    /// The specified [`BoundedRational`] as a Real
-    pub fn new(rational: BoundedRational) -> Real {
+    /// The specified [`Rational`] as a Real
+    pub fn new(rational: Rational) -> Real {
         Self {
             rational,
             class: Class::One,
@@ -106,7 +106,7 @@ impl Real {
     /// π, the ratio of a circle's circumference to its diameter
     pub fn pi() -> Real {
         Self {
-            rational: BoundedRational::one(),
+            rational: Rational::one(),
             class: Class::Pi,
             computable: Computable::pi(),
         }
@@ -114,7 +114,7 @@ impl Real {
 
     /// e, Euler's number and the base of the natural logarithm function
     pub fn e() -> Real {
-        let one = BoundedRational::one();
+        let one = Rational::one();
         Self {
             rational: one.clone(),
             class: Class::Exp(one.clone()),
@@ -168,7 +168,7 @@ impl Real {
         let computable = convert(prev);
 
         Self {
-            rational: BoundedRational::one(),
+            rational: Rational::one(),
             class: Class::Irrational,
             computable,
         }
@@ -179,9 +179,9 @@ impl Real {
     ///
     /// Example
     /// ```
-    /// use realistic::{BoundedRational,Real};
-    /// let five = Real::new(BoundedRational::new(5));
-    /// let a_fifth = Real::new(BoundedRational::fraction(1, 5));
+    /// use realistic::{Rational,Real};
+    /// let five = Real::new(Rational::new(5));
+    /// let a_fifth = Real::new(Rational::fraction(1, 5));
     /// assert_eq!(five.inverse(), Ok(a_fifth));
     /// ```
     pub fn inverse(self) -> Result<Self, RealProblem> {
@@ -198,7 +198,7 @@ impl Real {
             }
             Class::Sqrt(sqrt) => {
                 if let Some(sqrt) = sqrt.to_big_integer() {
-                    let rational = (self.rational * BoundedRational::from_bigint(sqrt)).inverse();
+                    let rational = (self.rational * Rational::from_bigint(sqrt)).inverse();
                     return Ok(Self {
                         rational,
                         class: self.class,
@@ -236,7 +236,7 @@ impl Real {
             Class::One => {
                 if self.rational.extract_square_will_succeed() {
                     let (square, rest) = self.rational.extract_square_reduced();
-                    if rest == BoundedRational::one() {
+                    if rest == Rational::one() {
                         return Ok(Self {
                             rational: square,
                             class: Class::One,
@@ -254,7 +254,7 @@ impl Real {
             Class::Pi => {
                 if self.rational.extract_square_will_succeed() {
                     let (square, rest) = self.rational.clone().extract_square_reduced();
-                    if rest == BoundedRational::one() {
+                    if rest == Rational::one() {
                         return Ok(Self {
                             rational: square,
                             class: Class::Irrational,
@@ -266,8 +266,8 @@ impl Real {
             Class::Exp(exp) => {
                 if self.rational.extract_square_will_succeed() {
                     let (square, rest) = self.rational.clone().extract_square_reduced();
-                    if rest == BoundedRational::one() {
-                        let exp = exp.clone() / BoundedRational::new(2);
+                    if rest == Rational::one() {
+                        let exp = exp.clone() / Rational::new(2);
                         return Ok(Self {
                             rational: square,
                             class: Class::Exp(exp.clone()),
@@ -285,18 +285,18 @@ impl Real {
     /// Apply the exponential function to this Real parameter
     pub fn exp(self) -> Result<Real, RealProblem> {
         if self.definitely_zero() {
-            return Ok(Self::new(BoundedRational::one()));
+            return Ok(Self::new(Rational::one()));
         }
         match &self.class {
             Class::One => {
                 return Ok(Self {
-                    rational: BoundedRational::one(),
+                    rational: Rational::one(),
                     class: Class::Exp(self.rational.clone()),
                     computable: Computable::e(self.rational),
                 })
             }
             Class::Ln(ln) => {
-                if self.rational == BoundedRational::one() {
+                if self.rational == Rational::one() {
                     return Ok(Self {
                         rational: ln.clone(),
                         class: Class::One,
@@ -314,19 +314,19 @@ impl Real {
     pub fn ln(self) -> Result<Real, RealProblem> {
         match &self.class {
             Class::One => {
-                if self.rational == BoundedRational::one() {
+                if self.rational == Rational::one() {
                     return Ok(Self::zero());
                 } else {
                     let new = Computable::rational(self.rational.clone());
                     return Ok(Self {
-                        rational: BoundedRational::one(),
+                        rational: Rational::one(),
                         class: Class::Ln(self.rational),
                         computable: Computable::ln(new),
                     });
                 }
             }
             Class::Exp(exp) => {
-                if self.rational == BoundedRational::one() {
+                if self.rational == Rational::one() {
                     return Ok(Self {
                         rational: exp.clone(),
                         class: Class::One,
@@ -430,7 +430,7 @@ impl FromStr for Real {
     type Err = RealProblem;
 
     fn from_str(s: &str) -> Result<Self, RealProblem> {
-        let rational: BoundedRational = s.parse().map_err(|_| RealProblem::ParseError)?;
+        let rational: Rational = s.parse().map_err(|_| RealProblem::ParseError)?;
         Ok(Self {
             rational,
             class: Class::One,
@@ -459,15 +459,15 @@ impl Add for Real {
         if other.definitely_zero() {
             return self;
         }
-        if self.class == Class::One && self.rational == BoundedRational::one() {
+        if self.class == Class::One && self.rational == Rational::one() {
             return other;
         }
-        if other.class == Class::One && other.rational == BoundedRational::one() {
+        if other.class == Class::One && other.rational == Rational::one() {
             return self;
         }
         let left = if self.class == Class::One {
             Computable::rational(self.rational)
-        } else if self.rational == BoundedRational::one() {
+        } else if self.rational == Rational::one() {
             self.computable
         } else {
             let lr = Computable::rational(self.rational);
@@ -475,7 +475,7 @@ impl Add for Real {
         };
         let right = if other.class == Class::One {
             Computable::rational(other.rational)
-        } else if other.rational == BoundedRational::one() {
+        } else if other.rational == Rational::one() {
             other.computable
         } else {
             let rr = Computable::rational(other.rational);
@@ -483,7 +483,7 @@ impl Add for Real {
         };
         let computable = Computable::add(left, right);
         Self {
-            rational: BoundedRational::one(),
+            rational: Rational::one(),
             class: Class::Irrational,
             computable,
         }
@@ -510,7 +510,7 @@ impl Sub for Real {
 }
 
 impl Real {
-    fn multiply_sqrts(x: BoundedRational, y: BoundedRational) -> Self {
+    fn multiply_sqrts(x: Rational, y: Rational) -> Self {
         if x == y {
             Self {
                 rational: x,
@@ -519,7 +519,7 @@ impl Real {
             }
         } else {
             let product = x * y;
-            if product == BoundedRational::zero() {
+            if product == Rational::zero() {
                 return Self {
                     rational: product,
                     class: One,

@@ -16,29 +16,29 @@ pub struct ParseBRError();
 ///
 /// Parsing a rational from a simple fraction
 /// ```
-/// use realistic::BoundedRational;
-/// let half: BoundedRational = "9/18".parse().unwrap();
+/// use realistic::Rational;
+/// let half: Rational = "9/18".parse().unwrap();
 /// ```
 ///
 /// Parsing a decimal fraction
 /// ```
-/// use realistic::BoundedRational;
-/// let point_two_five: BoundedRational = "0.25".parse().unwrap();
+/// use realistic::Rational;
+/// let point_two_five: Rational = "0.25".parse().unwrap();
 /// ```
 ///
 /// Simple arithmetic
 /// ```
-/// use realistic::BoundedRational;
-/// let quarter = BoundedRational::fraction(1, 4);
-/// let eighteen = BoundedRational::new(18);
-/// let two = BoundedRational::one() + BoundedRational::one();
+/// use realistic::Rational;
+/// let quarter = Rational::fraction(1, 4);
+/// let eighteen = Rational::new(18);
+/// let two = Rational::one() + Rational::one();
 /// let sixteen = eighteen - two;
 /// let four = quarter * sixteen;
-/// assert_eq!(four, BoundedRational::new(4));
+/// assert_eq!(four, Rational::new(4));
 /// ```
 
 #[derive(Clone, Debug)]
-pub struct BoundedRational {
+pub struct Rational {
     sign: Sign,
     numerator: BigUint,
     denominator: BigUint,
@@ -49,7 +49,7 @@ static TWO: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&2).unwra
 static FIVE: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&5).unwrap());
 static TEN: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&10).unwrap());
 
-impl BoundedRational {
+impl Rational {
     /// Zero, the additive identity
     pub fn zero() -> Self {
         Self {
@@ -68,7 +68,7 @@ impl BoundedRational {
         }
     }
 
-    /// The non-negative BoundedRational corresponding to the provided [`u64`]
+    /// The non-negative Rational corresponding to the provided [`u64`]
     pub fn new(n: u64) -> Self {
         Self {
             sign: Plus,
@@ -77,7 +77,7 @@ impl BoundedRational {
         }
     }
 
-    /// The BoundedRational corresponding to the provided [`BigInt`]
+    /// The Rational corresponding to the provided [`BigInt`]
     pub fn from_bigint(n: BigInt) -> Self {
         let sign = n.sign();
         let numerator = n.magnitude().clone();
@@ -88,7 +88,7 @@ impl BoundedRational {
         }
     }
 
-    /// The non-negative BoundedRational corresponding to the provided [`u64`]
+    /// The non-negative Rational corresponding to the provided [`u64`]
     /// numerator and denominator as a fraction
     pub fn fraction(n: u64, d: u64) -> Self {
         Self {
@@ -98,7 +98,7 @@ impl BoundedRational {
         }
     }
 
-    /// The BoundedRational corresponding to the provided [`BigInt`]
+    /// The Rational corresponding to the provided [`BigInt`]
     /// numerator and [`BigUint`] denominator as a fraction
     pub fn from_bigint_fraction(n: BigInt, denominator: BigUint) -> Self {
         let sign = n.sign();
@@ -130,14 +130,14 @@ impl BoundedRational {
         }
     }
 
-    /// The inverse of this BoundedRational
+    /// The inverse of this Rational
     ///
     /// # Example
     ///
     /// ```
-    /// use realistic::BoundedRational;
-    /// let five = BoundedRational::new(5);
-    /// let a_fifth = BoundedRational::fraction(1, 5);
+    /// use realistic::Rational;
+    /// let five = Rational::new(5);
+    /// let a_fifth = Rational::fraction(1, 5);
     /// assert_eq!(five.clone().inverse(), a_fifth);
     /// assert_eq!(a_fifth.clone().inverse(), five);
     /// ```
@@ -222,8 +222,7 @@ impl BoundedRational {
     }
 
     fn extract_square(n: BigUint) -> (BigUint, BigUint) {
-        static SQUARES: LazyLock<Vec<(BigUint, BigUint)>> =
-            LazyLock::new(BoundedRational::make_squares);
+        static SQUARES: LazyLock<Vec<(BigUint, BigUint)>> = LazyLock::new(Rational::make_squares);
 
         let mut square = One::one();
         let mut rest = n;
@@ -270,8 +269,8 @@ impl BoundedRational {
     }
 }
 
-impl BoundedRational {
-    pub fn fmt_combine(&self, c: &Computable, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Rational {
+    pub(crate) fn fmt_combine(&self, c: &Computable, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let d = &self.denominator.to_bigint().unwrap();
         let n = &self.numerator.to_bigint().unwrap();
         let precision = f.precision().unwrap_or(16);
@@ -291,7 +290,7 @@ impl BoundedRational {
 
 use core::fmt;
 
-impl fmt::Display for BoundedRational {
+impl fmt::Display for Rational {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.sign == Minus {
             f.write_str("-")?;
@@ -335,7 +334,7 @@ impl fmt::Display for BoundedRational {
 
 use std::str::FromStr;
 
-impl FromStr for BoundedRational {
+impl FromStr for Rational {
     type Err = ParseBRError;
 
     fn from_str(s: &str) -> Result<Self, ParseBRError> {
@@ -400,7 +399,7 @@ impl FromStr for BoundedRational {
 use core::ops::*;
 use std::cmp::Ordering;
 
-impl Add for BoundedRational {
+impl Add for Rational {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
@@ -428,7 +427,7 @@ impl Add for BoundedRational {
     }
 }
 
-impl Neg for BoundedRational {
+impl Neg for Rational {
     type Output = Self;
 
     fn neg(self) -> Self {
@@ -439,7 +438,7 @@ impl Neg for BoundedRational {
     }
 }
 
-impl Sub for BoundedRational {
+impl Sub for Rational {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
@@ -447,7 +446,7 @@ impl Sub for BoundedRational {
     }
 }
 
-impl Mul for BoundedRational {
+impl Mul for Rational {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
@@ -462,7 +461,7 @@ impl Mul for BoundedRational {
     }
 }
 
-impl Div for BoundedRational {
+impl Div for Rational {
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
@@ -477,7 +476,7 @@ impl Div for BoundedRational {
     }
 }
 
-impl BoundedRational {
+impl Rational {
     fn definitely_equal(&self, other: &Self) -> bool {
         if self.sign != other.sign {
             return false;
@@ -489,7 +488,7 @@ impl BoundedRational {
     }
 }
 
-impl PartialEq for BoundedRational {
+impl PartialEq for Rational {
     fn eq(&self, other: &Self) -> bool {
         if self.sign != other.sign {
             return false;
@@ -508,66 +507,66 @@ mod tests {
 
     #[test]
     fn display() {
-        let many: BoundedRational = "12345".parse().unwrap();
+        let many: Rational = "12345".parse().unwrap();
         let s = format!("{many}");
         assert_eq!(s, "12345");
-        let five: BoundedRational = "5".parse().unwrap();
-        let third: BoundedRational = "1/3".parse().unwrap();
+        let five: Rational = "5".parse().unwrap();
+        let third: Rational = "1/3".parse().unwrap();
         let s = format!("{}", five * third);
         assert_eq!(s, "1 2/3");
     }
 
     #[test]
     fn decimals() {
-        let first: BoundedRational = "0.0".parse().unwrap();
-        assert_eq!(first, BoundedRational::zero());
-        let a: BoundedRational = "0.4".parse().unwrap();
-        let b: BoundedRational = "2.5".parse().unwrap();
+        let first: Rational = "0.0".parse().unwrap();
+        assert_eq!(first, Rational::zero());
+        let a: Rational = "0.4".parse().unwrap();
+        let b: Rational = "2.5".parse().unwrap();
         let answer = a * b;
-        assert_eq!(answer, BoundedRational::one());
+        assert_eq!(answer, Rational::one());
     }
 
     #[test]
     /// See e.g. https://discussions.apple.com/thread/252474975
     /// Apple calculator is not trustworthy if you are a programmer
     fn parse() {
-        let big: BoundedRational = "288230376151711743".parse().unwrap();
-        let small: BoundedRational = "45".parse().unwrap();
-        let expected: BoundedRational = "12970366926827028435".parse().unwrap();
+        let big: Rational = "288230376151711743".parse().unwrap();
+        let small: Rational = "45".parse().unwrap();
+        let expected: Rational = "12970366926827028435".parse().unwrap();
         assert_eq!(big * small, expected);
     }
 
     #[test]
     fn parse_fractions() {
-        let third: BoundedRational = "1/3".parse().unwrap();
-        let minus_four: BoundedRational = "-4".parse().unwrap();
-        let twelve: BoundedRational = "12/20".parse().unwrap();
+        let third: Rational = "1/3".parse().unwrap();
+        let minus_four: Rational = "-4".parse().unwrap();
+        let twelve: Rational = "12/20".parse().unwrap();
         let answer = third + minus_four * twelve;
-        let expected: BoundedRational = "-31/15".parse().unwrap();
+        let expected: Rational = "-31/15".parse().unwrap();
         assert_eq!(answer, expected);
     }
 
     #[test]
     fn square_reduced() {
-        let thirty_two: BoundedRational = "32".parse().unwrap();
+        let thirty_two: Rational = "32".parse().unwrap();
         let (square, rest) = thirty_two.extract_square_reduced();
-        let four: BoundedRational = "4".parse().unwrap();
+        let four: Rational = "4".parse().unwrap();
         assert_eq!(square, four);
-        let two: BoundedRational = "2".parse().unwrap();
+        let two: Rational = "2".parse().unwrap();
         assert_eq!(rest, two);
-        let minus_one: BoundedRational = "-1".parse().unwrap();
+        let minus_one: Rational = "-1".parse().unwrap();
         let (square, rest) = minus_one.clone().extract_square_reduced();
-        assert_eq!(square, BoundedRational::one());
+        assert_eq!(square, Rational::one());
         assert_eq!(rest, minus_one);
     }
 
     #[test]
     fn signs() {
-        let half: BoundedRational = "4/8".parse().unwrap();
-        let one = BoundedRational::one();
+        let half: Rational = "4/8".parse().unwrap();
+        let one = Rational::one();
         let minus_half = half - one;
-        let two = BoundedRational::new(2);
-        let zero = BoundedRational::zero();
+        let two = Rational::new(2);
+        let zero = Rational::zero();
         let minus_two = zero - two;
         let i2 = minus_two.inverse();
         assert_eq!(i2, minus_half);
@@ -575,52 +574,52 @@ mod tests {
 
     #[test]
     fn half_plus_one_times_two() {
-        let two = BoundedRational::new(2);
+        let two = Rational::new(2);
         let half = two.inverse();
-        let one = BoundedRational::one();
-        let two = BoundedRational::new(2);
-        let three = BoundedRational::new(3);
+        let one = Rational::one();
+        let two = Rational::new(2);
+        let three = Rational::new(3);
         let sum = half + one;
         assert_eq!(sum * two, three);
     }
 
     #[test]
     fn three_divided_by_six() {
-        let three = BoundedRational::new(3);
-        let six = BoundedRational::new(6);
-        let half: BoundedRational = "1/2".parse().unwrap();
+        let three = Rational::new(3);
+        let six = Rational::new(6);
+        let half: Rational = "1/2".parse().unwrap();
         assert_eq!(three / six, half);
     }
 
     #[test]
     fn one_plus_two() {
-        let one = BoundedRational::one();
-        let two = BoundedRational::new(2);
-        let three = BoundedRational::new(3);
+        let one = Rational::one();
+        let two = Rational::new(2);
+        let three = Rational::new(3);
         assert_eq!(one + two, three);
     }
 
     #[test]
     fn two_minus_one() {
-        let two = BoundedRational::new(2);
-        let one = BoundedRational::one();
-        assert_eq!(two - one, BoundedRational::one());
+        let two = Rational::new(2);
+        let one = Rational::one();
+        assert_eq!(two - one, Rational::one());
     }
 
     #[test]
     fn two_times_three() {
-        let two = BoundedRational::new(2);
-        let three = BoundedRational::new(3);
-        assert_eq!(two * three, BoundedRational::new(6));
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        assert_eq!(two * three, Rational::new(6));
     }
 
     #[test]
     fn decimal() {
-        let decimal: BoundedRational = "7.125".parse().unwrap();
+        let decimal: Rational = "7.125".parse().unwrap();
         assert!(!decimal.prefer_fraction());
-        let half: BoundedRational = "4/8".parse().unwrap();
+        let half: Rational = "4/8".parse().unwrap();
         assert!(!half.prefer_fraction());
-        let third: BoundedRational = "2/6".parse().unwrap();
+        let third: Rational = "2/6".parse().unwrap();
         assert!(third.prefer_fraction());
     }
 }

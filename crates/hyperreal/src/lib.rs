@@ -1,5 +1,5 @@
-mod bounded_rational;
-pub use crate::bounded_rational::BoundedRational;
+mod rational;
+pub use crate::rational::Rational;
 
 mod computable;
 pub use crate::computable::Computable;
