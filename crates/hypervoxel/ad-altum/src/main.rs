@@ -1,4 +1,8 @@
-use bevy::{prelude::*, window::PresentMode};
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
+    window::PresentMode,
+};
 use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
@@ -27,6 +31,8 @@ fn main() {
                 ..default()
             }),
             GamePlugin,
+            FrameTimeDiagnosticsPlugin,
+            LogDiagnosticsPlugin::default(),
             ScreenDiagnosticsPlugin::default(),
             ScreenFrameDiagnosticsPlugin,
             ScreenEntityDiagnosticsPlugin,
