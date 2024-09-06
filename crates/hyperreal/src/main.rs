@@ -28,6 +28,7 @@ pub fn main() {
             eprintln!("expression parsed as: {expr:?}");
         }
 
+        use RealProblem::*;
         let ans = expr.evaluate();
         match ans {
             Ok(ans) => {
@@ -43,11 +44,11 @@ pub fn main() {
                     println!("answer: {ans} ~= {ans:#.20}");
                 }
             }
-            Err(RealProblem::InsufficientParameters) => {
+            Err(InsufficientParameters) => {
                 println!("The operator needs more parameters")
             }
-            Err(RealProblem::NotFound) => println!("Symbol not found"),
-            Err(RealProblem::DivideByZero) => println!("Attempted division by zero"),
+            Err(NotFound) => println!("Symbol not found"),
+            Err(DivideByZero) => println!("Attempted division by zero"),
             _ => println!("Calculation failed: {ans:?}"),
         }
     }

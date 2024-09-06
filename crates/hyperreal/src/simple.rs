@@ -37,10 +37,11 @@ pub struct Simple {
 }
 
 fn parse_problem(problem: RealProblem) -> &'static str {
+    use RealProblem::*;
     match problem {
-        RealProblem::DivideByZero => "Attempting to divide by zero",
-        RealProblem::NotFound => "Symbol not found",
-        RealProblem::ParseError => "Unable to parse number",
+        DivideByZero => "Attempting to divide by zero",
+        NotFound => "Symbol not found",
+        ParseError => "Unable to parse number",
         _ => {
             eprintln!("Specifically the problem is {problem:?}");
             "Some unknown problem during parsing"
@@ -58,15 +59,16 @@ impl Simple {
     }
 
     pub fn evaluate(&self) -> Result<Real, RealProblem> {
+        use Operator::*;
         match self.op {
-            Operator::Plus => {
+            Plus => {
                 let mut value = Real::zero();
                 for operand in &self.operands {
                     value = value + operand.value()?;
                 }
                 Ok(value)
             }
-            Operator::Minus => match self.operands.len() {
+            Minus => match self.operands.len() {
                 0 => Err(RealProblem::InsufficientParameters),
                 1 => {
                     let operand = self.operands.first().unwrap();
@@ -82,14 +84,14 @@ impl Simple {
                     Ok(value)
                 }
             },
-            Operator::Star => {
+            Star => {
                 let mut value = Real::new(Rational::one());
                 for operand in &self.operands {
                     value = value * operand.value()?;
                 }
                 Ok(value)
             }
-            Operator::Slash => match self.operands.len() {
+            Slash => match self.operands.len() {
                 0 => Err(RealProblem::InsufficientParameters),
                 1 => {
                     let operand = self.operands.first().unwrap();
@@ -104,7 +106,7 @@ impl Simple {
                     Ok(value)
                 }
             },
-            Operator::Exp => {
+            Exp => {
                 if self.operands.len() != 1 {
                     return Err(RealProblem::ParseError);
                 }
@@ -112,7 +114,7 @@ impl Simple {
                 let value = operand.value()?.exp()?;
                 Ok(value)
             }
-            Operator::Ln => {
+            Ln => {
                 if self.operands.len() != 1 {
                     return Err(RealProblem::ParseError);
                 }
@@ -120,7 +122,7 @@ impl Simple {
                 let value = operand.value()?.ln()?;
                 Ok(value)
             }
-            Operator::Sqrt => {
+            Sqrt => {
                 if self.operands.len() != 1 {
                     return Err(RealProblem::ParseError);
                 }
@@ -138,35 +140,36 @@ impl Simple {
             return Err("No parenthetical expression");
         }
 
+        use Operator::*;
         // One operator
         let op: Operator = match chars.peek() {
             Some('+') => {
                 chars.next();
-                Operator::Plus
+                Plus
             }
             Some('-') => {
                 chars.next();
-                Operator::Minus
+                Minus
             }
             Some('*') => {
                 chars.next();
-                Operator::Star
+                Star
             }
             Some('/') => {
                 chars.next();
-                Operator::Slash
+                Slash
             }
             Some('l') => {
                 chars.next();
-                Operator::Ln
+                Ln
             }
             Some('e') => {
                 chars.next();
-                Operator::Exp
+                Exp
             }
             Some('√' | 's') => {
                 chars.next();
-                Operator::Sqrt
+                Sqrt
             }
             _ => return Err("Unexpected symbol while looking for an operator"),
         };
