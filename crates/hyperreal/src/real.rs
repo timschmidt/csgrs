@@ -123,7 +123,7 @@ impl Real {
     }
 }
 
-use num_bigint::Sign;
+use num::bigint::Sign;
 
 impl Real {
     /// Is this Real exactly zero?

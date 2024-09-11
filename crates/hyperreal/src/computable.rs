@@ -1,6 +1,6 @@
 use crate::Rational;
-use num_bigint::{BigInt, BigUint, Sign};
-use num_traits::{One, Zero};
+use num::{bigint::Sign, BigInt, BigUint};
+use num::{One, Zero};
 use std::ops::Deref;
 
 pub type Precision = i32;
@@ -30,8 +30,8 @@ mod rationals {
 }
 
 mod big {
-    use num_bigint::{BigInt, ToBigInt};
-    use num_traits::One;
+    use num::One;
+    use num::{bigint::ToBigInt, BigInt};
     use std::sync::LazyLock;
 
     pub(super) static MINUS_ONE: LazyLock<BigInt> =
@@ -427,7 +427,7 @@ impl Approximation for Int {
 #[derive(Debug)]
 struct Inverse(Computable);
 
-use num_traits::Signed;
+use num::Signed;
 
 impl Approximation for Inverse {
     fn approximate(&self, p: Precision) -> BigInt {

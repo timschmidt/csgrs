@@ -1,7 +1,7 @@
 use crate::Computable;
-use num_bigint::Sign::{self, *};
-use num_bigint::{BigInt, BigUint, ToBigInt, ToBigUint};
-use num_traits::{One, Zero};
+use num::bigint::Sign::{self, *};
+use num::{bigint::ToBigInt, bigint::ToBigUint, BigInt, BigUint};
+use num::{One, Zero};
 use std::sync::LazyLock;
 
 #[derive(Clone, Debug)]
