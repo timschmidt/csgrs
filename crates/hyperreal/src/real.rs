@@ -1,5 +1,7 @@
 use crate::Computable;
 use crate::Rational;
+use num::bigint::Sign;
+use Class::*;
 
 /// Problems when either parsing or attempting Arithmetic with [`Real`] numbers
 
@@ -22,8 +24,6 @@ enum Class {
     Irrational,
 }
 
-use Class::*;
-
 // Neither None nor Irrational are judged equal to anything here
 impl PartialEq for Class {
     fn eq(&self, other: &Self) -> bool {
@@ -39,16 +39,16 @@ impl PartialEq for Class {
 }
 
 impl Class {
-    // Could treat Class::Exp specially for large negative exponents
+    // Could treat Exp specially for large negative exponents
     fn is_non_zero(&self) -> bool {
         true
     }
 
     fn make_exp(br: Rational) -> (Class, Computable) {
         if br == Rational::zero() {
-            (Class::One, Computable::one())
+            (One, Computable::one())
         } else {
-            (Class::Exp(br.clone()), Computable::e(br))
+            (Exp(br.clone()), Computable::e(br))
         }
     }
 }
@@ -89,7 +89,7 @@ impl Real {
     pub fn zero() -> Real {
         Self {
             rational: Rational::zero(),
-            class: Class::One,
+            class: One,
             computable: Computable::one(),
         }
     }
@@ -98,7 +98,7 @@ impl Real {
     pub fn new(rational: Rational) -> Real {
         Self {
             rational,
-            class: Class::One,
+            class: One,
             computable: Computable::one(),
         }
     }
@@ -107,7 +107,7 @@ impl Real {
     pub fn pi() -> Real {
         Self {
             rational: Rational::one(),
-            class: Class::Pi,
+            class: Pi,
             computable: Computable::pi(),
         }
     }
@@ -117,13 +117,11 @@ impl Real {
         let one = Rational::one();
         Self {
             rational: one.clone(),
-            class: Class::Exp(one.clone()),
+            class: Exp(one.clone()),
             computable: Computable::e(one),
         }
     }
 }
-
-use num::bigint::Sign;
 
 impl Real {
     /// Is this Real exactly zero?
@@ -147,7 +145,7 @@ impl Real {
     /// this will be accurate for trivial Rationals and some but not all other cases
     pub fn best_sign(&self) -> Sign {
         match &self.class {
-            Class::One | Class::Pi | Class::Exp(_) | Class::Sqrt(_) => self.rational.sign(),
+            One | Pi | Exp(_) | Sqrt(_) => self.rational.sign(),
             _ => match (self.rational.sign(), self.computable.sign()) {
                 (Sign::NoSign, _) => Sign::NoSign,
                 (_, Sign::NoSign) => Sign::NoSign,
@@ -169,7 +167,7 @@ impl Real {
 
         Self {
             rational: Rational::one(),
-            class: Class::Irrational,
+            class: Irrational,
             computable,
         }
     }
@@ -189,14 +187,14 @@ impl Real {
             return Err(RealProblem::DivideByZero);
         }
         match &self.class {
-            Class::One => {
+            One => {
                 return Ok(Self {
                     rational: self.rational.inverse(),
-                    class: Class::One,
+                    class: One,
                     computable: Computable::one(),
                 });
             }
-            Class::Sqrt(sqrt) => {
+            Sqrt(sqrt) => {
                 if let Some(sqrt) = sqrt.to_big_integer() {
                     let rational = (self.rational * Rational::from_bigint(sqrt)).inverse();
                     return Ok(Self {
@@ -206,11 +204,11 @@ impl Real {
                     });
                 }
             }
-            Class::Exp(exp) => {
+            Exp(exp) => {
                 let exp = Neg::neg(exp.clone());
                 return Ok(Self {
                     rational: self.rational.inverse(),
-                    class: Class::Exp(exp.clone()),
+                    class: Exp(exp.clone()),
                     computable: Computable::e(exp),
                 });
             }
@@ -218,7 +216,7 @@ impl Real {
         }
         Ok(Self {
             rational: self.rational.inverse(),
-            class: Class::Irrational,
+            class: Irrational,
             computable: Computable::inverse(self.computable),
         })
     }
@@ -233,44 +231,44 @@ impl Real {
             return Ok(Self::zero());
         }
         match &self.class {
-            Class::One => {
+            One => {
                 if self.rational.extract_square_will_succeed() {
                     let (square, rest) = self.rational.extract_square_reduced();
                     if rest == Rational::one() {
                         return Ok(Self {
                             rational: square,
-                            class: Class::One,
+                            class: One,
                             computable: Computable::one(),
                         });
                     } else {
                         return Ok(Self {
                             rational: square,
-                            class: Class::Sqrt(rest.clone()),
+                            class: Sqrt(rest.clone()),
                             computable: Computable::sqrt_rational(rest),
                         });
                     }
                 }
             }
-            Class::Pi => {
+            Pi => {
                 if self.rational.extract_square_will_succeed() {
                     let (square, rest) = self.rational.clone().extract_square_reduced();
                     if rest == Rational::one() {
                         return Ok(Self {
                             rational: square,
-                            class: Class::Irrational,
+                            class: Irrational,
                             computable: Computable::sqrt(self.computable),
                         });
                     }
                 }
             }
-            Class::Exp(exp) => {
+            Exp(exp) => {
                 if self.rational.extract_square_will_succeed() {
                     let (square, rest) = self.rational.clone().extract_square_reduced();
                     if rest == Rational::one() {
                         let exp = exp.clone() / Rational::new(2);
                         return Ok(Self {
                             rational: square,
-                            class: Class::Exp(exp.clone()),
+                            class: Exp(exp.clone()),
                             computable: Computable::e(exp),
                         });
                     }
@@ -288,18 +286,18 @@ impl Real {
             return Ok(Self::new(Rational::one()));
         }
         match &self.class {
-            Class::One => {
+            One => {
                 return Ok(Self {
                     rational: Rational::one(),
-                    class: Class::Exp(self.rational.clone()),
+                    class: Exp(self.rational.clone()),
                     computable: Computable::e(self.rational),
                 })
             }
-            Class::Ln(ln) => {
+            Ln(ln) => {
                 if self.rational == Rational::one() {
                     return Ok(Self {
                         rational: ln.clone(),
-                        class: Class::One,
+                        class: One,
                         computable: Computable::one(),
                     });
                 }
@@ -313,23 +311,23 @@ impl Real {
     /// The natural logarithm of this Real
     pub fn ln(self) -> Result<Real, RealProblem> {
         match &self.class {
-            Class::One => {
+            One => {
                 if self.rational == Rational::one() {
                     return Ok(Self::zero());
                 } else {
                     let new = Computable::rational(self.rational.clone());
                     return Ok(Self {
                         rational: Rational::one(),
-                        class: Class::Ln(self.rational),
+                        class: Ln(self.rational),
                         computable: Computable::ln(new),
                     });
                 }
             }
-            Class::Exp(exp) => {
+            Exp(exp) => {
                 if self.rational == Rational::one() {
                     return Ok(Self {
                         rational: exp.clone(),
-                        class: Class::One,
+                        class: One,
                         computable: Computable::one(),
                     });
                 }
@@ -342,17 +340,17 @@ impl Real {
 
     /// Is this Real a whole number aka integer ?
     pub fn is_whole(&self) -> bool {
-        self.class == Class::One && self.rational.is_whole()
+        self.class == One && self.rational.is_whole()
     }
 
     /// Is this Real known to be rational ?
     pub fn is_rational(&self) -> bool {
-        self.class == Class::One
+        self.class == One
     }
 
     /// Should we display this Real as a fraction ?
     pub fn prefer_fraction(&self) -> bool {
-        self.class == Class::One && self.rational.prefer_fraction()
+        self.class == One && self.rational.prefer_fraction()
     }
 }
 
@@ -361,7 +359,7 @@ use core::fmt;
 impl Real {
     /// Format this Real as a decimal rather than rational
     pub fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.class == Class::One {
+        if self.class == One {
             if let Some(precision) = f.precision() {
                 f.write_fmt(format_args!("{:#.*}", precision, self.rational))
             } else {
@@ -376,35 +374,35 @@ impl Real {
 impl fmt::Display for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.class {
-            Class::One => {
+            One => {
                 if f.alternate() {
                     return self.decimal(f);
                 } else {
                     f.write_fmt(format_args!("{}", self.rational))?;
                 }
             }
-            Class::Pi => {
+            Pi => {
                 if f.alternate() {
                     return self.decimal(f);
                 } else {
                     f.write_fmt(format_args!("{} Pi", self.rational))?;
                 }
             }
-            Class::Exp(n) => {
+            Exp(n) => {
                 if f.alternate() {
                     return self.decimal(f);
                 } else {
                     f.write_fmt(format_args!("{} x e**({})", self.rational, &n))?;
                 }
             }
-            Class::Ln(n) => {
+            Ln(n) => {
                 if f.alternate() {
                     return self.decimal(f);
                 } else {
                     f.write_fmt(format_args!("{} x ln({})", self.rational, &n))?;
                 }
             }
-            Class::Sqrt(n) => {
+            Sqrt(n) => {
                 if f.alternate() {
                     return self.decimal(f);
                 } else {
@@ -424,16 +422,14 @@ impl fmt::Display for Real {
     }
 }
 
-use std::str::FromStr;
-
-impl FromStr for Real {
+impl std::str::FromStr for Real {
     type Err = RealProblem;
 
     fn from_str(s: &str) -> Result<Self, RealProblem> {
         let rational: Rational = s.parse().map_err(|_| RealProblem::ParseError)?;
         Ok(Self {
             rational,
-            class: Class::One,
+            class: One,
             computable: Computable::one(),
         })
     }
@@ -459,13 +455,13 @@ impl Add for Real {
         if other.definitely_zero() {
             return self;
         }
-        if self.class == Class::One && self.rational == Rational::one() {
+        if self.class == One && self.rational == Rational::one() {
             return other;
         }
-        if other.class == Class::One && other.rational == Rational::one() {
+        if other.class == One && other.rational == Rational::one() {
             return self;
         }
-        let left = if self.class == Class::One {
+        let left = if self.class == One {
             Computable::rational(self.rational)
         } else if self.rational == Rational::one() {
             self.computable
@@ -473,7 +469,7 @@ impl Add for Real {
             let lr = Computable::rational(self.rational);
             Computable::multiply(lr, self.computable)
         };
-        let right = if other.class == Class::One {
+        let right = if other.class == One {
             Computable::rational(other.rational)
         } else if other.rational == Rational::one() {
             other.computable
@@ -484,7 +480,7 @@ impl Add for Real {
         let computable = Computable::add(left, right);
         Self {
             rational: Rational::one(),
-            class: Class::Irrational,
+            class: Irrational,
             computable,
         }
     }
@@ -552,14 +548,14 @@ impl Mul for Real {
             return Self { rational, ..self };
         }
         match (self.class, other.class) {
-            (Class::Sqrt(r), Class::Sqrt(s)) => {
+            (Sqrt(r), Sqrt(s)) => {
                 let square = Self::multiply_sqrts(r, s);
                 Self {
                     rational: square.rational * self.rational * other.rational,
                     ..square
                 }
             }
-            (Class::Exp(r), Class::Exp(s)) => {
+            (Exp(r), Exp(s)) => {
                 let (class, computable) = Class::make_exp(r + s);
                 let rational = self.rational * other.rational;
                 Self {
@@ -568,11 +564,11 @@ impl Mul for Real {
                     computable,
                 }
             }
-            (Class::Pi, Class::Pi) => {
+            (Pi, Pi) => {
                 let rational = self.rational * other.rational;
                 Self {
                     rational,
-                    class: Class::Irrational,
+                    class: Irrational,
                     computable: Computable::square(Computable::pi()),
                 }
             }
@@ -580,7 +576,7 @@ impl Mul for Real {
                 let rational = self.rational * other.rational;
                 Self {
                     rational,
-                    class: Class::Irrational,
+                    class: Irrational,
                     computable: Computable::multiply(self.computable, other.computable),
                 }
             }

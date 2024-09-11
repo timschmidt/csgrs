@@ -255,8 +255,7 @@ impl Simple {
     }
 }
 
-use std::str::FromStr;
-impl FromStr for Simple {
+impl std::str::FromStr for Simple {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {

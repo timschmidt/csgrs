@@ -332,9 +332,7 @@ impl fmt::Display for Rational {
     }
 }
 
-use std::str::FromStr;
-
-impl FromStr for Rational {
+impl std::str::FromStr for Rational {
     type Err = ParseBRError;
 
     fn from_str(s: &str) -> Result<Self, ParseBRError> {
@@ -397,12 +395,13 @@ impl FromStr for Rational {
 }
 
 use core::ops::*;
-use std::cmp::Ordering;
 
 impl Add for Rational {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
+        use std::cmp::Ordering::*;
+
         let denominator = &self.denominator * &other.denominator;
         let a = self.numerator * other.denominator;
         let b = other.numerator * self.denominator;
@@ -412,11 +411,11 @@ impl Add for Rational {
             (Plus, Plus) => (Plus, a + b),
             (Minus, Minus) => (Minus, a + b),
             (x, y) => match a.cmp(&b) {
-                Ordering::Greater => (x, a - b),
-                Ordering::Equal => {
+                Greater => (x, a - b),
+                Equal => {
                     return Self::zero();
                 }
-                Ordering::Less => (y, b - a),
+                Less => (y, b - a),
             },
         };
         Self::maybe_reduce(Self {

@@ -1,11 +1,12 @@
 use crate::Rational;
+use core::cmp::Ordering;
+use num::Signed;
 use num::{bigint::Sign, BigInt, BigUint};
 use num::{One, Zero};
+use std::cell::RefCell;
 use std::ops::Deref;
 
 pub type Precision = i32;
-
-use std::cell::RefCell;
 
 #[derive(Clone, Debug, PartialEq)]
 enum Cache {
@@ -299,8 +300,6 @@ impl Computable {
     }
 }
 
-use core::cmp::Ordering;
-
 impl Computable {
     /// Do not call this function if `self` and `other` may be the same
     pub fn compare_to(&self, other: &Self) -> Ordering {
@@ -426,8 +425,6 @@ impl Approximation for Int {
 
 #[derive(Debug)]
 struct Inverse(Computable);
-
-use num::Signed;
 
 impl Approximation for Inverse {
     fn approximate(&self, p: Precision) -> BigInt {
