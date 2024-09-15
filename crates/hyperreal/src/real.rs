@@ -625,6 +625,14 @@ impl PartialEq<Rational> for Real {
     }
 }
 
+// Symmetry
+impl PartialEq<Real> for Rational {
+    fn eq(&self, other: &Real) -> bool {
+        other.class == Class::One && *self == other.rational
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
