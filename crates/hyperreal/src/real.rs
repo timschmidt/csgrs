@@ -24,7 +24,7 @@ enum Class {
     Irrational,
 }
 
-// Neither None nor Irrational are judged equal to anything here
+// We can't tell whether an Irrational value is ever equal to anything
 impl PartialEq for Class {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -62,8 +62,9 @@ impl Class {
 ///
 /// Even a normal rational can be parsed as a Real
 /// ```
-/// use realistic::Real;
+/// use realistic::{Real, Rational};
 /// let half: Real = "0.5".parse().unwrap();
+/// assert_eq!(half, Rational::fraction(1, 2));
 /// ```
 ///
 /// Simple arithmetic
@@ -617,6 +618,13 @@ impl PartialEq for Real {
     }
 }
 
+// For a rational this definitely works
+impl PartialEq<Rational> for Real {
+    fn eq(&self, other: &Rational) -> bool {
+        self.class == Class::One && self.rational == *other
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -649,7 +657,7 @@ mod tests {
         assert_eq!(zero, Real::zero());
         let six_half: Real = "13/2".parse().unwrap();
         let opposite = six_half.inverse().unwrap();
-        let expected = "2/13".parse().unwrap();
+        let expected: Real = "2/13".parse().unwrap();
         assert_eq!(opposite, expected);
     }
 
@@ -697,14 +705,15 @@ mod tests {
         let two_pi = Real::pi() + Real::pi();
         let two: Real = "2".parse().unwrap();
         assert_eq!(two_pi, two * Real::pi());
+        assert_ne!(two_pi, Rational::new(2));
     }
 
     #[test]
     fn sqrt_exact() {
         let big: Real = "40000".parse().unwrap();
-        let small: Real = "200".parse().unwrap();
+        let small: Rational = "200".parse().unwrap();
         let answer = big.sqrt().unwrap();
-        assert_eq!(small, answer);
+        assert_eq!(answer, small);
     }
 
     #[test]
@@ -718,7 +727,7 @@ mod tests {
         let three: Real = "3".parse().unwrap();
         let b = small * three;
         let answer = a * b;
-        let eighteen: Real = "18".parse().unwrap();
+        let eighteen: Rational = "18".parse().unwrap();
         assert_eq!(answer, eighteen);
     }
 }
