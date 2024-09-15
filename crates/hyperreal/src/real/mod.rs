@@ -77,6 +77,15 @@ impl Class {
 /// let two = realistic::Rational::new(2);
 /// assert_eq!(answer, Real::new(two));
 /// ```
+///
+/// Conversion
+/// ```
+/// use realistic::{Real, Rational};
+/// let nine: Real = 9.into();
+/// let three = Rational::new(3);
+/// let answer = nine.sqrt().unwrap();
+/// assert_eq!(answer, three);
+/// ```
 
 #[derive(Debug)]
 pub struct Real {
@@ -726,13 +735,13 @@ mod tests {
 
     #[test]
     fn square_sqrt() {
-        let two: Real = "2".parse().unwrap();
-        let three: Real = "3".parse().unwrap();
+        let two: Real = 2.into();
+        let three: Real = 3.into();
         let small = three.sqrt().expect("Should be able to sqrt(n)");
         let a = small * two;
-        let three: Real = "3".parse().unwrap();
+        let three: Real = 3.into();
         let small = three.sqrt().expect("Should be able to sqrt(n)");
-        let three: Real = "3".parse().unwrap();
+        let three: Real = 3.into();
         let b = small * three;
         let answer = a * b;
         let eighteen: Rational = "18".parse().unwrap();
