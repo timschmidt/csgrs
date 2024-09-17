@@ -128,13 +128,14 @@ pub const fn calculate_total_voxel_count(max_lod_level: usize) -> usize {
 ///
 /// # Constants
 ///
-/// - `MAX_VOXEL_COUNT`: The maximum size of the data vector, calculated using the [calculate_total_voxel_count] function.
+/// - [MAX_VOXEL_COUNT](VoxTree::MAX_VOXEL_COUNT): The maximum size of the data vector, calculated using the [calculate_total_voxel_count] function.
 ///
 /// # Methods
 ///
-/// - `new()`: Creates a new `VoxTree` instance with the data vector initialized to zeros.
-/// - `set_value(lod, x, y, z, value)`: Sets the value of a voxel at the specified LOD and coordinates.
-/// - `get_value(lod, x, y, z)`: Gets the value of a voxel at the specified LOD and coordinates.
+/// - [new](VoxTree::new)`()`: Creates a new [VoxTree] instance with the data vector initialized to zeros.
+/// - [set_value](VoxTree::set_value)`(lod, x, y, z, value)`: Sets the value of a voxel at the specified LOD and coordinates.
+/// - [get_value](VoxTree::get_value)`(lod, x, y, z)`: Gets the value of a voxel at the specified LOD and coordinates.
+/// - [update_lods](VoxTree::update_lods)`()`: Updates the voxel data for all LODs based on the current voxel values at maximum LOD, 0.
 ///
 /// # Explanation
 ///
@@ -160,7 +161,7 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
 
     // Creates a new [VoxTree] instance.
     ///
-    /// This method initializes the `data` vector with zeros, with the size [VoxTree::MAX_VOXEL_COUNT], determined by the `MAX_LOD_LEVEL`.
+    /// This method initializes the `data` vector with zeros, with the size [MAX_VOXEL_COUNT](VoxTree::MAX_VOXEL_COUNT), determined by the `MAX_LOD_LEVEL`.
     ///
     /// # Returns
     ///
@@ -352,7 +353,7 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
 impl<const MAX_LOD_LEVEL: usize> Default for VoxTree<MAX_LOD_LEVEL> {
     /// Creates a default [VoxTree] instance.
     ///
-    /// This method is equivalent to calling [VoxTree::new()].
+    /// This method is equivalent to calling [new](VoxTree::new).
     ///
     /// # Returns
     ///
