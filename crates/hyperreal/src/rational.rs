@@ -75,23 +75,15 @@ impl Rational {
 
     /// The Rational corresponding to the provided [`BigInt`]
     pub fn from_bigint(n: BigInt) -> Self {
-        let sign = n.sign();
-        let numerator = n.magnitude().clone();
-        Self {
-            sign,
-            numerator,
-            denominator: BigUint::one(),
-        }
+        Self::from_bigint_fraction(n, BigUint::one())
     }
 
     /// The non-negative Rational corresponding to the provided [`u64`]
     /// numerator and denominator as a fraction
-    pub fn fraction(n: u64, d: u64) -> Self {
-        Self {
-            sign: Plus,
-            numerator: ToBigUint::to_biguint(&n).unwrap(),
-            denominator: ToBigUint::to_biguint(&d).unwrap(),
-        }
+    pub fn fraction(n: i64, d: u64) -> Self {
+        let numerator = ToBigInt::to_bigint(&n).unwrap();
+        let denominator = ToBigUint::to_biguint(&d).unwrap();
+        Self::from_bigint_fraction(numerator, denominator)
     }
 
     /// The Rational corresponding to the provided [`BigInt`]
@@ -99,8 +91,7 @@ impl Rational {
     pub fn from_bigint_fraction(n: BigInt, denominator: BigUint) -> Self {
         let sign = n.sign();
         let numerator = n.magnitude().clone();
-        let answer =
-        Self {
+        let answer = Self {
             sign,
             numerator,
             denominator,

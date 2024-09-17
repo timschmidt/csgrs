@@ -645,7 +645,6 @@ impl PartialEq<Real> for Rational {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
