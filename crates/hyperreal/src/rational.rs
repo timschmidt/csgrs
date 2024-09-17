@@ -68,13 +68,9 @@ impl Rational {
         }
     }
 
-    /// The non-negative Rational corresponding to the provided [`u64`]
-    pub fn new(n: u64) -> Self {
-        Self {
-            sign: Plus,
-            numerator: ToBigUint::to_biguint(&n).unwrap(),
-            denominator: BigUint::one(),
-        }
+    /// The non-negative Rational corresponding to the provided [`i64`]
+    pub fn new(n: i64) -> Self {
+        Self::from_bigint(ToBigInt::to_bigint(&n).unwrap())
     }
 
     /// The Rational corresponding to the provided [`BigInt`]
@@ -103,11 +99,13 @@ impl Rational {
     pub fn from_bigint_fraction(n: BigInt, denominator: BigUint) -> Self {
         let sign = n.sign();
         let numerator = n.magnitude().clone();
+        let answer =
         Self {
             sign,
             numerator,
             denominator,
-        }
+        };
+        answer.reduce()
     }
 
     fn maybe_reduce(self) -> Self {
@@ -547,13 +545,13 @@ mod tests {
 
     #[test]
     fn square_reduced() {
-        let thirty_two: Rational = "32".parse().unwrap();
+        let thirty_two = Rational::new(32);
         let (square, rest) = thirty_two.extract_square_reduced();
-        let four: Rational = "4".parse().unwrap();
+        let four = Rational::new(4);
         assert_eq!(square, four);
-        let two: Rational = "2".parse().unwrap();
+        let two = Rational::new(2);
         assert_eq!(rest, two);
-        let minus_one: Rational = "-1".parse().unwrap();
+        let minus_one = Rational::new(-1);
         let (square, rest) = minus_one.clone().extract_square_reduced();
         assert_eq!(square, Rational::one());
         assert_eq!(rest, minus_one);

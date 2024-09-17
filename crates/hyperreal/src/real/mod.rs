@@ -3,6 +3,8 @@ use crate::Rational;
 use num::bigint::Sign;
 use Class::*;
 
+mod convert;
+
 /// Problems when either parsing or attempting Arithmetic with [`Real`] numbers
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -12,6 +14,8 @@ pub enum RealProblem {
     DivideByZero,
     NotFound,
     InsufficientParameters,
+    NotANumber,
+    Infinity,
 }
 
 #[derive(Clone, Debug)]
