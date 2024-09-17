@@ -656,23 +656,45 @@ mod tests {
     }
 
     #[test]
+    fn parse() {
+        let counting: Real = "123456789".parse().unwrap();
+        let answer = Real::new(Rational::new(123456789));
+        assert_eq!(counting, answer);
+    }
+
+    #[test]
+    fn parse_large() {
+        let input: Real = "378089444731722233953867379643788100".parse().unwrap();
+        let root = Rational::new(614889782588491410);
+        let answer = Real::new(root.clone() * root);
+        assert_eq!(input, answer);
+    }
+
+    #[test]
+    fn parse_fraction() {
+        let input: Real = "98760/123450".parse().unwrap();
+        let answer = Real::new(Rational::fraction(9876, 12345));
+        assert_eq!(input, answer);
+    }
+
+    #[test]
     fn root_divide() {
-        let twenty: Real = "20".parse().unwrap();
-        let five: Real = "5".parse().unwrap();
+        let twenty: Real = 20.into();
+        let five: Real = 5.into();
         let a = twenty.sqrt().unwrap();
         let b = five.sqrt().unwrap().inverse().unwrap();
         let answer = a * b;
-        let two: Real = "2".parse().unwrap();
+        let two: Real = 2.into();
         assert_eq!(answer, two);
     }
 
     #[test]
     fn rational() {
-        let two: Real = "2".parse().unwrap();
+        let two: Real = 2.into();
         assert_ne!(two, Real::zero());
-        let four: Real = "4".parse().unwrap();
+        let four: Real = 4.into();
         let answer = four - two;
-        let two: Real = "2".parse().unwrap();
+        let two: Real = 2.into();
         assert_eq!(answer, two);
         let zero = answer - two;
         assert_eq!(zero, Real::zero());
@@ -687,15 +709,15 @@ mod tests {
     // perfect square?" (fixed in 2018)
     #[test]
     fn perfect_square() {
-        let four: Real = "4".parse().unwrap();
-        let two: Real = "2".parse().unwrap();
+        let four: Real = 4.into();
+        let two: Real = 2.into();
         let calc = four.sqrt().unwrap() - two;
         assert_eq!(calc, Real::zero());
     }
 
     #[test]
     fn one_over_e() {
-        let one: Real = "1".parse().unwrap();
+        let one: Real = 1.into();
         let e = Real::e();
         let e_inverse = Real::e().inverse().unwrap();
         let answer = e * e_inverse;
@@ -706,11 +728,11 @@ mod tests {
 
     #[test]
     fn unlike_sqrts() {
-        let thirty: Real = "30".parse().unwrap();
-        let ten: Real = "10".parse().unwrap();
+        let thirty: Real = 30.into();
+        let ten: Real = 10.into();
         let answer = thirty.sqrt().unwrap() * ten.sqrt().unwrap();
-        let ten: Real = "10".parse().unwrap();
-        let three: Real = "3".parse().unwrap();
+        let ten: Real = 10.into();
+        let three: Real = 3.into();
         let or = ten * three.sqrt().unwrap();
         assert_eq!(answer, or);
     }
@@ -724,15 +746,15 @@ mod tests {
         assert!(z1.definitely_zero());
         assert!(z2.definitely_zero());
         let two_pi = Real::pi() + Real::pi();
-        let two: Real = "2".parse().unwrap();
+        let two: Real = 2.into();
         assert_eq!(two_pi, two * Real::pi());
         assert_ne!(two_pi, Rational::new(2));
     }
 
     #[test]
     fn sqrt_exact() {
-        let big: Real = "40000".parse().unwrap();
-        let small: Rational = "200".parse().unwrap();
+        let big: Real = 40_000.into();
+        let small: Rational = Rational::new(200);
         let answer = big.sqrt().unwrap();
         assert_eq!(answer, small);
     }
@@ -748,7 +770,7 @@ mod tests {
         let three: Real = 3.into();
         let b = small * three;
         let answer = a * b;
-        let eighteen: Rational = "18".parse().unwrap();
+        let eighteen: Rational = Rational::new(18);
         assert_eq!(answer, eighteen);
     }
 }
