@@ -1,5 +1,3 @@
-use bevy::utils::default;
-
 /// Calculates the total number of voxels along one axis at the maximum level of detail (LOD).
 ///
 /// # Parameters
