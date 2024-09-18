@@ -31,10 +31,15 @@ impl TryFrom<f32> for Real {
     type Error = RealProblem;
 
     fn try_from(n: f32) -> Result<Real, Self::Error> {
+        const NEG_BITS: u32 = 0x8000_0000;
+        const EXP_BITS: u32 = 0x7f80_0000;
+        const SIG_BITS: u32 = 0x007f_ffff;
+        assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u32::MAX);
+
         let bits = n.to_bits();
-        let neg = (bits & 0x8000_0000) == 0x8000_0000;
-        let exp = (bits & 0x7f80_0000) >> 23;
-        let sig = bits & 0x7f_ffff;
+        let neg = (bits & NEG_BITS) == NEG_BITS;
+        let exp = (bits & EXP_BITS) >> EXP_BITS.trailing_zeros();
+        let sig = bits & SIG_BITS;
         match exp {
             0 => {
                 if sig == 0 {
@@ -49,7 +54,7 @@ impl TryFrom<f32> for Real {
                 }
             }
             1..=150 => {
-                let n = 0x80_0000 + sig;
+                let n = SIG_BITS + 1 + sig;
                 let numerator: BigInt = n.into();
                 let denominator = BigUint::one() << (150 - exp);
                 Ok(signed(
@@ -58,7 +63,7 @@ impl TryFrom<f32> for Real {
                 ))
             }
             151..=254 => {
-                let n = 0x80_0000 + sig;
+                let n = SIG_BITS + 1 + sig;
                 let mut big: BigInt = n.into();
                 big <<= exp - 150;
                 Ok(signed(Rational::from_bigint(big), neg))
@@ -79,10 +84,15 @@ impl TryFrom<f64> for Real {
     type Error = RealProblem;
 
     fn try_from(n: f64) -> Result<Real, Self::Error> {
+        const NEG_BITS: u64 = 0x8000_0000_0000_0000;
+        const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
+        const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
+        assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u64::MAX);
+
         let bits = n.to_bits();
-        let neg = (bits & 0x8000_0000_0000_0000) == 0x8000_0000_0000_0000;
-        let exp = (bits & 0x7ff0_0000_0000_0000) >> 52;
-        let sig = bits & 0xf_ffff_ffff_ffff;
+        let neg = (bits & NEG_BITS) == NEG_BITS;
+        let exp = (bits & EXP_BITS) >> EXP_BITS.trailing_zeros();
+        let sig = bits & SIG_BITS;
         match exp {
             0 => {
                 if sig == 0 {
@@ -97,7 +107,7 @@ impl TryFrom<f64> for Real {
                 }
             }
             1..=1075 => {
-                let n = 0x10_0000_0000_0000 + sig;
+                let n = SIG_BITS + 1 + sig;
                 let numerator: BigInt = n.into();
                 let denominator = BigUint::one() << (1075 - exp);
                 Ok(signed(
@@ -106,7 +116,7 @@ impl TryFrom<f64> for Real {
                 ))
             }
             1076..=2046 => {
-                let n = 0x10_0000_0000_0000 + sig;
+                let n = SIG_BITS + 1 + sig;
                 let mut big: BigInt = n.into();
                 big <<= exp - 1075;
                 Ok(signed(Rational::from_bigint(big), neg))
@@ -144,16 +154,24 @@ mod tests {
         let d: f32 = 81.0;
         let a: Real = f.try_into().unwrap();
         let b: Real = d.try_into().unwrap();
-        let third = Real::new(Rational::fraction(2, 6));
+        let third = Real::new(Rational::fraction(1, 3));
         let answer = (a / b).unwrap();
         assert_eq!(answer, third);
     }
 
     #[test]
-    fn repr() {
+    fn repr_f32() {
         let f: f32 = 1.23456789;
         let a: Real = f.try_into().unwrap();
-        let third = Real::new(Rational::fraction(5178153, 4194304));
-        assert_eq!(a, third);
+        let correct = Real::new(Rational::fraction(5178153, 4194304));
+        assert_eq!(a, correct);
+    }
+
+    #[test]
+    fn repr_f64() {
+        let f: f64 = 1.23456789;
+        let a: Real = f.try_into().unwrap();
+        let correct = Real::new(Rational::fraction(5559999489367579, 4503599627370496));
+        assert_eq!(a, correct);
     }
 }
