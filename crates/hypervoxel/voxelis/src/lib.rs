@@ -1,4 +1,7 @@
+pub mod chunk;
 pub mod voxtree;
+
+pub use chunk::Chunk;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
