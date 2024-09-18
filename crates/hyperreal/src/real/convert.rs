@@ -34,7 +34,7 @@ impl TryFrom<f32> for Real {
         const NEG_BITS: u32 = 0x8000_0000;
         const EXP_BITS: u32 = 0x7f80_0000;
         const SIG_BITS: u32 = 0x007f_ffff;
-        assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u32::MAX);
+        debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u32::MAX);
 
         let bits = n.to_bits();
         let neg = (bits & NEG_BITS) == NEG_BITS;
@@ -87,7 +87,7 @@ impl TryFrom<f64> for Real {
         const NEG_BITS: u64 = 0x8000_0000_0000_0000;
         const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
         const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
-        assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u64::MAX);
+        debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u64::MAX);
 
         let bits = n.to_bits();
         let neg = (bits & NEG_BITS) == NEG_BITS;
