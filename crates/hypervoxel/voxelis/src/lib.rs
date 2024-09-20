@@ -1,4 +1,5 @@
 pub mod chunk;
+pub(crate) mod math;
 pub mod voxtree;
 
 pub use chunk::Chunk;
