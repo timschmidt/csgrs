@@ -20,6 +20,29 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
         return false;
     }
 
+    // Check if the triangle's plane intersects the cube
+    let normal = (tv1 - tv0).cross(tv2 - tv0);
+    let d = -normal.dot(tv0);
+
+    let p1 = cube_min;
+    let p2 = Vec3::new(cube_max.x, cube_min.y, cube_min.z);
+    let p3 = Vec3::new(cube_max.x, cube_max.y, cube_min.z);
+    let p4 = Vec3::new(cube_min.x, cube_max.y, cube_min.z);
+    let p5 = Vec3::new(cube_min.x, cube_min.y, cube_max.z);
+    let p6 = Vec3::new(cube_max.x, cube_min.y, cube_max.z);
+    let p7 = cube_max;
+    let p8 = Vec3::new(cube_min.x, cube_max.y, cube_max.z);
+
+    let cube_points = [p1, p2, p3, p4, p5, p6, p7, p8];
+    let sign = (normal.dot(cube_points[0]) + d).signum();
+
+    for p in &cube_points[1..] {
+        let new_sign = (normal.dot(*p) + d).signum();
+        if new_sign != sign {
+            return true; // The plane intersects the cube
+        }
+    }
+
     // Check if any of the triangle's vertices are inside or on the cube
     if point_in_or_on_cube(tv0, cube)
         || point_in_or_on_cube(tv1, cube)
