@@ -1,5 +1,6 @@
 pub mod chunk;
 pub(crate) mod math;
+pub mod obj_reader;
 pub mod voxtree;
 
 pub use chunk::Chunk;
