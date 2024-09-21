@@ -26,6 +26,7 @@ const MAX_LOD_SIZE: usize = 5;
 
 pub struct Chunk {
     data: VoxTree<MAX_LOD_SIZE>,
+    position: IVec3,
 }
 
 impl Chunk {
@@ -35,7 +36,23 @@ impl Chunk {
     pub fn new() -> Self {
         Self {
             data: VoxTree::<MAX_LOD_SIZE>::new(),
+            position: IVec3::ZERO,
         }
+    }
+
+    pub fn with_position(x: i32, y: i32, z: i32) -> Self {
+        Self {
+            data: VoxTree::<MAX_LOD_SIZE>::new(),
+            position: IVec3::new(x, y, z),
+        }
+    }
+
+    pub fn set_position(&mut self, x: i32, y: i32, z: i32) {
+        self.position = IVec3::new(x, y, z);
+    }
+
+    pub fn get_position(&self) -> IVec3 {
+        self.position
     }
 
     pub fn generate_data(&mut self) {
