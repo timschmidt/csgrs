@@ -283,17 +283,19 @@ impl Voxelizer {
 
                             if intersects {
                                 chunk.set_value(x as u8, y as u8, z as u8, 1);
-                            } else {
-                                println!(
-                                    " Triangle ({:2.1}, {:2.1}, {:2.1}) does not intersect with cube ({}, {}) [{}, {}, {}]@{}",
-                                    v1, v2, v3, world_min_position, world_max_position, x, y, z, chunk_index
-                                );
+                                // } else {
+                                //     println!(
+                                //         " Triangle ({:2.1}, {:2.1}, {:2.1}) does not intersect with cube ({}, {}) [{}, {}, {}]@{}",
+                                //         v1, v2, v3, world_min_position, world_max_position, x, y, z, chunk_index
+                                //     );
                             }
                         }
                     }
                 }
             }
         }
+
+        // self.fill_gaps();
 
         for chunk in self.chunks.iter_mut() {
             chunk.update_lods();
