@@ -558,14 +558,14 @@ mod tests {
     }
 
     #[test]
-    fn test_cube_vertex_inside_triangle() {
+    fn test_cube_above_triangle_no_intersection() {
         let triangle = (
             Vec3::new(0.0, 0.0, 0.0),
             Vec3::new(1.0, 0.0, 0.0),
             Vec3::new(0.0, 1.0, 0.0),
         );
         let cube = (Vec3::new(0.5, 0.5, 0.5), Vec3::new(1.5, 1.5, 1.5));
-        assert!(triangle_cube_intersection(triangle, cube));
+        assert!(!triangle_cube_intersection(triangle, cube));
     }
 
     #[test]
