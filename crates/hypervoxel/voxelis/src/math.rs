@@ -161,7 +161,7 @@ fn triangle_edge_intersection(edge: (Vec3, Vec3), triangle: (Vec3, Vec3, Vec3)) 
     let t = -(normal.dot(e1) + d) / normal.dot(edge_vec);
 
     // If t is in [0..1], the edge intersects the plane
-    if t >= 0.0 && t <= 1.0 {
+    if (0.0..=1.0).contains(&t) {
         // Compute the intersection point
         let intersection = e1 + edge_vec * t;
 
@@ -261,11 +261,8 @@ pub(crate) fn edge_intersection(edge1: (Vec3, Vec3), edge2: (Vec3, Vec3)) -> boo
     let t2 = r.cross(d1).dot(cross_d1_d2) / denom;
 
     // Check if the intersection point is within both edges
-    let intersects = (0.0 - epsilon..=1.0 + epsilon).contains(&t1)
-        && (0.0 - epsilon..=1.0 + epsilon).contains(&t2);
 
-    println!("Intersection result: {}", intersects);
-    intersects
+    (0.0 - epsilon..=1.0 + epsilon).contains(&t1) && (0.0 - epsilon..=1.0 + epsilon).contains(&t2)
 }
 
 #[cfg(test)]
