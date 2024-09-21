@@ -22,7 +22,7 @@ const VECTOR_LEFT: Vec3 = Vec3::new(-1.0, 0.0, 0.0);
 const VECTOR_FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 const VECTOR_BACK: Vec3 = Vec3::new(0.0, 0.0, 1.0);
 
-const MAX_LOD_SIZE: usize = 5;
+pub const MAX_LOD_SIZE: usize = 5;
 
 pub struct Chunk {
     data: VoxTree<MAX_LOD_SIZE>,
