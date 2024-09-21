@@ -8,10 +8,6 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
     let tri_min = tv0.min(tv1).min(tv2);
     let tri_max = tv0.max(tv1).max(tv2);
 
-    println!("Triangle vertices: {:?}, {:?}, {:?}", tv0, tv1, tv2);
-    println!("Triangle bounds: min: {:?}, max: {:?}", tri_min, tri_max);
-    println!("Cube bounds: min: {:?}, max: {:?}", cube_min, cube_max);
-
     // Check if the bounding boxes overlap or touch
     let epsilon = 1e-5;
     if tri_max.x < cube_min.x - epsilon
@@ -21,7 +17,6 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
         || tri_max.z < cube_min.z - epsilon
         || tri_min.z > cube_max.z + epsilon
     {
-        println!("Bounding boxes do not overlap or touch");
         return false;
     }
 
@@ -30,7 +25,6 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
         || point_in_or_on_cube(tv1, cube)
         || point_in_or_on_cube(tv2, cube)
     {
-        println!("Triangle vertex inside or on cube");
         return true;
     }
 
@@ -47,9 +41,7 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
     ];
 
     for &vertex in &cube_vertices {
-        println!("Checking cube vertex: {:?}", vertex);
         if point_in_or_on_triangle(vertex, triangle) {
-            println!("Cube vertex inside or on triangle");
             return true;
         }
     }
@@ -98,13 +90,11 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
     for &edge in &triangle_edges {
         for &face in &cube_faces {
             if edge_quad_intersection(edge, face) {
-                println!("Triangle edge intersects cube face");
                 return true;
             }
         }
     }
 
-    println!("No intersection found");
     false
 }
 
@@ -262,13 +252,6 @@ pub(crate) fn edge_intersection(edge1: (Vec3, Vec3), edge2: (Vec3, Vec3)) -> boo
     let cross_d1_d2 = d1.cross(d2);
     let denom = cross_d1_d2.length_squared();
 
-    println!("Edge 1: {:?} to {:?}", e1v0, e1v1);
-    println!("Edge 2: {:?} to {:?}", e2v0, e2v1);
-    println!("d1: {:?}, d2: {:?}", d1, d2);
-    println!("r: {:?}", r);
-    println!("cross_d1_d2: {:?}", cross_d1_d2);
-    println!("denom: {}", denom);
-
     // Relaxed epsilon for floating-point comparisons
     let epsilon = 1e-5;
 
@@ -276,16 +259,13 @@ pub(crate) fn edge_intersection(edge1: (Vec3, Vec3), edge2: (Vec3, Vec3)) -> boo
     if denom < epsilon {
         // Edges are parallel, check if they are collinear (on the same line)
         let cross_r_d1 = r.cross(d1);
-        println!("Parallel edges, cross_r_d1: {:?}", cross_r_d1);
         if cross_r_d1.length_squared() > epsilon {
-            println!("Edges are parallel but not collinear");
             return false; // Edges are parallel but not collinear
         }
 
         // Edges are collinear, check if they overlap
         let t0 = r.dot(d1) / d1.length_squared();
         let t1 = (r + d2).dot(d1) / d1.length_squared();
-        println!("Collinear edges, t0: {}, t1: {}", t0, t1);
         return (0.0 - epsilon..=1.0 + epsilon).contains(&t0)
             || (0.0 - epsilon..=1.0 + epsilon).contains(&t1)
             || (t0 <= 0.0 && t1 >= 1.0)
@@ -294,17 +274,13 @@ pub(crate) fn edge_intersection(edge1: (Vec3, Vec3), edge2: (Vec3, Vec3)) -> boo
 
     // Check for coplanarity
     let scalar_triple_product = r.dot(cross_d1_d2);
-    println!("Scalar triple product: {}", scalar_triple_product);
     if scalar_triple_product.abs() > epsilon * cross_d1_d2.length() {
-        println!("Edges are not coplanar");
         return false; // Edges are not coplanar
     }
 
     // Compute t1 and t2, the parameters for both edges
     let t1 = r.cross(d2).dot(cross_d1_d2) / denom;
     let t2 = r.cross(d1).dot(cross_d1_d2) / denom;
-
-    println!("t1: {}, t2: {}", t1, t2);
 
     // Check if the intersection point is within both edges
     let intersects = (0.0 - epsilon..=1.0 + epsilon).contains(&t1)
