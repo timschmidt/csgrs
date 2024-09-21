@@ -52,6 +52,40 @@ impl Voxelizer {
         }
     }
 
+    pub fn simple_voxelize(&mut self) {
+        self.chunks = Vec::with_capacity(
+            self.chunks_size.x as usize * self.chunks_size.y as usize * self.chunks_size.z as usize,
+        );
+
+        for y in 0..self.chunks_size.y {
+            for z in 0..self.chunks_size.z {
+                for x in 0..self.chunks_size.x {
+                    self.chunks.push(Chunk::with_position(x, y, z));
+                }
+            }
+        }
+
+        let mesh_min = self.mesh.aabb.0;
+
+        for face in &self.mesh.faces {
+            for vertex_index in [face.x, face.y, face.z] {
+                let vertex = self.mesh.vertices[(vertex_index - 1) as usize] - mesh_min;
+                let voxel = (vertex / VOXEL_SIZE).floor().as_ivec3();
+                let local_voxel = self.convert_voxel_world_to_local(voxel);
+
+                let chunk_index = self.calculate_chunk_index(voxel);
+                let chunk = &mut self.chunks[chunk_index];
+
+                chunk.set_value(
+                    local_voxel.x as u8,
+                    local_voxel.y as u8,
+                    local_voxel.z as u8,
+                    1,
+                );
+            }
+        }
+    }
+
     pub fn voxelize(&mut self) {
         self.chunks = Vec::with_capacity(
             self.chunks_size.x as usize * self.chunks_size.y as usize * self.chunks_size.z as usize,
