@@ -172,28 +172,6 @@ fn triangle_edge_intersection(edge: (Vec3, Vec3), triangle: (Vec3, Vec3, Vec3)) 
     }
 }
 
-fn triangle_quad_intersection(
-    triangle: (Vec3, Vec3, Vec3),
-    quad: (Vec3, Vec3, Vec3, Vec3),
-) -> bool {
-    // Implement triangle-quad intersection test here
-    // This can be done by splitting the quad into two triangles and testing against both
-    triangle_triangle_intersection(triangle, (quad.0, quad.1, quad.2))
-        || triangle_triangle_intersection(triangle, (quad.0, quad.2, quad.3))
-}
-
-fn triangle_triangle_intersection(tri1: (Vec3, Vec3, Vec3), tri2: (Vec3, Vec3, Vec3)) -> bool {
-    // Implement triangle-triangle intersection test here
-    // This can be done using the Möller–Trumbore intersection algorithm
-    // For simplicity, we'll just check if any vertex of one triangle is inside the other
-    point_in_triangle(tri1.0, tri2)
-        || point_in_triangle(tri1.1, tri2)
-        || point_in_triangle(tri1.2, tri2)
-        || point_in_triangle(tri2.0, tri1)
-        || point_in_triangle(tri2.1, tri1)
-        || point_in_triangle(tri2.2, tri1)
-}
-
 pub(crate) fn point_in_cube(point: Vec3, cube: (Vec3, Vec3)) -> bool {
     let (cube_min, cube_max) = cube;
 
