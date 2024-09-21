@@ -55,6 +55,14 @@ impl Chunk {
         self.position
     }
 
+    pub fn set_value(&mut self, x: u8, y: u8, z: u8, value: i32) {
+        self.data.set_value(0, x, y, z, value);
+    }
+
+    pub fn update_lods(&mut self) {
+        self.data.update_lods();
+    }
+
     pub fn generate_data(&mut self) {
         for y in 0..Self::VOXELS_PER_AXIS {
             for z in 0..Self::VOXELS_PER_AXIS {
