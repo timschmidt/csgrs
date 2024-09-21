@@ -62,21 +62,32 @@ fn setup(
 ) {
     println!("cwd: {:?}", std::env::current_dir().unwrap().display());
 
-    // let obj = obj_reader::Obj::parse("assets/procedural_brick_wall.obj");
-    // let obj = obj_reader::Obj::parse("assets/column.obj");
-    // let obj = obj_reader::Obj::parse("assets/cylinder.obj");
-    // let obj = obj_reader::Obj::parse("assets/default_cube.obj");
-    // let obj = obj_reader::Obj::parse("assets/gear.obj");
-    // let obj = obj_reader::Obj::parse("assets/icosphere.obj");
-    // let obj = obj_reader::Obj::parse("assets/sphere.obj");
-    // let obj = obj_reader::Obj::parse("assets/suzanne.obj");
-    // let obj = obj_reader::Obj::parse("assets/torus.obj");
-    // let obj = obj_reader::Obj::parse("assets/torus_knot.obj");
-    // let obj = obj_reader::Obj::parse("assets/wall.obj");
-    // let obj = obj_reader::Obj::parse("assets/wall_arc.obj");
-    // let obj = obj_reader::Obj::parse("assets/wall_dome.obj");
-    // let obj = obj_reader::Obj::parse("assets/wall_floor.obj");
-    let obj = obj_reader::Obj::parse("assets/worm_gear.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/procedural_brick_wall.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/column.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/cylinder.obj");
+    let obj = obj_reader::Obj::parse("ad-altum/assets/default_cube.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/gear.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/icosphere.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/polonez.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/rhino.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/sphere.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_01.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_03.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_04.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_05.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_06.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_07.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_08.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_09.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/suzanne.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/torus.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/torus_knot.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_arc.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_dome.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_floor.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/worm_gear.obj");
     let mut voxelizer = Voxelizer::new(obj);
     voxelizer.voxelize();
 

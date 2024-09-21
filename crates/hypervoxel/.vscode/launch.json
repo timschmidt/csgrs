@@ -21,7 +21,7 @@
         }
       },
       "args": [],
-      "cwd": "${workspaceFolder}/ad-altum"
+      "cwd": "${workspaceFolder}"
     },
     {
       "type": "lldb",
@@ -39,7 +39,7 @@
         }
       },
       "args": [],
-      "cwd": "${workspaceFolder}/ad-altum",
+      "cwd": "${workspaceFolder}",
       "preLaunchTask": "rust: cargo build"
     },
     {
