@@ -14,6 +14,8 @@ pub struct Obj {
 
 impl Obj {
     pub fn parse(path: &str) -> Self {
+        println!("Parsing obj file: {}", path);
+
         let file = File::open(path).unwrap();
         let reader = BufReader::new(file);
 
