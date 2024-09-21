@@ -39,9 +39,9 @@ impl Voxelizer {
     }
 
     pub fn new(mesh: Obj) -> Self {
-        let chunks_size_x = mesh.size.x.ceil() as i32;
-        let chunks_size_y = mesh.size.y.ceil() as i32;
-        let chunks_size_z = mesh.size.z.ceil() as i32;
+        let chunks_size_x = (mesh.size.x.ceil() as i32) + 1;
+        let chunks_size_y = (mesh.size.y.ceil() as i32) + 1;
+        let chunks_size_z = (mesh.size.z.ceil() as i32) + 1;
 
         let chunks_size = IVec3::new(chunks_size_x, chunks_size_y, chunks_size_z);
 
