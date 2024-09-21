@@ -123,11 +123,12 @@ impl Chunk {
         self.data.update_lods();
     }
 
-    pub fn generate_mesh(&self) -> Mesh {
-        let mut vertices = Vec::new();
-        let mut normals = Vec::new();
-        let mut indices = Vec::new();
-
+    pub fn generate_mesh_arrays(
+        &self,
+        vertices: &mut Vec<Vec3>,
+        normals: &mut Vec<Vec3>,
+        indices: &mut Vec<u32>,
+    ) {
         let voxels_per_axis = Self::VOXELS_PER_AXIS as f32;
         let tile_size = Vec3::new(1.0, 1.0, 1.0) / voxels_per_axis;
         let tile_half_size = tile_size / 2.0;
@@ -212,22 +213,13 @@ impl Chunk {
                     }
 
                     if has_top {
-                        Self::add_quad(
-                            &mut vertices,
-                            &mut indices,
-                            &mut normals,
-                            &v0,
-                            &v2,
-                            &v3,
-                            &v1,
-                            &VECTOR_UP,
-                        );
+                        Self::add_quad(vertices, indices, normals, &v0, &v2, &v3, &v1, &VECTOR_UP);
                     }
                     if has_right {
                         Self::add_quad(
-                            &mut vertices,
-                            &mut indices,
-                            &mut normals,
+                            vertices,
+                            indices,
+                            normals,
                             &v2,
                             &v5,
                             &v6,
@@ -237,9 +229,9 @@ impl Chunk {
                     }
                     if has_bottom {
                         Self::add_quad(
-                            &mut vertices,
-                            &mut indices,
-                            &mut normals,
+                            vertices,
+                            indices,
+                            normals,
                             &v7,
                             &v5,
                             &v4,
@@ -249,9 +241,9 @@ impl Chunk {
                     }
                     if has_left {
                         Self::add_quad(
-                            &mut vertices,
-                            &mut indices,
-                            &mut normals,
+                            vertices,
+                            indices,
+                            normals,
                             &v0,
                             &v7,
                             &v4,
@@ -261,9 +253,9 @@ impl Chunk {
                     }
                     if has_front {
                         Self::add_quad(
-                            &mut vertices,
-                            &mut indices,
-                            &mut normals,
+                            vertices,
+                            indices,
+                            normals,
                             &v3,
                             &v6,
                             &v7,
@@ -273,9 +265,9 @@ impl Chunk {
                     }
                     if has_back {
                         Self::add_quad(
-                            &mut vertices,
-                            &mut indices,
-                            &mut normals,
+                            vertices,
+                            indices,
+                            normals,
                             &v1,
                             &v4,
                             &v5,
@@ -286,6 +278,14 @@ impl Chunk {
                 }
             }
         }
+    }
+
+    pub fn generate_mesh(&self) -> Mesh {
+        let mut vertices = Vec::new();
+        let mut normals = Vec::new();
+        let mut indices = Vec::new();
+
+        self.generate_mesh_arrays(&mut vertices, &mut normals, &mut indices);
 
         Mesh::new(
             PrimitiveTopology::TriangleList,
