@@ -59,6 +59,10 @@ impl Chunk {
         self.data.set_value(0, x, y, z, value);
     }
 
+    pub fn get_value(&self, x: u8, y: u8, z: u8) -> i32 {
+        self.data.get_value(0, x, y, z)
+    }
+
     pub fn update_lods(&mut self) {
         self.data.update_lods();
     }
