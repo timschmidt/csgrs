@@ -272,9 +272,11 @@ impl Voxelizer {
                             // let epsilon = VOXEL_SIZE / 1.0;
                             // let epsilon = Vec3::new(epsilon, epsilon, epsilon);
 
-                            let world_min_position = world_voxel_position;
+                            let epsilon = VOXEL_SIZE * 0.001; // Small fraction of voxel size
+                            let world_min_position = world_voxel_position - Vec3::splat(epsilon);
                             let world_max_position = world_voxel_position
-                                + Vec3::new(VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE);
+                                + Vec3::new(VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+                                + Vec3::splat(epsilon);
 
                             let intersects = triangle_cube_intersection(
                                 (v1, v2, v3),
