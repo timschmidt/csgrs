@@ -1,0 +1,103 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "ad-altum (Release)",
+      "cargo": {
+        "args": [
+          "build",
+          "--release",
+          "--bin=ad-altum",
+          "--package=ad-altum"
+        ],
+        "filter": {
+          "name": "ad-altum",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/ad-altum"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "ad-altum (Debug)",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=ad-altum",
+          "--package=ad-altum"
+        ],
+        "filter": {
+          "name": "ad-altum",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/ad-altum",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'ad-altum'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=ad-altum",
+          "--package=ad-altum"
+        ],
+        "filter": {
+          "name": "ad-altum",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'ad-altum'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=ad-altum",
+          "--package=ad-altum"
+        ],
+        "filter": {
+          "name": "ad-altum",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'voxelis'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib",
+          "--package=voxelis"
+        ],
+        "filter": {
+          "name": "voxelis",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
