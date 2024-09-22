@@ -1,4 +1,4 @@
-use crate::voxtree;
+use crate::voxtree::calculate_voxels_per_axis;
 use crate::voxtree::VoxTree;
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
@@ -22,27 +22,28 @@ const VECTOR_LEFT: Vec3 = Vec3::new(-1.0, 0.0, 0.0);
 const VECTOR_FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 const VECTOR_BACK: Vec3 = Vec3::new(0.0, 0.0, 1.0);
 
-pub const MAX_LOD_SIZE: usize = 5;
+pub const MAX_LOD_LEVEL: usize = 7;
+pub const VOXELS_PER_AXIS: u8 = calculate_voxels_per_axis(MAX_LOD_LEVEL) as u8;
+pub const VOXELS_PER_AXIS_MINUS_ONE: u8 = VOXELS_PER_AXIS - 1;
+pub const VOXEL_SIZE: f32 = 1.0 / VOXELS_PER_AXIS as f32;
 
+#[derive(Default)]
 pub struct Chunk {
-    data: VoxTree<MAX_LOD_SIZE>,
+    data: VoxTree<MAX_LOD_LEVEL>,
     position: IVec3,
 }
 
 impl Chunk {
-    const VOXELS_PER_AXIS: u8 = voxtree::calculate_voxels_per_axis(MAX_LOD_SIZE) as u8;
-    const VOXELS_PER_AXIS_MINUS_ONE: u8 = Self::VOXELS_PER_AXIS - 1;
-
     pub fn new() -> Self {
         Self {
-            data: VoxTree::<MAX_LOD_SIZE>::new(),
+            data: VoxTree::<MAX_LOD_LEVEL>::default(),
             position: IVec3::ZERO,
         }
     }
 
     pub fn with_position(x: i32, y: i32, z: i32) -> Self {
         Self {
-            data: VoxTree::<MAX_LOD_SIZE>::new(),
+            data: VoxTree::<MAX_LOD_LEVEL>::default(),
             position: IVec3::new(x, y, z),
         }
     }
@@ -68,10 +69,10 @@ impl Chunk {
     }
 
     pub fn generate_data(&mut self) {
-        for y in 0..Self::VOXELS_PER_AXIS {
-            for z in 0..Self::VOXELS_PER_AXIS {
-                for x in 0..Self::VOXELS_PER_AXIS {
-                    self.data.set_value(0, x, y, z, (x + y + z) as i32 + 1);
+        for y in 0..VOXELS_PER_AXIS {
+            for z in 0..VOXELS_PER_AXIS {
+                for x in 0..VOXELS_PER_AXIS {
+                    self.data.set_value(0, x, y, z, (x + y + z) as i32);
                 }
             }
         }
@@ -129,7 +130,7 @@ impl Chunk {
         normals: &mut Vec<Vec3>,
         indices: &mut Vec<u32>,
     ) {
-        let voxels_per_axis = Self::VOXELS_PER_AXIS as f32;
+        let voxels_per_axis = VOXELS_PER_AXIS as f32;
         let tile_size = Vec3::new(1.0, 1.0, 1.0) / voxels_per_axis;
         let tile_half_size = tile_size / 2.0;
 
@@ -142,15 +143,15 @@ impl Chunk {
         let chunk_v6 = CUBE_VERTS[6] * tile_half_size + tile_half_size;
         let chunk_v7 = CUBE_VERTS[7] * tile_half_size + tile_half_size;
 
-        for y in 0..Self::VOXELS_PER_AXIS {
-            let is_top = y == Self::VOXELS_PER_AXIS_MINUS_ONE;
+        for y in 0..VOXELS_PER_AXIS {
+            let is_top = y == VOXELS_PER_AXIS_MINUS_ONE;
             let is_bottom = y == 0;
 
-            for z in 0..Self::VOXELS_PER_AXIS {
-                let is_front = z == Self::VOXELS_PER_AXIS_MINUS_ONE;
+            for z in 0..VOXELS_PER_AXIS {
+                let is_front = z == VOXELS_PER_AXIS_MINUS_ONE;
                 let is_back = z == 0;
 
-                for x in 0..Self::VOXELS_PER_AXIS {
+                for x in 0..VOXELS_PER_AXIS {
                     let value = self.data.get_value(0, x, y, z);
 
                     if value == 0 {
@@ -172,7 +173,7 @@ impl Chunk {
                     let v6 = position + chunk_v6;
                     let v7 = position + chunk_v7;
 
-                    let is_right = x == Self::VOXELS_PER_AXIS_MINUS_ONE;
+                    let is_right = x == VOXELS_PER_AXIS_MINUS_ONE;
                     let is_left = x == 0;
 
                     let has_top = if is_top {
