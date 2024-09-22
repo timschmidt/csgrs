@@ -134,51 +134,124 @@ fn point_in_or_on_cube(point: Vec3, cube: (Vec3, Vec3)) -> bool {
 }
 
 fn point_in_or_on_triangle(point: Vec3, triangle: (Vec3, Vec3, Vec3)) -> bool {
-    let (v0, v1, v2) = triangle;
+    let (a, b, c) = triangle;
     let epsilon = 1e-5;
 
     // Check if the point is in the same plane as the triangle
-    let normal = (v1 - v0).cross(v2 - v0);
-    let distance_to_plane = normal.dot(point - v0);
+    let normal = (b - a).cross(c - a);
+    let distance_to_plane = normal.dot(point - a);
     if distance_to_plane.abs() > epsilon {
         return false;
     }
 
-    // Compute vectors
-    let v0v1 = v1 - v0;
-    let v0v2 = v2 - v0;
-    let v0p = point - v0;
+    let v0 = b - a;
+    let v1 = c - a;
+    let v2 = point - a;
 
-    // Compute dot products
-    let dot00 = v0v1.dot(v0v1);
-    let dot01 = v0v1.dot(v0v2);
-    let dot02 = v0v1.dot(v0p);
-    let dot11 = v0v2.dot(v0v2);
-    let dot12 = v0v2.dot(v0p);
+    let d00 = v0.dot(v0);
+    let d01 = v0.dot(v1);
+    let d11 = v1.dot(v1);
+    let d20 = v2.dot(v0);
+    let d21 = v2.dot(v1);
 
-    // Compute barycentric coordinates
-    let inv_denom = 1.0 / (dot00 * dot11 - dot01 * dot01);
-    let u = (dot11 * dot02 - dot01 * dot12) * inv_denom;
-    let v = (dot00 * dot12 - dot01 * dot02) * inv_denom;
+    let denom = d00 * d11 - d01 * d01;
+    let v = (d11 * d20 - d01 * d21) / denom;
+    let w = (d00 * d21 - d01 * d20) / denom;
+    let u = 1.0 - v - w;
 
-    // Check if point is in or on triangle
-    (u >= -epsilon) && (v >= -epsilon) && (u + v <= 1.0 + epsilon)
+    u >= -epsilon && v >= -epsilon && w >= -epsilon && (u + v + w).abs() <= 1.0 + epsilon
 }
 
 fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
-    // Check if the edge intersects with either triangle of the quad
-    triangle_edge_intersection(edge, (quad.0, quad.1, quad.2)) ||
-    triangle_edge_intersection(edge, (quad.0, quad.2, quad.3)) ||
+    let (e1, e2) = edge;
+    let (q1, q2, q3, q4) = quad;
+    let epsilon = 1e-5;
 
-    // Check if any point of the edge is inside the quad
-    point_in_quad(edge.0, quad) ||
-    point_in_quad(edge.1, quad)
+    // Check if the edge intersects with either triangle of the quad
+    if triangle_edge_intersection(edge, (q1, q2, q3))
+        || triangle_edge_intersection(edge, (q1, q3, q4))
+    {
+        return true;
+    }
+
+    // Compute average normal for the potentially non-planar quad
+    let normal1 = (q2 - q1).cross(q3 - q1).normalize();
+    let normal2 = (q3 - q2).cross(q4 - q2).normalize();
+    let normal3 = (q4 - q3).cross(q1 - q3).normalize();
+    let normal4 = (q1 - q4).cross(q2 - q4).normalize();
+    let avg_normal = (normal1 + normal2 + normal3 + normal4).normalize();
+
+    let edge_vec = e2 - e1;
+    let center = (q1 + q2 + q3 + q4) * 0.25;
+
+    // Check if the edge is parallel to the quad's average plane
+    if avg_normal.dot(edge_vec).abs() < epsilon {
+        // Check if the edge is close to the quad's plane
+        let dist_to_plane = avg_normal.dot(e1 - center).abs();
+        if dist_to_plane < epsilon {
+            // Edge is coplanar with quad, check if it intersects the quad's boundaries
+            let quad_edges = [(q1, q2), (q2, q3), (q3, q4), (q4, q1)];
+            for &quad_edge in &quad_edges {
+                if line_segment_overlap(edge, quad_edge) {
+                    return true;
+                }
+            }
+
+            // Check if the edge is fully contained within the quad
+            let edge_midpoint = (e1 + e2) * 0.5;
+            if point_in_quad(edge_midpoint, quad) {
+                return true;
+            }
+        }
+    } else {
+        // Edge is not parallel to the quad's plane, check for intersection
+        let t = avg_normal.dot(center - e1) / avg_normal.dot(edge_vec);
+        if t >= 0.0 && t <= 1.0 {
+            let intersection = e1 + edge_vec * t;
+            if point_in_quad(intersection, quad) {
+                return true;
+            }
+        }
+    }
+
+    false
 }
 
 fn point_in_quad(point: Vec3, quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
-    // Check if the point is in either triangle of the quad
-    point_in_or_on_triangle(point, (quad.0, quad.1, quad.2))
-        || point_in_or_on_triangle(point, (quad.0, quad.2, quad.3))
+    let (a, b, c, d) = quad;
+    let epsilon = 1e-5;
+
+    // Compute an average normal for the potentially non-planar quad
+    let normal1 = (b - a).cross(c - a).normalize();
+    let normal2 = (c - b).cross(d - b).normalize();
+    let normal3 = (d - c).cross(a - c).normalize();
+    let normal4 = (a - d).cross(b - d).normalize();
+    let avg_normal = (normal1 + normal2 + normal3 + normal4).normalize();
+
+    // Compute the center of the quad
+    let center = (a + b + c + d) * 0.25;
+
+    // Project the point onto the average plane of the quad
+    let dist_to_plane = avg_normal.dot(point - center);
+    let projected_point = point - avg_normal * dist_to_plane;
+
+    // Check if the point is too far from the quad's plane
+    if dist_to_plane.abs() > epsilon {
+        return false;
+    }
+
+    // Function to check if a point is on the right side of an edge
+    let is_on_right_side = |v1: Vec3, v2: Vec3| -> bool {
+        let edge = v2 - v1;
+        let to_point = projected_point - v1;
+        avg_normal.dot(edge.cross(to_point)) >= -epsilon
+    };
+
+    // Check if the projected point is on the right side of all edges
+    is_on_right_side(a, b)
+        && is_on_right_side(b, c)
+        && is_on_right_side(c, d)
+        && is_on_right_side(d, a)
 }
 
 fn triangle_edge_intersection(edge: (Vec3, Vec3), triangle: (Vec3, Vec3, Vec3)) -> bool {
@@ -265,28 +338,31 @@ fn point_on_line_segment(point: Vec3, segment: (Vec3, Vec3)) -> bool {
 fn line_segment_overlap(seg1: (Vec3, Vec3), seg2: (Vec3, Vec3)) -> bool {
     let (a, b) = seg1;
     let (c, d) = seg2;
-    let epsilon = 1e-5;
+    let epsilon = 1e-6; // Smaller epsilon for more precision
 
     // Check if the segments are parallel
     let dir1 = (b - a).normalize();
     let dir2 = (d - c).normalize();
-    if dir1.cross(dir2).length() > epsilon {
-        return false; // Not parallel
+    if dir1.cross(dir2).length_squared() < epsilon * epsilon {
+        // Segments are parallel, check for collinearity
+        let ac = c - a;
+        if ac.cross(dir1).length_squared() > epsilon * epsilon {
+            return false; // Parallel but not collinear
+        }
+        // Check for overlap on the same line
+        let t1 = ac.dot(dir1);
+        let t2 = (d - a).dot(dir1);
+        let s2 = (b - a).length();
+        return (0.0..=s2).contains(&t1) || (0.0..=s2).contains(&t2) || (t1 <= 0.0 && t2 >= s2);
     }
 
-    // Project segment endpoints onto the first segment
+    // Not parallel, check for intersection
+    let n = dir1.cross(dir2);
     let ac = c - a;
-    let ad = d - a;
-    let ab = b - a;
+    let t = ac.cross(dir2).dot(n) / n.length_squared();
+    let u = ac.cross(dir1).dot(n) / n.length_squared();
 
-    let t1 = ac.dot(ab) / ab.length_squared();
-    let t2 = ad.dot(ab) / ab.length_squared();
-
-    // Check for overlap
-    let tmin = t1.min(t2);
-    let tmax = t1.max(t2);
-
-    tmin <= 1.0 + epsilon && tmax >= 0.0 - epsilon
+    (-epsilon..=1.0 + epsilon).contains(&t) && (-epsilon..=1.0 + epsilon).contains(&u)
 }
 
 #[cfg(test)]
@@ -513,7 +589,9 @@ mod tests {
                 Vec3::new(1.0, 1.0, 0.0),
                 Vec3::new(0.0, 1.0, 0.0),
             );
-            assert!(!edge_quad_intersection(edge, quad));
+            let result = edge_quad_intersection(edge, quad);
+            println!("Intersection result: {}", result);
+            assert!(!result);
         }
 
         #[test]
