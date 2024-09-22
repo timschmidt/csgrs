@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use bevy::color::palettes::basic::SILVER;
 use bevy::color::palettes::css::GRAY;
 use bevy::core_pipeline::bloom::BloomSettings;
@@ -22,6 +24,9 @@ struct GamePlugin;
 
 #[derive(Component)]
 struct Chunk;
+
+#[derive(Resource)]
+pub struct VoxelizerResource(pub Voxelizer);
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
@@ -59,41 +64,11 @@ fn hsl_to_rgb(hue: f32, saturation: f32, lightness: f32) -> (f32, f32, f32) {
 fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut voxelizer: ResMut<VoxelizerResource>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // println!("cwd: {:?}", std::env::current_dir().unwrap().display());
-
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/procedural_brick_wall.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/column.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/cylinder.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/default_cube.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/gear.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/icosphere.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/polonez.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/rhino.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/sphere.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_01.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_03.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_04.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_05.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_06.obj");
-    let obj = obj_reader::Obj::parse("ad-altum/assets/statue_07.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_08.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_09.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_10.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/suzanne.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/torus.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/torus_knot.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_arc.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_dome.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_floor.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/worm_gear.obj");
-    let mut voxelizer = Voxelizer::new(obj);
-    voxelizer.voxelize();
-    // voxelizer.simple_voxelize();
+    let voxelizer = &mut voxelizer.0;
 
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
@@ -172,8 +147,14 @@ fn setup(
         ..default()
     });
 
+    let now = Instant::now();
+
+    println!("Generating meshes...");
+
     let chunks_len = voxelizer.chunks.len();
     for (i, chunk) in voxelizer.chunks.iter().enumerate() {
+        print!("Generating mesh for chunk {}/{}\r", i + 1, chunks_len);
+
         let chunk_position = chunk.get_position();
 
         let mesh = chunk.generate_mesh();
@@ -210,6 +191,8 @@ fn setup(
             ));
     }
 
+    println!("Generating meshes took {:?}", now.elapsed());
+
     commands.spawn(PbrBundle {
         mesh: meshes.add(
             Plane3d::default()
@@ -223,8 +206,8 @@ fn setup(
 }
 
 fn rotate(mut query: Query<&mut Transform, With<Camera>>, _time: Res<Time>) {
-    let cam = query.iter_mut().next().unwrap();
-    println!("Cam: {:?}", cam.translation);
+    // let cam = query.iter_mut().next().unwrap();
+    // println!("Cam: {:?}", cam.translation);
     // for mut transform in &mut query {
     //     transform.rotate_y(time.delta_seconds() / 2.);
     // }
@@ -240,6 +223,37 @@ fn toggle_wireframe(
 }
 
 fn main() {
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/procedural_brick_wall.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/column.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/cylinder.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/default_cube.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/gear.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/icosphere.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/polonez.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/rhino.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/sphere.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_01.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_03.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_04.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_05.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_06.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_07.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_08.obj");
+    let obj = obj_reader::Obj::parse("ad-altum/assets/statue_09.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_10.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/suzanne.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/torus.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/torus_knot.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_arc.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_dome.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_floor.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/worm_gear.obj");
+    let mut voxelizer = Voxelizer::new(obj);
+    voxelizer.voxelize();
+    // voxelizer.simple_voxelize();
+
     App::new()
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {
@@ -266,6 +280,7 @@ fn main() {
             blue: 0.02,
             alpha: 1.0,
         })))
+        .insert_resource(VoxelizerResource(voxelizer))
         .insert_resource(Msaa::Off)
         .run();
 
