@@ -12,3 +12,7 @@ bevy_egui.workspace = true
 bevy_panorbit_camera.workspace = true
 bevy_screen_diagnostics.workspace = true
 egui_extras.workspace = true
+log = { version = "*", features = [
+  "max_level_debug",
+  "release_max_level_warn",
+] }

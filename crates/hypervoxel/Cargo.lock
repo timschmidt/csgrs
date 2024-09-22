@@ -93,6 +93,7 @@ dependencies = [
  "bevy_panorbit_camera",
  "bevy_screen_diagnostics",
  "egui_extras",
+ "log",
  "voxelis",
 ]
 
@@ -3991,6 +3992,7 @@ dependencies = [
  "bevy_egui",
  "bevy_panorbit_camera",
  "egui_extras",
+ "log",
 ]
 
 [[package]]

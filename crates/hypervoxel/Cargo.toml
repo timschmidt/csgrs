@@ -12,6 +12,10 @@ bevy_panorbit_camera = { version = "0.19.3" }
 bevy_screen_diagnostics = "0.6.0"
 # bevy_screen_diagnostics = { git = "https://github.com/laundmo/bevy_screen_diagnostics.git", branch = "main" }
 egui_extras = "0.28.1"
+log = { version = "*", features = [
+  "max_level_debug",
+  "release_max_level_warn",
+] }
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
