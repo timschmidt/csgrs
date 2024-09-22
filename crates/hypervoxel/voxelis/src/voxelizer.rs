@@ -113,18 +113,8 @@ impl Voxelizer {
             }
         }
 
-        // for chunk in self.chunks.iter_mut() {
-        //     for y in 0..VOXELS_PER_AXIS {
-        //         for z in 0..VOXELS_PER_AXIS {
-        //             for x in 0..VOXELS_PER_AXIS {
-        //                 chunk.set_value(x as u8, y as u8, z as u8, 1);
-        //             }
-        //         }
-        //     }
-        // }
-
         let mesh_min = self.mesh.aabb.0;
-        let epsilon = VOXEL_SIZE * 0.001; // Small fraction of voxel size
+        let epsilon = VOXEL_SIZE * 0.001;
         let splat = Vec3::splat(epsilon);
 
         let now = Instant::now();
@@ -133,11 +123,6 @@ impl Voxelizer {
             let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
             let v2 = self.mesh.vertices[(face.y - 1) as usize] - mesh_min;
             let v3 = self.mesh.vertices[(face.z - 1) as usize] - mesh_min;
-
-            // println!(
-            //     "Face ({}, {}, {}) -> ({:?}, {:?}, {:?})",
-            //     face.x, face.y, face.z, v1, v2, v3
-            // );
 
             let min = v1.min(v2).min(v3);
             let max = v1.max(v2).max(v3);
@@ -148,11 +133,6 @@ impl Voxelizer {
             let world_min_voxel = world_min_voxel.as_ivec3();
             let world_max_voxel = world_max_voxel.as_ivec3() + IVec3::splat(1);
             let diff_voxel = world_max_voxel - world_min_voxel;
-
-            // println!(
-            //     " world_min_voxel: {:?} world_max_voxel: {:?} diff_voxel: {:?}",
-            //     world_min_voxel, world_max_voxel, diff_voxel
-            // );
 
             let mut affected_voxels = Vec::new();
 
@@ -169,28 +149,12 @@ impl Voxelizer {
                         let chunk_index =
                             Self::calculate_chunk_index(world_voxel, chunks_size, chunks_len);
 
-                        // println!(
-                        //     "  -> ({}, {}, {})@{} -> ({}, {}, {})",
-                        //     x, y, z, chunk_index, world_voxel.x, world_voxel.y, world_voxel.z
-                        // );
-
                         if chunk_index != current_chunk_index && current_min_voxel != IVec3::MAX {
                             affected_voxels.push((
                                 current_chunk_index,
                                 Self::convert_voxel_world_to_local(current_min_voxel),
                                 Self::convert_voxel_world_to_local(current_max_voxel),
                             ));
-
-                            // println!(
-                            //     "   -> (x) affected_voxels: {}, ({}, {}, {}), ({}, {}, {})",
-                            //     current_chunk_index,
-                            //     current_min_voxel.x,
-                            //     current_min_voxel.y,
-                            //     current_min_voxel.z,
-                            //     current_max_voxel.x,
-                            //     current_max_voxel.y,
-                            //     current_max_voxel.z
-                            // );
 
                             current_min_voxel = IVec3::MAX;
                             current_max_voxel = IVec3::MIN;
@@ -211,17 +175,7 @@ impl Voxelizer {
                 ));
             }
 
-            // println!("Affected voxels size: {}, voxels:", affected_voxels.len());
-
-            // for (chunk_index, min_voxel, max_voxel) in affected_voxels.iter() {
-            //     println!(" {}, {:?}, {:?}", chunk_index, min_voxel, max_voxel);
-            // }
-
             for (chunk_index, min_voxel, max_voxel) in affected_voxels.iter() {
-                // println!(
-                //     " Chunk index: {}, min voxel: {:?}, max voxel: {:?}",
-                //     chunk_index, min_voxel, max_voxel
-                // );
                 let chunk = &mut self.chunks[*chunk_index];
                 let chunk_position = chunk.get_position();
 
@@ -252,8 +206,6 @@ impl Voxelizer {
                 }
             }
         }
-
-        // self.fill_gaps();
 
         for chunk in self.chunks.iter_mut() {
             chunk.update_lods();
