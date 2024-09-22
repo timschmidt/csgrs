@@ -19,7 +19,7 @@ use std::collections::HashMap;
 /// assert_eq!(calculate_voxels_per_axis(2), 4);
 /// assert_eq!(calculate_voxels_per_axis(3), 8);
 /// assert_eq!(calculate_voxels_per_axis(4), 16);
-/// assert_eq!(calculate_voxels_per_axis(5), 32);s
+/// assert_eq!(calculate_voxels_per_axis(5), 32);
 /// assert_eq!(calculate_voxels_per_axis(6), 64);
 /// ```
 pub const fn calculate_voxels_per_axis(lod_level: usize) -> usize {
