@@ -167,32 +167,126 @@ fn point_in_or_on_triangle(point: Vec3, triangle: (Vec3, Vec3, Vec3)) -> bool {
 
 fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
     // Check if the edge intersects with either triangle of the quad
-    triangle_edge_intersection(edge, (quad.0, quad.1, quad.2))
-        || triangle_edge_intersection(edge, (quad.0, quad.2, quad.3))
+    triangle_edge_intersection(edge, (quad.0, quad.1, quad.2)) ||
+    triangle_edge_intersection(edge, (quad.0, quad.2, quad.3)) ||
+
+    // Check if any point of the edge is inside the quad
+    point_in_quad(edge.0, quad) ||
+    point_in_quad(edge.1, quad)
+}
+
+fn point_in_quad(point: Vec3, quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
+    // Check if the point is in either triangle of the quad
+    point_in_or_on_triangle(point, (quad.0, quad.1, quad.2))
+        || point_in_or_on_triangle(point, (quad.0, quad.2, quad.3))
 }
 
 fn triangle_edge_intersection(edge: (Vec3, Vec3), triangle: (Vec3, Vec3, Vec3)) -> bool {
     let (e1, e2) = edge;
     let (t1, t2, t3) = triangle;
+    let epsilon = 1e-5;
 
-    // Compute the plane's normal and distance
-    let edge_vec = e2 - e1;
-    let normal = (t2 - t1).cross(t3 - t1).normalize();
+    // Check if any of the triangle vertices lie on the edge
+    if point_on_line_segment(t1, edge)
+        || point_on_line_segment(t2, edge)
+        || point_on_line_segment(t3, edge)
+    {
+        return true;
+    }
+
+    // Check if either endpoint of the edge is inside or on the triangle
+    if point_in_or_on_triangle(e1, triangle) || point_in_or_on_triangle(e2, triangle) {
+        return true;
+    }
+
+    // Compute the triangle's normal
+    let normal = (t2 - t1).cross(t3 - t1);
+
+    // If the normal is zero, the triangle is degenerate (a line or point)
+    if normal.length_squared() < epsilon {
+        // Check if the degenerate triangle overlaps with the edge
+        return line_segment_overlap(edge, (t1, t2))
+            || line_segment_overlap(edge, (t2, t3))
+            || line_segment_overlap(edge, (t3, t1));
+    }
+
+    let normal = normal.normalize();
     let d = -normal.dot(t1);
 
-    // Compute the t value for the directed line ab intersecting the plane
-    let t = -(normal.dot(e1) + d) / normal.dot(edge_vec);
+    // Compute the intersection point
+    let edge_vec = e2 - e1;
+    let denom = normal.dot(edge_vec);
 
-    // If t is in [0..1], the edge intersects the plane
-    if (0.0..=1.0).contains(&t) {
-        // Compute the intersection point
-        let intersection = e1 + edge_vec * t;
-
-        // Check if the intersection point is inside the triangle
-        point_in_or_on_triangle(intersection, triangle)
-    } else {
-        false
+    // If denom is zero, the edge is parallel to the triangle's plane
+    if denom.abs() < epsilon {
+        // The edge is parallel to the triangle's plane
+        // Check if it's coplanar
+        if (normal.dot(e1) + d).abs() < epsilon {
+            // The edge is coplanar with the triangle
+            // Check if it intersects with any of the triangle's edges
+            return line_segment_overlap(edge, (t1, t2))
+                || line_segment_overlap(edge, (t2, t3))
+                || line_segment_overlap(edge, (t3, t1));
+        }
+        return false;
     }
+
+    let t = -(normal.dot(e1) + d) / denom;
+
+    // Check if the intersection point is on the edge
+    if t < 0.0 || t > 1.0 {
+        return false;
+    }
+
+    // Compute the intersection point
+    let intersection = e1 + edge_vec * t;
+
+    // Check if the intersection point is inside or on the triangle
+    point_in_or_on_triangle(intersection, triangle)
+}
+
+fn point_on_line_segment(point: Vec3, segment: (Vec3, Vec3)) -> bool {
+    let (a, b) = segment;
+    let epsilon = 1e-5;
+
+    let ab = b - a;
+    let ap = point - a;
+
+    // Check if the point is collinear with the line segment
+    if ab.cross(ap).length_squared() > epsilon * epsilon {
+        return false;
+    }
+
+    // Check if the point is within the bounds of the line segment
+    let t = ap.dot(ab) / ab.length_squared();
+    -epsilon <= t && t <= 1.0 + epsilon
+}
+
+fn line_segment_overlap(seg1: (Vec3, Vec3), seg2: (Vec3, Vec3)) -> bool {
+    let (a, b) = seg1;
+    let (c, d) = seg2;
+    let epsilon = 1e-5;
+
+    // Check if the segments are parallel
+    let dir1 = (b - a).normalize();
+    let dir2 = (d - c).normalize();
+    if dir1.cross(dir2).length() > epsilon {
+        return false; // Not parallel
+    }
+
+    // Project segment endpoints onto the first segment
+    let ac = c - a;
+    let ad = d - a;
+    let ab = b - a;
+
+    let t1 = ac.dot(ab) / ab.length_squared();
+    let t2 = ad.dot(ab) / ab.length_squared();
+
+    // Check for overlap
+    let tmin = t1.min(t2);
+    let tmax = t1.max(t2);
+
+    tmin <= 1.0 + epsilon && tmax >= 0.0 - epsilon
 }
 
 #[cfg(test)]
