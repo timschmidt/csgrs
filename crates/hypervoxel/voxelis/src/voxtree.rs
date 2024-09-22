@@ -1,12 +1,14 @@
-/// Calculates the total number of voxels along one axis at the maximum level of detail (LOD).
+use std::collections::HashMap;
+
+/// Calculates the total number of voxels along one axis at a given level of detail (LOD).
 ///
 /// # Parameters
 ///
-/// - `max_lod_level`: The maximum level of detail for which to calculate the number of voxels per axis.
+/// - `lod_level`: The level of detail for which to calculate the number of voxels per axis.
 ///
 /// # Returns
 ///
-/// The number of voxels along one axis at the specified maximum LOD as a `usize`.
+/// The number of voxels along one axis at the specified LOD as a `usize`.
 ///
 /// # Examples
 ///
@@ -17,11 +19,11 @@
 /// assert_eq!(calculate_voxels_per_axis(2), 4);
 /// assert_eq!(calculate_voxels_per_axis(3), 8);
 /// assert_eq!(calculate_voxels_per_axis(4), 16);
-/// assert_eq!(calculate_voxels_per_axis(5), 32);
+/// assert_eq!(calculate_voxels_per_axis(5), 32);s
 /// assert_eq!(calculate_voxels_per_axis(6), 64);
 /// ```
-pub const fn calculate_voxels_per_axis(max_lod_level: usize) -> usize {
-    1 << max_lod_level
+pub const fn calculate_voxels_per_axis(lod_level: usize) -> usize {
+    1 << lod_level
 }
 
 /// Calculates the area of voxels along one axis at a given level of detail (LOD).
@@ -113,10 +115,10 @@ pub const fn calculate_total_voxel_count(max_lod_level: usize) -> usize {
     (1 << (3 * (max_lod_level + 1))) / 7
 }
 
-/// A structure representing a voxel tree that stores voxel data for multiple levels of detail (LODs).
+/// A Sparse-Voxel-Octree (SVO) structure representing a voxel tree that stores voxel data for multiple levels of detail (LODs).
 ///
 /// The [VoxTree] struct is parameterized by a constant `MAX_LOD_LEVEL`, which determines the maximum level of detail
-/// and consequently the size of the data storage required to keep voxels for all LODs.
+/// and consequently the total size of the data storage required to keep voxels for all LODs.
 ///
 /// # Type Parameters
 ///
@@ -124,15 +126,15 @@ pub const fn calculate_total_voxel_count(max_lod_level: usize) -> usize {
 ///
 /// # Fields
 ///
-/// - `data`: A vector storing the voxel data. The size of this vector is determined by the `MAX_LOD_LEVEL`.
+/// - `data`: A hashmap storing the voxel data. The maximum size of this hashmaap is determined by the `MAX_LOD_LEVEL`.
 ///
 /// # Constants
 ///
-/// - [MAX_VOXEL_COUNT](VoxTree::MAX_VOXEL_COUNT): The maximum size of the data vector, calculated using the [calculate_total_voxel_count] function.
+/// - [MAX_VOXEL_COUNT](VoxTree::MAX_VOXEL_COUNT): The maximum size of the data hashmap, calculated using the [calculate_total_voxel_count] function.
 ///
 /// # Methods
 ///
-/// - [new](VoxTree::new)`()`: Creates a new [VoxTree] instance with the data vector initialized to zeros.
+/// - [new](VoxTree::new)`()`: Creates a new [VoxTree] instance with the empty data hashmap.
 /// - [set_value](VoxTree::set_value)`(lod, x, y, z, value)`: Sets the value of a voxel at the specified LOD and coordinates.
 /// - [get_value](VoxTree::get_value)`(lod, x, y, z)`: Gets the value of a voxel at the specified LOD and coordinates.
 /// - [update_lods](VoxTree::update_lods)`()`: Updates the voxel data for all LODs based on the current voxel values at maximum LOD, 0.
@@ -153,7 +155,7 @@ pub const fn calculate_total_voxel_count(max_lod_level: usize) -> usize {
 /// voxtree.set_value(1, 1, 1, 1, 42);
 /// ```
 pub struct VoxTree<const MAX_LOD_LEVEL: usize> {
-    data: Vec<i32>,
+    data: HashMap<usize, i32>,
 }
 
 impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
@@ -176,7 +178,7 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
     /// ```
     pub fn new() -> Self {
         Self {
-            data: vec![0; Self::MAX_VOXEL_COUNT],
+            data: HashMap::new(),
         }
     }
 
@@ -200,7 +202,19 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
     /// ```
     pub fn set_value(&mut self, lod: usize, x: u8, y: u8, z: u8, value: i32) {
         let index = Self::get_index_of(lod, x, y, z);
-        self.data[index] = value;
+        if value != 0 {
+            self.data.insert(index, value);
+        } else {
+            self.data.remove(&index);
+        }
+    }
+
+    fn set_value_for_index(&mut self, index: usize, value: i32) {
+        if value != 0 {
+            self.data.insert(index, value);
+        } else {
+            self.data.remove(&index);
+        }
     }
 
     /// Gets the value of a voxel at the specified level of detail (LOD) and coordinates.
@@ -226,7 +240,11 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
     /// ```
     pub fn get_value(&self, lod: usize, x: u8, y: u8, z: u8) -> i32 {
         let index = Self::get_index_of(lod, x, y, z);
-        self.data[index]
+        *self.data.get(&index).unwrap_or(&0)
+    }
+
+    fn get_value_for_index(&self, index: usize) -> i32 {
+        *self.data.get(&index).unwrap_or(&0)
     }
 
     /// Updates the voxel data for all LODs based on the current voxel values at maximum LOD, 0.
@@ -256,10 +274,11 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
                         let mut average_value = 0;
 
                         for child_index in child_indices {
-                            average_value += self.data[child_index];
+                            average_value += self.get_value_for_index(child_index);
                         }
 
-                        self.data[index] = (average_value as f64 / 8.0).round() as i32;
+                        let average_value = (average_value as f64 / 8.0).round() as i32;
+                        self.set_value_for_index(index, average_value);
                     }
                 }
             }
@@ -422,13 +441,13 @@ mod tests {
     #[test]
     fn voxtree_new() {
         let voxtree = VoxTree::<2>::new();
-        assert_eq!(voxtree.data.len(), 73);
+        assert_eq!(voxtree.data.len(), 0);
     }
 
     #[test]
     fn voxtree_default() {
         let voxtree = VoxTree::<2>::default();
-        assert_eq!(voxtree.data.len(), 73);
+        assert_eq!(voxtree.data.len(), 0);
     }
 
     #[test]
@@ -446,28 +465,28 @@ mod tests {
     fn voxtree_get_set_value() {
         let mut voxtree = VoxTree::<2>::new();
 
-        assert_eq!(voxtree.data[0], 0);
+        assert_eq!(voxtree.get_value_for_index(0), 0);
         assert_eq!(voxtree.get_value(2, 0, 0, 0), 0);
 
         voxtree.set_value(2, 0, 0, 0, 2);
 
-        assert_eq!(voxtree.data[0], 2);
+        assert_eq!(voxtree.get_value_for_index(0), 2);
         assert_eq!(voxtree.get_value(2, 0, 0, 0), 2);
 
-        assert_eq!(voxtree.data[9], 0);
+        assert_eq!(voxtree.get_value_for_index(9), 0);
         assert_eq!(voxtree.get_value(0, 0, 0, 0), 0);
 
         voxtree.set_value(0, 0, 0, 0, 1);
 
-        assert_eq!(voxtree.data[9], 1);
+        assert_eq!(voxtree.get_value_for_index(9), 1);
         assert_eq!(voxtree.get_value(0, 0, 0, 0), 1);
 
-        assert_eq!(voxtree.data[72], 0);
+        assert_eq!(voxtree.get_value_for_index(72), 0);
         assert_eq!(voxtree.get_value(0, 3, 3, 3), 0);
 
         voxtree.set_value(0, 3, 3, 3, 3);
 
-        assert_eq!(voxtree.data[72], 3);
+        assert_eq!(voxtree.get_value_for_index(72), 3);
         assert_eq!(voxtree.get_value(0, 3, 3, 3), 3);
     }
 
