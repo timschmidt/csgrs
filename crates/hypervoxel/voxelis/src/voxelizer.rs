@@ -119,7 +119,11 @@ impl Voxelizer {
 
         let now = Instant::now();
 
-        for face in self.mesh.faces.iter() {
+        println!("Voxelize started");
+
+        for (face_id, face) in self.mesh.faces.iter().enumerate() {
+            print!("Voxelize face {}/{}\r", face_id + 1, self.mesh.faces.len(),);
+
             let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
             let v2 = self.mesh.vertices[(face.y - 1) as usize] - mesh_min;
             let v3 = self.mesh.vertices[(face.z - 1) as usize] - mesh_min;
@@ -175,7 +179,10 @@ impl Voxelizer {
                 ));
             }
 
-            for (chunk_index, min_voxel, max_voxel) in affected_voxels.iter() {
+            let affected_voxels_len = affected_voxels.len();
+            for (voxel_id, (chunk_index, min_voxel, max_voxel)) in
+                affected_voxels.iter().enumerate()
+            {
                 let chunk = &mut self.chunks[*chunk_index];
                 let chunk_position = chunk.get_position();
 
@@ -207,7 +214,10 @@ impl Voxelizer {
             }
         }
 
-        for chunk in self.chunks.iter_mut() {
+        println!("Voxelize finished, updating LODs");
+
+        for (chunk_id, chunk) in self.chunks.iter_mut().enumerate() {
+            print!("Updating LODs for chunk: {}/{}\r", chunk_id + 1, chunks_len);
             chunk.update_lods();
         }
 
