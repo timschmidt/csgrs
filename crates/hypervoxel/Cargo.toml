@@ -24,3 +24,7 @@ log = { version = "*", features = [
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 [profile.dev.package."*"]
 opt-level = 3
+
+[profile.release-debug-info]
+inherits = "release"
+debug = true
