@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use bevy::math::{IVec3, Vec3};
 
 use crate::math::triangle_cube_intersection;
@@ -68,6 +70,8 @@ impl Voxelizer {
             }
         }
 
+        let now = Instant::now();
+
         let mesh_min = self.mesh.aabb.0;
 
         for face in self.mesh.faces.iter() {
@@ -91,6 +95,8 @@ impl Voxelizer {
         for chunk in self.chunks.iter_mut() {
             chunk.update_lods();
         }
+
+        println!("Simple voxelize took: {:?}", now.elapsed());
     }
 
     pub fn voxelize(&mut self) {
@@ -120,6 +126,8 @@ impl Voxelizer {
         let mesh_min = self.mesh.aabb.0;
         let epsilon = VOXEL_SIZE * 0.001; // Small fraction of voxel size
         let splat = Vec3::splat(epsilon);
+
+        let now = Instant::now();
 
         for face in self.mesh.faces.iter() {
             let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
@@ -250,5 +258,7 @@ impl Voxelizer {
         for chunk in self.chunks.iter_mut() {
             chunk.update_lods();
         }
+
+        println!("Voxelize took: {:?}", now.elapsed());
     }
 }
