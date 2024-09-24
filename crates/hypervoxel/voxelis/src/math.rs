@@ -431,6 +431,34 @@ mod tests {
             assert!(!point_in_or_on_cube(Vec3::new(0.5, 0.5, -0.1), cube));
             assert!(!point_in_or_on_cube(Vec3::new(0.5, 0.5, 1.1), cube));
         }
+
+        #[test]
+        fn test_very_close_to_cube_but_outside() {
+            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let epsilon = 1e-5;
+
+            // Very close to the cube but outside
+            assert!(!point_in_or_on_cube(
+                Vec3::new(1.0 + epsilon, 0.5, 0.5),
+                cube
+            ));
+            assert!(!point_in_or_on_cube(
+                Vec3::new(0.5, 1.0 + epsilon, 0.5),
+                cube
+            ));
+            assert!(!point_in_or_on_cube(
+                Vec3::new(0.5, 0.5, 1.0 + epsilon),
+                cube
+            ));
+        }
+
+        #[test]
+        fn test_at_center_of_cube() {
+            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+
+            // At the center of the cube
+            assert!(point_in_or_on_cube(Vec3::new(0.5, 0.5, 0.5), cube));
+        }
     }
 
     mod test_point_in_or_on_triangle {
@@ -515,6 +543,43 @@ mod tests {
             assert!(!point_in_or_on_triangle(Vec3::new(0.5, 0.5, 1.0), triangle));
             assert!(!point_in_or_on_triangle(Vec3::new(1.0, 1.0, 1.0), triangle));
         }
+
+        #[test]
+        fn test_very_close_to_triangle_but_outside() {
+            let triangle = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+            let epsilon = 1e-5;
+
+            // Very close to the triangle but outside
+            assert!(!point_in_or_on_triangle(
+                Vec3::new(1.0 + epsilon, 0.0, 0.0),
+                triangle
+            ));
+            assert!(!point_in_or_on_triangle(
+                Vec3::new(0.0, 1.0 + epsilon, 0.0),
+                triangle
+            ));
+            assert!(!point_in_or_on_triangle(
+                Vec3::new(-epsilon, -epsilon, 0.0),
+                triangle
+            ));
+        }
+
+        #[test]
+        fn test_at_centroid_of_triangle() {
+            let triangle = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+
+            // At the centroid of the triangle
+            let centroid = (triangle.0 + triangle.1 + triangle.2) / 3.0;
+            assert!(point_in_or_on_triangle(centroid, triangle));
+        }
     }
 
     mod test_edge_quad_intersection {
@@ -589,9 +654,7 @@ mod tests {
                 Vec3::new(1.0, 1.0, 0.0),
                 Vec3::new(0.0, 1.0, 0.0),
             );
-            let result = edge_quad_intersection(edge, quad);
-            println!("Intersection result: {}", result);
-            assert!(!result);
+            assert!(!edge_quad_intersection(edge, quad));
         }
 
         #[test]
@@ -616,6 +679,54 @@ mod tests {
                 Vec3::new(0.0, 1.0, 0.0),
             );
             assert!(edge_quad_intersection(edge, quad));
+        }
+
+        #[test]
+        fn test_edge_parallel_to_quad_inside() {
+            let edge = (Vec3::new(0.25, 0.25, 0.0), Vec3::new(0.75, 0.25, 0.0));
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+            assert!(edge_quad_intersection(edge, quad));
+        }
+
+        #[test]
+        fn test_edge_coinciding_with_quad_face() {
+            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 0.0));
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+            assert!(edge_quad_intersection(edge, quad));
+        }
+
+        #[test]
+        fn test_edge_intersecting_quad_at_multiple_points() {
+            let edge = (Vec3::new(-0.5, 0.5, 0.0), Vec3::new(1.5, 0.5, 0.0));
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+            assert!(edge_quad_intersection(edge, quad));
+        }
+
+        #[test]
+        fn test_edge_very_close_to_quad_but_outside() {
+            let edge = (Vec3::new(1.0 + 1e-6, 0.5, 0.0), Vec3::new(2.0, 0.5, 0.0));
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+            assert!(!edge_quad_intersection(edge, quad));
         }
     }
 
@@ -696,6 +807,112 @@ mod tests {
             );
             assert!(!point_in_quad(Vec3::new(0.5, 0.5, 1.0), quad));
         }
+
+        #[test]
+        fn test_point_on_vertex() {
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+            assert!(point_in_quad(Vec3::new(0.5, 0.0, 0.0), quad));
+        }
+
+        #[test]
+        fn test_point_outside_vertex() {
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+            assert!(!point_in_quad(Vec3::new(-0.5, -0.5, 0.0), quad));
+        }
+
+        #[test]
+        fn test_point_outside_edge_not_touching_vertex() {
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+            assert!(!point_in_quad(Vec3::new(0.5, -0.5, 0.0), quad));
+        }
+
+        #[test]
+        fn test_point_far_from_quad() {
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+            assert!(!point_in_quad(Vec3::new(10.0, 10.0, 10.0), quad));
+        }
+
+        #[test]
+        fn test_point_on_diagonal() {
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+            assert!(point_in_quad(Vec3::new(0.5, 0.5, 0.0), quad));
+        }
+
+        #[test]
+        fn test_point_on_boundary_not_edge_or_vertex() {
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+
+            // Point on the boundary but not on the edges or vertices
+            assert!(point_in_quad(Vec3::new(0.5, 0.5, 0.0), quad));
+        }
+
+        #[test]
+        fn test_point_at_center_of_quad() {
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+
+            // Point exactly at the center of the quad
+            assert!(point_in_quad(Vec3::new(0.5, 0.5, 0.0), quad));
+        }
+
+        #[test]
+        fn test_point_very_close_to_quad_but_outside() {
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+
+            // Point very close to the quad but outside (testing epsilon)
+            assert!(!point_in_quad(Vec3::new(1.0 + 1e-4, 0.5, 0.0), quad));
+        }
+
+        #[test]
+        fn test_point_very_close_to_quad_but_inside() {
+            let quad = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            );
+            let point = Vec3::new(1.0 - 1e-6, 0.5, 0.0);
+            assert!(point_in_quad(point, quad));
+        }
     }
 
     mod test_triangle_edge_intersection {
@@ -766,6 +983,61 @@ mod tests {
             let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
             assert!(triangle_edge_intersection(edge, triangle));
         }
+
+        #[test]
+        fn test_triangle_edge_coinciding_with_edge() {
+            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 0.0));
+            let triangle = (
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(1.0, 1.0, 0.0),
+                Vec3::new(0.5, 0.5, 0.0),
+            );
+            assert!(triangle_edge_intersection(edge, triangle));
+        }
+
+        #[test]
+        fn test_triangle_edge_very_close_to_edge_but_not_intersecting() {
+            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 0.0));
+            let triangle = (
+                Vec3::new(0.0, 0.0, 0.1),
+                Vec3::new(1.0, 1.0, 0.1),
+                Vec3::new(0.5, 0.5, 0.1),
+            );
+            assert!(!triangle_edge_intersection(edge, triangle));
+        }
+
+        #[test]
+        fn test_triangle_edge_intersecting_at_multiple_points() {
+            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 2.0, 0.0));
+            let triangle = (
+                Vec3::new(0.5, 0.5, 0.0),
+                Vec3::new(1.5, 0.5, 0.0),
+                Vec3::new(0.5, 1.5, 0.0),
+            );
+            assert!(triangle_edge_intersection(edge, triangle));
+        }
+
+        #[test]
+        fn test_triangle_edge_intersecting_at_single_point() {
+            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 0.0));
+            let triangle = (
+                Vec3::new(0.5, 0.5, 0.0),
+                Vec3::new(1.5, 0.5, 0.0),
+                Vec3::new(0.5, 1.5, 0.0),
+            );
+            assert!(triangle_edge_intersection(edge, triangle));
+        }
+
+        #[test]
+        fn test_triangle_edge_parallel_to_edge_but_inside() {
+            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 2.0, 0.0));
+            let triangle = (
+                Vec3::new(0.5, 0.5, 0.0),
+                Vec3::new(1.5, 0.5, 0.0),
+                Vec3::new(0.5, 1.5, 0.0),
+            );
+            assert!(triangle_edge_intersection(edge, triangle));
+        }
     }
 
     mod test_point_on_line_segment {
@@ -826,6 +1098,45 @@ mod tests {
                 Vec3::new(0.5, 0.5, 0.500001),
                 segment
             ));
+        }
+
+        #[test]
+        fn test_point_on_boundary() {
+            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            assert!(point_on_line_segment(Vec3::new(0.5, 0.5, 0.5), segment));
+        }
+
+        #[test]
+        fn test_point_far_beyond_segment_end() {
+            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            assert!(!point_on_line_segment(Vec3::new(1.5, 1.5, 1.5), segment));
+        }
+
+        #[test]
+        fn test_point_far_beyond_segment_start() {
+            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            assert!(!point_on_line_segment(Vec3::new(-1.5, -1.5, -1.5), segment));
+        }
+
+        #[test]
+        fn test_point_at_midpoint_of_segment() {
+            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let point = Vec3::new(0.5, 0.5, 0.5);
+            assert!(point_on_line_segment(point, segment));
+        }
+
+        #[test]
+        fn test_point_very_close_to_segment_but_outside_epsilon() {
+            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let point = Vec3::new(0.5, 0.5, 0.5001); // Slightly outside epsilon
+            assert!(!point_on_line_segment(point, segment));
+        }
+
+        #[test]
+        fn test_point_exactly_at_epsilon_boundary() {
+            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let point = Vec3::new(0.5, 0.5, 0.50001); // Exactly at epsilon boundary
+            assert!(point_on_line_segment(point, segment));
         }
     }
 
@@ -892,6 +1203,63 @@ mod tests {
         fn test_segments_barely_missing() {
             let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
             let seg2 = (Vec3::new(1.000001, 0.0, 0.0), Vec3::new(2.0, 0.0, 0.0));
+            assert!(!line_segment_overlap(seg1, seg2));
+        }
+
+        #[test]
+        fn test_segments_perpendicular_intersecting() {
+            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 0.0, 0.0));
+            let seg2 = (Vec3::new(1.0, -1.0, 0.0), Vec3::new(1.0, 1.0, 0.0));
+            assert!(line_segment_overlap(seg1, seg2));
+        }
+
+        #[test]
+        fn test_segments_perpendicular_not_intersecting() {
+            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
+            let seg2 = (Vec3::new(2.0, -1.0, 0.0), Vec3::new(2.0, 1.0, 0.0));
+            assert!(!line_segment_overlap(seg1, seg2));
+        }
+
+        #[test]
+        fn test_segments_skew() {
+            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let seg2 = (Vec3::new(0.0, 1.0, 0.0), Vec3::new(1.0, 0.0, 1.0));
+            assert!(!line_segment_overlap(seg1, seg2));
+        }
+
+        #[test]
+        fn test_segments_parallel_overlap_endpoint() {
+            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 0.0, 0.0));
+            let seg2 = (Vec3::new(1.0, 0.0, 0.0), Vec3::new(3.0, 0.0, 0.0));
+            assert!(line_segment_overlap(seg1, seg2));
+        }
+
+        #[test]
+        fn test_segments_same_start_point() {
+            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let seg2 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
+            assert!(line_segment_overlap(seg1, seg2));
+        }
+
+        #[test]
+        fn test_segments_same_end_point() {
+            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let seg2 = (Vec3::new(0.0, 1.0, 1.0), Vec3::new(1.0, 1.0, 1.0));
+            assert!(line_segment_overlap(seg1, seg2));
+        }
+
+        #[test]
+        fn test_segments_one_point() {
+            let seg1 = (Vec3::new(1.0, 1.0, 1.0), Vec3::new(1.0, 1.0, 1.0));
+            let seg2 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 2.0, 2.0));
+            assert!(line_segment_overlap(seg1, seg2));
+        }
+
+        #[test]
+        fn test_segments_parallel_very_close() {
+            let epsilon = 1e-7;
+            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
+            let seg2 = (Vec3::new(0.0, epsilon, 0.0), Vec3::new(1.0, epsilon, 0.0));
             assert!(!line_segment_overlap(seg1, seg2));
         }
     }
