@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 /// Calculates the total number of voxels along one axis at a given level of detail (LOD).
@@ -262,6 +263,11 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
     /// voxtree.update_lods();
     /// ```
     pub fn update_lods(&mut self) {
+        self.update_lods_parallel_clone();
+    }
+
+    // Sequential implementation
+    pub fn update_lods_sequential(&mut self) {
         for lod in 1..=MAX_LOD_LEVEL {
             let voxels_per_axis = calculate_voxels_per_axis(MAX_LOD_LEVEL - lod) as u8;
 
@@ -271,16 +277,51 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
                         let index = Self::get_index_of(lod, x, y, z);
                         let child_indices = Self::get_lod_child_indices(lod, x, y, z);
 
-                        let mut average_value = 0;
+                        let sum = child_indices
+                            .iter()
+                            .map(|&child_index| self.data.get(&child_index).unwrap_or(&0))
+                            .sum::<i32>();
 
-                        for child_index in child_indices {
-                            average_value += self.get_value_for_index(child_index);
-                        }
-
-                        let average_value = (average_value as f64 / 8.0).round() as i32;
+                        let average_value = (sum + 4) / 8; // Adding 4 ensures proper rounding
                         self.set_value_for_index(index, average_value);
                     }
                 }
+            }
+        }
+    }
+
+    // Parallel implementation with cloning
+    pub fn update_lods_parallel_clone(&mut self) {
+        for lod in 1..=MAX_LOD_LEVEL {
+            let voxels_per_axis = calculate_voxels_per_axis(MAX_LOD_LEVEL - lod) as u8;
+
+            let data_snapshot = self.data.clone();
+
+            let indices: Vec<(u8, u8, u8)> = (0..voxels_per_axis)
+                .flat_map(|y| {
+                    (0..voxels_per_axis)
+                        .flat_map(move |z| (0..voxels_per_axis).map(move |x| (x, y, z)))
+                })
+                .collect();
+
+            let updates: Vec<(usize, i32)> = indices
+                .into_par_iter()
+                .map(|(x, y, z)| {
+                    let index = Self::get_index_of(lod, x, y, z);
+                    let child_indices = Self::get_lod_child_indices(lod, x, y, z);
+
+                    let sum = child_indices
+                        .iter()
+                        .map(|&child_index| *data_snapshot.get(&child_index).unwrap_or(&0))
+                        .sum::<i32>();
+
+                    let average_value = (sum + 4) / 8; // Adding 4 ensures proper rounding
+                    (index, average_value)
+                })
+                .collect();
+
+            for (index, value) in updates {
+                self.set_value_for_index(index, value);
             }
         }
     }
