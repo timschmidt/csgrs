@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 /// Calculates the total number of voxels along one axis at a given level of detail (LOD).
 ///
@@ -155,7 +155,7 @@ pub const fn calculate_total_voxel_count(max_lod_level: usize) -> usize {
 /// voxtree.set_value(1, 1, 1, 1, 42);
 /// ```
 pub struct VoxTree<const MAX_LOD_LEVEL: usize> {
-    data: HashMap<usize, i32>,
+    data: FxHashMap<usize, i32>,
 }
 
 impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
@@ -178,7 +178,7 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
     /// ```
     pub fn new() -> Self {
         Self {
-            data: HashMap::new(),
+            data: FxHashMap::default(),
         }
     }
 
