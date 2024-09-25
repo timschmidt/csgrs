@@ -112,7 +112,7 @@ pub const fn calculate_total_voxel_count(max_lod_level: usize) -> usize {
     // (8^(max_lod_level + 1) - 1) / 7
     // ((2^3)^(max_lod_level + 1))) / 7
     // (2^(3 * (max_lod_level + 1))) / 7
-    (1 << (3 * (max_lod_level + 1))) / 7
+    ((1 << (3 * (max_lod_level + 1))) - 1) / 7
 }
 
 /// A Sparse-Voxel-Octree (SVO) structure representing a voxel tree that stores voxel data for multiple levels of detail (LODs).
@@ -306,28 +306,54 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
     /// - LOD 1: Lower detail level is LOD level 1 internally
     /// - LOD 2: Lowest detail level is LOD level 0 internally
     fn get_index_of(lod: usize, x: u8, y: u8, z: u8) -> usize {
-        let lod = MAX_LOD_LEVEL - lod;
+        // Validate LOD level
+        assert!(
+            lod <= MAX_LOD_LEVEL,
+            "LOD level {} exceeds MAX_LOD_LEVEL {}",
+            lod,
+            MAX_LOD_LEVEL
+        );
 
-        if lod == 0 {
-            return 0;
-        }
+        // Map the external LOD (where lod = 0 is highest detail) to internal LOD (for calculations)
+        let internal_lod = MAX_LOD_LEVEL - lod;
 
+        // Calculate the number of voxels per axis at the given LOD
+        let voxels_per_axis = calculate_voxels_per_axis(internal_lod);
+
+        // Validate voxel coordinates
         let x = x as usize;
         let y = y as usize;
         let z = z as usize;
 
-        assert!(lod <= MAX_LOD_LEVEL);
-        assert!(x < calculate_voxels_per_axis(lod));
-        assert!(y < calculate_voxels_per_axis(lod));
-        assert!(z < calculate_voxels_per_axis(lod));
+        assert!(
+            x < voxels_per_axis && y < voxels_per_axis && z < voxels_per_axis,
+            "Voxel coordinates ({}, {}, {}) are out of bounds for LOD {} with size {}",
+            x,
+            y,
+            z,
+            lod,
+            voxels_per_axis
+        );
 
-        let lod_data_offset = calculate_total_voxel_count(lod - 1);
-        let voxel_area = calculate_voxel_area(lod);
-        let voxels_per_axis = calculate_voxels_per_axis(lod);
+        // Calculate the total number of voxels before the current LOD
+        let lod_data_offset = if internal_lod == 0 {
+            0
+        } else {
+            calculate_total_voxel_count(internal_lod - 1)
+        };
 
-        let index = lod_data_offset + y * voxel_area + z * voxels_per_axis + x;
+        // Calculate the index within the current LOD
+        let index_in_lod = x + z * voxels_per_axis + y * voxels_per_axis * voxels_per_axis;
 
-        assert!(index < Self::MAX_VOXEL_COUNT);
+        // Total index is the sum of the offset and the index within the LOD
+        let index = lod_data_offset + index_in_lod;
+
+        assert!(
+            index < Self::MAX_VOXEL_COUNT,
+            "Calculated index {} exceeds MAX_VOXEL_COUNT {}",
+            index,
+            Self::MAX_VOXEL_COUNT
+        );
 
         index
     }
@@ -349,9 +375,18 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
     ///
     /// This method will panic if `lod` is 0, as there are no child voxels at the maximum level of detail.
     fn get_lod_child_indices(lod: usize, x: u8, y: u8, z: u8) -> [usize; 8] {
-        assert!(lod > 0);
+        // At the maximum internal LOD (lowest detail), there are no child indices
+        assert!(
+            lod > 0,
+            "LOD {} has no child indices (maximum LOD is {})",
+            lod,
+            MAX_LOD_LEVEL
+        );
 
+        // Calculate the child LOD
         let child_lod = lod - 1;
+
+        // Each voxel splits into 8 child voxels at higher resolution
         let x = x * 2;
         let y = y * 2;
         let z = z * 2;
