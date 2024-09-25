@@ -16,3 +16,10 @@ log = { version = "*", features = [
 ] }
 rayon.workspace = true
 rustc-hash.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+
+[[bench]]
+name = "voxtree_bench"
+harness = false
