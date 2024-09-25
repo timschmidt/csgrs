@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::time::Instant;
 
 use bevy::math::{IVec3, Vec3};
@@ -14,6 +15,13 @@ pub struct Voxelizer {
     pub mesh: Obj,
     pub chunks_size: IVec3,
     pub chunks: Vec<Chunk>,
+}
+
+// Helper function to calculate chunk index from coordinates
+fn calculate_chunk_index_from_coords(x: i32, y: i32, z: i32, chunks_size: IVec3) -> usize {
+    let chunks_area = chunks_size.x * chunks_size.z;
+    let chunk_index = y * chunks_area + z * chunks_size.x + x;
+    chunk_index as usize
 }
 
 impl Voxelizer {
@@ -106,6 +114,7 @@ impl Voxelizer {
         let chunks_size = self.chunks_size;
         self.chunks = Vec::with_capacity(chunks_len);
 
+        // Initialize chunks
         for y in 0..self.chunks_size.y {
             for z in 0..self.chunks_size.z {
                 for x in 0..self.chunks_size.x {
@@ -115,14 +124,17 @@ impl Voxelizer {
         }
 
         let mesh_min = self.mesh.aabb.0;
-        let epsilon = VOXEL_SIZE * 0.001;
-        let splat = Vec3::splat(epsilon);
-
-        let now = Instant::now();
 
         println!("Voxelize started");
 
-        for face in self.mesh.faces.iter() {
+        let face_to_chunk_map_now = Instant::now();
+
+        println!("Building face-to-chunk mapping");
+
+        // Build face-to-chunk mapping
+        let mut chunk_face_map: HashMap<usize, Vec<IVec3>> = HashMap::new();
+
+        for face in &self.mesh.faces {
             let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
             let v2 = self.mesh.vertices[(face.y - 1) as usize] - mesh_min;
             let v3 = self.mesh.vertices[(face.z - 1) as usize] - mesh_min;
@@ -130,86 +142,141 @@ impl Voxelizer {
             let min = v1.min(v2).min(v3);
             let max = v1.max(v2).max(v3);
 
-            let world_min_voxel = min / VOXEL_SIZE;
-            let world_max_voxel = max / VOXEL_SIZE;
+            let world_min_voxel = (min / VOXEL_SIZE).floor().as_ivec3();
+            let world_max_voxel = (max / VOXEL_SIZE).ceil().as_ivec3();
 
-            let world_min_voxel = world_min_voxel.as_ivec3();
-            let world_max_voxel = world_max_voxel.as_ivec3() + IVec3::splat(1);
-            let diff_voxel = world_max_voxel - world_min_voxel;
+            // Determine which chunks this face overlaps
+            let min_chunk = world_min_voxel / VOXELS_PER_AXIS as i32;
+            let max_chunk = world_max_voxel / VOXELS_PER_AXIS as i32;
 
-            let mut affected_voxels = Vec::new();
+            for chunk_y in min_chunk.y..=max_chunk.y {
+                for chunk_z in min_chunk.z..=max_chunk.z {
+                    for chunk_x in min_chunk.x..=max_chunk.x {
+                        let chunk_index = calculate_chunk_index_from_coords(
+                            chunk_x,
+                            chunk_y,
+                            chunk_z,
+                            chunks_size,
+                        );
 
-            let mut current_chunk_index =
-                Self::calculate_chunk_index(world_min_voxel, chunks_size, chunks_len);
-            let mut current_min_voxel = IVec3::MAX;
-            let mut current_max_voxel = IVec3::MIN;
-
-            for y in 0..diff_voxel.y {
-                for z in 0..diff_voxel.z {
-                    for x in 0..diff_voxel.x {
-                        let world_voxel = world_min_voxel + IVec3::new(x, y, z);
-
-                        let chunk_index =
-                            Self::calculate_chunk_index(world_voxel, chunks_size, chunks_len);
-
-                        if chunk_index != current_chunk_index && current_min_voxel != IVec3::MAX {
-                            affected_voxels.push((
-                                current_chunk_index,
-                                Self::convert_voxel_world_to_local(current_min_voxel),
-                                Self::convert_voxel_world_to_local(current_max_voxel),
-                            ));
-
-                            current_min_voxel = IVec3::MAX;
-                            current_max_voxel = IVec3::MIN;
-                        }
-
-                        current_chunk_index = chunk_index;
-                        current_min_voxel = current_min_voxel.min(world_voxel);
-                        current_max_voxel = current_max_voxel.max(world_voxel);
-                    }
-                }
-            }
-
-            if current_min_voxel != IVec3::MAX {
-                affected_voxels.push((
-                    current_chunk_index,
-                    Self::convert_voxel_world_to_local(current_min_voxel),
-                    Self::convert_voxel_world_to_local(current_max_voxel),
-                ));
-            }
-
-            for (chunk_index, min_voxel, max_voxel) in affected_voxels.iter() {
-                let chunk = &mut self.chunks[*chunk_index];
-                let chunk_position = chunk.get_position();
-
-                for y in min_voxel.y..=max_voxel.y {
-                    for z in min_voxel.z..=max_voxel.z {
-                        for x in min_voxel.x..=max_voxel.x {
-                            let world_voxel_position = Vec3::new(
-                                chunk_position.x as f32 + (x as f32 * VOXEL_SIZE),
-                                chunk_position.y as f32 + (y as f32 * VOXEL_SIZE),
-                                chunk_position.z as f32 + (z as f32 * VOXEL_SIZE),
-                            );
-
-                            let world_min_position = world_voxel_position - splat;
-                            let world_max_position = world_voxel_position
-                                + Vec3::new(VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
-                                + splat;
-
-                            let intersects = triangle_cube_intersection(
-                                (v1, v2, v3),
-                                (world_min_position, world_max_position),
-                            );
-
-                            if intersects {
-                                chunk.set_value(x as u8, y as u8, z as u8, 1);
-                            }
+                        if chunk_index < chunks_len {
+                            chunk_face_map.entry(chunk_index).or_default().push(*face);
                         }
                     }
                 }
             }
         }
 
+        let face_to_chunk_map_time = face_to_chunk_map_now.elapsed();
+
+        println!("Voxelizing");
+
+        let epsilon = VOXEL_SIZE * 0.001;
+        let splat = Vec3::splat(epsilon);
+
+        let now = Instant::now();
+
+        self.chunks
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(loop_chunk_index, loop_chunk)| {
+                if let Some(faces) = chunk_face_map.get(&loop_chunk_index) {
+                    for face in faces.iter() {
+                        let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
+                        let v2 = self.mesh.vertices[(face.y - 1) as usize] - mesh_min;
+                        let v3 = self.mesh.vertices[(face.z - 1) as usize] - mesh_min;
+
+                        let min = v1.min(v2).min(v3);
+                        let max = v1.max(v2).max(v3);
+
+                        let world_min_voxel = min / VOXEL_SIZE;
+                        let world_max_voxel = max / VOXEL_SIZE;
+
+                        let world_min_voxel = world_min_voxel.as_ivec3();
+                        let world_max_voxel = world_max_voxel.as_ivec3() + IVec3::splat(1);
+                        let diff_voxel = world_max_voxel - world_min_voxel;
+
+                        let mut affected_voxels = Vec::new();
+
+                        let mut current_chunk_index =
+                            Self::calculate_chunk_index(world_min_voxel, chunks_size, chunks_len);
+                        let mut current_min_voxel = IVec3::MAX;
+                        let mut current_max_voxel = IVec3::MIN;
+
+                        for y in 0..diff_voxel.y {
+                            for z in 0..diff_voxel.z {
+                                for x in 0..diff_voxel.x {
+                                    let world_voxel = world_min_voxel + IVec3::new(x, y, z);
+
+                                    let chunk_index = Self::calculate_chunk_index(
+                                        world_voxel,
+                                        chunks_size,
+                                        chunks_len,
+                                    );
+
+                                    if chunk_index != current_chunk_index
+                                        && current_min_voxel != IVec3::MAX
+                                    {
+                                        affected_voxels.push((
+                                            current_chunk_index,
+                                            Self::convert_voxel_world_to_local(current_min_voxel),
+                                            Self::convert_voxel_world_to_local(current_max_voxel),
+                                        ));
+
+                                        current_min_voxel = IVec3::MAX;
+                                        current_max_voxel = IVec3::MIN;
+                                    }
+
+                                    current_chunk_index = chunk_index;
+                                    current_min_voxel = current_min_voxel.min(world_voxel);
+                                    current_max_voxel = current_max_voxel.max(world_voxel);
+                                }
+                            }
+                        }
+
+                        if current_min_voxel != IVec3::MAX {
+                            affected_voxels.push((
+                                current_chunk_index,
+                                Self::convert_voxel_world_to_local(current_min_voxel),
+                                Self::convert_voxel_world_to_local(current_max_voxel),
+                            ));
+                        }
+
+                        let chunk_position = loop_chunk.get_position();
+                        for (chunk_index, min_voxel, max_voxel) in affected_voxels.iter() {
+                            if *chunk_index != loop_chunk_index {
+                                continue;
+                            }
+
+                            for y in min_voxel.y..=max_voxel.y {
+                                for z in min_voxel.z..=max_voxel.z {
+                                    for x in min_voxel.x..=max_voxel.x {
+                                        let world_voxel_position = Vec3::new(
+                                            chunk_position.x as f32 + (x as f32 * VOXEL_SIZE),
+                                            chunk_position.y as f32 + (y as f32 * VOXEL_SIZE),
+                                            chunk_position.z as f32 + (z as f32 * VOXEL_SIZE),
+                                        );
+
+                                        let world_min_position = world_voxel_position - splat;
+                                        let world_max_position = world_voxel_position
+                                            + Vec3::new(VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+                                            + splat;
+
+                                        let intersects = triangle_cube_intersection(
+                                            (v1, v2, v3),
+                                            (world_min_position, world_max_position),
+                                        );
+
+                                        if intersects {
+                                            loop_chunk.set_value(x as u8, y as u8, z as u8, 1);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         let voxelize_time = now.elapsed();
 
         println!(
@@ -225,11 +292,12 @@ impl Voxelizer {
         });
 
         let update_lods_time = update_lods_now.elapsed();
-        let total = voxelize_time + update_lods_time;
+        let total = face_to_chunk_map_time + voxelize_time + update_lods_time;
 
         println!(
-            "Done, {} chunks, voxelized: {:?}, update lods: {:?}, total: {:?}",
+            "Done, {} chunks, face-to-chunk: {:?}, voxelized: {:?}, update lods: {:?}, total: {:?}",
             self.chunks.len(),
+            face_to_chunk_map_time,
             voxelize_time,
             update_lods_time,
             total
