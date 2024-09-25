@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 use bevy::math::{IVec3, Vec3};
+use rayon::prelude::*;
 
 use crate::math::triangle_cube_intersection;
 use crate::obj_reader::Obj;
@@ -121,9 +122,7 @@ impl Voxelizer {
 
         println!("Voxelize started");
 
-        for (face_id, face) in self.mesh.faces.iter().enumerate() {
-            print!("Voxelize face {}/{}\r", face_id + 1, self.mesh.faces.len(),);
-
+        for face in self.mesh.faces.iter() {
             let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
             let v2 = self.mesh.vertices[(face.y - 1) as usize] - mesh_min;
             let v3 = self.mesh.vertices[(face.z - 1) as usize] - mesh_min;
@@ -179,10 +178,7 @@ impl Voxelizer {
                 ));
             }
 
-            let affected_voxels_len = affected_voxels.len();
-            for (voxel_id, (chunk_index, min_voxel, max_voxel)) in
-                affected_voxels.iter().enumerate()
-            {
+            for (chunk_index, min_voxel, max_voxel) in affected_voxels.iter() {
                 let chunk = &mut self.chunks[*chunk_index];
                 let chunk_position = chunk.get_position();
 
@@ -214,13 +210,29 @@ impl Voxelizer {
             }
         }
 
-        println!("Voxelize finished, updating LODs");
+        let voxelize_time = now.elapsed();
 
-        for (chunk_id, chunk) in self.chunks.iter_mut().enumerate() {
-            print!("Updating LODs for chunk: {}/{}\r", chunk_id + 1, chunks_len);
+        println!(
+            "Voxelize finished, updating LODs for {} chunks",
+            self.chunks.len()
+        );
+
+        let update_lods_now = Instant::now();
+
+        // Update LODs in parallel
+        self.chunks.par_iter_mut().for_each(|chunk| {
             chunk.update_lods();
-        }
+        });
 
-        println!("Voxelize took: {:?}", now.elapsed());
+        let update_lods_time = update_lods_now.elapsed();
+        let total = voxelize_time + update_lods_time;
+
+        println!(
+            "Done, {} chunks, voxelized: {:?}, update lods: {:?}, total: {:?}",
+            self.chunks.len(),
+            voxelize_time,
+            update_lods_time,
+            total
+        );
     }
 }
