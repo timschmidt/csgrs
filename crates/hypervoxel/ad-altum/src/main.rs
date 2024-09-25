@@ -13,6 +13,7 @@ use bevy::pbr::{
     VolumetricFogSettings,
 };
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, window::PresentMode};
+use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
@@ -35,30 +36,64 @@ impl Plugin for GamePlugin {
     }
 }
 
-fn generate_chunk_color(index: usize, total: usize) -> Color {
-    // Normalize the index to generate distinct hues
-    let hue = (index as f32 / total as f32) * 360.0;
+// fn generate_chunk_color(index: usize, total: usize) -> Color {
+//     // Normalize the index to generate distinct hues
+//     let hue = (index as f32 / total as f32) * 360.0;
 
-    // Convert HSL to RGB
-    let rgb = hsl_to_rgb(hue, 0.7, 0.5); // Saturation: 0.7, Lightness: 0.5
-    Color::srgba(rgb.0, rgb.1, rgb.2, 1.0)
+//     // Convert HSL to RGB
+//     let rgb = hsl_to_rgb(hue, 0.7, 0.5); // Saturation: 0.7, Lightness: 0.5
+//     Color::srgba(rgb.0, rgb.1, rgb.2, 1.0)
+// }
+
+// fn hsl_to_rgb(hue: f32, saturation: f32, lightness: f32) -> (f32, f32, f32) {
+//     let c = (1.0 - (2.0 * lightness - 1.0).abs()) * saturation;
+//     let x = c * (1.0 - ((hue / 60.0) % 2.0 - 1.0).abs());
+//     let m = lightness - c / 2.0;
+
+//     let (r, g, b) = match hue {
+//         0.0..=60.0 => (c, x, 0.0),
+//         60.0..=120.0 => (x, c, 0.0),
+//         120.0..=180.0 => (0.0, c, x),
+//         180.0..=240.0 => (0.0, x, c),
+//         240.0..=300.0 => (x, 0.0, c),
+//         _ => (c, 0.0, x),
+//     };
+
+//     (r + m, g + m, b + m)
+// }
+
+fn generate_base_chunk_color(x: i32, y: i32, z: i32) -> Color {
+    // Use prime numbers to create a unique seed for each coordinate
+    let seed = x as f32 * 31.0 + y as f32 * 37.0 + z as f32 * 41.0;
+
+    // Generate color components using trigonometric functions
+    let r = (seed.sin() * 0.5 + 0.5).fract();
+    let g = (seed.cos() * 0.5 + 0.5).fract();
+    let b = ((seed * 0.1).tan() * 0.5 + 0.5).fract();
+
+    Color::srgba(r, g, b, 1.0)
 }
 
-fn hsl_to_rgb(hue: f32, saturation: f32, lightness: f32) -> (f32, f32, f32) {
-    let c = (1.0 - (2.0 * lightness - 1.0).abs()) * saturation;
-    let x = c * (1.0 - ((hue / 60.0) % 2.0 - 1.0).abs());
-    let m = lightness - c / 2.0;
+// fn generate_chunk_color(x: i32, y: i32, z: i32) -> Color {
+//     let base_color = generate_base_chunk_color(x, y, z);
+//     // Shift the color based on the chunk's position in the grid
+//     let shift = (x + y + z) as f32 * 0.1;
+//     let r = (base_color.to_srgba().red + shift).fract();
+//     let g = (base_color.to_srgba().green + shift * 1.5).fract();
+//     let b = (base_color.to_srgba().blue + shift * 2.0).fract();
 
-    let (r, g, b) = match hue {
-        0.0..=60.0 => (c, x, 0.0),
-        60.0..=120.0 => (x, c, 0.0),
-        120.0..=180.0 => (0.0, c, x),
-        180.0..=240.0 => (0.0, x, c),
-        240.0..=300.0 => (x, 0.0, c),
-        _ => (c, 0.0, x),
-    };
+//     Color::srgba(r, g, b, 1.0)
+// }
 
-    (r + m, g + m, b + m)
+fn generate_chunk_color(x: i32, y: i32, z: i32) -> Color {
+    // Determine if the chunk should be black based on the sum of its coordinates
+    let is_black = (x + y + z) % 2 == 0;
+
+    if is_black {
+        Color::from(SILVER)
+    } else {
+        Color::WHITE
+    }
 }
 
 fn setup(
@@ -74,7 +109,8 @@ fn setup(
         directional_light: DirectionalLight {
             color: Color::srgb(0.98, 0.95, 0.82),
             shadows_enabled: true,
-            illuminance: 5_000., //light_consts::lux::OVERCAST_DAY,
+            // illuminance: 5_000., //light_consts::lux::OVERCAST_DAY,
+            illuminance: light_consts::lux::AMBIENT_DAYLIGHT,
 
             ..default()
         },
@@ -92,6 +128,7 @@ fn setup(
                 },
                 // transform: Transform::from_xyz(0.0, 7., 14.0)
                 transform: Transform::from_xyz(2.2716377, 1.2876732, 3.9676127)
+                // transform: Transform::from_xyz(-1.9573995, 1.9533201, -1.9587312)
                     .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
                 ..default()
             },
@@ -167,7 +204,7 @@ fn setup(
         );
 
         let mesh_material = materials.add(StandardMaterial {
-            base_color: generate_chunk_color(i, chunks_len),
+            base_color: generate_chunk_color(chunk_position.x, chunk_position.y, chunk_position.z),
             perceptual_roughness: 1.0,
             reflectance: 0.0,
             ..default()
@@ -191,7 +228,7 @@ fn setup(
             ));
     }
 
-    println!("Generating meshes took {:?}", now.elapsed());
+    println!("\nGenerating meshes took {:?}", now.elapsed());
 
     commands.spawn(PbrBundle {
         mesh: meshes.add(
@@ -224,9 +261,11 @@ fn toggle_wireframe(
 
 fn main() {
     // let obj = obj_reader::Obj::parse("ad-altum/assets/procedural_brick_wall.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/barn_0.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/column.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/cylinder.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/default_cube.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/fence_0.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/gear.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/icosphere.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/polonez.obj");
@@ -234,13 +273,15 @@ fn main() {
     // let obj = obj_reader::Obj::parse("ad-altum/assets/sphere.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_01.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_03.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02_huge.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02_human_reference.obj");
+    let obj = obj_reader::Obj::parse("ad-altum/assets/statue_03.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_04.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_05.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_06.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_07.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_08.obj");
-    let obj = obj_reader::Obj::parse("ad-altum/assets/statue_09.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_09.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_10.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/suzanne.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/torus.obj");
@@ -264,6 +305,7 @@ fn main() {
                 }),
                 ..default()
             }),
+            EguiPlugin,
             // TemporalAntiAliasPlugin,
             GamePlugin,
             PanOrbitCameraPlugin,
