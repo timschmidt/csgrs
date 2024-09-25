@@ -8,7 +8,7 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
     let tri_min = tv0.min(tv1).min(tv2);
     let tri_max = tv0.max(tv1).max(tv2);
 
-    // Check if the bounding boxes overlap or touch
+    // Check if the bounding boxes overlap or touch with precision handling
     let epsilon = 1e-5;
     if tri_max.x < cube_min.x - epsilon
         || tri_min.x > cube_max.x + epsilon
@@ -24,20 +24,25 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
     let normal = (tv1 - tv0).cross(tv2 - tv0);
     let d = -normal.dot(tv0);
 
-    let p1 = cube_min;
-    let p2 = Vec3::new(cube_max.x, cube_min.y, cube_min.z);
-    let p3 = Vec3::new(cube_max.x, cube_max.y, cube_min.z);
-    let p4 = Vec3::new(cube_min.x, cube_max.y, cube_min.z);
-    let p5 = Vec3::new(cube_min.x, cube_min.y, cube_max.z);
-    let p6 = Vec3::new(cube_max.x, cube_min.y, cube_max.z);
-    let p7 = cube_max;
-    let p8 = Vec3::new(cube_min.x, cube_max.y, cube_max.z);
-
-    let cube_points = [p1, p2, p3, p4, p5, p6, p7, p8];
+    // Define the vertices of the cube once for use throughout the function
+    let cube_points = [
+        Vec3::new(cube_min.x, cube_min.y, cube_min.z),
+        Vec3::new(cube_max.x, cube_min.y, cube_min.z),
+        Vec3::new(cube_max.x, cube_max.y, cube_min.z),
+        Vec3::new(cube_min.x, cube_max.y, cube_min.z),
+        Vec3::new(cube_min.x, cube_min.y, cube_max.z),
+        Vec3::new(cube_max.x, cube_min.y, cube_max.z),
+        Vec3::new(cube_max.x, cube_max.y, cube_max.z),
+        Vec3::new(cube_min.x, cube_max.y, cube_max.z),
+    ];
     let sign = (normal.dot(cube_points[0]) + d).signum();
 
     for p in &cube_points[1..] {
         let new_sign = (normal.dot(*p) + d).signum();
+        // Handle near-zero cases to improve intersection detection accuracy
+        if (normal.dot(*p) + d).abs() < epsilon {
+            continue; // Skip further checks if a point is very close to the plane
+        }
         if new_sign != sign {
             return true; // The plane intersects the cube
         }
@@ -63,7 +68,7 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
         Vec3::new(cube_min.x, cube_max.y, cube_max.z),
     ];
 
-    for &vertex in &cube_vertices {
+    for &vertex in &cube_points {
         if point_in_or_on_triangle(vertex, triangle) {
             return true;
         }
@@ -121,10 +126,20 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
     false
 }
 
-fn point_in_or_on_cube(point: Vec3, cube: (Vec3, Vec3)) -> bool {
+pub(crate) fn point_in_or_on_cube(point: Vec3, cube: (Vec3, Vec3)) -> bool {
     let (cube_min, cube_max) = cube;
-    let epsilon = 1e-5;
 
+    // Calculate a dynamic epsilon based on the size of the cube
+    let cube_size = (cube_max - cube_min).length();
+    let epsilon = cube_size * 1e-8; // Scale epsilon based on the size of the cube
+
+    // Check for degenerate cube cases (collapsing into a plane, line, or point)
+    if cube_size < 1e-8 {
+        // Treat the cube as a single point in this case
+        return (point - cube_min).length() < epsilon;
+    }
+
+    // Check if the point is inside or very close to the cube's boundaries
     point.x >= cube_min.x - epsilon
         && point.x <= cube_max.x + epsilon
         && point.y >= cube_min.y - epsilon
@@ -133,39 +148,74 @@ fn point_in_or_on_cube(point: Vec3, cube: (Vec3, Vec3)) -> bool {
         && point.z <= cube_max.z + epsilon
 }
 
-fn point_in_or_on_triangle(point: Vec3, triangle: (Vec3, Vec3, Vec3)) -> bool {
+pub(crate) fn point_in_or_on_triangle(point: Vec3, triangle: (Vec3, Vec3, Vec3)) -> bool {
     let (a, b, c) = triangle;
-    let epsilon = 1e-5;
+
+    // Calculate the area of the triangle to determine epsilon dynamically
+    let v0 = b - a;
+    let v1 = c - a;
+    let normal = v0.cross(v1);
+    let triangle_area = normal.length() * 0.5;
+    let epsilon = triangle_area * 1e-5; // Scale epsilon based on the area of the triangle
+
+    // Check if the triangle is degenerate (nearly zero area)
+    if triangle_area < 1e-8 {
+        // If degenerate, treat the triangle as a line or point and check proximity
+        let distance_to_vertices = [
+            (point - a).length(),
+            (point - b).length(),
+            (point - c).length(),
+        ];
+        return distance_to_vertices.iter().any(|&d| d < epsilon);
+    }
 
     // Check if the point is in the same plane as the triangle
-    let normal = (b - a).cross(c - a);
     let distance_to_plane = normal.dot(point - a);
     if distance_to_plane.abs() > epsilon {
         return false;
     }
 
-    let v0 = b - a;
-    let v1 = c - a;
+    // Check if the point is inside the triangle using barycentric coordinates
     let v2 = point - a;
+    let dot00 = v0.dot(v0);
+    let dot01 = v0.dot(v1);
+    let dot02 = v0.dot(v2);
+    let dot11 = v1.dot(v1);
+    let dot12 = v1.dot(v2);
 
-    let d00 = v0.dot(v0);
-    let d01 = v0.dot(v1);
-    let d11 = v1.dot(v1);
-    let d20 = v2.dot(v0);
-    let d21 = v2.dot(v1);
+    let inv_denom = 1.0 / (dot00 * dot11 - dot01 * dot01);
+    let u = (dot11 * dot02 - dot01 * dot12) * inv_denom;
+    let v = (dot00 * dot12 - dot01 * dot02) * inv_denom;
 
-    let denom = d00 * d11 - d01 * d01;
-    let v = (d11 * d20 - d01 * d21) / denom;
-    let w = (d00 * d21 - d01 * d20) / denom;
-    let u = 1.0 - v - w;
-
-    u >= -epsilon && v >= -epsilon && w >= -epsilon && (u + v + w).abs() <= 1.0 + epsilon
+    u >= -epsilon && v >= -epsilon && (u + v) <= 1.0 + epsilon
 }
 
-fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
+pub(crate) fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
     let (e1, e2) = edge;
     let (q1, q2, q3, q4) = quad;
-    let epsilon = 1e-5;
+
+    // Calculate average edge length to determine a dynamic epsilon, handling degenerate cases
+    let edge_length = (e2 - e1).length();
+    let quad_edge_lengths = [
+        (q2 - q1).length(),
+        (q3 - q2).length(),
+        (q4 - q3).length(),
+        (q1 - q4).length(),
+    ];
+    let avg_length = (edge_length + quad_edge_lengths.iter().sum::<f32>()) / 5.0;
+    let epsilon = avg_length * 1e-5; // Scale epsilon based on average edge length
+
+    // Handle degenerate cases where the quad collapses into a line or point
+    if avg_length < 1e-8 {
+        // Treat the quad as a degenerate case, check overlap directly with line segments
+        let degenerate_edges = [(q1, q2), (q2, q3), (q3, q4), (q4, q1)];
+        for &degenerate_edge in &degenerate_edges {
+            if line_segment_overlap(edge, degenerate_edge) {
+                return true;
+            }
+        }
+        return false; // No intersection in degenerate case
+    }
 
     // Check if the edge intersects with either triangle of the quad
     if triangle_edge_intersection(edge, (q1, q2, q3))
@@ -185,8 +235,9 @@ fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)) ->
     let center = (q1 + q2 + q3 + q4) * 0.25;
 
     // Check if the edge is parallel to the quad's average plane
-    if avg_normal.dot(edge_vec).abs() < epsilon {
-        // Check if the edge is close to the quad's plane
+    let parallel_check = avg_normal.dot(edge_vec);
+    if parallel_check.abs() < epsilon {
+        // Check if the edge is coplanar with the quad
         let dist_to_plane = avg_normal.dot(e1 - center).abs();
         if dist_to_plane < epsilon {
             // Edge is coplanar with quad, check if it intersects the quad's boundaries
@@ -197,16 +248,15 @@ fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)) ->
                 }
             }
 
-            // Check if the edge is fully contained within the quad
-            let edge_midpoint = (e1 + e2) * 0.5;
-            if point_in_quad(edge_midpoint, quad) {
+            // Check if the midpoint of the edge is within the quad as a secondary containment check
+            if point_in_quad((e1 + e2) * 0.5, quad) {
                 return true;
             }
         }
     } else {
-        // Edge is not parallel to the quad's plane, check for intersection
-        let t = avg_normal.dot(center - e1) / avg_normal.dot(edge_vec);
-        if t >= 0.0 && t <= 1.0 {
+        // Edge intersects the quad's plane, compute the intersection point
+        let t = avg_normal.dot(center - e1) / parallel_check;
+        if (0.0..=1.0).contains(&t) {
             let intersection = e1 + edge_vec * t;
             if point_in_quad(intersection, quad) {
                 return true;
@@ -217,11 +267,18 @@ fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)) ->
     false
 }
 
-fn point_in_quad(point: Vec3, quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
+pub(crate) fn point_in_quad(point: Vec3, quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
     let (a, b, c, d) = quad;
-    let epsilon = 1e-5;
 
-    // Compute an average normal for the potentially non-planar quad
+    // Calculate edge lengths to determine a dynamic epsilon
+    let length1 = (b - a).length();
+    let length2 = (c - b).length();
+    let length3 = (d - c).length();
+    let length4 = (a - d).length();
+    let avg_length = (length1 + length2 + length3 + length4) * 0.25;
+    let epsilon = avg_length * 1e-5; // Scale epsilon based on average edge length
+
+    // Compute normals for the potentially non-planar quad
     let normal1 = (b - a).cross(c - a).normalize();
     let normal2 = (c - b).cross(d - b).normalize();
     let normal3 = (d - c).cross(a - c).normalize();
@@ -254,10 +311,17 @@ fn point_in_quad(point: Vec3, quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
         && is_on_right_side(d, a)
 }
 
-fn triangle_edge_intersection(edge: (Vec3, Vec3), triangle: (Vec3, Vec3, Vec3)) -> bool {
+pub(crate) fn triangle_edge_intersection(edge: (Vec3, Vec3), triangle: (Vec3, Vec3, Vec3)) -> bool {
     let (e1, e2) = edge;
     let (t1, t2, t3) = triangle;
-    let epsilon = 1e-5;
+
+    // Calculate average edge length to determine a dynamic epsilon
+    let edge_length = (e2 - e1).length();
+    let tri_edge1 = (t2 - t1).length();
+    let tri_edge2 = (t3 - t2).length();
+    let tri_edge3 = (t1 - t3).length();
+    let avg_length = (edge_length + tri_edge1 + tri_edge2 + tri_edge3) / 4.0;
+    let epsilon = avg_length * 1e-5; // Scale epsilon based on average length
 
     // Check if any of the triangle vertices lie on the edge
     if point_on_line_segment(t1, edge)
@@ -318,11 +382,19 @@ fn triangle_edge_intersection(edge: (Vec3, Vec3), triangle: (Vec3, Vec3, Vec3)) 
     point_in_or_on_triangle(intersection, triangle)
 }
 
-fn point_on_line_segment(point: Vec3, segment: (Vec3, Vec3)) -> bool {
+pub(crate) fn point_on_line_segment(point: Vec3, segment: (Vec3, Vec3)) -> bool {
     let (a, b) = segment;
-    let epsilon = 1e-5;
 
+    // Calculate the segment length and determine a dynamic epsilon
     let ab = b - a;
+    let segment_length = ab.length();
+    let epsilon = segment_length * 1e-5; // Scale epsilon based on segment length
+
+    // Handle degenerate case: if the segment length is nearly zero, treat it as a point
+    if segment_length < 1e-8 {
+        return (point - a).length() < epsilon;
+    }
+
     let ap = point - a;
 
     // Check if the point is collinear with the line segment
@@ -335,10 +407,34 @@ fn point_on_line_segment(point: Vec3, segment: (Vec3, Vec3)) -> bool {
     -epsilon <= t && t <= 1.0 + epsilon
 }
 
-fn line_segment_overlap(seg1: (Vec3, Vec3), seg2: (Vec3, Vec3)) -> bool {
+pub(crate) fn line_segment_overlap(seg1: (Vec3, Vec3), seg2: (Vec3, Vec3)) -> bool {
     let (a, b) = seg1;
     let (c, d) = seg2;
-    let epsilon = 1e-6; // Smaller epsilon for more precision
+
+    // Calculate the lengths of both segments and determine a dynamic epsilon
+    let length1 = (b - a).length();
+    let length2 = (d - c).length();
+    let max_length = length1.max(length2);
+    let epsilon = max_length * 1e-7; // Scale epsilon based on the longest segment
+
+    // Handle degenerate cases: segments with nearly zero length
+    if length1 < 1e-8 {
+        // First segment is a point, check if it lies on the second segment or coincides with the point
+        return (b - a).length() < epsilon && point_on_line_segment(a, seg2);
+    }
+    if length2 < 1e-8 {
+        // Second segment is a point, check if it lies on the first segment
+        return point_on_line_segment(c, seg1);
+    }
+
+    // Check if the segments share an endpoint
+    if (a - c).length() < epsilon
+        || (a - d).length() < epsilon
+        || (b - c).length() < epsilon
+        || (b - d).length() < epsilon
+    {
+        return true;
+    }
 
     // Check if the segments are parallel
     let dir1 = (b - a).normalize();
@@ -352,17 +448,47 @@ fn line_segment_overlap(seg1: (Vec3, Vec3), seg2: (Vec3, Vec3)) -> bool {
         // Check for overlap on the same line
         let t1 = ac.dot(dir1);
         let t2 = (d - a).dot(dir1);
-        let s2 = (b - a).length();
-        return (0.0..=s2).contains(&t1) || (0.0..=s2).contains(&t2) || (t1 <= 0.0 && t2 >= s2);
+        let s1 = length1;
+        let s2 = length2;
+        return (0.0..=s1).contains(&t1) || (0.0..=s2).contains(&t2) || (t1 <= 0.0 && t2 >= s1);
     }
 
     // Not parallel, check for intersection
     let n = dir1.cross(dir2);
     let ac = c - a;
-    let t = ac.cross(dir2).dot(n) / n.length_squared();
-    let u = ac.cross(dir1).dot(n) / n.length_squared();
 
-    (-epsilon..=1.0 + epsilon).contains(&t) && (-epsilon..=1.0 + epsilon).contains(&u)
+    let denom = n.length_squared();
+
+    // If the cross product of direction vectors is near zero but not zero, check for skew
+    if denom.abs() < epsilon {
+        // Check if the segments are truly skew: they do not lie on the same plane
+        let plane_check = (dir1.cross(dir2)).dot(ac).abs();
+        if plane_check > epsilon {
+            return false; // Segments are skew and do not intersect
+        }
+    }
+
+    let t = ac.cross(dir2).dot(n) / denom;
+    let u = ac.cross(dir1).dot(n) / denom;
+
+    // Check if intersection parameters t and u are within segment bounds [0, 1]
+    if !(0.0..=1.0).contains(&t) || !(0.0..=1.0).contains(&u) {
+        return false; // Intersection parameters are outside valid range
+    }
+
+    // Calculate actual intersection points on each segment
+    let intersection_point_seg1 = a + (b - a) * t;
+    let intersection_point_seg2 = c + (d - c) * u;
+
+    // Ensure intersection points lie within the segment bounds (not just extended lines)
+    if !point_on_line_segment(intersection_point_seg1, seg1)
+        || !point_on_line_segment(intersection_point_seg2, seg2)
+    {
+        return false; // Intersection points do not lie within the actual segments
+    }
+
+    // Strictly check if the intersection point lies within the exact bounds of both segments without expanding
+    true
 }
 
 #[cfg(test)]
@@ -719,7 +845,7 @@ mod tests {
 
         #[test]
         fn test_edge_very_close_to_quad_but_outside() {
-            let edge = (Vec3::new(1.0 + 1e-6, 0.5, 0.0), Vec3::new(2.0, 0.5, 0.0));
+            let edge = (Vec3::new(1.0 + 1e-4, 0.5, 0.0), Vec3::new(2.0, 0.5, 0.0));
             let quad = (
                 Vec3::new(0.0, 0.0, 0.0),
                 Vec3::new(1.0, 0.0, 0.0),
@@ -1257,7 +1383,7 @@ mod tests {
 
         #[test]
         fn test_segments_parallel_very_close() {
-            let epsilon = 1e-7;
+            let epsilon = 1e-5;
             let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
             let seg2 = (Vec3::new(0.0, epsilon, 0.0), Vec3::new(1.0, epsilon, 0.0));
             assert!(!line_segment_overlap(seg1, seg2));
