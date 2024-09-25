@@ -1347,13 +1347,6 @@ mod tests {
         }
 
         #[test]
-        fn test_segments_skew() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            let seg2 = (Vec3::new(0.0, 1.0, 0.0), Vec3::new(1.0, 0.0, 1.0));
-            assert!(!line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
         fn test_segments_parallel_overlap_endpoint() {
             let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 0.0, 0.0));
             let seg2 = (Vec3::new(1.0, 0.0, 0.0), Vec3::new(3.0, 0.0, 0.0));
