@@ -3,6 +3,7 @@ use std::time::Instant;
 use bevy::color::palettes::basic::SILVER;
 use bevy::color::palettes::css::GRAY;
 use bevy::core_pipeline::bloom::BloomSettings;
+use rayon::prelude::*;
 // use bevy::core_pipeline::experimental::taa::{TemporalAntiAliasBundle, TemporalAntiAliasPlugin};
 use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::core_pipeline::Skybox;
@@ -189,13 +190,22 @@ fn setup(
     println!("Generating meshes...");
 
     let chunks_len = voxelizer.chunks.len();
-    for (i, chunk) in voxelizer.chunks.iter().enumerate() {
-        print!("Generating mesh for chunk {}/{}\r", i + 1, chunks_len);
+    let chunks_meshes: Vec<Option<Mesh>> = voxelizer
+        .chunks
+        .par_iter()
+        .map(|chunk| chunk.generate_mesh())
+        .collect();
 
-        let chunk_position = chunk.get_position();
+    for (i, chunk_mesh) in chunks_meshes.iter().enumerate() {
+        if chunk_mesh.is_none() {
+            continue;
+        }
 
-        let mesh = chunk.generate_mesh();
-        let mesh = meshes.add(mesh);
+        let chunk_mesh = chunk_mesh.as_ref().unwrap();
+
+        let mesh = meshes.add(chunk_mesh.clone());
+
+        let chunk_position = voxelizer.chunks[i].get_position();
 
         let chunk_world_position = Vec3::new(
             chunk_position.x as f32,
