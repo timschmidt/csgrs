@@ -183,6 +183,10 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
+
     /// Sets the value of a voxel at the specified level of detail (LOD) and coordinates.
     ///
     /// # Parameters
