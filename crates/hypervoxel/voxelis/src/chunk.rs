@@ -281,20 +281,26 @@ impl Chunk {
         }
     }
 
-    pub fn generate_mesh(&self) -> Mesh {
+    pub fn generate_mesh(&self) -> Option<Mesh> {
+        if self.is_empty() {
+            return None;
+        }
+
         let mut vertices = Vec::new();
         let mut normals = Vec::new();
         let mut indices = Vec::new();
 
         self.generate_mesh_arrays(&mut vertices, &mut normals, &mut indices);
 
-        Mesh::new(
-            PrimitiveTopology::TriangleList,
-            RenderAssetUsages::RENDER_WORLD,
+        Some(
+            Mesh::new(
+                PrimitiveTopology::TriangleList,
+                RenderAssetUsages::RENDER_WORLD,
+            )
+            .with_inserted_indices(Indices::U32(indices))
+            .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
+            .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals),
         )
-        .with_inserted_indices(Indices::U32(indices))
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
     }
 
     fn add_quad(
