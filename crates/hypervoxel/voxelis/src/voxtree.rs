@@ -127,7 +127,7 @@ pub const fn calculate_total_voxel_count(max_lod_level: usize) -> usize {
 ///
 /// # Fields
 ///
-/// - `data`: A hashmap storing the voxel data. The maximum size of this hashmaap is determined by the `MAX_LOD_LEVEL`.
+/// - `data`: A hashmap storing the voxel data. The maximum size of this hashmap is determined by the `MAX_LOD_LEVEL`.
 ///
 /// # Constants
 ///
