@@ -207,12 +207,6 @@ fn setup(
 
         let chunk_position = voxelizer.chunks[i].get_position();
 
-        let chunk_world_position = Vec3::new(
-            chunk_position.x as f32,
-            chunk_position.y as f32,
-            chunk_position.z as f32,
-        );
-
         let mesh_material = materials.add(StandardMaterial {
             base_color: generate_chunk_color(chunk_position.x, chunk_position.y, chunk_position.z),
             perceptual_roughness: 1.0,
@@ -225,7 +219,7 @@ fn setup(
                 mesh,
                 material: mesh_material.clone(),
                 // transform: Transform::from_xyz(0.0, 0.0, -5.0),
-                transform: Transform::from_translation(chunk_world_position),
+                transform: Transform::from_translation(chunk_position.as_vec3()),
                 ..default()
             })
             .insert(Chunk)
