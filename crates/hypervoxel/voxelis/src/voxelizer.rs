@@ -13,7 +13,7 @@ use crate::Chunk;
 use crate::chunk::INV_VOXEL_SIZE;
 use crate::chunk::VOXELS_PER_AXIS;
 use crate::chunk::VOXEL_SIZE;
-use crate::World;
+use crate::Model;
 
 // Helper function to calculate chunk index from coordinates
 fn calculate_chunk_index_from_coords(x: i32, y: i32, z: i32, chunks_size: IVec3) -> usize {
@@ -50,7 +50,7 @@ fn convert_voxel_world_to_local(current_min_voxel: IVec3) -> IVec3 {
 
 pub struct Voxelizer {
     pub mesh: Obj,
-    pub world: World,
+    pub model: Model,
 }
 
 impl Voxelizer {
@@ -63,22 +63,22 @@ impl Voxelizer {
 
         Self {
             mesh,
-            world: World::with_size(chunks_size),
+            model: Model::with_size(chunks_size),
         }
     }
 
     pub fn clear(&mut self) {
-        self.world.clear();
+        self.model.clear();
     }
 
     pub fn prepare_chunks(&mut self) {
-        println!("Initializing {} chunks", self.world.chunks_len);
+        println!("Initializing {} chunks", self.model.chunks_len);
 
         // Initialize chunks
-        for y in 0..self.world.chunks_size.y {
-            for z in 0..self.world.chunks_size.z {
-                for x in 0..self.world.chunks_size.x {
-                    self.world.chunks.push(Chunk::with_position(x, y, z));
+        for y in 0..self.model.chunks_size.y {
+            for z in 0..self.model.chunks_size.z {
+                for x in 0..self.model.chunks_size.x {
+                    self.model.chunks.push(Chunk::with_position(x, y, z));
                 }
             }
         }
@@ -111,10 +111,10 @@ impl Voxelizer {
                             chunk_x,
                             chunk_y,
                             chunk_z,
-                            self.world.chunks_size,
+                            self.model.chunks_size,
                         );
 
-                        if chunk_index < self.world.chunks_len {
+                        if chunk_index < self.model.chunks_len {
                             chunk_face_map.entry(chunk_index).or_default().push(*face);
                         }
                     }
@@ -131,7 +131,7 @@ impl Voxelizer {
 
         let mesh_min = self.mesh.aabb.0;
 
-        self.world
+        self.model
             .chunks
             .par_iter_mut()
             .enumerate()
@@ -223,14 +223,14 @@ impl Voxelizer {
     }
 
     pub fn update_lods(&mut self) {
-        self.world.update_lods();
+        // self.model.update_lods();
     }
 
     pub fn simple_voxelize(&mut self) {
         self.prepare_chunks();
 
-        let chunks_size = self.world.chunks_size;
-        let chunks_len = self.world.chunks_len;
+        let chunks_size = self.model.chunks_size;
+        let chunks_len = self.model.chunks_len;
 
         let now = Instant::now();
 
@@ -243,7 +243,7 @@ impl Voxelizer {
                 let local_voxel = convert_voxel_world_to_local(voxel);
 
                 let chunk_index = calculate_chunk_index(voxel, chunks_size, chunks_len);
-                let chunk = &mut self.world.chunks[chunk_index];
+                let chunk = &mut self.model.chunks[chunk_index];
 
                 chunk.set_value(
                     local_voxel.x as u8,
@@ -281,7 +281,7 @@ impl Voxelizer {
 
         println!(
             "Voxelize finished, updating LODs for {} chunks",
-            self.world.chunks.len()
+            self.model.chunks.len()
         );
 
         let update_lods_time = Instant::now();
@@ -289,7 +289,7 @@ impl Voxelizer {
         self.update_lods();
 
         let empty_chunks = self
-            .world
+            .model
             .chunks
             .par_iter()
             .filter(|chunk| chunk.is_empty())
@@ -300,7 +300,7 @@ impl Voxelizer {
 
         println!(
             "Done, {} chunks, empty: {}, face-to-chunk: {:?}, voxelized: {:?}, update lods: {:?}, total: {:?}",
-            self.world.chunks.len(),
+            self.model.chunks.len(),
             empty_chunks,
             face_to_chunk_map_time,
             voxelize_time,
