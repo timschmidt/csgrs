@@ -56,18 +56,6 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
         return true;
     }
 
-    // Check if any of the cube's vertices are inside or on the triangle
-    let cube_vertices = [
-        Vec3::new(cube_min.x, cube_min.y, cube_min.z),
-        Vec3::new(cube_max.x, cube_min.y, cube_min.z),
-        Vec3::new(cube_max.x, cube_max.y, cube_min.z),
-        Vec3::new(cube_min.x, cube_max.y, cube_min.z),
-        Vec3::new(cube_min.x, cube_min.y, cube_max.z),
-        Vec3::new(cube_max.x, cube_min.y, cube_max.z),
-        Vec3::new(cube_max.x, cube_max.y, cube_max.z),
-        Vec3::new(cube_min.x, cube_max.y, cube_max.z),
-    ];
-
     for &vertex in &cube_points {
         if point_in_or_on_triangle(vertex, triangle) {
             return true;
@@ -78,40 +66,40 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
     let triangle_edges = [(tv0, tv1), (tv1, tv2), (tv2, tv0)];
     let cube_faces = [
         (
-            cube_vertices[0],
-            cube_vertices[1],
-            cube_vertices[2],
-            cube_vertices[3],
+            cube_points[0],
+            cube_points[1],
+            cube_points[2],
+            cube_points[3],
         ), // Front
         (
-            cube_vertices[4],
-            cube_vertices[5],
-            cube_vertices[6],
-            cube_vertices[7],
+            cube_points[4],
+            cube_points[5],
+            cube_points[6],
+            cube_points[7],
         ), // Back
         (
-            cube_vertices[0],
-            cube_vertices[1],
-            cube_vertices[5],
-            cube_vertices[4],
+            cube_points[0],
+            cube_points[1],
+            cube_points[5],
+            cube_points[4],
         ), // Bottom
         (
-            cube_vertices[2],
-            cube_vertices[3],
-            cube_vertices[7],
-            cube_vertices[6],
+            cube_points[2],
+            cube_points[3],
+            cube_points[7],
+            cube_points[6],
         ), // Top
         (
-            cube_vertices[0],
-            cube_vertices[3],
-            cube_vertices[7],
-            cube_vertices[4],
+            cube_points[0],
+            cube_points[3],
+            cube_points[7],
+            cube_points[4],
         ), // Left
         (
-            cube_vertices[1],
-            cube_vertices[2],
-            cube_vertices[6],
-            cube_vertices[5],
+            cube_points[1],
+            cube_points[2],
+            cube_points[6],
+            cube_points[5],
         ), // Right
     ];
 
@@ -462,7 +450,7 @@ pub(crate) fn line_segment_overlap(seg1: (Vec3, Vec3), seg2: (Vec3, Vec3)) -> bo
     // If the cross product of direction vectors is near zero but not zero, check for skew
     if denom.abs() < epsilon {
         // Check if the segments are truly skew: they do not lie on the same plane
-        let plane_check = (dir1.cross(dir2)).dot(ac).abs();
+        let plane_check = dir1.cross(dir2).dot(ac).abs();
         if plane_check > epsilon {
             return false; // Segments are skew and do not intersect
         }
