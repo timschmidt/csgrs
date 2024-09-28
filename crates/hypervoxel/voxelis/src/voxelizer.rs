@@ -1,7 +1,6 @@
 use std::time::Instant;
 
 use bevy::math::IVec3;
-use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 use crate::math::triangle_cube_intersection;
@@ -13,6 +12,7 @@ use crate::Chunk;
 use crate::chunk::INV_VOXEL_SIZE;
 use crate::chunk::VOXELS_PER_AXIS;
 use crate::chunk::VOXEL_SIZE;
+use crate::World;
 
 // Helper function to calculate chunk index from coordinates
 fn calculate_chunk_index_from_coords(x: i32, y: i32, z: i32, chunks_size: IVec3) -> usize {
@@ -49,9 +49,7 @@ fn convert_voxel_world_to_local(current_min_voxel: IVec3) -> IVec3 {
 
 pub struct Voxelizer {
     pub mesh: Obj,
-    pub chunks_size: IVec3,
-    pub chunks_len: usize,
-    pub chunks: Vec<Chunk>,
+    pub world: World,
 }
 
 impl Voxelizer {
@@ -64,30 +62,22 @@ impl Voxelizer {
 
         Self {
             mesh,
-            chunks_size,
-            chunks_len: 0,
-            chunks: Vec::new(),
+            world: World::with_size(chunks_size),
         }
     }
 
     pub fn clear(&mut self) {
-        for chunk in self.chunks.iter_mut() {
-            chunk.clear();
-        }
+        self.world.clear();
     }
 
     pub fn prepare_chunks(&mut self) {
-        self.chunks_len =
-            self.chunks_size.x as usize * self.chunks_size.y as usize * self.chunks_size.z as usize;
-        self.chunks = Vec::with_capacity(self.chunks_len);
-
-        println!("Initializing {} chunks", self.chunks_len);
+        println!("Initializing {} chunks", self.world.chunks_len);
 
         // Initialize chunks
-        for y in 0..self.chunks_size.y {
-            for z in 0..self.chunks_size.z {
-                for x in 0..self.chunks_size.x {
-                    self.chunks.push(Chunk::with_position(x, y, z));
+        for y in 0..self.world.chunks_size.y {
+            for z in 0..self.world.chunks_size.z {
+                for x in 0..self.world.chunks_size.x {
+                    self.world.chunks.push(Chunk::with_position(x, y, z));
                 }
             }
         }
@@ -120,10 +110,10 @@ impl Voxelizer {
                             chunk_x,
                             chunk_y,
                             chunk_z,
-                            self.chunks_size,
+                            self.world.chunks_size,
                         );
 
-                        if chunk_index < self.chunks_len {
+                        if chunk_index < self.world.chunks_len {
                             chunk_face_map.entry(chunk_index).or_default().push(*face);
                         }
                     }
@@ -140,7 +130,8 @@ impl Voxelizer {
 
         let mesh_min = self.mesh.aabb.0;
 
-        self.chunks
+        self.world
+            .chunks
             .par_iter_mut()
             .enumerate()
             .for_each(|(chunk_index, chunk)| {
@@ -231,27 +222,14 @@ impl Voxelizer {
     }
 
     pub fn update_lods(&mut self) {
-        // Update LODs in parallel
-        self.chunks.par_iter_mut().for_each(|chunk| {
-            if !chunk.is_empty() {
-                chunk.update_lods();
-            }
-        });
+        self.world.update_lods();
     }
 
     pub fn simple_voxelize(&mut self) {
-        let chunks_len =
-            self.chunks_size.x as usize * self.chunks_size.y as usize * self.chunks_size.z as usize;
-        let chunks_size = self.chunks_size;
-        self.chunks = Vec::with_capacity(chunks_len);
+        self.prepare_chunks();
 
-        for y in 0..self.chunks_size.y {
-            for z in 0..self.chunks_size.z {
-                for x in 0..self.chunks_size.x {
-                    self.chunks.push(Chunk::with_position(x, y, z));
-                }
-            }
-        }
+        let chunks_size = self.world.chunks_size;
+        let chunks_len = self.world.chunks_len;
 
         let now = Instant::now();
 
@@ -264,7 +242,7 @@ impl Voxelizer {
                 let local_voxel = convert_voxel_world_to_local(voxel);
 
                 let chunk_index = calculate_chunk_index(voxel, chunks_size, chunks_len);
-                let chunk = &mut self.chunks[chunk_index];
+                let chunk = &mut self.world.chunks[chunk_index];
 
                 chunk.set_value(
                     local_voxel.x as u8,
@@ -275,12 +253,7 @@ impl Voxelizer {
             }
         }
 
-        // Update LODs in parallel
-        self.chunks.par_iter_mut().for_each(|chunk| {
-            if !chunk.is_empty() {
-                chunk.update_lods();
-            }
-        });
+        self.update_lods();
 
         println!("Simple voxelize took: {:?}", now.elapsed());
     }
@@ -307,7 +280,7 @@ impl Voxelizer {
 
         println!(
             "Voxelize finished, updating LODs for {} chunks",
-            self.chunks.len()
+            self.world.chunks.len()
         );
 
         let update_lods_time = Instant::now();
@@ -315,6 +288,7 @@ impl Voxelizer {
         self.update_lods();
 
         let empty_chunks = self
+            .world
             .chunks
             .par_iter()
             .filter(|chunk| chunk.is_empty())
@@ -325,7 +299,7 @@ impl Voxelizer {
 
         println!(
             "Done, {} chunks, empty: {}, face-to-chunk: {:?}, voxelized: {:?}, update lods: {:?}, total: {:?}",
-            self.chunks.len(),
+            self.world.chunks.len(),
             empty_chunks,
             face_to_chunk_map_time,
             voxelize_time,
