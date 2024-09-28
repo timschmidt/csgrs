@@ -17,6 +17,7 @@ log = { version = "*", features = [
 ] }
 rayon = "1.10.0"
 rustc-hash = "2.0.0"
+zstd = "0.13.2"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
