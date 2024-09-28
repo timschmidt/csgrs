@@ -69,7 +69,7 @@ pub fn export_model_to_obj(name: String, path: PathBuf, model: &Model) {
     }
 }
 
-pub fn export_model_to_vtm(path: PathBuf, model: &Model) {
+pub fn export_model_to_vtm(name: String, path: PathBuf, model: &Model) {
     let mut data: Vec<u8> = Vec::new();
 
     model.run_length_encode(&mut data);
@@ -89,6 +89,9 @@ pub fn export_model_to_vtm(path: PathBuf, model: &Model) {
     writer.write_u16::<LittleEndian>(size.x as u16).unwrap();
     writer.write_u16::<LittleEndian>(size.y as u16).unwrap();
     writer.write_u16::<LittleEndian>(size.z as u16).unwrap();
+
+    writer.write_u8(name.len() as u8).unwrap();
+    writer.write_all(name.as_bytes()).unwrap();
 
     writer.write_all(&compressed_data).unwrap();
 }
