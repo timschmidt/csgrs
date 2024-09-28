@@ -178,7 +178,7 @@ impl Voxelizer {
 
         println!("Voxelizing");
 
-        let epsilon = VOXEL_SIZE * 0.001;
+        let epsilon = VOXEL_SIZE * 1e-7;
         let splat = Vec3::splat(epsilon);
 
         let now = Instant::now();
