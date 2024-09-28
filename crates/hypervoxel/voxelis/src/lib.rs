@@ -1,4 +1,5 @@
 pub mod chunk;
+pub mod export;
 pub(crate) mod math;
 pub mod obj_reader;
 pub mod voxelizer;
