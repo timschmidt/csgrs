@@ -66,6 +66,11 @@ impl Voxelizer {
             chunks: Vec::new(),
         }
     }
+    pub fn clear(&mut self) {
+        for chunk in self.chunks.iter_mut() {
+            chunk.clear();
+        }
+    }
 
     pub fn simple_voxelize(&mut self) {
         let chunks_len =

@@ -53,6 +53,10 @@ impl Chunk {
         self.data.is_empty()
     }
 
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
+
     pub fn set_position(&mut self, x: i32, y: i32, z: i32) {
         self.position = IVec3::new(x, y, z);
     }
