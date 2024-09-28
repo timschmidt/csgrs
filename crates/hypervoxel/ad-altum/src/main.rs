@@ -279,7 +279,7 @@ fn main() {
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02_huge.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02_human_reference.obj");
-    let obj = obj_reader::Obj::parse("ad-altum/assets/statue_03.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_03.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_04.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_05.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_06.obj");
@@ -291,7 +291,7 @@ fn main() {
     // let obj = obj_reader::Obj::parse("ad-altum/assets/torus.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/torus_knot.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/wall.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_arc.obj");
+    let obj = obj_reader::Obj::parse("ad-altum/assets/wall_arc.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_dome.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_floor.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/worm_gear.obj");
