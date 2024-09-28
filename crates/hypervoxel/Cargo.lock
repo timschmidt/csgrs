@@ -4225,6 +4225,7 @@ dependencies = [
  "bevy",
  "bevy_egui",
  "bevy_panorbit_camera",
+ "byteorder",
  "criterion",
  "egui_extras",
  "log",

@@ -9,6 +9,7 @@ license = "MIT OR Apache-2.0"
 bevy_egui.workspace = true
 bevy_panorbit_camera.workspace = true
 bevy.workspace = true
+byteorder.workspace = true
 egui_extras.workspace = true
 log.workspace = true
 rayon.workspace = true
