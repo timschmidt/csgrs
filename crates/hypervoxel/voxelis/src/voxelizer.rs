@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 use std::time::Instant;
 
-use bevy::math::{IVec3, Vec3};
+use bevy::math::IVec3;
 use rayon::prelude::*;
 
 use crate::math::triangle_cube_intersection;
+use crate::math::Freal;
+use crate::math::Vec3;
 use crate::obj_reader::Obj;
 use crate::Chunk;
 
@@ -180,6 +182,13 @@ impl Voxelizer {
             .par_iter_mut()
             .enumerate()
             .for_each(|(loop_chunk_index, loop_chunk)| {
+                let chunk_position = loop_chunk.get_position();
+                let chunk_world_position = IVec3::new(
+                    chunk_position.x * VOXELS_PER_AXIS as i32,
+                    chunk_position.y * VOXELS_PER_AXIS as i32,
+                    chunk_position.z * VOXELS_PER_AXIS as i32,
+                );
+
                 if let Some(faces) = chunk_face_map.get(&loop_chunk_index) {
                     for face in faces.iter() {
                         let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
@@ -252,15 +261,14 @@ impl Voxelizer {
                                 for z in min_voxel.z..=max_voxel.z {
                                     for x in min_voxel.x..=max_voxel.x {
                                         let world_voxel_position = Vec3::new(
-                                            chunk_position.x as f32 + (x as f32 * VOXEL_SIZE),
-                                            chunk_position.y as f32 + (y as f32 * VOXEL_SIZE),
-                                            chunk_position.z as f32 + (z as f32 * VOXEL_SIZE),
+                                            (chunk_world_position.x + x) as Freal * VOXEL_SIZE,
+                                            (chunk_world_position.y + y) as Freal * VOXEL_SIZE,
+                                            (chunk_world_position.z + z) as Freal * VOXEL_SIZE,
                                         );
 
                                         let world_min_position = world_voxel_position - splat;
-                                        let world_max_position = world_voxel_position
-                                            + Vec3::new(VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
-                                            + splat;
+                                        let world_max_position =
+                                            world_voxel_position + Vec3::splat(VOXEL_SIZE) + splat;
 
                                         let intersects = triangle_cube_intersection(
                                             (v1, v2, v3),

@@ -1,4 +1,5 @@
-use bevy::math::Vec3;
+pub type Vec3 = bevy::math::DVec3;
+pub type Freal = f64;
 
 pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Vec3, Vec3)) -> bool {
     let (tv0, tv1, tv2) = triangle;
@@ -190,7 +191,7 @@ pub(crate) fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3
         (q4 - q3).length(),
         (q1 - q4).length(),
     ];
-    let avg_length = (edge_length + quad_edge_lengths.iter().sum::<f32>()) / 5.0;
+    let avg_length = (edge_length + quad_edge_lengths.iter().sum::<Freal>()) / 5.0;
     let epsilon = avg_length * 1e-5; // Scale epsilon based on average edge length
 
     // Handle degenerate cases where the quad collapses into a line or point

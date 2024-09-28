@@ -3,7 +3,10 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-use bevy::math::{IVec3, Vec3};
+use bevy::math::IVec3;
+
+use crate::math::Freal;
+use crate::math::Vec3;
 
 pub struct Obj {
     pub vertices: Vec<Vec3>,
@@ -22,22 +25,22 @@ impl Obj {
         let mut vertices = Vec::new();
         let mut faces = Vec::new();
 
-        let mut min_x = f32::MAX;
-        let mut min_y = f32::MAX;
-        let mut min_z = f32::MAX;
+        let mut min_x = Freal::MAX;
+        let mut min_y = Freal::MAX;
+        let mut min_z = Freal::MAX;
 
-        let mut max_x = f32::MIN;
-        let mut max_y = f32::MIN;
-        let mut max_z = f32::MIN;
+        let mut max_x = Freal::MIN;
+        let mut max_y = Freal::MIN;
+        let mut max_z = Freal::MIN;
 
         for line in reader.lines() {
             let line = line.unwrap();
             let tokens: Vec<&str> = line.split_whitespace().collect();
             match tokens[0] {
                 "v" => {
-                    let x: f32 = tokens[1].parse().unwrap();
-                    let y: f32 = tokens[2].parse().unwrap();
-                    let z: f32 = tokens[3].parse().unwrap();
+                    let x: Freal = tokens[1].parse().unwrap();
+                    let y: Freal = tokens[2].parse().unwrap();
+                    let z: Freal = tokens[3].parse().unwrap();
 
                     let vertex = Vec3::new(x, y, z);
 

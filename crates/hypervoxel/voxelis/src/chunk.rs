@@ -1,31 +1,32 @@
+use crate::math::Freal;
 use crate::voxtree::calculate_voxels_per_axis;
 use crate::voxtree::VoxTree;
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
 
-const CUBE_VERTS: [Vec3; 8] = [
-    Vec3::new(-1.0, 1.0, -1.0),
-    Vec3::new(1.0, 1.0, -1.0),
-    Vec3::new(1.0, 1.0, 1.0),
-    Vec3::new(-1.0, 1.0, 1.0),
-    Vec3::new(-1.0, -1.0, -1.0),
-    Vec3::new(1.0, -1.0, -1.0),
-    Vec3::new(1.0, -1.0, 1.0),
-    Vec3::new(-1.0, -1.0, 1.0),
+const CUBE_VERTS: [bevy::math::Vec3; 8] = [
+    bevy::math::Vec3::new(-1.0, 1.0, -1.0),
+    bevy::math::Vec3::new(1.0, 1.0, -1.0),
+    bevy::math::Vec3::new(1.0, 1.0, 1.0),
+    bevy::math::Vec3::new(-1.0, 1.0, 1.0),
+    bevy::math::Vec3::new(-1.0, -1.0, -1.0),
+    bevy::math::Vec3::new(1.0, -1.0, -1.0),
+    bevy::math::Vec3::new(1.0, -1.0, 1.0),
+    bevy::math::Vec3::new(-1.0, -1.0, 1.0),
 ];
 
-const VECTOR_UP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
-const VECTOR_RIGHT: Vec3 = Vec3::new(1.0, 0.0, 0.0);
-const VECTOR_DOWN: Vec3 = Vec3::new(0.0, -1.0, 0.0);
-const VECTOR_LEFT: Vec3 = Vec3::new(-1.0, 0.0, 0.0);
-const VECTOR_FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
-const VECTOR_BACK: Vec3 = Vec3::new(0.0, 0.0, 1.0);
+const VECTOR_UP: Vec3 = bevy::math::Vec3::new(0.0, 1.0, 0.0);
+const VECTOR_RIGHT: Vec3 = bevy::math::Vec3::new(1.0, 0.0, 0.0);
+const VECTOR_DOWN: Vec3 = bevy::math::Vec3::new(0.0, -1.0, 0.0);
+const VECTOR_LEFT: Vec3 = bevy::math::Vec3::new(-1.0, 0.0, 0.0);
+const VECTOR_FORWARD: Vec3 = bevy::math::Vec3::new(0.0, 0.0, -1.0);
+const VECTOR_BACK: Vec3 = bevy::math::Vec3::new(0.0, 0.0, 1.0);
 
 pub const MAX_LOD_LEVEL: usize = 7;
 pub const VOXELS_PER_AXIS: u8 = calculate_voxels_per_axis(MAX_LOD_LEVEL) as u8;
 pub const VOXELS_PER_AXIS_MINUS_ONE: u8 = VOXELS_PER_AXIS - 1;
-pub const VOXEL_SIZE: f32 = 1.0 / VOXELS_PER_AXIS as f32;
+pub const VOXEL_SIZE: Freal = 1.0 / VOXELS_PER_AXIS as Freal;
 
 #[derive(Default)]
 pub struct Chunk {
@@ -130,12 +131,12 @@ impl Chunk {
 
     pub fn generate_mesh_arrays(
         &self,
-        vertices: &mut Vec<Vec3>,
-        normals: &mut Vec<Vec3>,
+        vertices: &mut Vec<bevy::math::Vec3>,
+        normals: &mut Vec<bevy::math::Vec3>,
         indices: &mut Vec<u32>,
     ) {
         let voxels_per_axis = VOXELS_PER_AXIS as f32;
-        let tile_size = Vec3::new(1.0, 1.0, 1.0) / voxels_per_axis;
+        let tile_size = bevy::math::Vec3::new(1.0, 1.0, 1.0) / voxels_per_axis;
         let tile_half_size = tile_size / 2.0;
 
         let chunk_v0 = CUBE_VERTS[0] * tile_half_size + tile_half_size;
@@ -162,7 +163,7 @@ impl Chunk {
                         continue;
                     }
 
-                    let position = Vec3::new(
+                    let position = bevy::math::Vec3::new(
                         x as f32 * tile_size.x,
                         y as f32 * tile_size.y,
                         z as f32 * tile_size.z,
@@ -308,14 +309,14 @@ impl Chunk {
     }
 
     fn add_quad(
-        vertices: &mut Vec<Vec3>,
+        vertices: &mut Vec<bevy::math::Vec3>,
         indices: &mut Vec<u32>,
-        normals: &mut Vec<Vec3>,
-        v0: &Vec3,
-        v1: &Vec3,
-        v2: &Vec3,
-        v3: &Vec3,
-        normal: &Vec3,
+        normals: &mut Vec<bevy::math::Vec3>,
+        v0: &bevy::math::Vec3,
+        v1: &bevy::math::Vec3,
+        v2: &bevy::math::Vec3,
+        v3: &bevy::math::Vec3,
+        normal: &bevy::math::Vec3,
     ) {
         let index = vertices.len() as u32;
 
