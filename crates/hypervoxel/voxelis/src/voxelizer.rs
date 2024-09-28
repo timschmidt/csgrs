@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 use bevy::math::IVec3;
+use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 use crate::math::triangle_cube_intersection;
