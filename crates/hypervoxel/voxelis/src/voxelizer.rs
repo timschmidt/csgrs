@@ -114,10 +114,14 @@ impl Voxelizer {
     }
 
     pub fn voxelize(&mut self) {
+        println!("Voxelize started");
+
         let chunks_len =
             self.chunks_size.x as usize * self.chunks_size.y as usize * self.chunks_size.z as usize;
         let chunks_size = self.chunks_size;
         self.chunks = Vec::with_capacity(chunks_len);
+
+        println!("Initializing {} chunks", chunks_len);
 
         // Initialize chunks
         for y in 0..self.chunks_size.y {
@@ -129,8 +133,6 @@ impl Voxelizer {
         }
 
         let mesh_min = self.mesh.aabb.0;
-
-        println!("Voxelize started");
 
         let face_to_chunk_map_now = Instant::now();
 
