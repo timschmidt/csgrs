@@ -103,9 +103,12 @@ impl Voxelizer {
             }
         }
 
-        for chunk in self.chunks.iter_mut() {
-            chunk.update_lods();
-        }
+        // Update LODs in parallel
+        self.chunks.par_iter_mut().for_each(|chunk| {
+            if !chunk.is_empty() {
+                chunk.update_lods();
+            }
+        });
 
         println!("Simple voxelize took: {:?}", now.elapsed());
     }
@@ -294,17 +297,26 @@ impl Voxelizer {
 
         let update_lods_now = Instant::now();
 
+        let empty_chunks = self
+            .chunks
+            .par_iter()
+            .filter(|chunk| chunk.is_empty())
+            .count();
+
         // Update LODs in parallel
         self.chunks.par_iter_mut().for_each(|chunk| {
-            chunk.update_lods();
+            if !chunk.is_empty() {
+                chunk.update_lods();
+            }
         });
 
         let update_lods_time = update_lods_now.elapsed();
         let total = face_to_chunk_map_time + voxelize_time + update_lods_time;
 
         println!(
-            "Done, {} chunks, face-to-chunk: {:?}, voxelized: {:?}, update lods: {:?}, total: {:?}",
+            "Done, {} chunks, empty: {}, face-to-chunk: {:?}, voxelized: {:?}, update lods: {:?}, total: {:?}",
             self.chunks.len(),
+            empty_chunks,
             face_to_chunk_map_time,
             voxelize_time,
             update_lods_time,
