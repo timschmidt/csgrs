@@ -1,6 +1,8 @@
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
+use crate::voxtree_iterator::VoxTreeIterator;
+
 /// Calculates the total number of voxels along one axis at a given level of detail (LOD).
 ///
 /// # Parameters
@@ -462,6 +464,10 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
             Self::get_index_of(child_lod, x, y + 1, z + 1),
             Self::get_index_of(child_lod, x + 1, y + 1, z + 1),
         ]
+    }
+
+    pub fn iter(&self) -> VoxTreeIterator<MAX_LOD_LEVEL> {
+        VoxTreeIterator::new(&self.data)
     }
 }
 

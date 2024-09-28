@@ -4,6 +4,7 @@ pub(crate) mod math;
 pub mod obj_reader;
 pub mod voxelizer;
 pub mod voxtree;
+pub mod voxtree_iterator;
 pub mod world;
 
 pub use chunk::Chunk;
