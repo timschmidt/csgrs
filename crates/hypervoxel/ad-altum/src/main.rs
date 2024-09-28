@@ -316,12 +316,10 @@ fn main() {
 
     let base_export_path = Path::new("ad-altum/assets/export/");
 
-    export_model_to_obj(
-        path.file_name().unwrap().to_str().unwrap().to_string(),
-        base_export_path.join(path).as_path(),
-        &voxelizer.model,
-    );
-    export_model_to_vtm(base_export_path.join("vox.vtm").as_path(), &voxelizer.model);
+    let name = path.file_name().unwrap().to_str().unwrap().to_string();
+
+    export_model_to_obj(name, base_export_path.join(path), &voxelizer.model);
+    export_model_to_vtm(base_export_path.join("vox.vtm"), &voxelizer.model);
 
     // voxelizer.simple_voxelize();
 

@@ -1,5 +1,8 @@
 use byteorder::{LittleEndian, WriteBytesExt};
-use std::{io::Write, path::Path};
+use std::{
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use crate::{chunk::MAX_LOD_LEVEL, Model};
 
@@ -20,7 +23,7 @@ pub fn encode_varint(mut value: usize) -> Vec<u8> {
     bytes
 }
 
-pub fn export_model_to_obj(name: String, path: &Path, model: &Model) {
+pub fn export_model_to_obj(name: String, path: PathBuf, model: &Model) {
     let mut vertices: Vec<bevy::math::Vec3> = Vec::new();
     let mut normals: Vec<bevy::math::Vec3> = Vec::new();
     let mut indices: Vec<u32> = Vec::new();
@@ -66,7 +69,7 @@ pub fn export_model_to_obj(name: String, path: &Path, model: &Model) {
     }
 }
 
-pub fn export_model_to_vtm(path: &Path, model: &Model) {
+pub fn export_model_to_vtm(path: PathBuf, model: &Model) {
     let mut data: Vec<u8> = Vec::new();
 
     model.run_length_encode(&mut data);
