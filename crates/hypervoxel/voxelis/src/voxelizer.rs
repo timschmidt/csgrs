@@ -195,6 +195,10 @@ impl Voxelizer {
                 );
 
                 if let Some(faces) = chunk_face_map.get(&loop_chunk_index) {
+                    if faces.is_empty() {
+                        return;
+                    }
+
                     for face in faces.iter() {
                         let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
                         let v2 = self.mesh.vertices[(face.y - 1) as usize] - mesh_min;
@@ -231,11 +235,16 @@ impl Voxelizer {
                                     if chunk_index != current_chunk_index
                                         && current_min_voxel != IVec3::MAX
                                     {
-                                        affected_voxels.push((
-                                            current_chunk_index,
-                                            Self::convert_voxel_world_to_local(current_min_voxel),
-                                            Self::convert_voxel_world_to_local(current_max_voxel),
-                                        ));
+                                        if current_chunk_index == loop_chunk_index {
+                                            affected_voxels.push((
+                                                Self::convert_voxel_world_to_local(
+                                                    current_min_voxel,
+                                                ),
+                                                Self::convert_voxel_world_to_local(
+                                                    current_max_voxel,
+                                                ),
+                                            ));
+                                        }
 
                                         current_min_voxel = IVec3::MAX;
                                         current_max_voxel = IVec3::MIN;
@@ -248,20 +257,16 @@ impl Voxelizer {
                             }
                         }
 
-                        if current_min_voxel != IVec3::MAX {
+                        if current_min_voxel != IVec3::MAX
+                            && current_chunk_index == loop_chunk_index
+                        {
                             affected_voxels.push((
-                                current_chunk_index,
                                 Self::convert_voxel_world_to_local(current_min_voxel),
                                 Self::convert_voxel_world_to_local(current_max_voxel),
                             ));
                         }
 
-                        let chunk_position = loop_chunk.get_position();
-                        for (chunk_index, min_voxel, max_voxel) in affected_voxels.iter() {
-                            if *chunk_index != loop_chunk_index {
-                                continue;
-                            }
-
+                        for (min_voxel, max_voxel) in affected_voxels.iter() {
                             for y in min_voxel.y..=max_voxel.y {
                                 for z in min_voxel.z..=max_voxel.z {
                                     for x in min_voxel.x..=max_voxel.x {
