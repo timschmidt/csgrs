@@ -234,6 +234,10 @@ impl Voxelizer {
                                         chunks_len,
                                     );
 
+                                    if chunk_index != loop_chunk_index {
+                                        continue;
+                                    }
+
                                     if chunk_index != current_chunk_index
                                         && current_min_voxel != IVec3::MAX
                                     {
