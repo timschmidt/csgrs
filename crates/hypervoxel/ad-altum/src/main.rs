@@ -14,7 +14,7 @@ use bevy::pbr::{
     VolumetricFogSettings,
 };
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, window::PresentMode};
-use bevy_egui::{egui, EguiContexts, EguiPlugin};
+use bevy_egui::EguiPlugin;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
@@ -174,14 +174,6 @@ fn setup(
         // base_color: Color::WHITE,
         perceptual_roughness: 0.7,
         reflectance: 0.4,
-        ..default()
-    });
-
-    let mesh_material = materials.add(StandardMaterial {
-        base_color: Color::from(SILVER),
-        // base_color: Color::WHITE,
-        perceptual_roughness: 1.0,
-        reflectance: 0.0,
         ..default()
     });
 
