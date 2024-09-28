@@ -116,6 +116,18 @@ pub const fn calculate_total_voxel_count(max_lod_level: usize) -> usize {
     ((1 << (3 * (max_lod_level + 1))) - 1) / 7
 }
 
+pub const fn calculate_lod_data_index(lod_level: usize, max_lod_level: usize) -> usize {
+    // Map the external LOD (where lod = 0 is highest detail) to internal LOD (for calculations)
+    let internal_lod = max_lod_level - lod_level;
+
+    // Calculate the index at which data starts for given LOD level
+    if internal_lod == 0 {
+        0
+    } else {
+        calculate_total_voxel_count(internal_lod - 1)
+    }
+}
+
 /// A Sparse-Voxel-Octree (SVO) structure representing a voxel tree that stores voxel data for multiple levels of detail (LODs).
 ///
 /// The [VoxTree] struct is parameterized by a constant `MAX_LOD_LEVEL`, which determines the maximum level of detail
