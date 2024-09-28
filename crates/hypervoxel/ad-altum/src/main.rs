@@ -20,7 +20,7 @@ use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
-use voxelis::export::export_obj;
+use voxelis::export::{export_model_to_obj, export_model_to_vtm};
 use voxelis::obj_reader;
 use voxelis::voxelizer::Voxelizer;
 
@@ -316,11 +316,12 @@ fn main() {
 
     let base_export_path = Path::new("ad-altum/assets/export/");
 
-    export_obj(
+    export_model_to_obj(
         path.file_name().unwrap().to_str().unwrap().to_string(),
         base_export_path.join(path).as_path(),
-        &voxelizer.world,
+        &voxelizer.model,
     );
+    export_model_to_vtm(base_export_path.join("vox.vtm").as_path(), &voxelizer.model);
 
     // voxelizer.simple_voxelize();
 

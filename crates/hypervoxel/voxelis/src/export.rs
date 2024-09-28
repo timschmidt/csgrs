@@ -1,6 +1,9 @@
+use byteorder::{LittleEndian, WriteBytesExt};
 use std::{io::Write, path::Path};
 
-use crate::Model;
+use crate::{chunk::MAX_LOD_LEVEL, Model};
+
+const VTM_VERSION: u16 = 1;
 
 pub fn encode_varint(mut value: usize) -> Vec<u8> {
     let mut bytes = Vec::new();
@@ -61,4 +64,28 @@ pub fn export_model_to_obj(name: String, path: &Path, model: &Model) {
             ))
             .unwrap();
     }
+}
+
+pub fn export_model_to_vtm(path: &Path, model: &Model) {
+    let mut data: Vec<u8> = Vec::new();
+
+    model.run_length_encode(&mut data);
+
+    let mut encoder = zstd::stream::Encoder::new(Vec::new(), 7).unwrap();
+    std::io::copy(&mut data.as_slice(), &mut encoder).unwrap();
+    let compressed_data = encoder.finish().unwrap();
+
+    let mut vox_file = std::fs::File::create(path).unwrap();
+    let mut writer = std::io::BufWriter::new(&mut vox_file);
+
+    writer.write_all("VoxTreeModel".as_bytes()).unwrap();
+    writer.write_u16::<LittleEndian>(VTM_VERSION).unwrap();
+    writer.write_u8(MAX_LOD_LEVEL as u8).unwrap();
+
+    let size = model.chunks_size;
+    writer.write_u16::<LittleEndian>(size.x as u16).unwrap();
+    writer.write_u16::<LittleEndian>(size.y as u16).unwrap();
+    writer.write_u16::<LittleEndian>(size.z as u16).unwrap();
+
+    writer.write_all(&compressed_data).unwrap();
 }
