@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::time::Instant;
 
 use bevy::color::palettes::basic::SILVER;
@@ -256,55 +257,62 @@ fn toggle_wireframe(
 }
 
 fn main() {
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/procedural_brick_wall.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/barn_0.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/column.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/cylinder.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/default_cube.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/fence_0.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/gear.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/icosphere.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/polonez.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/rhino.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/sphere.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_01.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02_huge.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_02_human_reference.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_03.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_04.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_05.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_06.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_07.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_08.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_09.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/statue_10.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/suzanne.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/torus.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/torus_knot.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall.obj");
-    let obj = obj_reader::Obj::parse("ad-altum/assets/wall_arc.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_dome.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_floor.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/worm_gear.obj");
+    let base_path = Path::new("ad-altum/assets/");
 
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/bedroom.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/buddha.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/sponza.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/dragon_small.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/dragon.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/chestnut_01.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/chestnut.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/powerplant.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/thors_hammer.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/walls.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/some_shield.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/medium_scout.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/large_scout.obj");
-    // let obj = obj_reader::Obj::parse("ad-altum/assets/ships.obj");
+    // let path = Path::new("procedural_brick_wall.obj");
+    // let path = Path::new("barn_0.obj");
+    // let path = Path::new("column.obj");
+    // let path = Path::new("cylinder.obj");
+    // let path = Path::new("default_cube.obj");
+    // let path = Path::new("fence_0.obj");
+    // let path = Path::new("gear.obj");
+    // let path = Path::new("icosphere.obj");
+    // let path = Path::new("polonez.obj");
+    // let path = Path::new("rhino.obj");
+    // let path = Path::new("sphere.obj");
+    // let path = Path::new("statue_01.obj");
+    // let path = Path::new("statue_02.obj");
+    // let path = Path::new("statue_02_huge.obj");
+    // let path = Path::new("statue_02_human_reference.obj");
+    // let path = Path::new("statue_03.obj");
+    // let path = Path::new("statue_04.obj");
+    // let path = Path::new("statue_05.obj");
+    // let path = Path::new("statue_06.obj");
+    // let path = Path::new("statue_07.obj");
+    // let path = Path::new("statue_08.obj");
+    // let path = Path::new("statue_09.obj");
+    // let path = Path::new("statue_10.obj");
+    // let path = Path::new("suzanne.obj");
+    // let path = Path::new("torus.obj");
+    // let path = Path::new("torus_knot.obj");
+    // let path = Path::new("wall.obj");
+    // let path = Path::new("wall_arc.obj");
+    // let path = Path::new("wall_dome.obj");
+    // let path = Path::new("wall_floor.obj");
+    // let path = Path::new("worm_gear.obj");
+
+    let path = Path::new("bedroom.obj");
+    // let  path = Path::new("buddha.obj");
+    // let  path = Path::new("sponza.obj");
+    // let  path = Path::new("dragon_small.obj");
+    // let  path = Path::new("dragon.obj");
+    // let  path = Path::new("chestnut_01.obj");
+    // let  path = Path::new("chestnut.obj");
+    // let  path = Path::new("powerplant.obj");
+    // let  path = Path::new("thors_hammer.obj");
+    // let  path = Path::new("walls.obj");
+    // let  path = Path::new("some_shield.obj");
+    // let  path = Path::new("medium_scout.obj");
+    // let  path = Path::new("large_scout.obj");
+    // let  path = Path::new("ships.obj");
+
+    let import_path = base_path.join(path);
+
+    let obj = obj_reader::Obj::parse(import_path.to_str().unwrap());
 
     let mut voxelizer = Voxelizer::new(obj);
     voxelizer.voxelize();
+
     // voxelizer.simple_voxelize();
 
     App::new()
