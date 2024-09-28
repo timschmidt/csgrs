@@ -51,4 +51,10 @@ impl World {
             }
         });
     }
+
+    pub fn run_length_encode(&self, data: &mut Vec<u8>) {
+        for chunk in self.chunks.iter() {
+            chunk.run_length_encode(data);
+        }
+    }
 }

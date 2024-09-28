@@ -2,6 +2,21 @@ use std::{io::Write, path::Path};
 
 use crate::Model;
 
+pub fn encode_varint(mut value: usize) -> Vec<u8> {
+    let mut bytes = Vec::new();
+
+    while value >= 0x80 {
+        // Set the MSB to indicate more bytes follow
+        bytes.push((value as u8 & 0x7F) | 0x80);
+        value >>= 7;
+    }
+
+    // Last byte with MSB unset
+    bytes.push(value as u8);
+
+    bytes
+}
+
 pub fn export_model_to_obj(name: String, path: &Path, model: &Model) {
     let mut vertices: Vec<bevy::math::Vec3> = Vec::new();
     let mut normals: Vec<bevy::math::Vec3> = Vec::new();

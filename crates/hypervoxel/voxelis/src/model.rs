@@ -42,4 +42,10 @@ impl Model {
         self.chunks_len = size.x as usize * size.y as usize * size.z as usize;
         self.chunks = Vec::with_capacity(self.chunks_len);
     }
+
+    pub fn run_length_encode(&self, data: &mut Vec<u8>) {
+        for chunk in self.chunks.iter() {
+            chunk.run_length_encode(data);
+        }
+    }
 }

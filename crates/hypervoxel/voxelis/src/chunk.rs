@@ -1,3 +1,4 @@
+use crate::export::encode_varint;
 use crate::math::Freal;
 use crate::voxtree::calculate_voxels_per_axis;
 use crate::voxtree::VoxTree;
@@ -312,6 +313,33 @@ impl Chunk {
             .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
             .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals),
         )
+    }
+
+    pub fn run_length_encode(&self, data: &mut Vec<u8>) {
+        let mut iter = self.data.iter().peekable();
+
+        while let Some(value) = iter.next() {
+            // Initialize count for the current run
+            let mut count = 1;
+
+            // Count how many times the current value repeats consecutively
+            while let Some(&next_value) = iter.peek() {
+                if next_value == value {
+                    iter.next();
+                    count += 1;
+                } else {
+                    break;
+                }
+            }
+
+            // Encode the count using variable-length encoding
+            let count_bytes = encode_varint(count);
+            data.extend(count_bytes);
+
+            // Serialize the i32 value into 4 bytes (little-endian)
+            let value_bytes = value.to_le_bytes();
+            data.extend_from_slice(&value_bytes);
+        }
     }
 
     fn add_quad(
