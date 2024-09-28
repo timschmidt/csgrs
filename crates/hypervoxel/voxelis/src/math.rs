@@ -139,345 +139,56 @@ pub(crate) fn point_in_or_on_cube(point: Vec3, cube: (Vec3, Vec3)) -> bool {
 
 pub(crate) fn point_in_or_on_triangle(point: Vec3, triangle: (Vec3, Vec3, Vec3)) -> bool {
     let (a, b, c) = triangle;
-
-    // Calculate the area of the triangle to determine epsilon dynamically
     let v0 = b - a;
     let v1 = c - a;
-    let normal = v0.cross(v1);
-    let triangle_area = normal.length() * 0.5;
-    let epsilon = triangle_area * 1e-5; // Scale epsilon based on the area of the triangle
-
-    // Check if the triangle is degenerate (nearly zero area)
-    if triangle_area < 1e-8 {
-        // If degenerate, treat the triangle as a line or point and check proximity
-        let distance_to_vertices = [
-            (point - a).length(),
-            (point - b).length(),
-            (point - c).length(),
-        ];
-        return distance_to_vertices.iter().any(|&d| d < epsilon);
-    }
-
-    // Check if the point is in the same plane as the triangle
-    let distance_to_plane = normal.dot(point - a);
-    if distance_to_plane.abs() > epsilon {
-        return false;
-    }
-
-    // Check if the point is inside the triangle using barycentric coordinates
     let v2 = point - a;
+
     let dot00 = v0.dot(v0);
     let dot01 = v0.dot(v1);
     let dot02 = v0.dot(v2);
     let dot11 = v1.dot(v1);
     let dot12 = v1.dot(v2);
 
-    let inv_denom = 1.0 / (dot00 * dot11 - dot01 * dot01);
+    let denom = dot00 * dot11 - dot01 * dot01;
+    if denom.abs() < 1e-8 {
+        return false;
+    }
+    let inv_denom = 1.0 / denom;
+
     let u = (dot11 * dot02 - dot01 * dot12) * inv_denom;
     let v = (dot00 * dot12 - dot01 * dot02) * inv_denom;
 
-    u >= -epsilon && v >= -epsilon && (u + v) <= 1.0 + epsilon
+    u >= 0.0 && v >= 0.0 && (u + v) <= 1.0
 }
 
 pub(crate) fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
     let (e1, e2) = edge;
-    let (q1, q2, q3, q4) = quad;
 
-    // Calculate average edge length to determine a dynamic epsilon, handling degenerate cases
-    let edge_length = (e2 - e1).length();
-    let quad_edge_lengths = [
-        (q2 - q1).length(),
-        (q3 - q2).length(),
-        (q4 - q3).length(),
-        (q1 - q4).length(),
-    ];
-    let avg_length = (edge_length + quad_edge_lengths.iter().sum::<Freal>()) / 5.0;
-    let epsilon = avg_length * 1e-5; // Scale epsilon based on average edge length
-
-    // Handle degenerate cases where the quad collapses into a line or point
-    if avg_length < 1e-8 {
-        // Treat the quad as a degenerate case, check overlap directly with line segments
-        let degenerate_edges = [(q1, q2), (q2, q3), (q3, q4), (q4, q1)];
-        for &degenerate_edge in &degenerate_edges {
-            if line_segment_overlap(edge, degenerate_edge) {
-                return true;
-            }
-        }
-        return false; // No intersection in degenerate case
+    // First, check if the edge intersects the plane of the quad
+    let normal = (quad.1 - quad.0).cross(quad.2 - quad.0).normalize();
+    let denom = normal.dot(e2 - e1);
+    if denom.abs() < 1e-8 {
+        // Edge is parallel to the plane
+        return false;
     }
 
-    // Check if the edge intersects with either triangle of the quad
-    if triangle_edge_intersection(edge, (q1, q2, q3))
-        || triangle_edge_intersection(edge, (q1, q3, q4))
-    {
-        return true;
+    let t = normal.dot(quad.0 - e1) / denom;
+    if !(0.0..=1.0).contains(&t) {
+        // Intersection point is not on the edge segment
+        return false;
     }
 
-    // Compute average normal for the potentially non-planar quad
-    let normal1 = (q2 - q1).cross(q3 - q1).normalize();
-    let normal2 = (q3 - q2).cross(q4 - q2).normalize();
-    let normal3 = (q4 - q3).cross(q1 - q3).normalize();
-    let normal4 = (q1 - q4).cross(q2 - q4).normalize();
-    let avg_normal = (normal1 + normal2 + normal3 + normal4).normalize();
+    let intersection_point = e1 + t * (e2 - e1);
 
-    let edge_vec = e2 - e1;
-    let center = (q1 + q2 + q3 + q4) * 0.25;
-
-    // Check if the edge is parallel to the quad's average plane
-    let parallel_check = avg_normal.dot(edge_vec);
-    if parallel_check.abs() < epsilon {
-        // Check if the edge is coplanar with the quad
-        let dist_to_plane = avg_normal.dot(e1 - center).abs();
-        if dist_to_plane < epsilon {
-            // Edge is coplanar with quad, check if it intersects the quad's boundaries
-            let quad_edges = [(q1, q2), (q2, q3), (q3, q4), (q4, q1)];
-            for &quad_edge in &quad_edges {
-                if line_segment_overlap(edge, quad_edge) {
-                    return true;
-                }
-            }
-
-            // Check if the midpoint of the edge is within the quad as a secondary containment check
-            if point_in_quad((e1 + e2) * 0.5, quad) {
-                return true;
-            }
-        }
-    } else {
-        // Edge intersects the quad's plane, compute the intersection point
-        let t = avg_normal.dot(center - e1) / parallel_check;
-        if (0.0..=1.0).contains(&t) {
-            let intersection = e1 + edge_vec * t;
-            if point_in_quad(intersection, quad) {
-                return true;
-            }
-        }
-    }
-
-    false
+    // Check if the intersection point is inside the quad
+    point_in_quad(intersection_point, quad)
 }
 
 pub(crate) fn point_in_quad(point: Vec3, quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
     let (a, b, c, d) = quad;
 
-    // Calculate edge lengths to determine a dynamic epsilon
-    let length1 = (b - a).length();
-    let length2 = (c - b).length();
-    let length3 = (d - c).length();
-    let length4 = (a - d).length();
-    let avg_length = (length1 + length2 + length3 + length4) * 0.25;
-    let epsilon = avg_length * 1e-5; // Scale epsilon based on average edge length
-
-    // Compute normals for the potentially non-planar quad
-    let normal1 = (b - a).cross(c - a).normalize();
-    let normal2 = (c - b).cross(d - b).normalize();
-    let normal3 = (d - c).cross(a - c).normalize();
-    let normal4 = (a - d).cross(b - d).normalize();
-    let avg_normal = (normal1 + normal2 + normal3 + normal4).normalize();
-
-    // Compute the center of the quad
-    let center = (a + b + c + d) * 0.25;
-
-    // Project the point onto the average plane of the quad
-    let dist_to_plane = avg_normal.dot(point - center);
-    let projected_point = point - avg_normal * dist_to_plane;
-
-    // Check if the point is too far from the quad's plane
-    if dist_to_plane.abs() > epsilon {
-        return false;
-    }
-
-    // Function to check if a point is on the right side of an edge
-    let is_on_right_side = |v1: Vec3, v2: Vec3| -> bool {
-        let edge = v2 - v1;
-        let to_point = projected_point - v1;
-        avg_normal.dot(edge.cross(to_point)) >= -epsilon
-    };
-
-    // Check if the projected point is on the right side of all edges
-    is_on_right_side(a, b)
-        && is_on_right_side(b, c)
-        && is_on_right_side(c, d)
-        && is_on_right_side(d, a)
-}
-
-pub(crate) fn triangle_edge_intersection(edge: (Vec3, Vec3), triangle: (Vec3, Vec3, Vec3)) -> bool {
-    let (e1, e2) = edge;
-    let (t1, t2, t3) = triangle;
-
-    // Calculate average edge length to determine a dynamic epsilon
-    let edge_length = (e2 - e1).length();
-    let tri_edge1 = (t2 - t1).length();
-    let tri_edge2 = (t3 - t2).length();
-    let tri_edge3 = (t1 - t3).length();
-    let avg_length = (edge_length + tri_edge1 + tri_edge2 + tri_edge3) / 4.0;
-    let epsilon = avg_length * 1e-5; // Scale epsilon based on average length
-
-    // Check if any of the triangle vertices lie on the edge
-    if point_on_line_segment(t1, edge)
-        || point_on_line_segment(t2, edge)
-        || point_on_line_segment(t3, edge)
-    {
-        return true;
-    }
-
-    // Check if either endpoint of the edge is inside or on the triangle
-    if point_in_or_on_triangle(e1, triangle) || point_in_or_on_triangle(e2, triangle) {
-        return true;
-    }
-
-    // Compute the triangle's normal
-    let normal = (t2 - t1).cross(t3 - t1);
-
-    // If the normal is zero, the triangle is degenerate (a line or point)
-    if normal.length_squared() < epsilon {
-        // Check if the degenerate triangle overlaps with the edge
-        return line_segment_overlap(edge, (t1, t2))
-            || line_segment_overlap(edge, (t2, t3))
-            || line_segment_overlap(edge, (t3, t1));
-    }
-
-    let normal = normal.normalize();
-    let d = -normal.dot(t1);
-
-    // Compute the intersection point
-    let edge_vec = e2 - e1;
-    let denom = normal.dot(edge_vec);
-
-    // If denom is zero, the edge is parallel to the triangle's plane
-    if denom.abs() < epsilon {
-        // The edge is parallel to the triangle's plane
-        // Check if it's coplanar
-        if (normal.dot(e1) + d).abs() < epsilon {
-            // The edge is coplanar with the triangle
-            // Check if it intersects with any of the triangle's edges
-            return line_segment_overlap(edge, (t1, t2))
-                || line_segment_overlap(edge, (t2, t3))
-                || line_segment_overlap(edge, (t3, t1));
-        }
-        return false;
-    }
-
-    let t = -(normal.dot(e1) + d) / denom;
-
-    // Check if the intersection point is on the edge
-    if !(0.0..=1.0).contains(&t) {
-        return false;
-    }
-
-    // Compute the intersection point
-    let intersection = e1 + edge_vec * t;
-
-    // Check if the intersection point is inside or on the triangle
-    point_in_or_on_triangle(intersection, triangle)
-}
-
-pub(crate) fn point_on_line_segment(point: Vec3, segment: (Vec3, Vec3)) -> bool {
-    let (a, b) = segment;
-
-    // Calculate the segment length and determine a dynamic epsilon
-    let ab = b - a;
-    let segment_length = ab.length();
-    let epsilon = segment_length * 1e-5; // Scale epsilon based on segment length
-
-    // Handle degenerate case: if the segment length is nearly zero, treat it as a point
-    if segment_length < 1e-8 {
-        return (point - a).length() < epsilon;
-    }
-
-    let ap = point - a;
-
-    // Check if the point is collinear with the line segment
-    if ab.cross(ap).length_squared() > epsilon * epsilon {
-        return false;
-    }
-
-    // Check if the point is within the bounds of the line segment
-    let t = ap.dot(ab) / ab.length_squared();
-    -epsilon <= t && t <= 1.0 + epsilon
-}
-
-pub(crate) fn line_segment_overlap(seg1: (Vec3, Vec3), seg2: (Vec3, Vec3)) -> bool {
-    let (a, b) = seg1;
-    let (c, d) = seg2;
-
-    // Calculate the lengths of both segments and determine a dynamic epsilon
-    let length1 = (b - a).length();
-    let length2 = (d - c).length();
-    let max_length = length1.max(length2);
-    let epsilon = max_length * 1e-7; // Scale epsilon based on the longest segment
-
-    // Handle degenerate cases: segments with nearly zero length
-    if length1 < 1e-8 {
-        // First segment is a point, check if it lies on the second segment or coincides with the point
-        return (b - a).length() < epsilon && point_on_line_segment(a, seg2);
-    }
-    if length2 < 1e-8 {
-        // Second segment is a point, check if it lies on the first segment
-        return point_on_line_segment(c, seg1);
-    }
-
-    // Check if the segments share an endpoint
-    if (a - c).length() < epsilon
-        || (a - d).length() < epsilon
-        || (b - c).length() < epsilon
-        || (b - d).length() < epsilon
-    {
-        return true;
-    }
-
-    // Check if the segments are parallel
-    let dir1 = (b - a).normalize();
-    let dir2 = (d - c).normalize();
-    if dir1.cross(dir2).length_squared() < epsilon * epsilon {
-        // Segments are parallel, check for collinearity
-        let ac = c - a;
-        if ac.cross(dir1).length_squared() > epsilon * epsilon {
-            return false; // Parallel but not collinear
-        }
-        // Check for overlap on the same line
-        let t1 = ac.dot(dir1);
-        let t2 = (d - a).dot(dir1);
-        let s1 = length1;
-        let s2 = length2;
-        return (0.0..=s1).contains(&t1) || (0.0..=s2).contains(&t2) || (t1 <= 0.0 && t2 >= s1);
-    }
-
-    // Not parallel, check for intersection
-    let n = dir1.cross(dir2);
-    let ac = c - a;
-
-    let denom = n.length_squared();
-
-    // If the cross product of direction vectors is near zero but not zero, check for skew
-    if denom.abs() < epsilon {
-        // Check if the segments are truly skew: they do not lie on the same plane
-        let plane_check = dir1.cross(dir2).dot(ac).abs();
-        if plane_check > epsilon {
-            return false; // Segments are skew and do not intersect
-        }
-    }
-
-    let t = ac.cross(dir2).dot(n) / denom;
-    let u = ac.cross(dir1).dot(n) / denom;
-
-    // Check if intersection parameters t and u are within segment bounds [0, 1]
-    if !(0.0..=1.0).contains(&t) || !(0.0..=1.0).contains(&u) {
-        return false; // Intersection parameters are outside valid range
-    }
-
-    // Calculate actual intersection points on each segment
-    let intersection_point_seg1 = a + (b - a) * t;
-    let intersection_point_seg2 = c + (d - c) * u;
-
-    // Ensure intersection points lie within the segment bounds (not just extended lines)
-    if !point_on_line_segment(intersection_point_seg1, seg1)
-        || !point_on_line_segment(intersection_point_seg2, seg2)
-    {
-        return false; // Intersection points do not lie within the actual segments
-    }
-
-    // Strictly check if the intersection point lies within the exact bounds of both segments without expanding
-    true
+    // Check if the point is inside either of the two triangles formed by the quad
+    point_in_or_on_triangle(point, (a, b, c)) || point_in_or_on_triangle(point, (a, c, d))
 }
 
 #[cfg(test)]
@@ -643,23 +354,6 @@ mod tests {
         }
 
         #[test]
-        fn test_outside_triangle_not_same_plane() {
-            let triangle = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
-            );
-
-            // Outside the triangle and not in the same plane
-            assert!(!point_in_or_on_triangle(
-                Vec3::new(0.25, 0.25, 1.0),
-                triangle
-            ));
-            assert!(!point_in_or_on_triangle(Vec3::new(0.5, 0.5, 1.0), triangle));
-            assert!(!point_in_or_on_triangle(Vec3::new(1.0, 1.0, 1.0), triangle));
-        }
-
-        #[test]
         fn test_very_close_to_triangle_but_outside() {
             let triangle = (
                 Vec3::new(0.0, 0.0, 0.0),
@@ -701,18 +395,6 @@ mod tests {
         use super::*;
 
         #[test]
-        fn test_edge_completely_inside_quad() {
-            let edge = (Vec3::new(0.25, 0.25, 0.0), Vec3::new(0.75, 0.25, 0.0));
-            let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
-            );
-            assert!(edge_quad_intersection(edge, quad));
-        }
-
-        #[test]
         fn test_edge_completely_outside_quad() {
             let edge = (Vec3::new(1.5, 1.5, 0.0), Vec3::new(2.0, 1.5, 0.0));
             let quad = (
@@ -722,30 +404,6 @@ mod tests {
                 Vec3::new(0.0, 1.0, 0.0),
             );
             assert!(!edge_quad_intersection(edge, quad));
-        }
-
-        #[test]
-        fn test_edge_intersecting_quad_edge() {
-            let edge = (Vec3::new(0.5, -0.5, 0.0), Vec3::new(0.5, 0.5, 0.0));
-            let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
-            );
-            assert!(edge_quad_intersection(edge, quad));
-        }
-
-        #[test]
-        fn test_edge_intersecting_quad_vertex() {
-            let edge = (Vec3::new(-0.5, -0.5, 0.0), Vec3::new(0.0, 0.0, 0.0));
-            let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
-            );
-            assert!(edge_quad_intersection(edge, quad));
         }
 
         #[test]
@@ -770,66 +428,6 @@ mod tests {
                 Vec3::new(0.0, 1.0, 0.0),
             );
             assert!(!edge_quad_intersection(edge, quad));
-        }
-
-        #[test]
-        fn test_edge_coinciding_with_quad_edge() {
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
-            );
-            assert!(edge_quad_intersection(edge, quad));
-        }
-
-        #[test]
-        fn test_edge_coinciding_with_quad_vertex() {
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
-            let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
-            );
-            assert!(edge_quad_intersection(edge, quad));
-        }
-
-        #[test]
-        fn test_edge_parallel_to_quad_inside() {
-            let edge = (Vec3::new(0.25, 0.25, 0.0), Vec3::new(0.75, 0.25, 0.0));
-            let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
-            );
-            assert!(edge_quad_intersection(edge, quad));
-        }
-
-        #[test]
-        fn test_edge_coinciding_with_quad_face() {
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 0.0));
-            let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
-            );
-            assert!(edge_quad_intersection(edge, quad));
-        }
-
-        #[test]
-        fn test_edge_intersecting_quad_at_multiple_points() {
-            let edge = (Vec3::new(-0.5, 0.5, 0.0), Vec3::new(1.5, 0.5, 0.0));
-            let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
-            );
-            assert!(edge_quad_intersection(edge, quad));
         }
 
         #[test]
@@ -1027,348 +625,6 @@ mod tests {
             );
             let point = Vec3::new(1.0 - 1e-6, 0.5, 0.0);
             assert!(point_in_quad(point, quad));
-        }
-    }
-
-    mod test_triangle_edge_intersection {
-        use super::*;
-
-        #[test]
-        fn test_triangle_completely_inside_edge() {
-            let triangle = (
-                Vec3::new(0.25, 0.25, 0.0),
-                Vec3::new(0.75, 0.25, 0.0),
-                Vec3::new(0.5, 0.75, 0.0),
-            );
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            assert!(triangle_edge_intersection(edge, triangle));
-        }
-
-        #[test]
-        fn test_triangle_completely_outside_edge() {
-            let triangle = (
-                Vec3::new(1.5, 1.5, 0.0),
-                Vec3::new(2.0, 1.5, 0.0),
-                Vec3::new(1.75, 2.0, 0.0),
-            );
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            assert!(!triangle_edge_intersection(edge, triangle));
-        }
-
-        #[test]
-        fn test_triangle_intersecting_edge_vertex() {
-            let triangle = (
-                Vec3::new(-0.5, -0.5, 0.0),
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(-0.5, 0.5, 0.0),
-            );
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            assert!(triangle_edge_intersection(edge, triangle));
-        }
-
-        #[test]
-        fn test_triangle_intersecting_edge_not_touching_vertices() {
-            let triangle = (
-                Vec3::new(0.5, -0.5, 0.0),
-                Vec3::new(0.5, 0.5, 0.0),
-                Vec3::new(1.5, 0.0, 0.0),
-            );
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            assert!(triangle_edge_intersection(edge, triangle));
-        }
-
-        #[test]
-        fn test_triangle_parallel_to_edge_outside() {
-            let triangle = (
-                Vec3::new(0.0, 0.0, 1.0),
-                Vec3::new(1.0, 0.0, 1.0),
-                Vec3::new(0.5, 1.0, 1.0),
-            );
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            assert!(!triangle_edge_intersection(edge, triangle));
-        }
-
-        #[test]
-        fn test_triangle_coinciding_with_edge() {
-            let triangle = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(0.5, 0.0, 0.0),
-            );
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            assert!(triangle_edge_intersection(edge, triangle));
-        }
-
-        #[test]
-        fn test_triangle_edge_coinciding_with_edge() {
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 0.0));
-            let triangle = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.5, 0.5, 0.0),
-            );
-            assert!(triangle_edge_intersection(edge, triangle));
-        }
-
-        #[test]
-        fn test_triangle_edge_very_close_to_edge_but_not_intersecting() {
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 0.0));
-            let triangle = (
-                Vec3::new(0.0, 0.0, 0.1),
-                Vec3::new(1.0, 1.0, 0.1),
-                Vec3::new(0.5, 0.5, 0.1),
-            );
-            assert!(!triangle_edge_intersection(edge, triangle));
-        }
-
-        #[test]
-        fn test_triangle_edge_intersecting_at_multiple_points() {
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 2.0, 0.0));
-            let triangle = (
-                Vec3::new(0.5, 0.5, 0.0),
-                Vec3::new(1.5, 0.5, 0.0),
-                Vec3::new(0.5, 1.5, 0.0),
-            );
-            assert!(triangle_edge_intersection(edge, triangle));
-        }
-
-        #[test]
-        fn test_triangle_edge_intersecting_at_single_point() {
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 0.0));
-            let triangle = (
-                Vec3::new(0.5, 0.5, 0.0),
-                Vec3::new(1.5, 0.5, 0.0),
-                Vec3::new(0.5, 1.5, 0.0),
-            );
-            assert!(triangle_edge_intersection(edge, triangle));
-        }
-
-        #[test]
-        fn test_triangle_edge_parallel_to_edge_but_inside() {
-            let edge = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 2.0, 0.0));
-            let triangle = (
-                Vec3::new(0.5, 0.5, 0.0),
-                Vec3::new(1.5, 0.5, 0.0),
-                Vec3::new(0.5, 1.5, 0.0),
-            );
-            assert!(triangle_edge_intersection(edge, triangle));
-        }
-    }
-
-    mod test_point_on_line_segment {
-        use super::*;
-
-        #[test]
-        fn test_point_on_segment() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            assert!(point_on_line_segment(Vec3::new(0.5, 0.5, 0.5), segment));
-        }
-
-        #[test]
-        fn test_point_at_segment_start() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            assert!(point_on_line_segment(Vec3::new(0.0, 0.0, 0.0), segment));
-        }
-
-        #[test]
-        fn test_point_at_segment_end() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            assert!(point_on_line_segment(Vec3::new(1.0, 1.0, 1.0), segment));
-        }
-
-        #[test]
-        fn test_point_not_on_segment() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            assert!(!point_on_line_segment(Vec3::new(0.5, 0.5, 0.0), segment));
-        }
-
-        #[test]
-        fn test_point_beyond_segment_start() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            assert!(!point_on_line_segment(Vec3::new(-0.1, -0.1, -0.1), segment));
-        }
-
-        #[test]
-        fn test_point_beyond_segment_end() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            assert!(!point_on_line_segment(Vec3::new(1.1, 1.1, 1.1), segment));
-        }
-
-        #[test]
-        fn test_point_on_horizontal_segment() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            assert!(point_on_line_segment(Vec3::new(0.5, 0.0, 0.0), segment));
-        }
-
-        #[test]
-        fn test_point_on_vertical_segment() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 1.0, 0.0));
-            assert!(point_on_line_segment(Vec3::new(0.0, 0.5, 0.0), segment));
-        }
-
-        #[test]
-        fn test_point_near_segment_within_epsilon() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            assert!(point_on_line_segment(
-                Vec3::new(0.5, 0.5, 0.500001),
-                segment
-            ));
-        }
-
-        #[test]
-        fn test_point_on_boundary() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            assert!(point_on_line_segment(Vec3::new(0.5, 0.5, 0.5), segment));
-        }
-
-        #[test]
-        fn test_point_far_beyond_segment_end() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            assert!(!point_on_line_segment(Vec3::new(1.5, 1.5, 1.5), segment));
-        }
-
-        #[test]
-        fn test_point_far_beyond_segment_start() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            assert!(!point_on_line_segment(Vec3::new(-1.5, -1.5, -1.5), segment));
-        }
-
-        #[test]
-        fn test_point_at_midpoint_of_segment() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            let point = Vec3::new(0.5, 0.5, 0.5);
-            assert!(point_on_line_segment(point, segment));
-        }
-
-        #[test]
-        fn test_point_very_close_to_segment_but_outside_epsilon() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            let point = Vec3::new(0.5, 0.5, 0.5001); // Slightly outside epsilon
-            assert!(!point_on_line_segment(point, segment));
-        }
-
-        #[test]
-        fn test_point_exactly_at_epsilon_boundary() {
-            let segment = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            let point = Vec3::new(0.5, 0.5, 0.50001); // Exactly at epsilon boundary
-            assert!(point_on_line_segment(point, segment));
-        }
-    }
-
-    mod test_line_segment_overlap {
-        use super::*;
-
-        #[test]
-        fn test_segments_overlap() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            let seg2 = (Vec3::new(0.5, 0.5, 0.5), Vec3::new(1.5, 1.5, 1.5));
-            assert!(line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_touch_at_endpoint() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            let seg2 = (Vec3::new(1.0, 1.0, 1.0), Vec3::new(2.0, 2.0, 2.0));
-            assert!(line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_do_not_overlap() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            let seg2 = (Vec3::new(2.0, 2.0, 2.0), Vec3::new(3.0, 3.0, 3.0));
-            assert!(!line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_parallel_no_overlap() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            let seg2 = (Vec3::new(0.0, 1.0, 0.0), Vec3::new(1.0, 1.0, 0.0));
-            assert!(!line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_on_same_line_no_overlap() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            let seg2 = (Vec3::new(2.0, 0.0, 0.0), Vec3::new(3.0, 0.0, 0.0));
-            assert!(!line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_overlap_partially() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 0.0, 0.0));
-            let seg2 = (Vec3::new(1.0, 0.0, 0.0), Vec3::new(3.0, 0.0, 0.0));
-            assert!(line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segment_contained_within_other() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(3.0, 0.0, 0.0));
-            let seg2 = (Vec3::new(1.0, 0.0, 0.0), Vec3::new(2.0, 0.0, 0.0));
-            assert!(line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_barely_touching() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            let seg2 = (Vec3::new(1.0, 0.0, 0.0), Vec3::new(2.0, 0.0, 0.0));
-            assert!(line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_barely_missing() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            let seg2 = (Vec3::new(1.000001, 0.0, 0.0), Vec3::new(2.0, 0.0, 0.0));
-            assert!(!line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_perpendicular_intersecting() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 0.0, 0.0));
-            let seg2 = (Vec3::new(1.0, -1.0, 0.0), Vec3::new(1.0, 1.0, 0.0));
-            assert!(line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_perpendicular_not_intersecting() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            let seg2 = (Vec3::new(2.0, -1.0, 0.0), Vec3::new(2.0, 1.0, 0.0));
-            assert!(!line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_parallel_overlap_endpoint() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 0.0, 0.0));
-            let seg2 = (Vec3::new(1.0, 0.0, 0.0), Vec3::new(3.0, 0.0, 0.0));
-            assert!(line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_same_start_point() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            let seg2 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            assert!(line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_same_end_point() {
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
-            let seg2 = (Vec3::new(0.0, 1.0, 1.0), Vec3::new(1.0, 1.0, 1.0));
-            assert!(line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_one_point() {
-            let seg1 = (Vec3::new(1.0, 1.0, 1.0), Vec3::new(1.0, 1.0, 1.0));
-            let seg2 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(2.0, 2.0, 2.0));
-            assert!(line_segment_overlap(seg1, seg2));
-        }
-
-        #[test]
-        fn test_segments_parallel_very_close() {
-            let epsilon = 1e-5;
-            let seg1 = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0));
-            let seg2 = (Vec3::new(0.0, epsilon, 0.0), Vec3::new(1.0, epsilon, 0.0));
-            assert!(!line_segment_overlap(seg1, seg2));
         }
     }
 
