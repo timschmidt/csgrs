@@ -94,6 +94,8 @@ dependencies = [
  "bevy_screen_diagnostics",
  "egui_extras",
  "log",
+ "rayon",
+ "rustc-hash 2.0.0",
  "voxelis",
 ]
 
