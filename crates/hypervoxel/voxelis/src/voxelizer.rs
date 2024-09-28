@@ -92,65 +92,10 @@ impl Voxelizer {
         }
     }
 
-    pub fn simple_voxelize(&mut self) {
-        let chunks_len =
-            self.chunks_size.x as usize * self.chunks_size.y as usize * self.chunks_size.z as usize;
-        let chunks_size = self.chunks_size;
-        self.chunks = Vec::with_capacity(chunks_len);
-
-        for y in 0..self.chunks_size.y {
-            for z in 0..self.chunks_size.z {
-                for x in 0..self.chunks_size.x {
-                    self.chunks.push(Chunk::with_position(x, y, z));
-                }
-            }
-        }
-
-        let now = Instant::now();
-
-        let mesh_min = self.mesh.aabb.0;
-
-        for face in self.mesh.faces.iter() {
-            for vertex_index in [face.x, face.y, face.z] {
-                let vertex = self.mesh.vertices[(vertex_index - 1) as usize] - mesh_min;
-                let voxel = (vertex / VOXEL_SIZE).floor().as_ivec3();
-                let local_voxel = convert_voxel_world_to_local(voxel);
-
-                let chunk_index = calculate_chunk_index(voxel, chunks_size, chunks_len);
-                let chunk = &mut self.chunks[chunk_index];
-
-                chunk.set_value(
-                    local_voxel.x as u8,
-                    local_voxel.y as u8,
-                    local_voxel.z as u8,
-                    1,
-                );
-            }
-        }
-
-        // Update LODs in parallel
-        self.chunks.par_iter_mut().for_each(|chunk| {
-            if !chunk.is_empty() {
-                chunk.update_lods();
-            }
-        });
-
-        println!("Simple voxelize took: {:?}", now.elapsed());
-    }
-
-    pub fn voxelize(&mut self) {
-        println!("Voxelize started");
-
-        self.prepare_chunks();
-
-        let mesh_min = self.mesh.aabb.0;
-
-        let face_to_chunk_map_now = Instant::now();
-
-        println!("Building face-to-chunk mapping");
-
-        // Build face-to-chunk mapping
+    pub fn build_face_to_chunk_map(&mut self) -> FxHashMap<usize, Vec<IVec3>> {
         let mut chunk_face_map: FxHashMap<usize, Vec<IVec3>> = FxHashMap::default();
+
+        let mesh_min = self.mesh.aabb.0;
 
         for face in &self.mesh.faces {
             let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
@@ -185,12 +130,14 @@ impl Voxelizer {
             }
         }
 
-        let face_to_chunk_map_time = face_to_chunk_map_now.elapsed();
+        chunk_face_map
+    }
 
-        println!("Voxelizing");
-
+    pub fn voxelize_mesh(&mut self, chunk_face_map: &FxHashMap<usize, Vec<IVec3>>) {
         let epsilon = VOXEL_SIZE * 1e-7;
         let splat = Vec3::splat(epsilon);
+
+        let mesh_min = self.mesh.aabb.0;
 
         let now = Instant::now();
 
@@ -311,6 +258,80 @@ impl Voxelizer {
                     }
                 }
             });
+    }
+
+    pub fn update_lods(&mut self) {
+        // Update LODs in parallel
+        self.chunks.par_iter_mut().for_each(|chunk| {
+            if !chunk.is_empty() {
+                chunk.update_lods();
+            }
+        });
+    }
+
+    pub fn simple_voxelize(&mut self) {
+        let chunks_len =
+            self.chunks_size.x as usize * self.chunks_size.y as usize * self.chunks_size.z as usize;
+        let chunks_size = self.chunks_size;
+        self.chunks = Vec::with_capacity(chunks_len);
+
+        for y in 0..self.chunks_size.y {
+            for z in 0..self.chunks_size.z {
+                for x in 0..self.chunks_size.x {
+                    self.chunks.push(Chunk::with_position(x, y, z));
+                }
+            }
+        }
+
+        let now = Instant::now();
+
+        let mesh_min = self.mesh.aabb.0;
+
+        for face in self.mesh.faces.iter() {
+            for vertex_index in [face.x, face.y, face.z] {
+                let vertex = self.mesh.vertices[(vertex_index - 1) as usize] - mesh_min;
+                let voxel = (vertex / VOXEL_SIZE).floor().as_ivec3();
+                let local_voxel = convert_voxel_world_to_local(voxel);
+
+                let chunk_index = calculate_chunk_index(voxel, chunks_size, chunks_len);
+                let chunk = &mut self.chunks[chunk_index];
+
+                chunk.set_value(
+                    local_voxel.x as u8,
+                    local_voxel.y as u8,
+                    local_voxel.z as u8,
+                    1,
+                );
+            }
+        }
+
+        // Update LODs in parallel
+        self.chunks.par_iter_mut().for_each(|chunk| {
+            if !chunk.is_empty() {
+                chunk.update_lods();
+            }
+        });
+
+        println!("Simple voxelize took: {:?}", now.elapsed());
+    }
+
+    pub fn voxelize(&mut self) {
+        println!("Voxelize started");
+
+        self.prepare_chunks();
+
+        let now = Instant::now();
+        let face_to_chunk_map_now = Instant::now();
+
+        println!("Building face-to-chunk mapping");
+
+        // Build face-to-chunk mapping
+        let chunk_face_map = self.build_face_to_chunk_map();
+
+        let face_to_chunk_map_time = face_to_chunk_map_now.elapsed();
+
+        self.voxelize_mesh(&chunk_face_map);
+
         let voxelize_time = now.elapsed();
 
         println!(
@@ -320,18 +341,13 @@ impl Voxelizer {
 
         let update_lods_now = Instant::now();
 
+        self.update_lods();
+
         let empty_chunks = self
             .chunks
             .par_iter()
             .filter(|chunk| chunk.is_empty())
             .count();
-
-        // Update LODs in parallel
-        self.chunks.par_iter_mut().for_each(|chunk| {
-            if !chunk.is_empty() {
-                chunk.update_lods();
-            }
-        });
 
         let update_lods_time = update_lods_now.elapsed();
         let total = face_to_chunk_map_time + voxelize_time + update_lods_time;
