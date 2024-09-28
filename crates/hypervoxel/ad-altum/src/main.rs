@@ -295,6 +295,22 @@ fn main() {
     // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_dome.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/wall_floor.obj");
     // let obj = obj_reader::Obj::parse("ad-altum/assets/worm_gear.obj");
+
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/bedroom.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/buddha.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/sponza.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/dragon_small.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/dragon.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/chestnut_01.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/chestnut.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/powerplant.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/thors_hammer.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/walls.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/some_shield.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/medium_scout.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/large_scout.obj");
+    // let obj = obj_reader::Obj::parse("ad-altum/assets/ships.obj");
+
     let mut voxelizer = Voxelizer::new(obj);
     voxelizer.voxelize();
     // voxelizer.simple_voxelize();
