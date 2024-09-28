@@ -13,12 +13,6 @@ use crate::Chunk;
 use crate::chunk::VOXELS_PER_AXIS;
 use crate::chunk::VOXEL_SIZE;
 
-pub struct Voxelizer {
-    pub mesh: Obj,
-    pub chunks_size: IVec3,
-    pub chunks: Vec<Chunk>,
-}
-
 // Helper function to calculate chunk index from coordinates
 fn calculate_chunk_index_from_coords(x: i32, y: i32, z: i32, chunks_size: IVec3) -> usize {
     let chunks_area = chunks_size.x * chunks_size.z;
@@ -52,6 +46,13 @@ fn convert_voxel_world_to_local(current_min_voxel: IVec3) -> IVec3 {
     IVec3::new(chunk_x, chunk_y, chunk_z)
 }
 
+pub struct Voxelizer {
+    pub mesh: Obj,
+    pub chunks_size: IVec3,
+    pub chunks_len: usize,
+    pub chunks: Vec<Chunk>,
+}
+
 impl Voxelizer {
     pub fn new(mesh: Obj) -> Self {
         let chunks_size_x = (mesh.size.x.ceil() as i32) + 1;
@@ -63,12 +64,31 @@ impl Voxelizer {
         Self {
             mesh,
             chunks_size,
+            chunks_len: 0,
             chunks: Vec::new(),
         }
     }
+
     pub fn clear(&mut self) {
         for chunk in self.chunks.iter_mut() {
             chunk.clear();
+        }
+    }
+
+    pub fn prepare_chunks(&mut self) {
+        self.chunks_len =
+            self.chunks_size.x as usize * self.chunks_size.y as usize * self.chunks_size.z as usize;
+        self.chunks = Vec::with_capacity(self.chunks_len);
+
+        println!("Initializing {} chunks", self.chunks_len);
+
+        // Initialize chunks
+        for y in 0..self.chunks_size.y {
+            for z in 0..self.chunks_size.z {
+                for x in 0..self.chunks_size.x {
+                    self.chunks.push(Chunk::with_position(x, y, z));
+                }
+            }
         }
     }
 
@@ -121,21 +141,7 @@ impl Voxelizer {
     pub fn voxelize(&mut self) {
         println!("Voxelize started");
 
-        let chunks_len =
-            self.chunks_size.x as usize * self.chunks_size.y as usize * self.chunks_size.z as usize;
-        let chunks_size = self.chunks_size;
-        self.chunks = Vec::with_capacity(chunks_len);
-
-        println!("Initializing {} chunks", chunks_len);
-
-        // Initialize chunks
-        for y in 0..self.chunks_size.y {
-            for z in 0..self.chunks_size.z {
-                for x in 0..self.chunks_size.x {
-                    self.chunks.push(Chunk::with_position(x, y, z));
-                }
-            }
-        }
+        self.prepare_chunks();
 
         let mesh_min = self.mesh.aabb.0;
 
@@ -168,10 +174,10 @@ impl Voxelizer {
                             chunk_x,
                             chunk_y,
                             chunk_z,
-                            chunks_size,
+                            self.chunks_size,
                         );
 
-                        if chunk_index < chunks_len {
+                        if chunk_index < self.chunks_len {
                             chunk_face_map.entry(chunk_index).or_default().push(*face);
                         }
                     }
@@ -223,8 +229,11 @@ impl Voxelizer {
                         let world_max_voxel = world_max_voxel.as_ivec3() + IVec3::splat(1);
                         let diff_voxel = world_max_voxel - world_min_voxel;
 
-                        let mut current_chunk_index =
-                            calculate_chunk_index(world_min_voxel, chunks_size, chunks_len);
+                        let mut current_chunk_index = calculate_chunk_index(
+                            world_min_voxel,
+                            self.chunks_size,
+                            self.chunks_len,
+                        );
                         let mut current_min_voxel = IVec3::MAX;
                         let mut current_max_voxel = IVec3::MIN;
 
@@ -233,8 +242,11 @@ impl Voxelizer {
                                 for x in 0..diff_voxel.x {
                                     let world_voxel = world_min_voxel + IVec3::new(x, y, z);
 
-                                    let chunk_index =
-                                        calculate_chunk_index(world_voxel, chunks_size, chunks_len);
+                                    let chunk_index = calculate_chunk_index(
+                                        world_voxel,
+                                        self.chunks_size,
+                                        self.chunks_len,
+                                    );
 
                                     if chunk_index != loop_chunk_index {
                                         continue;
