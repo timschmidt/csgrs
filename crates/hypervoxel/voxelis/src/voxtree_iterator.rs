@@ -1,9 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use crate::{
-    chunk::VOXELS_PER_AXIS,
-    voxtree::{calculate_lod_data_index, calculate_voxels_per_axis},
-};
+use crate::voxtree::{calculate_lod_data_index, calculate_voxels_per_axis};
 
 pub struct VoxTreeIterator<'a, const MAX_LOD_LEVEL: usize> {
     data: &'a FxHashMap<usize, i32>,
