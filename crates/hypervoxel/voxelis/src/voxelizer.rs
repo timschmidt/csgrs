@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use std::time::Instant;
 
 use bevy::math::IVec3;
 use rayon::prelude::*;
+use rustc_hash::FxHashMap;
 
 use crate::math::triangle_cube_intersection;
 use crate::math::Freal;
@@ -134,7 +134,7 @@ impl Voxelizer {
         println!("Building face-to-chunk mapping");
 
         // Build face-to-chunk mapping
-        let mut chunk_face_map: HashMap<usize, Vec<IVec3>> = HashMap::new();
+        let mut chunk_face_map: FxHashMap<usize, Vec<IVec3>> = FxHashMap::default();
 
         for face in &self.mesh.faces {
             let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
