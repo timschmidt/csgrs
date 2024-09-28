@@ -26,33 +26,33 @@ fn calculate_chunk_index_from_coords(x: i32, y: i32, z: i32, chunks_size: IVec3)
     chunk_index as usize
 }
 
+fn calculate_chunk_index(
+    world_voxel_position: IVec3,
+    chunks_size: IVec3,
+    chunks_len: usize,
+) -> usize {
+    let chunk_x = world_voxel_position.x / VOXELS_PER_AXIS as i32;
+    let chunk_y = world_voxel_position.y / VOXELS_PER_AXIS as i32;
+    let chunk_z = world_voxel_position.z / VOXELS_PER_AXIS as i32;
+
+    let chunks_area = chunks_size.x * chunks_size.z;
+
+    let chunk_index = chunk_y * chunks_area + chunk_z * chunks_size.x + chunk_x;
+
+    assert!(chunk_index < chunks_len as i32);
+
+    chunk_index as usize
+}
+
+fn convert_voxel_world_to_local(current_min_voxel: IVec3) -> IVec3 {
+    let chunk_x = current_min_voxel.x % VOXELS_PER_AXIS as i32;
+    let chunk_y = current_min_voxel.y % VOXELS_PER_AXIS as i32;
+    let chunk_z = current_min_voxel.z % VOXELS_PER_AXIS as i32;
+
+    IVec3::new(chunk_x, chunk_y, chunk_z)
+}
+
 impl Voxelizer {
-    fn calculate_chunk_index(
-        world_voxel_position: IVec3,
-        chunks_size: IVec3,
-        chunks_len: usize,
-    ) -> usize {
-        let chunk_x = world_voxel_position.x / VOXELS_PER_AXIS as i32;
-        let chunk_y = world_voxel_position.y / VOXELS_PER_AXIS as i32;
-        let chunk_z = world_voxel_position.z / VOXELS_PER_AXIS as i32;
-
-        let chunks_area = chunks_size.x * chunks_size.z;
-
-        let chunk_index = chunk_y * chunks_area + chunk_z * chunks_size.x + chunk_x;
-
-        assert!(chunk_index < chunks_len as i32);
-
-        chunk_index as usize
-    }
-
-    fn convert_voxel_world_to_local(current_min_voxel: IVec3) -> IVec3 {
-        let chunk_x = current_min_voxel.x % VOXELS_PER_AXIS as i32;
-        let chunk_y = current_min_voxel.y % VOXELS_PER_AXIS as i32;
-        let chunk_z = current_min_voxel.z % VOXELS_PER_AXIS as i32;
-
-        IVec3::new(chunk_x, chunk_y, chunk_z)
-    }
-
     pub fn new(mesh: Obj) -> Self {
         let chunks_size_x = (mesh.size.x.ceil() as i32) + 1;
         let chunks_size_y = (mesh.size.y.ceil() as i32) + 1;
@@ -94,9 +94,9 @@ impl Voxelizer {
             for vertex_index in [face.x, face.y, face.z] {
                 let vertex = self.mesh.vertices[(vertex_index - 1) as usize] - mesh_min;
                 let voxel = (vertex / VOXEL_SIZE).floor().as_ivec3();
-                let local_voxel = Self::convert_voxel_world_to_local(voxel);
+                let local_voxel = convert_voxel_world_to_local(voxel);
 
-                let chunk_index = Self::calculate_chunk_index(voxel, chunks_size, chunks_len);
+                let chunk_index = calculate_chunk_index(voxel, chunks_size, chunks_len);
                 let chunk = &mut self.chunks[chunk_index];
 
                 chunk.set_value(
@@ -224,7 +224,7 @@ impl Voxelizer {
                         let diff_voxel = world_max_voxel - world_min_voxel;
 
                         let mut current_chunk_index =
-                            Self::calculate_chunk_index(world_min_voxel, chunks_size, chunks_len);
+                            calculate_chunk_index(world_min_voxel, chunks_size, chunks_len);
                         let mut current_min_voxel = IVec3::MAX;
                         let mut current_max_voxel = IVec3::MIN;
 
@@ -233,11 +233,8 @@ impl Voxelizer {
                                 for x in 0..diff_voxel.x {
                                     let world_voxel = world_min_voxel + IVec3::new(x, y, z);
 
-                                    let chunk_index = Self::calculate_chunk_index(
-                                        world_voxel,
-                                        chunks_size,
-                                        chunks_len,
-                                    );
+                                    let chunk_index =
+                                        calculate_chunk_index(world_voxel, chunks_size, chunks_len);
 
                                     if chunk_index != loop_chunk_index {
                                         continue;
@@ -248,12 +245,8 @@ impl Voxelizer {
                                     {
                                         if current_chunk_index == loop_chunk_index {
                                             affected_voxels.push((
-                                                Self::convert_voxel_world_to_local(
-                                                    current_min_voxel,
-                                                ),
-                                                Self::convert_voxel_world_to_local(
-                                                    current_max_voxel,
-                                                ),
+                                                convert_voxel_world_to_local(current_min_voxel),
+                                                convert_voxel_world_to_local(current_max_voxel),
                                             ));
                                         }
 
@@ -272,8 +265,8 @@ impl Voxelizer {
                             && current_chunk_index == loop_chunk_index
                         {
                             affected_voxels.push((
-                                Self::convert_voxel_world_to_local(current_min_voxel),
-                                Self::convert_voxel_world_to_local(current_max_voxel),
+                                convert_voxel_world_to_local(current_min_voxel),
+                                convert_voxel_world_to_local(current_max_voxel),
                             ));
                         }
 
