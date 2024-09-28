@@ -184,7 +184,7 @@ fn setup(
     println!("Generating meshes...");
 
     let chunks_meshes: Vec<Option<Mesh>> = voxelizer
-        .world
+        .model
         .chunks
         .par_iter()
         .map(|chunk| chunk.generate_mesh())
@@ -199,7 +199,7 @@ fn setup(
 
         let mesh = meshes.add(chunk_mesh.clone());
 
-        let chunk_position = voxelizer.world.chunks[i].get_position();
+        let chunk_position = voxelizer.model.chunks[i].get_position();
 
         let mesh_material = materials.add(StandardMaterial {
             base_color: generate_chunk_color(chunk_position.x, chunk_position.y, chunk_position.z),
