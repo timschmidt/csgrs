@@ -139,6 +139,7 @@ impl Chunk {
         vertices: &mut Vec<bevy::math::Vec3>,
         normals: &mut Vec<bevy::math::Vec3>,
         indices: &mut Vec<u32>,
+        offset: bevy::math::Vec3,
     ) {
         let voxels_per_axis = VOXELS_PER_AXIS as f32;
         let tile_size = bevy::math::Vec3::new(1.0, 1.0, 1.0) / voxels_per_axis;
@@ -174,14 +175,14 @@ impl Chunk {
                         z as f32 * tile_size.z,
                     );
 
-                    let v0 = position + chunk_v0;
-                    let v1 = position + chunk_v1;
-                    let v2 = position + chunk_v2;
-                    let v3 = position + chunk_v3;
-                    let v4 = position + chunk_v4;
-                    let v5 = position + chunk_v5;
-                    let v6 = position + chunk_v6;
-                    let v7 = position + chunk_v7;
+                    let v0 = position + chunk_v0 + offset;
+                    let v1 = position + chunk_v1 + offset;
+                    let v2 = position + chunk_v2 + offset;
+                    let v3 = position + chunk_v3 + offset;
+                    let v4 = position + chunk_v4 + offset;
+                    let v5 = position + chunk_v5 + offset;
+                    let v6 = position + chunk_v6 + offset;
+                    let v7 = position + chunk_v7 + offset;
 
                     let is_right = x == VOXELS_PER_AXIS_MINUS_ONE;
                     let is_left = x == 0;
@@ -300,7 +301,7 @@ impl Chunk {
         let mut normals = Vec::new();
         let mut indices = Vec::new();
 
-        self.generate_mesh_arrays(&mut vertices, &mut normals, &mut indices);
+        self.generate_mesh_arrays(&mut vertices, &mut normals, &mut indices, Vec3::ZERO);
 
         Some(
             Mesh::new(
