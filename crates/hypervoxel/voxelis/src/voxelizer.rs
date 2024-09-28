@@ -199,7 +199,11 @@ impl Voxelizer {
                         return;
                     }
 
+                    let mut affected_voxels = Vec::with_capacity(25_000);
+
                     for face in faces.iter() {
+                        affected_voxels.clear();
+
                         let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
                         let v2 = self.mesh.vertices[(face.y - 1) as usize] - mesh_min;
                         let v3 = self.mesh.vertices[(face.z - 1) as usize] - mesh_min;
@@ -213,8 +217,6 @@ impl Voxelizer {
                         let world_min_voxel = world_min_voxel.as_ivec3();
                         let world_max_voxel = world_max_voxel.as_ivec3() + IVec3::splat(1);
                         let diff_voxel = world_max_voxel - world_min_voxel;
-
-                        let mut affected_voxels = Vec::new();
 
                         let mut current_chunk_index =
                             Self::calculate_chunk_index(world_min_voxel, chunks_size, chunks_len);
