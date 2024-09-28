@@ -27,6 +27,7 @@ pub const MAX_LOD_LEVEL: usize = 6;
 pub const VOXELS_PER_AXIS: u8 = calculate_voxels_per_axis(MAX_LOD_LEVEL) as u8;
 pub const VOXELS_PER_AXIS_MINUS_ONE: u8 = VOXELS_PER_AXIS - 1;
 pub const VOXEL_SIZE: Freal = 1.0 / VOXELS_PER_AXIS as Freal;
+pub const INV_VOXEL_SIZE: Freal = 1.0 / VOXEL_SIZE;
 
 #[derive(Default)]
 pub struct Chunk {

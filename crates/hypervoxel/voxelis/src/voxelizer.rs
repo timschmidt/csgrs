@@ -8,9 +8,9 @@ use crate::math::triangle_cube_intersection;
 use crate::math::Freal;
 use crate::math::Vec3;
 use crate::obj_reader::Obj;
-use crate::voxelizer;
 use crate::Chunk;
 
+use crate::chunk::INV_VOXEL_SIZE;
 use crate::chunk::VOXELS_PER_AXIS;
 use crate::chunk::VOXEL_SIZE;
 
@@ -106,8 +106,8 @@ impl Voxelizer {
             let min = v1.min(v2).min(v3);
             let max = v1.max(v2).max(v3);
 
-            let world_min_voxel = (min / VOXEL_SIZE).floor().as_ivec3();
-            let world_max_voxel = (max / VOXEL_SIZE).ceil().as_ivec3();
+            let world_min_voxel = (min * INV_VOXEL_SIZE).floor().as_ivec3();
+            let world_max_voxel = (max * INV_VOXEL_SIZE).ceil().as_ivec3();
 
             // Determine which chunks this face overlaps
             let min_chunk = world_min_voxel / VOXELS_PER_AXIS as i32;
@@ -140,118 +140,87 @@ impl Voxelizer {
 
         let mesh_min = self.mesh.aabb.0;
 
-        let now = Instant::now();
-
         self.chunks
             .par_iter_mut()
             .enumerate()
-            .for_each(|(loop_chunk_index, loop_chunk)| {
-                let chunk_position = loop_chunk.get_position();
-                let chunk_world_position = IVec3::new(
-                    chunk_position.x * VOXELS_PER_AXIS as i32,
-                    chunk_position.y * VOXELS_PER_AXIS as i32,
-                    chunk_position.z * VOXELS_PER_AXIS as i32,
-                );
-
-                if let Some(faces) = chunk_face_map.get(&loop_chunk_index) {
+            .for_each(|(chunk_index, chunk)| {
+                if let Some(faces) = chunk_face_map.get(&chunk_index) {
                     if faces.is_empty() {
                         return;
                     }
 
-                    let mut affected_voxels = Vec::with_capacity(25_000);
+                    let chunk_position = chunk.get_position();
+                    let chunk_world_position = IVec3::new(
+                        chunk_position.x * VOXELS_PER_AXIS as i32,
+                        chunk_position.y * VOXELS_PER_AXIS as i32,
+                        chunk_position.z * VOXELS_PER_AXIS as i32,
+                    );
+
+                    // Compute the chunk's world bounding box
+                    let chunk_world_min = Vec3::new(
+                        chunk_world_position.x as Freal * VOXEL_SIZE,
+                        chunk_world_position.y as Freal * VOXEL_SIZE,
+                        chunk_world_position.z as Freal * VOXEL_SIZE,
+                    );
+                    let chunk_world_max =
+                        chunk_world_min + Vec3::splat(VOXELS_PER_AXIS as Freal * VOXEL_SIZE);
 
                     for face in faces.iter() {
-                        affected_voxels.clear();
-
                         let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
                         let v2 = self.mesh.vertices[(face.y - 1) as usize] - mesh_min;
                         let v3 = self.mesh.vertices[(face.z - 1) as usize] - mesh_min;
 
-                        let min = v1.min(v2).min(v3);
-                        let max = v1.max(v2).max(v3);
+                        // Compute the face's bounding box in world coordinates
+                        let face_min = v1.min(v2).min(v3);
+                        let face_max = v1.max(v2).max(v3);
 
-                        let world_min_voxel = min / VOXEL_SIZE;
-                        let world_max_voxel = max / VOXEL_SIZE;
+                        // Compute the overlapping region between the face and the chunk
+                        let overlap_min = face_min.max(chunk_world_min) - splat;
+                        let overlap_max = face_max.min(chunk_world_max) + splat;
 
-                        let world_min_voxel = world_min_voxel.as_ivec3();
-                        let world_max_voxel = world_max_voxel.as_ivec3() + IVec3::splat(1);
-                        let diff_voxel = world_max_voxel - world_min_voxel;
-
-                        let mut current_chunk_index = calculate_chunk_index(
-                            world_min_voxel,
-                            self.chunks_size,
-                            self.chunks_len,
-                        );
-                        let mut current_min_voxel = IVec3::MAX;
-                        let mut current_max_voxel = IVec3::MIN;
-
-                        for y in 0..diff_voxel.y {
-                            for z in 0..diff_voxel.z {
-                                for x in 0..diff_voxel.x {
-                                    let world_voxel = world_min_voxel + IVec3::new(x, y, z);
-
-                                    let chunk_index = calculate_chunk_index(
-                                        world_voxel,
-                                        self.chunks_size,
-                                        self.chunks_len,
-                                    );
-
-                                    if chunk_index != loop_chunk_index {
-                                        continue;
-                                    }
-
-                                    if chunk_index != current_chunk_index
-                                        && current_min_voxel != IVec3::MAX
-                                    {
-                                        if current_chunk_index == loop_chunk_index {
-                                            affected_voxels.push((
-                                                convert_voxel_world_to_local(current_min_voxel),
-                                                convert_voxel_world_to_local(current_max_voxel),
-                                            ));
-                                        }
-
-                                        current_min_voxel = IVec3::MAX;
-                                        current_max_voxel = IVec3::MIN;
-                                    }
-
-                                    current_chunk_index = chunk_index;
-                                    current_min_voxel = current_min_voxel.min(world_voxel);
-                                    current_max_voxel = current_max_voxel.max(world_voxel);
-                                }
-                            }
-                        }
-
-                        if current_min_voxel != IVec3::MAX
-                            && current_chunk_index == loop_chunk_index
+                        // Check if there is any overlap
+                        if overlap_min.x >= overlap_max.x
+                            || overlap_min.y >= overlap_max.y
+                            || overlap_min.z >= overlap_max.z
                         {
-                            affected_voxels.push((
-                                convert_voxel_world_to_local(current_min_voxel),
-                                convert_voxel_world_to_local(current_max_voxel),
-                            ));
+                            // No overlap with the current chunk, skip to the next face
+                            continue;
                         }
 
-                        for (min_voxel, max_voxel) in affected_voxels.iter() {
-                            for y in min_voxel.y..=max_voxel.y {
-                                for z in min_voxel.z..=max_voxel.z {
-                                    for x in min_voxel.x..=max_voxel.x {
-                                        let world_voxel_position = Vec3::new(
-                                            (chunk_world_position.x + x) as Freal * VOXEL_SIZE,
-                                            (chunk_world_position.y + y) as Freal * VOXEL_SIZE,
-                                            (chunk_world_position.z + z) as Freal * VOXEL_SIZE,
-                                        );
+                        // Map the overlapping region to voxel indices within the chunk
+                        let local_min_voxel = ((overlap_min - chunk_world_min) / VOXEL_SIZE)
+                            .floor()
+                            .as_ivec3();
+                        let local_max_voxel = ((overlap_max - chunk_world_min) / VOXEL_SIZE)
+                            .ceil()
+                            .as_ivec3();
 
-                                        let world_min_position = world_voxel_position - splat;
-                                        let world_max_position =
-                                            world_voxel_position + Vec3::splat(VOXEL_SIZE) + splat;
+                        // Clamp voxel indices to valid range [0, VOXELS_PER_AXIS - 1]
+                        let local_min_voxel = local_min_voxel
+                            .clamp(IVec3::ZERO, IVec3::splat(VOXELS_PER_AXIS as i32 - 1));
+                        let local_max_voxel = local_max_voxel
+                            .clamp(IVec3::ZERO, IVec3::splat(VOXELS_PER_AXIS as i32 - 1));
 
-                                        let intersects = triangle_cube_intersection(
-                                            (v1, v2, v3),
-                                            (world_min_position, world_max_position),
-                                        );
+                        // Iterate over the voxels within the overlapping region
+                        for y in local_min_voxel.y..=local_max_voxel.y {
+                            for z in local_min_voxel.z..=local_max_voxel.z {
+                                for x in local_min_voxel.x..=local_max_voxel.x {
+                                    // Compute world position of the voxel
+                                    let world_voxel_position = chunk_world_min
+                                        + Vec3::new(x as Freal, y as Freal, z as Freal)
+                                            * VOXEL_SIZE;
 
-                                        if intersects {
-                                            loop_chunk.set_value(x as u8, y as u8, z as u8, 1);
-                                        }
+                                    // Expand voxel bounds slightly by epsilon (if needed)
+                                    let world_min_position = world_voxel_position - splat;
+                                    let world_max_position =
+                                        world_voxel_position + Vec3::splat(VOXEL_SIZE) + splat;
+
+                                    // Perform the intersection test
+                                    if triangle_cube_intersection(
+                                        (v1, v2, v3),
+                                        (world_min_position, world_max_position),
+                                    ) {
+                                        chunk.set_value(x as u8, y as u8, z as u8, 1);
                                     }
                                 }
                             }
@@ -291,7 +260,7 @@ impl Voxelizer {
         for face in self.mesh.faces.iter() {
             for vertex_index in [face.x, face.y, face.z] {
                 let vertex = self.mesh.vertices[(vertex_index - 1) as usize] - mesh_min;
-                let voxel = (vertex / VOXEL_SIZE).floor().as_ivec3();
+                let voxel = (vertex * INV_VOXEL_SIZE).floor().as_ivec3();
                 let local_voxel = convert_voxel_world_to_local(voxel);
 
                 let chunk_index = calculate_chunk_index(voxel, chunks_size, chunks_len);
