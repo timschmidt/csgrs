@@ -3,8 +3,10 @@ pub(crate) mod math;
 pub mod obj_reader;
 pub mod voxelizer;
 pub mod voxtree;
+pub mod world;
 
 pub use chunk::Chunk;
+pub use world::World;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
