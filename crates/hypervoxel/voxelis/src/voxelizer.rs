@@ -8,6 +8,7 @@ use crate::math::triangle_cube_intersection;
 use crate::math::Freal;
 use crate::math::Vec3;
 use crate::obj_reader::Obj;
+use crate::voxelizer;
 use crate::Chunk;
 
 use crate::chunk::VOXELS_PER_AXIS;
@@ -320,26 +321,27 @@ impl Voxelizer {
 
         self.prepare_chunks();
 
-        let now = Instant::now();
-        let face_to_chunk_map_now = Instant::now();
+        let face_to_chunk_map_time = Instant::now();
 
         println!("Building face-to-chunk mapping");
 
         // Build face-to-chunk mapping
         let chunk_face_map = self.build_face_to_chunk_map();
 
-        let face_to_chunk_map_time = face_to_chunk_map_now.elapsed();
+        let face_to_chunk_map_time = face_to_chunk_map_time.elapsed();
+
+        let voxelize_time = Instant::now();
 
         self.voxelize_mesh(&chunk_face_map);
 
-        let voxelize_time = now.elapsed();
+        let voxelize_time = voxelize_time.elapsed();
 
         println!(
             "Voxelize finished, updating LODs for {} chunks",
             self.chunks.len()
         );
 
-        let update_lods_now = Instant::now();
+        let update_lods_time = Instant::now();
 
         self.update_lods();
 
@@ -349,7 +351,7 @@ impl Voxelizer {
             .filter(|chunk| chunk.is_empty())
             .count();
 
-        let update_lods_time = update_lods_now.elapsed();
+        let update_lods_time = update_lods_time.elapsed();
         let total = face_to_chunk_map_time + voxelize_time + update_lods_time;
 
         println!(
