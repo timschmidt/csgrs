@@ -283,7 +283,7 @@ impl Computable {
         }
         let mut sign = Sign::NoSign;
         let mut p = 0;
-        while p > -1000 && sign == Sign::NoSign {
+        while p > -2000 && sign == Sign::NoSign {
             let appr = self.approx(p);
             p -= 10;
             sign = appr.sign();
@@ -367,7 +367,7 @@ impl Computable {
     }
 
     /// MSD but iteratively without a guess as to precision
-    fn iter_msd(&self) -> Precision {
+    pub(super) fn iter_msd(&self) -> Precision {
         let mut prec = 0;
 
         // prec = 0, -16, -40, -76, etc.
@@ -901,6 +901,17 @@ mod tests {
         let eight: BigInt = "8".parse().unwrap();
         let g = Computable::integer(eight.clone());
         assert_eq!(Some(3), g.msd(-4));
+    }
+
+    #[test]
+    fn iter_msd() {
+        let one = Computable::one();
+        assert_eq!(one.iter_msd(), 0);
+        let pi = Computable::pi();
+        assert_eq!(pi.iter_msd(), 1);
+        let five = Rational::new(5);
+        let e = Computable::e(five);
+        assert_eq!(e.iter_msd(), 7);
     }
 
     #[test]
