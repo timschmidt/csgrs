@@ -1,13 +1,13 @@
 use std::{io::Write, path::Path};
 
-use crate::World;
+use crate::Model;
 
-pub fn export_obj(name: String, path: &Path, world: &World) {
+pub fn export_model_to_obj(name: String, path: &Path, model: &Model) {
     let mut vertices: Vec<bevy::math::Vec3> = Vec::new();
     let mut normals: Vec<bevy::math::Vec3> = Vec::new();
     let mut indices: Vec<u32> = Vec::new();
 
-    for chunk in world.chunks.iter() {
+    for chunk in model.chunks.iter() {
         if chunk.is_empty() {
             continue;
         }
