@@ -7,6 +7,7 @@ use byteorder::BigEndian;
 use byteorder::WriteBytesExt;
 
 use crate::export::{decode_varint, encode_varint};
+use crate::io::VTC_MAGIC;
 use crate::math::Freal;
 use crate::voxtree::calculate_voxels_per_axis;
 use crate::voxtree::VoxTree;
@@ -316,7 +317,7 @@ impl Chunk {
 
         let mut writer = std::io::BufWriter::new(data);
 
-        writer.write_all("VoxTreeChunk".as_bytes()).unwrap();
+        writer.write_all(&VTC_MAGIC).unwrap();
         writer
             .write_u32::<BigEndian>(rle_data.len() as u32)
             .unwrap();
