@@ -274,7 +274,7 @@ fn main() {
     // let path = Path::new("statue_02.obj");
     // let path = Path::new("statue_02_huge.obj");
     // let path = Path::new("statue_02_human_reference.obj");
-    // let path = Path::new("statue_03.obj");
+    let path = Path::new("statue_03.obj");
     // let path = Path::new("statue_04.obj");
     // let path = Path::new("statue_05.obj");
     // let path = Path::new("statue_06.obj");
@@ -291,7 +291,7 @@ fn main() {
     // let path = Path::new("wall_floor.obj");
     // let path = Path::new("worm_gear.obj");
 
-    let path = Path::new("bedroom.obj");
+    // let path = Path::new("bedroom.obj");
     // let  path = Path::new("buddha.obj");
     // let  path = Path::new("sponza.obj");
     // let  path = Path::new("dragon_small.obj");
