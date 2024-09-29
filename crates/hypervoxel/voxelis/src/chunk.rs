@@ -1,10 +1,11 @@
+use bevy::prelude::*;
+use bevy::render::mesh::{Indices, PrimitiveTopology};
+use bevy::render::render_asset::RenderAssetUsages;
+
 use crate::export::encode_varint;
 use crate::math::Freal;
 use crate::voxtree::calculate_voxels_per_axis;
 use crate::voxtree::VoxTree;
-use bevy::prelude::*;
-use bevy::render::mesh::{Indices, PrimitiveTopology};
-use bevy::render::render_asset::RenderAssetUsages;
 
 const CUBE_VERTS: [bevy::math::Vec3; 8] = [
     bevy::math::Vec3::new(-1.0, 1.0, -1.0),

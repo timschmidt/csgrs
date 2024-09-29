@@ -1,8 +1,9 @@
-use byteorder::{LittleEndian, WriteBytesExt};
 use std::{
     io::Write,
     path::{Path, PathBuf},
 };
+
+use byteorder::{BigEndian, LittleEndian};
 
 use crate::{chunk::MAX_LOD_LEVEL, Model};
 
