@@ -85,21 +85,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ad-altum"
-version = "24.2.0"
-dependencies = [
- "bevy",
- "bevy_egui",
- "bevy_panorbit_camera",
- "bevy_screen_diagnostics",
- "egui_extras",
- "log",
- "rayon",
- "rustc-hash 2.0.0",
- "voxelis",
-]
-
-[[package]]
 name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4289,6 +4274,21 @@ dependencies = [
  "rayon",
  "rustc-hash 2.0.0",
  "zstd",
+]
+
+[[package]]
+name = "vtm-viewer"
+version = "24.2.0"
+dependencies = [
+ "bevy",
+ "bevy_egui",
+ "bevy_panorbit_camera",
+ "bevy_screen_diagnostics",
+ "egui_extras",
+ "log",
+ "rayon",
+ "rustc-hash 2.0.0",
+ "voxelis",
 ]
 
 [[package]]

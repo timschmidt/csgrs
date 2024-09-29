@@ -257,7 +257,7 @@ fn toggle_wireframe(
 }
 
 fn main() {
-    let base_path = Path::new("ad-altum/assets/");
+    let base_path = Path::new("vtm-viewer/assets/");
 
     // let path = Path::new("procedural_brick_wall.obj");
     // let path = Path::new("barn_0.obj");
@@ -313,7 +313,7 @@ fn main() {
     let mut voxelizer = Voxelizer::new(obj);
     voxelizer.voxelize();
 
-    let base_export_path = Path::new("ad-altum/assets/export/");
+    let base_export_path = Path::new("vtm-viewer/assets/export/");
 
     let name = path.file_stem().unwrap().to_str().unwrap().to_string();
 
@@ -331,7 +331,7 @@ fn main() {
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
-                    title: "Ad Altum".to_string(),
+                    title: "VoxTreeModel Viewer".to_string(),
                     present_mode: PresentMode::Immediate,
                     ..default()
                 }),
