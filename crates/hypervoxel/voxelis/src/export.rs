@@ -10,7 +10,7 @@ use crate::{
 };
 
 pub fn encode_varint(mut value: usize) -> Vec<u8> {
-    let mut bytes = Vec::new();
+    let mut bytes = Vec::with_capacity(8);
 
     while value >= 0x80 {
         // Set the MSB to indicate more bytes follow
@@ -27,14 +27,19 @@ pub fn encode_varint(mut value: usize) -> Vec<u8> {
 pub fn decode_varint(iter: &mut std::slice::Iter<u8>) -> Option<usize> {
     let mut result = 0usize;
     let mut shift = 0;
+
     loop {
         let byte = *iter.next()?;
+
         result |= ((byte & 0x7F) as usize) << shift;
+
         if byte & 0x80 == 0 {
             break;
         }
+
         shift += 7;
     }
+
     Some(result)
 }
 
