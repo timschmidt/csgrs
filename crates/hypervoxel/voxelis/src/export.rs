@@ -5,7 +5,7 @@ use md5::{Digest, Md5};
 
 use crate::{
     chunk::MAX_LOD_LEVEL,
-    io::{DEFAULT_FLAGS, RESERVED_1, RESERVED_2, VTM_MAGIC, VTM_VERSION},
+    io::{Flags, RESERVED_1, RESERVED_2, VTM_MAGIC, VTM_VERSION},
     Model,
 };
 
@@ -93,9 +93,12 @@ pub fn export_model_to_vtm(name: String, path: PathBuf, model: &Model) {
     let mut vox_file = std::fs::File::create(path).unwrap();
     let mut writer = std::io::BufWriter::new(&mut vox_file);
 
+    let flags = Flags::DEFAULT;
+    // let flags = Flags::NONE;
+
     writer.write_all(&VTM_MAGIC).unwrap();
     writer.write_u16::<BigEndian>(VTM_VERSION).unwrap();
-    writer.write_u16::<BigEndian>(DEFAULT_FLAGS.bits()).unwrap();
+    writer.write_u16::<BigEndian>(flags.bits()).unwrap();
     writer.write_u8(MAX_LOD_LEVEL as u8).unwrap();
     writer.write_u32::<BigEndian>(RESERVED_1).unwrap();
     writer.write_u32::<BigEndian>(RESERVED_2).unwrap();

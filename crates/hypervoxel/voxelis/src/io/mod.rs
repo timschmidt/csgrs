@@ -7,8 +7,6 @@ pub const VTC_MAGIC: [u8; 12] = *b"VoxTreeChunk";
 pub const RESERVED_1: u32 = 0;
 pub const RESERVED_2: u32 = 0;
 
-pub const DEFAULT_FLAGS: Flags = Flags::DEFAULT;
-
 bitflags! {
   #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
   pub struct Flags: u16 {
