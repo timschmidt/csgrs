@@ -3,7 +3,7 @@ use voxelis::{obj_reader::Obj, voxelizer::Voxelizer};
 
 fn prepare_obj() -> Obj {
     let path = "../ad-altum/assets/statue_03.obj";
-    Obj::parse(path)
+    Obj::parse(&path)
 }
 
 fn benchmark_voxelize(c: &mut Criterion) {
