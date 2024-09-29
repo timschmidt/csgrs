@@ -227,17 +227,20 @@ impl Chunk {
                     }
 
                     if has_top {
-                        Self::add_quad(vertices, indices, normals, &v0, &v2, &v3, &v1, &VECTOR_UP);
+                        Self::add_quad(
+                            vertices,
+                            indices,
+                            normals,
+                            (&v0, &v2, &v3, &v1),
+                            &VECTOR_UP,
+                        );
                     }
                     if has_right {
                         Self::add_quad(
                             vertices,
                             indices,
                             normals,
-                            &v2,
-                            &v5,
-                            &v6,
-                            &v1,
+                            (&v2, &v5, &v6, &v1),
                             &VECTOR_RIGHT,
                         );
                     }
@@ -246,10 +249,7 @@ impl Chunk {
                             vertices,
                             indices,
                             normals,
-                            &v7,
-                            &v5,
-                            &v4,
-                            &v6,
+                            (&v7, &v5, &v4, &v6),
                             &VECTOR_DOWN,
                         );
                     }
@@ -258,10 +258,7 @@ impl Chunk {
                             vertices,
                             indices,
                             normals,
-                            &v0,
-                            &v7,
-                            &v4,
-                            &v3,
+                            (&v0, &v7, &v4, &v3),
                             &VECTOR_LEFT,
                         );
                     }
@@ -270,10 +267,7 @@ impl Chunk {
                             vertices,
                             indices,
                             normals,
-                            &v3,
-                            &v6,
-                            &v7,
-                            &v2,
+                            (&v3, &v6, &v7, &v2),
                             &VECTOR_BACK,
                         );
                     }
@@ -282,10 +276,7 @@ impl Chunk {
                             vertices,
                             indices,
                             normals,
-                            &v1,
-                            &v4,
-                            &v5,
-                            &v0,
+                            (&v1, &v4, &v5, &v0),
                             &VECTOR_FORWARD,
                         );
                     }
@@ -347,12 +338,16 @@ impl Chunk {
         vertices: &mut Vec<bevy::math::Vec3>,
         indices: &mut Vec<u32>,
         normals: &mut Vec<bevy::math::Vec3>,
-        v0: &bevy::math::Vec3,
-        v1: &bevy::math::Vec3,
-        v2: &bevy::math::Vec3,
-        v3: &bevy::math::Vec3,
+        quad: (
+            &bevy::math::Vec3,
+            &bevy::math::Vec3,
+            &bevy::math::Vec3,
+            &bevy::math::Vec3,
+        ),
         normal: &bevy::math::Vec3,
     ) {
+        let (v0, v1, v2, v3) = quad;
+
         let index = vertices.len() as u32;
 
         vertices.push(*v0);
