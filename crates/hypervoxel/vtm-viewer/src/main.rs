@@ -308,7 +308,7 @@ fn main() {
 
     let import_path = base_path.join(path);
 
-    let obj = obj_reader::Obj::parse(import_path.to_str().unwrap());
+    let obj = obj_reader::Obj::parse(&import_path);
 
     let mut voxelizer = Voxelizer::new(obj);
     voxelizer.voxelize();
@@ -320,10 +320,10 @@ fn main() {
     // // export_model_to_obj(name.clone(), base_export_path.join(path), &voxelizer.model);
     let export_vtm_path = base_export_path.join(format!("{}.vtm", name));
     println!("Exporting model to VTM {}", export_vtm_path.display());
-    export_model_to_vtm(name.clone(), export_vtm_path.clone(), &voxelizer.model);
+    export_model_to_vtm(name.clone(), &export_vtm_path, &voxelizer.model);
 
     println!("Importing model from VTM {}", export_vtm_path.display());
-    let model = import_model_from_vtm(base_export_path.join(format!("{}.vtm", name)));
+    let model = import_model_from_vtm(&export_vtm_path);
 
     // voxelizer.simple_voxelize();
 

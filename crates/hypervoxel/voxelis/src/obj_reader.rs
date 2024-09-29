@@ -1,6 +1,7 @@
 use std::{
     fs::File,
     io::{BufRead, BufReader},
+    path::Path,
 };
 
 use bevy::math::IVec3;
@@ -16,8 +17,8 @@ pub struct Obj {
 }
 
 impl Obj {
-    pub fn parse(path: &str) -> Self {
-        println!("Parsing obj file: {}", path);
+    pub fn parse<P: AsRef<Path>>(path: &P) -> Self {
+        println!("Parsing obj file: {}", path.as_ref().display());
 
         let file = File::open(path).unwrap();
         let reader = BufReader::new(file);
@@ -72,7 +73,7 @@ impl Obj {
         );
         let size = Vec3::new(max_x - min_x, max_y - min_y, max_z - min_z);
 
-        println!("Parsed obj file: {}", path);
+        println!("Parsed obj file: {}", path.as_ref().display());
         println!("Vertices: {}", vertices.len());
         println!("Faces: {}", faces.len());
         println!("Size: {:?}", size);

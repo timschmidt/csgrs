@@ -1,4 +1,4 @@
-use std::{io::Read, path::PathBuf};
+use std::{io::Read, path::Path};
 
 use bevy::math::IVec3;
 use byteorder::{BigEndian, ReadBytesExt};
@@ -10,7 +10,7 @@ use crate::{
     Model,
 };
 
-pub fn import_model_from_vtm(path: PathBuf) -> Model {
+pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
     let mut vox_file = std::fs::File::open(path).unwrap();
     let mut reader = std::io::BufReader::new(&mut vox_file);
 

@@ -1,4 +1,4 @@
-use std::{io::Write, path::PathBuf};
+use std::{io::Write, path::Path};
 
 use byteorder::{BigEndian, WriteBytesExt};
 use md5::{Digest, Md5};
@@ -9,7 +9,7 @@ use crate::{
     Model,
 };
 
-pub fn export_model_to_obj(name: String, path: PathBuf, model: &Model) {
+pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model) {
     let mut vertices: Vec<bevy::math::Vec3> = Vec::new();
     let mut normals: Vec<bevy::math::Vec3> = Vec::new();
     let mut indices: Vec<u32> = Vec::new();
@@ -55,7 +55,7 @@ pub fn export_model_to_obj(name: String, path: PathBuf, model: &Model) {
     }
 }
 
-pub fn export_model_to_vtm(name: String, path: PathBuf, model: &Model) {
+pub fn export_model_to_vtm<P: AsRef<Path>>(name: String, path: &P, model: &Model) {
     let mut vox_file = std::fs::File::create(path).unwrap();
     let mut writer = std::io::BufWriter::new(&mut vox_file);
 
