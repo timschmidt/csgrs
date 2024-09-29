@@ -318,7 +318,7 @@ fn main() {
 
     let name = path.file_stem().unwrap().to_str().unwrap().to_string();
 
-    export_model_to_obj(name.clone(), base_export_path.join(path), &voxelizer.model);
+    // export_model_to_obj(name.clone(), base_export_path.join(path), &voxelizer.model);
     export_model_to_vtm(
         name.clone(),
         base_export_path.join(format!("{}.vtm", name)),
