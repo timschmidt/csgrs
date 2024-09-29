@@ -9,7 +9,6 @@ fn prepare_obj() -> Obj {
 fn benchmark_voxelize(c: &mut Criterion) {
     let obj = prepare_obj();
     let mut voxelizer = Voxelizer::new(obj);
-    voxelizer.prepare_chunks();
     let face_chunk_map = voxelizer.build_face_to_chunk_map();
 
     c.bench_function("voxelizing", |b| {
