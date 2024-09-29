@@ -104,11 +104,17 @@ pub fn export_model_to_vtm(name: String, path: PathBuf, model: &Model) {
     writer.write_u32::<BigEndian>(RESERVED_2).unwrap();
 
     let size = model.chunks_size;
-    writer.write_u16::<BigEndian>(size.x as u16).unwrap();
-    writer.write_u16::<BigEndian>(size.y as u16).unwrap();
-    writer.write_u16::<BigEndian>(size.z as u16).unwrap();
+    writer
+        .write_u16::<BigEndian>(size.x.try_into().unwrap())
+        .unwrap();
+    writer
+        .write_u16::<BigEndian>(size.y.try_into().unwrap())
+        .unwrap();
+    writer
+        .write_u16::<BigEndian>(size.z.try_into().unwrap())
+        .unwrap();
 
-    writer.write_u8(name.len() as u8).unwrap();
+    writer.write_u8(name.len().try_into().unwrap()).unwrap();
     writer.write_all(name.as_bytes()).unwrap();
 
     let mut data = Vec::new();
@@ -119,7 +125,7 @@ pub fn export_model_to_vtm(name: String, path: PathBuf, model: &Model) {
     let compressed_data = encoder.finish().unwrap();
 
     let mut md5_hasher = Md5::new();
-    md5_hasher.update(&compressed_data);
+    md5_hasher.update(&data);
     let md5_hash = md5_hasher.finalize();
 
     writer.write_all(&md5_hash).unwrap();
