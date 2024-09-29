@@ -469,6 +469,24 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
     pub fn iter(&self) -> VoxTreeIterator<MAX_LOD_LEVEL> {
         VoxTreeIterator::new(&self.data)
     }
+
+    pub fn for_each_mut<F>(&mut self, mut f: F)
+    where
+        F: FnMut(usize, &mut i32),
+    {
+        let voxels_per_axis = calculate_voxels_per_axis(MAX_LOD_LEVEL);
+        let max_size = voxels_per_axis * voxels_per_axis * voxels_per_axis;
+        let min_index = calculate_lod_data_index(0, MAX_LOD_LEVEL);
+        let max_index = min_index + max_size;
+
+        for index in min_index..max_index {
+            let mut value = 0;
+
+            f(index - min_index, &mut value);
+
+            self.set_value_for_index(index, value);
+        }
+    }
 }
 
 impl<const MAX_LOD_LEVEL: usize> Default for VoxTree<MAX_LOD_LEVEL> {
