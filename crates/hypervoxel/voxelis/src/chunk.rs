@@ -313,13 +313,26 @@ impl Chunk {
     }
 
     pub fn serialize(&self, data: &mut Vec<u8>) {
-        let rle_data = self.encode_rle();
-
         let mut writer = std::io::BufWriter::new(data);
 
         writer.write_all(&VTC_MAGIC).unwrap();
+
+        let position = self.position;
+
         writer
-            .write_u32::<BigEndian>(rle_data.len() as u32)
+            .write_u16::<BigEndian>(position.x.try_into().unwrap())
+            .unwrap();
+        writer
+            .write_u16::<BigEndian>(position.y.try_into().unwrap())
+            .unwrap();
+        writer
+            .write_u16::<BigEndian>(position.z.try_into().unwrap())
+            .unwrap();
+
+        let rle_data = self.encode_rle();
+
+        writer
+            .write_u32::<BigEndian>(rle_data.len().try_into().unwrap())
             .unwrap();
         writer.write_all(&rle_data).unwrap();
     }
