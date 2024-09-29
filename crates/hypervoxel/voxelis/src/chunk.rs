@@ -6,7 +6,7 @@ use bevy::render::render_asset::RenderAssetUsages;
 use byteorder::BigEndian;
 use byteorder::WriteBytesExt;
 
-use crate::export::encode_varint;
+use crate::export::{decode_varint, encode_varint};
 use crate::math::Freal;
 use crate::voxtree::calculate_voxels_per_axis;
 use crate::voxtree::VoxTree;
@@ -352,6 +352,22 @@ impl Chunk {
         }
 
         buffer
+    }
+
+    fn decode_rle(input: &[u8]) -> Vec<i32> {
+        let mut output = Vec::new();
+        let mut iter = input.iter();
+
+        while let Some(count) = decode_varint(&mut iter) {
+            // Read the next 4 bytes for the i32 value
+            let value =
+                decode_varint(&mut iter).expect("Unexpected end of input during value read") as i32;
+
+            // Append 'value' to the output 'count' times
+            output.extend(std::iter::repeat(value).take(count));
+        }
+
+        output
     }
 
     fn add_quad(
