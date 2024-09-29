@@ -120,18 +120,23 @@ pub fn export_model_to_vtm(name: String, path: PathBuf, model: &Model) {
     let mut data = Vec::new();
     model.serialize(&mut data);
 
-    let mut encoder = zstd::stream::Encoder::new(Vec::new(), 7).unwrap();
-    std::io::copy(&mut data.as_slice(), &mut encoder).unwrap();
-    let compressed_data = encoder.finish().unwrap();
-
     let mut md5_hasher = Md5::new();
     md5_hasher.update(&data);
     let md5_hash = md5_hasher.finalize();
 
     writer.write_all(&md5_hash).unwrap();
 
+    let data = if flags.contains(Flags::COMPRESSED) {
+        let mut encoder = zstd::stream::Encoder::new(Vec::new(), 7).unwrap();
+        std::io::copy(&mut data.as_slice(), &mut encoder).unwrap();
+
+        encoder.finish().unwrap()
+    } else {
+        data
+    };
+
     writer
-        .write_u32::<BigEndian>(compressed_data.len() as u32)
+        .write_u32::<BigEndian>(data.len().try_into().unwrap())
         .unwrap();
-    writer.write_all(&compressed_data).unwrap();
+    writer.write_all(&data).unwrap();
 }
