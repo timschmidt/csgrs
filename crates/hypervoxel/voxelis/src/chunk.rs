@@ -346,8 +346,8 @@ impl Chunk {
             let count_bytes = encode_varint(count);
             buffer.extend(count_bytes);
 
-            // Serialize the i32 value into 4 bytes (little-endian)
-            let value_bytes = value.to_le_bytes();
+            // Encode the value using variable-length encoding
+            let value_bytes = encode_varint(value as usize);
             buffer.extend_from_slice(&value_bytes);
         }
 
