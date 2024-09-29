@@ -44,7 +44,7 @@ impl Model {
         self.chunks = Self::init_chunks(self.chunks_size, self.chunks_len);
     }
 
-    pub fn serialize(&self, data: &mut Vec<u8>, sizes: &mut Vec<u16>) {
+    pub fn serialize(&self, data: &mut Vec<u8>, sizes: &mut Vec<u32>) {
         const BUFFER_SIZE: usize = 1024 * 256;
 
         let chunks_data: Vec<Vec<u8>> = self

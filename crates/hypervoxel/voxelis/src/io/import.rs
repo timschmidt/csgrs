@@ -68,8 +68,8 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
 
     let mut sizes_reader = std::io::BufReader::new(sizes.as_slice());
 
-    for _ in 0..sizes.len() / 2 {
-        let size = sizes_reader.read_u16::<BigEndian>().unwrap();
+    for _ in 0..sizes.len() / 4 {
+        let size = sizes_reader.read_u32::<BigEndian>().unwrap();
         sizes_data.push(size);
     }
 
