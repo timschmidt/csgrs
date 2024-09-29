@@ -8,7 +8,6 @@ use crate::math::triangle_cube_intersection;
 use crate::math::Freal;
 use crate::math::Vec3;
 use crate::obj_reader::Obj;
-use crate::Chunk;
 
 use crate::chunk::INV_VOXEL_SIZE;
 use crate::chunk::VOXELS_PER_AXIS;
