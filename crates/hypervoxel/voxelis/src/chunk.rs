@@ -6,7 +6,7 @@ use bevy::render::render_asset::RenderAssetUsages;
 use byteorder::BigEndian;
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
-use crate::export::{decode_varint, encode_varint};
+use crate::io::export::{decode_varint, encode_varint};
 use crate::io::VTC_MAGIC;
 use crate::math::Freal;
 use crate::voxtree::calculate_voxels_per_axis;
