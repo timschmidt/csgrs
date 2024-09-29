@@ -35,6 +35,20 @@ pub fn encode_varint(mut value: usize) -> Vec<u8> {
     bytes
 }
 
+pub fn decode_varint(iter: &mut std::slice::Iter<u8>) -> Option<usize> {
+    let mut result = 0usize;
+    let mut shift = 0;
+    loop {
+        let byte = *iter.next()?;
+        result |= ((byte & 0x7F) as usize) << shift;
+        if byte & 0x80 == 0 {
+            break;
+        }
+        shift += 7;
+    }
+    Some(result)
+}
+
 pub fn export_model_to_obj(name: String, path: PathBuf, model: &Model) {
     let mut vertices: Vec<bevy::math::Vec3> = Vec::new();
     let mut normals: Vec<bevy::math::Vec3> = Vec::new();
