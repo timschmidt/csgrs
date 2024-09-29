@@ -21,8 +21,8 @@ use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
 use voxelis::export::{export_model_to_obj, export_model_to_vtm};
-use voxelis::obj_reader;
 use voxelis::voxelizer::Voxelizer;
+use voxelis::{obj_reader, Model};
 
 struct GamePlugin;
 
@@ -30,7 +30,7 @@ struct GamePlugin;
 struct Chunk;
 
 #[derive(Resource)]
-pub struct VoxelizerResource(pub Voxelizer);
+pub struct ModelResource(pub Model);
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
@@ -102,11 +102,11 @@ fn generate_chunk_color(x: i32, y: i32, z: i32) -> Color {
 fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut voxelizer: ResMut<VoxelizerResource>,
+    mut model: ResMut<ModelResource>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let voxelizer = &mut voxelizer.0;
+    let model = &mut model.0;
 
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
@@ -182,8 +182,7 @@ fn setup(
 
     println!("Generating meshes...");
 
-    let chunks_meshes: Vec<Option<Mesh>> = voxelizer
-        .model
+    let chunks_meshes: Vec<Option<Mesh>> = model
         .chunks
         .par_iter()
         .map(|chunk| chunk.generate_mesh())
@@ -198,7 +197,7 @@ fn setup(
 
         let mesh = meshes.add(chunk_mesh.clone());
 
-        let chunk_position = voxelizer.model.chunks[i].get_position();
+        let chunk_position = model.chunks[i].get_position();
 
         let mesh_material = materials.add(StandardMaterial {
             base_color: generate_chunk_color(chunk_position.x, chunk_position.y, chunk_position.z),
@@ -324,6 +323,8 @@ fn main() {
         &voxelizer.model,
     );
 
+    let model = voxelizer.model;
+
     // voxelizer.simple_voxelize();
 
     App::new()
@@ -353,7 +354,7 @@ fn main() {
             blue: 0.02,
             alpha: 1.0,
         })))
-        .insert_resource(VoxelizerResource(voxelizer))
+        .insert_resource(ModelResource(model))
         .insert_resource(Msaa::Off)
         .run();
 
