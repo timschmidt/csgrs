@@ -1,4 +1,5 @@
 use bevy::math::IVec3;
+use rayon::prelude::*;
 
 use crate::Chunk;
 
@@ -43,9 +44,22 @@ impl Model {
         self.chunks = Self::init_chunks(self.chunks_size, self.chunks_len);
     }
 
-    pub fn serialize(&self, data: &mut Vec<u8>) {
-        for chunk in self.chunks.iter() {
-            chunk.serialize(data);
+    pub fn serialize(&self, data: &mut Vec<u8>, sizes: &mut Vec<u16>) {
+        const BUFFER_SIZE: usize = 1024 * 256;
+
+        let chunks_data: Vec<Vec<u8>> = self
+            .chunks
+            .par_iter()
+            .map(|chunk| {
+                let mut buffer = Vec::with_capacity(BUFFER_SIZE);
+                chunk.serialize(&mut buffer);
+                buffer
+            })
+            .collect();
+
+        for chunk_data in chunks_data.iter() {
+            sizes.push(chunk_data.len().try_into().unwrap());
+            data.extend(chunk_data);
         }
     }
 

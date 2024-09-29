@@ -118,7 +118,8 @@ pub fn export_model_to_vtm(name: String, path: PathBuf, model: &Model) {
     writer.write_all(name.as_bytes()).unwrap();
 
     let mut data = Vec::new();
-    model.serialize(&mut data);
+    let mut sizes = Vec::new();
+    model.serialize(&mut data, &mut sizes);
 
     let mut md5_hasher = Md5::new();
     md5_hasher.update(&data);
@@ -126,14 +127,29 @@ pub fn export_model_to_vtm(name: String, path: PathBuf, model: &Model) {
 
     writer.write_all(&md5_hash).unwrap();
 
-    let data = if flags.contains(Flags::COMPRESSED) {
+    let mut sizes_data = Vec::new();
+    for size in sizes.iter() {
+        sizes_data.extend(size.to_be_bytes());
+    }
+
+    let (sizes, data) = if flags.contains(Flags::COMPRESSED) {
+        let mut encoder = zstd::stream::Encoder::new(Vec::new(), 7).unwrap();
+        std::io::copy(&mut sizes_data.as_slice(), &mut encoder).unwrap();
+        let sizes_data = encoder.finish().unwrap();
+
         let mut encoder = zstd::stream::Encoder::new(Vec::new(), 7).unwrap();
         std::io::copy(&mut data.as_slice(), &mut encoder).unwrap();
+        let data = encoder.finish().unwrap();
 
-        encoder.finish().unwrap()
+        (sizes_data, data)
     } else {
-        data
+        (sizes_data, data)
     };
+
+    writer
+        .write_u32::<BigEndian>(sizes.len().try_into().unwrap())
+        .unwrap();
+    writer.write_all(&sizes).unwrap();
 
     writer
         .write_u32::<BigEndian>(data.len().try_into().unwrap())
