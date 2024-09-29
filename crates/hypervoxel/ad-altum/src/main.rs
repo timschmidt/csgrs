@@ -112,9 +112,8 @@ fn setup(
         directional_light: DirectionalLight {
             color: Color::srgb(0.98, 0.95, 0.82),
             shadows_enabled: true,
-            // illuminance: 5_000., //light_consts::lux::OVERCAST_DAY,
-            illuminance: light_consts::lux::AMBIENT_DAYLIGHT,
-
+            illuminance: 3_000., //light_consts::lux::OVERCAST_DAY,
+            // illuminance: light_consts::lux::AMBIENT_DAYLIGHT,
             ..default()
         },
         transform: Transform::from_xyz(0.0, 0.0, 0.0)
