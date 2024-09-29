@@ -257,75 +257,16 @@ fn toggle_wireframe(
 }
 
 fn main() {
-    let base_path = Path::new("vtm-viewer/assets/");
+    if std::env::args().len() < 2 {
+        println!("Usage: vtm-viewer <vtm-file>");
+        std::process::exit(1);
+    }
 
-    // let path = Path::new("procedural_brick_wall.obj");
-    // let path = Path::new("barn_0.obj");
-    // let path = Path::new("column.obj");
-    // let path = Path::new("cylinder.obj");
-    // let path = Path::new("default_cube.obj");
-    // let path = Path::new("fence_0.obj");
-    // let path = Path::new("gear.obj");
-    // let path = Path::new("icosphere.obj");
-    // let path = Path::new("polonez.obj");
-    // let path = Path::new("rhino.obj");
-    // let path = Path::new("sphere.obj");
-    // let path = Path::new("statue_01.obj");
-    // let path = Path::new("statue_02.obj");
-    // let path = Path::new("statue_02_huge.obj");
-    // let path = Path::new("statue_02_human_reference.obj");
-    let path = Path::new("statue_03.obj");
-    // let path = Path::new("statue_04.obj");
-    // let path = Path::new("statue_05.obj");
-    // let path = Path::new("statue_06.obj");
-    // let path = Path::new("statue_07.obj");
-    // let path = Path::new("statue_08.obj");
-    // let path = Path::new("statue_09.obj");
-    // let path = Path::new("statue_10.obj");
-    // let path = Path::new("suzanne.obj");
-    // let path = Path::new("torus.obj");
-    // let path = Path::new("torus_knot.obj");
-    // let path = Path::new("wall.obj");
-    // let path = Path::new("wall_arc.obj");
-    // let path = Path::new("wall_dome.obj");
-    // let path = Path::new("wall_floor.obj");
-    // let path = Path::new("worm_gear.obj");
+    let input = std::env::args().nth(1).unwrap();
+    let input = Path::new(&input);
 
-    // let path = Path::new("bedroom.obj");
-    // let  path = Path::new("buddha.obj");
-    // let  path = Path::new("sponza.obj");
-    // let  path = Path::new("dragon_small.obj");
-    // let  path = Path::new("dragon.obj");
-    // let  path = Path::new("chestnut_01.obj");
-    // let  path = Path::new("chestnut.obj");
-    // let  path = Path::new("powerplant.obj");
-    // let  path = Path::new("thors_hammer.obj");
-    // let  path = Path::new("walls.obj");
-    // let  path = Path::new("some_shield.obj");
-    // let  path = Path::new("medium_scout.obj");
-    // let  path = Path::new("large_scout.obj");
-    // let  path = Path::new("ships.obj");
-
-    let import_path = base_path.join(path);
-
-    let obj = obj_reader::Obj::parse(&import_path);
-
-    let mut voxelizer = Voxelizer::new(obj);
-    voxelizer.voxelize();
-
-    let base_export_path = Path::new("vtm-viewer/assets/export/");
-
-    let name = path.file_stem().unwrap().to_str().unwrap().to_string();
-
-    // // export_model_to_obj(name.clone(), base_export_path.join(path), &voxelizer.model);
-    let export_vtm_path = base_export_path.join(format!("{}.vtm", name));
-    println!("Exporting model to VTM {}", export_vtm_path.display());
-    export_model_to_vtm(name.clone(), &export_vtm_path, &voxelizer.model);
-
-    println!("Importing model from VTM {}", export_vtm_path.display());
-    let model = import_model_from_vtm(&export_vtm_path);
-
-    // voxelizer.simple_voxelize();
+    println!("Opening VTM model {}", input.display());
+    let model = import_model_from_vtm(&input);
 
     App::new()
         .add_plugins((
