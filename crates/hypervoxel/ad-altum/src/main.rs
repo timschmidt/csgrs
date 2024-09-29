@@ -20,7 +20,7 @@ use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
-use voxelis::export::{export_model_to_obj, export_model_to_vtm};
+use voxelis::export::{export_model_to_obj, export_model_to_vtm, import_model_from_vtm};
 use voxelis::voxelizer::Voxelizer;
 use voxelis::{obj_reader, Model};
 
@@ -316,14 +316,13 @@ fn main() {
 
     let name = path.file_stem().unwrap().to_str().unwrap().to_string();
 
-    // export_model_to_obj(name.clone(), base_export_path.join(path), &voxelizer.model);
-    export_model_to_vtm(
-        name.clone(),
-        base_export_path.join(format!("{}.vtm", name)),
-        &voxelizer.model,
-    );
+    // // export_model_to_obj(name.clone(), base_export_path.join(path), &voxelizer.model);
+    let export_vtm_path = base_export_path.join(format!("{}.vtm", name));
+    println!("Exporting model to VTM {}", export_vtm_path.display());
+    export_model_to_vtm(name.clone(), export_vtm_path.clone(), &voxelizer.model);
 
-    let model = voxelizer.model;
+    println!("Importing model from VTM {}", export_vtm_path.display());
+    let model = import_model_from_vtm(base_export_path.join(format!("{}.vtm", name)));
 
     // voxelizer.simple_voxelize();
 

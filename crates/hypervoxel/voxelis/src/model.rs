@@ -76,4 +76,13 @@ impl Model {
 
         chunks
     }
+
+    pub fn deserialize(&mut self, data: &[u8], offsets: &[usize]) {
+        self.chunks
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(chunk_index, chunk)| {
+                chunk.deserialize(data, chunk_index, offsets);
+            });
+    }
 }

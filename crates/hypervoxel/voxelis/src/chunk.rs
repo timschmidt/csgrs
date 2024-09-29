@@ -1,10 +1,10 @@
-use std::io::Write;
+use std::io::{BufReader, Read, Write};
 
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
 use byteorder::BigEndian;
-use byteorder::WriteBytesExt;
+use byteorder::{ReadBytesExt, WriteBytesExt};
 
 use crate::export::{decode_varint, encode_varint};
 use crate::io::VTC_MAGIC;
@@ -335,6 +335,30 @@ impl Chunk {
             .write_u32::<BigEndian>(rle_data.len().try_into().unwrap())
             .unwrap();
         writer.write_all(&rle_data).unwrap();
+    }
+
+    pub fn deserialize(&mut self, data: &[u8], chunk_index: usize, offsets: &[usize]) {
+        let offset = offsets[chunk_index];
+        let mut reader = BufReader::new(&data[offset..]);
+
+        let mut magic = [0; VTC_MAGIC.len()];
+        reader.read_exact(&mut magic).unwrap();
+        assert_eq!(magic, VTC_MAGIC);
+
+        let x = reader.read_u16::<BigEndian>().unwrap() as i32;
+        let y = reader.read_u16::<BigEndian>().unwrap() as i32;
+        let z = reader.read_u16::<BigEndian>().unwrap() as i32;
+        self.position = IVec3::new(x, y, z);
+
+        let data_len = reader.read_u32::<BigEndian>().unwrap() as usize;
+        let mut data = vec![0; data_len];
+        reader.read_exact(&mut data).unwrap();
+
+        let rle_data = Self::decode_rle(&data);
+
+        self.data.for_each_mut(|index, value| {
+            *value = rle_data[index];
+        });
     }
 
     fn encode_rle(&self) -> Vec<u8> {
