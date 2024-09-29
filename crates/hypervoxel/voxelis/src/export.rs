@@ -73,7 +73,7 @@ pub fn export_model_to_obj(name: String, path: PathBuf, model: &Model) {
 pub fn export_model_to_vtm(name: String, path: PathBuf, model: &Model) {
     let mut data: Vec<u8> = Vec::new();
 
-    model.run_length_encode(&mut data);
+    model.serialize(&mut data);
 
     let mut encoder = zstd::stream::Encoder::new(Vec::new(), 7).unwrap();
     std::io::copy(&mut data.as_slice(), &mut encoder).unwrap();

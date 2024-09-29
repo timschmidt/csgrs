@@ -316,7 +316,7 @@ impl Chunk {
         )
     }
 
-    pub fn run_length_encode(&self, data: &mut Vec<u8>) {
+    pub fn serialize(&self, data: &mut Vec<u8>) {
         let mut iter = self.data.iter().peekable();
 
         while let Some(value) = iter.next() {
