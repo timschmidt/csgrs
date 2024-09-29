@@ -30,7 +30,7 @@ const VECTOR_LEFT: Vec3 = bevy::math::Vec3::new(-1.0, 0.0, 0.0);
 const VECTOR_FORWARD: Vec3 = bevy::math::Vec3::new(0.0, 0.0, -1.0);
 const VECTOR_BACK: Vec3 = bevy::math::Vec3::new(0.0, 0.0, 1.0);
 
-pub const MAX_LOD_LEVEL: usize = 5;
+pub const MAX_LOD_LEVEL: usize = 6;
 pub const VOXELS_PER_AXIS: u8 = calculate_voxels_per_axis(MAX_LOD_LEVEL) as u8;
 pub const VOXELS_PER_AXIS_MINUS_ONE: u8 = VOXELS_PER_AXIS - 1;
 pub const VOXEL_SIZE: Freal = 1.0 / VOXELS_PER_AXIS as Freal;
