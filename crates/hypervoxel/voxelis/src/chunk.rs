@@ -312,7 +312,7 @@ impl Chunk {
     }
 
     pub fn serialize(&self, data: &mut Vec<u8>) {
-        let rle_data = self.run_length_encode();
+        let rle_data = self.encode_rle();
 
         let mut writer = std::io::BufWriter::new(data);
 
@@ -323,7 +323,7 @@ impl Chunk {
         writer.write_all(&rle_data).unwrap();
     }
 
-    fn run_length_encode(&self) -> Vec<u8> {
+    fn encode_rle(&self) -> Vec<u8> {
         let mut buffer = Vec::new();
 
         let mut iter = self.data.iter().peekable();
