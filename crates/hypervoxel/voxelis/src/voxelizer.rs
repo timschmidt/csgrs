@@ -71,19 +71,6 @@ impl Voxelizer {
         self.model.clear();
     }
 
-    pub fn prepare_chunks(&mut self) {
-        println!("Initializing {} chunks", self.model.chunks_len);
-
-        // Initialize chunks
-        for y in 0..self.model.chunks_size.y {
-            for z in 0..self.model.chunks_size.z {
-                for x in 0..self.model.chunks_size.x {
-                    self.model.chunks.push(Chunk::with_position(x, y, z));
-                }
-            }
-        }
-    }
-
     pub fn build_face_to_chunk_map(&mut self) -> FxHashMap<usize, Vec<IVec3>> {
         let mut chunk_face_map: FxHashMap<usize, Vec<IVec3>> = FxHashMap::default();
 
@@ -227,8 +214,6 @@ impl Voxelizer {
     }
 
     pub fn simple_voxelize(&mut self) {
-        self.prepare_chunks();
-
         let chunks_size = self.model.chunks_size;
         let chunks_len = self.model.chunks_len;
 
@@ -261,8 +246,6 @@ impl Voxelizer {
 
     pub fn voxelize(&mut self) {
         println!("Voxelize started");
-
-        self.prepare_chunks();
 
         let face_to_chunk_map_time = Instant::now();
 
