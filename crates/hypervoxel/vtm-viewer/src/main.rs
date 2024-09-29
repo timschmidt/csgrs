@@ -20,7 +20,7 @@ use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
-use voxelis::io::export::{export_model_to_obj, export_model_to_vtm};
+use voxelis::io::export::export_model_to_vtm;
 use voxelis::io::import::import_model_from_vtm;
 use voxelis::voxelizer::Voxelizer;
 use voxelis::{obj_reader, Model};
