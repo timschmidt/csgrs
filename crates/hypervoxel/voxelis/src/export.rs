@@ -7,7 +7,7 @@ use byteorder::{BigEndian, LittleEndian};
 
 use crate::{chunk::MAX_LOD_LEVEL, Model};
 
-const VTM_VERSION: u16 = 1;
+const VTM_VERSION: u16 = 0x0100;
 
 pub fn encode_varint(mut value: usize) -> Vec<u8> {
     let mut bytes = Vec::new();
