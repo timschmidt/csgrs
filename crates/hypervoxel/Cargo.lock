@@ -4292,6 +4292,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "vtm-voxelize"
+version = "24.2.0"
+dependencies = [
+ "voxelis",
+]
+
+[[package]]
 name = "walkdir"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
