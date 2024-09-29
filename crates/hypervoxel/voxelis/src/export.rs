@@ -1,13 +1,24 @@
-use std::{
-    io::Write,
-    path::{Path, PathBuf},
-};
+use std::{io::Write, path::PathBuf};
 
-use byteorder::{BigEndian, LittleEndian};
+use bitflags::bitflags;
+use byteorder::{BigEndian, WriteBytesExt};
+use md5::{Digest, Md5};
 
 use crate::{chunk::MAX_LOD_LEVEL, Model};
 
 const VTM_VERSION: u16 = 0x0100;
+const DEFAULT_FLAGS: Flags = Flags::DEFAULT;
+const RESERVED_1: u32 = 0;
+const RESERVED_2: u32 = 0;
+
+bitflags! {
+  #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+  struct Flags: u16 {
+    const COMPRESSED = 0b00000001;
+
+    const DEFAULT = Self::COMPRESSED.bits();
+  }
+}
 
 pub fn encode_varint(mut value: usize) -> Vec<u8> {
     let mut bytes = Vec::new();
@@ -71,28 +82,39 @@ pub fn export_model_to_obj(name: String, path: PathBuf, model: &Model) {
 }
 
 pub fn export_model_to_vtm(name: String, path: PathBuf, model: &Model) {
-    let mut data: Vec<u8> = Vec::new();
+    let mut vox_file = std::fs::File::create(path).unwrap();
+    let mut writer = std::io::BufWriter::new(&mut vox_file);
 
+    writer.write_all("VoxTreeModel".as_bytes()).unwrap();
+    writer.write_u16::<BigEndian>(VTM_VERSION).unwrap();
+    writer.write_u16::<BigEndian>(DEFAULT_FLAGS.bits()).unwrap();
+    writer.write_u8(MAX_LOD_LEVEL as u8).unwrap();
+    writer.write_u32::<BigEndian>(RESERVED_1).unwrap();
+    writer.write_u32::<BigEndian>(RESERVED_2).unwrap();
+
+    let size = model.chunks_size;
+    writer.write_u16::<BigEndian>(size.x as u16).unwrap();
+    writer.write_u16::<BigEndian>(size.y as u16).unwrap();
+    writer.write_u16::<BigEndian>(size.z as u16).unwrap();
+
+    writer.write_u8(name.len() as u8).unwrap();
+    writer.write_all(name.as_bytes()).unwrap();
+
+    let mut data = Vec::new();
     model.serialize(&mut data);
 
     let mut encoder = zstd::stream::Encoder::new(Vec::new(), 7).unwrap();
     std::io::copy(&mut data.as_slice(), &mut encoder).unwrap();
     let compressed_data = encoder.finish().unwrap();
 
-    let mut vox_file = std::fs::File::create(path).unwrap();
-    let mut writer = std::io::BufWriter::new(&mut vox_file);
+    let mut md5_hasher = Md5::new();
+    md5_hasher.update(&compressed_data);
+    let md5_hash = md5_hasher.finalize();
 
-    writer.write_all("VoxTreeModel".as_bytes()).unwrap();
-    writer.write_u16::<LittleEndian>(VTM_VERSION).unwrap();
-    writer.write_u8(MAX_LOD_LEVEL as u8).unwrap();
+    writer.write_all(&md5_hash).unwrap();
 
-    let size = model.chunks_size;
-    writer.write_u16::<LittleEndian>(size.x as u16).unwrap();
-    writer.write_u16::<LittleEndian>(size.y as u16).unwrap();
-    writer.write_u16::<LittleEndian>(size.z as u16).unwrap();
-
-    writer.write_u8(name.len() as u8).unwrap();
-    writer.write_all(name.as_bytes()).unwrap();
-
+    writer
+        .write_u32::<BigEndian>(compressed_data.len() as u32)
+        .unwrap();
     writer.write_all(&compressed_data).unwrap();
 }

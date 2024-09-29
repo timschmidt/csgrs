@@ -1,6 +1,10 @@
+use std::io::Write;
+
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
+use byteorder::BigEndian;
+use byteorder::WriteBytesExt;
 
 use crate::export::encode_varint;
 use crate::math::Freal;
@@ -308,6 +312,20 @@ impl Chunk {
     }
 
     pub fn serialize(&self, data: &mut Vec<u8>) {
+        let rle_data = self.run_length_encode();
+
+        let mut writer = std::io::BufWriter::new(data);
+
+        writer.write_all("VoxTreeChunk".as_bytes()).unwrap();
+        writer
+            .write_u32::<BigEndian>(rle_data.len() as u32)
+            .unwrap();
+        writer.write_all(&rle_data).unwrap();
+    }
+
+    fn run_length_encode(&self) -> Vec<u8> {
+        let mut buffer = Vec::new();
+
         let mut iter = self.data.iter().peekable();
 
         while let Some(value) = iter.next() {
@@ -326,12 +344,14 @@ impl Chunk {
 
             // Encode the count using variable-length encoding
             let count_bytes = encode_varint(count);
-            data.extend(count_bytes);
+            buffer.extend(count_bytes);
 
             // Serialize the i32 value into 4 bytes (little-endian)
             let value_bytes = value.to_le_bytes();
-            data.extend_from_slice(&value_bytes);
+            buffer.extend_from_slice(&value_bytes);
         }
+
+        buffer
     }
 
     fn add_quad(
