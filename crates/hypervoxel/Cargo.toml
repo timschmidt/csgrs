@@ -6,16 +6,18 @@ members = ["ad-altum", "voxelis"]
 voxelis = { path = "voxelis" }
 # bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy = "0.14.2"
-byteorder = "1.5.0"
 bevy_egui = "0.29.0"
 bevy_panorbit_camera = { version = "0.19.3", features = ["bevy_egui"] }
-bevy_screen_diagnostics = "0.6.0"
 # bevy_screen_diagnostics = { git = "https://github.com/laundmo/bevy_screen_diagnostics.git", branch = "main" }
+bevy_screen_diagnostics = "0.6.0"
+bitflags = "2.6.0"
+byteorder = "1.5.0"
 egui_extras = "0.28.1"
 log = { version = "*", features = [
   "max_level_debug",
   "release_max_level_warn",
 ] }
+md-5 = "0.10.6"
 rayon = "1.10.0"
 rustc-hash = "2.0.0"
 zstd = "0.13.2"
