@@ -147,33 +147,21 @@ impl Chunk {
         self.data.update_lods();
     }
 
+    #[inline(always)]
     fn add_quad(
         vertices: &mut Vec<Vec3>,
         indices: &mut Vec<u32>,
         normals: &mut Vec<Vec3>,
-        quad: (&Vec3, &Vec3, &Vec3, &Vec3),
-        normal: &Vec3,
+        quad: [Vec3; 4],
+        normal: Vec3,
     ) {
-        let (v0, v1, v2, v3) = quad;
-
         let index = vertices.len() as u32;
 
-        vertices.push(*v0);
-        vertices.push(*v1);
-        vertices.push(*v2);
-        vertices.push(*v3);
+        vertices.extend_from_slice(&quad);
 
-        normals.push(*normal);
-        normals.push(*normal);
-        normals.push(*normal);
-        normals.push(*normal);
+        normals.extend(std::iter::repeat(normal).take(4));
 
-        indices.push(index + 2);
-        indices.push(index + 1);
-        indices.push(index);
-        indices.push(index + 3);
-        indices.push(index);
-        indices.push(index + 1);
+        indices.extend_from_slice(&[index + 2, index + 1, index, index + 3, index, index + 1]);
     }
 
     #[inline(always)]
@@ -197,54 +185,27 @@ impl Chunk {
         let chunk_v6 = CUBE_VERTS[6] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
         let chunk_v7 = CUBE_VERTS[7] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
 
+        let data = self.data.to_vec(0);
+
         for y in 0..VOXELS_PER_AXIS {
-            let is_top = y == VOXELS_PER_AXIS_MINUS_ONE;
-            let is_bottom = y == 0;
-
             for z in 0..VOXELS_PER_AXIS {
-                let is_front = z == VOXELS_PER_AXIS_MINUS_ONE;
-                let is_back = z == 0;
-
                 for x in 0..VOXELS_PER_AXIS {
-                    let value = self.data.get_value(0, x, y, z);
+                    let value = data[Self::get_index(x, y, z)];
 
                     if value == 0 {
                         continue;
                     }
 
-                    let is_right = x == VOXELS_PER_AXIS_MINUS_ONE;
-                    let is_left = x == 0;
+                    let has_top =
+                        y + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x, y + 1, z)] == 0;
+                    let has_bottom = y == 0 || data[Self::get_index(x, y - 1, z)] == 0;
+                    let has_left = x == 0 || data[Self::get_index(x - 1, y, z)] == 0;
+                    let has_right =
+                        x + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x + 1, y, z)] == 0;
+                    let has_back = z == 0 || data[Self::get_index(x, y, z - 1)] == 0;
+                    let has_front =
+                        z + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x, y, z + 1)] == 0;
 
-                    let has_top = if !is_top {
-                        self.data.get_value(0, x, y + 1, z) == 0
-                    } else {
-                        true
-                    };
-                    let has_bottom = if !is_bottom {
-                        self.data.get_value(0, x, y - 1, z) == 0
-                    } else {
-                        true
-                    };
-                    let has_left = if !is_left {
-                        self.data.get_value(0, x - 1, y, z) == 0
-                    } else {
-                        true
-                    };
-                    let has_right = if !is_right {
-                        self.data.get_value(0, x + 1, y, z) == 0
-                    } else {
-                        true
-                    };
-                    let has_back = if !is_back {
-                        self.data.get_value(0, x, y, z - 1) == 0
-                    } else {
-                        true
-                    };
-                    let has_front = if !is_front {
-                        self.data.get_value(0, x, y, z + 1) == 0
-                    } else {
-                        true
-                    };
                     let has_something =
                         has_top || has_bottom || has_left || has_right || has_back || has_front;
 
@@ -254,67 +215,52 @@ impl Chunk {
 
                     let position = Vec3::new(x as f32, y as f32, z as f32) * VOXEL_SIZE_VEC3;
 
-                    let v0 = position + chunk_v0;
-                    let v1 = position + chunk_v1;
-                    let v2 = position + chunk_v2;
-                    let v3 = position + chunk_v3;
-                    let v4 = position + chunk_v4;
-                    let v5 = position + chunk_v5;
-                    let v6 = position + chunk_v6;
-                    let v7 = position + chunk_v7;
-
                     if has_top {
-                        Self::add_quad(
-                            vertices,
-                            indices,
-                            normals,
-                            (&v0, &v2, &v3, &v1),
-                            &VECTOR_UP,
-                        );
+                        let v0 = position + chunk_v0;
+                        let v1 = position + chunk_v1;
+                        let v2 = position + chunk_v2;
+                        let v3 = position + chunk_v3;
+                        Self::add_quad(vertices, indices, normals, [v0, v2, v3, v1], VECTOR_UP);
                     }
                     if has_right {
-                        Self::add_quad(
-                            vertices,
-                            indices,
-                            normals,
-                            (&v2, &v5, &v6, &v1),
-                            &VECTOR_RIGHT,
-                        );
+                        let v1 = position + chunk_v1;
+                        let v2 = position + chunk_v2;
+                        let v5 = position + chunk_v5;
+                        let v6 = position + chunk_v6;
+                        Self::add_quad(vertices, indices, normals, [v2, v5, v6, v1], VECTOR_RIGHT);
                     }
                     if has_bottom {
-                        Self::add_quad(
-                            vertices,
-                            indices,
-                            normals,
-                            (&v7, &v5, &v4, &v6),
-                            &VECTOR_DOWN,
-                        );
+                        let v4 = position + chunk_v4;
+                        let v5 = position + chunk_v5;
+                        let v6 = position + chunk_v6;
+                        let v7 = position + chunk_v7;
+                        Self::add_quad(vertices, indices, normals, [v7, v5, v4, v6], VECTOR_DOWN);
                     }
                     if has_left {
-                        Self::add_quad(
-                            vertices,
-                            indices,
-                            normals,
-                            (&v0, &v7, &v4, &v3),
-                            &VECTOR_LEFT,
-                        );
+                        let v0 = position + chunk_v0;
+                        let v3 = position + chunk_v3;
+                        let v4 = position + chunk_v4;
+                        let v7 = position + chunk_v7;
+                        Self::add_quad(vertices, indices, normals, [v0, v7, v4, v3], VECTOR_LEFT);
                     }
                     if has_front {
-                        Self::add_quad(
-                            vertices,
-                            indices,
-                            normals,
-                            (&v3, &v6, &v7, &v2),
-                            &VECTOR_BACK,
-                        );
+                        let v2 = position + chunk_v2;
+                        let v3 = position + chunk_v3;
+                        let v6 = position + chunk_v6;
+                        let v7 = position + chunk_v7;
+                        Self::add_quad(vertices, indices, normals, [v3, v6, v7, v2], VECTOR_BACK);
                     }
                     if has_back {
+                        let v0 = position + chunk_v0;
+                        let v1 = position + chunk_v1;
+                        let v4 = position + chunk_v4;
+                        let v5 = position + chunk_v5;
                         Self::add_quad(
                             vertices,
                             indices,
                             normals,
-                            (&v1, &v4, &v5, &v0),
-                            &VECTOR_FORWARD,
+                            [v1, v4, v5, v0],
+                            VECTOR_FORWARD,
                         );
                     }
                 }
@@ -329,143 +275,93 @@ impl Chunk {
         indices: &mut Vec<u32>,
         offset: Vec3,
     ) {
-        let voxels_per_axis = VOXELS_PER_AXIS as f32;
-        let tile_size = Vec3::new(1.0, 1.0, 1.0) / voxels_per_axis;
-        let tile_half_size = tile_size / 2.0;
+        let chunk_v0 = CUBE_VERTS[0] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v1 = CUBE_VERTS[1] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v2 = CUBE_VERTS[2] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v3 = CUBE_VERTS[3] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v4 = CUBE_VERTS[4] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v5 = CUBE_VERTS[5] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v6 = CUBE_VERTS[6] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v7 = CUBE_VERTS[7] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
 
-        let chunk_v0 = CUBE_VERTS[0] * tile_half_size + tile_half_size + offset;
-        let chunk_v1 = CUBE_VERTS[1] * tile_half_size + tile_half_size + offset;
-        let chunk_v2 = CUBE_VERTS[2] * tile_half_size + tile_half_size + offset;
-        let chunk_v3 = CUBE_VERTS[3] * tile_half_size + tile_half_size + offset;
-        let chunk_v4 = CUBE_VERTS[4] * tile_half_size + tile_half_size + offset;
-        let chunk_v5 = CUBE_VERTS[5] * tile_half_size + tile_half_size + offset;
-        let chunk_v6 = CUBE_VERTS[6] * tile_half_size + tile_half_size + offset;
-        let chunk_v7 = CUBE_VERTS[7] * tile_half_size + tile_half_size + offset;
+        let data = self.data.to_vec(0);
 
         for y in 0..VOXELS_PER_AXIS {
-            let is_top = y == VOXELS_PER_AXIS_MINUS_ONE;
-            let is_bottom = y == 0;
-
             for z in 0..VOXELS_PER_AXIS {
-                let is_front = z == VOXELS_PER_AXIS_MINUS_ONE;
-                let is_back = z == 0;
-
                 for x in 0..VOXELS_PER_AXIS {
-                    let value = self.data.get_value(0, x, y, z);
+                    let value = data[Self::get_index(x, y, z)];
 
                     if value == 0 {
                         continue;
                     }
 
-                    let is_right = x == VOXELS_PER_AXIS_MINUS_ONE;
-                    let is_left = x == 0;
+                    let has_top =
+                        y + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x, y + 1, z)] == 0;
+                    let has_bottom = y == 0 || data[Self::get_index(x, y - 1, z)] == 0;
+                    let has_left = x == 0 || data[Self::get_index(x - 1, y, z)] == 0;
+                    let has_right =
+                        x + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x + 1, y, z)] == 0;
+                    let has_back = z == 0 || data[Self::get_index(x, y, z - 1)] == 0;
+                    let has_front =
+                        z + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x, y, z + 1)] == 0;
 
-                    let has_top = if !is_top {
-                        self.data.get_value(0, x, y + 1, z) == 0
-                    } else {
-                        true
-                    };
-                    let has_bottom = if !is_bottom {
-                        self.data.get_value(0, x, y - 1, z) == 0
-                    } else {
-                        true
-                    };
-                    let has_left = if !is_left {
-                        self.data.get_value(0, x - 1, y, z) == 0
-                    } else {
-                        true
-                    };
-                    let has_right = if !is_right {
-                        self.data.get_value(0, x + 1, y, z) == 0
-                    } else {
-                        true
-                    };
-                    let has_back = if !is_back {
-                        self.data.get_value(0, x, y, z - 1) == 0
-                    } else {
-                        true
-                    };
-                    let has_front = if !is_front {
-                        self.data.get_value(0, x, y, z + 1) == 0
-                    } else {
-                        true
-                    };
-                    let has_something =
-                        has_top || has_bottom || has_left || has_right || has_back || has_front;
+                    // let has_something =
+                    //     has_top || has_bottom || has_left || has_right || has_back || has_front;
 
-                    if !has_something {
-                        continue;
-                    }
+                    // if !has_something {
+                    //     continue;
+                    // }
 
-                    let position = Vec3::new(
-                        x as f32 * tile_size.x,
-                        y as f32 * tile_size.y,
-                        z as f32 * tile_size.z,
-                    );
+                    // let position = Vec3::new(x as f32, y as f32, z as f32) * VOXEL_SIZE_VEC3;
 
-                    let v0 = position + chunk_v0;
-                    let v1 = position + chunk_v1;
-                    let v2 = position + chunk_v2;
-                    let v3 = position + chunk_v3;
-                    let v4 = position + chunk_v4;
-                    let v5 = position + chunk_v5;
-                    let v6 = position + chunk_v6;
-                    let v7 = position + chunk_v7;
-
-                    if has_top {
-                        // Self::add_quad(
-                        //     vertices,
-                        //     indices,
-                        //     normals,
-                        //     (&v0, &v2, &v3, &v1),
-                        //     &VECTOR_UP,
-                        // );
-                    }
-                    if has_right {
-                        // Self::add_quad(
-                        //     vertices,
-                        //     indices,
-                        //     normals,
-                        //     (&v2, &v5, &v6, &v1),
-                        //     &VECTOR_RIGHT,
-                        // );
-                    }
-                    if has_bottom {
-                        // Self::add_quad(
-                        //     vertices,
-                        //     indices,
-                        //     normals,
-                        //     (&v7, &v5, &v4, &v6),
-                        //     &VECTOR_DOWN,
-                        // );
-                    }
-                    if has_left {
-                        // Self::add_quad(
-                        //     vertices,
-                        //     indices,
-                        //     normals,
-                        //     (&v0, &v7, &v4, &v3),
-                        //     &VECTOR_LEFT,
-                        // );
-                    }
-                    if has_front {
-                        // Self::add_quad(
-                        //     vertices,
-                        //     indices,
-                        //     normals,
-                        //     (&v3, &v6, &v7, &v2),
-                        //     &VECTOR_BACK,
-                        // );
-                    }
-                    if has_back {
-                        // Self::add_quad(
-                        //     vertices,
-                        //     indices,
-                        //     normals,
-                        //     (&v1, &v4, &v5, &v0),
-                        //     &VECTOR_FORWARD,
-                        // );
-                    }
+                    // if has_top {
+                    //     let v0 = position + chunk_v0;
+                    //     let v1 = position + chunk_v1;
+                    //     let v2 = position + chunk_v2;
+                    //     let v3 = position + chunk_v3;
+                    //     Self::add_quad(vertices, indices, normals, [v0, v2, v3, v1], VECTOR_UP);
+                    // }
+                    // if has_right {
+                    //     let v1 = position + chunk_v1;
+                    //     let v2 = position + chunk_v2;
+                    //     let v5 = position + chunk_v5;
+                    //     let v6 = position + chunk_v6;
+                    //     Self::add_quad(vertices, indices, normals, [v2, v5, v6, v1], VECTOR_RIGHT);
+                    // }
+                    // if has_bottom {
+                    //     let v4 = position + chunk_v4;
+                    //     let v5 = position + chunk_v5;
+                    //     let v6 = position + chunk_v6;
+                    //     let v7 = position + chunk_v7;
+                    //     Self::add_quad(vertices, indices, normals, [v7, v5, v4, v6], VECTOR_DOWN);
+                    // }
+                    // if has_left {
+                    //     let v0 = position + chunk_v0;
+                    //     let v3 = position + chunk_v3;
+                    //     let v4 = position + chunk_v4;
+                    //     let v7 = position + chunk_v7;
+                    //     Self::add_quad(vertices, indices, normals, [v0, v7, v4, v3], VECTOR_LEFT);
+                    // }
+                    // if has_front {
+                    //     let v2 = position + chunk_v2;
+                    //     let v3 = position + chunk_v3;
+                    //     let v6 = position + chunk_v6;
+                    //     let v7 = position + chunk_v7;
+                    //     Self::add_quad(vertices, indices, normals, [v3, v6, v7, v2], VECTOR_BACK);
+                    // }
+                    // if has_back {
+                    //     let v0 = position + chunk_v0;
+                    //     let v1 = position + chunk_v1;
+                    //     let v4 = position + chunk_v4;
+                    //     let v5 = position + chunk_v5;
+                    //     Self::add_quad(
+                    //         vertices,
+                    //         indices,
+                    //         normals,
+                    //         [v1, v4, v5, v0],
+                    //         VECTOR_FORWARD,
+                    //     );
+                    // }
                 }
             }
         }
