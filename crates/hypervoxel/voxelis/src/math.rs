@@ -1,5 +1,5 @@
-pub type Vec3 = bevy::math::DVec3;
-pub type Freal = f64;
+pub type Vec3 = bevy::math::Vec3;
+pub type Freal = f32;
 
 pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Vec3, Vec3)) -> bool {
     let (tv0, tv1, tv2) = triangle;
