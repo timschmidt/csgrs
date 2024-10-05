@@ -144,6 +144,35 @@ impl Chunk {
         self.data.update_lods();
     }
 
+    fn add_quad(
+        vertices: &mut Vec<Vec3>,
+        indices: &mut Vec<u32>,
+        normals: &mut Vec<Vec3>,
+        quad: (&Vec3, &Vec3, &Vec3, &Vec3),
+        normal: &Vec3,
+    ) {
+        let (v0, v1, v2, v3) = quad;
+
+        let index = vertices.len() as u32;
+
+        vertices.push(*v0);
+        vertices.push(*v1);
+        vertices.push(*v2);
+        vertices.push(*v3);
+
+        normals.push(*normal);
+        normals.push(*normal);
+        normals.push(*normal);
+        normals.push(*normal);
+
+        indices.push(index + 2);
+        indices.push(index + 1);
+        indices.push(index);
+        indices.push(index + 3);
+        indices.push(index);
+        indices.push(index + 1);
+    }
+
     pub fn generate_mesh_arrays(
         &self,
         vertices: &mut Vec<Vec3>,
@@ -558,34 +587,5 @@ impl Chunk {
         }
 
         output
-    }
-
-    fn add_quad(
-        vertices: &mut Vec<Vec3>,
-        indices: &mut Vec<u32>,
-        normals: &mut Vec<Vec3>,
-        quad: (&Vec3, &Vec3, &Vec3, &Vec3),
-        normal: &Vec3,
-    ) {
-        let (v0, v1, v2, v3) = quad;
-
-        let index = vertices.len() as u32;
-
-        vertices.push(*v0);
-        vertices.push(*v1);
-        vertices.push(*v2);
-        vertices.push(*v3);
-
-        normals.push(*normal);
-        normals.push(*normal);
-        normals.push(*normal);
-        normals.push(*normal);
-
-        indices.push(index + 2);
-        indices.push(index + 1);
-        indices.push(index);
-        indices.push(index + 3);
-        indices.push(index);
-        indices.push(index + 1);
     }
 }
