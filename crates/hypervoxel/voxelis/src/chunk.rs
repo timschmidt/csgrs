@@ -173,6 +173,11 @@ impl Chunk {
         indices.push(index + 1);
     }
 
+    #[inline(always)]
+    fn get_index(x: u8, y: u8, z: u8) -> usize {
+        ((y as usize) << (2 * MAX_LOD_LEVEL)) + ((z as usize) << MAX_LOD_LEVEL) + x as usize
+    }
+
     pub fn generate_mesh_arrays(
         &self,
         vertices: &mut Vec<Vec3>,
