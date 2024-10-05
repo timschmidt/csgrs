@@ -2804,6 +2804,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "meshing-debugger"
+version = "24.2.0"
+dependencies = [
+ "bevy",
+ "bevy_egui 0.30.0",
+ "bevy_panorbit_camera",
+ "bevy_screen_diagnostics",
+ "egui_extras",
+ "log",
+ "voxelis",
+]
+
+[[package]]
 name = "metal"
 version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4274,6 +4287,13 @@ dependencies = [
  "rayon",
  "rustc-hash 2.0.0",
  "zstd",
+]
+
+[[package]]
+name = "vtm-export"
+version = "24.2.0"
+dependencies = [
+ "voxelis",
 ]
 
 [[package]]

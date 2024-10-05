@@ -1,6 +1,12 @@
 [workspace]
 resolver = "2"
-members = ["voxelis", "vtm-viewer", "vtm-voxelize"]
+members = [
+  "meshing-debugger",
+  "voxelis",
+  "vtm-export",
+  "vtm-viewer",
+  "vtm-voxelize",
+]
 
 [workspace.dependencies]
 voxelis = { path = "voxelis" }

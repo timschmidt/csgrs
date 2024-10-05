@@ -1,0 +1,9 @@
+[package]
+name = "vtm-export"
+version = "24.2.0"
+authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+voxelis.workspace = true
