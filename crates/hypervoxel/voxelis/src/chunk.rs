@@ -85,11 +85,12 @@ impl Chunk {
         self.data.update_lods();
     }
 
-    pub fn generate_data(&mut self) {
+    pub fn generate_test_data(&mut self) {
         for y in 0..VOXELS_PER_AXIS {
-            for z in 0..VOXELS_PER_AXIS {
-                for x in 0..VOXELS_PER_AXIS {
-                    self.data.set_value(0, x, y, z, (x + y + z) as i32);
+            let offset = y % 2;
+            for z in offset..VOXELS_PER_AXIS - offset {
+                for x in offset..VOXELS_PER_AXIS - offset {
+                    self.data.set_value(0, x, y, z, y as i32 + 1);
                 }
             }
         }

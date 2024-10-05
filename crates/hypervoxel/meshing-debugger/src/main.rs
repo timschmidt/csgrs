@@ -111,11 +111,11 @@ fn setup(
     });
 
     let mut naive_chunk = voxelis::Chunk::new();
-    naive_chunk.generate_data();
+    naive_chunk.generate_test_data();
     let naive_mesh = naive_chunk.generate_mesh().unwrap();
 
     let mut greedy_chunk = voxelis::Chunk::new();
-    greedy_chunk.generate_data();
+    greedy_chunk.generate_test_data();
     let greedy_mesh = greedy_chunk.generate_mesh().unwrap();
 
     let naive_mesh = meshes.add(naive_mesh);
