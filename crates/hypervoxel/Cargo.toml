@@ -12,13 +12,13 @@ members = [
 voxelis = { path = "voxelis" }
 # bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy = "0.14.2"
-bevy_egui = "0.29.0"
+bevy_egui = "0.30.0"
 bevy_panorbit_camera = { version = "0.19.3", features = ["bevy_egui"] }
 # bevy_screen_diagnostics = { git = "https://github.com/laundmo/bevy_screen_diagnostics.git", branch = "main" }
 bevy_screen_diagnostics = "0.6.0"
 bitflags = "2.6.0"
 byteorder = "1.5.0"
-egui_extras = "0.28.1"
+egui_extras = "0.29.1"
 log = { version = "*", features = [
   "max_level_debug",
   "release_max_level_warn",
