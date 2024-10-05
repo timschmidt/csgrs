@@ -487,6 +487,22 @@ impl<const MAX_LOD_LEVEL: usize> VoxTree<MAX_LOD_LEVEL> {
             self.set_value_for_index(index, value);
         }
     }
+
+    pub fn to_vec(&self, lod: usize) -> Vec<i32> {
+        let voxels_per_axis = calculate_voxels_per_axis(MAX_LOD_LEVEL - lod);
+        let size = voxels_per_axis * voxels_per_axis * voxels_per_axis;
+        let min_index = calculate_lod_data_index(lod, MAX_LOD_LEVEL);
+        let max_index = min_index + size;
+
+        let mut data = vec![0; size];
+
+        for index in min_index..max_index {
+            let value = self.get_value_for_index(index);
+            data[index - min_index] = value;
+        }
+
+        data
+    }
 }
 
 impl<const MAX_LOD_LEVEL: usize> Default for VoxTree<MAX_LOD_LEVEL> {
