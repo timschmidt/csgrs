@@ -195,35 +195,35 @@ impl Chunk {
                     let is_right = x == VOXELS_PER_AXIS_MINUS_ONE;
                     let is_left = x == 0;
 
-                    let has_top = if is_top {
-                        true
-                    } else {
+                    let has_top = if !is_top {
                         self.data.get_value(0, x, y + 1, z) == 0
-                    };
-                    let has_bottom = if is_bottom {
-                        true
                     } else {
+                        true
+                    };
+                    let has_bottom = if !is_bottom {
                         self.data.get_value(0, x, y - 1, z) == 0
-                    };
-                    let has_left = if is_left {
-                        true
                     } else {
+                        true
+                    };
+                    let has_left = if !is_left {
                         self.data.get_value(0, x - 1, y, z) == 0
-                    };
-                    let has_right = if is_right {
-                        true
                     } else {
+                        true
+                    };
+                    let has_right = if !is_right {
                         self.data.get_value(0, x + 1, y, z) == 0
-                    };
-                    let has_back = if is_back {
-                        true
                     } else {
+                        true
+                    };
+                    let has_back = if !is_back {
                         self.data.get_value(0, x, y, z - 1) == 0
-                    };
-                    let has_front = if is_front {
-                        true
                     } else {
+                        true
+                    };
+                    let has_front = if !is_front {
                         self.data.get_value(0, x, y, z + 1) == 0
+                    } else {
+                        true
                     };
                     let has_something =
                         has_top || has_bottom || has_left || has_right || has_back || has_front;
