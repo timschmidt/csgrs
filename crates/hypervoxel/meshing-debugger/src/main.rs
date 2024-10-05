@@ -56,22 +56,9 @@ fn setup(
                 },
                 // transform: Transform::from_xyz(0.0, 7., 14.0)
                 transform: Transform {
-                    translation: Vec3 {
-                        x: 1.494671,
-                        y: 1.4369639,
-                        z: -2.2307386,
-                    },
-                    rotation: Quat {
-                        x: -0.0011287899,
-                        y: 0.98234415,
-                        z: 0.18698518,
-                        w: 0.0059302035,
-                    },
-                    scale: Vec3 {
-                        x: 1.0,
-                        y: 1.0,
-                        z: 1.0,
-                    },
+                    translation: Vec3::new(1.494671, 1.4369639, -2.2307386),
+                    rotation: Quat::from_xyzw(-0.0011287899, 0.98234415, 0.18698518, 0.0059302035),
+                    scale: Vec3::new(1.0, 1.0, 1.0),
                 },
                 // transform: Transform::from_xyz(-1.9573995, 1.9533201, -1.9587312)
                 ..default()
