@@ -2,7 +2,7 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use voxelis::{obj_reader::Obj, voxelizer::Voxelizer};
 
 fn prepare_obj() -> Obj {
-    let path = "../ad-altum/assets/statue_03.obj";
+    let path = "../vtm-viewer/assets/statue_03.obj";
     Obj::parse(&path)
 }
 
