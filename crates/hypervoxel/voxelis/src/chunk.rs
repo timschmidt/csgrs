@@ -36,6 +36,9 @@ pub const MAX_LOD_LEVEL: usize = 6;
 pub const VOXELS_PER_AXIS: u8 = calculate_voxels_per_axis(MAX_LOD_LEVEL) as u8;
 pub const VOXELS_PER_AXIS_MINUS_ONE: u8 = VOXELS_PER_AXIS - 1;
 pub const VOXEL_SIZE: Freal = 1.0 / VOXELS_PER_AXIS as Freal;
+pub const VOXEL_SIZE_VEC3: Vec3 = Vec3::splat(VOXEL_SIZE);
+pub const HALF_VOXEL_SIZE: Freal = VOXEL_SIZE / 2.0;
+pub const HALF_VOXEL_SIZE_VEC3: Vec3 = Vec3::splat(HALF_VOXEL_SIZE);
 pub const INV_VOXEL_SIZE: Freal = 1.0 / VOXEL_SIZE;
 
 #[derive(Default)]
@@ -185,18 +188,14 @@ impl Chunk {
         indices: &mut Vec<u32>,
         offset: Vec3,
     ) {
-        let voxels_per_axis = VOXELS_PER_AXIS as f32;
-        let tile_size = Vec3::new(1.0, 1.0, 1.0) / voxels_per_axis;
-        let tile_half_size = tile_size / 2.0;
-
-        let chunk_v0 = CUBE_VERTS[0] * tile_half_size + tile_half_size;
-        let chunk_v1 = CUBE_VERTS[1] * tile_half_size + tile_half_size;
-        let chunk_v2 = CUBE_VERTS[2] * tile_half_size + tile_half_size;
-        let chunk_v3 = CUBE_VERTS[3] * tile_half_size + tile_half_size;
-        let chunk_v4 = CUBE_VERTS[4] * tile_half_size + tile_half_size;
-        let chunk_v5 = CUBE_VERTS[5] * tile_half_size + tile_half_size;
-        let chunk_v6 = CUBE_VERTS[6] * tile_half_size + tile_half_size;
-        let chunk_v7 = CUBE_VERTS[7] * tile_half_size + tile_half_size;
+        let chunk_v0 = CUBE_VERTS[0] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v1 = CUBE_VERTS[1] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v2 = CUBE_VERTS[2] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v3 = CUBE_VERTS[3] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v4 = CUBE_VERTS[4] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v5 = CUBE_VERTS[5] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v6 = CUBE_VERTS[6] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v7 = CUBE_VERTS[7] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
 
         for y in 0..VOXELS_PER_AXIS {
             let is_top = y == VOXELS_PER_AXIS_MINUS_ONE;
@@ -212,21 +211,6 @@ impl Chunk {
                     if value == 0 {
                         continue;
                     }
-
-                    let position = Vec3::new(
-                        x as f32 * tile_size.x,
-                        y as f32 * tile_size.y,
-                        z as f32 * tile_size.z,
-                    );
-
-                    let v0 = position + chunk_v0 + offset;
-                    let v1 = position + chunk_v1 + offset;
-                    let v2 = position + chunk_v2 + offset;
-                    let v3 = position + chunk_v3 + offset;
-                    let v4 = position + chunk_v4 + offset;
-                    let v5 = position + chunk_v5 + offset;
-                    let v6 = position + chunk_v6 + offset;
-                    let v7 = position + chunk_v7 + offset;
 
                     let is_right = x == VOXELS_PER_AXIS_MINUS_ONE;
                     let is_left = x == 0;
@@ -267,6 +251,17 @@ impl Chunk {
                     if !has_something {
                         continue;
                     }
+
+                    let position = Vec3::new(x as f32, y as f32, z as f32) * VOXEL_SIZE_VEC3;
+
+                    let v0 = position + chunk_v0;
+                    let v1 = position + chunk_v1;
+                    let v2 = position + chunk_v2;
+                    let v3 = position + chunk_v3;
+                    let v4 = position + chunk_v4;
+                    let v5 = position + chunk_v5;
+                    let v6 = position + chunk_v6;
+                    let v7 = position + chunk_v7;
 
                     if has_top {
                         Self::add_quad(
