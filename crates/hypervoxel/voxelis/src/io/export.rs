@@ -4,14 +4,14 @@ use byteorder::{BigEndian, WriteBytesExt};
 use md5::{Digest, Md5};
 
 use crate::{
-    chunk::MAX_LOD_LEVEL,
+    chunk::{Vec3, MAX_LOD_LEVEL},
     io::{Flags, RESERVED_1, RESERVED_2, VTM_MAGIC, VTM_VERSION},
     Model,
 };
 
 pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model) {
-    let mut vertices: Vec<bevy::math::Vec3> = Vec::new();
-    let mut normals: Vec<bevy::math::Vec3> = Vec::new();
+    let mut vertices: Vec<Vec3> = Vec::new();
+    let mut normals: Vec<Vec3> = Vec::new();
     let mut indices: Vec<u32> = Vec::new();
 
     for chunk in model.chunks.iter() {
