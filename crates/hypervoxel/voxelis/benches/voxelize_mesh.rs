@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-use voxelis::chunk::Vec3;
+use voxelis::{chunk::Vec3, Chunk};
 
 fn benchmark_meshing(c: &mut Criterion) {
     let offset = Vec3::ZERO;
@@ -8,10 +8,13 @@ fn benchmark_meshing(c: &mut Criterion) {
     let mut chunk = voxelis::Chunk::new();
     chunk.generate_test_data();
 
+    let data = chunk.to_vec(0);
+
     let mut test_vertices = Vec::new();
     let mut test_normals = Vec::new();
     let mut test_indices = Vec::new();
-    chunk.generate_mesh_arrays(
+    Chunk::generate_mesh_arrays(
+        &data,
         &mut test_vertices,
         &mut test_normals,
         &mut test_indices,
@@ -27,12 +30,18 @@ fn benchmark_meshing(c: &mut Criterion) {
     let normals_len = test_normals.len();
     let indices_len = test_indices.len();
 
+    let mut vertices = Vec::with_capacity(vertices_len);
+    let mut normals = Vec::with_capacity(normals_len);
+    let mut indices = Vec::with_capacity(indices_len);
+
     c.bench_function("naive meshing", |b| {
         b.iter(|| {
-            let mut vertices = Vec::with_capacity(vertices_len);
-            let mut normals = Vec::with_capacity(normals_len);
-            let mut indices = Vec::with_capacity(indices_len);
-            chunk.generate_mesh_arrays(
+            vertices.clear();
+            normals.clear();
+            indices.clear();
+
+            Chunk::generate_mesh_arrays(
+                black_box(&data),
                 black_box(&mut vertices),
                 black_box(&mut normals),
                 black_box(&mut indices),
@@ -42,10 +51,12 @@ fn benchmark_meshing(c: &mut Criterion) {
     });
     c.bench_function("greedy meshing", |b| {
         b.iter(|| {
-            let mut vertices = Vec::with_capacity(vertices_len);
-            let mut normals = Vec::with_capacity(normals_len);
-            let mut indices = Vec::with_capacity(indices_len);
-            chunk.generate_greedy_mesh_arrays(
+            vertices.clear();
+            normals.clear();
+            indices.clear();
+
+            Chunk::generate_greedy_mesh_arrays(
+                black_box(&data),
                 black_box(&mut vertices),
                 black_box(&mut normals),
                 black_box(&mut indices),

@@ -6,7 +6,7 @@ use md5::{Digest, Md5};
 use crate::{
     chunk::{Vec3, MAX_LOD_LEVEL},
     io::{Flags, RESERVED_1, RESERVED_2, VTM_MAGIC, VTM_VERSION},
-    Model,
+    Chunk, Model,
 };
 
 pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model) {
@@ -21,7 +21,9 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model
 
         let offset = chunk.get_position().as_vec3();
 
-        chunk.generate_mesh_arrays(&mut vertices, &mut normals, &mut indices, offset);
+        let data = chunk.to_vec(0);
+
+        Chunk::generate_mesh_arrays(&data, &mut vertices, &mut normals, &mut indices, offset);
     }
 
     let obj_file = std::fs::File::create(path).unwrap();

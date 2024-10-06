@@ -5,14 +5,15 @@ use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
 use byteorder::BigEndian;
 use byteorder::{ReadBytesExt, WriteBytesExt};
+use wide::f32x8;
 
 use crate::io::VTC_MAGIC;
 use crate::io::{decode_varint, encode_varint};
-use crate::math::Freal;
 use crate::voxtree::calculate_voxels_per_axis;
 use crate::voxtree::VoxTree;
 
 pub type Vec3 = bevy::math::Vec3;
+pub type Freal = f32;
 
 const CUBE_VERTS: [Vec3; 8] = [
     Vec3::new(-1.0, 1.0, -1.0),
@@ -25,12 +26,12 @@ const CUBE_VERTS: [Vec3; 8] = [
     Vec3::new(-1.0, -1.0, 1.0),
 ];
 
-const VECTOR_UP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
-const VECTOR_RIGHT: Vec3 = Vec3::new(1.0, 0.0, 0.0);
-const VECTOR_DOWN: Vec3 = Vec3::new(0.0, -1.0, 0.0);
-const VECTOR_LEFT: Vec3 = Vec3::new(-1.0, 0.0, 0.0);
-const VECTOR_FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
-const VECTOR_BACK: Vec3 = Vec3::new(0.0, 0.0, 1.0);
+const VEC_UP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+const VEC_RIGHT: Vec3 = Vec3::new(1.0, 0.0, 0.0);
+const VEC_DOWN: Vec3 = Vec3::new(0.0, -1.0, 0.0);
+const VEC_LEFT: Vec3 = Vec3::new(-1.0, 0.0, 0.0);
+const VEC_FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
+const VEC_BACK: Vec3 = Vec3::new(0.0, 0.0, 1.0);
 
 pub const MAX_LOD_LEVEL: usize = 6;
 pub const VOXELS_PER_AXIS: u8 = calculate_voxels_per_axis(MAX_LOD_LEVEL) as u8;
@@ -40,6 +41,8 @@ pub const VOXEL_SIZE_VEC3: Vec3 = Vec3::splat(VOXEL_SIZE);
 pub const HALF_VOXEL_SIZE: Freal = VOXEL_SIZE / 2.0;
 pub const HALF_VOXEL_SIZE_VEC3: Vec3 = Vec3::splat(HALF_VOXEL_SIZE);
 pub const INV_VOXEL_SIZE: Freal = 1.0 / VOXEL_SIZE;
+pub const SHIFT_Y: usize = 1 << (2 * MAX_LOD_LEVEL);
+pub const SHIFT_Z: usize = 1 << MAX_LOD_LEVEL;
 
 #[derive(Default)]
 pub struct Chunk {
@@ -128,98 +131,95 @@ impl Chunk {
     }
 
     pub fn generate_mesh_arrays(
-        &self,
+        data: &[i32],
         vertices: &mut Vec<Vec3>,
         normals: &mut Vec<Vec3>,
         indices: &mut Vec<u32>,
         offset: Vec3,
     ) {
-        let chunk_v0 = CUBE_VERTS[0] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v1 = CUBE_VERTS[1] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v2 = CUBE_VERTS[2] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v3 = CUBE_VERTS[3] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v4 = CUBE_VERTS[4] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v5 = CUBE_VERTS[5] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v6 = CUBE_VERTS[6] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v7 = CUBE_VERTS[7] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let half_voxel_offset = HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v0 = CUBE_VERTS[0] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v1 = CUBE_VERTS[1] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v2 = CUBE_VERTS[2] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v3 = CUBE_VERTS[3] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v4 = CUBE_VERTS[4] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v5 = CUBE_VERTS[5] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v6 = CUBE_VERTS[6] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v7 = CUBE_VERTS[7] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
 
-        let data = self.data.to_vec(0);
+        let chunk_v_x = f32x8::from([
+            chunk_v0.x, chunk_v1.x, chunk_v2.x, chunk_v3.x, chunk_v4.x, chunk_v5.x, chunk_v6.x,
+            chunk_v7.x,
+        ]);
+        let chunk_v_y = f32x8::from([
+            chunk_v0.y, chunk_v1.y, chunk_v2.y, chunk_v3.y, chunk_v4.y, chunk_v5.y, chunk_v6.y,
+            chunk_v7.y,
+        ]);
+        let chunk_v_z = f32x8::from([
+            chunk_v0.z, chunk_v1.z, chunk_v2.z, chunk_v3.z, chunk_v4.z, chunk_v5.z, chunk_v6.z,
+            chunk_v7.z,
+        ]);
 
         for y in 0..VOXELS_PER_AXIS {
+            let base_index_y = (y as usize) * SHIFT_Y;
+            let v_y = f32x8::splat(y as f32 * VOXEL_SIZE_VEC3.y) + chunk_v_y;
+            let v_y_array = v_y.to_array();
+
             for z in 0..VOXELS_PER_AXIS {
+                let base_index_z = base_index_y + (z as usize) * SHIFT_Z;
+                let v_z = f32x8::splat(z as f32 * VOXEL_SIZE_VEC3.z) + chunk_v_z;
+                let v_z_array = v_z.to_array();
+
                 for x in 0..VOXELS_PER_AXIS {
-                    let value = data[Self::get_index(x, y, z)];
+                    let index = base_index_z + x as usize;
 
-                    if value == 0 {
+                    if unsafe { *data.get_unchecked(index) } == 0 {
                         continue;
                     }
 
-                    let has_top =
-                        y + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x, y + 1, z)] == 0;
-                    let has_bottom = y == 0 || data[Self::get_index(x, y - 1, z)] == 0;
-                    let has_left = x == 0 || data[Self::get_index(x - 1, y, z)] == 0;
+                    let has_top = y + 1 >= VOXELS_PER_AXIS
+                        || unsafe { *data.get_unchecked(index + SHIFT_Y) } == 0;
+                    let has_bottom = y == 0 || unsafe { *data.get_unchecked(index - SHIFT_Y) } == 0;
+                    let has_front = z + 1 >= VOXELS_PER_AXIS
+                        || unsafe { *data.get_unchecked(index + SHIFT_Z) } == 0;
+                    let has_back = z == 0 || unsafe { *data.get_unchecked(index - SHIFT_Z) } == 0;
                     let has_right =
-                        x + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x + 1, y, z)] == 0;
-                    let has_back = z == 0 || data[Self::get_index(x, y, z - 1)] == 0;
-                    let has_front =
-                        z + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x, y, z + 1)] == 0;
+                        x + 1 >= VOXELS_PER_AXIS || unsafe { *data.get_unchecked(index + 1) } == 0;
+                    let has_left = x == 0 || unsafe { *data.get_unchecked(index - 1) } == 0;
 
-                    let has_something =
-                        has_top || has_bottom || has_left || has_right || has_back || has_front;
-
-                    if !has_something {
+                    if !(has_top || has_bottom || has_left || has_right || has_back || has_front) {
                         continue;
                     }
 
-                    let position = Vec3::new(x as f32, y as f32, z as f32) * VOXEL_SIZE_VEC3;
+                    let v_x = f32x8::splat(x as f32 * VOXEL_SIZE_VEC3.x) + chunk_v_x;
+                    let v_x_array = v_x.to_array();
+
+                    let v0 = Vec3::new(v_x_array[0], v_y_array[0], v_z_array[0]);
+                    let v1 = Vec3::new(v_x_array[1], v_y_array[1], v_z_array[1]);
+                    let v2 = Vec3::new(v_x_array[2], v_y_array[2], v_z_array[2]);
+                    let v3 = Vec3::new(v_x_array[3], v_y_array[3], v_z_array[3]);
+                    let v4 = Vec3::new(v_x_array[4], v_y_array[4], v_z_array[4]);
+                    let v5 = Vec3::new(v_x_array[5], v_y_array[5], v_z_array[5]);
+                    let v6 = Vec3::new(v_x_array[6], v_y_array[6], v_z_array[6]);
+                    let v7 = Vec3::new(v_x_array[7], v_y_array[7], v_z_array[7]);
 
                     if has_top {
-                        let v0 = position + chunk_v0;
-                        let v1 = position + chunk_v1;
-                        let v2 = position + chunk_v2;
-                        let v3 = position + chunk_v3;
-                        Self::add_quad(vertices, indices, normals, [v0, v2, v3, v1], VECTOR_UP);
+                        Self::add_quad(vertices, indices, normals, [v0, v2, v3, v1], VEC_UP);
                     }
                     if has_right {
-                        let v1 = position + chunk_v1;
-                        let v2 = position + chunk_v2;
-                        let v5 = position + chunk_v5;
-                        let v6 = position + chunk_v6;
-                        Self::add_quad(vertices, indices, normals, [v2, v5, v6, v1], VECTOR_RIGHT);
+                        Self::add_quad(vertices, indices, normals, [v2, v5, v6, v1], VEC_RIGHT);
                     }
                     if has_bottom {
-                        let v4 = position + chunk_v4;
-                        let v5 = position + chunk_v5;
-                        let v6 = position + chunk_v6;
-                        let v7 = position + chunk_v7;
-                        Self::add_quad(vertices, indices, normals, [v7, v5, v4, v6], VECTOR_DOWN);
+                        Self::add_quad(vertices, indices, normals, [v7, v5, v4, v6], VEC_DOWN);
                     }
                     if has_left {
-                        let v0 = position + chunk_v0;
-                        let v3 = position + chunk_v3;
-                        let v4 = position + chunk_v4;
-                        let v7 = position + chunk_v7;
-                        Self::add_quad(vertices, indices, normals, [v0, v7, v4, v3], VECTOR_LEFT);
+                        Self::add_quad(vertices, indices, normals, [v0, v7, v4, v3], VEC_LEFT);
                     }
                     if has_front {
-                        let v2 = position + chunk_v2;
-                        let v3 = position + chunk_v3;
-                        let v6 = position + chunk_v6;
-                        let v7 = position + chunk_v7;
-                        Self::add_quad(vertices, indices, normals, [v3, v6, v7, v2], VECTOR_BACK);
+                        Self::add_quad(vertices, indices, normals, [v3, v6, v7, v2], VEC_BACK);
                     }
                     if has_back {
-                        let v0 = position + chunk_v0;
-                        let v1 = position + chunk_v1;
-                        let v4 = position + chunk_v4;
-                        let v5 = position + chunk_v5;
-                        Self::add_quad(
-                            vertices,
-                            indices,
-                            normals,
-                            [v1, v4, v5, v0],
-                            VECTOR_FORWARD,
-                        );
+                        Self::add_quad(vertices, indices, normals, [v1, v4, v5, v0], VEC_FORWARD);
                     }
                 }
             }
@@ -227,98 +227,95 @@ impl Chunk {
     }
 
     pub fn generate_greedy_mesh_arrays(
-        &self,
+        data: &[i32],
         vertices: &mut Vec<Vec3>,
         normals: &mut Vec<Vec3>,
         indices: &mut Vec<u32>,
         offset: Vec3,
     ) {
-        let chunk_v0 = CUBE_VERTS[0] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v1 = CUBE_VERTS[1] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v2 = CUBE_VERTS[2] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v3 = CUBE_VERTS[3] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v4 = CUBE_VERTS[4] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v5 = CUBE_VERTS[5] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v6 = CUBE_VERTS[6] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
-        let chunk_v7 = CUBE_VERTS[7] * HALF_VOXEL_SIZE_VEC3 + HALF_VOXEL_SIZE_VEC3 + offset;
+        let half_voxel_offset = HALF_VOXEL_SIZE_VEC3 + offset;
+        let chunk_v0 = CUBE_VERTS[0] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v1 = CUBE_VERTS[1] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v2 = CUBE_VERTS[2] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v3 = CUBE_VERTS[3] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v4 = CUBE_VERTS[4] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v5 = CUBE_VERTS[5] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v6 = CUBE_VERTS[6] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
+        let chunk_v7 = CUBE_VERTS[7] * HALF_VOXEL_SIZE_VEC3 + half_voxel_offset;
 
-        let data = self.data.to_vec(0);
+        let chunk_v_x = f32x8::from([
+            chunk_v0.x, chunk_v1.x, chunk_v2.x, chunk_v3.x, chunk_v4.x, chunk_v5.x, chunk_v6.x,
+            chunk_v7.x,
+        ]);
+        let chunk_v_y = f32x8::from([
+            chunk_v0.y, chunk_v1.y, chunk_v2.y, chunk_v3.y, chunk_v4.y, chunk_v5.y, chunk_v6.y,
+            chunk_v7.y,
+        ]);
+        let chunk_v_z = f32x8::from([
+            chunk_v0.z, chunk_v1.z, chunk_v2.z, chunk_v3.z, chunk_v4.z, chunk_v5.z, chunk_v6.z,
+            chunk_v7.z,
+        ]);
 
         for y in 0..VOXELS_PER_AXIS {
-            for z in 0..VOXELS_PER_AXIS {
-                for x in 0..VOXELS_PER_AXIS {
-                    let value = data[Self::get_index(x, y, z)];
+            let base_index_y = (y as usize) * SHIFT_Y;
+            let v_y = f32x8::splat(y as f32 * VOXEL_SIZE_VEC3.y) + chunk_v_y;
+            let v_y_array = v_y.to_array();
 
-                    if value == 0 {
+            for z in 0..VOXELS_PER_AXIS {
+                let base_index_z = base_index_y + (z as usize) * SHIFT_Z;
+                let v_z = f32x8::splat(z as f32 * VOXEL_SIZE_VEC3.z) + chunk_v_z;
+                let v_z_array = v_z.to_array();
+
+                for x in 0..VOXELS_PER_AXIS {
+                    let index = base_index_z + x as usize;
+
+                    if unsafe { *data.get_unchecked(index) } == 0 {
                         continue;
                     }
 
-                    let has_top =
-                        y + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x, y + 1, z)] == 0;
-                    let has_bottom = y == 0 || data[Self::get_index(x, y - 1, z)] == 0;
-                    let has_left = x == 0 || data[Self::get_index(x - 1, y, z)] == 0;
+                    let has_top = y + 1 >= VOXELS_PER_AXIS
+                        || unsafe { *data.get_unchecked(index + SHIFT_Y) } == 0;
+                    let has_bottom = y == 0 || unsafe { *data.get_unchecked(index - SHIFT_Y) } == 0;
+                    let has_front = z + 1 >= VOXELS_PER_AXIS
+                        || unsafe { *data.get_unchecked(index + SHIFT_Z) } == 0;
+                    let has_back = z == 0 || unsafe { *data.get_unchecked(index - SHIFT_Z) } == 0;
                     let has_right =
-                        x + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x + 1, y, z)] == 0;
-                    let has_back = z == 0 || data[Self::get_index(x, y, z - 1)] == 0;
-                    let has_front =
-                        z + 1 >= VOXELS_PER_AXIS || data[Self::get_index(x, y, z + 1)] == 0;
+                        x + 1 >= VOXELS_PER_AXIS || unsafe { *data.get_unchecked(index + 1) } == 0;
+                    let has_left = x == 0 || unsafe { *data.get_unchecked(index - 1) } == 0;
 
-                    // let has_something =
-                    //     has_top || has_bottom || has_left || has_right || has_back || has_front;
+                    if !(has_top || has_bottom || has_left || has_right || has_back || has_front) {
+                        continue;
+                    }
 
-                    // if !has_something {
-                    //     continue;
-                    // }
+                    let v_x = f32x8::splat(x as f32 * VOXEL_SIZE_VEC3.x) + chunk_v_x;
+                    let v_x_array = v_x.to_array();
 
-                    // let position = Vec3::new(x as f32, y as f32, z as f32) * VOXEL_SIZE_VEC3;
+                    let v0 = Vec3::new(v_x_array[0], v_y_array[0], v_z_array[0]);
+                    let v1 = Vec3::new(v_x_array[1], v_y_array[1], v_z_array[1]);
+                    let v2 = Vec3::new(v_x_array[2], v_y_array[2], v_z_array[2]);
+                    let v3 = Vec3::new(v_x_array[3], v_y_array[3], v_z_array[3]);
+                    let v4 = Vec3::new(v_x_array[4], v_y_array[4], v_z_array[4]);
+                    let v5 = Vec3::new(v_x_array[5], v_y_array[5], v_z_array[5]);
+                    let v6 = Vec3::new(v_x_array[6], v_y_array[6], v_z_array[6]);
+                    let v7 = Vec3::new(v_x_array[7], v_y_array[7], v_z_array[7]);
 
                     // if has_top {
-                    //     let v0 = position + chunk_v0;
-                    //     let v1 = position + chunk_v1;
-                    //     let v2 = position + chunk_v2;
-                    //     let v3 = position + chunk_v3;
-                    //     Self::add_quad(vertices, indices, normals, [v0, v2, v3, v1], VECTOR_UP);
+                    //     Self::add_quad(vertices, indices, normals, [v0, v2, v3, v1], VEC_UP);
                     // }
                     // if has_right {
-                    //     let v1 = position + chunk_v1;
-                    //     let v2 = position + chunk_v2;
-                    //     let v5 = position + chunk_v5;
-                    //     let v6 = position + chunk_v6;
-                    //     Self::add_quad(vertices, indices, normals, [v2, v5, v6, v1], VECTOR_RIGHT);
+                    //     Self::add_quad(vertices, indices, normals, [v2, v5, v6, v1], VEC_RIGHT);
                     // }
                     // if has_bottom {
-                    //     let v4 = position + chunk_v4;
-                    //     let v5 = position + chunk_v5;
-                    //     let v6 = position + chunk_v6;
-                    //     let v7 = position + chunk_v7;
-                    //     Self::add_quad(vertices, indices, normals, [v7, v5, v4, v6], VECTOR_DOWN);
+                    //     Self::add_quad(vertices, indices, normals, [v7, v5, v4, v6], VEC_DOWN);
                     // }
                     // if has_left {
-                    //     let v0 = position + chunk_v0;
-                    //     let v3 = position + chunk_v3;
-                    //     let v4 = position + chunk_v4;
-                    //     let v7 = position + chunk_v7;
-                    //     Self::add_quad(vertices, indices, normals, [v0, v7, v4, v3], VECTOR_LEFT);
+                    //     Self::add_quad(vertices, indices, normals, [v0, v7, v4, v3], VEC_LEFT);
                     // }
                     // if has_front {
-                    //     let v2 = position + chunk_v2;
-                    //     let v3 = position + chunk_v3;
-                    //     let v6 = position + chunk_v6;
-                    //     let v7 = position + chunk_v7;
-                    //     Self::add_quad(vertices, indices, normals, [v3, v6, v7, v2], VECTOR_BACK);
+                    //     Self::add_quad(vertices, indices, normals, [v3, v6, v7, v2], VEC_BACK);
                     // }
                     // if has_back {
-                    //     let v0 = position + chunk_v0;
-                    //     let v1 = position + chunk_v1;
-                    //     let v4 = position + chunk_v4;
-                    //     let v5 = position + chunk_v5;
-                    //     Self::add_quad(
-                    //         vertices,
-                    //         indices,
-                    //         normals,
-                    //         [v1, v4, v5, v0],
-                    //         VECTOR_FORWARD,
-                    //     );
+                    //     Self::add_quad(vertices, indices, normals, [v1, v4, v5, v0], VEC_FORWARD);
                     // }
                 }
             }
@@ -334,7 +331,20 @@ impl Chunk {
         let mut normals = Vec::new();
         let mut indices = Vec::new();
 
-        self.generate_mesh_arrays(&mut vertices, &mut normals, &mut indices, Vec3::ZERO);
+        let data = self.to_vec(0);
+
+        Self::generate_mesh_arrays(&data, &mut vertices, &mut normals, &mut indices, Vec3::ZERO);
+
+        Some(
+            Mesh::new(
+                PrimitiveTopology::TriangleList,
+                RenderAssetUsages::RENDER_WORLD,
+            )
+            .with_inserted_indices(Indices::U32(indices))
+            .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
+            .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals),
+        )
+    }
 
     pub fn generate_greedy_mesh(&self) -> Option<Mesh> {
         if self.is_empty() {
