@@ -167,7 +167,7 @@ fn toggle_wireframe(
 }
 
 fn rotate(query: Query<&mut Transform, With<Camera>>) {
-    println!("cam: {:?}", query.iter().next());
+    // println!("cam: {:?}", query.iter().next());
 }
 
 fn main() {
