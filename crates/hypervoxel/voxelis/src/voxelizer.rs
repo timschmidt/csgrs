@@ -9,10 +9,11 @@ use crate::math::Freal;
 use crate::math::Vec3;
 use crate::obj_reader::Obj;
 
-use crate::chunk::INV_VOXEL_SIZE;
 use crate::chunk::VOXELS_PER_AXIS;
-use crate::chunk::VOXEL_SIZE;
 use crate::Model;
+
+pub const VOXEL_SIZE: Freal = 1.0 / VOXELS_PER_AXIS as Freal;
+pub const INV_VOXEL_SIZE: Freal = 1.0 / VOXEL_SIZE;
 
 // Helper function to calculate chunk index from coordinates
 fn calculate_chunk_index_from_coords(x: i32, y: i32, z: i32, chunks_size: IVec3) -> usize {
