@@ -114,9 +114,7 @@ impl Chunk {
         let index = vertices.len() as u32;
 
         vertices.extend_from_slice(&quad);
-
-        normals.extend(std::iter::repeat(normal).take(4));
-
+        normals.extend_from_slice(&[normal, normal, normal, normal]);
         indices.extend_from_slice(&[index + 2, index + 1, index, index + 3, index, index + 1]);
     }
 
