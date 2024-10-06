@@ -40,3 +40,14 @@ opt-level = 3
 [profile.release-debug-info]
 inherits = "release"
 debug = true
+
+# [profile.release]
+# opt-level = 3
+# codegen-units = 1
+# lto = "fat"
+# debug = false
+# overflow-checks = false
+# panic = 'abort'
+
+# [build]
+# rustflags = ["-C", "target-cpu=native"]
