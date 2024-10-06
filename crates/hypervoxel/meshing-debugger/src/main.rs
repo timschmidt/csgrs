@@ -103,7 +103,7 @@ fn setup(
 
     let mut greedy_chunk = voxelis::Chunk::new();
     greedy_chunk.generate_test_data();
-    let greedy_mesh = greedy_chunk.generate_mesh().unwrap();
+    let greedy_mesh = greedy_chunk.generate_greedy_mesh().unwrap();
 
     let naive_mesh = meshes.add(naive_mesh);
     let greedy_mesh = meshes.add(greedy_mesh);
