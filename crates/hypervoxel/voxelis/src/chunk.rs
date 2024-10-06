@@ -336,6 +336,25 @@ impl Chunk {
 
         self.generate_mesh_arrays(&mut vertices, &mut normals, &mut indices, Vec3::ZERO);
 
+    pub fn generate_greedy_mesh(&self) -> Option<Mesh> {
+        if self.is_empty() {
+            return None;
+        }
+
+        let mut vertices = Vec::new();
+        let mut normals = Vec::new();
+        let mut indices = Vec::new();
+
+        let data = self.to_vec(0);
+
+        Self::generate_greedy_mesh_arrays(
+            &data,
+            &mut vertices,
+            &mut normals,
+            &mut indices,
+            Vec3::ZERO,
+        );
+
         Some(
             Mesh::new(
                 PrimitiveTopology::TriangleList,
