@@ -16,6 +16,7 @@ log.workspace = true
 md-5.workspace = true
 rayon.workspace = true
 rustc-hash.workspace = true
+wide.workspace = true
 zstd.workspace = true
 
 [dev-dependencies]

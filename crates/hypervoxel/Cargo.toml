@@ -26,10 +26,11 @@ log = { version = "*", features = [
 md-5 = "0.10.6"
 rayon = "1.10.0"
 rustc-hash = "2.0.0"
+wide = "0.7.28"
 zstd = "0.13.2"
 
 # Enable a small amount of optimization in debug mode
-[profile.dev]
+# [profile.dev]
 #opt-level = 1
 
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
