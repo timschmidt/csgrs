@@ -1,7 +1,7 @@
 use bevy::math::IVec3;
 use rayon::prelude::*;
 
-use crate::Chunk;
+use crate::chunk::Chunk;
 
 #[derive(Default)]
 pub struct World {

@@ -1,5 +1,4 @@
-use bevy::color::palettes::basic::SILVER;
-use bevy::color::palettes::css::{GRAY, GREEN, RED};
+use bevy::color::palettes;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::core_pipeline::Skybox;
@@ -14,6 +13,8 @@ use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
+
+use voxelis::chunk::Chunk as VoxChunk;
 
 struct GamePlugin;
 
@@ -91,17 +92,17 @@ fn setup(
     );
 
     let ground_material = materials.add(StandardMaterial {
-        base_color: Color::from(GRAY),
+        base_color: Color::from(palettes::css::GRAY),
         perceptual_roughness: 0.7,
         reflectance: 0.4,
         ..default()
     });
 
-    let mut naive_chunk = voxelis::Chunk::new();
+    let mut naive_chunk = VoxChunk::new();
     naive_chunk.generate_test_data();
     let naive_mesh = naive_chunk.generate_mesh().unwrap();
 
-    let mut greedy_chunk = voxelis::Chunk::new();
+    let mut greedy_chunk = VoxChunk::new();
     greedy_chunk.generate_test_data();
     let greedy_mesh = greedy_chunk.generate_greedy_mesh().unwrap();
 
@@ -112,14 +113,14 @@ fn setup(
     let greedy_chunk_position = IVec3::new(-1, 0, -1);
 
     let naive_mesh_material = materials.add(StandardMaterial {
-        base_color: Color::from(RED),
+        base_color: Color::from(palettes::css::RED),
         perceptual_roughness: 1.0,
         reflectance: 0.0,
         ..default()
     });
 
     let greedy_mesh_material = materials.add(StandardMaterial {
-        base_color: Color::from(GREEN),
+        base_color: Color::from(palettes::css::GREEN),
         perceptual_roughness: 1.0,
         reflectance: 0.0,
         ..default()

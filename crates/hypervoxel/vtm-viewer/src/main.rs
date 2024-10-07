@@ -1,8 +1,7 @@
 use std::path::Path;
 use std::time::Instant;
 
-use bevy::color::palettes::basic::SILVER;
-use bevy::color::palettes::css::GRAY;
+use bevy::color::palettes;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::core_pipeline::Skybox;
@@ -18,8 +17,9 @@ use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
 use rayon::prelude::*;
+
 use voxelis::io::import::import_model_from_vtm;
-use voxelis::Model;
+use voxelis::model::Model;
 
 struct GamePlugin;
 
@@ -78,7 +78,7 @@ fn generate_chunk_color_checkered(x: i32, y: i32, z: i32) -> Color {
     let is_black = (x + y + z) % 2 == 0;
 
     if is_black {
-        Color::from(SILVER)
+        Color::from(palettes::css::SILVER)
     } else {
         Color::WHITE
     }
@@ -117,7 +117,7 @@ fn setup(
                 },
                 // transform: Transform::from_xyz(0.0, 7., 14.0)
                 transform: Transform::from_xyz(2.2716377, 1.2876732, 3.9676127)
-                // transform: Transform::from_xyz(-1.9573995, 1.9533201, -1.9587312)
+                    // transform: Transform::from_xyz(-1.9573995, 1.9533201, -1.9587312)
                     .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
                 ..default()
             },
@@ -149,7 +149,7 @@ fn setup(
     );
 
     let ground_material = materials.add(StandardMaterial {
-        base_color: Color::from(GRAY),
+        base_color: Color::from(palettes::css::GRAY),
         perceptual_roughness: 0.7,
         reflectance: 0.4,
         ..default()

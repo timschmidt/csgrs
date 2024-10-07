@@ -4,13 +4,10 @@ use bevy::math::IVec3;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
-use crate::math::triangle_cube_intersection;
-use crate::math::Freal;
-use crate::math::Vec3;
-use crate::obj_reader::Obj;
-
 use crate::chunk::VOXELS_PER_AXIS;
-use crate::Model;
+use crate::math::{triangle_cube_intersection, Freal, Vec3};
+use crate::model::Model;
+use crate::obj_reader::Obj;
 
 pub const VOXEL_SIZE: Freal = 1.0 / VOXELS_PER_AXIS as Freal;
 pub const INV_VOXEL_SIZE: Freal = 1.0 / VOXEL_SIZE;

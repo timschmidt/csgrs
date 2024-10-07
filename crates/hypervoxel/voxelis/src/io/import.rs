@@ -4,11 +4,9 @@ use bevy::math::IVec3;
 use byteorder::{BigEndian, ReadBytesExt};
 use md5::{Digest, Md5};
 
-use crate::{
-    chunk::MAX_LOD_LEVEL,
-    io::{Flags, VTM_MAGIC, VTM_VERSION},
-    Model,
-};
+use crate::chunk::MAX_LOD_LEVEL;
+use crate::io::{Flags, VTM_MAGIC, VTM_VERSION};
+use crate::model::Model;
 
 pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
     let mut vox_file = std::fs::File::open(path).unwrap();

@@ -1,11 +1,11 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-use voxelis::{chunk::Vec3, Chunk};
+use voxelis::{chunk::Chunk, chunk::Vec3};
 
 fn benchmark_meshing(c: &mut Criterion) {
     let offset = Vec3::ZERO;
 
-    let mut chunk = voxelis::Chunk::new();
+    let mut chunk = Chunk::new();
     chunk.generate_test_data();
 
     let data = chunk.to_vec(0);
