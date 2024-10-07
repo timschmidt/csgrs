@@ -1,10 +1,8 @@
 use std::io::{BufReader, Read, Write};
 
-use bevy::prelude::*;
-use bevy::render::mesh::{Indices, PrimitiveTopology};
-use bevy::render::render_asset::RenderAssetUsages;
 use byteorder::BigEndian;
 use byteorder::{ReadBytesExt, WriteBytesExt};
+use glam::IVec3;
 use wide::f32x8;
 
 use crate::io::VTC_MAGIC;
@@ -12,7 +10,7 @@ use crate::io::{decode_varint, encode_varint};
 use crate::voxtree::calculate_voxels_per_axis;
 use crate::voxtree::VoxTree;
 
-pub type Vec3 = bevy::math::Vec3;
+pub type Vec3 = glam::Vec3;
 pub type Freal = f32;
 
 const CUBE_VERTS: [Vec3; 8] = [
@@ -320,60 +318,6 @@ impl Chunk {
                 }
             }
         }
-    }
-
-    pub fn generate_mesh(&self) -> Option<Mesh> {
-        if self.is_empty() {
-            return None;
-        }
-
-        let mut vertices = Vec::new();
-        let mut normals = Vec::new();
-        let mut indices = Vec::new();
-
-        let data = self.to_vec(0);
-
-        Self::generate_mesh_arrays(&data, &mut vertices, &mut normals, &mut indices, Vec3::ZERO);
-
-        Some(
-            Mesh::new(
-                PrimitiveTopology::TriangleList,
-                RenderAssetUsages::RENDER_WORLD,
-            )
-            .with_inserted_indices(Indices::U32(indices))
-            .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
-            .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals),
-        )
-    }
-
-    pub fn generate_greedy_mesh(&self) -> Option<Mesh> {
-        if self.is_empty() {
-            return None;
-        }
-
-        let mut vertices = Vec::new();
-        let mut normals = Vec::new();
-        let mut indices = Vec::new();
-
-        let data = self.to_vec(0);
-
-        Self::generate_greedy_mesh_arrays(
-            &data,
-            &mut vertices,
-            &mut normals,
-            &mut indices,
-            Vec3::ZERO,
-        );
-
-        Some(
-            Mesh::new(
-                PrimitiveTopology::TriangleList,
-                RenderAssetUsages::RENDER_WORLD,
-            )
-            .with_inserted_indices(Indices::U32(indices))
-            .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
-            .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals),
-        )
     }
 
     pub fn serialize(&self, data: &mut Vec<u8>) {

@@ -15,6 +15,7 @@ use bevy_screen_diagnostics::{
 };
 
 use voxelis::chunk::Chunk as VoxChunk;
+use voxelis_bevy::mesh::{generate_greedy_mesh, generate_mesh};
 
 struct GamePlugin;
 
@@ -100,11 +101,11 @@ fn setup(
 
     let mut naive_chunk = VoxChunk::new();
     naive_chunk.generate_test_data();
-    let naive_mesh = naive_chunk.generate_mesh().unwrap();
+    let naive_mesh = generate_mesh(&naive_chunk).unwrap();
 
     let mut greedy_chunk = VoxChunk::new();
     greedy_chunk.generate_test_data();
-    let greedy_mesh = greedy_chunk.generate_greedy_mesh().unwrap();
+    let greedy_mesh = generate_greedy_mesh(&greedy_chunk).unwrap();
 
     let naive_mesh = meshes.add(naive_mesh);
     let greedy_mesh = meshes.add(greedy_mesh);

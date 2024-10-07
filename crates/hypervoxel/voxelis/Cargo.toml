@@ -6,12 +6,9 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-bevy_egui.workspace = true
-bevy_panorbit_camera.workspace = true
-bevy.workspace = true
 bitflags.workspace = true
 byteorder.workspace = true
-egui_extras.workspace = true
+glam.workspace = true
 log.workspace = true
 md-5.workspace = true
 rayon.workspace = true

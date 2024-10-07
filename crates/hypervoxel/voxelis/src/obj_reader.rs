@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use bevy::math::IVec3;
+use glam::IVec3;
 
 use crate::math::Freal;
 use crate::math::Vec3;

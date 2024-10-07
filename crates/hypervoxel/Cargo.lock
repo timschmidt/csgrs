@@ -2827,6 +2827,7 @@ dependencies = [
  "egui_extras",
  "log",
  "voxelis",
+ "voxelis-bevy",
 ]
 
 [[package]]
@@ -4297,19 +4298,24 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 name = "voxelis"
 version = "24.2.0"
 dependencies = [
- "bevy",
- "bevy_egui",
- "bevy_panorbit_camera",
  "bitflags 2.6.0",
  "byteorder",
  "criterion",
- "egui_extras",
+ "glam",
  "log",
  "md-5",
  "rayon",
  "rustc-hash 2.0.0",
  "wide",
  "zstd",
+]
+
+[[package]]
+name = "voxelis-bevy"
+version = "24.2.0"
+dependencies = [
+ "bevy",
+ "voxelis",
 ]
 
 [[package]]
@@ -4332,6 +4338,7 @@ dependencies = [
  "rayon",
  "rustc-hash 2.0.0",
  "voxelis",
+ "voxelis-bevy",
 ]
 
 [[package]]

@@ -20,6 +20,7 @@ use rayon::prelude::*;
 
 use voxelis::io::import::import_model_from_vtm;
 use voxelis::model::Model;
+use voxelis_bevy::mesh::generate_mesh;
 
 struct GamePlugin;
 
@@ -159,11 +160,7 @@ fn setup(
 
     println!("Generating meshes...");
 
-    let chunks_meshes: Vec<Option<Mesh>> = model
-        .chunks
-        .par_iter()
-        .map(|chunk| chunk.generate_mesh())
-        .collect();
+    let chunks_meshes: Vec<Option<Mesh>> = model.chunks.par_iter().map(generate_mesh).collect();
 
     for (i, chunk_mesh) in chunks_meshes.iter().enumerate() {
         if chunk_mesh.is_none() {

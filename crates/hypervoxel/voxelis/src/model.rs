@@ -1,4 +1,4 @@
-use bevy::math::IVec3;
+use glam::IVec3;
 use rayon::prelude::*;
 
 use crate::chunk::Chunk;

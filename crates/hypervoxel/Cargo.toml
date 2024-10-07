@@ -3,6 +3,7 @@ resolver = "2"
 members = [
   "meshing-debugger",
   "voxelis",
+  "voxelis-bevy",
   "vtm-export",
   "vtm-viewer",
   "vtm-voxelize",
@@ -10,6 +11,7 @@ members = [
 
 [workspace.dependencies]
 voxelis = { path = "voxelis" }
+voxelis-bevy = { path = "voxelis-bevy" }
 # bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy = "0.14.2"
 bevy_egui = "0.29.0"
@@ -19,6 +21,7 @@ bevy_screen_diagnostics = "0.6.0"
 bitflags = "2.6.0"
 byteorder = "1.5.0"
 egui_extras = "0.29.1"
+glam = "0.27.0"
 log = { version = "*", features = [
   "max_level_debug",
   "release_max_level_warn",

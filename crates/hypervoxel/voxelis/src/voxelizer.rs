@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use bevy::math::IVec3;
+use glam::IVec3;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 

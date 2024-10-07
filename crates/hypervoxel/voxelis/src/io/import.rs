@@ -1,7 +1,7 @@
 use std::{io::Read, path::Path};
 
-use bevy::math::IVec3;
 use byteorder::{BigEndian, ReadBytesExt};
+use glam::IVec3;
 use md5::{Digest, Md5};
 
 use crate::chunk::MAX_LOD_LEVEL;
