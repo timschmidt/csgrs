@@ -577,31 +577,12 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "128438a8163e49528207aabf20d3ff0890fd6be0f0054626915995efac87922b"
 dependencies = [
+ "arboard",
  "bevy",
  "bytemuck",
  "console_log",
  "crossbeam-channel",
  "egui 0.28.1",
- "js-sys",
- "log",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
- "wgpu-types",
- "winit",
-]
-
-[[package]]
-name = "bevy_egui"
-version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0b8c164da1303ac3e6dc8d1a649be3e4399f12fd132f7665f3d018884236f9c"
-dependencies = [
- "arboard",
- "bevy",
- "bytemuck",
- "crossbeam-channel",
- "egui 0.29.1",
  "js-sys",
  "log",
  "thread_local",
@@ -831,7 +812,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0aec4ab2ef0d8527c3e85db205f6b0eb3c302f81401dfb7131db425f5fd78d2c"
 dependencies = [
  "bevy",
- "bevy_egui 0.29.0",
+ "bevy_egui",
 ]
 
 [[package]]
@@ -1887,7 +1868,6 @@ version = "0.29.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "775cfde491852059e386c4e1deb4aef381c617dc364184c6f6afee99b87c402b"
 dependencies = [
- "bytemuck",
  "emath 0.29.1",
 ]
 
@@ -1948,9 +1928,6 @@ name = "emath"
 version = "0.29.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1fe0049ce51d0fb414d029e668dd72eb30bc2b739bf34296ed97bd33df544f3"
-dependencies = [
- "bytemuck",
-]
 
 [[package]]
 name = "encase"
@@ -2028,19 +2005,11 @@ checksum = "a32af8da821bd4f43f2c137e295459ee2e1661d87ca8779dfa0eaf45d870e20f"
 dependencies = [
  "ab_glyph",
  "ahash",
- "bytemuck",
  "ecolor 0.29.1",
  "emath 0.29.1",
- "epaint_default_fonts",
  "nohash-hasher",
  "parking_lot",
 ]
-
-[[package]]
-name = "epaint_default_fonts"
-version = "0.29.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "483440db0b7993cf77a20314f08311dbe95675092405518c0677aa08c151a3ea"
 
 [[package]]
 name = "equivalent"
@@ -2852,7 +2821,7 @@ name = "meshing-debugger"
 version = "24.2.0"
 dependencies = [
  "bevy",
- "bevy_egui 0.30.0",
+ "bevy_egui",
  "bevy_panorbit_camera",
  "bevy_screen_diagnostics",
  "egui_extras",
@@ -4329,7 +4298,7 @@ name = "voxelis"
 version = "24.2.0"
 dependencies = [
  "bevy",
- "bevy_egui 0.30.0",
+ "bevy_egui",
  "bevy_panorbit_camera",
  "bitflags 2.6.0",
  "byteorder",
@@ -4355,7 +4324,7 @@ name = "vtm-viewer"
 version = "24.2.0"
 dependencies = [
  "bevy",
- "bevy_egui 0.30.0",
+ "bevy_egui",
  "bevy_panorbit_camera",
  "bevy_screen_diagnostics",
  "egui_extras",
