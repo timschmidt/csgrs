@@ -4,6 +4,11 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/ad-altum/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/voxelis/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/meshing-debugger/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/voxelis/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/vtm-export/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/vtm-viewer/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/vtm-voxelize/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
