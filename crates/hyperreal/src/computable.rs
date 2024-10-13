@@ -340,7 +340,7 @@ impl Computable {
         }
     }
 
-    /// MSD - but Precision::MIN if as yet undiscovered
+    /// MSD - or perhaps None if as yet undiscovered and less than p
     fn msd(&self, p: Precision) -> Option<Precision> {
         let cache = self.cached();
         let mut try_once = false;
