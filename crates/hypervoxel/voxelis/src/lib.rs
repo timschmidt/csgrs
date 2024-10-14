@@ -3,6 +3,7 @@ pub mod io;
 pub(crate) mod math;
 pub mod model;
 pub mod obj_reader;
+pub mod svo;
 pub mod voxelizer;
 pub mod voxtree;
 pub mod voxtree_iterator;
