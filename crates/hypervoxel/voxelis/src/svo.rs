@@ -7,6 +7,7 @@ pub struct Voxel<T> {
     pub value: T,
 }
 
+#[derive(Default)]
 pub struct Octree<T: Copy + Default + PartialEq> {
     max_depth: u8,
     root: Option<Box<OctreeNode<T>>>,
@@ -16,6 +17,10 @@ pub struct Octree<T: Copy + Default + PartialEq> {
 pub enum OctreeNode<T: Copy + Default + PartialEq> {
     Branch(Box<[Option<OctreeNode<T>>; 8]>),
     Leaf(Voxel<T>),
+}
+
+pub struct OctreeIterator<'a, T: Copy + Default + PartialEq> {
+    stack: Vec<&'a OctreeNode<T>>,
 }
 
 fn child_index(position: IVec3, depth: u8, max_depth: u8) -> usize {
@@ -46,12 +51,22 @@ impl<T: Copy + Default + PartialEq> Octree<T> {
     }
 
     pub fn insert(&mut self, position: IVec3, voxel: Voxel<T>) {
-        if self.root.is_none() {
-            self.root = Some(Box::new(OctreeNode::new_branch()));
-        }
+        if voxel.value == T::default() {
+            // Remove the voxel from the tree
+            if let Some(root) = &mut self.root {
+                let should_remove = root.remove_at_depth(position, 0, self.max_depth);
+                if should_remove {
+                    self.root = None;
+                }
+            }
+        } else {
+            if self.root.is_none() {
+                self.root = Some(Box::new(OctreeNode::new_branch()));
+            }
 
-        if let Some(root) = &mut self.root {
-            root.insert_at_depth(position, 0, self.max_depth, voxel);
+            if let Some(root) = &mut self.root {
+                root.insert_at_depth(position, 0, self.max_depth, voxel);
+            }
         }
     }
 
@@ -62,7 +77,7 @@ impl<T: Copy + Default + PartialEq> Octree<T> {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.root.as_ref().map_or(true, |root| root.is_empty())
+        self.root.is_none()
     }
 
     pub fn is_full(&self) -> bool {
@@ -74,12 +89,11 @@ impl<T: Copy + Default + PartialEq> Octree<T> {
     }
 
     pub fn clear(&mut self) {
-        if let Some(root) = &mut self.root {
-            root.clear();
-            if root.is_empty() {
-                self.root = None;
-            }
-        }
+        self.root = None;
+    }
+
+    pub fn iter(&self) -> OctreeIterator<'_, T> {
+        OctreeIterator::new(self.root.as_deref())
     }
 
     pub fn to_vec(&self) -> Vec<T> {
@@ -110,6 +124,48 @@ impl<T: Copy + Default + PartialEq> Octree<T> {
 
         data
     }
+
+    pub fn for_each_mut<F>(&mut self, mut f: F)
+    where
+        F: FnMut(usize, &mut T),
+    {
+        let voxels_per_axis = Self::calculate_voxels_per_axis(self.max_depth as usize);
+
+        for y in 0..voxels_per_axis {
+            for z in 0..voxels_per_axis {
+                for x in 0..voxels_per_axis {
+                    let index = y * voxels_per_axis * voxels_per_axis + z * voxels_per_axis + x;
+                    let position = IVec3::new(x as i32, y as i32, z as i32);
+
+                    // Get the current value at the position or default if not present
+                    let mut value = self.get(position).map_or(T::default(), |voxel| voxel.value);
+
+                    // Pass the index and mutable reference to the value to the closure
+                    f(index, &mut value);
+
+                    // Update the octree with the new value
+                    if value != T::default() {
+                        self.insert(position, Voxel { value });
+                    } else {
+                        // Remove the voxel by inserting the default value
+                        self.insert(
+                            position,
+                            Voxel {
+                                value: T::default(),
+                            },
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn total_memory_size(&self) -> usize {
+        self.root
+            .as_ref()
+            .map_or(0, |root| root.total_memory_size())
+            + std::mem::size_of::<Self>()
+    }
 }
 
 impl<T: Copy + Default + PartialEq> OctreeNode<T> {
@@ -117,61 +173,89 @@ impl<T: Copy + Default + PartialEq> OctreeNode<T> {
         OctreeNode::Branch(Box::new([None, None, None, None, None, None, None, None]))
     }
 
-    fn insert_at_depth(&mut self, position: IVec3, depth: u8, max_depth: u8, voxel: Voxel<T>) {
+    fn insert_at_depth(
+        &mut self,
+        position: IVec3,
+        depth: u8,
+        max_depth: u8,
+        voxel: Voxel<T>,
+    ) -> bool {
+        if voxel.value == T::default() {
+            // Remove the voxel from the tree
+            return self.remove_at_depth(position, depth, max_depth);
+        }
+
         if depth == max_depth {
             *self = OctreeNode::Leaf(voxel);
+            // Do not remove this node
+            false
         } else {
             match self {
                 OctreeNode::Leaf(existing_voxel) => {
                     // If the existing leaf has the same value, no action is needed
                     if *existing_voxel == voxel {
-                        return;
+                        return false; // Do not remove this node
                     }
 
                     // Split the leaf into a branch
                     let mut branch = OctreeNode::new_branch();
 
                     // Initialize all children with the existing voxel value
-                    for i in 0..8 {
-                        branch.set_child(i, OctreeNode::Leaf(*existing_voxel));
+                    if existing_voxel.value != T::default() {
+                        for i in 0..8 {
+                            branch.set_child(i, OctreeNode::Leaf(*existing_voxel));
+                        }
                     }
 
                     // Replace self with the new branch
                     *self = branch;
 
                     // Now, insert the new voxel into the tree
-                    self.insert_at_depth(position, depth, max_depth, voxel);
-                }
-                OctreeNode::Branch(children) => {
-                    let index = child_index(position, depth, max_depth);
+                    let should_remove = self.insert_at_depth(position, depth, max_depth, voxel);
 
-                    if children[index].is_none() {
-                        if depth + 1 == max_depth {
-                            // We're at the level just before max_depth
-                            children[index] = Some(OctreeNode::Leaf(voxel));
-                        } else {
-                            // Create a new branch node
-                            children[index] = Some(OctreeNode::new_branch());
-                            children[index].as_mut().unwrap().insert_at_depth(
-                                position,
-                                depth + 1,
-                                max_depth,
-                                voxel,
-                            );
-                        }
-                    } else {
-                        children[index].as_mut().unwrap().insert_at_depth(
-                            position,
-                            depth + 1,
-                            max_depth,
-                            voxel,
-                        );
-                    }
-
-                    // After insertion, check if we can merge this branch into a leaf
+                    // After insertion, check if we can merge this branch into a Leaf
                     if let Some(merged_voxel) = self.try_merge_children_into_leaf() {
                         *self = OctreeNode::Leaf(merged_voxel);
+                        return false; // Do not remove this node
                     }
+
+                    should_remove
+                }
+                OctreeNode::Branch(children) => {
+                    {
+                        let index = child_index(position, depth, max_depth);
+
+                        if let Some(child) = &mut children[index] {
+                            let should_remove =
+                                child.insert_at_depth(position, depth + 1, max_depth, voxel);
+                            if should_remove {
+                                children[index] = None;
+                            }
+                        } else if voxel.value != T::default() {
+                            // Create a new child node
+                            let mut child = OctreeNode::new_branch();
+                            let should_remove =
+                                child.insert_at_depth(position, depth + 1, max_depth, voxel);
+                            if !should_remove {
+                                children[index] = Some(child);
+                            }
+                        }
+                    }
+
+                    // After insertion, check if we can merge this branch into a Leaf
+                    if let Some(merged_voxel) = self.try_merge_children_into_leaf() {
+                        *self = OctreeNode::Leaf(merged_voxel);
+                        return false; // Do not remove this node
+                    }
+
+                    if let OctreeNode::Branch(children) = self {
+                        // If all children are None, remove this node
+                        if children.iter().all(|child| child.is_none()) {
+                            return true;
+                        }
+                    }
+
+                    false
                 }
             }
         }
@@ -185,6 +269,52 @@ impl<T: Copy + Default + PartialEq> OctreeNode<T> {
                 children[index]
                     .as_ref()
                     .and_then(|child| child.get_at_depth(position, depth + 1, max_depth))
+            }
+        }
+    }
+
+    fn remove_at_depth(&mut self, position: IVec3, depth: u8, max_depth: u8) -> bool {
+        if depth == max_depth {
+            // At the Leaf node corresponding to the voxel
+            true // Indicate that this node should be removed
+        } else {
+            match self {
+                OctreeNode::Leaf(existing_voxel) => {
+                    // Leaf node with default value can be removed
+                    existing_voxel.value == T::default()
+                }
+                OctreeNode::Branch(children) => {
+                    {
+                        let index = child_index(position, depth, max_depth);
+
+                        if let Some(child) = &mut children[index] {
+                            let should_remove =
+                                child.remove_at_depth(position, depth + 1, max_depth);
+                            if should_remove {
+                                children[index] = None;
+                            }
+                        }
+                    }
+
+                    // After removal, check if we can merge this branch into a Leaf
+                    if let Some(merged_voxel) = self.try_merge_children_into_leaf() {
+                        if merged_voxel.value == T::default() {
+                            return true; // The merged Leaf has default value; remove this node
+                        } else {
+                            *self = OctreeNode::Leaf(merged_voxel);
+                            return false;
+                        }
+                    }
+
+                    if let OctreeNode::Branch(children) = self {
+                        // If all children are None, remove this node
+                        if children.iter().all(|child| child.is_none()) {
+                            return true;
+                        }
+                    }
+
+                    false
+                }
             }
         }
     }
@@ -212,6 +342,7 @@ impl<T: Copy + Default + PartialEq> OctreeNode<T> {
             for child in children.iter() {
                 match child {
                     Some(OctreeNode::Leaf(voxel)) if *voxel == first_voxel => continue,
+                    Some(OctreeNode::Leaf(voxel)) if voxel.value == T::default() => return None,
                     _ => return None, // Cannot merge if any child is not a matching Leaf node
                 }
             }
@@ -240,28 +371,52 @@ impl<T: Copy + Default + PartialEq> OctreeNode<T> {
         }
     }
 
-    pub fn clear(&mut self) {
+    pub fn total_memory_size(&self) -> usize {
         match self {
-            OctreeNode::Leaf(_) => *self = OctreeNode::Leaf(Voxel::default()),
+            OctreeNode::Leaf(_) => std::mem::size_of::<Self>(),
             OctreeNode::Branch(children) => {
-                children.iter_mut().for_each(|child| {
-                    if let Some(child) = child {
-                        child.clear();
-                    }
-                });
+                let children_size: usize = children
+                    .iter()
+                    .filter_map(|child| child.as_ref())
+                    .map(|child| child.total_memory_size())
+                    .sum();
+                std::mem::size_of::<Self>() + children_size
+            }
+        }
+    }
+}
 
-                // After clearing, attempt to merge the branch into a leaf
-                if let Some(merged_voxel) = self.try_merge_children_into_leaf() {
-                    *self = OctreeNode::Leaf(merged_voxel);
+impl<'a, T: Copy + Default + PartialEq> OctreeIterator<'a, T> {
+    pub fn new(root: Option<&'a OctreeNode<T>>) -> Self {
+        let stack = root.into_iter().collect();
+        Self { stack }
+    }
+}
+
+impl<'a, T: Copy + Default + PartialEq> Iterator for OctreeIterator<'a, T> {
+    type Item = &'a Voxel<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some(node) = self.stack.pop() {
+            match node {
+                OctreeNode::Leaf(voxel) => return Some(voxel),
+                OctreeNode::Branch(children) => {
+                    for child in children.iter().rev().filter_map(|child| child.as_ref()) {
+                        self.stack.push(child);
+                    }
                 }
             }
         }
+
+        None
     }
 }
 
 #[cfg(test)]
 mod tests {
     use glam::IVec3;
+
+    use crate::svo::OctreeNode;
 
     use super::{Octree, Voxel};
 
@@ -348,10 +503,76 @@ mod tests {
         }
 
         octree.clear();
-        // assert!(octree.is_empty());
+        assert!(octree.is_empty());
 
-        // for &pos in positions.iter() {
-        //     assert!(octree.get(pos).is_none());
-        // }
+        for &pos in positions.iter() {
+            assert!(octree.get(pos).is_none());
+        }
+    }
+
+    #[test]
+    fn test_no_default_leaf_nodes() {
+        let mut octree = Octree::<u8>::new(3);
+
+        // Insert some voxels with non-default values
+        octree.insert(IVec3::new(0, 0, 0), Voxel { value: 1 });
+        octree.insert(IVec3::new(1, 1, 1), Voxel { value: 2 });
+
+        // Set a voxel to the default value, which should remove the node
+        octree.insert(IVec3::new(0, 0, 0), Voxel { value: 0 });
+
+        // Traverse the tree to ensure no Leaf nodes have default value
+        fn check_no_default_leaf<T: Copy + Default + PartialEq>(node: &OctreeNode<T>) {
+            match node {
+                OctreeNode::Leaf(voxel) => {
+                    assert!(
+                        voxel.value != T::default(),
+                        "Found a Leaf node with default value!"
+                    );
+                }
+                OctreeNode::Branch(children) => {
+                    for child in children.iter().flatten() {
+                        check_no_default_leaf(child);
+                    }
+                }
+            }
+        }
+
+        if let Some(root) = &octree.root {
+            check_no_default_leaf(root);
+        }
+    }
+
+    #[test]
+    fn test_total_memory_size() {
+        let mut octree = Octree::<u8>::new(3);
+        assert_eq!(
+            octree.total_memory_size(),
+            std::mem::size_of::<Octree<u8>>()
+        );
+
+        octree.insert(IVec3::new(0, 0, 0), Voxel { value: 1 });
+        let size_with_one_voxel = octree.total_memory_size();
+        assert!(size_with_one_voxel > std::mem::size_of::<Octree<u8>>());
+        assert_eq!(size_with_one_voxel, 80);
+
+        octree.clear();
+        assert_eq!(
+            octree.total_memory_size(),
+            std::mem::size_of::<Octree<u8>>()
+        );
+    }
+
+    #[test]
+    fn test_iterator() {
+        let mut octree = Octree::<u8>::new(3);
+
+        octree.insert(IVec3::new(0, 0, 0), Voxel { value: 1 });
+        octree.insert(IVec3::new(1, 1, 1), Voxel { value: 2 });
+
+        let voxels: Vec<&Voxel<u8>> = octree.iter().collect();
+        assert_eq!(voxels.len(), 2);
+        assert_eq!(voxels[0].value, 1);
+        assert_eq!(voxels[1].value, 2);
     }
 }
