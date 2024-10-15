@@ -81,7 +81,7 @@ impl Chunk {
 
     pub fn set_value(&mut self, x: u8, y: u8, z: u8, value: i32) {
         self.data
-            .insert(IVec3::new(x as i32, y as i32, z as i32), Voxel { value });
+            .set(IVec3::new(x as i32, y as i32, z as i32), Voxel { value });
     }
 
     pub fn get_value(&self, x: u8, y: u8, z: u8) -> i32 {
