@@ -575,4 +575,23 @@ mod tests {
         assert_eq!(voxels[0].value, 1);
         assert_eq!(voxels[1].value, 2);
     }
+
+    #[test]
+    fn test_fill() {
+        let mut octree = Octree::<u8>::new(6);
+        assert!(!octree.is_full());
+
+        for y in 0..64 {
+            for z in 0..64 {
+                for x in 0..64 {
+                    octree.insert(IVec3::new(x, y, z), Voxel { value: 1 });
+                }
+            }
+        }
+
+        assert!(octree.is_full());
+
+        octree.insert(IVec3::new(0, 0, 0), Voxel { value: 0 });
+        assert!(!octree.is_full());
+    }
 }
