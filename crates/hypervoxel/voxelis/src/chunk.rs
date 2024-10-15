@@ -159,8 +159,8 @@ impl Chunk {
         ((y as usize) << (2 * MAX_LOD_LEVEL)) + ((z as usize) << MAX_LOD_LEVEL) + x as usize
     }
 
-    pub fn to_vec(&self, lod: usize) -> Vec<i32> {
-        self.data.to_vec(lod)
+    pub fn to_vec(&self, _lod: usize) -> Vec<i32> {
+        self.data.to_vec()
     }
 
     pub fn generate_mesh_arrays(
