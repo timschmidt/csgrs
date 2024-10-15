@@ -101,7 +101,7 @@ impl Chunk {
             }
         }
 
-        self.data.update_lods();
+        self.update_lods();
     }
 
     #[inline(always)]
