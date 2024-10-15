@@ -108,6 +108,37 @@ impl Chunk {
         self.update_lods();
     }
 
+    pub fn fill(&mut self, value: i32) {
+        for y in 0..VOXELS_PER_AXIS {
+            for z in 0..VOXELS_PER_AXIS {
+                for x in 0..VOXELS_PER_AXIS {
+                    self.set_value(x, y, z, value);
+                }
+            }
+        }
+    }
+
+    pub fn generate_test_sphere(&mut self, center: IVec3, radius: i32, value: i32) {
+        let (cx, cy, cz) = (center.x, center.y, center.z);
+        let radius_squared = radius * radius;
+
+        for y in 0..VOXELS_PER_AXIS {
+            for z in 0..VOXELS_PER_AXIS {
+                for x in 0..VOXELS_PER_AXIS {
+                    let dx = x as i32 - cx;
+                    let dy = y as i32 - cy;
+                    let dz = z as i32 - cz;
+
+                    let distance_squared = dx * dx + dy * dy + dz * dz;
+
+                    if distance_squared <= radius_squared {
+                        self.set_value(x, y, z, value);
+                    }
+                }
+            }
+        }
+    }
+
     #[inline(always)]
     fn add_quad(
         vertices: &mut Vec<Vec3>,
