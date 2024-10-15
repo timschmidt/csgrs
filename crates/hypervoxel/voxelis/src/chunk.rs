@@ -145,18 +145,13 @@ impl Chunk {
         indices: &mut Vec<u32>,
         normals: &mut Vec<Vec3>,
         quad: [Vec3; 4],
-        normal: Vec3,
+        normal: &Vec3,
     ) {
         let index = vertices.len() as u32;
 
-        vertices.extend_from_slice(&quad);
-        normals.extend_from_slice(&[normal, normal, normal, normal]);
-        indices.extend_from_slice(&[index + 2, index + 1, index, index + 3, index, index + 1]);
-    }
-
-    #[inline(always)]
-    fn get_index(x: u8, y: u8, z: u8) -> usize {
-        ((y as usize) << (2 * MAX_LOD_LEVEL)) + ((z as usize) << MAX_LOD_LEVEL) + x as usize
+        vertices.extend(quad);
+        normals.extend([normal, normal, normal, normal]);
+        indices.extend([index + 2, index + 1, index, index + 3, index, index + 1]);
     }
 
     pub fn to_vec(&self, _lod: usize) -> Vec<i32> {
@@ -237,22 +232,22 @@ impl Chunk {
                     let v7 = Vec3::new(v_x_array[7], v_y_array[7], v_z_array[7]);
 
                     if has_top {
-                        Self::add_quad(vertices, indices, normals, [v0, v2, v3, v1], VEC_UP);
+                        Self::add_quad(vertices, indices, normals, [v0, v2, v3, v1], &VEC_UP);
                     }
                     if has_right {
-                        Self::add_quad(vertices, indices, normals, [v2, v5, v6, v1], VEC_RIGHT);
+                        Self::add_quad(vertices, indices, normals, [v2, v5, v6, v1], &VEC_RIGHT);
                     }
                     if has_bottom {
-                        Self::add_quad(vertices, indices, normals, [v7, v5, v4, v6], VEC_DOWN);
+                        Self::add_quad(vertices, indices, normals, [v7, v5, v4, v6], &VEC_DOWN);
                     }
                     if has_left {
-                        Self::add_quad(vertices, indices, normals, [v0, v7, v4, v3], VEC_LEFT);
+                        Self::add_quad(vertices, indices, normals, [v0, v7, v4, v3], &VEC_LEFT);
                     }
                     if has_front {
-                        Self::add_quad(vertices, indices, normals, [v3, v6, v7, v2], VEC_BACK);
+                        Self::add_quad(vertices, indices, normals, [v3, v6, v7, v2], &VEC_BACK);
                     }
                     if has_back {
-                        Self::add_quad(vertices, indices, normals, [v1, v4, v5, v0], VEC_FORWARD);
+                        Self::add_quad(vertices, indices, normals, [v1, v4, v5, v0], &VEC_FORWARD);
                     }
                 }
             }
