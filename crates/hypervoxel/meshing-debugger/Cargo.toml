@@ -13,4 +13,5 @@ bevy_panorbit_camera.workspace = true
 bevy_screen_diagnostics.workspace = true
 bevy.workspace = true
 egui_extras.workspace = true
+humanize-bytes.workspace = true
 log.workspace = true

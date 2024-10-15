@@ -22,6 +22,7 @@ bitflags = "2.6.0"
 byteorder = "1.5.0"
 egui_extras = "0.29.1"
 glam = "0.27.0"
+humanize-bytes = "1.0.6"
 log = { version = "*", features = [
   "max_level_debug",
   "release_max_level_warn",

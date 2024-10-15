@@ -9,6 +9,7 @@ license = "MIT OR Apache-2.0"
 bitflags.workspace = true
 byteorder.workspace = true
 glam.workspace = true
+humanize-bytes.workspace = true
 log.workspace = true
 md-5.workspace = true
 rayon.workspace = true
