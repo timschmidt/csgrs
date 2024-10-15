@@ -445,4 +445,8 @@ impl Chunk {
 
         output
     }
+
+    pub fn total_memory_size(&self) -> usize {
+        self.data.total_memory_size()
+    }
 }
