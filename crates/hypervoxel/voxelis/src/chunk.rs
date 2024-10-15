@@ -7,8 +7,8 @@ use wide::f32x8;
 
 use crate::io::VTC_MAGIC;
 use crate::io::{decode_varint, encode_varint};
+use crate::svo::{Octree, Voxel};
 use crate::voxtree::calculate_voxels_per_axis;
-use crate::voxtree::VoxTree;
 
 pub type Vec3 = glam::Vec3;
 pub type Freal = f32;
@@ -44,21 +44,21 @@ pub const SHIFT_Z: usize = 1 << MAX_LOD_LEVEL;
 
 #[derive(Default)]
 pub struct Chunk {
-    data: VoxTree<MAX_LOD_LEVEL>,
+    data: Octree<i32>,
     position: IVec3,
 }
 
 impl Chunk {
     pub fn new() -> Self {
         Self {
-            data: VoxTree::<MAX_LOD_LEVEL>::default(),
+            data: Octree::new(MAX_LOD_LEVEL as u8),
             position: IVec3::ZERO,
         }
     }
 
     pub fn with_position(x: i32, y: i32, z: i32) -> Self {
         Self {
-            data: VoxTree::<MAX_LOD_LEVEL>::default(),
+            data: Octree::new(MAX_LOD_LEVEL as u8),
             position: IVec3::new(x, y, z),
         }
     }
@@ -80,11 +80,15 @@ impl Chunk {
     }
 
     pub fn set_value(&mut self, x: u8, y: u8, z: u8, value: i32) {
-        self.data.set_value(0, x, y, z, value);
+        self.data
+            .insert(IVec3::new(x as i32, y as i32, z as i32), Voxel { value });
     }
 
     pub fn get_value(&self, x: u8, y: u8, z: u8) -> i32 {
-        self.data.get_value(0, x, y, z)
+        match self.data.get(IVec3::new(x as i32, y as i32, z as i32)) {
+            Some(voxel) => voxel.value,
+            None => 0,
+        }
     }
 
     pub fn update_lods(&mut self) {
@@ -96,7 +100,7 @@ impl Chunk {
             let offset = y % 2;
             for z in offset..VOXELS_PER_AXIS - offset {
                 for x in offset..VOXELS_PER_AXIS - offset {
-                    self.data.set_value(0, x, y, z, y as i32 + 1);
+                    self.set_value(x, y, z, y as i32 + 1);
                 }
             }
         }
@@ -380,7 +384,7 @@ impl Chunk {
 
             // Count how many times the current value repeats consecutively
             while let Some(&next_value) = iter.peek() {
-                if next_value == value {
+                if next_value.value == value.value {
                     iter.next();
                     count += 1;
                 } else {
@@ -393,7 +397,7 @@ impl Chunk {
             buffer.extend(count_bytes);
 
             // Encode the value using variable-length encoding
-            let value_bytes = encode_varint(value as usize);
+            let value_bytes = encode_varint(value.value as usize);
             buffer.extend_from_slice(&value_bytes);
         }
 
