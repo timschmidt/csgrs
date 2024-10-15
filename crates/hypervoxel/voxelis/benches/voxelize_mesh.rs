@@ -1,12 +1,17 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-use voxelis::{chunk::Chunk, chunk::Vec3};
+use glam::IVec3;
+use voxelis::chunk::{Chunk, Vec3, VOXELS_PER_AXIS};
 
 fn benchmark_meshing(c: &mut Criterion) {
     let offset = Vec3::ZERO;
 
     let mut chunk = Chunk::new();
-    chunk.generate_test_data();
+
+    let r = VOXELS_PER_AXIS as i32 / 2;
+    chunk.generate_test_sphere(IVec3::new(r - 1, r - 1, r - 1), r, 1);
+
+    chunk.update_lods();
 
     let data = chunk.to_vec(0);
 
@@ -33,6 +38,11 @@ fn benchmark_meshing(c: &mut Criterion) {
     let mut vertices = Vec::with_capacity(vertices_len);
     let mut normals = Vec::with_capacity(normals_len);
     let mut indices = Vec::with_capacity(indices_len);
+
+    println!(
+        "Memory size: {}",
+        humanize_bytes::humanize_bytes_binary!(chunk.total_memory_size())
+    );
 
     c.bench_function("naive meshing", |b| {
         b.iter(|| {
