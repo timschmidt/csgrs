@@ -92,7 +92,7 @@ impl Chunk {
     }
 
     pub fn update_lods(&mut self) {
-        self.data.update_lods();
+        // self.data.update_lods();
     }
 
     pub fn generate_test_data(&mut self) {
