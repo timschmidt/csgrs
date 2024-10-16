@@ -1,6 +1,10 @@
-use std::marker::PhantomData;
+use std::io::Read;
+use std::{io::Write, marker::PhantomData};
 
+use byteorder::{ReadBytesExt, WriteBytesExt};
 use glam::IVec3;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Voxel<T> {
@@ -8,19 +12,19 @@ pub struct Voxel<T> {
 }
 
 #[derive(Default, Debug)]
-pub struct Octree<T: Copy + Default + PartialEq> {
+pub struct Octree<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> {
     max_depth: u8,
     root: Option<Box<OctreeNode<T>>>,
     _phantom: PhantomData<T>,
 }
 
 #[derive(Debug)]
-pub enum OctreeNode<T: Copy + Default + PartialEq> {
+pub enum OctreeNode<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> {
     Branch(Box<[Option<OctreeNode<T>>; 8]>),
     Leaf(Voxel<T>),
 }
 
-pub struct OctreeIterator<'a, T: Copy + Default + PartialEq> {
+pub struct OctreeIterator<'a, T: Copy + Default + PartialEq + Serialize + DeserializeOwned> {
     stack: Vec<&'a OctreeNode<T>>,
 }
 
@@ -42,7 +46,7 @@ fn child_index(position: IVec3, depth: u8, max_depth: u8) -> usize {
     index
 }
 
-impl<T: Copy + Default + PartialEq> Octree<T> {
+impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Octree<T> {
     pub fn new(max_depth: u8) -> Self {
         Self {
             max_depth,
@@ -164,9 +168,121 @@ impl<T: Copy + Default + PartialEq> Octree<T> {
             .map_or(0, |root| root.total_memory_size())
             + std::mem::size_of::<Self>()
     }
+
+    pub fn serialize_to_vec(&self) -> std::io::Result<Vec<u8>> {
+        let mut buffer = Vec::new();
+
+        {
+            let mut writer = std::io::BufWriter::new(&mut buffer);
+            self.serialize(&mut writer)?;
+        }
+
+        Ok(buffer)
+    }
+
+    pub fn serialize<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        if let Some(root) = &self.root {
+            // Octree is not empty, write a flag indicating the presence of the root node (1u8)
+            writer.write_u8(1u8)?;
+            Self::serialize_node(writer, root)?;
+        } else {
+            // Octree is empty, write a flag indicating the absence of the root node (0u8)
+            writer.write_u8(0u8)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn deserialize<R: Read>(&mut self, reader: &mut R) -> std::io::Result<()> {
+        // Read the flag indicating the presence of the root node
+        let root_presence_flag = reader.read_u8()?;
+
+        match root_presence_flag {
+            0 => {
+                // Octree is empty, set the root to None
+                self.root = None;
+            }
+            1 => {
+                // Octree is not empty, deserialize the root node
+                self.root = Some(Box::new(Self::deserialize_node(reader)?));
+            }
+            _ => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "Invalid root presence flag",
+                ));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn serialize_node<W: Write>(writer: &mut W, node: &OctreeNode<T>) -> std::io::Result<()> {
+        match node {
+            OctreeNode::Leaf(voxel) => {
+                // Write a flag indicating a leaf node (0u8)
+                writer.write_u8(0u8)?;
+                // Serialize the voxel value
+                // Ensure T implements Serialize
+                bincode::serialize_into(writer, &voxel.value).map_err(|e| {
+                    std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string())
+                })?;
+            }
+            OctreeNode::Branch(children) => {
+                // Write a flag indicating a branch node (1u8)
+                writer.write_u8(1u8)?;
+                // Create a bitmask for child presence
+                let mut bitmask = 0u8;
+                for (i, child) in children.iter().enumerate() {
+                    if child.is_some() {
+                        bitmask |= 1 << i;
+                    }
+                }
+                // Write the bitmask
+                writer.write_u8(bitmask)?;
+
+                // Recursively serialize existing children
+                for child in children.iter().flatten() {
+                    Self::serialize_node(writer, child)?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn deserialize_node<R: Read>(reader: &mut R) -> std::io::Result<OctreeNode<T>> {
+        let node_type = reader.read_u8()?;
+
+        match node_type {
+            0 => {
+                // Leaf node
+                let value = bincode::deserialize_from(reader).map_err(|e| {
+                    std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string())
+                })?;
+                Ok(OctreeNode::Leaf(Voxel { value }))
+            }
+            1 => {
+                // Branch node
+                let bitmask = reader.read_u8()?;
+                let mut children = Box::new([None, None, None, None, None, None, None, None]);
+                for i in 0..8 {
+                    if (bitmask >> i) & 1 == 1 {
+                        let child_node = Self::deserialize_node(reader)?;
+                        children[i] = Some(child_node);
+                    }
+                }
+                Ok(OctreeNode::Branch(children))
+            }
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Invalid node type",
+            )),
+        }
+    }
 }
 
-impl<T: Copy + Default + PartialEq> OctreeNode<T> {
+impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> OctreeNode<T> {
     fn new_branch() -> Self {
         OctreeNode::Branch(Box::new([None, None, None, None, None, None, None, None]))
     }
@@ -322,14 +438,16 @@ impl<T: Copy + Default + PartialEq> OctreeNode<T> {
     }
 }
 
-impl<'a, T: Copy + Default + PartialEq> OctreeIterator<'a, T> {
+impl<'a, T: Copy + Default + PartialEq + Serialize + DeserializeOwned> OctreeIterator<'a, T> {
     pub fn new(root: Option<&'a OctreeNode<T>>) -> Self {
         let stack = root.into_iter().collect();
         Self { stack }
     }
 }
 
-impl<'a, T: Copy + Default + PartialEq> Iterator for OctreeIterator<'a, T> {
+impl<'a, T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Iterator
+    for OctreeIterator<'a, T>
+{
     type Item = &'a Voxel<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -351,6 +469,7 @@ impl<'a, T: Copy + Default + PartialEq> Iterator for OctreeIterator<'a, T> {
 #[cfg(test)]
 mod tests {
     use glam::IVec3;
+    use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
     use crate::svo::OctreeNode;
 
@@ -458,7 +577,9 @@ mod tests {
         octree.set(IVec3::new(0, 0, 0), Voxel { value: 0 });
 
         // Traverse the tree to ensure no Leaf nodes have default value
-        fn check_no_default_leaf<T: Copy + Default + PartialEq>(node: &OctreeNode<T>) {
+        fn check_no_default_leaf<T: Copy + Default + PartialEq + Serialize + DeserializeOwned>(
+            node: &OctreeNode<T>,
+        ) {
             match node {
                 OctreeNode::Leaf(voxel) => {
                     assert!(

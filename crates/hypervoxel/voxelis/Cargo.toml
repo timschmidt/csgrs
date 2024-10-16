@@ -6,6 +6,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+bincode.workspace = true
 bitflags.workspace = true
 byteorder.workspace = true
 glam.workspace = true
@@ -14,6 +15,7 @@ log.workspace = true
 md-5.workspace = true
 rayon.workspace = true
 rustc-hash.workspace = true
+serde.workspace = true
 wide.workspace = true
 zstd.workspace = true
 
