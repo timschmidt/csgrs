@@ -14,7 +14,7 @@ use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
 
-use voxelis::chunk::Chunk as VoxChunk;
+use voxelis::chunk::{Chunk as VoxChunk, VOXELS_PER_AXIS};
 use voxelis_bevy::mesh::{generate_greedy_mesh, generate_mesh};
 
 struct GamePlugin;
@@ -100,7 +100,25 @@ fn setup(
     });
 
     let mut naive_chunk = VoxChunk::new();
-    naive_chunk.generate_test_data();
+
+    let r = VOXELS_PER_AXIS as i32 / 2;
+    let r1 = VOXELS_PER_AXIS as i32 - 1;
+    let v = 0;
+    naive_chunk.fill(1);
+    naive_chunk.generate_test_sphere(IVec3::new(0, 0, 0), r, v);
+    naive_chunk.generate_test_sphere(IVec3::new(0, r1, r1), r, v);
+    naive_chunk.generate_test_sphere(IVec3::new(r1, r1, 0), r, v);
+    naive_chunk.generate_test_sphere(IVec3::new(r1, 0, r1), r, v);
+    naive_chunk.generate_test_sphere(IVec3::new(r1, 0, 0), r, v);
+    naive_chunk.generate_test_sphere(IVec3::new(0, r1, 0), r, v);
+    naive_chunk.generate_test_sphere(IVec3::new(0, 0, r1), r, v);
+    naive_chunk.generate_test_sphere(IVec3::new(r1, r1, r1), r, v);
+
+    println!(
+        "Memory size: {}",
+        humanize_bytes::humanize_bytes_binary!(naive_chunk.total_memory_size())
+    );
+
     let naive_mesh = generate_mesh(&naive_chunk).unwrap();
 
     let mut greedy_chunk = VoxChunk::new();
