@@ -83,7 +83,14 @@ impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Octree<T> {
     }
 
     pub fn is_full(&self) -> bool {
-        self.root.as_ref().map_or(false, |root| root.is_full())
+        if let Some(root) = &self.root {
+            return match root.as_ref() {
+                OctreeNode::Leaf(_) => true,
+                OctreeNode::Branch(_) => root.is_full(),
+            };
+        }
+
+        false
     }
 
     pub fn calculate_voxels_per_axis(lod_level: usize) -> usize {
@@ -102,29 +109,38 @@ impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Octree<T> {
         let voxels_per_axis = Self::calculate_voxels_per_axis(self.max_depth as usize);
         let shift_y: usize = 1 << (2 * self.max_depth as usize);
         let shift_z: usize = 1 << self.max_depth as usize;
-
-        let mut data = vec![T::default(); voxels_per_axis * voxels_per_axis * voxels_per_axis];
+        let size: usize = voxels_per_axis * voxels_per_axis * voxels_per_axis;
 
         if let Some(root) = &self.root {
-            for y in 0..voxels_per_axis {
-                let base_index_y = y * shift_y;
-                for z in 0..voxels_per_axis {
-                    let base_index_z = base_index_y + z * shift_z;
-                    for x in 0..voxels_per_axis {
-                        let index = base_index_z + x;
-                        if let Some(voxel) = root.get_at_depth(
-                            IVec3::new(x as i32, y as i32, z as i32),
-                            0,
-                            self.max_depth,
-                        ) {
-                            data[index] = voxel.value;
+            match root.as_ref() {
+                OctreeNode::Leaf(voxel) => {
+                    return vec![voxel.value; size];
+                }
+                OctreeNode::Branch(_) => {
+                    let mut data = vec![T::default(); size];
+                    for y in 0..voxels_per_axis {
+                        let base_index_y = y * shift_y;
+                        for z in 0..voxels_per_axis {
+                            let base_index_z = base_index_y + z * shift_z;
+                            for x in 0..voxels_per_axis {
+                                let index = base_index_z + x;
+                                if let Some(voxel) = root.get_at_depth(
+                                    IVec3::new(x as i32, y as i32, z as i32),
+                                    0,
+                                    self.max_depth,
+                                ) {
+                                    data[index] = voxel.value;
+                                }
+                            }
                         }
                     }
+
+                    return data;
                 }
             }
         }
 
-        data
+        vec![T::default(); size]
     }
 
     pub fn for_each_mut<F>(&mut self, mut f: F)
