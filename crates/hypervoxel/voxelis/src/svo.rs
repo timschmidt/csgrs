@@ -1,34 +1,41 @@
-use std::io::Read;
-use std::{io::Write, marker::PhantomData};
+use std::hash::{Hash, Hasher};
+use std::marker::PhantomData;
 
-use byteorder::{ReadBytesExt, WriteBytesExt};
 use glam::IVec3;
-use serde::de::DeserializeOwned;
-use serde::Serialize;
+
+pub trait RequiredVoxelTraits:
+    Clone + Copy + PartialEq + Default + Hash + std::fmt::Display + std::fmt::Debug
+{
+}
+
+impl<T> RequiredVoxelTraits for T where
+    T: Clone + Copy + PartialEq + Default + Hash + std::fmt::Display + std::fmt::Debug
+{
+}
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Voxel<T> {
+pub struct Voxel<T: RequiredVoxelTraits> {
     pub value: T,
 }
 
 #[derive(Default, Debug)]
-pub struct Octree<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> {
+pub struct Octree<T: RequiredVoxelTraits> {
     max_depth: u8,
     root: Option<Box<OctreeNode<T>>>,
     _phantom: PhantomData<T>,
 }
 
 #[derive(Debug)]
-pub enum OctreeNode<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> {
+pub enum OctreeNode<T: RequiredVoxelTraits> {
     Branch(Box<[Option<OctreeNode<T>>; 8]>),
     Leaf(Voxel<T>),
 }
 
-pub struct OctreeIterator<'a, T: Copy + Default + PartialEq + Serialize + DeserializeOwned> {
+pub struct OctreeIterator<'a, T: RequiredVoxelTraits> {
     stack: Vec<&'a OctreeNode<T>>,
 }
 
-fn child_index(position: IVec3, depth: u8, max_depth: u8) -> usize {
+fn octree_child_index(position: IVec3, depth: u8, max_depth: u8) -> usize {
     let shift = max_depth - depth - 1;
 
     let mut index = 0;
@@ -46,7 +53,180 @@ fn child_index(position: IVec3, depth: u8, max_depth: u8) -> usize {
     index
 }
 
-impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Octree<T> {
+pub fn octree_calculate_voxels_per_axis(lod_level: usize) -> usize {
+    1 << lod_level
+}
+
+fn octree_get_at_depth<T: RequiredVoxelTraits>(
+    node: &OctreeNode<T>,
+    position: IVec3,
+    depth: u8,
+    max_depth: u8,
+) -> Option<&Voxel<T>> {
+    match node {
+        OctreeNode::Leaf(voxel) => Some(voxel),
+        OctreeNode::Branch(children) => {
+            let index = octree_child_index(position, depth, max_depth);
+            children[index]
+                .as_ref()
+                .and_then(|child| octree_get_at_depth(child, position, depth + 1, max_depth))
+        }
+    }
+}
+
+fn octree_set_at_depth<T: RequiredVoxelTraits>(
+    node: &mut OctreeNode<T>,
+    position: IVec3,
+    depth: u8,
+    max_depth: u8,
+    voxel: Voxel<T>,
+) -> bool {
+    if depth == max_depth {
+        *node = OctreeNode::Leaf(voxel);
+        voxel.value == T::default()
+    } else {
+        match node {
+            OctreeNode::Leaf(existing_voxel) => {
+                // If the existing leaf has the same value, no action is needed
+                if *existing_voxel == voxel {
+                    return false; // Do not remove this node
+                }
+
+                // Split the leaf into a branch
+                let mut branch = OctreeNode::new_branch();
+
+                // Initialize all children with the existing voxel value
+                for i in 0..8 {
+                    octree_set_child(&mut branch, i, OctreeNode::Leaf(*existing_voxel));
+                }
+
+                // Replace self with the new branch
+                *node = branch;
+
+                // Now, insert the new voxel into the tree
+                let should_remove = octree_set_at_depth(node, position, depth, max_depth, voxel);
+
+                // After insertion, check if we can merge this branch into a Leaf
+                if let Some(merged_voxel) = octree_try_merge_children_into_leaf(node) {
+                    *node = OctreeNode::Leaf(merged_voxel);
+                    return merged_voxel.value == T::default(); // Indicate if this node should be removed
+                }
+
+                should_remove
+            }
+            OctreeNode::Branch(children) => {
+                let index = octree_child_index(position, depth, max_depth);
+
+                if let Some(child) = &mut children[index] {
+                    let should_remove =
+                        octree_set_at_depth(child, position, depth + 1, max_depth, voxel);
+                    if should_remove {
+                        children[index] = None;
+                    }
+                } else if voxel.value != T::default() {
+                    // Create a new child node
+                    let mut child = OctreeNode::new_branch();
+                    let should_remove =
+                        octree_set_at_depth(&mut child, position, depth + 1, max_depth, voxel);
+                    if !should_remove {
+                        children[index] = Some(child);
+                    }
+                }
+
+                // After insertion, check if we can merge this branch into a Leaf
+                if let Some(merged_voxel) = octree_try_merge_children_into_leaf(node) {
+                    *node = OctreeNode::Leaf(merged_voxel);
+                    return merged_voxel.value == T::default(); // Indicate if this node should be removed
+                }
+
+                if let OctreeNode::Branch(children) = node {
+                    // If all children are None, remove this node
+                    if children.iter().all(|child| child.is_none()) {
+                        return true;
+                    }
+                }
+
+                false
+            }
+        }
+    }
+}
+
+fn octree_set_child<T: RequiredVoxelTraits>(
+    node: &mut OctreeNode<T>,
+    index: usize,
+    child: OctreeNode<T>,
+) {
+    if let OctreeNode::Branch(children) = node {
+        children[index] = Some(child);
+    }
+}
+
+fn octree_try_merge_children_into_leaf<T: RequiredVoxelTraits>(
+    node: &OctreeNode<T>,
+) -> Option<Voxel<T>> {
+    if let OctreeNode::Branch(children) = node {
+        // Get the first child (octant 0)
+        let first_child = &children[0];
+
+        // The first child must be a Leaf node to consider merging
+        let first_voxel = match first_child {
+            Some(OctreeNode::Leaf(voxel)) => *voxel,
+            _ => return None, // Cannot merge if the first child is not a leaf
+        };
+
+        // Check if all other children are leaves with the same voxel value
+        for child in children.iter() {
+            match child {
+                Some(OctreeNode::Leaf(voxel)) if *voxel == first_voxel => continue,
+                Some(OctreeNode::Leaf(voxel)) if voxel.value == T::default() => return None,
+                _ => return None, // Cannot merge if any child is not a matching Leaf node
+            }
+        }
+
+        return Some(first_voxel);
+    }
+
+    None
+}
+
+fn octree_is_node_empty<T: RequiredVoxelTraits>(node: &OctreeNode<T>) -> bool {
+    match node {
+        OctreeNode::Leaf(_) => false,
+        OctreeNode::Branch(children) => children.iter().all(|child| {
+            child
+                .as_ref()
+                .map_or(true, |child| octree_is_node_empty(child))
+        }),
+    }
+}
+
+fn octree_is_node_full<T: RequiredVoxelTraits>(node: &OctreeNode<T>) -> bool {
+    match node {
+        OctreeNode::Leaf(_) => true,
+        OctreeNode::Branch(children) => children.iter().all(|child| {
+            child
+                .as_ref()
+                .map_or(false, |child| octree_is_node_full(child))
+        }),
+    }
+}
+
+fn octree_node_memory_size<T: RequiredVoxelTraits>(node: &OctreeNode<T>) -> usize {
+    match node {
+        OctreeNode::Leaf(_) => std::mem::size_of::<OctreeNode<T>>(),
+        OctreeNode::Branch(children) => {
+            let children_size: usize = children
+                .iter()
+                .filter_map(|child| child.as_ref())
+                .map(|child| octree_node_memory_size(child))
+                .sum();
+            std::mem::size_of::<OctreeNode<T>>() + children_size
+        }
+    }
+}
+
+impl<T: RequiredVoxelTraits> Octree<T> {
     pub fn new(max_depth: u8) -> Self {
         Self {
             max_depth,
@@ -65,7 +245,7 @@ impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Octree<T> {
         }
 
         if let Some(root) = &mut self.root {
-            let should_remove = root.set_at_depth(position, 0, self.max_depth, voxel);
+            let should_remove = octree_set_at_depth(root, position, 0, self.max_depth, voxel);
             if should_remove {
                 self.root = None;
             }
@@ -75,7 +255,7 @@ impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Octree<T> {
     pub fn get(&self, position: IVec3) -> Option<&Voxel<T>> {
         self.root
             .as_ref()
-            .and_then(|root| root.get_at_depth(position, 0, self.max_depth))
+            .and_then(|root| octree_get_at_depth(root, position, 0, self.max_depth))
     }
 
     pub fn is_empty(&self) -> bool {
@@ -86,15 +266,11 @@ impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Octree<T> {
         if let Some(root) = &self.root {
             return match root.as_ref() {
                 OctreeNode::Leaf(_) => true,
-                OctreeNode::Branch(_) => root.is_full(),
+                OctreeNode::Branch(_) => octree_is_node_full(root),
             };
         }
 
         false
-    }
-
-    pub fn calculate_voxels_per_axis(lod_level: usize) -> usize {
-        1 << lod_level
     }
 
     pub fn clear(&mut self) {
@@ -106,7 +282,7 @@ impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Octree<T> {
     }
 
     pub fn to_vec(&self) -> Vec<T> {
-        let voxels_per_axis = Self::calculate_voxels_per_axis(self.max_depth as usize);
+        let voxels_per_axis = octree_calculate_voxels_per_axis(self.max_depth as usize);
         let shift_y: usize = 1 << (2 * self.max_depth as usize);
         let shift_z: usize = 1 << self.max_depth as usize;
         let size: usize = voxels_per_axis * voxels_per_axis * voxels_per_axis;
@@ -124,7 +300,8 @@ impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Octree<T> {
                             let base_index_z = base_index_y + z * shift_z;
                             for x in 0..voxels_per_axis {
                                 let index = base_index_z + x;
-                                if let Some(voxel) = root.get_at_depth(
+                                if let Some(voxel) = octree_get_at_depth(
+                                    root,
                                     IVec3::new(x as i32, y as i32, z as i32),
                                     0,
                                     self.max_depth,
@@ -147,7 +324,7 @@ impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Octree<T> {
     where
         F: FnMut(usize, &mut T),
     {
-        let voxels_per_axis = Self::calculate_voxels_per_axis(self.max_depth as usize);
+        let voxels_per_axis = octree_calculate_voxels_per_axis(self.max_depth as usize);
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -181,289 +358,25 @@ impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Octree<T> {
     pub fn total_memory_size(&self) -> usize {
         self.root
             .as_ref()
-            .map_or(0, |root| root.total_memory_size())
+            .map_or(0, |root| octree_node_memory_size(root))
             + std::mem::size_of::<Self>()
-    }
-
-    pub fn serialize_to_vec(&self) -> std::io::Result<Vec<u8>> {
-        let mut buffer = Vec::new();
-
-        {
-            let mut writer = std::io::BufWriter::new(&mut buffer);
-            self.serialize(&mut writer)?;
-        }
-
-        Ok(buffer)
-    }
-
-    pub fn serialize<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-        if let Some(root) = &self.root {
-            // Octree is not empty, write a flag indicating the presence of the root node (1u8)
-            writer.write_u8(1u8)?;
-            Self::serialize_node(writer, root)?;
-        } else {
-            // Octree is empty, write a flag indicating the absence of the root node (0u8)
-            writer.write_u8(0u8)?;
-        }
-
-        Ok(())
-    }
-
-    pub fn deserialize<R: Read>(&mut self, reader: &mut R) -> std::io::Result<()> {
-        // Read the flag indicating the presence of the root node
-        let root_presence_flag = reader.read_u8()?;
-
-        match root_presence_flag {
-            0 => {
-                // Octree is empty, set the root to None
-                self.root = None;
-            }
-            1 => {
-                // Octree is not empty, deserialize the root node
-                self.root = Some(Box::new(Self::deserialize_node(reader)?));
-            }
-            _ => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "Invalid root presence flag",
-                ));
-            }
-        }
-
-        Ok(())
-    }
-
-    fn serialize_node<W: Write>(writer: &mut W, node: &OctreeNode<T>) -> std::io::Result<()> {
-        match node {
-            OctreeNode::Leaf(voxel) => {
-                // Write a flag indicating a leaf node (0u8)
-                writer.write_u8(0u8)?;
-                // Serialize the voxel value
-                // Ensure T implements Serialize
-                bincode::serialize_into(writer, &voxel.value).map_err(|e| {
-                    std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string())
-                })?;
-            }
-            OctreeNode::Branch(children) => {
-                // Write a flag indicating a branch node (1u8)
-                writer.write_u8(1u8)?;
-                // Create a bitmask for child presence
-                let mut bitmask = 0u8;
-                for (i, child) in children.iter().enumerate() {
-                    if child.is_some() {
-                        bitmask |= 1 << i;
-                    }
-                }
-                // Write the bitmask
-                writer.write_u8(bitmask)?;
-
-                // Recursively serialize existing children
-                for child in children.iter().flatten() {
-                    Self::serialize_node(writer, child)?;
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    fn deserialize_node<R: Read>(reader: &mut R) -> std::io::Result<OctreeNode<T>> {
-        let node_type = reader.read_u8()?;
-
-        match node_type {
-            0 => {
-                // Leaf node
-                let value = bincode::deserialize_from(reader).map_err(|e| {
-                    std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string())
-                })?;
-                Ok(OctreeNode::Leaf(Voxel { value }))
-            }
-            1 => {
-                // Branch node
-                let bitmask = reader.read_u8()?;
-                let mut children = Box::new([None, None, None, None, None, None, None, None]);
-                for i in 0..8 {
-                    if (bitmask >> i) & 1 == 1 {
-                        let child_node = Self::deserialize_node(reader)?;
-                        children[i] = Some(child_node);
-                    }
-                }
-                Ok(OctreeNode::Branch(children))
-            }
-            _ => Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Invalid node type",
-            )),
-        }
     }
 }
 
-impl<T: Copy + Default + PartialEq + Serialize + DeserializeOwned> OctreeNode<T> {
+impl<T: RequiredVoxelTraits> OctreeNode<T> {
     fn new_branch() -> Self {
         OctreeNode::Branch(Box::new([None, None, None, None, None, None, None, None]))
     }
-
-    fn set_at_depth(&mut self, position: IVec3, depth: u8, max_depth: u8, voxel: Voxel<T>) -> bool {
-        if depth == max_depth {
-            *self = OctreeNode::Leaf(voxel);
-            voxel.value == T::default()
-        } else {
-            match self {
-                OctreeNode::Leaf(existing_voxel) => {
-                    // If the existing leaf has the same value, no action is needed
-                    if *existing_voxel == voxel {
-                        return false; // Do not remove this node
-                    }
-
-                    // Split the leaf into a branch
-                    let mut branch = OctreeNode::new_branch();
-
-                    // Initialize all children with the existing voxel value
-                    for i in 0..8 {
-                        branch.set_child(i, OctreeNode::Leaf(*existing_voxel));
-                    }
-
-                    // Replace self with the new branch
-                    *self = branch;
-
-                    // Now, insert the new voxel into the tree
-                    let should_remove = self.set_at_depth(position, depth, max_depth, voxel);
-
-                    // After insertion, check if we can merge this branch into a Leaf
-                    if let Some(merged_voxel) = self.try_merge_children_into_leaf() {
-                        *self = OctreeNode::Leaf(merged_voxel);
-                        return merged_voxel.value == T::default(); // Indicate if this node should be removed
-                    }
-
-                    should_remove
-                }
-                OctreeNode::Branch(children) => {
-                    let index = child_index(position, depth, max_depth);
-
-                    if let Some(child) = &mut children[index] {
-                        let should_remove =
-                            child.set_at_depth(position, depth + 1, max_depth, voxel);
-                        if should_remove {
-                            children[index] = None;
-                        }
-                    } else if voxel.value != T::default() {
-                        // Create a new child node
-                        let mut child = OctreeNode::new_branch();
-                        let should_remove =
-                            child.set_at_depth(position, depth + 1, max_depth, voxel);
-                        if !should_remove {
-                            children[index] = Some(child);
-                        }
-                    }
-
-                    // After insertion, check if we can merge this branch into a Leaf
-                    if let Some(merged_voxel) = self.try_merge_children_into_leaf() {
-                        *self = OctreeNode::Leaf(merged_voxel);
-                        return merged_voxel.value == T::default(); // Indicate if this node should be removed
-                    }
-
-                    if let OctreeNode::Branch(children) = self {
-                        // If all children are None, remove this node
-                        if children.iter().all(|child| child.is_none()) {
-                            return true;
-                        }
-                    }
-
-                    false
-                }
-            }
-        }
-    }
-
-    fn get_at_depth(&self, position: IVec3, depth: u8, max_depth: u8) -> Option<&Voxel<T>> {
-        match self {
-            OctreeNode::Leaf(voxel) => Some(voxel),
-            OctreeNode::Branch(children) => {
-                let index = child_index(position, depth, max_depth);
-                children[index]
-                    .as_ref()
-                    .and_then(|child| child.get_at_depth(position, depth + 1, max_depth))
-            }
-        }
-    }
-
-    fn set_child(&mut self, index: usize, child: OctreeNode<T>) {
-        if let OctreeNode::Branch(children) = self {
-            children[index] = Some(child);
-        } else {
-            panic!("OctreeNode::set_child called on non-branch node");
-        }
-    }
-
-    fn try_merge_children_into_leaf(&self) -> Option<Voxel<T>> {
-        if let OctreeNode::Branch(children) = self {
-            // Get the first child (octant 0)
-            let first_child = &children[0];
-
-            // The first child must be a Leaf node to consider merging
-            let first_voxel = match first_child {
-                Some(OctreeNode::Leaf(voxel)) => *voxel,
-                _ => return None, // Cannot merge if the first child is not a leaf
-            };
-
-            // Check if all other children are leaves with the same voxel value
-            for child in children.iter() {
-                match child {
-                    Some(OctreeNode::Leaf(voxel)) if *voxel == first_voxel => continue,
-                    Some(OctreeNode::Leaf(voxel)) if voxel.value == T::default() => return None,
-                    _ => return None, // Cannot merge if any child is not a matching Leaf node
-                }
-            }
-
-            return Some(first_voxel);
-        }
-
-        None
-    }
-
-    pub fn is_empty(&self) -> bool {
-        match self {
-            OctreeNode::Leaf(_) => false,
-            OctreeNode::Branch(children) => children
-                .iter()
-                .all(|child| child.as_ref().map_or(true, |child| child.is_empty())),
-        }
-    }
-
-    pub fn is_full(&self) -> bool {
-        match self {
-            OctreeNode::Leaf(_) => true,
-            OctreeNode::Branch(children) => children
-                .iter()
-                .all(|child| child.as_ref().map_or(false, |child| child.is_full())),
-        }
-    }
-
-    pub fn total_memory_size(&self) -> usize {
-        match self {
-            OctreeNode::Leaf(_) => std::mem::size_of::<Self>(),
-            OctreeNode::Branch(children) => {
-                let children_size: usize = children
-                    .iter()
-                    .filter_map(|child| child.as_ref())
-                    .map(|child| child.total_memory_size())
-                    .sum();
-                std::mem::size_of::<Self>() + children_size
-            }
-        }
-    }
 }
 
-impl<'a, T: Copy + Default + PartialEq + Serialize + DeserializeOwned> OctreeIterator<'a, T> {
+impl<'a, T: RequiredVoxelTraits> OctreeIterator<'a, T> {
     pub fn new(root: Option<&'a OctreeNode<T>>) -> Self {
         let stack = root.into_iter().collect();
         Self { stack }
     }
 }
 
-impl<'a, T: Copy + Default + PartialEq + Serialize + DeserializeOwned> Iterator
-    for OctreeIterator<'a, T>
-{
+impl<'a, T: RequiredVoxelTraits> Iterator for OctreeIterator<'a, T> {
     type Item = &'a Voxel<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -487,7 +400,7 @@ mod tests {
     use glam::IVec3;
     use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-    use crate::svo::OctreeNode;
+    use crate::svo::{octree_calculate_voxels_per_axis, OctreeNode, RequiredVoxelTraits};
 
     use super::{Octree, Voxel};
 
@@ -593,9 +506,7 @@ mod tests {
         octree.set(IVec3::new(0, 0, 0), Voxel { value: 0 });
 
         // Traverse the tree to ensure no Leaf nodes have default value
-        fn check_no_default_leaf<T: Copy + Default + PartialEq + Serialize + DeserializeOwned>(
-            node: &OctreeNode<T>,
-        ) {
+        fn check_no_default_leaf<T: RequiredVoxelTraits>(node: &OctreeNode<T>) {
             match node {
                 OctreeNode::Leaf(voxel) => {
                     assert!(
@@ -655,7 +566,7 @@ mod tests {
         let mut octree = Octree::<u8>::new(max_depth);
         assert!(!octree.is_full());
 
-        let voxels_per_axis = Octree::<u8>::calculate_voxels_per_axis(max_depth as usize) as i32;
+        let voxels_per_axis = octree_calculate_voxels_per_axis(max_depth as usize) as i32;
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
