@@ -33,3 +33,7 @@ harness = false
 [[bench]]
 name = "voxelize_mesh"
 harness = false
+
+[[bench]]
+name = "svo_bench"
+harness = false
