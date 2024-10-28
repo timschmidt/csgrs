@@ -14,7 +14,7 @@ enum Cache {
 }
 
 /// Computable approximation of a Real number
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Computable {
     internal: Box<Approximation>,
     cache: RefCell<Cache>,
@@ -405,7 +405,7 @@ fn scale(n: BigInt, p: Precision) -> BigInt {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Approximation {
     Int(BigInt),
     Inverse(Computable),
@@ -443,14 +443,12 @@ impl Approximation {
 }
 
 mod approximation {
-    use crate::Rational;
+    use crate::computable::{big, scale, shift};
     use crate::Computable;
-    use num::{One, Zero};
-    use num::{BigInt, BigUint, Signed};
+    use crate::Rational;
     use num::bigint::Sign;
-    use crate::computable::big;
-    use crate::computable::scale;
-    use crate::computable::shift;
+    use num::{BigInt, BigUint, Signed};
+    use num::{One, Zero};
     use std::ops::Deref;
 
     pub type Precision = i32;
