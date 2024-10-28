@@ -1,6 +1,5 @@
 use crate::Rational;
 use core::cmp::Ordering;
-use num::Signed;
 use num::{bigint::Sign, BigInt, BigUint};
 use num::{One, Zero};
 use std::cell::RefCell;
@@ -17,7 +16,7 @@ enum Cache {
 /// Computable approximation of a Real number
 #[derive(Debug)]
 pub struct Computable {
-    internal: Box<dyn Approximation>,
+    internal: Box<Approximation>,
     cache: RefCell<Cache>,
 }
 
@@ -56,7 +55,7 @@ impl Computable {
     /// Exactly one
     pub fn one() -> Self {
         Self {
-            internal: Box::new(Int(BigInt::one())),
+            internal: Box::new(Approximation::Int(BigInt::one())),
             cache: RefCell::new(Cache::Invalid),
         }
     }
@@ -76,7 +75,7 @@ impl Computable {
     /// Any Rational
     pub fn rational(r: Rational) -> Self {
         Self {
-            internal: Box::new(Ratio(r)),
+            internal: Box::new(Approximation::Ratio(r)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
@@ -103,7 +102,7 @@ impl Computable {
             square_root.square()
         } else {
             Self {
-                internal: Box::new(Exp(self)),
+                internal: Box::new(Approximation::Exp(self)),
                 cache: RefCell::new(Cache::Invalid),
             }
         }
@@ -160,63 +159,63 @@ impl Computable {
 
     fn prescaled_ln(self) -> Self {
         Self {
-            internal: Box::new(PrescaledLn(self)),
+            internal: Box::new(Approximation::PrescaledLn(self)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
     pub fn sqrt(self) -> Self {
         Self {
-            internal: Box::new(Sqrt(self)),
+            internal: Box::new(Approximation::Sqrt(self)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
     fn prescaled_atan(n: BigInt) -> Self {
         Self {
-            internal: Box::new(PrescaledAtan(n)),
+            internal: Box::new(Approximation::PrescaledAtan(n)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
     pub fn negate(self) -> Self {
         Self {
-            internal: Box::new(Negate(self)),
+            internal: Box::new(Approximation::Negate(self)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
     pub fn inverse(self) -> Self {
         Self {
-            internal: Box::new(Inverse(self)),
+            internal: Box::new(Approximation::Inverse(self)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
     fn shift_left(self, n: i32) -> Self {
         Self {
-            internal: Box::new(Shift::new(self, n)),
+            internal: Box::new(Approximation::Offset(self, n)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
     fn shift_right(self, n: i32) -> Self {
         Self {
-            internal: Box::new(Shift::new(self, -n)),
+            internal: Box::new(Approximation::Offset(self, -n)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
     pub fn square(self) -> Self {
         Self {
-            internal: Box::new(Square(self)),
+            internal: Box::new(Approximation::Square(self)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
     pub fn multiply(self, other: Self) -> Self {
         Self {
-            internal: Box::new(Multiply::new(self, other)),
+            internal: Box::new(Approximation::Multiply(self, other)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
@@ -224,14 +223,14 @@ impl Computable {
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, other: Computable) -> Self {
         Self {
-            internal: Box::new(Add::new(self, other)),
+            internal: Box::new(Approximation::Add(self, other)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
 
     fn integer(n: BigInt) -> Self {
         Self {
-            internal: Box::new(Int(n)),
+            internal: Box::new(Approximation::Int(n)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
@@ -406,29 +405,58 @@ fn scale(n: BigInt, p: Precision) -> BigInt {
     }
 }
 
-trait Approximation: core::fmt::Debug {
-    /* TODO maybe provide some mechanism to request computation stops? */
-
-    /// result is within 1 but scaled by 2 ^ p
-    /// So e.g. pi with p=0 is 3, pi with p=2 = 314
-    fn approximate(&self, p: Precision) -> BigInt;
+#[derive(Debug)]
+enum Approximation {
+    Int(BigInt),
+    Inverse(Computable),
+    Negate(Computable),
+    Add(Computable, Computable),
+    Multiply(Computable, Computable),
+    Square(Computable),
+    Ratio(Rational),
+    Offset(Computable, i32),
+    Exp(Computable),
+    Sqrt(Computable),
+    PrescaledLn(Computable),
+    PrescaledAtan(BigInt),
 }
 
-#[derive(Debug)]
-struct Int(BigInt);
-
-impl Approximation for Int {
+impl Approximation {
     fn approximate(&self, p: Precision) -> BigInt {
-        scale(self.0.clone(), -p)
+        use Approximation::*;
+
+        match self {
+            Int(i) => scale(i.clone(), -p),
+            Inverse(c) => approximation::inverse(&c, p),
+            Negate(c) => -c.approx(p),
+            Add(c1, c2) => approximation::add(&c1, &c2, p),
+            Multiply(c1, c2) => approximation::multiply(&c1, &c2, p),
+            Square(c) => approximation::square(&c, p),
+            Ratio(r) => approximation::ratio(r, p),
+            Offset(c, n) => approximation::offset(&c, *n, p),
+            Exp(c) => approximation::exp(&c, p),
+            Sqrt(c) => approximation::sqrt(&c, p),
+            PrescaledLn(c) => approximation::ln(&c, p),
+            PrescaledAtan(i) => approximation::atan(i, p),
+        }
     }
 }
 
-#[derive(Debug)]
-struct Inverse(Computable);
+mod approximation {
+    use crate::Rational;
+    use crate::Computable;
+    use num::{One, Zero};
+    use num::{BigInt, BigUint, Signed};
+    use num::bigint::Sign;
+    use crate::computable::big;
+    use crate::computable::scale;
+    use crate::computable::shift;
+    use std::ops::Deref;
 
-impl Approximation for Inverse {
-    fn approximate(&self, p: Precision) -> BigInt {
-        let msd = self.0.iter_msd();
+    pub type Precision = i32;
+
+    pub(super) fn inverse(c: &Computable, p: Precision) -> BigInt {
+        let msd = c.iter_msd();
         let inv_msd = 1 - msd;
         let digits_needed = inv_msd - p + 3;
         let prec_needed = msd - digits_needed;
@@ -439,7 +467,7 @@ impl Approximation for Inverse {
         }
 
         let dividend = big::ONE.deref() << log_scale_factor;
-        let scaled_divisor = self.0.approx(prec_needed);
+        let scaled_divisor = c.approx(prec_needed);
         let abs_scaled_divisor = scaled_divisor.abs();
         let adj_dividend = dividend + (&abs_scaled_divisor >> 1);
         let result: BigInt = adj_dividend / abs_scaled_divisor;
@@ -450,65 +478,28 @@ impl Approximation for Inverse {
             result
         }
     }
-}
 
-#[derive(Debug)]
-struct Negate(Computable);
-
-impl Approximation for Negate {
-    fn approximate(&self, p: Precision) -> BigInt {
-        -self.0.approx(p)
+    pub(super) fn add(c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
+        scale(c1.approx(p - 2) + c2.approx(p - 2), -2)
     }
-}
 
-#[derive(Debug)]
-struct Add {
-    a: Computable,
-    b: Computable,
-}
-
-impl Add {
-    fn new(a: Computable, b: Computable) -> Self {
-        Self { a, b }
-    }
-}
-
-impl Approximation for Add {
-    fn approximate(&self, p: Precision) -> BigInt {
-        scale(self.a.approx(p - 2) + self.b.approx(p - 2), -2)
-    }
-}
-
-#[derive(Debug)]
-struct Multiply {
-    a: Computable,
-    b: Computable,
-}
-
-impl Multiply {
-    fn new(a: Computable, b: Computable) -> Self {
-        Self { a, b }
-    }
-}
-
-impl Approximation for Multiply {
-    fn approximate(&self, p: Precision) -> BigInt {
+    pub(super) fn multiply(c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
         let half_prec = (p >> 1) - 1;
 
-        match self.a.msd(half_prec) {
-            None => match self.b.msd(half_prec) {
+        match c1.msd(half_prec) {
+            None => match c2.msd(half_prec) {
                 None => Zero::zero(),
                 Some(msd_op2) => {
                     let prec1 = p - msd_op2 - 3;
-                    let appr1 = self.a.approx(prec1);
+                    let appr1 = c1.approx(prec1);
 
                     if appr1.sign() == Sign::NoSign {
                         return Zero::zero();
                     }
 
-                    let msd_op1 = self.a.known_msd();
+                    let msd_op1 = c1.known_msd();
                     let prec2 = p - msd_op1 - 3;
-                    let appr2 = self.b.approx(prec2);
+                    let appr2 = c2.approx(prec2);
 
                     let scale_digits = prec2 + prec1 - p;
                     scale(appr2 * appr1, scale_digits)
@@ -516,89 +507,68 @@ impl Approximation for Multiply {
             },
             Some(msd_op1) => {
                 let prec2 = p - msd_op1 - 3;
-                let appr2 = self.b.approx(prec2);
+                let appr2 = c2.approx(prec2);
 
                 if appr2.sign() == Sign::NoSign {
                     return Zero::zero();
                 }
 
-                let msd_op2 = self.b.known_msd();
+                let msd_op2 = c2.known_msd();
                 let prec1 = p - msd_op2 - 3;
-                let appr1 = self.a.approx(prec1);
+                let appr1 = c1.approx(prec1);
 
                 let scale_digits = prec1 + prec2 - p;
                 scale(appr1 * appr2, scale_digits)
             }
         }
     }
-}
 
-#[derive(Debug)]
-struct Square(Computable);
-
-impl Approximation for Square {
-    fn approximate(&self, p: Precision) -> BigInt {
+    pub(super) fn square(c: &Computable, p: Precision) -> BigInt {
         let half_prec = (p >> 1) - 1;
-        let prec2 = match self.0.msd(half_prec) {
+        let prec2 = match c.msd(half_prec) {
             None => {
                 return Zero::zero();
             }
             Some(msd) => p - msd - 3,
         };
 
-        let appr2 = self.0.approx(prec2);
+        let appr2 = c.approx(prec2);
 
         if appr2.sign() == Sign::NoSign {
             return Zero::zero();
         }
 
-        let msd_op2 = self.0.known_msd();
+        let msd_op2 = c.known_msd();
         let prec1 = p - msd_op2 - 3;
-        let appr1 = self.0.approx(prec1);
+        let appr1 = c.approx(prec1);
 
         let scale_digits = prec1 + prec2 - p;
         scale(appr1 * appr2, scale_digits)
     }
-}
 
-#[derive(Debug)]
-struct Shift {
-    a: Computable,
-    n: i32,
-}
-
-impl Shift {
-    fn new(a: Computable, n: i32) -> Self {
-        Self { a, n }
-    }
-}
-
-impl Approximation for Shift {
-    fn approximate(&self, p: Precision) -> BigInt {
-        self.a.approx(p - self.n)
-    }
-}
-
-#[derive(Debug)]
-struct Ratio(Rational);
-
-impl Approximation for Ratio {
-    fn approximate(&self, p: Precision) -> BigInt {
+    pub(super) fn ratio(r: &Rational, p: Precision) -> BigInt {
         if p >= 0 {
-            scale(self.0.shifted_big_integer(0), -p)
+            scale(r.shifted_big_integer(0), -p)
         } else {
-            self.0.shifted_big_integer(-p)
+            r.shifted_big_integer(-p)
         }
     }
-}
 
-#[derive(Debug)]
-struct Exp(Computable);
+    pub(super) fn offset(c: &Computable, n: i32, p: Precision) -> BigInt {
+        c.approx(p - n)
+    }
 
-/// Only intended for Computable values < 0.5, others will be pre-scaled
-/// in Computable::exp
-impl Approximation for Exp {
-    fn approximate(&self, p: Precision) -> BigInt {
+    fn bound_log2(n: i32) -> i32 {
+        let abs_n = n.abs();
+        let ln2 = 2.0_f64.ln();
+        let n_plus_1: f64 = (abs_n + 1).into();
+        let ans: f64 = (n_plus_1.ln() / ln2).ceil();
+        ans as i32
+    }
+
+    /* Only intended for Computable values < 0.5, others will be pre-scaled
+     * in Computable::exp */
+    pub(super) fn exp(c: &Computable, p: Precision) -> BigInt {
         if p >= 1 {
             return Zero::zero();
         }
@@ -612,7 +582,7 @@ impl Approximation for Exp {
         let calc_precision = p - bound_log2(2 * iterations_needed) - 4; // for error in op, truncation.
         let op_prec = p - 3;
 
-        let op_appr = self.0.approx(op_prec);
+        let op_appr = c.approx(op_prec);
 
         // Error in argument results in error of < 3/8 ulp.
         // Sum of term eval. rounding error is < 1/16 ulp.
@@ -634,21 +604,66 @@ impl Approximation for Exp {
 
         scale(sum, calc_precision - p)
     }
-}
 
-#[derive(Debug)]
-struct PrescaledLn(Computable);
+    pub(super) fn sqrt(c: &Computable, p: Precision) -> BigInt {
+        let fp_prec: i32 = 50;
+        let fp_op_prec: i32 = 60;
 
-// Compute an approximation of ln(1+x) to precision p.
-// This assumes |x| < 1/2.
-// It uses a Taylor series expansion.
-// Unfortunately there appears to be no way to take
-// advantage of old information.
-// Note: this is known to be a bad algorithm for
-// floating point.  Unfortunately, other alternatives
-// appear to require precomputed tabular information.
-impl Approximation for PrescaledLn {
-    fn approximate(&self, p: Precision) -> BigInt {
+        let max_prec_needed = 2 * p - 1;
+        let msd = c.msd(max_prec_needed).unwrap_or(Precision::MIN);
+
+        if msd <= max_prec_needed {
+            return Zero::zero();
+        }
+
+        let result_msd = msd / 2;
+        let result_digits = result_msd - p;
+
+        if result_digits > fp_prec {
+            // Compute less precise approximation and use a Newton iter.
+            let appr_digits = result_digits / 2 + 6;
+            // This should be conservative.  Is fewer enough?
+            let appr_prec = result_msd - appr_digits;
+
+            let last_appr = sqrt(c, appr_prec);
+            let prod_prec = 2 * appr_prec;
+
+            let op_appr = c.approx(prod_prec);
+
+            // Slightly fewer might be enough;
+            // Compute (last_appr * last_appr + op_appr)/(last_appr/2)
+            // while adjusting the scaling to make everything work
+
+            let prod_prec_scaled_numerator = (&last_appr * &last_appr) + op_appr;
+            let scaled_numerator = scale(prod_prec_scaled_numerator, appr_prec - p);
+
+            let shifted_result = scaled_numerator / last_appr;
+
+            (shifted_result + big::ONE.deref()) / big::TWO.deref()
+        } else {
+            // Use an approximation from the Num crate
+            // Make sure all precisions are even
+            let op_prec = (msd - fp_op_prec) & !1;
+            let working_prec = op_prec - fp_op_prec;
+
+            let scaled_bi_appr = c.approx(op_prec) << fp_op_prec;
+
+            let scaled_sqrt = scaled_bi_appr.sqrt();
+
+            let shift_count = working_prec / 2 - p;
+            shift(scaled_sqrt, shift_count)
+        }
+    }
+
+    // Compute an approximation of ln(1+x) to precision p.
+    // This assumes |x| < 1/2.
+    // It uses a Taylor series expansion.
+    // Unfortunately there appears to be no way to take
+    // advantage of old information.
+    // Note: this is known to be a bad algorithm for
+    // floating point.  Unfortunately, other alternatives
+    // appear to require precomputed tabular information.
+    pub(super) fn ln(c: &Computable, p: Precision) -> BigInt {
         if p >= 0 {
             return Zero::zero();
         }
@@ -656,7 +671,7 @@ impl Approximation for PrescaledLn {
         let iterations_needed = -p;
         let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
         let op_prec = p - 3;
-        let op_appr = self.0.approx(op_prec);
+        let op_appr = c.approx(op_prec);
 
         let mut x_nth = scale(op_appr.clone(), op_prec - calc_precision);
         let mut current_term = x_nth.clone();
@@ -679,78 +694,10 @@ impl Approximation for PrescaledLn {
 
         scale(sum, calc_precision - p)
     }
-}
 
-#[derive(Debug)]
-struct Sqrt(Computable);
-
-impl Approximation for Sqrt {
-    fn approximate(&self, p: Precision) -> BigInt {
-        let fp_prec: i32 = 50;
-        let fp_op_prec: i32 = 60;
-
-        let max_prec_needed = 2 * p - 1;
-        let msd = self.0.msd(max_prec_needed).unwrap_or(Precision::MIN);
-
-        if msd <= max_prec_needed {
-            return Zero::zero();
-        }
-
-        let result_msd = msd / 2;
-        let result_digits = result_msd - p;
-
-        if result_digits > fp_prec {
-            // Compute less precise approximation and use a Newton iter.
-            let appr_digits = result_digits / 2 + 6;
-            // This should be conservative.  Is fewer enough?
-            let appr_prec = result_msd - appr_digits;
-
-            let last_appr = self.approximate(appr_prec);
-            let prod_prec = 2 * appr_prec;
-
-            let op_appr = self.0.approx(prod_prec);
-
-            // Slightly fewer might be enough;
-            // Compute (last_appr * last_appr + op_appr)/(last_appr/2)
-            // while adjusting the scaling to make everything work
-
-            let prod_prec_scaled_numerator = (&last_appr * &last_appr) + op_appr;
-            let scaled_numerator = scale(prod_prec_scaled_numerator, appr_prec - p);
-
-            let shifted_result = scaled_numerator / last_appr;
-
-            (shifted_result + big::ONE.deref()) / big::TWO.deref()
-        } else {
-            // Use an approximation from the Num crate
-            // Make sure all precisions are even
-            let op_prec = (msd - fp_op_prec) & !1;
-            let working_prec = op_prec - fp_op_prec;
-
-            let scaled_bi_appr = self.0.approx(op_prec) << fp_op_prec;
-
-            let scaled_sqrt = scaled_bi_appr.sqrt();
-
-            let shift_count = working_prec / 2 - p;
-            shift(scaled_sqrt, shift_count)
-        }
-    }
-}
-
-fn bound_log2(n: i32) -> i32 {
-    let abs_n = n.abs();
-    let ln2 = 2.0_f64.ln();
-    let n_plus_1: f64 = (abs_n + 1).into();
-    let ans: f64 = (n_plus_1.ln() / ln2).ceil();
-    ans as i32
-}
-
-// PrescaledAtan(n) is the Arctangent of 1/n where n is some small integer > base
-// what is "base" in this context?
-#[derive(Debug)]
-struct PrescaledAtan(BigInt);
-
-impl Approximation for PrescaledAtan {
-    fn approximate(&self, p: Precision) -> BigInt {
+    // Approximate the Arctangent of 1/n where n is some small integer > base
+    // what is "base" in this context?
+    pub(super) fn atan(i: &BigInt, p: Precision) -> BigInt {
         if p >= 1 {
             return Zero::zero();
         }
@@ -774,8 +721,8 @@ impl Approximation for PrescaledAtan {
         let max_trunc_error: BigUint = BigUint::one() << (p - 2 - calc_precision);
 
         let scaled_1 = big::ONE.deref() << (-calc_precision);
-        let big_op_squared: BigInt = &self.0 * &self.0;
-        let inverse: BigInt = scaled_1 / &self.0;
+        let big_op_squared: BigInt = i * i;
+        let inverse: BigInt = scaled_1 / i;
 
         let mut current_power = inverse.clone();
         let mut current_term = inverse.clone();
@@ -965,7 +912,7 @@ mod tests {
     fn scaled_ln1() {
         let zero = Computable::integer(BigInt::zero());
         let ln = Computable {
-            internal: Box::new(PrescaledLn(zero)),
+            internal: Box::new(Approximation::PrescaledLn(zero)),
             cache: RefCell::new(Cache::Invalid),
         };
         let zero = BigInt::zero();
@@ -977,7 +924,7 @@ mod tests {
         let zero_4: Rational = "0.4".parse().unwrap();
         let rational = Computable::rational(zero_4);
         let ln = Computable {
-            internal: Box::new(PrescaledLn(rational)),
+            internal: Box::new(Approximation::PrescaledLn(rational)),
             cache: RefCell::new(Cache::Invalid),
         };
         let five: BigInt = "5".parse().unwrap();
