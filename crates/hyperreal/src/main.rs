@@ -1,9 +1,12 @@
 use realistic::{RealProblem, Simple};
 use std::io;
+use std::collections::HashMap;
 
 pub fn main() {
     let debug_parse = false;
 
+    let mut names = HashMap::new();
+    let mut n: u32 = 0;
     loop {
         let mut input = String::new();
 
@@ -29,20 +32,24 @@ pub fn main() {
         }
 
         use RealProblem::*;
-        let ans = expr.evaluate();
+        let ans = expr.evaluate(&names);
         match ans {
             Ok(ans) => {
+                n += 1;
+                let name = format!("#{n}");
                 if ans.is_whole() {
-                    println!("answer: {ans}");
+                    println!("{name}: {ans}");
                 } else if ans.is_rational() {
                     if ans.prefer_fraction() {
-                        println!("answer: {ans} ~= {ans:#.10}");
+                        println!("{name}: {ans} ~= {ans:#.10}");
                     } else {
-                        println!("answer: {ans} = {ans:#}");
+                        println!("{name}: {ans} = {ans:#}");
                     }
                 } else {
-                    println!("answer: {ans} ~= {ans:#.20}");
+                    println!("{name}: {ans} ~= {ans:#.20}");
                 }
+                names.insert("last".to_owned(), ans.clone());
+                names.insert(name, ans);
             }
             Err(InsufficientParameters) => {
                 println!("The operator needs more parameters")

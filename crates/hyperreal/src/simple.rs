@@ -1,6 +1,9 @@
 use crate::{Rational, Real, RealProblem};
 use std::iter::Peekable;
 use std::str::Chars;
+use std::collections::HashMap;
+
+type Symbols = HashMap<String, Real>;
 
 #[derive(Clone, Debug, PartialEq)]
 enum Operator {
@@ -21,11 +24,11 @@ enum Operand {
 }
 
 impl Operand {
-    pub fn value(&self) -> Result<Real, RealProblem> {
+    pub fn value(&self, names: &Symbols) -> Result<Real, RealProblem> {
         match self {
             Operand::Literal(n) => Ok(Real::new(n.clone())),
-            Operand::Symbol(s) => Simple::lookup(s),
-            Operand::SubExpression(xpr) => xpr.evaluate(),
+            Operand::Symbol(s) => Simple::lookup(s, names),
+            Operand::SubExpression(xpr) => xpr.evaluate(names),
         }
     }
 }
@@ -50,7 +53,10 @@ fn parse_problem(problem: RealProblem) -> &'static str {
 }
 
 impl Simple {
-    fn lookup(name: &str) -> Result<Real, RealProblem> {
+    fn lookup(name: &str, names: &Symbols) -> Result<Real, RealProblem> {
+        if let Some(value) = names.get(name) {
+            return Ok(value.clone());
+        }
         match name {
             "pi" => Ok(Real::pi()),
             "e" => Ok(Real::e()),
@@ -58,13 +64,13 @@ impl Simple {
         }
     }
 
-    pub fn evaluate(&self) -> Result<Real, RealProblem> {
+    pub fn evaluate(&self, names: &Symbols) -> Result<Real, RealProblem> {
         use Operator::*;
         match self.op {
             Plus => {
                 let mut value = Real::zero();
                 for operand in &self.operands {
-                    value = value + operand.value()?;
+                    value = value + operand.value(names)?;
                 }
                 Ok(value)
             }
@@ -72,14 +78,14 @@ impl Simple {
                 0 => Err(RealProblem::InsufficientParameters),
                 1 => {
                     let operand = self.operands.first().unwrap();
-                    let value = -(operand.value()?);
+                    let value = -(operand.value(names)?);
                     Ok(value)
                 }
                 _ => {
-                    let mut value: Real = self.operands.first().unwrap().value()?;
+                    let mut value: Real = self.operands.first().unwrap().value(names)?;
                     let operands = self.operands.iter().skip(1);
                     for operand in operands {
-                        value = value - (operand.value()?);
+                        value = value - (operand.value(names)?);
                     }
                     Ok(value)
                 }
@@ -87,7 +93,7 @@ impl Simple {
             Star => {
                 let mut value = Real::new(Rational::one());
                 for operand in &self.operands {
-                    value = value * operand.value()?;
+                    value = value * operand.value(names)?;
                 }
                 Ok(value)
             }
@@ -95,13 +101,13 @@ impl Simple {
                 0 => Err(RealProblem::InsufficientParameters),
                 1 => {
                     let operand = self.operands.first().unwrap();
-                    operand.value()?.inverse()
+                    operand.value(names)?.inverse()
                 }
                 _ => {
-                    let mut value: Real = self.operands.first().unwrap().value()?;
+                    let mut value: Real = self.operands.first().unwrap().value(names)?;
                     let operands = self.operands.iter().skip(1);
                     for operand in operands {
-                        value = (value / operand.value()?)?;
+                        value = (value / operand.value(names)?)?;
                     }
                     Ok(value)
                 }
@@ -111,7 +117,7 @@ impl Simple {
                     return Err(RealProblem::ParseError);
                 }
                 let operand = self.operands.first().unwrap();
-                let value = operand.value()?.exp()?;
+                let value = operand.value(names)?.exp()?;
                 Ok(value)
             }
             Ln => {
@@ -119,7 +125,7 @@ impl Simple {
                     return Err(RealProblem::ParseError);
                 }
                 let operand = self.operands.first().unwrap();
-                let value = operand.value()?.ln()?;
+                let value = operand.value(names)?.ln()?;
                 Ok(value)
             }
             Sqrt => {
@@ -127,7 +133,7 @@ impl Simple {
                     return Err(RealProblem::ParseError);
                 }
                 let operand = self.operands.first().unwrap();
-                let value = operand.value()?.sqrt()?;
+                let value = operand.value(names)?.sqrt()?;
                 Ok(value)
             }
         }
@@ -191,7 +197,7 @@ impl Simple {
                     // ignore
                     chars.next();
                 }
-                'a'..='z' => {
+                '#' | 'a'..='z' => {
                     let operand = Self::consume_symbol(chars);
                     operands.push(operand);
                 }
@@ -214,11 +220,15 @@ impl Simple {
         Err("Incomplete expression")
     }
 
-    // Consume a symbol, starting with a letter and consisting of zero or more:
+    // Consume a symbol, starting with # or a letter and consisting of zero or more:
     // letters, underscores or digits
     fn consume_symbol(c: &mut Peekable<Chars>) -> Operand {
         let mut sym = String::new();
 
+        if let Some('#') = c.peek() {
+            sym.push('#');
+            c.next();
+        }
         while let Some(item) = c.peek() {
             match item {
                 'A'..='Z' | 'a'..='z' | '0'..='9' => sym.push(*item),
@@ -276,15 +286,17 @@ mod tests {
 
     #[test]
     fn division_zero() {
+        let empty = HashMap::new();
         let xpr: Simple = "(/ 0)".parse().unwrap();
-        let result = xpr.evaluate();
+        let result = xpr.evaluate(&empty);
         assert_eq!(result, Err(RealProblem::DivideByZero))
     }
 
     #[test]
     fn simple_arithmetic() {
+        let empty = HashMap::new();
         let xpr: Simple = "(+ 1 (* 2 3) 4)".parse().unwrap();
-        let result = xpr.evaluate().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
         assert!(result.is_whole());
         let ans = format!("{result}");
         assert_eq!(ans, "11");
@@ -292,8 +304,9 @@ mod tests {
 
     #[test]
     fn fractions() {
+        let empty = HashMap::new();
         let xpr: Simple = "(/ (+ 1 2) (* 3 4))".parse().unwrap();
-        let result = xpr.evaluate().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result}");
         assert_eq!(ans, "1/4");
         let decimal = format!("{result:#}");
@@ -302,40 +315,45 @@ mod tests {
 
     #[test]
     fn sqrts() {
+        let empty = HashMap::new();
         let xpr: Simple = "(* (√ 40) (√ 90))".parse().unwrap();
-        let result = xpr.evaluate().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result}");
         assert_eq!(ans, "60");
     }
 
     #[test]
     fn sqrt_pi() {
+        let empty = HashMap::new();
         let xpr: Simple = "(√ (+ pi pi pi pi))".parse().unwrap();
-        let result = xpr.evaluate().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result:#.32}");
         assert_eq!(ans, "3.54490770181103205459633496668229...");
     }
 
     #[test]
     fn pi() {
+        let empty = HashMap::new();
         let xpr: Simple = "(* (+ pi pi) (* 3 pi))".parse().unwrap();
-        let result = xpr.evaluate().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result:#.32}");
         assert_eq!(ans, "59.21762640653615171300694599925690...");
     }
 
     #[test]
     fn pi_e_4() {
+        let empty = HashMap::new();
         let xpr: Simple = "(* pi e 4)".parse().unwrap();
-        let result = xpr.evaluate().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result:#.32}");
         assert_eq!(ans, "34.15893689069426826185420347818629...");
     }
 
     #[test]
     fn ln_e() {
+        let empty = HashMap::new();
         let xpr: Simple = "(l (* (e 4) (e 6)))".parse().unwrap();
-        let result = xpr.evaluate().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
         assert!(result.is_whole());
         let ans = format!("{result}");
         assert_eq!(ans, "10");
@@ -343,16 +361,18 @@ mod tests {
 
     #[test]
     fn div_pi_e_4() {
+        let empty = HashMap::new();
         let xpr: Simple = "(/ pi e 4)".parse().unwrap();
-        let result = xpr.evaluate().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result:#.32}");
         assert_eq!(ans, "0.28893183744773042947752329582817...");
     }
 
     #[test]
     fn e_minus_one() {
+        let empty = HashMap::new();
         let xpr: Simple = "(/ e)".parse().unwrap();
-        let result = xpr.evaluate().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result:#.32}");
         assert_eq!(ans, "0.36787944117144232159552377016146...");
     }
