@@ -91,7 +91,7 @@ impl Class {
 /// assert_eq!(answer, three);
 /// ```
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Real {
     rational: Rational,
     class: Class,
