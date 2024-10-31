@@ -59,6 +59,7 @@ Numeric literals are written in decimal, 2.75 is exactly two and three quarters.
 
 Today the built-in names are only e (the mathematical constant and base of the natural logarithm) and pi (the mathematical constant π)
 
+However in the built-in evaluator names are also given to the previous answer (last) and all numbered answers (#1, #2 and so on)
 
 (+ 1 2 3 4) == 10
 
