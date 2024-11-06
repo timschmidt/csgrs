@@ -140,6 +140,31 @@ impl Real {
     }
 }
 
+use crate::computable::Precision;
+
+fn sig_exp_32(c: Computable, msd: Precision, bits: u32) -> (u32, u32) {
+    if msd < -126 {
+        let sig = c
+            .approx(-149)
+            .magnitude()
+            .try_into()
+            .expect("Magnitude of the top bits should fit in a u32");
+        (sig, 0)
+    } else {
+        let sig: u32 = c
+            .approx(msd - 23)
+            .magnitude()
+            .try_into()
+            .expect("Magnitude of the top bits should fit in a u32");
+        // MSD has almost (but not quite) two orders of binary magnitude range
+        if sig > bits {
+            (sig & bits, (127 + msd) as u32)
+        } else {
+            ((sig << 1) & bits, (126 + msd) as u32)
+        }
+    }
+}
+
 impl From<Real> for f32 {
     fn from(r: Real) -> f32 {
         use num::bigint::Sign::*;
@@ -173,16 +198,34 @@ impl From<Real> for f32 {
                 _ => unreachable!(),
             };
         }
-        let (sig, exp): (u32, u32) = if msd < -126 {
-            (c.approx(-149).try_into().unwrap(), 0)
-        } else {
-            (c.approx(msd - 23).try_into().unwrap(), (127 + msd) as u32)
-        };
-        let sig_bits = sig & SIG_BITS;
+        let (sig_bits, exp) = sig_exp_32(c, msd, SIG_BITS);
         let neg_bits: u32 = neg << NEG_BITS.trailing_zeros();
         let exp_bits: u32 = exp << EXP_BITS.trailing_zeros();
         let bits = neg_bits | exp_bits | sig_bits;
         f32::from_bits(bits)
+    }
+}
+
+fn sig_exp_64(c: Computable, msd: Precision, bits: u64) -> (u64, u64) {
+    if msd < -1022 {
+        let sig = c
+            .approx(-1074)
+            .magnitude()
+            .try_into()
+            .expect("Magnitude of the top bits should fit in a u64");
+        (sig, 0)
+    } else {
+        let sig: u64 = c
+            .approx(msd - 52)
+            .magnitude()
+            .try_into()
+            .expect("Magnitude of the top bits should fit in a u64");
+        // MSD has almost (but not quite) two orders of binary magnitude range
+        if sig > bits {
+            (sig & bits, (1023 + msd) as u64)
+        } else {
+            (sig << 1 & bits, (1022 + msd) as u64)
+        }
     }
 }
 
@@ -219,12 +262,7 @@ impl From<Real> for f64 {
                 _ => unreachable!(),
             };
         }
-        let (sig, exp): (u64, u64) = if msd < -1022 {
-            (c.approx(-1074).try_into().unwrap(), 0)
-        } else {
-            (c.approx(msd - 52).try_into().unwrap(), (1023 + msd) as u64)
-        };
-        let sig_bits = sig & SIG_BITS;
+        let (sig_bits, exp) = sig_exp_64(c, msd, SIG_BITS);
         let neg_bits: u64 = neg << NEG_BITS.trailing_zeros();
         let exp_bits: u64 = exp << EXP_BITS.trailing_zeros();
         let bits = neg_bits | exp_bits | sig_bits;
@@ -247,6 +285,36 @@ mod tests {
         let zero = Real::zero();
         assert_eq!(a, zero);
         assert_eq!(b, zero);
+    }
+
+    #[test]
+    fn half_to_float() {
+        let half = Real::new(Rational::fraction(1, 2));
+        let f: f32 = half.clone().into();
+        let d: f64 = half.into();
+        assert_eq!(f, 0.5);
+        assert_eq!(d, 0.5);
+    }
+
+    #[test]
+    fn half_from_float() {
+        let half = 0.5_f32;
+        let correct = Real::new(Rational::fraction(1, 2));
+        let answer: Real = half.try_into().unwrap();
+        assert_eq!(answer, correct);
+        let half = 0.5_f64;
+        let correct = Real::new(Rational::fraction(1, 2));
+        let answer: Real = half.try_into().unwrap();
+        assert_eq!(answer, correct);
+    }
+
+    #[test]
+    fn negative_half() {
+        let half = Real::new(Rational::fraction(-1, 2));
+        let f: f32 = half.clone().into();
+        let d: f64 = half.into();
+        assert_eq!(f, -0.5);
+        assert_eq!(d, -0.5);
     }
 
     #[test]
