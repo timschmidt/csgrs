@@ -427,16 +427,16 @@ impl Approximation {
 
         match self {
             Int(i) => scale(i.clone(), -p),
-            Inverse(c) => approximation::inverse(&c, p),
+            Inverse(c) => approximation::inverse(c, p),
             Negate(c) => -c.approx(p),
-            Add(c1, c2) => approximation::add(&c1, &c2, p),
-            Multiply(c1, c2) => approximation::multiply(&c1, &c2, p),
-            Square(c) => approximation::square(&c, p),
+            Add(c1, c2) => approximation::add(c1, c2, p),
+            Multiply(c1, c2) => approximation::multiply(c1, c2, p),
+            Square(c) => approximation::square(c, p),
             Ratio(r) => approximation::ratio(r, p),
-            Offset(c, n) => approximation::offset(&c, *n, p),
-            Exp(c) => approximation::exp(&c, p),
-            Sqrt(c) => approximation::sqrt(&c, p),
-            PrescaledLn(c) => approximation::ln(&c, p),
+            Offset(c, n) => approximation::offset(c, *n, p),
+            Exp(c) => approximation::exp(c, p),
+            Sqrt(c) => approximation::sqrt(c, p),
+            PrescaledLn(c) => approximation::ln(c, p),
             PrescaledAtan(i) => approximation::atan(i, p),
         }
     }
