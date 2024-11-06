@@ -1,6 +1,6 @@
 use realistic::{RealProblem, Simple};
-use std::io;
 use std::collections::HashMap;
+use std::io;
 
 pub fn main() {
     let debug_parse = false;

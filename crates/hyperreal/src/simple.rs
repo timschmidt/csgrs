@@ -1,7 +1,7 @@
 use crate::{Rational, Real, RealProblem};
+use std::collections::HashMap;
 use std::iter::Peekable;
 use std::str::Chars;
-use std::collections::HashMap;
 
 type Symbols = HashMap<String, Real>;
 
