@@ -766,4 +766,13 @@ mod tests {
         let eighteen: Rational = Rational::new(18);
         assert_eq!(answer, eighteen);
     }
+
+    #[test]
+    fn adding_one_works() {
+        let pi = Real::pi();
+        let one: Real = 1.into();
+        let plus_one = pi + one;
+        let float: f64 = plus_one.into();
+        assert_eq!(float, 4.141592653589793);
+    }
 }
