@@ -469,12 +469,6 @@ impl Add for Real {
         if other.definitely_zero() {
             return self;
         }
-        if self.class == One && self.rational == Rational::one() {
-            return other;
-        }
-        if other.class == One && other.rational == Rational::one() {
-            return self;
-        }
         let left = if self.class == One {
             Computable::rational(self.rational)
         } else if self.rational == Rational::one() {
