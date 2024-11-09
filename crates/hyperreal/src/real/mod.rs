@@ -373,15 +373,7 @@ use core::fmt;
 impl Real {
     /// Format this Real as a decimal rather than rational
     pub fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.class == One {
-            if let Some(precision) = f.precision() {
-                f.write_fmt(format_args!("{:#.*}", precision, self.rational))
-            } else {
-                f.write_fmt(format_args!("{:#}", self.rational))
-            }
-        } else {
-            self.rational.fmt_combine(&self.computable, f)
-        }
+        f.write_fmt(format_args!("{:e}", self.clone().fold()))
     }
 }
 

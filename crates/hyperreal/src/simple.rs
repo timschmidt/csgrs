@@ -310,7 +310,7 @@ mod tests {
         let ans = format!("{result}");
         assert_eq!(ans, "1/4");
         let decimal = format!("{result:#}");
-        assert_eq!(decimal, "0.25");
+        assert_eq!(decimal, "2.5e-1");
     }
 
     #[test]
@@ -328,7 +328,7 @@ mod tests {
         let xpr: Simple = "(√ (+ pi pi pi pi))".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result:#.32}");
-        assert_eq!(ans, "3.54490770181103205459633496668229...");
+        assert_eq!(ans, "3.54490770181103205459633496668229e0");
     }
 
     #[test]
@@ -337,7 +337,7 @@ mod tests {
         let xpr: Simple = "(* (+ pi pi) (* 3 pi))".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result:#.32}");
-        assert_eq!(ans, "59.21762640653615171300694599925690...");
+        assert_eq!(ans, "5.92176264065361517130069459992569e1");
     }
 
     #[test]
@@ -346,7 +346,7 @@ mod tests {
         let xpr: Simple = "(* pi e 4)".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result:#.32}");
-        assert_eq!(ans, "34.15893689069426826185420347818629...");
+        assert_eq!(ans, "3.41589368906942682618542034781862e1");
     }
 
     #[test]
@@ -365,7 +365,7 @@ mod tests {
         let xpr: Simple = "(/ pi e 4)".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result:#.32}");
-        assert_eq!(ans, "0.28893183744773042947752329582817...");
+        assert_eq!(ans, "2.88931837447730429477523295828174e-1");
     }
 
     #[test]
@@ -374,6 +374,6 @@ mod tests {
         let xpr: Simple = "(/ e)".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result:#.32}");
-        assert_eq!(ans, "0.36787944117144232159552377016146...");
+        assert_eq!(ans, "3.67879441171442321595523770161460e-1");
     }
 }

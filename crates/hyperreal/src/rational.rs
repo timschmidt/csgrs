@@ -1,4 +1,3 @@
-use crate::Computable;
 use num::bigint::Sign::{self, *};
 use num::{bigint::ToBigInt, bigint::ToBigUint, BigInt, BigUint};
 use num::{One, Zero};
@@ -255,25 +254,6 @@ impl Rational {
     pub fn extract_square_will_succeed(&self) -> bool {
         self.numerator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
             && self.denominator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
-    }
-}
-
-impl Rational {
-    pub(crate) fn fmt_combine(&self, c: &Computable, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let d = &self.denominator.to_bigint().unwrap();
-        let n = &self.numerator.to_bigint().unwrap();
-        let precision = f.precision().unwrap_or(16);
-        let bits = (n / d).bits() + ((precision * 10) as u64 / 3);
-        let factor: i32 = bits
-            .try_into()
-            .expect("The number of bits we care about should fit in a 32-bit integer!");
-
-        let divisor = TWO.pow(factor.try_into().unwrap());
-
-        let r = Self::from_bigint_fraction(c.approx(-factor), divisor);
-        let s = r * self.clone();
-
-        f.write_fmt(format_args!("{s:#.*}...", precision))
     }
 }
 

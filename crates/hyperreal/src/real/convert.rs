@@ -134,7 +134,7 @@ impl TryFrom<f64> for Real {
 }
 
 impl Real {
-    fn fold(self) -> Computable {
+    pub(crate) fn fold(self) -> Computable {
         let rat = Computable::rational(self.rational);
         rat.multiply(self.computable)
     }
