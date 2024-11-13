@@ -19,7 +19,7 @@ pub(super) enum Approximation {
     Exp(Computable),
     Sqrt(Computable),
     PrescaledLn(Computable),
-    PrescaledAtan(BigInt),
+    IntegralAtan(BigInt),
 }
 
 impl Approximation {
@@ -38,7 +38,7 @@ impl Approximation {
             Exp(c) => exp(c, p),
             Sqrt(c) => sqrt(c, p),
             PrescaledLn(c) => ln(c, p),
-            PrescaledAtan(i) => atan(i, p),
+            IntegralAtan(i) => atan(i, p),
         }
     }
 }

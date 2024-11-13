@@ -188,7 +188,7 @@ impl Computable {
 
     fn prescaled_atan(n: BigInt) -> Self {
         Self {
-            internal: Box::new(Approximation::PrescaledAtan(n)),
+            internal: Box::new(Approximation::IntegralAtan(n)),
             cache: RefCell::new(Cache::Invalid),
         }
     }
