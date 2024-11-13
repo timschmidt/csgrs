@@ -1,4 +1,4 @@
-use realistic::{RealProblem, Simple};
+use realistic::{Real, RealProblem, Simple};
 use std::collections::HashMap;
 use std::io;
 
@@ -37,17 +37,7 @@ pub fn main() {
             Ok(ans) => {
                 n += 1;
                 let name = format!("#{n}");
-                if ans.is_whole() {
-                    println!("{name}: {ans}");
-                } else if ans.is_rational() {
-                    if ans.prefer_fraction() {
-                        println!("{name}: {ans} ~= {ans:#.10}");
-                    } else {
-                        println!("{name}: {ans} = {ans:#}");
-                    }
-                } else {
-                    println!("{name}: {ans} ~= {ans:#.20}");
-                }
+                answer(&ans, &name);
                 names.insert("last".to_owned(), ans.clone());
                 names.insert(name, ans);
             }
@@ -58,5 +48,19 @@ pub fn main() {
             Err(DivideByZero) => println!("Attempted division by zero"),
             _ => println!("Calculation failed: {ans:?}"),
         }
+    }
+}
+
+fn answer(ans: &Real, name: &str) {
+    if ans.is_whole() {
+        println!("{name}: {ans}");
+    } else if ans.is_rational() {
+        if ans.prefer_fraction() {
+            println!("{name}: {ans} ~= {ans:#.10}");
+        } else {
+            println!("{name}: {ans} = {ans:#}");
+        }
+    } else {
+        println!("{name}: {ans} ~= {ans:#.20}");
     }
 }
