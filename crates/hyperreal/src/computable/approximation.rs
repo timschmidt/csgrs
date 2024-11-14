@@ -1,7 +1,7 @@
 use crate::computable::{scale, shift, signed, Precision};
 use crate::Computable;
 use crate::Rational;
-use num::bigint::Sign;
+use num::bigint::{Sign, ToBigInt};
 use num::{BigInt, BigUint, Signed};
 use num::{One, Zero};
 use std::ops::Deref;
@@ -20,6 +20,7 @@ pub(super) enum Approximation {
     Sqrt(Computable),
     PrescaledLn(Computable),
     IntegralAtan(BigInt),
+    PrescaledCos(Computable),
 }
 
 impl Approximation {
@@ -39,6 +40,7 @@ impl Approximation {
             Sqrt(c) => sqrt(c, p),
             PrescaledLn(c) => ln(c, p),
             IntegralAtan(i) => atan(i, p),
+            PrescaledCos(c) => cos(c, p),
         }
     }
 }
@@ -184,6 +186,7 @@ fn exp(c: &Computable, p: Precision) -> BigInt {
     let mut sum = scaled_1;
     let mut n = BigInt::zero();
 
+    // TODO possibly good place to halt computation
     while current_term.abs() > max_trunc_error {
         n += signed::ONE.deref();
         current_term = scale(current_term * &op_appr, op_prec) / &n;
@@ -243,6 +246,49 @@ fn sqrt(c: &Computable, p: Precision) -> BigInt {
     }
 }
 
+// Compute cosine of |c| < 1
+// uses a Taylor series expansion.
+fn cos(c: &Computable, p: Precision) -> BigInt {
+    if p >= 1 {
+        return signed::ONE.deref().clone();
+    }
+    let iterations_needed = -p / 2 + 4;
+
+    //  Claim: each intermediate term is accurate
+    //  to 2*2^calc_precision.
+    //  Total rounding error in series computation is
+    //  2*iterations_needed*2^calc_precision,
+    //  exclusive of error in op.
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4; // for error in op, truncation.
+    let op_prec = p - 2;
+    let op_appr = c.approx(op_prec);
+
+    // Error in argument results in error of < 1/4 ulp.
+    // Cumulative arithmetic rounding error is < 1/16 ulp.
+    // Series truncation error < 1/16 ulp.
+    // Final rounding error is <= 1/2 ulp.
+    // Thus final error is < 1 ulp.
+
+    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    let mut n = 0;
+    let mut current_term = signed::ONE.deref() << (-calc_precision);
+    let mut current_sum = current_term.clone();
+
+    // TODO good place to halt computation
+    while current_term.abs() > max_trunc_error {
+        n += 2;
+
+        /* current_term = - current_term * op * op / n * (n - 1)   */
+        current_term = scale(current_term * &op_appr, op_prec);
+        current_term = scale(current_term * &op_appr, op_prec);
+        let divisor = ToBigInt::to_bigint(&-n).unwrap() * ToBigInt::to_bigint(&(n - 1)).unwrap();
+        current_term /= divisor;
+
+        current_sum += &current_term;
+    }
+    scale(current_sum, calc_precision - p)
+}
+
 // Compute an approximation of ln(1+x) to precision p.
 // This assumes |x| < 1/2.
 // It uses a Taylor series expansion.
@@ -270,6 +316,7 @@ fn ln(c: &Computable, p: Precision) -> BigInt {
 
     let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
 
+    // TODO good place to halt computation
     while current_term.abs() > max_trunc_error {
         n += 1;
         sign = -sign;

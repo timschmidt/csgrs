@@ -352,6 +352,30 @@ impl Real {
         Ok(self.make_computable(Computable::ln))
     }
 
+    /// The cosine of this Real
+    pub fn cos(self) -> Result<Real, RealProblem> {
+        if self.definitely_zero() {
+            return Ok(Self {
+                rational: Rational::one(),
+                class: One,
+                computable: Computable::one(),
+            });
+        }
+        match &self.class {
+            One => {
+                let new = Computable::rational(self.rational.clone());
+                return Ok(Self {
+                    rational: Rational::one(),
+                    class: Irrational,
+                    computable: Computable::cos(new),
+                });
+            }
+            _ => (),
+        }
+
+        Ok(self.make_computable(Computable::cos))
+    }
+
     /// Is this Real a whole number aka integer ?
     pub fn is_whole(&self) -> bool {
         self.class == One && self.rational.is_whole()

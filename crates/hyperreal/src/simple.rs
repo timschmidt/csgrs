@@ -14,6 +14,7 @@ enum Operator {
     Sqrt,
     Exp,
     Ln,
+    Cos,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -136,6 +137,14 @@ impl Simple {
                 let value = operand.value(names)?.sqrt()?;
                 Ok(value)
             }
+            Cos => {
+                if self.operands.len() != 1 {
+                    return Err(RealProblem::ParseError);
+                }
+                let operand = self.operands.first().unwrap();
+                let value = operand.value(names)?.cos()?;
+                Ok(value)
+            }
         }
     }
 
@@ -176,6 +185,10 @@ impl Simple {
             Some('√' | 's') => {
                 chars.next();
                 Sqrt
+            }
+            Some('c') => {
+                chars.next();
+                Cos
             }
             _ => return Err("Unexpected symbol while looking for an operator"),
         };

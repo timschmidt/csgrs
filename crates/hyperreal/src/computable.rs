@@ -44,6 +44,7 @@ mod signed {
     pub(super) static THREE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&3).unwrap());
     pub(super) static FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&4).unwrap());
     pub(super) static FIVE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&5).unwrap());
+    pub(super) static SIX: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&6).unwrap());
     pub(super) static SEVEN: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&7).unwrap());
     pub(super) static EIGHT: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&8).unwrap());
     pub(super) static TWENTY_FOUR: LazyLock<BigInt> =
@@ -60,10 +61,12 @@ mod unsigned {
     use std::sync::LazyLock;
 
     pub(super) static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
+    pub(super) static TWO: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&2).unwrap());
     pub(super) static TEN: LazyLock<BigUint> =
         LazyLock::new(|| ToBigUint::to_biguint(&10).unwrap());
     pub(super) static FIVE: LazyLock<BigUint> =
         LazyLock::new(|| ToBigUint::to_biguint(&5).unwrap());
+    pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&6).unwrap());
 }
 
 impl Computable {
@@ -118,6 +121,33 @@ impl Computable {
         } else {
             Self {
                 internal: Box::new(Approximation::Exp(self)),
+                cache: RefCell::new(Cache::Invalid),
+            }
+        }
+    }
+
+    pub fn cos(self) -> Self {
+        let rough_appr = self.approx(-1);
+        let abs_rough_appr = rough_appr.magnitude();
+
+        if abs_rough_appr >= unsigned::SIX.deref() {
+            // Subtract multiples of PI
+            let multiplier = rough_appr / signed::SIX.deref();
+            let low_bit = multiplier.bit(0);
+
+            let adjustment = Self::pi().multiply(Self::rational(Rational::from_bigint(multiplier)));
+            if low_bit {
+                self.add(adjustment.negate()).cos().negate()
+            } else {
+                self.add(adjustment.negate()).cos()
+            }
+        } else if abs_rough_appr >= unsigned::TWO.deref() {
+            // Scale further with double angle formula
+            let cos_half = self.shift_right(1).cos();
+            cos_half.square().shift_left(1).add(Self::one().negate())
+        } else {
+            Self {
+                internal: Box::new(Approximation::PrescaledCos(self)),
                 cache: RefCell::new(Cache::Invalid),
             }
         }
@@ -684,6 +714,22 @@ mod tests {
         let ln = Computable::ln(integer);
         let correct: BigInt = "1769595698905".parse().unwrap();
         assert_eq!(ln.approx(-40), correct);
+    }
+
+    #[test]
+    fn cos_zero() {
+        let zero = Computable::rational(Rational::zero());
+        let cos = zero.cos();
+        let correct: BigInt = "4294967296".parse().unwrap();
+        assert_eq!(cos.approx(-32), correct);
+    }
+
+    #[test]
+    fn cos_one() {
+        let one = Computable::one();
+        let cos = one.cos();
+        let correct: BigInt = "2320580734".parse().unwrap();
+        assert_eq!(cos.approx(-32), correct);
     }
 
     #[test]
