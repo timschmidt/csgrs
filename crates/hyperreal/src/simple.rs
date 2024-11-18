@@ -15,6 +15,7 @@ enum Operator {
     Exp,
     Ln,
     Cos,
+    Sin,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -145,6 +146,37 @@ impl Simple {
                 let value = operand.value(names)?.cos()?;
                 Ok(value)
             }
+            Sin => {
+                if self.operands.len() != 1 {
+                    return Err(RealProblem::ParseError);
+                }
+                let operand = self.operands.first().unwrap();
+                let value = operand.value(names)?.sin()?;
+                Ok(value)
+            }
+        }
+    }
+
+    fn operator(chars: &mut Peekable<Chars>) -> Result<Operator, &'static str> {
+        let mut op = String::new();
+
+        while let Some(c) = chars.peek() {
+            match c {
+                'A'..='Z' | 'a'..='z' => op.push(*c),
+                _ => break,
+            }
+            chars.next();
+        }
+        op.make_ascii_lowercase();
+
+        use Operator::*;
+        match op.as_str() {
+            "ln" | "l" => Ok(Ln),
+            "exp" | "e" => Ok(Exp),
+            "sqrt" | "s" => Ok(Sqrt),
+            "cos" => Ok(Cos),
+            "sin" => Ok(Sin),
+            _ => Err("No such operator"),
         }
     }
 
@@ -174,22 +206,11 @@ impl Simple {
                 chars.next();
                 Slash
             }
-            Some('l') => {
-                chars.next();
-                Ln
-            }
-            Some('e') => {
-                chars.next();
-                Exp
-            }
-            Some('√' | 's') => {
+            Some('√') => {
                 chars.next();
                 Sqrt
             }
-            Some('c') => {
-                chars.next();
-                Cos
-            }
+            Some('a'..='z') => Self::operator(chars)?,
             _ => return Err("Unexpected symbol while looking for an operator"),
         };
 

@@ -15,7 +15,9 @@ The built-in example interactive evaluates [Simple Expressions](#simple-expressi
 
 This library is incomplete, some features which were whole and useful in the Java API described in the paper are unfinished or partial here.
 
-In particular the trigonometric functions provided in Hans' work are not yet implemented, there is Pi but no Sine etc.
+The library does now have trigonometric functions but it still does not have interrupt capability, if you've set another thread the goal of
+computing a complex calculation or for a great deal of precision this library does not yet provide a mechanism to stop the calculation early.
+
 
 ## Unfaithful
 

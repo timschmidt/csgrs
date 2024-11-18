@@ -352,6 +352,26 @@ impl Real {
         Ok(self.make_computable(Computable::ln))
     }
 
+    /// The sine of this Real
+    pub fn sin(self) -> Result<Real, RealProblem> {
+        if self.definitely_zero() {
+            return Ok(Self::zero());
+        }
+        match &self.class {
+            One => {
+                let new = Computable::rational(self.rational.clone());
+                return Ok(Self {
+                    rational: Rational::one(),
+                    class: Irrational,
+                    computable: Computable::sin(new),
+                });
+            }
+            _ => (),
+        }
+
+        Ok(self.make_computable(Computable::sin))
+    }
+
     /// The cosine of this Real
     pub fn cos(self) -> Result<Real, RealProblem> {
         if self.definitely_zero() {
