@@ -366,6 +366,15 @@ impl Real {
                     computable: Computable::sin(new),
                 });
             }
+            Pi => {
+                if self.rational.is_whole() {
+                    return Ok(Self {
+                        rational: Rational::zero(),
+                        class: One,
+                        computable: Computable::one(),
+                    });
+                }
+            }
             _ => (),
         }
 
@@ -389,6 +398,23 @@ impl Real {
                     class: Irrational,
                     computable: Computable::cos(new),
                 });
+            }
+            Pi => {
+                if let Some(n) = self.rational.to_big_integer() {
+                    if n.bit(0) {
+                        return Ok(Self {
+                            rational: Rational::one().neg(),
+                            class: One,
+                            computable: Computable::one(),
+                        });
+                    } else {
+                        return Ok(Self {
+                            rational: Rational::one(),
+                            class: One,
+                            computable: Computable::one(),
+                        });
+                    }
+                }
             }
             _ => (),
         }
