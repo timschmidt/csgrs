@@ -140,8 +140,7 @@ impl Rational {
     pub fn is_whole(&self) -> bool {
         let whole = &self.numerator / &self.denominator;
         let round = &whole * &self.denominator;
-        let left = &self.numerator - &round;
-        left.is_zero()
+        self.numerator == round
     }
 
     pub fn prefer_fraction(&self) -> bool {
