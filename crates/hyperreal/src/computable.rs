@@ -418,6 +418,7 @@ impl Computable {
     pub(super) fn iter_msd(&self) -> Precision {
         let mut prec = 0;
 
+        // TODO possibly good place to halt computation
         // prec = 0, -16, -40, -76, etc.
         loop {
             let msd = self.msd(prec);
