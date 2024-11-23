@@ -105,9 +105,13 @@ impl Rational {
 
     fn reduce(self) -> Self {
         if self.denominator == *ONE.deref() {
+            return self;
+        }
+
+        let divisor = num::Integer::gcd(&self.numerator, &self.denominator);
+        if divisor == *ONE.deref() {
             self
         } else {
-            let divisor = num::Integer::gcd(&self.numerator, &self.denominator);
             let numerator = self.numerator / &divisor;
             let denominator = self.denominator / &divisor;
             Self {
@@ -138,6 +142,9 @@ impl Rational {
     }
 
     pub fn is_whole(&self) -> bool {
+        if self.denominator == *ONE.deref() {
+            return true;
+        }
         let whole = &self.numerator / &self.denominator;
         let round = &whole * &self.denominator;
         self.numerator == round
@@ -165,8 +172,7 @@ impl Rational {
     pub fn to_big_integer(&self) -> Option<BigInt> {
         let whole = &self.numerator / &self.denominator;
         let round = &whole * &self.denominator;
-        let left = &self.numerator - &round;
-        if left.is_zero() {
+        if self.numerator == round {
             Some(BigInt::from_biguint(self.sign, whole))
         } else {
             None
