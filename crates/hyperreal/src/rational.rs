@@ -150,6 +150,10 @@ impl Rational {
         self.numerator == round
     }
 
+    pub(crate) fn denominator(&self) -> &BigUint {
+        &self.denominator
+    }
+
     pub fn prefer_fraction(&self) -> bool {
         let mut rem = self.denominator.clone();
         while (&rem % &*TEN).is_zero() {

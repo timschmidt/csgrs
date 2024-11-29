@@ -57,6 +57,18 @@ impl Class {
     }
 }
 
+mod unsigned {
+    use num::{bigint::ToBigUint, BigUint};
+    use std::sync::LazyLock;
+
+    pub(super) static TWO: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&2).unwrap());
+    pub(super) static THREE: LazyLock<BigUint> =
+        LazyLock::new(|| ToBigUint::to_biguint(&3).unwrap());
+    pub(super) static FOUR: LazyLock<BigUint> =
+        LazyLock::new(|| ToBigUint::to_biguint(&4).unwrap());
+    pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&6).unwrap());
+}
+
 /// (More) Real numbers
 ///
 /// This type is functionally the product of a [`Computable`] number
@@ -368,11 +380,37 @@ impl Real {
             }
             Pi => {
                 if self.rational.is_whole() {
-                    return Ok(Self {
-                        rational: Rational::zero(),
-                        class: One,
-                        computable: Computable::one(),
+                    return Ok(Self::zero());
+                }
+                let mut r: Option<Real> = None;
+                let d = self.rational.denominator();
+                if d == unsigned::TWO.deref() {
+                    r = Some(Self::new(Rational::one()));
+                }
+                if d == unsigned::THREE.deref() {
+                    r = Some(Self {
+                        rational: Rational::fraction(1, 2),
+                        class: Sqrt(Rational::new(3)),
+                        computable: Computable::sqrt_rational(Rational::new(3)),
                     });
+                }
+                if d == unsigned::FOUR.deref() {
+                    r = Some(Self {
+                        rational: Rational::fraction(1, 2),
+                        class: Sqrt(Rational::new(2)),
+                        computable: Computable::sqrt_rational(Rational::new(2)),
+                    });
+                }
+                if d == unsigned::SIX.deref() {
+                    r = Some(Self::new(Rational::fraction(1, 2)));
+                }
+                if let Some(real) = r {
+                    let whole = self.rational.shifted_big_integer(0);
+                    if whole.bit(0) {
+                        return Ok(real.neg());
+                    } else {
+                        return Ok(real);
+                    }
                 }
             }
             _ => (),
@@ -384,11 +422,7 @@ impl Real {
     /// The cosine of this Real
     pub fn cos(self) -> Result<Real, RealProblem> {
         if self.definitely_zero() {
-            return Ok(Self {
-                rational: Rational::one(),
-                class: One,
-                computable: Computable::one(),
-            });
+            return Ok(Self::new(Rational::one()));
         }
         match &self.class {
             One => {
@@ -400,21 +434,12 @@ impl Real {
                 });
             }
             Pi => {
-                if let Some(n) = self.rational.to_big_integer() {
-                    if n.bit(0) {
-                        return Ok(Self {
-                            rational: Rational::one().neg(),
-                            class: One,
-                            computable: Computable::one(),
-                        });
-                    } else {
-                        return Ok(Self {
-                            rational: Rational::one(),
-                            class: One,
-                            computable: Computable::one(),
-                        });
-                    }
-                }
+                let off = Self {
+                    rational: self.rational + Rational::fraction(1, 2),
+                    class: Pi,
+                    computable: self.computable,
+                };
+                return off.sin();
             }
             _ => (),
         }
@@ -836,5 +861,29 @@ mod tests {
         let plus_one = pi + one;
         let float: f64 = plus_one.into();
         assert_eq!(float, 4.141592653589793);
+    }
+
+    #[test]
+    fn sin_easy() {
+        let pi = Real::pi();
+        let zero = Real::zero();
+        let two: Real = 2.into();
+        let two_pi = pi.clone() * two;
+        assert_eq!(zero.clone().sin().unwrap(), zero);
+        assert_eq!(pi.clone().sin().unwrap(), zero);
+        assert_eq!(two_pi.clone().sin().unwrap(), zero);
+    }
+
+    #[test]
+    fn cos_easy() {
+        let pi = Real::pi();
+        let zero = Real::zero();
+        let one: Real = 1.into();
+        let two: Real = 2.into();
+        let two_pi = pi.clone() * two;
+        let minus_one: Real = (-1).into();
+        assert_eq!(zero.clone().cos().unwrap(), one);
+        assert_eq!(pi.clone().cos().unwrap(), minus_one);
+        assert_eq!(two_pi.clone().cos().unwrap(), one);
     }
 }
