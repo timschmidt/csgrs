@@ -51,17 +51,25 @@ expression of this type is named Simple.
 We can parse these expressions in the usual way, and we can evaluate such an expression.
 
 Currently the provided operators are the + - * and / expected in programming for addition, subtraction, multiplication and division
-plus e for the natural exponenitation, l for the natural log, and s or √ for square roots
+plus e or exp for the natural exponenitation, l or ln for the natural log, and s, sqrt or √ for square roots.
 
-(l (e 1)) == (e (l 1)) == 1
+Also the cosine (cos) and sine (sin) functions are provided.
 
-(s 9) == 3
+
+(ln (exp 1)) == (e (l 1)) == 1
+
+(sqrt 9) == 3
+
+(cos (* pi 2.5)) == 0
 
 Numeric literals are written in decimal, 2.75 is exactly two and three quarters.
 
 Today the built-in names are only e (the mathematical constant and base of the natural logarithm) and pi (the mathematical constant π)
 
 However in the built-in evaluator names are also given to the previous answer (last) and all numbered answers (#1, #2 and so on)
+
+When results are not whole numbers, scientific notation is used to display the decimal fraction
+
 
 (+ 1 2 3 4) == 10
 
