@@ -218,39 +218,65 @@ impl Rational {
         ]
     }
 
-    fn extract_square(n: BigUint) -> (BigUint, BigUint) {
-        static SQUARES: LazyLock<Vec<(BigUint, BigUint)>> = LazyLock::new(Rational::make_squares);
+    // Some(root) squared is n, otherwise None
+    fn try_perfect(n: BigUint) -> Option<BigUint> {
+        use crate::Computable;
+        use std::cmp::Ordering::*;
 
-        let mut square = One::one();
+        let r = Self {
+            sign: Plus,
+            numerator: n.clone(),
+            denominator: BigUint::one(),
+        };
+        let sqrt = Computable::sqrt_rational(r);
+        let root = ToBigUint::to_biguint(&sqrt.approx(0)).expect("should be an unsigned integer");
+        let square = root.clone() * root.clone();
+        match n.cmp(&square) {
+            Equal => Some(root),
+            _ => None,
+        }
+    }
+
+    // (root squared times rest) = n
+    fn extract_square(n: BigUint) -> (BigUint, BigUint) {
+        const SQUARES: LazyLock<Vec<(BigUint, BigUint)>> = LazyLock::new(Rational::make_squares);
+
+        let one: BigUint = One::one();
+        let mut root = one.clone();
         let mut rest = n;
         if rest.bits() > Self::EXTRACT_SQUARE_MAX_LEN {
-            return (square, rest);
+            return (root, rest);
         }
         for (p, s) in &*SQUARES {
-            let one: BigUint = One::one();
             if rest == one {
                 break;
             }
             while (&rest % s).is_zero() {
                 rest /= s;
-                square *= p;
+                root *= p;
             }
         }
 
-        (square, rest)
+        if rest == one {
+            (root, one)
+        } else if let Some(factor) = Self::try_perfect(rest.clone()) {
+            (root * factor, one)
+        } else {
+            (root, rest)
+        }
     }
 
     pub fn extract_square_reduced(self) -> (Self, Self) {
         if self.sign == NoSign {
             return (Self::zero(), Self::zero());
         }
-        let (nsquare, nrest) = Self::extract_square(self.numerator);
-        let (dsquare, drest) = Self::extract_square(self.denominator);
+        let (nroot, nrest) = Self::extract_square(self.numerator);
+        let (droot, drest) = Self::extract_square(self.denominator);
         (
             Self {
                 sign: Plus,
-                numerator: nsquare,
-                denominator: dsquare,
+                numerator: nroot,
+                denominator: droot,
             },
             Self {
                 sign: self.sign,
@@ -588,6 +614,13 @@ mod tests {
         let two = Rational::new(2);
         let three = Rational::new(3);
         assert_eq!(two * three, Rational::new(6));
+    }
+
+    #[test]
+    fn sqrt_4761() {
+        let n = Rational::new(4761);
+        let reduced = n.extract_square_reduced();
+        assert_eq!(reduced, (Rational::new(69), Rational::one()));
     }
 
     #[test]
