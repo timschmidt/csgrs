@@ -886,4 +886,14 @@ mod tests {
         assert_eq!(pi.clone().cos().unwrap(), minus_one);
         assert_eq!(two_pi.clone().cos().unwrap(), one);
     }
+
+    #[test]
+    fn sqrt_3045512() {
+        let n: Real = 3045512.into();
+        let sqrt = n.sqrt().unwrap();
+        let root = Rational::new(1234);
+        assert_eq!(sqrt.rational, root);
+        let two = Rational::new(2);
+        assert_eq!(sqrt.class, Sqrt(two));
+    }
 }

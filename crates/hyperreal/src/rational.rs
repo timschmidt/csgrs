@@ -215,6 +215,10 @@ impl Rational {
                 ToBigUint::to_biguint(&13).unwrap(),
                 ToBigUint::to_biguint(&169).unwrap(),
             ),
+            (
+                ToBigUint::to_biguint(&17).unwrap(),
+                ToBigUint::to_biguint(&289).unwrap(),
+            ),
         ]
     }
 
@@ -230,7 +234,7 @@ impl Rational {
         };
         let sqrt = Computable::sqrt_rational(r);
         let root = ToBigUint::to_biguint(&sqrt.approx(0)).expect("should be an unsigned integer");
-        let square = root.clone() * root.clone();
+        let square = &root * &root;
         match n.cmp(&square) {
             Equal => Some(root),
             _ => None,
@@ -239,7 +243,7 @@ impl Rational {
 
     // (root squared times rest) = n
     fn extract_square(n: BigUint) -> (BigUint, BigUint) {
-        const SQUARES: LazyLock<Vec<(BigUint, BigUint)>> = LazyLock::new(Rational::make_squares);
+        static SQUARES: LazyLock<Vec<(BigUint, BigUint)>> = LazyLock::new(Rational::make_squares);
 
         let one: BigUint = One::one();
         let mut root = one.clone();
@@ -257,13 +261,19 @@ impl Rational {
             }
         }
 
-        if rest == one {
-            (root, one)
-        } else if let Some(factor) = Self::try_perfect(rest.clone()) {
-            (root * factor, one)
-        } else {
-            (root, rest)
+        for n in [1, 2, 3, 5, 6, 7, 8, 10, 11, 13] {
+            let divisor = ToBigUint::to_biguint(&n).unwrap();
+            if rest == divisor {
+                return (root, rest);
+            }
+            if (&rest % &divisor).is_zero() {
+                let square = &rest / &divisor;
+                if let Some(factor) = Self::try_perfect(square) {
+                    return (root * factor, divisor);
+                }
+            }
         }
+        (root, rest)
     }
 
     pub fn extract_square_reduced(self) -> (Self, Self) {
