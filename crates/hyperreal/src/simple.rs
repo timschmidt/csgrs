@@ -354,6 +354,10 @@ mod tests {
         let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result}");
         assert_eq!(ans, "60");
+        let xpr: Simple = "(* (√ 14) (√ 1666350))".parse().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
+        let ans = format!("{result}");
+        assert_eq!(ans, "4830");
     }
 
     #[test]

@@ -618,6 +618,13 @@ impl Real {
                 };
             }
             let (a, b) = product.extract_square_reduced();
+            if b == Rational::one() {
+                return Self {
+                    rational: a,
+                    class: One,
+                    computable: Computable::one(),
+                };
+            }
             Self {
                 rational: a,
                 class: Sqrt(b.clone()),

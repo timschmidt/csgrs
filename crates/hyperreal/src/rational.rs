@@ -261,7 +261,14 @@ impl Rational {
             }
         }
 
-        for n in [1, 2, 3, 5, 6, 7, 8, 10, 11, 13] {
+        let divisors = if rest.bit(0) {
+            // Odd number so dividing by an even number won't get a whole result
+            [1, 3, 5, 7, 11, 13, 15, 17, 19]
+        } else {
+            [1, 2, 3, 5, 6, 7, 8, 10, 11]
+        };
+
+        for n in divisors {
             let divisor = ToBigUint::to_biguint(&n).unwrap();
             if rest == divisor {
                 return (root, rest);
@@ -627,10 +634,23 @@ mod tests {
     }
 
     #[test]
-    fn sqrt_4761() {
-        let n = Rational::new(4761);
-        let reduced = n.extract_square_reduced();
-        assert_eq!(reduced, (Rational::new(69), Rational::one()));
+    fn sqrt_trouble() {
+        for (n, root, rest) in [
+            (1, 1, 1),
+            (2, 1, 2),
+            (3, 1, 3),
+            (4, 2, 1),
+            (16, 4, 1),
+            (400, 20, 1),
+            (1323, 21, 3),
+            (4761, 69, 1),
+            (123456, 8, 1929),
+            (715716, 846, 1),
+        ] {
+            let n = Rational::new(n);
+            let reduced = n.extract_square_reduced();
+            assert_eq!(reduced, (Rational::new(root), Rational::new(rest)));
+        }
     }
 
     #[test]
