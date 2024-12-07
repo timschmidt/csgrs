@@ -143,7 +143,7 @@ impl Simple {
                     return Err(RealProblem::ParseError);
                 }
                 let operand = self.operands.first().unwrap();
-                let value = operand.value(names)?.cos()?;
+                let value = operand.value(names)?.cos();
                 Ok(value)
             }
             Sin => {
@@ -151,7 +151,7 @@ impl Simple {
                     return Err(RealProblem::ParseError);
                 }
                 let operand = self.operands.first().unwrap();
-                let value = operand.value(names)?.sin()?;
+                let value = operand.value(names)?.sin();
                 Ok(value)
             }
         }

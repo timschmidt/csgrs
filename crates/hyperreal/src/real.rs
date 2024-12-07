@@ -336,6 +336,9 @@ impl Real {
 
     /// The natural logarithm of this Real
     pub fn ln(self) -> Result<Real, RealProblem> {
+        if self.definitely_zero() {
+            return Err(RealProblem::NotANumber);
+        }
         match &self.class {
             One => {
                 if self.rational == Rational::one() {
@@ -365,22 +368,22 @@ impl Real {
     }
 
     /// The sine of this Real
-    pub fn sin(self) -> Result<Real, RealProblem> {
+    pub fn sin(self) -> Real {
         if self.definitely_zero() {
-            return Ok(Self::zero());
+            return Self::zero();
         }
         match &self.class {
             One => {
                 let new = Computable::rational(self.rational.clone());
-                return Ok(Self {
+                return Self {
                     rational: Rational::one(),
                     class: Irrational,
                     computable: Computable::sin(new),
-                });
+                };
             }
             Pi => {
                 if self.rational.is_whole() {
-                    return Ok(Self::zero());
+                    return Self::zero();
                 }
                 let mut r: Option<Real> = None;
                 let d = self.rational.denominator();
@@ -407,31 +410,31 @@ impl Real {
                 if let Some(real) = r {
                     let whole = self.rational.shifted_big_integer(0);
                     if whole.bit(0) {
-                        return Ok(real.neg());
+                        return real.neg();
                     } else {
-                        return Ok(real);
+                        return real;
                     }
                 }
             }
             _ => (),
         }
 
-        Ok(self.make_computable(Computable::sin))
+        self.make_computable(Computable::sin)
     }
 
     /// The cosine of this Real
-    pub fn cos(self) -> Result<Real, RealProblem> {
+    pub fn cos(self) -> Real {
         if self.definitely_zero() {
-            return Ok(Self::new(Rational::one()));
+            return Self::new(Rational::one());
         }
         match &self.class {
             One => {
                 let new = Computable::rational(self.rational.clone());
-                return Ok(Self {
+                return Self {
                     rational: Rational::one(),
                     class: Irrational,
                     computable: Computable::cos(new),
-                });
+                };
             }
             Pi => {
                 let off = Self {
@@ -444,7 +447,7 @@ impl Real {
             _ => (),
         }
 
-        Ok(self.make_computable(Computable::cos))
+        self.make_computable(Computable::cos)
     }
 
     /// Is this Real a whole number aka integer ?
@@ -839,6 +842,12 @@ mod tests {
     }
 
     #[test]
+    fn ln_zero() {
+        let zero = Real::zero();
+        assert_eq!(zero.ln(), Err(RealProblem::NotANumber));
+    }
+
+    #[test]
     fn sqrt_exact() {
         let big: Real = 40_000.into();
         let small: Rational = Rational::new(200);
@@ -876,9 +885,9 @@ mod tests {
         let zero = Real::zero();
         let two: Real = 2.into();
         let two_pi = pi.clone() * two;
-        assert_eq!(zero.clone().sin().unwrap(), zero);
-        assert_eq!(pi.clone().sin().unwrap(), zero);
-        assert_eq!(two_pi.clone().sin().unwrap(), zero);
+        assert_eq!(zero.clone().sin(), zero);
+        assert_eq!(pi.clone().sin(), zero);
+        assert_eq!(two_pi.clone().sin(), zero);
     }
 
     #[test]
@@ -889,9 +898,9 @@ mod tests {
         let two: Real = 2.into();
         let two_pi = pi.clone() * two;
         let minus_one: Real = (-1).into();
-        assert_eq!(zero.clone().cos().unwrap(), one);
-        assert_eq!(pi.clone().cos().unwrap(), minus_one);
-        assert_eq!(two_pi.clone().cos().unwrap(), one);
+        assert_eq!(zero.clone().cos(), one);
+        assert_eq!(pi.clone().cos(), minus_one);
+        assert_eq!(two_pi.clone().cos(), one);
     }
 
     #[test]
