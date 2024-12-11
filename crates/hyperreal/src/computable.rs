@@ -7,6 +7,7 @@ use std::cell::RefCell;
 use std::ops::Deref;
 
 mod approximation;
+mod format;
 
 pub type Precision = i32;
 
@@ -432,77 +433,6 @@ impl Computable {
         }
         self.msd(Precision::MIN)
             .expect("Should have a known MSD by now")
-    }
-}
-
-use core::fmt;
-use num::bigint::Sign::*;
-
-impl fmt::LowerExp for Computable {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.sign() == Minus {
-            f.write_str("-")?;
-        } else if f.sign_plus() {
-            // Even for zero
-            f.write_str("+")?;
-        }
-        let msd = self.iter_msd();
-        let mut digits = f.precision().unwrap_or(32);
-        // Precision does not include the first digit before the decimal point
-        let bits: Precision = ((digits + 1) * 4)
-            .try_into()
-            .expect("Bits of precision should fit");
-        let appr = self.approx(msd - bits);
-        let magn = appr.magnitude();
-        let mut slack = unsigned::TEN.clone();
-        let mut exp: i32 = 0;
-        let mut divisor = unsigned::ONE.clone();
-        let mut excess = msd - bits;
-
-        // If we have enough bits already then just divide off the powers of two
-        if excess < 0 {
-            divisor <<= bits - msd;
-        }
-
-        // Regardless, adjust until we've calculated the decimal exponent
-        loop {
-            while divisor <= *magn {
-                if excess > 0 {
-                    excess -= 1;
-                    exp += 1;
-                    divisor *= &*unsigned::FIVE;
-                } else {
-                    exp += 1;
-                    divisor *= &*unsigned::TEN;
-                }
-            }
-            while divisor > *magn {
-                exp -= 1;
-                divisor /= &*unsigned::TEN;
-            }
-            if excess <= 0 {
-                break;
-            }
-        }
-
-        let whole = magn / &divisor;
-        f.write_fmt(format_args!("{whole}."))?;
-        let round = &whole * &divisor;
-        let mut left = magn - round;
-        while digits >= 1 {
-            left *= &*unsigned::TEN;
-            slack *= &*unsigned::TEN;
-            let digit = &left / &divisor;
-            f.write_fmt(format_args!("{digit}"))?;
-            left -= digit * &divisor;
-            // The residual may never become zero as it is an approximation
-            if left < slack {
-                break;
-            }
-            digits -= 1;
-        }
-        f.write_fmt(format_args!("e{exp}"))?;
-        Ok(())
     }
 }
 
