@@ -142,6 +142,29 @@ mod tests {
     }
 
     #[test]
+    fn pinch() {
+        let ans = Computable::rational(Rational::new(11));
+        assert_eq!(format!("{ans:.0e}"), "1e1");
+        assert_eq!(format!("{ans:.1e}"), "1.1e1");
+        assert_eq!(format!("{ans:e}"), "1.1e1");
+        let ans = Computable::rational(Rational::new(101));
+        assert_eq!(format!("{ans:.0e}"), "1e2");
+        assert_eq!(format!("{ans:.1e}"), "1.0e2");
+        assert_eq!(format!("{ans:.2e}"), "1.01e2");
+        assert_eq!(format!("{ans:e}"), "1.01e2");
+        let ans = Computable::rational(Rational::new(10001));
+        assert_eq!(format!("{ans:.0e}"), "1e4");
+        assert_eq!(format!("{ans:.2e}"), "1.00e4");
+        assert_eq!(format!("{ans:.4e}"), "1.0001e4");
+        assert_eq!(format!("{ans:e}"), "1.0001e4");
+        let ans = Computable::rational(Rational::new(1_000_000_001));
+        assert_eq!(format!("{ans:.0e}"), "1e9");
+        assert_eq!(format!("{ans:.8e}"), "1.00000000e9");
+        assert_eq!(format!("{ans:.10e}"), "1.0000000010e9");
+        assert_eq!(format!("{ans:e}"), "1.000000001e9");
+    }
+
+    #[test]
     fn almost() {
         let ans = Computable::rational(Rational::fraction(99, 10));
         assert_eq!(format!("{ans:.0e}"), "1e1");
