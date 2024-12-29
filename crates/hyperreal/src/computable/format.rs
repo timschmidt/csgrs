@@ -4,11 +4,6 @@ use core::fmt;
 use num::bigint::Sign::Minus;
 use num::BigUint;
 
-fn bits(p: usize) -> Precision {
-    let b = ((p + 4) * 32) / 10;
-    b.try_into().expect("Bits of precision should fit")
-}
-
 fn trim(num: &mut Vec<u8>) {
     loop {
         match num.pop() {
@@ -51,6 +46,11 @@ fn up(num: &mut Vec<u8>) -> bool {
 const DEFAULT_PRECISION: usize = 32;
 
 fn enough_bits(msd: Precision, prec: Option<usize>) -> Precision {
+    fn bits(p: usize) -> Precision {
+        let b = ((p + 4) * 32) / 10;
+        b.try_into().expect("Bits of precision should fit")
+    }
+
     let bits = bits(prec.unwrap_or(DEFAULT_PRECISION)) as Precision;
     if msd > 0 {
         bits + msd
@@ -223,7 +223,7 @@ impl fmt::LowerExp for Computable {
         let precision = f.precision();
         // Precision does not include the first digit before the decimal point
         let exact = precision.unwrap_or(DEFAULT_PRECISION);
-        let bits = bits(exact);
+        let bits = enough_bits(msd, f.precision());
         let appr = self.approx(msd - bits);
         let (num, exp) = digits(
             appr.magnitude(),
@@ -298,14 +298,30 @@ mod tests {
 
     #[test]
     fn exp_huge_neg() {
-        let huge = Computable::rational(Rational::new(1_000_000_000_000));
+        let huge = Computable::rational(Rational::new(1_000_000_000_000_000_000));
         let minus_fifty = Computable::rational(Rational::new(-50));
         let ans = huge.clone().multiply(huge).multiply(minus_fifty);
-        assert_eq!(format!("{ans:.4e}"), "-5.0000e25");
-        assert_eq!(format!("{ans:.0e}"), "-5e25");
-        assert_eq!(format!("{ans:.2e}"), "-5.00e25");
-        assert_eq!(format!("{ans:.8e}"), "-5.00000000e25");
-        assert_eq!(format!("{ans:e}"), "-5e25");
+        assert_eq!(format!("{ans:.4e}"), "-5.0000e37");
+        assert_eq!(format!("{ans:.0e}"), "-5e37");
+        assert_eq!(format!("{ans:.2e}"), "-5.00e37");
+        assert_eq!(format!("{ans:.8e}"), "-5.00000000e37");
+        assert_eq!(format!("{ans:e}"), "-5e37");
+    }
+
+    #[test]
+    fn exp_bigger() {
+        let mut huge = Computable::rational(Rational::new(1_000_000_000_000_000_000));
+        huge = huge.clone().multiply(huge);
+        huge = huge.clone().multiply(huge);
+        huge = huge.clone().multiply(huge);
+        huge = huge.clone().multiply(huge);
+        let fraction = Computable::rational(Rational::fraction(1_000_000_000_000_000_000, 3));
+        let ans = huge.clone().multiply(huge).multiply(fraction);
+        assert_eq!(format!("{ans:.4e}"), "3.3333e593");
+        assert_eq!(format!("{ans:.0e}"), "3e593");
+        assert_eq!(format!("{ans:.2e}"), "3.33e593");
+        assert_eq!(format!("{ans:.8e}"), "3.33333333e593");
+        assert_eq!(format!("{ans:e}"), "3.33333333333333333333333333333333e593");
     }
 
     #[test]
@@ -412,5 +428,21 @@ mod tests {
         assert_eq!(format!("{tt:.4}"), "0.6667");
         assert_eq!(format!("{tt:.8}"), "0.66666667");
         assert_eq!(format!("{tt}"), "0.66666666666666666666666666666667");
+    }
+
+    #[test]
+    fn disp_threes() {
+        let mut huge = Computable::rational(Rational::new(1_000_000_000_000_000_000));
+        huge = huge.clone().multiply(huge);
+        huge = huge.clone().multiply(huge);
+        huge = huge.clone().multiply(huge);
+        huge = huge.clone().multiply(huge);
+        let fraction = Computable::rational(Rational::fraction(1_000_000_000_000_000_000, 3));
+        let ans = huge.clone().multiply(huge).multiply(fraction);
+        assert_eq!(format!("{ans:.4}").trim_matches('3'), ".");
+        assert_eq!(format!("{ans:.0}").trim_matches('3'), "");
+        assert_eq!(format!("{ans:.2}").trim_matches('3'), ".");
+        assert_eq!(format!("{ans:.8}").trim_matches('3'), ".");
+        assert_eq!(format!("{ans}").trim_matches('3'), ".");
     }
 }
