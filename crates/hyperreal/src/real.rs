@@ -470,8 +470,22 @@ use core::fmt;
 
 impl Real {
     /// Format this Real as a decimal rather than rational
+    /// Scientific notation will be used if the value is very large or small
     pub fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("{:e}", self.clone().fold()))
+        let folded = self.clone().fold();
+        let msd = folded.iter_msd();
+        if msd > -20 && msd < 60 {
+            f.write_fmt(format_args!("{folded}"))
+        } else {
+            f.write_fmt(format_args!("{folded:e}"))
+        }
+    }
+}
+
+impl fmt::LowerExp for Real {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let folded = self.clone().fold();
+        f.write_fmt(format_args!("{folded:e}"))
     }
 }
 
@@ -480,49 +494,47 @@ impl fmt::Display for Real {
         match &self.class {
             One => {
                 if f.alternate() {
-                    return self.decimal(f);
+                    self.decimal(f)
                 } else {
-                    f.write_fmt(format_args!("{}", self.rational))?;
+                    f.write_fmt(format_args!("{}", self.rational))
                 }
             }
             Pi => {
                 if f.alternate() {
-                    return self.decimal(f);
+                    self.decimal(f)
                 } else {
-                    f.write_fmt(format_args!("{} Pi", self.rational))?;
+                    f.write_fmt(format_args!("{} Pi", self.rational))
                 }
             }
             Exp(n) => {
                 if f.alternate() {
-                    return self.decimal(f);
+                    self.decimal(f)
                 } else {
-                    f.write_fmt(format_args!("{} x e**({})", self.rational, &n))?;
+                    f.write_fmt(format_args!("{} x e**({})", self.rational, &n))
                 }
             }
             Ln(n) => {
                 if f.alternate() {
-                    return self.decimal(f);
+                    self.decimal(f)
                 } else {
-                    f.write_fmt(format_args!("{} x ln({})", self.rational, &n))?;
+                    f.write_fmt(format_args!("{} x ln({})", self.rational, &n))
                 }
             }
             Sqrt(n) => {
                 if f.alternate() {
-                    return self.decimal(f);
+                    self.decimal(f)
                 } else {
-                    f.write_fmt(format_args!("{} √({})", self.rational, &n))?;
+                    f.write_fmt(format_args!("{} √({})", self.rational, &n))
                 }
             }
             _ => {
                 if f.alternate() {
-                    return self.decimal(f);
+                    self.decimal(f)
                 } else {
-                    f.write_fmt(format_args!("{} x {:?}", self.rational, self.class))?;
+                    f.write_fmt(format_args!("{} x {:?}", self.rational, self.class))
                 }
             }
         }
-
-        Ok(())
     }
 }
 
