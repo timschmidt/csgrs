@@ -1,7 +1,8 @@
 //! csg.rs
 //!
-//! A Rust translation of Evan Wallace's JavaScript CSG code. This uses a BSP tree
-//! for constructive solid geometry (union, subtract, intersect).
+//! A Rust translation of Evan Wallace's JavaScript CSG code, modified to use
+//! nalgebra for points/vectors. This uses a BSP tree for constructive solid
+//! geometry (union, subtract, intersect).
 //!
 //! # Example
 //!
@@ -13,114 +14,44 @@
 //! println!("{}", result.to_stl("my_solid"));
 //! ```
 
-/// Epsilon for floating-point comparisons
+use nalgebra::Vector3;
+
 const EPSILON: f64 = 1e-5;
 
-/// A 3D vector
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Vector {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
-}
-
-impl Vector {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
-        Vector { x, y, z }
-    }
-
-    pub fn from_slice(slice: &[f64]) -> Self {
-        Vector {
-            x: slice[0],
-            y: slice[1],
-            z: slice[2],
-        }
-    }
-
-    pub fn clone(&self) -> Self {
-        *self
-    }
-
-    pub fn negated(&self) -> Self {
-        Vector::new(-self.x, -self.y, -self.z)
-    }
-
-    pub fn plus(&self, a: &Vector) -> Self {
-        Vector::new(self.x + a.x, self.y + a.y, self.z + a.z)
-    }
-
-    pub fn minus(&self, a: &Vector) -> Self {
-        Vector::new(self.x - a.x, self.y - a.y, self.z - a.z)
-    }
-
-    pub fn times(&self, a: f64) -> Self {
-        Vector::new(self.x * a, self.y * a, self.z * a)
-    }
-
-    pub fn divided_by(&self, a: f64) -> Self {
-        Vector::new(self.x / a, self.y / a, self.z / a)
-    }
-
-    pub fn dot(&self, a: &Vector) -> f64 {
-        self.x * a.x + self.y * a.y + self.z * a.z
-    }
-
-    pub fn lerp(&self, a: &Vector, t: f64) -> Self {
-        self.plus(&a.minus(self).times(t))
-    }
-
-    pub fn length(&self) -> f64 {
-        self.dot(self).sqrt()
-    }
-
-    pub fn unit(&self) -> Self {
-        let len = self.length();
-        if len < EPSILON {
-            *self
-        } else {
-            self.divided_by(len)
-        }
-    }
-
-    pub fn cross(&self, a: &Vector) -> Self {
-        Vector::new(
-            self.y * a.z - self.z * a.y,
-            self.z * a.x - self.x * a.z,
-            self.x * a.y - self.y * a.x,
-        )
-    }
+/// A small helper for linear interpolation of `Vec3`.
+fn lerp_vec3(a: &Vector3<f64>, b: &Vector3<f64>, t: f64) -> Vector3<f64> {
+    a + (b - a) * t
 }
 
 /// A vertex of a polygon, holding position and normal.
-/// Additional data (like UVs, colors, etc.) can be added if needed.
 #[derive(Debug, Clone)]
 pub struct Vertex {
-    pub pos: Vector,
-    pub normal: Vector,
+    pub pos: Vector3<f64>,
+    pub normal: Vector3<f64>,
 }
 
 impl Vertex {
-    pub fn new(pos: Vector, normal: Vector) -> Self {
+    pub fn new(pos: Vector3<f64>, normal: Vector3<f64>) -> Self {
         Vertex { pos, normal }
     }
 
     pub fn clone(&self) -> Self {
         Vertex {
-            pos: self.pos.clone(),
-            normal: self.normal.clone(),
+            pos: self.pos,
+            normal: self.normal,
         }
     }
 
     /// Flip orientation-specific data (like normals)
     pub fn flip(&mut self) {
-        self.normal = self.normal.negated();
+        self.normal = -self.normal;
     }
 
     /// Linearly interpolate between self and `other` by parameter `t`
     pub fn interpolate(&self, other: &Vertex, t: f64) -> Vertex {
         Vertex {
-            pos: self.pos.lerp(&other.pos, t),
-            normal: self.normal.lerp(&other.normal, t),
+            pos: lerp_vec3(&self.pos, &other.pos, t),
+            normal: lerp_vec3(&self.normal, &other.normal, t),
         }
     }
 }
@@ -128,14 +59,14 @@ impl Vertex {
 /// A plane in 3D space defined by a normal and a w-value
 #[derive(Debug, Clone)]
 pub struct Plane {
-    pub normal: Vector,
+    pub normal: Vector3<f64>,
     pub w: f64,
 }
 
 impl Plane {
     /// Create a plane from three points
-    pub fn from_points(a: &Vector, b: &Vector, c: &Vector) -> Plane {
-        let n = b.minus(a).cross(&c.minus(a)).unit();
+    pub fn from_points(a: &Vector3<f64>, b: &Vector3<f64>, c: &Vector3<f64>) -> Plane {
+        let n = (b - a).cross(&(c - a)).normalize();
         Plane {
             normal: n,
             w: n.dot(a),
@@ -144,13 +75,13 @@ impl Plane {
 
     pub fn clone(&self) -> Self {
         Plane {
-            normal: self.normal.clone(),
+            normal: self.normal,
             w: self.w,
         }
     }
 
     pub fn flip(&mut self) {
-        self.normal = self.normal.negated();
+        self.normal = -self.normal;
         self.w = -self.w;
     }
 
@@ -164,7 +95,6 @@ impl Plane {
         front: &mut Vec<Polygon>,
         back: &mut Vec<Polygon>,
     ) {
-        // Classification constants
         const COPLANAR: i32 = 0;
         const FRONT: i32 = 1;
         const BACK: i32 = 2;
@@ -223,11 +153,14 @@ impl Plane {
                     }
 
                     if (ti | tj) == SPANNING {
-                        let t = (self.w - self.normal.dot(&vi.pos))
-                            / self.normal.dot(&vj.pos.minus(&vi.pos));
-                        let v = vi.interpolate(vj, t);
-                        f.push(v.clone());
-                        b.push(v);
+                        let denom = self.normal.dot(&(vj.pos - vi.pos));
+                        // Avoid dividing by zero
+                        if denom.abs() > EPSILON {
+                            let t = (self.w - self.normal.dot(&vi.pos)) / denom;
+                            let v = vi.interpolate(vj, t);
+                            f.push(v.clone());
+                            b.push(v);
+                        }
                     }
                 }
 
@@ -268,7 +201,7 @@ impl Polygon {
 
     pub fn clone(&self) -> Self {
         Polygon {
-            vertices: self.vertices.iter().map(|v| v.clone()).collect(),
+            vertices: self.vertices.iter().map(Vertex::clone).collect(),
             shared: self.shared.clone(),
             plane: self.plane.clone(),
         }
@@ -416,30 +349,26 @@ impl Node {
         }
         let plane = self.plane.clone().unwrap();
 
-        // We'll accumulate front/back polygons separately
         let mut front: Vec<Polygon> = Vec::new();
         let mut back: Vec<Polygon> = Vec::new();
 
         for p in polygons {
-            // Temporary vectors for coplanar polygons
             let mut coplanar_front = Vec::new();
             let mut coplanar_back = Vec::new();
 
             plane.split_polygon(
                 p,
-                &mut coplanar_front, // instead of &mut self.polygons
-                &mut coplanar_back,  // instead of &mut self.polygons
+                &mut coplanar_front,
+                &mut coplanar_back,
                 &mut front,
                 &mut back,
             );
 
-            // Now we can safely merge those coplanar polygons into self.polygons
             self.polygons.append(&mut coplanar_front);
             self.polygons.append(&mut coplanar_back);
         }
 
         if !front.is_empty() {
-            // Build the front subtree
             if self.front.is_none() {
                 self.front = Some(Box::new(Node::new(vec![])));
             }
@@ -447,7 +376,6 @@ impl Node {
         }
 
         if !back.is_empty() {
-            // Build the back subtree
             if self.back.is_none() {
                 self.back = Some(Box::new(Node::new(vec![])));
             }
@@ -554,24 +482,21 @@ impl CSG {
     /// let cube = CSG::cube(None);
     /// ```
     pub fn cube(options: Option<(&[f64; 3], &[f64; 3])>) -> CSG {
-        // Default center = [0, 0, 0], radius = [1, 1, 1]
         let (center, radius) = match options {
             Some((c, r)) => (*c, *r),
             None => ([0.0, 0.0, 0.0], [1.0, 1.0, 1.0]),
         };
+        let c = Vector3::new(center[0], center[1], center[2]);
+        let r = Vector3::new(radius[0], radius[1], radius[2]);
 
-        // Build the 6 faces
         let indices_and_normals = vec![
-            (vec![0, 4, 6, 2], Vector::new(-1.0, 0.0, 0.0)),
-            (vec![1, 3, 7, 5], Vector::new(1.0, 0.0, 0.0)),
-            (vec![0, 1, 5, 4], Vector::new(0.0, -1.0, 0.0)),
-            (vec![2, 6, 7, 3], Vector::new(0.0, 1.0, 0.0)),
-            (vec![0, 2, 3, 1], Vector::new(0.0, 0.0, -1.0)),
-            (vec![4, 5, 7, 6], Vector::new(0.0, 0.0, 1.0)),
+            (vec![0, 4, 6, 2], Vector3::new(-1.0, 0.0, 0.0)),
+            (vec![1, 3, 7, 5], Vector3::new(1.0, 0.0, 0.0)),
+            (vec![0, 1, 5, 4], Vector3::new(0.0, -1.0, 0.0)),
+            (vec![2, 6, 7, 3], Vector3::new(0.0, 1.0, 0.0)),
+            (vec![0, 2, 3, 1], Vector3::new(0.0, 0.0, -1.0)),
+            (vec![4, 5, 7, 6], Vector3::new(0.0, 0.0, 1.0)),
         ];
-
-        let c = Vector::from_slice(&center);
-        let r = Vector::from_slice(&radius);
 
         let mut polygons = Vec::new();
         for (idxs, n) in indices_and_normals {
@@ -581,7 +506,7 @@ impl CSG {
                 let vx = c.x + r.x * ((i & 1) as f64 * 2.0 - 1.0);
                 let vy = c.y + r.y * (((i & 2) >> 1) as f64 * 2.0 - 1.0);
                 let vz = c.z + r.z * (((i & 4) >> 2) as f64 * 2.0 - 1.0);
-                verts.push(Vertex::new(Vector::new(vx, vy, vz), n));
+                verts.push(Vertex::new(Vector3::new(vx, vy, vz), n));
             }
             polygons.push(Polygon::new(verts, None));
         }
@@ -602,21 +527,22 @@ impl CSG {
             None => ([0.0, 0.0, 0.0], 1.0, 16, 8),
         };
 
-        let c = Vector::from_slice(&center);
+        let c = Vector3::new(center[0], center[1], center[2]);
         let mut polygons = Vec::new();
 
-        // generate polygons
+        // 2π is `std::f64::consts::TAU` in newer Rust,
+        // but if that's not available, replace with `2.0 * std::f64::consts::PI`.
         for i in 0..slices {
             for j in 0..stacks {
                 let mut vertices = Vec::new();
 
                 let vertex = |theta: f64, phi: f64| {
-                    let dir = Vector::new(
+                    let dir = Vector3::new(
                         theta.cos() * phi.sin(),
                         phi.cos(),
                         theta.sin() * phi.sin(),
                     );
-                    Vertex::new(c.plus(&dir.times(radius)), dir)
+                    Vertex::new(c + dir * radius, dir)
                 };
 
                 let t0 = i as f64 / slices as f64;
@@ -624,13 +550,11 @@ impl CSG {
                 let p0 = j as f64 / stacks as f64;
                 let p1 = (j + 1) as f64 / stacks as f64;
 
-                // angles
-                let theta0 = t0 * std::f64::consts::TAU; // 2π
+                let theta0 = t0 * std::f64::consts::TAU; 
                 let theta1 = t1 * std::f64::consts::TAU;
                 let phi0 = p0 * std::f64::consts::PI;
                 let phi1 = p1 * std::f64::consts::PI;
 
-                // build up to 4 vertices
                 vertices.push(vertex(theta0, phi0));
                 if j > 0 {
                     vertices.push(vertex(theta1, phi0));
@@ -660,26 +584,32 @@ impl CSG {
             None => ([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16),
         };
 
-        let s = Vector::from_slice(&start);
-        let e = Vector::from_slice(&end);
-        let ray = e.minus(&s);
-        let axis_z = ray.unit();
+        let s = Vector3::new(start[0], start[1], start[2]);
+        let e = Vector3::new(end[0], end[1], end[2]);
+        let ray = e - s;
+        let axis_z = ray.normalize();
         let is_y = axis_z.y.abs() > 0.5;
-        let axis_x = Vector::new(is_y as i32 as f64, (!is_y) as i32 as f64, 0.0)
-            .cross(&axis_z)
-            .unit();
-        let axis_y = axis_x.cross(&axis_z).unit();
 
-        let start_v = Vertex::new(s, axis_z.negated());
+        // If axis_z is mostly aligned with Y, pick X; otherwise pick Y.
+        let mut axis_x = if is_y {
+            Vector3::new(1.0, 0.0, 0.0)
+        } else {
+            Vector3::new(0.0, 1.0, 0.0)
+        };
+        axis_x = axis_x.cross(&axis_z).normalize();
+        let axis_y = axis_x.cross(&axis_z).normalize();
+
+        let start_v = Vertex::new(s, -axis_z);
         let end_v = Vertex::new(e, axis_z);
 
         let mut polygons = Vec::new();
 
         let point = |stack: f64, slice: f64, normal_blend: f64| {
             let angle = slice * std::f64::consts::TAU;
-            let out = axis_x.times(angle.cos()).plus(&axis_y.times(angle.sin()));
-            let pos = s.plus(&ray.times(stack)).plus(&out.times(radius));
-            let normal = out.times(1.0 - normal_blend.abs()).plus(&axis_z.times(normal_blend));
+            let out = axis_x * angle.cos() + axis_y * angle.sin();
+            let pos = s + ray * stack + out * radius;
+            // Blend outward normal with axis_z for the cap edges
+            let normal = out * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
             Vertex::new(pos, normal)
         };
 
@@ -723,7 +653,7 @@ impl CSG {
     }
 
     // ----------------------------------------------------------
-    //   NEW: Export to ASCII STL
+    //   Export to ASCII STL
     // ----------------------------------------------------------
 
     /// Convert this CSG to an **ASCII STL** string with the given `name`.
@@ -735,16 +665,18 @@ impl CSG {
     /// ```
     pub fn to_stl(&self, name: &str) -> String {
         let mut out = String::new();
-        // STL header
         out.push_str(&format!("solid {}\n", name));
 
-        // For each polygon, triangulate and then output each triangle
         for poly in &self.polygons {
-            let normal = poly.plane.normal.unit();
+            // Use the polygon plane's normal for the facet normal (normalized).
+            let normal = poly.plane.normal.normalize();
             let triangles = poly.triangulate();
 
             for tri in triangles {
-                out.push_str(&format!("  facet normal {:.6} {:.6} {:.6}\n", normal.x, normal.y, normal.z));
+                out.push_str(&format!(
+                    "  facet normal {:.6} {:.6} {:.6}\n",
+                    normal.x, normal.y, normal.z
+                ));
                 out.push_str("    outer loop\n");
                 for vertex in &tri {
                     out.push_str(&format!(
@@ -757,7 +689,6 @@ impl CSG {
             }
         }
 
-        // STL footer
         out.push_str(&format!("endsolid {}\n", name));
         out
     }

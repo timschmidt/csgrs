@@ -5,3 +5,4 @@ edition = "2021"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>",]
 
 [dependencies]
+nalgebra = "0.33.2"
