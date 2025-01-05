@@ -14,6 +14,11 @@
 //! println!("{}", result.to_stl("my_solid"));
 //! ```
 
+#![allow(dead_code)]
+
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
+
 use nalgebra::Vector3;
 
 const EPSILON: f64 = 1e-5;

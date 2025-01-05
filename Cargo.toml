@@ -1,8 +1,13 @@
 [package]
-name = "csgrs"
+name = "csg-rs"
 version = "0.1.0"
 edition = "2021"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>",]
 
 [dependencies]
-nalgebra = "0.33.2"
+nalgebra = "0.33"
+rayon = { version = "1.7", optional = true }
+
+[features]
+default = []
+parallel = ["rayon"]
