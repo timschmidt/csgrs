@@ -475,9 +475,9 @@ impl Real {
         let folded = self.clone().fold();
         let msd = folded.iter_msd();
         if msd > -20 && msd < 60 {
-            f.write_fmt(format_args!("{folded}"))
+            fmt::Display::fmt(&folded, f)
         } else {
-            f.write_fmt(format_args!("{folded:e}"))
+            fmt::LowerExp::fmt(&folded, f)
         }
     }
 }
@@ -485,54 +485,23 @@ impl Real {
 impl fmt::LowerExp for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let folded = self.clone().fold();
-        f.write_fmt(format_args!("{folded:e}"))
+        folded.fmt(f)
     }
 }
 
 impl fmt::Display for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.class {
-            One => {
-                if f.alternate() {
-                    self.decimal(f)
-                } else {
-                    f.write_fmt(format_args!("{}", self.rational))
-                }
-            }
-            Pi => {
-                if f.alternate() {
-                    self.decimal(f)
-                } else {
-                    f.write_fmt(format_args!("{} Pi", self.rational))
-                }
-            }
-            Exp(n) => {
-                if f.alternate() {
-                    self.decimal(f)
-                } else {
-                    f.write_fmt(format_args!("{} x e**({})", self.rational, &n))
-                }
-            }
-            Ln(n) => {
-                if f.alternate() {
-                    self.decimal(f)
-                } else {
-                    f.write_fmt(format_args!("{} x ln({})", self.rational, &n))
-                }
-            }
-            Sqrt(n) => {
-                if f.alternate() {
-                    self.decimal(f)
-                } else {
-                    f.write_fmt(format_args!("{} √({})", self.rational, &n))
-                }
-            }
-            _ => {
-                if f.alternate() {
-                    self.decimal(f)
-                } else {
-                    f.write_fmt(format_args!("{} x {:?}", self.rational, self.class))
-                }
+        if f.alternate() {
+            self.decimal(f)
+        } else {
+            self.rational.fmt(f)?;
+            match &self.class {
+                One => Ok(()),
+                Pi => f.write_str(" Pi"),
+                Exp(n) => write!(f, " x e**({})", &n),
+                Ln(n) => write!(f, " x ln({})", &n),
+                Sqrt(n) => write!(f, " √({})", &n),
+                _ => write!(f, " x {:?}", self.class),
             }
         }
     }
@@ -923,5 +892,16 @@ mod tests {
         assert_eq!(sqrt.rational, root);
         let two = Rational::new(2);
         assert_eq!(sqrt.class, Sqrt(two));
+    }
+
+    #[test]
+    fn exp_pi() {
+        let pi = Real::pi();
+        assert_eq!(format!("{pi:.2e}"), "3.14e0");
+        assert_eq!(format!("{pi:.4e}"), "3.1416e0");
+        assert_eq!(format!("{pi:.8e}"), "3.14159265e0");
+        assert_eq!(format!("{pi:.16e}"), "3.1415926535897932e0");
+        assert_eq!(format!("{pi:.32e}"), "3.14159265358979323846264338327950e0");
+        assert_eq!(format!("{pi:e}"), "3.1415926535897932384626433832795e0");
     }
 }
