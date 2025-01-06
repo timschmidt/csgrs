@@ -62,7 +62,7 @@ Also the cosine (cos) and sine (sin) functions are provided.
 
 (cos (* pi 2.5)) == 0
 
-Numeric literals are written in decimal, 2.75 is exactly two and three quarters.
+Numeric literals are written in decimal, 2.75 is exactly two and three quarters. The underscore is ignored, so 10\_000 means the same as 10000
 
 Today the built-in names are only e (the mathematical constant and base of the natural logarithm) and pi (the mathematical constant π)
 
