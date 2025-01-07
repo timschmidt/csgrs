@@ -56,11 +56,11 @@ fn answer(ans: &Real, name: &str) {
         println!("{name}: {ans}");
     } else if ans.is_rational() {
         if ans.prefer_fraction() {
-            println!("{name}: {ans} ~= {ans:#.10}");
+            println!("{name}: {ans} ~= {ans:#}");
         } else {
             println!("{name}: {ans} = {ans:#}");
         }
     } else {
-        println!("{name}: {ans} ~= {ans:#.20}");
+        println!("{name}: {ans} ~= {ans:#}");
     }
 }
