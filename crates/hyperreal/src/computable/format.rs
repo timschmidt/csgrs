@@ -176,7 +176,7 @@ impl fmt::Display for Computable {
         }
         while exp >= 0 {
             let digit = num.next().unwrap_or_default();
-            f.write_fmt(format_args!("{digit}"))?;
+            write!(f, "{digit}")?;
             exp -= 1;
         }
         // Decimal point or early exit if we won't write any decimal places
@@ -199,7 +199,7 @@ impl fmt::Display for Computable {
                 return Ok(());
             }
             dp -= 1;
-            f.write_fmt(format_args!("{digit}"))?;
+            write!(f, "{digit}")?;
         }
         if f.precision().is_none() {
             return Ok(());
@@ -237,9 +237,9 @@ impl fmt::LowerExp for Computable {
             if n == 1 {
                 f.write_str(".")?;
             }
-            f.write_fmt(format_args!("{digit}"))?;
+            write!(f, "{digit}")?;
         }
-        f.write_fmt(format_args!("e{exp}"))?;
+        write!(f, "e{exp}")?;
         Ok(())
     }
 }

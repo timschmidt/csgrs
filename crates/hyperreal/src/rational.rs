@@ -319,17 +319,17 @@ impl fmt::Display for Rational {
             f.write_str("+")?;
         }
         if self.denominator == *ONE.deref() {
-            f.write_fmt(format_args!("{}", self.numerator))?;
+            write!(f, "{}", self.numerator)?;
         } else if f.alternate() {
             let whole = &self.numerator / &self.denominator;
-            f.write_fmt(format_args!("{whole}."))?;
+            write!(f, "{whole}.")?;
             let round = &whole * &self.denominator;
             let mut left = &self.numerator - &round;
             let mut digits = f.precision().unwrap_or(1000);
             loop {
                 left *= &*TEN;
                 let digit = &left / &self.denominator;
-                f.write_fmt(format_args!("{digit}"))?;
+                write!(f, "{digit}")?;
                 left -= digit * &self.denominator;
                 if left.is_zero() {
                     break;
@@ -344,9 +344,9 @@ impl fmt::Display for Rational {
             let round = &whole * &self.denominator;
             let left = &self.numerator - &round;
             if whole.is_zero() {
-                f.write_fmt(format_args!("{left}/{}", self.denominator))?;
+                write!(f, "{left}/{}", self.denominator)?;
             } else {
-                f.write_fmt(format_args!("{whole} {left}/{}", self.denominator))?;
+                write!(f, "{whole} {left}/{}", self.denominator)?;
             }
         }
         Ok(())
