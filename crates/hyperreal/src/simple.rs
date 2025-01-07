@@ -418,10 +418,12 @@ mod tests {
     #[test]
     fn precision() {
         let empty = HashMap::new();
-        let xpr: Simple = "(* 35088.93592003040493454779969771102629 35088.93592003040493454779969771102629)".parse().unwrap();
+        let xpr: Simple =
+            "(* 35088.93592003040493454779969771102629 35088.93592003040493454779969771102629)"
+                .parse()
+                .unwrap();
         let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result:#}");
         assert_eq!(ans, "1231233424.0000000000000000000000000003181");
-
     }
 }
