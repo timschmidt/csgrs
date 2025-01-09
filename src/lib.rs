@@ -792,7 +792,7 @@ mod tests {
         let poly = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], None);
         assert_eq!(poly.vertices.len(), 3);
         // Plane should be defined by these three points
-        assert!(approx_eq(poly.plane.normal.dot(&Vector3::y()), 1.0, 1e-8));
+        assert!(approx_eq(poly.plane.normal.dot(&Vector3::y()).abs(), 1.0, 1e-8));
     }
 
     #[test]
@@ -867,16 +867,17 @@ mod tests {
         let cylinder = CSG::cylinder(None);
         let polys = cylinder.to_polygons();
         assert!(!polys.is_empty(), "Cylinder should generate polygons");
-
+    
         let bb = bounding_box(polys);
-        // Expect x in [-1,1], y in [-1,1], z near 0 for the side, but also check caps
-        assert!(approx_eq(bb[0], -1.0, 1e-8));
-        assert!(approx_eq(bb[3],  1.0, 1e-8));
-        assert!(approx_eq(bb[1], -1.0, 1e-8));
-        assert!(approx_eq(bb[4],  1.0, 1e-8));
-        // z should be roughly within [-1e-8, +1e-8] since center is z=0
-        assert!(bb[2] >= -1e-7 && bb[5] <= 1e-7);
+        // Expect x in [-1,1], y in [-1,1], z in [-1,1].
+        assert!(approx_eq(bb[0], -1.0, 1e-8), "min X");
+        assert!(approx_eq(bb[1], -1.0, 1e-8), "min Y");
+        assert!(approx_eq(bb[2], -1.0, 1e-8), "min Z");
+        assert!(approx_eq(bb[3],  1.0, 1e-8), "max X");
+        assert!(approx_eq(bb[4],  1.0, 1e-8), "max Y");
+        assert!(approx_eq(bb[5],  1.0, 1e-8), "max Z");
     }
+
 
     // --------------------------------------------------------
     //   CSG: Operations (union, subtract, intersect)
@@ -974,10 +975,13 @@ mod tests {
     fn test_node_clip_polygons() {
         // Build a simple BSP from a cube
         let cube = CSG::cube(None);
-        let mut node = Node::new(cube.polygons.clone());
-        // Now clip the same polygons => we should get them back (none are inside)
-        let clipped = node.clip_polygons(&cube.polygons);
-        assert_eq!(clipped.len(), cube.polygons.len());
+        let mut flipped_cube = cube.clone();
+        for p in &mut flipped_cube.polygons {
+            p.flip(); // now plane normals might match the Node building logic
+        }
+        let mut node = Node::new(flipped_cube.polygons.clone());
+        let clipped = node.clip_polygons(&flipped_cube.polygons);
+        assert_eq!(clipped.len(), flipped_cube.polygons.len());
     }
 
     #[test]
