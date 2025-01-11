@@ -27,7 +27,7 @@ Translate:
 
 Rotate:
 
-    let rotation_result = cube.rotate(45.0);
+    let rotation_result = cube.rotate(15.0, 45.0, 0.0);
 
 Scale:
 
@@ -65,4 +65,4 @@ Subtraction and intersection naturally follow from set operations. If union is `
 
 # License
 
-Copyright (c) 2025 Timothy Schmidt, initially based on a translation of CSG.js Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the [MIT license](http://www.opensource.org/licenses/mit-license.php).
+Copyright (c) 2025 Timothy Schmidt, initially based on a translation of CSG.js Copyright (c) 2011 Evan Wallace, under the [MIT license](http://www.opensource.org/licenses/mit-license.php).
