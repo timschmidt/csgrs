@@ -26,7 +26,7 @@ mod tests;
 
 const EPSILON: f64 = 1e-5;
 
-pub enum Axes {
+pub enum Axis {
     X,
     Y,
     Z,
@@ -742,11 +742,11 @@ impl CSG {
     }
     
     /// Mirror across X=0, Y=0, or Z=0 plane
-    pub fn mirror(&self, axis: Axes) -> CSG {
+    pub fn mirror(&self, axis: Axis) -> CSG {
         let (sx, sy, sz) = match axis {
-            Axes::X => (-1.0,  1.0,  1.0),
-            Axes::Y => ( 1.0, -1.0,  1.0),
-            Axes::Z => ( 1.0,  1.0, -1.0),
+            Axis::X => (-1.0,  1.0,  1.0),
+            Axis::Y => ( 1.0, -1.0,  1.0),
+            Axis::Z => ( 1.0,  1.0, -1.0),
         };
 
         // We can just use a "non-uniform scaling" matrix that

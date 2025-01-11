@@ -10,7 +10,7 @@ Construct a shape:
     let sphere = csgrs::sphere(None);
     let cylinder = csgrs::cylinder(None);
 
-Combine shapes with:
+Combine shapes:
 
     let union_result = cube.union(&sphere);
     let subtraction_result = cube.subtract(&sphere);
@@ -20,6 +20,22 @@ Extract polygons:
 
     let polygons = union_result.to_polygons();
     println!("Polygon count = {}", polygons.len());
+    
+Translate:
+
+    let translation_result = cube.translate(Vector3::new(3.0, 2.0, 1.0));
+
+Rotate:
+
+    let rotation_result = cube.rotate(45.0);
+
+Scale:
+
+    let scale_result = cube.scale(2.0, 1.0, 3.0);
+
+Mirror:
+
+    let mirror_result = cube.mirror(Axis::Y);
 
 Export an STL:
 
@@ -32,19 +48,21 @@ Export an STL:
 
 All CSG operations are implemented in terms of two functions, `clip_to()` and `invert()`, which remove parts of a BSP tree inside another BSP tree and swap solid and empty space, respectively. To find the union of `a` and `b`, we want to remove everything in `a` inside `b` and everything in `b` inside `a`, then combine polygons from `a` and `b` into one solid:
 
-    a.clip_to(b);
-    b.clip_to(a);
+    a.clip_to(&b);
+    b.clip_to(&a);
+    a.build(&b.all_polygons());
 
 The only tricky part is handling overlapping coplanar polygons in both trees. The code above keeps both copies, but we need to keep them in one tree and remove them in the other tree. To remove them from `b` we can clip the inverse of `b` against `a`. The code for union now looks like this:
 
-    a.clip_to(b);
-    b.clip_to(a);
+    a.clip_to(&b);
+    b.clip_to(&a);
     b.invert();
-    b.clip_to(a);
+    b.clip_to(&a);
     b.invert();
+    a.build(&b.all_polygons());
 
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 # License
 
-Copyright (c) 2025 Timothy Schmidt, based on a translation of CSG.js Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the [MIT license](http://www.opensource.org/licenses/mit-license.php).
+Copyright (c) 2025 Timothy Schmidt, initially based on a translation of CSG.js Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the [MIT license](http://www.opensource.org/licenses/mit-license.php).
