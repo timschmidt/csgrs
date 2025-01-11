@@ -19,9 +19,15 @@
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
-use nalgebra::Vector3;
+use nalgebra::{Matrix4, Vector4, Vector3, Translation3, Rotation3};
 
 const EPSILON: f64 = 1e-5;
+
+pub enum Axes {
+    X,
+    Y,
+    Z,
+}
 
 /// A small helper for linear interpolation of `Vec3`.
 fn lerp_vec3(a: &Vector3<f64>, b: &Vector3<f64>, t: f64) -> Vector3<f64> {
@@ -656,7 +662,96 @@ impl CSG {
 
         CSG::from_polygons(polygons)
     }
+    
+    /// Transform all vertices in this CSG by a given 4×4 matrix.
+    pub fn transform(&self, mat: &Matrix4<f64>) -> CSG {
+        // We also need the inverse-transpose for correct normal transformation
+        // if the matrix has any non-uniform scaling/shearing.
+        let mat_inv_transpose = mat.try_inverse().unwrap().transpose();
 
+        let mut csg = self.clone();
+
+        for poly in &mut csg.polygons {
+            for vert in &mut poly.vertices {
+                // Position as a homogeneous vector [x, y, z, 1].
+                let pos_h = Vector4::new(vert.pos.x, vert.pos.y, vert.pos.z, 1.0);
+                let new_pos = mat * pos_h;
+                vert.pos.x = new_pos.x / new_pos.w;
+                vert.pos.y = new_pos.y / new_pos.w;
+                vert.pos.z = new_pos.z / new_pos.w;
+
+                // Normal as a homogeneous vector [nx, ny, nz, 0].
+                // Using the inverse-transpose for correct normal transform.
+                let norm_h = Vector4::new(vert.normal.x, vert.normal.y, vert.normal.z, 0.0);
+                let new_norm = mat_inv_transpose * norm_h;
+                // If you want the normal re-normalized (often recommended):
+                let mut normal3 = Vector3::new(new_norm.x, new_norm.y, new_norm.z);
+                let _ = normal3.normalize_mut();
+                vert.normal = normal3;
+            }
+
+            // Update the plane’s normal & w as well.
+            // The plane normal is a direction => use inverse-transpose.
+            let plane_normal_h = Vector4::new(
+                poly.plane.normal.x,
+                poly.plane.normal.y,
+                poly.plane.normal.z,
+                0.0,
+            );
+            let new_plane_normal_h = mat_inv_transpose * plane_normal_h;
+            let mut new_plane_normal = Vector3::new(
+                new_plane_normal_h.x,
+                new_plane_normal_h.y,
+                new_plane_normal_h.z,
+            );
+            let _ = new_plane_normal.normalize_mut();
+
+            // For plane.w, pick any vertex from the polygon
+            // after transformation and dot with the new normal:
+            poly.plane.normal = new_plane_normal;
+            poly.plane.w = new_plane_normal.dot(&poly.vertices[0].pos);
+        }
+
+        csg
+    }
+    
+    pub fn translate(&self, v: Vector3<f64>) -> CSG {
+        let translation = Translation3::from(v);
+        // Convert to a Matrix4
+        let mat4 = translation.to_homogeneous();
+        self.transform(&mat4)
+    }
+    
+    pub fn rotate(&self, x_deg: f64, y_deg: f64, z_deg: f64) -> CSG {
+        let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg.to_radians());
+        let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg.to_radians());
+        let rz = Rotation3::from_axis_angle(&Vector3::z_axis(), z_deg.to_radians());
+        
+        // Compose them in the desired order
+        let rot = rz * ry * rx;
+        let mat4 = rot.to_homogeneous();
+        self.transform(&mat4)
+    }
+    
+    pub fn scale(&self, sx: f64, sy: f64, sz: f64) -> CSG {
+        let mat4 = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
+        self.transform(&mat4)
+    }
+    
+    /// Mirror across X=0, Y=0, or Z=0 plane
+    pub fn mirror(&self, axis: Axes) -> CSG {
+        let (sx, sy, sz) = match axis {
+            Axes::X => (-1.0,  1.0,  1.0),
+            Axes::Y => ( 1.0, -1.0,  1.0),
+            Axes::Z => ( 1.0,  1.0, -1.0),
+        };
+
+        // We can just use a "non-uniform scaling" matrix that
+        // flips exactly one axis:
+        let mat = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
+        self.transform(&mat)
+    }
+    
     // ----------------------------------------------------------
     //   Export to ASCII STL
     // ----------------------------------------------------------
