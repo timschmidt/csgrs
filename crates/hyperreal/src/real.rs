@@ -482,6 +482,13 @@ impl Real {
     }
 }
 
+impl fmt::UpperExp for Real {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let folded = self.clone().fold();
+        folded.fmt(f)
+    }
+}
+
 impl fmt::LowerExp for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let folded = self.clone().fold();
@@ -898,9 +905,9 @@ mod tests {
     fn exp_pi() {
         let pi = Real::pi();
         assert_eq!(format!("{pi:.2e}"), "3.14e0");
-        assert_eq!(format!("{pi:.4e}"), "3.1416e0");
+        assert_eq!(format!("{pi:.4E}"), "3.1416E0");
         assert_eq!(format!("{pi:.8e}"), "3.14159265e0");
-        assert_eq!(format!("{pi:.16e}"), "3.1415926535897932e0");
+        assert_eq!(format!("{pi:.16E}"), "3.1415926535897932E0");
         assert_eq!(format!("{pi:.32e}"), "3.14159265358979323846264338327950e0");
         assert_eq!(format!("{pi:e}"), "3.1415926535897932384626433832795e0");
     }

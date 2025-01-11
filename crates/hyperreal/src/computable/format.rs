@@ -211,6 +211,39 @@ impl fmt::Display for Computable {
     }
 }
 
+impl fmt::UpperExp for Computable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.sign() == Minus {
+            f.write_str("-")?;
+        } else if f.sign_plus() {
+            // Even for zero
+            f.write_str("+")?;
+        }
+        let msd = self.iter_msd();
+        let precision = f.precision();
+        // Precision does not include the first digit before the decimal point
+        let exact = precision.unwrap_or(DEFAULT_PRECISION);
+        let bits = enough_bits(msd, f.precision());
+        let appr = self.approx(msd - bits);
+        let (num, exp) = digits(
+            appr.magnitude(),
+            Places::Exp(exact),
+            bits,
+            msd,
+            precision.is_none(),
+        );
+
+        for (n, digit) in num.into_iter().enumerate() {
+            if n == 1 {
+                f.write_str(".")?;
+            }
+            write!(f, "{digit}")?;
+        }
+        write!(f, "E{exp}")?;
+        Ok(())
+    }
+}
+
 impl fmt::LowerExp for Computable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.sign() == Minus {
@@ -254,9 +287,9 @@ mod tests {
         let smol = Computable::rational(Rational::fraction(1, 1_000_000_000_000));
         let ans = smol.clone().multiply(smol);
         assert_eq!(format!("{ans:.0e}"), "1e-24");
-        assert_eq!(format!("{ans:.2e}"), "1.00e-24");
+        assert_eq!(format!("{ans:.2E}"), "1.00E-24");
         assert_eq!(format!("{ans:.4e}"), "1.0000e-24");
-        assert_eq!(format!("{ans:.8e}"), "1.00000000e-24");
+        assert_eq!(format!("{ans:.8E}"), "1.00000000E-24");
         assert_eq!(format!("{ans:e}"), "1e-24");
     }
 
@@ -264,21 +297,21 @@ mod tests {
     fn pinch() {
         let ans = Computable::rational(Rational::new(11));
         assert_eq!(format!("{ans:.0e}"), "1e1");
-        assert_eq!(format!("{ans:.1e}"), "1.1e1");
+        assert_eq!(format!("{ans:.1E}"), "1.1E1");
         assert_eq!(format!("{ans:e}"), "1.1e1");
         let ans = Computable::rational(Rational::new(101));
         assert_eq!(format!("{ans:.0e}"), "1e2");
-        assert_eq!(format!("{ans:.1e}"), "1.0e2");
+        assert_eq!(format!("{ans:.1E}"), "1.0E2");
         assert_eq!(format!("{ans:.2e}"), "1.01e2");
         assert_eq!(format!("{ans:e}"), "1.01e2");
         let ans = Computable::rational(Rational::new(10001));
         assert_eq!(format!("{ans:.0e}"), "1e4");
-        assert_eq!(format!("{ans:.2e}"), "1.00e4");
+        assert_eq!(format!("{ans:.2E}"), "1.00E4");
         assert_eq!(format!("{ans:.4e}"), "1.0001e4");
         assert_eq!(format!("{ans:e}"), "1.0001e4");
         let ans = Computable::rational(Rational::new(1_000_000_001));
         assert_eq!(format!("{ans:.0e}"), "1e9");
-        assert_eq!(format!("{ans:.8e}"), "1.00000000e9");
+        assert_eq!(format!("{ans:.8E}"), "1.00000000E9");
         assert_eq!(format!("{ans:.10e}"), "1.0000000010e9");
         assert_eq!(format!("{ans:e}"), "1.000000001e9");
     }
@@ -292,7 +325,7 @@ mod tests {
         let ans = Computable::rational(Rational::fraction(9999, 10));
         assert_eq!(format!("{ans:.0e}"), "1e3");
         let ans = Computable::rational(Rational::new(12346));
-        assert_eq!(format!("{ans:.0e}"), "1e4");
+        assert_eq!(format!("{ans:.0E}"), "1E4");
         assert_eq!(format!("{ans:.3e}"), "1.235e4");
     }
 
