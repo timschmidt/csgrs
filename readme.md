@@ -16,8 +16,11 @@ Construct a 2D shape:
 Construct a 3D shape:
 
     let cube = csgrs::cube(None);
+    let cube = csgrs::cube(Some([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])); // center, radius
     let sphere = csgrs::sphere(None);
+    let sphere = csgrs::sphere(Some([0.0, 0.0, 0.0], 1.0, 16, 8)); // center, radius, slices, stacks
     let cylinder = csgrs::cylinder(None);
+    let cylinder = csgrs::cylinder([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16); // start, end, radius, slices
 
 Combine shapes:
 
@@ -48,16 +51,16 @@ Mirror:
     
 Convex hull:
 
-    let cube_hull = cube.convex_hull();
+    let hull = cube.convex_hull();
 
 Minkowski sum:
 
-    let minkowski_sum = cube.minkowski_sum(&sphere);
+    let rounded_cube = cube.minkowski_sum(&sphere);
     
 Extrude a 2D shape:
 
     let square = csgrs::square(Some(([2.0, 2.0], true)));
-    let cube_like = square.extrude(5.0);
+    let prism = square.extrude(5.0);
     
 Rotate extrude:
 
