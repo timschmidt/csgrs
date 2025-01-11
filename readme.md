@@ -36,6 +36,14 @@ Scale:
 Mirror:
 
     let mirror_result = cube.mirror(Axis::Y);
+    
+Convex hull:
+
+    let cube_hull = cube.convex_hull();
+
+Minkowski sum:
+
+    let minkowski_sum = cube.minkowski_sum(&sphere);
 
 Export an STL:
 

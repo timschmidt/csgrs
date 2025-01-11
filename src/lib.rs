@@ -20,6 +20,7 @@
 use rayon::prelude::*;
 
 use nalgebra::{Matrix4, Vector4, Vector3, Translation3, Rotation3};
+use chull::{ConvexHullWrapper};
 
 #[cfg(test)]
 mod tests;
@@ -753,6 +754,98 @@ impl CSG {
         // flips exactly one axis:
         let mat = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
         self.transform(&mat)
+    }
+    
+    /// Compute the convex hull of all vertices in this CSG.
+    pub fn convex_hull(&self) -> CSG {
+        // Gather all (x, y, z) coordinates from the polygons
+        let points: Vec<Vec<f64>> = self
+            .polygons
+            .iter()
+            .flat_map(|poly| {
+                poly.vertices.iter().map(|v| {
+                    vec![v.pos.x, v.pos.y, v.pos.z]
+                })
+            })
+            .collect();
+
+        // Compute convex hull using the robust wrapper
+        let hull = ConvexHullWrapper::try_new(&points, None)
+            .expect("Failed to compute convex hull");
+
+        let (verts, indices) = hull.vertices_indices();
+
+        // Reconstruct polygons as triangles
+        let mut polygons = Vec::new();
+        for tri in indices.chunks(3) {
+            let i0 = tri[0];
+            let i1 = tri[1];
+            let i2 = tri[2];
+            
+            let v0 = &verts[i0];
+            let v1 = &verts[i1];
+            let v2 = &verts[i2];
+
+            let vv0 = Vertex::new(Vector3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
+            let vv1 = Vertex::new(Vector3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
+            let vv2 = Vertex::new(Vector3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
+
+            polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
+        }
+
+        CSG::from_polygons(polygons)
+    }
+
+    /// Compute the Minkowski sum: self ⊕ other
+    ///
+    /// Naive approach: Take every vertex in `self`, add it to every vertex in `other`,
+    /// then compute the convex hull of all resulting points.
+    pub fn minkowski_sum(&self, other: &CSG) -> CSG {
+        // Collect all vertices (x, y, z) from self
+        let verts_a: Vec<Vector3<f64>> = self.polygons
+            .iter()
+            .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
+            .collect();
+
+        // Collect all vertices from other
+        let verts_b: Vec<Vector3<f64>> = other.polygons
+            .iter()
+            .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
+            .collect();
+
+        // For Minkowski, add every point in A to every point in B
+        let mut sum_points = Vec::with_capacity(verts_a.len() * verts_b.len());
+        for a in &verts_a {
+            for b in &verts_b {
+                sum_points.push(vec![a.x + b.x, a.y + b.y, a.z + b.z]);
+            }
+        }
+
+        // Compute the hull of these Minkowski-sum points
+        let hull = ConvexHullWrapper::try_new(&sum_points, None)
+            .expect("Failed to compute Minkowski sum hull");
+
+        let (verts, indices) = hull.vertices_indices();
+
+        // Reconstruct polygons
+        let mut polygons = Vec::new();
+        for tri in indices.chunks(3) {
+            let i0 = tri[0];
+            let i1 = tri[1];
+            let i2 = tri[2];
+
+            let v0 = &verts[i0];
+            let v1 = &verts[i1];
+            let v2 = &verts[i2];
+
+            let vv0 = Vertex::new(Vector3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
+            let vv1 = Vertex::new(Vector3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
+            let vv2 = Vertex::new(Vector3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
+
+            polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
+        }
+
+        CSG::from_polygons(polygons)
     }
     
     // ----------------------------------------------------------
