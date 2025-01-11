@@ -6,12 +6,12 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
 Construct a 2D shape:
 
-    let square = CSG::square(None);
-    let square2 = CSG::square(Some(([2.0, 3.0], true)));
-    let circle = CSG::circle(None);
-    let circle2 = CSG::circle(Some((2.0, 64)));
+    let square = csgrs::square(None);
+    let square2 = csgrs::square(Some(([2.0, 3.0], true)));
+    let circle = csgrs::circle(None);
+    let circle2 = csgrs::circle(Some((2.0, 64)));
     let points = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
-    let polygon2d = CSG::polygon_2d(&points);
+    let polygon2d = csgrs::polygon_2d(&points);
 
 Construct a 3D shape:
 
@@ -56,7 +56,7 @@ Minkowski sum:
     
 Extrude a 2D shape:
 
-    let square = CSG::square(Some(([2.0, 2.0], true)));
+    let square = csgrs::square(Some(([2.0, 2.0], true)));
     let cube_like = square.extrude(5.0);
     
 Rotate extrude:
