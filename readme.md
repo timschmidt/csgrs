@@ -53,6 +53,20 @@ Convex hull:
 Minkowski sum:
 
     let minkowski_sum = cube.minkowski_sum(&sphere);
+    
+Extrude a 2D shape:
+
+    let square = CSG::square(Some(([2.0, 2.0], true)));
+    let cube_like = square.extrude(5.0);
+    
+Rotate extrude:
+
+    let polygon = CSG::polygon_2d(&[
+        [1.0, 0.0],
+        [1.0, 2.0],
+        [0.5, 2.5],
+    ]);
+    let revolve_shape = polygon.rotate_extrude(360.0, 16);
 
 Export an STL:
 

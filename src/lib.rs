@@ -983,6 +983,218 @@ impl CSG {
         placeholder.translate(nalgebra::Vector3::new(0.0, 0.0, 0.0))
     }
     
+    /// Linearly extrude this (2D) shape in the +Z direction by `height`.
+    ///
+    /// This is similar to OpenSCAD's `linear_extrude(height=...)` assuming
+    /// the base 2D shape is in the XY plane with a +Z normal.
+    ///
+    /// - If your shape is centered around Z=0, the resulting extrusion
+    ///   will go from Z=0 to Z=`height`.
+    /// - The top polygons will be created at Z=`height`.
+    /// - The bottom polygons remain at Z=0 (the original).
+    /// - Side polygons will be formed around the perimeter.
+    pub fn extrude(&self, height: f64) -> CSG {
+        // Collect all new polygons here
+        let mut new_polygons = Vec::new();
+
+        // 1) Bottom polygons = original polygons
+        //    (assuming they are already in the XY plane with some Z).
+        //    We keep them as-is. If you want them “closed”, make sure the polygon
+        //    normal is pointing down or up consistently.
+        for poly in &self.polygons {
+            new_polygons.push(poly.clone()); 
+        }
+
+        // 2) Top polygons = translate each original polygon by +Z=height,
+        //    then *flip* if you want the normals to face outward (typically up).
+        //    The simplest approach is to clone, then shift all vertices by (0,0,height).
+        //    We can do that using the `translate(...)` method, but let's do it manually here:
+        let top_polygons = self.translate(Vector3::new(0.0, 0.0, height)).polygons;
+        // Typically for a "closed" shape, you'd want the top polygon normals
+        // facing upward. If your original polygons had +Z normals, after
+        // translation, they'd still have +Z normals, so you might not need flip.
+        // But if you want them reversed, uncomment:
+        // for p in &mut top_polygons {
+        //     p.flip();
+        // }
+
+        // Add those top polygons to the list
+        new_polygons.extend(top_polygons.iter().cloned());
+
+        // 3) Side polygons = For each polygon in `self`, connect its edges
+        //    from the original to the translated version.
+        //
+        //    We'll iterate over each polygon’s vertices. For each edge
+        //    (v[i], v[i+1]), we form a rectangular side quad with the corresponding
+        //    points in the top polygon.  That is:
+        //
+        //    bottom edge = (v[i], v[i+1])
+        //    top edge    = (v[i]+(0,0,h), v[i+1]+(0,0,h))
+        //
+        //    We'll build those as two triangles or one quad polygon.
+        //
+        //    We can find the corresponding top vertex by the same index in
+        //    the top_polygons list.  Because we simply did a single `translate(...)`
+        //    for the entire shape, we need to match polygons by index.
+
+        // We'll do this polygon-by-polygon. For each polygon, we retrieve
+        // its "partner" in top_polygons by the same index. This assumes the order
+        // of polygons hasn't changed between self.polygons and top_polygons.
+        //
+        // => If your shape has many polygons, be sure they line up. 
+        //    If your shape is a single polygon, it's simpler. 
+        //    If your shape is multiple polygons, be mindful.
+
+        // We already have them in arrays: 
+        let bottom_polys = &self.polygons;
+        let top_polys = &top_polygons;
+
+        for (poly_bottom, poly_top) in bottom_polys.iter().zip(top_polys.iter()) {
+            let vcount = poly_bottom.vertices.len();
+            if vcount < 3 {
+                continue; // skip degenerate
+            }
+
+            for i in 0..vcount {
+                let j = (i + 1) % vcount; // next index
+
+                // Bottom edge: b_i -> b_j
+                let b_i = &poly_bottom.vertices[i];
+                let b_j = &poly_bottom.vertices[j];
+
+                // Top edge: t_i -> t_j
+                let t_i = &poly_top.vertices[i];
+                let t_j = &poly_top.vertices[j];
+
+                // We'll form a quad [b_i, b_j, t_j, t_i]
+                // with outward-facing normals. 
+                let side_poly = Polygon::new(
+                    vec![
+                        b_i.clone(),
+                        b_j.clone(),
+                        t_j.clone(),
+                        t_i.clone(),
+                    ],
+                    None,
+                );
+                new_polygons.push(side_poly);
+            }
+        }
+
+        // Combine into a new CSG
+        CSG::from_polygons(new_polygons)
+    }
+    
+    /// Rotate-extrude (revolve) this 2D shape around the Z-axis from 0..`angle_degs`.
+    /// - `segments` determines how many steps to sample around the axis.
+    /// - For a full revolve, pass `angle_degs = 360.0`.
+    /// 
+    /// This is similar to OpenSCAD's `rotate_extrude(angle=..., segments=...)`.
+    pub fn rotate_extrude(&self, angle_degs: f64, segments: usize) -> CSG {
+        let angle_radians = angle_degs.to_radians();
+        if segments < 2 {
+            panic!("rotate_extrude requires at least 2 segments");
+        }
+
+        // For each polygon in the original 2D shape, we'll build a "swept" surface.
+        // We'll store the new polygons in here:
+        let mut new_polygons = Vec::new();
+
+        // Precompute rotation transforms for each step.
+        // Step i in [0..segments]:
+        //   θ_i = i * (angle_radians / (segments as f64))
+        // We'll store these as 4×4 matrices for convenience.
+        let mut transforms = Vec::with_capacity(segments);
+        for i in 0..segments {
+            let frac = i as f64 / segments as f64;
+            let theta = frac * angle_radians;
+            let rot = Rotation3::from_axis_angle(&Vector3::z_axis(), theta);
+            transforms.push(rot.to_homogeneous());
+        }
+
+        // Also consider the "closing" transform: if angle < 360, we do not close fully,
+        // but if angle == 360, the last transform is the same as the 0th. 
+        // We'll handle that logic by just iterating from i..(i+1).
+        // We'll get the index of the next slice: (i+1)%segments if angle=360,
+        // or i+1 if partial revolve. For partial revolve, the last segment = segments-1
+        // won't connect forward if angle<360. 
+        //
+        // We'll define a small helper to get the next index safely:
+        let closed = (angle_degs - 360.0).abs() < EPSILON; // if angle=360, we close
+        let next_index = |i: usize| -> Option<usize> {
+            if i == segments - 1 {
+                if closed {
+                    Some(0)
+                } else {
+                    None
+                }
+            } else {
+                Some(i + 1)
+            }
+        };
+
+        // For each polygon in our 2D shape...
+        let polys = &self.polygons;
+        for poly in polys {
+            let vcount = poly.vertices.len();
+            if vcount < 3 {
+                continue;
+            }
+
+            // Build a slice of transformed polygons
+            // for i in 0..segments, polygon_i = transform(poly, transforms[i])
+            let mut slices = Vec::with_capacity(segments);
+            for i in 0..segments {
+                let slice_csg = CSG::from_polygons(vec![poly.clone()]).transform(&transforms[i]);
+                // We only have 1 polygon in slice_csg, so just grab it
+                slices.push(slice_csg.polygons[0].clone());
+            }
+
+            // Now connect slice i -> slice i+1 for each edge in the original polygon
+            // The bottom edge is from slices[i].vertices[edge], 
+            // the top edge is from slices[i+1].vertices[edge] (in matching order).
+            for i in 0..segments {
+                let n_i = next_index(i);
+                if n_i.is_none() {
+                    continue; // partial revolve, we skip the last connection
+                }
+                let i2 = n_i.unwrap();
+
+                // The two polygons we want to connect are slices[i] and slices[i2].
+                let poly1 = &slices[i];
+                let poly2 = &slices[i2];
+
+                // Connect edges
+                for e in 0..vcount {
+                    let e_next = (e + 1) % vcount;
+
+                    let b1 = &poly1.vertices[e];
+                    let b2 = &poly1.vertices[e_next];
+                    let t1 = &poly2.vertices[e];
+                    let t2 = &poly2.vertices[e_next];
+
+                    // We'll form a quad [b1, b2, t2, t1]
+                    let side_poly = Polygon::new(
+                        vec![b1.clone(), b2.clone(), t2.clone(), t1.clone()],
+                        None,
+                    );
+                    new_polygons.push(side_poly);
+                }
+            }
+
+            // Optionally, if you want the "ends" (like if angle<360), you could
+            // add the very first slice polygon and the last slice polygon
+            // as “caps” — but that’s more advanced logic:
+            // - 0° cap = slices[0] (or a reversed copy)
+            // - angle° cap = slices[segments-1] ...
+            //
+            // For a full revolve (360), these ends coincide and there's no extra capping needed.
+        }
+
+        // Combine everything into a new shape
+        CSG::from_polygons(new_polygons)
+    }
+    
     // ----------------------------------------------------------
     //   Export to ASCII STL
     // ----------------------------------------------------------
