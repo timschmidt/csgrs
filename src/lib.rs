@@ -848,6 +848,141 @@ impl CSG {
         CSG::from_polygons(polygons)
     }
     
+    /// Creates a 2D square in the XY plane.
+    ///
+    /// # Parameters
+    ///
+    /// - `size`: the width and height of the square (default [1.0, 1.0])
+    /// - `center`: if `true`, center the square about (0,0); otherwise bottom-left is at (0,0).
+    ///
+    /// # Example
+    /// let sq = CSG::square(None);
+    /// // or with custom params:
+    /// let sq2 = CSG::square(Some(([2.0, 3.0], true)));
+    pub fn square(params: Option<([f64; 2], bool)>) -> CSG {
+        let (size, center) = match params {
+            Some((sz, c)) => (sz, c),
+            None => ([1.0, 1.0], false),
+        };
+
+        let (w, h) = (size[0], size[1]);
+        let (x0, y0, x1, y1) = if center {
+            (-w / 2.0, -h / 2.0,  w / 2.0,  h / 2.0)
+        } else {
+            (0.0, 0.0, w, h)
+        };
+
+        // Single 2D polygon, normal = +Z
+        let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+        let vertices = vec![
+            Vertex::new(nalgebra::Vector3::new(x0, y0, 0.0), normal),
+            Vertex::new(nalgebra::Vector3::new(x1, y0, 0.0), normal),
+            Vertex::new(nalgebra::Vector3::new(x1, y1, 0.0), normal),
+            Vertex::new(nalgebra::Vector3::new(x0, y1, 0.0), normal),
+        ];
+        let poly = Polygon::new(vertices, None);
+
+        CSG::from_polygons(vec![poly])
+    }
+
+    /// Creates a 2D circle in the XY plane.
+    ///
+    /// # Parameters
+    ///
+    /// - `r`: circle radius (default 1.0)
+    /// - `segments`: how many line segments to approximate the circle (default 32)
+    ///
+    /// # Example
+    /// let c = CSG::circle(None);
+    /// // or with custom params:
+    /// let c2 = CSG::circle(Some((2.0, 64)));
+    pub fn circle(params: Option<(f64, usize)>) -> CSG {
+        let (r, segments) = match params {
+            Some((radius, segs)) => (radius, segs),
+            None => (1.0, 32),
+        };
+
+        let mut verts = Vec::with_capacity(segments);
+        let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+
+        for i in 0..segments {
+            let theta = 2.0 * std::f64::consts::PI * (i as f64) / (segments as f64);
+            let x = r * theta.cos();
+            let y = r * theta.sin();
+            verts.push(Vertex::new(nalgebra::Vector3::new(x, y, 0.0), normal));
+        }
+
+        // One polygon with 'segments' vertices
+        let poly = Polygon::new(verts, None);
+        CSG::from_polygons(vec![poly])
+    }
+
+    /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
+    ///
+    /// # Parameters
+    ///
+    /// - `points`: a sequence of 2D points (e.g. `[[0.0,0.0], [1.0,0.0], [0.5,1.0]]`)
+    ///   describing the polygon boundary in order.
+    ///
+    /// **Note:** This simple version ignores 'paths' and holes. For more complex
+    /// polygons, we'll have to handle multiple paths, winding order, holes, etc.
+    ///
+    /// # Example
+    /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
+    /// let poly2d = CSG::polygon_2d(&pts);
+    pub fn polygon_2d(points: &[[f64; 2]]) -> CSG {
+        assert!(
+            points.len() >= 3,
+            "polygon_2d requires at least 3 points"
+        );
+        
+        let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+        let mut verts = Vec::with_capacity(points.len());
+        for p in points {
+            verts.push(Vertex::new(
+                nalgebra::Vector3::new(p[0], p[1], 0.0),
+                normal
+            ));
+        }
+
+        let poly = Polygon::new(verts, None);
+        CSG::from_polygons(vec![poly])
+    }
+
+    /// Creates 2D text in the XY plane, returning one or more polygons.
+    ///
+    /// **Note**: In OpenSCAD, `text(...)` uses a font engine to generate outline polygons
+    /// of each glyph. Implementing this fully in Rust would require a font library (e.g. `fontdue`,
+    /// `rusttype`, or similar). Below is a *stub* that returns an empty shape or a placeholder.
+    ///
+    /// # Parameters
+    ///
+    /// - `text_str`: the text to render
+    /// - `size`: approximate font size
+    ///
+    /// # Example
+    /// let txt = CSG::text("Hello", None);
+    /// // This stub returns an empty shape or placeholder polygons.
+    pub fn text(text_str: &str, size: Option<f64>) -> CSG {
+        // --- STUB implementation ---
+        // In a real implementation, you’d use a font library
+        // to generate outlines, then convert to polygons.
+
+        let _font_size = size.unwrap_or(10.0);
+        if text_str.is_empty() {
+            return CSG::new();
+        }
+
+        // For illustration, we'll just return a small 'placeholder' square
+        // that indicates "text bounding box", ignoring the actual glyph outlines:
+        let w = text_str.len() as f64 * 0.6 * _font_size; // approximate width
+        let h = _font_size;
+        let placeholder = CSG::square(Some(([w, h], false)));
+        
+        // Translate it slightly, so it's visible at (0,0):
+        placeholder.translate(nalgebra::Vector3::new(0.0, 0.0, 0.0))
+    }
+    
     // ----------------------------------------------------------
     //   Export to ASCII STL
     // ----------------------------------------------------------

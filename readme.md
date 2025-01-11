@@ -4,7 +4,16 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
 ![Example CSG output](docs/csg.png)
 
-Construct a shape:
+Construct a 2D shape:
+
+    let square = CSG::square(None);
+    let square2 = CSG::square(Some(([2.0, 3.0], true)));
+    let circle = CSG::circle(None);
+    let circle2 = CSG::circle(Some((2.0, 64)));
+    let points = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
+    let polygon2d = CSG::polygon_2d(&points);
+
+Construct a 3D shape:
 
     let cube = csgrs::cube(None);
     let sphere = csgrs::sphere(None);
