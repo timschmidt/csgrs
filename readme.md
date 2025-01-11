@@ -61,7 +61,7 @@ Extrude a 2D shape:
     
 Rotate extrude:
 
-    let polygon = CSG::polygon_2d(&[
+    let polygon = csgrs::polygon_2d(&[
         [1.0, 0.0],
         [1.0, 2.0],
         [0.5, 2.5],
