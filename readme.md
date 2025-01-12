@@ -69,7 +69,7 @@ Rotate extrude:
         [1.0, 2.0],
         [0.5, 2.5],
     ]);
-    let revolve_shape = polygon.rotate_extrude(360.0, 16);
+    let revolve_shape = polygon.rotate_extrude(360.0, 16); // degrees, steps
 
 Export an STL:
 
@@ -96,6 +96,15 @@ The only tricky part is handling overlapping coplanar polygons in both trees. Th
     a.build(&b.all_polygons());
 
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
+
+# Todo
+- Refactor to use Point3 where appropriate
+- Extrusions from X, Y, or Z
+- Bounding box function
+- Measurement function
+- Grow / Shrink
+- Projection
+- dxf export
 
 # License
 
