@@ -105,7 +105,6 @@ Subtraction and intersection naturally follow from set operations. If union is `
 
 # Todo
 - Extrusions from X, Y, or Z
-- Bounding box function
 - Measurement function
 - Grow / Shrink / 2D offset
 - Projection
