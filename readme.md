@@ -1,6 +1,6 @@
 # csg.rs
 
-Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean operations like union and intersection to combine 3D solids. This library implements CSG operations on meshes elegantly and concisely using BSP trees, and is meant to serve as an easily understandable implementation of the algorithm.
+Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean operations like union and intersection to combine 3D solids. This library implements CSG operations on meshes simply using BSP trees.  It is meant to add CSG to the larger [Dimforge](https://www.dimforge.com/) ecosystem, be largely compatible with [OpenSCAD](https://openscad.org/), work in a wide variety of environments, and be reasonably performant.
 
 ![Example CSG output](docs/csg.png)
 
@@ -70,6 +70,12 @@ Rotate extrude:
         [0.5, 2.5],
     ]);
     let revolve_shape = polygon.rotate_extrude(360.0, 16); // degrees, steps
+    
+Bounding Box:
+
+    let aabb = cube.bounding_box();
+    println!("Axis-aligned bounding box mins: {:?}", aabb.mins);
+    println!("Axis-aligned bounding box maxs: {:?}", aabb.maxs);
 
 Export an STL:
 

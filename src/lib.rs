@@ -21,6 +21,7 @@ use rayon::prelude::*;
 
 use nalgebra::{Matrix4, Vector4, Vector3, Point3, Translation3, Rotation3};
 use chull::ConvexHullWrapper;
+use parry3d_f64::bounding_volume::Aabb;
 
 #[cfg(test)]
 mod tests;
@@ -1212,6 +1213,26 @@ impl CSG {
 
         // Combine everything into a new shape
         CSG::from_polygons(new_polygons)
+    }
+
+    /// Returns a `parry3d::bounding_volume::AABB`.
+    pub fn bounding_box(&self) -> Aabb {
+        // Gather all points from all polygons.
+        // parry expects a slice of `&Point3<f64>` or a slice of `na::Point3<f64>`.
+        let mut all_points = Vec::new();
+        for poly in &self.polygons {
+            for v in &poly.vertices {
+                all_points.push(v.pos); // already an nalgebra Point3<f64>
+            }
+        }
+
+        // If empty, return a degenerate AABB at origin or handle accordingly
+        if all_points.is_empty() {
+            return Aabb::new_invalid(); // or AABB::new(Point3::origin(), Point3::origin());
+        }
+
+        // Construct the parry AABB from points
+        Aabb::from_points(&all_points)
     }
     
     // ----------------------------------------------------------
