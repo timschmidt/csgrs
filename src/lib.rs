@@ -19,8 +19,8 @@
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
-use nalgebra::{Matrix4, Vector4, Vector3, Translation3, Rotation3};
-use chull::{ConvexHullWrapper};
+use nalgebra::{Matrix4, Vector4, Vector3, Point3, Translation3, Rotation3};
+use chull::ConvexHullWrapper;
 
 #[cfg(test)]
 mod tests;
@@ -33,20 +33,15 @@ pub enum Axis {
     Z,
 }
 
-/// A small helper for linear interpolation of `Vec3`.
-fn lerp_vec3(a: &Vector3<f64>, b: &Vector3<f64>, t: f64) -> Vector3<f64> {
-    a + (b - a) * t
-}
-
 /// A vertex of a polygon, holding position and normal.
 #[derive(Debug, Clone)]
 pub struct Vertex {
-    pub pos: Vector3<f64>,
+    pub pos: Point3<f64>,
     pub normal: Vector3<f64>,
 }
 
 impl Vertex {
-    pub fn new(pos: Vector3<f64>, normal: Vector3<f64>) -> Self {
+    pub fn new(pos: Point3<f64>, normal: Vector3<f64>) -> Self {
         Vertex { pos, normal }
     }
 
@@ -62,11 +57,17 @@ impl Vertex {
         self.normal = -self.normal;
     }
 
-    /// Linearly interpolate between self and `other` by parameter `t`
+    /// Linearly interpolate between `self` and `other` by parameter `t`.
     pub fn interpolate(&self, other: &Vertex, t: f64) -> Vertex {
+        // For positions (Point3): p(t) = p0 + t * (p1 - p0)
+        let new_pos = self.pos + (other.pos - self.pos) * t;
+
+        // For normals (Vector3): n(t) = n0 + t * (n1 - n0)
+        let new_normal = self.normal + (other.normal - self.normal) * t;
+
         Vertex {
-            pos: lerp_vec3(&self.pos, &other.pos, t),
-            normal: lerp_vec3(&self.normal, &other.normal, t),
+            pos: new_pos,
+            normal: new_normal,
         }
     }
 }
@@ -80,11 +81,11 @@ pub struct Plane {
 
 impl Plane {
     /// Create a plane from three points
-    pub fn from_points(a: &Vector3<f64>, b: &Vector3<f64>, c: &Vector3<f64>) -> Plane {
+    pub fn from_points(a: &Point3<f64>, b: &Point3<f64>, c: &Point3<f64>) -> Plane {
         let n = (b - a).cross(&(c - a)).normalize();
         Plane {
             normal: n,
-            w: n.dot(a),
+            w: n.dot(&a.coords),
         }
     }
 
@@ -120,7 +121,7 @@ impl Plane {
 
         // Classify each vertex
         for v in &polygon.vertices {
-            let t = self.normal.dot(&v.pos) - self.w;
+            let t = self.normal.dot(&v.pos.coords) - self.w;
             let vertex_type = if t < -EPSILON {
                 BACK
             } else if t > EPSILON {
@@ -171,7 +172,7 @@ impl Plane {
                         let denom = self.normal.dot(&(vj.pos - vi.pos));
                         // Avoid dividing by zero
                         if denom.abs() > EPSILON {
-                            let t = (self.w - self.normal.dot(&vi.pos)) / denom;
+                            let t = (self.w - self.normal.dot(&vi.pos.coords)) / denom;
                             let v = vi.interpolate(vj, t);
                             f.push(v.clone());
                             b.push(v);
@@ -521,7 +522,7 @@ impl CSG {
                 let vx = c.x + r.x * ((i & 1) as f64 * 2.0 - 1.0);
                 let vy = c.y + r.y * (((i & 2) >> 1) as f64 * 2.0 - 1.0);
                 let vz = c.z + r.z * (((i & 4) >> 2) as f64 * 2.0 - 1.0);
-                verts.push(Vertex::new(Vector3::new(vx, vy, vz), n));
+                verts.push(Vertex::new(Point3::new(vx, vy, vz), n));
             }
             polygons.push(Polygon::new(verts, None));
         }
@@ -557,7 +558,10 @@ impl CSG {
                         phi.cos(),
                         theta.sin() * phi.sin(),
                     );
-                    Vertex::new(c + dir * radius, dir)
+                    Vertex::new(Point3::new(c.x + dir.x * radius,
+                                            c.y + dir.y * radius,
+                                            c.z + dir.z * radius),
+                                dir)
                 };
 
                 let t0 = i as f64 / slices as f64;
@@ -614,8 +618,8 @@ impl CSG {
         axis_x = axis_x.cross(&axis_z).normalize();
         let axis_y = axis_x.cross(&axis_z).normalize();
 
-        let start_v = Vertex::new(s, -axis_z);
-        let end_v = Vertex::new(e, axis_z);
+        let start_v = Vertex::new(Point3::new(s.x, s.y, s.z), -axis_z);
+        let end_v = Vertex::new(Point3::new(e.x, e.y, e.z), axis_z);
 
         let mut polygons = Vec::new();
 
@@ -625,7 +629,7 @@ impl CSG {
             let pos = s + ray * stack + out * radius;
             // Blend outward normal with axis_z for the cap edges
             let normal = out * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
-            Vertex::new(pos, normal)
+            Vertex::new(Point3::new(pos.x, pos.y, pos.z), normal)
         };
 
         for i in 0..slices {
@@ -678,15 +682,27 @@ impl CSG {
         for poly in &mut csg.polygons {
             for vert in &mut poly.vertices {
                 // Position as a homogeneous vector [x, y, z, 1].
-                let pos_h = Vector4::new(vert.pos.x, vert.pos.y, vert.pos.z, 1.0);
+                let pos_h = Vector4::new(
+                    vert.pos.x,
+                    vert.pos.y,
+                    vert.pos.z,
+                    1.0,
+                );
                 let new_pos = mat * pos_h;
-                vert.pos.x = new_pos.x / new_pos.w;
-                vert.pos.y = new_pos.y / new_pos.w;
-                vert.pos.z = new_pos.z / new_pos.w;
+                vert.pos = Point3::new(
+                    new_pos.x / new_pos.w,
+                    new_pos.y / new_pos.w,
+                    new_pos.z / new_pos.w,
+                );
 
                 // Normal as a homogeneous vector [nx, ny, nz, 0].
                 // Using the inverse-transpose for correct normal transform.
-                let norm_h = Vector4::new(vert.normal.x, vert.normal.y, vert.normal.z, 0.0);
+                let norm_h = Vector4::new(
+                    vert.normal.x,
+                    vert.normal.y,
+                    vert.normal.z,
+                    0.0,
+                );
                 let new_norm = mat_inv_transpose * norm_h;
                 // If you want the normal re-normalized (often recommended):
                 let mut normal3 = Vector3::new(new_norm.x, new_norm.y, new_norm.z);
@@ -713,7 +729,11 @@ impl CSG {
             // For plane.w, pick any vertex from the polygon
             // after transformation and dot with the new normal:
             poly.plane.normal = new_plane_normal;
-            poly.plane.w = new_plane_normal.dot(&poly.vertices[0].pos);
+            if !poly.vertices.is_empty() {
+                poly.plane.w = new_plane_normal.dot(
+                    &poly.vertices[0].pos.coords
+                );
+            }
         }
 
         csg
@@ -786,9 +806,9 @@ impl CSG {
             let v1 = &verts[i1];
             let v2 = &verts[i2];
 
-            let vv0 = Vertex::new(Vector3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
-            let vv1 = Vertex::new(Vector3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
-            let vv2 = Vertex::new(Vector3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
+            let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
+            let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
+            let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
 
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
@@ -802,13 +822,13 @@ impl CSG {
     /// then compute the convex hull of all resulting points.
     pub fn minkowski_sum(&self, other: &CSG) -> CSG {
         // Collect all vertices (x, y, z) from self
-        let verts_a: Vec<Vector3<f64>> = self.polygons
+        let verts_a: Vec<Point3<f64>> = self.polygons
             .iter()
             .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
             .collect();
 
         // Collect all vertices from other
-        let verts_b: Vec<Vector3<f64>> = other.polygons
+        let verts_b: Vec<Point3<f64>> = other.polygons
             .iter()
             .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
             .collect();
@@ -838,9 +858,9 @@ impl CSG {
             let v1 = &verts[i1];
             let v2 = &verts[i2];
 
-            let vv0 = Vertex::new(Vector3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
-            let vv1 = Vertex::new(Vector3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
-            let vv2 = Vertex::new(Vector3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
+            let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
+            let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
+            let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
 
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
@@ -873,12 +893,12 @@ impl CSG {
         };
 
         // Single 2D polygon, normal = +Z
-        let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+        let normal = Vector3::new(0.0, 0.0, 1.0);
         let vertices = vec![
-            Vertex::new(nalgebra::Vector3::new(x0, y0, 0.0), normal),
-            Vertex::new(nalgebra::Vector3::new(x1, y0, 0.0), normal),
-            Vertex::new(nalgebra::Vector3::new(x1, y1, 0.0), normal),
-            Vertex::new(nalgebra::Vector3::new(x0, y1, 0.0), normal),
+            Vertex::new(Point3::new(x0, y0, 0.0), normal),
+            Vertex::new(Point3::new(x1, y0, 0.0), normal),
+            Vertex::new(Point3::new(x1, y1, 0.0), normal),
+            Vertex::new(Point3::new(x0, y1, 0.0), normal),
         ];
         let poly = Polygon::new(vertices, None);
 
@@ -903,13 +923,13 @@ impl CSG {
         };
 
         let mut verts = Vec::with_capacity(segments);
-        let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+        let normal = Vector3::new(0.0, 0.0, 1.0);
 
         for i in 0..segments {
             let theta = 2.0 * std::f64::consts::PI * (i as f64) / (segments as f64);
             let x = r * theta.cos();
             let y = r * theta.sin();
-            verts.push(Vertex::new(nalgebra::Vector3::new(x, y, 0.0), normal));
+            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
 
         // One polygon with 'segments' vertices
@@ -936,11 +956,11 @@ impl CSG {
             "polygon_2d requires at least 3 points"
         );
         
-        let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+        let normal = Vector3::new(0.0, 0.0, 1.0);
         let mut verts = Vec::with_capacity(points.len());
         for p in points {
             verts.push(Vertex::new(
-                nalgebra::Vector3::new(p[0], p[1], 0.0),
+                Point3::new(p[0], p[1], 0.0),
                 normal
             ));
         }
@@ -979,8 +999,8 @@ impl CSG {
         let h = _font_size;
         let placeholder = CSG::square(Some(([w, h], false)));
         
-        // Translate it slightly, so it's visible at (0,0):
-        placeholder.translate(nalgebra::Vector3::new(0.0, 0.0, 0.0))
+        // Translate so it's visible at (0,0):
+        placeholder.translate(Vector3::new(0.0, 0.0, 0.0))
     }
     
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
@@ -1002,7 +1022,7 @@ impl CSG {
         //    We keep them as-is. If you want them “closed”, make sure the polygon
         //    normal is pointing down or up consistently.
         for poly in &self.polygons {
-            new_polygons.push(poly.clone()); 
+            new_polygons.push(poly.clone());
         }
 
         // 2) Top polygons = translate each original polygon by +Z=height,
@@ -1134,8 +1154,7 @@ impl CSG {
         };
 
         // For each polygon in our 2D shape...
-        let polys = &self.polygons;
-        for poly in polys {
+        for poly in &self.polygons {
             let vcount = poly.vertices.len();
             if vcount < 3 {
                 continue;
