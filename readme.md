@@ -16,11 +16,11 @@ Construct a 2D shape:
 Construct a 3D shape:
 
     let cube = csgrs::cube(None);
-    let cube = csgrs::cube(Some([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])); // center, radius
+    let cube2 = csgrs::cube(Some([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])); // center, radius
     let sphere = csgrs::sphere(None);
-    let sphere = csgrs::sphere(Some([0.0, 0.0, 0.0], 1.0, 16, 8)); // center, radius, slices, stacks
+    let sphere2 = csgrs::sphere(Some([0.0, 0.0, 0.0], 1.0, 16, 8)); // center, radius, slices, stacks
     let cylinder = csgrs::cylinder(None);
-    let cylinder = csgrs::cylinder([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16); // start, end, radius, slices
+    let cylinder2 = csgrs::cylinder(Some([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16)); // start, end, radius, slices
 
 Combine shapes:
 
