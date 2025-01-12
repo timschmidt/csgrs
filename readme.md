@@ -102,9 +102,16 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - Extrusions from X, Y, or Z
 - Bounding box function
 - Measurement function
-- Grow / Shrink
+- Grow / Shrink / 2D offset
 - Projection
 - dxf export
+- Vector font / text function / textmetrics
+- multmatrix (just expose the nalgebra functionality)
+- color
+- fragments (circle, sphere, regularize with rotate_extrude)
+- polyhedron w/ examples
+- polygon holes
+- fill
 
 # License
 
