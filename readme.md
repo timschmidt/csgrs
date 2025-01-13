@@ -83,11 +83,23 @@ Rotate extrude:
                                   21, 22, 23, 24,
                                   0, 0, 0, 1));
     
-Bounding Box:
+Bounding box:
 
     let aabb = cube.bounding_box();
     println!("Axis-aligned bounding box mins: {:?}", aabb.mins);
     println!("Axis-aligned bounding box maxs: {:?}", aabb.maxs);
+    
+Ray intersections:
+
+    let cube = csgrs::cube(None);
+    let ray_origin = nalgebra::Point3::new(-5.0, 0.0, 0.0);
+    let ray_dir    = nalgebra::Vector3::new(1.0, 0.0, 0.0);
+
+    let intersections = cube.ray_intersections(&ray_origin, &ray_dir);
+    println!("Found {} intersections:", intersections.len());
+    for (point, dist) in intersections {
+        println!("  t = {:.4}, point = {:?}", dist, point); // distance to 4 decimal places
+    }
 
 Export an STL:
 

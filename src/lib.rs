@@ -3,9 +3,13 @@
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
-use nalgebra::{Matrix4, Vector3, Point3, Translation3, Rotation3};
+use nalgebra::{Matrix4, Vector3, Point3, Translation3, Rotation3, Isometry3};
 use chull::ConvexHullWrapper;
-use parry3d_f64::bounding_volume::Aabb;
+use parry3d_f64::{
+    bounding_volume::Aabb,
+    query::{Ray, RayCast},
+    shape::Triangle,
+    };
 
 #[cfg(test)]
 mod tests;
@@ -736,6 +740,59 @@ impl CSG {
         }
 
         CSG::from_polygons(polygons)
+    }
+
+    /// Casts a ray defined by `origin` + t * `direction` against all triangles
+    /// of this CSG and returns a list of (intersection_point, distance),
+    /// sorted by ascending distance.
+    ///
+    /// # Parameters
+    /// - `origin`: The ray’s start point.
+    /// - `direction`: The ray’s direction vector.
+    ///
+    /// # Returns
+    /// A `Vec` of `(Point3<f64>, f64)` where:
+    /// - `Point3<f64>` is the intersection coordinate in 3D,
+    /// - `f64` is the distance (the ray parameter t) from `origin`.
+    pub fn ray_intersections(
+        &self,
+        origin: &nalgebra::Point3<f64>,
+        direction: &nalgebra::Vector3<f64>,
+    ) -> Vec<(nalgebra::Point3<f64>, f64)> {
+        let ray = Ray::new(*origin, *direction);
+        let iso = Isometry3::identity(); // No transformation on the triangles themselves.
+
+        let mut hits = Vec::new();
+
+        // 1) For each polygon in the CSG:
+        for poly in &self.polygons {
+            // 2) Triangulate it if necessary:
+            let triangles = poly.triangulate();
+
+            // 3) For each triangle, do a ray–triangle intersection test:
+            for tri in triangles {
+                let a = tri[0].pos;
+                let b = tri[1].pos;
+                let c = tri[2].pos;
+
+                // Construct a parry Triangle shape from the 3 vertices:
+                let triangle = Triangle::new(a, b, c);
+
+                // Ray-cast against the triangle:
+                if let Some(hit) = triangle.cast_ray_and_get_normal(&iso, &ray, f64::MAX, true) {
+                    let point_on_ray = ray.point_at(hit.time_of_impact);
+                    hits.push((
+                        nalgebra::Point3::from(point_on_ray.coords),
+                        hit.time_of_impact,
+                    ));
+                }
+            }
+        }
+
+        // 4) Sort hits by ascending distance (toi):
+        hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        hits
     }
 
     /// Creates a 2D square in the XY plane.
