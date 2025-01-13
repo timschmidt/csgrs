@@ -110,7 +110,6 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - Projection
 - dxf export
 - Vector font / text function / textmetrics
-- multmatrix (just expose the nalgebra functionality)
 - color
 - fragments (circle, sphere, regularize with rotate_extrude)
 - polyhedron w/ examples
