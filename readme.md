@@ -152,7 +152,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - Extrusions from X, Y, or Z
 - Grow / Shrink / 2D offset
 - Projection
-- dxf export
+- dxf/svg import/export
 - Vector font / text function / textmetrics
 - color
 - fragments (circle, sphere, regularize with rotate_extrude)
