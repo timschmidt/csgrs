@@ -32,7 +32,7 @@ Extract polygons:
 
     let polygons = union_result.to_polygons();
     println!("Polygon count = {}", polygons.len());
-    
+
 Translate:
 
     let translation_result = cube.translate(Vector3::new(3.0, 2.0, 1.0));
@@ -70,6 +70,18 @@ Rotate extrude:
         [0.5, 2.5],
     ]);
     let revolve_shape = polygon.rotate_extrude(360.0, 16); // degrees, steps
+    
+[Transform](https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations):
+
+    // Scale X, Shear X along Y, Shear X along Z, Translate X
+    // Shear Y along X, Scale Y, Shear Y along Z, Translate Y
+    // Shear Z along X, Shear Z along Y, Scale Z, Translate Z
+    // The last row are clamped to 0,0,0,1 in OpenSCAD
+    
+    cube.transform(Matrix4x4::new(11, 12, 13, 14,
+                                  21, 22, 23, 24,
+                                  21, 22, 23, 24,
+                                  0, 0, 0, 1));
     
 Bounding Box:
 
