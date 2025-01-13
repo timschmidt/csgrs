@@ -1,3 +1,5 @@
+// tests
+
 #[cfg(test)]
 use super::*;
 use nalgebra::Vector3;
@@ -54,8 +56,14 @@ fn approx_eq(a: f64, b: f64, eps: f64) -> bool {
 
 #[test]
 fn test_vertex_interpolate() {
-    let v1 = Vertex::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0));
-    let v2 = Vertex::new(Vector3::new(10.0, 10.0, 10.0), Vector3::new(0.0, 1.0, 0.0));
+    let v1 = Vertex::new(
+        Point3::new(0.0, 0.0, 0.0),
+        Vector3::new(1.0, 0.0, 0.0),
+    );
+    let v2 = Vertex::new(
+        Point3::new(10.0, 10.0, 10.0),
+        Vector3::new(0.0, 1.0, 0.0),
+    );
 
     let v_mid = v1.interpolate(&v2, 0.5);
     assert!(approx_eq(v_mid.pos.x, 5.0, 1e-8));
@@ -70,9 +78,13 @@ fn test_vertex_interpolate() {
 
 #[test]
 fn test_vertex_flip() {
-    let mut v = Vertex::new(Vector3::new(1.0, 2.0, 3.0), Vector3::new(1.0, 0.0, 0.0));
+    let mut v = Vertex::new(
+        Point3::new(1.0, 2.0, 3.0),
+        Vector3::new(1.0, 0.0, 0.0),
+    );
     v.flip();
-    assert_eq!(v.pos, Vector3::new(1.0, 2.0, 3.0));
+    // Position remains the same
+    assert_eq!(v.pos, Point3::new(1.0, 2.0, 3.0));
     // Normal should be negated
     assert_eq!(v.normal, Vector3::new(-1.0, 0.0, 0.0));
 }
@@ -83,21 +95,24 @@ fn test_vertex_flip() {
 
 #[test]
 fn test_polygon_construction() {
-    let v1 = Vertex::new(Vector3::new(0.0, 0.0, 0.0), Vector3::y());
-    let v2 = Vertex::new(Vector3::new(1.0, 0.0, 0.0), Vector3::y());
-    let v3 = Vertex::new(Vector3::new(0.0, 1.0, 0.0), Vector3::y());
+    let v1 = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::y());
+    let v2 = Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::y());
+    let v3 = Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::y());
 
     let poly = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], None);
     assert_eq!(poly.vertices.len(), 3);
-    // Plane should be defined by these three points
-    assert!(approx_eq(poly.plane.normal.dot(&Vector3::y()).abs(), 1.0, 1e-8));
+    // Plane should be defined by these three points. We expect a normal near ±Y.
+    assert!(
+        approx_eq(poly.plane.normal.dot(&Vector3::y()).abs(), 1.0, 1e-8),
+        "Expected plane normal to match ±Y"
+    );
 }
 
 #[test]
 fn test_polygon_flip() {
-    let v1 = Vertex::new(Vector3::new(0.0, 0.0, 0.0), Vector3::y());
-    let v2 = Vertex::new(Vector3::new(1.0, 0.0, 0.0), Vector3::y());
-    let v3 = Vertex::new(Vector3::new(0.0, 1.0, 0.0), Vector3::y());
+    let v1 = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::y());
+    let v2 = Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::y());
+    let v3 = Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::y());
     let mut poly = Polygon::new(vec![v1, v2, v3], None);
 
     let original_normal = poly.plane.normal;
@@ -111,14 +126,18 @@ fn test_polygon_flip() {
 
 #[test]
 fn test_polygon_triangulate() {
-    let v1 = Vertex::new(Vector3::new(0.0, 0.0, 0.0), Vector3::z());
-    let v2 = Vertex::new(Vector3::new(1.0, 0.0, 0.0), Vector3::z());
-    let v3 = Vertex::new(Vector3::new(1.0, 1.0, 0.0), Vector3::z());
-    let v4 = Vertex::new(Vector3::new(0.0, 1.0, 0.0), Vector3::z());
+    let v1 = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z());
+    let v2 = Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z());
+    let v3 = Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z());
+    let v4 = Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z());
     let poly = Polygon::new(vec![v1, v2, v3, v4], None);
 
     let triangles = poly.triangulate();
-    assert_eq!(triangles.len(), 2, "A quad should triangulate into 2 triangles");
+    assert_eq!(
+        triangles.len(),
+        2,
+        "A quad should triangulate into 2 triangles"
+    );
 }
 
 // --------------------------------------------------------
@@ -176,7 +195,6 @@ fn test_csg_cylinder() {
     assert!(approx_eq(bb[5],  1.0, 1e-8), "max Z");
 }
 
-
 // --------------------------------------------------------
 //   CSG: Operations (union, subtract, intersect)
 // --------------------------------------------------------
@@ -185,13 +203,12 @@ fn test_csg_cylinder() {
 fn test_csg_union() {
     let cube1 = CSG::cube(None); // from -1 to +1 in all coords
     let cube2 = CSG::cube(Some((&[0.5, 0.5, 0.5], &[1.0, 1.0, 1.0])));
-    // The second cube is centered at (0.5,0.5,0.5)
 
     let union_csg = cube1.union(&cube2);
     let polys = union_csg.to_polygons();
     assert!(!polys.is_empty(), "Union of two cubes should produce polygons");
 
-    // Check bounding box => it should now at least range from -1 to (0.5+1) = 1.5
+    // Check bounding box => should now at least range from -1 to (0.5+1) = 1.5
     let bb = bounding_box(polys);
     assert!(approx_eq(bb[0], -1.0, 1e-8));
     assert!(approx_eq(bb[1], -1.0, 1e-8));
@@ -225,7 +242,10 @@ fn test_csg_intersect() {
 
     let intersection = sphere.intersect(&cube);
     let polys = intersection.to_polygons();
-    assert!(!polys.is_empty(), "Sphere ∩ Cube should produce a shape (the portion of the sphere inside the cube)");
+    assert!(
+        !polys.is_empty(),
+        "Sphere ∩ Cube should produce the portion of the sphere inside the cube"
+    );
 
     // Check bounding box => intersection is roughly a sphere clipped to [-1,1]^3
     let bb = bounding_box(polys);
@@ -242,8 +262,11 @@ fn test_csg_intersect() {
 fn test_csg_inverse() {
     let cube = CSG::cube(None);
     let inv_cube = cube.inverse();
-    assert_eq!(inv_cube.to_polygons().len(), cube.to_polygons().len(), 
-        "Inverse should keep the same polygon count, but flip them");
+    assert_eq!(
+        inv_cube.to_polygons().len(),
+        cube.to_polygons().len(),
+        "Inverse should keep the same polygon count, but flip them"
+    );
 }
 
 // --------------------------------------------------------
@@ -275,7 +298,7 @@ fn test_node_clip_polygons() {
     let cube = CSG::cube(None);
     let mut flipped_cube = cube.clone();
     for p in &mut flipped_cube.polygons {
-        p.flip(); // now plane normals might match the Node building logic
+        p.flip(); // now plane normals match the Node-building logic
     }
     let mut node = Node::new(flipped_cube.polygons.clone());
     let clipped = node.clip_polygons(&flipped_cube.polygons);
@@ -295,3 +318,4 @@ fn test_node_invert() {
     node.invert();
     assert_eq!(node.polygons.len(), original_count);
 }
+

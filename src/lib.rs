@@ -1,19 +1,3 @@
-//! csg.rs
-//!
-//! A Rust translation of Evan Wallace's JavaScript CSG code, modified to use
-//! nalgebra for points/vectors. This uses a BSP tree for constructive solid
-//! geometry (union, subtract, intersect).
-//!
-//! # Example
-//!
-//! ```rust
-//! let cube = CSG::cube(None);
-//! let sphere = CSG::sphere(None);
-//! let result = cube.subtract(&sphere);
-//! let polygons = result.to_polygons();
-//! println!("{}", result.to_stl("my_solid"));
-//! ```
-
 #![allow(dead_code)]
 
 #[cfg(feature = "parallel")]
@@ -44,13 +28,6 @@ pub struct Vertex {
 impl Vertex {
     pub fn new(pos: Point3<f64>, normal: Vector3<f64>) -> Self {
         Vertex { pos, normal }
-    }
-
-    pub fn clone(&self) -> Self {
-        Vertex {
-            pos: self.pos,
-            normal: self.normal,
-        }
     }
 
     /// Flip orientation-specific data (like normals)
