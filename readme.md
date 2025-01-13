@@ -128,6 +128,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - polygon holes
 - fill
 - 32bit / 64bit feature
+- refactor STL export to use library
 
 # License
 
