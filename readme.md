@@ -21,6 +21,27 @@ Construct a 3D shape:
     let sphere2 = csgrs::sphere(Some([0.0, 0.0, 0.0], 1.0, 16, 8)); // center, radius, slices, stacks
     let cylinder = csgrs::cylinder(None);
     let cylinder2 = csgrs::cylinder(Some([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16)); // start, end, radius, slices
+    
+    // A simple triangular prism
+    let pts = &[
+        [0.0, 0.0, 0.0], // 0
+        [1.0, 0.0, 0.0], // 1
+        [0.0, 1.0, 0.0], // 2
+        [0.0, 0.0, 1.0], // 3
+        [1.0, 0.0, 1.0], // 4
+        [0.0, 1.0, 1.0], // 5
+    ];
+
+    // Faces: bottom triangle, top triangle, and 3 rectangular sides
+    let faces = vec![
+        vec![0, 1, 2],    // bottom
+        vec![3, 5, 4],    // top
+        vec![0, 2, 5, 3], // side
+        vec![0, 3, 4, 1], // side
+        vec![1, 4, 5, 2], // side
+    ];
+
+    let prism_csg = CSG::polyhedron(pts, &faces);
 
 Combine shapes:
 
@@ -135,7 +156,6 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - Vector font / text function / textmetrics
 - color
 - fragments (circle, sphere, regularize with rotate_extrude)
-- polyhedron w/ examples
 - polygon holes
 - fill
 - 32bit / 64bit feature

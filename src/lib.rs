@@ -593,6 +593,74 @@ impl CSG {
 
         CSG::from_polygons(polygons)
     }
+    
+    /// Creates a CSG polyhedron from raw vertex data (`points`) and face indices.
+    ///
+    /// # Parameters
+    ///
+    /// - `points`: a slice of `[x,y,z]` coordinates.
+    /// - `faces`: each element is a list of indices into `points`, describing one face.
+    ///   Each face must have at least 3 indices.
+    ///
+    /// # Example
+    /// ```
+    /// let pts = &[
+    ///     [0.0, 0.0, 0.0], // point0
+    ///     [1.0, 0.0, 0.0], // point1
+    ///     [1.0, 1.0, 0.0], // point2
+    ///     [0.0, 1.0, 0.0], // point3
+    ///     [0.5, 0.5, 1.0], // point4 - top
+    /// ];
+    ///
+    /// // Two faces: bottom square [0,1,2,3], and a pyramid side [0,1,4]
+    /// let fcs = vec![
+    ///     vec![0, 1, 2, 3],
+    ///     vec![0, 1, 4],
+    ///     vec![1, 2, 4],
+    ///     vec![2, 3, 4],
+    ///     vec![3, 0, 4],
+    /// ];
+    ///
+    /// let csg_poly = CSG::polyhedron(pts, &fcs);
+    /// ```
+    pub fn polyhedron(points: &[[f64; 3]], faces: &[Vec<usize>]) -> CSG {
+        let mut polygons = Vec::new();
+
+        for face in faces {
+            // Skip degenerate faces
+            if face.len() < 3 {
+                continue;
+            }
+
+            // Gather the vertices for this face
+            let mut face_vertices = Vec::with_capacity(face.len());
+            for &idx in face {
+                // Ensure the index is valid
+                if idx >= points.len() {
+                    panic!("Face index {} is out of range (points.len = {}).", idx, points.len());
+                }
+                let [x, y, z] = points[idx];
+                face_vertices.push(Vertex::new(
+                    nalgebra::Point3::new(x, y, z),
+                    nalgebra::Vector3::zeros(), // we'll set this later
+                ));
+            }
+
+            // Build the polygon (plane is auto-computed from first 3 vertices).
+            let mut poly = Polygon::new(face_vertices, None);
+
+            // Optionally, set each vertex normal to match the polygon’s plane normal,
+            // so that shading in many 3D viewers looks correct.
+            let plane_normal = poly.plane.normal;
+            for v in &mut poly.vertices {
+                v.normal = plane_normal;
+            }
+
+            polygons.push(poly);
+        }
+
+        CSG::from_polygons(polygons)
+    }
 
     /// Transform all vertices in this CSG by a given 4×4 matrix.
     pub fn transform(&self, mat: &Matrix4<f64>) -> CSG {
