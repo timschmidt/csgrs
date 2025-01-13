@@ -19,7 +19,7 @@
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
-use nalgebra::{Matrix4, Vector4, Vector3, Point3, Translation3, Rotation3};
+use nalgebra::{Matrix4, Vector3, Point3, Translation3, Rotation3};
 use chull::ConvexHullWrapper;
 use parry3d_f64::bounding_volume::Aabb;
 
@@ -65,11 +65,7 @@ impl Vertex {
 
         // For normals (Vector3): n(t) = n0 + t * (n1 - n0)
         let new_normal = self.normal + (other.normal - self.normal) * t;
-
-        Vertex {
-            pos: new_pos,
-            normal: new_normal,
-        }
+        Vertex::new(new_pos, new_normal)
     }
 }
 
@@ -87,13 +83,6 @@ impl Plane {
         Plane {
             normal: n,
             w: n.dot(&a.coords),
-        }
-    }
-
-    pub fn clone(&self) -> Self {
-        Plane {
-            normal: self.normal,
-            w: self.w,
         }
     }
 
@@ -209,19 +198,7 @@ impl Polygon {
             &vertices[1].pos,
             &vertices[2].pos,
         );
-        Polygon {
-            vertices,
-            shared,
-            plane,
-        }
-    }
-
-    pub fn clone(&self) -> Self {
-        Polygon {
-            vertices: self.vertices.iter().map(Vertex::clone).collect(),
-            shared: self.shared.clone(),
-            plane: self.plane.clone(),
-        }
+        Polygon { vertices, shared, plane }
     }
 
     pub fn flip(&mut self) {
@@ -271,15 +248,6 @@ impl Node {
             node.build(&polygons);
         }
         node
-    }
-
-    pub fn clone(&self) -> Self {
-        Node {
-            plane: self.plane.clone(),
-            front: self.front.clone(),
-            back: self.back.clone(),
-            polygons: self.polygons.iter().map(|p| p.clone()).collect(),
-        }
     }
 
     /// Invert all polygons in the BSP tree
@@ -410,9 +378,7 @@ pub struct CSG {
 impl CSG {
     /// Create an empty CSG
     pub fn new() -> Self {
-        CSG {
-            polygons: Vec::new(),
-        }
+        CSG { polygons: Vec::new() }
     }
 
     /// Build a CSG from an existing polygon list
@@ -422,13 +388,6 @@ impl CSG {
         csg
     }
 
-    /// Clone this CSG
-    pub fn clone(&self) -> Self {
-        CSG {
-            polygons: self.polygons.iter().map(|p| p.clone()).collect(),
-        }
-    }
-
     /// Return the internal polygons
     pub fn to_polygons(&self) -> &[Polygon] {
         &self.polygons
@@ -436,8 +395,8 @@ impl CSG {
 
     /// CSG union: this ∪ other
     pub fn union(&self, other: &CSG) -> CSG {
-        let mut a = Node::new(self.clone().polygons);
-        let mut b = Node::new(other.clone().polygons);
+        let mut a = Node::new(self.polygons.clone());
+        let mut b = Node::new(other.polygons.clone());
 
         a.clip_to(&b);
         b.clip_to(&a);
@@ -451,8 +410,8 @@ impl CSG {
 
     /// CSG subtract: this \ other
     pub fn subtract(&self, other: &CSG) -> CSG {
-        let mut a = Node::new(self.clone().polygons);
-        let mut b = Node::new(other.clone().polygons);
+        let mut a = Node::new(self.polygons.clone());
+        let mut b = Node::new(other.polygons.clone());
 
         a.invert();
         a.clip_to(&b);
@@ -468,8 +427,8 @@ impl CSG {
 
     /// CSG intersect: this ∩ other
     pub fn intersect(&self, other: &CSG) -> CSG {
-        let mut a = Node::new(self.clone().polygons);
-        let mut b = Node::new(other.clone().polygons);
+        let mut a = Node::new(self.polygons.clone());
+        let mut b = Node::new(other.polygons.clone());
 
         a.invert();
         b.clip_to(&a);
@@ -491,13 +450,7 @@ impl CSG {
         csg
     }
 
-    /// Construct an axis-aligned cube, optional center and radius
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let cube = CSG::cube(None);
-    /// ```
+    /// Construct an axis-aligned cube, with optional center and radius
     pub fn cube(options: Option<(&[f64; 3], &[f64; 3])>) -> CSG {
         let (center, radius) = match options {
             Some((c, r)) => (*c, *r),
@@ -532,12 +485,6 @@ impl CSG {
     }
 
     /// Construct a sphere with optional center, radius, slices, stacks
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let sphere = CSG::sphere(None);
-    /// ```
     pub fn sphere(options: Option<(&[f64; 3], f64, usize, usize)>) -> CSG {
         let (center, radius, slices, stacks) = match options {
             Some((c, r, sl, st)) => (*c, r, sl, st),
@@ -570,7 +517,7 @@ impl CSG {
                 let p0 = j as f64 / stacks as f64;
                 let p1 = (j + 1) as f64 / stacks as f64;
 
-                let theta0 = t0 * std::f64::consts::TAU; 
+                let theta0 = t0 * std::f64::consts::TAU;
                 let theta1 = t1 * std::f64::consts::TAU;
                 let phi0 = p0 * std::f64::consts::PI;
                 let phi1 = p1 * std::f64::consts::PI;
@@ -592,12 +539,6 @@ impl CSG {
     }
 
     /// Construct a cylinder with optional start, end, radius, slices
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let cylinder = CSG::cylinder(None);
-    /// ```
     pub fn cylinder(options: Option<(&[f64; 3], &[f64; 3], f64, usize)>) -> CSG {
         let (start, end, radius, slices) = match options {
             Some((s, e, r, sl)) => (*s, *e, r, sl),
@@ -619,8 +560,8 @@ impl CSG {
         axis_x = axis_x.cross(&axis_z).normalize();
         let axis_y = axis_x.cross(&axis_z).normalize();
 
-        let start_v = Vertex::new(Point3::new(s.x, s.y, s.z), -axis_z);
-        let end_v = Vertex::new(Point3::new(e.x, e.y, e.z), axis_z);
+        let start_v = Vertex::new(Point3::from(s), -axis_z);
+        let end_v = Vertex::new(Point3::from(e), axis_z);
 
         let mut polygons = Vec::new();
 
@@ -630,7 +571,7 @@ impl CSG {
             let pos = s + ray * stack + out * radius;
             // Blend outward normal with axis_z for the cap edges
             let normal = out * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
-            Vertex::new(Point3::new(pos.x, pos.y, pos.z), normal)
+            Vertex::new(Point3::from(pos), normal)
         };
 
         for i in 0..slices {
@@ -671,74 +612,34 @@ impl CSG {
 
         CSG::from_polygons(polygons)
     }
-    
+
     /// Transform all vertices in this CSG by a given 4×4 matrix.
     pub fn transform(&self, mat: &Matrix4<f64>) -> CSG {
-        // We also need the inverse-transpose for correct normal transformation
-        // if the matrix has any non-uniform scaling/shearing.
-        let mat_inv_transpose = mat.try_inverse().unwrap().transpose();
+    let mat_inv_transpose = mat.try_inverse().unwrap().transpose();
+    let mut csg = self.clone();
 
-        let mut csg = self.clone();
+    for poly in &mut csg.polygons {
+        for vert in &mut poly.vertices {
+            // Position
+            let hom_pos = mat * vert.pos.to_homogeneous();
+            vert.pos = Point3::from_homogeneous(hom_pos).unwrap();
 
-        for poly in &mut csg.polygons {
-            for vert in &mut poly.vertices {
-                // Position as a homogeneous vector [x, y, z, 1].
-                let pos_h = Vector4::new(
-                    vert.pos.x,
-                    vert.pos.y,
-                    vert.pos.z,
-                    1.0,
-                );
-                let new_pos = mat * pos_h;
-                vert.pos = Point3::new(
-                    new_pos.x / new_pos.w,
-                    new_pos.y / new_pos.w,
-                    new_pos.z / new_pos.w,
-                );
-
-                // Normal as a homogeneous vector [nx, ny, nz, 0].
-                // Using the inverse-transpose for correct normal transform.
-                let norm_h = Vector4::new(
-                    vert.normal.x,
-                    vert.normal.y,
-                    vert.normal.z,
-                    0.0,
-                );
-                let new_norm = mat_inv_transpose * norm_h;
-                // If you want the normal re-normalized (often recommended):
-                let mut normal3 = Vector3::new(new_norm.x, new_norm.y, new_norm.z);
-                let _ = normal3.normalize_mut();
-                vert.normal = normal3;
-            }
-
-            // Update the plane’s normal & w as well.
-            // The plane normal is a direction => use inverse-transpose.
-            let plane_normal_h = Vector4::new(
-                poly.plane.normal.x,
-                poly.plane.normal.y,
-                poly.plane.normal.z,
-                0.0,
-            );
-            let new_plane_normal_h = mat_inv_transpose * plane_normal_h;
-            let mut new_plane_normal = Vector3::new(
-                new_plane_normal_h.x,
-                new_plane_normal_h.y,
-                new_plane_normal_h.z,
-            );
-            let _ = new_plane_normal.normalize_mut();
-
-            // For plane.w, pick any vertex from the polygon
-            // after transformation and dot with the new normal:
-            poly.plane.normal = new_plane_normal;
-            if !poly.vertices.is_empty() {
-                poly.plane.w = new_plane_normal.dot(
-                    &poly.vertices[0].pos.coords
-                );
-            }
+            // Normal
+            vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
         }
 
-        csg
+        // Plane normal
+        poly.plane.normal = mat_inv_transpose.transform_vector(&poly.plane.normal).normalize();
+
+        // Plane w
+        if let Some(first_vert) = poly.vertices.get(0) {
+            poly.plane.w = poly.plane.normal.dot(&first_vert.pos.coords);
+        }
     }
+
+    csg
+}
+
     
     pub fn translate(&self, v: Vector3<f64>) -> CSG {
         let translation = Translation3::from(v);
@@ -746,7 +647,7 @@ impl CSG {
         let mat4 = translation.to_homogeneous();
         self.transform(&mat4)
     }
-    
+
     pub fn rotate(&self, x_deg: f64, y_deg: f64, z_deg: f64) -> CSG {
         let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg.to_radians());
         let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg.to_radians());
@@ -754,21 +655,20 @@ impl CSG {
         
         // Compose them in the desired order
         let rot = rz * ry * rx;
-        let mat4 = rot.to_homogeneous();
-        self.transform(&mat4)
+        self.transform(&rot.to_homogeneous())
     }
-    
+
     pub fn scale(&self, sx: f64, sy: f64, sz: f64) -> CSG {
         let mat4 = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
         self.transform(&mat4)
     }
-    
+
     /// Mirror across X=0, Y=0, or Z=0 plane
     pub fn mirror(&self, axis: Axis) -> CSG {
         let (sx, sy, sz) = match axis {
-            Axis::X => (-1.0,  1.0,  1.0),
-            Axis::Y => ( 1.0, -1.0,  1.0),
-            Axis::Z => ( 1.0,  1.0, -1.0),
+            Axis::X => (-1.0, 1.0, 1.0),
+            Axis::Y => (1.0, -1.0, 1.0),
+            Axis::Z => (1.0, 1.0, -1.0),
         };
 
         // We can just use a "non-uniform scaling" matrix that
@@ -776,7 +676,7 @@ impl CSG {
         let mat = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
         self.transform(&mat)
     }
-    
+
     /// Compute the convex hull of all vertices in this CSG.
     pub fn convex_hull(&self) -> CSG {
         // Gather all (x, y, z) coordinates from the polygons
@@ -799,13 +699,9 @@ impl CSG {
         // Reconstruct polygons as triangles
         let mut polygons = Vec::new();
         for tri in indices.chunks(3) {
-            let i0 = tri[0];
-            let i1 = tri[1];
-            let i2 = tri[2];
-            
-            let v0 = &verts[i0];
-            let v1 = &verts[i1];
-            let v2 = &verts[i2];
+            let v0 = &verts[tri[0]];
+            let v1 = &verts[tri[1]];
+            let v2 = &verts[tri[2]];
 
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
@@ -851,13 +747,9 @@ impl CSG {
         // Reconstruct polygons
         let mut polygons = Vec::new();
         for tri in indices.chunks(3) {
-            let i0 = tri[0];
-            let i1 = tri[1];
-            let i2 = tri[2];
-
-            let v0 = &verts[i0];
-            let v1 = &verts[i1];
-            let v2 = &verts[i2];
+            let v0 = &verts[tri[0]];
+            let v1 = &verts[tri[1]];
+            let v2 = &verts[tri[2]];
 
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
@@ -868,7 +760,7 @@ impl CSG {
 
         CSG::from_polygons(polygons)
     }
-    
+
     /// Creates a 2D square in the XY plane.
     ///
     /// # Parameters
@@ -888,7 +780,7 @@ impl CSG {
 
         let (w, h) = (size[0], size[1]);
         let (x0, y0, x1, y1) = if center {
-            (-w / 2.0, -h / 2.0,  w / 2.0,  h / 2.0)
+            (-w / 2.0, -h / 2.0, w / 2.0, h / 2.0)
         } else {
             (0.0, 0.0, w, h)
         };
@@ -901,22 +793,10 @@ impl CSG {
             Vertex::new(Point3::new(x1, y1, 0.0), normal),
             Vertex::new(Point3::new(x0, y1, 0.0), normal),
         ];
-        let poly = Polygon::new(vertices, None);
-
-        CSG::from_polygons(vec![poly])
+        CSG::from_polygons(vec![Polygon::new(vertices, None)])
     }
 
     /// Creates a 2D circle in the XY plane.
-    ///
-    /// # Parameters
-    ///
-    /// - `r`: circle radius (default 1.0)
-    /// - `segments`: how many line segments to approximate the circle (default 32)
-    ///
-    /// # Example
-    /// let c = CSG::circle(None);
-    /// // or with custom params:
-    /// let c2 = CSG::circle(Some((2.0, 64)));
     pub fn circle(params: Option<(f64, usize)>) -> CSG {
         let (r, segments) = match params {
             Some((radius, segs)) => (radius, segs),
@@ -933,9 +813,7 @@ impl CSG {
             verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
 
-        // One polygon with 'segments' vertices
-        let poly = Polygon::new(verts, None);
-        CSG::from_polygons(vec![poly])
+        CSG::from_polygons(vec![Polygon::new(verts, None)])
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -952,22 +830,14 @@ impl CSG {
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     /// let poly2d = CSG::polygon_2d(&pts);
     pub fn polygon_2d(points: &[[f64; 2]]) -> CSG {
-        assert!(
-            points.len() >= 3,
-            "polygon_2d requires at least 3 points"
-        );
-        
+        assert!(points.len() >= 3, "polygon_2d requires at least 3 points");
+
         let normal = Vector3::new(0.0, 0.0, 1.0);
         let mut verts = Vec::with_capacity(points.len());
         for p in points {
-            verts.push(Vertex::new(
-                Point3::new(p[0], p[1], 0.0),
-                normal
-            ));
+            verts.push(Vertex::new(Point3::new(p[0], p[1], 0.0), normal));
         }
-
-        let poly = Polygon::new(verts, None);
-        CSG::from_polygons(vec![poly])
+        CSG::from_polygons(vec![Polygon::new(verts, None)])
     }
 
     /// Creates 2D text in the XY plane, returning one or more polygons.
@@ -1144,11 +1014,7 @@ impl CSG {
         let closed = (angle_degs - 360.0).abs() < EPSILON; // if angle=360, we close
         let next_index = |i: usize| -> Option<usize> {
             if i == segments - 1 {
-                if closed {
-                    Some(0)
-                } else {
-                    None
-                }
+                if closed { Some(0) } else { None }
             } else {
                 Some(i + 1)
             }
@@ -1276,4 +1142,3 @@ impl CSG {
         out
     }
 }
-
