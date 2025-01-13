@@ -8,6 +8,7 @@ authors = ["Timothy Schmidt <timschmidt@gmail.com>",]
 chull = "0.2.4"
 nalgebra = "0.33"
 parry3d-f64 = "0.18.0"
+rapier3d-f64 = "0.23.0"
 rayon = { version = "1.7", optional = true }
 
 [features]

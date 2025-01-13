@@ -3,13 +3,14 @@
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
-use nalgebra::{Matrix4, Vector3, Point3, Translation3, Rotation3, Isometry3};
+use nalgebra::{Matrix4, Vector3, Point3, Translation3, Rotation3, Isometry3, Unit, Quaternion};
 use chull::ConvexHullWrapper;
 use parry3d_f64::{
     bounding_volume::Aabb,
     query::{Ray, RayCast},
-    shape::Triangle,
+    shape::{Triangle, TriMesh, SharedShape},
     };
+use rapier3d_f64::prelude::*;
 
 #[cfg(test)]
 mod tests;
@@ -664,31 +665,30 @@ impl CSG {
 
     /// Transform all vertices in this CSG by a given 4×4 matrix.
     pub fn transform(&self, mat: &Matrix4<f64>) -> CSG {
-    let mat_inv_transpose = mat.try_inverse().unwrap().transpose();
-    let mut csg = self.clone();
-
-    for poly in &mut csg.polygons {
-        for vert in &mut poly.vertices {
-            // Position
-            let hom_pos = mat * vert.pos.to_homogeneous();
-            vert.pos = Point3::from_homogeneous(hom_pos).unwrap();
-
-            // Normal
-            vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
+        let mat_inv_transpose = mat.try_inverse().unwrap().transpose();
+        let mut csg = self.clone();
+    
+        for poly in &mut csg.polygons {
+            for vert in &mut poly.vertices {
+                // Position
+                let hom_pos = mat * vert.pos.to_homogeneous();
+                vert.pos = Point3::from_homogeneous(hom_pos).unwrap();
+    
+                // Normal
+                vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
+            }
+    
+            // Plane normal
+            poly.plane.normal = mat_inv_transpose.transform_vector(&poly.plane.normal).normalize();
+    
+            // Plane w
+            if let Some(first_vert) = poly.vertices.get(0) {
+                poly.plane.w = poly.plane.normal.dot(&first_vert.pos.coords);
+            }
         }
-
-        // Plane normal
-        poly.plane.normal = mat_inv_transpose.transform_vector(&poly.plane.normal).normalize();
-
-        // Plane w
-        if let Some(first_vert) = poly.vertices.get(0) {
-            poly.plane.w = poly.plane.normal.dot(&first_vert.pos.coords);
-        }
+    
+        csg
     }
-
-    csg
-}
-
     
     pub fn translate(&self, v: Vector3<f64>) -> CSG {
         let translation = Translation3::from(v);
@@ -1201,6 +1201,89 @@ impl CSG {
 
         // Construct the parry AABB from points
         Aabb::from_points(&all_points)
+    }
+    
+    /// Convert the polygons in this CSG to a Parry TriMesh.
+    /// Useful for collision detection or physics simulations.
+    pub fn to_trimesh(&self) -> SharedShape {
+        // 1) Gather all the triangles from each polygon
+        // 2) Build a TriMesh from points + triangle indices
+        // 3) Wrap that in a SharedShape to be used in Rapier
+        let mut vertices = Vec::new();
+        let mut indices = Vec::new();
+        let mut index_offset = 0;
+
+        for poly in &self.polygons {
+            let tris = poly.triangulate();
+            for tri in &tris {
+                // Each tri is [Vertex; 3]
+                //  push the positions into `vertices`
+                //  build the index triplet for `indices`
+                for v in tri {
+                    vertices.push(Point3::new(v.pos.x, v.pos.y, v.pos.z));
+                }
+                indices.push([index_offset, index_offset+1, index_offset+2]);
+                index_offset += 3;
+            }
+        }
+
+        // TriMesh::new(Vec<[f64; 3]>, Vec<[u32; 3]>)
+        let trimesh = TriMesh::new(vertices, indices).unwrap();
+        SharedShape::new(trimesh)
+    }
+    
+    /// Approximate mass properties using Rapier.
+    pub fn mass_properties(&self, density: f64) -> (f64, Point3<f64>, Unit<Quaternion<f64>>) {
+        let shape = self.to_trimesh();
+    
+        if let Some(trimesh) = shape.as_trimesh() {
+            let mp = trimesh.mass_properties(density);
+            (
+                mp.mass(),
+                mp.local_com,                         // a Point3<f64>
+                mp.principal_inertia_local_frame      // a Unit<Quaternion<f64>>
+            )
+        } else {
+            // fallback if not a TriMesh
+            (
+                0.0,
+                Point3::origin(),   // Return a Point3
+                Unit::<Quaternion<f64>>::identity()    // Identity quaternion
+            )
+        }
+    }
+
+    /// Create a Rapier rigid body + collider from this CSG, using
+    /// an axis-angle `rotation` in 3D (the vector’s length is the
+    /// rotation in radians, and its direction is the axis).
+    pub fn to_rigid_body(
+        &self,
+        rb_set: &mut RigidBodySet,
+        co_set: &mut ColliderSet,
+        translation: Vector3<f64>,
+        // Change this from `UnitQuaternion<f64>` to a Vector3<f64>.
+        // The magnitude of this vector = rotation in radians;
+        // its direction = rotation axis.
+        rotation: Vector3<f64>,
+        density: f64,
+    ) -> RigidBodyHandle {
+        let shape = self.to_trimesh();
+    
+        // Build a Rapier RigidBody
+        let rb = RigidBodyBuilder::dynamic()
+            .translation(translation)
+            // Now `rotation(...)` expects an axis-angle Vector3.
+            .rotation(rotation)
+            .build();
+        let rb_handle = rb_set.insert(rb);
+    
+        // Build the collider
+        let coll = ColliderBuilder::new(shape)
+            .density(density)
+            .build();
+        co_set.insert_with_parent(coll, rb_handle, rb_set);
+    
+        rb_handle
     }
     
     // ----------------------------------------------------------
