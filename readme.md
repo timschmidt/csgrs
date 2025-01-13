@@ -122,6 +122,30 @@ Ray intersections and measurement:
         println!("  t = {:.4}, point = {:?}", dist, point); // distance to 4 decimal places
     }
 
+Create a Parry TriMesh:
+
+    let trimesh = my_csg.to_trimesh();
+
+Create a Rapier rigid body:
+
+    // 90 degrees in radians
+    let angle = std::f64::consts::FRAC_PI_2;
+    // Axis-angle: direction = Z, magnitude = angle
+    let axis_angle = Vector3::z() * angle;
+    
+    let rigid_body = my_csg.to_rigid_body(
+        &mut rigid_body_set,
+        &mut collider_set,
+        Vector3::new(0.0, 0.0, 0.0), // translation
+        axis_angle,                  // 90° around Z
+        1.0,                         // density
+    );
+    
+Collect mass properties of a shape:
+
+    let density = 1.0;
+    let (mass, center_of_mass, inertia_frame) = my_csg.mass_properties(density);
+
 Export an STL:
 
     let stl_data = union_result.to_stl("cube_minus_sphere");
