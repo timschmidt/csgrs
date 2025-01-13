@@ -41,7 +41,7 @@ Construct a 3D shape:
         vec![1, 4, 5, 2], // side
     ];
 
-    let prism = csgrs::polyhedron(pts, &faces);
+    let prism = csgrs::polyhedron(points, &faces);
 
 Combine shapes:
 
