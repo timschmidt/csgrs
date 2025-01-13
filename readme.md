@@ -89,7 +89,7 @@ Bounding box:
     println!("Axis-aligned bounding box mins: {:?}", aabb.mins);
     println!("Axis-aligned bounding box maxs: {:?}", aabb.maxs);
     
-Ray intersections:
+Ray intersections and measurement:
 
     let cube = csgrs::cube(None);
     let ray_origin = nalgebra::Point3::new(-5.0, 0.0, 0.0);
@@ -140,6 +140,9 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - fill
 - 32bit / 64bit feature
 - refactor STL export to use library
+- manifoldness tests / fixes
+- stl import
+- stl normals checks
 
 # License
 
