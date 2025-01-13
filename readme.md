@@ -23,7 +23,7 @@ Construct a 3D shape:
     let cylinder2 = csgrs::cylinder(Some([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16)); // start, end, radius, slices
     
     // A simple triangular prism
-    let pts = &[
+    let points = &[
         [0.0, 0.0, 0.0], // 0
         [1.0, 0.0, 0.0], // 1
         [0.0, 1.0, 0.0], // 2
@@ -41,7 +41,7 @@ Construct a 3D shape:
         vec![1, 4, 5, 2], // side
     ];
 
-    let prism_csg = CSG::polyhedron(pts, &faces);
+    let prism = csgrs::polyhedron(pts, &faces);
 
 Combine shapes:
 
