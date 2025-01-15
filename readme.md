@@ -4,23 +4,27 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
 ![Example CSG output](docs/csg.png)
 
+Use the library:
+
+    use csgrs::CSG;
+
 Construct a 2D shape:
 
-    let square = csgrs::square(None);
-    let square2 = csgrs::square(Some(([2.0, 3.0], true)));
-    let circle = csgrs::circle(None);
-    let circle2 = csgrs::circle(Some((2.0, 64)));
+    let square = CSG::square(None);
+    let square2 = CSG::square(Some(([2.0, 3.0], true)));
+    let circle = CSG::circle(None);
+    let circle2 = CSG::circle(Some((2.0, 64)));
     let points = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
-    let polygon2d = csgrs::polygon_2d(&points);
+    let polygon2d = CSG::polygon_2d(&points);
 
 Construct a 3D shape:
 
-    let cube = csgrs::cube(None);
-    let cube2 = csgrs::cube(Some([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])); // center, radius
-    let sphere = csgrs::sphere(None);
-    let sphere2 = csgrs::sphere(Some([0.0, 0.0, 0.0], 1.0, 16, 8)); // center, radius, slices, stacks
-    let cylinder = csgrs::cylinder(None);
-    let cylinder2 = csgrs::cylinder(Some([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16)); // start, end, radius, slices
+    let cube = CSG::cube(None);
+    let cube2 = CSG::cube(Some([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])); // center, radius
+    let sphere = CSG::sphere(None);
+    let sphere2 = CSG::sphere(Some([0.0, 0.0, 0.0], 1.0, 16, 8)); // center, radius, slices, stacks
+    let cylinder = CSG::cylinder(None);
+    let cylinder2 = CSG::cylinder(Some([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16)); // start, end, radius, slices
     
     // A simple triangular prism
     let points = &[
@@ -41,7 +45,7 @@ Construct a 3D shape:
         vec![1, 4, 5, 2], // side
     ];
 
-    let prism = csgrs::polyhedron(points, &faces);
+    let prism = CSG::polyhedron(points, &faces);
 
 Combine shapes:
 
@@ -80,12 +84,12 @@ Minkowski sum:
     
 Extrude a 2D shape:
 
-    let square = csgrs::square(Some(([2.0, 2.0], true)));
+    let square = CSG::square(Some(([2.0, 2.0], true)));
     let prism = square.extrude(5.0);
     
 Rotate extrude:
 
-    let polygon = csgrs::polygon_2d(&[
+    let polygon = CSG::polygon_2d(&[
         [1.0, 0.0],
         [1.0, 2.0],
         [0.5, 2.5],
@@ -112,7 +116,7 @@ Bounding box:
     
 Ray intersections and measurement:
 
-    let cube = csgrs::cube(None);
+    let cube = CSG::cube(None);
     let ray_origin = nalgebra::Point3::new(-5.0, 0.0, 0.0);
     let ray_dir    = nalgebra::Vector3::new(1.0, 0.0, 0.0);
 
