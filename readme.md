@@ -114,6 +114,16 @@ Bounding box:
     println!("Axis-aligned bounding box mins: {:?}", aabb.mins);
     println!("Axis-aligned bounding box maxs: {:?}", aabb.maxs);
     
+Grow / Shrink a 3D shape:
+
+    let grown_cube = cube.grow(4.0);
+    let shrunk_cube = cube.shrink(4.0);
+
+Grow / Shrink a 2D shape:
+
+    let grown_square = square.grow_2d(4.0);
+    let shrunk_square = square.shrink_2d(4.0);
+    
 Ray intersections and measurement:
 
     let cube = CSG::cube(None);
@@ -178,7 +188,6 @@ Subtraction and intersection naturally follow from set operations. If union is `
 
 # Todo
 - Extrusions from X, Y, or Z
-- Grow / Shrink / 2D offset
 - Projection
 - dxf/svg import/export
 - Vector font / text function / textmetrics

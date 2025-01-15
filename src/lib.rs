@@ -1203,6 +1203,80 @@ impl CSG {
         Aabb::from_points(&all_points)
     }
     
+    /// Helper to collect all vertices from the CSG.
+    pub fn vertices(&self) -> Vec<Vertex> {
+        self.polygons
+            .iter()
+            .flat_map(|p| p.vertices.clone())
+            .collect()
+    }
+
+    /// Approximate growing (outward offset) of the shape by a given distance.
+    /// This method unions translated copies of the shape along a sphere.
+    pub fn grow(&self, distance: f64) -> CSG {
+        // Use a moderate resolution sphere for approximation.
+        let resolution = 32;
+        let sphere = CSG::sphere(Some((&[0.0, 0.0, 0.0], distance, resolution, resolution / 2)));
+        let sphere_vertices = sphere.vertices();
+        let mut result = CSG::new();
+
+        // Union the shape translated by each vertex of the sphere.
+        for v in sphere_vertices {
+            result = result.union(&self.translate(v.pos.coords));
+        }
+        result
+    }
+
+    /// Approximate shrinking (inward offset) of the shape by a given distance.
+    /// This method unions translated copies of the complement of the shape along a sphere,
+    /// then inverts the result.
+    pub fn shrink(&self, distance: f64) -> CSG {
+        let resolution = 32;
+        let sphere = CSG::sphere(Some((&[0.0, 0.0, 0.0], distance, resolution, resolution / 2)));
+        let sphere_vertices = sphere.vertices();
+        let complement = self.inverse();
+        let mut result = CSG::new();
+
+        // Union the complement translated by each sphere vertex.
+        for v in sphere_vertices {
+            result = result.union(&complement.translate(v.pos.coords));
+        }
+        // Invert to get the inward offset.
+        result.inverse()
+    }
+
+    /// Approximate 2D growing (outward offset) of the shape by a given distance.
+    /// This uses a circle in the XY plane.
+    pub fn grow_2d(&self, distance: f64) -> CSG {
+        let resolution = 64;
+        let circle = CSG::circle(Some((distance, resolution)));
+        let circle_vertices = circle.vertices();
+        let mut result = CSG::new();
+
+        for v in circle_vertices {
+            // Translate in XY plane; Z remains 0.
+            let translation = Vector3::new(v.pos.x, v.pos.y, 0.0);
+            result = result.union(&self.translate(translation));
+        }
+        result
+    }
+
+    /// Approximate 2D shrinking (inward offset) of the shape by a given distance.
+    /// This uses a circle in the XY plane and the complement operation.
+    pub fn shrink_2d(&self, distance: f64) -> CSG {
+        let resolution = 64;
+        let circle = CSG::circle(Some((distance, resolution)));
+        let circle_vertices = circle.vertices();
+        let complement = self.inverse();
+        let mut result = CSG::new();
+
+        for v in circle_vertices {
+            let translation = Vector3::new(v.pos.x, v.pos.y, 0.0);
+            result = result.union(&complement.translate(translation));
+        }
+        result.inverse()
+    }
+    
     /// Convert the polygons in this CSG to a Parry TriMesh.
     /// Useful for collision detection or physics simulations.
     pub fn to_trimesh(&self) -> SharedShape {
