@@ -1,2 +1,4 @@
 /target/
 output.stl
+*.swp
+/src/*.swp
