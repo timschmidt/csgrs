@@ -14,6 +14,7 @@ Construct a 2D shape:
     let square2 = CSG::square(Some(([2.0, 3.0], true)));
     let circle = CSG::circle(None);
     let circle2 = CSG::circle(Some((2.0, 64)));
+    
     let points = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     let polygon2d = CSG::polygon_2d(&points);
 
@@ -27,7 +28,7 @@ Construct a 3D shape:
     let cylinder2 = CSG::cylinder(Some([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16)); // start, end, radius, slices
     
     // A simple triangular prism
-    let points = &[
+    let points = [
         [0.0, 0.0, 0.0], // 0
         [1.0, 0.0, 0.0], // 1
         [0.0, 1.0, 0.0], // 2
@@ -35,7 +36,6 @@ Construct a 3D shape:
         [1.0, 0.0, 1.0], // 4
         [0.0, 1.0, 1.0], // 5
     ];
-
     // Faces: bottom triangle, top triangle, and 3 rectangular sides
     let faces = vec![
         vec![0, 1, 2],    // bottom
@@ -44,8 +44,7 @@ Construct a 3D shape:
         vec![0, 3, 4, 1], // side
         vec![1, 4, 5, 2], // side
     ];
-
-    let prism = CSG::polyhedron(points, &faces);
+    let prism = CSG::polyhedron(&points, &faces);
 
 Combine shapes:
 
@@ -124,6 +123,13 @@ Grow / Shrink a 2D shape:
     let grown_square = square.grow_2d(4.0);
     let shrunk_square = square.shrink_2d(4.0);
     
+Text:
+
+    let font_data = include_bytes!("my_font.ttf");
+
+    // Generate a simple "Hello" text in the XY plane
+    let csg_text = CSG::text_mesh("Hello", font_data, Some(10.0));
+    
 Ray intersections and measurement:
 
     let cube = CSG::cube(None);
@@ -190,7 +196,6 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - Extrusions from X, Y, or Z
 - Projection
 - dxf/svg import/export
-- Vector font / text function / textmetrics
 - color
 - fragments (circle, sphere, regularize with rotate_extrude)
 - polygon holes

@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![forbid(unsafe_code)]
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -11,6 +12,7 @@ use parry3d_f64::{
     shape::{Triangle, TriMesh, SharedShape},
     };
 use rapier3d_f64::prelude::*;
+use meshtext::{Glyph, MeshGenerator, MeshText};
 
 #[cfg(test)]
 mod tests;
@@ -941,40 +943,6 @@ impl CSG {
         }
         CSG::from_polygons(vec![Polygon::new(verts, None)])
     }
-
-    /// Creates 2D text in the XY plane, returning one or more polygons.
-    ///
-    /// **Note**: In OpenSCAD, `text(...)` uses a font engine to generate outline polygons
-    /// of each glyph. Implementing this fully in Rust would require a font library (e.g. `fontdue`,
-    /// `rusttype`, or similar). Below is a *stub* that returns an empty shape or a placeholder.
-    ///
-    /// # Parameters
-    ///
-    /// - `text_str`: the text to render
-    /// - `size`: approximate font size
-    ///
-    /// # Example
-    /// let txt = CSG::text("Hello", None);
-    /// // This stub returns an empty shape or placeholder polygons.
-    pub fn text(text_str: &str, size: Option<f64>) -> CSG {
-        // --- STUB implementation ---
-        // In a real implementation, you’d use a font library
-        // to generate outlines, then convert to polygons.
-
-        let _font_size = size.unwrap_or(10.0);
-        if text_str.is_empty() {
-            return CSG::new();
-        }
-
-        // For illustration, we'll just return a small 'placeholder' square
-        // that indicates "text bounding box", ignoring the actual glyph outlines:
-        let w = text_str.len() as f64 * 0.6 * _font_size; // approximate width
-        let h = _font_size;
-        let placeholder = CSG::square(Some(([w, h], false)));
-        
-        // Translate so it's visible at (0,0):
-        placeholder.translate(Vector3::new(0.0, 0.0, 0.0))
-    }
     
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
@@ -1277,6 +1245,104 @@ impl CSG {
         result.inverse()
     }
     
+    /// Convert a `MeshText` (from meshtext) into a list of `Polygon` in the XY plane.
+    /// - `scale` allows you to resize the glyph (e.g. matching a desired font size).
+    /// - By default, the glyph’s normal is set to +Z.
+    fn meshtext_to_polygons(glyph_mesh: &meshtext::MeshText, scale: f64) -> Vec<Polygon> {
+        let mut polygons = Vec::new();
+        let verts = &glyph_mesh.vertices;
+    
+        // Each set of 9 floats = one triangle: (x1,y1,z1, x2,y2,z2, x3,y3,z3)
+        for tri_chunk in verts.chunks_exact(9) {
+            let x1 = tri_chunk[0];
+            let y1 = tri_chunk[1];
+            let z1 = tri_chunk[2];
+            let x2 = tri_chunk[3];
+            let y2 = tri_chunk[4];
+            let z2 = tri_chunk[5];
+            let x3 = tri_chunk[6];
+            let y3 = tri_chunk[7];
+            let z3 = tri_chunk[8];
+    
+            // Scale them
+            let px1 = x1 as f64 * scale;
+            let py1 = y1 as f64 * scale;
+            let pz1 = z1 as f64 * scale;
+    
+            let px2 = x2 as f64 * scale;
+            let py2 = y2 as f64 * scale;
+            let pz2 = z2 as f64 * scale;
+    
+            let px3 = x3 as f64 * scale;
+            let py3 = y3 as f64 * scale;
+            let pz3 = z3 as f64 * scale;
+    
+            // Normal = +Z
+            let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+    
+            polygons.push(Polygon::new(
+                vec![
+                    Vertex::new(nalgebra::Point3::new(px1, py1, pz1), normal),
+                    Vertex::new(nalgebra::Point3::new(px2, py2, pz2), normal),
+                    Vertex::new(nalgebra::Point3::new(px3, py3, pz3), normal),
+                ],
+                None,
+            ));
+        }
+    
+        polygons
+    }
+
+    /// Creates 2D text in the XY plane using the `meshtext` crate to generate glyph meshes.
+    ///
+    /// - `text_str`: the text to render
+    /// - `font_data`: TTF font file bytes (e.g. `include_bytes!("../assets/FiraMono-Regular.ttf")`)
+    /// - `size`: optional scaling factor (e.g., a rough "font size"). 
+    ///
+    /// **Note**: This is a basic example that:
+    ///   - does not handle kerning or multi-line text,
+    ///   - simply advances the cursor by each glyph’s width,
+    ///   - places all characters along the X axis.
+    pub fn text_mesh(text_str: &str, font_data: &[u8], size: Option<f64>) -> CSG {
+        let mut generator = MeshGenerator::new(font_data.to_vec());
+        let scale = size.unwrap_or(20.0);
+    
+        let mut all_polygons = Vec::new();
+        let mut cursor_x = 0.0f64;
+    
+        for ch in text_str.chars() {
+            // Optionally skip control chars
+            if ch.is_control() {
+                continue;
+            }
+            // Generate glyph mesh
+            let glyph_mesh: MeshText = match generator.generate_glyph(ch, true, None) {
+                Ok(m) => m,
+                Err(_) => {
+                    // Missing glyph? Advance by some default
+                    cursor_x += scale;
+                    continue;
+                }
+            };
+    
+            // Convert to polygons
+            let glyph_polygons = Self::meshtext_to_polygons(&glyph_mesh, scale);
+    
+            // Translate polygons by (cursor_x, 0.0)
+            let glyph_csg = CSG::from_polygons(glyph_polygons)
+                .translate(nalgebra::Vector3::new(cursor_x, 0.0, 0.0));
+    
+            // Accumulate
+            all_polygons.extend(glyph_csg.polygons);
+    
+            // Advance cursor by the glyph’s bounding-box width
+            let glyph_width = glyph_mesh.bbox.max.x - glyph_mesh.bbox.min.x;
+            cursor_x += glyph_width as f64 * scale;
+        }
+    
+        CSG::from_polygons(all_polygons)
+    }
+
     /// Convert the polygons in this CSG to a Parry TriMesh.
     /// Useful for collision detection or physics simulations.
     pub fn to_trimesh(&self) -> SharedShape {

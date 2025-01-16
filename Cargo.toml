@@ -6,6 +6,7 @@ authors = ["Timothy Schmidt <timschmidt@gmail.com>",]
 
 [dependencies]
 chull = "0.2.4"
+meshtext = { version = "0.3.1", features = ["owned"] }
 nalgebra = "0.33"
 parry3d-f64 = "0.18.0"
 rapier3d-f64 = "0.23.0"
