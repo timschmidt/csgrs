@@ -213,6 +213,8 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - refactor STL export to use library
 - manifoldness tests / fixes
 - stl import
+- debug grow/shrink
+- debug revolve extrude
 
 # License
 
