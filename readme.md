@@ -133,11 +133,11 @@ Text:
 Subdivide triangles:
 
     let subdivisions = 2;
-    subdivides = my_csg.subdivide_triangles(subdivisions);
+    let subdivided_csg = my_csg.subdivide_triangles(subdivisions);
     
 Renormalize:
 
-    my_csg.renormalize();
+    let renormalized_csg = my_csg.renormalize();
     
 Ray intersections and measurement:
 
