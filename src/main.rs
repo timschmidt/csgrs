@@ -22,7 +22,7 @@ fn main() {
 
     // 2) Transformations: Translate, Rotate, Scale, Mirror
     let moved_cube = cube
-        .translate(Vector3::new(2.0, 0.0, 0.0))
+        .translate(Vector3::new(1.0, 0.0, 0.0))
         .rotate(0.0, 45.0, 0.0)
         .scale(1.0, 0.5, 2.0);
     let _ = fs::write("stl/cube_transformed.stl", moved_cube.to_stl("cube_transformed"));
@@ -31,13 +31,13 @@ fn main() {
     let _ = fs::write("stl/cube_mirrored_x.stl", mirrored_cube.to_stl("cube_mirrored_x"));
 
     // 3) Boolean operations: Union, Subtract, Intersect
-    let union_shape = cube.union(&sphere);
+    let union_shape = moved_cube.union(&sphere);
     let _ = fs::write("stl/union_cube_sphere.stl", union_shape.to_stl("union_cube_sphere"));
 
-    let subtract_shape = cube.subtract(&sphere);
+    let subtract_shape = moved_cube.subtract(&sphere);
     let _ = fs::write("stl/subtract_cube_sphere.stl", subtract_shape.to_stl("subtract_cube_sphere"));
 
-    let intersect_shape = cube.intersect(&sphere);
+    let intersect_shape = moved_cube.intersect(&sphere);
     let _ = fs::write("stl/intersect_cube_sphere.stl", intersect_shape.to_stl("intersect_cube_sphere"));
 
     // 4) Convex hull
