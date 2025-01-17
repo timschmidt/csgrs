@@ -165,6 +165,24 @@ impl Plane {
     }
 }
 
+// Helper function to subdivide triangles
+fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
+    let v0 = tri[0].clone();
+    let v1 = tri[1].clone();
+    let v2 = tri[2].clone();
+
+    let v01 = v0.interpolate(&v1, 0.5);
+    let v12 = v1.interpolate(&v2, 0.5);
+    let v20 = v2.interpolate(&v0, 0.5);
+
+    vec![
+        [v0.clone(),  v01.clone(), v20.clone()],
+        [v01.clone(), v1.clone(),  v12.clone()],
+        [v20.clone(), v12.clone(), v2.clone()],
+        [v01,         v12,         v20],
+    ]
+}
+
 /// A convex polygon, defined by a list of vertices and a plane
 #[derive(Debug, Clone)]
 pub struct Polygon {
@@ -208,6 +226,51 @@ impl Polygon {
             ]);
         }
         triangles
+    }
+    
+    /// Subdivide this polygon into smaller triangles.
+    /// Returns a list of new triangles (each is a [Vertex; 3]).
+    pub fn subdivide_triangles(&self, levels: u32) -> Vec<[Vertex; 3]> {
+        // 1) Triangulate the polygon as it is.
+        let base_tris = self.triangulate();
+
+        // 2) For each triangle, subdivide 'levels' times.
+        let mut result = Vec::new();
+        for tri in base_tris {
+            // We'll keep a queue of triangles to process
+            let mut queue = vec![tri];
+            for _ in 0..levels {
+                let mut next_level = Vec::new();
+                for t in queue {
+                    let subs = subdivide_triangle(t);
+                    next_level.extend(subs);
+                }
+                queue = next_level;
+            }
+            result.extend(queue);
+        }
+
+        result
+    }
+    
+    /// Recompute this polygon's plane from the first 3 vertices,
+    /// then set all vertices' normals to match that plane (flat shading).
+    pub fn recalc_plane_and_normals(&mut self) {
+        if self.vertices.len() < 3 {
+            return; // degenerate or empty
+        }
+        // Recompute the plane from the first 3 vertices
+        self.plane = Plane::from_points(
+            &self.vertices[0].pos,
+            &self.vertices[1].pos,
+            &self.vertices[2].pos,
+        );
+
+        // Assign each vertex’s normal to match the plane
+        let new_normal = self.plane.normal;
+        for v in &mut self.vertices {
+            v.normal = new_normal;
+        }
     }
 }
 
@@ -810,6 +873,39 @@ impl CSG {
         }
 
         CSG::from_polygons(polygons)
+    }
+
+    /// Subdivide all polygons in this CSG 'levels' times, returning a new CSG.
+    /// This results in a triangular mesh with more detail.
+    pub fn subdivide_triangles(&self, levels: u32) -> CSG {
+        if levels == 0 {
+            return self.clone();
+        }
+
+        let mut new_polygons = Vec::new();
+
+        for poly in &self.polygons {
+            // Subdivide the polygon into many smaller triangles
+            let sub_tris = poly.subdivide_triangles(levels);
+            // Convert each small tri back into a Polygon with 3 vertices
+            // (you can keep the same 'shared' data or None).
+            for tri in sub_tris {
+                new_polygons.push(
+                    Polygon::new(vec![tri[0].clone(), tri[1].clone(), tri[2].clone()], poly.shared.clone())
+                );
+            }
+        }
+
+        CSG::from_polygons(new_polygons)
+    }
+    
+    /// Renormalize all polygons in this CSG by re-computing each polygon’s plane
+    /// (from the first 3 vertices) and assigning the plane’s normal to all vertices.
+    /// This is a "flat shading" approach.
+    pub fn renormalize(&mut self) {
+        for poly in &mut self.polygons {
+            poly.recalc_plane_and_normals();
+        }
     }
 
     /// Casts a ray defined by `origin` + t * `direction` against all triangles

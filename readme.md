@@ -130,6 +130,15 @@ Text:
     // Generate a simple "Hello" text in the XY plane
     let csg_text = CSG::text_mesh("Hello", font_data, Some(10.0));
     
+Subdivide triangles:
+
+    let subdivisions = 2;
+    subdivides = my_csg.subdivide_triangles(subdivisions);
+    
+Renormalize:
+
+    my_csg.renormalize();
+    
 Ray intersections and measurement:
 
     let cube = CSG::cube(None);
@@ -204,7 +213,6 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - refactor STL export to use library
 - manifoldness tests / fixes
 - stl import
-- stl normals checks
 
 # License
 
