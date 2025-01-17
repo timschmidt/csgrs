@@ -7,6 +7,9 @@ use nalgebra::{Vector3, Point3};
 use csgrs::{CSG, Axis};
 
 fn main() {
+    // Ensure the /stls folder exists
+    let _ = fs::create_dir_all("stl");
+
     // 1) Basic shapes: cube, sphere, cylinder
     let cube = CSG::cube(None); // center=(0,0,0), radius=(1,1,1) by default
     let _ = fs::write("stl/cube.stl", cube.to_stl("cube"));
