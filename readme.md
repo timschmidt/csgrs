@@ -210,7 +210,8 @@ The only tricky part is handling overlapping coplanar polygons in both trees. Th
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 # Todo
-- Extrusions from X, Y, or Z
+- set/get shared data per polygon, ensure preserved through operations
+- Extrusions across arbitrary vector
 - Projection
 - dxf/svg import/export
 - color
@@ -219,10 +220,11 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - fill
 - 32bit / 64bit feature
 - parallelize clip_to and invert with rayon and par_iter
+- identify more candidates for par_iter
 - manifoldness tests / fixes - in stl_io library
 - debug grow/shrink
-- debug revolve extrude
-- adjust binary STL function to output bytes
+- debug revolve extrude - use vector extrusions
+- adjust binary STL function to output data, not file
 
 # License
 
