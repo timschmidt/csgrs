@@ -226,6 +226,9 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - reimplement 3D offsetting with voxelcsgrs
 - debug revolve extrude - use vector extrusions
 - adjust binary STL function to output data, not file
+- identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
+ - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
+ - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
 
 # License
 
