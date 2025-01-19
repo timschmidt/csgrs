@@ -222,7 +222,8 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
 - manifoldness tests / fixes - in stl_io library
-- debug grow/shrink
+- reimplement 2D offsetting with cavalier_contours
+- reimplement 3D offsetting with voxelcsgrs
 - debug revolve extrude - use vector extrusions
 - adjust binary STL function to output data, not file
 
