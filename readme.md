@@ -175,12 +175,20 @@ Collect mass properties of a shape:
     let density = 1.0;
     let (mass, center_of_mass, inertia_frame) = my_csg.mass_properties(density);
 
-Export an STL:
+Export an ASCII STL:
 
     let stl_data = union_result.to_stl("cube_minus_sphere");
     let filename = "output.stl";
     let mut file = File::create(filename).expect("Failed to create file");
     file.write_all(stl_data.as_bytes()).expect("Failed to write STL");
+    
+Export a binary STL:
+
+    my_csg.to_stl_file("output.stl").unwrap();
+
+Import an STL:
+
+    let csg = CSG::from_stl_file("input.stl").unwrap();
 
 # Implementation Details
 
@@ -210,9 +218,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - polygon holes
 - fill
 - 32bit / 64bit feature
-- refactor STL export to use library
-- manifoldness tests / fixes
-- stl import
+- manifoldness tests / fixes - in stl_io library
 - debug grow/shrink
 - debug revolve extrude
 

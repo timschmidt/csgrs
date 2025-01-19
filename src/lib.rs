@@ -13,6 +13,8 @@ use parry3d_f64::{
     };
 use rapier3d_f64::prelude::*;
 use meshtext::{Glyph, MeshGenerator, MeshText};
+use stl_io;
+use std::fs::OpenOptions;
 
 #[cfg(test)]
 mod tests;
@@ -1561,5 +1563,70 @@ impl CSG {
 
         out.push_str(&format!("endsolid {}\n", name));
         out
+    }
+    
+    /// Export the CSG object to a binary STL file using `stl_io`.
+    pub fn to_stl_file(&self, file_path: &str) -> Result<(), std::io::Error> {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(file_path)?;
+
+        let mut triangles = Vec::new();
+        for poly in &self.polygons {
+            let normal = poly.plane.normal.normalize();
+            let tri_list = poly.triangulate();
+
+            for tri in tri_list {
+                triangles.push(stl_io::Triangle {
+                    normal: stl_io::Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
+                    vertices: [
+                        stl_io::Vertex::new([tri[0].pos.x as f32, tri[0].pos.y as f32, tri[0].pos.z as f32]),
+                        stl_io::Vertex::new([tri[1].pos.x as f32, tri[1].pos.y as f32, tri[1].pos.z as f32]),
+                        stl_io::Vertex::new([tri[2].pos.x as f32, tri[2].pos.y as f32, tri[2].pos.z as f32]),
+                    ],
+                });
+            }
+        }
+
+        stl_io::write_stl(&mut file, triangles.iter())?;
+        Ok(())
+    }
+
+    /// Import a CSG object from a binary STL file using `stl_io`.
+    pub fn from_stl_file(file_path: &str) -> Result<CSG, std::io::Error> {
+        let mut file = OpenOptions::new().read(true).open(file_path)?;
+        let stl_reader = stl_io::create_stl_reader(&mut file)?;
+
+        let mut polygons = Vec::new();
+
+        for tri_result in stl_reader {
+            // Handle potential errors from the STL reader
+            let tri = match tri_result {
+                Ok(t) => t,
+                Err(e) => return Err(e), // Propagate the error
+            };
+
+            // Construct vertices and a polygon
+            let vertices = vec![
+                Vertex::new(
+                    Point3::new(tri.vertices[0][0] as f64, tri.vertices[0][1] as f64, tri.vertices[0][2] as f64),
+                    Vector3::new(tri.normal[0] as f64, tri.normal[1] as f64, tri.normal[2] as f64),
+                ),
+                Vertex::new(
+                    Point3::new(tri.vertices[1][0] as f64, tri.vertices[1][1] as f64, tri.vertices[1][2] as f64),
+                    Vector3::new(tri.normal[0] as f64, tri.normal[1] as f64, tri.normal[2] as f64),
+                ),
+                Vertex::new(
+                    Point3::new(tri.vertices[2][0] as f64, tri.vertices[2][1] as f64, tri.vertices[2][2] as f64),
+                    Vector3::new(tri.normal[0] as f64, tri.normal[1] as f64, tri.normal[2] as f64),
+                ),
+            ];
+            let polygon = Polygon::new(vertices, None);
+            polygons.push(polygon);
+        }
+
+        Ok(CSG::from_polygons(polygons))
     }
 }
