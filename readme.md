@@ -218,9 +218,11 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - polygon holes
 - fill
 - 32bit / 64bit feature
+- parallelize clip_to and invert with rayon and par_iter
 - manifoldness tests / fixes - in stl_io library
 - debug grow/shrink
 - debug revolve extrude
+- adjust binary STL function to output bytes
 
 # License
 
