@@ -66,6 +66,9 @@ impl Plane {
     /// Create a plane from three points
     pub fn from_points(a: &Point3<f64>, b: &Point3<f64>, c: &Point3<f64>) -> Plane {
         let n = (b - a).cross(&(c - a)).normalize();
+        if n.magnitude() < EPSILON {
+            panic!("Degenerate polygon: vertices do not define a plane");
+        }
         Plane {
             normal: n,
             w: n.dot(&a.coords),

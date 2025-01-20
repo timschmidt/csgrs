@@ -2,7 +2,10 @@
 name = "csgrs"
 version = "0.2.0"
 edition = "2021"
+description = "Constructive solid geometry on meshes using BSP trees in Rust"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>",]
+license = "MIT"
+repository = "https://github.com/timschmidt/csgrs"
 
 [dependencies]
 chull = "0.2.4"
