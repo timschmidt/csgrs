@@ -6,7 +6,7 @@ description = "Constructive solid geometry on meshes using BSP trees in Rust"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>",]
 license = "MIT"
 repository = "https://github.com/timschmidt/csgrs"
-readme = "https://raw.githubusercontent.com/timschmidt/csgrs/refs/heads/main/readme.md"
+readme = "readme.md"
 
 [dependencies]
 chull = "0.2.4"
