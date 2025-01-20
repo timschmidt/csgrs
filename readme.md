@@ -139,7 +139,7 @@ Renormalize:
 
     let renormalized_csg = my_csg.renormalize();
     
-Ray intersections and measurement:
+Compute all ray intersections for measurement (expensive):
 
     let cube = CSG::cube(None);
     let ray_origin = nalgebra::Point3::new(-5.0, 0.0, 0.0);
