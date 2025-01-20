@@ -212,7 +212,8 @@ Subtraction and intersection naturally follow from set operations. If union is `
 # Todo
 - set/get shared data per polygon, ensure preserved through operations
 - Extrusions across arbitrary vector
-- Projection
+- debug revolve extrude - use vector extrusions
+- Projection to 2D / Cut
 - dxf/svg import/export
 - color
 - fragments (circle, sphere, regularize with rotate_extrude)
@@ -223,8 +224,10 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - identify more candidates for par_iter
 - manifoldness tests / fixes - in stl_io library
 - reimplement 2D offsetting with cavalier_contours
-- reimplement 3D offsetting with voxelcsgrs
-- debug revolve extrude - use vector extrusions
+- reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
+- reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
+- implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
+- reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
 - adjust binary STL function to output data, not file
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
  - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
