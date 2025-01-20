@@ -959,6 +959,8 @@ impl CSG {
 
         // 4) Sort hits by ascending distance (toi):
         hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        // 5) remove duplicate hits if they fall within tolerance
+        hits.dedup_by(|a, b| (a.1 - b.1).abs() < EPSILON);
 
         hits
     }
