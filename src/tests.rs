@@ -300,7 +300,7 @@ fn test_node_clip_polygons() {
     for p in &mut flipped_cube.polygons {
         p.flip(); // now plane normals match the Node-building logic
     }
-    let mut node = Node::new(flipped_cube.polygons.clone());
+    let node = Node::new(flipped_cube.polygons.clone());
     let clipped = node.clip_polygons(&flipped_cube.polygons);
     assert_eq!(clipped.len(), flipped_cube.polygons.len());
 }
@@ -319,3 +319,99 @@ fn test_node_invert() {
     assert_eq!(node.polygons.len(), original_count);
 }
 
+#[test]
+#[should_panic(expected = "Polygon::new requires at least 3 vertices")]
+fn test_polygon_creation_with_fewer_than_three_vertices() {
+    let vertices = vec![
+        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0)),
+        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0)),
+    ];
+
+    // This should panic due to insufficient vertices
+    let _polygon = Polygon::new(vertices, None);
+}
+
+#[test]
+fn test_degenerate_polygon_after_clipping() {
+    let vertices = vec![
+        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
+        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
+        Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
+    ];
+
+    let polygon = Polygon::new(vertices.clone(), None);
+    let plane = Plane {
+        normal: Vector3::new(0.0, 1.0, 0.0),
+        w: 1.5,
+    };
+
+    let mut coplanar_front = Vec::new();
+    let mut coplanar_back = Vec::new();
+    let mut front = Vec::new();
+    let mut back = Vec::new();
+
+    eprintln!("Original polygon: {:?}", polygon);
+    eprintln!("Clipping plane: {:?}", plane);
+
+    plane.split_polygon(
+        &polygon,
+        &mut coplanar_front,
+        &mut coplanar_back,
+        &mut front,
+        &mut back,
+    );
+
+    eprintln!("Front polygons: {:?}", front);
+    eprintln!("Back polygons: {:?}", back);
+
+    assert!(front.is_empty(), "Front should be empty for this test");
+    assert!(back.is_empty(), "Back should be empty for this test");
+}
+
+#[test]
+fn test_valid_polygon_clipping() {
+    let vertices = vec![
+        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
+        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
+        Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
+    ];
+
+    let polygon = Polygon::new(vertices, None);
+
+    let plane = Plane {
+        normal: Vector3::new(0.0, -1.0, 0.0),
+        w: -0.5,
+    };
+
+    let mut coplanar_front = Vec::new();
+    let mut coplanar_back = Vec::new();
+    let mut front = Vec::new();
+    let mut back = Vec::new();
+
+    eprintln!("Polygon before clipping: {:?}", polygon);
+    eprintln!("Clipping plane: {:?}", plane);
+
+    plane.split_polygon(
+        &polygon,
+        &mut coplanar_front,
+        &mut coplanar_back,
+        &mut front,
+        &mut back,
+    );
+
+    eprintln!("Front polygons: {:?}", front);
+    eprintln!("Back polygons: {:?}", back);
+
+    assert!(!front.is_empty(), "Front should not be empty");
+    assert!(!back.is_empty(), "Back should not be empty");
+}
+
+#[test]
+#[should_panic(expected = "Polygon::new requires at least 3 vertices")]
+fn test_polygon_with_insufficient_vertices() {
+    let vertices = vec![
+        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0)),
+        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0)),
+    ];
+    let _polygon = Polygon::new(vertices, None); // Should panic
+}
