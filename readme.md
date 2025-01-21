@@ -154,11 +154,11 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
         println!("  t = {:.4}, point = {:?}", dist, point); // distance to 4 decimal places
     }
 
-## Create a Parry TriMesh:
+## Create a [Parry](https://parry.rs/) TriMesh:
 
     let trimesh = my_csg.to_trimesh();
 
-## Create a Rapier rigid body:
+## Create a [Rapier](https://rapier.rs/) rigid body:
 
     // 90 degrees in radians
     let angle = std::f64::consts::FRAC_PI_2;
