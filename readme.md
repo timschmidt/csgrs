@@ -269,13 +269,11 @@ The only tricky part is handling overlapping coplanar polygons in both trees. Th
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 ## Todo
-- set/get shared data per polygon, ensure preserved through operations
 - extrusions across arbitrary vector
 - extrusions between two polygons
 - debug revolve extrude - use vector extrusions
 - Projection to 2D / Cut
 - dxf/svg import/export
-- color
 - fragments (circle, sphere, regularize with rotate_extrude)
 - polygon holes
 - fill
