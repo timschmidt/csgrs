@@ -82,13 +82,13 @@ impl Plane {
 
     /// Split `polygon` by this plane if needed, distributing the results into
     /// `coplanar_front`, `coplanar_back`, `front`, and `back`.
-    pub fn split_polygon(
+    pub fn split_polygon<S: Clone>(
         &self,
-        polygon: &Polygon,
-        coplanar_front: &mut Vec<Polygon>,
-        coplanar_back: &mut Vec<Polygon>,
-        front: &mut Vec<Polygon>,
-        back: &mut Vec<Polygon>,
+        polygon: &Polygon<S>,
+        coplanar_front: &mut Vec<Polygon<S>>,
+        coplanar_back: &mut Vec<Polygon<S>>,
+        front: &mut Vec<Polygon<S>>,
+        back: &mut Vec<Polygon<S>>,
     ) {
         const COPLANAR: i32 = 0;
         const FRONT: i32 = 1;
@@ -188,18 +188,18 @@ fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
     ]
 }
 
-/// A convex polygon, defined by a list of vertices and a plane
+/// A convex polygon, defined by a list of vertices and a plane.
+/// - `S` is the generic "shared" data type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
-pub struct Polygon {
+pub struct Polygon<S: Clone> {
     pub vertices: Vec<Vertex>,
-    /// This can hold any “shared” data (color, surface ID, etc.).
-    pub shared: Option<String>,
+    pub shared: Option<S>,
     pub plane: Plane,
 }
 
-impl Polygon {
+impl<S: Clone> Polygon<S> {
     /// Create a polygon from vertices
-    pub fn new(vertices: Vec<Vertex>, shared: Option<String>) -> Self {
+    pub fn new(vertices: Vec<Vertex>, shared: Option<S>) -> Self {
         let plane = Plane::from_points(
             &vertices[0].pos,
             &vertices[1].pos,
@@ -232,7 +232,7 @@ impl Polygon {
         }
         triangles
     }
-    
+
     /// Subdivide this polygon into smaller triangles.
     /// Returns a list of new triangles (each is a [Vertex; 3]).
     pub fn subdivide_triangles(&self, levels: u32) -> Vec<[Vertex; 3]> {
@@ -257,7 +257,7 @@ impl Polygon {
 
         result
     }
-    
+
     /// Recompute this polygon's plane from the first 3 vertices,
     /// then set all vertices' normals to match that plane (flat shading).
     pub fn recalc_plane_and_normals(&mut self) {
@@ -277,19 +277,36 @@ impl Polygon {
             v.normal = new_normal;
         }
     }
+
+    // --- New getters/setters for shared data ---
+
+    /// Returns a reference to the shared data, if any.
+    pub fn shared_data(&self) -> Option<&S> {
+        self.shared.as_ref()
+    }
+
+    /// Returns a mutable reference to the shared data, if any.
+    pub fn shared_data_mut(&mut self) -> Option<&mut S> {
+        self.shared.as_mut()
+    }
+
+    /// Sets the shared data to the given value.
+    pub fn set_shared_data(&mut self, data: S) {
+        self.shared = Some(data);
+    }
 }
 
 /// A BSP tree node, containing polygons plus optional front/back subtrees
 #[derive(Debug, Clone)]
-pub struct Node {
+pub struct Node<S: Clone> {
     pub plane: Option<Plane>,
-    pub front: Option<Box<Node>>,
-    pub back: Option<Box<Node>>,
-    pub polygons: Vec<Polygon>,
+    pub front: Option<Box<Node<S>>>,
+    pub back: Option<Box<Node<S>>>,
+    pub polygons: Vec<Polygon<S>>,
 }
 
-impl Node {
-    pub fn new(polygons: Vec<Polygon>) -> Self {
+impl<S: Clone> Node<S> {
+    pub fn new(polygons: Vec<Polygon<S>>) -> Self {
         let mut node = Node {
             plane: None,
             front: None,
@@ -320,14 +337,14 @@ impl Node {
     }
 
     /// Recursively remove all polygons in `polygons` that are inside this BSP tree
-    pub fn clip_polygons(&self, polygons: &[Polygon]) -> Vec<Polygon> {
+    pub fn clip_polygons(&self, polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
         if self.plane.is_none() {
             return polygons.to_vec();
         }
 
         let plane = self.plane.as_ref().unwrap();
-        let mut front: Vec<Polygon> = Vec::new();
-        let mut back: Vec<Polygon> = Vec::new();
+        let mut front: Vec<Polygon<S>> = Vec::new();
+        let mut back: Vec<Polygon<S>> = Vec::new();
 
         for poly in polygons {
             plane.split_polygon(
@@ -353,7 +370,7 @@ impl Node {
     }
 
     /// Remove all polygons in this BSP tree that are inside the other BSP tree
-    pub fn clip_to(&mut self, bsp: &Node) {
+    pub fn clip_to(&mut self, bsp: &Node<S>) {
         self.polygons = bsp.clip_polygons(&self.polygons);
         if let Some(ref mut front) = self.front {
             front.clip_to(bsp);
@@ -364,7 +381,7 @@ impl Node {
     }
 
     /// Return all polygons in this BSP tree
-    pub fn all_polygons(&self) -> Vec<Polygon> {
+    pub fn all_polygons(&self) -> Vec<Polygon<S>> {
         let mut result = self.polygons.clone();
         if let Some(ref front) = self.front {
             result.extend(front.all_polygons());
@@ -376,7 +393,7 @@ impl Node {
     }
 
     /// Build a BSP tree from the given polygons
-    pub fn build(&mut self, polygons: &[Polygon]) {
+    pub fn build(&mut self, polygons: &[Polygon<S>]) {
         if polygons.is_empty() {
             return;
         }
@@ -386,8 +403,8 @@ impl Node {
         }
         let plane = self.plane.clone().unwrap();
 
-        let mut front: Vec<Polygon> = Vec::new();
-        let mut back: Vec<Polygon> = Vec::new();
+        let mut front: Vec<Polygon<S>> = Vec::new();
+        let mut back: Vec<Polygon<S>> = Vec::new();
 
         for p in polygons {
             let mut coplanar_front = Vec::new();
@@ -423,30 +440,30 @@ impl Node {
 
 /// The main CSG solid structure. Contains a list of polygons.
 #[derive(Debug, Clone)]
-pub struct CSG {
-    pub polygons: Vec<Polygon>,
+pub struct CSG<S: Clone> {
+    pub polygons: Vec<Polygon<S>>,
 }
 
-impl CSG {
+impl<S: Clone> CSG<S> {
     /// Create an empty CSG
     pub fn new() -> Self {
         CSG { polygons: Vec::new() }
     }
 
     /// Build a CSG from an existing polygon list
-    pub fn from_polygons(polygons: Vec<Polygon>) -> Self {
+    pub fn from_polygons(polygons: Vec<Polygon<S>>) -> Self {
         let mut csg = CSG::new();
         csg.polygons = polygons;
         csg
     }
 
     /// Return the internal polygons
-    pub fn to_polygons(&self) -> &[Polygon] {
+    pub fn to_polygons(&self) -> &[Polygon<S>] {
         &self.polygons
     }
 
     /// CSG union: this ∪ other
-    pub fn union(&self, other: &CSG) -> CSG {
+    pub fn union(&self, other: &CSG<S>) -> CSG<S> {
         let mut a = Node::new(self.polygons.clone());
         let mut b = Node::new(other.polygons.clone());
 
@@ -461,7 +478,7 @@ impl CSG {
     }
 
     /// CSG subtract: this \ other
-    pub fn subtract(&self, other: &CSG) -> CSG {
+    pub fn subtract(&self, other: &CSG<S>) -> CSG<S> {
         let mut a = Node::new(self.polygons.clone());
         let mut b = Node::new(other.polygons.clone());
 
@@ -478,7 +495,7 @@ impl CSG {
     }
 
     /// CSG intersect: this ∩ other
-    pub fn intersect(&self, other: &CSG) -> CSG {
+    pub fn intersect(&self, other: &CSG<S>) -> CSG<S> {
         let mut a = Node::new(self.polygons.clone());
         let mut b = Node::new(other.polygons.clone());
 
@@ -494,7 +511,7 @@ impl CSG {
     }
 
     /// Invert this CSG (flip inside vs. outside)
-    pub fn inverse(&self) -> CSG {
+    pub fn inverse(&self) -> CSG<S> {
         let mut csg = self.clone();
         for p in &mut csg.polygons {
             p.flip();
@@ -503,7 +520,7 @@ impl CSG {
     }
 
     /// Construct an axis-aligned cube, with optional center and radius
-    pub fn cube(options: Option<(&[f64; 3], &[f64; 3])>) -> CSG {
+    pub fn cube(options: Option<(&[f64; 3], &[f64; 3])>) -> CSG<S> {
         let (center, radius) = match options {
             Some((c, r)) => (*c, *r),
             None => ([0.0, 0.0, 0.0], [1.0, 1.0, 1.0]),
@@ -537,7 +554,7 @@ impl CSG {
     }
 
     /// Construct a sphere with optional center, radius, slices, stacks
-    pub fn sphere(options: Option<(&[f64; 3], f64, usize, usize)>) -> CSG {
+    pub fn sphere(options: Option<(&[f64; 3], f64, usize, usize)>) -> CSG<S> {
         let (center, radius, slices, stacks) = match options {
             Some((c, r, sl, st)) => (*c, r, sl, st),
             None => ([0.0, 0.0, 0.0], 1.0, 16, 8),
@@ -591,7 +608,7 @@ impl CSG {
     }
 
     /// Construct a cylinder with optional start, end, radius, slices
-    pub fn cylinder(options: Option<(&[f64; 3], &[f64; 3], f64, usize)>) -> CSG {
+    pub fn cylinder(options: Option<(&[f64; 3], &[f64; 3], f64, usize)>) -> CSG<S> {
         let (start, end, radius, slices) = match options {
             Some((s, e, r, sl)) => (*s, *e, r, sl),
             None => ([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16),
@@ -664,7 +681,7 @@ impl CSG {
 
         CSG::from_polygons(polygons)
     }
-    
+
     /// Creates a CSG polyhedron from raw vertex data (`points`) and face indices.
     ///
     /// # Parameters
@@ -694,7 +711,7 @@ impl CSG {
     ///
     /// let csg_poly = CSG::polyhedron(pts, &fcs);
     /// ```
-    pub fn polyhedron(points: &[[f64; 3]], faces: &[Vec<usize>]) -> CSG {
+    pub fn polyhedron(points: &[[f64; 3]], faces: &[Vec<usize>]) -> CSG<S> {
         let mut polygons = Vec::new();
 
         for face in faces {
@@ -712,8 +729,8 @@ impl CSG {
                 }
                 let [x, y, z] = points[idx];
                 face_vertices.push(Vertex::new(
-                    nalgebra::Point3::new(x, y, z),
-                    nalgebra::Vector3::zeros(), // we'll set this later
+                    Point3::new(x, y, z),
+                    Vector3::zeros(), // we'll set this later
                 ));
             }
 
@@ -726,7 +743,6 @@ impl CSG {
             for v in &mut poly.vertices {
                 v.normal = plane_normal;
             }
-
             polygons.push(poly);
         }
 
@@ -734,10 +750,10 @@ impl CSG {
     }
 
     /// Transform all vertices in this CSG by a given 4×4 matrix.
-    pub fn transform(&self, mat: &Matrix4<f64>) -> CSG {
+    pub fn transform(&self, mat: &Matrix4<f64>) -> CSG<S> {
         let mat_inv_transpose = mat.try_inverse().unwrap().transpose();
         let mut csg = self.clone();
-    
+
         for poly in &mut csg.polygons {
             for vert in &mut poly.vertices {
                 // Position
@@ -756,18 +772,18 @@ impl CSG {
                 poly.plane.w = poly.plane.normal.dot(&first_vert.pos.coords);
             }
         }
-    
+
         csg
     }
-    
-    pub fn translate(&self, v: Vector3<f64>) -> CSG {
+
+    pub fn translate(&self, v: Vector3<f64>) -> CSG<S> {
         let translation = Translation3::from(v);
         // Convert to a Matrix4
         let mat4 = translation.to_homogeneous();
         self.transform(&mat4)
     }
 
-    pub fn rotate(&self, x_deg: f64, y_deg: f64, z_deg: f64) -> CSG {
+    pub fn rotate(&self, x_deg: f64, y_deg: f64, z_deg: f64) -> CSG<S> {
         let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg.to_radians());
         let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg.to_radians());
         let rz = Rotation3::from_axis_angle(&Vector3::z_axis(), z_deg.to_radians());
@@ -777,13 +793,13 @@ impl CSG {
         self.transform(&rot.to_homogeneous())
     }
 
-    pub fn scale(&self, sx: f64, sy: f64, sz: f64) -> CSG {
+    pub fn scale(&self, sx: f64, sy: f64, sz: f64) -> CSG<S> {
         let mat4 = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
         self.transform(&mat4)
     }
 
     /// Mirror across X=0, Y=0, or Z=0 plane
-    pub fn mirror(&self, axis: Axis) -> CSG {
+    pub fn mirror(&self, axis: Axis) -> CSG<S> {
         let (sx, sy, sz) = match axis {
             Axis::X => (-1.0, 1.0, 1.0),
             Axis::Y => (1.0, -1.0, 1.0),
@@ -797,15 +813,13 @@ impl CSG {
     }
 
     /// Compute the convex hull of all vertices in this CSG.
-    pub fn convex_hull(&self) -> CSG {
-        // Gather all (x, y, z) coordinates from the polygons
+    pub fn convex_hull(&self) -> CSG<S> {
+	// Gather all (x, y, z) coordinates from the polygons
         let points: Vec<Vec<f64>> = self
             .polygons
             .iter()
             .flat_map(|poly| {
-                poly.vertices.iter().map(|v| {
-                    vec![v.pos.x, v.pos.y, v.pos.z]
-                })
+                poly.vertices.iter().map(|v| vec![v.pos.x, v.pos.y, v.pos.z])
             })
             .collect();
 
@@ -821,11 +835,9 @@ impl CSG {
             let v0 = &verts[tri[0]];
             let v1 = &verts[tri[1]];
             let v2 = &verts[tri[2]];
-
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
-
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
 
@@ -836,7 +848,7 @@ impl CSG {
     ///
     /// Naive approach: Take every vertex in `self`, add it to every vertex in `other`,
     /// then compute the convex hull of all resulting points.
-    pub fn minkowski_sum(&self, other: &CSG) -> CSG {
+    pub fn minkowski_sum(&self, other: &CSG<S>) -> CSG<S> {
         // Collect all vertices (x, y, z) from self
         let verts_a: Vec<Point3<f64>> = self.polygons
             .iter()
@@ -860,7 +872,6 @@ impl CSG {
         // Compute the hull of these Minkowski-sum points
         let hull = ConvexHullWrapper::try_new(&sum_points, None)
             .expect("Failed to compute Minkowski sum hull");
-
         let (verts, indices) = hull.vertices_indices();
 
         // Reconstruct polygons
@@ -869,11 +880,9 @@ impl CSG {
             let v0 = &verts[tri[0]];
             let v1 = &verts[tri[1]];
             let v2 = &verts[tri[2]];
-
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
-
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
 
@@ -882,13 +891,12 @@ impl CSG {
 
     /// Subdivide all polygons in this CSG 'levels' times, returning a new CSG.
     /// This results in a triangular mesh with more detail.
-    pub fn subdivide_triangles(&self, levels: u32) -> CSG {
+    pub fn subdivide_triangles(&self, levels: u32) -> CSG<S> {
         if levels == 0 {
             return self.clone();
         }
 
         let mut new_polygons = Vec::new();
-
         for poly in &self.polygons {
             // Subdivide the polygon into many smaller triangles
             let sub_tris = poly.subdivide_triangles(levels);
@@ -903,10 +911,9 @@ impl CSG {
 
         CSG::from_polygons(new_polygons)
     }
-    
+
     /// Renormalize all polygons in this CSG by re-computing each polygon’s plane
-    /// (from the first 3 vertices) and assigning the plane’s normal to all vertices.
-    /// This is a "flat shading" approach.
+    /// and assigning that plane’s normal to all vertices.
     pub fn renormalize(&mut self) {
         for poly in &mut self.polygons {
             poly.recalc_plane_and_normals();
@@ -927,9 +934,9 @@ impl CSG {
     /// - `f64` is the distance (the ray parameter t) from `origin`.
     pub fn ray_intersections(
         &self,
-        origin: &nalgebra::Point3<f64>,
-        direction: &nalgebra::Vector3<f64>,
-    ) -> Vec<(nalgebra::Point3<f64>, f64)> {
+        origin: &Point3<f64>,
+        direction: &Vector3<f64>,
+    ) -> Vec<(Point3<f64>, f64)> {
         let ray = Ray::new(*origin, *direction);
         let iso = Isometry3::identity(); // No transformation on the triangles themselves.
 
@@ -953,7 +960,7 @@ impl CSG {
                 if let Some(hit) = triangle.cast_ray_and_get_normal(&iso, &ray, f64::MAX, true) {
                     let point_on_ray = ray.point_at(hit.time_of_impact);
                     hits.push((
-                        nalgebra::Point3::from(point_on_ray.coords),
+                        Point3::from(point_on_ray.coords),
                         hit.time_of_impact,
                     ));
                 }
@@ -979,7 +986,7 @@ impl CSG {
     /// let sq = CSG::square(None);
     /// // or with custom params:
     /// let sq2 = CSG::square(Some(([2.0, 3.0], true)));
-    pub fn square(params: Option<([f64; 2], bool)>) -> CSG {
+    pub fn square(params: Option<([f64; 2], bool)>) -> CSG<S> {
         let (size, center) = match params {
             Some((sz, c)) => (sz, c),
             None => ([1.0, 1.0], false),
@@ -1004,7 +1011,7 @@ impl CSG {
     }
 
     /// Creates a 2D circle in the XY plane.
-    pub fn circle(params: Option<(f64, usize)>) -> CSG {
+    pub fn circle(params: Option<(f64, usize)>) -> CSG<S> {
         let (r, segments) = match params {
             Some((radius, segs)) => (radius, segs),
             None => (1.0, 32),
@@ -1036,9 +1043,8 @@ impl CSG {
     /// # Example
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     /// let poly2d = CSG::polygon_2d(&pts);
-    pub fn polygon_2d(points: &[[f64; 2]]) -> CSG {
+    pub fn polygon_2d(points: &[[f64; 2]]) -> CSG<S> {
         assert!(points.len() >= 3, "polygon_2d requires at least 3 points");
-
         let normal = Vector3::new(0.0, 0.0, 1.0);
         let mut verts = Vec::with_capacity(points.len());
         for p in points {
@@ -1046,7 +1052,7 @@ impl CSG {
         }
         CSG::from_polygons(vec![Polygon::new(verts, None)])
     }
-    
+
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
     /// This is similar to OpenSCAD's `linear_extrude(height=...)` assuming
@@ -1057,7 +1063,7 @@ impl CSG {
     /// - The top polygons will be created at Z=`height`.
     /// - The bottom polygons remain at Z=0 (the original).
     /// - Side polygons will be formed around the perimeter.
-    pub fn extrude(&self, height: f64) -> CSG {
+    pub fn extrude(&self, height: f64) -> CSG<S> {
         // Collect all new polygons here
         let mut new_polygons = Vec::new();
 
@@ -1118,7 +1124,6 @@ impl CSG {
             if vcount < 3 {
                 continue; // skip degenerate
             }
-
             for i in 0..vcount {
                 let j = (i + 1) % vcount; // next index
 
@@ -1139,7 +1144,9 @@ impl CSG {
                         t_j.clone(),
                         t_i.clone(),
                     ],
-                    None,
+		    None,
+		    // Possibly this instead of None:
+                    //poly_bottom.shared.clone(),
                 );
                 new_polygons.push(side_poly);
             }
@@ -1148,13 +1155,13 @@ impl CSG {
         // Combine into a new CSG
         CSG::from_polygons(new_polygons)
     }
-    
+
     /// Rotate-extrude (revolve) this 2D shape around the Z-axis from 0..`angle_degs`.
     /// - `segments` determines how many steps to sample around the axis.
     /// - For a full revolve, pass `angle_degs = 360.0`.
     /// 
     /// This is similar to OpenSCAD's `rotate_extrude(angle=..., segments=...)`.
-    pub fn rotate_extrude(&self, angle_degs: f64, segments: usize) -> CSG {
+    pub fn rotate_extrude(&self, angle_degs: f64, segments: usize) -> CSG<S> {
         let angle_radians = angle_degs.to_radians();
         if segments < 2 {
             panic!("rotate_extrude requires at least 2 segments");
@@ -1226,7 +1233,6 @@ impl CSG {
                 // Connect edges
                 for e in 0..vcount {
                     let e_next = (e + 1) % vcount;
-
                     let b1 = &poly1.vertices[e];
                     let b2 = &poly1.vertices[e_next];
                     let t1 = &poly2.vertices[e];
@@ -1236,6 +1242,8 @@ impl CSG {
                     let side_poly = Polygon::new(
                         vec![b1.clone(), b2.clone(), t2.clone(), t1.clone()],
                         None,
+			// Possibly this instead of None:
+			//poly.shared.clone(),
                     );
                     new_polygons.push(side_poly);
                 }
@@ -1254,14 +1262,14 @@ impl CSG {
         CSG::from_polygons(new_polygons)
     }
 
-    /// Returns a `parry3d::bounding_volume::AABB`.
+    /// Returns a `parry3d::bounding_volume::Aabb`.
     pub fn bounding_box(&self) -> Aabb {
         // Gather all points from all polygons.
         // parry expects a slice of `&Point3<f64>` or a slice of `na::Point3<f64>`.
         let mut all_points = Vec::new();
         for poly in &self.polygons {
             for v in &poly.vertices {
-                all_points.push(v.pos); // already an nalgebra Point3<f64>
+                all_points.push(v.pos);
             }
         }
 
@@ -1273,7 +1281,7 @@ impl CSG {
         // Construct the parry AABB from points
         Aabb::from_points(&all_points)
     }
-    
+
     /// Helper to collect all vertices from the CSG.
     pub fn vertices(&self) -> Vec<Vertex> {
         self.polygons
@@ -1282,12 +1290,11 @@ impl CSG {
             .collect()
     }
 
-    /// Approximate growing (outward offset) of the shape by a given distance.
+    /// Approximate growing (outward offset) of the shape by a given distance (3D).
     /// This method unions translated copies of the shape along a sphere.
-    pub fn grow(&self, distance: f64) -> CSG {
-        // Use a moderate resolution sphere for approximation.
+    pub fn grow(&self, distance: f64) -> CSG<S> {
         let resolution = 32;
-        let sphere = CSG::sphere(Some((&[0.0, 0.0, 0.0], distance, resolution, resolution / 2)));
+        let sphere: CSG<S> = CSG::sphere(Some((&[0.0, 0.0, 0.0], distance, resolution, resolution / 2)));
         let sphere_vertices = sphere.vertices();
         let mut result = CSG::new();
 
@@ -1298,34 +1305,30 @@ impl CSG {
         result
     }
 
-    /// Approximate shrinking (inward offset) of the shape by a given distance.
+    /// Approximate shrinking (inward offset) of the shape by a given distance (3D).
     /// This method unions translated copies of the complement of the shape along a sphere,
     /// then inverts the result.
-    pub fn shrink(&self, distance: f64) -> CSG {
+    pub fn shrink(&self, distance: f64) -> CSG<S> {
         let resolution = 32;
-        let sphere = CSG::sphere(Some((&[0.0, 0.0, 0.0], distance, resolution, resolution / 2)));
+        let sphere: CSG<S> = CSG::sphere(Some((&[0.0, 0.0, 0.0], distance, resolution, resolution / 2)));
         let sphere_vertices = sphere.vertices();
         let complement = self.inverse();
         let mut result = CSG::new();
 
-        // Union the complement translated by each sphere vertex.
         for v in sphere_vertices {
             result = result.union(&complement.translate(v.pos.coords));
         }
-        // Invert to get the inward offset.
         result.inverse()
     }
 
     /// Approximate 2D growing (outward offset) of the shape by a given distance.
-    /// This uses a circle in the XY plane.
-    pub fn grow_2d(&self, distance: f64) -> CSG {
+    pub fn grow_2d(&self, distance: f64) -> CSG<S> {
         let resolution = 64;
-        let circle = CSG::circle(Some((distance, resolution)));
+        let circle: CSG<S> = CSG::circle(Some((distance, resolution)));
         let circle_vertices = circle.vertices();
         let mut result = CSG::new();
 
         for v in circle_vertices {
-            // Translate in XY plane; Z remains 0.
             let translation = Vector3::new(v.pos.x, v.pos.y, 0.0);
             result = result.union(&self.translate(translation));
         }
@@ -1333,10 +1336,9 @@ impl CSG {
     }
 
     /// Approximate 2D shrinking (inward offset) of the shape by a given distance.
-    /// This uses a circle in the XY plane and the complement operation.
-    pub fn shrink_2d(&self, distance: f64) -> CSG {
+    pub fn shrink_2d(&self, distance: f64) -> CSG<S> {
         let resolution = 64;
-        let circle = CSG::circle(Some((distance, resolution)));
+        let circle: CSG<S> = CSG::circle(Some((distance, resolution)));
         let circle_vertices = circle.vertices();
         let complement = self.inverse();
         let mut result = CSG::new();
@@ -1347,52 +1349,52 @@ impl CSG {
         }
         result.inverse()
     }
-    
+
     /// Convert a `MeshText` (from meshtext) into a list of `Polygon` in the XY plane.
     /// - `scale` allows you to resize the glyph (e.g. matching a desired font size).
     /// - By default, the glyph’s normal is set to +Z.
-    fn meshtext_to_polygons(glyph_mesh: &meshtext::MeshText, scale: f64) -> Vec<Polygon> {
+    fn meshtext_to_polygons(glyph_mesh: &meshtext::MeshText, scale: f64) -> Vec<Polygon<S>> {
         let mut polygons = Vec::new();
         let verts = &glyph_mesh.vertices;
-    
+
         // Each set of 9 floats = one triangle: (x1,y1,z1, x2,y2,z2, x3,y3,z3)
         for tri_chunk in verts.chunks_exact(9) {
-            let x1 = tri_chunk[0];
-            let y1 = tri_chunk[1];
-            let z1 = tri_chunk[2];
-            let x2 = tri_chunk[3];
-            let y2 = tri_chunk[4];
-            let z2 = tri_chunk[5];
-            let x3 = tri_chunk[6];
-            let y3 = tri_chunk[7];
-            let z3 = tri_chunk[8];
-    
+            let x1 = tri_chunk[0] as f64;
+            let y1 = tri_chunk[1] as f64;
+            let z1 = tri_chunk[2] as f64;
+            let x2 = tri_chunk[3] as f64;
+            let y2 = tri_chunk[4] as f64;
+            let z2 = tri_chunk[5] as f64;
+            let x3 = tri_chunk[6] as f64;
+            let y3 = tri_chunk[7] as f64;
+            let z3 = tri_chunk[8] as f64;
+
             // Scale them
-            let px1 = x1 as f64 * scale;
-            let py1 = y1 as f64 * scale;
-            let pz1 = z1 as f64 * scale;
+            let px1 = x1 * scale;
+            let py1 = y1 * scale;
+            let pz1 = z1 * scale;
     
-            let px2 = x2 as f64 * scale;
-            let py2 = y2 as f64 * scale;
-            let pz2 = z2 as f64 * scale;
+            let px2 = x2 * scale;
+            let py2 = y2 * scale;
+            let pz2 = z2 * scale;
     
-            let px3 = x3 as f64 * scale;
-            let py3 = y3 as f64 * scale;
-            let pz3 = z3 as f64 * scale;
+            let px3 = x3 * scale;
+            let py3 = y3 * scale;
+            let pz3 = z3 * scale;
     
             // Normal = +Z
             let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
     
             polygons.push(Polygon::new(
                 vec![
-                    Vertex::new(nalgebra::Point3::new(px1, py1, pz1), normal),
-                    Vertex::new(nalgebra::Point3::new(px2, py2, pz2), normal),
-                    Vertex::new(nalgebra::Point3::new(px3, py3, pz3), normal),
+                    Vertex::new(Point3::new(px1, py1, pz1), normal),
+                    Vertex::new(Point3::new(px2, py2, pz2), normal),
+                    Vertex::new(Point3::new(px3, py3, pz3), normal),
                 ],
                 None,
             ));
         }
-    
+
         polygons
     }
 
@@ -1406,13 +1408,13 @@ impl CSG {
     ///   - does not handle kerning or multi-line text,
     ///   - simply advances the cursor by each glyph’s width,
     ///   - places all characters along the X axis.
-    pub fn text_mesh(text_str: &str, font_data: &[u8], size: Option<f64>) -> CSG {
+    pub fn text_mesh(text_str: &str, font_data: &[u8], size: Option<f64>) -> CSG<S> {
         let mut generator = MeshGenerator::new(font_data.to_vec());
         let scale = size.unwrap_or(20.0);
-    
+
         let mut all_polygons = Vec::new();
         let mut cursor_x = 0.0f64;
-    
+
         for ch in text_str.chars() {
             // Optionally skip control chars
             if ch.is_control() {
@@ -1430,19 +1432,18 @@ impl CSG {
     
             // Convert to polygons
             let glyph_polygons = Self::meshtext_to_polygons(&glyph_mesh, scale);
-    
+
             // Translate polygons by (cursor_x, 0.0)
             let glyph_csg = CSG::from_polygons(glyph_polygons)
-                .translate(nalgebra::Vector3::new(cursor_x, 0.0, 0.0));
-    
+                .translate(Vector3::new(cursor_x, 0.0, 0.0));
             // Accumulate
             all_polygons.extend(glyph_csg.polygons);
-    
+
             // Advance cursor by the glyph’s bounding-box width
             let glyph_width = glyph_mesh.bbox.max.x - glyph_mesh.bbox.min.x;
             cursor_x += glyph_width as f64 * scale;
         }
-    
+
         CSG::from_polygons(all_polygons)
     }
 
@@ -1474,11 +1475,10 @@ impl CSG {
         let trimesh = TriMesh::new(vertices, indices).unwrap();
         SharedShape::new(trimesh)
     }
-    
+
     /// Approximate mass properties using Rapier.
     pub fn mass_properties(&self, density: f64) -> (f64, Point3<f64>, Unit<Quaternion<f64>>) {
         let shape = self.to_trimesh();
-    
         if let Some(trimesh) = shape.as_trimesh() {
             let mp = trimesh.mass_properties(density);
             (
@@ -1487,12 +1487,8 @@ impl CSG {
                 mp.principal_inertia_local_frame      // a Unit<Quaternion<f64>>
             )
         } else {
-            // fallback if not a TriMesh
-            (
-                0.0,
-                Point3::origin(),   // Return a Point3
-                Unit::<Quaternion<f64>>::identity()    // Identity quaternion
-            )
+	    // fallback if not a TriMesh
+            (0.0, Point3::origin(), Unit::<Quaternion<f64>>::identity())
         }
     }
 
@@ -1504,10 +1500,7 @@ impl CSG {
         rb_set: &mut RigidBodySet,
         co_set: &mut ColliderSet,
         translation: Vector3<f64>,
-        // Change this from `UnitQuaternion<f64>` to a Vector3<f64>.
-        // The magnitude of this vector = rotation in radians;
-        // its direction = rotation axis.
-        rotation: Vector3<f64>,
+        rotation: Vector3<f64>, // rotation axis scaled by angle (radians)
         density: f64,
     ) -> RigidBodyHandle {
         let shape = self.to_trimesh();
@@ -1528,7 +1521,7 @@ impl CSG {
     
         rb_handle
     }
-    
+
     // ----------------------------------------------------------
     //   Export to ASCII STL
     // ----------------------------------------------------------
@@ -1569,7 +1562,7 @@ impl CSG {
         out.push_str(&format!("endsolid {}\n", name));
         out
     }
-    
+
     /// Export the CSG object to a binary STL file using `stl_io`.
     pub fn to_stl_file(&self, file_path: &str) -> Result<(), std::io::Error> {
         let mut file = OpenOptions::new()
@@ -1600,7 +1593,7 @@ impl CSG {
     }
 
     /// Import a CSG object from a binary STL file using `stl_io`.
-    pub fn from_stl_file(file_path: &str) -> Result<CSG, std::io::Error> {
+    pub fn from_stl_file(file_path: &str) -> Result<CSG<S>, std::io::Error> {
         let mut file = OpenOptions::new().read(true).open(file_path)?;
         let stl_reader = stl_io::create_stl_reader(&mut file)?;
 
@@ -1628,8 +1621,7 @@ impl CSG {
                     Vector3::new(tri.normal[0] as f64, tri.normal[1] as f64, tri.normal[2] as f64),
                 ),
             ];
-            let polygon = Polygon::new(vertices, None);
-            polygons.push(polygon);
+            polygons.push(Polygon::new(vertices, None));
         }
 
         Ok(CSG::from_polygons(polygons))

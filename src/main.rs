@@ -1,23 +1,27 @@
 // main.rs
 //
-// Minimal example of each function of csgrs
+// Minimal example of each function of csgrs (which is now generic over the shared-data type S).
+// Here, we do not use any shared data, so we'll bind the generic S to ().
 
 use std::fs;
 use nalgebra::{Vector3, Point3};
 use csgrs::{CSG, Axis};
+
+// A type alias for convenience: no shared data, i.e. S = ()
+type MyCSG = CSG<()>;
 
 fn main() {
     // Ensure the /stls folder exists
     let _ = fs::create_dir_all("stl");
 
     // 1) Basic shapes: cube, sphere, cylinder
-    let cube = CSG::cube(None); // center=(0,0,0), radius=(1,1,1) by default
+    let cube = MyCSG::cube(None); // center=(0,0,0), radius=(1,1,1) by default
     let _ = fs::write("stl/cube.stl", cube.to_stl("cube"));
 
-    let sphere = CSG::sphere(None); // center=(0,0,0), radius=1, slices=16, stacks=8
+    let sphere = MyCSG::sphere(None); // center=(0,0,0), radius=1, slices=16, stacks=8
     let _ = fs::write("stl/sphere.stl", sphere.to_stl("sphere"));
 
-    let cylinder = CSG::cylinder(None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=16
+    let cylinder = MyCSG::cylinder(None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=16
     let _ = fs::write("stl/cylinder.stl", cylinder.to_stl("cylinder"));
 
     // 2) Transformations: Translate, Rotate, Scale, Mirror
@@ -56,10 +60,10 @@ fn main() {
     let _ = fs::write("stl/cube_shrink_0_2.stl", shrunk_cube.to_stl("cube_shrink_0_2"));
 
     // 7) 2D shapes and 2D offsetting
-    let square_2d = CSG::square(Some(([2.0, 2.0], true))); // 2x2 square, centered
+    let square_2d = MyCSG::square(Some(([2.0, 2.0], true))); // 2x2 square, centered
     let _ = fs::write("stl/square_2d.stl", square_2d.to_stl("square_2d"));
 
-    let circle_2d = CSG::circle(Some((1.0, 32)));
+    let circle_2d = MyCSG::circle(Some((1.0, 32)));
     let _ = fs::write("stl/circle_2d.stl", circle_2d.to_stl("circle_2d"));
 
     let grown_2d = square_2d.grow_2d(0.5);
@@ -108,13 +112,13 @@ fn main() {
         vec![1, 2, 3],
         vec![2, 0, 3],
     ];
-    let poly = CSG::polyhedron(points, &faces);
+    let poly = MyCSG::polyhedron(points, &faces);
     let _ = fs::write("stl/tetrahedron.stl", poly.to_stl("tetrahedron"));
 
     // 13) Text example (2D). Provide a valid TTF font data below:
-    // (Replace "SomeFont.ttf" with a real .ttf file in your project.)
+    // (Replace "asar.ttf" with a real .ttf file in your project.)
     let font_data = include_bytes!("../asar.ttf");
-    let text_csg = CSG::text_mesh("HELLO", font_data, Some(15.0));
+    let text_csg = MyCSG::text_mesh("HELLO", font_data, Some(15.0));
     let _ = fs::write("stl/text_hello_2d.stl", text_csg.to_stl("text_hello_2d"));
 
     // Optionally extrude the text:
@@ -122,9 +126,9 @@ fn main() {
     let _ = fs::write("stl/text_hello_extruded.stl", text_extruded.to_stl("text_hello_extruded"));
 
     // 14) Mass properties (just printing them)
-    let (mass, com, principal_frame) = cube.mass_properties(1.0); 
+    let (mass, com, principal_frame) = cube.mass_properties(1.0);
     println!("Cube mass = {}", mass);
     println!("Cube center of mass = {:?}", com);
     println!("Cube principal inertia local frame = {:?}", principal_frame);
-    
 }
+
