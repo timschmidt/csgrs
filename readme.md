@@ -8,64 +8,8 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
     use csgrs::CSG;
     
-## Generic shared data:
-
-In order to allow you to store custom per-polygon metadata (colors, IDs, etc.), `csgrs` now has a generic type parameter `S: Clone` on both `CSG<S>` and `Polygon<S>`.  If you don’t need custom data, you can simply use `()`, an empty type, for `S`.
-
-    // No shared data:
+    // Create a type alias for easy usage
     type MyCSG = CSG<()>;
-    let cube = MyCSG::cube(None);
-
-If you do want custom data, define your own type that implements Clone:
-
-    #[derive(Clone)]
-    struct MyMetadata {
-        color: (u8, u8, u8),
-        layer_id: u32,
-        // etc.
-    }
-    
-    // Then alias with the custom type:
-    type MyCSG = CSG<MyMetadata>;
-    
-    // Or instantiate directly:
-    let mut csg = CSG::<MyMetadata>::new();
-
-The various shape functions (`cube`, `sphere`, etc.) produce polygons whose `shared` field is `None` by default.
-
-## Getting and setting shared data:
-
-Once you have a `CSG<S>`, you can access its polygons (either via `csg.polygons` or `csg.to_polygons()`) and use the following helper methods on each `Polygon<S>`:
-
-    shared_data() -> Option<&S>: Returns a reference to the shared data if present.
-    shared_data_mut() -> Option<&mut S>: Returns a mutable reference to the shared data.
-    set_shared_data(value: S): Overwrites the shared data with a new value.
-    
-    // Create a CSG with a single polygon that has a string shared value:
-    let mut poly = Polygon::new(
-        vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), nalgebra::Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), nalgebra::Vector3::z()),
-            Vertex::new(Point3::new(0.0, 1.0, 0.0), nalgebra::Vector3::z()),
-        ],
-        Some("MyTriangle".to_string()),
-    );
-    
-    // Access the data
-    if let Some(data) = poly.shared_data() {
-        println!("Shared data is: {}", data);
-    }
-    
-    // Mutably modify
-    if let Some(data_mut) = poly.shared_data_mut() {
-        data_mut.push_str("_extended");
-    }
-    
-    // Or directly set
-    poly.set_shared_data("OverwrittenData".to_string());
-    
-    // Make a CSG from polygons
-    let csg = CSG::from_polygons(vec![poly]);
 
 ## Construct a 2D shape:
 
@@ -248,6 +192,65 @@ Once you have a `CSG<S>`, you can access its polygons (either via `csg.polygons`
 ## Import an STL:
 
     let csg = MyCSG::from_stl_file("input.stl").unwrap();
+    
+## Generic shared data:
+
+In order to allow you to store custom per-polygon metadata (colors, IDs, etc.), `csgrs` now has a generic type parameter `S: Clone` on both `CSG<S>` and `Polygon<S>`.  If you don’t need custom data, you can simply use `()`, an empty type, for `S`.
+
+    // No shared data:
+    type MyCSG = CSG<()>;
+    let cube = MyCSG::cube(None);
+
+If you do want custom data, define your own type that implements Clone:
+
+    #[derive(Clone)]
+    struct MyMetadata {
+        color: (u8, u8, u8),
+        layer_id: u32,
+        // etc.
+    }
+    
+    // Then alias with the custom type:
+    type MyCSG = CSG<MyMetadata>;
+    
+    // Or instantiate directly:
+    let mut csg = CSG::<MyMetadata>::new();
+
+The various shape functions (`cube`, `sphere`, etc.) produce polygons whose `shared` field is `None` by default.
+
+## Getting and setting shared data:
+
+Once you have a `CSG<S>`, you can access its polygons (either via `csg.polygons` or `csg.to_polygons()`) and use the following helper methods on each `Polygon<S>`:
+
+    shared_data() -> Option<&S>: Returns a reference to the shared data if present.
+    shared_data_mut() -> Option<&mut S>: Returns a mutable reference to the shared data.
+    set_shared_data(value: S): Overwrites the shared data with a new value.
+    
+    // Create a CSG with a single polygon that has a string shared value:
+    let mut poly = Polygon::new(
+        vec![
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), nalgebra::Vector3::z()),
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), nalgebra::Vector3::z()),
+            Vertex::new(Point3::new(0.0, 1.0, 0.0), nalgebra::Vector3::z()),
+        ],
+        Some("MyTriangle".to_string()),
+    );
+    
+    // Access the data
+    if let Some(data) = poly.shared_data() {
+        println!("Shared data is: {}", data);
+    }
+    
+    // Mutably modify
+    if let Some(data_mut) = poly.shared_data_mut() {
+        data_mut.push_str("_extended");
+    }
+    
+    // Or directly set
+    poly.set_shared_data("OverwrittenData".to_string());
+    
+    // Make a CSG from polygons
+    let csg = CSG::from_polygons(vec![poly]);
 
 ## Implementation Details
 
