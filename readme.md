@@ -31,7 +31,7 @@ If you do want custom data, define your own type that implements Clone:
     // Or instantiate directly:
     let mut csg = CSG::<MyMetadata>::new();
 
-The various shape functions (`cube`, `sphere`, etc.) produce polygons whose `shared` field is `None` by default. You can fill that in if you wish.
+The various shape functions (`cube`, `sphere`, etc.) produce polygons whose `shared` field is `None` by default.
 
 ## Getting and setting shared data:
 
@@ -272,7 +272,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - extrusions across arbitrary vector
 - extrusions between two polygons
 - debug revolve extrude - use vector extrusions
-- Projection to 2D / Cut
+- projection to 2D / cut
 - dxf/svg import/export
 - fragments (circle, sphere, regularize with rotate_extrude)
 - polygon holes
@@ -288,8 +288,8 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
 - adjust binary STL function to output data, not file
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
- - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
- - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
+  - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
+  - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
 
 # License
 
