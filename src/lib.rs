@@ -1052,106 +1052,70 @@ impl<S: Clone> CSG<S> {
         }
         CSG::from_polygons(vec![Polygon::new(verts, None)])
     }
-
+    
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
     /// This is similar to OpenSCAD's `linear_extrude(height=...)` assuming
     /// the base 2D shape is in the XY plane with a +Z normal.
-    ///
-    /// - If your shape is centered around Z=0, the resulting extrusion
-    ///   will go from Z=0 to Z=`height`.
-    /// - The top polygons will be created at Z=`height`.
-    /// - The bottom polygons remain at Z=0 (the original).
-    /// - Side polygons will be formed around the perimeter.
     pub fn extrude(&self, height: f64) -> CSG<S> {
+        // Simply call the new extrude_along method with a (0,0,height) vector
+        self.extrude_along(Vector3::new(0.0, 0.0, height))
+    }
+    
+    /// Linearly extrude this (2D) shape along an arbitrary 3D direction vector.
+    ///
+    /// - The shape is “swept” from its original location to a translated “top” copy
+    ///   offset by `direction`.
+    /// - Side walls are formed between the bottom and top edges.
+    /// - The shape is assumed to be “2D” in the sense that each polygon typically
+    ///   lies in a single plane (e.g. XY). For best results, your polygons’ normals
+    ///   should be consistent.
+    pub fn extrude_along(&self, direction: Vector3<f64>) -> CSG<S> {
         // Collect all new polygons here
         let mut new_polygons = Vec::new();
-
+    
         // 1) Bottom polygons = original polygons
-        //    (assuming they are already in the XY plane with some Z).
-        //    We keep them as-is. If you want them “closed”, make sure the polygon
-        //    normal is pointing down or up consistently.
+        //    (assuming they are in some plane, e.g. XY). We just clone them.
         for poly in &self.polygons {
             new_polygons.push(poly.clone());
         }
-
-        // 2) Top polygons = translate each original polygon by +Z=height,
-        //    then *flip* if you want the normals to face outward (typically up).
-        //    The simplest approach is to clone, then shift all vertices by (0,0,height).
-        //    We can do that using the `translate(...)` method, but let's do it manually here:
-        let top_polygons = self.translate(Vector3::new(0.0, 0.0, height)).polygons;
-        // Typically for a "closed" shape, you'd want the top polygon normals
-        // facing upward. If your original polygons had +Z normals, after
-        // translation, they'd still have +Z normals, so you might not need flip.
-        // But if you want them reversed, uncomment:
-        // for p in &mut top_polygons {
-        //     p.flip();
-        // }
-
-        // Add those top polygons to the list
+    
+        // 2) Top polygons = translate each original polygon by `direction`.
+        //    The orientation of their normals will remain the same unless you decide to flip them.
+        let top_polygons = self.translate(direction).polygons;
         new_polygons.extend(top_polygons.iter().cloned());
-
+    
         // 3) Side polygons = For each polygon in `self`, connect its edges
-        //    from the original to the translated version.
+        //    from the original to the corresponding edges in the translated version.
         //
-        //    We'll iterate over each polygon’s vertices. For each edge
-        //    (v[i], v[i+1]), we form a rectangular side quad with the corresponding
-        //    points in the top polygon.  That is:
-        //
-        //    bottom edge = (v[i], v[i+1])
-        //    top edge    = (v[i]+(0,0,h), v[i+1]+(0,0,h))
-        //
-        //    We'll build those as two triangles or one quad polygon.
-        //
-        //    We can find the corresponding top vertex by the same index in
-        //    the top_polygons list.  Because we simply did a single `translate(...)`
-        //    for the entire shape, we need to match polygons by index.
-
-        // We'll do this polygon-by-polygon. For each polygon, we retrieve
-        // its "partner" in top_polygons by the same index. This assumes the order
-        // of polygons hasn't changed between self.polygons and top_polygons.
-        //
-        // => If your shape has many polygons, be sure they line up. 
-        //    If your shape is a single polygon, it's simpler. 
-        //    If your shape is multiple polygons, be mindful.
-
-        // We already have them in arrays: 
+        //    We'll iterate over each polygon’s vertices. For each edge (v[i], v[i+1]),
+        //    we form a rectangular side quad with (v[i]+direction, v[i+1]+direction).
+        //    That is, a quad [b_i, b_j, t_j, t_i].
         let bottom_polys = &self.polygons;
         let top_polys = &top_polygons;
-
+    
         for (poly_bottom, poly_top) in bottom_polys.iter().zip(top_polys.iter()) {
             let vcount = poly_bottom.vertices.len();
             if vcount < 3 {
-                continue; // skip degenerate
+                continue; // skip degenerate or empty polygons
             }
             for i in 0..vcount {
-                let j = (i + 1) % vcount; // next index
-
-                // Bottom edge: b_i -> b_j
+                let j = (i + 1) % vcount; // next index, wrapping around
                 let b_i = &poly_bottom.vertices[i];
                 let b_j = &poly_bottom.vertices[j];
-
-                // Top edge: t_i -> t_j
                 let t_i = &poly_top.vertices[i];
                 let t_j = &poly_top.vertices[j];
-
-                // We'll form a quad [b_i, b_j, t_j, t_i]
-                // with outward-facing normals. 
+    
+                // Build a side quad [b_i, b_j, t_j, t_i].
+                // Then push it as a new polygon.
                 let side_poly = Polygon::new(
-                    vec![
-                        b_i.clone(),
-                        b_j.clone(),
-                        t_j.clone(),
-                        t_i.clone(),
-                    ],
-		    None,
-		    // Possibly this instead of None:
-                    //poly_bottom.shared.clone(),
+                    vec![b_i.clone(), b_j.clone(), t_j.clone(), t_i.clone()],
+                    None
                 );
                 new_polygons.push(side_poly);
             }
         }
-
+    
         // Combine into a new CSG
         CSG::from_polygons(new_polygons)
     }

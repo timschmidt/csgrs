@@ -89,6 +89,14 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     let square = MyCSG::square(Some(([2.0, 2.0], true)));
     let prism = square.extrude(5.0);
     
+## Extrude along a vector:
+
+    // Extrude along the +Y direction by 5 units:
+    let extruded_y = my_2d_shape.extrude_along(Vector3::new(0.0, 5.0, 0.0));
+    
+    // Extrude along some arbitrary vector, say (1.0, 2.0, 3.0):
+    let extruded_diagonal = my_2d_shape.extrude_along(Vector3::new(1.0, 2.0, 3.0));
+    
 ## Rotate extrude: (bugged atm)
 
     let polygon = MyCSG::polygon_2d(&[
@@ -272,7 +280,6 @@ The only tricky part is handling overlapping coplanar polygons in both trees. Th
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 ## Todo
-- extrusions across arbitrary vector
 - extrusions between two polygons
 - debug revolve extrude - use vector extrusions
 - projection to 2D / cut
