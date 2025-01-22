@@ -298,6 +298,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
 - adjust binary STL function to output data, not file
 - evaluate https://github.com/asny/tri-mesh for useful functions
+- identify blockers for no-std
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
   - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
