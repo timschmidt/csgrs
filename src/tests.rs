@@ -937,14 +937,17 @@ fn test_csg_extrude() {
 
 #[test]
 fn test_csg_rotate_extrude() {
-    // A line from (1,0,0) to (1,1,0) in XY => rotate_extrude => forms a cylindrical shell.
-    let line_pts = &[
-        [1.0, 0.0],
-        [1.0, 1.0],
-    ];
-    let line_csg: CSG<()> = CSG::polygon_2d(line_pts);
-    let revolve = line_csg.rotate_extrude(360.0, 16);
-    // We expect some ring-like shape with polygons
+    // Default square is from (0,0) to (1,1) in XY.
+    // Shift it so it’s from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
+    // and rotate it 90 degrees so that it can be swept around Z
+    let square: CSG<()> = CSG::square(None)
+        .translate(nalgebra::Vector3::new(1.0, 0.0, 0.0))
+        .rotate(90.0, 0.0, 0.0);
+
+    // Now revolve this translated square around the Z-axis, 360° in 16 segments.
+    let revolve = square.rotate_extrude(360.0, 16);
+
+    // We expect a ring-like “tube” instead of a degenerate shape.
     assert!(!revolve.polygons.is_empty());
 }
 
