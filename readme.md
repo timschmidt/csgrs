@@ -129,10 +129,10 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     let grown_cube = cube.grow(4.0);
     let shrunk_cube = cube.shrink(4.0);
 
-## Grow / Shrink a 2D shape: (bugged atm)
+## Grow / Shrink a 2D shape:
 
-    let grown_square = square.grow_2d(4.0);
-    let shrunk_square = square.shrink_2d(4.0);
+    let grown_square = square.offset_2d(4.0);
+    let shrunk_square = square.offset_2d(-4.0);
     
 ## Text:
 
@@ -292,7 +292,6 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
 - manifoldness tests / fixes - in stl_io library
-- reimplement 2D offsetting with cavalier_contours
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
 - reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html

@@ -66,10 +66,10 @@ fn main() {
     let circle_2d = MyCSG::circle(Some((1.0, 32)));
     let _ = fs::write("stl/circle_2d.stl", circle_2d.to_stl("circle_2d"));
 
-    let grown_2d = square_2d.grow_2d(0.5);
+    let grown_2d = square_2d.offset_2d(0.5);
     let _ = fs::write("stl/square_2d_grow_0_5.stl", grown_2d.to_stl("square_2d_grow_0_5"));
 
-    let shrunk_2d = square_2d.shrink_2d(0.5);
+    let shrunk_2d = square_2d.offset_2d(-0.5);
     let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl("square_2d_shrink_0_5"));
 
     // 8) Extrude & Rotate-Extrude

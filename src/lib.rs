@@ -15,6 +15,9 @@ use rapier3d_f64::prelude::*;
 use meshtext::{Glyph, MeshGenerator, MeshText};
 use stl_io;
 use std::fs::OpenOptions;
+use cavalier_contours::polyline::{
+    Polyline, PlineSource, PlineCreation, PlineSourceMut,
+};
 
 #[cfg(test)]
 mod tests;
@@ -25,6 +28,74 @@ pub enum Axis {
     X,
     Y,
     Z,
+}
+
+/// Minimal 2D vertex structure for polylines.
+#[derive(Debug, Clone)]
+pub struct PlineVertex2D {
+    pub x: f64,
+    pub y: f64,
+    pub bulge: f64,
+}
+
+/// Converts one of your 3D polygons (assumed to lie in the XY plane) into
+/// a sequence of 2D polyline vertices. We set `bulge = 0.0` for each edge.
+pub fn polygon_to_polyline2d<S: Clone>(poly: &Polygon<S>) -> Vec<PlineVertex2D> {
+    let mut result = Vec::new();
+
+    if poly.vertices.len() < 2 {
+        return result; // degenerate or empty polygon
+    }
+
+    // We assume the polygon is already in the XY plane (z ~ 0).
+    // If your polygons might have arcs, you'd need more logic to detect + store bulge, etc.
+    for v in &poly.vertices {
+        let px = v.pos.x; // x in plane
+        let py = v.pos.y; // y in plane
+        // bulge=0 => line segment
+        result.push(PlineVertex2D {
+            x: px,
+            y: py,
+            bulge: 0.0,
+        });
+    }
+
+    result
+}
+
+/// Builds a CSG from a list of 2D polylines (in XY). We treat each polyline as one
+/// flat polygon, lying in Z=0 with normal +Z. If you have multiple polylines,
+/// they become multiple polygons in the returned CSG. For more advanced logic
+/// (like holes, or combining them), you can union them or store them differently.
+pub fn build_csg_from_polyline<S: Clone>(
+    loops: &Vec<Vec<PlineVertex2D>>,
+) -> CSG<S> {
+    let mut all_polygons = Vec::new();
+
+    // Normal for all polygons is +Z in a simple 2D XY scenario
+    let plane_normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+
+    for loop_ in loops {
+        if loop_.len() < 3 {
+            // skip degenerate
+            continue;
+        }
+
+        // Convert the loop of (x,y,bulge=0) into a single Polygon with flat shading
+        let mut poly_verts = Vec::with_capacity(loop_.len());
+
+        for v2d in loop_ {
+            let pt = nalgebra::Point3::new(v2d.x, v2d.y, 0.0);
+            poly_verts.push(Vertex::new(pt, plane_normal));
+        }
+
+        // Make one Polygon with an auto-computed plane
+        let poly_3d = Polygon::new(poly_verts, None);
+        all_polygons.push(poly_3d);
+    }
+
+    // Combine all polygons into a single CSG
+    CSG::from_polygons(all_polygons)
 }
 
 /// A vertex of a polygon, holding position and normal.
@@ -1285,33 +1356,51 @@ impl<S: Clone> CSG<S> {
         result.inverse()
     }
 
-    /// Approximate 2D growing (outward offset) of the shape by a given distance.
-    pub fn grow_2d(&self, distance: f64) -> CSG<S> {
-        let resolution = 64;
-        let circle: CSG<S> = CSG::circle(Some((distance, resolution)));
-        let circle_vertices = circle.vertices();
-        let mut result = CSG::new();
-
-        for v in circle_vertices {
-            let translation = Vector3::new(v.pos.x, v.pos.y, 0.0);
-            result = result.union(&self.translate(translation));
+    /// Grows/outsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
+    pub fn offset_2d(&self, distance: f64) -> CSG<S> {
+        // 1) Convert each polygon to a 2D polyline in XY
+        let mut all_plines_2d = Vec::new();
+        for poly in &self.polygons {
+            // Assume `poly` is in XY plane, gather the points:
+            let pline2d = polygon_to_polyline2d(poly);
+            all_plines_2d.push(pline2d);
         }
-        result
-    }
 
-    /// Approximate 2D shrinking (inward offset) of the shape by a given distance.
-    pub fn shrink_2d(&self, distance: f64) -> CSG<S> {
-        let resolution = 64;
-        let circle: CSG<S> = CSG::circle(Some((distance, resolution)));
-        let circle_vertices = circle.vertices();
-        let complement = self.inverse();
-        let mut result = CSG::new();
+        // 2) For each polyline, build a cavalier_contours Polyline<f64>, offset it
+        let mut offset_loops = Vec::new(); // each "loop" is a Vec<PlineVertex2D> in your 2D format
 
-        for v in circle_vertices {
-            let translation = Vector3::new(v.pos.x, v.pos.y, 0.0);
-            result = result.union(&complement.translate(translation));
+        for pline2d in all_plines_2d {
+            // Convert to cavalier_contours Polyline (closed by default):
+            let mut cpoly = Polyline::<f64>::with_capacity(pline2d.len(), /*is_closed=*/true);
+            for v in &pline2d {
+                cpoly.add(v.x, v.y, v.bulge);
+            }
+
+            // Remove any degenerate or redundant vertices:
+            cpoly.remove_redundant(1e-5);
+
+            // Perform the actual offset:
+            let result_plines = cpoly.parallel_offset(-distance);
+
+            // Convert the result polylines back into your PlineVertex2D
+            for off_pl in result_plines {
+                let mut out_loop = Vec::new();
+                // The offset polyline is typically closed; iterate over all its vertices:
+                for i in 0..off_pl.vertex_count() {
+                    let vv = off_pl.at(i);
+                    out_loop.push(PlineVertex2D {
+                        x: vv.x,
+                        y: vv.y,
+                        bulge: vv.bulge,
+                    });
+                }
+                // Collect this loop
+                offset_loops.push(out_loop);
+            }
         }
-        result.inverse()
+
+        // 3) Build a new CSG from those offset loops in XY:
+        build_csg_from_polyline::<S>(&offset_loops)
     }
 
     /// Convert a `MeshText` (from meshtext) into a list of `Polygon` in the XY plane.

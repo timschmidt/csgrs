@@ -1,6 +1,6 @@
 [package]
 name = "csgrs"
-version = "0.3.2"
+version = "0.4.0"
 edition = "2021"
 description = "Constructive solid geometry on meshes using BSP trees in Rust"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>",]
@@ -9,6 +9,7 @@ repository = "https://github.com/timschmidt/csgrs"
 readme = "readme.md"
 
 [dependencies]
+cavalier_contours = "0.4.0"
 chull = "0.2.4"
 meshtext = { version = "0.3.1", features = ["owned"] }
 nalgebra = "0.33"

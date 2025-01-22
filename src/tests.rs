@@ -991,17 +991,22 @@ fn test_csg_grow_and_shrink() {
 
 #[test]
 fn test_csg_grow_2d_and_shrink_2d() {
-    let sq: CSG<()> = CSG::square(None); 
-    let grown = sq.grow_2d(0.5);
-    let bb_sq = sq.bounding_box();
-    let bb_gr = grown.bounding_box();
+    let square: CSG<()> = CSG::square(Some(([2.0, 2.0], true))); 
+    let grown = square.offset_2d(0.5);
+    let shrunk = square.offset_2d(-0.5);
+    let bb_square = square.bounding_box();
+    let bb_grown = grown.bounding_box();
+    let bb_shrunk = shrunk.bounding_box();
+    
+    println!("Square bb: {:#?}", bb_square);
+    println!("Grown bb: {:#?}", bb_grown);
+    println!("Shrunk bb: {:#?}", bb_shrunk);
+    
     // Should be bigger
-    assert!(bb_gr.maxs.x > bb_sq.maxs.x + 0.4);
+    assert!(bb_grown.maxs.x > bb_square.maxs.x + 0.4);
 
-    let shr = sq.shrink_2d(0.5);
-    let bb_sh = shr.bounding_box();
     // Should be smaller
-    assert!(bb_sh.maxs.x < bb_sq.maxs.x + 0.1);
+    assert!(bb_shrunk.maxs.x < bb_square.maxs.x + 0.1);
 }
 
 #[test]
@@ -1349,4 +1354,84 @@ fn test_complex_shared_data_struct_in_boolean_ops() {
             col
         );
     }
+}
+
+/// Helper function to calculate the signed area of a polygon.
+/// Positive area indicates CCW ordering.
+fn signed_area(polygon: &Polygon<()>) -> f64 {
+    let mut area = 0.0;
+    let verts = &polygon.vertices;
+    for i in 0..verts.len() {
+        let j = (i + 1) % verts.len();
+        area += (verts[i].pos.x * verts[j].pos.y) - (verts[j].pos.x * verts[i].pos.y);
+    }
+    area / 2.0
+}
+
+#[test]
+fn test_square_ccw_ordering() {
+    let square = CSG::square(None);
+    assert_eq!(square.polygons.len(), 1);
+    let poly = &square.polygons[0];
+    let area = signed_area(poly);
+    assert!(area > 0.0, "Square vertices are not CCW ordered");
+}
+
+#[test]
+fn test_offset_2d_positive_distance_grows() {
+    let square = CSG::square(Some(([2.0, 2.0], true))); // Centered square with size 2x2
+    let offset = square.offset_2d(0.5); // Positive offset should grow the square
+
+    // The original square has area 4.0
+    // The offset square should have area greater than 4.0
+    assert_eq!(offset.polygons.len(), 1);
+    let poly = &offset.polygons[0];
+    let area = signed_area(poly);
+    assert!(area > 4.0, "Offset with positive distance did not grow the square");
+}
+
+#[test]
+fn test_offset_2d_negative_distance_shrinks() {
+    let square = CSG::square(Some(([2.0, 2.0], true))); // Centered square with size 2x2
+    let offset = square.offset_2d(-0.5); // Negative offset should shrink the square
+
+    // The original square has area 4.0
+    // The offset square should have area less than 4.0
+    assert_eq!(offset.polygons.len(), 1);
+    let poly = &offset.polygons[0];
+    let area = signed_area(poly);
+    assert!(area < 4.0, "Offset with negative distance did not shrink the square");
+}
+
+#[test]
+fn test_polygon_2d_enforce_ccw_ordering() {
+    // Define a triangle in CW order
+    let points_cw = vec![[0.0, 0.0], [1.0, 0.0], [0.5, 1.0]];
+    let mut csg_cw = CSG::polygon_2d(&points_cw);
+    // Enforce CCW ordering
+    csg_cw.renormalize();
+    let poly = &csg_cw.polygons[0];
+    let area = signed_area(poly);
+    assert!(area > 0.0, "Polygon ordering was not corrected to CCW");
+}
+
+#[test]
+fn test_circle_offset_2d() {
+    let circle = CSG::circle(Some((1.0, 32)));
+    let offset_grow = circle.offset_2d(0.2); // Should grow the circle
+    let offset_shrink = circle.offset_2d(-0.2); // Should shrink the circle
+
+    // Original circle has area ~3.1416
+    let original_area = 3.141592653589793;
+    let grow_area = signed_area(&offset_grow.polygons[0]);
+    let shrink_area = signed_area(&offset_shrink.polygons[0]);
+
+    assert!(
+        grow_area > original_area,
+        "Offset with positive distance did not grow the circle"
+    );
+    assert!(
+        shrink_area < original_area,
+        "Offset with negative distance did not shrink the circle"
+    );
 }
