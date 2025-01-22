@@ -281,8 +281,8 @@ Subtraction and intersection naturally follow from set operations. If union is `
 
 ## Todo
 - extrusions between two polygons
-- debug revolve extrude - use vector extrusions
-- projection to 2D / cut
+- debug revolve extrude - use vector extrusions, cap ends
+- projection to 2d / cut
 - dxf/svg import/export
 - fragments (circle, sphere, regularize with rotate_extrude)
 - polygon holes
@@ -297,6 +297,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
 - adjust binary STL function to output data, not file
+- evaluate https://github.com/asny/tri-mesh for useful functions
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
   - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
