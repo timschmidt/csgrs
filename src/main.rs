@@ -16,80 +16,80 @@ fn main() {
 
     // 1) Basic shapes: cube, sphere, cylinder
     let cube = MyCSG::cube(None); // center=(0,0,0), radius=(1,1,1) by default
-    let _ = fs::write("stl/cube.stl", cube.to_stl("cube"));
+    let _ = fs::write("stl/cube.stl", cube.to_stl_binary("cube").unwrap());
 
     let sphere = MyCSG::sphere(None); // center=(0,0,0), radius=1, slices=16, stacks=8
-    let _ = fs::write("stl/sphere.stl", sphere.to_stl("sphere"));
+    let _ = fs::write("stl/sphere.stl", sphere.to_stl_binary("sphere").unwrap());
 
     let cylinder = MyCSG::cylinder(None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=16
-    let _ = fs::write("stl/cylinder.stl", cylinder.to_stl("cylinder"));
+    let _ = fs::write("stl/cylinder.stl", cylinder.to_stl_binary("cylinder").unwrap());
 
     // 2) Transformations: Translate, Rotate, Scale, Mirror
     let moved_cube = cube
         .translate(Vector3::new(1.0, 0.0, 0.0))
         .rotate(0.0, 45.0, 0.0)
         .scale(1.0, 0.5, 2.0);
-    let _ = fs::write("stl/cube_transformed.stl", moved_cube.to_stl("cube_transformed"));
+    let _ = fs::write("stl/cube_transformed.stl", moved_cube.to_stl_binary("cube_transformed").unwrap());
 
     let mirrored_cube = cube.mirror(Axis::X);
-    let _ = fs::write("stl/cube_mirrored_x.stl", mirrored_cube.to_stl("cube_mirrored_x"));
+    let _ = fs::write("stl/cube_mirrored_x.stl", mirrored_cube.to_stl_binary("cube_mirrored_x").unwrap());
 
     // 3) Boolean operations: Union, Subtract, Intersect
     let union_shape = moved_cube.union(&sphere);
-    let _ = fs::write("stl/union_cube_sphere.stl", union_shape.to_stl("union_cube_sphere"));
+    let _ = fs::write("stl/union_cube_sphere.stl", union_shape.to_stl_binary("union_cube_sphere").unwrap());
 
     let subtract_shape = moved_cube.subtract(&sphere);
-    let _ = fs::write("stl/subtract_cube_sphere.stl", subtract_shape.to_stl("subtract_cube_sphere"));
+    let _ = fs::write("stl/subtract_cube_sphere.stl", subtract_shape.to_stl_binary("subtract_cube_sphere").unwrap());
 
     let intersect_shape = moved_cube.intersect(&sphere);
-    let _ = fs::write("stl/intersect_cube_sphere.stl", intersect_shape.to_stl("intersect_cube_sphere"));
+    let _ = fs::write("stl/intersect_cube_sphere.stl", intersect_shape.to_stl_binary("intersect_cube_sphere").unwrap());
 
     // 4) Convex hull
     let hull_of_union = union_shape.convex_hull();
-    let _ = fs::write("stl/hull_union.stl", hull_of_union.to_stl("hull_union"));
+    let _ = fs::write("stl/hull_union.stl", hull_of_union.to_stl_binary("hull_union").unwrap());
 
     // 5) Minkowski sum
     let minkowski = cube.minkowski_sum(&sphere);
-    let _ = fs::write("stl/minkowski_cube_sphere.stl", minkowski.to_stl("minkowski_cube_sphere"));
+    let _ = fs::write("stl/minkowski_cube_sphere.stl", minkowski.to_stl_binary("minkowski_cube_sphere").unwrap());
 
     // 6) Grow & Shrink (3D offsetting)
     let grown_cube = cube.grow(0.2);   // approximate outward offset
-    let _ = fs::write("stl/cube_grow_0_2.stl", grown_cube.to_stl("cube_grow_0_2"));
+    let _ = fs::write("stl/cube_grow_0_2.stl", grown_cube.to_stl_binary("cube_grow_0_2").unwrap());
 
     let shrunk_cube = cube.shrink(0.2); // approximate inward offset
-    let _ = fs::write("stl/cube_shrink_0_2.stl", shrunk_cube.to_stl("cube_shrink_0_2"));
+    let _ = fs::write("stl/cube_shrink_0_2.stl", shrunk_cube.to_stl_binary("cube_shrink_0_2").unwrap());
 
     // 7) 2D shapes and 2D offsetting
     let square_2d = MyCSG::square(Some(([2.0, 2.0], true))); // 2x2 square, centered
-    let _ = fs::write("stl/square_2d.stl", square_2d.to_stl("square_2d"));
+    let _ = fs::write("stl/square_2d.stl", square_2d.to_stl_binary("square_2d").unwrap());
 
     let circle_2d = MyCSG::circle(Some((1.0, 32)));
-    let _ = fs::write("stl/circle_2d.stl", circle_2d.to_stl("circle_2d"));
+    let _ = fs::write("stl/circle_2d.stl", circle_2d.to_stl_binary("circle_2d").unwrap());
 
     let grown_2d = square_2d.offset_2d(0.5);
-    let _ = fs::write("stl/square_2d_grow_0_5.stl", grown_2d.to_stl("square_2d_grow_0_5"));
+    let _ = fs::write("stl/square_2d_grow_0_5.stl", grown_2d.to_stl_binary("square_2d_grow_0_5").unwrap());
 
     let shrunk_2d = square_2d.offset_2d(-0.5);
-    let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl("square_2d_shrink_0_5"));
+    let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_binary("square_2d_shrink_0_5").unwrap());
 
     // 8) Extrude & Rotate-Extrude
     let extruded_square = square_2d.extrude(1.0);
-    let _ = fs::write("stl/square_extrude.stl", extruded_square.to_stl("square_extrude"));
+    let _ = fs::write("stl/square_extrude.stl", extruded_square.to_stl_binary("square_extrude").unwrap());
 
     let revolve_circle = circle_2d.rotate_extrude(360.0, 32);
-    let _ = fs::write("stl/circle_revolve_360.stl", revolve_circle.to_stl("circle_revolve_360"));
+    let _ = fs::write("stl/circle_revolve_360.stl", revolve_circle.to_stl_binary("circle_revolve_360").unwrap());
 
     let partial_revolve = circle_2d.rotate_extrude(180.0, 32);
-    let _ = fs::write("stl/circle_revolve_180.stl", partial_revolve.to_stl("circle_revolve_180"));
+    let _ = fs::write("stl/circle_revolve_180.stl", partial_revolve.to_stl_binary("circle_revolve_180").unwrap());
 
     // 9) Subdivide triangles (for smoother sphere or shapes):
     let subdiv_sphere = sphere.subdivide_triangles(2); // 2 subdivision levels
-    let _ = fs::write("stl/sphere_subdiv2.stl", subdiv_sphere.to_stl("sphere_subdiv2"));
+    let _ = fs::write("stl/sphere_subdiv2.stl", subdiv_sphere.to_stl_binary("sphere_subdiv2").unwrap());
 
     // 10) Renormalize polygons (flat shading):
     let mut union_clone = union_shape.clone();
     union_clone.renormalize();
-    let _ = fs::write("stl/union_renormalized.stl", union_clone.to_stl("union_renormalized"));
+    let _ = fs::write("stl/union_renormalized.stl", union_clone.to_stl_binary("union_renormalized").unwrap());
 
     // 11) Ray intersection demo (just printing the results)
     {
@@ -113,17 +113,17 @@ fn main() {
         vec![2, 0, 3],
     ];
     let poly = MyCSG::polyhedron(points, &faces);
-    let _ = fs::write("stl/tetrahedron.stl", poly.to_stl("tetrahedron"));
+    let _ = fs::write("stl/tetrahedron.stl", poly.to_stl_binary("tetrahedron").unwrap());
 
     // 13) Text example (2D). Provide a valid TTF font data below:
     // (Replace "asar.ttf" with a real .ttf file in your project.)
     let font_data = include_bytes!("../asar.ttf");
     let text_csg = MyCSG::text_mesh("HELLO", font_data, Some(15.0));
-    let _ = fs::write("stl/text_hello_2d.stl", text_csg.to_stl("text_hello_2d"));
+    let _ = fs::write("stl/text_hello_2d.stl", text_csg.to_stl_binary("text_hello_2d").unwrap());
 
     // Optionally extrude the text:
     let text_extruded = text_csg.extrude(2.0);
-    let _ = fs::write("stl/text_hello_extruded.stl", text_extruded.to_stl("text_hello_extruded"));
+    let _ = fs::write("stl/text_hello_extruded.stl", text_extruded.to_stl_binary("text_hello_extruded").unwrap());
 
     // 14) Mass properties (just printing them)
     let (mass, com, principal_frame) = cube.mass_properties(1.0);

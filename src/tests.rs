@@ -91,9 +91,9 @@ fn test_polygon_construction() {
 // --------------------------------------------------------
 
 #[test]
-fn test_to_stl() {
+fn test_to_stl_ascii() {
     let cube: CSG<()> = CSG::cube(None);
-    let stl_str = cube.to_stl("test_cube");
+    let stl_str = cube.to_stl_ascii("test_cube");
     // Basic checks
     assert!(stl_str.contains("solid test_cube"));
     assert!(stl_str.contains("endsolid test_cube"));
