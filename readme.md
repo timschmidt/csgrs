@@ -280,9 +280,8 @@ Subtraction and intersection naturally follow from set operations. If union is `
 
 ## Todo
 - vector font for machining
-- extrusions between two polygons
 - extruding a line does not currently result in a 2D shape as it has fewer than three points
-- debug revolve extrude - use vector extrusions, cap ends
+- debug revolve extrude - use extrusions between polygons, cap ends
 - projection to 2d / cut
 - dxf/svg import/export
 - fragments (circle, sphere, regularize with rotate_extrude)
