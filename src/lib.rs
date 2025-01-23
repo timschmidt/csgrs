@@ -1236,110 +1236,92 @@ impl<S: Clone> CSG<S> {
         CSG::from_polygons(polygons)
     }
 
-    /// Rotate-extrude (revolve) this 2D shape around the Z-axis from 0..`angle_degs`.
-    /// - `segments` determines how many steps to sample around the axis.
-    /// - For a full revolve, pass `angle_degs = 360.0`.
-    /// 
-    /// This is similar to OpenSCAD's `rotate_extrude(angle=..., segments=...)`.
+    /// Rotate-extrude (revolve) this 2D shape around the Z-axis from 0..`angle_degs`
+    /// by replicating the original polygon(s) at each step and calling `extrude_between`.
+    /// Caps are added automatically if the revolve is partial (angle < 360°).
     pub fn rotate_extrude(&self, angle_degs: f64, segments: usize) -> CSG<S> {
         let angle_radians = angle_degs.to_radians();
         if segments < 2 {
             panic!("rotate_extrude requires at least 2 segments");
         }
-
-        // For each polygon in the original 2D shape, we'll build a "swept" surface.
-        // We'll store the new polygons in here:
-        let mut new_polygons = Vec::new();
-
-        // Precompute rotation transforms for each step.
-        // Step i in [0..segments]:
-        //   θ_i = i * (angle_radians / (segments as f64))
-        // We'll store these as 4×4 matrices for convenience.
-        let mut transforms = Vec::with_capacity(segments);
-        for i in 0..segments {
-            let frac = i as f64 / segments as f64;
-            let theta = frac * angle_radians;
-            let rot = Rotation3::from_axis_angle(&Vector3::z_axis(), theta);
-            transforms.push(rot.to_homogeneous());
-        }
-
-        // Also consider the "closing" transform: if angle < 360, we do not close fully,
-        // but if angle == 360, the last transform is the same as the 0th. 
-        // We'll handle that logic by just iterating from i..(i+1).
-        // We'll get the index of the next slice: (i+1)%segments if angle=360,
-        // or i+1 if partial revolve. For partial revolve, the last segment = segments-1
-        // won't connect forward if angle<360. 
-        //
-        // We'll define a small helper to get the next index safely:
-        let closed = (angle_degs - 360.0).abs() < EPSILON; // if angle=360, we close
-        let next_index = |i: usize| -> Option<usize> {
-            if i == segments - 1 {
-                if closed { Some(0) } else { None }
-            } else {
-                Some(i + 1)
-            }
-        };
-
-        // For each polygon in our 2D shape...
-        for poly in &self.polygons {
-            let vcount = poly.vertices.len();
-            if vcount < 3 {
+    
+        // We'll consider the revolve "closed" if the angle is effectively 360°
+        let closed = (angle_degs - 360.0).abs() < EPSILON;
+    
+        // Collect all newly formed polygons here
+        let mut result_polygons = Vec::new();
+    
+        // For each polygon in our original 2D shape:
+        for original_poly in &self.polygons {
+            let n_verts = original_poly.vertices.len();
+            if n_verts < 3 {
+                // Skip degenerate or empty polygons
                 continue;
             }
-
-            // Build a slice of transformed polygons
-            // for i in 0..segments, polygon_i = transform(poly, transforms[i])
-            let mut slices = Vec::with_capacity(segments);
-            for i in 0..segments {
-                let slice_csg = CSG::from_polygons(vec![poly.clone()]).transform(&transforms[i]);
-                // We only have 1 polygon in slice_csg, so just grab it
-                slices.push(slice_csg.polygons[0].clone());
+    
+            // 1) Create a list of rotated copies ("slices") of `original_poly`.
+            //    We'll generate `segments+1` slices if it's a partial revolve,
+            //    so that slices[0] = 0° and slices[segments] = angle_degs,
+            //    giving us "segments" intervals to extrude_between.
+            //    If `angle_degs == 360`, slices[segments] ends up co-located with slices[0].
+            let mut slices = Vec::with_capacity(segments + 1);
+            for i in 0..=segments {
+                let frac = i as f64 / segments as f64;
+                let theta = frac * angle_radians;
+    
+                // Build a rotation around Z by `theta`
+                let rot = Rotation3::from_axis_angle(&Vector3::z_axis(), theta).to_homogeneous();
+    
+                // Transform this single polygon by that rotation
+                let rotated_poly = CSG::from_polygons(vec![original_poly.clone()])
+                    .transform(&rot)
+                    .polygons[0]
+                    .clone();
+                slices.push(rotated_poly);
             }
-
-            // Now connect slice i -> slice i+1 for each edge in the original polygon
-            // The bottom edge is from slices[i].vertices[edge], 
-            // the top edge is from slices[i+1].vertices[edge] (in matching order).
-            for i in 0..segments {
-                let n_i = next_index(i);
-                if n_i.is_none() {
-                    continue; // partial revolve, we skip the last connection
+    
+            // 2) "Loft" between successive slices using `extrude_between`.
+            //    - If it's a full 360 revolve, we do 0..(segments) and wrap around 
+            //      from slices[segments-1] => slices[0].
+            //    - If it's partial, we just do 0..(segments), which covers 
+            //      slices[i] -> slices[i+1] for i=0..(segments-1).
+            if closed {
+                // Full revolve (angle ~ 360)
+                for i in 0..(segments) {
+                    // extrude_between slices[i] and slices[i+1], but on the last iteration
+                    // slices[segments] is effectively the same as slices[0].
+                    let bottom = &slices[i];
+                    let top = &slices[(i + 1) % slices.len()]; // wraps around
+                    let mut side_solid = CSG::extrude_between(bottom, top).polygons;
+                    result_polygons.append(&mut side_solid);
                 }
-                let i2 = n_i.unwrap();
-
-                // The two polygons we want to connect are slices[i] and slices[i2].
-                let poly1 = &slices[i];
-                let poly2 = &slices[i2];
-
-                // Connect edges
-                for e in 0..vcount {
-                    let e_next = (e + 1) % vcount;
-                    let b1 = &poly1.vertices[e];
-                    let b2 = &poly1.vertices[e_next];
-                    let t1 = &poly2.vertices[e];
-                    let t2 = &poly2.vertices[e_next];
-
-                    // We'll form a quad [b1, b2, t2, t1]
-                    let side_poly = Polygon::new(
-                        vec![b1.clone(), b2.clone(), t2.clone(), t1.clone()],
-                        None,
-			// Possibly this instead of None:
-			//poly.shared.clone(),
-                    );
-                    new_polygons.push(side_poly);
+                // No separate caps needed for a closed revolve; it's already sealed.
+            } else {
+                // Partial revolve (angle < 360)
+                // We form `segments` extrusions from i..i+1 (i=0..segments-1)
+                for i in 0..segments {
+                    let bottom = &slices[i];
+                    let top = &slices[i + 1];
+                    let mut side_solid = CSG::extrude_between(bottom, top).polygons;
+                    result_polygons.append(&mut side_solid);
                 }
+    
+                // 3) Add "caps" for the first and last slices so the revolve is closed at each end.
+                //    Typically you want them oriented outward, so we can flip one cap if desired.
+                let mut start_cap = slices[0].clone();
+                // Flip the start cap so its normal faces outward instead of inward:
+                start_cap.flip();
+    
+                // The end cap is slices[segments] as-is:
+                let end_cap = slices[segments].clone();
+    
+                result_polygons.push(start_cap);
+                result_polygons.push(end_cap);
             }
-
-            // Optionally, if you want the "ends" (like if angle<360), you could
-            // add the very first slice polygon and the last slice polygon
-            // as “caps” — but that’s more advanced logic:
-            // - 0° cap = slices[0] (or a reversed copy)
-            // - angle° cap = slices[segments-1] ...
-            //
-            // For a full revolve (360), these ends coincide and there's no extra capping needed.
         }
-
-        // Combine everything into a new shape
-        CSG::from_polygons(new_polygons)
+    
+        // Gather everything into a new CSG
+        CSG::from_polygons(result_polygons)
     }
 
     /// Returns a `parry3d::bounding_volume::Aabb`.

@@ -76,10 +76,10 @@ fn main() {
     let extruded_square = square_2d.extrude(1.0);
     let _ = fs::write("stl/square_extrude.stl", extruded_square.to_stl_binary("square_extrude").unwrap());
 
-    let revolve_circle = circle_2d.rotate_extrude(360.0, 32);
+    let revolve_circle = circle_2d.rotate(90.0,0.0,0.0).translate(Vector3::new(10.0, 0.0, 0.0)).rotate_extrude(360.0, 32);
     let _ = fs::write("stl/circle_revolve_360.stl", revolve_circle.to_stl_binary("circle_revolve_360").unwrap());
 
-    let partial_revolve = circle_2d.rotate_extrude(180.0, 32);
+    let partial_revolve = circle_2d.rotate(90.0,0.0,0.0).translate(Vector3::new(10.0, 0.0, 0.0)).rotate_extrude(180.0, 32);
     let _ = fs::write("stl/circle_revolve_180.stl", partial_revolve.to_stl_binary("circle_revolve_180").unwrap());
 
     // 9) Subdivide triangles (for smoother sphere or shapes):

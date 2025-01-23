@@ -97,7 +97,13 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     // Extrude along some arbitrary vector, say (1.0, 2.0, 3.0):
     let extruded_diagonal = my_2d_shape.extrude_along(Vector3::new(1.0, 2.0, 3.0));
     
-## Rotate extrude: (bugged atm)
+## Extrude between two polygons:
+
+    let circle = MyCSG::circle(Some((2.0, 64)));
+    let circle2 = MyCSG::circle(Some((2.0, 64)));
+    let solid = CSG::extrude_between(circle, circle2);
+    
+## Rotate extrude:
 
     let polygon = MyCSG::polygon_2d(&[
         [1.0, 0.0],
@@ -281,7 +287,6 @@ Subtraction and intersection naturally follow from set operations. If union is `
 ## Todo
 - vector font for machining
 - extruding a line does not currently result in a 2D shape as it has fewer than three points
-- debug revolve extrude - use extrusions between polygons, cap ends
 - projection to 2d / cut
 - dxf/svg import/export
 - fragments (circle, sphere, regularize with rotate_extrude)
