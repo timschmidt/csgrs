@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 use super::*;
-use nalgebra::{Vector3, Point3, Matrix4};
+use nalgebra::{Vector3, Point3};
 
 // --------------------------------------------------------
 //   Helpers
@@ -1066,7 +1066,8 @@ fn test_csg_to_stl_and_from_stl_file() {
     let tmp_path = "test_csg_output.stl";
 
     let cube: CSG<()> = CSG::cube(None);
-    let res = cube.to_stl_file(tmp_path);
+    let res = cube.to_stl_binary("A cube");
+    std::fs::write(tmp_path, res.as_ref().unwrap());
     assert!(res.is_ok());
 
     let csg_in: CSG<()> = CSG::from_stl_file(tmp_path).unwrap();
@@ -1434,4 +1435,164 @@ fn test_circle_offset_2d() {
         shrink_area < original_area,
         "Offset with negative distance did not shrink the circle"
     );
+}
+
+/// Helper to make a simple Polygon in 3D with given vertices.
+fn make_polygon_3d(points: &[[f64; 3]]) -> Polygon<()> {
+    let mut verts = Vec::new();
+    for p in points {
+        let pos = nalgebra::Point3::new(p[0], p[1], p[2]);
+        // For simplicity, just store an arbitrary normal; Polygon::new re-computes the plane anyway.
+        let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+        verts.push(Vertex::new(pos, normal));
+    }
+    Polygon::new(verts, None)
+}
+
+#[test]
+fn test_same_number_of_vertices() {
+    // "Bottom" is a triangle in 3D
+    let bottom = make_polygon_3d(&[
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.5, 0.5, 0.0],
+    ]);
+    // "Top" is the same triangle, shifted up in Z
+    let top = make_polygon_3d(&[
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [0.5, 0.5, 1.0],
+    ]);
+
+    // This should succeed with no panic:
+    let csg = CSG::extrude_between(&bottom, &top);
+
+    // Expect: 
+    //  - bottom polygon 
+    //  - top polygon 
+    //  - 3 side polygons (one for each edge of the triangle)
+    assert_eq!(csg.polygons.len(), 1 /*bottom*/ + 1 /*top*/ + 3 /*sides*/);
+}
+
+#[test]
+#[should_panic(expected = "same number of vertices")]
+fn test_different_number_of_vertices_panics() {
+    // Bottom has 3 vertices
+    let bottom = make_polygon_3d(&[
+        [0.0, 0.0, 0.0],
+        [2.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+    ]);
+    // Top has 4 vertices
+    let top = make_polygon_3d(&[
+        [0.0, 0.0, 2.0],
+        [2.0, 0.0, 2.0],
+        [2.0, 2.0, 2.0],
+        [0.0, 2.0, 2.0],
+    ]);
+
+    // This should panic due to unequal vertex counts
+    let _ = CSG::extrude_between(&bottom, &top);
+}
+
+#[test]
+fn test_consistent_winding() {
+    // Make a square in the XY plane (bottom)
+    let bottom = make_polygon_3d(&[
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+    ]);
+    // Make the same square, shifted up in Z, with the same winding direction
+    let top = make_polygon_3d(&[
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0],
+    ]);
+
+    let csg = CSG::extrude_between(&bottom, &top);
+
+    // Expect 1 bottom + 1 top + 4 side faces = 6 polygons
+    assert_eq!(csg.polygons.len(), 6);
+
+    // Optionally check that each polygon has at least 3 vertices
+    for poly in &csg.polygons {
+        assert!(poly.vertices.len() >= 3);
+    }
+}
+
+#[test]
+fn test_inverted_orientation() {
+    // Bottom square
+    let bottom = make_polygon_3d(&[
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+    ]);
+    // Top square, but with vertices in opposite order => "flipped" winding
+    let mut top = make_polygon_3d(&[
+        [0.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+    ]);
+
+    // We can fix by flipping `top`:
+    top.flip();
+
+    let csg = CSG::extrude_between(&bottom, &top);
+
+    // Expect 1 bottom + 1 top + 4 sides = 6 polygons
+    assert_eq!(csg.polygons.len(), 6);
+
+    // Check bounding box for sanity
+    let bbox = csg.bounding_box();
+    assert!(bbox.mins.z < bbox.maxs.z, "Should have a non-zero height in the Z dimension");
+}
+
+#[test]
+fn test_union_of_extruded_shapes() {
+    // We'll extrude two shapes that partially overlap, then union them.
+
+    // First shape: triangle
+    let bottom1 = make_polygon_3d(&[
+        [0.0, 0.0, 0.0],
+        [2.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+    ]);
+    let top1 = make_polygon_3d(&[
+        [0.0, 0.0, 1.0],
+        [2.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+    ]);
+    let csg1 = CSG::extrude_between(&bottom1, &top1);
+
+    // Second shape: small shifted square
+    let bottom2 = make_polygon_3d(&[
+        [1.0, -0.2, 0.5],
+        [2.0, -0.2, 0.5],
+        [2.0, 0.8, 0.5],
+        [1.0, 0.8, 0.5],
+    ]);
+    let top2 = make_polygon_3d(&[
+        [1.0, -0.2, 1.5],
+        [2.0, -0.2, 1.5],
+        [2.0, 0.8, 1.5],
+        [1.0, 0.8, 1.5],
+    ]);
+    let csg2 = CSG::extrude_between(&bottom2, &top2);
+
+    // Union them
+    let unioned = csg1.union(&csg2);
+
+    // Sanity check: union shouldn’t be empty
+    assert!(!unioned.polygons.is_empty());
+
+    // Its bounding box should span at least from z=0 to z=1.5
+    let bbox = unioned.bounding_box();
+    assert!(bbox.mins.z <= 0.0 + EPSILON);
+    assert!(bbox.maxs.z >= 1.5 - EPSILON);
 }
