@@ -1586,7 +1586,7 @@ impl<S: Clone> CSG<S> {
     /// let stl_text = csg.to_stl("my_solid");
     /// println!("{}", stl_text);
     /// ```
-    pub fn to_stl(&self, name: &str) -> String {
+    pub fn to_stl_ascii(&self, name: &str) -> String {
         let mut out = String::new();
         out.push_str(&format!("solid {}\n", name));
 
@@ -1616,33 +1616,45 @@ impl<S: Clone> CSG<S> {
         out
     }
 
-    /// Export the CSG object to a binary STL file using `stl_io`.
-    pub fn to_stl_file(&self, file_path: &str) -> Result<(), std::io::Error> {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(file_path)?;
+    // ----------------------------------------------------------
+    //   Export to BINARY STL (returns Vec<u8>)
+    // ----------------------------------------------------------
 
+    /// Convert this CSG to a **binary STL** byte vector with the given `name`.
+    ///
+    /// The resulting `Vec<u8>` can then be written to a file or handled in memory:
+    ///
+    /// ```
+    /// let bytes = csg.to_stl_binary("my_solid")?;
+    /// std::fs::write("my_solid.stl", bytes)?;
+    /// ```
+    pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
+        // `_name` could be embedded in the binary header if desired, but `stl_io` 
+        // doesn't strictly require it. We skip storing it or store it in the 80-byte header.
+
+        // Gather the triangles for stl_io
         let mut triangles = Vec::new();
         for poly in &self.polygons {
             let normal = poly.plane.normal.normalize();
             let tri_list = poly.triangulate();
 
             for tri in tri_list {
-                triangles.push(stl_io::Triangle {
-                    normal: stl_io::Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
+                triangles.push(StlTriangle {
+                    normal: Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
                     vertices: [
-                        stl_io::Vertex::new([tri[0].pos.x as f32, tri[0].pos.y as f32, tri[0].pos.z as f32]),
-                        stl_io::Vertex::new([tri[1].pos.x as f32, tri[1].pos.y as f32, tri[1].pos.z as f32]),
-                        stl_io::Vertex::new([tri[2].pos.x as f32, tri[2].pos.y as f32, tri[2].pos.z as f32]),
+                        StlVertex::new([tri[0].pos.x as f32, tri[0].pos.y as f32, tri[0].pos.z as f32, ]),
+                        StlVertex::new([tri[1].pos.x as f32, tri[1].pos.y as f32, tri[1].pos.z as f32, ]),
+                        StlVertex::new([tri[2].pos.x as f32, tri[2].pos.y as f32, tri[2].pos.z as f32, ]),
                     ],
                 });
             }
         }
 
-        stl_io::write_stl(&mut file, triangles.iter())?;
-        Ok(())
+        // Write to an in-memory buffer
+        let mut cursor = Cursor::new(Vec::new());
+        stl_io::write_stl(&mut cursor, triangles.iter())?;
+
+        Ok(cursor.into_inner())
     }
 
     /// Import a CSG object from a binary STL file using `stl_io`.

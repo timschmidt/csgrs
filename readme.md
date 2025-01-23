@@ -188,14 +188,13 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
 ## Export an ASCII STL:
 
-    let stl_data = union_result.to_stl("cube_minus_sphere");
-    let filename = "output.stl";
-    let mut file = File::create(filename).expect("Failed to create file");
-    file.write_all(stl_data.as_bytes()).expect("Failed to write STL");
+    let stl_data = union_result.to_stl_ascii("cube_minus_sphere");
+    std::fs::write("output.stl", stl_data.as_bytes())?;
     
 ## Export a binary STL:
 
-    my_csg.to_stl_file("output.stl").unwrap();
+    let bytes = union_result.to_stl_binary("my_solid")?;
+    std::fs::write("output.stl", bytes)?;
 
 ## Import an STL:
 
@@ -297,7 +296,6 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
-- adjust binary STL function to output data, not file
 - evaluate https://github.com/asny/tri-mesh for useful functions
 - identify blockers for no-std
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
