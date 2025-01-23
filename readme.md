@@ -201,7 +201,7 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
     let csg = MyCSG::from_stl_file("input.stl").unwrap();
     
-## Generic shared data:
+## Generic per-object and per-polygon metadata:
 
 In order to allow you to store custom per-polygon metadata (colors, IDs, etc.), `csgrs` now has a generic type parameter `S: Clone` on both `CSG<S>` and `Polygon<S>`.  If you don’t need custom data, you can simply use `()`, an empty type, for `S`.
 
@@ -226,7 +226,7 @@ If you do want custom data, define your own type that implements Clone:
 
 The various shape functions (`cube`, `sphere`, etc.) produce polygons whose `shared` field is `None` by default.
 
-## Getting and setting shared data:
+## Getting and setting metadata:
 
 Once you have a `CSG<S>`, you can access its polygons (either via `csg.polygons` or `csg.to_polygons()`) and use the following helper methods on each `Polygon<S>`:
 
