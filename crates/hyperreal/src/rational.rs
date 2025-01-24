@@ -313,14 +313,17 @@ use core::fmt;
 
 impl fmt::Display for Rational {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.denominator == *ONE.deref() {
+            let int = self.numerator.to_string();
+            return f.pad_integral(self.sign != Minus, "", &int);
+        }
+
         if self.sign == Minus {
             f.write_str("-")?;
         } else if f.sign_plus() {
             f.write_str("+")?;
         }
-        if self.denominator == *ONE.deref() {
-            write!(f, "{}", self.numerator)?;
-        } else if f.alternate() {
+        if f.alternate() {
             let whole = &self.numerator / &self.denominator;
             write!(f, "{whole}.")?;
             let round = &whole * &self.denominator;
@@ -339,17 +342,17 @@ impl fmt::Display for Rational {
                     break;
                 }
             }
+            Ok(())
         } else {
             let whole = &self.numerator / &self.denominator;
             let round = &whole * &self.denominator;
             let left = &self.numerator - &round;
             if whole.is_zero() {
-                write!(f, "{left}/{}", self.denominator)?;
+                write!(f, "{left}/{}", self.denominator)
             } else {
-                write!(f, "{whole} {left}/{}", self.denominator)?;
+                write!(f, "{whole} {left}/{}", self.denominator)
             }
         }
-        Ok(())
     }
 }
 
