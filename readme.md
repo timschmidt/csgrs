@@ -210,7 +210,7 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
 In order to allow you to store custom per-polygon metadata (colors, IDs, etc.), `csgrs` now has a generic type parameter `S: Clone` on both `CSG<S>` and `Polygon<S>`.  If you don’t need custom data, you can simply use `()`, an empty type, for `S`.
 
-    // No shared data:
+    // No metadata:
     type MyCSG = CSG<()>;
     let cube = MyCSG::cube(None);
 
@@ -286,6 +286,8 @@ Subtraction and intersection naturally follow from set operations. If union is `
 
 ## Todo
 - vector font for machining
+- support twist and scale in linear extrude like openscad
+- support scale in rotate extrude
 - extruding a line does not currently result in a 2D shape as it has fewer than three points
 - projection to 2d / cut
 - dxf/svg import/export
