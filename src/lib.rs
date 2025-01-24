@@ -590,8 +590,89 @@ impl<S: Clone> CSG<S> {
         }
         csg
     }
+    
+    /// Creates a 2D square in the XY plane.
+    ///
+    /// # Parameters
+    ///
+    /// - `size`: the width and height of the square (default [1.0, 1.0])
+    /// - `center`: if `true`, center the square about (0,0); otherwise bottom-left is at (0,0).
+    ///
+    /// # Example
+    /// let sq = CSG::square(None);
+    /// // or with custom params:
+    /// let sq2 = CSG::square(Some(([2.0, 3.0], true)));
+    pub fn square(params: Option<([f64; 2], bool)>) -> CSG<S> {
+        let (size, center) = match params {
+            Some((sz, c)) => (sz, c),
+            None => ([1.0, 1.0], false),
+        };
 
-    /// Construct an axis-aligned cube, with optional center and radius
+        let (w, h) = (size[0], size[1]);
+        let (x0, y0, x1, y1) = if center {
+            (-w / 2.0, -h / 2.0, w / 2.0, h / 2.0)
+        } else {
+            (0.0, 0.0, w, h)
+        };
+
+        // Single 2D polygon, normal = +Z
+        let normal = Vector3::new(0.0, 0.0, 1.0);
+        let vertices = vec![
+            Vertex::new(Point3::new(x0, y0, 0.0), normal),
+            Vertex::new(Point3::new(x1, y0, 0.0), normal),
+            Vertex::new(Point3::new(x1, y1, 0.0), normal),
+            Vertex::new(Point3::new(x0, y1, 0.0), normal),
+        ];
+        CSG::from_polygons(vec![Polygon::new(vertices, None)])
+    }
+
+    /// Creates a 2D circle in the XY plane.
+    pub fn circle(params: Option<(f64, usize)>) -> CSG<S> {
+        let (r, segments) = match params {
+            Some((radius, segs)) => (radius, segs),
+            None => (1.0, 32),
+        };
+
+        let mut verts = Vec::with_capacity(segments);
+        let normal = Vector3::new(0.0, 0.0, 1.0);
+
+        for i in 0..segments {
+            let theta = 2.0 * std::f64::consts::PI * (i as f64) / (segments as f64);
+            let x = r * theta.cos();
+            let y = r * theta.sin();
+            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+        }
+
+        CSG::from_polygons(vec![Polygon::new(verts, None)])
+    }
+
+    /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
+    ///
+    /// # Parameters
+    ///
+    /// - `points`: a sequence of 2D points (e.g. `[[0.0,0.0], [1.0,0.0], [0.5,1.0]]`)
+    ///   describing the polygon boundary in order.
+    ///
+    /// **Note:** This simple version ignores 'paths' and holes. For more complex
+    /// polygons, we'll have to handle multiple paths, winding order, holes, etc.
+    ///
+    /// # Example
+    /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
+    /// let poly2d = CSG::polygon_2d(&pts);
+    pub fn polygon_2d(points: &[[f64; 2]]) -> CSG<S> {
+        assert!(points.len() >= 3, "polygon_2d requires at least 3 points");
+        let normal = Vector3::new(0.0, 0.0, 1.0);
+        let mut verts = Vec::with_capacity(points.len());
+        for p in points {
+            verts.push(Vertex::new(Point3::new(p[0], p[1], 0.0), normal));
+        }
+        CSG::from_polygons(vec![Polygon::new(verts, None)])
+    }
+
+    /// Construct an axis-aligned cube by creating a 2D square and then
+    /// extruding it between two parallel planes (using `extrude_between`).
+    /// We translate the final shape so that its center is at `center`,
+    /// and each axis extends ± its corresponding `radius`.
     pub fn cube(options: Option<(&[f64; 3], &[f64; 3])>) -> CSG<S> {
         let (center, radius) = match options {
             Some((c, r)) => (*c, *r),
@@ -599,30 +680,29 @@ impl<S: Clone> CSG<S> {
         };
         let c = Vector3::new(center[0], center[1], center[2]);
         let r = Vector3::new(radius[0], radius[1], radius[2]);
-
-        let indices_and_normals = vec![
-            (vec![0, 4, 6, 2], Vector3::new(-1.0, 0.0, 0.0)),
-            (vec![1, 3, 7, 5], Vector3::new(1.0, 0.0, 0.0)),
-            (vec![0, 1, 5, 4], Vector3::new(0.0, -1.0, 0.0)),
-            (vec![2, 6, 7, 3], Vector3::new(0.0, 1.0, 0.0)),
-            (vec![0, 2, 3, 1], Vector3::new(0.0, 0.0, -1.0)),
-            (vec![4, 5, 7, 6], Vector3::new(0.0, 0.0, 1.0)),
-        ];
-
-        let mut polygons = Vec::new();
-        for (idxs, n) in indices_and_normals {
-            let mut verts = Vec::new();
-            for i in idxs {
-                // The bits of `i` pick +/- for x,y,z
-                let vx = c.x + r.x * ((i & 1) as f64 * 2.0 - 1.0);
-                let vy = c.y + r.y * (((i & 2) >> 1) as f64 * 2.0 - 1.0);
-                let vz = c.z + r.z * (((i & 4) >> 2) as f64 * 2.0 - 1.0);
-                verts.push(Vertex::new(Point3::new(vx, vy, vz), n));
-            }
-            polygons.push(Polygon::new(verts, None));
-        }
-
-        CSG::from_polygons(polygons)
+    
+        // 1) Create a centered square in the XY plane of width 2*r.x and height 2*r.y.
+        let base_2d = CSG::square(Some(([2.0 * r.x, 2.0 * r.y], true)));
+        // Our 2D shape has exactly one polygon:
+        let bottom_poly = &base_2d.polygons[0];
+    
+        // 2) Make the top polygon by translating this bottom polygon in +Z by 2*r.z.
+        let top_poly_csg = CSG::from_polygons(vec![bottom_poly.clone()])
+            .translate(Vector3::new(0.0, 0.0, 2.0 * r.z));
+        let top_poly = &top_poly_csg.polygons[0];
+    
+        // 3) Extrude between them to get a rectangular prism.
+        let prism = CSG::extrude_between(bottom_poly, top_poly, true);
+    
+        // 4) Finally, shift so that the prism is centered at `c` in Z:
+        //    originally it spans z from 0..2*r.z; translating by -r.z moves it to -r.z..+r.z,
+        //    then we shift by c. This yields the final bounding box:
+        //       [c.x - r.x .. c.x + r.x,
+        //        c.y - r.y .. c.y + r.y,
+        //        c.z - r.z .. c.z + r.z].
+        prism
+            .translate(Vector3::new(0.0, 0.0, -r.z))
+            .translate(c)
     }
 
     /// Construct a sphere with optional center, radius, slices, stacks
@@ -635,8 +715,6 @@ impl<S: Clone> CSG<S> {
         let c = Vector3::new(center[0], center[1], center[2]);
         let mut polygons = Vec::new();
 
-        // 2π is `std::f64::consts::TAU` in newer Rust,
-        // but if that's not available, replace with `2.0 * std::f64::consts::PI`.
         for i in 0..slices {
             for j in 0..stacks {
                 let mut vertices = Vec::new();
@@ -679,79 +757,64 @@ impl<S: Clone> CSG<S> {
         CSG::from_polygons(polygons)
     }
 
-    /// Construct a cylinder with optional start, end, radius, slices
+    /// Construct a cylinder whose centerline goes from `start` to `end`,
+    /// with a circular cross-section of given `radius`. We first build a
+    /// 2D circle in the XY plane, then extrude two copies of it in the Z
+    /// direction (via `extrude_between`), and finally rotate/translate
+    /// so that the cylinder aligns with `start -> end`.
     pub fn cylinder(options: Option<(&[f64; 3], &[f64; 3], f64, usize)>) -> CSG<S> {
         let (start, end, radius, slices) = match options {
             Some((s, e, r, sl)) => (*s, *e, r, sl),
             None => ([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16),
         };
-
+    
         let s = Vector3::new(start[0], start[1], start[2]);
         let e = Vector3::new(end[0], end[1], end[2]);
         let ray = e - s;
-        let axis_z = ray.normalize();
-        let is_y = axis_z.y.abs() > 0.5;
-
-        // If axis_z is mostly aligned with Y, pick X; otherwise pick Y.
-        let mut axis_x = if is_y {
-            Vector3::new(1.0, 0.0, 0.0)
-        } else {
-            Vector3::new(0.0, 1.0, 0.0)
-        };
-        axis_x = axis_x.cross(&axis_z).normalize();
-        let axis_y = axis_x.cross(&axis_z).normalize();
-
-        let start_v = Vertex::new(Point3::from(s), -axis_z);
-        let end_v = Vertex::new(Point3::from(e), axis_z);
-
-        let mut polygons = Vec::new();
-
-        let point = |stack: f64, slice: f64, normal_blend: f64| {
-            let angle = slice * std::f64::consts::TAU;
-            let out = axis_x * angle.cos() + axis_y * angle.sin();
-            let pos = s + ray * stack + out * radius;
-            // Blend outward normal with axis_z for the cap edges
-            let normal = out * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
-            Vertex::new(Point3::from(pos), normal)
-        };
-
-        for i in 0..slices {
-            let t0 = i as f64 / slices as f64;
-            let t1 = (i + 1) as f64 / slices as f64;
-
-            // bottom cap
-            polygons.push(Polygon::new(
-                vec![
-                    start_v.clone(),
-                    point(0.0, t0, -1.0),
-                    point(0.0, t1, -1.0),
-                ],
-                None,
-            ));
-
-            // tube
-            polygons.push(Polygon::new(
-                vec![
-                    point(0.0, t1, 0.0),
-                    point(0.0, t0, 0.0),
-                    point(1.0, t0, 0.0),
-                    point(1.0, t1, 0.0),
-                ],
-                None,
-            ));
-
-            // top cap
-            polygons.push(Polygon::new(
-                vec![
-                    end_v.clone(),
-                    point(1.0, t1, 1.0),
-                    point(1.0, t0, 1.0),
-                ],
-                None,
-            ));
+        let length = ray.norm();
+    
+        // 1) Build a 2D circle in the XY plane of radius `radius`.
+        let circle_2d = CSG::circle(Some((radius, slices)));
+        let bottom_poly = &circle_2d.polygons[0];
+    
+        // 2) Translate a copy of that circle up in Z by `length` to form the top.
+        let top_poly_csg = CSG::from_polygons(vec![bottom_poly.clone()])
+            .translate(Vector3::new(0.0, 0.0, length));
+        let top_poly = &top_poly_csg.polygons[0];
+    
+        // 3) Extrude between the bottom and top polygons to form a basic cylinder along the Z-axis.
+        let raw_cyl = CSG::extrude_between(bottom_poly, top_poly, true);
+    
+        // 4) Orient the cylinder so that its axis goes from `start` to `end`.
+        //    We rotate from +Z to `ray` using an axis-angle rotation.
+        if length.abs() < f64::EPSILON {
+            // Degenerate case: start == end, just return the shape without orientation.
+            return raw_cyl.translate(s);
         }
-
-        CSG::from_polygons(polygons)
+    
+        let z_unit = Vector3::new(0.0, 0.0, 1.0);
+        let direction = ray / length;
+        let axis = z_unit.cross(&direction);
+        let angle = z_unit.angle(&direction);
+    
+        let rotation = if axis.magnitude() < f64::EPSILON {
+            // If `ray` is parallel or anti-parallel to Z, handle that separately:
+            // e.g. if ray is in +Z direction, no rotation needed; if in -Z, rotate 180° about X or Y.
+            if z_unit.dot(&direction) > 0.0 {
+                Matrix4::identity()
+            } else {
+                // 180° flip around X-axis (or Y-axis), for a perfect reversal.
+                Rotation3::from_axis_angle(&Vector3::x_axis(), std::f64::consts::PI).to_homogeneous()
+            }
+        } else {
+            let axis_norm = axis.normalize();
+            Rotation3::from_axis_angle(&nalgebra::Unit::new_unchecked(axis_norm), angle).to_homogeneous()
+        };
+    
+        // 5) Apply the rotation, then translate so the bottom sits at `start`.
+        raw_cyl
+            .transform(&rotation)
+            .translate(s)
     }
 
     /// Creates a CSG polyhedron from raw vertex data (`points`) and face indices.
@@ -1046,84 +1109,6 @@ impl<S: Clone> CSG<S> {
 
         hits
     }
-
-    /// Creates a 2D square in the XY plane.
-    ///
-    /// # Parameters
-    ///
-    /// - `size`: the width and height of the square (default [1.0, 1.0])
-    /// - `center`: if `true`, center the square about (0,0); otherwise bottom-left is at (0,0).
-    ///
-    /// # Example
-    /// let sq = CSG::square(None);
-    /// // or with custom params:
-    /// let sq2 = CSG::square(Some(([2.0, 3.0], true)));
-    pub fn square(params: Option<([f64; 2], bool)>) -> CSG<S> {
-        let (size, center) = match params {
-            Some((sz, c)) => (sz, c),
-            None => ([1.0, 1.0], false),
-        };
-
-        let (w, h) = (size[0], size[1]);
-        let (x0, y0, x1, y1) = if center {
-            (-w / 2.0, -h / 2.0, w / 2.0, h / 2.0)
-        } else {
-            (0.0, 0.0, w, h)
-        };
-
-        // Single 2D polygon, normal = +Z
-        let normal = Vector3::new(0.0, 0.0, 1.0);
-        let vertices = vec![
-            Vertex::new(Point3::new(x0, y0, 0.0), normal),
-            Vertex::new(Point3::new(x1, y0, 0.0), normal),
-            Vertex::new(Point3::new(x1, y1, 0.0), normal),
-            Vertex::new(Point3::new(x0, y1, 0.0), normal),
-        ];
-        CSG::from_polygons(vec![Polygon::new(vertices, None)])
-    }
-
-    /// Creates a 2D circle in the XY plane.
-    pub fn circle(params: Option<(f64, usize)>) -> CSG<S> {
-        let (r, segments) = match params {
-            Some((radius, segs)) => (radius, segs),
-            None => (1.0, 32),
-        };
-
-        let mut verts = Vec::with_capacity(segments);
-        let normal = Vector3::new(0.0, 0.0, 1.0);
-
-        for i in 0..segments {
-            let theta = 2.0 * std::f64::consts::PI * (i as f64) / (segments as f64);
-            let x = r * theta.cos();
-            let y = r * theta.sin();
-            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
-        }
-
-        CSG::from_polygons(vec![Polygon::new(verts, None)])
-    }
-
-    /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
-    ///
-    /// # Parameters
-    ///
-    /// - `points`: a sequence of 2D points (e.g. `[[0.0,0.0], [1.0,0.0], [0.5,1.0]]`)
-    ///   describing the polygon boundary in order.
-    ///
-    /// **Note:** This simple version ignores 'paths' and holes. For more complex
-    /// polygons, we'll have to handle multiple paths, winding order, holes, etc.
-    ///
-    /// # Example
-    /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
-    /// let poly2d = CSG::polygon_2d(&pts);
-    pub fn polygon_2d(points: &[[f64; 2]]) -> CSG<S> {
-        assert!(points.len() >= 3, "polygon_2d requires at least 3 points");
-        let normal = Vector3::new(0.0, 0.0, 1.0);
-        let mut verts = Vec::with_capacity(points.len());
-        for p in points {
-            verts.push(Vertex::new(Point3::new(p[0], p[1], 0.0), normal));
-        }
-        CSG::from_polygons(vec![Polygon::new(verts, None)])
-    }
     
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
@@ -1198,17 +1183,27 @@ impl<S: Clone> CSG<S> {
     ///   - The `bottom` polygon,
     ///   - The `top` polygon,
     ///   - `n` rectangular side polygons bridging each edge of `bottom` to the corresponding edge of `top`.
-    pub fn extrude_between(bottom: &Polygon<S>, top: &Polygon<S>) -> CSG<S> {
+    pub fn extrude_between(bottom: &Polygon<S>, top: &Polygon<S>, flip_bottom_polygon: bool) -> CSG<S> {
         let n = bottom.vertices.len();
         assert_eq!(
-            n, 
+            n,
             top.vertices.len(),
             "extrude_between: both polygons must have the same number of vertices"
         );
     
+        // Conditionally flip the bottom polygon if requested.
+        let bottom_poly = if flip_bottom_polygon {
+            let mut flipped = bottom.clone();
+            flipped.flip();
+            flipped
+        } else {
+            bottom.clone()
+        };
+    
         // 1) Gather polygons: bottom + top
         //    (Depending on the orientation, you might want to flip one of them.)
-        let mut polygons = vec![bottom.clone(), top.clone()];
+
+        let mut polygons = vec![bottom_poly.clone(), top.clone()];
     
         // 2) For each edge (i -> i+1) in bottom, connect to the corresponding edge in top.
         for i in 0..n {
@@ -1292,7 +1287,7 @@ impl<S: Clone> CSG<S> {
                     // slices[segments] is effectively the same as slices[0].
                     let bottom = &slices[i];
                     let top = &slices[(i + 1) % slices.len()]; // wraps around
-                    let mut side_solid = CSG::extrude_between(bottom, top).polygons;
+                    let mut side_solid = CSG::extrude_between(bottom, top, false).polygons;
                     result_polygons.append(&mut side_solid);
                 }
                 // No separate caps needed for a closed revolve; it's already sealed.
@@ -1302,7 +1297,7 @@ impl<S: Clone> CSG<S> {
                 for i in 0..segments {
                     let bottom = &slices[i];
                     let top = &slices[i + 1];
-                    let mut side_solid = CSG::extrude_between(bottom, top).polygons;
+                    let mut side_solid = CSG::extrude_between(bottom, top, false).polygons;
                     result_polygons.append(&mut side_solid);
                 }
     
@@ -1428,6 +1423,135 @@ impl<S: Clone> CSG<S> {
 
         // 3) Build a new CSG from those offset loops in XY:
         build_csg_from_polyline::<S>(&offset_loops)
+    }
+
+    /// Flattens (projects) this CSG onto the XY plane, or slices it by z=0 to get the cross-section.
+    ///
+    /// - If `cut_at_z0 == false`, we take every polygon and just set `z=0` for all its vertices.
+    /// - If `cut_at_z0 == true`, we compute the intersection of each polygon with the plane z=0
+    ///   and build those cross-section polygons in the XY plane (z=0).
+    ///
+    /// Returns a new CSG containing only the resulting 2D polygons in z=0.
+    pub fn project(&self, cut_at_z0: bool) -> CSG<S> {
+        // The plane z=0 can be represented by normal (0,0,1), w=0
+        let plane = Plane {
+            normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
+            w: 0.0,
+        };
+        let eps = EPSILON; // or 1e-5, as defined
+
+        let mut result_polygons = Vec::new();
+
+        // For each polygon in the original CSG:
+        for poly in &self.polygons {
+            if !cut_at_z0 {
+                // -----------------------------------------
+                // 1) Simple projection: flatten z -> 0
+                // -----------------------------------------
+                let new_verts: Vec<Vertex> = poly.vertices
+                    .iter()
+                    .map(|v| {
+                        Vertex {
+                            pos: nalgebra::Point3::new(v.pos.x, v.pos.y, 0.0),
+                            // We can force normal = +Z, or keep the old normal if you prefer
+                            normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
+                        }
+                    })
+                    .collect();
+
+                result_polygons.push(Polygon::new(new_verts, poly.shared.clone()));
+            } else {
+                // -----------------------------------------
+                // 2) Slice by z=0: find cross-section
+                // -----------------------------------------
+                let vcount = poly.vertices.len();
+                if vcount < 2 {
+                    continue; // skip degenerate
+                }
+
+                // Classify each vertex against z=0 plane
+                // side[i] = +1 if above plane, -1 if below plane, 0 if on plane
+                let mut sides = Vec::with_capacity(vcount);
+                for v in &poly.vertices {
+                    let dist = plane.normal.dot(&v.pos.coords) - plane.w;
+                    if dist.abs() < eps {
+                        sides.push(0); // on plane
+                    } else if dist > 0.0 {
+                        sides.push(1); // above
+                    } else {
+                        sides.push(-1); // below
+                    }
+                }
+
+                // Collect the points where the polygon intersects z=0
+                let mut intersect_points = Vec::new();
+
+                for i in 0..vcount {
+                    let j = (i + 1) % vcount;
+                    let side_i = sides[i];
+                    let side_j = sides[j];
+                    let vi = &poly.vertices[i];
+                    let vj = &poly.vertices[j];
+
+                    // If a vertex lies exactly on z=0, include it
+                    if side_i == 0 {
+                        intersect_points.push(vi.pos);
+                    }
+
+                    // If edges cross the plane (one above, one below), find intersection
+                    if side_i != side_j && side_i != 0 && side_j != 0 {
+                        let denom = plane.normal.dot(&(vj.pos - vi.pos));
+                        if denom.abs() > eps {
+                            // parameter t along edge vi->vj
+                            let t = (plane.w - plane.normal.dot(&vi.pos.coords)) / denom;
+                            let new_v = vi.interpolate(vj, t).pos;
+                            intersect_points.push(new_v);
+                        }
+                    }
+                }
+
+                // If we have fewer than 3 intersection points, no valid cross-section polygon
+                if intersect_points.len() < 3 {
+                    continue;
+                }
+
+                // Because the polygon is (usually) convex or at least planar, these intersection
+                // points can be turned into a loop in the plane z=0. We just need to sort them
+                // around their average center so they form a proper polygon.
+                let mut avg = nalgebra::Vector3::zeros();
+                for p in &intersect_points {
+                    avg += p.coords;
+                }
+                avg /= intersect_points.len() as f64;
+
+                // Sort by polar angle about `avg`
+                intersect_points.sort_by(|a, b| {
+                    let ax = a.x - avg.x;
+                    let ay = a.y - avg.y;
+                    let bx = b.x - avg.x;
+                    let by = b.y - avg.y;
+                    let angle_a = ay.atan2(ax);
+                    let angle_b = by.atan2(bx);
+                    angle_a
+                        .partial_cmp(&angle_b)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                });
+
+                // Build a new Polygon (in z=0, normal = +Z)
+                let normal_2d = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+                let new_verts: Vec<Vertex> = intersect_points
+                    .into_iter()
+                    .map(|p| Vertex::new(
+                        nalgebra::Point3::new(p.x, p.y, 0.0),
+                        normal_2d,
+                    ))
+                    .collect();
+
+                result_polygons.push(Polygon::new(new_verts, poly.shared.clone()));
+            }
+        }
+
+        CSG::from_polygons(result_polygons)
     }
 
     /// Convert a `MeshText` (from meshtext) into a list of `Polygon` in the XY plane.

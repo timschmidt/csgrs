@@ -49,6 +49,12 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     ];
     let prism = MyCSG::polyhedron(&points, &faces);
 
+## Project or cut a 3D shape into 2D
+
+    let cube = MyCSG::cube(None);
+    let projection = cube.project(false);
+    let cut = cube.project(true);
+
 ## Combine shapes:
 
     let union_result = cube.union(&sphere);
@@ -101,7 +107,7 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
     let circle = MyCSG::circle(Some((2.0, 64)));
     let circle2 = MyCSG::circle(Some((2.0, 64)));
-    let solid = CSG::extrude_between(circle, circle2);
+    let solid = CSG::extrude_between(circle, circle2.translate(Vector3::new(3.0, 2.0, 5.0)));
     
 ## Rotate extrude:
 
@@ -287,9 +293,8 @@ Subtraction and intersection naturally follow from set operations. If union is `
 ## Todo
 - vector font for machining
 - support twist and scale in linear extrude like openscad
-- support scale in rotate extrude
+- support scale and translation along a vector in rotate extrude
 - extruding a line does not currently result in a 2D shape as it has fewer than three points
-- projection to 2d / cut
 - dxf/svg import/export
 - fragments (circle, sphere, regularize with rotate_extrude)
 - polygon holes
@@ -307,6 +312,10 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
   - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
+
+## Todo maybe
+- implement arc support in 2d using cavalier_contours, tessellate in from_polygons
+- extend Polygon to allow edges to store arc parameters and bulge like cavalier_contours and update split_polygon to handle line/arc intersections.
 
 # License
 

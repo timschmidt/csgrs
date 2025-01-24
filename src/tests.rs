@@ -756,10 +756,8 @@ fn test_csg_cylinder() {
     assert!(approx_eq(bb[4],  1.0, 1e-8), "max Y");
     assert!(approx_eq(bb[5],  1.0, 1e-8), "max Z");
     
-    // We have slices = 16, each slice has 3 polygons (bottom cap tri, tube quad, top cap tri) => 16 * 3 = 48
-    // But the tube quad is actually a single polygon with 4 vertices, not 2 triangles. 
-    // So total polygons = 16 * 3 = 48
-    assert_eq!(cylinder.polygons.len(), 16 * 3);
+    // We have slices = 16, plus 2 polygons for the end caps
+    assert_eq!(cylinder.polygons.len(), 18);
 }
 
 #[test]
@@ -1034,6 +1032,7 @@ fn test_csg_to_trimesh() {
 fn test_csg_mass_properties() {
     let cube: CSG<()> = CSG::cube(None); // side=2 => volume=8. If density=1 => mass=8
     let (mass, com, _frame) = cube.mass_properties(1.0);
+    println!("{:#?}", mass);
     // For a centered cube with side 2, volume=8 => mass=8 => COM=(0,0,0)
     assert!(approx_eq(mass, 8.0, 0.1));
     assert!(approx_eq(com.x, 0.0, 0.001));
@@ -1465,7 +1464,7 @@ fn test_same_number_of_vertices() {
     ]);
 
     // This should succeed with no panic:
-    let csg = CSG::extrude_between(&bottom, &top);
+    let csg = CSG::extrude_between(&bottom, &top, true);
 
     // Expect: 
     //  - bottom polygon 
@@ -1492,7 +1491,7 @@ fn test_different_number_of_vertices_panics() {
     ]);
 
     // This should panic due to unequal vertex counts
-    let _ = CSG::extrude_between(&bottom, &top);
+    let _ = CSG::extrude_between(&bottom, &top, true);
 }
 
 #[test]
@@ -1512,7 +1511,7 @@ fn test_consistent_winding() {
         [0.0, 1.0, 1.0],
     ]);
 
-    let csg = CSG::extrude_between(&bottom, &top);
+    let csg = CSG::extrude_between(&bottom, &top, false);
 
     // Expect 1 bottom + 1 top + 4 side faces = 6 polygons
     assert_eq!(csg.polygons.len(), 6);
@@ -1543,7 +1542,7 @@ fn test_inverted_orientation() {
     // We can fix by flipping `top`:
     top.flip();
 
-    let csg = CSG::extrude_between(&bottom, &top);
+    let csg = CSG::extrude_between(&bottom, &top, false);
 
     // Expect 1 bottom + 1 top + 4 sides = 6 polygons
     assert_eq!(csg.polygons.len(), 6);
@@ -1568,7 +1567,7 @@ fn test_union_of_extruded_shapes() {
         [2.0, 0.0, 1.0],
         [1.0, 1.0, 1.0],
     ]);
-    let csg1 = CSG::extrude_between(&bottom1, &top1);
+    let csg1 = CSG::extrude_between(&bottom1, &top1, true);
 
     // Second shape: small shifted square
     let bottom2 = make_polygon_3d(&[
@@ -1583,7 +1582,7 @@ fn test_union_of_extruded_shapes() {
         [2.0, 0.8, 1.5],
         [1.0, 0.8, 1.5],
     ]);
-    let csg2 = CSG::extrude_between(&bottom2, &top2);
+    let csg2 = CSG::extrude_between(&bottom2, &top2, true);
 
     // Union them
     let unioned = csg1.union(&csg2);
