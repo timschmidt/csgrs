@@ -292,12 +292,19 @@ Subtraction and intersection naturally follow from set operations. If union is `
 
 ## Todo
 - vector font for machining
+  - https://github.com/kamalmostafa/hershey-fonts
+  - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
+- https://github.com/PsichiX/density-mesh
+- implement 2d offsetting with these for testing against cavalier_contours
+  - https://github.com/Akirami/polygon-offsetting
+  - https://github.com/anlumo/offset_polygon
 - support twist and scale in linear extrude like openscad
 - support scale and translation along a vector in rotate extrude
 - extruding a line does not currently result in a 2D shape as it has fewer than three points
 - dxf/svg import/export
 - fragments (circle, sphere, regularize with rotate_extrude)
 - polygon holes
+  - https://github.com/Open-S2/earclip
 - fill
 - 32bit / 64bit feature
 - parallelize clip_to and invert with rayon and par_iter
@@ -315,6 +322,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
 
 ## Todo maybe
 - implement arc support in 2d using cavalier_contours, tessellate in from_polygons
+- reconstruct arcs from polylines using 
 - extend Polygon to allow edges to store arc parameters and bulge like cavalier_contours and update split_polygon to handle line/arc intersections.
 
 # License
