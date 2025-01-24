@@ -1066,7 +1066,7 @@ fn test_csg_to_stl_and_from_stl_file() {
 
     let cube: CSG<()> = CSG::cube(None);
     let res = cube.to_stl_binary("A cube");
-    std::fs::write(tmp_path, res.as_ref().unwrap());
+    let _ = std::fs::write(tmp_path, res.as_ref().unwrap());
     assert!(res.is_ok());
 
     let csg_in: CSG<()> = CSG::from_stl_file(tmp_path).unwrap();
