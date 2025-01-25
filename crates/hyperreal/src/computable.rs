@@ -121,7 +121,7 @@ impl Computable {
             square_root.square()
         } else {
             Self {
-                internal: Box::new(Approximation::Exp(self)),
+                internal: Box::new(Approximation::PrescaledExp(self)),
                 cache: RefCell::new(Cache::Invalid),
             }
         }
