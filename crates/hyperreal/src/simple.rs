@@ -365,7 +365,7 @@ mod tests {
         let empty = HashMap::new();
         let xpr: Simple = "(√ (+ pi pi pi pi))".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
-        let ans = format!("{result:e}");
+        let ans = format!("{result:.32e}");
         assert_eq!(ans, "3.54490770181103205459633496668229e0");
     }
 
@@ -374,7 +374,7 @@ mod tests {
         let empty = HashMap::new();
         let xpr: Simple = "(* (+ pi pi) (* 3 pi))".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
-        let ans = format!("{result:e}");
+        let ans = format!("{result:.32e}");
         assert_eq!(ans, "5.92176264065361517130069459992569e1");
     }
 
@@ -383,7 +383,7 @@ mod tests {
         let empty = HashMap::new();
         let xpr: Simple = "(* pi e 4)".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
-        let ans = format!("{result:e}");
+        let ans = format!("{result:.32e}");
         assert_eq!(ans, "3.41589368906942682618542034781863e1");
     }
 
@@ -402,7 +402,7 @@ mod tests {
         let empty = HashMap::new();
         let xpr: Simple = "(/ pi e 4)".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
-        let ans = format!("{result:e}");
+        let ans = format!("{result:.32e}");
         assert_eq!(ans, "2.88931837447730429477523295828174e-1");
     }
 
@@ -411,7 +411,7 @@ mod tests {
         let empty = HashMap::new();
         let xpr: Simple = "(/ e)".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
-        let ans = format!("{result:e}");
+        let ans = format!("{result:.32e}");
         assert_eq!(ans, "3.67879441171442321595523770161461e-1");
     }
 
@@ -423,7 +423,7 @@ mod tests {
                 .parse()
                 .unwrap();
         let result = xpr.evaluate(&empty).unwrap();
-        let ans = format!("{result:#}");
-        assert_eq!(ans, "1231233424.0000000000000000000000000003181");
+        let ans = format!("{result:#.29}");
+        assert_eq!(ans, "1231233424.00000000000000000000000000032");
     }
 }
