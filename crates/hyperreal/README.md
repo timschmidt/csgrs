@@ -53,7 +53,7 @@ We can parse these expressions in the usual way, and we can evaluate such an exp
 Currently the provided operators are the + - * and / expected in programming for addition, subtraction, multiplication and division
 plus e or exp for the natural exponenitation, l or ln for the natural log, and s, sqrt or √ for square roots.
 
-Also the cosine (cos) and sine (sin) functions are provided.
+The cosine (cos) and sine (sin) functions are provided and expressions which reduce to sin() of some rational multiple of pi are tracked.
 
 
 (ln (exp 1)) == (e (l 1)) == 1
@@ -68,7 +68,7 @@ Today the built-in names are only e (the mathematical constant and base of the n
 
 However in the built-in evaluator names are also given to the previous answer (last) and all numbered answers (#1, #2 and so on)
 
-When results are not whole numbers, scientific notation is used to display the decimal fraction
+When results are not integral, scientific notation is used to display the decimal fraction
 
 
 (+ 1 2 3 4) == 10

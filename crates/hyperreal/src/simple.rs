@@ -331,7 +331,7 @@ mod tests {
         let empty = HashMap::new();
         let xpr: Simple = "(+ 1 (* 2 3) 4)".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
-        assert!(result.is_whole());
+        assert!(result.is_integer());
         let ans = format!("{result}");
         assert_eq!(ans, "11");
     }
@@ -392,7 +392,7 @@ mod tests {
         let empty = HashMap::new();
         let xpr: Simple = "(l (* (e 4) (e 6)))".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
-        assert!(result.is_whole());
+        assert!(result.is_integer());
         let ans = format!("{result}");
         assert_eq!(ans, "10");
     }

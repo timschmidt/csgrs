@@ -25,6 +25,7 @@ enum Class {
     Sqrt(Rational),
     Exp(Rational),
     Ln(Rational),
+    SinPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     Irrational,
 }
 
@@ -37,6 +38,7 @@ impl PartialEq for Class {
             (Sqrt(r), Sqrt(s)) => r == s,
             (Exp(r), Exp(s)) => r == s,
             (Ln(r), Ln(s)) => r == s,
+            (SinPi(r), SinPi(s)) => r == s,
             (_, _) => false,
         }
     }
@@ -55,6 +57,13 @@ impl Class {
             (Exp(br.clone()), Computable::e(br))
         }
     }
+}
+
+mod rationals {
+    use crate::Rational;
+    use std::sync::LazyLock;
+
+    pub(super) static HALF: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2));
 }
 
 mod unsigned {
@@ -149,6 +158,26 @@ impl Real {
     }
 }
 
+// Sin(r) is a single curve, then reflected, then both halves negated
+// returns whether to negate, and the (if necessary reflected) fraction
+// 0 < r < 0.5
+// Never actually used for exact zero or half
+fn curve(r: Rational) -> (bool, Rational) {
+    let whole = r.shifted_big_integer(0);
+    let mut s = r.fract();
+    if s.sign() == Sign::Minus {
+        s = s.neg();
+    }
+    if s > *rationals::HALF {
+        s = Rational::one() - s;
+    }
+    if whole.bit(0) {
+        (true, s)
+    } else {
+        (false, s)
+    }
+}
+
 impl Real {
     /// Is this Real exactly zero?
     pub fn definitely_zero(&self) -> bool {
@@ -171,7 +200,7 @@ impl Real {
     /// this will be accurate for trivial Rationals and some but not all other cases
     pub fn best_sign(&self) -> Sign {
         match &self.class {
-            One | Pi | Exp(_) | Sqrt(_) => self.rational.sign(),
+            One | Pi | Exp(_) | Sqrt(_) | SinPi(_) => self.rational.sign(),
             _ => match (self.rational.sign(), self.computable.sign()) {
                 (Sign::NoSign, _) => Sign::NoSign,
                 (_, Sign::NoSign) => Sign::NoSign,
@@ -382,7 +411,7 @@ impl Real {
                 };
             }
             Pi => {
-                if self.rational.is_whole() {
+                if self.rational.is_integer() {
                     return Self::zero();
                 }
                 let mut r: Option<Real> = None;
@@ -413,6 +442,23 @@ impl Real {
                         return real.neg();
                     } else {
                         return real;
+                    }
+                } else {
+                    let (neg, r) = curve(self.rational);
+                    let new =
+                        Computable::multiply(Computable::pi(), Computable::rational(r.clone()));
+                    if neg {
+                        return Self {
+                            rational: Rational::new(-1),
+                            class: SinPi(r),
+                            computable: Computable::sin(new),
+                        };
+                    } else {
+                        return Self {
+                            rational: Rational::one(),
+                            class: SinPi(r),
+                            computable: Computable::sin(new),
+                        };
                     }
                 }
             }
@@ -450,9 +496,9 @@ impl Real {
         self.make_computable(Computable::cos)
     }
 
-    /// Is this Real a whole number aka integer ?
-    pub fn is_whole(&self) -> bool {
-        self.class == One && self.rational.is_whole()
+    /// Is this Real an integer ?
+    pub fn is_integer(&self) -> bool {
+        self.class == One && self.rational.is_integer()
     }
 
     /// Is this Real known to be rational ?
@@ -508,6 +554,7 @@ impl fmt::Display for Real {
                 Exp(n) => write!(f, " x e**({})", &n),
                 Ln(n) => write!(f, " x ln({})", &n),
                 Sqrt(n) => write!(f, " √({})", &n),
+                SinPi(n) => write!(f, " x sin({} x Pi)", &n),
                 _ => write!(f, " x {:?}", self.class),
             }
         }
@@ -899,6 +946,19 @@ mod tests {
         assert_eq!(sqrt.rational, root);
         let two = Rational::new(2);
         assert_eq!(sqrt.class, Sqrt(two));
+    }
+
+    #[test]
+    fn curves() {
+        let eighty = Rational::fraction(80, 100);
+        let twenty = Rational::fraction(20, 100);
+        assert_eq!(curve(eighty), (false, twenty));
+        let forty = Rational::fraction(40, 100);
+        let sixty = Rational::fraction(60, 100);
+        assert_eq!(curve(sixty), (false, forty));
+        let otf = Rational::fraction(124, 100);
+        let tf = Rational::fraction(24, 100);
+        assert_eq!(curve(otf), (true, tf));
     }
 
     #[test]

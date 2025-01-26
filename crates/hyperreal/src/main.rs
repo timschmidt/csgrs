@@ -52,7 +52,7 @@ pub fn main() {
 }
 
 fn answer(ans: &Real, name: &str) {
-    if ans.is_whole() {
+    if ans.is_integer() {
         println!("{name}: {ans}");
     } else if ans.is_rational() {
         if ans.prefer_fraction() {

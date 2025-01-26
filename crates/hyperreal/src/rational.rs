@@ -141,13 +141,40 @@ impl Rational {
         }
     }
 
-    pub fn is_whole(&self) -> bool {
-        if self.denominator == *ONE.deref() {
-            return true;
+    /// Checks if the value is an integer
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use realistic::Rational;
+    /// assert!(Rational::new(5).is_integer());
+    /// assert!(Rational::fraction(16, 4).is_integer());
+    /// assert!(!Rational::fraction(5, 4).is_integer());
+    /// ```
+    pub fn is_integer(&self) -> bool {
+        self.denominator == *ONE.deref()
+    }
+
+    /// The fractional part of this Rational
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use realistic::Rational;
+    /// let approx_pi = Rational::fraction(22, 7);
+    /// let a_seventh = Rational::fraction(1, 7);
+    /// assert_eq!(approx_pi.fract(), a_seventh);
+    /// ```
+    pub fn fract(&self) -> Self {
+        if self.is_integer() {
+            return Self::zero();
         }
-        let whole = &self.numerator / &self.denominator;
-        let round = &whole * &self.denominator;
-        self.numerator == round
+        let n = &self.numerator % &self.denominator;
+        Self {
+            sign: self.sign,
+            numerator: n,
+            denominator: self.denominator.clone(),
+        }
     }
 
     pub(crate) fn denominator(&self) -> &BigUint {
@@ -524,6 +551,32 @@ impl PartialEq for Rational {
     }
 }
 
+impl PartialOrd for Rational {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        use std::cmp::Ordering::*;
+        match self.sign.cmp(&other.sign) {
+            Less => return Some(Less),
+            Greater => return Some(Greater),
+            _ => (),
+        }
+        if self.denominator == other.denominator {
+            match self.sign {
+                Plus => self.numerator.partial_cmp(&other.numerator),
+                Minus => other.numerator.partial_cmp(&self.numerator),
+                NoSign => unreachable!(),
+            }
+        } else {
+            let left = &self.numerator * &other.denominator;
+            let right = &other.numerator * &self.denominator;
+            match self.sign {
+                Plus => left.partial_cmp(&right),
+                Minus => right.partial_cmp(&left),
+                NoSign => unreachable!(),
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -637,6 +690,15 @@ mod tests {
     }
 
     #[test]
+    fn fract() {
+        let seventy_ninths = Rational::fraction(70, 9);
+        assert_eq!(seventy_ninths.fract(), Rational::fraction(7, 9));
+        assert_eq!(seventy_ninths.neg().fract(), Rational::fraction(-7, 9));
+        let six = Rational::new(6);
+        assert_eq!(six.fract(), Rational::zero());
+    }
+
+    #[test]
     fn sqrt_trouble() {
         for (n, root, rest) in [
             (1, 1, 1),
@@ -664,5 +726,13 @@ mod tests {
         assert!(!half.prefer_fraction());
         let third: Rational = "2/6".parse().unwrap();
         assert!(third.prefer_fraction());
+    }
+
+    #[test]
+    fn compare() {
+        assert!(Rational::one() > Rational::zero());
+        assert!(Rational::new(5) > Rational::new(4));
+        assert!(Rational::new(-10) < Rational::new(5));
+        assert!(Rational::fraction(1, 4) < Rational::fraction(1, 3));
     }
 }
