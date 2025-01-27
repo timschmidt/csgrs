@@ -1595,3 +1595,341 @@ fn test_union_of_extruded_shapes() {
     assert!(bbox.mins.z <= 0.0 + EPSILON);
     assert!(bbox.maxs.z >= 1.5 - EPSILON);
 }
+
+#[test]
+fn test_flatten_cube() {
+    // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
+    //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
+    let cube = CSG::<()>::cube(Some((&[0.0, 0.0, 0.0], &[1.0, 1.0, 1.0])));
+    // 2) Flatten into the XY plane
+    let flattened = cube.project(false);
+    
+    // The flattened cube should have 1 polygon1, now in z=0
+    assert_eq!(flattened.polygons.len(), 1, 
+        "Flattened cube should have 1 face in z=0");
+
+    // Check that all vertices lie at z=0
+    for poly in &flattened.polygons {
+        for v in &poly.vertices {
+            assert!(
+                (v.pos.z - 0.0).abs() < EPSILON,
+                "Flattened vertex must have z=0, found z={}",
+                v.pos.z
+            );
+        }
+    }
+
+    // Optional: we can check the bounding box in z-dimension is effectively zero
+    let bbox = flattened.bounding_box();
+    let thickness = bbox.maxs.z - bbox.mins.z;
+    assert!(
+        thickness.abs() < EPSILON,
+        "Flattened shape should have negligible thickness in z"
+    );
+}
+
+#[test]
+fn test_slice_cylinder() {
+    // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
+    let cyl = CSG::<()>::cylinder(Some((&[0.0, -1.0, 0.0], &[0.0, 1.0, 0.0], 1.0, 32)));
+    // 2) Slice at z=0
+    let cross_section = cyl.project(true);
+
+    // For a simple cylinder, the cross-section is typically 1 circle polygon 
+    // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
+    // So we expect exactly 1 polygon.
+    assert_eq!(
+        cross_section.polygons.len(), 
+        1,
+        "Slicing a cylinder at z=0 should yield exactly 1 cross-section polygon"
+    );
+
+    let poly = &cross_section.polygons[0];
+    let vcount = poly.vertices.len();
+
+    // We used 32 slices for the cylinder, so we expect up to 32 edges
+    // in the cross-section circle. Some slight differences might occur
+    // if the slicing logic merges or sorts vertices. 
+    // Typically, you might see vcount = 32 or vcount = 34, etc.
+    // Let's just check it's > 3 and in a plausible range:
+    assert!(
+        vcount >= 3 && vcount <= 40,
+        "Expected cross-section circle to have a number of edges ~32, got {}",
+        vcount
+    );
+
+    // Check all vertices are on z=0
+    for v in &poly.vertices {
+        assert!(
+            (v.pos.z - 0.0).abs() < EPSILON,
+            "Sliced vertex must have z=0, found z={}",
+            v.pos.z
+        );
+    }
+
+    // Optional: check approximate radius
+    // The cross-section should be at radius ~1 around x=0,y=some, z=0
+    // (Actually, the cylinder's axis is along Y, so we expect x^2+z^2=1. 
+    //  But since z=0 now, effectively we expect x^2=1 => x=±1 if we're ignoring any bulge, 
+    //  or we'll see a circle in the plane y=?? Actually, wait— 
+    //  the cylinder we built is from (0,-1,0) to (0,1,0) with radius=1 around that axis, 
+    //  so the cross-section plane is z=0, meaning x^2 + y^2 = 1. 
+    //  We can check a couple of sample vertices.)
+    if !poly.vertices.is_empty() {
+        let first_v = &poly.vertices[0].pos;
+        let r_approx = (first_v.x.powi(2) + first_v.y.powi(2)).sqrt();
+        // We expect something close to radius=1:
+        assert!(
+            (r_approx - 1.0).abs() < 1e-3,
+            "Cross-section radius should be ~1, got {:?}",
+            r_approx
+        );
+    }
+}
+
+/// Helper to create a `Polygon` in the XY plane from an array of (x,y) points,
+/// with z=0 and normal=+Z.
+fn polygon_from_xy_points(xy_points: &[[f64; 2]]) -> Polygon<()> {
+    assert!(xy_points.len() >= 3, "Need at least 3 points for a polygon.");
+
+    let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+    let vertices: Vec<Vertex> = xy_points
+        .iter()
+        .map(|&[x, y]| Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal))
+        .collect();
+
+    Polygon::new(vertices, None)
+}
+
+/// Test `polygon_to_polyline2d` with a simple square polygon in the XY plane.
+#[test]
+fn test_polygon_to_polyline2d_square() {
+    let square_poly = polygon_from_xy_points(&[
+        [0.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
+        [0.0, 1.0],
+    ]);
+
+    let pline_2d = polygon_to_polyline2d(&square_poly);
+    assert_eq!(pline_2d.len(), 4, "Expected 4 vertices in the polyline");
+    // Check coordinates
+    assert_eq!(pline_2d[0].x, 0.0);
+    assert_eq!(pline_2d[0].y, 0.0);
+    assert_eq!(pline_2d[1].x, 1.0);
+    assert_eq!(pline_2d[1].y, 0.0);
+    // etc.
+}
+
+/// Test `polygon_to_polyline2d` with a degenerate polygon (< 2 vertices).
+#[test]
+fn test_polygon_to_polyline2d_degenerate() {
+    let degenerate_poly = Polygon::<()>::new(vec![ // single-vertex polygon
+        Vertex::new(nalgebra::Point3::new(0.0, 0.0, 0.0),
+                    nalgebra::Vector3::new(0.0,0.0,1.0))
+    ], None);
+
+    let pline_2d = polygon_to_polyline2d(&degenerate_poly);
+    assert_eq!(pline_2d.len(), 0, "Expected an empty result for degenerate polygon");
+}
+
+/// Test `polyline2d_to_cc_polyline` and `pline_area` with a known square loop.
+#[test]
+fn test_polyline2d_to_cc_polyline_and_area() {
+    let square_2d = vec![
+        PlineVertex2D::new(0.0, 0.0),
+        PlineVertex2D::new(1.0, 0.0),
+        PlineVertex2D::new(1.0, 1.0),
+        PlineVertex2D::new(0.0, 1.0),
+    ];
+    let cc_pl = polyline2d_to_cc_polyline(&square_2d);
+    // Expect 4 vertices, closed
+    assert_eq!(cc_pl.vertex_count(), 4, "Should have 4 vertices");
+    assert!(cc_pl.is_closed(), "Should be closed by default");
+
+    let area = super::pline_area(&cc_pl);
+    assert!((area - 1.0).abs() < 1e-9, "Area should be 1.0 for a unit square");
+}
+
+/// Test `build_csg_from_polyline` with a simple shape.
+/// We expect a single polygon in the resulting CSG.
+#[test]
+fn test_build_csg_from_polyline_square() {
+    let square_loop = vec![
+        PlineVertex2D::new(0.0, 0.0),
+        PlineVertex2D::new(2.0, 0.0),
+        PlineVertex2D::new(2.0, 2.0),
+        PlineVertex2D::new(0.0, 2.0),
+    ];
+    let loops = vec![square_loop];
+    let csg: CSG<()> = build_csg_from_polyline(&loops);
+    assert_eq!(csg.polygons.len(), 1, "Expected exactly one polygon");
+    let bb = csg.bounding_box();
+    assert_eq!(bb.mins.x, 0.0);
+    assert_eq!(bb.mins.y, 0.0);
+    assert_eq!(bb.maxs.x, 2.0);
+    assert_eq!(bb.maxs.y, 2.0);
+}
+
+/// Test a simple case of `flatten_and_union` with a single square in the XY plane.
+/// We expect the same shape back.
+#[test]
+fn test_flatten_and_union_single_polygon() {
+    // Create a CSG with one polygon (a unit square).
+    let square_poly = polygon_from_xy_points(&[
+        [0.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
+        [0.0, 1.0],
+    ]);
+    let csg = CSG::from_polygons(vec![square_poly]);
+
+    // Flatten & union it
+    let flat_csg = flatten_and_union(&csg);
+
+    // Expect the same bounding box
+    assert!(!flat_csg.polygons.is_empty(), "Result should not be empty");
+    let bb = flat_csg.bounding_box();
+    assert_eq!(bb.mins.x, 0.0);
+    assert_eq!(bb.mins.y, 0.0);
+    assert_eq!(bb.maxs.x, 1.0);
+    assert_eq!(bb.maxs.y, 1.0);
+}
+
+/// Test `flatten_and_union` with two overlapping squares.
+/// The result should be a single unioned polygon covering [0..2, 0..1].
+#[test]
+fn test_flatten_and_union_two_overlapping_squares() {
+    // First square from (0,0) to (1,1)
+    let square1 = polygon_from_xy_points(&[
+        [0.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
+        [0.0, 1.0],
+    ]);
+    // Second square from (1,0) to (2,1)
+    let square2 = polygon_from_xy_points(&[
+        [1.0, 0.0],
+        [2.0, 0.0],
+        [2.0, 1.0],
+        [1.0, 1.0],
+    ]);
+    let csg = CSG::from_polygons(vec![square1, square2]);
+
+    let flat_csg = flatten_and_union(&csg);
+    assert!(!flat_csg.polygons.is_empty(), "Union should not be empty");
+
+    // The bounding box should now span x=0..2, y=0..1
+    let bb = flat_csg.bounding_box();
+    assert_eq!(bb.mins.x, 0.0);
+    assert_eq!(bb.maxs.x, 2.0);
+    assert_eq!(bb.mins.y, 0.0);
+    assert_eq!(bb.maxs.y, 1.0);
+
+    // We can also check that there's exactly 1 polygon if the union merges them fully
+    // (Though sometimes the union might produce multiple polygons if the library doesn't merge edges,
+    //  but with cavalier_contours "Or" we should get a single merged loop.)
+    assert_eq!(
+        flat_csg.polygons.len(),
+        1,
+        "Expected one merged polygon after flatten+union"
+    );
+}
+
+/// Test `flatten_and_union` with two disjoint squares.
+/// The result should have two separate polygons.
+#[test]
+fn test_flatten_and_union_two_disjoint_squares() {
+    // Square A at (0..1, 0..1)
+    let square_a = polygon_from_xy_points(&[
+        [0.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
+        [0.0, 1.0],
+    ]);
+    // Square B at (2..3, 2..3)
+    let square_b = polygon_from_xy_points(&[
+        [2.0, 2.0],
+        [3.0, 2.0],
+        [3.0, 3.0],
+        [2.0, 3.0],
+    ]);
+    let csg = CSG::from_polygons(vec![square_a, square_b]);
+
+    let flat_csg = flatten_and_union(&csg);
+    assert!(!flat_csg.polygons.is_empty());
+
+    // Expect 2 disjoint polygons in the result
+    assert_eq!(
+        flat_csg.polygons.len(),
+        2,
+        "Expected two separate polygons after union"
+    );
+}
+
+/// Test `flatten_and_union` when polygons are not perfectly in the XY plane,
+/// but very close to z=0. This checks sensitivity to floating errors.
+#[test]
+fn test_flatten_and_union_near_xy_plane() {
+    let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+    // Slightly "tilted" or with z=1e-6
+    let poly1 = Polygon::<()>::new(
+        vec![
+            Vertex::new(nalgebra::Point3::new(0.0, 0.0, 1e-6), normal),
+            Vertex::new(nalgebra::Point3::new(1.0, 0.0, 1e-6), normal),
+            Vertex::new(nalgebra::Point3::new(1.0, 1.0, 1e-6), normal),
+            Vertex::new(nalgebra::Point3::new(0.0, 1.0, 1e-6), normal),
+        ],
+        None,
+    );
+
+    let csg = CSG::from_polygons(vec![poly1]);
+    let flat_csg = flatten_and_union(&csg);
+
+    assert!(!flat_csg.polygons.is_empty(), "Should flatten to a valid polygon");
+    let bb = flat_csg.bounding_box();
+    assert_eq!(bb.mins.x, 0.0);
+    assert_eq!(bb.maxs.x, 1.0);
+    assert_eq!(bb.mins.y, 0.0);
+    assert_eq!(bb.maxs.y, 1.0);
+}
+
+/// Test with multiple polygons that share edges or have nearly collinear edges
+/// to ensure numeric tolerances (`eps_area`, `eps_pos`) don't remove them incorrectly.
+#[test]
+fn test_flatten_and_union_collinear_edges() {
+    // Two rectangles sharing a long horizontal edge
+    let rect1 = polygon_from_xy_points(&[
+        [0.0, 0.0],
+        [2.0, 0.0],
+        [2.0, 1.0],
+        [0.0, 1.0],
+    ]);
+    let rect2 = polygon_from_xy_points(&[
+        [2.0, 0.0],
+        [4.0, 0.0],
+        [4.0, 1.001],  // slightly off
+        [2.0, 1.0],
+    ]);
+
+    let csg = CSG::<()>::from_polygons(vec![rect1, rect2]);
+    let flat_csg = flatten_and_union(&csg);
+
+    // Expect 1 polygon from x=0..4, y=0..~1.0ish
+    assert!(!flat_csg.polygons.is_empty());
+    let bb = flat_csg.bounding_box();
+    assert!((bb.maxs.x - 4.0).abs() < 1e-5, "Should span up to x=4.0");
+    // Also check the y-range is ~1.001
+    assert!((bb.maxs.y - 1.001).abs() < 1e-3);
+}
+
+/// If you suspect `flatten_and_union` is returning no polygons, this test
+/// ensures we get at least one polygon for a simple shape. If it fails,
+/// you can println! debug info in `flatten_and_union`.
+#[test]
+fn test_flatten_and_union_debug() {
+    let csg_square = CSG::<()>::square(None); // a 1×1 square at [0..1, 0..1]
+    let flattened = flatten_and_union(&csg_square);
+    assert!(!flattened.polygons.is_empty(), "Flattened square should not be empty");
+    assert!(flattened.polygons[0].vertices.len() >= 3, "Should form at least a triangle");
+}
