@@ -143,6 +143,10 @@ fn main() {
     // 2) Slice at z=0
     let cross_section = cyl.project(true);
     let _ = fs::write("stl/sliced_cylinder.stl", cross_section.to_stl_binary("sliced_cylinder").unwrap());
+    
+    let poor_geometry_shape = moved_cube.subtract(&sphere);
+    let retriangulated_shape = poor_geometry_shape.retriangulate();
+    let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
 }
 
