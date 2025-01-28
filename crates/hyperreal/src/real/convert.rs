@@ -142,25 +142,34 @@ impl Real {
 
 use crate::computable::Precision;
 
-fn sig_exp_32(c: Computable, msd: Precision, bits: u32) -> (u32, u32) {
-    if msd < -126 {
+// (Significand, Exponent)
+fn sig_exp_32(c: Computable, msd: Precision) -> (u32, u32) {
+    const SIG_BITS: u32 = 0x007f_ffff;
+    const OVERSIZE: u32 = 0x0100_0000;
+
+    if msd <= -126 {
         let sig = c
             .approx(-149)
             .magnitude()
             .try_into()
             .expect("Magnitude of the top bits should fit in a u32");
-        (sig, 0)
+        // It is possible for that top bit to be set, so we're not a denormal
+        if sig > SIG_BITS {
+            (sig & SIG_BITS, 1)
+        } else {
+            (sig, 0)
+        }
     } else {
         let sig: u32 = c
-            .approx(msd - 23)
+            .approx(msd - 24)
             .magnitude()
             .try_into()
             .expect("Magnitude of the top bits should fit in a u32");
         // MSD has almost (but not quite) two orders of binary magnitude range
-        if sig > bits {
-            (sig & bits, (127 + msd) as u32)
+        if sig >= OVERSIZE {
+            ((sig >> 1) & SIG_BITS, (127 + msd) as u32)
         } else {
-            ((sig << 1) & bits, (126 + msd) as u32)
+            (sig & SIG_BITS, (126 + msd) as u32)
         }
     }
 }
@@ -198,7 +207,7 @@ impl From<Real> for f32 {
                 _ => unreachable!(),
             };
         }
-        let (sig_bits, exp) = sig_exp_32(c, msd, SIG_BITS);
+        let (sig_bits, exp) = sig_exp_32(c, msd);
         let neg_bits: u32 = neg << NEG_BITS.trailing_zeros();
         let exp_bits: u32 = exp << EXP_BITS.trailing_zeros();
         let bits = neg_bits | exp_bits | sig_bits;
@@ -206,6 +215,7 @@ impl From<Real> for f32 {
     }
 }
 
+// (Significand, Exponent)
 fn sig_exp_64(c: Computable, msd: Precision, bits: u64) -> (u64, u64) {
     if msd < -1022 {
         let sig = c
@@ -367,73 +377,59 @@ mod tests {
         assert_eq!(zero, 0.0);
     }
 
-    #[test]
-    fn big_roundtrip() {
-        let before = f32::MAX;
-        let mid: Real = before.try_into().unwrap();
-        let after: f32 = mid.into();
-        assert_eq!(before, after);
-        let before = f64::MAX;
-        let mid: Real = before.try_into().unwrap();
-        let after: f64 = mid.into();
-        assert_eq!(before, after);
+    fn roundtrip<T>(f: T) -> T where T: TryInto<Real> + From<Real>, <T as TryInto<Real>>::Error: std::fmt::Debug  {
+        let mid: Real = f.try_into().unwrap();
+        mid.into()
     }
 
     #[test]
-    fn arbitrary_roundtrip() {
-        let before = 0.123456789_f32;
-        let mid: Real = before.try_into().unwrap();
-        let after: f32 = mid.into();
-        assert_eq!(before, after);
-        let before = 987654321_f32;
-        let mid: Real = before.try_into().unwrap();
-        let after: f32 = mid.into();
-        assert_eq!(before, after);
-        let before = 0.123456789_f64;
-        let mid: Real = before.try_into().unwrap();
-        let after: f64 = mid.into();
-        assert_eq!(before, after);
-        let before = 987654321_f64;
-        let mid: Real = before.try_into().unwrap();
-        let after: f64 = mid.into();
-        assert_eq!(before, after);
+    fn big_roundtrip() {
+        assert_eq!(f32::MAX, roundtrip(f32::MAX));
+        assert_eq!(f64::MAX, roundtrip(f64::MAX));
     }
 
     #[test]
     fn small_roundtrip() {
-        let before = f32::MIN_POSITIVE;
-        let mid: Real = before.try_into().unwrap();
-        let after: f32 = mid.into();
-        assert_eq!(before, after);
-        let before = f64::MIN_POSITIVE;
-        let mid: Real = before.try_into().unwrap();
-        let after: f64 = mid.into();
-        assert_eq!(before, after);
+        assert_eq!(f32::MIN_POSITIVE, roundtrip(f32::MIN_POSITIVE));
+        assert_eq!(f64::MIN_POSITIVE, roundtrip(f64::MIN_POSITIVE));
     }
 
     #[test]
-    fn subnormal_roundtrip_64() {
+    fn arbitrary_roundtrip() {
+        assert_eq!(0.123456789_f32, roundtrip(0.123456789_f32));
+        assert_eq!(987654321_f32, roundtrip(987654321_f32));
+        assert_eq!(0.123456789_f64, roundtrip(0.123456789_f64));
+        assert_eq!(987654321_f64, roundtrip(987654321_f64));
+    }
+
+    #[test]
+    fn almost_two() {
+        // Largest f32 which is smaller than two
+        let h = f32::from_bits(0x3fff_ffff);
+        let r: Real = h.try_into().unwrap();
+        let j: f32 = r.into();
+        assert_eq!(h, j);
+    }
+
+    #[test]
+    fn subnormal_roundtrip() {
         let before = 1.234e-310_f64;
         assert_ne!(before, 0.0);
-        let mid: Real = before.try_into().unwrap();
-        let after: f64 = mid.into();
-        assert_eq!(before, after);
-    }
-
-    #[test]
-    fn subnormal_roundtrip_32() {
+        assert_eq!(before, roundtrip(before));
+        // Large but still subnormal
+        let sub = f32::from_bits(0x7c0000);
+        assert_eq!(sub, roundtrip(sub));
         let before = 1.234e-41_f32;
         assert_ne!(before, 0.0);
-        let mid: Real = before.try_into().unwrap();
-        let after: f32 = mid.into();
-        assert_eq!(before, after);
+        assert_eq!(before, roundtrip(before));
     }
 
+    // Our Pi isn't exactly equal to the IEEE approximations since it's more accurate
     #[test]
     fn pi() {
         let f: f32 = Real::pi().into();
-        assert_eq!(f, std::f32::consts::PI);
+        assert!(std::f32::consts::PI.to_bits().abs_diff(f.to_bits()) < 2);
         let f: f64 = Real::pi().into();
-        assert_eq!(f, std::f64::consts::PI);
+        assert!(std::f64::consts::PI.to_bits().abs_diff(f.to_bits()) < 2);
     }
 }
