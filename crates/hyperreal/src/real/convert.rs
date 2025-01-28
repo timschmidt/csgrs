@@ -216,25 +216,32 @@ impl From<Real> for f32 {
 }
 
 // (Significand, Exponent)
-fn sig_exp_64(c: Computable, msd: Precision, bits: u64) -> (u64, u64) {
-    if msd < -1022 {
+fn sig_exp_64(c: Computable, msd: Precision) -> (u64, u64) {
+    const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
+    const OVERSIZE: u64 = 0x0020_0000_0000_0000;
+
+    if msd <= -1022 {
         let sig = c
             .approx(-1074)
             .magnitude()
             .try_into()
             .expect("Magnitude of the top bits should fit in a u64");
-        (sig, 0)
+        if sig > SIG_BITS {
+            (sig & SIG_BITS, 1)
+        } else {
+            (sig, 0)
+        }
     } else {
         let sig: u64 = c
-            .approx(msd - 52)
+            .approx(msd - 53)
             .magnitude()
             .try_into()
             .expect("Magnitude of the top bits should fit in a u64");
         // MSD has almost (but not quite) two orders of binary magnitude range
-        if sig > bits {
-            (sig & bits, (1023 + msd) as u64)
+        if sig >= OVERSIZE {
+            ((sig >> 1) & SIG_BITS, (1023 + msd) as u64)
         } else {
-            (sig << 1 & bits, (1022 + msd) as u64)
+            (sig & SIG_BITS, (1022 + msd) as u64)
         }
     }
 }
@@ -272,7 +279,7 @@ impl From<Real> for f64 {
                 _ => unreachable!(),
             };
         }
-        let (sig_bits, exp) = sig_exp_64(c, msd, SIG_BITS);
+        let (sig_bits, exp) = sig_exp_64(c, msd);
         let neg_bits: u64 = neg << NEG_BITS.trailing_zeros();
         let exp_bits: u64 = exp << EXP_BITS.trailing_zeros();
         let bits = neg_bits | exp_bits | sig_bits;
@@ -409,6 +416,11 @@ mod tests {
         let r: Real = h.try_into().unwrap();
         let j: f32 = r.into();
         assert_eq!(h, j);
+        // Largest f64 which is smaller than two
+        let h = f64::from_bits(0x3fff_ffff_ffff_ffff);
+        let r: Real = h.try_into().unwrap();
+        let j: f64 = r.into();
+        assert_eq!(h, j);
     }
 
     #[test]
@@ -416,12 +428,14 @@ mod tests {
         let before = 1.234e-310_f64;
         assert_ne!(before, 0.0);
         assert_eq!(before, roundtrip(before));
-        // Large but still subnormal
-        let sub = f32::from_bits(0x7c0000);
-        assert_eq!(sub, roundtrip(sub));
         let before = 1.234e-41_f32;
         assert_ne!(before, 0.0);
         assert_eq!(before, roundtrip(before));
+        // Large but still subnormal
+        let sub = f32::from_bits(0x7c0000);
+        assert_eq!(sub, roundtrip(sub));
+        let sub = f64::from_bits(0x000f_ffff_00000000);
+        assert_eq!(sub, roundtrip(sub));
     }
 
     // Our Pi isn't exactly equal to the IEEE approximations since it's more accurate
