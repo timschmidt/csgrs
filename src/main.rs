@@ -61,7 +61,7 @@ fn main() {
 
     // 7) 2D shapes and 2D offsetting
     let square_2d = MyCSG::square(Some(([2.0, 2.0], true))); // 2x2 square, centered
-    let _ = fs::write("stl/square_2d.stl", square_2d.to_stl_binary("square_2d").unwrap());
+    let _ = fs::write("stl/square_2d.stl", square_2d.to_stl_ascii("square_2d"));
 
     let circle_2d = MyCSG::circle(Some((1.0, 32)));
     let _ = fs::write("stl/circle_2d.stl", circle_2d.to_stl_binary("circle_2d").unwrap());
@@ -70,7 +70,7 @@ fn main() {
     let _ = fs::write("stl/square_2d_grow_0_5.stl", grown_2d.to_stl_binary("square_2d_grow_0_5").unwrap());
 
     let shrunk_2d = square_2d.offset_2d(-0.5);
-    let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_binary("square_2d_shrink_0_5").unwrap());
+    let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"));
 
     // 8) Extrude & Rotate-Extrude
     let extruded_square = square_2d.extrude(1.0);
@@ -130,5 +130,19 @@ fn main() {
     println!("Cube mass = {}", mass);
     println!("Cube center of mass = {:?}", com);
     println!("Cube principal inertia local frame = {:?}", principal_frame);
+    
+    // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
+    //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
+    let cube = CSG::<()>::cube(Some((&[0.0, 0.0, 0.0], &[1.0, 1.0, 1.0])));
+    // 2) Flatten into the XY plane
+    let flattened = cube.project(false);
+    let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
+    
+    // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
+    let cyl = CSG::<()>::cylinder(Some((&[0.0, -1.0, 0.0], &[0.0, 1.0, 0.0], 1.0, 32)));
+    // 2) Slice at z=0
+    let cross_section = cyl.project(true);
+    let _ = fs::write("stl/sliced_cylinder.stl", cross_section.to_stl_binary("sliced_cylinder").unwrap());
+
 }
 

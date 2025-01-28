@@ -17,8 +17,9 @@ use stl_io;
 use std::io::Cursor;
 use std::fs::OpenOptions;
 use cavalier_contours::polyline::{
-    Polyline, PlineSource, PlineCreation, PlineSourceMut,
+    Polyline, PlineSource, PlineCreation, PlineSourceMut, BooleanOp, PlineBooleanOptions
 };
+use cavalier_contours::polyline::internal::pline_boolean::polyline_boolean;
 
 #[cfg(test)]
 mod tests;
@@ -39,6 +40,12 @@ pub struct PlineVertex2D {
     pub bulge: f64,
 }
 
+impl PlineVertex2D {
+    pub fn new(x: f64, y: f64) -> Self {
+        PlineVertex2D { x, y, bulge: 0.0 }
+    }
+}
+
 /// Converts one of your 3D polygons (assumed to lie in the XY plane) into
 /// a sequence of 2D polyline vertices. We set `bulge = 0.0` for each edge.
 pub fn polygon_to_polyline2d<S: Clone>(poly: &Polygon<S>) -> Vec<PlineVertex2D> {
@@ -51,13 +58,10 @@ pub fn polygon_to_polyline2d<S: Clone>(poly: &Polygon<S>) -> Vec<PlineVertex2D> 
     // We assume the polygon is already in the XY plane (z ~ 0).
     // If your polygons might have arcs, you'd need more logic to detect + store bulge, etc.
     for v in &poly.vertices {
-        let px = v.pos.x; // x in plane
-        let py = v.pos.y; // y in plane
-        // bulge=0 => line segment
         result.push(PlineVertex2D {
-            x: px,
-            y: py,
-            bulge: 0.0,
+            x: v.pos.x, // x in plane
+            y: v.pos.y, // y in plane
+            bulge: 0.0, // bulge=0 => line segment
         });
     }
 
@@ -97,6 +101,120 @@ pub fn build_csg_from_polyline<S: Clone>(
 
     // Combine all polygons into a single CSG
     CSG::from_polygons(all_polygons)
+}
+
+/// Convert your 2D vertices into a cavalier_contours Polyline<f64>, making it closed.
+pub fn polyline2d_to_cc_polyline(verts: &[PlineVertex2D]) -> Polyline<f64> {
+    let mut pl = Polyline::with_capacity(verts.len(), true);
+    for v in verts {
+        pl.add(v.x, v.y, v.bulge);
+    }
+    pl
+}
+
+/// Computes the signed area of a closed 2D polyline via the shoelace formula.
+/// We assume `pline.is_closed() == true` and it has at least 2 vertices.
+/// Returns positive area if CCW, negative if CW. Near-zero => degenerate.
+fn pline_area(pline: &Polyline<f64>) -> f64 {
+    if pline.vertex_count() < 3 {
+        return 0.0;
+    }
+    let mut area = 0.0;
+    let n = pline.vertex_count();
+    for i in 0..n {
+        let j = (i + 1) % n;
+        let (x_i, y_i) = (pline.at(i).x, pline.at(i).y);
+        let (x_j, y_j) = (pline.at(j).x, pline.at(j).y);
+        area += x_i * y_j - y_i * x_j;
+    }
+    0.5 * area
+}
+
+/// Build a new CSG from a set of 2D polylines in XY. Each polyline
+/// is turned into one polygon at z=0. If a union produced multiple
+/// loops, you will get multiple polygons in the final CSG.
+pub fn build_csg_from_cc_polylines<S: Clone>(
+    loops: Vec<Polyline<f64>>,
+) -> CSG<S> {
+    let mut all_polygons = Vec::new();
+    let plane_normal = Vector3::new(0.0, 0.0, 1.0);
+
+    for pl in loops {
+        // Convert each Polyline into a single polygon in z=0.
+        // If you need arcs, you could subdivide by bulge, etc. This example ignores arcs for simplicity.
+        if pl.vertex_count() >= 3 {
+            let mut poly_verts = Vec::with_capacity(pl.vertex_count());
+            for i in 0..pl.vertex_count() {
+                let v = pl.at(i);
+                poly_verts.push(Vertex::new(
+                    nalgebra::Point3::new(v.x, v.y, 0.0),
+                    plane_normal
+                ));
+            }
+            all_polygons.push(Polygon::new(poly_verts, None));
+        }
+    }
+
+    CSG::from_polygons(all_polygons)
+}
+
+/// Flatten a `CSG` into the XY plane and union all polygons' outlines,
+/// returning a new `CSG` that may contain multiple polygons (loops) if disjoint.
+///
+/// We skip "degenerate" loops whose area is near zero, both before
+/// and after performing the union. This helps avoid collinear or
+/// duplicate edges that can cause issues in `cavalier_contours`.
+pub fn flatten_and_union<S: Clone>(csg: &CSG<S>) -> CSG<S> {
+    let eps_area = 1e-9;
+    let eps_pos = 1e-5;
+
+    // 1) Convert each 3D polygon into a 2D polyline on z=0,
+    //    remove duplicates, skip degenerate (zero-area) loops.
+    let mut polylines_2d = Vec::new();
+    for poly in &csg.polygons {
+        let pline2d = polygon_to_polyline2d(poly);
+        let cc_poly = polyline2d_to_cc_polyline(&pline2d);
+        cc_poly.remove_redundant(eps_pos);
+
+        // Check area; skip if below threshold
+        if pline_area(&cc_poly).abs() > eps_area {
+            polylines_2d.push(cc_poly);
+        }
+    }
+    if polylines_2d.is_empty() {
+        return CSG::new();
+    }
+
+    // 2) Repeatedly union all polylines. Because 2D union can yield multiple disjoint loops,
+    //    we store them all, filtering out degenerate loops each time.
+    let mut union_acc: Vec<Polyline<f64>> = vec![polylines_2d[0].clone()];
+
+    let options = PlineBooleanOptions {
+        pline1_aabb_index: None,
+        pos_equal_eps: eps_pos,
+        ..Default::default()
+    };
+
+    for next_pl in &polylines_2d[1..] {
+        let mut new_acc = Vec::new();
+        for loop_pl in &union_acc {
+            let union_result = polyline_boolean(loop_pl, next_pl, BooleanOp::Or, &options);
+            // union_result.pos_plines are the union loops in 2D
+            for res_pl in union_result.pos_plines {
+                let area = pline_area(&res_pl.pline).abs();
+                if area > eps_area {
+                    new_acc.push(res_pl.pline);
+                }
+            }
+        }
+        union_acc = new_acc;
+        if union_acc.is_empty() {
+            break; // everything degenerated
+        }
+    }
+
+    // 3) Convert the final union loops back to polygons in Z=0.
+    build_csg_from_cc_polylines(union_acc)
 }
 
 /// A vertex of a polygon, holding position and normal.
@@ -272,6 +390,11 @@ pub struct Polygon<S: Clone> {
 impl<S: Clone> Polygon<S> {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, shared: Option<S>) -> Self {
+        assert!(
+            vertices.len() >= 3,
+            "Polygon::new requires at least 3 vertices"
+        );
+    
         let plane = Plane::from_points(
             &vertices[0].pos,
             &vertices[1].pos,
@@ -1427,130 +1550,107 @@ impl<S: Clone> CSG<S> {
 
     /// Flattens (projects) this CSG onto the XY plane, or slices it by z=0 to get the cross-section.
     ///
-    /// - If `cut_at_z0 == false`, we take every polygon and just set `z=0` for all its vertices.
+    /// - If `cut_at_z0 == false`, we now use `flatten_and_union(self)` instead of the old "just set z=0" code.
     /// - If `cut_at_z0 == true`, we compute the intersection of each polygon with the plane z=0
     ///   and build those cross-section polygons in the XY plane (z=0).
     ///
     /// Returns a new CSG containing only the resulting 2D polygons in z=0.
     pub fn project(&self, cut_at_z0: bool) -> CSG<S> {
-        // The plane z=0 can be represented by normal (0,0,1), w=0
+        if !cut_at_z0 {
+            // NEW: Use flatten_and_union instead of simple flattening
+            return flatten_and_union(self);
+        }
+    
+        // Otherwise, slice by z=0 as before:
         let plane = Plane {
             normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
             w: 0.0,
         };
         let eps = EPSILON; // or 1e-5, as defined
-
+    
         let mut result_polygons = Vec::new();
-
+    
         // For each polygon in the original CSG:
         for poly in &self.polygons {
-            if !cut_at_z0 {
-                // -----------------------------------------
-                // 1) Simple projection: flatten z -> 0
-                // -----------------------------------------
-                let new_verts: Vec<Vertex> = poly.vertices
-                    .iter()
-                    .map(|v| {
-                        Vertex {
-                            pos: nalgebra::Point3::new(v.pos.x, v.pos.y, 0.0),
-                            // We can force normal = +Z, or keep the old normal if you prefer
-                            normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
-                        }
-                    })
-                    .collect();
-
-                result_polygons.push(Polygon::new(new_verts, poly.shared.clone()));
-            } else {
-                // -----------------------------------------
-                // 2) Slice by z=0: find cross-section
-                // -----------------------------------------
-                let vcount = poly.vertices.len();
-                if vcount < 2 {
-                    continue; // skip degenerate
-                }
-
-                // Classify each vertex against z=0 plane
-                // side[i] = +1 if above plane, -1 if below plane, 0 if on plane
-                let mut sides = Vec::with_capacity(vcount);
-                for v in &poly.vertices {
-                    let dist = plane.normal.dot(&v.pos.coords) - plane.w;
-                    if dist.abs() < eps {
-                        sides.push(0); // on plane
-                    } else if dist > 0.0 {
-                        sides.push(1); // above
-                    } else {
-                        sides.push(-1); // below
-                    }
-                }
-
-                // Collect the points where the polygon intersects z=0
-                let mut intersect_points = Vec::new();
-
-                for i in 0..vcount {
-                    let j = (i + 1) % vcount;
-                    let side_i = sides[i];
-                    let side_j = sides[j];
-                    let vi = &poly.vertices[i];
-                    let vj = &poly.vertices[j];
-
-                    // If a vertex lies exactly on z=0, include it
-                    if side_i == 0 {
-                        intersect_points.push(vi.pos);
-                    }
-
-                    // If edges cross the plane (one above, one below), find intersection
-                    if side_i != side_j && side_i != 0 && side_j != 0 {
-                        let denom = plane.normal.dot(&(vj.pos - vi.pos));
-                        if denom.abs() > eps {
-                            // parameter t along edge vi->vj
-                            let t = (plane.w - plane.normal.dot(&vi.pos.coords)) / denom;
-                            let new_v = vi.interpolate(vj, t).pos;
-                            intersect_points.push(new_v);
-                        }
-                    }
-                }
-
-                // If we have fewer than 3 intersection points, no valid cross-section polygon
-                if intersect_points.len() < 3 {
-                    continue;
-                }
-
-                // Because the polygon is (usually) convex or at least planar, these intersection
-                // points can be turned into a loop in the plane z=0. We just need to sort them
-                // around their average center so they form a proper polygon.
-                let mut avg = nalgebra::Vector3::zeros();
-                for p in &intersect_points {
-                    avg += p.coords;
-                }
-                avg /= intersect_points.len() as f64;
-
-                // Sort by polar angle about `avg`
-                intersect_points.sort_by(|a, b| {
-                    let ax = a.x - avg.x;
-                    let ay = a.y - avg.y;
-                    let bx = b.x - avg.x;
-                    let by = b.y - avg.y;
-                    let angle_a = ay.atan2(ax);
-                    let angle_b = by.atan2(bx);
-                    angle_a
-                        .partial_cmp(&angle_b)
-                        .unwrap_or(std::cmp::Ordering::Equal)
-                });
-
-                // Build a new Polygon (in z=0, normal = +Z)
-                let normal_2d = nalgebra::Vector3::new(0.0, 0.0, 1.0);
-                let new_verts: Vec<Vertex> = intersect_points
-                    .into_iter()
-                    .map(|p| Vertex::new(
-                        nalgebra::Point3::new(p.x, p.y, 0.0),
-                        normal_2d,
-                    ))
-                    .collect();
-
-                result_polygons.push(Polygon::new(new_verts, poly.shared.clone()));
+            let vcount = poly.vertices.len();
+            if vcount < 2 {
+                continue; // skip degenerate
             }
+    
+            // Classify each vertex against z=0 plane
+            // side[i] = +1 if above plane, -1 if below plane, 0 if on plane
+            let mut sides = Vec::with_capacity(vcount);
+            for v in &poly.vertices {
+                let dist = plane.normal.dot(&v.pos.coords) - plane.w;
+                if dist.abs() < eps {
+                    sides.push(0); // on plane
+                } else if dist > 0.0 {
+                    sides.push(1); // above
+                } else {
+                    sides.push(-1); // below
+                }
+            }
+    
+            // Collect the points where the polygon intersects z=0
+            let mut intersect_points = Vec::new();
+    
+            for i in 0..vcount {
+                let j = (i + 1) % vcount;
+                let side_i = sides[i];
+                let side_j = sides[j];
+                let vi = &poly.vertices[i];
+                let vj = &poly.vertices[j];
+    
+                // If a vertex lies exactly on z=0, include it
+                if side_i == 0 {
+                    intersect_points.push(vi.pos);
+                }
+    
+                // If edges cross the plane, find intersection
+                if side_i != side_j && side_i != 0 && side_j != 0 {
+                    let denom = plane.normal.dot(&(vj.pos - vi.pos));
+                    if denom.abs() > eps {
+                        let t = (plane.w - plane.normal.dot(&vi.pos.coords)) / denom;
+                        let new_v = vi.interpolate(vj, t).pos;
+                        intersect_points.push(new_v);
+                    }
+                }
+            }
+    
+            // If fewer than 3 intersection points, no valid cross-section
+            if intersect_points.len() < 3 {
+                continue;
+            }
+    
+            // Sort intersection points around their average center so they form a proper polygon
+            let mut avg = nalgebra::Vector3::zeros();
+            for p in &intersect_points {
+                avg += p.coords;
+            }
+            avg /= intersect_points.len() as f64;
+    
+            intersect_points.sort_by(|a, b| {
+                let ax = a.x - avg.x;
+                let ay = a.y - avg.y;
+                let bx = b.x - avg.x;
+                let by = b.y - avg.y;
+                let angle_a = ay.atan2(ax);
+                let angle_b = by.atan2(bx);
+                angle_a
+                    .partial_cmp(&angle_b)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
+    
+            // Build a new Polygon (in z=0, normal = +Z)
+            let normal_2d = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+            let new_verts: Vec<Vertex> = intersect_points
+                .into_iter()
+                .map(|p| Vertex::new(nalgebra::Point3::new(p.x, p.y, 0.0), normal_2d))
+                .collect();
+    
+            result_polygons.push(Polygon::new(new_verts, poly.shared.clone()));
         }
-
+    
         CSG::from_polygons(result_polygons)
     }
 
