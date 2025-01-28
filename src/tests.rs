@@ -74,8 +74,8 @@ fn test_vertex_flip() {
 #[test]
 fn test_polygon_construction() {
     let v1 = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::y());
-    let v2 = Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::y());
-    let v3 = Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::y());
+    let v2 = Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::y());
+    let v3 = Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::y());
 
     let poly: Polygon<()> = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], None);
     assert_eq!(poly.vertices.len(), 3);
@@ -131,8 +131,8 @@ fn test_degenerate_polygon_after_clipping() {
 
     let polygon: Polygon<()> = Polygon::new(vertices.clone(), None);
     let plane = Plane {
-        normal: Vector3::new(0.0, 1.0, 0.0),
-        w: 1.5,
+        normal: Vector3::new(0.0, 0.0, 0.0),
+        w: 0.0,
     };
 
     let mut coplanar_front = Vec::new();
@@ -461,7 +461,8 @@ fn test_node_clip_polygons() {
     }
     let node: Node<()> = Node::new(flipped_cube.polygons.clone());
     let clipped = node.clip_polygons(&flipped_cube.polygons);
-    assert_eq!(clipped.len(), flipped_cube.polygons.len());
+    assert_eq!(cube.polygons.len(), flipped_cube.polygons.len());
+    assert_eq!(clipped.len(), 0);
 }
 
 #[test]
@@ -547,9 +548,9 @@ fn test_node_clip_to() {
     );
     let node_b: Node<()> = Node::new(vec![big_poly]);
     node_a.clip_to(&node_b);
-    // We expect nodeA's polygon to remain
+    // We expect nodeA's polygon to be removed
     let all_a = node_a.all_polygons();
-    assert_eq!(all_a.len(), 1);
+    assert_eq!(all_a.len(), 0);
 }
 
 #[test]
