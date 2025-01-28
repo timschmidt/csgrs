@@ -291,6 +291,7 @@ The only tricky part is handling overlapping coplanar polygons in both trees. Th
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 ## Todo
+- fix normals on rotate_extrude
 - 2d boolean ops
   - functions: signed area, is_ccw, line/line intersection, intersection, union, difference
   - tests / implementation with cavalier_contours
