@@ -11,6 +11,7 @@ readme = "readme.md"
 [dependencies]
 cavalier_contours = "0.4.0"
 chull = "0.2.4"
+earclip = "1.1.0"
 meshtext = { version = "0.3.1", features = ["owned"] }
 nalgebra = "0.33"
 parry3d-f64 = "0.18.0"

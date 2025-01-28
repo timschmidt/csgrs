@@ -313,8 +313,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - extruding a line does not currently result in a 2D shape as it has fewer than three points
 - dxf/svg import/export
 - fragments (circle, sphere, regularize with rotate_extrude)
-- extend polygon to handle multiple loops, outside and holes
-  - use https://github.com/Open-S2/earclip on from_polygons, plane splitting
+- extend polygon to handle multiple loops, outside and holes, using earclip on from_polygons, plane splitting
 - fill
 - 32bit / 64bit feature
 - parallelize clip_to and invert with rayon and par_iter

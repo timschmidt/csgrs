@@ -163,6 +163,7 @@ version = "0.6.0"
 dependencies = [
  "cavalier_contours",
  "chull",
+ "earclip",
  "meshtext",
  "nalgebra",
  "parry3d-f64",
@@ -176,6 +177,15 @@ name = "downcast-rs"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
+
+[[package]]
+name = "earclip"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca0eb1a3f37fa301292302f8c9ebb7bfd33f8197c93630606335515bf02fc43b"
+dependencies = [
+ "num-traits",
+]
 
 [[package]]
 name = "either"

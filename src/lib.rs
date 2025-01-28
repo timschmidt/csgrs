@@ -20,6 +20,7 @@ use cavalier_contours::polyline::{
     Polyline, PlineSource, PlineCreation, PlineSourceMut, BooleanOp, PlineBooleanOptions
 };
 use cavalier_contours::polyline::internal::pline_boolean::polyline_boolean;
+use earclip::earcut;
 
 #[cfg(test)]
 mod tests;
@@ -215,6 +216,34 @@ pub fn flatten_and_union<S: Clone>(csg: &CSG<S>) -> CSG<S> {
 
     // 3) Convert the final union loops back to polygons in Z=0.
     build_csg_from_cc_polylines(union_acc)
+}
+
+/// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v` so that
+/// {u, v, n} forms an orthonormal basis. `n` is assumed non‐zero.
+fn build_orthonormal_basis(n: nalgebra::Vector3<f64>) -> (nalgebra::Vector3<f64>, nalgebra::Vector3<f64>) {
+    // Normalize the given normal
+    let n = n.normalize();
+
+    // Pick a vector that is not parallel to `n`. For instance, pick the axis
+    // which has the smallest absolute component in `n`, and cross from there.
+    let mut other = nalgebra::Vector3::new(0.0, 0.0, 0.0);
+
+    // We choose the axis with the smallest absolute value in n,
+    // because crossing with that is least likely to cause numeric issues.
+    if n.x.abs() < n.y.abs() && n.x.abs() < n.z.abs() {
+        other.x = 1.0;
+    } else if n.y.abs() < n.z.abs() {
+        other.y = 1.0;
+    } else {
+        other.z = 1.0;
+    }
+
+    // v = n × other
+    let v = n.cross(&other).normalize();
+    // u = v × n
+    let u = v.cross(&n).normalize();
+
+    (u, v)
 }
 
 /// A vertex of a polygon, holding position and normal.
@@ -1749,6 +1778,76 @@ impl<S: Clone> CSG<S> {
         }
 
         CSG::from_polygons(all_polygons)
+    }
+    
+    /// Re‐triangulate each polygon in this CSG using the `earclip` library (earcut).
+    /// Returns a new CSG whose polygons are all triangles.
+    pub fn retriangulate(&self) -> CSG<S> {
+        let mut new_polygons = Vec::new();
+
+        // For each polygon in this CSG:
+        for poly in &self.polygons {
+            // Skip if fewer than 3 vertices or degenerate
+            if poly.vertices.len() < 3 {
+                continue;
+            }
+            // Optional: You may also want to check if the polygon is "nearly degenerate"
+            // by measuring area or normal magnitude, etc. For brevity, we skip that here.
+
+            // 1) Build an orthonormal basis from the polygon's plane normal
+            let n = poly.plane.normal.normalize();
+            let (u, v) = build_orthonormal_basis(n);
+
+            // 2) Pick a reference point on the polygon. Typically the first vertex
+            let p0 = poly.vertices[0].pos;
+
+            // 3) Project each 3D vertex into 2D coordinates: (x_i, y_i)
+            // We'll store them in a flat `Vec<f64>` of the form [x0, y0, x1, y1, x2, y2, ...]
+            let mut coords_2d = Vec::with_capacity(poly.vertices.len() * 2);
+            for vert in &poly.vertices {
+                let offset = vert.pos.coords - p0.coords;  // vector from p0 to the vertex
+                let x = offset.dot(&u);
+                let y = offset.dot(&v);
+                coords_2d.push(x);
+                coords_2d.push(y);
+            }
+
+            // 4) Call Earcut on that 2D outline. We assume no holes, so hole_indices = &[].
+            //    earcut's signature is `earcut::<f64, usize>(data, hole_indices, dim)`
+            //    with `dim = 2` for our XY data.
+            let indices: Vec<usize> = earcut(&coords_2d, &[], 2);
+
+            // 5) Map each returned triangle's (i0, i1, i2) back to 3D,
+            //    constructing a new `Polygon` (with 3 vertices) for each tri.
+            //
+            //    The earcut indices are typed as `usize` in this snippet; if
+            //    your crate’s `Index` is `u32`, simply adjust or cast as needed.
+            for tri in indices.chunks_exact(3) {
+                let mut tri_vertices = Vec::with_capacity(3);
+                for &i in tri {
+                    let x = coords_2d[2 * i];
+                    let y = coords_2d[2 * i + 1];
+                    // Inverse projection:
+                    // Q_3D = p0 + x * u + y * v
+                    let pos_vec = p0.coords + x * u + y * v;
+                    let pos_3d  = Point3::from(pos_vec);
+                    // We can store the normal = polygon's plane normal (or recalc).
+                    // We'll recalc below, so for now just keep n or 0 as a placeholder:
+                    tri_vertices.push(Vertex::new(pos_3d, n));
+                }
+
+                // Create a polygon from these 3 vertices. We preserve the `shared` data:
+                let mut new_poly = Polygon::new(tri_vertices, poly.shared.clone());
+
+                // Recompute the plane/normal to ensure correct orientation/shading:
+                new_poly.recalc_plane_and_normals();
+
+                new_polygons.push(new_poly);
+            }
+        }
+
+        // Combine all newly formed triangles into a new CSG:
+        CSG::from_polygons(new_polygons)
     }
 
     /// Convert the polygons in this CSG to a Parry TriMesh.
