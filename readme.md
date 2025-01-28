@@ -292,6 +292,10 @@ Subtraction and intersection naturally follow from set operations. If union is `
 
 ## Todo
 - fix normals on rotate_extrude
+- fix normal on bottom face of extrude
+- determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
+- determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
+- determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
 - 2d boolean ops
   - functions: signed area, is_ccw, line/line intersection, intersection, union, difference
   - tests / implementation with cavalier_contours
