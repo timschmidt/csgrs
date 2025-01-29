@@ -1373,43 +1373,29 @@ impl<S: Clone> CSG<S> {
             //      from slices[segments-1] => slices[0].
             //    - If it's partial, we just do 0..(segments), which covers 
             //      slices[i] -> slices[i+1] for i=0..(segments-1).
-            if closed {
-                // Full revolve (angle ~ 360)
-                for i in 0..(segments) {
-                    // extrude_between slices[i] and slices[i+1], but on the last iteration
-                    // slices[segments] is effectively the same as slices[0].
-                    let bottom = &slices[i];
-                    let top = &slices[(i + 1) % slices.len()]; // wraps around
-                    let mut side_solid = CSG::extrude_between(bottom, top, false).polygons;
-                    result_polygons.append(&mut side_solid);
-                }
-                // No separate caps needed for a closed revolve; it's already sealed.
-            } else {
-                // Partial revolve (angle < 360)
-                // We form `segments` extrusions from i..i+1 (i=0..segments-1)
-                for i in 0..segments {
-                    let bottom = &slices[i];
-                    let top = &slices[i + 1];
-                    let mut side_solid = CSG::extrude_between(bottom, top, false).polygons;
-                    result_polygons.append(&mut side_solid);
-                }
-    
-                // 3) Add "caps" for the first and last slices so the revolve is closed at each end.
-                //    Typically you want them oriented outward, so we can flip one cap if desired.
-                let mut start_cap = slices[0].clone();
-                // Flip the start cap so its normal faces outward instead of inward:
-                start_cap.flip();
-    
-                // The end cap is slices[segments] as-is:
+            for i in 0..(segments) {
+                // extrude_between slices[i] and slices[i+1], but on the last iteration
+                // slices[segments] is effectively the same as slices[0].
+                let bottom = &slices[i];
+                let top = if closed {
+                    &slices[(i + 1) % slices.len()] // Wrap around if `closed` is true
+                } else {
+                    &slices[i + 1] // Direct access if `closed` is false
+                };
+                let mut side_solid = CSG::extrude_between(bottom, top, true).polygons;
+                result_polygons.append(&mut side_solid);
+            }
+
+            // Add "cap" for the last slices so the revolve is closed at each end.
+            // The end cap is slices[segments] as-is:
+            if !closed {
                 let end_cap = slices[segments].clone();
-    
-                result_polygons.push(start_cap);
                 result_polygons.push(end_cap);
             }
         }
     
         // Gather everything into a new CSG
-        CSG::from_polygons(result_polygons)
+        CSG::from_polygons(result_polygons) // todo: figure out why rotate_extrude results in inverted solids
     }
 
     /// Returns a `parry3d::bounding_volume::Aabb`.
