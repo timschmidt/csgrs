@@ -171,6 +171,16 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
     let renormalized_csg = cube.renormalize();
     
+## Test manifoldness:
+
+    let cube = MyCSG::cube(None);
+
+    // Check if the cube is manifold
+    match cube.is_manifold()? {
+        true => println!("The cube is manifold."),
+        false => println!("The cube is not manifold."),
+    }
+    
 ## Compute all ray intersections for measurement (expensive):
 
     let cube = MyCSG::cube(None);
@@ -222,12 +232,12 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     let stl_data: Vec<u8> = std::fs::read("path_to_stl_file.stl")?;
     let csg = MyCSG::from_stl(&stl_data)?;
     
-## Export a dxf:
+## Export a DXF:
 
     let bytes = union_result.to_dxf()?;
     std::fs::write(bytes)?;
 
-## Import a dxf:
+## Import a DXF:
 
     let dxf_data: Vec<u8> = std::fs::read("path_to_stl_file.dxf")?;
     let csg = MyCSG::from_dxf(&dxf_data)?;
@@ -339,7 +349,6 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - 32bit / 64bit feature
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
-- manifoldness tests / fixes - in stl_io library
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
 - reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html

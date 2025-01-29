@@ -1899,6 +1899,34 @@ impl<S: Clone> CSG<S> {
     
         rb_handle
     }
+    
+    /// Checks if the CSG object is manifold.
+    ///
+    /// This function triangulates the CSG polygons, creates a temporary in-memory
+    /// STL file, reads the STL from memory, uses it to populate an `IndexedMesh`,
+    /// validates the mesh for manifoldness, and returns the validation result.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(true)`: If the CSG object is manifold.
+    /// - `Ok(false)`: If the CSG object is not manifold.
+    /// - `Err(...)`: If an error occurs during the process.
+    pub fn is_manifold(&self) -> Result<bool, std::io::Error> {
+        // Since `as_indexed_triangles` is not a public function, we'll serialize to binary STL in-memory
+        // and then deserialize it to obtain the IndexedMesh.
+        let binary_stl = self.to_stl_binary("is_manifold_temp")?;
+        let mut cursor = Cursor::new(binary_stl);
+    
+        // Create an STL reader from the cursor
+        let mut stl_reader = stl_io::create_stl_reader(&mut cursor)?;
+        let indexed_mesh = stl_reader.as_indexed_triangles().unwrap();
+
+        // Step 2: Validate the IndexedMesh for manifoldness
+        match indexed_mesh.validate() {
+            Ok(_) => Ok(true),  // The mesh is manifold
+            Err(_) => Ok(false), // The mesh is not manifold
+        }
+    }
 
     // ----------------------------------------------------------
     //   Export to ASCII STL
