@@ -1009,11 +1009,11 @@ fn test_csg_grow_2d_and_shrink_2d() {
 }
 
 #[test]
-fn test_csg_text_mesh() {
+fn test_csg_text() {
     // We can’t easily test visually, but we can at least test that it doesn’t panic
     // and returns some polygons for normal ASCII letters.
     let font_data = include_bytes!("../asar.ttf");
-    let text_csg: CSG<()> = CSG::text_mesh("ABC", font_data, Some(10.0));
+    let text_csg: CSG<()> = CSG::text("ABC", font_data, Some(10.0));
     assert!(!text_csg.polygons.is_empty());
 }
 

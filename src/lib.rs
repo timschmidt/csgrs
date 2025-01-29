@@ -1712,7 +1712,7 @@ impl<S: Clone> CSG<S> {
     ///   - does not handle kerning or multi-line text,
     ///   - simply advances the cursor by each glyph’s width,
     ///   - places all characters along the X axis.
-    pub fn text_mesh(text_str: &str, font_data: &[u8], size: Option<f64>) -> CSG<S> {
+    pub fn text(text_str: &str, font_data: &[u8], size: Option<f64>) -> CSG<S> {
         let mut generator = MeshGenerator::new(font_data.to_vec());
         let scale = size.unwrap_or(20.0);
 

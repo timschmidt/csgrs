@@ -160,7 +160,7 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     let font_data = include_bytes!("my_font.ttf");
 
     // Generate a simple "Hello" text in the XY plane
-    let csg_text = MyCSG::text_mesh("Hello", font_data, Some(10.0));
+    let csg_text = MyCSG::text("Hello", font_data, Some(10.0));
     
 ## Subdivide triangles:
 
