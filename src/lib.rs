@@ -159,65 +159,6 @@ pub fn build_csg_from_cc_polylines<S: Clone>(
     CSG::from_polygons(all_polygons)
 }
 
-/// Flatten a `CSG` into the XY plane and union all polygons' outlines,
-/// returning a new `CSG` that may contain multiple polygons (loops) if disjoint.
-///
-/// We skip "degenerate" loops whose area is near zero, both before
-/// and after performing the union. This helps avoid collinear or
-/// duplicate edges that can cause issues in `cavalier_contours`.
-pub fn flatten_and_union<S: Clone>(csg: &CSG<S>) -> CSG<S> {
-    let eps_area = 1e-9;
-    let eps_pos = 1e-5;
-
-    // 1) Convert each 3D polygon into a 2D polyline on z=0,
-    //    remove duplicates, skip degenerate (zero-area) loops.
-    let mut polylines_2d = Vec::new();
-    for poly in &csg.polygons {
-        let pline2d = polygon_to_polyline2d(poly);
-        let cc_poly = polyline2d_to_cc_polyline(&pline2d);
-        cc_poly.remove_redundant(eps_pos);
-
-        // Check area; skip if below threshold
-        if pline_area(&cc_poly).abs() > eps_area {
-            polylines_2d.push(cc_poly);
-        }
-    }
-    if polylines_2d.is_empty() {
-        return CSG::new();
-    }
-
-    // 2) Repeatedly union all polylines. Because 2D union can yield multiple disjoint loops,
-    //    we store them all, filtering out degenerate loops each time.
-    let mut union_acc: Vec<Polyline<f64>> = vec![polylines_2d[0].clone()];
-
-    let options = PlineBooleanOptions {
-        pline1_aabb_index: None,
-        pos_equal_eps: eps_pos,
-        ..Default::default()
-    };
-
-    for next_pl in &polylines_2d[1..] {
-        let mut new_acc = Vec::new();
-        for loop_pl in &union_acc {
-            let union_result = polyline_boolean(loop_pl, next_pl, BooleanOp::Or, &options);
-            // union_result.pos_plines are the union loops in 2D
-            for res_pl in union_result.pos_plines {
-                let area = pline_area(&res_pl.pline).abs();
-                if area > eps_area {
-                    new_acc.push(res_pl.pline);
-                }
-            }
-        }
-        union_acc = new_acc;
-        if union_acc.is_empty() {
-            break; // everything degenerated
-        }
-    }
-
-    // 3) Convert the final union loops back to polygons in Z=0.
-    build_csg_from_cc_polylines(union_acc)
-}
-
 /// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v` so that
 /// {u, v, n} forms an orthonormal basis. `n` is assumed non‐zero.
 fn build_orthonormal_basis(n: nalgebra::Vector3<f64>) -> (nalgebra::Vector3<f64>, nalgebra::Vector3<f64>) {
@@ -1577,10 +1518,63 @@ impl<S: Clone> CSG<S> {
         build_csg_from_polyline::<S>(&offset_loops)
     }
 
-    /// Flattens (projects) this CSG onto the XY plane.
-    /// Returns a new CSG containing only the resulting 2D polygons in z=0.
+    /// Flatten a `CSG` into the XY plane and union all polygons' outlines,
+    /// returning a new `CSG` that may contain multiple polygons (loops) if disjoint.
+    ///
+    /// We skip "degenerate" loops whose area is near zero, both before
+    /// and after performing the union. This helps avoid collinear or
+    /// duplicate edges that can cause issues in `cavalier_contours`.
     pub fn project(&self) -> CSG<S> {
-        flatten_and_union(self)
+        let eps_area = 1e-9;
+        let eps_pos = 1e-5;
+    
+        // 1) Convert each 3D polygon into a 2D polyline on z=0,
+        //    remove duplicates, skip degenerate (zero-area) loops.
+        let mut polylines_2d = Vec::new();
+        for poly in &self.polygons {
+            let pline2d = polygon_to_polyline2d(poly);
+            let cc_poly = polyline2d_to_cc_polyline(&pline2d);
+            cc_poly.remove_redundant(eps_pos);
+    
+            // Check area; skip if below threshold
+            if pline_area(&cc_poly).abs() > eps_area {
+                polylines_2d.push(cc_poly);
+            }
+        }
+        if polylines_2d.is_empty() {
+            return CSG::new();
+        }
+    
+        // 2) Repeatedly union all polylines. Because 2D union can yield multiple disjoint loops,
+        //    we store them all, filtering out degenerate loops each time.
+        let mut union_acc: Vec<Polyline<f64>> = vec![polylines_2d[0].clone()];
+    
+        let options = PlineBooleanOptions {
+            pline1_aabb_index: None,
+            pos_equal_eps: eps_pos,
+            ..Default::default()
+        };
+    
+        for next_pl in &polylines_2d[1..] {
+            let mut new_acc = Vec::new();
+            for loop_pl in &union_acc {
+                let union_result = polyline_boolean(loop_pl, next_pl, BooleanOp::Or, &options);
+                // union_result.pos_plines are the union loops in 2D
+                for res_pl in union_result.pos_plines {
+                    let area = pline_area(&res_pl.pline).abs();
+                    if area > eps_area {
+                        new_acc.push(res_pl.pline);
+                    }
+                }
+            }
+            union_acc = new_acc;
+            if union_acc.is_empty() {
+                break; // everything degenerated
+            }
+        }
+    
+        // 3) Convert the final union loops back to polygons in Z=0.
+        build_csg_from_cc_polylines(union_acc)
     }
     
     /// Slice this CSG by a plane, keeping only cross-sections on that plane.
