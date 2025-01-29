@@ -15,7 +15,6 @@ use rapier3d_f64::prelude::*;
 use meshtext::{Glyph, MeshGenerator, MeshText};
 use stl_io;
 use std::io::Cursor;
-use std::fs::OpenOptions;
 use cavalier_contours::polyline::{
     Polyline, PlineSource, PlineCreation, PlineSourceMut, BooleanOp, PlineBooleanOptions
 };
@@ -1374,8 +1373,6 @@ impl<S: Clone> CSG<S> {
             //    - If it's partial, we just do 0..(segments), which covers 
             //      slices[i] -> slices[i+1] for i=0..(segments-1).
             for i in 0..(segments) {
-                // extrude_between slices[i] and slices[i+1], but on the last iteration
-                // slices[segments] is effectively the same as slices[0].
                 let bottom = &slices[i];
                 let top = if closed {
                     &slices[(i + 1) % slices.len()] // Wrap around if `closed` is true
@@ -1386,7 +1383,7 @@ impl<S: Clone> CSG<S> {
                 result_polygons.append(&mut side_solid);
             }
 
-            // Add "cap" for the last slices so the revolve is closed at each end.
+            // Add "cap" for the last slice so the revolve is closed at end.
             // The end cap is slices[segments] as-is:
             if !closed {
                 let end_cap = slices[segments].clone();
@@ -1983,10 +1980,13 @@ impl<S: Clone> CSG<S> {
         Ok(cursor.into_inner())
     }
 
-    /// Import a CSG object from a binary STL file using `stl_io`.
-    pub fn from_stl_file(file_path: &str) -> Result<CSG<S>, std::io::Error> {
-        let mut file = OpenOptions::new().read(true).open(file_path)?;
-        let stl_reader = stl_io::create_stl_reader(&mut file)?;
+    /// Create a CSG object from STL data using `stl_io`.
+    pub fn from_stl(stl_data: &[u8]) -> Result<CSG<S>, std::io::Error> {
+        // Create an in-memory cursor from the STL data
+        let mut cursor = Cursor::new(stl_data);
+    
+        // Create an STL reader from the cursor
+        let stl_reader = stl_io::create_stl_reader(&mut cursor)?;
 
         let mut polygons = Vec::new();
 

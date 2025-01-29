@@ -219,7 +219,8 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
 ## Import an STL:
 
-    let csg = MyCSG::from_stl_file("input.stl").unwrap();
+    let stl_data: Vec<u8> = std::fs::read("path_to_stl_file.stl")?;
+    let csg = MyCSG::from_stl(&stl_data)?;
     
 ## Generic per-object and per-polygon metadata:
 
@@ -300,7 +301,6 @@ The only tricky part is handling overlapping coplanar polygons in both trees. Th
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 ## Todo
-- adjust STL import function and examples to consume data, not file
 - rename shared data functions to metadata functions
 - fix normals on rotate_extrude
 - fix normal on bottom face of extrude
@@ -312,6 +312,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
   - tests / implementation with cavalier_contours
 - vector font for machining
   - https://github.com/kamalmostafa/hershey-fonts
+    - https://github.com/kicad-rs/hershey/blob/main/src/lib.rs
   - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - https://crates.io/crates/contour_tracing
 - evaluate https://github.com/gfx-rs/genmesh

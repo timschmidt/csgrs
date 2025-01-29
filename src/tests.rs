@@ -1060,7 +1060,7 @@ fn test_csg_to_rigid_body() {
 }
 
 #[test]
-fn test_csg_to_stl_and_from_stl_file() {
+fn test_csg_to_stl_and_from_stl_file() -> Result<(), Box<dyn std::error::Error>> {
     // We'll create a small shape, write to an STL, read it back.
     // You can redirect to a temp file or do an in-memory test.
     let tmp_path = "test_csg_output.stl";
@@ -1070,7 +1070,8 @@ fn test_csg_to_stl_and_from_stl_file() {
     let _ = std::fs::write(tmp_path, res.as_ref().unwrap());
     assert!(res.is_ok());
 
-    let csg_in: CSG<()> = CSG::from_stl_file(tmp_path).unwrap();
+    let stl_data: Vec<u8> = std::fs::read(tmp_path)?;
+    let csg_in: CSG<()> = CSG::from_stl(&stl_data)?;
     // We expect to read the same number of triangular faces as the cube originally had
     // (though the orientation/normals might differ).
     // The default cube -> 6 polygons x 1 polygon each with 4 vertices => 12 triangles in STL.
@@ -1079,6 +1080,7 @@ fn test_csg_to_stl_and_from_stl_file() {
 
     // Cleanup the temp file if desired
     let _ = std::fs::remove_file(tmp_path);
+    Ok(())
 }
 
 /// A small, custom shared-data type to demonstrate usage.
@@ -1603,7 +1605,7 @@ fn test_flatten_cube() {
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::<()>::cube(Some((&[0.0, 0.0, 0.0], &[1.0, 1.0, 1.0])));
     // 2) Flatten into the XY plane
-    let flattened = cube.project(false);
+    let flattened = cube.project();
     
     // The flattened cube should have 1 polygon1, now in z=0
     assert_eq!(flattened.polygons.len(), 1, 
@@ -1634,7 +1636,7 @@ fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::<()>::cylinder(Some((&[0.0, -1.0, 0.0], &[0.0, 1.0, 0.0], 1.0, 32)));
     // 2) Slice at z=0
-    let cross_section = cyl.project(true);
+    let cross_section = cyl.cut(None);
 
     // For a simple cylinder, the cross-section is typically 1 circle polygon 
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
@@ -1786,7 +1788,7 @@ fn test_flatten_and_union_single_polygon() {
     let csg = CSG::from_polygons(vec![square_poly]);
 
     // Flatten & union it
-    let flat_csg = flatten_and_union(&csg);
+    let flat_csg = csg.project();
 
     // Expect the same bounding box
     assert!(!flat_csg.polygons.is_empty(), "Result should not be empty");
@@ -1817,7 +1819,7 @@ fn test_flatten_and_union_two_overlapping_squares() {
     ]);
     let csg = CSG::from_polygons(vec![square1, square2]);
 
-    let flat_csg = flatten_and_union(&csg);
+    let flat_csg = csg.project();
     assert!(!flat_csg.polygons.is_empty(), "Union should not be empty");
 
     // The bounding box should now span x=0..2, y=0..1
@@ -1857,7 +1859,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
     ]);
     let csg = CSG::from_polygons(vec![square_a, square_b]);
 
-    let flat_csg = flatten_and_union(&csg);
+    let flat_csg = csg.project();
     assert!(!flat_csg.polygons.is_empty());
 
     // Expect 2 disjoint polygons in the result
@@ -1885,7 +1887,7 @@ fn test_flatten_and_union_near_xy_plane() {
     );
 
     let csg = CSG::from_polygons(vec![poly1]);
-    let flat_csg = flatten_and_union(&csg);
+    let flat_csg = csg.project();
 
     assert!(!flat_csg.polygons.is_empty(), "Should flatten to a valid polygon");
     let bb = flat_csg.bounding_box();
@@ -1914,7 +1916,7 @@ fn test_flatten_and_union_collinear_edges() {
     ]);
 
     let csg = CSG::<()>::from_polygons(vec![rect1, rect2]);
-    let flat_csg = flatten_and_union(&csg);
+    let flat_csg = csg.project();
 
     // Expect 1 polygon from x=0..4, y=0..~1.0ish
     assert!(!flat_csg.polygons.is_empty());
@@ -1930,7 +1932,7 @@ fn test_flatten_and_union_collinear_edges() {
 #[test]
 fn test_flatten_and_union_debug() {
     let csg_square = CSG::<()>::square(None); // a 1×1 square at [0..1, 0..1]
-    let flattened = flatten_and_union(&csg_square);
+    let flattened = csg_square.project();
     assert!(!flattened.polygons.is_empty(), "Flattened square should not be empty");
     assert!(flattened.polygons[0].vertices.len() >= 3, "Should form at least a triangle");
 }
