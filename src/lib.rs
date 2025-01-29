@@ -2091,10 +2091,6 @@ impl<S: Clone> CSG<S> {
 
     /// Export the CSG object to DXF format.
     ///
-    /// # Parameters
-    ///
-    /// - `name`: The name of the DXF solid.
-    ///
     /// # Returns
     ///
     /// A `Result` containing the DXF file as a byte vector or an error if exporting fails.
