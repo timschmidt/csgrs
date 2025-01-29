@@ -15,11 +15,15 @@ use rapier3d_f64::prelude::*;
 use meshtext::{Glyph, MeshGenerator, MeshText};
 use stl_io;
 use std::io::Cursor;
+use std::f64::consts::PI;
+use std::error::Error;
 use cavalier_contours::polyline::{
     Polyline, PlineSource, PlineCreation, PlineSourceMut, BooleanOp, PlineBooleanOptions
 };
 use cavalier_contours::polyline::internal::pline_boolean::polyline_boolean;
 use earclip::earcut;
+use dxf::Drawing;
+use dxf::entities::*;
 
 #[cfg(test)]
 mod tests;
@@ -2014,5 +2018,122 @@ impl<S: Clone> CSG<S> {
         }
 
         Ok(CSG::from_polygons(polygons))
+    }
+    
+    /// Import a CSG object from DXF data.
+    ///
+    /// # Parameters
+    ///
+    /// - `dxf_data`: A byte slice containing the DXF file data.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the CSG object or an error if parsing fails.
+    pub fn from_dxf(dxf_data: &[u8]) -> Result<CSG<S>, Box<dyn Error>> {
+        // Load the DXF drawing from the provided data
+        let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
+
+        let mut polygons = Vec::new();
+
+        for entity in drawing.entities() {
+            match &entity.specific {
+                EntityType::Line(_line) => {
+                    // Convert a line to a thin rectangular polygon (optional)
+                    // Alternatively, skip lines if they don't form closed loops
+                    // Here, we'll skip standalone lines
+                    // To form polygons from lines, you'd need to group connected lines into loops
+                }
+                EntityType::Polyline(polyline) => {
+                    // Handle POLYLINE entities (which can be 2D or 3D)
+                    if polyline.is_closed() {
+                        let mut verts = Vec::new();
+                        for vertex in polyline.vertices() {
+                            verts.push(Vertex::new(
+                                Point3::new(vertex.location.x, vertex.location.y, vertex.location.z),
+                                Vector3::new(0.0, 0.0, 1.0), // Assuming flat in XY
+                            ));
+                        }
+                        // Create a polygon from the polyline vertices
+                        if verts.len() >= 3 {
+                            polygons.push(Polygon::new(verts, None));
+                        }
+                    }
+                }
+                EntityType::Circle(circle) => {
+                    // Approximate circles with regular polygons
+                    let center = Point3::new(circle.center.x, circle.center.y, circle.center.z);
+                    let radius = circle.radius;
+                    let segments = 32; // Number of segments to approximate the circle
+
+                    let mut verts = Vec::new();
+                    let normal = Vector3::new(0.0, 0.0, 1.0); // Assuming circle lies in XY plane
+
+                    for i in 0..segments {
+                        let theta = 2.0 * PI * (i as f64) / (segments as f64);
+                        let x = center.x + radius * theta.cos();
+                        let y = center.y + radius * theta.sin();
+                        let z = center.z;
+                        verts.push(Vertex::new(Point3::new(x, y, z), normal));
+                    }
+
+                    // Create a polygon from the approximated circle vertices
+                    polygons.push(Polygon::new(verts, None));
+                }
+                // Handle other entity types as needed (e.g., Arc, Spline)
+                _ => {
+                    // Ignore unsupported entity types for now
+                }
+            }
+        }
+
+        Ok(CSG::from_polygons(polygons))
+    }
+
+    /// Export the CSG object to DXF format.
+    ///
+    /// # Parameters
+    ///
+    /// - `name`: The name of the DXF solid.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the DXF file as a byte vector or an error if exporting fails.
+    pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
+        let mut drawing = Drawing::new();
+
+        for poly in &self.polygons {
+            // Triangulate the polygon if it has more than 3 vertices
+            let triangles = if poly.vertices.len() > 3 {
+                poly.triangulate()
+            } else {
+                vec![[
+                    poly.vertices[0].clone(),
+                    poly.vertices[1].clone(),
+                    poly.vertices[2].clone(),
+                ]]
+            };
+
+            for tri in triangles {
+                // Create a 3DFACE entity for each triangle
+                let face = dxf::entities::Face3D::new(
+                    // 3DFACE expects four vertices, but for triangles, the fourth is the same as the third
+                    dxf::Point::new(tri[0].pos.x, tri[0].pos.y, tri[0].pos.z),
+                    dxf::Point::new(tri[1].pos.x, tri[1].pos.y, tri[1].pos.z),
+                    dxf::Point::new(tri[2].pos.x, tri[2].pos.y, tri[2].pos.z),
+                    dxf::Point::new(tri[2].pos.x, tri[2].pos.y, tri[2].pos.z), // Duplicate for triangular face
+                );
+                
+                let entity = dxf::entities::Entity::new(dxf::entities::EntityType::Face3D(face));
+
+                // Add the 3DFACE entity to the drawing
+                drawing.add_entity(entity);
+            }
+        }
+
+        // Serialize the DXF drawing to bytes
+        let mut buffer = Vec::new();
+        drawing.save(&mut buffer)?;
+
+        Ok(buffer)
     }
 }

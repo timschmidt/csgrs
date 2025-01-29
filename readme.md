@@ -222,6 +222,16 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     let stl_data: Vec<u8> = std::fs::read("path_to_stl_file.stl")?;
     let csg = MyCSG::from_stl(&stl_data)?;
     
+## Export a dxf:
+
+    let bytes = union_result.to_dxf()?;
+    std::fs::write(bytes)?;
+
+## Import a dxf:
+
+    let dxf_data: Vec<u8> = std::fs::read("path_to_stl_file.dxf")?;
+    let csg = MyCSG::from_dxf(&dxf_data)?;
+    
 ## Generic per-object and per-polygon metadata:
 
 In order to allow you to store custom per-polygon metadata (colors, IDs, etc.), `csgrs` now has a generic type parameter `S: Clone` on both `CSG<S>` and `Polygon<S>`.  If you don’t need custom data, you can simply use `()`, an empty type, for `S`.
@@ -322,7 +332,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - support twist and scale in linear extrude like openscad
 - support scale and translation along a vector in rotate extrude
 - extruding a line does not currently result in a 2D shape as it has fewer than three points
-- dxf/svg import/export
+- svg import/export
 - fragments (circle, sphere, regularize with rotate_extrude)
 - extend polygon to handle multiple loops, outside and holes, using earclip on from_polygons, plane splitting
 - fill
