@@ -2,7 +2,7 @@ use crate::computable::{unsigned, Precision};
 use crate::Computable;
 use core::fmt;
 use num::bigint::Sign::Minus;
-use num::BigUint;
+use num::{BigUint, Zero};
 
 fn trim(num: &mut Vec<u8>) {
     loop {
@@ -83,6 +83,16 @@ impl Places {
     }
 }
 
+// digits but when we know it's all zeroes
+fn zeroes(places: Places, stop: bool) -> (Vec<u8>, i32) {
+    if stop {
+        (vec![0], 0)
+    } else {
+        let count = places.digits(0);
+        (vec![0; count], 0)
+    }
+}
+
 // output decimal digits (as bytes) Vec<u8> and a exponent
 fn digits(
     magn: &BigUint,
@@ -94,6 +104,10 @@ fn digits(
     let mut exp: i32 = 0;
     let mut divisor = unsigned::ONE.clone();
     let mut excess = msd - bits;
+
+    if *magn == BigUint::zero() {
+        return zeroes(places, stop);
+    }
 
     // If we have enough bits already then just divide off the powers of two
     if excess < 0 {
@@ -122,7 +136,7 @@ fn digits(
     }
 
     let count = places.digits(exp);
-    // If we're not actually here to calculate digits, but rounding occurs...
+    // If we're not actually here to calculate any digits, but rounding occurs...
     if count == 0 {
         divisor *= &*unsigned::FIVE;
         if magn > &divisor {
@@ -404,7 +418,16 @@ mod tests {
     }
 
     #[test]
-    fn disp_zero() {
+    fn actual_zero() {
+        let zero = Computable::rational(Rational::zero());
+        assert_eq!(format!("{zero}"), "0");
+        assert_eq!(format!("{zero:.10}"), "0.0000000000");
+        assert_eq!(format!("{zero:.5E}"), "0.00000E0");
+        assert_eq!(format!("{zero:.0e}"), "0e0");
+    }
+
+    #[test]
+    fn disp_too_small() {
         let ratios = [(1, 3), (1, 4), (2, 5), (1, 6), (3, 7)];
         for ratio in ratios {
             let ans = Computable::rational(Rational::fraction(ratio.0, ratio.1));

@@ -415,6 +415,8 @@ impl Computable {
         Some(self.known_msd())
     }
 
+    const STOP_PRECISION: Precision = Precision::MIN / 3;
+
     /// MSD but iteratively without a guess as to precision
     pub(super) fn iter_msd(&self) -> Precision {
         let mut prec = 0;
@@ -427,12 +429,12 @@ impl Computable {
                 return msd;
             }
             prec = (prec * 3) / 2 - 16;
-            if prec <= Precision::MIN + 30 {
+            if prec <= Self::STOP_PRECISION {
                 break;
             }
         }
-        self.msd(Precision::MIN)
-            .expect("Should have a known MSD by now")
+        self.msd(Self::STOP_PRECISION)
+            .unwrap_or(Self::STOP_PRECISION)
     }
 }
 

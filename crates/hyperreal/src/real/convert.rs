@@ -384,7 +384,11 @@ mod tests {
         assert_eq!(zero, 0.0);
     }
 
-    fn roundtrip<T>(f: T) -> T where T: TryInto<Real> + From<Real>, <T as TryInto<Real>>::Error: std::fmt::Debug  {
+    fn roundtrip<T>(f: T) -> T
+    where
+        T: TryInto<Real> + From<Real>,
+        <T as TryInto<Real>>::Error: std::fmt::Debug,
+    {
         let mid: Real = f.try_into().unwrap();
         mid.into()
     }
