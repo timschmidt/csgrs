@@ -251,9 +251,9 @@ The various shape functions (`cube`, `sphere`, etc.) produce polygons whose `sha
 
 Once you have a `CSG<S>`, you can access its polygons (either via `csg.polygons` or `csg.to_polygons()`) and use the following helper methods on each `Polygon<S>`:
 
-    shared_data() -> Option<&S>: Returns a reference to the metadata if present.
-    shared_data_mut() -> Option<&mut S>: Returns a mutable reference to the metadata.
-    set_shared_data(value: S): Overwrites the metadata with a new value.
+    metadata() -> Option<&S>: Returns a reference to the metadata if present.
+    metadata_mut() -> Option<&mut S>: Returns a mutable reference to the metadata.
+    set_metadata(value: S): Overwrites the metadata with a new value.
     
     // Create a CSG with a single polygon that has a string metadata value:
     let mut poly = Polygon::new(
@@ -266,17 +266,17 @@ Once you have a `CSG<S>`, you can access its polygons (either via `csg.polygons`
     );
     
     // Access the data
-    if let Some(data) = poly.shared_data() {
+    if let Some(data) = poly.metadata() {
         println!("Metadata data is: {}", data);
     }
     
     // Mutably modify
-    if let Some(data_mut) = poly.shared_data_mut() {
+    if let Some(data_mut) = poly.metadata_mut() {
         data_mut.push_str("_extended");
     }
     
     // Or directly set
-    poly.set_shared_data("OverwrittenData".to_string());
+    poly.set_metadata("OverwrittenData".to_string());
     
     // Make a CSG from polygons
     let csg = CSG::from_polygons(vec![poly]);
@@ -301,7 +301,6 @@ The only tricky part is handling overlapping coplanar polygons in both trees. Th
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 ## Todo
-- rename shared data functions to metadata functions
 - fix normals on rotate_extrude
 - fix normal on bottom face of extrude
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii

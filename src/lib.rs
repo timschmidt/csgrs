@@ -319,10 +319,10 @@ impl Plane {
                 }
 
                 if f.len() >= 3 {
-                    front.push(Polygon::new(f, polygon.shared.clone()));
+                    front.push(Polygon::new(f, polygon.metadata.clone()));
                 }
                 if b.len() >= 3 {
-                    back.push(Polygon::new(b, polygon.shared.clone()));
+                    back.push(Polygon::new(b, polygon.metadata.clone()));
                 }
             }
         }
@@ -348,17 +348,17 @@ fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
 }
 
 /// A convex polygon, defined by a list of vertices and a plane.
-/// - `S` is the generic "shared" data type, stored as `Option<S>`.
+/// - `S` is the generic metadata type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
 pub struct Polygon<S: Clone> {
     pub vertices: Vec<Vertex>,
-    pub shared: Option<S>,
+    pub metadata: Option<S>,
     pub plane: Plane,
 }
 
 impl<S: Clone> Polygon<S> {
     /// Create a polygon from vertices
-    pub fn new(vertices: Vec<Vertex>, shared: Option<S>) -> Self {
+    pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
         assert!(
             vertices.len() >= 3,
             "Polygon::new requires at least 3 vertices"
@@ -369,7 +369,7 @@ impl<S: Clone> Polygon<S> {
             &vertices[1].pos,
             &vertices[2].pos,
         );
-        Polygon { vertices, shared, plane }
+        Polygon { vertices, metadata, plane }
     }
 
     pub fn flip(&mut self) {
@@ -442,21 +442,19 @@ impl<S: Clone> Polygon<S> {
         }
     }
 
-    // --- New getters/setters for shared data ---
-
-    /// Returns a reference to the shared data, if any.
-    pub fn shared_data(&self) -> Option<&S> {
-        self.shared.as_ref()
+    /// Returns a reference to the metadata, if any.
+    pub fn metadata(&self) -> Option<&S> {
+        self.metadata.as_ref()
     }
 
-    /// Returns a mutable reference to the shared data, if any.
-    pub fn shared_data_mut(&mut self) -> Option<&mut S> {
-        self.shared.as_mut()
+    /// Returns a mutable reference to the metadata, if any.
+    pub fn metadata_mut(&mut self) -> Option<&mut S> {
+        self.metadata.as_mut()
     }
 
-    /// Sets the shared data to the given value.
-    pub fn set_shared_data(&mut self, data: S) {
-        self.shared = Some(data);
+    /// Sets the metadata to the given value.
+    pub fn set_metadata(&mut self, data: S) {
+        self.metadata = Some(data);
     }
 }
 
@@ -1128,10 +1126,10 @@ impl<S: Clone> CSG<S> {
             // Subdivide the polygon into many smaller triangles
             let sub_tris = poly.subdivide_triangles(levels);
             // Convert each small tri back into a Polygon with 3 vertices
-            // (you can keep the same 'shared' data or None).
+            // (you can keep the same metadata or None).
             for tri in sub_tris {
                 new_polygons.push(
-                    Polygon::new(vec![tri[0].clone(), tri[1].clone(), tri[2].clone()], poly.shared.clone())
+                    Polygon::new(vec![tri[0].clone(), tri[1].clone(), tri[2].clone()], poly.metadata.clone())
                 );
             }
         }
@@ -1315,7 +1313,7 @@ impl<S: Clone> CSG<S> {
                     t_j.clone(), // top[i+1]
                     t_i.clone(), // top[i]
                 ],
-                None, // or carry over some shared data if you wish
+                None, // or carry over some metadata if you wish
             );
             polygons.push(side_poly);
         }
@@ -1650,7 +1648,7 @@ impl<S: Clone> CSG<S> {
                 .map(|p| Vertex::new(nalgebra::Point3::new(p.x, p.y, 0.0), normal_2d))
                 .collect();
     
-            result_polygons.push(Polygon::new(new_verts, poly.shared.clone()));
+            result_polygons.push(Polygon::new(new_verts, poly.metadata.clone()));
         }
     
         CSG::from_polygons(result_polygons)
@@ -1809,8 +1807,8 @@ impl<S: Clone> CSG<S> {
                     tri_vertices.push(Vertex::new(pos_3d, n));
                 }
 
-                // Create a polygon from these 3 vertices. We preserve the `shared` data:
-                let mut new_poly = Polygon::new(tri_vertices, poly.shared.clone());
+                // Create a polygon from these 3 vertices. We preserve the metadata:
+                let mut new_poly = Polygon::new(tri_vertices, poly.metadata.clone());
 
                 // Recompute the plane/normal to ensure correct orientation/shading:
                 new_poly.recalc_plane_and_normals();

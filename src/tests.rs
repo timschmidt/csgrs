@@ -317,7 +317,7 @@ fn test_polygon_new() {
     ];
     let poly: Polygon<()> = Polygon::new(vertices.clone(), None);
     assert_eq!(poly.vertices.len(), 3);
-    assert_eq!(poly.shared, None);
+    assert_eq!(poly.metadata, None);
     // Plane normal should be +Z for the above points
     assert!(approx_eq(poly.plane.normal.x, 0.0, EPSILON));
     assert!(approx_eq(poly.plane.normal.y, 0.0, EPSILON));
@@ -1083,16 +1083,16 @@ fn test_csg_to_stl_and_from_stl_file() -> Result<(), Box<dyn std::error::Error>>
     Ok(())
 }
 
-/// A small, custom shared-data type to demonstrate usage.
+/// A small, custom metadata type to demonstrate usage.
 /// We derive PartialEq so we can assert equality in tests.
 #[derive(Debug, Clone, PartialEq)]
-struct MySharedData {
+struct MyMetaData {
     id: u32,
     label: String,
 }
 
 #[test]
-fn test_polygon_shared_data_string() {
+fn test_polygon_metadata_string() {
     // Create a simple triangle polygon with shared data = Some("triangle".to_string()).
     let verts = vec![
         Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
@@ -1102,21 +1102,21 @@ fn test_polygon_shared_data_string() {
     let mut poly = Polygon::new(verts, Some("triangle".to_string()));
 
     // Check getter
-    assert_eq!(poly.shared_data(), Some(&"triangle".to_string()));
+    assert_eq!(poly.metadata(), Some(&"triangle".to_string()));
 
     // Check setter
-    poly.set_shared_data("updated".to_string());
-    assert_eq!(poly.shared_data(), Some(&"updated".to_string()));
+    poly.set_metadata("updated".to_string());
+    assert_eq!(poly.metadata(), Some(&"updated".to_string()));
 
     // Check mutable getter
-    if let Some(data) = poly.shared_data_mut() {
+    if let Some(data) = poly.metadata_mut() {
         data.push_str("_appended");
     }
-    assert_eq!(poly.shared_data(), Some(&"updated_appended".to_string()));
+    assert_eq!(poly.metadata(), Some(&"updated_appended".to_string()));
 }
 
 #[test]
-fn test_polygon_shared_data_integer() {
+fn test_polygon_metadata_integer() {
     // Create a polygon with integer shared data
     let verts = vec![
         Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
@@ -1126,13 +1126,13 @@ fn test_polygon_shared_data_integer() {
     let poly = Polygon::new(verts, Some(42u32));
 
     // Confirm data
-    assert_eq!(poly.shared_data(), Some(&42));
+    assert_eq!(poly.metadata(), Some(&42));
 }
 
 #[test]
-fn test_polygon_shared_data_custom_struct() {
+fn test_polygon_metadata_custom_struct() {
     // Create a polygon with our custom struct
-    let my_data = MySharedData {
+    let my_data = MyMetaData {
         id: 999,
         label: "MyLabel".into(),
     };
@@ -1143,11 +1143,11 @@ fn test_polygon_shared_data_custom_struct() {
     ];
     let poly = Polygon::new(verts, Some(my_data.clone()));
 
-    assert_eq!(poly.shared_data(), Some(&my_data));
+    assert_eq!(poly.metadata(), Some(&my_data));
 }
 
 #[test]
-fn test_csg_construction_with_shared_data() {
+fn test_csg_construction_with_metadata() {
     // Build a CSG of two polygons, each with distinct shared data.
     let poly_a = Polygon::new(
         vec![
@@ -1169,12 +1169,12 @@ fn test_csg_construction_with_shared_data() {
 
     // We expect two polygons with the same shared data as the originals.
     assert_eq!(csg.polygons.len(), 2);
-    assert_eq!(csg.polygons[0].shared_data(), Some(&"PolyA".to_string()));
-    assert_eq!(csg.polygons[1].shared_data(), Some(&"PolyB".to_string()));
+    assert_eq!(csg.polygons[0].metadata(), Some(&"PolyA".to_string()));
+    assert_eq!(csg.polygons[1].metadata(), Some(&"PolyB".to_string()));
 }
 
 #[test]
-fn test_union_shared_data() {
+fn test_union_metadata() {
     // Let's union two squares in the XY plane, each with different shared data.
     // So after union, we typically get polygons from each original shape.
     // If there's any overlap, new polygons might be formed, but in CSG
@@ -1184,14 +1184,14 @@ fn test_union_shared_data() {
     let sq1 = CSG::square(Some(([1.0, 1.0], false))); // bottom-left at (0,0), top-right at (1,1)
     let mut sq1 = sq1; // now let us set shared data for each polygon
     for p in &mut sq1.polygons {
-        p.set_shared_data("Square1".to_string());
+        p.set_metadata("Square1".to_string());
     }
 
     // Translate Square2 so it partially overlaps. => label "Square2"
     let sq2 = CSG::square(Some(([1.0, 1.0], false))).translate(Vector3::new(0.5, 0.0, 0.0));
     let mut sq2 = sq2;
     for p in &mut sq2.polygons {
-        p.set_shared_data("Square2".to_string());
+        p.set_metadata("Square2".to_string());
     }
 
     // Union
@@ -1201,7 +1201,7 @@ fn test_union_shared_data() {
     // We can at least confirm that each polygon's shared data is EITHER "Square1" or "Square2",
     // and never mixed or lost.
     for poly in &union_csg.polygons {
-        let data = poly.shared_data().unwrap();
+        let data = poly.metadata().unwrap();
         assert!(
             data == "Square1" || data == "Square2",
             "Union polygon has unexpected shared data = {:?}",
@@ -1211,31 +1211,31 @@ fn test_union_shared_data() {
 }
 
 #[test]
-fn test_subtract_shared_data() {
+fn test_subtract_metadata() {
     // Subtract two cubes, each with different shared data. The resulting polygons
     // come from the *minuend* (the first shape) with *some* portion clipped out.
     // So the subtracted portion from the second shape won't appear in the final.
 
     let mut cube1 = CSG::cube(None);
     for p in &mut cube1.polygons {
-        p.set_shared_data("Cube1".to_string());
+        p.set_metadata("Cube1".to_string());
     }
 
     let mut cube2 = CSG::cube(None).translate(Vector3::new(0.5, 0.5, 0.5));
     for p in &mut cube2.polygons {
-        p.set_shared_data("Cube2".to_string());
+        p.set_metadata("Cube2".to_string());
     }
 
     let result = cube1.subtract(&cube2);
 
     // All polygons in the result should come from "Cube1" only.
     for poly in &result.polygons {
-        assert_eq!(poly.shared_data(), Some(&"Cube1".to_string()));
+        assert_eq!(poly.metadata(), Some(&"Cube1".to_string()));
     }
 }
 
 #[test]
-fn test_intersect_shared_data() {
+fn test_intersect_metadata() {
     // Intersection: the resulting polygons should come from polygons that are inside both.
     // Typically, the library picks polygons from the first shape, then clips them
     // against the second. Depending on exact implementation, the polygons that remain
@@ -1245,12 +1245,12 @@ fn test_intersect_shared_data() {
 
     let mut cube1 = CSG::cube(None);
     for p in &mut cube1.polygons {
-        p.set_shared_data("Cube1".to_string());
+        p.set_metadata("Cube1".to_string());
     }
 
     let mut cube2 = CSG::cube(None).translate(Vector3::new(0.5, 0.5, 0.5));
     for p in &mut cube2.polygons {
-        p.set_shared_data("Cube2".to_string());
+        p.set_metadata("Cube2".to_string());
     }
 
     let result = cube1.intersect(&cube2);
@@ -1259,7 +1259,7 @@ fn test_intersect_shared_data() {
     // actually from both shapes or from shape A. Let's check that if they do have shared data,
     // it must be from either "Cube1" or "Cube2".
     for poly in &result.polygons {
-        let data = poly.shared_data().unwrap();
+        let data = poly.metadata().unwrap();
         assert!(
             data == "Cube1" || data == "Cube2",
             "Intersection polygon has unexpected shared data = {:?}",
@@ -1269,24 +1269,24 @@ fn test_intersect_shared_data() {
 }
 
 #[test]
-fn test_flip_invert_shared_data() {
+fn test_flip_invert_metadata() {
     // Flipping or inverting a shape should NOT change the shared data;
     // it only flips normals/polygons.
 
     let mut csg = CSG::cube(None);
     for p in &mut csg.polygons {
-        p.set_shared_data("MyCube".to_string());
+        p.set_metadata("MyCube".to_string());
     }
 
     // Invert
     let inverted = csg.inverse();
     for poly in &inverted.polygons {
-        assert_eq!(poly.shared_data(), Some(&"MyCube".to_string()));
+        assert_eq!(poly.metadata(), Some(&"MyCube".to_string()));
     }
 }
 
 #[test]
-fn test_subdivide_shared_data() {
+fn test_subdivide_metadata() {
     // Subdivide a polygon with shared data, ensure all new subdivided polygons
     // preserve that data.
 
@@ -1302,15 +1302,15 @@ fn test_subdivide_shared_data() {
     let csg = CSG::from_polygons(vec![poly]);
     let subdivided = csg.subdivide_triangles(1); // one level of subdivision
 
-    // Now it's split into multiple triangles. Each should keep "LargeQuad" as shared.
+    // Now it's split into multiple triangles. Each should keep "LargeQuad" as metadata.
     assert!(subdivided.polygons.len() > 1);
     for spoly in &subdivided.polygons {
-        assert_eq!(spoly.shared_data(), Some(&"LargeQuad".to_string()));
+        assert_eq!(spoly.metadata(), Some(&"LargeQuad".to_string()));
     }
 }
 
 #[test]
-fn test_transform_shared_data() {
+fn test_transform_metadata() {
     // Make sure that transform does not lose or change shared data.
     let poly = Polygon::new(
         vec![
@@ -1326,12 +1326,12 @@ fn test_transform_shared_data() {
     let csg_rot = csg_scale.rotate(0.0, 0.0, 45.0);
 
     for poly in &csg_rot.polygons {
-        assert_eq!(poly.shared_data(), Some(&"Tri".to_string()));
+        assert_eq!(poly.metadata(), Some(&"Tri".to_string()));
     }
 }
 
 #[test]
-fn test_complex_shared_data_struct_in_boolean_ops() {
+fn test_complex_metadata_struct_in_boolean_ops() {
     // We'll do an operation using a custom struct to verify it remains intact.
     // We'll do a union for instance.
 
@@ -1340,17 +1340,17 @@ fn test_complex_shared_data_struct_in_boolean_ops() {
 
     let mut csg1 = CSG::cube(None);
     for p in &mut csg1.polygons {
-        p.set_shared_data(Color(255, 0, 0));
+        p.set_metadata(Color(255, 0, 0));
     }
     let mut csg2 = CSG::cube(None).translate(Vector3::new(0.5, 0.5, 0.5));
     for p in &mut csg2.polygons {
-        p.set_shared_data(Color(0, 255, 0));
+        p.set_metadata(Color(0, 255, 0));
     }
 
     let unioned = csg1.union(&csg2);
     // Now polygons are either from csg1 (red) or csg2 (green).
     for poly in &unioned.polygons {
-        let col = poly.shared_data().unwrap();
+        let col = poly.metadata().unwrap();
         assert!(
             *col == Color(255, 0, 0) || *col == Color(0, 255, 0),
             "Unexpected color in union: {:?}",
