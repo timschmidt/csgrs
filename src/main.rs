@@ -135,14 +135,15 @@ fn main() {
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::<()>::cube(Some((&[0.0, 0.0, 0.0], &[1.0, 1.0, 1.0])));
     // 2) Flatten into the XY plane
-    let flattened = cube.project(false);
+    let flattened = cube.project();
     let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
     
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
-    let cyl = CSG::<()>::cylinder(Some((&[0.0, -1.0, 0.0], &[0.0, 1.0, 0.0], 1.0, 32)));
+    let cyl = CSG::<()>::cylinder(Some((&[0.0, 0.0, -1.0], &[0.0, 0.0, 1.0], 1.0, 32)));
     // 2) Slice at z=0
-    let cross_section = cyl.project(true);
-    let _ = fs::write("stl/sliced_cylinder.stl", cross_section.to_stl_binary("sliced_cylinder").unwrap());
+    let cross_section = cyl.cut(None);
+    let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));
+    let _ = fs::write("stl/sliced_cylinder_slice.stl", cross_section.to_stl_ascii("sliced_cylinder_slice"));
     
     let poor_geometry_shape = moved_cube.subtract(&sphere);
     let retriangulated_shape = poor_geometry_shape.retriangulate();

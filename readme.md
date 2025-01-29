@@ -49,12 +49,6 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     ];
     let prism = MyCSG::polyhedron(&points, &faces);
 
-## Project or cut a 3D shape into 2D
-
-    let cube = MyCSG::cube(None);
-    let projection = cube.project(false);
-    let cut = cube.project(true);
-
 ## Combine shapes:
 
     let union_result = cube.union(&sphere);
@@ -89,6 +83,21 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 ## Minkowski sum:
 
     let rounded_cube = cube.minkowski_sum(&sphere);
+    
+## Project a 3D shape into 2D
+
+    let cube = MyCSG::cube(None);
+    let projection = cube.project();
+    
+## Cut a shape with a plane:
+
+    let cut = cube.cut(None); // cut at z=0
+    
+    let plane = Plane {
+        normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
+        w: 1.0,
+    }
+    let slice = cube.cut(plane); // cut at z=1
     
 ## Extrude a 2D shape:
 
@@ -136,12 +145,12 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     println!("Axis-aligned bounding box mins: {:?}", aabb.mins);
     println!("Axis-aligned bounding box maxs: {:?}", aabb.maxs);
     
-## Grow / Shrink a 3D shape: (bugged atm)
+## Offset a 3D shape: (bugged atm)
 
     let grown_cube = cube.grow(4.0);
     let shrunk_cube = cube.shrink(4.0);
 
-## Grow / Shrink a 2D shape:
+## Offset a 2D shape:
 
     let grown_square = square.offset_2d(4.0);
     let shrunk_square = square.offset_2d(-4.0);
@@ -156,11 +165,11 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 ## Subdivide triangles:
 
     let subdivisions = 2;
-    let subdivided_csg = my_csg.subdivide_triangles(subdivisions);
+    let subdivided_csg = rounded_cube.subdivide_triangles(subdivisions);
     
 ## Renormalize:
 
-    let renormalized_csg = my_csg.renormalize();
+    let renormalized_csg = cube.renormalize();
     
 ## Compute all ray intersections for measurement (expensive):
 
@@ -241,11 +250,11 @@ The various shape functions (`cube`, `sphere`, etc.) produce polygons whose `sha
 
 Once you have a `CSG<S>`, you can access its polygons (either via `csg.polygons` or `csg.to_polygons()`) and use the following helper methods on each `Polygon<S>`:
 
-    shared_data() -> Option<&S>: Returns a reference to the shared data if present.
-    shared_data_mut() -> Option<&mut S>: Returns a mutable reference to the shared data.
-    set_shared_data(value: S): Overwrites the shared data with a new value.
+    shared_data() -> Option<&S>: Returns a reference to the metadata if present.
+    shared_data_mut() -> Option<&mut S>: Returns a mutable reference to the metadata.
+    set_shared_data(value: S): Overwrites the metadata with a new value.
     
-    // Create a CSG with a single polygon that has a string shared value:
+    // Create a CSG with a single polygon that has a string metadata value:
     let mut poly = Polygon::new(
         vec![
             Vertex::new(Point3::new(0.0, 0.0, 0.0), nalgebra::Vector3::z()),
@@ -257,7 +266,7 @@ Once you have a `CSG<S>`, you can access its polygons (either via `csg.polygons`
     
     // Access the data
     if let Some(data) = poly.shared_data() {
-        println!("Shared data is: {}", data);
+        println!("Metadata data is: {}", data);
     }
     
     // Mutably modify
@@ -291,6 +300,8 @@ The only tricky part is handling overlapping coplanar polygons in both trees. Th
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 ## Todo
+- adjust STL import function and examples to consume data, not file
+- rename shared data functions to metadata functions
 - fix normals on rotate_extrude
 - fix normal on bottom face of extrude
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii

@@ -1577,24 +1577,20 @@ impl<S: Clone> CSG<S> {
         build_csg_from_polyline::<S>(&offset_loops)
     }
 
-    /// Flattens (projects) this CSG onto the XY plane, or slices it by z=0 to get the cross-section.
-    ///
-    /// - If `cut_at_z0 == false`, we now use `flatten_and_union(self)` instead of the old "just set z=0" code.
-    /// - If `cut_at_z0 == true`, we compute the intersection of each polygon with the plane z=0
-    ///   and build those cross-section polygons in the XY plane (z=0).
-    ///
+    /// Flattens (projects) this CSG onto the XY plane.
     /// Returns a new CSG containing only the resulting 2D polygons in z=0.
-    pub fn project(&self, cut_at_z0: bool) -> CSG<S> {
-        if !cut_at_z0 {
-            // NEW: Use flatten_and_union instead of simple flattening
-            return flatten_and_union(self);
-        }
+    pub fn project(&self) -> CSG<S> {
+        flatten_and_union(self)
+    }
     
-        // Otherwise, slice by z=0 as before:
-        let plane = Plane {
+    /// Slice this CSG by a plane, keeping only cross-sections on that plane.
+    /// If `plane` is None, defaults to the plane z=0.
+    pub fn cut(&self, plane: Option<Plane>) -> CSG<S> {
+
+        let plane = plane.unwrap_or_else(|| Plane {
             normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
             w: 0.0,
-        };
+        });
         let eps = EPSILON; // or 1e-5, as defined
     
         let mut result_polygons = Vec::new();
@@ -1606,7 +1602,7 @@ impl<S: Clone> CSG<S> {
                 continue; // skip degenerate
             }
     
-            // Classify each vertex against z=0 plane
+            // Classify each vertex against plane
             // side[i] = +1 if above plane, -1 if below plane, 0 if on plane
             let mut sides = Vec::with_capacity(vcount);
             for v in &poly.vertices {
@@ -1620,7 +1616,7 @@ impl<S: Clone> CSG<S> {
                 }
             }
     
-            // Collect the points where the polygon intersects z=0
+            // Collect the points where the polygon intersects the plane
             let mut intersect_points = Vec::new();
     
             for i in 0..vcount {
@@ -1630,7 +1626,7 @@ impl<S: Clone> CSG<S> {
                 let vi = &poly.vertices[i];
                 let vj = &poly.vertices[j];
     
-                // If a vertex lies exactly on z=0, include it
+                // If a vertex lies exactly on the plane, include it
                 if side_i == 0 {
                     intersect_points.push(vi.pos);
                 }
