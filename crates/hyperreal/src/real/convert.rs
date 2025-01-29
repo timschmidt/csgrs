@@ -417,12 +417,16 @@ mod tests {
     fn almost_two() {
         // Largest f32 which is smaller than two
         let h = f32::from_bits(0x3fff_ffff);
+        assert_eq!(format!("{h:#.7}"), "1.9999999");
         let r: Real = h.try_into().unwrap();
+        assert_eq!(format!("{r:#.7}"), "1.9999999");
         let j: f32 = r.into();
         assert_eq!(h, j);
         // Largest f64 which is smaller than two
         let h = f64::from_bits(0x3fff_ffff_ffff_ffff);
+        assert_eq!(format!("{h:#.16}"), "1.9999999999999998");
         let r: Real = h.try_into().unwrap();
+        assert_eq!(format!("{r:#.16}"), "1.9999999999999998");
         let j: f64 = r.into();
         assert_eq!(h, j);
     }
