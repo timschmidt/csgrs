@@ -5,6 +5,10 @@ use num::bigint::{Sign, ToBigInt};
 use num::{BigInt, BigUint, Signed};
 use num::{One, Zero};
 use std::ops::Deref;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
+type Signal = Arc<AtomicBool>;
 
 #[derive(Clone, Debug)]
 pub(super) enum Approximation {
@@ -24,28 +28,28 @@ pub(super) enum Approximation {
 }
 
 impl Approximation {
-    pub fn approximate(&self, p: Precision) -> BigInt {
+    pub fn approximate(&self, signal: &Option<Signal>, p: Precision) -> BigInt {
         use Approximation::*;
 
         match self {
             Int(i) => scale(i.clone(), -p),
-            Inverse(c) => inverse(c, p),
-            Negate(c) => -c.approx(p),
-            Add(c1, c2) => add(c1, c2, p),
-            Multiply(c1, c2) => multiply(c1, c2, p),
-            Square(c) => square(c, p),
+            Inverse(c) => inverse(signal, c, p),
+            Negate(c) => -c.approx_signal(signal, p),
+            Add(c1, c2) => add(signal, c1, c2, p),
+            Multiply(c1, c2) => multiply(signal, c1, c2, p),
+            Square(c) => square(signal, c, p),
             Ratio(r) => ratio(r, p),
-            Offset(c, n) => offset(c, *n, p),
-            PrescaledExp(c) => exp(c, p),
-            Sqrt(c) => sqrt(c, p),
-            PrescaledLn(c) => ln(c, p),
-            IntegralAtan(i) => atan(i, p),
-            PrescaledCos(c) => cos(c, p),
+            Offset(c, n) => offset(signal, c, *n, p),
+            PrescaledExp(c) => exp(signal, c, p),
+            Sqrt(c) => sqrt(signal, c, p),
+            PrescaledLn(c) => ln(signal, c, p),
+            IntegralAtan(i) => atan(signal, i, p),
+            PrescaledCos(c) => cos(signal, c, p),
         }
     }
 }
 
-fn inverse(c: &Computable, p: Precision) -> BigInt {
+fn inverse(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let msd = c.iter_msd();
     let inv_msd = 1 - msd;
     let digits_needed = inv_msd - p + 3;
@@ -57,7 +61,7 @@ fn inverse(c: &Computable, p: Precision) -> BigInt {
     }
 
     let dividend = signed::ONE.deref() << log_scale_factor;
-    let scaled_divisor = c.approx(prec_needed);
+    let scaled_divisor = c.approx_signal(signal, prec_needed);
     let abs_scaled_divisor = scaled_divisor.abs();
     let adj_dividend = dividend + (&abs_scaled_divisor >> 1);
     let result: BigInt = adj_dividend / abs_scaled_divisor;
@@ -69,11 +73,14 @@ fn inverse(c: &Computable, p: Precision) -> BigInt {
     }
 }
 
-fn add(c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
-    scale(c1.approx(p - 2) + c2.approx(p - 2), -2)
+fn add(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
+    scale(
+        c1.approx_signal(signal, p - 2) + c2.approx_signal(signal, p - 2),
+        -2,
+    )
 }
 
-fn multiply(c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
+fn multiply(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
     let half_prec = (p >> 1) - 1;
 
     match c1.msd(half_prec) {
@@ -81,7 +88,7 @@ fn multiply(c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
             None => Zero::zero(),
             Some(msd_op2) => {
                 let prec1 = p - msd_op2 - 3;
-                let appr1 = c1.approx(prec1);
+                let appr1 = c1.approx_signal(signal, prec1);
 
                 if appr1.sign() == Sign::NoSign {
                     return Zero::zero();
@@ -89,7 +96,7 @@ fn multiply(c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
 
                 let msd_op1 = c1.known_msd();
                 let prec2 = p - msd_op1 - 3;
-                let appr2 = c2.approx(prec2);
+                let appr2 = c2.approx_signal(signal, prec2);
 
                 let scale_digits = prec2 + prec1 - p;
                 scale(appr2 * appr1, scale_digits)
@@ -97,7 +104,7 @@ fn multiply(c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
         },
         Some(msd_op1) => {
             let prec2 = p - msd_op1 - 3;
-            let appr2 = c2.approx(prec2);
+            let appr2 = c2.approx_signal(signal, prec2);
 
             if appr2.sign() == Sign::NoSign {
                 return Zero::zero();
@@ -105,7 +112,7 @@ fn multiply(c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
 
             let msd_op2 = c2.known_msd();
             let prec1 = p - msd_op2 - 3;
-            let appr1 = c1.approx(prec1);
+            let appr1 = c1.approx_signal(signal, prec1);
 
             let scale_digits = prec1 + prec2 - p;
             scale(appr1 * appr2, scale_digits)
@@ -113,7 +120,7 @@ fn multiply(c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
     }
 }
 
-fn square(c: &Computable, p: Precision) -> BigInt {
+fn square(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let half_prec = (p >> 1) - 1;
     let prec2 = match c.msd(half_prec) {
         None => {
@@ -122,7 +129,7 @@ fn square(c: &Computable, p: Precision) -> BigInt {
         Some(msd) => p - msd - 3,
     };
 
-    let appr2 = c.approx(prec2);
+    let appr2 = c.approx_signal(signal, prec2);
 
     if appr2.sign() == Sign::NoSign {
         return Zero::zero();
@@ -130,7 +137,7 @@ fn square(c: &Computable, p: Precision) -> BigInt {
 
     let msd_op2 = c.known_msd();
     let prec1 = p - msd_op2 - 3;
-    let appr1 = c.approx(prec1);
+    let appr1 = c.approx_signal(signal, prec1);
 
     let scale_digits = prec1 + prec2 - p;
     scale(appr1 * appr2, scale_digits)
@@ -144,8 +151,8 @@ fn ratio(r: &Rational, p: Precision) -> BigInt {
     }
 }
 
-fn offset(c: &Computable, n: i32, p: Precision) -> BigInt {
-    c.approx(p - n)
+fn offset(signal: &Option<Signal>, c: &Computable, n: i32, p: Precision) -> BigInt {
+    c.approx_signal(signal, p - n)
 }
 
 fn bound_log2(n: i32) -> i32 {
@@ -158,7 +165,7 @@ fn bound_log2(n: i32) -> i32 {
 
 /* Only intended for Computable values < 0.5, others will be pre-scaled
  * in Computable::exp */
-fn exp(c: &Computable, p: Precision) -> BigInt {
+fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     if p >= 1 {
         return Zero::zero();
     }
@@ -172,7 +179,7 @@ fn exp(c: &Computable, p: Precision) -> BigInt {
     let calc_precision = p - bound_log2(2 * iterations_needed) - 4; // for error in op, truncation.
     let op_prec = p - 3;
 
-    let op_appr = c.approx(op_prec);
+    let op_appr = c.approx_signal(signal, op_prec);
 
     // Error in argument results in error of < 3/8 ulp.
     // Sum of term eval. rounding error is < 1/16 ulp.
@@ -186,8 +193,10 @@ fn exp(c: &Computable, p: Precision) -> BigInt {
     let mut sum = scaled_1;
     let mut n = BigInt::zero();
 
-    // TODO possibly good place to halt computation
     while current_term.abs() > max_trunc_error {
+        if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+            break;
+        }
         n += signed::ONE.deref();
         current_term = scale(current_term * &op_appr, op_prec) / &n;
         sum += &current_term;
@@ -196,7 +205,7 @@ fn exp(c: &Computable, p: Precision) -> BigInt {
     scale(sum, calc_precision - p)
 }
 
-fn sqrt(c: &Computable, p: Precision) -> BigInt {
+fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let fp_prec: i32 = 50;
     let fp_op_prec: i32 = 60;
 
@@ -205,6 +214,10 @@ fn sqrt(c: &Computable, p: Precision) -> BigInt {
 
     if msd <= max_prec_needed {
         return Zero::zero();
+    }
+
+    if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+        return signed::ONE.deref().clone();
     }
 
     let result_msd = msd / 2;
@@ -216,10 +229,10 @@ fn sqrt(c: &Computable, p: Precision) -> BigInt {
         // This should be conservative.  Is fewer enough?
         let appr_prec = result_msd - appr_digits;
 
-        let last_appr = sqrt(c, appr_prec);
+        let last_appr = sqrt(signal, c, appr_prec);
         let prod_prec = 2 * appr_prec;
 
-        let op_appr = c.approx(prod_prec);
+        let op_appr = c.approx_signal(signal, prod_prec);
 
         // Slightly fewer might be enough;
         // Compute (last_appr * last_appr + op_appr)/(last_appr/2)
@@ -237,7 +250,7 @@ fn sqrt(c: &Computable, p: Precision) -> BigInt {
         let op_prec = (msd - fp_op_prec) & !1;
         let working_prec = op_prec - fp_op_prec;
 
-        let scaled_bi_appr = c.approx(op_prec) << fp_op_prec;
+        let scaled_bi_appr = c.approx_signal(signal, op_prec) << fp_op_prec;
 
         let scaled_sqrt = scaled_bi_appr.sqrt();
 
@@ -248,11 +261,15 @@ fn sqrt(c: &Computable, p: Precision) -> BigInt {
 
 // Compute cosine of |c| < 1
 // uses a Taylor series expansion.
-fn cos(c: &Computable, p: Precision) -> BigInt {
+fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     if p >= 1 {
         return signed::ONE.deref().clone();
     }
     let iterations_needed = -p / 2 + 4;
+
+    if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+        return signed::ONE.deref().clone();
+    }
 
     //  Claim: each intermediate term is accurate
     //  to 2*2^calc_precision.
@@ -261,7 +278,7 @@ fn cos(c: &Computable, p: Precision) -> BigInt {
     //  exclusive of error in op.
     let calc_precision = p - bound_log2(2 * iterations_needed) - 4; // for error in op, truncation.
     let op_prec = p - 2;
-    let op_appr = c.approx(op_prec);
+    let op_appr = c.approx_signal(signal, op_prec);
 
     // Error in argument results in error of < 1/4 ulp.
     // Cumulative arithmetic rounding error is < 1/16 ulp.
@@ -274,8 +291,10 @@ fn cos(c: &Computable, p: Precision) -> BigInt {
     let mut current_term = signed::ONE.deref() << (-calc_precision);
     let mut current_sum = current_term.clone();
 
-    // TODO good place to halt computation
     while current_term.abs() > max_trunc_error {
+        if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+            break;
+        }
         n += 2;
 
         /* current_term = - current_term * op * op / n * (n - 1)   */
@@ -297,7 +316,7 @@ fn cos(c: &Computable, p: Precision) -> BigInt {
 // Note: this is known to be a bad algorithm for
 // floating point.  Unfortunately, other alternatives
 // appear to require precomputed tabular information.
-fn ln(c: &Computable, p: Precision) -> BigInt {
+fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     if p >= 0 {
         return Zero::zero();
     }
@@ -305,7 +324,7 @@ fn ln(c: &Computable, p: Precision) -> BigInt {
     let iterations_needed = -p;
     let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
     let op_prec = p - 3;
-    let op_appr = c.approx(op_prec);
+    let op_appr = c.approx_signal(signal, op_prec);
 
     let mut x_nth = scale(op_appr.clone(), op_prec - calc_precision);
     let mut current_term = x_nth.clone();
@@ -316,8 +335,10 @@ fn ln(c: &Computable, p: Precision) -> BigInt {
 
     let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
 
-    // TODO good place to halt computation
     while current_term.abs() > max_trunc_error {
+        if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+            break;
+        }
         n += 1;
         sign = -sign;
         x_nth = scale(&x_nth * &op_appr, op_prec);
@@ -332,7 +353,7 @@ fn ln(c: &Computable, p: Precision) -> BigInt {
 
 // Approximate the Arctangent of 1/n where n is some small integer > base
 // what is "base" in this context?
-fn atan(i: &BigInt, p: Precision) -> BigInt {
+fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
     if p >= 1 {
         return Zero::zero();
     }
@@ -366,8 +387,10 @@ fn atan(i: &BigInt, p: Precision) -> BigInt {
     let mut sign = 1;
     let mut n = 1;
 
-    // TODO good place to halt computation
     while *current_term.magnitude() > max_trunc_error {
+        if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+            break;
+        }
         n += 2;
         current_power /= &big_op_squared;
         sign = -sign;

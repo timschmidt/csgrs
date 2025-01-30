@@ -78,6 +78,11 @@ mod unsigned {
     pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&6).unwrap());
 }
 
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
+
+pub type Signal = Arc<AtomicBool>;
+
 /// (More) Real numbers
 ///
 /// This type is functionally the product of a [`Computable`] number
@@ -111,21 +116,30 @@ mod unsigned {
 /// let answer = nine.sqrt().unwrap();
 /// assert_eq!(answer, three);
 /// ```
-
 #[derive(Clone, Debug)]
 pub struct Real {
     rational: Rational,
     class: Class,
     computable: Computable,
+    signal: Option<Signal>,
 }
 
 impl Real {
+    /// Provide an atomic flag to signal early abort of calculations
+    /// The provided flag can be used e.g. from another execution thread
+    /// Aborted calculations may have incorrect results
+    pub fn abort(&mut self, s: Signal) {
+        self.signal = Some(s.clone());
+        self.computable.abort(s);
+    }
+
     /// Zero, the additive identity
     pub fn zero() -> Real {
         Self {
             rational: Rational::zero(),
             class: One,
             computable: Computable::one(),
+            signal: None,
         }
     }
 
@@ -135,6 +149,7 @@ impl Real {
             rational,
             class: One,
             computable: Computable::one(),
+            signal: None,
         }
     }
 
@@ -144,6 +159,7 @@ impl Real {
             rational: Rational::one(),
             class: Pi,
             computable: Computable::pi(),
+            signal: None,
         }
     }
 
@@ -154,6 +170,7 @@ impl Real {
             rational: one.clone(),
             class: Exp(one.clone()),
             computable: Computable::e(one),
+            signal: None,
         }
     }
 }
@@ -224,6 +241,7 @@ impl Real {
             rational: Rational::one(),
             class: Irrational,
             computable,
+            signal: None,
         }
     }
 
@@ -247,6 +265,7 @@ impl Real {
                     rational: self.rational.inverse(),
                     class: One,
                     computable: Computable::one(),
+                    signal: None,
                 });
             }
             Sqrt(sqrt) => {
@@ -256,6 +275,7 @@ impl Real {
                         rational,
                         class: self.class,
                         computable: self.computable,
+                        signal: None,
                     });
                 }
             }
@@ -265,6 +285,7 @@ impl Real {
                     rational: self.rational.inverse(),
                     class: Exp(exp.clone()),
                     computable: Computable::e(exp),
+                    signal: None,
                 });
             }
             _ => (),
@@ -273,6 +294,7 @@ impl Real {
             rational: self.rational.inverse(),
             class: Irrational,
             computable: Computable::inverse(self.computable),
+            signal: None,
         })
     }
 
@@ -294,12 +316,14 @@ impl Real {
                             rational: square,
                             class: One,
                             computable: Computable::one(),
+                            signal: None,
                         });
                     } else {
                         return Ok(Self {
                             rational: square,
                             class: Sqrt(rest.clone()),
                             computable: Computable::sqrt_rational(rest),
+                            signal: None,
                         });
                     }
                 }
@@ -312,6 +336,7 @@ impl Real {
                             rational: square,
                             class: Irrational,
                             computable: Computable::sqrt(self.computable),
+                            signal: None,
                         });
                     }
                 }
@@ -325,6 +350,7 @@ impl Real {
                             rational: square,
                             class: Exp(exp.clone()),
                             computable: Computable::e(exp),
+                            signal: None,
                         });
                     }
                 }
@@ -346,6 +372,7 @@ impl Real {
                     rational: Rational::one(),
                     class: Exp(self.rational.clone()),
                     computable: Computable::e(self.rational),
+                    signal: None,
                 })
             }
             Ln(ln) => {
@@ -354,6 +381,7 @@ impl Real {
                         rational: ln.clone(),
                         class: One,
                         computable: Computable::one(),
+                        signal: None,
                     });
                 }
             }
@@ -378,6 +406,7 @@ impl Real {
                         rational: Rational::one(),
                         class: Ln(self.rational),
                         computable: Computable::ln(new),
+                        signal: None,
                     });
                 }
             }
@@ -387,6 +416,7 @@ impl Real {
                         rational: exp.clone(),
                         class: One,
                         computable: Computable::one(),
+                        signal: None,
                     });
                 }
             }
@@ -408,6 +438,7 @@ impl Real {
                     rational: Rational::one(),
                     class: Irrational,
                     computable: Computable::sin(new),
+                    signal: None,
                 };
             }
             Pi => {
@@ -424,6 +455,7 @@ impl Real {
                         rational: Rational::fraction(1, 2),
                         class: Sqrt(Rational::new(3)),
                         computable: Computable::sqrt_rational(Rational::new(3)),
+                        signal: None,
                     });
                 }
                 if d == unsigned::FOUR.deref() {
@@ -431,6 +463,7 @@ impl Real {
                         rational: Rational::fraction(1, 2),
                         class: Sqrt(Rational::new(2)),
                         computable: Computable::sqrt_rational(Rational::new(2)),
+                        signal: None,
                     });
                 }
                 if d == unsigned::SIX.deref() {
@@ -452,12 +485,14 @@ impl Real {
                             rational: Rational::new(-1),
                             class: SinPi(r),
                             computable: Computable::sin(new),
+                            signal: None,
                         };
                     } else {
                         return Self {
                             rational: Rational::one(),
                             class: SinPi(r),
                             computable: Computable::sin(new),
+                            signal: None,
                         };
                     }
                 }
@@ -480,6 +515,7 @@ impl Real {
                     rational: Rational::one(),
                     class: Irrational,
                     computable: Computable::cos(new),
+                    signal: None,
                 };
             }
             Pi => {
@@ -487,6 +523,7 @@ impl Real {
                     rational: self.rational + Rational::fraction(1, 2),
                     class: Pi,
                     computable: self.computable,
+                    signal: None,
                 };
                 return off.sin();
             }
@@ -570,6 +607,7 @@ impl std::str::FromStr for Real {
             rational,
             class: One,
             computable: Computable::one(),
+            signal: None,
         })
     }
 }
@@ -615,6 +653,7 @@ impl Add for Real {
             rational: Rational::one(),
             class: Irrational,
             computable,
+            signal: None,
         }
     }
 }
@@ -645,6 +684,7 @@ impl Real {
                 rational: x,
                 class: One,
                 computable: Computable::one(),
+                signal: None,
             }
         } else {
             let product = x * y;
@@ -653,6 +693,7 @@ impl Real {
                     rational: product,
                     class: One,
                     computable: Computable::one(),
+                    signal: None,
                 };
             }
             let (a, b) = product.extract_square_reduced();
@@ -661,12 +702,14 @@ impl Real {
                     rational: a,
                     class: One,
                     computable: Computable::one(),
+                    signal: None,
                 };
             }
             Self {
                 rational: a,
                 class: Sqrt(b.clone()),
                 computable: Computable::sqrt_rational(b),
+                signal: None,
             }
         }
     }
@@ -702,6 +745,7 @@ impl Mul for Real {
                     rational,
                     class,
                     computable,
+                    signal: None,
                 }
             }
             (Pi, Pi) => {
@@ -710,6 +754,7 @@ impl Mul for Real {
                     rational,
                     class: Irrational,
                     computable: Computable::square(Computable::pi()),
+                    signal: None,
                 }
             }
             _ => {
@@ -718,6 +763,7 @@ impl Mul for Real {
                     rational,
                     class: Irrational,
                     computable: Computable::multiply(self.computable, other.computable),
+                    signal: None,
                 }
             }
         }

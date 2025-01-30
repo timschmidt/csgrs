@@ -17,11 +17,17 @@ enum Cache {
     Valid((Precision, BigInt)),
 }
 
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
+
+pub type Signal = Arc<AtomicBool>;
+
 /// Computable approximation of a Real number
 #[derive(Clone, Debug)]
 pub struct Computable {
     internal: Box<Approximation>,
     cache: RefCell<Cache>,
+    signal: Option<Signal>,
 }
 
 mod rationals {
@@ -76,6 +82,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Int(BigInt::one())),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -96,6 +103,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Ratio(r)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -123,6 +131,7 @@ impl Computable {
             Self {
                 internal: Box::new(Approximation::PrescaledExp(self)),
                 cache: RefCell::new(Cache::Invalid),
+                signal: None,
             }
         }
     }
@@ -150,6 +159,7 @@ impl Computable {
             Self {
                 internal: Box::new(Approximation::PrescaledCos(self)),
                 cache: RefCell::new(Cache::Invalid),
+                signal: None,
             }
         }
     }
@@ -211,6 +221,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledLn(self)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -218,6 +229,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Sqrt(self)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -225,6 +237,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::IntegralAtan(n)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -232,6 +245,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Negate(self)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -239,6 +253,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Inverse(self)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -246,6 +261,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Offset(self, n)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -253,6 +269,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Offset(self, -n)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -260,6 +277,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Square(self)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -267,6 +285,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Multiply(self, other)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -275,6 +294,7 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Add(self, other)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
@@ -282,11 +302,16 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Int(n)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 }
 
 impl Computable {
+    pub fn abort(&mut self, s: Signal) {
+        self.signal = Some(s);
+    }
+
     /// An approximation of this Computable scaled to a specific precision
     ///
     /// The approximation is scaled (thus, a larger value for more negative p)
@@ -318,7 +343,21 @@ impl Computable {
                 return scale(cache_appr, cache_prec - p);
             }
         }
-        let result = self.internal.approximate(p);
+        let result = self.internal.approximate(&self.signal, p);
+        self.cache.replace(Cache::Valid((p, result.clone())));
+        result
+    }
+
+    /// As above but with a specified signal
+    pub fn approx_signal(&self, signal: &Option<Signal>, p: Precision) -> BigInt {
+        // Check precision is OK?
+
+        if let Cache::Valid((cache_prec, cache_appr)) = self.cache.clone().into_inner() {
+            if p >= cache_prec {
+                return scale(cache_appr, cache_prec - p);
+            }
+        }
+        let result = self.internal.approximate(signal, p);
         self.cache.replace(Cache::Valid((p, result.clone())));
         result
     }
@@ -417,24 +456,35 @@ impl Computable {
 
     const STOP_PRECISION: Precision = Precision::MIN / 3;
 
-    /// MSD but iteratively without a guess as to precision
-    pub(super) fn iter_msd(&self) -> Precision {
+    /// MSD iteratively: 0, -16, -40, -76 etc. or p if that's lower
+    pub(super) fn iter_msd_stop(&self, p: Precision) -> Option<Precision> {
+        use std::sync::atomic::Ordering;
+
         let mut prec = 0;
 
-        // TODO possibly good place to halt computation
-        // prec = 0, -16, -40, -76, etc.
         loop {
             let msd = self.msd(prec);
-            if let Some(msd) = msd {
+            if msd.is_some() {
                 return msd;
             }
             prec = (prec * 3) / 2 - 16;
-            if prec <= Self::STOP_PRECISION {
+            if prec <= p {
+                break;
+            }
+            if self
+                .signal
+                .as_ref()
+                .is_some_and(|s| s.load(Ordering::SeqCst))
+            {
                 break;
             }
         }
-        self.msd(Self::STOP_PRECISION)
-            .unwrap_or(Self::STOP_PRECISION)
+        self.msd(p)
+    }
+
+    /// MSD but iteratively without a guess as to precision
+    pub(super) fn iter_msd(&self) -> Precision {
+        self.iter_msd_stop(Self::STOP_PRECISION).unwrap_or(Self::STOP_PRECISION)
     }
 }
 
@@ -627,6 +677,7 @@ mod tests {
         let ln = Computable {
             internal: Box::new(Approximation::PrescaledLn(zero)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         };
         let zero = BigInt::zero();
         assert_eq!(zero, ln.approx(100));
@@ -639,6 +690,7 @@ mod tests {
         let ln = Computable {
             internal: Box::new(Approximation::PrescaledLn(rational)),
             cache: RefCell::new(Cache::Invalid),
+            signal: None,
         };
         let five: BigInt = "5".parse().unwrap();
         assert_eq!(five, ln.approx(-4));

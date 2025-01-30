@@ -135,8 +135,16 @@ impl TryFrom<f64> for Real {
 
 impl Real {
     pub(crate) fn fold(self) -> Computable {
-        let rat = Computable::rational(self.rational);
-        rat.multiply(self.computable)
+        use crate::real::Class;
+
+        let mut c = Computable::rational(self.rational);
+        if self.class != Class::One {
+            c = c.multiply(self.computable);
+        }
+        if let Some(s) = self.signal {
+            c.abort(s.clone());
+        }
+        c
     }
 }
 
@@ -192,14 +200,13 @@ impl From<Real> for f32 {
             Minus => 1,
         };
 
-        let msd = c.iter_msd();
-        if msd < -150 {
+        let Some(msd) = c.iter_msd_stop(-150) else {
             return match neg {
                 0 => 0.0,
                 1 => -0.0,
                 _ => unreachable!(),
             };
-        }
+        };
         if msd > 127 {
             return match neg {
                 0 => f32::INFINITY,
@@ -264,14 +271,13 @@ impl From<Real> for f64 {
             Minus => 1,
         };
 
-        let msd = c.iter_msd();
-        if msd < -1075 {
+        let Some(msd) = c.iter_msd_stop(-1075) else {
             return match neg {
                 0 => 0.0,
                 1 => -0.0,
                 _ => unreachable!(),
             };
-        }
+        };
         if msd > 1023 {
             return match neg {
                 0 => f64::INFINITY,
@@ -343,6 +349,18 @@ mod tests {
         let third = Real::new(Rational::fraction(1, 3));
         let answer = (a / b).unwrap();
         assert_eq!(answer, third);
+    }
+
+    #[test]
+    fn too_small() {
+        let r: Real = f32::from_bits(1).try_into().unwrap();
+        let s = r * Real::new(Rational::fraction(1, 3));
+        let f: f32 = s.into();
+        assert_eq!(f, 0.0_f32);
+        let r: Real = f64::from_bits(1).try_into().unwrap();
+        let s = r * Real::new(Rational::fraction(1, 3));
+        let f: f64 = s.into();
+        assert_eq!(f, 0.0_f64);
     }
 
     #[test]
