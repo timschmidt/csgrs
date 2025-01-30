@@ -122,7 +122,7 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
     let circle = MyCSG::circle(Some((2.0, 64)));
     let circle2 = MyCSG::circle(Some((2.0, 64)));
-    let solid = CSG::extrude_between(circle, circle2.translate(Vector3::new(3.0, 2.0, 5.0)));
+    let solid = MyCSG::extrude_between(circle, circle2.translate(Vector3::new(3.0, 2.0, 5.0)));
     
 ### Rotate extrude:
 
@@ -327,11 +327,14 @@ The only tricky part is handling overlapping coplanar polygons in both trees. Th
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 ## Todo
+- file formats behind a feature flag
+- parry, rapier behind feature flags
 - polygons_by_metadata public function of a CSG
 - extend flatten to work with arbitrary planes
 - overwrite polygon metadata correctly in difference, intersection, etc
 - fix normals on rotate_extrude
 - fix normal on bottom face of extrude
+  - square circle test from 0.6.0
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
@@ -369,7 +372,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
 
 ## Todo maybe
-- implement arc support in 2d using cavalier_contours, tessellate in from_polygons
+- implement arc support in 2d using cavalier_contours, interpolate/tessellate in from_polygons
 - reconstruct arcs from polylines using 
 - extend Polygon to allow edges to store arc parameters and bulge like cavalier_contours and update split_polygon to handle line/arc intersections.
 
