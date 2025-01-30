@@ -59,6 +59,8 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
     let polygons = union_result.to_polygons();
     println!("Polygon count = {}", polygons.len());
+    
+    let same_polygons = union_result.polygons;
 
 ### Translate:
 
@@ -321,6 +323,8 @@ The only tricky part is handling overlapping coplanar polygons in both trees. Th
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 ## Todo
+- extend flatten to work with arbitrary planes
+- overwrite polygon metadata correctly in difference, intersection, etc
 - fix normals on rotate_extrude
 - fix normal on bottom face of extrude
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
