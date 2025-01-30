@@ -327,6 +327,7 @@ The only tricky part is handling overlapping coplanar polygons in both trees. Th
 Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
 
 ## Todo
+- polygons_by_metadata public function of a CSG
 - extend flatten to work with arbitrary planes
 - overwrite polygon metadata correctly in difference, intersection, etc
 - fix normals on rotate_extrude
