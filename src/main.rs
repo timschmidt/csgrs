@@ -135,7 +135,7 @@ fn main() {
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::<()>::cube(Some((&[0.0, 0.0, 0.0], &[1.0, 1.0, 1.0])));
     // 2) Flatten into the XY plane
-    let flattened = cube.project();
+    let flattened = cube.flatten();
     let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
     
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices

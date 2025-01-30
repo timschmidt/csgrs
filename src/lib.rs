@@ -1509,7 +1509,7 @@ impl<S: Clone> CSG<S> {
     /// We skip "degenerate" loops whose area is near zero, both before
     /// and after performing the union. This helps avoid collinear or
     /// duplicate edges that can cause issues in `cavalier_contours`.
-    pub fn project(&self) -> CSG<S> {
+    pub fn flatten(&self) -> CSG<S> {
         let eps_area = 1e-9;
         let eps_pos = 1e-5;
     
@@ -1795,8 +1795,7 @@ impl<S: Clone> CSG<S> {
             // 5) Map each returned triangle's (i0, i1, i2) back to 3D,
             //    constructing a new `Polygon` (with 3 vertices) for each tri.
             //
-            //    The earcut indices are typed as `usize` in this snippet; if
-            //    your crate’s `Index` is `u32`, simply adjust or cast as needed.
+            //    The earcut indices are typed as `usize` adjust or cast as needed.
             for tri in indices.chunks_exact(3) {
                 let mut tri_vertices = Vec::with_capacity(3);
                 for &i in tri {

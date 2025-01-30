@@ -4,14 +4,14 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
 ![Example CSG output](docs/csg.png)
 
-## Use the library:
+### Use the library:
 
     use csgrs::CSG;
     
     // Create a type alias for easy usage
     type MyCSG = CSG<()>;
 
-## Construct a 2D shape:
+### Construct a 2D shape:
 
     let square = MyCSG::square(None);
     let square2 = MyCSG::square(Some(([2.0, 3.0], true)));
@@ -21,7 +21,7 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     let points = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     let polygon2d = MyCSG::polygon_2d(&points);
 
-## Construct a 3D shape:
+### Construct a 3D shape:
 
     let cube = MyCSG::cube(None);
     let cube2 = MyCSG::cube(Some([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])); // center, radius
@@ -49,47 +49,47 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     ];
     let prism = MyCSG::polyhedron(&points, &faces);
 
-## Combine shapes:
+### Combine shapes:
 
     let union_result = cube.union(&sphere);
     let subtraction_result = cube.subtract(&sphere);
     let intersection_result = cylinder.intersect(&sphere);
 
-## Extract polygons:
+### Extract polygons:
 
     let polygons = union_result.to_polygons();
     println!("Polygon count = {}", polygons.len());
 
-## Translate:
+### Translate:
 
     let translation_result = cube.translate(Vector3::new(3.0, 2.0, 1.0));
 
-## Rotate:
+### Rotate:
 
     let rotation_result = cube.rotate(15.0, 45.0, 0.0);
 
-## Scale:
+### Scale:
 
     let scale_result = cube.scale(2.0, 1.0, 3.0);
 
-## Mirror:
+### Mirror:
 
     let mirror_result = cube.mirror(Axis::Y);
     
-## Convex hull:
+### Convex hull:
 
     let hull = cube.convex_hull();
 
-## Minkowski sum:
+### Minkowski sum:
 
     let rounded_cube = cube.minkowski_sum(&sphere);
     
-## Project a 3D shape into 2D
+### Flatten a 3D shape into 2D
 
     let cube = MyCSG::cube(None);
-    let projection = cube.project();
+    let flattened_cube = cube.flatten();
     
-## Cut a shape with a plane:
+### Cut a shape with a plane:
 
     let cut = cube.cut(None); // cut at z=0
     
@@ -99,12 +99,12 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     }
     let slice = cube.cut(plane); // cut at z=1
     
-## Extrude a 2D shape:
+### Extrude a 2D shape:
 
     let square = MyCSG::square(Some(([2.0, 2.0], true)));
     let prism = square.extrude(5.0);
     
-## Extrude along a vector:
+### Extrude along a vector:
 
     // Extrude along the +Y direction by 5 units:
     let extruded_y = my_2d_shape.extrude_along(Vector3::new(0.0, 5.0, 0.0));
@@ -112,13 +112,13 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     // Extrude along some arbitrary vector, say (1.0, 2.0, 3.0):
     let extruded_diagonal = my_2d_shape.extrude_along(Vector3::new(1.0, 2.0, 3.0));
     
-## Extrude between two polygons:
+### Extrude between two polygons:
 
     let circle = MyCSG::circle(Some((2.0, 64)));
     let circle2 = MyCSG::circle(Some((2.0, 64)));
     let solid = CSG::extrude_between(circle, circle2.translate(Vector3::new(3.0, 2.0, 5.0)));
     
-## Rotate extrude:
+### Rotate extrude:
 
     let polygon = MyCSG::polygon_2d(&[
         [1.0, 0.0],
@@ -127,7 +127,7 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
     ]);
     let revolve_shape = polygon.rotate_extrude(360.0, 16); // degrees, steps
     
-## [Transform](https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations):
+### [Transform](https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations):
 
     // Scale X, Shear X along Y, Shear X along Z, Translate X
     // Shear Y along X, Scale Y, Shear Y along Z, Translate Y
@@ -139,39 +139,39 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
                                   21, 22, 23, 24,
                                   0, 0, 0, 1));
     
-## Bounding box:
+### Bounding box:
 
     let aabb = cube.bounding_box();
     println!("Axis-aligned bounding box mins: {:?}", aabb.mins);
     println!("Axis-aligned bounding box maxs: {:?}", aabb.maxs);
     
-## Offset a 3D shape: (bugged atm)
+### Offset a 3D shape: (bugged atm)
 
     let grown_cube = cube.grow(4.0);
     let shrunk_cube = cube.shrink(4.0);
 
-## Offset a 2D shape:
+### Offset a 2D shape:
 
     let grown_square = square.offset_2d(4.0);
     let shrunk_square = square.offset_2d(-4.0);
     
-## Text:
+### Text:
 
     let font_data = include_bytes!("my_font.ttf");
 
     // Generate a simple "Hello" text in the XY plane
     let csg_text = MyCSG::text("Hello", font_data, Some(10.0));
     
-## Subdivide triangles:
+### Subdivide triangles:
 
     let subdivisions = 2;
     let subdivided_csg = rounded_cube.subdivide_triangles(subdivisions);
     
-## Renormalize:
+### Renormalize:
 
     let renormalized_csg = cube.renormalize();
     
-## Test manifoldness:
+### Test manifoldness:
 
     let cube = MyCSG::cube(None);
 
@@ -181,7 +181,7 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
         false => println!("The cube is not manifold."),
     }
     
-## Compute all ray intersections for measurement (expensive):
+### Compute all ray intersections for measurement (expensive):
 
     let cube = MyCSG::cube(None);
     let ray_origin = nalgebra::Point3::new(-5.0, 0.0, 0.0);
@@ -193,11 +193,11 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
         println!("  t = {:.4}, point = {:?}", dist, point); // distance to 4 decimal places
     }
 
-## Create a [Parry](https://parry.rs/) TriMesh:
+### Create a [Parry](https://parry.rs/) TriMesh:
 
     let trimesh = my_csg.to_trimesh();
 
-## Create a [Rapier](https://rapier.rs/) rigid body:
+### Create a [Rapier](https://rapier.rs/) rigid body:
 
     // 90 degrees in radians
     let angle = std::f64::consts::FRAC_PI_2;
@@ -212,37 +212,37 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
         1.0,                         // density
     );
     
-## Collect mass properties of a shape:
+### Collect mass properties of a shape:
 
     let density = 1.0;
     let (mass, center_of_mass, inertia_frame) = my_csg.mass_properties(density);
 
-## Export an ASCII STL:
+### Export an ASCII STL:
 
     let stl_data = union_result.to_stl_ascii("cube_minus_sphere");
     std::fs::write("output.stl", stl_data.as_bytes())?;
     
-## Export a binary STL:
+### Export a binary STL:
 
     let bytes = union_result.to_stl_binary("my_solid")?;
     std::fs::write("output.stl", bytes)?;
 
-## Import an STL:
+### Import an STL:
 
     let stl_data: Vec<u8> = std::fs::read("path_to_stl_file.stl")?;
     let csg = MyCSG::from_stl(&stl_data)?;
     
-## Export a DXF:
+### Export a DXF:
 
     let bytes = union_result.to_dxf()?;
     std::fs::write(bytes)?;
 
-## Import a DXF:
+### Import a DXF:
 
-    let dxf_data: Vec<u8> = std::fs::read("path_to_stl_file.dxf")?;
+    let dxf_data: Vec<u8> = std::fs::read("path_to_dxf_file.dxf")?;
     let csg = MyCSG::from_dxf(&dxf_data)?;
     
-## Generic per-object and per-polygon metadata:
+## Generic per-polygon metadata:
 
 In order to allow you to store custom per-polygon metadata (colors, IDs, etc.), `csgrs` now has a generic type parameter `S: Clone` on both `CSG<S>` and `Polygon<S>`.  If you don’t need custom data, you can simply use `()`, an empty type, for `S`.
 

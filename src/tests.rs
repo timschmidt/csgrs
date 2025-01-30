@@ -1605,7 +1605,7 @@ fn test_flatten_cube() {
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::<()>::cube(Some((&[0.0, 0.0, 0.0], &[1.0, 1.0, 1.0])));
     // 2) Flatten into the XY plane
-    let flattened = cube.project();
+    let flattened = cube.flatten();
     
     // The flattened cube should have 1 polygon1, now in z=0
     assert_eq!(flattened.polygons.len(), 1, 
@@ -1788,7 +1788,7 @@ fn test_flatten_and_union_single_polygon() {
     let csg = CSG::from_polygons(vec![square_poly]);
 
     // Flatten & union it
-    let flat_csg = csg.project();
+    let flat_csg = csg.flatten();
 
     // Expect the same bounding box
     assert!(!flat_csg.polygons.is_empty(), "Result should not be empty");
@@ -1819,7 +1819,7 @@ fn test_flatten_and_union_two_overlapping_squares() {
     ]);
     let csg = CSG::from_polygons(vec![square1, square2]);
 
-    let flat_csg = csg.project();
+    let flat_csg = csg.flatten();
     assert!(!flat_csg.polygons.is_empty(), "Union should not be empty");
 
     // The bounding box should now span x=0..2, y=0..1
@@ -1859,7 +1859,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
     ]);
     let csg = CSG::from_polygons(vec![square_a, square_b]);
 
-    let flat_csg = csg.project();
+    let flat_csg = csg.flatten();
     assert!(!flat_csg.polygons.is_empty());
 
     // Expect 2 disjoint polygons in the result
@@ -1887,7 +1887,7 @@ fn test_flatten_and_union_near_xy_plane() {
     );
 
     let csg = CSG::from_polygons(vec![poly1]);
-    let flat_csg = csg.project();
+    let flat_csg = csg.flatten();
 
     assert!(!flat_csg.polygons.is_empty(), "Should flatten to a valid polygon");
     let bb = flat_csg.bounding_box();
@@ -1916,7 +1916,7 @@ fn test_flatten_and_union_collinear_edges() {
     ]);
 
     let csg = CSG::<()>::from_polygons(vec![rect1, rect2]);
-    let flat_csg = csg.project();
+    let flat_csg = csg.flatten();
 
     // Expect 1 polygon from x=0..4, y=0..~1.0ish
     assert!(!flat_csg.polygons.is_empty());
@@ -1932,7 +1932,7 @@ fn test_flatten_and_union_collinear_edges() {
 #[test]
 fn test_flatten_and_union_debug() {
     let csg_square = CSG::<()>::square(None); // a 1×1 square at [0..1, 0..1]
-    let flattened = csg_square.project();
+    let flattened = csg_square.flatten();
     assert!(!flattened.polygons.is_empty(), "Flattened square should not be empty");
     assert!(flattened.polygons[0].vertices.len() >= 3, "Should form at least a triangle");
 }
