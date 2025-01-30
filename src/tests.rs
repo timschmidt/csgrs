@@ -1714,7 +1714,7 @@ fn test_polygon_to_polyline2d_square() {
         [0.0, 1.0],
     ]);
 
-    let pline_2d = polygon_to_polyline2d(&square_poly);
+    let pline_2d = &square_poly.to_polyline2d();
     assert_eq!(pline_2d.len(), 4, "Expected 4 vertices in the polyline");
     // Check coordinates
     assert_eq!(pline_2d[0].x, 0.0);
@@ -1732,7 +1732,7 @@ fn test_polygon_to_polyline2d_degenerate() {
                     nalgebra::Vector3::new(0.0,0.0,1.0))
     ], None);
 
-    let pline_2d = polygon_to_polyline2d(&degenerate_poly);
+    let pline_2d = &degenerate_poly.to_polyline2d();
     assert_eq!(pline_2d.len(), 0, "Expected an empty result for degenerate polygon");
 }
 

@@ -50,28 +50,6 @@ impl PlineVertex2D {
     }
 }
 
-/// Converts one of your 3D polygons (assumed to lie in the XY plane) into
-/// a sequence of 2D polyline vertices. We set `bulge = 0.0` for each edge.
-pub fn polygon_to_polyline2d<S: Clone>(poly: &Polygon<S>) -> Vec<PlineVertex2D> {
-    let mut result = Vec::new();
-
-    if poly.vertices.len() < 2 {
-        return result; // degenerate or empty polygon
-    }
-
-    // We assume the polygon is already in the XY plane (z ~ 0).
-    // If your polygons might have arcs, you'd need more logic to detect + store bulge, etc.
-    for v in &poly.vertices {
-        result.push(PlineVertex2D {
-            x: v.pos.x, // x in plane
-            y: v.pos.y, // y in plane
-            bulge: 0.0, // bulge=0 => line segment
-        });
-    }
-
-    result
-}
-
 /// Builds a CSG from a list of 2D polylines (in XY). We treat each polyline as one
 /// flat polygon, lying in Z=0 with normal +Z. If you have multiple polylines,
 /// they become multiple polygons in the returned CSG. For more advanced logic
@@ -444,6 +422,28 @@ impl<S: Clone> Polygon<S> {
         for v in &mut self.vertices {
             v.normal = new_normal;
         }
+    }
+    
+    /// Converts one of your 3D polygons (assumed to lie in the XY plane) into
+    /// a sequence of 2D polyline vertices. We set `bulge = 0.0` for each edge.
+    pub fn to_polyline2d(&self) -> Vec<PlineVertex2D> {
+        let mut result = Vec::new();
+    
+        if self.vertices.len() < 2 {
+            return result; // degenerate or empty polygon
+        }
+    
+        // We assume the polygon is already in the XY plane (z ~ 0).
+        // If your polygons might have arcs, you'd need more logic to detect + store bulge, etc.
+        for v in &self.vertices {
+            result.push(PlineVertex2D {
+                x: v.pos.x, // x in plane
+                y: v.pos.y, // y in plane
+                bulge: 0.0, // bulge=0 => line segment
+            });
+        }
+    
+        result
     }
 
     /// Returns a reference to the metadata, if any.
@@ -1460,7 +1460,7 @@ impl<S: Clone> CSG<S> {
         let mut all_plines_2d = Vec::new();
         for poly in &self.polygons {
             // Assume `poly` is in XY plane, gather the points:
-            let pline2d = polygon_to_polyline2d(poly);
+            let pline2d = poly.to_polyline2d();
             all_plines_2d.push(pline2d);
         }
 
@@ -1514,7 +1514,7 @@ impl<S: Clone> CSG<S> {
         //    remove duplicates, skip degenerate (zero-area) loops.
         let mut polylines_2d = Vec::new();
         for poly in &self.polygons {
-            let pline2d = polygon_to_polyline2d(poly);
+            let pline2d = poly.to_polyline2d();
             let cc_poly = polyline2d_to_cc_polyline(&pline2d);
             cc_poly.remove_redundant(EPSILON);
     
@@ -1708,7 +1708,7 @@ impl<S: Clone> CSG<S> {
     /// - `font_data`: TTF font file bytes (e.g. `include_bytes!("../assets/FiraMono-Regular.ttf")`)
     /// - `size`: optional scaling factor (e.g., a rough "font size"). 
     ///
-    /// **Note**: This is a basic example that:
+    /// **Note**: Limitations:
     ///   - does not handle kerning or multi-line text,
     ///   - simply advances the cursor by each glyph’s width,
     ///   - places all characters along the X axis.
@@ -1923,10 +1923,8 @@ impl<S: Clone> CSG<S> {
         }
     }
 
-    // ----------------------------------------------------------
-    //   Export to ASCII STL
-    // ----------------------------------------------------------
-
+    /// Export to ASCII STL
+    ///
     /// Convert this CSG to an **ASCII STL** string with the given `name`.
     ///
     /// ```
@@ -1964,10 +1962,8 @@ impl<S: Clone> CSG<S> {
         out
     }
 
-    // ----------------------------------------------------------
-    //   Export to BINARY STL (returns Vec<u8>)
-    // ----------------------------------------------------------
-
+    /// Export to BINARY STL (returns Vec<u8>)
+    ///
     /// Convert this CSG to a **binary STL** byte vector with the given `name`.
     ///
     /// The resulting `Vec<u8>` can then be written to a file or handled in memory:

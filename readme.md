@@ -78,6 +78,10 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 
     let mirror_result = cube.mirror(Axis::Y);
     
+### Inverse
+
+    let inverse_result = cube.inverse();
+    
 ### Convex hull:
 
     let hull = cube.convex_hull();
