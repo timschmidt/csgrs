@@ -77,34 +77,6 @@ fn pline_area(pline: &Polyline<f64>) -> f64 {
     0.5 * area
 }
 
-/// Build a new CSG from a set of 2D polylines in XY. Each polyline
-/// is turned into one polygon at z=0. If a union produced multiple
-/// loops, you will get multiple polygons in the final CSG.
-pub fn build_csg_from_cc_polylines<S: Clone>(
-    loops: Vec<Polyline<f64>>,
-) -> CSG<S> {
-    let mut all_polygons = Vec::new();
-    let plane_normal = Vector3::new(0.0, 0.0, 1.0);
-
-    for pl in loops {
-        // Convert each Polyline into a single polygon in z=0.
-        // If you need arcs, you could subdivide by bulge, etc. This example ignores arcs for simplicity.
-        if pl.vertex_count() >= 3 {
-            let mut poly_verts = Vec::with_capacity(pl.vertex_count());
-            for i in 0..pl.vertex_count() {
-                let v = pl.at(i);
-                poly_verts.push(Vertex::new(
-                    nalgebra::Point3::new(v.x, v.y, 0.0),
-                    plane_normal
-                ));
-            }
-            all_polygons.push(Polygon::new(poly_verts, None));
-        }
-    }
-
-    CSG::from_polygons(all_polygons)
-}
-
 /// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v` so that
 /// {u, v, n} forms an orthonormal basis. `n` is assumed non‐zero.
 fn build_orthonormal_basis(n: nalgebra::Vector3<f64>) -> (nalgebra::Vector3<f64>, nalgebra::Vector3<f64>) {
@@ -623,6 +595,32 @@ impl<S: Clone> CSG<S> {
         }
     
         // Combine all polygons into a single CSG
+        CSG::from_polygons(all_polygons)
+    }
+    
+    /// Build a new CSG from a set of 2D polylines in XY. Each polyline
+    /// is turned into one polygon at z=0. If a union produced multiple
+    /// loops, you will get multiple polygons in the final CSG.
+    pub fn from_cc_polylines(loops: Vec<Polyline<f64>>) -> CSG<S> {
+        let mut all_polygons = Vec::new();
+        let plane_normal = Vector3::new(0.0, 0.0, 1.0);
+    
+        for pl in loops {
+            // Convert each Polyline into a single polygon in z=0.
+            // If you need arcs, you could subdivide by bulge, etc. This example ignores arcs for simplicity.
+            if pl.vertex_count() >= 3 {
+                let mut poly_verts = Vec::with_capacity(pl.vertex_count());
+                for i in 0..pl.vertex_count() {
+                    let v = pl.at(i);
+                    poly_verts.push(Vertex::new(
+                        nalgebra::Point3::new(v.x, v.y, 0.0),
+                        plane_normal
+                    ));
+                }
+                all_polygons.push(Polygon::new(poly_verts, None));
+            }
+        }
+    
         CSG::from_polygons(all_polygons)
     }
 
@@ -1554,7 +1552,7 @@ impl<S: Clone> CSG<S> {
         }
     
         // 3) Convert the final union loops back to polygons in Z=0.
-        build_csg_from_cc_polylines(union_acc)
+        CSG::from_cc_polylines(union_acc)
     }
     
     /// Slice this CSG by a plane, keeping only cross-sections on that plane.
