@@ -1765,7 +1765,7 @@ fn test_build_csg_from_polyline_square() {
         PlineVertex2D::new(0.0, 2.0),
     ];
     let loops = vec![square_loop];
-    let csg: CSG<()> = build_csg_from_polyline(&loops);
+    let csg: CSG<()> = CSG::from_polylines(&loops);
     assert_eq!(csg.polygons.len(), 1, "Expected exactly one polygon");
     let bb = csg.bounding_box();
     assert_eq!(bb.mins.x, 0.0);

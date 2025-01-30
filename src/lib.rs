@@ -50,41 +50,6 @@ impl PlineVertex2D {
     }
 }
 
-/// Builds a CSG from a list of 2D polylines (in XY). We treat each polyline as one
-/// flat polygon, lying in Z=0 with normal +Z. If you have multiple polylines,
-/// they become multiple polygons in the returned CSG. For more advanced logic
-/// (like holes, or combining them), you can union them or store them differently.
-pub fn build_csg_from_polyline<S: Clone>(
-    loops: &Vec<Vec<PlineVertex2D>>,
-) -> CSG<S> {
-    let mut all_polygons = Vec::new();
-
-    // Normal for all polygons is +Z in a simple 2D XY scenario
-    let plane_normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
-
-    for loop_ in loops {
-        if loop_.len() < 3 {
-            // skip degenerate
-            continue;
-        }
-
-        // Convert the loop of (x,y,bulge=0) into a single Polygon with flat shading
-        let mut poly_verts = Vec::with_capacity(loop_.len());
-
-        for v2d in loop_ {
-            let pt = nalgebra::Point3::new(v2d.x, v2d.y, 0.0);
-            poly_verts.push(Vertex::new(pt, plane_normal));
-        }
-
-        // Make one Polygon with an auto-computed plane
-        let poly_3d = Polygon::new(poly_verts, None);
-        all_polygons.push(poly_3d);
-    }
-
-    // Combine all polygons into a single CSG
-    CSG::from_polygons(all_polygons)
-}
-
 /// Convert your 2D vertices into a cavalier_contours Polyline<f64>, making it closed.
 pub fn polyline2d_to_cc_polyline(verts: &[PlineVertex2D]) -> Polyline<f64> {
     let mut pl = Polyline::with_capacity(verts.len(), true);
@@ -626,6 +591,39 @@ impl<S: Clone> CSG<S> {
     /// Return the internal polygons
     pub fn to_polygons(&self) -> &[Polygon<S>] {
         &self.polygons
+    }
+    
+    /// Builds a CSG from a list of 2D polylines (in XY). We treat each polyline as one
+    /// flat polygon, lying in Z=0 with normal +Z. If you have multiple polylines,
+    /// they become multiple polygons in the returned CSG. For more advanced logic
+    /// (like holes, or combining them), we can union them or store them differently.
+    pub fn from_polylines(loops: &Vec<Vec<PlineVertex2D>>) -> CSG<S> {
+        let mut all_polygons = Vec::new();
+    
+        // Normal for all polygons is +Z in a simple 2D XY scenario
+        let plane_normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+    
+        for loop_ in loops {
+            if loop_.len() < 3 {
+                // skip degenerate
+                continue;
+            }
+    
+            // Convert the loop of (x,y,bulge=0) into a single Polygon with flat shading
+            let mut poly_verts = Vec::with_capacity(loop_.len());
+    
+            for v2d in loop_ {
+                let pt = nalgebra::Point3::new(v2d.x, v2d.y, 0.0);
+                poly_verts.push(Vertex::new(pt, plane_normal));
+            }
+    
+            // Make one Polygon with an auto-computed plane
+            let poly_3d = Polygon::new(poly_verts, None);
+            all_polygons.push(poly_3d);
+        }
+    
+        // Combine all polygons into a single CSG
+        CSG::from_polygons(all_polygons)
     }
 
     /// CSG union: this ∪ other
@@ -1498,7 +1496,7 @@ impl<S: Clone> CSG<S> {
         }
 
         // 3) Build a new CSG from those offset loops in XY:
-        build_csg_from_polyline::<S>(&offset_loops)
+        CSG::from_polylines(&offset_loops)
     }
 
     /// Flatten a `CSG` into the XY plane and union all polygons' outlines,
