@@ -757,8 +757,8 @@ fn test_csg_cylinder() {
     assert!(approx_eq(bb[4],  1.0, 1e-8), "max Y");
     assert!(approx_eq(bb[5],  1.0, 1e-8), "max Z");
     
-    // We have slices = 16, plus 2 polygons for the end caps
-    assert_eq!(cylinder.polygons.len(), 18);
+    // We have slices = 16, plus 16*2 polygons for the end caps
+    assert_eq!(cylinder.polygons.len(), 48);
 }
 
 #[test]
