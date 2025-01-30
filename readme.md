@@ -109,10 +109,10 @@ Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean oper
 ### Extrude along a vector:
 
     // Extrude along the +Y direction by 5 units:
-    let extruded_y = my_2d_shape.extrude_along(Vector3::new(0.0, 5.0, 0.0));
+    let extruded_y = my_2d_shape.extrude_vector(Vector3::new(0.0, 5.0, 0.0));
     
     // Extrude along some arbitrary vector, say (1.0, 2.0, 3.0):
-    let extruded_diagonal = my_2d_shape.extrude_along(Vector3::new(1.0, 2.0, 3.0));
+    let extruded_diagonal = my_2d_shape.extrude_vector(Vector3::new(1.0, 2.0, 3.0));
     
 ### Extrude between two polygons:
 

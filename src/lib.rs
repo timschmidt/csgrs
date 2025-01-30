@@ -1206,11 +1206,9 @@ impl<S: Clone> CSG<S> {
     
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
-    /// This is similar to OpenSCAD's `linear_extrude(height=...)` assuming
-    /// the base 2D shape is in the XY plane with a +Z normal.
+    /// This is just a convenience wrapper around extrude_vector using Vector3::new(0.0, 0.0, height)
     pub fn extrude(&self, height: f64) -> CSG<S> {
-        // Simply call the new extrude_along method with a (0,0,height) vector
-        self.extrude_along(Vector3::new(0.0, 0.0, height))
+        self.extrude_vector(Vector3::new(0.0, 0.0, height))
     }
     
     /// Linearly extrude this (2D) shape along an arbitrary 3D direction vector.
@@ -1221,7 +1219,7 @@ impl<S: Clone> CSG<S> {
     /// - The shape is assumed to be “2D” in the sense that each polygon typically
     ///   lies in a single plane (e.g. XY). For best results, your polygons’ normals
     ///   should be consistent.
-    pub fn extrude_along(&self, direction: Vector3<f64>) -> CSG<S> {
+    pub fn extrude_vector(&self, direction: Vector3<f64>) -> CSG<S> {
         // Collect all new polygons here
         let mut new_polygons = Vec::new();
     
