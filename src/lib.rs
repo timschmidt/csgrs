@@ -1509,7 +1509,6 @@ impl<S: Clone> CSG<S> {
     /// duplicate edges that can cause issues in `cavalier_contours`.
     pub fn flatten(&self) -> CSG<S> {
         let eps_area = 1e-9;
-        let eps_pos = 1e-5;
     
         // 1) Convert each 3D polygon into a 2D polyline on z=0,
         //    remove duplicates, skip degenerate (zero-area) loops.
@@ -1517,7 +1516,7 @@ impl<S: Clone> CSG<S> {
         for poly in &self.polygons {
             let pline2d = polygon_to_polyline2d(poly);
             let cc_poly = polyline2d_to_cc_polyline(&pline2d);
-            cc_poly.remove_redundant(eps_pos);
+            cc_poly.remove_redundant(EPSILON);
     
             // Check area; skip if below threshold
             if pline_area(&cc_poly).abs() > eps_area {
@@ -1534,7 +1533,7 @@ impl<S: Clone> CSG<S> {
     
         let options = PlineBooleanOptions {
             pline1_aabb_index: None,
-            pos_equal_eps: eps_pos,
+            pos_equal_eps: EPSILON,
             ..Default::default()
         };
     
@@ -1568,7 +1567,6 @@ impl<S: Clone> CSG<S> {
             normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
             w: 0.0,
         });
-        let eps = EPSILON; // or 1e-5, as defined
     
         let mut result_polygons = Vec::new();
     
@@ -1584,7 +1582,7 @@ impl<S: Clone> CSG<S> {
             let mut sides = Vec::with_capacity(vcount);
             for v in &poly.vertices {
                 let dist = plane.normal.dot(&v.pos.coords) - plane.w;
-                if dist.abs() < eps {
+                if dist.abs() < EPSILON {
                     sides.push(0); // on plane
                 } else if dist > 0.0 {
                     sides.push(1); // above
@@ -1611,7 +1609,7 @@ impl<S: Clone> CSG<S> {
                 // If edges cross the plane, find intersection
                 if side_i != side_j && side_i != 0 && side_j != 0 {
                     let denom = plane.normal.dot(&(vj.pos - vi.pos));
-                    if denom.abs() > eps {
+                    if denom.abs() > EPSILON {
                         let t = (plane.w - plane.normal.dot(&vi.pos.coords)) / denom;
                         let new_v = vi.interpolate(vj, t).pos;
                         intersect_points.push(new_v);
