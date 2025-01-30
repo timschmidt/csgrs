@@ -149,5 +149,12 @@ fn main() {
     let retriangulated_shape = poor_geometry_shape.retriangulate();
     let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
+    let sphere_test = csgrs::CSG::<()>::sphere(Some((&[0.0, 0.0, 0.0], 1.2, 16, 8)));
+    let cube_test = csgrs::CSG::<()>::cube(None);
+    let res = cube_test.subtract(&sphere_test);
+    let _ = fs::write("stl/sphere_cube_test.stl", res.to_stl_binary("sphere_cube_test").unwrap());
+    assert_eq!(res.bounding_box(), cube_test.bounding_box());
+
+
 }
 

@@ -771,29 +771,30 @@ impl<S: Clone> CSG<S> {
         };
         let c = Vector3::new(center[0], center[1], center[2]);
         let r = Vector3::new(radius[0], radius[1], radius[2]);
-    
-        // 1) Create a centered square in the XY plane of width 2*r.x and height 2*r.y.
-        let base_2d = CSG::square(Some(([2.0 * r.x, 2.0 * r.y], true)));
-        // Our 2D shape has exactly one polygon:
-        let bottom_poly = &base_2d.polygons[0];
-    
-        // 2) Make the top polygon by translating this bottom polygon in +Z by 2*r.z.
-        let top_poly_csg = CSG::from_polygons(vec![bottom_poly.clone()])
-            .translate(Vector3::new(0.0, 0.0, 2.0 * r.z));
-        let top_poly = &top_poly_csg.polygons[0];
-    
-        // 3) Extrude between them to get a rectangular prism.
-        let prism = CSG::extrude_between(bottom_poly, top_poly, true);
-    
-        // 4) Finally, shift so that the prism is centered at `c` in Z:
-        //    originally it spans z from 0..2*r.z; translating by -r.z moves it to -r.z..+r.z,
-        //    then we shift by c. This yields the final bounding box:
-        //       [c.x - r.x .. c.x + r.x,
-        //        c.y - r.y .. c.y + r.y,
-        //        c.z - r.z .. c.z + r.z].
-        prism
-            .translate(Vector3::new(0.0, 0.0, -r.z))
-            .translate(c)
+
+        let indices_and_normals = vec![
+            (vec![0, 4, 6, 2], Vector3::new(-1.0, 0.0, 0.0)),
+            (vec![1, 3, 7, 5], Vector3::new(1.0, 0.0, 0.0)),
+            (vec![0, 1, 5, 4], Vector3::new(0.0, -1.0, 0.0)),
+            (vec![2, 6, 7, 3], Vector3::new(0.0, 1.0, 0.0)),
+            (vec![0, 2, 3, 1], Vector3::new(0.0, 0.0, -1.0)),
+            (vec![4, 5, 7, 6], Vector3::new(0.0, 0.0, 1.0)),
+        ];
+
+        let mut polygons = Vec::new();
+        for (idxs, n) in indices_and_normals {
+            let mut verts = Vec::new();
+            for i in idxs {
+                // The bits of `i` pick +/- for x,y,z
+                let vx = c.x + r.x * ((i & 1) as f64 * 2.0 - 1.0);
+                let vy = c.y + r.y * (((i & 2) >> 1) as f64 * 2.0 - 1.0);
+                let vz = c.z + r.z * (((i & 4) >> 2) as f64 * 2.0 - 1.0);
+                verts.push(Vertex::new(Point3::new(vx, vy, vz), n));
+            }
+            polygons.push(Polygon::new(verts, None));
+        }
+
+        CSG::from_polygons(polygons)
     }
 
     /// Construct a sphere with optional center, radius, slices, stacks
@@ -858,54 +859,73 @@ impl<S: Clone> CSG<S> {
             Some((s, e, r, sl)) => (*s, *e, r, sl),
             None => ([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16),
         };
-    
+
         let s = Vector3::new(start[0], start[1], start[2]);
         let e = Vector3::new(end[0], end[1], end[2]);
         let ray = e - s;
-        let length = ray.norm();
-    
-        // 1) Build a 2D circle in the XY plane of radius `radius`.
-        let circle_2d = CSG::circle(Some((radius, slices)));
-        let bottom_poly = &circle_2d.polygons[0];
-    
-        // 2) Translate a copy of that circle up in Z by `length` to form the top.
-        let top_poly_csg = CSG::from_polygons(vec![bottom_poly.clone()])
-            .translate(Vector3::new(0.0, 0.0, length));
-        let top_poly = &top_poly_csg.polygons[0];
-    
-        // 3) Extrude between the bottom and top polygons to form a basic cylinder along the Z-axis.
-        let raw_cyl = CSG::extrude_between(bottom_poly, top_poly, true);
-    
-        // 4) Orient the cylinder so that its axis goes from `start` to `end`.
-        //    We rotate from +Z to `ray` using an axis-angle rotation.
-        if length.abs() < f64::EPSILON {
-            // Degenerate case: start == end, just return the shape without orientation.
-            return raw_cyl.translate(s);
-        }
-    
-        let z_unit = Vector3::new(0.0, 0.0, 1.0);
-        let direction = ray / length;
-        let axis = z_unit.cross(&direction);
-        let angle = z_unit.angle(&direction);
-    
-        let rotation = if axis.magnitude() < f64::EPSILON {
-            // If `ray` is parallel or anti-parallel to Z, handle that separately:
-            // e.g. if ray is in +Z direction, no rotation needed; if in -Z, rotate 180° about X or Y.
-            if z_unit.dot(&direction) > 0.0 {
-                Matrix4::identity()
-            } else {
-                // 180° flip around X-axis (or Y-axis), for a perfect reversal.
-                Rotation3::from_axis_angle(&Vector3::x_axis(), std::f64::consts::PI).to_homogeneous()
-            }
+        let axis_z = ray.normalize();
+        let is_y = axis_z.y.abs() > 0.5;
+
+        // If axis_z is mostly aligned with Y, pick X; otherwise pick Y.
+        let mut axis_x = if is_y {
+            Vector3::new(1.0, 0.0, 0.0)
         } else {
-            let axis_norm = axis.normalize();
-            Rotation3::from_axis_angle(&nalgebra::Unit::new_unchecked(axis_norm), angle).to_homogeneous()
+            Vector3::new(0.0, 1.0, 0.0)
         };
-    
-        // 5) Apply the rotation, then translate so the bottom sits at `start`.
-        raw_cyl
-            .transform(&rotation)
-            .translate(s)
+        axis_x = axis_x.cross(&axis_z).normalize();
+        let axis_y = axis_x.cross(&axis_z).normalize();
+
+        let start_v = Vertex::new(Point3::from(s), -axis_z);
+        let end_v = Vertex::new(Point3::from(e), axis_z);
+
+        let mut polygons = Vec::new();
+
+        let point = |stack: f64, slice: f64, normal_blend: f64| {
+            let angle = slice * std::f64::consts::TAU;
+            let out = axis_x * angle.cos() + axis_y * angle.sin();
+            let pos = s + ray * stack + out * radius;
+            // Blend outward normal with axis_z for the cap edges
+            let normal = out * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
+            Vertex::new(Point3::from(pos), normal)
+        };
+
+        for i in 0..slices {
+            let t0 = i as f64 / slices as f64;
+            let t1 = (i + 1) as f64 / slices as f64;
+
+            // bottom cap
+            polygons.push(Polygon::new(
+                vec![
+                    start_v.clone(),
+                    point(0.0, t0, -1.0),
+                    point(0.0, t1, -1.0),
+                ],
+                None,
+            ));
+
+            // tube
+            polygons.push(Polygon::new(
+                vec![
+                    point(0.0, t1, 0.0),
+                    point(0.0, t0, 0.0),
+                    point(1.0, t0, 0.0),
+                    point(1.0, t1, 0.0),
+                ],
+                None,
+            ));
+
+            // top cap
+            polygons.push(Polygon::new(
+                vec![
+                    end_v.clone(),
+                    point(1.0, t1, 1.0),
+                    point(1.0, t0, 1.0),
+                ],
+                None,
+            ));
+        }
+
+        CSG::from_polygons(polygons)
     }
 
     /// Creates a CSG polyhedron from raw vertex data (`points`) and face indices.
