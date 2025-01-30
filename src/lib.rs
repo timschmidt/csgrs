@@ -50,15 +50,6 @@ impl PlineVertex2D {
     }
 }
 
-/// Convert your 2D vertices into a cavalier_contours Polyline<f64>, making it closed.
-pub fn polyline2d_to_cc_polyline(verts: &[PlineVertex2D]) -> Polyline<f64> {
-    let mut pl = Polyline::with_capacity(verts.len(), true);
-    for v in verts {
-        pl.add(v.x, v.y, v.bulge);
-    }
-    pl
-}
-
 /// Computes the signed area of a closed 2D polyline via the shoelace formula.
 /// We assume `pline.is_closed() == true` and it has at least 2 vertices.
 /// Returns positive area if CCW, negative if CW. Near-zero => degenerate.
@@ -103,6 +94,24 @@ fn build_orthonormal_basis(n: nalgebra::Vector3<f64>) -> (nalgebra::Vector3<f64>
     let u = v.cross(&n).normalize();
 
     (u, v)
+}
+
+// Helper function to subdivide a triangle
+pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
+    let v0 = tri[0].clone();
+    let v1 = tri[1].clone();
+    let v2 = tri[2].clone();
+
+    let v01 = v0.interpolate(&v1, 0.5);
+    let v12 = v1.interpolate(&v2, 0.5);
+    let v20 = v2.interpolate(&v0, 0.5);
+
+    vec![
+        [v0.clone(),  v01.clone(), v20.clone()],
+        [v01.clone(), v1.clone(),  v12.clone()],
+        [v20.clone(), v12.clone(), v2.clone()],
+        [v01,         v12,         v20],
+    ]
 }
 
 /// A vertex of a polygon, holding position and normal.
@@ -248,24 +257,6 @@ impl Plane {
     }
 }
 
-// Helper function to subdivide triangles
-fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
-    let v0 = tri[0].clone();
-    let v1 = tri[1].clone();
-    let v2 = tri[2].clone();
-
-    let v01 = v0.interpolate(&v1, 0.5);
-    let v12 = v1.interpolate(&v2, 0.5);
-    let v20 = v2.interpolate(&v0, 0.5);
-
-    vec![
-        [v0.clone(),  v01.clone(), v20.clone()],
-        [v01.clone(), v1.clone(),  v12.clone()],
-        [v20.clone(), v12.clone(), v2.clone()],
-        [v01,         v12,         v20],
-    ]
-}
-
 /// A convex polygon, defined by a list of vertices and a plane.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
@@ -381,6 +372,16 @@ impl<S: Clone> Polygon<S> {
         }
     
         result
+    }
+    
+    /// Convert 2D vertices into a cavalier_contours Polyline<f64>, making it closed.
+    pub fn to_cc_polyline(&self) -> Polyline<f64> {
+        let verts = &self.to_polyline2d();
+        let mut pl = Polyline::with_capacity(verts.len(), true);
+        for v in verts {
+            pl.add(v.x, v.y, v.bulge);
+        }
+        pl
     }
 
     /// Returns a reference to the metadata, if any.
@@ -1510,8 +1511,7 @@ impl<S: Clone> CSG<S> {
         //    remove duplicates, skip degenerate (zero-area) loops.
         let mut polylines_2d = Vec::new();
         for poly in &self.polygons {
-            let pline2d = poly.to_polyline2d();
-            let cc_poly = polyline2d_to_cc_polyline(&pline2d);
+            let cc_poly = poly.to_cc_polyline();
             cc_poly.remove_redundant(EPSILON);
     
             // Check area; skip if below threshold

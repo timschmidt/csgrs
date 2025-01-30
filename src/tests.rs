@@ -1736,16 +1736,18 @@ fn test_polygon_to_polyline2d_degenerate() {
     assert_eq!(pline_2d.len(), 0, "Expected an empty result for degenerate polygon");
 }
 
-/// Test `polyline2d_to_cc_polyline` and `pline_area` with a known square loop.
+/// Test `to_cc_polyline` and `pline_area` with a known square loop.
 #[test]
-fn test_polyline2d_to_cc_polyline_and_area() {
+fn test_to_cc_polyline_and_area() {
     let square_2d = vec![
         PlineVertex2D::new(0.0, 0.0),
         PlineVertex2D::new(1.0, 0.0),
         PlineVertex2D::new(1.0, 1.0),
         PlineVertex2D::new(0.0, 1.0),
     ];
-    let cc_pl = polyline2d_to_cc_polyline(&square_2d);
+    let polylines = vec![square_2d];
+    let square_csg = CSG::<()>::from_polylines(&polylines);
+    let cc_pl = square_csg.polygons[0].to_cc_polyline();
     // Expect 4 vertices, closed
     assert_eq!(cc_pl.vertex_count(), 4, "Should have 4 vertices");
     assert!(cc_pl.is_closed(), "Should be closed by default");
