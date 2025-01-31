@@ -29,14 +29,15 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 ## Features
 
 - **BSP-based** CSG boolean operations: union, difference, intersection.
-- **2D** (XY-plane) polygons and advanced 2D booleans via [cavalier_contours](https://crates.io/crates/cavalier_contours).
-- **3D** shape construction: cubes, spheres, cylinders, polyhedrons from face lists, and more.
-- **Transformations**: translate, rotate, scale, mirror, etc.
-- **Extrusions**: linear extrude, rotate-extrude (revolve), extrude-between arbitrary polygons.
-- **Triangulation** (via [earclip]) and polygon refinement methods (subdivide, renormalize, etc.).
-- **Optional** concurrency with the `"parallel"` feature (uses `rayon`).
+- **2D** polygons and advanced 2D booleans and offsetting via [cavalier_contours](https://crates.io/crates/cavalier_contours).
+- **3D** shape construction: cubes, spheres, cylinders, polyhedrons, and more.
+- **Transformations**: translate, rotate, scale, mirror, invert, transform, etc.
+- **Extrusions**: linear extrude, rotate-extrude (revolve), extrude-between polygons with same number of vertices and winding.
+- **Triangulation** via [earclip], subdivide, renormalize, etc.
+- **Text** 2D text generation from TTF fonts, extrude for 3D
+- **Soon** concurrency with the `"parallel"` feature (uses `rayon`).
 - **Optional** interoperability with [Rapier] and [Parry] for physics, collisions, bounding volumes, etc.
-- **Import/export** from/to ASCII or binary STL, DXF, plus 2D text generation from TTF fonts.
+- **Import/export** from/to ASCII or binary STL, and DXF
 - **Generic per-polygon metadata** to store color, layer IDs, or any custom data.
 
 > **Note**: Some features (e.g. parallel operations, STL, DXF, Rapier integration) may eventually be placed behind feature flags.
@@ -425,11 +426,20 @@ without restriction, including without limitation the rights to use, copy, modif
 publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
 to whom the Software is furnished to do so, subject to the following conditions:
 
-[... full MIT license text ...]
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
 This library initially based on a translation of **CSG.js** © 2011 Evan Wallace, under the MIT license.  
 
 ---
 
-**Enjoy building geometry in Rust!** If you find issues, please file an [issue](https://github.com/timschmidt/csgrs/issues) or submit a pull request. Feedback and contributions are welcome!
+**Have fun building geometry in Rust!** If you find issues, please file an [issue](https://github.com/timschmidt/csgrs/issues) or submit a pull request. Feedback and contributions are welcome!
