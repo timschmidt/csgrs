@@ -430,7 +430,6 @@ impl<S: Clone> Polygon<S> {
         
         polygons_out
     }
-
     
     /// Perform 2D boolean intersection with `other` and return resulting polygons.
     pub fn intersection(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
@@ -490,15 +489,7 @@ impl<S: Clone> Polygon<S> {
             if pl.vertex_count() < 3 {
                 continue;
             }
-            let plane_normal = nalgebra::Vector3::z();
-            let mut verts = Vec::with_capacity(pl.vertex_count());
-            for i in 0..pl.vertex_count() {
-                let v = pl.at(i);
-                verts.push(
-                    Vertex::new(nalgebra::Point3::new(v.x, v.y, 0.0), plane_normal)
-                );
-            }
-            polygons_out.push(Polygon::new(verts, None));
+            polygons_out.push(Polygon::from_cc_polyline(pl.clone()));
         }
         polygons_out
     }
