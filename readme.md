@@ -1,7 +1,3 @@
-Below is an updated **README.md** that corrects, clarifies, and expands upon the original documentation. Feel free to adapt it further for your specific repository or usage context.
-
----
-
 # csgrs
 
 A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations on sets of polygons stored in BSP trees. This allows you to construct and manipulate 2D and 3D geometry with operations such as *union*, *difference*, *intersection*, and more—much like [OpenSCAD](https://openscad.org/) does, but in Rust.
