@@ -2,7 +2,7 @@
 
 A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations on sets of polygons stored in BSP trees. This allows you to construct and manipulate 2D and 3D geometry with operations such as *union*, *difference*, *intersection*, and more—much like [OpenSCAD](https://openscad.org/) does, but in Rust.
 
-This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://nalgebra.org/), [Parry](https://parry.rs/), and [Rapier](https://rapier.rs/)), leverage [`earclip`](https://crates.io/crates/earclip) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust mesh and line processing, be reasonably performant on a wide variety of targets, and provide an extensible, type-safe API.
+This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`earclip`](https://crates.io/crates/earclip) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust mesh and line processing, be reasonably performant on a wide variety of targets, and provide an extensible, type-safe API.
 
 ## Table of Contents
 
@@ -32,10 +32,11 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 - **3D shapes**: cubes, spheres, cylinders, polyhedrons, and more.
 - **Polygon/Polyline based 2D**: 2D boolean operations and offsetting via [cavalier_contours](https://crates.io/crates/cavalier_contours).
 - **2D shapes**: square, circle, polygon, and more.
-- **Transformations**: translate, rotate, scale, mirror, invert, transform, etc.
+- **Transformations**: translate, rotate, scale, mirror, inverse, transform, convex hull, minkowski sum, flatten, cut, etc.
 - **Extrusions**: linear extrude, rotate-extrude (revolve), extrude-between polygons with same number of vertices and winding.
-- **Triangulation**: via [earclip], subdivide, renormalize, etc.
+- **Triangulation**: via [earclip](https://crates.io/crates/earclip), subdivide, renormalize, etc.
 - **Text**: 2D text generation from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext), extrude for 3D.
+- **Measurement**: provide an origin and vector and receive all intersections with distance from origin and location.
 - **Physics**: interoperability with [Rapier] and [Parry] for physics, collisions, bounding volumes, etc.
 - **Soon**: concurrency with the `"parallel"` feature (uses `rayon`).
 - **Import/export**: from/to ASCII or binary STL, and DXF
@@ -367,6 +368,7 @@ match csg_obj.is_manifold()? {
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - extend flatten to work with arbitrary planes
+- extend Polygon 2D functions to work with arbitrary planes
 - overwrite polygon metadata correctly in difference, intersection, etc
 - fix normals on rotate_extrude
 - fix normal on bottom face of extrude
