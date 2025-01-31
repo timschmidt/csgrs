@@ -39,9 +39,9 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 - **Text**: from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext).
 - **Measurement**: provide an origin and vector and receive all intersections with distance from origin and location.
 - **Physics**: interoperability with [Parry](https://crates.io/crates/parry3d) and [Rapier](https://crates.io/crates/rapier3d) for physics, collisions, bounding volumes, etc.
-- **Soon**: concurrency with the `"parallel"` feature (uses `rayon`).
 - **Import/export**: from/to ASCII or binary STL, and DXF
 - **Generic per-polygon metadata**: to store color, layer IDs, texture handles, simulation values, or any custom data.
+- **Soon**: concurrency with the `"parallel"` feature (uses `rayon`).
 
 > **Note**: Some features (e.g. parallel operations, STL, DXF, Rapier integration) may eventually be placed behind feature flags.
 

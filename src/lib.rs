@@ -263,6 +263,46 @@ impl Plane {
             }
         }
     }
+    
+    /// Returns (T, T_inv), where:
+    /// - `T`   maps a point on this plane into XY plane (z=0) 
+    ///   with the plane’s normal going to +Z,
+    /// - `T_inv` is the inverse transform, mapping back.
+    pub fn to_xy_transform(&self) -> (Matrix4<f64>, Matrix4<f64>) {
+        // Normal
+        let n = self.normal;
+        let n_len = n.norm();
+        if n_len < 1e-12 {
+            // Degenerate plane, return identity
+            return (Matrix4::identity(), Matrix4::identity());
+        }
+
+        // Normalize
+        let norm_dir = n / n_len;
+
+        // Rotate plane.normal -> +Z
+        let rot = Rotation3::rotation_between(&norm_dir, &Vector3::z())
+            .unwrap_or_else(|| Rotation3::identity());
+        let iso_rot = Isometry3::from_parts(Translation3::identity(), rot.into());
+
+        // We want to translate so that the plane’s reference point 
+        //    (some point p0 with n·p0 = w) lands at z=0 in the new coords.
+        // p0 = (plane.w / (n·n)) * n
+        let denom = n.dot(&n);
+        let p0_3d = norm_dir * (self.w / denom);
+        let p0_rot = iso_rot.transform_point(&Point3::from(p0_3d));
+
+        // We want p0_rot.z = 0, so we shift by -p0_rot.z
+        let shift_z = -p0_rot.z;
+        let iso_trans = Translation3::new(0.0, 0.0, shift_z);
+
+        let transform_to_xy = iso_trans.to_homogeneous() * iso_rot.to_homogeneous();
+
+        // Inverse for going back
+        let transform_from_xy = transform_to_xy.try_inverse().unwrap_or_else(|| Matrix4::identity());
+
+        (transform_to_xy, transform_from_xy)
+    }
 }
 
 /// A convex polygon, defined by a list of vertices and a plane.
@@ -290,32 +330,93 @@ impl<S: Clone> Polygon<S> {
         Polygon { vertices, metadata, plane }
     }
     
-    /// Build a new Polygon from a set of 2D polylines in XY. Each polyline
-    /// is turned into one polygon at z=0.
-    pub fn from_cc_polyline(polyline: Polyline<f64>) -> Polygon<S> {
-        let plane_normal = nalgebra::Vector3::z();
+    /// Build a new Polygon in 3D from a 2D polyline in *this* polygon’s plane.
+    /// i.e. we treat that 2D polyline as lying in the same plane as `self`.
+    pub fn from_2d(&self, polyline: Polyline<f64>) -> Polygon<S> {
+        let (_to_xy, from_xy) = self.plane.to_xy_transform();
     
-        if polyline.vertex_count() >= 3 {
-            let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
-            for i in 0..polyline.vertex_count() {
-                let v = polyline.at(i);
-                poly_verts.push(Vertex::new(
-                    nalgebra::Point3::new(v.x, v.y, 0.0),
-                    plane_normal
-                ));
-            }
-            return Polygon::new(poly_verts, None);
+        let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
+        for i in 0..polyline.vertex_count() {
+            let v = polyline.at(i);
+            
+            // (x, y, 0, 1)
+            let p4_local = nalgebra::Vector4::new(v.x, v.y, 0.0, 1.0);
+            let p4_world = from_xy * p4_local;
+
+            let vx = p4_world[0];
+            let vy = p4_world[1];
+            let vz = p4_world[2];
+
+            poly_verts.push(Vertex::new(
+                Point3::new(vx, vy, vz),
+                self.plane.normal  // We will recalc plane anyway
+            ));
+        }
+        let mut poly3d = Polygon::new(poly_verts, self.metadata.clone());
+        poly3d.recalc_plane_and_normals();
+        poly3d
+    }
+    
+    /// Project this polygon into its own plane’s local XY coordinates,
+    /// producing a 2D cavalier_contours Polyline<f64>.
+    pub fn to_2d(&self) -> Polyline<f64> {
+        if self.vertices.len() < 2 {
+            // Degenerate polygon, return empty polyline
+            return Polyline::new();
         }
         
-        // Fallback if no polylines had enough vertices:
-        return Polygon {
-            vertices: Vec::new(),
-            plane: Plane {
-                normal: nalgebra::Vector3::z(),
-                w: 0.0,
-            },
-            metadata: None,
-        };
+        // Get transforms
+        let (to_xy, _from_xy) = self.plane.to_xy_transform();
+
+        // Transform each vertex. 
+        // Then we only keep (x, y) and ignore the new z (should be near zero).
+        let mut polyline = Polyline::with_capacity(self.vertices.len(), true);
+        for v in &self.vertices {
+            let p4 = v.pos.to_homogeneous();
+            let xyz = to_xy * p4; // Matrix4 × Vector4
+            let x2 = xyz[0];
+            let y2 = xyz[1];
+            let bulge = 0.0;  // ignoring arcs
+            polyline.add(x2, y2, bulge);
+        }
+        polyline
+    }
+    
+    /// Project this polygon into its own plane’s local XY coordinates,
+    /// producing a 2D cavalier_contours Polyline<f64>.
+    pub fn to_xy(&self) -> Polyline<f64> {
+        if self.vertices.len() < 2 {
+            // Degenerate polygon, return empty polyline
+            return Polyline::new();
+        }
+
+        // We flatten the polygon into the XY plane (z ~ 0).
+        // If our polygons might have arcs, we'll need more logic to detect + store bulge, etc.
+        let mut polyline = Polyline::with_capacity(self.vertices.len(), true);
+        for v in &self.vertices {
+            let bulge = 0.0;  // ignoring arcs
+            polyline.add(v.pos.coords.x, v.pos.coords.y, bulge);
+        }
+        polyline
+    }
+    
+    /// Build a new Polygon from a set of 2D polylines in XY. Each polyline
+    /// is turned into one polygon at z=0.
+    pub fn from_xy(polyline: Polyline<f64>) -> Polygon<S> {
+        if polyline.vertex_count() < 3 {
+            // degenerate polygon
+        }
+        
+        let plane_normal = nalgebra::Vector3::z();
+        let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
+        for i in 0..polyline.vertex_count() {
+            let v = polyline.at(i);
+            poly_verts.push(Vertex::new(
+                nalgebra::Point3::new(v.x, v.y, 0.0),
+                plane_normal
+            ));
+        }
+        return Polygon::new(poly_verts, None);
     }
 
     pub fn flip(&mut self) {
@@ -388,28 +489,11 @@ impl<S: Clone> Polygon<S> {
         }
     }
     
-    /// Convert 2D vertices into a cavalier_contours Polyline<f64>, making it closed.
-    pub fn to_cc_polyline(&self) -> Polyline<f64> {
-        if self.vertices.len() < 2 {
-            // degenerate or empty polygon
-        }
-        
-        let mut polyline = Polyline::with_capacity(self.vertices.len(), true);
-        
-        // We assume the polygon is already in the XY plane (z ~ 0).
-        // If our polygons might have arcs, we'll need more logic to detect + store bulge, etc.
-        for v in &self.vertices {
-            let bulge = 0.0;
-            polyline.add(v.pos.coords.x, v.pos.coords.y, bulge);
-        }
-        polyline
-    }
-    
     /// Return all resulting polygons from the union.
     /// If the union has disjoint pieces, you'll get multiple polygons.
     pub fn union(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
-        let self_cc = self.to_cc_polyline();
-        let other_cc = other.to_cc_polyline();
+        let self_cc = self.to_2d();
+        let other_cc = other.to_2d();
     
         // Use cavalier_contours boolean op OR
         // union_result is a `BooleanResult<Polyline>`
@@ -420,12 +504,12 @@ impl<S: Clone> Polygon<S> {
         // union_result.pos_plines has the union outlines
         // union_result.neg_plines might be empty for `Or`.
         for outline in union_result.pos_plines {
-            let pl = &outline.pline; // a Polyline<f64>
+            let pl = outline.pline; // a Polyline<f64>
             if pl.vertex_count() < 3 {
                 continue; // skip degenerate
             }
             // Convert to a 3D Polygon<S> in the XY plane
-            polygons_out.push(Polygon::from_cc_polyline(pl.clone()));
+            polygons_out.push(self.from_2d(pl));
         }
         
         polygons_out
@@ -433,8 +517,8 @@ impl<S: Clone> Polygon<S> {
     
     /// Perform 2D boolean intersection with `other` and return resulting polygons.
     pub fn intersection(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
-        let self_cc = self.to_cc_polyline();
-        let other_cc = other.to_cc_polyline();
+        let self_cc = self.to_2d();
+        let other_cc = other.to_2d();
     
         // Use cavalier_contours boolean op AND
         let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::And);
@@ -443,19 +527,19 @@ impl<S: Clone> Polygon<S> {
     
         // For intersection, result.pos_plines has the “kept” intersection loops
         for outline in result.pos_plines {
-            let pl = &outline.pline;
+            let pl = outline.pline;
             if pl.vertex_count() < 3 {
                 continue;
             }
-            polygons_out.push(Polygon::from_cc_polyline(pl.clone()));
+            polygons_out.push(self.from_2d(pl));
         }
         polygons_out
     }
     
     /// Perform 2D boolean difference (this minus other) and return resulting polygons.
     pub fn difference(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
-        let self_cc = self.to_cc_polyline();
-        let other_cc = other.to_cc_polyline();
+        let self_cc = self.to_2d();
+        let other_cc = other.to_2d();
     
         // Use cavalier_contours boolean op NOT
         let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::Not);
@@ -464,19 +548,19 @@ impl<S: Clone> Polygon<S> {
     
         // For difference, result.pos_plines is what remains of self after subtracting `other`.
         for outline in result.pos_plines {
-            let pl = &outline.pline;
+            let pl = outline.pline;
             if pl.vertex_count() < 3 {
                 continue;
             }
-            polygons_out.push(Polygon::from_cc_polyline(pl.clone()));
+            polygons_out.push(self.from_2d(pl));
         }
         polygons_out
     }
     
     /// Perform 2D boolean exclusive‐or (symmetric difference) and return resulting polygons.
     pub fn xor(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
-        let self_cc = self.to_cc_polyline();
-        let other_cc = other.to_cc_polyline();
+        let self_cc = self.to_2d();
+        let other_cc = other.to_2d();
     
         // Use cavalier_contours boolean op XOR
         let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::Xor);
@@ -485,11 +569,11 @@ impl<S: Clone> Polygon<S> {
     
         // For XOR, result.pos_plines is the symmetrical difference
         for outline in result.pos_plines {
-            let pl = &outline.pline;
+            let pl = outline.pline;
             if pl.vertex_count() < 3 {
                 continue;
             }
-            polygons_out.push(Polygon::from_cc_polyline(pl.clone()));
+            polygons_out.push(self.from_2d(pl));
         }
         polygons_out
     }
@@ -1604,7 +1688,7 @@ impl<S: Clone> CSG<S> {
 
         for poly in &self.polygons {
             // Convert to cavalier_contours Polyline (closed by default):
-            let cpoly = poly.to_cc_polyline();
+            let cpoly = poly.to_xy();
 
             // Remove any degenerate or redundant vertices:
             cpoly.remove_redundant(1e-5);
@@ -1634,14 +1718,14 @@ impl<S: Clone> CSG<S> {
         let mut polys_2d = Vec::new();
         for poly in &self.polygons {
             // Convert to a cavalier_contours::Polyline first (same as .to_cc_polyline())
-            let cc = poly.to_cc_polyline();
+            let cc = poly.to_xy();
             // Optional: remove redundant points
             cc.remove_redundant(EPSILON);
 
             // Check area (shoelace). If above threshold, turn it into a 2D Polygon
             let area = crate::pline_area(&cc).abs();
             if area > eps_area {
-                polys_2d.push(Polygon::from_cc_polyline(cc));
+                polys_2d.push(Polygon::from_xy(cc));
             }
         }
         if polys_2d.is_empty() {
@@ -1748,6 +1832,114 @@ impl<S: Clone> CSG<S> {
         }
     
         CSG::from_polygons(result_polygons)
+    }
+    
+    /// Slice this CSG by `plane`, returning the cross‐section(s) in that plane
+    /// as a new CSG of 2D polygons. If `plane` is `None`, slices at z=0.
+    pub fn cut_slab(&self, plane: Option<Plane>) -> CSG<S> {
+        // 1) Pick the plane or default to z=0
+        let plane = plane.unwrap_or_else(|| Plane {
+            normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
+            w: 0.0,
+        });
+        
+        // 2) Build a transform T that maps our plane → the XY plane at z=0.
+        //
+        //    - We want plane.normal to become +Z
+        //    - We want the plane’s “offset” (the point where plane.normal·p = w) to lie at z=0
+        //
+        //    The easiest way is:
+        //      A) Rotate plane.normal to +Z
+        //      B) Translate so that the plane’s reference point is at z=0
+        //
+        //    Let’s find a small point on that plane: p0 = plane.normal * (plane.w / normal.len²).
+        let n = plane.normal;
+        let n_len = n.magnitude();
+        if n_len < 1e-12 {
+            // Degenerate plane? Just bail or return empty
+            return CSG::new();
+        }
+        let norm_dir = n / n_len;    // normalized
+        let p0 = norm_dir * plane.w; // a point on the plane in 3D
+        
+        // A) Rotate `norm_dir` to +Z
+        //    We can do so by e.g. Rotation3::rotation_between(&norm_dir, &Vector3::z())
+        let to_z = Rotation3::rotation_between(&norm_dir, &Vector3::z())
+            .unwrap_or_else(|| Rotation3::identity());
+        
+        // B) Then translate so that p0 goes to z=0
+        //    After rotation, p0 is somewhere. We want its z to become 0 => so we shift by -p0.z
+        //    We can do it by building an isometry that does the rotation, then find the new p0,
+        //    then do a translation that sets the new p0.z = 0.
+        let iso_rot = Isometry3::from_parts(Translation3::identity(), to_z.into());
+        let p0_rot = iso_rot.transform_point(&Point3::from(p0));
+        let shift_z = -p0_rot.z;
+        let iso_trans = Translation3::new(0.0, 0.0, shift_z);
+
+        // Combined transform T = translate * rotate
+        let transform_to_xy = iso_trans.to_homogeneous() * iso_rot.to_homogeneous();
+        
+        // Transform shape into the plane’s coordinate system so that the plane is now z=0.
+        let csg_in_plane_coords = self.transform(&transform_to_xy);
+
+        // 3) Build a big “slab” in z=[-ε, +ε], with a big bounding square in XY.
+        //    First find bounding box of csg_in_plane_coords to decide how big the slab must be.
+        let aabb = csg_in_plane_coords.bounding_box();
+        let mins = aabb.mins;
+        let maxs = aabb.maxs;
+        
+        // We can consider the Aabb "invalid" if mins is not <= maxs in each component.
+        // Alternatively, you could check for degenerate bounding boxes if you like.
+        let valid = mins.x <= maxs.x && mins.y <= maxs.y && mins.z <= maxs.z;
+        
+        if !valid {
+            // handle the invalid case, e.g. return empty
+            return CSG::new();
+        }
+        
+        // The "diagonal" is just (maxs - mins):
+        let diag_vec = maxs - mins;
+        let diag_len = diag_vec.norm();
+        
+        // some “big enough” dimension
+        let diag = (diag_len * 2.0).max(1.0);
+        let epsilon = 1e-5;
+        
+        // Let’s build a big square in XY from -diag..+diag, then extrude from z = -ε..+ε.
+        // That “square” is effectively the top‐down bounding shape for the slab in XY.
+        //
+        // We'll just use CSG::square, then scale it up, and extrude ±ε.
+        let big_xy = CSG::square(None)
+            .scale(diag, diag, 1.0)
+            .translate(Vector3::new(-diag / 2.0, -diag / 2.0, 0.0));
+        
+        // Now extrude it ± ε around z=0: easiest is extrude +ε, then shift -ε/2
+        // or do something like:
+        let slab = big_xy
+            .extrude(2.0 * epsilon) // extrude from z=0 up to z=+2ε
+            .translate(Vector3::new(0.0, 0.0, -epsilon)); // shift down so range is [-ε, +ε]
+        
+        // 4) Intersect the shape with that slab in plane‐coords
+        let cross_section_3d = csg_in_plane_coords.intersect(&slab);
+
+        // 5) Flatten that intersection down to z=0 using your existing `flatten()`,
+        //    which merges everything in XY.  This uses your new 2D boolean ops under the hood.
+        let section_2d = cross_section_3d.flatten();
+
+        // 6) (Optional) transform the cross‐section polygons back to the *original* 3D coordinate system
+        //    if you want them placed in the actual slicing plane in 3D.  That’s typically helpful
+        //    if the user wants to see the cross‐section “in place.”
+        //
+        //    The inverse is T⁻¹ (the inverse of `transform_to_xy`).
+        //    But note that your `flatten()` forced polygons to z=0, so re‐lifting them onto
+        //    the real plane means you have to set their z‐coordinate to plane.w along the normal.
+        //    In short, you may or may not want this step. 
+        //
+        //    If you do want them in the original 3D:
+        //      let invT = transform_to_xy.try_inverse().unwrap();
+        //      section_2d = section_2d.transform(&invT);
+
+        section_2d
     }
 
     /// Convert a `MeshText` (from meshtext) into a list of `Polygon` in the XY plane.
