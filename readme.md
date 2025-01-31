@@ -28,27 +28,27 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 
 ## Features
 
-- **BSP-based** CSG boolean operations: union, difference, intersection.
-- **2D** polygons and advanced 2D booleans and offsetting via [cavalier_contours](https://crates.io/crates/cavalier_contours).
-- **3D** shape construction: cubes, spheres, cylinders, polyhedrons, and more.
+- **BSP-based**: fast 3D CSG boolean operations: union, difference, intersection.
+- **3D shapes**: shape construction: cubes, spheres, cylinders, polyhedrons, and more.
+- **2D**: advanced 2D boolean operations and offsetting via [cavalier_contours](https://crates.io/crates/cavalier_contours).
+- **2D shapes**: square, circle, polygon, and more.
 - **Transformations**: translate, rotate, scale, mirror, invert, transform, etc.
 - **Extrusions**: linear extrude, rotate-extrude (revolve), extrude-between polygons with same number of vertices and winding.
-- **Triangulation** via [earclip], subdivide, renormalize, etc.
-- **Text** 2D text generation from TTF fonts, extrude for 3D
-- **Soon** concurrency with the `"parallel"` feature (uses `rayon`).
-- **Optional** interoperability with [Rapier] and [Parry] for physics, collisions, bounding volumes, etc.
-- **Import/export** from/to ASCII or binary STL, and DXF
-- **Generic per-polygon metadata** to store color, layer IDs, or any custom data.
+- **Triangulation**: via [earclip], subdivide, renormalize, etc.
+- **Text**: 2D text generation from TTF fonts, extrude for 3D
+- **Physics**: interoperability with [Rapier] and [Parry] for physics, collisions, bounding volumes, etc.
+- **Soon**: concurrency with the `"parallel"` feature (uses `rayon`).
+- **Import/export**: from/to ASCII or binary STL, and DXF
+- **Generic per-polygon metadata**: to store color, layer IDs, texture handles, simulation values, or any custom data.
 
 > **Note**: Some features (e.g. parallel operations, STL, DXF, Rapier integration) may eventually be placed behind feature flags.
 
 ## Installation
 
-Add the following to your `Cargo.toml`:
+Add csgrs to your rust project:
 
-```toml
-[dependencies]
-csgrs = "^0.8.0"
+```shell
+cargo add csgrs
 ```
 
 ## Quick Start Example
@@ -365,6 +365,7 @@ match csg_obj.is_manifold()? {
 - file formats behind a feature flag
 - parry, rapier behind feature flags
 - polygons_by_metadata public function of a CSG
+  - draft implementation done, pending API discussion
 - extend flatten to work with arbitrary planes
 - overwrite polygon metadata correctly in difference, intersection, etc
 - fix normals on rotate_extrude
@@ -373,9 +374,8 @@ match csg_obj.is_manifold()? {
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
-- 2d boolean ops
-  - functions: signed area, is_ccw, line/line intersection
-  - tests / implementation with cavalier_contours
+- remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
+  - tests
 - vector font for machining
   - https://github.com/kamalmostafa/hershey-fonts
     - https://github.com/kicad-rs/hershey/blob/main/src/lib.rs
