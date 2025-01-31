@@ -28,14 +28,14 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 
 ## Features
 
-- **BSP-based**: fast 3D CSG boolean operations: union, difference, intersection.
-- **3D shapes**: shape construction: cubes, spheres, cylinders, polyhedrons, and more.
-- **2D**: advanced 2D boolean operations and offsetting via [cavalier_contours](https://crates.io/crates/cavalier_contours).
+- **BSP-based 3D**: fast 3D CSG boolean operations (union, difference, intersection) built around splitting polygons with a plane.
+- **3D shapes**: cubes, spheres, cylinders, polyhedrons, and more.
+- **Polygon/Polyline based 2D**: 2D boolean operations and offsetting via [cavalier_contours](https://crates.io/crates/cavalier_contours).
 - **2D shapes**: square, circle, polygon, and more.
 - **Transformations**: translate, rotate, scale, mirror, invert, transform, etc.
 - **Extrusions**: linear extrude, rotate-extrude (revolve), extrude-between polygons with same number of vertices and winding.
 - **Triangulation**: via [earclip], subdivide, renormalize, etc.
-- **Text**: 2D text generation from TTF fonts, extrude for 3D
+- **Text**: 2D text generation from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext), extrude for 3D.
 - **Physics**: interoperability with [Rapier] and [Parry] for physics, collisions, bounding volumes, etc.
 - **Soon**: concurrency with the `"parallel"` feature (uses `rayon`).
 - **Import/export**: from/to ASCII or binary STL, and DXF
