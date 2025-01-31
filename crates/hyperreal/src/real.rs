@@ -393,7 +393,7 @@ impl Real {
 
     /// The natural logarithm of this Real
     pub fn ln(self) -> Result<Real, RealProblem> {
-        if self.definitely_zero() {
+        if self.best_sign() != Sign::Plus {
             return Err(RealProblem::NotANumber);
         }
         match &self.class {
