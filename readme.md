@@ -21,8 +21,9 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 5. [File I/O](#file-io)
 6. [Integration with Parry and Rapier](#integration-with-parry-and-rapier)
 7. [Manifold Check](#manifold-check)
-8. [Roadmap / Todo](#roadmap--todo)
-9. [License](#license)
+8. [2D Subsystem and Polygon‐Level 2D Operations](#2d-subsystem-and-polygon‐level-2d-operations)
+9. [Roadmap / Todo](#roadmap--todo)
+10. [License](#license)
 
 ---
 
@@ -360,6 +361,63 @@ match csg_obj.is_manifold()? {
     false => println!("Not manifold."),
 }
 ```
+
+---
+## 2D Subsystem and Polygon‐Level 2D Operations
+
+Although **CSG** typically focuses on three‐dimensional Boolean operations, this library also provides a robust **2D subsystem** built on top of [cavalier_contours](https://crates.io/crates/cavalier_contours). Each `Polygon<S>` in 3D can be **projected** into 2D (its own local XY plane) for 2D boolean operations such as **union**, **difference**, **intersection**, and **xor**. These are especially handy if you’re primarily dealing with planar shapes or want to perform profile manipulations before (or after) extruding.
+
+Below is a quick overview of the **2D‐related methods** you’ll find on `Polygon<S>`:
+
+### `Polygon::to_2d()` and `Polygon::from_2d(...)`
+- **`to_2d()`**  
+  Projects the polygon from its 3D plane into a 2D [`Polyline<f64>`](https://docs.rs/cavalier_contours/latest/cavalier_contours/polyline/struct.Polyline.html).  
+  Internally:
+  1. Finds a transform that sends `polygon.plane.normal` to the +Z axis.
+  2. Transforms each vertex into that local coordinate system (so the polygon lies at *z = 0*).
+  3. Returns a 2D `Polyline<f64>` of `(x, y, bulge)` points (here, `bulge` is set to `0.0` by default).
+
+- **`from_2d(polyline)`**  
+  The inverse of `to_2d()`, creating a 3D `Polygon` from a 2D `Polyline<f64>`. This method uses the **same** plane as the polygon on which you called `from_2d()`. That is, it takes `(x, y)` points in the local XY plane of `self.plane` and lifts them back into 3D space.
+
+These two functions let you cleanly convert between a 3D polygon and a pure 2D representation whenever you need to do 2D manipulations.  
+
+> **Tip**: If your polygons truly are already in the global XY plane (i.e., `z ≈ 0`), you can alternatively use `Polygon::to_xy()` and `Polygon::from_xy(...)`. Those skip the plane‐based transform and simply store or read `(x, y, 0.0)` directly.
+
+### 2D Boolean Operations
+
+A `Polygon<S>` supports **union**, **difference**, **intersection**, and **xor** in 2D. Each of these methods:
+- Projects **both** polygons into 2D via `to_2d()`.
+- Invokes [cavalier_contours](https://crates.io/crates/cavalier_contours) to compute the boolean operation.
+- Reconstructs one or more resulting polygons in 3D using `from_2d(...)`.
+
+Each operation returns a `Vec<Polygon<S>>` rather than a single polygon, because the result may split into multiple disjoint pieces.  
+
+- **`union(&other) -> Vec<Polygon<S>>`**  
+  `self ∪ other`. Merges overlapping or adjacent areas.
+
+- **`intersection(&other) -> Vec<Polygon<S>>`**  
+  `self ∩ other`. Keeps only overlapping regions.
+
+- **`difference(&other) -> Vec<Polygon<S>>`**  
+  `self \ other`. Subtracts `other` from `self`.
+
+- **`xor(&other) -> Vec<Polygon<S>>`**  
+  Symmetric difference `(self ∪ other) \ (self ∩ other)`—keeps regions that belong to exactly one polygon.
+
+Example usage:
+```rust
+let p1 = polygon_a.union(&polygon_b);          // 2D union
+let p2 = polygon_a.intersection(&polygon_b);   // 2D intersection
+let p3 = polygon_a.difference(&polygon_b);     // 2D difference
+let p4 = polygon_a.xor(&polygon_b);            // 2D xor
+```
+
+### Signed Area (Shoelace)
+The helper `pline_area` function (shown in the code) computes the signed area of a closed `Polyline<f64>`:
+- **Positive** if the points are in **counterclockwise (CCW)** order.
+- **Negative** if the points are in **clockwise (CW)** order.
+- Near‐zero for degenerate or collinear loops.
 
 ---
 
