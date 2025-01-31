@@ -364,6 +364,8 @@ match csg_obj.is_manifold()? {
 ---
 
 ## Roadmap / Todo
+- fix up error handling with result types
+- convert more for loops to iterators
 - file formats behind a feature flag
 - parry, rapier behind feature flags
 - polygons_by_metadata public function of a CSG
