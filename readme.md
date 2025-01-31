@@ -2,7 +2,7 @@
 
 A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations on sets of polygons stored in BSP trees. This allows you to construct and manipulate 2D and 3D geometry with operations such as *union*, *difference*, *intersection*, and more—much like [OpenSCAD](https://openscad.org/) does, but in Rust.
 
-This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [Rapier](https://rapier.rs/) and [Parry](https://parry.rs/)), leverage existing crates for geometry (like [`nalgebra`](https://nalgebra.org/)) and mesh processing (like [`earclip`](https://crates.io/crates/earclip), [`cavalier_contours`](https://crates.io/crates/cavalier_contours), [`stl_io`](https://crates.io/crates/stl_io), etc.), and provide an extensible, type-safe API.  
+This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://nalgebra.org/), [Parry](https://parry.rs/), and [Rapier](https://rapier.rs/)), leverage [`earclip`](https://crates.io/crates/earclip) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust mesh and line processing, be reasonably performant on a wide variety of targets, and provide an extensible, type-safe API.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 ## Features
 
 - **BSP-based** CSG boolean operations: union, difference, intersection.
-- **2D** (XY-plane) polygons and advanced 2D booleans via [cavalier_contours].
+- **2D** (XY-plane) polygons and advanced 2D booleans via [cavalier_contours](https://crates.io/crates/cavalier_contours).
 - **3D** shape construction: cubes, spheres, cylinders, polyhedrons from face lists, and more.
 - **Transformations**: translate, rotate, scale, mirror, etc.
 - **Extrusions**: linear extrude, rotate-extrude (revolve), extrude-between arbitrary polygons.
