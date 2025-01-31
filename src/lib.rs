@@ -36,20 +36,6 @@ pub enum Axis {
     Z,
 }
 
-/// Minimal 2D vertex structure for polylines.
-#[derive(Debug, Clone)]
-pub struct PlineVertex2D {
-    pub x: f64,
-    pub y: f64,
-    pub bulge: f64,
-}
-
-impl PlineVertex2D {
-    pub fn new(x: f64, y: f64) -> Self {
-        PlineVertex2D { x, y, bulge: 0.0 }
-    }
-}
-
 /// Computes the signed area of a closed 2D polyline via the shoelace formula.
 /// We assume `pline.is_closed() == true` and it has at least 2 vertices.
 /// Returns positive area if CCW, negative if CW. Near-zero => degenerate.
@@ -352,36 +338,21 @@ impl<S: Clone> Polygon<S> {
         }
     }
     
-    /// Converts one of your 3D polygons (assumed to lie in the XY plane) into
-    /// a sequence of 2D polyline vertices. We set `bulge = 0.0` for each edge.
-    pub fn to_polyline2d(&self) -> Vec<PlineVertex2D> {
-        let mut result = Vec::new();
-    
+    /// Convert 2D vertices into a cavalier_contours Polyline<f64>, making it closed.
+    pub fn to_cc_polyline(&self) -> Polyline<f64> {
         if self.vertices.len() < 2 {
-            return result; // degenerate or empty polygon
+            // degenerate or empty polygon
         }
-    
+        
+        let mut polyline = Polyline::with_capacity(self.vertices.len(), true);
+        
         // We assume the polygon is already in the XY plane (z ~ 0).
         // If your polygons might have arcs, you'd need more logic to detect + store bulge, etc.
         for v in &self.vertices {
-            result.push(PlineVertex2D {
-                x: v.pos.x, // x in plane
-                y: v.pos.y, // y in plane
-                bulge: 0.0, // bulge=0 => line segment
-            });
+            let bulge = 0.0;
+            polyline.add(v.pos.coords.x, v.pos.coords.y, bulge);
         }
-    
-        result
-    }
-    
-    /// Convert 2D vertices into a cavalier_contours Polyline<f64>, making it closed.
-    pub fn to_cc_polyline(&self) -> Polyline<f64> {
-        let verts = &self.to_polyline2d();
-        let mut pl = Polyline::with_capacity(verts.len(), true);
-        for v in verts {
-            pl.add(v.x, v.y, v.bulge);
-        }
-        pl
+        polyline
     }
 
     /// Returns a reference to the metadata, if any.
@@ -566,38 +537,54 @@ impl<S: Clone> CSG<S> {
         &self.polygons
     }
     
-    /// Builds a CSG from a list of 2D polylines (in XY). We treat each polyline as one
-    /// flat polygon, lying in Z=0 with normal +Z. If you have multiple polylines,
-    /// they become multiple polygons in the returned CSG. For more advanced logic
-    /// (like holes, or combining them), we can union them or store them differently.
-    pub fn from_polylines(loops: &Vec<Vec<PlineVertex2D>>) -> CSG<S> {
-        let mut all_polygons = Vec::new();
-    
-        // Normal for all polygons is +Z in a simple 2D XY scenario
-        let plane_normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
-    
-        for loop_ in loops {
-            if loop_.len() < 3 {
-                // skip degenerate
-                continue;
-            }
-    
-            // Convert the loop of (x,y,bulge=0) into a single Polygon with flat shading
-            let mut poly_verts = Vec::with_capacity(loop_.len());
-    
-            for v2d in loop_ {
-                let pt = nalgebra::Point3::new(v2d.x, v2d.y, 0.0);
-                poly_verts.push(Vertex::new(pt, plane_normal));
-            }
-    
-            // Make one Polygon with an auto-computed plane
-            let poly_3d = Polygon::new(poly_verts, None);
-            all_polygons.push(poly_3d);
-        }
-    
-        // Combine all polygons into a single CSG
-        CSG::from_polygons(all_polygons)
-    }
+    /// Group polygons by their metadata.
+    ///
+    /// Returns a map from the metadata (as `Option<S>`) to a
+    /// list of references to all polygons that have that metadata.
+    ///
+    /// # Example
+    /// ```
+    /// let mut csg = CSG::new();
+    /// // ... fill `csg.polygons` with some that share metadata, some that have None, etc.
+    ///
+    /// let grouped = csg.polygons_by_metadata();
+    /// for (meta, polys) in &grouped {
+    ///     println!("Metadata = {:?}, #polygons = {}", meta, polys.len());
+    /// }
+    /// ```
+    /// requires impl<S: Clone + Eq + Hash> CSG<S> { and use std::collections::HashMap; use std::hash::Hash;
+    ///pub fn polygons_by_metadata(&self) -> HashMap<Option<S>, Vec<&Polygon<S>>> {
+    ///    let mut map: HashMap<Option<S>, Vec<&Polygon<S>>> = HashMap::new();
+    ///    
+    ///    for poly in &self.polygons {
+    ///        // Clone the `Option<S>` so we can use it as the key
+    ///        let key = poly.metadata.clone();
+    ///        map.entry(key).or_default().push(poly);
+    ///    }
+    ///    
+    ///    map
+    ///}
+
+    /// Return polygons grouped by metadata
+    /// requires impl<S: Clone + std::cmp::PartialEq> CSG<S> {
+    ///pub fn polygons_by_metadata_partialeq(&self) -> Vec<(Option<S>, Vec<&Polygon<S>>)> {
+    ///    let mut groups: Vec<(Option<S>, Vec<&Polygon<S>>)> = Vec::new();
+    ///    'outer: for poly in &self.polygons {
+    ///        let meta = poly.metadata.clone();
+    ///        // Try to find an existing group with the same metadata (requires a way to compare!)
+    ///        for (existing_meta, polys) in &mut groups {
+    ///            // For this to work, you need some form of comparison on `S`.
+    ///            // If S does not implement Eq, you might do partial compare or pointer compare, etc.
+    ///            if *existing_meta == meta {
+    ///                polys.push(poly);
+    ///                continue 'outer;
+    ///            }
+    ///        }
+    ///        // Otherwise, start a new group
+    ///        groups.push((meta, vec![poly]));
+    ///    }
+    ///    groups
+    ///}
     
     /// Build a new CSG from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0. If a union produced multiple
@@ -1473,23 +1460,12 @@ impl<S: Clone> CSG<S> {
 
     /// Grows/outsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
     pub fn offset_2d(&self, distance: f64) -> CSG<S> {
-        // 1) Convert each polygon to a 2D polyline in XY
-        let mut all_plines_2d = Vec::new();
+        // For each polyline, build a cavalier_contours Polyline<f64>, offset it
+        let mut offset_loops = Vec::new(); // each "loop" is a cavalier_contours polyline
+
         for poly in &self.polygons {
-            // Assume `poly` is in XY plane, gather the points:
-            let pline2d = poly.to_polyline2d();
-            all_plines_2d.push(pline2d);
-        }
-
-        // 2) For each polyline, build a cavalier_contours Polyline<f64>, offset it
-        let mut offset_loops = Vec::new(); // each "loop" is a Vec<PlineVertex2D> in your 2D format
-
-        for pline2d in all_plines_2d {
             // Convert to cavalier_contours Polyline (closed by default):
-            let mut cpoly = Polyline::<f64>::with_capacity(pline2d.len(), /*is_closed=*/true);
-            for v in &pline2d {
-                cpoly.add(v.x, v.y, v.bulge);
-            }
+            let cpoly = poly.to_cc_polyline();
 
             // Remove any degenerate or redundant vertices:
             cpoly.remove_redundant(1e-5);
@@ -1497,25 +1473,12 @@ impl<S: Clone> CSG<S> {
             // Perform the actual offset:
             let result_plines = cpoly.parallel_offset(-distance);
 
-            // Convert the result polylines back into your PlineVertex2D
-            for off_pl in result_plines {
-                let mut out_loop = Vec::new();
-                // The offset polyline is typically closed; iterate over all its vertices:
-                for i in 0..off_pl.vertex_count() {
-                    let vv = off_pl.at(i);
-                    out_loop.push(PlineVertex2D {
-                        x: vv.x,
-                        y: vv.y,
-                        bulge: vv.bulge,
-                    });
-                }
-                // Collect this loop
-                offset_loops.push(out_loop);
-            }
+            // Collect this loop
+            offset_loops.extend(result_plines);
         }
 
-        // 3) Build a new CSG from those offset loops in XY:
-        CSG::from_polylines(&offset_loops)
+        // Build a new CSG from those offset loops in XY:
+        CSG::from_cc_polylines(offset_loops)
     }
 
     /// Flatten a `CSG` into the XY plane and union all polygons' outlines,
