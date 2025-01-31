@@ -1,6 +1,6 @@
 [package]
 name = "csgrs"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2021"
 description = "Constructive solid geometry on meshes using BSP trees in Rust"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>",]
