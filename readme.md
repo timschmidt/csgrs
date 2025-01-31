@@ -30,12 +30,13 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 
 - **BSP-based 3D**: fast 3D CSG boolean operations (union, difference, intersection) built around splitting polygons with a plane.
 - **3D shapes**: cubes, spheres, cylinders, polyhedrons, and more.
-- **Polygon/Polyline based 2D**: 2D boolean operations and offsetting via [cavalier contours](https://crates.io/crates/cavalier_contours).
+- **3D Transformations**: translate, rotate, scale, mirror, inverse, transform, convex hull, minkowski sum, flatten, cut, etc.
+- **Polygon based 2D**: fast 2D boolean operations and offsetting via [cavalier contours](https://crates.io/crates/cavalier_contours).
 - **2D shapes**: square, circle, polygon, and more.
-- **Transformations**: translate, rotate, scale, mirror, inverse, transform, convex hull, minkowski sum, flatten, cut, etc.
+- **2D Transformations**: translate, rotate, scale, mirror, inverse, transform, convex hull, minkowski sum, offset, flatten, reorient, etc.
 - **Extrusions**: linear extrude, rotate-extrude (revolve), extrude-between polygons with same number of vertices and winding.
 - **Triangulation**: via [earclip](https://crates.io/crates/earclip), subdivide, renormalize, etc.
-- **Text**: 2D text generation from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext), extrude for 3D.
+- **Text**: from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext).
 - **Measurement**: provide an origin and vector and receive all intersections with distance from origin and location.
 - **Physics**: interoperability with [Parry](https://crates.io/crates/parry3d) and [Rapier](https://crates.io/crates/rapier3d) for physics, collisions, bounding volumes, etc.
 - **Soon**: concurrency with the `"parallel"` feature (uses `rayon`).
@@ -206,7 +207,7 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::ray_intersections(origin, direction)`** — returns all intersection points and distances.
 - **`CSG::flatten()`** — flattens a 3D shape into 2D (on the XY plane), unions the outlines.
 - **`CSG::cut(Some(plane))`** — slices the CSG by a plane and returns the cross-section polygons.
-- **`CSG::offset_2d(distance)`** — outward (or inward) offset in 2D using [cavalier_contours].
+- **`CSG::offset_2d(distance)`** — outward (or inward) offset in 2D using [cavalier_contours](https://crates.io/crates/cavalier_contours).
 - **`CSG::grow(distance)`**, **`CSG::shrink(distance)`** (3D offset, currently approximate/experimental).
 - **`CSG::subdivide_triangles(levels)`** — subdivides each polygon’s triangles, increasing mesh density.
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
