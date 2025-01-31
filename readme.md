@@ -369,7 +369,6 @@ match csg_obj.is_manifold()? {
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - extend flatten to work with arbitrary planes
-- extend Polygon 2D functions to work with arbitrary planes
 - overwrite polygon metadata correctly in difference, intersection, etc
 - fix normals on rotate_extrude
 - fix normal on bottom face of extrude
@@ -377,7 +376,7 @@ match csg_obj.is_manifold()? {
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
-- remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
+- remaining 2d functions to finalize: signed area, is_ccw, line/line intersection, translate, rotate, scale, transform, mirror, inverse, convex hull, minkowski sum
   - tests
 - vector font for machining
   - https://github.com/kamalmostafa/hershey-fonts
