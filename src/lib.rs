@@ -18,9 +18,8 @@ use std::io::Cursor;
 use std::f64::consts::PI;
 use std::error::Error;
 use cavalier_contours::polyline::{
-    Polyline, PlineSource, PlineCreation, PlineSourceMut, BooleanOp, PlineBooleanOptions
+    Polyline, PlineSource, PlineCreation, PlineSourceMut, BooleanOp
 };
-use cavalier_contours::polyline::internal::pline_boolean::polyline_boolean;
 use earclip::earcut;
 use dxf::Drawing;
 use dxf::entities::*;
@@ -98,6 +97,29 @@ pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
         [v20.clone(), v12.clone(), v2.clone()],
         [v01,         v12,         v20],
     ]
+}
+
+/// Perform a 2D union of an entire slice of polygons (all assumed in the XY plane).
+/// Because `Polygon::union` returns a `Vec<Polygon<S>>` (it can split or merge),
+/// we accumulate and re‐union until everything is combined.
+fn union_all_2d<S: Clone>(polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
+    if polygons.is_empty() {
+        return vec![];
+    }
+    // Start with the first polygon
+    let mut result = vec![polygons[0].clone()];
+
+    // Union successively with each subsequent polygon
+    for poly in &polygons[1..] {
+        let mut new_result = Vec::new();
+        for r in result {
+            // `r.union(poly)` is the new 2D union call. It can return multiple disjoint polygons.
+            let merged = r.union(poly);
+            new_result.extend(merged);
+        }
+        result = new_result;
+    }
+    result
 }
 
 /// A vertex of a polygon, holding position and normal.
@@ -1639,53 +1661,31 @@ impl<S: Clone> CSG<S> {
     /// duplicate edges that can cause issues in `cavalier_contours`.
     pub fn flatten(&self) -> CSG<S> {
         let eps_area = 1e-9;
-    
-        // 1) Convert each 3D polygon into a 2D polyline on z=0,
-        //    remove duplicates, skip degenerate (zero-area) loops.
-        let mut polylines_2d = Vec::new();
+
+        // Convert each 3D polygon to a 2D polygon in XY (z=0).
+        // Filter out degenerate polygons (area ~ 0).
+        let mut polys_2d = Vec::new();
         for poly in &self.polygons {
-            let cc_poly = poly.to_cc_polyline();
-            cc_poly.remove_redundant(EPSILON);
-    
-            // Check area; skip if below threshold
-            if pline_area(&cc_poly).abs() > eps_area {
-                polylines_2d.push(cc_poly);
+            // Convert to a cavalier_contours::Polyline first (same as .to_cc_polyline())
+            let cc = poly.to_cc_polyline();
+            // Optional: remove redundant points
+            cc.remove_redundant(EPSILON);
+
+            // Check area (shoelace). If above threshold, turn it into a 2D Polygon
+            let area = crate::pline_area(&cc).abs();
+            if area > eps_area {
+                polys_2d.push(Polygon::from_cc_polylines(cc));
             }
         }
-        if polylines_2d.is_empty() {
+        if polys_2d.is_empty() {
             return CSG::new();
         }
-    
-        // 2) Repeatedly union all polylines. Because 2D union can yield multiple disjoint loops,
-        //    we store them all, filtering out degenerate loops each time.
-        let mut union_acc: Vec<Polyline<f64>> = vec![polylines_2d[0].clone()];
-    
-        let options = PlineBooleanOptions {
-            pline1_aabb_index: None,
-            pos_equal_eps: EPSILON,
-            ..Default::default()
-        };
-    
-        for next_pl in &polylines_2d[1..] {
-            let mut new_acc = Vec::new();
-            for loop_pl in &union_acc {
-                let union_result = polyline_boolean(loop_pl, next_pl, BooleanOp::Or, &options);
-                // union_result.pos_plines are the union loops in 2D
-                for res_pl in union_result.pos_plines {
-                    let area = pline_area(&res_pl.pline).abs();
-                    if area > eps_area {
-                        new_acc.push(res_pl.pline);
-                    }
-                }
-            }
-            union_acc = new_acc;
-            if union_acc.is_empty() {
-                break; // everything degenerated
-            }
-        }
-    
-        // 3) Convert the final union loops back to polygons in Z=0.
-        CSG::from_cc_polylines(union_acc)
+
+        // Use our `union_all_2d` helper
+        let merged_2d = union_all_2d(&polys_2d);
+
+        // Return them as a new CSG in z=0
+        CSG::from_polygons(merged_2d)
     }
     
     /// Slice this CSG by a plane, keeping only cross-sections on that plane.
