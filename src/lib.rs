@@ -292,7 +292,7 @@ impl<S: Clone> Polygon<S> {
     
     /// Build a new Polygon from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0.
-    pub fn from_cc_polylines(polyline: Polyline<f64>) -> Polygon<S> {
+    pub fn from_cc_polyline(polyline: Polyline<f64>) -> Polygon<S> {
         let plane_normal = nalgebra::Vector3::z();
     
         if polyline.vertex_count() >= 3 {
@@ -425,15 +425,7 @@ impl<S: Clone> Polygon<S> {
                 continue; // skip degenerate
             }
             // Convert to a 3D Polygon<S> in the XY plane
-            let plane_normal = nalgebra::Vector3::z();
-            let mut verts = Vec::with_capacity(pl.vertex_count());
-            for i in 0..pl.vertex_count() {
-                let v = pl.at(i);
-                verts.push(
-                    Vertex::new(nalgebra::Point3::new(v.x, v.y, 0.0), plane_normal)
-                );
-            }
-            polygons_out.push(Polygon::new(verts, None));
+            polygons_out.push(Polygon::from_cc_polyline(pl.clone()));
         }
         
         polygons_out
@@ -456,15 +448,7 @@ impl<S: Clone> Polygon<S> {
             if pl.vertex_count() < 3 {
                 continue;
             }
-            let plane_normal = nalgebra::Vector3::z();
-            let mut verts = Vec::with_capacity(pl.vertex_count());
-            for i in 0..pl.vertex_count() {
-                let v = pl.at(i);
-                verts.push(
-                    Vertex::new(nalgebra::Point3::new(v.x, v.y, 0.0), plane_normal)
-                );
-            }
-            polygons_out.push(Polygon::new(verts, None));
+            polygons_out.push(Polygon::from_cc_polyline(pl.clone()));
         }
         polygons_out
     }
@@ -485,15 +469,7 @@ impl<S: Clone> Polygon<S> {
             if pl.vertex_count() < 3 {
                 continue;
             }
-            let plane_normal = nalgebra::Vector3::z();
-            let mut verts = Vec::with_capacity(pl.vertex_count());
-            for i in 0..pl.vertex_count() {
-                let v = pl.at(i);
-                verts.push(
-                    Vertex::new(nalgebra::Point3::new(v.x, v.y, 0.0), plane_normal)
-                );
-            }
-            polygons_out.push(Polygon::new(verts, None));
+            polygons_out.push(Polygon::from_cc_polyline(pl.clone()));
         }
         polygons_out
     }
@@ -1674,7 +1650,7 @@ impl<S: Clone> CSG<S> {
             // Check area (shoelace). If above threshold, turn it into a 2D Polygon
             let area = crate::pline_area(&cc).abs();
             if area > eps_area {
-                polys_2d.push(Polygon::from_cc_polylines(cc));
+                polys_2d.push(Polygon::from_cc_polyline(cc));
             }
         }
         if polys_2d.is_empty() {
