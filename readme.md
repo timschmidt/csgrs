@@ -1,332 +1,370 @@
+Below is an updated **README.md** that corrects, clarifies, and expands upon the original documentation. Feel free to adapt it further for your specific repository or usage context.
+
+---
+
 # csgrs
 
-Constructive Solid Geometry (CSG) is a modeling technique that uses Boolean operations like union and intersection to combine 3D solids. This library implements CSG operations on meshes simply using BSP trees.  It is meant to add CSG to the larger [Dimforge](https://www.dimforge.com/) ecosystem, bring the [OpenSCAD](https://openscad.org/) feature set into Rust, work in a wide variety of environments, and be reasonably performant.
-
-![Example CSG output](docs/csg.png)
-
-### Use the library:
-
-    use csgrs::CSG;
-    
-    // Create a type alias for easy usage
-    type MyCSG = CSG<()>;
-
-### Construct a 2D shape:
-
-    let square = MyCSG::square(None);
-    let square2 = MyCSG::square(Some(([2.0, 3.0], true)));
-    let circle = MyCSG::circle(None);
-    let circle2 = MyCSG::circle(Some((2.0, 64)));
-    
-    let points = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
-    let polygon2d = MyCSG::polygon_2d(&points);
-
-### Construct a 3D shape:
-
-    let cube = MyCSG::cube(None);
-    let cube2 = MyCSG::cube(Some([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])); // center, radius
-    let sphere = MyCSG::sphere(None);
-    let sphere2 = MyCSG::sphere(Some([0.0, 0.0, 0.0], 1.0, 16, 8)); // center, radius, slices, stacks
-    let cylinder = MyCSG::cylinder(None);
-    let cylinder2 = MyCSG::cylinder(Some([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16)); // start, end, radius, slices
-    
-    // A simple triangular prism
-    let points = [
-        [0.0, 0.0, 0.0], // 0
-        [1.0, 0.0, 0.0], // 1
-        [0.0, 1.0, 0.0], // 2
-        [0.0, 0.0, 1.0], // 3
-        [1.0, 0.0, 1.0], // 4
-        [0.0, 1.0, 1.0], // 5
-    ];
-    // Faces: bottom triangle, top triangle, and 3 rectangular sides
-    let faces = vec![
-        vec![0, 1, 2],    // bottom
-        vec![3, 5, 4],    // top
-        vec![0, 2, 5, 3], // side
-        vec![0, 3, 4, 1], // side
-        vec![1, 4, 5, 2], // side
-    ];
-    let prism = MyCSG::polyhedron(&points, &faces);
-
-### Combine shapes:
-
-    let union_result = cube.union(&sphere);
-    let subtraction_result = cube.subtract(&sphere);
-    let intersection_result = cylinder.intersect(&sphere);
-
-### Extract polygons:
-
-    let polygons = union_result.to_polygons();
-    println!("Polygon count = {}", polygons.len());
-    
-    let same_polygons = union_result.polygons;
-
-### Translate:
-
-    let translation_result = cube.translate(Vector3::new(3.0, 2.0, 1.0));
-
-### Rotate:
-
-    let rotation_result = cube.rotate(15.0, 45.0, 0.0);
-
-### Scale:
-
-    let scale_result = cube.scale(2.0, 1.0, 3.0);
-
-### Mirror:
-
-    let mirror_result = cube.mirror(Axis::Y);
-    
-### Inverse
-
-    let inverse_result = cube.inverse();
-    
-### Convex hull:
-
-    let hull = cube.convex_hull();
-
-### Minkowski sum:
-
-    let rounded_cube = cube.minkowski_sum(&sphere);
-    
-### Flatten a 3D shape into 2D
-
-    let cube = MyCSG::cube(None);
-    let flattened_cube = cube.flatten();
-    
-### Cut a shape with a plane:
-
-    let cut = cube.cut(None); // cut at z=0
-    
-    let plane = Plane {
-        normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
-        w: 1.0,
-    }
-    let slice = cube.cut(plane); // cut at z=1
-    
-### Extrude a 2D shape:
-
-    let square = MyCSG::square(Some(([2.0, 2.0], true)));
-    let prism = square.extrude(5.0);
-    
-### Extrude along a vector:
-
-    // Extrude along the +Y direction by 5 units:
-    let extruded_y = my_2d_shape.extrude_vector(Vector3::new(0.0, 5.0, 0.0));
-    
-    // Extrude along some arbitrary vector, say (1.0, 2.0, 3.0):
-    let extruded_diagonal = my_2d_shape.extrude_vector(Vector3::new(1.0, 2.0, 3.0));
-    
-### Extrude between two polygons:
-
-    let circle = MyCSG::circle(Some((2.0, 64)));
-    let circle2 = MyCSG::circle(Some((2.0, 64)));
-    let solid = MyCSG::extrude_between(circle, circle2.translate(Vector3::new(3.0, 2.0, 5.0)));
-    
-### Rotate extrude:
-
-    let polygon = MyCSG::polygon_2d(&[
-        [1.0, 0.0],
-        [1.0, 2.0],
-        [0.5, 2.5],
-    ]);
-    let revolve_shape = polygon.rotate_extrude(360.0, 16); // degrees, steps
-    
-### [Transform](https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations):
-
-    // Scale X, Shear X along Y, Shear X along Z, Translate X
-    // Shear Y along X, Scale Y, Shear Y along Z, Translate Y
-    // Shear Z along X, Shear Z along Y, Scale Z, Translate Z
-    // The last row are clamped to 0,0,0,1 in OpenSCAD
-    
-    cube.transform(Matrix4x4::new(11, 12, 13, 14,
-                                  21, 22, 23, 24,
-                                  21, 22, 23, 24,
-                                  0, 0, 0, 1));
-    
-### Bounding box:
-
-    let aabb = cube.bounding_box();
-    println!("Axis-aligned bounding box mins: {:?}", aabb.mins);
-    println!("Axis-aligned bounding box maxs: {:?}", aabb.maxs);
-    
-### Offset a 3D shape: (bugged atm)
-
-    let grown_cube = cube.grow(4.0);
-    let shrunk_cube = cube.shrink(4.0);
-
-### Offset a 2D shape:
-
-    let grown_square = square.offset_2d(4.0);
-    let shrunk_square = square.offset_2d(-4.0);
-    
-### Text:
-
-    let font_data = include_bytes!("my_font.ttf");
-
-    // Generate a simple "Hello" text in the XY plane
-    let csg_text = MyCSG::text("Hello", font_data, Some(10.0));
-    
-### Subdivide triangles:
-
-    let subdivisions = 2;
-    let subdivided_csg = rounded_cube.subdivide_triangles(subdivisions);
-    
-### Renormalize:
-
-    let renormalized_csg = cube.renormalize();
-    
-### Test manifoldness:
-
-    let cube = MyCSG::cube(None);
-
-    // Check if the cube is manifold
-    match cube.is_manifold()? {
-        true => println!("The cube is manifold."),
-        false => println!("The cube is not manifold."),
-    }
-    
-### Compute all ray intersections for measurement (expensive):
-
-    let cube = MyCSG::cube(None);
-    let ray_origin = nalgebra::Point3::new(-5.0, 0.0, 0.0);
-    let ray_dir    = nalgebra::Vector3::new(1.0, 0.0, 0.0);
-
-    let intersections = cube.ray_intersections(&ray_origin, &ray_dir);
-    println!("Found {} intersections:", intersections.len());
-    for (point, dist) in intersections {
-        println!("  t = {:.4}, point = {:?}", dist, point); // distance to 4 decimal places
-    }
-
-### Create a [Parry](https://parry.rs/) TriMesh:
-
-    let trimesh = my_csg.to_trimesh();
-
-### Create a [Rapier](https://rapier.rs/) rigid body:
-
-    // 90 degrees in radians
-    let angle = std::f64::consts::FRAC_PI_2;
-    // Axis-angle: direction = Z, magnitude = angle
-    let axis_angle = Vector3::z() * angle;
-    
-    let rigid_body = my_csg.to_rigid_body(
-        &mut rigid_body_set,
-        &mut collider_set,
-        Vector3::new(0.0, 0.0, 0.0), // translation
-        axis_angle,                  // 90° around Z
-        1.0,                         // density
-    );
-    
-### Collect mass properties of a shape:
-
-    let density = 1.0;
-    let (mass, center_of_mass, inertia_frame) = my_csg.mass_properties(density);
-
-### Export an ASCII STL:
-
-    let stl_data = union_result.to_stl_ascii("cube_minus_sphere");
-    std::fs::write("output.stl", stl_data.as_bytes())?;
-    
-### Export a binary STL:
-
-    let bytes = union_result.to_stl_binary("my_solid")?;
-    std::fs::write("output.stl", bytes)?;
-
-### Import an STL:
-
-    let stl_data: Vec<u8> = std::fs::read("path_to_stl_file.stl")?;
-    let csg = MyCSG::from_stl(&stl_data)?;
-    
-### Export a DXF:
-
-    let bytes = union_result.to_dxf()?;
-    std::fs::write(bytes)?;
-
-### Import a DXF:
-
-    let dxf_data: Vec<u8> = std::fs::read("path_to_dxf_file.dxf")?;
-    let csg = MyCSG::from_dxf(&dxf_data)?;
-    
-## Generic per-polygon metadata:
-
-In order to allow you to store custom per-polygon metadata (colors, IDs, etc.), `csgrs` now has a generic type parameter `S: Clone` on both `CSG<S>` and `Polygon<S>`.  If you don’t need custom data, you can simply use `()`, an empty type, for `S`.
-
-    // No metadata:
-    type MyCSG = CSG<()>;
-    let cube = MyCSG::cube(None);
-
-If you do want custom data, define your own type that implements Clone:
-
-    #[derive(Clone)]
-    struct MyMetadata {
-        color: (u8, u8, u8),
-        layer_id: u32,
-        // etc.
-    }
-    
-    // Then alias with the custom type:
-    type MyCSG = CSG<MyMetadata>;
-    
-    // Or instantiate directly:
-    let mut csg = CSG::<MyMetadata>::new();
-
-The various shape functions (`cube`, `sphere`, etc.) produce polygons whose `shared` field is `None` by default.
-
-## Getting and setting metadata:
-
-Once you have a `CSG<S>`, you can access its polygons (either via `csg.polygons` or `csg.to_polygons()`) and use the following helper methods on each `Polygon<S>`:
-
-    metadata() -> Option<&S>: Returns a reference to the metadata if present.
-    metadata_mut() -> Option<&mut S>: Returns a mutable reference to the metadata.
-    set_metadata(value: S): Overwrites the metadata with a new value.
-    
-    // Create a CSG with a single polygon that has a string metadata value:
-    let mut poly = Polygon::new(
-        vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), nalgebra::Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), nalgebra::Vector3::z()),
-            Vertex::new(Point3::new(0.0, 1.0, 0.0), nalgebra::Vector3::z()),
-        ],
-        Some("MyTriangle".to_string()),
-    );
-    
-    // Access the data
-    if let Some(data) = poly.metadata() {
-        println!("Metadata data is: {}", data);
-    }
-    
-    // Mutably modify
-    if let Some(data_mut) = poly.metadata_mut() {
-        data_mut.push_str("_extended");
-    }
-    
-    // Or directly set
-    poly.set_metadata("OverwrittenData".to_string());
-    
-    // Make a CSG from polygons
-    let csg = CSG::from_polygons(vec![poly]);
-
-## Implementation Details
-
-All CSG operations are implemented in terms of two functions, `clip_to()` and `invert()`, which remove parts of a BSP tree inside another BSP tree and swap solid and empty space, respectively. To find the union of `a` and `b`, we want to remove everything in `a` inside `b` and everything in `b` inside `a`, then combine polygons from `a` and `b` into one solid:
-
-    a.clip_to(&b);
-    b.clip_to(&a);
-    a.build(&b.all_polygons());
-
-The only tricky part is handling overlapping coplanar polygons in both trees. The code above keeps both copies, but we need to keep them in one tree and remove them in the other tree. To remove them from `b` we can clip the inverse of `b` against `a`. The code for union now looks like this:
-
-    a.clip_to(&b);
-    b.clip_to(&a);
-    b.invert();
-    b.clip_to(&a);
-    b.invert();
-    a.build(&b.all_polygons());
-
-Subtraction and intersection naturally follow from set operations. If union is `A | B`, subtraction is `A - B = ~(~A | B)` and intersection is `A & B = ~(~A | ~B)` where `~` is the complement operator.
-
-## Todo
+A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations on sets of polygons stored in BSP trees. This allows you to construct and manipulate 2D and 3D geometry with operations such as *union*, *difference*, *intersection*, and more—much like [OpenSCAD](https://openscad.org/) does, but in Rust.
+
+This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [Rapier](https://rapier.rs/) and [Parry](https://parry.rs/)), leverage existing crates for geometry (like [`nalgebra`](https://nalgebra.org/)) and mesh processing (like [`earclip`](https://crates.io/crates/earclip), [`cavalier_contours`](https://crates.io/crates/cavalier_contours), [`stl_io`](https://crates.io/crates/stl_io), etc.), and provide an extensible, type-safe API.  
+
+## Table of Contents
+
+1. [Features](#features)
+2. [Installation](#installation)
+3. [Quick Start Example](#quick-start-example)
+4. [Library Overview](#library-overview)
+    - [CSG and Polygon Structures](#csg-and-polygon-structures)
+    - [2D Shapes](#2d-shapes)
+    - [3D Shapes](#3d-shapes)
+    - [Boolean Operations](#boolean-operations)
+    - [Transformations](#transformations)
+    - [Extrusions and Revolves](#extrusions-and-revolves)
+    - [Miscellaneous Operations](#miscellaneous-operations)
+    - [Working with Metadata](#working-with-metadata)
+5. [File I/O](#file-io)
+6. [Integration with Parry and Rapier](#integration-with-parry-and-rapier)
+7. [Manifold Check](#manifold-check)
+8. [Roadmap / Todo](#roadmap--todo)
+9. [License](#license)
+
+---
+
+## Features
+
+- **BSP-based** CSG boolean operations: union, difference, intersection.
+- **2D** (XY-plane) polygons and advanced 2D booleans via [cavalier_contours].
+- **3D** shape construction: cubes, spheres, cylinders, polyhedrons from face lists, and more.
+- **Transformations**: translate, rotate, scale, mirror, etc.
+- **Extrusions**: linear extrude, rotate-extrude (revolve), extrude-between arbitrary polygons.
+- **Triangulation** (via [earclip]) and polygon refinement methods (subdivide, renormalize, etc.).
+- **Optional** concurrency with the `"parallel"` feature (uses `rayon`).
+- **Optional** interoperability with [Rapier] and [Parry] for physics, collisions, bounding volumes, etc.
+- **Import/export** from/to ASCII or binary STL, DXF, plus 2D text generation from TTF fonts.
+- **Generic per-polygon metadata** to store color, layer IDs, or any custom data.
+
+> **Note**: Some features (e.g. parallel operations, STL, DXF, Rapier integration) may eventually be placed behind feature flags.
+
+## Installation
+
+Add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+csgrs = "^0.8.0"
+```
+
+## Quick Start Example
+
+```rust
+use nalgebra::Vector3;
+use csgrs::{CSG, Axis};
+
+// Alias the library’s generic CSG type with empty metadata:
+type MyCSG = CSG<()>;
+
+// Create two shapes:
+let cube = MyCSG::cube(None);       // 2×2×2 cube centered at origin
+let sphere = MyCSG::sphere(None);   // sphere of radius=1 at origin
+
+// Compute union:
+let union_result = cube.union(&sphere);
+
+// Write the result as an ASCII STL:
+let stl_text = union_result.to_stl_ascii("cube_plus_sphere");
+std::fs::write("cube_sphere_union.stl", stl_text).unwrap();
+
+// For more advanced usage (e.g., rapier integration, 2D offsetting, etc.), see below.
+```
+
+## Library Overview
+
+### CSG and Polygon Structures
+
+- **`CSG<S>`** is the main type. It stores a list of **polygons** (`Vec<Polygon<S>>`).
+- **`Polygon<S>`** holds:
+  - a `Vec<Vertex>` (positions + normals),
+  - an optional metadata field (`Option<S>`), and
+  - a `Plane` describing the polygon’s orientation in 3D.
+
+You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)`.
+
+### 2D Shapes
+
+Helper constructors for 2D shapes in the XY plane:
+
+- `CSG::square(Some(([width, height], center)))`
+- `CSG::circle(Some((radius, segments)))`
+- `CSG::polygon_2d(&[[x1,y1],[x2,y2],...])`
+
+Examples:
+
+```rust
+let square = MyCSG::square(None);          // 1×1 at origin
+let centered_rect = MyCSG::square(Some(([2.0, 4.0], true)));
+let circle = MyCSG::circle(None);          // radius=1, 32 segments
+let circle2 = MyCSG::circle(Some((2.0, 64)));
+```
+
+### 3D Shapes
+
+Similarly, you can create standard 3D primitives:
+
+- `CSG::cube(Some((&center, &radius)))`
+- `CSG::sphere(Some((&center, radius, slices, stacks)))`
+- `CSG::cylinder(Some((&start, &end, radius, slices)))`
+- `CSG::polyhedron(points, faces)`
+
+Examples:
+
+```rust
+// Unit cube at origin
+let cube = MyCSG::cube(None);
+
+// Sphere of radius=2 at origin with 32 slices and 16 stacks
+let sphere = MyCSG::sphere(Some((&[0.0, 0.0, 0.0], 2.0, 32, 16)));
+
+// Cylinder from (0, -1, 0) to (0, 1, 0) with radius=1 and 16 slices
+let cyl = MyCSG::cylinder(Some((&[0.0, -1.0, 0.0], &[0.0, 1.0, 0.0], 1.0, 16)));
+
+// Create a custom polyhedron from points and face indices:
+let points = &[
+    [0.0, 0.0, 0.0],
+    [1.0, 0.0, 0.0],
+    [1.0, 1.0, 0.0],
+    [0.0, 1.0, 0.0],
+    [0.5, 0.5, 1.0],
+];
+let faces = vec![
+    vec![0, 1, 2, 3], // base rectangle
+    vec![0, 1, 4],    // triangular side
+    vec![1, 2, 4],
+    vec![2, 3, 4],
+    vec![3, 0, 4],
+];
+let pyramid = MyCSG::polyhedron(points, &faces);
+```
+
+### Boolean Operations
+
+Three primary operations:
+
+1. **Union**: `a.union(&b)`
+2. **Difference**: `a.subtract(&b)`
+3. **Intersection**: `a.intersect(&b)`
+
+They all return a new `CSG<S>`.
+
+```rust
+let union_result = cube.union(&sphere);
+let subtraction_result = cube.subtract(&sphere);
+let intersection_result = cylinder.intersect(&sphere);
+```
+
+### Transformations
+
+- `translate(v: Vector3<f64>)`
+- `rotate(x_deg, y_deg, z_deg)`
+- `scale(sx, sy, sz)`
+- `mirror(Axis::X | Axis::Y | Axis::Z)`
+- `transform(&Matrix4<f64>)` for arbitrary affine transforms.
+
+```rust
+use nalgebra::Vector3;
+
+let moved = cube.translate(Vector3::new(3.0, 0.0, 0.0));
+let rotated = sphere.rotate(0.0, 45.0, 90.0);
+let scaled = cylinder.scale(2.0, 1.0, 1.0);
+let mirrored = cube.mirror(Axis::Z);
+```
+
+### Extrusions and Revolves
+
+- **Linear Extrude**: 
+  - `my_2d_shape.extrude(height: f64)`  
+  - `my_2d_shape.extrude_vector(direction: Vector3<f64>)`  
+- **Extrude Between Two Polygons**:  
+  ```rust
+  let polygon_bottom = MyCSG::circle(Some((2.0, 64)));
+  let polygon_top = polygon_bottom.translate(Vector3::new(0.0, 0.0, 5.0));
+  let lofted = MyCSG::extrude_between(&polygon_bottom.polygons[0],
+                                      &polygon_top.polygons[0],
+                                      false);
+  ```
+- **Rotate-Extrude (Revolve)**: `my_2d_shape.rotate_extrude(angle_degs, segments)`
+
+```rust
+let square = MyCSG::square(Some(([2.0,2.0], false)));
+let prism = square.extrude(5.0);
+
+let revolve_shape = square.rotate_extrude(360.0, 16);
+```
+
+### Miscellaneous Operations
+
+- **`CSG::inverse()`** — flips the inside/outside orientation.
+- **`CSG::convex_hull()`** — uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
+- **`CSG::minkowski_sum(&other)`** — naive Minkowski sum, then takes the hull.
+- **`CSG::ray_intersections(origin, direction)`** — returns all intersection points and distances.
+- **`CSG::flatten()`** — flattens a 3D shape into 2D (on the XY plane), unions the outlines.
+- **`CSG::cut(Some(plane))`** — slices the CSG by a plane and returns the cross-section polygons.
+- **`CSG::offset_2d(distance)`** — outward (or inward) offset in 2D using [cavalier_contours].
+- **`CSG::grow(distance)`**, **`CSG::shrink(distance)`** (3D offset, currently approximate/experimental).
+- **`CSG::subdivide_triangles(levels)`** — subdivides each polygon’s triangles, increasing mesh density.
+- **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
+
+### Working with Metadata
+
+`CSG<S>` is generic over `S: Clone`. Each polygon has an optional `metadata: Option<S>`.  
+Use cases include storing color, ID, or layer info.
+
+```rust
+#[derive(Clone)]
+struct MyMetadata {
+    color: (u8,u8,u8),
+    label: String,
+}
+
+type MyCSG = CSG<MyMetadata>;
+
+// For a single polygon:
+use nalgebra::{Point3, Vector3};
+use csgrs::{Polygon, Vertex, Plane};
+
+let mut poly = Polygon::new(
+    vec![
+        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+    ],
+    Some(MyMetadata { color: (255,0,0), label: "Triangle".into() }),
+);
+
+// Retrieve metadata
+if let Some(data) = poly.metadata() {
+    println!("This polygon is labeled {}", data.label);
+}
+
+// Mutate metadata
+if let Some(data_mut) = poly.metadata_mut() {
+    data_mut.label.push_str("_extended");
+}
+```
+
+---
+
+## File I/O
+
+### STL
+
+- **Export ASCII STL**: `csg.to_stl_ascii("solid_name") -> String`
+- **Export Binary STL**: `csg.to_stl_binary("solid_name") -> io::Result<Vec<u8>>`
+- **Import STL**: `CSG::from_stl(&stl_data) -> io::Result<CSG<S>>`
+
+```rust
+// Save to ASCII STL
+let stl_text = csg_union.to_stl_ascii("union_solid");
+std::fs::write("union_ascii.stl", stl_text).unwrap();
+
+// Save to binary STL
+let stl_bytes = csg_union.to_stl_binary("union_solid").unwrap();
+std::fs::write("union_bin.stl", stl_bytes).unwrap();
+
+// Load from an STL file on disk
+let file_data = std::fs::read("some_file.stl")?;
+let imported_csg = CSG::from_stl(&file_data)?;
+```
+
+### DXF
+
+- **Export**: `csg.to_dxf() -> Result<Vec<u8>, Box<dyn Error>>`
+- **Import**: `CSG::from_dxf(&dxf_data) -> Result<CSG<S>, Box<dyn Error>>`
+
+```rust
+// Export DXF
+let dxf_bytes = csg_obj.to_dxf()?;
+std::fs::write("output.dxf", dxf_bytes)?;
+
+// Import DXF
+let dxf_data = std::fs::read("some_file.dxf")?;
+let csg_dxf = CSG::from_dxf(&dxf_data)?;
+```
+
+### 2D Text
+
+You can generate 2D text geometry in the XY plane from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext):
+
+```rust
+let font_data = include_bytes!("../fonts/MyFont.ttf");
+let csg_text = MyCSG::text("Hello!", font_data, Some(20.0));
+
+// Then extrude the text to make it 3D:
+let text_3d = csg_text.extrude(1.0);
+```
+
+---
+
+## Integration with Parry and Rapier
+
+### Create a Parry `TriMesh`
+
+`csg.to_trimesh()` returns a `SharedShape` containing a `TriMesh<f64>`.
+
+```rust
+use csgrs::CSG;
+use rapier3d_f64::prelude::*;
+
+let trimesh_shape = csg_obj.to_trimesh(); // SharedShape with a TriMesh
+```
+
+### Create a Rapier Rigid Body
+
+`csg.to_rigid_body(rb_set, co_set, translation, rotation, density)` helps build and insert both a rigid body and a collider:
+
+```rust
+use nalgebra::Vector3;
+use rapier3d_f64::prelude::*;
+use csgrs::CSG;
+
+let mut rb_set = RigidBodySet::new();
+let mut co_set = ColliderSet::new();
+
+let axis_angle = Vector3::z() * std::f64::consts::FRAC_PI_2; // 90° around Z
+let rb_handle = csg_obj.to_rigid_body(
+    &mut rb_set,
+    &mut co_set,
+    Vector3::new(0.0, 0.0, 0.0), // translation
+    axis_angle,                  // axis-angle
+    1.0,                         // density
+);
+```
+
+### Mass Properties
+
+```rust
+let density = 1.0;
+let (mass, com, inertia_frame) = csg_obj.mass_properties(density);
+println!("Mass: {}", mass);
+println!("Center of Mass: {:?}", com);
+println!("Inertia local frame: {:?}", inertia_frame);
+```
+
+---
+
+## Manifold Check
+
+`csg.is_manifold()` performs a quick check by writing a temporary binary STL in memory, reading it back into an indexed mesh, and validating that mesh. Returns `Ok(true)` if manifold, `Ok(false)` if not, or an `Err` on I/O issues.
+
+```rust
+match csg_obj.is_manifold()? {
+    true => println!("CSG is manifold!"),
+    false => println!("Not manifold."),
+}
+```
+
+---
+
+## Roadmap / Todo
 - file formats behind a feature flag
 - parry, rapier behind feature flags
 - polygons_by_metadata public function of a CSG
@@ -339,7 +377,7 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
 - 2d boolean ops
-  - functions: signed area, is_ccw, line/line intersection, intersection, union, difference
+  - functions: signed area, is_ccw, line/line intersection
   - tests / implementation with cavalier_contours
 - vector font for machining
   - https://github.com/kamalmostafa/hershey-fonts
@@ -376,6 +414,26 @@ Subtraction and intersection naturally follow from set operations. If union is `
 - reconstruct arcs from polylines using 
 - extend Polygon to allow edges to store arc parameters and bulge like cavalier_contours and update split_polygon to handle line/arc intersections.
 
-# License
+---
 
-Copyright (c) 2025 Timothy Schmidt, initially based on a translation of CSG.js Copyright (c) 2011 Evan Wallace, under the [MIT license](http://www.opensource.org/licenses/mit-license.php).
+## License
+
+```
+MIT License
+
+Copyright (c) 2025 Timothy Schmidt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the "Software"), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, merge, 
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
+to whom the Software is furnished to do so, subject to the following conditions:
+
+[... full MIT license text ...]
+```
+
+This library initially based on a translation of **CSG.js** © 2011 Evan Wallace, under the MIT license.  
+
+---
+
+**Enjoy building geometry in Rust!** If you find issues, please file an [issue](https://github.com/timschmidt/csgrs/issues) or submit a pull request. Feedback and contributions are welcome!
