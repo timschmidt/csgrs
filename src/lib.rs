@@ -267,6 +267,34 @@ impl<S: Clone> Polygon<S> {
         );
         Polygon { vertices, metadata, plane }
     }
+    
+    /// Build a new Polygon from a set of 2D polylines in XY. Each polyline
+    /// is turned into one polygon at z=0.
+    pub fn from_cc_polylines(polyline: Polyline<f64>) -> Polygon<S> {
+        let plane_normal = nalgebra::Vector3::z();
+    
+        if polyline.vertex_count() >= 3 {
+            let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
+            for i in 0..polyline.vertex_count() {
+                let v = polyline.at(i);
+                poly_verts.push(Vertex::new(
+                    nalgebra::Point3::new(v.x, v.y, 0.0),
+                    plane_normal
+                ));
+            }
+            return Polygon::new(poly_verts, None);
+        }
+        
+        // Fallback if no polylines had enough vertices:
+        return Polygon {
+            vertices: Vec::new(),
+            plane: Plane {
+                normal: nalgebra::Vector3::z(),
+                w: 0.0,
+            },
+            metadata: None,
+        };
+    }
 
     pub fn flip(&mut self) {
         self.vertices.reverse();
@@ -347,12 +375,134 @@ impl<S: Clone> Polygon<S> {
         let mut polyline = Polyline::with_capacity(self.vertices.len(), true);
         
         // We assume the polygon is already in the XY plane (z ~ 0).
-        // If your polygons might have arcs, you'd need more logic to detect + store bulge, etc.
+        // If our polygons might have arcs, we'll need more logic to detect + store bulge, etc.
         for v in &self.vertices {
             let bulge = 0.0;
             polyline.add(v.pos.coords.x, v.pos.coords.y, bulge);
         }
         polyline
+    }
+    
+    /// Return all resulting polygons from the union.
+    /// If the union has disjoint pieces, you'll get multiple polygons.
+    pub fn union(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
+        let self_cc = self.to_cc_polyline();
+        let other_cc = other.to_cc_polyline();
+    
+        // Use cavalier_contours boolean op OR
+        // union_result is a `BooleanResult<Polyline>`
+        let union_result = self_cc.boolean(&other_cc, BooleanOp::Or);
+        
+        let mut polygons_out = Vec::new();
+        
+        // union_result.pos_plines has the union outlines
+        // union_result.neg_plines might be empty for `Or`.
+        for outline in union_result.pos_plines {
+            let pl = &outline.pline; // a Polyline<f64>
+            if pl.vertex_count() < 3 {
+                continue; // skip degenerate
+            }
+            // Convert to a 3D Polygon<S> in the XY plane
+            let plane_normal = nalgebra::Vector3::z();
+            let mut verts = Vec::with_capacity(pl.vertex_count());
+            for i in 0..pl.vertex_count() {
+                let v = pl.at(i);
+                verts.push(
+                    Vertex::new(nalgebra::Point3::new(v.x, v.y, 0.0), plane_normal)
+                );
+            }
+            polygons_out.push(Polygon::new(verts, None));
+        }
+        
+        polygons_out
+    }
+
+    
+    /// Perform 2D boolean intersection with `other` and return resulting polygons.
+    pub fn intersection(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
+        let self_cc = self.to_cc_polyline();
+        let other_cc = other.to_cc_polyline();
+    
+        // Use cavalier_contours boolean op AND
+        let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::And);
+    
+        let mut polygons_out = Vec::new();
+    
+        // For intersection, result.pos_plines has the “kept” intersection loops
+        for outline in result.pos_plines {
+            let pl = &outline.pline;
+            if pl.vertex_count() < 3 {
+                continue;
+            }
+            let plane_normal = nalgebra::Vector3::z();
+            let mut verts = Vec::with_capacity(pl.vertex_count());
+            for i in 0..pl.vertex_count() {
+                let v = pl.at(i);
+                verts.push(
+                    Vertex::new(nalgebra::Point3::new(v.x, v.y, 0.0), plane_normal)
+                );
+            }
+            polygons_out.push(Polygon::new(verts, None));
+        }
+        polygons_out
+    }
+    
+    /// Perform 2D boolean difference (this minus other) and return resulting polygons.
+    pub fn difference(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
+        let self_cc = self.to_cc_polyline();
+        let other_cc = other.to_cc_polyline();
+    
+        // Use cavalier_contours boolean op NOT
+        let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::Not);
+    
+        let mut polygons_out = Vec::new();
+    
+        // For difference, result.pos_plines is what remains of self after subtracting `other`.
+        for outline in result.pos_plines {
+            let pl = &outline.pline;
+            if pl.vertex_count() < 3 {
+                continue;
+            }
+            let plane_normal = nalgebra::Vector3::z();
+            let mut verts = Vec::with_capacity(pl.vertex_count());
+            for i in 0..pl.vertex_count() {
+                let v = pl.at(i);
+                verts.push(
+                    Vertex::new(nalgebra::Point3::new(v.x, v.y, 0.0), plane_normal)
+                );
+            }
+            polygons_out.push(Polygon::new(verts, None));
+        }
+        polygons_out
+    }
+    
+    /// Perform 2D boolean exclusive‐or (symmetric difference) and return resulting polygons.
+    pub fn xor(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
+        let self_cc = self.to_cc_polyline();
+        let other_cc = other.to_cc_polyline();
+    
+        // Use cavalier_contours boolean op XOR
+        let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::Xor);
+    
+        let mut polygons_out = Vec::new();
+    
+        // For XOR, result.pos_plines is the symmetrical difference
+        for outline in result.pos_plines {
+            let pl = &outline.pline;
+            if pl.vertex_count() < 3 {
+                continue;
+            }
+            let plane_normal = nalgebra::Vector3::z();
+            let mut verts = Vec::with_capacity(pl.vertex_count());
+            for i in 0..pl.vertex_count() {
+                let v = pl.at(i);
+                verts.push(
+                    Vertex::new(nalgebra::Point3::new(v.x, v.y, 0.0), plane_normal)
+                );
+            }
+            polygons_out.push(Polygon::new(verts, None));
+        }
+        polygons_out
     }
 
     /// Returns a reference to the metadata, if any.
@@ -1458,9 +1608,9 @@ impl<S: Clone> CSG<S> {
         result.inverse()
     }
 
-    /// Grows/outsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
+    /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
+    /// for each Polygon we convert to a cavalier_contours Polyline<f64> and call parallel_offset
     pub fn offset_2d(&self, distance: f64) -> CSG<S> {
-        // For each polyline, build a cavalier_contours Polyline<f64>, offset it
         let mut offset_loops = Vec::new(); // each "loop" is a cavalier_contours polyline
 
         for poly in &self.polygons {
