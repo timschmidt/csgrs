@@ -1,50 +1,8 @@
 # csgrs
 
-A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** enables you to construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to manupulate, interrogate, and simulate those shapes without leaving Rust.
+A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** enables you to construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to manipulate, interrogate, and simulate those shapes without leaving Rust.
 
 This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`earclip`](https://crates.io/crates/earclip) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust mesh and line processing, be reasonably performant on a wide variety of targets, and provide an extensible, type-safe API.
-
-## Table of Contents
-
-1. [Features](#features)
-2. [Installation](#installation)
-3. [Quick Start Example](#quick-start-example)
-4. [Library Overview](#library-overview)
-    - [CSG and Polygon Structures](#csg-and-polygon-structures)
-    - [2D Shapes](#2d-shapes)
-    - [3D Shapes](#3d-shapes)
-    - [Boolean Operations](#boolean-operations)
-    - [Transformations](#transformations)
-    - [Extrusions and Revolves](#extrusions-and-revolves)
-    - [Miscellaneous Operations](#miscellaneous-operations)
-    - [Working with Metadata](#working-with-metadata)
-5. [File I/O](#file-io)
-6. [Integration with Parry and Rapier](#integration-with-parry-and-rapier)
-7. [Manifold Check](#manifold-check)
-8. [2D Subsystem and Polygon‐Level 2D Operations](#2d-subsystem-and-polygon‐level-2d-operations)
-9. [Roadmap / Todo](#roadmap--todo)
-10. [License](#license)
-
----
-
-## Features
-
-- **BSP-based 3D**: fast 3D CSG boolean operations (union, difference, intersection) built around splitting polygons with a plane.
-- **3D shapes**: cubes, spheres, cylinders, polyhedrons, and more.
-- **3D Transformations**: translate, rotate, scale, mirror, inverse, transform, convex hull, minkowski sum, flatten, cut, etc.
-- **Polygon based 2D**: fast 2D boolean operations and offsetting via [`cavalier contours`](https://crates.io/crates/cavalier_contours).
-- **2D shapes**: square, circle, polygon, and more.
-- **2D Transformations**: translate, rotate, scale, mirror, inverse, transform, convex hull, minkowski sum, offset, flatten, reorient, etc.
-- **Extrusions**: linear extrude, rotate-extrude (revolve), extrude-between polygons with same number of vertices and winding.
-- **Triangulation**: via [`earclip`](https://crates.io/crates/earclip), subdivide, renormalize, etc.
-- **Text**: from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext).
-- **Measurement**: provide an origin and vector and receive all intersections with distance from origin and location.
-- **Physics**: interoperability with [`Parry`](https://crates.io/crates/parry3d) and [`Rapier`](https://crates.io/crates/rapier3d) for physics, collisions, bounding volumes, etc.
-- **Import/export**: from/to ASCII or binary STL, and DXF
-- **Generic per-polygon metadata**: to store color, layer IDs, texture handles, simulation values, or any custom data.
-- **Soon**: concurrency with the `"parallel"` feature (uses `rayon`).
-
-> **Note**: Some features (e.g. parallel operations, STL, DXF, Rapier integration) may eventually be placed behind feature flags.
 
 ## Installation
 
@@ -77,8 +35,6 @@ std::fs::write("cube_sphere_union.stl", stl_text).unwrap();
 // For more advanced usage (e.g., rapier integration, 2D offsetting, etc.), see below.
 ```
 
-## Library Overview
-
 ### CSG and Polygon Structures
 
 - **`CSG<S>`** is the main type. It stores a list of **polygons** (`Vec<Polygon<S>>`).
@@ -87,7 +43,7 @@ std::fs::write("cube_sphere_union.stl", stl_text).unwrap();
   - an optional metadata field (`Option<S>`), and
   - a `Plane` describing the polygon’s orientation in 3D.
 
-You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)`.
+`CSG<S>` provides methods for working with 3D shapes, `Polygon<S>` provides analagous methods for working with 2D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)`.  Some 2D functions are re-exported by `CSG<S>` for ease of use.
 
 ### 2D Shapes
 
@@ -251,10 +207,6 @@ if let Some(data_mut) = poly.metadata_mut() {
 }
 ```
 
----
-
-## File I/O
-
 ### STL
 
 - **Export ASCII STL**: `csg.to_stl_ascii("solid_name") -> String`
@@ -301,10 +253,6 @@ let csg_text = MyCSG::text("Hello!", font_data, Some(20.0));
 // Then extrude the text to make it 3D:
 let text_3d = csg_text.extrude(1.0);
 ```
-
----
-
-## Integration with Parry and Rapier
 
 ### Create a Parry `TriMesh`
 
