@@ -20,7 +20,7 @@ use std::error::Error;
 use cavalier_contours::polyline::{
     Polyline, PlineSource, PlineCreation, PlineSourceMut, BooleanOp
 };
-use earclip::earcut;
+use earclip::{earcut, flatten};
 use dxf::Drawing;
 use dxf::entities::*;
 
@@ -818,7 +818,7 @@ impl<S: Clone> CSG<S> {
     
         for pl in loops {
             // Convert each Polyline into a single polygon in z=0.
-            // If you need arcs, you could subdivide by bulge, etc. This example ignores arcs for simplicity.
+            // For arcs, we could subdivide by bulge, etc. This ignores arcs for simplicity.
             if pl.vertex_count() >= 3 {
                 let mut poly_verts = Vec::with_capacity(pl.vertex_count());
                 for i in 0..pl.vertex_count() {
@@ -833,6 +833,74 @@ impl<S: Clone> CSG<S> {
         }
     
         CSG::from_polygons(all_polygons)
+    }
+    
+    /// Constructs a new CSG solid from “complex” (possibly non‐triangulated)
+    /// polygons provided in the same format that earclip accepts:
+    /// a slice of polygons, each a Vec of points (each point a Vec<f64> of length 2 or 3).
+    ///
+    /// The routine “flattens” the input into a flat list of coordinates and a list of hole indices,
+    /// then uses earcut to tessellate the outline into triangles.
+    ///
+    /// Each triangle is then converted into a Polygon (with three vertices) with a default normal
+    /// (here assumed to be pointing along +Z if the polygon is 2D) and no metadata.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// // A square with a square hole:
+    /// let outer = vec![
+    ///     vec![0.0, 0.0],
+    ///     vec![10.0, 0.0],
+    ///     vec![10.0, 10.0],
+    ///     vec![0.0, 10.0],
+    /// ];
+    /// let hole = vec![
+    ///     vec![3.0, 3.0],
+    ///     vec![7.0, 3.0],
+    ///     vec![7.0, 7.0],
+    ///     vec![3.0, 7.0],
+    /// ];
+    ///
+    /// // In earclip’s expected format, the first polygon is the outer loop,
+    /// // and any subsequent ones are holes:
+    /// let polys = vec![outer, hole];
+    ///
+    /// let csg = CSG::<()>::from_complex_polygons(&polys);
+    /// // Now csg.polygons contains the triangulated version.
+    /// ```
+    pub fn from_complex_polygons(polys: &[Vec<Vec<f64>>]) -> CSG<S> {
+        // Flatten the input. (The earclip::flatten function returns a tuple:
+        // (flat_vertices, hole_indices, dim). For example, if the input is 2D,
+        // dim will be 2.)
+        let (vertices, hole_indices, dim) = flatten(polys);
+        // Tessellate the flattened polygon using earcut.
+        let indices: Vec<usize> = earcut(&vertices, &hole_indices, dim);
+        
+        let mut new_polygons = Vec::new();
+        // Each consecutive triple in the output indices defines a triangle.
+        for tri in indices.chunks_exact(3) {
+            let mut tri_vertices = Vec::with_capacity(3);
+            for &i in tri {
+                let start = i * dim;
+                // Build a 3D point.
+                let p = if dim == 2 {
+                    // If 2D, assume z = 0.
+                    Point3::new(vertices[start], vertices[start + 1], 0.0)
+                } else {
+                    // If 3D (or higher) use the first three coordinates.
+                    Point3::new(vertices[start], vertices[start + 1], vertices[start + 2])
+                };
+                // Here we simply assign a default normal pointing up.
+                // (In a more advanced implementation you might compute
+                // the true face normal from the triangle vertices.)
+                let normal = Vector3::new(0.0, 0.0, 1.0);
+                tri_vertices.push(Vertex::new(p, normal));
+            }
+            // Create a polygon (triangle) with no metadata.
+            new_polygons.push(Polygon::new(tri_vertices, None));
+        }
+        CSG::from_polygons(new_polygons)
     }
 
     /// CSG union: this ∪ other

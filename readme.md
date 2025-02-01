@@ -382,7 +382,7 @@ Below is a quick overview of the **2D‐related methods** you’ll find on `Poly
 
 These two functions let you cleanly convert between a 3D polygon and a pure 2D representation whenever you need to do 2D manipulations.  
 
-> **Tip**: If your polygons truly are already in the global XY plane (i.e., `z ≈ 0`), you can alternatively use `Polygon::to_xy()` and `Polygon::from_xy(...)`. Those skip the plane‐based transform and simply store or read `(x, y, 0.0)` directly.
+> **Tip**: If your polygons truly are already in the global XY plane (i.e., `z ≈ 0`), or you would like to flatten them without adjusting for their reference plane, you can use `Polygon::to_xy()` and `Polygon::from_xy(...)`. Those skip the plane‐based transform and simply store or read `(x, y, 0.0)` directly.
 
 ### 2D Boolean Operations
 
