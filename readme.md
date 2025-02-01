@@ -1,6 +1,6 @@
 # csgrs
 
-A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** enables you to construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to manipulate, interrogate, and simulate those shapes without leaving Rust.
+A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** enables you to construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to transform, interrogate, and simulate those shapes without leaving Rust.
 
 This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`earclip`](https://crates.io/crates/earclip) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust mesh and line processing, be reasonably performant on a wide variety of targets, and provide an extensible, type-safe API.
 
@@ -31,8 +31,6 @@ let union_result = cube.union(&sphere);
 // Write the result as an ASCII STL:
 let stl_text = union_result.to_stl_ascii("cube_plus_sphere");
 std::fs::write("cube_sphere_union.stl", stl_text).unwrap();
-
-// For more advanced usage (e.g., rapier integration, 2D offsetting, etc.), see below.
 ```
 
 ### CSG and Polygon Structures
@@ -53,8 +51,6 @@ Helper constructors for 2D shapes in the XY plane:
 - `CSG::circle(Some((radius, segments)))`
 - `CSG::polygon_2d(&[[x1,y1],[x2,y2],...])`
 
-Examples:
-
 ```rust
 let square = MyCSG::square(None);          // 1×1 at origin
 let centered_rect = MyCSG::square(Some(([2.0, 4.0], true)));
@@ -70,8 +66,6 @@ Similarly, you can create standard 3D primitives:
 - `CSG::sphere(Some((&center, radius, slices, stacks)))`
 - `CSG::cylinder(Some((&start, &end, radius, slices)))`
 - `CSG::polyhedron(points, faces)`
-
-Examples:
 
 ```rust
 // Unit cube at origin
