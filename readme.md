@@ -32,14 +32,14 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 - **BSP-based 3D**: fast 3D CSG boolean operations (union, difference, intersection) built around splitting polygons with a plane.
 - **3D shapes**: cubes, spheres, cylinders, polyhedrons, and more.
 - **3D Transformations**: translate, rotate, scale, mirror, inverse, transform, convex hull, minkowski sum, flatten, cut, etc.
-- **Polygon based 2D**: fast 2D boolean operations and offsetting via [cavalier contours](https://crates.io/crates/cavalier_contours).
+- **Polygon based 2D**: fast 2D boolean operations and offsetting via [`cavalier contours`](https://crates.io/crates/cavalier_contours).
 - **2D shapes**: square, circle, polygon, and more.
 - **2D Transformations**: translate, rotate, scale, mirror, inverse, transform, convex hull, minkowski sum, offset, flatten, reorient, etc.
 - **Extrusions**: linear extrude, rotate-extrude (revolve), extrude-between polygons with same number of vertices and winding.
-- **Triangulation**: via [earclip](https://crates.io/crates/earclip), subdivide, renormalize, etc.
+- **Triangulation**: via [`earclip`](https://crates.io/crates/earclip), subdivide, renormalize, etc.
 - **Text**: from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext).
 - **Measurement**: provide an origin and vector and receive all intersections with distance from origin and location.
-- **Physics**: interoperability with [Parry](https://crates.io/crates/parry3d) and [Rapier](https://crates.io/crates/rapier3d) for physics, collisions, bounding volumes, etc.
+- **Physics**: interoperability with [`Parry`](https://crates.io/crates/parry3d) and [`Rapier`](https://crates.io/crates/rapier3d) for physics, collisions, bounding volumes, etc.
 - **Import/export**: from/to ASCII or binary STL, and DXF
 - **Generic per-polygon metadata**: to store color, layer IDs, texture handles, simulation values, or any custom data.
 - **Soon**: concurrency with the `"parallel"` feature (uses `rayon`).
@@ -432,18 +432,18 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 - overwrite polygon metadata correctly in difference, intersection, etc
 - fix normals on rotate_extrude
 - fix normal on bottom face of extrude
-  - square circle test from 0.6.0
+  - cube sphere test from 0.6.0
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
-- remaining 2d functions to finalize: signed area, is_ccw, line/line intersection, translate, rotate, scale, transform, mirror, inverse, convex hull, minkowski sum
+- remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
   - tests
+- lazy transformations
 - vector font for machining
   - https://github.com/kamalmostafa/hershey-fonts
     - https://github.com/kicad-rs/hershey/blob/main/src/lib.rs
   - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - https://crates.io/crates/contour_tracing
-- evaluate https://github.com/gfx-rs/genmesh
 - https://github.com/PsichiX/density-mesh
 - implement 2d offsetting with these for testing against cavalier_contours
   - https://github.com/Akirami/polygon-offsetting
@@ -453,7 +453,6 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 - extruding a line does not currently result in a 2D shape as it has fewer than three points
 - svg import/export
 - fragments (circle, sphere, regularize with rotate_extrude)
-- extend polygon to handle multiple loops, outside and holes, using earclip on from_polygons, plane splitting
 - fill
 - 32bit / 64bit feature
 - parallelize clip_to and invert with rayon and par_iter

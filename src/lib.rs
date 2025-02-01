@@ -577,6 +577,141 @@ impl<S: Clone> Polygon<S> {
         }
         polygons_out
     }
+    
+    /// Returns a new Polygon translated by t.
+    pub fn translate(&self, t: Vector3<f64>) -> Self {
+        let new_vertices = self.vertices.iter()
+            .map(|v| Vertex::new(v.pos + t, v.normal))
+            .collect();
+        let new_plane = Plane {
+            normal: self.plane.normal,
+            w: self.plane.w + self.plane.normal.dot(&t),
+        };
+        Self {
+            vertices: new_vertices,
+            metadata: self.metadata.clone(),
+            plane: new_plane,
+        }
+    }
+
+    /// Applies the affine transform given by mat to all vertices and normals.
+    pub fn transform(&self, mat: &Matrix4<f64>) -> Self {
+        let new_vertices: Vec<Vertex> = self.vertices.iter()
+            .map(|v| {
+                // Transform the position:
+                let p_hom = v.pos.to_homogeneous();
+                let new_hom = mat * p_hom;
+                let new_pos = Point3::from_homogeneous(new_hom).unwrap();
+                // Transform the normal using the inverse–transpose:
+                let mat_inv_trans = mat.try_inverse().unwrap().transpose();
+                // Treat the normal as a direction (w=0)
+                let normal_hom = v.normal.push(0.0);
+                let new_normal = (mat_inv_trans * normal_hom).xyz().normalize();
+                Vertex::new(new_pos, new_normal)
+            })
+            .collect();
+        // Recompute the plane from the first three vertices.
+        let new_plane = if new_vertices.len() >= 3 {
+            Plane::from_points(&new_vertices[0].pos, &new_vertices[1].pos, &new_vertices[2].pos)
+        } else {
+            self.plane.clone()
+        };
+        Self {
+            vertices: new_vertices,
+            metadata: self.metadata.clone(),
+            plane: new_plane,
+        }
+    }
+
+    /// Rotates the polygon by a given angle (radians) about the given axis.
+    /// If a center is provided the rotation is performed about that point;
+    /// otherwise rotation is about the origin.
+    pub fn rotate(&self, axis: Vector3<f64>, angle: f64, center: Option<Point3<f64>>) -> Self {
+        let rotation = Rotation3::from_axis_angle(&Unit::new_normalize(axis), angle);
+        let t = if let Some(c) = center {
+            // Translate so that c goes to the origin, rotate, then translate back.
+            let trans_to_origin = Translation3::from(-c.coords);
+            let trans_back = Translation3::from(c.coords);
+            trans_back.to_homogeneous() * rotation.to_homogeneous() * trans_to_origin.to_homogeneous()
+        } else {
+            rotation.to_homogeneous()
+        };
+        self.transform(&t)
+    }
+
+    /// Uniformly scales the polygon by the given factor.
+    pub fn scale(&self, factor: f64) -> Self {
+        let scaling = Matrix4::new_nonuniform_scaling(&Vector3::new(factor, factor, factor));
+        self.transform(&scaling)
+    }
+
+    /// Mirrors the polygon about the given axis (X, Y, or Z).
+    pub fn mirror(&self, axis: Axis) -> Self {
+        let (sx, sy, sz) = match axis {
+            Axis::X => (-1.0, 1.0, 1.0),
+            Axis::Y => (1.0, -1.0, 1.0),
+            Axis::Z => (1.0, 1.0, -1.0),
+        };
+        let mirror_mat = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
+        self.transform(&mirror_mat)
+    }
+
+    /// Returns a new Polygon with its orientation reversed (i.e. flipped).
+    /// (This is equivalent to “inverse” in CSG.)
+    pub fn inverse(&self) -> Self {
+        let mut new_poly = self.clone();
+        new_poly.flip();
+        new_poly
+    }
+
+    /// Returns a new Polygon that is the convex hull of the current polygon’s vertices.
+    /// (It projects the vertices to 2D in the polygon’s plane, computes the convex hull, and lifts back.)
+    pub fn convex_hull(&self) -> Self {
+        let (to_xy, from_xy) = self.plane.to_xy_transform();
+        let pts_2d: Vec<Vec<f64>> = self.vertices.iter().map(|v| {
+            let p2 = to_xy * v.pos.to_homogeneous();
+            vec![p2[0], p2[1]]
+        }).collect();
+        let chull = ConvexHullWrapper::try_new(&pts_2d, None)
+            .expect("convex hull failed");
+        let (hull_verts, _hull_indices) = chull.vertices_indices();
+        let new_vertices = hull_verts.iter().map(|p| {
+            // Make sure to tell Rust the type explicitly so that the multiplication produces
+            // a Vector4<f64>.
+            let p4: nalgebra::Vector4<f64> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
+            let p3 = from_xy * p4;
+            Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
+        }).collect();
+        Polygon::new(new_vertices, self.metadata.clone())
+    }
+
+    /// Returns the Minkowski sum of this polygon and another.
+    /// (For each vertex in self and other, we add their coordinates, and then take the convex hull.)
+    pub fn minkowski_sum(&self, other: &Self) -> Self {
+        let mut sum_pts = Vec::new();
+        for v in &self.vertices {
+            for w in &other.vertices {
+                sum_pts.push(Point3::from(v.pos.coords + w.pos.coords));
+            }
+        }
+        let (to_xy, from_xy) = self.plane.to_xy_transform();
+        let pts_2d: Vec<Vec<f64>> = sum_pts.iter().map(|p| {
+            let p_hom = p.to_homogeneous();
+            let p2 = to_xy * p_hom;
+            vec![p2[0], p2[1]]
+        }).collect();
+        let chull = ConvexHullWrapper::try_new(&pts_2d, None)
+            .expect("Minkowski sum convex hull failed");
+        let (hull_verts, _hull_indices) = chull.vertices_indices();
+        let new_vertices = hull_verts.iter().map(|p| {
+            // Make sure to tell Rust the type explicitly so that the multiplication produces
+            // a Vector4<f64>.
+            let p4: nalgebra::Vector4<f64> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
+            let p3 = from_xy * p4;
+            Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
+        }).collect();
+        Polygon::new(new_vertices, self.metadata.clone())
+    }
 
     /// Returns a reference to the metadata, if any.
     pub fn metadata(&self) -> Option<&S> {
