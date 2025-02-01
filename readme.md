@@ -409,8 +409,8 @@ The helper `pline_area` function (shown in the code) computes the signed area of
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
 
 ## Todo maybe
-- implement arc support in 2d using cavalier_contours, interpolate/tessellate in from_polygons
-- reconstruct arcs from polylines using 
+- implement constant radius arc support in 2d using cavalier_contours, interpolate/tessellate in from_polygons
+- reconstruct arcs from polylines using ?
 - extend Polygon to allow edges to store arc parameters and bulge like cavalier_contours and update split_polygon to handle line/arc intersections.
 
 ---
