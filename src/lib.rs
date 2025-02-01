@@ -4,7 +4,7 @@
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
-use nalgebra::{Matrix4, Vector3, Point3, Translation3, Rotation3, Isometry3, Unit, Quaternion};
+use nalgebra::{Point2, Point3, Vector3, Translation3, Rotation3, Isometry3, Matrix4, Unit, Quaternion};
 use chull::ConvexHullWrapper;
 use parry3d_f64::{
     bounding_volume::Aabb,
@@ -118,6 +118,230 @@ fn union_all_2d<S: Clone>(polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
         result = new_result;
     }
     result
+}
+
+/// Helper to normalize angles into (-π, π].
+#[inline]
+fn normalize_angle(mut a: f64) -> f64 {
+    while a <= -PI {
+        a += 2.0 * PI;
+    }
+    while a > PI {
+        a -= 2.0 * PI;
+    }
+    a
+}
+
+/// Compute an initial guess of the circle center through three points p1, p2, p3
+/// (this is used purely as an initial guess).
+///
+/// This is a direct port of your snippet’s `centre(p1, p2, p3)`, but
+/// returning a `Point2<f64>` from nalgebra.
+fn naive_circle_center(
+    p1: &Point2<f64>,
+    p2: &Point2<f64>,
+    p3: &Point2<f64>,
+) -> Point2<f64> {
+    // Coordinates
+    let (x1, y1) = (p1.x, p1.y);
+    let (x2, y2) = (p2.x, p2.y);
+    let (x3, y3) = (p3.x, p3.y);
+
+    let x12 = x1 - x2;
+    let x13 = x1 - x3;
+    let y12 = y1 - y2;
+    let y13 = y1 - y3;
+
+    let y31 = y3 - y1;
+    let y21 = y2 - y1;
+    let x31 = x3 - x1;
+    let x21 = x2 - x1;
+
+    let sx13 = x1.powi(2) - x3.powi(2);
+    let sy13 = y1.powi(2) - y3.powi(2);
+    let sx21 = x2.powi(2) - x1.powi(2);
+    let sy21 = y2.powi(2) - y1.powi(2);
+
+    let xden = 2.0 * (x31 * y12 - x21 * y13);
+    let yden = 2.0 * (y31 * x12 - y21 * x13);
+
+    if xden.abs() < 1e-14 || yden.abs() < 1e-14 {
+        // fallback => just average the points
+        let cx = (x1 + x2 + x3) / 3.0;
+        let cy = (y1 + y2 + y3) / 3.0;
+        return Point2::new(cx, cy);
+    }
+
+    let g = (sx13 * y12 + sy13 * y12 + sx21 * y13 + sy21 * y13) / xden;
+    let f = (sx13 * x12 + sy13 * x12 + sx21 * x13 + sy21 * x13) / yden;
+
+    // Return the center as a Point2
+    Point2::new(-g, -f)
+}
+
+/// Fit a circle to the points `[pt_c, intermediates..., pt_n]` by adjusting an offset `d` from
+/// the midpoint. This reproduces your “arcfinder” approach in a version that uses nalgebra’s
+/// `Point2<f64>`.
+///
+/// # Returns
+///
+/// `(center, radius, cw, rms)`:
+/// - `center`: fitted circle center (Point2),
+/// - `radius`: circle radius,
+/// - `cw`: `true` if the arc is clockwise, `false` if ccw,
+/// - `rms`: root‐mean‐square error of the fit.
+pub fn fit_circle_arcfinder(
+    pt_c: &Point2<f64>,
+    pt_n: &Point2<f64>,
+    intermediates: &[Point2<f64>]
+) -> (Point2<f64>, f64, bool, f64)
+{
+    // 1) Distance between pt_c and pt_n, plus midpoint
+    let k = (pt_c - pt_n).norm();
+    if k < 1e-14 {
+        // Degenerate case => no unique circle
+        let center = *pt_c;
+        return (center, 0.0, false, 9999.0);
+    }
+    let mid = Point2::new(
+        0.5 * (pt_c.x + pt_n.x),
+        0.5 * (pt_c.y + pt_n.y),
+    );
+
+    // 2) Pre‐compute the direction used for the offset:
+    //    This is the 2D +90 rotation of (pt_n - pt_c).
+    //    i.e. rotate( dx, dy ) => (dy, -dx ) or similar.
+    let vec_cn = pt_n - pt_c;  // a Vector2
+    let rx = vec_cn.y;   // +90 deg
+    let ry = -vec_cn.x;  // ...
+    
+    // collect all points in one array for the mismatch
+    let mut all_points = Vec::with_capacity(intermediates.len() + 2);
+    all_points.push(*pt_c);
+    all_points.extend_from_slice(intermediates);
+    all_points.push(*pt_n);
+
+    // The mismatch function g(d)
+    let g = |d: f64| -> f64 {
+        let r_desired = (d*d + 0.25 * k*k).sqrt();
+        // circle center
+        let cx = mid.x + (d/k)*rx;
+        let cy = mid.y + (d/k)*ry;
+        let mut sum_sq = 0.0;
+        for p in &all_points {
+            let dx = p.x - cx;
+            let dy = p.y - cy;
+            let dist = (dx*dx + dy*dy).sqrt();
+            let diff = dist - r_desired;
+            sum_sq += diff*diff;
+        }
+        sum_sq
+    };
+
+    // derivative dg(d) => we’ll do a small finite difference
+    let dg = |d: f64| -> f64 {
+        let h = 1e-6;
+        let g_p = g(d + h);
+        let g_m = g(d - h);
+        (g_p - g_m) / (2.0 * h)
+    };
+
+    // 3) choose an initial guess for d
+    let mut d_est = 0.0;  // fallback
+    if !intermediates.is_empty() {
+        // pick p3 ~ the middle of intermediates
+        let mididx = intermediates.len()/2;
+        let p3 = intermediates[mididx];
+        let c_est = naive_circle_center(pt_c, pt_n, &p3);
+        // project c_est - mid onto (rx, ry)/k => that is d
+        let dx = c_est.x - mid.x;
+        let dy = c_est.y - mid.y;
+        let dot = dx*(rx/k) + dy*(ry/k);
+        d_est = dot;
+    }
+
+    // 4) small secant iteration for ~10 steps
+    let mut d0 = d_est - 0.1*k;
+    let mut d1 = d_est;
+    let mut dg0 = dg(d0);
+    let mut dg1 = dg(d1);
+
+    for _ in 0..10 {
+        if (dg1 - dg0).abs() < 1e-14 {
+            break;
+        }
+        let temp = d1;
+        d1 = d1 - dg1*(d1 - d0)/(dg1 - dg0);
+        d0 = temp;
+        dg0 = dg1;
+        dg1 = dg(d1);
+    }
+
+    let d_opt = d1;
+    let cx = mid.x + (d_opt/k)*rx;
+    let cy = mid.y + (d_opt/k)*ry;
+    let center = Point2::new(cx, cy);
+    let radius_opt = (d_opt*d_opt + 0.25*k*k).sqrt();
+
+    // sum of squares at d_opt
+    let sum_sq = g(d_opt);
+    let n_pts = all_points.len() as f64;
+    let rms = (sum_sq / n_pts).sqrt();
+
+    // 5) determine cw vs ccw
+    let dx0 = pt_c.x - cx;
+    let dy0 = pt_c.y - cy;
+    let dx1 = pt_n.x - cx;
+    let dy1 = pt_n.y - cy;
+    let angle0 = dy0.atan2(dx0);
+    let angle1 = dy1.atan2(dx1);
+    let total_sweep = normalize_angle(angle1 - angle0);
+    let cw = total_sweep < 0.0;
+
+    (center, radius_opt, cw, rms)
+}
+
+/// Helper to produce the "best fit arc" for the points from `pt_c` through `pt_n`, plus
+/// any in `intermediates`. This is basically your old “best_arc” logic but now returning
+/// `None` if it fails or `Some((cw, radius, center, rms))` if success.
+fn best_arc_fit(
+    pt_c: Point2<f64>,
+    pt_n: Point2<f64>,
+    intermediates: &[Point2<f64>],
+    rms_limit: f64,
+    angle_limit_degs: f64,
+    _offset_limit: f64
+) -> Option<(bool, f64, Point2<f64>, f64)>
+{
+    // 1) Call your circle-fitting routine:
+    let (center, radius, cw, rms) = fit_circle_arcfinder(&pt_c, &pt_n, intermediates);
+
+    // 2) Check RMS error vs. limit
+    if rms > rms_limit {
+        return None;
+    }
+    // 3) measure the total arc sweep
+    //    We'll compute angle0, angle1 from the center
+    //    v0 = pt_c - center, v1 = pt_n - center
+    let v0 = pt_c - center;
+    let v1 = pt_n - center;
+    let angle0 = v0.y.atan2(v0.x);
+    let angle1 = v1.y.atan2(v1.x);
+    let sweep = normalize_angle(angle1 - angle0).abs();
+    let sweep_degs = sweep.to_degrees();
+    if sweep_degs > angle_limit_degs {
+        return None;
+    }
+    // 4) Possibly check some "offset" or chord–offset constraints
+    // e.g. if your logic says “if radius < ??? or if something with offset_limit”
+    if radius < 1e-9 {
+        return None;
+    }
+    // offset constraint is left to your specific arcs logic:
+    // if something > offset_limit {...}
+    
+    // If all is well:
+    Some((cw, radius, center, rms))
 }
 
 /// A vertex of a polygon, holding position and normal.
@@ -709,6 +933,121 @@ impl<S: Clone> Polygon<S> {
             Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
         }).collect();
         Polygon::new(new_vertices, self.metadata.clone())
+    }
+    
+    /// Attempt to reconstruct arcs of constant radius in the 2D projection of this polygon,
+    /// storing them as bulge arcs in the returned `Polyline<f64>`.
+    ///
+    /// # Parameters
+    /// - `min_match`: minimal number of consecutive edges needed to consider forming an arc
+    /// - `rms_limit`: max RMS fitting error (like `arcfinder`’s `options.rms_limit`)
+    /// - `angle_limit_degs`: max total arc sweep in degrees 
+    /// - `offset_limit`: additional limit used by `arcfinder` for chord offsets, etc.
+    ///
+    /// # Returns
+    /// A single `Polyline<f64>` with arcs (encoded via bulge) or lines if no arcs found.
+    ///
+    pub fn reconstruct_arcs(
+        &self,
+        min_match: usize,
+        rms_limit: f64,
+        angle_limit_degs: f64,
+        offset_limit: f64
+    ) -> Polyline<f64>
+    {
+        // 1) Flatten or project to 2D. Suppose `to_2d()` returns a Polyline<f64> with .x, .y, .bulge:
+        let poly_2d = self.to_2d(); 
+        // If too few vertices, or degenerate
+        if poly_2d.vertex_count() < 2 {
+            return poly_2d;
+        }
+    
+        // 2) Collect all points in a Vec<Point2<f64>>
+        //    If polygon is closed, the polyline might be closed. We can handle it accordingly:
+        let mut all_pts: Vec<Point2<f64>> = Vec::with_capacity(poly_2d.vertex_count());
+        for i in 0..poly_2d.vertex_count() {
+            let v = poly_2d.at(i);
+            all_pts.push(Point2::new(v.x, v.y));
+        }
+    
+        // 3) We'll build a new output polyline with arcs. 
+        //    For demonstration, let's replicate an approach like your code snippet:
+        let mut result = Polyline::with_capacity(all_pts.len(), poly_2d.is_closed());
+        if !all_pts.is_empty() {
+            // add the first point as a line start
+            let pt_c = all_pts[0];
+            result.add(pt_c.x, pt_c.y, 0.0);
+        }
+    
+        let mut i = 0;
+        let n = all_pts.len();
+    
+        while i < n-1 {
+            // Attempt to form an arc from i..some j≥i+min_match
+            let start_pt = all_pts[i];
+            let mut found_arc = false;
+            let mut best_j = i+1;
+            let mut best_arc_data: Option<(bool, f64, Point2<f64>)> = None;
+    
+            let mut j = i + min_match;
+            while j < n {
+                let pt_j = all_pts[j];
+                let midslice = &all_pts[i+1 .. j];
+                if let Some((cw, r, ctr, _rms)) = best_arc_fit(
+                    start_pt, pt_j, midslice,
+                    rms_limit, angle_limit_degs, offset_limit
+                ) {
+                    found_arc = true;
+                    best_arc_data = Some((cw, r, ctr));
+                    best_j = j;
+                    j += 1;  // try extending more
+                } else {
+                    break;
+                }
+            }
+    
+            if found_arc {
+                // we have an arc from i..best_j
+                let end_pt = all_pts[best_j];
+                let (cw, _r, c) = best_arc_data.unwrap();
+    
+                // compute angle from center => to find bulge
+                let v0 = start_pt - c;  // v0 is a Vector2<f64>
+                let v1 = end_pt - c;    // v1 is a Vector2<f64>
+                let ang0 = v0.y.atan2(v0.x);
+                let ang1 = v1.y.atan2(v1.x);
+                let total_sweep = normalize_angle(ang1 - ang0);
+                let arc_sweep = if cw { -total_sweep.abs() } else { total_sweep.abs() };
+                // bulge = tan(sweep/4)
+                let bulge = (arc_sweep * 0.25).tan();
+    
+                // set bulge on the last vertex in `result` (the arc start):
+                let last_idx = result.vertex_count()-1;
+                let mut last_v = result[last_idx];
+                last_v.bulge = bulge;
+                result.set_vertex(last_idx, last_v);
+    
+                // then add end vertex with bulge=0
+                result.add(end_pt.x, end_pt.y, 0.0);
+    
+                i = best_j;
+            } else {
+                // no arc => just line from i->i+1
+                let next_pt = all_pts[i+1];
+                // set bulge=0 on the last output vertex
+                let last_idx = result.vertex_count()-1;
+                let mut lv = result[last_idx];
+                lv.bulge = 0.0;
+                result.set_vertex(last_idx, lv);
+    
+                result.add(next_pt.x, next_pt.y, 0.0);
+    
+                i += 1;
+            }
+            
+        }
+    
+        result
     }
 
     /// Returns a reference to the metadata, if any.

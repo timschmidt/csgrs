@@ -392,7 +392,7 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
 - remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
   - tests
-- lazy transformations
+- lazy transformations?
 - vector font for machining
   - https://github.com/kamalmostafa/hershey-fonts
     - https://github.com/kicad-rs/hershey/blob/main/src/lib.rs
@@ -423,7 +423,6 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 
 ## Todo maybe
 - implement constant radius arc support in 2d using cavalier_contours, interpolate/tessellate in from_polygons
-- reconstruct arcs from polylines using ?
 - extend Polygon to allow edges to store arc parameters and bulge like cavalier_contours and update split_polygon to handle line/arc intersections.
 
 ---
@@ -457,4 +456,6 @@ This library initially based on a translation of **CSG.js** © 2011 Evan Wallace
 
 ---
 
-**Have fun building geometry in Rust!** If you find issues, please file an [issue](https://github.com/timschmidt/csgrs/issues) or submit a pull request. Feedback and contributions are welcome!
+If you find issues, please file an [issue](https://github.com/timschmidt/csgrs/issues) or submit a pull request. Feedback and contributions are welcome!
+
+**Have fun building geometry in Rust!**
