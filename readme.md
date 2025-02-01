@@ -297,9 +297,7 @@ println!("Center of Mass: {:?}", com);
 println!("Inertia local frame: {:?}", inertia_frame);
 ```
 
----
-
-## Manifold Check
+### Manifold Check
 
 `csg.is_manifold()` triangulates the CSG, builds a HashMap of all edges (pairs of vertices), and checks that each is used exactly twice. Returns `true` if manifold, `false` if not.
 
@@ -314,11 +312,11 @@ if (csg_obj.is_manifold()){
 ---
 ## 2D Subsystem and Polygon‐Level 2D Operations
 
-Although **CSG** typically focuses on three‐dimensional Boolean operations, this library also provides a robust **2D subsystem** built on top of [cavalier_contours](https://crates.io/crates/cavalier_contours). Each `Polygon<S>` in 3D can be **projected** into 2D (its own local XY plane) for 2D boolean operations such as **union**, **difference**, **intersection**, and **xor**. These are especially handy if you’re primarily dealing with planar shapes or want to perform profile manipulations before (or after) extruding.
+Although **CSG** typically focuses on three‐dimensional Boolean operations, this library also provides a robust **2D subsystem** built on top of [cavalier_contours](https://crates.io/crates/cavalier_contours). Each `Polygon<S>` in 3D can be **projected** into 2D (its own local XY plane) for 2D boolean operations such as **union**, **difference**, **intersection**, and **xor**. These are especially handy if you’re offsetting shapes, working with complex polygons, or just want 2D output.
 
 Below is a quick overview of the **2D‐related methods** you’ll find on `Polygon<S>`:
 
-### `Polygon::to_2d()` and `Polygon::from_2d(...)`
+### Polygon::to_2d() and Polygon::from_2d(...)
 - **`to_2d()`**  
   Projects the polygon from its 3D plane into a 2D [`Polyline<f64>`](https://docs.rs/cavalier_contours/latest/cavalier_contours/polyline/struct.Polyline.html).  
   Internally:
