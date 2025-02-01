@@ -6,8 +6,6 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 
 ## Installation
 
-Add csgrs to your rust project:
-
 ```shell
 cargo add csgrs
 ```
@@ -169,6 +167,9 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 Use cases include storing color, ID, or layer info.
 
 ```rust
+use nalgebra::{Point3, Vector3};
+use csgrs::{Polygon, Vertex, Plane};
+
 #[derive(Clone)]
 struct MyMetadata {
     color: (u8,u8,u8),
@@ -178,9 +179,6 @@ struct MyMetadata {
 type MyCSG = CSG<MyMetadata>;
 
 // For a single polygon:
-use nalgebra::{Point3, Vector3};
-use csgrs::{Polygon, Vertex, Plane};
-
 let mut poly = Polygon::new(
     vec![
         Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
@@ -236,7 +234,7 @@ let dxf_data = std::fs::read("some_file.dxf")?;
 let csg_dxf = CSG::from_dxf(&dxf_data)?;
 ```
 
-### 2D Text
+### TrueType Text
 
 You can generate 2D text geometry in the XY plane from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext):
 
@@ -353,6 +351,21 @@ let p2 = polygon_a.intersection(&polygon_b);   // 2D intersection
 let p3 = polygon_a.difference(&polygon_b);     // 2D difference
 let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 ```
+
+### Transformations
+
+- `translate(v: Vector3<f64>)`
+- `rotate(axis: Vector3<f64>, angle: f64, center: Option<Point3<f64>>)`
+- `scale(factor: f64)`
+- `mirror(Axis::X | Axis::Y | Axis::Z)`
+- `transform(&Matrix4<f64>)` for arbitrary affine transforms.
+- `inverse()`
+- `convex_hull()`
+- `minkowski_sum(other: Polygon<S>)`
+
+### Misc functions
+
+- `subdivide_triangles()`
 
 ### Signed Area (Shoelace)
 The helper `pline_area` function (shown in the code) computes the signed area of a closed `Polyline<f64>`:
