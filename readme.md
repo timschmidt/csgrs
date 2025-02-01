@@ -353,11 +353,12 @@ println!("Inertia local frame: {:?}", inertia_frame);
 
 ## Manifold Check
 
-`csg.is_manifold()` performs a quick check by writing a temporary binary STL in memory, reading it back into an indexed mesh, and validating that mesh. Returns `Ok(true)` if manifold, `Ok(false)` if not, or an `Err` on I/O issues.
+`csg.is_manifold()` triangulates the CSG, builds a HashMap of all edges (pairs of vertices), and checks that each is used exactly twice. Returns `true` if manifold, `false` if not.
 
 ```rust
-match csg_obj.is_manifold()? {
+if (csg_obj.is_manifold()){
     true => println!("CSG is manifold!"),
+} else {
     false => println!("Not manifold."),
 }
 ```
