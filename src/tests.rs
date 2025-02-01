@@ -1866,3 +1866,24 @@ fn test_flatten_and_union_debug() {
     assert!(!flattened.polygons.is_empty(), "Flattened square should not be empty");
     assert!(flattened.polygons[0].vertices.len() >= 3, "Should form at least a triangle");
 }
+
+#[test]
+fn test_extrude_faces_on_hull_only() {
+    let extruded_cube_geo = CSG::<()>::from_complex_polygons(&vec![vec![
+        vec![0., 0.],
+        vec![0., 1.],
+        vec![1., 1.],
+        vec![1., 0.],
+    ]])
+    .extrude(1.);
+
+    let triangles = extruded_cube_geo
+        .to_polygons()
+        .iter()
+        .flat_map(|poly| poly.triangulate());
+
+    assert_eq!(
+        triangles.count(),
+        6 /* sides of a cube */ * 2 /* triangles per side */
+    );
+}
