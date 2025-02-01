@@ -17,6 +17,7 @@ use stl_io;
 use std::io::Cursor;
 use std::f64::consts::PI;
 use std::error::Error;
+use std::collections::HashMap;
 use cavalier_contours::polyline::{
     Polyline, PlineSource, PlineCreation, PlineSourceMut, BooleanOp
 };
@@ -61,17 +62,14 @@ fn build_orthonormal_basis(n: nalgebra::Vector3<f64>) -> (nalgebra::Vector3<f64>
 
     // Pick a vector that is not parallel to `n`. For instance, pick the axis
     // which has the smallest absolute component in `n`, and cross from there.
-    let mut other = nalgebra::Vector3::new(0.0, 0.0, 0.0);
-
-    // We choose the axis with the smallest absolute value in n,
-    // because crossing with that is least likely to cause numeric issues.
-    if n.x.abs() < n.y.abs() && n.x.abs() < n.z.abs() {
-        other.x = 1.0;
+    // Because crossing with that is least likely to cause numeric issues.
+    let other = if n.x.abs() < n.y.abs() && n.x.abs() < n.z.abs() {
+        Vector3::x()
     } else if n.y.abs() < n.z.abs() {
-        other.y = 1.0;
+        Vector3::y()
     } else {
-        other.z = 1.0;
-    }
+        Vector3::z()
+    };
 
     // v = n × other
     let v = n.cross(&other).normalize();
@@ -1157,9 +1155,6 @@ impl<S: Clone> CSG<S> {
     /// - `points`: a sequence of 2D points (e.g. `[[0.0,0.0], [1.0,0.0], [0.5,1.0]]`)
     ///   describing the polygon boundary in order.
     ///
-    /// **Note:** This simple version ignores 'paths' and holes. For more complex
-    /// polygons, we'll have to handle multiple paths, winding order, holes, etc.
-    ///
     /// # Example
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     /// let poly2d = CSG::polygon_2d(&pts);
@@ -1489,6 +1484,7 @@ impl<S: Clone> CSG<S> {
         let (verts, indices) = hull.vertices_indices();
 
         // Reconstruct polygons as triangles
+        // todo: replace with filter / iterator
         let mut polygons = Vec::new();
         for tri in indices.chunks(3) {
             let v0 = &verts[tri[0]];
@@ -1519,14 +1515,16 @@ impl<S: Clone> CSG<S> {
             .iter()
             .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
             .collect();
+            
+        if verts_a.is_empty() || verts_b.is_empty() {
+            // Empty input to minkowski sum
+        }
 
         // For Minkowski, add every point in A to every point in B
-        let mut sum_points = Vec::with_capacity(verts_a.len() * verts_b.len());
-        for a in &verts_a {
-            for b in &verts_b {
-                sum_points.push(vec![a.x + b.x, a.y + b.y, a.z + b.z]);
-            }
-        }
+        let sum_points: Vec<_> = verts_a.iter()
+            .flat_map(|a| verts_b.iter().map(move |b| a + b.coords))
+            .map(|v| vec![v.x, v.y, v.z])
+            .collect();
 
         // Compute the hull of these Minkowski-sum points
         let hull = ConvexHullWrapper::try_new(&sum_points, None)
@@ -2388,30 +2386,67 @@ impl<S: Clone> CSG<S> {
     
     /// Checks if the CSG object is manifold.
     ///
-    /// This function triangulates the CSG polygons, creates a temporary in-memory
-    /// STL file, reads the STL from memory, uses it to populate an `IndexedMesh`,
-    /// validates the mesh for manifoldness, and returns the validation result.
+    /// This function defines a comparison function which takes EPSILON into account
+    /// for f64 coordinates, builds a hashmap key from the string representation of
+    /// the coordinates, triangulates the CSG polygons, gathers each of their three edges,
+    /// counts how many times each edge appears across all triangles,
+    /// and returns true if every edge appears exactly 2 times, else false.
+    ///
+    /// We should also check that all faces have consistent orientation and no neighbors
+    /// have flipped normals.
+    ///
+    /// We should also check for zero-area triangles
     ///
     /// # Returns
     ///
-    /// - `Ok(true)`: If the CSG object is manifold.
-    /// - `Ok(false)`: If the CSG object is not manifold.
-    /// - `Err(...)`: If an error occurs during the process.
-    pub fn is_manifold(&self) -> Result<bool, std::io::Error> {
-        // Since `as_indexed_triangles` is not a public function, we'll serialize to binary STL in-memory
-        // and then deserialize it to obtain the IndexedMesh.
-        let binary_stl = self.to_stl_binary("is_manifold_temp")?;
-        let mut cursor = Cursor::new(binary_stl);
-    
-        // Create an STL reader from the cursor
-        let mut stl_reader = stl_io::create_stl_reader(&mut cursor)?;
-        let indexed_mesh = stl_reader.as_indexed_triangles().unwrap();
-
-        // Step 2: Validate the IndexedMesh for manifoldness
-        match indexed_mesh.validate() {
-            Ok(_) => Ok(true),  // The mesh is manifold
-            Err(_) => Ok(false), // The mesh is not manifold
+    /// - `true`: If the CSG object is manifold.
+    /// - `false`: If the CSG object is not manifold.
+    pub fn is_manifold(&self) -> bool {
+        fn approx_lt(a: &Point3<f64>, b: &Point3<f64>) -> bool {
+            // Compare x
+            if (a.x - b.x).abs() > EPSILON {
+                return a.x < b.x;
+            }
+            // If x is "close", compare y
+            if (a.y - b.y).abs() > EPSILON {
+                return a.y < b.y;
+            }
+            // If y is also close, compare z
+            a.z < b.z
         }
+
+        // Turn a 3D point into a string with limited decimal places
+        fn point_key(p: &Point3<f64>) -> String {
+            // Truncate/round to e.g. 6 decimals
+            format!("{:.6},{:.6},{:.6}", p.x, p.y, p.z)
+        }
+
+        let mut edge_counts: HashMap<(String, String), u32> = HashMap::new();
+
+        for poly in &self.polygons {
+            // Triangulate each polygon
+            for tri in poly.triangulate() {
+                // Each tri is 3 vertices: [v0, v1, v2]
+                // We'll look at edges (0->1, 1->2, 2->0).
+                for &(i0, i1) in &[(0,1), (1,2), (2,0)] {
+                    let p0 = tri[i0].pos;
+                    let p1 = tri[i1].pos;
+                    
+                    // Order them so (p0, p1) and (p1, p0) become the same key
+                    let (a_key, b_key) = if approx_lt(&p0, &p1) {
+                        (point_key(&p0), point_key(&p1))
+                    } else {
+                        (point_key(&p1), point_key(&p0))
+                    };
+
+                    *edge_counts.entry((a_key, b_key)).or_insert(0) += 1;
+                }
+            }
+        }
+
+        // For a perfectly closed manifold surface (with no boundary),
+        // each edge should appear exactly 2 times.
+        edge_counts.values().all(|&count| count == 2)
     }
 
     /// Export to ASCII STL
