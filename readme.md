@@ -388,8 +388,6 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 - extend flatten to work with arbitrary planes
 - overwrite polygon metadata correctly in difference, intersection, etc
 - fix normals on rotate_extrude
-- fix normal on bottom face of extrude
-  - cube sphere test from 0.6.0
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
