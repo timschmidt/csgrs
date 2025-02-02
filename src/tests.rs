@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 use super::*;
-use nalgebra::{Vector3, Point3};
+use nalgebra::{Point3, Vector3};
 
 // --------------------------------------------------------
 //   Helpers
@@ -56,10 +56,7 @@ fn approx_eq(a: f64, b: f64, eps: f64) -> bool {
 
 #[test]
 fn test_vertex_flip() {
-    let mut v = Vertex::new(
-        Point3::new(1.0, 2.0, 3.0),
-        Vector3::new(1.0, 0.0, 0.0),
-    );
+    let mut v = Vertex::new(Point3::new(1.0, 2.0, 3.0), Vector3::new(1.0, 0.0, 0.0));
     v.flip();
     // Position remains the same
     assert_eq!(v.pos, Point3::new(1.0, 2.0, 3.0));
@@ -278,8 +275,8 @@ fn test_plane_split_polygon() {
 
     let mut cf = Vec::new(); // coplanar_front
     let mut cb = Vec::new(); // coplanar_back
-    let mut f = Vec::new();  // front
-    let mut b = Vec::new();  // back
+    let mut f = Vec::new(); // front
+    let mut b = Vec::new(); // back
 
     plane.split_polygon(&poly, &mut cf, &mut cb, &mut f, &mut b);
     // This polygon is spanning across y=0 plane => we expect no coplanar, but front/back polygons.
@@ -338,9 +335,21 @@ fn test_polygon_flip() {
     poly.flip();
     // The vertices should be reversed, and normal flipped
     assert_eq!(poly.vertices.len(), 3);
-    assert!(approx_eq(poly.plane.normal.x, -plane_normal_before.x, EPSILON));
-    assert!(approx_eq(poly.plane.normal.y, -plane_normal_before.y, EPSILON));
-    assert!(approx_eq(poly.plane.normal.z, -plane_normal_before.z, EPSILON));
+    assert!(approx_eq(
+        poly.plane.normal.x,
+        -plane_normal_before.x,
+        EPSILON
+    ));
+    assert!(approx_eq(
+        poly.plane.normal.y,
+        -plane_normal_before.y,
+        EPSILON
+    ));
+    assert!(approx_eq(
+        poly.plane.normal.z,
+        -plane_normal_before.z,
+        EPSILON
+    ));
 }
 
 #[test]
@@ -505,7 +514,11 @@ fn test_node_clip_polygons2() {
         None,
     );
 
-    node.build(&[poly_in_plane.clone(), poly_above.clone(), poly_below.clone()]);
+    node.build(&[
+        poly_in_plane.clone(),
+        poly_above.clone(),
+        poly_below.clone(),
+    ]);
     // Now node has polygons: [poly_in_plane], front child with poly_above, back child with poly_below
 
     // Clip a polygon that crosses from z=-0.5 to z=0.5
@@ -605,7 +618,10 @@ fn test_csg_union() {
 
     let union_csg = cube1.union(&cube2);
     let polys = union_csg.to_polygons();
-    assert!(!polys.is_empty(), "Union of two cubes should produce polygons");
+    assert!(
+        !polys.is_empty(),
+        "Union of two cubes should produce polygons"
+    );
 
     // Check bounding box => should now at least range from -1 to (0.5+1) = 1.5
     let bb = bounding_box(polys);
@@ -625,13 +641,16 @@ fn test_csg_subtract() {
 
     let result = big_cube.subtract(&small_cube);
     let polys = result.to_polygons();
-    assert!(!polys.is_empty(), "Subtracting a smaller cube should leave polygons");
+    assert!(
+        !polys.is_empty(),
+        "Subtracting a smaller cube should leave polygons"
+    );
 
     // Check bounding box => should still be [-2,-2,-2, 2,2,2], but with a chunk removed
     let bb = bounding_box(polys);
     // At least the bounding box remains the same
     assert!(approx_eq(bb[0], -2.0, 1e-8));
-    assert!(approx_eq(bb[3],  2.0, 1e-8));
+    assert!(approx_eq(bb[3], 2.0, 1e-8));
 }
 
 #[test]
@@ -690,13 +709,25 @@ fn test_csg_inverse() {
     let c1: CSG<()> = CSG::cube(None);
     let inv = c1.inverse();
     // The polygons are flipped
-    // We can check just that the polygon planes are reversed, etc. 
+    // We can check just that the polygon planes are reversed, etc.
     // A full check might compare the polygons, but let's do a quick check on one polygon.
     let orig_poly = &c1.polygons[0];
     let inv_poly = &inv.polygons[0];
-    assert!(approx_eq(orig_poly.plane.normal.x, -inv_poly.plane.normal.x, EPSILON));
-    assert!(approx_eq(orig_poly.plane.normal.y, -inv_poly.plane.normal.y, EPSILON));
-    assert!(approx_eq(orig_poly.plane.normal.z, -inv_poly.plane.normal.z, EPSILON));
+    assert!(approx_eq(
+        orig_poly.plane.normal.x,
+        -inv_poly.plane.normal.x,
+        EPSILON
+    ));
+    assert!(approx_eq(
+        orig_poly.plane.normal.y,
+        -inv_poly.plane.normal.y,
+        EPSILON
+    ));
+    assert!(approx_eq(
+        orig_poly.plane.normal.z,
+        -inv_poly.plane.normal.z,
+        EPSILON
+    ));
     assert_eq!(
         c1.to_polygons().len(),
         inv.to_polygons().len(),
@@ -706,7 +737,7 @@ fn test_csg_inverse() {
 
 #[test]
 fn test_csg_cube() {
-    let c: CSG<()> = CSG::cube(None); 
+    let c: CSG<()> = CSG::cube(None);
     // By default, center=(0,0,0) radius=(1,1,1) => corners at ±1
     // We expect 6 faces, each 4 vertices = 6 polygons
     assert_eq!(c.polygons.len(), 6);
@@ -732,12 +763,12 @@ fn test_csg_sphere() {
     assert!(approx_eq(bb[0], -1.0, 1e-1));
     assert!(approx_eq(bb[1], -1.0, 1e-1));
     assert!(approx_eq(bb[2], -1.0, 1e-1));
-    assert!(approx_eq(bb[3],  1.0, 1e-1));
-    assert!(approx_eq(bb[4],  1.0, 1e-1));
-    assert!(approx_eq(bb[5],  1.0, 1e-1));
-    
+    assert!(approx_eq(bb[3], 1.0, 1e-1));
+    assert!(approx_eq(bb[4], 1.0, 1e-1));
+    assert!(approx_eq(bb[5], 1.0, 1e-1));
+
     // We expect 16 * 8 polygons = 128 polygons
-    // each stack band is 16 polys, times 8 => 128. 
+    // each stack band is 16 polys, times 8 => 128.
     assert_eq!(sphere.polygons.len(), 16 * 8);
 }
 
@@ -753,10 +784,10 @@ fn test_csg_cylinder() {
     assert!(approx_eq(bb[0], -1.0, 1e-8), "min X");
     assert!(approx_eq(bb[1], -1.0, 1e-8), "min Y");
     assert!(approx_eq(bb[2], -1.0, 1e-8), "min Z");
-    assert!(approx_eq(bb[3],  1.0, 1e-8), "max X");
-    assert!(approx_eq(bb[4],  1.0, 1e-8), "max Y");
-    assert!(approx_eq(bb[5],  1.0, 1e-8), "max Z");
-    
+    assert!(approx_eq(bb[3], 1.0, 1e-8), "max X");
+    assert!(approx_eq(bb[4], 1.0, 1e-8), "max Y");
+    assert!(approx_eq(bb[5], 1.0, 1e-8), "max Z");
+
     // We have slices = 16, plus 16*2 polygons for the end caps
     assert_eq!(cylinder.polygons.len(), 48);
 }
@@ -770,12 +801,7 @@ fn test_csg_polyhedron() {
         [0.0, 1.0, 0.0], // 2
         [0.0, 0.0, 1.0], // 3
     ];
-    let faces = vec![
-        vec![0, 1, 2],
-        vec![0, 1, 3],
-        vec![1, 2, 3],
-        vec![2, 0, 3],
-    ];
+    let faces = vec![vec![0, 1, 2], vec![0, 1, 3], vec![1, 2, 3], vec![2, 0, 3]];
     let csg_tetra: CSG<()> = CSG::polyhedron(pts, &faces);
     // We should have exactly 4 triangular faces
     assert_eq!(csg_tetra.polygons.len(), 4);
@@ -805,7 +831,7 @@ fn test_csg_transform_translate_rotate_scale() {
     let poly0 = &rotated.polygons[0];
     for v in &poly0.vertices {
         // After a 90° rotation around X, the old Y should become old Z,
-        // and the old Z should become -old Y. 
+        // and the old Z should become -old Y.
         // We can’t trivially guess each vertex's new coordinate but can do a sanity check:
         // The bounding box in Y might be [-1..1], but let's check we have differences in Y from original.
         assert_ne!(v.pos.y, 0.0); // Expect something was changed if originally it was ±1 in Z
@@ -907,12 +933,7 @@ fn test_csg_circle() {
 
 #[test]
 fn test_csg_polygon_2d() {
-    let points = &[
-        [0.0, 0.0],
-        [2.0, 0.0],
-        [2.0, 1.0],
-        [0.0, 1.0],
-    ];
+    let points = &[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0], [0.0, 1.0]];
     let poly2d: CSG<()> = CSG::polygon_2d(points);
     assert_eq!(poly2d.polygons.len(), 1);
     assert_eq!(poly2d.polygons[0].vertices.len(), 4);
@@ -974,7 +995,7 @@ fn test_csg_vertices() {
 #[test]
 fn test_csg_grow_and_shrink() {
     let sq: CSG<()> = CSG::square(Some(([1.0, 1.0], true))); // center-based square
-    // Grow by 0.5
+                                                             // Grow by 0.5
     let grown = sq.grow(0.5);
     // bounding box should be bigger
     let bb_sq = sq.bounding_box();
@@ -990,17 +1011,17 @@ fn test_csg_grow_and_shrink() {
 
 #[test]
 fn test_csg_grow_2d_and_shrink_2d() {
-    let square: CSG<()> = CSG::square(Some(([2.0, 2.0], true))); 
+    let square: CSG<()> = CSG::square(Some(([2.0, 2.0], true)));
     let grown = square.offset_2d(0.5);
     let shrunk = square.offset_2d(-0.5);
     let bb_square = square.bounding_box();
     let bb_grown = grown.bounding_box();
     let bb_shrunk = shrunk.bounding_box();
-    
+
     println!("Square bb: {:#?}", bb_square);
     println!("Grown bb: {:#?}", bb_grown);
     println!("Shrunk bb: {:#?}", bb_shrunk);
-    
+
     // Should be bigger
     assert!(bb_grown.maxs.x > bb_square.maxs.x + 0.4);
 
@@ -1390,7 +1411,10 @@ fn test_offset_2d_positive_distance_grows() {
     assert_eq!(offset.polygons.len(), 1);
     let poly = &offset.polygons[0];
     let area = signed_area(poly);
-    assert!(area > 4.0, "Offset with positive distance did not grow the square");
+    assert!(
+        area > 4.0,
+        "Offset with positive distance did not grow the square"
+    );
 }
 
 #[test]
@@ -1403,7 +1427,10 @@ fn test_offset_2d_negative_distance_shrinks() {
     assert_eq!(offset.polygons.len(), 1);
     let poly = &offset.polygons[0];
     let area = signed_area(poly);
-    assert!(area < 4.0, "Offset with negative distance did not shrink the square");
+    assert!(
+        area < 4.0,
+        "Offset with negative distance did not shrink the square"
+    );
 }
 
 #[test]
@@ -1454,37 +1481,28 @@ fn make_polygon_3d(points: &[[f64; 3]]) -> Polygon<()> {
 #[test]
 fn test_same_number_of_vertices() {
     // "Bottom" is a triangle in 3D
-    let bottom = make_polygon_3d(&[
-        [0.0, 0.0, 0.0],
-        [1.0, 0.0, 0.0],
-        [0.5, 0.5, 0.0],
-    ]);
+    let bottom = make_polygon_3d(&[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.5, 0.5, 0.0]]);
     // "Top" is the same triangle, shifted up in Z
-    let top = make_polygon_3d(&[
-        [0.0, 0.0, 1.0],
-        [1.0, 0.0, 1.0],
-        [0.5, 0.5, 1.0],
-    ]);
+    let top = make_polygon_3d(&[[0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [0.5, 0.5, 1.0]]);
 
     // This should succeed with no panic:
     let csg = CSG::extrude_between(&bottom, &top, true);
 
-    // Expect: 
-    //  - bottom polygon 
-    //  - top polygon 
+    // Expect:
+    //  - bottom polygon
+    //  - top polygon
     //  - 3 side polygons (one for each edge of the triangle)
-    assert_eq!(csg.polygons.len(), 1 /*bottom*/ + 1 /*top*/ + 3 /*sides*/);
+    assert_eq!(
+        csg.polygons.len(),
+        1 /*bottom*/ + 1 /*top*/ + 3 /*sides*/
+    );
 }
 
 #[test]
 #[should_panic(expected = "same number of vertices")]
 fn test_different_number_of_vertices_panics() {
     // Bottom has 3 vertices
-    let bottom = make_polygon_3d(&[
-        [0.0, 0.0, 0.0],
-        [2.0, 0.0, 0.0],
-        [1.0, 1.0, 0.0],
-    ]);
+    let bottom = make_polygon_3d(&[[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [1.0, 1.0, 0.0]]);
     // Top has 4 vertices
     let top = make_polygon_3d(&[
         [0.0, 0.0, 2.0],
@@ -1552,7 +1570,10 @@ fn test_inverted_orientation() {
 
     // Check bounding box for sanity
     let bbox = csg.bounding_box();
-    assert!(bbox.mins.z < bbox.maxs.z, "Should have a non-zero height in the Z dimension");
+    assert!(
+        bbox.mins.z < bbox.maxs.z,
+        "Should have a non-zero height in the Z dimension"
+    );
 }
 
 #[test]
@@ -1560,16 +1581,8 @@ fn test_union_of_extruded_shapes() {
     // We'll extrude two shapes that partially overlap, then union them.
 
     // First shape: triangle
-    let bottom1 = make_polygon_3d(&[
-        [0.0, 0.0, 0.0],
-        [2.0, 0.0, 0.0],
-        [1.0, 1.0, 0.0],
-    ]);
-    let top1 = make_polygon_3d(&[
-        [0.0, 0.0, 1.0],
-        [2.0, 0.0, 1.0],
-        [1.0, 1.0, 1.0],
-    ]);
+    let bottom1 = make_polygon_3d(&[[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [1.0, 1.0, 0.0]]);
+    let top1 = make_polygon_3d(&[[0.0, 0.0, 1.0], [2.0, 0.0, 1.0], [1.0, 1.0, 1.0]]);
     let csg1 = CSG::extrude_between(&bottom1, &top1, true);
 
     // Second shape: small shifted square
@@ -1606,10 +1619,13 @@ fn test_flatten_cube() {
     let cube = CSG::<()>::cube(Some((&[0.0, 0.0, 0.0], &[1.0, 1.0, 1.0])));
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
-    
+
     // The flattened cube should have 1 polygon1, now in z=0
-    assert_eq!(flattened.polygons.len(), 1, 
-        "Flattened cube should have 1 face in z=0");
+    assert_eq!(
+        flattened.polygons.len(),
+        1,
+        "Flattened cube should have 1 face in z=0"
+    );
 
     // Check that all vertices lie at z=0
     for poly in &flattened.polygons {
@@ -1638,11 +1654,11 @@ fn test_slice_cylinder() {
     // 2) Slice at z=0
     let cross_section = cyl.cut(None);
 
-    // For a simple cylinder, the cross-section is typically 1 circle polygon 
+    // For a simple cylinder, the cross-section is typically 1 circle polygon
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
     // So we expect exactly 1 polygon.
     assert_eq!(
-        cross_section.polygons.len(), 
+        cross_section.polygons.len(),
         1,
         "Slicing a cylinder at z=0 should yield exactly 1 cross-section polygon"
     );
@@ -1652,7 +1668,7 @@ fn test_slice_cylinder() {
 
     // We used 32 slices for the cylinder, so we expect up to 32 edges
     // in the cross-section circle. Some slight differences might occur
-    // if the slicing logic merges or sorts vertices. 
+    // if the slicing logic merges or sorts vertices.
     // Typically, you might see vcount = 32 or vcount = 34, etc.
     // Let's just check it's > 3 and in a plausible range:
     assert!(
@@ -1672,11 +1688,11 @@ fn test_slice_cylinder() {
 
     // Optional: check approximate radius
     // The cross-section should be at radius ~1 around x=0,y=some, z=0
-    // (Actually, the cylinder's axis is along Y, so we expect x^2+z^2=1. 
-    //  But since z=0 now, effectively we expect x^2=1 => x=±1 if we're ignoring any bulge, 
-    //  or we'll see a circle in the plane y=?? Actually, wait— 
-    //  the cylinder we built is from (0,-1,0) to (0,1,0) with radius=1 around that axis, 
-    //  so the cross-section plane is z=0, meaning x^2 + y^2 = 1. 
+    // (Actually, the cylinder's axis is along Y, so we expect x^2+z^2=1.
+    //  But since z=0 now, effectively we expect x^2=1 => x=±1 if we're ignoring any bulge,
+    //  or we'll see a circle in the plane y=?? Actually, wait—
+    //  the cylinder we built is from (0,-1,0) to (0,1,0) with radius=1 around that axis,
+    //  so the cross-section plane is z=0, meaning x^2 + y^2 = 1.
     //  We can check a couple of sample vertices.)
     if !poly.vertices.is_empty() {
         let first_v = &poly.vertices[0].pos;
@@ -1693,7 +1709,10 @@ fn test_slice_cylinder() {
 /// Helper to create a `Polygon` in the XY plane from an array of (x,y) points,
 /// with z=0 and normal=+Z.
 fn polygon_from_xy_points(xy_points: &[[f64; 2]]) -> Polygon<()> {
-    assert!(xy_points.len() >= 3, "Need at least 3 points for a polygon.");
+    assert!(
+        xy_points.len() >= 3,
+        "Need at least 3 points for a polygon."
+    );
 
     let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
     let vertices: Vec<Vertex> = xy_points
@@ -1709,12 +1728,7 @@ fn polygon_from_xy_points(xy_points: &[[f64; 2]]) -> Polygon<()> {
 #[test]
 fn test_flatten_and_union_single_polygon() {
     // Create a CSG with one polygon (a unit square).
-    let square_poly = polygon_from_xy_points(&[
-        [0.0, 0.0],
-        [1.0, 0.0],
-        [1.0, 1.0],
-        [0.0, 1.0],
-    ]);
+    let square_poly = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     let csg = CSG::from_polygons(vec![square_poly]);
 
     // Flatten & union it
@@ -1734,19 +1748,9 @@ fn test_flatten_and_union_single_polygon() {
 #[test]
 fn test_flatten_and_union_two_overlapping_squares() {
     // First square from (0,0) to (1,1)
-    let square1 = polygon_from_xy_points(&[
-        [0.0, 0.0],
-        [1.0, 0.0],
-        [1.0, 1.0],
-        [0.0, 1.0],
-    ]);
+    let square1 = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     // Second square from (1,0) to (2,1)
-    let square2 = polygon_from_xy_points(&[
-        [1.0, 0.0],
-        [2.0, 0.0],
-        [2.0, 1.0],
-        [1.0, 1.0],
-    ]);
+    let square2 = polygon_from_xy_points(&[[1.0, 0.0], [2.0, 0.0], [2.0, 1.0], [1.0, 1.0]]);
     let csg = CSG::from_polygons(vec![square1, square2]);
 
     let flat_csg = csg.flatten();
@@ -1774,19 +1778,9 @@ fn test_flatten_and_union_two_overlapping_squares() {
 #[test]
 fn test_flatten_and_union_two_disjoint_squares() {
     // Square A at (0..1, 0..1)
-    let square_a = polygon_from_xy_points(&[
-        [0.0, 0.0],
-        [1.0, 0.0],
-        [1.0, 1.0],
-        [0.0, 1.0],
-    ]);
+    let square_a = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     // Square B at (2..3, 2..3)
-    let square_b = polygon_from_xy_points(&[
-        [2.0, 2.0],
-        [3.0, 2.0],
-        [3.0, 3.0],
-        [2.0, 3.0],
-    ]);
+    let square_b = polygon_from_xy_points(&[[2.0, 2.0], [3.0, 2.0], [3.0, 3.0], [2.0, 3.0]]);
     let csg = CSG::from_polygons(vec![square_a, square_b]);
 
     let flat_csg = csg.flatten();
@@ -1819,7 +1813,10 @@ fn test_flatten_and_union_near_xy_plane() {
     let csg = CSG::from_polygons(vec![poly1]);
     let flat_csg = csg.flatten();
 
-    assert!(!flat_csg.polygons.is_empty(), "Should flatten to a valid polygon");
+    assert!(
+        !flat_csg.polygons.is_empty(),
+        "Should flatten to a valid polygon"
+    );
     let bb = flat_csg.bounding_box();
     assert_eq!(bb.mins.x, 0.0);
     assert_eq!(bb.maxs.x, 1.0);
@@ -1832,16 +1829,11 @@ fn test_flatten_and_union_near_xy_plane() {
 #[test]
 fn test_flatten_and_union_collinear_edges() {
     // Two rectangles sharing a long horizontal edge
-    let rect1 = polygon_from_xy_points(&[
-        [0.0, 0.0],
-        [2.0, 0.0],
-        [2.0, 1.0],
-        [0.0, 1.0],
-    ]);
+    let rect1 = polygon_from_xy_points(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0], [0.0, 1.0]]);
     let rect2 = polygon_from_xy_points(&[
         [2.0, 0.0],
         [4.0, 0.0],
-        [4.0, 1.001],  // slightly off
+        [4.0, 1.001], // slightly off
         [2.0, 1.0],
     ]);
 
@@ -1863,6 +1855,12 @@ fn test_flatten_and_union_collinear_edges() {
 fn test_flatten_and_union_debug() {
     let csg_square = CSG::<()>::square(None); // a 1×1 square at [0..1, 0..1]
     let flattened = csg_square.flatten();
-    assert!(!flattened.polygons.is_empty(), "Flattened square should not be empty");
-    assert!(flattened.polygons[0].vertices.len() >= 3, "Should form at least a triangle");
+    assert!(
+        !flattened.polygons.is_empty(),
+        "Flattened square should not be empty"
+    );
+    assert!(
+        flattened.polygons[0].vertices.len() >= 3,
+        "Should form at least a triangle"
+    );
 }

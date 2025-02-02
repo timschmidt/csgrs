@@ -4,26 +4,28 @@
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
-use nalgebra::{Point2, Point3, Vector3, Translation3, Rotation3, Isometry3, Matrix4, Unit, Quaternion};
+use cavalier_contours::polyline::{
+    BooleanOp, PlineCreation, PlineSource, PlineSourceMut, Polyline,
+};
 use chull::ConvexHullWrapper;
+use dxf::entities::*;
+use dxf::Drawing;
+use earclip::{earcut, flatten};
+use meshtext::{Glyph, MeshGenerator, MeshText};
+use nalgebra::{
+    Isometry3, Matrix4, Point2, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
+};
 use parry3d_f64::{
     bounding_volume::Aabb,
     query::{Ray, RayCast},
     shape::{Shape, SharedShape, TriMesh, Triangle},
-    };
-use rapier3d_f64::prelude::*;
-use meshtext::{Glyph, MeshGenerator, MeshText};
-use stl_io;
-use std::io::Cursor;
-use std::f64::consts::PI;
-use std::error::Error;
-use std::collections::HashMap;
-use cavalier_contours::polyline::{
-    Polyline, PlineSource, PlineCreation, PlineSourceMut, BooleanOp
 };
-use earclip::{earcut, flatten};
-use dxf::Drawing;
-use dxf::entities::*;
+use rapier3d_f64::prelude::*;
+use std::collections::HashMap;
+use std::error::Error;
+use std::f64::consts::PI;
+use std::io::Cursor;
+use stl_io;
 
 #[cfg(test)]
 mod tests;
@@ -56,7 +58,9 @@ fn pline_area(pline: &Polyline<f64>) -> f64 {
 
 /// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v` so that
 /// {u, v, n} forms an orthonormal basis. `n` is assumed non‐zero.
-fn build_orthonormal_basis(n: nalgebra::Vector3<f64>) -> (nalgebra::Vector3<f64>, nalgebra::Vector3<f64>) {
+fn build_orthonormal_basis(
+    n: nalgebra::Vector3<f64>,
+) -> (nalgebra::Vector3<f64>, nalgebra::Vector3<f64>) {
     // Normalize the given normal
     let n = n.normalize();
 
@@ -90,10 +94,10 @@ pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
     let v20 = v2.interpolate(&v0, 0.5);
 
     vec![
-        [v0.clone(),  v01.clone(), v20.clone()],
-        [v01.clone(), v1.clone(),  v12.clone()],
+        [v0.clone(), v01.clone(), v20.clone()],
+        [v01.clone(), v1.clone(), v12.clone()],
         [v20.clone(), v12.clone(), v2.clone()],
-        [v01,         v12,         v20],
+        [v01, v12, v20],
     ]
 }
 
@@ -137,11 +141,7 @@ fn normalize_angle(mut a: f64) -> f64 {
 ///
 /// This is a direct port of your snippet’s `centre(p1, p2, p3)`, but
 /// returning a `Point2<f64>` from nalgebra.
-fn naive_circle_center(
-    p1: &Point2<f64>,
-    p2: &Point2<f64>,
-    p3: &Point2<f64>,
-) -> Point2<f64> {
+fn naive_circle_center(p1: &Point2<f64>, p2: &Point2<f64>, p3: &Point2<f64>) -> Point2<f64> {
     // Coordinates
     let (x1, y1) = (p1.x, p1.y);
     let (x2, y2) = (p2.x, p2.y);
@@ -193,9 +193,8 @@ fn naive_circle_center(
 pub fn fit_circle_arcfinder(
     pt_c: &Point2<f64>,
     pt_n: &Point2<f64>,
-    intermediates: &[Point2<f64>]
-) -> (Point2<f64>, f64, bool, f64)
-{
+    intermediates: &[Point2<f64>],
+) -> (Point2<f64>, f64, bool, f64) {
     // 1) Distance between pt_c and pt_n, plus midpoint
     let k = (pt_c - pt_n).norm();
     if k < 1e-14 {
@@ -203,18 +202,15 @@ pub fn fit_circle_arcfinder(
         let center = *pt_c;
         return (center, 0.0, false, 9999.0);
     }
-    let mid = Point2::new(
-        0.5 * (pt_c.x + pt_n.x),
-        0.5 * (pt_c.y + pt_n.y),
-    );
+    let mid = Point2::new(0.5 * (pt_c.x + pt_n.x), 0.5 * (pt_c.y + pt_n.y));
 
     // 2) Pre‐compute the direction used for the offset:
     //    This is the 2D +90 rotation of (pt_n - pt_c).
     //    i.e. rotate( dx, dy ) => (dy, -dx ) or similar.
-    let vec_cn = pt_n - pt_c;  // a Vector2
-    let rx = vec_cn.y;   // +90 deg
-    let ry = -vec_cn.x;  // ...
-    
+    let vec_cn = pt_n - pt_c; // a Vector2
+    let rx = vec_cn.y; // +90 deg
+    let ry = -vec_cn.x; // ...
+
     // collect all points in one array for the mismatch
     let mut all_points = Vec::with_capacity(intermediates.len() + 2);
     all_points.push(*pt_c);
@@ -223,17 +219,17 @@ pub fn fit_circle_arcfinder(
 
     // The mismatch function g(d)
     let g = |d: f64| -> f64 {
-        let r_desired = (d*d + 0.25 * k*k).sqrt();
+        let r_desired = (d * d + 0.25 * k * k).sqrt();
         // circle center
-        let cx = mid.x + (d/k)*rx;
-        let cy = mid.y + (d/k)*ry;
+        let cx = mid.x + (d / k) * rx;
+        let cy = mid.y + (d / k) * ry;
         let mut sum_sq = 0.0;
         for p in &all_points {
             let dx = p.x - cx;
             let dy = p.y - cy;
-            let dist = (dx*dx + dy*dy).sqrt();
+            let dist = (dx * dx + dy * dy).sqrt();
             let diff = dist - r_desired;
-            sum_sq += diff*diff;
+            sum_sq += diff * diff;
         }
         sum_sq
     };
@@ -247,21 +243,21 @@ pub fn fit_circle_arcfinder(
     };
 
     // 3) choose an initial guess for d
-    let mut d_est = 0.0;  // fallback
+    let mut d_est = 0.0; // fallback
     if !intermediates.is_empty() {
         // pick p3 ~ the middle of intermediates
-        let mididx = intermediates.len()/2;
+        let mididx = intermediates.len() / 2;
         let p3 = intermediates[mididx];
         let c_est = naive_circle_center(pt_c, pt_n, &p3);
         // project c_est - mid onto (rx, ry)/k => that is d
         let dx = c_est.x - mid.x;
         let dy = c_est.y - mid.y;
-        let dot = dx*(rx/k) + dy*(ry/k);
+        let dot = dx * (rx / k) + dy * (ry / k);
         d_est = dot;
     }
 
     // 4) small secant iteration for ~10 steps
-    let mut d0 = d_est - 0.1*k;
+    let mut d0 = d_est - 0.1 * k;
     let mut d1 = d_est;
     let mut dg0 = dg(d0);
     let mut dg1 = dg(d1);
@@ -271,17 +267,17 @@ pub fn fit_circle_arcfinder(
             break;
         }
         let temp = d1;
-        d1 = d1 - dg1*(d1 - d0)/(dg1 - dg0);
+        d1 = d1 - dg1 * (d1 - d0) / (dg1 - dg0);
         d0 = temp;
         dg0 = dg1;
         dg1 = dg(d1);
     }
 
     let d_opt = d1;
-    let cx = mid.x + (d_opt/k)*rx;
-    let cy = mid.y + (d_opt/k)*ry;
+    let cx = mid.x + (d_opt / k) * rx;
+    let cy = mid.y + (d_opt / k) * ry;
     let center = Point2::new(cx, cy);
-    let radius_opt = (d_opt*d_opt + 0.25*k*k).sqrt();
+    let radius_opt = (d_opt * d_opt + 0.25 * k * k).sqrt();
 
     // sum of squares at d_opt
     let sum_sq = g(d_opt);
@@ -310,9 +306,8 @@ fn best_arc_fit(
     intermediates: &[Point2<f64>],
     rms_limit: f64,
     angle_limit_degs: f64,
-    _offset_limit: f64
-) -> Option<(bool, f64, Point2<f64>, f64)>
-{
+    _offset_limit: f64,
+) -> Option<(bool, f64, Point2<f64>, f64)> {
     // 1) Call your circle-fitting routine:
     let (center, radius, cw, rms) = fit_circle_arcfinder(&pt_c, &pt_n, intermediates);
 
@@ -339,7 +334,7 @@ fn best_arc_fit(
     }
     // offset constraint is left to your specific arcs logic:
     // if something > offset_limit {...}
-    
+
     // If all is well:
     Some((cw, radius, center, rms))
 }
@@ -485,9 +480,9 @@ impl Plane {
             }
         }
     }
-    
+
     /// Returns (T, T_inv), where:
-    /// - `T`   maps a point on this plane into XY plane (z=0) 
+    /// - `T`   maps a point on this plane into XY plane (z=0)
     ///   with the plane’s normal going to +Z,
     /// - `T_inv` is the inverse transform, mapping back.
     pub fn to_xy_transform(&self) -> (Matrix4<f64>, Matrix4<f64>) {
@@ -507,7 +502,7 @@ impl Plane {
             .unwrap_or_else(|| Rotation3::identity());
         let iso_rot = Isometry3::from_parts(Translation3::identity(), rot.into());
 
-        // We want to translate so that the plane’s reference point 
+        // We want to translate so that the plane’s reference point
         //    (some point p0 with n·p0 = w) lands at z=0 in the new coords.
         // p0 = (plane.w / (n·n)) * n
         let denom = n.dot(&n);
@@ -521,7 +516,9 @@ impl Plane {
         let transform_to_xy = iso_trans.to_homogeneous() * iso_rot.to_homogeneous();
 
         // Inverse for going back
-        let transform_from_xy = transform_to_xy.try_inverse().unwrap_or_else(|| Matrix4::identity());
+        let transform_from_xy = transform_to_xy
+            .try_inverse()
+            .unwrap_or_else(|| Matrix4::identity());
 
         (transform_to_xy, transform_from_xy)
     }
@@ -543,24 +540,24 @@ impl<S: Clone> Polygon<S> {
             vertices.len() >= 3,
             "Polygon::new requires at least 3 vertices"
         );
-    
-        let plane = Plane::from_points(
-            &vertices[0].pos,
-            &vertices[1].pos,
-            &vertices[2].pos,
-        );
-        Polygon { vertices, metadata, plane }
+
+        let plane = Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos);
+        Polygon {
+            vertices,
+            metadata,
+            plane,
+        }
     }
-    
+
     /// Build a new Polygon in 3D from a 2D polyline in *this* polygon’s plane.
     /// i.e. we treat that 2D polyline as lying in the same plane as `self`.
     pub fn from_2d(&self, polyline: Polyline<f64>) -> Polygon<S> {
         let (_to_xy, from_xy) = self.plane.to_xy_transform();
-    
+
         let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
         for i in 0..polyline.vertex_count() {
             let v = polyline.at(i);
-            
+
             // (x, y, 0, 1)
             let p4_local = nalgebra::Vector4::new(v.x, v.y, 0.0, 1.0);
             let p4_world = from_xy * p4_local;
@@ -571,14 +568,14 @@ impl<S: Clone> Polygon<S> {
 
             poly_verts.push(Vertex::new(
                 Point3::new(vx, vy, vz),
-                self.plane.normal  // We will recalc plane anyway
+                self.plane.normal, // We will recalc plane anyway
             ));
         }
         let mut poly3d = Polygon::new(poly_verts, self.metadata.clone());
         poly3d.recalc_plane_and_normals();
         poly3d
     }
-    
+
     /// Project this polygon into its own plane’s local XY coordinates,
     /// producing a 2D cavalier_contours Polyline<f64>.
     pub fn to_2d(&self) -> Polyline<f64> {
@@ -586,11 +583,11 @@ impl<S: Clone> Polygon<S> {
             // Degenerate polygon, return empty polyline
             return Polyline::new();
         }
-        
+
         // Get transforms
         let (to_xy, _from_xy) = self.plane.to_xy_transform();
 
-        // Transform each vertex. 
+        // Transform each vertex.
         // Then we only keep (x, y) and ignore the new z (should be near zero).
         let mut polyline = Polyline::with_capacity(self.vertices.len(), true);
         for v in &self.vertices {
@@ -598,12 +595,12 @@ impl<S: Clone> Polygon<S> {
             let xyz = to_xy * p4; // Matrix4 × Vector4
             let x2 = xyz[0];
             let y2 = xyz[1];
-            let bulge = 0.0;  // ignoring arcs
+            let bulge = 0.0; // ignoring arcs
             polyline.add(x2, y2, bulge);
         }
         polyline
     }
-    
+
     /// Project this polygon into its own plane’s local XY coordinates,
     /// producing a 2D cavalier_contours Polyline<f64>.
     pub fn to_xy(&self) -> Polyline<f64> {
@@ -616,26 +613,26 @@ impl<S: Clone> Polygon<S> {
         // If our polygons might have arcs, we'll need more logic to detect + store bulge, etc.
         let mut polyline = Polyline::with_capacity(self.vertices.len(), true);
         for v in &self.vertices {
-            let bulge = 0.0;  // ignoring arcs
+            let bulge = 0.0; // ignoring arcs
             polyline.add(v.pos.coords.x, v.pos.coords.y, bulge);
         }
         polyline
     }
-    
+
     /// Build a new Polygon from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0.
     pub fn from_xy(polyline: Polyline<f64>) -> Polygon<S> {
         if polyline.vertex_count() < 3 {
             // degenerate polygon
         }
-        
+
         let plane_normal = nalgebra::Vector3::z();
         let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
         for i in 0..polyline.vertex_count() {
             let v = polyline.at(i);
             poly_verts.push(Vertex::new(
                 nalgebra::Point3::new(v.x, v.y, 0.0),
-                plane_normal
+                plane_normal,
             ));
         }
         return Polygon::new(poly_verts, None);
@@ -710,19 +707,19 @@ impl<S: Clone> Polygon<S> {
             v.normal = new_normal;
         }
     }
-    
+
     /// Return all resulting polygons from the union.
     /// If the union has disjoint pieces, you'll get multiple polygons.
     pub fn union(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
         let self_cc = self.to_2d();
         let other_cc = other.to_2d();
-    
+
         // Use cavalier_contours boolean op OR
         // union_result is a `BooleanResult<Polyline>`
         let union_result = self_cc.boolean(&other_cc, BooleanOp::Or);
-        
+
         let mut polygons_out = Vec::new();
-        
+
         // union_result.pos_plines has the union outlines
         // union_result.neg_plines might be empty for `Or`.
         for outline in union_result.pos_plines {
@@ -733,20 +730,20 @@ impl<S: Clone> Polygon<S> {
             // Convert to a 3D Polygon<S> in the XY plane
             polygons_out.push(self.from_2d(pl));
         }
-        
+
         polygons_out
     }
-    
+
     /// Perform 2D boolean intersection with `other` and return resulting polygons.
     pub fn intersection(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
         let self_cc = self.to_2d();
         let other_cc = other.to_2d();
-    
+
         // Use cavalier_contours boolean op AND
         let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::And);
-    
+
         let mut polygons_out = Vec::new();
-    
+
         // For intersection, result.pos_plines has the “kept” intersection loops
         for outline in result.pos_plines {
             let pl = outline.pline;
@@ -757,17 +754,17 @@ impl<S: Clone> Polygon<S> {
         }
         polygons_out
     }
-    
+
     /// Perform 2D boolean difference (this minus other) and return resulting polygons.
     pub fn difference(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
         let self_cc = self.to_2d();
         let other_cc = other.to_2d();
-    
+
         // Use cavalier_contours boolean op NOT
         let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::Not);
-    
+
         let mut polygons_out = Vec::new();
-    
+
         // For difference, result.pos_plines is what remains of self after subtracting `other`.
         for outline in result.pos_plines {
             let pl = outline.pline;
@@ -778,17 +775,17 @@ impl<S: Clone> Polygon<S> {
         }
         polygons_out
     }
-    
+
     /// Perform 2D boolean exclusive‐or (symmetric difference) and return resulting polygons.
     pub fn xor(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
         let self_cc = self.to_2d();
         let other_cc = other.to_2d();
-    
+
         // Use cavalier_contours boolean op XOR
         let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::Xor);
-    
+
         let mut polygons_out = Vec::new();
-    
+
         // For XOR, result.pos_plines is the symmetrical difference
         for outline in result.pos_plines {
             let pl = outline.pline;
@@ -799,10 +796,12 @@ impl<S: Clone> Polygon<S> {
         }
         polygons_out
     }
-    
+
     /// Returns a new Polygon translated by t.
     pub fn translate(&self, t: Vector3<f64>) -> Self {
-        let new_vertices = self.vertices.iter()
+        let new_vertices = self
+            .vertices
+            .iter()
             .map(|v| Vertex::new(v.pos + t, v.normal))
             .collect();
         let new_plane = Plane {
@@ -818,7 +817,9 @@ impl<S: Clone> Polygon<S> {
 
     /// Applies the affine transform given by mat to all vertices and normals.
     pub fn transform(&self, mat: &Matrix4<f64>) -> Self {
-        let new_vertices: Vec<Vertex> = self.vertices.iter()
+        let new_vertices: Vec<Vertex> = self
+            .vertices
+            .iter()
             .map(|v| {
                 // Transform the position:
                 let p_hom = v.pos.to_homogeneous();
@@ -834,7 +835,11 @@ impl<S: Clone> Polygon<S> {
             .collect();
         // Recompute the plane from the first three vertices.
         let new_plane = if new_vertices.len() >= 3 {
-            Plane::from_points(&new_vertices[0].pos, &new_vertices[1].pos, &new_vertices[2].pos)
+            Plane::from_points(
+                &new_vertices[0].pos,
+                &new_vertices[1].pos,
+                &new_vertices[2].pos,
+            )
         } else {
             self.plane.clone()
         };
@@ -854,7 +859,9 @@ impl<S: Clone> Polygon<S> {
             // Translate so that c goes to the origin, rotate, then translate back.
             let trans_to_origin = Translation3::from(-c.coords);
             let trans_back = Translation3::from(c.coords);
-            trans_back.to_homogeneous() * rotation.to_homogeneous() * trans_to_origin.to_homogeneous()
+            trans_back.to_homogeneous()
+                * rotation.to_homogeneous()
+                * trans_to_origin.to_homogeneous()
         } else {
             rotation.to_homogeneous()
         };
@@ -890,20 +897,26 @@ impl<S: Clone> Polygon<S> {
     /// (It projects the vertices to 2D in the polygon’s plane, computes the convex hull, and lifts back.)
     pub fn convex_hull(&self) -> Self {
         let (to_xy, from_xy) = self.plane.to_xy_transform();
-        let pts_2d: Vec<Vec<f64>> = self.vertices.iter().map(|v| {
-            let p2 = to_xy * v.pos.to_homogeneous();
-            vec![p2[0], p2[1]]
-        }).collect();
-        let chull = ConvexHullWrapper::try_new(&pts_2d, None)
-            .expect("convex hull failed");
+        let pts_2d: Vec<Vec<f64>> = self
+            .vertices
+            .iter()
+            .map(|v| {
+                let p2 = to_xy * v.pos.to_homogeneous();
+                vec![p2[0], p2[1]]
+            })
+            .collect();
+        let chull = ConvexHullWrapper::try_new(&pts_2d, None).expect("convex hull failed");
         let (hull_verts, _hull_indices) = chull.vertices_indices();
-        let new_vertices = hull_verts.iter().map(|p| {
-            // Make sure to tell Rust the type explicitly so that the multiplication produces
-            // a Vector4<f64>.
-            let p4: nalgebra::Vector4<f64> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
-            let p3 = from_xy * p4;
-            Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
-        }).collect();
+        let new_vertices = hull_verts
+            .iter()
+            .map(|p| {
+                // Make sure to tell Rust the type explicitly so that the multiplication produces
+                // a Vector4<f64>.
+                let p4: nalgebra::Vector4<f64> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
+                let p3 = from_xy * p4;
+                Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
+            })
+            .collect();
         Polygon::new(new_vertices, self.metadata.clone())
     }
 
@@ -917,31 +930,37 @@ impl<S: Clone> Polygon<S> {
             }
         }
         let (to_xy, from_xy) = self.plane.to_xy_transform();
-        let pts_2d: Vec<Vec<f64>> = sum_pts.iter().map(|p| {
-            let p_hom = p.to_homogeneous();
-            let p2 = to_xy * p_hom;
-            vec![p2[0], p2[1]]
-        }).collect();
-        let chull = ConvexHullWrapper::try_new(&pts_2d, None)
-            .expect("Minkowski sum convex hull failed");
+        let pts_2d: Vec<Vec<f64>> = sum_pts
+            .iter()
+            .map(|p| {
+                let p_hom = p.to_homogeneous();
+                let p2 = to_xy * p_hom;
+                vec![p2[0], p2[1]]
+            })
+            .collect();
+        let chull =
+            ConvexHullWrapper::try_new(&pts_2d, None).expect("Minkowski sum convex hull failed");
         let (hull_verts, _hull_indices) = chull.vertices_indices();
-        let new_vertices = hull_verts.iter().map(|p| {
-            // Make sure to tell Rust the type explicitly so that the multiplication produces
-            // a Vector4<f64>.
-            let p4: nalgebra::Vector4<f64> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
-            let p3 = from_xy * p4;
-            Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
-        }).collect();
+        let new_vertices = hull_verts
+            .iter()
+            .map(|p| {
+                // Make sure to tell Rust the type explicitly so that the multiplication produces
+                // a Vector4<f64>.
+                let p4: nalgebra::Vector4<f64> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
+                let p3 = from_xy * p4;
+                Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
+            })
+            .collect();
         Polygon::new(new_vertices, self.metadata.clone())
     }
-    
+
     /// Attempt to reconstruct arcs of constant radius in the 2D projection of this polygon,
     /// storing them as bulge arcs in the returned `Polyline<f64>`.
     ///
     /// # Parameters
     /// - `min_match`: minimal number of consecutive edges needed to consider forming an arc
     /// - `rms_limit`: max RMS fitting error (like `arcfinder`’s `options.rms_limit`)
-    /// - `angle_limit_degs`: max total arc sweep in degrees 
+    /// - `angle_limit_degs`: max total arc sweep in degrees
     /// - `offset_limit`: additional limit used by `arcfinder` for chord offsets, etc.
     ///
     /// # Returns
@@ -952,16 +971,15 @@ impl<S: Clone> Polygon<S> {
         min_match: usize,
         rms_limit: f64,
         angle_limit_degs: f64,
-        offset_limit: f64
-    ) -> Polyline<f64>
-    {
+        offset_limit: f64,
+    ) -> Polyline<f64> {
         // 1) Flatten or project to 2D. Suppose `to_2d()` returns a Polyline<f64> with .x, .y, .bulge:
-        let poly_2d = self.to_2d(); 
+        let poly_2d = self.to_2d();
         // If too few vertices, or degenerate
         if poly_2d.vertex_count() < 2 {
             return poly_2d;
         }
-    
+
         // 2) Collect all points in a Vec<Point2<f64>>
         //    If polygon is closed, the polyline might be closed. We can handle it accordingly:
         let mut all_pts: Vec<Point2<f64>> = Vec::with_capacity(poly_2d.vertex_count());
@@ -969,8 +987,8 @@ impl<S: Clone> Polygon<S> {
             let v = poly_2d.at(i);
             all_pts.push(Point2::new(v.x, v.y));
         }
-    
-        // 3) We'll build a new output polyline with arcs. 
+
+        // 3) We'll build a new output polyline with arcs.
         //    For demonstration, let's replicate an approach like your code snippet:
         let mut result = Polyline::with_capacity(all_pts.len(), poly_2d.is_closed());
         if !all_pts.is_empty() {
@@ -978,75 +996,82 @@ impl<S: Clone> Polygon<S> {
             let pt_c = all_pts[0];
             result.add(pt_c.x, pt_c.y, 0.0);
         }
-    
+
         let mut i = 0;
         let n = all_pts.len();
-    
-        while i < n-1 {
+
+        while i < n - 1 {
             // Attempt to form an arc from i..some j≥i+min_match
             let start_pt = all_pts[i];
             let mut found_arc = false;
-            let mut best_j = i+1;
+            let mut best_j = i + 1;
             let mut best_arc_data: Option<(bool, f64, Point2<f64>)> = None;
-    
+
             let mut j = i + min_match;
             while j < n {
                 let pt_j = all_pts[j];
-                let midslice = &all_pts[i+1 .. j];
+                let midslice = &all_pts[i + 1..j];
                 if let Some((cw, r, ctr, _rms)) = best_arc_fit(
-                    start_pt, pt_j, midslice,
-                    rms_limit, angle_limit_degs, offset_limit
+                    start_pt,
+                    pt_j,
+                    midslice,
+                    rms_limit,
+                    angle_limit_degs,
+                    offset_limit,
                 ) {
                     found_arc = true;
                     best_arc_data = Some((cw, r, ctr));
                     best_j = j;
-                    j += 1;  // try extending more
+                    j += 1; // try extending more
                 } else {
                     break;
                 }
             }
-    
+
             if found_arc {
                 // we have an arc from i..best_j
                 let end_pt = all_pts[best_j];
                 let (cw, _r, c) = best_arc_data.unwrap();
-    
+
                 // compute angle from center => to find bulge
-                let v0 = start_pt - c;  // v0 is a Vector2<f64>
-                let v1 = end_pt - c;    // v1 is a Vector2<f64>
+                let v0 = start_pt - c; // v0 is a Vector2<f64>
+                let v1 = end_pt - c; // v1 is a Vector2<f64>
                 let ang0 = v0.y.atan2(v0.x);
                 let ang1 = v1.y.atan2(v1.x);
                 let total_sweep = normalize_angle(ang1 - ang0);
-                let arc_sweep = if cw { -total_sweep.abs() } else { total_sweep.abs() };
+                let arc_sweep = if cw {
+                    -total_sweep.abs()
+                } else {
+                    total_sweep.abs()
+                };
                 // bulge = tan(sweep/4)
                 let bulge = (arc_sweep * 0.25).tan();
-    
+
                 // set bulge on the last vertex in `result` (the arc start):
-                let last_idx = result.vertex_count()-1;
+                let last_idx = result.vertex_count() - 1;
                 let mut last_v = result[last_idx];
                 last_v.bulge = bulge;
                 result.set_vertex(last_idx, last_v);
-    
+
                 // then add end vertex with bulge=0
                 result.add(end_pt.x, end_pt.y, 0.0);
-    
+
                 i = best_j;
             } else {
                 // no arc => just line from i->i+1
-                let next_pt = all_pts[i+1];
+                let next_pt = all_pts[i + 1];
                 // set bulge=0 on the last output vertex
-                let last_idx = result.vertex_count()-1;
+                let last_idx = result.vertex_count() - 1;
                 let mut lv = result[last_idx];
                 lv.bulge = 0.0;
                 result.set_vertex(last_idx, lv);
-    
+
                 result.add(next_pt.x, next_pt.y, 0.0);
-    
+
                 i += 1;
             }
-            
         }
-    
+
         result
     }
 
@@ -1217,7 +1242,9 @@ pub struct CSG<S: Clone> {
 impl<S: Clone> CSG<S> {
     /// Create an empty CSG
     pub fn new() -> Self {
-        CSG { polygons: Vec::new() }
+        CSG {
+            polygons: Vec::new(),
+        }
     }
 
     /// Build a CSG from an existing polygon list
@@ -1231,7 +1258,7 @@ impl<S: Clone> CSG<S> {
     pub fn to_polygons(&self) -> &[Polygon<S>] {
         &self.polygons
     }
-    
+
     /// Group polygons by their metadata.
     ///
     /// Returns a map from the metadata (as `Option<S>`) to a
@@ -1280,14 +1307,14 @@ impl<S: Clone> CSG<S> {
     ///    }
     ///    groups
     ///}
-    
+
     /// Build a new CSG from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0. If a union produced multiple
     /// loops, you will get multiple polygons in the final CSG.
     pub fn from_cc_polylines(loops: Vec<Polyline<f64>>) -> CSG<S> {
         let mut all_polygons = Vec::new();
         let plane_normal = Vector3::new(0.0, 0.0, 1.0);
-    
+
         for pl in loops {
             // Convert each Polyline into a single polygon in z=0.
             // For arcs, we could subdivide by bulge, etc. This ignores arcs for simplicity.
@@ -1297,16 +1324,16 @@ impl<S: Clone> CSG<S> {
                     let v = pl.at(i);
                     poly_verts.push(Vertex::new(
                         nalgebra::Point3::new(v.x, v.y, 0.0),
-                        plane_normal
+                        plane_normal,
                     ));
                 }
                 all_polygons.push(Polygon::new(poly_verts, None));
             }
         }
-    
+
         CSG::from_polygons(all_polygons)
     }
-    
+
     /// Constructs a new CSG solid from “complex” (possibly non‐triangulated)
     /// polygons provided in the same format that earclip accepts:
     /// a slice of polygons, each a Vec of points (each point a Vec<f64> of length 2 or 3).
@@ -1348,7 +1375,7 @@ impl<S: Clone> CSG<S> {
         let (vertices, hole_indices, dim) = flatten(polys);
         // Tessellate the flattened polygon using earcut.
         let indices: Vec<usize> = earcut(&vertices, &hole_indices, dim);
-        
+
         let mut new_polygons = Vec::new();
         // Each consecutive triple in the output indices defines a triangle.
         for tri in indices.chunks_exact(3) {
@@ -1431,7 +1458,7 @@ impl<S: Clone> CSG<S> {
         }
         csg
     }
-    
+
     /// Creates a 2D square in the XY plane.
     ///
     /// # Parameters
@@ -1559,15 +1586,16 @@ impl<S: Clone> CSG<S> {
                 let mut vertices = Vec::new();
 
                 let vertex = |theta: f64, phi: f64| {
-                    let dir = Vector3::new(
-                        theta.cos() * phi.sin(),
-                        phi.cos(),
-                        theta.sin() * phi.sin(),
-                    );
-                    Vertex::new(Point3::new(c.x + dir.x * radius,
-                                            c.y + dir.y * radius,
-                                            c.z + dir.z * radius),
-                                dir)
+                    let dir =
+                        Vector3::new(theta.cos() * phi.sin(), phi.cos(), theta.sin() * phi.sin());
+                    Vertex::new(
+                        Point3::new(
+                            c.x + dir.x * radius,
+                            c.y + dir.y * radius,
+                            c.z + dir.z * radius,
+                        ),
+                        dir,
+                    )
                 };
 
                 let t0 = i as f64 / slices as f64;
@@ -1642,11 +1670,7 @@ impl<S: Clone> CSG<S> {
 
             // bottom cap
             polygons.push(Polygon::new(
-                vec![
-                    start_v.clone(),
-                    point(0.0, t0, -1.0),
-                    point(0.0, t1, -1.0),
-                ],
+                vec![start_v.clone(), point(0.0, t0, -1.0), point(0.0, t1, -1.0)],
                 None,
             ));
 
@@ -1663,11 +1687,7 @@ impl<S: Clone> CSG<S> {
 
             // top cap
             polygons.push(Polygon::new(
-                vec![
-                    end_v.clone(),
-                    point(1.0, t1, 1.0),
-                    point(1.0, t0, 1.0),
-                ],
+                vec![end_v.clone(), point(1.0, t1, 1.0), point(1.0, t0, 1.0)],
                 None,
             ));
         }
@@ -1718,7 +1738,11 @@ impl<S: Clone> CSG<S> {
             for &idx in face {
                 // Ensure the index is valid
                 if idx >= points.len() {
-                    panic!("Face index {} is out of range (points.len = {}).", idx, points.len());
+                    panic!(
+                        "Face index {} is out of range (points.len = {}).",
+                        idx,
+                        points.len()
+                    );
                 }
                 let [x, y, z] = points[idx];
                 face_vertices.push(Vertex::new(
@@ -1752,14 +1776,16 @@ impl<S: Clone> CSG<S> {
                 // Position
                 let hom_pos = mat * vert.pos.to_homogeneous();
                 vert.pos = Point3::from_homogeneous(hom_pos).unwrap();
-    
+
                 // Normal
                 vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
             }
-    
+
             // Plane normal
-            poly.plane.normal = mat_inv_transpose.transform_vector(&poly.plane.normal).normalize();
-    
+            poly.plane.normal = mat_inv_transpose
+                .transform_vector(&poly.plane.normal)
+                .normalize();
+
             // Plane w
             if let Some(first_vert) = poly.vertices.get(0) {
                 poly.plane.w = poly.plane.normal.dot(&first_vert.pos.coords);
@@ -1780,7 +1806,7 @@ impl<S: Clone> CSG<S> {
         let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg.to_radians());
         let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg.to_radians());
         let rz = Rotation3::from_axis_angle(&Vector3::z_axis(), z_deg.to_radians());
-        
+
         // Compose them in the desired order
         let rot = rz * ry * rx;
         self.transform(&rot.to_homogeneous())
@@ -1807,18 +1833,20 @@ impl<S: Clone> CSG<S> {
 
     /// Compute the convex hull of all vertices in this CSG.
     pub fn convex_hull(&self) -> CSG<S> {
-	// Gather all (x, y, z) coordinates from the polygons
+        // Gather all (x, y, z) coordinates from the polygons
         let points: Vec<Vec<f64>> = self
             .polygons
             .iter()
             .flat_map(|poly| {
-                poly.vertices.iter().map(|v| vec![v.pos.x, v.pos.y, v.pos.z])
+                poly.vertices
+                    .iter()
+                    .map(|v| vec![v.pos.x, v.pos.y, v.pos.z])
             })
             .collect();
 
         // Compute convex hull using the robust wrapper
-        let hull = ConvexHullWrapper::try_new(&points, None)
-            .expect("Failed to compute convex hull");
+        let hull =
+            ConvexHullWrapper::try_new(&points, None).expect("Failed to compute convex hull");
 
         let (verts, indices) = hull.vertices_indices();
 
@@ -1844,23 +1872,26 @@ impl<S: Clone> CSG<S> {
     /// then compute the convex hull of all resulting points.
     pub fn minkowski_sum(&self, other: &CSG<S>) -> CSG<S> {
         // Collect all vertices (x, y, z) from self
-        let verts_a: Vec<Point3<f64>> = self.polygons
+        let verts_a: Vec<Point3<f64>> = self
+            .polygons
             .iter()
             .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
             .collect();
 
         // Collect all vertices from other
-        let verts_b: Vec<Point3<f64>> = other.polygons
+        let verts_b: Vec<Point3<f64>> = other
+            .polygons
             .iter()
             .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
             .collect();
-            
+
         if verts_a.is_empty() || verts_b.is_empty() {
             // Empty input to minkowski sum
         }
 
         // For Minkowski, add every point in A to every point in B
-        let sum_points: Vec<_> = verts_a.iter()
+        let sum_points: Vec<_> = verts_a
+            .iter()
             .flat_map(|a| verts_b.iter().map(move |b| a + b.coords))
             .map(|v| vec![v.x, v.y, v.z])
             .collect();
@@ -1899,9 +1930,10 @@ impl<S: Clone> CSG<S> {
             // Convert each small tri back into a Polygon with 3 vertices
             // (you can keep the same metadata or None).
             for tri in sub_tris {
-                new_polygons.push(
-                    Polygon::new(vec![tri[0].clone(), tri[1].clone(), tri[2].clone()], poly.metadata.clone())
-                );
+                new_polygons.push(Polygon::new(
+                    vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
+                    poly.metadata.clone(),
+                ));
             }
         }
 
@@ -1955,10 +1987,7 @@ impl<S: Clone> CSG<S> {
                 // Ray-cast against the triangle:
                 if let Some(hit) = triangle.cast_ray_and_get_normal(&iso, &ray, f64::MAX, true) {
                     let point_on_ray = ray.point_at(hit.time_of_impact);
-                    hits.push((
-                        Point3::from(point_on_ray.coords),
-                        hit.time_of_impact,
-                    ));
+                    hits.push((Point3::from(point_on_ray.coords), hit.time_of_impact));
                 }
             }
         }
@@ -1970,14 +1999,14 @@ impl<S: Clone> CSG<S> {
 
         hits
     }
-    
+
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
     /// This is just a convenience wrapper around extrude_vector using Vector3::new(0.0, 0.0, height)
     pub fn extrude(&self, height: f64) -> CSG<S> {
         self.extrude_vector(Vector3::new(0.0, 0.0, height))
     }
-    
+
     /// Linearly extrude this (2D) shape along an arbitrary 3D direction vector.
     ///
     /// - The shape is “swept” from its original location to a translated “top” copy
@@ -1989,18 +2018,18 @@ impl<S: Clone> CSG<S> {
     pub fn extrude_vector(&self, direction: Vector3<f64>) -> CSG<S> {
         // Collect all new polygons here
         let mut new_polygons = Vec::new();
-    
+
         // 1) Bottom polygons = original polygons
         //    (assuming they are in some plane, e.g. XY). We just clone them.
         for poly in &self.polygons {
             new_polygons.push(poly.clone());
         }
-    
+
         // 2) Top polygons = translate each original polygon by `direction`.
         //    The orientation of their normals will remain the same unless you decide to flip them.
         let top_polygons = self.translate(direction).polygons;
         new_polygons.extend(top_polygons.iter().cloned());
-    
+
         // 3) Side polygons = For each polygon in `self`, connect its edges
         //    from the original to the corresponding edges in the translated version.
         //
@@ -2009,7 +2038,7 @@ impl<S: Clone> CSG<S> {
         //    That is, a quad [b_i, b_j, t_j, t_i].
         let bottom_polys = &self.polygons;
         let top_polys = &top_polygons;
-    
+
         for (poly_bottom, poly_top) in bottom_polys.iter().zip(top_polys.iter()) {
             let vcount = poly_bottom.vertices.len();
             if vcount < 3 {
@@ -2021,35 +2050,39 @@ impl<S: Clone> CSG<S> {
                 let b_j = &poly_bottom.vertices[j];
                 let t_i = &poly_top.vertices[i];
                 let t_j = &poly_top.vertices[j];
-    
+
                 // Build a side quad [b_i, b_j, t_j, t_i].
                 // Then push it as a new polygon.
                 let side_poly = Polygon::new(
                     vec![b_i.clone(), b_j.clone(), t_j.clone(), t_i.clone()],
-                    None
+                    None,
                 );
                 new_polygons.push(side_poly);
             }
         }
-    
+
         // Combine into a new CSG
         CSG::from_polygons(new_polygons)
     }
-    
+
     /// Extrudes (or "lofts") a closed 3D volume between two polygons in space.
     /// - `bottom` and `top` each have the same number of vertices `n`, in matching order.
     /// - Returns a new CSG whose faces are:
     ///   - The `bottom` polygon,
     ///   - The `top` polygon,
     ///   - `n` rectangular side polygons bridging each edge of `bottom` to the corresponding edge of `top`.
-    pub fn extrude_between(bottom: &Polygon<S>, top: &Polygon<S>, flip_bottom_polygon: bool) -> CSG<S> {
+    pub fn extrude_between(
+        bottom: &Polygon<S>,
+        top: &Polygon<S>,
+        flip_bottom_polygon: bool,
+    ) -> CSG<S> {
         let n = bottom.vertices.len();
         assert_eq!(
             n,
             top.vertices.len(),
             "extrude_between: both polygons must have the same number of vertices"
         );
-    
+
         // Conditionally flip the bottom polygon if requested.
         let bottom_poly = if flip_bottom_polygon {
             let mut flipped = bottom.clone();
@@ -2058,12 +2091,12 @@ impl<S: Clone> CSG<S> {
         } else {
             bottom.clone()
         };
-    
+
         // 1) Gather polygons: bottom + top
         //    (Depending on the orientation, you might want to flip one of them.)
 
         let mut polygons = vec![bottom_poly.clone(), top.clone()];
-    
+
         // 2) For each edge (i -> i+1) in bottom, connect to the corresponding edge in top.
         for i in 0..n {
             let j = (i + 1) % n;
@@ -2071,9 +2104,9 @@ impl<S: Clone> CSG<S> {
             let b_j = &bottom.vertices[j];
             let t_i = &top.vertices[i];
             let t_j = &top.vertices[j];
-    
+
             // Build the side face as a 4-vertex polygon (quad).
-            // Winding order here is chosen so that the polygon's normal faces outward 
+            // Winding order here is chosen so that the polygon's normal faces outward
             // (depending on the orientation of bottom vs. top).
             let side_poly = Polygon::new(
                 vec![
@@ -2086,7 +2119,7 @@ impl<S: Clone> CSG<S> {
             );
             polygons.push(side_poly);
         }
-    
+
         CSG::from_polygons(polygons)
     }
 
@@ -2098,13 +2131,13 @@ impl<S: Clone> CSG<S> {
         if segments < 2 {
             panic!("rotate_extrude requires at least 2 segments");
         }
-    
+
         // We'll consider the revolve "closed" if the angle is effectively 360°
         let closed = (angle_degs - 360.0).abs() < EPSILON;
-    
+
         // Collect all newly formed polygons here
         let mut result_polygons = Vec::new();
-    
+
         // For each polygon in our original 2D shape:
         for original_poly in &self.polygons {
             let n_verts = original_poly.vertices.len();
@@ -2112,7 +2145,7 @@ impl<S: Clone> CSG<S> {
                 // Skip degenerate or empty polygons
                 continue;
             }
-    
+
             // 1) Create a list of rotated copies ("slices") of `original_poly`.
             //    We'll generate `segments+1` slices if it's a partial revolve,
             //    so that slices[0] = 0° and slices[segments] = angle_degs,
@@ -2122,10 +2155,10 @@ impl<S: Clone> CSG<S> {
             for i in 0..=segments {
                 let frac = i as f64 / segments as f64;
                 let theta = frac * angle_radians;
-    
+
                 // Build a rotation around Z by `theta`
                 let rot = Rotation3::from_axis_angle(&Vector3::z_axis(), theta).to_homogeneous();
-    
+
                 // Transform this single polygon by that rotation
                 let rotated_poly = CSG::from_polygons(vec![original_poly.clone()])
                     .transform(&rot)
@@ -2133,11 +2166,11 @@ impl<S: Clone> CSG<S> {
                     .clone();
                 slices.push(rotated_poly);
             }
-    
+
             // 2) "Loft" between successive slices using `extrude_between`.
-            //    - If it's a full 360 revolve, we do 0..(segments) and wrap around 
+            //    - If it's a full 360 revolve, we do 0..(segments) and wrap around
             //      from slices[segments-1] => slices[0].
-            //    - If it's partial, we just do 0..(segments), which covers 
+            //    - If it's partial, we just do 0..(segments), which covers
             //      slices[i] -> slices[i+1] for i=0..(segments-1).
             for i in 0..(segments) {
                 let bottom = &slices[i];
@@ -2157,7 +2190,7 @@ impl<S: Clone> CSG<S> {
                 result_polygons.push(end_cap);
             }
         }
-    
+
         // Gather everything into a new CSG
         CSG::from_polygons(result_polygons) // todo: figure out why rotate_extrude results in inverted solids
     }
@@ -2194,7 +2227,12 @@ impl<S: Clone> CSG<S> {
     /// This method unions translated copies of the shape along a sphere.
     pub fn grow(&self, distance: f64) -> CSG<S> {
         let resolution = 32;
-        let sphere: CSG<S> = CSG::sphere(Some((&[0.0, 0.0, 0.0], distance, resolution, resolution / 2)));
+        let sphere: CSG<S> = CSG::sphere(Some((
+            &[0.0, 0.0, 0.0],
+            distance,
+            resolution,
+            resolution / 2,
+        )));
         let sphere_vertices = sphere.vertices();
         let mut result = CSG::new();
 
@@ -2210,7 +2248,12 @@ impl<S: Clone> CSG<S> {
     /// then inverts the result.
     pub fn shrink(&self, distance: f64) -> CSG<S> {
         let resolution = 32;
-        let sphere: CSG<S> = CSG::sphere(Some((&[0.0, 0.0, 0.0], distance, resolution, resolution / 2)));
+        let sphere: CSG<S> = CSG::sphere(Some((
+            &[0.0, 0.0, 0.0],
+            distance,
+            resolution,
+            resolution / 2,
+        )));
         let sphere_vertices = sphere.vertices();
         let complement = self.inverse();
         let mut result = CSG::new();
@@ -2278,25 +2321,24 @@ impl<S: Clone> CSG<S> {
         // Return them as a new CSG in z=0
         CSG::from_polygons(merged_2d)
     }
-    
+
     /// Slice this CSG by a plane, keeping only cross-sections on that plane.
     /// If `plane` is None, defaults to the plane z=0.
     pub fn cut(&self, plane: Option<Plane>) -> CSG<S> {
-
         let plane = plane.unwrap_or_else(|| Plane {
             normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
             w: 0.0,
         });
-    
+
         let mut result_polygons = Vec::new();
-    
+
         // For each polygon in the original CSG:
         for poly in &self.polygons {
             let vcount = poly.vertices.len();
             if vcount < 2 {
                 continue; // skip degenerate
             }
-    
+
             // Classify each vertex against plane
             // side[i] = +1 if above plane, -1 if below plane, 0 if on plane
             let mut sides = Vec::with_capacity(vcount);
@@ -2310,22 +2352,22 @@ impl<S: Clone> CSG<S> {
                     sides.push(-1); // below
                 }
             }
-    
+
             // Collect the points where the polygon intersects the plane
             let mut intersect_points = Vec::new();
-    
+
             for i in 0..vcount {
                 let j = (i + 1) % vcount;
                 let side_i = sides[i];
                 let side_j = sides[j];
                 let vi = &poly.vertices[i];
                 let vj = &poly.vertices[j];
-    
+
                 // If a vertex lies exactly on the plane, include it
                 if side_i == 0 {
                     intersect_points.push(vi.pos);
                 }
-    
+
                 // If edges cross the plane, find intersection
                 if side_i != side_j && side_i != 0 && side_j != 0 {
                     let denom = plane.normal.dot(&(vj.pos - vi.pos));
@@ -2336,19 +2378,19 @@ impl<S: Clone> CSG<S> {
                     }
                 }
             }
-    
+
             // If fewer than 3 intersection points, no valid cross-section
             if intersect_points.len() < 3 {
                 continue;
             }
-    
+
             // Sort intersection points around their average center so they form a proper polygon
             let mut avg = nalgebra::Vector3::zeros();
             for p in &intersect_points {
                 avg += p.coords;
             }
             avg /= intersect_points.len() as f64;
-    
+
             intersect_points.sort_by(|a, b| {
                 let ax = a.x - avg.x;
                 let ay = a.y - avg.y;
@@ -2360,20 +2402,20 @@ impl<S: Clone> CSG<S> {
                     .partial_cmp(&angle_b)
                     .unwrap_or(std::cmp::Ordering::Equal)
             });
-    
+
             // Build a new Polygon (in z=0, normal = +Z)
             let normal_2d = nalgebra::Vector3::new(0.0, 0.0, 1.0);
             let new_verts: Vec<Vertex> = intersect_points
                 .into_iter()
                 .map(|p| Vertex::new(nalgebra::Point3::new(p.x, p.y, 0.0), normal_2d))
                 .collect();
-    
+
             result_polygons.push(Polygon::new(new_verts, poly.metadata.clone()));
         }
-    
+
         CSG::from_polygons(result_polygons)
     }
-    
+
     /// Slice this CSG by `plane`, returning the cross‐section(s) in that plane
     /// as a new CSG of 2D polygons. If `plane` is `None`, slices at z=0.
     pub fn cut_slab(&self, plane: Option<Plane>) -> CSG<S> {
@@ -2382,7 +2424,7 @@ impl<S: Clone> CSG<S> {
             normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
             w: 0.0,
         });
-        
+
         // 2) Build a transform T that maps our plane → the XY plane at z=0.
         //
         //    - We want plane.normal to become +Z
@@ -2399,14 +2441,14 @@ impl<S: Clone> CSG<S> {
             // Degenerate plane? Just bail or return empty
             return CSG::new();
         }
-        let norm_dir = n / n_len;    // normalized
+        let norm_dir = n / n_len; // normalized
         let p0 = norm_dir * plane.w; // a point on the plane in 3D
-        
+
         // A) Rotate `norm_dir` to +Z
         //    We can do so by e.g. Rotation3::rotation_between(&norm_dir, &Vector3::z())
         let to_z = Rotation3::rotation_between(&norm_dir, &Vector3::z())
             .unwrap_or_else(|| Rotation3::identity());
-        
+
         // B) Then translate so that p0 goes to z=0
         //    After rotation, p0 is somewhere. We want its z to become 0 => so we shift by -p0.z
         //    We can do it by building an isometry that does the rotation, then find the new p0,
@@ -2418,7 +2460,7 @@ impl<S: Clone> CSG<S> {
 
         // Combined transform T = translate * rotate
         let transform_to_xy = iso_trans.to_homogeneous() * iso_rot.to_homogeneous();
-        
+
         // Transform shape into the plane’s coordinate system so that the plane is now z=0.
         let csg_in_plane_coords = self.transform(&transform_to_xy);
 
@@ -2427,24 +2469,24 @@ impl<S: Clone> CSG<S> {
         let aabb = csg_in_plane_coords.bounding_box();
         let mins = aabb.mins;
         let maxs = aabb.maxs;
-        
+
         // We can consider the Aabb "invalid" if mins is not <= maxs in each component.
         // Alternatively, you could check for degenerate bounding boxes if you like.
         let valid = mins.x <= maxs.x && mins.y <= maxs.y && mins.z <= maxs.z;
-        
+
         if !valid {
             // handle the invalid case, e.g. return empty
             return CSG::new();
         }
-        
+
         // The "diagonal" is just (maxs - mins):
         let diag_vec = maxs - mins;
         let diag_len = diag_vec.norm();
-        
+
         // some “big enough” dimension
         let diag = (diag_len * 2.0).max(1.0);
         let epsilon = 1e-5;
-        
+
         // Let’s build a big square in XY from -diag..+diag, then extrude from z = -ε..+ε.
         // That “square” is effectively the top‐down bounding shape for the slab in XY.
         //
@@ -2452,13 +2494,13 @@ impl<S: Clone> CSG<S> {
         let big_xy = CSG::square(None)
             .scale(diag, diag, 1.0)
             .translate(Vector3::new(-diag / 2.0, -diag / 2.0, 0.0));
-        
+
         // Now extrude it ± ε around z=0: easiest is extrude +ε, then shift -ε/2
         // or do something like:
         let slab = big_xy
             .extrude(2.0 * epsilon) // extrude from z=0 up to z=+2ε
             .translate(Vector3::new(0.0, 0.0, -epsilon)); // shift down so range is [-ε, +ε]
-        
+
         // 4) Intersect the shape with that slab in plane‐coords
         let cross_section_3d = csg_in_plane_coords.intersect(&slab);
 
@@ -2473,7 +2515,7 @@ impl<S: Clone> CSG<S> {
         //    The inverse is T⁻¹ (the inverse of `transform_to_xy`).
         //    But note that your `flatten()` forced polygons to z=0, so re‐lifting them onto
         //    the real plane means you have to set their z‐coordinate to plane.w along the normal.
-        //    In short, you may or may not want this step. 
+        //    In short, you may or may not want this step.
         //
         //    If you do want them in the original 3D:
         //      let invT = transform_to_xy.try_inverse().unwrap();
@@ -2505,18 +2547,18 @@ impl<S: Clone> CSG<S> {
             let px1 = x1 * scale;
             let py1 = y1 * scale;
             let pz1 = z1 * scale;
-    
+
             let px2 = x2 * scale;
             let py2 = y2 * scale;
             let pz2 = z2 * scale;
-    
+
             let px3 = x3 * scale;
             let py3 = y3 * scale;
             let pz3 = z3 * scale;
-    
+
             // Normal = +Z
             let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
-    
+
             polygons.push(Polygon::new(
                 vec![
                     Vertex::new(Point3::new(px1, py1, pz1), normal),
@@ -2534,7 +2576,7 @@ impl<S: Clone> CSG<S> {
     ///
     /// - `text_str`: the text to render
     /// - `font_data`: TTF font file bytes (e.g. `include_bytes!("../assets/FiraMono-Regular.ttf")`)
-    /// - `size`: optional scaling factor (e.g., a rough "font size"). 
+    /// - `size`: optional scaling factor (e.g., a rough "font size").
     ///
     /// **Note**: Limitations:
     ///   - does not handle kerning or multi-line text,
@@ -2561,13 +2603,13 @@ impl<S: Clone> CSG<S> {
                     continue;
                 }
             };
-    
+
             // Convert to polygons
             let glyph_polygons = Self::meshtext_to_polygons(&glyph_mesh, scale);
 
             // Translate polygons by (cursor_x, 0.0)
-            let glyph_csg = CSG::from_polygons(glyph_polygons)
-                .translate(Vector3::new(cursor_x, 0.0, 0.0));
+            let glyph_csg =
+                CSG::from_polygons(glyph_polygons).translate(Vector3::new(cursor_x, 0.0, 0.0));
             // Accumulate
             all_polygons.extend(glyph_csg.polygons);
 
@@ -2578,7 +2620,7 @@ impl<S: Clone> CSG<S> {
 
         CSG::from_polygons(all_polygons)
     }
-    
+
     /// Re‐triangulate each polygon in this CSG using the `earclip` library (earcut).
     /// Returns a new CSG whose polygons are all triangles.
     pub fn retriangulate(&self) -> CSG<S> {
@@ -2604,7 +2646,7 @@ impl<S: Clone> CSG<S> {
             // We'll store them in a flat `Vec<f64>` of the form [x0, y0, x1, y1, x2, y2, ...]
             let mut coords_2d = Vec::with_capacity(poly.vertices.len() * 2);
             for vert in &poly.vertices {
-                let offset = vert.pos.coords - p0.coords;  // vector from p0 to the vertex
+                let offset = vert.pos.coords - p0.coords; // vector from p0 to the vertex
                 let x = offset.dot(&u);
                 let y = offset.dot(&v);
                 coords_2d.push(x);
@@ -2628,7 +2670,7 @@ impl<S: Clone> CSG<S> {
                     // Inverse projection:
                     // Q_3D = p0 + x * u + y * v
                     let pos_vec = p0.coords + x * u + y * v;
-                    let pos_3d  = Point3::from(pos_vec);
+                    let pos_3d = Point3::from(pos_vec);
                     // We can store the normal = polygon's plane normal (or recalc).
                     // We'll recalc below, so for now just keep n or 0 as a placeholder:
                     tri_vertices.push(Vertex::new(pos_3d, n));
@@ -2667,7 +2709,7 @@ impl<S: Clone> CSG<S> {
                 for v in tri {
                     vertices.push(Point3::new(v.pos.x, v.pos.y, v.pos.z));
                 }
-                indices.push([index_offset, index_offset+1, index_offset+2]);
+                indices.push([index_offset, index_offset + 1, index_offset + 2]);
                 index_offset += 3;
             }
         }
@@ -2684,11 +2726,11 @@ impl<S: Clone> CSG<S> {
             let mp = trimesh.mass_properties(density);
             (
                 mp.mass(),
-                mp.local_com,                         // a Point3<f64>
-                mp.principal_inertia_local_frame      // a Unit<Quaternion<f64>>
+                mp.local_com,                     // a Point3<f64>
+                mp.principal_inertia_local_frame, // a Unit<Quaternion<f64>>
             )
         } else {
-	    // fallback if not a TriMesh
+            // fallback if not a TriMesh
             (0.0, Point3::origin(), Unit::<Quaternion<f64>>::identity())
         }
     }
@@ -2705,7 +2747,7 @@ impl<S: Clone> CSG<S> {
         density: f64,
     ) -> RigidBodyHandle {
         let shape = self.to_trimesh();
-    
+
         // Build a Rapier RigidBody
         let rb = RigidBodyBuilder::dynamic()
             .translation(translation)
@@ -2713,16 +2755,14 @@ impl<S: Clone> CSG<S> {
             .rotation(rotation)
             .build();
         let rb_handle = rb_set.insert(rb);
-    
+
         // Build the collider
-        let coll = ColliderBuilder::new(shape)
-            .density(density)
-            .build();
+        let coll = ColliderBuilder::new(shape).density(density).build();
         co_set.insert_with_parent(coll, rb_handle, rb_set);
-    
+
         rb_handle
     }
-    
+
     /// Checks if the CSG object is manifold.
     ///
     /// This function defines a comparison function which takes EPSILON into account
@@ -2767,10 +2807,10 @@ impl<S: Clone> CSG<S> {
             for tri in poly.triangulate() {
                 // Each tri is 3 vertices: [v0, v1, v2]
                 // We'll look at edges (0->1, 1->2, 2->0).
-                for &(i0, i1) in &[(0,1), (1,2), (2,0)] {
+                for &(i0, i1) in &[(0, 1), (1, 2), (2, 0)] {
                     let p0 = tri[i0].pos;
                     let p1 = tri[i1].pos;
-                    
+
                     // Order them so (p0, p1) and (p1, p0) become the same key
                     let (a_key, b_key) = if approx_lt(&p0, &p1) {
                         (point_key(&p0), point_key(&p1))
@@ -2838,7 +2878,7 @@ impl<S: Clone> CSG<S> {
     /// std::fs::write("my_solid.stl", bytes)?;
     /// ```
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
-        // `_name` could be embedded in the binary header if desired, but `stl_io` 
+        // `_name` could be embedded in the binary header if desired, but `stl_io`
         // doesn't strictly require it. We skip storing it or store it in the 80-byte header.
 
         // Gather the triangles for stl_io
@@ -2849,11 +2889,27 @@ impl<S: Clone> CSG<S> {
 
             for tri in tri_list {
                 triangles.push(stl_io::Triangle {
-                    normal: stl_io::Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
+                    normal: stl_io::Normal::new([
+                        normal.x as f32,
+                        normal.y as f32,
+                        normal.z as f32,
+                    ]),
                     vertices: [
-                        stl_io::Vertex::new([tri[0].pos.x as f32, tri[0].pos.y as f32, tri[0].pos.z as f32, ]),
-                        stl_io::Vertex::new([tri[1].pos.x as f32, tri[1].pos.y as f32, tri[1].pos.z as f32, ]),
-                        stl_io::Vertex::new([tri[2].pos.x as f32, tri[2].pos.y as f32, tri[2].pos.z as f32, ]),
+                        stl_io::Vertex::new([
+                            tri[0].pos.x as f32,
+                            tri[0].pos.y as f32,
+                            tri[0].pos.z as f32,
+                        ]),
+                        stl_io::Vertex::new([
+                            tri[1].pos.x as f32,
+                            tri[1].pos.y as f32,
+                            tri[1].pos.z as f32,
+                        ]),
+                        stl_io::Vertex::new([
+                            tri[2].pos.x as f32,
+                            tri[2].pos.y as f32,
+                            tri[2].pos.z as f32,
+                        ]),
                     ],
                 });
             }
@@ -2870,7 +2926,7 @@ impl<S: Clone> CSG<S> {
     pub fn from_stl(stl_data: &[u8]) -> Result<CSG<S>, std::io::Error> {
         // Create an in-memory cursor from the STL data
         let mut cursor = Cursor::new(stl_data);
-    
+
         // Create an STL reader from the cursor
         let stl_reader = stl_io::create_stl_reader(&mut cursor)?;
 
@@ -2886,16 +2942,40 @@ impl<S: Clone> CSG<S> {
             // Construct vertices and a polygon
             let vertices = vec![
                 Vertex::new(
-                    Point3::new(tri.vertices[0][0] as f64, tri.vertices[0][1] as f64, tri.vertices[0][2] as f64),
-                    Vector3::new(tri.normal[0] as f64, tri.normal[1] as f64, tri.normal[2] as f64),
+                    Point3::new(
+                        tri.vertices[0][0] as f64,
+                        tri.vertices[0][1] as f64,
+                        tri.vertices[0][2] as f64,
+                    ),
+                    Vector3::new(
+                        tri.normal[0] as f64,
+                        tri.normal[1] as f64,
+                        tri.normal[2] as f64,
+                    ),
                 ),
                 Vertex::new(
-                    Point3::new(tri.vertices[1][0] as f64, tri.vertices[1][1] as f64, tri.vertices[1][2] as f64),
-                    Vector3::new(tri.normal[0] as f64, tri.normal[1] as f64, tri.normal[2] as f64),
+                    Point3::new(
+                        tri.vertices[1][0] as f64,
+                        tri.vertices[1][1] as f64,
+                        tri.vertices[1][2] as f64,
+                    ),
+                    Vector3::new(
+                        tri.normal[0] as f64,
+                        tri.normal[1] as f64,
+                        tri.normal[2] as f64,
+                    ),
                 ),
                 Vertex::new(
-                    Point3::new(tri.vertices[2][0] as f64, tri.vertices[2][1] as f64, tri.vertices[2][2] as f64),
-                    Vector3::new(tri.normal[0] as f64, tri.normal[1] as f64, tri.normal[2] as f64),
+                    Point3::new(
+                        tri.vertices[2][0] as f64,
+                        tri.vertices[2][1] as f64,
+                        tri.vertices[2][2] as f64,
+                    ),
+                    Vector3::new(
+                        tri.normal[0] as f64,
+                        tri.normal[1] as f64,
+                        tri.normal[2] as f64,
+                    ),
                 ),
             ];
             polygons.push(Polygon::new(vertices, None));
@@ -2903,7 +2983,7 @@ impl<S: Clone> CSG<S> {
 
         Ok(CSG::from_polygons(polygons))
     }
-    
+
     /// Import a CSG object from DXF data.
     ///
     /// # Parameters
@@ -2933,7 +3013,11 @@ impl<S: Clone> CSG<S> {
                         let mut verts = Vec::new();
                         for vertex in polyline.vertices() {
                             verts.push(Vertex::new(
-                                Point3::new(vertex.location.x, vertex.location.y, vertex.location.z),
+                                Point3::new(
+                                    vertex.location.x,
+                                    vertex.location.y,
+                                    vertex.location.z,
+                                ),
                                 Vector3::new(0.0, 0.0, 1.0), // Assuming flat in XY
                             ));
                         }
@@ -3002,7 +3086,7 @@ impl<S: Clone> CSG<S> {
                     dxf::Point::new(tri[2].pos.x, tri[2].pos.y, tri[2].pos.z),
                     dxf::Point::new(tri[2].pos.x, tri[2].pos.y, tri[2].pos.z), // Duplicate for triangular face
                 );
-                
+
                 let entity = dxf::entities::Entity::new(dxf::entities::EntityType::Face3D(face));
 
                 // Add the 3DFACE entity to the drawing
