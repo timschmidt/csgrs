@@ -14,14 +14,14 @@ cargo add csgrs
 
 ```rust
 use nalgebra::Vector3;
-use csgrs::{CSG, Axis};
+use csgrs::Axis;
 
 // Alias the library’s generic CSG type with empty metadata:
-type MyCSG = CSG<()>;
+type CSG = csgrs::CSG<()>;
 
 // Create two shapes:
-let cube = MyCSG::cube(None);       // 2×2×2 cube centered at origin
-let sphere = MyCSG::sphere(None);   // sphere of radius=1 at origin
+let cube = CSG::cube(None);       // 2×2×2 cube centered at origin
+let sphere = CSG::sphere(None);   // sphere of radius=1 at origin
 
 // Compute union:
 let union_result = cube.union(&sphere);
@@ -50,10 +50,10 @@ Helper constructors for 2D shapes in the XY plane:
 - `CSG::polygon_2d(&[[x1,y1],[x2,y2],...])`
 
 ```rust
-let square = MyCSG::square(None);          // 1×1 at origin
-let centered_rect = MyCSG::square(Some(([2.0, 4.0], true)));
-let circle = MyCSG::circle(None);          // radius=1, 32 segments
-let circle2 = MyCSG::circle(Some((2.0, 64)));
+let square = CSG::square(None);          // 1×1 at origin
+let centered_rect = CSG::square(Some(([2.0, 4.0], true)));
+let circle = CSG::circle(None);          // radius=1, 32 segments
+let circle2 = CSG::circle(Some((2.0, 64)));
 ```
 
 ### 3D Shapes
@@ -67,13 +67,13 @@ Similarly, you can create standard 3D primitives:
 
 ```rust
 // Unit cube at origin
-let cube = MyCSG::cube(None);
+let cube = CSG::cube(None);
 
 // Sphere of radius=2 at origin with 32 slices and 16 stacks
-let sphere = MyCSG::sphere(Some((&[0.0, 0.0, 0.0], 2.0, 32, 16)));
+let sphere = CSG::sphere(Some((&[0.0, 0.0, 0.0], 2.0, 32, 16)));
 
 // Cylinder from (0, -1, 0) to (0, 1, 0) with radius=1 and 16 slices
-let cyl = MyCSG::cylinder(Some((&[0.0, -1.0, 0.0], &[0.0, 1.0, 0.0], 1.0, 16)));
+let cyl = CSG::cylinder(Some((&[0.0, -1.0, 0.0], &[0.0, 1.0, 0.0], 1.0, 16)));
 
 // Create a custom polyhedron from points and face indices:
 let points = &[
@@ -90,7 +90,7 @@ let faces = vec![
     vec![2, 3, 4],
     vec![3, 0, 4],
 ];
-let pyramid = MyCSG::polyhedron(points, &faces);
+let pyramid = CSG::polyhedron(points, &faces);
 ```
 
 ### Boolean Operations
@@ -133,16 +133,16 @@ let mirrored = cube.mirror(Axis::Z);
   - `my_2d_shape.extrude_vector(direction: Vector3<f64>)`  
 - **Extrude Between Two Polygons**:  
   ```rust
-  let polygon_bottom = MyCSG::circle(Some((2.0, 64)));
+  let polygon_bottom = CSG::circle(Some((2.0, 64)));
   let polygon_top = polygon_bottom.translate(Vector3::new(0.0, 0.0, 5.0));
-  let lofted = MyCSG::extrude_between(&polygon_bottom.polygons[0],
+  let lofted = CSG::extrude_between(&polygon_bottom.polygons[0],
                                       &polygon_top.polygons[0],
                                       false);
   ```
 - **Rotate-Extrude (Revolve)**: `my_2d_shape.rotate_extrude(angle_degs, segments)`
 
 ```rust
-let square = MyCSG::square(Some(([2.0,2.0], false)));
+let square = CSG::square(Some(([2.0,2.0], false)));
 let prism = square.extrude(5.0);
 
 let revolve_shape = square.rotate_extrude(360.0, 16);
@@ -167,7 +167,7 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 Use cases include storing color, ID, or layer info.
 
 ```rust
-use csgrs::{Polygon, Vertex, CSG};
+use csgrs::{Polygon, Vertex};
 use nalgebra::{Point3, Vector3};
 
 #[derive(Clone)]
@@ -176,7 +176,7 @@ struct MyMetadata {
     label: String,
 }
 
-type MyCSG = CSG<MyMetadata>;
+type CSG = csgrs::CSG<MyMetadata>;
 
 // For a single polygon:
 let mut poly = Polygon::new(
@@ -243,7 +243,7 @@ You can generate 2D text geometry in the XY plane from TTF fonts via [`meshtext`
 
 ```rust
 let font_data = include_bytes!("../fonts/MyFont.ttf");
-let csg_text = MyCSG::text("Hello!", font_data, Some(20.0));
+let csg_text = CSG::text("Hello!", font_data, Some(20.0));
 
 // Then extrude the text to make it 3D:
 let text_3d = csg_text.extrude(1.0);
