@@ -167,12 +167,12 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 Use cases include storing color, ID, or layer info.
 
 ```rust
+use csgrs::{Polygon, Vertex, CSG};
 use nalgebra::{Point3, Vector3};
-use csgrs::{Polygon, Vertex, Plane};
 
 #[derive(Clone)]
 struct MyMetadata {
-    color: (u8,u8,u8),
+    color: (u8, u8, u8),
     label: String,
 }
 
@@ -185,7 +185,10 @@ let mut poly = Polygon::new(
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ],
-    Some(MyMetadata { color: (255,0,0), label: "Triangle".into() }),
+    Some(MyMetadata {
+        color: (255, 0, 0),
+        label: "Triangle".into(),
+    }),
 );
 
 // Retrieve metadata
