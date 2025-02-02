@@ -217,7 +217,7 @@ fn main() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::<()>::cylinder(Some((&[0.0, 0.0, -1.0], &[0.0, 0.0, 1.0], 1.0, 32)));
     // 2) Slice at z=0
-    let cross_section = cyl.cut(None);
+    let cross_section = cyl.slice(None);
     let _ = fs::write(
         "stl/sliced_cylinder.stl",
         cyl.to_stl_ascii("sliced_cylinder"),
