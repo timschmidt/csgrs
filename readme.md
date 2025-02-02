@@ -21,11 +21,11 @@ type CSG = csgrs::CSG<()>;
 let cube = CSG::cube(None);       // 2×2×2 cube centered at origin
 let sphere = CSG::sphere(None);   // sphere of radius=1 at origin
 
-// Compute union:
-let difference_result = cube.difference(&sphere);
+// Subtract one from the other:
+let subtract_result = cube.subtract(&sphere);
 
 // Write the result as an ASCII STL:
-let stl_text = difference_result.to_stl_ascii("cube_minus_sphere");
+let stl_text = subtract_result.to_stl_ascii("cube_minus_sphere");
 std::fs::write("cube_sphere_difference.stl", stl_text).unwrap();
 ```
 
@@ -37,7 +37,7 @@ std::fs::write("cube_sphere_difference.stl", stl_text).unwrap();
   - an optional metadata field (`Option<S>`), and
   - a `Plane` describing the polygon’s orientation in 3D.
 
-`CSG<S>` provides methods for working with 3D shapes, `Polygon<S>` provides analagous methods for working with 2D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)`.  Some 2D functions are re-exported by `CSG<S>` for ease of use.
+`CSG<S>` provides methods for working with 3D shapes, `Polygon<S>` provides methods for working with 2D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)`.  Some 2D functions are re-exported by `CSG<S>` for ease of use.
 
 ### 2D Shapes
 
