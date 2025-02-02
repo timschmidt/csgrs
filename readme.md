@@ -8,14 +8,12 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 
 ```shell
 cargo add csgrs
+cargo add nalgebra
 ```
 
 ## Quick Start Example
 
 ```rust
-use nalgebra::Vector3;
-use csgrs::Axis;
-
 // Alias the library’s generic CSG type with empty metadata:
 type CSG = csgrs::CSG<()>;
 
@@ -24,11 +22,11 @@ let cube = CSG::cube(None);       // 2×2×2 cube centered at origin
 let sphere = CSG::sphere(None);   // sphere of radius=1 at origin
 
 // Compute union:
-let union_result = cube.union(&sphere);
+let difference_result = cube.difference(&sphere);
 
 // Write the result as an ASCII STL:
-let stl_text = union_result.to_stl_ascii("cube_plus_sphere");
-std::fs::write("cube_sphere_union.stl", stl_text).unwrap();
+let stl_text = difference_result.to_stl_ascii("cube_minus_sphere");
+std::fs::write("cube_sphere_difference.stl", stl_text).unwrap();
 ```
 
 ### CSG and Polygon Structures
