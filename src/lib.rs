@@ -9,7 +9,7 @@ use chull::ConvexHullWrapper;
 use parry3d_f64::{
     bounding_volume::Aabb,
     query::{Ray, RayCast},
-    shape::{Triangle, TriMesh, SharedShape},
+    shape::{Shape, SharedShape, TriMesh, Triangle},
     };
 use rapier3d_f64::prelude::*;
 use meshtext::{Glyph, MeshGenerator, MeshText};
