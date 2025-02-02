@@ -2022,7 +2022,9 @@ impl<S: Clone> CSG<S> {
         // 1) Bottom polygons = original polygons
         //    (assuming they are in some plane, e.g. XY). We just clone them.
         for poly in &self.polygons {
-            new_polygons.push(poly.clone());
+            let mut bottom = poly.clone();
+            bottom.flip();
+            new_polygons.push(bottom);
         }
 
         // 2) Top polygons = translate each original polygon by `direction`.
