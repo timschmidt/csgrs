@@ -1231,6 +1231,110 @@ impl<S: Clone> Node<S> {
             self.back.as_mut().unwrap().build(&back);
         }
     }
+    
+    /// Slices this BSP node with `slicing_plane`, returning:
+    /// - All polygons that are coplanar with the plane (within EPSILON),
+    /// - A list of line‐segment intersections (each a [Vertex; 2]) from polygons that span the plane.
+    pub fn slice(
+        &self,
+        slicing_plane: &Plane
+    ) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
+        let all_polys = self.all_polygons();
+
+        let mut coplanar_polygons = Vec::new();
+        let mut intersection_edges = Vec::new();
+
+        for poly in &all_polys {
+            let vcount = poly.vertices.len();
+            if vcount < 2 {
+                continue; // degenerate polygon => skip
+            }
+
+            // Classify each vertex relative to the slicing plane
+            // We store the classification (FRONT, BACK, COPLANAR) in `types`
+            const COPLANAR: i32 = 0;
+            const FRONT: i32 = 1;
+            const BACK: i32 = 2;
+            const SPANNING: i32 = 3;
+
+            let mut polygon_type = 0;
+            let mut types = Vec::with_capacity(vcount);
+
+            for v in &poly.vertices {
+                let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.w;
+                let t = if dist < -EPSILON {
+                    BACK
+                } else if dist > EPSILON {
+                    FRONT
+                } else {
+                    COPLANAR
+                };
+                polygon_type |= t;
+                types.push(t);
+            }
+
+            // Based on the combined classification of its vertices:
+            match polygon_type {
+                COPLANAR => {
+                    // The entire polygon is in the plane, so push it to the coplanar list.
+                    // Depending on normal alignment, it may be “coplanar_front” or “coplanar_back.”
+                    // Usually we don’t care — we just return them as “in the plane.”
+                    coplanar_polygons.push(poly.clone());
+                }
+
+                FRONT | BACK => {
+                    // Entirely on one side => no intersection. We skip it.
+                }
+
+                SPANNING => {
+                    // The polygon crosses the plane. We'll gather the intersection points
+                    // (the new vertices introduced on edges that cross the plane).
+                    let mut crossing_points = Vec::new();
+
+                    for i in 0..vcount {
+                        let j = (i + 1) % vcount;
+                        let ti = types[i];
+                        let tj = types[j];
+                        let vi = &poly.vertices[i];
+                        let vj = &poly.vertices[j];
+
+                        // If this vertex is on the "back" side, and the next vertex is on the
+                        // "front" side (or vice versa), that edge crosses the plane.
+                        // (Also if exactly one is COPLANAR and the other is FRONT or BACK, etc.)
+                        if (ti | tj) == SPANNING {
+                            // The param t at which plane intersects the edge [vi -> vj].
+                            // Avoid dividing by zero:
+                            let denom = slicing_plane.normal.dot(&(vj.pos - vi.pos));
+                            if denom.abs() > EPSILON {
+                                let t = (slicing_plane.w
+                                    - slicing_plane.normal.dot(&vi.pos.coords))
+                                    / denom;
+                                // Interpolate:
+                                let intersect_vert = vi.interpolate(vj, t);
+                                crossing_points.push(intersect_vert);
+                            }
+                        }
+                    }
+
+                    // Typical convex polygons crossing a plane get exactly 2 intersection points.
+                    // Concave polygons might produce 2 or more. We pair them up in consecutive pairs:
+                    // e.g. if crossing_points = [p0, p1, p2, p3], we'll produce 2 edges: [p0,p1], [p2,p3].
+                    // This is one simple heuristic. If you have an odd number, something degenerate happened.
+                    for chunk in crossing_points.chunks_exact(2) {
+                        intersection_edges.push([chunk[0].clone(), chunk[1].clone()]);
+                    }
+                    // If crossing_points.len() was not a multiple of 2, you can handle leftover
+                    // points or flag them as errors, etc. We'll skip that detail here.
+                }
+
+                _ => {
+                    // Shouldn't happen in a typical classification, but we can ignore
+                }
+            }
+        }
+
+        (coplanar_polygons, intersection_edges)
+    }
 }
 
 /// The main CSG solid structure. Contains a list of polygons.
