@@ -2004,32 +2004,61 @@ impl<S: Clone> CSG<S> {
         // 3) Side polygons = For each polygon in `self`, connect its edges
         //    from the original to the corresponding edges in the translated version.
         //
-        //    We'll iterate over each polygon’s vertices. For each edge (v[i], v[i+1]),
-        //    we form a rectangular side quad with (v[i]+direction, v[i+1]+direction).
-        //    That is, a quad [b_i, b_j, t_j, t_i].
+        //    We'll need to extract the edges that form the hull of the extrusion.
+        //    For each of these edges, we'll create a polygon forming the side of
+        //    the extruded solid.
         let bottom_polys = &self.polygons;
-        let top_polys = &top_polygons;
-    
-        for (poly_bottom, poly_top) in bottom_polys.iter().zip(top_polys.iter()) {
-            let vcount = poly_bottom.vertices.len();
-            if vcount < 3 {
-                continue; // skip degenerate or empty polygons
-            }
-            for i in 0..vcount {
-                let j = (i + 1) % vcount; // next index, wrapping around
-                let b_i = &poly_bottom.vertices[i];
-                let b_j = &poly_bottom.vertices[j];
-                let t_i = &poly_top.vertices[i];
-                let t_j = &poly_top.vertices[j];
-    
-                // Build a side quad [b_i, b_j, t_j, t_i].
-                // Then push it as a new polygon.
-                let side_poly = Polygon::new(
-                    vec![b_i.clone(), b_j.clone(), t_j.clone(), t_i.clone()],
-                    None
-                );
-                new_polygons.push(side_poly);
-            }
+
+        // Get all individual edges of all polygons of the pottom polygons
+        let edges_bottom = bottom_polys
+            .iter()
+            .flat_map(|poly| {
+                poly.triangulate()
+                    .iter()
+                    .map(|tri| {
+                        vec![
+                            [tri[0].clone(), tri[1].clone()],
+                            [tri[1].clone(), tri[2].clone()],
+                            [tri[2].clone(), tri[0].clone()],
+                        ]
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .flatten()
+            .collect::<Vec<_>>();
+
+        // Remove all edges that are not part of the hull of the maximum
+        // unified polygon
+        let hull_edges_bottom = edges_bottom
+            .iter()
+            .filter(|edge| {
+                // todo: Use a hash map and look up duplicate edges. This is O(|edges|^2)!
+                !edges_bottom.iter().any(|other_edge| {
+                    edge[1].pos == other_edge[0].pos && edge[0].pos == other_edge[1].pos
+                })
+            })
+            .collect::<Vec<_>>();
+
+        // For all hull edges, create a side polygon that conntects the
+        // bottom and top polygons.
+        for hull_edge_bottom in hull_edges_bottom {
+            // todo: Recompute vertex normals for this polygon
+            let side_poly = Polygon::new(
+                vec![
+                    hull_edge_bottom[0].clone(),
+                    hull_edge_bottom[1].clone(),
+                    Vertex::new(
+                        hull_edge_bottom[1].pos + direction,
+                        hull_edge_bottom[1].normal,
+                    ),
+                    Vertex::new(
+                        hull_edge_bottom[0].pos + direction,
+                        hull_edge_bottom[0].normal,
+                    ),
+                ],
+                None,
+            );
+            new_polygons.push(side_poly);
         }
     
         // Combine into a new CSG
