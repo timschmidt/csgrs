@@ -2130,9 +2130,12 @@ impl<S: Clone> CSG<S> {
             let top = poly.translate(direction);
             bottom.flip();
             
+            // Collect top and bottom polygons for stitching side walls
             bottom_polygons.push(bottom.clone());
-            result_polygons.push(bottom);
             top_polygons.push(top.clone());
+            
+            // Collect top and bottom polygons in result
+            result_polygons.push(bottom);
             result_polygons.push(top);
         }
 
