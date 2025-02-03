@@ -125,7 +125,6 @@ fn union_all_2d<S: Clone>(polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
 }
 
 /// Helper to normalize angles into (-π, π].
-#[inline]
 fn normalize_angle(mut a: f64) -> f64 {
     while a <= -PI {
         a += 2.0 * PI;
@@ -1473,16 +1472,14 @@ impl<S: Clone> CSG<S> {
     /// // Now csg.polygons contains the triangulated version.
     /// ```
     pub fn from_complex_polygons(polys: &[Vec<Vec<f64>>]) -> CSG<S> {
-        // Flatten the input. (The earclip::flatten function returns a tuple:
-        // (flat_vertices, hole_indices, dim). For example, if the input is 2D,
-        // dim will be 2.)
-        let (vertices, hole_indices, dim) = flatten(polys);
-        // Tessellate the flattened polygon using earcut.
-        let indices: Vec<usize> = earcut(&vertices, &hole_indices, dim);
+        // Flatten (as in data, not geometry) the input. If the input is 2D, dim will be 2.
+        let (vertices, indices, dim) = earclip::flatten(polys);
+        // Tessellate the polygon using earcut.
+        let earcut_indices: Vec<usize> = earcut(&vertices, &indices, dim);
 
         let mut new_polygons = Vec::new();
         // Each consecutive triple in the output indices defines a triangle.
-        for tri in indices.chunks_exact(3) {
+        for tri in earcut_indices.chunks_exact(3) {
             let mut tri_vertices = Vec::with_capacity(3);
             for &i in tri {
                 let start = i * dim;
@@ -1495,9 +1492,8 @@ impl<S: Clone> CSG<S> {
                     Point3::new(vertices[start], vertices[start + 1], vertices[start + 2])
                 };
                 // Here we simply assign a default normal pointing up.
-                // (In a more advanced implementation you might compute
-                // the true face normal from the triangle vertices.)
-                let normal = Vector3::new(0.0, 0.0, 1.0);
+                // todo:  compute the true face normal from the triangle vertices.)
+                let normal = Vector3::z();
                 tri_vertices.push(Vertex::new(p, normal));
             }
             // Create a polygon (triangle) with no metadata.
@@ -2120,32 +2116,33 @@ impl<S: Clone> CSG<S> {
     ///   lies in a single plane (e.g. XY). For best results, your polygons’ normals
     ///   should be consistent.
     pub fn extrude_vector(&self, direction: Vector3<f64>) -> CSG<S> {
-        // Collect all new polygons here
-        let mut new_polygons = Vec::new();
+        // Collect our polygons
+        let mut result_polygons = Vec::new();
+        let mut top_polygons = Vec::new();
+        let mut bottom_polygons = Vec::new();
 
-        // 1) Bottom polygons = original polygons
-        //    (assuming they are in some plane, e.g. XY). We just clone them.
-        for poly in &self.polygons {
+        let unioned_polygons = &self.flatten().polygons;
+
+        // Bottom polygons = original polygons
+        // (assuming they are in some plane, e.g. XY). We just clone them.
+        for poly in unioned_polygons {
             let mut bottom = poly.clone();
+            let top = poly.translate(direction);
             bottom.flip();
-            new_polygons.push(bottom);
+            
+            bottom_polygons.push(bottom.clone());
+            result_polygons.push(bottom);
+            top_polygons.push(top.clone());
+            result_polygons.push(top);
         }
 
-        // 2) Top polygons = translate each original polygon by `direction`.
-        //    The orientation of their normals will remain the same unless you decide to flip them.
-        let top_polygons = self.translate(direction).polygons;
-        new_polygons.extend(top_polygons.iter().cloned());
-
-        // 3) Side polygons = For each polygon in `self`, connect its edges
-        //    from the original to the corresponding edges in the translated version.
+        // Side polygons = For each polygon in `self`, connect its edges
+        // from the original to the corresponding edges in the translated version.
         //
-        //    We'll iterate over each polygon’s vertices. For each edge (v[i], v[i+1]),
-        //    we form a rectangular side quad with (v[i]+direction, v[i+1]+direction).
-        //    That is, a quad [b_i, b_j, t_j, t_i].
-        let bottom_polys = &self.polygons;
-        let top_polys = &top_polygons;
-
-        for (poly_bottom, poly_top) in bottom_polys.iter().zip(top_polys.iter()) {
+        // We'll iterate over each polygon’s vertices. For each edge (v[i], v[i+1]),
+        // we form a rectangular side quad with (v[i]+direction, v[i+1]+direction).
+        // That is, a quad [b_i, b_j, t_j, t_i].
+        for (poly_bottom, poly_top) in bottom_polygons.iter().zip(top_polygons.iter()) {
             let vcount = poly_bottom.vertices.len();
             if vcount < 3 {
                 continue; // skip degenerate or empty polygons
@@ -2163,12 +2160,12 @@ impl<S: Clone> CSG<S> {
                     vec![b_i.clone(), b_j.clone(), t_j.clone(), t_i.clone()],
                     None,
                 );
-                new_polygons.push(side_poly);
+                result_polygons.push(side_poly);
             }
         }
 
         // Combine into a new CSG
-        CSG::from_polygons(new_polygons)
+        CSG::from_polygons(result_polygons)
     }
 
     /// Extrudes (or "lofts") a closed 3D volume between two polygons in space.
