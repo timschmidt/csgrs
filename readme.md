@@ -8,14 +8,14 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 
 ```shell
 cargo add csgrs
-cargo add nalgebra
+cargo add nalgebra // provides Points, Vectors, etc. 
 ```
 
 ## Quick Start Example
 
 ```rust
 // Alias the library’s generic CSG type with empty metadata:
-type CSG = csgrs::CSG<()>;
+type CSG = csgrs::csg::CSG<()>;
 
 // Create two shapes:
 let cube = CSG::cube(None);       // 2×2×2 cube centered at origin
@@ -360,7 +360,7 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 - `scale(factor: f64)`
 - `mirror(Axis::X | Axis::Y | Axis::Z)`
 - `transform(&Matrix4<f64>)` for arbitrary affine transforms.
-- `inverse()`
+- `flip()`
 - `convex_hull()`
 - `minkowski_sum(other: Polygon<S>)`
 
@@ -378,6 +378,7 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 
 ## Roadmap / Todo
 - fix up error handling with result types
+- sweep following path
 - convert more for loops to iterators
 - file formats behind a feature flag
 - parry, rapier behind feature flags

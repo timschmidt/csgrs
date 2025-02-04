@@ -1,7 +1,11 @@
-// tests
-
 #[cfg(test)]
 use super::*;
+use crate::enums::Axis;
+use crate::node::Node;
+use crate::vertex::Vertex;
+use crate::plane::Plane;
+use crate::polygon::Polygon;
+use crate::csg::CSG;
 use nalgebra::{Point3, Vector3};
 
 // --------------------------------------------------------
@@ -1652,7 +1656,7 @@ fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::<()>::cylinder(Some((&[0.0, -1.0, 0.0], &[0.0, 1.0, 0.0], 1.0, 32)));
     // 2) Slice at z=0
-    let cross_section = cyl.cut(None);
+    let cross_section = cyl.slice(None);
 
     // For a simple cylinder, the cross-section is typically 1 circle polygon
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
