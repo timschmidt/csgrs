@@ -155,15 +155,48 @@ impl Rational {
         self.denominator == *ONE.deref()
     }
 
-    /// The fractional part of this Rational
+    /// The integer part of this Rational
+    ///
+    /// Non integer rationals will thus be truncated towards zero
     ///
     /// # Example
     ///
     /// ```
     /// use realistic::Rational;
     /// let approx_pi = Rational::fraction(22, 7);
+    /// let three = Rational::new(3);
+    /// assert_eq!(approx_pi.trunc(), three);
+    /// ```
+    pub fn trunc(&self) -> Self {
+        if self.is_integer() {
+            return self.clone();
+        }
+        let n = &self.numerator / &self.denominator;
+        Self {
+            sign: self.sign,
+            numerator: n,
+            denominator: ONE.deref().clone(),
+        }
+    }
+
+    /// The fractional part of this Rational
+    ///
+    /// If the rational was negative, this fraction will also be negative
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use realistic::Rational;
+    /// let approx_pi = Rational::fraction(22, 7);
     /// let a_seventh = Rational::fraction(1, 7);
     /// assert_eq!(approx_pi.fract(), a_seventh);
+    /// ```
+    ///
+    /// ```
+    /// use realistic::Rational;
+    /// let backward = Rational::fraction(-53, 9);
+    /// let fract = Rational::fraction(-8, 9);
+    /// assert_eq!(backward.fract(), fract);
     /// ```
     pub fn fract(&self) -> Self {
         if self.is_integer() {
