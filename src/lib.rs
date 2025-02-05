@@ -9,8 +9,8 @@ use rayon::prelude::*;
 pub mod enums;
 pub mod vertex;
 pub mod plane;
-pub mod node;
 pub mod polygon;
+pub mod bsp;
 pub mod csg;
 
 #[cfg(test)]
