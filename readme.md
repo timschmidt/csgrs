@@ -25,8 +25,8 @@ let sphere = CSG::sphere(None);   // sphere of radius=1 at origin
 let subtract_result = cube.subtract(&sphere);
 
 // Write the result as an ASCII STL:
-let stl_text = subtract_result.to_stl_ascii("cube_minus_sphere");
-std::fs::write("cube_sphere_difference.stl", stl_text).unwrap();
+let stl = subtract_result.to_stl_ascii("cube_minus_sphere");
+std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 ```
 
 ### CSG and Polygon Structures
@@ -165,7 +165,7 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 Use cases include storing color, ID, or layer info.
 
 ```rust
-use csgrs::{polygon::Polygon, vertex::Vertex};
+use csgrs::{Polygon, Vertex};
 use nalgebra::{Point3, Vector3};
 
 #[derive(Clone)]
@@ -252,7 +252,7 @@ let text_3d = csg_text.extrude(1.0);
 `csg.to_trimesh()` returns a `SharedShape` containing a `TriMesh<f64>`.
 
 ```rust
-use csgrs::csg::CSG;
+use csgrs::CSG;
 use rapier3d_f64::prelude::*;
 
 let trimesh_shape = csg_obj.to_trimesh(); // SharedShape with a TriMesh
@@ -265,7 +265,7 @@ let trimesh_shape = csg_obj.to_trimesh(); // SharedShape with a TriMesh
 ```rust
 use nalgebra::Vector3;
 use rapier3d_f64::prelude::*;
-use csgrs::csg::CSG;
+use csgrs::CSG;
 
 let mut rb_set = RigidBodySet::new();
 let mut co_set = ColliderSet::new();
