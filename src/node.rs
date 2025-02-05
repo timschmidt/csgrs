@@ -45,6 +45,7 @@ impl<S: Clone> Node<S> {
 
     /// Recursively remove all polygons in `polygons` that are inside this BSP tree
     pub fn clip_polygons(&self, polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
+        // If this node has no plane (i.e. it’s empty), just return
         if self.plane.is_none() {
             return polygons.to_vec();
         }
@@ -66,6 +67,23 @@ impl<S: Clone> Node<S> {
             );
         }
 
+        // Now decide where to send the coplanar polygons.  If the polygon’s normal
+        // aligns with this node’s plane.normal, treat it as “front,” else treat as “back.”
+        for cp in coplanar_front {
+            if plane.normal.dot(&cp.plane.normal) > 0.0 {
+                front.push(cp);
+            } else {
+                back.push(cp);
+            }
+        }
+        for cp in coplanar_back {
+            if plane.normal.dot(&cp.plane.normal) > 0.0 {
+                front.push(cp);
+            } else {
+                back.push(cp);
+            }
+        }
+
         // Recursively clip the front polygons.
         if let Some(ref f) = self.front {
             front = f.clip_polygons(&front);
@@ -78,13 +96,9 @@ impl<S: Clone> Node<S> {
             back.clear();
         }
 
-        // Now combine everything: include both sets of coplanar pieces plus the front and back parts.
-        let mut result = Vec::new();
-        //result.extend(coplanar_front);
-        //result.extend(coplanar_back);
-        result.extend(front);
-        result.extend(back);
-        result
+        // Now combine front and back
+        front.extend(back);
+        front
     }
 
     /// Remove all polygons in this BSP tree that are inside the other BSP tree
