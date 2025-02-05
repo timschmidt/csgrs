@@ -252,7 +252,7 @@ let text_3d = csg_text.extrude(1.0);
 `csg.to_trimesh()` returns a `SharedShape` containing a `TriMesh<f64>`.
 
 ```rust
-use csgrs::CSG;
+use csgrs::csg::CSG;
 use rapier3d_f64::prelude::*;
 
 let trimesh_shape = csg_obj.to_trimesh(); // SharedShape with a TriMesh
@@ -265,7 +265,7 @@ let trimesh_shape = csg_obj.to_trimesh(); // SharedShape with a TriMesh
 ```rust
 use nalgebra::Vector3;
 use rapier3d_f64::prelude::*;
-use csgrs::CSG;
+use csgrs::csg::CSG;
 
 let mut rb_set = RigidBodySet::new();
 let mut co_set = ColliderSet::new();
