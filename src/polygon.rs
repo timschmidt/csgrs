@@ -1006,7 +1006,6 @@ impl<S: Clone> Polygon<S> {
     }
 
     /// Very basic ring self‐intersection check by naive line–line intersection
-    /// (similar to part of `IsValidOp`).
     fn check_ring_self_intersection(&self) -> Result<(), ValidationError> {
         // We can flatten to 2D or do full 3D line‐segment intersection logic
         // but typically “self” is in the plane, so let's do a quick 2D approach:

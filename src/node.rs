@@ -52,12 +52,14 @@ impl<S: Clone> Node<S> {
         let plane = self.plane.as_ref().unwrap();
         let mut front: Vec<Polygon<S>> = Vec::new();
         let mut back: Vec<Polygon<S>> = Vec::new();
+        let mut cfront: Vec<Polygon<S>> = Vec::new();
+        let mut cback:  Vec<Polygon<S>> = Vec::new();
 
         for poly in polygons {
             plane.split_polygon(
                 poly,
-                &mut Vec::new(), // coplanar_front
-                &mut Vec::new(), // coplanar_back
+                &mut cfront, // coplanar_front
+                &mut cback,  // coplanar_back
                 &mut front,
                 &mut back,
             );
