@@ -52,30 +52,39 @@ impl<S: Clone> Node<S> {
         let plane = self.plane.as_ref().unwrap();
         let mut front: Vec<Polygon<S>> = Vec::new();
         let mut back: Vec<Polygon<S>> = Vec::new();
-        let mut cfront: Vec<Polygon<S>> = Vec::new();
-        let mut cback:  Vec<Polygon<S>> = Vec::new();
+        let mut coplanar_front: Vec<Polygon<S>> = Vec::new();
+        let mut coplanar_back:  Vec<Polygon<S>> = Vec::new();
 
+        // For each polygon, split it by the node's plane.
         for poly in polygons {
             plane.split_polygon(
                 poly,
-                &mut cfront, // coplanar_front
-                &mut cback,  // coplanar_back
+                &mut coplanar_front,
+                &mut coplanar_back,
                 &mut front,
                 &mut back,
             );
         }
 
+        // Recursively clip the front polygons.
         if let Some(ref f) = self.front {
             front = f.clip_polygons(&front);
         }
+        
+        // Recursively clip the back polygons.
         if let Some(ref b) = self.back {
             back = b.clip_polygons(&back);
         } else {
             back.clear();
         }
 
-        front.extend(back);
-        front
+        // Now combine everything: include both sets of coplanar pieces plus the front and back parts.
+        let mut result = Vec::new();
+        //result.extend(coplanar_front);
+        //result.extend(coplanar_back);
+        result.extend(front);
+        result.extend(back);
+        result
     }
 
     /// Remove all polygons in this BSP tree that are inside the other BSP tree
@@ -107,6 +116,7 @@ impl<S: Clone> Node<S> {
             return;
         }
 
+        // Choose the first polygon's plane as the splitting plane if not already set.
         if self.plane.is_none() {
             self.plane = Some(polygons[0].plane.clone());
         }
@@ -115,6 +125,7 @@ impl<S: Clone> Node<S> {
         let mut front: Vec<Polygon<S>> = Vec::new();
         let mut back: Vec<Polygon<S>> = Vec::new();
 
+        // For each polygon, split it relative to the current node's plane.
         for p in polygons {
             let mut coplanar_front = Vec::new();
             let mut coplanar_back = Vec::new();
@@ -131,6 +142,7 @@ impl<S: Clone> Node<S> {
             self.polygons.append(&mut coplanar_back);
         }
 
+        // Recursively build the front subtree.
         if !front.is_empty() {
             if self.front.is_none() {
                 self.front = Some(Box::new(Node::new(vec![])));
@@ -138,6 +150,7 @@ impl<S: Clone> Node<S> {
             self.front.as_mut().unwrap().build(&front);
         }
 
+        // Recursively build the back subtree.
         if !back.is_empty() {
             if self.back.is_none() {
                 self.back = Some(Box::new(Node::new(vec![])));
