@@ -732,6 +732,23 @@ mod tests {
     }
 
     #[test]
+    fn trunc() {
+        let seventy_ninths = Rational::fraction(70, 9);
+        let whole = seventy_ninths.trunc();
+        let frac = seventy_ninths.fract();
+        assert_eq!(whole + frac, seventy_ninths);
+        let shrink = Rational::fraction(-405, 11);
+        let whole = shrink.trunc();
+        let frac = shrink.fract();
+        assert_eq!(whole + frac, shrink);
+        let zero = Rational::zero();
+        let whole = zero.trunc();
+        let frac = zero.fract();
+        assert_eq!(whole, frac);
+        assert_eq!(whole + frac, zero);
+    }
+
+    #[test]
     fn sqrt_trouble() {
         for (n, root, rest) in [
             (1, 1, 1),
