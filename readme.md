@@ -17,7 +17,7 @@ cargo add csgrs
 cargo add nalgebra // provides Points, Vectors, etc. 
 ```
 
-## Quick Start Example
+### Example main.rs
 
 ```rust
 // Alias the library’s generic CSG type with empty metadata:
