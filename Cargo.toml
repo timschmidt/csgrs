@@ -15,11 +15,22 @@ dxf = "0.6.0"
 earclip = "1.1.0"
 meshtext = { version = "0.3.1", features = ["owned"] }
 nalgebra = "0.33"
-parry3d-f64 = "0.18.0"
-rapier3d-f64 = "0.23.0"
+rapier3d-f64 = { version = "0.23.0", optional = true }
+rapier3d = { version = "0.23.0", optional = true }
+parry3d-f64  = { version = "0.18.0", optional = true }
+parry3d  = { version = "0.18.0", optional = true }
 rayon = { version = "1.7", optional = true }
 stl_io = "0.8.3"
 
 [features]
-default = []
+default = ["f64"]
 parallel = ["rayon"]
+f64 = [
+  "rapier3d-f64",
+  "parry3d-f64",
+]
+f32 = [
+  "rapier3d",
+  "parry3d",
+]
+

@@ -1,4 +1,4 @@
-use crate::EPSILON;
+use crate::float_types::{EPSILON, Real};
 use crate::vertex::Vertex;
 use crate::polygon::Polygon;
 use nalgebra::{
@@ -8,13 +8,13 @@ use nalgebra::{
 /// A plane in 3D space defined by a normal and a w-value
 #[derive(Debug, Clone)]
 pub struct Plane {
-    pub normal: Vector3<f64>,
-    pub w: f64,
+    pub normal: Vector3<Real>,
+    pub w: Real,
 }
 
 impl Plane {
     /// Create a plane from three points
-    pub fn from_points(a: &Point3<f64>, b: &Point3<f64>, c: &Point3<f64>) -> Plane {
+    pub fn from_points(a: &Point3<Real>, b: &Point3<Real>, c: &Point3<Real>) -> Plane {
         let n = (b - a).cross(&(c - a)).normalize();
         if n.magnitude() < EPSILON {
             panic!("Degenerate polygon: vertices do not define a plane");
@@ -123,7 +123,7 @@ impl Plane {
     /// - `T`   maps a point on this plane into XY plane (z=0)
     ///   with the plane’s normal going to +Z,
     /// - `T_inv` is the inverse transform, mapping back.
-    pub fn to_xy_transform(&self) -> (Matrix4<f64>, Matrix4<f64>) {
+    pub fn to_xy_transform(&self) -> (Matrix4<Real>, Matrix4<Real>) {
         // Normal
         let n = self.normal;
         let n_len = n.norm();

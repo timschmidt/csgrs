@@ -1,5 +1,5 @@
 #[cfg(test)]
-use super::*;
+use crate::float_types::{Real, EPSILON, FRAC_PI_2};
 use crate::enums::Axis;
 use crate::bsp::Node;
 use crate::vertex::Vertex;
@@ -14,13 +14,13 @@ use nalgebra::{Point3, Vector3};
 
 /// Returns the approximate bounding box `[min_x, min_y, min_z, max_x, max_y, max_z]`
 /// for a set of polygons.
-fn bounding_box(polygons: &[Polygon<()>]) -> [f64; 6] {
-    let mut min_x = f64::MAX;
-    let mut min_y = f64::MAX;
-    let mut min_z = f64::MAX;
-    let mut max_x = f64::MIN;
-    let mut max_y = f64::MIN;
-    let mut max_z = f64::MIN;
+fn bounding_box(polygons: &[Polygon<()>]) -> [Real; 6] {
+    let mut min_x = Real::MAX;
+    let mut min_y = Real::MAX;
+    let mut min_z = Real::MAX;
+    let mut max_x = Real::MIN;
+    let mut max_y = Real::MIN;
+    let mut max_z = Real::MIN;
 
     for poly in polygons {
         for v in &poly.vertices {
@@ -50,7 +50,7 @@ fn bounding_box(polygons: &[Polygon<()>]) -> [f64; 6] {
 }
 
 /// Quick helper to compare floating-point results with an acceptable tolerance.
-fn approx_eq(a: f64, b: f64, eps: f64) -> bool {
+fn approx_eq(a: Real, b: Real, eps: Real) -> bool {
     (a - b).abs() < eps
 }
 
@@ -1068,7 +1068,7 @@ fn test_csg_mass_properties() {
 
 #[test]
 fn test_csg_to_rigid_body() {
-    use rapier3d_f64::prelude::*;
+    use crate::float_types::rapier3d::prelude::*;
     let cube: CSG<()> = CSG::cube(None);
     let mut rb_set = RigidBodySet::new();
     let mut co_set = ColliderSet::new();
@@ -1076,7 +1076,7 @@ fn test_csg_to_rigid_body() {
         &mut rb_set,
         &mut co_set,
         Vector3::new(10.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, std::f64::consts::FRAC_PI_2), // 90 deg around Z
+        Vector3::new(0.0, 0.0, FRAC_PI_2), // 90 deg around Z
         1.0,
     );
     let rb = rb_set.get(handle).unwrap();
@@ -1386,7 +1386,7 @@ fn test_complex_metadata_struct_in_boolean_ops() {
 
 /// Helper function to calculate the signed area of a polygon.
 /// Positive area indicates CCW ordering.
-fn signed_area(polygon: &Polygon<()>) -> f64 {
+fn signed_area(polygon: &Polygon<()>) -> Real {
     let mut area = 0.0;
     let verts = &polygon.vertices;
     for i in 0..verts.len() {
@@ -1471,7 +1471,7 @@ fn test_circle_offset_2d() {
 }
 
 /// Helper to make a simple Polygon in 3D with given vertices.
-fn make_polygon_3d(points: &[[f64; 3]]) -> Polygon<()> {
+fn make_polygon_3d(points: &[[Real; 3]]) -> Polygon<()> {
     let mut verts = Vec::new();
     for p in points {
         let pos = nalgebra::Point3::new(p[0], p[1], p[2]);
@@ -1712,7 +1712,7 @@ fn test_slice_cylinder() {
 
 /// Helper to create a `Polygon` in the XY plane from an array of (x,y) points,
 /// with z=0 and normal=+Z.
-fn polygon_from_xy_points(xy_points: &[[f64; 2]]) -> Polygon<()> {
+fn polygon_from_xy_points(xy_points: &[[Real; 2]]) -> Polygon<()> {
     assert!(
         xy_points.len() >= 3,
         "Need at least 3 points for a polygon."

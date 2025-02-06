@@ -1,4 +1,4 @@
-use crate::EPSILON;
+use crate::float_types::EPSILON;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
 use crate::polygon::Polygon;

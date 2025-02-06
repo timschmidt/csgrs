@@ -414,9 +414,8 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 - support scale and translation along a vector in rotate extrude
 - extruding a line does not currently result in a 2D shape as it has fewer than three points
 - svg import/export
-- fragments (circle, sphere, regularize with rotate_extrude)
+- consider using cavalier_contours::core::traits::Real
 - fill
-- 32bit / 64bit feature
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html

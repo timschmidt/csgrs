@@ -1,4 +1,4 @@
-use std::f64::consts::PI;
+use crate::float_types::{Real, PI};
 use crate::enums::{Axis, ValidationError};
 use crate::vertex::Vertex;
 use crate::plane::Plane;
@@ -13,7 +13,7 @@ use chull::ConvexHullWrapper;
 /// Computes the signed area of a closed 2D polyline via the shoelace formula.
 /// We assume `pline.is_closed() == true` and it has at least 2 vertices.
 /// Returns positive area if CCW, negative if CW. Near-zero => degenerate.
-pub fn pline_area(pline: &Polyline<f64>) -> f64 {
+pub fn pline_area(pline: &Polyline<Real>) -> Real {
     if pline.vertex_count() < 3 {
         return 0.0;
     }
@@ -31,8 +31,8 @@ pub fn pline_area(pline: &Polyline<f64>) -> f64 {
 /// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v` so that
 /// {u, v, n} forms an orthonormal basis. `n` is assumed non‐zero.
 pub fn build_orthonormal_basis(
-    n: nalgebra::Vector3<f64>,
-) -> (nalgebra::Vector3<f64>, nalgebra::Vector3<f64>) {
+    n: nalgebra::Vector3<Real>,
+) -> (nalgebra::Vector3<Real>, nalgebra::Vector3<Real>) {
     // Normalize the given normal
     let n = n.normalize();
 
@@ -97,7 +97,7 @@ pub fn union_all_2d<S: Clone>(polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
 }
 
 /// Helper to normalize angles into (-π, π].
-fn normalize_angle(mut a: f64) -> f64 {
+fn normalize_angle(mut a: Real) -> Real {
     while a <= -PI {
         a += 2.0 * PI;
     }
@@ -109,17 +109,17 @@ fn normalize_angle(mut a: f64) -> f64 {
 
 /// Returns `true` if the line segments p1->p2 and p3->p4 intersect, otherwise `false`.
 fn segments_intersect_2d(
-    p1x: f64, p1y: f64,
-    p2x: f64, p2y: f64,
-    p3x: f64, p3y: f64,
-    p4x: f64, p4y: f64,
+    p1x: Real, p1y: Real,
+    p2x: Real, p2y: Real,
+    p3x: Real, p3y: Real,
+    p4x: Real, p4y: Real,
 ) -> bool {
     // A helper function to get the orientation of the triplet (p, q, r).
     // Returns:
     // 0 -> p, q, r are collinear
     // 1 -> Clockwise
     // 2 -> Counterclockwise
-    fn orientation(px: f64, py: f64, qx: f64, qy: f64, rx: f64, ry: f64) -> i32 {
+    fn orientation(px: Real, py: Real, qx: Real, qy: Real, rx: Real, ry: Real) -> i32 {
         let val = (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
         if val.abs() < 1e-12 {
             0
@@ -131,7 +131,7 @@ fn segments_intersect_2d(
     }
 
     // A helper function to check if point q lies on line segment pr
-    fn on_segment(px: f64, py: f64, qx: f64, qy: f64, rx: f64, ry: f64) -> bool {
+    fn on_segment(px: Real, py: Real, qx: Real, qy: Real, rx: Real, ry: Real) -> bool {
         qx >= px.min(rx) && qx <= px.max(rx) &&
         qy >= py.min(ry) && qy <= py.max(ry)
     }
@@ -173,8 +173,8 @@ fn segments_intersect_2d(
 /// (this is used purely as an initial guess).
 ///
 /// This is a direct port of your snippet’s `centre(p1, p2, p3)`, but
-/// returning a `Point2<f64>` from nalgebra.
-fn naive_circle_center(p1: &Point2<f64>, p2: &Point2<f64>, p3: &Point2<f64>) -> Point2<f64> {
+/// returning a `Point2<Real>` from nalgebra.
+fn naive_circle_center(p1: &Point2<Real>, p2: &Point2<Real>, p3: &Point2<Real>) -> Point2<Real> {
     // Coordinates
     let (x1, y1) = (p1.x, p1.y);
     let (x2, y2) = (p2.x, p2.y);
@@ -214,7 +214,7 @@ fn naive_circle_center(p1: &Point2<f64>, p2: &Point2<f64>, p3: &Point2<f64>) -> 
 
 /// Fit a circle to the points `[pt_c, intermediates..., pt_n]` by adjusting an offset `d` from
 /// the midpoint. This reproduces your “arcfinder” approach in a version that uses nalgebra’s
-/// `Point2<f64>`.
+/// `Point2<Real>`.
 ///
 /// # Returns
 ///
@@ -224,10 +224,10 @@ fn naive_circle_center(p1: &Point2<f64>, p2: &Point2<f64>, p3: &Point2<f64>) -> 
 /// - `cw`: `true` if the arc is clockwise, `false` if ccw,
 /// - `rms`: root‐mean‐square error of the fit.
 pub fn fit_circle_arcfinder(
-    pt_c: &Point2<f64>,
-    pt_n: &Point2<f64>,
-    intermediates: &[Point2<f64>],
-) -> (Point2<f64>, f64, bool, f64) {
+    pt_c: &Point2<Real>,
+    pt_n: &Point2<Real>,
+    intermediates: &[Point2<Real>],
+) -> (Point2<Real>, Real, bool, Real) {
     // 1) Distance between pt_c and pt_n, plus midpoint
     let k = (pt_c - pt_n).norm();
     if k < 1e-14 {
@@ -251,7 +251,7 @@ pub fn fit_circle_arcfinder(
     all_points.push(*pt_n);
 
     // The mismatch function g(d)
-    let g = |d: f64| -> f64 {
+    let g = |d: Real| -> Real {
         let r_desired = (d * d + 0.25 * k * k).sqrt();
         // circle center
         let cx = mid.x + (d / k) * rx;
@@ -268,7 +268,7 @@ pub fn fit_circle_arcfinder(
     };
 
     // derivative dg(d) => we’ll do a small finite difference
-    let dg = |d: f64| -> f64 {
+    let dg = |d: Real| -> Real {
         let h = 1e-6;
         let g_p = g(d + h);
         let g_m = g(d - h);
@@ -314,7 +314,7 @@ pub fn fit_circle_arcfinder(
 
     // sum of squares at d_opt
     let sum_sq = g(d_opt);
-    let n_pts = all_points.len() as f64;
+    let n_pts = all_points.len() as Real;
     let rms = (sum_sq / n_pts).sqrt();
 
     // 5) determine cw vs ccw
@@ -334,13 +334,13 @@ pub fn fit_circle_arcfinder(
 /// any in `intermediates`. This is basically your old “best_arc” logic but now returning
 /// `None` if it fails or `Some((cw, radius, center, rms))` if success.
 fn best_arc_fit(
-    pt_c: Point2<f64>,
-    pt_n: Point2<f64>,
-    intermediates: &[Point2<f64>],
-    rms_limit: f64,
-    angle_limit_degs: f64,
-    _offset_limit: f64,
-) -> Option<(bool, f64, Point2<f64>, f64)> {
+    pt_c: Point2<Real>,
+    pt_n: Point2<Real>,
+    intermediates: &[Point2<Real>],
+    rms_limit: Real,
+    angle_limit_degs: Real,
+    _offset_limit: Real,
+) -> Option<(bool, Real, Point2<Real>, Real)> {
     // 1) Call your circle-fitting routine:
     let (center, radius, cw, rms) = fit_circle_arcfinder(&pt_c, &pt_n, intermediates);
 
@@ -399,7 +399,7 @@ impl<S: Clone> Polygon<S> {
 
     /// Build a new Polygon in 3D from a 2D polyline in *this* polygon’s plane.
     /// i.e. we treat that 2D polyline as lying in the same plane as `self`.
-    pub fn from_2d(&self, polyline: Polyline<f64>) -> Polygon<S> {
+    pub fn from_2d(&self, polyline: Polyline<Real>) -> Polygon<S> {
         let (_to_xy, from_xy) = self.plane.to_xy_transform();
 
         let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
@@ -425,8 +425,8 @@ impl<S: Clone> Polygon<S> {
     }
 
     /// Project this polygon into its own plane’s local XY coordinates,
-    /// producing a 2D cavalier_contours Polyline<f64>.
-    pub fn to_2d(&self) -> Polyline<f64> {
+    /// producing a 2D cavalier_contours Polyline<Real>.
+    pub fn to_2d(&self) -> Polyline<Real> {
         if self.vertices.len() < 2 {
             // Degenerate polygon, return empty polyline
             return Polyline::new();
@@ -450,8 +450,8 @@ impl<S: Clone> Polygon<S> {
     }
 
     /// Project this polygon into its own plane’s local XY coordinates,
-    /// producing a 2D cavalier_contours Polyline<f64>.
-    pub fn to_xy(&self) -> Polyline<f64> {
+    /// producing a 2D cavalier_contours Polyline<Real>.
+    pub fn to_xy(&self) -> Polyline<Real> {
         if self.vertices.len() < 2 {
             // Degenerate polygon, return empty polyline
             return Polyline::new();
@@ -469,7 +469,7 @@ impl<S: Clone> Polygon<S> {
 
     /// Build a new Polygon from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0.
-    pub fn from_xy(polyline: Polyline<f64>) -> Polygon<S> {
+    pub fn from_xy(polyline: Polyline<Real>) -> Polygon<S> {
         if polyline.vertex_count() < 3 {
             // degenerate polygon
         }
@@ -494,7 +494,7 @@ impl<S: Clone> Polygon<S> {
         self.plane.flip();
     }
     
-    fn calculate_new_normal(&self) -> Vector3<f64> {
+    fn calculate_new_normal(&self) -> Vector3<Real> {
         let n = self.vertices.len();
         assert!(n >= 3, "Need at least 3 points to form a polygon.");
         
@@ -601,7 +601,7 @@ impl<S: Clone> Polygon<S> {
         // union_result.pos_plines has the union outlines
         // union_result.neg_plines might be empty for `Or`.
         for outline in union_result.pos_plines {
-            let pl = outline.pline; // a Polyline<f64>
+            let pl = outline.pline; // a Polyline<Real>
             if pl.vertex_count() < 3 {
                 continue; // skip degenerate
             }
@@ -676,7 +676,7 @@ impl<S: Clone> Polygon<S> {
     }
 
     /// Returns a new Polygon translated by t.
-    pub fn translate(&self, t: Vector3<f64>) -> Self {
+    pub fn translate(&self, t: Vector3<Real>) -> Self {
         let new_vertices = self
             .vertices
             .iter()
@@ -694,7 +694,7 @@ impl<S: Clone> Polygon<S> {
     }
 
     /// Applies the affine transform given by mat to all vertices and normals.
-    pub fn transform(&self, mat: &Matrix4<f64>) -> Self {
+    pub fn transform(&self, mat: &Matrix4<Real>) -> Self {
         let new_vertices: Vec<Vertex> = self
             .vertices
             .iter()
@@ -731,7 +731,7 @@ impl<S: Clone> Polygon<S> {
     /// Rotates the polygon by a given angle (radians) about the given axis.
     /// If a center is provided the rotation is performed about that point;
     /// otherwise rotation is about the origin.
-    pub fn rotate(&self, axis: Vector3<f64>, angle: f64, center: Option<Point3<f64>>) -> Self {
+    pub fn rotate(&self, axis: Vector3<Real>, angle: Real, center: Option<Point3<Real>>) -> Self {
         let rotation = Rotation3::from_axis_angle(&Unit::new_normalize(axis), angle);
         let t = if let Some(c) = center {
             // Translate so that c goes to the origin, rotate, then translate back.
@@ -747,7 +747,7 @@ impl<S: Clone> Polygon<S> {
     }
 
     /// Uniformly scales the polygon by the given factor.
-    pub fn scale(&self, factor: f64) -> Self {
+    pub fn scale(&self, factor: Real) -> Self {
         let scaling = Matrix4::new_nonuniform_scaling(&Vector3::new(factor, factor, factor));
         self.transform(&scaling)
     }
@@ -767,7 +767,7 @@ impl<S: Clone> Polygon<S> {
     /// (It projects the vertices to 2D in the polygon’s plane, computes the convex hull, and lifts back.)
     pub fn convex_hull(&self) -> Self {
         let (to_xy, from_xy) = self.plane.to_xy_transform();
-        let pts_2d: Vec<Vec<f64>> = self
+        let pts_2d: Vec<Vec<Real>> = self
             .vertices
             .iter()
             .map(|v| {
@@ -781,8 +781,8 @@ impl<S: Clone> Polygon<S> {
             .iter()
             .map(|p| {
                 // Make sure to tell Rust the type explicitly so that the multiplication produces
-                // a Vector4<f64>.
-                let p4: nalgebra::Vector4<f64> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
+                // a Vector4<Real>.
+                let p4: nalgebra::Vector4<Real> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
                 let p3 = from_xy * p4;
                 Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
             })
@@ -800,7 +800,7 @@ impl<S: Clone> Polygon<S> {
             }
         }
         let (to_xy, from_xy) = self.plane.to_xy_transform();
-        let pts_2d: Vec<Vec<f64>> = sum_pts
+        let pts_2d: Vec<Vec<Real>> = sum_pts
             .iter()
             .map(|p| {
                 let p_hom = p.to_homogeneous();
@@ -815,8 +815,8 @@ impl<S: Clone> Polygon<S> {
             .iter()
             .map(|p| {
                 // Make sure to tell Rust the type explicitly so that the multiplication produces
-                // a Vector4<f64>.
-                let p4: nalgebra::Vector4<f64> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
+                // a Vector4<Real>.
+                let p4: nalgebra::Vector4<Real> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
                 let p3 = from_xy * p4;
                 Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
             })
@@ -825,7 +825,7 @@ impl<S: Clone> Polygon<S> {
     }
 
     /// Attempt to reconstruct arcs of constant radius in the 2D projection of this polygon,
-    /// storing them as bulge arcs in the returned `Polyline<f64>`.
+    /// storing them as bulge arcs in the returned `Polyline<Real>`.
     ///
     /// # Parameters
     /// - `min_match`: minimal number of consecutive edges needed to consider forming an arc
@@ -834,25 +834,25 @@ impl<S: Clone> Polygon<S> {
     /// - `offset_limit`: additional limit used by `arcfinder` for chord offsets, etc.
     ///
     /// # Returns
-    /// A single `Polyline<f64>` with arcs (encoded via bulge) or lines if no arcs found.
+    /// A single `Polyline<Real>` with arcs (encoded via bulge) or lines if no arcs found.
     ///
     pub fn reconstruct_arcs(
         &self,
         min_match: usize,
-        rms_limit: f64,
-        angle_limit_degs: f64,
-        offset_limit: f64,
-    ) -> Polyline<f64> {
-        // 1) Flatten or project to 2D. Suppose `to_2d()` returns a Polyline<f64> with .x, .y, .bulge:
+        rms_limit: Real,
+        angle_limit_degs: Real,
+        offset_limit: Real,
+    ) -> Polyline<Real> {
+        // 1) Flatten or project to 2D. Suppose `to_2d()` returns a Polyline<Real> with .x, .y, .bulge:
         let poly_2d = self.to_2d();
         // If too few vertices, or degenerate
         if poly_2d.vertex_count() < 2 {
             return poly_2d;
         }
 
-        // 2) Collect all points in a Vec<Point2<f64>>
+        // 2) Collect all points in a Vec<Point2<Real>>
         //    If polygon is closed, the polyline might be closed. We can handle it accordingly:
-        let mut all_pts: Vec<Point2<f64>> = Vec::with_capacity(poly_2d.vertex_count());
+        let mut all_pts: Vec<Point2<Real>> = Vec::with_capacity(poly_2d.vertex_count());
         for i in 0..poly_2d.vertex_count() {
             let v = poly_2d.at(i);
             all_pts.push(Point2::new(v.x, v.y));
@@ -875,7 +875,7 @@ impl<S: Clone> Polygon<S> {
             let start_pt = all_pts[i];
             let mut found_arc = false;
             let mut best_j = i + 1;
-            let mut best_arc_data: Option<(bool, f64, Point2<f64>)> = None;
+            let mut best_arc_data: Option<(bool, Real, Point2<Real>)> = None;
 
             let mut j = i + min_match;
             while j < n {
@@ -904,8 +904,8 @@ impl<S: Clone> Polygon<S> {
                 let (cw, _r, c) = best_arc_data.unwrap();
 
                 // compute angle from center => to find bulge
-                let v0 = start_pt - c; // v0 is a Vector2<f64>
-                let v1 = end_pt - c; // v1 is a Vector2<f64>
+                let v0 = start_pt - c; // v0 is a Vector2<Real>
+                let v1 = end_pt - c; // v1 is a Vector2<Real>
                 let ang0 = v0.y.atan2(v0.x);
                 let ang1 = v1.y.atan2(v1.x);
                 let total_sweep = normalize_angle(ang1 - ang0);

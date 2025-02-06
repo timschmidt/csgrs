@@ -339,7 +339,9 @@ dependencies = [
  "earclip",
  "meshtext",
  "nalgebra",
+ "parry3d",
  "parry3d-f64",
+ "rapier3d",
  "rapier3d-f64",
  "rayon",
  "stl_io",
@@ -945,6 +947,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "parry3d"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ecb572cea5c76b06bc744aaefdbb9e6ea9e5695f50f79c0227bddecd6ec925a4"
+dependencies = [
+ "approx",
+ "arrayvec",
+ "bitflags 2.7.0",
+ "downcast-rs",
+ "either",
+ "ena",
+ "log",
+ "nalgebra",
+ "num-derive",
+ "num-traits 0.2.19",
+ "ordered-float",
+ "rstar",
+ "rustc-hash",
+ "simba",
+ "slab",
+ "smallvec",
+ "spade",
+ "thiserror",
+]
+
+[[package]]
 name = "parry3d-f64"
 version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1084,6 +1112,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "rapier3d"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57a93155032849cf4ae33481c60c8d1fd2a8ded14553e10539aaf1d401b65ecc"
+dependencies = [
+ "approx",
+ "arrayvec",
+ "bit-vec",
+ "bitflags 2.7.0",
+ "crossbeam",
+ "downcast-rs",
+ "log",
+ "nalgebra",
+ "num-derive",
+ "num-traits 0.2.19",
+ "ordered-float",
+ "parry3d",
+ "profiling",
+ "rustc-hash",
+ "simba",
+ "thiserror",
 ]
 
 [[package]]

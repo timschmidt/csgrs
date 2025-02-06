@@ -1,16 +1,17 @@
 use nalgebra::{
     Point3, Vector3,
 };
+use crate::float_types::Real;
 
 /// A vertex of a polygon, holding position and normal.
 #[derive(Debug, Clone)]
 pub struct Vertex {
-    pub pos: Point3<f64>,
-    pub normal: Vector3<f64>,
+    pub pos: Point3<Real>,
+    pub normal: Vector3<Real>,
 }
 
 impl Vertex {
-    pub fn new(pos: Point3<f64>, normal: Vector3<f64>) -> Self {
+    pub fn new(pos: Point3<Real>, normal: Vector3<Real>) -> Self {
         Vertex { pos, normal }
     }
 
@@ -20,7 +21,7 @@ impl Vertex {
     }
 
     /// Linearly interpolate between `self` and `other` by parameter `t`.
-    pub fn interpolate(&self, other: &Vertex, t: f64) -> Vertex {
+    pub fn interpolate(&self, other: &Vertex, t: Real) -> Vertex {
         // For positions (Point3): p(t) = p0 + t * (p1 - p0)
         let new_pos = self.pos + (other.pos - self.pos) * t;
 
