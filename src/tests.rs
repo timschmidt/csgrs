@@ -997,24 +997,7 @@ fn test_csg_vertices() {
 }
 
 #[test]
-fn test_csg_grow_and_shrink() {
-    let sq: CSG<()> = CSG::square(Some(([1.0, 1.0], true))); // center-based square
-                                                             // Grow by 0.5
-    let grown = sq.grow(0.5);
-    // bounding box should be bigger
-    let bb_sq = sq.bounding_box();
-    let bb_gr = grown.bounding_box();
-    assert!(bb_gr.mins.x < bb_sq.mins.x - 0.1);
-
-    // Similarly test shrink
-    let shr = sq.shrink(0.5);
-    let bb_sh = shr.bounding_box();
-    // bounding box should be smaller
-    assert!(bb_sh.mins.x > bb_sq.mins.x - 0.1);
-}
-
-#[test]
-fn test_csg_grow_2d_and_shrink_2d() {
+fn test_csg_offset_2d() {
     let square: CSG<()> = CSG::square(Some(([2.0, 2.0], true)));
     let grown = square.offset_2d(0.5);
     let shrunk = square.offset_2d(-0.5);

@@ -1016,47 +1016,6 @@ impl<S: Clone> CSG<S> {
             .collect()
     }
 
-    /// Approximate growing (outward offset) of the shape by a given distance (3D).
-    /// This method unions translated copies of the shape along a sphere.
-    pub fn grow(&self, distance: Real) -> CSG<S> {
-        let resolution = 32;
-        let sphere: CSG<S> = CSG::sphere(Some((
-            &[0.0, 0.0, 0.0],
-            distance,
-            resolution,
-            resolution / 2,
-        )));
-        let sphere_vertices = sphere.vertices();
-        let mut result = CSG::new();
-
-        // Union the shape translated by each vertex of the sphere.
-        for v in sphere_vertices {
-            result = result.union(&self.translate(v.pos.coords));
-        }
-        result
-    }
-
-    /// Approximate shrinking (inward offset) of the shape by a given distance (3D).
-    /// This method unions translated copies of the complement of the shape along a sphere,
-    /// then inverts the result.
-    pub fn shrink(&self, distance: Real) -> CSG<S> {
-        let resolution = 32;
-        let sphere: CSG<S> = CSG::sphere(Some((
-            &[0.0, 0.0, 0.0],
-            distance,
-            resolution,
-            resolution / 2,
-        )));
-        let sphere_vertices = sphere.vertices();
-        let complement = self.inverse();
-        let mut result = CSG::new();
-
-        for v in sphere_vertices {
-            result = result.union(&complement.translate(v.pos.coords));
-        }
-        result.inverse()
-    }
-
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
     /// for each Polygon we convert to a cavalier_contours Polyline<Real> and call parallel_offset
     pub fn offset_2d(&self, distance: Real) -> CSG<S> {
