@@ -6,9 +6,13 @@ This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.
 
 ![Example CSG output](docs/csg.png)
 
-## Installation
+## Getting started
+
+Install the [Rust](https://www.rust-lang.org/) language tools from [rustup.rs](https://rustup.rs/).
 
 ```shell
+cargo new my_cad_project
+cd my_cad_project
 cargo add csgrs
 cargo add nalgebra // provides Points, Vectors, etc. 
 ```
