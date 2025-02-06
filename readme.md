@@ -4,6 +4,8 @@ A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean op
 
 This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`earclip`](https://crates.io/crates/earclip) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust mesh and line processing, be reasonably performant on a wide variety of targets, and provide an extensible, type-safe API.
 
+![Example CSG output](docs/csg.png)
+
 ## Installation
 
 ```shell
@@ -399,6 +401,8 @@ The helper `pline_area` function (shown in the code) computes the signed area of
   - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - https://crates.io/crates/contour_tracing
 - https://github.com/PsichiX/density-mesh
+- evaluate https://github.com/MIERUNE/earcut-rs vs earclip
+- screw threads
 - implement 2d offsetting with these for testing against cavalier_contours
   - https://github.com/Akirami/polygon-offsetting
   - https://github.com/anlumo/offset_polygon
@@ -423,7 +427,7 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 
 ## Todo maybe
 - implement constant radius arc support in 2d using cavalier_contours, interpolate/tessellate in from_polygons
-- extend Polygon to allow edges to store arc parameters and bulge like cavalier_contours and update split_polygon to handle line/arc intersections.
+- extend Polygon to allow edges to store bulge like cavalier_contours and update split_polygon to handle line/arc intersections.
 
 ---
 
