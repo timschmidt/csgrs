@@ -1,7 +1,7 @@
 #[cfg(test)]
 use super::*;
 use crate::enums::Axis;
-use crate::node::Node;
+use crate::bsp::Node;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
 use crate::polygon::Polygon;

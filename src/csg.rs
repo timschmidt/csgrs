@@ -360,9 +360,9 @@ impl<S: Clone> CSG<S> {
         CSG::from_polygons(polygons)
     }
 
-    /// Construct a sphere with optional center, radius, slices, stacks
+    /// Construct a sphere with optional center, radius, segments, stacks
     pub fn sphere(options: Option<(&[f64; 3], f64, usize, usize)>) -> CSG<S> {
-        let (center, radius, slices, stacks) = match options {
+        let (center, radius, segments, stacks) = match options {
             Some((c, r, sl, st)) => (*c, r, sl, st),
             None => ([0.0, 0.0, 0.0], 1.0, 16, 8),
         };
@@ -370,7 +370,7 @@ impl<S: Clone> CSG<S> {
         let c = Vector3::new(center[0], center[1], center[2]);
         let mut polygons = Vec::new();
 
-        for i in 0..slices {
+        for i in 0..segments {
             for j in 0..stacks {
                 let mut vertices = Vec::new();
 
@@ -387,8 +387,8 @@ impl<S: Clone> CSG<S> {
                     )
                 };
 
-                let t0 = i as f64 / slices as f64;
-                let t1 = (i + 1) as f64 / slices as f64;
+                let t0 = i as f64 / segments as f64;
+                let t1 = (i + 1) as f64 / segments as f64;
                 let p0 = j as f64 / stacks as f64;
                 let p1 = (j + 1) as f64 / stacks as f64;
 
@@ -414,12 +414,9 @@ impl<S: Clone> CSG<S> {
     }
 
     /// Construct a cylinder whose centerline goes from `start` to `end`,
-    /// with a circular cross-section of given `radius`. We first build a
-    /// 2D circle in the XY plane, then extrude two copies of it in the Z
-    /// direction (via `extrude_between`), and finally rotate/translate
-    /// so that the cylinder aligns with `start -> end`.
+    /// with a circular cross-section of given `radius`. 
     pub fn cylinder(options: Option<(&[f64; 3], &[f64; 3], f64, usize)>) -> CSG<S> {
-        let (start, end, radius, slices) = match options {
+        let (start, end, radius, segments) = match options {
             Some((s, e, r, sl)) => (*s, *e, r, sl),
             None => ([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16),
         };
@@ -453,9 +450,9 @@ impl<S: Clone> CSG<S> {
             Vertex::new(Point3::from(pos), normal)
         };
 
-        for i in 0..slices {
-            let t0 = i as f64 / slices as f64;
-            let t1 = (i + 1) as f64 / slices as f64;
+        for i in 0..segments {
+            let t0 = i as f64 / segments as f64;
+            let t1 = (i + 1) as f64 / segments as f64;
 
             // bottom cap
             polygons.push(Polygon::new(
