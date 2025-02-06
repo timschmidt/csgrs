@@ -336,16 +336,7 @@ impl Computable {
     /// assert!((ToBigInt::to_bigint(&25).unwrap() ..= ToBigInt::to_bigint(&26).unwrap()).contains(&pi.approx(-3)));
     /// ```
     pub fn approx(&self, p: Precision) -> BigInt {
-        // Check precision is OK?
-
-        if let Cache::Valid((cache_prec, cache_appr)) = self.cache.clone().into_inner() {
-            if p >= cache_prec {
-                return scale(cache_appr, cache_prec - p);
-            }
-        }
-        let result = self.internal.approximate(&self.signal, p);
-        self.cache.replace(Cache::Valid((p, result.clone())));
-        result
+        self.approx_signal(&self.signal, p)
     }
 
     /// As above but with a specified signal
