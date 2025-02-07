@@ -40,6 +40,7 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 - **`CSG<S>`** is the main type. It stores a list of **polygons** (`Vec<Polygon<S>>`).
 - **`Polygon<S>`** holds:
   - a `Vec<Vertex>` (positions + normals),
+  - a `bool` indicating whether the polyline is open or closed,
   - an optional metadata field (`Option<S>`), and
   - a `Plane` describing the polygon’s orientation in 3D.
 
