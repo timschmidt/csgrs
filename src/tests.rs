@@ -78,7 +78,7 @@ fn test_polygon_construction() {
     let v2 = Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::y());
     let v3 = Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::y());
 
-    let poly: Polygon<()> = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], None);
+    let poly: Polygon<()> = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], false, None);
     assert_eq!(poly.vertices.len(), 3);
     // Plane should be defined by these three points. We expect a normal near ±Y.
     assert!(
@@ -111,18 +111,6 @@ fn test_to_stl_ascii() {
 // --------------------------------------------------------
 
 #[test]
-#[should_panic(expected = "Polygon::new requires at least 3 vertices")]
-fn test_polygon_creation_with_fewer_than_three_vertices() {
-    let vertices = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0)),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0)),
-    ];
-
-    // This should panic due to insufficient vertices
-    let _polygon: Polygon<()> = Polygon::new(vertices, None);
-}
-
-#[test]
 fn test_degenerate_polygon_after_clipping() {
     let vertices = vec![
         Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
@@ -130,7 +118,7 @@ fn test_degenerate_polygon_after_clipping() {
         Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices.clone(), None);
+    let polygon: Polygon<()> = Polygon::new(vertices.clone(), false, None);
     let plane = Plane {
         normal: Vector3::new(0.0, 0.0, 0.0),
         w: 0.0,
@@ -167,7 +155,7 @@ fn test_valid_polygon_clipping() {
         Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices, None);
+    let polygon: Polygon<()> = Polygon::new(vertices, false, None);
 
     let plane = Plane {
         normal: Vector3::new(0.0, -1.0, 0.0),
@@ -195,16 +183,6 @@ fn test_valid_polygon_clipping() {
 
     assert!(!front.is_empty(), "Front should not be empty");
     assert!(!back.is_empty(), "Back should not be empty");
-}
-
-#[test]
-#[should_panic(expected = "Polygon::new requires at least 3 vertices")]
-fn test_polygon_with_insufficient_vertices() {
-    let vertices = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0)),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0)),
-    ];
-    let _polygon: Polygon<()> = Polygon::new(vertices, None); // Should panic
 }
 
 // ------------------------------------------------------------
@@ -274,6 +252,7 @@ fn test_plane_split_polygon() {
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(-1.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         None,
     );
 
@@ -316,7 +295,7 @@ fn test_polygon_new() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly: Polygon<()> = Polygon::new(vertices.clone(), None);
+    let poly: Polygon<()> = Polygon::new(vertices.clone(), false, None);
     assert_eq!(poly.vertices.len(), 3);
     assert_eq!(poly.metadata, None);
     // Plane normal should be +Z for the above points
@@ -333,6 +312,7 @@ fn test_polygon_flip() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         None,
     );
     let plane_normal_before = poly.plane.normal;
@@ -366,6 +346,7 @@ fn test_polygon_triangulate() {
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         None,
     );
     let triangles = poly.triangulate();
@@ -386,6 +367,7 @@ fn test_polygon_subdivide_triangles() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         None,
     );
     let subs = poly.subdivide_triangles(1);
@@ -405,6 +387,7 @@ fn test_polygon_recalc_plane_and_normals() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::zeros()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::zeros()),
         ],
+        false,
         None,
     );
     poly.recalc_plane_and_normals();
@@ -428,6 +411,7 @@ fn test_node_new_and_build() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         None,
     );
     let node: Node<()> = Node::new(vec![p.clone()]);
@@ -446,6 +430,7 @@ fn test_node_invert() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         None,
     );
     let mut node: Node<()> = Node::new(vec![p.clone()]);
@@ -499,6 +484,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         None,
     );
     let poly_above: Polygon<()> = Polygon::new(
@@ -507,6 +493,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::z()),
         ],
+        false,
         None,
     );
     let poly_below: Polygon<()> = Polygon::new(
@@ -515,6 +502,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, -1.0), Vector3::z()),
         ],
+        false,
         None,
     );
 
@@ -532,6 +520,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(2.0, -1.0, 0.5), Vector3::z()),
             Vertex::new(Point3::new(-1.0, 2.0, 0.5), Vector3::z()),
         ],
+        false,
         None,
     );
     let clipped = node.clip_polygons(&[crossing_poly.clone()]);
@@ -550,6 +539,7 @@ fn test_node_clip_to() {
             Vertex::new(Point3::new(0.5, -0.5, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 0.5, 0.0), Vector3::z()),
         ],
+        false,
         None,
     );
     let mut node_a: Node<()> = Node::new(vec![poly.clone()]);
@@ -561,6 +551,7 @@ fn test_node_clip_to() {
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(-1.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         None,
     );
     let node_b: Node<()> = Node::new(vec![big_poly]);
@@ -579,6 +570,7 @@ fn test_node_all_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         None,
     );
     let poly2: Polygon<()> = Polygon::new(
@@ -587,6 +579,7 @@ fn test_node_all_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::z()),
         ],
+        false,
         None,
     );
 
@@ -607,6 +600,7 @@ fn test_csg_from_polygons_and_to_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         None,
     );
     let csg: CSG<()> = CSG::from_polygons(vec![poly.clone()]);
@@ -1107,7 +1101,7 @@ fn test_polygon_metadata_string() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let mut poly = Polygon::new(verts, Some("triangle".to_string()));
+    let mut poly = Polygon::new(verts, false, Some("triangle".to_string()));
 
     // Check getter
     assert_eq!(poly.metadata(), Some(&"triangle".to_string()));
@@ -1131,7 +1125,7 @@ fn test_polygon_metadata_integer() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly = Polygon::new(verts, Some(42u32));
+    let poly = Polygon::new(verts, false, Some(42u32));
 
     // Confirm data
     assert_eq!(poly.metadata(), Some(&42));
@@ -1149,7 +1143,7 @@ fn test_polygon_metadata_custom_struct() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly = Polygon::new(verts, Some(my_data.clone()));
+    let poly = Polygon::new(verts, false, Some(my_data.clone()));
 
     assert_eq!(poly.metadata(), Some(&my_data));
 }
@@ -1163,6 +1157,7 @@ fn test_csg_construction_with_metadata() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         Some("PolyA".to_string()),
     );
     let poly_b = Polygon::new(
@@ -1171,6 +1166,7 @@ fn test_csg_construction_with_metadata() {
             Vertex::new(Point3::new(3.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(3.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         Some("PolyB".to_string()),
     );
     let csg = CSG::from_polygons(vec![poly_a.clone(), poly_b.clone()]);
@@ -1305,6 +1301,7 @@ fn test_subdivide_metadata() {
             Vertex::new(Point3::new(2.0, 2.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 2.0, 0.0), Vector3::z()),
         ],
+        false,
         Some("LargeQuad".to_string()),
     );
     let csg = CSG::from_polygons(vec![poly]);
@@ -1326,6 +1323,7 @@ fn test_transform_metadata() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
+        false,
         Some("Tri".to_string()),
     );
     let csg = CSG::from_polygons(vec![poly]);
@@ -1462,7 +1460,7 @@ fn make_polygon_3d(points: &[[Real; 3]]) -> Polygon<()> {
         let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
         verts.push(Vertex::new(pos, normal));
     }
-    Polygon::new(verts, None)
+    Polygon::new(verts, false, None)
 }
 
 #[test]
@@ -1707,7 +1705,7 @@ fn polygon_from_xy_points(xy_points: &[[Real; 2]]) -> Polygon<()> {
         .map(|&[x, y]| Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal))
         .collect();
 
-    Polygon::new(vertices, None)
+    Polygon::new(vertices, false, None)
 }
 
 /// Test a simple case of `flatten_and_union` with a single square in the XY plane.
@@ -1794,6 +1792,7 @@ fn test_flatten_and_union_near_xy_plane() {
             Vertex::new(nalgebra::Point3::new(1.0, 1.0, 1e-6), normal),
             Vertex::new(nalgebra::Point3::new(0.0, 1.0, 1e-6), normal),
         ],
+        false,
         None,
     );
 

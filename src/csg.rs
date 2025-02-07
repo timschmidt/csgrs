@@ -119,7 +119,7 @@ impl<S: Clone> CSG<S> {
                         plane_normal,
                     ));
                 }
-                all_polygons.push(Polygon::new(poly_verts, None));
+                all_polygons.push(Polygon::new(poly_verts, false, None)); // todo: handle open polylines here
             }
         }
 
@@ -185,7 +185,7 @@ impl<S: Clone> CSG<S> {
                 tri_vertices.push(Vertex::new(p, normal));
             }
             // Create a polygon (triangle) with no metadata.
-            new_polygons.push(Polygon::new(tri_vertices, None));
+            new_polygons.push(Polygon::new(tri_vertices, false, None));
         }
         CSG::from_polygons(new_polygons)
     }
@@ -279,7 +279,7 @@ impl<S: Clone> CSG<S> {
             Vertex::new(Point3::new(x1, y1, 0.0), normal),
             Vertex::new(Point3::new(x0, y1, 0.0), normal),
         ];
-        CSG::from_polygons(vec![Polygon::new(vertices, None)])
+        CSG::from_polygons(vec![Polygon::new(vertices, false, None)])
     }
 
     /// Creates a 2D circle in the XY plane.
@@ -299,7 +299,7 @@ impl<S: Clone> CSG<S> {
             verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
 
-        CSG::from_polygons(vec![Polygon::new(verts, None)])
+        CSG::from_polygons(vec![Polygon::new(verts, false, None)])
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -313,13 +313,15 @@ impl<S: Clone> CSG<S> {
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     /// let poly2d = CSG::polygon_2d(&pts);
     pub fn polygon_2d(points: &[[Real; 2]]) -> CSG<S> {
+        // todo: return error
         assert!(points.len() >= 3, "polygon_2d requires at least 3 points");
+
         let normal = Vector3::new(0.0, 0.0, 1.0);
         let mut verts = Vec::with_capacity(points.len());
         for p in points {
             verts.push(Vertex::new(Point3::new(p[0], p[1], 0.0), normal));
         }
-        CSG::from_polygons(vec![Polygon::new(verts, None)])
+        CSG::from_polygons(vec![Polygon::new(verts, false, None)])
     }
 
     /// Construct an axis-aligned cube by creating a 2D square and then
@@ -353,7 +355,7 @@ impl<S: Clone> CSG<S> {
                 let vz = c.z + r.z * (((i & 4) >> 2) as Real * 2.0 - 1.0);
                 verts.push(Vertex::new(Point3::new(vx, vy, vz), n));
             }
-            polygons.push(Polygon::new(verts, None));
+            polygons.push(Polygon::new(verts, false, None));
         }
 
         CSG::from_polygons(polygons)
@@ -405,7 +407,7 @@ impl<S: Clone> CSG<S> {
                 }
                 vertices.push(vertex(theta0, phi1));
 
-                polygons.push(Polygon::new(vertices, None));
+                polygons.push(Polygon::new(vertices, false, None));
             }
         }
 
@@ -456,6 +458,7 @@ impl<S: Clone> CSG<S> {
             // bottom cap
             polygons.push(Polygon::new(
                 vec![start_v.clone(), point(0.0, t0, -1.0), point(0.0, t1, -1.0)],
+                false,
                 None,
             ));
 
@@ -467,12 +470,14 @@ impl<S: Clone> CSG<S> {
                     point(1.0, t0, 0.0),
                     point(1.0, t1, 0.0),
                 ],
+                false,
                 None,
             ));
 
             // top cap
             polygons.push(Polygon::new(
                 vec![end_v.clone(), point(1.0, t1, 1.0), point(1.0, t0, 1.0)],
+                false,
                 None,
             ));
         }
@@ -537,7 +542,7 @@ impl<S: Clone> CSG<S> {
             }
 
             // Build the polygon (plane is auto-computed from first 3 vertices).
-            let mut poly = Polygon::new(face_vertices, None);
+            let mut poly = Polygon::new(face_vertices, false, None);
 
             // Optionally, set each vertex normal to match the polygon’s plane normal,
             // so that shading in many 3D viewers looks correct.
@@ -645,7 +650,7 @@ impl<S: Clone> CSG<S> {
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
-            polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
+            polygons.push(Polygon::new(vec![vv0, vv1, vv2], false, None));
         }
 
         CSG::from_polygons(polygons)
@@ -695,7 +700,7 @@ impl<S: Clone> CSG<S> {
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
-            polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
+            polygons.push(Polygon::new(vec![vv0, vv1, vv2], false, None));
         }
 
         CSG::from_polygons(polygons)
@@ -717,6 +722,7 @@ impl<S: Clone> CSG<S> {
             for tri in sub_tris {
                 new_polygons.push(Polygon::new(
                     vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
+                    false,
                     poly.metadata.clone(),
                 ));
             }
@@ -800,14 +806,14 @@ impl<S: Clone> CSG<S> {
     /// - The shape is assumed to be “2D” in the sense that each polygon typically
     ///   lies in a single plane (e.g. XY). For best results, your polygons’ normals
     ///   should be consistent.
-    pub fn extrude_vector(&self, direction: Vector3<Real>) -> CSG<S> {
+    pub fn extrude_vector(&self, direction: Vector3<Real>) -> CSG<S> {    
         // Collect our polygons
         let mut result_polygons = Vec::new();
         let mut top_polygons = Vec::new();
         let mut bottom_polygons = Vec::new();
 
         //let unioned_polygons = &self.flatten().polygons;
-        let unioned_polygons = &self.polygons;
+        let unioned_polygons = &self.polygons; // todo
 
         // Bottom polygons = original polygons
         // (assuming they are in some plane, e.g. XY). We just clone them.
@@ -848,6 +854,7 @@ impl<S: Clone> CSG<S> {
                 // Then push it as a new polygon.
                 let side_poly = Polygon::new(
                     vec![b_i.clone(), b_j.clone(), t_j.clone(), t_i.clone()],
+                    false,
                     None,
                 );
                 result_polygons.push(side_poly);
@@ -908,6 +915,7 @@ impl<S: Clone> CSG<S> {
                     t_j.clone(), // top[i+1]
                     t_i.clone(), // top[i]
                 ],
+                false,
                 None, // or carry over some metadata if you wish
             );
             polygons.push(side_poly);
@@ -987,6 +995,53 @@ impl<S: Clone> CSG<S> {
         // Gather everything into a new CSG
         CSG::from_polygons(result_polygons) // todo: figure out why rotate_extrude results in inverted solids
     }
+    
+    /// Build a CSG by extruding a CavalierContours `Polyline` (open) along `direction`.
+    /// This is similar to “extrude_vector” in the 2D case, but here we treat
+    /// the polyline as purely 1D—no caps, just side walls.
+    pub fn extrude_polyline(poly: &Polyline<Real>, direction: Vector3<Real>) -> CSG<S> {
+        if poly.vertex_count() < 2 {
+            return CSG::new();
+        }
+
+        let mut polygons = Vec::new();
+
+        // Construct bottom + top, then side quads
+        let mut bottom_verts = Vec::new();
+        let mut top_verts = Vec::new();
+
+        for i in 0..poly.vertex_count() {
+            let v = poly.at(i);
+            bottom_verts.push( Vertex::new(
+                Point3::new(v.x, v.y, 0.0),
+                Vector3::z()
+            ));
+            top_verts.push( Vertex::new(
+                Point3::new(v.x + direction.x, v.y + direction.y, direction.z),
+                Vector3::z()
+            ));
+        }
+
+        // Build side polygons
+        for i in 0..(poly.vertex_count() - 1) {
+            let b_i = bottom_verts[i].clone();
+            let b_j = bottom_verts[i+1].clone();
+            let mut t_i = b_i.clone();
+            let mut t_j = b_j.clone();
+            t_i.pos += direction;
+            t_j.pos += direction;
+
+            // side quad
+            polygons.push( Polygon::new(
+                vec![b_i, b_j, t_j.clone(), t_i.clone()],
+                false,
+                None
+            ));
+        }
+
+        CSG::from_polygons(polygons)
+    }
+
 
     /// Returns a `parry3d::bounding_volume::Aabb`.
     pub fn bounding_box(&self) -> Aabb {
@@ -1128,6 +1183,7 @@ impl<S: Clone> CSG<S> {
                     Vertex::new(Point3::new(px2, py2, pz2), normal),
                     Vertex::new(Point3::new(px3, py3, pz3), normal),
                 ],
+                false,
                 None,
             ));
         }
@@ -1240,7 +1296,7 @@ impl<S: Clone> CSG<S> {
                 }
 
                 // Create a polygon from these 3 vertices. We preserve the metadata:
-                let mut new_poly = Polygon::new(tri_vertices, poly.metadata.clone());
+                let mut new_poly = Polygon::new(tri_vertices, false, poly.metadata.clone());
 
                 // Recompute the plane/normal to ensure correct orientation/shading:
                 new_poly.recalc_plane_and_normals();
@@ -1541,7 +1597,7 @@ impl<S: Clone> CSG<S> {
                     ),
                 ),
             ];
-            polygons.push(Polygon::new(vertices, None));
+            polygons.push(Polygon::new(vertices, false, None));
         }
 
         Ok(CSG::from_polygons(polygons))
@@ -1586,7 +1642,7 @@ impl<S: Clone> CSG<S> {
                         }
                         // Create a polygon from the polyline vertices
                         if verts.len() >= 3 {
-                            polygons.push(Polygon::new(verts, None));
+                            polygons.push(Polygon::new(verts, false, None));
                         }
                     }
                 }
@@ -1608,7 +1664,7 @@ impl<S: Clone> CSG<S> {
                     }
 
                     // Create a polygon from the approximated circle vertices
-                    polygons.push(Polygon::new(verts, None));
+                    polygons.push(Polygon::new(verts, false, None));
                 }
                 // Handle other entity types as needed (e.g., Arc, Spline)
                 _ => {

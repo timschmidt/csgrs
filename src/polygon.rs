@@ -377,21 +377,22 @@ fn best_arc_fit(
 #[derive(Debug, Clone)]
 pub struct Polygon<S: Clone> {
     pub vertices: Vec<Vertex>,
+    pub open: bool,
     pub metadata: Option<S>,
     pub plane: Plane,
 }
 
 impl<S: Clone> Polygon<S> {
     /// Create a polygon from vertices
-    pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
-        assert!(
-            vertices.len() >= 3,
-            "Polygon::new requires at least 3 vertices"
-        );
+    pub fn new(vertices: Vec<Vertex>, mut open: bool, metadata: Option<S>) -> Self {
+        if vertices.len() < 3 {
+            open = true;
+        };
 
         let plane = Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos);
         Polygon {
             vertices,
+            open,
             metadata,
             plane,
         }
@@ -419,7 +420,7 @@ impl<S: Clone> Polygon<S> {
                 self.plane.normal, // We will recalc plane anyway
             ));
         }
-        let mut poly3d = Polygon::new(poly_verts, self.metadata.clone());
+        let mut poly3d = Polygon::new(poly_verts, self.open.clone(), self.metadata.clone());
         poly3d.recalc_plane_and_normals();
         poly3d
     }
@@ -483,7 +484,7 @@ impl<S: Clone> Polygon<S> {
                 plane_normal,
             ));
         }
-        return Polygon::new(poly_verts, None);
+        return Polygon::new(poly_verts, false, None); // todo: handle open polylines here
     }
 
     pub fn flip(&mut self) {
@@ -688,6 +689,7 @@ impl<S: Clone> Polygon<S> {
         };
         Self {
             vertices: new_vertices,
+            open: self.open.clone(),
             metadata: self.metadata.clone(),
             plane: new_plane,
         }
@@ -723,6 +725,7 @@ impl<S: Clone> Polygon<S> {
         };
         Self {
             vertices: new_vertices,
+            open: self.open.clone(),
             metadata: self.metadata.clone(),
             plane: new_plane,
         }
@@ -787,7 +790,7 @@ impl<S: Clone> Polygon<S> {
                 Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
             })
             .collect();
-        Polygon::new(new_vertices, self.metadata.clone())
+        Polygon::new(new_vertices, false, self.metadata.clone())
     }
 
     /// Returns the Minkowski sum of this polygon and another.
@@ -821,7 +824,7 @@ impl<S: Clone> Polygon<S> {
                 Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
             })
             .collect();
-        Polygon::new(new_vertices, self.metadata.clone())
+        Polygon::new(new_vertices, false, self.metadata.clone())
     }
 
     /// Attempt to reconstruct arcs of constant radius in the 2D projection of this polygon,

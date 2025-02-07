@@ -1,5 +1,5 @@
-use nalgebra::Point3;
 use crate::float_types::Real;
+use nalgebra::Point3;
 
 pub enum Axis {
     X,

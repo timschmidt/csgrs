@@ -40,10 +40,10 @@ impl Plane {
         front: &mut Vec<Polygon<S>>,
         back: &mut Vec<Polygon<S>>,
     ) {
-        const COPLANAR: i32 = 0;
-        const FRONT: i32 = 1;
-        const BACK: i32 = 2;
-        const SPANNING: i32 = 3;
+        const COPLANAR: i8 = 0;
+        const FRONT: i8 = 1;
+        const BACK: i8 = 2;
+        const SPANNING: i8 = 3;
 
         let mut polygon_type = 0;
         let mut types = Vec::with_capacity(polygon.vertices.len());
@@ -110,10 +110,10 @@ impl Plane {
                 }
 
                 if f.len() >= 3 {
-                    front.push(Polygon::new(f, polygon.metadata.clone()));
+                    front.push(Polygon::new(f, polygon.open.clone(), polygon.metadata.clone()));
                 }
                 if b.len() >= 3 {
-                    back.push(Polygon::new(b, polygon.metadata.clone()));
+                    back.push(Polygon::new(b, polygon.open.clone(), polygon.metadata.clone()));
                 }
             }
         }

@@ -52,13 +52,6 @@ fn main() {
     let minkowski = cube.minkowski_sum(&sphere);
     let _ = fs::write("stl/minkowski_cube_sphere.stl", minkowski.to_stl_binary("minkowski_cube_sphere").unwrap());
 
-    // 6) Grow & Shrink (3D offsetting)
-    //let grown_cube = cube.grow(0.2);   // approximate outward offset
-    //let _ = fs::write("stl/cube_grow_0_2.stl", grown_cube.to_stl_binary("cube_grow_0_2").unwrap());
-
-    //let shrunk_cube = cube.shrink(0.2); // approximate inward offset
-    //let _ = fs::write("stl/cube_shrink_0_2.stl", shrunk_cube.to_stl_binary("cube_shrink_0_2").unwrap());
-
     // 7) 2D shapes and 2D offsetting
     let square_2d = CSG::square(Some(([2.0, 2.0], true))); // 2x2 square, centered
     let _ = fs::write("stl/square_2d.stl", square_2d.to_stl_ascii("square_2d"));

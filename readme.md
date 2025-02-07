@@ -398,7 +398,7 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 - remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
   - tests
 - lazy transformations?
-- vector font for machining / svg import/export / cavalier_contours based polyline functions, addition to the csg datastructure
+- vector font for machining / svg import/export / cavalier_contours based polyline functions
   - https://github.com/kamalmostafa/hershey-fonts
     - https://github.com/kicad-rs/hershey/blob/main/src/lib.rs
   - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
@@ -412,7 +412,6 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 - support twist and scale in linear extrude like openscad
 - support scale and translation along a vector in rotate extrude
 - extruding a line does not currently result in a 2D shape as it has fewer than three points
-- consider using cavalier_contours::core::traits::Real
 - fill
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter

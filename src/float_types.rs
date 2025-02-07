@@ -1,3 +1,4 @@
+// Re-export parry and rapier for the apropriate float size
 #[cfg(feature = "f64")]
 pub use parry3d_f64 as parry3d;
 #[cfg(feature = "f64")]
