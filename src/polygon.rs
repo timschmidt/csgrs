@@ -1,4 +1,4 @@
-use crate::float_types::{Real, PI, OPEN, CLOSED};
+use crate::float_types::{Real, PI, CLOSED};
 use crate::enums::{Axis, ValidationError};
 use crate::vertex::Vertex;
 use crate::plane::Plane;

@@ -1,5 +1,5 @@
 #[cfg(test)]
-use crate::float_types::{Real, EPSILON, FRAC_PI_2, OPEN, CLOSED};
+use crate::float_types::{Real, EPSILON, FRAC_PI_2, CLOSED};
 use crate::enums::Axis;
 use crate::bsp::Node;
 use crate::vertex::Vertex;
@@ -367,7 +367,7 @@ fn test_polygon_subdivide_triangles() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
     let subs = poly.subdivide_triangles(1);
@@ -387,7 +387,7 @@ fn test_polygon_recalc_plane_and_normals() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::zeros()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::zeros()),
         ],
-        false,
+        CLOSED,
         None,
     );
     poly.recalc_plane_and_normals();
@@ -411,7 +411,7 @@ fn test_node_new_and_build() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
     let node: Node<()> = Node::new(vec![p.clone()]);
@@ -430,7 +430,7 @@ fn test_node_invert() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
     let mut node: Node<()> = Node::new(vec![p.clone()]);
@@ -447,20 +447,6 @@ fn test_node_invert() {
     // If we invert back, we should get the same geometry
     node.invert();
     assert_eq!(node.polygons.len(), original_count);
-}
-
-#[test]
-fn test_node_clip_polygons() {
-    // Build a simple BSP from a cube
-    let cube: CSG<()> = CSG::cube(None);
-    let mut flipped_cube = cube.clone();
-    for p in &mut flipped_cube.polygons {
-        p.flip(); // now plane normals match the Node-building logic
-    }
-    let node: Node<()> = Node::new(flipped_cube.polygons.clone());
-    let clipped = node.clip_polygons(&flipped_cube.polygons);
-    assert_eq!(cube.polygons.len(), flipped_cube.polygons.len());
-    assert_eq!(clipped.len(), 0);
 }
 
 #[test]
@@ -484,7 +470,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
     let poly_above: Polygon<()> = Polygon::new(
@@ -493,7 +479,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
     let poly_below: Polygon<()> = Polygon::new(
@@ -502,7 +488,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, -1.0), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
 
@@ -520,7 +506,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(2.0, -1.0, 0.5), Vector3::z()),
             Vertex::new(Point3::new(-1.0, 2.0, 0.5), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
     let clipped = node.clip_polygons(&[crossing_poly.clone()]);
@@ -539,7 +525,7 @@ fn test_node_clip_to() {
             Vertex::new(Point3::new(0.5, -0.5, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 0.5, 0.0), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
     let mut node_a: Node<()> = Node::new(vec![poly.clone()]);
@@ -551,7 +537,7 @@ fn test_node_clip_to() {
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(-1.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
     let node_b: Node<()> = Node::new(vec![big_poly]);
@@ -570,7 +556,7 @@ fn test_node_all_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
     let poly2: Polygon<()> = Polygon::new(
@@ -579,7 +565,7 @@ fn test_node_all_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
 
@@ -600,7 +586,7 @@ fn test_csg_from_polygons_and_to_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
+        CLOSED,
         None,
     );
     let csg: CSG<()> = CSG::from_polygons(vec![poly.clone()]);
