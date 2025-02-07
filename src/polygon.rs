@@ -1,4 +1,4 @@
-use crate::float_types::{Real, PI};
+use crate::float_types::{Real, PI, OPEN, CLOSED};
 use crate::enums::{Axis, ValidationError};
 use crate::vertex::Vertex;
 use crate::plane::Plane;
@@ -484,7 +484,7 @@ impl<S: Clone> Polygon<S> {
                 plane_normal,
             ));
         }
-        return Polygon::new(poly_verts, false, None); // todo: handle open polylines here
+        return Polygon::new(poly_verts, CLOSED, None); // todo: handle open polylines here
     }
 
     pub fn flip(&mut self) {
@@ -790,7 +790,7 @@ impl<S: Clone> Polygon<S> {
                 Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
             })
             .collect();
-        Polygon::new(new_vertices, false, self.metadata.clone())
+        Polygon::new(new_vertices, CLOSED, self.metadata.clone())
     }
 
     /// Returns the Minkowski sum of this polygon and another.
@@ -824,7 +824,7 @@ impl<S: Clone> Polygon<S> {
                 Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
             })
             .collect();
-        Polygon::new(new_vertices, false, self.metadata.clone())
+        Polygon::new(new_vertices, CLOSED, self.metadata.clone())
     }
 
     /// Attempt to reconstruct arcs of constant radius in the 2D projection of this polygon,
