@@ -475,7 +475,8 @@ impl Computable {
 
     /// MSD but iteratively without a guess as to precision
     pub(super) fn iter_msd(&self) -> Precision {
-        self.iter_msd_stop(Self::STOP_PRECISION).unwrap_or(Self::STOP_PRECISION)
+        self.iter_msd_stop(Self::STOP_PRECISION)
+            .unwrap_or(Self::STOP_PRECISION)
     }
 }
 

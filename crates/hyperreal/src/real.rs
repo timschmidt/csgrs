@@ -556,11 +556,9 @@ impl Real {
     /// Scientific notation will be used if the value is very large or small
     pub fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let folded = self.clone().fold();
-        let msd = folded.iter_msd();
-        if msd > -20 && msd < 60 {
-            fmt::Display::fmt(&folded, f)
-        } else {
-            fmt::LowerExp::fmt(&folded, f)
+        match folded.iter_msd_stop(-20) {
+            Some(-19..60) => fmt::Display::fmt(&folded, f),
+            _ => fmt::LowerExp::fmt(&folded, f),
         }
     }
 }
