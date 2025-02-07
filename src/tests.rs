@@ -1,5 +1,5 @@
 #[cfg(test)]
-use crate::float_types::{Real, EPSILON, FRAC_PI_2};
+use crate::float_types::{Real, EPSILON, FRAC_PI_2, OPEN, CLOSED};
 use crate::enums::Axis;
 use crate::bsp::Node;
 use crate::vertex::Vertex;
@@ -78,7 +78,7 @@ fn test_polygon_construction() {
     let v2 = Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::y());
     let v3 = Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::y());
 
-    let poly: Polygon<()> = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], false, None);
+    let poly: Polygon<()> = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], CLOSED, None);
     assert_eq!(poly.vertices.len(), 3);
     // Plane should be defined by these three points. We expect a normal near ±Y.
     assert!(
@@ -118,7 +118,7 @@ fn test_degenerate_polygon_after_clipping() {
         Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices.clone(), false, None);
+    let polygon: Polygon<()> = Polygon::new(vertices.clone(), CLOSED, None);
     let plane = Plane {
         normal: Vector3::new(0.0, 0.0, 0.0),
         w: 0.0,
@@ -155,7 +155,7 @@ fn test_valid_polygon_clipping() {
         Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices, false, None);
+    let polygon: Polygon<()> = Polygon::new(vertices, CLOSED, None);
 
     let plane = Plane {
         normal: Vector3::new(0.0, -1.0, 0.0),
@@ -295,7 +295,7 @@ fn test_polygon_new() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly: Polygon<()> = Polygon::new(vertices.clone(), false, None);
+    let poly: Polygon<()> = Polygon::new(vertices.clone(), CLOSED, None);
     assert_eq!(poly.vertices.len(), 3);
     assert_eq!(poly.metadata, None);
     // Plane normal should be +Z for the above points
@@ -1101,7 +1101,7 @@ fn test_polygon_metadata_string() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let mut poly = Polygon::new(verts, false, Some("triangle".to_string()));
+    let mut poly = Polygon::new(verts, CLOSED, Some("triangle".to_string()));
 
     // Check getter
     assert_eq!(poly.metadata(), Some(&"triangle".to_string()));
@@ -1125,7 +1125,7 @@ fn test_polygon_metadata_integer() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly = Polygon::new(verts, false, Some(42u32));
+    let poly = Polygon::new(verts, CLOSED, Some(42u32));
 
     // Confirm data
     assert_eq!(poly.metadata(), Some(&42));
@@ -1143,7 +1143,7 @@ fn test_polygon_metadata_custom_struct() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly = Polygon::new(verts, false, Some(my_data.clone()));
+    let poly = Polygon::new(verts, CLOSED, Some(my_data.clone()));
 
     assert_eq!(poly.metadata(), Some(&my_data));
 }
@@ -1460,7 +1460,7 @@ fn make_polygon_3d(points: &[[Real; 3]]) -> Polygon<()> {
         let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
         verts.push(Vertex::new(pos, normal));
     }
-    Polygon::new(verts, false, None)
+    Polygon::new(verts, CLOSED, None)
 }
 
 #[test]
@@ -1705,7 +1705,7 @@ fn polygon_from_xy_points(xy_points: &[[Real; 2]]) -> Polygon<()> {
         .map(|&[x, y]| Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal))
         .collect();
 
-    Polygon::new(vertices, false, None)
+    Polygon::new(vertices, CLOSED, None)
 }
 
 /// Test a simple case of `flatten_and_union` with a single square in the XY plane.
@@ -1792,7 +1792,7 @@ fn test_flatten_and_union_near_xy_plane() {
             Vertex::new(nalgebra::Point3::new(1.0, 1.0, 1e-6), normal),
             Vertex::new(nalgebra::Point3::new(0.0, 1.0, 1e-6), normal),
         ],
-        false,
+        CLOSED,
         None,
     );
 

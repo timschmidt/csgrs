@@ -38,3 +38,7 @@ pub const FRAC_PI_2: Real = std::f64::consts::FRAC_PI_2;
 pub const TAU: Real = std::f32::consts::TAU;
 #[cfg(feature = "f64")]
 pub const TAU: Real = std::f64::consts::TAU;
+
+// Open and Closed polygon convenience aliases
+pub const OPEN: bool = true;
+pub const CLOSED: bool = false;
