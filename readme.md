@@ -399,6 +399,8 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 - remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
   - tests
 - lazy transformations?
+- invert Polygon::open to match cavalier_contours
+- use &[T] over Vec<T> where possible
 - vector font for machining / svg import/export / cavalier_contours based polyline functions
   - https://github.com/kamalmostafa/hershey-fonts
     - https://github.com/kicad-rs/hershey/blob/main/src/lib.rs

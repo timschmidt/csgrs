@@ -103,14 +103,15 @@ impl<S: Clone> CSG<S> {
     /// Build a new CSG from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0. If a union produced multiple
     /// loops, you will get multiple polygons in the final CSG.
-    pub fn from_cavalier_contours(loops: Vec<Polyline<Real>>) -> CSG<S> {
+    pub fn from_polylines(polylines: Vec<Polyline<Real>>, metadata: Option<S>) -> CSG<S> {
         let mut all_polygons = Vec::new();
         let plane_normal = Vector3::z();
 
-        for pl in loops {
+        for pl in polylines {
             // Convert each Polyline into a single polygon in z=0.
             // todo: For arcs, subdivide by bulge, etc. This ignores arcs for simplicity.
-            if pl.vertex_count() >= 3 {
+            let open = !pl.is_closed();
+            if pl.vertex_count() >= 2 {
                 let mut poly_verts = Vec::with_capacity(pl.vertex_count());
                 for i in 0..pl.vertex_count() {
                     let v = pl.at(i);
@@ -119,7 +120,7 @@ impl<S: Clone> CSG<S> {
                         plane_normal,
                     ));
                 }
-                all_polygons.push(Polygon::new(poly_verts, CLOSED, None)); // todo: handle open polylines here
+                all_polygons.push(Polygon::new(poly_verts, open, metadata.clone()));
             }
         }
 
@@ -996,52 +997,112 @@ impl<S: Clone> CSG<S> {
         CSG::from_polygons(result_polygons) // todo: figure out why rotate_extrude results in inverted solids
     }
     
-    /// Build a CSG by extruding a CavalierContours `Polyline` (open) along `direction`.
-    /// This is similar to “extrude_vector” in the 2D case, but here we treat
-    /// the polyline as purely 1D—no caps, just side walls.
-    pub fn extrude_polyline(poly: &Polyline<Real>, direction: Vector3<Real>) -> CSG<S> {
+    /// Extrude an open or closed 2D polyline (from cavalier_contours) along `direction`,
+    /// returning a 3D `CSG` containing the resulting side walls plus top/bottom if it’s closed.
+    /// For open polylines, no “caps” are added unless you do so manually.
+    pub fn extrude_polyline(poly: Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>) -> CSG<S> {
         if poly.vertex_count() < 2 {
             return CSG::new();
         }
 
-        let mut polygons = Vec::new();
+        let open = !poly.is_closed();
+        let polygon_bottom = Polygon::from_polyline(poly, metadata.clone());
+        let mut result_polygons = Vec::new();
 
-        // Construct bottom + top, then side quads
-        let mut bottom_verts = Vec::new();
-        let mut top_verts = Vec::new();
+        // "bottom" polygon => keep it only if closed
+        if !open {
+            let mut bottom = polygon_bottom.clone();
+            // The top polygon is just a translate
+            let top = bottom.translate(direction);
 
-        for i in 0..poly.vertex_count() {
-            let v = poly.at(i);
-            bottom_verts.push( Vertex::new(
-                Point3::new(v.x, v.y, 0.0),
-                Vector3::z()
-            ));
-            top_verts.push( Vertex::new(
-                Point3::new(v.x + direction.x, v.y + direction.y, direction.z),
-                Vector3::z()
-            ));
+            // Flip winding on the bottom
+            bottom.flip();
+
+            result_polygons.push(bottom);
+            result_polygons.push(top);
         }
 
-        // Build side polygons
-        for i in 0..(poly.vertex_count() - 1) {
-            let b_i = bottom_verts[i].clone();
-            let b_j = bottom_verts[i+1].clone();
-            let mut t_i = b_i.clone();
-            let mut t_j = b_j.clone();
-            t_i.pos += direction;
-            t_j.pos += direction;
+        // Build side walls
+        let b_verts = &polygon_bottom.vertices;
+        let t_verts: Vec<_> = b_verts.iter().map(|v| {
+            let mut tv = v.clone();
+            tv.pos += direction;
+            tv
+        }).collect();
 
-            // side quad
-            polygons.push( Polygon::new(
-                vec![b_i, b_j, t_j.clone(), t_i.clone()],
-                false,
-                None
-            ));
+        let vcount = b_verts.len();
+        for i in 0..(vcount-0) {  // if closed, we wrap, if open, we do (vcount-1) for side segments
+            let j = (i+1) % vcount; 
+            // For open polyline, skip the last segment that is the "wrap around" if not closed:
+            if open && j == 0 {
+                break;
+            }
+            let b_i = b_verts[i].clone();
+            let b_j = b_verts[j].clone();
+            let t_i = t_verts[i].clone();
+            let t_j = t_verts[j].clone();
+
+            let side = Polygon::new(vec![b_i, b_j, t_j, t_i], CLOSED, metadata.clone());
+            result_polygons.push(side);
         }
-
-        CSG::from_polygons(polygons)
+        CSG::from_polygons(result_polygons)
     }
 
+    /// Given a list of Polygons that each represent a 2D open polyline (in XY, z=0),
+    /// reconstruct a single 3D polyline by matching consecutive endpoints in 3D space.
+    /// (If some polygons are closed, you can skip them or handle differently.)
+    ///
+    /// Returns a vector of 3D points (the polyline’s vertices). 
+    /// If no matching is possible or the polygons are empty, returns an empty vector.
+    pub fn reconstruct_polyline_3d(polylines: &[Polygon<S>]) -> Vec<nalgebra::Point3<Real>> {
+        // Collect open polylines in 2D first:
+        let mut all_points = Vec::new();
+        for poly in polylines {
+            if !poly.open {
+                // skip or handle closed polygons differently
+                continue;
+            }
+            // Convert to 2D
+            let pline_2d = poly.to_2d();
+            if pline_2d.vertex_count() < 2 {
+                continue;
+            }
+            // gather all points
+            let mut segment_points = Vec::with_capacity(pline_2d.vertex_count());
+            for i in 0..pline_2d.vertex_count() {
+                let v = pline_2d.at(i);
+                segment_points.push(nalgebra::Point3::new(v.x, v.y, 0.0));
+            }
+            all_points.push(segment_points);
+        }
+        if all_points.is_empty() {
+            return vec![];
+        }
+
+        // Simple approach: assume each open polyline’s end matches the next polyline’s start,
+        // building one continuous chain. 
+        // More sophisticated logic might do a tolerance-based matching, 
+        // or unify them in a single chain, etc.
+        let mut chain = Vec::new();
+        // Start with the first polyline’s points
+        chain.extend(all_points[0].clone());
+        // Then see if the last point matches the first point of the next polyline, 
+        // etc. (You can do any matching logic you prefer.)
+        for i in 1..all_points.len() {
+            let prev_end = chain.last().unwrap();
+            let next_start = all_points[i][0];
+            // If they match within some tolerance, skip the next start:
+            if (prev_end.coords - next_start.coords).norm() < 1e-9 {
+                // skip the next_start
+                chain.extend(all_points[i].iter().skip(1).cloned());
+            } else {
+                // if no match, just connect them with a big jump
+                chain.extend(all_points[i].iter().cloned());
+            }
+        }
+
+        chain
+    }
 
     /// Returns a `parry3d::bounding_volume::Aabb`.
     pub fn bounding_box(&self) -> Aabb {
@@ -1074,24 +1135,26 @@ impl<S: Clone> CSG<S> {
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
     /// for each Polygon we convert to a cavalier_contours Polyline<Real> and call parallel_offset
     pub fn offset_2d(&self, distance: Real) -> CSG<S> {
-        let mut offset_loops = Vec::new(); // each "loop" is a cavalier_contours polyline
+        let mut result_polygons = Vec::new(); // each "loop" is a Polygon
 
         for poly in &self.polygons {
             // Convert to cavalier_contours Polyline (closed by default):
-            let cpoly = poly.to_xy();
+            let cpoly = poly.to_polyline();
 
             // Remove any degenerate or redundant vertices:
-            cpoly.remove_redundant(1e-5);
+            cpoly.remove_redundant(EPSILON);
 
             // Perform the actual offset:
             let result_plines = cpoly.parallel_offset(-distance);
 
-            // Collect this loop
-            offset_loops.extend(result_plines);
+            // Collect polygons
+            for pline in result_plines {
+                result_polygons.push(Polygon::from_polyline(pline, poly.metadata.clone()));
+            }
         }
 
         // Build a new CSG from those offset loops in XY:
-        CSG::from_cavalier_contours(offset_loops)
+        CSG::from_polygons(result_polygons)
     }
 
     /// Flatten a `CSG` into the XY plane and union all polygons' outlines,
@@ -1108,14 +1171,14 @@ impl<S: Clone> CSG<S> {
         let mut polys_2d = Vec::new();
         for poly in &self.polygons {
             // Convert to a cavalier_contours::Polyline first (same as .to_cc_polyline())
-            let cc = poly.to_xy();
+            let cc = poly.to_polyline();
             // Optional: remove redundant points
             cc.remove_redundant(EPSILON);
 
             // Check area (shoelace). If above threshold, turn it into a 2D Polygon
             let area = pline_area(&cc).abs();
             if area > eps_area {
-                polys_2d.push(Polygon::from_xy(cc));
+                polys_2d.push(Polygon::from_polyline(cc, poly.metadata.clone()));
             }
         }
         if polys_2d.is_empty() {

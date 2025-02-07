@@ -401,6 +401,7 @@ impl<S: Clone> Polygon<S> {
     /// Build a new Polygon in 3D from a 2D polyline in *this* polygon’s plane.
     /// i.e. we treat that 2D polyline as lying in the same plane as `self`.
     pub fn from_2d(&self, polyline: Polyline<Real>) -> Polygon<S> {
+        let open = !polyline.is_closed();
         let (_to_xy, from_xy) = self.plane.to_xy_transform();
 
         let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
@@ -420,7 +421,7 @@ impl<S: Clone> Polygon<S> {
                 self.plane.normal, // We will recalc plane anyway
             ));
         }
-        let mut poly3d = Polygon::new(poly_verts, self.open.clone(), self.metadata.clone());
+        let mut poly3d = Polygon::new(poly_verts, open, self.metadata.clone());
         poly3d.recalc_plane_and_normals();
         poly3d
     }
@@ -438,13 +439,13 @@ impl<S: Clone> Polygon<S> {
 
         // Transform each vertex.
         // Then we only keep (x, y) and ignore the new z (should be near zero).
-        let mut polyline = Polyline::with_capacity(self.vertices.len(), true);
+        let mut polyline = Polyline::with_capacity(self.vertices.len(), !self.open);
         for v in &self.vertices {
             let p4 = v.pos.to_homogeneous();
             let xyz = to_xy * p4; // Matrix4 × Vector4
             let x2 = xyz[0];
             let y2 = xyz[1];
-            let bulge = 0.0; // ignoring arcs
+            let bulge = 0.0; // todo: support arcs
             polyline.add(x2, y2, bulge);
         }
         polyline
@@ -452,7 +453,7 @@ impl<S: Clone> Polygon<S> {
 
     /// Project this polygon into its own plane’s local XY coordinates,
     /// producing a 2D cavalier_contours Polyline<Real>.
-    pub fn to_xy(&self) -> Polyline<Real> {
+    pub fn to_polyline(&self) -> Polyline<Real> {
         if self.vertices.len() < 2 {
             // Degenerate polygon, return empty polyline
             return Polyline::new();
@@ -460,7 +461,7 @@ impl<S: Clone> Polygon<S> {
 
         // We flatten the polygon into the XY plane (z ~ 0).
         // If our polygons might have arcs, we'll need more logic to detect + store bulge, etc.
-        let mut polyline = Polyline::with_capacity(self.vertices.len(), true);
+        let mut polyline = Polyline::with_capacity(self.vertices.len(), !self.open);
         for v in &self.vertices {
             let bulge = 0.0; // ignoring arcs
             polyline.add(v.pos.coords.x, v.pos.coords.y, bulge);
@@ -470,10 +471,12 @@ impl<S: Clone> Polygon<S> {
 
     /// Build a new Polygon from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0.
-    pub fn from_xy(polyline: Polyline<Real>) -> Polygon<S> {
-        if polyline.vertex_count() < 3 {
+    pub fn from_polyline(polyline: Polyline<Real>, metadata: Option<S>) -> Polygon<S> {
+        if polyline.vertex_count() < 2 {
             // degenerate polygon
         }
+        
+        let open = !polyline.is_closed();
 
         let plane_normal = nalgebra::Vector3::z();
         let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
@@ -484,7 +487,7 @@ impl<S: Clone> Polygon<S> {
                 plane_normal,
             ));
         }
-        return Polygon::new(poly_verts, CLOSED, None); // todo: handle open polylines here
+        return Polygon::new(poly_verts, open, metadata);
     }
 
     pub fn flip(&mut self) {
@@ -825,6 +828,38 @@ impl<S: Clone> Polygon<S> {
             })
             .collect();
         Polygon::new(new_vertices, CLOSED, self.metadata.clone())
+    }
+
+    /// Parallel offset of this polygon (interpreted as an open polyline) by distance `d`.
+    /// Uses cavalier_contours offset on the underlying 2D polyline representation.
+    /// Returns a new Polygon or possibly multiple polygons.
+    pub fn offset_open(&self, distance: Real) -> Vec<Polygon<S>> {
+        if self.vertices.len() < 2 {
+            return vec![];
+        }
+        // Convert to a single 2D open polyline
+        let pline_2d = self.to_2d();
+        // Perform offset
+        let offset_result = pline_2d.parallel_offset(distance);
+        let plane_normal = nalgebra::Vector3::z();
+
+        // Convert each offset polyline back to a 3D Polygon
+        let mut new_polygons = Vec::new();
+        for off_pl in offset_result {
+            if off_pl.vertex_count() >= 2 {
+                let open = !off_pl.is_closed(); 
+                let mut poly_verts = Vec::with_capacity(off_pl.vertex_count());
+                for i in 0..off_pl.vertex_count() {
+                    let v = off_pl.at(i);
+                    poly_verts.push(Vertex::new(
+                        nalgebra::Point3::new(v.x, v.y, 0.0),
+                        plane_normal,
+                    ));
+                }
+                new_polygons.push(Polygon::new(poly_verts, open, self.metadata.clone()));
+            }
+        }
+        new_polygons
     }
 
     /// Attempt to reconstruct arcs of constant radius in the 2D projection of this polygon,
