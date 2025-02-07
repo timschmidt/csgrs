@@ -401,7 +401,7 @@ The helper `pline_area` function (shown in the code) computes the signed area of
 - lazy transformations?
 - invert Polygon::open to match cavalier_contours
 - use &[T] over Vec<T> where possible
-- vector font for machining / svg import/export / cavalier_contours based polyline functions
+- vector font for machining / svg import/export
   - https://github.com/kamalmostafa/hershey-fonts
     - https://github.com/kicad-rs/hershey/blob/main/src/lib.rs
   - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
@@ -414,7 +414,6 @@ The helper `pline_area` function (shown in the code) computes the signed area of
   - https://github.com/anlumo/offset_polygon
 - support twist and scale in linear extrude like openscad
 - support scale and translation along a vector in rotate extrude
-- extruding a line does not currently result in a 2D shape as it has fewer than three points
 - fill
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
