@@ -164,6 +164,11 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::offset_2d(distance)`** — outward (or inward) offset in 2D using [cavalier_contours](https://crates.io/crates/cavalier_contours).
 - **`CSG::subdivide_triangles(levels)`** — subdivides each polygon’s triangles, increasing mesh density.
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
+- **`CSG::reconstruct_polyline_3d(polylines: &[Polygon<S>])`** — 
+- **`CSG::bounding_box()`** — 
+- **`CSG::retriangulate()`** — 
+- **`CSG::extrude_polyline(poly: Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>)`** — 
+- 
 
 ### Working with Metadata
 
@@ -323,12 +328,12 @@ Below is a quick overview of the **2D‐related methods** you’ll find on `Poly
   2. Transforms each vertex into that local coordinate system (so the polygon lies at *z = 0*).
   3. Returns a 2D `Polyline<f64>` of `(x, y, bulge)` points (here, `bulge` is set to `0.0` by default).
 
-- **`from_2d(polyline)`**  
+- **`from_2d(polyline, Some(metadata))`**  
   The inverse of `to_2d()`, creating a 3D `Polygon` from a 2D `Polyline<f64>`. This method uses the **same** plane as the polygon on which you called `from_2d()`. That is, it takes `(x, y)` points in the local XY plane of `self.plane` and lifts them back into 3D space.
 
 These two functions let you cleanly convert between a 3D polygon and a pure 2D representation whenever you need to do 2D manipulations.  
 
-> **Tip**: If your polygons truly are already in the global XY plane (i.e., `z ≈ 0`), or you would like to flatten them without adjusting for their reference plane, you can use `Polygon::to_xy()` and `Polygon::from_xy(...)`. Those skip the plane‐based transform and simply store or read `(x, y, 0.0)` directly.
+> **Tip**: If your polygons truly are already in the global XY plane (i.e., `z ≈ 0`), or you would like to flatten them without adjusting for their reference plane, you can use `Polygon::to_polyline()` and `Polygon::from_polyline(...)`. Those skip the plane‐based transform and simply store or read `(x, y, 0.0)` directly.
 
 ### 2D Boolean Operations
 
@@ -373,6 +378,16 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 ### Misc functions
 
 - `subdivide_triangles()`
+- `calculate_new_normal()`
+- `triangulate()`
+- `recalc_plane_and_normals()`
+- `offset_open(distance)`
+- `reconstruct_arcs(min_match: usize, rms_limit: Real, angle_limit_degs: Real, offset_limit: Real)`
+- `check_coordinates_finite()`
+- `check_repeated_points()`
+- `check_ring_closed()`
+- `check_minimum_ring_size()`
+- `check_ring_self_intersection()`
 
 ### Signed Area (Shoelace)
 The helper `pline_area` function (shown in the code) computes the signed area of a closed `Polyline<f64>`:
