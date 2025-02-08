@@ -168,7 +168,6 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::bounding_box()`** — 
 - **`CSG::retriangulate()`** — 
 - **`CSG::extrude_polyline(poly: Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>)`** — 
-- 
 
 ### Working with Metadata
 
