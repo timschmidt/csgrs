@@ -1,5 +1,4 @@
 use crate::{Computable, Rational, Real, RealProblem};
-use num::{BigInt, BigUint, One};
 
 impl From<i64> for Real {
     fn from(n: i64) -> Real {
@@ -19,64 +18,17 @@ impl From<Rational> for Real {
     }
 }
 
-fn signed(n: Rational, neg: bool) -> Real {
-    if neg {
-        Real::new(-n)
-    } else {
-        Real::new(n)
-    }
-}
-
 impl TryFrom<f32> for Real {
     type Error = RealProblem;
 
     fn try_from(n: f32) -> Result<Real, Self::Error> {
-        const NEG_BITS: u32 = 0x8000_0000;
-        const EXP_BITS: u32 = 0x7f80_0000;
-        const SIG_BITS: u32 = 0x007f_ffff;
-        debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u32::MAX);
+        use crate::FloatProblem;
 
-        let bits = n.to_bits();
-        let neg = (bits & NEG_BITS) == NEG_BITS;
-        let exp = (bits & EXP_BITS) >> EXP_BITS.trailing_zeros();
-        let sig = bits & SIG_BITS;
-        match exp {
-            0 => {
-                if sig == 0 {
-                    Ok(Real::new(Rational::zero()))
-                } else {
-                    let numerator: BigInt = sig.into();
-                    let denominator = BigUint::one() << 149;
-                    Ok(signed(
-                        Rational::from_bigint_fraction(numerator, denominator),
-                        neg,
-                    ))
-                }
-            }
-            1..=150 => {
-                let n = SIG_BITS + 1 + sig;
-                let numerator: BigInt = n.into();
-                let denominator = BigUint::one() << (150 - exp);
-                Ok(signed(
-                    Rational::from_bigint_fraction(numerator, denominator),
-                    neg,
-                ))
-            }
-            151..=254 => {
-                let n = SIG_BITS + 1 + sig;
-                let mut big: BigInt = n.into();
-                big <<= exp - 150;
-                Ok(signed(Rational::from_bigint(big), neg))
-            }
-            255 => {
-                if sig == 0 {
-                    Err(RealProblem::Infinity)
-                } else {
-                    Err(RealProblem::NotANumber)
-                }
-            }
-            _ => unreachable!(),
-        }
+        let rational: Rational = n.try_into().map_err(|e| match e {
+            FloatProblem::Infinity => RealProblem::Infinity,
+            FloatProblem::NotANumber => RealProblem::NotANumber,
+        })?;
+        Ok(Real::new(rational))
     }
 }
 
@@ -84,52 +36,13 @@ impl TryFrom<f64> for Real {
     type Error = RealProblem;
 
     fn try_from(n: f64) -> Result<Real, Self::Error> {
-        const NEG_BITS: u64 = 0x8000_0000_0000_0000;
-        const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
-        const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
-        debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u64::MAX);
+        use crate::FloatProblem;
 
-        let bits = n.to_bits();
-        let neg = (bits & NEG_BITS) == NEG_BITS;
-        let exp = (bits & EXP_BITS) >> EXP_BITS.trailing_zeros();
-        let sig = bits & SIG_BITS;
-        match exp {
-            0 => {
-                if sig == 0 {
-                    Ok(Real::new(Rational::zero()))
-                } else {
-                    let numerator: BigInt = sig.into();
-                    let denominator = BigUint::one() << 1074;
-                    Ok(signed(
-                        Rational::from_bigint_fraction(numerator, denominator),
-                        neg,
-                    ))
-                }
-            }
-            1..=1075 => {
-                let n = SIG_BITS + 1 + sig;
-                let numerator: BigInt = n.into();
-                let denominator = BigUint::one() << (1075 - exp);
-                Ok(signed(
-                    Rational::from_bigint_fraction(numerator, denominator),
-                    neg,
-                ))
-            }
-            1076..=2046 => {
-                let n = SIG_BITS + 1 + sig;
-                let mut big: BigInt = n.into();
-                big <<= exp - 1075;
-                Ok(signed(Rational::from_bigint(big), neg))
-            }
-            2047 => {
-                if sig == 0 {
-                    Err(RealProblem::Infinity)
-                } else {
-                    Err(RealProblem::NotANumber)
-                }
-            }
-            _ => unreachable!(),
-        }
+        let rational: Rational = n.try_into().map_err(|e| match e {
+            FloatProblem::Infinity => RealProblem::Infinity,
+            FloatProblem::NotANumber => RealProblem::NotANumber,
+        })?;
+        Ok(Real::new(rational))
     }
 }
 
@@ -296,6 +209,7 @@ impl From<Real> for f64 {
 #[cfg(test)]
 mod tests {
     use num::bigint::ToBigInt;
+    use num::{BigInt, One};
 
     use super::*;
 
@@ -308,6 +222,26 @@ mod tests {
         let zero = Real::zero();
         assert_eq!(a, zero);
         assert_eq!(b, zero);
+    }
+
+    #[test]
+    fn infinity() {
+        let f = f32::INFINITY;
+        let d = f64::NEG_INFINITY;
+        let a: RealProblem = <f32 as TryInto<Real>>::try_into(f).unwrap_err();
+        let b: RealProblem = <f64 as TryInto<Real>>::try_into(d).unwrap_err();
+        assert_eq!(a, RealProblem::Infinity);
+        assert_eq!(b, RealProblem::Infinity);
+    }
+
+    #[test]
+    fn nans() {
+        let f = f32::NAN;
+        let d = f64::NAN;
+        let a: RealProblem = <f32 as TryInto<Real>>::try_into(f).unwrap_err();
+        let b: RealProblem = <f64 as TryInto<Real>>::try_into(d).unwrap_err();
+        assert_eq!(a, RealProblem::NotANumber);
+        assert_eq!(b, RealProblem::NotANumber);
     }
 
     #[test]

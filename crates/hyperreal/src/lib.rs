@@ -1,4 +1,5 @@
 mod rational;
+pub use crate::rational::convert::FloatProblem;
 pub use crate::rational::Rational;
 
 mod computable;

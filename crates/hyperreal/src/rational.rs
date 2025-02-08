@@ -3,6 +3,8 @@ use num::{bigint::ToBigInt, bigint::ToBigUint, BigInt, BigUint};
 use num::{One, Zero};
 use std::sync::LazyLock;
 
+pub(crate) mod convert;
+
 #[derive(Clone, Debug)]
 pub struct ParseBRError();
 
