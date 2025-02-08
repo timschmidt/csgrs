@@ -590,6 +590,20 @@ impl<S: Clone> CSG<S> {
 
         CSG::from_polygons(polygons)
     }
+    
+    // A helper to create a vertical cylinder along Z from z=0..z=height
+    // with the specified radius (NOT diameter).
+    pub fn cylinder_z(radius: f64, height: f64) -> CSG<()> {
+        // csgrs::csg::cylinder takes an Option<(&[Real;3], &[Real;3], Real, usize)>
+        // (start, end, radius, segments).
+        // We'll define the start at [0,0,0], the end at [0,0,height], ~32 segments:
+        CSG::cylinder(Some((
+            &[0.0, 0.0, 0.0],
+            &[0.0, 0.0, height],
+            radius,
+            32,
+        )))
+    }
 
     /// Creates a CSG polyhedron from raw vertex data (`points`) and face indices.
     ///
