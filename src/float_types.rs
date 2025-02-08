@@ -42,3 +42,13 @@ pub const TAU: Real = std::f64::consts::TAU;
 // Open and Closed polygon convenience aliases
 pub const OPEN: bool = true;
 pub const CLOSED: bool = false;
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Unit conversion
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pub const INCH: Real = 25.4;
+pub const FOOT: Real =  25.4 * 12.0;
+pub const YARD: Real = 25.4 * 36.0;
+pub const MM: Real = 1.0;
+pub const CM: Real = 10.0;
+pub const METER: Real = 1000.0;
