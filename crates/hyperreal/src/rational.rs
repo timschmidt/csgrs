@@ -13,6 +13,11 @@ pub struct ParseBRError();
 /// This type is functionally a [`Sign`] with a ratio between two [`BigUint`]
 /// (the numerator and denominator). The numerator and denominator are finite.
 ///
+/// The "ordinary" floating point numbers are rationals, but when converted
+/// the exact rational may not be what you intuitively expected. It's obvious
+/// that one third isn't represented exactly as an f64, but not everybody
+/// will realise that 0.3 isn't either.
+///
 /// # Examples
 ///
 /// Parsing a rational from a simple fraction
@@ -25,6 +30,13 @@ pub struct ParseBRError();
 /// ```
 /// use realistic::Rational;
 /// let point_two_five: Rational = "0.25".parse().unwrap();
+/// ```
+///
+/// Converting a 64-bit floating point number
+/// ```
+/// use realistic::Rational;
+/// let r: Rational = 0.3_f64.try_into().unwrap();
+/// assert!(r != Rational::fraction(3, 10));
 /// ```
 ///
 /// Simple arithmetic
