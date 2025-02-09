@@ -13,11 +13,7 @@ The built-in example interactive evaluates [Simple Expressions](#simple-expressi
 
 ## Unfinished
 
-This library is incomplete, some features which were whole and useful in the Java API described in the paper are unfinished or partial here.
-
-The library does now have trigonometric functions but it still does not have interrupt capability, if you've set another thread the goal of
-computing a complex calculation or for a great deal of precision this library does not yet provide a mechanism to stop the calculation early.
-
+Most features from the Java are now replicated or have equivalent functionality in realistic, but this still tidying up to do.
 
 ## Unfaithful
 
@@ -25,13 +21,27 @@ To the extent this implementation reflects the intent of the original paper, cre
 
 On the other hand, if you encounter bugs or inadequacies in this code, chances are blame for those lies entirely with me as its programmer
 
-In some places the natural way to express the API in Rust differs from Java and I intend to explain such deviatione below, but for now the
-nature of the work often makes that impractical.
+In some places the natural way to express the API in Rust differs from Java and I intend to explain such deviations below.
+
+### Conversions
+
+Where applicable the Rust conversion APIs (From, Into, TryFrom, TryInto) are made available for these types.
+
+You can convert f32 or f64 (IEEE floating point values) into a Rational or Real. You can convert a Real back to the closest floating point
+value. This should round trip correctly, note that these convert to the closest binary fraction *not* to the decimal fraction as displayed.
+Conversions from f32 or f64 are fallible, as both NaN and Infinity do not have equivalents in these types.
+
+You can convert i32 or i64 directly into a Real.
+
+
+### Arithmetic operators on Rational and Real
 
 Unlike Java, Rust has "Operator overloading" or rather, we can implement many arithmetic operators for user defined types. This means that
 where the Java API provides named functions, in many cases the Rust API provides operators, such as + (impl Add) and * (impl Multiply)
 
 I have chosen not to provide this capability for Computable, this might be revisited later
+
+### Naming
 
 `BoundedRational::to_big_integer` has a different name because in Rust `as` signifies that this conversion is cheap
 

@@ -91,8 +91,8 @@ impl Rational {
         Self::from_bigint_fraction(n, BigUint::one())
     }
 
-    /// The non-negative Rational corresponding to the provided [`u64`]
-    /// numerator and denominator as a fraction
+    /// The non-negative Rational corresponding to the provided [`i64`]
+    /// numerator and [`u64`] denominator as a fraction
     pub fn fraction(n: i64, d: u64) -> Self {
         let numerator = ToBigInt::to_bigint(&n).unwrap();
         let denominator = ToBigUint::to_biguint(&d).unwrap();
