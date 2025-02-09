@@ -22,12 +22,7 @@ impl TryFrom<f32> for Real {
     type Error = Problem;
 
     fn try_from(n: f32) -> Result<Real, Self::Error> {
-        use crate::FloatProblem;
-
-        let rational: Rational = n.try_into().map_err(|e| match e {
-            FloatProblem::Infinity => Problem::Infinity,
-            FloatProblem::NotANumber => Problem::NotANumber,
-        })?;
+        let rational: Rational = n.try_into()?;
         Ok(Real::new(rational))
     }
 }
@@ -36,12 +31,7 @@ impl TryFrom<f64> for Real {
     type Error = Problem;
 
     fn try_from(n: f64) -> Result<Real, Self::Error> {
-        use crate::FloatProblem;
-
-        let rational: Rational = n.try_into().map_err(|e| match e {
-            FloatProblem::Infinity => Problem::Infinity,
-            FloatProblem::NotANumber => Problem::NotANumber,
-        })?;
+        let rational: Rational = n.try_into()?;
         Ok(Real::new(rational))
     }
 }

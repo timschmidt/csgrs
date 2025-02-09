@@ -1,13 +1,5 @@
-use crate::Rational;
+use crate::{Problem, Rational};
 use num::{BigInt, BigUint, One};
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum FloatProblem {
-    NotANumber,
-    Infinity,
-}
-
-// TODO: implement Error
 
 fn signed(n: Rational, neg: bool) -> Rational {
     if neg {
@@ -18,7 +10,7 @@ fn signed(n: Rational, neg: bool) -> Rational {
 }
 
 impl TryFrom<f32> for Rational {
-    type Error = FloatProblem;
+    type Error = Problem;
 
     fn try_from(n: f32) -> Result<Rational, Self::Error> {
         const NEG_BITS: u32 = 0x8000_0000;
@@ -60,9 +52,9 @@ impl TryFrom<f32> for Rational {
             }
             255 => {
                 if sig == 0 {
-                    Err(FloatProblem::Infinity)
+                    Err(Problem::Infinity)
                 } else {
-                    Err(FloatProblem::NotANumber)
+                    Err(Problem::NotANumber)
                 }
             }
             _ => unreachable!(),
@@ -71,7 +63,7 @@ impl TryFrom<f32> for Rational {
 }
 
 impl TryFrom<f64> for Rational {
-    type Error = FloatProblem;
+    type Error = Problem;
 
     fn try_from(n: f64) -> Result<Rational, Self::Error> {
         const NEG_BITS: u64 = 0x8000_0000_0000_0000;
@@ -113,9 +105,9 @@ impl TryFrom<f64> for Rational {
             }
             2047 => {
                 if sig == 0 {
-                    Err(FloatProblem::Infinity)
+                    Err(Problem::Infinity)
                 } else {
-                    Err(FloatProblem::NotANumber)
+                    Err(Problem::NotANumber)
                 }
             }
             _ => unreachable!(),
