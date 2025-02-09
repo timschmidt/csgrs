@@ -390,7 +390,7 @@ fn test_polygon_recalc_plane_and_normals() {
         CLOSED,
         None,
     );
-    poly.set_new_normals();
+    poly.set_new_normal();
     assert!(approx_eq(poly.plane.normal.z, 1.0, EPSILON));
     for v in &poly.vertices {
         assert!(approx_eq(v.normal.x, 0.0, EPSILON));

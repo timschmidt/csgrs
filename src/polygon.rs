@@ -422,7 +422,7 @@ impl<S: Clone> Polygon<S> {
             ));
         }
         let mut poly3d = Polygon::new(poly_verts, open, self.metadata.clone());
-        poly3d.set_new_normals();
+        poly3d.set_new_normal();
         poly3d
     }
 
@@ -541,7 +541,8 @@ impl<S: Clone> Polygon<S> {
         result // todo: return polygons
     }
 
-    fn calculate_new_normal(&self) -> Vector3<Real> {
+    /// return a normal calculated from all polygon vertices
+    pub fn calculate_new_normal(&self) -> Vector3<Real> {
         let n = self.vertices.len();
         if n < 3 {
             return Vector3::z(); // degenerate or empty
@@ -574,7 +575,7 @@ impl<S: Clone> Polygon<S> {
     }
 
     /// Recompute this polygon's normal, then set all vertices' normals to match (flat shading).
-    pub fn set_new_normals(&mut self) {
+    pub fn set_new_normal(&mut self) {
         // Assign each vertex’s normal to match the plane
         let new_normal = self.calculate_new_normal();
         for v in &mut self.vertices {

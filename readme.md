@@ -382,15 +382,15 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 
 - `subdivide_triangles()` - Subdivide this polygon into smaller triangles
 - `calculate_new_normal()`- return a normal calculated from all polygon vertices
-- `set_new_normals()` - recalculate and set polygon normals
+- `set_new_normal()` - recalculate and set polygon normal
 - `triangulate()` - Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2]
-- `offset(distance)`
-- `reconstruct_arcs(min_match: usize, rms_limit: Real, angle_limit_degs: Real, offset_limit: Real)`
-- `check_coordinates_finite()`
-- `check_repeated_points()`
-- `check_ring_closed()`
-- `check_minimum_ring_size()`
-- `check_ring_self_intersection()`
+- `offset(distance: Real)` - offset a polygon by distance in positive or negative direction depending on normal
+- `reconstruct_arcs(min_match: usize, rms_limit: Real, angle_limit_degs: Real, offset_limit: Real)` - Attempt to reconstruct arcs of constant radius from this polygon
+- `check_coordinates_finite()` - Returns an error if any coordinate is not finite (NaN or ±∞)
+- `check_repeated_points()` - Check for repeated adjacent points. Return the first repeated coordinate if found
+- `check_ring_closed()` - Check ring closure: first and last vertex must coincide if polygon is meant to be closed
+- `check_minimum_ring_size()` - Check that the ring has at least 3 distinct points
+- `check_ring_self_intersection()` - Very basic ring self‐intersection check by naive line–line intersection
 
 ### Signed Area (Shoelace)
 The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
@@ -409,7 +409,6 @@ The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - extend flatten to work with arbitrary planes
-- overwrite polygon metadata correctly in difference, intersection, etc
 - fix normals on rotate_extrude
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
