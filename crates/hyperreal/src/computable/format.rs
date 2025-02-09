@@ -298,7 +298,7 @@ mod tests {
 
     #[test]
     fn exp_smol() {
-        let smol = Computable::rational(Rational::fraction(1, 1_000_000_000_000));
+        let smol = Computable::rational(Rational::fraction(1, 1_000_000_000_000).unwrap());
         let ans = smol.clone().multiply(smol);
         assert_eq!(format!("{ans:.0e}"), "1e-24");
         assert_eq!(format!("{ans:.2E}"), "1.00E-24");
@@ -332,11 +332,11 @@ mod tests {
 
     #[test]
     fn almost() {
-        let ans = Computable::rational(Rational::fraction(99, 10));
+        let ans = Computable::rational(Rational::fraction(99, 10).unwrap());
         assert_eq!(format!("{ans:.0e}"), "1e1");
-        let ans = Computable::rational(Rational::fraction(999, 10));
+        let ans = Computable::rational(Rational::fraction(999, 10).unwrap());
         assert_eq!(format!("{ans:.0e}"), "1e2");
-        let ans = Computable::rational(Rational::fraction(9999, 10));
+        let ans = Computable::rational(Rational::fraction(9999, 10).unwrap());
         assert_eq!(format!("{ans:.0e}"), "1e3");
         let ans = Computable::rational(Rational::new(12346));
         assert_eq!(format!("{ans:.0E}"), "1E4");
@@ -362,7 +362,8 @@ mod tests {
         huge = huge.clone().multiply(huge);
         huge = huge.clone().multiply(huge);
         huge = huge.clone().multiply(huge);
-        let fraction = Computable::rational(Rational::fraction(1_000_000_000_000_000_000, 3));
+        let fraction =
+            Computable::rational(Rational::fraction(1_000_000_000_000_000_000, 3).unwrap());
         let ans = huge.clone().multiply(huge).multiply(fraction);
         assert_eq!(format!("{ans:.4e}"), "3.3333e593");
         assert_eq!(format!("{ans:.0e}"), "3e593");
@@ -373,7 +374,7 @@ mod tests {
 
     #[test]
     fn exp_two_thirds() {
-        let tt = Computable::rational(Rational::fraction(2, 3));
+        let tt = Computable::rational(Rational::fraction(2, 3).unwrap());
         assert_eq!(format!("{tt:.0e}"), "7e-1");
         assert_eq!(format!("{tt:.2e}"), "6.67e-1");
         assert_eq!(format!("{tt:.4e}"), "6.6667e-1");
@@ -394,7 +395,7 @@ mod tests {
 
     #[test]
     fn disp_tiny() {
-        let tiny = Computable::rational(Rational::fraction(8, 1_000_000_000));
+        let tiny = Computable::rational(Rational::fraction(8, 1_000_000_000).unwrap());
         assert_eq!(format!("{tiny:.0}"), "0");
         assert_eq!(format!("{tiny:.2}"), "0.00");
         assert_eq!(format!("{tiny:.8}"), "0.00000001");
@@ -403,7 +404,7 @@ mod tests {
 
     #[test]
     fn disp_small() {
-        let smol = Computable::rational(Rational::fraction(4, 1000_000));
+        let smol = Computable::rational(Rational::fraction(4, 1000_000).unwrap());
         assert_eq!(format!("{smol:.0}"), "0");
         assert_eq!(format!("{smol:.2}"), "0.00");
         assert_eq!(format!("{smol}"), "0.000004");
@@ -430,7 +431,7 @@ mod tests {
     fn disp_too_small() {
         let ratios = [(1, 3), (1, 4), (2, 5), (1, 6), (3, 7)];
         for ratio in ratios {
-            let ans = Computable::rational(Rational::fraction(ratio.0, ratio.1));
+            let ans = Computable::rational(Rational::fraction(ratio.0, ratio.1).unwrap());
             assert_eq!(format!("{ans:.0}"), "0");
         }
     }
@@ -439,14 +440,14 @@ mod tests {
     fn disp_one() {
         let ratios = [(1, 2), (3, 4), (3, 5), (5, 6), (4, 7)];
         for ratio in ratios {
-            let ans = Computable::rational(Rational::fraction(ratio.0, ratio.1));
+            let ans = Computable::rational(Rational::fraction(ratio.0, ratio.1).unwrap());
             assert_eq!(format!("{ans:.0}"), "1");
         }
     }
 
     #[test]
     fn disp_one_third() {
-        let ot = Computable::rational(Rational::fraction(1, 3));
+        let ot = Computable::rational(Rational::fraction(1, 3).unwrap());
         assert_eq!(format!("{ot:.0}"), "0");
         assert_eq!(format!("{ot:.2}"), "0.33");
         assert_eq!(format!("{ot}"), "0.33333333333333333333333333333333");
@@ -478,7 +479,7 @@ mod tests {
 
     #[test]
     fn disp_two_thirds() {
-        let tt = Computable::rational(Rational::fraction(2, 3));
+        let tt = Computable::rational(Rational::fraction(2, 3).unwrap());
         assert_eq!(format!("{tt:.0}"), "1");
         assert_eq!(format!("{tt:.2}"), "0.67");
         assert_eq!(format!("{tt:.4}"), "0.6667");
@@ -493,7 +494,8 @@ mod tests {
         huge = huge.clone().multiply(huge);
         huge = huge.clone().multiply(huge);
         huge = huge.clone().multiply(huge);
-        let fraction = Computable::rational(Rational::fraction(1_000_000_000_000_000_000, 3));
+        let fraction =
+            Computable::rational(Rational::fraction(1_000_000_000_000_000_000, 3).unwrap());
         let ans = huge.clone().multiply(huge).multiply(fraction);
         assert_eq!(format!("{ans:.4}").trim_matches('3'), ".");
         assert_eq!(format!("{ans:.0}").trim_matches('3'), "");

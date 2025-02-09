@@ -38,7 +38,7 @@ impl TryFrom<f32> for Rational {
                     let numerator: BigInt = sig.into();
                     let denominator = BigUint::one() << 149;
                     Ok(signed(
-                        Rational::from_bigint_fraction(numerator, denominator),
+                        Rational::from_bigint_fraction(numerator, denominator).unwrap(),
                         neg,
                     ))
                 }
@@ -48,7 +48,7 @@ impl TryFrom<f32> for Rational {
                 let numerator: BigInt = n.into();
                 let denominator = BigUint::one() << (150 - exp);
                 Ok(signed(
-                    Rational::from_bigint_fraction(numerator, denominator),
+                    Rational::from_bigint_fraction(numerator, denominator).unwrap(),
                     neg,
                 ))
             }
@@ -91,7 +91,7 @@ impl TryFrom<f64> for Rational {
                     let numerator: BigInt = sig.into();
                     let denominator = BigUint::one() << 1074;
                     Ok(signed(
-                        Rational::from_bigint_fraction(numerator, denominator),
+                        Rational::from_bigint_fraction(numerator, denominator).unwrap(),
                         neg,
                     ))
                 }
@@ -101,7 +101,7 @@ impl TryFrom<f64> for Rational {
                 let numerator: BigInt = n.into();
                 let denominator = BigUint::one() << (1075 - exp);
                 Ok(signed(
-                    Rational::from_bigint_fraction(numerator, denominator),
+                    Rational::from_bigint_fraction(numerator, denominator).unwrap(),
                     neg,
                 ))
             }
@@ -141,7 +141,7 @@ mod tests {
     #[test]
     fn half_from_float() {
         let half = 0.5_f32;
-        let correct = Rational::fraction(1, 2);
+        let correct = Rational::fraction(1, 2).unwrap();
         let answer: Rational = half.try_into().unwrap();
         assert_eq!(answer, correct);
         let half = 0.5_f64;
@@ -153,7 +153,7 @@ mod tests {
     fn repr_f32() {
         let f: f32 = 1.23456789;
         let a: Rational = f.try_into().unwrap();
-        let correct = Rational::fraction(5178153, 4194304);
+        let correct = Rational::fraction(5178153, 4194304).unwrap();
         assert_eq!(a, correct);
     }
 
@@ -161,7 +161,7 @@ mod tests {
     fn repr_f64() {
         let f: f64 = 1.23456789;
         let a: Rational = f.try_into().unwrap();
-        let correct = Rational::fraction(5559999489367579, 4503599627370496);
+        let correct = Rational::fraction(5559999489367579, 4503599627370496).unwrap();
         assert_eq!(a, correct);
     }
 }

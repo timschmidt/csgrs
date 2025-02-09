@@ -1,4 +1,4 @@
-use crate::{Rational, Real, RealProblem};
+use crate::{Problem, Rational, Real};
 use std::collections::HashMap;
 use std::iter::Peekable;
 use std::str::Chars;
@@ -26,7 +26,7 @@ enum Operand {
 }
 
 impl Operand {
-    pub fn value(&self, names: &Symbols) -> Result<Real, RealProblem> {
+    pub fn value(&self, names: &Symbols) -> Result<Real, Problem> {
         match self {
             Operand::Literal(n) => Ok(Real::new(n.clone())),
             Operand::Symbol(s) => Simple::lookup(s, names),
@@ -41,8 +41,8 @@ pub struct Simple {
     operands: Vec<Operand>,
 }
 
-fn parse_problem(problem: RealProblem) -> &'static str {
-    use RealProblem::*;
+fn parse_problem(problem: Problem) -> &'static str {
+    use Problem::*;
     match problem {
         DivideByZero => "Attempting to divide by zero",
         NotFound => "Symbol not found",
@@ -55,18 +55,18 @@ fn parse_problem(problem: RealProblem) -> &'static str {
 }
 
 impl Simple {
-    fn lookup(name: &str, names: &Symbols) -> Result<Real, RealProblem> {
+    fn lookup(name: &str, names: &Symbols) -> Result<Real, Problem> {
         if let Some(value) = names.get(name) {
             return Ok(value.clone());
         }
         match name {
             "pi" => Ok(Real::pi()),
             "e" => Ok(Real::e()),
-            _ => Err(RealProblem::NotFound),
+            _ => Err(Problem::NotFound),
         }
     }
 
-    pub fn evaluate(&self, names: &Symbols) -> Result<Real, RealProblem> {
+    pub fn evaluate(&self, names: &Symbols) -> Result<Real, Problem> {
         use Operator::*;
         match self.op {
             Plus => {
@@ -77,7 +77,7 @@ impl Simple {
                 Ok(value)
             }
             Minus => match self.operands.len() {
-                0 => Err(RealProblem::InsufficientParameters),
+                0 => Err(Problem::InsufficientParameters),
                 1 => {
                     let operand = self.operands.first().unwrap();
                     let value = -(operand.value(names)?);
@@ -100,7 +100,7 @@ impl Simple {
                 Ok(value)
             }
             Slash => match self.operands.len() {
-                0 => Err(RealProblem::InsufficientParameters),
+                0 => Err(Problem::InsufficientParameters),
                 1 => {
                     let operand = self.operands.first().unwrap();
                     operand.value(names)?.inverse()
@@ -116,7 +116,7 @@ impl Simple {
             },
             Exp => {
                 if self.operands.len() != 1 {
-                    return Err(RealProblem::ParseError);
+                    return Err(Problem::ParseError);
                 }
                 let operand = self.operands.first().unwrap();
                 let value = operand.value(names)?.exp()?;
@@ -124,7 +124,7 @@ impl Simple {
             }
             Ln => {
                 if self.operands.len() != 1 {
-                    return Err(RealProblem::ParseError);
+                    return Err(Problem::ParseError);
                 }
                 let operand = self.operands.first().unwrap();
                 let value = operand.value(names)?.ln()?;
@@ -132,7 +132,7 @@ impl Simple {
             }
             Sqrt => {
                 if self.operands.len() != 1 {
-                    return Err(RealProblem::ParseError);
+                    return Err(Problem::ParseError);
                 }
                 let operand = self.operands.first().unwrap();
                 let value = operand.value(names)?.sqrt()?;
@@ -140,7 +140,7 @@ impl Simple {
             }
             Cos => {
                 if self.operands.len() != 1 {
-                    return Err(RealProblem::ParseError);
+                    return Err(Problem::ParseError);
                 }
                 let operand = self.operands.first().unwrap();
                 let value = operand.value(names)?.cos();
@@ -148,7 +148,7 @@ impl Simple {
             }
             Sin => {
                 if self.operands.len() != 1 {
-                    return Err(RealProblem::ParseError);
+                    return Err(Problem::ParseError);
                 }
                 let operand = self.operands.first().unwrap();
                 let value = operand.value(names)?.sin();
@@ -277,7 +277,7 @@ impl Simple {
     // Consume a literal, for now presumably a single number consisting of:
     // a possible leading minus symbol, then
     // digits, the decimal point and optionally commas, underscores etc. which are ignored
-    fn consume_literal(c: &mut Peekable<Chars>) -> Result<Operand, RealProblem> {
+    fn consume_literal(c: &mut Peekable<Chars>) -> Result<Operand, Problem> {
         let mut num = String::new();
 
         if let Some('-') = c.peek() {
@@ -293,7 +293,7 @@ impl Simple {
             c.next();
         }
 
-        let n: Rational = num.parse().map_err(|_| RealProblem::ParseError)?;
+        let n: Rational = num.parse().map_err(|_| Problem::ParseError)?;
 
         Ok(Operand::Literal(n))
     }
@@ -323,7 +323,7 @@ mod tests {
         let empty = HashMap::new();
         let xpr: Simple = "(/ 0)".parse().unwrap();
         let result = xpr.evaluate(&empty);
-        assert_eq!(result, Err(RealProblem::DivideByZero))
+        assert_eq!(result, Err(Problem::DivideByZero))
     }
 
     #[test]

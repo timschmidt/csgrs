@@ -1,3 +1,4 @@
+use crate::Problem;
 use num::bigint::Sign::{self, *};
 use num::{bigint::ToBigInt, bigint::ToBigUint, BigInt, BigUint};
 use num::{One, Zero};
@@ -36,13 +37,13 @@ pub struct ParseBRError();
 /// ```
 /// use realistic::Rational;
 /// let r: Rational = 0.3_f64.try_into().unwrap();
-/// assert!(r != Rational::fraction(3, 10));
+/// assert!(r != Rational::fraction(3, 10).unwrap());
 /// ```
 ///
 /// Simple arithmetic
 /// ```
 /// use realistic::Rational;
-/// let quarter = Rational::fraction(1, 4);
+/// let quarter = Rational::fraction(1, 4).unwrap();
 /// let eighteen = Rational::new(18);
 /// let two = Rational::one() + Rational::one();
 /// let sixteen = eighteen - two;
@@ -88,12 +89,12 @@ impl Rational {
 
     /// The Rational corresponding to the provided [`BigInt`]
     pub fn from_bigint(n: BigInt) -> Self {
-        Self::from_bigint_fraction(n, BigUint::one())
+        Self::from_bigint_fraction(n, BigUint::one()).unwrap()
     }
 
     /// The non-negative Rational corresponding to the provided [`i64`]
     /// numerator and [`u64`] denominator as a fraction
-    pub fn fraction(n: i64, d: u64) -> Self {
+    pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
         let numerator = ToBigInt::to_bigint(&n).unwrap();
         let denominator = ToBigUint::to_biguint(&d).unwrap();
         Self::from_bigint_fraction(numerator, denominator)
@@ -101,7 +102,10 @@ impl Rational {
 
     /// The Rational corresponding to the provided [`BigInt`]
     /// numerator and [`BigUint`] denominator as a fraction
-    pub fn from_bigint_fraction(n: BigInt, denominator: BigUint) -> Self {
+    pub fn from_bigint_fraction(n: BigInt, denominator: BigUint) -> Result<Self, Problem> {
+        if denominator == BigUint::ZERO {
+            return Err(Problem::DivideByZero);
+        }
         let sign = n.sign();
         let numerator = n.magnitude().clone();
         let answer = Self {
@@ -109,7 +113,7 @@ impl Rational {
             numerator,
             denominator,
         };
-        answer.reduce()
+        Ok(answer.reduce())
     }
 
     fn maybe_reduce(self) -> Self {
@@ -143,7 +147,7 @@ impl Rational {
     /// ```
     /// use realistic::Rational;
     /// let five = Rational::new(5);
-    /// let a_fifth = Rational::fraction(1, 5);
+    /// let a_fifth = Rational::fraction(1, 5).unwrap();
     /// assert_eq!(five.clone().inverse(), a_fifth);
     /// assert_eq!(a_fifth.clone().inverse(), five);
     /// ```
@@ -162,8 +166,8 @@ impl Rational {
     /// ```
     /// use realistic::Rational;
     /// assert!(Rational::new(5).is_integer());
-    /// assert!(Rational::fraction(16, 4).is_integer());
-    /// assert!(!Rational::fraction(5, 4).is_integer());
+    /// assert!(Rational::fraction(16, 4).unwrap().is_integer());
+    /// assert!(!Rational::fraction(5, 4).unwrap().is_integer());
     /// ```
     pub fn is_integer(&self) -> bool {
         self.denominator == *ONE.deref()
@@ -177,7 +181,7 @@ impl Rational {
     ///
     /// ```
     /// use realistic::Rational;
-    /// let approx_pi = Rational::fraction(22, 7);
+    /// let approx_pi = Rational::fraction(22, 7).unwrap();
     /// let three = Rational::new(3);
     /// assert_eq!(approx_pi.trunc(), three);
     /// ```
@@ -201,15 +205,15 @@ impl Rational {
     ///
     /// ```
     /// use realistic::Rational;
-    /// let approx_pi = Rational::fraction(22, 7);
-    /// let a_seventh = Rational::fraction(1, 7);
+    /// let approx_pi = Rational::fraction(22, 7).unwrap();
+    /// let a_seventh = Rational::fraction(1, 7).unwrap();
     /// assert_eq!(approx_pi.fract(), a_seventh);
     /// ```
     ///
     /// ```
     /// use realistic::Rational;
-    /// let backward = Rational::fraction(-53, 9);
-    /// let fract = Rational::fraction(-8, 9);
+    /// let backward = Rational::fraction(-53, 9).unwrap();
+    /// let fract = Rational::fraction(-8, 9).unwrap();
     /// assert_eq!(backward.fract(), fract);
     /// ```
     pub fn fract(&self) -> Self {
@@ -738,20 +742,23 @@ mod tests {
 
     #[test]
     fn fract() {
-        let seventy_ninths = Rational::fraction(70, 9);
-        assert_eq!(seventy_ninths.fract(), Rational::fraction(7, 9));
-        assert_eq!(seventy_ninths.neg().fract(), Rational::fraction(-7, 9));
+        let seventy_ninths = Rational::fraction(70, 9).unwrap();
+        assert_eq!(seventy_ninths.fract(), Rational::fraction(7, 9).unwrap());
+        assert_eq!(
+            seventy_ninths.neg().fract(),
+            Rational::fraction(-7, 9).unwrap()
+        );
         let six = Rational::new(6);
         assert_eq!(six.fract(), Rational::zero());
     }
 
     #[test]
     fn trunc() {
-        let seventy_ninths = Rational::fraction(70, 9);
+        let seventy_ninths = Rational::fraction(70, 9).unwrap();
         let whole = seventy_ninths.trunc();
         let frac = seventy_ninths.fract();
         assert_eq!(whole + frac, seventy_ninths);
-        let shrink = Rational::fraction(-405, 11);
+        let shrink = Rational::fraction(-405, 11).unwrap();
         let whole = shrink.trunc();
         let frac = shrink.fract();
         assert_eq!(whole + frac, shrink);
@@ -797,6 +804,12 @@ mod tests {
         assert!(Rational::one() > Rational::zero());
         assert!(Rational::new(5) > Rational::new(4));
         assert!(Rational::new(-10) < Rational::new(5));
-        assert!(Rational::fraction(1, 4) < Rational::fraction(1, 3));
+        assert!(Rational::fraction(1, 4).unwrap() < Rational::fraction(1, 3).unwrap());
+    }
+
+    #[test]
+    fn divide_by_zero() {
+        let err = Rational::fraction(1, 0).unwrap_err();
+        assert_eq!(err, Problem::DivideByZero);
     }
 }

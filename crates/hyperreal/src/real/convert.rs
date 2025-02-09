@@ -1,4 +1,4 @@
-use crate::{Computable, Rational, Real, RealProblem};
+use crate::{Computable, Problem, Rational, Real};
 
 impl From<i64> for Real {
     fn from(n: i64) -> Real {
@@ -19,28 +19,28 @@ impl From<Rational> for Real {
 }
 
 impl TryFrom<f32> for Real {
-    type Error = RealProblem;
+    type Error = Problem;
 
     fn try_from(n: f32) -> Result<Real, Self::Error> {
         use crate::FloatProblem;
 
         let rational: Rational = n.try_into().map_err(|e| match e {
-            FloatProblem::Infinity => RealProblem::Infinity,
-            FloatProblem::NotANumber => RealProblem::NotANumber,
+            FloatProblem::Infinity => Problem::Infinity,
+            FloatProblem::NotANumber => Problem::NotANumber,
         })?;
         Ok(Real::new(rational))
     }
 }
 
 impl TryFrom<f64> for Real {
-    type Error = RealProblem;
+    type Error = Problem;
 
     fn try_from(n: f64) -> Result<Real, Self::Error> {
         use crate::FloatProblem;
 
         let rational: Rational = n.try_into().map_err(|e| match e {
-            FloatProblem::Infinity => RealProblem::Infinity,
-            FloatProblem::NotANumber => RealProblem::NotANumber,
+            FloatProblem::Infinity => Problem::Infinity,
+            FloatProblem::NotANumber => Problem::NotANumber,
         })?;
         Ok(Real::new(rational))
     }
@@ -228,25 +228,25 @@ mod tests {
     fn infinity() {
         let f = f32::INFINITY;
         let d = f64::NEG_INFINITY;
-        let a: RealProblem = <f32 as TryInto<Real>>::try_into(f).unwrap_err();
-        let b: RealProblem = <f64 as TryInto<Real>>::try_into(d).unwrap_err();
-        assert_eq!(a, RealProblem::Infinity);
-        assert_eq!(b, RealProblem::Infinity);
+        let a: Problem = <f32 as TryInto<Real>>::try_into(f).unwrap_err();
+        let b: Problem = <f64 as TryInto<Real>>::try_into(d).unwrap_err();
+        assert_eq!(a, Problem::Infinity);
+        assert_eq!(b, Problem::Infinity);
     }
 
     #[test]
     fn nans() {
         let f = f32::NAN;
         let d = f64::NAN;
-        let a: RealProblem = <f32 as TryInto<Real>>::try_into(f).unwrap_err();
-        let b: RealProblem = <f64 as TryInto<Real>>::try_into(d).unwrap_err();
-        assert_eq!(a, RealProblem::NotANumber);
-        assert_eq!(b, RealProblem::NotANumber);
+        let a: Problem = <f32 as TryInto<Real>>::try_into(f).unwrap_err();
+        let b: Problem = <f64 as TryInto<Real>>::try_into(d).unwrap_err();
+        assert_eq!(a, Problem::NotANumber);
+        assert_eq!(b, Problem::NotANumber);
     }
 
     #[test]
     fn half_to_float() {
-        let half = Real::new(Rational::fraction(1, 2));
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
         let f: f32 = half.clone().into();
         let d: f64 = half.into();
         assert_eq!(f, 0.5);
@@ -256,18 +256,18 @@ mod tests {
     #[test]
     fn half_from_float() {
         let half = 0.5_f32;
-        let correct = Real::new(Rational::fraction(1, 2));
+        let correct = Real::new(Rational::fraction(1, 2).unwrap());
         let answer: Real = half.try_into().unwrap();
         assert_eq!(answer, correct);
         let half = 0.5_f64;
-        let correct = Real::new(Rational::fraction(1, 2));
+        let correct = Real::new(Rational::fraction(1, 2).unwrap());
         let answer: Real = half.try_into().unwrap();
         assert_eq!(answer, correct);
     }
 
     #[test]
     fn negative_half() {
-        let half = Real::new(Rational::fraction(-1, 2));
+        let half = Real::new(Rational::fraction(-1, 2).unwrap());
         let f: f32 = half.clone().into();
         let d: f64 = half.into();
         assert_eq!(f, -0.5);
@@ -280,7 +280,7 @@ mod tests {
         let d: f32 = 81.0;
         let a: Real = f.try_into().unwrap();
         let b: Real = d.try_into().unwrap();
-        let third = Real::new(Rational::fraction(1, 3));
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
         let answer = (a / b).unwrap();
         assert_eq!(answer, third);
     }
@@ -288,11 +288,11 @@ mod tests {
     #[test]
     fn too_small() {
         let r: Real = f32::from_bits(1).try_into().unwrap();
-        let s = r * Real::new(Rational::fraction(1, 3));
+        let s = r * Real::new(Rational::fraction(1, 3).unwrap());
         let f: f32 = s.into();
         assert_eq!(f, 0.0_f32);
         let r: Real = f64::from_bits(1).try_into().unwrap();
-        let s = r * Real::new(Rational::fraction(1, 3));
+        let s = r * Real::new(Rational::fraction(1, 3).unwrap());
         let f: f64 = s.into();
         assert_eq!(f, 0.0_f64);
     }
@@ -301,7 +301,7 @@ mod tests {
     fn repr_f32() {
         let f: f32 = 1.23456789;
         let a: Real = f.try_into().unwrap();
-        let correct = Real::new(Rational::fraction(5178153, 4194304));
+        let correct = Real::new(Rational::fraction(5178153, 4194304).unwrap());
         assert_eq!(a, correct);
     }
 
@@ -309,7 +309,7 @@ mod tests {
     fn repr_f64() {
         let f: f64 = 1.23456789;
         let a: Real = f.try_into().unwrap();
-        let correct = Real::new(Rational::fraction(5559999489367579, 4503599627370496));
+        let correct = Real::new(Rational::fraction(5559999489367579, 4503599627370496).unwrap());
         assert_eq!(a, correct);
     }
 

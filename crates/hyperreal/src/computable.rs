@@ -34,9 +34,12 @@ mod rationals {
     use crate::Rational;
     use std::sync::LazyLock;
 
-    pub(super) static SHORT_9: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 9));
-    pub(super) static SHORT_24: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 24));
-    pub(super) static SHORT_80: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 80));
+    pub(super) static SHORT_9: LazyLock<Rational> =
+        LazyLock::new(|| Rational::fraction(1, 9).unwrap());
+    pub(super) static SHORT_24: LazyLock<Rational> =
+        LazyLock::new(|| Rational::fraction(1, 24).unwrap());
+    pub(super) static SHORT_80: LazyLock<Rational> =
+        LazyLock::new(|| Rational::fraction(1, 80).unwrap());
 }
 
 mod signed {
@@ -322,7 +325,7 @@ impl Computable {
     /// use realistic::{Rational,Computable};
     /// use num::{Zero,One};
     /// use num::bigint::{BigInt,ToBigInt};
-    /// let n = Rational::fraction(7, 8);
+    /// let n = Rational::fraction(7, 8).unwrap();
     /// let comp = Computable::rational(n);
     /// assert!((BigInt::zero() ..= BigInt::one()).contains(&comp.approx(0)));
     /// ```

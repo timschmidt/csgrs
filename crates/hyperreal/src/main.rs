@@ -1,4 +1,4 @@
-use realistic::{Real, RealProblem, Simple};
+use realistic::{Problem, Real, Simple};
 use std::collections::HashMap;
 use std::io;
 
@@ -31,7 +31,7 @@ pub fn main() {
             eprintln!("expression parsed as: {expr:?}");
         }
 
-        use RealProblem::*;
+        use Problem::*;
         let ans = expr.evaluate(&names);
         match ans {
             Ok(ans) => {

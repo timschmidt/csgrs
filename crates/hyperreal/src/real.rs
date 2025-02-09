@@ -1,22 +1,7 @@
-use crate::Computable;
-use crate::Rational;
+use crate::{Computable, Problem, Rational};
 use num::bigint::Sign;
-use Class::*;
 
 mod convert;
-
-/// Problems when either parsing or attempting Arithmetic with [`Real`] numbers
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum RealProblem {
-    ParseError,
-    SqrtNegative,
-    DivideByZero,
-    NotFound,
-    InsufficientParameters,
-    NotANumber,
-    Infinity,
-}
 
 #[derive(Clone, Debug)]
 enum Class {
@@ -28,6 +13,8 @@ enum Class {
     SinPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     Irrational,
 }
+
+use Class::*;
 
 // We can't tell whether an Irrational value is ever equal to anything
 impl PartialEq for Class {
@@ -63,7 +50,8 @@ mod rationals {
     use crate::Rational;
     use std::sync::LazyLock;
 
-    pub(super) static HALF: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2));
+    pub(super) static HALF: LazyLock<Rational> =
+        LazyLock::new(|| Rational::fraction(1, 2).unwrap());
 }
 
 mod unsigned {
@@ -94,7 +82,7 @@ pub type Signal = Arc<AtomicBool>;
 /// ```
 /// use realistic::{Real, Rational};
 /// let half: Real = "0.5".parse().unwrap();
-/// assert_eq!(half, Rational::fraction(1, 2));
+/// assert_eq!(half, Rational::fraction(1, 2).unwrap());
 /// ```
 ///
 /// Simple arithmetic
@@ -245,19 +233,19 @@ impl Real {
         }
     }
 
-    /// The inverse of this Real, or a [`RealProblem`] if that's impossible,
-    /// in particular RealProblem::DivideByZero if this real is zero
+    /// The inverse of this Real, or a [`Problem`] if that's impossible,
+    /// in particular Problem::DivideByZero if this real is zero
     ///
     /// Example
     /// ```
     /// use realistic::{Rational,Real};
     /// let five = Real::new(Rational::new(5));
-    /// let a_fifth = Real::new(Rational::fraction(1, 5));
+    /// let a_fifth = Real::new(Rational::fraction(1, 5).unwrap());
     /// assert_eq!(five.inverse(), Ok(a_fifth));
     /// ```
-    pub fn inverse(self) -> Result<Self, RealProblem> {
+    pub fn inverse(self) -> Result<Self, Problem> {
         if self.definitely_zero() {
-            return Err(RealProblem::DivideByZero);
+            return Err(Problem::DivideByZero);
         }
         match &self.class {
             One => {
@@ -298,11 +286,11 @@ impl Real {
         })
     }
 
-    /// The square root of this Real, or a [`RealProblem`] if that's impossible,
-    /// in particular RealProblem::SqrtNegative if this Real is negative
-    pub fn sqrt(self) -> Result<Real, RealProblem> {
+    /// The square root of this Real, or a [`Problem`] if that's impossible,
+    /// in particular Problem::SqrtNegative if this Real is negative
+    pub fn sqrt(self) -> Result<Real, Problem> {
         if self.best_sign() == Sign::Minus {
-            return Err(RealProblem::SqrtNegative);
+            return Err(Problem::SqrtNegative);
         }
         if self.definitely_zero() {
             return Ok(Self::zero());
@@ -362,7 +350,7 @@ impl Real {
     }
 
     /// Apply the exponential function to this Real parameter
-    pub fn exp(self) -> Result<Real, RealProblem> {
+    pub fn exp(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
             return Ok(Self::new(Rational::one()));
         }
@@ -392,9 +380,9 @@ impl Real {
     }
 
     /// The natural logarithm of this Real
-    pub fn ln(self) -> Result<Real, RealProblem> {
+    pub fn ln(self) -> Result<Real, Problem> {
         if self.best_sign() != Sign::Plus {
-            return Err(RealProblem::NotANumber);
+            return Err(Problem::NotANumber);
         }
         match &self.class {
             One => {
@@ -452,7 +440,7 @@ impl Real {
                 }
                 if d == unsigned::THREE.deref() {
                     r = Some(Self {
-                        rational: Rational::fraction(1, 2),
+                        rational: Rational::fraction(1, 2).unwrap(),
                         class: Sqrt(Rational::new(3)),
                         computable: Computable::sqrt_rational(Rational::new(3)),
                         signal: None,
@@ -460,14 +448,14 @@ impl Real {
                 }
                 if d == unsigned::FOUR.deref() {
                     r = Some(Self {
-                        rational: Rational::fraction(1, 2),
+                        rational: Rational::fraction(1, 2).unwrap(),
                         class: Sqrt(Rational::new(2)),
                         computable: Computable::sqrt_rational(Rational::new(2)),
                         signal: None,
                     });
                 }
                 if d == unsigned::SIX.deref() {
-                    r = Some(Self::new(Rational::fraction(1, 2)));
+                    r = Some(Self::new(Rational::fraction(1, 2).unwrap()));
                 }
                 if let Some(real) = r {
                     let whole = self.rational.shifted_big_integer(0);
@@ -520,7 +508,7 @@ impl Real {
             }
             Pi => {
                 let off = Self {
-                    rational: self.rational + Rational::fraction(1, 2),
+                    rational: self.rational + Rational::fraction(1, 2).unwrap(),
                     class: Pi,
                     computable: self.computable,
                     signal: None,
@@ -597,10 +585,10 @@ impl fmt::Display for Real {
 }
 
 impl std::str::FromStr for Real {
-    type Err = RealProblem;
+    type Err = Problem;
 
-    fn from_str(s: &str) -> Result<Self, RealProblem> {
-        let rational: Rational = s.parse().map_err(|_| RealProblem::ParseError)?;
+    fn from_str(s: &str) -> Result<Self, Problem> {
+        let rational: Rational = s.parse().map_err(|_| Problem::ParseError)?;
         Ok(Self {
             rational,
             class: One,
@@ -769,9 +757,9 @@ impl Mul for Real {
 }
 
 impl Div for Real {
-    type Output = Result<Self, RealProblem>;
+    type Output = Result<Self, Problem>;
 
-    fn div(self, other: Self) -> Result<Self, RealProblem> {
+    fn div(self, other: Self) -> Result<Self, Problem> {
         if self.class == other.class {
             let rational = self.rational / other.rational;
             return Ok(Self::new(rational));
@@ -784,7 +772,7 @@ impl Div for Real {
             return Ok(Self::zero());
         }
         if other.definitely_zero() {
-            return Err(RealProblem::DivideByZero);
+            return Err(Problem::DivideByZero);
         }
 
         let inverted = other.inverse()?;
