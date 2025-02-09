@@ -385,9 +385,9 @@ impl<S: Clone> CSG<S> {
         let bottom = Polygon::new(
             vec![
                 Vertex::new(p000, bottom_normal),
-                Vertex::new(p100, bottom_normal),
-                Vertex::new(p110, bottom_normal),
                 Vertex::new(p010, bottom_normal),
+                Vertex::new(p110, bottom_normal),
+                Vertex::new(p100, bottom_normal),
             ],
             CLOSED,
             None,
@@ -399,9 +399,9 @@ impl<S: Clone> CSG<S> {
         let top = Polygon::new(
             vec![
                 Vertex::new(p001, top_normal),
-                Vertex::new(p011, top_normal),
-                Vertex::new(p111, top_normal),
                 Vertex::new(p101, top_normal),
+                Vertex::new(p111, top_normal),
+                Vertex::new(p011, top_normal),                
             ],
             CLOSED,
             None,
@@ -413,9 +413,9 @@ impl<S: Clone> CSG<S> {
         let front = Polygon::new(
             vec![
                 Vertex::new(p000, front_normal),
-                Vertex::new(p001, front_normal),
-                Vertex::new(p101, front_normal),
                 Vertex::new(p100, front_normal),
+                Vertex::new(p101, front_normal),
+                Vertex::new(p001, front_normal),
             ],
             CLOSED,
             None,
@@ -427,9 +427,9 @@ impl<S: Clone> CSG<S> {
         let back = Polygon::new(
             vec![
                 Vertex::new(p010, back_normal),
-                Vertex::new(p110, back_normal),
-                Vertex::new(p111, back_normal),
                 Vertex::new(p011, back_normal),
+                Vertex::new(p111, back_normal),
+                Vertex::new(p110, back_normal),
             ],
             CLOSED,
             None,
@@ -441,9 +441,9 @@ impl<S: Clone> CSG<S> {
         let left = Polygon::new(
             vec![
                 Vertex::new(p000, left_normal),
-                Vertex::new(p010, left_normal),
-                Vertex::new(p011, left_normal),
                 Vertex::new(p001, left_normal),
+                Vertex::new(p011, left_normal),
+                Vertex::new(p010, left_normal),
             ],
             CLOSED,
             None,
@@ -455,9 +455,9 @@ impl<S: Clone> CSG<S> {
         let right = Polygon::new(
             vec![
                 Vertex::new(p100, right_normal),
-                Vertex::new(p101, right_normal),
-                Vertex::new(p111, right_normal),
                 Vertex::new(p110, right_normal),
+                Vertex::new(p111, right_normal),
+                Vertex::new(p101, right_normal),
             ],
             CLOSED,
             None,
