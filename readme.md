@@ -57,7 +57,7 @@ Helper constructors for 2D shapes in the XY plane:
 ```rust
 let square = CSG::square(1.0, 1.0, None); // 1×1 at origin
 let rect = CSG::square(2.0, 4.0, None);
-let circle = CSG::circle(1.0, 32, None);          // radius=1, 32 segments
+let circle = CSG::circle(1.0, 32, None); // radius=1, 32 segments
 let circle2 = CSG::circle(2.0, 64, None);
 ```
 
@@ -117,11 +117,11 @@ let intersection_result = cylinder.intersect(&sphere);
 
 ### Transformations
 
-- `translate(v: Vector3<f64>)`
+- `translate(vector: Vector3<Real>)`
 - `rotate(x_deg, y_deg, z_deg)`
-- `scale(sx, sy, sz)`
+- `scale(scale_x, scale_y, scale_z)`
 - `mirror(Axis::X | Axis::Y | Axis::Z)`
-- `transform(&Matrix4<f64>)` for arbitrary affine transforms.
+- `transform(&Matrix4<Real>)` for arbitrary affine transforms.
 
 ```rust
 use nalgebra::Vector3;
@@ -135,8 +135,8 @@ let mirrored = cube.mirror(Axis::Z);
 ### Extrusions and Revolves
 
 - **Linear Extrude**: 
-  - `my_2d_shape.extrude(height: f64)`  
-  - `my_2d_shape.extrude_vector(direction: Vector3<f64>)`  
+  - `my_2d_shape.extrude(height: Real)`  
+  - `my_2d_shape.extrude_vector(direction: Vector3<Real>)`  
 - **Extrude Between Two Polygons**:  
   ```rust
   let polygon_bottom = CSG::circle(2.0, 64, None);
@@ -262,11 +262,11 @@ let text_3d = csg_text.extrude(1.0);
 
 ### Create a Parry `TriMesh`
 
-`csg.to_trimesh()` returns a `SharedShape` containing a `TriMesh<f64>`.
+`csg.to_trimesh()` returns a `SharedShape` containing a `TriMesh<Real>`.
 
 ```rust
 use csgrs::csg::CSG;
-use rapier3d_f64::prelude::*;
+use csgrs::float_types::rapier3d::prelude::*;  // re-exported for f32/f64 support
 
 let trimesh_shape = csg_obj.to_trimesh(); // SharedShape with a TriMesh
 ```
@@ -277,13 +277,14 @@ let trimesh_shape = csg_obj.to_trimesh(); // SharedShape with a TriMesh
 
 ```rust
 use nalgebra::Vector3;
-use rapier3d_f64::prelude::*;
+use csgrs::float_types::rapier3d::prelude::*;  // re-exported for f32/f64 support
+use csgrs::float_types::FRAC_PI_2;
 use csgrs::csg::CSG;
 
 let mut rb_set = RigidBodySet::new();
 let mut co_set = ColliderSet::new();
 
-let axis_angle = Vector3::z() * std::f64::consts::FRAC_PI_2; // 90° around Z
+let axis_angle = Vector3::z() * FRAC_PI_2; // 90° around Z
 let rb_handle = csg_obj.to_rigid_body(
     &mut rb_set,
     &mut co_set,
@@ -331,7 +332,7 @@ Below is a quick overview of the **2D‐related methods** you’ll find on `Poly
   3. Returns a 2D `Polyline<f64>` of `(x, y, bulge)` points (here, `bulge` is set to `0.0` by default).
 
 - **`from_2d(polyline, Some(metadata))`**  
-  The inverse of `to_2d()`, creating a 3D `Polygon` from a 2D `Polyline<f64>`. This method uses the **same** plane as the polygon on which you called `from_2d()`. That is, it takes `(x, y)` points in the local XY plane of `self.plane` and lifts them back into 3D space.
+  The inverse of `to_2d()`, creating a 3D `Polygon` from a 2D `Polyline<Real>`. This method uses the **same** plane as the polygon on which you called `from_2d()`. That is, it takes `(x, y)` points in the local XY plane of `self.plane` and lifts them back into 3D space.
 
 These two functions let you cleanly convert between a 3D polygon and a pure 2D representation whenever you need to do 2D manipulations.  
 
@@ -368,11 +369,11 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 
 ### Transformations
 
-- `translate(v: Vector3<f64>)`
-- `rotate(axis: Vector3<f64>, angle: f64, center: Option<Point3<f64>>)`
-- `scale(factor: f64)`
+- `translate(v: Vector3<Real>)`
+- `rotate(axis: Vector3<Real>, angle: Real, center: Option<Point3<Real>>)`
+- `scale(factor: Real)`
 - `mirror(Axis::X | Axis::Y | Axis::Z)`
-- `transform(&Matrix4<f64>)` for arbitrary affine transforms.
+- `transform(&Matrix4<Real>)` for arbitrary affine transforms.
 - `flip()`
 - `convex_hull()`
 - `minkowski_sum(other: Polygon<S>)`
@@ -392,7 +393,7 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 - `check_ring_self_intersection()`
 
 ### Signed Area (Shoelace)
-The `pline_area` function computes the signed area of a closed `Polyline<f64>`:
+The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
 - **Positive** if the points are in **counterclockwise (CCW)** order.
 - **Negative** if the points are in **clockwise (CW)** order.
 - Near‐zero for degenerate or collinear loops.
