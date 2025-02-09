@@ -24,8 +24,8 @@ cargo add nalgebra // provides Points, Vectors, etc.
 type CSG = csgrs::csg::CSG<()>;
 
 // Create two shapes:
-let cube = CSG::cube(None);       // 2×2×2 cube centered at origin
-let sphere = CSG::sphere(None);   // sphere of radius=1 at origin
+let cube = CSG::cube(2.0, 2.0, 2.0);  // 2×2×2 cube at origin
+let sphere = CSG::sphere(None);       // sphere of radius=1 at origin
 
 // Subtract one from the other:
 let subtract_result = cube.subtract(&sphere);
@@ -78,7 +78,7 @@ let cube = CSG::cube(1.0, 1.0, 1.0);
 // Sphere of radius=2 at origin with 32 slices and 16 stacks
 let sphere = CSG::sphere(Some((&[0.0, 0.0, 0.0], 2.0, 32, 16)));
 
-// Cylinder from (0, -1, 0) to (0, 1, 0) with radius=1 and 16 slices
+// Cylinder from radius=1, height=2, 16 slices, and no metadata
 let cyl = CSG::cylinder(1.0, 2.0, 16, None);
 
 // Create a custom polyhedron from points and face indices:
