@@ -390,7 +390,7 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 - `check_ring_self_intersection()`
 
 ### Signed Area (Shoelace)
-The helper `pline_area` function (shown in the code) computes the signed area of a closed `Polyline<f64>`:
+The `pline_area` function computes the signed area of a closed `Polyline<f64>`:
 - **Positive** if the points are in **counterclockwise (CCW)** order.
 - **Negative** if the points are in **clockwise (CW)** order.
 - Near‐zero for degenerate or collinear loops.
