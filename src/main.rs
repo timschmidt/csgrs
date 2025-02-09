@@ -15,13 +15,13 @@ fn main() {
     let _ = fs::create_dir_all("stl");
 
     // 1) Basic shapes: cube, sphere, cylinder
-    let cube = CSG::cube(None); // center=(0,0,0), radius=(1,1,1) by default
+    let cube = CSG::cube(2.0, 2.0, 2.0);
     let _ = fs::write("stl/cube.stl", cube.to_stl_binary("cube").unwrap());
 
     let sphere = CSG::sphere(None); // center=(0,0,0), radius=1, slices=16, stacks=8
     let _ = fs::write("stl/sphere.stl", sphere.to_stl_binary("sphere").unwrap());
 
-    let cylinder = CSG::cylinder(None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=16
+    let cylinder = CSG::cylinder(1.0, 2.0, 32, None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=32
     let _ = fs::write("stl/cylinder.stl", cylinder.to_stl_binary("cylinder").unwrap());
 
     // 2) Transformations: Translate, Rotate, Scale, Mirror
@@ -126,13 +126,13 @@ fn main() {
     
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
-    let cube = CSG::cube(Some((&[0.0, 0.0, 0.0], &[1.0, 1.0, 1.0])));
+    let cube = CSG::cube(1.0, 1.0, 1.0);
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
     let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
     
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
-    let cyl = CSG::cylinder(Some((&[0.0, 0.0, -1.0], &[0.0, 0.0, 1.0], 1.0, 32)));
+    let cyl = CSG::cylinder_ptp(Point3::new(0.0, 0.0, -1.0), Point3::new(0.0, 0.0, 1.0), 1.0, 32, None);
     // 2) Slice at z=0
     let cross_section = cyl.slice(None);
     let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));
@@ -143,7 +143,7 @@ fn main() {
     let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
     let sphere_test = CSG::sphere(Some((&[0.0, 0.0, 0.0], 1.2, 16, 8)));
-    let cube_test = CSG::cube(None);
+    let cube_test = CSG::cube(1.0, 1.0, 1.0);
     let res = cube_test.subtract(&sphere_test);
     let _ = fs::write("stl/sphere_cube_test.stl", res.to_stl_binary("sphere_cube_test").unwrap());
     assert_eq!(res.bounding_box(), cube_test.bounding_box());

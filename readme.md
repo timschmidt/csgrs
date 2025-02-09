@@ -65,20 +65,21 @@ let circle2 = CSG::circle(Some((2.0, 64)));
 
 Similarly, you can create standard 3D primitives:
 
-- `CSG::cube(Some((&center, &radius)))`
+- `CSG::cube(length, width, height)`
 - `CSG::sphere(Some((&center, radius, slices, stacks)))`
-- `CSG::cylinder(Some((&start, &end, radius, slices)))`
+- `CSG::cylinder(radius, height, segments, metadata)`
+- `CSG::cylinder_ptp(Point3: start, Point3: end, radius, segments, metadata)`
 - `CSG::polyhedron(points, faces)`
 
 ```rust
 // Unit cube at origin
-let cube = CSG::cube(None);
+let cube = CSG::cube(1.0, 1.0, 1.0);
 
 // Sphere of radius=2 at origin with 32 slices and 16 stacks
 let sphere = CSG::sphere(Some((&[0.0, 0.0, 0.0], 2.0, 32, 16)));
 
 // Cylinder from (0, -1, 0) to (0, 1, 0) with radius=1 and 16 slices
-let cyl = CSG::cylinder(Some((&[0.0, -1.0, 0.0], &[0.0, 1.0, 0.0], 1.0, 16)));
+let cyl = CSG::cylinder(1.0, 2.0, 16, None);
 
 // Create a custom polyhedron from points and face indices:
 let points = &[
@@ -169,6 +170,7 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::retriangulate()`** — retriangulates all polygons with [`earclip`](https://crates.io/crates/earclip)
 - **`CSG::extrude_polyline(poly: Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>)`** — extrude an open ended polyline to create a surface
 - **`CSG::from_polylines(polylines: Vec<Polyline<Real>>, metadata: Option<S>)`** — create a new CSG from [cavalier_contours](https://crates.io/crates/cavalier_contours) polylines
+- **`CSG::vertices()`** — collect all vertices from the CSG
 
 ### Working with Metadata
 

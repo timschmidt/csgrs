@@ -324,46 +324,10 @@ impl<S: Clone> CSG<S> {
         }
         CSG::from_polygons(vec![Polygon::new(verts, CLOSED, None)])
     }
-
-    /// Construct an axis-aligned cube.
-    /// We translate the final shape so that its center is at `center`,
-    /// and each axis extends ± its corresponding `radius`.
-    pub fn cube(options: Option<(&[Real; 3], &[Real; 3])>) -> CSG<S> {
-        let (center, radius) = match options {
-            Some((c, r)) => (*c, *r),
-            None => ([0.0, 0.0, 0.0], [1.0, 1.0, 1.0]),
-        };
-        let c = Vector3::new(center[0], center[1], center[2]);
-        let r = Vector3::new(radius[0], radius[1], radius[2]);
-
-        let indices_and_normals = vec![
-            (vec![0, 4, 6, 2], Vector3::new(-1.0, 0.0, 0.0)),
-            (vec![1, 3, 7, 5], Vector3::new(1.0, 0.0, 0.0)),
-            (vec![0, 1, 5, 4], Vector3::new(0.0, -1.0, 0.0)),
-            (vec![2, 6, 7, 3], Vector3::new(0.0, 1.0, 0.0)),
-            (vec![0, 2, 3, 1], Vector3::new(0.0, 0.0, -1.0)),
-            (vec![4, 5, 7, 6], Vector3::new(0.0, 0.0, 1.0)),
-        ];
-
-        let mut polygons = Vec::new();
-        for (idxs, n) in indices_and_normals {
-            let mut verts = Vec::new();
-            for i in idxs {
-                // The bits of `i` pick +/- for x,y,z
-                let vx = c.x + r.x * ((i & 1) as Real * 2.0 - 1.0);
-                let vy = c.y + r.y * (((i & 2) >> 1) as Real * 2.0 - 1.0);
-                let vz = c.z + r.z * (((i & 4) >> 2) as Real * 2.0 - 1.0);
-                verts.push(Vertex::new(Point3::new(vx, vy, vz), n));
-            }
-            polygons.push(Polygon::new(verts, CLOSED, None));
-        }
-
-        CSG::from_polygons(polygons)
-    }
     
-    /// Create a rectangular prism (a box) that spans from (0, 0, 0) 
+    /// Create a right prism (a box) that spans from (0, 0, 0) 
     /// to (width, height, depth). All dimensions must be >= 0.
-    pub fn prism(width: Real, height: Real, depth: Real) -> CSG<S> {
+    pub fn cube(width: Real, height: Real, depth: Real) -> CSG<S> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
         let p000 = Point3::new(0.0,      0.0,      0.0);
@@ -520,22 +484,17 @@ impl<S: Clone> CSG<S> {
         CSG::from_polygons(polygons)
     }
 
-    /// Construct a cylinder whose centerline goes from `start` to `end`,
+    /// Construct a cone whose centerline goes from `start` to `end`,
     /// with a circular cross-section of given `radius`. 
-    pub fn cylinder(options: Option<(&[Real; 3], &[Real; 3], Real, usize)>) -> CSG<S> {
-        let (start, end, radius, segments) = match options {
-            Some((s, e, r, sl)) => (*s, *e, r, sl),
-            None => ([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], 1.0, 16),
-        };
-
-        let s = Vector3::new(start[0], start[1], start[2]);
-        let e = Vector3::new(end[0], end[1], end[2]);
+    pub fn cylinder_ptp(start: Point3<Real>, end: Point3<Real>, radius: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
+        let s = start.coords;
+        let e = end.coords;
         let ray = e - s;
         let axis_z = ray.normalize();
-        let is_y = axis_z.y.abs() > 0.5;
 
         // If axis_z is mostly aligned with Y, pick X; otherwise pick Y.
-        let mut axis_x = if is_y {
+        let is_y = axis_z.y.abs() > 0.5;
+        let mut axis_x: Vector3<Real> = if is_y {
             Vector3::new(1.0, 0.0, 0.0)
         } else {
             Vector3::new(0.0, 1.0, 0.0)
@@ -543,16 +502,19 @@ impl<S: Clone> CSG<S> {
         axis_x = axis_x.cross(&axis_z).normalize();
         let axis_y = axis_x.cross(&axis_z).normalize();
 
-        let start_v = Vertex::new(Point3::from(s), -axis_z);
-        let end_v = Vertex::new(Point3::from(e), axis_z);
+        let start_v = Vertex::new(start, -axis_z);
+        let end_v = Vertex::new(end, axis_z);
 
         let mut polygons = Vec::new();
 
+        // Helper to compute a vertex at a given "slice" (angle) and "stack" ([0..1])
         let point = |stack: Real, slice: Real, normal_blend: Real| {
             let angle = slice * TAU;
-            let out = axis_x * angle.cos() + axis_y * angle.sin();
-            let pos = s + ray * stack + out * radius;
-            // Blend outward normal with axis_z for the cap edges
+            let out   = axis_x * angle.cos() + axis_y * angle.sin();
+            // Position: linear interpolation along the axis + radial offset
+            let pos   = s + ray * stack + out * radius;
+            // For the outer tube, normal is approximately `out`. For the caps,
+            // we blend in ±axis_z to get a continuous normal around the rim.
             let normal = out * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
             Vertex::new(Point3::from(pos), normal)
         };
@@ -565,7 +527,7 @@ impl<S: Clone> CSG<S> {
             polygons.push(Polygon::new(
                 vec![start_v.clone(), point(0.0, t0, -1.0), point(0.0, t1, -1.0)],
                 false,
-                None,
+                metadata.clone(),
             ));
 
             // tube
@@ -577,14 +539,14 @@ impl<S: Clone> CSG<S> {
                     point(1.0, t1, 0.0),
                 ],
                 false,
-                None,
+                metadata.clone(),
             ));
 
             // top cap
             polygons.push(Polygon::new(
                 vec![end_v.clone(), point(1.0, t1, 1.0), point(1.0, t0, 1.0)],
                 false,
-                None,
+                metadata.clone(),
             ));
         }
 
@@ -593,16 +555,17 @@ impl<S: Clone> CSG<S> {
     
     // A helper to create a vertical cylinder along Z from z=0..z=height
     // with the specified radius (NOT diameter).
-    pub fn cylinder_z(radius: f64, height: f64) -> CSG<()> {
-        // csgrs::csg::cylinder takes an Option<(&[Real;3], &[Real;3], Real, usize)>
-        // (start, end, radius, segments).
+    pub fn cylinder(radius: f64, height: f64, segments: usize, metadata: Option<S>) -> CSG<S> {
+        // csgrs::csg::cylinder_ptp takes a (Point3, Point3, Real, usize, Option(metadata))
+        // (start, end, radius, segments, metadata).
         // We'll define the start at [0,0,0], the end at [0,0,height], ~32 segments:
-        CSG::cylinder(Some((
-            &[0.0, 0.0, 0.0],
-            &[0.0, 0.0, height],
+        CSG::cylinder_ptp(
+            Point3::new(0.0, 0.0, 0.0),
+            Point3::new(0.0, 0.0, height),
             radius,
-            32,
-        )))
+            segments,
+            metadata,
+        )
     }
 
     /// Creates a CSG polyhedron from raw vertex data (`points`) and face indices.
@@ -838,11 +801,10 @@ impl<S: Clone> CSG<S> {
             // Subdivide the polygon into many smaller triangles
             let sub_tris = poly.subdivide_triangles(levels);
             // Convert each small tri back into a Polygon with 3 vertices
-            // (you can keep the same metadata or None).
             for tri in sub_tris {
                 new_polygons.push(Polygon::new(
                     vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
-                    false,
+                    CLOSED,
                     poly.metadata.clone(),
                 ));
             }
@@ -1000,7 +962,7 @@ impl<S: Clone> CSG<S> {
         assert_eq!(
             n,
             top.vertices.len(),
-            "extrude_between: both polygons must have the same number of vertices"
+            "extrude_between: both polygons must have the same number of vertices" // todo: return error
         );
 
         // Conditionally flip the bottom polygon if requested.
@@ -1035,8 +997,8 @@ impl<S: Clone> CSG<S> {
                     t_j.clone(), // top[i+1]
                     t_i.clone(), // top[i]
                 ],
-                false,
-                None, // or carry over some metadata if you wish
+                CLOSED,
+                bottom.metadata.clone(), // carry over bottom polygon metadata
             );
             polygons.push(side_poly);
         }
