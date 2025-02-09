@@ -107,7 +107,7 @@ Three primary operations:
 2. **Difference**: `a.subtract(&b)`
 3. **Intersection**: `a.intersect(&b)`
 
-They all return a new `CSG<S>`.
+They all return a new `CSG<S>`
 
 ```rust
 let union_result = cube.union(&sphere);
@@ -433,6 +433,7 @@ The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
 - support scale and translation along a vector in rotate extrude
 - fill
 - implement .center()
+- implement CSG::cone();
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html

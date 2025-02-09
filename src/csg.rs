@@ -526,6 +526,121 @@ impl<S: Clone> CSG<S> {
         CSG::from_polygons(polygons)
     }
     
+    /// Construct a frustum whose axis goes from `start` to `end`, with the start face having
+    /// radius = `radius1` and the end face having radius = `radius2`.
+    pub fn frustrum(
+        start: Point3<Real>,
+        end: Point3<Real>,
+        radius1: Real,
+        radius2: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> CSG<S> {
+        let s = start.coords;
+        let e = end.coords;
+        let ray = e - s;
+    
+        // If the start and end coincide, return an empty CSG or handle gracefully
+        if ray.norm_squared() < EPSILON {
+            return CSG::new();
+        }
+    
+        // We’ll choose an axis_z aligned with the start->end vector
+        let axis_z = ray.normalize();
+    
+        // Pick an axis_x that is not parallel to axis_z
+        let axis_x = if axis_z.y.abs() > 0.5 {
+            Vector3::x()
+        } else {
+            Vector3::y()
+        }
+        .cross(&axis_z)
+        .normalize();
+    
+        // Now define axis_y = axis_x × axis_z
+        let axis_y = axis_x.cross(&axis_z).normalize();
+    
+        // For convenience, define "center" vertices for the caps
+        let start_v = Vertex::new(start, -axis_z); // bottom cap center
+        let end_v = Vertex::new(end, axis_z);      // top cap center
+    
+        // We’ll collect polygons for the bottom cap, top cap, and side walls
+        let mut polygons = Vec::new();
+    
+        // Helper: given a "stack" (0.0 for bottom, 1.0 for top) and a "slice" in [0..1],
+        // return a Vertex on the frustum surface. `normal_blend` controls how
+        // we blend the purely radial normal vs. the cap normal for bottom/top.
+        let point = |stack: Real, slice: Real, normal_blend: Real| {
+            // Interpolate radius by stack: 0 => radius1, 1 => radius2
+            let r = radius1 * (1.0 - stack) + radius2 * stack;
+    
+            // Convert the slice fraction into an angle around the axis
+            let angle = slice * TAU;
+            let radial_dir = axis_x * angle.cos() + axis_y * angle.sin();
+    
+            // Position in 3D
+            let pos = s + ray * stack + radial_dir * r;
+    
+            // For a perfect cylinder, the side normal is radial. For the caps,
+            // we blend in ±axis_z for smooth normals at the seam. You can
+            // omit this blend if you prefer simpler “hard” edges.
+            let normal = radial_dir * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
+            Vertex::new(Point3::from(pos), normal.normalize())
+        };
+    
+        // Build polygons via "fan" for bottom cap, side quads, and "fan" for top cap
+        for i in 0..segments {
+            let slice0 = i as Real / segments as Real;
+            let slice1 = (i + 1) as Real / segments as Real;
+    
+            //
+            // Bottom cap triangle
+            //  -- "fan" from start_v to ring edges at stack=0
+            //
+            polygons.push(Polygon::new(
+                vec![
+                    start_v.clone(),
+                    point(0.0, slice0, -1.0),
+                    point(0.0, slice1, -1.0),
+                ],
+                CLOSED,
+                metadata.clone(),
+            ));
+    
+            //
+            // Side wall (a quad) bridging stack=0..1 at slice0..slice1
+            // The four corners are:
+            //   (0.0, slice1), (0.0, slice0), (1.0, slice0), (1.0, slice1)
+            //
+            polygons.push(Polygon::new(
+                vec![
+                    point(0.0, slice1, 0.0),
+                    point(0.0, slice0, 0.0),
+                    point(1.0, slice0, 0.0),
+                    point(1.0, slice1, 0.0),
+                ],
+                CLOSED,
+                metadata.clone(),
+            ));
+    
+            //
+            // Top cap triangle
+            //  -- "fan" from end_v to ring edges at stack=1
+            //
+            polygons.push(Polygon::new(
+                vec![
+                    end_v.clone(),
+                    point(1.0, slice1, 1.0),
+                    point(1.0, slice0, 1.0),
+                ],
+                CLOSED,
+                metadata.clone(),
+            ));
+        }
+    
+        CSG::from_polygons(polygons)
+    }
+    
     // A helper to create a vertical cylinder along Z from z=0..z=height
     // with the specified radius (NOT diameter).
     pub fn cylinder(radius: f64, height: f64, segments: usize, metadata: Option<S>) -> CSG<S> {
