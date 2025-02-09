@@ -56,7 +56,7 @@ fn main() {
     let square_2d = CSG::square(2.0, 2.0, None); // 2x2 square, centered
     let _ = fs::write("stl/square_2d.stl", square_2d.to_stl_ascii("square_2d"));
 
-    let circle_2d = CSG::circle(Some((1.0, 32)));
+    let circle_2d = CSG::circle(1.0, 32, None);
     let _ = fs::write("stl/circle_2d.stl", circle_2d.to_stl_binary("circle_2d").unwrap());
 
     let grown_2d = square_2d.offset_2d(0.5);
@@ -105,13 +105,13 @@ fn main() {
         vec![1, 2, 3],
         vec![2, 0, 3],
     ];
-    let poly = CSG::polyhedron(points, &faces);
+    let poly = CSG::polyhedron(points, &faces, None);
     let _ = fs::write("stl/tetrahedron.stl", poly.to_stl_binary("tetrahedron").unwrap());
 
     // 13) Text example (2D). Provide a valid TTF font data below:
     // (Replace "asar.ttf" with a real .ttf file in your project.)
     let font_data = include_bytes!("../asar.ttf");
-    let text_csg = CSG::text("HELLO", font_data, Some(15.0));
+    let text_csg = CSG::text("HELLO", font_data, Some(15.0), None);
     let _ = fs::write("stl/text_hello_2d.stl", text_csg.to_stl_binary("text_hello_2d").unwrap());
 
     // Optionally extrude the text:

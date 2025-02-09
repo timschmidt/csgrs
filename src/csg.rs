@@ -270,7 +270,7 @@ impl<S: Clone> CSG<S> {
     }
 
     /// Creates a 2D circle in the XY plane.
-    pub fn circle(radius: Real, segments: usize, metadata: Option<S>)>) -> CSG<S> {
+    pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
         let mut verts = Vec::with_capacity(segments);
         let normal = Vector3::new(0.0, 0.0, 1.0);
 

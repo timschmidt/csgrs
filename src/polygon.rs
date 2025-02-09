@@ -547,16 +547,16 @@ impl<S: Clone> Polygon<S> {
 
     /// Subdivide this polygon into smaller triangles.
     /// Returns a list of new triangles (each is a [Vertex; 3]).
-    pub fn subdivide_triangles(&self, levels: u32) -> Vec<[Vertex; 3]> {
+    pub fn subdivide_triangles(&self, subdivisions: u32) -> Vec<[Vertex; 3]> {
         // 1) Triangulate the polygon as it is.
         let base_tris = self.triangulate();
 
-        // 2) For each triangle, subdivide 'levels' times.
+        // 2) For each triangle, subdivide 'subdivisions' times.
         let mut result = Vec::new();
         for tri in base_tris {
             // We'll keep a queue of triangles to process
             let mut queue = vec![tri];
-            for _ in 0..levels {
+            for _ in 0..subdivisions {
                 let mut next_level = Vec::new();
                 for t in queue {
                     let subs = subdivide_triangle(t);
@@ -680,6 +680,7 @@ impl<S: Clone> Polygon<S> {
     }
 
     /// Returns a new Polygon translated by t.
+    /// todo: modify for Vector2 in-plane translation
     pub fn translate(&self, t: Vector3<Real>) -> Self {
         let new_vertices = self
             .vertices
@@ -833,7 +834,7 @@ impl<S: Clone> Polygon<S> {
     /// Parallel offset of this polygon (interpreted as an open polyline) by distance `d`.
     /// Uses cavalier_contours offset on the underlying 2D polyline representation.
     /// Returns a new Polygon or possibly multiple polygons.
-    pub fn offset_open(&self, distance: Real) -> Vec<Polygon<S>> {
+    pub fn offset(&self, distance: Real) -> Vec<Polygon<S>> {
         if self.vertices.len() < 2 {
             return vec![];
         }
@@ -847,7 +848,7 @@ impl<S: Clone> Polygon<S> {
         let mut new_polygons = Vec::new();
         for off_pl in offset_result {
             if off_pl.vertex_count() >= 2 {
-                let open = !off_pl.is_closed(); 
+                let open = !off_pl.is_closed();
                 let mut poly_verts = Vec::with_capacity(off_pl.vertex_count());
                 for i in 0..off_pl.vertex_count() {
                     let v = off_pl.at(i);

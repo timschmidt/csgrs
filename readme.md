@@ -369,7 +369,7 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 
 ### Transformations
 
-- `translate(v: Vector3<Real>)`
+- `translate(vector: Vector3<Real>)`
 - `rotate(axis: Vector3<Real>, angle: Real, center: Option<Point3<Real>>)`
 - `scale(factor: Real)`
 - `mirror(Axis::X | Axis::Y | Axis::Z)`
@@ -380,11 +380,11 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 
 ### Misc functions
 
-- `subdivide_triangles()`
+- `subdivide_triangles()` - Subdivide this polygon into smaller triangles
 - `calculate_new_normal()`
-- `triangulate()`
+- `triangulate()` - Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2]
 - `recalc_plane_and_normals()`
-- `offset_open(distance)`
+- `offset(distance)`
 - `reconstruct_arcs(min_match: usize, rms_limit: Real, angle_limit_degs: Real, offset_limit: Real)`
 - `check_coordinates_finite()`
 - `check_repeated_points()`
