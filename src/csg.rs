@@ -327,7 +327,7 @@ impl<S: Clone> CSG<S> {
     
     /// Create a right prism (a box) that spans from (0, 0, 0) 
     /// to (width, height, depth). All dimensions must be >= 0.
-    pub fn cube(width: Real, height: Real, depth: Real) -> CSG<S> {
+    pub fn cube(width: Real, height: Real, depth: Real, metadata: Option<S>) -> CSG<S> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
         let p000 = Point3::new(0.0,      0.0,      0.0);
@@ -354,7 +354,7 @@ impl<S: Clone> CSG<S> {
                 Vertex::new(p100, bottom_normal),
             ],
             CLOSED,
-            None,
+            metadata.clone(),
         );
 
         // Top face (z=depth, normal approx. +Z)
@@ -368,7 +368,7 @@ impl<S: Clone> CSG<S> {
                 Vertex::new(p011, top_normal),                
             ],
             CLOSED,
-            None,
+            metadata.clone(),
         );
 
         // Front face (y=0, normal approx. -Y)
@@ -382,7 +382,7 @@ impl<S: Clone> CSG<S> {
                 Vertex::new(p001, front_normal),
             ],
             CLOSED,
-            None,
+            metadata.clone(),
         );
 
         // Back face (y=height, normal approx. +Y)
@@ -396,7 +396,7 @@ impl<S: Clone> CSG<S> {
                 Vertex::new(p110, back_normal),
             ],
             CLOSED,
-            None,
+            metadata.clone(),
         );
 
         // Left face (x=0, normal approx. -X)
@@ -410,7 +410,7 @@ impl<S: Clone> CSG<S> {
                 Vertex::new(p010, left_normal),
             ],
             CLOSED,
-            None,
+            metadata.clone(),
         );
 
         // Right face (x=width, normal approx. +X)
@@ -424,7 +424,7 @@ impl<S: Clone> CSG<S> {
                 Vertex::new(p101, right_normal),
             ],
             CLOSED,
-            None,
+            metadata.clone(),
         );
 
         // Combine all faces into a CSG

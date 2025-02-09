@@ -15,7 +15,7 @@ fn main() {
     let _ = fs::create_dir_all("stl");
 
     // 1) Basic shapes: cube, sphere, cylinder
-    let cube = CSG::cube(2.0, 2.0, 2.0);
+    let cube = CSG::cube(2.0, 2.0, 2.0, None);
     let _ = fs::write("stl/cube.stl", cube.to_stl_binary("cube").unwrap());
 
     let sphere = CSG::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
@@ -126,7 +126,7 @@ fn main() {
     
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
-    let cube = CSG::cube(1.0, 1.0, 1.0);
+    let cube = CSG::cube(1.0, 1.0, 1.0, None);
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
     let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
@@ -143,7 +143,7 @@ fn main() {
     let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
     let sphere_test = CSG::sphere(1.0, 16, 8, None);
-    let cube_test = CSG::cube(1.0, 1.0, 1.0);
+    let cube_test = CSG::cube(1.0, 1.0, 1.0, None);
     let res = cube_test.subtract(&sphere_test);
     let _ = fs::write("stl/sphere_cube_test.stl", res.to_stl_binary("sphere_cube_test").unwrap());
     assert_eq!(res.bounding_box(), cube_test.bounding_box());

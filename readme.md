@@ -24,7 +24,7 @@ cargo add nalgebra // provides Points, Vectors, etc.
 type CSG = csgrs::csg::CSG<()>;
 
 // Create two shapes:
-let cube = CSG::cube(2.0, 2.0, 2.0);  // 2×2×2 cube at origin
+let cube = CSG::cube(2.0, 2.0, 2.0, None);  // 2×2×2 cube at origin
 let sphere = CSG::sphere(1.0, 16, 8, None); // sphere of radius=1 at origin
 
 // Subtract one from the other:
@@ -65,18 +65,18 @@ let circle2 = CSG::circle(Some((2.0, 64)));
 
 Similarly, you can create standard 3D primitives:
 
-- `CSG::cube(length, width, height)`
-- `CSG::sphere(Real: radius, usize: slices, usize: stacks, Option: metadata)`
+- `CSG::cube(Real: length, Real: width, Real: height, Option: metadata)`
+- `CSG::sphere(Real: radius, usize: segments, usize: stacks, Option: metadata)`
 - `CSG::cylinder(Real: radius, Real: height, usize: segments, Option: metadata)`
 - `CSG::cylinder_ptp(Point3: start, Point3: end, Real: radius, usize: segments, Option: metadata)`
 - `CSG::polyhedron(points, faces)`
 
 ```rust
-// Unit cube at origin
-let cube = CSG::cube(1.0, 1.0, 1.0);
+// Unit cube at origin, no metadata
+let cube = CSG::cube(1.0, 1.0, 1.0, None);
 
-// Sphere of radius=2 at origin with 32 slices and 16 stacks
-let sphere = CSG::sphere(Some((&[0.0, 0.0, 0.0], 2.0, 32, 16)));
+// Sphere of radius=2 at origin with 32 segments and 16 stacks
+let sphere = CSG::sphere(2.0, 32, 16, None);
 
 // Cylinder from radius=1, height=2, 16 slices, and no metadata
 let cyl = CSG::cylinder(1.0, 2.0, 16, None);
