@@ -117,13 +117,13 @@ let intersection_result = cylinder.intersect(&sphere);
 
 ### Transformations
 
-- `translate(vector: Vector3<Real>)` - Returns a new CSG translated by vector
-- `rotate(x_deg, y_deg, z_deg)` - Returns a new CSG rotated in x, y, and z
-- `scale(scale_x, scale_y, scale_z)` - Returns a new CSG scaled in x, y, and z
-- `mirror(Axis::X | Axis::Y | Axis::Z)` - Returns a new CSG mirrored by x, y, or z
-- `center()` - Returns a new CSG centered at the origin
-- `float()` - Returns a new CSG translated so that its bottommost point(s) sit exactly at z=0
-- `transform(&Matrix4<Real>)` - Returns a new CSG after applying arbitrary affine transforms
+- **`CSG::translate(vector: Vector3<Real>)`** - Returns the CSG translated by vector
+- **`CSG::rotate(x_deg, y_deg, z_deg)`** - Returns the CSG rotated in x, y, and z
+- **`CSG::scale(scale_x, scale_y, scale_z)`** - Returns the CSG scaled in x, y, and z
+- **`CSG::mirror(Axis::X | Axis::Y | Axis::Z)`** - Returns the CSG mirrored by x, y, or z
+- **`CSG::center()`** - Returns the CSG centered at the origin
+- **`CSG::float()`** - Returns the CSG translated so that its bottommost point(s) sit exactly at z=0
+- **`CSG::transform(&Matrix4<Real>)`** - Returns the CSG after applying arbitrary affine transforms
 
 ```rust
 use nalgebra::Vector3;
@@ -349,16 +349,16 @@ A `Polygon<S>` supports **union**, **difference**, **intersection**, and **xor**
 
 Each operation returns a `Vec<Polygon<S>>` rather than a single polygon, because the result may split into multiple disjoint pieces.  
 
-- **`union(&other) -> Vec<Polygon<S>>`**  
+- **`Polygon::union(&other) -> Vec<Polygon<S>>`**  
   `self ∪ other`. Merges overlapping or adjacent areas.
 
-- **`intersection(&other) -> Vec<Polygon<S>>`**  
+- **`Polygon::intersection(&other) -> Vec<Polygon<S>>`**  
   `self ∩ other`. Keeps only overlapping regions.
 
-- **`difference(&other) -> Vec<Polygon<S>>`**  
+- **`Polygon::difference(&other) -> Vec<Polygon<S>>`**  
   `self \ other`. Subtracts `other` from `self`.
 
-- **`xor(&other) -> Vec<Polygon<S>>`**  
+- **`Polygon::xor(&other) -> Vec<Polygon<S>>`**  
   Symmetric difference `(self ∪ other) \ (self ∩ other)`—keeps regions that belong to exactly one polygon.
 
 Example usage:
@@ -371,28 +371,28 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 
 ### Transformations
 
-- `translate(vector: Vector3<Real>)` - Returns a new Polygon translated by vector
-- `rotate(axis: Vector3<Real>, angle: Real, center: Option<Point3<Real>>)` - Rotates the polygon by a given angle in radians about axis.  If a center is provided the rotation is performed about that point, otherwise rotation is about the origin.
-- `scale(factor: Real)` - Uniformly scales the polygon by the given factor
-- `mirror(Axis::X | Axis::Y | Axis::Z)` - Mirrors the polygon about the given axis (X, Y, or Z).
-- `transform(&Matrix4<Real>)` for arbitrary affine transforms
-- `flip()` - Reverses winding order, flips vertices normals, and flips the plane normal, i.e. flips the polygon
-- `convex_hull()` - Returns a new Polygon that is the convex hull of the current polygon’s vertices
-- `minkowski_sum(other: Polygon<S>)` - Returns the Minkowski sum of this polygon and other
+- **`Polygon::translate(vector: Vector3<Real>)`** - Returns a new Polygon translated by vector
+- **`Polygon::rotate(axis: Vector3<Real>, angle: Real, center: Option<Point3<Real>>)`** - Rotates the polygon by a given angle in radians about axis.  If a center is provided the rotation is performed about that point, otherwise rotation is about the origin.
+- **`Polygon::scale(factor: Real)`** - Uniformly scales the polygon by the given factor
+- **`Polygon::mirror(Axis::X | Axis::Y | Axis::Z)`** - Mirrors the polygon about the given axis (X, Y, or Z).
+- **`Polygon::transform(&Matrix4<Real>)`** for arbitrary affine transforms
+- **`Polygon::flip()`** - Reverses winding order, flips vertices normals, and flips the plane normal, i.e. flips the polygon
+- **`Polygon::convex_hull()`** - Returns a new Polygon that is the convex hull of the current polygon’s vertices
+- **`Polygon::minkowski_sum(other: Polygon<S>)`** - Returns the Minkowski sum of this polygon and other
 
 ### Misc functions
 
-- `subdivide_triangles()` - Subdivide this polygon into smaller triangles
-- `calculate_new_normal()`- return a normal calculated from all polygon vertices
-- `set_new_normal()` - recalculate and set polygon normal
-- `triangulate()` - Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2]
-- `offset(distance: Real)` - offset a polygon by distance in positive or negative direction depending on normal
-- `reconstruct_arcs(min_match: usize, rms_limit: Real, angle_limit_degs: Real, offset_limit: Real)` - Attempt to reconstruct arcs of constant radius from this polygon
-- `check_coordinates_finite()` - Returns an error if any coordinate is not finite (NaN or ±∞)
-- `check_repeated_points()` - Check for repeated adjacent points. Return the first repeated coordinate if found
-- `check_ring_closed()` - Check ring closure: first and last vertex must coincide if polygon is meant to be closed
-- `check_minimum_ring_size()` - Check that the ring has at least 3 distinct points
-- `check_ring_self_intersection()` - Very basic ring self‐intersection check by naive line–line intersection
+- **`Polygon::subdivide_triangles()`** - Subdivide this polygon into smaller triangles
+- **`Polygon::calculate_new_normal()`**- return a normal calculated from all polygon vertices
+- **`Polygon::set_new_normal()`** - recalculate and set polygon normal
+- **`Polygon::triangulate()`** - Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2]
+- **`Polygon::offset(distance: Real)`** - offset a polygon by distance in positive or negative direction depending on normal
+- **`Polygon::reconstruct_arcs(min_match: usize, rms_limit: Real, angle_limit_degs: Real, offset_limit: Real)`** - Attempt to reconstruct arcs of constant radius from this polygon
+- **`Polygon::check_coordinates_finite()`** - Returns an error if any coordinate is not finite (NaN or ±∞)
+- **`Polygon::check_repeated_points()`** - Check for repeated adjacent points. Return the first repeated coordinate if found
+- **`Polygon::check_ring_closed()`** - Check ring closure: first and last vertex must coincide if polygon is meant to be closed
+- **`Polygon::check_minimum_ring_size()`** - Check that the ring has at least 3 distinct points
+- **`Polygon::check_ring_self_intersection()`** - Very basic ring self‐intersection check by naive line–line intersection
 
 ### Signed Area (Shoelace)
 The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
@@ -434,8 +434,6 @@ The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
 - support twist and scale in linear extrude like openscad
 - support scale and translation along a vector in rotate extrude
 - fill
-- implement .center()
-- implement CSG::cone();
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
