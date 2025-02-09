@@ -899,7 +899,7 @@ fn test_csg_ray_intersections() {
 
 #[test]
 fn test_csg_square() {
-    let sq: CSG<()> = CSG::square(None);
+    let sq: CSG<()> = CSG::square(2.0, 2.0, None);
     // Single polygon, 4 vertices
     assert_eq!(sq.polygons.len(), 1);
     let poly = &sq.polygons[0];
@@ -925,7 +925,7 @@ fn test_csg_polygon_2d() {
 
 #[test]
 fn test_csg_extrude() {
-    let sq: CSG<()> = CSG::square(None); // default 1x1 square at XY plane
+    let sq: CSG<()> = CSG::square(2.0, 2.0, None); // default 1x1 square at XY plane
     let extruded = sq.extrude(5.0);
     // We expect:
     //   bottom polygon: 1
@@ -944,7 +944,7 @@ fn test_csg_rotate_extrude() {
     // Default square is from (0,0) to (1,1) in XY.
     // Shift it so it’s from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
     // and rotate it 90 degrees so that it can be swept around Z
-    let square: CSG<()> = CSG::square(None)
+    let square: CSG<()> = CSG::square(2.0, 2.0, None)
         .translate(nalgebra::Vector3::new(1.0, 0.0, 0.0))
         .rotate(90.0, 0.0, 0.0);
 
@@ -978,7 +978,7 @@ fn test_csg_vertices() {
 
 #[test]
 fn test_csg_offset_2d() {
-    let square: CSG<()> = CSG::square(Some(([2.0, 2.0], true)));
+    let square: CSG<()> = CSG::square(2.0, 2.0, None);
     let grown = square.offset_2d(0.5);
     let shrunk = square.offset_2d(-0.5);
     let bb_square = square.bounding_box();
@@ -1171,14 +1171,14 @@ fn test_union_metadata() {
     // each new polygon inherits the shared data from whichever polygon it came from.
 
     // Square1 from (0,0) to (1,1) => label "Square1"
-    let sq1 = CSG::square(Some(([1.0, 1.0], false))); // bottom-left at (0,0), top-right at (1,1)
+    let sq1 = CSG::square(1.0, 1.0, None); // bottom-left at (0,0), top-right at (1,1)
     let mut sq1 = sq1; // now let us set shared data for each polygon
     for p in &mut sq1.polygons {
         p.set_metadata("Square1".to_string());
     }
 
     // Translate Square2 so it partially overlaps. => label "Square2"
-    let sq2 = CSG::square(Some(([1.0, 1.0], false))).translate(Vector3::new(0.5, 0.0, 0.0));
+    let sq2 = CSG::square(1.0, 1.0, None).translate(Vector3::new(0.5, 0.0, 0.0));
     let mut sq2 = sq2;
     for p in &mut sq2.polygons {
         p.set_metadata("Square2".to_string());
@@ -1365,7 +1365,7 @@ fn signed_area(polygon: &Polygon<()>) -> Real {
 
 #[test]
 fn test_square_ccw_ordering() {
-    let square = CSG::square(None);
+    let square = CSG::square(2.0, 2.0, None);
     assert_eq!(square.polygons.len(), 1);
     let poly = &square.polygons[0];
     let area = signed_area(poly);
@@ -1374,7 +1374,7 @@ fn test_square_ccw_ordering() {
 
 #[test]
 fn test_offset_2d_positive_distance_grows() {
-    let square = CSG::square(Some(([2.0, 2.0], true))); // Centered square with size 2x2
+    let square = CSG::square(2.0, 2.0, None); // Centered square with size 2x2
     let offset = square.offset_2d(0.5); // Positive offset should grow the square
 
     // The original square has area 4.0
@@ -1390,7 +1390,7 @@ fn test_offset_2d_positive_distance_grows() {
 
 #[test]
 fn test_offset_2d_negative_distance_shrinks() {
-    let square = CSG::square(Some(([2.0, 2.0], true))); // Centered square with size 2x2
+    let square = CSG::square(2.0, 2.0, None); // Centered square with size 2x2
     let offset = square.offset_2d(-0.5); // Negative offset should shrink the square
 
     // The original square has area 4.0
@@ -1825,7 +1825,7 @@ fn test_flatten_and_union_collinear_edges() {
 /// you can println! debug info in `flatten_and_union`.
 #[test]
 fn test_flatten_and_union_debug() {
-    let csg_square = CSG::<()>::square(None); // a 1×1 square at [0..1, 0..1]
+    let csg_square = CSG::<()>::square(2.0, 2.0, None); // a 1×1 square at [0..1, 0..1]
     let flattened = csg_square.flatten();
     assert!(
         !flattened.polygons.is_empty(),

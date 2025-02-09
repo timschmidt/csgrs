@@ -53,7 +53,7 @@ fn main() {
     let _ = fs::write("stl/minkowski_cube_sphere.stl", minkowski.to_stl_binary("minkowski_cube_sphere").unwrap());
 
     // 7) 2D shapes and 2D offsetting
-    let square_2d = CSG::square(Some(([2.0, 2.0], true))); // 2x2 square, centered
+    let square_2d = CSG::square(2.0, 2.0, None); // 2x2 square, centered
     let _ = fs::write("stl/square_2d.stl", square_2d.to_stl_ascii("square_2d"));
 
     let circle_2d = CSG::circle(Some((1.0, 32)));

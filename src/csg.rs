@@ -252,35 +252,21 @@ impl<S: Clone> CSG<S> {
     ///
     /// # Parameters
     ///
-    /// - `size`: the width and height of the square (default [1.0, 1.0])
-    /// - `center`: if `true`, center the square about (0,0); otherwise bottom-left is at (0,0).
+    /// - `width`: the width of the square
+    /// - `length`: the height of the square
     ///
     /// # Example
-    /// let sq = CSG::square(None);
-    /// // or with custom params:
-    /// let sq2 = CSG::square(Some(([2.0, 3.0], true)));
-    pub fn square(params: Option<([Real; 2], bool)>) -> CSG<S> {
-        let (size, center) = match params {
-            Some((sz, c)) => (sz, c),
-            None => ([1.0, 1.0], false),
-        };
-
-        let (w, h) = (size[0], size[1]);
-        let (x0, y0, x1, y1) = if center {
-            (-w / 2.0, -h / 2.0, w / 2.0, h / 2.0)
-        } else {
-            (0.0, 0.0, w, h)
-        };
-
+    /// let sq2 = CSG::square(2.0, 3.0, None);
+    pub fn square(width: Real, length: Real, metadata: Option<S>) -> CSG<S> {
         // Single 2D polygon, normal = +Z
         let normal = Vector3::new(0.0, 0.0, 1.0);
         let vertices = vec![
-            Vertex::new(Point3::new(x0, y0, 0.0), normal),
-            Vertex::new(Point3::new(x1, y0, 0.0), normal),
-            Vertex::new(Point3::new(x1, y1, 0.0), normal),
-            Vertex::new(Point3::new(x0, y1, 0.0), normal),
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(width, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(width, length, 0.0), normal),
+            Vertex::new(Point3::new(0.0, length, 0.0), normal),
         ];
-        CSG::from_polygons(vec![Polygon::new(vertices, CLOSED, None)])
+        CSG::from_polygons(vec![Polygon::new(vertices, CLOSED, metadata.clone())])
     }
 
     /// Creates a 2D circle in the XY plane.
@@ -326,19 +312,19 @@ impl<S: Clone> CSG<S> {
     }
     
     /// Create a right prism (a box) that spans from (0, 0, 0) 
-    /// to (width, height, depth). All dimensions must be >= 0.
-    pub fn cube(width: Real, height: Real, depth: Real, metadata: Option<S>) -> CSG<S> {
+    /// to (width, length, height). All dimensions must be >= 0.
+    pub fn cube(width: Real, length: Real, height: Real, metadata: Option<S>) -> CSG<S> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
         let p000 = Point3::new(0.0,      0.0,      0.0);
         let p100 = Point3::new(width,    0.0,      0.0);
-        let p110 = Point3::new(width,    height,   0.0);
-        let p010 = Point3::new(0.0,      height,   0.0);
+        let p110 = Point3::new(width,    length,   0.0);
+        let p010 = Point3::new(0.0,      length,   0.0);
 
-        let p001 = Point3::new(0.0,      0.0,      depth);
-        let p101 = Point3::new(width,    0.0,      depth);
-        let p111 = Point3::new(width,    height,   depth);
-        let p011 = Point3::new(0.0,      height,   depth);
+        let p001 = Point3::new(0.0,      0.0,      height);
+        let p101 = Point3::new(width,    0.0,      height);
+        let p111 = Point3::new(width,    length,   height);
+        let p011 = Point3::new(0.0,      length,   height);
 
         // We’ll define 6 faces (each a Polygon), in an order that keeps outward-facing normals 
         // and consistent (counter-clockwise) vertex winding as viewed from outside the prism.

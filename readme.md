@@ -24,8 +24,8 @@ cargo add nalgebra // provides Points, Vectors, etc.
 type CSG = csgrs::csg::CSG<()>;
 
 // Create two shapes:
-let cube = CSG::cube(2.0, 2.0, 2.0, None);  // 2×2×2 cube at origin
-let sphere = CSG::sphere(1.0, 16, 8, None); // sphere of radius=1 at origin
+let cube = CSG::cube(2.0, 2.0, 2.0, None);  // 2×2×2 cube at origin, no metadata
+let sphere = CSG::sphere(1.0, 16, 8, None); // sphere of radius=1 at origin, no metadata
 
 // Subtract one from the other:
 let subtract_result = cube.subtract(&sphere);
@@ -50,7 +50,7 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 
 Helper constructors for 2D shapes in the XY plane:
 
-- `CSG::square(Some(([width, height], center)))`
+- `CSG::square(width: Real, length: Real, metadata: Option<S>)))`
 - `CSG::circle(Some((radius, segments)))`
 - `CSG::polygon_2d(&[[x1,y1],[x2,y2],...])`
 
@@ -65,10 +65,10 @@ let circle2 = CSG::circle(Some((2.0, 64)));
 
 Similarly, you can create standard 3D primitives:
 
-- `CSG::cube(Real: length, Real: width, Real: height, Option: metadata)`
-- `CSG::sphere(Real: radius, usize: segments, usize: stacks, Option: metadata)`
-- `CSG::cylinder(Real: radius, Real: height, usize: segments, Option: metadata)`
-- `CSG::cylinder_ptp(Point3: start, Point3: end, Real: radius, usize: segments, Option: metadata)`
+- `CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`
+- `CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`
+- `CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`
+- `CSG::cylinder_ptp(Point3: start, Point3: end, Real: radius, usize: segments, metadata: Option<S>)`
 - `CSG::polyhedron(points, faces)`
 
 ```rust
