@@ -528,7 +528,7 @@ impl<S: Clone> CSG<S> {
     
     /// Construct a frustum whose axis goes from `start` to `end`, with the start face having
     /// radius = `radius1` and the end face having radius = `radius2`.
-    pub fn frustrum(
+    pub fn frustrum_ptp(
         start: Point3<Real>,
         end: Point3<Real>,
         radius1: Real,
@@ -756,11 +756,47 @@ impl<S: Clone> CSG<S> {
         csg
     }
 
-    pub fn translate(&self, v: Vector3<Real>) -> CSG<S> {
-        let translation = Translation3::from(v);
+    /// Returns a new CSG translated by vector.
+    ///
+    pub fn translate(&self, vector: Vector3<Real>) -> CSG<S> {
+        let translation = Translation3::from(vector);
         // Convert to a Matrix4
         let mat4 = translation.to_homogeneous();
         self.transform(&mat4)
+    }
+    
+    /// Returns a new CSG translated so that its bounding-box center is at the origin (0,0,0).
+    ///
+    /// If this CSG is empty (has no polygons) such that the bounding box is invalid,
+    /// this simply returns a clone of the original.
+    pub fn center(&self) -> Self {
+        let aabb = self.bounding_box();
+        
+        // Compute the AABB center
+        let center_x = (aabb.mins.x + aabb.maxs.x) * 0.5;
+        let center_y = (aabb.mins.y + aabb.maxs.y) * 0.5;
+        let center_z = (aabb.mins.z + aabb.maxs.z) * 0.5;
+        let center = nalgebra::Vector3::new(center_x, center_y, center_z);
+
+        // Translate so that the bounding-box center goes to the origin
+        self.translate(-center)
+    }
+    
+    /// Translates the CSG so that its bottommost point(s) sit exactly at z=0.
+    ///
+    /// - Shifts all vertices up or down such that the minimum z coordinate of the bounding box becomes 0.
+    ///
+    /// # Example
+    /// ```
+    /// let csg = CSG::cube(1.0, 1.0, 3.0, None).translate(nalgebra::Vector3::new(2.0, 1.0, -2.0));
+    /// let floated = csg.float();
+    /// assert_eq!(floated.bounding_box().mins.z, 0.0);
+    /// ```
+    pub fn float(&self) -> Self {
+        let aabb = self.bounding_box();
+        let min_z = aabb.mins.z;
+        let shift = nalgebra::Vector3::new(0.0, 0.0, -min_z);
+        self.translate(shift)
     }
 
     pub fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> CSG<S> {

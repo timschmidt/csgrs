@@ -117,11 +117,13 @@ let intersection_result = cylinder.intersect(&sphere);
 
 ### Transformations
 
-- `translate(vector: Vector3<Real>)`
-- `rotate(x_deg, y_deg, z_deg)`
-- `scale(scale_x, scale_y, scale_z)`
-- `mirror(Axis::X | Axis::Y | Axis::Z)`
-- `transform(&Matrix4<Real>)` for arbitrary affine transforms.
+- `translate(vector: Vector3<Real>)` - Returns a new CSG translated by vector
+- `rotate(x_deg, y_deg, z_deg)` - Returns a new CSG rotated in x, y, and z
+- `scale(scale_x, scale_y, scale_z)` - Returns a new CSG scaled in x, y, and z
+- `mirror(Axis::X | Axis::Y | Axis::Z)` - Returns a new CSG mirrored by x, y, or z
+- `center()` - Returns a new CSG centered at the origin
+- `float()` - Returns a new CSG translated so that its bottommost point(s) sit exactly at z=0
+- `transform(&Matrix4<Real>)` - Returns a new CSG after applying arbitrary affine transforms
 
 ```rust
 use nalgebra::Vector3;
