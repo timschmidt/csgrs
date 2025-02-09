@@ -68,7 +68,7 @@ Similarly, you can create standard 3D primitives:
 - `CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`
 - `CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`
 - `CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`
-- `CSG::cylinder_ptp(Point3: start, Point3: end, Real: radius, usize: segments, metadata: Option<S>)`
+- `CSG::cylinder_ptp(start: Point3, end: Point3, radius: Real, segments: usize, metadata: Option<S>)`
 - `CSG::polyhedron(points, faces)`
 
 ```rust
