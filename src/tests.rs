@@ -390,7 +390,7 @@ fn test_polygon_recalc_plane_and_normals() {
         CLOSED,
         None,
     );
-    poly.recalc_plane_and_normals();
+    poly.set_new_normals();
     assert!(approx_eq(poly.plane.normal.z, 1.0, EPSILON));
     for v in &poly.vertices {
         assert!(approx_eq(v.normal.x, 0.0, EPSILON));
@@ -786,7 +786,7 @@ fn test_csg_polyhedron() {
         [0.0, 0.0, 1.0], // 3
     ];
     let faces = vec![vec![0, 1, 2], vec![0, 1, 3], vec![1, 2, 3], vec![2, 0, 3]];
-    let csg_tetra: CSG<()> = CSG::polyhedron(pts, &faces);
+    let csg_tetra: CSG<()> = CSG::polyhedron(pts, &faces, None);
     // We should have exactly 4 triangular faces
     assert_eq!(csg_tetra.polygons.len(), 4);
 }
@@ -908,7 +908,7 @@ fn test_csg_square() {
 
 #[test]
 fn test_csg_circle() {
-    let circle: CSG<()> = CSG::circle(None);
+    let circle: CSG<()> = CSG::circle(2.0, 32, None);
     // Single polygon with 32 segments => 32 vertices
     assert_eq!(circle.polygons.len(), 1);
     let poly = &circle.polygons[0];
@@ -918,7 +918,7 @@ fn test_csg_circle() {
 #[test]
 fn test_csg_polygon_2d() {
     let points = &[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0], [0.0, 1.0]];
-    let poly2d: CSG<()> = CSG::polygon_2d(points);
+    let poly2d: CSG<()> = CSG::polygon_2d(points, None);
     assert_eq!(poly2d.polygons.len(), 1);
     assert_eq!(poly2d.polygons[0].vertices.len(), 4);
 }
@@ -1001,7 +1001,7 @@ fn test_csg_text() {
     // We can’t easily test visually, but we can at least test that it doesn’t panic
     // and returns some polygons for normal ASCII letters.
     let font_data = include_bytes!("../asar.ttf");
-    let text_csg: CSG<()> = CSG::text("ABC", font_data, Some(10.0));
+    let text_csg: CSG<()> = CSG::text("ABC", font_data, Some(10.0), None);
     assert!(!text_csg.polygons.is_empty());
 }
 
@@ -1408,7 +1408,7 @@ fn test_offset_2d_negative_distance_shrinks() {
 fn test_polygon_2d_enforce_ccw_ordering() {
     // Define a triangle in CW order
     let points_cw = vec![[0.0, 0.0], [1.0, 0.0], [0.5, 1.0]];
-    let mut csg_cw = CSG::polygon_2d(&points_cw);
+    let mut csg_cw = CSG::polygon_2d(&points_cw, None);
     // Enforce CCW ordering
     csg_cw.renormalize();
     let poly = &csg_cw.polygons[0];
@@ -1418,7 +1418,7 @@ fn test_polygon_2d_enforce_ccw_ordering() {
 
 #[test]
 fn test_circle_offset_2d() {
-    let circle = CSG::circle(Some((1.0, 32)));
+    let circle = CSG::circle(1.0, 32, None);
     let offset_grow = circle.offset_2d(0.2); // Should grow the circle
     let offset_shrink = circle.offset_2d(-0.2); // Should shrink the circle
 

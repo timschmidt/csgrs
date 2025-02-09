@@ -790,7 +790,7 @@ impl<S: Clone> CSG<S> {
     /// and assigning that plane’s normal to all vertices.
     pub fn renormalize(&mut self) {
         for poly in &mut self.polygons {
-            poly.recalc_plane_and_normals();
+            poly.set_new_normals();
         }
     }
 
@@ -1416,7 +1416,7 @@ impl<S: Clone> CSG<S> {
                 let mut new_poly = Polygon::new(tri_vertices, CLOSED, poly.metadata.clone());
 
                 // Recompute the plane/normal to ensure correct orientation/shading:
-                new_poly.recalc_plane_and_normals();
+                new_poly.set_new_normals();
 
                 new_polygons.push(new_poly);
             }

@@ -369,21 +369,21 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 
 ### Transformations
 
-- `translate(vector: Vector3<Real>)`
-- `rotate(axis: Vector3<Real>, angle: Real, center: Option<Point3<Real>>)`
-- `scale(factor: Real)`
-- `mirror(Axis::X | Axis::Y | Axis::Z)`
-- `transform(&Matrix4<Real>)` for arbitrary affine transforms.
-- `flip()`
-- `convex_hull()`
-- `minkowski_sum(other: Polygon<S>)`
+- `translate(vector: Vector3<Real>)` - Returns a new Polygon translated by vector
+- `rotate(axis: Vector3<Real>, angle: Real, center: Option<Point3<Real>>)` - Rotates the polygon by a given angle in radians about axis.  If a center is provided the rotation is performed about that point, otherwise rotation is about the origin.
+- `scale(factor: Real)` - Uniformly scales the polygon by the given factor
+- `mirror(Axis::X | Axis::Y | Axis::Z)` - Mirrors the polygon about the given axis (X, Y, or Z).
+- `transform(&Matrix4<Real>)` for arbitrary affine transforms
+- `flip()` - Reverses winding order, flips vertices normals, and flips the plane normal, i.e. flips the polygon
+- `convex_hull()` - Returns a new Polygon that is the convex hull of the current polygon’s vertices
+- `minkowski_sum(other: Polygon<S>)` - Returns the Minkowski sum of this polygon and other
 
 ### Misc functions
 
 - `subdivide_triangles()` - Subdivide this polygon into smaller triangles
-- `calculate_new_normal()`
+- `calculate_new_normal()`- return a normal calculated from all polygon vertices
+- `set_new_normals()` - recalculate and set polygon normals
 - `triangulate()` - Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2]
-- `recalc_plane_and_normals()`
 - `offset(distance)`
 - `reconstruct_arcs(min_match: usize, rms_limit: Real, angle_limit_degs: Real, offset_limit: Real)`
 - `check_coordinates_finite()`

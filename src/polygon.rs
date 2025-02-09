@@ -422,7 +422,7 @@ impl<S: Clone> Polygon<S> {
             ));
         }
         let mut poly3d = Polygon::new(poly_verts, open, self.metadata.clone());
-        poly3d.recalc_plane_and_normals();
+        poly3d.set_new_normals();
         poly3d
     }
 
@@ -490,42 +490,13 @@ impl<S: Clone> Polygon<S> {
         return Polygon::new(poly_verts, open, metadata);
     }
 
+    /// Reverses winding order, flips vertices normals, and flips the plane normal
     pub fn flip(&mut self) {
         self.vertices.reverse();
         for v in &mut self.vertices {
             v.flip();
         }
         self.plane.flip();
-    }
-    
-    fn calculate_new_normal(&self) -> Vector3<Real> {
-        let n = self.vertices.len();
-        assert!(n >= 3, "Need at least 3 points to form a polygon.");
-        
-        let mut points = Vec::new();
-        for vertex in &self.vertices {
-            points.push(vertex.pos);
-        }
-        let mut normal = Vector3::zeros();
-    
-        // Loop over each edge of the polygon.
-        for i in 0..n {
-            let current = points[i];
-            let next = points[(i + 1) % n]; // wrap around using modulo
-            normal.x += (current.y - next.y) * (current.z + next.z);
-            normal.y += (current.z - next.z) * (current.x + next.x);
-            normal.z += (current.x - next.x) * (current.y + next.y);
-        }
-    
-        // Normalize the computed normal.
-        let mut poly_normal = normal.normalize();
-    
-        // Ensure the computed normal is in the same direction as the given normal.
-        if poly_normal.dot(&self.plane.normal) < 0.0 {
-            poly_normal = -poly_normal;
-        }
-        
-        poly_normal
     }
 
     /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
@@ -567,24 +538,45 @@ impl<S: Clone> Polygon<S> {
             result.extend(queue);
         }
 
-        result
+        result // todo: return polygons
     }
 
-    /// Recompute this polygon's plane from the first 3 vertices,
-    /// then set all vertices' normals to match that plane (flat shading).
-    pub fn recalc_plane_and_normals(&mut self) {
-        if self.vertices.len() < 3 {
-            return; // degenerate or empty
+    fn calculate_new_normal(&self) -> Vector3<Real> {
+        let n = self.vertices.len();
+        if n < 3 {
+            return Vector3::z(); // degenerate or empty
         }
-        // Recompute the plane from the first 3 vertices
-        self.plane = Plane::from_points(
-            &self.vertices[0].pos,
-            &self.vertices[1].pos,
-            &self.vertices[2].pos,
-        );
+        
+        let mut points = Vec::new();
+        for vertex in &self.vertices {
+            points.push(vertex.pos);
+        }
+        let mut normal = Vector3::zeros();
+    
+        // Loop over each edge of the polygon.
+        for i in 0..n {
+            let current = points[i];
+            let next = points[(i + 1) % n]; // wrap around using modulo
+            normal.x += (current.y - next.y) * (current.z + next.z);
+            normal.y += (current.z - next.z) * (current.x + next.x);
+            normal.z += (current.x - next.x) * (current.y + next.y);
+        }
+    
+        // Normalize the computed normal.
+        let mut poly_normal = normal.normalize();
+    
+        // Ensure the computed normal is in the same direction as the given normal.
+        if poly_normal.dot(&self.plane.normal) < 0.0 {
+            poly_normal = -poly_normal;
+        }
+        
+        poly_normal
+    }
 
+    /// Recompute this polygon's normal, then set all vertices' normals to match (flat shading).
+    pub fn set_new_normals(&mut self) {
         // Assign each vertex’s normal to match the plane
-        let new_normal = self.plane.normal;
+        let new_normal = self.calculate_new_normal();
         for v in &mut self.vertices {
             v.normal = new_normal;
         }
@@ -680,8 +672,7 @@ impl<S: Clone> Polygon<S> {
     }
 
     /// Returns a new Polygon translated by t.
-    /// todo: modify for Vector2 in-plane translation
-    pub fn translate(&self, t: Vector3<Real>) -> Self {
+    pub fn translate(&self, t: Vector3<Real>) -> Self {     // todo: modify for Vector2 in-plane translation
         let new_vertices = self
             .vertices
             .iter()
