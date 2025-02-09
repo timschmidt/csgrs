@@ -55,8 +55,8 @@ Helper constructors for 2D shapes in the XY plane:
 - `CSG::polygon_2d(&[[x1,y1],[x2,y2],...])`
 
 ```rust
-let square = CSG::square(None);          // 1×1 at origin
-let centered_rect = CSG::square(Some(([2.0, 4.0], true)));
+let square = CSG::square(1.0, 1.0, None); // 1×1 at origin
+let rect = CSG::square(2.0, 4.0, None);
 let circle = CSG::circle(None);          // radius=1, 32 segments
 let circle2 = CSG::circle(Some((2.0, 64)));
 ```
