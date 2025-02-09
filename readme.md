@@ -162,13 +162,13 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::flatten()`** — flattens a 3D shape into 2D (on the XY plane), unions the outlines.
 - **`CSG::slice(Some(plane))`** — slices the CSG by a plane and returns the cross-section polygons.
 - **`CSG::offset_2d(distance)`** — outward (or inward) offset in 2D using [cavalier_contours](https://crates.io/crates/cavalier_contours).
-- **`CSG::subdivide_triangles(levels)`** — subdivides each polygon’s triangles, increasing mesh density.
+- **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
-- **`CSG::reconstruct_polyline_3d(polylines: &[Polygon<S>])`** — 
-- **`CSG::bounding_box()`** — 
-- **`CSG::retriangulate()`** — 
-- **`CSG::extrude_polyline(poly: Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>)`** — 
-- **`CSG::from_polylines(polylines: Vec<Polyline<Real>>, metadata: Option<S>)`** — 
+- **`CSG::reconstruct_polyline_3d(polylines: &[Polygon<S>])`** — reconstructs a 3d polyline from 2d polylines with matching start/end points
+- **`CSG::bounding_box()`** — computes the bounding box of the shape
+- **`CSG::retriangulate()`** — retriangulates all polygons with earclip
+- **`CSG::extrude_polyline(poly: Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>)`** — extrude an open ended polyline to create a surface
+- **`CSG::from_polylines(polylines: Vec<Polyline<Real>>, metadata: Option<S>)`** — create a new CSG from [cavalier_contours](https://crates.io/crates/cavalier_contours) polylines
 
 ### Working with Metadata
 
