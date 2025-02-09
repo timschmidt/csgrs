@@ -270,23 +270,18 @@ impl<S: Clone> CSG<S> {
     }
 
     /// Creates a 2D circle in the XY plane.
-    pub fn circle(params: Option<(Real, usize)>) -> CSG<S> {
-        let (r, segments) = match params {
-            Some((radius, segs)) => (radius, segs),
-            None => (1.0, 32),
-        };
-
+    pub fn circle(radius: Real, segments: usize, metadata: Option<S>)>) -> CSG<S> {
         let mut verts = Vec::with_capacity(segments);
         let normal = Vector3::new(0.0, 0.0, 1.0);
 
         for i in 0..segments {
             let theta = 2.0 * PI * (i as Real) / (segments as Real);
-            let x = r * theta.cos();
-            let y = r * theta.sin();
+            let x = radius * theta.cos();
+            let y = radius * theta.sin();
             verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
 
-        CSG::from_polygons(vec![Polygon::new(verts, CLOSED, None)])
+        CSG::from_polygons(vec![Polygon::new(verts, CLOSED, metadata)])
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -298,8 +293,8 @@ impl<S: Clone> CSG<S> {
     ///
     /// # Example
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
-    /// let poly2d = CSG::polygon_2d(&pts);
-    pub fn polygon_2d(points: &[[Real; 2]]) -> CSG<S> {
+    /// let poly2d = CSG::polygon_2d(&pts, metadata);
+    pub fn polygon_2d(points: &[[Real; 2]], metadata: Option<S>) -> CSG<S> {
         // todo: return error
         assert!(points.len() >= 3, "polygon_2d requires at least 3 points");
 
@@ -308,7 +303,7 @@ impl<S: Clone> CSG<S> {
         for p in points {
             verts.push(Vertex::new(Point3::new(p[0], p[1], 0.0), normal));
         }
-        CSG::from_polygons(vec![Polygon::new(verts, CLOSED, None)])
+        CSG::from_polygons(vec![Polygon::new(verts, CLOSED, metadata)])
     }
     
     /// Create a right prism (a box) that spans from (0, 0, 0) 
@@ -1267,7 +1262,7 @@ impl<S: Clone> CSG<S> {
     /// Convert a `MeshText` (from meshtext) into a list of `Polygon` in the XY plane.
     /// - `scale` allows you to resize the glyph (e.g. matching a desired font size).
     /// - By default, the glyph’s normal is set to +Z.
-    fn meshtext_to_polygons(glyph_mesh: &meshtext::MeshText, scale: Real) -> Vec<Polygon<S>> {
+    fn meshtext_to_polygons(glyph_mesh: &meshtext::MeshText, scale: Real, metadata: Option<S>) -> Vec<Polygon<S>> {
         let mut polygons = Vec::new();
         let verts = &glyph_mesh.vertices;
 
@@ -1305,8 +1300,8 @@ impl<S: Clone> CSG<S> {
                     Vertex::new(Point3::new(px2, py2, pz2), normal),
                     Vertex::new(Point3::new(px3, py3, pz3), normal),
                 ],
-                false,
-                None,
+                CLOSED,
+                metadata.clone(),
             ));
         }
 
@@ -1323,7 +1318,7 @@ impl<S: Clone> CSG<S> {
     ///   - does not handle kerning or multi-line text,
     ///   - simply advances the cursor by each glyph’s width,
     ///   - places all characters along the X axis.
-    pub fn text(text_str: &str, font_data: &[u8], size: Option<Real>) -> CSG<S> {
+    pub fn text(text_str: &str, font_data: &[u8], size: Option<Real>, metadata: Option<S>) -> CSG<S> {
         let mut generator = MeshGenerator::new(font_data.to_vec());
         let scale = size.unwrap_or(20.0);
 
@@ -1346,7 +1341,7 @@ impl<S: Clone> CSG<S> {
             };
 
             // Convert to polygons
-            let glyph_polygons = Self::meshtext_to_polygons(&glyph_mesh, scale);
+            let glyph_polygons = Self::meshtext_to_polygons(&glyph_mesh, scale, metadata.clone());
 
             // Translate polygons by (cursor_x, 0.0)
             let glyph_csg =

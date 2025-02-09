@@ -50,15 +50,15 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 
 Helper constructors for 2D shapes in the XY plane:
 
-- `CSG::square(width: Real, length: Real, metadata: Option<S>)))`
-- `CSG::circle(Some((radius, segments)))`
-- `CSG::polygon_2d(&[[x1,y1],[x2,y2],...])`
+- `CSG::square(width: Real, length: Real, metadata: Option<S>)`
+- `CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`
+- `CSG::polygon_2d(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`
 
 ```rust
 let square = CSG::square(1.0, 1.0, None); // 1×1 at origin
 let rect = CSG::square(2.0, 4.0, None);
-let circle = CSG::circle(None);          // radius=1, 32 segments
-let circle2 = CSG::circle(Some((2.0, 64)));
+let circle = CSG::circle(1.0, 32, None);          // radius=1, 32 segments
+let circle2 = CSG::circle(2.0, 64, None);
 ```
 
 ### 3D Shapes
@@ -139,7 +139,7 @@ let mirrored = cube.mirror(Axis::Z);
   - `my_2d_shape.extrude_vector(direction: Vector3<f64>)`  
 - **Extrude Between Two Polygons**:  
   ```rust
-  let polygon_bottom = CSG::circle(Some((2.0, 64)));
+  let polygon_bottom = CSG::circle(2.0, 64, None);
   let polygon_top = polygon_bottom.translate(Vector3::new(0.0, 0.0, 5.0));
   let lofted = CSG::extrude_between(&polygon_bottom.polygons[0],
                                       &polygon_top.polygons[0],
@@ -148,7 +148,7 @@ let mirrored = cube.mirror(Axis::Z);
 - **Rotate-Extrude (Revolve)**: `my_2d_shape.rotate_extrude(angle_degs, segments)`
 
 ```rust
-let square = CSG::square(Some(([2.0,2.0], false)));
+let square = CSG::square(2.0, 2.0, None);
 let prism = square.extrude(5.0);
 
 let revolve_shape = square.rotate_extrude(360.0, 16);
@@ -254,7 +254,7 @@ You can generate 2D text geometry in the XY plane from TTF fonts via [`meshtext`
 
 ```rust
 let font_data = include_bytes!("../fonts/MyFont.ttf");
-let csg_text = CSG::text("Hello!", font_data, Some(20.0));
+let csg_text = CSG::text("Hello!", font_data, Some(20.0), None);
 
 // Then extrude the text to make it 3D:
 let text_3d = csg_text.extrude(1.0);
@@ -432,6 +432,7 @@ The `pline_area` function computes the signed area of a closed `Polyline<f64>`:
 - support twist and scale in linear extrude like openscad
 - support scale and translation along a vector in rotate extrude
 - fill
+- implement .center()
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
