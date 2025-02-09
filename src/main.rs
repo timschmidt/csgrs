@@ -18,7 +18,7 @@ fn main() {
     let cube = CSG::cube(2.0, 2.0, 2.0);
     let _ = fs::write("stl/cube.stl", cube.to_stl_binary("cube").unwrap());
 
-    let sphere = CSG::sphere(None); // center=(0,0,0), radius=1, slices=16, stacks=8
+    let sphere = CSG::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
     let _ = fs::write("stl/sphere.stl", sphere.to_stl_binary("sphere").unwrap());
 
     let cylinder = CSG::cylinder(1.0, 2.0, 32, None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=32
@@ -142,7 +142,7 @@ fn main() {
     let retriangulated_shape = poor_geometry_shape.retriangulate();
     let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
-    let sphere_test = CSG::sphere(Some((&[0.0, 0.0, 0.0], 1.2, 16, 8)));
+    let sphere_test = CSG::sphere(1.0, 16, 8, None);
     let cube_test = CSG::cube(1.0, 1.0, 1.0);
     let res = cube_test.subtract(&sphere_test);
     let _ = fs::write("stl/sphere_cube_test.stl", res.to_stl_binary("sphere_cube_test").unwrap());

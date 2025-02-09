@@ -431,14 +431,8 @@ impl<S: Clone> CSG<S> {
         CSG::from_polygons(vec![bottom, top, front, back, left, right])
     }
 
-    /// Construct a sphere with optional center, radius, segments, stacks
-    pub fn sphere(options: Option<(&[Real; 3], Real, usize, usize)>) -> CSG<S> {
-        let (center, radius, segments, stacks) = match options {
-            Some((c, r, sl, st)) => (*c, r, sl, st),
-            None => ([0.0, 0.0, 0.0], 1.0, 16, 8),
-        };
-
-        let c = Vector3::new(center[0], center[1], center[2]);
+    /// Construct a sphere with radius, segments, stacks
+    pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>) -> CSG<S> {
         let mut polygons = Vec::new();
 
         for i in 0..segments {
@@ -446,13 +440,12 @@ impl<S: Clone> CSG<S> {
                 let mut vertices = Vec::new();
 
                 let vertex = |theta: Real, phi: Real| {
-                    let dir =
-                        Vector3::new(theta.cos() * phi.sin(), phi.cos(), theta.sin() * phi.sin());
+                    let dir = Vector3::new(theta.cos() * phi.sin(), phi.cos(), theta.sin() * phi.sin());
                     Vertex::new(
                         Point3::new(
-                            c.x + dir.x * radius,
-                            c.y + dir.y * radius,
-                            c.z + dir.z * radius,
+                            dir.x * radius,
+                            dir.y * radius,
+                            dir.z * radius,
                         ),
                         dir,
                     )
@@ -477,10 +470,9 @@ impl<S: Clone> CSG<S> {
                 }
                 vertices.push(vertex(theta0, phi1));
 
-                polygons.push(Polygon::new(vertices, CLOSED, None));
+                polygons.push(Polygon::new(vertices, CLOSED, metadata.clone()));
             }
         }
-
         CSG::from_polygons(polygons)
     }
 

@@ -640,7 +640,7 @@ fn test_csg_subtract() {
 #[test]
 fn test_csg_union2() {
     let c1: CSG<()> = CSG::cube(2.0, 2.0, 2.0); // cube from (-1..+1) if that's how you set radius=1 by default
-    let c2: CSG<()> = CSG::sphere(None); // default sphere radius=1
+    let c2: CSG<()> = CSG::sphere(1.0, 16, 8, None); // default sphere radius=1
     let unioned = c1.union(&c2);
     // We can check bounding box is bigger or at least not smaller than either shape’s box
     let bb_union = unioned.bounding_box();
@@ -653,7 +653,7 @@ fn test_csg_union2() {
 #[test]
 fn test_csg_intersect() {
     let c1: CSG<()> = CSG::cube(2.0, 2.0, 2.0);
-    let c2: CSG<()> = CSG::sphere(None);
+    let c2: CSG<()> = CSG::sphere(1.0, 16, 8, None);
     let isect = c1.intersect(&c2);
     let bb_isect = isect.bounding_box();
     // The intersection bounding box should be smaller than or equal to each
@@ -667,7 +667,7 @@ fn test_csg_intersect() {
 
 #[test]
 fn test_csg_intersect2() {
-    let sphere: CSG<()> = CSG::sphere(None);
+    let sphere: CSG<()> = CSG::sphere(1.0, 16, 8, None);
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0);
 
     let intersection = sphere.intersect(&cube);
@@ -738,7 +738,7 @@ fn test_csg_cube() {
 #[test]
 fn test_csg_sphere() {
     // Default sphere => radius=1, slices=16, stacks=8
-    let sphere: CSG<()> = CSG::sphere(None);
+    let sphere: CSG<()> = CSG::sphere(1.0, 16, 8, None);
     let polys = sphere.to_polygons();
     assert!(!polys.is_empty(), "Sphere should generate polygons");
 
@@ -835,7 +835,7 @@ fn test_csg_mirror() {
 #[test]
 fn test_csg_convex_hull() {
     // If we take a shape with some random points, the hull should just enclose them
-    let c1: CSG<()> = CSG::sphere(Some((&[0.0, 0.0, 0.0], 1.0, 8, 4)));
+    let c1: CSG<()> = CSG::sphere(1.0, 16, 8, None);
     // The convex_hull of a sphere's sampling is basically that same shape, but let's see if it runs.
     let hull = c1.convex_hull();
     // The hull should have some polygons
@@ -957,7 +957,7 @@ fn test_csg_rotate_extrude() {
 
 #[test]
 fn test_csg_bounding_box() {
-    let sphere: CSG<()> = CSG::sphere(Some((&[2.0, -1.0, 3.0], 2.0, 8, 4)));
+    let sphere: CSG<()> = CSG::sphere(1.0, 16, 8, None);
     let bb = sphere.bounding_box();
     // center=(2,-1,3), radius=2 => bounding box min=(0,-3,1), max=(4,1,5)
     assert!(approx_eq(bb.mins.x, 0.0, 0.1));

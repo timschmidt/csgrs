@@ -25,7 +25,7 @@ type CSG = csgrs::csg::CSG<()>;
 
 // Create two shapes:
 let cube = CSG::cube(2.0, 2.0, 2.0);  // 2×2×2 cube at origin
-let sphere = CSG::sphere(None);       // sphere of radius=1 at origin
+let sphere = CSG::sphere(1.0, 16, 8, None); // sphere of radius=1 at origin
 
 // Subtract one from the other:
 let subtract_result = cube.subtract(&sphere);
@@ -66,9 +66,9 @@ let circle2 = CSG::circle(Some((2.0, 64)));
 Similarly, you can create standard 3D primitives:
 
 - `CSG::cube(length, width, height)`
-- `CSG::sphere(Some((&center, radius, slices, stacks)))`
-- `CSG::cylinder(radius, height, segments, metadata)`
-- `CSG::cylinder_ptp(Point3: start, Point3: end, radius, segments, metadata)`
+- `CSG::sphere(Real: radius, usize: slices, usize: stacks, Option: metadata)`
+- `CSG::cylinder(Real: radius, Real: height, usize: segments, Option: metadata)`
+- `CSG::cylinder_ptp(Point3: start, Point3: end, Real: radius, usize: segments, Option: metadata)`
 - `CSG::polyhedron(points, faces)`
 
 ```rust
