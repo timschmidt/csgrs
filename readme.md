@@ -96,7 +96,7 @@ let faces = vec![
     vec![2, 3, 4],
     vec![3, 0, 4],
 ];
-let pyramid = CSG::polyhedron(points, &faces);
+let pyramid = CSG::polyhedron(points, &faces, None);
 ```
 
 ### Boolean Operations
