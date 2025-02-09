@@ -504,7 +504,7 @@ impl<S: Clone> CSG<S> {
             // bottom cap
             polygons.push(Polygon::new(
                 vec![start_v.clone(), point(0.0, t0, -1.0), point(0.0, t1, -1.0)],
-                false,
+                CLOSED,
                 metadata.clone(),
             ));
 
@@ -516,14 +516,14 @@ impl<S: Clone> CSG<S> {
                     point(1.0, t0, 0.0),
                     point(1.0, t1, 0.0),
                 ],
-                false,
+                CLOSED,
                 metadata.clone(),
             ));
 
             // top cap
             polygons.push(Polygon::new(
                 vec![end_v.clone(), point(1.0, t1, 1.0), point(1.0, t0, 1.0)],
-                false,
+                CLOSED,
                 metadata.clone(),
             ));
         }
@@ -575,7 +575,7 @@ impl<S: Clone> CSG<S> {
     ///
     /// let csg_poly = CSG::polyhedron(pts, &fcs);
     /// ```
-    pub fn polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>]) -> CSG<S> {
+    pub fn polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>) -> CSG<S> {
         let mut polygons = Vec::new();
 
         for face in faces {
@@ -603,7 +603,7 @@ impl<S: Clone> CSG<S> {
             }
 
             // Build the polygon (plane is auto-computed from first 3 vertices).
-            let mut poly = Polygon::new(face_vertices, CLOSED, None);
+            let mut poly = Polygon::new(face_vertices, CLOSED, metadata.clone());
 
             // Optionally, set each vertex normal to match the polygon’s plane normal,
             // so that shading in many 3D viewers looks correct.
