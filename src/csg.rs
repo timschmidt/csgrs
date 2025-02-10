@@ -17,9 +17,11 @@ use cavalier_contours::polyline::{
     PlineSource, Polyline,
 };
 use chull::ConvexHullWrapper;
-use meshtext::{Glyph, MeshGenerator, MeshText};
 use std::io::Cursor;
 use std::error::Error;
+
+#[cfg(feature = "truetype-text")]
+use meshtext::{Glyph, MeshGenerator, MeshText};
 
 #[cfg(feature = "dxf-io")]
 use dxf::entities::*;
@@ -1541,6 +1543,7 @@ impl<S: Clone> CSG<S> {
     /// Convert a `MeshText` (from meshtext) into a list of `Polygon` in the XY plane.
     /// - `scale` allows you to resize the glyph (e.g. matching a desired font size).
     /// - By default, the glyph’s normal is set to +Z.
+    #[cfg(feature = "truetype-text")]
     fn meshtext_to_polygons(glyph_mesh: &meshtext::MeshText, scale: Real, metadata: Option<S>) -> Vec<Polygon<S>> {
         let mut polygons = Vec::new();
         let verts = &glyph_mesh.vertices;
@@ -1597,6 +1600,7 @@ impl<S: Clone> CSG<S> {
     ///   - does not handle kerning or multi-line text,
     ///   - simply advances the cursor by each glyph’s width,
     ///   - places all characters along the X axis.
+    #[cfg(feature = "truetype-text")]
     pub fn text(text_str: &str, font_data: &[u8], size: Option<Real>, metadata: Option<S>) -> CSG<S> {
         let mut generator = MeshGenerator::new(font_data.to_vec());
         let scale = size.unwrap_or(20.0);

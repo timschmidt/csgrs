@@ -13,7 +13,7 @@ cavalier_contours = "0.4.0"
 chull = "0.2.4"
 dxf = { version = "0.6.0", optional = true }
 earclip = "1.1.0"
-meshtext = { version = "0.3.1", features = ["owned"] }
+meshtext = { version = "0.3.1", features = ["owned"], optional = true }
 nalgebra = "0.33"
 rapier3d-f64 = { version = "0.23.0", optional = true }
 rapier3d = { version = "0.23.0", optional = true }
@@ -23,7 +23,7 @@ rayon = { version = "1.7", optional = true }
 stl_io = { version = "0.8.3", optional = true }
 
 [features]
-default = ["f64", "stl-io", "dxf-io"]
+default = ["f64", "stl-io", "dxf-io", "truetype-text"]
 parallel = ["rayon"]
 f64 = [
   "rapier3d-f64",
@@ -38,4 +38,7 @@ stl-io = [
 ]
 dxf-io = [
   "dxf",
+]
+truetype-text = [
+  "meshtext",
 ]
