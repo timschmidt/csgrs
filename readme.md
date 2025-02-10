@@ -69,8 +69,7 @@ Similarly, you can create standard 3D primitives:
 - **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
 - **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::cylinder_ptp(start: Point3, end: Point3, radius: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::frustrum_ptp(
-        start: Point3<Real>,
+- **`CSG::frustrum_ptp(start: Point3<Real>,
         end: Point3<Real>,
         radius1: Real,
         radius2: Real,
@@ -118,8 +117,8 @@ They all return a new `CSG<S>`
 
 ```rust
 let union_result = cube.union(&sphere);
-let subtraction_result = cube.subtract(&sphere);
-let intersection_result = cylinder.intersect(&sphere);
+let subtraction_result = cube.difference(&sphere);
+let intersection_result = cylinder.intersection(&sphere);
 ```
 
 ### Transformations
@@ -443,6 +442,7 @@ The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
 - fill
 - space filling curves
 - mirror across arbitrary planes
+  - rename enums.rs errors.rs
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
