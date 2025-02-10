@@ -1222,6 +1222,159 @@ impl<S: Clone> CSG<S> {
         }
         CSG::from_polygons(result_polygons)
     }
+    
+    /// Sweep a 2D shape `shape_2d` (in XY plane, normal=+Z) along a 2D path `path_2d` (also in XY).
+    /// Produces a 3D CSG whose cross-sections match `shape_2d` at each vertex of `path_2d`.
+    ///
+    /// - If `path_2d` is open, the shape is capped at the start/end.
+    /// - If `path_2d` is closed, we connect the last copy back to the first, forming a loop without caps.
+    ///
+    /// # Assumptions
+    /// - `shape_2d` is a single Polygon in the XY plane. Its normal should be +Z.
+    /// - `path_2d` is a single Polygon (or open polyline) also in XY. If `path_2d.open==false`, it’s closed.
+    /// - Both polygons have enough vertices to be meaningful (e.g. 3+ for the shape if closed, 2+ for the path).
+    ///
+    /// # Returns
+    /// A new 3D `CSG` that is the swept volume.
+    pub fn sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>) -> CSG<S> {
+        // 1) Gather the path’s vertices in XY
+        if path_2d.vertices.len() < 2 {
+            // Degenerate path => no sweep
+            return CSG::new();
+        }
+        let path_is_closed = !path_2d.open;  // If false => open path, if true => closed path
+    
+        // Extract path points (x,y,0) from path_2d
+        let mut path_points = Vec::with_capacity(path_2d.vertices.len());
+        for v in &path_2d.vertices {
+            // We only take X & Y; Z is typically 0 for a 2D path
+            path_points.push(Point3::new(v.pos.x, v.pos.y, 0.0));
+        }
+    
+        // 2) Convert the shape_2d into a list of its vertices in local coords (usually in XY).
+        //    We assume shape_2d is a single polygon (can also handle multiple if needed).
+        let shape_is_closed = !shape_2d.open && shape_2d.vertices.len() >= 3;
+        let shape_count = shape_2d.vertices.len();
+    
+        // 3) For each path vertex, compute the orientation that aligns +Z to the path tangent.
+        //    Then transform the shape’s 2D vertices into 3D “slice[i]”.
+        let n_path = path_points.len();
+        let mut slices: Vec<Vec<Point3<Real>>> = Vec::with_capacity(n_path);
+    
+        for i in 0..n_path {
+            // The path tangent is p[i+1] - p[i] (or wrap if path is closed)
+            // If open and i == n_path-1 => we’ll copy the tangent from the last segment
+            let next_i = if i == n_path - 1 {
+                if path_is_closed { 0 } else { i - 1 } // if closed, wrap, else reuse the previous
+            } else {
+                i + 1
+            };
+    
+            let mut dir = path_points[next_i] - path_points[i];
+            if dir.norm_squared() < EPSILON {
+                // Degenerate segment => fallback to the previous direction or just use +Z
+                dir = Vector3::z();
+            } else {
+                dir.normalize_mut();
+            }
+    
+            // Build a rotation that maps +Z to `dir`.
+            let rot = rotation_from_z_to_dir(dir);
+    
+            // Build a translation that puts shape origin at path_points[i]
+            let trans = Translation3::from(path_points[i].coords);
+    
+            // Combined transform = T * R
+            let mat = trans.to_homogeneous() * rot;
+    
+            // Apply that transform to all shape_2d vertices => slice[i]
+            let mut slice_i = Vec::with_capacity(shape_count);
+            for sv in &shape_2d.vertices {
+                let local_pt = sv.pos;  // (x, y, z=0)
+                let p4 = local_pt.to_homogeneous();
+                let p4_trans = mat * p4;
+                slice_i.push(Point3::from_homogeneous(p4_trans).unwrap());
+            }
+            slices.push(slice_i);
+        }
+    
+        // 4) Build polygons for the new 3D swept solid.
+        //    - (A) “Cap” polygons at start & end if path is open.
+        //    - (B) “Side wall” quads between slice[i] and slice[i+1].
+        //
+        // We’ll gather them all into a Vec<Polygon<S>>, then make a CSG.
+    
+        let mut all_polygons = Vec::new();
+    
+        // (A) Caps if path is open
+        //     We replicate the shape_2d as polygons at slice[0] and slice[n_path-1].
+        //     We flip the first one so its normal faces outward. The last we keep as is.
+        if !path_is_closed {
+            // “Bottom” cap = slice[0], but we flip its winding so outward normal is “down” the path
+            if shape_is_closed {
+                let bottom_poly = polygon_from_slice(
+                    &slices[0],
+                    true, // flip
+                    shape_2d.metadata.clone(),
+                );
+                all_polygons.push(bottom_poly);
+            }
+            // “Top” cap = slice[n_path-1] (no flip)
+            if shape_is_closed {
+                let top_poly = polygon_from_slice(
+                    &slices[n_path - 1],
+                    false, // no flip
+                    shape_2d.metadata.clone(),
+                );
+                all_polygons.push(top_poly);
+            }
+        }
+    
+        // (B) Side walls: For i in [0..n_path-1], or [0..n_path] if closed
+        let end_index = if path_is_closed { n_path } else { n_path - 1 };
+    
+        for i in 0..end_index {
+            let i_next = (i + 1) % n_path;  // wraps if closed
+            let slice_i = &slices[i];
+            let slice_next = &slices[i_next];
+    
+            // For each edge in the shape, connect vertices k..k+1
+            // shape_2d may be open or closed. If open, we do shape_count-1 edges; if closed, shape_count edges.
+            let edge_count = if shape_is_closed {
+                shape_count  // because last edge wraps
+            } else {
+                shape_count - 1
+            };
+    
+            for k in 0..edge_count {
+                let k_next = (k + 1) % shape_count;
+    
+                let v_i_k     = slice_i[k];
+                let v_i_knext = slice_i[k_next];
+                let v_next_k     = slice_next[k];
+                let v_next_knext = slice_next[k_next];
+    
+                // Build a quad polygon in CCW order for outward normal
+                // or you might choose a different ordering.  Typically:
+                //   [v_i_k, v_i_knext, v_next_knext, v_next_k]
+                // forms an outward-facing side wall if the shape_2d was originally CCW in XY.
+                let side_poly = Polygon::new(
+                    vec![
+                        Vertex::new(v_i_k,     Vector3::zeros()),
+                        Vertex::new(v_i_knext, Vector3::zeros()),
+                        Vertex::new(v_next_knext, Vector3::zeros()),
+                        Vertex::new(v_next_k,     Vector3::zeros()),
+                    ],
+                    CLOSED,
+                    shape_2d.metadata.clone(),
+                );
+                all_polygons.push(side_poly);
+            }
+        }
+    
+        // 5) Combine into a final CSG
+        CSG::from_polygons(all_polygons)
+    }
 
     /// Given a list of Polygons that each represent a 2D open polyline (in XY, z=0),
     /// reconstruct a single 3D polyline by matching consecutive endpoints in 3D space.
@@ -2229,4 +2382,59 @@ impl<S: Clone> CSG<S> {
 
         Ok(buffer)
     }
+}
+
+/// Build a rotation matrix that maps the global +Z axis to the specified `dir` in 3D.
+///
+/// - If `dir` is near zero length or near +Z, we produce the identity.
+/// - Otherwise, we use an axis‐angle rotation from +Z to `dir`.
+fn rotation_from_z_to_dir(dir: Vector3<Real>) -> Matrix4<Real> {
+    // We'll rotate the z-axis (0,0,1) onto `dir`.
+    let z = Vector3::z();
+    let dot = z.dot(&dir);
+    // If dir is basically the same as z, no rotation needed
+    if (dot - 1.0).abs() < EPSILON {
+        return Matrix4::identity();
+    }
+    // If dir is basically opposite z
+    if (dot + 1.0).abs() < EPSILON {
+        // 180 deg around X or Y axis
+        let rot180 = Rotation3::from_axis_angle(&Unit::new_normalize(Vector3::x()), PI);
+        return rot180.to_homogeneous();
+    }
+    // Otherwise, general axis = z × dir
+    let axis = z.cross(&dir).normalize();
+    let angle = z.dot(&dir).acos();
+    let rot = Rotation3::from_axis_angle(&Unit::new_unchecked(axis), angle);
+    rot.to_homogeneous()
+}
+
+/// Helper to build a single Polygon from a “slice” of 3D points.
+///
+/// If `flip_winding` is true, we reverse the vertex order (so the polygon’s normal flips).
+fn polygon_from_slice<S: Clone>(
+    slice_pts: &[Point3<Real>],
+    flip_winding: bool,
+    metadata: Option<S>,
+) -> Polygon<S> {
+    if slice_pts.len() < 3 {
+        // degenerate polygon
+        return Polygon::new(vec![], true, metadata);
+    }
+    // Build the vertex list
+    let mut verts: Vec<Vertex> = slice_pts
+        .iter()
+        .map(|p| Vertex::new(*p, Vector3::zeros()))
+        .collect();
+
+    if flip_winding {
+        verts.reverse();
+        for v in &mut verts {
+            v.flip();
+        }
+    }
+
+    let mut poly = Polygon::new(verts, CLOSED, metadata);
+    poly.set_new_normal(); // Recompute its plane & normal for consistency
+    poly
 }
