@@ -143,7 +143,7 @@ let mirrored = cube.mirror(plane_x);
 
 - **Linear Extrude**: 
   - `my_2d_shape.extrude(height: Real)`  
-  - `my_2d_shape.extrude_vector(direction: Vector3<Real>)`  
+  - `my_2d_shape.extrude_vector(direction: Vector3)`  
 - **Extrude Between Two Polygons**:  
   ```rust
   let polygon_bottom = CSG::circle(2.0, 64, None);
@@ -154,7 +154,7 @@ let mirrored = cube.mirror(plane_x);
   ```
 - **Rotate-Extrude (Revolve)**: `my_2d_shape.rotate_extrude(angle_degs, segments)`
 - **Sweep**: `sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>)`
-- **Extrude a polyline to create a surface**: `CSG::extrude_polyline(poly: Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>)`
+- **Extrude a polyline to create a surface**: `extrude_polyline(poly: Polyline, direction: Vector3, metadata: Option<S>)`
 
 ```rust
 let square = CSG::square(2.0, 2.0, None);
@@ -177,7 +177,7 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::reconstruct_polyline_3d(polylines: &[Polygon<S>])`** — reconstructs a 3d polyline from 2d polylines with matching start/end points
 - **`CSG::bounding_box()`** — computes the bounding box of the shape
 - **`CSG::retriangulate()`** — retriangulates all polygons with [`earclip`](https://crates.io/crates/earclip)
-- **`CSG::from_polylines(polylines: Vec<Polyline<Real>>, metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
+- **`CSG::from_polylines(polylines: Vec<Polyline>, metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::vertices()`** — collect all vertices from the CSG
 - **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
 
@@ -334,14 +334,14 @@ Below is a quick overview of the **2D‐related methods** you’ll find on `Poly
 
 ### Polygon::to_2d() and Polygon::from_2d(...)
 - **`to_2d()`**  
-  Projects the polygon from its 3D plane into a 2D [`Polyline<f64>`](https://docs.rs/cavalier_contours/latest/cavalier_contours/polyline/struct.Polyline.html).  
+  Projects the polygon from its 3D plane into a 2D [`Polyline`](https://docs.rs/cavalier_contours/latest/cavalier_contours/polyline/struct.Polyline.html).  
   Internally:
   1. Finds a transform that sends `polygon.plane.normal` to the +Z axis.
   2. Transforms each vertex into that local coordinate system (so the polygon lies at *z = 0*).
-  3. Returns a 2D `Polyline<f64>` of `(x, y, bulge)` points (here, `bulge` is set to `0.0` by default).
+  3. Returns a 2D `Polyline` of `(x, y, bulge)` points (here, `bulge` is set to `0.0` by default).
 
 - **`from_2d(polyline)`**  
-  The inverse of `to_2d()`, creating a 3D `Polygon` from a 2D `Polyline<Real>`. This method uses the **same** plane as the polygon on which you called `from_2d()`. That is, it takes `(x, y)` points in the local XY plane of `self.plane` and lifts them back into 3D space.
+  The inverse of `to_2d()`, creating a 3D `Polygon` from a 2D `Polyline`. This method uses the **same** plane as the polygon on which you called `from_2d()`. That is, it takes `(x, y)` points in the local XY plane of `self.plane` and lifts them back into 3D space.
 
 These two functions let you cleanly convert between a 3D polygon and a pure 2D representation whenever you need to do 2D manipulations.  
 
@@ -378,13 +378,13 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 
 ### Transformations
 
-- **`Polygon::translate(vector: Vector3<Real>)`** - Returns a new Polygon translated by vector
-- **`Polygon::rotate(axis: Vector3<Real>, angle: Real, center: Option<Point3<Real>>)`** - Rotates the polygon by a given angle in radians about axis.  If a center is provided the rotation is performed about that point, otherwise rotation is about the origin.
+- **`Polygon::translate(vector: Vector3)`** - Returns a new Polygon translated by vector
+- **`Polygon::rotate(axis: Vector3, angle: Real, center: Option<Point3>)`** - Rotates the polygon by a given angle in radians about axis.  If a center is provided the rotation is performed about that point, otherwise rotation is about the origin.
 - **`Polygon::scale(factor: Real)`** - Uniformly scales the polygon by the given factor
 - **`Polygon::mirror_x()`** - Mirrors the polygon about the x axis
 - **`Polygon::mirror_y()`** - Mirrors the polygon about the y axis
 - **`Polygon::mirror_z()`** - Mirrors the polygon about the z axis
-- **`Polygon::transform(&Matrix4<Real>)`** for arbitrary affine transforms
+- **`Polygon::transform(&Matrix4)`** for arbitrary affine transforms
 - **`Polygon::flip()`** - Reverses winding order, flips vertices normals, and flips the plane normal, i.e. flips the polygon
 - **`Polygon::convex_hull()`** - Returns a new Polygon that is the convex hull of the current polygon’s vertices
 - **`Polygon::minkowski_sum(other: Polygon<S>)`** - Returns the Minkowski sum of this polygon and other
@@ -404,7 +404,7 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 - **`Polygon::check_ring_self_intersection()`** - Very basic ring self‐intersection check by naive line–line intersection
 
 ### Signed Area (Shoelace)
-The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
+The `pline_area` function computes the signed area of a closed `Polyline`:
 - **Positive** if the points are in **counterclockwise (CCW)** order.
 - **Negative** if the points are in **clockwise (CW)** order.
 - Near‐zero for degenerate or collinear loops.
@@ -413,7 +413,6 @@ The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
 
 ## Roadmap / Todo
 - fix up error handling with result types
-- sweep following path
 - convert more for loops to iterators
 - file formats behind a feature flag
 - parry, rapier behind feature flags
