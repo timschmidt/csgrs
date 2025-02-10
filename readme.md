@@ -69,8 +69,8 @@ Similarly, you can create standard 3D primitives:
 - **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
 - **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::cylinder_ptp(start: Point3, end: Point3, radius: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::frustrum_ptp(start: Point3<Real>,
-        end: Point3<Real>,
+- **`CSG::frustrum_ptp(start: Point3,
+        end: Point3,
         radius1: Real,
         radius2: Real,
         segments: usize,
@@ -111,7 +111,7 @@ Three primary operations:
 
 ```rust
 let union_result = cube.union(&sphere);
-let subtraction_result = cube.difference(&sphere);
+let difference_result = cube.difference(&sphere);
 let intersection_result = cylinder.intersection(&sphere);
 ```
 
@@ -119,13 +119,13 @@ They all return a new `CSG<S>`
 
 ### Transformations
 
-- **`CSG::translate(vector: Vector3<Real>)`** - Returns the CSG translated by vector
+- **`CSG::translate(vector: Vector3)`** - Returns the CSG translated by vector
 - **`CSG::rotate(x_deg, y_deg, z_deg)`** - Returns the CSG rotated in x, y, and z
 - **`CSG::scale(scale_x, scale_y, scale_z)`** - Returns the CSG scaled in x, y, and z
-- **`CSG::mirror(Axis::X | Axis::Y | Axis::Z)`** - Returns the CSG mirrored by x, y, or z
+- **`CSG::mirror(plane: Plane)`** - Returns the CSG mirrored by plane
 - **`CSG::center()`** - Returns the CSG centered at the origin
 - **`CSG::float()`** - Returns the CSG translated so that its bottommost point(s) sit exactly at z=0
-- **`CSG::transform(&Matrix4<Real>)`** - Returns the CSG after applying arbitrary affine transforms
+- **`CSG::transform(&Matrix4)`** - Returns the CSG after applying arbitrary affine transforms
 
 ```rust
 use nalgebra::Vector3;
@@ -133,7 +133,10 @@ use nalgebra::Vector3;
 let moved = cube.translate(Vector3::new(3.0, 0.0, 0.0));
 let rotated = sphere.rotate(0.0, 45.0, 90.0);
 let scaled = cylinder.scale(2.0, 1.0, 1.0);
-let mirrored = cube.mirror(Axis::Z);
+let plane_x = Plane { normal: Vector3::x(), w: 0.0 }; // x=0 plane
+let plane_y = Plane { normal: Vector3::y(), w: 0.0 }; // y=0 plane
+let plane_z = Plane { normal: Vector3::z(), w: 0.0 }; // z=0 plane
+let mirrored = cube.mirror(plane_x);
 ```
 
 ### Extrusions and Revolves
@@ -376,7 +379,9 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 - **`Polygon::translate(vector: Vector3<Real>)`** - Returns a new Polygon translated by vector
 - **`Polygon::rotate(axis: Vector3<Real>, angle: Real, center: Option<Point3<Real>>)`** - Rotates the polygon by a given angle in radians about axis.  If a center is provided the rotation is performed about that point, otherwise rotation is about the origin.
 - **`Polygon::scale(factor: Real)`** - Uniformly scales the polygon by the given factor
-- **`Polygon::mirror(Axis::X | Axis::Y | Axis::Z)`** - Mirrors the polygon about the given axis (X, Y, or Z).
+- **`Polygon::mirror_x()`** - Mirrors the polygon about the x axis
+- **`Polygon::mirror_y()`** - Mirrors the polygon about the y axis
+- **`Polygon::mirror_z()`** - Mirrors the polygon about the z axis
 - **`Polygon::transform(&Matrix4<Real>)`** for arbitrary affine transforms
 - **`Polygon::flip()`** - Reverses winding order, flips vertices normals, and flips the plane normal, i.e. flips the polygon
 - **`Polygon::convex_hull()`** - Returns a new Polygon that is the convex hull of the current polygon’s vertices
@@ -437,8 +442,6 @@ The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
 - support scale and translation along a vector in rotate extrude
 - fill
 - space filling curves
-- mirror across arbitrary planes
-  - rename enums.rs errors.rs
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html

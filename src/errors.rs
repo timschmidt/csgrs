@@ -1,12 +1,6 @@
 use crate::float_types::Real;
 use nalgebra::Point3;
 
-pub enum Axis {
-    X,
-    Y,
-    Z,
-}
-
 /// All the possible validation issues we might encounter,
 #[derive(Debug, Clone, PartialEq)]
 pub enum ValidationError {

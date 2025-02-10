@@ -1,5 +1,5 @@
 use crate::float_types::{Real, PI, CLOSED};
-use crate::enums::{Axis, ValidationError};
+use crate::errors::ValidationError;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
 use nalgebra::{
@@ -751,14 +751,21 @@ impl<S: Clone> Polygon<S> {
         self.transform(&scaling)
     }
 
-    /// Mirrors the polygon about the given axis (X, Y, or Z).
-    pub fn mirror(&self, axis: Axis) -> Self {
-        let (sx, sy, sz) = match axis {
-            Axis::X => (-1.0, 1.0, 1.0),
-            Axis::Y => (1.0, -1.0, 1.0),
-            Axis::Z => (1.0, 1.0, -1.0),
-        };
-        let mirror_mat = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
+    /// Mirrors the polygon about the given x axis
+    pub fn mirror_x(&self) -> Self {
+        let mirror_mat = Matrix4::new_nonuniform_scaling(&Vector3::new(-1.0, 1.0, 1.0));
+        self.transform(&mirror_mat)
+    }
+    
+    /// Mirrors the polygon about the given y axis
+    pub fn mirror_y(&self) -> Self {
+        let mirror_mat = Matrix4::new_nonuniform_scaling(&Vector3::new(1.0, -1.0, 1.0));
+        self.transform(&mirror_mat)
+    }
+    
+    /// Mirrors the polygon about the given z axis
+    pub fn mirror_z(&self) -> Self {
+        let mirror_mat = Matrix4::new_nonuniform_scaling(&Vector3::new(1.0, 1.0, -1.0));
         self.transform(&mirror_mat)
     }
 

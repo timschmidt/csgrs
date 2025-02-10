@@ -1,6 +1,5 @@
 #[cfg(test)]
 use crate::float_types::{Real, EPSILON, FRAC_PI_2, CLOSED};
-use crate::enums::Axis;
 use crate::bsp::Node;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
@@ -618,12 +617,12 @@ fn test_csg_union() {
 }
 
 #[test]
-fn test_csg_subtract() {
+fn test_csg_difference() {
     // Subtract a smaller cube from a bigger one
     let big_cube: CSG<()> = CSG::cube(4.0, 4.0, 4.0, None).translate(Vector3::new(-2.0, -2.0, -2.0)); // radius=2 => spans [-2,2]
     let small_cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).translate(Vector3::new(-1.0, -1.0, -1.0)); // radius=1 => spans [-1,1]
 
-    let result = big_cube.subtract(&small_cube);
+    let result = big_cube.difference(&small_cube);
     let polys = result.to_polygons();
     assert!(
         !polys.is_empty(),
@@ -654,7 +653,7 @@ fn test_csg_union2() {
 fn test_csg_intersect() {
     let c1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
     let c2: CSG<()> = CSG::sphere(1.0, 16, 8, None);
-    let isect = c1.intersect(&c2);
+    let isect = c1.intersection(&c2);
     let bb_isect = isect.bounding_box();
     // The intersection bounding box should be smaller than or equal to each
     let bb_cube = c1.bounding_box();
@@ -670,7 +669,7 @@ fn test_csg_intersect2() {
     let sphere: CSG<()> = CSG::sphere(1.0, 16, 8, None);
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
 
-    let intersection = sphere.intersect(&cube);
+    let intersection = sphere.intersection(&cube);
     let polys = intersection.to_polygons();
     assert!(
         !polys.is_empty(),
@@ -825,7 +824,8 @@ fn test_csg_transform_translate_rotate_scale() {
 #[test]
 fn test_csg_mirror() {
     let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    let mirror_x = c.mirror(Axis::X);
+    let plane_x = Plane { normal: Vector3::x(), w: 0.0 }; // x=0 plane
+    let mirror_x = c.mirror(plane_x);
     let bb_mx = mirror_x.bounding_box();
     // The original cube was from x=-1..1, so mirrored across X=0 is the same bounding box
     assert!(approx_eq(bb_mx.mins.x, -1.0, EPSILON));
@@ -1201,10 +1201,10 @@ fn test_union_metadata() {
 }
 
 #[test]
-fn test_subtract_metadata() {
-    // Subtract two cubes, each with different shared data. The resulting polygons
+fn test_difference_metadata() {
+    // Difference two cubes, each with different shared data. The resulting polygons
     // come from the *minuend* (the first shape) with *some* portion clipped out.
-    // So the subtracted portion from the second shape won't appear in the final.
+    // So the differenced portion from the second shape won't appear in the final.
 
     let mut cube1 = CSG::cube(2.0, 2.0, 2.0, None);
     for p in &mut cube1.polygons {
@@ -1216,7 +1216,7 @@ fn test_subtract_metadata() {
         p.set_metadata("Cube2".to_string());
     }
 
-    let result = cube1.subtract(&cube2);
+    let result = cube1.difference(&cube2);
 
     // All polygons in the result should come from "Cube1" only.
     for poly in &result.polygons {
@@ -1243,7 +1243,7 @@ fn test_intersect_metadata() {
         p.set_metadata("Cube2".to_string());
     }
 
-    let result = cube1.intersect(&cube2);
+    let result = cube1.intersection(&cube2);
 
     // Depending on the implementation, it's common that intersection polygons are
     // actually from both shapes or from shape A. Let's check that if they do have shared data,

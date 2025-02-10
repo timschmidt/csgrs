@@ -5,7 +5,7 @@
 
 use std::fs;
 use nalgebra::{Vector3, Point3};
-use csgrs::enums::Axis;
+use csgrs::plane::Plane;
 
 // A type alias for convenience: no shared data, i.e. S = ()
 type CSG = csgrs::csg::CSG<()>;
@@ -31,17 +31,18 @@ fn main() {
         .scale(1.0, 0.5, 2.0);
     let _ = fs::write("stl/cube_transformed.stl", moved_cube.to_stl_binary("cube_transformed").unwrap());
 
-    let mirrored_cube = cube.mirror(Axis::X);
+    let plane_x = Plane { normal: Vector3::x(), w: 0.0 };
+    let mirrored_cube = cube.mirror(plane_x);
     let _ = fs::write("stl/cube_mirrored_x.stl", mirrored_cube.to_stl_binary("cube_mirrored_x").unwrap());
 
     // 3) Boolean operations: Union, Subtract, Intersect
     let union_shape = moved_cube.union(&sphere);
     let _ = fs::write("stl/union_cube_sphere.stl", union_shape.to_stl_binary("union_cube_sphere").unwrap());
 
-    let subtract_shape = moved_cube.subtract(&sphere);
+    let subtract_shape = moved_cube.difference(&sphere);
     let _ = fs::write("stl/subtract_cube_sphere.stl", subtract_shape.to_stl_binary("subtract_cube_sphere").unwrap());
 
-    let intersect_shape = moved_cube.intersect(&sphere);
+    let intersect_shape = moved_cube.intersection(&sphere);
     let _ = fs::write("stl/intersect_cube_sphere.stl", intersect_shape.to_stl_binary("intersect_cube_sphere").unwrap());
 
     // 4) Convex hull
@@ -138,13 +139,13 @@ fn main() {
     let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));
     let _ = fs::write("stl/sliced_cylinder_slice.stl", cross_section.to_stl_ascii("sliced_cylinder_slice"));
     
-    let poor_geometry_shape = moved_cube.subtract(&sphere);
+    let poor_geometry_shape = moved_cube.difference(&sphere);
     let retriangulated_shape = poor_geometry_shape.retriangulate();
     let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
     let sphere_test = CSG::sphere(1.0, 16, 8, None);
     let cube_test = CSG::cube(1.0, 1.0, 1.0, None);
-    let res = cube_test.subtract(&sphere_test);
+    let res = cube_test.difference(&sphere_test);
     let _ = fs::write("stl/sphere_cube_test.stl", res.to_stl_binary("sphere_cube_test").unwrap());
     assert_eq!(res.bounding_box(), cube_test.bounding_box());
 

@@ -1,11 +1,10 @@
 use crate::float_types::{EPSILON, PI, TAU, CLOSED, Real};
-use crate::enums::Axis;
 use crate::bsp::Node;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
 use crate::polygon::{Polygon, pline_area, union_all_2d, build_orthonormal_basis};
 use nalgebra::{
-    Isometry3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
+    Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
 };
 use crate::float_types::parry3d::{
     bounding_volume::Aabb,
@@ -813,19 +812,48 @@ impl<S: Clone> CSG<S> {
         let mat4 = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
         self.transform(&mat4)
     }
+    
+    /// Reflect (mirror) this CSG about an arbitrary plane `plane`.
+    ///
+    /// The plane is specified by:
+    ///   `plane.normal` = the plane’s normal vector (need not be unit),
+    ///   `plane.w`      = the dot-product with that normal for points on the plane (offset).
+    ///
+    /// Returns a new CSG whose geometry is mirrored accordingly.
+    pub fn mirror(&self, plane: Plane) -> Self {
+        // Normal might not be unit, so compute its length:
+        let len = plane.normal.norm();
+        if len.abs() < EPSILON {
+            // Degenerate plane? Just return clone (no transform)
+            return self.clone();
+        }
 
-    /// Mirror across X=0, Y=0, or Z=0 plane
-    pub fn mirror(&self, axis: Axis) -> CSG<S> {
-        let (sx, sy, sz) = match axis {
-            Axis::X => (-1.0, 1.0, 1.0),
-            Axis::Y => (1.0, -1.0, 1.0),
-            Axis::Z => (1.0, 1.0, -1.0),
-        };
+        // Unit normal:
+        let n = plane.normal / len;
+        // Adjusted offset = w / ||n||
+        let w = plane.w / len;
 
-        // We can just use a "non-uniform scaling" matrix that
-        // flips exactly one axis:
-        let mat = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
-        self.transform(&mat)
+        // Step 1) Translate so the plane crosses the origin
+        // The plane’s offset vector from origin is (w * n).
+        let offset = n * w;
+        let t1 = Translation3::from(-offset);  // push the plane to origin
+        let t1_mat = t1.to_homogeneous();
+
+        // Step 2) Build the reflection matrix about a plane normal n at the origin
+        //   R = I - 2 n n^T
+        let mut reflect_4 = Matrix4::identity();
+        let reflect_3 = Matrix3::identity() - 2.0 * n * n.transpose();
+        reflect_4.fixed_view_mut::<3, 3>(0, 0).copy_from(&reflect_3);
+
+        // Step 3) Translate back
+        let t2 = Translation3::from(offset);   // pull the plane back out
+        let t2_mat = t2.to_homogeneous();
+
+        // Combine into a single 4×4
+        let mirror_mat = t2_mat * reflect_4 * t1_mat;
+
+        // Apply to all polygons
+        self.transform(&mirror_mat)
     }
 
     /// Compute the convex hull of all vertices in this CSG.

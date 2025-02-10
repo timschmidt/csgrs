@@ -4,7 +4,7 @@
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
-pub mod enums;
+pub mod errors;
 pub mod float_types;
 pub mod vertex;
 pub mod plane;
