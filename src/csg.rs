@@ -1088,7 +1088,7 @@ impl<S: Clone> CSG<S> {
                 // Then push it as a new polygon.
                 let side_poly = Polygon::new(
                     vec![b_i.clone(), b_j.clone(), t_j.clone(), t_i.clone()],
-                    false,
+                    CLOSED,
                     None,
                 );
                 result_polygons.push(side_poly);
