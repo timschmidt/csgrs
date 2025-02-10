@@ -1702,7 +1702,7 @@ impl<S: Clone> CSG<S> {
     /// // Suppose `shape` is a CSG volume, e.g. a box or sphere.
     /// let gyroid_csg = shape.tpms_gyroid(50, 2.0, 0.0);
     /// ```
-    pub fn tpms_gyroid(&self, resolution: usize, period: Real, iso_value: Real) -> CSG<S> {
+    pub fn gyroid(&self, resolution: usize, period: Real, iso_value: Real) -> CSG<S> {
         use nalgebra::Point3;
 
         // 1) Get bounding box of `self`.

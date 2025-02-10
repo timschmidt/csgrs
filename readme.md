@@ -178,7 +178,7 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::extrude_polyline(poly: Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>)`** — extrude an open ended polyline to create a surface
 - **`CSG::from_polylines(polylines: Vec<Polyline<Real>>, metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::vertices()`** — collect all vertices from the CSG
-- **`CSG::tpms_gyroid(&self, resolution: usize, period: Real, iso_value: Real)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
+- **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
 
 ### Working with Metadata
 
