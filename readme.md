@@ -27,8 +27,8 @@ type CSG = csgrs::csg::CSG<()>;
 let cube = CSG::cube(2.0, 2.0, 2.0, None);  // 2×2×2 cube at origin, no metadata
 let sphere = CSG::sphere(1.0, 16, 8, None); // sphere of radius=1 at origin, no metadata
 
-// Subtract one from the other:
-let subtract_result = cube.subtract(&sphere);
+// Difference one from the other:
+let difference_result = cube.difference(&sphere);
 
 // Write the result as an ASCII STL:
 let stl = subtract_result.to_stl_ascii("cube_minus_sphere");
@@ -122,7 +122,7 @@ They all return a new `CSG<S>`
 - **`CSG::translate(vector: Vector3)`** - Returns the CSG translated by vector
 - **`CSG::rotate(x_deg, y_deg, z_deg)`** - Returns the CSG rotated in x, y, and z
 - **`CSG::scale(scale_x, scale_y, scale_z)`** - Returns the CSG scaled in x, y, and z
-- **`CSG::mirror(plane: Plane)`** - Returns the CSG mirrored by plane
+- **`CSG::mirror(plane: Plane)`** - Returns the CSG mirrored across plane
 - **`CSG::center()`** - Returns the CSG centered at the origin
 - **`CSG::float()`** - Returns the CSG translated so that its bottommost point(s) sit exactly at z=0
 - **`CSG::transform(&Matrix4)`** - Returns the CSG after applying arbitrary affine transforms
