@@ -20,8 +20,13 @@ use chull::ConvexHullWrapper;
 use meshtext::{Glyph, MeshGenerator, MeshText};
 use std::io::Cursor;
 use std::error::Error;
+
+#[cfg(feature = "dxf-io")]
 use dxf::entities::*;
+#[cfg(feature = "dxf-io")]
 use dxf::Drawing;
+
+#[cfg(feature = "stl-io")]
 use stl_io;
 
 /// The main CSG solid structure. Contains a list of polygons.
@@ -2159,6 +2164,7 @@ impl<S: Clone> CSG<S> {
     /// let bytes = csg.to_stl_binary("my_solid")?;
     /// std::fs::write("my_solid.stl", bytes)?;
     /// ```
+    #[cfg(feature = "stl-io")]
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
         // `_name` could be embedded in the binary header if desired, but `stl_io`
         // doesn't strictly require it. We skip storing it or store it in the 80-byte header.
@@ -2205,6 +2211,7 @@ impl<S: Clone> CSG<S> {
     }
 
     /// Create a CSG object from STL data using `stl_io`.
+    #[cfg(feature = "stl-io")]
     pub fn from_stl(stl_data: &[u8]) -> Result<CSG<S>, std::io::Error> {
         // Create an in-memory cursor from the STL data
         let mut cursor = Cursor::new(stl_data);
@@ -2275,6 +2282,7 @@ impl<S: Clone> CSG<S> {
     /// # Returns
     ///
     /// A `Result` containing the CSG object or an error if parsing fails.
+    #[cfg(feature = "dxf-io")]
     pub fn from_dxf(dxf_data: &[u8]) -> Result<CSG<S>, Box<dyn Error>> {
         // Load the DXF drawing from the provided data
         let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
@@ -2344,6 +2352,7 @@ impl<S: Clone> CSG<S> {
     /// # Returns
     ///
     /// A `Result` containing the DXF file as a byte vector or an error if exporting fails.
+    #[cfg(feature = "dxf-io")]
     pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
         let mut drawing = Drawing::new();
 

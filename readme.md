@@ -414,7 +414,6 @@ The `pline_area` function computes the signed area of a closed `Polyline`:
 ## Roadmap / Todo
 - fix up error handling with result types
 - convert more for loops to iterators
-- file formats behind a feature flag
 - parry, rapier behind feature flags
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
@@ -441,7 +440,6 @@ The `pline_area` function computes the signed area of a closed `Polyline`:
   - https://github.com/anlumo/offset_polygon
 - support twist and scale in linear extrude like openscad
 - support scale and translation along a vector in rotate extrude
-- fill
 - investigate marching_cubes, marching_cubes_rs
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter

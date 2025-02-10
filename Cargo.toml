@@ -11,7 +11,7 @@ readme = "readme.md"
 [dependencies]
 cavalier_contours = "0.4.0"
 chull = "0.2.4"
-dxf = "0.6.0"
+dxf = { version = "0.6.0", optional = true }
 earclip = "1.1.0"
 meshtext = { version = "0.3.1", features = ["owned"] }
 nalgebra = "0.33"
@@ -20,10 +20,10 @@ rapier3d = { version = "0.23.0", optional = true }
 parry3d-f64  = { version = "0.18.0", optional = true }
 parry3d  = { version = "0.18.0", optional = true }
 rayon = { version = "1.7", optional = true }
-stl_io = "0.8.3"
+stl_io = { version = "0.8.3", optional = true }
 
 [features]
-default = ["f64"]
+default = ["f64", "stl-io", "dxf-io"]
 parallel = ["rayon"]
 f64 = [
   "rapier3d-f64",
@@ -33,4 +33,9 @@ f32 = [
   "rapier3d",
   "parry3d",
 ]
-
+stl-io = [
+  "stl_io",
+]
+dxf-io = [
+  "dxf",
+]
