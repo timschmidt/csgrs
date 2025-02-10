@@ -105,21 +105,17 @@ let faces = vec![
 let pyramid = CSG::polyhedron(points, &faces, None);
 ```
 
-### Boolean Operations
+### 3D Boolean Operations
 
 Three primary operations:
-
-1. **Union**: `a.union(&b)`
-2. **Difference**: `a.difference(&b)`
-3. **Intersection**: `a.intersection(&b)`
-
-They all return a new `CSG<S>`
 
 ```rust
 let union_result = cube.union(&sphere);
 let subtraction_result = cube.difference(&sphere);
 let intersection_result = cylinder.intersection(&sphere);
 ```
+
+They all return a new `CSG<S>`
 
 ### Transformations
 
