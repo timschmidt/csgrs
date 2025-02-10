@@ -206,8 +206,8 @@ impl<S: Clone> CSG<S> {
         CSG::from_polygons(a.all_polygons())
     }
 
-    /// CSG subtract: this \ other
-    pub fn subtract(&self, other: &CSG<S>) -> CSG<S> {
+    /// CSG difference: this \ other
+    pub fn difference(&self, other: &CSG<S>) -> CSG<S> {
         let mut a = Node::new(self.polygons.clone());
         let mut b = Node::new(other.polygons.clone());
 
@@ -223,8 +223,8 @@ impl<S: Clone> CSG<S> {
         CSG::from_polygons(a.all_polygons())
     }
 
-    /// CSG intersect: this ∩ other
-    pub fn intersect(&self, other: &CSG<S>) -> CSG<S> {
+    /// CSG intersection: this ∩ other
+    pub fn intersection(&self, other: &CSG<S>) -> CSG<S> {
         let mut a = Node::new(self.polygons.clone());
         let mut b = Node::new(other.polygons.clone());
 

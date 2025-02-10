@@ -69,6 +69,13 @@ Similarly, you can create standard 3D primitives:
 - **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
 - **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::cylinder_ptp(start: Point3, end: Point3, radius: Real, segments: usize, metadata: Option<S>)`**
+- **`CSG::frustrum_ptp(
+        start: Point3<Real>,
+        end: Point3<Real>,
+        radius1: Real,
+        radius2: Real,
+        segments: usize,
+        metadata: Option<S>)`** - Construct a frustum from `start` to `end` with `radius1` and `radius2`
 - **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
 
 ```rust
@@ -104,8 +111,8 @@ let pyramid = CSG::polyhedron(points, &faces, None);
 Three primary operations:
 
 1. **Union**: `a.union(&b)`
-2. **Difference**: `a.subtract(&b)`
-3. **Intersection**: `a.intersect(&b)`
+2. **Difference**: `a.difference(&b)`
+3. **Intersection**: `a.intersection(&b)`
 
 They all return a new `CSG<S>`
 
@@ -364,8 +371,8 @@ Each operation returns a `Vec<Polygon<S>>` rather than a single polygon, because
 Example usage:
 ```rust
 let p1 = polygon_a.union(&polygon_b);          // 2D union
-let p2 = polygon_a.intersection(&polygon_b);   // 2D intersection
-let p3 = polygon_a.difference(&polygon_b);     // 2D difference
+let p2 = polygon_a.difference(&polygon_b);     // 2D difference
+let p3 = polygon_a.intersection(&polygon_b);   // 2D intersection
 let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 ```
 
@@ -435,6 +442,7 @@ The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
 - support scale and translation along a vector in rotate extrude
 - fill
 - space filling curves
+- mirror across arbitrary planes
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
