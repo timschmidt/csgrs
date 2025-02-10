@@ -1,5 +1,28 @@
 use crate::{Problem, Rational};
+use num::bigint::ToBigInt;
 use num::{BigInt, BigUint, One};
+
+macro_rules! impl_integer_conversion {
+    ($T:ty) => {
+        impl From<$T> for Rational {
+            #[inline]
+            fn from(n: $T) -> Rational {
+                Self::from_bigint(ToBigInt::to_bigint(&n).unwrap())
+            }
+        }
+    };
+}
+
+impl_integer_conversion!(i8);
+impl_integer_conversion!(i16);
+impl_integer_conversion!(i32);
+impl_integer_conversion!(i64);
+impl_integer_conversion!(i128);
+impl_integer_conversion!(u8);
+impl_integer_conversion!(u16);
+impl_integer_conversion!(u32);
+impl_integer_conversion!(u64);
+impl_integer_conversion!(u128);
 
 fn signed(n: Rational, neg: bool) -> Rational {
     if neg {
@@ -118,6 +141,28 @@ impl TryFrom<f64> for Rational {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn signed_integers() {
+        let one: Rational = i8::MAX.into();
+        let two: Rational = i16::MAX.into();
+        let three: Rational = i32::MAX.into();
+        let four: Rational = i64::MAX.into();
+        assert_eq!(one, Rational::new(0x7f));
+        assert_eq!(two, Rational::new(0x7fff));
+        assert_eq!(three, Rational::new(0x7fff_ffff));
+        assert_eq!(four, Rational::new(0x7fff_ffff_ffff_ffff));
+    }
+
+    #[test]
+    fn unsigned_integers() {
+        let one: Rational = u8::MAX.into();
+        let two: Rational = u16::MAX.into();
+        let three: Rational = u32::MAX.into();
+        assert_eq!(one, Rational::new(0xff));
+        assert_eq!(two, Rational::new(0xffff));
+        assert_eq!(three, Rational::new(0xffff_ffff));
+    }
 
     #[test]
     fn zero() {

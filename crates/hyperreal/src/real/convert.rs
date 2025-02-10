@@ -1,16 +1,27 @@
 use crate::{Computable, Problem, Rational, Real};
+use num::bigint::ToBigInt;
 
-impl From<i64> for Real {
-    fn from(n: i64) -> Real {
-        Real::new(Rational::new(n))
-    }
+macro_rules! impl_integer_conversion {
+    ($T:ty) => {
+        impl From<$T> for Real {
+            #[inline]
+            fn from(n: $T) -> Real {
+                Real::new(Rational::from_bigint(ToBigInt::to_bigint(&n).unwrap()))
+            }
+        }
+    };
 }
 
-impl From<i32> for Real {
-    fn from(n: i32) -> Real {
-        Real::new(Rational::new(n.into()))
-    }
-}
+impl_integer_conversion!(i8);
+impl_integer_conversion!(i16);
+impl_integer_conversion!(i32);
+impl_integer_conversion!(i64);
+impl_integer_conversion!(i128);
+impl_integer_conversion!(u8);
+impl_integer_conversion!(u16);
+impl_integer_conversion!(u32);
+impl_integer_conversion!(u64);
+impl_integer_conversion!(u128);
 
 impl From<Rational> for Real {
     fn from(rational: Rational) -> Real {
