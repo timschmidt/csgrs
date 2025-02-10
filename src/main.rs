@@ -132,8 +132,12 @@ fn main() {
     let flattened = cube.flatten();
     let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
     
+    // Create a frustrum (start=-2, end=+2) with radius1 = 1, radius2 = 2, 32 slices
+    let frustrum = CSG::frustrum_ptp(Point3::new(0.0, 0.0, -2.0), Point3::new(0.0, 0.0, 2.0), 1.0, 2.0, 32, None);
+    let _ = fs::write("stl/frustrum.stl", frustrum.to_stl_ascii("frustrum"));
+    
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
-    let cyl = CSG::cylinder_ptp(Point3::new(0.0, 0.0, -1.0), Point3::new(0.0, 0.0, 1.0), 1.0, 32, None);
+    let cyl = CSG::frustrum_ptp(Point3::new(0.0, 0.0, -1.0), Point3::new(0.0, 0.0, 1.0), 1.0, 1.0, 32, None);
     // 2) Slice at z=0
     let cross_section = cyl.slice(None);
     let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));

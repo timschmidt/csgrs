@@ -455,75 +455,6 @@ impl<S: Clone> CSG<S> {
         }
         CSG::from_polygons(polygons)
     }
-
-    /// Construct a cone whose centerline goes from `start` to `end`,
-    /// with a circular cross-section of given `radius`. 
-    pub fn cylinder_ptp(start: Point3<Real>, end: Point3<Real>, radius: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
-        let s = start.coords;
-        let e = end.coords;
-        let ray = e - s;
-        let axis_z = ray.normalize();
-
-        // If axis_z is mostly aligned with Y, pick X; otherwise pick Y.
-        let is_y = axis_z.y.abs() > 0.5;
-        let mut axis_x: Vector3<Real> = if is_y {
-            Vector3::new(1.0, 0.0, 0.0)
-        } else {
-            Vector3::new(0.0, 1.0, 0.0)
-        };
-        axis_x = axis_x.cross(&axis_z).normalize();
-        let axis_y = axis_x.cross(&axis_z).normalize();
-
-        let start_v = Vertex::new(start, -axis_z);
-        let end_v = Vertex::new(end, axis_z);
-
-        let mut polygons = Vec::new();
-
-        // Helper to compute a vertex at a given "slice" (angle) and "stack" ([0..1])
-        let point = |stack: Real, slice: Real, normal_blend: Real| {
-            let angle = slice * TAU;
-            let out   = axis_x * angle.cos() + axis_y * angle.sin();
-            // Position: linear interpolation along the axis + radial offset
-            let pos   = s + ray * stack + out * radius;
-            // For the outer tube, normal is approximately `out`. For the caps,
-            // we blend in ±axis_z to get a continuous normal around the rim.
-            let normal = out * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
-            Vertex::new(Point3::from(pos), normal)
-        };
-
-        for i in 0..segments {
-            let t0 = i as Real / segments as Real;
-            let t1 = (i + 1) as Real / segments as Real;
-
-            // bottom cap
-            polygons.push(Polygon::new(
-                vec![start_v.clone(), point(0.0, t0, -1.0), point(0.0, t1, -1.0)],
-                CLOSED,
-                metadata.clone(),
-            ));
-
-            // tube
-            polygons.push(Polygon::new(
-                vec![
-                    point(0.0, t1, 0.0),
-                    point(0.0, t0, 0.0),
-                    point(1.0, t0, 0.0),
-                    point(1.0, t1, 0.0),
-                ],
-                CLOSED,
-                metadata.clone(),
-            ));
-
-            // top cap
-            polygons.push(Polygon::new(
-                vec![end_v.clone(), point(1.0, t1, 1.0), point(1.0, t0, 1.0)],
-                CLOSED,
-                metadata.clone(),
-            ));
-        }
-
-        CSG::from_polygons(polygons)
-    }
     
     /// Construct a frustum whose axis goes from `start` to `end`, with the start face having
     /// radius = `radius1` and the end face having radius = `radius2`.
@@ -642,13 +573,24 @@ impl<S: Clone> CSG<S> {
     
     // A helper to create a vertical cylinder along Z from z=0..z=height
     // with the specified radius (NOT diameter).
-    pub fn cylinder(radius: f64, height: f64, segments: usize, metadata: Option<S>) -> CSG<S> {
-        // csgrs::csg::cylinder_ptp takes a (Point3, Point3, Real, usize, Option(metadata))
-        // (start, end, radius, segments, metadata).
-        // We'll define the start at [0,0,0], the end at [0,0,height], ~32 segments:
-        CSG::cylinder_ptp(
+    pub fn frustrum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
+        CSG::frustrum_ptp(
             Point3::new(0.0, 0.0, 0.0),
             Point3::new(0.0, 0.0, height),
+            radius1,
+            radius2,
+            segments,
+            metadata,
+        )
+    }
+    
+    // A helper to create a vertical cylinder along Z from z=0..z=height
+    // with the specified radius (NOT diameter).
+    pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
+        CSG::frustrum_ptp(
+            Point3::new(0.0, 0.0, 0.0),
+            Point3::new(0.0, 0.0, height),
+            radius.clone(),
             radius,
             segments,
             metadata,
