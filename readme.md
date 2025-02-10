@@ -1,6 +1,6 @@
 # csgrs
 
-A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** enables you to construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to transform, interrogate, and simulate those shapes without leaving Rust.
+A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** helps you construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to transform, interrogate, and simulate those shapes without leaving Rust.
 
 This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`earclip`](https://crates.io/crates/earclip) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust mesh and line processing, be reasonably performant on a wide variety of targets, and provide an extensible, type-safe API.
 
@@ -164,14 +164,14 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::ray_intersections(origin, direction)`** — returns all intersection points and distances.
 - **`CSG::flatten()`** — flattens a 3D shape into 2D (on the XY plane), unions the outlines.
 - **`CSG::slice(Some(plane))`** — slices the CSG by a plane and returns the cross-section polygons.
-- **`CSG::offset_2d(distance)`** — outward (or inward) offset in 2D using [cavalier_contours](https://crates.io/crates/cavalier_contours).
+- **`CSG::offset_2d(distance)`** — outward (or inward) offset in 2D using [`cavalier_contours`](https://crates.io/crates/cavalier_contours).
 - **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
 - **`CSG::reconstruct_polyline_3d(polylines: &[Polygon<S>])`** — reconstructs a 3d polyline from 2d polylines with matching start/end points
 - **`CSG::bounding_box()`** — computes the bounding box of the shape
 - **`CSG::retriangulate()`** — retriangulates all polygons with [`earclip`](https://crates.io/crates/earclip)
 - **`CSG::extrude_polyline(poly: Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>)`** — extrude an open ended polyline to create a surface
-- **`CSG::from_polylines(polylines: Vec<Polyline<Real>>, metadata: Option<S>)`** — create a new CSG from [cavalier_contours](https://crates.io/crates/cavalier_contours) polylines
+- **`CSG::from_polylines(polylines: Vec<Polyline<Real>>, metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::vertices()`** — collect all vertices from the CSG
 
 ### Working with Metadata
@@ -333,7 +333,7 @@ Below is a quick overview of the **2D‐related methods** you’ll find on `Poly
   2. Transforms each vertex into that local coordinate system (so the polygon lies at *z = 0*).
   3. Returns a 2D `Polyline<f64>` of `(x, y, bulge)` points (here, `bulge` is set to `0.0` by default).
 
-- **`from_2d(polyline, Some(metadata))`**  
+- **`from_2d(polyline)`**  
   The inverse of `to_2d()`, creating a 3D `Polygon` from a 2D `Polyline<Real>`. This method uses the **same** plane as the polygon on which you called `from_2d()`. That is, it takes `(x, y)` points in the local XY plane of `self.plane` and lifts them back into 3D space.
 
 These two functions let you cleanly convert between a 3D polygon and a pure 2D representation whenever you need to do 2D manipulations.  
@@ -434,6 +434,7 @@ The `pline_area` function computes the signed area of a closed `Polyline<Real>`:
 - support twist and scale in linear extrude like openscad
 - support scale and translation along a vector in rotate extrude
 - fill
+- space filling curves
 - parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
