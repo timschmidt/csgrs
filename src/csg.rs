@@ -2,7 +2,7 @@ use crate::float_types::{EPSILON, PI, TAU, CLOSED, Real};
 use crate::bsp::Node;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
-use crate::polygon::{Polygon, pline_area, union_all_2d, build_orthonormal_basis};
+use crate::polygon::{Polygon, polyline_area, union_all_2d, build_orthonormal_basis};
 use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
 };
@@ -1520,9 +1520,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// We skip "degenerate" loops whose area is near zero, both before
     /// and after performing the union. This helps avoid collinear or
     /// duplicate edges that can cause issues in `cavalier_contours`.
-    pub fn flatten(&self) -> CSG<S> {
-        let eps_area = 1e-9;
-    
+    pub fn flatten(&self) -> CSG<S> {    
         #[cfg(feature = "parallel")]
         let polys_2d: Vec<Polygon<S>> = self
             .polygons
@@ -1530,10 +1528,9 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             .filter_map(|poly| {
                 let cc = poly.to_polyline();
                 cc.remove_redundant(EPSILON);
-                let area = pline_area(&cc).abs();
-                if area > eps_area {
-                    // keep it
-                    Some(Polygon::from_polyline(cc, poly.metadata.clone()))
+                let area = polyline_area(&cc).abs();
+                if area > EPSILON { // keep it
+                    Some(Polygon::from_polyline(&cc, poly.metadata.clone()))
                 } else {
                     None
                 }
@@ -1547,8 +1544,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             .filter_map(|poly| {
                 let cc = poly.to_polyline();
                 cc.remove_redundant(EPSILON);
-                let area = pline_area(&cc).abs();
-                if area > eps_area {
+                let area = polyline_area(&cc).abs();
+                if area > EPSILON { // keep it
                     Some(Polygon::from_polyline(&cc, poly.metadata.clone()))
                 } else {
                     None

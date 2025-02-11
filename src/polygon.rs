@@ -740,7 +740,7 @@ impl<S: Clone> Polygon<S> {
 /// Computes the signed area of a closed 2D polyline via the shoelace formula.
 /// We assume `pline.is_closed() == true` and it has at least 2 vertices.
 /// Returns positive area if CCW, negative if CW. Near-zero => degenerate.
-pub fn pline_area(pline: &Polyline<Real>) -> Real {
+pub fn polyline_area(pline: &Polyline<Real>) -> Real {
     if pline.vertex_count() < 3 {
         return 0.0;
     }

@@ -429,7 +429,6 @@ The `pline_area` function computes the signed area of a closed `Polyline`:
   - tests
 - lazy transformations?
 - invert Polygon::open to match cavalier_contours
-- use &[T] over Vec<T> where possible
 - vector font for machining / svg import/export
   - https://github.com/kamalmostafa/hershey-fonts
     - https://github.com/kicad-rs/hershey/blob/main/src/lib.rs
