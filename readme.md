@@ -154,7 +154,7 @@ let mirrored = cube.mirror(plane_x);
   ```
 - **Rotate-Extrude (Revolve)**: `my_2d_shape.rotate_extrude(angle_degs, segments)`
 - **Sweep**: `sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>)`
-- **Extrude a polyline to create a surface**: `extrude_polyline(poly: Polyline, direction: Vector3, metadata: Option<S>)`
+- **Extrude a polyline to create a surface**: `extrude_polyline(poly: &Polyline, direction: Vector3, metadata: Option<S>)`
 
 ```rust
 let square = CSG::square(2.0, 2.0, None);
