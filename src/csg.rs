@@ -202,8 +202,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
     /// CSG union: this ∪ other
     pub fn union(&self, other: &CSG<S>) -> CSG<S> {
-        let mut a = Node::new(self.polygons.clone());
-        let mut b = Node::new(other.polygons.clone());
+        let mut a = Node::new(&self.polygons);
+        let mut b = Node::new(&other.polygons);
 
         a.clip_to(&b);
         b.clip_to(&a);
@@ -217,8 +217,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
     /// CSG difference: this \ other
     pub fn difference(&self, other: &CSG<S>) -> CSG<S> {
-        let mut a = Node::new(self.polygons.clone());
-        let mut b = Node::new(other.polygons.clone());
+        let mut a = Node::new(&self.polygons);
+        let mut b = Node::new(&other.polygons);
 
         a.invert();
         a.clip_to(&b);
@@ -234,8 +234,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
     /// CSG intersection: this ∩ other
     pub fn intersection(&self, other: &CSG<S>) -> CSG<S> {
-        let mut a = Node::new(self.polygons.clone());
-        let mut b = Node::new(other.polygons.clone());
+        let mut a = Node::new(&self.polygons);
+        let mut b = Node::new(&other.polygons);
 
         a.invert();
         b.clip_to(&a);
