@@ -10,368 +10,6 @@ use cavalier_contours::polyline::{
 };
 use chull::ConvexHullWrapper;
 
-/// Computes the signed area of a closed 2D polyline via the shoelace formula.
-/// We assume `pline.is_closed() == true` and it has at least 2 vertices.
-/// Returns positive area if CCW, negative if CW. Near-zero => degenerate.
-pub fn pline_area(pline: &Polyline<Real>) -> Real {
-    if pline.vertex_count() < 3 {
-        return 0.0;
-    }
-    let mut area = 0.0;
-    let n = pline.vertex_count();
-    for i in 0..n {
-        let j = (i + 1) % n;
-        let (x_i, y_i) = (pline.at(i).x, pline.at(i).y);
-        let (x_j, y_j) = (pline.at(j).x, pline.at(j).y);
-        area += x_i * y_j - y_i * x_j;
-    }
-    0.5 * area
-}
-
-/// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v` so that
-/// {u, v, n} forms an orthonormal basis. `n` is assumed non‐zero.
-pub fn build_orthonormal_basis(
-    n: nalgebra::Vector3<Real>,
-) -> (nalgebra::Vector3<Real>, nalgebra::Vector3<Real>) {
-    // Normalize the given normal
-    let n = n.normalize();
-
-    // Pick a vector that is not parallel to `n`. For instance, pick the axis
-    // which has the smallest absolute component in `n`, and cross from there.
-    // Because crossing with that is least likely to cause numeric issues.
-    let other = if n.x.abs() < n.y.abs() && n.x.abs() < n.z.abs() {
-        Vector3::x()
-    } else if n.y.abs() < n.z.abs() {
-        Vector3::y()
-    } else {
-        Vector3::z()
-    };
-
-    // v = n × other
-    let v = n.cross(&other).normalize();
-    // u = v × n
-    let u = v.cross(&n).normalize();
-
-    (u, v)
-}
-
-// Helper function to subdivide a triangle
-pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
-    let v0 = tri[0].clone();
-    let v1 = tri[1].clone();
-    let v2 = tri[2].clone();
-
-    let v01 = v0.interpolate(&v1, 0.5);
-    let v12 = v1.interpolate(&v2, 0.5);
-    let v20 = v2.interpolate(&v0, 0.5);
-
-    vec![
-        [v0.clone(), v01.clone(), v20.clone()],
-        [v01.clone(), v1.clone(), v12.clone()],
-        [v20.clone(), v12.clone(), v2.clone()],
-        [v01, v12, v20],
-    ]
-}
-
-/// Perform a 2D union of an entire slice of polygons (all assumed in the XY plane).
-/// Because `Polygon::union` returns a `Vec<Polygon<S>>` (it can split or merge),
-/// we accumulate and re‐union until everything is combined.
-pub fn union_all_2d<S: Clone>(polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
-    if polygons.is_empty() {
-        return vec![];
-    }
-    // Start with the first polygon
-    let mut result = vec![polygons[0].clone()];
-
-    // Union successively with each subsequent polygon
-    for poly in &polygons[1..] {
-        let mut new_result = Vec::new();
-        for r in result {
-            // `r.union(poly)` can return multiple disjoint polygons.
-            let merged = r.union(poly);
-            new_result.extend(merged);
-        }
-        result = new_result;
-    }
-    result
-}
-
-/// Helper to normalize angles into (-π, π].
-fn normalize_angle(mut a: Real) -> Real {
-    while a <= -PI {
-        a += 2.0 * PI;
-    }
-    while a > PI {
-        a -= 2.0 * PI;
-    }
-    a
-}
-
-/// Returns `true` if the line segments p1->p2 and p3->p4 intersect, otherwise `false`.
-fn segments_intersect_2d(
-    p1x: Real, p1y: Real,
-    p2x: Real, p2y: Real,
-    p3x: Real, p3y: Real,
-    p4x: Real, p4y: Real,
-) -> bool {
-    // A helper function to get the orientation of the triplet (p, q, r).
-    // Returns:
-    // 0 -> p, q, r are collinear
-    // 1 -> Clockwise
-    // 2 -> Counterclockwise
-    fn orientation(px: Real, py: Real, qx: Real, qy: Real, rx: Real, ry: Real) -> i32 {
-        let val = (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
-        if val.abs() < 1e-12 {
-            0
-        } else if val > 0.0 {
-            1
-        } else {
-            2
-        }
-    }
-
-    // A helper function to check if point q lies on line segment pr
-    fn on_segment(px: Real, py: Real, qx: Real, qy: Real, rx: Real, ry: Real) -> bool {
-        qx >= px.min(rx) && qx <= px.max(rx) &&
-        qy >= py.min(ry) && qy <= py.max(ry)
-    }
-
-    // Find the 4 orientations needed for the general and special cases
-    let o1 = orientation(p1x, p1y, p2x, p2y, p3x, p3y);
-    let o2 = orientation(p1x, p1y, p2x, p2y, p4x, p4y);
-    let o3 = orientation(p3x, p3y, p4x, p4y, p1x, p1y);
-    let o4 = orientation(p3x, p3y, p4x, p4y, p2x, p2y);
-
-    // General case: If the two line segments strictly intersect
-    if o1 != o2 && o3 != o4 {
-        return true;
-    }
-
-    // Special cases: check for collinearity and overlap
-    // p1, p2, p3 are collinear and p3 lies on segment p1p2
-    if o1 == 0 && on_segment(p1x, p1y, p3x, p3y, p2x, p2y) {
-        return true;
-    }
-    // p1, p2, p4 are collinear and p4 lies on segment p1p2
-    if o2 == 0 && on_segment(p1x, p1y, p4x, p4y, p2x, p2y) {
-        return true;
-    }
-    // p3, p4, p1 are collinear and p1 lies on segment p3p4
-    if o3 == 0 && on_segment(p3x, p3y, p1x, p1y, p4x, p4y) {
-        return true;
-    }
-    // p3, p4, p2 are collinear and p2 lies on segment p3p4
-    if o4 == 0 && on_segment(p3x, p3y, p2x, p2y, p4x, p4y) {
-        return true;
-    }
-
-    // Otherwise, they do not intersect
-    false
-}
-
-/// Compute an initial guess of the circle center through three points p1, p2, p3
-/// (this is used purely as an initial guess).
-///
-/// This is a direct port of your snippet’s `centre(p1, p2, p3)`, but
-/// returning a `Point2<Real>` from nalgebra.
-fn naive_circle_center(p1: &Point2<Real>, p2: &Point2<Real>, p3: &Point2<Real>) -> Point2<Real> {
-    // Coordinates
-    let (x1, y1) = (p1.x, p1.y);
-    let (x2, y2) = (p2.x, p2.y);
-    let (x3, y3) = (p3.x, p3.y);
-
-    let x12 = x1 - x2;
-    let x13 = x1 - x3;
-    let y12 = y1 - y2;
-    let y13 = y1 - y3;
-
-    let y31 = y3 - y1;
-    let y21 = y2 - y1;
-    let x31 = x3 - x1;
-    let x21 = x2 - x1;
-
-    let sx13 = x1.powi(2) - x3.powi(2);
-    let sy13 = y1.powi(2) - y3.powi(2);
-    let sx21 = x2.powi(2) - x1.powi(2);
-    let sy21 = y2.powi(2) - y1.powi(2);
-
-    let xden = 2.0 * (x31 * y12 - x21 * y13);
-    let yden = 2.0 * (y31 * x12 - y21 * x13);
-
-    if xden.abs() < 1e-14 || yden.abs() < 1e-14 {
-        // fallback => just average the points
-        let cx = (x1 + x2 + x3) / 3.0;
-        let cy = (y1 + y2 + y3) / 3.0;
-        return Point2::new(cx, cy);
-    }
-
-    let g = (sx13 * y12 + sy13 * y12 + sx21 * y13 + sy21 * y13) / xden;
-    let f = (sx13 * x12 + sy13 * x12 + sx21 * x13 + sy21 * x13) / yden;
-
-    // Return the center as a Point2
-    Point2::new(-g, -f)
-}
-
-/// Fit a circle to the points `[pt_c, intermediates..., pt_n]` by adjusting an offset `d` from
-/// the midpoint. This reproduces your “arcfinder” approach in a version that uses nalgebra’s
-/// `Point2<Real>`.
-///
-/// # Returns
-///
-/// `(center, radius, cw, rms)`:
-/// - `center`: fitted circle center (Point2),
-/// - `radius`: circle radius,
-/// - `cw`: `true` if the arc is clockwise, `false` if ccw,
-/// - `rms`: root‐mean‐square error of the fit.
-pub fn fit_circle_arcfinder(
-    pt_c: &Point2<Real>,
-    pt_n: &Point2<Real>,
-    intermediates: &[Point2<Real>],
-) -> (Point2<Real>, Real, bool, Real) {
-    // 1) Distance between pt_c and pt_n, plus midpoint
-    let k = (pt_c - pt_n).norm();
-    if k < 1e-14 {
-        // Degenerate case => no unique circle
-        let center = *pt_c;
-        return (center, 0.0, false, 9999.0);
-    }
-    let mid = Point2::new(0.5 * (pt_c.x + pt_n.x), 0.5 * (pt_c.y + pt_n.y));
-
-    // 2) Pre‐compute the direction used for the offset:
-    //    This is the 2D +90 rotation of (pt_n - pt_c).
-    //    i.e. rotate( dx, dy ) => (dy, -dx ) or similar.
-    let vec_cn = pt_n - pt_c; // a Vector2
-    let rx = vec_cn.y; // +90 deg
-    let ry = -vec_cn.x; // ...
-
-    // collect all points in one array for the mismatch
-    let mut all_points = Vec::with_capacity(intermediates.len() + 2);
-    all_points.push(*pt_c);
-    all_points.extend_from_slice(intermediates);
-    all_points.push(*pt_n);
-
-    // The mismatch function g(d)
-    let g = |d: Real| -> Real {
-        let r_desired = (d * d + 0.25 * k * k).sqrt();
-        // circle center
-        let cx = mid.x + (d / k) * rx;
-        let cy = mid.y + (d / k) * ry;
-        let mut sum_sq = 0.0;
-        for p in &all_points {
-            let dx = p.x - cx;
-            let dy = p.y - cy;
-            let dist = (dx * dx + dy * dy).sqrt();
-            let diff = dist - r_desired;
-            sum_sq += diff * diff;
-        }
-        sum_sq
-    };
-
-    // derivative dg(d) => we’ll do a small finite difference
-    let dg = |d: Real| -> Real {
-        let h = 1e-6;
-        let g_p = g(d + h);
-        let g_m = g(d - h);
-        (g_p - g_m) / (2.0 * h)
-    };
-
-    // 3) choose an initial guess for d
-    let mut d_est = 0.0; // fallback
-    if !intermediates.is_empty() {
-        // pick p3 ~ the middle of intermediates
-        let mididx = intermediates.len() / 2;
-        let p3 = intermediates[mididx];
-        let c_est = naive_circle_center(pt_c, pt_n, &p3);
-        // project c_est - mid onto (rx, ry)/k => that is d
-        let dx = c_est.x - mid.x;
-        let dy = c_est.y - mid.y;
-        let dot = dx * (rx / k) + dy * (ry / k);
-        d_est = dot;
-    }
-
-    // 4) small secant iteration for ~10 steps
-    let mut d0 = d_est - 0.1 * k;
-    let mut d1 = d_est;
-    let mut dg0 = dg(d0);
-    let mut dg1 = dg(d1);
-
-    for _ in 0..10 {
-        if (dg1 - dg0).abs() < 1e-14 {
-            break;
-        }
-        let temp = d1;
-        d1 = d1 - dg1 * (d1 - d0) / (dg1 - dg0);
-        d0 = temp;
-        dg0 = dg1;
-        dg1 = dg(d1);
-    }
-
-    let d_opt = d1;
-    let cx = mid.x + (d_opt / k) * rx;
-    let cy = mid.y + (d_opt / k) * ry;
-    let center = Point2::new(cx, cy);
-    let radius_opt = (d_opt * d_opt + 0.25 * k * k).sqrt();
-
-    // sum of squares at d_opt
-    let sum_sq = g(d_opt);
-    let n_pts = all_points.len() as Real;
-    let rms = (sum_sq / n_pts).sqrt();
-
-    // 5) determine cw vs ccw
-    let dx0 = pt_c.x - cx;
-    let dy0 = pt_c.y - cy;
-    let dx1 = pt_n.x - cx;
-    let dy1 = pt_n.y - cy;
-    let angle0 = dy0.atan2(dx0);
-    let angle1 = dy1.atan2(dx1);
-    let total_sweep = normalize_angle(angle1 - angle0);
-    let cw = total_sweep < 0.0;
-
-    (center, radius_opt, cw, rms)
-}
-
-/// Helper to produce the "best fit arc" for the points from `pt_c` through `pt_n`, plus
-/// any in `intermediates`. This is basically your old “best_arc” logic but now returning
-/// `None` if it fails or `Some((cw, radius, center, rms))` if success.
-fn best_arc_fit(
-    pt_c: Point2<Real>,
-    pt_n: Point2<Real>,
-    intermediates: &[Point2<Real>],
-    rms_limit: Real,
-    angle_limit_degs: Real,
-    _offset_limit: Real,
-) -> Option<(bool, Real, Point2<Real>, Real)> {
-    // 1) Call your circle-fitting routine:
-    let (center, radius, cw, rms) = fit_circle_arcfinder(&pt_c, &pt_n, intermediates);
-
-    // 2) Check RMS error vs. limit
-    if rms > rms_limit {
-        return None;
-    }
-    // 3) measure the total arc sweep
-    //    We'll compute angle0, angle1 from the center
-    //    v0 = pt_c - center, v1 = pt_n - center
-    let v0 = pt_c - center;
-    let v1 = pt_n - center;
-    let angle0 = v0.y.atan2(v0.x);
-    let angle1 = v1.y.atan2(v1.x);
-    let sweep = normalize_angle(angle1 - angle0).abs();
-    let sweep_degs = sweep.to_degrees();
-    if sweep_degs > angle_limit_degs {
-        return None;
-    }
-    // 4) Possibly check some "offset" or chord–offset constraints
-    // e.g. if your logic says “if radius < ??? or if something with offset_limit”
-    if radius < 1e-9 {
-        return None;
-    }
-    // offset constraint is left to your specific arcs logic:
-    // if something > offset_limit {...}
-
-    // If all is well:
-    Some((cw, radius, center, rms))
-}
-
 /// A convex polygon, defined by a list of vertices and a plane.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
@@ -1097,4 +735,366 @@ impl<S: Clone> Polygon<S> {
     pub fn set_metadata(&mut self, data: S) {
         self.metadata = Some(data);
     }
+}
+
+/// Computes the signed area of a closed 2D polyline via the shoelace formula.
+/// We assume `pline.is_closed() == true` and it has at least 2 vertices.
+/// Returns positive area if CCW, negative if CW. Near-zero => degenerate.
+pub fn pline_area(pline: &Polyline<Real>) -> Real {
+    if pline.vertex_count() < 3 {
+        return 0.0;
+    }
+    let mut area = 0.0;
+    let n = pline.vertex_count();
+    for i in 0..n {
+        let j = (i + 1) % n;
+        let (x_i, y_i) = (pline.at(i).x, pline.at(i).y);
+        let (x_j, y_j) = (pline.at(j).x, pline.at(j).y);
+        area += x_i * y_j - y_i * x_j;
+    }
+    0.5 * area
+}
+
+/// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v` so that
+/// {u, v, n} forms an orthonormal basis. `n` is assumed non‐zero.
+pub fn build_orthonormal_basis(
+    n: nalgebra::Vector3<Real>,
+) -> (nalgebra::Vector3<Real>, nalgebra::Vector3<Real>) {
+    // Normalize the given normal
+    let n = n.normalize();
+
+    // Pick a vector that is not parallel to `n`. For instance, pick the axis
+    // which has the smallest absolute component in `n`, and cross from there.
+    // Because crossing with that is least likely to cause numeric issues.
+    let other = if n.x.abs() < n.y.abs() && n.x.abs() < n.z.abs() {
+        Vector3::x()
+    } else if n.y.abs() < n.z.abs() {
+        Vector3::y()
+    } else {
+        Vector3::z()
+    };
+
+    // v = n × other
+    let v = n.cross(&other).normalize();
+    // u = v × n
+    let u = v.cross(&n).normalize();
+
+    (u, v)
+}
+
+// Helper function to subdivide a triangle
+pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
+    let v0 = tri[0].clone();
+    let v1 = tri[1].clone();
+    let v2 = tri[2].clone();
+
+    let v01 = v0.interpolate(&v1, 0.5);
+    let v12 = v1.interpolate(&v2, 0.5);
+    let v20 = v2.interpolate(&v0, 0.5);
+
+    vec![
+        [v0.clone(), v01.clone(), v20.clone()],
+        [v01.clone(), v1.clone(), v12.clone()],
+        [v20.clone(), v12.clone(), v2.clone()],
+        [v01, v12, v20],
+    ]
+}
+
+/// Perform a 2D union of an entire slice of polygons (all assumed in the XY plane).
+/// Because `Polygon::union` returns a `Vec<Polygon<S>>` (it can split or merge),
+/// we accumulate and re‐union until everything is combined.
+pub fn union_all_2d<S: Clone>(polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
+    if polygons.is_empty() {
+        return vec![];
+    }
+    // Start with the first polygon
+    let mut result = vec![polygons[0].clone()];
+
+    // Union successively with each subsequent polygon
+    for poly in &polygons[1..] {
+        let mut new_result = Vec::new();
+        for r in result {
+            // `r.union(poly)` can return multiple disjoint polygons.
+            let merged = r.union(poly);
+            new_result.extend(merged);
+        }
+        result = new_result;
+    }
+    result
+}
+
+/// Helper to normalize angles into (-π, π].
+fn normalize_angle(mut a: Real) -> Real {
+    while a <= -PI {
+        a += 2.0 * PI;
+    }
+    while a > PI {
+        a -= 2.0 * PI;
+    }
+    a
+}
+
+/// Returns `true` if the line segments p1->p2 and p3->p4 intersect, otherwise `false`.
+fn segments_intersect_2d(
+    p1x: Real, p1y: Real,
+    p2x: Real, p2y: Real,
+    p3x: Real, p3y: Real,
+    p4x: Real, p4y: Real,
+) -> bool {
+    // A helper function to get the orientation of the triplet (p, q, r).
+    // Returns:
+    // 0 -> p, q, r are collinear
+    // 1 -> Clockwise
+    // 2 -> Counterclockwise
+    fn orientation(px: Real, py: Real, qx: Real, qy: Real, rx: Real, ry: Real) -> i32 {
+        let val = (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
+        if val.abs() < 1e-12 {
+            0
+        } else if val > 0.0 {
+            1
+        } else {
+            2
+        }
+    }
+
+    // A helper function to check if point q lies on line segment pr
+    fn on_segment(px: Real, py: Real, qx: Real, qy: Real, rx: Real, ry: Real) -> bool {
+        qx >= px.min(rx) && qx <= px.max(rx) &&
+        qy >= py.min(ry) && qy <= py.max(ry)
+    }
+
+    // Find the 4 orientations needed for the general and special cases
+    let o1 = orientation(p1x, p1y, p2x, p2y, p3x, p3y);
+    let o2 = orientation(p1x, p1y, p2x, p2y, p4x, p4y);
+    let o3 = orientation(p3x, p3y, p4x, p4y, p1x, p1y);
+    let o4 = orientation(p3x, p3y, p4x, p4y, p2x, p2y);
+
+    // General case: If the two line segments strictly intersect
+    if o1 != o2 && o3 != o4 {
+        return true;
+    }
+
+    // Special cases: check for collinearity and overlap
+    // p1, p2, p3 are collinear and p3 lies on segment p1p2
+    if o1 == 0 && on_segment(p1x, p1y, p3x, p3y, p2x, p2y) {
+        return true;
+    }
+    // p1, p2, p4 are collinear and p4 lies on segment p1p2
+    if o2 == 0 && on_segment(p1x, p1y, p4x, p4y, p2x, p2y) {
+        return true;
+    }
+    // p3, p4, p1 are collinear and p1 lies on segment p3p4
+    if o3 == 0 && on_segment(p3x, p3y, p1x, p1y, p4x, p4y) {
+        return true;
+    }
+    // p3, p4, p2 are collinear and p2 lies on segment p3p4
+    if o4 == 0 && on_segment(p3x, p3y, p2x, p2y, p4x, p4y) {
+        return true;
+    }
+
+    // Otherwise, they do not intersect
+    false
+}
+
+/// Compute an initial guess of the circle center through three points p1, p2, p3
+/// (this is used purely as an initial guess).
+///
+/// This is a direct port of your snippet’s `centre(p1, p2, p3)`, but
+/// returning a `Point2<Real>` from nalgebra.
+fn naive_circle_center(p1: &Point2<Real>, p2: &Point2<Real>, p3: &Point2<Real>) -> Point2<Real> {
+    // Coordinates
+    let (x1, y1) = (p1.x, p1.y);
+    let (x2, y2) = (p2.x, p2.y);
+    let (x3, y3) = (p3.x, p3.y);
+
+    let x12 = x1 - x2;
+    let x13 = x1 - x3;
+    let y12 = y1 - y2;
+    let y13 = y1 - y3;
+
+    let y31 = y3 - y1;
+    let y21 = y2 - y1;
+    let x31 = x3 - x1;
+    let x21 = x2 - x1;
+
+    let sx13 = x1.powi(2) - x3.powi(2);
+    let sy13 = y1.powi(2) - y3.powi(2);
+    let sx21 = x2.powi(2) - x1.powi(2);
+    let sy21 = y2.powi(2) - y1.powi(2);
+
+    let xden = 2.0 * (x31 * y12 - x21 * y13);
+    let yden = 2.0 * (y31 * x12 - y21 * x13);
+
+    if xden.abs() < 1e-14 || yden.abs() < 1e-14 {
+        // fallback => just average the points
+        let cx = (x1 + x2 + x3) / 3.0;
+        let cy = (y1 + y2 + y3) / 3.0;
+        return Point2::new(cx, cy);
+    }
+
+    let g = (sx13 * y12 + sy13 * y12 + sx21 * y13 + sy21 * y13) / xden;
+    let f = (sx13 * x12 + sy13 * x12 + sx21 * x13 + sy21 * x13) / yden;
+
+    // Return the center as a Point2
+    Point2::new(-g, -f)
+}
+
+/// Fit a circle to the points `[pt_c, intermediates..., pt_n]` by adjusting an offset `d` from
+/// the midpoint. This reproduces your “arcfinder” approach in a version that uses nalgebra’s
+/// `Point2<Real>`.
+///
+/// # Returns
+///
+/// `(center, radius, cw, rms)`:
+/// - `center`: fitted circle center (Point2),
+/// - `radius`: circle radius,
+/// - `cw`: `true` if the arc is clockwise, `false` if ccw,
+/// - `rms`: root‐mean‐square error of the fit.
+pub fn fit_circle_arcfinder(
+    pt_c: &Point2<Real>,
+    pt_n: &Point2<Real>,
+    intermediates: &[Point2<Real>],
+) -> (Point2<Real>, Real, bool, Real) {
+    // 1) Distance between pt_c and pt_n, plus midpoint
+    let k = (pt_c - pt_n).norm();
+    if k < 1e-14 {
+        // Degenerate case => no unique circle
+        let center = *pt_c;
+        return (center, 0.0, false, 9999.0);
+    }
+    let mid = Point2::new(0.5 * (pt_c.x + pt_n.x), 0.5 * (pt_c.y + pt_n.y));
+
+    // 2) Pre‐compute the direction used for the offset:
+    //    This is the 2D +90 rotation of (pt_n - pt_c).
+    //    i.e. rotate( dx, dy ) => (dy, -dx ) or similar.
+    let vec_cn = pt_n - pt_c; // a Vector2
+    let rx = vec_cn.y; // +90 deg
+    let ry = -vec_cn.x; // ...
+
+    // collect all points in one array for the mismatch
+    let mut all_points = Vec::with_capacity(intermediates.len() + 2);
+    all_points.push(*pt_c);
+    all_points.extend_from_slice(intermediates);
+    all_points.push(*pt_n);
+
+    // The mismatch function g(d)
+    let g = |d: Real| -> Real {
+        let r_desired = (d * d + 0.25 * k * k).sqrt();
+        // circle center
+        let cx = mid.x + (d / k) * rx;
+        let cy = mid.y + (d / k) * ry;
+        let mut sum_sq = 0.0;
+        for p in &all_points {
+            let dx = p.x - cx;
+            let dy = p.y - cy;
+            let dist = (dx * dx + dy * dy).sqrt();
+            let diff = dist - r_desired;
+            sum_sq += diff * diff;
+        }
+        sum_sq
+    };
+
+    // derivative dg(d) => we’ll do a small finite difference
+    let dg = |d: Real| -> Real {
+        let h = 1e-6;
+        let g_p = g(d + h);
+        let g_m = g(d - h);
+        (g_p - g_m) / (2.0 * h)
+    };
+
+    // 3) choose an initial guess for d
+    let mut d_est = 0.0; // fallback
+    if !intermediates.is_empty() {
+        // pick p3 ~ the middle of intermediates
+        let mididx = intermediates.len() / 2;
+        let p3 = intermediates[mididx];
+        let c_est = naive_circle_center(pt_c, pt_n, &p3);
+        // project c_est - mid onto (rx, ry)/k => that is d
+        let dx = c_est.x - mid.x;
+        let dy = c_est.y - mid.y;
+        let dot = dx * (rx / k) + dy * (ry / k);
+        d_est = dot;
+    }
+
+    // 4) small secant iteration for ~10 steps
+    let mut d0 = d_est - 0.1 * k;
+    let mut d1 = d_est;
+    let mut dg0 = dg(d0);
+    let mut dg1 = dg(d1);
+
+    for _ in 0..10 {
+        if (dg1 - dg0).abs() < 1e-14 {
+            break;
+        }
+        let temp = d1;
+        d1 = d1 - dg1 * (d1 - d0) / (dg1 - dg0);
+        d0 = temp;
+        dg0 = dg1;
+        dg1 = dg(d1);
+    }
+
+    let d_opt = d1;
+    let cx = mid.x + (d_opt / k) * rx;
+    let cy = mid.y + (d_opt / k) * ry;
+    let center = Point2::new(cx, cy);
+    let radius_opt = (d_opt * d_opt + 0.25 * k * k).sqrt();
+
+    // sum of squares at d_opt
+    let sum_sq = g(d_opt);
+    let n_pts = all_points.len() as Real;
+    let rms = (sum_sq / n_pts).sqrt();
+
+    // 5) determine cw vs ccw
+    let dx0 = pt_c.x - cx;
+    let dy0 = pt_c.y - cy;
+    let dx1 = pt_n.x - cx;
+    let dy1 = pt_n.y - cy;
+    let angle0 = dy0.atan2(dx0);
+    let angle1 = dy1.atan2(dx1);
+    let total_sweep = normalize_angle(angle1 - angle0);
+    let cw = total_sweep < 0.0;
+
+    (center, radius_opt, cw, rms)
+}
+
+/// Helper to produce the "best fit arc" for the points from `pt_c` through `pt_n`, plus
+/// any in `intermediates`. This is basically your old “best_arc” logic but now returning
+/// `None` if it fails or `Some((cw, radius, center, rms))` if success.
+fn best_arc_fit(
+    pt_c: Point2<Real>,
+    pt_n: Point2<Real>,
+    intermediates: &[Point2<Real>],
+    rms_limit: Real,
+    angle_limit_degs: Real,
+    _offset_limit: Real,
+) -> Option<(bool, Real, Point2<Real>, Real)> {
+    // 1) Call your circle-fitting routine:
+    let (center, radius, cw, rms) = fit_circle_arcfinder(&pt_c, &pt_n, intermediates);
+
+    // 2) Check RMS error vs. limit
+    if rms > rms_limit {
+        return None;
+    }
+    // 3) measure the total arc sweep
+    //    We'll compute angle0, angle1 from the center
+    //    v0 = pt_c - center, v1 = pt_n - center
+    let v0 = pt_c - center;
+    let v1 = pt_n - center;
+    let angle0 = v0.y.atan2(v0.x);
+    let angle1 = v1.y.atan2(v1.x);
+    let sweep = normalize_angle(angle1 - angle0).abs();
+    let sweep_degs = sweep.to_degrees();
+    if sweep_degs > angle_limit_degs {
+        return None;
+    }
+    // 4) Possibly check some "offset" or chord–offset constraints
+    // e.g. if your logic says “if radius < ??? or if something with offset_limit”
+    if radius < 1e-9 {
+        return None;
+    }
+    // offset constraint is left to your specific arcs logic:
+    // if something > offset_limit {...}
+
+    // If all is well:
+    Some((cw, radius, center, rms))
 }
