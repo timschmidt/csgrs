@@ -166,7 +166,7 @@ impl<S: Clone> CSG<S> {
     /// let csg = CSG::<()>::from_complex_polygons(&polys);
     /// // Now csg.polygons contains the triangulated version.
     /// ```
-    pub fn from_earclip(polys: &[Vec<Vec<Real>>]) -> CSG<S> {
+    pub fn from_earclip(polys: &[Vec<Vec<Real>>], metadata: Option<S>) -> CSG<S> {
         // Flatten (as in data, not geometry) the input. If the input is 2D, dim will be 2.
         let (vertices, hole_indices, dim) = earclip::flatten(polys);
         // Tessellate the polygon using earcut.
@@ -187,12 +187,12 @@ impl<S: Clone> CSG<S> {
                     Point3::new(vertices[start], vertices[start + 1], vertices[start + 2])
                 };
                 // Here we simply assign a default normal pointing up.
-                // todo:  compute the true face normal from the triangle vertices.)
                 let normal = Vector3::z();
                 tri_vertices.push(Vertex::new(p, normal));
             }
-            // Create a polygon (triangle) with no metadata.
-            new_polygons.push(Polygon::new(tri_vertices, CLOSED, None));
+            // Create a polygon (triangle)
+            // todo:  compute the true face normal from the triangle vertices.): let normal = (b - a).cross(&(c - a)).normalize();
+            new_polygons.push(Polygon::new(tri_vertices, CLOSED, metadata.clone()));
         }
         CSG::from_polygons(new_polygons)
     }
@@ -1452,7 +1452,7 @@ impl<S: Clone> CSG<S> {
 
         // If empty, return a degenerate AABB at origin or handle accordingly
         if all_points.is_empty() {
-            return Aabb::new_invalid(); // or AABB::new(Point3::origin(), Point3::origin());
+            return Aabb::new(Point3::origin(), Point3::origin()); // or Aabb::new_invalid();
         }
 
         // Construct the parry AABB from points

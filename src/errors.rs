@@ -27,3 +27,8 @@ pub enum ValidationError {
     /// In general, anything else
     Other(String, Option<Point3<Real>>),
 }
+
+// Plane::from_points "Degenerate polygon: vertices do not define a plane"
+// CSG::polyhedron "Face index {} is out of range (points.len = {})."
+// CSG::rotate_extrude "rotate_extrude requires at least 2 segments"
+// CSG::extrude_between "extrude_between: both polygons must have the same number of vertices"
