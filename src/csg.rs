@@ -2458,7 +2458,7 @@ fn rotation_from_z_to_dir(dir: Vector3<Real>) -> Matrix4<Real> {
 /// Helper to build a single Polygon from a “slice” of 3D points.
 ///
 /// If `flip_winding` is true, we reverse the vertex order (so the polygon’s normal flips).
-fn polygon_from_slice<S: Clone>(
+fn polygon_from_slice<S: Clone + Send + Sync>(
     slice_pts: &[Point3<Real>],
     flip_winding: bool,
     metadata: Option<S>,

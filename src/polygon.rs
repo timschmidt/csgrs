@@ -20,7 +20,7 @@ pub struct Polygon<S: Clone> {
     pub plane: Plane,
 }
 
-impl<S: Clone> Polygon<S> {
+impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, mut open: bool, metadata: Option<S>) -> Self {
         if vertices.len() < 3 {
@@ -803,7 +803,7 @@ pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
 /// Perform a 2D union of an entire slice of polygons (all assumed in the XY plane).
 /// Because `Polygon::union` returns a `Vec<Polygon<S>>` (it can split or merge),
 /// we accumulate and re‐union until everything is combined.
-pub fn union_all_2d<S: Clone>(polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
+pub fn union_all_2d<S: Clone>(polygons: &[Polygon<S>]) -> Vec<Polygon<S>> where S: Send, S: Sync {
     if polygons.is_empty() {
         return vec![];
     }

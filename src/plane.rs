@@ -32,7 +32,7 @@ impl Plane {
 
     /// Split `polygon` by this plane if needed, distributing the results into
     /// `coplanar_front`, `coplanar_back`, `front`, and `back`.
-    pub fn split_polygon<S: Clone>(
+    pub fn split_polygon<S: Clone + Send + Sync>(
         &self,
         polygon: &Polygon<S>,
         coplanar_front: &mut Vec<Polygon<S>>,

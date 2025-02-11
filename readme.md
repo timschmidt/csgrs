@@ -443,7 +443,6 @@ The `pline_area` function computes the signed area of a closed `Polyline`:
 - support twist and scale in linear extrude like openscad
 - support scale and translation along a vector in rotate extrude
 - investigate marching_cubes, marching_cubes_rs
-- parallelize clip_to and invert with rayon and par_iter
 - identify more candidates for par_iter
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
 - reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
