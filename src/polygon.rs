@@ -109,7 +109,7 @@ impl<S: Clone> Polygon<S> {
 
     /// Build a new Polygon from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0.
-    pub fn from_polyline(polyline: Polyline<Real>, metadata: Option<S>) -> Polygon<S> {
+    pub fn from_polyline(polyline: &Polyline<Real>, metadata: Option<S>) -> Polygon<S> {
         if polyline.vertex_count() < 2 {
             // degenerate polygon
         }

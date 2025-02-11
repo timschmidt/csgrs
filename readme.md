@@ -177,6 +177,7 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::reconstruct_polyline_3d(polylines: &[Polygon<S>])`** — reconstructs a 3d polyline from 2d polylines with matching start/end points
 - **`CSG::bounding_box()`** — computes the bounding box of the shape
 - **`CSG::retriangulate()`** — retriangulates all polygons with [`earclip`](https://crates.io/crates/earclip)
+- **`CSG::from_polygons(polygons: &[Polygon<S>])`** - create a new CSG from Polygons
 - **`CSG::from_polylines(polylines: &[Polyline], metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::from_earclip(polys: &[Vec<Vec<Real>>], metadata: Option<S>)`** — create a new CSG from [`earclip`](https://crates.io/crates/earclip) polys
 - **`CSG::vertices()`** — collect all vertices from the CSG
@@ -188,7 +189,8 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 Use cases include storing color, ID, or layer info.
 
 ```rust
-use csgrs::{Polygon, Vertex};
+use csgrs::polygon::Polygon;
+use csgrs::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 
 #[derive(Clone)]

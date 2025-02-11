@@ -1204,7 +1204,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// Extrude an open or closed 2D polyline (from cavalier_contours) along `direction`,
     /// returning a 3D `CSG` containing the resulting side walls plus top/bottom if it’s closed.
     /// For open polylines, no “caps” are added unless you do so manually.
-    pub fn extrude_polyline(poly: Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>) -> CSG<S> {
+    pub fn extrude_polyline(poly: &Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>) -> CSG<S> {
         if poly.vertex_count() < 2 {
             return CSG::new();
         }
@@ -1506,7 +1506,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
             // Collect polygons
             for pline in result_plines {
-                result_polygons.push(Polygon::from_polyline(pline, poly.metadata.clone()));
+                result_polygons.push(Polygon::from_polyline(&pline, poly.metadata.clone()));
             }
         }
 
@@ -1549,7 +1549,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 cc.remove_redundant(EPSILON);
                 let area = pline_area(&cc).abs();
                 if area > eps_area {
-                    Some(Polygon::from_polyline(cc, poly.metadata.clone()))
+                    Some(Polygon::from_polyline(&cc, poly.metadata.clone()))
                 } else {
                     None
                 }
