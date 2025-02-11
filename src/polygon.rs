@@ -38,7 +38,7 @@ impl<S: Clone> Polygon<S> {
 
     /// Build a new Polygon in 3D from a 2D polyline in *this* polygon’s plane.
     /// i.e. we treat that 2D polyline as lying in the same plane as `self`.
-    pub fn from_2d(&self, polyline: Polyline<Real>) -> Polygon<S> {
+    pub fn from_2d(&self, polyline: &Polyline<Real>) -> Polygon<S> {
         let open = !polyline.is_closed();
         let (_to_xy, from_xy) = self.plane.to_xy_transform();
 
@@ -241,7 +241,7 @@ impl<S: Clone> Polygon<S> {
                 continue; // skip degenerate
             }
             // Convert to a 3D Polygon<S> in the XY plane
-            polygons_out.push(self.from_2d(pl));
+            polygons_out.push(self.from_2d(&pl));
         }
 
         polygons_out
@@ -263,7 +263,7 @@ impl<S: Clone> Polygon<S> {
             if pl.vertex_count() < 3 {
                 continue;
             }
-            polygons_out.push(self.from_2d(pl));
+            polygons_out.push(self.from_2d(&pl));
         }
         polygons_out
     }
@@ -284,7 +284,7 @@ impl<S: Clone> Polygon<S> {
             if pl.vertex_count() < 3 {
                 continue;
             }
-            polygons_out.push(self.from_2d(pl));
+            polygons_out.push(self.from_2d(&pl));
         }
         polygons_out
     }
@@ -305,7 +305,7 @@ impl<S: Clone> Polygon<S> {
             if pl.vertex_count() < 3 {
                 continue;
             }
-            polygons_out.push(self.from_2d(pl));
+            polygons_out.push(self.from_2d(&pl));
         }
         polygons_out
     }
