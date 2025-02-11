@@ -49,9 +49,9 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     }
 
     /// Build a CSG from an existing polygon list
-    pub fn from_polygons(polygons: Vec<Polygon<S>>) -> Self {
+    pub fn from_polygons(polygons: &[Polygon<S>]) -> Self {
         let mut csg = CSG::new();
-        csg.polygons = polygons;
+        csg.polygons = polygons.to_vec();
         csg
     }
 
@@ -133,7 +133,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
 
-        CSG::from_polygons(all_polygons)
+        CSG::from_polygons(&all_polygons)
     }
 
     /// Constructs a new CSG solid polygons provided in the format that earclip accepts:
@@ -197,7 +197,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             // todo:  compute the true face normal from the triangle vertices.): let normal = (b - a).cross(&(c - a)).normalize();
             new_polygons.push(Polygon::new(tri_vertices, CLOSED, metadata.clone()));
         }
-        CSG::from_polygons(new_polygons)
+        CSG::from_polygons(&new_polygons)
     }
 
     /// CSG union: this ∪ other
@@ -212,7 +212,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         b.invert();
         a.build(&b.all_polygons());
 
-        CSG::from_polygons(a.all_polygons())
+        CSG::from_polygons(&a.all_polygons())
     }
 
     /// CSG difference: this \ other
@@ -229,7 +229,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         a.build(&b.all_polygons());
         a.invert();
 
-        CSG::from_polygons(a.all_polygons())
+        CSG::from_polygons(&a.all_polygons())
     }
 
     /// CSG intersection: this ∩ other
@@ -245,7 +245,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         a.build(&b.all_polygons());
         a.invert();
 
-        CSG::from_polygons(a.all_polygons())
+        CSG::from_polygons(&a.all_polygons())
     }
 
     /// Invert this CSG (flip inside vs. outside)
@@ -275,7 +275,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             Vertex::new(Point3::new(width, length, 0.0), normal),
             Vertex::new(Point3::new(0.0, length, 0.0), normal),
         ];
-        CSG::from_polygons(vec![Polygon::new(vertices, CLOSED, metadata.clone())])
+        CSG::from_polygons(&[Polygon::new(vertices, CLOSED, metadata.clone())])
     }
 
     /// Creates a 2D circle in the XY plane.
@@ -290,7 +290,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
 
-        CSG::from_polygons(vec![Polygon::new(verts, CLOSED, metadata)])
+        CSG::from_polygons(&[Polygon::new(verts, CLOSED, metadata)])
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -312,7 +312,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         for p in points {
             verts.push(Vertex::new(Point3::new(p[0], p[1], 0.0), normal));
         }
-        CSG::from_polygons(vec![Polygon::new(verts, CLOSED, metadata)])
+        CSG::from_polygons(&[Polygon::new(verts, CLOSED, metadata)])
     }
     
     /// Create a right prism (a box) that spans from (0, 0, 0) 
@@ -418,7 +418,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         );
 
         // Combine all faces into a CSG
-        CSG::from_polygons(vec![bottom, top, front, back, left, right])
+        CSG::from_polygons(&[bottom, top, front, back, left, right])
     }
 
     /// Construct a sphere with radius, segments, stacks
@@ -463,7 +463,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 polygons.push(Polygon::new(vertices, CLOSED, metadata.clone()));
             }
         }
-        CSG::from_polygons(polygons)
+        CSG::from_polygons(&polygons)
     }
     
     /// Construct a frustum whose axis goes from `start` to `end`, with the start face having
@@ -578,7 +578,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             ));
         }
     
-        CSG::from_polygons(polygons)
+        CSG::from_polygons(&polygons)
     }
     
     // A helper to create a vertical cylinder along Z from z=0..z=height
@@ -675,7 +675,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             polygons.push(poly);
         }
 
-        CSG::from_polygons(polygons)
+        CSG::from_polygons(&polygons)
     }
 
     /// Transform all vertices in this CSG by a given 4×4 matrix.
@@ -840,7 +840,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], CLOSED, None));
         }
 
-        CSG::from_polygons(polygons)
+        CSG::from_polygons(&polygons)
     }
 
     /// Compute the Minkowski sum: self ⊕ other
@@ -890,7 +890,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], CLOSED, None));
         }
 
-        CSG::from_polygons(polygons)
+        CSG::from_polygons(&polygons)
     }
 
     /// Subdivide all polygons in this CSG 'levels' times, returning a new CSG.
@@ -933,7 +933,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             })
             .collect();
     
-        CSG::from_polygons(new_polygons)
+        CSG::from_polygons(&new_polygons)
     }
 
     /// Renormalize all polygons in this CSG by re-computing each polygon’s plane
@@ -1067,7 +1067,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         // Combine into a new CSG
-        CSG::from_polygons(result_polygons)
+        CSG::from_polygons(&result_polygons)
     }
 
     /// Extrudes (or "lofts") a closed 3D volume between two polygons in space.
@@ -1126,7 +1126,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             polygons.push(side_poly);
         }
 
-        CSG::from_polygons(polygons)
+        CSG::from_polygons(&polygons)
     }
 
     /// Rotate-extrude (revolve) this 2D shape around the Z-axis from 0..`angle_degs`
@@ -1166,7 +1166,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 let rot = Rotation3::from_axis_angle(&Vector3::z_axis(), theta).to_homogeneous();
 
                 // Transform this single polygon by that rotation
-                let rotated_poly = CSG::from_polygons(vec![original_poly.clone()])
+                let rotated_poly = CSG::from_polygons(&[original_poly.clone()])
                     .transform(&rot)
                     .polygons[0]
                     .clone();
@@ -1198,7 +1198,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         // Gather everything into a new CSG
-        CSG::from_polygons(result_polygons) // todo: figure out why rotate_extrude results in inverted solids
+        CSG::from_polygons(&result_polygons) // todo: figure out why rotate_extrude results in inverted solids
     }
     
     /// Extrude an open or closed 2D polyline (from cavalier_contours) along `direction`,
@@ -1249,7 +1249,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let side = Polygon::new(vec![b_i, b_j, t_j, t_i], CLOSED, metadata.clone());
             result_polygons.push(side);
         }
-        CSG::from_polygons(result_polygons)
+        CSG::from_polygons(&result_polygons)
     }
     
     /// Sweep a 2D shape `shape_2d` (in XY plane, normal=+Z) along a 2D path `path_2d` (also in XY).
@@ -1402,7 +1402,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
     
         // 5) Combine into a final CSG
-        CSG::from_polygons(all_polygons)
+        CSG::from_polygons(&all_polygons)
     }
 
     /// Given a list of Polygons that each represent a 2D open polyline (in XY, z=0),
@@ -1511,7 +1511,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         // Build a new CSG from those offset loops in XY:
-        CSG::from_polygons(result_polygons)
+        CSG::from_polygons(&result_polygons)
     }
 
     /// Flatten a `CSG` into the XY plane and union all polygons' outlines,
@@ -1560,7 +1560,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let merged_2d = union_all_2d(&polys_2d);
     
         // --- 3) Convert merged_2d polygons (still in XY) to a new CSG
-        CSG::from_polygons(merged_2d)
+        CSG::from_polygons(&merged_2d)
     }
 
     /// Slice this CSG by a plane, keeping only cross-sections on that plane.
@@ -1573,7 +1573,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         let result_polygons = Vec::new();
 
-        CSG::from_polygons(result_polygons)
+        CSG::from_polygons(&result_polygons)
     }
 
     /// Convert a `MeshText` (from meshtext) into a list of `Polygon` in the XY plane.
@@ -1664,7 +1664,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
             // Translate polygons by (cursor_x, 0.0)
             let glyph_csg =
-                CSG::from_polygons(glyph_polygons).translate(Vector3::new(cursor_x, 0.0, 0.0));
+                CSG::from_polygons(&glyph_polygons).translate(Vector3::new(cursor_x, 0.0, 0.0));
             // Accumulate
             all_polygons.extend(glyph_csg.polygons);
 
@@ -1673,7 +1673,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             cursor_x += glyph_width as Real * scale;
         }
 
-        CSG::from_polygons(all_polygons)
+        CSG::from_polygons(&all_polygons)
     }
 
     /// Re‐triangulate each polygon in this CSG using the `earclip` library (earcut).
@@ -1742,7 +1742,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         // Combine all newly formed triangles into a new CSG:
-        CSG::from_polygons(new_polygons)
+        CSG::from_polygons(&new_polygons)
     }
 
     /// Convert the polygons in this CSG to a Parry TriMesh.
@@ -2147,7 +2147,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             poly.set_new_normal();
             surf_polygons.push(poly);
         }
-        let gyroid_surf = CSG::from_polygons(surf_polygons);
+        let gyroid_surf = CSG::from_polygons(&surf_polygons);
 
         // 5) Intersect with `self` to keep only the portion of the gyroid inside this volume.
         let clipped = gyroid_surf.intersection(self);
@@ -2310,7 +2310,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             polygons.push(Polygon::new(vertices, CLOSED, None));
         }
 
-        Ok(CSG::from_polygons(polygons))
+        Ok(CSG::from_polygons(&polygons))
     }
 
     /// Import a CSG object from DXF data.
@@ -2384,7 +2384,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
 
-        Ok(CSG::from_polygons(polygons))
+        Ok(CSG::from_polygons(&polygons))
     }
 
     /// Export the CSG object to DXF format.
