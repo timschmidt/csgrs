@@ -112,7 +112,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// Build a new CSG from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0. If a union produced multiple
     /// loops, you will get multiple polygons in the final CSG.
-    pub fn from_polylines(polylines: Vec<Polyline<Real>>, metadata: Option<S>) -> CSG<S> {
+    pub fn from_polylines(polylines: &[Polyline<Real>], metadata: Option<S>) -> CSG<S> {
         let mut all_polygons = Vec::new();
         let plane_normal = Vector3::z();
 

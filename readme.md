@@ -177,7 +177,7 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::reconstruct_polyline_3d(polylines: &[Polygon<S>])`** — reconstructs a 3d polyline from 2d polylines with matching start/end points
 - **`CSG::bounding_box()`** — computes the bounding box of the shape
 - **`CSG::retriangulate()`** — retriangulates all polygons with [`earclip`](https://crates.io/crates/earclip)
-- **`CSG::from_polylines(polylines: Vec<Polyline>, metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
+- **`CSG::from_polylines(polylines: &[Polyline], metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::from_earclip(polys: &[Vec<Vec<Real>>], metadata: Option<S>)`** — create a new CSG from [`earclip`](https://crates.io/crates/earclip) polys
 - **`CSG::vertices()`** — collect all vertices from the CSG
 - **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
