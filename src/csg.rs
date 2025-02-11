@@ -20,6 +20,9 @@ use chull::ConvexHullWrapper;
 use std::io::Cursor;
 use std::error::Error;
 
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
+
 #[cfg(feature = "truetype-text")]
 use meshtext::{Glyph, MeshGenerator, MeshText};
 
@@ -37,7 +40,7 @@ pub struct CSG<S: Clone> {
     pub polygons: Vec<Polygon<S>>,
 }
 
-impl<S: Clone> CSG<S> {
+impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// Create an empty CSG
     pub fn new() -> Self {
         CSG {
@@ -896,21 +899,40 @@ impl<S: Clone> CSG<S> {
         if levels == 0 {
             return self.clone();
         }
-
-        let mut new_polygons = Vec::new();
-        for poly in &self.polygons {
-            // Subdivide the polygon into many smaller triangles
-            let sub_tris = poly.subdivide_triangles(levels);
-            // Convert each small tri back into a Polygon with 3 vertices
-            for tri in sub_tris {
-                new_polygons.push(Polygon::new(
-                    vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
-                    CLOSED,
-                    poly.metadata.clone(),
-                ));
-            }
-        }
-
+    
+        #[cfg(feature = "parallel")]
+        let new_polygons: Vec<Polygon<S>> = self
+            .polygons
+            .par_iter()
+            .flat_map(|poly| {
+                let sub_tris = poly.subdivide_triangles(levels);
+                // Convert each small tri back to a Polygon
+                sub_tris.into_par_iter().map(move |tri| {
+                    Polygon::new(
+                        vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
+                        CLOSED,
+                        poly.metadata.clone(),
+                    )
+                })
+            })
+            .collect();
+    
+        #[cfg(not(feature = "parallel"))]
+        let new_polygons: Vec<Polygon<S>> = self
+            .polygons
+            .iter()
+            .flat_map(|poly| {
+                let sub_tris = poly.subdivide_triangles(levels);
+                sub_tris.into_iter().map(move |tri| {
+                    Polygon::new(
+                        vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
+                        CLOSED,
+                        poly.metadata.clone(),
+                    )
+                })
+            })
+            .collect();
+    
         CSG::from_polygons(new_polygons)
     }
 
@@ -1500,30 +1522,44 @@ impl<S: Clone> CSG<S> {
     /// duplicate edges that can cause issues in `cavalier_contours`.
     pub fn flatten(&self) -> CSG<S> {
         let eps_area = 1e-9;
-
-        // Convert each 3D polygon to a 2D polygon in XY (z=0).
-        // Filter out degenerate polygons (area ~ 0).
-        let mut polys_2d = Vec::new();
-        for poly in &self.polygons {
-            // Convert to a cavalier_contours::Polyline first (same as .to_cc_polyline())
-            let cc = poly.to_polyline();
-            // Optional: remove redundant points
-            cc.remove_redundant(EPSILON);
-
-            // Check area (shoelace). If above threshold, turn it into a 2D Polygon
-            let area = pline_area(&cc).abs();
-            if area > eps_area {
-                polys_2d.push(Polygon::from_polyline(cc, poly.metadata.clone()));
-            }
-        }
-        if polys_2d.is_empty() {
-            return CSG::new();
-        }
-
-        // Use our `union_all_2d` helper
+    
+        #[cfg(feature = "parallel")]
+        let polys_2d: Vec<Polygon<S>> = self
+            .polygons
+            .par_iter()
+            .filter_map(|poly| {
+                let cc = poly.to_polyline();
+                cc.remove_redundant(EPSILON);
+                let area = pline_area(&cc).abs();
+                if area > eps_area {
+                    // keep it
+                    Some(Polygon::from_polyline(cc, poly.metadata.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect();
+    
+        #[cfg(not(feature = "parallel"))]
+        let polys_2d: Vec<Polygon<S>> = self
+            .polygons
+            .iter()
+            .filter_map(|poly| {
+                let cc = poly.to_polyline();
+                cc.remove_redundant(EPSILON);
+                let area = pline_area(&cc).abs();
+                if area > eps_area {
+                    Some(Polygon::from_polyline(cc, poly.metadata.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect();
+    
+        // --- 2) Union them (still a single-thread union_all_2d call for now)
         let merged_2d = union_all_2d(&polys_2d);
-
-        // Return them as a new CSG in z=0
+    
+        // --- 3) Convert merged_2d polygons (still in XY) to a new CSG
         CSG::from_polygons(merged_2d)
     }
 

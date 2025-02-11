@@ -1,9 +1,6 @@
 #![allow(dead_code)]
 #![forbid(unsafe_code)]
 
-#[cfg(feature = "parallel")]
-use rayon::prelude::*;
-
 pub mod errors;
 pub mod float_types;
 pub mod vertex;
