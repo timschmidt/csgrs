@@ -429,6 +429,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
 - remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
   - tests
+- bending
 - lazy transformations?
 - invert Polygon::open to match cavalier_contours
 - vector font for machining / svg import/export
