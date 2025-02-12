@@ -433,7 +433,6 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
   - https://github.com/kamalmostafa/hershey-fonts
     - https://github.com/kicad-rs/hershey/blob/main/src/lib.rs
   - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
-- https://crates.io/crates/contour_tracing
 - https://github.com/PsichiX/density-mesh
 - screw threads
 - attachment points / rapier integration
