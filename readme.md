@@ -435,7 +435,6 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
   - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - https://crates.io/crates/contour_tracing
 - https://github.com/PsichiX/density-mesh
-- evaluate https://github.com/MIERUNE/earcut-rs vs earclip
 - screw threads
 - attachment points / rapier integration
 - implement 2d offsetting with these for testing against cavalier_contours
