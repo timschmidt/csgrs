@@ -324,9 +324,9 @@ println!("Inertia local frame: {:?}", inertia_frame);
 
 ```rust
 if (csg_obj.is_manifold()){
-    true => println!("CSG is manifold!"),
+    println!("CSG is manifold!");
 } else {
-    false => println!("Not manifold."),
+    println!("Not manifold.");
 }
 ```
 
