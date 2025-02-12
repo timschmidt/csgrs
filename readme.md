@@ -31,7 +31,7 @@ let sphere = CSG::sphere(1.0, 16, 8, None); // sphere of radius=1 at origin, no 
 let difference_result = cube.difference(&sphere);
 
 // Write the result as an ASCII STL:
-let stl = subtract_result.to_stl_ascii("cube_minus_sphere");
+let stl = difference_result.to_stl_ascii("cube_minus_sphere");
 std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 ```
 
@@ -407,7 +407,7 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 - **`Polygon::check_ring_self_intersection()`** - Very basic ring self‐intersection check by naive line–line intersection
 
 ### Signed Area (Shoelace)
-The `pline_area` function computes the signed area of a closed `Polyline`:
+The `polyline_area` function computes the signed area of a closed `Polyline`:
 - **Positive** if the points are in **counterclockwise (CCW)** order.
 - **Negative** if the points are in **clockwise (CW)** order.
 - Near‐zero for degenerate or collinear loops.
@@ -437,6 +437,7 @@ The `pline_area` function computes the signed area of a closed `Polyline`:
 - https://github.com/PsichiX/density-mesh
 - evaluate https://github.com/MIERUNE/earcut-rs vs earclip
 - screw threads
+- attachment points / rapier integration
 - implement 2d offsetting with these for testing against cavalier_contours
   - https://github.com/Akirami/polygon-offsetting
   - https://github.com/anlumo/offset_polygon
