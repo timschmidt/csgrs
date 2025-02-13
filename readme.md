@@ -177,7 +177,8 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
 - **`CSG::reconstruct_polyline_3d(polylines: &[Polygon<S>])`** — reconstructs a 3d polyline from 2d polylines with matching start/end points
 - **`CSG::bounding_box()`** — computes the bounding box of the shape
-- **`CSG::triangulate_earclip()`** — retriangulates all polygons with [`earclip`](https://crates.io/crates/earclip)
+- **`CSG::triangulate()`** — triangulates all polygons returning a CSG containing triangles
+- **`CSG::triangulate_earclip()`** — triangulates all polygons with [`earclip`](https://crates.io/crates/earclip) returning a CSG containing triangles
 - **`CSG::from_polygons(polygons: &[Polygon<S>])`** - create a new CSG from Polygons
 - **`CSG::from_polylines(polylines: &[Polyline], metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::from_earclip(polys: &[Vec<Vec<Real>>], metadata: Option<S>)`** — create a new CSG from [`earclip`](https://crates.io/crates/earclip) polys
