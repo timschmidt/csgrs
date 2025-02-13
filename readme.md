@@ -424,7 +424,6 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - extend flatten to work with arbitrary planes
-- fix normals on rotate_extrude
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
