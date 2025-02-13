@@ -276,7 +276,7 @@ impl Simple {
 
     // Consume a literal, for now presumably a single number consisting of:
     // a possible leading minus symbol, then
-    // digits, the decimal point and optionally commas, underscores etc. which are ignored
+    // digits, the decimal point or a slash and optionally commas, underscores etc. which are ignored
     fn consume_literal(c: &mut Peekable<Chars>) -> Result<Operand, Problem> {
         let mut num = String::new();
 
@@ -286,14 +286,14 @@ impl Simple {
         }
         while let Some(item) = c.peek() {
             match item {
-                '0'..='9' | '.' => num.push(*item),
+                '0'..='9' | '.' | '/' => num.push(*item),
                 '_' | ',' | '\'' => { /* ignore */ }
                 _ => break,
             }
             c.next();
         }
 
-        let n: Rational = num.parse().map_err(|_| Problem::ParseError)?;
+        let n: Rational = num.parse()?;
 
         Ok(Operand::Literal(n))
     }
@@ -316,6 +316,15 @@ mod tests {
     fn missing_close() {
         let xpr: Result<Simple, &str> = "(+ (* (e 4) (e 6))".parse();
         assert_eq!(xpr, Err("Incomplete expression"))
+    }
+
+    #[test]
+    fn two() {
+        let empty = HashMap::new();
+        let xpr: Simple = "(* 1/3 15/4 1.6)".parse().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
+        let ans = format!("{result}");
+        assert_eq!(ans, "2");
     }
 
     #[test]
