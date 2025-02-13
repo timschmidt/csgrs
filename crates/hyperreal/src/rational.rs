@@ -6,9 +6,6 @@ use std::sync::LazyLock;
 
 pub(crate) mod convert;
 
-#[derive(Clone, Debug)]
-pub struct ParseBRError();
-
 /// Ratio of two integers
 ///
 /// This type is functionally a [`Sign`] with a ratio between two [`BigUint`]
@@ -462,9 +459,9 @@ impl fmt::Display for Rational {
 }
 
 impl std::str::FromStr for Rational {
-    type Err = ParseBRError;
+    type Err = Problem;
 
-    fn from_str(s: &str) -> Result<Self, ParseBRError> {
+    fn from_str(s: &str) -> Result<Self, Problem> {
         let mut sign: Sign = Plus;
         let s = match s.strip_prefix('-') {
             Some(s) => {
@@ -474,17 +471,17 @@ impl std::str::FromStr for Rational {
             None => s,
         };
         if let Some((n, d)) = s.split_once('/') {
-            let numerator = BigUint::parse_bytes(n.as_bytes(), 10).ok_or(ParseBRError {})?;
+            let numerator = BigUint::parse_bytes(n.as_bytes(), 10).ok_or(Problem::BadFraction)?;
             if numerator.is_zero() {
                 sign = NoSign;
             }
             Ok(Self {
                 sign,
                 numerator,
-                denominator: BigUint::parse_bytes(d.as_bytes(), 10).ok_or(ParseBRError {})?,
+                denominator: BigUint::parse_bytes(d.as_bytes(), 10).ok_or(Problem::BadFraction)?,
             })
         } else if let Some((i, d)) = s.split_once('.') {
-            let numerator = BigUint::parse_bytes(i.as_bytes(), 10).ok_or(ParseBRError {})?;
+            let numerator = BigUint::parse_bytes(i.as_bytes(), 10).ok_or(Problem::BadDecimal)?;
             let whole = if numerator.is_zero() {
                 Self {
                     sign: NoSign,
@@ -498,7 +495,7 @@ impl std::str::FromStr for Rational {
                     denominator: One::one(),
                 }
             };
-            let numerator = BigUint::parse_bytes(d.as_bytes(), 10).ok_or(ParseBRError {})?;
+            let numerator = BigUint::parse_bytes(d.as_bytes(), 10).ok_or(Problem::BadDecimal)?;
             if numerator.is_zero() {
                 return Ok(whole);
             }
@@ -510,7 +507,7 @@ impl std::str::FromStr for Rational {
             };
             Ok(whole + fraction)
         } else {
-            let numerator = BigUint::parse_bytes(s.as_bytes(), 10).ok_or(ParseBRError {})?;
+            let numerator = BigUint::parse_bytes(s.as_bytes(), 10).ok_or(Problem::BadInteger)?;
             if numerator.is_zero() {
                 sign = NoSign;
             }

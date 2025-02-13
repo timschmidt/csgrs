@@ -24,6 +24,12 @@ pub enum Problem {
     NotANumber,
     /// Tried to convert a floating point Infinity which has no equivalent
     Infinity,
+    /// When parsing a fraction either the numerator or denominator weren't decimal digits
+    BadFraction,
+    /// When parsing a decimal there was non-digits on one or both sides of the decimal point
+    BadDecimal,
+    /// When parsing an integer there were non-digits in the text
+    BadInteger,
 }
 
 use std::fmt;
