@@ -144,7 +144,7 @@ let mirrored = cube.mirror(plane_x);
 - **Linear Extrude**: 
   - `my_2d_shape.extrude(height: Real)`  
   - `my_2d_shape.extrude_vector(direction: Vector3)`  
-  - `my_2d_shape.linear_extrude(direction: Vector3, center: bool, twist_degs: Real, segments: usize, scale: Real)`
+  - `my_2d_shape.linear_extrude(direction: Vector3, twist_degs: Real, segments: usize, scale: Real)`
 - **Extrude Between Two Polygons**:  
   ```rust
   let polygon_bottom = CSG::circle(2.0, 64, None);

@@ -1169,7 +1169,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// # Parameters
     /// - `direction`: Direction vector for the extrusion.
-    /// - `center`: If true, the Z range is `-height/2 .. +height/2`; else `0 .. height`.
     /// - `twist_degs`: Total twist in degrees around the extrusion axis from bottom to top.
     /// - `segments`: Number of intermediate subdivisions.
     /// - `scale`: A uniform scale factor to apply at the top slice (bottom is scale=1.0).
@@ -1186,7 +1185,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// let shape_2d = CSG::square(2.0, 2.0, None); // a 2D square in XY
     /// let extruded = shape_2d.linear_extrude(
     ///     direction = nalgebra::Vector3::new(0.0, 0.0, 1.0),
-    ///     center = false,
     ///     twist_degs = 360.0,
     ///     segments = Some(32),
     ///     scale = 1.2,
@@ -1195,27 +1193,16 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     pub fn linear_extrude(
         &self,
         direction: Vector3<Real>,
-        center: bool,
         twist_degs: Real,
         segments: usize,
         scale: Real,
     ) -> CSG<S> {
         // 1) calculate height from direction vector
         let height = direction.norm();
-    
-        // ----------------------------------------------
-        // 2) Decide on the local Z range
-        //    If center=true, extrude from -height/2..+height/2,
-        //    else extrude  0..height.
-        // ----------------------------------------------
-        let (z_start, z_end) = if center {
-            (-height * 0.5, height * 0.5)
-        } else {
-            (0.0, height)
-        };
+        let (z_start, z_end) = (0.0, height);
 
         // ----------------------------------------------
-        // 3) For each segment i in [0..segments], compute:
+        // 2) For each segment i in [0..segments], compute:
         //       fraction f = i/n
         //       z_i = z_start + f*(z_end - z_start)
         //       scale_i = 1 + (scale - 1)*f
@@ -1261,7 +1248,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         // ----------------------------------------------
-        // 4) Connect consecutive segments to form side walls.
+        // 3) Connect consecutive segments to form side walls.
         //    For each polygon in segment[i], connect to polygon in segment[i+1].
         //
         //    The typical assumption is that the number of polygons & vertex count
@@ -1322,7 +1309,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mut extruded_csg = CSG::from_polygons(&result_polygons);
 
         // ----------------------------------------------
-        // 5) Finally, the `direction` to extrude along,
+        // 4) Finally, the `direction` to extrude along,
         //    rotate the entire shape from +Z to that direction 
         //    and scale its length to `height`.
         //
