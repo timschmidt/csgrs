@@ -1155,7 +1155,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 let side_poly = Polygon::new(
                     vec![b_i.clone(), b_j.clone(), t_j.clone(), t_i.clone()],
                     CLOSED,
-                    None,
+                    poly_bottom.metadata.clone(),
                 );
                 result_polygons.push(side_poly);
             }
@@ -1319,10 +1319,10 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         //
         //    In OpenSCAD, `direction` is required to be "positive Z" direction, but we can be more general.
         // ---------------------------------------------- 
-        if height > crate::float_types::EPSILON {
+        if height > EPSILON {
             // 1) rotate from +Z to final_dir
             let zaxis = Vector3::z();
-            if (zaxis - direction.normalize()).norm() > crate::float_types::EPSILON {
+            if (zaxis - direction.normalize()).norm() > EPSILON {
                 // do the rotation transform
                 let axis = zaxis.cross(&direction).normalize();
                 let angle = zaxis.dot(&direction).acos(); // angle between
@@ -1401,7 +1401,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     pub fn rotate_extrude(&self, angle_degs: Real, segments: usize) -> CSG<S> {
         let angle_radians = angle_degs.to_radians();
         if segments < 2 {
-            panic!("rotate_extrude requires at least 2 segments");
+            panic!("rotate_extrude requires at least 2 segments"); // todo: return error
         }
 
         // We'll consider the revolve "closed" if the angle is effectively 360°

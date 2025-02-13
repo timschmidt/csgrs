@@ -431,13 +431,12 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
   - tests
 - bending
-- lazy transformations?
+- document compounded transformations using nalgebra
 - invert Polygon::open to match cavalier_contours
 - vector font for machining / svg import/export
   - https://github.com/kamalmostafa/hershey-fonts
     - https://github.com/kicad-rs/hershey/blob/main/src/lib.rs
   - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
-- https://github.com/PsichiX/density-mesh
 - screw threads
 - attachment points / rapier integration
 - implement 2d offsetting with these for testing against cavalier_contours
@@ -459,7 +458,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 ## Todo maybe
 - implement constant radius arc support in 2d using cavalier_contours, interpolate/tessellate in from_polygons
 - extend Polygon to allow edges to store bulge like cavalier_contours and update split_polygon to handle line/arc intersections.
-
+- https://github.com/PsichiX/density-mesh
 ---
 
 ## License
