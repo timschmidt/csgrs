@@ -232,6 +232,17 @@ impl Rational {
         &self.denominator
     }
 
+    /// Is this Rational better understood as a fraction?
+    ///
+    /// If a decimal expansion of this fraction would never end this is true
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use realistic::Rational;
+    /// let third = Rational::fraction(1, 3).unwrap();
+    /// assert!(third.prefer_fraction());
+    /// ```
     pub fn prefer_fraction(&self) -> bool {
         let mut rem = self.denominator.clone();
         while (&rem % &*TEN).is_zero() {
@@ -246,11 +257,24 @@ impl Rational {
         rem != BigUint::one()
     }
 
+    /// Left shift the value by any amount and return a [`BigInt`]
+    /// of the truncated integer value
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use realistic::Rational;
+    /// use num::bigint::ToBigInt;
+    /// let seven_fifths = Rational::fraction(7, 5).unwrap();
+    /// let eleven = ToBigInt::to_bigint(&11).unwrap();
+    /// assert_eq!(seven_fifths.shifted_big_integer(3), eleven);
+    /// ```
     pub fn shifted_big_integer(&self, shift: i32) -> BigInt {
         let whole = (&self.numerator << shift) / &self.denominator;
         BigInt::from_biguint(self.sign, whole)
     }
 
+    /// Either the corresponding [`BigInt`] or None if this value is not an integer
     pub fn to_big_integer(&self) -> Option<BigInt> {
         let whole = &self.numerator / &self.denominator;
         let round = &whole * &self.denominator;
@@ -263,6 +287,7 @@ impl Rational {
         }
     }
 
+    /// The [`Sign`] of this value
     pub fn sign(&self) -> Sign {
         self.sign
     }
