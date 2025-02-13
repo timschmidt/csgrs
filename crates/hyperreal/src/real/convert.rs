@@ -65,9 +65,9 @@ impl Real {
 use crate::computable::Precision;
 
 // (Significand, Exponent)
-fn sig_exp_32(c: Computable, msd: Precision) -> (u32, u32) {
+fn sig_exp_32(c: Computable, mut msd: Precision) -> (u32, u32) {
     const SIG_BITS: u32 = 0x007f_ffff;
-    const OVERSIZE: u32 = 0x0100_0000;
+    const OVERSIZE: u32 = SIG_BITS.next_power_of_two() << 1;
 
     if msd <= -126 {
         let sig = c
@@ -82,17 +82,17 @@ fn sig_exp_32(c: Computable, msd: Precision) -> (u32, u32) {
             (sig, 0)
         }
     } else {
-        let sig: u32 = c
+        let mut sig: u32 = c
             .approx(msd - 24)
             .magnitude()
             .try_into()
             .expect("Magnitude of the top bits should fit in a u32");
         // MSD has almost (but not quite) two orders of binary magnitude range
-        if sig >= OVERSIZE {
-            ((sig >> 1) & SIG_BITS, (127 + msd) as u32)
-        } else {
-            (sig & SIG_BITS, (126 + msd) as u32)
+        while sig >= OVERSIZE {
+            msd += 1;
+            sig >>= 1;
         }
+        (sig & SIG_BITS, (126 + msd) as u32)
     }
 }
 
@@ -137,9 +137,9 @@ impl From<Real> for f32 {
 }
 
 // (Significand, Exponent)
-fn sig_exp_64(c: Computable, msd: Precision) -> (u64, u64) {
+fn sig_exp_64(c: Computable, mut msd: Precision) -> (u64, u64) {
     const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
-    const OVERSIZE: u64 = 0x0020_0000_0000_0000;
+    const OVERSIZE: u64 = SIG_BITS.next_power_of_two() << 1;
 
     if msd <= -1022 {
         let sig = c
@@ -153,17 +153,17 @@ fn sig_exp_64(c: Computable, msd: Precision) -> (u64, u64) {
             (sig, 0)
         }
     } else {
-        let sig: u64 = c
+        let mut sig: u64 = c
             .approx(msd - 53)
             .magnitude()
             .try_into()
             .expect("Magnitude of the top bits should fit in a u64");
         // MSD has almost (but not quite) two orders of binary magnitude range
-        if sig >= OVERSIZE {
-            ((sig >> 1) & SIG_BITS, (1023 + msd) as u64)
-        } else {
-            (sig & SIG_BITS, (1022 + msd) as u64)
+        while sig >= OVERSIZE {
+            msd += 1;
+            sig >>= 1;
         }
+        (sig & SIG_BITS, (1022 + msd) as u64)
     }
 }
 
@@ -406,5 +406,21 @@ mod tests {
         assert!(std::f32::consts::PI.to_bits().abs_diff(f.to_bits()) < 2);
         let f: f64 = Real::pi().into();
         assert!(std::f64::consts::PI.to_bits().abs_diff(f.to_bits()) < 2);
+    }
+
+    #[test]
+    fn max_u64_f32() {
+        let max_u64: Rational = u64::MAX.into();
+        let r = Real::new(max_u64);
+        let f: f32 = r.try_into().unwrap();
+        assert_eq!(f, u64::MAX as f32);
+    }
+
+    #[test]
+    fn max_u64_f64() {
+        let max_u64: Rational = u64::MAX.into();
+        let r = Real::new(max_u64);
+        let d: f64 = r.try_into().unwrap();
+        assert_eq!(d, u64::MAX as f64);
     }
 }
