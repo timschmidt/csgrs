@@ -1939,9 +1939,23 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         CSG::from_polygons(&all_polygons)
     }
 
-    /// Re‐triangulate each polygon in this CSG using the `earclip` library (earcut).
+    /// Triangulate each polygon in the CSG returning a CSG containing triangles
+    pub fn triangulate(&self) -> CSG<S> {
+        let mut triangles = Vec::new();
+    
+        for poly in &self.polygons {
+            let tris = poly.triangulate();
+            for triangle in tris {
+                triangles.push(Polygon::new(triangle.to_vec(), CLOSED, poly.metadata.clone()));
+            }
+        }
+        
+        CSG::from_polygons(&triangles)
+    }
+
+    /// Re‐triangulate each polygon in this CSG using the `earclip` library.
     /// Returns a new CSG whose polygons are all triangles.
-    pub fn retriangulate(&self) -> CSG<S> {
+    pub fn triangulate_earclip(&self) -> CSG<S> {
         let mut new_polygons = Vec::new();
 
         // For each polygon in this CSG:
@@ -1971,8 +1985,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 coords_2d.push(y);
             }
 
-            // 4) Call Earcut on that 2D outline. We assume no holes, so hole_indices = &[].
-            //    earcut's signature is `earcut::<Real, usize>(data, hole_indices, dim)`
+            // 4) Call earclip on that 2D outline. We assume no holes, so hole_indices = &[].
+            //    earclip's signature is `earcut::<Real, usize>(data, hole_indices, dim)`
             //    with `dim = 2` for our XY data.
             let indices: Vec<usize> = earclip::earcut(&coords_2d, &[], 2);
 
@@ -2014,23 +2028,24 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // 1) Gather all the triangles from each polygon
         // 2) Build a TriMesh from points + triangle indices
         // 3) Wrap that in a SharedShape to be used in Rapier
+        let tri_csg = self.triangulate();
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
         let mut index_offset = 0;
 
-        for poly in &self.polygons {
-            let tris = poly.triangulate();
-            for tri in &tris {
-                // Each tri is [Vertex; 3]
-                //  push the positions into `vertices`
-                //  build the index triplet for `indices`
-                for v in tri {
-                    vertices.push(Point3::new(v.pos.x, v.pos.y, v.pos.z));
-                }
-                indices.push([index_offset, index_offset + 1, index_offset + 2]);
-                index_offset += 3;
-            }
+        for poly in &tri_csg.polygons {
+            let a = poly.vertices[0].pos;
+            let b = poly.vertices[1].pos;
+            let c = poly.vertices[2].pos;
+    
+            vertices.push(a);
+            vertices.push(b);
+            vertices.push(c);
+    
+            indices.push([index_offset, index_offset + 1, index_offset + 2]);
+            index_offset += 3;
         }
+
 
         // TriMesh::new(Vec<[Real; 3]>, Vec<[u32; 3]>)
         let trimesh = TriMesh::new(vertices, indices).unwrap();
@@ -2118,26 +2133,25 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             format!("{:.6},{:.6},{:.6}", p.x, p.y, p.z)
         }
 
+        // Triangulate the whole shape once
+        let tri_csg = self.triangulate();
         let mut edge_counts: HashMap<(String, String), u32> = HashMap::new();
 
-        for poly in &self.polygons {
-            // Triangulate each polygon
-            for tri in poly.triangulate() {
-                // Each tri is 3 vertices: [v0, v1, v2]
-                // We'll look at edges (0->1, 1->2, 2->0).
-                for &(i0, i1) in &[(0, 1), (1, 2), (2, 0)] {
-                    let p0 = tri[i0].pos;
-                    let p1 = tri[i1].pos;
+        for poly in &tri_csg.polygons {
+            // Each tri is 3 vertices: [v0, v1, v2]
+            // We'll look at edges (0->1, 1->2, 2->0).
+            for &(i0, i1) in &[(0, 1), (1, 2), (2, 0)] {
+                let p0 = &poly.vertices[i0].pos;
+                let p1 = &poly.vertices[i1].pos;
 
-                    // Order them so (p0, p1) and (p1, p0) become the same key
-                    let (a_key, b_key) = if approx_lt(&p0, &p1) {
-                        (point_key(&p0), point_key(&p1))
-                    } else {
-                        (point_key(&p1), point_key(&p0))
-                    };
+                // Order them so (p0, p1) and (p1, p0) become the same key
+                let (a_key, b_key) = if approx_lt(&p0, &p1) {
+                    (point_key(&p0), point_key(&p1))
+                } else {
+                    (point_key(&p1), point_key(&p0))
+                };
 
-                    *edge_counts.entry((a_key, b_key)).or_insert(0) += 1;
-                }
+                *edge_counts.entry((a_key, b_key)).or_insert(0) += 1;
             }
         }
 

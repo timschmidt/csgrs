@@ -144,7 +144,7 @@ fn main() {
     let _ = fs::write("stl/sliced_cylinder_slice.stl", cross_section.to_stl_ascii("sliced_cylinder_slice"));
     
     let poor_geometry_shape = moved_cube.difference(&sphere);
-    let retriangulated_shape = poor_geometry_shape.retriangulate();
+    let retriangulated_shape = poor_geometry_shape.triangulate_earclip();
     let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
     let sphere_test = CSG::sphere(1.0, 16, 8, None);
