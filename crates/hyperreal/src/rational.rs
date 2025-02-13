@@ -255,8 +255,10 @@ impl Rational {
         let whole = &self.numerator / &self.denominator;
         let round = &whole * &self.denominator;
         if self.numerator == round {
+            debug_assert!(self.denominator == *ONE.deref());
             Some(BigInt::from_biguint(self.sign, whole))
         } else {
+            debug_assert!(self.denominator != *ONE.deref());
             None
         }
     }

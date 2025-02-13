@@ -1,4 +1,4 @@
-use crate::computable::{scale, shift, signed, Signal, should_stop, Precision};
+use crate::computable::{scale, shift, should_stop, signed, Precision, Signal};
 use crate::Computable;
 use crate::Rational;
 use num::bigint::{Sign, ToBigInt};
