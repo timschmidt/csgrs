@@ -1169,7 +1169,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// # Parameters
     /// - `direction`: Direction vector for the extrusion.
-    /// - `twist_degs`: Total twist in degrees around the extrusion axis from bottom to top.
+    /// - `twist`: Total twist in degrees around the extrusion axis from bottom to top.
     /// - `segments`: Number of intermediate subdivisions.
     /// - `scale`: A uniform scale factor to apply at the top slice (bottom is scale=1.0).
     ///
@@ -1184,16 +1184,16 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// ```
     /// let shape_2d = CSG::square(2.0, 2.0, None); // a 2D square in XY
     /// let extruded = shape_2d.linear_extrude(
-    ///     direction = nalgebra::Vector3::new(0.0, 0.0, 1.0),
-    ///     twist_degs = 360.0,
-    ///     segments = Some(32),
+    ///     direction = nalgebra::Vector3::new(0.0, 0.0, 10.0),
+    ///     twist = 360.0,
+    ///     segments = 32,
     ///     scale = 1.2,
     /// );
     /// ```
     pub fn linear_extrude(
         &self,
         direction: Vector3<Real>,
-        twist_degs: Real,
+        twist: Real,
         segments: usize,
         scale: Real,
     ) -> CSG<S> {
@@ -1206,7 +1206,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         //       fraction f = i/n
         //       z_i = z_start + f*(z_end - z_start)
         //       scale_i = 1 + (scale - 1)*f
-        //       twist_i = twist_degs * f
+        //       twist_i = twist * f
         //
         //   Then transform (scale -> rotate -> translate)
         //   the original 2D polygons.
@@ -1217,7 +1217,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let f = (i as Real) / (segments as Real);
             let z_i = z_start + f * (z_end - z_start);
             let sc_i = 1.0 + f * (scale - 1.0);
-            let twist_i_deg = twist_degs * f;
+            let twist_i_deg = twist * f;
             let twist_i_rad = twist_i_deg.to_radians();
 
             // Build a transform: scale in XY, then rotate around Z, then translate in Z.
