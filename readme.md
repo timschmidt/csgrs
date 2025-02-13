@@ -443,7 +443,6 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - implement 2d offsetting with these for testing against cavalier_contours
   - https://github.com/Akirami/polygon-offsetting
   - https://github.com/anlumo/offset_polygon
-- support twist and scale in linear extrude like openscad
 - support scale and translation along a vector in rotate extrude
 - investigate marching_cubes, marching_cubes_rs
 - identify more candidates for par_iter
