@@ -1168,7 +1168,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// Perform a linear extrusion along some axis, with optional twist, center, slices, scale, etc.
     ///
     /// # Parameters
-    /// - `vector`: Direction vector for the extrusion.
+    /// - `direction`: Direction vector for the extrusion.
     /// - `center`: If true, the Z range is `-height/2 .. +height/2`; else `0 .. height`.
     /// - `twist_degs`: Total twist in degrees around the extrusion axis from bottom to top.
     /// - `segments`: Number of intermediate subdivisions.
@@ -1185,7 +1185,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// ```
     /// let shape_2d = CSG::square(2.0, 2.0, None); // a 2D square in XY
     /// let extruded = shape_2d.linear_extrude(
-    ///     vector = nalgebra::Vector3::new(0.0, 0.0, 1.0),
+    ///     direction = nalgebra::Vector3::new(0.0, 0.0, 1.0),
     ///     center = false,
     ///     twist_degs = 360.0,
     ///     segments = Some(32),
@@ -1194,14 +1194,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// ```
     pub fn linear_extrude(
         &self,
-        vector: Vector3<Real>,
+        direction: Vector3<Real>,
         center: bool,
         twist_degs: Real,
         segments: usize,
         scale: Real,
     ) -> CSG<S> {
-        // 1) calculate height from vector
-        let height = vector.norm();
+        // 1) calculate height from direction vector
+        let height = direction.norm();
     
         // ----------------------------------------------
         // 2) Decide on the local Z range
@@ -1322,23 +1322,23 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mut extruded_csg = CSG::from_polygons(&result_polygons);
 
         // ----------------------------------------------
-        // 5) Finally, the `vector` to extrude along,
+        // 5) Finally, the `direction` to extrude along,
         //    rotate the entire shape from +Z to that direction 
         //    and scale its length to `height`.
         //
-        //    If vector = Some([vx, vy, vz]), we do:
-        //      - first check vector’s length. If non-zero, we’ll rotate +Z to match its direction
+        //    If direction = Some([vx, vy, vz]), we do:
+        //      - first check direction’s length. If non-zero, we’ll rotate +Z to match its direction
         //      - scale the shape so that bounding box extends exactly `length(v)` in that direction.
         //
-        //    In OpenSCAD, `vector` is required to be "positive Z" direction, but we can be more general.
+        //    In OpenSCAD, `direction` is required to be "positive Z" direction, but we can be more general.
         // ---------------------------------------------- 
         if height > crate::float_types::EPSILON {
             // 1) rotate from +Z to final_dir
             let zaxis = Vector3::z();
-            if (zaxis - vector.normalize()).norm() > crate::float_types::EPSILON {
+            if (zaxis - direction.normalize()).norm() > crate::float_types::EPSILON {
                 // do the rotation transform
-                let axis = zaxis.cross(&vector).normalize();
-                let angle = zaxis.dot(&vector).acos(); // angle between
+                let axis = zaxis.cross(&direction).normalize();
+                let angle = zaxis.dot(&direction).acos(); // angle between
                 let rot_mat = nalgebra::Rotation3::from_axis_angle(
                     &nalgebra::Unit::new_normalize(axis),
                     angle
