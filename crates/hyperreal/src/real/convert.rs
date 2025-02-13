@@ -87,7 +87,8 @@ fn sig_exp_32(c: Computable, mut msd: Precision) -> (u32, u32) {
             .magnitude()
             .try_into()
             .expect("Magnitude of the top bits should fit in a u32");
-        // MSD has almost (but not quite) two orders of binary magnitude range
+        // We always throw away at least one bit of the approximation
+        debug_assert!(sig >= OVERSIZE);
         while sig >= OVERSIZE {
             msd += 1;
             sig >>= 1;
@@ -350,10 +351,14 @@ mod tests {
     fn big_roundtrip() {
         assert_eq!(f32::MAX, roundtrip(f32::MAX));
         assert_eq!(f64::MAX, roundtrip(f64::MAX));
+        assert_eq!(f32::MIN, roundtrip(f32::MIN));
+        assert_eq!(f64::MIN, roundtrip(f64::MIN));
     }
 
     #[test]
     fn small_roundtrip() {
+        assert_eq!(f32::MIN_POSITIVE * 3.0, roundtrip(f32::MIN_POSITIVE * 3.0));
+        assert_eq!(f64::MIN_POSITIVE * 3.0, roundtrip(f64::MIN_POSITIVE * 3.0));
         assert_eq!(f32::MIN_POSITIVE, roundtrip(f32::MIN_POSITIVE));
         assert_eq!(f64::MIN_POSITIVE, roundtrip(f64::MIN_POSITIVE));
     }
