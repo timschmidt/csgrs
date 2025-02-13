@@ -1,14 +1,10 @@
-use crate::computable::{scale, shift, signed, Precision};
+use crate::computable::{scale, shift, signed, Signal, should_stop, Precision};
 use crate::Computable;
 use crate::Rational;
 use num::bigint::{Sign, ToBigInt};
 use num::{BigInt, BigUint, Signed};
 use num::{One, Zero};
 use std::ops::Deref;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
-
-type Signal = Arc<AtomicBool>;
 
 #[derive(Clone, Debug)]
 pub(super) enum Approximation {
@@ -194,7 +190,7 @@ fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let mut n = BigInt::zero();
 
     while current_term.abs() > max_trunc_error {
-        if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+        if should_stop(signal) {
             break;
         }
         n += signed::ONE.deref();
@@ -216,7 +212,7 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         return Zero::zero();
     }
 
-    if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+    if should_stop(signal) {
         return signed::ONE.deref().clone();
     }
 
@@ -267,7 +263,7 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     }
     let iterations_needed = -p / 2 + 4;
 
-    if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+    if should_stop(signal) {
         return signed::ONE.deref().clone();
     }
 
@@ -292,7 +288,7 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let mut current_sum = current_term.clone();
 
     while current_term.abs() > max_trunc_error {
-        if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+        if should_stop(signal) {
             break;
         }
         n += 2;
@@ -336,7 +332,7 @@ fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
 
     while current_term.abs() > max_trunc_error {
-        if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+        if should_stop(signal) {
             break;
         }
         n += 1;
@@ -388,7 +384,7 @@ fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
     let mut n = 1;
 
     while *current_term.magnitude() > max_trunc_error {
-        if signal.as_ref().is_some_and(|s| s.load(Ordering::SeqCst)) {
+        if should_stop(signal) {
             break;
         }
         n += 2;

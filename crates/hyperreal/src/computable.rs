@@ -22,6 +22,11 @@ use std::sync::Arc;
 
 pub type Signal = Arc<AtomicBool>;
 
+fn should_stop(signal: &Option<Signal>) -> bool {
+    use std::sync::atomic::Ordering::*;
+    signal.as_ref().is_some_and(|s| s.load(Relaxed))
+}
+
 /// Computable approximation of a Real number
 #[derive(Clone, Debug)]
 pub struct Computable {
@@ -452,8 +457,6 @@ impl Computable {
 
     /// MSD iteratively: 0, -16, -40, -76 etc. or p if that's lower
     pub(super) fn iter_msd_stop(&self, p: Precision) -> Option<Precision> {
-        use std::sync::atomic::Ordering;
-
         let mut prec = 0;
 
         loop {
@@ -465,11 +468,7 @@ impl Computable {
             if prec <= p {
                 break;
             }
-            if self
-                .signal
-                .as_ref()
-                .is_some_and(|s| s.load(Ordering::SeqCst))
-            {
+            if should_stop(&self.signal) {
                 break;
             }
         }
