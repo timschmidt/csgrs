@@ -1828,13 +1828,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     }
 
     /// Slice this CSG by a plane, keeping only cross-sections on that plane.
-    /// If `plane` is None, defaults to the plane z=0.
-    pub fn slice(&self, plane: Option<Plane>) -> CSG<S> {
-        let _plane = plane.unwrap_or_else(|| Plane {
-            normal: nalgebra::Vector3::new(0.0, 0.0, 1.0),
-            w: 0.0,
-        });
-
+    pub fn slice(&self, plane: Plane) -> CSG<S> {
         let result_polygons = Vec::new();
 
         CSG::from_polygons(&result_polygons)

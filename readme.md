@@ -171,7 +171,7 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::minkowski_sum(&other)`** — naive Minkowski sum, then takes the hull.
 - **`CSG::ray_intersections(origin, direction)`** — returns all intersection points and distances.
 - **`CSG::flatten()`** — flattens a 3D shape into 2D (on the XY plane), unions the outlines.
-- **`CSG::slice(Some(plane))`** — slices the CSG by a plane and returns the cross-section polygons.
+- **`CSG::slice(plane)`** — slices the CSG by a plane and returns the cross-section polygons.
 - **`CSG::offset_2d(distance)`** — outward (or inward) offset in 2D using [`cavalier_contours`](https://crates.io/crates/cavalier_contours).
 - **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
