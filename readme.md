@@ -282,7 +282,7 @@ Hershey fonts are single stroke fonts which produce open ended polylines in the 
 
 ```rust
 let font_data = include_bytes("../fonts/myfont.jhf");
-let csg_text = CSG::from_hershey("Hello!", font_data, size: 20.0, None);
+let csg_text = CSG::from_hershey("Hello!", font_data, 20.0, None);
 
 // Then extrude the text to make it 3D:
 let text_3d = CSG::new();
