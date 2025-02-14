@@ -86,7 +86,7 @@ mod unsigned {
 
 impl Computable {
     /// Exactly one
-    pub fn one() -> Self {
+    pub fn one() -> Computable {
         Self {
             internal: Box::new(Approximation::Int(BigInt::one())),
             cache: RefCell::new(Cache::Invalid),
@@ -95,7 +95,7 @@ impl Computable {
     }
 
     /// Approximate π, the ratio of a circle's circumference to its diameter
-    pub fn pi() -> Self {
+    pub fn pi() -> Computable {
         let atan5 = Self::prescaled_atan(signed::FIVE.clone());
         let atan_239 = Self::prescaled_atan(signed::TWO_THREE_NINE.clone());
         let four = Self::integer(signed::FOUR.clone());
@@ -107,7 +107,7 @@ impl Computable {
     }
 
     /// Any Rational
-    pub fn rational(r: Rational) -> Self {
+    pub fn rational(r: Rational) -> Computable {
         Self {
             internal: Box::new(Approximation::Ratio(r)),
             cache: RefCell::new(Cache::Invalid),
@@ -115,18 +115,16 @@ impl Computable {
         }
     }
 
-    pub fn e(r: Rational) -> Self {
+}
+
+impl Computable {
+    pub(crate) fn e(r: Rational) -> Self {
         let rational = Self::rational(r);
         Self::exp(rational)
     }
 
-    /// Square root of any Rational
-    pub fn sqrt_rational(r: Rational) -> Self {
-        let rational = Self::rational(r);
-        Self::sqrt(rational)
-    }
-
-    pub fn exp(self) -> Self {
+    /// Natural Exponential function, raise Euler's Number to this number
+    pub fn exp(self) -> Computable {
         let low_prec: Precision = -10;
         let rough_appr: BigInt = self.approx(low_prec);
         if rough_appr.sign() == Sign::Minus {
@@ -144,7 +142,8 @@ impl Computable {
         }
     }
 
-    pub fn cos(self) -> Self {
+    /// Cosine of this number
+    pub fn cos(self) -> Computable {
         let rough_appr = self.approx(-1);
         let abs_rough_appr = rough_appr.magnitude();
 
@@ -172,7 +171,8 @@ impl Computable {
         }
     }
 
-    pub fn sin(self) -> Self {
+    /// Sine of this number
+    pub fn sin(self) -> Computable {
         Self::pi().shift_right(1).add(self.negate()).cos()
     }
 
@@ -190,7 +190,8 @@ impl Computable {
         ln2_1.add(neg_ln2_2).add(ln2_3)
     }
 
-    pub fn ln(self) -> Self {
+    /// Natural logarithm of this number
+    pub fn ln(self) -> Computable {
         // Sixteenths, ie 8 == 0.5, 24 == 1.5
         let low_ln_limit = signed::EIGHT.deref();
         let high_ln_limit = signed::TWENTY_FOUR.deref();
@@ -233,7 +234,13 @@ impl Computable {
         }
     }
 
-    pub fn sqrt(self) -> Self {
+    pub(crate) fn sqrt_rational(r: Rational) -> Self {
+        let rational = Self::rational(r);
+        Self::sqrt(rational)
+    }
+
+    /// Square root of this number
+    pub fn sqrt(self) -> Computable {
         Self {
             internal: Box::new(Approximation::Sqrt(self)),
             cache: RefCell::new(Cache::Invalid),
@@ -249,7 +256,8 @@ impl Computable {
         }
     }
 
-    pub fn negate(self) -> Self {
+    /// Negate this number
+    pub fn negate(self) -> Computable {
         Self {
             internal: Box::new(Approximation::Negate(self)),
             cache: RefCell::new(Cache::Invalid),
@@ -257,7 +265,8 @@ impl Computable {
         }
     }
 
-    pub fn inverse(self) -> Self {
+    /// Multiplicative inverse of this number
+    pub fn inverse(self) -> Computable {
         Self {
             internal: Box::new(Approximation::Inverse(self)),
             cache: RefCell::new(Cache::Invalid),
@@ -281,6 +290,7 @@ impl Computable {
         }
     }
 
+    /// Square of this number
     pub fn square(self) -> Self {
         Self {
             internal: Box::new(Approximation::Square(self)),
@@ -289,7 +299,8 @@ impl Computable {
         }
     }
 
-    pub fn multiply(self, other: Self) -> Self {
+    /// Multiply this number by some other number
+    pub fn multiply(self, other: Computable) -> Computable {
         Self {
             internal: Box::new(Approximation::Multiply(self, other)),
             cache: RefCell::new(Cache::Invalid),
@@ -297,8 +308,9 @@ impl Computable {
         }
     }
 
+    /// Add some other number to this number
     #[allow(clippy::should_implement_trait)]
-    pub fn add(self, other: Computable) -> Self {
+    pub fn add(self, other: Computable) -> Computable {
         Self {
             internal: Box::new(Approximation::Add(self, other)),
             cache: RefCell::new(Cache::Invalid),
@@ -313,9 +325,7 @@ impl Computable {
             signal: None,
         }
     }
-}
 
-impl Computable {
     pub fn abort(&mut self, s: Signal) {
         self.signal = Some(s);
     }
@@ -335,19 +345,20 @@ impl Computable {
     /// assert!((BigInt::zero() ..= BigInt::one()).contains(&comp.approx(0)));
     /// ```
     ///
-    /// Example: π * 2³ is a bit more than 25
+    /// Example: π * 2³ is a bit more than 25 but less than 26
     /// ```
     /// use realistic::{Rational,Computable};
     /// use num::{Zero,One};
     /// use num::bigint::{BigInt,ToBigInt};
     /// let pi = Computable::pi();
-    /// assert!((ToBigInt::to_bigint(&25).unwrap() ..= ToBigInt::to_bigint(&26).unwrap()).contains(&pi.approx(-3)));
+    /// let between_25_26 = (ToBigInt::to_bigint(&25).unwrap() ..= ToBigInt::to_bigint(&26).unwrap());
+    /// assert!(between_25_26.contains(&pi.approx(-3)));
     /// ```
     pub fn approx(&self, p: Precision) -> BigInt {
         self.approx_signal(&self.signal, p)
     }
 
-    /// As above but with a specified signal
+    /// Like `approx` but specifying an atomic stop signal
     pub fn approx_signal(&self, signal: &Option<Signal>, p: Precision) -> BigInt {
         // Check precision is OK?
 
@@ -385,9 +396,7 @@ impl Computable {
             None
         }
     }
-}
 
-impl Computable {
     /// Do not call this function if `self` and `other` may be the same
     pub fn compare_to(&self, other: &Self) -> Ordering {
         let mut tolerance = -20;
@@ -401,6 +410,7 @@ impl Computable {
         panic!("Apparently called Computable::compare_to on equal values");
     }
 
+    /// Compare two values to a specified tolerance (more negative numbers are more precise)
     pub fn compare_absolute(&self, other: &Self, tolerance: Precision) -> Ordering {
         let needed = tolerance - 1;
         let this = self.approx(needed);
