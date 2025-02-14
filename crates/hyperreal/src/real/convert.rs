@@ -87,8 +87,7 @@ fn sig_exp_32(c: Computable, mut msd: Precision) -> (u32, u32) {
             .magnitude()
             .try_into()
             .expect("Magnitude of the top bits should fit in a u32");
-        // We always throw away at least one bit of the approximation
-        debug_assert!(sig >= OVERSIZE);
+        // Almost (but not quite) two orders of binary magnitude range
         while sig >= OVERSIZE {
             msd += 1;
             sig >>= 1;
@@ -159,7 +158,7 @@ fn sig_exp_64(c: Computable, mut msd: Precision) -> (u64, u64) {
             .magnitude()
             .try_into()
             .expect("Magnitude of the top bits should fit in a u64");
-        // MSD has almost (but not quite) two orders of binary magnitude range
+        // Almost (but not quite) two orders of binary magnitude range
         while sig >= OVERSIZE {
             msd += 1;
             sig >>= 1;
@@ -402,6 +401,15 @@ mod tests {
         assert_eq!(sub, roundtrip(sub));
         let sub = f64::from_bits(0x000f_ffff_00000000);
         assert_eq!(sub, roundtrip(sub));
+    }
+
+    // Sometimes during conversion the approximation fits without shifting, that's fine
+    // but none of our other tests for f32 catch that
+    #[test]
+    fn bit_conversion() {
+        let r = Real::new(Rational::fraction(2, 5).unwrap()) * Real::pi();
+        let f: f32 = r.sin().into();
+        assert_eq!(f, 0.951056516);
     }
 
     // Our Pi isn't exactly equal to the IEEE approximations since it's more accurate
