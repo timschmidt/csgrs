@@ -24,6 +24,7 @@ stl_io = { version = "0.8.3", optional = true }
 earcut = "0.4.2"
 image = { version = "0.25.5", optional = true }
 contour_tracing = { version = "1.0.12", optional = true }
+hershey = "0.1.1"
 
 [features]
 default = ["f64", "stl-io", "dxf-io", "truetype-text"]

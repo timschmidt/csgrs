@@ -276,6 +276,16 @@ let csg_text = CSG::text("Hello!", font_data, Some(20.0), None);
 let text_3d = csg_text.extrude(1.0);
 ```
 
+### Hershey Text
+
+```rust
+let font_data = include_bytes("../fonts/myfont.jhf");
+let csg_text = CSG::from_hershey("Hello!", font_data, size: Some(20.0), None);
+
+// Then extrude the text to make it 3D:
+let text_3d = csg_text.extrude_polyline(1.0);
+```
+
 ### Create a Parry `TriMesh`
 
 `csg.to_trimesh()` returns a `SharedShape` containing a `TriMesh<Real>`.
@@ -433,10 +443,8 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - bending
 - document compounded transformations using nalgebra
 - invert Polygon::open to match cavalier_contours
-- vector font for machining / svg import/export
-  - https://github.com/kamalmostafa/hershey-fonts
-    - https://github.com/kicad-rs/hershey/blob/main/src/lib.rs
-  - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
+- svg import/export
+- http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - screw threads
 - attachment points / rapier integration
 - implement 2d offsetting with these for testing against cavalier_contours

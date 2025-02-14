@@ -14,12 +14,13 @@ use crate::float_types::parry3d::{
 use crate::float_types::rapier3d::prelude::*;
 use std::collections::HashMap;
 use cavalier_contours::polyline::{
-    PlineSource, Polyline,
+    PlineSource, Polyline, PlineSourceMut,
 };
 use chull::ConvexHullWrapper;
 use std::io::Cursor;
 use std::error::Error;
 use earcut::Earcut;
+use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -64,54 +65,54 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         &self.polygons
     }
 
-    /// Group polygons by their metadata.
-    ///
-    /// Returns a map from the metadata (as `Option<S>`) to a
-    /// list of references to all polygons that have that metadata.
-    ///
-    /// # Example
-    /// ```
-    /// let mut csg = CSG::new();
-    /// // ... fill `csg.polygons` with some that share metadata, some that have None, etc.
-    ///
-    /// let grouped = csg.polygons_by_metadata();
-    /// for (meta, polys) in &grouped {
-    ///     println!("Metadata = {:?}, #polygons = {}", meta, polys.len());
-    /// }
-    /// ```
-    /// requires impl<S: Clone + Eq + Hash> CSG<S> { and use std::collections::HashMap; use std::hash::Hash;
-    ///pub fn polygons_by_metadata(&self) -> HashMap<Option<S>, Vec<&Polygon<S>>> {
-    ///    let mut map: HashMap<Option<S>, Vec<&Polygon<S>>> = HashMap::new();
-    ///    
-    ///    for poly in &self.polygons {
-    ///        // Clone the `Option<S>` so we can use it as the key
-    ///        let key = poly.metadata.clone();
-    ///        map.entry(key).or_default().push(poly);
-    ///    }
-    ///    
-    ///    map
-    ///}
+    // Group polygons by their metadata.
+    //
+    // Returns a map from the metadata (as `Option<S>`) to a
+    // list of references to all polygons that have that metadata.
+    //
+    // # Example
+    // ```
+    // let mut csg = CSG::new();
+    // // ... fill `csg.polygons` with some that share metadata, some that have None, etc.
+    //
+    // let grouped = csg.polygons_by_metadata();
+    // for (meta, polys) in &grouped {
+    //     println!("Metadata = {:?}, #polygons = {}", meta, polys.len());
+    // }
+    // ```
+    // requires impl<S: Clone + Eq + Hash> CSG<S> { and use std::collections::HashMap; use std::hash::Hash;
+    // pub fn polygons_by_metadata(&self) -> HashMap<Option<S>, Vec<&Polygon<S>>> {
+    //    let mut map: HashMap<Option<S>, Vec<&Polygon<S>>> = HashMap::new();
+    //    
+    //    for poly in &self.polygons {
+    //        // Clone the `Option<S>` so we can use it as the key
+    //        let key = poly.metadata.clone();
+    //        map.entry(key).or_default().push(poly);
+    //    }
+    //    
+    //    map
+    // }
 
-    /// Return polygons grouped by metadata
-    /// requires impl<S: Clone + std::cmp::PartialEq> CSG<S> {
-    ///pub fn polygons_by_metadata_partialeq(&self) -> Vec<(Option<S>, Vec<&Polygon<S>>)> {
-    ///    let mut groups: Vec<(Option<S>, Vec<&Polygon<S>>)> = Vec::new();
-    ///    'outer: for poly in &self.polygons {
-    ///        let meta = poly.metadata.clone();
-    ///        // Try to find an existing group with the same metadata (requires a way to compare!)
-    ///        for (existing_meta, polys) in &mut groups {
-    ///            // For this to work, you need some form of comparison on `S`.
-    ///            // If S does not implement Eq, you might do partial compare or pointer compare, etc.
-    ///            if *existing_meta == meta {
-    ///                polys.push(poly);
-    ///                continue 'outer;
-    ///            }
-    ///        }
-    ///        // Otherwise, start a new group
-    ///        groups.push((meta, vec![poly]));
-    ///    }
-    ///    groups
-    ///}
+    // Return polygons grouped by metadata
+    // requires impl<S: Clone + std::cmp::PartialEq> CSG<S> {
+    // pub fn polygons_by_metadata_partialeq(&self) -> Vec<(Option<S>, Vec<&Polygon<S>>)> {
+    //    let mut groups: Vec<(Option<S>, Vec<&Polygon<S>>)> = Vec::new();
+    //    'outer: for poly in &self.polygons {
+    //        let meta = poly.metadata.clone();
+    //        // Try to find an existing group with the same metadata (requires a way to compare!)
+    //        for (existing_meta, polys) in &mut groups {
+    //            // For this to work, you need some form of comparison on `S`.
+    //            // If S does not implement Eq, you might do partial compare or pointer compare, etc.
+    //            if *existing_meta == meta {
+    //                polys.push(poly);
+    //                continue 'outer;
+    //            }
+    //        }
+    //        // Otherwise, start a new group
+    //        groups.push((meta, vec![poly]));
+    //    }
+    //    groups
+    // }
 
     /// Build a new CSG from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0. If a union produced multiple
@@ -1891,7 +1892,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
     /// Creates 2D text in the XY plane using the `meshtext` crate to generate glyph meshes.
     ///
-    /// - `text_str`: the text to render
+    /// - `text`: the text to render
     /// - `font_data`: TTF font file bytes (e.g. `include_bytes!("../assets/FiraMono-Regular.ttf")`)
     /// - `size`: optional scaling factor (e.g., a rough "font size").
     ///
@@ -1900,14 +1901,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///   - simply advances the cursor by each glyph’s width,
     ///   - places all characters along the X axis.
     #[cfg(feature = "truetype-text")]
-    pub fn text(text_str: &str, font_data: &[u8], size: Option<Real>, metadata: Option<S>) -> CSG<S> {
+    pub fn text(text: &str, font_data: &[u8], size: Option<Real>, metadata: Option<S>) -> CSG<S> {
         let mut generator = MeshGenerator::new(font_data.to_vec());
         let scale = size.unwrap_or(20.0);
 
         let mut all_polygons = Vec::new();
         let mut cursor_x: Real = 0.0;
 
-        for ch in text_str.chars() {
+        for ch in text.chars() {
             // Optionally skip control chars
             if ch.is_control() {
                 continue;
@@ -1951,6 +1952,78 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
         
         CSG::from_polygons(&triangles)
+    }
+
+    /// Creates 2D text in the XY plane using a **Hershey** font.
+    ///
+    /// Each glyph is rendered as one or more *open* polygons (strokes).  If you need 
+    /// “thick” or “filled” text, you could **offset** or **extrude** these strokes 
+    /// afterward.
+    ///
+    /// # Parameters
+    ///
+    /// - `text`: The text to render.
+    /// - `font`: A Hershey `Font` reference (from your hershey crate code).
+    /// - `size`: Optional scaling factor (defaults to 20.0 if `None`).
+    /// - `metadata`: Shared metadata to attach to each stroke polygon.
+    ///
+    /// # Returns
+    ///
+    /// A new 2D `CSG<S>` in the XY plane, composed of multiple open polygons 
+    /// (one for each stroke).
+    ///
+    /// # Example
+    /// ```
+    /// let font = hershey::fonts::GOTHIC_ENG_SANS; // or whichever Font you have
+    /// let csg_text = CSG::from_hershey("HELLO", &font, Some(15.0), None);
+    /// // Now you can extrude or union, etc.
+    /// ```
+    pub fn from_hershey(
+        text: &str,
+        font: &Font,
+        size: Option<Real>,
+        metadata: Option<S>,
+    ) -> CSG<S> {
+        let scale = size.unwrap_or(20.0);
+        let mut all_polygons = Vec::new();
+
+        // Simple left-to-right “pen” position
+        let mut cursor_x: Real = 0.0;
+
+        for ch in text.chars() {
+            // Optionally skip controls, spaces, or handle them differently
+            if ch.is_control() {
+                continue;
+            }
+            // Attempt to get the glyph
+            match font.glyph(ch) {
+                Ok(g) => {
+                    // Convert the Hershey glyph’s line segments into open polylines/polygons
+                    let glyph_width = (g.max_x - g.min_x) as Real;
+
+                    let strokes = build_hershey_glyph_polygons(
+                        &g,
+                        scale,
+                        cursor_x,
+                        0.0,          // y offset
+                        metadata.clone()
+                    );
+                    all_polygons.extend(strokes);
+
+                    // Advance cursor in x by the glyph width (scaled).
+                    // You might add spacing, or shift by g.min_x, etc.
+                    cursor_x += glyph_width * scale * 0.8; 
+                    // ^ adjust to taste or add extra letter spacing
+                }
+                Err(_) => {
+                    // Missing glyph => skip or move cursor
+                    cursor_x += 6.0 * scale;
+                }
+            }
+        }
+
+        // Combine everything
+        CSG::from_polygons(&all_polygons)
     }
 
     /// Re‐triangulate each polygon in this CSG using the `earclip` library.
@@ -2960,4 +3033,57 @@ fn polygon_from_slice<S: Clone + Send + Sync>(
     let mut poly = Polygon::new(verts, CLOSED, metadata);
     poly.set_new_normal(); // Recompute its plane & normal for consistency
     poly
+}
+
+/// Helper for building open polygons from a single Hershey `Glyph`.
+fn build_hershey_glyph_polygons<S: Clone + Send + Sync>(
+    glyph: &HersheyGlyph,
+    scale: Real,
+    offset_x: Real,
+    offset_y: Real,
+    metadata: Option<S>,
+) -> Vec<Polygon<S>> {
+    let mut polygons = Vec::new();
+
+    // We will collect line segments in a “current” Polyline 
+    // each time we see `Vector::MoveTo` => start a new stroke.
+    let mut current_pline = Polyline::new();
+    let mut _pen_down = false;
+
+    for vector_cmd in &glyph.vectors {
+        match vector_cmd {
+            HersheyVector::MoveTo { x, y } => {
+                // The Hershey code sets pen-up or "hovering" here: start a new polyline
+                // if the old polyline has 2+ vertices, push it into polygons
+                if current_pline.vertex_count() >= 2 {
+                    // Convert the existing stroke into an open polygon
+                    let stroke_poly = Polygon::from_polyline(&current_pline, metadata.clone());
+                    polygons.push(stroke_poly);
+                }
+                // Begin a fresh new stroke
+                current_pline = Polyline::new();
+                let px = offset_x + (*x as Real) * scale;
+                let py = offset_y + (*y as Real) * scale;
+                current_pline.add(px, py, 0.0);
+
+                _pen_down = false;
+            }
+            HersheyVector::LineTo { x, y } => {
+                // If pen was up, effectively we’re continuing from last point
+                let px = offset_x + (*x as Real) * scale;
+                let py = offset_y + (*y as Real) * scale;
+                current_pline.add(px, py, 0.0);
+
+                _pen_down = true;
+            }
+        }
+    }
+
+    // If our final polyline has >=2 vertices, store it
+    if current_pline.vertex_count() >= 2 {
+        let stroke_poly = Polygon::from_polyline(&current_pline, metadata.clone());
+        polygons.push(stroke_poly);
+    }
+
+    polygons
 }
