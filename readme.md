@@ -278,6 +278,8 @@ let text_3d = csg_text.extrude(1.0);
 
 ### Hershey Text
 
+Hershey fonts are single stroke fonts which produce open ended polylines in the XY plane via [`hershey`](https://crates.io/crates/hershey)
+
 ```rust
 let font_data = include_bytes("../fonts/myfont.jhf");
 let csg_text = CSG::from_hershey("Hello!", font_data, size: Some(20.0), None);
