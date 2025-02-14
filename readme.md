@@ -270,7 +270,7 @@ You can generate 2D text geometry in the XY plane from TTF fonts via [`meshtext`
 
 ```rust
 let font_data = include_bytes!("../fonts/MyFont.ttf");
-let csg_text = CSG::text("Hello!", font_data, Some(20.0), None);
+let csg_text = CSG::text("Hello!", font_data, 20.0, None);
 
 // Then extrude the text to make it 3D:
 let text_3d = csg_text.extrude(1.0);
@@ -282,7 +282,7 @@ Hershey fonts are single stroke fonts which produce open ended polylines in the 
 
 ```rust
 let font_data = include_bytes("../fonts/myfont.jhf");
-let csg_text = CSG::from_hershey("Hello!", font_data, size: Some(20.0), None);
+let csg_text = CSG::from_hershey("Hello!", font_data, size: 20.0, None);
 
 // Then extrude the text to make it 3D:
 let text_3d = CSG::new();

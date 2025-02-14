@@ -112,7 +112,7 @@ fn main() {
     // 13) Text example (2D). Provide a valid TTF font data below:
     // (Replace "asar.ttf" with a real .ttf file in your project.)
     let font_data = include_bytes!("../asar.ttf");
-    let text_csg = CSG::text("HELLO", font_data, Some(15.0), None);
+    let text_csg = CSG::text("HELLO", font_data, 15.0, None);
     let _ = fs::write("stl/text_hello_2d.stl", text_csg.to_stl_binary("text_hello_2d").unwrap());
 
     // Optionally extrude the text:

@@ -1901,9 +1901,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///   - simply advances the cursor by each glyph’s width,
     ///   - places all characters along the X axis.
     #[cfg(feature = "truetype-text")]
-    pub fn text(text: &str, font_data: &[u8], size: Option<Real>, metadata: Option<S>) -> CSG<S> {
+    pub fn text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>) -> CSG<S> {
         let mut generator = MeshGenerator::new(font_data.to_vec());
-        let scale = size.unwrap_or(20.0);
 
         let mut all_polygons = Vec::new();
         let mut cursor_x: Real = 0.0;
@@ -1918,13 +1917,13 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 Ok(m) => m,
                 Err(_) => {
                     // Missing glyph? Advance by some default
-                    cursor_x += scale;
+                    cursor_x += size;
                     continue;
                 }
             };
 
             // Convert to polygons
-            let glyph_polygons = Self::meshtext_to_polygons(&glyph_mesh, scale, metadata.clone());
+            let glyph_polygons = Self::meshtext_to_polygons(&glyph_mesh, size, metadata.clone());
 
             // Translate polygons by (cursor_x, 0.0)
             let glyph_csg =
@@ -1934,7 +1933,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
             // Advance cursor by the glyph’s bounding-box width
             let glyph_width = glyph_mesh.bbox.max.x - glyph_mesh.bbox.min.x;
-            cursor_x += glyph_width as Real * scale;
+            cursor_x += glyph_width as Real * size;
         }
 
         CSG::from_polygons(&all_polygons)
@@ -1981,10 +1980,9 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     pub fn from_hershey(
         text: &str,
         font: &Font,
-        size: Option<Real>,
+        size: Real,
         metadata: Option<S>,
     ) -> CSG<S> {
-        let scale = size.unwrap_or(20.0);
         let mut all_polygons = Vec::new();
 
         // Simple left-to-right “pen” position
@@ -2003,7 +2001,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
                     let strokes = build_hershey_glyph_polygons(
                         &g,
-                        scale,
+                        size,
                         cursor_x,
                         0.0,          // y offset
                         metadata.clone()
@@ -2012,12 +2010,12 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
                     // Advance cursor in x by the glyph width (scaled).
                     // You might add spacing, or shift by g.min_x, etc.
-                    cursor_x += glyph_width * scale * 0.8; 
+                    cursor_x += glyph_width * size * 0.8; 
                     // ^ adjust to taste or add extra letter spacing
                 }
                 Err(_) => {
                     // Missing glyph => skip or move cursor
-                    cursor_x += 6.0 * scale;
+                    cursor_x += 6.0 * size;
                 }
             }
         }
