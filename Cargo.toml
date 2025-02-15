@@ -37,7 +37,7 @@ f32 = [
   "rapier3d",
   "parry3d",
 ]
-chull-io = [ // convex hull and minkowski sum
+chull-io = [ # convex hull and minkowski sum
   "chull",
 ]
 stl-io = [
