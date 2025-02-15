@@ -402,7 +402,7 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 
 - **`Polygon::translate(vector: Vector3)`** - Returns a new Polygon translated by vector
 - **`Polygon::rotate(axis: Vector3, angle: Real, center: Option<Point3>)`** - Rotates the polygon by a given angle in radians about axis.  If a center is provided the rotation is performed about that point, otherwise rotation is about the origin.
-- **`Polygon::scale(sx: Real, sy: Real)`** - Scales the polygon by the given factors in it's local Plane's X and Y
+- **`Polygon::scale(sx: Real, sy: Real)`** - Scales the polygon in it's local Plane by factors for X and Y
 - **`Polygon::mirror_x()`** - Mirrors the polygon about the x axis
 - **`Polygon::mirror_y()`** - Mirrors the polygon about the y axis
 - **`Polygon::mirror_z()`** - Mirrors the polygon about the z axis
@@ -463,7 +463,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
 - evaluate https://github.com/asny/tri-mesh for useful functions
-- identify blockers for no-std
+- identify blockers for no-std: std::collections::HashMap, std::io::Cursor, std::error::Error
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
   - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
