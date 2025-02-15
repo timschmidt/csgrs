@@ -8,6 +8,8 @@ use nalgebra::{
 use cavalier_contours::polyline::{
     BooleanOp, PlineCreation, PlineSource, PlineSourceMut, Polyline,
 };
+
+#[cfg(feature = "chull-io")]
 use chull::ConvexHullWrapper;
 
 /// A convex polygon, defined by a list of vertices and a plane.
