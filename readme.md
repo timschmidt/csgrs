@@ -402,7 +402,7 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 
 - **`Polygon::translate(vector: Vector3)`** - Returns a new Polygon translated by vector
 - **`Polygon::rotate(axis: Vector3, angle: Real, center: Option<Point3>)`** - Rotates the polygon by a given angle in radians about axis.  If a center is provided the rotation is performed about that point, otherwise rotation is about the origin.
-- **`Polygon::scale(factor: Real)`** - Uniformly scales the polygon by the given factor
+- **`Polygon::scale(sx: Real, sy: Real)`** - Scales the polygon by the given factors in it's local Plane's X and Y
 - **`Polygon::mirror_x()`** - Mirrors the polygon about the x axis
 - **`Polygon::mirror_y()`** - Mirrors the polygon about the y axis
 - **`Polygon::mirror_z()`** - Mirrors the polygon about the z axis

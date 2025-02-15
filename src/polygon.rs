@@ -383,10 +383,13 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         self.transform(&t)
     }
 
-    /// Uniformly scales the polygon by the given factor.
-    pub fn scale(&self, factor: Real) -> Self {
-        let scaling = Matrix4::new_nonuniform_scaling(&Vector3::new(factor, factor, factor));
-        self.transform(&scaling)
+    /// Scales the polygon by the given factors.
+    pub fn scale(&self, sx: Real, sy: Real) -> Self {
+        let scaling = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, 0.0));
+        let polygon_2d = Polygon::from_polyline(&self.to_2d(), self.metadata.clone());
+        let scaled = polygon_2d.transform(&scaling);
+        let reoriented = self.from_2d(&scaled.to_polyline());
+        reoriented
     }
 
     /// Mirrors the polygon about the given x axis
