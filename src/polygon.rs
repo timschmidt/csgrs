@@ -409,6 +409,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
 
     /// Returns a new Polygon that is the convex hull of the current polygon’s vertices.
     /// (It projects the vertices to 2D in the polygon’s plane, computes the convex hull, and lifts back.)
+    #[cfg(feature = "chull-io")]
     pub fn convex_hull(&self) -> Self {
         let (to_xy, from_xy) = self.plane.to_xy_transform();
         let pts_2d: Vec<Vec<Real>> = self
@@ -436,6 +437,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
 
     /// Returns the Minkowski sum of this polygon and another.
     /// (For each vertex in self and other, we add their coordinates, and then take the convex hull.)
+    #[cfg(feature = "chull-io")]
     pub fn minkowski_sum(&self, other: &Self) -> Self {
         let mut sum_pts = Vec::new();
         for v in &self.vertices {

@@ -13,13 +13,19 @@ use crate::float_types::parry3d::{
 };
 use crate::float_types::rapier3d::prelude::*;
 use std::collections::HashMap;
+use std::io::Cursor;
+use std::error::Error;
 use cavalier_contours::polyline::{
     PlineSource, Polyline, PlineSourceMut,
 };
+
+#[cfg(feature = "chull-io")]
 use chull::ConvexHullWrapper;
-use std::io::Cursor;
-use std::error::Error;
+
+#[cfg(feature = "earcut-io")]
 use earcut::Earcut;
+
+#[cfg(feature = "hershey-text")]
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 
 #[cfg(feature = "parallel")]
@@ -37,7 +43,7 @@ use dxf::Drawing;
 use stl_io;
 
 #[cfg(feature = "image-io")]
-use image::{GrayImage, Luma};
+use image::GrayImage;
 
 /// The main CSG solid structure. Contains a list of polygons.
 #[derive(Debug, Clone)]
@@ -905,6 +911,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     }
 
     /// Compute the convex hull of all vertices in this CSG.
+    #[cfg(feature = "chull-io")]
     pub fn convex_hull(&self) -> CSG<S> {
         // Gather all (x, y, z) coordinates from the polygons
         let points: Vec<Vec<Real>> = self
@@ -943,6 +950,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// Naive approach: Take every vertex in `self`, add it to every vertex in `other`,
     /// then compute the convex hull of all resulting points.
+    #[cfg(feature = "chull-io")]
     pub fn minkowski_sum(&self, other: &CSG<S>) -> CSG<S> {
         // Collect all vertices (x, y, z) from self
         let verts_a: Vec<Point3<Real>> = self
@@ -2030,6 +2038,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// let csg_text = CSG::from_hershey("HELLO", &font, Some(15.0), None);
     /// // Now you can extrude or union, etc.
     /// ```
+    #[cfg(feature = "hershey-text")]
     pub fn from_hershey(
         text: &str,
         font: &Font,
@@ -2079,6 +2088,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
     /// Re‐triangulate each polygon in this CSG using the `earclip` library.
     /// Returns a new CSG whose polygons are all triangles.
+    #[cfg(feature = "earclip-io")]
     pub fn triangulate_earclip(&self) -> CSG<S> {
         let mut new_polygons = Vec::new();
 
@@ -2648,7 +2658,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         // 5) Build a CSG from those polygons
-        CSG::from_polygons(all_polygons)
+        CSG::from_polygons(&all_polygons)
     }
 
     /// Internal helper to parse a minimal subset of SVG path commands:
@@ -3087,6 +3097,7 @@ fn polygon_from_slice<S: Clone + Send + Sync>(
 }
 
 /// Helper for building open polygons from a single Hershey `Glyph`.
+#[cfg(feature = "hershey-text")]
 fn build_hershey_glyph_polygons<S: Clone + Send + Sync>(
     glyph: &HersheyGlyph,
     scale: Real,
