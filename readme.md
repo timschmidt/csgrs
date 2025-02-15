@@ -285,7 +285,7 @@ let font_data = include_bytes("../fonts/myfont.jhf");
 let csg_text = CSG::from_hershey("Hello!", font_data, 20.0, None);
 
 // Then extrude the text to make it 3D:
-let text_3d = CSG::new();
+let mut text_3d = CSG::new();
 for polygon in csg_text.polygons {
     text_3d.union(&CSG::extrude_polyline(polygon.to_polyline(), Vector3::z(), None));
 }
