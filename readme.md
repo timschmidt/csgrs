@@ -1,6 +1,6 @@
 # csgrs
 
-A **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** helps you construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to transform, interrogate, and simulate those shapes without leaving Rust.
+An optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** helps you construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to transform, interrogate, and simulate those shapes without leaving Rust.
 
 This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`earclip`](https://crates.io/crates/earclip) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust mesh and line processing, be reasonably performant on a wide variety of targets, and provide an extensible, type-safe API.
 
