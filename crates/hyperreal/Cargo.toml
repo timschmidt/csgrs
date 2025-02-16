@@ -3,7 +3,7 @@ name = "realistic"
 description = "Towards an API for the Real Numbers"
 license = "Apache-2.0"
 repository = "https://github.com/tialaramex/realistic/"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2021"
 
 [dependencies]
