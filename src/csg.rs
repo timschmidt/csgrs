@@ -180,6 +180,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// let csg = CSG::<()>::from_complex_polygons(&polys);
     /// // Now csg.polygons contains the triangulated version.
     /// ```
+    #[cfg(feature = "earclip-io")]
     pub fn from_earclip(polys: &[Vec<Vec<Real>>], metadata: Option<S>) -> CSG<S> {
         // Flatten (as in data, not geometry) the input. If the input is 2D, dim will be 2.
         let (vertices, hole_indices, dim) = earclip::flatten(polys);
@@ -245,6 +246,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// let csg = CSG::<()>::from_earcut(&polys, None);
     /// // Now `csg.polygons` contains the triangulated version.
     /// ```
+    #[cfg(feature = "earcut-io")]
     pub fn from_earcut(polys: &[Vec<Vec<Real>>], metadata: Option<S>) -> CSG<S> {
         // If no input is provided, return an empty CSG.
         if polys.is_empty() {
