@@ -172,26 +172,41 @@ pub fn metaballs_to_csg<S: Clone + Send + Sync>(
         let i1 = tri[1] as usize;
         let i2 = tri[2] as usize;
 
-        let p0 = sn_buffer.positions[i0];
-        let p1 = sn_buffer.positions[i1];
-        let p2 = sn_buffer.positions[i2];
-
+        let p0_index = sn_buffer.positions[i0];
+        let p1_index = sn_buffer.positions[i1];
+        let p2_index = sn_buffer.positions[i2];
+        
+        // Convert from index space to real (world) space:
+        let p0_real = Point3::new(
+            min_pt.x + p0_index[0] as Real * dx,
+            min_pt.y + p0_index[1] as Real * dy,
+            min_pt.z + p0_index[2] as Real * dz
+        );
+        
+        let p1_real = Point3::new(
+            min_pt.x + p1_index[0] as Real * dx,
+            min_pt.y + p1_index[1] as Real * dy,
+            min_pt.z + p1_index[2] as Real * dz
+        );
+        
+        let p2_real = Point3::new(
+            min_pt.x + p2_index[0] as Real * dx,
+            min_pt.y + p2_index[1] as Real * dy,
+            min_pt.z + p2_index[2] as Real * dz
+        );
+        
+        // Likewise for the normals if you want them in true world space. 
+        // Usually you'd need to do an inverse-transpose transform if your 
+        // scale is non-uniform. For uniform voxels, scaling is simpler:
+        
         let n0 = sn_buffer.normals[i0];
         let n1 = sn_buffer.normals[i1];
         let n2 = sn_buffer.normals[i2];
-
-        let v0 = Vertex::new(
-            Point3::new(p0[0] as Real, p0[1] as Real, p0[2] as Real),
-            Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real),
-        );
-        let v1 = Vertex::new(
-            Point3::new(p1[0] as Real, p1[1] as Real, p1[2] as Real),
-            Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real),
-        );
-        let v2 = Vertex::new(
-            Point3::new(p2[0] as Real, p2[1] as Real, p2[2] as Real),
-            Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real),
-        );
+        
+        // Construct your vertices:
+        let v0 = Vertex::new(p0_real, Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real));
+        let v1 = Vertex::new(p1_real, Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real));
+        let v2 = Vertex::new(p2_real, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
 
         // Each tri is turned into a Polygon with 3 vertices
         let poly = Polygon::new(vec![v0, v2, v1], false, None);
