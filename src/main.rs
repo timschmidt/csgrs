@@ -6,6 +6,7 @@
 use std::fs;
 use nalgebra::{Vector3, Point3};
 use csgrs::plane::Plane;
+use csgrs::metaball::MetaBall;
 
 // A type alias for convenience: no shared data, i.e. S = ()
 type CSG = csgrs::csg::CSG<()>;
@@ -153,6 +154,26 @@ fn main() {
     let _ = fs::write("stl/sphere_cube_test.stl", res.to_stl_binary("sphere_cube_test").unwrap());
     assert_eq!(res.bounding_box(), cube_test.bounding_box());
 
+    // Suppose we want two overlapping metaballs
+    let balls = vec![
+        MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0),
+        MetaBall::new(Point3::new(1.5, 0.0, 0.0), 1.0),
+    ];
 
+    let resolution = (60, 60, 60);
+    let iso_value = 1.0;
+    let padding = 0.2;
+
+    let metaball_csg = CSG::from_metaballs(
+        &balls,
+        resolution,
+        iso_value,
+        padding,
+    );
+    
+    // For instance, save to STL
+    let stl_data = metaball_csg.to_stl_binary("my_metaballs").unwrap();
+    std::fs::write("stl/metaballs.stl", stl_data)
+        .expect("Failed to write metaballs.stl");
 }
 

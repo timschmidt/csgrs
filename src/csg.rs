@@ -2566,6 +2566,21 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         clipped
     }
 
+    /// **Creates a CSG from a list of metaballs** by sampling a 3D grid and using marching cubes.
+    /// 
+    /// - `balls`: slice of metaball definitions (center + radius).
+    /// - `resolution`: (nx, ny, nz) defines how many steps along x, y, z.
+    /// - `iso_value`: threshold at which the isosurface is extracted.
+    /// - `padding`: extra margin around the bounding region (e.g. 0.5) so the surface doesn’t get truncated.
+    pub fn from_metaballs(
+        balls: &[crate::metaball::MetaBall],
+        resolution: (usize, usize, usize),
+        iso_value: Real,
+        padding: Real,
+    ) -> Self {
+        crate::metaball::metaballs_to_csg(balls, resolution, iso_value, padding)
+    }
+
     /// Builds a new CSG from the “on” pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.
     ///
