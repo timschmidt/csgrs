@@ -33,7 +33,6 @@ Conversions from f32 or f64 are fallible, as both NaN and Infinity do not have e
 
 You can convert i32 or i64 directly into a Real.
 
-
 ### Arithmetic operators on Rational and Real
 
 Unlike Java, Rust has "Operator overloading" or rather, we can implement many arithmetic operators for user defined types. This means that
@@ -73,6 +72,8 @@ The cosine (cos) and sine (sin) functions are provided and expressions which red
 (cos (* pi 2.5)) == 0
 
 Numeric literals are written in decimal, 2.75 is exactly two and three quarters. The underscore is ignored, so 10\_000 means the same as 10000
+
+You may also write a fraction, including improper fractions such as 11/7 or 4/3 and this will be recognised as a rational number
 
 Today the built-in names are only e (the mathematical constant and base of the natural logarithm) and pi (the mathematical constant π)
 
