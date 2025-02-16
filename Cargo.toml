@@ -25,6 +25,7 @@ earcut = { version = "0.4.2", optional = true }
 image = { version = "0.25.5", optional = true }
 contour_tracing = { version = "1.0.12", features = ["array"], optional = true }
 hershey = { version = "0.1.1", optional = true }
+fast-surface-nets = "0.2.1"
 
 [features]
 default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "earclip-io", "earcut-io", "image-io"]
