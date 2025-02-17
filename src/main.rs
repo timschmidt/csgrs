@@ -162,7 +162,7 @@ fn main() {
 
     let resolution = (60, 60, 60);
     let iso_value = 1.0;
-    let padding = 0.2;
+    let padding = 1.0;
 
     let metaball_csg = CSG::from_metaballs(
         &balls,

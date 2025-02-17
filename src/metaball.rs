@@ -1,4 +1,4 @@
-use crate::float_types::{EPSILON, Real};
+use crate::float_types::{EPSILON, Real, CLOSED};
 use crate::csg::CSG;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -153,7 +153,7 @@ pub fn metaballs_to_csg<S: Clone + Send + Sync>(
 
     // The region we pass to surface_nets is the entire 3D range [0..nx, 0..ny, 0..nz]
     // minus 1 in each dimension to avoid indexing past the boundary:
-    let (max_x, max_y, max_z) = (nx - 1, ny - 1, nz - 1);
+    let (max_x, max_y, max_z) = (nx, ny, nz);
 
     surface_nets(
         &field_values,      // SDF array
@@ -209,7 +209,7 @@ pub fn metaballs_to_csg<S: Clone + Send + Sync>(
         let v2 = Vertex::new(p2_real, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
 
         // Each tri is turned into a Polygon with 3 vertices
-        let poly = Polygon::new(vec![v0, v2, v1], false, None);
+        let poly = Polygon::new(vec![v0, v2, v1], CLOSED, None);
         triangles.push(poly);
     }
 
