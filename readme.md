@@ -76,6 +76,7 @@ Similarly, you can create standard 3D primitives:
         segments: usize,
         metadata: Option<S>)`** - Construct a frustum from `start` to `end` with `radius1` and `radius2`
 - **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
+- **`CSG::MetaBall` and `CSG::from_metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real)`**
 
 ```rust
 // Unit cube at origin, no metadata
@@ -103,6 +104,24 @@ let faces = vec![
     vec![3, 0, 4],
 ];
 let pyramid = CSG::polyhedron(points, &faces, None);
+
+// Metaballs https://en.wikipedia.org/wiki/Metaballs
+use csgrs::csg::MetaBall;
+let balls = vec![
+    MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0),
+    MetaBall::new(Point3::new(1.5, 0.0, 0.0), 1.0),
+];
+
+let resolution = (60, 60, 60);
+let iso_value = 1.0;
+let padding = 1.0;
+
+let metaball_csg = CSG::from_metaballs(
+    &balls,
+    resolution,
+    iso_value,
+    padding,
+);
 ```
 
 ### 3D Boolean Operations

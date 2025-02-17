@@ -25,10 +25,10 @@ earcut = { version = "0.4.2", optional = true }
 image = { version = "0.25.5", optional = true }
 contour_tracing = { version = "1.0.12", features = ["array"], optional = true }
 hershey = { version = "0.1.1", optional = true }
-fast-surface-nets = "0.2.1"
+fast-surface-nets = { version = "0.2.1", optional = true }
 
 [features]
-default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "earclip-io", "earcut-io", "image-io"]
+default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "earclip-io", "earcut-io", "image-io", "metaballs"]
 parallel = ["rayon"]
 f64 = [
   "rapier3d-f64",
@@ -62,4 +62,7 @@ hershey-text = [
 image-io = [
   "image",
   "contour_tracing",
+]
+metaballs = [
+  "fast-surface-nets",
 ]

@@ -6,7 +6,7 @@
 use std::fs;
 use nalgebra::{Vector3, Point3};
 use csgrs::plane::Plane;
-use csgrs::metaball::MetaBall;
+use csgrs::csg::MetaBall;
 
 // A type alias for convenience: no shared data, i.e. S = ()
 type CSG = csgrs::csg::CSG<()>;

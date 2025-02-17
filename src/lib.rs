@@ -8,7 +8,6 @@ pub mod plane;
 pub mod polygon;
 pub mod bsp;
 pub mod csg;
-pub mod metaball;
 
 #[cfg(test)]
 mod tests;
