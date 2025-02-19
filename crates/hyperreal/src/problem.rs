@@ -8,7 +8,7 @@ use crate::{Rational, Real};
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum Problem {
-    /// Unspecified problem while parsing a number
+    /// Unspecified problem while parsing an expression
     ParseError,
     /// Tried to take the Square Root of a Negative, these values are Imaginary
     SqrtNegative,
@@ -30,6 +30,8 @@ pub enum Problem {
     BadDecimal,
     /// When parsing an integer there were non-digits in the text
     BadInteger,
+    /// The closest integer was outside the range for the chosen type
+    OutOfRange,
 }
 
 use std::fmt;

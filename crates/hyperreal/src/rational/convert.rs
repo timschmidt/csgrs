@@ -10,6 +10,15 @@ macro_rules! impl_integer_conversion {
                 Self::from_bigint(ToBigInt::to_bigint(&n).unwrap())
             }
         }
+
+        impl TryFrom<Rational> for $T {
+            type Error = Problem;
+
+            fn try_from(n: Rational) -> Result<$T, Self::Error> {
+                let i = n.shifted_big_integer(0);
+                <$T>::try_from(i).map_err(|_| Problem::OutOfRange)
+            }
+        }
     };
 }
 
@@ -162,6 +171,33 @@ mod tests {
         assert_eq!(one, Rational::new(0xff));
         assert_eq!(two, Rational::new(0xffff));
         assert_eq!(three, Rational::new(0xffff_ffff));
+    }
+
+    #[test]
+    fn nines() {
+        let nine = Rational::new(99);
+        let n_i8: i8 = nine.clone().try_into().unwrap();
+        let n_u32: u32 = nine.clone().try_into().unwrap();
+        let n_i64: i64 = nine.clone().try_into().unwrap();
+        let n_u128: u128 = nine.clone().try_into().unwrap();
+        assert_eq!(n_i8, 99);
+        assert_eq!(n_u32, 99);
+        assert_eq!(n_i64, 99);
+        assert_eq!(n_u128, 99);
+    }
+
+    #[test]
+    fn huge() {
+        let huge = Rational::new(123_456_789);
+        let problem = <Rational as TryInto<i16>>::try_into(huge).unwrap_err();
+        assert_eq!(problem, Problem::OutOfRange);
+    }
+
+    #[test]
+    fn negative() {
+        let minus_100 = Rational::new(-100);
+        let problem = <Rational as TryInto<u8>>::try_into(minus_100).unwrap_err();
+        assert_eq!(problem, Problem::OutOfRange);
     }
 
     #[test]
