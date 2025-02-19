@@ -829,15 +829,9 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 // Normal
                 vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
             }
-
-            // Plane normal
-            poly.plane.normal = mat_inv_transpose
-                .transform_vector(&poly.plane.normal)
-                .normalize();
-
-            // Plane w
-            if let Some(first_vert) = poly.vertices.get(0) {
-                poly.plane.w = poly.plane.normal.dot(&first_vert.pos.coords);
+                
+            if poly.vertices.len() >= 3 {
+                poly.plane = Plane::from_points(&poly.vertices[0].pos, &poly.vertices[1].pos, &poly.vertices[2].pos);
             }
         }
 
