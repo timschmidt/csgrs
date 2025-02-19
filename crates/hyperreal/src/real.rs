@@ -588,7 +588,7 @@ impl std::str::FromStr for Real {
     type Err = Problem;
 
     fn from_str(s: &str) -> Result<Self, Problem> {
-        let rational: Rational = s.parse().map_err(|_| Problem::ParseError)?;
+        let rational: Rational = s.parse()?;
         Ok(Self {
             rational,
             class: One,
