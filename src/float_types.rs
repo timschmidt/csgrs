@@ -23,21 +23,21 @@ pub const EPSILON: Real = 1e-12;
 
 // Pi
 #[cfg(feature = "f32")]
-pub const PI: Real = std::f32::consts::PI;
+pub const PI: Real = core::f32::consts::PI;
 #[cfg(feature = "f64")]
-pub const PI: Real = std::f64::consts::PI;
+pub const PI: Real = core::f64::consts::PI;
 
 // Frac Pi 2
 #[cfg(feature = "f32")]
-pub const FRAC_PI_2: Real = std::f32::consts::FRAC_PI_2;
+pub const FRAC_PI_2: Real = core::f32::consts::FRAC_PI_2;
 #[cfg(feature = "f64")]
-pub const FRAC_PI_2: Real = std::f64::consts::FRAC_PI_2;
+pub const FRAC_PI_2: Real = core::f64::consts::FRAC_PI_2;
 
 // Tau
 #[cfg(feature = "f32")]
-pub const TAU: Real = std::f32::consts::TAU;
+pub const TAU: Real = core::f32::consts::TAU;
 #[cfg(feature = "f64")]
-pub const TAU: Real = std::f64::consts::TAU;
+pub const TAU: Real = core::f64::consts::TAU;
 
 // Open and Closed polygon convenience aliases
 pub const OPEN: bool = true;

@@ -482,7 +482,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
 - evaluate https://github.com/asny/tri-mesh for useful functions
-- identify blockers for no-std: std::collections::HashMap, std::io::Cursor, std::error::Error
+- identify blockers for no-std: std::io::Cursor, std::error::Error
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
   - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
