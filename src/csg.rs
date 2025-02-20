@@ -7,7 +7,6 @@ use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
 };
 use hashbrown::HashMap;
-use std::io::Cursor;
 use std::error::Error;
 use cavalier_contours::polyline::{
     PlineSource, Polyline, PlineSourceMut,
@@ -33,6 +32,9 @@ use rayon::prelude::*;
 
 #[cfg(feature = "truetype-text")]
 use meshtext::{Glyph, MeshGenerator, MeshText};
+
+#[cfg(any(feature = "stl-io", feature = "dxf-io"))]
+use core2::io::Cursor;
 
 #[cfg(feature = "dxf-io")]
 use dxf::entities::*;
@@ -405,29 +407,29 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// let sq2 = CSG::square(2.0, 3.0, None);
     pub fn square(width: Real, length: Real, metadata: Option<S>) -> CSG<S> {
         // Single 2D polygon, normal = +Z
-        let normal = Vector3::new(0.0, 0.0, 1.0);
+        let normal = Vector3::z();
         let vertices = vec![
             Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
             Vertex::new(Point3::new(width, 0.0, 0.0), normal),
             Vertex::new(Point3::new(width, length, 0.0), normal),
             Vertex::new(Point3::new(0.0, length, 0.0), normal),
         ];
-        CSG::from_polygons(&[Polygon::new(vertices, CLOSED, metadata.clone())])
+        CSG::from_polygons(&[Polygon::new(vertices, CLOSED, metadata)])
     }
 
     /// Creates a 2D circle in the XY plane.
     pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
-        let mut verts = Vec::with_capacity(segments);
-        let normal = Vector3::new(0.0, 0.0, 1.0);
+        let mut vertices = Vec::with_capacity(segments);
+        let normal = Vector3::z();
 
         for i in 0..segments {
             let theta = 2.0 * PI * (i as Real) / (segments as Real);
             let x = radius * theta.cos();
             let y = radius * theta.sin();
-            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+            vertices.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
 
-        CSG::from_polygons(&[Polygon::new(verts, CLOSED, metadata)])
+        CSG::from_polygons(&[Polygon::new(vertices, CLOSED, metadata)])
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -441,15 +443,17 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     /// let poly2d = CSG::polygon_2d(&pts, metadata);
     pub fn polygon_2d(points: &[[Real; 2]], metadata: Option<S>) -> CSG<S> {
-        // todo: return error
-        assert!(points.len() >= 3, "polygon_2d requires at least 3 points");
-
-        let normal = Vector3::new(0.0, 0.0, 1.0);
-        let mut verts = Vec::with_capacity(points.len());
-        for p in points {
-            verts.push(Vertex::new(Point3::new(p[0], p[1], 0.0), normal));
+        // todo: return error "polygon_2d requires at least 3 points"
+        if points.len() < 3 {
+            return CSG::new();
         }
-        CSG::from_polygons(&[Polygon::new(verts, CLOSED, metadata)])
+
+        let normal = Vector3::z();
+        let mut vertices = Vec::with_capacity(points.len());
+        for p in points {
+            vertices.push(Vertex::new(Point3::new(p[0], p[1], 0.0), normal));
+        }
+        CSG::from_polygons(&[Polygon::new(vertices, CLOSED, metadata)])
     }
     
     /// Create a right prism (a box) that spans from (0, 0, 0) 

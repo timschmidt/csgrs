@@ -455,6 +455,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 ## Roadmap / Todo
 - fix up error handling with result types
 - convert more for loops to iterators
+- rewrite bounding_box to be compatible with parry, but not require it, put parry, rapier behind feature flag
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - extend flatten to work with arbitrary planes
@@ -474,13 +475,11 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
   - https://github.com/Akirami/polygon-offsetting
   - https://github.com/anlumo/offset_polygon
 - support scale and translation along a vector in rotate extrude
-- investigate marching_cubes, marching_cubes_rs
 - identify more candidates for par_iter
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
 - reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
-- evaluate https://github.com/asny/tri-mesh for useful functions
 - identify blockers for no-std: std::io::Cursor, std::error::Error
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
   - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
@@ -490,6 +489,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - implement constant radius arc support in 2d using cavalier_contours, interpolate/tessellate in from_polygons
 - extend Polygon to allow edges to store bulge like cavalier_contours and update split_polygon to handle line/arc intersections.
 - https://github.com/PsichiX/density-mesh
+- https://github.com/asny/tri-mesh port
 ---
 
 ## License
