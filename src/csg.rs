@@ -476,7 +476,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // Bottom face (z=0, normal approx. -Z)
         // p000 -> p100 -> p110 -> p010
-        let bottom_normal = Vector3::new(0.0, 0.0, -1.0);
+        let bottom_normal = -Vector3::z();
         let bottom = Polygon::new(
             vec![
                 Vertex::new(p000, bottom_normal),
@@ -490,7 +490,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // Top face (z=depth, normal approx. +Z)
         // p001 -> p011 -> p111 -> p101
-        let top_normal = Vector3::new(0.0, 0.0, 1.0);
+        let top_normal = Vector3::z();
         let top = Polygon::new(
             vec![
                 Vertex::new(p001, top_normal),
@@ -504,7 +504,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // Front face (y=0, normal approx. -Y)
         // p000 -> p001 -> p101 -> p100
-        let front_normal = Vector3::new(0.0, -1.0, 0.0);
+        let front_normal = -Vector3::y();
         let front = Polygon::new(
             vec![
                 Vertex::new(p000, front_normal),
@@ -518,7 +518,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // Back face (y=height, normal approx. +Y)
         // p010 -> p110 -> p111 -> p011
-        let back_normal = Vector3::new(0.0, 1.0, 0.0);
+        let back_normal = Vector3::y();
         let back = Polygon::new(
             vec![
                 Vertex::new(p010, back_normal),
@@ -532,7 +532,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // Left face (x=0, normal approx. -X)
         // p000 -> p010 -> p011 -> p001
-        let left_normal = Vector3::new(-1.0, 0.0, 0.0);
+        let left_normal = -Vector3::x();
         let left = Polygon::new(
             vec![
                 Vertex::new(p000, left_normal),
@@ -546,7 +546,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // Right face (x=width, normal approx. +X)
         // p100 -> p101 -> p111 -> p110
-        let right_normal = Vector3::new(1.0, 0.0, 0.0);
+        let right_normal = Vector3::x();
         let right = Polygon::new(
             vec![
                 Vertex::new(p100, right_normal),
