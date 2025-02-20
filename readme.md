@@ -455,7 +455,6 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 ## Roadmap / Todo
 - fix up error handling with result types
 - convert more for loops to iterators
-- parry, rapier behind feature flags
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - extend flatten to work with arbitrary planes

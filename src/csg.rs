@@ -6,18 +6,18 @@ use crate::polygon::{Polygon, polyline_area, union_all_2d, build_orthonormal_bas
 use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
 };
+use hashbrown::HashMap;
+use std::io::Cursor;
+use std::error::Error;
+use cavalier_contours::polyline::{
+    PlineSource, Polyline, PlineSourceMut,
+};
 use crate::float_types::parry3d::{
     bounding_volume::Aabb,
     query::{Ray, RayCast},
     shape::{Shape, SharedShape, TriMesh, Triangle},
 };
 use crate::float_types::rapier3d::prelude::*;
-use std::collections::HashMap;
-use std::io::Cursor;
-use std::error::Error;
-use cavalier_contours::polyline::{
-    PlineSource, Polyline, PlineSourceMut,
-};
 
 #[cfg(feature = "chull-io")]
 use chull::ConvexHullWrapper;
