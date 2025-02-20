@@ -2,7 +2,9 @@
 
 An optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** helps you construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to transform, interrogate, and simulate those shapes without leaving Rust.
 
-This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`earclip`](https://crates.io/crates/earclip) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust mesh and line processing, be reasonably performant on a wide variety of targets, and provide an extensible, type-safe API.
+This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`earclip`](https://crates.io/crates/earclip)/[`earcut`](https://crates.io/crates/earcut) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust mesh and line processing, be fast and flexible, and provide an extensible, type-safe API.
+
+The BSP tree works with shapes made of lines which can be easily split by a plane.  **csgrs** has limited support for recovering curves from interpolated polylines, and for offsetting curves when calculating tool offsets or for adaptive clearing.  This approach works even when models are imported as a mesh.
 
 ![Example CSG output](docs/csg.png)
 
@@ -479,7 +481,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
-- identify blockers for no-std: std::io::Cursor, std::error::Error
+- std::io::Cursor, std::error::Error - core2 no_std transition
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
   - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
