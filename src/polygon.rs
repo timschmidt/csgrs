@@ -3,7 +3,7 @@ use crate::errors::ValidationError;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
 use nalgebra::{
-    Matrix4, Point2, Point3, Rotation3, Translation3, Unit, Vector3,
+    Matrix4, Point2, Point3, Rotation3, Translation3, Unit, Vector3, Vector4,
 };
 use cavalier_contours::polyline::{
     BooleanOp, PlineCreation, PlineSource, PlineSourceMut, Polyline,
@@ -49,7 +49,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             let v = polyline.at(i);
 
             // (x, y, 0, 1)
-            let p4_local = nalgebra::Vector4::new(v.x, v.y, 0.0, 1.0);
+            let p4_local = Vector4::new(v.x, v.y, 0.0, 1.0);
             let p4_world = from_xy * p4_local;
 
             let vx = p4_world[0];
@@ -118,12 +118,12 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         
         let open = !polyline.is_closed();
 
-        let plane_normal = nalgebra::Vector3::z();
+        let plane_normal = Vector3::z();
         let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
         for i in 0..polyline.vertex_count() {
             let v = polyline.at(i);
             poly_verts.push(Vertex::new(
-                nalgebra::Point3::new(v.x, v.y, 0.0),
+                Point3::new(v.x, v.y, 0.0),
                 plane_normal,
             ));
         }
@@ -432,7 +432,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             .map(|p| {
                 // Make sure to tell Rust the type explicitly so that the multiplication produces
                 // a Vector4<Real>.
-                let p4: nalgebra::Vector4<Real> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
+                let p4: Vector4<Real> = Vector4::new(p[0], p[1], 0.0, 1.0);
                 let p3 = from_xy * p4;
                 Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
             })
@@ -467,7 +467,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             .map(|p| {
                 // Make sure to tell Rust the type explicitly so that the multiplication produces
                 // a Vector4<Real>.
-                let p4: nalgebra::Vector4<Real> = nalgebra::Vector4::new(p[0], p[1], 0.0, 1.0);
+                let p4: Vector4<Real> = Vector4::new(p[0], p[1], 0.0, 1.0);
                 let p3 = from_xy * p4;
                 Vertex::new(Point3::from_homogeneous(p3).unwrap(), self.plane.normal)
             })
@@ -486,7 +486,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         let pline_2d = self.to_2d();
         // Perform offset
         let offset_result = pline_2d.parallel_offset(distance);
-        let plane_normal = nalgebra::Vector3::z();
+        let plane_normal = Vector3::z();
 
         // Convert each offset polyline back to a 3D Polygon
         let mut new_polygons = Vec::new();
@@ -497,7 +497,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
                 for i in 0..off_pl.vertex_count() {
                     let v = off_pl.at(i);
                     poly_verts.push(Vertex::new(
-                        nalgebra::Point3::new(v.x, v.y, 0.0),
+                        Point3::new(v.x, v.y, 0.0),
                         plane_normal,
                     ));
                 }
@@ -764,9 +764,7 @@ pub fn polyline_area(pline: &Polyline<Real>) -> Real {
 
 /// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v` so that
 /// {u, v, n} forms an orthonormal basis. `n` is assumed non‐zero.
-pub fn build_orthonormal_basis(
-    n: nalgebra::Vector3<Real>,
-) -> (nalgebra::Vector3<Real>, nalgebra::Vector3<Real>) {
+pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real>) {
     // Normalize the given normal
     let n = n.normalize();
 
