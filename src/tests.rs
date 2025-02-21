@@ -721,13 +721,13 @@ fn test_csg_inverse() {
 #[test]
 fn test_csg_cube() {
     let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    // By default, center=(0,0,0) radius=(1,1,1) => corners at ±1
+    // By default, corner at (0,0,0)
     // We expect 6 faces, each 4 vertices = 6 polygons
     assert_eq!(c.polygons.len(), 6);
     // Check bounding box
     let bb = c.bounding_box();
-    assert!(approx_eq(bb.mins.x, -1.0, EPSILON));
-    assert!(approx_eq(bb.maxs.x, 1.0, EPSILON));
+    assert!(approx_eq(bb.mins.x, 0.0, EPSILON));
+    assert!(approx_eq(bb.maxs.x, 2.0, EPSILON));
 }
 
 // --------------------------------------------------------
@@ -757,8 +757,8 @@ fn test_csg_sphere() {
 
 #[test]
 fn test_csg_cylinder() {
-    // Default cylinder => from (0,-1,0) to (0,1,0) with radius=1
-    let cylinder: CSG<()> = CSG::cylinder(1.0, 2.0, 32, None);
+    // Default cylinder => from (0,0,0) to (0,2,0) with radius=1
+    let cylinder: CSG<()> = CSG::cylinder(1.0, 2.0, 16, None);
     let polys = cylinder.to_polygons();
     assert!(!polys.is_empty(), "Cylinder should generate polygons");
 
@@ -766,10 +766,10 @@ fn test_csg_cylinder() {
     // Expect x in [-1,1], y in [-1,1], z in [-1,1].
     assert!(approx_eq(bb[0], -1.0, 1e-8), "min X");
     assert!(approx_eq(bb[1], -1.0, 1e-8), "min Y");
-    assert!(approx_eq(bb[2], -1.0, 1e-8), "min Z");
+    assert!(approx_eq(bb[2], 0.0, 1e-8), "min Z");
     assert!(approx_eq(bb[3], 1.0, 1e-8), "max X");
     assert!(approx_eq(bb[4], 1.0, 1e-8), "max Y");
-    assert!(approx_eq(bb[5], 1.0, 1e-8), "max Z");
+    assert!(approx_eq(bb[5], 2.0, 1e-8), "max Z");
 
     // We have slices = 16, plus 16*2 polygons for the end caps
     assert_eq!(cylinder.polygons.len(), 48);
@@ -827,9 +827,9 @@ fn test_csg_mirror() {
     let plane_x = Plane { normal: Vector3::x(), w: 0.0 }; // x=0 plane
     let mirror_x = c.mirror(plane_x);
     let bb_mx = mirror_x.bounding_box();
-    // The original cube was from x=-1..1, so mirrored across X=0 is the same bounding box
-    assert!(approx_eq(bb_mx.mins.x, -1.0, EPSILON));
-    assert!(approx_eq(bb_mx.maxs.x, 1.0, EPSILON));
+    // The original cube was from x=0..2, so mirrored across X=0 should be -2..0
+    assert!(approx_eq(bb_mx.mins.x, -2.0, EPSILON));
+    assert!(approx_eq(bb_mx.maxs.x, 0.0, EPSILON));
 }
 
 #[test]
