@@ -59,12 +59,12 @@ fn approx_eq(a: Real, b: Real, eps: Real) -> bool {
 
 #[test]
 fn test_vertex_flip() {
-    let mut v = Vertex::new(Point3::new(1.0, 2.0, 3.0), Vector3::new(1.0, 0.0, 0.0));
+    let mut v = Vertex::new(Point3::new(1.0, 2.0, 3.0), Vector3::x());
     v.flip();
     // Position remains the same
     assert_eq!(v.pos, Point3::new(1.0, 2.0, 3.0));
     // Normal should be negated
-    assert_eq!(v.normal, Vector3::new(-1.0, 0.0, 0.0));
+    assert_eq!(v.normal, -Vector3::x());
 }
 
 // --------------------------------------------------------
@@ -413,7 +413,7 @@ fn test_node_new_and_build() {
         CLOSED,
         None,
     );
-    let node: Node<()> = Node::new(vec![p.clone()]);
+    let node: Node<()> = Node::new(&[p.clone()]);
     // The node should have built a tree with plane = p.plane, polygons = [p], no front/back children
     assert!(node.plane.is_some());
     assert_eq!(node.polygons.len(), 1);
@@ -432,7 +432,7 @@ fn test_node_invert() {
         CLOSED,
         None,
     );
-    let mut node: Node<()> = Node::new(vec![p.clone()]);
+    let mut node: Node<()> = Node::new(&[p.clone()]);
     let original_count = node.polygons.len();
     let original_normal = node.plane.as_ref().unwrap().normal;
     node.invert();
@@ -527,7 +527,7 @@ fn test_node_clip_to() {
         CLOSED,
         None,
     );
-    let mut node_a: Node<()> = Node::new(vec![poly.clone()]);
+    let mut node_a: Node<()> = Node::new(&[poly.clone()]);
     // Another polygon that fully encloses the above
     let big_poly: Polygon<()> = Polygon::new(
         vec![
@@ -539,7 +539,7 @@ fn test_node_clip_to() {
         CLOSED,
         None,
     );
-    let node_b: Node<()> = Node::new(vec![big_poly]);
+    let node_b: Node<()> = Node::new(&[big_poly]);
     node_a.clip_to(&node_b);
     // We expect nodeA's polygon to be removed
     let all_a = node_a.all_polygons();
@@ -568,7 +568,7 @@ fn test_node_all_polygons() {
         None,
     );
 
-    let node: Node<()> = Node::new(vec![poly1.clone(), poly2.clone()]);
+    let node: Node<()> = Node::new(&[poly1.clone(), poly2.clone()]);
     let all_polys = node.all_polygons();
     // We expect to retrieve both polygons
     assert_eq!(all_polys.len(), 2);
@@ -588,7 +588,7 @@ fn test_csg_from_polygons_and_to_polygons() {
         CLOSED,
         None,
     );
-    let csg: CSG<()> = CSG::from_polygons(vec![poly.clone()]);
+    let csg: CSG<()> = CSG::from_polygons(&[poly.clone()]);
     let polys = csg.to_polygons();
     assert_eq!(polys.len(), 1);
     assert_eq!(polys[0].vertices.len(), 3);
@@ -945,7 +945,7 @@ fn test_csg_rotate_extrude() {
     // Shift it so it’s from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
     // and rotate it 90 degrees so that it can be swept around Z
     let square: CSG<()> = CSG::square(2.0, 2.0, None)
-        .translate(nalgebra::Vector3::new(1.0, 0.0, 0.0))
+        .translate(Vector3::new(1.0, 0.0, 0.0))
         .rotate(90.0, 0.0, 0.0);
 
     // Now revolve this translated square around the Z-axis, 360° in 16 segments.
@@ -1001,7 +1001,7 @@ fn test_csg_text() {
     // We can’t easily test visually, but we can at least test that it doesn’t panic
     // and returns some polygons for normal ASCII letters.
     let font_data = include_bytes!("../asar.ttf");
-    let text_csg: CSG<()> = CSG::text("ABC", font_data, Some(10.0), None);
+    let text_csg: CSG<()> = CSG::text("ABC", font_data, 10.0, None);
     assert!(!text_csg.polygons.is_empty());
 }
 
@@ -1155,7 +1155,7 @@ fn test_csg_construction_with_metadata() {
         false,
         Some("PolyB".to_string()),
     );
-    let csg = CSG::from_polygons(vec![poly_a.clone(), poly_b.clone()]);
+    let csg = CSG::from_polygons(&[poly_a.clone(), poly_b.clone()]);
 
     // We expect two polygons with the same shared data as the originals.
     assert_eq!(csg.polygons.len(), 2);
@@ -1290,7 +1290,7 @@ fn test_subdivide_metadata() {
         false,
         Some("LargeQuad".to_string()),
     );
-    let csg = CSG::from_polygons(vec![poly]);
+    let csg = CSG::from_polygons(&[poly]);
     let subdivided = csg.subdivide_triangles(1); // one level of subdivision
 
     // Now it's split into multiple triangles. Each should keep "LargeQuad" as metadata.
@@ -1312,7 +1312,7 @@ fn test_transform_metadata() {
         false,
         Some("Tri".to_string()),
     );
-    let csg = CSG::from_polygons(vec![poly]);
+    let csg = CSG::from_polygons(&[poly]);
     let csg_trans = csg.translate(Vector3::new(10.0, 5.0, 0.0));
     let csg_scale = csg_trans.scale(2.0, 2.0, 1.0);
     let csg_rot = csg_scale.rotate(0.0, 0.0, 45.0);
@@ -1441,9 +1441,9 @@ fn test_circle_offset_2d() {
 fn make_polygon_3d(points: &[[Real; 3]]) -> Polygon<()> {
     let mut verts = Vec::new();
     for p in points {
-        let pos = nalgebra::Point3::new(p[0], p[1], p[2]);
+        let pos = Point3::new(p[0], p[1], p[2]);
         // For simplicity, just store an arbitrary normal; Polygon::new re-computes the plane anyway.
-        let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+        let normal = Vector3::z();
         verts.push(Vertex::new(pos, normal));
     }
     Polygon::new(verts, CLOSED, None)
@@ -1623,7 +1623,7 @@ fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::<()>::cylinder(1.0, 2.0, 32, None);
     // 2) Slice at z=0
-    let cross_section = cyl.slice(None);
+    let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
 
     // For a simple cylinder, the cross-section is typically 1 circle polygon
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
@@ -1685,10 +1685,10 @@ fn polygon_from_xy_points(xy_points: &[[Real; 2]]) -> Polygon<()> {
         "Need at least 3 points for a polygon."
     );
 
-    let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+    let normal = Vector3::z();
     let vertices: Vec<Vertex> = xy_points
         .iter()
-        .map(|&[x, y]| Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal))
+        .map(|&[x, y]| Vertex::new(Point3::new(x, y, 0.0), normal))
         .collect();
 
     Polygon::new(vertices, CLOSED, None)
@@ -1700,7 +1700,7 @@ fn polygon_from_xy_points(xy_points: &[[Real; 2]]) -> Polygon<()> {
 fn test_flatten_and_union_single_polygon() {
     // Create a CSG with one polygon (a unit square).
     let square_poly = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
-    let csg = CSG::from_polygons(vec![square_poly]);
+    let csg = CSG::from_polygons(&[square_poly]);
 
     // Flatten & union it
     let flat_csg = csg.flatten();
@@ -1722,7 +1722,7 @@ fn test_flatten_and_union_two_overlapping_squares() {
     let square1 = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     // Second square from (1,0) to (2,1)
     let square2 = polygon_from_xy_points(&[[1.0, 0.0], [2.0, 0.0], [2.0, 1.0], [1.0, 1.0]]);
-    let csg = CSG::from_polygons(vec![square1, square2]);
+    let csg = CSG::from_polygons(&[square1, square2]);
 
     let flat_csg = csg.flatten();
     assert!(!flat_csg.polygons.is_empty(), "Union should not be empty");
@@ -1752,7 +1752,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
     let square_a = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     // Square B at (2..3, 2..3)
     let square_b = polygon_from_xy_points(&[[2.0, 2.0], [3.0, 2.0], [3.0, 3.0], [2.0, 3.0]]);
-    let csg = CSG::from_polygons(vec![square_a, square_b]);
+    let csg = CSG::from_polygons(&[square_a, square_b]);
 
     let flat_csg = csg.flatten();
     assert!(!flat_csg.polygons.is_empty());
@@ -1769,20 +1769,20 @@ fn test_flatten_and_union_two_disjoint_squares() {
 /// but very close to z=0. This checks sensitivity to floating errors.
 #[test]
 fn test_flatten_and_union_near_xy_plane() {
-    let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+    let normal = Vector3::z();
     // Slightly "tilted" or with z=1e-6
     let poly1 = Polygon::<()>::new(
         vec![
-            Vertex::new(nalgebra::Point3::new(0.0, 0.0, 1e-6), normal),
-            Vertex::new(nalgebra::Point3::new(1.0, 0.0, 1e-6), normal),
-            Vertex::new(nalgebra::Point3::new(1.0, 1.0, 1e-6), normal),
-            Vertex::new(nalgebra::Point3::new(0.0, 1.0, 1e-6), normal),
+            Vertex::new(Point3::new(0.0, 0.0, 1e-6), normal),
+            Vertex::new(Point3::new(1.0, 0.0, 1e-6), normal),
+            Vertex::new(Point3::new(1.0, 1.0, 1e-6), normal),
+            Vertex::new(Point3::new(0.0, 1.0, 1e-6), normal),
         ],
         CLOSED,
         None,
     );
 
-    let csg = CSG::from_polygons(vec![poly1]);
+    let csg = CSG::from_polygons(&[poly1]);
     let flat_csg = csg.flatten();
 
     assert!(
@@ -1809,7 +1809,7 @@ fn test_flatten_and_union_collinear_edges() {
         [2.0, 1.0],
     ]);
 
-    let csg = CSG::<()>::from_polygons(vec![rect1, rect2]);
+    let csg = CSG::<()>::from_polygons(&[rect1, rect2]);
     let flat_csg = csg.flatten();
 
     // Expect 1 polygon from x=0..4, y=0..~1.0ish
