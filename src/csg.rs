@@ -171,7 +171,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 for i in 0..pl.vertex_count() {
                     let v = pl.at(i);
                     poly_verts.push(Vertex::new(
-                        nalgebra::Point3::new(v.x, v.y, 0.0),
+                        Point3::new(v.x, v.y, 0.0),
                         plane_normal,
                     ));
                 }
@@ -862,7 +862,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let center_x = (aabb.mins.x + aabb.maxs.x) * 0.5;
         let center_y = (aabb.mins.y + aabb.maxs.y) * 0.5;
         let center_z = (aabb.mins.z + aabb.maxs.z) * 0.5;
-        let center = nalgebra::Vector3::new(center_x, center_y, center_z);
+        let center = Vector3::new(center_x, center_y, center_z);
 
         // Translate so that the bounding-box center goes to the origin
         self.translate(-center)
@@ -874,14 +874,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// # Example
     /// ```
-    /// let csg = CSG::cube(1.0, 1.0, 3.0, None).translate(nalgebra::Vector3::new(2.0, 1.0, -2.0));
+    /// let csg = CSG::cube(1.0, 1.0, 3.0, None).translate(Vector3::new(2.0, 1.0, -2.0));
     /// let floated = csg.float();
     /// assert_eq!(floated.bounding_box().mins.z, 0.0);
     /// ```
     pub fn float(&self) -> Self {
         let aabb = self.bounding_box();
         let min_z = aabb.mins.z;
-        let shift = nalgebra::Vector3::new(0.0, 0.0, -min_z);
+        let shift = Vector3::new(0.0, 0.0, -min_z);
         self.translate(shift)
     }
 
@@ -1226,7 +1226,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// ```
     /// let shape_2d = CSG::square(2.0, 2.0, None); // a 2D square in XY
     /// let extruded = shape_2d.linear_extrude(
-    ///     direction = nalgebra::Vector3::new(0.0, 0.0, 10.0),
+    ///     direction = Vector3::new(0.0, 0.0, 10.0),
     ///     twist = 360.0,
     ///     segments = 32,
     ///     scale = 1.2,
@@ -1264,15 +1264,15 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
             // Build a transform: scale in XY, then rotate around Z, then translate in Z.
             // (1) scale
-            let mat_scale = nalgebra::Matrix4::new_nonuniform_scaling(&Vector3::new(sc_i, sc_i, 1.0));
+            let mat_scale = Matrix4::new_nonuniform_scaling(&Vector3::new(sc_i, sc_i, 1.0));
             // (2) rotate around Z by twist_i
-            let rot = nalgebra::Rotation3::from_axis_angle(
-                &nalgebra::Vector3::z_axis(),
+            let rot = Rotation3::from_axis_angle(
+                &Vector3::z_axis(),
                 twist_i_rad,
             )
             .to_homogeneous();
             // (3) translate by z_i in Z
-            let tr = nalgebra::Translation3::new(0.0, 0.0, z_i).to_homogeneous();
+            let tr = Translation3::new(0.0, 0.0, z_i).to_homogeneous();
 
             let segment_mat = tr * rot * mat_scale;
 
@@ -1368,8 +1368,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 // do the rotation transform
                 let axis = zaxis.cross(&direction).normalize();
                 let angle = zaxis.dot(&direction).acos(); // angle between
-                let rot_mat = nalgebra::Rotation3::from_axis_angle(
-                    &nalgebra::Unit::new_normalize(axis),
+                let rot_mat = Rotation3::from_axis_angle(
+                    &Unit::new_normalize(axis),
                     angle
                 ).to_homogeneous();
                 extruded_csg = extruded_csg.transform(&rot_mat);
@@ -1719,7 +1719,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// Returns a vector of 3D points (the polyline’s vertices). 
     /// If no matching is possible or the polygons are empty, returns an empty vector.
-    pub fn reconstruct_polyline_3d(polylines: &[Polygon<S>]) -> Vec<nalgebra::Point3<Real>> {
+    pub fn reconstruct_polyline_3d(polylines: &[Polygon<S>]) -> Vec<Point3<Real>> {
         // Collect open polylines in 2D first:
         let mut all_points = Vec::new();
         for poly in polylines {
@@ -1736,7 +1736,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let mut segment_points = Vec::with_capacity(pline_2d.vertex_count());
             for i in 0..pline_2d.vertex_count() {
                 let v = pline_2d.at(i);
-                segment_points.push(nalgebra::Point3::new(v.x, v.y, 0.0));
+                segment_points.push(Point3::new(v.x, v.y, 0.0));
             }
             all_points.push(segment_points);
         }
@@ -1968,7 +1968,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let pz3 = z3 * scale;
 
             // Normal = +Z
-            let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+            let normal = Vector3::z();
 
             polygons.push(Polygon::new(
                 vec![
@@ -2345,8 +2345,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// let gyroid_csg = shape.tpms_gyroid(50, 2.0, 0.0);
     /// ```
     pub fn gyroid(&self, resolution: usize, period: Real, iso_value: Real) -> CSG<S> {
-        use nalgebra::Point3;
-
         // 1) Get bounding box of `self`.
         let aabb = self.bounding_box();
 
@@ -2858,12 +2856,12 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 continue;
             }
             // Build vertices with normal = +Z
-            let normal = nalgebra::Vector3::new(0.0, 0.0, 1.0);
+            let normal = Vector3::z();
             let open = false; // We usually consider each contour closed (since it’s a shape outline).
             let mut verts = Vec::with_capacity(pl.len());
             for &(x, y) in &pl {
                 verts.push(Vertex::new(
-                    nalgebra::Point3::new(x as Real, y as Real, 0.0),
+                    Point3::new(x as Real, y as Real, 0.0),
                     normal,
                 ));
             }
@@ -3177,7 +3175,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                                     vertex.location.y as Real,
                                     vertex.location.z as Real,
                                 ),
-                                Vector3::new(0.0, 0.0, 1.0), // Assuming flat in XY
+                                Vector3::z(), // Assuming flat in XY
                             ));
                         }
                         // Create a polygon from the polyline vertices
@@ -3193,7 +3191,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     let segments = 32; // Number of segments to approximate the circle
 
                     let mut verts = Vec::new();
-                    let normal = Vector3::new(0.0, 0.0, 1.0); // Assuming circle lies in XY plane
+                    let normal = Vector3::z(); // Assuming circle lies in XY plane
 
                     for i in 0..segments {
                         let theta = 2.0 * PI * (i as Real) / (segments as Real);

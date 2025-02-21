@@ -466,6 +466,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
   - tests
 - bending
+- space filling curves, hilbert sort polygons
 - document compounded transformations using nalgebra
 - invert Polygon::open to match cavalier_contours
 - svg import/export
