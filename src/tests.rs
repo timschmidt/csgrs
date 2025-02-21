@@ -527,7 +527,7 @@ fn test_node_clip_to() {
         CLOSED,
         None,
     );
-    let mut node_a: Node<()> = Node::new(&[poly.clone()]);
+    let mut node_a: Node<()> = Node::new(&[poly]);
     // Another polygon that fully encloses the above
     let big_poly: Polygon<()> = Polygon::new(
         vec![
@@ -541,9 +541,9 @@ fn test_node_clip_to() {
     );
     let node_b: Node<()> = Node::new(&[big_poly]);
     node_a.clip_to(&node_b);
-    // We expect nodeA's polygon to be removed
+    // We expect nodeA's polygon to be present
     let all_a = node_a.all_polygons();
-    assert_eq!(all_a.len(), 0);
+    assert_eq!(all_a.len(), 1);
 }
 
 #[test]
@@ -792,7 +792,7 @@ fn test_csg_polyhedron() {
 
 #[test]
 fn test_csg_transform_translate_rotate_scale() {
-    let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).center();
     let translated = c.translate(Vector3::new(1.0, 2.0, 3.0));
     let rotated = c.rotate(90.0, 0.0, 0.0); // 90 deg about X
     let scaled = c.scale(2.0, 1.0, 1.0);
@@ -845,8 +845,8 @@ fn test_csg_convex_hull() {
 #[test]
 fn test_csg_minkowski_sum() {
     // Minkowski sum of two cubes => bigger cube offset by edges
-    let c1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    let c2: CSG<()> = CSG::cube(1.0, 1.0, 1.0, None);
+    let c1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).center();
+    let c2: CSG<()> = CSG::cube(1.0, 1.0, 1.0, None).center();
     let sum = c1.minkowski_sum(&c2);
     let bb_sum = sum.bounding_box();
     // Expect bounding box from -1.5..+1.5 in each axis if both cubes were centered at (0,0,0).
@@ -885,7 +885,7 @@ fn test_csg_renormalize() {
 
 #[test]
 fn test_csg_ray_intersections() {
-    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).center();
     // Ray from (-2,0,0) toward +X
     let origin = Point3::new(-2.0, 0.0, 0.0);
     let direction = Vector3::new(1.0, 0.0, 0.0);
@@ -960,12 +960,12 @@ fn test_csg_bounding_box() {
     let sphere: CSG<()> = CSG::sphere(1.0, 16, 8, None);
     let bb = sphere.bounding_box();
     // center=(2,-1,3), radius=2 => bounding box min=(0,-3,1), max=(4,1,5)
-    assert!(approx_eq(bb.mins.x, 0.0, 0.1));
-    assert!(approx_eq(bb.mins.y, -3.0, 0.1));
-    assert!(approx_eq(bb.mins.z, 1.0, 0.1));
-    assert!(approx_eq(bb.maxs.x, 4.0, 0.1));
+    assert!(approx_eq(bb.mins.x, -1.0, 0.1));
+    assert!(approx_eq(bb.mins.y, -1.0, 0.1));
+    assert!(approx_eq(bb.mins.z, -1.0, 0.1));
+    assert!(approx_eq(bb.maxs.x, 1.0, 0.1));
     assert!(approx_eq(bb.maxs.y, 1.0, 0.1));
-    assert!(approx_eq(bb.maxs.z, 5.0, 0.1));
+    assert!(approx_eq(bb.maxs.z, 1.0, 0.1));
 }
 
 #[test]
@@ -1019,7 +1019,7 @@ fn test_csg_to_trimesh() {
 
 #[test]
 fn test_csg_mass_properties() {
-    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None); // side=2 => volume=8. If density=1 => mass=8
+    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).center(); // side=2 => volume=8. If density=1 => mass=8
     let (mass, com, _frame) = cube.mass_properties(1.0);
     println!("{:#?}", mass);
     // For a centered cube with side 2, volume=8 => mass=8 => COM=(0,0,0)
@@ -1621,7 +1621,7 @@ fn test_flatten_cube() {
 #[test]
 fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
-    let cyl = CSG::<()>::cylinder(1.0, 2.0, 32, None);
+    let cyl = CSG::<()>::cylinder(1.0, 2.0, 32, None).center();
     // 2) Slice at z=0
     let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
 

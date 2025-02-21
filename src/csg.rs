@@ -791,7 +791,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             for &idx in face {
                 // Ensure the index is valid
                 if idx >= points.len() {
-                    panic!(
+                    panic!( // todo return error
                         "Face index {} is out of range (points.len = {}).",
                         idx,
                         points.len()
@@ -821,14 +821,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
     /// Transform all vertices in this CSG by a given 4×4 matrix.
     pub fn transform(&self, mat: &Matrix4<Real>) -> CSG<S> {
-        let mat_inv_transpose = mat.try_inverse().unwrap().transpose();
+        let mat_inv_transpose = mat.try_inverse().unwrap().transpose(); // todo catch error
         let mut csg = self.clone();
 
         for poly in &mut csg.polygons {
             for vert in &mut poly.vertices {
                 // Position
                 let hom_pos = mat * vert.pos.to_homogeneous();
-                vert.pos = Point3::from_homogeneous(hom_pos).unwrap();
+                vert.pos = Point3::from_homogeneous(hom_pos).unwrap();  // todo catch error
 
                 // Normal
                 vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
@@ -852,9 +852,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     }
     
     /// Returns a new CSG translated so that its bounding-box center is at the origin (0,0,0).
-    ///
-    /// If this CSG is empty (has no polygons) such that the bounding box is invalid,
-    /// this simply returns a clone of the original.
     pub fn center(&self) -> Self {
         let aabb = self.bounding_box();
         
@@ -885,6 +882,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         self.translate(shift)
     }
 
+    /// Rotates the CSG by x_degrees, y_degrees, z_degrees
     pub fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> CSG<S> {
         let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg.to_radians());
         let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg.to_radians());
@@ -895,6 +893,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         self.transform(&rot.to_homogeneous())
     }
 
+    /// Scales the CSG by scale_x, scale_y, scale_z
     pub fn scale(&self, sx: Real, sy: Real, sz: Real) -> CSG<S> {
         let mat4 = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
         self.transform(&mat4)
