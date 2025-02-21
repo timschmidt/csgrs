@@ -473,7 +473,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - bending
 - space filling curves, hilbert sort polygons / points
 - document compounded transformations using nalgebra
-- par_iter minkowski
+- identify more candidates for par_iter: minkowski
 - invert Polygon::open to match cavalier_contours
 - svg import/export
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
@@ -483,7 +483,6 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
   - https://github.com/Akirami/polygon-offsetting
   - https://github.com/anlumo/offset_polygon
 - support scale and translation along a vector in rotate extrude
-- identify more candidates for par_iter
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
 - reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html

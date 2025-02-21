@@ -1783,9 +1783,19 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     }
 
     /// Helper to collect all vertices from the CSG.
+    #[cfg(not(feature = "parallel"))]
     pub fn vertices(&self) -> Vec<Vertex> {
         self.polygons
             .iter()
+            .flat_map(|p| p.vertices.clone())
+            .collect()
+    }
+    
+    /// Parallel helper to collect all vertices from the CSG.
+    #[cfg(feature = "parallel")]
+    pub fn vertices(&self) -> Vec<Vertex> {
+        self.polygons
+            .par_iter()
             .flat_map(|p| p.vertices.clone())
             .collect()
     }
