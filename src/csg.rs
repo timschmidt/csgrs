@@ -1,4 +1,4 @@
-use crate::float_types::{EPSILON, PI, TAU, CLOSED, Real};
+use crate::float_types::{EPSILON, PI, TAU, OPEN, CLOSED, Real};
 use crate::bsp::Node;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
@@ -1157,7 +1157,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mut top_polygons = Vec::new();
         let mut bottom_polygons = Vec::new();
 
-        //let unioned_polygons = &self.flatten().polygons;
+        // let unioned_polygons = &self.flatten().polygons;
         let unioned_polygons = &self.polygons; // todo
 
         // Bottom polygons = original polygons
@@ -1236,19 +1236,19 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// );
     /// ```
     pub fn linear_extrude(&self, direction: Vector3<Real>, twist: Real, segments: usize, scale: Real) -> CSG<S> {
-        // 1) calculate height from direction vector
+        // calculate height from direction vector
         let height = direction.norm();
         let (z_start, z_end) = (0.0, height);
 
         // ----------------------------------------------
-        // 2) For each segment i in [0..segments], compute:
-        //       fraction f = i/n
-        //       z_i = z_start + f*(z_end - z_start)
-        //       scale_i = 1 + (scale - 1)*f
-        //       twist_i = twist * f
+        // For each segment i in [0..segments], compute:
+        //    fraction f = i/n
+        //    z_i = z_start + f*(z_end - z_start)
+        //    scale_i = 1 + (scale - 1)*f
+        //    twist_i = twist * f
         //
-        //   Then transform (scale -> rotate -> translate)
-        //   the original 2D polygons.
+        // Then transform (scale -> rotate -> translate)
+        // the original 2D polygons.
         // ----------------------------------------------
         let mut segments_polygons = Vec::with_capacity(segments + 1);
 
@@ -1287,14 +1287,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         // ----------------------------------------------
-        // 3) Connect consecutive segments to form side walls.
-        //    For each polygon in segment[i], connect to polygon in segment[i+1].
+        // Connect consecutive segments to form side walls.
+        // For each polygon in segment[i], connect to polygon in segment[i+1].
         //
-        //    The typical assumption is that the number of polygons & vertex count
-        //    matches from segment to segment. If the shape has multiple polygons or holes,
-        //    more advanced matching is needed. The simplest approach is if the shape is
-        //    a single polygon with the same vertex count each segment. 
-        //    If not, you may need "lofting" logic or repeated triangulation.
+        // The typical assumption is that the number of polygons & vertex count
+        // matches from segment to segment. If the shape has multiple polygons or holes,
+        // more advanced matching is needed. The simplest approach is if the shape is
+        // a single polygon with the same vertex count each segment. 
+        // If not, you may need "lofting" logic or repeated triangulation.
         // ----------------------------------------------
         let mut result_polygons = Vec::new();
 
@@ -1348,15 +1348,15 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mut extruded_csg = CSG::from_polygons(&result_polygons);
 
         // ----------------------------------------------
-        // 4) Finally, the `direction` to extrude along,
-        //    rotate the entire shape from +Z to that direction 
-        //    and scale its length to `height`.
+        // Finally, the `direction` to extrude along,
+        // rotate the entire shape from +Z to that direction 
+        // and scale its length to `height`.
         //
-        //    If direction = Some([vx, vy, vz]), we do:
-        //      - first check direction’s length. If non-zero, we’ll rotate +Z to match its direction
-        //      - scale the shape so that bounding box extends exactly `length(v)` in that direction.
+        // If direction = Some([vx, vy, vz]), we do:
+        //   - first check direction’s length. If non-zero, we’ll rotate +Z to match its direction
+        //   - scale the shape so that bounding box extends exactly `length(v)` in that direction.
         //
-        //    In OpenSCAD, `direction` is required to be "positive Z" direction, but we can be more general.
+        // In OpenSCAD, `direction` is required to be "positive Z" direction, but we can be more general.
         // ---------------------------------------------- 
         if height > EPSILON {
             // 1) rotate from +Z to final_dir
@@ -1398,12 +1398,12 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             bottom.clone()
         };
 
-        // 1) Gather polygons: bottom + top
-        //    (Depending on the orientation, you might want to flip one of them.)
+        // Gather polygons: bottom + top
+        // (Depending on the orientation, you might want to flip one of them.)
 
         let mut polygons = vec![bottom_poly.clone(), top.clone()];
 
-        // 2) For each edge (i -> i+1) in bottom, connect to the corresponding edge in top.
+        // For each edge (i -> i+1) in bottom, connect to the corresponding edge in top.
         for i in 0..n {
             let j = (i + 1) % n;
             let b_i = &bottom.vertices[i];
@@ -1567,7 +1567,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// # Returns
     /// A new 3D `CSG` that is the swept volume.
     pub fn sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>) -> CSG<S> {
-        // 1) Gather the path’s vertices in XY
+        // Gather the path’s vertices in XY
         if path_2d.vertices.len() < 2 {
             // Degenerate path => no sweep
             return CSG::new();
@@ -1581,13 +1581,13 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             path_points.push(Point3::new(v.pos.x, v.pos.y, 0.0));
         }
     
-        // 2) Convert the shape_2d into a list of its vertices in local coords (usually in XY).
-        //    We assume shape_2d is a single polygon (can also handle multiple if needed).
+        // Convert the shape_2d into a list of its vertices in local coords (usually in XY).
+        // We assume shape_2d is a single polygon (can also handle multiple if needed).
         let shape_is_closed = !shape_2d.open && shape_2d.vertices.len() >= 3;
         let shape_count = shape_2d.vertices.len();
     
-        // 3) For each path vertex, compute the orientation that aligns +Z to the path tangent.
-        //    Then transform the shape’s 2D vertices into 3D “slice[i]”.
+        // For each path vertex, compute the orientation that aligns +Z to the path tangent.
+        // Then transform the shape’s 2D vertices into 3D “slice[i]”.
         let n_path = path_points.len();
         let mut slices: Vec<Vec<Point3<Real>>> = Vec::with_capacity(n_path);
     
@@ -1628,17 +1628,17 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             slices.push(slice_i);
         }
     
-        // 4) Build polygons for the new 3D swept solid.
-        //    - (A) “Cap” polygons at start & end if path is open.
-        //    - (B) “Side wall” quads between slice[i] and slice[i+1].
+        // Build polygons for the new 3D swept solid.
+        // - (A) “Cap” polygons at start & end if path is open.
+        // - (B) “Side wall” quads between slice[i] and slice[i+1].
         //
         // We’ll gather them all into a Vec<Polygon<S>>, then make a CSG.
     
         let mut all_polygons = Vec::new();
     
-        // (A) Caps if path is open
-        //     We replicate the shape_2d as polygons at slice[0] and slice[n_path-1].
-        //     We flip the first one so its normal faces outward. The last we keep as is.
+        // Caps if path is open
+        //  We replicate the shape_2d as polygons at slice[0] and slice[n_path-1].
+        //  We flip the first one so its normal faces outward. The last we keep as is.
         if !path_is_closed {
             // “Bottom” cap = slice[0], but we flip its winding so outward normal is “down” the path
             if shape_is_closed {
@@ -1660,7 +1660,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
     
-        // (B) Side walls: For i in [0..n_path-1], or [0..n_path] if closed
+        // Side walls: For i in [0..n_path-1], or [0..n_path] if closed
         let end_index = if path_is_closed { n_path } else { n_path - 1 };
     
         for i in 0..end_index {
@@ -1702,7 +1702,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
     
-        // 5) Combine into a final CSG
+        // Combine into a final CSG
         CSG::from_polygons(&all_polygons)
     }
 
@@ -1891,26 +1891,26 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// //   - Or empty if no intersection
     /// ```
     pub fn slice(&self, plane: Plane) -> CSG<S> {
-        // 1) Build a BSP from all of our polygons:
+        // Build a BSP from all of our polygons:
         let node = Node::new(&self.polygons.clone());
 
-        // 2) Ask the BSP for coplanar polygons + intersection edges:
+        // Ask the BSP for coplanar polygons + intersection edges:
         let (coplanar_polys, intersection_edges) = node.slice(&plane);
 
-        // 3) “Knit” those intersection edges into polylines. Each edge is [vA, vB].
+        // “Knit” those intersection edges into polylines. Each edge is [vA, vB].
         let polylines_3d = unify_intersection_edges(&intersection_edges);
 
-        // 4) Convert each polyline of vertices into a Polygon<S> with `open = true` or false (if loop).
+        // Convert each polyline of vertices into a Polygon<S> with `open = true` or false (if loop).
         let mut result_polygons = Vec::new();
 
-        // (a) Add the coplanar polygons. We can re‐assign their plane to `plane` to ensure
-        //     they share the exact plane definition (in case of numeric drift).
+        // Add the coplanar polygons. We can re‐assign their plane to `plane` to ensure
+        // they share the exact plane definition (in case of numeric drift).
         for mut p in coplanar_polys {
             p.plane = plane.clone(); // unify plane data
             result_polygons.push(p);
         }
 
-        // (b) Convert the “chains” or loops into open/closed polygons
+        // Convert the “chains” or loops into open/closed polygons
         for chain in polylines_3d {
             let n = chain.len();
             if n < 2 {
@@ -1933,7 +1933,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             result_polygons.push(poly);
         }
 
-        // 5) Build a new CSG
+        // Build a new CSG
         CSG::from_polygons(&result_polygons)
     }
 
@@ -2023,8 +2023,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let glyph_polygons = Self::meshtext_to_polygons(&glyph_mesh, size, metadata.clone());
 
             // Translate polygons by (cursor_x, 0.0)
-            let glyph_csg =
-                CSG::from_polygons(&glyph_polygons).translate(cursor_x, 0.0, 0.0);
+            let glyph_csg = CSG::from_polygons(&glyph_polygons).translate(cursor_x, 0.0, 0.0);
             // Accumulate
             all_polygons.extend(glyph_csg.polygons);
 
@@ -2218,7 +2217,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
 
         // TriMesh::new(Vec<[Real; 3]>, Vec<[u32; 3]>)
-        let trimesh = TriMesh::new(vertices, indices).unwrap();
+        let trimesh = TriMesh::new(vertices, indices).unwrap(); // todo: handle error
         SharedShape::new(trimesh)
     }
 
@@ -2348,16 +2347,16 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// let gyroid_csg = shape.tpms_gyroid(50, 2.0, 0.0);
     /// ```
     pub fn gyroid(&self, resolution: usize, period: Real, iso_value: Real) -> CSG<S> {
-        // 1) Get bounding box of `self`.
+        // Get bounding box of `self`.
         let aabb = self.bounding_box();
 
         // Extract bounding box corners
         let min_pt = aabb.mins;
         let max_pt = aabb.maxs;
 
-        // 2) Discretize bounding box into a 3D grid of size `resolution × resolution × resolution`.
-        //    For each cell in the grid, we'll sample the Gyroid function at its corners and do
-        //    a simple "marching cubes" step.
+        // Discretize bounding box into a 3D grid of size `resolution × resolution × resolution`.
+        // For each cell in the grid, we'll sample the Gyroid function at its corners and do
+        // a simple "marching cubes" step.
         if resolution < 2 {
             // degenerate sampling => no real geometry
             return CSG::new();
@@ -2411,17 +2410,17 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
 
-        // 3) Marching Cubes (naïve version).
+        // Marching Cubes (naïve version).
         //
-        //    We'll do a simple variant that looks at each cube of 8 corner samples, checks
-        //    which corners are above/below the iso_value, and linearly interpolates edges.
-        //    For a full version with all 256 cases, see e.g.:
-        //      - the "marching_cubes" crate, or
-        //      - the classic lookup‐table approach from Paul Bourke / NVIDIA.
+        // We'll do a simple variant that looks at each cube of 8 corner samples, checks
+        // which corners are above/below the iso_value, and linearly interpolates edges.
+        // For a full version with all 256 cases, see e.g.:
+        //   - the "marching_cubes" crate, or
+        //   - the classic lookup‐table approach from Paul Bourke / NVIDIA.
         //
-        //    Here, we’ll implement just enough to produce a surface, using the standard
-        //    approach in about ~8 steps.  For brevity, we skip the full 256-case edge table
-        //    and do a simpler approach that might produce more triangles than typical.
+        // Here, we’ll implement just enough to produce a surface, using the standard
+        // approach in about ~8 steps.  For brevity, we skip the full 256-case edge table
+        // and do a simpler approach that might produce more triangles than typical.
 
         let mut triangles = Vec::new(); // will store [ (p1, p2, p3), ... ]
 
@@ -2575,7 +2574,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
 
-        // 4) Convert our triangle soup into a new CSG
+        // Convert our triangle soup into a new CSG
         let mut surf_polygons = Vec::with_capacity(triangles.len());
         for (a, b, c) in triangles {
             // Create a 3‐vertex polygon
@@ -2594,7 +2593,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
         let gyroid_surf = CSG::from_polygons(&surf_polygons);
 
-        // 5) Intersect with `self` to keep only the portion of the gyroid inside this volume.
+        // Intersect with `self` to keep only the portion of the gyroid inside this volume.
         let clipped = gyroid_surf.intersection(self);
 
         clipped
@@ -2617,7 +2616,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             return CSG::new();
         }
     
-        // 1) Determine bounding box of all metaballs (plus padding).
+        // Determine bounding box of all metaballs (plus padding).
         let mut min_pt = Point3::new(Real::MAX, Real::MAX, Real::MAX);
         let mut max_pt = Point3::new(-Real::MAX, -Real::MAX, -Real::MAX);
     
@@ -2646,7 +2645,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
     
-        // 2) Resolution for X, Y, Z
+        // Resolution for X, Y, Z
         let nx = resolution.0.max(2) as u32;
         let ny = resolution.1.max(2) as u32;
         let nz = resolution.2.max(2) as u32;
@@ -2656,8 +2655,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let dy = (max_pt.y - min_pt.y) / (ny as Real - 1.0);
         let dz = (max_pt.z - min_pt.z) / (nz as Real - 1.0);
     
-        // 3) Create and fill the scalar-field array with "field_value - iso_value"
-        //    so that the isosurface will be at 0.
+        // Create and fill the scalar-field array with "field_value - iso_value"
+        // so that the isosurface will be at 0.
         let array_size = (nx * ny * nz) as usize;
         let mut field_values = vec![0.0 as f32; array_size];
     
@@ -2679,8 +2678,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
     
-        // 4) Use fast-surface-nets to extract a mesh from this 3D scalar field.
-        //    We'll define a shape type for ndshape:
+        // Use fast-surface-nets to extract a mesh from this 3D scalar field.
+        // We'll define a shape type for ndshape:
         #[allow(non_snake_case)]
         #[derive(Clone, Copy)]
         struct GridShape {
@@ -2734,8 +2733,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             &mut sn_buffer,
         );
     
-        // 5) Convert the resulting surface net indices/positions into Polygons
-        //    for the csgrs data structures.
+        // Convert the resulting surface net indices/positions into Polygons
+        // for the csgrs data structures.
         let mut triangles = Vec::with_capacity(sn_buffer.indices.len() / 3);
     
         for tri in sn_buffer.indices.chunks_exact(3) {
@@ -2784,7 +2783,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             triangles.push(poly);
         }
     
-        // 6) Build and return a CSG from these polygons
+        // Build and return a CSG from these polygons
         CSG::from_polygons(&triangles)
     }
 
@@ -2818,14 +2817,9 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         threshold: u8,
         closepaths: bool,
         metadata: Option<S>,
-    ) -> Self {
-        use crate::polygon::Polygon;
-        use crate::vertex::Vertex;
-        use crate::float_types::Real;
-        use crate::float_types::EPSILON;
-        
-        // 1) Convert the image into a 2D array of bits for the contour_tracing::array::bits_to_paths function.
-        //    We treat pixels >= threshold as 1, else 0.
+    ) -> Self {        
+        // Convert the image into a 2D array of bits for the contour_tracing::array::bits_to_paths function.
+        // We treat pixels >= threshold as 1, else 0.
         let width = img.width() as usize;
         let height = img.height() as usize;
         let mut bits = Vec::with_capacity(height);
@@ -2842,17 +2836,17 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             bits.push(row);
         }
 
-        // 2) Use contour_tracing::array::bits_to_paths to get a single SVG path string
-        //    containing multiple “move” commands for each outline/hole.
+        // Use contour_tracing::array::bits_to_paths to get a single SVG path string
+        // containing multiple “move” commands for each outline/hole.
         let svg_path = contour_tracing::array::bits_to_paths(bits, closepaths);
         // This might look like: "M1 0H4V1H1M6 0H11V5H6 ..." etc.
 
-        // 3) Parse the path string into one or more polylines. Each polyline
-        //    starts with an 'M x y' and then “H x” or “V y” commands until the next 'M' or end.
+        // Parse the path string into one or more polylines. Each polyline
+        // starts with an 'M x y' and then “H x” or “V y” commands until the next 'M' or end.
         let polylines = Self::parse_svg_path_into_polylines(&svg_path);
 
-        // 4) Convert each polyline into a Polygon in the XY plane at z=0,
-        //    storing them in a `Vec<Polygon<S>>`.
+        // Convert each polyline into a Polygon in the XY plane at z=0,
+        // storing them in a `Vec<Polygon<S>>`.
         let mut all_polygons = Vec::new();
         for pl in polylines {
             if pl.len() < 2 {
@@ -2879,7 +2873,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             all_polygons.push(poly);
         }
 
-        // 5) Build a CSG from those polygons
+        // Build a CSG from those polygons
         CSG::from_polygons(&all_polygons)
     }
 
@@ -3298,7 +3292,7 @@ fn polygon_from_slice<S: Clone + Send + Sync>(
 ) -> Polygon<S> {
     if slice_pts.len() < 3 {
         // degenerate polygon
-        return Polygon::new(vec![], true, metadata);
+        return Polygon::new(vec![], OPEN, metadata);
     }
     // Build the vertex list
     let mut verts: Vec<Vertex> = slice_pts
@@ -3396,11 +3390,11 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
     // We will store adjacency by a “key” that identifies an endpoint up to EPSILON,
     // then link edges that share the same key.
 
-    // 2) Adjacency map: key -> list of (edge_index, is_start_or_end)
-    //    We’ll store “(edge_idx, which_end)” as which_end = 0 or 1 for edges[edge_idx][0/1].
+    // Adjacency map: key -> list of (edge_index, is_start_or_end)
+    // We’ll store “(edge_idx, which_end)” as which_end = 0 or 1 for edges[edge_idx][0/1].
     let mut adjacency: HashMap<EndKey, Vec<(usize, usize)>> = HashMap::new();
 
-    // 3) Collect all endpoints
+    // Collect all endpoints
     for (i, edge) in edges.iter().enumerate() {
         for end_idx in 0..2 {
             let v = &edge[end_idx];
@@ -3409,12 +3403,12 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
         }
     }
 
-    // 4) We’ll keep track of which edges have been “visited” in the final polylines.
+    // We’ll keep track of which edges have been “visited” in the final polylines.
     let mut visited = vec![false; edges.len()];
 
     let mut chains: Vec<Vec<Vertex>> = Vec::new();
 
-    // 5) For each edge not yet visited, we “walk” outward from one end, building a chain
+    // For each edge not yet visited, we “walk” outward from one end, building a chain
     for start_edge_idx in 0..edges.len() {
         if visited[start_edge_idx] {
             continue;

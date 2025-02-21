@@ -473,7 +473,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - bending
 - space filling curves, hilbert sort polygons / points
 - document compounded transformations using nalgebra
-- identify more candidates for par_iter: minkowski
+- identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold
 - invert Polygon::open to match cavalier_contours
 - svg import/export
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
