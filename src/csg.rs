@@ -842,9 +842,15 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         csg
     }
 
+    /// Returns a new CSG translated by x, y, and z.
+    ///
+    pub fn translate(&self, x: Real, y: Real, z: Real) -> CSG<S> {
+        self.translate_vector(Vector3::new(x, y, z))
+    }
+    
     /// Returns a new CSG translated by vector.
     ///
-    pub fn translate(&self, vector: Vector3<Real>) -> CSG<S> {
+    pub fn translate_vector(&self, vector: Vector3<Real>) -> CSG<S> {
         let translation = Translation3::from(vector);
         // Convert to a Matrix4
         let mat4 = translation.to_homogeneous();
@@ -859,10 +865,9 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let center_x = (aabb.mins.x + aabb.maxs.x) * 0.5;
         let center_y = (aabb.mins.y + aabb.maxs.y) * 0.5;
         let center_z = (aabb.mins.z + aabb.maxs.z) * 0.5;
-        let center = Vector3::new(center_x, center_y, center_z);
 
         // Translate so that the bounding-box center goes to the origin
-        self.translate(-center)
+        self.translate(-center_x, -center_y, -center_z)
     }
     
     /// Translates the CSG so that its bottommost point(s) sit exactly at z=0.
@@ -871,15 +876,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// # Example
     /// ```
-    /// let csg = CSG::cube(1.0, 1.0, 3.0, None).translate(Vector3::new(2.0, 1.0, -2.0));
+    /// let csg = CSG::cube(1.0, 1.0, 3.0, None).translate(2.0, 1.0, -2.0);
     /// let floated = csg.float();
     /// assert_eq!(floated.bounding_box().mins.z, 0.0);
     /// ```
     pub fn float(&self) -> Self {
         let aabb = self.bounding_box();
         let min_z = aabb.mins.z;
-        let shift = Vector3::new(0.0, 0.0, -min_z);
-        self.translate(shift)
+        self.translate(0.0, 0.0, -min_z)
     }
 
     /// Rotates the CSG by x_degrees, y_degrees, z_degrees
@@ -1160,7 +1164,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // (assuming they are in some plane, e.g. XY). We just clone them.
         for poly in unioned_polygons {
             let mut bottom = poly.clone();
-            let top = poly.translate(direction);
+            let top = poly.translate_vector(direction);
             
             // Collect top and bottom polygons for stitching side walls in same winding orientation
             bottom_polygons.push(bottom.clone());
@@ -1231,13 +1235,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///     scale = 1.2,
     /// );
     /// ```
-    pub fn linear_extrude(
-        &self,
-        direction: Vector3<Real>,
-        twist: Real,
-        segments: usize,
-        scale: Real,
-    ) -> CSG<S> {
+    pub fn linear_extrude(&self, direction: Vector3<Real>, twist: Real, segments: usize, scale: Real) -> CSG<S> {
         // 1) calculate height from direction vector
         let height = direction.norm();
         let (z_start, z_end) = (0.0, height);
@@ -1383,11 +1381,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///   - The `bottom` polygon,
     ///   - The `top` polygon,
     ///   - `n` rectangular side polygons bridging each edge of `bottom` to the corresponding edge of `top`.
-    pub fn extrude_between(
-        bottom: &Polygon<S>,
-        top: &Polygon<S>,
-        flip_bottom_polygon: bool,
-    ) -> CSG<S> {
+    pub fn extrude_between(bottom: &Polygon<S>, top: &Polygon<S>, flip_bottom_polygon: bool) -> CSG<S> {
         let n = bottom.vertices.len();
         assert_eq!(
             n,
@@ -1524,7 +1518,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         if !open {
             let mut bottom = polygon_bottom.clone();
             // The top polygon is just a translate
-            let top = bottom.translate(direction);
+            let top = bottom.translate_vector(direction);
 
             // Flip winding on the bottom
             bottom.flip();
@@ -2020,7 +2014,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
             // Translate polygons by (cursor_x, 0.0)
             let glyph_csg =
-                CSG::from_polygons(&glyph_polygons).translate(Vector3::new(cursor_x, 0.0, 0.0));
+                CSG::from_polygons(&glyph_polygons).translate(cursor_x, 0.0, 0.0);
             // Accumulate
             all_polygons.extend(glyph_csg.polygons);
 

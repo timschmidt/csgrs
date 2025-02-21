@@ -31,7 +31,7 @@ fn main() {
 
     // 2) Transformations: Translate, Rotate, Scale, Mirror
     let moved_cube = cube
-        .translate(Vector3::new(1.0, 0.0, 0.0))
+        .translate(1.0, 0.0, 0.0)
         .rotate(0.0, 45.0, 0.0)
         .scale(1.0, 0.5, 2.0);
     #[cfg(feature = "stl-io")]
@@ -89,11 +89,11 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/square_extrude.stl", extruded_square.to_stl_binary("square_extrude").unwrap());
 
-    let revolve_circle = circle_2d.rotate(-90.0,0.0,0.0).translate(Vector3::new(10.0, 0.0, 0.0)).rotate_extrude(360.0, 32);
+    let revolve_circle = circle_2d.rotate(-90.0,0.0,0.0).translate(10.0, 0.0, 0.0).rotate_extrude(360.0, 32);
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/circle_revolve_360.stl", revolve_circle.to_stl_binary("circle_revolve_360").unwrap());
 
-    let partial_revolve = circle_2d.rotate(-90.0,0.0,0.0).translate(Vector3::new(10.0, 0.0, 0.0)).rotate_extrude(180.0, 32);
+    let partial_revolve = circle_2d.rotate(-90.0,0.0,0.0).translate(10.0, 0.0, 0.0).rotate_extrude(180.0, 32);
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/circle_revolve_180.stl", partial_revolve.to_stl_binary("circle_revolve_180").unwrap());
 

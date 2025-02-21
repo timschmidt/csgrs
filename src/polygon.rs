@@ -214,7 +214,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         poly_normal
     }
 
-    /// Recompute this polygon's normal, then set all vertices' normals to match (flat shading).
+    /// Recompute this polygon's normal from all vertices, then set all vertices' normals to match (flat shading).
     pub fn set_new_normal(&mut self) {
         // Assign each vertex’s normal to match the plane
         let new_normal = self.calculate_new_normal();
@@ -313,7 +313,12 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
     }
 
     /// Returns a new Polygon translated by t.
-    pub fn translate(&self, t: Vector3<Real>) -> Self {     // todo: modify for Vector2 in-plane translation
+    pub fn translate(&self, x: Real, y: Real, z: Real) -> Self {     // todo: modify for Vector2 in-plane translation
+        self.translate_vector(Vector3::new(x, y, z))
+    }
+
+    /// Returns a new Polygon translated by t.
+    pub fn translate_vector(&self, t: Vector3<Real>) -> Self {     // todo: modify for Vector2 in-plane translation
         let new_vertices = self
             .vertices
             .iter()

@@ -596,8 +596,8 @@ fn test_csg_from_polygons_and_to_polygons() {
 
 #[test]
 fn test_csg_union() {
-    let cube1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).translate(Vector3::new(-1.0, -1.0, -1.0)); // from -1 to +1 in all coords
-    let cube2: CSG<()> = CSG::cube(1.0, 1.0, 1.0, None).translate(Vector3::new(0.5, 0.5, 0.5));
+    let cube1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).translate(-1.0, -1.0, -1.0); // from -1 to +1 in all coords
+    let cube2: CSG<()> = CSG::cube(1.0, 1.0, 1.0, None).translate(0.5, 0.5, 0.5);
 
     let union_csg = cube1.union(&cube2);
     let polys = union_csg.to_polygons();
@@ -619,8 +619,8 @@ fn test_csg_union() {
 #[test]
 fn test_csg_difference() {
     // Subtract a smaller cube from a bigger one
-    let big_cube: CSG<()> = CSG::cube(4.0, 4.0, 4.0, None).translate(Vector3::new(-2.0, -2.0, -2.0)); // radius=2 => spans [-2,2]
-    let small_cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).translate(Vector3::new(-1.0, -1.0, -1.0)); // radius=1 => spans [-1,1]
+    let big_cube: CSG<()> = CSG::cube(4.0, 4.0, 4.0, None).translate(-2.0, -2.0, -2.0); // radius=2 => spans [-2,2]
+    let small_cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).translate(-1.0, -1.0, -1.0); // radius=1 => spans [-1,1]
 
     let result = big_cube.difference(&small_cube);
     let polys = result.to_polygons();
@@ -793,7 +793,7 @@ fn test_csg_polyhedron() {
 #[test]
 fn test_csg_transform_translate_rotate_scale() {
     let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).center();
-    let translated = c.translate(Vector3::new(1.0, 2.0, 3.0));
+    let translated = c.translate(1.0, 2.0, 3.0);
     let rotated = c.rotate(90.0, 0.0, 0.0); // 90 deg about X
     let scaled = c.scale(2.0, 1.0, 1.0);
 
@@ -945,7 +945,7 @@ fn test_csg_rotate_extrude() {
     // Shift it so it’s from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
     // and rotate it 90 degrees so that it can be swept around Z
     let square: CSG<()> = CSG::square(2.0, 2.0, None)
-        .translate(Vector3::new(1.0, 0.0, 0.0))
+        .translate(1.0, 0.0, 0.0)
         .rotate(90.0, 0.0, 0.0);
 
     // Now revolve this translated square around the Z-axis, 360° in 16 segments.
@@ -1178,7 +1178,7 @@ fn test_union_metadata() {
     }
 
     // Translate Square2 so it partially overlaps. => label "Square2"
-    let sq2 = CSG::square(1.0, 1.0, None).translate(Vector3::new(0.5, 0.0, 0.0));
+    let sq2 = CSG::square(1.0, 1.0, None).translate(0.5, 0.0, 0.0);
     let mut sq2 = sq2;
     for p in &mut sq2.polygons {
         p.set_metadata("Square2".to_string());
@@ -1211,7 +1211,7 @@ fn test_difference_metadata() {
         p.set_metadata("Cube1".to_string());
     }
 
-    let mut cube2 = CSG::cube(2.0, 2.0, 2.0, None).translate(Vector3::new(0.5, 0.5, 0.5));
+    let mut cube2 = CSG::cube(2.0, 2.0, 2.0, None).translate(0.5, 0.5, 0.5);
     for p in &mut cube2.polygons {
         p.set_metadata("Cube2".to_string());
     }
@@ -1238,7 +1238,7 @@ fn test_intersect_metadata() {
         p.set_metadata("Cube1".to_string());
     }
 
-    let mut cube2 = CSG::cube(2.0, 2.0, 2.0, None).translate(Vector3::new(0.5, 0.5, 0.5));
+    let mut cube2 = CSG::cube(2.0, 2.0, 2.0, None).translate(0.5, 0.5, 0.5);
     for p in &mut cube2.polygons {
         p.set_metadata("Cube2".to_string());
     }
@@ -1313,7 +1313,7 @@ fn test_transform_metadata() {
         Some("Tri".to_string()),
     );
     let csg = CSG::from_polygons(&[poly]);
-    let csg_trans = csg.translate(Vector3::new(10.0, 5.0, 0.0));
+    let csg_trans = csg.translate(10.0, 5.0, 0.0);
     let csg_scale = csg_trans.scale(2.0, 2.0, 1.0);
     let csg_rot = csg_scale.rotate(0.0, 0.0, 45.0);
 
@@ -1334,7 +1334,7 @@ fn test_complex_metadata_struct_in_boolean_ops() {
     for p in &mut csg1.polygons {
         p.set_metadata(Color(255, 0, 0));
     }
-    let mut csg2 = CSG::cube(2.0, 2.0, 2.0, None).translate(Vector3::new(0.5, 0.5, 0.5));
+    let mut csg2 = CSG::cube(2.0, 2.0, 2.0, None).translate(0.5, 0.5, 0.5);
     for p in &mut csg2.polygons {
         p.set_metadata(Color(0, 255, 0));
     }

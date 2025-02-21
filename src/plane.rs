@@ -17,7 +17,7 @@ impl Plane {
     pub fn from_points(a: &Point3<Real>, b: &Point3<Real>, c: &Point3<Real>) -> Plane {
         let n = (b - a).cross(&(c - a)).normalize();
         if n.magnitude() < EPSILON {
-            panic!("Degenerate polygon: vertices do not define a plane");
+            panic!("Degenerate polygon: vertices do not define a plane"); // todo: return error
         }
         Plane {
             normal: n,

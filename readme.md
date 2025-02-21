@@ -140,7 +140,8 @@ They all return a new `CSG<S>`
 
 ### Transformations
 
-- **`CSG::translate(vector: Vector3)`** - Returns the CSG translated by vector
+- **`CSG::translate(x: Real, y: Real, z: Real)`** - Returns the CSG translated by x, y, and z
+- **`CSG::translate_vector(vector: Vector3)`** - Returns the CSG translated by vector
 - **`CSG::rotate(x_deg, y_deg, z_deg)`** - Returns the CSG rotated in x, y, and z
 - **`CSG::scale(scale_x, scale_y, scale_z)`** - Returns the CSG scaled in x, y, and z
 - **`CSG::mirror(plane: Plane)`** - Returns the CSG mirrored across plane
@@ -151,7 +152,7 @@ They all return a new `CSG<S>`
 ```rust
 use nalgebra::Vector3;
 
-let moved = cube.translate(Vector3::new(3.0, 0.0, 0.0));
+let moved = cube.translate(3.0, 0.0, 0.0);
 let rotated = sphere.rotate(0.0, 45.0, 90.0);
 let scaled = cylinder.scale(2.0, 1.0, 1.0);
 let plane_x = Plane { normal: Vector3::x(), w: 0.0 }; // x=0 plane
@@ -169,7 +170,7 @@ let mirrored = cube.mirror(plane_x);
 - **Extrude Between Two Polygons**:  
   ```rust
   let polygon_bottom = CSG::circle(2.0, 64, None);
-  let polygon_top = polygon_bottom.translate(Vector3::new(0.0, 0.0, 5.0));
+  let polygon_top = polygon_bottom.translate(0.0, 0.0, 5.0);
   let lofted = CSG::extrude_between(&polygon_bottom.polygons[0],
                                       &polygon_top.polygons[0],
                                       false);
@@ -421,7 +422,8 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 
 ### Transformations
 
-- **`Polygon::translate(vector: Vector3)`** - Returns a new Polygon translated by vector
+- **`Polygon::translate(x: Real, y: Real, z: Real)`** - Returns a new Polygon translated by x, y, and z
+- **`Polygon::translate_vector(vector: Vector3)`** - Returns a new Polygon translated by vector
 - **`Polygon::rotate(axis: Vector3, angle: Real, center: Option<Point3>)`** - Rotates the polygon by a given angle in radians about axis.  If a center is provided the rotation is performed about that point, otherwise rotation is about the origin.
 - **`Polygon::scale(sx: Real, sy: Real)`** - Scales the polygon in it's local Plane by factors for X and Y
 - **`Polygon::mirror_x()`** - Mirrors the polygon about the x axis
@@ -460,13 +462,16 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - extend flatten to work with arbitrary planes
+- document coordinate system / coordinate transformations
+- alternate functions w/o nalgebra types
+- rewrite bounding_box to work without parry using iter / par_iter, put parry, rapier behind feature flags
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
 - remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
   - tests
 - bending
-- space filling curves, hilbert sort polygons
+- space filling curves, hilbert sort polygons / points
 - document compounded transformations using nalgebra
 - par_iter minkowski
 - invert Polygon::open to match cavalier_contours
