@@ -209,48 +209,6 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::from_earcut(polys: &[Vec<Vec<Real>>], metadata: Option<S>)`** - create a new CSG from [`earcut`](https://crates.io/crates/earcut) polys
 - **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
 
-### Working with Metadata
-
-`CSG<S>` is generic over `S: Clone`. Each polygon has an optional `metadata: Option<S>`.  
-Use cases include storing color, ID, or layer info.
-
-```rust
-use csgrs::polygon::Polygon;
-use csgrs::vertex::Vertex;
-use nalgebra::{Point3, Vector3};
-
-#[derive(Clone)]
-struct MyMetadata {
-    color: (u8, u8, u8),
-    label: String,
-}
-
-type CSG = csgrs::CSG<MyMetadata>;
-
-// For a single polygon:
-let mut poly = Polygon::new(
-    vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
-    ],
-    Some(MyMetadata {
-        color: (255, 0, 0),
-        label: "Triangle".into(),
-    }),
-);
-
-// Retrieve metadata
-if let Some(data) = poly.metadata() {
-    println!("This polygon is labeled {}", data.label);
-}
-
-// Mutate metadata
-if let Some(data_mut) = poly.metadata_mut() {
-    data_mut.label.push_str("_extended");
-}
-```
-
 ### STL
 
 - **Export ASCII STL**: `csg.to_stl_ascii("solid_name") -> String`
@@ -453,6 +411,48 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - **Positive** if the points are in **counterclockwise (CCW)** order.
 - **Negative** if the points are in **clockwise (CW)** order.
 - Near‐zero for degenerate or collinear loops.
+
+### Working with Metadata
+
+`CSG<S>` is generic over `S: Clone`. Each polygon has an optional `metadata: Option<S>`.  
+Use cases include storing color, ID, or layer info.
+
+```rust
+use csgrs::polygon::Polygon;
+use csgrs::vertex::Vertex;
+use nalgebra::{Point3, Vector3};
+
+#[derive(Clone)]
+struct MyMetadata {
+    color: (u8, u8, u8),
+    label: String,
+}
+
+type CSG = csgrs::CSG<MyMetadata>;
+
+// For a single polygon:
+let mut poly = Polygon::new(
+    vec![
+        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+    ],
+    Some(MyMetadata {
+        color: (255, 0, 0),
+        label: "Triangle".into(),
+    }),
+);
+
+// Retrieve metadata
+if let Some(data) = poly.metadata() {
+    println!("This polygon is labeled {}", data.label);
+}
+
+// Mutate metadata
+if let Some(data_mut) = poly.metadata_mut() {
+    data_mut.label.push_str("_extended");
+}
+```
 
 ---
 
