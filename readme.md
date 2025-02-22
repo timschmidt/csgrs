@@ -53,6 +53,7 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 - **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
 - **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
+- **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
 
 ```rust
 let square = CSG::square(1.0, 1.0, None); // 1×1 at origin
@@ -71,7 +72,6 @@ let circle2 = CSG::circle(2.0, 64, None);
 - **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
 - **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
 - **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: Option<S>)`** - Return a CSG created by meshing a signed distance field within a bounding box
-- **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
 
 ```rust
 // Unit cube at origin, no metadata
@@ -103,7 +103,7 @@ let pyramid = CSG::polyhedron(points, &faces, None);
 // Metaballs https://en.wikipedia.org/wiki/Metaballs
 use csgrs::csg::MetaBall;
 let balls = vec![
-    MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0),
+    MetaBall::new(Point3::origin(), 1.0),
     MetaBall::new(Point3::new(1.5, 0.0, 0.0), 1.0),
 ];
 
@@ -433,7 +433,7 @@ type CSG = csgrs::CSG<MyMetadata>;
 // For a single polygon:
 let mut poly = Polygon::new(
     vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::origin(), Vector3::z()),
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ],
@@ -457,6 +457,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 ---
 
 ## Roadmap / Todo
+- pass through 2D shapes to Polygon level functions?
 - fix up error handling with result types
 - convert more for loops to iterators
 - polygons_by_metadata public function of a CSG
