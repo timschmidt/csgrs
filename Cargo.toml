@@ -1,6 +1,6 @@
 [package]
 name = "csgrs"
-version = "0.15.2"
+version = "0.16.0"
 edition = "2021"
 description = "Constructive solid geometry on meshes using BSP trees in Rust"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>",]
@@ -26,12 +26,12 @@ image = { version = "0.25.5", optional = true }
 contour_tracing = { version = "1.0.12", features = ["array"], optional = true }
 hershey = { version = "0.1.1", optional = true }
 fast-surface-nets = { version = "0.2.1", optional = true }
-hashbrown = "0.15.2" 
+hashbrown = { version = "0.15.2", optional = true } 
 # core2 = { version = "0.4.0", default_features = false, features = ["alloc"] } # no-std, still throws errors
 core2 = { version = "0.4.0", features = ["alloc"] }
 
 [features]
-default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "earclip-io", "earcut-io", "image-io", "metaballs"]
+default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "earclip-io", "earcut-io", "image-io", "metaballs", "hashmap"]
 parallel = ["rayon"]
 f64 = [
   "rapier3d-f64",
@@ -68,4 +68,7 @@ image-io = [
 ]
 metaballs = [
   "fast-surface-nets",
+]
+hashmap = [ # slice and related helper functions, is_manifold()
+  "hashbrown",
 ]

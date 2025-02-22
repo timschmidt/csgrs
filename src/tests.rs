@@ -1619,6 +1619,7 @@ fn test_flatten_cube() {
 }
 
 #[test]
+#[cfg(feature = "hashmap")]
 fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::<()>::cylinder(1.0, 2.0, 32, None).center();

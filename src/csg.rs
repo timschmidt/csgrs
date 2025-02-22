@@ -6,7 +6,6 @@ use crate::polygon::{Polygon, polyline_area, union_all_2d, build_orthonormal_bas
 use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
 };
-use hashbrown::HashMap;
 use std::error::Error;
 use cavalier_contours::polyline::{
     PlineSource, Polyline, PlineSourceMut,
@@ -17,6 +16,9 @@ use crate::float_types::parry3d::{
     shape::{Shape, SharedShape, TriMesh, Triangle},
 };
 use crate::float_types::rapier3d::prelude::*;
+
+#[cfg(feature = "hashmap")]
+use hashbrown::HashMap;
 
 #[cfg(feature = "chull-io")]
 use chull::ConvexHullWrapper;
@@ -1890,6 +1892,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// //   - Possibly an open or closed polygon(s) at z=0
     /// //   - Or empty if no intersection
     /// ```
+    #[cfg(feature = "hashmap")]
     pub fn slice(&self, plane: Plane) -> CSG<S> {
         // Build a BSP from all of our polygons:
         let node = Node::new(&self.polygons.clone());
@@ -2282,6 +2285,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// - `true`: If the CSG object is manifold.
     /// - `false`: If the CSG object is not manifold.
+    #[cfg(feature = "hashmap")]
     pub fn is_manifold(&self) -> bool {
         fn approx_lt(a: &Point3<Real>, b: &Point3<Real>) -> bool {
             // Compare x
@@ -3386,6 +3390,7 @@ fn make_key(pos: &Point3<Real>) -> EndKey {
 /// matching endpoints that lie within EPSILON of each other, forming either open or closed chains.
 ///
 /// This returns a `Vec` of polylines, where each polyline is a `Vec<Vertex>`.
+#[cfg(feature = "hashmap")]
 fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
     // We will store adjacency by a “key” that identifies an endpoint up to EPSILON,
     // then link edges that share the same key.
@@ -3440,6 +3445,7 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
 
 /// Extends a chain “forward” by repeatedly finding any unvisited edge that starts
 /// at the chain’s current end vertex.
+#[cfg(feature = "hashmap")]
 fn extend_chain_forward(
     chain: &mut Vec<Vertex>,
     adjacency: &HashMap<EndKey, Vec<(usize, usize)>>,
