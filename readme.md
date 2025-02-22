@@ -411,6 +411,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - **Negative** if the points are in **clockwise (CW)** order.
 - Near‐zero for degenerate or collinear loops.
 
+---
 ## Working with Metadata
 
 `CSG<S>` is generic over `S: Clone`. Each polygon has an optional `metadata: Option<S>`.  
