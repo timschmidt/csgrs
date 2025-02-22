@@ -53,13 +53,47 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 - **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
 - **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
+- **`CSG::from_polylines(polylines: &[Polyline], metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
+- **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext)
 
 ```rust
 let square = CSG::square(1.0, 1.0, None); // 1×1 at origin
 let rect = CSG::square(2.0, 4.0, None);
 let circle = CSG::circle(1.0, 32, None); // radius=1, 32 segments
 let circle2 = CSG::circle(2.0, 64, None);
+
+let font_data = include_bytes!("../fonts/MyFont.ttf");
+let csg_text = CSG::text("Hello!", font_data, 20.0, None);
+
+// Then extrude the text to make it 3D:
+let text_3d = csg_text.extrude(1.0);
+```
+
+### Extrusions and Revolves
+
+- **Linear Extrude**: 
+  - **`CSG::extrude(height: Real)`**  
+  - **`CSG::extrude_vector(direction: Vector3)`**  
+  - **`CSG::linear_extrude(direction: Vector3, twist: Real, segments: usize, scale: Real)`**
+- **Extrude Between Two Polygons**:  
+  - **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`**
+- **Rotate-Extrude (Revolve)**:
+  - **`CSG::rotate_extrude(angle_degs, segments)`**
+- **Sweep**:
+  - **`sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>)`**
+- **Extrude a polyline to create a surface**:
+  - **`extrude_polyline(poly: &Polyline, direction: Vector3, metadata: Option<S>)`**
+
+```rust
+let square = CSG::square(2.0, 2.0, None);
+let prism = square.extrude(5.0);
+
+let revolve_shape = square.rotate_extrude(360.0, 16);
+
+let polygon_bottom = CSG::circle(2.0, 64, None);
+let polygon_top = polygon_bottom.translate(0.0, 0.0, 5.0);
+let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false);
 ```
 
 ### 3D Shapes
@@ -72,6 +106,7 @@ let circle2 = CSG::circle(2.0, 64, None);
 - **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
 - **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
 - **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: Option<S>)`** - Return a CSG created by meshing a signed distance field within a bounding box
+- **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
 
 ```rust
 // Unit cube at origin, no metadata
@@ -80,7 +115,7 @@ let cube = CSG::cube(1.0, 1.0, 1.0, None);
 // Sphere of radius=2 at origin with 32 segments and 16 stacks
 let sphere = CSG::sphere(2.0, 32, 16, None);
 
-// Cylinder from radius=1, height=2, 16 slices, and no metadata
+// Cylinder from radius=1, height=2, 16 segments, and no metadata
 let cyl = CSG::cylinder(1.0, 2.0, 16, None);
 
 // Create a custom polyhedron from points and face indices:
@@ -156,35 +191,13 @@ use nalgebra::Vector3;
 use csgrs::plane::Plane;
 
 let moved = cube.translate(3.0, 0.0, 0.0);
+let moved2 = cube.translate_vector(Vector3::new(3.0, 0.0, 0.0));
 let rotated = sphere.rotate(0.0, 45.0, 90.0);
 let scaled = cylinder.scale(2.0, 1.0, 1.0);
 let plane_x = Plane { normal: Vector3::x(), w: 0.0 }; // x=0 plane
 let plane_y = Plane { normal: Vector3::y(), w: 0.0 }; // y=0 plane
 let plane_z = Plane { normal: Vector3::z(), w: 0.0 }; // z=0 plane
 let mirrored = cube.mirror(plane_x);
-```
-
-### Extrusions and Revolves
-
-- **Linear Extrude**: 
-  - `my_2d_shape.extrude(height: Real)`  
-  - `my_2d_shape.extrude_vector(direction: Vector3)`  
-  - `my_2d_shape.linear_extrude(direction: Vector3, twist: Real, segments: usize, scale: Real)`
-- **Extrude Between Two Polygons**:  
-  ```rust
-  let polygon_bottom = CSG::circle(2.0, 64, None);
-  let polygon_top = polygon_bottom.translate(0.0, 0.0, 5.0);
-  let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false);
-  ```
-- **Rotate-Extrude (Revolve)**: `my_2d_shape.rotate_extrude(angle_degs, segments)`
-- **Sweep**: `sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>)`
-- **Extrude a polyline to create a surface**: `extrude_polyline(poly: &Polyline, direction: Vector3, metadata: Option<S>)`
-
-```rust
-let square = CSG::square(2.0, 2.0, None);
-let prism = square.extrude(5.0);
-
-let revolve_shape = square.rotate_extrude(360.0, 16);
 ```
 
 ### Miscellaneous Operations
@@ -204,10 +217,8 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::triangulate()`** — triangulates all polygons returning a CSG containing triangles
 - **`CSG::triangulate_earclip()`** — triangulates all polygons with [`earclip`](https://crates.io/crates/earclip) returning a CSG containing triangles
 - **`CSG::from_polygons(polygons: &[Polygon<S>])`** - create a new CSG from Polygons
-- **`CSG::from_polylines(polylines: &[Polyline], metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::from_earclip(polys: &[Vec<Vec<Real>>], metadata: Option<S>)`** — create a new CSG from [`earclip`](https://crates.io/crates/earclip) polys
 - **`CSG::from_earcut(polys: &[Vec<Vec<Real>>], metadata: Option<S>)`** - create a new CSG from [`earcut`](https://crates.io/crates/earcut) polys
-- **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
 
 ### STL
 
@@ -242,18 +253,6 @@ std::fs::write("output.dxf", dxf_bytes)?;
 // Import DXF
 let dxf_data = std::fs::read("some_file.dxf")?;
 let csg_dxf = CSG::from_dxf(&dxf_data)?;
-```
-
-### TrueType Text
-
-You can generate 2D text geometry in the XY plane from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext):
-
-```rust
-let font_data = include_bytes!("../fonts/MyFont.ttf");
-let csg_text = CSG::text("Hello!", font_data, 20.0, None);
-
-// Then extrude the text to make it 3D:
-let text_3d = csg_text.extrude(1.0);
 ```
 
 ### Hershey Text
@@ -412,7 +411,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - **Negative** if the points are in **clockwise (CW)** order.
 - Near‐zero for degenerate or collinear loops.
 
-### Working with Metadata
+## Working with Metadata
 
 `CSG<S>` is generic over `S: Clone`. Each polygon has an optional `metadata: Option<S>`.  
 Use cases include storing color, ID, or layer info.
@@ -457,9 +456,9 @@ if let Some(data_mut) = poly.metadata_mut() {
 ---
 
 ## Roadmap / Todo
-- pass through 2D shapes to Polygon level functions?
 - fix up error handling with result types
-- convert more for loops to iterators
+- convert more for loops to iterators - csg::transform
+- convert polygon level 2D functions to Point2 and Vector2
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - extend flatten to work with arbitrary planes
@@ -474,7 +473,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 - bending
 - gears
 - space filling curves, hilbert sort polygons / points
-- identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold
+- identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold, polygon::transform
 - invert Polygon::open to match cavalier_contours
 - svg import/export
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
