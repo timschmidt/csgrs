@@ -52,8 +52,8 @@ use image::GrayImage;
 #[cfg(any(feature = "metaballs", feature = "sdf"))]
 use fast_surface_nets::{surface_nets, SurfaceNetsBuffer};
 
-#[derive(Debug, Clone)]
 #[cfg(feature = "metaballs")]
+#[derive(Debug, Clone)]
 pub struct MetaBall {
     pub center: Point3<Real>,
     pub radius: Real,
