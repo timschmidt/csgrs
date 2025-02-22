@@ -190,32 +190,32 @@ fn main() {
     let _ = fs::write("stl/sphere_cube_test.stl", res.to_stl_binary("sphere_cube_test").unwrap());
     assert_eq!(res.bounding_box(), cube_test.bounding_box());
 
-    // Suppose we want two overlapping metaballs
-    #[cfg(feature = "metaballs")]
-    let balls = vec![
-        MetaBall::new(Point3::origin(), 1.0),
-        MetaBall::new(Point3::new(1.5, 0.0, 0.0), 1.0),
-    ];
-
-    let resolution = (60, 60, 60);
-    let iso_value = 1.0;
-    let padding = 1.0;
-
-    #[cfg(feature = "metaballs")]
-    let metaball_csg = CSG::metaballs(
-        &balls,
-        resolution,
-        iso_value,
-        padding,
-    );
+    #[cfg(all(feature = "stl-io", feature = "metaballs"))]
+    {
+        // Suppose we want two overlapping metaballs
+        let balls = vec![
+            MetaBall::new(Point3::origin(), 1.0),
+            MetaBall::new(Point3::new(1.5, 0.0, 0.0), 1.0),
+        ];
     
-    // For instance, save to STL
-    #[cfg(feature = "metaballs")]
-    #[cfg(feature = "stl-io")]
-    let stl_data = metaball_csg.to_stl_binary("my_metaballs").unwrap();
-    #[cfg(feature = "metaballs")]
-    std::fs::write("stl/metaballs.stl", stl_data)
-        .expect("Failed to write metaballs.stl");
+        let resolution = (60, 60, 60);
+        let iso_value = 1.0;
+        let padding = 1.0;
+    
+        #[cfg(feature = "metaballs")]
+        let metaball_csg = CSG::metaballs(
+            &balls,
+            resolution,
+            iso_value,
+            padding,
+            None,
+        );
+        
+        // For instance, save to STL
+        let stl_data = metaball_csg.to_stl_binary("my_metaballs").unwrap();
+        std::fs::write("stl/metaballs.stl", stl_data)
+            .expect("Failed to write metaballs.stl");
+    }
         
     #[cfg(feature = "sdf")]
     {
@@ -227,7 +227,7 @@ fn main() {
         let max_pt = Point3::new( 2.0,  2.0,  2.0);
         let iso_value = 0.0; // Typically zero for SDF-based surfaces
     
-        let csg_shape = CSG::sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
+        let csg_shape = CSG::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
     
         // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
         #[cfg(feature="stl-io")]

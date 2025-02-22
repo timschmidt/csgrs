@@ -2350,7 +2350,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// // Suppose `shape` is a CSG volume, e.g. a box or sphere.
     /// let gyroid_csg = shape.tpms_gyroid(50, 2.0, 0.0);
     /// ```
-    pub fn gyroid(&self, resolution: usize, period: Real, iso_value: Real) -> CSG<S> {
+    pub fn gyroid(&self, resolution: usize, period: Real, iso_value: Real, metadata: Option<S>) -> CSG<S> {
         // Get bounding box of `self`.
         let aabb = self.bounding_box();
 
@@ -2588,8 +2588,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     Vertex::new(b, Vector3::zeros()),
                     Vertex::new(c, Vector3::zeros()),
                 ],
-                true,
-                None,
+                CLOSED,
+                metadata.clone(),
             );
             // Recompute plane & normals
             poly.set_new_normal();
@@ -2615,6 +2615,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         resolution: (usize, usize, usize),
         iso_value: Real,
         padding: Real,
+        metadata: Option<S>,
     ) -> CSG<S> {
         if balls.is_empty() {
             return CSG::new();
@@ -2783,7 +2784,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let v2 = Vertex::new(p2_real, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
     
             // Each tri is turned into a Polygon with 3 vertices
-            let poly = Polygon::new(vec![v0, v2, v1], CLOSED, None);
+            let poly = Polygon::new(vec![v0, v2, v1], CLOSED, metadata.clone());
             triangles.push(poly);
         }
     
@@ -2812,6 +2813,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         min_pt: Point3<Real>,
         max_pt: Point3<Real>,
         iso_value: Real,
+        metadata: Option<S>,
     ) -> CSG<S>
     where
         // F is a closure or function that takes a 3D point and returns the signed distance.
@@ -2962,7 +2964,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             );
     
             // Note: reverse v1, v2 if you need to fix winding
-            let poly = Polygon::new(vec![v0, v1, v2], CLOSED, None);
+            let poly = Polygon::new(vec![v0, v1, v2], CLOSED, metadata.clone());
             triangles.push(poly);
         }
     
@@ -3259,7 +3261,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
     /// Create a CSG object from STL data using `stl_io`.
     #[cfg(feature = "stl-io")]
-    pub fn from_stl(stl_data: &[u8]) -> Result<CSG<S>, std::io::Error> {
+    pub fn from_stl(stl_data: &[u8], metadata: Option<S>,) -> Result<CSG<S>, std::io::Error> {
         // Create an in-memory cursor from the STL data
         let mut cursor = Cursor::new(stl_data);
 
@@ -3314,7 +3316,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     ),
                 ),
             ];
-            polygons.push(Polygon::new(vertices, CLOSED, None));
+            polygons.push(Polygon::new(vertices, CLOSED, metadata.clone()));
         }
 
         Ok(CSG::from_polygons(&polygons))
@@ -3330,7 +3332,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// A `Result` containing the CSG object or an error if parsing fails.
     #[cfg(feature = "dxf-io")]
-    pub fn from_dxf(dxf_data: &[u8]) -> Result<CSG<S>, Box<dyn Error>> {
+    pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>,) -> Result<CSG<S>, Box<dyn Error>> {
         // Load the DXF drawing from the provided data
         let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
 
@@ -3382,7 +3384,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     }
 
                     // Create a polygon from the approximated circle vertices
-                    polygons.push(Polygon::new(verts, CLOSED, None));
+                    polygons.push(Polygon::new(verts, CLOSED, metadata.clone()));
                 }
                 // Handle other entity types as needed (e.g., Arc, Spline)
                 _ => {

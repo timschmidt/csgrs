@@ -1059,7 +1059,7 @@ fn test_csg_to_stl_and_from_stl_file() -> Result<(), Box<dyn std::error::Error>>
     assert!(res.is_ok());
 
     let stl_data: Vec<u8> = std::fs::read(tmp_path)?;
-    let csg_in: CSG<()> = CSG::from_stl(&stl_data)?;
+    let csg_in: CSG<()> = CSG::from_stl(&stl_data, None)?;
     // We expect to read the same number of triangular faces as the cube originally had
     // (though the orientation/normals might differ).
     // The default cube -> 6 polygons x 1 polygon each with 4 vertices => 12 triangles in STL.

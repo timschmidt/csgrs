@@ -73,8 +73,9 @@ Similarly, you can create standard 3D primitives:
 - **`CSG::frustrum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum at origin with height and `radius1` and `radius2`
 - **`CSG::frustrum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum from `start` to `end` with `radius1` and `radius2`
 - **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
-- **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real)`**
-- **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real)`** - Return a CSG created by meshing a signed distance field within a bounding box
+- **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
+- **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: Option<S>)`** - Return a CSG created by meshing a signed distance field within a bounding box
+- **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
 
 ```rust
 // Unit cube at origin, no metadata
@@ -194,6 +195,7 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 
 ### Miscellaneous Operations
 
+- **`CSG::vertices()`** — collect all vertices from the CSG
 - **`CSG::inverse()`** — flips the inside/outside orientation.
 - **`CSG::convex_hull()`** — uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
 - **`CSG::minkowski_sum(&other)`** — naive Minkowski sum, then takes the hull.
@@ -211,9 +213,7 @@ let revolve_shape = square.rotate_extrude(360.0, 16);
 - **`CSG::from_polylines(polylines: &[Polyline], metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::from_earclip(polys: &[Vec<Vec<Real>>], metadata: Option<S>)`** — create a new CSG from [`earclip`](https://crates.io/crates/earclip) polys
 - **`CSG::from_earcut(polys: &[Vec<Vec<Real>>], metadata: Option<S>)`** - create a new CSG from [`earcut`](https://crates.io/crates/earcut) polys
-- **`CSG::vertices()`** — collect all vertices from the CSG
-- **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
-- **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
+- **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
 
 ### Working with Metadata
 
