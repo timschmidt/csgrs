@@ -2610,7 +2610,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// - `iso_value`: threshold at which the isosurface is extracted.
     /// - `padding`: extra margin around the bounding region (e.g. 0.5) so the surface doesn’t get truncated.
     #[cfg(feature = "metaballs")]    
-    pub fn from_metaballs(
+    pub fn metaballs(
         balls: &[MetaBall],
         resolution: (usize, usize, usize),
         iso_value: Real,
@@ -2806,7 +2806,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///    // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
     ///    let _ = std::fs::write("stl/sdf_sphere.stl", csg_shape.to_stl_binary("sdf_sphere").unwrap());
     #[cfg(feature = "sdf")]
-    pub fn from_sdf<F>(
+    pub fn sdf<F>(
         sdf: F,
         resolution: (usize, usize, usize),
         min_pt: Point3<Real>,

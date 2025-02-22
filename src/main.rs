@@ -193,7 +193,7 @@ fn main() {
     // Suppose we want two overlapping metaballs
     #[cfg(feature = "metaballs")]
     let balls = vec![
-        MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0),
+        MetaBall::new(Point3::origin(), 1.0),
         MetaBall::new(Point3::new(1.5, 0.0, 0.0), 1.0),
     ];
 
@@ -202,7 +202,7 @@ fn main() {
     let padding = 1.0;
 
     #[cfg(feature = "metaballs")]
-    let metaball_csg = CSG::from_metaballs(
+    let metaball_csg = CSG::metaballs(
         &balls,
         resolution,
         iso_value,
@@ -227,7 +227,7 @@ fn main() {
         let max_pt = Point3::new( 2.0,  2.0,  2.0);
         let iso_value = 0.0; // Typically zero for SDF-based surfaces
     
-        let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
+        let csg_shape = CSG::sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
     
         // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
         #[cfg(feature="stl-io")]

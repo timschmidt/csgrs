@@ -73,8 +73,8 @@ Similarly, you can create standard 3D primitives:
 - **`CSG::frustrum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum at origin with height and `radius1` and `radius2`
 - **`CSG::frustrum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum from `start` to `end` with `radius1` and `radius2`
 - **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
-- **`CSG::from_metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real)`**
-- **`CSG::from_sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real)`** - Return a CSG created by meshing a signed distance field within a bounding box
+- **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real)`**
+- **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real)`** - Return a CSG created by meshing a signed distance field within a bounding box
 
 ```rust
 // Unit cube at origin, no metadata
