@@ -3,6 +3,7 @@
 // Minimal example of each function of csgrs (which is now generic over the shared-data type S).
 // Here, we do not use any shared data, so we'll bind the generic S to ().
 
+use csgrs::float_types::Real;
 use std::fs;
 use nalgebra::{Vector3, Point3};
 use csgrs::plane::Plane;
@@ -170,11 +171,11 @@ fn main() {
     let cyl = CSG::frustrum_ptp(Point3::new(0.0, 0.0, -1.0), Point3::new(0.0, 0.0, 1.0), 1.0, 1.0, 32, None);
     // 2) Slice at z=0
     #[cfg(feature = "hashmap")]
+    {
     let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
-    #[cfg(feature = "hashmap")]
     let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));
-    #[cfg(feature = "hashmap")]
     let _ = fs::write("stl/sliced_cylinder_slice.stl", cross_section.to_stl_ascii("sliced_cylinder_slice"));
+    }
     
     let poor_geometry_shape = moved_cube.difference(&sphere);
     #[cfg(feature = "earclip-io")]
@@ -215,5 +216,21 @@ fn main() {
     #[cfg(feature = "metaballs")]
     std::fs::write("stl/metaballs.stl", stl_data)
         .expect("Failed to write metaballs.stl");
+        
+    #[cfg(feature = "sdf")]
+    {
+        // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
+        let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
+    
+        let resolution = (60, 60, 60);
+        let min_pt = Point3::new(-2.0, -2.0, -2.0);
+        let max_pt = Point3::new( 2.0,  2.0,  2.0);
+        let iso_value = 0.0; // Typically zero for SDF-based surfaces
+    
+        let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
+    
+        // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
+        #[cfg(feature="stl-io")]
+        let _ = std::fs::write("stl/sdf_sphere.stl", csg_shape.to_stl_binary("sdf_sphere").unwrap());
+    }
 }
-
