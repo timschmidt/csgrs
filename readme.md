@@ -120,6 +120,7 @@ let metaball_csg = CSG::from_metaballs(
     resolution,
     iso_value,
     padding,
+    None,
 );
 
 // Example Signed Distance Field for a sphere of radius 1.5 centered at (0,0,0)
@@ -130,7 +131,7 @@ let min_pt = Point3::new(-2.0, -2.0, -2.0);
 let max_pt = Point3::new( 2.0,  2.0,  2.0);
 let iso_value = 0.0; // Typically zero for SDF-based surfaces
 
-let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
+let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
 ```
 
 ### 3D Boolean Operations
@@ -468,7 +469,7 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - extend flatten to work with arbitrary planes
-- document coordinate system / coordinate transformations
+- document coordinate system / coordinate transformations / compounded transformations
 - alternate functions w/o nalgebra types
 - rewrite bounding_box to work without parry using iter / par_iter, put parry, rapier behind feature flags
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
@@ -478,7 +479,6 @@ The `polyline_area` function computes the signed area of a closed `Polyline`:
   - tests
 - bending
 - space filling curves, hilbert sort polygons / points
-- document compounded transformations using nalgebra
 - identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold
 - invert Polygon::open to match cavalier_contours
 - svg import/export
