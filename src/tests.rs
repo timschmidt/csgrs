@@ -73,7 +73,7 @@ fn test_vertex_flip() {
 
 #[test]
 fn test_polygon_construction() {
-    let v1 = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::y());
+    let v1 = Vertex::new(Point3::origin(), Vector3::y());
     let v2 = Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::y());
     let v3 = Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::y());
 
@@ -112,9 +112,9 @@ fn test_to_stl_ascii() {
 #[test]
 fn test_degenerate_polygon_after_clipping() {
     let vertices = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
-        Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
+        Vertex::new(Point3::origin(), Vector3::y()),
+        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::y()),
+        Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
     let polygon: Polygon<()> = Polygon::new(vertices.clone(), CLOSED, None);
@@ -149,15 +149,15 @@ fn test_degenerate_polygon_after_clipping() {
 #[test]
 fn test_valid_polygon_clipping() {
     let vertices = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
-        Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::new(0.0, 1.0, 0.0)),
+        Vertex::new(Point3::origin(), Vector3::y()),
+        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::y()),
+        Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
     let polygon: Polygon<()> = Polygon::new(vertices, CLOSED, None);
 
     let plane = Plane {
-        normal: Vector3::new(0.0, -1.0, 0.0),
+        normal: -Vector3::y(),
         w: -0.5,
     };
 
@@ -198,8 +198,8 @@ fn test_vertex_new() {
 
 #[test]
 fn test_vertex_interpolate() {
-    let v1 = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0));
-    let v2 = Vertex::new(Point3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 1.0, 0.0));
+    let v1 = Vertex::new(Point3::origin(), Vector3::x());
+    let v2 = Vertex::new(Point3::new(2.0, 2.0, 2.0), Vector3::y());
     let v_mid = v1.interpolate(&v2, 0.5);
     assert!(approx_eq(v_mid.pos.x, 1.0, EPSILON));
     assert!(approx_eq(v_mid.pos.y, 1.0, EPSILON));
@@ -214,7 +214,7 @@ fn test_vertex_interpolate() {
 // ------------------------------------------------------------
 #[test]
 fn test_plane_from_points() {
-    let a = Point3::new(0.0, 0.0, 0.0);
+    let a = Point3::origin();
     let b = Point3::new(1.0, 0.0, 0.0);
     let c = Point3::new(0.0, 1.0, 0.0);
     let plane = Plane::from_points(&a, &b, &c);
@@ -227,7 +227,7 @@ fn test_plane_from_points() {
 #[test]
 fn test_plane_flip() {
     let mut plane = Plane {
-        normal: Vector3::new(0.0, 1.0, 0.0),
+        normal: Vector3::y(),
         w: 2.0,
     };
     plane.flip();
@@ -290,7 +290,7 @@ fn test_plane_split_polygon() {
 #[test]
 fn test_polygon_new() {
     let vertices = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::origin(), Vector3::z()),
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
@@ -307,7 +307,7 @@ fn test_polygon_new() {
 fn test_polygon_flip() {
     let mut poly: Polygon<()> = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
@@ -340,7 +340,7 @@ fn test_polygon_triangulate() {
     // A quad:
     let poly: Polygon<()> = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
@@ -362,7 +362,7 @@ fn test_polygon_subdivide_triangles() {
     // A single triangle (level=1 should produce 4 sub-triangles)
     let poly: Polygon<()> = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
@@ -382,7 +382,7 @@ fn test_polygon_subdivide_triangles() {
 fn test_polygon_recalc_plane_and_normals() {
     let mut poly: Polygon<()> = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::zeros()),
+            Vertex::new(Point3::origin(), Vector3::zeros()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::zeros()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::zeros()),
         ],
@@ -406,7 +406,7 @@ fn test_node_new_and_build() {
     // A simple triangle:
     let p: Polygon<()> = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
@@ -425,7 +425,7 @@ fn test_node_new_and_build() {
 fn test_node_invert() {
     let p: Polygon<()> = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
@@ -465,7 +465,7 @@ fn test_node_clip_polygons2() {
     // We'll put a polygon in the plane exactly (z=0) and one above, one below
     let poly_in_plane: Polygon<()> = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
@@ -551,7 +551,7 @@ fn test_node_all_polygons() {
     // Build a node with multiple polygons
     let poly1: Polygon<()> = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
@@ -581,7 +581,7 @@ fn test_node_all_polygons() {
 fn test_csg_from_polygons_and_to_polygons() {
     let poly: Polygon<()> = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
@@ -1083,7 +1083,7 @@ struct MyMetaData {
 fn test_polygon_metadata_string() {
     // Create a simple triangle polygon with shared data = Some("triangle".to_string()).
     let verts = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::origin(), Vector3::z()),
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
@@ -1107,7 +1107,7 @@ fn test_polygon_metadata_string() {
 fn test_polygon_metadata_integer() {
     // Create a polygon with integer shared data
     let verts = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::origin(), Vector3::z()),
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
@@ -1125,7 +1125,7 @@ fn test_polygon_metadata_custom_struct() {
         label: "MyLabel".into(),
     };
     let verts = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::origin(), Vector3::z()),
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
@@ -1139,7 +1139,7 @@ fn test_csg_construction_with_metadata() {
     // Build a CSG of two polygons, each with distinct shared data.
     let poly_a = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
         ],
@@ -1282,7 +1282,7 @@ fn test_subdivide_metadata() {
 
     let poly = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(2.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(2.0, 2.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 2.0, 0.0), Vector3::z()),
@@ -1305,7 +1305,7 @@ fn test_transform_metadata() {
     // Make sure that transform does not lose or change shared data.
     let poly = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],

@@ -409,7 +409,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // Single 2D polygon, normal = +Z
         let normal = Vector3::z();
         let vertices = vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::origin(), normal),
             Vertex::new(Point3::new(width, 0.0, 0.0), normal),
             Vertex::new(Point3::new(width, length, 0.0), normal),
             Vertex::new(Point3::new(0.0, length, 0.0), normal),
@@ -726,7 +726,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     // with the specified radius (NOT diameter).
     pub fn frustrum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
         CSG::frustrum_ptp(
-            Point3::new(0.0, 0.0, 0.0),
+            Point3::origin(),
             Point3::new(0.0, 0.0, height),
             radius1,
             radius2,
@@ -739,7 +739,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     // with the specified radius (NOT diameter).
     pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
         CSG::frustrum_ptp(
-            Point3::new(0.0, 0.0, 0.0),
+            Point3::origin(),
             Point3::new(0.0, 0.0, height),
             radius.clone(),
             radius,
