@@ -16,7 +16,6 @@ Install the [Rust](https://www.rust-lang.org/) language tools from [rustup.rs](h
 cargo new my_cad_project
 cd my_cad_project
 cargo add csgrs
-cargo add nalgebra // provides Points, Vectors, etc. 
 ```
 
 ### Example main.rs
@@ -72,18 +71,13 @@ let text_3d = csg_text.extrude(1.0);
 
 ### Extrusions and Revolves
 
-- **Linear Extrude**: 
-  - **`CSG::extrude(height: Real)`**  
-  - **`CSG::extrude_vector(direction: Vector3)`**  
-  - **`CSG::linear_extrude(direction: Vector3, twist: Real, segments: usize, scale: Real)`**
-- **Extrude Between Two Polygons**:  
-  - **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`**
-- **Rotate-Extrude (Revolve)**:
-  - **`CSG::rotate_extrude(angle_degs, segments)`**
-- **Sweep**:
-  - **`sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>)`**
-- **Extrude a polyline to create a surface**:
-  - **`extrude_polyline(poly: &Polyline, direction: Vector3, metadata: Option<S>)`**
+- **`CSG::extrude(height: Real)`** - Simple extrude in Z+
+- **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
+- **`CSG::linear_extrude(direction: Vector3, twist: Real, segments: usize, scale: Real)`** - Extrude along Vector3 direction with twist, segments, and scale
+- **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Extrude Between Two Polygons
+- **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating
+- **`CSG::sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>)`** - Extrude along a path
+- **`CSG::extrude_polyline(poly: &Polyline, direction: Vector3, metadata: Option<S>)`** - Extrude a polyline to create a surface
 
 ```rust
 let square = CSG::square(2.0, 2.0, None);
@@ -165,7 +159,7 @@ let iso_value = 0.0; // Typically zero for SDF-based surfaces
 let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
 ```
 
-### 3D Boolean Operations
+### CSG Boolean Operations
 
 ```rust
 let union_result = cube.union(&sphere);
@@ -458,6 +452,8 @@ if let Some(data_mut) = poly.metadata_mut() {
 
 ## Roadmap / Todo
 - fix up error handling with result types
+- ray intersection (singular)
+- https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d
 - convert more for loops to iterators - csg::transform
 - convert polygon level 2D functions to Point2 and Vector2
 - polygons_by_metadata public function of a CSG
@@ -473,6 +469,8 @@ if let Some(data_mut) = poly.metadata_mut() {
   - tests
 - bending
 - gears
+- gpu accelleration?
+- reduce dependency feature sets
 - space filling curves, hilbert sort polygons / points
 - identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold, polygon::transform
 - invert Polygon::open to match cavalier_contours
