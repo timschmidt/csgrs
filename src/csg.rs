@@ -2961,8 +2961,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real),
             );
     
-            // Note: reversed v1, v2 if you need to fix winding
-            // We'll invert v2 and v1 to preserve a consistent winding:
+            // Note: reverse v1, v2 if you need to fix winding
             let poly = Polygon::new(vec![v0, v1, v2], CLOSED, None);
             triangles.push(poly);
         }

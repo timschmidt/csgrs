@@ -79,6 +79,7 @@ Similarly, you can create standard 3D primitives:
         metadata: Option<S>)`** - Construct a frustum from `start` to `end` with `radius1` and `radius2`
 - **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
 - **`CSG::MetaBall` and `CSG::from_metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real)`**
+- **`CSG::from_sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real)`** - Return a CSG created by meshing a signed distance field within a bounding box
 
 ```rust
 // Unit cube at origin, no metadata
@@ -124,6 +125,16 @@ let metaball_csg = CSG::from_metaballs(
     iso_value,
     padding,
 );
+
+// Example SDF for a sphere of radius 1.5 centered at (0,0,0)
+let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
+
+let resolution = (60, 60, 60);
+let min_pt = Point3::new(-2.0, -2.0, -2.0);
+let max_pt = Point3::new( 2.0,  2.0,  2.0);
+let iso_value = 0.0; // Typically zero for SDF-based surfaces
+
+let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
 ```
 
 ### 3D Boolean Operations
