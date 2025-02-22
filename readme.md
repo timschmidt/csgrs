@@ -50,8 +50,6 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 
 ### 2D Shapes
 
-Helper constructors for 2D shapes in the XY plane:
-
 - **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
 - **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::polygon_2d(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
@@ -64,8 +62,6 @@ let circle2 = CSG::circle(2.0, 64, None);
 ```
 
 ### 3D Shapes
-
-Similarly, you can create standard 3D primitives:
 
 - **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
 - **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
@@ -136,8 +132,6 @@ let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value, Non
 
 ### 3D Boolean Operations
 
-Three primary operations:
-
 ```rust
 let union_result = cube.union(&sphere);
 let difference_result = cube.difference(&sphere);
@@ -159,6 +153,7 @@ They all return a new `CSG<S>`
 
 ```rust
 use nalgebra::Vector3;
+use csgrs::plane::Plane;
 
 let moved = cube.translate(3.0, 0.0, 0.0);
 let rotated = sphere.rotate(0.0, 45.0, 90.0);
@@ -179,9 +174,7 @@ let mirrored = cube.mirror(plane_x);
   ```rust
   let polygon_bottom = CSG::circle(2.0, 64, None);
   let polygon_top = polygon_bottom.translate(0.0, 0.0, 5.0);
-  let lofted = CSG::extrude_between(&polygon_bottom.polygons[0],
-                                      &polygon_top.polygons[0],
-                                      false);
+  let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false);
   ```
 - **Rotate-Extrude (Revolve)**: `my_2d_shape.rotate_extrude(angle_degs, segments)`
 - **Sweep**: `sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>)`
