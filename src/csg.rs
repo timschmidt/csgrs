@@ -443,8 +443,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// # Example
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
-    /// let poly2d = CSG::polygon_2d(&pts, metadata);
-    pub fn polygon_2d(points: &[[Real; 2]], metadata: Option<S>) -> CSG<S> {
+    /// let poly2d = CSG::polygon(&pts, metadata);
+    pub fn polygon(points: &[[Real; 2]], metadata: Option<S>) -> CSG<S> {
         // todo: return error "polygon_2d requires at least 3 points"
         if points.len() < 3 {
             return CSG::new();

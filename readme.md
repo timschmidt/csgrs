@@ -52,7 +52,7 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 
 - **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
 - **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::polygon_2d(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
+- **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
 
 ```rust
 let square = CSG::square(1.0, 1.0, None); // 1×1 at origin
@@ -471,6 +471,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 - remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
   - tests
 - bending
+- gears
 - space filling curves, hilbert sort polygons / points
 - identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold
 - invert Polygon::open to match cavalier_contours

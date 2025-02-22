@@ -918,7 +918,7 @@ fn test_csg_circle() {
 #[test]
 fn test_csg_polygon_2d() {
     let points = &[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0], [0.0, 1.0]];
-    let poly2d: CSG<()> = CSG::polygon_2d(points, None);
+    let poly2d: CSG<()> = CSG::polygon(points, None);
     assert_eq!(poly2d.polygons.len(), 1);
     assert_eq!(poly2d.polygons[0].vertices.len(), 4);
 }
@@ -1408,7 +1408,7 @@ fn test_offset_2d_negative_distance_shrinks() {
 fn test_polygon_2d_enforce_ccw_ordering() {
     // Define a triangle in CW order
     let points_cw = vec![[0.0, 0.0], [1.0, 0.0], [0.5, 1.0]];
-    let mut csg_cw = CSG::polygon_2d(&points_cw, None);
+    let mut csg_cw = CSG::polygon(&points_cw, None);
     // Enforce CCW ordering
     csg_cw.renormalize();
     let poly = &csg_cw.polygons[0];
