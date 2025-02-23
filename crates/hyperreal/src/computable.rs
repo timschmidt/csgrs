@@ -114,7 +114,6 @@ impl Computable {
             signal: None,
         }
     }
-
 }
 
 impl Computable {
@@ -142,21 +141,40 @@ impl Computable {
         }
     }
 
+    /// Calculate nearby multiple of pi
+    fn pi_multiple(&self) -> BigInt {
+        let mut rough_appr = self.approx(-1);
+        let mut multiple = rough_appr / signed::SIX.deref();
+
+        loop {
+            let adj = Self::pi()
+                .multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
+            let sum = self.clone().add(adj);
+            rough_appr = sum.approx(-1);
+            multiple += &rough_appr / signed::SIX.deref();
+
+            let abs_rough_appr = rough_appr.magnitude();
+            if abs_rough_appr < unsigned::SIX.deref() {
+                return multiple;
+            }
+        }
+    }
+
     /// Cosine of this number
     pub fn cos(self) -> Computable {
         let rough_appr = self.approx(-1);
         let abs_rough_appr = rough_appr.magnitude();
 
         if abs_rough_appr >= unsigned::SIX.deref() {
-            // Subtract multiples of PI
-            let multiplier = rough_appr / signed::SIX.deref();
+            let multiplier = Self::pi_multiple(&self);
             let low_bit = multiplier.bit(0);
 
-            let adjustment = Self::pi().multiply(Self::rational(Rational::from_bigint(multiplier)));
+            let adjustment =
+                Self::pi().multiply(Self::rational(Rational::from_bigint(multiplier)).negate());
             if low_bit {
-                self.add(adjustment.negate()).cos().negate()
+                self.add(adjustment).cos().negate()
             } else {
-                self.add(adjustment.negate()).cos()
+                self.add(adjustment).cos()
             }
         } else if abs_rough_appr >= unsigned::TWO.deref() {
             // Scale further with double angle formula
