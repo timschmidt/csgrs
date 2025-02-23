@@ -1119,6 +1119,94 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         CSG::from_polygons(&[poly])
     }
     
+    /// Creates a 2D circle with a rectangular keyway slot cut out on the +X side.
+    pub fn circle_with_keyway(
+        radius: Real,
+        segments: usize,
+        key_width: Real,
+        key_depth: Real,
+        metadata: Option<S>,
+    ) -> CSG<S> {
+        // 1. Full circle
+        let circle = CSG::circle(radius, segments, metadata.clone());
+    
+        // 2. Construct the keyway rectangle:
+        //    - width along X = key_depth
+        //    - height along Y = key_width
+        //    - its right edge at x = +radius
+        //    - so it spans from x = (radius - key_depth) to x = radius
+        //    - and from y = -key_width/2 to y = +key_width/2
+        let key_rect = CSG::square(key_depth, key_width, metadata.clone())
+            .translate(radius - key_depth, -key_width * 0.5, 0.0);
+    
+        // 3. Subtract the keyway slot from the circle
+        circle.difference(&key_rect)
+    }
+
+    /// Creates a 2D "D" shape (circle with one flat chord).
+    /// `radius` is the circle radius,
+    /// `flat_dist` is how far from the center the flat chord is placed.
+    ///   - If flat_dist == 0.0 => chord passes through center => a half-circle
+    ///   - If flat_dist < radius => chord is inside the circle => typical "D" shape
+    ///
+    /// Solve for distance from center using width of flat:
+    /// let half_c = chord_len / 2.0;
+    /// let flat_dist = (radius*radius - half_c*half_c).sqrt();
+    pub fn circle_with_flat(
+        radius: Real,
+        segments: usize,
+        flat_dist: Real,
+        metadata: Option<S>,
+    ) -> CSG<S> {
+        // 1. Full circle
+        let circle = CSG::circle(radius, segments, metadata.clone());
+    
+        // 2. Build a large rectangle that cuts off everything below y = -flat_dist
+        //    (i.e., we remove that portion to create a chord).
+        //    Width = 2*radius is plenty to cover the circle’s X-range.
+        //    Height = large enough, we just shift it so top edge is at y = -flat_dist.
+        //    So that rectangle covers from y = -∞ up to y = -flat_dist.
+        let cutter_height = 9999.0; // some large number
+        let rect_cutter = CSG::square(2.0 * radius, cutter_height, metadata.clone())
+            .translate(-radius, -cutter_height, 0.0) // put its bottom near "negative infinity"
+            .translate(0.0, -flat_dist, 0.0);        // now top edge is at y = -flat_dist
+    
+        // 3. Subtract to produce the flat chord
+        circle.difference(&rect_cutter)
+    }
+
+    /// Circle with two parallel flat chords on opposing sides (e.g., "double D" shape).
+    /// `radius`   => circle radius
+    /// `segments` => how many segments in the circle approximation
+    /// `flat_dist` => half-distance between flats measured from the center.
+    ///   - chord at y=+flat_dist  and  chord at y=-flat_dist
+    pub fn circle_with_two_flats(
+        radius: Real,
+        segments: usize,
+        flat_dist: Real,
+        metadata: Option<S>,
+    ) -> CSG<S> {
+        // 1. Full circle
+        let circle = CSG::circle(radius, segments, metadata.clone());
+    
+        // 2. Large rectangle to cut the TOP (above +flat_dist)
+        let cutter_height = 9999.0;
+        let top_rect = CSG::square(2.0 * radius, cutter_height, metadata.clone())
+            // place bottom at y=flat_dist
+            .translate(-radius, flat_dist, 0.0);
+    
+        // 3. Large rectangle to cut the BOTTOM (below -flat_dist)
+        let bottom_rect = CSG::square(2.0 * radius, cutter_height, metadata.clone())
+            // place top at y=-flat_dist => bottom extends downward
+            .translate(-radius, -cutter_height - flat_dist, 0.0);
+    
+        // 4. Subtract both
+        let with_top_flat = circle.difference(&top_rect);
+        let with_both_flats = with_top_flat.difference(&bottom_rect);
+    
+        with_both_flats
+    }
+
     /// Create a right prism (a box) that spans from (0, 0, 0) 
     /// to (width, length, height). All dimensions must be >= 0.
     pub fn cube(width: Real, length: Real, height: Real, metadata: Option<S>) -> CSG<S> {
