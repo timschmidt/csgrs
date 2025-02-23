@@ -475,7 +475,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
         // We'll build up a vector of Vertex in CCW order.
         // The normal is +Z for all points.
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
 
         // Helper to push a 90-degree arc around corner (cx, cy) with startAngle..endAngle
         let mut points = Vec::new();
@@ -491,7 +491,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 let t = start_rad + (i as Real) * step;
                 let x = cx + r * t.cos();
                 let y = cy + r * t.sin();
-                result.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+                result.push(Vertex::new(Point3::new(x, y, 0.0), normal));
             }
         };
 
@@ -527,7 +527,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
         // Build a single Polygon, then wrap in CSG
-        let poly = crate::polygon::Polygon::new(deduped, /*open=*/ false, metadata);
+        let poly = Polygon::new(deduped, CLOSED, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -544,15 +544,15 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
         let rx = width  * 0.5;
         let ry = height * 0.5;
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
         let mut verts = Vec::with_capacity(segments);
         for i in 0..segments {
-            let theta = crate::float_types::TAU * (i as Real) / (segments as Real);
+            let theta = TAU * (i as Real) / (segments as Real);
             let x = rx * theta.cos();
             let y = ry * theta.sin();
-            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
-        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        let poly = Polygon::new(verts, CLOSED, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -566,15 +566,15 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         if sides < 3 {
             return Self::new();
         }
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
         let mut verts = Vec::with_capacity(sides);
         for i in 0..sides {
-            let theta = crate::float_types::TAU * (i as Real) / (sides as Real);
+            let theta = TAU * (i as Real) / (sides as Real);
             let x = radius * theta.cos();
             let y = radius * theta.sin();
-            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
-        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        let poly = Polygon::new(verts, CLOSED, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -584,13 +584,13 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         height: Real,
         metadata: Option<S>,
     ) -> Self {
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
         let vertices = vec![
-            Vertex::new(nalgebra::Point3::new(0.0,     0.0,     0.0), normal),
-            Vertex::new(nalgebra::Point3::new(width,   0.0,     0.0), normal),
-            Vertex::new(nalgebra::Point3::new(0.0,     height,  0.0), normal),
+            Vertex::new(Point3::origin(), normal),
+            Vertex::new(Point3::new(width,   0.0,     0.0), normal),
+            Vertex::new(Point3::new(0.0,     height,  0.0), normal),
         ];
-        let poly = crate::polygon::Polygon::new(vertices, false, metadata);
+        let poly = crate::polygon::Polygon::new(vertices, CLOSED, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -602,15 +602,15 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         height: Real,
         metadata: Option<S>,
     ) -> Self {
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
         // (0,0) -> (bottom,0) -> (top,height) -> (0,height)
         let vertices = vec![
-            Vertex::new(nalgebra::Point3::new(0.0,          0.0, 0.0), normal),
-            Vertex::new(nalgebra::Point3::new(bottom_width, 0.0, 0.0), normal),
-            Vertex::new(nalgebra::Point3::new(top_width,    height, 0.0), normal),
-            Vertex::new(nalgebra::Point3::new(0.0,          height, 0.0), normal),
+            Vertex::new(Point3::origin(), normal),
+            Vertex::new(Point3::new(bottom_width, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(top_width,    height, 0.0), normal),
+            Vertex::new(Point3::new(0.0,          height, 0.0), normal),
         ];
-        let poly = crate::polygon::Polygon::new(vertices, false, metadata);
+        let poly = Polygon::new(vertices, CLOSED, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -627,23 +627,23 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         if num_points < 2 {
             return Self::new();
         }
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
         let mut verts = Vec::with_capacity(num_points * 2);
-        let step = crate::float_types::TAU / (num_points as Real);
+        let step = TAU / (num_points as Real);
         for i in 0..num_points {
             // Outer
             let theta_out = (i as Real) * step;
             let x_out = outer_radius * theta_out.cos();
             let y_out = outer_radius * theta_out.sin();
-            verts.push(Vertex::new(nalgebra::Point3::new(x_out, y_out, 0.0), normal));
+            verts.push(Vertex::new(Point3::new(x_out, y_out, 0.0), normal));
 
             // Inner
             let theta_in = theta_out + (step * 0.5);
             let x_in = inner_radius * theta_in.cos();
             let y_in = inner_radius * theta_in.sin();
-            verts.push(Vertex::new(nalgebra::Point3::new(x_in, y_in, 0.0), normal));
+            verts.push(Vertex::new(Point3::new(x_in, y_in, 0.0), normal));
         }
-        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        let poly = Polygon::new(verts, CLOSED, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -651,40 +651,40 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// - a circle arc for the "round" top
     /// - it tapers down to a cusp at bottom.
     /// This is just one of many possible "teardrop" definitions.
-    pub fn teardrop(
+    pub fn teardrop_outline(
         width: Real,
-        height: Real,
+        length: Real,
         segments: usize,
         metadata: Option<S>,
     ) -> Self {
         // The circle portion is at the top; cusp at bottom center.
-        if segments < 2 || width < EPSILON || height < EPSILON {
+        if segments < 2 || width < EPSILON || length < EPSILON {
             return Self::new();
         }
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
         let r = width * 0.5;
         // We'll define the circle center near the top, so that the bottom is at y=0.
         // Let's place the circle center at (0, height - r).
         // Then the bottom cusp is at (0,0).
-        let center_y = height - r;
+        let center_y = length - r;
         let mut verts = Vec::new();
         // Arc from angle=180 deg to angle=0 deg, CCW (left side).
         let half_segments = segments / 2;
         for i in 0..=half_segments {
-            let t = std::f64::consts::PI * (i as Real / half_segments as Real); // 0..pi
+            let t = PI * (i as Real / half_segments as Real); // 0..pi
             let x = -r * t.cos(); // sweeping from left to right
             let y =  r * t.sin() + center_y;
-            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
         // Then go to the cusp (0,0) at bottom
-        verts.push(Vertex::new(nalgebra::Point3::new(0.0, 0.0, 0.0), normal));
+        verts.push(Vertex::new(Point3::origin(), normal));
         // Now do the right side arc from angle=0 deg to angle=-180 deg (or angle=0..pi but mirrored in X)
         for i in 0..=half_segments {
-            let t = std::f64::consts::PI * (i as Real / half_segments as Real); // 0..pi
+            let t = PI * (i as Real / half_segments as Real); // 0..pi
             let x =  r * t.cos(); // mirrored
             let y =  r * t.sin() + center_y;
             // We push in reverse order so that we proceed CCW up the right side
-            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
         // Deduplicate final
         if let Some(first) = verts.first() {
@@ -694,7 +694,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 }
             }
         }
-        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        let poly = Polygon::new(verts, CLOSED, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -713,17 +713,17 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
         let rx = width  * 0.5;
         let ry = length * 0.5;
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
         let mut verts = Vec::with_capacity(segments);
         for i in 0..segments {
-            let theta = crate::float_types::TAU * (i as Real) / (segments as Real);
+            let theta = TAU * (i as Real) / (segments as Real);
             // Distort the standard ellipse a bit, e.g. weigh more heavily near the "top"
             let distort = 1.0 + 0.2 * (theta.cos());
             let x = rx * theta.cos() * distort * 0.8; // slightly less on the x-distortion
             let y = ry * theta.sin();
-            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
-        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        let poly = Polygon::new(verts, CLOSED, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -738,7 +738,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         if segments < 3 {
             return Self::new();
         }
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
         let rx = width  * 0.5;
         let ry = height * 0.5;
         let m  = 4.0; // exponent
@@ -749,9 +749,9 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let st = t.sin().abs().powf(2.0/m) * t.sin().signum();
             let x = rx * ct;
             let y = ry * st;
-            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
-        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        let poly = Polygon::new(verts, CLOSED, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -786,14 +786,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         if sides < 3 || arc_segments_per_side < 1 {
             return Self::new();
         }
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
         // First define the corners of a regular polygon
         let mut corners = Vec::with_capacity(sides);
         for i in 0..sides {
-            let theta = crate::float_types::TAU * (i as Real) / (sides as Real);
+            let theta = TAU * (i as Real) / (sides as Real);
             let x = radius * theta.cos();
             let y = radius * theta.sin();
-            corners.push(nalgebra::Point3::new(x, y, 0.0));
+            corners.push(Point3::new(x, y, 0.0));
         }
         // For each corner i, we draw an arc that is centered at corner (i+1), going from corner i to (i+2)
         // We'll store all arcs in a big chain
@@ -811,8 +811,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let end_angle   = v_end.y.atan2(v_end.x);
             // We want to proceed CCW. We'll unify angles
             let mut delta = end_angle - start_angle;
-            while delta <= 0.0 { delta += crate::float_types::TAU; }
-            if delta > crate::float_types::PI * 1.5 {
+            while delta <= 0.0 { delta += TAU; }
+            if delta > PI * 1.5 {
                 // Some shapes might have >180 arcs. Usually Reuleaux arcs are 2π/sides,
                 // but let's just clamp to something sensible if needed.
             }
@@ -821,7 +821,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 let a = start_angle + (seg_i as Real)*step;
                 let px = center.x + radius*a.cos();
                 let py = center.y + radius*a.sin();
-                all_points.push(nalgebra::Point3::new(px, py, 0.0));
+                all_points.push(Point3::new(px, py, 0.0));
             }
         }
         // Finally close the shape by connecting the last arc to the first point
@@ -837,7 +837,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let verts: Vec<Vertex> = all_points.into_iter()
             .map(|p| Vertex::new(p, normal))
             .collect();
-        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        let poly = Polygon::new(verts, CLOSED, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -892,12 +892,12 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let sweep     = end_rad - start_rad;
     
         // Build vertices: center at origin, then arc from start->end
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
         let mut verts = Vec::with_capacity(segments + 2);
     
         // Center vertex
         verts.push(Vertex::new(
-            nalgebra::Point3::new(0.0, 0.0, 0.0),
+            Point3::origin(),
             normal,
         ));
     
@@ -907,11 +907,11 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let angle = start_rad + t * sweep;
             let x = radius * angle.cos();
             let y = radius * angle.sin();
-            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
     
         // One polygon
-        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        let poly = Polygon::new(verts, CLOSED, metadata);
         CSG::from_polygons(&[poly])
     }
     
@@ -1049,7 +1049,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     
                 if pts.len() >= 2 {
                     // Build a small polygon from these points
-                    let normal = nalgebra::Vector3::z();
+                    let normal = Vector3::z();
                     let mut poly_verts = Vec::new();
                     // Sort them in an order that won't self-intersect too badly
                     // (You can do more robust sorting or triangulation if needed)
@@ -1091,7 +1091,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             return CSG::new();
         }
     
-        let normal = nalgebra::Vector3::z();
+        let normal = Vector3::z();
         let mut verts = Vec::with_capacity(segments);
     
         fn supershape_r(theta: Real, a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real) -> Real {
@@ -1111,11 +1111,11 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let r = supershape_r(theta, a, b, m, n1, n2, n3);
             let x = r * theta.cos();
             let y = r * theta.sin();
-            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
     
         // Single closed polygon
-        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        let poly = Polygon::new(verts, CLOSED, metadata);
         CSG::from_polygons(&[poly])
     }
     
@@ -1480,6 +1480,100 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         CSG::from_polygons(&polygons)
+    }
+    
+    /// Creates a 3D "egg" shape by revolving the existing 2D `egg_outline` profile.
+    ///
+    /// # Parameters
+    /// - `width`: The "width" of the 2D egg outline.
+    /// - `length`: The "length" (height) of the 2D egg outline.
+    /// - `revolve_segments`: Number of segments for the revolution.
+    /// - `outline_segments`: Number of segments for the 2D egg outline itself.
+    /// - `metadata`: Optional metadata.
+    pub fn egg(
+        width: Real,
+        length: Real,
+        revolve_segments: usize,
+        outline_segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        let egg_2d = Self::egg_outline(width, length, outline_segments, metadata.clone());
+        let egg_2d_aligned = egg_2d
+            .rotate(-90.0, 0.0, 0.0)
+            .translate(width * 0.5, 0.0, 0.0);
+
+        egg_2d_aligned.rotate_extrude(360.0, revolve_segments)
+    }
+    
+    /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via rotate_extrude).
+    ///
+    /// # Parameters
+    /// - `width`: Width of the 2D teardrop profile.
+    /// - `length`: Length of the 2D teardrop profile.
+    /// - `revolve_segments`: Number of segments for the revolution (the "circular" direction).
+    /// - `shape_segments`: Number of segments for the 2D teardrop outline itself.
+    /// - `metadata`: Optional metadata.
+    pub fn teardrop(
+        width: Real,
+        length: Real,
+        revolve_segments: usize,
+        shape_segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        // 1) Make a 2D teardrop in the XY plane.
+        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
+        // 2) Usually we want to revolve around the Z-axis, but we can rotate so that
+        //    the teardrop shape stands "upright" and revolve around the Z.
+        //    For example, rotate by -90° around X so that the teardrop's "stem" is along Z,
+        //    then translate so revolve axis is through the "left" side.
+        // Adjust to taste:
+        let td_2d_aligned = td_2d
+            .rotate(-90.0, 0.0, 0.0)   // tilt so 'bottom' is at the revolve axis
+            .translate(width * 0.5, 0.0, 0.0);
+
+        // 3) revolve 360 degrees
+        td_2d_aligned.rotate_extrude(360.0, revolve_segments)
+    }
+
+    /// Creates a 3D "teardrop cylinder" by extruding the existing 2D `teardrop` in the Z+ axis.
+    ///
+    /// # Parameters
+    /// - `width`: Width of the 2D teardrop profile.
+    /// - `length`: Length of the 2D teardrop profile.
+    /// - `revolve_segments`: Number of segments for the revolution (the "circular" direction).
+    /// - `shape_segments`: Number of segments for the 2D teardrop outline itself.
+    /// - `metadata`: Optional metadata.
+    pub fn teardrop_cylinder(
+        width: Real,
+        length: Real,
+        height: Real,
+        shape_segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        // Make a 2D teardrop in the XY plane.
+        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
+        td_2d.extrude(height)
+    }
+    
+    /// Creates an ellipsoid by taking a sphere of radius=1 and scaling it by (rx, ry, rz).
+    ///
+    /// # Parameters
+    /// - `rx`: X-axis radius.
+    /// - `ry`: Y-axis radius.
+    /// - `rz`: Z-axis radius.
+    /// - `segments`: Number of horizontal segments.
+    /// - `stacks`: Number of vertical stacks.
+    /// - `metadata`: Optional metadata.
+    pub fn ellipsoid(
+        rx: Real,
+        ry: Real,
+        rz: Real,
+        segments: usize,
+        stacks: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        let base_sphere = Self::sphere(1.0, segments, stacks, metadata.clone());
+        base_sphere.scale(rx, ry, rz)
     }
 
     /// Transform all vertices in this CSG by a given 4×4 matrix.
