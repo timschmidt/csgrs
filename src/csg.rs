@@ -458,7 +458,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         CSG::from_polygons(&[Polygon::new(vertices, CLOSED, metadata)])
     }
     
-    /// 1) Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
+    /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
     /// `corner_segments` controls the smoothness of each rounded corner.
     pub fn rounded_rectangle(
         width: Real,
@@ -531,7 +531,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         Self::from_polygons(&[poly])
     }
 
-    /// 2) Ellipse in XY plane, centered at (0,0), with full width `width`, full height `height`.
+    /// Ellipse in XY plane, centered at (0,0), with full width `width`, full height `height`.
     /// `segments` is the number of polygon edges approximating the ellipse.
     pub fn ellipse(
         width: Real,
@@ -556,7 +556,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         Self::from_polygons(&[poly])
     }
 
-    /// 3) Regular N-gon in XY plane, centered at (0,0), with circumscribed radius `radius`.
+    /// Regular N-gon in XY plane, centered at (0,0), with circumscribed radius `radius`.
     /// `sides` is how many edges (>=3).
     pub fn regular_ngon(
         sides: usize,
@@ -578,7 +578,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         Self::from_polygons(&[poly])
     }
 
-    /// 4) Right triangle from (0,0) to (width,0) to (0,height).
+    /// Right triangle from (0,0) to (width,0) to (0,height).
     pub fn right_triangle(
         width: Real,
         height: Real,
@@ -594,7 +594,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         Self::from_polygons(&[poly])
     }
 
-    /// 5) Trapezoid from (0,0) -> (bottom_width,0) -> (top_width,height) -> (0,height)
+    /// Trapezoid from (0,0) -> (bottom_width,0) -> (top_width,height) -> (0,height)
     /// Note: this is a simple shape that can represent many trapezoids or parallelograms.
     pub fn trapezoid(
         top_width: Real,
@@ -614,7 +614,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         Self::from_polygons(&[poly])
     }
 
-    /// 6) Star shape (typical "spiky star") with `num_points`, outer_radius, inner_radius.
+    /// Star shape (typical "spiky star") with `num_points`, outer_radius, inner_radius.
     /// The star is centered at (0,0).
     pub fn star(
         num_points: usize,
@@ -647,7 +647,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         Self::from_polygons(&[poly])
     }
 
-    /// 7) Teardrop shape.  A simple approach:
+    /// Teardrop shape.  A simple approach:
     /// - a circle arc for the "round" top
     /// - it tapers down to a cusp at bottom.
     /// This is just one of many possible "teardrop" definitions.
@@ -698,7 +698,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         Self::from_polygons(&[poly])
     }
 
-    /// 8) Egg outline.  Approximate an egg shape using a parametric approach.
+    /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
     pub fn egg_outline(
         width: Real,
@@ -727,7 +727,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         Self::from_polygons(&[poly])
     }
 
-    /// 9) Squircle (superellipse) centered at (0,0) with bounding box width×height.
+    /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
     /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
     pub fn squircle(
         width: Real,
@@ -755,7 +755,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         Self::from_polygons(&[poly])
     }
 
-    /// 10) Keyhole shape (simple version): a large circle + a rectangle "handle".
+    /// Keyhole shape (simple version): a large circle + a rectangle "handle".
     /// This does *not* have a hole.  If you want a literal hole, you'd do difference ops.
     /// Here we do union of a circle and a rectangle.
     pub fn keyhole(
@@ -775,7 +775,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         unioned.flatten()
     }
 
-    /// 11) Reuleaux polygon with `sides` and "radius".  Approximates constant-width shape.
+    /// Reuleaux polygon with `sides` and "radius".  Approximates constant-width shape.
     /// This is a simplified approximation that arcs from each vertex to the next.
     pub fn reuleaux_polygon(
         sides: usize,
@@ -841,7 +841,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         Self::from_polygons(&[poly])
     }
 
-    /// 12) Ring with inner diameter = `id` and (radial) thickness = `thickness`.
+    /// Ring with inner diameter = `id` and (radial) thickness = `thickness`.
     /// Outer diameter = `id + 2*thickness`. This yields an annulus in the XY plane.
     /// `segments` controls how smooth the outer/inner circles are.
     ///
