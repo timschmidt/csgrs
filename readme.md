@@ -52,6 +52,18 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 - **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
 - **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
+- **`CSG::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
+- **`CSG::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- **`CSG::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
+- **`CSG::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
+- **`CSG::trapezoid(top_width: Real, bottom_width: Real, height: Real, metadata: Option<S>)`**
+- **`CSG::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
+- **`CSG::teardrop(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- **`CSG::egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
+- **`CSG::squircle(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- **`CSG::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
+- **`CSG::reuleaux_polygon(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`**
+- **`CSG::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::from_polylines(polylines: &[Polyline], metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
 - **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext)
@@ -453,6 +465,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 ## Roadmap / Todo
 - fix up error handling with result types
 - ray intersection (singular)
+- find nearest polygon
 - https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d
 - convert more for loops to iterators - csg::transform
 - convert polygon level 2D functions to Point2 and Vector2

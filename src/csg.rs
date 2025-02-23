@@ -458,6 +458,419 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         CSG::from_polygons(&[Polygon::new(vertices, CLOSED, metadata)])
     }
     
+    /// 1) Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
+    /// `corner_segments` controls the smoothness of each rounded corner.
+    pub fn rounded_rectangle(
+        width: Real,
+        height: Real,
+        corner_radius: Real,
+        corner_segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        // Clamp the corner radius so it does not exceed half of the smaller dimension
+        let r = corner_radius.min(width * 0.5).min(height * 0.5);
+        if r <= EPSILON {
+            // Fallback: just a plain rectangle (no rounding)
+            return Self::square(width, height, metadata);
+        }
+        // We'll build up a vector of Vertex in CCW order.
+        // The normal is +Z for all points.
+        let normal = nalgebra::Vector3::z();
+
+        // Helper to push a 90-degree arc around corner (cx, cy) with startAngle..endAngle
+        let mut points = Vec::new();
+        let arc = |result: &mut Vec<Vertex>,
+                   cx: Real,
+                   cy: Real,
+                   start_deg: Real,
+                   end_deg: Real| {
+            let start_rad = start_deg.to_radians();
+            let end_rad   = end_deg.to_radians();
+            let step      = (end_rad - start_rad) / corner_segments as Real;
+            for i in 0..=corner_segments {
+                let t = start_rad + (i as Real) * step;
+                let x = cx + r * t.cos();
+                let y = cy + r * t.sin();
+                result.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+            }
+        };
+
+        // We want CCW around the shape:
+        // Bottom-left corner arc: center at (r, r), angles from 180..270
+        arc(&mut points, r, r, 180.0, 270.0);
+        // Bottom edge -> bottom-right corner arc: center at (width - r, r), angles 270..360
+        arc(&mut points, width - r, r, 270.0, 360.0);
+        // Right edge -> top-right corner arc: center at (width - r, height - r), angles 0..90
+        arc(&mut points, width - r, height - r, 0.0, 90.0);
+        // Top edge -> top-left corner arc: center at (r, height - r), angles 90..180
+        arc(&mut points, r, height - r, 90.0, 180.0);
+        // Now we have a full outline with 4 arcs, but note each arc includes both endpoints.
+        // So we might get duplicated corner points at the arc junctures. We could remove dups:
+        // (In many cases, the underlying CSG code can handle near-duplicates, but let's be tidy.)
+        let mut deduped = Vec::new();
+        for pt in points {
+            if deduped.is_empty() {
+                deduped.push(pt);
+            } else {
+                let last = deduped.last().unwrap();
+                if (pt.pos.coords - last.pos.coords).norm() > EPSILON {
+                    deduped.push(pt);
+                }
+            }
+        }
+        // Ensure the final point is not a duplicate of the first
+        if !deduped.is_empty() {
+            let first = &deduped[0];
+            let last  = deduped.last().unwrap();
+            if (first.pos.coords - last.pos.coords).norm() < EPSILON {
+                deduped.pop();
+            }
+        }
+        // Build a single Polygon, then wrap in CSG
+        let poly = crate::polygon::Polygon::new(deduped, /*open=*/ false, metadata);
+        Self::from_polygons(&[poly])
+    }
+
+    /// 2) Ellipse in XY plane, centered at (0,0), with full width `width`, full height `height`.
+    /// `segments` is the number of polygon edges approximating the ellipse.
+    pub fn ellipse(
+        width: Real,
+        height: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        if segments < 3 {
+            return Self::new();
+        }
+        let rx = width  * 0.5;
+        let ry = height * 0.5;
+        let normal = nalgebra::Vector3::z();
+        let mut verts = Vec::with_capacity(segments);
+        for i in 0..segments {
+            let theta = crate::float_types::TAU * (i as Real) / (segments as Real);
+            let x = rx * theta.cos();
+            let y = ry * theta.sin();
+            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+        }
+        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        Self::from_polygons(&[poly])
+    }
+
+    /// 3) Regular N-gon in XY plane, centered at (0,0), with circumscribed radius `radius`.
+    /// `sides` is how many edges (>=3).
+    pub fn regular_ngon(
+        sides: usize,
+        radius: Real,
+        metadata: Option<S>,
+    ) -> Self {
+        if sides < 3 {
+            return Self::new();
+        }
+        let normal = nalgebra::Vector3::z();
+        let mut verts = Vec::with_capacity(sides);
+        for i in 0..sides {
+            let theta = crate::float_types::TAU * (i as Real) / (sides as Real);
+            let x = radius * theta.cos();
+            let y = radius * theta.sin();
+            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+        }
+        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        Self::from_polygons(&[poly])
+    }
+
+    /// 4) Right triangle from (0,0) to (width,0) to (0,height).
+    pub fn right_triangle(
+        width: Real,
+        height: Real,
+        metadata: Option<S>,
+    ) -> Self {
+        let normal = nalgebra::Vector3::z();
+        let vertices = vec![
+            Vertex::new(nalgebra::Point3::new(0.0,     0.0,     0.0), normal),
+            Vertex::new(nalgebra::Point3::new(width,   0.0,     0.0), normal),
+            Vertex::new(nalgebra::Point3::new(0.0,     height,  0.0), normal),
+        ];
+        let poly = crate::polygon::Polygon::new(vertices, false, metadata);
+        Self::from_polygons(&[poly])
+    }
+
+    /// 5) Trapezoid from (0,0) -> (bottom_width,0) -> (top_width,height) -> (0,height)
+    /// Note: this is a simple shape that can represent many trapezoids or parallelograms.
+    pub fn trapezoid(
+        top_width: Real,
+        bottom_width: Real,
+        height: Real,
+        metadata: Option<S>,
+    ) -> Self {
+        let normal = nalgebra::Vector3::z();
+        // (0,0) -> (bottom,0) -> (top,height) -> (0,height)
+        let vertices = vec![
+            Vertex::new(nalgebra::Point3::new(0.0,          0.0, 0.0), normal),
+            Vertex::new(nalgebra::Point3::new(bottom_width, 0.0, 0.0), normal),
+            Vertex::new(nalgebra::Point3::new(top_width,    height, 0.0), normal),
+            Vertex::new(nalgebra::Point3::new(0.0,          height, 0.0), normal),
+        ];
+        let poly = crate::polygon::Polygon::new(vertices, false, metadata);
+        Self::from_polygons(&[poly])
+    }
+
+    /// 6) Star shape (typical "spiky star") with `num_points`, outer_radius, inner_radius.
+    /// The star is centered at (0,0).
+    pub fn star(
+        num_points: usize,
+        outer_radius: Real,
+        inner_radius: Real,
+        metadata: Option<S>,
+    ) -> Self {
+        // We'll build 2*num_points vertices, alternating outer/inner.
+        // If num_points < 2, we bail.
+        if num_points < 2 {
+            return Self::new();
+        }
+        let normal = nalgebra::Vector3::z();
+        let mut verts = Vec::with_capacity(num_points * 2);
+        let step = crate::float_types::TAU / (num_points as Real);
+        for i in 0..num_points {
+            // Outer
+            let theta_out = (i as Real) * step;
+            let x_out = outer_radius * theta_out.cos();
+            let y_out = outer_radius * theta_out.sin();
+            verts.push(Vertex::new(nalgebra::Point3::new(x_out, y_out, 0.0), normal));
+
+            // Inner
+            let theta_in = theta_out + (step * 0.5);
+            let x_in = inner_radius * theta_in.cos();
+            let y_in = inner_radius * theta_in.sin();
+            verts.push(Vertex::new(nalgebra::Point3::new(x_in, y_in, 0.0), normal));
+        }
+        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        Self::from_polygons(&[poly])
+    }
+
+    /// 7) Teardrop shape.  A simple approach:
+    /// - a circle arc for the "round" top
+    /// - it tapers down to a cusp at bottom.
+    /// This is just one of many possible "teardrop" definitions.
+    pub fn teardrop(
+        width: Real,
+        height: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        // The circle portion is at the top; cusp at bottom center.
+        if segments < 2 || width < EPSILON || height < EPSILON {
+            return Self::new();
+        }
+        let normal = nalgebra::Vector3::z();
+        let r = width * 0.5;
+        // We'll define the circle center near the top, so that the bottom is at y=0.
+        // Let's place the circle center at (0, height - r).
+        // Then the bottom cusp is at (0,0).
+        let center_y = height - r;
+        let mut verts = Vec::new();
+        // Arc from angle=180 deg to angle=0 deg, CCW (left side).
+        let half_segments = segments / 2;
+        for i in 0..=half_segments {
+            let t = std::f64::consts::PI * (i as Real / half_segments as Real); // 0..pi
+            let x = -r * t.cos(); // sweeping from left to right
+            let y =  r * t.sin() + center_y;
+            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+        }
+        // Then go to the cusp (0,0) at bottom
+        verts.push(Vertex::new(nalgebra::Point3::new(0.0, 0.0, 0.0), normal));
+        // Now do the right side arc from angle=0 deg to angle=-180 deg (or angle=0..pi but mirrored in X)
+        for i in 0..=half_segments {
+            let t = std::f64::consts::PI * (i as Real / half_segments as Real); // 0..pi
+            let x =  r * t.cos(); // mirrored
+            let y =  r * t.sin() + center_y;
+            // We push in reverse order so that we proceed CCW up the right side
+            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+        }
+        // Deduplicate final
+        if let Some(first) = verts.first() {
+            if let Some(last) = verts.last() {
+                if (first.pos.coords - last.pos.coords).norm() < EPSILON {
+                    verts.pop();
+                }
+            }
+        }
+        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        Self::from_polygons(&[poly])
+    }
+
+    /// 8) Egg outline.  Approximate an egg shape using a parametric approach.
+    /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
+    pub fn egg_outline(
+        width: Real,
+        length: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        // We treat (width/2, length/2) as "radii", but distort them with a small sinusoidal factor
+        // to create an "egg" shape.  Many variants are possible.
+        if segments < 3 {
+            return Self::new();
+        }
+        let rx = width  * 0.5;
+        let ry = length * 0.5;
+        let normal = nalgebra::Vector3::z();
+        let mut verts = Vec::with_capacity(segments);
+        for i in 0..segments {
+            let theta = crate::float_types::TAU * (i as Real) / (segments as Real);
+            // Distort the standard ellipse a bit, e.g. weigh more heavily near the "top"
+            let distort = 1.0 + 0.2 * (theta.cos());
+            let x = rx * theta.cos() * distort * 0.8; // slightly less on the x-distortion
+            let y = ry * theta.sin();
+            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+        }
+        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        Self::from_polygons(&[poly])
+    }
+
+    /// 9) Squircle (superellipse) centered at (0,0) with bounding box width×height.
+    /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
+    pub fn squircle(
+        width: Real,
+        height: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        if segments < 3 {
+            return Self::new();
+        }
+        let normal = nalgebra::Vector3::z();
+        let rx = width  * 0.5;
+        let ry = height * 0.5;
+        let m  = 4.0; // exponent
+        let mut verts = Vec::with_capacity(segments);
+        for i in 0..segments {
+            let t = crate::float_types::TAU * (i as Real) / (segments as Real);
+            let ct = t.cos().abs().powf(2.0/m) * t.cos().signum();
+            let st = t.sin().abs().powf(2.0/m) * t.sin().signum();
+            let x = rx * ct;
+            let y = ry * st;
+            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+        }
+        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        Self::from_polygons(&[poly])
+    }
+
+    /// 10) Keyhole shape (simple version): a large circle + a rectangle "handle".
+    /// This does *not* have a hole.  If you want a literal hole, you'd do difference ops.
+    /// Here we do union of a circle and a rectangle.
+    pub fn keyhole(
+        circle_radius: Real,
+        handle_width: Real,
+        handle_height: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        // Big circle centered at (0,0), plus a rectangle below it that extends downward.
+        // We'll union them.  Then we flatten to produce a single polygon if possible.
+        let circ = Self::circle(circle_radius, segments, metadata.clone());
+        let rect = Self::square(handle_width, handle_height, metadata.clone())
+            .translate(-0.5*handle_width, -handle_height, 0.0);
+        let unioned = circ.union(&rect);
+        // Possibly flatten into a single polygon
+        unioned.flatten()
+    }
+
+    /// 11) Reuleaux polygon with `sides` and "radius".  Approximates constant-width shape.
+    /// This is a simplified approximation that arcs from each vertex to the next.
+    pub fn reuleaux_polygon(
+        sides: usize,
+        radius: Real,
+        arc_segments_per_side: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        if sides < 3 || arc_segments_per_side < 1 {
+            return Self::new();
+        }
+        let normal = nalgebra::Vector3::z();
+        // First define the corners of a regular polygon
+        let mut corners = Vec::with_capacity(sides);
+        for i in 0..sides {
+            let theta = crate::float_types::TAU * (i as Real) / (sides as Real);
+            let x = radius * theta.cos();
+            let y = radius * theta.sin();
+            corners.push(nalgebra::Point3::new(x, y, 0.0));
+        }
+        // For each corner i, we draw an arc that is centered at corner (i+1), going from corner i to (i+2)
+        // We'll store all arcs in a big chain
+        let mut all_points = Vec::new();
+        for i in 0..sides {
+            let i_next = (i + 1) % sides;
+            let i_next2 = (i + 2) % sides;
+            let center = corners[i_next];
+            let start  = corners[i];
+            let end    = corners[i_next2];
+            // The arc from 'start' to 'end' with 'center' as center. We'll approximate it with arc_segments_per_side.
+            let v_start = start - center;
+            let v_end   = end   - center;
+            let start_angle = v_start.y.atan2(v_start.x);
+            let end_angle   = v_end.y.atan2(v_end.x);
+            // We want to proceed CCW. We'll unify angles
+            let mut delta = end_angle - start_angle;
+            while delta <= 0.0 { delta += crate::float_types::TAU; }
+            if delta > crate::float_types::PI * 1.5 {
+                // Some shapes might have >180 arcs. Usually Reuleaux arcs are 2π/sides,
+                // but let's just clamp to something sensible if needed.
+            }
+            let step = delta / arc_segments_per_side as Real;
+            for seg_i in 0..arc_segments_per_side {
+                let a = start_angle + (seg_i as Real)*step;
+                let px = center.x + radius*a.cos();
+                let py = center.y + radius*a.sin();
+                all_points.push(nalgebra::Point3::new(px, py, 0.0));
+            }
+        }
+        // Finally close the shape by connecting the last arc to the first point
+        // If needed, push the very end point:
+        if !all_points.is_empty() {
+            let first = all_points[0];
+            let last  = *all_points.last().unwrap();
+            if (first.coords - last.coords).norm() > EPSILON {
+                all_points.push(first);
+            }
+        }
+        // Convert to vertices
+        let verts: Vec<Vertex> = all_points.into_iter()
+            .map(|p| Vertex::new(p, normal))
+            .collect();
+        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        Self::from_polygons(&[poly])
+    }
+
+    /// 12) Ring with inner diameter = `id` and (radial) thickness = `thickness`.
+    /// Outer diameter = `id + 2*thickness`. This yields an annulus in the XY plane.
+    /// `segments` controls how smooth the outer/inner circles are.
+    ///
+    /// Internally, we do:
+    ///   outer = circle(outer_radius)
+    ///   inner = circle(inner_radius)
+    ///   ring = outer.difference(inner)
+    /// Then we call `flatten()` to unify into a single shape that has a hole.
+    pub fn ring(
+        id: Real,
+        thickness: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        if id <= 0.0 || thickness <= 0.0 {
+            return Self::new();
+        }
+        let inner_radius = id * 0.5;
+        let outer_radius = inner_radius + thickness;
+        // Make outer circle
+        let outer = Self::circle(outer_radius, segments, metadata.clone());
+        // Make inner circle
+        let inner = Self::circle(inner_radius, segments, metadata.clone());
+        // Difference
+        let ring = outer.difference(&inner);
+        // Attempt to unify into a single polygon with a hole
+        ring.flatten()
+    }
+    
     /// Create a right prism (a box) that spans from (0, 0, 0) 
     /// to (width, length, height). All dimensions must be >= 0.
     pub fn cube(width: Real, length: Real, height: Real, metadata: Option<S>) -> CSG<S> {
