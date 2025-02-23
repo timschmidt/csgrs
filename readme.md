@@ -64,6 +64,10 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 - **`CSG::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::reuleaux_polygon(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`**
 - **`CSG::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
+- **`CSG::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: Option<S>)`**
+- **`CSG::metaball_2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**  
+- **`CSG::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: Option<S>)`**
+  
 - **`CSG::from_polylines(polylines: &[Polyline], metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
 - **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext)
@@ -191,6 +195,9 @@ They all return a new `CSG<S>`
 - **`CSG::center()`** - Returns the CSG centered at the origin
 - **`CSG::float()`** - Returns the CSG translated so that its bottommost point(s) sit exactly at z=0
 - **`CSG::transform(&Matrix4)`** - Returns the CSG after applying arbitrary affine transforms
+- **`CSG::distribute_arc(count: usize, radius: Real, start_angle_deg: Real, end_angle_deg: Real)`**
+- **`CSG::distribute_linear(count: usize, dir: nalgebra::Vector3, spacing: Real)`**
+- **`CSG::distribute_grid(rows: usize, cols: usize, dx: Real, dy: Real)`**
 
 ```rust
 use nalgebra::Vector3;

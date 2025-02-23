@@ -871,6 +871,254 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         ring.flatten()
     }
     
+    /// Create a 2D "pie slice" (wedge) in the XY plane.
+    /// - `radius`: outer radius of the slice.
+    /// - `start_angle_deg`: starting angle in degrees (measured from X-axis).
+    /// - `end_angle_deg`: ending angle in degrees.
+    /// - `segments`: how many segments to use to approximate the arc.
+    /// - `metadata`: optional user metadata for this polygon.
+    pub fn pie_slice(
+        radius: Real,
+        start_angle_deg: Real,
+        end_angle_deg: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        if segments < 1 {
+            return CSG::new();
+        }
+        let start_rad = start_angle_deg.to_radians();
+        let end_rad   = end_angle_deg.to_radians();
+        let sweep     = end_rad - start_rad;
+    
+        // Build vertices: center at origin, then arc from start->end
+        let normal = nalgebra::Vector3::z();
+        let mut verts = Vec::with_capacity(segments + 2);
+    
+        // Center vertex
+        verts.push(Vertex::new(
+            nalgebra::Point3::new(0.0, 0.0, 0.0),
+            normal,
+        ));
+    
+        // Arc vertices
+        for i in 0..=segments {
+            let t = i as Real / segments as Real;
+            let angle = start_rad + t * sweep;
+            let x = radius * angle.cos();
+            let y = radius * angle.sin();
+            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+        }
+    
+        // One polygon
+        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        CSG::from_polygons(&[poly])
+    }
+    
+    /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
+    /// - `balls`: array of (center, radius).
+    /// - `resolution`: (nx, ny) grid resolution for marching squares.
+    /// - `iso_value`: threshold for the iso-surface.
+    /// - `padding`: extra boundary beyond each ball's radius.
+    /// - `metadata`: optional user metadata.
+    pub fn metaball_2d(
+        balls: &[(nalgebra::Point2<Real>, Real)],
+        resolution: (usize, usize),
+        iso_value: Real,
+        padding: Real,
+        metadata: Option<S>,
+    ) -> Self {
+        if balls.is_empty() || resolution.0 < 2 || resolution.1 < 2 {
+            return CSG::new();
+        }
+    
+        // 1) Determine bounding box in 2D
+        let mut min_x = Real::MAX;
+        let mut min_y = Real::MAX;
+        let mut max_x = -Real::MAX;
+        let mut max_y = -Real::MAX;
+    
+        for (center, r) in balls {
+            let rr = *r + padding;
+            if center.x - rr < min_x { min_x = center.x - rr; }
+            if center.x + rr > max_x { max_x = center.x + rr; }
+            if center.y - rr < min_y { min_y = center.y - rr; }
+            if center.y + rr > max_y { max_y = center.y + rr; }
+        }
+    
+        let nx = resolution.0;
+        let ny = resolution.1;
+        let dx = (max_x - min_x) / (nx as Real - 1.0);
+        let dy = (max_y - min_y) / (ny as Real - 1.0);
+    
+        // 2) Define a helper to compute scalar field from the 2D metaballs
+        fn scalar_field(balls: &[(nalgebra::Point2<Real>, Real)], x: Real, y: Real) -> Real {
+            let mut v = 0.0;
+            for (c, r) in balls {
+                let dx = x - c.x;
+                let dy = y - c.y;
+                let dist_sq = dx*dx + dy*dy + crate::float_types::EPSILON;
+                let r_sq = r * r;
+                v += r_sq / dist_sq;
+            }
+            v
+        }
+    
+        // 3) Sample the grid
+        let mut grid = vec![0.0; nx * ny];
+        let index = |ix: usize, iy: usize| -> usize {
+            iy * nx + ix
+        };
+    
+        for iy in 0..ny {
+            let yv = min_y + (iy as Real)*dy;
+            for ix in 0..nx {
+                let xv = min_x + (ix as Real)*dx;
+                let val = scalar_field(balls, xv, yv);
+                grid[index(ix, iy)] = val;
+            }
+        }
+    
+        // 4) Marching squares to build polylines for iso_value
+        let mut all_polygons = Vec::new();
+    
+        // A small function to interpolate the crossing between two grid corners
+        let interpolate = |(x1, y1, v1): (Real, Real, Real),
+                        (x2, y2, v2): (Real, Real, Real)| -> (Real, Real) {
+            // If the values are the same, fall back
+            if (v2 - v1).abs() < crate::float_types::EPSILON {
+                return (x1, y1);
+            }
+            let t = (iso_value - v1) / (v2 - v1);
+            (x1 + t * (x2 - x1), y1 + t * (y2 - y1))
+        };
+    
+        // We'll store polygon edges in sequences, then unify them
+        // For clarity, we just store each cell's contour as a small polygon.
+        // Production code might unify them more carefully.
+        for iy in 0..(ny - 1) {
+            let y0 = min_y + iy as Real * dy;
+            let y1 = min_y + (iy+1) as Real * dy;
+            for ix in 0..(nx - 1) {
+                let x0 = min_x + ix as Real * dx;
+                let x1 = min_x + (ix+1) as Real * dx;
+    
+                let v0 = grid[index(ix, iy)];
+                let v1 = grid[index(ix+1, iy)];
+                let v2 = grid[index(ix+1, iy+1)];
+                let v3 = grid[index(ix, iy+1)];
+    
+                // Build a bitmask
+                let mut c = 0u8;
+                if v0 >= iso_value { c |= 1; }
+                if v1 >= iso_value { c |= 2; }
+                if v2 >= iso_value { c |= 4; }
+                if v3 >= iso_value { c |= 8; }
+    
+                // Cases 0 or 15 => no crossing
+                if c == 0 || c == 15 {
+                    continue;
+                }
+    
+                // We track up to 4 intersection points
+                let mut pts = Vec::with_capacity(4);
+    
+                // Each corner: (x, y, value)
+                let c0 = (x0, y0, v0);
+                let c1 = (x1, y0, v1);
+                let c2 = (x1, y1, v2);
+                let c3 = (x0, y1, v3);
+    
+                // If edges cross iso boundary, compute intersection
+                // top edge
+                if (c & 1) != (c & 2) {
+                    pts.push(interpolate(c0, c1));
+                }
+                // right edge
+                if (c & 2) != (c & 4) {
+                    pts.push(interpolate(c1, c2));
+                }
+                // bottom edge
+                if (c & 4) != (c & 8) {
+                    pts.push(interpolate(c2, c3));
+                }
+                // left edge
+                if (c & 8) != (c & 1) {
+                    pts.push(interpolate(c3, c0));
+                }
+    
+                if pts.len() >= 2 {
+                    // Build a small polygon from these points
+                    let normal = nalgebra::Vector3::z();
+                    let mut poly_verts = Vec::new();
+                    // Sort them in an order that won't self-intersect too badly
+                    // (You can do more robust sorting or triangulation if needed)
+                    for (px, py) in pts {
+                        poly_verts.push(Vertex::new(
+                            nalgebra::Point3::new(px, py, 0.0),
+                            normal,
+                        ));
+                    }
+                    // For a “raw” ring, you might want to close it or not
+                    let poly = crate::polygon::Polygon::new(poly_verts, false, metadata.clone());
+                    all_polygons.push(poly);
+                }
+            }
+        }
+    
+        // Build final CSG from the pieces
+        // If you want to attempt a union of all these cells, you can flatten:
+        //    let final_2d = CSG::from_polygons(&all_polygons).flatten();
+        // but this can be expensive. We'll just return them as separate polygons.
+        CSG::from_polygons(&all_polygons)
+    }
+
+    /// Create a 2D supershape in the XY plane, approximated by `segments` edges.
+    /// The superformula parameters are typically:
+    ///   r(θ) = [ (|cos(mθ/4)/a|^n2 + |sin(mθ/4)/b|^n3) ^ (-1/n1) ]
+    /// Adjust as needed for your use-case.
+    pub fn supershape(
+        a: Real,
+        b: Real,
+        m: Real,
+        n1: Real,
+        n2: Real,
+        n3: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        if segments < 3 {
+            return CSG::new();
+        }
+    
+        let normal = nalgebra::Vector3::z();
+        let mut verts = Vec::with_capacity(segments);
+    
+        fn supershape_r(theta: Real, a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real) -> Real {
+            // Avoid zeros
+            let t = m * theta / 4.0;
+            let cos_t = (t).cos().abs();
+            let sin_t = (t).sin().abs();
+            let term1 = (cos_t / a).powf(n2);
+            let term2 = (sin_t / b).powf(n3);
+            let r = (term1 + term2).powf(-1.0 / n1);
+            r
+        }
+    
+        for i in 0..segments {
+            let frac = i as Real / segments as Real;
+            let theta = 2.0 * crate::float_types::PI * frac;
+            let r = supershape_r(theta, a, b, m, n1, n2, n3);
+            let x = r * theta.cos();
+            let y = r * theta.sin();
+            verts.push(Vertex::new(nalgebra::Point3::new(x, y, 0.0), normal));
+        }
+    
+        // Single closed polygon
+        let poly = crate::polygon::Polygon::new(verts, false, metadata);
+        CSG::from_polygons(&[poly])
+    }
+    
     /// Create a right prism (a box) that spans from (0, 0, 0) 
     /// to (width, length, height). All dimensions must be >= 0.
     pub fn cube(width: Real, length: Real, height: Real, metadata: Option<S>) -> CSG<S> {
@@ -1359,6 +1607,93 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // Apply to all polygons
         self.transform(&mirror_mat)
+    }
+    
+    /// Distribute this CSG `count` times around an arc (in XY plane) of radius,
+    /// from `start_angle_deg` to `end_angle_deg`.
+    /// Returns a new CSG with all copies (their polygons).
+    pub fn distribute_arc(
+        &self,
+        count: usize,
+        radius: Real,
+        start_angle_deg: Real,
+        end_angle_deg: Real,
+    ) -> CSG<S> {
+        if count < 1 {
+            return self.clone();
+        }
+        let mut all_polys = Vec::new();
+        let start_rad = start_angle_deg.to_radians();
+        let end_rad   = end_angle_deg.to_radians();
+        let sweep     = end_rad - start_rad;
+    
+        for i in 0..count {
+            let t = if count == 1 { 0.5 } else { i as Real / (count as Real - 1.0) };
+            let angle = start_rad + t * sweep;
+    
+            // Construct a transform: rotate by `angle` around Z, then translate outward by `radius`
+            let rot = nalgebra::Rotation3::from_axis_angle(
+                &nalgebra::Vector3::z_axis(),
+                angle
+            ).to_homogeneous();
+            let trans = nalgebra::Translation3::new(radius, 0.0, 0.0).to_homogeneous();
+            let mat = rot * trans;
+    
+            let csg_i = self.transform(&mat);
+            all_polys.extend(csg_i.polygons);
+        }
+        CSG::from_polygons(&all_polys)
+    }
+    
+    /// Distribute this CSG `count` times along a straight line (vector),
+    /// each copy spaced by `spacing`.
+    /// E.g. if `dir=(1.0,0.0,0.0)` and `spacing=2.0`, you get copies at
+    /// x=0, x=2, x=4, ... etc.
+    pub fn distribute_linear(
+        &self,
+        count: usize,
+        dir: nalgebra::Vector3<Real>,
+        spacing: Real,
+    ) -> CSG<S> {
+        if count < 1 {
+            return self.clone();
+        }
+        let step = dir.normalize() * spacing;
+        let mut all_polys = Vec::new();
+        for i in 0..count {
+            let offset = step * (i as Real);
+            let trans  = nalgebra::Translation3::from(offset).to_homogeneous();
+            let csg_i  = self.transform(&trans);
+            all_polys.extend(csg_i.polygons);
+        }
+        CSG::from_polygons(&all_polys)
+    }
+
+    /// Distribute this CSG in a grid of `rows x cols`, with spacing dx, dy in XY plane.
+    /// top-left or bottom-left depends on your usage of row/col iteration.
+    pub fn distribute_grid(
+        &self,
+        rows: usize,
+        cols: usize,
+        dx: Real,
+        dy: Real,
+    ) -> CSG<S> {
+        if rows < 1 || cols < 1 {
+            return self.clone();
+        }
+        let mut all_polys = Vec::new();
+        let step_x = nalgebra::Vector3::new(dx, 0.0, 0.0);
+        let step_y = nalgebra::Vector3::new(0.0, dy, 0.0);
+    
+        for r in 0..rows {
+            for c in 0..cols {
+                let offset = step_x * (c as Real) + step_y * (r as Real);
+                let trans  = nalgebra::Translation3::from(offset).to_homogeneous();
+                let csg_i  = self.transform(&trans);
+                all_polys.extend(csg_i.polygons);
+            }
+        }
+        CSG::from_polygons(&all_polys)
     }
 
     /// Compute the convex hull of all vertices in this CSG.
