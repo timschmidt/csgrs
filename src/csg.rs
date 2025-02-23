@@ -957,7 +957,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             for (c, r) in balls {
                 let dx = x - c.x;
                 let dy = y - c.y;
-                let dist_sq = dx*dx + dy*dy + crate::float_types::EPSILON;
+                let dist_sq = dx*dx + dy*dy + EPSILON;
                 let r_sq = r * r;
                 v += r_sq / dist_sq;
             }
@@ -986,7 +986,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let interpolate = |(x1, y1, v1): (Real, Real, Real),
                         (x2, y2, v2): (Real, Real, Real)| -> (Real, Real) {
             // If the values are the same, fall back
-            if (v2 - v1).abs() < crate::float_types::EPSILON {
+            if (v2 - v1).abs() < EPSILON {
                 return (x1, y1);
             }
             let t = (iso_value - v1) / (v2 - v1);
@@ -1055,12 +1055,12 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     // (You can do more robust sorting or triangulation if needed)
                     for (px, py) in pts {
                         poly_verts.push(Vertex::new(
-                            nalgebra::Point3::new(px, py, 0.0),
+                            Point3::new(px, py, 0.0),
                             normal,
                         ));
                     }
                     // For a “raw” ring, you might want to close it or not
-                    let poly = crate::polygon::Polygon::new(poly_verts, false, metadata.clone());
+                    let poly = Polygon::new(poly_verts, CLOSED, metadata.clone());
                     all_polygons.push(poly);
                 }
             }

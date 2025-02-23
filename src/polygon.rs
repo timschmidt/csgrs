@@ -25,11 +25,13 @@ pub struct Polygon<S: Clone> {
 impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, mut open: bool, metadata: Option<S>) -> Self {
-        if vertices.len() < 3 {
+        let plane = if vertices.len() < 3 {
             open = true;
+            Plane { normal: Vector3::z(), w: 0.0 }
+        } else {
+            Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos)
         };
-
-        let plane = Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos);
+       
         Polygon {
             vertices,
             open,

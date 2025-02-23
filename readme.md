@@ -470,6 +470,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 ---
 
 ## Roadmap / Todo
+- adjust rotate_extrude to work with XY plane polygons, like OpenSCAD
 - fix up error handling with result types
 - ray intersection (singular)
 - find nearest polygon
@@ -489,6 +490,7 @@ if let Some(data_mut) = poly.metadata_mut() {
   - tests
 - bending
 - gears
+- lead-ins, lead-outs
 - gpu accelleration?
 - reduce dependency feature sets
 - space filling curves, hilbert sort polygons / points
