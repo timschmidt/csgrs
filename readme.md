@@ -476,6 +476,8 @@ if let Some(data_mut) = poly.metadata_mut() {
 ---
 
 ## Roadmap / Todo
+- should 2d ops be seperate from the polygon type?  require use of XY plane, special triangulation, special extrudes to deal with holes?
+  - polylines in CSG?
 - adjust rotate_extrude to work with XY plane polygons, like OpenSCAD
 - fix up error handling with result types
 - ray intersection (singular)

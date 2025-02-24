@@ -85,7 +85,10 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
 /// The main CSG solid structure. Contains a list of polygons.
 #[derive(Debug, Clone)]
 pub struct CSG<S: Clone> {
+    /// 3D polygons for volumetric shapes
     pub polygons: Vec<Polygon<S>>,
+    /// 2D polylines in the XY plane for 2D shapes
+    pub polylines: Vec<Polyline<Real>>,
 }
 
 impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
@@ -93,6 +96,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     pub fn new() -> Self {
         CSG {
             polygons: Vec::new(),
+            polylines: Vec::new(),
         }
     }
 
