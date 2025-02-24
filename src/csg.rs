@@ -1139,8 +1139,10 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let key_rect = CSG::square(key_depth, key_width, metadata.clone())
             .translate(radius - key_depth, -key_width * 0.5, 0.0);
     
+        let polygons = circle.polygons[0].difference(&key_rect.polygons[0]);
+    
         // 3. Subtract the keyway slot from the circle
-        circle.difference(&key_rect)
+        CSG::from_polygons(&polygons)
     }
 
     /// Creates a 2D "D" shape (circle with one flat chord).
@@ -1587,8 +1589,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ) -> Self {
         let egg_2d = Self::egg_outline(width, length, outline_segments, metadata.clone());
         let egg_2d_aligned = egg_2d
-            .rotate(-90.0, 0.0, 0.0)
-            .translate(width * 0.5, 0.0, 0.0);
+            .rotate(-90.0, 0.0, 0.0);
 
         egg_2d_aligned.rotate_extrude(360.0, revolve_segments)
     }

@@ -6,7 +6,7 @@ use nalgebra::{
     Matrix4, Point2, Point3, Rotation3, Translation3, Unit, Vector3, Vector4,
 };
 use cavalier_contours::polyline::{
-    BooleanOp, PlineCreation, PlineSource, PlineSourceMut, Polyline,
+    BooleanOp, BooleanResult, PlineCreation, PlineSource, PlineSourceMut, Polyline,
 };
 
 #[cfg(feature = "chull-io")]
@@ -131,6 +131,27 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         }
         return Polygon::new(poly_verts, open, metadata);
     }
+    
+    /// The Boolean stitching in Cavalier Contours may deliberately flip certain loops’ directions to form valid closed results.
+    ///
+    /// Post-processes a BooleanResult<Polyline<T>> so that all positive polylines are CCW winding, and all negative
+    /// polylines are CW winding.
+    pub fn fix_polyline_winding(result: &mut BooleanResult<Polyline<Real>>) {
+        // The `pos_plines` and `neg_plines` are each Vec<BooleanResultPline<Polyline<T>>>,
+        // containing `.pline: Polyline<T>` and metadata.
+        for brp in &mut result.pos_plines {
+            let area = brp.pline.area();  // Negative => clockwise
+            if area < 0.0 {
+                brp.pline.invert_direction_mut();
+            }
+        }
+        for brp in &mut result.neg_plines {
+            let area = brp.pline.area();  // Negative => clockwise
+            if area > 0.0 {
+                brp.pline.invert_direction_mut();
+            }
+        }
+    }
 
     /// Reverses winding order, flips vertices normals, and flips the plane normal
     pub fn flip(&mut self) {
@@ -233,13 +254,14 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
 
         // Use cavalier_contours boolean op OR
         // union_result is a `BooleanResult<Polyline>`
-        let union_result = self_cc.boolean(&other_cc, BooleanOp::Or);
+        let mut result = self_cc.boolean(&other_cc, BooleanOp::Or);
+        Polygon::<()>::fix_polyline_winding(&mut result);
 
         let mut polygons_out = Vec::new();
 
         // union_result.pos_plines has the union outlines
         // union_result.neg_plines might be empty for `Or`.
-        for outline in union_result.pos_plines {
+        for outline in result.pos_plines {
             let pl = outline.pline; // a Polyline<Real>
             if pl.vertex_count() < 3 {
                 continue; // skip degenerate
@@ -257,7 +279,8 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         let other_cc = other.to_2d();
 
         // Use cavalier_contours boolean op AND
-        let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::And);
+        let mut result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::And);
+        Polygon::<()>::fix_polyline_winding(&mut result);
 
         let mut polygons_out = Vec::new();
 
@@ -274,11 +297,14 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
 
     /// Perform 2D boolean difference (this minus other) and return resulting polygons.
     pub fn difference(&self, other: &Polygon<S>) -> Vec<Polygon<S>> {
-        let self_cc = self.to_2d();
-        let other_cc = other.to_2d();
+        //let self_cc = self.to_2d();
+        //let other_cc = other.to_2d();
+        let self_cc = self.to_polyline();
+        let other_cc = other.to_polyline();
 
         // Use cavalier_contours boolean op NOT
-        let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::Not);
+        let mut result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::Not);
+        Polygon::<()>::fix_polyline_winding(&mut result);
 
         let mut polygons_out = Vec::new();
 
@@ -288,8 +314,9 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             if pl.vertex_count() < 3 {
                 continue;
             }
-            polygons_out.push(self.from_2d(&pl));
+            polygons_out.push(Polygon::from_polyline(&pl, self.metadata.clone()));
         }
+        
         polygons_out
     }
 
@@ -299,7 +326,8 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         let other_cc = other.to_2d();
 
         // Use cavalier_contours boolean op XOR
-        let result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::Xor);
+        let mut result = self_cc.boolean(&other_cc, cavalier_contours::polyline::BooleanOp::Xor);
+        Polygon::<()>::fix_polyline_winding(&mut result);
 
         let mut polygons_out = Vec::new();
 

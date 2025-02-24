@@ -7,6 +7,11 @@ use csgrs::float_types::Real;
 use std::fs;
 use nalgebra::{Vector3, Point3};
 use csgrs::plane::Plane;
+use cavalier_contours::polyline::{Polyline, PlineSourceMut};
+
+#[cfg(feature = "image")]
+use image::{GrayImage, ImageBuffer};
+
 #[cfg(feature = "metaballs")]
 use csgrs::csg::MetaBall;
 
@@ -265,4 +270,144 @@ fn main() {
     let grid_of_ss = sshape.distribute_grid(4, 4, 3.0, 3.0);
     let _ = fs::write("stl/grid_of_ss.stl", grid_of_ss.to_stl_ascii("grid_of_ss"));
     
+    // 1. Circle with keyway
+    let keyway_shape = CSG::circle_with_keyway(10.0, 64, 2.0, 3.0, None);
+    let _ = fs::write("stl/keyway_shape.stl", keyway_shape.to_stl_ascii("keyway_shape"));
+    // Extrude it 2 units:
+    let keyway_3d = keyway_shape.extrude(2.0);
+    let _ = fs::write("stl/keyway_3d.stl", keyway_3d.to_stl_ascii("keyway_3d"));
+
+    // 2. D-shape
+    let d_shape = CSG::circle_with_flat(5.0, 32, 2.0, None);
+    let _ = fs::write("stl/d_shape.stl", d_shape.to_stl_ascii("d_shape"));
+    let d_3d = d_shape.extrude(1.0);
+    let _ = fs::write("stl/d_3d.stl", d_3d.to_stl_ascii("d_3d"));
+
+    // 3. Double-flat circle
+    let double_flat = CSG::circle_with_two_flats(8.0, 64, 3.0, None);
+    let _ = fs::write("stl/double_flat.stl", double_flat.to_stl_ascii("double_flat"));
+    let df_3d = double_flat.extrude(0.5);
+    let _ = fs::write("stl/df_3d.stl", df_3d.to_stl_ascii("df_3d"));
+    
+    // A 3D teardrop shape
+    let teardrop_solid = CSG::teardrop(3.0, 5.0, 32, 32, None);
+    let _ = fs::write("stl/teardrop_solid.stl", teardrop_solid.to_stl_ascii("teardrop_solid"));
+    
+    // A 3D egg shape
+    let egg_solid = CSG::egg(3.0, 6.0, 32, 32, None);
+    let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
+    
+    // An ellipsoid with X radius=2, Y radius=1, Z radius=3
+    let ellip = CSG::ellipsoid(2.0, 1.0, 3.0, 16, 8, None);
+    let _ = fs::write("stl/ellip.stl", ellip.to_stl_ascii("ellip"));
+    
+    // A teardrop 'blank' hole
+    let teardrop_cylinder = CSG::teardrop_cylinder(2.0, 4.0, 32.0, 16, None);
+    let _ = fs::write("stl/teardrop_cylinder.stl", teardrop_cylinder.to_stl_ascii("teardrop_cylinder"));
+    
+    // 1) polygon()
+    let polygon_2d = CSG::polygon(
+        &[
+            [0.0, 0.0],
+            [2.0, 0.0],
+            [1.5, 1.0],
+            [1.0, 2.0],
+        ],
+        None,
+    );
+    let _ = fs::write("stl/polygon_2d.stl", polygon_2d.to_stl_ascii("polygon_2d"));
+
+    // 2) rounded_rectangle(width, height, corner_radius, corner_segments)
+    let rrect_2d = CSG::rounded_rectangle(4.0, 2.0, 0.3, 8, None);
+    let _ = fs::write("stl/rounded_rectangle_2d.stl", rrect_2d.to_stl_ascii("rounded_rectangle_2d"));
+
+    // 3) ellipse(width, height, segments)
+    let ellipse_2d = CSG::ellipse(3.0, 1.5, 32, None);
+    let _ = fs::write("stl/ellipse_2d.stl", ellipse_2d.to_stl_ascii("ellipse_2d"));
+
+    // 4) regular_ngon(sides, radius)
+    let ngon_2d = CSG::regular_ngon(6, 1.0, None); // Hexagon
+    let _ = fs::write("stl/ngon_2d.stl", ngon_2d.to_stl_ascii("ngon_2d"));
+
+    // 5) right_triangle(width, height)
+    let rtri_2d = CSG::right_triangle(2.0, 1.0, None);
+    let _ = fs::write("stl/right_triangle_2d.stl", rtri_2d.to_stl_ascii("right_triangle_2d"));
+
+    // 6) trapezoid(top_width, bottom_width, height)
+    let trap_2d = CSG::trapezoid(1.0, 2.0, 2.0, None);
+    let _ = fs::write("stl/trapezoid_2d.stl", trap_2d.to_stl_ascii("trapezoid_2d"));
+
+    // 7) star(num_points, outer_radius, inner_radius)
+    let star_2d = CSG::star(5, 2.0, 0.8, None);
+    let _ = fs::write("stl/star_2d.stl", star_2d.to_stl_ascii("star_2d"));
+
+    // 8) teardrop(width, height, segments) [2D shape]
+    let teardrop_2d = CSG::teardrop(2.0, 3.0, 32, 16, None);
+    let _ = fs::write("stl/teardrop_2d.stl", teardrop_2d.to_stl_ascii("teardrop_2d"));
+
+    // 9) egg_outline(width, length, segments) [2D shape]
+    let egg_2d = CSG::egg_outline(2.0, 4.0, 32, None);
+    let _ = fs::write("stl/egg_outline_2d.stl", egg_2d.to_stl_ascii("egg_outline_2d"));
+
+    // 10) squircle(width, height, segments)
+    let squircle_2d = CSG::squircle(3.0, 3.0, 32, None);
+    let _ = fs::write("stl/squircle_2d.stl", squircle_2d.to_stl_ascii("squircle_2d"));
+
+    // 11) keyhole(circle_radius, handle_width, handle_height, segments)
+    let keyhole_2d = CSG::keyhole(1.0, 1.0, 2.0, 16, None);
+    let _ = fs::write("stl/keyhole_2d.stl", keyhole_2d.to_stl_ascii("keyhole_2d"));
+
+    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
+    let reuleaux_2d = CSG::reuleaux_polygon(3, 1.0, 16, None); // Reuleaux triangle
+    let _ = fs::write("stl/reuleaux_2d.stl", reuleaux_2d.to_stl_ascii("reuleaux_2d"));
+
+    // 13) ring(inner_diam, thickness, segments)
+    let ring_2d = CSG::ring(5.0, 1.0, 32, None);
+    let _ = fs::write("stl/ring_2d.stl", ring_2d.to_stl_ascii("ring_2d"));
+
+    // 14) from_polylines(...)
+    {
+        // Construct two polylines as examples
+        let mut pline1 = Polyline::new_closed();
+        pline1.add(0.0, 0.0, 0.0);
+        pline1.add(2.0, 0.0, 0.0);
+        pline1.add(1.5, 1.5, 0.0);
+
+        let mut pline2 = Polyline::new_closed();
+        pline2.add(3.0, 0.0, 0.0);
+        pline2.add(4.0, 1.0, 0.0);
+        pline2.add(3.0, 2.0, 0.0);
+
+        let polylines = &[pline1, pline2];
+        let csg_from_plines = CSG::from_polylines(polylines, None);
+        let _ = fs::write("stl/from_polylines.stl", csg_from_plines.to_stl_ascii("from_polylines"));
+    }
+
+    // 15) from_image(img, threshold, closepaths, metadata) [requires "image" feature]
+    #[cfg(feature = "image")]
+    {
+        // Make a simple 64x64 gray image with a circle in the center
+        let mut img: GrayImage = ImageBuffer::new(64, 64);
+        // Fill a small circle of "white" pixels in the middle
+        let center = (32, 32);
+        for y in 0..64 {
+            for x in 0..64 {
+                let dx = x as i32 - center.0 as i32;
+                let dy = y as i32 - center.1 as i32;
+                if dx*dx + dy*dy < 15*15 {
+                    img.put_pixel(x, y, image::Luma([255u8]));
+                }
+            }
+        }
+        let csg_img = CSG::from_image(&img, 128, true, None);
+        let _ = fs::write("stl/from_image.stl", csg_img.to_stl_ascii("from_image"));
+    }
+
+    // 16) gyroid(...) – uses the current CSG volume as a bounding region
+    // Let's reuse the `cube` from above:
+    #[cfg(feature = "stl-io")]
+    {
+        let gyroid_inside_cube = cube.gyroid(32, 2.0, 0.0, None);
+        let _ = fs::write("stl/gyroid_cube.stl", gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap());
+    }
 }

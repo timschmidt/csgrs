@@ -479,6 +479,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 - adjust rotate_extrude to work with XY plane polygons, like OpenSCAD
 - fix up error handling with result types
 - ray intersection (singular)
+- outline, holes functions, wind_cw, wind_ccw
 - find nearest polygon
 - https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d
 - convert more for loops to iterators - csg::transform
