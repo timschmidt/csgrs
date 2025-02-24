@@ -1,6 +1,7 @@
 use crate::{Computable, Problem, Rational};
 use num::bigint::Sign;
 
+mod test;
 mod convert;
 
 #[derive(Clone, Debug)]

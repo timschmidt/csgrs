@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::{Problem, Rational, Real};
+    use super::super::curve;
 
     #[test]
     fn zero() {
@@ -25,7 +26,7 @@ mod tests {
     #[test]
     fn parse_fraction() {
         let input: Real = "98760/123450".parse().unwrap();
-        let answer = Real::new(Rational::fraction(9876, 12345));
+        let answer = Real::new(Rational::fraction(9876, 12345).unwrap());
         assert_eq!(input, answer);
     }
 
@@ -106,7 +107,7 @@ mod tests {
     #[test]
     fn ln_zero() {
         let zero = Real::zero();
-        assert_eq!(zero.ln(), Err(RealProblem::NotANumber));
+        assert_eq!(zero.ln(), Err(Problem::NotANumber));
     }
 
     #[test]
@@ -167,6 +168,8 @@ mod tests {
 
     #[test]
     fn sqrt_3045512() {
+        use crate::real::Class::Sqrt;
+
         let n: Real = 3045512.into();
         let sqrt = n.sqrt().unwrap();
         let root = Rational::new(1234);
@@ -177,14 +180,14 @@ mod tests {
 
     #[test]
     fn curves() {
-        let eighty = Rational::fraction(80, 100);
-        let twenty = Rational::fraction(20, 100);
+        let eighty = Rational::fraction(80, 100).unwrap();
+        let twenty = Rational::fraction(20, 100).unwrap();
         assert_eq!(curve(eighty), (false, twenty));
-        let forty = Rational::fraction(40, 100);
-        let sixty = Rational::fraction(60, 100);
+        let forty = Rational::fraction(40, 100).unwrap();
+        let sixty = Rational::fraction(60, 100).unwrap();
         assert_eq!(curve(sixty), (false, forty));
-        let otf = Rational::fraction(124, 100);
-        let tf = Rational::fraction(24, 100);
+        let otf = Rational::fraction(124, 100).unwrap();
+        let tf = Rational::fraction(24, 100).unwrap();
         assert_eq!(curve(otf), (true, tf));
     }
 
