@@ -36,16 +36,20 @@ let stl = difference_result.to_stl_ascii("cube_minus_sphere");
 std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 ```
 
-### CSG and Polygon Structures
+### CSG Structure
 
-- **`CSG<S>`** is the main type. It stores a list of **polygons** (`Vec<Polygon<S>>`).
-- **`Polygon<S>`** holds:
-  - a `Vec<Vertex>` (positions + normals),
-  - a `bool` indicating whether the polyline is open or closed,
-  - an optional metadata field (`Option<S>`), and
-  - a `Plane` describing the polygon’s orientation in 3D.
+- **`CSG<S>`** is the main type. It stores:
+  - a `Vec<Polygon<S>>` polygons, describing a 3D shape, each **`Polygon<S>`** holds:
+    - a `Vec<Vertex>` (positions + normals),
+    - a `Plane` describing the polygon’s orientation in 3D.
+    - an optional metadata field (`Option<S>`)
+  - a [`cavalier_contours`](https://crates.io/crates/cavalier_contours) 2D Shape which holds:
+    - `Vec<IndexedPolyline<T>>` ccw_plines, which contains positive shapes
+    - `Vec<IndexedPolyline<T>>` cw_plines, which contains negative shapes (i.e. holes)
+    - `StaticAABB2DIndex<T>` plines_index, Spatial index of all the polyline area bounding boxes, index positions correspond to in order all the counter clockwise polylines followed by all the clockwise polylines
+  - an optional metadata field (`Option<S>`)
 
-`CSG<S>` provides methods for working with 3D shapes, `Polygon<S>` provides methods for working with 2D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)`.  Some 2D functions are re-exported by `CSG<S>` for ease of use.
+`CSG<S>` provides methods for working with 2D and 3D shapes, `Polygon<S>` provides methods for working with 2D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from polylines with `CSG::from_polylines(...)`.  2D and 3D shapes generally do not interact in the library, except where one is explicitly transformed into the other as in extrude or slice.
 
 ### 2D Shapes
 
@@ -346,69 +350,16 @@ if (csg_obj.is_manifold()){
 ```
 
 ---
-## 2D Subsystem and Polygon‐Level 2D Operations
+## Polygon
 
 Although **CSG** typically focuses on three‐dimensional Boolean operations, this library also provides a robust **2D subsystem** built on top of [cavalier_contours](https://crates.io/crates/cavalier_contours). Each `Polygon<S>` in 3D can be **projected** into 2D (its own local XY plane) for 2D boolean operations such as **union**, **difference**, **intersection**, and **xor**. These are especially handy if you’re offsetting shapes, working with complex polygons, or just want 2D output.
-
-Below is a quick overview of the **2D‐related methods** you’ll find on `Polygon<S>`:
-
-### Polygon::to_2d() and Polygon::from_2d(...)
-- **`to_2d()`**  
-  Projects the polygon from its 3D plane into a 2D [`Polyline`](https://docs.rs/cavalier_contours/latest/cavalier_contours/polyline/struct.Polyline.html).  
-  Internally:
-  1. Finds a transform that sends `polygon.plane.normal` to the +Z axis.
-  2. Transforms each vertex into that local coordinate system (so the polygon lies at *z = 0*).
-  3. Returns a 2D `Polyline` of `(x, y, bulge)` points (here, `bulge` is set to `0.0` by default).
-
-- **`from_2d(polyline)`**  
-  The inverse of `to_2d()`, creating a 3D `Polygon` from a 2D `Polyline`. This method uses the **same** plane as the polygon on which you called `from_2d()`. That is, it takes `(x, y)` points in the local XY plane of `self.plane` and lifts them back into 3D space.
-
-These two functions let you cleanly convert between a 3D polygon and a pure 2D representation whenever you need to do 2D manipulations.  
-
-> **Tip**: If your polygons truly are already in the global XY plane (i.e., `z ≈ 0`), or you would like to flatten them without adjusting for their reference plane, you can use `Polygon::to_polyline()` and `Polygon::from_polyline(...)`. Those skip the plane‐based transform and simply store or read `(x, y, 0.0)` directly.
-
-### 2D Boolean Operations
-
-A `Polygon<S>` supports **union**, **difference**, **intersection**, and **xor** in 2D. Each of these methods:
-- Projects **both** polygons into 2D via `to_2d()`.
-- Invokes [cavalier_contours](https://crates.io/crates/cavalier_contours) to compute the boolean operation.
-- Reconstructs one or more resulting polygons in 3D using `from_2d(...)`.
-
-Each operation returns a `Vec<Polygon<S>>` rather than a single polygon, because the result may split into multiple disjoint pieces.  
-
-- **`Polygon::union(&other) -> Vec<Polygon<S>>`**  
-  `self ∪ other`. Merges overlapping or adjacent areas.
-
-- **`Polygon::intersection(&other) -> Vec<Polygon<S>>`**  
-  `self ∩ other`. Keeps only overlapping regions.
-
-- **`Polygon::difference(&other) -> Vec<Polygon<S>>`**  
-  `self \ other`. Subtracts `other` from `self`.
-
-- **`Polygon::xor(&other) -> Vec<Polygon<S>>`**  
-  Symmetric difference `(self ∪ other) \ (self ∩ other)`—keeps regions that belong to exactly one polygon.
-
-Example usage:
-```rust
-let p1 = polygon_a.union(&polygon_b);          // 2D union
-let p2 = polygon_a.difference(&polygon_b);     // 2D difference
-let p3 = polygon_a.intersection(&polygon_b);   // 2D intersection
-let p4 = polygon_a.xor(&polygon_b);            // 2D xor
-```
 
 ### Transformations
 
 - **`Polygon::translate(x: Real, y: Real, z: Real)`** - Returns a new Polygon translated by x, y, and z
 - **`Polygon::translate_vector(vector: Vector3)`** - Returns a new Polygon translated by vector
-- **`Polygon::rotate(axis: Vector3, angle: Real, center: Option<Point3>)`** - Rotates the polygon by a given angle in radians about axis.  If a center is provided the rotation is performed about that point, otherwise rotation is about the origin.
-- **`Polygon::scale(sx: Real, sy: Real)`** - Scales the polygon in it's local Plane by factors for X and Y
-- **`Polygon::mirror_x()`** - Mirrors the polygon about the x axis
-- **`Polygon::mirror_y()`** - Mirrors the polygon about the y axis
-- **`Polygon::mirror_z()`** - Mirrors the polygon about the z axis
 - **`Polygon::transform(&Matrix4)`** for arbitrary affine transforms
 - **`Polygon::flip()`** - Reverses winding order, flips vertices normals, and flips the plane normal, i.e. flips the polygon
-- **`Polygon::convex_hull()`** - Returns a new Polygon that is the convex hull of the current polygon’s vertices
-- **`Polygon::minkowski_sum(other: Polygon<S>)`** - Returns the Minkowski sum of this polygon and other
 
 ### Misc functions
 
@@ -416,8 +367,6 @@ let p4 = polygon_a.xor(&polygon_b);            // 2D xor
 - **`Polygon::calculate_new_normal()`**- return a normal calculated from all polygon vertices
 - **`Polygon::set_new_normal()`** - recalculate and set polygon normal
 - **`Polygon::triangulate()`** - Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2]
-- **`Polygon::offset(distance: Real)`** - offset a polygon by distance in positive or negative direction depending on normal
-- **`Polygon::reconstruct_arcs(min_match: usize, rms_limit: Real, angle_limit_degs: Real, offset_limit: Real)`** - Attempt to reconstruct arcs of constant radius from this polygon
 - **`Polygon::check_coordinates_finite()`** - Returns an error if any coordinate is not finite (NaN or ±∞)
 - **`Polygon::check_repeated_points()`** - Check for repeated adjacent points. Return the first repeated coordinate if found
 - **`Polygon::check_ring_closed()`** - Check ring closure: first and last vertex must coincide if polygon is meant to be closed
@@ -519,8 +468,6 @@ if let Some(data_mut) = poly.metadata_mut() {
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
 
 ## Todo maybe
-- implement constant radius arc support in 2d using cavalier_contours, interpolate/tessellate in from_polygons
-- extend Polygon to allow edges to store bulge like cavalier_contours and update split_polygon to handle line/arc intersections.
 - https://github.com/PsichiX/density-mesh
 - https://github.com/asny/tri-mesh port
 ---

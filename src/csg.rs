@@ -1706,7 +1706,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // Adjust to taste:
         let td_2d_aligned = td_2d
             .rotate(-90.0, 0.0, 0.0);   // tilt so 'bottom' is at the revolve axis
-            //.translate(width * 0.5, 0.0, 0.0);
 
         // 3) revolve 360 degrees
         td_2d_aligned.rotate_extrude(360.0, revolve_segments)
