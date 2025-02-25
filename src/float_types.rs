@@ -39,10 +39,6 @@ pub const TAU: Real = core::f32::consts::TAU;
 #[cfg(feature = "f64")]
 pub const TAU: Real = core::f64::consts::TAU;
 
-// Open and Closed polygon convenience aliases
-pub const OPEN: bool = true;
-pub const CLOSED: bool = false;
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Unit conversion
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

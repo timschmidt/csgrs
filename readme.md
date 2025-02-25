@@ -477,11 +477,9 @@ if let Some(data_mut) = poly.metadata_mut() {
 
 ## Roadmap / Todo
 - should 2d ops be seperate from the polygon type?  require use of XY plane, special triangulation, special extrudes to deal with holes?
-  - polylines in CSG?
 - adjust rotate_extrude to work with XY plane polygons, like OpenSCAD
 - fix up error handling with result types
 - ray intersection (singular)
-- outline, holes functions, wind_cw, wind_ccw
 - find nearest polygon
 - https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d
 - convert more for loops to iterators - csg::transform
@@ -490,7 +488,6 @@ if let Some(data_mut) = poly.metadata_mut() {
   - draft implementation done, pending API discussion
 - extend flatten to work with arbitrary planes
 - document coordinate system / coordinate transformations / compounded transformations
-- alternate functions w/o nalgebra types
 - rewrite bounding_box to work without parry using iter / par_iter, put parry, rapier behind feature flags
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
@@ -504,7 +501,6 @@ if let Some(data_mut) = poly.metadata_mut() {
 - reduce dependency feature sets
 - space filling curves, hilbert sort polygons / points
 - identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold, polygon::transform
-- invert Polygon::open to match cavalier_contours
 - svg import/export
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - screw threads

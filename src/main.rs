@@ -83,12 +83,12 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/circle_2d.stl", circle_2d.to_stl_binary("circle_2d").unwrap());
 
-    let grown_2d = square_2d.offset_2d(0.5);
-    #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/square_2d_grow_0_5.stl", grown_2d.to_stl_binary("square_2d_grow_0_5").unwrap());
+    //let grown_2d = square_2d.offset_2d(0.5);
+    //#[cfg(feature = "stl-io")]
+    //let _ = fs::write("stl/square_2d_grow_0_5.stl", grown_2d.to_stl_binary("square_2d_grow_0_5").unwrap());
 
-    let shrunk_2d = square_2d.offset_2d(-0.5);
-    let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"));
+    //let shrunk_2d = square_2d.offset_2d(-0.5);
+    //let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"));
 
     // 8) Extrude & Rotate-Extrude
     let extruded_square = square_2d.extrude(1.0);
@@ -165,8 +165,8 @@ fn main() {
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::cube(1.0, 1.0, 1.0, None);
     // 2) Flatten into the XY plane
-    let flattened = cube.flatten();
-    let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
+    //let flattened = cube.flatten();
+    //let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
     
     // Create a frustrum (start=-2, end=+2) with radius1 = 1, radius2 = 2, 32 slices
     let frustrum = CSG::frustrum_ptp(Point3::new(0.0, 0.0, -2.0), Point3::new(0.0, 0.0, 2.0), 1.0, 2.0, 32, None);
@@ -250,8 +250,8 @@ fn main() {
         (Point2::new(1.5, 0.0), 1.0),
         (Point2::new(0.75, 1.0), 0.5),
     ];
-    let mb2d = CSG::metaball_2d(&balls_2d, (100, 100), 1.0, 0.25, None);
-    let _ = fs::write("stl/mb2d.stl", mb2d.to_stl_ascii("metaballs2d"));
+    //let mb2d = CSG::metaball_2d(&balls_2d, (100, 100), 1.0, 0.25, None);
+    //let _ = fs::write("stl/mb2d.stl", mb2d.to_stl_ascii("metaballs2d"));
     
     // Create a supershape
     let sshape = CSG::supershape(1.0, 1.0, 6.0, 1.0, 1.0, 1.0, 128, None);
@@ -342,7 +342,7 @@ fn main() {
     let _ = fs::write("stl/star_2d.stl", star_2d.to_stl_ascii("star_2d"));
 
     // 8) teardrop(width, height, segments) [2D shape]
-    let teardrop_2d = CSG::teardrop(2.0, 3.0, 32, 16, None);
+    let teardrop_2d = CSG::teardrop_outline(2.0, 3.0, 16, None);
     let _ = fs::write("stl/teardrop_2d.stl", teardrop_2d.to_stl_ascii("teardrop_2d"));
 
     // 9) egg_outline(width, length, segments) [2D shape]

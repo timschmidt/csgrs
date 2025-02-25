@@ -1,15 +1,16 @@
-use crate::float_types::{EPSILON, PI, TAU, OPEN, CLOSED, Real};
+use crate::float_types::{EPSILON, PI, TAU, Real};
 use crate::bsp::Node;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
-use crate::polygon::{Polygon, polyline_area, union_all_2d, build_orthonormal_basis};
+use crate::polygon::{Polygon, build_orthonormal_basis};
 use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
 };
 use std::error::Error;
 use cavalier_contours::polyline::{
-    PlineSource, Polyline, PlineSourceMut,
+    PlineCreation, PlineSource, PlineSourceMut, Polyline,
 };
+use cavalier_contours::shape_algorithms::Shape as CCShape;
 use crate::float_types::parry3d::{
     bounding_volume::Aabb,
     query::{Ray, RayCast},
@@ -82,13 +83,16 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
     value
 }
 
-/// The main CSG solid structure. Contains a list of polygons.
+/// The main CSG solid structure. Contains a list of 3D polygons, 2D polylines, and some metadata.
 #[derive(Debug, Clone)]
 pub struct CSG<S: Clone> {
     /// 3D polygons for volumetric shapes
     pub polygons: Vec<Polygon<S>>,
     /// 2D polylines in the XY plane for 2D shapes
-    pub polylines: Vec<Polyline<Real>>,
+    /// When storing multiple polylines, these will be interpreted by unioning all CCW polylines, then differencing CW polylines from that.
+    pub polylines: CCShape<Real>,
+    /// metadata
+    pub metadata: Option<S>,
 }
 
 impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
@@ -96,7 +100,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     pub fn new() -> Self {
         CSG {
             polygons: Vec::new(),
-            polylines: Vec::new(),
+            polylines: CCShape::empty(),
+            metadata: None,
         }
     }
 
@@ -112,6 +117,43 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         &self.polygons
     }
 
+    /// Build a new CSG containing polylines
+    pub fn from_polylines(polylines: &[Polyline<Real>], metadata: Option<S>) -> CSG<S> {
+        let mut csg = CSG::new();
+        csg.polylines = CCShape::from_plines(polylines.to_vec());
+        csg.metadata = metadata;
+        csg
+    }
+
+    /// Build a new CSG from a set of 2D polylines in XY. Each polyline
+    /// is turned into one polygon at z=0. If a union produced multiple
+    /// loops, you will get multiple polygons in the final CSG.
+    ///
+    /// Unsure if this function will be useful after the new 2D subsystem
+    pub fn polylines_to_polygons(polylines: &[Polyline<Real>], metadata: Option<S>) -> CSG<S> {
+        let mut all_polygons = Vec::new();
+        let plane_normal = Vector3::z();
+
+        for pl in polylines {
+            // Convert each Polyline into a single polygon in z=0.
+            // todo: For arcs, subdivide by bulge, etc. This ignores arcs for simplicity.
+            let open = !pl.is_closed();
+            if pl.vertex_count() >= 2 {
+                let mut poly_verts = Vec::with_capacity(pl.vertex_count());
+                for i in 0..pl.vertex_count() {
+                    let v = pl.at(i);
+                    poly_verts.push(Vertex::new(
+                        Point3::new(v.x, v.y, 0.0),
+                        plane_normal,
+                    ));
+                }
+                all_polygons.push(Polygon::new(poly_verts, metadata.clone()));
+            }
+        }
+
+        CSG::from_polygons(&all_polygons)
+    }
+    
     // Group polygons by their metadata.
     //
     // Returns a map from the metadata (as `Option<S>`) to a
@@ -160,33 +202,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     //    }
     //    groups
     // }
-
-    /// Build a new CSG from a set of 2D polylines in XY. Each polyline
-    /// is turned into one polygon at z=0. If a union produced multiple
-    /// loops, you will get multiple polygons in the final CSG.
-    pub fn from_polylines(polylines: &[Polyline<Real>], metadata: Option<S>) -> CSG<S> {
-        let mut all_polygons = Vec::new();
-        let plane_normal = Vector3::z();
-
-        for pl in polylines {
-            // Convert each Polyline into a single polygon in z=0.
-            // todo: For arcs, subdivide by bulge, etc. This ignores arcs for simplicity.
-            let open = !pl.is_closed();
-            if pl.vertex_count() >= 2 {
-                let mut poly_verts = Vec::with_capacity(pl.vertex_count());
-                for i in 0..pl.vertex_count() {
-                    let v = pl.at(i);
-                    poly_verts.push(Vertex::new(
-                        Point3::new(v.x, v.y, 0.0),
-                        plane_normal,
-                    ));
-                }
-                all_polygons.push(Polygon::new(poly_verts, open, metadata.clone()));
-            }
-        }
-
-        CSG::from_polygons(&all_polygons)
-    }
 
     /// Constructs a new CSG solid polygons provided in the format that earclip accepts:
     /// a slice of polygons, each a Vec of points (each point a Vec<Real> of length 2 or 3).
@@ -248,7 +263,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
             // Create a polygon (triangle)
             // todo:  compute the true face normal from the triangle vertices.): let normal = (b - a).cross(&(c - a)).normalize();
-            new_polygons.push(Polygon::new(tri_vertices, CLOSED, metadata.clone()));
+            new_polygons.push(Polygon::new(tri_vertices, metadata.clone()));
         }
         CSG::from_polygons(&new_polygons)
     }
@@ -339,7 +354,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             );
 
             // Create a triangle polygon (closed) from these three vertices.
-            triangles.push(Polygon::new(vec![v0, v1, v2], CLOSED, metadata.clone()));
+            triangles.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
         }
 
         CSG::from_polygons(&triangles)
@@ -401,6 +416,85 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
         csg
     }
+    
+    /// 2D union using the cavalier_contours `Shape` boolean operations.
+    pub fn union_2d(&self, other: &CSG<S>) -> CSG<S> {
+        // self.polylines and other.polylines are `Shape<Real>`.
+        let shape1 = &self.polylines;
+        let shape2 = &other.polylines;
+
+        // Perform the union using the new Shape-based method
+        let union_shape = shape1.union(shape2);
+
+        // Gather the resulting polylines from the unioned shape
+        let mut result_plines = Vec::new();
+        // The resulting shape’s `ccw_plines` and `cw_plines` each contain an
+        // `IndexedPolyline<T>` with `.polyline` holding the actual Polyline.
+        for indexed_pl in union_shape.ccw_plines.iter().chain(union_shape.cw_plines.iter()) {
+            result_plines.push(indexed_pl.polyline.clone());
+        }
+
+        // Construct a new CSG that has no 3D polygons, but the new 2D polylines
+        CSG {
+            polygons: Vec::new(),
+            polylines: CCShape::from_plines(result_plines),
+            metadata: self.metadata.clone(),
+        }
+    }
+
+    /// 2D intersection using the cavalier_contours `Shape` boolean operations.
+    pub fn intersection_2d(&self, other: &CSG<S>) -> CSG<S> {
+        let shape1 = &self.polylines;
+        let shape2 = &other.polylines;
+
+        let intersected = shape1.intersection(shape2);
+        let mut result_plines = Vec::new();
+        for indexed_pl in intersected.ccw_plines.iter().chain(intersected.cw_plines.iter()) {
+            result_plines.push(indexed_pl.polyline.clone());
+        }
+
+        CSG {
+            polygons: Vec::new(),
+            polylines: CCShape::from_plines(result_plines),
+            metadata: self.metadata.clone(),
+        }
+    }
+
+    /// 2D difference using the cavalier_contours `Shape` boolean operations.
+    pub fn difference_2d(&self, other: &CSG<S>) -> CSG<S> {
+        let shape1 = &self.polylines;
+        let shape2 = &other.polylines;
+
+        let diff_shape = shape1.difference(shape2);
+        let mut result_plines = Vec::new();
+        for indexed_pl in diff_shape.ccw_plines.iter().chain(diff_shape.cw_plines.iter()) {
+            result_plines.push(indexed_pl.polyline.clone());
+        }
+
+        CSG {
+            polygons: Vec::new(),
+            polylines: CCShape::from_plines(result_plines),
+            metadata: self.metadata.clone(),
+        }
+    }
+
+    /// 2D symmetric difference (XOR) using the cavalier_contours `Shape` boolean operations.
+    pub fn xor_2d(&self, other: &CSG<S>) -> CSG<S> {
+        let shape1 = &self.polylines;
+        let shape2 = &other.polylines;
+
+        let xor_shape = shape1.xor(shape2);
+        let mut result_plines = Vec::new();
+        for indexed_pl in xor_shape.ccw_plines.iter().chain(xor_shape.cw_plines.iter()) {
+            result_plines.push(indexed_pl.polyline.clone());
+        }
+
+        CSG {
+            polygons: Vec::new(),
+            polylines: CCShape::from_plines(result_plines),
+            metadata: self.metadata.clone(),
+        }
+    }
 
     /// Creates a 2D square in the XY plane.
     ///
@@ -420,7 +514,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             Vertex::new(Point3::new(width, length, 0.0), normal),
             Vertex::new(Point3::new(0.0, length, 0.0), normal),
         ];
-        CSG::from_polygons(&[Polygon::new(vertices, CLOSED, metadata)])
+        CSG::from_polygons(&[Polygon::new(vertices, metadata)])
     }
 
     /// Creates a 2D circle in the XY plane.
@@ -435,7 +529,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             vertices.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
 
-        CSG::from_polygons(&[Polygon::new(vertices, CLOSED, metadata)])
+        CSG::from_polygons(&[Polygon::new(vertices, metadata)])
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -459,7 +553,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         for p in points {
             vertices.push(Vertex::new(Point3::new(p[0], p[1], 0.0), normal));
         }
-        CSG::from_polygons(&[Polygon::new(vertices, CLOSED, metadata)])
+        CSG::from_polygons(&[Polygon::new(vertices, metadata)])
     }
     
     /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
@@ -531,7 +625,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
         // Build a single Polygon, then wrap in CSG
-        let poly = Polygon::new(deduped, CLOSED, metadata);
+        let poly = Polygon::new(deduped, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -556,7 +650,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let y = ry * theta.sin();
             verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
-        let poly = Polygon::new(verts, CLOSED, metadata);
+        let poly = Polygon::new(verts, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -578,7 +672,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let y = radius * theta.sin();
             verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
-        let poly = Polygon::new(verts, CLOSED, metadata);
+        let poly = Polygon::new(verts, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -594,7 +688,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             Vertex::new(Point3::new(width,   0.0,     0.0), normal),
             Vertex::new(Point3::new(0.0,     height,  0.0), normal),
         ];
-        let poly = crate::polygon::Polygon::new(vertices, CLOSED, metadata);
+        let poly = crate::polygon::Polygon::new(vertices, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -614,7 +708,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             Vertex::new(Point3::new(top_width,    height, 0.0), normal),
             Vertex::new(Point3::new(0.0,          height, 0.0), normal),
         ];
-        let poly = Polygon::new(vertices, CLOSED, metadata);
+        let poly = Polygon::new(vertices, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -647,7 +741,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let y_in = inner_radius * theta_in.sin();
             verts.push(Vertex::new(Point3::new(x_in, y_in, 0.0), normal));
         }
-        let poly = Polygon::new(verts, CLOSED, metadata);
+        let poly = Polygon::new(verts, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -698,7 +792,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 }
             }
         }
-        let poly = Polygon::new(verts, CLOSED, metadata);
+        let poly = Polygon::new(verts, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -727,7 +821,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let y = ry * theta.sin();
             verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
-        let poly = Polygon::new(verts, CLOSED, metadata);
+        let poly = Polygon::new(verts, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -755,7 +849,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let y = ry * st;
             verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
         }
-        let poly = Polygon::new(verts, CLOSED, metadata);
+        let poly = Polygon::new(verts, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -776,7 +870,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             .translate(-0.5*handle_width, -handle_height, 0.0);
         let unioned = circ.union(&rect);
         // Possibly flatten into a single polygon
-        unioned.flatten()
+        //unioned.flatten()
+        unioned
     }
 
     /// Reuleaux polygon with `sides` and "radius".  Approximates constant-width shape.
@@ -841,7 +936,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let verts: Vec<Vertex> = all_points.into_iter()
             .map(|p| Vertex::new(p, normal))
             .collect();
-        let poly = Polygon::new(verts, CLOSED, metadata);
+        let poly = Polygon::new(verts, metadata);
         Self::from_polygons(&[poly])
     }
 
@@ -872,7 +967,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // Difference
         let ring = outer.difference(&inner);
         // Attempt to unify into a single polygon with a hole
-        ring.flatten()
+        //ring.flatten()
+        ring
     }
     
     /// Create a 2D "pie slice" (wedge) in the XY plane.
@@ -915,7 +1011,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
     
         // One polygon
-        let poly = Polygon::new(verts, CLOSED, metadata);
+        let poly = Polygon::new(verts, metadata);
         CSG::from_polygons(&[poly])
     }
     
@@ -1064,7 +1160,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                         ));
                     }
                     // For a “raw” ring, you might want to close it or not
-                    let poly = Polygon::new(poly_verts, CLOSED, metadata.clone());
+                    let poly = Polygon::new(poly_verts, metadata.clone());
                     all_polygons.push(poly);
                 }
             }
@@ -1119,7 +1215,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
     
         // Single closed polygon
-        let poly = Polygon::new(verts, CLOSED, metadata);
+        let poly = Polygon::new(verts, metadata);
         CSG::from_polygons(&[poly])
     }
     
@@ -1143,10 +1239,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let key_rect = CSG::square(key_depth, key_width, metadata.clone())
             .translate(radius - key_depth, -key_width * 0.5, 0.0);
     
-        let polygons = circle.polygons[0].difference(&key_rect.polygons[0]);
-    
-        // 3. Subtract the keyway slot from the circle
-        CSG::from_polygons(&polygons)
+        circle.difference_2d(&key_rect)
     }
 
     /// Creates a 2D "D" shape (circle with one flat chord).
@@ -1241,7 +1334,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 Vertex::new(p110, bottom_normal),
                 Vertex::new(p100, bottom_normal),
             ],
-            CLOSED,
             metadata.clone(),
         );
 
@@ -1255,7 +1347,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 Vertex::new(p111, top_normal),
                 Vertex::new(p011, top_normal),                
             ],
-            CLOSED,
             metadata.clone(),
         );
 
@@ -1269,7 +1360,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 Vertex::new(p101, front_normal),
                 Vertex::new(p001, front_normal),
             ],
-            CLOSED,
             metadata.clone(),
         );
 
@@ -1283,7 +1373,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 Vertex::new(p111, back_normal),
                 Vertex::new(p110, back_normal),
             ],
-            CLOSED,
             metadata.clone(),
         );
 
@@ -1297,7 +1386,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 Vertex::new(p011, left_normal),
                 Vertex::new(p010, left_normal),
             ],
-            CLOSED,
             metadata.clone(),
         );
 
@@ -1311,7 +1399,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 Vertex::new(p111, right_normal),
                 Vertex::new(p101, right_normal),
             ],
-            CLOSED,
             metadata.clone(),
         );
 
@@ -1358,7 +1445,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 }
                 vertices.push(vertex(theta0, phi1));
 
-                polygons.push(Polygon::new(vertices, CLOSED, metadata.clone()));
+                polygons.push(Polygon::new(vertices, metadata.clone()));
             }
         }
         CSG::from_polygons(&polygons)
@@ -1441,7 +1528,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     point(0.0, slice0, -1.0),
                     point(0.0, slice1, -1.0),
                 ],
-                CLOSED,
                 metadata.clone(),
             ));
     
@@ -1457,7 +1543,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     point(1.0, slice0, 0.0),
                     point(1.0, slice1, 0.0),
                 ],
-                CLOSED,
                 metadata.clone(),
             ));
     
@@ -1471,7 +1556,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     point(1.0, slice1, 1.0),
                     point(1.0, slice0, 1.0),
                 ],
-                CLOSED,
                 metadata.clone(),
             ));
         }
@@ -1562,7 +1646,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
 
             // Build the polygon (plane is auto-computed from first 3 vertices).
-            let mut poly = Polygon::new(face_vertices, CLOSED, metadata.clone());
+            let mut poly = Polygon::new(face_vertices, metadata.clone());
 
             // Optionally, set each vertex normal to match the polygon’s plane normal,
             // so that shading in many 3D viewers looks correct.
@@ -1621,8 +1705,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         //    then translate so revolve axis is through the "left" side.
         // Adjust to taste:
         let td_2d_aligned = td_2d
-            .rotate(-90.0, 0.0, 0.0)   // tilt so 'bottom' is at the revolve axis
-            .translate(width * 0.5, 0.0, 0.0);
+            .rotate(-90.0, 0.0, 0.0);   // tilt so 'bottom' is at the revolve axis
+            //.translate(width * 0.5, 0.0, 0.0);
 
         // 3) revolve 360 degrees
         td_2d_aligned.rotate_extrude(360.0, revolve_segments)
@@ -1913,7 +1997,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
-            polygons.push(Polygon::new(vec![vv0, vv1, vv2], CLOSED, None));
+            polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
 
         CSG::from_polygons(&polygons)
@@ -1964,7 +2048,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
-            polygons.push(Polygon::new(vec![vv0, vv1, vv2], CLOSED, None));
+            polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
 
         CSG::from_polygons(&polygons)
@@ -1987,7 +2071,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 sub_tris.into_par_iter().map(move |tri| {
                     Polygon::new(
                         vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
-                        CLOSED,
                         poly.metadata.clone(),
                     )
                 })
@@ -2003,7 +2086,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 sub_tris.into_iter().map(move |tri| {
                     Polygon::new(
                         vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
-                        CLOSED,
                         poly.metadata.clone(),
                     )
                 })
@@ -2136,7 +2218,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 // Then push it as a new polygon.
                 let side_poly = Polygon::new(
                     vec![b_i.clone(), b_j.clone(), t_j.clone(), t_i.clone()],
-                    CLOSED,
                     poly_bottom.metadata.clone(),
                 );
                 result_polygons.push(side_poly);
@@ -2358,7 +2439,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     t_j.clone(), // top[i+1]
                     t_i.clone(), // top[i]
                 ],
-                CLOSED,
                 bottom.metadata.clone(), // carry over bottom polygon metadata
             );
             polygons.push(side_poly);
@@ -2484,7 +2564,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let t_i = t_verts[i].clone();
             let t_j = t_verts[j].clone();
 
-            let side = Polygon::new(vec![b_i, b_j, t_j, t_i], CLOSED, metadata.clone());
+            let side = Polygon::new(vec![b_i, b_j, t_j, t_i], metadata.clone());
             result_polygons.push(side);
         }
         CSG::from_polygons(&result_polygons)
@@ -2503,6 +2583,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// # Returns
     /// A new 3D `CSG` that is the swept volume.
+    /*
     pub fn sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>) -> CSG<S> {
         // Gather the path’s vertices in XY
         if path_2d.vertices.len() < 2 {
@@ -2632,7 +2713,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                         Vertex::new(v_next_knext, Vector3::zeros()),
                         Vertex::new(v_next_k,     Vector3::zeros()),
                     ],
-                    CLOSED,
                     shape_2d.metadata.clone(),
                 );
                 all_polygons.push(side_poly);
@@ -2642,62 +2722,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // Combine into a final CSG
         CSG::from_polygons(&all_polygons)
     }
-
-    /// Given a list of Polygons that each represent a 2D open polyline (in XY, z=0),
-    /// reconstruct a single 3D polyline by matching consecutive endpoints in 3D space.
-    /// (If some polygons are closed, you can skip them or handle differently.)
-    ///
-    /// Returns a vector of 3D points (the polyline’s vertices). 
-    /// If no matching is possible or the polygons are empty, returns an empty vector.
-    pub fn reconstruct_polyline_3d(polylines: &[Polygon<S>]) -> Vec<Point3<Real>> {
-        // Collect open polylines in 2D first:
-        let mut all_points = Vec::new();
-        for poly in polylines {
-            if !poly.open {
-                // skip or handle closed polygons differently
-                continue;
-            }
-            // Convert to 2D
-            let pline_2d = poly.to_2d();
-            if pline_2d.vertex_count() < 2 {
-                continue;
-            }
-            // gather all points
-            let mut segment_points = Vec::with_capacity(pline_2d.vertex_count());
-            for i in 0..pline_2d.vertex_count() {
-                let v = pline_2d.at(i);
-                segment_points.push(Point3::new(v.x, v.y, 0.0));
-            }
-            all_points.push(segment_points);
-        }
-        if all_points.is_empty() {
-            return vec![];
-        }
-
-        // Simple approach: assume each open polyline’s end matches the next polyline’s start,
-        // building one continuous chain. 
-        // More sophisticated logic might do a tolerance-based matching, 
-        // or unify them in a single chain, etc.
-        let mut chain = Vec::new();
-        // Start with the first polyline’s points
-        chain.extend(all_points[0].clone());
-        // Then see if the last point matches the first point of the next polyline, 
-        // etc. (You can do any matching logic you prefer.)
-        for i in 1..all_points.len() {
-            let prev_end = chain.last().unwrap();
-            let next_start = all_points[i][0];
-            // If they match within some tolerance, skip the next start:
-            if (prev_end.coords - next_start.coords).norm() < 1e-9 {
-                // skip the next_start
-                chain.extend(all_points[i].iter().skip(1).cloned());
-            } else {
-                // if no match, just connect them with a big jump
-                chain.extend(all_points[i].iter().cloned());
-            }
-        }
-
-        chain
-    }
+    */
 
     /// Returns a `parry3d::bounding_volume::Aabb`.
     pub fn bounding_box(&self) -> Aabb {
@@ -2739,6 +2764,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
     /// for each Polygon we convert to a cavalier_contours Polyline<Real> and call parallel_offset
+    /*
     pub fn offset_2d(&self, distance: Real) -> CSG<S> {
         let mut result_polygons = Vec::new(); // each "loop" is a Polygon
 
@@ -2761,6 +2787,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // Build a new CSG from those offset loops in XY:
         CSG::from_polygons(&result_polygons)
     }
+    */
 
     /// Flatten a `CSG` into the XY plane and union all polygons' outlines,
     /// returning a new `CSG` that may contain multiple polygons (loops) if disjoint.
@@ -2768,9 +2795,10 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// We skip "degenerate" loops whose area is near zero, both before
     /// and after performing the union. This helps avoid collinear or
     /// duplicate edges that can cause issues in `cavalier_contours`.
+    /*
     pub fn flatten(&self) -> CSG<S> {    
         #[cfg(feature = "parallel")]
-        let polys_2d: Vec<Polygon<S>> = self
+        let polylines: Vec<Polyline<Real>> = self
             .polygons
             .par_iter()
             .filter_map(|poly| {
@@ -2778,7 +2806,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 cc.remove_redundant(EPSILON);
                 let area = polyline_area(&cc).abs();
                 if area > EPSILON { // keep it
-                    Some(Polygon::from_polyline(&cc, poly.metadata.clone()))
+                    Some(&cc)
                 } else {
                     None
                 }
@@ -2786,7 +2814,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             .collect();
     
         #[cfg(not(feature = "parallel"))]
-        let polys_2d: Vec<Polygon<S>> = self
+        let polylines: Vec<Polyline<Real>> = self
             .polygons
             .iter()
             .filter_map(|poly| {
@@ -2794,19 +2822,17 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 cc.remove_redundant(EPSILON);
                 let area = polyline_area(&cc).abs();
                 if area > EPSILON { // keep it
-                    Some(Polygon::from_polyline(&cc, poly.metadata.clone()))
+                    Some(&cc)
                 } else {
                     None
                 }
             })
             .collect();
     
-        // --- 2) Union them (still a single-thread union_all_2d call for now)
-        let merged_2d = union_all_2d(&polys_2d);
-    
         // --- 3) Convert merged_2d polygons (still in XY) to a new CSG
-        CSG::from_polygons(&merged_2d)
+        CSG::from_polylines(&polylines)
     }
+    */
 
     /// Slice this solid by a given `plane`, returning a new `CSG` whose polygons
     /// are either:
@@ -2863,9 +2889,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
             let poly = Polygon {
                 vertices: chain,
-                open: !is_closed,
-                metadata: None, // you could choose to store something else
                 plane: plane.clone(),
+                metadata: None, // you could choose to store something else
             };
 
             result_polygons.push(poly);
@@ -2917,7 +2942,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     Vertex::new(Point3::new(px2, py2, pz2), normal),
                     Vertex::new(Point3::new(px3, py3, pz3), normal),
                 ],
-                CLOSED,
                 metadata.clone(),
             ));
         }
@@ -2980,7 +3004,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         for poly in &self.polygons {
             let tris = poly.triangulate();
             for triangle in tris {
-                triangles.push(Polygon::new(triangle.to_vec(), CLOSED, poly.metadata.clone()));
+                triangles.push(Polygon::new(triangle.to_vec(), poly.metadata.clone()));
             }
         }
         
@@ -3116,7 +3140,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 }
 
                 // Create a polygon from these 3 vertices. We preserve the metadata:
-                let mut new_poly = Polygon::new(tri_vertices, CLOSED, poly.metadata.clone());
+                let mut new_poly = Polygon::new(tri_vertices, poly.metadata.clone());
 
                 // Recompute the plane/normal to ensure correct orientation/shading:
                 new_poly.set_new_normal();
@@ -3523,7 +3547,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     Vertex::new(b, Vector3::zeros()),
                     Vertex::new(c, Vector3::zeros()),
                 ],
-                CLOSED,
                 metadata.clone(),
             );
             // Recompute plane & normals
@@ -3719,7 +3742,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let v2 = Vertex::new(p2_real, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
     
             // Each tri is turned into a Polygon with 3 vertices
-            let poly = Polygon::new(vec![v0, v2, v1], CLOSED, metadata.clone());
+            let poly = Polygon::new(vec![v0, v2, v1], metadata.clone());
             triangles.push(poly);
         }
     
@@ -3899,7 +3922,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             );
     
             // Note: reverse v1, v2 if you need to fix winding
-            let poly = Polygon::new(vec![v0, v1, v2], CLOSED, metadata.clone());
+            let poly = Polygon::new(vec![v0, v1, v2], metadata.clone());
             triangles.push(poly);
         }
     
@@ -3989,7 +4012,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 // close it
                 verts.push(verts.first().unwrap().clone());
             }
-            let poly = Polygon::new(verts, open, metadata.clone());
+            let poly = Polygon::new(verts, metadata.clone());
             all_polygons.push(poly);
         }
 
@@ -4251,7 +4274,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     ),
                 ),
             ];
-            polygons.push(Polygon::new(vertices, CLOSED, metadata.clone()));
+            polygons.push(Polygon::new(vertices, metadata.clone()));
         }
 
         Ok(CSG::from_polygons(&polygons))
@@ -4297,7 +4320,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                         }
                         // Create a polygon from the polyline vertices
                         if verts.len() >= 3 {
-                            polygons.push(Polygon::new(verts, CLOSED, None));
+                            polygons.push(Polygon::new(verts, None));
                         }
                     }
                 }
@@ -4319,7 +4342,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     }
 
                     // Create a polygon from the approximated circle vertices
-                    polygons.push(Polygon::new(verts, CLOSED, metadata.clone()));
+                    polygons.push(Polygon::new(verts, metadata.clone()));
                 }
                 // Handle other entity types as needed (e.g., Arc, Spline)
                 _ => {
@@ -4412,7 +4435,7 @@ fn polygon_from_slice<S: Clone + Send + Sync>(
 ) -> Polygon<S> {
     if slice_pts.len() < 3 {
         // degenerate polygon
-        return Polygon::new(vec![], OPEN, metadata);
+        return Polygon::new(vec![], metadata);
     }
     // Build the vertex list
     let mut verts: Vec<Vertex> = slice_pts
@@ -4427,7 +4450,7 @@ fn polygon_from_slice<S: Clone + Send + Sync>(
         }
     }
 
-    let mut poly = Polygon::new(verts, CLOSED, metadata);
+    let mut poly = Polygon::new(verts, metadata);
     poly.set_new_normal(); // Recompute its plane & normal for consistency
     poly
 }

@@ -110,10 +110,10 @@ impl Plane {
                 }
 
                 if f.len() >= 3 {
-                    front.push(Polygon::new(f, polygon.open.clone(), polygon.metadata.clone()));
+                    front.push(Polygon::new(f, polygon.metadata.clone()));
                 }
                 if b.len() >= 3 {
-                    back.push(Polygon::new(b, polygon.open.clone(), polygon.metadata.clone()));
+                    back.push(Polygon::new(b, polygon.metadata.clone()));
                 }
             }
         }
