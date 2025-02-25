@@ -39,17 +39,17 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 ### CSG Structure
 
 - **`CSG<S>`** is the main type. It stores:
-  - a `Vec<Polygon<S>>` polygons, describing a 3D shape, each **`Polygon<S>`** holds:
+  - a `Vec<Polygon<S>>` polygons, describing a 3D shape, each `Polygon<S>` holds:
     - a `Vec<Vertex>` (positions + normals),
     - a `Plane` describing the polygon’s orientation in 3D.
     - an optional metadata field (`Option<S>`)
-  - a [`cavalier_contours`](https://crates.io/crates/cavalier_contours) 2D Shape which holds:
+  - a [`cavalier_contours`](https://crates.io/crates/cavalier_contours) `Shape<T>` polylines, describing a 2D shape:
     - `Vec<IndexedPolyline<T>>` ccw_plines, which contains positive shapes
     - `Vec<IndexedPolyline<T>>` cw_plines, which contains negative shapes (i.e. holes)
     - `StaticAABB2DIndex<T>` plines_index, Spatial index of all the polyline area bounding boxes, index positions correspond to in order all the counter clockwise polylines followed by all the clockwise polylines
   - an optional metadata field (`Option<S>`)
 
-`CSG<S>` provides methods for working with 2D and 3D shapes, `Polygon<S>` provides methods for working with 2D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from polylines with `CSG::from_polylines(...)`.  2D and 3D shapes generally do not interact in the library, except where one is explicitly transformed into the other as in extrude or slice.
+`CSG<S>` provides methods for working with 2D and 3D shapes, `Polygon<S>` provides methods for working with 2D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from polylines with `CSG::from_polylines(...)`.  Polygons must be closed, planar, have 3 or more vertices.  Polylines can be open or closed, have holes, but must be planar in the XY.  2D and 3D shapes generally do not interact in the library, except where one is explicitly transformed into the other as in extrude or slice.
 
 ### 2D Shapes
 

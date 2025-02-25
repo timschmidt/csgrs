@@ -502,34 +502,29 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// - `width`: the width of the square
     /// - `length`: the height of the square
+    /// - `metadata`: optional metadata
     ///
     /// # Example
     /// let sq2 = CSG::square(2.0, 3.0, None);
     pub fn square(width: Real, length: Real, metadata: Option<S>) -> CSG<S> {
-        // Single 2D polygon, normal = +Z
-        let normal = Vector3::z();
-        let vertices = vec![
-            Vertex::new(Point3::origin(), normal),
-            Vertex::new(Point3::new(width, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(width, length, 0.0), normal),
-            Vertex::new(Point3::new(0.0, length, 0.0), normal),
-        ];
-        CSG::from_polygons(&[Polygon::new(vertices, metadata)])
+        let mut pl = Polyline::new_closed();
+        pl.add(0.0, 0.0, 0.0);
+        pl.add(width, 0.0, 0.0);
+        pl.add(width, length, 0.0);
+        pl.add(0.0, length, 0.0);
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Creates a 2D circle in the XY plane.
     pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
-        let mut vertices = Vec::with_capacity(segments);
-        let normal = Vector3::z();
-
+        let mut pl = Polyline::new_closed();
         for i in 0..segments {
             let theta = 2.0 * PI * (i as Real) / (segments as Real);
             let x = radius * theta.cos();
             let y = radius * theta.sin();
-            vertices.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+            pl.add(x, y, 0.0);
         }
-
-        CSG::from_polygons(&[Polygon::new(vertices, metadata)])
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -543,17 +538,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     /// let poly2d = CSG::polygon(&pts, metadata);
     pub fn polygon(points: &[[Real; 2]], metadata: Option<S>) -> CSG<S> {
-        // todo: return error "polygon_2d requires at least 3 points"
         if points.len() < 3 {
             return CSG::new();
         }
-
-        let normal = Vector3::z();
-        let mut vertices = Vec::with_capacity(points.len());
+        let mut pl = Polyline::new_closed();
         for p in points {
-            vertices.push(Vertex::new(Point3::new(p[0], p[1], 0.0), normal));
+            pl.add(p[0], p[1], 0.0);
         }
-        CSG::from_polygons(&[Polygon::new(vertices, metadata)])
+        CSG::from_polylines(&[pl], metadata)
     }
     
     /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
@@ -565,184 +557,114 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         corner_segments: usize,
         metadata: Option<S>,
     ) -> Self {
-        // Clamp the corner radius so it does not exceed half of the smaller dimension
         let r = corner_radius.min(width * 0.5).min(height * 0.5);
         if r <= EPSILON {
-            // Fallback: just a plain rectangle (no rounding)
             return Self::square(width, height, metadata);
         }
-        // We'll build up a vector of Vertex in CCW order.
-        // The normal is +Z for all points.
-        let normal = Vector3::z();
-
-        // Helper to push a 90-degree arc around corner (cx, cy) with startAngle..endAngle
-        let mut points = Vec::new();
-        let arc = |result: &mut Vec<Vertex>,
+        // Build a single closed polyline with arcs at the corners.
+        let mut pl = Polyline::new_closed();
+        let arc = |pl: &mut Polyline<Real>,
                    cx: Real,
                    cy: Real,
                    start_deg: Real,
                    end_deg: Real| {
             let start_rad = start_deg.to_radians();
-            let end_rad   = end_deg.to_radians();
-            let step      = (end_rad - start_rad) / corner_segments as Real;
+            let end_rad = end_deg.to_radians();
+            let step = (end_rad - start_rad) / corner_segments as Real;
             for i in 0..=corner_segments {
                 let t = start_rad + (i as Real) * step;
                 let x = cx + r * t.cos();
                 let y = cy + r * t.sin();
-                result.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+                pl.add(x, y, 0.0);
             }
         };
+        // TL corner arc: 180 -> 270
+        arc(&mut pl, r, r, 180.0, 270.0);
+        // TR corner arc: 270 -> 360
+        arc(&mut pl, width - r, r, 270.0, 360.0);
+        // BR corner: 0 -> 90
+        arc(&mut pl, width - r, height - r, 0.0, 90.0);
+        // BL corner: 90 -> 180
+        arc(&mut pl, r, height - r, 90.0, 180.0);
 
-        // We want CCW around the shape:
-        // Bottom-left corner arc: center at (r, r), angles from 180..270
-        arc(&mut points, r, r, 180.0, 270.0);
-        // Bottom edge -> bottom-right corner arc: center at (width - r, r), angles 270..360
-        arc(&mut points, width - r, r, 270.0, 360.0);
-        // Right edge -> top-right corner arc: center at (width - r, height - r), angles 0..90
-        arc(&mut points, width - r, height - r, 0.0, 90.0);
-        // Top edge -> top-left corner arc: center at (r, height - r), angles 90..180
-        arc(&mut points, r, height - r, 90.0, 180.0);
-        // Now we have a full outline with 4 arcs, but note each arc includes both endpoints.
-        // So we might get duplicated corner points at the arc junctures. We could remove dups:
-        // (In many cases, the underlying CSG code can handle near-duplicates, but let's be tidy.)
-        let mut deduped = Vec::new();
-        for pt in points {
-            if deduped.is_empty() {
-                deduped.push(pt);
-            } else {
-                let last = deduped.last().unwrap();
-                if (pt.pos.coords - last.pos.coords).norm() > EPSILON {
-                    deduped.push(pt);
-                }
-            }
-        }
-        // Ensure the final point is not a duplicate of the first
-        if !deduped.is_empty() {
-            let first = &deduped[0];
-            let last  = deduped.last().unwrap();
-            if (first.pos.coords - last.pos.coords).norm() < EPSILON {
-                deduped.pop();
-            }
-        }
-        // Build a single Polygon, then wrap in CSG
-        let poly = Polygon::new(deduped, metadata);
-        Self::from_polygons(&[poly])
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Ellipse in XY plane, centered at (0,0), with full width `width`, full height `height`.
     /// `segments` is the number of polygon edges approximating the ellipse.
-    pub fn ellipse(
-        width: Real,
-        height: Real,
-        segments: usize,
-        metadata: Option<S>,
-    ) -> Self {
+    pub fn ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 3 {
             return Self::new();
         }
-        let rx = width  * 0.5;
+        let rx = width * 0.5;
         let ry = height * 0.5;
-        let normal = Vector3::z();
-        let mut verts = Vec::with_capacity(segments);
+        let mut pl = Polyline::new_closed();
         for i in 0..segments {
             let theta = TAU * (i as Real) / (segments as Real);
             let x = rx * theta.cos();
             let y = ry * theta.sin();
-            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+            pl.add(x, y, 0.0);
         }
-        let poly = Polygon::new(verts, metadata);
-        Self::from_polygons(&[poly])
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Regular N-gon in XY plane, centered at (0,0), with circumscribed radius `radius`.
     /// `sides` is how many edges (>=3).
-    pub fn regular_ngon(
-        sides: usize,
-        radius: Real,
-        metadata: Option<S>,
-    ) -> Self {
+    pub fn regular_ngon(sides: usize, radius: Real, metadata: Option<S>) -> Self {
         if sides < 3 {
             return Self::new();
         }
-        let normal = Vector3::z();
-        let mut verts = Vec::with_capacity(sides);
+        let mut pl = Polyline::new_closed();
         for i in 0..sides {
             let theta = TAU * (i as Real) / (sides as Real);
             let x = radius * theta.cos();
             let y = radius * theta.sin();
-            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+            pl.add(x, y, 0.0);
         }
-        let poly = Polygon::new(verts, metadata);
-        Self::from_polygons(&[poly])
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
-    pub fn right_triangle(
-        width: Real,
-        height: Real,
-        metadata: Option<S>,
-    ) -> Self {
-        let normal = Vector3::z();
-        let vertices = vec![
-            Vertex::new(Point3::origin(), normal),
-            Vertex::new(Point3::new(width,   0.0,     0.0), normal),
-            Vertex::new(Point3::new(0.0,     height,  0.0), normal),
-        ];
-        let poly = crate::polygon::Polygon::new(vertices, metadata);
-        Self::from_polygons(&[poly])
+    pub fn right_triangle(width: Real, height: Real, metadata: Option<S>) -> Self {
+        let mut pl = Polyline::new_closed();
+        pl.add(0.0, 0.0, 0.0);
+        pl.add(width, 0.0, 0.0);
+        pl.add(0.0, height, 0.0);
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Trapezoid from (0,0) -> (bottom_width,0) -> (top_width,height) -> (0,height)
     /// Note: this is a simple shape that can represent many trapezoids or parallelograms.
-    pub fn trapezoid(
-        top_width: Real,
-        bottom_width: Real,
-        height: Real,
-        metadata: Option<S>,
-    ) -> Self {
-        let normal = Vector3::z();
-        // (0,0) -> (bottom,0) -> (top,height) -> (0,height)
-        let vertices = vec![
-            Vertex::new(Point3::origin(), normal),
-            Vertex::new(Point3::new(bottom_width, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(top_width,    height, 0.0), normal),
-            Vertex::new(Point3::new(0.0,          height, 0.0), normal),
-        ];
-        let poly = Polygon::new(vertices, metadata);
-        Self::from_polygons(&[poly])
+    pub fn trapezoid(top_width: Real, bottom_width: Real, height: Real, metadata: Option<S>) -> Self {
+        let mut pl = Polyline::new_closed();
+        pl.add(0.0, 0.0, 0.0);
+        pl.add(bottom_width, 0.0, 0.0);
+        pl.add(top_width, height, 0.0);
+        pl.add(0.0, height, 0.0);
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Star shape (typical "spiky star") with `num_points`, outer_radius, inner_radius.
     /// The star is centered at (0,0).
-    pub fn star(
-        num_points: usize,
-        outer_radius: Real,
-        inner_radius: Real,
-        metadata: Option<S>,
-    ) -> Self {
-        // We'll build 2*num_points vertices, alternating outer/inner.
-        // If num_points < 2, we bail.
+    pub fn star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>) -> Self {
         if num_points < 2 {
             return Self::new();
         }
-        let normal = Vector3::z();
-        let mut verts = Vec::with_capacity(num_points * 2);
+        let mut pl = Polyline::new_closed();
         let step = TAU / (num_points as Real);
         for i in 0..num_points {
-            // Outer
+            // outer
             let theta_out = (i as Real) * step;
             let x_out = outer_radius * theta_out.cos();
             let y_out = outer_radius * theta_out.sin();
-            verts.push(Vertex::new(Point3::new(x_out, y_out, 0.0), normal));
-
-            // Inner
+            pl.add(x_out, y_out, 0.0);
+            // inner
             let theta_in = theta_out + (step * 0.5);
             let x_in = inner_radius * theta_in.cos();
             let y_in = inner_radius * theta_in.sin();
-            verts.push(Vertex::new(Point3::new(x_in, y_in, 0.0), normal));
+            pl.add(x_in, y_in, 0.0);
         }
-        let poly = Polygon::new(verts, metadata);
-        Self::from_polygons(&[poly])
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Teardrop shape.  A simple approach:
@@ -2175,8 +2097,13 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mut top_polygons = Vec::new();
         let mut bottom_polygons = Vec::new();
 
-        // let unioned_polygons = &self.flatten().polygons;
-        let unioned_polygons = &self.polygons; // todo
+        // If we have polylines but no polygons, turn them into polygons first.
+        let unioned_polygons = if self.polygons.is_empty() && (!self.polylines.ccw_plines.is_empty() | !self.polylines.cw_plines.is_empty()) {
+            let tmp_csg = CSG::polylines_to_polygons(&self.polylines, self.metadata.clone());
+            tmp_csg.polygons
+        } else {
+            self.polygons.clone()
+        };
 
         // Bottom polygons = original polygons
         // (assuming they are in some plane, e.g. XY). We just clone them.
@@ -2458,11 +2385,19 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // We'll consider the revolve "closed" if the angle is effectively 360°
         let closed = (angle_degs - 360.0).abs() < EPSILON;
 
+        // Convert polylines to polygons if needed
+        let original_polygons = if self.polygons.is_empty() && (!self.polylines.ccw_plines.is_empty() | !self.polylines.cw_plines.is_empty()) {
+            let tmp_csg = CSG::polylines_to_polygons(&self.polylines, self.metadata.clone());
+            tmp_csg.polygons
+        } else {
+            self.polygons.clone()
+        };
+
         // Collect all newly formed polygons here
         let mut result_polygons = Vec::new();
 
         // For each polygon in our original 2D shape:
-        for original_poly in &self.polygons {
+        for original_poly in &original_polygons {
             let n_verts = original_poly.vertices.len();
             if n_verts < 3 {
                 // Skip degenerate or empty polygons
@@ -4151,6 +4086,30 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                         vertex.pos.x, vertex.pos.y, vertex.pos.z
                     ));
                 }
+                out.push_str("    endloop\n");
+                out.push_str("  endfacet\n");
+            }
+        }
+        
+        // 2) Export polylines as degenerate facets:
+        //    For each polyline, each edge becomes a single zero-area triangle
+        //    repeating the same line endpoints.
+        let mut all_plines = self.polylines.ccw_plines.clone();
+        all_plines.extend(self.polylines.cw_plines.clone());
+        for pl in all_plines {
+            let vcount = pl.polyline.vertex_count();
+            if vcount < 2 {
+                continue;
+            }
+            for i in 0..(vcount - 1) {
+                let p0 = pl.polyline.at(i);
+                let p1 = pl.polyline.at(i + 1);
+                // We'll give a dummy normal = (0,0,0).
+                out.push_str(&format!("  facet normal 0.000000 0.000000 0.000000\n"));
+                out.push_str("    outer loop\n");
+                out.push_str(&format!("      vertex {:.6} {:.6} 0.000000\n", p0.x, p0.y));
+                out.push_str(&format!("      vertex {:.6} {:.6} 0.000000\n", p1.x, p1.y));
+                out.push_str(&format!("      vertex {:.6} {:.6} 0.000000\n", p0.x, p0.y));
                 out.push_str("    endloop\n");
                 out.push_str("  endfacet\n");
             }
