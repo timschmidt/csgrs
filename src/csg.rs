@@ -128,20 +128,35 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// Build a new CSG from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0. If a union produced multiple
     /// loops, you will get multiple polygons in the final CSG.
-    ///
-    /// Unsure if this function will be useful after the new 2D subsystem
-    pub fn polylines_to_polygons(polylines: &[Polyline<Real>], metadata: Option<S>) -> CSG<S> {
+    pub fn from_shape(shape: &CCShape<Real>, metadata: Option<S>) -> CSG<S> {
         let mut all_polygons = Vec::new();
         let plane_normal = Vector3::z();
 
-        for pl in polylines {
+        for pl in &shape.ccw_plines {
             // Convert each Polyline into a single polygon in z=0.
             // todo: For arcs, subdivide by bulge, etc. This ignores arcs for simplicity.
-            let open = !pl.is_closed();
-            if pl.vertex_count() >= 2 {
-                let mut poly_verts = Vec::with_capacity(pl.vertex_count());
-                for i in 0..pl.vertex_count() {
-                    let v = pl.at(i);
+            let open = !pl.polyline.is_closed();
+            if pl.polyline.vertex_count() >= 3 {
+                let mut poly_verts = Vec::with_capacity(pl.polyline.vertex_count());
+                for i in 0..pl.polyline.vertex_count() {
+                    let v = pl.polyline.at(i);
+                    poly_verts.push(Vertex::new(
+                        Point3::new(v.x, v.y, 0.0),
+                        plane_normal,
+                    ));
+                }
+                all_polygons.push(Polygon::new(poly_verts, metadata.clone()));
+            }
+        }
+        
+        for pl in &shape.cw_plines {
+            // Convert each negative clockwise Polyline into a single polygon in z=0.
+            // todo: For arcs, subdivide by bulge, etc. This ignores arcs for simplicity.
+            let open = !pl.polyline.is_closed();
+            if pl.polyline.vertex_count() >= 3 {
+                let mut poly_verts = Vec::with_capacity(pl.polyline.vertex_count());
+                for i in 0..pl.polyline.vertex_count() {
+                    let v = pl.polyline.at(i);
                     poly_verts.push(Vertex::new(
                         Point3::new(v.x, v.y, 0.0),
                         plane_normal,
@@ -2099,7 +2114,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // If we have polylines but no polygons, turn them into polygons first.
         let unioned_polygons = if self.polygons.is_empty() && (!self.polylines.ccw_plines.is_empty() | !self.polylines.cw_plines.is_empty()) {
-            let tmp_csg = CSG::polylines_to_polygons(&self.polylines, self.metadata.clone());
+            let tmp_csg = CSG::from_shape(&self.polylines, self.metadata.clone());
             tmp_csg.polygons
         } else {
             self.polygons.clone()
@@ -2387,7 +2402,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // Convert polylines to polygons if needed
         let original_polygons = if self.polygons.is_empty() && (!self.polylines.ccw_plines.is_empty() | !self.polylines.cw_plines.is_empty()) {
-            let tmp_csg = CSG::polylines_to_polygons(&self.polylines, self.metadata.clone());
+            let tmp_csg = CSG::from_shape(&self.polylines, self.metadata.clone());
             tmp_csg.polygons
         } else {
             self.polygons.clone()
