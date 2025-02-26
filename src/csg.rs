@@ -376,6 +376,92 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         CSG::from_polygons(&triangles)
     }
+    
+    #[cfg(feature = "earclip-io")]
+    fn triangulate_2d_earclip(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]>
+    {
+        // Flatten data for earclip:
+        //   - We treat `outer` as the first polygon,
+        //   - Then each `holes[i]` as subsequent polygon(s).
+        // earclip can handle “polygon with hole(s)” if you flatten with the
+        // appropriate hole start indices.
+    
+        // Combine everything into one single big Vec<Vec<Vec<Real>>> shape
+        // in which [outer] is the first polygon, holes come after.
+        let mut polygons: Vec<Vec<Vec<Real>>> = Vec::new();
+        // Outer polygon in 2D
+        let outer_2d: Vec<Vec<Real>> = outer.iter().map(|p| vec![p[0], p[1]]).collect();
+        polygons.push(outer_2d);
+    
+        for h in holes {
+            let hole_2d: Vec<Vec<Real>> = h.iter().map(|p| vec![p[0], p[1]]).collect();
+            polygons.push(hole_2d);
+        }
+    
+        // Use the earclip version from your code (similar to the “from_earclip” pattern)
+        // We produce triangles in 3D, z=0, with normal = +Z by default.
+        let (vertices, hole_indices, dim) = earclip::flatten::<Real, usize>(&polygons);
+        let indices = earclip::earcut::<Real, usize>(&vertices, &hole_indices, dim);
+    
+        let mut result = Vec::new();
+        for tri in indices.chunks_exact(3) {
+            let mut tri_pts = [Point3::origin(); 3];
+            for (k, &idx) in tri.iter().enumerate() {
+                let start = idx * dim;
+                // Our 2D flatten => x = vertices[start], y = vertices[start+1], z=0
+                tri_pts[k] = Point3::new(vertices[start], vertices[start+1], 0.0);
+            }
+            result.push(tri_pts);
+        }
+    
+        result
+    }
+    
+    #[cfg(feature = "earcut-io")]
+    fn triangulate_2d_earcut(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]>
+    {
+        use earcut::Earcut;
+    
+        // Flatten in a style suitable for earcut:
+        //   - single “outer” array,
+        //   - then hole(s) arrays, with the “hole index” = length of outer so far.
+        // See the existing “from_earcut” code for an example.
+    
+        let mut all_vertices_2d = Vec::new();
+        let mut hole_indices = Vec::new();
+    
+        // Outer polygon
+        for pt in outer {
+            all_vertices_2d.push([pt[0], pt[1]]);
+        }
+    
+        let mut current_len = all_vertices_2d.len();
+        for h in holes {
+            hole_indices.push(current_len);
+            for pt in *h {
+                all_vertices_2d.push([pt[0], pt[1]]);
+            }
+            current_len = all_vertices_2d.len();
+        }
+    
+        let mut earcut = Earcut::new();
+        let mut triangle_indices = Vec::new();
+    
+        // dimension = 2
+        earcut.earcut(all_vertices_2d.clone(), &hole_indices, &mut triangle_indices);
+    
+        let mut result = Vec::new();
+        for tri in triangle_indices.chunks_exact(3) {
+            let pts = [
+                Point3::new(all_vertices_2d[tri[0]][0], all_vertices_2d[tri[0]][1], 0.0),
+                Point3::new(all_vertices_2d[tri[1]][0], all_vertices_2d[tri[1]][1], 0.0),
+                Point3::new(all_vertices_2d[tri[2]][0], all_vertices_2d[tri[2]][1], 0.0),
+            ];
+            result.push(pts);
+        }
+    
+        result
+    }
 
     /// CSG union: this ∪ other
     pub fn union(&self, other: &CSG<S>) -> CSG<S> {
@@ -4067,55 +4153,125 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     pub fn to_stl_ascii(&self, name: &str) -> String {
         let mut out = String::new();
         out.push_str(&format!("solid {}\n", name));
-
+    
+        // ------------------------------------------------------------
+        // 1) First, write existing 3D polygons (same as before)
         for poly in &self.polygons {
-            // Use the polygon plane's normal for the facet normal (normalized).
             let normal = poly.plane.normal.normalize();
             let triangles = poly.triangulate();
-
             for tri in triangles {
-                out.push_str(&format!(
-                    "  facet normal {:.6} {:.6} {:.6}\n",
-                    normal.x, normal.y, normal.z
-                ));
+                out.push_str(&format!("  facet normal {:.6} {:.6} {:.6}\n",
+                                    normal.x, normal.y, normal.z));
                 out.push_str("    outer loop\n");
                 for vertex in &tri {
-                    out.push_str(&format!(
-                        "      vertex {:.6} {:.6} {:.6}\n",
-                        vertex.pos.x, vertex.pos.y, vertex.pos.z
-                    ));
+                    out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n",
+                                        vertex.pos.x, vertex.pos.y, vertex.pos.z));
                 }
                 out.push_str("    endloop\n");
                 out.push_str("  endfacet\n");
             }
         }
-        
-        // 2) Export polylines as degenerate facets:
-        //    For each polyline, each edge becomes a single zero-area triangle
-        //    repeating the same line endpoints.
-        let mut all_plines = self.polylines.ccw_plines.clone();
-        all_plines.extend(self.polylines.cw_plines.clone());
-        for pl in all_plines {
-            let vcount = pl.polyline.vertex_count();
-            if vcount < 2 {
-                continue;
+    
+        // ------------------------------------------------------------
+        // 2) Next, handle all ccw_plines + holes using earclip or earcut
+        //    (non-manifold 2D shape in XY plane).
+        // For each outer CCW:
+        for (outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
+            let outer_pline = &outer_ipline.polyline;
+    
+            // bounding box for outer
+            let Some(aabb) = outer_pline.extents() else { todo!() };
+            let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
+    
+            // find potential hole indices
+            let bounding_box_query = self.polylines.plines_index.query(oxmin, oymin, oxmax, oymax);
+    
+            // gather “holes” that are truly inside
+            let mut holes_xy: Vec<Vec<[Real;2]>> = Vec::new();
+    
+            for hole_candidate_idx in bounding_box_query {
+                // Recall ccw_plines come first in index, then cw_plines.
+                // So test if hole_candidate_idx >= self.polylines.ccw_plines.len()
+                // to see if it's a CW hole.
+                let cw_start = self.polylines.ccw_plines.len();
+                if hole_candidate_idx < cw_start {
+                    continue; // that’s another outer or the same outer
+                }
+                let hole_ipline = &self.polylines.cw_plines[hole_candidate_idx - cw_start].polyline;
+    
+                // pick any vertex from the hole and do “point in polygon” for outer
+                let hv0 = hole_ipline.at(0);
+                if CSG::<()>::point_in_polygon_2d(hv0.x, hv0.y, &outer_pline) {
+                    // Confirm we interpret this as a valid hole => collect
+                    let mut hole_pts = Vec::new();
+                    for i in 0..hole_ipline.vertex_count() {
+                        let p = hole_ipline.at(i);
+                        hole_pts.push([p.x, p.y]);
+                    }
+                    holes_xy.push(hole_pts);
+                }
             }
-            for i in 0..(vcount - 1) {
-                let p0 = pl.polyline.at(i);
-                let p1 = pl.polyline.at(i + 1);
-                // We'll give a dummy normal = (0,0,0).
-                out.push_str(&format!("  facet normal 0.000000 0.000000 0.000000\n"));
-                out.push_str("    outer loop\n");
-                out.push_str(&format!("      vertex {:.6} {:.6} 0.000000\n", p0.x, p0.y));
-                out.push_str(&format!("      vertex {:.6} {:.6} 0.000000\n", p1.x, p1.y));
-                out.push_str(&format!("      vertex {:.6} {:.6} 0.000000\n", p0.x, p0.y));
-                out.push_str("    endloop\n");
-                out.push_str("  endfacet\n");
+    
+            // Prepare the outer ring in 2D
+            let mut outer_xy = Vec::new();
+            for i in 0..outer_pline.vertex_count() {
+                let v = outer_pline.at(i);
+                outer_xy.push([v.x, v.y]);
+            }
+    
+            // Triangulate via whichever approach is enabled:
+            #[cfg(feature="earclip-io")]
+            {
+                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
+                let triangles_2d = CSG::<()>::triangulate_2d_earclip(&outer_xy, &hole_refs);
+                // Write them to STL with normal = 0,0,1
+                for tri in triangles_2d {
+                    out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
+                    out.push_str("    outer loop\n");
+                    for pt in &tri {
+                        out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n", pt.x, pt.y, pt.z));
+                    }
+                    out.push_str("    endloop\n");
+                    out.push_str("  endfacet\n");
+                }
+            }
+    
+            #[cfg(feature="earcut-io")]
+            {
+                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
+                let triangles_2d = CSG::<()>::triangulate_2d_earcut(&outer_xy, &hole_refs);
+                for tri in triangles_2d {
+                    out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
+                    out.push_str("    outer loop\n");
+                    for pt in &tri {
+                        out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n", pt.x, pt.y, pt.z));
+                    }
+                    out.push_str("    endloop\n");
+                    out.push_str("  endfacet\n");
+                }
             }
         }
-
+    
         out.push_str(&format!("endsolid {}\n", name));
         out
+    }
+    
+    // A simple even-odd or winding check for “point in polygon” in 2D:
+    fn point_in_polygon_2d(px: Real, py: Real, pline: &Polyline<Real>) -> bool {
+        let mut inside = false;
+        let count = pline.vertex_count();
+        let mut j = count - 1;
+        for i in 0..count {
+            let pi = pline.at(i);
+            let pj = pline.at(j);
+            if ((pi.y > py) != (pj.y > py)) &&
+            (px < (pj.x - pi.x)*(py - pi.y)/(pj.y - pi.y) + pi.x)
+            {
+                inside = !inside;
+            }
+            j = i;
+        }
+        inside
     }
 
     /// Export to BINARY STL (returns Vec<u8>)

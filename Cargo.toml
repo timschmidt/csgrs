@@ -31,7 +31,7 @@ hashbrown = { version = "0.15.2", optional = true }
 core2 = { version = "0.4.0", features = ["alloc"] }
 
 [features]
-default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "earclip-io", "earcut-io", "image-io", "metaballs", "hashmap", "sdf"]
+default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "earclip-io", "image-io", "metaballs", "hashmap", "sdf"]
 parallel = ["rayon"]
 f64 = [
   "rapier3d-f64",
