@@ -153,11 +153,9 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
     /// Build a new Polygon from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0.
     pub fn from_polyline(polyline: &Polyline<Real>, metadata: Option<S>) -> Polygon<S> {
-        if polyline.vertex_count() < 2 {
+        if polyline.vertex_count() < 3 {
             // degenerate polygon
         }
-        
-        let open = !polyline.is_closed();
 
         let plane_normal = Vector3::z();
         let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
