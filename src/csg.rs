@@ -11,6 +11,7 @@ use cavalier_contours::polyline::{
     PlineCreation, PlineSource, PlineSourceMut, Polyline,
 };
 use cavalier_contours::shape_algorithms::Shape as CCShape;
+use cavalier_contours::shape_algorithms::ShapeOffsetOptions;
 use crate::float_types::parry3d::{
     bounding_volume::Aabb,
     query::{Ray, RayCast},
@@ -128,6 +129,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// Build a new CSG from a set of 2D polylines in XY. Each polyline
     /// is turned into one polygon at z=0. If a union produced multiple
     /// loops, you will get multiple polygons in the final CSG.
+    /// todo: rename shape_to_polygons and consume self.
     pub fn from_shape(shape: &CCShape<Real>, metadata: Option<S>) -> CSG<S> {
         let mut all_polygons = Vec::new();
         let plane_normal = Vector3::z();
@@ -688,49 +690,38 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// This is just one of many possible "teardrop" definitions.
     pub fn teardrop_outline(
         width: Real,
-        length: Real,
+        height: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Self {
-        // The circle portion is at the top; cusp at bottom center.
-        if segments < 2 || width < EPSILON || length < EPSILON {
-            return Self::new();
+        metadata: Option<S>
+    ) -> CSG<S> {
+        // A "filled" 2D teardrop outline
+        if segments < 2 || width < EPSILON || height < EPSILON {
+            return CSG::new();
         }
-        let normal = Vector3::z();
+        // Build the outline as a closed polyline
         let r = width * 0.5;
-        // We'll define the circle center near the top, so that the bottom is at y=0.
-        // Let's place the circle center at (0, height - r).
-        // Then the bottom cusp is at (0,0).
-        let center_y = length - r;
-        let mut verts = Vec::new();
-        // Arc from angle=180 deg to angle=0 deg, CCW (left side).
-        let half_segments = segments / 2;
-        for i in 0..=half_segments {
-            let t = PI * (i as Real / half_segments as Real); // 0..pi
-            let x = -r * t.cos(); // sweeping from left to right
-            let y =  r * t.sin() + center_y;
-            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+        let center_y = height - r;
+        let half_seg = segments / 2;
+
+        let mut pl = Polyline::new_closed();
+        // Arc from left side
+        for i in 0..=half_seg {
+            let t = PI * (i as Real / half_seg as Real);
+            let x = -r * t.cos();
+            let y = r * t.sin() + center_y;
+            pl.add(x, y, 0.0);
         }
-        // Then go to the cusp (0,0) at bottom
-        verts.push(Vertex::new(Point3::origin(), normal));
-        // Now do the right side arc from angle=0 deg to angle=-180 deg (or angle=0..pi but mirrored in X)
-        for i in 0..=half_segments {
-            let t = PI * (i as Real / half_segments as Real); // 0..pi
-            let x =  r * t.cos(); // mirrored
-            let y =  r * t.sin() + center_y;
-            // We push in reverse order so that we proceed CCW up the right side
-            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+        // down to cusp at (0,0)
+        pl.add(0.0, 0.0, 0.0);
+        // arc around right side
+        for i in 0..=half_seg {
+            let t = PI * (i as Real / half_seg as Real);
+            let x = r * t.cos();
+            let y = r * t.sin() + center_y;
+            pl.add(x, y, 0.0);
         }
-        // Deduplicate final
-        if let Some(first) = verts.first() {
-            if let Some(last) = verts.last() {
-                if (first.pos.coords - last.pos.coords).norm() < EPSILON {
-                    verts.pop();
-                }
-            }
-        }
-        let poly = Polygon::new(verts, metadata);
-        Self::from_polygons(&[poly])
+
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
@@ -739,27 +730,23 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         width: Real,
         length: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Self {
-        // We treat (width/2, length/2) as "radii", but distort them with a small sinusoidal factor
-        // to create an "egg" shape.  Many variants are possible.
+        metadata: Option<S>
+    ) -> CSG<S> {
+        // Very approximate "egg" profile
         if segments < 3 {
-            return Self::new();
+            return CSG::new();
         }
-        let rx = width  * 0.5;
+        let rx = width * 0.5;
         let ry = length * 0.5;
-        let normal = Vector3::z();
-        let mut verts = Vec::with_capacity(segments);
+        let mut pl = Polyline::new_closed();
         for i in 0..segments {
             let theta = TAU * (i as Real) / (segments as Real);
-            // Distort the standard ellipse a bit, e.g. weigh more heavily near the "top"
-            let distort = 1.0 + 0.2 * (theta.cos());
-            let x = rx * theta.cos() * distort * 0.8; // slightly less on the x-distortion
+            let distort = 1.0 + 0.2 * theta.cos();
+            let x = rx * theta.cos() * distort * 0.8;
             let y = ry * theta.sin();
-            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+            pl.add(x, y, 0.0);
         }
-        let poly = Polygon::new(verts, metadata);
-        Self::from_polygons(&[poly])
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
@@ -768,26 +755,24 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         width: Real,
         height: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Self {
+        metadata: Option<S>
+    ) -> CSG<S> {
         if segments < 3 {
-            return Self::new();
+            return CSG::new();
         }
-        let normal = Vector3::z();
-        let rx = width  * 0.5;
+        let rx = width * 0.5;
         let ry = height * 0.5;
-        let m  = 4.0; // exponent
-        let mut verts = Vec::with_capacity(segments);
+        let m = 4.0; // exponent
+        let mut pl = Polyline::new_closed();
         for i in 0..segments {
-            let t = crate::float_types::TAU * (i as Real) / (segments as Real);
-            let ct = t.cos().abs().powf(2.0/m) * t.cos().signum();
-            let st = t.sin().abs().powf(2.0/m) * t.sin().signum();
+            let t = TAU * (i as Real) / (segments as Real);
+            let ct = t.cos().abs().powf(2.0 / m) * t.cos().signum();
+            let st = t.sin().abs().powf(2.0 / m) * t.sin().signum();
             let x = rx * ct;
             let y = ry * st;
-            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+            pl.add(x, y, 0.0);
         }
-        let poly = Polygon::new(verts, metadata);
-        Self::from_polygons(&[poly])
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Keyhole shape (simple version): a large circle + a rectangle "handle".
@@ -798,17 +783,34 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         handle_width: Real,
         handle_height: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Self {
-        // Big circle centered at (0,0), plus a rectangle below it that extends downward.
-        // We'll union them.  Then we flatten to produce a single polygon if possible.
-        let circ = Self::circle(circle_radius, segments, metadata.clone());
-        let rect = Self::square(handle_width, handle_height, metadata.clone())
-            .translate(-0.5*handle_width, -handle_height, 0.0);
-        let unioned = circ.union(&rect);
-        // Possibly flatten into a single polygon
-        //unioned.flatten()
-        unioned
+        metadata: Option<S>
+    ) -> CSG<S> {
+        // circle
+        let mut circ = Polyline::new_closed();
+        for i in 0..segments {
+            let th = TAU * i as Real / segments as Real;
+            let x = circle_radius * th.cos();
+            let y = circle_radius * th.sin();
+            circ.add(x, y, 0.0);
+        }
+        let circle_sh = CCShape::from_plines(vec![circ]);
+
+        // rectangle (handle)
+        let mut rect_pl = Polyline::new_closed();
+        rect_pl.add(0.0, 0.0, 0.0);
+        rect_pl.add(handle_width, 0.0, 0.0);
+        rect_pl.add(handle_width, handle_height, 0.0);
+        rect_pl.add(0.0, handle_height, 0.0);
+
+        // shift rectangle so it connects to circle at the top
+        //rect_pl.apply_offset(-0.5 * handle_width, -handle_height);
+
+        let rect_sh = CCShape::from_plines(vec![rect_pl]);
+
+        // union
+        let union_sh = circle_sh.union(&rect_sh);
+
+        CSG::from_shape(&union_sh, metadata)
     }
 
     /// Reuleaux polygon with `sides` and "radius".  Approximates constant-width shape.
@@ -904,8 +906,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // Difference
         let ring = outer.difference(&inner);
         // Attempt to unify into a single polygon with a hole
-        //ring.flatten()
-        ring
+        ring.flatten()
     }
     
     /// Create a 2D "pie slice" (wedge) in the XY plane.
@@ -2713,75 +2714,77 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
     /// for each Polygon we convert to a cavalier_contours Polyline<Real> and call parallel_offset
-    /*
     pub fn offset_2d(&self, distance: Real) -> CSG<S> {
-        let mut result_polygons = Vec::new(); // each "loop" is a Polygon
+        // If we have 2D polylines, just offset them using Cavalier Contours.
+        let mut offset_result = cavalier_contours::shape_algorithms::Shape::empty();
+        if !self.polylines.ccw_plines.is_empty() | !self.polylines.cw_plines.is_empty() {
+            // offset all existing polylines
+            let offset_shape = self.polylines.parallel_offset(distance, ShapeOffsetOptions::new());
+            offset_result = offset_shape;
+        }
+        // Return as a CSG with empty polygons and updated polylines.
+        CSG {
+            polygons: Vec::new(),
+            polylines: offset_result,
+            metadata: self.metadata.clone(),
+        }
+    }
 
-        for poly in &self.polygons {
-            // Convert to cavalier_contours Polyline (closed by default):
-            let cpoly = poly.to_polyline();
+    /// Flattens any 3D polygons by projecting them onto the XY plane
+    /// (Z=0), unions them as 2D polylines, and returns a purely 2D result.
+    ///
+    /// If this CSG is already 2D (polylines only), we simply return
+    /// the union of those polylines.
+    pub fn flatten(&self) -> CSG<S> {
+        use cavalier_contours::shape_algorithms::Shape as CCShape;
 
-            // Remove any degenerate or redundant vertices:
-            cpoly.remove_redundant(EPSILON);
-
-            // Perform the actual offset:
-            let result_plines = cpoly.parallel_offset(-distance);
-
-            // Collect polygons
-            for pline in result_plines {
-                result_polygons.push(Polygon::from_polyline(&pline, poly.metadata.clone()));
-            }
+        // If we already have no polygons (just polylines), it might
+        // already be 2D, so we can return them. But to mimic the tests'
+        // "flatten and union" approach, let's union them anyway:
+        if self.polygons.is_empty() {
+            let unioned_polylines = {
+                // The polylines in `self.polylines` might be multiple sub-shapes.
+                // Union them in 2D to get a single final shape (or multiple disjoint shapes).
+                let mut shape_acc = CCShape::empty();
+                // Just union all sub-shapes. If they overlap, they become merged.
+                for indexed_pl in self.polylines.ccw_plines.iter().chain(self.polylines.cw_plines.iter()) {
+                    let sub = CCShape::from_plines(vec![indexed_pl.polyline.clone()]);
+                    shape_acc = shape_acc.union(&sub);
+                }
+                shape_acc
+            };
+            return CSG {
+                polygons: Vec::new(),
+                polylines: unioned_polylines,
+                metadata: self.metadata.clone(),
+            };
         }
 
-        // Build a new CSG from those offset loops in XY:
-        CSG::from_polygons(&result_polygons)
-    }
-    */
+        // Otherwise, project each 3D polygon's perimeter down to Z=0 and union them.
+        let mut shape_acc = CCShape::empty();
+        for poly in &self.polygons {
+            if poly.vertices.is_empty() {
+                continue;
+            }
+            // Build a polyline for the polygon's perimeter in XY plane
+            let mut pl = cavalier_contours::polyline::Polyline::new_closed();
+            for v in &poly.vertices {
+                // Project the 3D vertex v.pos onto XY plane
+                pl.add(v.pos.x, v.pos.y, 0.0);
+            }
+            // Turn it into a shape
+            let sub_shape = CCShape::from_plines(vec![pl]);
+            // Union into the accumulator
+            shape_acc = shape_acc.union(&sub_shape);
+        }
 
-    /// Flatten a `CSG` into the XY plane and union all polygons' outlines,
-    /// returning a new `CSG` that may contain multiple polygons (loops) if disjoint.
-    ///
-    /// We skip "degenerate" loops whose area is near zero, both before
-    /// and after performing the union. This helps avoid collinear or
-    /// duplicate edges that can cause issues in `cavalier_contours`.
-    /*
-    pub fn flatten(&self) -> CSG<S> {    
-        #[cfg(feature = "parallel")]
-        let polylines: Vec<Polyline<Real>> = self
-            .polygons
-            .par_iter()
-            .filter_map(|poly| {
-                let cc = poly.to_polyline();
-                cc.remove_redundant(EPSILON);
-                let area = polyline_area(&cc).abs();
-                if area > EPSILON { // keep it
-                    Some(&cc)
-                } else {
-                    None
-                }
-            })
-            .collect();
-    
-        #[cfg(not(feature = "parallel"))]
-        let polylines: Vec<Polyline<Real>> = self
-            .polygons
-            .iter()
-            .filter_map(|poly| {
-                let cc = poly.to_polyline();
-                cc.remove_redundant(EPSILON);
-                let area = polyline_area(&cc).abs();
-                if area > EPSILON { // keep it
-                    Some(&cc)
-                } else {
-                    None
-                }
-            })
-            .collect();
-    
-        // --- 3) Convert merged_2d polygons (still in XY) to a new CSG
-        CSG::from_polylines(&polylines)
+        // Return as a 2D CSG: polygons empty, polylines hold the unioned perimeter(s).
+        CSG {
+            polygons: Vec::new(),
+            polylines: shape_acc,
+            metadata: self.metadata.clone(),
+        }
     }
-    */
 
     /// Slice this solid by a given `plane`, returning a new `CSG` whose polygons
     /// are either:
