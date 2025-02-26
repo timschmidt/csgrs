@@ -30,8 +30,10 @@ pub enum Problem {
     BadDecimal,
     /// When parsing an integer there were non-digits in the text
     BadInteger,
-    /// The closest integer was outside the range for the chosen type
+    /// The integer was outside the range for the chosen type
     OutOfRange,
+    /// The rational was not an integer
+    NotAnInteger,
 }
 
 use std::fmt;

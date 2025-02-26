@@ -174,13 +174,23 @@ impl Rational {
     ///
     /// Non integer rationals will thus be truncated towards zero
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```
     /// use realistic::Rational;
     /// let approx_pi = Rational::fraction(22, 7).unwrap();
     /// let three = Rational::new(3);
     /// assert_eq!(approx_pi.trunc(), three);
+    /// ```
+    ///
+    /// The integer result can be converted to a primitive integer type
+    /// with suitable range
+    ///
+    /// ```
+    /// use realistic::Rational;
+    /// let fraction = Rational::new(172) / Rational::new(9);
+    /// let int: u8 = fraction.trunc().try_into().unwrap();
+    /// assert_eq!(int, 19);
     /// ```
     pub fn trunc(&self) -> Self {
         if self.is_integer() {

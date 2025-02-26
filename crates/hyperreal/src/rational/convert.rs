@@ -15,8 +15,11 @@ macro_rules! impl_integer_conversion {
             type Error = Problem;
 
             fn try_from(n: Rational) -> Result<$T, Self::Error> {
-                let i = n.shifted_big_integer(0);
-                <$T>::try_from(i).map_err(|_| Problem::OutOfRange)
+                if let Some(i) = n.to_big_integer() {
+                    <$T>::try_from(i).map_err(|_| Problem::OutOfRange)
+                } else {
+                    Err(Problem::NotAnInteger)
+                }
             }
         }
     };
@@ -184,6 +187,16 @@ mod tests {
         assert_eq!(n_u32, 99);
         assert_eq!(n_i64, 99);
         assert_eq!(n_u128, 99);
+    }
+
+    #[test]
+    fn not_int() {
+        let almost_pi = Rational::fraction(22,7).unwrap();
+        let problem = <Rational as TryInto<i16>>::try_into(almost_pi).unwrap_err();
+        assert_eq!(problem, Problem::NotAnInteger);
+        let almost_pi = Rational::fraction(22,7).unwrap();
+        let three: u32 = almost_pi.trunc().try_into().unwrap();
+        assert_eq!(three, 3);
     }
 
     #[test]
