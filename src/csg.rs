@@ -309,8 +309,27 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         b.clip_to(&a);
         b.invert();
         a.build(&b.all_polygons());
+        
+        // self.polylines and other.polylines are `CCShape<Real>`.
+        let shape1 = &self.polylines;
+        let shape2 = &other.polylines;
 
-        CSG::from_polygons(&a.all_polygons())
+        // Perform the union using cavalier_contours Shape-based union
+        let union_shape = shape1.union(shape2);
+
+        // Gather the resulting polylines from the unioned shape
+        let mut result_plines = Vec::new();
+        // The resulting shape’s `ccw_plines` and `cw_plines` each contain an
+        // `IndexedPolyline<T>` with `.polyline` holding the actual Polyline.
+        for indexed_pl in union_shape.ccw_plines.iter().chain(union_shape.cw_plines.iter()) {
+            result_plines.push(indexed_pl.polyline.clone());
+        }
+
+        CSG {
+            polygons: a.all_polygons(),
+            polylines: CCShape::from_plines(result_plines),
+            metadata: self.metadata.clone(),
+        }
     }
 
     /// CSG difference: this \ other
@@ -326,8 +345,21 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         b.invert();
         a.build(&b.all_polygons());
         a.invert();
+        
+        let shape1 = &self.polylines;
+        let shape2 = &other.polylines;
 
-        CSG::from_polygons(&a.all_polygons())
+        let diff_shape = shape1.difference(shape2);
+        let mut result_plines = Vec::new();
+        for indexed_pl in diff_shape.ccw_plines.iter().chain(diff_shape.cw_plines.iter()) {
+            result_plines.push(indexed_pl.polyline.clone());
+        }
+
+        CSG {
+            polygons: a.all_polygons(),
+            polylines: CCShape::from_plines(result_plines),
+            metadata: self.metadata.clone(),
+        }
     }
 
     /// CSG intersection: this ∩ other
@@ -342,46 +374,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         b.clip_to(&a);
         a.build(&b.all_polygons());
         a.invert();
-
-        CSG::from_polygons(&a.all_polygons())
-    }
-
-    /// Invert this CSG (flip inside vs. outside)
-    pub fn inverse(&self) -> CSG<S> {
-        let mut csg = self.clone();
-        for p in &mut csg.polygons {
-            p.flip();
-        }
-        csg
-    }
-    
-    /// 2D union using the cavalier_contours `Shape` boolean operations.
-    pub fn union_2d(&self, other: &CSG<S>) -> CSG<S> {
-        // self.polylines and other.polylines are `Shape<Real>`.
-        let shape1 = &self.polylines;
-        let shape2 = &other.polylines;
-
-        // Perform the union using the new Shape-based method
-        let union_shape = shape1.union(shape2);
-
-        // Gather the resulting polylines from the unioned shape
-        let mut result_plines = Vec::new();
-        // The resulting shape’s `ccw_plines` and `cw_plines` each contain an
-        // `IndexedPolyline<T>` with `.polyline` holding the actual Polyline.
-        for indexed_pl in union_shape.ccw_plines.iter().chain(union_shape.cw_plines.iter()) {
-            result_plines.push(indexed_pl.polyline.clone());
-        }
-
-        // Construct a new CSG that has no 3D polygons, but the new 2D polylines
-        CSG {
-            polygons: Vec::new(),
-            polylines: CCShape::from_plines(result_plines),
-            metadata: self.metadata.clone(),
-        }
-    }
-
-    /// 2D intersection using the cavalier_contours `Shape` boolean operations.
-    pub fn intersection_2d(&self, other: &CSG<S>) -> CSG<S> {
+        
         let shape1 = &self.polylines;
         let shape2 = &other.polylines;
 
@@ -392,32 +385,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         CSG {
-            polygons: Vec::new(),
+            polygons: a.all_polygons(),
             polylines: CCShape::from_plines(result_plines),
             metadata: self.metadata.clone(),
         }
     }
-
-    /// 2D difference using the cavalier_contours `Shape` boolean operations.
-    pub fn difference_2d(&self, other: &CSG<S>) -> CSG<S> {
-        let shape1 = &self.polylines;
-        let shape2 = &other.polylines;
-
-        let diff_shape = shape1.difference(shape2);
-        let mut result_plines = Vec::new();
-        for indexed_pl in diff_shape.ccw_plines.iter().chain(diff_shape.cw_plines.iter()) {
-            result_plines.push(indexed_pl.polyline.clone());
-        }
-
-        CSG {
-            polygons: Vec::new(),
-            polylines: CCShape::from_plines(result_plines),
-            metadata: self.metadata.clone(),
-        }
-    }
-
+    
     /// 2D symmetric difference (XOR) using the cavalier_contours `Shape` boolean operations.
-    pub fn xor_2d(&self, other: &CSG<S>) -> CSG<S> {
+    pub fn xor(&self, other: &CSG<S>) -> CSG<S> {
         let shape1 = &self.polylines;
         let shape2 = &other.polylines;
 
@@ -432,6 +407,15 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             polylines: CCShape::from_plines(result_plines),
             metadata: self.metadata.clone(),
         }
+    }
+
+    /// Invert this CSG (flip inside vs. outside)
+    pub fn inverse(&self) -> CSG<S> {
+        let mut csg = self.clone();
+        for p in &mut csg.polygons {
+            p.flip();
+        }
+        csg
     }
 
     /// Creates a 2D square in the XY plane.
@@ -1083,7 +1067,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let key_rect = CSG::square(key_depth, key_width, metadata.clone())
             .translate(radius - key_depth, -key_width * 0.5, 0.0);
     
-        circle.difference_2d(&key_rect)
+        circle.difference(&key_rect)
     }
 
     /// Creates a 2D "D" shape (circle with one flat chord).
@@ -1115,7 +1099,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             .translate(0.0, -flat_dist, 0.0);        // now top edge is at y = -flat_dist
     
         // 3. Subtract to produce the flat chord
-        circle.difference_2d(&rect_cutter)
+        circle.difference(&rect_cutter)
     }
 
     /// Circle with two parallel flat chords on opposing sides (e.g., "double D" shape).
@@ -1144,8 +1128,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             .translate(-radius, -cutter_height - flat_dist, 0.0);
     
         // 4. Subtract both
-        let with_top_flat = circle.difference_2d(&top_rect);
-        let with_both_flats = with_top_flat.difference_2d(&bottom_rect);
+        let with_top_flat = circle.difference(&top_rect);
+        let with_both_flats = with_top_flat.difference(&bottom_rect);
     
         with_both_flats
     }
