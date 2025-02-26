@@ -6,7 +6,7 @@ use nalgebra::{
     Matrix4, Point2, Point3, Rotation3, Translation3, Unit, Vector3, Vector4,
 };
 use cavalier_contours::polyline::{
-    PlineCreation, PlineSource, PlineSourceMut, Polyline,
+    PlineSource, Polyline,
 };
 
 /// A convex polygon, defined by a list of vertices and a plane.

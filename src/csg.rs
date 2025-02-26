@@ -8,7 +8,7 @@ use nalgebra::{
 };
 use std::error::Error;
 use cavalier_contours::polyline::{
-    PlineCreation, PlineSource, PlineSourceMut, Polyline,
+    PlineSource, PlineSourceMut, Polyline,
 };
 use cavalier_contours::shape_algorithms::Shape as CCShape;
 use cavalier_contours::shape_algorithms::ShapeOffsetOptions;
@@ -1023,7 +1023,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         // marching squares => polylines
-        let mut all_plines = CCShape::empty(); // each polyline from one cell intersection
+        let all_plines = CCShape::empty(); // each polyline from one cell intersection
 
         let interpolate = |(x1, y1, v1): (Real,Real,Real),
                            (x2, y2, v2): (Real,Real,Real)| -> (Real,Real) {
