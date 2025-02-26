@@ -137,7 +137,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         for pl in &shape.ccw_plines {
             // Convert each Polyline into a single polygon in z=0.
             // todo: For arcs, subdivide by bulge, etc. This ignores arcs for simplicity.
-            let open = !pl.polyline.is_closed();
             if pl.polyline.vertex_count() >= 3 {
                 let mut poly_verts = Vec::with_capacity(pl.polyline.vertex_count());
                 for i in 0..pl.polyline.vertex_count() {
@@ -154,7 +153,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         for pl in &shape.cw_plines {
             // Convert each negative clockwise Polyline into a single polygon in z=0.
             // todo: For arcs, subdivide by bulge, etc. This ignores arcs for simplicity.
-            let open = !pl.polyline.is_closed();
             if pl.polyline.vertex_count() >= 3 {
                 let mut poly_verts = Vec::with_capacity(pl.polyline.vertex_count());
                 for i in 0..pl.polyline.vertex_count() {
@@ -983,18 +981,19 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let th = TAU * i as Real / segments as Real;
             outer_pl.add(outer_radius * th.cos(), outer_radius * th.sin(), 0.0);
         }
-        let outer_sh = CCShape::from_plines(vec![outer_pl]);
 
         // Inner circle
         let mut inner_pl = Polyline::new_closed();
-        for i in 0..segments {
+        for i in 0..segments { // reversed for inner hole
             let th = TAU * i as Real / segments as Real;
             inner_pl.add(inner_radius * th.cos(), inner_radius * th.sin(), 0.0);
         }
-        let inner_sh = CCShape::from_plines(vec![inner_pl]);
-
+        inner_pl.invert_direction_mut();
+        let mut result = vec![outer_pl];
+        result.push(inner_pl);
+        
         // difference
-        CSG::from_shape(&inner_sh, metadata)
+        CSG::from_polylines(&result, metadata)
     }
     
     /// Create a 2D "pie slice" (wedge) in the XY plane.
