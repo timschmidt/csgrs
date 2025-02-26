@@ -250,8 +250,8 @@ fn main() {
         (Point2::new(1.5, 0.0), 1.0),
         (Point2::new(0.75, 1.0), 0.5),
     ];
-    //let mb2d = CSG::metaball_2d(&balls_2d, (100, 100), 1.0, 0.25, None);
-    //let _ = fs::write("stl/mb2d.stl", mb2d.to_stl_ascii("metaballs2d"));
+    let mb2d = CSG::metaball_2d(&balls_2d, (100, 100), 1.0, 0.25, None);
+    let _ = fs::write("stl/mb2d.stl", mb2d.to_stl_ascii("metaballs2d"));
     
     // Create a supershape
     let sshape = CSG::supershape(1.0, 1.0, 6.0, 1.0, 1.0, 1.0, 128, None);

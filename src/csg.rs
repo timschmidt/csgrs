@@ -1181,7 +1181,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         // merge all polylines into one shape
-        CSG::from_shape(&all_plines, metadata)
+        CSG::from_polylines(&ccshape_to_polylines(all_plines), metadata)
     }
 
     /// Create a 2D supershape in the XY plane, approximated by `segments` edges.
