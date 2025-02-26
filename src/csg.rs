@@ -403,7 +403,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         CSG {
-            polygons: Vec::new(),
+            polygons: self.polygons.clone(),
             polylines: CCShape::from_plines(result_plines),
             metadata: self.metadata.clone(),
         }
