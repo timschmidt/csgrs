@@ -8,7 +8,7 @@ use nalgebra::{
 };
 use std::error::Error;
 use cavalier_contours::polyline::{
-    PlineSource, PlineSourceMut, Polyline,
+    PlineSource, PlineSourceMut, Polyline, PlineOrientation
 };
 use cavalier_contours::shape_algorithms::Shape as CCShape;
 use cavalier_contours::shape_algorithms::ShapeOffsetOptions;
@@ -887,7 +887,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         rect_pl.add(0.0, handle_height, 0.0);
 
         // shift rectangle so it connects to circle at the top
-        //rect_pl.apply_offset(-0.5 * handle_width, -handle_height);
+        rect_pl.translate_mut(-0.5 * handle_width, -handle_height);
 
         let rect_sh = CCShape::from_plines(vec![rect_pl]);
 
@@ -988,8 +988,11 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let th = TAU * i as Real / segments as Real;
             inner_pl.add(inner_radius * th.cos(), inner_radius * th.sin(), 0.0);
         }
-        inner_pl.invert_direction_mut();
+        
         let mut result = vec![outer_pl];
+        if inner_pl.orientation() == PlineOrientation::CounterClockwise {
+            inner_pl.invert_direction_mut();
+        }
         result.push(inner_pl);
         
         // difference
