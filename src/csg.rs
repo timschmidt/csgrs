@@ -819,64 +819,55 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         sides: usize,
         radius: Real,
         arc_segments_per_side: usize,
-        metadata: Option<S>,
-    ) -> Self {
+        metadata: Option<S>
+    ) -> CSG<S> {
+        // For a typical 2D Reuleaux shape: each corner is an arc
+        // from one vertex to the next, with center on the adjacent vertex.
         if sides < 3 || arc_segments_per_side < 1 {
-            return Self::new();
+            return CSG::new();
         }
-        let normal = Vector3::z();
-        // First define the corners of a regular polygon
         let mut corners = Vec::with_capacity(sides);
         for i in 0..sides {
             let theta = TAU * (i as Real) / (sides as Real);
             let x = radius * theta.cos();
             let y = radius * theta.sin();
-            corners.push(Point3::new(x, y, 0.0));
+            corners.push((x, y));
         }
-        // For each corner i, we draw an arc that is centered at corner (i+1), going from corner i to (i+2)
-        // We'll store all arcs in a big chain
-        let mut all_points = Vec::new();
+
+        // Build one big closed polyline by tracing arcs
+        let mut pl = Polyline::new_closed();
         for i in 0..sides {
             let i_next = (i + 1) % sides;
-            let i_next2 = (i + 2) % sides;
             let center = corners[i_next];
-            let start  = corners[i];
-            let end    = corners[i_next2];
-            // The arc from 'start' to 'end' with 'center' as center. We'll approximate it with arc_segments_per_side.
-            let v_start = start - center;
-            let v_end   = end   - center;
-            let start_angle = v_start.y.atan2(v_start.x);
-            let end_angle   = v_end.y.atan2(v_end.x);
-            // We want to proceed CCW. We'll unify angles
+            let start_pt = corners[i];
+            let end_pt   = corners[(i + 2) % sides];
+
+            let vx_s = start_pt.0 - center.0;
+            let vy_s = start_pt.1 - center.1;
+            let start_angle = vy_s.atan2(vx_s);
+
+            let vx_e = end_pt.0 - center.0;
+            let vy_e = end_pt.1 - center.1;
+            let end_angle = vy_e.atan2(vx_e);
+
+            // be mindful of direction - typical reuleaux arcs go "outside"
             let mut delta = end_angle - start_angle;
-            while delta <= 0.0 { delta += TAU; }
-            if delta > PI * 1.5 {
-                // Some shapes might have >180 arcs. Usually Reuleaux arcs are 2π/sides,
-                // but let's just clamp to something sensible if needed.
+            while delta <= 0.0 {
+                delta += TAU;
             }
-            let step = delta / arc_segments_per_side as Real;
+
+            let step = delta / (arc_segments_per_side as Real);
             for seg_i in 0..arc_segments_per_side {
-                let a = start_angle + (seg_i as Real)*step;
-                let px = center.x + radius*a.cos();
-                let py = center.y + radius*a.sin();
-                all_points.push(Point3::new(px, py, 0.0));
+                let a = start_angle + (seg_i as Real) * step;
+                let x = center.0 + radius * a.cos();
+                let y = center.1 + radius * a.sin();
+                pl.add(x, y, 0.0);
             }
         }
-        // Finally close the shape by connecting the last arc to the first point
-        // If needed, push the very end point:
-        if !all_points.is_empty() {
-            let first = all_points[0];
-            let last  = *all_points.last().unwrap();
-            if (first.coords - last.coords).norm() > EPSILON {
-                all_points.push(first);
-            }
-        }
-        // Convert to vertices
-        let verts: Vec<Vertex> = all_points.into_iter()
-            .map(|p| Vertex::new(p, normal))
-            .collect();
-        let poly = Polygon::new(verts, metadata);
-        Self::from_polygons(&[poly])
+        // optionally close if needed
+        // polyline is closed above, so no repeated last point needed
+
+        CSG::from_polylines(&[pl], metadata)
     }
 
     /// Ring with inner diameter = `id` and (radial) thickness = `thickness`.
@@ -892,21 +883,32 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         id: Real,
         thickness: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Self {
+        metadata: Option<S>
+    ) -> CSG<S> {
         if id <= 0.0 || thickness <= 0.0 {
-            return Self::new();
+            return CSG::new();
         }
         let inner_radius = id * 0.5;
         let outer_radius = inner_radius + thickness;
-        // Make outer circle
-        let outer = Self::circle(outer_radius, segments, metadata.clone());
-        // Make inner circle
-        let inner = Self::circle(inner_radius, segments, metadata.clone());
-        // Difference
-        let ring = outer.difference(&inner);
-        // Attempt to unify into a single polygon with a hole
-        ring.flatten()
+
+        // Outer circle
+        let mut outer_pl = Polyline::new_closed();
+        for i in 0..segments {
+            let th = TAU * i as Real / segments as Real;
+            outer_pl.add(outer_radius * th.cos(), outer_radius * th.sin(), 0.0);
+        }
+        let outer_sh = CCShape::from_plines(vec![outer_pl]);
+
+        // Inner circle
+        let mut inner_pl = Polyline::new_closed();
+        for i in 0..segments {
+            let th = TAU * i as Real / segments as Real;
+            inner_pl.add(inner_radius * th.cos(), inner_radius * th.sin(), 0.0);
+        }
+        let inner_sh = CCShape::from_plines(vec![inner_pl]);
+
+        // difference
+        CSG::from_shape(&inner_sh, metadata)
     }
     
     /// Create a 2D "pie slice" (wedge) in the XY plane.
@@ -920,37 +922,32 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         start_angle_deg: Real,
         end_angle_deg: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Self {
+        metadata: Option<S>
+    ) -> CSG<S> {
         if segments < 1 {
             return CSG::new();
         }
         let start_rad = start_angle_deg.to_radians();
         let end_rad   = end_angle_deg.to_radians();
-        let sweep     = end_rad - start_rad;
-    
-        // Build vertices: center at origin, then arc from start->end
-        let normal = Vector3::z();
-        let mut verts = Vec::with_capacity(segments + 2);
-    
-        // Center vertex
-        verts.push(Vertex::new(
-            Point3::origin(),
-            normal,
-        ));
-    
-        // Arc vertices
+        let sweep = end_rad - start_rad;
+
+        // create an open polyline that includes center, then arc
+        let mut pl = Polyline::new();
+        pl.add(0.0, 0.0, 0.0); // center
+
+        // arc points
         for i in 0..=segments {
             let t = i as Real / segments as Real;
             let angle = start_rad + t * sweep;
             let x = radius * angle.cos();
             let y = radius * angle.sin();
-            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+            pl.add(x, y, 0.0);
         }
-    
-        // One polygon
-        let poly = Polygon::new(verts, metadata);
-        CSG::from_polygons(&[poly])
+        // close by adding center at the end again or we can keep it open
+        // If we truly want a "solid" slice, we can close the polyline:
+        pl.set_is_closed(true);
+
+        CSG::from_polylines(&[pl], metadata)
     }
     
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
@@ -964,50 +961,58 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         resolution: (usize, usize),
         iso_value: Real,
         padding: Real,
-        metadata: Option<S>,
-    ) -> Self {
-        if balls.is_empty() || resolution.0 < 2 || resolution.1 < 2 {
+        metadata: Option<S>
+    ) -> CSG<S> {
+        // Same marching-squares approach as before, but instead of building polygons,
+        // build polylines for each contour and combine them in one CCShape or just store them all.
+        // We'll collect them in a vector and do "from_plines".
+        // The existing code can be mostly reused, but at the end, store them as polylines.
+
+        let (nx, ny) = resolution;
+        if balls.is_empty() || nx < 2 || ny < 2 {
             return CSG::new();
         }
-    
-        // 1) Determine bounding box in 2D
+
+        // bounding box
         let mut min_x = Real::MAX;
         let mut min_y = Real::MAX;
         let mut max_x = -Real::MAX;
         let mut max_y = -Real::MAX;
-    
         for (center, r) in balls {
             let rr = *r + padding;
-            if center.x - rr < min_x { min_x = center.x - rr; }
-            if center.x + rr > max_x { max_x = center.x + rr; }
-            if center.y - rr < min_y { min_y = center.y - rr; }
-            if center.y + rr > max_y { max_y = center.y + rr; }
+            if center.x - rr < min_x {
+                min_x = center.x - rr;
+            }
+            if center.x + rr > max_x {
+                max_x = center.x + rr;
+            }
+            if center.y - rr < min_y {
+                min_y = center.y - rr;
+            }
+            if center.y + rr > max_y {
+                max_y = center.y + rr;
+            }
         }
-    
-        let nx = resolution.0;
-        let ny = resolution.1;
+
+        // sampling grid
         let dx = (max_x - min_x) / (nx as Real - 1.0);
         let dy = (max_y - min_y) / (ny as Real - 1.0);
-    
-        // 2) Define a helper to compute scalar field from the 2D metaballs
+
         fn scalar_field(balls: &[(nalgebra::Point2<Real>, Real)], x: Real, y: Real) -> Real {
             let mut v = 0.0;
             for (c, r) in balls {
                 let dx = x - c.x;
                 let dy = y - c.y;
                 let dist_sq = dx*dx + dy*dy + EPSILON;
-                let r_sq = r * r;
+                let r_sq = r*r;
                 v += r_sq / dist_sq;
             }
             v
         }
-    
-        // 3) Sample the grid
+
+        // Evaluate grid
         let mut grid = vec![0.0; nx * ny];
-        let index = |ix: usize, iy: usize| -> usize {
-            iy * nx + ix
-        };
-    
+        let index = |ix: usize, iy: usize| -> usize { iy*nx + ix };
         for iy in 0..ny {
             let yv = min_y + (iy as Real)*dy;
             for ix in 0..nx {
@@ -1016,99 +1021,79 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 grid[index(ix, iy)] = val;
             }
         }
-    
-        // 4) Marching squares to build polylines for iso_value
-        let mut all_polygons = Vec::new();
-    
-        // A small function to interpolate the crossing between two grid corners
-        let interpolate = |(x1, y1, v1): (Real, Real, Real),
-                        (x2, y2, v2): (Real, Real, Real)| -> (Real, Real) {
-            // If the values are the same, fall back
-            if (v2 - v1).abs() < EPSILON {
-                return (x1, y1);
+
+        // marching squares => polylines
+        let mut all_plines = CCShape::empty(); // each polyline from one cell intersection
+
+        let interpolate = |(x1, y1, v1): (Real,Real,Real),
+                           (x2, y2, v2): (Real,Real,Real)| -> (Real,Real) {
+            let denom = (v2 - v1).abs();
+            if denom < EPSILON {
+                (x1, y1)
+            } else {
+                let t = (iso_value - v1) / (v2 - v1);
+                (x1 + t*(x2 - x1), y1 + t*(y2 - y1))
             }
-            let t = (iso_value - v1) / (v2 - v1);
-            (x1 + t * (x2 - x1), y1 + t * (y2 - y1))
         };
-    
-        // We'll store polygon edges in sequences, then unify them
-        // For clarity, we just store each cell's contour as a small polygon.
-        // Production code might unify them more carefully.
+
         for iy in 0..(ny - 1) {
-            let y0 = min_y + iy as Real * dy;
-            let y1 = min_y + (iy+1) as Real * dy;
+            let y0 = min_y + (iy as Real)*dy;
+            let y1 = min_y + ((iy+1) as Real)*dy;
             for ix in 0..(nx - 1) {
-                let x0 = min_x + ix as Real * dx;
-                let x1 = min_x + (ix+1) as Real * dx;
-    
-                let v0 = grid[index(ix, iy)];
-                let v1 = grid[index(ix+1, iy)];
+                let x0 = min_x + (ix as Real)*dx;
+                let x1 = min_x + ((ix+1) as Real)*dx;
+
+                let v0 = grid[index(ix,   iy  )];
+                let v1 = grid[index(ix+1, iy  )];
                 let v2 = grid[index(ix+1, iy+1)];
-                let v3 = grid[index(ix, iy+1)];
-    
-                // Build a bitmask
+                let v3 = grid[index(ix,   iy+1)];
+
+                // classification
                 let mut c = 0u8;
                 if v0 >= iso_value { c |= 1; }
                 if v1 >= iso_value { c |= 2; }
                 if v2 >= iso_value { c |= 4; }
                 if v3 >= iso_value { c |= 8; }
-    
-                // Cases 0 or 15 => no crossing
                 if c == 0 || c == 15 {
                     continue;
                 }
-    
-                // We track up to 4 intersection points
-                let mut pts = Vec::with_capacity(4);
-    
-                // Each corner: (x, y, value)
-                let c0 = (x0, y0, v0);
-                let c1 = (x1, y0, v1);
-                let c2 = (x1, y1, v2);
-                let c3 = (x0, y1, v3);
-    
-                // If edges cross iso boundary, compute intersection
-                // top edge
-                if (c & 1) != (c & 2) {
-                    pts.push(interpolate(c0, c1));
-                }
-                // right edge
-                if (c & 2) != (c & 4) {
-                    pts.push(interpolate(c1, c2));
-                }
-                // bottom edge
-                if (c & 4) != (c & 8) {
-                    pts.push(interpolate(c2, c3));
-                }
-                // left edge
-                if (c & 8) != (c & 1) {
-                    pts.push(interpolate(c3, c0));
-                }
-    
-                if pts.len() >= 2 {
-                    // Build a small polygon from these points
-                    let normal = Vector3::z();
-                    let mut poly_verts = Vec::new();
-                    // Sort them in an order that won't self-intersect too badly
-                    // (You can do more robust sorting or triangulation if needed)
-                    for (px, py) in pts {
-                        poly_verts.push(Vertex::new(
-                            Point3::new(px, py, 0.0),
-                            normal,
-                        ));
+
+                // find edges
+                let corners = [
+                    (x0, y0, v0),
+                    (x1, y0, v1),
+                    (x1, y1, v2),
+                    (x0, y1, v3),
+                ];
+                let mut pts = Vec::new();
+                // edges
+                let mut check_edge = |mask_a: u8, mask_b: u8, a: usize, b: usize| {
+                    if ((c & mask_a) != 0) ^ ((c & mask_b) != 0) {
+                        let (px, py) = interpolate(corners[a], corners[b]);
+                        pts.push((px, py));
                     }
-                    // For a “raw” ring, you might want to close it or not
-                    let poly = Polygon::new(poly_verts, metadata.clone());
-                    all_polygons.push(poly);
+                };
+
+                check_edge(1, 2, 0, 1);
+                check_edge(2, 4, 1, 2);
+                check_edge(4, 8, 2, 3);
+                check_edge(8, 1, 3, 0);
+
+                // build a small open polyline with those intersection points
+                // (some cells can produce 2 points => a line, or 4 => a more complex shape).
+                if pts.len() >= 2 {
+                    let mut pl = Polyline::new();
+                    for &(px, py) in &pts {
+                        pl.add(px, py, 0.0);
+                    }
+                    // optionally can close if needed, but usually these are open segments
+                    all_plines.union(&CCShape::from_plines(vec![pl]));
                 }
             }
         }
-    
-        // Build final CSG from the pieces
-        // If you want to attempt a union of all these cells, you can flatten:
-        //    let final_2d = CSG::from_polygons(&all_polygons).flatten();
-        // but this can be expensive. We'll just return them as separate polygons.
-        CSG::from_polygons(&all_polygons)
+
+        // merge all polylines into one shape
+        CSG::from_shape(&all_plines, metadata)
     }
 
     /// Create a 2D supershape in the XY plane, approximated by `segments` edges.
@@ -1123,38 +1108,34 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         n2: Real,
         n3: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Self {
+        metadata: Option<S>
+    ) -> CSG<S> {
         if segments < 3 {
             return CSG::new();
         }
-    
-        let normal = Vector3::z();
-        let mut verts = Vec::with_capacity(segments);
-    
-        fn supershape_r(theta: Real, a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real) -> Real {
-            // Avoid zeros
-            let t = m * theta / 4.0;
-            let cos_t = (t).cos().abs();
-            let sin_t = (t).sin().abs();
-            let term1 = (cos_t / a).powf(n2);
-            let term2 = (sin_t / b).powf(n3);
-            let r = (term1 + term2).powf(-1.0 / n1);
-            r
+        fn supershape_r(
+            theta: Real,
+            a: Real, b: Real,
+            m: Real, n1: Real, n2: Real, n3: Real
+        ) -> Real {
+            let t = m*theta*0.25; // mθ/4
+            let cos_t = t.cos().abs();
+            let sin_t = t.sin().abs();
+            let term1 = (cos_t/a).powf(n2);
+            let term2 = (sin_t/b).powf(n3);
+            (term1 + term2).powf(-1.0/n1)
         }
-    
+
+        let mut pl = Polyline::new_closed();
         for i in 0..segments {
             let frac = i as Real / segments as Real;
-            let theta = 2.0 * crate::float_types::PI * frac;
+            let theta = TAU * frac;
             let r = supershape_r(theta, a, b, m, n1, n2, n3);
             let x = r * theta.cos();
             let y = r * theta.sin();
-            verts.push(Vertex::new(Point3::new(x, y, 0.0), normal));
+            pl.add(x, y, 0.0);
         }
-    
-        // Single closed polygon
-        let poly = Polygon::new(verts, metadata);
-        CSG::from_polygons(&[poly])
+        CSG::from_polylines(&[pl], metadata)
     }
     
     /// Creates a 2D circle with a rectangular keyway slot cut out on the +X side.
@@ -1209,7 +1190,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             .translate(0.0, -flat_dist, 0.0);        // now top edge is at y = -flat_dist
     
         // 3. Subtract to produce the flat chord
-        circle.difference(&rect_cutter)
+        circle.difference_2d(&rect_cutter)
     }
 
     /// Circle with two parallel flat chords on opposing sides (e.g., "double D" shape).
@@ -1238,8 +1219,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             .translate(-radius, -cutter_height - flat_dist, 0.0);
     
         // 4. Subtract both
-        let with_top_flat = circle.difference(&top_rect);
-        let with_both_flats = with_top_flat.difference(&bottom_rect);
+        let with_top_flat = circle.difference_2d(&top_rect);
+        let with_both_flats = with_top_flat.difference_2d(&bottom_rect);
     
         with_both_flats
     }
