@@ -769,8 +769,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 pl.add(x, y, 0.0);
             }
         }
-        // optionally close if needed
-        // polyline is closed above, so no repeated last point needed
 
         CSG::from_polylines(&[pl], metadata)
     }
@@ -810,13 +808,13 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             inner_pl.add(inner_radius * th.cos(), inner_radius * th.sin(), 0.0);
         }
         
+        // Ensure inner circle is oriented CW as a hole, and combine inner and outer
         let mut result = vec![outer_pl];
         if inner_pl.orientation() == PlineOrientation::CounterClockwise {
             inner_pl.invert_direction_mut();
         }
         result.push(inner_pl);
         
-        // difference
         CSG::from_polylines(&result, metadata)
     }
     
@@ -1525,18 +1523,11 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         shape_segments: usize,
         metadata: Option<S>,
     ) -> Self {
-        // 1) Make a 2D teardrop in the XY plane.
+        // Make a 2D teardrop in the XY plane.
         let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
-        // 2) Usually we want to revolve around the Z-axis, but we can rotate so that
-        //    the teardrop shape stands "upright" and revolve around the Z.
-        //    For example, rotate by -90° around X so that the teardrop's "stem" is along Z,
-        //    then translate so revolve axis is through the "left" side.
-        // Adjust to taste:
-        let td_2d_aligned = td_2d
-            .rotate(-90.0, 0.0, 0.0);   // tilt so 'bottom' is at the revolve axis
 
-        // 3) revolve 360 degrees
-        td_2d_aligned.rotate_extrude(360.0, revolve_segments)
+        // revolve 360 degrees
+        td_2d.rotate_extrude(360.0, revolve_segments)
     }
 
     /// Creates a 3D "teardrop cylinder" by extruding the existing 2D `teardrop` in the Z+ axis.
