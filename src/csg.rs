@@ -894,7 +894,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // union
         let union_sh = circle_sh.union(&rect_sh);
 
-        CSG::from_shape(&union_sh, metadata)
+        CSG::from_polylines(&ccshape_to_polylines(union_sh), metadata)
     }
 
     /// Reuleaux polygon with `sides` and "radius".  Approximates constant-width shape.
@@ -2903,7 +2903,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             // Check if last point matches first (within EPSILON) => closed loop
             let first = &chain[0];
             let last = &chain[n - 1];
-            let is_closed = (first.pos.coords - last.pos.coords).norm() < EPSILON;
+            let _is_closed = (first.pos.coords - last.pos.coords).norm() < EPSILON;
 
             let poly = Polygon {
                 vertices: chain,
@@ -4015,7 +4015,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
             // Build vertices with normal = +Z
             let normal = Vector3::z();
-            let open = false; // We usually consider each contour closed (since it’s a shape outline).
             let mut verts = Vec::with_capacity(pl.len());
             for &(x, y) in &pl {
                 verts.push(Vertex::new(
@@ -4175,7 +4174,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // 2) Next, handle all ccw_plines + holes using earclip or earcut
         //    (non-manifold 2D shape in XY plane).
         // For each outer CCW:
-        for (outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
+        for (_outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
             let outer_pline = &outer_ipline.polyline;
     
             // bounding box for outer
@@ -4743,4 +4742,15 @@ fn extend_chain_forward(
             }
         }
     }
+}
+
+/// Returns all polylines from both the ccw_plines and cw_plines fields of a Shape,
+/// concatenated together into a single Vec<Polyline<Real>>.
+pub fn ccshape_to_polylines(shape: CCShape<Real>) -> Vec<Polyline<Real>> {
+    shape.ccw_plines.iter()
+        .map(|indexed_pline| indexed_pline.polyline.clone())
+        .chain(shape.cw_plines.iter()
+            .map(|indexed_pline| indexed_pline.polyline.clone()),
+        )
+        .collect()
 }
