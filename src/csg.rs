@@ -113,23 +113,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         csg
     }
 
-    /// Return the internal polygons
-    pub fn to_polygons(&self) -> &[Polygon<S>] {
-        &self.polygons
-    }
-
-    /// Build a new CSG containing polylines
-    pub fn from_polylines(polylines: &[Polyline<Real>], metadata: Option<S>) -> CSG<S> {
-        let mut csg = CSG::new();
-        csg.polylines = CCShape::from_plines(polylines.to_vec());
-        csg.metadata = metadata;
-        csg
-    }
-
-    /// Build a new CSG from the CCShape in self. Each polyline
-    /// is turned into one polygon at z=0. If a union produced multiple
-    /// loops, you will get multiple polygons in the final CSG.
-    pub fn polygonize(&self) -> CSG<S> {
+    /// Convert internal polylines into polygons and return along with any existing internal polygons
+    pub fn to_polygons(&self) -> Vec<Polygon<S>> {
         let mut all_polygons = Vec::new();
         let plane_normal = Vector3::z();
 
@@ -166,7 +151,16 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         all_polygons.extend(self.polygons.clone());
-        CSG::from_polygons(&all_polygons)
+        all_polygons
+    }
+
+    /// Build a new CSG containing polylines
+    pub fn from_polylines(polylines: &[Polyline<Real>], metadata: Option<S>) -> CSG<S> {
+        let mut csg = CSG::new();
+        // from_plines properly parses CCW and CW polylines into appropriate buckets
+        csg.polylines = CCShape::from_plines(polylines.to_vec());
+        csg.metadata = metadata;
+        csg
     }
     
     // Group polygons by their metadata.
@@ -2027,8 +2021,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // If we have polylines but no polygons, turn them into polygons first.
         let unioned_polygons = if self.polygons.is_empty() && (!self.polylines.ccw_plines.is_empty() | !self.polylines.cw_plines.is_empty()) {
-            let tmp_csg = &self.polygonize();
-            tmp_csg.polygons.clone()
+            self.to_polygons()
         } else {
             self.polygons.clone()
         };
@@ -2315,8 +2308,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // Convert polylines to polygons if needed
         let original_polygons = if self.polygons.is_empty() && (!self.polylines.ccw_plines.is_empty() | !self.polylines.cw_plines.is_empty()) {
-            let tmp_csg = &self.polygonize();
-            tmp_csg.polygons.clone()
+            self.to_polygons()
         } else {
             self.polygons.clone()
         };
@@ -2325,7 +2317,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mut result_polygons = Vec::new();
 
         // For each polygon in our original 2D shape:
-        for original_poly in &original_polygons {
+        for original_poly in original_polygons {
             let n_verts = original_poly.vertices.len();
             if n_verts < 3 {
                 // Skip degenerate or empty polygons
