@@ -165,7 +165,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
 
-        // todo: include polygons from self.polygons
+        all_polygons.extend(self.polygons.clone());
         CSG::from_polygons(&all_polygons)
     }
     
