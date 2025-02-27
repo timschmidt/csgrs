@@ -1,10 +1,10 @@
 # csgrs
 
-An optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** helps you construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to transform, interrogate, and simulate those shapes without leaving Rust.
+A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** helps you construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to transform, interrogate, and simulate those shapes without leaving Rust.
 
 This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`earclip`](https://crates.io/crates/earclip)/[`earcut`](https://crates.io/crates/earcut) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust processing of convex and non-convex polygons and polygons with holes, be light weight and full featured, and provide an extensible type-safe API.
 
-The BSP tree works with shapes made of lines which can be split by a plane.  In 3D, **csgrs** interpolates all curves so that they can be processed by the BSP. **csgrs** has limited support for recovering curves from interpolated lines into 2D, and for offsetting curves in 2D.  Recovering curves works even on models that are imported as a mesh, allowing them to be "upgraded" to real arcs for offsetting, booleans, toolpathing, etc.
+The BSP tree works with shapes made of lines.  In 3D, **csgrs** interpolates all curves so that they can be processed by the BSP. **csgrs** has limited support for recovering curves from interpolated lines into 2D, and for offsetting curves in 2D.  Recovering curves should work even on models imported as a mesh, allowing them to be "upgraded" to real arcs for offsetting, booleans, toolpathing, etc.
 
 ![Example CSG output](docs/csg.png)
 
