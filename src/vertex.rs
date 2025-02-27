@@ -4,7 +4,7 @@ use nalgebra::{
 use crate::float_types::Real;
 
 /// A vertex of a polygon, holding position and normal.
-#[derive(Debug, Clone)]
+#[derive(Copy, Debug, Clone)]
 pub struct Vertex {
     pub pos: Point3<Real>,
     pub normal: Vector3<Real>,

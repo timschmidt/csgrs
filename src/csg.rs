@@ -2002,7 +2002,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         };
 
         // Bottom polygons = original polygons
-        // (assuming they are in some plane, e.g. XY). We just clone them.
         for poly in unioned_polygons {
             let mut bottom = poly.clone();
             let top = poly.translate_vector(direction);

@@ -425,31 +425,29 @@ if let Some(data_mut) = poly.metadata_mut() {
 ---
 
 ## Roadmap / Todo
-- should 2d ops be seperate from the polygon type?  require use of XY plane, special triangulation, special extrudes to deal with holes?
+- finish converting triangulation from 2d engine overhaul
+- finish converting extrudes to deal with holes, from 2d engine overhaul
 - adjust rotate_extrude to work with XY plane polygons, like OpenSCAD
 - fix up error handling with result types
 - ray intersection (singular)
-- find nearest polygon
+- expose cavalier_contour Polyline traits on 2D shapes
 - https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d
 - convert more for loops to iterators - csg::transform
-- convert polygon level 2D functions to Point2 and Vector2
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
-- extend flatten to work with arbitrary planes
 - document coordinate system / coordinate transformations / compounded transformations
 - rewrite bounding_box to work without parry using iter / par_iter, put parry, rapier behind feature flags
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
-- remaining 2d functions to finalize: signed area, is_ccw, line/line intersection
-  - tests
+- 2d functionality tests
 - bending
 - gears
 - lead-ins, lead-outs
 - gpu accelleration?
 - reduce dependency feature sets
 - space filling curves, hilbert sort polygons / points
-- identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold, polygon::transform
+- identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold
 - svg import/export
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - screw threads

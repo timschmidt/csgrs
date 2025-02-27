@@ -45,19 +45,105 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
 
     /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
     pub fn triangulate(&self) -> Vec<[Vertex; 3]> {
-        let mut triangles = Vec::new();
+        // If polygon has fewer than 3 vertices, nothing to triangulate
         if self.vertices.len() < 3 {
+            return Vec::new();
+        }
+
+        // ----- Option 1: Use earclip if "earclip-io" feature is enabled -----
+        #[cfg(feature = "earclip-io")]
+        {
+            // We will flatten the polygon onto a local 2D plane and call earclip::earcut
+            let normal_3d = self.plane.normal.normalize();
+            let (u, v) = build_orthonormal_basis(normal_3d);
+            let origin_3d = self.vertices[0].pos;
+
+            // Collect 2D coords by projecting each vertex onto (u,v) plane
+            let mut coords_2d = Vec::with_capacity(self.vertices.len() * 2);
+            for vert in &self.vertices {
+                let offset = vert.pos.coords - origin_3d.coords;
+                let x = offset.dot(&u);
+                let y = offset.dot(&v);
+                coords_2d.push(x);
+                coords_2d.push(y);
+            }
+
+            // Use earclip
+            let indices = earclip::earcut::<Real, usize>(&coords_2d, &[], 2);
+            let mut triangles = Vec::with_capacity(indices.len() / 3);
+
+            // Rebuild final 3D triangles
+            for tri_chunk in indices.chunks_exact(3) {
+                let mut tri_vertices = [Vertex::new(Point3::origin(), Vector3::zeros()); 3];
+                for (k, &idx) in tri_chunk.iter().enumerate() {
+                    let x = coords_2d[2 * idx];
+                    let y = coords_2d[2 * idx + 1];
+                    let pos_3d = origin_3d.coords + (x * u) + (y * v);
+                    tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
+                }
+                triangles.push(tri_vertices);
+            }
             return triangles;
         }
-        let v0 = self.vertices[0].clone();
-        for i in 1..(self.vertices.len() - 1) {
-            triangles.push([
-                v0.clone(),
-                self.vertices[i].clone(),
-                self.vertices[i + 1].clone(),
-            ]);
+
+        // ----- Option 2: Use earcut if "earcut-io" feature is enabled -----
+        #[cfg(feature = "earcut-io")]
+        {
+            use earcut::Earcut;
+
+            let normal_3d = self.plane.normal.normalize();
+            let (u, v) = build_orthonormal_basis(normal_3d);
+            let origin_3d = self.vertices[0].pos;
+
+            // Flatten each vertex to 2D
+            let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
+            for vert in &self.vertices {
+                let offset = vert.pos.coords - origin_3d.coords;
+                let x = offset.dot(&u);
+                let y = offset.dot(&v);
+                all_vertices_2d.push([x, y]);
+            }
+
+            // No holes, so hole_indices = []
+            let hole_indices: Vec<usize> = Vec::new();
+
+            // Run earcut
+            let mut earcut = Earcut::new();
+            let mut triangle_indices = Vec::new();
+            earcut.earcut(all_vertices_2d.clone(), &hole_indices, &mut triangle_indices);
+
+            // Convert back into 3D triangles
+            let mut triangles = Vec::with_capacity(triangle_indices.len() / 3);
+            for tri_chunk in triangle_indices.chunks_exact(3) {
+                let mut tri_vertices = [Vertex::new(Point3::origin(), Vector3::zeros()); 3];
+                for (k, &idx) in tri_chunk.iter().enumerate() {
+                    let [x, y] = all_vertices_2d[idx];
+                    let pos_3d = origin_3d.coords + (x * u) + (y * v);
+                    tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
+                }
+                triangles.push(tri_vertices);
+            }
+            return triangles;
         }
-        triangles
+
+        // ----- Fallback / default if neither earclip-io nor earcut-io is enabled, known to fail for non-convex polygons and polygons with holes -----
+        #[cfg(not(any(feature = "earclip-io", feature = "earcut-io")))]
+        {
+            // Naive fan triangulation from vertex[0]
+            let mut triangles = Vec::new();
+            if self.vertices.len() < 3 {
+                return triangles;
+            }
+            let v0 = self.vertices[0].clone();
+            for i in 1..(self.vertices.len() - 1) {
+                triangles.push([
+                    v0.clone(),
+                    self.vertices[i].clone(),
+                    self.vertices[i + 1].clone(),
+                ]);
+            }
+            triangles
+        }
     }
 
     /// Subdivide this polygon into smaller triangles.
