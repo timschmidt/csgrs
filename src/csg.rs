@@ -1575,10 +1575,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         metadata: Option<S>,
     ) -> Self {
         let egg_2d = Self::egg_outline(width, length, outline_segments, metadata.clone());
-        let egg_2d_aligned = egg_2d
-            .rotate(-90.0, 0.0, 0.0);
-
-        egg_2d_aligned.rotate_extrude(360.0, revolve_segments)
+        egg_2d.rotate_extrude(360.0, revolve_segments)
     }
     
     /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via rotate_extrude).

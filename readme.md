@@ -39,13 +39,13 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 ### CSG Structure
 
 - **`CSG<S>`** is the main type. It stores:
-  - a `Vec<Polygon<S>>` polygons, describing a 3D shape, each `Polygon<S>` holds:
+  - a `Vec<Polygon<S>>` polygons, describing 3D shapes, each `Polygon<S>` holds:
     - a `Vec<Vertex>` (positions + normals),
     - a `Plane` describing the polygon’s orientation in 3D.
     - an optional metadata field (`Option<S>`)
-  - a [`cavalier_contours`](https://crates.io/crates/cavalier_contours) `Shape<Real>` polylines, describing a 2D shape:
-    - `Vec<IndexedPolyline<Real>>` ccw_plines, which contains indexed positive shapes
-    - `Vec<IndexedPolyline<Real>>` cw_plines, which contains indexed negative shapes (i.e. holes)
+  - a [`cavalier_contours`](https://crates.io/crates/cavalier_contours) `Shape<Real>` polylines, describing 2D shapes:
+    - `Vec<IndexedPolyline<Real>>` ccw_plines, which contains indexed positive shapes, 0 - many allowed.
+    - `Vec<IndexedPolyline<Real>>` cw_plines, which contains indexed negative shapes (i.e. holes), 0 - many allowed.
     - `StaticAABB2DIndex<Real>` plines_index, a spatial index of all the polyline area bounding boxes, positions correspond to all the counter clockwise polylines followed by all the clockwise polylines
   - an optional metadata field (`Option<S>`)
 
