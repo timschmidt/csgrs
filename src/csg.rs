@@ -628,14 +628,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         CSG::from_polylines(&[pl], metadata)
     }
 
-    /// Trapezoid from (0,0) -> (bottom_width,0) -> (top_width,height) -> (0,height)
+    /// Trapezoid from (0,0) -> (bottom_width,0) -> (top_width+top_offset,height) -> (top_offset,height)
     /// Note: this is a simple shape that can represent many trapezoids or parallelograms.
-    pub fn trapezoid(top_width: Real, bottom_width: Real, height: Real, metadata: Option<S>) -> Self {
+    pub fn trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>) -> Self {
         let mut pl = Polyline::new_closed();
         pl.add(0.0, 0.0, 0.0);
         pl.add(bottom_width, 0.0, 0.0);
-        pl.add(top_width, height, 0.0);
-        pl.add(0.0, height, 0.0);
+        pl.add(top_width + top_offset, height, 0.0);
+        pl.add(top_offset, height, 0.0);
         CSG::from_polylines(&[pl], metadata)
     }
 

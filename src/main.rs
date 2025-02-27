@@ -334,7 +334,7 @@ fn main() {
     let _ = fs::write("stl/right_triangle_2d.stl", rtri_2d.to_stl_ascii("right_triangle_2d"));
 
     // 6) trapezoid(top_width, bottom_width, height)
-    let trap_2d = CSG::trapezoid(1.0, 2.0, 2.0, None);
+    let trap_2d = CSG::trapezoid(1.0, 2.0, 2.0, 0.5, None);
     let _ = fs::write("stl/trapezoid_2d.stl", trap_2d.to_stl_ascii("trapezoid_2d"));
 
     // 7) star(num_points, outer_radius, inner_radius)

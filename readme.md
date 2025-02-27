@@ -60,7 +60,7 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 - **`CSG::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
 - **`CSG::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
-- **`CSG::trapezoid(top_width: Real, bottom_width: Real, height: Real, metadata: Option<S>)`**
+- **`CSG::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>)`**
 - **`CSG::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
 - **`CSG::teardrop(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
@@ -97,7 +97,7 @@ let text_3d = csg_text.extrude(1.0);
 - **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
 - **`CSG::linear_extrude(direction: Vector3, twist: Real, segments: usize, scale: Real)`** - Extrude along Vector3 direction with twist, segments, and scale
 - **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Extrude Between Two Polygons
-- **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating
+- **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
 - **`CSG::sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>)`** - Extrude along a path
 - **`CSG::extrude_polyline(poly: &Polyline, direction: Vector3, metadata: Option<S>)`** - Extrude a polyline to create a surface
 
@@ -425,6 +425,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 ---
 
 ## Roadmap / Todo
+- halve egg, teardrop before roatate_extruding
 - remove_redundant on rotate_extrude?
 - should cube_mirrored_x be inverted? - check mirror across arbitrary plane function
 - fix shape of reuleaux, trapezoid
