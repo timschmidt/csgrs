@@ -2402,7 +2402,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 let theta = frac * angle_radians;
 
                 // Build a rotation around Y by `theta`
-                let rot = Rotation3::from_axis_angle(&Vector3::y_axis(), theta).to_homogeneous();
+                let rot = Rotation3::from_axis_angle(&Vector3::y_axis(), -theta).to_homogeneous();
 
                 // Transform this single polygon by that rotation
                 let rotated_poly = CSG::from_polygons(&[original_poly.clone()])

@@ -428,12 +428,12 @@ if let Some(data_mut) = poly.metadata_mut() {
 - stl_binary support for CCShape
 - fix distribute functions
 - should cube_mirrored_x be inverted? - check mirror across arbitrary plane function
-- fix shape of D, double-flat, egg_outline, reuleaux, trapezoid
+- fix shape of egg_outline, reuleaux, trapezoid
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere
-- fix retriangulated
 - fix teardrop_2d, teardrop cylinder, teardrop solid
 - fix normal on bottom of tetrahedron
+- improve extrude_between to work on Shape as well
 - check flatten() works on polygons and flattens to polylines, same for slice
 - convert text to introduce polyline, which can then be tessellated through the normal means
 - make improved use of the bounding box index in CCShape to speed operations
