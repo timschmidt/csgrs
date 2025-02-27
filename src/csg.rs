@@ -4180,16 +4180,11 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     
         //
         // 2) Triangulate all 2D CCShape polylines, just like in to_stl_ascii
-        //    - We replicate the "outer vs. holes" approach.
         //
         //    *All polylines are taken as lying in the XY plane with Z=0.*
         //    The normal for these 2D polygons is (0, 0, 1) or (0, 0, -1).
         //    We'll choose (0,0,1) for convenience, matching the ASCII approach.
         //
-    
-        // Because the code below references `point_in_polygon_2d` from the existing
-        // implementation, we can call it directly: `CSG::<()>::point_in_polygon_2d(...)`.
-        // Adjust if your actual code needs a different path.
     
         for (_outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
             let outer_pline = &outer_ipline.polyline;
@@ -4265,6 +4260,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
     
             // If *neither* `earclip-io` nor `earcut-io` is enabled, fallback:
+            // known to fail with non-convex polygons and polygons with holes
             #[cfg(not(any(feature="earclip-io", feature="earcut-io")))]
             {
                 // Just produce one large face in +Z, ignoring holes
