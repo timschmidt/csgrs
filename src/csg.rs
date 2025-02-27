@@ -2,7 +2,7 @@ use crate::float_types::{EPSILON, PI, TAU, Real};
 use crate::bsp::Node;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
-use crate::polygon::{Polygon, build_orthonormal_basis};
+use crate::polygon::Polygon;
 use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
 };
@@ -121,7 +121,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         //  - Triangulate the outer + holes with earclip or earcut if the feature is enabled.
         //  - Otherwise, fall back to a single non‐triangulated polygon.
     
-        // 1) Build polygons from ccw_plines (outer boundaries)
+        // Build polygons from ccw_plines (outer boundaries)
         for (_outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
             let outer_pline = &outer_ipline.polyline;
             if outer_pline.vertex_count() < 3 {
@@ -135,7 +135,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             };
             let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
     
-            // 2) Find which CW polylines might be holes (bounding‐box query)
+            // Find which CW polylines might be holes (bounding‐box query)
             let bounding_box_query = self.polylines.plines_index.query(oxmin, oymin, oxmax, oymax);
             let mut holes_xy: Vec<Vec<[Real;2]>> = Vec::new();
     
@@ -161,14 +161,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 }
             }
     
-            // 3) Collect the outer polyline’s points into `outer_xy`
+            // Collect the outer polyline’s points into `outer_xy`
             let mut outer_xy = Vec::with_capacity(outer_pline.vertex_count());
             for i in 0..outer_pline.vertex_count() {
                 let v = outer_pline.at(i);
                 outer_xy.push([v.x, v.y]);
             }
     
-            // 4) Triangulate outer + holes using earclip or earcut, if available
+            // Triangulate outer + holes using earclip or earcut, if available
             #[cfg(feature = "earclip-io")]
             {
                 let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
@@ -207,6 +207,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
     
             // Fallback if neither earclip nor earcut is enabled
+            // Known to fail on non-convex polygons, and polygons with holes
             #[cfg(not(any(feature = "earclip-io", feature = "earcut-io")))]
             {
                 // Just make one polygon from the outer boundary, ignoring holes.
@@ -220,12 +221,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
     
-        // 5) (Optional) If you want to do the same approach for self.polylines.cw_plines
-        //    that are not “holes”, you can do so, or skip them. Typically, one assumes
-        //    ccw=outer, cw=holes. If you do want to treat stand‐alone cw as valid polygons,
-        //    replicate the logic above for cw_plines.
-    
-        // 6) Finally, include the 3D polygons the CSG already had
+        // Finally, include the 3D polygons the CSG already had
         all_polygons.extend(self.polygons.clone());
     
         all_polygons
@@ -3047,76 +3043,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         // Combine everything
         CSG::from_polygons(&all_polygons)
-    }
-
-    /// Re‐triangulate each polygon in this CSG using the `earclip` library.
-    /// Returns a new CSG whose polygons are all triangles.
-    #[cfg(feature = "earclip-io")]
-    pub fn triangulate_earclip(&self) -> CSG<S> {
-        let mut new_polygons = Vec::new();
-
-        // For each polygon in this CSG:
-        for poly in &self.polygons {
-            // Skip if fewer than 3 vertices or degenerate
-            if poly.vertices.len() < 3 {
-                continue;
-            }
-            // Optional: You may also want to check if the polygon is "nearly degenerate"
-            // by measuring area or normal magnitude, etc. For brevity, we skip that here.
-
-            // 1) Build an orthonormal basis from the polygon's plane normal
-            let n = poly.plane.normal.normalize();
-            let (u, v) = build_orthonormal_basis(n);
-
-            // 2) Pick a reference point on the polygon. Typically the first vertex
-            let p0 = poly.vertices[0].pos;
-
-            // 3) Project each 3D vertex into 2D coordinates: (x_i, y_i)
-            // We'll store them in a flat `Vec<Real>` of the form [x0, y0, x1, y1, x2, y2, ...]
-            let mut coords_2d = Vec::with_capacity(poly.vertices.len() * 2);
-            for vert in &poly.vertices {
-                let offset = vert.pos.coords - p0.coords; // vector from p0 to the vertex
-                let x = offset.dot(&u);
-                let y = offset.dot(&v);
-                coords_2d.push(x);
-                coords_2d.push(y);
-            }
-
-            // 4) Call earclip on that 2D outline. We assume no holes, so hole_indices = &[].
-            //    earclip's signature is `earcut::<Real, usize>(data, hole_indices, dim)`
-            //    with `dim = 2` for our XY data.
-            let indices: Vec<usize> = earclip::earcut(&coords_2d, &[], 2);
-
-            // 5) Map each returned triangle's (i0, i1, i2) back to 3D,
-            //    constructing a new `Polygon` (with 3 vertices) for each tri.
-            //
-            //    The earcut indices are typed as `usize` adjust or cast as needed.
-            for tri in indices.chunks_exact(3) {
-                let mut tri_vertices = Vec::with_capacity(3);
-                for &i in tri {
-                    let x = coords_2d[2 * i];
-                    let y = coords_2d[2 * i + 1];
-                    // Inverse projection:
-                    // Q_3D = p0 + x * u + y * v
-                    let pos_vec = p0.coords + x * u + y * v;
-                    let pos_3d = Point3::from(pos_vec);
-                    // We can store the normal = polygon's plane normal (or recalc).
-                    // We'll recalc below, so for now just keep n or 0 as a placeholder:
-                    tri_vertices.push(Vertex::new(pos_3d, n));
-                }
-
-                // Create a polygon from these 3 vertices. We preserve the metadata:
-                let mut new_poly = Polygon::new(tri_vertices, poly.metadata.clone());
-
-                // Recompute the plane/normal to ensure correct orientation/shading:
-                new_poly.set_new_normal();
-
-                new_polygons.push(new_poly);
-            }
-        }
-
-        // Combine all newly formed triangles into a new CSG:
-        CSG::from_polygons(&new_polygons)
     }
 
     /// Convert the polygons in this CSG to a Parry TriMesh.

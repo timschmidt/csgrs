@@ -182,11 +182,11 @@ fn main() {
     let _ = fs::write("stl/sliced_cylinder_slice.stl", cross_section.to_stl_ascii("sliced_cylinder_slice"));
     }
     
-    let poor_geometry_shape = moved_cube.difference(&sphere);
-    #[cfg(feature = "earclip-io")]
-    let retriangulated_shape = poor_geometry_shape.triangulate_earclip();
-    #[cfg(all(feature = "earclip-io", feature = "stl-io"))]
-    let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
+    //let poor_geometry_shape = moved_cube.difference(&sphere);
+    //#[cfg(feature = "earclip-io")]
+    //let retriangulated_shape = poor_geometry_shape.triangulate_earclip();
+    //#[cfg(all(feature = "earclip-io", feature = "stl-io"))]
+    //let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
     let sphere_test = CSG::sphere(1.0, 16, 8, None);
     let cube_test = CSG::cube(1.0, 1.0, 1.0, None);
@@ -346,7 +346,7 @@ fn main() {
     let _ = fs::write("stl/teardrop_2d.stl", teardrop_2d.to_stl_ascii("teardrop_2d"));
 
     // 9) egg_outline(width, length, segments) [2D shape]
-    let egg_2d = CSG::egg_outline(2.0, 4.0, 32, None);
+    let egg_2d = CSG::egg_outline(4.0, 2.0, 32, None);
     let _ = fs::write("stl/egg_outline_2d.stl", egg_2d.to_stl_ascii("egg_outline_2d"));
 
     // 10) squircle(width, height, segments)
@@ -358,7 +358,7 @@ fn main() {
     let _ = fs::write("stl/keyhole_2d.stl", keyhole_2d.to_stl_ascii("keyhole_2d"));
 
     // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux_2d = CSG::reuleaux_polygon(3, 1.0, 16, None); // Reuleaux triangle
+    let reuleaux_2d = CSG::reuleaux_polygon(3, 2.0, 16, None); // Reuleaux triangle
     let _ = fs::write("stl/reuleaux_2d.stl", reuleaux_2d.to_stl_ascii("reuleaux_2d"));
 
     // 13) ring(inner_diam, thickness, segments)
