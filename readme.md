@@ -426,12 +426,10 @@ if let Some(data_mut) = poly.metadata_mut() {
 
 ## Roadmap / Todo
 - remove_redundant on rotate_extrude?
-- fix distribute functions
 - should cube_mirrored_x be inverted? - check mirror across arbitrary plane function
 - fix shape of reuleaux, trapezoid
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere
-- fix teardrop_2d, teardrop cylinder, teardrop solid
 - improve extrude_between to work on Shape as well
 - check flatten() works on polygons and flattens to polylines, same for slice
 - convert text to introduce polyline, which can then be tessellated through the normal means

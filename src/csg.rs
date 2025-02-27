@@ -672,33 +672,33 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         segments: usize,
         metadata: Option<S>
     ) -> CSG<S> {
-        // A "filled" 2D teardrop outline
         if segments < 2 || width < EPSILON || height < EPSILON {
             return CSG::new();
         }
-        // Build the outline as a closed polyline
+        // half-circle radius
         let r = width * 0.5;
+        // the top of the circle at y = center_y
         let center_y = height - r;
         let half_seg = segments / 2;
-
+    
         let mut pl = Polyline::new_closed();
-        // Arc from left side
-        for i in 0..=half_seg {
-            let t = PI * (i as Real / half_seg as Real);
-            let x = -r * t.cos();
-            let y = r * t.sin() + center_y;
-            pl.add(x, y, 0.0);
-        }
-        // down to cusp at (0,0)
+    
+        // Start at the bottom tip:
         pl.add(0.0, 0.0, 0.0);
-        // arc around right side
+    
+        // Arc over top
         for i in 0..=half_seg {
             let t = PI * (i as Real / half_seg as Real);
-            let x = r * t.cos();
-            let y = r * t.sin() + center_y;
+            let x = -r * t.cos();      // left half
+            let y =  r * t.sin() + center_y;
             pl.add(x, y, 0.0);
         }
-
+        
+        pl.invert_direction_mut();
+    
+        // Done: we come back down to the bottom tip automatically
+        // because the polyline is closed.
+    
         CSG::from_polylines(&[pl], metadata)
     }
 
