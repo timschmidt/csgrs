@@ -427,7 +427,6 @@ if let Some(data_mut) = poly.metadata_mut() {
 ## Roadmap / Todo
 - stl_binary support for CCShape
 - fix distribute functions
-- fix rotate_extrude
 - should cube_mirrored_x be inverted? - check mirror across arbitrary plane function
 - fix shape of D, double-flat, egg_outline, reuleaux, trapezoid
 - fix metaballs_2d
@@ -438,9 +437,6 @@ if let Some(data_mut) = poly.metadata_mut() {
 - check flatten() works on polygons and flattens to polylines, same for slice
 - convert text to introduce polyline, which can then be tessellated through the normal means
 - make improved use of the bounding box index in CCShape to speed operations
-- finish converting triangulation from 2d engine overhaul
-- finish converting extrudes to deal with holes, from 2d engine overhaul
-- adjust rotate_extrude to work with XY plane polygons, like OpenSCAD
 - fix up error handling with result types
 - ray intersection (singular)
 - expose cavalier_contour Polyline traits on 2D shapes
@@ -449,7 +445,6 @@ if let Some(data_mut) = poly.metadata_mut() {
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - document coordinate system / coordinate transformations / compounded transformations
-- rewrite bounding_box to work without parry using iter / par_iter, put parry, rapier behind feature flags
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
