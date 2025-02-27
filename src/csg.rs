@@ -2651,22 +2651,61 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
     /// Returns a `parry3d::bounding_volume::Aabb`.
     pub fn bounding_box(&self) -> Aabb {
-        // Gather all points from all polygons.
-        // parry expects a slice of `&Point3<Real>` or a slice of `na::Point3<Real>`.
-        let mut all_points = Vec::new();
+        // We'll track min and max in x, y, z among all polygons and polylines.
+        let mut min_x = Real::MAX;
+        let mut min_y = Real::MAX;
+        let mut min_z = Real::MAX;
+        let mut max_x = -Real::MAX;
+        let mut max_y = -Real::MAX;
+        let mut max_z = -Real::MAX;
+
+        // First gather from the polygons (3D)
         for poly in &self.polygons {
             for v in &poly.vertices {
-                all_points.push(v.pos);
+                let px = v.pos.x;
+                let py = v.pos.y;
+                let pz = v.pos.z;
+                if px < min_x { min_x = px; }
+                if py < min_y { min_y = py; }
+                if pz < min_z { min_z = pz; }
+                if px > max_x { max_x = px; }
+                if py > max_y { max_y = py; }
+                if pz > max_z { max_z = pz; }
             }
         }
 
-        // If empty, return a degenerate AABB at origin or handle accordingly
-        if all_points.is_empty() {
-            return Aabb::new(Point3::origin(), Point3::origin()); // or Aabb::new_invalid();
+        // Next gather from the shape's 2D bounding index (CCShape),
+        // which is effectively min_x, min_y, max_x, max_y in 2D.
+        // We'll interpret them in 3D by letting z=0 for the shape.
+        if let Some(bounds) = self.polylines.plines_index.bounds() {
+            // shape's bounding box is 2D:
+            let shape_min_x = bounds.min_x;
+            let shape_min_y = bounds.min_y;
+            let shape_max_x = bounds.max_x;
+            let shape_max_y = bounds.max_y;
+
+            // Compare with our current min/max
+            if shape_min_x < min_x { min_x = shape_min_x; }
+            if shape_min_y < min_y { min_y = shape_min_y; }
+            // we treat polylines as z=0, so check that too
+            if 0.0 < min_z { min_z = 0.0; }
+
+            if shape_max_x > max_x { max_x = shape_max_x; }
+            if shape_max_y > max_y { max_y = shape_max_y; }
+            // likewise for z=0
+            if 0.0 > max_z { max_z = 0.0; }
         }
 
-        // Construct the parry AABB from points
-        Aabb::from_points(&all_points)
+        // If nothing was updated (e.g. no geometry), clamp to a trivial box
+        if min_x > max_x {
+            // Typically means we had no polygons or polylines at all
+            return Aabb::new(Point3::origin(), Point3::origin());
+        }
+
+        // Form the parry3d Aabb from [mins..maxs]
+        let mins = Point3::new(min_x, min_y, min_z);
+        let maxs = Point3::new(max_x, max_y, max_z);
+        Aabb::new(mins, maxs)
     }
 
     /// Helper to collect all vertices from the CSG.
