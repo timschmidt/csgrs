@@ -3,7 +3,7 @@ use crate::errors::ValidationError;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
 use nalgebra::{
-    Matrix4, Point2, Point3, Rotation3, Translation3, Unit, Vector3, Vector4,
+    Point2, Point3, Vector3,
 };
 use cavalier_contours::polyline::{
     PlineSource, Polyline,

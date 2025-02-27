@@ -122,7 +122,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         //  - Otherwise, fall back to a single non‐triangulated polygon.
     
         // 1) Build polygons from ccw_plines (outer boundaries)
-        for (outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
+        for (_outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
             let outer_pline = &outer_ipline.polyline;
             if outer_pline.vertex_count() < 3 {
                 // Not enough points to form a polygon

@@ -425,6 +425,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 ---
 
 ## Roadmap / Todo
+- make improved use of the bounding box index in CCShape to speed operations
 - finish converting triangulation from 2d engine overhaul
 - finish converting extrudes to deal with holes, from 2d engine overhaul
 - adjust rotate_extrude to work with XY plane polygons, like OpenSCAD
