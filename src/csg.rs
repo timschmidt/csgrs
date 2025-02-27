@@ -720,9 +720,9 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         for i in 0..segments {
             let theta = TAU * (i as Real) / (segments as Real);
             let distort = 1.0 + 0.2 * theta.cos();
-            let x = rx * theta.cos() * distort * 0.8;
-            let y = ry * theta.sin();
-            pl.add(x, y, 0.0);
+            let x = rx * theta.sin();
+            let y = ry * theta.cos() * distort * 0.8;
+            pl.add(-x, y, 0.0);
         }
         CSG::from_polylines(&[pl], metadata)
     }
@@ -1804,7 +1804,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         if count < 1 {
             return self.clone();
         }
-        let mut all_polys = Vec::new();
+        let mut result = CSG::new();
         let start_rad = start_angle_deg.to_radians();
         let end_rad   = end_angle_deg.to_radians();
         let sweep     = end_rad - start_rad;
@@ -1813,7 +1813,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let t = if count == 1 { 0.5 } else { i as Real / (count as Real - 1.0) };
             let angle = start_rad + t * sweep;
     
-            // Construct a transform: rotate by `angle` around Z, then translate outward by `radius`
+            // Construct a transform: rotate by `angle` around Y, then translate outward by `radius`
             let rot = nalgebra::Rotation3::from_axis_angle(
                 &nalgebra::Vector3::z_axis(),
                 angle
@@ -1822,9 +1822,9 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let mat = rot * trans;
     
             let csg_i = self.transform(&mat);
-            all_polys.extend(csg_i.polygons);
+            result = result.union(&csg_i);
         }
-        CSG::from_polygons(&all_polys)
+        result
     }
     
     /// Distribute this CSG `count` times along a straight line (vector),

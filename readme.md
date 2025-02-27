@@ -425,10 +425,11 @@ if let Some(data_mut) = poly.metadata_mut() {
 ---
 
 ## Roadmap / Todo
+- remove_redundant on rotate_extrude
 - stl_binary support for CCShape
 - fix distribute functions
 - should cube_mirrored_x be inverted? - check mirror across arbitrary plane function
-- fix shape of egg_outline, reuleaux, trapezoid
+- fix shape of reuleaux, trapezoid
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere
 - fix teardrop_2d, teardrop cylinder, teardrop solid

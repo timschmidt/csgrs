@@ -130,7 +130,7 @@ fn main() {
         [0.5, 0.5, 1.0],
     ];
     let faces = vec![
-        vec![0, 1, 2], // base triangle
+        vec![0, 2, 1], // base triangle
         vec![0, 1, 3], // side
         vec![1, 2, 3],
         vec![2, 0, 3],
@@ -294,7 +294,7 @@ fn main() {
     let _ = fs::write("stl/teardrop_solid.stl", teardrop_solid.to_stl_ascii("teardrop_solid"));
     
     // A 3D egg shape
-    let egg_solid = CSG::egg(3.0, 6.0, 32, 32, None);
+    let egg_solid = CSG::egg(2.0, 4.0, 32, 32, None);
     let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
     
     // An ellipsoid with X radius=2, Y radius=1, Z radius=3
@@ -346,7 +346,7 @@ fn main() {
     let _ = fs::write("stl/teardrop_2d.stl", teardrop_2d.to_stl_ascii("teardrop_2d"));
 
     // 9) egg_outline(width, length, segments) [2D shape]
-    let egg_2d = CSG::egg_outline(4.0, 2.0, 32, None);
+    let egg_2d = CSG::egg_outline(2.0, 4.0, 32, None);
     let _ = fs::write("stl/egg_outline_2d.stl", egg_2d.to_stl_ascii("egg_outline_2d"));
 
     // 10) squircle(width, height, segments)
@@ -358,7 +358,7 @@ fn main() {
     let _ = fs::write("stl/keyhole_2d.stl", keyhole_2d.to_stl_ascii("keyhole_2d"));
 
     // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux_2d = CSG::reuleaux_polygon(3, 2.0, 16, None); // Reuleaux triangle
+    let reuleaux_2d = CSG::reuleaux_polygon(4, 12.0, 16, None); // Reuleaux triangle
     let _ = fs::write("stl/reuleaux_2d.stl", reuleaux_2d.to_stl_ascii("reuleaux_2d"));
 
     // 13) ring(inner_diam, thickness, segments)
