@@ -49,7 +49,7 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
     - `StaticAABB2DIndex<Real>` plines_index, a spatial index of all the polyline area bounding boxes, positions correspond to all the counter clockwise polylines followed by all the clockwise polylines
   - an optional metadata field (`Option<S>`)
 
-`CSG<S>` provides methods for working with 2D and 3D shapes, `Polygon<S>` provides methods for working with 2D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from polylines with `CSG::from_polylines(...)`.  Polygons must be closed, planar, have 3 or more vertices.  Polylines can be open or closed, have holes, but must be planar in the XY.  Operations work on both 2D and 3D shapes though they generally do not interact except where one is explicitly transformed into the other as in extrude or slice.
+`CSG<S>` provides methods for working with 2D and 3D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from polylines with `CSG::from_polylines(...)`.  Polygons must be closed, planar, have 3 or more vertices.  Polylines can be open or closed, have holes, but must be planar in the XY.  Operations work on both 2D and 3D shapes though they generally do not interact except where one is explicitly transformed into the other as in extrude or slice.  Polygons and polylines are triangulated with [`earclip`](https://crates.io/crates/earclip)/[`earcut`](https://crates.io/crates/earcut) when being exported as an STL, or when a polyline is converted into polygons.
 
 ### 2D Shapes
 
@@ -426,9 +426,8 @@ if let Some(data_mut) = poly.metadata_mut() {
 
 ## Roadmap / Todo
 - halve egg, teardrop before roatate_extruding
-- remove_redundant on rotate_extrude?
 - should cube_mirrored_x be inverted? - check mirror across arbitrary plane function
-- fix shape of reuleaux, trapezoid
+- fix shape of reuleaux
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere
 - improve extrude_between to work on Shape as well
