@@ -1648,7 +1648,9 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         base_sphere.scale(rx, ry, rz)
     }
 
-    /// Transform all vertices in this CSG by a given 4×4 matrix.
+    /// Apply an arbitrary 3D transform (as a 4x4 matrix) to both polygons and polylines.
+    /// The polygon z-coordinates and normal vectors are fully transformed in 3D,
+    /// and the 2D polylines are updated by ignoring the resulting z after transform.
     pub fn transform(&self, mat: &Matrix4<Real>) -> CSG<S> {
         let mat_inv_transpose = mat.try_inverse().unwrap().transpose(); // todo catch error
         let mut csg = self.clone();
@@ -1667,6 +1669,28 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 poly.plane = Plane::from_points(&poly.vertices[0].pos, &poly.vertices[1].pos, &poly.vertices[2].pos);
             }
         }
+        
+        // Transform polylines from self.polylines
+        // Because polylines store 2D x,y, we’ll treat them as x,y,0 in 3D.
+        // After transformation, we store back the new x,y ignoring any new z.
+        for ipline in csg.polylines.ccw_plines.iter_mut()
+                             .chain(csg.polylines.cw_plines.iter_mut())
+        {
+            let ply = &mut ipline.polyline;
+            // transform each vertex
+            for i in 0..ply.vertex_count() {
+                let mut v = ply.at(i);
+                // treat as a 3D point (v.x, v.y, 0.0)
+                let hom = mat * Point3::new(v.x, v.y, 0.0).to_homogeneous();
+                // perspective divide:
+                let w_inv = hom.w.abs().recip();
+                v.x = hom.x * w_inv;
+                v.y = hom.y * w_inv;
+                ply.set_vertex(i, v);
+            }
+            // Rebuild the spatial index if you rely on ipline.spatial_index
+            ipline.spatial_index = ply.create_aabb_index();
+        }
 
         csg
     }
@@ -1681,6 +1705,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     pub fn translate_vector(&self, vector: Vector3<Real>) -> CSG<S> {
         let translation = Translation3::from(vector);
+        
         // Convert to a Matrix4
         let mat4 = translation.to_homogeneous();
         self.transform(&mat4)
@@ -1755,8 +1780,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // Step 1) Translate so the plane crosses the origin
         // The plane’s offset vector from origin is (w * n).
         let offset = n * w;
-        let t1 = Translation3::from(-offset);  // push the plane to origin
-        let t1_mat = t1.to_homogeneous();
+        let t1 = Translation3::from(-offset).to_homogeneous();  // push the plane to origin
 
         // Step 2) Build the reflection matrix about a plane normal n at the origin
         //   R = I - 2 n n^T
@@ -1765,11 +1789,10 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         reflect_4.fixed_view_mut::<3, 3>(0, 0).copy_from(&reflect_3);
 
         // Step 3) Translate back
-        let t2 = Translation3::from(offset);   // pull the plane back out
-        let t2_mat = t2.to_homogeneous();
+        let t2 = Translation3::from(offset).to_homogeneous();   // pull the plane back out
 
         // Combine into a single 4×4
-        let mirror_mat = t2_mat * reflect_4 * t1_mat;
+        let mirror_mat = t2 * reflect_4 * t1;
 
         // Apply to all polygons
         self.transform(&mirror_mat)
@@ -2345,7 +2368,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         CSG::from_polygons(&polygons)
     }
 
-    /// Rotate-extrude (revolve) this 2D shape around the Z-axis from 0..`angle_degs`
+    /// Rotate-extrude (revolve) this 2D shape around the Y-axis from 0..`angle_degs`
     /// by replicating the original polygon(s) at each step and calling `extrude_between`.
     /// Caps are added automatically if the revolve is partial (angle < 360°).
     pub fn rotate_extrude(&self, angle_degs: Real, segments: usize) -> CSG<S> {
@@ -2357,12 +2380,9 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // We'll consider the revolve "closed" if the angle is effectively 360°
         let closed = (angle_degs - 360.0).abs() < EPSILON;
 
-        // Convert polylines to polygons if needed
-        let original_polygons = if self.polygons.is_empty() && (!self.polylines.ccw_plines.is_empty() | !self.polylines.cw_plines.is_empty()) {
-            self.to_polygons()
-        } else {
-            self.polygons.clone()
-        };
+        // Collect polygons, and convert polylines to polygons
+        let mut original_polygons = self.polygons.clone();
+        original_polygons.extend(self.to_polygons());
 
         // Collect all newly formed polygons here
         let mut result_polygons = Vec::new();
@@ -2385,8 +2405,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 let frac = i as Real / segments as Real;
                 let theta = frac * angle_radians;
 
-                // Build a rotation around Z by `theta`
-                let rot = Rotation3::from_axis_angle(&Vector3::z_axis(), theta).to_homogeneous();
+                // Build a rotation around Y by `theta`
+                let rot = Rotation3::from_axis_angle(&Vector3::y_axis(), theta).to_homogeneous();
 
                 // Transform this single polygon by that rotation
                 let rotated_poly = CSG::from_polygons(&[original_poly.clone()])

@@ -428,7 +428,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 - stl_binary support for CCShape
 - fix distribute functions
 - fix rotate_extrude
-- should cube_mirrored_x be inverted?
+- should cube_mirrored_x be inverted? - check mirror across arbitrary plane function
 - fix shape of D, double-flat, egg_outline, reuleaux, trapezoid
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere
