@@ -4154,48 +4154,149 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// std::fs::write("my_solid.stl", bytes)?;
     /// ```
     #[cfg(feature = "stl-io")]
-    pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
-        // `_name` could be embedded in the binary header if desired, but `stl_io`
-        // doesn't strictly require it. We skip storing it or store it in the 80-byte header.
-
-        // Gather the triangles for stl_io
+    pub fn to_stl_binary(&self, _name:&str) -> std::io::Result<Vec<u8>> {
+        use stl_io::{Normal, Vertex, Triangle, write_stl};
+        use core2::io::Cursor;
+    
         let mut triangles = Vec::new();
+    
+        //
+        // 1) Triangulate all 3D polygons
+        //
         for poly in &self.polygons {
             let normal = poly.plane.normal.normalize();
             let tri_list = poly.triangulate();
-
             for tri in tri_list {
-                triangles.push(stl_io::Triangle {
-                    normal: stl_io::Normal::new([
-                        normal.x as f32,
-                        normal.y as f32,
-                        normal.z as f32,
-                    ]),
+                triangles.push(Triangle {
+                    normal: Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
                     vertices: [
-                        stl_io::Vertex::new([
-                            tri[0].pos.x as f32,
-                            tri[0].pos.y as f32,
-                            tri[0].pos.z as f32,
-                        ]),
-                        stl_io::Vertex::new([
-                            tri[1].pos.x as f32,
-                            tri[1].pos.y as f32,
-                            tri[1].pos.z as f32,
-                        ]),
-                        stl_io::Vertex::new([
-                            tri[2].pos.x as f32,
-                            tri[2].pos.y as f32,
-                            tri[2].pos.z as f32,
-                        ]),
+                        Vertex::new([tri[0].pos.x as f32, tri[0].pos.y as f32, tri[0].pos.z as f32]),
+                        Vertex::new([tri[1].pos.x as f32, tri[1].pos.y as f32, tri[1].pos.z as f32]),
+                        Vertex::new([tri[2].pos.x as f32, tri[2].pos.y as f32, tri[2].pos.z as f32]),
                     ],
                 });
             }
         }
-
-        // Write to an in-memory buffer
+    
+        //
+        // 2) Triangulate all 2D CCShape polylines, just like in to_stl_ascii
+        //    - We replicate the "outer vs. holes" approach.
+        //
+        //    *All polylines are taken as lying in the XY plane with Z=0.*
+        //    The normal for these 2D polygons is (0, 0, 1) or (0, 0, -1).
+        //    We'll choose (0,0,1) for convenience, matching the ASCII approach.
+        //
+    
+        // Because the code below references `point_in_polygon_2d` from the existing
+        // implementation, we can call it directly: `CSG::<()>::point_in_polygon_2d(...)`.
+        // Adjust if your actual code needs a different path.
+    
+        for (_outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
+            let outer_pline = &outer_ipline.polyline;
+            let Some(aabb) = outer_pline.extents() else {
+                // empty or single-vertex pline
+                continue;
+            };
+            let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
+    
+            // find candidate holes overlapping in bounding box
+            let bounding_box_query = self.polylines.plines_index.query(oxmin, oymin, oxmax, oymax);
+            let mut holes_xy: Vec<Vec<[Real; 2]>> = Vec::new();
+            for hole_candidate_idx in bounding_box_query {
+                // remember: cw_plines start after all ccw_plines in the indexing
+                let cw_start = self.polylines.ccw_plines.len();
+                if hole_candidate_idx < cw_start {
+                    // that means it's not in cw_plines but just another ccw, skip
+                    continue;
+                }
+                let hole_ipline = &self.polylines.cw_plines[hole_candidate_idx - cw_start].polyline;
+                // check if this candidate hole is inside the outer
+                let hv0 = hole_ipline.at(0);
+                if CSG::<()>::point_in_polygon_2d(hv0.x, hv0.y, &outer_pline) {
+                    // gather the hole points
+                    let mut hole_pts = Vec::with_capacity(hole_ipline.vertex_count());
+                    for i in 0..hole_ipline.vertex_count() {
+                        let p = hole_ipline.at(i);
+                        hole_pts.push([p.x, p.y]);
+                    }
+                    holes_xy.push(hole_pts);
+                }
+            }
+    
+            // gather points for outer
+            let mut outer_xy = Vec::with_capacity(outer_pline.vertex_count());
+            for i in 0..outer_pline.vertex_count() {
+                let v = outer_pline.at(i);
+                outer_xy.push([v.x, v.y]);
+            }
+    
+            // Triangulate the 2D polygon plus holes
+            #[cfg(feature="earclip-io")]
+            {
+                let hole_refs: Vec<&[[Real; 2]]> = holes_xy.iter().map(|h| &h[..]).collect();
+                let triangles_2d = CSG::<()>::triangulate_2d_earclip(&outer_xy, &hole_refs);
+                for tri in triangles_2d {
+                    // we have tri as [Point3<Real>;3], normal assumed +Z
+                    triangles.push(Triangle {
+                        normal: Normal::new([0.0, 0.0, 1.0]),
+                        vertices: [
+                            Vertex::new([tri[0].x as f32, tri[0].y as f32, tri[0].z as f32]),
+                            Vertex::new([tri[1].x as f32, tri[1].y as f32, tri[1].z as f32]),
+                            Vertex::new([tri[2].x as f32, tri[2].y as f32, tri[2].z as f32]),
+                        ],
+                    });
+                }
+            }
+    
+            #[cfg(feature="earcut-io")]
+            {
+                let hole_refs: Vec<&[[Real; 2]]> = holes_xy.iter().map(|h| &h[..]).collect();
+                let triangles_2d = CSG::<()>::triangulate_2d_earcut(&outer_xy, &hole_refs);
+                for tri in triangles_2d {
+                    triangles.push(Triangle {
+                        normal: Normal::new([0.0, 0.0, 1.0]),
+                        vertices: [
+                            Vertex::new([tri[0].x as f32, tri[0].y as f32, tri[0].z as f32]),
+                            Vertex::new([tri[1].x as f32, tri[1].y as f32, tri[1].z as f32]),
+                            Vertex::new([tri[2].x as f32, tri[2].y as f32, tri[2].z as f32]),
+                        ],
+                    });
+                }
+            }
+    
+            // If *neither* `earclip-io` nor `earcut-io` is enabled, fallback:
+            #[cfg(not(any(feature="earclip-io", feature="earcut-io")))]
+            {
+                // Just produce one large face in +Z, ignoring holes
+                let mut poly_verts = Vec::with_capacity(outer_xy.len());
+                for coord in &outer_xy {
+                    let (x, y) = (coord[0], coord[1]);
+                    poly_verts.push([x, y, 0.0]);
+                }
+                // naive fan triangulation
+                if poly_verts.len() >= 3 {
+                    let first = poly_verts[0];
+                    for i in 1..(poly_verts.len()-1) {
+                        let vi = poly_verts[i];
+                        let vj = poly_verts[i+1];
+                        triangles.push(Triangle {
+                            normal: Normal::new([0.0, 0.0, 1.0]),
+                            vertices: [
+                                Vertex::new([first[0] as f32, first[1] as f32, first[2] as f32]),
+                                Vertex::new([vi[0] as f32,   vi[1] as f32,   vi[2] as f32]),
+                                Vertex::new([vj[0] as f32,   vj[1] as f32,   vj[2] as f32]),
+                            ],
+                        });
+                    }
+                }
+            }
+        } // end for all ccw_plines
+    
+        //
+        // 3) Write out to STL
+        //
         let mut cursor = Cursor::new(Vec::new());
-        stl_io::write_stl(&mut cursor, triangles.iter())?;
-
+        write_stl(&mut cursor, triangles.iter())?;
         Ok(cursor.into_inner())
     }
 
