@@ -116,41 +116,118 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// Convert internal polylines into polygons and return along with any existing internal polygons
     pub fn to_polygons(&self) -> Vec<Polygon<S>> {
         let mut all_polygons = Vec::new();
-        let plane_normal = Vector3::z();
-
-        for pl in &self.polylines.ccw_plines {
-            // Convert each Polyline into a single polygon in z=0.
-            // todo: For arcs, subdivide by bulge, etc. This ignores arcs for simplicity.
-            if pl.polyline.vertex_count() >= 3 {
-                let mut poly_verts = Vec::with_capacity(pl.polyline.vertex_count());
-                for i in 0..pl.polyline.vertex_count() {
-                    let v = pl.polyline.at(i);
-                    poly_verts.push(Vertex::new(
-                        Point3::new(v.x, v.y, 0.0),
-                        plane_normal,
-                    ));
+    
+        //  - For each "outer" CCW polyline, find any "hole" CW polylines that lie inside.
+        //  - Triangulate the outer + holes with earclip or earcut if the feature is enabled.
+        //  - Otherwise, fall back to a single non‐triangulated polygon.
+    
+        // 1) Build polygons from ccw_plines (outer boundaries)
+        for (outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
+            let outer_pline = &outer_ipline.polyline;
+            if outer_pline.vertex_count() < 3 {
+                // Not enough points to form a polygon
+                continue;
+            }
+    
+            // Compute bounding box of the outer polyline
+            let Some(aabb) = outer_pline.extents() else {
+                continue;
+            };
+            let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
+    
+            // 2) Find which CW polylines might be holes (bounding‐box query)
+            let bounding_box_query = self.polylines.plines_index.query(oxmin, oymin, oxmax, oymax);
+            let mut holes_xy: Vec<Vec<[Real;2]>> = Vec::new();
+    
+            for hole_candidate_idx in bounding_box_query {
+                // CW polylines start after all the CCW ones
+                let cw_start = self.polylines.ccw_plines.len();
+                if hole_candidate_idx < cw_start {
+                    // This is also a CCW boundary, not a hole
+                    continue;
+                }
+                let hole_ipline = &self.polylines.cw_plines[hole_candidate_idx - cw_start].polyline;
+    
+                // A hole’s first vertex is tested for “inside outer boundary”
+                let hv0 = hole_ipline.at(0);
+                if Self::point_in_polygon_2d(hv0.x, hv0.y, outer_pline) {
+                    // Gather the hole’s points into holes_xy
+                    let mut hole_pts = Vec::with_capacity(hole_ipline.vertex_count());
+                    for i in 0..hole_ipline.vertex_count() {
+                        let p = hole_ipline.at(i);
+                        hole_pts.push([p.x, p.y]);
+                    }
+                    holes_xy.push(hole_pts);
+                }
+            }
+    
+            // 3) Collect the outer polyline’s points into `outer_xy`
+            let mut outer_xy = Vec::with_capacity(outer_pline.vertex_count());
+            for i in 0..outer_pline.vertex_count() {
+                let v = outer_pline.at(i);
+                outer_xy.push([v.x, v.y]);
+            }
+    
+            // 4) Triangulate outer + holes using earclip or earcut, if available
+            #[cfg(feature = "earclip-io")]
+            {
+                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
+                let triangles_2d = Self::triangulate_2d_earclip(&outer_xy, &hole_refs);
+    
+                // Convert each returned triangle into a Polygon<S> with Z=0
+                for tri in triangles_2d {
+                    let p0 = tri[0];
+                    let p1 = tri[1];
+                    let p2 = tri[2];
+                    let verts = vec![
+                        Vertex::new(p0, Vector3::z()),
+                        Vertex::new(p1, Vector3::z()),
+                        Vertex::new(p2, Vector3::z()),
+                    ];
+                    all_polygons.push(Polygon::new(verts, self.metadata.clone()));
+                }
+            }
+    
+            #[cfg(feature = "earcut-io")]
+            {
+                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
+                let triangles_2d = Self::triangulate_2d_earcut(&outer_xy, &hole_refs);
+    
+                for tri in triangles_2d {
+                    let p0 = tri[0];
+                    let p1 = tri[1];
+                    let p2 = tri[2];
+                    let verts = vec![
+                        Vertex::new(p0, Vector3::z()),
+                        Vertex::new(p1, Vector3::z()),
+                        Vertex::new(p2, Vector3::z()),
+                    ];
+                    all_polygons.push(Polygon::new(verts, self.metadata.clone()));
+                }
+            }
+    
+            // Fallback if neither earclip nor earcut is enabled
+            #[cfg(not(any(feature = "earclip-io", feature = "earcut-io")))]
+            {
+                // Just make one polygon from the outer boundary, ignoring holes.
+                let plane_normal = Vector3::z();
+                let mut poly_verts = Vec::with_capacity(outer_pline.vertex_count());
+                for i in 0..outer_pline.vertex_count() {
+                    let v = outer_pline.at(i);
+                    poly_verts.push(Vertex::new(Point3::new(v.x, v.y, 0.0), plane_normal));
                 }
                 all_polygons.push(Polygon::new(poly_verts, self.metadata.clone()));
             }
         }
-        
-        for pl in &self.polylines.cw_plines {
-            // Convert each negative clockwise Polyline into a single polygon in z=0.
-            // todo: For arcs, subdivide by bulge, etc. This ignores arcs for simplicity.
-            if pl.polyline.vertex_count() >= 3 {
-                let mut poly_verts = Vec::with_capacity(pl.polyline.vertex_count());
-                for i in 0..pl.polyline.vertex_count() {
-                    let v = pl.polyline.at(i);
-                    poly_verts.push(Vertex::new(
-                        Point3::new(v.x, v.y, 0.0),
-                        plane_normal,
-                    ));
-                }
-                all_polygons.push(Polygon::new(poly_verts, self.metadata.clone()));
-            }
-        }
-
+    
+        // 5) (Optional) If you want to do the same approach for self.polylines.cw_plines
+        //    that are not “holes”, you can do so, or skip them. Typically, one assumes
+        //    ccw=outer, cw=holes. If you do want to treat stand‐alone cw as valid polygons,
+        //    replicate the logic above for cw_plines.
+    
+        // 6) Finally, include the 3D polygons the CSG already had
         all_polygons.extend(self.polygons.clone());
+    
         all_polygons
     }
 

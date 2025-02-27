@@ -126,7 +126,8 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             return triangles;
         }
 
-        // ----- Fallback / default if neither earclip-io nor earcut-io is enabled, known to fail for non-convex polygons and polygons with holes -----
+        // ----- Fallback / default if neither earclip-io nor earcut-io is enabled
+        // known to fail for non-convex polygons and polygons with holes -----
         #[cfg(not(any(feature = "earclip-io", feature = "earcut-io")))]
         {
             // Naive fan triangulation from vertex[0]
