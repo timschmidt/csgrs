@@ -45,22 +45,23 @@ impl Plane {
         const BACK: i8 = 2;
         const SPANNING: i8 = 3;
 
-        let mut polygon_type = 0;
-        let mut types = Vec::with_capacity(polygon.vertices.len());
-
         // Classify each vertex
-        for v in &polygon.vertices {
-            let t = self.normal.dot(&v.pos.coords) - self.w;
-            let vertex_type = if t < -EPSILON {
-                BACK
-            } else if t > EPSILON {
-                FRONT
-            } else {
-                COPLANAR
-            };
-            polygon_type |= vertex_type;
-            types.push(vertex_type);
-        }
+        let (types, polygon_type) = polygon.vertices
+            .iter()
+            .map(|v| {
+                let t = self.normal.dot(&v.pos.coords) - self.w;
+                if t < -EPSILON {
+                    BACK
+                } else if t > EPSILON {
+                    FRONT
+                } else {
+                    COPLANAR
+                }
+            })
+            .fold((Vec::with_capacity(polygon.vertices.len()), 0), |(mut vec, acc), ty| {
+                vec.push(ty);
+                (vec, acc | ty)
+            });
 
         match polygon_type {
             COPLANAR => {

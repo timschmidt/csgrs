@@ -428,7 +428,6 @@ if let Some(data_mut) = poly.metadata_mut() {
 - transition all extrudes over to CCShape native / polygon secondary, disengage chulls
 - transition text to CCShape, which can then be extruded / tessellated through the normal means
 - check flatten() works on polygons and flattens to polylines, same for slice
-- should cube_mirrored_x be inverted? - check mirror across arbitrary plane function
 - fix shape of reuleaux
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere
