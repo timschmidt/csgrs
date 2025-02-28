@@ -1576,11 +1576,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ) -> Self {
         let egg_2d = Self::egg_outline(width, length, outline_segments, metadata.clone());
         
-        // Build a large rectangle that cuts off everything below y = -flat_dist
-        // (i.e., we remove that portion to create a chord).
-        // Width = 2*radius is plenty to cover the circle’s X-range.
-        // Height = large enough, we just shift it so top edge is at y = -flat_dist.
-        // So that rectangle covers from y = -∞ up to y = -flat_dist.
+        // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
         let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone())
             .translate(-cutter_height, -cutter_height/2.0, 0.0);
@@ -1608,8 +1604,15 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // Make a 2D teardrop in the XY plane.
         let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
 
+        // Build a large rectangle that cuts off everything
+        let cutter_height = 9999.0; // some large number
+        let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone())
+            .translate(-cutter_height, -cutter_height/2.0, 0.0);
+    
+        let half_teardrop = td_2d.difference(&rect_cutter);
+
         // revolve 360 degrees
-        td_2d.rotate_extrude(360.0, revolve_segments)
+        half_teardrop.rotate_extrude(360.0, revolve_segments)
     }
 
     /// Creates a 3D "teardrop cylinder" by extruding the existing 2D `teardrop` in the Z+ axis.
