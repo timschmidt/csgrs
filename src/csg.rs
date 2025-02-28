@@ -1575,7 +1575,19 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         metadata: Option<S>,
     ) -> Self {
         let egg_2d = Self::egg_outline(width, length, outline_segments, metadata.clone());
-        egg_2d.rotate_extrude(360.0, revolve_segments)
+        
+        // Build a large rectangle that cuts off everything below y = -flat_dist
+        // (i.e., we remove that portion to create a chord).
+        // Width = 2*radius is plenty to cover the circle’s X-range.
+        // Height = large enough, we just shift it so top edge is at y = -flat_dist.
+        // So that rectangle covers from y = -∞ up to y = -flat_dist.
+        let cutter_height = 9999.0; // some large number
+        let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone())
+            .translate(-cutter_height, -cutter_height/2.0, 0.0);
+    
+        let half_egg = egg_2d.difference(&rect_cutter);
+        
+        half_egg.rotate_extrude(360.0, revolve_segments)
     }
     
     /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via rotate_extrude).
