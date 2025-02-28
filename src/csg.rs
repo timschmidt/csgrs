@@ -1803,7 +1803,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mirror_mat = t2 * reflect_4 * t1;
 
         // Apply to all polygons
-        self.transform(&mirror_mat)
+        self.transform(&mirror_mat).inverse()
     }
     
     /// Distribute this CSG `count` times around an arc (in XY plane) of radius,
