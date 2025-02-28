@@ -1583,7 +1583,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     
         let half_egg = egg_2d.difference(&rect_cutter);
         
-        half_egg.rotate_extrude(360.0, revolve_segments)
+        half_egg.rotate_extrude(360.0, revolve_segments).convex_hull()
     }
     
     /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via rotate_extrude).
@@ -1612,7 +1612,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let half_teardrop = td_2d.difference(&rect_cutter);
 
         // revolve 360 degrees
-        half_teardrop.rotate_extrude(360.0, revolve_segments)
+        half_teardrop.rotate_extrude(360.0, revolve_segments).convex_hull()
     }
 
     /// Creates a 3D "teardrop cylinder" by extruding the existing 2D `teardrop` in the Z+ axis.
@@ -1632,7 +1632,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ) -> Self {
         // Make a 2D teardrop in the XY plane.
         let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
-        td_2d.extrude(height)
+        td_2d.extrude(height).convex_hull()
     }
     
     /// Creates an ellipsoid by taking a sphere of radius=1 and scaling it by (rx, ry, rz).
