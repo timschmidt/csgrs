@@ -130,26 +130,6 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             }
             return triangles;
         }
-
-        // ----- Fallback / default if neither earclip-io nor earcut-io is enabled
-        // known to fail for non-convex polygons and polygons with holes -----
-        #[cfg(not(any(feature = "earclip-io", feature = "earcut-io")))]
-        {
-            // Naive fan triangulation from vertex[0]
-            let mut triangles = Vec::new();
-            if self.vertices.len() < 3 {
-                return triangles;
-            }
-            let v0 = self.vertices[0].clone();
-            for i in 1..(self.vertices.len() - 1) {
-                triangles.push([
-                    v0.clone(),
-                    self.vertices[i].clone(),
-                    self.vertices[i + 1].clone(),
-                ]);
-            }
-            triangles
-        }
     }
 
     /// Subdivide this polygon into smaller triangles.

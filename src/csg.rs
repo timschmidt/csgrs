@@ -4293,34 +4293,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     });
                 }
             }
-    
-            // If *neither* `earclip-io` nor `earcut-io` is enabled, fallback:
-            // known to fail with non-convex polygons and polygons with holes
-            #[cfg(not(any(feature="earclip-io", feature="earcut-io")))]
-            {
-                // Just produce one large face in +Z, ignoring holes
-                let mut poly_verts = Vec::with_capacity(outer_xy.len());
-                for coord in &outer_xy {
-                    let (x, y) = (coord[0], coord[1]);
-                    poly_verts.push([x, y, 0.0]);
-                }
-                // naive fan triangulation
-                if poly_verts.len() >= 3 {
-                    let first = poly_verts[0];
-                    for i in 1..(poly_verts.len()-1) {
-                        let vi = poly_verts[i];
-                        let vj = poly_verts[i+1];
-                        triangles.push(Triangle {
-                            normal: Normal::new([0.0, 0.0, 1.0]),
-                            vertices: [
-                                Vertex::new([first[0] as f32, first[1] as f32, first[2] as f32]),
-                                Vertex::new([vi[0] as f32,   vi[1] as f32,   vi[2] as f32]),
-                                Vertex::new([vj[0] as f32,   vj[1] as f32,   vj[2] as f32]),
-                            ],
-                        });
-                    }
-                }
-            }
         } // end for all ccw_plines
     
         //
