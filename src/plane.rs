@@ -100,58 +100,42 @@ impl Plane {
                 let mut f: Vec<Vertex> = Vec::new();
                 let mut b: Vec<Vertex> = Vec::new();
                 
-                let vcount = polygon.vertices.len();
-                for i in 0..vcount {
-                    let j = (i + 1) % vcount;
-                    let ti = types[i];
-                    let tj = types[j];
-                    let vi = &polygon.vertices[i];
-                    let vj = &polygon.vertices[j];
-
-                    if ti != BACK {
-                        f.push(vi.clone());
-                    }
-                    if ti != FRONT {
-                        b.push(vi.clone());
-                    }
-
-                    if (ti | tj) == SPANNING {
-                        let denom = self.normal.dot(&(vj.pos - vi.pos));
-                        // Avoid dividing by zero
-                        if denom.abs() > EPSILON {
-                            let t = (self.w - self.normal.dot(&vi.pos.coords)) / denom;
-                            let v = vi.interpolate(vj, t);
-                            f.push(v.clone());
-                            b.push(v);
-                        }
-                    }
-                }
-                
-                /*
+                // Use zip with cycle to pair (current, next)
                 for ((&ti, vi), (&tj, vj)) in types
                     .iter()
-                    .zip(&polygon.vertices)
-                    .zip(types.iter().cycle().skip(1).zip(polygon.edges()))
+                    .zip(polygon.vertices.iter())
+                    .zip(
+                        types.iter().cycle().skip(1)
+                             .zip(polygon.vertices.iter().cycle().skip(1))
+                    )
                 {
+                    // If current vertex is definitely not behind plane,
+                    // it goes to f (front side)
                     if ti != BACK {
                         f.push(vi.clone());
                     }
+                    // If current vertex is definitely not in front,
+                    // it goes to b (back side)
                     if ti != FRONT {
                         b.push(vi.clone());
                     }
+
+                    // If the edge between these two vertices crosses the plane,
+                    // compute intersection and add that intersection to both sets
                     if (ti | tj) == SPANNING {
                         let denom = self.normal.dot(&(vj.pos - vi.pos));
                         // Avoid dividing by zero
                         if denom.abs() > EPSILON {
                             let t = (self.w - self.normal.dot(&vi.pos.coords)) / denom;
-                            let v = vi.interpolate(vj, t);
-                            f.push(v.clone());
-                            b.push(v);
+                            let v_new = vi.interpolate(vj, t);
+                            f.push(v_new.clone());
+                            b.push(v_new);
                         }
                     }
                 }
-                */
 
+                // Build new polygons from the front/back vertex lists
+                // if they have at least 3 vertices
                 if f.len() >= 3 {
                     front.push(Polygon::new(f, polygon.metadata.clone()));
                 }
