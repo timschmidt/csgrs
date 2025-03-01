@@ -4,23 +4,6 @@ use crate::polygon::Polygon;
 use nalgebra::{
     Isometry3, Point3, Matrix4, Rotation3, Translation3, Vector3,
 };
-//use std::iter;
-
-/*
-use std::iter::partition_in_place; // nightly, or you can hand-roll something similar
-
-let mut typed_verts: Vec<_> = polygon.vertices
-    .iter()
-    .map(|v| {
-        let dist = self.normal.dot(&v.pos.coords) - self.w;
-        let typ = if dist < -EPSILON { BACK } else if dist > EPSILON { FRONT } else { COPLANAR };
-        (v.clone(), typ)
-    })
-    .collect();
-
-// now typed_verts has (Vertex, i8) for each
-// you can do partition or a custom grouping to gather the fronts/backs/coplanars in one pass
-*/
 
 /// A plane in 3D space defined by a normal and a w-value
 #[derive(Debug, Clone)]
@@ -63,7 +46,8 @@ impl Plane {
         const SPANNING: i8 = 3;
 
         // Classify each vertex
-        let (types, polygon_type) = polygon.vertices
+        let (types, polygon_type) = polygon
+            .vertices
             .iter()
             .map(|v| {
                 let t = self.normal.dot(&v.pos.coords) - self.w;
@@ -99,7 +83,7 @@ impl Plane {
                 // SPANNING
                 let mut f: Vec<Vertex> = Vec::new();
                 let mut b: Vec<Vertex> = Vec::new();
-                
+
                 // Use zip with cycle to pair (current, next)
                 for ((&ti, vi), (&tj, vj)) in types
                     .iter()

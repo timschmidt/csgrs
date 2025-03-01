@@ -2127,65 +2127,172 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// - The shape is assumed to be “2D” in the sense that each polygon typically
     ///   lies in a single plane (e.g. XY). For best results, your polygons’ normals
     ///   should be consistent.
-    pub fn extrude_vector(&self, direction: Vector3<Real>) -> CSG<S> {    
-        // Collect our polygons
-        let mut result_polygons = Vec::new();
-        let mut top_polygons = Vec::new();
-        let mut bottom_polygons = Vec::new();
-
-        // If we have polylines but no polygons, turn them into polygons first.
-        let unioned_polygons = if self.polygons.is_empty() && (!self.polylines.ccw_plines.is_empty() | !self.polylines.cw_plines.is_empty()) {
-            self.to_polygons()
-        } else {
-            self.polygons.clone()
-        };
-
-        // Bottom polygons = original polygons
-        for poly in unioned_polygons {
-            let mut bottom = poly.clone();
-            let top = poly.translate_vector(direction);
-            
-            // Collect top and bottom polygons for stitching side walls in same winding orientation
-            bottom_polygons.push(bottom.clone());
-            top_polygons.push(top.clone());
-            
-            bottom.flip(); // flip winding of the bottom polygon for correct normals
-            
-            // Collect top and bottom polygons in result
-            result_polygons.push(bottom);
-            result_polygons.push(top);
+    pub fn extrude_vector(&self, direction: Vector3<Real>) -> CSG<S> {
+        // Collect final 3D polygons
+        let mut polygons_3d = Vec::new();
+        
+        let shape = &self.polylines;
+    
+        // If direction is near zero, there's no thickness => return empty or just a flat shape
+        if direction.norm() < EPSILON {
+            return CSG::new();
         }
-
-        // Side polygons = For each polygon in `self`, connect its edges
-        // from the original to the corresponding edges in the translated version.
-        //
-        // We'll iterate over each polygon’s vertices. For each edge (v[i], v[i+1]),
-        // we form a rectangular side quad with (v[i]+direction, v[i+1]+direction).
-        // That is, a quad [b_i, b_j, t_j, t_i].
-        for (poly_bottom, poly_top) in bottom_polygons.iter().zip(top_polygons.iter()) {
-            let vcount = poly_bottom.vertices.len();
-            if vcount < 3 {
-                continue; // skip degenerate or empty polygons
+    
+        // We'll create a “top” shape by translating the entire CCShape in 2D by (dx, dy).
+        // Then produce 3D polygons for bottom, top, and side walls.
+        let dx = direction.x;
+        let dy = direction.y;
+        let dz = direction.z;
+    
+        // Identify which polylines are "outer" (CCW) and which are "hole" (CW). 
+        // For each CCW polyline, we build a cap with any matching holes inside it.
+    
+        // Step A: build top & bottom polygons (caps) if the polylines are closed.
+        // We do that by grouping each CCW boundary with any CW hole that lies inside it.
+        // Then we triangulate at z=0 for bottom, z=dz for top.
+        // For the bottom, we flip the normal (so its normal is downward).
+        // For the top, keep orientation up.
+    
+        // We'll only do caps if the polylines are truly closed. Cavalier Contours has
+        // `polyline.is_closed()`. If is_closed is false, we skip caps on that boundary.
+        for (_outer_idx, outer_entry) in shape.ccw_plines.iter().enumerate() {
+            let outer_pl = &outer_entry.polyline;
+            if !outer_pl.is_closed() || outer_pl.vertex_count() < 3 {
+                // skip capping for this boundary
+                continue;
             }
-            for i in 0..vcount {
-                let j = (i + 1) % vcount; // next index, wrapping around
-                let b_i = &poly_bottom.vertices[i];
-                let b_j = &poly_bottom.vertices[j];
-                let t_i = &poly_top.vertices[i];
-                let t_j = &poly_top.vertices[j];
-
-                // Build a side quad [b_i, b_j, t_j, t_i].
-                // Then push it as a new polygon.
+    
+            // bounding box for outer
+            let Some(aabb) = outer_pl.extents() else {
+                // skip degenerate
+                continue;
+            };
+            let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
+    
+            // collect holes
+            let mut holes_2d : Vec<Vec<[Real;2]>> = Vec::new();
+    
+            let bounding_query = shape.plines_index.query(oxmin, oymin, oxmax, oymax);
+            let cw_start = shape.ccw_plines.len();
+            for hole_idx in bounding_query {
+                if hole_idx < cw_start {
+                    continue; // another ccw boundary, skip
+                }
+                let hole_pl = &shape.cw_plines[hole_idx - cw_start].polyline;
+                if !hole_pl.is_closed() || hole_pl.vertex_count() < 3 {
+                    continue;
+                }
+                // check if the hole belongs inside this outer by point-in-poly test
+                let hv0 = hole_pl.at(0);
+                if point_in_poly_2d(hv0.x, hv0.y, outer_pl) {
+                    // gather
+                    let mut arr = Vec::with_capacity(hole_pl.vertex_count());
+                    for i in 0..hole_pl.vertex_count() {
+                        let p = hole_pl.at(i);
+                        arr.push([p.x, p.y]);
+                    }
+                    holes_2d.push(arr);
+                }
+            }
+    
+            // gather outer boundary 2D
+            let mut outer_2d = Vec::with_capacity(outer_pl.vertex_count());
+            for i in 0..outer_pl.vertex_count() {
+                let v = outer_pl.at(i);
+                outer_2d.push([v.x, v.y]);
+            }
+    
+            // Triangulate bottom (z=0)
+            #[cfg(feature="earcut-io")]
+            let bottom_tris = CSG::<()>::triangulate_2d_earcut(
+                &outer_2d[..],
+                &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
+                0.0,
+            );
+            
+            #[cfg(feature="earclip-io")]
+            let bottom_tris = CSG::<()>::triangulate_2d_earclip(
+                &outer_2d[..],
+                &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
+            );
+            
+            // The “bottom” polygons need flipping. We'll do that by reversing the triangle’s vertex order.
+            for tri in bottom_tris {
+                let v0 = Vertex::new(tri[2], Vector3::new(0.0, 0.0, -1.0));
+                let v1 = Vertex::new(tri[1], Vector3::new(0.0, 0.0, -1.0));
+                let v2 = Vertex::new(tri[0], Vector3::new(0.0, 0.0, -1.0));
+                polygons_3d.push(Polygon::new(vec![v0, v1, v2], self.metadata.clone()));
+            }
+    
+            // Triangulate top (z= + direction.z, but we must keep full 3D offset)
+            // We can simply do the same XY coords but shift them up by (dx, dy, dz)
+            #[cfg(feature="earcut-io")]
+            let top_tris = CSG::<()>::triangulate_2d_earcut(
+                &outer_2d[..],
+                &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
+                0.0, // we'll apply the shift later
+            );
+            
+            #[cfg(feature="earclip-io")]
+            let top_tris = CSG::<()>::triangulate_2d_earclip(
+                &outer_2d[..],
+                &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
+            );
+            
+            for tri in top_tris {
+                let p0 = Point3::new(tri[0].x + dx, tri[0].y + dy, tri[0].z + dz);
+                let p1 = Point3::new(tri[1].x + dx, tri[1].y + dy, tri[1].z + dz);
+                let p2 = Point3::new(tri[2].x + dx, tri[2].y + dy, tri[2].z + dz);
+                let v0 = Vertex::new(p0, Vector3::new(0.0, 0.0, 1.0));
+                let v1 = Vertex::new(p1, Vector3::new(0.0, 0.0, 1.0));
+                let v2 = Vertex::new(p2, Vector3::new(0.0, 0.0, 1.0));
+                polygons_3d.push(Polygon::new(vec![v0, v1, v2], self.metadata.clone()));
+            }
+        }
+    
+        // Step B: build side walls for each (closed or open) polyline.
+        // We'll do this for every polyline (both ccw and cw).
+        // For each consecutive edge in polyline, produce a 4-vertex side polygon.
+        // i.e. [b_i, b_j, t_j, t_i], where t_i = b_i + direction, t_j = b_j + direction.
+    
+        let all_plines = shape.ccw_plines.iter().chain(shape.cw_plines.iter());
+        for ip in all_plines {
+            let pl = &ip.polyline;
+            let n = pl.vertex_count();
+            if n < 2 {
+                continue;
+            }
+            let is_closed = pl.is_closed();
+            // for each edge i..i+1
+            let edge_count = if is_closed { n } else { n - 1 };
+            for i in 0..edge_count {
+                let j = (i + 1) % n;
+                let p_i = pl.at(i);
+                let p_j = pl.at(j);
+    
+                let b_i = Point3::new(p_i.x, p_i.y, 0.0);
+                let b_j = Point3::new(p_j.x, p_j.y, 0.0);
+                let t_i = Point3::new(p_i.x + dx, p_i.y + dy, dz);
+                let t_j = Point3::new(p_j.x + dx, p_j.y + dy, dz);
+    
+                // Build the side polygon
+                // The normal can be computed or left as zero. For best results, compute an outward normal.
+                // We'll do a naive approach: let plane compute it.
                 let side_poly = Polygon::new(
-                    vec![b_i.clone(), b_j.clone(), t_j.clone(), t_i.clone()],
-                    poly_bottom.metadata.clone(),
+                    vec![
+                        Vertex::new(b_i, Vector3::zeros()),
+                        Vertex::new(b_j, Vector3::zeros()),
+                        Vertex::new(t_j, Vector3::zeros()),
+                        Vertex::new(t_i, Vector3::zeros()),
+                    ],
+                    self.metadata.clone(),
                 );
-                result_polygons.push(side_poly);
+                polygons_3d.push(side_poly);
             }
         }
-
-        // Combine into a new CSG
-        CSG::from_polygons(&result_polygons)
+    
+        // Return a new CSG
+        CSG::from_polygons(&polygons_3d)
     }
     
     /// Perform a linear extrusion along some axis, with optional twist, center, slices, scale, etc.
@@ -4729,3 +4836,23 @@ pub fn ccshape_to_polylines(shape: CCShape<Real>) -> Vec<Polyline<Real>> {
         )
         .collect()
 }
+
+/// Basic point in polygon test in 2D (XY).  
+fn point_in_poly_2d(px: Real, py: Real, pline: &Polyline<Real>) -> bool {
+    let mut inside = false;
+    let n = pline.vertex_count();
+    let mut j = n - 1;
+    for i in 0..n {
+        let pi = pline.at(i);
+        let pj = pline.at(j);
+        // typical even-odd test
+        let intersect = ((pi.y > py) != (pj.y > py))
+            && (px < (pj.x - pi.x) * (py - pi.y) / (pj.y - pi.y) + pi.x);
+        if intersect {
+            inside = !inside;
+        }
+        j = i;
+    }
+    inside
+}
+
