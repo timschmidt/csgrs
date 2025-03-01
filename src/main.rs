@@ -294,7 +294,7 @@ fn main() {
     let _ = fs::write("stl/teardrop_solid.stl", teardrop_solid.to_stl_ascii("teardrop_solid"));
     
     // A 3D egg shape
-    let egg_solid = CSG::egg(2.0, 4.0, 32, 32, None);
+    let egg_solid = CSG::egg(2.0, 4.0, 8, 16, None);
     let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
     
     // An ellipsoid with X radius=2, Y radius=1, Z radius=3

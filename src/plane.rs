@@ -4,6 +4,23 @@ use crate::polygon::Polygon;
 use nalgebra::{
     Isometry3, Point3, Matrix4, Rotation3, Translation3, Vector3,
 };
+//use std::iter;
+
+/*
+use std::iter::partition_in_place; // nightly, or you can hand-roll something similar
+
+let mut typed_verts: Vec<_> = polygon.vertices
+    .iter()
+    .map(|v| {
+        let dist = self.normal.dot(&v.pos.coords) - self.w;
+        let typ = if dist < -EPSILON { BACK } else if dist > EPSILON { FRONT } else { COPLANAR };
+        (v.clone(), typ)
+    })
+    .collect();
+
+// now typed_verts has (Vertex, i8) for each
+// you can do partition or a custom grouping to gather the fronts/backs/coplanars in one pass
+*/
 
 /// A plane in 3D space defined by a normal and a w-value
 #[derive(Debug, Clone)]
@@ -82,8 +99,8 @@ impl Plane {
                 // SPANNING
                 let mut f: Vec<Vertex> = Vec::new();
                 let mut b: Vec<Vertex> = Vec::new();
+                
                 let vcount = polygon.vertices.len();
-
                 for i in 0..vcount {
                     let j = (i + 1) % vcount;
                     let ti = types[i];
@@ -109,6 +126,31 @@ impl Plane {
                         }
                     }
                 }
+                
+                /*
+                for ((&ti, vi), (&tj, vj)) in types
+                    .iter()
+                    .zip(&polygon.vertices)
+                    .zip(types.iter().cycle().skip(1).zip(polygon.edges()))
+                {
+                    if ti != BACK {
+                        f.push(vi.clone());
+                    }
+                    if ti != FRONT {
+                        b.push(vi.clone());
+                    }
+                    if (ti | tj) == SPANNING {
+                        let denom = self.normal.dot(&(vj.pos - vi.pos));
+                        // Avoid dividing by zero
+                        if denom.abs() > EPSILON {
+                            let t = (self.w - self.normal.dot(&vi.pos.coords)) / denom;
+                            let v = vi.interpolate(vj, t);
+                            f.push(v.clone());
+                            b.push(v);
+                        }
+                    }
+                }
+                */
 
                 if f.len() >= 3 {
                     front.push(Polygon::new(f, polygon.metadata.clone()));

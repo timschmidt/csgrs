@@ -205,20 +205,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     all_polygons.push(Polygon::new(verts, self.metadata.clone()));
                 }
             }
-    
-            // Fallback if neither earclip nor earcut is enabled
-            // Known to fail on non-convex polygons, and polygons with holes
-            #[cfg(not(any(feature = "earclip-io", feature = "earcut-io")))]
-            {
-                // Just make one polygon from the outer boundary, ignoring holes.
-                let plane_normal = Vector3::z();
-                let mut poly_verts = Vec::with_capacity(outer_pline.vertex_count());
-                for i in 0..outer_pline.vertex_count() {
-                    let v = outer_pline.at(i);
-                    poly_verts.push(Vertex::new(Point3::new(v.x, v.y, 0.0), plane_normal));
-                }
-                all_polygons.push(Polygon::new(poly_verts, self.metadata.clone()));
-            }
         }
     
         // Finally, include the 3D polygons the CSG already had
@@ -2715,15 +2701,12 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // First gather from the polygons (3D)
         for poly in &self.polygons {
             for v in &poly.vertices {
-                let px = v.pos.x;
-                let py = v.pos.y;
-                let pz = v.pos.z;
-                if px < min_x { min_x = px; }
-                if py < min_y { min_y = py; }
-                if pz < min_z { min_z = pz; }
-                if px > max_x { max_x = px; }
-                if py > max_y { max_y = py; }
-                if pz > max_z { max_z = pz; }
+                if v.pos.x < min_x { min_x = v.pos.x; }
+                if v.pos.y < min_y { min_y = v.pos.y; }
+                if v.pos.z < min_z { min_z = v.pos.z; }
+                if v.pos.x > max_x { max_x = v.pos.x; }
+                if v.pos.y > max_y { max_y = v.pos.y; }
+                if v.pos.z > max_z { max_z = v.pos.z; }
             }
         }
 
@@ -2731,20 +2714,14 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // which is effectively min_x, min_y, max_x, max_y in 2D.
         // We'll interpret them in 3D by letting z=0 for the shape.
         if let Some(bounds) = self.polylines.plines_index.bounds() {
-            // shape's bounding box is 2D:
-            let shape_min_x = bounds.min_x;
-            let shape_min_y = bounds.min_y;
-            let shape_max_x = bounds.max_x;
-            let shape_max_y = bounds.max_y;
-
             // Compare with our current min/max
-            if shape_min_x < min_x { min_x = shape_min_x; }
-            if shape_min_y < min_y { min_y = shape_min_y; }
+            if bounds.min_x < min_x { min_x = bounds.min_x; }
+            if bounds.min_y < min_y { min_y = bounds.min_y; }
             // we treat polylines as z=0, so check that too
             if 0.0 < min_z { min_z = 0.0; }
 
-            if shape_max_x > max_x { max_x = shape_max_x; }
-            if shape_max_y > max_y { max_y = shape_max_y; }
+            if bounds.max_x > max_x { max_x = bounds.max_x; }
+            if bounds.max_y > max_y { max_y = bounds.max_y; }
             // likewise for z=0
             if 0.0 > max_z { max_z = 0.0; }
         }
@@ -2791,7 +2768,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
         // Return as a CSG with empty polygons and updated polylines.
         CSG {
-            polygons: Vec::new(),
+            polygons: self.polygons.clone(),
             polylines: offset_result,
             metadata: self.metadata.clone(),
         }
@@ -2803,8 +2780,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// If this CSG is already 2D (polylines only), we simply return
     /// the union of those polylines.
     pub fn flatten(&self) -> CSG<S> {
-        use cavalier_contours::shape_algorithms::Shape as CCShape;
-
         // If we already have no polygons (just polylines), it might
         // already be 2D, so we can return them. But to mimic the tests'
         // "flatten and union" approach, let's union them anyway:

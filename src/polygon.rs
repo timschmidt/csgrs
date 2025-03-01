@@ -42,6 +42,11 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         }
         self.plane.flip();
     }
+    
+    /// Return an iterator over paired vertexes each forming an edge of the polygon
+    pub fn edges(&self) -> impl Iterator<Item=(&Vertex, &Vertex)> {
+        self.vertices.iter().zip(self.vertices.iter().cycle().skip(1))
+    }
 
     /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
     pub fn triangulate(&self) -> Vec<[Vertex; 3]> {
