@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::{Problem, Rational, Real};
     use super::super::curve;
+    use crate::{Problem, Rational, Real};
 
     #[test]
     fn zero() {

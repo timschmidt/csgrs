@@ -191,10 +191,10 @@ mod tests {
 
     #[test]
     fn not_int() {
-        let almost_pi = Rational::fraction(22,7).unwrap();
+        let almost_pi = Rational::fraction(22, 7).unwrap();
         let problem = <Rational as TryInto<i16>>::try_into(almost_pi).unwrap_err();
         assert_eq!(problem, Problem::NotAnInteger);
-        let almost_pi = Rational::fraction(22,7).unwrap();
+        let almost_pi = Rational::fraction(22, 7).unwrap();
         let three: u32 = almost_pi.trunc().try_into().unwrap();
         assert_eq!(three, 3);
     }

@@ -419,6 +419,47 @@ impl Rational {
         self.numerator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
             && self.denominator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
     }
+
+    // This could grow unreasonably in terms of object size
+    // TODO: Reject such cases
+    fn pow_up(&self, exp: &BigUint) -> Self {
+        if exp == &BigUint::ZERO {
+            return Self::one();
+        }
+        let mut result = Self::one();
+        for b in (0..(exp.bits())).rev() {
+            result *= result.clone();
+            if exp.bit(b) {
+                result *= self;
+            }
+        }
+        result
+    }
+
+    /// Integer exponeniation
+    pub fn powi(self, exp: BigInt) -> Self {
+        // Arguably wrong if self is also zero
+        if exp == BigInt::ZERO {
+            return Self::one();
+        }
+        if self.sign == NoSign {
+            return Self::zero();
+        }
+        // Plus or minus one exactly
+        if self.is_integer() && self.numerator == *ONE.deref() {
+            if self.sign == Minus && exp.bit(0) {
+                return Self::new(-1);
+            } else {
+                return Self::one();
+            }
+        }
+        // TODO reject exp.bits() > N
+        match exp.sign() {
+            Minus => self.inverse().pow_up(exp.magnitude()),
+            Plus => self.pow_up(exp.magnitude()),
+            NoSign => unreachable!(),
+        }
+    }
 }
 
 use core::fmt;
@@ -593,6 +634,24 @@ impl Mul for Rational {
             numerator,
             denominator,
         })
+    }
+}
+
+impl MulAssign for Rational {
+    fn mul_assign(&mut self, other: Self) {
+        let sign = self.sign * other.sign;
+        self.sign = sign;
+        self.numerator *= other.numerator;
+        self.denominator *= other.denominator;
+    }
+}
+
+impl MulAssign<&Rational> for Rational {
+    fn mul_assign(&mut self, other: &Rational) {
+        let sign = self.sign * other.sign;
+        self.sign = sign;
+        self.numerator = &self.numerator * &other.numerator;
+        self.denominator = &self.denominator * &other.denominator;
     }
 }
 
@@ -801,6 +860,14 @@ mod tests {
         let frac = zero.fract();
         assert_eq!(whole, frac);
         assert_eq!(whole + frac, zero);
+    }
+
+    #[test]
+    fn power() {
+        let one_two_five = Rational::new(5).powi(ToBigInt::to_bigint(&-3).unwrap());
+        assert_eq!(one_two_five, Rational::fraction(1, 125).unwrap());
+        let more = Rational::new(7).powi(11i32.into());
+        assert_eq!(more, Rational::new(1_977_326_743));
     }
 
     #[test]

@@ -16,6 +16,7 @@ enum Operator {
     Ln,
     Cos,
     Sin,
+    Pow,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -154,6 +155,17 @@ impl Simple {
                 let value = operand.value(names)?.sin();
                 Ok(value)
             }
+            Pow => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let op1 = &self.operands[0];
+                let op2 = &self.operands[1];
+                let v1 = op1.value(names)?;
+                let v2 = op2.value(names)?;
+                let value = v1.pow(v2)?;
+                Ok(value)
+            }
         }
     }
 
@@ -176,6 +188,7 @@ impl Simple {
             "sqrt" | "s" => Ok(Sqrt),
             "cos" => Ok(Cos),
             "sin" => Ok(Sin),
+            "pow" => Ok(Pow),
             _ => Err("No such operator"),
         }
     }
@@ -205,6 +218,10 @@ impl Simple {
             Some('/') => {
                 chars.next();
                 Slash
+            }
+            Some('^') => {
+                chars.next();
+                Pow
             }
             Some('√') => {
                 chars.next();
