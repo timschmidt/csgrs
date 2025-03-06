@@ -523,7 +523,7 @@ impl Real {
         self.make_computable(Computable::cos)
     }
 
-    fn pow_int(self, exp: BigInt) -> Result<Self, Problem> {
+    fn powi(self, exp: BigInt) -> Result<Self, Problem> {
         if exp == BigInt::one() {
             return Ok(self);
         }
@@ -540,7 +540,7 @@ impl Real {
         if self.class == One {
             /* TODO: detect and avoid truly enormous results, see UnifiedReal.java for ideas */
             Ok(Self {
-                rational: self.rational.powi(exp),
+                rational: self.rational.powi(exp)?,
                 class: One,
                 computable: self.computable,
                 signal: None,
@@ -555,7 +555,7 @@ impl Real {
         if exp.class == One {
             match exp.rational.to_big_integer() {
                 Some(n) => {
-                    return self.pow_int(n);
+                    return self.powi(n);
                 }
                 None => todo!(),
             }

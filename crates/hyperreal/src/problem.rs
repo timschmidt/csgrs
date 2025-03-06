@@ -34,6 +34,8 @@ pub enum Problem {
     OutOfRange,
     /// The rational was not an integer
     NotAnInteger,
+    /// Operation was rejected because it was likely to consume all available resources
+    Exhausted,
 }
 
 use std::fmt;

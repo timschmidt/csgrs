@@ -421,7 +421,7 @@ impl Rational {
     }
 
     // This could grow unreasonably in terms of object size
-    // TODO: Reject such cases
+    // so only call this for modest exp values
     fn pow_up(&self, exp: &BigUint) -> Self {
         if exp == &BigUint::ZERO {
             return Self::one();
@@ -437,26 +437,29 @@ impl Rational {
     }
 
     /// Integer exponeniation
-    pub fn powi(self, exp: BigInt) -> Self {
+    pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
+        const TOO_MANY_BITS: u64 = 1000;
         // Arguably wrong if self is also zero
         if exp == BigInt::ZERO {
-            return Self::one();
+            return Ok(Self::one());
         }
         if self.sign == NoSign {
-            return Self::zero();
+            return Ok(Self::zero());
         }
         // Plus or minus one exactly
         if self.is_integer() && self.numerator == *ONE.deref() {
             if self.sign == Minus && exp.bit(0) {
-                return Self::new(-1);
+                return Ok(Self::new(-1));
             } else {
-                return Self::one();
+                return Ok(Self::one());
             }
         }
-        // TODO reject exp.bits() > N
+        if exp.bits() >= TOO_MANY_BITS {
+            return Err(Problem::Exhausted);
+        }
         match exp.sign() {
-            Minus => self.inverse().pow_up(exp.magnitude()),
-            Plus => self.pow_up(exp.magnitude()),
+            Minus => Ok(self.inverse().pow_up(exp.magnitude())),
+            Plus => Ok(self.pow_up(exp.magnitude())),
             NoSign => unreachable!(),
         }
     }
@@ -865,8 +868,8 @@ mod tests {
     #[test]
     fn power() {
         let one_two_five = Rational::new(5).powi(ToBigInt::to_bigint(&-3).unwrap());
-        assert_eq!(one_two_five, Rational::fraction(1, 125).unwrap());
-        let more = Rational::new(7).powi(11i32.into());
+        assert_eq!(one_two_five, Rational::fraction(1, 125));
+        let more = Rational::new(7).powi(11i32.into()).unwrap();
         assert_eq!(more, Rational::new(1_977_326_743));
     }
 

@@ -60,7 +60,7 @@ expression of this type is named Simple.
 We can parse these expressions in the usual way, and we can evaluate such an expression.
 
 Currently the provided operators are the + - * and / expected in programming for addition, subtraction, multiplication and division
-plus e or exp for the natural exponenitation, l or ln for the natural log, and s, sqrt or √ for square roots.
+plus e or exp for the natural exponenitation, l or ln for the natural log, pow or ^ for exponentiation, and s, sqrt or √ for square roots.
 
 The cosine (cos) and sine (sin) functions are provided and expressions which reduce to sin() of some rational multiple of pi are tracked.
 
