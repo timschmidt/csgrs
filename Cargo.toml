@@ -29,9 +29,10 @@ fast-surface-nets = { version = "0.2.1", optional = true }
 hashbrown = { version = "0.15.2", optional = true } 
 # core2 = { version = "0.4.0", default_features = false, features = ["alloc"] } # no-std, still throws errors
 core2 = { version = "0.4.0", features = ["alloc"] }
+geo = "0.29.3"
 
 [features]
-default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "earclip-io", "image-io", "metaballs", "hashmap", "sdf"]
+default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "earcut-io", "image-io", "metaballs", "hashmap", "sdf"]
 parallel = ["rayon"]
 f64 = [
   "rapier3d-f64",

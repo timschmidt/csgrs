@@ -2207,7 +2207,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let bottom_tris = CSG::<()>::triangulate_2d_earcut(
                 &outer_2d[..],
                 &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-                0.0,
             );
             
             #[cfg(feature="earclip-io")]
@@ -2230,7 +2229,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let top_tris = CSG::<()>::triangulate_2d_earcut(
                 &outer_2d[..],
                 &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-                0.0, // we'll apply the shift later
             );
             
             #[cfg(feature="earclip-io")]
