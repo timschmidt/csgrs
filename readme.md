@@ -469,6 +469,7 @@ if let Some(data_mut) = poly.metadata_mut() {
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
 - implement functions from https://docs.rs/geo/latest/geo/
 - port https://github.com/21re/rust-geo-booleanop to cavalier_contours
+- https://crates.io/crates/polylabel
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
