@@ -474,6 +474,11 @@ if let Some(data_mut) = poly.metadata_mut() {
 - https://github.com/PsichiX/density-mesh
 - https://github.com/asny/tri-mesh port
 - https://docs.rs/geo/latest/geo port
+  - https://crates.io/crates/geo
+  - https://crates.io/crates/geo-buf
+  - https://crates.io/crates/geo-offset
+  - https://crates.io/crates/offset-polygon
+  - https://crates.io/crates/geo-booleanop
 - https://crates.io/crates/flo_curves
 ---
 
