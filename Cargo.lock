@@ -177,7 +177,7 @@ checksum = "8f1fe948ff07f4bd06c30984e69f5b4899c516a3ef74f34df92a2df2ab535495"
 [[package]]
 name = "cavalier_contours"
 version = "0.4.0"
-source = "git+https://github.com/timschmidt/cavalier_contours#50b6f24f60af32399b22f795ae181dc9df705799"
+source = "git+https://github.com/timschmidt/cavalier_contours?branch=shape-boolean-transformation#8e8cc6b8a15c92108a1b807371d714545a8750f7"
 dependencies = [
  "num-traits 0.2.19",
  "static_aabb2d_index",
