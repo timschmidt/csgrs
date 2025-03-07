@@ -249,7 +249,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     
     fn triangulate_2d(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]>
     {
-        // Flatten in a style suitable for earcut:
+        // Flatten in a style suitable for earcutr:
         //   - single “outer” array,
         //   - then hole(s) arrays, with the “hole index” = length of outer so far.
     
