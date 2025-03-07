@@ -467,10 +467,14 @@ if let Some(data_mut) = poly.metadata_mut() {
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
   - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
+- implement functions from https://docs.rs/geo/latest/geo/
+- port https://github.com/21re/rust-geo-booleanop to cavalier_contours
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
 - https://github.com/asny/tri-mesh port
+- https://docs.rs/geo/latest/geo port
+- https://crates.io/crates/flo_curves
 ---
 
 ## License
