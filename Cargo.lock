@@ -352,8 +352,7 @@ dependencies = [
  "contour_tracing",
  "core2",
  "dxf",
- "earclip",
- "earcut",
+ "earcutr",
  "fast-surface-nets",
  "geo",
  "hashbrown 0.15.2",
@@ -390,24 +389,6 @@ dependencies = [
  "num",
  "uuid",
  "xmltree",
-]
-
-[[package]]
-name = "earclip"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca0eb1a3f37fa301292302f8c9ebb7bfd33f8197c93630606335515bf02fc43b"
-dependencies = [
- "num-traits 0.2.19",
-]
-
-[[package]]
-name = "earcut"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc983a9877de8a84c818d847108c454d956a78a6fc0aa6182bf5fad79b5f8595"
-dependencies = [
- "num-traits 0.2.19",
 ]
 
 [[package]]

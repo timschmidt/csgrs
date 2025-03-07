@@ -18,15 +18,13 @@ use crate::float_types::parry3d::{
     shape::{Shape, SharedShape, TriMesh, Triangle},
 };
 use crate::float_types::rapier3d::prelude::*;
+extern crate earcutr;
 
 #[cfg(feature = "hashmap")]
 use hashbrown::HashMap;
 
 #[cfg(feature = "chull-io")]
 use chull::ConvexHullWrapper;
-
-#[cfg(feature = "earcut-io")]
-use earcut::Earcut;
 
 #[cfg(feature = "hershey-text")]
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
@@ -168,42 +166,20 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 outer_xy.push([v.x, v.y]);
             }
     
-            // Triangulate outer + holes using earclip or earcut, if available
-            #[cfg(feature = "earclip-io")]
-            {
-                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = Self::triangulate_2d_earclip(&outer_xy, &hole_refs);
-    
-                // Convert each returned triangle into a Polygon<S> with Z=0
-                for tri in triangles_2d {
-                    let p0 = tri[0];
-                    let p1 = tri[1];
-                    let p2 = tri[2];
-                    let verts = vec![
-                        Vertex::new(p0, Vector3::z()),
-                        Vertex::new(p1, Vector3::z()),
-                        Vertex::new(p2, Vector3::z()),
-                    ];
-                    all_polygons.push(Polygon::new(verts, self.metadata.clone()));
-                }
-            }
-    
-            #[cfg(feature = "earcut-io")]
-            {
-                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = Self::triangulate_2d_earcut(&outer_xy, &hole_refs);
-    
-                for tri in triangles_2d {
-                    let p0 = tri[0];
-                    let p1 = tri[1];
-                    let p2 = tri[2];
-                    let verts = vec![
-                        Vertex::new(p0, Vector3::z()),
-                        Vertex::new(p1, Vector3::z()),
-                        Vertex::new(p2, Vector3::z()),
-                    ];
-                    all_polygons.push(Polygon::new(verts, self.metadata.clone()));
-                }
+            // Triangulate outer + holes
+            let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
+            let triangles_2d = Self::triangulate_2d(&outer_xy, &hole_refs);
+
+            for tri in triangles_2d {
+                let p0 = tri[0];
+                let p1 = tri[1];
+                let p2 = tri[2];
+                let verts = vec![
+                    Vertex::new(p0, Vector3::z()),
+                    Vertex::new(p1, Vector3::z()),
+                    Vertex::new(p2, Vector3::z()),
+                ];
+                all_polygons.push(Polygon::new(verts, self.metadata.clone()));
             }
         }
     
@@ -271,88 +247,45 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     //    groups
     // }
     
-    #[cfg(feature = "earclip-io")]
-    fn triangulate_2d_earclip(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]>
+    fn triangulate_2d(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]>
     {
-        // Flatten data for earclip:
-        //   - We treat `outer` as the first polygon,
-        //   - Then each `holes[i]` as subsequent polygon(s).
-        // earclip can handle “polygon with hole(s)” if you flatten with the
-        // appropriate hole start indices.
-    
-        // Combine everything into one single big Vec<Vec<Vec<Real>>> shape
-        // in which [outer] is the first polygon, holes come after.
-        let mut polygons: Vec<Vec<Vec<Real>>> = Vec::new();
-        // Outer polygon in 2D
-        let outer_2d: Vec<Vec<Real>> = outer.iter().map(|p| vec![p[0], p[1]]).collect();
-        polygons.push(outer_2d);
-    
-        for h in holes {
-            let hole_2d: Vec<Vec<Real>> = h.iter().map(|p| vec![p[0], p[1]]).collect();
-            polygons.push(hole_2d);
-        }
-    
-        // Use the earclip version from your code (similar to the “from_earclip” pattern)
-        // We produce triangles in 3D, z=0, with normal = +Z by default.
-        let (vertices, hole_indices, dim) = earclip::flatten::<Real, usize>(&polygons);
-        let indices = earclip::earcut::<Real, usize>(&vertices, &hole_indices, dim);
-    
-        let mut result = Vec::new();
-        for tri in indices.chunks_exact(3) {
-            let mut tri_pts = [Point3::origin(); 3];
-            for (k, &idx) in tri.iter().enumerate() {
-                let start = idx * dim;
-                // Our 2D flatten => x = vertices[start], y = vertices[start+1], z=0
-                tri_pts[k] = Point3::new(vertices[start], vertices[start+1], 0.0);
-            }
-            result.push(tri_pts);
-        }
-    
-        result
-    }
-    
-    #[cfg(feature = "earcut-io")]
-    fn triangulate_2d_earcut(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]>
-    {
-        use earcut::Earcut;
-    
         // Flatten in a style suitable for earcut:
         //   - single “outer” array,
         //   - then hole(s) arrays, with the “hole index” = length of outer so far.
-        // See the existing “from_earcut” code for an example.
     
         let mut all_vertices_2d = Vec::new();
         let mut hole_indices = Vec::new();
     
-        // Outer polygon
+        // Push outer polygon points
         for pt in outer {
-            all_vertices_2d.push([pt[0], pt[1]]);
+            all_vertices_2d.push(pt[0]);
+            all_vertices_2d.push(pt[1]);
         }
     
-        let mut current_len = all_vertices_2d.len();
+        // Keep track of length so far, so we know where holes start
+        let mut current_len = all_vertices_2d.len() / 2; // in "2D points" count (not float count)
         for h in holes {
             hole_indices.push(current_len);
             for pt in *h {
-                all_vertices_2d.push([pt[0], pt[1]]);
+                all_vertices_2d.push(pt[0]);
+                all_vertices_2d.push(pt[1]);
             }
-            current_len = all_vertices_2d.len();
+            // Recount in terms of how many [x,y] points we have
+            current_len = all_vertices_2d.len() / 2;
         }
     
-        let mut earcut = Earcut::new();
-        let mut triangle_indices = Vec::new();
-    
         // dimension = 2
-        earcut.earcut(all_vertices_2d.clone(), &hole_indices, &mut triangle_indices);
+        let triangle_indices = earcutr::earcut(&all_vertices_2d.clone(), &hole_indices, 2).expect("earcutr triangulation failed");
     
         let mut result = Vec::new();
         for tri in triangle_indices.chunks_exact(3) {
-            let pts = [
-                Point3::new(all_vertices_2d[tri[0]][0], all_vertices_2d[tri[0]][1], 0.0),
-                Point3::new(all_vertices_2d[tri[1]][0], all_vertices_2d[tri[1]][1], 0.0),
-                Point3::new(all_vertices_2d[tri[2]][0], all_vertices_2d[tri[2]][1], 0.0),
-            ];
-            result.push(pts);
-        }
+        let pts = [
+            Point3::new(all_vertices_2d[2 * tri[0]], all_vertices_2d[2 * tri[0] + 1], 0.0),
+            Point3::new(all_vertices_2d[2 * tri[1]], all_vertices_2d[2 * tri[1] + 1], 0.0),
+            Point3::new(all_vertices_2d[2 * tri[2]], all_vertices_2d[2 * tri[2] + 1], 0.0),
+        ];
+        result.push(pts);
+    }
     
         result
     }
@@ -2203,14 +2136,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
     
             // Triangulate bottom (z=0)
-            #[cfg(feature="earcut-io")]
-            let bottom_tris = CSG::<()>::triangulate_2d_earcut(
-                &outer_2d[..],
-                &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-            );
-            
-            #[cfg(feature="earclip-io")]
-            let bottom_tris = CSG::<()>::triangulate_2d_earclip(
+            let bottom_tris = CSG::<()>::triangulate_2d(
                 &outer_2d[..],
                 &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
             );
@@ -2225,14 +2151,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     
             // Triangulate top (z= + direction.z, but we must keep full 3D offset)
             // We can simply do the same XY coords but shift them up by (dx, dy, dz)
-            #[cfg(feature="earcut-io")]
-            let top_tris = CSG::<()>::triangulate_2d_earcut(
-                &outer_2d[..],
-                &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-            );
-            
-            #[cfg(feature="earclip-io")]
-            let top_tris = CSG::<()>::triangulate_2d_earclip(
+            let top_tris = CSG::<()>::triangulate_2d(
                 &outer_2d[..],
                 &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
             );
@@ -4228,36 +4147,17 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 outer_xy.push([v.x, v.y]);
             }
     
-            // Triangulate via whichever approach is enabled:
-            #[cfg(feature="earclip-io")]
-            {
-                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = CSG::<()>::triangulate_2d_earclip(&outer_xy, &hole_refs);
-                // Write them to STL with normal = 0,0,1
-                for tri in triangles_2d {
-                    out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
-                    out.push_str("    outer loop\n");
-                    for pt in &tri {
-                        out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n", pt.x, pt.y, pt.z));
-                    }
-                    out.push_str("    endloop\n");
-                    out.push_str("  endfacet\n");
+            // Triangulate
+            let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
+            let triangles_2d = CSG::<()>::triangulate_2d(&outer_xy, &hole_refs);
+            for tri in triangles_2d {
+                out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
+                out.push_str("    outer loop\n");
+                for pt in &tri {
+                    out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n", pt.x, pt.y, pt.z));
                 }
-            }
-    
-            #[cfg(feature="earcut-io")]
-            {
-                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = CSG::<()>::triangulate_2d_earcut(&outer_xy, &hole_refs);
-                for tri in triangles_2d {
-                    out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
-                    out.push_str("    outer loop\n");
-                    for pt in &tri {
-                        out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n", pt.x, pt.y, pt.z));
-                    }
-                    out.push_str("    endloop\n");
-                    out.push_str("  endfacet\n");
-                }
+                out.push_str("    endloop\n");
+                out.push_str("  endfacet\n");
             }
         }
     
@@ -4365,28 +4265,10 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                 outer_xy.push([v.x, v.y]);
             }
     
-            // Triangulate the 2D polygon plus holes
-            #[cfg(feature="earclip-io")]
+            // Triangulate the 2D polygon plus holes 
             {
                 let hole_refs: Vec<&[[Real; 2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = CSG::<()>::triangulate_2d_earclip(&outer_xy, &hole_refs);
-                for tri in triangles_2d {
-                    // we have tri as [Point3<Real>;3], normal assumed +Z
-                    triangles.push(Triangle {
-                        normal: Normal::new([0.0, 0.0, 1.0]),
-                        vertices: [
-                            Vertex::new([tri[0].x as f32, tri[0].y as f32, tri[0].z as f32]),
-                            Vertex::new([tri[1].x as f32, tri[1].y as f32, tri[1].z as f32]),
-                            Vertex::new([tri[2].x as f32, tri[2].y as f32, tri[2].z as f32]),
-                        ],
-                    });
-                }
-            }
-    
-            #[cfg(feature="earcut-io")]
-            {
-                let hole_refs: Vec<&[[Real; 2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = CSG::<()>::triangulate_2d_earcut(&outer_xy, &hole_refs);
+                let triangles_2d = CSG::<()>::triangulate_2d(&outer_xy, &hole_refs);
                 for tri in triangles_2d {
                     triangles.push(Triangle {
                         normal: Normal::new([0.0, 0.0, 1.0]),

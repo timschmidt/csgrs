@@ -13,7 +13,7 @@ nalgebra = "0.33"
 cavalier_contours = { git = "https://github.com/timschmidt/cavalier_contours", branch = "shape-boolean-transformation" }
 chull = { version = "0.2.4", optional = true }
 dxf = { version = "0.6.0", optional = true }
-earclip = { version = "1.1.0", optional = true }
+earcutr = "0.4.3"
 meshtext = { version = "0.3.1", features = ["owned"], optional = true }
 rapier3d-f64 = { version = "0.23.0", optional = true }
 rapier3d = { version = "0.23.0", optional = true }
@@ -21,7 +21,6 @@ parry3d-f64  = { version = "0.18.0", optional = true }
 parry3d  = { version = "0.18.0", optional = true }
 rayon = { version = "1.7", optional = true }
 stl_io = { version = "0.8.3", optional = true }
-earcut = { version = "0.4.2", optional = true }
 image = { version = "0.25.5", optional = true }
 contour_tracing = { version = "1.0.12", features = ["array"], optional = true }
 hershey = { version = "0.1.1", optional = true }
@@ -32,7 +31,7 @@ core2 = { version = "0.4.0", features = ["alloc"] }
 geo = "0.29.3"
 
 [features]
-default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "earcut-io", "image-io", "metaballs", "hashmap", "sdf"]
+default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "image-io", "metaballs", "hashmap", "sdf"]
 parallel = ["rayon"]
 f64 = [
   "rapier3d-f64",
@@ -50,12 +49,6 @@ stl-io = [
 ]
 dxf-io = [
   "dxf",
-]
-earclip-io = [
-  "earclip",
-]
-earcut-io = [
-  "earcut",
 ]
 truetype-text = [
   "meshtext",
