@@ -95,13 +95,13 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/square_extrude.stl", extruded_square.to_stl_binary("square_extrude").unwrap());
 
-    let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(360.0, 32);
-    #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/circle_revolve_360.stl", revolve_circle.to_stl_binary("circle_revolve_360").unwrap());
+    //let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(360.0, 32);
+    //#[cfg(feature = "stl-io")]
+    //let _ = fs::write("stl/circle_revolve_360.stl", revolve_circle.to_stl_binary("circle_revolve_360").unwrap());
 
-    let partial_revolve = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(180.0, 32);
-    #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/circle_revolve_180.stl", partial_revolve.to_stl_binary("circle_revolve_180").unwrap());
+    //let partial_revolve = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(180.0, 32);
+    //#[cfg(feature = "stl-io")]
+    //let _ = fs::write("stl/circle_revolve_180.stl", partial_revolve.to_stl_binary("circle_revolve_180").unwrap());
 
     // 9) Subdivide triangles (for smoother sphere or shapes):
     let subdiv_sphere = sphere.subdivide_triangles(2); // 2 subdivision levels
@@ -156,10 +156,10 @@ fn main() {
     let _ = fs::write("stl/text_hello_extruded.stl", text_extruded.to_stl_binary("text_hello_extruded").unwrap());
 
     // 14) Mass properties (just printing them)
-    let (mass, com, principal_frame) = cube.mass_properties(1.0);
-    println!("Cube mass = {}", mass);
-    println!("Cube center of mass = {:?}", com);
-    println!("Cube principal inertia local frame = {:?}", principal_frame);
+    //let (mass, com, principal_frame) = cube.mass_properties(1.0);
+    //println!("Cube mass = {}", mass);
+    //println!("Cube center of mass = {:?}", com);
+    //println!("Cube principal inertia local frame = {:?}", principal_frame);
     
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)

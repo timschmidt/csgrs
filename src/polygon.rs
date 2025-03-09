@@ -79,9 +79,12 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
     
         // No holes, so hole_indices = []
         let hole_indices: Vec<usize> = Vec::new();
-    
+        
+        //println!("vertices: {:#?}", flattened);
+        //println!("hole indices: {:#?}", hole_indices);        
+        
         // Run earcutr (on the flattened array) 
-        let triangle_indices = earcutr::earcut(&flattened, &hole_indices, 2)
+        let triangle_indices = earcutr::earcut(&flattened, &hole_indices, 3)
             .expect("Failed to triangulate polygon using earcutr");
     
         // Convert back into 3D triangles

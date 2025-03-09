@@ -636,6 +636,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// - a circle arc for the "round" top
     /// - it tapers down to a cusp at bottom.
     /// This is just one of many possible "teardrop" definitions.
+    // todo: center on focus of the arc
     pub fn teardrop_outline(
         width: Real,
         length: Real,
@@ -653,18 +654,10 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mut coords = Vec::with_capacity(segments + 2);
         coords.push((0.0, 0.0));
 
-        // Arc around left side
+        // Arc around
         for i in 0..=half_seg {
             let t = PI * (i as Real / half_seg as Real);
             let x = -r * t.cos(); // left
-            let y = center_y + r * t.sin();
-            coords.push((x, y));
-        }
-
-        // Arc around right side back to bottom
-        for i in 0..=half_seg {
-            let t = PI - (i as Real)*(PI/(half_seg as Real));
-            let x = r * t.cos(); // right
             let y = center_y + r * t.sin();
             coords.push((x, y));
         }
@@ -1969,15 +1962,19 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     .map(|v| vec![v.pos.x, v.pos.y, v.pos.z])
             })
             .collect();
-
-        // Compute convex hull using the robust wrapper
-        let hull =
-            ConvexHullWrapper::try_new(&points, None).expect("Failed to compute convex hull");
-
+    
+        // Attempt to compute the convex hull using the robust wrapper
+        let hull = match ConvexHullWrapper::try_new(&points, None) {
+            Ok(h) => h,
+            Err(_) => {
+                // Fallback to an empty CSG if hull generation fails
+                return CSG::new();
+            }
+        };
+    
         let (verts, indices) = hull.vertices_indices();
-
+    
         // Reconstruct polygons as triangles
-        // todo: replace with filter / iterator
         let mut polygons = Vec::new();
         for tri in indices.chunks(3) {
             let v0 = &verts[tri[0]];
@@ -1988,7 +1985,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
-
+    
         CSG::from_polygons(&polygons)
     }
 
@@ -4238,9 +4235,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     
         let mut triangles = Vec::new();
     
-        //
-        // (A) Triangulate all 3D polygons in self.polygons
-        //
+        // Triangulate all 3D polygons in self.polygons
         for poly in &self.polygons {
             let normal = poly.plane.normal.normalize();
             // Convert polygon to triangles
