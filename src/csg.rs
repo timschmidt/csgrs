@@ -13,7 +13,6 @@ use geo::{
 //use geo_booleanop::boolean::BooleanOp;
 use std::error::Error;
 use std::fmt::Debug;
-//use cavalier_contours::polyline::{PlineSource, PlineSourceMut, Polyline};
 use crate::float_types::parry3d::{
     bounding_volume::Aabb,
     query::{Ray, RayCast},
@@ -2912,76 +2911,69 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         CSG::from_polygons(&triangles)
     }
 
-    /// Creates 2D text in the XY plane using a **Hershey** font.
+    /// Creates **2D line-stroke text** in the XY plane using a Hershey font.
     ///
-    /// Each glyph is rendered as one or more *open* polygons (strokes).  If you need 
-    /// “thick” or “filled” text, you could **offset** or **extrude** these strokes 
-    /// afterward.
+    /// Each glyph’s strokes become one or more `LineString<Real>` entries in `geometry`.
+    /// If you need them filled or thickened, you can later offset or extrude these lines.
     ///
     /// # Parameters
-    ///
-    /// - `text`: The text to render.
-    /// - `font`: A Hershey `Font` reference (from your hershey crate code).
-    /// - `size`: Optional scaling factor (defaults to 20.0 if `None`).
-    /// - `metadata`: Shared metadata to attach to each stroke polygon.
+    /// - `text`: The text to render
+    /// - `font`: The Hershey font (e.g., `hershey::fonts::GOTHIC_ENG_SANS`)
+    /// - `size`: Scale factor for glyphs
+    /// - `metadata`: Optional user data to store in the resulting CSG
     ///
     /// # Returns
+    /// A new `CSG` where each glyph stroke is a `Geometry::LineString` in `geometry`.
     ///
-    /// A new 2D `CSG<S>` in the XY plane, composed of multiple open polygons 
-    /// (one for each stroke).
-    ///
-    /// # Example
-    /// ```
-    /// let font = hershey::fonts::GOTHIC_ENG_SANS; // or whichever Font you have
-    /// let csg_text = CSG::from_hershey("HELLO", &font, Some(15.0), None);
-    /// // Now you can extrude or union, etc.
-    /// ```
-    #[cfg(feature = "hershey-text")]
     pub fn from_hershey(
         text: &str,
         font: &Font,
         size: Real,
         metadata: Option<S>,
     ) -> CSG<S> {
-        let mut all_polygons = Vec::new();
+        use geo::{Geometry, GeometryCollection};
 
-        // Simple left-to-right “pen” position
+        let mut all_strokes = Vec::new();
         let mut cursor_x: Real = 0.0;
 
         for ch in text.chars() {
-            // Optionally skip controls, spaces, or handle them differently
+            // Skip control chars or spaces as needed
             if ch.is_control() {
                 continue;
             }
-            // Attempt to get the glyph
+
+            // Attempt to find a glyph in this font
             match font.glyph(ch) {
-                Ok(g) => {
-                    // Convert the Hershey glyph’s line segments into open polylines/polygons
-                    let glyph_width = (g.max_x - g.min_x) as Real;
+                Ok(glyph) => {
+                    // Convert the Hershey lines to geo::LineString objects
+                    let glyph_width = (glyph.max_x - glyph.min_x) as Real;
+                    let strokes = build_hershey_glyph_lines(&glyph, size, cursor_x, 0.0);
 
-                    let strokes = build_hershey_glyph_polygons(
-                        &g,
-                        size,
-                        cursor_x,
-                        0.0,          // y offset
-                        metadata.clone()
-                    );
-                    all_polygons.extend(strokes);
+                    // Collect them
+                    all_strokes.extend(strokes);
 
-                    // Advance cursor in x by the glyph width (scaled).
-                    // You might add spacing, or shift by g.min_x, etc.
-                    cursor_x += glyph_width * size * 0.8; 
-                    // ^ adjust to taste or add extra letter spacing
+                    // Advance the pen in X
+                    cursor_x += glyph_width * size * 0.8;
                 }
                 Err(_) => {
-                    // Missing glyph => skip or move cursor
+                    // Missing glyph => skip or just advance
                     cursor_x += 6.0 * size;
                 }
             }
         }
 
-        // Combine everything
-        CSG::from_polygons(&all_polygons)
+        // Insert each stroke as a separate LineString in the geometry
+        let mut geo_coll = GeometryCollection::default();
+        for line_str in all_strokes {
+            geo_coll.0.push(Geometry::LineString(line_str));
+        }
+
+        // Return a new CSG that has no 3D polygons, but has these lines in geometry.
+        CSG {
+            polygons: Vec::new(),
+            geometry: geo_coll,
+            metadata,
+        }
     }
 
     /// Convert the polygons in this CSG to a Parry TriMesh.
@@ -4471,56 +4463,47 @@ fn polygon_from_slice<S: Clone + Send + Sync>(
 
 /// Helper for building open polygons from a single Hershey `Glyph`.
 #[cfg(feature = "hershey-text")]
-fn build_hershey_glyph_polygons<S: Clone + Send + Sync>(
+fn build_hershey_glyph_lines(
     glyph: &HersheyGlyph,
     scale: Real,
     offset_x: Real,
     offset_y: Real,
-    metadata: Option<S>,
-) -> Vec<Polygon<S>> {
-    let mut polygons = Vec::new();
+) -> Vec<geo::LineString<Real>> {
+    use geo::{coord, LineString};
 
-    // We will collect line segments in a “current” Polyline 
-    // each time we see `Vector::MoveTo` => start a new stroke.
-    let mut current_pline = Polyline::new();
-    let mut _pen_down = false;
+    let mut strokes = Vec::new();
+
+    // We'll accumulate each stroke’s points in `current_coords`,
+    // resetting whenever Hershey issues a "MoveTo"
+    let mut current_coords = Vec::new();
 
     for vector_cmd in &glyph.vectors {
         match vector_cmd {
             HersheyVector::MoveTo { x, y } => {
-                // The Hershey code sets pen-up or "hovering" here: start a new polyline
-                // if the old polyline has 2+ vertices, push it into polygons
-                if current_pline.vertex_count() >= 2 {
-                    // Convert the existing stroke into an open polygon
-                    let stroke_poly = Polygon::from_polyline(&current_pline, metadata.clone());
-                    polygons.push(stroke_poly);
+                // If we already had 2+ points, that stroke is complete:
+                if current_coords.len() >= 2 {
+                    strokes.push(LineString::from(current_coords));
                 }
-                // Begin a fresh new stroke
-                current_pline = Polyline::new();
+                // Start a new stroke
+                current_coords = Vec::new();
                 let px = offset_x + (*x as Real) * scale;
                 let py = offset_y + (*y as Real) * scale;
-                current_pline.add(px, py, 0.0);
-
-                _pen_down = false;
+                current_coords.push(coord! { x: px, y: py });
             }
             HersheyVector::LineTo { x, y } => {
-                // If pen was up, effectively we’re continuing from last point
                 let px = offset_x + (*x as Real) * scale;
                 let py = offset_y + (*y as Real) * scale;
-                current_pline.add(px, py, 0.0);
-
-                _pen_down = true;
+                current_coords.push(coord! { x: px, y: py });
             }
         }
     }
 
-    // If our final polyline has >=2 vertices, store it
-    if current_pline.vertex_count() >= 2 {
-        let stroke_poly = Polygon::from_polyline(&current_pline, metadata.clone());
-        polygons.push(stroke_poly);
+    // End-of-glyph: if our final stroke has 2+ points, convert to a line string
+    if current_coords.len() >= 2 {
+        strokes.push(LineString::from(current_coords));
     }
 
-    polygons
+    strokes
 }
 
 // Extract only the polygons from a geometry collection

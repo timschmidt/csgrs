@@ -184,15 +184,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f1fe948ff07f4bd06c30984e69f5b4899c516a3ef74f34df92a2df2ab535495"
 
 [[package]]
-name = "cavalier_contours"
-version = "0.4.0"
-source = "git+https://github.com/timschmidt/cavalier_contours?branch=shape-boolean-transformation#5d5b8ea0c8351b109a820b27a7323f803941f29d"
-dependencies = [
- "num-traits 0.2.19",
- "static_aabb2d_index",
-]
-
-[[package]]
 name = "cc"
 version = "1.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -252,15 +243,6 @@ checksum = "977db54e5eec96279bea3032dcf41d3844e90d62e5cfeded48f8d53b1a755d7a"
 dependencies = [
  "num-bigint 0.3.3",
  "num-traits 0.2.19",
-]
-
-[[package]]
-name = "clipper-sys"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5141c32419064aef7322f754b92fd4ea53c360c1ad984ec38b58af533eba3ac"
-dependencies = [
- "cc",
 ]
 
 [[package]]
@@ -365,7 +347,6 @@ checksum = "43da5946c66ffcc7745f48db692ffbb10a83bfe0afd96235c5c2a4fb23994929"
 name = "csgrs"
 version = "0.16.0"
 dependencies = [
- "cavalier_contours",
  "chull",
  "contour_tracing",
  "core2",
@@ -374,7 +355,6 @@ dependencies = [
  "fast-surface-nets",
  "geo",
  "geo-booleanop",
- "geo-offset",
  "hashbrown 0.15.2",
  "hershey",
  "image",
@@ -562,28 +542,6 @@ dependencies = [
  "geo-types 0.6.2",
  "num-traits 0.2.19",
  "robust 0.1.2",
-]
-
-[[package]]
-name = "geo-clipper"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2370335cc0c40c7bc1e5b0ead27bdbb2132d54cfbb96248a4bdd65db1a6873aa"
-dependencies = [
- "clipper-sys",
- "geo-types 0.7.15",
-]
-
-[[package]]
-name = "geo-offset"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d74cc1ae801176d4cfee3f4be7dd8758aa5e3c6155bf7d1fd8b5db3546eb7fe4"
-dependencies = [
- "geo-clipper",
- "geo-types 0.7.15",
- "itertools 0.14.0",
- "num-traits 0.2.19",
 ]
 
 [[package]]
@@ -876,15 +834,6 @@ name = "itertools"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
 dependencies = [
  "either",
 ]
@@ -1635,15 +1584,6 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
-
-[[package]]
-name = "static_aabb2d_index"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1204bd3057a2225dc60d157bd921aaeaa4d318527bd32af4678cad39e5279849"
-dependencies = [
- "num-traits 0.2.19",
-]
 
 [[package]]
 name = "static_assertions"

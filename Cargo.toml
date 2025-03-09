@@ -10,7 +10,6 @@ readme = "readme.md"
 
 [dependencies]
 nalgebra = "0.33"
-cavalier_contours = { git = "https://github.com/timschmidt/cavalier_contours", branch = "shape-boolean-transformation" }
 chull = { version = "0.2.4", optional = true }
 dxf = { version = "0.6.0", optional = true }
 earcutr = "0.4.3"
@@ -30,7 +29,6 @@ hashbrown = { version = "0.15.2", optional = true }
 core2 = { version = "0.4.0", features = ["alloc"] }
 geo = "0.29.3"
 geo-booleanop = "0.3.2"
-geo-offset = "0.4.0"
 
 [features]
 default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "image-io", "metaballs", "hashmap", "sdf"]
