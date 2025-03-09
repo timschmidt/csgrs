@@ -424,25 +424,31 @@ if let Some(data_mut) = poly.metadata_mut() {
 
 ---
 
+## Performance
+Patterns we work to follow throughout the library to improve performance and memory usage:
+- functions should accept borrowed slices, this permits easy use of iterators
+- iterators should be used wherever parallelism may help (and rayon's par_iter)
+- allocations should be kept to a minimum.  Memory should be read-only if possible, clone if necessary, and offer the choice of transmut in place or create new copy when appropriate
+
 ## Roadmap / Todo
 - transition all extrudes over to Polygon/Multipolygon native / polygon secondary, disengage chulls
 - transition text to Polygon/Multipolygon, which can then be extruded / tessellated through the normal means
-- check flatten() works on polygons and flattens to polylines, same for slice
+- check flatten() works on polygons and flattens to GeometryCollections, same for slice
 - fix shape of reuleaux
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere
 - fix up error handling with result types
 - ray intersection (singular)
-- expose cavalier_contour Polyline traits on 2D shapes
+- expose geo traits on 2D shapes
 - https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d
 - convert more for loops to iterators - csg::transform
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - document coordinate system / coordinate transformations / compounded transformations
+- produce renders for every function
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
-- 2d functionality tests
 - bending
 - gears
 - lead-ins, lead-outs
@@ -454,9 +460,6 @@ if let Some(data_mut) = poly.metadata_mut() {
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - screw threads
 - attachment points / rapier integration
-- implement 2d offsetting with these for testing against cavalier_contours
-  - https://github.com/Akirami/polygon-offsetting
-  - https://github.com/anlumo/offset_polygon
 - support scale and translation along a vector in rotate extrude
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
 - reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
@@ -467,24 +470,20 @@ if let Some(data_mut) = poly.metadata_mut() {
   - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
 - implement functions from https://docs.rs/geo/latest/geo/
-- port https://github.com/21re/rust-geo-booleanop to cavalier_contours
 - https://crates.io/crates/polylabel
 - reduce allocations
 - history tree
   - STEP import / export
   - curves?
 - constraintt solving tree
+- test geo_booleanop as alternative to geo's built-in boolean ops.
+- adapt cavalier_contours demo application
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
 - https://github.com/asny/tri-mesh port
-- https://docs.rs/geo/latest/geo port
-  - https://crates.io/crates/geo
-  - https://crates.io/crates/geo-buf
-  - https://crates.io/crates/geo-offset
-  - https://crates.io/crates/offset-polygon
-  - https://crates.io/crates/geo-booleanop
 - https://crates.io/crates/flo_curves
+- port https://github.com/21re/rust-geo-booleanop to cavalier_contours
 ---
 
 ## License
