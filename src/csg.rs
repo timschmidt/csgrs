@@ -262,18 +262,29 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         a.build(&b.all_polygons());
         a.invert();
         
-        let mut new_geometry = GeometryCollection::default();
-
-        for g1 in &self.geometry.0 {
-            for g2 in &other.geometry.0 {
-                let result_geom = g1.difference(&g2);
-                new_geometry.0.push(result_geom);
+        // -- 2D geometry-based approach --
+        let polys1 = gc_to_polygons(&self.geometry);
+        let polys2 = gc_to_polygons(&other.geometry);
+    
+        // Perform difference on those polygons
+        let differenced = polys1.difference(&polys2);
+    
+        // Wrap the differenced polygons + lines/points back into one GeometryCollection
+        let mut final_gc = GeometryCollection::default();
+        final_gc.0.push(Geometry::MultiPolygon(differenced));
+    
+        // Re-insert lines & points from self only
+        // (If you need to exclude lines/points that lie inside other, you'd need more checks here.)
+        for g in &self.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                _ => final_gc.0.push(g.clone()),
             }
         }
-
+    
         CSG {
             polygons: a.all_polygons(),
-            geometry: new_geometry,
+            geometry: final_gc,
             metadata: self.metadata.clone(),
         }
     }
@@ -291,36 +302,70 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         a.build(&b.all_polygons());
         a.invert();
         
-        let mut new_geometry = GeometryCollection::default();
-
-        for g1 in &self.geometry {
-            for g2 in &other.geometry {
-                let result_geom = g1.intersection(&g2);
-                new_geometry.0.push(result_geom);
+        // -- 2D geometry-based approach --
+        let polys1 = gc_to_polygons(&self.geometry);
+        let polys2 = gc_to_polygons(&other.geometry);
+    
+        // Perform intersection on those polygons
+        let intersected = polys1.intersection(&polys2);
+    
+        // Wrap the intersected polygons + lines/points into one GeometryCollection
+        let mut final_gc = GeometryCollection::default();
+        final_gc.0.push(Geometry::MultiPolygon(intersected));
+    
+        // For lines and points: keep them only if they intersect in both sets
+        // todo: detect intersection of non-polygons
+        for g in &self.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                _ => final_gc.0.push(g.clone()),
             }
         }
-
+        for g in &other.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                _ => final_gc.0.push(g.clone()),
+            }
+        }
+    
         CSG {
             polygons: a.all_polygons(),
-            geometry: new_geometry,
+            geometry: final_gc,
             metadata: self.metadata.clone(),
         }
     }
     
     /// 2D symmetric difference (XOR) using the cavalier_contours `Shape` boolean operations.
     pub fn xor(&self, other: &CSG<S>) -> CSG<S> {
-        let mut new_geometry = GeometryCollection::default();
-
-        for g1 in &self.geometry {
-            for g2 in &other.geometry {
-                let result_geom = g1.xor(&g2);
-                new_geometry.0.push(result_geom);
+        // -- 2D geometry-based approach only (no polygon-based Node usage here) --
+        let polys1 = gc_to_polygons(&self.geometry);
+        let polys2 = gc_to_polygons(&other.geometry);
+    
+        // Perform symmetric difference (XOR)
+        let xored = polys1.xor(&polys2);
+    
+        // Wrap in a new GeometryCollection
+        let mut final_gc = GeometryCollection::default();
+        final_gc.0.push(Geometry::MultiPolygon(xored));
+    
+        // Re-insert lines & points from both sets
+        for g in &self.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                _ => final_gc.0.push(g.clone()),
             }
         }
-
+        for g in &other.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                _ => final_gc.0.push(g.clone()),
+            }
+        }
+    
         CSG {
+            // If you also want a polygon-based Node XOR, you'd need to implement that similarly
             polygons: self.polygons.clone(),
-            geometry: new_geometry,
+            geometry: final_gc,
             metadata: self.metadata.clone(),
         }
     }

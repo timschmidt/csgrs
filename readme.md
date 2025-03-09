@@ -425,13 +425,12 @@ if let Some(data_mut) = poly.metadata_mut() {
 ---
 
 ## Roadmap / Todo
-- transition all extrudes over to CCShape native / polygon secondary, disengage chulls
-- transition text to CCShape, which can then be extruded / tessellated through the normal means
+- transition all extrudes over to Polygon/Multipolygon native / polygon secondary, disengage chulls
+- transition text to Polygon/Multipolygon, which can then be extruded / tessellated through the normal means
 - check flatten() works on polygons and flattens to polylines, same for slice
 - fix shape of reuleaux
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere
-- make improved use of the bounding box index in CCShape to speed operations
 - fix up error handling with result types
 - ray intersection (singular)
 - expose cavalier_contour Polyline traits on 2D shapes
@@ -470,6 +469,11 @@ if let Some(data_mut) = poly.metadata_mut() {
 - implement functions from https://docs.rs/geo/latest/geo/
 - port https://github.com/21re/rust-geo-booleanop to cavalier_contours
 - https://crates.io/crates/polylabel
+- reduce allocations
+- history tree
+  - STEP import / export
+  - curves?
+- constraintt solving tree
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
