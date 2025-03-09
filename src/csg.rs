@@ -12,10 +12,7 @@ use geo::{
 //extern crate geo_booleanop;
 //use geo_booleanop::boolean::BooleanOp;
 use std::error::Error;
-use cavalier_contours::polyline::{
-    PlineSource, PlineSourceMut, Polyline
-};
-use cavalier_contours::shape_algorithms::Shape as CCShape;
+use cavalier_contours::polyline::{PlineSource, PlineSourceMut, Polyline};
 use crate::float_types::parry3d::{
     bounding_volume::Aabb,
     query::{Ray, RayCast},
@@ -4235,96 +4232,139 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// std::fs::write("my_solid.stl", bytes)?;
     /// ```
     #[cfg(feature = "stl-io")]
-    pub fn to_stl_binary(&self, _name:&str) -> std::io::Result<Vec<u8>> {
+    pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
         use stl_io::{Normal, Vertex, Triangle, write_stl};
         use core2::io::Cursor;
     
         let mut triangles = Vec::new();
     
         //
-        // 1) Triangulate all 3D polygons
+        // (A) Triangulate all 3D polygons in self.polygons
         //
         for poly in &self.polygons {
             let normal = poly.plane.normal.normalize();
+            // Convert polygon to triangles
             let tri_list = poly.triangulate();
             for tri in tri_list {
                 triangles.push(Triangle {
                     normal: Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
                     vertices: [
-                        Vertex::new([tri[0].pos.x as f32, tri[0].pos.y as f32, tri[0].pos.z as f32]),
-                        Vertex::new([tri[1].pos.x as f32, tri[1].pos.y as f32, tri[1].pos.z as f32]),
-                        Vertex::new([tri[2].pos.x as f32, tri[2].pos.y as f32, tri[2].pos.z as f32]),
+                        Vertex::new([
+                            tri[0].pos.x as f32,
+                            tri[0].pos.y as f32,
+                            tri[0].pos.z as f32
+                        ]),
+                        Vertex::new([
+                            tri[1].pos.x as f32,
+                            tri[1].pos.y as f32,
+                            tri[1].pos.z as f32
+                        ]),
+                        Vertex::new([
+                            tri[2].pos.x as f32,
+                            tri[2].pos.y as f32,
+                            tri[2].pos.z as f32
+                        ]),
                     ],
                 });
             }
         }
     
         //
-        // 2) Triangulate all 2D CCShape polylines, just like in to_stl_ascii
+        // (B) Triangulate any 2D geometry from self.geometry (Polygon, MultiPolygon).
+        //     We treat these as lying in the XY plane, at Z=0, with a default normal of +Z.
         //
-        //    *All polylines are taken as lying in the XY plane with Z=0.*
-        //    The normal for these 2D polygons is (0, 0, 1) or (0, 0, -1).
-        //    We'll choose (0,0,1) for convenience, matching the ASCII approach.
-        //
+        for geom in &self.geometry {
+            match geom {
+                geo::Geometry::Polygon(poly2d) => {
+                    // Gather outer ring as [x,y]
+                    let outer: Vec<[Real; 2]> =
+                        poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
     
-        for (_outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
-            let outer_pline = &outer_ipline.polyline;
-            let Some(aabb) = outer_pline.extents() else {
-                // empty or single-vertex pline
-                continue;
-            };
-            let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
+                    // Gather holes
+                    let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
+                        .interiors()
+                        .iter()
+                        .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
+                        .collect();
     
-            // find candidate holes overlapping in bounding box
-            let bounding_box_query = self.polylines.plines_index.query(oxmin, oymin, oxmax, oymax);
-            let mut holes_xy: Vec<Vec<[Real; 2]>> = Vec::new();
-            for hole_candidate_idx in bounding_box_query {
-                // remember: cw_plines start after all ccw_plines in the indexing
-                let cw_start = self.polylines.ccw_plines.len();
-                if hole_candidate_idx < cw_start {
-                    // that means it's not in cw_plines but just another ccw, skip
-                    continue;
-                }
-                let hole_ipline = &self.polylines.cw_plines[hole_candidate_idx - cw_start].polyline;
-                // check if this candidate hole is inside the outer
-                let hv0 = hole_ipline.at(0);
-                if CSG::<()>::point_in_polygon_2d(hv0.x, hv0.y, &outer_pline) {
-                    // gather the hole points
-                    let mut hole_pts = Vec::with_capacity(hole_ipline.vertex_count());
-                    for i in 0..hole_ipline.vertex_count() {
-                        let p = hole_ipline.at(i);
-                        hole_pts.push([p.x, p.y]);
+                    // Convert each hole to a slice-reference for triangulation
+                    let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
+    
+                    // Triangulate using our earcutr-based helper
+                    let tri_2d = Self::triangulate_2d(&outer, &hole_refs);
+    
+                    // Each triangle is in XY, so normal = (0,0,1)
+                    for tri_pts in tri_2d {
+                        triangles.push(Triangle {
+                            normal: Normal::new([0.0, 0.0, 1.0]),
+                            vertices: [
+                                Vertex::new([
+                                    tri_pts[0].x as f32,
+                                    tri_pts[0].y as f32,
+                                    tri_pts[0].z as f32
+                                ]),
+                                Vertex::new([
+                                    tri_pts[1].x as f32,
+                                    tri_pts[1].y as f32,
+                                    tri_pts[1].z as f32
+                                ]),
+                                Vertex::new([
+                                    tri_pts[2].x as f32,
+                                    tri_pts[2].y as f32,
+                                    tri_pts[2].z as f32
+                                ]),
+                            ],
+                        });
                     }
-                    holes_xy.push(hole_pts);
                 }
-            }
     
-            // gather points for outer
-            let mut outer_xy = Vec::with_capacity(outer_pline.vertex_count());
-            for i in 0..outer_pline.vertex_count() {
-                let v = outer_pline.at(i);
-                outer_xy.push([v.x, v.y]);
-            }
+                geo::Geometry::MultiPolygon(mpoly) => {
+                    // Same approach, but each Polygon in the MultiPolygon
+                    for poly2d in &mpoly.0 {
+                        let outer: Vec<[Real; 2]> =
+                            poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
     
-            // Triangulate the 2D polygon plus holes 
-            {
-                let hole_refs: Vec<&[[Real; 2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = CSG::<()>::triangulate_2d(&outer_xy, &hole_refs);
-                for tri in triangles_2d {
-                    triangles.push(Triangle {
-                        normal: Normal::new([0.0, 0.0, 1.0]),
-                        vertices: [
-                            Vertex::new([tri[0].x as f32, tri[0].y as f32, tri[0].z as f32]),
-                            Vertex::new([tri[1].x as f32, tri[1].y as f32, tri[1].z as f32]),
-                            Vertex::new([tri[2].x as f32, tri[2].y as f32, tri[2].z as f32]),
-                        ],
-                    });
+                        let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
+                            .interiors()
+                            .iter()
+                            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
+                            .collect();
+    
+                        let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
+                        let tri_2d = Self::triangulate_2d(&outer, &hole_refs);
+    
+                        for tri_pts in tri_2d {
+                            triangles.push(Triangle {
+                                normal: Normal::new([0.0, 0.0, 1.0]),
+                                vertices: [
+                                    Vertex::new([
+                                        tri_pts[0].x as f32,
+                                        tri_pts[0].y as f32,
+                                        tri_pts[0].z as f32
+                                    ]),
+                                    Vertex::new([
+                                        tri_pts[1].x as f32,
+                                        tri_pts[1].y as f32,
+                                        tri_pts[1].z as f32
+                                    ]),
+                                    Vertex::new([
+                                        tri_pts[2].x as f32,
+                                        tri_pts[2].y as f32,
+                                        tri_pts[2].z as f32
+                                    ]),
+                                ],
+                            });
+                        }
+                    }
                 }
+    
+                // Skip other geometry types: lines, points, etc.
+                _ => {}
             }
-        } // end for all ccw_plines
+        }
     
         //
-        // 3) Write out to STL
+        // (C) Encode into a binary STL buffer
         //
         let mut cursor = Cursor::new(Vec::new());
         write_stl(&mut cursor, triangles.iter())?;
@@ -4745,17 +4785,6 @@ fn extend_chain_forward(
             }
         }
     }
-}
-
-/// Returns all polylines from both the ccw_plines and cw_plines fields of a Shape,
-/// concatenated together into a single Vec<Polyline<Real>>.
-pub fn ccshape_to_polylines(shape: CCShape<Real>) -> Vec<Polyline<Real>> {
-    shape.ccw_plines.iter()
-        .map(|indexed_pline| indexed_pline.polyline.clone())
-        .chain(shape.cw_plines.iter()
-            .map(|indexed_pline| indexed_pline.polyline.clone()),
-        )
-        .collect()
 }
 
 /// Basic point in polygon test in 2D (XY).  
