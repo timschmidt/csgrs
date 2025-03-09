@@ -2172,7 +2172,6 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         {
             match geom {
                 geo::Geometry::Polygon(poly) => {
-                    // We do the same logic as extrude_polygon, inlined or via a helper
                     let exterior_coords: Vec<[Real; 2]> =
                         poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
                     let interior_rings: Vec<Vec<[Real; 2]>> = poly
@@ -2221,10 +2220,10 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                             let t_j = b_j + direction;
                             out_polygons.push(Polygon::new(
                                 vec![
-                                    Vertex::new(b_i, Vector3::zeros()),
                                     Vertex::new(b_j, Vector3::zeros()),
-                                    Vertex::new(t_j, Vector3::zeros()),
+                                    Vertex::new(b_i, Vector3::zeros()),
                                     Vertex::new(t_i, Vector3::zeros()),
+                                    Vertex::new(t_j, Vector3::zeros()),
                                 ],
                                 metadata.clone(),
                             ));
