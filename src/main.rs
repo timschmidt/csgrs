@@ -123,7 +123,7 @@ fn main() {
     }
 
     // 12) Polyhedron example (simple tetrahedron):
-    let points = &[
+    let points = [
         [0.0, 0.0, 0.0],
         [1.0, 0.0, 0.0],
         [0.5, 1.0, 0.0],
@@ -135,9 +135,9 @@ fn main() {
         vec![1, 2, 3],
         vec![2, 0, 3],
     ];
-    let poly = CSG::polyhedron(points, &faces, None);
+    let poly = CSG::polyhedron(&points, &faces, None);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/tetrahedron.stl", poly.to_stl_binary("tetrahedron").unwrap());
+    let _ = fs::write("stl/tetrahedron.stl", poly.to_stl_ascii("tetrahedron"));
 
     // 13) Text example (2D). Provide a valid TTF font data below:
     // (Replace "asar.ttf" with a real .ttf file in your project.)
@@ -156,10 +156,10 @@ fn main() {
     let _ = fs::write("stl/text_hello_extruded.stl", text_extruded.to_stl_binary("text_hello_extruded").unwrap());
 
     // 14) Mass properties (just printing them)
-    //let (mass, com, principal_frame) = cube.mass_properties(1.0);
-    //println!("Cube mass = {}", mass);
-    //println!("Cube center of mass = {:?}", com);
-    //println!("Cube principal inertia local frame = {:?}", principal_frame);
+    let (mass, com, principal_frame) = cube.mass_properties(1.0);
+    println!("Cube mass = {}", mass);
+    println!("Cube center of mass = {:?}", com);
+    println!("Cube principal inertia local frame = {:?}", principal_frame);
     
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)

@@ -5,9 +5,6 @@ use crate::plane::Plane;
 use nalgebra::{
     Point2, Point3, Vector3,
 };
-use cavalier_contours::polyline::{
-    PlineSource, Polyline,
-};
 extern crate earcutr;
 
 /// A convex polygon, defined by a list of vertices and a plane.
@@ -78,13 +75,10 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         }
     
         // No holes, so hole_indices = []
-        let hole_indices: Vec<usize> = Vec::new();
-        
-        //println!("vertices: {:#?}", flattened);
-        //println!("hole indices: {:#?}", hole_indices);        
+        let hole_indices: Vec<usize> = Vec::new();      
         
         // Run earcutr (on the flattened array) 
-        let triangle_indices = earcutr::earcut(&flattened, &hole_indices, 3)
+        let triangle_indices = earcutr::earcut(&flattened, &hole_indices, 2)
             .expect("Failed to triangulate polygon using earcutr");
     
         // Convert back into 3D triangles
@@ -191,25 +185,6 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             plane: new_plane,
             metadata: self.metadata.clone(),
         }
-    }
-    
-    /// Build a new Polygon from a set of 2D polylines in XY. Each polyline
-    /// is turned into one polygon at z=0.
-    pub fn from_polyline(polyline: &Polyline<Real>, metadata: Option<S>) -> Polygon<S> {
-        if polyline.vertex_count() < 3 {
-            // degenerate polygon
-        }
-
-        let plane_normal = Vector3::z();
-        let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
-        for i in 0..polyline.vertex_count() {
-            let v = polyline.at(i);
-            poly_verts.push(Vertex::new(
-                Point3::new(v.x, v.y, 0.0),
-                plane_normal,
-            ));
-        }
-        return Polygon::new(poly_verts, metadata);
     }
     
     /// Returns an error if any coordinate is not finite (NaN or ±∞).
