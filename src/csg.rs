@@ -4,10 +4,10 @@ use crate::vertex::Vertex;
 use crate::plane::Plane;
 use crate::polygon::Polygon;
 use nalgebra::{
-    Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
+    Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3, partial_min, partial_max,
 };
 use geo::{
-    AffineTransform, AffineOps, line_string, BooleanOps, Coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Polygon as GeoPolygon,
+    AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Polygon as GeoPolygon, Rect,
 };
 //extern crate geo_booleanop;
 //use geo_booleanop::boolean::BooleanOp;
@@ -109,6 +109,24 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             geometry: GeometryCollection::default(),
             metadata: None,
         }
+    }
+    
+    /// Helper to collect all vertices from the CSG.
+    #[cfg(not(feature = "parallel"))]
+    pub fn vertices(&self) -> Vec<Vertex> {
+        self.polygons
+            .iter()
+            .flat_map(|p| p.vertices.clone())
+            .collect()
+    }
+    
+    /// Parallel helper to collect all vertices from the CSG.
+    #[cfg(feature = "parallel")]
+    pub fn vertices(&self) -> Vec<Vertex> {
+        self.polygons
+            .par_iter()
+            .flat_map(|p| p.vertices.clone())
+            .collect()
     }
 
     /// Build a CSG from an existing polygon list
@@ -2758,9 +2776,11 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     }
     */
 
-    /// Returns a `parry3d::bounding_volume::Aabb`.
+    /// Returns a [`parry3d::bounding_volume::Aabb`] by merging:
+    /// 1. The 3D bounds of all `polygons`.
+    /// 2. The 2D bounding rectangle of `self.geometry`, interpreted at z=0.
     pub fn bounding_box(&self) -> Aabb {
-        // We'll track min and max in x, y, z among all polygons and polylines.
+        // Track overall min/max in x, y, z among all 3D polygons and the 2D geometry’s bounding_rect.
         let mut min_x = Real::MAX;
         let mut min_y = Real::MAX;
         let mut min_z = Real::MAX;
@@ -2768,62 +2788,47 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mut max_y = -Real::MAX;
         let mut max_z = -Real::MAX;
 
-        // First gather from the polygons (3D)
+        // 1) Gather from the 3D polygons
         for poly in &self.polygons {
             for v in &poly.vertices {
-                if v.pos.x < min_x { min_x = v.pos.x; }
-                if v.pos.y < min_y { min_y = v.pos.y; }
-                if v.pos.z < min_z { min_z = v.pos.z; }
-                if v.pos.x > max_x { max_x = v.pos.x; }
-                if v.pos.y > max_y { max_y = v.pos.y; }
-                if v.pos.z > max_z { max_z = v.pos.z; }
+                min_x = *partial_min(&min_x, &v.pos.x).unwrap();
+                min_y = *partial_min(&min_y, &v.pos.y).unwrap();
+                min_z = *partial_min(&min_z, &v.pos.z).unwrap();
+
+                max_x = *partial_max(&max_x, &v.pos.x).unwrap();
+                max_y = *partial_max(&max_y, &v.pos.y).unwrap();
+                max_z = *partial_max(&max_z, &v.pos.z).unwrap();
             }
         }
 
-        // Next gather from the shape's 2D bounding index (CCShape),
-        // which is effectively min_x, min_y, max_x, max_y in 2D.
-        // We'll interpret them in 3D by letting z=0 for the shape.
-        if let Some(bounds) = self.polylines.plines_index.bounds() {
-            // Compare with our current min/max
-            if bounds.min_x < min_x { min_x = bounds.min_x; }
-            if bounds.min_y < min_y { min_y = bounds.min_y; }
-            // we treat polylines as z=0, so check that too
-            if 0.0 < min_z { min_z = 0.0; }
+        // 2) Gather from the 2D geometry using `geo::BoundingRect`
+        //    This gives us (min_x, min_y) / (max_x, max_y) in 2D. For 3D, treat z=0.
+        //    Explicitly capture the result of `.bounding_rect()` as an Option<Rect<Real>>
+        let maybe_rect: Option<Rect<Real>> = self.geometry.bounding_rect().into();
+    
+        if let Some(rect) = maybe_rect {
+            let min_pt = rect.min();
+            let max_pt = rect.max();
 
-            if bounds.max_x > max_x { max_x = bounds.max_x; }
-            if bounds.max_y > max_y { max_y = bounds.max_y; }
-            // likewise for z=0
-            if 0.0 > max_z { max_z = 0.0; }
+            // Merge the 2D bounds into our existing min/max, forcing z=0 for 2D geometry.
+            min_x = *partial_min(&min_x, &min_pt.x).unwrap();
+            min_y = *partial_min(&min_y, &min_pt.y).unwrap();
+            min_z = *partial_min(&min_z, &0.0).unwrap();
+
+            max_x = *partial_max(&max_x, &max_pt.x).unwrap();
+            max_y = *partial_max(&max_y, &max_pt.y).unwrap();
+            max_z = *partial_max(&max_z, &0.0).unwrap();
         }
 
-        // If nothing was updated (e.g. no geometry), clamp to a trivial box
+        // If still uninitialized (e.g., no polygons or geometry), return a trivial AABB at origin
         if min_x > max_x {
-            // Typically means we had no polygons or polylines at all
             return Aabb::new(Point3::origin(), Point3::origin());
         }
 
-        // Form the parry3d Aabb from [mins..maxs]
+        // Build a parry3d Aabb from these min/max corners
         let mins = Point3::new(min_x, min_y, min_z);
         let maxs = Point3::new(max_x, max_y, max_z);
         Aabb::new(mins, maxs)
-    }
-
-    /// Helper to collect all vertices from the CSG.
-    #[cfg(not(feature = "parallel"))]
-    pub fn vertices(&self) -> Vec<Vertex> {
-        self.polygons
-            .iter()
-            .flat_map(|p| p.vertices.clone())
-            .collect()
-    }
-    
-    /// Parallel helper to collect all vertices from the CSG.
-    #[cfg(feature = "parallel")]
-    pub fn vertices(&self) -> Vec<Vertex> {
-        self.polygons
-            .par_iter()
-            .flat_map(|p| p.vertices.clone())
-            .collect()
     }
 
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
