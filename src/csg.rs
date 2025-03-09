@@ -1,4 +1,4 @@
-use crate::float_types::{EPSILON, PI, TAU, Real};
+use crate::float_types::{EPSILON, PI, TAU, FRAC_PI_2, Real};
 use crate::bsp::Node;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
@@ -13,7 +13,7 @@ use geo::{
 //use geo_booleanop::boolean::BooleanOp;
 use std::error::Error;
 use cavalier_contours::polyline::{
-    PlineSource, PlineSourceMut, Polyline, PlineOrientation
+    PlineSource, PlineSourceMut, Polyline
 };
 use cavalier_contours::shape_algorithms::Shape as CCShape;
 use cavalier_contours::shape_algorithms::ShapeOffsetOptions;
@@ -151,7 +151,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     }
     
     /// Create a CSG that holds *only* 2D geometry in a `geo::GeometryCollection`.
-    pub fn from_geo(geometry: GeometryCollection<f64>, metadata: Option<S>) -> Self {
+    pub fn from_geo(geometry: GeometryCollection<Real>, metadata: Option<S>) -> Self {
         let mut csg = CSG::new();
         csg.geometry = geometry;
         csg.metadata = metadata;
@@ -456,7 +456,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         CSG::from_geo(gc, metadata)
     }
 
-    
     /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
     /// `corner_segments` controls the smoothness of each rounded corner.
     pub fn rounded_rectangle(
@@ -470,33 +469,57 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         if r <= EPSILON {
             return Self::square(width, height, metadata);
         }
-        // Build a single closed polyline with arcs at the corners.
-        let mut pl = Polyline::new_closed();
-        let arc = |pl: &mut Polyline<Real>,
-                   cx: Real,
-                   cy: Real,
-                   start_deg: Real,
-                   end_deg: Real| {
-            let start_rad = start_deg.to_radians();
-            let end_rad = end_deg.to_radians();
-            let step = (end_rad - start_rad) / corner_segments as Real;
-            for i in 0..=corner_segments {
-                let t = start_rad + (i as Real) * step;
-                let x = cx + r * t.cos();
-                let y = cy + r * t.sin();
-                pl.add(x, y, 0.0);
-            }
-        };
-        // TL corner arc: 180 -> 270
-        arc(&mut pl, r, r, 180.0, 270.0);
-        // TR corner arc: 270 -> 360
-        arc(&mut pl, width - r, r, 270.0, 360.0);
-        // BR corner: 0 -> 90
-        arc(&mut pl, width - r, height - r, 0.0, 90.0);
-        // BL corner: 90 -> 180
-        arc(&mut pl, r, height - r, 90.0, 180.0);
+        let mut coords = Vec::new();
+        // We'll approximate each 90° corner with `corner_segments` arcs
+        let step = FRAC_PI_2 / corner_segments as Real;
 
-        CSG::from_polylines(&[pl], metadata)
+        // Top-left corner arc, center (r, height-r), angles 180 -> 270
+        let cx_tl = r;
+        let cy_tl = height - r;
+        for i in 0..=corner_segments {
+            let angle = PI + (i as Real) * step;
+            let x = cx_tl + r * angle.cos();
+            let y = cy_tl + r * angle.sin();
+            coords.push((x, y));
+        }
+
+        // Top-right corner arc, center (width-r, height-r), angles 270 -> 360
+        let cx_tr = width - r;
+        let cy_tr = height - r;
+        for i in 0..=corner_segments {
+            let angle = FRAC_PI_2 + (i as Real) * step;
+            let x = cx_tr + r * angle.cos();
+            let y = cy_tr + r * angle.sin();
+            coords.push((x, y));
+        }
+
+        // Bottom-right corner arc, center (width-r, r), angles 0 -> 90
+        let cx_br = width - r;
+        let cy_br = r;
+        for i in 0..=corner_segments {
+            let angle = 0.0 + (i as Real) * step;
+            let x = cx_br + r * angle.cos();
+            let y = cy_br + r * angle.sin();
+            coords.push((x, y));
+        }
+
+        // Bottom-left corner arc, center (r, r), angles 90 -> 180
+        let cx_bl = r;
+        let cy_bl = r;
+        for i in 0..=corner_segments {
+            let angle = FRAC_PI_2 + (i as Real) * step;
+            let x = cx_bl + r * angle.cos();
+            let y = cy_bl + r * angle.sin();
+            coords.push((x, y));
+        }
+
+        // close
+        coords.push(coords[0]);
+
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        let mut gc = GeometryCollection::default();
+        gc.0.push(Geometry::Polygon(polygon_2d));
+        CSG::from_geo(gc, metadata)
     }
 
     /// Ellipse in XY plane, centered at (0,0), with full width `width`, full height `height`.
@@ -543,47 +566,56 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         CSG::from_geo(gc, metadata)
     }
 
-    /// Right triangle from (0,0) to (width,0) to (0,height).
-    pub fn right_triangle(width: Real, height: Real, metadata: Option<S>) -> Self {
-        let mut pl = Polyline::new_closed();
-        pl.add(0.0, 0.0, 0.0);
-        pl.add(width, 0.0, 0.0);
-        pl.add(0.0, height, 0.0);
-        CSG::from_polylines(&[pl], metadata)
-    }
-
     /// Trapezoid from (0,0) -> (bottom_width,0) -> (top_width+top_offset,height) -> (top_offset,height)
     /// Note: this is a simple shape that can represent many trapezoids or parallelograms.
-    pub fn trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>) -> Self {
-        let mut pl = Polyline::new_closed();
-        pl.add(0.0, 0.0, 0.0);
-        pl.add(bottom_width, 0.0, 0.0);
-        pl.add(top_width + top_offset, height, 0.0);
-        pl.add(top_offset, height, 0.0);
-        CSG::from_polylines(&[pl], metadata)
+    pub fn trapezoid(
+        top_width: Real,
+        bottom_width: Real,
+        height: Real,
+        top_offset: Real,
+        metadata: Option<S>,
+    ) -> Self {
+        let coords = vec![
+            (0.0,             0.0),
+            (bottom_width,    0.0),
+            (top_width + top_offset, height),
+            (top_offset,      height),
+            (0.0,             0.0), // close
+        ];
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        let mut gc = GeometryCollection::default();
+        gc.0.push(Geometry::Polygon(polygon_2d));
+        CSG::from_geo(gc, metadata)
     }
 
     /// Star shape (typical "spiky star") with `num_points`, outer_radius, inner_radius.
     /// The star is centered at (0,0).
     pub fn star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>) -> Self {
         if num_points < 2 {
-            return Self::new();
+            return CSG::new();
         }
-        let mut pl = Polyline::new_closed();
+        let mut coords = Vec::with_capacity(2 * num_points + 1);
         let step = TAU / (num_points as Real);
         for i in 0..num_points {
-            // outer
-            let theta_out = (i as Real) * step;
+            // Outer point
+            let theta_out = i as Real * step;
             let x_out = outer_radius * theta_out.cos();
             let y_out = outer_radius * theta_out.sin();
-            pl.add(x_out, y_out, 0.0);
-            // inner
-            let theta_in = theta_out + (step * 0.5);
+            coords.push((x_out, y_out));
+
+            // Inner point
+            let theta_in = theta_out + 0.5 * step;
             let x_in = inner_radius * theta_in.cos();
             let y_in = inner_radius * theta_in.sin();
-            pl.add(x_in, y_in, 0.0);
+            coords.push((x_in, y_in));
         }
-        CSG::from_polylines(&[pl], metadata)
+        // close
+        coords.push(coords[0]);
+
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        let mut gc = GeometryCollection::default();
+        gc.0.push(Geometry::Polygon(polygon_2d));
+        CSG::from_geo(gc, metadata)
     }
 
     /// Teardrop shape.  A simple approach:
@@ -592,38 +624,42 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// This is just one of many possible "teardrop" definitions.
     pub fn teardrop_outline(
         width: Real,
-        height: Real,
+        length: Real,
         segments: usize,
-        metadata: Option<S>
+        metadata: Option<S>,
     ) -> CSG<S> {
-        if segments < 2 || width < EPSILON || height < EPSILON {
+        if segments < 2 || width < EPSILON || length < EPSILON {
             return CSG::new();
         }
-        // half-circle radius
-        let r = width * 0.5;
-        // the top of the circle at y = center_y
-        let center_y = height - r;
+        let r = 0.5 * width;
+        let center_y = length - r;
         let half_seg = segments / 2;
-    
-        let mut pl = Polyline::new_closed();
-    
-        // Start at the bottom tip:
-        pl.add(0.0, 0.0, 0.0);
-    
-        // Arc over top
+
+        // We’ll store points, starting from the bottom tip at (0,0).
+        let mut coords = Vec::with_capacity(segments + 2);
+        coords.push((0.0, 0.0));
+
+        // Arc around left side
         for i in 0..=half_seg {
             let t = PI * (i as Real / half_seg as Real);
-            let x = -r * t.cos();      // left half
-            let y =  r * t.sin() + center_y;
-            pl.add(x, y, 0.0);
+            let x = -r * t.cos(); // left
+            let y = center_y + r * t.sin();
+            coords.push((x, y));
         }
-        
-        pl.invert_direction_mut();
-    
-        // Done: we come back down to the bottom tip automatically
-        // because the polyline is closed.
-    
-        CSG::from_polylines(&[pl], metadata)
+
+        // Arc around right side back to bottom
+        for i in 0..=half_seg {
+            let t = PI - (i as Real)*(PI/(half_seg as Real));
+            let x = r * t.cos(); // right
+            let y = center_y + r * t.sin();
+            coords.push((x, y));
+        }
+
+        coords.push(coords[0]);
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        let mut gc = GeometryCollection::default();
+        gc.0.push(Geometry::Polygon(polygon_2d));
+        CSG::from_geo(gc, metadata)
     }
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
@@ -632,24 +668,30 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         width: Real,
         length: Real,
         segments: usize,
-        metadata: Option<S>
+        metadata: Option<S>,
     ) -> CSG<S> {
-        // Very approximate "egg" profile
         if segments < 3 {
             return CSG::new();
         }
-        let rx = width * 0.5;
-        let ry = length * 0.5;
-        let mut pl = Polyline::new_closed();
+        let rx = 0.5 * width;
+        let ry = 0.5 * length;
+        let mut coords = Vec::with_capacity(segments + 1);
         for i in 0..segments {
             let theta = TAU * (i as Real) / (segments as Real);
+            // toy distortion approach
             let distort = 1.0 + 0.2 * theta.cos();
             let x = rx * theta.sin();
             let y = ry * theta.cos() * distort * 0.8;
-            pl.add(-x, y, 0.0);
+            coords.push((-x, y));  // mirrored
         }
-        CSG::from_polylines(&[pl], metadata)
+        coords.push(coords[0]);
+
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        let mut gc = GeometryCollection::default();
+        gc.0.push(Geometry::Polygon(polygon_2d));
+        CSG::from_geo(gc, metadata)
     }
+
 
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
     /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
@@ -657,24 +699,29 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         width: Real,
         height: Real,
         segments: usize,
-        metadata: Option<S>
+        metadata: Option<S>,
     ) -> CSG<S> {
         if segments < 3 {
             return CSG::new();
         }
-        let rx = width * 0.5;
-        let ry = height * 0.5;
-        let m = 4.0; // exponent
-        let mut pl = Polyline::new_closed();
+        let rx = 0.5 * width;
+        let ry = 0.5 * height;
+        let m = 4.0;
+        let mut coords = Vec::with_capacity(segments + 1);
         for i in 0..segments {
             let t = TAU * (i as Real) / (segments as Real);
             let ct = t.cos().abs().powf(2.0 / m) * t.cos().signum();
             let st = t.sin().abs().powf(2.0 / m) * t.sin().signum();
             let x = rx * ct;
             let y = ry * st;
-            pl.add(x, y, 0.0);
+            coords.push((x, y));
         }
-        CSG::from_polylines(&[pl], metadata)
+        coords.push(coords[0]);
+
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        let mut gc = GeometryCollection::default();
+        gc.0.push(Geometry::Polygon(polygon_2d));
+        CSG::from_geo(gc, metadata)
     }
 
     /// Keyhole shape (simple version): a large circle + a rectangle "handle".
@@ -685,34 +732,38 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         handle_width: Real,
         handle_height: Real,
         segments: usize,
-        metadata: Option<S>
+        metadata: Option<S>,
     ) -> CSG<S> {
-        // circle
-        let mut circ = Polyline::new_closed();
-        for i in 0..segments {
-            let th = TAU * i as Real / segments as Real;
-            let x = circle_radius * th.cos();
-            let y = circle_radius * th.sin();
-            circ.add(x, y, 0.0);
+        if segments < 3 {
+            return CSG::new();
         }
-        let circle_sh = CCShape::from_plines(vec![circ]);
+        // 1) Circle
+        let mut circle_coords = Vec::with_capacity(segments + 1);
+        for i in 0..segments {
+            let th = TAU * (i as Real) / (segments as Real);
+            circle_coords.push((circle_radius * th.cos(), circle_radius * th.sin()));
+        }
+        circle_coords.push(circle_coords[0]);
+        let circle_poly = GeoPolygon::new(LineString::from(circle_coords), vec![]);
 
-        // rectangle (handle)
-        let mut rect_pl = Polyline::new_closed();
-        rect_pl.add(0.0, 0.0, 0.0);
-        rect_pl.add(handle_width, 0.0, 0.0);
-        rect_pl.add(handle_width, handle_height, 0.0);
-        rect_pl.add(0.0, handle_height, 0.0);
+        // 2) Rectangle (handle), from -hw/2..+hw/2 in X and 0..handle_height in Y
+        let rect_coords = vec![
+            (-0.5 * handle_width, 0.0),
+            ( 0.5 * handle_width, 0.0),
+            ( 0.5 * handle_width, handle_height),
+            (-0.5 * handle_width, handle_height),
+            (-0.5 * handle_width, 0.0),
+        ];
+        let rect_poly = GeoPolygon::new(LineString::from(rect_coords), vec![]);
 
-        // shift rectangle so it connects to circle at the top
-        rect_pl.translate_mut(-0.5 * handle_width, -handle_height);
+        // 3) Union them with geo’s BooleanOps
+        let mp1 = MultiPolygon(vec![circle_poly]);
+        let mp2 = MultiPolygon(vec![rect_poly]);
+        let unioned = mp1.union(&mp2);
 
-        let rect_sh = CCShape::from_plines(vec![rect_pl]);
-
-        // union
-        let union_sh = circle_sh.union(&rect_sh);
-
-        CSG::from_polylines(&ccshape_to_polylines(union_sh), metadata)
+        let mut gc = GeometryCollection::default();
+        gc.0.push(Geometry::MultiPolygon(unioned));
+        CSG::from_geo(gc, metadata)
     }
 
     /// Reuleaux polygon with `sides` and "radius".  Approximates constant-width shape.
@@ -723,21 +774,18 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         arc_segments_per_side: usize,
         metadata: Option<S>
     ) -> CSG<S> {
-        // For a typical 2D Reuleaux shape: each corner is an arc
-        // from one vertex to the next, with center on the adjacent vertex.
         if sides < 3 || arc_segments_per_side < 1 {
             return CSG::new();
         }
+        // Corner positions (the "center" of each arc is the next corner).
         let mut corners = Vec::with_capacity(sides);
         for i in 0..sides {
             let theta = TAU * (i as Real) / (sides as Real);
-            let x = radius * theta.cos();
-            let y = radius * theta.sin();
-            corners.push((x, y));
+            corners.push((radius * theta.cos(), radius * theta.sin()));
         }
 
-        // Build one big closed polyline by tracing arcs
-        let mut pl = Polyline::new_closed();
+        // Build one big ring of points by tracing arcs corner->corner.
+        let mut coords = Vec::new();
         for i in 0..sides {
             let i_next = (i + 1) % sides;
             let center = corners[i_next];
@@ -752,22 +800,24 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let vy_e = end_pt.1 - center.1;
             let end_angle = vy_e.atan2(vx_e);
 
-            // be mindful of direction - typical reuleaux arcs go "outside"
             let mut delta = end_angle - start_angle;
             while delta <= 0.0 {
                 delta += TAU;
             }
-
             let step = delta / (arc_segments_per_side as Real);
             for seg_i in 0..arc_segments_per_side {
                 let a = start_angle + (seg_i as Real) * step;
                 let x = center.0 + radius * a.cos();
                 let y = center.1 + radius * a.sin();
-                pl.add(x, y, 0.0);
+                coords.push((x, y));
             }
         }
+        coords.push(coords[0]);
 
-        CSG::from_polylines(&[pl], metadata)
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        let mut gc = GeometryCollection::default();
+        gc.0.push(Geometry::Polygon(polygon_2d));
+        CSG::from_geo(gc, metadata)
     }
 
     /// Ring with inner diameter = `id` and (radial) thickness = `thickness`.
@@ -785,34 +835,37 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         segments: usize,
         metadata: Option<S>
     ) -> CSG<S> {
-        if id <= 0.0 || thickness <= 0.0 {
+        if id <= 0.0 || thickness <= 0.0 || segments < 3 {
             return CSG::new();
         }
-        let inner_radius = id * 0.5;
+        let inner_radius = 0.5 * id;
         let outer_radius = inner_radius + thickness;
 
-        // Outer circle
-        let mut outer_pl = Polyline::new_closed();
+        // Outer ring (CCW)
+        let mut outer = Vec::with_capacity(segments + 1);
         for i in 0..segments {
-            let th = TAU * i as Real / segments as Real;
-            outer_pl.add(outer_radius * th.cos(), outer_radius * th.sin(), 0.0);
+            let th = TAU * (i as Real) / (segments as Real);
+            let x = outer_radius * th.cos();
+            let y = outer_radius * th.sin();
+            outer.push((x, y));
         }
+        outer.push(outer[0]);
 
-        // Inner circle
-        let mut inner_pl = Polyline::new_closed();
-        for i in 0..segments { // reversed for inner hole
-            let th = TAU * i as Real / segments as Real;
-            inner_pl.add(inner_radius * th.cos(), inner_radius * th.sin(), 0.0);
+        // Inner ring (must be opposite orientation for a hole in geo)
+        let mut inner = Vec::with_capacity(segments + 1);
+        for i in 0..segments {
+            let th = TAU * (i as Real) / (segments as Real);
+            let x = inner_radius * th.cos();
+            let y = inner_radius * th.sin();
+            inner.push((x, y));
         }
-        
-        // Ensure inner circle is oriented CW as a hole, and combine inner and outer
-        let mut result = vec![outer_pl];
-        if inner_pl.orientation() == PlineOrientation::CounterClockwise {
-            inner_pl.invert_direction_mut();
-        }
-        result.push(inner_pl);
-        
-        CSG::from_polylines(&result, metadata)
+        inner.push(inner[0]);
+        inner.reverse();  // ensure hole is opposite winding from outer
+
+        let polygon_2d = GeoPolygon::new(LineString::from(outer), vec![LineString::from(inner)]);
+        let mut gc = GeometryCollection::default();
+        gc.0.push(Geometry::Polygon(polygon_2d));
+        CSG::from_geo(gc, metadata)
     }
     
     /// Create a 2D "pie slice" (wedge) in the XY plane.
