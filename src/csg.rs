@@ -7,7 +7,7 @@ use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3, partial_min, partial_max,
 };
 use geo::{
-    AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Polygon as GeoPolygon, Rect,
+    Area, AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Polygon as GeoPolygon, Rect,
 };
 //extern crate geo_booleanop;
 //use geo_booleanop::boolean::BooleanOp;
@@ -2486,80 +2486,185 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         CSG::from_polygons(&polygons)
     }
 
-    /// Rotate-extrude (revolve) this 2D shape around the Y-axis from 0..`angle_degs`
-    /// by replicating the original polygon(s) at each step and calling `extrude_between`.
-    /// Caps are added automatically if the revolve is partial (angle < 360°).
+    /// Rotate-extrude (revolve) only the Polygon and MultiPolygon geometry in `self.geometry`
+    /// around the Y-axis from 0..`angle_degs` in `segments` steps, producing side walls
+    /// in an orientation consistent with the polygon's winding.
+    ///
+    /// - Ignores `self.polygons`.
+    /// - Returns a new CSG containing **only** the newly extruded side polygons (no end caps).
+    /// - `angle_degs`: how far to revolve, in degrees (e.g. 360 for a full revolve).
+    /// - `segments`: number of subdivisions around the revolve.
+    ///
+    /// # Important
+    /// - We assume your 2D polygon(s) lie in the XY plane (z=0).
+    /// - The revolve axis is the Y-axis.
+    /// - Exterior rings (CCW in Geo) will produce outward-facing side walls.
+    /// - Interior rings (holes, typically CW) will produce inward-facing side walls.
+    /// - No top/bottom caps are added, even if the revolve is partial.
+    /// - The returned CSG has an **empty** `.geometry` and only the extruded side walls in `.polygons`.
     pub fn rotate_extrude(&self, angle_degs: Real, segments: usize) -> CSG<S> {
-        let angle_radians = angle_degs.to_radians();
         if segments < 2 {
-            panic!("rotate_extrude requires at least 2 segments"); // todo: return error
+            panic!("rotate_extrude requires at least 2 segments.");
         }
 
-        // We'll consider the revolve "closed" if the angle is effectively 360°
-        let closed = (angle_degs - 360.0).abs() < EPSILON;
+        let angle_radians = angle_degs.to_radians();
+        let mut new_polygons = Vec::new();
 
-        // Collect polygons, and convert polylines to polygons
-        let mut original_polygons = self.polygons.clone();
-        original_polygons.extend(self.to_polygons());
+        // A small helper to revolve a point (x,y) in the XY plane around the Y-axis by theta.
+        // The output is a 3D point (X, Y, Z).
+        fn revolve_around_y(x: Real, y: Real, theta: Real) -> Point3<Real> {
+            let cos_t = theta.cos();
+            let sin_t = theta.sin();
+            // Map (x, y, 0) => ( x*cos θ, y, x*sin θ )
+            Point3::new(x * cos_t, y, x * sin_t)
+        }
 
-        // Collect all newly formed polygons here
-        let mut result_polygons = Vec::new();
+        // Another helper to determine if a ring (LineString) is CCW or CW in Geo.
+        // In `geo`, ring.exterior() is CCW for an outer boundary, CW for holes.
+        // If the signed area > 0 => CCW; < 0 => CW.
+        fn is_ccw(ring: &geo::LineString<Real>) -> bool {
+            ring.signed_area() > 0.0
+        }
 
-        // For each polygon in our original 2D shape:
-        for original_poly in original_polygons {
-            let n_verts = original_poly.vertices.len();
-            if n_verts < 3 {
-                // Skip degenerate or empty polygons
-                continue;
+        // A helper to extrude one ring of coordinates (including the last->first if needed),
+        // pushing its side polygons into `out_polygons`.
+        // - `ring_coords`: The ring’s sequence of points. Usually closed (last=first).
+        // - `ring_is_ccw`: true if it's an exterior ring, false if interior/hole.
+        // - `angle_radians`: total revolve sweep in radians.
+        // - `segments`: how many discrete slices around the revolve.
+        // - `metadata`: user metadata to attach to side polygons.
+        // - `out_polygons`: accumulates the newly formed quads.
+        fn revolve_ring<S: Clone + Send + Sync>(
+            ring_coords: &[geo::Coord<Real>],
+            ring_is_ccw: bool,
+            angle_radians: Real,
+            segments: usize,
+            metadata: &Option<S>,
+            out_polygons: &mut Vec<crate::polygon::Polygon<S>>,
+        ) {
+            if ring_coords.len() < 2 {
+                return;
             }
+            // Typically the last point = first point for a closed ring.
+            // We'll iterate over each edge i..i+1, and revolve them around by segments slices.
 
-            // 1) Create a list of rotated copies ("slices") of `original_poly`.
-            //    We'll generate `segments+1` slices if it's a partial revolve,
-            //    so that slices[0] = 0° and slices[segments] = angle_degs,
-            //    giving us "segments" intervals to extrude_between.
-            //    If `angle_degs == 360`, slices[segments] ends up co-located with slices[0].
-            let mut slices = Vec::with_capacity(segments + 1);
-            for i in 0..=segments {
-                let frac = i as Real / segments as Real;
-                let theta = frac * angle_radians;
+            // The revolve step size in radians:
+            let step = angle_radians / (segments as Real);
 
-                // Build a rotation around Y by `theta`
-                let rot = Rotation3::from_axis_angle(&Vector3::y_axis(), -theta).to_homogeneous();
+            // For each edge in the ring:
+            for i in 0..(ring_coords.len() - 1) {
+                let c_i = ring_coords[i];
+                let c_j = ring_coords[i + 1];
 
-                // Transform this single polygon by that rotation
-                let rotated_poly = CSG::from_polygons(&[original_poly.clone()])
-                    .transform(&rot)
-                    .polygons[0]
-                    .clone();
-                slices.push(rotated_poly);
-            }
+                // If these two points are the same, skip degenerate edge
+                if (c_i.x - c_j.x).abs() < EPSILON && (c_i.y - c_j.y).abs() < EPSILON {
+                    continue;
+                }
 
-            // 2) "Loft" between successive slices using `extrude_between`.
-            //    - If it's a full 360 revolve, we do 0..(segments) and wrap around
-            //      from slices[segments-1] => slices[0].
-            //    - If it's partial, we just do 0..(segments), which covers
-            //      slices[i] -> slices[i+1] for i=0..(segments-1).
-            for i in 0..(segments) {
-                let bottom = &slices[i];
-                let top = if closed {
-                    &slices[(i + 1) % slices.len()] // Wrap around if `closed` is true
-                } else {
-                    &slices[i + 1] // Direct access if `closed` is false
-                };
-                let mut side_solid = CSG::extrude_between(bottom, top, true).polygons;
-                result_polygons.append(&mut side_solid);
-            }
+                // For each revolve slice j..j+1
+                for s in 0..segments {
+                    let th0 = s as Real * step;
+                    let th1 = (s as Real + 1.0) * step;
 
-            // Add "cap" for the last slice so the revolve is closed at end.
-            // The end cap is slices[segments] as-is:
-            if !closed {
-                let end_cap = slices[segments].clone();
-                result_polygons.push(end_cap);
+                    // revolve bottom edge endpoints at angle th0
+                    let b_i = revolve_around_y(c_i.x, c_i.y, th0);
+                    let b_j = revolve_around_y(c_j.x, c_j.y, th0);
+                    // revolve top edge endpoints at angle th1
+                    let t_i = revolve_around_y(c_i.x, c_i.y, th1);
+                    let t_j = revolve_around_y(c_j.x, c_j.y, th1);
+
+                    // Build a 4-vertex side polygon for the ring edge.  
+                    // The orientation depends on ring_is_ccw:  
+                    //    If CCW => outward walls -> [b_i, b_j, t_j, t_i]  
+                    //    If CW  => reverse it -> [b_j, b_i, t_i, t_j]  
+                    let quad_verts = if ring_is_ccw {
+                        vec![b_j, b_i, t_i, t_j]
+                    } else {
+                        vec![b_i, b_j, t_j, t_i]
+                    }
+                    .into_iter()
+                    .map(|pos| crate::vertex::Vertex::new(pos, Vector3::zeros()))
+                    .collect();
+
+                    out_polygons.push(crate::polygon::Polygon::new(quad_verts, metadata.clone()));
+                }
             }
         }
 
-        // Gather everything into a new CSG
-        CSG::from_polygons(&result_polygons) // todo: figure out why rotate_extrude results in inverted solids
+        // Now iterate over the geometry in `self.geometry`, ignoring everything else:
+        for geom in &self.geometry {
+            match geom {
+                geo::Geometry::Polygon(poly2d) => {
+                    // The exterior ring
+                    let ext = poly2d.exterior();
+                    let ext_coords = ext.0.as_slice();
+                    let ccw = is_ccw(ext);
+                    revolve_ring(
+                        ext_coords,
+                        ccw,
+                        angle_radians,
+                        segments,
+                        &self.metadata,
+                        &mut new_polygons,
+                    );
+
+                    // Each interior ring (hole)
+                    for hole in poly2d.interiors() {
+                        let hole_coords = hole.0.as_slice();
+                        let hole_ccw = is_ccw(hole);
+                        revolve_ring(
+                            hole_coords,
+                            hole_ccw,
+                            angle_radians,
+                            segments,
+                            &self.metadata,
+                            &mut new_polygons,
+                        );
+                    }
+                }
+                geo::Geometry::MultiPolygon(mpoly) => {
+                    // For each polygon in the MultiPolygon
+                    for poly2d in &mpoly.0 {
+                        // Exterior
+                        let ext = poly2d.exterior();
+                        let ext_coords = ext.0.as_slice();
+                        let ccw = is_ccw(ext);
+                        revolve_ring(
+                            ext_coords,
+                            ccw,
+                            angle_radians,
+                            segments,
+                            &self.metadata,
+                            &mut new_polygons,
+                        );
+
+                        // Interiors (holes)
+                        for hole in poly2d.interiors() {
+                            let hole_coords = hole.0.as_slice();
+                            let hole_ccw = is_ccw(hole);
+                            revolve_ring(
+                                hole_coords,
+                                hole_ccw,
+                                angle_radians,
+                                segments,
+                                &self.metadata,
+                                &mut new_polygons,
+                            );
+                        }
+                    }
+                }
+                // Ignore lines, points, etc.
+                _ => {}
+            }
+        }
+
+        // Return a new CSG containing *only* these newly formed polygons.
+        // Geometry is empty, and we preserve the same metadata (optional).
+        CSG {
+            polygons: new_polygons,
+            geometry: geo::GeometryCollection::default(),
+            metadata: self.metadata.clone(),
+        }
     }
     
     /// Sweep a 2D shape `shape_2d` (in XY plane, normal=+Z) along a 2D path `path_2d` (also in XY).

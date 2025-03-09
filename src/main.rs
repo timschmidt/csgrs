@@ -94,13 +94,13 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/square_extrude.stl", extruded_square.to_stl_binary("square_extrude").unwrap());
 
-    //let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(360.0, 32);
-    //#[cfg(feature = "stl-io")]
-    //let _ = fs::write("stl/circle_revolve_360.stl", revolve_circle.to_stl_binary("circle_revolve_360").unwrap());
+    let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(360.0, 32);
+    #[cfg(feature = "stl-io")]
+    let _ = fs::write("stl/circle_revolve_360.stl", revolve_circle.to_stl_binary("circle_revolve_360").unwrap());
 
-    //let partial_revolve = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(180.0, 32);
-    //#[cfg(feature = "stl-io")]
-    //let _ = fs::write("stl/circle_revolve_180.stl", partial_revolve.to_stl_binary("circle_revolve_180").unwrap());
+    let partial_revolve = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(180.0, 32);
+    #[cfg(feature = "stl-io")]
+    let _ = fs::write("stl/circle_revolve_180.stl", partial_revolve.to_stl_binary("circle_revolve_180").unwrap());
 
     // 9) Subdivide triangles (for smoother sphere or shapes):
     let subdiv_sphere = sphere.subdivide_triangles(2); // 2 subdivision levels
