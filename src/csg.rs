@@ -487,43 +487,43 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // We'll approximate each 90° corner with `corner_segments` arcs
         let step = FRAC_PI_2 / corner_segments as Real;
 
-        // Top-left corner arc, center (r, height-r), angles 180 -> 270
+        // Top-left corner arc, center (r, height-r), (π → 3π/2) angles 180 -> 270
         let cx_tl = r;
         let cy_tl = height - r;
         for i in 0..=corner_segments {
-            let angle = PI + (i as Real) * step;
+            let angle = FRAC_PI_2 + (i as Real) * step;
             let x = cx_tl + r * angle.cos();
             let y = cy_tl + r * angle.sin();
             coords.push((x, y));
         }
-
-        // Top-right corner arc, center (width-r, height-r), angles 270 -> 360
-        let cx_tr = width - r;
-        let cy_tr = height - r;
+        
+        // Bottom-left corner arc, center (r, r), (π/2 → π) angles 90 -> 180
+        let cx_bl = r;
+        let cy_bl = r;
         for i in 0..=corner_segments {
-            let angle = FRAC_PI_2 + (i as Real) * step;
-            let x = cx_tr + r * angle.cos();
-            let y = cy_tr + r * angle.sin();
+            let angle = PI + (i as Real) * step;
+            let x = cx_bl + r * angle.cos();
+            let y = cy_bl + r * angle.sin();
             coords.push((x, y));
         }
-
-        // Bottom-right corner arc, center (width-r, r), angles 0 -> 90
+        
+        // Bottom-right corner arc, center (width-r, r), (0 → π/2) angles 0 -> 90
         let cx_br = width - r;
         let cy_br = r;
         for i in 0..=corner_segments {
-            let angle = 0.0 + (i as Real) * step;
+            let angle = 1.5 * PI + (i as Real) * step;
             let x = cx_br + r * angle.cos();
             let y = cy_br + r * angle.sin();
             coords.push((x, y));
         }
 
-        // Bottom-left corner arc, center (r, r), angles 90 -> 180
-        let cx_bl = r;
-        let cy_bl = r;
+        // Top-right corner arc, center (width-r, height-r), (3π/2 → 2π) angles 270 -> 360
+        let cx_tr = width - r;
+        let cy_tr = height - r;
         for i in 0..=corner_segments {
-            let angle = FRAC_PI_2 + (i as Real) * step;
-            let x = cx_bl + r * angle.cos();
-            let y = cy_bl + r * angle.sin();
+            let angle = 0.0 + (i as Real) * step;
+            let x = cx_tr + r * angle.cos();
+            let y = cy_tr + r * angle.sin();
             coords.push((x, y));
         }
 

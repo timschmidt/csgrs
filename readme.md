@@ -478,6 +478,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - constraintt solving tree
 - test geo_booleanop as alternative to geo's built-in boolean ops.
 - adapt cavalier_contours demo application
+- support storing UV[W] coordinates with vertexes
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
