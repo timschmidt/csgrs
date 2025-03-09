@@ -7,7 +7,7 @@ use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
 };
 use geo::{
-    line_string, BooleanOps, Coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Polygon as GeoPolygon,
+    AffineTransform, AffineOps, line_string, BooleanOps, Coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Polygon as GeoPolygon,
 };
 //extern crate geo_booleanop;
 //use geo_booleanop::boolean::BooleanOp;
@@ -1671,7 +1671,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D,
     /// and the 2D polylines are updated by ignoring the resulting z after transform.
     pub fn transform(&self, mat: &Matrix4<Real>) -> CSG<S> {
-        let mat_inv_transpose = mat.try_inverse().unwrap().transpose(); // todo catch error
+        let mat_inv_transpose = mat.try_inverse().expect("Matrix not invertible?").transpose(); // todo catch error
         let mut csg = self.clone();
 
         for poly in &mut csg.polygons {
@@ -1689,27 +1689,37 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
         
-        // Transform polylines from self.polylines
-        // Because polylines store 2D x,y, we’ll treat them as x,y,0 in 3D.
-        // After transformation, we store back the new x,y ignoring any new z.
-        for ipline in csg.polylines.ccw_plines.iter_mut()
-                             .chain(csg.polylines.cw_plines.iter_mut())
-        {
-            let ply = &mut ipline.polyline;
-            // transform each vertex
-            for i in 0..ply.vertex_count() {
-                let mut v = ply.at(i);
-                // treat as a 3D point (v.x, v.y, 0.0)
-                let hom = mat * Point3::new(v.x, v.y, 0.0).to_homogeneous();
-                // perspective divide:
-                let w_inv = hom.w.abs().recip();
-                v.x = hom.x * w_inv;
-                v.y = hom.y * w_inv;
-                ply.set_vertex(i, v);
-            }
-            // Rebuild the spatial index if you rely on ipline.spatial_index
-            ipline.spatial_index = ply.create_aabb_index();
-        }
+        // Convert the top-left 2×2 submatrix + translation of a 4×4 into a geo::AffineTransform
+        // The 4x4 looks like:
+        //  [ m11  m12  m13  m14 ]
+        //  [ m21  m22  m23  m24 ]
+        //  [ m31  m32  m33  m34 ]
+        //  [ m41  m42  m43  m44 ]
+        //
+        // For 2D, we use the sub-block:
+        //   a = m11,  b = m12,
+        //   d = m21,  e = m22,
+        //   xoff = m14,
+        //   yoff = m24,
+        // ignoring anything in z.
+        //
+        // So the final affine transform in 2D has matrix:
+        //   [a   b   xoff]
+        //   [d   e   yoff]
+        //   [0   0    1  ]
+        let a    = mat[(0, 0)];
+        let b    = mat[(0, 1)];
+        let xoff = mat[(0, 3)];
+        let d    = mat[(1, 0)];
+        let e    = mat[(1, 1)];
+        let yoff = mat[(1, 3)];
+    
+        let affine2 = AffineTransform::new(a, b, xoff, d, e, yoff);
+
+        // 4) Transform csg.geometry (the GeometryCollection) in 2D
+        //    Using geo’s map-coords approach or the built-in AffineOps trait.
+        //    Below we use the `AffineOps` trait if you have `use geo::AffineOps;`
+        csg.geometry = csg.geometry.affine_transform(&affine2);
 
         csg
     }
