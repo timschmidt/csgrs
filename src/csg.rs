@@ -1844,8 +1844,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let end_rad   = end_angle_deg.to_radians();
         let sweep     = end_rad - start_rad;
 
-        // Instead of unioning each copy, we just collect all polylines.
-        let mut all_plines = Vec::new();
+        // create a container to hold our unioned copies
+        let mut all_csg = CSG::<S>::new();
 
         for i in 0..count {
             // pick an angle fraction
@@ -1866,26 +1866,16 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let trans = nalgebra::Translation3::new(radius, 0.0, 0.0).to_homogeneous();
             let mat   = rot * trans;
 
-            // Transform a copy of self
-            let csg_i = self.transform(&mat);
-
-            // Gather its polylines (both CCW and CW) into a single list.
-            for ipline in &csg_i.polylines.ccw_plines {
-                all_plines.push(ipline.polyline.clone());
-            }
-            for ipline in &csg_i.polylines.cw_plines {
-                all_plines.push(ipline.polyline.clone());
-            }
+            // Transform a copy of self and union with other copies
+            all_csg = all_csg.union(&self.transform(&mat));
         }
 
-        // Build a new shape from these polylines
-        let shape = CCShape::from_plines(all_plines);
-
-        // Put it in a new CSG, no union calls
-        let mut result = CSG::new();
-        result.polylines = shape;
-        result.metadata  = self.metadata.clone();
-        result
+        // Put it in a new CSG
+        CSG {
+            polygons: all_csg.polygons,
+            geometry: all_csg.geometry,
+            metadata: self.metadata.clone(),
+        }
     }
     
     /// Distribute this CSG `count` times along a straight line (vector),
@@ -1903,27 +1893,23 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
         let step = dir.normalize() * spacing;
     
-        let mut all_plines = Vec::new();
+        // create a container to hold our unioned copies
+        let mut all_csg = CSG::<S>::new();
     
         for i in 0..count {
             let offset  = step * (i as Real);
             let trans   = nalgebra::Translation3::from(offset).to_homogeneous();
-            let csg_i   = self.transform(&trans);
     
-            // gather polylines
-            for ipline in &csg_i.polylines.ccw_plines {
-                all_plines.push(ipline.polyline.clone());
-            }
-            for ipline in &csg_i.polylines.cw_plines {
-                all_plines.push(ipline.polyline.clone());
-            }
+            // Transform a copy of self and union with other copies
+            all_csg = all_csg.union(&self.transform(&trans));
         }
     
-        let shape = CCShape::from_plines(all_plines);
-        let mut result = CSG::new();
-        result.polylines = shape;
-        result.metadata  = self.metadata.clone();
-        result
+        // Put it in a new CSG
+        CSG {
+            polygons: all_csg.polygons,
+            geometry: all_csg.geometry,
+            metadata: self.metadata.clone(),
+        }
     }
 
     /// Distribute this CSG in a grid of `rows x cols`, with spacing dx, dy in XY plane.
@@ -1935,28 +1921,25 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let step_x = nalgebra::Vector3::new(dx, 0.0, 0.0);
         let step_y = nalgebra::Vector3::new(0.0, dy, 0.0);
     
-        let mut all_plines = Vec::new();
+        // create a container to hold our unioned copies
+        let mut all_csg = CSG::<S>::new();
     
         for r in 0..rows {
             for c in 0..cols {
                 let offset = step_x * (c as Real) + step_y * (r as Real);
                 let trans  = nalgebra::Translation3::from(offset).to_homogeneous();
-                let csg_i  = self.transform(&trans);
     
-                for ipline in &csg_i.polylines.ccw_plines {
-                    all_plines.push(ipline.polyline.clone());
-                }
-                for ipline in &csg_i.polylines.cw_plines {
-                    all_plines.push(ipline.polyline.clone());
-                }
+                // Transform a copy of self and union with other copies
+                all_csg = all_csg.union(&self.transform(&trans));
             }
         }
     
-        let shape = CCShape::from_plines(all_plines);
-        let mut result = CSG::new();
-        result.polylines = shape;
-        result.metadata  = self.metadata.clone();
-        result
+        // Put it in a new CSG
+        CSG {
+            polygons: all_csg.polygons,
+            geometry: all_csg.geometry,
+            metadata: self.metadata.clone(),
+        }
     }
 
     /// Compute the convex hull of all vertices in this CSG.
