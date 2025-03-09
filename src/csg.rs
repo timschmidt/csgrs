@@ -16,7 +16,6 @@ use cavalier_contours::polyline::{
     PlineSource, PlineSourceMut, Polyline
 };
 use cavalier_contours::shape_algorithms::Shape as CCShape;
-use cavalier_contours::shape_algorithms::ShapeOffsetOptions;
 use crate::float_types::parry3d::{
     bounding_volume::Aabb,
     query::{Ray, RayCast},
@@ -2834,17 +2833,11 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
     /// for each Polygon we convert to a cavalier_contours Polyline<Real> and call parallel_offset
     pub fn offset_2d(&self, distance: Real) -> CSG<S> {
-        // If we have 2D polylines, just offset them using Cavalier Contours.
-        let mut offset_result = cavalier_contours::shape_algorithms::Shape::empty();
-        if !self.polylines.ccw_plines.is_empty() | !self.polylines.cw_plines.is_empty() {
-            // offset all existing polylines
-            let offset_shape = self.polylines.parallel_offset(distance, ShapeOffsetOptions::new());
-            offset_result = offset_shape;
-        }
-        // Return as a CSG with empty polygons and updated polylines.
+        
+        // Return as a CSG with empty polygons and updated geometry.
         CSG {
             polygons: self.polygons.clone(),
-            polylines: offset_result,
+            geometry: GeometryCollection::default(),
             metadata: self.metadata.clone(),
         }
     }
@@ -2855,50 +2848,12 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// If this CSG is already 2D (polylines only), we simply return
     /// the union of those polylines.
     pub fn flatten(&self) -> CSG<S> {
-        // If we already have no polygons (just polylines), it might
-        // already be 2D, so we can return them. But to mimic the tests'
-        // "flatten and union" approach, let's union them anyway:
-        if self.polygons.is_empty() {
-            let unioned_polylines = {
-                // The polylines in `self.polylines` might be multiple sub-shapes.
-                // Union them in 2D to get a single final shape (or multiple disjoint shapes).
-                let mut shape_acc = CCShape::empty();
-                // Just union all sub-shapes. If they overlap, they become merged.
-                for indexed_pl in self.polylines.ccw_plines.iter().chain(self.polylines.cw_plines.iter()) {
-                    let sub = CCShape::from_plines(vec![indexed_pl.polyline.clone()]);
-                    shape_acc = shape_acc.union(&sub);
-                }
-                shape_acc
-            };
-            return CSG {
-                polygons: Vec::new(),
-                polylines: unioned_polylines,
-                metadata: self.metadata.clone(),
-            };
-        }
-
-        // Otherwise, project each 3D polygon's perimeter down to Z=0 and union them.
-        let mut shape_acc = CCShape::empty();
-        for poly in &self.polygons {
-            if poly.vertices.is_empty() {
-                continue;
-            }
-            // Build a polyline for the polygon's perimeter in XY plane
-            let mut pl = cavalier_contours::polyline::Polyline::new_closed();
-            for v in &poly.vertices {
-                // Project the 3D vertex v.pos onto XY plane
-                pl.add(v.pos.x, v.pos.y, 0.0);
-            }
-            // Turn it into a shape
-            let sub_shape = CCShape::from_plines(vec![pl]);
-            // Union into the accumulator
-            shape_acc = shape_acc.union(&sub_shape);
-        }
+        
 
         // Return as a 2D CSG: polygons empty, polylines hold the unioned perimeter(s).
         CSG {
             polygons: Vec::new(),
-            polylines: shape_acc,
+            geometry: GeometryCollection::default(),
             metadata: self.metadata.clone(),
         }
     }
@@ -4121,6 +4076,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     }
 
     /// Export to ASCII STL
+    /// 1) 3D polygons in `self.polygons`,
+    /// 2) any 2D Polygons or MultiPolygons in `self.geometry` (triangulated in XY).
     ///
     /// Convert this CSG to an **ASCII STL** string with the given `name`.
     ///
@@ -4133,82 +4090,115 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mut out = String::new();
         out.push_str(&format!("solid {}\n", name));
     
-        // ------------------------------------------------------------
-        // 1) First, write existing 3D polygons (same as before)
+        //
+        // (A) Write out all *3D* polygons
+        //
         for poly in &self.polygons {
-            let normal = poly.plane.normal.normalize();
+            // Ensure the polygon is triangulated, since STL is triangle-based.
             let triangles = poly.triangulate();
+            // A typical STL uses the face normal; we can take the polygon’s plane normal:
+            let normal = poly.plane.normal.normalize();
+    
             for tri in triangles {
-                out.push_str(&format!("  facet normal {:.6} {:.6} {:.6}\n",
-                                    normal.x, normal.y, normal.z));
+                out.push_str(&format!(
+                    "  facet normal {:.6} {:.6} {:.6}\n",
+                    normal.x, normal.y, normal.z
+                ));
                 out.push_str("    outer loop\n");
                 for vertex in &tri {
-                    out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n",
-                                        vertex.pos.x, vertex.pos.y, vertex.pos.z));
+                    out.push_str(&format!(
+                        "      vertex {:.6} {:.6} {:.6}\n",
+                        vertex.pos.x, vertex.pos.y, vertex.pos.z
+                    ));
                 }
                 out.push_str("    endloop\n");
                 out.push_str("  endfacet\n");
             }
         }
     
-        // ------------------------------------------------------------
-        // 2) Next, handle all ccw_plines + holes using earclip or earcut
-        //    (non-manifold 2D shape in XY plane).
-        // For each outer CCW:
-        for (_outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
-            let outer_pline = &outer_ipline.polyline;
+        //
+        // (B) Write out all *2D* geometry from `self.geometry`
+        //     We only handle Polygon and MultiPolygon.  We triangulate in XY, set z=0.
+        //    
+        for geom in &self.geometry {
+            match geom {
+                geo::Geometry::Polygon(poly2d) => {
+                    // Outer ring (in CCW for a typical “positive” polygon)
+                    let outer = poly2d
+                        .exterior()
+                        .coords_iter()
+                        .map(|c| [c.x, c.y])
+                        .collect::<Vec<[Real; 2]>>();
     
-            // bounding box for outer
-            let Some(aabb) = outer_pline.extents() else { todo!() };
-            let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
+                    // Collect holes
+                    let holes_vec = poly2d
+                        .interiors()
+                        .into_iter()
+                        .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
+                        .collect::<Vec<_>>();
+                    let hole_refs = holes_vec
+                        .iter()
+                        .map(|hole_coords| &hole_coords[..])
+                        .collect::<Vec<_>>();
     
-            // find potential hole indices
-            let bounding_box_query = self.polylines.plines_index.query(oxmin, oymin, oxmax, oymax);
+                    // Triangulate with our existing helper:
+                    let triangles_2d = Self::triangulate_2d(&outer, &hole_refs);
     
-            // gather “holes” that are truly inside
-            let mut holes_xy: Vec<Vec<[Real;2]>> = Vec::new();
-    
-            for hole_candidate_idx in bounding_box_query {
-                // Recall ccw_plines come first in index, then cw_plines.
-                // So test if hole_candidate_idx >= self.polylines.ccw_plines.len()
-                // to see if it's a CW hole.
-                let cw_start = self.polylines.ccw_plines.len();
-                if hole_candidate_idx < cw_start {
-                    continue; // that’s another outer or the same outer
-                }
-                let hole_ipline = &self.polylines.cw_plines[hole_candidate_idx - cw_start].polyline;
-    
-                // pick any vertex from the hole and do “point in polygon” for outer
-                let hv0 = hole_ipline.at(0);
-                if CSG::<()>::point_in_polygon_2d(hv0.x, hv0.y, &outer_pline) {
-                    // Confirm we interpret this as a valid hole => collect
-                    let mut hole_pts = Vec::new();
-                    for i in 0..hole_ipline.vertex_count() {
-                        let p = hole_ipline.at(i);
-                        hole_pts.push([p.x, p.y]);
+                    // Write each tri as a facet in ASCII STL, with a normal of (0,0,1)
+                    for tri in triangles_2d {
+                        out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
+                        out.push_str("    outer loop\n");
+                        for pt in &tri {
+                            out.push_str(&format!(
+                                "      vertex {:.6} {:.6} {:.6}\n",
+                                pt.x, pt.y, pt.z
+                            ));
+                        }
+                        out.push_str("    endloop\n");
+                        out.push_str("  endfacet\n");
                     }
-                    holes_xy.push(hole_pts);
                 }
-            }
     
-            // Prepare the outer ring in 2D
-            let mut outer_xy = Vec::new();
-            for i in 0..outer_pline.vertex_count() {
-                let v = outer_pline.at(i);
-                outer_xy.push([v.x, v.y]);
-            }
+                geo::Geometry::MultiPolygon(mp) => {
+                    // Each polygon inside the MultiPolygon
+                    for poly2d in &mp.0 {
+                        let outer = poly2d
+                            .exterior()
+                            .coords_iter()
+                            .map(|c| [c.x, c.y])
+                            .collect::<Vec<[Real; 2]>>();
     
-            // Triangulate
-            let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-            let triangles_2d = CSG::<()>::triangulate_2d(&outer_xy, &hole_refs);
-            for tri in triangles_2d {
-                out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
-                out.push_str("    outer loop\n");
-                for pt in &tri {
-                    out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n", pt.x, pt.y, pt.z));
+                        // Holes
+                        let holes_vec = poly2d
+                            .interiors()
+                            .into_iter()
+                            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
+                            .collect::<Vec<_>>();
+                        let hole_refs = holes_vec
+                            .iter()
+                            .map(|hole_coords| &hole_coords[..])
+                            .collect::<Vec<_>>();
+    
+                        let triangles_2d = Self::triangulate_2d(&outer, &hole_refs);
+    
+                        for tri in triangles_2d {
+                            out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
+                            out.push_str("    outer loop\n");
+                            for pt in &tri {
+                                out.push_str(&format!(
+                                    "      vertex {:.6} {:.6} {:.6}\n",
+                                    pt.x, pt.y, pt.z
+                                ));
+                            }
+                            out.push_str("    endloop\n");
+                            out.push_str("  endfacet\n");
+                        }
+                    }
                 }
-                out.push_str("    endloop\n");
-                out.push_str("  endfacet\n");
+    
+                // Skip all other geometry types (LineString, Point, etc.)
+                // You can optionally handle them if you like, or ignore them.
+                _ => {}
             }
         }
     
