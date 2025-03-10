@@ -1,5 +1,5 @@
 use crate::{Computable, Problem, Rational};
-use num::bigint::{BigInt, Sign};
+use num::bigint::{BigInt, BigUint, Sign};
 use num::One;
 
 mod convert;
@@ -523,9 +523,29 @@ impl Real {
         self.make_computable(Computable::cos)
     }
 
-    fn exp_ln_pow(self, exp: BigInt) -> Result<Self, Problem> {
+    fn recursive_powi(base: &Real, exp: &BigUint) -> Self {
+        if exp == &BigUint::one() {
+            return base.clone();
+        }
+        let mut result = Self::new(Rational::one());
+        for b in (0..(exp.bits())).rev() {
+            result = result.clone() * result;
+            if exp.bit(b) {
+                result = result * base.clone();
+            }
+        }
+        result
+    }
+
+    fn exp_ln_powi(self, exp: BigInt) -> Result<Self, Problem> {
         match self.best_sign() {
-            Sign::NoSign => panic!("We do not handle almost zero yet"),
+            Sign::NoSign => {
+                if exp.sign() == Sign::Minus {
+                    Ok(Self::recursive_powi(&self, exp.magnitude()).neg())
+                } else {
+                    Ok(Self::recursive_powi(&self, exp.magnitude()))
+                }
+            }
             Sign::Plus => {
                 let r = Computable::rational(self.rational);
                 let value = Computable::multiply(r, self.computable);
@@ -562,7 +582,8 @@ impl Real {
         }
     }
 
-    fn powi(self, exp: BigInt) -> Result<Self, Problem> {
+    /// Raise this Real to some integer exponent
+    pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
         if exp == BigInt::one() {
             return Ok(self);
         }
@@ -587,7 +608,7 @@ impl Real {
             }
         }
         // We can sometims do better here if we know an exact square root
-        self.exp_ln_pow(exp)
+        self.exp_ln_powi(exp)
     }
 
     /// Raise this Real to some Real exponent
