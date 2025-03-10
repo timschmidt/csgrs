@@ -2,7 +2,7 @@
 
 A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** helps you construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to transform, interrogate, and simulate those shapes without leaving Rust.
 
-This library aims to integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`earclip`](https://crates.io/crates/earclip)/[`earcut`](https://crates.io/crates/earcut) and [`cavalier_contours`](https://crates.io/crates/cavalier_contours) for robust processing of convex and non-convex polygons and polygons with holes, be light weight and full featured, and provide an extensible type-safe API.
+This library aims to be light weight and full featured, integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`geo`](https://crates.io/crates/geo) and [`earcutr`](https://crates.io/crates/earcutr) for robust processing of convex and non-convex polygons with holes, and provide an extensible type-safe API.
 
 The BSP tree works with shapes made of lines.  In 3D, **csgrs** interpolates all curves so that they can be processed by the BSP. **csgrs** has limited support for recovering curves from interpolated lines into 2D, and for offsetting curves in 2D.  Recovering curves should work even on models imported as a mesh, allowing them to be "upgraded" to real arcs for offsetting, booleans, toolpathing, etc.
 
@@ -43,13 +43,10 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
     - a `Vec<Vertex>` (positions + normals),
     - a `Plane` describing the polygon’s orientation in 3D.
     - an optional metadata field (`Option<S>`)
-  - a [`cavalier_contours`](https://crates.io/crates/cavalier_contours) `Shape<Real>` polylines, describing 2D shapes:
-    - `Vec<IndexedPolyline<Real>>` ccw_plines, which contains indexed positive shapes, 0 - many allowed.
-    - `Vec<IndexedPolyline<Real>>` cw_plines, which contains indexed negative shapes (i.e. holes), 0 - many allowed.
-    - `StaticAABB2DIndex<Real>` plines_index, a spatial index of all the polyline area bounding boxes, positions correspond to all the counter clockwise polylines followed by all the clockwise polylines
+  - a [`geo`](https://crates.io/crates/geo) `GeometryCollection<Real>`
   - an optional metadata field (`Option<S>`)
 
-`CSG<S>` provides methods for working with 2D and 3D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from polylines with `CSG::from_polylines(...)`.  Polygons must be closed, planar, have 3 or more vertices.  Polylines can be open or closed, have holes, but must be planar in the XY.  Operations work on both 2D and 3D shapes though they generally do not interact except where one is explicitly transformed into the other as in extrude or slice.  Polygons and polylines are triangulated with [`earclip`](https://crates.io/crates/earclip)/[`earcut`](https://crates.io/crates/earcut) when being exported as an STL, or when a polyline is converted into polygons using `CSG::to_polygons(...)`.
+`CSG<S>` provides methods for working with 2D and 3D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from geo Geometries with `CSG::from_geo(...)`.  Polygons must be closed, planar, have 3 or more vertices, and are 3D.  Geometries can be open or closed, have holes, but must be planar in the XY.  Operations work on both 2D and 3D shapes though they generally do not interact except where one is explicitly transformed into the other as in extrude or slice.  Polygons and Geometries are triangulated with [`earcutr`](https://crates.io/crates/earcutr) when being exported as an STL, or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 
 ### 2D Shapes
 
@@ -74,7 +71,6 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 - **`CSG::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: Option<S>)`**
 - **`CSG::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
 - **`CSG::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
-- **`CSG::from_polylines(polylines: &[Polyline], metadata: Option<S>)`** — create a new CSG from [`cavalier_contours`](https://crates.io/crates/cavalier_contours) polylines
 - **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
 - **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts via [`meshtext`](https://crates.io/crates/meshtext)
 
@@ -232,16 +228,12 @@ let mirrored = cube.mirror(plane_x);
 - **`CSG::ray_intersections(origin, direction)`** — returns all intersection points and distances.
 - **`CSG::flatten()`** — flattens a 3D shape into 2D (on the XY plane), unions the outlines.
 - **`CSG::slice(plane)`** — slices the CSG by a plane and returns the cross-section polygons.
-- **`CSG::offset_2d(distance)`** — outward (or inward) offset in 2D using [`cavalier_contours`](https://crates.io/crates/cavalier_contours).
+- **`CSG::offset_2d(distance)`** — outward (or inward) offset in 2D using [`geo`](https://crates.io/crates/geo).
 - **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
-- **`CSG::reconstruct_polyline_3d(polylines: &[Polygon<S>])`** — reconstructs a 3d polyline from 2d polylines with matching start/end points
-- **`CSG::bounding_box()`** — computes the bounding box of the shape
-- **`CSG::triangulate()`** — triangulates all polygons returning a CSG containing triangles
-- **`CSG::triangulate_earclip()`** — triangulates all polygons with [`earclip`](https://crates.io/crates/earclip) returning a CSG containing triangles
-- **`CSG::from_polygons(polygons: &[Polygon<S>])`** - create a new CSG from Polygons
-- **`CSG::from_earclip(polys: &[Vec<Vec<Real>>], metadata: Option<S>)`** — create a new CSG from [`earclip`](https://crates.io/crates/earclip) polys
-- **`CSG::from_earcut(polys: &[Vec<Vec<Real>>], metadata: Option<S>)`** - create a new CSG from [`earcut`](https://crates.io/crates/earcut) polys
+- **`CSG::bounding_box()`** — computes the bounding box of the shape.
+- **`CSG::triangulate()`** — triangulates all polygons returning a CSG containing triangles.
+- **`CSG::from_polygons(polygons: &[Polygon<S>])`** - create a new CSG from Polygons.
 
 ### STL
 
@@ -349,37 +341,6 @@ if (csg_obj.is_manifold()){
 }
 ```
 
----
-## Polygon
-
-Although **CSG** typically focuses on three‐dimensional Boolean operations, this library also provides a robust **2D subsystem** built on top of [cavalier_contours](https://crates.io/crates/cavalier_contours). Each `Polygon<S>` in 3D can be **projected** into 2D (its own local XY plane) for 2D boolean operations such as **union**, **difference**, **intersection**, and **xor**. These are especially handy if you’re offsetting shapes, working with complex polygons, or just want 2D output.
-
-### Transformations
-
-- **`Polygon::translate(x: Real, y: Real, z: Real)`** - Returns a new Polygon translated by x, y, and z
-- **`Polygon::translate_vector(vector: Vector3)`** - Returns a new Polygon translated by vector
-- **`Polygon::transform(&Matrix4)`** for arbitrary affine transforms
-- **`Polygon::flip()`** - Reverses winding order, flips vertices normals, and flips the plane normal, i.e. flips the polygon
-
-### Misc functions
-
-- **`Polygon::subdivide_triangles()`** - Subdivide this polygon into smaller triangles
-- **`Polygon::calculate_new_normal()`**- return a normal calculated from all polygon vertices
-- **`Polygon::set_new_normal()`** - recalculate and set polygon normal
-- **`Polygon::triangulate()`** - Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2]
-- **`Polygon::check_coordinates_finite()`** - Returns an error if any coordinate is not finite (NaN or ±∞)
-- **`Polygon::check_repeated_points()`** - Check for repeated adjacent points. Return the first repeated coordinate if found
-- **`Polygon::check_ring_closed()`** - Check ring closure: first and last vertex must coincide if polygon is meant to be closed
-- **`Polygon::check_minimum_ring_size()`** - Check that the ring has at least 3 distinct points
-- **`Polygon::check_ring_self_intersection()`** - Very basic ring self‐intersection check by naive line–line intersection
-
-### Signed Area (Shoelace)
-The `polyline_area` function computes the signed area of a closed `Polyline`:
-- **Positive** if the points are in **counterclockwise (CCW)** order.
-- **Negative** if the points are in **clockwise (CW)** order.
-- Near‐zero for degenerate or collinear loops.
-
----
 ## Working with Metadata
 
 `CSG<S>` is generic over `S: Clone`. Each polygon has an optional `metadata: Option<S>`.  
@@ -473,12 +434,14 @@ Patterns we work to follow throughout the library to improve performance and mem
 - https://crates.io/crates/polylabel
 - reduce allocations
 - history tree
-  - STEP import / export
+  - STEP/IGES import / export
   - curves?
 - constraintt solving tree
 - test geo_booleanop as alternative to geo's built-in boolean ops.
 - adapt cavalier_contours demo application
 - support storing UV[W] coordinates with vertexes
+- chamfers
+- 
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
