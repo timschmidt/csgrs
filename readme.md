@@ -95,7 +95,6 @@ let text_3d = csg_text.extrude(1.0);
 - **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Extrude Between Two Polygons
 - **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
 - **`CSG::sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>)`** - Extrude along a path
-- **`CSG::extrude_polyline(poly: &Polyline, direction: Vector3, metadata: Option<S>)`** - Extrude a polyline to create a surface
 
 ```rust
 let square = CSG::square(2.0, 2.0, None);
@@ -392,13 +391,13 @@ Patterns we work to follow throughout the library to improve performance and mem
 - allocations should be kept to a minimum.  Memory should be read-only if possible, clone if necessary, and offer the choice of transmut in place or create new copy when appropriate
 
 ## Roadmap / Todo
-- transition all extrudes over to Polygon/Multipolygon native / polygon secondary, disengage chulls
+- transition sweep, linear_extrude, extrude_between over to Polygon/Multipolygon native / polygon secondary, disengage chulls on shapes
 - transition text to Polygon/Multipolygon, which can then be extruded / tessellated through the normal means
 - check flatten() works on polygons and flattens to GeometryCollections, same for slice
 - fix shape of reuleaux
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere
-- fix up error handling with result types
+- fix up error handling with result types, eliminate panics
 - ray intersection (singular)
 - expose geo traits on 2D shapes
 - https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d
@@ -420,7 +419,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - svg import/export
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - screw threads
-- attachment points / rapier integration
 - support scale and translation along a vector in rotate extrude
 - reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
 - reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
@@ -439,9 +437,20 @@ Patterns we work to follow throughout the library to improve performance and mem
 - constraintt solving tree
 - test geo_booleanop as alternative to geo's built-in boolean ops.
 - adapt cavalier_contours demo application
-- support storing UV[W] coordinates with vertexes
+- rethink metadata
+  - support storing UV[W] coordinates with vertexes at compile time (try to keep runtime cost low too)
+  - accomplish equivalence checks and memory usage reduction by using a hashmap instead of storing metadata with each node
+  - with equivalence checks, 
 - chamfers
-- 
+- rewrite Polygon::triangulate(), CSG::to_stl_*, CSG::to_polygons to use geo triangulate, eliminate earcutr dep, open up other algorithm options
+  - make algorithm selectable at compile time
+- align_x_pos, align_x_neg, align_y_pos, align_y_neg, align_z_pos, align_z_neg, center_x, center_y, center_z,
+- attachment points / rapier integration
+  - attachment is a Vertex (Point + normal)
+  - attachments Vec in CSG datastructure
+  - make corners and centers of bb accessible by default, even in empty CSG
+  - make corners, edge midpoints, and centroids of polygons accessible by default (calculate on demand using an iterator)
+  - align_to_attachment(name, csg2, name2)
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
