@@ -523,6 +523,45 @@ impl Real {
         self.make_computable(Computable::cos)
     }
 
+    fn exp_ln_pow(self, exp: BigInt) -> Result<Self, Problem> {
+        match self.best_sign() {
+            Sign::NoSign => panic!("We do not handle almost zero yet"),
+            Sign::Plus => {
+                let r = Computable::rational(self.rational);
+                let value = Computable::multiply(r, self.computable);
+                let exp = Computable::integer(exp);
+
+                Ok(Self {
+                    rational: Rational::one(),
+                    class: Irrational,
+                    computable: value.ln().multiply(exp).exp(),
+                    signal: None,
+                })
+            }
+            Sign::Minus => {
+                let odd = exp.bit(0);
+                let r = Computable::rational(self.rational.neg());
+                let value = Computable::multiply(r, self.computable);
+                let exp = Computable::integer(exp);
+                if odd {
+                    Ok(Self {
+                        rational: Rational::one(),
+                        class: Irrational,
+                        computable: value.ln().multiply(exp).exp().negate(),
+                        signal: None,
+                    })
+                } else {
+                    Ok(Self {
+                        rational: Rational::one(),
+                        class: Irrational,
+                        computable: value.ln().multiply(exp).exp(),
+                        signal: None,
+                    })
+                }
+            }
+        }
+    }
+
     fn powi(self, exp: BigInt) -> Result<Self, Problem> {
         if exp == BigInt::one() {
             return Ok(self);
@@ -538,16 +577,17 @@ impl Real {
             return Err(Problem::NotANumber);
         }
         if self.class == One {
-            /* TODO: detect and avoid truly enormous results, see UnifiedReal.java for ideas */
-            Ok(Self {
-                rational: self.rational.powi(exp)?,
-                class: One,
-                computable: self.computable,
-                signal: None,
-            })
-        } else {
-            todo!("Can't exponeniate anything except Rationals so far")
+            if let Ok(rational) = self.rational.clone().powi(exp.clone()) {
+                return Ok(Self {
+                    rational,
+                    class: One,
+                    computable: self.computable,
+                    signal: None,
+                });
+            }
         }
+        // We can sometims do better here if we know an exact square root
+        self.exp_ln_pow(exp)
     }
 
     /// Raise this Real to some Real exponent

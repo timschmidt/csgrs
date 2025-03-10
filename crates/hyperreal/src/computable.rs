@@ -336,7 +336,7 @@ impl Computable {
         }
     }
 
-    fn integer(n: BigInt) -> Self {
+    pub(crate) fn integer(n: BigInt) -> Self {
         Self {
             internal: Box::new(Approximation::Int(n)),
             cache: RefCell::new(Cache::Invalid),
