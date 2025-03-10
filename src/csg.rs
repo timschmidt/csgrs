@@ -7,7 +7,7 @@ use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3, partial_min, partial_max,
 };
 use geo::{
-    Area, AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Polygon as GeoPolygon, Rect,
+    Area, AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Orient, orient::Direction, Polygon as GeoPolygon, Rect,
 };
 //extern crate geo_booleanop;
 //use geo_booleanop::boolean::BooleanOp;
@@ -232,10 +232,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     
         // Perform union on those polygons
         let unioned = polys1.union(&polys2); // This is valid if each is a MultiPolygon
+        let oriented = unioned.orient(Direction::Default);
     
         // Wrap the unioned polygons + lines/points back into one GeometryCollection
         let mut final_gc = GeometryCollection::default();
-        final_gc.0.push(Geometry::MultiPolygon(unioned));
+        final_gc.0.push(Geometry::MultiPolygon(oriented));
         
         // re-insert lines & points from both sets:
         for g in &self.geometry.0 {
@@ -282,10 +283,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     
         // Perform difference on those polygons
         let differenced = polys1.difference(&polys2);
+        let oriented = differenced.orient(Direction::Default);
     
         // Wrap the differenced polygons + lines/points back into one GeometryCollection
         let mut final_gc = GeometryCollection::default();
-        final_gc.0.push(Geometry::MultiPolygon(differenced));
+        final_gc.0.push(Geometry::MultiPolygon(oriented));
     
         // Re-insert lines & points from self only
         // (If you need to exclude lines/points that lie inside other, you'd need more checks here.)
@@ -322,10 +324,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     
         // Perform intersection on those polygons
         let intersected = polys1.intersection(&polys2);
+        let oriented = intersected.orient(Direction::Default);
     
         // Wrap the intersected polygons + lines/points into one GeometryCollection
         let mut final_gc = GeometryCollection::default();
-        final_gc.0.push(Geometry::MultiPolygon(intersected));
+        final_gc.0.push(Geometry::MultiPolygon(oriented));
     
         // For lines and points: keep them only if they intersect in both sets
         // todo: detect intersection of non-polygons
@@ -357,10 +360,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     
         // Perform symmetric difference (XOR)
         let xored = polys1.xor(&polys2);
+        let oriented = xored.orient(Direction::Default);
     
         // Wrap in a new GeometryCollection
         let mut final_gc = GeometryCollection::default();
-        final_gc.0.push(Geometry::MultiPolygon(xored));
+        final_gc.0.push(Geometry::MultiPolygon(oriented));
     
         // Re-insert lines & points from both sets
         for g in &self.geometry.0 {
