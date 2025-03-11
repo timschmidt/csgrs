@@ -416,7 +416,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - reduce dependency feature sets
 - space filling curves, hilbert sort polygons / points
 - identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold
-- svg import/export
+- svg import/export using https://crates.io/crates/geo-svg-io
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - screw threads
 - support scale and translation along a vector in rotate extrude
@@ -430,6 +430,7 @@ Patterns we work to follow throughout the library to improve performance and mem
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
 - implement functions from https://docs.rs/geo/latest/geo/
 - https://crates.io/crates/polylabel
+  - pull in https://github.com/fschutt/polylabel-mini/blob/master/src/lib.rs and adjust f64 -> Real
 - reduce allocations
 - history tree
   - STEP/IGES import / export
@@ -451,12 +452,24 @@ Patterns we work to follow throughout the library to improve performance and mem
   - make corners and centers of bb accessible by default, even in empty CSG
   - make corners, edge midpoints, and centroids of polygons accessible by default (calculate on demand using an iterator)
   - align_to_attachment(name, csg2, name2)
+  - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src
+- implement C FFI using https://rust-lang.github.io/rust-bindgen/
+- pull in https://crates.io/crates/geo-uom for units and dimensional analysis
+- verify functions against robust predicates here: https://github.com/hayashi-stl/robust-geo/blob/main/src/geo.rs
+- https://github.com/u65xhd/meshvox
+- https://crates.io/crates/geo-validity-check as compile time option
+- https://crates.io/crates/geo-index
+- https://github.com/lelongg/geo-rand
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
 - https://github.com/asny/tri-mesh port
 - https://crates.io/crates/flo_curves
 - port https://github.com/21re/rust-geo-booleanop to cavalier_contours
+- hyperbolic geometry: https://github.com/agerasev/ccgeom/tree/master/src/hyperbolic
+- https://crates.io/crates/spherical_geometry
+- https://crates.io/crates/miniproj
+- examine https://crates.io/crates/geo-aid constraint solver
 ---
 
 ## License

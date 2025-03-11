@@ -186,16 +186,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cdt"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b91b872294f63ef586b32aa94141561681aa35ca2d703960cca4f661f4e18184"
-dependencies = [
- "geometry-predicates",
- "thiserror",
-]
-
-[[package]]
 name = "cfg-expr"
 version = "0.15.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -348,7 +338,6 @@ dependencies = [
  "hashbrown 0.15.2",
  "hershey",
  "image",
- "meshtext",
  "nalgebra",
  "parry3d",
  "parry3d-f64",
@@ -356,6 +345,8 @@ dependencies = [
  "rapier3d-f64",
  "rayon",
  "stl_io",
+ "ttf-parser",
+ "ttf-utils",
 ]
 
 [[package]]
@@ -533,12 +524,6 @@ checksum = "e6e5ed84f8089c70234b0a8e0aedb6dc733671612ddc0d37c6066052f9781960"
 dependencies = [
  "libm",
 ]
-
-[[package]]
-name = "geometry-predicates"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8dba84198cf199c11b83f1cb9243eaeb70dc50b719d2835ebf34bf2481bca010"
 
 [[package]]
 name = "getrandom"
@@ -891,18 +876,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
-name = "meshtext"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c68541f06674ef4bb1f84e3dca654998135ff1a8bb5a60cfbfe5b8615f8e555"
-dependencies = [
- "cdt",
- "glam",
- "owned_ttf_parser",
- "ttf-parser",
-]
-
-[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1094,15 +1067,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7bb71e1b3fa6ca1c61f383464aaf2bb0e2f8e772a1f01d486832464de363b951"
 dependencies = [
  "num-traits 0.2.19",
-]
-
-[[package]]
-name = "owned_ttf_parser"
-version = "0.25.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22ec719bbf3b2a81c109a4e20b1f129b5566b7dce654bc3872f6a05abf82b2c4"
-dependencies = [
- "ttf-parser",
 ]
 
 [[package]]
@@ -1650,9 +1614,18 @@ dependencies = [
 
 [[package]]
 name = "ttf-parser"
-version = "0.25.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2df906b07856748fa3f6e0ad0cbaa047052d4a7dd609e231c4f72cee8c36f31"
+checksum = "f3e7994fc4aed0ee366a4b0d01562c8a7cd5a5017088bceb6921b0c8c538f34e"
+
+[[package]]
+name = "ttf-utils"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ff12815494b93841cf044cc7793f0207d256ec6237a10fb6efcb4dd0b070d90"
+dependencies = [
+ "ttf-parser",
+]
 
 [[package]]
 name = "typenum"

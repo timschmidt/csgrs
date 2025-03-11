@@ -34,7 +34,9 @@ use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use rayon::prelude::*;
 
 #[cfg(feature = "truetype-text")]
-use meshtext::{Glyph, MeshGenerator, MeshText};
+use ttf_utils::Outline;
+#[cfg(feature = "truetype-text")]
+use ttf_parser::{Face, GlyphId, OutlineBuilder};
 
 #[cfg(any(feature = "stl-io", feature = "dxf-io"))]
 use core2::io::Cursor;
@@ -52,6 +54,9 @@ use image::GrayImage;
 
 #[cfg(any(feature = "metaballs", feature = "sdf"))]
 use fast_surface_nets::{surface_nets, SurfaceNetsBuffer};
+
+// For flattening curves, how many segments per quad/cubic
+const CURVE_STEPS: usize = 8;
 
 #[cfg(feature = "metaballs")]
 #[derive(Debug, Clone)]
@@ -2826,7 +2831,24 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             }
     
             // Build a rotation that maps +Z to `dir`.
-            let rot = rotation_from_z_to_dir(dir);
+            // We'll rotate the z-axis (0,0,1) onto `dir`.
+            let z = Vector3::z();
+            let dot = z.dot(&dir);
+            // If dir is basically the same as z, no rotation needed
+            if (dot - 1.0).abs() < EPSILON {
+                return Matrix4::identity();
+            }
+            // If dir is basically opposite z
+            if (dot + 1.0).abs() < EPSILON {
+                // 180 deg around X or Y axis
+                let rot180 = Rotation3::from_axis_angle(&Unit::new_normalize(Vector3::x()), PI);
+                return rot180.to_homogeneous();
+            }
+            // Otherwise, general axis = z × dir
+            let axis = z.cross(&dir).normalize();
+            let angle = z.dot(&dir).acos();
+            let initial_rot = Rotation3::from_axis_angle(&Unit::new_unchecked(axis), angle);
+            let rot = initial_rot.to_homogeneous()
     
             // Build a translation that puts shape origin at path_points[i]
             let trans = Translation3::from(path_points[i].coords);
@@ -3006,101 +3028,92 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
     }
 
-    /// Convert a `MeshText` (from meshtext) into a list of `Polygon` in the XY plane.
-    /// - `scale` allows you to resize the glyph (e.g. matching a desired font size).
-    /// - By default, the glyph’s normal is set to +Z.
-    #[cfg(feature = "truetype-text")]
-    fn meshtext_to_polygons(glyph_mesh: &meshtext::MeshText, scale: Real, metadata: Option<S>) -> Vec<Polygon<S>> {
-        let mut polygons = Vec::new();
-        let verts = &glyph_mesh.vertices;
-
-        // Each set of 9 floats = one triangle: (x1,y1,z1, x2,y2,z2, x3,y3,z3)
-        for tri_chunk in verts.chunks_exact(9) {
-            let x1 = tri_chunk[0] as Real;
-            let y1 = tri_chunk[1] as Real;
-            let z1 = tri_chunk[2] as Real;
-            let x2 = tri_chunk[3] as Real;
-            let y2 = tri_chunk[4] as Real;
-            let z2 = tri_chunk[5] as Real;
-            let x3 = tri_chunk[6] as Real;
-            let y3 = tri_chunk[7] as Real;
-            let z3 = tri_chunk[8] as Real;
-
-            // Scale them
-            let px1 = x1 * scale;
-            let py1 = y1 * scale;
-            let pz1 = z1 * scale;
-
-            let px2 = x2 * scale;
-            let py2 = y2 * scale;
-            let pz2 = z2 * scale;
-
-            let px3 = x3 * scale;
-            let py3 = y3 * scale;
-            let pz3 = z3 * scale;
-
-            // Normal = +Z
-            let normal = Vector3::z();
-
-            polygons.push(Polygon::new(
-                vec![
-                    Vertex::new(Point3::new(px1, py1, pz1), normal),
-                    Vertex::new(Point3::new(px2, py2, pz2), normal),
-                    Vertex::new(Point3::new(px3, py3, pz3), normal),
-                ],
-                metadata.clone(),
-            ));
-        }
-
-        polygons
-    }
-
-    /// Creates 2D text in the XY plane using the `meshtext` crate to generate glyph meshes.
+    /// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
+    /// 
+    /// Each glyph's outline is stored as either:
+    /// - a `Polygon` (if the contour was explicitly `close()`d), or
+    /// - a `LineString` (if it ended open).
     ///
-    /// - `text`: the text to render
-    /// - `font_data`: TTF font file bytes (e.g. `include_bytes!("../assets/FiraMono-Regular.ttf")`)
-    /// - `size`: optional scaling factor (e.g., a rough "font size").
+    /// No triangulation is done. This allows you to later do your own fill,
+    /// union, offset, or extrude operations on the raw line segments.
     ///
-    /// **Note**: Limitations:
-    ///   - does not handle kerning or multi-line text,
-    ///   - simply advances the cursor by each glyph’s width,
-    ///   - places all characters along the X axis.
-    #[cfg(feature = "truetype-text")]
-    pub fn text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>) -> CSG<S> {
-        let mut generator = MeshGenerator::new(font_data.to_vec());
+    /// # Arguments
+    /// - `text`: the text string (no multiline logic here)
+    /// - `font_data`: raw bytes of a TTF file
+    /// - `scale`: a uniform scale factor
+    /// - `metadata`: optional metadata for the resulting `CSG`
+    pub fn text(
+        text: &str,
+        font_data: &[u8],
+        scale: Real,
+        metadata: Option<S>,
+    ) -> Self {
+        // Load the font face (using ttf_parser). 
+        // As of ttf_parser 0.14+, we typically do: Face::parse(font_data, 0)
+        // If you have older version, might do Face::from_slice(...) returning a Result.
+        let face = match ttf_parser::Face::from_slice(font_data, 0) {
+            Ok(f) => f,
+            Err(_) => {
+                // If the font fails to parse, return an empty 2D CSG
+                return CSG::new();
+            }
+        };
 
-        let mut all_polygons = Vec::new();
-        let mut cursor_x: Real = 0.0;
+        // We'll collect all glyphs' outlines into one geometry:
+        let mut geo_coll = GeometryCollection::default();
 
+        // Simple naive cursor advancement in X:
+        let mut cursor_x = 0.0_f64;
+
+        // For each character:
         for ch in text.chars() {
-            // Optionally skip control chars
+            // Skip control chars:
             if ch.is_control() {
                 continue;
             }
-            // Generate glyph mesh
-            let glyph_mesh: MeshText = match generator.generate_glyph(ch, true, None) {
-                Ok(m) => m,
-                Err(_) => {
-                    // Missing glyph? Advance by some default
-                    cursor_x += size;
-                    continue;
+
+            // Find glyph:
+            if let Some(gid) = face.glyph_index(ch) {
+                // Build an Outline via ttf_utils
+                if let Some(outline) = Outline::new(&face, gid) {
+                    // Flatten all contours into line segments:
+                    let mut collector = OutlineFlattener::new(scale as f64, cursor_x, 0.0);
+                    outline.emit(&mut collector);
+
+                    // Now collector.contours holds "closed" contours
+                    // and collector.open_contours holds "open" lines.
+                    for c in collector.contours {
+                        // Turn that Vec<(x,y)> into a Polygon
+                        if c.len() >= 3 {
+                            let ring = LineString::from(c);
+                            let polygon_2d = GeoPolygon::new(ring, vec![]);
+                            geo_coll.0.push(Geometry::Polygon(polygon_2d));
+                        }
+                    }
+                    for c in collector.open_contours {
+                        // Turn that Vec<(x,y)> into a LineString
+                        if c.len() >= 2 {
+                            let ls = LineString::from(c);
+                            geo_coll.0.push(Geometry::LineString(ls));
+                        }
+                    }
+
+                    // Advance cursor by the glyph's bounding-box width * scale
+                    let bbox = outline.bbox();
+                    let glyph_width = (bbox.width() as f64) * (scale as f64);
+                    cursor_x += glyph_width;
+                } else {
+                    // Some glyphs (e.g. space) have no outline -> skip
+                    cursor_x += scale as f64 * 0.3;
                 }
-            };
-
-            // Convert to polygons
-            let glyph_polygons = Self::meshtext_to_polygons(&glyph_mesh, size, metadata.clone());
-
-            // Translate polygons by (cursor_x, 0.0)
-            let glyph_csg = CSG::from_polygons(&glyph_polygons).translate(cursor_x, 0.0, 0.0);
-            // Accumulate
-            all_polygons.extend(glyph_csg.polygons);
-
-            // Advance cursor by the glyph’s bounding-box width
-            let glyph_width = glyph_mesh.bbox.max.x - glyph_mesh.bbox.min.x;
-            cursor_x += glyph_width as Real * size;
+            } else {
+                // Missing glyph => skip or treat as small blank
+                cursor_x += scale as f64 * 0.3;
+            }
         }
 
-        CSG::from_polygons(&all_polygons)
+        // Wrap it up as a 2D CSG
+        CSG::from_geo(geo_coll, metadata)
     }
 
     /// Triangulate each polygon in the CSG returning a CSG containing triangles
@@ -4612,31 +4625,6 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     }
 }
 
-/// Build a rotation matrix that maps the global +Z axis to the specified `dir` in 3D.
-///
-/// - If `dir` is near zero length or near +Z, we produce the identity.
-/// - Otherwise, we use an axis‐angle rotation from +Z to `dir`.
-fn rotation_from_z_to_dir(dir: Vector3<Real>) -> Matrix4<Real> {
-    // We'll rotate the z-axis (0,0,1) onto `dir`.
-    let z = Vector3::z();
-    let dot = z.dot(&dir);
-    // If dir is basically the same as z, no rotation needed
-    if (dot - 1.0).abs() < EPSILON {
-        return Matrix4::identity();
-    }
-    // If dir is basically opposite z
-    if (dot + 1.0).abs() < EPSILON {
-        // 180 deg around X or Y axis
-        let rot180 = Rotation3::from_axis_angle(&Unit::new_normalize(Vector3::x()), PI);
-        return rot180.to_homogeneous();
-    }
-    // Otherwise, general axis = z × dir
-    let axis = z.cross(&dir).normalize();
-    let angle = z.dot(&dir).acos();
-    let rot = Rotation3::from_axis_angle(&Unit::new_unchecked(axis), angle);
-    rot.to_homogeneous()
-}
-
 /// Helper to build a single Polygon from a “slice” of 3D points.
 ///
 /// If `flip_winding` is true, we reverse the vertex order (so the polygon’s normal flips).
@@ -4723,4 +4711,166 @@ fn gc_to_polygons(gc: &GeometryCollection<Real>) -> MultiPolygon<Real> {
         }
     }
     MultiPolygon(polygons)
+}
+
+/// A helper that implements `ttf_parser::OutlineBuilder`.
+/// It receives MoveTo/LineTo/QuadTo/CurveTo calls from `outline.emit(self)`.
+/// We flatten curves and accumulate polylines. 
+///
+/// - Whenever `close()` occurs, we finalize the current subpath as a closed polygon (`contours`).
+/// - If we start a new MoveTo while the old subpath is open, that old subpath is treated as open (`open_contours`).
+struct OutlineFlattener {
+    // scale + offset
+    scale: f64,
+    offset_x: f64,
+    offset_y: f64,
+
+    // We gather shapes: each "subpath" can be closed or open
+    contours: Vec<Vec<(f64, f64)>>,      // closed polygons
+    open_contours: Vec<Vec<(f64, f64)>>, // open polylines
+
+    current: Vec<(f64, f64)>, // points for the subpath
+    last_pt: (f64, f64),      // current "cursor" in flattening
+    subpath_open: bool,
+}
+
+impl OutlineFlattener {
+    fn new(scale: f64, offset_x: f64, offset_y: f64) -> Self {
+        Self {
+            scale,
+            offset_x,
+            offset_y,
+            contours: Vec::new(),
+            open_contours: Vec::new(),
+            current: Vec::new(),
+            last_pt: (0.0, 0.0),
+            subpath_open: false,
+        }
+    }
+
+    /// Helper: transform TTF coordinates => final (x,y)
+    #[inline]
+    fn tx(&self, x: f32, y: f32) -> (f64, f64) {
+        let sx = x as f64 * self.scale + self.offset_x;
+        let sy = y as f64 * self.scale + self.offset_y;
+        (sx, sy)
+    }
+
+    /// Start a fresh subpath
+    fn begin_subpath(&mut self, x: f32, y: f32) {
+        // If we already had an open subpath, push it as open_contours:
+        if self.subpath_open && !self.current.is_empty() {
+            self.open_contours.push(self.current.clone());
+        }
+        self.current.clear();
+
+        self.subpath_open = true;
+        self.last_pt = self.tx(x, y);
+        self.current.push(self.last_pt);
+    }
+
+    /// Finish the current subpath as open (do not close).
+    /// (We call this if a new `MoveTo` or the entire glyph ends.)
+    fn finish_open_subpath(&mut self) {
+        if self.subpath_open && !self.current.is_empty() {
+            self.open_contours.push(self.current.clone());
+        }
+        self.current.clear();
+        self.subpath_open = false;
+    }
+
+    /// Flatten a line from `last_pt` to `(x,y)`.
+    fn line_to_impl(&mut self, x: f32, y: f32) {
+        let (xx, yy) = self.tx(x, y);
+        self.current.push((xx, yy));
+        self.last_pt = (xx, yy);
+    }
+
+    /// Flatten a quadratic Bézier from last_pt -> (x1,y1) -> (x2,y2)
+    fn quad_to_impl(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) {
+        let steps = CURVE_STEPS;
+        let (px0, py0) = self.last_pt;
+        let (px1, py1) = self.tx(x1, y1);
+        let (px2, py2) = self.tx(x2, y2);
+
+        // B(t) = (1 - t)^2 * p0 + 2(1 - t)t * cp + t^2 * p2
+        for i in 1..=steps {
+            let t = i as f64 / steps as f64;
+            let mt = 1.0 - t;
+            let bx = mt*mt*px0 + 2.0*mt*t*px1 + t*t*px2;
+            let by = mt*mt*py0 + 2.0*mt*t*py1 + t*t*py2;
+            self.current.push((bx, by));
+        }
+        self.last_pt = (px2, py2);
+    }
+
+    /// Flatten a cubic Bézier from last_pt -> (x1,y1) -> (x2,y2) -> (x3,y3)
+    fn curve_to_impl(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
+        let steps = CURVE_STEPS;
+        let (px0, py0) = self.last_pt;
+        let (cx1, cy1) = self.tx(x1, y1);
+        let (cx2, cy2) = self.tx(x2, y2);
+        let (px3, py3) = self.tx(x3, y3);
+
+        // B(t) = (1-t)^3 p0 + 3(1-t)^2 t c1 + 3(1-t) t^2 c2 + t^3 p3
+        for i in 1..=steps {
+            let t = i as f64 / steps as f64;
+            let mt = 1.0 - t;
+            let mt2 = mt*mt;
+            let t2  = t*t;
+            let bx = mt2*mt*px0
+                + 3.0*mt2*t*cx1
+                + 3.0*mt*t2*cx2
+                + t2*t*px3;
+            let by = mt2*mt*py0
+                + 3.0*mt2*t*cy1
+                + 3.0*mt*t2*cy2
+                + t2*t*py3;
+            self.current.push((bx, by));
+        }
+        self.last_pt = (px3, py3);
+    }
+
+    /// Called when `close()` is invoked => store as a closed polygon.
+    fn close_impl(&mut self) {
+        // We have a subpath that should be closed => replicate first point as last if needed.
+        let n = self.current.len();
+        if n > 2 {
+            // If the last point != the first, close it.
+            let first = self.current[0];
+            let last  = self.current[n-1];
+            if (first.0 - last.0).abs() > f64::EPSILON || (first.1 - last.1).abs() > f64::EPSILON {
+                self.current.push(first);
+            }
+            // That becomes one closed contour
+            self.contours.push(self.current.clone());
+        } else {
+            // If it's 2 or fewer points, ignore or treat as degenerate
+        }
+
+        self.current.clear();
+        self.subpath_open = false;
+    }
+}
+
+impl OutlineBuilder for OutlineFlattener {
+    fn move_to(&mut self, x: f32, y: f32) {
+        self.begin_subpath(x, y);
+    }
+
+    fn line_to(&mut self, x: f32, y: f32) {
+        self.line_to_impl(x, y);
+    }
+
+    fn quad_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) {
+        self.quad_to_impl(x1, y1, x2, y2);
+    }
+
+    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
+        self.curve_to_impl(x1, y1, x2, y2, x3, y3);
+    }
+
+    fn close(&mut self) {
+        self.close_impl();
+    }
 }
