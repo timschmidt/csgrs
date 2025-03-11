@@ -47,8 +47,8 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
     }
 
     /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
-    pub fn triangulate(&self) -> Vec<[Vertex; 3]> {
-        // If polygon has fewer than 3 vertices, nothing to triangulate
+    pub fn tessellate(&self) -> Vec<[Vertex; 3]> {
+        // If polygon has fewer than 3 vertices, nothing to tessellate
         if self.vertices.len() < 3 {
             return Vec::new();
         }
@@ -90,7 +90,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
     /// Returns a list of new triangles (each is a [Vertex; 3]).
     pub fn subdivide_triangles(&self, subdivisions: u32) -> Vec<[Vertex; 3]> {
         // 1) Triangulate the polygon as it is.
-        let base_tris = self.triangulate();
+        let base_tris = self.tessellate();
 
         // 2) For each triangle, subdivide 'subdivisions' times.
         let mut result = Vec::new();

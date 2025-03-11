@@ -189,7 +189,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         csg
     }
     
-    pub fn triangulate_2d(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]> {
+    pub fn tessellate_2d(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]> {
         // Convert the outer ring into a `LineString`
         let outer_coords: Vec<Coord<Real>> = outer
             .iter()
@@ -2130,7 +2130,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // 1) For each polygon in the CSG:
         for poly in &self.polygons {
             // 2) Triangulate it if necessary:
-            let triangles = poly.triangulate();
+            let triangles = poly.tessellate();
 
             // 3) For each triangle, do a ray–triangle intersection test:
             for tri in triangles {
@@ -2199,7 +2199,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
                     // bottom
                     let bottom_tris =
-                        CSG::<()>::triangulate_2d(&exterior_coords, &interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>());
+                        CSG::<()>::tessellate_2d(&exterior_coords, &interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>());
                     for tri in bottom_tris {
                         let v0 = Vertex::new(tri[2], -Vector3::z());
                         let v1 = Vertex::new(tri[1], -Vector3::z());
@@ -2208,7 +2208,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                     }
                     // top
                     let top_tris =
-                        CSG::<()>::triangulate_2d(&exterior_coords, &interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>());
+                        CSG::<()>::tessellate_2d(&exterior_coords, &interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>());
                     for tri in top_tris {
                         let p0 = tri[0] + direction;
                         let p1 = tri[1] + direction;
@@ -3168,11 +3168,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     }
 
     /// Triangulate each polygon in the CSG returning a CSG containing triangles
-    pub fn triangulate(&self) -> CSG<S> {
+    pub fn tessellate(&self) -> CSG<S> {
         let mut triangles = Vec::new();
     
         for poly in &self.polygons {
-            let tris = poly.triangulate();
+            let tris = poly.tessellate();
             for triangle in tris {
                 triangles.push(Polygon::new(triangle.to_vec(), poly.metadata.clone()));
             }
@@ -3252,7 +3252,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // 1) Gather all the triangles from each polygon
         // 2) Build a TriMesh from points + triangle indices
         // 3) Wrap that in a SharedShape to be used in Rapier
-        let tri_csg = self.triangulate();
+        let tri_csg = self.tessellate();
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
         let mut index_offset = 0;
@@ -3324,7 +3324,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///
     /// This function defines a comparison function which takes EPSILON into account
     /// for Real coordinates, builds a hashmap key from the string representation of
-    /// the coordinates, triangulates the CSG polygons, gathers each of their three edges,
+    /// the coordinates, tessellates the CSG polygons, gathers each of their three edges,
     /// counts how many times each edge appears across all triangles,
     /// and returns true if every edge appears exactly 2 times, else false.
     ///
@@ -3359,7 +3359,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
 
         // Triangulate the whole shape once
-        let tri_csg = self.triangulate();
+        let tri_csg = self.tessellate();
         let mut edge_counts: HashMap<(String, String), u32> = HashMap::new();
 
         for poly in &tri_csg.polygons {
@@ -4216,7 +4216,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
     /// Export to ASCII STL
     /// 1) 3D polygons in `self.polygons`,
-    /// 2) any 2D Polygons or MultiPolygons in `self.geometry` (triangulated in XY).
+    /// 2) any 2D Polygons or MultiPolygons in `self.geometry` (tessellated in XY).
     ///
     /// Convert this CSG to an **ASCII STL** string with the given `name`.
     ///
@@ -4233,8 +4233,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // (A) Write out all *3D* polygons
         //
         for poly in &self.polygons {
-            // Ensure the polygon is triangulated, since STL is triangle-based.
-            let triangles = poly.triangulate();
+            // Ensure the polygon is tessellated, since STL is triangle-based.
+            let triangles = poly.tessellate();
             // A typical STL uses the face normal; we can take the polygon’s plane normal:
             let normal = poly.plane.normal.normalize();
     
@@ -4257,7 +4257,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     
         //
         // (B) Write out all *2D* geometry from `self.geometry`
-        //     We only handle Polygon and MultiPolygon.  We triangulate in XY, set z=0.
+        //     We only handle Polygon and MultiPolygon.  We tessellate in XY, set z=0.
         //    
         for geom in &self.geometry {
             match geom {
@@ -4281,7 +4281,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                         .collect::<Vec<_>>();
     
                     // Triangulate with our existing helper:
-                    let triangles_2d = Self::triangulate_2d(&outer, &hole_refs);
+                    let triangles_2d = Self::tessellate_2d(&outer, &hole_refs);
     
                     // Write each tri as a facet in ASCII STL, with a normal of (0,0,1)
                     for tri in triangles_2d {
@@ -4318,7 +4318,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                             .map(|hole_coords| &hole_coords[..])
                             .collect::<Vec<_>>();
     
-                        let triangles_2d = Self::triangulate_2d(&outer, &hole_refs);
+                        let triangles_2d = Self::tessellate_2d(&outer, &hole_refs);
     
                         for tri in triangles_2d {
                             out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
@@ -4366,7 +4366,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         for poly in &self.polygons {
             let normal = poly.plane.normal.normalize();
             // Convert polygon to triangles
-            let tri_list = poly.triangulate();
+            let tri_list = poly.tessellate();
             for tri in tri_list {
                 triangles.push(Triangle {
                     normal: Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
@@ -4413,7 +4413,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                     let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
     
                     // Triangulate using our geo-based helper
-                    let tri_2d = Self::triangulate_2d(&outer, &hole_refs);
+                    let tri_2d = Self::tessellate_2d(&outer, &hole_refs);
     
                     // Each triangle is in XY, so normal = (0,0,1)
                     for tri_pts in tri_2d {
@@ -4453,7 +4453,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                             .collect();
     
                         let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
-                        let tri_2d = Self::triangulate_2d(&outer, &hole_refs);
+                        let tri_2d = Self::tessellate_2d(&outer, &hole_refs);
     
                         for tri_pts in tri_2d {
                             triangles.push(Triangle {
@@ -4642,7 +4642,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         for poly in &self.polygons {
             // Triangulate the polygon if it has more than 3 vertices
             let triangles = if poly.vertices.len() > 3 {
-                poly.triangulate()
+                poly.tessellate()
             } else {
                 vec![[
                     poly.vertices[0].clone(),
