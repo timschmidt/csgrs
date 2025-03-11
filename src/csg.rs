@@ -3137,13 +3137,20 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         let mut new_gc = GeometryCollection::default();
 
         // Convert the “chains” or loops into open/closed polygons
-        for chain in polylines_3d {
+        for mut chain in polylines_3d {
             let n = chain.len();
             if n < 2 {
                 // degenerate
                 continue;
             }
 
+            // check if first and last point are within EPSILON of each other
+            let dist_sq = (chain[0].pos - chain[n - 1].pos).norm_squared();
+            if dist_sq < EPSILON * EPSILON {
+                // Force them to be exactly the same, closing the line
+                chain[n - 1] = chain[0].clone();
+            }
+            
             let polyline = LineString::new(chain.iter().map(|vertex| {coord! {x: vertex.pos.x, y: vertex.pos.y}}).collect());
             
             if polyline.is_closed() {
