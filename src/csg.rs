@@ -7,7 +7,7 @@ use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3, partial_min, partial_max,
 };
 use geo::{
-    Area, AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Orient, orient::Direction, Polygon as GeoPolygon, Rect,
+    Area, AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Orient, orient::Direction, Polygon as GeoPolygon, Rect, Winding,
 };
 //extern crate geo_booleanop;
 //use geo_booleanop::boolean::BooleanOp;
@@ -36,7 +36,7 @@ use rayon::prelude::*;
 #[cfg(feature = "truetype-text")]
 use ttf_utils::Outline;
 #[cfg(feature = "truetype-text")]
-use ttf_parser::{Face, GlyphId, OutlineBuilder};
+use ttf_parser::{OutlineBuilder};
 
 #[cfg(any(feature = "stl-io", feature = "dxf-io"))]
 use core2::io::Cursor;
@@ -3030,27 +3030,27 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
     /// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
     /// 
-    /// Each glyph's outline is stored as either:
-    /// - a `Polygon` (if the contour was explicitly `close()`d), or
-    /// - a `LineString` (if it ended open).
-    ///
-    /// No triangulation is done. This allows you to later do your own fill,
-    /// union, offset, or extrude operations on the raw line segments.
+    /// Each glyph’s closed contours become one or more `Polygon`s (with holes if needed), 
+    /// and any open contours become `LineString`s.
     ///
     /// # Arguments
     /// - `text`: the text string (no multiline logic here)
     /// - `font_data`: raw bytes of a TTF file
-    /// - `scale`: a uniform scale factor
+    /// - `scale`: a uniform scale factor for glyphs
     /// - `metadata`: optional metadata for the resulting `CSG`
+    ///
+    /// # Returns
+    /// A `CSG` whose `geometry` contains:
+    /// - One or more `Polygon`s for each glyph, 
+    /// - A set of `LineString`s for any open contours (rare in standard fonts), 
+    /// all positioned in the XY plane at z=0.
     pub fn text(
         text: &str,
         font_data: &[u8],
         scale: Real,
         metadata: Option<S>,
     ) -> Self {
-        // Load the font face (using ttf_parser). 
-        // As of ttf_parser 0.14+, we typically do: Face::parse(font_data, 0)
-        // If you have older version, might do Face::from_slice(...) returning a Result.
+        // 1) Parse the TTF font
         let face = match ttf_parser::Face::from_slice(font_data, 0) {
             Ok(f) => f,
             Err(_) => {
@@ -3059,60 +3059,101 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             }
         };
 
-        // We'll collect all glyphs' outlines into one geometry:
+        // 2) We'll collect all glyph geometry into one GeometryCollection
         let mut geo_coll = GeometryCollection::default();
 
-        // Simple naive cursor advancement in X:
-        let mut cursor_x = 0.0_f64;
+        // 3) A simple "pen" cursor for horizontal text layout
+        let mut cursor_x = 0.0 as Real;
 
-        // For each character:
         for ch in text.chars() {
             // Skip control chars:
             if ch.is_control() {
                 continue;
             }
 
-            // Find glyph:
+            // Find glyph index in the font
             if let Some(gid) = face.glyph_index(ch) {
-                // Build an Outline via ttf_utils
+                // Extract the glyph outline (if any)
                 if let Some(outline) = Outline::new(&face, gid) {
-                    // Flatten all contours into line segments:
-                    let mut collector = OutlineFlattener::new(scale as f64, cursor_x, 0.0);
+                    // Flatten the outline into line segments
+                    let mut collector = OutlineFlattener::new(scale as Real, cursor_x as Real, 0.0);
                     outline.emit(&mut collector);
 
-                    // Now collector.contours holds "closed" contours
-                    // and collector.open_contours holds "open" lines.
-                    for c in collector.contours {
-                        // Turn that Vec<(x,y)> into a Polygon
-                        if c.len() >= 3 {
-                            let ring = LineString::from(c);
-                            let polygon_2d = GeoPolygon::new(ring, vec![]);
-                            geo_coll.0.push(Geometry::Polygon(polygon_2d));
+                    // Now `collector.contours` holds closed subpaths,
+                    // and `collector.open_contours` holds open polylines.
+
+                    // -------------------------
+                    // Handle all CLOSED subpaths (which might be outer shapes or holes):
+                    // -------------------------
+                    if !collector.contours.is_empty() {
+                        // We can have multiple outer loops and multiple inner loops (holes).
+                        let mut outer_rings = Vec::new();
+                        let mut hole_rings  = Vec::new();
+
+                        for closed_pts in collector.contours {
+                            if closed_pts.len() < 3 {
+                                continue; // degenerate
+                            }
+
+                            let ring = LineString::from(closed_pts);
+
+                            // We need to measure signed area.  The `signed_area` method works on a Polygon,
+                            // so construct a temporary single-ring polygon:
+                            let tmp_poly = GeoPolygon::new(ring.clone(), vec![]);
+                            let area = tmp_poly.signed_area();
+
+                            if area < 0.0 {
+                                // This is an outer ring
+                                outer_rings.push(ring);
+                            } else {
+                                // This is a hole ring
+                                hole_rings.push(ring);
+                            }
                         }
-                    }
-                    for c in collector.open_contours {
-                        // Turn that Vec<(x,y)> into a LineString
-                        if c.len() >= 2 {
-                            let ls = LineString::from(c);
-                            geo_coll.0.push(Geometry::LineString(ls));
+
+                        // Typically, a TrueType glyph has exactly one outer ring and 0+ holes.
+                        // But in some tricky glyphs, you might see multiple separate outer rings.
+                        // We'll create one Polygon for the first outer ring with all holes,
+                        // then if there are additional outer rings, each becomes its own separate Polygon.
+                        if !outer_rings.is_empty() {
+                            let first_outer = outer_rings.remove(0);
+
+                            // The “primary” polygon: first outer + all holes
+                            let polygon_2d = GeoPolygon::new(first_outer, hole_rings);
+                            geo_coll.0.push(Geometry::Polygon(polygon_2d));
+
+                            // If there are leftover outer rings, push them each as a separate polygon (no holes):
+                            for extra_outer in outer_rings {
+                                let poly_2d = GeoPolygon::new(extra_outer, vec![]);
+                                geo_coll.0.push(Geometry::Polygon(poly_2d));
+                            }
                         }
                     }
 
-                    // Advance cursor by the glyph's bounding-box width * scale
+                    // -------------------------
+                    // Handle all OPEN subpaths => store as LineStrings:
+                    // -------------------------
+                    for open_pts in collector.open_contours {
+                        if open_pts.len() >= 2 {
+                            geo_coll.0.push(Geometry::LineString(LineString::from(open_pts)));
+                        }
+                    }
+
+                    // Finally, advance our pen by the glyph's bounding-box width
                     let bbox = outline.bbox();
-                    let glyph_width = (bbox.width() as f64) * (scale as f64);
+                    let glyph_width = bbox.width() as Real * scale;
                     cursor_x += glyph_width;
                 } else {
-                    // Some glyphs (e.g. space) have no outline -> skip
-                    cursor_x += scale as f64 * 0.3;
+                    // If there's no outline (e.g., space), just move a bit
+                    cursor_x += scale as Real * 0.3;
                 }
             } else {
-                // Missing glyph => skip or treat as small blank
-                cursor_x += scale as f64 * 0.3;
+                // Missing glyph => small blank advance
+                cursor_x += scale as Real * 0.3;
             }
         }
 
-        // Wrap it up as a 2D CSG
+        // Build a 2D CSG from the collected geometry
         CSG::from_geo(geo_coll, metadata)
     }
 
