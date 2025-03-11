@@ -1,17 +1,18 @@
-use crate::float_types::{EPSILON, PI, TAU, Real};
+use crate::float_types::{EPSILON, PI, TAU, FRAC_PI_2, Real};
 use crate::bsp::Node;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
 use crate::polygon::Polygon;
 use nalgebra::{
-    Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
+    Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3, partial_min, partial_max,
 };
+use geo::{
+    Area, AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, coord, Coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Orient, orient::Direction, Polygon as GeoPolygon, Rect, TriangulateEarcut,
+};
+//extern crate geo_booleanop;
+//use geo_booleanop::boolean::BooleanOp;
 use std::error::Error;
-use cavalier_contours::polyline::{
-    PlineSource, PlineSourceMut, Polyline, PlineOrientation
-};
-use cavalier_contours::shape_algorithms::Shape as CCShape;
-use cavalier_contours::shape_algorithms::ShapeOffsetOptions;
+use std::fmt::Debug;
 use crate::float_types::parry3d::{
     bounding_volume::Aabb,
     query::{Ray, RayCast},
@@ -25,9 +26,6 @@ use hashbrown::HashMap;
 #[cfg(feature = "chull-io")]
 use chull::ConvexHullWrapper;
 
-#[cfg(feature = "earcut-io")]
-use earcut::Earcut;
-
 #[cfg(feature = "hershey-text")]
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 
@@ -35,7 +33,9 @@ use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use rayon::prelude::*;
 
 #[cfg(feature = "truetype-text")]
-use meshtext::{Glyph, MeshGenerator, MeshText};
+use ttf_utils::Outline;
+#[cfg(feature = "truetype-text")]
+use ttf_parser::{OutlineBuilder};
 
 #[cfg(any(feature = "stl-io", feature = "dxf-io"))]
 use core2::io::Cursor;
@@ -51,8 +51,14 @@ use stl_io;
 #[cfg(feature = "image-io")]
 use image::GrayImage;
 
+#[cfg(feature = "offset")]
+use geo_buf::{ buffer_polygon, buffer_multi_polygon, };
+
 #[cfg(any(feature = "metaballs", feature = "sdf"))]
 use fast_surface_nets::{surface_nets, SurfaceNetsBuffer};
+
+// For flattening curves, how many segments per quad/cubic
+const CURVE_STEPS: usize = 8;
 
 #[cfg(feature = "metaballs")]
 #[derive(Debug, Clone)]
@@ -89,21 +95,41 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
 pub struct CSG<S: Clone> {
     /// 3D polygons for volumetric shapes
     pub polygons: Vec<Polygon<S>>,
-    /// 2D polylines in the XY plane for 2D shapes
-    /// When storing multiple polylines, these will be interpreted by unioning all CCW polylines, then differencing CW polylines from that.
-    pub polylines: CCShape<Real>,
-    /// metadata
+
+    /// 2D geometry
+    pub geometry: GeometryCollection<Real>,
+
+    /// Metadata
     pub metadata: Option<S>,
 }
 
-impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
+
+impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// Create an empty CSG
     pub fn new() -> Self {
         CSG {
             polygons: Vec::new(),
-            polylines: CCShape::empty(),
+            geometry: GeometryCollection::default(),
             metadata: None,
         }
+    }
+    
+    /// Helper to collect all vertices from the CSG.
+    #[cfg(not(feature = "parallel"))]
+    pub fn vertices(&self) -> Vec<Vertex> {
+        self.polygons
+            .iter()
+            .flat_map(|p| p.vertices.clone())
+            .collect()
+    }
+    
+    /// Parallel helper to collect all vertices from the CSG.
+    #[cfg(feature = "parallel")]
+    pub fn vertices(&self) -> Vec<Vertex> {
+        self.polygons
+            .par_iter()
+            .flat_map(|p| p.vertices.clone())
+            .collect()
     }
 
     /// Build a CSG from an existing polygon list
@@ -113,251 +139,111 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         csg
     }
 
-    /// Convert internal polylines into polygons and return along with any existing internal polygons
+    /// Convert internal polylines into polygons and return along with any existing internal polygons.
     pub fn to_polygons(&self) -> Vec<Polygon<S>> {
         let mut all_polygons = Vec::new();
     
-        //  - For each "outer" CCW polyline, find any "hole" CW polylines that lie inside.
-        //  - Triangulate the outer + holes with earclip or earcut if the feature is enabled.
-        //  - Otherwise, fall back to a single non‐triangulated polygon.
-    
-        // Build polygons from ccw_plines (outer boundaries)
-        for (_outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
-            let outer_pline = &outer_ipline.polyline;
-            if outer_pline.vertex_count() < 3 {
-                // Not enough points to form a polygon
-                continue;
-            }
-    
-            // Compute bounding box of the outer polyline
-            let Some(aabb) = outer_pline.extents() else {
-                continue;
-            };
-            let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
-    
-            // Find which CW polylines might be holes (bounding‐box query)
-            let bounding_box_query = self.polylines.plines_index.query(oxmin, oymin, oxmax, oymax);
-            let mut holes_xy: Vec<Vec<[Real;2]>> = Vec::new();
-    
-            for hole_candidate_idx in bounding_box_query {
-                // CW polylines start after all the CCW ones
-                let cw_start = self.polylines.ccw_plines.len();
-                if hole_candidate_idx < cw_start {
-                    // This is also a CCW boundary, not a hole
-                    continue;
+        for geom in &self.geometry {
+            if let Geometry::Polygon(poly2d) = geom {
+                // 1. Convert the outer ring to 3D.
+                let mut outer_vertices_3d = Vec::new();
+                for c in poly2d.exterior().coords_iter() {
+                    outer_vertices_3d.push(
+                        Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z())
+                    );
                 }
-                let hole_ipline = &self.polylines.cw_plines[hole_candidate_idx - cw_start].polyline;
+                
+                // Push as a new Polygon<S> if it has at least 3 vertices.
+                if outer_vertices_3d.len() >= 3 {
+                    all_polygons.push(Polygon::new(outer_vertices_3d, self.metadata.clone()));
+                }
     
-                // A hole’s first vertex is tested for “inside outer boundary”
-                let hv0 = hole_ipline.at(0);
-                if Self::point_in_polygon_2d(hv0.x, hv0.y, outer_pline) {
-                    // Gather the hole’s points into holes_xy
-                    let mut hole_pts = Vec::with_capacity(hole_ipline.vertex_count());
-                    for i in 0..hole_ipline.vertex_count() {
-                        let p = hole_ipline.at(i);
-                        hole_pts.push([p.x, p.y]);
+                // 2. Convert each interior ring (hole) into its own Polygon<S>.
+                for ring in poly2d.interiors() {
+                    let mut hole_vertices_3d = Vec::new();
+                    for c in ring.coords_iter() {
+                        hole_vertices_3d.push(
+                            Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z())
+                        );
                     }
-                    holes_xy.push(hole_pts);
+    
+                    if hole_vertices_3d.len() >= 3 {
+                        // If your `Polygon<S>` type can represent holes internally,
+                        // adjust this to store hole_vertices_3d as a hole rather
+                        // than a new standalone polygon.
+                        all_polygons.push(Polygon::new(hole_vertices_3d, self.metadata.clone()));
+                    }
                 }
             }
-    
-            // Collect the outer polyline’s points into `outer_xy`
-            let mut outer_xy = Vec::with_capacity(outer_pline.vertex_count());
-            for i in 0..outer_pline.vertex_count() {
-                let v = outer_pline.at(i);
-                outer_xy.push([v.x, v.y]);
-            }
-    
-            // Triangulate outer + holes using earclip or earcut, if available
-            #[cfg(feature = "earclip-io")]
-            {
-                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = Self::triangulate_2d_earclip(&outer_xy, &hole_refs);
-    
-                // Convert each returned triangle into a Polygon<S> with Z=0
-                for tri in triangles_2d {
-                    let p0 = tri[0];
-                    let p1 = tri[1];
-                    let p2 = tri[2];
-                    let verts = vec![
-                        Vertex::new(p0, Vector3::z()),
-                        Vertex::new(p1, Vector3::z()),
-                        Vertex::new(p2, Vector3::z()),
-                    ];
-                    all_polygons.push(Polygon::new(verts, self.metadata.clone()));
-                }
-            }
-    
-            #[cfg(feature = "earcut-io")]
-            {
-                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = Self::triangulate_2d_earcut(&outer_xy, &hole_refs);
-    
-                for tri in triangles_2d {
-                    let p0 = tri[0];
-                    let p1 = tri[1];
-                    let p2 = tri[2];
-                    let verts = vec![
-                        Vertex::new(p0, Vector3::z()),
-                        Vertex::new(p1, Vector3::z()),
-                        Vertex::new(p2, Vector3::z()),
-                    ];
-                    all_polygons.push(Polygon::new(verts, self.metadata.clone()));
-                }
-            }
+            // else if let Geometry::LineString(ls) = geom {
+            //     // Example of how you might convert a linestring to a polygon,
+            //     // if desired. Omitted for brevity.
+            // }
         }
-    
-        // Finally, include the 3D polygons the CSG already had
-        all_polygons.extend(self.polygons.clone());
     
         all_polygons
     }
-
-    /// Build a new CSG containing polylines
-    pub fn from_polylines(polylines: &[Polyline<Real>], metadata: Option<S>) -> CSG<S> {
+    
+    /// Create a CSG that holds *only* 2D geometry in a `geo::GeometryCollection`.
+    pub fn from_geo(geometry: GeometryCollection<Real>, metadata: Option<S>) -> Self {
         let mut csg = CSG::new();
-        // from_plines properly parses CCW and CW polylines into appropriate buckets
-        csg.polylines = CCShape::from_plines(polylines.to_vec());
+        csg.geometry = geometry;
         csg.metadata = metadata;
         csg
     }
     
-    // Group polygons by their metadata.
-    //
-    // Returns a map from the metadata (as `Option<S>`) to a
-    // list of references to all polygons that have that metadata.
-    //
-    // # Example
-    // ```
-    // let mut csg = CSG::new();
-    // // ... fill `csg.polygons` with some that share metadata, some that have None, etc.
-    //
-    // let grouped = csg.polygons_by_metadata();
-    // for (meta, polys) in &grouped {
-    //     println!("Metadata = {:?}, #polygons = {}", meta, polys.len());
-    // }
-    // ```
-    // requires impl<S: Clone + Eq + Hash> CSG<S> { and use std::collections::HashMap; use std::hash::Hash;
-    // pub fn polygons_by_metadata(&self) -> HashMap<Option<S>, Vec<&Polygon<S>>> {
-    //    let mut map: HashMap<Option<S>, Vec<&Polygon<S>>> = HashMap::new();
-    //    
-    //    for poly in &self.polygons {
-    //        // Clone the `Option<S>` so we can use it as the key
-    //        let key = poly.metadata.clone();
-    //        map.entry(key).or_default().push(poly);
-    //    }
-    //    
-    //    map
-    // }
-
-    // Return polygons grouped by metadata
-    // requires impl<S: Clone + std::cmp::PartialEq> CSG<S> {
-    // pub fn polygons_by_metadata_partialeq(&self) -> Vec<(Option<S>, Vec<&Polygon<S>>)> {
-    //    let mut groups: Vec<(Option<S>, Vec<&Polygon<S>>)> = Vec::new();
-    //    'outer: for poly in &self.polygons {
-    //        let meta = poly.metadata.clone();
-    //        // Try to find an existing group with the same metadata (requires a way to compare!)
-    //        for (existing_meta, polys) in &mut groups {
-    //            // For this to work, you need some form of comparison on `S`.
-    //            // If S does not implement Eq, you might do partial compare or pointer compare, etc.
-    //            if *existing_meta == meta {
-    //                polys.push(poly);
-    //                continue 'outer;
-    //            }
-    //        }
-    //        // Otherwise, start a new group
-    //        groups.push((meta, vec![poly]));
-    //    }
-    //    groups
-    // }
+    pub fn tessellate_2d(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]> {
+        // Convert the outer ring into a `LineString`
+        let outer_coords: Vec<Coord<Real>> = outer
+            .iter()
+            .map(|&[x, y]| Coord { x, y })
+            .collect();
+        
+        // Convert each hole into its own `LineString`
+        let holes_coords: Vec<LineString<Real>> = holes
+            .iter()
+            .map(|hole| {
+                let coords: Vec<Coord<Real>> = hole
+                    .iter()
+                    .map(|&[x, y]| Coord { x, y })
+                    .collect();
+                LineString::new(coords)
+            })
+            .collect();
     
-    #[cfg(feature = "earclip-io")]
-    fn triangulate_2d_earclip(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]>
-    {
-        // Flatten data for earclip:
-        //   - We treat `outer` as the first polygon,
-        //   - Then each `holes[i]` as subsequent polygon(s).
-        // earclip can handle “polygon with hole(s)” if you flatten with the
-        // appropriate hole start indices.
+        // Ear-cut triangulation on the polygon (outer + holes)
+        let polygon = GeoPolygon::new(LineString::new(outer_coords), holes_coords);
+        let triangulation = polygon.earcut_triangles_raw();
+        let triangle_indices = triangulation.triangle_indices;
+        let vertices = triangulation.vertices;
     
-        // Combine everything into one single big Vec<Vec<Vec<Real>>> shape
-        // in which [outer] is the first polygon, holes come after.
-        let mut polygons: Vec<Vec<Vec<Real>>> = Vec::new();
-        // Outer polygon in 2D
-        let outer_2d: Vec<Vec<Real>> = outer.iter().map(|p| vec![p[0], p[1]]).collect();
-        polygons.push(outer_2d);
-    
-        for h in holes {
-            let hole_2d: Vec<Vec<Real>> = h.iter().map(|p| vec![p[0], p[1]]).collect();
-            polygons.push(hole_2d);
-        }
-    
-        // Use the earclip version from your code (similar to the “from_earclip” pattern)
-        // We produce triangles in 3D, z=0, with normal = +Z by default.
-        let (vertices, hole_indices, dim) = earclip::flatten::<Real, usize>(&polygons);
-        let indices = earclip::earcut::<Real, usize>(&vertices, &hole_indices, dim);
-    
-        let mut result = Vec::new();
-        for tri in indices.chunks_exact(3) {
-            let mut tri_pts = [Point3::origin(); 3];
-            for (k, &idx) in tri.iter().enumerate() {
-                let start = idx * dim;
-                // Our 2D flatten => x = vertices[start], y = vertices[start+1], z=0
-                tri_pts[k] = Point3::new(vertices[start], vertices[start+1], 0.0);
-            }
-            result.push(tri_pts);
-        }
-    
-        result
-    }
-    
-    #[cfg(feature = "earcut-io")]
-    fn triangulate_2d_earcut(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]>
-    {
-        use earcut::Earcut;
-    
-        // Flatten in a style suitable for earcut:
-        //   - single “outer” array,
-        //   - then hole(s) arrays, with the “hole index” = length of outer so far.
-        // See the existing “from_earcut” code for an example.
-    
-        let mut all_vertices_2d = Vec::new();
-        let mut hole_indices = Vec::new();
-    
-        // Outer polygon
-        for pt in outer {
-            all_vertices_2d.push([pt[0], pt[1]]);
-        }
-    
-        let mut current_len = all_vertices_2d.len();
-        for h in holes {
-            hole_indices.push(current_len);
-            for pt in *h {
-                all_vertices_2d.push([pt[0], pt[1]]);
-            }
-            current_len = all_vertices_2d.len();
-        }
-    
-        let mut earcut = Earcut::new();
-        let mut triangle_indices = Vec::new();
-    
-        // dimension = 2
-        earcut.earcut(all_vertices_2d.clone(), &hole_indices, &mut triangle_indices);
-    
-        let mut result = Vec::new();
+        // Convert the 2D result (x,y) into 3D triangles with z=0
+        let mut result = Vec::with_capacity(triangle_indices.len() / 3);
         for tri in triangle_indices.chunks_exact(3) {
             let pts = [
-                Point3::new(all_vertices_2d[tri[0]][0], all_vertices_2d[tri[0]][1], 0.0),
-                Point3::new(all_vertices_2d[tri[1]][0], all_vertices_2d[tri[1]][1], 0.0),
-                Point3::new(all_vertices_2d[tri[2]][0], all_vertices_2d[tri[2]][1], 0.0),
+                Point3::new(vertices[2 * tri[0]], vertices[2 * tri[0] + 1], 0.0),
+                Point3::new(vertices[2 * tri[1]], vertices[2 * tri[1] + 1], 0.0),
+                Point3::new(vertices[2 * tri[2]], vertices[2 * tri[2] + 1], 0.0),
             ];
             result.push(pts);
         }
-    
         result
     }
 
-    /// CSG union: this ∪ other
+    // Return a new CSG representing space in either this CSG or in the
+    // other CSG. Neither this CSG nor the other CSG are modified.
+    // 
+    //     let c = a.union(b);
+    // 
+    //     +-------+            +-------+
+    //     |       |            |       |
+    //     |   a   |            |       |
+    //     |    +--+----+   =   |       +----+
+    //     +----+--+    |       +----+       |
+    //          |   b   |            |       |
+    //          |       |            |       |
+    //          +-------+            +-------+
+    // 
     pub fn union(&self, other: &CSG<S>) -> CSG<S> {
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
@@ -369,29 +255,57 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         b.invert();
         a.build(&b.all_polygons());
         
-        // self.polylines and other.polylines are `CCShape<Real>`.
-        let shape1 = &self.polylines;
-        let shape2 = &other.polylines;
-
-        // Perform the union using cavalier_contours Shape-based union
-        let union_shape = shape1.union(shape2);
-
-        // Gather the resulting polylines from the unioned shape
-        let mut result_plines = Vec::new();
-        // The resulting shape’s `ccw_plines` and `cw_plines` each contain an
-        // `IndexedPolyline<T>` with `.polyline` holding the actual Polyline.
-        for indexed_pl in union_shape.ccw_plines.iter().chain(union_shape.cw_plines.iter()) {
-            result_plines.push(indexed_pl.polyline.clone());
+        // Extract polygons from geometry
+        let polys1 = gc_to_polygons(&self.geometry);
+        let polys2 = gc_to_polygons(&other.geometry);
+    
+        // Perform union on those polygons
+        let unioned = polys1.union(&polys2); // This is valid if each is a MultiPolygon
+        let oriented = unioned.orient(Direction::Default);
+    
+        // Wrap the unioned polygons + lines/points back into one GeometryCollection
+        let mut final_gc = GeometryCollection::default();
+        final_gc.0.push(Geometry::MultiPolygon(oriented));
+        
+        // re-insert lines & points from both sets:
+        for g in &self.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
+                    // skip polygons
+                }
+                _ => final_gc.0.push(g.clone())
+            }
+        }
+        for g in &other.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
+                    // skip polygons
+                }
+                _ => final_gc.0.push(g.clone())
+            }
         }
 
         CSG {
             polygons: a.all_polygons(),
-            polylines: CCShape::from_plines(result_plines),
+            geometry: final_gc,
             metadata: self.metadata.clone(),
         }
     }
 
-    /// CSG difference: this \ other
+    // Return a new CSG representing space in this CSG but not in the
+    // other CSG. Neither this CSG nor the other CSG are modified.
+    // 
+    //     let c = a.difference(b);
+    // 
+    //     +-------+            +-------+
+    //     |       |            |       |
+    //     |   a   |            |       |
+    //     |    +--+----+   =   |    +--+
+    //     +----+--+    |       +----+
+    //          |   b   |
+    //          |       |
+    //          +-------+
+    // 
     pub fn difference(&self, other: &CSG<S>) -> CSG<S> {
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
@@ -405,23 +319,48 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         a.build(&b.all_polygons());
         a.invert();
         
-        let shape1 = &self.polylines;
-        let shape2 = &other.polylines;
-
-        let diff_shape = shape1.difference(shape2);
-        let mut result_plines = Vec::new();
-        for indexed_pl in diff_shape.ccw_plines.iter().chain(diff_shape.cw_plines.iter()) {
-            result_plines.push(indexed_pl.polyline.clone());
+        // -- 2D geometry-based approach --
+        let polys1 = gc_to_polygons(&self.geometry);
+        let polys2 = gc_to_polygons(&other.geometry);
+    
+        // Perform difference on those polygons
+        let differenced = polys1.difference(&polys2);
+        let oriented = differenced.orient(Direction::Default);
+    
+        // Wrap the differenced polygons + lines/points back into one GeometryCollection
+        let mut final_gc = GeometryCollection::default();
+        final_gc.0.push(Geometry::MultiPolygon(oriented));
+    
+        // Re-insert lines & points from self only
+        // (If you need to exclude lines/points that lie inside other, you'd need more checks here.)
+        for g in &self.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                _ => final_gc.0.push(g.clone()),
+            }
         }
-
+    
         CSG {
             polygons: a.all_polygons(),
-            polylines: CCShape::from_plines(result_plines),
+            geometry: final_gc,
             metadata: self.metadata.clone(),
         }
     }
 
-    /// CSG intersection: this ∩ other
+    // Return a new CSG representing space in both this CSG and the
+    // other CSG. Neither this CSG nor the other CSG are modified.
+    // 
+    //     let c = a.intersect(b);
+    // 
+    //     +-------+
+    //     |       |
+    //     |   a   |
+    //     |    +--+----+   =   +--+
+    //     +----+--+    |       +--+
+    //          |   b   |
+    //          |       |
+    //          +-------+
+    // 
     pub fn intersection(&self, other: &CSG<S>) -> CSG<S> {
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
@@ -434,38 +373,99 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         a.build(&b.all_polygons());
         a.invert();
         
-        let shape1 = &self.polylines;
-        let shape2 = &other.polylines;
-
-        let intersected = shape1.intersection(shape2);
-        let mut result_plines = Vec::new();
-        for indexed_pl in intersected.ccw_plines.iter().chain(intersected.cw_plines.iter()) {
-            result_plines.push(indexed_pl.polyline.clone());
+        // -- 2D geometry-based approach --
+        let polys1 = gc_to_polygons(&self.geometry);
+        let polys2 = gc_to_polygons(&other.geometry);
+    
+        // Perform intersection on those polygons
+        let intersected = polys1.intersection(&polys2);
+        let oriented = intersected.orient(Direction::Default);
+    
+        // Wrap the intersected polygons + lines/points into one GeometryCollection
+        let mut final_gc = GeometryCollection::default();
+        final_gc.0.push(Geometry::MultiPolygon(oriented));
+    
+        // For lines and points: keep them only if they intersect in both sets
+        // todo: detect intersection of non-polygons
+        for g in &self.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                _ => final_gc.0.push(g.clone()),
+            }
         }
-
+        for g in &other.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                _ => final_gc.0.push(g.clone()),
+            }
+        }
+    
         CSG {
             polygons: a.all_polygons(),
-            polylines: CCShape::from_plines(result_plines),
+            geometry: final_gc,
             metadata: self.metadata.clone(),
         }
     }
     
-    /// 2D symmetric difference (XOR) using the cavalier_contours `Shape` boolean operations.
+    // Return a new CSG representing space in this CSG excluding the space in the
+    // other CSG plus the space in the other CSG excluding the space in this CSG.
+    // Neither this CSG nor the other CSG are modified.
+    // 
+    //     let c = a.xor(b);
+    // 
+    //     +-------+            +-------+
+    //     |       |            |       |
+    //     |   a   |            |   a   |
+    //     |    +--+----+   =   |    +--+----+
+    //     +----+--+    |       +----+--+    |
+    //          |   b   |            |       |
+    //          |       |            |       |
+    //          +-------+            +-------+
+    // 
     pub fn xor(&self, other: &CSG<S>) -> CSG<S> {
-        let shape1 = &self.polylines;
-        let shape2 = &other.polylines;
-
-        let xor_shape = shape1.xor(shape2);
-        let mut result_plines = Vec::new();
-        for indexed_pl in xor_shape.ccw_plines.iter().chain(xor_shape.cw_plines.iter()) {
-            result_plines.push(indexed_pl.polyline.clone());
+        // A \ B
+        let a_sub_b = self.difference(other);
+    
+        // B \ A
+        let b_sub_a = other.difference(self);
+    
+        // Union those two
+        a_sub_b.union(&b_sub_a)
+        
+        /* here in case 2D xor misbehaves as an alternate implementation
+        // -- 2D geometry-based approach only (no polygon-based Node usage here) --
+        let polys1 = gc_to_polygons(&self.geometry);
+        let polys2 = gc_to_polygons(&other.geometry);
+    
+        // Perform symmetric difference (XOR)
+        let xored = polys1.xor(&polys2);
+        let oriented = xored.orient(Direction::Default);
+    
+        // Wrap in a new GeometryCollection
+        let mut final_gc = GeometryCollection::default();
+        final_gc.0.push(Geometry::MultiPolygon(oriented));
+    
+        // Re-insert lines & points from both sets
+        for g in &self.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                _ => final_gc.0.push(g.clone()),
+            }
         }
-
+        for g in &other.geometry.0 {
+            match g {
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                _ => final_gc.0.push(g.clone()),
+            }
+        }
+    
         CSG {
+            // If you also want a polygon-based Node XOR, you'd need to implement that similarly
             polygons: self.polygons.clone(),
-            polylines: CCShape::from_plines(result_plines),
+            geometry: final_gc,
             metadata: self.metadata.clone(),
         }
+        */
     }
 
     /// Invert this CSG (flip inside vs. outside)
@@ -487,25 +487,44 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// # Example
     /// let sq2 = CSG::square(2.0, 3.0, None);
-    pub fn square(width: Real, length: Real, metadata: Option<S>) -> CSG<S> {
-        let mut pl = Polyline::new_closed();
-        pl.add(0.0, 0.0, 0.0);
-        pl.add(width, 0.0, 0.0);
-        pl.add(width, length, 0.0);
-        pl.add(0.0, length, 0.0);
-        CSG::from_polylines(&[pl], metadata)
+    pub fn square(width: Real, length: Real, metadata: Option<S>) -> Self {
+        // In geo, a Polygon is basically (outer: LineString, Vec<LineString> for holes).
+        let outer = line_string![
+            (x: 0.0,     y: 0.0),
+            (x: width,   y: 0.0),
+            (x: width,   y: length),
+            (x: 0.0,     y: length),
+            (x: 0.0,     y: 0.0),  // close explicitly
+        ];
+        let polygon_2d = GeoPolygon::new(outer, vec![]);
+
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Creates a 2D circle in the XY plane.
-    pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
-        let mut pl = Polyline::new_closed();
+    pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Self {
+        if segments < 3 {
+            return CSG::new();
+        }
+        let mut coords = Vec::with_capacity(segments + 1);
         for i in 0..segments {
             let theta = 2.0 * PI * (i as Real) / (segments as Real);
             let x = radius * theta.cos();
             let y = radius * theta.sin();
-            pl.add(x, y, 0.0);
+            coords.push((x, y));
         }
-        CSG::from_polylines(&[pl], metadata)
+        // close it
+        coords.push((coords[0].0, coords[0].1));
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
+    }
+    
+    /// Right triangle from (0,0) to (width,0) to (0,height).
+    pub fn right_triangle(width: Real, height: Real, metadata: Option<S>) -> Self {
+        let line_string: LineString = vec![[0.0, 0.0], [width, 0.0], [0.0, height]].into();
+        let polygon = GeoPolygon::new(line_string, vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon)]), metadata)
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -518,17 +537,23 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// # Example
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     /// let poly2d = CSG::polygon(&pts, metadata);
-    pub fn polygon(points: &[[Real; 2]], metadata: Option<S>) -> CSG<S> {
+    pub fn polygon(points: &[[Real; 2]], metadata: Option<S>) -> Self {
         if points.len() < 3 {
             return CSG::new();
         }
-        let mut pl = Polyline::new_closed();
+        let mut coords = Vec::with_capacity(points.len() + 1);
         for p in points {
-            pl.add(p[0], p[1], 0.0);
+            coords.push((p[0], p[1]));
         }
-        CSG::from_polylines(&[pl], metadata)
+        // close
+        if coords[0] != *coords.last().unwrap() {
+            coords.push(coords[0]);
+        }
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
-    
+
     /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
     /// `corner_segments` controls the smoothness of each rounded corner.
     pub fn rounded_rectangle(
@@ -542,150 +567,176 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         if r <= EPSILON {
             return Self::square(width, height, metadata);
         }
-        // Build a single closed polyline with arcs at the corners.
-        let mut pl = Polyline::new_closed();
-        let arc = |pl: &mut Polyline<Real>,
-                   cx: Real,
-                   cy: Real,
-                   start_deg: Real,
-                   end_deg: Real| {
-            let start_rad = start_deg.to_radians();
-            let end_rad = end_deg.to_radians();
-            let step = (end_rad - start_rad) / corner_segments as Real;
-            for i in 0..=corner_segments {
-                let t = start_rad + (i as Real) * step;
-                let x = cx + r * t.cos();
-                let y = cy + r * t.sin();
-                pl.add(x, y, 0.0);
-            }
-        };
-        // TL corner arc: 180 -> 270
-        arc(&mut pl, r, r, 180.0, 270.0);
-        // TR corner arc: 270 -> 360
-        arc(&mut pl, width - r, r, 270.0, 360.0);
-        // BR corner: 0 -> 90
-        arc(&mut pl, width - r, height - r, 0.0, 90.0);
-        // BL corner: 90 -> 180
-        arc(&mut pl, r, height - r, 90.0, 180.0);
+        let mut coords = Vec::new();
+        // We'll approximate each 90° corner with `corner_segments` arcs
+        let step = FRAC_PI_2 / corner_segments as Real;
 
-        CSG::from_polylines(&[pl], metadata)
+        // Top-left corner arc, center (r, height-r), (π → 3π/2) angles 180 -> 270
+        let cx_tl = r;
+        let cy_tl = height - r;
+        for i in 0..=corner_segments {
+            let angle = FRAC_PI_2 + (i as Real) * step;
+            let x = cx_tl + r * angle.cos();
+            let y = cy_tl + r * angle.sin();
+            coords.push((x, y));
+        }
+        
+        // Bottom-left corner arc, center (r, r), (π/2 → π) angles 90 -> 180
+        let cx_bl = r;
+        let cy_bl = r;
+        for i in 0..=corner_segments {
+            let angle = PI + (i as Real) * step;
+            let x = cx_bl + r * angle.cos();
+            let y = cy_bl + r * angle.sin();
+            coords.push((x, y));
+        }
+        
+        // Bottom-right corner arc, center (width-r, r), (0 → π/2) angles 0 -> 90
+        let cx_br = width - r;
+        let cy_br = r;
+        for i in 0..=corner_segments {
+            let angle = 1.5 * PI + (i as Real) * step;
+            let x = cx_br + r * angle.cos();
+            let y = cy_br + r * angle.sin();
+            coords.push((x, y));
+        }
+
+        // Top-right corner arc, center (width-r, height-r), (3π/2 → 2π) angles 270 -> 360
+        let cx_tr = width - r;
+        let cy_tr = height - r;
+        for i in 0..=corner_segments {
+            let angle = 0.0 + (i as Real) * step;
+            let x = cx_tr + r * angle.cos();
+            let y = cy_tr + r * angle.sin();
+            coords.push((x, y));
+        }
+
+        // close
+        coords.push(coords[0]);
+
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Ellipse in XY plane, centered at (0,0), with full width `width`, full height `height`.
     /// `segments` is the number of polygon edges approximating the ellipse.
     pub fn ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 3 {
-            return Self::new();
+            return CSG::new();
         }
-        let rx = width * 0.5;
-        let ry = height * 0.5;
-        let mut pl = Polyline::new_closed();
+        let rx = 0.5 * width;
+        let ry = 0.5 * height;
+        let mut coords = Vec::with_capacity(segments + 1);
         for i in 0..segments {
             let theta = TAU * (i as Real) / (segments as Real);
             let x = rx * theta.cos();
             let y = ry * theta.sin();
-            pl.add(x, y, 0.0);
+            coords.push((x, y));
         }
-        CSG::from_polylines(&[pl], metadata)
+        coords.push(coords[0]);
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Regular N-gon in XY plane, centered at (0,0), with circumscribed radius `radius`.
     /// `sides` is how many edges (>=3).
     pub fn regular_ngon(sides: usize, radius: Real, metadata: Option<S>) -> Self {
         if sides < 3 {
-            return Self::new();
+            return CSG::new();
         }
-        let mut pl = Polyline::new_closed();
+        let mut coords = Vec::with_capacity(sides + 1);
         for i in 0..sides {
             let theta = TAU * (i as Real) / (sides as Real);
             let x = radius * theta.cos();
             let y = radius * theta.sin();
-            pl.add(x, y, 0.0);
+            coords.push((x, y));
         }
-        CSG::from_polylines(&[pl], metadata)
-    }
-
-    /// Right triangle from (0,0) to (width,0) to (0,height).
-    pub fn right_triangle(width: Real, height: Real, metadata: Option<S>) -> Self {
-        let mut pl = Polyline::new_closed();
-        pl.add(0.0, 0.0, 0.0);
-        pl.add(width, 0.0, 0.0);
-        pl.add(0.0, height, 0.0);
-        CSG::from_polylines(&[pl], metadata)
+        coords.push(coords[0]);
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Trapezoid from (0,0) -> (bottom_width,0) -> (top_width+top_offset,height) -> (top_offset,height)
     /// Note: this is a simple shape that can represent many trapezoids or parallelograms.
-    pub fn trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>) -> Self {
-        let mut pl = Polyline::new_closed();
-        pl.add(0.0, 0.0, 0.0);
-        pl.add(bottom_width, 0.0, 0.0);
-        pl.add(top_width + top_offset, height, 0.0);
-        pl.add(top_offset, height, 0.0);
-        CSG::from_polylines(&[pl], metadata)
+    pub fn trapezoid(
+        top_width: Real,
+        bottom_width: Real,
+        height: Real,
+        top_offset: Real,
+        metadata: Option<S>,
+    ) -> Self {
+        let coords = vec![
+            (0.0,             0.0),
+            (bottom_width,    0.0),
+            (top_width + top_offset, height),
+            (top_offset,      height),
+            (0.0,             0.0), // close
+        ];
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Star shape (typical "spiky star") with `num_points`, outer_radius, inner_radius.
     /// The star is centered at (0,0).
     pub fn star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>) -> Self {
         if num_points < 2 {
-            return Self::new();
+            return CSG::new();
         }
-        let mut pl = Polyline::new_closed();
+        let mut coords = Vec::with_capacity(2 * num_points + 1);
         let step = TAU / (num_points as Real);
         for i in 0..num_points {
-            // outer
-            let theta_out = (i as Real) * step;
+            // Outer point
+            let theta_out = i as Real * step;
             let x_out = outer_radius * theta_out.cos();
             let y_out = outer_radius * theta_out.sin();
-            pl.add(x_out, y_out, 0.0);
-            // inner
-            let theta_in = theta_out + (step * 0.5);
+            coords.push((x_out, y_out));
+
+            // Inner point
+            let theta_in = theta_out + 0.5 * step;
             let x_in = inner_radius * theta_in.cos();
             let y_in = inner_radius * theta_in.sin();
-            pl.add(x_in, y_in, 0.0);
+            coords.push((x_in, y_in));
         }
-        CSG::from_polylines(&[pl], metadata)
+        // close
+        coords.push(coords[0]);
+
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Teardrop shape.  A simple approach:
     /// - a circle arc for the "round" top
     /// - it tapers down to a cusp at bottom.
     /// This is just one of many possible "teardrop" definitions.
+    // todo: center on focus of the arc
     pub fn teardrop_outline(
         width: Real,
-        height: Real,
+        length: Real,
         segments: usize,
-        metadata: Option<S>
+        metadata: Option<S>,
     ) -> CSG<S> {
-        if segments < 2 || width < EPSILON || height < EPSILON {
+        if segments < 2 || width < EPSILON || length < EPSILON {
             return CSG::new();
         }
-        // half-circle radius
-        let r = width * 0.5;
-        // the top of the circle at y = center_y
-        let center_y = height - r;
+        let r = 0.5 * width;
+        let center_y = length - r;
         let half_seg = segments / 2;
-    
-        let mut pl = Polyline::new_closed();
-    
-        // Start at the bottom tip:
-        pl.add(0.0, 0.0, 0.0);
-    
-        // Arc over top
+
+        // We’ll store points, starting from the bottom tip at (0,0).
+        let mut coords = Vec::with_capacity(segments + 2);
+        coords.push((0.0, 0.0));
+
+        // Arc around
         for i in 0..=half_seg {
             let t = PI * (i as Real / half_seg as Real);
-            let x = -r * t.cos();      // left half
-            let y =  r * t.sin() + center_y;
-            pl.add(x, y, 0.0);
+            let x = -r * t.cos(); // left
+            let y = center_y + r * t.sin();
+            coords.push((x, y));
         }
-        
-        pl.invert_direction_mut();
-    
-        // Done: we come back down to the bottom tip automatically
-        // because the polyline is closed.
-    
-        CSG::from_polylines(&[pl], metadata)
+
+        coords.push(coords[0]);
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
@@ -694,24 +745,28 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         width: Real,
         length: Real,
         segments: usize,
-        metadata: Option<S>
+        metadata: Option<S>,
     ) -> CSG<S> {
-        // Very approximate "egg" profile
         if segments < 3 {
             return CSG::new();
         }
-        let rx = width * 0.5;
-        let ry = length * 0.5;
-        let mut pl = Polyline::new_closed();
+        let rx = 0.5 * width;
+        let ry = 0.5 * length;
+        let mut coords = Vec::with_capacity(segments + 1);
         for i in 0..segments {
             let theta = TAU * (i as Real) / (segments as Real);
+            // toy distortion approach
             let distort = 1.0 + 0.2 * theta.cos();
             let x = rx * theta.sin();
             let y = ry * theta.cos() * distort * 0.8;
-            pl.add(-x, y, 0.0);
+            coords.push((-x, y));  // mirrored
         }
-        CSG::from_polylines(&[pl], metadata)
+        coords.push(coords[0]);
+
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
+
 
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
     /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
@@ -719,24 +774,27 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         width: Real,
         height: Real,
         segments: usize,
-        metadata: Option<S>
+        metadata: Option<S>,
     ) -> CSG<S> {
         if segments < 3 {
             return CSG::new();
         }
-        let rx = width * 0.5;
-        let ry = height * 0.5;
-        let m = 4.0; // exponent
-        let mut pl = Polyline::new_closed();
+        let rx = 0.5 * width;
+        let ry = 0.5 * height;
+        let m = 4.0;
+        let mut coords = Vec::with_capacity(segments + 1);
         for i in 0..segments {
             let t = TAU * (i as Real) / (segments as Real);
             let ct = t.cos().abs().powf(2.0 / m) * t.cos().signum();
             let st = t.sin().abs().powf(2.0 / m) * t.sin().signum();
             let x = rx * ct;
             let y = ry * st;
-            pl.add(x, y, 0.0);
+            coords.push((x, y));
         }
-        CSG::from_polylines(&[pl], metadata)
+        coords.push(coords[0]);
+
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Keyhole shape (simple version): a large circle + a rectangle "handle".
@@ -747,34 +805,36 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         handle_width: Real,
         handle_height: Real,
         segments: usize,
-        metadata: Option<S>
+        metadata: Option<S>,
     ) -> CSG<S> {
-        // circle
-        let mut circ = Polyline::new_closed();
-        for i in 0..segments {
-            let th = TAU * i as Real / segments as Real;
-            let x = circle_radius * th.cos();
-            let y = circle_radius * th.sin();
-            circ.add(x, y, 0.0);
+        if segments < 3 {
+            return CSG::new();
         }
-        let circle_sh = CCShape::from_plines(vec![circ]);
+        // 1) Circle
+        let mut circle_coords = Vec::with_capacity(segments + 1);
+        for i in 0..segments {
+            let th = TAU * (i as Real) / (segments as Real);
+            circle_coords.push((circle_radius * th.cos(), circle_radius * th.sin()));
+        }
+        circle_coords.push(circle_coords[0]);
+        let circle_poly = GeoPolygon::new(LineString::from(circle_coords), vec![]);
 
-        // rectangle (handle)
-        let mut rect_pl = Polyline::new_closed();
-        rect_pl.add(0.0, 0.0, 0.0);
-        rect_pl.add(handle_width, 0.0, 0.0);
-        rect_pl.add(handle_width, handle_height, 0.0);
-        rect_pl.add(0.0, handle_height, 0.0);
+        // 2) Rectangle (handle), from -hw/2..+hw/2 in X and 0..handle_height in Y
+        let rect_coords = vec![
+            (-0.5 * handle_width, 0.0),
+            ( 0.5 * handle_width, 0.0),
+            ( 0.5 * handle_width, handle_height),
+            (-0.5 * handle_width, handle_height),
+            (-0.5 * handle_width, 0.0),
+        ];
+        let rect_poly = GeoPolygon::new(LineString::from(rect_coords), vec![]);
 
-        // shift rectangle so it connects to circle at the top
-        rect_pl.translate_mut(-0.5 * handle_width, -handle_height);
+        // 3) Union them with geo’s BooleanOps
+        let mp1 = MultiPolygon(vec![circle_poly]);
+        let mp2 = MultiPolygon(vec![rect_poly]);
+        let multipolygon_2d = mp1.union(&mp2);
 
-        let rect_sh = CCShape::from_plines(vec![rect_pl]);
-
-        // union
-        let union_sh = circle_sh.union(&rect_sh);
-
-        CSG::from_polylines(&ccshape_to_polylines(union_sh), metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::MultiPolygon(multipolygon_2d)]), metadata)
     }
 
     /// Reuleaux polygon with `sides` and "radius".  Approximates constant-width shape.
@@ -785,21 +845,18 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         arc_segments_per_side: usize,
         metadata: Option<S>
     ) -> CSG<S> {
-        // For a typical 2D Reuleaux shape: each corner is an arc
-        // from one vertex to the next, with center on the adjacent vertex.
         if sides < 3 || arc_segments_per_side < 1 {
             return CSG::new();
         }
+        // Corner positions (the "center" of each arc is the next corner).
         let mut corners = Vec::with_capacity(sides);
         for i in 0..sides {
             let theta = TAU * (i as Real) / (sides as Real);
-            let x = radius * theta.cos();
-            let y = radius * theta.sin();
-            corners.push((x, y));
+            corners.push((radius * theta.cos(), radius * theta.sin()));
         }
 
-        // Build one big closed polyline by tracing arcs
-        let mut pl = Polyline::new_closed();
+        // Build one big ring of points by tracing arcs corner->corner.
+        let mut coords = Vec::new();
         for i in 0..sides {
             let i_next = (i + 1) % sides;
             let center = corners[i_next];
@@ -814,22 +871,22 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let vy_e = end_pt.1 - center.1;
             let end_angle = vy_e.atan2(vx_e);
 
-            // be mindful of direction - typical reuleaux arcs go "outside"
             let mut delta = end_angle - start_angle;
             while delta <= 0.0 {
                 delta += TAU;
             }
-
             let step = delta / (arc_segments_per_side as Real);
             for seg_i in 0..arc_segments_per_side {
                 let a = start_angle + (seg_i as Real) * step;
                 let x = center.0 + radius * a.cos();
                 let y = center.1 + radius * a.sin();
-                pl.add(x, y, 0.0);
+                coords.push((x, y));
             }
         }
+        coords.push(coords[0]);
 
-        CSG::from_polylines(&[pl], metadata)
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Ring with inner diameter = `id` and (radial) thickness = `thickness`.
@@ -847,34 +904,35 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         segments: usize,
         metadata: Option<S>
     ) -> CSG<S> {
-        if id <= 0.0 || thickness <= 0.0 {
+        if id <= 0.0 || thickness <= 0.0 || segments < 3 {
             return CSG::new();
         }
-        let inner_radius = id * 0.5;
+        let inner_radius = 0.5 * id;
         let outer_radius = inner_radius + thickness;
 
-        // Outer circle
-        let mut outer_pl = Polyline::new_closed();
+        // Outer ring (CCW)
+        let mut outer = Vec::with_capacity(segments + 1);
         for i in 0..segments {
-            let th = TAU * i as Real / segments as Real;
-            outer_pl.add(outer_radius * th.cos(), outer_radius * th.sin(), 0.0);
+            let th = TAU * (i as Real) / (segments as Real);
+            let x = outer_radius * th.cos();
+            let y = outer_radius * th.sin();
+            outer.push((x, y));
         }
+        outer.push(outer[0]);
 
-        // Inner circle
-        let mut inner_pl = Polyline::new_closed();
-        for i in 0..segments { // reversed for inner hole
-            let th = TAU * i as Real / segments as Real;
-            inner_pl.add(inner_radius * th.cos(), inner_radius * th.sin(), 0.0);
+        // Inner ring (must be opposite orientation for a hole in geo)
+        let mut inner = Vec::with_capacity(segments + 1);
+        for i in 0..segments {
+            let th = TAU * (i as Real) / (segments as Real);
+            let x = inner_radius * th.cos();
+            let y = inner_radius * th.sin();
+            inner.push((x, y));
         }
-        
-        // Ensure inner circle is oriented CW as a hole, and combine inner and outer
-        let mut result = vec![outer_pl];
-        if inner_pl.orientation() == PlineOrientation::CounterClockwise {
-            inner_pl.invert_direction_mut();
-        }
-        result.push(inner_pl);
-        
-        CSG::from_polylines(&result, metadata)
+        inner.push(inner[0]);
+        inner.reverse();  // ensure hole is opposite winding from outer
+
+        let polygon_2d = GeoPolygon::new(LineString::from(outer), vec![LineString::from(inner)]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
     
     /// Create a 2D "pie slice" (wedge) in the XY plane.
@@ -893,27 +951,25 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         if segments < 1 {
             return CSG::new();
         }
+    
         let start_rad = start_angle_deg.to_radians();
         let end_rad   = end_angle_deg.to_radians();
-        let sweep = end_rad - start_rad;
-
-        // create an open polyline that includes center, then arc
-        let mut pl = Polyline::new();
-        pl.add(0.0, 0.0, 0.0); // center
-
-        // arc points
+        let sweep     = end_rad - start_rad;
+    
+        // Build a ring of coordinates starting at (0,0), going around the arc, and closing at (0,0).
+        let mut coords = Vec::with_capacity(segments + 2);
+        coords.push((0.0, 0.0));
         for i in 0..=segments {
-            let t = i as Real / segments as Real;
+            let t = i as Real / (segments as Real);
             let angle = start_rad + t * sweep;
             let x = radius * angle.cos();
             let y = radius * angle.sin();
-            pl.add(x, y, 0.0);
+            coords.push((x, y));
         }
-        // close by adding center at the end again or we can keep it open
-        // If we truly want a "solid" slice, we can close the polyline:
-        pl.set_is_closed(true);
-
-        CSG::from_polylines(&[pl], metadata)
+        coords.push((0.0, 0.0)); // close explicitly
+    
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
     
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
@@ -929,137 +985,161 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         padding: Real,
         metadata: Option<S>
     ) -> CSG<S> {
-        // Same marching-squares approach as before, but instead of building polygons,
-        // build polylines for each contour and combine them in one CCShape or just store them all.
-        // We'll collect them in a vector and do "from_plines".
-        // The existing code can be mostly reused, but at the end, store them as polylines.
-
         let (nx, ny) = resolution;
         if balls.is_empty() || nx < 2 || ny < 2 {
             return CSG::new();
         }
-
-        // bounding box
+    
+        // 1) Compute bounding box around all metaballs
         let mut min_x = Real::MAX;
         let mut min_y = Real::MAX;
         let mut max_x = -Real::MAX;
         let mut max_y = -Real::MAX;
         for (center, r) in balls {
             let rr = *r + padding;
-            if center.x - rr < min_x {
-                min_x = center.x - rr;
-            }
-            if center.x + rr > max_x {
-                max_x = center.x + rr;
-            }
-            if center.y - rr < min_y {
-                min_y = center.y - rr;
-            }
-            if center.y + rr > max_y {
-                max_y = center.y + rr;
-            }
+            if center.x - rr < min_x { min_x = center.x - rr; }
+            if center.x + rr > max_x { max_x = center.x + rr; }
+            if center.y - rr < min_y { min_y = center.y - rr; }
+            if center.y + rr > max_y { max_y = center.y + rr; }
         }
-
-        // sampling grid
+    
         let dx = (max_x - min_x) / (nx as Real - 1.0);
         let dy = (max_y - min_y) / (ny as Real - 1.0);
-
+    
+        // 2) Fill a grid with the summed “influence” minus iso_value
         fn scalar_field(balls: &[(nalgebra::Point2<Real>, Real)], x: Real, y: Real) -> Real {
             let mut v = 0.0;
             for (c, r) in balls {
                 let dx = x - c.x;
                 let dy = y - c.y;
                 let dist_sq = dx*dx + dy*dy + EPSILON;
-                let r_sq = r*r;
-                v += r_sq / dist_sq;
+                v += (r*r) / dist_sq;
             }
             v
         }
-
-        // Evaluate grid
+    
         let mut grid = vec![0.0; nx * ny];
         let index = |ix: usize, iy: usize| -> usize { iy*nx + ix };
         for iy in 0..ny {
             let yv = min_y + (iy as Real)*dy;
             for ix in 0..nx {
                 let xv = min_x + (ix as Real)*dx;
-                let val = scalar_field(balls, xv, yv);
+                let val = scalar_field(balls, xv, yv) - iso_value;
                 grid[index(ix, iy)] = val;
             }
         }
-
-        // marching squares => polylines
-        let all_plines = CCShape::empty(); // each polyline from one cell intersection
-
+    
+        // 3) Marching squares -> line segments
+        let mut contours = Vec::<LineString<Real>>::new();
+    
+        // Interpolator:
         let interpolate = |(x1, y1, v1): (Real,Real,Real),
-                           (x2, y2, v2): (Real,Real,Real)| -> (Real,Real) {
+                        (x2, y2, v2): (Real,Real,Real)| -> (Real,Real) {
             let denom = (v2 - v1).abs();
             if denom < EPSILON {
                 (x1, y1)
             } else {
-                let t = (iso_value - v1) / (v2 - v1);
+                let t = -v1 / (v2 - v1); // crossing at 0
                 (x1 + t*(x2 - x1), y1 + t*(y2 - y1))
             }
         };
-
+    
         for iy in 0..(ny - 1) {
             let y0 = min_y + (iy as Real)*dy;
             let y1 = min_y + ((iy+1) as Real)*dy;
+    
             for ix in 0..(nx - 1) {
                 let x0 = min_x + (ix as Real)*dx;
                 let x1 = min_x + ((ix+1) as Real)*dx;
-
+    
                 let v0 = grid[index(ix,   iy  )];
                 let v1 = grid[index(ix+1, iy  )];
                 let v2 = grid[index(ix+1, iy+1)];
                 let v3 = grid[index(ix,   iy+1)];
-
+    
                 // classification
                 let mut c = 0u8;
-                if v0 >= iso_value { c |= 1; }
-                if v1 >= iso_value { c |= 2; }
-                if v2 >= iso_value { c |= 4; }
-                if v3 >= iso_value { c |= 8; }
+                if v0 >= 0.0 { c |= 1; }
+                if v1 >= 0.0 { c |= 2; }
+                if v2 >= 0.0 { c |= 4; }
+                if v3 >= 0.0 { c |= 8; }
                 if c == 0 || c == 15 {
-                    continue;
+                    continue; // no crossing
                 }
-
-                // find edges
+    
                 let corners = [
                     (x0, y0, v0),
                     (x1, y0, v1),
                     (x1, y1, v2),
                     (x0, y1, v3),
                 ];
+    
                 let mut pts = Vec::new();
-                // edges
+                // function to check each edge
                 let mut check_edge = |mask_a: u8, mask_b: u8, a: usize, b: usize| {
-                    if ((c & mask_a) != 0) ^ ((c & mask_b) != 0) {
+                    let inside_a = (c & mask_a) != 0;
+                    let inside_b = (c & mask_b) != 0;
+                    if inside_a != inside_b {
                         let (px, py) = interpolate(corners[a], corners[b]);
                         pts.push((px, py));
                     }
                 };
-
+    
                 check_edge(1, 2, 0, 1);
                 check_edge(2, 4, 1, 2);
                 check_edge(4, 8, 2, 3);
                 check_edge(8, 1, 3, 0);
-
-                // build a small open polyline with those intersection points
-                // (some cells can produce 2 points => a line, or 4 => a more complex shape).
+    
+                // we might get 2 intersection points => single line segment
+                // or 4 => two line segments, etc.
+                // For simplicity, we just store them in a small open polyline:
                 if pts.len() >= 2 {
-                    let mut pl = Polyline::new();
+                    let mut pl = LineString::new(vec![]);
                     for &(px, py) in &pts {
-                        pl.add(px, py, 0.0);
+                        pl.0.push(coord!{x: px, y: py});
                     }
-                    // optionally can close if needed, but usually these are open segments
-                    all_plines.union(&CCShape::from_plines(vec![pl]));
+                    // Do not close. These are just line segments from this cell.
+                    contours.push(pl);
                 }
             }
         }
-
-        // merge all polylines into one shape
-        CSG::from_polylines(&ccshape_to_polylines(all_plines), metadata)
+    
+        // 4) Convert these line segments into geo::LineStrings or geo::Polygons if closed.
+        //    We store them in a GeometryCollection.
+        let mut gc = GeometryCollection::default();
+    
+        // If you want to unify them into continuous lines, you can do so,
+        // but for now let's just push each as a separate line or polygon if closed.
+        for pl in contours {
+            let n = pl.coords_count();
+            if n < 2 { continue; }
+    
+            // gather coords
+            let coords: Vec<_> = (0..n).map(|i| {
+                let v = pl.0[i];
+                (v.x, v.y)
+            }).collect();
+    
+            // Check if first == last => closed
+            let closed = {
+                let first = coords[0];
+                let last  = coords[n-1];
+                let dx = first.0 - last.0;
+                let dy = first.1 - last.1;
+                (dx*dx + dy*dy).sqrt() < EPSILON
+            };
+    
+            if closed {
+                // Turn it into a Polygon
+                let polygon_2d = GeoPolygon::new(LineString::from(coords.clone()), vec![]);
+                gc.0.push(Geometry::Polygon(polygon_2d));
+            } else {
+                // It's an open line
+                gc.0.push(Geometry::LineString(LineString::from(coords)));
+            }
+        }
+    
+        CSG::from_geo(gc, metadata)
     }
 
     /// Create a 2D supershape in the XY plane, approximated by `segments` edges.
@@ -1079,29 +1159,37 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         if segments < 3 {
             return CSG::new();
         }
+    
+        // The typical superformula radius function
         fn supershape_r(
             theta: Real,
             a: Real, b: Real,
             m: Real, n1: Real, n2: Real, n3: Real
         ) -> Real {
-            let t = m*theta*0.25; // mθ/4
+            // r(θ) = [ |cos(mθ/4)/a|^n2 + |sin(mθ/4)/b|^n3 ]^(-1/n1)
+            let t = m*theta*0.25;
             let cos_t = t.cos().abs();
             let sin_t = t.sin().abs();
             let term1 = (cos_t/a).powf(n2);
             let term2 = (sin_t/b).powf(n3);
             (term1 + term2).powf(-1.0/n1)
         }
-
-        let mut pl = Polyline::new_closed();
+    
+        let mut coords = Vec::with_capacity(segments + 1);
         for i in 0..segments {
-            let frac = i as Real / segments as Real;
+            let frac = i as Real / (segments as Real);
             let theta = TAU * frac;
             let r = supershape_r(theta, a, b, m, n1, n2, n3);
+    
             let x = r * theta.cos();
             let y = r * theta.sin();
-            pl.add(x, y, 0.0);
+            coords.push((x, y));
         }
-        CSG::from_polylines(&[pl], metadata)
+        // close it
+        coords.push(coords[0]);
+    
+        let polygon_2d = geo::Polygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
     
     /// Creates a 2D circle with a rectangular keyway slot cut out on the +X side.
@@ -1533,8 +1621,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             // Build the polygon (plane is auto-computed from first 3 vertices).
             let mut poly = Polygon::new(face_vertices, metadata.clone());
 
-            // Optionally, set each vertex normal to match the polygon’s plane normal,
-            // so that shading in many 3D viewers looks correct.
+            // Set each vertex normal to match the polygon’s plane normal,
             let plane_normal = poly.plane.normal;
             for v in &mut poly.vertices {
                 v.normal = plane_normal;
@@ -1646,7 +1733,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D,
     /// and the 2D polylines are updated by ignoring the resulting z after transform.
     pub fn transform(&self, mat: &Matrix4<Real>) -> CSG<S> {
-        let mat_inv_transpose = mat.try_inverse().unwrap().transpose(); // todo catch error
+        let mat_inv_transpose = mat.try_inverse().expect("Matrix not invertible?").transpose(); // todo catch error
         let mut csg = self.clone();
 
         for poly in &mut csg.polygons {
@@ -1664,27 +1751,37 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
         }
         
-        // Transform polylines from self.polylines
-        // Because polylines store 2D x,y, we’ll treat them as x,y,0 in 3D.
-        // After transformation, we store back the new x,y ignoring any new z.
-        for ipline in csg.polylines.ccw_plines.iter_mut()
-                             .chain(csg.polylines.cw_plines.iter_mut())
-        {
-            let ply = &mut ipline.polyline;
-            // transform each vertex
-            for i in 0..ply.vertex_count() {
-                let mut v = ply.at(i);
-                // treat as a 3D point (v.x, v.y, 0.0)
-                let hom = mat * Point3::new(v.x, v.y, 0.0).to_homogeneous();
-                // perspective divide:
-                let w_inv = hom.w.abs().recip();
-                v.x = hom.x * w_inv;
-                v.y = hom.y * w_inv;
-                ply.set_vertex(i, v);
-            }
-            // Rebuild the spatial index if you rely on ipline.spatial_index
-            ipline.spatial_index = ply.create_aabb_index();
-        }
+        // Convert the top-left 2×2 submatrix + translation of a 4×4 into a geo::AffineTransform
+        // The 4x4 looks like:
+        //  [ m11  m12  m13  m14 ]
+        //  [ m21  m22  m23  m24 ]
+        //  [ m31  m32  m33  m34 ]
+        //  [ m41  m42  m43  m44 ]
+        //
+        // For 2D, we use the sub-block:
+        //   a = m11,  b = m12,
+        //   d = m21,  e = m22,
+        //   xoff = m14,
+        //   yoff = m24,
+        // ignoring anything in z.
+        //
+        // So the final affine transform in 2D has matrix:
+        //   [a   b   xoff]
+        //   [d   e   yoff]
+        //   [0   0    1  ]
+        let a    = mat[(0, 0)];
+        let b    = mat[(0, 1)];
+        let xoff = mat[(0, 3)];
+        let d    = mat[(1, 0)];
+        let e    = mat[(1, 1)];
+        let yoff = mat[(1, 3)];
+    
+        let affine2 = AffineTransform::new(a, b, xoff, d, e, yoff);
+
+        // 4) Transform csg.geometry (the GeometryCollection) in 2D
+        //    Using geo’s map-coords approach or the built-in AffineOps trait.
+        //    Below we use the `AffineOps` trait if you have `use geo::AffineOps;`
+        csg.geometry = csg.geometry.affine_transform(&affine2);
 
         csg
     }
@@ -1809,8 +1906,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let end_rad   = end_angle_deg.to_radians();
         let sweep     = end_rad - start_rad;
 
-        // Instead of unioning each copy, we just collect all polylines.
-        let mut all_plines = Vec::new();
+        // create a container to hold our unioned copies
+        let mut all_csg = CSG::<S>::new();
 
         for i in 0..count {
             // pick an angle fraction
@@ -1831,26 +1928,16 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let trans = nalgebra::Translation3::new(radius, 0.0, 0.0).to_homogeneous();
             let mat   = rot * trans;
 
-            // Transform a copy of self
-            let csg_i = self.transform(&mat);
-
-            // Gather its polylines (both CCW and CW) into a single list.
-            for ipline in &csg_i.polylines.ccw_plines {
-                all_plines.push(ipline.polyline.clone());
-            }
-            for ipline in &csg_i.polylines.cw_plines {
-                all_plines.push(ipline.polyline.clone());
-            }
+            // Transform a copy of self and union with other copies
+            all_csg = all_csg.union(&self.transform(&mat));
         }
 
-        // Build a new shape from these polylines
-        let shape = CCShape::from_plines(all_plines);
-
-        // Put it in a new CSG, no union calls
-        let mut result = CSG::new();
-        result.polylines = shape;
-        result.metadata  = self.metadata.clone();
-        result
+        // Put it in a new CSG
+        CSG {
+            polygons: all_csg.polygons,
+            geometry: all_csg.geometry,
+            metadata: self.metadata.clone(),
+        }
     }
     
     /// Distribute this CSG `count` times along a straight line (vector),
@@ -1868,27 +1955,23 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
         let step = dir.normalize() * spacing;
     
-        let mut all_plines = Vec::new();
+        // create a container to hold our unioned copies
+        let mut all_csg = CSG::<S>::new();
     
         for i in 0..count {
             let offset  = step * (i as Real);
             let trans   = nalgebra::Translation3::from(offset).to_homogeneous();
-            let csg_i   = self.transform(&trans);
     
-            // gather polylines
-            for ipline in &csg_i.polylines.ccw_plines {
-                all_plines.push(ipline.polyline.clone());
-            }
-            for ipline in &csg_i.polylines.cw_plines {
-                all_plines.push(ipline.polyline.clone());
-            }
+            // Transform a copy of self and union with other copies
+            all_csg = all_csg.union(&self.transform(&trans));
         }
     
-        let shape = CCShape::from_plines(all_plines);
-        let mut result = CSG::new();
-        result.polylines = shape;
-        result.metadata  = self.metadata.clone();
-        result
+        // Put it in a new CSG
+        CSG {
+            polygons: all_csg.polygons,
+            geometry: all_csg.geometry,
+            metadata: self.metadata.clone(),
+        }
     }
 
     /// Distribute this CSG in a grid of `rows x cols`, with spacing dx, dy in XY plane.
@@ -1900,28 +1983,25 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let step_x = nalgebra::Vector3::new(dx, 0.0, 0.0);
         let step_y = nalgebra::Vector3::new(0.0, dy, 0.0);
     
-        let mut all_plines = Vec::new();
+        // create a container to hold our unioned copies
+        let mut all_csg = CSG::<S>::new();
     
         for r in 0..rows {
             for c in 0..cols {
                 let offset = step_x * (c as Real) + step_y * (r as Real);
                 let trans  = nalgebra::Translation3::from(offset).to_homogeneous();
-                let csg_i  = self.transform(&trans);
     
-                for ipline in &csg_i.polylines.ccw_plines {
-                    all_plines.push(ipline.polyline.clone());
-                }
-                for ipline in &csg_i.polylines.cw_plines {
-                    all_plines.push(ipline.polyline.clone());
-                }
+                // Transform a copy of self and union with other copies
+                all_csg = all_csg.union(&self.transform(&trans));
             }
         }
     
-        let shape = CCShape::from_plines(all_plines);
-        let mut result = CSG::new();
-        result.polylines = shape;
-        result.metadata  = self.metadata.clone();
-        result
+        // Put it in a new CSG
+        CSG {
+            polygons: all_csg.polygons,
+            geometry: all_csg.geometry,
+            metadata: self.metadata.clone(),
+        }
     }
 
     /// Compute the convex hull of all vertices in this CSG.
@@ -1937,15 +2017,19 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     .map(|v| vec![v.pos.x, v.pos.y, v.pos.z])
             })
             .collect();
-
-        // Compute convex hull using the robust wrapper
-        let hull =
-            ConvexHullWrapper::try_new(&points, None).expect("Failed to compute convex hull");
-
+    
+        // Attempt to compute the convex hull using the robust wrapper
+        let hull = match ConvexHullWrapper::try_new(&points, None) {
+            Ok(h) => h,
+            Err(_) => {
+                // Fallback to an empty CSG if hull generation fails
+                return CSG::new();
+            }
+        };
+    
         let (verts, indices) = hull.vertices_indices();
-
+    
         // Reconstruct polygons as triangles
-        // todo: replace with filter / iterator
         let mut polygons = Vec::new();
         for tri in indices.chunks(3) {
             let v0 = &verts[tri[0]];
@@ -1956,7 +2040,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
-
+    
         CSG::from_polygons(&polygons)
     }
 
@@ -2085,7 +2169,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // 1) For each polygon in the CSG:
         for poly in &self.polygons {
             // 2) Triangulate it if necessary:
-            let triangles = poly.triangulate();
+            let triangles = poly.tessellate();
 
             // 3) For each triangle, do a ray–triangle intersection test:
             for tri in triangles {
@@ -2119,179 +2203,181 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         self.extrude_vector(Vector3::new(0.0, 0.0, height))
     }
 
-    /// Linearly extrude this (2D) shape along an arbitrary 3D direction vector.
+    /// Linearly extrude any 2D geometry (Polygons, MultiPolygons, or sub-geometries
+    /// in a GeometryCollection) in `self.geometry` along the given `direction`.
     ///
-    /// - The shape is “swept” from its original location to a translated “top” copy
-    ///   offset by `direction`.
-    /// - Side walls are formed between the bottom and top edges.
+    /// Builds top, bottom, and side polygons in 3D, storing them in `csg.polygons`.
+    /// Returns a new CSG containing these extruded polygons (plus any existing 3D polygons
+    /// you already had in `self.polygons`).
     pub fn extrude_vector(&self, direction: Vector3<Real>) -> CSG<S> {
-        // Collect final 3D polygons
-        let mut polygons_3d = Vec::new();
-        
-        let shape = &self.polylines;
-    
-        // If direction is near zero, there's no thickness => return empty or just a flat shape
+        // If the direction is near zero length, nothing to extrude:
         if direction.norm() < EPSILON {
-            return CSG::new();
+            return self.clone(); // or return an empty CSG
         }
-    
-        // We'll create a “top” shape by translating the entire CCShape in 2D by (dx, dy).
-        // Then produce 3D polygons for bottom, top, and side walls.
-        let dx = direction.x;
-        let dy = direction.y;
-        let dz = direction.z;
-    
-        // Identify which polylines are "outer" (CCW) and which are "hole" (CW). 
-        // For each CCW polyline, we build a cap with any matching holes inside it.
-    
-        // Step A: build top & bottom polygons (caps) if the polylines are closed.
-        // We do that by grouping each CCW boundary with any CW hole that lies inside it.
-        // Then we triangulate at z=0 for bottom, z=dz for top.
-        // For the bottom, we flip the normal (so its normal is downward).
-        // For the top, keep orientation up.
-    
-        // We'll only do caps if the polylines are truly closed. Cavalier Contours has
-        // `polyline.is_closed()`. If is_closed is false, we skip caps on that boundary.
-        for (_outer_idx, outer_entry) in shape.ccw_plines.iter().enumerate() {
-            let outer_pl = &outer_entry.polyline;
-            if !outer_pl.is_closed() || outer_pl.vertex_count() < 3 {
-                // skip capping for this boundary
-                continue;
-            }
-    
-            // bounding box for outer
-            let Some(aabb) = outer_pl.extents() else {
-                // skip degenerate
-                continue;
-            };
-            let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
-    
-            // collect holes
-            let mut holes_2d : Vec<Vec<[Real;2]>> = Vec::new();
-    
-            let bounding_query = shape.plines_index.query(oxmin, oymin, oxmax, oymax);
-            let cw_start = shape.ccw_plines.len();
-            for hole_idx in bounding_query {
-                if hole_idx < cw_start {
-                    continue; // another ccw boundary, skip
-                }
-                let hole_pl = &shape.cw_plines[hole_idx - cw_start].polyline;
-                if !hole_pl.is_closed() || hole_pl.vertex_count() < 3 {
-                    continue;
-                }
-                // check if the hole belongs inside this outer by point-in-poly test
-                let hv0 = hole_pl.at(0);
-                if point_in_poly_2d(hv0.x, hv0.y, outer_pl) {
-                    // gather
-                    let mut arr = Vec::with_capacity(hole_pl.vertex_count());
-                    for i in 0..hole_pl.vertex_count() {
-                        let p = hole_pl.at(i);
-                        arr.push([p.x, p.y]);
+
+        // Collect the new 3D polygons generated by extrusion:
+        let mut new_polygons = Vec::new();
+
+        // A helper to handle any Geometry
+        fn extrude_geometry<S: Clone + Send + Sync>(
+            geom: &geo::Geometry<Real>,
+            direction: Vector3<Real>,
+            metadata: &Option<S>,
+            out_polygons: &mut Vec<Polygon<S>>,
+        )
+        {
+            match geom {
+                geo::Geometry::Polygon(poly) => {
+                    let exterior_coords: Vec<[Real; 2]> =
+                        poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
+                    let interior_rings: Vec<Vec<[Real; 2]>> = poly
+                        .interiors()
+                        .into_iter()
+                        .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
+                        .collect();
+
+                    // bottom
+                    let bottom_tris =
+                        CSG::<()>::tessellate_2d(&exterior_coords, &interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>());
+                    for tri in bottom_tris {
+                        let v0 = Vertex::new(tri[2], -Vector3::z());
+                        let v1 = Vertex::new(tri[1], -Vector3::z());
+                        let v2 = Vertex::new(tri[0], -Vector3::z());
+                        out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
                     }
-                    holes_2d.push(arr);
+                    // top
+                    let top_tris =
+                        CSG::<()>::tessellate_2d(&exterior_coords, &interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>());
+                    for tri in top_tris {
+                        let p0 = tri[0] + direction;
+                        let p1 = tri[1] + direction;
+                        let p2 = tri[2] + direction;
+                        let v0 = Vertex::new(p0, Vector3::z());
+                        let v1 = Vertex::new(p1, Vector3::z());
+                        let v2 = Vertex::new(p2, Vector3::z());
+                        out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
+                    }
+
+                    // sides
+                    let all_rings = std::iter::once(poly.exterior()).chain(poly.interiors());
+                    for ring in all_rings {
+                        let coords: Vec<_> = ring.coords_iter().collect();
+                        let n = coords.len();
+                        if n < 2 {
+                            continue;
+                        }
+                        for i in 0..(n - 1) {
+                            let j = i + 1;
+                            let c_i = coords[i];
+                            let c_j = coords[j];
+                            let b_i = Point3::new(c_i.x, c_i.y, 0.0);
+                            let b_j = Point3::new(c_j.x, c_j.y, 0.0);
+                            let t_i = b_i + direction;
+                            let t_j = b_j + direction;
+                            out_polygons.push(Polygon::new(
+                                vec![
+                                    Vertex::new(b_i, Vector3::zeros()),
+                                    Vertex::new(b_j, Vector3::zeros()),
+                                    Vertex::new(t_j, Vector3::zeros()),
+                                    Vertex::new(t_i, Vector3::zeros()),
+                                ],
+                                metadata.clone(),
+                            ));
+                        }
+                    }
                 }
-            }
-    
-            // gather outer boundary 2D
-            let mut outer_2d = Vec::with_capacity(outer_pl.vertex_count());
-            for i in 0..outer_pl.vertex_count() {
-                let v = outer_pl.at(i);
-                outer_2d.push([v.x, v.y]);
-            }
-    
-            // Triangulate bottom (z=0)
-            #[cfg(feature="earcut-io")]
-            let bottom_tris = CSG::<()>::triangulate_2d_earcut(
-                &outer_2d[..],
-                &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-                0.0,
-            );
-            
-            #[cfg(feature="earclip-io")]
-            let bottom_tris = CSG::<()>::triangulate_2d_earclip(
-                &outer_2d[..],
-                &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-            );
-            
-            // The “bottom” polygons need flipping. We'll do that by reversing the triangle’s vertex order.
-            for tri in bottom_tris {
-                let v0 = Vertex::new(tri[2], Vector3::new(0.0, 0.0, -1.0));
-                let v1 = Vertex::new(tri[1], Vector3::new(0.0, 0.0, -1.0));
-                let v2 = Vertex::new(tri[0], Vector3::new(0.0, 0.0, -1.0));
-                polygons_3d.push(Polygon::new(vec![v0, v1, v2], self.metadata.clone()));
-            }
-    
-            // Triangulate top (z= + direction.z, but we must keep full 3D offset)
-            // We can simply do the same XY coords but shift them up by (dx, dy, dz)
-            #[cfg(feature="earcut-io")]
-            let top_tris = CSG::<()>::triangulate_2d_earcut(
-                &outer_2d[..],
-                &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-                0.0, // we'll apply the shift later
-            );
-            
-            #[cfg(feature="earclip-io")]
-            let top_tris = CSG::<()>::triangulate_2d_earclip(
-                &outer_2d[..],
-                &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-            );
-            
-            for tri in top_tris {
-                let p0 = Point3::new(tri[0].x + dx, tri[0].y + dy, tri[0].z + dz);
-                let p1 = Point3::new(tri[1].x + dx, tri[1].y + dy, tri[1].z + dz);
-                let p2 = Point3::new(tri[2].x + dx, tri[2].y + dy, tri[2].z + dz);
-                let v0 = Vertex::new(p0, Vector3::new(0.0, 0.0, 1.0));
-                let v1 = Vertex::new(p1, Vector3::new(0.0, 0.0, 1.0));
-                let v2 = Vertex::new(p2, Vector3::new(0.0, 0.0, 1.0));
-                polygons_3d.push(Polygon::new(vec![v0, v1, v2], self.metadata.clone()));
+                geo::Geometry::MultiPolygon(mp) => {
+                    for poly in &mp.0 {
+                        extrude_geometry(&geo::Geometry::Polygon(poly.clone()), direction, metadata, out_polygons);
+                    }
+                }
+                geo::Geometry::GeometryCollection(gc) => {
+                    for sub in &gc.0 {
+                        extrude_geometry(sub, direction, metadata, out_polygons);
+                    }
+                }
+                // Other geometry types (LineString, Point, etc.) are skipped or could be handled differently:
+                _ => { /* skip */ }
             }
         }
-    
-        // Step B: build side walls for each (closed or open) polyline.
-        // We'll do this for every polyline (both ccw and cw).
-        // For each consecutive edge in polyline, produce a 4-vertex side polygon.
-        // i.e. [b_i, b_j, t_j, t_i], where t_i = b_i + direction, t_j = b_j + direction.
-    
-        let all_plines = shape.ccw_plines.iter().chain(shape.cw_plines.iter());
-        for ip in all_plines {
-            let pl = &ip.polyline;
-            let n = pl.vertex_count();
-            if n < 2 {
-                continue;
-            }
-            let is_closed = pl.is_closed();
-            // for each edge i..i+1
-            let edge_count = if is_closed { n } else { n - 1 };
-            for i in 0..edge_count {
-                let j = (i + 1) % n;
-                let p_i = pl.at(i);
-                let p_j = pl.at(j);
-    
-                let b_i = Point3::new(p_i.x, p_i.y, 0.0);
-                let b_j = Point3::new(p_j.x, p_j.y, 0.0);
-                let t_i = Point3::new(p_i.x + dx, p_i.y + dy, dz);
-                let t_j = Point3::new(p_j.x + dx, p_j.y + dy, dz);
-    
-                // Build the side polygon
-                // The normal can be computed or left as zero. For best results, compute an outward normal.
-                // We'll do a naive approach: let plane compute it.
-                let side_poly = Polygon::new(
-                    vec![
-                        Vertex::new(b_i, Vector3::zeros()),
-                        Vertex::new(b_j, Vector3::zeros()),
-                        Vertex::new(t_j, Vector3::zeros()),
-                        Vertex::new(t_i, Vector3::zeros()),
-                    ],
-                    self.metadata.clone(),
-                );
-                polygons_3d.push(side_poly);
-            }
+
+        // -- 1) Extrude the polygons from self.polygons if you also want to re-extrude them.
+        //    (Often, your `polygons` are already 3D, so you might skip extruding them again.)
+        //    We'll skip it here for clarity.  If you do want to extrude existing 2D polygons
+        //    in `self.polygons`, you'd add similar logic.
+
+        // -- 2) Extrude from self.geometry (the `geo::GeometryCollection`).
+        for geom in &self.geometry {
+            extrude_geometry(geom, direction, &self.metadata, &mut new_polygons);
         }
-    
+
+        // Combine new extruded polygons with any existing 3D polygons:
+        let mut final_polygons = self.polygons.clone();
+        final_polygons.extend(new_polygons);
+
         // Return a new CSG
-        CSG::from_polygons(&polygons_3d)
+        CSG {
+            polygons: final_polygons,
+            geometry: self.geometry.clone(),
+            metadata: self.metadata.clone(),
+        }
     }
     
+    /// Extrudes (or "lofts") a closed 3D volume between two polygons in space.
+    /// - `bottom` and `top` each have the same number of vertices `n`, in matching order.
+    /// - Returns a new CSG whose faces are:
+    ///   - The `bottom` polygon,
+    ///   - The `top` polygon,
+    ///   - `n` rectangular side polygons bridging each edge of `bottom` to the corresponding edge of `top`.
+    pub fn extrude_between(bottom: &Polygon<S>, top: &Polygon<S>, flip_bottom_polygon: bool) -> CSG<S> {
+        let n = bottom.vertices.len();
+        assert_eq!(
+            n,
+            top.vertices.len(),
+            "extrude_between: both polygons must have the same number of vertices" // todo: return error
+        );
+
+        // Conditionally flip the bottom polygon if requested.
+        let bottom_poly = if flip_bottom_polygon {
+            let mut flipped = bottom.clone();
+            flipped.flip();
+            flipped
+        } else {
+            bottom.clone()
+        };
+
+        // Gather polygons: bottom + top
+        // (Depending on the orientation, you might want to flip one of them.)
+
+        let mut polygons = vec![bottom_poly.clone(), top.clone()];
+
+        // For each edge (i -> i+1) in bottom, connect to the corresponding edge in top.
+        for i in 0..n {
+            let j = (i + 1) % n;
+            let b_i = &bottom.vertices[i];
+            let b_j = &bottom.vertices[j];
+            let t_i = &top.vertices[i];
+            let t_j = &top.vertices[j];
+
+            // Build the side face as a 4-vertex polygon (quad).
+            // Winding order here is chosen so that the polygon's normal faces outward
+            // (depending on the orientation of bottom vs. top).
+            let side_poly = Polygon::new(
+                vec![
+                    b_i.clone(), // bottom[i]
+                    b_j.clone(), // bottom[i+1]
+                    t_j.clone(), // top[i+1]
+                    t_i.clone(), // top[i]
+                ],
+                bottom.metadata.clone(), // carry over bottom polygon metadata
+            );
+            polygons.push(side_poly);
+        }
+
+        CSG::from_polygons(&polygons)
+    }
+    
+    /*
     /// Perform a linear extrusion along some axis, with optional twist, center, slices, scale, etc.
     ///
     /// # Parameters
@@ -2463,186 +2549,285 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // otherwise, just return as is
         CSG::from_polygons(&polygons_3d)
     }
+    */
 
-    /// Extrudes (or "lofts") a closed 3D volume between two polygons in space.
-    /// - `bottom` and `top` each have the same number of vertices `n`, in matching order.
-    /// - Returns a new CSG whose faces are:
-    ///   - The `bottom` polygon,
-    ///   - The `top` polygon,
-    ///   - `n` rectangular side polygons bridging each edge of `bottom` to the corresponding edge of `top`.
-    pub fn extrude_between(bottom: &Polygon<S>, top: &Polygon<S>, flip_bottom_polygon: bool) -> CSG<S> {
-        let n = bottom.vertices.len();
-        assert_eq!(
-            n,
-            top.vertices.len(),
-            "extrude_between: both polygons must have the same number of vertices" // todo: return error
-        );
-
-        // Conditionally flip the bottom polygon if requested.
-        let bottom_poly = if flip_bottom_polygon {
-            let mut flipped = bottom.clone();
-            flipped.flip();
-            flipped
-        } else {
-            bottom.clone()
-        };
-
-        // Gather polygons: bottom + top
-        // (Depending on the orientation, you might want to flip one of them.)
-
-        let mut polygons = vec![bottom_poly.clone(), top.clone()];
-
-        // For each edge (i -> i+1) in bottom, connect to the corresponding edge in top.
-        for i in 0..n {
-            let j = (i + 1) % n;
-            let b_i = &bottom.vertices[i];
-            let b_j = &bottom.vertices[j];
-            let t_i = &top.vertices[i];
-            let t_j = &top.vertices[j];
-
-            // Build the side face as a 4-vertex polygon (quad).
-            // Winding order here is chosen so that the polygon's normal faces outward
-            // (depending on the orientation of bottom vs. top).
-            let side_poly = Polygon::new(
-                vec![
-                    b_i.clone(), // bottom[i]
-                    b_j.clone(), // bottom[i+1]
-                    t_j.clone(), // top[i+1]
-                    t_i.clone(), // top[i]
-                ],
-                bottom.metadata.clone(), // carry over bottom polygon metadata
-            );
-            polygons.push(side_poly);
-        }
-
-        CSG::from_polygons(&polygons)
-    }
-
-    /// Rotate-extrude (revolve) this 2D shape around the Y-axis from 0..`angle_degs`
-    /// by replicating the original polygon(s) at each step and calling `extrude_between`.
-    /// Caps are added automatically if the revolve is partial (angle < 360°).
+    /// Rotate-extrude (revolve) only the Polygon and MultiPolygon geometry in `self.geometry`
+    /// around the Y-axis from 0..`angle_degs` in `segments` steps, producing side walls
+    /// in an orientation consistent with the polygon's winding.
+    ///
+    /// - Ignores `self.polygons`.
+    /// - Returns a new CSG containing **only** the newly extruded side polygons (no end caps).
+    /// - `angle_degs`: how far to revolve, in degrees (e.g. 360 for a full revolve).
+    /// - `segments`: number of subdivisions around the revolve.
+    ///
+    /// # Key Points
+    /// - Only 2D geometry in `self.geometry` is used. Any `self.polygons` are ignored.
+    /// - Axis of revolution: **Y-axis**. We treat each ring's (x,y) -> revolve_around_y(x,y,theta).
+    /// - Exterior rings (CCW in Geo) produce outward-facing side polygons.
+    /// - Interior rings (CW) produce inward-facing side polygons ("holes").
+    /// - If `angle_degs < 360`, we add **two caps**: one at angle=0, one at angle=angle_degs.
+    ///   - Cap orientation is set so that normals face outward, consistent with a solid.
+    /// - Returns a new CSG with `.polygons` containing only the side walls + any caps.
+    ///   The `.geometry` is empty, i.e. `GeometryCollection::default()`.
     pub fn rotate_extrude(&self, angle_degs: Real, segments: usize) -> CSG<S> {
-        let angle_radians = angle_degs.to_radians();
         if segments < 2 {
-            panic!("rotate_extrude requires at least 2 segments"); // todo: return error
+            panic!("rotate_extrude requires at least 2 segments.");
         }
 
-        // We'll consider the revolve "closed" if the angle is effectively 360°
-        let closed = (angle_degs - 360.0).abs() < EPSILON;
+        let angle_radians = angle_degs.to_radians();
+        let mut new_polygons = Vec::new();
 
-        // Collect polygons, and convert polylines to polygons
-        let mut original_polygons = self.polygons.clone();
-        original_polygons.extend(self.to_polygons());
+        // A small helper to revolve a point (x,y) in the XY plane around the Y-axis by theta.
+        // The output is a 3D point (X, Y, Z).
+        fn revolve_around_y(x: Real, y: Real, theta: Real) -> Point3<Real> {
+            let cos_t = theta.cos();
+            let sin_t = theta.sin();
+            // Map (x, y, 0) => ( x*cos θ, y, x*sin θ )
+            Point3::new(x * cos_t, y, x * sin_t)
+        }
 
-        // Collect all newly formed polygons here
-        let mut result_polygons = Vec::new();
+        // Another helper to determine if a ring (LineString) is CCW or CW in Geo.
+        // In `geo`, ring.exterior() is CCW for an outer boundary, CW for holes.
+        // If the signed area > 0 => CCW; < 0 => CW.
+        fn is_ccw(ring: &LineString<Real>) -> bool {
+            let poly = GeoPolygon::new(ring.clone(), vec![]);
+            poly.signed_area() > 0.0
+        }
 
-        // For each polygon in our original 2D shape:
-        for original_poly in original_polygons {
-            let n_verts = original_poly.vertices.len();
-            if n_verts < 3 {
-                // Skip degenerate or empty polygons
-                continue;
+        // A helper to extrude one ring of coordinates (including the last->first if needed),
+        // pushing its side polygons into `out_polygons`.
+        // - `ring_coords`: The ring’s sequence of points. Usually closed (last=first).
+        // - `ring_is_ccw`: true if it's an exterior ring, false if interior/hole.
+        // - `angle_radians`: total revolve sweep in radians.
+        // - `segments`: how many discrete slices around the revolve.
+        // - `metadata`: user metadata to attach to side polygons.
+        fn revolve_ring<S: Clone + Send + Sync>(
+            ring_coords: &[geo::Coord<Real>],
+            ring_is_ccw: bool,
+            angle_radians: Real,
+            segments: usize,
+            metadata: &Option<S>,
+        ) -> Vec<Polygon<S>> {
+            if ring_coords.len() < 2 {
+                return vec![];
+            }
+            
+            let mut out_polygons = Vec::new();
+            // Typically the last point = first point for a closed ring.
+            // We'll iterate over each edge i..i+1, and revolve them around by segments slices.
+
+            // The revolve step size in radians:
+            let step = angle_radians / (segments as Real);
+
+            // For each edge in the ring:
+            for i in 0..(ring_coords.len() - 1) {
+                let c_i = ring_coords[i];
+                let c_j = ring_coords[i + 1];
+
+                // If these two points are the same, skip degenerate edge
+                if (c_i.x - c_j.x).abs() < EPSILON && (c_i.y - c_j.y).abs() < EPSILON {
+                    continue;
+                }
+
+                // For each revolve slice j..j+1
+                for s in 0..segments {
+                    let th0 = s as Real * step;
+                    let th1 = (s as Real + 1.0) * step;
+
+                    // revolve bottom edge endpoints at angle th0
+                    let b_i = revolve_around_y(c_i.x, c_i.y, th0);
+                    let b_j = revolve_around_y(c_j.x, c_j.y, th0);
+                    // revolve top edge endpoints at angle th1
+                    let t_i = revolve_around_y(c_i.x, c_i.y, th1);
+                    let t_j = revolve_around_y(c_j.x, c_j.y, th1);
+
+                    // Build a 4-vertex side polygon for the ring edge.  
+                    // The orientation depends on ring_is_ccw:  
+                    //    If CCW => outward walls -> [b_i, b_j, t_j, t_i]  
+                    //    If CW  => reverse it -> [b_j, b_i, t_i, t_j]  
+                    let quad_verts = if ring_is_ccw {
+                        vec![b_i, b_j, t_j, t_i]
+                    } else {
+                        vec![b_j, b_i, t_i, t_j]
+                    }
+                    .into_iter()
+                    .map(|pos| Vertex::new(pos, Vector3::zeros()))
+                    .collect();
+
+                    out_polygons.push(Polygon::new(quad_verts, metadata.clone()));
+                }
+            }
+            out_polygons
+        }
+        
+        // Build a single “cap” polygon from ring_coords at a given angle (0 or angle_radians).
+        //  - revolve each 2D point by `angle`, produce a 3D ring
+        //  - if `flip` is true, reverse the ring so the normal is inverted
+        fn build_cap_polygon<S: Clone + Send + Sync>(
+            ring_coords: &[geo::Coord<Real>],
+            angle: Real,
+            flip: bool,
+            metadata: &Option<S>,
+        ) -> Option<Polygon<S>> {
+            if ring_coords.len() < 3 {
+                return None;
+            }
+            // revolve each coordinate at the given angle
+            let mut pts_3d: Vec<_> = ring_coords
+                .iter()
+                .map(|c| revolve_around_y(c.x, c.y, angle))
+                .collect();
+
+            // ensure closed if the ring wasn't strictly closed
+            // (the last point in a Geo ring is typically the same as the first)
+            let last = pts_3d.last().unwrap();
+            let first = pts_3d.first().unwrap();
+            if (last.x - first.x).abs() > EPSILON
+                || (last.y - first.y).abs() > EPSILON
+                || (last.z - first.z).abs() > EPSILON
+            {
+                pts_3d.push(*first);
             }
 
-            // 1) Create a list of rotated copies ("slices") of `original_poly`.
-            //    We'll generate `segments+1` slices if it's a partial revolve,
-            //    so that slices[0] = 0° and slices[segments] = angle_degs,
-            //    giving us "segments" intervals to extrude_between.
-            //    If `angle_degs == 360`, slices[segments] ends up co-located with slices[0].
-            let mut slices = Vec::with_capacity(segments + 1);
-            for i in 0..=segments {
-                let frac = i as Real / segments as Real;
-                let theta = frac * angle_radians;
+            // Turn into Vertex
+            let mut verts: Vec<_> = pts_3d
+                .into_iter()
+                .map(|p3| Vertex::new(p3, Vector3::zeros()))
+                .collect();
 
-                // Build a rotation around Y by `theta`
-                let rot = Rotation3::from_axis_angle(&Vector3::y_axis(), -theta).to_homogeneous();
-
-                // Transform this single polygon by that rotation
-                let rotated_poly = CSG::from_polygons(&[original_poly.clone()])
-                    .transform(&rot)
-                    .polygons[0]
-                    .clone();
-                slices.push(rotated_poly);
+            // If flip == true, reverse them and flip each vertex
+            if flip {
+                verts.reverse();
+                for v in &mut verts {
+                    v.flip();
+                }
             }
 
-            // 2) "Loft" between successive slices using `extrude_between`.
-            //    - If it's a full 360 revolve, we do 0..(segments) and wrap around
-            //      from slices[segments-1] => slices[0].
-            //    - If it's partial, we just do 0..(segments), which covers
-            //      slices[i] -> slices[i+1] for i=0..(segments-1).
-            for i in 0..(segments) {
-                let bottom = &slices[i];
-                let top = if closed {
-                    &slices[(i + 1) % slices.len()] // Wrap around if `closed` is true
-                } else {
-                    &slices[i + 1] // Direct access if `closed` is false
-                };
-                let mut side_solid = CSG::extrude_between(bottom, top, true).polygons;
-                result_polygons.append(&mut side_solid);
-            }
+            // Build the polygon
+            let poly = Polygon::new(verts, metadata.clone());
+            Some(poly)
+        }
 
-            // Add "cap" for the last slice so the revolve is closed at end.
-            // The end cap is slices[segments] as-is:
-            if !closed {
-                let end_cap = slices[segments].clone();
-                result_polygons.push(end_cap);
+        //----------------------------------------------------------------------
+        // 2) Iterate over each geometry (Polygon or MultiPolygon),
+        //    revolve the side walls, and possibly add caps if angle_degs < 360.
+        //----------------------------------------------------------------------
+        let full_revolve = (angle_degs - 360.0).abs() < EPSILON; // or angle_degs >= 359.999..., etc.
+        let do_caps = !full_revolve && (angle_degs > 0.0);
+
+        for geom in &self.geometry {
+            match geom {
+                geo::Geometry::Polygon(poly2d) => {
+                    // Exterior ring
+                    let ext_ring = poly2d.exterior();
+                    let ext_ccw = is_ccw(ext_ring);
+
+                    // (A) side walls
+                    new_polygons.extend(revolve_ring(
+                        &ext_ring.0,
+                        ext_ccw,
+                        angle_radians,
+                        segments,
+                        &self.metadata,
+                    ));
+
+                    // (B) cap(s) if partial revolve
+                    if do_caps {
+                        // start-cap at angle=0
+                        //   flip if ext_ccw == true
+                        if let Some(cap) = build_cap_polygon(
+                            &ext_ring.0,
+                            0.0,
+                            ext_ccw, // exterior ring => flip the start cap
+                            &self.metadata,
+                        ) {
+                            new_polygons.push(cap);
+                        }
+
+                        // end-cap at angle= angle_radians
+                        //   flip if ext_ccw == false
+                        if let Some(cap) = build_cap_polygon(
+                            &ext_ring.0,
+                            angle_radians,
+                            !ext_ccw, // exterior ring => keep normal orientation for end
+                            &self.metadata,
+                        ) {
+                            new_polygons.push(cap);
+                        }
+                    }
+
+                    // Interior rings (holes)
+                    for hole in poly2d.interiors() {
+                        let hole_ccw = is_ccw(hole);
+                        new_polygons.extend(revolve_ring(
+                            &hole.0,
+                            hole_ccw,
+                            angle_radians,
+                            segments,
+                            &self.metadata,
+                        ));
+                    }
+                }
+
+                geo::Geometry::MultiPolygon(mpoly) => {
+                    // Each Polygon inside
+                    for poly2d in &mpoly.0 {
+                        let ext_ring = poly2d.exterior();
+                        let ext_ccw = is_ccw(ext_ring);
+
+                        new_polygons.extend(revolve_ring(
+                            &ext_ring.0,
+                            ext_ccw,
+                            angle_radians,
+                            segments,
+                            &self.metadata,
+                        ));
+                        if do_caps {
+                            if let Some(cap) = build_cap_polygon(
+                                &ext_ring.0,
+                                0.0,
+                                ext_ccw,
+                                &self.metadata,
+                            ) {
+                                new_polygons.push(cap);
+                            }
+                            if let Some(cap) = build_cap_polygon(
+                                &ext_ring.0,
+                                angle_radians,
+                                !ext_ccw,
+                                &self.metadata,
+                            ) {
+                                new_polygons.push(cap);
+                            }
+                        }
+
+                        // holes
+                        for hole in poly2d.interiors() {
+                            let hole_ccw = is_ccw(hole);
+                            new_polygons.extend(revolve_ring(
+                                &hole.0,
+                                hole_ccw,
+                                angle_radians,
+                                segments,
+                                &self.metadata,
+                            ));
+                        }
+                    }
+                }
+
+                // Ignore lines, points, etc.
+                _ => {}
             }
         }
 
-        // Gather everything into a new CSG
-        CSG::from_polygons(&result_polygons) // todo: figure out why rotate_extrude results in inverted solids
-    }
-    
-    /// Extrude an open or closed 2D polyline (from cavalier_contours) along `direction`,
-    /// returning a 3D `CSG` containing the resulting side walls plus top/bottom if it’s closed.
-    /// For open polylines, no “caps” are added unless you do so manually.
-    pub fn extrude_polyline(poly: &Polyline<Real>, direction: Vector3<Real>, metadata: Option<S>) -> CSG<S> {
-        if poly.vertex_count() < 2 {
-            return CSG::new();
+        //----------------------------------------------------------------------
+        // 3) Return the new CSG:
+        //----------------------------------------------------------------------
+        CSG {
+            polygons: new_polygons,
+            geometry: GeometryCollection::default(),
+            metadata: self.metadata.clone(),
         }
-
-        let open = !poly.is_closed();
-        let polygon_bottom = Polygon::from_polyline(poly, metadata.clone());
-        let mut result_polygons = Vec::new();
-
-        // "bottom" polygon => keep it only if closed
-        if !open {
-            let mut bottom = polygon_bottom.clone();
-            // The top polygon is just a translate
-            let top = bottom.translate_vector(direction);
-
-            // Flip winding on the bottom
-            bottom.flip();
-
-            result_polygons.push(bottom);
-            result_polygons.push(top);
-        }
-
-        // Build side walls
-        let b_verts = &polygon_bottom.vertices;
-        let t_verts: Vec<_> = b_verts.iter().map(|v| {
-            let mut tv = v.clone();
-            tv.pos += direction;
-            tv
-        }).collect();
-
-        let vcount = b_verts.len();
-        for i in 0..(vcount-0) {  // if closed, we wrap, if open, we do (vcount-1) for side segments
-            let j = (i+1) % vcount; 
-            // For open polyline, skip the last segment that is the "wrap around" if not closed:
-            if open && j == 0 {
-                break;
-            }
-            let b_i = b_verts[i].clone();
-            let b_j = b_verts[j].clone();
-            let t_i = t_verts[i].clone();
-            let t_j = t_verts[j].clone();
-
-            let side = Polygon::new(vec![b_i, b_j, t_j, t_i], metadata.clone());
-            result_polygons.push(side);
-        }
-        CSG::from_polygons(&result_polygons)
     }
     
     /// Sweep a 2D shape `shape_2d` (in XY plane, normal=+Z) along a 2D path `path_2d` (also in XY).
@@ -2702,7 +2887,24 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             }
     
             // Build a rotation that maps +Z to `dir`.
-            let rot = rotation_from_z_to_dir(dir);
+            // We'll rotate the z-axis (0,0,1) onto `dir`.
+            let z = Vector3::z();
+            let dot = z.dot(&dir);
+            // If dir is basically the same as z, no rotation needed
+            if (dot - 1.0).abs() < EPSILON {
+                return Matrix4::identity();
+            }
+            // If dir is basically opposite z
+            if (dot + 1.0).abs() < EPSILON {
+                // 180 deg around X or Y axis
+                let rot180 = Rotation3::from_axis_angle(&Unit::new_normalize(Vector3::x()), PI);
+                return rot180.to_homogeneous();
+            }
+            // Otherwise, general axis = z × dir
+            let axis = z.cross(&dir).normalize();
+            let angle = z.dot(&dir).acos();
+            let initial_rot = Rotation3::from_axis_angle(&Unit::new_unchecked(axis), angle);
+            let rot = initial_rot.to_homogeneous()
     
             // Build a translation that puts shape origin at path_points[i]
             let trans = Translation3::from(path_points[i].coords);
@@ -2799,9 +3001,11 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     }
     */
 
-    /// Returns a `parry3d::bounding_volume::Aabb`.
+    /// Returns a [`parry3d::bounding_volume::Aabb`] by merging:
+    /// 1. The 3D bounds of all `polygons`.
+    /// 2. The 2D bounding rectangle of `self.geometry`, interpreted at z=0.
     pub fn bounding_box(&self) -> Aabb {
-        // We'll track min and max in x, y, z among all polygons and polylines.
+        // Track overall min/max in x, y, z among all 3D polygons and the 2D geometry’s bounding_rect.
         let mut min_x = Real::MAX;
         let mut min_y = Real::MAX;
         let mut min_z = Real::MAX;
@@ -2809,136 +3013,148 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mut max_y = -Real::MAX;
         let mut max_z = -Real::MAX;
 
-        // First gather from the polygons (3D)
+        // 1) Gather from the 3D polygons
         for poly in &self.polygons {
             for v in &poly.vertices {
-                if v.pos.x < min_x { min_x = v.pos.x; }
-                if v.pos.y < min_y { min_y = v.pos.y; }
-                if v.pos.z < min_z { min_z = v.pos.z; }
-                if v.pos.x > max_x { max_x = v.pos.x; }
-                if v.pos.y > max_y { max_y = v.pos.y; }
-                if v.pos.z > max_z { max_z = v.pos.z; }
+                min_x = *partial_min(&min_x, &v.pos.x).unwrap();
+                min_y = *partial_min(&min_y, &v.pos.y).unwrap();
+                min_z = *partial_min(&min_z, &v.pos.z).unwrap();
+
+                max_x = *partial_max(&max_x, &v.pos.x).unwrap();
+                max_y = *partial_max(&max_y, &v.pos.y).unwrap();
+                max_z = *partial_max(&max_z, &v.pos.z).unwrap();
             }
         }
 
-        // Next gather from the shape's 2D bounding index (CCShape),
-        // which is effectively min_x, min_y, max_x, max_y in 2D.
-        // We'll interpret them in 3D by letting z=0 for the shape.
-        if let Some(bounds) = self.polylines.plines_index.bounds() {
-            // Compare with our current min/max
-            if bounds.min_x < min_x { min_x = bounds.min_x; }
-            if bounds.min_y < min_y { min_y = bounds.min_y; }
-            // we treat polylines as z=0, so check that too
-            if 0.0 < min_z { min_z = 0.0; }
+        // 2) Gather from the 2D geometry using `geo::BoundingRect`
+        //    This gives us (min_x, min_y) / (max_x, max_y) in 2D. For 3D, treat z=0.
+        //    Explicitly capture the result of `.bounding_rect()` as an Option<Rect<Real>>
+        let maybe_rect: Option<Rect<Real>> = self.geometry.bounding_rect().into();
+    
+        if let Some(rect) = maybe_rect {
+            let min_pt = rect.min();
+            let max_pt = rect.max();
 
-            if bounds.max_x > max_x { max_x = bounds.max_x; }
-            if bounds.max_y > max_y { max_y = bounds.max_y; }
-            // likewise for z=0
-            if 0.0 > max_z { max_z = 0.0; }
+            // Merge the 2D bounds into our existing min/max, forcing z=0 for 2D geometry.
+            min_x = *partial_min(&min_x, &min_pt.x).unwrap();
+            min_y = *partial_min(&min_y, &min_pt.y).unwrap();
+            min_z = *partial_min(&min_z, &0.0).unwrap();
+
+            max_x = *partial_max(&max_x, &max_pt.x).unwrap();
+            max_y = *partial_max(&max_y, &max_pt.y).unwrap();
+            max_z = *partial_max(&max_z, &0.0).unwrap();
         }
 
-        // If nothing was updated (e.g. no geometry), clamp to a trivial box
+        // If still uninitialized (e.g., no polygons or geometry), return a trivial AABB at origin
         if min_x > max_x {
-            // Typically means we had no polygons or polylines at all
             return Aabb::new(Point3::origin(), Point3::origin());
         }
 
-        // Form the parry3d Aabb from [mins..maxs]
+        // Build a parry3d Aabb from these min/max corners
         let mins = Point3::new(min_x, min_y, min_z);
         let maxs = Point3::new(max_x, max_y, max_z);
         Aabb::new(mins, maxs)
     }
 
-    /// Helper to collect all vertices from the CSG.
-    #[cfg(not(feature = "parallel"))]
-    pub fn vertices(&self) -> Vec<Vertex> {
-        self.polygons
-            .iter()
-            .flat_map(|p| p.vertices.clone())
-            .collect()
-    }
-    
-    /// Parallel helper to collect all vertices from the CSG.
-    #[cfg(feature = "parallel")]
-    pub fn vertices(&self) -> Vec<Vertex> {
-        self.polygons
-            .par_iter()
-            .flat_map(|p| p.vertices.clone())
-            .collect()
-    }
-
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
     /// for each Polygon we convert to a cavalier_contours Polyline<Real> and call parallel_offset
-    pub fn offset_2d(&self, distance: Real) -> CSG<S> {
-        // If we have 2D polylines, just offset them using Cavalier Contours.
-        let mut offset_result = cavalier_contours::shape_algorithms::Shape::empty();
-        if !self.polylines.ccw_plines.is_empty() | !self.polylines.cw_plines.is_empty() {
-            // offset all existing polylines
-            let offset_shape = self.polylines.parallel_offset(distance, ShapeOffsetOptions::new());
-            offset_result = offset_shape;
-        }
-        // Return as a CSG with empty polygons and updated polylines.
+    #[cfg(feature = "offset")]
+    pub fn offset(&self, distance: Real) -> CSG<S> {
+        // For each Geometry in the collection:
+        //   - If it's a Polygon, buffer it and store the result as a MultiPolygon
+        //   - If it's a MultiPolygon, buffer it directly
+        //   - Otherwise, ignore (exclude) it from the new collection
+        let offset_geoms = self.geometry
+            .iter()
+            .filter_map(|geom| match geom {
+                Geometry::Polygon(poly) => {
+                    let new_mpoly = buffer_polygon(poly, distance);
+                    Some(Geometry::MultiPolygon(new_mpoly))
+                }
+                Geometry::MultiPolygon(mpoly) => {
+                    let new_mpoly = buffer_multi_polygon(mpoly, distance);
+                    Some(Geometry::MultiPolygon(new_mpoly))
+                }
+                _ => None, // ignore other geometry types
+            })
+            .collect();
+    
+        // Construct a new GeometryCollection from the offset geometries
+        let new_collection = GeometryCollection(offset_geoms);
+    
+        // Return a new CSG using the offset geometry collection and the old polygons/metadata
         CSG {
             polygons: self.polygons.clone(),
-            polylines: offset_result,
+            geometry: new_collection,
             metadata: self.metadata.clone(),
         }
     }
 
-    /// Flattens any 3D polygons by projecting them onto the XY plane
-    /// (Z=0), unions them as 2D polylines, and returns a purely 2D result.
+    /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
+    /// unifies them into one or more 2D polygons, and returns a purely 2D CSG.
     ///
-    /// If this CSG is already 2D (polylines only), we simply return
-    /// the union of those polylines.
+    /// - If this CSG is already 2D (`self.polygons` is empty), just returns `self.clone()`.
+    /// - Otherwise, all `polygons` are tessellated, projected into XY, and unioned.
+    /// - We also union any existing 2D geometry (`self.geometry`).
+    /// - The output has `.polygons` empty and `.geometry` containing the final 2D shape.
     pub fn flatten(&self) -> CSG<S> {
-        // If we already have no polygons (just polylines), it might
-        // already be 2D, so we can return them. But to mimic the tests'
-        // "flatten and union" approach, let's union them anyway:
+        // 1) If there are no 3D polygons, this is already purely 2D => return as-is
         if self.polygons.is_empty() {
-            let unioned_polylines = {
-                // The polylines in `self.polylines` might be multiple sub-shapes.
-                // Union them in 2D to get a single final shape (or multiple disjoint shapes).
-                let mut shape_acc = CCShape::empty();
-                // Just union all sub-shapes. If they overlap, they become merged.
-                for indexed_pl in self.polylines.ccw_plines.iter().chain(self.polylines.cw_plines.iter()) {
-                    let sub = CCShape::from_plines(vec![indexed_pl.polyline.clone()]);
-                    shape_acc = shape_acc.union(&sub);
-                }
-                shape_acc
-            };
-            return CSG {
-                polygons: Vec::new(),
-                polylines: unioned_polylines,
-                metadata: self.metadata.clone(),
-            };
+            return self.clone();
         }
-
-        // Otherwise, project each 3D polygon's perimeter down to Z=0 and union them.
-        let mut shape_acc = CCShape::empty();
+    
+        // 2) Convert all 3D polygons into a collection of 2D polygons
+        let mut flattened_3d = Vec::new(); // will store geo::Polygon<Real>
+    
         for poly in &self.polygons {
-            if poly.vertices.is_empty() {
-                continue;
+            // Tessellate this polygon into triangles
+            let triangles = poly.tessellate();
+            // Each triangle has 3 vertices [v0, v1, v2].
+            // Project them onto XY => build a 2D polygon (triangle).
+            for tri in triangles {
+                let ring = vec![
+                    (tri[0].pos.x, tri[0].pos.y),
+                    (tri[1].pos.x, tri[1].pos.y),
+                    (tri[2].pos.x, tri[2].pos.y),
+                    (tri[0].pos.x, tri[0].pos.y), // close ring explicitly
+                ];
+                let polygon_2d = geo::Polygon::new(LineString::from(ring), vec![]);
+                flattened_3d.push(polygon_2d);
             }
-            // Build a polyline for the polygon's perimeter in XY plane
-            let mut pl = cavalier_contours::polyline::Polyline::new_closed();
-            for v in &poly.vertices {
-                // Project the 3D vertex v.pos onto XY plane
-                pl.add(v.pos.x, v.pos.y, 0.0);
-            }
-            // Turn it into a shape
-            let sub_shape = CCShape::from_plines(vec![pl]);
-            // Union into the accumulator
-            shape_acc = shape_acc.union(&sub_shape);
         }
-
-        // Return as a 2D CSG: polygons empty, polylines hold the unioned perimeter(s).
+    
+        // 3) Union all these polygons together into one MultiPolygon
+        //    (We could chain them in a fold-based union.)
+        let unioned_from_3d = if flattened_3d.is_empty() {
+            MultiPolygon::new(Vec::new())
+        } else {
+            // Start with the first polygon as a MultiPolygon
+            let mut mp_acc = MultiPolygon(vec![flattened_3d[0].clone()]);
+            // Union in the rest
+            for p in flattened_3d.iter().skip(1) {
+                mp_acc = mp_acc.union(&MultiPolygon(vec![p.clone()]));
+            }
+            mp_acc
+        };
+    
+        // 4) Union this with any existing 2D geometry (polygons) from self.geometry
+        let existing_2d = gc_to_polygons(&self.geometry);  // turns geometry -> MultiPolygon
+        let final_union = unioned_from_3d.union(&existing_2d);
+        // Optionally ensure consistent orientation (CCW for exteriors):
+        let oriented = final_union.orient(Direction::Default);
+    
+        // 5) Store final polygons as a MultiPolygon in a new GeometryCollection
+        let mut new_gc = GeometryCollection::default();
+        new_gc.0.push(Geometry::MultiPolygon(oriented));
+    
+        // 6) Return a purely 2D CSG: polygons empty, geometry has the final shape
         CSG {
             polygons: Vec::new(),
-            polylines: shape_acc,
+            geometry: new_gc,
             metadata: self.metadata.clone(),
         }
     }
-
+    
     /// Slice this solid by a given `plane`, returning a new `CSG` whose polygons
     /// are either:
     /// - The polygons that lie exactly in the slicing plane (coplanar), or
@@ -2969,7 +3185,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // “Knit” those intersection edges into polylines. Each edge is [vA, vB].
         let polylines_3d = unify_intersection_edges(&intersection_edges);
 
-        // Convert each polyline of vertices into a Polygon<S> with `open = true` or false (if loop).
+        // Convert each polyline of vertices into a Polygon<S>
         let mut result_polygons = Vec::new();
 
         // Add the coplanar polygons. We can re‐assign their plane to `plane` to ensure
@@ -2979,135 +3195,184 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
             result_polygons.push(p);
         }
 
+        let mut new_gc = GeometryCollection::default();
+
         // Convert the “chains” or loops into open/closed polygons
-        for chain in polylines_3d {
+        for mut chain in polylines_3d {
             let n = chain.len();
             if n < 2 {
                 // degenerate
                 continue;
             }
 
-            // Check if last point matches first (within EPSILON) => closed loop
-            let first = &chain[0];
-            let last = &chain[n - 1];
-            let _is_closed = (first.pos.coords - last.pos.coords).norm() < EPSILON;
-
-            let poly = Polygon {
-                vertices: chain,
-                plane: plane.clone(),
-                metadata: None, // you could choose to store something else
-            };
-
-            result_polygons.push(poly);
+            // check if first and last point are within EPSILON of each other
+            let dist_sq = (chain[0].pos - chain[n - 1].pos).norm_squared();
+            if dist_sq < EPSILON * EPSILON {
+                // Force them to be exactly the same, closing the line
+                chain[n - 1] = chain[0].clone();
+            }
+            
+            let polyline = LineString::new(chain.iter().map(|vertex| {coord! {x: vertex.pos.x, y: vertex.pos.y}}).collect());
+            
+            if polyline.is_closed() {
+                let polygon = GeoPolygon::new(polyline, vec![]);
+                let oriented = polygon.orient(Direction::Default);
+                new_gc.0.push(Geometry::Polygon(oriented));
+            } else {
+                new_gc.0.push(Geometry::LineString(polyline));
+            }
         }
 
-        // Build a new CSG
-        CSG::from_polygons(&result_polygons)
-    }
-
-    /// Convert a `MeshText` (from meshtext) into a list of `Polygon` in the XY plane.
-    /// - `scale` allows you to resize the glyph (e.g. matching a desired font size).
-    /// - By default, the glyph’s normal is set to +Z.
-    #[cfg(feature = "truetype-text")]
-    fn meshtext_to_polygons(glyph_mesh: &meshtext::MeshText, scale: Real, metadata: Option<S>) -> Vec<Polygon<S>> {
-        let mut polygons = Vec::new();
-        let verts = &glyph_mesh.vertices;
-
-        // Each set of 9 floats = one triangle: (x1,y1,z1, x2,y2,z2, x3,y3,z3)
-        for tri_chunk in verts.chunks_exact(9) {
-            let x1 = tri_chunk[0] as Real;
-            let y1 = tri_chunk[1] as Real;
-            let z1 = tri_chunk[2] as Real;
-            let x2 = tri_chunk[3] as Real;
-            let y2 = tri_chunk[4] as Real;
-            let z2 = tri_chunk[5] as Real;
-            let x3 = tri_chunk[6] as Real;
-            let y3 = tri_chunk[7] as Real;
-            let z3 = tri_chunk[8] as Real;
-
-            // Scale them
-            let px1 = x1 * scale;
-            let py1 = y1 * scale;
-            let pz1 = z1 * scale;
-
-            let px2 = x2 * scale;
-            let py2 = y2 * scale;
-            let pz2 = z2 * scale;
-
-            let px3 = x3 * scale;
-            let py3 = y3 * scale;
-            let pz3 = z3 * scale;
-
-            // Normal = +Z
-            let normal = Vector3::z();
-
-            polygons.push(Polygon::new(
-                vec![
-                    Vertex::new(Point3::new(px1, py1, pz1), normal),
-                    Vertex::new(Point3::new(px2, py2, pz2), normal),
-                    Vertex::new(Point3::new(px3, py3, pz3), normal),
-                ],
-                metadata.clone(),
-            ));
+        // Return a purely 2D CSG: polygons empty, geometry has the final shape
+        CSG {
+            polygons: Vec::new(),
+            geometry: new_gc,
+            metadata: self.metadata.clone(),
         }
-
-        polygons
     }
 
-    /// Creates 2D text in the XY plane using the `meshtext` crate to generate glyph meshes.
+    /// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
+    /// 
+    /// Each glyph’s closed contours become one or more `Polygon`s (with holes if needed), 
+    /// and any open contours become `LineString`s.
     ///
-    /// - `text`: the text to render
-    /// - `font_data`: TTF font file bytes (e.g. `include_bytes!("../assets/FiraMono-Regular.ttf")`)
-    /// - `size`: optional scaling factor (e.g., a rough "font size").
+    /// # Arguments
+    /// - `text`: the text string (no multiline logic here)
+    /// - `font_data`: raw bytes of a TTF file
+    /// - `scale`: a uniform scale factor for glyphs
+    /// - `metadata`: optional metadata for the resulting `CSG`
     ///
-    /// **Note**: Limitations:
-    ///   - does not handle kerning or multi-line text,
-    ///   - simply advances the cursor by each glyph’s width,
-    ///   - places all characters along the X axis.
-    #[cfg(feature = "truetype-text")]
-    pub fn text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>) -> CSG<S> {
-        let mut generator = MeshGenerator::new(font_data.to_vec());
+    /// # Returns
+    /// A `CSG` whose `geometry` contains:
+    /// - One or more `Polygon`s for each glyph, 
+    /// - A set of `LineString`s for any open contours (rare in standard fonts), 
+    /// all positioned in the XY plane at z=0.
+    pub fn text(
+        text: &str,
+        font_data: &[u8],
+        scale: Real,
+        metadata: Option<S>,
+    ) -> Self {
+        // 1) Parse the TTF font
+        let face = match ttf_parser::Face::from_slice(font_data, 0) {
+            Ok(f) => f,
+            Err(_) => {
+                // If the font fails to parse, return an empty 2D CSG
+                return CSG::new();
+            }
+        };
+        
+        // 1 font unit, 2048 font units / em, scale points / em, 0.352777 points / mm
+        let font_scale = 1.0 / 2048.0 * scale * 0.3527777;
 
-        let mut all_polygons = Vec::new();
-        let mut cursor_x: Real = 0.0;
+        // 2) We'll collect all glyph geometry into one GeometryCollection
+        let mut geo_coll = GeometryCollection::default();
+
+        // 3) A simple "pen" cursor for horizontal text layout
+        let mut cursor_x = 0.0 as Real;
 
         for ch in text.chars() {
-            // Optionally skip control chars
+            // Skip control chars:
             if ch.is_control() {
                 continue;
             }
-            // Generate glyph mesh
-            let glyph_mesh: MeshText = match generator.generate_glyph(ch, true, None) {
-                Ok(m) => m,
-                Err(_) => {
-                    // Missing glyph? Advance by some default
-                    cursor_x += size;
-                    continue;
+
+            // Find glyph index in the font
+            if let Some(gid) = face.glyph_index(ch) {
+                // Extract the glyph outline (if any)
+                if let Some(outline) = Outline::new(&face, gid) {
+                    // Flatten the outline into line segments
+                    let mut collector = OutlineFlattener::new(font_scale as Real, cursor_x as Real, 0.0);
+                    outline.emit(&mut collector);
+
+                    // Now `collector.contours` holds closed subpaths,
+                    // and `collector.open_contours` holds open polylines.
+
+                    // -------------------------
+                    // Handle all CLOSED subpaths (which might be outer shapes or holes):
+                    // -------------------------
+                    if !collector.contours.is_empty() {
+                        // We can have multiple outer loops and multiple inner loops (holes).
+                        let mut outer_rings = Vec::new();
+                        let mut hole_rings  = Vec::new();
+
+                        for closed_pts in collector.contours {
+                            if closed_pts.len() < 3 {
+                                continue; // degenerate
+                            }
+
+                            let ring = LineString::from(closed_pts);
+
+                            // We need to measure signed area.  The `signed_area` method works on a Polygon,
+                            // so construct a temporary single-ring polygon:
+                            let tmp_poly = GeoPolygon::new(ring.clone(), vec![]);
+                            let area = tmp_poly.signed_area();
+
+                            // ttf files store outer loops as CW and inner loops as CCW
+                            if area < 0.0 {
+                                // This is an outer ring
+                                outer_rings.push(ring);
+                            } else {
+                                // This is a hole ring
+                                hole_rings.push(ring);
+                            }
+                        }
+
+                        // Typically, a TrueType glyph has exactly one outer ring and 0+ holes.
+                        // But in some tricky glyphs, you might see multiple separate outer rings.
+                        // We'll create one Polygon for the first outer ring with all holes,
+                        // then if there are additional outer rings, each becomes its own separate Polygon.
+                        if !outer_rings.is_empty() {
+                            let first_outer = outer_rings.remove(0);
+
+                            // The “primary” polygon: first outer + all holes
+                            let polygon_2d = GeoPolygon::new(first_outer, hole_rings);
+                            let oriented = polygon_2d.orient(Direction::Default);
+                            geo_coll.0.push(Geometry::Polygon(oriented));
+
+                            // If there are leftover outer rings, push them each as a separate polygon (no holes):
+                            // todo: test bounding boxes and sort holes appropriately
+                            for extra_outer in outer_rings {
+                                let poly_2d = GeoPolygon::new(extra_outer, vec![]);
+                                let oriented = poly_2d.orient(Direction::Default);
+                                geo_coll.0.push(Geometry::Polygon(oriented));
+                            }
+                        }
+                    }
+
+                    // -------------------------
+                    // Handle all OPEN subpaths => store as LineStrings:
+                    // -------------------------
+                    for open_pts in collector.open_contours {
+                        if open_pts.len() >= 2 {
+                            geo_coll.0.push(Geometry::LineString(LineString::from(open_pts)));
+                        }
+                    }
+
+                    // Finally, advance our pen by the glyph's bounding-box width
+                    let bbox = outline.bbox();
+                    let glyph_width = bbox.width() as Real * font_scale;
+                    cursor_x += glyph_width;
+                } else {
+                    // If there's no outline (e.g., space), just move a bit
+                    cursor_x += font_scale as Real * 0.3;
                 }
-            };
-
-            // Convert to polygons
-            let glyph_polygons = Self::meshtext_to_polygons(&glyph_mesh, size, metadata.clone());
-
-            // Translate polygons by (cursor_x, 0.0)
-            let glyph_csg = CSG::from_polygons(&glyph_polygons).translate(cursor_x, 0.0, 0.0);
-            // Accumulate
-            all_polygons.extend(glyph_csg.polygons);
-
-            // Advance cursor by the glyph’s bounding-box width
-            let glyph_width = glyph_mesh.bbox.max.x - glyph_mesh.bbox.min.x;
-            cursor_x += glyph_width as Real * size;
+            } else {
+                // Missing glyph => small blank advance
+                cursor_x += font_scale as Real * 0.3;
+            }
         }
 
-        CSG::from_polygons(&all_polygons)
+        // Build a 2D CSG from the collected geometry
+        CSG::from_geo(geo_coll, metadata)
     }
 
     /// Triangulate each polygon in the CSG returning a CSG containing triangles
-    pub fn triangulate(&self) -> CSG<S> {
+    pub fn tessellate(&self) -> CSG<S> {
         let mut triangles = Vec::new();
     
         for poly in &self.polygons {
-            let tris = poly.triangulate();
+            let tris = poly.tessellate();
             for triangle in tris {
                 triangles.push(Polygon::new(triangle.to_vec(), poly.metadata.clone()));
             }
@@ -3116,76 +3381,69 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         CSG::from_polygons(&triangles)
     }
 
-    /// Creates 2D text in the XY plane using a **Hershey** font.
+    /// Creates **2D line-stroke text** in the XY plane using a Hershey font.
     ///
-    /// Each glyph is rendered as one or more *open* polygons (strokes).  If you need 
-    /// “thick” or “filled” text, you could **offset** or **extrude** these strokes 
-    /// afterward.
+    /// Each glyph’s strokes become one or more `LineString<Real>` entries in `geometry`.
+    /// If you need them filled or thickened, you can later offset or extrude these lines.
     ///
     /// # Parameters
-    ///
-    /// - `text`: The text to render.
-    /// - `font`: A Hershey `Font` reference (from your hershey crate code).
-    /// - `size`: Optional scaling factor (defaults to 20.0 if `None`).
-    /// - `metadata`: Shared metadata to attach to each stroke polygon.
+    /// - `text`: The text to render
+    /// - `font`: The Hershey font (e.g., `hershey::fonts::GOTHIC_ENG_SANS`)
+    /// - `size`: Scale factor for glyphs
+    /// - `metadata`: Optional user data to store in the resulting CSG
     ///
     /// # Returns
+    /// A new `CSG` where each glyph stroke is a `Geometry::LineString` in `geometry`.
     ///
-    /// A new 2D `CSG<S>` in the XY plane, composed of multiple open polygons 
-    /// (one for each stroke).
-    ///
-    /// # Example
-    /// ```
-    /// let font = hershey::fonts::GOTHIC_ENG_SANS; // or whichever Font you have
-    /// let csg_text = CSG::from_hershey("HELLO", &font, Some(15.0), None);
-    /// // Now you can extrude or union, etc.
-    /// ```
-    #[cfg(feature = "hershey-text")]
     pub fn from_hershey(
         text: &str,
         font: &Font,
         size: Real,
         metadata: Option<S>,
     ) -> CSG<S> {
-        let mut all_polygons = Vec::new();
+        use geo::{Geometry, GeometryCollection};
 
-        // Simple left-to-right “pen” position
+        let mut all_strokes = Vec::new();
         let mut cursor_x: Real = 0.0;
 
         for ch in text.chars() {
-            // Optionally skip controls, spaces, or handle them differently
+            // Skip control chars or spaces as needed
             if ch.is_control() {
                 continue;
             }
-            // Attempt to get the glyph
+
+            // Attempt to find a glyph in this font
             match font.glyph(ch) {
-                Ok(g) => {
-                    // Convert the Hershey glyph’s line segments into open polylines/polygons
-                    let glyph_width = (g.max_x - g.min_x) as Real;
+                Ok(glyph) => {
+                    // Convert the Hershey lines to geo::LineString objects
+                    let glyph_width = (glyph.max_x - glyph.min_x) as Real;
+                    let strokes = build_hershey_glyph_lines(&glyph, size, cursor_x, 0.0);
 
-                    let strokes = build_hershey_glyph_polygons(
-                        &g,
-                        size,
-                        cursor_x,
-                        0.0,          // y offset
-                        metadata.clone()
-                    );
-                    all_polygons.extend(strokes);
+                    // Collect them
+                    all_strokes.extend(strokes);
 
-                    // Advance cursor in x by the glyph width (scaled).
-                    // You might add spacing, or shift by g.min_x, etc.
-                    cursor_x += glyph_width * size * 0.8; 
-                    // ^ adjust to taste or add extra letter spacing
+                    // Advance the pen in X
+                    cursor_x += glyph_width * size * 0.8;
                 }
                 Err(_) => {
-                    // Missing glyph => skip or move cursor
+                    // Missing glyph => skip or just advance
                     cursor_x += 6.0 * size;
                 }
             }
         }
 
-        // Combine everything
-        CSG::from_polygons(&all_polygons)
+        // Insert each stroke as a separate LineString in the geometry
+        let mut geo_coll = GeometryCollection::default();
+        for line_str in all_strokes {
+            geo_coll.0.push(Geometry::LineString(line_str));
+        }
+
+        // Return a new CSG that has no 3D polygons, but has these lines in geometry.
+        CSG {
+            polygons: Vec::new(),
+            geometry: geo_coll,
+            metadata: metadata,
+        }
     }
 
     /// Convert the polygons in this CSG to a Parry TriMesh.
@@ -3194,7 +3452,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         // 1) Gather all the triangles from each polygon
         // 2) Build a TriMesh from points + triangle indices
         // 3) Wrap that in a SharedShape to be used in Rapier
-        let tri_csg = self.triangulate();
+        let tri_csg = self.tessellate();
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
         let mut index_offset = 0;
@@ -3266,7 +3524,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     ///
     /// This function defines a comparison function which takes EPSILON into account
     /// for Real coordinates, builds a hashmap key from the string representation of
-    /// the coordinates, triangulates the CSG polygons, gathers each of their three edges,
+    /// the coordinates, tessellates the CSG polygons, gathers each of their three edges,
     /// counts how many times each edge appears across all triangles,
     /// and returns true if every edge appears exactly 2 times, else false.
     ///
@@ -3301,7 +3559,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         }
 
         // Triangulate the whole shape once
-        let tri_csg = self.triangulate();
+        let tri_csg = self.tessellate();
         let mut edge_counts: HashMap<(String, String), u32> = HashMap::new();
 
         for poly in &tri_csg.polygons {
@@ -4039,9 +4297,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
                     normal,
                 ));
             }
-            // If the path was not closed and we used closepaths == true, the path commands
-            // do a 'Z', but we might need to ensure the first/last are the same. Up to you.
-            // For safety, we can ensure a closed ring if distinct:
+            // If the path was not closed and we used closepaths == true, we might need to ensure the first/last are the same.
             if (verts.first().unwrap().pos - verts.last().unwrap().pos).norm() > EPSILON {
                 // close it
                 verts.push(verts.first().unwrap().clone());
@@ -4157,6 +4413,8 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     }
 
     /// Export to ASCII STL
+    /// 1) 3D polygons in `self.polygons`,
+    /// 2) any 2D Polygons or MultiPolygons in `self.geometry` (tessellated in XY).
     ///
     /// Convert this CSG to an **ASCII STL** string with the given `name`.
     ///
@@ -4169,124 +4427,120 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         let mut out = String::new();
         out.push_str(&format!("solid {}\n", name));
     
-        // ------------------------------------------------------------
-        // 1) First, write existing 3D polygons (same as before)
+        //
+        // (A) Write out all *3D* polygons
+        //
         for poly in &self.polygons {
+            // Ensure the polygon is tessellated, since STL is triangle-based.
+            let triangles = poly.tessellate();
+            // A typical STL uses the face normal; we can take the polygon’s plane normal:
             let normal = poly.plane.normal.normalize();
-            let triangles = poly.triangulate();
+    
             for tri in triangles {
-                out.push_str(&format!("  facet normal {:.6} {:.6} {:.6}\n",
-                                    normal.x, normal.y, normal.z));
+                out.push_str(&format!(
+                    "  facet normal {:.6} {:.6} {:.6}\n",
+                    normal.x, normal.y, normal.z
+                ));
                 out.push_str("    outer loop\n");
                 for vertex in &tri {
-                    out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n",
-                                        vertex.pos.x, vertex.pos.y, vertex.pos.z));
+                    out.push_str(&format!(
+                        "      vertex {:.6} {:.6} {:.6}\n",
+                        vertex.pos.x, vertex.pos.y, vertex.pos.z
+                    ));
                 }
                 out.push_str("    endloop\n");
                 out.push_str("  endfacet\n");
             }
         }
     
-        // ------------------------------------------------------------
-        // 2) Next, handle all ccw_plines + holes using earclip or earcut
-        //    (non-manifold 2D shape in XY plane).
-        // For each outer CCW:
-        for (_outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
-            let outer_pline = &outer_ipline.polyline;
+        //
+        // (B) Write out all *2D* geometry from `self.geometry`
+        //     We only handle Polygon and MultiPolygon.  We tessellate in XY, set z=0.
+        //    
+        for geom in &self.geometry {
+            match geom {
+                geo::Geometry::Polygon(poly2d) => {
+                    // Outer ring (in CCW for a typical “positive” polygon)
+                    let outer = poly2d
+                        .exterior()
+                        .coords_iter()
+                        .map(|c| [c.x, c.y])
+                        .collect::<Vec<[Real; 2]>>();
     
-            // bounding box for outer
-            let Some(aabb) = outer_pline.extents() else { todo!() };
-            let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
+                    // Collect holes
+                    let holes_vec = poly2d
+                        .interiors()
+                        .into_iter()
+                        .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
+                        .collect::<Vec<_>>();
+                    let hole_refs = holes_vec
+                        .iter()
+                        .map(|hole_coords| &hole_coords[..])
+                        .collect::<Vec<_>>();
     
-            // find potential hole indices
-            let bounding_box_query = self.polylines.plines_index.query(oxmin, oymin, oxmax, oymax);
+                    // Triangulate with our existing helper:
+                    let triangles_2d = Self::tessellate_2d(&outer, &hole_refs);
     
-            // gather “holes” that are truly inside
-            let mut holes_xy: Vec<Vec<[Real;2]>> = Vec::new();
-    
-            for hole_candidate_idx in bounding_box_query {
-                // Recall ccw_plines come first in index, then cw_plines.
-                // So test if hole_candidate_idx >= self.polylines.ccw_plines.len()
-                // to see if it's a CW hole.
-                let cw_start = self.polylines.ccw_plines.len();
-                if hole_candidate_idx < cw_start {
-                    continue; // that’s another outer or the same outer
-                }
-                let hole_ipline = &self.polylines.cw_plines[hole_candidate_idx - cw_start].polyline;
-    
-                // pick any vertex from the hole and do “point in polygon” for outer
-                let hv0 = hole_ipline.at(0);
-                if CSG::<()>::point_in_polygon_2d(hv0.x, hv0.y, &outer_pline) {
-                    // Confirm we interpret this as a valid hole => collect
-                    let mut hole_pts = Vec::new();
-                    for i in 0..hole_ipline.vertex_count() {
-                        let p = hole_ipline.at(i);
-                        hole_pts.push([p.x, p.y]);
+                    // Write each tri as a facet in ASCII STL, with a normal of (0,0,1)
+                    for tri in triangles_2d {
+                        out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
+                        out.push_str("    outer loop\n");
+                        for pt in &tri {
+                            out.push_str(&format!(
+                                "      vertex {:.6} {:.6} {:.6}\n",
+                                pt.x, pt.y, pt.z
+                            ));
+                        }
+                        out.push_str("    endloop\n");
+                        out.push_str("  endfacet\n");
                     }
-                    holes_xy.push(hole_pts);
                 }
-            }
     
-            // Prepare the outer ring in 2D
-            let mut outer_xy = Vec::new();
-            for i in 0..outer_pline.vertex_count() {
-                let v = outer_pline.at(i);
-                outer_xy.push([v.x, v.y]);
-            }
+                geo::Geometry::MultiPolygon(mp) => {
+                    // Each polygon inside the MultiPolygon
+                    for poly2d in &mp.0 {
+                        let outer = poly2d
+                            .exterior()
+                            .coords_iter()
+                            .map(|c| [c.x, c.y])
+                            .collect::<Vec<[Real; 2]>>();
     
-            // Triangulate via whichever approach is enabled:
-            #[cfg(feature="earclip-io")]
-            {
-                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = CSG::<()>::triangulate_2d_earclip(&outer_xy, &hole_refs);
-                // Write them to STL with normal = 0,0,1
-                for tri in triangles_2d {
-                    out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
-                    out.push_str("    outer loop\n");
-                    for pt in &tri {
-                        out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n", pt.x, pt.y, pt.z));
+                        // Holes
+                        let holes_vec = poly2d
+                            .interiors()
+                            .into_iter()
+                            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
+                            .collect::<Vec<_>>();
+                        let hole_refs = holes_vec
+                            .iter()
+                            .map(|hole_coords| &hole_coords[..])
+                            .collect::<Vec<_>>();
+    
+                        let triangles_2d = Self::tessellate_2d(&outer, &hole_refs);
+    
+                        for tri in triangles_2d {
+                            out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
+                            out.push_str("    outer loop\n");
+                            for pt in &tri {
+                                out.push_str(&format!(
+                                    "      vertex {:.6} {:.6} {:.6}\n",
+                                    pt.x, pt.y, pt.z
+                                ));
+                            }
+                            out.push_str("    endloop\n");
+                            out.push_str("  endfacet\n");
+                        }
                     }
-                    out.push_str("    endloop\n");
-                    out.push_str("  endfacet\n");
                 }
-            }
     
-            #[cfg(feature="earcut-io")]
-            {
-                let hole_refs: Vec<&[[Real;2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = CSG::<()>::triangulate_2d_earcut(&outer_xy, &hole_refs);
-                for tri in triangles_2d {
-                    out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
-                    out.push_str("    outer loop\n");
-                    for pt in &tri {
-                        out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n", pt.x, pt.y, pt.z));
-                    }
-                    out.push_str("    endloop\n");
-                    out.push_str("  endfacet\n");
-                }
+                // Skip all other geometry types (LineString, Point, etc.)
+                // You can optionally handle them if you like, or ignore them.
+                _ => {}
             }
         }
     
         out.push_str(&format!("endsolid {}\n", name));
         out
-    }
-    
-    // A simple even-odd or winding check for “point in polygon” in 2D:
-    fn point_in_polygon_2d(px: Real, py: Real, pline: &Polyline<Real>) -> bool {
-        let mut inside = false;
-        let count = pline.vertex_count();
-        let mut j = count - 1;
-        for i in 0..count {
-            let pi = pline.at(i);
-            let pj = pline.at(j);
-            if ((pi.y > py) != (pj.y > py)) &&
-            (px < (pj.x - pi.x)*(py - pi.y)/(pj.y - pi.y) + pi.x)
-            {
-                inside = !inside;
-            }
-            j = i;
-        }
-        inside
     }
 
     /// Export to BINARY STL (returns Vec<u8>)
@@ -4300,114 +4554,137 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
     /// std::fs::write("my_solid.stl", bytes)?;
     /// ```
     #[cfg(feature = "stl-io")]
-    pub fn to_stl_binary(&self, _name:&str) -> std::io::Result<Vec<u8>> {
+    pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
         use stl_io::{Normal, Vertex, Triangle, write_stl};
         use core2::io::Cursor;
     
         let mut triangles = Vec::new();
     
-        //
-        // 1) Triangulate all 3D polygons
-        //
+        // Triangulate all 3D polygons in self.polygons
         for poly in &self.polygons {
             let normal = poly.plane.normal.normalize();
-            let tri_list = poly.triangulate();
+            // Convert polygon to triangles
+            let tri_list = poly.tessellate();
             for tri in tri_list {
                 triangles.push(Triangle {
                     normal: Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
                     vertices: [
-                        Vertex::new([tri[0].pos.x as f32, tri[0].pos.y as f32, tri[0].pos.z as f32]),
-                        Vertex::new([tri[1].pos.x as f32, tri[1].pos.y as f32, tri[1].pos.z as f32]),
-                        Vertex::new([tri[2].pos.x as f32, tri[2].pos.y as f32, tri[2].pos.z as f32]),
+                        Vertex::new([
+                            tri[0].pos.x as f32,
+                            tri[0].pos.y as f32,
+                            tri[0].pos.z as f32
+                        ]),
+                        Vertex::new([
+                            tri[1].pos.x as f32,
+                            tri[1].pos.y as f32,
+                            tri[1].pos.z as f32
+                        ]),
+                        Vertex::new([
+                            tri[2].pos.x as f32,
+                            tri[2].pos.y as f32,
+                            tri[2].pos.z as f32
+                        ]),
                     ],
                 });
             }
         }
     
         //
-        // 2) Triangulate all 2D CCShape polylines, just like in to_stl_ascii
+        // (B) Triangulate any 2D geometry from self.geometry (Polygon, MultiPolygon).
+        //     We treat these as lying in the XY plane, at Z=0, with a default normal of +Z.
         //
-        //    *All polylines are taken as lying in the XY plane with Z=0.*
-        //    The normal for these 2D polygons is (0, 0, 1) or (0, 0, -1).
-        //    We'll choose (0,0,1) for convenience, matching the ASCII approach.
-        //
+        for geom in &self.geometry {
+            match geom {
+                geo::Geometry::Polygon(poly2d) => {
+                    // Gather outer ring as [x,y]
+                    let outer: Vec<[Real; 2]> =
+                        poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
     
-        for (_outer_idx, outer_ipline) in self.polylines.ccw_plines.iter().enumerate() {
-            let outer_pline = &outer_ipline.polyline;
-            let Some(aabb) = outer_pline.extents() else {
-                // empty or single-vertex pline
-                continue;
-            };
-            let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
+                    // Gather holes
+                    let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
+                        .interiors()
+                        .iter()
+                        .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
+                        .collect();
     
-            // find candidate holes overlapping in bounding box
-            let bounding_box_query = self.polylines.plines_index.query(oxmin, oymin, oxmax, oymax);
-            let mut holes_xy: Vec<Vec<[Real; 2]>> = Vec::new();
-            for hole_candidate_idx in bounding_box_query {
-                // remember: cw_plines start after all ccw_plines in the indexing
-                let cw_start = self.polylines.ccw_plines.len();
-                if hole_candidate_idx < cw_start {
-                    // that means it's not in cw_plines but just another ccw, skip
-                    continue;
-                }
-                let hole_ipline = &self.polylines.cw_plines[hole_candidate_idx - cw_start].polyline;
-                // check if this candidate hole is inside the outer
-                let hv0 = hole_ipline.at(0);
-                if CSG::<()>::point_in_polygon_2d(hv0.x, hv0.y, &outer_pline) {
-                    // gather the hole points
-                    let mut hole_pts = Vec::with_capacity(hole_ipline.vertex_count());
-                    for i in 0..hole_ipline.vertex_count() {
-                        let p = hole_ipline.at(i);
-                        hole_pts.push([p.x, p.y]);
+                    // Convert each hole to a slice-reference for triangulation
+                    let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
+    
+                    // Triangulate using our geo-based helper
+                    let tri_2d = Self::tessellate_2d(&outer, &hole_refs);
+    
+                    // Each triangle is in XY, so normal = (0,0,1)
+                    for tri_pts in tri_2d {
+                        triangles.push(Triangle {
+                            normal: Normal::new([0.0, 0.0, 1.0]),
+                            vertices: [
+                                Vertex::new([
+                                    tri_pts[0].x as f32,
+                                    tri_pts[0].y as f32,
+                                    tri_pts[0].z as f32
+                                ]),
+                                Vertex::new([
+                                    tri_pts[1].x as f32,
+                                    tri_pts[1].y as f32,
+                                    tri_pts[1].z as f32
+                                ]),
+                                Vertex::new([
+                                    tri_pts[2].x as f32,
+                                    tri_pts[2].y as f32,
+                                    tri_pts[2].z as f32
+                                ]),
+                            ],
+                        });
                     }
-                    holes_xy.push(hole_pts);
                 }
-            }
     
-            // gather points for outer
-            let mut outer_xy = Vec::with_capacity(outer_pline.vertex_count());
-            for i in 0..outer_pline.vertex_count() {
-                let v = outer_pline.at(i);
-                outer_xy.push([v.x, v.y]);
-            }
+                geo::Geometry::MultiPolygon(mpoly) => {
+                    // Same approach, but each Polygon in the MultiPolygon
+                    for poly2d in &mpoly.0 {
+                        let outer: Vec<[Real; 2]> =
+                            poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
     
-            // Triangulate the 2D polygon plus holes
-            #[cfg(feature="earclip-io")]
-            {
-                let hole_refs: Vec<&[[Real; 2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = CSG::<()>::triangulate_2d_earclip(&outer_xy, &hole_refs);
-                for tri in triangles_2d {
-                    // we have tri as [Point3<Real>;3], normal assumed +Z
-                    triangles.push(Triangle {
-                        normal: Normal::new([0.0, 0.0, 1.0]),
-                        vertices: [
-                            Vertex::new([tri[0].x as f32, tri[0].y as f32, tri[0].z as f32]),
-                            Vertex::new([tri[1].x as f32, tri[1].y as f32, tri[1].z as f32]),
-                            Vertex::new([tri[2].x as f32, tri[2].y as f32, tri[2].z as f32]),
-                        ],
-                    });
+                        let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
+                            .interiors()
+                            .iter()
+                            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
+                            .collect();
+    
+                        let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
+                        let tri_2d = Self::tessellate_2d(&outer, &hole_refs);
+    
+                        for tri_pts in tri_2d {
+                            triangles.push(Triangle {
+                                normal: Normal::new([0.0, 0.0, 1.0]),
+                                vertices: [
+                                    Vertex::new([
+                                        tri_pts[0].x as f32,
+                                        tri_pts[0].y as f32,
+                                        tri_pts[0].z as f32
+                                    ]),
+                                    Vertex::new([
+                                        tri_pts[1].x as f32,
+                                        tri_pts[1].y as f32,
+                                        tri_pts[1].z as f32
+                                    ]),
+                                    Vertex::new([
+                                        tri_pts[2].x as f32,
+                                        tri_pts[2].y as f32,
+                                        tri_pts[2].z as f32
+                                    ]),
+                                ],
+                            });
+                        }
+                    }
                 }
-            }
     
-            #[cfg(feature="earcut-io")]
-            {
-                let hole_refs: Vec<&[[Real; 2]]> = holes_xy.iter().map(|h| &h[..]).collect();
-                let triangles_2d = CSG::<()>::triangulate_2d_earcut(&outer_xy, &hole_refs);
-                for tri in triangles_2d {
-                    triangles.push(Triangle {
-                        normal: Normal::new([0.0, 0.0, 1.0]),
-                        vertices: [
-                            Vertex::new([tri[0].x as f32, tri[0].y as f32, tri[0].z as f32]),
-                            Vertex::new([tri[1].x as f32, tri[1].y as f32, tri[1].z as f32]),
-                            Vertex::new([tri[2].x as f32, tri[2].y as f32, tri[2].z as f32]),
-                        ],
-                    });
-                }
+                // Skip other geometry types: lines, points, etc.
+                _ => {}
             }
-        } // end for all ccw_plines
+        }
     
         //
-        // 3) Write out to STL
+        // (C) Encode into a binary STL buffer
         //
         let mut cursor = Cursor::new(Vec::new());
         write_stl(&mut cursor, triangles.iter())?;
@@ -4563,7 +4840,7 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
         for poly in &self.polygons {
             // Triangulate the polygon if it has more than 3 vertices
             let triangles = if poly.vertices.len() > 3 {
-                poly.triangulate()
+                poly.tessellate()
             } else {
                 vec![[
                     poly.vertices[0].clone(),
@@ -4595,31 +4872,6 @@ impl<S: Clone> CSG<S> where S: Clone + Send + Sync {
 
         Ok(buffer)
     }
-}
-
-/// Build a rotation matrix that maps the global +Z axis to the specified `dir` in 3D.
-///
-/// - If `dir` is near zero length or near +Z, we produce the identity.
-/// - Otherwise, we use an axis‐angle rotation from +Z to `dir`.
-fn rotation_from_z_to_dir(dir: Vector3<Real>) -> Matrix4<Real> {
-    // We'll rotate the z-axis (0,0,1) onto `dir`.
-    let z = Vector3::z();
-    let dot = z.dot(&dir);
-    // If dir is basically the same as z, no rotation needed
-    if (dot - 1.0).abs() < EPSILON {
-        return Matrix4::identity();
-    }
-    // If dir is basically opposite z
-    if (dot + 1.0).abs() < EPSILON {
-        // 180 deg around X or Y axis
-        let rot180 = Rotation3::from_axis_angle(&Unit::new_normalize(Vector3::x()), PI);
-        return rot180.to_homogeneous();
-    }
-    // Otherwise, general axis = z × dir
-    let axis = z.cross(&dir).normalize();
-    let angle = z.dot(&dir).acos();
-    let rot = Rotation3::from_axis_angle(&Unit::new_unchecked(axis), angle);
-    rot.to_homogeneous()
 }
 
 /// Helper to build a single Polygon from a “slice” of 3D points.
@@ -4654,59 +4906,227 @@ fn polygon_from_slice<S: Clone + Send + Sync>(
 
 /// Helper for building open polygons from a single Hershey `Glyph`.
 #[cfg(feature = "hershey-text")]
-fn build_hershey_glyph_polygons<S: Clone + Send + Sync>(
+fn build_hershey_glyph_lines(
     glyph: &HersheyGlyph,
     scale: Real,
     offset_x: Real,
     offset_y: Real,
-    metadata: Option<S>,
-) -> Vec<Polygon<S>> {
-    let mut polygons = Vec::new();
+) -> Vec<geo::LineString<Real>> {
+    use geo::{coord, LineString};
 
-    // We will collect line segments in a “current” Polyline 
-    // each time we see `Vector::MoveTo` => start a new stroke.
-    let mut current_pline = Polyline::new();
-    let mut _pen_down = false;
+    let mut strokes = Vec::new();
+
+    // We'll accumulate each stroke’s points in `current_coords`,
+    // resetting whenever Hershey issues a "MoveTo"
+    let mut current_coords = Vec::new();
 
     for vector_cmd in &glyph.vectors {
         match vector_cmd {
             HersheyVector::MoveTo { x, y } => {
-                // The Hershey code sets pen-up or "hovering" here: start a new polyline
-                // if the old polyline has 2+ vertices, push it into polygons
-                if current_pline.vertex_count() >= 2 {
-                    // Convert the existing stroke into an open polygon
-                    let stroke_poly = Polygon::from_polyline(&current_pline, metadata.clone());
-                    polygons.push(stroke_poly);
+                // If we already had 2+ points, that stroke is complete:
+                if current_coords.len() >= 2 {
+                    strokes.push(LineString::from(current_coords));
                 }
-                // Begin a fresh new stroke
-                current_pline = Polyline::new();
+                // Start a new stroke
+                current_coords = Vec::new();
                 let px = offset_x + (*x as Real) * scale;
                 let py = offset_y + (*y as Real) * scale;
-                current_pline.add(px, py, 0.0);
-
-                _pen_down = false;
+                current_coords.push(coord! { x: px, y: py });
             }
             HersheyVector::LineTo { x, y } => {
-                // If pen was up, effectively we’re continuing from last point
                 let px = offset_x + (*x as Real) * scale;
                 let py = offset_y + (*y as Real) * scale;
-                current_pline.add(px, py, 0.0);
-
-                _pen_down = true;
+                current_coords.push(coord! { x: px, y: py });
             }
         }
     }
 
-    // If our final polyline has >=2 vertices, store it
-    if current_pline.vertex_count() >= 2 {
-        let stroke_poly = Polygon::from_polyline(&current_pline, metadata.clone());
-        polygons.push(stroke_poly);
+    // End-of-glyph: if our final stroke has 2+ points, convert to a line string
+    if current_coords.len() >= 2 {
+        strokes.push(LineString::from(current_coords));
     }
 
-    polygons
+    strokes
 }
 
-// 1) Build a small helper for hashing endpoints:
+// Extract only the polygons from a geometry collection
+fn gc_to_polygons(gc: &GeometryCollection<Real>) -> MultiPolygon<Real> {
+    let mut polygons = vec![];
+    for geom in &gc.0 {
+        match geom {
+            Geometry::Polygon(poly) => polygons.push(poly.clone()),
+            Geometry::MultiPolygon(mp) => polygons.extend(mp.0.clone()),
+            // ignore lines, points, etc.
+            _ => {}
+        }
+    }
+    MultiPolygon(polygons)
+}
+
+/// A helper that implements `ttf_parser::OutlineBuilder`.
+/// It receives MoveTo/LineTo/QuadTo/CurveTo calls from `outline.emit(self)`.
+/// We flatten curves and accumulate polylines. 
+///
+/// - Whenever `close()` occurs, we finalize the current subpath as a closed polygon (`contours`).
+/// - If we start a new MoveTo while the old subpath is open, that old subpath is treated as open (`open_contours`).
+struct OutlineFlattener {
+    // scale + offset
+    scale: Real,
+    offset_x: Real,
+    offset_y: Real,
+
+    // We gather shapes: each "subpath" can be closed or open
+    contours: Vec<Vec<(Real, Real)>>,      // closed polygons
+    open_contours: Vec<Vec<(Real, Real)>>, // open polylines
+
+    current: Vec<(Real, Real)>, // points for the subpath
+    last_pt: (Real, Real),      // current "cursor" in flattening
+    subpath_open: bool,
+}
+
+impl OutlineFlattener {
+    fn new(scale: Real, offset_x: Real, offset_y: Real) -> Self {
+        Self {
+            scale,
+            offset_x,
+            offset_y,
+            contours: Vec::new(),
+            open_contours: Vec::new(),
+            current: Vec::new(),
+            last_pt: (0.0, 0.0),
+            subpath_open: false,
+        }
+    }
+
+    /// Helper: transform TTF coordinates => final (x,y)
+    #[inline]
+    fn tx(&self, x: f32, y: f32) -> (Real, Real) {
+        let sx = x as Real * self.scale + self.offset_x;
+        let sy = y as Real * self.scale + self.offset_y;
+        (sx, sy)
+    }
+
+    /// Start a fresh subpath
+    fn begin_subpath(&mut self, x: f32, y: f32) {
+        // If we already had an open subpath, push it as open_contours:
+        if self.subpath_open && !self.current.is_empty() {
+            self.open_contours.push(self.current.clone());
+        }
+        self.current.clear();
+
+        self.subpath_open = true;
+        self.last_pt = self.tx(x, y);
+        self.current.push(self.last_pt);
+    }
+
+    /// Finish the current subpath as open (do not close).
+    /// (We call this if a new `MoveTo` or the entire glyph ends.)
+    fn finish_open_subpath(&mut self) {
+        if self.subpath_open && !self.current.is_empty() {
+            self.open_contours.push(self.current.clone());
+        }
+        self.current.clear();
+        self.subpath_open = false;
+    }
+
+    /// Flatten a line from `last_pt` to `(x,y)`.
+    fn line_to_impl(&mut self, x: f32, y: f32) {
+        let (xx, yy) = self.tx(x, y);
+        self.current.push((xx, yy));
+        self.last_pt = (xx, yy);
+    }
+
+    /// Flatten a quadratic Bézier from last_pt -> (x1,y1) -> (x2,y2)
+    fn quad_to_impl(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) {
+        let steps = CURVE_STEPS;
+        let (px0, py0) = self.last_pt;
+        let (px1, py1) = self.tx(x1, y1);
+        let (px2, py2) = self.tx(x2, y2);
+
+        // B(t) = (1 - t)^2 * p0 + 2(1 - t)t * cp + t^2 * p2
+        for i in 1..=steps {
+            let t = i as Real / steps as Real;
+            let mt = 1.0 - t;
+            let bx = mt*mt*px0 + 2.0*mt*t*px1 + t*t*px2;
+            let by = mt*mt*py0 + 2.0*mt*t*py1 + t*t*py2;
+            self.current.push((bx, by));
+        }
+        self.last_pt = (px2, py2);
+    }
+
+    /// Flatten a cubic Bézier from last_pt -> (x1,y1) -> (x2,y2) -> (x3,y3)
+    fn curve_to_impl(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
+        let steps = CURVE_STEPS;
+        let (px0, py0) = self.last_pt;
+        let (cx1, cy1) = self.tx(x1, y1);
+        let (cx2, cy2) = self.tx(x2, y2);
+        let (px3, py3) = self.tx(x3, y3);
+
+        // B(t) = (1-t)^3 p0 + 3(1-t)^2 t c1 + 3(1-t) t^2 c2 + t^3 p3
+        for i in 1..=steps {
+            let t = i as Real / steps as Real;
+            let mt = 1.0 - t;
+            let mt2 = mt*mt;
+            let t2  = t*t;
+            let bx = mt2*mt*px0
+                + 3.0*mt2*t*cx1
+                + 3.0*mt*t2*cx2
+                + t2*t*px3;
+            let by = mt2*mt*py0
+                + 3.0*mt2*t*cy1
+                + 3.0*mt*t2*cy2
+                + t2*t*py3;
+            self.current.push((bx, by));
+        }
+        self.last_pt = (px3, py3);
+    }
+
+    /// Called when `close()` is invoked => store as a closed polygon.
+    fn close_impl(&mut self) {
+        // We have a subpath that should be closed => replicate first point as last if needed.
+        let n = self.current.len();
+        if n > 2 {
+            // If the last point != the first, close it.
+            let first = self.current[0];
+            let last  = self.current[n-1];
+            if (first.0 - last.0).abs() > Real::EPSILON || (first.1 - last.1).abs() > Real::EPSILON {
+                self.current.push(first);
+            }
+            // That becomes one closed contour
+            self.contours.push(self.current.clone());
+        } else {
+            // If it's 2 or fewer points, ignore or treat as degenerate
+        }
+
+        self.current.clear();
+        self.subpath_open = false;
+    }
+}
+
+impl OutlineBuilder for OutlineFlattener {
+    fn move_to(&mut self, x: f32, y: f32) {
+        self.begin_subpath(x, y);
+    }
+
+    fn line_to(&mut self, x: f32, y: f32) {
+        self.line_to_impl(x, y);
+    }
+
+    fn quad_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) {
+        self.quad_to_impl(x1, y1, x2, y2);
+    }
+
+    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
+        self.curve_to_impl(x1, y1, x2, y2, x3, y3);
+    }
+
+    fn close(&mut self) {
+        self.close_impl();
+    }
+}
+
+
+// Build a small helper for hashing endpoints:
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 struct EndKey(i64, i64, i64);
 
@@ -4829,186 +5249,3 @@ fn extend_chain_forward(
         }
     }
 }
-
-/// Returns all polylines from both the ccw_plines and cw_plines fields of a Shape,
-/// concatenated together into a single Vec<Polyline<Real>>.
-pub fn ccshape_to_polylines(shape: CCShape<Real>) -> Vec<Polyline<Real>> {
-    shape.ccw_plines.iter()
-        .map(|indexed_pline| indexed_pline.polyline.clone())
-        .chain(shape.cw_plines.iter()
-            .map(|indexed_pline| indexed_pline.polyline.clone()),
-        )
-        .collect()
-}
-
-/// Basic point in polygon test in 2D (XY).  
-fn point_in_poly_2d(px: Real, py: Real, pline: &Polyline<Real>) -> bool {
-    let mut inside = false;
-    let n = pline.vertex_count();
-    let mut j = n - 1;
-    for i in 0..n {
-        let pi = pline.at(i);
-        let pj = pline.at(j);
-        // typical even-odd test
-        let intersect = ((pi.y > py) != (pj.y > py))
-            && (px < (pj.x - pi.x) * (py - pi.y) / (pj.y - pi.y) + pi.x);
-        if intersect {
-            inside = !inside;
-        }
-        j = i;
-    }
-    inside
-}
-
-/// For each CCW polyline, we get one 3D “outer boundary” in the returned vec,
-/// for each CW polyline, we get one 3D “hole” in the returned vec. The indexing
-/// (first all CCW, then all CW) is the same as in the original shape.
-fn project_shape_3d(shape: &CCShape<Real>, transform: &Matrix4<Real>) -> Vec<Vec<Point3<Real>>> {
-    let mut result = Vec::new();
-
-    // Helper to transform an (x, y) with z=0 → 3D
-    let project_pt = |x: Real, y: Real, mat: &Matrix4<Real>| {
-        let v = mat * nalgebra::Vector4::new(x, y, 0.0, 1.0);
-        Point3::new(v.x / v.w, v.y / v.w, v.z / v.w)
-    };
-
-    // For each “outer boundary” (CCW)
-    for ipline in &shape.ccw_plines {
-        let pl = &ipline.polyline;
-        let mut poly_3d = Vec::with_capacity(pl.vertex_count());
-        for i in 0..pl.vertex_count() {
-            let vx = pl.at(i);
-            poly_3d.push(project_pt(vx.x, vx.y, transform));
-        }
-        result.push(poly_3d);
-    }
-    // For each “hole” (CW)
-    for ipline in &shape.cw_plines {
-        let pl = &ipline.polyline;
-        let mut poly_3d = Vec::with_capacity(pl.vertex_count());
-        for i in 0..pl.vertex_count() {
-            let vx = pl.at(i);
-            poly_3d.push(project_pt(vx.x, vx.y, transform));
-        }
-        result.push(poly_3d);
-    }
-    result
-}
-
-// A helper that reads a 3D slice (the output of `project_shape_3d`) plus the original 2D shape
-// to build triangulated “cap” polygons. 
-// If `flip` is true => bottom cap, else top cap
-fn build_caps_from_slice<S: Clone + Send + Sync>(
-    shape: &CCShape<Real>,
-    slice_3d: &Vec<Vec<Point3<Real>>>,
-    flip: bool,
-    metadata: Option<S>
-) -> Vec<Polygon<S>> {
-    let mut polys = Vec::new();
-    // Step A: build top & bottom polygons (caps) if the polylines are closed.
-    // We do that by grouping each CCW boundary with any CW hole that lies inside it.
-    // Then we triangulate at z=0 for bottom, z=dz for top.
-    // For the bottom, we flip the normal (so its normal is downward).
-    // For the top, keep orientation up.
-
-    // We'll only do caps if the polylines are truly closed. Cavalier Contours has
-    // `polyline.is_closed()`. If is_closed is false, we skip caps on that boundary.
-    for (_outer_idx, outer_entry) in shape.ccw_plines.iter().enumerate() {
-        let outer_pl = &outer_entry.polyline;
-        if !outer_pl.is_closed() || outer_pl.vertex_count() < 3 {
-            // skip capping for this boundary
-            continue;
-        }
-
-        // bounding box for outer
-        let Some(aabb) = outer_pl.extents() else {
-            // skip degenerate
-            continue;
-        };
-        let (oxmin, oymin, oxmax, oymax) = (aabb.min_x, aabb.min_y, aabb.max_x, aabb.max_y);
-
-        // collect holes
-        let mut holes_2d : Vec<Vec<[Real;2]>> = Vec::new();
-
-        let bounding_query = shape.plines_index.query(oxmin, oymin, oxmax, oymax);
-        let cw_start = shape.ccw_plines.len();
-        for hole_idx in bounding_query {
-            if hole_idx < cw_start {
-                continue; // another ccw boundary, skip
-            }
-            let hole_pl = &shape.cw_plines[hole_idx - cw_start].polyline;
-            if !hole_pl.is_closed() || hole_pl.vertex_count() < 3 {
-                continue;
-            }
-            // check if the hole belongs inside this outer by point-in-poly test
-            let hv0 = hole_pl.at(0);
-            if point_in_poly_2d(hv0.x, hv0.y, outer_pl) {
-                // gather
-                let mut arr = Vec::with_capacity(hole_pl.vertex_count());
-                for i in 0..hole_pl.vertex_count() {
-                    let p = hole_pl.at(i);
-                    arr.push([p.x, p.y]);
-                }
-                holes_2d.push(arr);
-            }
-        }
-
-        // gather outer boundary 2D
-        let mut outer_2d = Vec::with_capacity(outer_pl.vertex_count());
-        for i in 0..outer_pl.vertex_count() {
-            let v = outer_pl.at(i);
-            outer_2d.push([v.x, v.y]);
-        }
-
-        // Triangulate bottom (z=0)
-        #[cfg(feature="earcut-io")]
-        let bottom_tris = CSG::<()>::triangulate_2d_earcut(
-            &outer_2d[..],
-            &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-            0.0,
-        );
-        
-        #[cfg(feature="earclip-io")]
-        let bottom_tris = CSG::<()>::triangulate_2d_earclip(
-            &outer_2d[..],
-            &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-        );
-        
-        // The “bottom” polygons need flipping. We'll do that by reversing the triangle’s vertex order.
-        for tri in bottom_tris {
-            let v0 = Vertex::new(tri[2], Vector3::new(0.0, 0.0, -1.0));
-            let v1 = Vertex::new(tri[1], Vector3::new(0.0, 0.0, -1.0));
-            let v2 = Vertex::new(tri[0], Vector3::new(0.0, 0.0, -1.0));
-            polys.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
-        }
-
-        // Triangulate top (z= + direction.z, but we must keep full 3D offset)
-        // We can simply do the same XY coords but shift them up by (dx, dy, dz)
-        #[cfg(feature="earcut-io")]
-        let top_tris = CSG::<()>::triangulate_2d_earcut(
-            &outer_2d[..],
-            &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-            0.0, // we'll apply the shift later
-        );
-        
-        #[cfg(feature="earclip-io")]
-        let top_tris = CSG::<()>::triangulate_2d_earclip(
-            &outer_2d[..],
-            &holes_2d.iter().map(|h| &h[..]).collect::<Vec<_>>(),
-        );
-        
-        /*
-        for tri in top_tris {
-            let p0 = Point3::new(tri[0].x + dx, tri[0].y + dy, tri[0].z + dz);
-            let p1 = Point3::new(tri[1].x + dx, tri[1].y + dy, tri[1].z + dz);
-            let p2 = Point3::new(tri[2].x + dx, tri[2].y + dy, tri[2].z + dz);
-            let v0 = Vertex::new(p0, Vector3::new(0.0, 0.0, 1.0));
-            let v1 = Vertex::new(p1, Vector3::new(0.0, 0.0, 1.0));
-            let v2 = Vertex::new(p2, Vector3::new(0.0, 0.0, 1.0));
-            polys.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
-        }
-        */
-    }
-    polys
-}
-

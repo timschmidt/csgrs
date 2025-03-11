@@ -5,9 +5,7 @@ use crate::plane::Plane;
 use nalgebra::{
     Point2, Point3, Vector3,
 };
-use cavalier_contours::polyline::{
-    PlineSource, Polyline,
-};
+use geo::{ Polygon as GeoPolygon, TriangulateEarcut, LineString, coord, };
 
 /// A polygon, defined by a list of vertices and a plane.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
@@ -49,94 +47,50 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
     }
 
     /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
-    pub fn triangulate(&self) -> Vec<[Vertex; 3]> {
-        // If polygon has fewer than 3 vertices, nothing to triangulate
+    pub fn tessellate(&self) -> Vec<[Vertex; 3]> {
+        // If polygon has fewer than 3 vertices, nothing to tessellate
         if self.vertices.len() < 3 {
             return Vec::new();
         }
 
-        // ----- Option 1: Use earclip if "earclip-io" feature is enabled -----
-        #[cfg(feature = "earclip-io")]
-        {
-            // We will flatten the polygon onto a local 2D plane and call earclip::earcut
-            let normal_3d = self.plane.normal.normalize();
-            let (u, v) = build_orthonormal_basis(normal_3d);
-            let origin_3d = self.vertices[0].pos;
-
-            // Collect 2D coords by projecting each vertex onto (u,v) plane
-            let mut coords_2d = Vec::with_capacity(self.vertices.len() * 2);
-            for vert in &self.vertices {
-                let offset = vert.pos.coords - origin_3d.coords;
-                let x = offset.dot(&u);
-                let y = offset.dot(&v);
-                coords_2d.push(x);
-                coords_2d.push(y);
-            }
-
-            // Use earclip
-            let indices = earclip::earcut::<Real, usize>(&coords_2d, &[], 2);
-            let mut triangles = Vec::with_capacity(indices.len() / 3);
-
-            // Rebuild final 3D triangles
-            for tri_chunk in indices.chunks_exact(3) {
-                let mut tri_vertices = [Vertex::new(Point3::origin(), Vector3::zeros()); 3];
-                for (k, &idx) in tri_chunk.iter().enumerate() {
-                    let x = coords_2d[2 * idx];
-                    let y = coords_2d[2 * idx + 1];
-                    let pos_3d = origin_3d.coords + (x * u) + (y * v);
-                    tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
-                }
-                triangles.push(tri_vertices);
-            }
-            return triangles;
+        let normal_3d = self.plane.normal.normalize();
+        let (u, v) = build_orthonormal_basis(normal_3d);
+        let origin_3d = self.vertices[0].pos;
+    
+        // Flatten each vertex to 2D
+        let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
+        for vert in &self.vertices {
+            let offset = vert.pos.coords - origin_3d.coords;
+            let x = offset.dot(&u);
+            let y = offset.dot(&v);
+            all_vertices_2d.push(coord!{x: x, y: y});
         }
-
-        // ----- Option 2: Use earcut if "earcut-io" feature is enabled -----
-        #[cfg(feature = "earcut-io")]
-        {
-            use earcut::Earcut;
-
-            let normal_3d = self.plane.normal.normalize();
-            let (u, v) = build_orthonormal_basis(normal_3d);
-            let origin_3d = self.vertices[0].pos;
-
-            // Flatten each vertex to 2D
-            let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
-            for vert in &self.vertices {
-                let offset = vert.pos.coords - origin_3d.coords;
-                let x = offset.dot(&u);
-                let y = offset.dot(&v);
-                all_vertices_2d.push([x, y]);
+    
+        let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new()).earcut_triangles_raw();
+        let triangle_indices = triangulation.triangle_indices;
+        let vertices = triangulation.vertices;
+    
+        // Convert back into 3D triangles
+        let mut triangles = Vec::with_capacity(triangle_indices.len() / 3);
+        for tri_chunk in triangle_indices.chunks_exact(3) {
+            let mut tri_vertices = [Vertex::new(Point3::origin(), Vector3::zeros()); 3];
+            for (k, &idx) in tri_chunk.iter().enumerate() {
+                let base = idx * 2;
+                let x = vertices[base];
+                let y = vertices[base + 1];
+                let pos_3d = origin_3d.coords + (x * u) + (y * v);
+                tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
             }
-
-            // No holes, so hole_indices = []
-            let hole_indices: Vec<usize> = Vec::new();
-
-            // Run earcut
-            let mut earcut = Earcut::new();
-            let mut triangle_indices = Vec::new();
-            earcut.earcut(all_vertices_2d.clone(), &hole_indices, &mut triangle_indices);
-
-            // Convert back into 3D triangles
-            let mut triangles = Vec::with_capacity(triangle_indices.len() / 3);
-            for tri_chunk in triangle_indices.chunks_exact(3) {
-                let mut tri_vertices = [Vertex::new(Point3::origin(), Vector3::zeros()); 3];
-                for (k, &idx) in tri_chunk.iter().enumerate() {
-                    let [x, y] = all_vertices_2d[idx];
-                    let pos_3d = origin_3d.coords + (x * u) + (y * v);
-                    tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
-                }
-                triangles.push(tri_vertices);
-            }
-            return triangles;
+            triangles.push(tri_vertices);
         }
+        triangles
     }
 
     /// Subdivide this polygon into smaller triangles.
     /// Returns a list of new triangles (each is a [Vertex; 3]).
     pub fn subdivide_triangles(&self, subdivisions: u32) -> Vec<[Vertex; 3]> {
         // 1) Triangulate the polygon as it is.
-        let base_tris = self.triangulate();
+        let base_tris = self.tessellate();
 
         // 2) For each triangle, subdivide 'subdivisions' times.
         let mut result = Vec::new();
@@ -222,25 +176,6 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         }
     }
     
-    /// Build a new Polygon from a set of 2D polylines in XY. Each polyline
-    /// is turned into one polygon at z=0.
-    pub fn from_polyline(polyline: &Polyline<Real>, metadata: Option<S>) -> Polygon<S> {
-        if polyline.vertex_count() < 3 {
-            // degenerate polygon
-        }
-
-        let plane_normal = Vector3::z();
-        let mut poly_verts = Vec::with_capacity(polyline.vertex_count());
-        for i in 0..polyline.vertex_count() {
-            let v = polyline.at(i);
-            poly_verts.push(Vertex::new(
-                Point3::new(v.x, v.y, 0.0),
-                plane_normal,
-            ));
-        }
-        return Polygon::new(poly_verts, metadata);
-    }
-
     /// Returns a reference to the metadata, if any.
     pub fn metadata(&self) -> Option<&S> {
         self.metadata.as_ref()

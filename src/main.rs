@@ -7,7 +7,6 @@ use csgrs::float_types::Real;
 use std::fs;
 use nalgebra::{Vector3, Point3};
 use csgrs::plane::Plane;
-use cavalier_contours::polyline::{Polyline, PlineSourceMut};
 
 #[cfg(feature = "image")]
 use image::{GrayImage, ImageBuffer};
@@ -83,12 +82,12 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/circle_2d.stl", circle_2d.to_stl_binary("circle_2d").unwrap());
 
-    //let grown_2d = square_2d.offset_2d(0.5);
-    //#[cfg(feature = "stl-io")]
-    //let _ = fs::write("stl/square_2d_grow_0_5.stl", grown_2d.to_stl_binary("square_2d_grow_0_5").unwrap());
+    let grown_2d = square_2d.offset(0.5);
+    #[cfg(feature = "stl-io")]
+    let _ = fs::write("stl/square_2d_grow_0_5.stl", grown_2d.to_stl_ascii("square_2d_grow_0_5"));
 
-    //let shrunk_2d = square_2d.offset_2d(-0.5);
-    //let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"));
+    let shrunk_2d = square_2d.offset(-0.5);
+    let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"));
 
     // 8) Extrude & Rotate-Extrude
     let extruded_square = square_2d.extrude(1.0);
@@ -123,7 +122,7 @@ fn main() {
     }
 
     // 12) Polyhedron example (simple tetrahedron):
-    let points = &[
+    let points = [
         [0.0, 0.0, 0.0],
         [1.0, 0.0, 0.0],
         [0.5, 1.0, 0.0],
@@ -135,9 +134,9 @@ fn main() {
         vec![1, 2, 3],
         vec![2, 0, 3],
     ];
-    let poly = CSG::polyhedron(points, &faces, None);
+    let poly = CSG::polyhedron(&points, &faces, None);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/tetrahedron.stl", poly.to_stl_binary("tetrahedron").unwrap());
+    let _ = fs::write("stl/tetrahedron.stl", poly.to_stl_ascii("tetrahedron"));
 
     // 13) Text example (2D). Provide a valid TTF font data below:
     // (Replace "asar.ttf" with a real .ttf file in your project.)
@@ -165,8 +164,8 @@ fn main() {
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::cube(1.0, 1.0, 1.0, None);
     // 2) Flatten into the XY plane
-    //let flattened = cube.flatten();
-    //let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
+    let flattened = cube.flatten();
+    let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
     
     // Create a frustrum (start=-2, end=+2) with radius1 = 1, radius2 = 2, 32 slices
     let frustrum = CSG::frustrum_ptp(Point3::new(0.0, 0.0, -2.0), Point3::new(0.0, 0.0, 2.0), 1.0, 2.0, 32, None);
@@ -329,10 +328,6 @@ fn main() {
     let ngon_2d = CSG::regular_ngon(6, 1.0, None); // Hexagon
     let _ = fs::write("stl/ngon_2d.stl", ngon_2d.to_stl_ascii("ngon_2d"));
 
-    // 5) right_triangle(width, height)
-    let rtri_2d = CSG::right_triangle(2.0, 1.0, None);
-    let _ = fs::write("stl/right_triangle_2d.stl", rtri_2d.to_stl_ascii("right_triangle_2d"));
-
     // 6) trapezoid(top_width, bottom_width, height)
     let trap_2d = CSG::trapezoid(1.0, 2.0, 2.0, 0.5, None);
     let _ = fs::write("stl/trapezoid_2d.stl", trap_2d.to_stl_ascii("trapezoid_2d"));
@@ -364,24 +359,6 @@ fn main() {
     // 13) ring(inner_diam, thickness, segments)
     let ring_2d = CSG::ring(5.0, 1.0, 32, None);
     let _ = fs::write("stl/ring_2d.stl", ring_2d.to_stl_ascii("ring_2d"));
-
-    // 14) from_polylines(...)
-    {
-        // Construct two polylines as examples
-        let mut pline1 = Polyline::new_closed();
-        pline1.add(0.0, 0.0, 0.0);
-        pline1.add(2.0, 0.0, 0.0);
-        pline1.add(1.5, 1.5, 0.0);
-
-        let mut pline2 = Polyline::new_closed();
-        pline2.add(3.0, 0.0, 0.0);
-        pline2.add(4.0, 1.0, 0.0);
-        pline2.add(3.0, 2.0, 0.0);
-
-        let polylines = &[pline1, pline2];
-        let csg_from_plines = CSG::from_polylines(polylines, None);
-        let _ = fs::write("stl/from_polylines.stl", csg_from_plines.to_stl_ascii("from_polylines"));
-    }
 
     // 15) from_image(img, threshold, closepaths, metadata) [requires "image" feature]
     #[cfg(feature = "image")]
