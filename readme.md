@@ -392,7 +392,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - transition sweep, linear_extrude, over to Polygon/Multipolygon native / polygon secondary
 - disengage chulls on 2D->3D shapes
 - fix text scale / extrusion
-- check slice() works on polygons and slices to GeometryCollections
 - fix shape of reuleaux
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere in main.rs - shapes are out of proximity

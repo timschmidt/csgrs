@@ -3200,6 +3200,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 return CSG::new();
             }
         };
+        
+        let font_scale = 1.0 / 2048.0 * scale * 0.3527777;
 
         // 2) We'll collect all glyph geometry into one GeometryCollection
         let mut geo_coll = GeometryCollection::default();
@@ -3218,7 +3220,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 // Extract the glyph outline (if any)
                 if let Some(outline) = Outline::new(&face, gid) {
                     // Flatten the outline into line segments
-                    let mut collector = OutlineFlattener::new(scale as Real, cursor_x as Real, 0.0);
+                    let mut collector = OutlineFlattener::new(font_scale as Real, cursor_x as Real, 0.0);
                     outline.emit(&mut collector);
 
                     // Now `collector.contours` holds closed subpaths,
@@ -3285,15 +3287,15 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
                     // Finally, advance our pen by the glyph's bounding-box width
                     let bbox = outline.bbox();
-                    let glyph_width = bbox.width() as Real * scale;
+                    let glyph_width = bbox.width() as Real * font_scale;
                     cursor_x += glyph_width;
                 } else {
                     // If there's no outline (e.g., space), just move a bit
-                    cursor_x += scale as Real * 0.3;
+                    cursor_x += font_scale as Real * 0.3;
                 }
             } else {
                 // Missing glyph => small blank advance
-                cursor_x += scale as Real * 0.3;
+                cursor_x += font_scale as Real * 0.3;
             }
         }
 
@@ -3376,7 +3378,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         CSG {
             polygons: Vec::new(),
             geometry: geo_coll,
-            metadata,
+            metadata: metadata,
         }
     }
 
@@ -4231,9 +4233,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                     normal,
                 ));
             }
-            // If the path was not closed and we used closepaths == true, the path commands
-            // do a 'Z', but we might need to ensure the first/last are the same. Up to you.
-            // For safety, we can ensure a closed ring if distinct:
+            // If the path was not closed and we used closepaths == true, we might need to ensure the first/last are the same.
             if (verts.first().unwrap().pos - verts.last().unwrap().pos).norm() > EPSILON {
                 // close it
                 verts.push(verts.first().unwrap().clone());
