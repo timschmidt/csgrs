@@ -1,6 +1,6 @@
 # csgrs
 
-A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in BSP trees. **csgrs** constructs 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and transforms, interrogates, and simulates without leaving Rust.  **csgrs** aims to be light weight and full featured by integrating with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)) and [`geo`](https://crates.io/crates/geo) for robust processing of [simple features](https://en.wikipedia.org/wiki/Simple_Features).  **csgrs** has a number of functions useful for generating CNC toolpaths.  The library can be built to use 32bit or 64bit floats, dependencies are 100% rust and nearly all optional. 
+A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in BSP trees. **csgrs** constructs 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and transforms, interrogates, and simulates without leaving Rust.  **csgrs** aims to be light weight and full featured by integrating with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)) and [`geo`](https://crates.io/crates/geo) for robust processing of [Simple Features](https://en.wikipedia.org/wiki/Simple_Features).  **csgrs** has a number of functions useful for generating CNC toolpaths.  The library can be built to use 32bit or 64bit floats, dependencies are 100% rust and nearly all optional. 
 
 The BSP tree works with polygons made of lines.  **csgrs** interpolates all curves when working in 3D so that they can be processed using the BSP tree.  [`earcutr`](https://crates.io/crates/earcutr) is used by [`geo`](https://crates.io/crates/geo) for tessellation, and only works in 2D, so **csgrs** rotates 3D polygons into 2D for tessellation then back to 3D.
 
@@ -389,13 +389,13 @@ Patterns we work to follow throughout the library to improve performance and mem
 - allocations should be kept to a minimum.  Memory should be read-only if possible, clone if necessary, and offer the choice of transmut in place or create new copy via appropriate functions
 
 ## Roadmap / Todo
-- transition sweep, linear_extrude, extrude_between over to Polygon/Multipolygon native / polygon secondary
+- transition sweep, linear_extrude, over to Polygon/Multipolygon native / polygon secondary
 - disengage chulls on 2D->3D shapes
 - fix text scale / extrusion
 - check slice() works on polygons and slices to GeometryCollections
 - fix shape of reuleaux
 - fix metaballs_2d
-- fix intersect_cube_sphere, subtract_cube_sphere
+- fix intersect_cube_sphere, subtract_cube_sphere in main.rs - shapes are out of proximity
 - fix up error handling with result types, eliminate panics
 - ray intersection (singular)
 - expose geo traits on 2D shapes

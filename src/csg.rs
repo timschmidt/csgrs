@@ -230,7 +230,20 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         result
     }
 
-    /// CSG union: this ∪ other
+    // Return a new CSG representing space in either this CSG or in the
+    // other CSG. Neither this CSG nor the other CSG are modified.
+    // 
+    //     let c = a.union(b);
+    // 
+    //     +-------+            +-------+
+    //     |       |            |       |
+    //     |   a   |            |       |
+    //     |    +--+----+   =   |       +----+
+    //     +----+--+    |       +----+       |
+    //          |   b   |            |       |
+    //          |       |            |       |
+    //          +-------+            +-------+
+    // 
     pub fn union(&self, other: &CSG<S>) -> CSG<S> {
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
@@ -279,7 +292,20 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
     }
 
-    /// CSG difference: this \ other
+    // Return a new CSG representing space in this CSG but not in the
+    // other CSG. Neither this CSG nor the other CSG are modified.
+    // 
+    //     let c = a.difference(b);
+    // 
+    //     +-------+            +-------+
+    //     |       |            |       |
+    //     |   a   |            |       |
+    //     |    +--+----+   =   |    +--+
+    //     +----+--+    |       +----+
+    //          |   b   |
+    //          |       |
+    //          +-------+
+    // 
     pub fn difference(&self, other: &CSG<S>) -> CSG<S> {
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
@@ -321,7 +347,20 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
     }
 
-    /// CSG intersection: this ∩ other
+    // Return a new CSG representing space in both this CSG and the
+    // other CSG. Neither this CSG nor the other CSG are modified.
+    // 
+    //     let c = a.intersect(b);
+    // 
+    //     +-------+
+    //     |       |
+    //     |   a   |
+    //     |    +--+----+   =   +--+
+    //     +----+--+    |       +--+
+    //          |   b   |
+    //          |       |
+    //          +-------+
+    // 
     pub fn intersection(&self, other: &CSG<S>) -> CSG<S> {
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
@@ -368,8 +407,32 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
     }
     
-    /// 2D symmetric difference (XOR) using the cavalier_contours `Shape` boolean operations.
+    // Return a new CSG representing space in this CSG excluding the space in the
+    // other CSG plus the space in the other CSG excluding the space in this CSG.
+    // Neither this CSG nor the other CSG are modified.
+    // 
+    //     let c = a.xor(b);
+    // 
+    //     +-------+            +-------+
+    //     |       |            |       |
+    //     |   a   |            |   a   |
+    //     |    +--+----+   =   |    +--+----+
+    //     +----+--+    |       +----+--+    |
+    //          |   b   |            |       |
+    //          |       |            |       |
+    //          +-------+            +-------+
+    // 
     pub fn xor(&self, other: &CSG<S>) -> CSG<S> {
+        // A \ B
+        let a_sub_b = self.difference(other);
+    
+        // B \ A
+        let b_sub_a = other.difference(self);
+    
+        // Union those two
+        a_sub_b.union(&b_sub_a)
+        
+        /* here in case 2D xor misbehaves as an alternate implementation
         // -- 2D geometry-based approach only (no polygon-based Node usage here) --
         let polys1 = gc_to_polygons(&self.geometry);
         let polys2 = gc_to_polygons(&other.geometry);
@@ -402,6 +465,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             geometry: final_gc,
             metadata: self.metadata.clone(),
         }
+        */
     }
 
     /// Invert this CSG (flip inside vs. outside)
