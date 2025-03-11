@@ -334,6 +334,7 @@ dependencies = [
  "dxf",
  "fast-surface-nets",
  "geo",
+ "geo-buf",
  "hashbrown 0.15.2",
  "hershey",
  "image",
@@ -500,6 +501,17 @@ dependencies = [
  "num-traits 0.2.19",
  "robust",
  "rstar",
+ "spade",
+]
+
+[[package]]
+name = "geo-buf"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3259dd509ae98be7ce49236ec9be30c7d8a0ce84eada28dbefb68bc839b29e66"
+dependencies = [
+ "geo",
+ "geo-types",
 ]
 
 [[package]]

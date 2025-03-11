@@ -225,7 +225,7 @@ let mirrored = cube.mirror(plane_x);
 - **`CSG::ray_intersections(origin, direction)`** — returns all intersection points and distances.
 - **`CSG::flatten()`** — flattens a 3D shape into 2D (on the XY plane), unions the outlines.
 - **`CSG::slice(plane)`** — slices the CSG by a plane and returns the cross-section polygons.
-- **`CSG::offset_2d(distance)`** — outward (or inward) offset in 2D using [`geo`](https://crates.io/crates/geo).
+- **`CSG::offset(distance)`** — outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
 - **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
 - **`CSG::bounding_box()`** — computes the bounding box of the shape.
@@ -391,7 +391,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 ## Roadmap / Todo
 - transition sweep, linear_extrude, extrude_between over to Polygon/Multipolygon native / polygon secondary, disengage chulls on shapes
 - transition text to Polygon/Multipolygon, which can then be extruded / tessellated through the normal means
-- check flatten() works on polygons and flattens to GeometryCollections, same for slice
+- check slice() works on polygons and slices to GeometryCollections
 - fix shape of reuleaux
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere
@@ -418,7 +418,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - screw threads
 - support scale and translation along a vector in rotate extrude
-- reimplement 3D offsetting with voxelcsgrs or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
+- reimplement 3D offsetting with https://github.com/u65xhd/meshvox or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
 - reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
@@ -426,7 +426,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
   - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
   - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
-- implement functions from https://docs.rs/geo/latest/geo/
 - https://crates.io/crates/polylabel
   - pull in https://github.com/fschutt/polylabel-mini/blob/master/src/lib.rs and adjust f64 -> Real
 - reduce allocations
