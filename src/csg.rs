@@ -2403,144 +2403,151 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///     scale = 1.2,
     /// );
     /// ```
-    pub fn linear_extrude(&self, direction: Vector3<Real>, twist: Real, segments: usize, scale: Real) -> CSG<S> {
-        // calculate height from direction vector
+    pub fn linear_extrude(
+        shape: &CCShape<Real>,
+        direction: Vector3<Real>,
+        twist_degs: Real,
+        segments: usize,
+        scale_top: Real,
+        metadata: Option<S>,
+    ) -> CSG<S> {
+        let mut polygons_3d = Vec::new();
+        if segments < 1 {
+            return CSG::new();
+        }
         let height = direction.norm();
-        let (z_start, z_end) = (0.0, height);
-
-        // ----------------------------------------------
-        // For each segment i in [0..segments], compute:
-        //    fraction f = i/n
-        //    z_i = z_start + f*(z_end - z_start)
-        //    scale_i = 1 + (scale - 1)*f
-        //    twist_i = twist * f
+        if height < EPSILON {
+            // no real extrusion
+            return CSG::new();
+        }
+    
+        // Step 1) Build a series of “transforms” from bottom=0..top=height, subdivided into `segments`.
+        //   For each i in [0..=segments], compute fraction f and:
+        //   - scale in XY => s_i
+        //   - twist about Z => rot_i
+        //   - translate in Z => z_i
         //
-        // Then transform (scale -> rotate -> translate)
-        // the original 2D polygons.
-        // ----------------------------------------------
-        let mut segments_polygons = Vec::with_capacity(segments + 1);
-
+        //   We'll store each “slice” in 3D form as a Vec<Vec<Point3<Real>>>,
+        //   i.e. one 3D polyline for each boundary or hole in the shape.
+        let mut slices: Vec<Vec<Vec<Point3<Real>>>> = Vec::with_capacity(segments + 1);
+        // The axis to rotate around is the unit of `direction`. We'll do final alignment after constructing them along +Z.
+        let axis_dir = direction.normalize();
+    
         for i in 0..=segments {
-            let f = (i as Real) / (segments as Real);
-            let z_i = z_start + f * (z_end - z_start);
-            let sc_i = 1.0 + f * (scale - 1.0);
-            let twist_i_deg = twist * f;
-            let twist_i_rad = twist_i_deg.to_radians();
-
-            // Build a transform: scale in XY, then rotate around Z, then translate in Z.
-            // (1) scale
-            let mat_scale = Matrix4::new_nonuniform_scaling(&Vector3::new(sc_i, sc_i, 1.0));
-            // (2) rotate around Z by twist_i
-            let rot = Rotation3::from_axis_angle(
-                &Vector3::z_axis(),
-                twist_i_rad,
-            )
-            .to_homogeneous();
-            // (3) translate by z_i in Z
-            let tr = Translation3::new(0.0, 0.0, z_i).to_homogeneous();
-
-            let segment_mat = tr * rot * mat_scale;
-
-            // Transform *this* shape by segment_mat
-            // However, we only want each polygon individually, not the entire 3D union yet.
-            // So let's flatten first to unify all 2D polygons, OR just use `self.polygons`.
-            let segment_csg = CSG::from_polygons(&self.polygons).transform(&segment_mat);
-
-            // We'll store all polygons from segment_csg as a "segment".
-            // But for extrude_between, we want exactly one "merged" polygon per shape
-            // if we want side walls. If your shape can have multiple polygons, we must keep them all.
-            // We'll do a flatten() if you want to unify them. In simpler usage,
-            // we might just store them as is. We'll store them as "the polygons for segment i."
-            segments_polygons.push(segment_csg.polygons);
+            let f = i as Real / segments as Real;
+            let s_i = 1.0 + (scale_top - 1.0) * f;  // lerp(1, scale_top, f)
+            let twist_rad = twist_degs.to_radians() * f;
+            let z_i = height * f;
+    
+            // Build transform T = Tz * Rz * Sxy
+            //  - scale in XY
+            //  - twist around Z
+            //  - translate in Z
+            let mat_scale = Matrix4::new_nonuniform_scaling(&Vector3::new(s_i, s_i, 1.0));
+            let mat_rot = Rotation3::from_axis_angle(&Vector3::z_axis(), twist_rad).to_homogeneous();
+            let mat_trans = Translation3::new(0.0, 0.0, z_i).to_homogeneous();
+            let slice_mat = mat_trans * mat_rot * mat_scale;
+    
+            let slice_3d = project_shape_3d(shape, &slice_mat);
+            slices.push(slice_3d);
         }
-
-        // ----------------------------------------------
-        // Connect consecutive segments to form side walls.
-        // For each polygon in segment[i], connect to polygon in segment[i+1].
+    
+        // Step 2) “Stitch” consecutive slices to form side polygons.  
+        // For each pair of slices[i], slices[i+1], for each boundary polyline j,
+        // connect edges. We assume each polyline has the same vertex_count in both slices.
+        // (If the shape is closed, we do wrap edges [n..0].)
+        // Then we optionally build bottom & top caps if the polylines are closed.
+    
+        // a) bottom + top caps, similar to extrude_vector approach
+        //    For slices[0], build a “bottom” by triangulating in XY, flipping normal.
+        //    For slices[segments], build a “top” by normal up.
         //
-        // The typical assumption is that the number of polygons & vertex count
-        // matches from segment to segment. If the shape has multiple polygons or holes,
-        // more advanced matching is needed. The simplest approach is if the shape is
-        // a single polygon with the same vertex count each segment. 
-        // If not, you may need "lofting" logic or repeated triangulation.
-        // ----------------------------------------------
-        let mut result_polygons = Vec::new();
-
-        // We also add the bottom polygons (with flipped winding) and top polygons as-is:
-        if !segments_polygons.is_empty() {
-            // BOTTOM set => flip winding
-            let bottom_set = &segments_polygons[0];
-            for botpoly in bottom_set {
-                let mut bp = botpoly.clone();
-                bp.flip();
-                result_polygons.push(bp);
-            }
-            // TOP set => keep as-is
-            let top_set = &segments_polygons[segments_polygons.len() - 1];
-            for toppoly in top_set {
-                result_polygons.push(toppoly.clone());
-            }
-        }
-
-        // Build side walls:
-        // We do a naive 1:1 polygon pairing for each segment pair.
+        //    But we only do it if each boundary is closed. 
+        //    We must group CCW with matching holes. This is the same logic as `extrude_vector`.
+    
+        // We'll do a small helper that triangulates shape in 2D, then lifts that triangulation to slice_3d.
+        // You can re‐use the logic from `extrude_vector`.
+    
+        // Build the “bottom” from slices[0] if polylines are all or partially closed
+        polygons_3d.extend(
+            build_caps_from_slice(shape, &slices[0], true, metadata.clone())
+        );
+        // Build the “top” from slices[segments] 
+        polygons_3d.extend(
+            build_caps_from_slice(shape, &slices[segments], false, metadata.clone())
+        );
+    
+        // b) side walls
         for i in 0..segments {
-            let bottom_polys = &segments_polygons[i];
-            let top_polys = &segments_polygons[i + 1];
-            if bottom_polys.len() != top_polys.len() {
-                // In complex shapes, you might need a more robust approach 
-                // or skip unmatched polygons. We'll do a direct zip here.
-                // For now, only iterate over the min length.
-            }
-            let pair_count = bottom_polys.len().min(top_polys.len());
-            for k in 0..pair_count {
-                let poly_bot = &bottom_polys[k];
-                let poly_top = &top_polys[k];
-
-                // `extrude_between` must have same vertex count in matching order:
-                if poly_bot.vertices.len() == poly_top.vertices.len() && poly_bot.vertices.len() >= 3
-                {
-                    let side_solid = CSG::extrude_between(poly_bot, poly_top, true);
-                    // Gather polygons
-                    for sp in side_solid.polygons {
-                        result_polygons.push(sp);
-                    }
+            let bottom_slice = &slices[i];
+            let top_slice = &slices[i + 1];
+    
+            // We know bottom_slice has shape.ccw_plines.len() + shape.cw_plines.len() polylines
+            // in the same order. Each polyline has the same vertex_count as in top_slice.
+            // So we can do a direct 1:1 match: bottom_slice[j] <-> top_slice[j].
+            for (pline_idx, bot3d) in bottom_slice.iter().enumerate() {
+                let top3d = &top_slice[pline_idx];
+                if bot3d.len() < 2 {
+                    continue;
+                }
+                // is it closed? We can check shape’s corresponding polyline
+                let is_closed = if pline_idx < shape.ccw_plines.len() {
+                    shape.ccw_plines[pline_idx].polyline.is_closed()
                 } else {
-                    // Mismatch in vertex count. 
-                    // Optionally do something else, or skip.
+                    shape.cw_plines[pline_idx - shape.ccw_plines.len()].polyline.is_closed()
+                };
+                let n = bot3d.len();
+                let edge_count = if is_closed { n } else { n - 1 };
+    
+                for k in 0..edge_count {
+                    let k_next = (k + 1) % n;
+                    let b_i = bot3d[k];
+                    let b_j = bot3d[k_next];
+                    let t_i = top3d[k];
+                    let t_j = top3d[k_next];
+    
+                    let poly_side = Polygon::new(
+                        vec![
+                            Vertex::new(b_i, Vector3::zeros()),
+                            Vertex::new(b_j, Vector3::zeros()),
+                            Vertex::new(t_j, Vector3::zeros()),
+                            Vertex::new(t_i, Vector3::zeros()),
+                        ],
+                        metadata.clone(),
+                    );
+                    polygons_3d.push(poly_side);
                 }
             }
         }
-
-        // Combine them all
-        let mut extruded_csg = CSG::from_polygons(&result_polygons);
-
-        // ----------------------------------------------
-        // Finally, the `direction` to extrude along,
-        // rotate the entire shape from +Z to that direction 
-        // and scale its length to `height`.
-        //
-        // If direction = Some([vx, vy, vz]), we do:
-        //   - first check direction’s length. If non-zero, we’ll rotate +Z to match its direction
-        //   - scale the shape so that bounding box extends exactly `length(v)` in that direction.
-        //
-        // In OpenSCAD, `direction` is required to be "positive Z" direction, but we can be more general.
-        // ---------------------------------------------- 
-        if height > EPSILON {
-            // 1) rotate from +Z to final_dir
-            let zaxis = Vector3::z();
-            if (zaxis - direction.normalize()).norm() > EPSILON {
-                // do the rotation transform
-                let axis = zaxis.cross(&direction).normalize();
-                let angle = zaxis.dot(&direction).acos(); // angle between
-                let rot_mat = Rotation3::from_axis_angle(
-                    &Unit::new_normalize(axis),
-                    angle
-                ).to_homogeneous();
-                extruded_csg = extruded_csg.transform(&rot_mat);
+    
+        // Step 3) If direction is not along +Z, rotate final mesh so +Z aligns with your direction
+        // (This is optional or can be done up front. Typical OpenSCAD style is to do everything 
+        // along +Z, then rotate the final.)
+        if (axis_dir - Vector3::z()).norm() > EPSILON {
+            // rotate from +Z to axis_dir
+            let rot_axis = Vector3::z().cross(&axis_dir);
+            let sin_theta = rot_axis.norm();
+            if sin_theta > EPSILON {
+                let cos_theta = Vector3::z().dot(&axis_dir);
+                let angle = cos_theta.acos();
+                let rot = Rotation3::from_axis_angle(&Unit::new_normalize(rot_axis), angle);
+                let mat = rot.to_homogeneous();
+                // transform the polygons
+                let mut final_polys = Vec::with_capacity(polygons_3d.len());
+                for mut poly in polygons_3d {
+                    for v in &mut poly.vertices {
+                        let pos4 = mat * nalgebra::Vector4::new(v.pos.x, v.pos.y, v.pos.z, 1.0);
+                        v.pos = Point3::new(pos4.x / pos4.w, pos4.y / pos4.w, pos4.z / pos4.w);
+                    }
+                    poly.set_new_normal();
+                    final_polys.push(poly);
+                }
+                return CSG::from_polygons(&final_polys);
             }
         }
-        extruded_csg
+    
+        // otherwise, just return as is
+        CSG::from_polygons(&polygons_3d)
     }
     */
 

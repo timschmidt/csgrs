@@ -7,7 +7,7 @@ use nalgebra::{
 };
 use geo::{ Polygon as GeoPolygon, TriangulateEarcut, LineString, coord, };
 
-/// A convex polygon, defined by a list of vertices and a plane.
+/// A polygon, defined by a list of vertices and a plane.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
 pub struct Polygon<S: Clone> {
@@ -176,66 +176,6 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         }
     }
     
-    /// Returns an error if any coordinate is not finite (NaN or ±∞).
-    fn check_coordinates_finite(&self) -> Result<(), ValidationError> {
-        for v in &self.vertices {
-            let p = &v.pos;
-            if !p.x.is_finite() || !p.y.is_finite() || !p.z.is_finite() {
-                return Err(ValidationError::InvalidCoordinate(p.clone()));
-            }
-        }
-        Ok(())
-    }
-
-    /// Check for repeated adjacent points. Return the first repeated coordinate if found.
-    fn check_repeated_points(&self) -> Result<(), ValidationError> {
-        // If there's only 2 or fewer points, skip
-        if self.vertices.len() <= 2 {
-            return Ok(());
-        }
-        for i in 0..self.vertices.len() - 1 {
-            let cur = &self.vertices[i].pos;
-            let nxt = &self.vertices[i + 1].pos;
-            if (cur.x - nxt.x).abs() < 1e-12
-                && (cur.y - nxt.y).abs() < 1e-12
-                && (cur.z - nxt.z).abs() < 1e-12
-            {
-                return Err(ValidationError::RepeatedPoint(cur.clone()));
-            }
-        }
-        Ok(())
-    }
-
-    /// Check ring closure: first and last vertex must coincide if polygon is meant to be closed.
-    fn check_ring_closed(&self) -> Result<(), ValidationError> {
-        if self.vertices.len() < 3 {
-            // Not enough points to be meaningful, skip or return error
-            return Err(ValidationError::TooFewPoints(
-                self.vertices.get(0).map(|v| v.pos).unwrap_or_else(|| Point3::origin()),
-            ));
-        }
-        let first = &self.vertices[0].pos;
-        let last = &self.vertices[self.vertices.len() - 1].pos;
-        let dist_sq = (first - last).norm_squared();
-        // Adjust tolerance as needed
-        if dist_sq > 1e-12 {
-            return Err(ValidationError::RingNotClosed(first.clone()));
-        }
-        Ok(())
-    }
-
-    /// Check that the ring has at least 3 distinct points.
-    fn check_minimum_ring_size(&self) -> Result<(), ValidationError> {
-        // A ring should have at least 3 unique coordinates (not counting the repeated last == first).
-        // If the user’s code always pushes a repeated last point, effective count = vertices.len() - 1.
-        if self.vertices.len() < 4 {
-            return Err(ValidationError::TooFewPoints(
-                self.vertices[0].pos.clone(),
-            ));
-        }
-        Ok(())
-    }
-
     /// Returns a reference to the metadata, if any.
     pub fn metadata(&self) -> Option<&S> {
         self.metadata.as_ref()
@@ -306,68 +246,6 @@ fn normalize_angle(mut a: Real) -> Real {
     a
 }
 
-/// Returns `true` if the line segments p1->p2 and p3->p4 intersect, otherwise `false`.
-fn segments_intersect_2d(
-    p1x: Real, p1y: Real,
-    p2x: Real, p2y: Real,
-    p3x: Real, p3y: Real,
-    p4x: Real, p4y: Real,
-) -> bool {
-    // A helper function to get the orientation of the triplet (p, q, r).
-    // Returns:
-    // 0 -> p, q, r are collinear
-    // 1 -> Clockwise
-    // 2 -> Counterclockwise
-    fn orientation(px: Real, py: Real, qx: Real, qy: Real, rx: Real, ry: Real) -> i32 {
-        let val = (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
-        if val.abs() < 1e-12 {
-            0
-        } else if val > 0.0 {
-            1
-        } else {
-            2
-        }
-    }
-
-    // A helper function to check if point q lies on line segment pr
-    fn on_segment(px: Real, py: Real, qx: Real, qy: Real, rx: Real, ry: Real) -> bool {
-        qx >= px.min(rx) && qx <= px.max(rx) &&
-        qy >= py.min(ry) && qy <= py.max(ry)
-    }
-
-    // Find the 4 orientations needed for the general and special cases
-    let o1 = orientation(p1x, p1y, p2x, p2y, p3x, p3y);
-    let o2 = orientation(p1x, p1y, p2x, p2y, p4x, p4y);
-    let o3 = orientation(p3x, p3y, p4x, p4y, p1x, p1y);
-    let o4 = orientation(p3x, p3y, p4x, p4y, p2x, p2y);
-
-    // General case: If the two line segments strictly intersect
-    if o1 != o2 && o3 != o4 {
-        return true;
-    }
-
-    // Special cases: check for collinearity and overlap
-    // p1, p2, p3 are collinear and p3 lies on segment p1p2
-    if o1 == 0 && on_segment(p1x, p1y, p3x, p3y, p2x, p2y) {
-        return true;
-    }
-    // p1, p2, p4 are collinear and p4 lies on segment p1p2
-    if o2 == 0 && on_segment(p1x, p1y, p4x, p4y, p2x, p2y) {
-        return true;
-    }
-    // p3, p4, p1 are collinear and p1 lies on segment p3p4
-    if o3 == 0 && on_segment(p3x, p3y, p1x, p1y, p4x, p4y) {
-        return true;
-    }
-    // p3, p4, p2 are collinear and p2 lies on segment p3p4
-    if o4 == 0 && on_segment(p3x, p3y, p2x, p2y, p4x, p4y) {
-        return true;
-    }
-
-    // Otherwise, they do not intersect
-    false
-}
-
 /// Compute an initial guess of the circle center through three points p1, p2, p3
 /// (this is used purely as an initial guess).
 ///
@@ -412,8 +290,7 @@ fn naive_circle_center(p1: &Point2<Real>, p2: &Point2<Real>, p3: &Point2<Real>) 
 }
 
 /// Fit a circle to the points `[pt_c, intermediates..., pt_n]` by adjusting an offset `d` from
-/// the midpoint. This reproduces your “arcfinder” approach in a version that uses nalgebra’s
-/// `Point2<Real>`.
+/// the midpoint. This uses nalgebra’s `Point2<Real>`.
 ///
 /// # Returns
 ///
@@ -527,46 +404,4 @@ pub fn fit_circle_arcfinder(
     let cw = total_sweep < 0.0;
 
     (center, radius_opt, cw, rms)
-}
-
-/// Helper to produce the "best fit arc" for the points from `pt_c` through `pt_n`, plus
-/// any in `intermediates`. This is basically your old “best_arc” logic but now returning
-/// `None` if it fails or `Some((cw, radius, center, rms))` if success.
-fn best_arc_fit(
-    pt_c: Point2<Real>,
-    pt_n: Point2<Real>,
-    intermediates: &[Point2<Real>],
-    rms_limit: Real,
-    angle_limit_degs: Real,
-    _offset_limit: Real,
-) -> Option<(bool, Real, Point2<Real>, Real)> {
-    // 1) Call your circle-fitting routine:
-    let (center, radius, cw, rms) = fit_circle_arcfinder(&pt_c, &pt_n, intermediates);
-
-    // 2) Check RMS error vs. limit
-    if rms > rms_limit {
-        return None;
-    }
-    // 3) measure the total arc sweep
-    //    We'll compute angle0, angle1 from the center
-    //    v0 = pt_c - center, v1 = pt_n - center
-    let v0 = pt_c - center;
-    let v1 = pt_n - center;
-    let angle0 = v0.y.atan2(v0.x);
-    let angle1 = v1.y.atan2(v1.x);
-    let sweep = normalize_angle(angle1 - angle0).abs();
-    let sweep_degs = sweep.to_degrees();
-    if sweep_degs > angle_limit_degs {
-        return None;
-    }
-    // 4) Possibly check some "offset" or chord–offset constraints
-    // e.g. if your logic says “if radius < ??? or if something with offset_limit”
-    if radius < 1e-9 {
-        return None;
-    }
-    // offset constraint is left to your specific arcs logic:
-    // if something > offset_limit {...}
-
-    // If all is well:
-    Some((cw, radius, center, rms))
 }
