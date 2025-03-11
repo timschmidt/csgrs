@@ -443,7 +443,6 @@ Patterns we work to follow throughout the library to improve performance and mem
   - accomplish equivalence checks and memory usage reduction by using a hashmap instead of storing metadata with each node
   - with equivalence checks, 
 - chamfers
-- rewrite CSG::to_stl_*, CSG::to_polygons to use geo triangulate, eliminate earcutr dep, open up other algorithm options like Polygon::triangulate()
   - make algorithm selectable at compile time
 - align_x_pos, align_x_neg, align_y_pos, align_y_neg, align_z_pos, align_z_neg, center_x, center_y, center_z,
 - attachment points / rapier integration
