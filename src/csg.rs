@@ -498,10 +498,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         ];
         let polygon_2d = GeoPolygon::new(outer, vec![]);
 
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Creates a 2D circle in the XY plane.
@@ -520,9 +517,14 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         coords.push((coords[0].0, coords[0].1));
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
 
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
+    }
+    
+    /// Right triangle from (0,0) to (width,0) to (0,height).
+    pub fn right_triangle(width: Real, height: Real, metadata: Option<S>) -> Self {
+        let line_string: LineString = vec![[0.0, 0.0], [width, 0.0], [0.0, height]].into();
+        let polygon = GeoPolygon::new(line_string, vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon)]), metadata)
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -549,9 +551,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
 
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
@@ -615,9 +615,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Ellipse in XY plane, centered at (0,0), with full width `width`, full height `height`.
@@ -637,10 +635,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
         coords.push(coords[0]);
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Regular N-gon in XY plane, centered at (0,0), with circumscribed radius `radius`.
@@ -657,11 +652,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             coords.push((x, y));
         }
         coords.push(coords[0]);
-        let poly_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(poly_2d));
-        CSG::from_geo(gc, metadata)
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Trapezoid from (0,0) -> (bottom_width,0) -> (top_width+top_offset,height) -> (top_offset,height)
@@ -681,9 +673,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             (0.0,             0.0), // close
         ];
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Star shape (typical "spiky star") with `num_points`, outer_radius, inner_radius.
@@ -711,9 +701,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Teardrop shape.  A simple approach:
@@ -748,9 +736,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
         coords.push(coords[0]);
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
@@ -778,9 +764,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
 
@@ -810,9 +794,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Keyhole shape (simple version): a large circle + a rectangle "handle".
@@ -850,11 +832,9 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // 3) Union them with geo’s BooleanOps
         let mp1 = MultiPolygon(vec![circle_poly]);
         let mp2 = MultiPolygon(vec![rect_poly]);
-        let unioned = mp1.union(&mp2);
+        let multipolygon_2d = mp1.union(&mp2);
 
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::MultiPolygon(unioned));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::MultiPolygon(multipolygon_2d)]), metadata)
     }
 
     /// Reuleaux polygon with `sides` and "radius".  Approximates constant-width shape.
@@ -906,9 +886,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
 
     /// Ring with inner diameter = `id` and (radial) thickness = `thickness`.
@@ -954,9 +932,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         inner.reverse();  // ensure hole is opposite winding from outer
 
         let polygon_2d = GeoPolygon::new(LineString::from(outer), vec![LineString::from(inner)]);
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
     
     /// Create a 2D "pie slice" (wedge) in the XY plane.
@@ -993,9 +969,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         coords.push((0.0, 0.0)); // close explicitly
     
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
     
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
@@ -1215,9 +1189,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         coords.push(coords[0]);
     
         let polygon_2d = geo::Polygon::new(LineString::from(coords), vec![]);
-        let mut gc = GeometryCollection::default();
-        gc.0.push(Geometry::Polygon(polygon_2d));
-        CSG::from_geo(gc, metadata)
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
     }
     
     /// Creates a 2D circle with a rectangular keyway slot cut out on the +X side.
@@ -2792,7 +2764,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         //----------------------------------------------------------------------
         CSG {
             polygons: new_polygons,
-            geometry: geo::GeometryCollection::default(),
+            geometry: GeometryCollection::default(),
             metadata: self.metadata.clone(),
         }
     }
