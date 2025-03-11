@@ -7,7 +7,7 @@ use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3, partial_min, partial_max,
 };
 use geo::{
-    Area, AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Orient, orient::Direction, Polygon as GeoPolygon, Rect,
+    Area, AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, coord, Coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Orient, orient::Direction, Polygon as GeoPolygon, Rect, TriangulateEarcut,
 };
 //extern crate geo_booleanop;
 //use geo_booleanop::boolean::BooleanOp;
@@ -19,7 +19,6 @@ use crate::float_types::parry3d::{
     shape::{Shape, SharedShape, TriMesh, Triangle},
 };
 use crate::float_types::rapier3d::prelude::*;
-extern crate earcutr;
 
 #[cfg(feature = "hashmap")]
 use hashbrown::HashMap;
@@ -137,33 +136,46 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         csg
     }
 
-    /// Convert internal polylines into polygons and return along with any existing internal polygons
+    /// Convert internal polylines into polygons and return along with any existing internal polygons.
     pub fn to_polygons(&self) -> Vec<Polygon<S>> {
         let mut all_polygons = Vec::new();
     
-        // Convert the 2D geometry from `geo` into 3D polygons. For example,
-        // if you have a Polygon in XY, we make a Polygon<S> with all Z=0:
         for geom in &self.geometry {
             if let Geometry::Polygon(poly2d) = geom {
-                // Convert the outer ring to 3D
-                let outer_coords = poly2d.exterior().coords_iter();
-                // todo: Triangulate (outer + holes). For brevity, we're producing
-                // one big polygon. Replace with earcutr.
-
-                // Example of a naive single-Polygon with no triangulation:
-                let mut vertices_3d = Vec::new();
-                for c in outer_coords {
-                    let vx = c.x;
-                    let vy = c.y;
-                    vertices_3d.push(
-                        Vertex::new(Point3::new(vx, vy, 0.0), Vector3::z())
+                // 1. Convert the outer ring to 3D.
+                let mut outer_vertices_3d = Vec::new();
+                for c in poly2d.exterior().coords_iter() {
+                    outer_vertices_3d.push(
+                        Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z())
                     );
                 }
-                if vertices_3d.len() >= 3 {
-                    all_polygons.push(Polygon::new(vertices_3d, self.metadata.clone()));
+                
+                // Push as a new Polygon<S> if it has at least 3 vertices.
+                if outer_vertices_3d.len() >= 3 {
+                    all_polygons.push(Polygon::new(outer_vertices_3d, self.metadata.clone()));
                 }
-                // Similarly handle `poly2d.interiors()` for holes, etc.
+    
+                // 2. Convert each interior ring (hole) into its own Polygon<S>.
+                for ring in poly2d.interiors() {
+                    let mut hole_vertices_3d = Vec::new();
+                    for c in ring.coords_iter() {
+                        hole_vertices_3d.push(
+                            Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z())
+                        );
+                    }
+    
+                    if hole_vertices_3d.len() >= 3 {
+                        // If your `Polygon<S>` type can represent holes internally,
+                        // adjust this to store hole_vertices_3d as a hole rather
+                        // than a new standalone polygon.
+                        all_polygons.push(Polygon::new(hole_vertices_3d, self.metadata.clone()));
+                    }
+                }
             }
+            // else if let Geometry::LineString(ls) = geom {
+            //     // Example of how you might convert a linestring to a polygon,
+            //     // if desired. Omitted for brevity.
+            // }
         }
     
         all_polygons
@@ -178,44 +190,40 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     }
     
     pub fn triangulate_2d(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]> {
-        // Flatten in a style suitable for earcutr:
-        //   - single “outer” array,
-        //   - then hole(s) arrays, with the “hole index” = length of outer so far.
+        // Convert the outer ring into a `LineString`
+        let outer_coords: Vec<Coord<Real>> = outer
+            .iter()
+            .map(|&[x, y]| Coord { x, y })
+            .collect();
+        
+        // Convert each hole into its own `LineString`
+        let holes_coords: Vec<LineString<Real>> = holes
+            .iter()
+            .map(|hole| {
+                let coords: Vec<Coord<Real>> = hole
+                    .iter()
+                    .map(|&[x, y]| Coord { x, y })
+                    .collect();
+                LineString::new(coords)
+            })
+            .collect();
     
-        let mut all_vertices_2d = Vec::new();
-        let mut hole_indices = Vec::new();
+        // Ear-cut triangulation on the polygon (outer + holes)
+        let polygon = GeoPolygon::new(LineString::new(outer_coords), holes_coords);
+        let triangulation = polygon.earcut_triangles_raw();
+        let triangle_indices = triangulation.triangle_indices;
+        let vertices = triangulation.vertices;
     
-        // Push outer polygon points
-        for pt in outer {
-            all_vertices_2d.push(pt[0]);
-            all_vertices_2d.push(pt[1]);
-        }
-    
-        // Keep track of length so far, so we know where holes start
-        let mut current_len = all_vertices_2d.len() / 2; // in "2D points" count (not float count)
-        for h in holes {
-            hole_indices.push(current_len);
-            for pt in *h {
-                all_vertices_2d.push(pt[0]);
-                all_vertices_2d.push(pt[1]);
-            }
-            // Recount in terms of how many [x,y] points we have
-            current_len = all_vertices_2d.len() / 2;
-        }
-    
-        // dimension = 2
-        let triangle_indices = earcutr::earcut(&all_vertices_2d.clone(), &hole_indices, 2).expect("earcutr triangulation failed");
-    
-        let mut result = Vec::new();
+        // Convert the 2D result (x,y) into 3D triangles with z=0
+        let mut result = Vec::with_capacity(triangle_indices.len() / 3);
         for tri in triangle_indices.chunks_exact(3) {
             let pts = [
-                Point3::new(all_vertices_2d[2 * tri[0]], all_vertices_2d[2 * tri[0] + 1], 0.0),
-                Point3::new(all_vertices_2d[2 * tri[1]], all_vertices_2d[2 * tri[1] + 1], 0.0),
-                Point3::new(all_vertices_2d[2 * tri[2]], all_vertices_2d[2 * tri[2] + 1], 0.0),
+                Point3::new(vertices[2 * tri[0]], vertices[2 * tri[0] + 1], 0.0),
+                Point3::new(vertices[2 * tri[1]], vertices[2 * tri[1] + 1], 0.0),
+                Point3::new(vertices[2 * tri[2]], vertices[2 * tri[2] + 1], 0.0),
             ];
             result.push(pts);
         }
-        
         result
     }
 
@@ -4404,7 +4412,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                     // Convert each hole to a slice-reference for triangulation
                     let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
     
-                    // Triangulate using our earcutr-based helper
+                    // Triangulate using our geo-based helper
                     let tri_2d = Self::triangulate_2d(&outer, &hole_refs);
     
                     // Each triangle is in XY, so normal = (0,0,1)

@@ -332,7 +332,6 @@ dependencies = [
  "contour_tracing",
  "core2",
  "dxf",
- "earcutr",
  "fast-surface-nets",
  "geo",
  "hashbrown 0.15.2",
