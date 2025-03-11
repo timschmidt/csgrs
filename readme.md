@@ -2,9 +2,9 @@
 
 A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*) on sets of polygons stored in BSP trees. **csgrs** helps you construct 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and to transform, interrogate, and simulate those shapes without leaving Rust.
 
-This library aims to be light weight and full featured, integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`geo`](https://crates.io/crates/geo) and [`earcutr`](https://crates.io/crates/earcutr) for robust processing of convex and non-convex polygons with holes, and provide an extensible type-safe API.
+This library aims to be light weight and full featured, integrate cleanly with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)), leverage [`geo`](https://crates.io/crates/geo) for robust processing of convex and non-convex polygons with holes, and provide an extensible type-safe API.
 
-The BSP tree works with shapes made of lines.  In 3D, **csgrs** interpolates all curves so that they can be processed by the BSP. **csgrs** has limited support for recovering curves from interpolated lines into 2D, and for offsetting curves in 2D.  Recovering curves should work even on models imported as a mesh, allowing them to be "upgraded" to real arcs for offsetting, booleans, toolpathing, etc.
+The BSP tree works with shapes made of lines.  In 3D, **csgrs** interpolates all curves so that they can be processed by the BSP. **csgrs** has limited support for recovering curves from interpolated lines into 2D, and for offsetting curves in 2D.  Recovering curves should work even on models imported as a mesh, allowing them to be "upgraded" to real arcs for offsetting, booleans, toolpathing, etc.  [`earcutr`](https://crates.io/crates/earcutr) is used by [`geo`](https://crates.io/crates/geo) for triangulation and only works in 2D, so **csgrs** rotates 3D polygons into 2D for triangulation then back to 3D.
 
 ![Example CSG output](docs/csg.png)
 
@@ -388,7 +388,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 Patterns we work to follow throughout the library to improve performance and memory usage:
 - functions should accept borrowed slices, this permits easy use of iterators
 - iterators should be used wherever parallelism may help (and rayon's par_iter)
-- allocations should be kept to a minimum.  Memory should be read-only if possible, clone if necessary, and offer the choice of transmut in place or create new copy when appropriate
+- allocations should be kept to a minimum.  Memory should be read-only if possible, clone if necessary, and offer the choice of transmut in place or create new copy via appropriate functions
 
 ## Roadmap / Todo
 - transition sweep, linear_extrude, extrude_between over to Polygon/Multipolygon native / polygon secondary, disengage chulls on shapes
@@ -443,7 +443,7 @@ Patterns we work to follow throughout the library to improve performance and mem
   - accomplish equivalence checks and memory usage reduction by using a hashmap instead of storing metadata with each node
   - with equivalence checks, 
 - chamfers
-- rewrite Polygon::triangulate(), CSG::to_stl_*, CSG::to_polygons to use geo triangulate, eliminate earcutr dep, open up other algorithm options
+- rewrite CSG::to_stl_*, CSG::to_polygons to use geo triangulate, eliminate earcutr dep, open up other algorithm options like Polygon::triangulate()
   - make algorithm selectable at compile time
 - align_x_pos, align_x_neg, align_y_pos, align_y_neg, align_z_pos, align_z_neg, center_x, center_y, center_z,
 - attachment points / rapier integration
