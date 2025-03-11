@@ -5,7 +5,7 @@ use crate::plane::Plane;
 use nalgebra::{
     Point2, Point3, Vector3,
 };
-extern crate earcutr;
+use geo::{ Polygon as GeoPolygon, TriangulateEarcut, LineString, coord, };
 
 /// A convex polygon, defined by a list of vertices and a plane.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
@@ -52,8 +52,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         if self.vertices.len() < 3 {
             return Vec::new();
         }
-    
-        // Use Earcutr for triangulation
+
         let normal_3d = self.plane.normal.normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
         let origin_3d = self.vertices[0].pos;
@@ -64,22 +63,12 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             let offset = vert.pos.coords - origin_3d.coords;
             let x = offset.dot(&u);
             let y = offset.dot(&v);
-            all_vertices_2d.push([x, y]);
+            all_vertices_2d.push(coord!{x: x, y: y});
         }
     
-        // Earcutr requires a flat array of coordinates, so flatten [x,y] into [x, y].
-        let mut flattened = Vec::with_capacity(self.vertices.len() * 2);
-        for [x, y] in &all_vertices_2d {
-            flattened.push(*x);
-            flattened.push(*y);
-        }
-    
-        // No holes, so hole_indices = []
-        let hole_indices: Vec<usize> = Vec::new();      
-        
-        // Run earcutr (on the flattened array) 
-        let triangle_indices = earcutr::earcut(&flattened, &hole_indices, 2)
-            .expect("Failed to triangulate polygon using earcutr");
+        let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new()).earcut_triangles_raw();
+        let triangle_indices = triangulation.triangle_indices;
+        let vertices = triangulation.vertices;
     
         // Convert back into 3D triangles
         let mut triangles = Vec::with_capacity(triangle_indices.len() / 3);
@@ -87,8 +76,8 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             let mut tri_vertices = [Vertex::new(Point3::origin(), Vector3::zeros()); 3];
             for (k, &idx) in tri_chunk.iter().enumerate() {
                 let base = idx * 2;
-                let x = flattened[base];
-                let y = flattened[base + 1];
+                let x = vertices[base];
+                let y = vertices[base + 1];
                 let pos_3d = origin_3d.coords + (x * u) + (y * v);
                 tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
             }

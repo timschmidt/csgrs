@@ -9,6 +9,14 @@ repository = "https://github.com/timschmidt/csgrs"
 readme = "readme.md"
 
 [profile.release]
+opt-level = 3
+lto = true
+debug = false
+debug-assertions = false
+overflow-checks = false
+
+[profile.embedded]
+inherits = "release"
 opt-level = "z"
 lto = true
 
