@@ -1,8 +1,8 @@
 # csgrs
 
-A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in BSP trees. **csgrs** constructs 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and transforms, interrogates, and simulates without leaving Rust.  **csgrs** aims to be light weight and full featured by integrating with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)) and [`geo`](https://crates.io/crates/geo) for robust processing of [simple features](https://en.wikipedia.org/wiki/Simple_Features).
+A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in BSP trees. **csgrs** constructs 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, and transforms, interrogates, and simulates without leaving Rust.  **csgrs** aims to be light weight and full featured by integrating with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)) and [`geo`](https://crates.io/crates/geo) for robust processing of [simple features](https://en.wikipedia.org/wiki/Simple_Features).  **csgrs** has a number of functions useful for generating CNC toolpaths.  The library can be built to use 32bit or 64bit floats, dependencies are 100% rust and nearly all optional. 
 
-The BSP tree works with polygons made of lines.  In 3D, **csgrs** interpolates all curves so that they can be processed by the BSP.  [`earcutr`](https://crates.io/crates/earcutr) is used by [`geo`](https://crates.io/crates/geo) for tessellation, and only works in 2D, so **csgrs** rotates 3D polygons into 2D for tessellation then back to 3D.
+The BSP tree works with polygons made of lines.  In 3D, **csgrs** interpolates all curves so that they can be processed busing the BSP tree.  [`earcutr`](https://crates.io/crates/earcutr) is used by [`geo`](https://crates.io/crates/geo) for tessellation, and only works in 2D, so **csgrs** rotates 3D polygons into 2D for tessellation then back to 3D.
 
 ![Example CSG output](docs/csg.png)
 
@@ -41,7 +41,7 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
     - a `Vec<Vertex>` (positions + normals),
     - a `Plane` describing the polygon’s orientation in 3D.
     - an optional metadata field (`Option<S>`)
-  - a [`geo`](https://crates.io/crates/geo) `GeometryCollection<Real>`
+  - a [`geo`](https://crates.io/crates/geo) [`GeometryCollection<Real>`](https://docs.rs/geo/latest/geo/geometry/struct.GeometryCollection.html)
   - an optional metadata field (`Option<S>`)
 
 `CSG<S>` provides methods for working with 2D and 3D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from geo Geometries with `CSG::from_geo(...)`.  Polygons must be closed, planar, have 3 or more vertices, and are 3D.  Geometries can be open or closed, have holes, but must be planar in the XY.  Operations work on both 2D and 3D shapes though they generally do not interact except where one is explicitly transformed into the other as in extrude or slice.  Polygons and Geometries are triangulated with [`earcutr`](https://crates.io/crates/earcutr) when being exported as an STL, or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
