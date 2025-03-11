@@ -82,12 +82,12 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/circle_2d.stl", circle_2d.to_stl_binary("circle_2d").unwrap());
 
-    //let grown_2d = square_2d.offset_2d(0.5);
-    //#[cfg(feature = "stl-io")]
-    //let _ = fs::write("stl/square_2d_grow_0_5.stl", grown_2d.to_stl_binary("square_2d_grow_0_5").unwrap());
+    let grown_2d = square_2d.offset(0.5);
+    #[cfg(feature = "stl-io")]
+    let _ = fs::write("stl/square_2d_grow_0_5.stl", grown_2d.to_stl_ascii("square_2d_grow_0_5"));
 
-    //let shrunk_2d = square_2d.offset_2d(-0.5);
-    //let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"));
+    let shrunk_2d = square_2d.offset(-0.5);
+    let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"));
 
     // 8) Extrude & Rotate-Extrude
     let extruded_square = square_2d.extrude(1.0);
