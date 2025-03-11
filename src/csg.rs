@@ -7,7 +7,7 @@ use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3, partial_min, partial_max,
 };
 use geo::{
-    Area, AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Orient, orient::Direction, Polygon as GeoPolygon, Rect, Winding,
+    Area, AffineTransform, AffineOps, BoundingRect, line_string, BooleanOps, coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Orient, orient::Direction, Polygon as GeoPolygon, Rect,
 };
 //extern crate geo_booleanop;
 //use geo_booleanop::boolean::BooleanOp;
@@ -4762,21 +4762,21 @@ fn gc_to_polygons(gc: &GeometryCollection<Real>) -> MultiPolygon<Real> {
 /// - If we start a new MoveTo while the old subpath is open, that old subpath is treated as open (`open_contours`).
 struct OutlineFlattener {
     // scale + offset
-    scale: f64,
-    offset_x: f64,
-    offset_y: f64,
+    scale: Real,
+    offset_x: Real,
+    offset_y: Real,
 
     // We gather shapes: each "subpath" can be closed or open
-    contours: Vec<Vec<(f64, f64)>>,      // closed polygons
-    open_contours: Vec<Vec<(f64, f64)>>, // open polylines
+    contours: Vec<Vec<(Real, Real)>>,      // closed polygons
+    open_contours: Vec<Vec<(Real, Real)>>, // open polylines
 
-    current: Vec<(f64, f64)>, // points for the subpath
-    last_pt: (f64, f64),      // current "cursor" in flattening
+    current: Vec<(Real, Real)>, // points for the subpath
+    last_pt: (Real, Real),      // current "cursor" in flattening
     subpath_open: bool,
 }
 
 impl OutlineFlattener {
-    fn new(scale: f64, offset_x: f64, offset_y: f64) -> Self {
+    fn new(scale: Real, offset_x: Real, offset_y: Real) -> Self {
         Self {
             scale,
             offset_x,
@@ -4791,9 +4791,9 @@ impl OutlineFlattener {
 
     /// Helper: transform TTF coordinates => final (x,y)
     #[inline]
-    fn tx(&self, x: f32, y: f32) -> (f64, f64) {
-        let sx = x as f64 * self.scale + self.offset_x;
-        let sy = y as f64 * self.scale + self.offset_y;
+    fn tx(&self, x: f32, y: f32) -> (Real, Real) {
+        let sx = x as Real * self.scale + self.offset_x;
+        let sy = y as Real * self.scale + self.offset_y;
         (sx, sy)
     }
 
@@ -4836,7 +4836,7 @@ impl OutlineFlattener {
 
         // B(t) = (1 - t)^2 * p0 + 2(1 - t)t * cp + t^2 * p2
         for i in 1..=steps {
-            let t = i as f64 / steps as f64;
+            let t = i as Real / steps as Real;
             let mt = 1.0 - t;
             let bx = mt*mt*px0 + 2.0*mt*t*px1 + t*t*px2;
             let by = mt*mt*py0 + 2.0*mt*t*py1 + t*t*py2;
@@ -4855,7 +4855,7 @@ impl OutlineFlattener {
 
         // B(t) = (1-t)^3 p0 + 3(1-t)^2 t c1 + 3(1-t) t^2 c2 + t^3 p3
         for i in 1..=steps {
-            let t = i as f64 / steps as f64;
+            let t = i as Real / steps as Real;
             let mt = 1.0 - t;
             let mt2 = mt*mt;
             let t2  = t*t;
@@ -4880,7 +4880,7 @@ impl OutlineFlattener {
             // If the last point != the first, close it.
             let first = self.current[0];
             let last  = self.current[n-1];
-            if (first.0 - last.0).abs() > f64::EPSILON || (first.1 - last.1).abs() > f64::EPSILON {
+            if (first.0 - last.0).abs() > Real::EPSILON || (first.1 - last.1).abs() > Real::EPSILON {
                 self.current.push(first);
             }
             // That becomes one closed contour
