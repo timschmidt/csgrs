@@ -1,5 +1,4 @@
 use crate::float_types::{Real, PI};
-use crate::errors::ValidationError;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
 use nalgebra::{

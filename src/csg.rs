@@ -3637,7 +3637,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
         
         // A small helper to evaluate the Schwarz-P function at a given (x, y, z).
-        fn schwarz_p_f(x: Real, y: Real, z: Real, period: Real) -> Real {
+        fn _schwarz_p_f(x: Real, y: Real, z: Real, period: Real) -> Real {
             let px = x / period;
             let py = y / period;
             let pz = z / period;
@@ -4877,7 +4877,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 /// Helper to build a single Polygon from a “slice” of 3D points.
 ///
 /// If `flip_winding` is true, we reverse the vertex order (so the polygon’s normal flips).
-fn polygon_from_slice<S: Clone + Send + Sync>(
+fn _polygon_from_slice<S: Clone + Send + Sync>(
     slice_pts: &[Point3<Real>],
     flip_winding: bool,
     metadata: Option<S>,
@@ -5021,7 +5021,7 @@ impl OutlineFlattener {
 
     /// Finish the current subpath as open (do not close).
     /// (We call this if a new `MoveTo` or the entire glyph ends.)
-    fn finish_open_subpath(&mut self) {
+    fn _finish_open_subpath(&mut self) {
         if self.subpath_open && !self.current.is_empty() {
             self.open_contours.push(self.current.clone());
         }
