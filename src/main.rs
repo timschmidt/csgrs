@@ -164,8 +164,8 @@ fn main() {
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::cube(1.0, 1.0, 1.0, None);
     // 2) Flatten into the XY plane
-    //let flattened = cube.flatten();
-    //let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
+    let flattened = cube.flatten();
+    let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
     
     // Create a frustrum (start=-2, end=+2) with radius1 = 1, radius2 = 2, 32 slices
     let frustrum = CSG::frustrum_ptp(Point3::new(0.0, 0.0, -2.0), Point3::new(0.0, 0.0, 2.0), 1.0, 2.0, 32, None);
@@ -174,12 +174,12 @@ fn main() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::frustrum_ptp(Point3::new(0.0, 0.0, -1.0), Point3::new(0.0, 0.0, 1.0), 1.0, 1.0, 32, None);
     // 2) Slice at z=0
-    //#[cfg(feature = "hashmap")]
-    //{
-    //let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
-    //let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));
-    //let _ = fs::write("stl/sliced_cylinder_slice.stl", cross_section.to_stl_ascii("sliced_cylinder_slice"));
-    //}
+    #[cfg(feature = "hashmap")]
+    {
+    let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
+    let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));
+    let _ = fs::write("stl/sliced_cylinder_slice.stl", cross_section.to_stl_ascii("sliced_cylinder_slice"));
+    }
     
     //let poor_geometry_shape = moved_cube.difference(&sphere);
     //#[cfg(feature = "earclip-io")]
