@@ -597,15 +597,36 @@ impl Real {
         if exp.sign() == Sign::Minus && self.definitely_zero() {
             return Err(Problem::NotANumber);
         }
-        if self.class == One {
-            if let Ok(rational) = self.rational.clone().powi(exp.clone()) {
-                return Ok(Self {
-                    rational,
-                    class: One,
-                    computable: self.computable,
-                    signal: None,
-                });
+        match &self.class {
+            One => {
+                if let Ok(rational) = self.rational.clone().powi(exp.clone()) {
+                    return Ok(Self {
+                        rational,
+                        class: One,
+                        computable: self.computable,
+                        signal: None,
+                    });
+                }
             }
+            Sqrt(sqrt) => {
+                let odd = exp.bit(0);
+                let rf1 = Self::new(self.rational.powi(exp.clone())?);
+                let square = Self::new(sqrt.clone());
+                let rf2 = square.powi(exp >> 1)?;
+                let product = rf1 * rf2;
+                if odd {
+                    let n = Self {
+                        rational: Rational::one(),
+                        class: Sqrt(sqrt.clone()),
+                        computable: self.computable,
+                        signal: None,
+                    };
+                    return Ok(product * n);
+                } else {
+                    return Ok(product);
+                }
+            }
+            _ => (),
         }
         // We can sometims do better here if we know an exact square root
         self.exp_ln_powi(exp)
