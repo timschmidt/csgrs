@@ -3102,6 +3102,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                             let tmp_poly = GeoPolygon::new(ring.clone(), vec![]);
                             let area = tmp_poly.signed_area();
 
+                            // ttf files store outer loops as CW and inner loops as CCW
                             if area < 0.0 {
                                 // This is an outer ring
                                 outer_rings.push(ring);
@@ -3123,6 +3124,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                             geo_coll.0.push(Geometry::Polygon(polygon_2d));
 
                             // If there are leftover outer rings, push them each as a separate polygon (no holes):
+                            // todo: test bounding boxes and sort holes appropriately
                             for extra_outer in outer_rings {
                                 let poly_2d = GeoPolygon::new(extra_outer, vec![]);
                                 geo_coll.0.push(Geometry::Polygon(poly_2d));
