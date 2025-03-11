@@ -3020,18 +3020,67 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
     }
 
-    /// Flattens any 3D polygons by projecting them onto the XY plane
-    /// (Z=0), unions them as 2D polylines, and returns a purely 2D result.
+    /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
+    /// unifies them into one or more 2D polygons, and returns a purely 2D CSG.
     ///
-    /// If this CSG is already 2D (polylines only), we simply return
-    /// the union of those polylines.
+    /// - If this CSG is already 2D (`self.polygons` is empty), just returns `self.clone()`.
+    /// - Otherwise, all `polygons` are tessellated, projected into XY, and unioned.
+    /// - We also union any existing 2D geometry (`self.geometry`).
+    /// - The output has `.polygons` empty and `.geometry` containing the final 2D shape.
     pub fn flatten(&self) -> CSG<S> {
-        
-
-        // Return as a 2D CSG: polygons empty, polylines hold the unioned perimeter(s).
+        // 1) If there are no 3D polygons, this is already purely 2D => return as-is
+        if self.polygons.is_empty() {
+            return self.clone();
+        }
+    
+        // 2) Convert all 3D polygons into a collection of 2D polygons
+        let mut flattened_3d = Vec::new(); // will store geo::Polygon<Real>
+    
+        for poly in &self.polygons {
+            // Tessellate this polygon into triangles
+            let triangles = poly.tessellate();
+            // Each triangle has 3 vertices [v0, v1, v2].
+            // Project them onto XY => build a 2D polygon (triangle).
+            for tri in triangles {
+                let ring = vec![
+                    (tri[0].pos.x, tri[0].pos.y),
+                    (tri[1].pos.x, tri[1].pos.y),
+                    (tri[2].pos.x, tri[2].pos.y),
+                    (tri[0].pos.x, tri[0].pos.y), // close ring explicitly
+                ];
+                let polygon_2d = geo::Polygon::new(LineString::from(ring), vec![]);
+                flattened_3d.push(polygon_2d);
+            }
+        }
+    
+        // 3) Union all these polygons together into one MultiPolygon
+        //    (We could chain them in a fold-based union.)
+        let unioned_from_3d = if flattened_3d.is_empty() {
+            MultiPolygon::new(Vec::new())
+        } else {
+            // Start with the first polygon as a MultiPolygon
+            let mut mp_acc = MultiPolygon(vec![flattened_3d[0].clone()]);
+            // Union in the rest
+            for p in flattened_3d.iter().skip(1) {
+                mp_acc = mp_acc.union(&MultiPolygon(vec![p.clone()]));
+            }
+            mp_acc
+        };
+    
+        // 4) Union this with any existing 2D geometry (polygons) from self.geometry
+        let existing_2d = gc_to_polygons(&self.geometry);  // turns geometry -> MultiPolygon
+        let final_union = unioned_from_3d.union(&existing_2d);
+        // Optionally ensure consistent orientation (CCW for exteriors):
+        let oriented = final_union.orient(Direction::Default);
+    
+        // 5) Store final polygons as a MultiPolygon in a new GeometryCollection
+        let mut new_gc = GeometryCollection::default();
+        new_gc.0.push(Geometry::MultiPolygon(oriented));
+    
+        // 6) Return a purely 2D CSG: polygons empty, geometry has the final shape
         CSG {
             polygons: Vec::new(),
-            geometry: GeometryCollection::default(),
+            geometry: new_gc,
             metadata: self.metadata.clone(),
         }
     }
