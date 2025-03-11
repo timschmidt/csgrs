@@ -1,5 +1,5 @@
 #[cfg(test)]
-use crate::float_types::{Real, EPSILON, FRAC_PI_2, CLOSED};
+use crate::float_types::{Real, EPSILON, FRAC_PI_2};
 use crate::bsp::Node;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
@@ -77,7 +77,7 @@ fn test_polygon_construction() {
     let v2 = Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::y());
     let v3 = Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::y());
 
-    let poly: Polygon<()> = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], CLOSED, None);
+    let poly: Polygon<()> = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], None);
     assert_eq!(poly.vertices.len(), 3);
     // Plane should be defined by these three points. We expect a normal near ±Y.
     assert!(
@@ -117,7 +117,7 @@ fn test_degenerate_polygon_after_clipping() {
         Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices.clone(), CLOSED, None);
+    let polygon: Polygon<()> = Polygon::new(vertices.clone(), None);
     let plane = Plane {
         normal: Vector3::new(0.0, 0.0, 0.0),
         w: 0.0,
@@ -154,7 +154,7 @@ fn test_valid_polygon_clipping() {
         Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices, CLOSED, None);
+    let polygon: Polygon<()> = Polygon::new(vertices, None);
 
     let plane = Plane {
         normal: -Vector3::y(),
@@ -251,7 +251,6 @@ fn test_plane_split_polygon() {
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(-1.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
         None,
     );
 
@@ -294,7 +293,7 @@ fn test_polygon_new() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly: Polygon<()> = Polygon::new(vertices.clone(), CLOSED, None);
+    let poly: Polygon<()> = Polygon::new(vertices.clone(), None);
     assert_eq!(poly.vertices.len(), 3);
     assert_eq!(poly.metadata, None);
     // Plane normal should be +Z for the above points
@@ -311,7 +310,6 @@ fn test_polygon_flip() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
         None,
     );
     let plane_normal_before = poly.plane.normal;
@@ -345,10 +343,9 @@ fn test_polygon_triangulate() {
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
         None,
     );
-    let triangles = poly.triangulate();
+    let triangles = poly.tessellate();
     // We expect 2 triangles from a quad
     assert_eq!(
         triangles.len(),
@@ -366,7 +363,6 @@ fn test_polygon_subdivide_triangles() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
     let subs = poly.subdivide_triangles(1);
@@ -386,7 +382,6 @@ fn test_polygon_recalc_plane_and_normals() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::zeros()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::zeros()),
         ],
-        CLOSED,
         None,
     );
     poly.set_new_normal();
@@ -410,7 +405,6 @@ fn test_node_new_and_build() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
     let node: Node<()> = Node::new(&[p.clone()]);
@@ -429,7 +423,6 @@ fn test_node_invert() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
     let mut node: Node<()> = Node::new(&[p.clone()]);
@@ -469,7 +462,6 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
     let poly_above: Polygon<()> = Polygon::new(
@@ -478,7 +470,6 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
     let poly_below: Polygon<()> = Polygon::new(
@@ -487,7 +478,6 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, -1.0), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
 
@@ -505,7 +495,6 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(2.0, -1.0, 0.5), Vector3::z()),
             Vertex::new(Point3::new(-1.0, 2.0, 0.5), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
     let clipped = node.clip_polygons(&[crossing_poly.clone()]);
@@ -524,7 +513,6 @@ fn test_node_clip_to() {
             Vertex::new(Point3::new(0.5, -0.5, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 0.5, 0.0), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
     let mut node_a: Node<()> = Node::new(&[poly]);
@@ -536,7 +524,6 @@ fn test_node_clip_to() {
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(-1.0, 1.0, 0.0), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
     let node_b: Node<()> = Node::new(&[big_poly]);
@@ -555,7 +542,6 @@ fn test_node_all_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
     let poly2: Polygon<()> = Polygon::new(
@@ -564,7 +550,6 @@ fn test_node_all_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
 
@@ -585,7 +570,6 @@ fn test_csg_from_polygons_and_to_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        CLOSED,
         None,
     );
     let csg: CSG<()> = CSG::from_polygons(&[poly.clone()]);
@@ -607,7 +591,7 @@ fn test_csg_union() {
     );
 
     // Check bounding box => should now at least range from -1 to (0.5+1) = 1.5
-    let bb = bounding_box(polys);
+    let bb = bounding_box(&polys);
     assert!(approx_eq(bb[0], -1.0, 1e-8));
     assert!(approx_eq(bb[1], -1.0, 1e-8));
     assert!(approx_eq(bb[2], -1.0, 1e-8));
@@ -630,7 +614,7 @@ fn test_csg_difference() {
     );
 
     // Check bounding box => should still be [-2,-2,-2, 2,2,2], but with a chunk removed
-    let bb = bounding_box(polys);
+    let bb = bounding_box(&polys);
     // At least the bounding box remains the same
     assert!(approx_eq(bb[0], -2.0, 1e-8));
     assert!(approx_eq(bb[3], 2.0, 1e-8));
@@ -677,7 +661,7 @@ fn test_csg_intersect2() {
     );
 
     // Check bounding box => intersection is roughly a sphere clipped to [-1,1]^3
-    let bb = bounding_box(polys);
+    let bb = bounding_box(&polys);
     // Should be a region inside the [-1,1] box
     for &val in &bb[..3] {
         assert!(val >= -1.0 - 1e-1);
@@ -741,7 +725,7 @@ fn test_csg_sphere() {
     let polys = sphere.to_polygons();
     assert!(!polys.is_empty(), "Sphere should generate polygons");
 
-    let bb = bounding_box(polys);
+    let bb = bounding_box(&polys);
     // Should roughly be [-1, -1, -1, 1, 1, 1]
     assert!(approx_eq(bb[0], -1.0, 1e-1));
     assert!(approx_eq(bb[1], -1.0, 1e-1));
@@ -762,7 +746,7 @@ fn test_csg_cylinder() {
     let polys = cylinder.to_polygons();
     assert!(!polys.is_empty(), "Cylinder should generate polygons");
 
-    let bb = bounding_box(polys);
+    let bb = bounding_box(&polys);
     // Expect x in [-1,1], y in [-1,1], z in [-1,1].
     assert!(approx_eq(bb[0], -1.0, 1e-8), "min X");
     assert!(approx_eq(bb[1], -1.0, 1e-8), "min Y");
@@ -979,8 +963,8 @@ fn test_csg_vertices() {
 #[test]
 fn test_csg_offset_2d() {
     let square: CSG<()> = CSG::square(2.0, 2.0, None);
-    let grown = square.offset_2d(0.5);
-    let shrunk = square.offset_2d(-0.5);
+    let grown = square.offset(0.5);
+    let shrunk = square.offset(-0.5);
     let bb_square = square.bounding_box();
     let bb_grown = grown.bounding_box();
     let bb_shrunk = shrunk.bounding_box();
@@ -1087,7 +1071,7 @@ fn test_polygon_metadata_string() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let mut poly = Polygon::new(verts, CLOSED, Some("triangle".to_string()));
+    let mut poly = Polygon::new(verts, Some("triangle".to_string()));
 
     // Check getter
     assert_eq!(poly.metadata(), Some(&"triangle".to_string()));
@@ -1111,7 +1095,7 @@ fn test_polygon_metadata_integer() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly = Polygon::new(verts, CLOSED, Some(42u32));
+    let poly = Polygon::new(verts, Some(42u32));
 
     // Confirm data
     assert_eq!(poly.metadata(), Some(&42));
@@ -1129,7 +1113,7 @@ fn test_polygon_metadata_custom_struct() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly = Polygon::new(verts, CLOSED, Some(my_data.clone()));
+    let poly = Polygon::new(verts, Some(my_data.clone()));
 
     assert_eq!(poly.metadata(), Some(&my_data));
 }
@@ -1143,7 +1127,6 @@ fn test_csg_construction_with_metadata() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
         Some("PolyA".to_string()),
     );
     let poly_b = Polygon::new(
@@ -1152,7 +1135,6 @@ fn test_csg_construction_with_metadata() {
             Vertex::new(Point3::new(3.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(3.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
         Some("PolyB".to_string()),
     );
     let csg = CSG::from_polygons(&[poly_a.clone(), poly_b.clone()]);
@@ -1287,7 +1269,6 @@ fn test_subdivide_metadata() {
             Vertex::new(Point3::new(2.0, 2.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 2.0, 0.0), Vector3::z()),
         ],
-        false,
         Some("LargeQuad".to_string()),
     );
     let csg = CSG::from_polygons(&[poly]);
@@ -1309,7 +1290,6 @@ fn test_transform_metadata() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        false,
         Some("Tri".to_string()),
     );
     let csg = CSG::from_polygons(&[poly]);
@@ -1375,7 +1355,7 @@ fn test_square_ccw_ordering() {
 #[test]
 fn test_offset_2d_positive_distance_grows() {
     let square = CSG::square(2.0, 2.0, None); // Centered square with size 2x2
-    let offset = square.offset_2d(0.5); // Positive offset should grow the square
+    let offset = square.offset(0.5); // Positive offset should grow the square
 
     // The original square has area 4.0
     // The offset square should have area greater than 4.0
@@ -1391,7 +1371,7 @@ fn test_offset_2d_positive_distance_grows() {
 #[test]
 fn test_offset_2d_negative_distance_shrinks() {
     let square = CSG::square(2.0, 2.0, None); // Centered square with size 2x2
-    let offset = square.offset_2d(-0.5); // Negative offset should shrink the square
+    let offset = square.offset(-0.5); // Negative offset should shrink the square
 
     // The original square has area 4.0
     // The offset square should have area less than 4.0
@@ -1419,8 +1399,8 @@ fn test_polygon_2d_enforce_ccw_ordering() {
 #[test]
 fn test_circle_offset_2d() {
     let circle = CSG::circle(1.0, 32, None);
-    let offset_grow = circle.offset_2d(0.2); // Should grow the circle
-    let offset_shrink = circle.offset_2d(-0.2); // Should shrink the circle
+    let offset_grow = circle.offset(0.2); // Should grow the circle
+    let offset_shrink = circle.offset(-0.2); // Should shrink the circle
 
     // Original circle has area ~3.1416
     let original_area = 3.141592653589793;
@@ -1446,7 +1426,7 @@ fn make_polygon_3d(points: &[[Real; 3]]) -> Polygon<()> {
         let normal = Vector3::z();
         verts.push(Vertex::new(pos, normal));
     }
-    Polygon::new(verts, CLOSED, None)
+    Polygon::new(verts, None)
 }
 
 #[test]
@@ -1692,7 +1672,7 @@ fn polygon_from_xy_points(xy_points: &[[Real; 2]]) -> Polygon<()> {
         .map(|&[x, y]| Vertex::new(Point3::new(x, y, 0.0), normal))
         .collect();
 
-    Polygon::new(vertices, CLOSED, None)
+    Polygon::new(vertices, None)
 }
 
 /// Test a simple case of `flatten_and_union` with a single square in the XY plane.
@@ -1779,7 +1759,6 @@ fn test_flatten_and_union_near_xy_plane() {
             Vertex::new(Point3::new(1.0, 1.0, 1e-6), normal),
             Vertex::new(Point3::new(0.0, 1.0, 1e-6), normal),
         ],
-        CLOSED,
         None,
     );
 

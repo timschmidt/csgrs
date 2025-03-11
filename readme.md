@@ -61,7 +61,7 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 - **`CSG::egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::squircle(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::reuleaux_polygon(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`**
+- **`CSG::reuleaux_polygon(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`** final shape not yet achieved
 - **`CSG::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: Option<S>)`**
 - **`CSG::metaball_2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`** failing at the moment, pending rework
@@ -274,12 +274,6 @@ Hershey fonts are single stroke fonts which produce open ended polylines in the 
 ```rust
 let font_data = include_bytes("../fonts/myfont.jhf");
 let csg_text = CSG::from_hershey("Hello!", font_data, 20.0, None);
-
-// Then extrude the text to make it 3D:
-let mut text_3d = CSG::new();
-for polygon in csg_text.polygons {
-    text_3d.union(&CSG::extrude_polyline(polygon.to_polyline(), Vector3::z(), None));
-}
 ```
 
 ### Create a Parry `TriMesh`
@@ -391,7 +385,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 ## Roadmap / Todo
 - transition sweep, linear_extrude, over to Polygon/Multipolygon native / polygon secondary
 - disengage chulls on 2D->3D shapes
-- fix text scale / extrusion
 - fix shape of reuleaux
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere in main.rs - shapes are out of proximity
@@ -437,8 +430,8 @@ Patterns we work to follow throughout the library to improve performance and mem
 - adapt cavalier_contours demo application
 - rethink metadata
   - support storing UV[W] coordinates with vertexes at compile time (try to keep runtime cost low too)
-  - accomplish equivalence checks and memory usage reduction by using a hashmap instead of storing metadata with each node
-  - with equivalence checks, 
+  - accomplish equivalence checks and memory usage reduction by using a hashmap or references instead of storing metadata with each node
+  - with equivalence checks, returning sorted metadata becomes easy
 - chamfers
   - make algorithm selectable at compile time
 - align_x_pos, align_x_neg, align_y_pos, align_y_neg, align_z_pos, align_z_neg, center_x, center_y, center_z,
