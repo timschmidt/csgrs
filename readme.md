@@ -87,12 +87,12 @@ let text_3d = csg_text.extrude(1.0);
 
 ### Extrusions and Revolves
 
+Extrusions build 3D polygons from 2D Geometries.
+
 - **`CSG::extrude(height: Real)`** - Simple extrude in Z+
 - **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
-- **`CSG::linear_extrude(direction: Vector3, twist: Real, segments: usize, scale: Real)`** - Extrude along Vector3 direction with twist, segments, and scale
-- **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Extrude Between Two Polygons
+- **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Extrude Between Two BSP Polygons
 - **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
-- **`CSG::sweep(shape_2d: &Polygon<S>, path_2d: &Polygon<S>)`** - Extrude along a path
 
 ```rust
 let square = CSG::square(2.0, 2.0, None);
@@ -389,8 +389,9 @@ Patterns we work to follow throughout the library to improve performance and mem
 - allocations should be kept to a minimum.  Memory should be read-only if possible, clone if necessary, and offer the choice of transmut in place or create new copy via appropriate functions
 
 ## Roadmap / Todo
-- transition sweep, linear_extrude, extrude_between over to Polygon/Multipolygon native / polygon secondary, disengage chulls on shapes
-- transition text to Polygon/Multipolygon, which can then be extruded / tessellated through the normal means
+- transition sweep, linear_extrude, extrude_between over to Polygon/Multipolygon native / polygon secondary
+- disengage chulls on 2D->3D shapes
+- fix text scale / extrusion
 - check slice() works on polygons and slices to GeometryCollections
 - fix shape of reuleaux
 - fix metaballs_2d
