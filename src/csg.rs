@@ -3201,6 +3201,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             }
         };
         
+        // 1 font unit, 2048 font units / em, scale points / em, 0.352777 points / mm
         let font_scale = 1.0 / 2048.0 * scale * 0.3527777;
 
         // 2) We'll collect all glyph geometry into one GeometryCollection
@@ -3265,13 +3266,15 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
                             // The “primary” polygon: first outer + all holes
                             let polygon_2d = GeoPolygon::new(first_outer, hole_rings);
-                            geo_coll.0.push(Geometry::Polygon(polygon_2d));
+                            let oriented = polygon_2d.orient(Direction::Default);
+                            geo_coll.0.push(Geometry::Polygon(oriented));
 
                             // If there are leftover outer rings, push them each as a separate polygon (no holes):
                             // todo: test bounding boxes and sort holes appropriately
                             for extra_outer in outer_rings {
                                 let poly_2d = GeoPolygon::new(extra_outer, vec![]);
-                                geo_coll.0.push(Geometry::Polygon(poly_2d));
+                                let oriented = poly_2d.orient(Direction::Default);
+                                geo_coll.0.push(Geometry::Polygon(oriented));
                             }
                         }
                     }
