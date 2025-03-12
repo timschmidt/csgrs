@@ -229,7 +229,7 @@ let mirrored = cube.mirror(plane_x);
 - **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
 - **`CSG::bounding_box()`** — computes the bounding box of the shape.
-- **`CSG::triangulate()`** — triangulates all polygons returning a CSG containing triangles.
+- **`CSG::tessellate()`** — triangulates all polygons returning a CSG containing triangles.
 - **`CSG::from_polygons(polygons: &[Polygon<S>])`** - create a new CSG from Polygons.
 
 ### STL
@@ -449,6 +449,11 @@ Patterns we work to follow throughout the library to improve performance and mem
 - https://crates.io/crates/geo-validity-check as compile time option
 - https://crates.io/crates/geo-index
 - https://github.com/lelongg/geo-rand
+- renderer integration
+  - blueprint renders
+  - exploded renders
+- airfoil cross-sections
+- implement 2D line, point, LineString functions for CSG
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
