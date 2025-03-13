@@ -119,7 +119,8 @@ let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.poly
 - **`CSG::ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
 - **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
 - **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: Option<S>)`** - Return a CSG created by meshing a signed distance field within a bounding box
-- **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
+- **`CSG::arrow(start: Point3, direction: Vector3, segments: usize, metadata: Option<S>)`** - Create an arrow at start, pointing along direction
+- **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self` - not yet working
 
 ```rust
 // Unit cube at origin, no metadata
