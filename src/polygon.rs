@@ -51,6 +51,8 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         if self.vertices.len() < 3 {
             return Vec::new();
         }
+        
+        //println!("{:#?}",  self.vertices);
 
         let normal_3d = self.plane.normal.normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
@@ -65,6 +67,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             all_vertices_2d.push(coord!{x: x, y: y});
         }
     
+        //println!("{:#?}",  LineString::new(all_vertices_2d.clone()));
         let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new()).earcut_triangles_raw();
         let triangle_indices = triangulation.triangle_indices;
         let vertices = triangulation.vertices;

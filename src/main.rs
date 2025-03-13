@@ -390,13 +390,16 @@ fn main() {
     
     // Define the start point and the arrow direction vector.
     // The arrow’s length is the norm of the direction vector.
-    let start = Point3::new(0.0, 0.0, 0.0);
+    let start = Point3::new(1.0, 1.0, 1.0);
     let direction = Vector3::new(10.0, 5.0, 20.0);
     
     // Define the resolution (number of segments for the cylindrical shaft and head).
     let segments = 16;
     
     // Create the arrow. We pass `None` for metadata.
-    let arrow_csg = CSG::arrow(start, direction, segments, None::<()>);
+    let arrow_csg = CSG::arrow(start, direction, segments, true, None::<()>);
     let _ = fs::write("stl/arrow.stl", arrow_csg.to_stl_ascii("arrow_example"));
+    
+    let arrow_reversed_csg = CSG::arrow(start, direction, segments, false, None::<()>);
+    let _ = fs::write("stl/arrow_reversed.stl", arrow_reversed_csg.to_stl_ascii("arrow_example"));
 }

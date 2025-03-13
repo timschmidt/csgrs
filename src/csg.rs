@@ -1424,8 +1424,26 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         CSG::from_polygons(&polygons)
     }
     
-    /// Construct a frustum whose axis goes from `start` to `end`, with the start face having
-    /// radius = `radius1` and the end face having radius = `radius2`.
+    /// Constructs a frustum between `start` and `end` with bottom radius = `radius1` and
+    /// top radius = `radius2`. In the normal case, it creates side quads and cap triangles.
+    /// However, if one of the radii is 0 (within EPSILON), then the degenerate face is treated
+    /// as a single point and the side is stitched using triangles.
+    /// 
+    /// # Parameters
+    /// - `start`: the center of the bottom face
+    /// - `end`: the center of the top face
+    /// - `radius1`: the radius at the bottom face
+    /// - `radius2`: the radius at the top face
+    /// - `segments`: number of segments around the circle (must be ≥ 3)
+    /// - `metadata`: optional metadata
+    /// 
+    /// # Example
+    /// ```
+    /// let bottom = Point3::new(0.0, 0.0, 0.0);
+    /// let top = Point3::new(0.0, 0.0, 5.0);
+    /// // This will create a cone (bottom degenerate) because radius1 is 0:
+    /// let cone = CSG::frustrum_ptp_special(bottom, top, 0.0, 2.0, 32, None);
+    /// ```
     pub fn frustrum_ptp(
         start: Point3<Real>,
         end: Point3<Real>,
@@ -1434,19 +1452,15 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         segments: usize,
         metadata: Option<S>,
     ) -> CSG<S> {
+        // Compute the axis and check that start and end do not coincide.
         let s = start.coords;
         let e = end.coords;
         let ray = e - s;
-    
-        // If the start and end coincide, return an empty CSG or handle gracefully
         if ray.norm_squared() < EPSILON {
             return CSG::new();
         }
-    
-        // We’ll choose an axis_z aligned with the start->end vector
         let axis_z = ray.normalize();
-    
-        // Pick an axis_x that is not parallel to axis_z
+        // Pick an axis not parallel to axis_z.
         let axis_x = if axis_z.y.abs() > 0.5 {
             Vector3::x()
         } else {
@@ -1454,83 +1468,101 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
         .cross(&axis_z)
         .normalize();
-    
-        // Now define axis_y = axis_x × axis_z
         let axis_y = axis_x.cross(&axis_z).normalize();
     
-        // For convenience, define "center" vertices for the caps
-        let start_v = Vertex::new(start, -axis_z); // bottom cap center
-        let end_v = Vertex::new(end, axis_z);      // top cap center
+        // The cap centers for the bottom and top.
+        let start_v = Vertex::new(start, -axis_z);
+        let end_v = Vertex::new(end, axis_z);
     
-        // We’ll collect polygons for the bottom cap, top cap, and side walls
-        let mut polygons = Vec::new();
-    
-        // Helper: given a "stack" (0.0 for bottom, 1.0 for top) and a "slice" in [0..1],
-        // return a Vertex on the frustum surface. `normal_blend` controls how
-        // we blend the purely radial normal vs. the cap normal for bottom/top.
+        // A closure that returns a vertex on the lateral surface.
+        // For a given stack (0.0 for bottom, 1.0 for top), slice (fraction along the circle),
+        // and a normal blend factor (used for cap smoothing), compute the vertex.
         let point = |stack: Real, slice: Real, normal_blend: Real| {
-            // Interpolate radius by stack: 0 => radius1, 1 => radius2
+            // Linear interpolation of radius.
             let r = radius1 * (1.0 - stack) + radius2 * stack;
-    
-            // Convert the slice fraction into an angle around the axis
             let angle = slice * TAU;
             let radial_dir = axis_x * angle.cos() + axis_y * angle.sin();
-    
-            // Position in 3D
             let pos = s + ray * stack + radial_dir * r;
-    
-            // For a perfect cylinder, the side normal is radial. For the caps,
-            // we blend in ±axis_z for smooth normals at the seam. You can
-            // omit this blend if you prefer simpler “hard” edges.
             let normal = radial_dir * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
             Vertex::new(Point3::from(pos), normal.normalize())
         };
     
-        // Build polygons via "fan" for bottom cap, side quads, and "fan" for top cap
+        let mut polygons = Vec::new();
+    
+        // Special-case flags for degenerate faces.
+        let bottom_degenerate = radius1.abs() < EPSILON;
+        let top_degenerate = radius2.abs() < EPSILON;
+    
+        // If both faces are degenerate, we cannot build a meaningful volume.
+        if bottom_degenerate && top_degenerate {
+            return CSG::new();
+        }
+    
+        // For each slice of the circle (0..segments)
         for i in 0..segments {
             let slice0 = i as Real / segments as Real;
             let slice1 = (i + 1) as Real / segments as Real;
     
-            //
-            // Bottom cap triangle
-            //  -- "fan" from start_v to ring edges at stack=0
-            //
-            polygons.push(Polygon::new(
-                vec![
-                    start_v.clone(),
-                    point(0.0, slice0, -1.0),
-                    point(0.0, slice1, -1.0),
-                ],
-                metadata.clone(),
-            ));
+            // In the normal frustrum_ptp, we always add a bottom cap triangle (fan) and a top cap triangle.
+            // Here, we only add the cap triangle if the corresponding radius is not degenerate.
+            if !bottom_degenerate {
+                // Bottom cap: a triangle fan from the bottom center to two consecutive points on the bottom ring.
+                polygons.push(Polygon::new(
+                    vec![
+                        start_v.clone(),
+                        point(0.0, slice0, -1.0),
+                        point(0.0, slice1, -1.0),
+                    ],
+                    metadata.clone(),
+                ));
+            }
+            if !top_degenerate {
+                // Top cap: a triangle fan from the top center to two consecutive points on the top ring.
+                polygons.push(Polygon::new(
+                    vec![
+                        end_v.clone(),
+                        point(1.0, slice1, 1.0),
+                        point(1.0, slice0, 1.0),
+                    ],
+                    metadata.clone(),
+                ));
+            }
     
-            //
-            // Side wall (a quad) bridging stack=0..1 at slice0..slice1
-            // The four corners are:
-            //   (0.0, slice1), (0.0, slice0), (1.0, slice0), (1.0, slice1)
-            //
-            polygons.push(Polygon::new(
-                vec![
-                    point(0.0, slice1, 0.0),
-                    point(0.0, slice0, 0.0),
-                    point(1.0, slice0, 0.0),
-                    point(1.0, slice1, 0.0),
-                ],
-                metadata.clone(),
-            ));
-    
-            //
-            // Top cap triangle
-            //  -- "fan" from end_v to ring edges at stack=1
-            //
-            polygons.push(Polygon::new(
-                vec![
-                    end_v.clone(),
-                    point(1.0, slice1, 1.0),
-                    point(1.0, slice0, 1.0),
-                ],
-                metadata.clone(),
-            ));
+            // For the side wall, we normally build a quad spanning from the bottom ring (stack=0)
+            // to the top ring (stack=1). If one of the rings is degenerate, that ring reduces to a single point.
+            // In that case, we output a triangle.
+            if bottom_degenerate {
+                // Bottom is a point (start_v); create a triangle from start_v to two consecutive points on the top ring.
+                polygons.push(Polygon::new(
+                    vec![
+                        start_v.clone(),
+                        point(1.0, slice0, 0.0),
+                        point(1.0, slice1, 0.0),
+                    ],
+                    metadata.clone(),
+                ));
+            } else if top_degenerate {
+                // Top is a point (end_v); create a triangle from two consecutive points on the bottom ring to end_v.
+                polygons.push(Polygon::new(
+                    vec![
+                        point(0.0, slice1, 0.0),
+                        point(0.0, slice0, 0.0),
+                        end_v.clone(),
+                    ],
+                    metadata.clone(),
+                ));
+            } else {
+                // Normal case: both rings are non-degenerate. Use a quad for the side wall.
+                polygons.push(Polygon::new(
+                    vec![
+                        point(0.0, slice1, 0.0),
+                        point(0.0, slice0, 0.0),
+                        point(1.0, slice0, 0.0),
+                        point(1.0, slice1, 0.0),
+                    ],
+                    metadata.clone(),
+                ));
+            }
         }
     
         CSG::from_polygons(&polygons)
@@ -1732,43 +1764,50 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// Creates an arrow CSG. The arrow is composed of:
     ///   - a cylindrical shaft, and
     ///   - a cone–like head (a frustrum from a larger base to a small tip)
-    /// placed at the given `start` point and pointing along the provided `direction`.
+    /// built along the canonical +Z axis. The arrow is then rotated so that +Z aligns with the given
+    /// direction, and finally translated so that either its base (if `orientation` is false)
+    /// or its tip (if `orientation` is true) is located at `start`.
     ///
-    /// The thickness and head dimensions are scaled proportional to the arrow’s length.
-    /// `segments` controls the resolution of the cylinder and cone shapes.
-    /// `metadata` is optionally passed along to each generated polygon.
+    /// The arrow’s dimensions (shaft radius, head dimensions, etc.) are scaled proportionally to the
+    /// total arrow length (the norm of the provided direction).
+    ///
+    /// # Parameters
+    /// - `start`: the reference point (base or tip, depending on orientation)
+    /// - `direction`: the vector defining arrow length and intended pointing direction
+    /// - `segments`: number of segments for approximating the cylinder and frustrum
+    /// - `orientation`: when false (default) the arrow points away from start (its base is at start);
+    ///                        when true the arrow points toward start (its tip is at start).
+    /// - `metadata`: optional metadata for the generated polygons.
     pub fn arrow(
         start: Point3<Real>,
         direction: Vector3<Real>,
         segments: usize,
+        orientation: bool,
         metadata: Option<S>,
     ) -> CSG<S> {
-        // Compute the total arrow length.
+        // Compute the arrow's total length.
         let arrow_length = direction.norm();
-        if arrow_length < crate::float_types::EPSILON {
-            // If the direction is (near) zero, return an empty CSG.
+        if arrow_length < EPSILON {
             return CSG::new();
         }
-        // Unit vector along the provided direction.
+        // Compute the unit direction.
         let unit_dir = direction / arrow_length;
     
         // Define proportions:
-        // • Let the arrow head be 20% of the arrow length.
-        // • The shaft length is the remainder.
+        // - Arrow head occupies 20% of total length.
+        // - Shaft occupies the remainder.
         let head_length = arrow_length * 0.2;
         let shaft_length = arrow_length - head_length;
     
-        // Define thickness proportional to the arrow length.
-        // Adjust these factors as desired.
+        // Define thickness parameters proportional to the arrow length.
         let shaft_radius = arrow_length * 0.03;      // shaft radius
-        let head_base_radius = arrow_length * 0.06;    // base of arrow head (wider than shaft)
-        let tip_radius = arrow_length * 0.005;         // small tip radius (almost a point)
+        let head_base_radius = arrow_length * 0.06;    // head base radius (wider than shaft)
+        let tip_radius = arrow_length * 0.0;         // tip radius (nearly a point)
     
-        // Create the shaft: a cylinder along Z from 0 to shaft_length.
+        // Build the shaft as a vertical cylinder along Z from 0 to shaft_length.
         let shaft = CSG::cylinder(shaft_radius, shaft_length, segments, metadata.clone());
     
-        // Create the arrow head:
-        // A frustrum (here used to make a tapered cone) from z = shaft_length to z = shaft_length+head_length.
+        // Build the arrow head as a frustrum from z = shaft_length to z = shaft_length + head_length.
         let head = CSG::frustrum_ptp(
             Point3::new(0.0, 0.0, shaft_length),
             Point3::new(0.0, 0.0, shaft_length + head_length),
@@ -1778,22 +1817,38 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             metadata.clone(),
         );
     
-        // Combine the shaft and head (using union) into a single arrow shape.
-        let arrow_shape = shaft.union(&head);
+        // Combine the shaft and head.
+        let mut canonical_arrow = shaft.union(&head);
     
-        // To orient the arrow along the provided direction, compute a rotation that maps +Z to unit_dir.
+        // If the arrow should point toward start, mirror the geometry in canonical space.
+        // The mirror transform about the plane z = arrow_length/2 maps any point (0,0,z) to (0,0, arrow_length - z).
+        if orientation {
+            let l = arrow_length;
+            let mirror_mat: Matrix4<Real> =
+                Translation3::new(0.0, 0.0, l / 2.0).to_homogeneous() *
+                Matrix4::new_nonuniform_scaling(&Vector3::new(1.0, 1.0, -1.0)) *
+                Translation3::new(0.0, 0.0, -l / 2.0).to_homogeneous();
+            canonical_arrow = canonical_arrow.transform(&mirror_mat).inverse();
+        }
+        // In both cases, we now have a canonical arrow that extends from z=0 to z=arrow_length.
+        // For orientation == false, z=0 is the base.
+        // For orientation == true, after mirroring z=0 is now the tip.
+    
+        // Compute the rotation that maps the canonical +Z axis to the provided direction.
         let z_axis = Vector3::z();
         let rotation = Rotation3::rotation_between(&z_axis, &unit_dir)
             .unwrap_or_else(|| Rotation3::identity());
-    
-        // Convert the rotation to a 4x4 homogeneous matrix.
         let rot_mat: Matrix4<Real> = rotation.to_homogeneous();
     
-        // Transform the arrow shape: first rotate, then translate it so that its base lies at `start`.
-        let arrow_rotated = arrow_shape.transform(&rot_mat);
-        let arrow_translated = arrow_rotated.translate(start.x, start.y, start.z);
+        // Rotate the arrow.
+        let rotated_arrow = canonical_arrow.transform(&rot_mat);
     
-        arrow_translated
+        // Finally, translate the arrow so that the anchored vertex (canonical (0,0,0)) moves to 'start'.
+        // In the false case, (0,0,0) is the base (arrow extends from start to start+direction).
+        // In the true case, after mirroring, (0,0,0) is the tip (arrow extends from start to start+direction).
+        let final_arrow = rotated_arrow.translate(start.x, start.y, start.z);
+    
+        final_arrow
     }
 
     /// Apply an arbitrary 3D transform (as a 4x4 matrix) to both polygons and polylines.
