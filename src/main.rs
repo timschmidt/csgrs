@@ -387,4 +387,16 @@ fn main() {
         let gyroid_inside_cube = cube.gyroid(32, 2.0, 0.0, None);
         let _ = fs::write("stl/gyroid_cube.stl", gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap());
     }
+    
+    // Define the start point and the arrow direction vector.
+    // The arrow’s length is the norm of the direction vector.
+    let start = Point3::new(0.0, 0.0, 0.0);
+    let direction = Vector3::new(10.0, 5.0, 20.0);
+    
+    // Define the resolution (number of segments for the cylindrical shaft and head).
+    let segments = 16;
+    
+    // Create the arrow. We pass `None` for metadata.
+    let arrow_csg = CSG::arrow(start, direction, segments, None::<()>);
+    let _ = fs::write("stl/arrow.stl", arrow_csg.to_stl_ascii("arrow_example"));
 }

@@ -1728,6 +1728,73 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         let base_sphere = Self::sphere(1.0, segments, stacks, metadata.clone());
         base_sphere.scale(rx, ry, rz)
     }
+    
+    /// Creates an arrow CSG. The arrow is composed of:
+    ///   - a cylindrical shaft, and
+    ///   - a cone–like head (a frustrum from a larger base to a small tip)
+    /// placed at the given `start` point and pointing along the provided `direction`.
+    ///
+    /// The thickness and head dimensions are scaled proportional to the arrow’s length.
+    /// `segments` controls the resolution of the cylinder and cone shapes.
+    /// `metadata` is optionally passed along to each generated polygon.
+    pub fn arrow(
+        start: Point3<Real>,
+        direction: Vector3<Real>,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> CSG<S> {
+        // Compute the total arrow length.
+        let arrow_length = direction.norm();
+        if arrow_length < crate::float_types::EPSILON {
+            // If the direction is (near) zero, return an empty CSG.
+            return CSG::new();
+        }
+        // Unit vector along the provided direction.
+        let unit_dir = direction / arrow_length;
+    
+        // Define proportions:
+        // • Let the arrow head be 20% of the arrow length.
+        // • The shaft length is the remainder.
+        let head_length = arrow_length * 0.2;
+        let shaft_length = arrow_length - head_length;
+    
+        // Define thickness proportional to the arrow length.
+        // Adjust these factors as desired.
+        let shaft_radius = arrow_length * 0.03;      // shaft radius
+        let head_base_radius = arrow_length * 0.06;    // base of arrow head (wider than shaft)
+        let tip_radius = arrow_length * 0.005;         // small tip radius (almost a point)
+    
+        // Create the shaft: a cylinder along Z from 0 to shaft_length.
+        let shaft = CSG::cylinder(shaft_radius, shaft_length, segments, metadata.clone());
+    
+        // Create the arrow head:
+        // A frustrum (here used to make a tapered cone) from z = shaft_length to z = shaft_length+head_length.
+        let head = CSG::frustrum_ptp(
+            Point3::new(0.0, 0.0, shaft_length),
+            Point3::new(0.0, 0.0, shaft_length + head_length),
+            head_base_radius,
+            tip_radius,
+            segments,
+            metadata.clone(),
+        );
+    
+        // Combine the shaft and head (using union) into a single arrow shape.
+        let arrow_shape = shaft.union(&head);
+    
+        // To orient the arrow along the provided direction, compute a rotation that maps +Z to unit_dir.
+        let z_axis = Vector3::z();
+        let rotation = Rotation3::rotation_between(&z_axis, &unit_dir)
+            .unwrap_or_else(|| Rotation3::identity());
+    
+        // Convert the rotation to a 4x4 homogeneous matrix.
+        let rot_mat: Matrix4<Real> = rotation.to_homogeneous();
+    
+        // Transform the arrow shape: first rotate, then translate it so that its base lies at `start`.
+        let arrow_rotated = arrow_shape.transform(&rot_mat);
+        let arrow_translated = arrow_rotated.translate(start.x, start.y, start.z);
+    
+        arrow_translated
+    }
 
     /// Apply an arbitrary 3D transform (as a 4x4 matrix) to both polygons and polylines.
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D,

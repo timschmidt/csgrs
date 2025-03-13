@@ -454,6 +454,10 @@ Patterns we work to follow throughout the library to improve performance and mem
   - exploded renders
 - airfoil cross-sections
 - implement 2D line, point, LineString functions for CSG
+- https://github.com/hmeyer/tessellation
+- emit TrueType glyphs into the same MultiPolygon for each call of text()
+- evaluate using approx crate
+- evaluate using https://docs.rs/nalgebra/latest/nalgebra/trait.RealField.html instead of float_types::Real
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
