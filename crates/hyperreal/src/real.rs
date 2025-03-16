@@ -224,9 +224,7 @@ impl Real {
     where
         F: FnOnce(Computable) -> Computable,
     {
-        let r = Computable::rational(self.rational);
-        let prev = Computable::multiply(r, self.computable);
-        let computable = convert(prev);
+        let computable = convert(self.fold());
 
         Self {
             rational: Rational::one(),
@@ -538,6 +536,22 @@ impl Real {
         result
     }
 
+    fn compute_exp_ln_powi(value: Computable, exp: BigInt) -> Option<Computable> {
+        match value.sign() {
+            Sign::NoSign => None,
+            Sign::Plus => Some(value.ln().multiply(Computable::integer(exp)).exp()),
+            Sign::Minus => {
+                let odd = exp.bit(0);
+                let exp = Computable::integer(exp);
+                if odd {
+                    Some(value.ln().multiply(exp).exp().negate())
+                } else {
+                    Some(value.ln().multiply(exp).exp())
+                }
+            }
+        }
+    }
+
     fn exp_ln_powi(self, exp: BigInt) -> Result<Self, Problem> {
         match self.best_sign() {
             Sign::NoSign => {
@@ -548,8 +562,7 @@ impl Real {
                 }
             }
             Sign::Plus => {
-                let r = Computable::rational(self.rational);
-                let value = Computable::multiply(r, self.computable);
+                let value = self.fold();
                 let exp = Computable::integer(exp);
 
                 Ok(Self {
@@ -561,8 +574,7 @@ impl Real {
             }
             Sign::Minus => {
                 let odd = exp.bit(0);
-                let r = Computable::rational(self.rational.neg());
-                let value = Computable::multiply(r, self.computable);
+                let value = self.fold();
                 let exp = Computable::integer(exp);
                 if odd {
                     Ok(Self {
@@ -626,7 +638,18 @@ impl Real {
                         return Ok(Self::new(product));
                     }
                 }
-                _ => (),
+                _ => {
+                    if let Some(computable) =
+                        Self::compute_exp_ln_powi(self.computable.clone(), exp.clone())
+                    {
+                        return Ok(Self {
+                            rational,
+                            class: Irrational,
+                            computable,
+                            signal: None,
+                        });
+                    }
+                }
             }
         }
         self.exp_ln_powi(exp)
@@ -746,22 +769,8 @@ impl Add for Real {
         if other.definitely_zero() {
             return self;
         }
-        let left = if self.class == One {
-            Computable::rational(self.rational)
-        } else if self.rational == Rational::one() {
-            self.computable
-        } else {
-            let lr = Computable::rational(self.rational);
-            Computable::multiply(lr, self.computable)
-        };
-        let right = if other.class == One {
-            Computable::rational(other.rational)
-        } else if other.rational == Rational::one() {
-            other.computable
-        } else {
-            let rr = Computable::rational(other.rational);
-            Computable::multiply(rr, other.computable)
-        };
+        let left = self.fold();
+        let right = other.fold();
         let computable = Computable::add(left, right);
         Self {
             rational: Rational::one(),
