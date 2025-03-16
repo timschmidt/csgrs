@@ -148,7 +148,7 @@ impl Plane {
 
         // Rotate plane.normal -> +Z
         let rot = Rotation3::rotation_between(&norm_dir, &Vector3::z())
-            .unwrap_or_else(|| Rotation3::identity());
+            .unwrap_or_else(Rotation3::identity);
         let iso_rot = Isometry3::from_parts(Translation3::identity(), rot.into());
 
         // We want to translate so that the plane’s reference point
@@ -167,7 +167,7 @@ impl Plane {
         // Inverse for going back
         let transform_from_xy = transform_to_xy
             .try_inverse()
-            .unwrap_or_else(|| Matrix4::identity());
+            .unwrap_or_else(Matrix4::identity);
 
         (transform_to_xy, transform_from_xy)
     }

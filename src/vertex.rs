@@ -4,14 +4,14 @@ use nalgebra::{
 use crate::float_types::Real;
 
 /// A vertex of a polygon, holding position and normal.
-#[derive(Copy, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Vertex {
     pub pos: Point3<Real>,
     pub normal: Vector3<Real>,
 }
 
 impl Vertex {
-    pub fn new(pos: Point3<Real>, normal: Vector3<Real>) -> Self {
+    pub const fn new(pos: Point3<Real>, normal: Vector3<Real>) -> Self {
         Vertex { pos, normal }
     }
 
