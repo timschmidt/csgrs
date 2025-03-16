@@ -1,10 +1,8 @@
 use crate::float_types::{Real, PI};
-use crate::vertex::Vertex;
 use crate::plane::Plane;
-use nalgebra::{
-    Point2, Point3, Vector3,
-};
-use geo::{ Polygon as GeoPolygon, TriangulateEarcut, LineString, coord, };
+use crate::vertex::Vertex;
+use geo::{coord, LineString, Polygon as GeoPolygon, TriangulateEarcut};
+use nalgebra::{Point2, Point3, Vector3};
 
 /// A polygon, defined by a list of vertices and a plane.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
@@ -15,7 +13,10 @@ pub struct Polygon<S: Clone> {
     pub metadata: Option<S>,
 }
 
-impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
+impl<S: Clone> Polygon<S>
+where
+    S: Clone + Send + Sync,
+{
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
         let plane = if vertices.len() < 3 {
@@ -23,7 +24,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         } else {
             Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos)
         };
-       
+
         Polygon {
             vertices,
             plane,
@@ -39,10 +40,12 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         }
         self.plane.flip();
     }
-    
+
     /// Return an iterator over paired vertexes each forming an edge of the polygon
-    pub fn edges(&self) -> impl Iterator<Item=(&Vertex, &Vertex)> {
-        self.vertices.iter().zip(self.vertices.iter().cycle().skip(1))
+    pub fn edges(&self) -> impl Iterator<Item = (&Vertex, &Vertex)> {
+        self.vertices
+            .iter()
+            .zip(self.vertices.iter().cycle().skip(1))
     }
 
     /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
@@ -51,31 +54,33 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         if self.vertices.len() < 3 {
             return Vec::new();
         }
-        
+
         //println!("{:#?}",  self.vertices);
 
         let normal_3d = self.plane.normal.normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
         let origin_3d = self.vertices[0].pos;
-    
+
         // Flatten each vertex to 2D
         let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
         for vert in &self.vertices {
             let offset = vert.pos.coords - origin_3d.coords;
             let x = offset.dot(&u);
             let y = offset.dot(&v);
-            all_vertices_2d.push(coord!{x: x, y: y});
+            all_vertices_2d.push(coord! {x: x, y: y});
         }
-    
+
         //println!("{:#?}",  LineString::new(all_vertices_2d.clone()));
-        let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new()).earcut_triangles_raw();
+        let triangulation =
+            GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new()).earcut_triangles_raw();
         let triangle_indices = triangulation.triangle_indices;
         let vertices = triangulation.vertices;
-    
+
         // Convert back into 3D triangles
         let mut triangles = Vec::with_capacity(triangle_indices.len() / 3);
         for tri_chunk in triangle_indices.chunks_exact(3) {
-            let mut tri_vertices = [const{Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0))}; 3];
+            let mut tri_vertices =
+                [const { Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0)) }; 3];
             for (k, &idx) in tri_chunk.iter().enumerate() {
                 let base = idx * 2;
                 let x = vertices[base];
@@ -119,13 +124,13 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
         if n < 3 {
             return Vector3::z(); // degenerate or empty
         }
-        
+
         let mut points = Vec::new();
         for vertex in &self.vertices {
             points.push(vertex.pos);
         }
         let mut normal = Vector3::zeros();
-    
+
         // Loop over each edge of the polygon.
         for i in 0..n {
             let current = points[i];
@@ -134,15 +139,15 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             normal.y += (current.z - next.z) * (current.x + next.x);
             normal.z += (current.x - next.x) * (current.y + next.y);
         }
-    
+
         // Normalize the computed normal.
         let mut poly_normal = normal.normalize();
-    
+
         // Ensure the computed normal is in the same direction as the given normal.
         if poly_normal.dot(&self.plane.normal) < 0.0 {
             poly_normal = -poly_normal;
         }
-        
+
         poly_normal
     }
 
@@ -154,14 +159,16 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             v.normal = new_normal;
         }
     }
-    
+
     /// Returns a new Polygon translated by t.
-    pub fn translate(&self, x: Real, y: Real, z: Real) -> Self {     // todo: modify for Vector2 in-plane translation
+    pub fn translate(&self, x: Real, y: Real, z: Real) -> Self {
+        // todo: modify for Vector2 in-plane translation
         self.translate_vector(Vector3::new(x, y, z))
     }
 
     /// Returns a new Polygon translated by t.
-    pub fn translate_vector(&self, t: Vector3<Real>) -> Self {     // todo: modify for Vector2 in-plane translation
+    pub fn translate_vector(&self, t: Vector3<Real>) -> Self {
+        // todo: modify for Vector2 in-plane translation
         let new_vertices = self
             .vertices
             .iter()
@@ -177,7 +184,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             metadata: self.metadata.clone(),
         }
     }
-    
+
     /// Returns a reference to the metadata, if any.
     pub fn metadata(&self) -> Option<&S> {
         self.metadata.as_ref()

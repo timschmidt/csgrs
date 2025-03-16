@@ -4,9 +4,9 @@
 // Here, we do not use any shared data, so we'll bind the generic S to ().
 
 use csgrs::float_types::Real;
-use std::fs;
-use nalgebra::{Vector3, Point3};
 use csgrs::plane::Plane;
+use nalgebra::{Point3, Vector3};
+use std::fs;
 
 #[cfg(feature = "image")]
 use image::{GrayImage, ImageBuffer};
@@ -32,7 +32,10 @@ fn main() {
 
     let cylinder = CSG::cylinder(1.0, 2.0, 32, None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=32
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/cylinder.stl", cylinder.to_stl_binary("cylinder").unwrap());
+    let _ = fs::write(
+        "stl/cylinder.stl",
+        cylinder.to_stl_binary("cylinder").unwrap(),
+    );
 
     // 2) Transformations: Translate, Rotate, Scale, Mirror
     let moved_cube = cube
@@ -40,39 +43,67 @@ fn main() {
         .rotate(0.0, 45.0, 0.0)
         .scale(1.0, 0.5, 2.0);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/cube_transformed.stl", moved_cube.to_stl_binary("cube_transformed").unwrap());
+    let _ = fs::write(
+        "stl/cube_transformed.stl",
+        moved_cube.to_stl_binary("cube_transformed").unwrap(),
+    );
 
-    let plane_x = Plane { normal: Vector3::x(), w: 0.0 };
+    let plane_x = Plane {
+        normal: Vector3::x(),
+        w: 0.0,
+    };
     let mirrored_cube = cube.mirror(plane_x);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/cube_mirrored_x.stl", mirrored_cube.to_stl_binary("cube_mirrored_x").unwrap());
+    let _ = fs::write(
+        "stl/cube_mirrored_x.stl",
+        mirrored_cube.to_stl_binary("cube_mirrored_x").unwrap(),
+    );
 
     // 3) Boolean operations: Union, Subtract, Intersect
     let union_shape = moved_cube.union(&sphere);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/union_cube_sphere.stl", union_shape.to_stl_binary("union_cube_sphere").unwrap());
+    let _ = fs::write(
+        "stl/union_cube_sphere.stl",
+        union_shape.to_stl_binary("union_cube_sphere").unwrap(),
+    );
 
     let subtract_shape = moved_cube.difference(&sphere);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/subtract_cube_sphere.stl", subtract_shape.to_stl_binary("subtract_cube_sphere").unwrap());
+    let _ = fs::write(
+        "stl/subtract_cube_sphere.stl",
+        subtract_shape
+            .to_stl_binary("subtract_cube_sphere")
+            .unwrap(),
+    );
 
     let intersect_shape = moved_cube.intersection(&sphere);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/intersect_cube_sphere.stl", intersect_shape.to_stl_binary("intersect_cube_sphere").unwrap());
+    let _ = fs::write(
+        "stl/intersect_cube_sphere.stl",
+        intersect_shape
+            .to_stl_binary("intersect_cube_sphere")
+            .unwrap(),
+    );
 
     // 4) Convex hull
     #[cfg(feature = "chull-io")]
     let hull_of_union = union_shape.convex_hull();
     #[cfg(feature = "stl-io")]
     #[cfg(feature = "chull-io")]
-    let _ = fs::write("stl/hull_union.stl", hull_of_union.to_stl_binary("hull_union").unwrap());
+    let _ = fs::write(
+        "stl/hull_union.stl",
+        hull_of_union.to_stl_binary("hull_union").unwrap(),
+    );
 
     // 5) Minkowski sum
     #[cfg(feature = "chull-io")]
     let minkowski = cube.minkowski_sum(&sphere);
     #[cfg(feature = "stl-io")]
     #[cfg(feature = "chull-io")]
-    let _ = fs::write("stl/minkowski_cube_sphere.stl", minkowski.to_stl_binary("minkowski_cube_sphere").unwrap());
+    let _ = fs::write(
+        "stl/minkowski_cube_sphere.stl",
+        minkowski.to_stl_binary("minkowski_cube_sphere").unwrap(),
+    );
 
     // 7) 2D shapes and 2D offsetting
     let square_2d = CSG::square(2.0, 2.0, None); // 2x2 square, centered
@@ -80,38 +111,66 @@ fn main() {
 
     let circle_2d = CSG::circle(1.0, 32, None);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/circle_2d.stl", circle_2d.to_stl_binary("circle_2d").unwrap());
+    let _ = fs::write(
+        "stl/circle_2d.stl",
+        circle_2d.to_stl_binary("circle_2d").unwrap(),
+    );
 
     let grown_2d = square_2d.offset(0.5);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/square_2d_grow_0_5.stl", grown_2d.to_stl_ascii("square_2d_grow_0_5"));
+    let _ = fs::write(
+        "stl/square_2d_grow_0_5.stl",
+        grown_2d.to_stl_ascii("square_2d_grow_0_5"),
+    );
 
     let shrunk_2d = square_2d.offset(-0.5);
-    let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"));
+    let _ = fs::write(
+        "stl/square_2d_shrink_0_5.stl",
+        shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"),
+    );
 
     // 8) Extrude & Rotate-Extrude
     let extruded_square = square_2d.extrude(1.0);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/square_extrude.stl", extruded_square.to_stl_binary("square_extrude").unwrap());
+    let _ = fs::write(
+        "stl/square_extrude.stl",
+        extruded_square.to_stl_binary("square_extrude").unwrap(),
+    );
 
-    let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(360.0, 32);
+    let revolve_circle = circle_2d
+        .translate(10.0, 0.0, 0.0)
+        .rotate_extrude(360.0, 32);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/circle_revolve_360.stl", revolve_circle.to_stl_binary("circle_revolve_360").unwrap());
+    let _ = fs::write(
+        "stl/circle_revolve_360.stl",
+        revolve_circle.to_stl_binary("circle_revolve_360").unwrap(),
+    );
 
-    let partial_revolve = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(180.0, 32);
+    let partial_revolve = circle_2d
+        .translate(10.0, 0.0, 0.0)
+        .rotate_extrude(180.0, 32);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/circle_revolve_180.stl", partial_revolve.to_stl_binary("circle_revolve_180").unwrap());
+    let _ = fs::write(
+        "stl/circle_revolve_180.stl",
+        partial_revolve.to_stl_binary("circle_revolve_180").unwrap(),
+    );
 
     // 9) Subdivide triangles (for smoother sphere or shapes):
     let subdiv_sphere = sphere.subdivide_triangles(2); // 2 subdivision levels
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/sphere_subdiv2.stl", subdiv_sphere.to_stl_binary("sphere_subdiv2").unwrap());
+    let _ = fs::write(
+        "stl/sphere_subdiv2.stl",
+        subdiv_sphere.to_stl_binary("sphere_subdiv2").unwrap(),
+    );
 
     // 10) Renormalize polygons (flat shading):
     let mut union_clone = union_shape.clone();
     union_clone.renormalize();
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/union_renormalized.stl", union_clone.to_stl_binary("union_renormalized").unwrap());
+    let _ = fs::write(
+        "stl/union_renormalized.stl",
+        union_clone.to_stl_binary("union_renormalized").unwrap(),
+    );
 
     // 11) Ray intersection demo (just printing the results)
     {
@@ -145,42 +204,74 @@ fn main() {
     let text_csg = CSG::text("HELLO", font_data, 15.0, None);
     #[cfg(feature = "stl-io")]
     #[cfg(feature = "truetype-text")]
-    let _ = fs::write("stl/text_hello_2d.stl", text_csg.to_stl_binary("text_hello_2d").unwrap());
+    let _ = fs::write(
+        "stl/text_hello_2d.stl",
+        text_csg.to_stl_binary("text_hello_2d").unwrap(),
+    );
 
     // Optionally extrude the text:
     #[cfg(feature = "truetype-text")]
     let text_extruded = text_csg.extrude(2.0);
     #[cfg(feature = "stl-io")]
     #[cfg(feature = "truetype-text")]
-    let _ = fs::write("stl/text_hello_extruded.stl", text_extruded.to_stl_binary("text_hello_extruded").unwrap());
+    let _ = fs::write(
+        "stl/text_hello_extruded.stl",
+        text_extruded.to_stl_binary("text_hello_extruded").unwrap(),
+    );
 
     // 14) Mass properties (just printing them)
     let (mass, com, principal_frame) = cube.mass_properties(1.0);
     println!("Cube mass = {}", mass);
     println!("Cube center of mass = {:?}", com);
     println!("Cube principal inertia local frame = {:?}", principal_frame);
-    
+
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::cube(1.0, 1.0, 1.0, None);
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
-    let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
-    
+    let _ = fs::write(
+        "stl/flattened_cube.stl",
+        flattened.to_stl_ascii("flattened_cube"),
+    );
+
     // Create a frustrum (start=-2, end=+2) with radius1 = 1, radius2 = 2, 32 slices
-    let frustrum = CSG::frustrum_ptp(Point3::new(0.0, 0.0, -2.0), Point3::new(0.0, 0.0, 2.0), 1.0, 2.0, 32, None);
+    let frustrum = CSG::frustrum_ptp(
+        Point3::new(0.0, 0.0, -2.0),
+        Point3::new(0.0, 0.0, 2.0),
+        1.0,
+        2.0,
+        32,
+        None,
+    );
     let _ = fs::write("stl/frustrum.stl", frustrum.to_stl_ascii("frustrum"));
-    
+
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
-    let cyl = CSG::frustrum_ptp(Point3::new(0.0, 0.0, -1.0), Point3::new(0.0, 0.0, 1.0), 1.0, 1.0, 32, None);
+    let cyl = CSG::frustrum_ptp(
+        Point3::new(0.0, 0.0, -1.0),
+        Point3::new(0.0, 0.0, 1.0),
+        1.0,
+        1.0,
+        32,
+        None,
+    );
     // 2) Slice at z=0
     #[cfg(feature = "hashmap")]
     {
-    let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
-    let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));
-    let _ = fs::write("stl/sliced_cylinder_slice.stl", cross_section.to_stl_ascii("sliced_cylinder_slice"));
+        let cross_section = cyl.slice(Plane {
+            normal: Vector3::z(),
+            w: 0.0,
+        });
+        let _ = fs::write(
+            "stl/sliced_cylinder.stl",
+            cyl.to_stl_ascii("sliced_cylinder"),
+        );
+        let _ = fs::write(
+            "stl/sliced_cylinder_slice.stl",
+            cross_section.to_stl_ascii("sliced_cylinder_slice"),
+        );
     }
-    
+
     //let poor_geometry_shape = moved_cube.difference(&sphere);
     //#[cfg(feature = "earclip-io")]
     //let retriangulated_shape = poor_geometry_shape.triangulate_earclip();
@@ -191,7 +282,10 @@ fn main() {
     let cube_test = CSG::cube(1.0, 1.0, 1.0, None);
     let res = cube_test.difference(&sphere_test);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/sphere_cube_test.stl", res.to_stl_binary("sphere_cube_test").unwrap());
+    let _ = fs::write(
+        "stl/sphere_cube_test.stl",
+        res.to_stl_binary("sphere_cube_test").unwrap(),
+    );
     assert_eq!(res.bounding_box(), cube_test.bounding_box());
 
     #[cfg(all(feature = "stl-io", feature = "metaballs"))]
@@ -201,47 +295,43 @@ fn main() {
             MetaBall::new(Point3::origin(), 1.0),
             MetaBall::new(Point3::new(1.5, 0.0, 0.0), 1.0),
         ];
-    
+
         let resolution = (60, 60, 60);
         let iso_value = 1.0;
         let padding = 1.0;
-    
+
         #[cfg(feature = "metaballs")]
-        let metaball_csg = CSG::metaballs(
-            &balls,
-            resolution,
-            iso_value,
-            padding,
-            None,
-        );
-        
+        let metaball_csg = CSG::metaballs(&balls, resolution, iso_value, padding, None);
+
         // For instance, save to STL
         let stl_data = metaball_csg.to_stl_binary("my_metaballs").unwrap();
-        std::fs::write("stl/metaballs.stl", stl_data)
-            .expect("Failed to write metaballs.stl");
+        std::fs::write("stl/metaballs.stl", stl_data).expect("Failed to write metaballs.stl");
     }
-        
+
     #[cfg(feature = "sdf")]
     {
         // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
         let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
-    
+
         let resolution = (60, 60, 60);
         let min_pt = Point3::new(-2.0, -2.0, -2.0);
-        let max_pt = Point3::new( 2.0,  2.0,  2.0);
+        let max_pt = Point3::new(2.0, 2.0, 2.0);
         let iso_value = 0.0; // Typically zero for SDF-based surfaces
-    
+
         let csg_shape = CSG::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
-    
+
         // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
-        #[cfg(feature="stl-io")]
-        let _ = std::fs::write("stl/sdf_sphere.stl", csg_shape.to_stl_binary("sdf_sphere").unwrap());
+        #[cfg(feature = "stl-io")]
+        let _ = std::fs::write(
+            "stl/sdf_sphere.stl",
+            csg_shape.to_stl_binary("sdf_sphere").unwrap(),
+        );
     }
-    
+
     // Create a pie slice of radius 2, from 0 to 90 degrees
     let wedge = CSG::pie_slice(2.0, 0.0, 90.0, 16, None);
     let _ = fs::write("stl/pie_slice.stl", wedge.to_stl_ascii("pie_slice"));
-    
+
     // Create a 2D "metaball" shape from 3 circles
     use nalgebra::Point2;
     let balls_2d = vec![
@@ -251,27 +341,30 @@ fn main() {
     ];
     let mb2d = CSG::metaball_2d(&balls_2d, (100, 100), 1.0, 0.25, None);
     let _ = fs::write("stl/mb2d.stl", mb2d.to_stl_ascii("metaballs2d"));
-    
+
     // Create a supershape
     let sshape = CSG::supershape(1.0, 1.0, 6.0, 1.0, 1.0, 1.0, 128, None);
     let _ = fs::write("stl/supershape.stl", sshape.to_stl_ascii("supershape"));
-    
+
     // Distribute a square along an arc
     let square = CSG::square(1.0, 1.0, None);
     let arc_array = square.distribute_arc(5, 5.0, 0.0, 180.0);
     let _ = fs::write("stl/arc_array.stl", arc_array.to_stl_ascii("arc_array"));
-    
+
     // Distribute that wedge along a linear axis
     let wedge_line = wedge.distribute_linear(4, nalgebra::Vector3::new(1.0, 0.0, 0.0), 3.0);
     let _ = fs::write("stl/wedge_line.stl", wedge_line.to_stl_ascii("wedge_line"));
-    
+
     // Make a 4x4 grid of the supershape
     let grid_of_ss = sshape.distribute_grid(4, 4, 3.0, 3.0);
     let _ = fs::write("stl/grid_of_ss.stl", grid_of_ss.to_stl_ascii("grid_of_ss"));
-    
+
     // 1. Circle with keyway
     let keyway_shape = CSG::circle_with_keyway(10.0, 64, 2.0, 3.0, None);
-    let _ = fs::write("stl/keyway_shape.stl", keyway_shape.to_stl_ascii("keyway_shape"));
+    let _ = fs::write(
+        "stl/keyway_shape.stl",
+        keyway_shape.to_stl_ascii("keyway_shape"),
+    );
     // Extrude it 2 units:
     let keyway_3d = keyway_shape.extrude(2.0);
     let _ = fs::write("stl/keyway_3d.stl", keyway_3d.to_stl_ascii("keyway_3d"));
@@ -284,41 +377,45 @@ fn main() {
 
     // 3. Double-flat circle
     let double_flat = CSG::circle_with_two_flats(8.0, 64, 3.0, None);
-    let _ = fs::write("stl/double_flat.stl", double_flat.to_stl_ascii("double_flat"));
+    let _ = fs::write(
+        "stl/double_flat.stl",
+        double_flat.to_stl_ascii("double_flat"),
+    );
     let df_3d = double_flat.extrude(0.5);
     let _ = fs::write("stl/df_3d.stl", df_3d.to_stl_ascii("df_3d"));
-    
+
     // A 3D teardrop shape
     let teardrop_solid = CSG::teardrop(3.0, 5.0, 32, 32, None);
-    let _ = fs::write("stl/teardrop_solid.stl", teardrop_solid.to_stl_ascii("teardrop_solid"));
-    
+    let _ = fs::write(
+        "stl/teardrop_solid.stl",
+        teardrop_solid.to_stl_ascii("teardrop_solid"),
+    );
+
     // A 3D egg shape
     let egg_solid = CSG::egg(2.0, 4.0, 8, 16, None);
     let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
-    
+
     // An ellipsoid with X radius=2, Y radius=1, Z radius=3
     let ellip = CSG::ellipsoid(2.0, 1.0, 3.0, 16, 8, None);
     let _ = fs::write("stl/ellip.stl", ellip.to_stl_ascii("ellip"));
-    
+
     // A teardrop 'blank' hole
     let teardrop_cylinder = CSG::teardrop_cylinder(2.0, 4.0, 32.0, 16, None);
-    let _ = fs::write("stl/teardrop_cylinder.stl", teardrop_cylinder.to_stl_ascii("teardrop_cylinder"));
-    
-    // 1) polygon()
-    let polygon_2d = CSG::polygon(
-        &[
-            [0.0, 0.0],
-            [2.0, 0.0],
-            [1.5, 1.0],
-            [1.0, 2.0],
-        ],
-        None,
+    let _ = fs::write(
+        "stl/teardrop_cylinder.stl",
+        teardrop_cylinder.to_stl_ascii("teardrop_cylinder"),
     );
+
+    // 1) polygon()
+    let polygon_2d = CSG::polygon(&[[0.0, 0.0], [2.0, 0.0], [1.5, 1.0], [1.0, 2.0]], None);
     let _ = fs::write("stl/polygon_2d.stl", polygon_2d.to_stl_ascii("polygon_2d"));
 
     // 2) rounded_rectangle(width, height, corner_radius, corner_segments)
     let rrect_2d = CSG::rounded_rectangle(4.0, 2.0, 0.3, 8, None);
-    let _ = fs::write("stl/rounded_rectangle_2d.stl", rrect_2d.to_stl_ascii("rounded_rectangle_2d"));
+    let _ = fs::write(
+        "stl/rounded_rectangle_2d.stl",
+        rrect_2d.to_stl_ascii("rounded_rectangle_2d"),
+    );
 
     // 3) ellipse(width, height, segments)
     let ellipse_2d = CSG::ellipse(3.0, 1.5, 32, None);
@@ -338,15 +435,24 @@ fn main() {
 
     // 8) teardrop(width, height, segments) [2D shape]
     let teardrop_2d = CSG::teardrop_outline(2.0, 3.0, 16, None);
-    let _ = fs::write("stl/teardrop_2d.stl", teardrop_2d.to_stl_ascii("teardrop_2d"));
+    let _ = fs::write(
+        "stl/teardrop_2d.stl",
+        teardrop_2d.to_stl_ascii("teardrop_2d"),
+    );
 
     // 9) egg_outline(width, length, segments) [2D shape]
     let egg_2d = CSG::egg_outline(2.0, 4.0, 32, None);
-    let _ = fs::write("stl/egg_outline_2d.stl", egg_2d.to_stl_ascii("egg_outline_2d"));
+    let _ = fs::write(
+        "stl/egg_outline_2d.stl",
+        egg_2d.to_stl_ascii("egg_outline_2d"),
+    );
 
     // 10) squircle(width, height, segments)
     let squircle_2d = CSG::squircle(3.0, 3.0, 32, None);
-    let _ = fs::write("stl/squircle_2d.stl", squircle_2d.to_stl_ascii("squircle_2d"));
+    let _ = fs::write(
+        "stl/squircle_2d.stl",
+        squircle_2d.to_stl_ascii("squircle_2d"),
+    );
 
     // 11) keyhole(circle_radius, handle_width, handle_height, segments)
     let keyhole_2d = CSG::keyhole(1.0, 1.0, 2.0, 16, None);
@@ -354,7 +460,10 @@ fn main() {
 
     // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
     let reuleaux_2d = CSG::reuleaux_polygon(4, 12.0, 16, None); // Reuleaux triangle
-    let _ = fs::write("stl/reuleaux_2d.stl", reuleaux_2d.to_stl_ascii("reuleaux_2d"));
+    let _ = fs::write(
+        "stl/reuleaux_2d.stl",
+        reuleaux_2d.to_stl_ascii("reuleaux_2d"),
+    );
 
     // 13) ring(inner_diam, thickness, segments)
     let ring_2d = CSG::ring(5.0, 1.0, 32, None);
@@ -371,7 +480,7 @@ fn main() {
             for x in 0..64 {
                 let dx = x as i32 - center.0 as i32;
                 let dy = y as i32 - center.1 as i32;
-                if dx*dx + dy*dy < 15*15 {
+                if dx * dx + dy * dy < 15 * 15 {
                     img.put_pixel(x, y, image::Luma([255u8]));
                 }
             }
@@ -385,21 +494,27 @@ fn main() {
     #[cfg(feature = "stl-io")]
     {
         let gyroid_inside_cube = cube.gyroid(32, 2.0, 0.0, None);
-        let _ = fs::write("stl/gyroid_cube.stl", gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap());
+        let _ = fs::write(
+            "stl/gyroid_cube.stl",
+            gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap(),
+        );
     }
-    
+
     // Define the start point and the arrow direction vector.
     // The arrow’s length is the norm of the direction vector.
     let start = Point3::new(1.0, 1.0, 1.0);
     let direction = Vector3::new(10.0, 5.0, 20.0);
-    
+
     // Define the resolution (number of segments for the cylindrical shaft and head).
     let segments = 16;
-    
+
     // Create the arrow. We pass `None` for metadata.
     let arrow_csg = CSG::arrow(start, direction, segments, true, None::<()>);
     let _ = fs::write("stl/arrow.stl", arrow_csg.to_stl_ascii("arrow_example"));
-    
+
     let arrow_reversed_csg = CSG::arrow(start, direction, segments, false, None::<()>);
-    let _ = fs::write("stl/arrow_reversed.stl", arrow_reversed_csg.to_stl_ascii("arrow_example"));
+    let _ = fs::write(
+        "stl/arrow_reversed.stl",
+        arrow_reversed_csg.to_stl_ascii("arrow_example"),
+    );
 }

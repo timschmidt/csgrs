@@ -1,9 +1,7 @@
-use crate::float_types::{EPSILON, Real};
-use crate::vertex::Vertex;
+use crate::float_types::{Real, EPSILON};
 use crate::polygon::Polygon;
-use nalgebra::{
-    Isometry3, Point3, Matrix4, Rotation3, Translation3, Vector3,
-};
+use crate::vertex::Vertex;
+use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 
 /// A plane in 3D space defined by a normal and a w-value
 #[derive(Debug, Clone)]
@@ -59,10 +57,13 @@ impl Plane {
                     COPLANAR
                 }
             })
-            .fold((Vec::with_capacity(polygon.vertices.len()), 0), |(mut vec, acc), ty| {
-                vec.push(ty);
-                (vec, acc | ty)
-            });
+            .fold(
+                (Vec::with_capacity(polygon.vertices.len()), 0),
+                |(mut vec, acc), ty| {
+                    vec.push(ty);
+                    (vec, acc | ty)
+                },
+            );
 
         match polygon_type {
             COPLANAR => {
@@ -85,14 +86,13 @@ impl Plane {
                 let mut b: Vec<Vertex> = Vec::new();
 
                 // Use zip with cycle to pair (current, next)
-                for ((&ti, vi), (&tj, vj)) in types
-                    .iter()
-                    .zip(polygon.vertices.iter())
-                    .zip(
-                        types.iter().cycle().skip(1)
-                             .zip(polygon.vertices.iter().cycle().skip(1))
-                    )
-                {
+                for ((&ti, vi), (&tj, vj)) in types.iter().zip(polygon.vertices.iter()).zip(
+                    types
+                        .iter()
+                        .cycle()
+                        .skip(1)
+                        .zip(polygon.vertices.iter().cycle().skip(1)),
+                ) {
                     // If current vertex is definitely not behind plane,
                     // it goes to f (front side)
                     if ti != BACK {

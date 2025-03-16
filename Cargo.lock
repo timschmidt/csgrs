@@ -601,6 +601,7 @@ dependencies = [
  "allocator-api2",
  "equivalent",
  "foldhash",
+ "rayon",
 ]
 
 [[package]]
@@ -1097,6 +1098,7 @@ dependencies = [
  "num-derive",
  "num-traits 0.2.19",
  "ordered-float",
+ "rayon",
  "rstar",
  "rustc-hash",
  "simba",
@@ -1123,6 +1125,7 @@ dependencies = [
  "num-derive",
  "num-traits 0.2.19",
  "ordered-float",
+ "rayon",
  "rstar",
  "rustc-hash",
  "simba",
@@ -1267,6 +1270,7 @@ dependencies = [
  "ordered-float",
  "parry3d",
  "profiling",
+ "rayon",
  "rustc-hash",
  "simba",
  "thiserror",
@@ -1291,6 +1295,7 @@ dependencies = [
  "ordered-float",
  "parry3d-f64",
  "profiling",
+ "rayon",
  "rustc-hash",
  "simba",
  "thiserror",

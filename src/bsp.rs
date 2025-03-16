@@ -1,7 +1,7 @@
 use crate::float_types::EPSILON;
-use crate::vertex::Vertex;
 use crate::plane::Plane;
 use crate::polygon::Polygon;
+use crate::vertex::Vertex;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -40,21 +40,18 @@ impl<S: Clone + Send + Sync> Node<S> {
         if let Some(ref mut plane) = self.plane {
             plane.flip();
         }
-        
+
         // Recursively invert children in parallel, if both exist
         #[cfg(feature = "parallel")]
         match (&mut self.front, &mut self.back) {
             (Some(front_node), Some(back_node)) => {
-                join(
-                    || front_node.invert(),
-                    || back_node.invert()
-                );
+                join(|| front_node.invert(), || back_node.invert());
             }
             (Some(front_node), None) => front_node.invert(),
             (None, Some(back_node)) => back_node.invert(),
             (None, None) => {}
         }
-        
+
         #[cfg(not(feature = "parallel"))]
         if let Some(ref mut front) = self.front {
             front.invert();
@@ -78,7 +75,7 @@ impl<S: Clone + Send + Sync> Node<S> {
         let mut front: Vec<Polygon<S>> = Vec::new();
         let mut back: Vec<Polygon<S>> = Vec::new();
         let mut coplanar_front: Vec<Polygon<S>> = Vec::new();
-        let mut coplanar_back:  Vec<Polygon<S>> = Vec::new();
+        let mut coplanar_back: Vec<Polygon<S>> = Vec::new();
 
         // For each polygon, split it by the node's plane.
         for poly in polygons {
@@ -112,7 +109,7 @@ impl<S: Clone + Send + Sync> Node<S> {
         if let Some(ref f) = self.front {
             front = f.clip_polygons(&front);
         }
-        
+
         // Recursively clip the back polygons.
         if let Some(ref b) = self.back {
             back = b.clip_polygons(&back);
@@ -137,29 +134,28 @@ impl<S: Clone + Send + Sync> Node<S> {
         let plane = self.plane.as_ref().unwrap();
 
         // Split each polygon in parallel; gather results
-        let (coplanar_front, coplanar_back, mut front, mut back) =
-            polygons
-                .par_iter()
-                .map(|poly| {
-                    let mut cf = Vec::new();
-                    let mut cb = Vec::new();
-                    let mut f = Vec::new();
-                    let mut b = Vec::new();
-                    plane.split_polygon(poly, &mut cf, &mut cb, &mut f, &mut b);
-                    (cf, cb, f, b)
-                })
-                .reduce(
-                    // Identity
-                    || (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
-                    // Reduce function
-                    |mut acc, x| {
-                        acc.0.extend(x.0);
-                        acc.1.extend(x.1);
-                        acc.2.extend(x.2);
-                        acc.3.extend(x.3);
-                        acc
-                    },
-                );
+        let (coplanar_front, coplanar_back, mut front, mut back) = polygons
+            .par_iter()
+            .map(|poly| {
+                let mut cf = Vec::new();
+                let mut cb = Vec::new();
+                let mut f = Vec::new();
+                let mut b = Vec::new();
+                plane.split_polygon(poly, &mut cf, &mut cb, &mut f, &mut b);
+                (cf, cb, f, b)
+            })
+            .reduce(
+                // Identity
+                || (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+                // Reduce function
+                |mut acc, x| {
+                    acc.0.extend(x.0);
+                    acc.1.extend(x.1);
+                    acc.2.extend(x.2);
+                    acc.3.extend(x.3);
+                    acc
+                },
+            );
 
         // Decide where to send the coplanar polygons
         for cp in coplanar_front {
@@ -193,7 +189,7 @@ impl<S: Clone + Send + Sync> Node<S> {
                     // If there's no back node, discard these polygons
                     Vec::new()
                 }
-            }
+            },
         );
 
         // Combine front and back
@@ -213,7 +209,7 @@ impl<S: Clone + Send + Sync> Node<S> {
             back.clip_to(bsp);
         }
     }
-    
+
     /// Parallel remove all polygons in this BSP tree that are inside the other BSP tree
     #[cfg(feature = "parallel")]
     pub fn clip_to(&mut self, bsp: &Node<S>) {
@@ -224,10 +220,7 @@ impl<S: Clone + Send + Sync> Node<S> {
         // Recurse in parallel over front/back
         match (&mut self.front, &mut self.back) {
             (Some(front_node), Some(back_node)) => {
-                join(
-                    || front_node.clip_to(bsp),
-                    || back_node.clip_to(bsp)
-                );
+                join(|| front_node.clip_to(bsp), || back_node.clip_to(bsp));
             }
             (Some(front_node), None) => front_node.clip_to(bsp),
             (None, Some(back_node)) => back_node.clip_to(bsp),
@@ -313,27 +306,26 @@ impl<S: Clone + Send + Sync> Node<S> {
         let plane = self.plane.clone().unwrap();
 
         // Split polygons in parallel
-        let (mut coplanar_front, mut coplanar_back, mut front, mut back) =
-            polygons
-                .par_iter()
-                .map(|p| {
-                    let mut cf = Vec::new();
-                    let mut cb = Vec::new();
-                    let mut f = Vec::new();
-                    let mut b = Vec::new();
-                    plane.split_polygon(p, &mut cf, &mut cb, &mut f, &mut b);
-                    (cf, cb, f, b)
-                })
-                .reduce(
-                    || (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
-                    |mut acc, x| {
-                        acc.0.extend(x.0);
-                        acc.1.extend(x.1);
-                        acc.2.extend(x.2);
-                        acc.3.extend(x.3);
-                        acc
-                    },
-                );
+        let (mut coplanar_front, mut coplanar_back, mut front, mut back) = polygons
+            .par_iter()
+            .map(|p| {
+                let mut cf = Vec::new();
+                let mut cb = Vec::new();
+                let mut f = Vec::new();
+                let mut b = Vec::new();
+                plane.split_polygon(p, &mut cf, &mut cb, &mut f, &mut b);
+                (cf, cb, f, b)
+            })
+            .reduce(
+                || (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+                |mut acc, x| {
+                    acc.0.extend(x.0);
+                    acc.1.extend(x.1);
+                    acc.2.extend(x.2);
+                    acc.3.extend(x.3);
+                    acc
+                },
+            );
 
         // Append coplanar fronts/backs to self.polygons
         self.polygons.append(&mut coplanar_front);
@@ -351,8 +343,7 @@ impl<S: Clone + Send + Sync> Node<S> {
 
                 let front_node = self.front.as_mut().unwrap();
                 let back_node = self.back.as_mut().unwrap();
-                join(|| front_node.build(&front),
-                     || back_node.build(&back));
+                join(|| front_node.build(&front), || back_node.build(&back));
             }
             (true, false) => {
                 if self.front.is_none() {
@@ -369,15 +360,12 @@ impl<S: Clone + Send + Sync> Node<S> {
             (false, false) => {}
         }
     }
-    
+
     /// Slices this BSP node with `slicing_plane`, returning:
     /// - All polygons that are coplanar with the plane (within EPSILON),
     /// - A list of line‐segment intersections (each a [Vertex; 2]) from polygons that span the plane.
     #[cfg(not(feature = "parallel"))]
-    pub fn slice(
-        &self,
-        slicing_plane: &Plane
-    ) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
+    pub fn slice(&self, slicing_plane: &Plane) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
         let all_polys = self.all_polygons();
 
         let mut coplanar_polygons = Vec::new();
@@ -474,102 +462,96 @@ impl<S: Clone + Send + Sync> Node<S> {
 
         (coplanar_polygons, intersection_edges)
     }
-    
+
     // ------------------------------------------------------------------------
     // Slice (parallel version)
     // ------------------------------------------------------------------------
     #[cfg(feature = "parallel")]
-    pub fn slice(
-        &self,
-        slicing_plane: &Plane
-    ) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
+    pub fn slice(&self, slicing_plane: &Plane) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
         // Collect all polygons (this can be expensive, but let's do it).
         let all_polys = self.all_polygons();
 
         // Process polygons in parallel
-        let (coplanar_polygons, intersection_edges) =
-            all_polys
-                .par_iter()
-                .map(|poly| {
-                    let vcount = poly.vertices.len();
-                    if vcount < 2 {
-                        // Degenerate => skip
-                        return (Vec::new(), Vec::new());
+        let (coplanar_polygons, intersection_edges) = all_polys
+            .par_iter()
+            .map(|poly| {
+                let vcount = poly.vertices.len();
+                if vcount < 2 {
+                    // Degenerate => skip
+                    return (Vec::new(), Vec::new());
+                }
+
+                // Classify each vertex relative to the slicing plane
+                const COPLANAR: i32 = 0;
+                const FRONT: i32 = 1;
+                const BACK: i32 = 2;
+                const SPANNING: i32 = 3;
+
+                let mut polygon_type = 0;
+                let mut types = Vec::with_capacity(vcount);
+
+                for v in &poly.vertices {
+                    let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.w;
+                    let t = if dist < -EPSILON {
+                        BACK
+                    } else if dist > EPSILON {
+                        FRONT
+                    } else {
+                        COPLANAR
+                    };
+                    polygon_type |= t;
+                    types.push(t);
+                }
+
+                match polygon_type {
+                    COPLANAR => {
+                        // Entire polygon in plane
+                        (vec![poly.clone()], Vec::new())
                     }
-
-                    // Classify each vertex relative to the slicing plane
-                    const COPLANAR: i32 = 0;
-                    const FRONT: i32 = 1;
-                    const BACK: i32 = 2;
-                    const SPANNING: i32 = 3;
-
-                    let mut polygon_type = 0;
-                    let mut types = Vec::with_capacity(vcount);
-
-                    for v in &poly.vertices {
-                        let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.w;
-                        let t = if dist < -EPSILON {
-                            BACK
-                        } else if dist > EPSILON {
-                            FRONT
-                        } else {
-                            COPLANAR
-                        };
-                        polygon_type |= t;
-                        types.push(t);
+                    FRONT | BACK => {
+                        // Entirely on one side => no intersection
+                        (Vec::new(), Vec::new())
                     }
+                    SPANNING => {
+                        // The polygon crosses the plane => gather intersection edges
+                        let mut crossing_points = Vec::new();
+                        for i in 0..vcount {
+                            let j = (i + 1) % vcount;
+                            let ti = types[i];
+                            let tj = types[j];
+                            let vi = &poly.vertices[i];
+                            let vj = &poly.vertices[j];
 
-                    match polygon_type {
-                        COPLANAR => {
-                            // Entire polygon in plane
-                            (vec![poly.clone()], Vec::new())
-                        }
-                        FRONT | BACK => {
-                            // Entirely on one side => no intersection
-                            (Vec::new(), Vec::new())
-                        }
-                        SPANNING => {
-                            // The polygon crosses the plane => gather intersection edges
-                            let mut crossing_points = Vec::new();
-                            for i in 0..vcount {
-                                let j = (i + 1) % vcount;
-                                let ti = types[i];
-                                let tj = types[j];
-                                let vi = &poly.vertices[i];
-                                let vj = &poly.vertices[j];
-
-                                if (ti | tj) == SPANNING {
-                                    let denom = slicing_plane
-                                        .normal
-                                        .dot(&(vj.pos - vi.pos));
-                                    if denom.abs() > EPSILON {
-                                        let t = (slicing_plane.w
-                                            - slicing_plane.normal.dot(&vi.pos.coords))
-                                            / denom;
-                                        let intersect_vert = vi.interpolate(vj, t);
-                                        crossing_points.push(intersect_vert);
-                                    }
+                            if (ti | tj) == SPANNING {
+                                let denom = slicing_plane.normal.dot(&(vj.pos - vi.pos));
+                                if denom.abs() > EPSILON {
+                                    let t = (slicing_plane.w
+                                        - slicing_plane.normal.dot(&vi.pos.coords))
+                                        / denom;
+                                    let intersect_vert = vi.interpolate(vj, t);
+                                    crossing_points.push(intersect_vert);
                                 }
                             }
-
-                            // Pair up intersection points => edges
-                            let mut edges = Vec::new();
-                            for chunk in crossing_points.chunks_exact(2) {
-                                edges.push([chunk[0].clone(), chunk[1].clone()]);
-                            }
-                            (Vec::new(), edges)
                         }
-                        _ => (Vec::new(), Vec::new()),
+
+                        // Pair up intersection points => edges
+                        let mut edges = Vec::new();
+                        for chunk in crossing_points.chunks_exact(2) {
+                            edges.push([chunk[0].clone(), chunk[1].clone()]);
+                        }
+                        (Vec::new(), edges)
                     }
-                })
-                .reduce(
-                    || (Vec::new(), Vec::new()),
-                    |mut acc, x| {
-                        acc.0.extend(x.0);
-                        acc.1.extend(x.1);
-                        acc
-                    }
-                );
+                    _ => (Vec::new(), Vec::new()),
+                }
+            })
+            .reduce(
+                || (Vec::new(), Vec::new()),
+                |mut acc, x| {
+                    acc.0.extend(x.0);
+                    acc.1.extend(x.1);
+                    acc
+                },
+            );
 
         (coplanar_polygons, intersection_edges)
     }
