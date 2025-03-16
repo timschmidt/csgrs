@@ -597,9 +597,9 @@ impl Real {
         if exp.sign() == Sign::Minus && self.definitely_zero() {
             return Err(Problem::NotANumber);
         }
-        match &self.class {
-            One => {
-                if let Ok(rational) = self.rational.clone().powi(exp.clone()) {
+        if let Ok(rational) = self.rational.clone().powi(exp.clone()) {
+            match &self.class {
+                One => {
                     return Ok(Self {
                         rational,
                         class: One,
@@ -607,42 +607,45 @@ impl Real {
                         signal: None,
                     });
                 }
-            }
-            Sqrt(sqrt) => {
-                let odd = exp.bit(0);
-                let rf1 = Self::new(self.rational.powi(exp.clone())?);
-                let square = Self::new(sqrt.clone());
-                let rf2 = square.powi(exp >> 1)?;
-                let product = rf1 * rf2;
-                if odd {
-                    let n = Self {
-                        rational: Rational::one(),
-                        class: Sqrt(sqrt.clone()),
-                        computable: self.computable,
-                        signal: None,
+                Sqrt(sqrt) => 'quick: {
+                    let odd = exp.bit(0);
+                    let Ok(rf2) = sqrt.clone().powi(exp.clone() >> 1) else {
+                        break 'quick;
                     };
-                    return Ok(product * n);
-                } else {
-                    return Ok(product);
+                    let product = rational * rf2;
+                    if odd {
+                        let n = Self {
+                            rational: product,
+                            class: Sqrt(sqrt.clone()),
+                            computable: self.computable,
+                            signal: None,
+                        };
+                        return Ok(n);
+                    } else {
+                        return Ok(Self::new(product));
+                    }
                 }
+                _ => (),
             }
-            _ => (),
         }
-        // We can sometims do better here if we know an exact square root
         self.exp_ln_powi(exp)
     }
 
     /// Raise this Real to some Real exponent
+    /// NB: Currently only integer powers are implemented - you can raise any real
+    /// but only to integer powers
     pub fn pow(self, exp: Self) -> Result<Self, Problem> {
         if exp.class == One {
             match exp.rational.to_big_integer() {
                 Some(n) => {
                     return self.powi(n);
                 }
-                None => todo!(),
+                None => {
+                    return Err(Problem::NotAnInteger);
+                }
             }
         }
-        todo!()
+        Err(Problem::NotAnInteger)
     }
 
     /// Is this Real an integer ?
