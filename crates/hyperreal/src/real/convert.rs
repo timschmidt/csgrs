@@ -49,12 +49,16 @@ impl TryFrom<f64> for Real {
 
 impl Real {
     pub(crate) fn fold(self) -> Computable {
-        use crate::real::Class;
+        use crate::real::{rationals, Class};
 
-        let mut c = Computable::rational(self.rational);
-        if self.class != Class::One {
-            c = c.multiply(self.computable);
-        }
+        let mut c = if self.rational == *rationals::ONE {
+            self.computable
+        } else if self.class == Class::One {
+            Computable::rational(self.rational)
+        } else {
+            Computable::rational(self.rational).multiply(self.computable)
+        };
+
         if let Some(s) = self.signal {
             c.abort(s.clone());
         }

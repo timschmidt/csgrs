@@ -54,6 +54,7 @@ mod rationals {
 
     pub(super) static HALF: LazyLock<Rational> =
         LazyLock::new(|| Rational::fraction(1, 2).unwrap());
+    pub(super) static ONE: LazyLock<Rational> = LazyLock::new(|| Rational::new(1));
 }
 
 mod unsigned {
