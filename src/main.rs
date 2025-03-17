@@ -12,7 +12,7 @@ use csgrs::plane::Plane;
 use image::{GrayImage, ImageBuffer};
 
 #[cfg(feature = "metaballs")]
-use csgrs::csg::MetaBall;
+use csgrs::metaballs::MetaBall;
 
 // A type alias for convenience: no shared data, i.e. S = ()
 type CSG = csgrs::csg::CSG<()>;
