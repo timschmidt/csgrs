@@ -34,6 +34,13 @@ let stl = difference_result.to_stl_ascii("cube_minus_sphere");
 std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 ```
 
+### Building for WASM
+
+```shell
+export RUSTFLAGS='--cfg getrandom_backend="wasm_js"'
+cargo build --features="wasm" --target=wasm32-unknown-unknown --release
+```
+
 ### CSG Structure
 
 - **`CSG<S>`** is the main type. It stores:
@@ -448,20 +455,17 @@ Patterns we work to follow throughout the library to improve performance and mem
 - verify functions against robust predicates here: https://github.com/hayashi-stl/robust-geo/blob/main/src/geo.rs
 - https://github.com/u65xhd/meshvox
 - https://crates.io/crates/geo-validity-check as compile time option
-  - updated dep versions here: https://github.com/TimTheBig/geo-validity-check
 - https://crates.io/crates/geo-index
 - https://github.com/lelongg/geo-rand
 - renderer integration
   - blueprint renders
   - exploded renders
-    - store explode vector along with each shape
 - airfoil cross-sections
 - implement 2D line, point, LineString functions for CSG
 - https://github.com/hmeyer/tessellation
 - emit TrueType glyphs into the same MultiPolygon for each call of text()
 - evaluate using approx crate
 - evaluate using https://docs.rs/nalgebra/latest/nalgebra/trait.RealField.html instead of float_types::Real
-- investigate https://github.com/TimTheBig/geo-3d
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh

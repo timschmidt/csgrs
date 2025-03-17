@@ -182,5 +182,4 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // Return as a CSG
         CSG::from_polygons(&triangles)
     }
-
 }

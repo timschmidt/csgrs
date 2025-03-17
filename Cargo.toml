@@ -8,6 +8,9 @@ license = "MIT"
 repository = "https://github.com/timschmidt/csgrs"
 readme = "readme.md"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [profile.release]
 opt-level = 3
 lto = true
@@ -42,6 +45,8 @@ ttf-parser = { version = "0.11.0", optional = true }
 hershey = { version = "0.1.1", optional = true }
 fast-surface-nets = { version = "0.2.1", optional = true }
 hashbrown = { version = "0.15.2", optional = true }
+getrandom = { version = "0.2.15", features = ["js"], optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
 default = ["f64", "stl-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "image-io", "metaballs", "hashmap", "sdf", "offset"]
@@ -93,4 +98,8 @@ sdf = [
 ]
 offset = [
   "geo-buf",
+]
+wasm = [
+  "getrandom",
+  "wasm-bindgen",
 ]
