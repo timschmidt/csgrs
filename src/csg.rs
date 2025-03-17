@@ -202,6 +202,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// ```
     #[must_use = "Use new CSG representing space in both CSG's"]
     pub fn union(&self, other: &CSG<S>) -> CSG<S> {
+        // 3D union:
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
 
@@ -212,15 +213,16 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         b.invert();
         a.build(&b.all_polygons());
         
-        // Extract polygons from geometry
+        // 2D union:
+        // Extract multipolygon from geometry
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
     
-        // Perform union on those polygons
+        // Perform union on those multipolygons
         let unioned = polys1.union(polys2); // This is valid if each is a MultiPolygon
         let oriented = unioned.orient(Direction::Default);
     
-        // Wrap the unioned polygons + lines/points back into one GeometryCollection
+        // Wrap the unioned multipolygons + lines/points back into one GeometryCollection
         let mut final_gc = GeometryCollection::default();
         final_gc.0.push(Geometry::MultiPolygon(oriented));
         
@@ -228,7 +230,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         for g in &self.geometry.0 {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
-                    // skip polygons
+                    // skip [multi]polygons
                 }
                 _ => final_gc.0.push(g.clone())
             }
@@ -236,7 +238,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         for g in &other.geometry.0 {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
-                    // skip polygons
+                    // skip [multi]polygons
                 }
                 _ => final_gc.0.push(g.clone())
             }
@@ -264,6 +266,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// ```
     #[must_use = "Use new CSG"]
     pub fn difference(&self, other: &CSG<S>) -> CSG<S> {
+        // 3D difference:
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
 
@@ -276,15 +279,15 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         a.build(&b.all_polygons());
         a.invert();
         
-        // -- 2D geometry-based approach --
+        // 2D difference:
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
     
-        // Perform difference on those polygons
+        // Perform difference on those multipolygons
         let differenced = polys1.difference(polys2);
         let oriented = differenced.orient(Direction::Default);
     
-        // Wrap the differenced polygons + lines/points back into one GeometryCollection
+        // Wrap the differenced multipolygons + lines/points back into one GeometryCollection
         let mut final_gc = GeometryCollection::default();
         final_gc.0.push(Geometry::MultiPolygon(oriented));
     
@@ -318,6 +321,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///          +-------+
     /// ```
     pub fn intersection(&self, other: &CSG<S>) -> CSG<S> {
+        // 3D intersection:
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
 
@@ -329,15 +333,15 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         a.build(&b.all_polygons());
         a.invert();
         
-        // -- 2D geometry-based approach --
+        // 2D intersection:
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
     
-        // Perform intersection on those polygons
+        // Perform intersection on those multipolygons
         let intersected = polys1.intersection(polys2);
         let oriented = intersected.orient(Direction::Default);
     
-        // Wrap the intersected polygons + lines/points into one GeometryCollection
+        // Wrap the intersected multipolygons + lines/points into one GeometryCollection
         let mut final_gc = GeometryCollection::default();
         final_gc.0.push(Geometry::MultiPolygon(oriented));
     
@@ -378,6 +382,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///          +-------+            +-------+
     /// ```
     pub fn xor(&self, other: &CSG<S>) -> CSG<S> {
+        // 3D and 2D xor:
         // A \ B
         let a_sub_b = self.difference(other);
     
