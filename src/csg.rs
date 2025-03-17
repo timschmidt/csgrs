@@ -393,7 +393,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         a_sub_b.union(&b_sub_a)
         
         /* here in case 2D xor misbehaves as an alternate implementation
-        // -- 2D geometry-based approach only (no polygon-based Node usage here) --
+        // 2D xor:
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
     
