@@ -11,5 +11,8 @@ pub mod csg;
 pub mod shapes2d;
 pub mod shapes3d;
 
+#[cfg(feature = "metaballs")]
+pub mod metaballs;
+
 #[cfg(test)]
 mod tests;
