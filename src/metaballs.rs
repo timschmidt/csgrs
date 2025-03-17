@@ -34,7 +34,7 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
     value
 }
 
-impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {    
+impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
     /// - `balls`: array of (center, radius).
     /// - `resolution`: (nx, ny) grid resolution for marching squares.

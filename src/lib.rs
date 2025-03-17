@@ -12,6 +12,9 @@ pub mod shapes2d;
 pub mod shapes3d;
 pub mod extrudes;
 
+#[cfg(feature = "sdf")]
+pub mod sdf;
+
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
 
