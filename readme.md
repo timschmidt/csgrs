@@ -466,6 +466,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - emit TrueType glyphs into the same MultiPolygon for each call of text()
 - evaluate using approx crate
 - evaluate using https://docs.rs/nalgebra/latest/nalgebra/trait.RealField.html instead of float_types::Real
+- mutable API for transmute, etc.
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh

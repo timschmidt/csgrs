@@ -12,6 +12,21 @@ pub mod shapes2d;
 pub mod shapes3d;
 pub mod extrudes;
 
+#[cfg(feature = "truetype-text")]
+pub mod truetype;
+
+#[cfg(feature = "image-io")]
+pub mod image;
+
+#[cfg(feature = "offset")]
+pub mod offset;
+
+#[cfg(feature = "chull-io")]
+pub mod convex_hull;
+
+#[cfg(feature = "hershey-text")]
+pub mod hershey;
+
 #[cfg(feature = "sdf")]
 pub mod sdf;
 
