@@ -411,7 +411,9 @@ Patterns we work to follow throughout the library to improve performance and mem
 - bending
 - gears
 - lead-ins, lead-outs
-- gpu accelleration?
+- gpu accelleration
+  - https://github.com/dimforge/wgmath
+  - https://github.com/pcwalton/pathfinder
 - reduce dependency feature sets
 - space filling curves, hilbert sort polygons / points
 - identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold
@@ -453,6 +455,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - implement C FFI using https://rust-lang.github.io/rust-bindgen/
 - pull in https://crates.io/crates/geo-uom for units and dimensional analysis
 - verify functions against robust predicates here: https://github.com/hayashi-stl/robust-geo/blob/main/src/geo.rs
+  - https://proptest-rs.github.io/proptest/intro.html
 - https://github.com/u65xhd/meshvox
 - https://crates.io/crates/geo-validity-check as compile time option
 - https://crates.io/crates/geo-index
@@ -467,6 +470,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - evaluate using approx crate
 - evaluate using https://docs.rs/nalgebra/latest/nalgebra/trait.RealField.html instead of float_types::Real
 - mutable API for transmute, etc.
+- implement trait geo::MetricSpace on nalgebra::Point, Point2, Point3
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
