@@ -12,6 +12,9 @@ pub mod shapes2d;
 pub mod shapes3d;
 pub mod extrudes;
 
+#[cfg(feature = "hashmap")]
+pub mod flatten_slice;
+
 #[cfg(feature = "truetype-text")]
 pub mod truetype;
 
