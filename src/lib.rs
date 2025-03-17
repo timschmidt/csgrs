@@ -10,6 +10,7 @@ pub mod bsp;
 pub mod csg;
 pub mod shapes2d;
 pub mod shapes3d;
+pub mod extrudes;
 
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
