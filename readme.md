@@ -35,9 +35,18 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 ```
 
 ### Building for WASM
+In the Cargo.toml of your project: 
+csgrs = { version = "0.16.0", features=["wasm"] }
 
 ```shell
 cargo build --features="wasm" --target=wasm32-unknown-unknown --release
+```
+
+### Building for f32
+In the Cargo.toml of your project: 
+
+```
+csgrs = { version = "0.16.0", default-features=false, features=["f32"] }
 ```
 
 ### CSG Structure
