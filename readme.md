@@ -381,7 +381,9 @@ if let Some(data_mut) = poly.metadata_mut() {
 }
 ```
 
----
+## Examples
+- [csgrs-bevy-example](https://github.com/timschmidt/csgrs-bevy-example)
+- [csgrs-egui-example](https://github.com/timschmidt/csgrs-egui-example)
 
 ## Performance
 Patterns we work to follow throughout the library to improve performance and memory usage:
@@ -480,7 +482,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - https://crates.io/crates/spherical_geometry
 - https://crates.io/crates/miniproj
 - examine https://crates.io/crates/geo-aid constraint solver
----
 
 ## License
 
