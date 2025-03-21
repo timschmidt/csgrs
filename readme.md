@@ -384,6 +384,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 ## Examples
 - [csgrs-bevy-example](https://github.com/timschmidt/csgrs-bevy-example)
 - [csgrs-egui-example](https://github.com/timschmidt/csgrs-egui-example)
+- [csgrs-druid-example](https://github.com/timschmidt/csgrs-druid-example)
 
 ## Performance
 Patterns we work to follow throughout the library to improve performance and memory usage:
