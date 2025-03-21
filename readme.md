@@ -472,6 +472,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - evaluate using https://docs.rs/nalgebra/latest/nalgebra/trait.RealField.html instead of float_types::Real
 - mutable API for transmute, etc.
 - implement trait geo::MetricSpace on nalgebra::Point, Point2, Point3
+- investigate https://github.com/TimTheBig/geo-3d for useful functions
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
