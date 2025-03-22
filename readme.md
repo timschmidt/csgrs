@@ -457,6 +457,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - implement C FFI using https://rust-lang.github.io/rust-bindgen/
 - pull in https://crates.io/crates/geo-uom for units and dimensional analysis
 - verify functions against robust predicates here: https://github.com/hayashi-stl/robust-geo/blob/main/src/geo.rs
+  - https://github.com/georust/robust
   - https://proptest-rs.github.io/proptest/intro.html
 - https://github.com/u65xhd/meshvox
 - https://crates.io/crates/geo-validity-check as compile time option
