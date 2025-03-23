@@ -413,7 +413,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - bending
 - gears
 - lead-ins, lead-outs
-- gpu accelleration
+- gpu acceleration
   - https://github.com/dimforge/wgmath
   - https://github.com/pcwalton/pathfinder
 - reduce dependency feature sets
@@ -441,7 +441,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - test geo_booleanop as alternative to geo's built-in boolean ops.
 - adapt cavalier_contours demo application
 - rethink metadata
-  - support storing UV[W] coordinates with vertexes at compile time (try to keep runtime cost low too)
+  - support storing UV[W] coordinates with vertices at compile time (try to keep runtime cost low too)
   - accomplish equivalence checks and memory usage reduction by using a hashmap or references instead of storing metadata with each node
   - with equivalence checks, returning sorted metadata becomes easy
 - chamfers

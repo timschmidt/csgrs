@@ -6,6 +6,7 @@ use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 /// A plane in 3D space defined by a normal and a w-value
 #[derive(Debug, Clone)]
 pub struct Plane {
+    /// The direction of the plane
     pub normal: Vector3<Real>,
     pub w: Real,
 }
@@ -23,6 +24,7 @@ impl Plane {
         }
     }
 
+    /// Flips the normal of the plane
     pub fn flip(&mut self) {
         self.normal = -self.normal;
         self.w = -self.w;
