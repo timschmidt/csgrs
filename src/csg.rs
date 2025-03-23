@@ -235,7 +235,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    #[must_use = "Use new CSG representing space in both CSG's"]
+    #[must_use = "Use the new CSG representing space in both CSG's"]
     pub fn union(&self, other: &CSG<S>) -> CSG<S> {
         // 3D union:
         let mut a = Node::new(&self.polygons);
@@ -299,7 +299,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///          |       |
     ///          +-------+
     /// ```
-    #[must_use = "Use new CSG"]
+    #[must_use = "Use the new CSG"]
     pub fn difference(&self, other: &CSG<S>) -> CSG<S> {
         // 3D difference:
         let mut a = Node::new(&self.polygons);
@@ -355,6 +355,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///          |       |
     ///          +-------+
     /// ```
+    #[must_use = "Use the new CSG"]
     pub fn intersection(&self, other: &CSG<S>) -> CSG<S> {
         // 3D intersection:
         let mut a = Node::new(&self.polygons);
@@ -416,6 +417,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
+    #[must_use = "Use the new CSG"]
     pub fn xor(&self, other: &CSG<S>) -> CSG<S> {
         // 3D and 2D xor:
         // A \ B
@@ -1451,5 +1453,4 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
         Ok(buffer)
     }
-    
 }

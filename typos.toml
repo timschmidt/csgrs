@@ -1,0 +1,12 @@
+[files]
+extend-exclude = ["/target"]
+ignore-hidden = true
+
+[default]
+locale = "en"
+
+[default.extend-words]
+iy = "iy"
+frustrum = "frustrum"
+hom = "hom"
+toi = "toi"
