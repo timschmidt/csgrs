@@ -199,9 +199,9 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
                 // Order them so (p0, p1) and (p1, p0) become the same key
                 let (a_key, b_key) = if approx_lt(&p0, &p1) {
-                    (point_key(&p0), point_key(&p1))
+                    (point_key(p0), point_key(p1))
                 } else {
-                    (point_key(&p1), point_key(&p0))
+                    (point_key(p1), point_key(p0))
                 };
 
                 *edge_counts.entry((a_key, b_key)).or_insert(0) += 1;

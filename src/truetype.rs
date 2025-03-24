@@ -168,7 +168,7 @@ struct OutlineFlattener {
 }
 
 impl OutlineFlattener {
-    fn new(scale: Real, offset_x: Real, offset_y: Real) -> Self {
+    const fn new(scale: Real, offset_x: Real, offset_y: Real) -> Self {
         Self {
             scale,
             offset_x,

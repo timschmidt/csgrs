@@ -1285,10 +1285,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
         for tri_result in stl_reader {
             // Handle potential errors from the STL reader
-            let tri = match tri_result {
-                Ok(t) => t,
-                Err(e) => return Err(e), // Propagate the error
-            };
+            let tri = tri_result?;
 
             // Construct vertices and a polygon
             let vertices = vec![

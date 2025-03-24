@@ -215,7 +215,7 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
     }
     
     /// Returns a reference to the metadata, if any.
-    pub fn metadata(&self) -> Option<&S> {
+    pub const fn metadata(&self) -> Option<&S> {
         self.metadata.as_ref()
     }
 
