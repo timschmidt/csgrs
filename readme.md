@@ -476,6 +476,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - implement trait geo::MetricSpace on nalgebra::Point, Point2, Point3
 - investigate https://github.com/TimTheBig/geo-3d for useful functions
 - gltf / obj / gerber output
+- 3d offset: https://github.com/komadori/bevy_mod_outline/
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
