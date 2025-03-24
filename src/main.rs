@@ -353,8 +353,36 @@ fn main() {
     let _ = fs::write("stl/keyhole_2d.stl", keyhole_2d.to_stl_ascii("keyhole_2d"));
 
     // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux_2d = CSG::reuleaux_polygon(4, 12.0, 16, None); // Reuleaux triangle
-    let _ = fs::write("stl/reuleaux_2d.stl", reuleaux_2d.to_stl_ascii("reuleaux_2d"));
+    let reuleaux3_2d = CSG::reuleaux_polygon(3, 2.0, 16, None); // Reuleaux triangle
+    let _ = fs::write("stl/reuleaux3_2d.stl", reuleaux3_2d.to_stl_ascii("reuleaux_2d"));
+
+    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
+    let reuleaux4_2d = CSG::reuleaux_polygon(4, 2.0, 16, None); // Reuleaux triangle
+    let _ = fs::write("stl/reuleaux4_2d.stl", reuleaux4_2d.to_stl_ascii("reuleaux_2d"));
+
+    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
+    let reuleaux5_2d = CSG::reuleaux_polygon(5, 2.0, 16, None); // Reuleaux triangle
+    let _ = fs::write("stl/reuleaux5_2d.stl", reuleaux5_2d.to_stl_ascii("reuleaux_2d"));
+    
+    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
+    let reuleaux6_2d = CSG::reuleaux_polygon(6, 2.0, 16, None); // Reuleaux triangle
+    let _ = fs::write("stl/reuleaux6_2d.stl", reuleaux6_2d.to_stl_ascii("reuleaux_2d"));
+    
+    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
+    let reuleaux7_2d = CSG::reuleaux_polygon(7, 2.0, 16, None); // Reuleaux triangle
+    let _ = fs::write("stl/reuleaux7_2d.stl", reuleaux7_2d.to_stl_ascii("reuleaux_2d"));
+    
+    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
+    let reuleaux8_2d = CSG::reuleaux_polygon(8, 2.0, 16, None); // Reuleaux triangle
+    let _ = fs::write("stl/reuleaux8_2d.stl", reuleaux8_2d.to_stl_ascii("reuleaux_2d"));
+    
+    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
+    let reuleaux9_2d = CSG::reuleaux_polygon(9, 2.0, 16, None); // Reuleaux triangle
+    let _ = fs::write("stl/reuleaux9_2d.stl", reuleaux9_2d.to_stl_ascii("reuleaux_2d"));
+    
+    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
+    let reuleaux10_2d = CSG::reuleaux_polygon(10, 2.0, 16, None); // Reuleaux triangle
+    let _ = fs::write("stl/reuleaux10_2d.stl", reuleaux10_2d.to_stl_ascii("reuleaux_2d"));
 
     // 13) ring(inner_diam, thickness, segments)
     let ring_2d = CSG::ring(5.0, 1.0, 32, None);
