@@ -1,5 +1,5 @@
 #[cfg(test)]
-use crate::float_types::{Real, EPSILON};
+use crate::float_types::{Real, EPSILON, FRAC_PI_2};
 use crate::bsp::Node;
 use crate::vertex::Vertex;
 use crate::plane::Plane;
@@ -1023,7 +1023,7 @@ fn test_csg_to_rigid_body() {
         &mut rb_set,
         &mut co_set,
         Vector3::new(10.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, Real::from(std::f64::consts::FRAC_PI_2)), // 90 deg around Z
+        Vector3::new(0.0, 0.0, FRAC_PI_2), // 90 deg around Z
         1.0,
     );
     let rb = rb_set.get(handle).unwrap();
