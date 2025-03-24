@@ -43,7 +43,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                         poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
                     let interior_rings: Vec<Vec<[Real; 2]>> = poly
                         .interiors()
-                        .into_iter()
+                        .iter()
                         .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
                         .collect();
 

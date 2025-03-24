@@ -500,8 +500,10 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     }
 
     /// Create a 2D supershape in the XY plane, approximated by `segments` edges.
-    /// The superformula parameters are typically:
+    ///
+    /// The superformula parameters are typically:\
     ///   r(θ) = [ (|cos(mθ/4)/a|^n2 + |sin(mθ/4)/b|^n3) ^ (-1/n1) ]
+    ///
     /// Adjust as needed for your use-case.
     pub fn supershape(
         a: Real,

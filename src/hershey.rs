@@ -65,7 +65,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         CSG {
             polygons: Vec::new(),
             geometry: geo_coll,
-            metadata: metadata,
+            metadata,
         }
     }
 }

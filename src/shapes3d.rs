@@ -564,7 +564,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // Compute the rotation that maps the canonical +Z axis to the provided direction.
         let z_axis = Vector3::z();
         let rotation = Rotation3::rotation_between(&z_axis, &unit_dir)
-            .unwrap_or_else(|| Rotation3::identity());
+            .unwrap_or_else(Rotation3::identity);
         let rot_mat: Matrix4<Real> = rotation.to_homogeneous();
     
         // Rotate the arrow.

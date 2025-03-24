@@ -14,7 +14,7 @@ pub struct MetaBall {
 }
 
 impl MetaBall {
-    pub fn new(center: Point3<Real>, radius: Real) -> Self {
+    pub const fn new(center: Point3<Real>, radius: Real) -> Self {
         Self { center, radius }
     }
 

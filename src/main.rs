@@ -156,7 +156,7 @@ fn main() {
 
     // 14) Mass properties (just printing them)
     let (mass, com, principal_frame) = cube.mass_properties(1.0);
-    println!("Cube mass = {}", mass);
+    println!("Cube mass = {mass}");
     println!("Cube center of mass = {:?}", com);
     println!("Cube principal inertia local frame = {:?}", principal_frame);
     
@@ -397,8 +397,8 @@ fn main() {
         let center = (32, 32);
         for y in 0..64 {
             for x in 0..64 {
-                let dx = x as i32 - center.0 as i32;
-                let dy = y as i32 - center.1 as i32;
+                let dx = x as i32 - center.0;
+                let dy = y as i32 - center.1;
                 if dx*dx + dy*dy < 15*15 {
                     img.put_pixel(x, y, image::Luma([255u8]));
                 }
