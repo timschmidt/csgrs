@@ -4,7 +4,8 @@
 //! Unless stated otherwise, all tolerances are governed by
 //! `float_types::EPSILON`.
 
-use crate::float_types::{EPSILON, Real};
+use std::ops::Neg;
+use crate::float_types::{Real, EPSILON};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
@@ -34,9 +35,26 @@ pub struct Plane {
     pub point_c: Point3<Real>,
 }
 
+impl Neg for Plane {
+    type Output = Self;
+
+    /// [`flip`](Plane::flip) the `Plane`
+    fn neg(self) -> Self::Output {
+        Self {
+            normal: -self.normal,
+            w: -self.w,
+        }
+    }
+}
+
 impl Plane {
     /// Create a plane from three points
     pub fn from_points(a: &Point3<Real>, b: &Point3<Real>, c: &Point3<Real>) -> Plane {
+        let n = (b - a).cross(&(c - a)).normalize();
+        if n.magnitude_squared() < EPSILON * EPSILON {
+            panic!("Degenerate polygon: vertices do not define a plane"); // todo: return error
+        }
+
         Plane {
             point_a: *a,
             point_b: *b,
