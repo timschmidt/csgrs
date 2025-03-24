@@ -1,14 +1,28 @@
+use std::ops::Neg;
 use crate::float_types::{Real, EPSILON};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 
-/// A plane in 3D space defined by a normal and a w-value
+/// A plane in 3D space defined by a normal and an intercept
 #[derive(Debug, Clone)]
 pub struct Plane {
-    /// The direction of the plane
+    /// The direction of the plane, which defines a vector that is perpendicular to the plane.
     pub normal: Vector3<Real>,
+    /// Y-intercept of the plane, the distance along the normal at which it's crossed by the plane.
     pub w: Real,
+}
+
+impl Neg for Plane {
+    type Output = Self;
+
+    /// [`flip`](Plane::flip) the `Plane`
+    fn neg(self) -> Self::Output {
+        Self {
+            normal: -self.normal,
+            w: -self.w,
+        }
+    }
 }
 
 impl Plane {
@@ -18,13 +32,14 @@ impl Plane {
         if n.magnitude() < EPSILON {
             panic!("Degenerate polygon: vertices do not define a plane"); // todo: return error
         }
+
         Plane {
             normal: n,
             w: n.dot(&a.coords),
         }
     }
 
-    /// Flips the normal of the plane
+    /// Flips the normal of the plane, in place
     pub fn flip(&mut self) {
         self.normal = -self.normal;
         self.w = -self.w;

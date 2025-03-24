@@ -1,3 +1,5 @@
+//! This module contains the implementation of the [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree data structure
+
 use crate::float_types::EPSILON;
 use crate::plane::Plane;
 use crate::polygon::Polygon;
@@ -9,7 +11,7 @@ use rayon::prelude::*;
 #[cfg(feature = "parallel")]
 use rayon::join;
 
-/// A BSP tree node, containing polygons plus optional front/back subtrees
+/// A [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node, containing polygons plus optional front/back subtrees
 #[derive(Debug, Clone)]
 pub struct Node<S: Clone> {
     pub plane: Option<Plane>,
