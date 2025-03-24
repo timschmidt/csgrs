@@ -9,6 +9,7 @@ repository = "https://github.com/timschmidt/csgrs"
 readme = "readme.md"
 keywords = ["geometry", "physics", "csg", "slicing", "offsetting"]
 categories = ["game-development", "graphics", "mathematics", "simulation", "wasm"]
+rust-version = "1.85.1"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
