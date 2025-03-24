@@ -169,9 +169,9 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// let bottom = Point3::new(0.0, 0.0, 0.0);
     /// let top = Point3::new(0.0, 0.0, 5.0);
     /// // This will create a cone (bottom degenerate) because radius1 is 0:
-    /// let cone = CSG::frustrum_ptp_special(bottom, top, 0.0, 2.0, 32, None);
+    /// let cone = CSG::frustum_ptp_special(bottom, top, 0.0, 2.0, 32, None);
     /// ```
-    pub fn frustrum_ptp(
+    pub fn frustum_ptp(
         start: Point3<Real>,
         end: Point3<Real>,
         radius1: Real,
@@ -230,7 +230,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             let slice0 = i as Real / segments as Real;
             let slice1 = (i + 1) as Real / segments as Real;
     
-            // In the normal frustrum_ptp, we always add a bottom cap triangle (fan) and a top cap triangle.
+            // In the normal frustum_ptp, we always add a bottom cap triangle (fan) and a top cap triangle.
             // Here, we only add the cap triangle if the corresponding radius is not degenerate.
             if !bottom_degenerate {
                 // Bottom cap: a triangle fan from the bottom center to two consecutive points on the bottom ring.
@@ -297,8 +297,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     
     // A helper to create a vertical cylinder along Z from z=0..z=height
     // with the specified radius (NOT diameter).
-    pub fn frustrum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
-        CSG::frustrum_ptp(
+    pub fn frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
+        CSG::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
             radius1,
@@ -311,7 +311,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     // A helper to create a vertical cylinder along Z from z=0..z=height
     // with the specified radius (NOT diameter).
     pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
-        CSG::frustrum_ptp(
+        CSG::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
             radius.clone(),
@@ -490,7 +490,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     
     /// Creates an arrow CSG. The arrow is composed of:
     ///   - a cylindrical shaft, and
-    ///   - a cone–like head (a frustrum from a larger base to a small tip)
+    ///   - a cone–like head (a frustum from a larger base to a small tip)
     /// built along the canonical +Z axis. The arrow is then rotated so that +Z aligns with the given
     /// direction, and finally translated so that either its base (if `orientation` is false)
     /// or its tip (if `orientation` is true) is located at `start`.
@@ -501,7 +501,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// # Parameters
     /// - `start`: the reference point (base or tip, depending on orientation)
     /// - `direction`: the vector defining arrow length and intended pointing direction
-    /// - `segments`: number of segments for approximating the cylinder and frustrum
+    /// - `segments`: number of segments for approximating the cylinder and frustum
     /// - `orientation`: when false (default) the arrow points away from start (its base is at start);
     ///                        when true the arrow points toward start (its tip is at start).
     /// - `metadata`: optional metadata for the generated polygons.
@@ -534,8 +534,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // Build the shaft as a vertical cylinder along Z from 0 to shaft_length.
         let shaft = CSG::cylinder(shaft_radius, shaft_length, segments, metadata.clone());
     
-        // Build the arrow head as a frustrum from z = shaft_length to z = shaft_length + head_length.
-        let head = CSG::frustrum_ptp(
+        // Build the arrow head as a frustum from z = shaft_length to z = shaft_length + head_length.
+        let head = CSG::frustum_ptp(
             Point3::new(0.0, 0.0, shaft_length),
             Point3::new(0.0, 0.0, shaft_length + head_length),
             head_base_radius,

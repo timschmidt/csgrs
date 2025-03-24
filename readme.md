@@ -116,8 +116,8 @@ let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.poly
 - **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
 - **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
 - **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::frustrum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum at origin with height and `radius1` and `radius2`.  If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
-- **`CSG::frustrum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum from `start` to `end` with `radius1` and `radius2`.  If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
+- **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum at origin with height and `radius1` and `radius2`.  If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
+- **`CSG::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum from `start` to `end` with `radius1` and `radius2`.  If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
 - **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
 - **`CSG::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: Option<S>)`**
 - **`CSG::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: Option<S>)`**
