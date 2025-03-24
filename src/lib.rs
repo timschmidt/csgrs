@@ -26,6 +26,8 @@
 //! - **earcut**: use `geo`s `earcutr` feature for triangulation
 
 #![forbid(unsafe_code)]
+#![deny(unused)]
+#![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
 
 pub mod errors;
 pub mod float_types;
