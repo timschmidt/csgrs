@@ -297,8 +297,8 @@ fn main() {
     let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
     
     // An ellipsoid with X radius=2, Y radius=1, Z radius=3
-    let ellip = CSG::ellipsoid(2.0, 1.0, 3.0, 16, 8, None);
-    let _ = fs::write("stl/ellip.stl", ellip.to_stl_ascii("ellip"));
+    let ellipsoid = CSG::ellipsoid(2.0, 1.0, 3.0, 16, 8, None);
+    let _ = fs::write("stl/ellipsoid.stl", ellipsoid.to_stl_ascii("ellipsoid"));
     
     // A teardrop 'blank' hole
     let teardrop_cylinder = CSG::teardrop_cylinder(2.0, 4.0, 32.0, 16, None);
@@ -321,8 +321,8 @@ fn main() {
     let _ = fs::write("stl/rounded_rectangle_2d.stl", rrect_2d.to_stl_ascii("rounded_rectangle_2d"));
 
     // 3) ellipse(width, height, segments)
-    let ellipse_2d = CSG::ellipse(3.0, 1.5, 32, None);
-    let _ = fs::write("stl/ellipse_2d.stl", ellipse_2d.to_stl_ascii("ellipse_2d"));
+    let ellipse = CSG::ellipse(3.0, 1.5, 32, None);
+    let _ = fs::write("stl/ellipse.stl", ellipse.to_stl_ascii("ellipse"));
 
     // 4) regular_ngon(sides, radius)
     let ngon_2d = CSG::regular_ngon(6, 1.0, None); // Hexagon
@@ -404,7 +404,7 @@ fn main() {
                 }
             }
         }
-        let csg_img = CSG::from_image(&img, 128, true, None);
+        let csg_img = CSG::from_image(&img, 128, true, None).center();
         let _ = fs::write("stl/from_image.stl", csg_img.to_stl_ascii("from_image"));
     }
 
