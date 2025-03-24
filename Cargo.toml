@@ -57,11 +57,11 @@ default = ["f64", "stl-io","svg-io", "dxf-io", "truetype-text", "hershey-text", 
 parallel = [
     "rayon",
     "geo/multithreading",
-    "hashbrown/rayon",
-    "parry3d/parallel",
-    "parry3d-f64/parallel",
-    "rapier3d/parallel",
-    "rapier3d-f64/parallel"
+    "hashbrown?/rayon",
+    "parry3d?/parallel",
+    "parry3d-f64?/parallel",
+    "rapier3d?/parallel",
+    "rapier3d-f64?/parallel"
 ]
 f64 = [
   "rapier3d-f64",
