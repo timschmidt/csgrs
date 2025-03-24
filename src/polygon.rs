@@ -4,7 +4,7 @@ use crate::plane::Plane;
 use nalgebra::{
     Point2, Point3, Vector3,
 };
-use geo::{ Polygon as GeoPolygon, TriangulateEarcut, LineString, coord, };
+use geo::{ Polygon as GeoPolygon, LineString, coord, };
 
 /// A polygon, defined by a list of vertices and a plane.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
@@ -67,25 +67,61 @@ impl<S: Clone> Polygon<S> where S: Clone + Send + Sync {
             all_vertices_2d.push(coord!{x: x, y: y});
         }
     
-        //println!("{:#?}",  LineString::new(all_vertices_2d.clone()));
-        let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new()).earcut_triangles_raw();
-        let triangle_indices = triangulation.triangle_indices;
-        let vertices = triangulation.vertices;
-    
-        // Convert back into 3D triangles
-        let mut triangles = Vec::with_capacity(triangle_indices.len() / 3);
-        for tri_chunk in triangle_indices.chunks_exact(3) {
-            let mut tri_vertices = [const{Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0))}; 3];
-            for (k, &idx) in tri_chunk.iter().enumerate() {
-                let base = idx * 2;
-                let x = vertices[base];
-                let y = vertices[base + 1];
-                let pos_3d = origin_3d.coords + (x * u) + (y * v);
-                tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
+        #[cfg(feature = "earcut")]
+        {
+            use geo::TriangulateEarcut;
+            //println!("{:#?}",  LineString::new(all_vertices_2d.clone()));
+            let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new()).earcut_triangles_raw();
+            let triangle_indices = triangulation.triangle_indices;
+            let vertices = triangulation.vertices;
+            
+            // Convert back into 3D triangles
+            let mut triangles = Vec::with_capacity(triangle_indices.len() / 3);
+            for tri_chunk in triangle_indices.chunks_exact(3) {
+                let mut tri_vertices = [const{Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0))}; 3];
+                for (k, &idx) in tri_chunk.iter().enumerate() {
+                    let base = idx * 2;
+                    let x = vertices[base];
+                    let y = vertices[base + 1];
+                    let pos_3d = origin_3d.coords + (x * u) + (y * v);
+                    tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
+                }
+                triangles.push(tri_vertices);
             }
-            triangles.push(tri_vertices);
+            triangles
         }
-        triangles
+        
+        #[cfg(feature = "delaunay")]
+        {
+            use geo::TriangulateSpade;
+            let polygon_2d = GeoPolygon::new(
+                LineString::new(all_vertices_2d),
+                // no holes if your polygon is always simple
+                Vec::new()
+            );
+            let Ok(tris) = polygon_2d.constrained_triangulation(Default::default()) else {
+                return Vec::new(); // or handle however you wish
+            };
+            
+            let mut final_triangles = Vec::with_capacity(tris.len());
+            for tri2d in tris {
+                // tri2d is a geo::Triangle in 2D
+                // Convert each corner from (x,y) to 3D again
+                let [coord_a, coord_b, coord_c] = [tri2d.0, tri2d.1, tri2d.2];
+                let pos_a_3d = origin_3d.coords + coord_a.x * u + coord_a.y * v;
+                let pos_b_3d = origin_3d.coords + coord_b.x * u + coord_b.y * v;
+                let pos_c_3d = origin_3d.coords + coord_c.x * u + coord_c.y * v;
+        
+                final_triangles.push([
+                    Vertex::new(Point3::from(pos_a_3d), normal_3d),
+                    Vertex::new(Point3::from(pos_b_3d), normal_3d),
+                    Vertex::new(Point3::from(pos_c_3d), normal_3d),
+                ]);
+            }
+            final_triangles
+        }
+    
+       
     }
 
     /// Subdivide this polygon into smaller triangles.

@@ -7,7 +7,7 @@ use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3, partial_min, partial_max,
 };
 use geo::{
-    AffineTransform, AffineOps, BoundingRect, BooleanOps, Coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Orient, orient::Direction, Polygon as GeoPolygon, Rect, TriangulateEarcut,
+    AffineTransform, AffineOps, BoundingRect, BooleanOps, Coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Orient, orient::Direction, Polygon as GeoPolygon, Rect,
 };
 //extern crate geo_booleanop;
 //use geo_booleanop::boolean::BooleanOp;
@@ -170,21 +170,56 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     
         // Ear-cut triangulation on the polygon (outer + holes)
         let polygon = GeoPolygon::new(LineString::new(outer_coords), holes_coords);
-        let triangulation = polygon.earcut_triangles_raw();
-        let triangle_indices = triangulation.triangle_indices;
-        let vertices = triangulation.vertices;
-    
-        // Convert the 2D result (x,y) into 3D triangles with z=0
-        let mut result = Vec::with_capacity(triangle_indices.len() / 3);
-        for tri in triangle_indices.chunks_exact(3) {
-            let pts = [
-                Point3::new(vertices[2 * tri[0]], vertices[2 * tri[0] + 1], 0.0),
-                Point3::new(vertices[2 * tri[1]], vertices[2 * tri[1] + 1], 0.0),
-                Point3::new(vertices[2 * tri[2]], vertices[2 * tri[2] + 1], 0.0),
-            ];
-            result.push(pts);
+        
+        #[cfg(feature = "earcut")]
+        {
+            use geo::TriangulateEarcut;
+            let triangulation = polygon.earcut_triangles_raw();
+            let triangle_indices = triangulation.triangle_indices;
+            let vertices = triangulation.vertices;
+        
+            // Convert the 2D result (x,y) into 3D triangles with z=0
+            let mut result = Vec::with_capacity(triangle_indices.len() / 3);
+            for tri in triangle_indices.chunks_exact(3) {
+                let pts = [
+                    Point3::new(vertices[2 * tri[0]], vertices[2 * tri[0] + 1], 0.0),
+                    Point3::new(vertices[2 * tri[1]], vertices[2 * tri[1] + 1], 0.0),
+                    Point3::new(vertices[2 * tri[2]], vertices[2 * tri[2] + 1], 0.0),
+                ];
+                result.push(pts);
+            }
+            result
         }
-        result
+        
+        #[cfg(feature = "delaunay")]
+        {
+            use geo::TriangulateSpade;
+            // We want polygons with holes => constrained triangulation.
+            // For safety, handle the Result the trait returns:
+            let Ok(tris) = polygon.constrained_triangulation(Default::default()) else {
+                // If a triangulation error is a possibility,
+                // pick the error-handling you want here:
+                return Vec::new();
+            };
+        
+            let mut result = Vec::with_capacity(tris.len());
+            for triangle in tris {
+                // Each `triangle` is a geo_types::Triangle whose `.0, .1, .2`
+                // are the 2D coordinates. We'll embed them at z=0.
+                let [a, b, c] = [
+                    triangle.0,
+                    triangle.1,
+                    triangle.2
+                ];
+                result.push([
+                    Point3::new(a.x, a.y, 0.0),
+                    Point3::new(b.x, b.y, 0.0),
+                    Point3::new(c.x, c.y, 0.0),
+                ]);
+            }
+            result
+        }
+        
     }
 
     /// Return a new CSG representing union of the two CSG's.
