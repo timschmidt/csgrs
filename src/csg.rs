@@ -878,7 +878,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // 2) Gather from the 2D geometry using `geo::BoundingRect`
         //    This gives us (min_x, min_y) / (max_x, max_y) in 2D. For 3D, treat z=0.
         //    Explicitly capture the result of `.bounding_rect()` as an Option<Rect<Real>>
-        let maybe_rect: Option<Rect<Real>> = self.geometry.bounding_rect().into();
+        let maybe_rect: Option<Rect<Real>> = self.geometry.bounding_rect();
     
         if let Some(rect) = maybe_rect {
             let min_pt = rect.min();

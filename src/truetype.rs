@@ -1,5 +1,5 @@
 use ttf_utils::Outline;
-use ttf_parser::{OutlineBuilder};
+use ttf_parser::OutlineBuilder;
 use crate::csg::CSG;
 use std::fmt::Debug;
 use crate::float_types::Real;
@@ -32,7 +32,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         metadata: Option<S>,
     ) -> Self {
         // 1) Parse the TTF font
-        let face = match ttf_parser::Face::from_slice(font_data, 0) {
+        let face = match ttf_parser::Face::parse(font_data, 0) {
             Ok(f) => f,
             Err(_) => {
                 // If the font fails to parse, return an empty 2D CSG
