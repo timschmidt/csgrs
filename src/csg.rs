@@ -1124,7 +1124,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         out
     }
 
-    /// Export to BINARY STL (returns Vec<u8>)
+    /// Export to BINARY STL (returns `Vec<u8>`)
     ///
     /// Convert this CSG to a **binary STL** byte vector with the given `name`.
     ///

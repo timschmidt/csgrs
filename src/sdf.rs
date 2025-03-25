@@ -9,18 +9,20 @@ use fast_surface_nets::{surface_nets, SurfaceNetsBuffer};
 impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// Return a CSG created by meshing a signed distance field within a bounding box
     ///
-    ///    // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
-    ///    let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
+    /// ```
+    /// // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
+    /// let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
     ///
-    ///    let resolution = (60, 60, 60);
-    ///    let min_pt = Point3::new(-2.0, -2.0, -2.0);
-    ///    let max_pt = Point3::new( 2.0,  2.0,  2.0);
-    ///    let iso_value = 0.0; // Typically zero for SDF-based surfaces
+    /// let resolution = (60, 60, 60);
+    /// let min_pt = Point3::new(-2.0, -2.0, -2.0);
+    /// let max_pt = Point3::new( 2.0,  2.0,  2.0);
+    /// let iso_value = 0.0; // Typically zero for SDF-based surfaces
     ///
-    ///    let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
+    /// let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
     ///
-    ///    // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
-    ///    let _ = std::fs::write("stl/sdf_sphere.stl", csg_shape.to_stl_binary("sdf_sphere").unwrap());
+    /// // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
+    /// let _ = std::fs::write("stl/sdf_sphere.stl", csg_shape.to_stl_binary("sdf_sphere").unwrap());
+    /// ```
     pub fn sdf<F>(
         sdf: F,
         resolution: (usize, usize, usize),

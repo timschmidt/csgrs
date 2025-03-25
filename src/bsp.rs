@@ -6,10 +6,7 @@ use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
-
-#[cfg(feature = "parallel")]
-use rayon::join;
+use rayon::{join, prelude::*};
 
 /// A [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node, containing polygons plus optional front/back subtrees
 #[derive(Debug, Clone)]
