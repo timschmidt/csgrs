@@ -6,7 +6,7 @@ use geo::{Geometry, GeometryCollection};
 
 impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
-    /// for each Polygon we convert to a cavalier_contours Polyline<Real> and call parallel_offset
+    /// for each Polygon we convert to a cavalier_contours `Polyline<Real>` and call `parallel_offset`
     pub fn offset(&self, distance: Real) -> CSG<S> {
         // For each Geometry in the collection:
         //   - If it's a Polygon, buffer it and store the result as a MultiPolygon

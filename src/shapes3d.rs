@@ -295,7 +295,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         CSG::from_polygons(&polygons)
     }
     
-    // A helper to create a vertical cylinder along Z from z=0..z=height
+    /// A helper to create a vertical cylinder along Z from z=0..z=height
     // with the specified radius (NOT diameter).
     pub fn frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
         CSG::frustum_ptp(
@@ -308,7 +308,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         )
     }
     
-    // A helper to create a vertical cylinder along Z from z=0..z=height
+    /// A helper to create a vertical cylinder along Z from z=0..z=height
     // with the specified radius (NOT diameter).
     pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
         CSG::frustum_ptp(
@@ -578,7 +578,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         final_arrow
     }
     
-        /// Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`.
+    /// Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`.
     ///
     /// # Parameters
     ///

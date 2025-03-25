@@ -4,7 +4,7 @@ use crate::plane::Plane;
 use nalgebra::{
     Point2, Point3, Vector3,
 };
-use geo::{ Polygon as GeoPolygon, LineString, coord, };
+use geo::{Polygon as GeoPolygon, LineString, coord};
 
 /// A polygon, defined by a list of vertices and a plane.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
