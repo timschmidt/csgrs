@@ -950,6 +950,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Returns a [`parry3d::bounding_volume::Aabb`] by merging:
     /// 1. The 3D bounds of all `polygons`.
     /// 2. The 2D bounding rectangle of `self.geometry`, interpreted at z=0.
+    ///
+    /// [`parry3d::bounding_volume::Aabb`]: crate::float_types::parry3d::bounding_volume::Aabb
     pub fn bounding_box(&self) -> Aabb {
         *self.bounding_box.get_or_init(|| {
             // Track overall min/max in x, y, z among all 3D polygons and the 2D geometry’s bounding_rect.
