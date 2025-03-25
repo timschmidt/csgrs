@@ -57,6 +57,7 @@ ttf-parser = { version = "^0.25", optional = true }
 hershey = { version = "0.1.1", optional = true }
 
 # wasm
+[target.'cfg(any(target_arch = "wasm32", target_arch = "wasm64"))'.dependencies]
 getrandom = { version = "0.3", features = ["wasm_js"], optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
 nom = { version = "7.1.3", optional = true }
@@ -115,10 +116,6 @@ sdf = [
 ]
 offset = [
   "geo-buf",
-]
-wasm = [
-  "getrandom",
-  "wasm-bindgen",
 ]
 delaunay = []
 earcut = []
