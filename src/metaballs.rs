@@ -1,3 +1,5 @@
+//! Implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
+
 use crate::csg::CSG;
 use crate::float_types::{Real, EPSILON};
 use crate::polygon::Polygon;
@@ -7,6 +9,11 @@ use geo::{coord, GeometryCollection, Geometry, LineString, Polygon as GeoPolygon
 use std::fmt::Debug;
 use fast_surface_nets::{surface_nets, SurfaceNetsBuffer};
 
+/// [Metaballs](https://en.wikipedia.org/wiki/Metaballs), organic-looking isosurface,
+/// characterised by their ability to meld together when in close proximity to create single objects. 
+///
+/// ![Metaballs demo image][Metaballs demo image]
+#[cfg_attr(doc, doc = embed_doc_image::embed_image!("Metaballs demo image", "docs/metaballs.png"))]
 #[derive(Debug, Clone)]
 pub struct MetaBall {
     pub center: Point3<Real>,
@@ -31,11 +38,13 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
     for ball in balls {
         value += ball.influence(p);
     }
+
     value
 }
 
 // Use fast-surface-nets to extract a mesh from this 3D scalar field.
 // We'll define a shape type for ndshape:
+/// The shape describing our discrete grid for Surface Nets
 #[allow(non_snake_case)]
 #[derive(Clone, Copy)]
 struct GridShape {
