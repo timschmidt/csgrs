@@ -1,3 +1,5 @@
+//! Implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
+
 use crate::csg::CSG;
 use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
@@ -37,6 +39,7 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
     for ball in balls {
         value += ball.influence(p);
     }
+
     value
 }
 
