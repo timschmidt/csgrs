@@ -15,6 +15,7 @@ use image::{GrayImage, ImageBuffer};
 use csgrs::metaballs::MetaBall;
 
 // A type alias for convenience: no shared data, i.e. S = ()
+#[allow(clippy::upper_case_acronyms)]
 type CSG = csgrs::csg::CSG<()>;
 
 fn main() {

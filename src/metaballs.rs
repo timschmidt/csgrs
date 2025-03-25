@@ -34,6 +34,46 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
     value
 }
 
+// Use fast-surface-nets to extract a mesh from this 3D scalar field.
+// We'll define a shape type for ndshape:
+#[allow(non_snake_case)]
+#[derive(Clone, Copy)]
+struct GridShape {
+    nx: u32,
+    ny: u32,
+    nz: u32,
+}
+
+impl fast_surface_nets::ndshape::Shape<3> for GridShape {
+    type Coord = u32;
+
+    #[inline]
+    fn as_array(&self) -> [Self::Coord; 3] {
+        [self.nx, self.ny, self.nz]
+    }
+
+    fn size(&self) -> Self::Coord {
+        self.nx * self.ny * self.nz
+    }
+
+    fn usize(&self) -> usize {
+        (self.nx * self.ny * self.nz) as usize
+    }
+
+    fn linearize(&self, coords: [Self::Coord; 3]) -> u32 {
+        let [x, y, z] = coords;
+        (z * self.ny + y) * self.nx + x
+    }
+
+    fn delinearize(&self, i: u32) -> [Self::Coord; 3] {
+        let x = i % (self.nx);
+        let yz = i / (self.nx);
+        let y = yz % (self.ny);
+        let z = yz / (self.ny);
+        [x, y, z]
+    }
+}
+
 impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
     /// - `balls`: array of (center, radius).
@@ -264,7 +304,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // Create and fill the scalar-field array with "field_value - iso_value"
         // so that the isosurface will be at 0.
         let array_size = (nx * ny * nz) as usize;
-        let mut field_values = vec![0.0 as f32; array_size];
+        let mut field_values = vec![0.0; array_size];
     
         let index_3d = |ix: u32, iy: u32, iz: u32| -> usize {
             (iz * ny + iy) as usize * (nx as usize) + ix as usize
@@ -283,45 +323,9 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 }
             }
         }
-    
+
         // Use fast-surface-nets to extract a mesh from this 3D scalar field.
         // We'll define a shape type for ndshape:
-        #[allow(non_snake_case)]
-        #[derive(Clone, Copy)]
-        struct GridShape {
-            nx: u32,
-            ny: u32,
-            nz: u32,
-        }
-        impl fast_surface_nets::ndshape::Shape<3> for GridShape {
-            type Coord = u32;
-            #[inline]
-            fn as_array(&self) -> [Self::Coord; 3] {
-                [self.nx, self.ny, self.nz]
-            }
-        
-            fn size(&self) -> Self::Coord {
-                self.nx * self.ny * self.nz
-            }
-        
-            fn usize(&self) -> usize {
-                (self.nx * self.ny * self.nz) as usize
-            }
-        
-            fn linearize(&self, coords: [Self::Coord; 3]) -> u32 {
-                let [x, y, z] = coords;
-                (z * self.ny + y) * self.nx + x
-            }
-        
-            fn delinearize(&self, i: u32) -> [Self::Coord; 3] {
-                let x = i % (self.nx);
-                let yz = i / (self.nx);
-                let y = yz % (self.ny);
-                let z = yz / (self.ny);
-                [x, y, z]
-            }
-        }
-    
         let shape = GridShape { nx, ny, nz };
     
         // We'll collect the output into a SurfaceNetsBuffer

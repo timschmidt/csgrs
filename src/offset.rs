@@ -1,4 +1,4 @@
-use geo_buf::{ buffer_polygon, buffer_multi_polygon, };
+use geo_buf::{buffer_polygon, buffer_multi_polygon};
 use crate::csg::CSG;
 use std::fmt::Debug;
 use crate::float_types::Real;
@@ -16,11 +16,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             .iter()
             .filter_map(|geom| match geom {
                 Geometry::Polygon(poly) => {
-                    let new_mpoly = buffer_polygon(poly, distance);
+                    let new_mpoly = buffer_polygon(poly, distance.into());
                     Some(Geometry::MultiPolygon(new_mpoly))
                 }
                 Geometry::MultiPolygon(mpoly) => {
-                    let new_mpoly = buffer_multi_polygon(mpoly, distance);
+                    let new_mpoly = buffer_multi_polygon(mpoly, distance.into());
                     Some(Geometry::MultiPolygon(new_mpoly))
                 }
                 _ => None, // ignore other geometry types
@@ -28,7 +28,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             .collect();
     
         // Construct a new GeometryCollection from the offset geometries
-        let new_collection = GeometryCollection(offset_geoms);
+        let new_collection = GeometryCollection::<Real>(offset_geoms);
     
         // Return a new CSG using the offset geometry collection and the old polygons/metadata
         CSG {
