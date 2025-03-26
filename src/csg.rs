@@ -1,24 +1,25 @@
-use crate::float_types::{EPSILON, PI, Real};
 use crate::bsp::Node;
-use crate::vertex::Vertex;
+use crate::float_types::{EPSILON, PI, Real};
 use crate::plane::Plane;
 use crate::polygon::Polygon;
-use nalgebra::{
-    Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3, partial_min, partial_max,
-};
+use crate::vertex::Vertex;
 use geo::{
-    AffineTransform, AffineOps, BoundingRect, BooleanOps, Coord, CoordsIter, Geometry, GeometryCollection, MultiPolygon, LineString, Orient, orient::Direction, Polygon as GeoPolygon, Rect,
+    AffineOps, AffineTransform, BooleanOps, BoundingRect, Coord, CoordsIter, Geometry,
+    GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
+    orient::Direction,
 };
-//extern crate geo_booleanop;
-//use geo_booleanop::boolean::BooleanOp;
-use std::error::Error;
-use std::fmt::Debug;
+use nalgebra::{
+    Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
+    partial_max, partial_min,
+};
 use crate::float_types::parry3d::{
     bounding_volume::Aabb,
     query::{Ray, RayCast},
     shape::{Shape, SharedShape, TriMesh, Triangle},
 };
 use crate::float_types::rapier3d::prelude::*;
+use std::error::Error;
+use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -27,9 +28,9 @@ use rayon::prelude::*;
 use core2::io::Cursor;
 
 #[cfg(feature = "dxf-io")]
-use dxf::entities::*;
-#[cfg(feature = "dxf-io")]
 use dxf::Drawing;
+#[cfg(feature = "dxf-io")]
+use dxf::entities::*;
 
 #[cfg(feature = "stl-io")]
 use stl_io;
@@ -47,7 +48,8 @@ pub struct CSG<S: Clone> {
     pub metadata: Option<S>,
 }
 
-impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
+impl<S: Clone + Debug> CSG<S>
+where S: Clone + Send + Sync {
     /// Create an empty CSG
     pub fn new() -> Self {
         CSG {
@@ -56,7 +58,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             metadata: None,
         }
     }
-    
+
     /// Helper to collect all vertices from the CSG.
     #[cfg(not(feature = "parallel"))]
     pub fn vertices(&self) -> Vec<Vertex> {
@@ -65,7 +67,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             .flat_map(|p| p.vertices.clone())
             .collect()
     }
-    
+
     /// Parallel helper to collect all vertices from the CSG.
     #[cfg(feature = "parallel")]
     pub fn vertices(&self) -> Vec<Vertex> {
@@ -85,22 +87,20 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// Convert internal polylines into polygons and return along with any existing internal polygons.
     pub fn to_polygons(&self) -> Vec<Polygon<S>> {
         let mut all_polygons = Vec::new();
-    
+
         for geom in &self.geometry {
             if let Geometry::Polygon(poly2d) = geom {
                 // 1. Convert the outer ring to 3D.
                 let mut outer_vertices_3d = Vec::new();
                 for c in poly2d.exterior().coords_iter() {
-                    outer_vertices_3d.push(
-                        Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z())
-                    );
+                    outer_vertices_3d.push(Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()));
                 }
-                
+
                 // Push as a new Polygon<S> if it has at least 3 vertices.
                 if outer_vertices_3d.len() >= 3 {
                     all_polygons.push(Polygon::new(outer_vertices_3d, self.metadata.clone()));
                 }
-    
+
                 // 2. Convert each interior ring (hole) into its own Polygon<S>.
                 for ring in poly2d.interiors() {
                     let mut hole_vertices_3d = Vec::new();
@@ -109,7 +109,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                             Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z())
                         );
                     }
-    
+
                     if hole_vertices_3d.len() >= 3 {
                         // If your `Polygon<S>` type can represent holes internally,
                         // adjust this to store hole_vertices_3d as a hole rather
@@ -123,10 +123,10 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             //     // if desired. Omitted for brevity.
             // }
         }
-    
+
         all_polygons
     }
-    
+
     /// Create a CSG that holds *only* 2D geometry in a `geo::GeometryCollection`.
     pub fn from_geo(geometry: GeometryCollection<Real>, metadata: Option<S>) -> Self {
         let mut csg = CSG::new();
@@ -134,10 +134,19 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         csg.metadata = metadata;
         csg
     }
-    
-    // Extract only the polygons from a geometry collection
+
+    /// Take the [`geo::Polygon`]'s from the `CSG`'s geometry collection
     pub fn to_multipolygon(&self) -> MultiPolygon<Real> {
-        let mut polygons = vec![];
+        // allocate vec to fit all polygons
+        let mut polygons = Vec::with_capacity(self.geometry.0.iter().fold(0, |len, geom| {
+            len + match geom {
+                Geometry::Polygon(_) => len + 1,
+                Geometry::MultiPolygon(mp) => len + mp.0.len(),
+                // ignore lines, points, etc.
+                _ => len,
+            }
+        }));
+
         for geom in &self.geometry.0 {
             match geom {
                 Geometry::Polygon(poly) => polygons.push(poly.clone()),
@@ -146,38 +155,33 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 _ => {}
             }
         }
+
         MultiPolygon(polygons)
     }
-    
+
     pub fn tessellate_2d(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]> {
         // Convert the outer ring into a `LineString`
-        let outer_coords: Vec<Coord<Real>> = outer
-            .iter()
-            .map(|&[x, y]| Coord { x, y })
-            .collect();
-        
+        let outer_coords: Vec<Coord<Real>> = outer.iter().map(|&[x, y]| Coord { x, y }).collect();
+
         // Convert each hole into its own `LineString`
         let holes_coords: Vec<LineString<Real>> = holes
             .iter()
             .map(|hole| {
-                let coords: Vec<Coord<Real>> = hole
-                    .iter()
-                    .map(|&[x, y]| Coord { x, y })
-                    .collect();
+                let coords: Vec<Coord<Real>> = hole.iter().map(|&[x, y]| Coord { x, y }).collect();
                 LineString::new(coords)
             })
             .collect();
-    
+
         // Ear-cut triangulation on the polygon (outer + holes)
         let polygon = GeoPolygon::new(LineString::new(outer_coords), holes_coords);
-        
+
         #[cfg(feature = "earcut")]
         {
             use geo::TriangulateEarcut;
             let triangulation = polygon.earcut_triangles_raw();
             let triangle_indices = triangulation.triangle_indices;
             let vertices = triangulation.vertices;
-        
+
             // Convert the 2D result (x,y) into 3D triangles with z=0
             let mut result = Vec::with_capacity(triangle_indices.len() / 3);
             for tri in triangle_indices.chunks_exact(3) {
@@ -190,7 +194,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             }
             result
         }
-        
+
         #[cfg(feature = "delaunay")]
         {
             use geo::TriangulateSpade;
@@ -201,16 +205,12 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 // pick the error-handling you want here:
                 return Vec::new();
             };
-        
+
             let mut result = Vec::with_capacity(tris.len());
             for triangle in tris {
                 // Each `triangle` is a geo_types::Triangle whose `.0, .1, .2`
                 // are the 2D coordinates. We'll embed them at z=0.
-                let [a, b, c] = [
-                    triangle.0,
-                    triangle.1,
-                    triangle.2
-                ];
+                let [a, b, c] = [triangle.0, triangle.1, triangle.2];
                 result.push([
                     Point3::new(a.x, a.y, 0.0),
                     Point3::new(b.x, b.y, 0.0),
@@ -219,7 +219,6 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             }
             result
         }
-        
     }
 
     /// Return a new CSG representing union of the two CSG's.
@@ -247,27 +246,27 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         b.clip_to(&a);
         b.invert();
         a.build(&b.all_polygons());
-        
+
         // 2D union:
         // Extract multipolygon from geometry
-        let polys1 = &self.to_multipolygon();
+        let polys1 = self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
-    
+
         // Perform union on those multipolygons
         let unioned = polys1.union(polys2); // This is valid if each is a MultiPolygon
         let oriented = unioned.orient(Direction::Default);
-    
+
         // Wrap the unioned multipolygons + lines/points back into one GeometryCollection
         let mut final_gc = GeometryCollection::default();
         final_gc.0.push(Geometry::MultiPolygon(oriented));
-        
+
         // re-insert lines & points from both sets:
         for g in &self.geometry.0 {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
                     // skip [multi]polygons
                 }
-                _ => final_gc.0.push(g.clone())
+                _ => final_gc.0.push(g.clone()),
             }
         }
         for g in &other.geometry.0 {
@@ -275,7 +274,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
                     // skip [multi]polygons
                 }
-                _ => final_gc.0.push(g.clone())
+                _ => final_gc.0.push(g.clone()),
             }
         }
 
@@ -313,28 +312,28 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         b.invert();
         a.build(&b.all_polygons());
         a.invert();
-        
+
         // 2D difference:
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
-    
+
         // Perform difference on those multipolygons
         let differenced = polys1.difference(polys2);
         let oriented = differenced.orient(Direction::Default);
-    
+
         // Wrap the differenced multipolygons + lines/points back into one GeometryCollection
         let mut final_gc = GeometryCollection::default();
         final_gc.0.push(Geometry::MultiPolygon(oriented));
-    
+
         // Re-insert lines & points from self only
         // (If you need to exclude lines/points that lie inside other, you'd need more checks here.)
         for g in &self.geometry.0 {
             match g {
-                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {} // skip
                 _ => final_gc.0.push(g.clone()),
             }
         }
-    
+
         CSG {
             polygons: a.all_polygons(),
             geometry: final_gc,
@@ -367,41 +366,41 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         b.clip_to(&a);
         a.build(&b.all_polygons());
         a.invert();
-        
+
         // 2D intersection:
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
-    
+
         // Perform intersection on those multipolygons
         let intersected = polys1.intersection(polys2);
         let oriented = intersected.orient(Direction::Default);
-    
+
         // Wrap the intersected multipolygons + lines/points into one GeometryCollection
         let mut final_gc = GeometryCollection::default();
         final_gc.0.push(Geometry::MultiPolygon(oriented));
-    
+
         // For lines and points: keep them only if they intersect in both sets
         // todo: detect intersection of non-polygons
         for g in &self.geometry.0 {
             match g {
-                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {} // skip
                 _ => final_gc.0.push(g.clone()),
             }
         }
         for g in &other.geometry.0 {
             match g {
-                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {} // skip
                 _ => final_gc.0.push(g.clone()),
             }
         }
-    
+
         CSG {
             polygons: a.all_polygons(),
             geometry: final_gc,
             metadata: self.metadata.clone(),
         }
     }
-    
+
     /// Return a new CSG representing space in this CSG excluding the space in the
     /// other CSG plus the space in the other CSG excluding the space in this CSG.
     ///
@@ -420,26 +419,26 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // 3D and 2D xor:
         // A \ B
         let a_sub_b = self.difference(other);
-    
+
         // B \ A
         let b_sub_a = other.difference(self);
-    
+
         // Union those two
         a_sub_b.union(&b_sub_a)
-        
+
         /* here in case 2D xor misbehaves as an alternate implementation
         // 2D xor:
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
-    
+
         // Perform symmetric difference (XOR)
         let xored = polys1.xor(polys2);
         let oriented = xored.orient(Direction::Default);
-    
+
         // Wrap in a new GeometryCollection
         let mut final_gc = GeometryCollection::default();
         final_gc.0.push(Geometry::MultiPolygon(oriented));
-    
+
         // Re-insert lines & points from both sets
         for g in &self.geometry.0 {
             match g {
@@ -453,7 +452,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 _ => final_gc.0.push(g.clone()),
             }
         }
-    
+
         CSG {
             // If you also want a polygon-based Node XOR, you'd need to implement that similarly
             polygons: self.polygons.clone(),
@@ -476,24 +475,30 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D,
     /// and the 2D polylines are updated by ignoring the resulting z after transform.
     pub fn transform(&self, mat: &Matrix4<Real>) -> CSG<S> {
-        let mat_inv_transpose = mat.try_inverse().expect("Matrix not invertible?").transpose(); // todo catch error
+        let mat_inv_transpose = mat
+            .try_inverse().expect("Matrix not invertible?")
+            .transpose(); // todo catch error
         let mut csg = self.clone();
 
         for poly in &mut csg.polygons {
             for vert in &mut poly.vertices {
                 // Position
                 let hom_pos = mat * vert.pos.to_homogeneous();
-                vert.pos = Point3::from_homogeneous(hom_pos).unwrap();  // todo catch error
+                vert.pos = Point3::from_homogeneous(hom_pos).unwrap(); // todo catch error
 
                 // Normal
                 vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
             }
-                
+
             if poly.vertices.len() >= 3 {
-                poly.plane = Plane::from_points(&poly.vertices[0].pos, &poly.vertices[1].pos, &poly.vertices[2].pos);
+                poly.plane = Plane::from_points(
+                    &poly.vertices[0].pos,
+                    &poly.vertices[1].pos,
+                    &poly.vertices[2].pos,
+                );
             }
         }
-        
+
         // Convert the top-left 2×2 submatrix + translation of a 4×4 into a geo::AffineTransform
         // The 4x4 looks like:
         //  [ m11  m12  m13  m14 ]
@@ -512,13 +517,13 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         //   [a   b   xoff]
         //   [d   e   yoff]
         //   [0   0    1  ]
-        let a    = mat[(0, 0)];
-        let b    = mat[(0, 1)];
+        let a = mat[(0, 0)];
+        let b = mat[(0, 1)];
         let xoff = mat[(0, 3)];
-        let d    = mat[(1, 0)];
-        let e    = mat[(1, 1)];
+        let d = mat[(1, 0)];
+        let e = mat[(1, 1)];
         let yoff = mat[(1, 3)];
-    
+
         let affine2 = AffineTransform::new(a, b, xoff, d, e, yoff);
 
         // 4) Transform csg.geometry (the GeometryCollection) in 2D
@@ -534,21 +539,21 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     pub fn translate(&self, x: Real, y: Real, z: Real) -> CSG<S> {
         self.translate_vector(Vector3::new(x, y, z))
     }
-    
+
     /// Returns a new CSG translated by vector.
     ///
     pub fn translate_vector(&self, vector: Vector3<Real>) -> CSG<S> {
         let translation = Translation3::from(vector);
-        
+
         // Convert to a Matrix4
         let mat4 = translation.to_homogeneous();
         self.transform(&mat4)
     }
-    
+
     /// Returns a new CSG translated so that its bounding-box center is at the origin (0,0,0).
     pub fn center(&self) -> Self {
         let aabb = self.bounding_box();
-        
+
         // Compute the AABB center
         let center_x = (aabb.mins.x + aabb.maxs.x) * 0.5;
         let center_y = (aabb.mins.y + aabb.maxs.y) * 0.5;
@@ -557,7 +562,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // Translate so that the bounding-box center goes to the origin
         self.translate(-center_x, -center_y, -center_z)
     }
-    
+
     /// Translates the CSG so that its bottommost point(s) sit exactly at z=0.
     ///
     /// - Shifts all vertices up or down such that the minimum z coordinate of the bounding box becomes 0.
@@ -590,7 +595,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         let mat4 = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
         self.transform(&mat4)
     }
-    
+
     /// Reflect (mirror) this CSG about an arbitrary plane `plane`.
     ///
     /// The plane is specified by:
@@ -614,7 +619,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // Step 1) Translate so the plane crosses the origin
         // The plane’s offset vector from origin is (w * n).
         let offset = n * w;
-        let t1 = Translation3::from(-offset).to_homogeneous();  // push the plane to origin
+        let t1 = Translation3::from(-offset).to_homogeneous(); // push the plane to origin
 
         // Step 2) Build the reflection matrix about a plane normal n at the origin
         //   R = I - 2 n n^T
@@ -623,7 +628,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         reflect_4.fixed_view_mut::<3, 3>(0, 0).copy_from(&reflect_3);
 
         // Step 3) Translate back
-        let t2 = Translation3::from(offset).to_homogeneous();   // pull the plane back out
+        let t2 = Translation3::from(offset).to_homogeneous(); // pull the plane back out
 
         // Combine into a single 4×4
         let mirror_mat = t2 * reflect_4 * t1;
@@ -631,7 +636,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // Apply to all polygons
         self.transform(&mirror_mat).inverse()
     }
-    
+
     /// Distribute this CSG `count` times around an arc (in XY plane) of radius,
     /// from `start_angle_deg` to `end_angle_deg`.
     /// Returns a new CSG with all copies (their polygons).
@@ -646,8 +651,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             return self.clone();
         }
         let start_rad = start_angle_deg.to_radians();
-        let end_rad   = end_angle_deg.to_radians();
-        let sweep     = end_rad - start_rad;
+        let end_rad = end_angle_deg.to_radians();
+        let sweep = end_rad - start_rad;
 
         // create a container to hold our unioned copies
         let mut all_csg = CSG::<S>::new();
@@ -661,7 +666,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             };
 
             let angle = start_rad + t * sweep;
-            let rot   = nalgebra::Rotation3::from_axis_angle(
+            let rot = nalgebra::Rotation3::from_axis_angle(
                 &nalgebra::Vector3::z_axis(),
                 angle,
             )
@@ -669,7 +674,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
             // translate out to radius in x
             let trans = nalgebra::Translation3::new(radius, 0.0, 0.0).to_homogeneous();
-            let mat   = rot * trans;
+            let mat = rot * trans;
 
             // Transform a copy of self and union with other copies
             all_csg = all_csg.union(&self.transform(&mat));
@@ -682,7 +687,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             metadata: self.metadata.clone(),
         }
     }
-    
+
     /// Distribute this CSG `count` times along a straight line (vector),
     /// each copy spaced by `spacing`.
     /// E.g. if `dir=(1.0,0.0,0.0)` and `spacing=2.0`, you get copies at
@@ -697,18 +702,18 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             return self.clone();
         }
         let step = dir.normalize() * spacing;
-    
+
         // create a container to hold our unioned copies
         let mut all_csg = CSG::<S>::new();
-    
+
         for i in 0..count {
-            let offset  = step * (i as Real);
-            let trans   = nalgebra::Translation3::from(offset).to_homogeneous();
-    
+            let offset = step * (i as Real);
+            let trans = nalgebra::Translation3::from(offset).to_homogeneous();
+
             // Transform a copy of self and union with other copies
             all_csg = all_csg.union(&self.transform(&trans));
         }
-    
+
         // Put it in a new CSG
         CSG {
             polygons: all_csg.polygons,
@@ -725,20 +730,20 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
         let step_x = nalgebra::Vector3::new(dx, 0.0, 0.0);
         let step_y = nalgebra::Vector3::new(0.0, dy, 0.0);
-    
+
         // create a container to hold our unioned copies
         let mut all_csg = CSG::<S>::new();
-    
+
         for r in 0..rows {
             for c in 0..cols {
                 let offset = step_x * (c as Real) + step_y * (r as Real);
-                let trans  = nalgebra::Translation3::from(offset).to_homogeneous();
-    
+                let trans = nalgebra::Translation3::from(offset).to_homogeneous();
+
                 // Transform a copy of self and union with other copies
                 all_csg = all_csg.union(&self.transform(&trans));
             }
         }
-    
+
         // Put it in a new CSG
         CSG {
             polygons: all_csg.polygons,
@@ -753,7 +758,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         if levels == 0 {
             return self.clone();
         }
-    
+
         #[cfg(feature = "parallel")]
         let new_polygons: Vec<Polygon<S>> = self
             .polygons
@@ -769,7 +774,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 })
             })
             .collect();
-    
+
         #[cfg(not(feature = "parallel"))]
         let new_polygons: Vec<Polygon<S>> = self
             .polygons
@@ -784,7 +789,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 })
             })
             .collect();
-    
+
         CSG::from_polygons(&new_polygons)
     }
 
@@ -876,8 +881,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // 2) Gather from the 2D geometry using `geo::BoundingRect`
         //    This gives us (min_x, min_y) / (max_x, max_y) in 2D. For 3D, treat z=0.
         //    Explicitly capture the result of `.bounding_rect()` as an Option<Rect<Real>>
-        let maybe_rect: Option<Rect<Real>> = self.geometry.bounding_rect().into();
-    
+        let maybe_rect: Option<Rect<Real>> = self.geometry.bounding_rect();
+
         if let Some(rect) = maybe_rect {
             let min_pt = rect.min();
             let max_pt = rect.max();
@@ -906,14 +911,14 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// Triangulate each polygon in the CSG returning a CSG containing triangles
     pub fn tessellate(&self) -> CSG<S> {
         let mut triangles = Vec::new();
-    
+
         for poly in &self.polygons {
             let tris = poly.tessellate();
             for triangle in tris {
                 triangles.push(Polygon::new(triangle.to_vec(), poly.metadata.clone()));
             }
         }
-        
+
         CSG::from_polygons(&triangles)
     }
 
@@ -932,15 +937,14 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             let a = poly.vertices[0].pos;
             let b = poly.vertices[1].pos;
             let c = poly.vertices[2].pos;
-    
+
             vertices.push(a);
             vertices.push(b);
             vertices.push(c);
-    
+
             indices.push([index_offset, index_offset + 1, index_offset + 2]);
             index_offset += 3;
         }
-
 
         // TriMesh::new(Vec<[Real; 3]>, Vec<[u32; 3]>)
         let trimesh = TriMesh::new(vertices, indices).unwrap(); // todo: handle error
@@ -1005,7 +1009,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     pub fn to_stl_ascii(&self, name: &str) -> String {
         let mut out = String::new();
         out.push_str(&format!("solid {}\n", name));
-    
+
         //
         // (A) Write out all *3D* polygons
         //
@@ -1014,7 +1018,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             let triangles = poly.tessellate();
             // A typical STL uses the face normal; we can take the polygon’s plane normal:
             let normal = poly.plane.normal.normalize();
-    
+
             for tri in triangles {
                 out.push_str(&format!(
                     "  facet normal {:.6} {:.6} {:.6}\n",
@@ -1031,11 +1035,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 out.push_str("  endfacet\n");
             }
         }
-    
+
         //
         // (B) Write out all *2D* geometry from `self.geometry`
         //     We only handle Polygon and MultiPolygon.  We tessellate in XY, set z=0.
-        //    
+        //
         for geom in &self.geometry {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
@@ -1045,7 +1049,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                         .coords_iter()
                         .map(|c| [c.x, c.y])
                         .collect::<Vec<[Real; 2]>>();
-    
+
                     // Collect holes
                     let holes_vec = poly2d
                         .interiors()
@@ -1056,10 +1060,10 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                         .iter()
                         .map(|hole_coords| &hole_coords[..])
                         .collect::<Vec<_>>();
-    
+
                     // Triangulate with our existing helper:
                     let triangles_2d = Self::tessellate_2d(&outer, &hole_refs);
-    
+
                     // Write each tri as a facet in ASCII STL, with a normal of (0,0,1)
                     for tri in triangles_2d {
                         out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
@@ -1074,7 +1078,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                         out.push_str("  endfacet\n");
                     }
                 }
-    
+
                 geo::Geometry::MultiPolygon(mp) => {
                     // Each polygon inside the MultiPolygon
                     for poly2d in &mp.0 {
@@ -1083,7 +1087,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                             .coords_iter()
                             .map(|c| [c.x, c.y])
                             .collect::<Vec<[Real; 2]>>();
-    
+
                         // Holes
                         let holes_vec = poly2d
                             .interiors()
@@ -1094,9 +1098,9 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                             .iter()
                             .map(|hole_coords| &hole_coords[..])
                             .collect::<Vec<_>>();
-    
+
                         let triangles_2d = Self::tessellate_2d(&outer, &hole_refs);
-    
+
                         for tri in triangles_2d {
                             out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
                             out.push_str("    outer loop\n");
@@ -1111,13 +1115,13 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                         }
                     }
                 }
-    
+
                 // Skip all other geometry types (LineString, Point, etc.)
                 // You can optionally handle them if you like, or ignore them.
                 _ => {}
             }
         }
-    
+
         out.push_str(&format!("endsolid {}\n", name));
         out
     }
@@ -1134,11 +1138,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// ```
     #[cfg(feature = "stl-io")]
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
-        use stl_io::{Normal, Vertex, Triangle, write_stl};
         use core2::io::Cursor;
-    
+        use stl_io::{Normal, Triangle, Vertex, write_stl};
+
         let mut triangles = Vec::new();
-    
+
         // Triangulate all 3D polygons in self.polygons
         for poly in &self.polygons {
             let normal = poly.plane.normal.normalize();
@@ -1151,23 +1155,23 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                         Vertex::new([
                             tri[0].pos.x as f32,
                             tri[0].pos.y as f32,
-                            tri[0].pos.z as f32
+                            tri[0].pos.z as f32,
                         ]),
                         Vertex::new([
                             tri[1].pos.x as f32,
                             tri[1].pos.y as f32,
-                            tri[1].pos.z as f32
+                            tri[1].pos.z as f32,
                         ]),
                         Vertex::new([
                             tri[2].pos.x as f32,
                             tri[2].pos.y as f32,
-                            tri[2].pos.z as f32
+                            tri[2].pos.z as f32,
                         ]),
                     ],
                 });
             }
         }
-    
+
         //
         // (B) Triangulate any 2D geometry from self.geometry (Polygon, MultiPolygon).
         //     We treat these as lying in the XY plane, at Z=0, with a default normal of +Z.
@@ -1176,22 +1180,24 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
                     // Gather outer ring as [x,y]
-                    let outer: Vec<[Real; 2]> =
-                        poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
-    
+                    let outer: Vec<[Real; 2]> = poly2d
+                        .exterior().coords_iter()
+                        .map(|c| [c.x, c.y])
+                        .collect();
+
                     // Gather holes
                     let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
                         .interiors()
                         .iter()
                         .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
                         .collect();
-    
+
                     // Convert each hole to a slice-reference for triangulation
                     let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
-    
+
                     // Triangulate using our geo-based helper
                     let tri_2d = Self::tessellate_2d(&outer, &hole_refs);
-    
+
                     // Each triangle is in XY, so normal = (0,0,1)
                     for tri_pts in tri_2d {
                         triangles.push(Triangle {
@@ -1200,38 +1206,40 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                                 Vertex::new([
                                     tri_pts[0].x as f32,
                                     tri_pts[0].y as f32,
-                                    tri_pts[0].z as f32
+                                    tri_pts[0].z as f32,
                                 ]),
                                 Vertex::new([
                                     tri_pts[1].x as f32,
                                     tri_pts[1].y as f32,
-                                    tri_pts[1].z as f32
+                                    tri_pts[1].z as f32,
                                 ]),
                                 Vertex::new([
                                     tri_pts[2].x as f32,
                                     tri_pts[2].y as f32,
-                                    tri_pts[2].z as f32
+                                    tri_pts[2].z as f32,
                                 ]),
                             ],
                         });
                     }
                 }
-    
+
                 geo::Geometry::MultiPolygon(mpoly) => {
                     // Same approach, but each Polygon in the MultiPolygon
                     for poly2d in &mpoly.0 {
-                        let outer: Vec<[Real; 2]> =
-                            poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
-    
+                        let outer: Vec<[Real; 2]> = poly2d
+                            .exterior().coords_iter()
+                            .map(|c| [c.x, c.y])
+                            .collect();
+
                         let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
                             .interiors()
                             .iter()
                             .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
                             .collect();
-    
+
                         let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
                         let tri_2d = Self::tessellate_2d(&outer, &hole_refs);
-    
+
                         for tri_pts in tri_2d {
                             triangles.push(Triangle {
                                 normal: Normal::new([0.0, 0.0, 1.0]),
@@ -1239,29 +1247,29 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                                     Vertex::new([
                                         tri_pts[0].x as f32,
                                         tri_pts[0].y as f32,
-                                        tri_pts[0].z as f32
+                                        tri_pts[0].z as f32,
                                     ]),
                                     Vertex::new([
                                         tri_pts[1].x as f32,
                                         tri_pts[1].y as f32,
-                                        tri_pts[1].z as f32
+                                        tri_pts[1].z as f32,
                                     ]),
                                     Vertex::new([
                                         tri_pts[2].x as f32,
                                         tri_pts[2].y as f32,
-                                        tri_pts[2].z as f32
+                                        tri_pts[2].z as f32,
                                     ]),
                                 ],
                             });
                         }
                     }
                 }
-    
+
                 // Skip other geometry types: lines, points, etc.
                 _ => {}
             }
         }
-    
+
         //
         // (C) Encode into a binary STL buffer
         //
@@ -1272,7 +1280,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
     /// Create a CSG object from STL data using `stl_io`.
     #[cfg(feature = "stl-io")]
-    pub fn from_stl(stl_data: &[u8], metadata: Option<S>,) -> Result<CSG<S>, std::io::Error> {
+    pub fn from_stl(stl_data: &[u8], metadata: Option<S>) -> Result<CSG<S>, std::io::Error> {
         // Create an in-memory cursor from the STL data
         let mut cursor = Cursor::new(stl_data);
 
@@ -1343,7 +1351,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///
     /// A `Result` containing the CSG object or an error if parsing fails.
     #[cfg(feature = "dxf-io")]
-    pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>,) -> Result<CSG<S>, Box<dyn Error>> {
+    pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>) -> Result<CSG<S>, Box<dyn Error>> {
         // Load the DXF drawing from the provided data
         let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
 
@@ -1379,7 +1387,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 }
                 EntityType::Circle(circle) => {
                     // Approximate circles with regular polygons
-                    let center = Point3::new(circle.center.x as Real, circle.center.y as Real, circle.center.z as Real);
+                    let center = Point3::new(
+                        circle.center.x as Real,
+                        circle.center.y as Real,
+                        circle.center.z as Real,
+                    );
                     let radius = circle.radius as Real;
                     let segments = 32; // Number of segments to approximate the circle
 
@@ -1432,10 +1444,26 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 // Create a 3DFACE entity for each triangle
                 let face = dxf::entities::Face3D::new(
                     // 3DFACE expects four vertices, but for triangles, the fourth is the same as the third
-                    dxf::Point::new(tri[0].pos.x as f64, tri[0].pos.y as f64, tri[0].pos.z as f64),
-                    dxf::Point::new(tri[1].pos.x as f64, tri[1].pos.y as f64, tri[1].pos.z as f64),
-                    dxf::Point::new(tri[2].pos.x as f64, tri[2].pos.y as f64, tri[2].pos.z as f64),
-                    dxf::Point::new(tri[2].pos.x as f64, tri[2].pos.y as f64, tri[2].pos.z as f64), // Duplicate for triangular face
+                    dxf::Point::new(
+                        tri[0].pos.x as f64,
+                        tri[0].pos.y as f64,
+                        tri[0].pos.z as f64,
+                    ),
+                    dxf::Point::new(
+                        tri[1].pos.x as f64,
+                        tri[1].pos.y as f64,
+                        tri[1].pos.z as f64,
+                    ),
+                    dxf::Point::new(
+                        tri[2].pos.x as f64,
+                        tri[2].pos.y as f64,
+                        tri[2].pos.z as f64,
+                    ),
+                    dxf::Point::new(
+                        tri[2].pos.x as f64,
+                        tri[2].pos.y as f64,
+                        tri[2].pos.z as f64,
+                    ), // Duplicate for triangular face
                 );
 
                 let entity = dxf::entities::Entity::new(dxf::entities::EntityType::Face3D(face));

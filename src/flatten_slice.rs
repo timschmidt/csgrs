@@ -1,14 +1,18 @@
-use crate::csg::CSG;
-use std::fmt::Debug;
-use geo::{GeometryCollection, LineString, orient::Direction, Geometry, Polygon as GeoPolygon, Orient, coord, MultiPolygon, BooleanOps};
-use hashbrown::HashMap;
-use crate::plane::Plane;
 use crate::bsp::Node;
-use crate::float_types::{Real, EPSILON};
-use nalgebra::Point3;
+use crate::csg::CSG;
+use crate::float_types::{EPSILON, Real};
+use crate::plane::Plane;
 use crate::vertex::Vertex;
+use geo::{
+    BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
+    Polygon as GeoPolygon, coord, orient::Direction,
+};
+use hashbrown::HashMap;
+use nalgebra::Point3;
+use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
+impl<S: Clone + Debug> CSG<S>
+where S: Clone + Send + Sync {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
     /// unifies them into one or more 2D polygons, and returns a purely 2D CSG.
     ///
@@ -21,10 +25,10 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         if self.polygons.is_empty() {
             return self.clone();
         }
-    
+
         // 2) Convert all 3D polygons into a collection of 2D polygons
         let mut flattened_3d = Vec::new(); // will store geo::Polygon<Real>
-    
+
         for poly in &self.polygons {
             // Tessellate this polygon into triangles
             let triangles = poly.tessellate();
@@ -41,7 +45,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 flattened_3d.push(polygon_2d);
             }
         }
-    
+
         // 3) Union all these polygons together into one MultiPolygon
         //    (We could chain them in a fold-based union.)
         let unioned_from_3d = if flattened_3d.is_empty() {
@@ -55,17 +59,17 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             }
             mp_acc
         };
-    
+
         // 4) Union this with any existing 2D geometry (polygons) from self.geometry
-        let existing_2d = &self.to_multipolygon();  // turns geometry -> MultiPolygon
+        let existing_2d = &self.to_multipolygon(); // turns geometry -> MultiPolygon
         let final_union = unioned_from_3d.union(existing_2d);
         // Optionally ensure consistent orientation (CCW for exteriors):
         let oriented = final_union.orient(Direction::Default);
-    
+
         // 5) Store final polygons as a MultiPolygon in a new GeometryCollection
         let mut new_gc = GeometryCollection::default();
         new_gc.0.push(Geometry::MultiPolygon(oriented));
-    
+
         // 6) Return a purely 2D CSG: polygons empty, geometry has the final shape
         CSG {
             polygons: Vec::new(),
@@ -73,7 +77,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             metadata: self.metadata.clone(),
         }
     }
-    
+
     /// Slice this solid by a given `plane`, returning a new `CSG` whose polygons
     /// are either:
     /// - The polygons that lie exactly in the slicing plane (coplanar), or
@@ -129,9 +133,16 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 // Force them to be exactly the same, closing the line
                 chain[n - 1] = chain[0].clone();
             }
-            
-            let polyline = LineString::new(chain.iter().map(|vertex| {coord! {x: vertex.pos.x, y: vertex.pos.y}}).collect());
-            
+
+            let polyline = LineString::new(
+                chain
+                    .iter()
+                    .map(|vertex| {
+                        coord! {x: vertex.pos.x, y: vertex.pos.y}
+                    })
+                    .collect(),
+            );
+
             if polyline.is_closed() {
                 let polygon = GeoPolygon::new(polyline, vec![]);
                 let oriented = polygon.orient(Direction::Default);
@@ -148,7 +159,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             metadata: self.metadata.clone(),
         }
     }
-    
+
     /// Checks if the CSG object is manifold.
     ///
     /// This function defines a comparison function which takes EPSILON into account

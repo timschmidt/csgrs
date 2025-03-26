@@ -1,12 +1,13 @@
-use image::GrayImage;
 use crate::csg::CSG;
-use std::fmt::Debug;
-use crate::float_types::{Real, EPSILON};
-use nalgebra::{Vector3, Point3};
-use crate::vertex::Vertex;
+use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
+use crate::vertex::Vertex;
+use image::GrayImage;
+use nalgebra::{Point3, Vector3};
+use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
+impl<S: Clone + Debug> CSG<S>
+where S: Clone + Send + Sync {
     /// Builds a new CSG from the “on” pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.
     ///
@@ -36,7 +37,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         threshold: u8,
         closepaths: bool,
         metadata: Option<S>,
-    ) -> Self {        
+    ) -> Self {
         // Convert the image into a 2D array of bits for the contour_tracing::array::bits_to_paths function.
         // We treat pixels >= threshold as 1, else 0.
         let width = img.width() as usize;
@@ -75,10 +76,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             let normal = Vector3::z();
             let mut verts = Vec::with_capacity(pl.len());
             for &(x, y) in &pl {
-                verts.push(Vertex::new(
-                    Point3::new(x as Real, y as Real, 0.0),
-                    normal,
-                ));
+                verts.push(Vertex::new(Point3::new(x as Real, y as Real, 0.0), normal));
             }
             // If the path was not closed and we used closepaths == true, we might need to ensure the first/last are the same.
             if (verts.first().unwrap().pos - verts.last().unwrap().pos).norm() > EPSILON {

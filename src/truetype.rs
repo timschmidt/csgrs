@@ -1,17 +1,21 @@
-use ttf_utils::Outline;
-use ttf_parser::{OutlineBuilder};
 use crate::csg::CSG;
-use std::fmt::Debug;
 use crate::float_types::Real;
-use geo::{GeometryCollection, LineString, orient::Direction, Geometry, Polygon as GeoPolygon, Area, Orient};
+use geo::{
+    Area, Geometry, GeometryCollection, LineString, Orient,
+    Polygon as GeoPolygon, orient::Direction,
+};
+use std::fmt::Debug;
+use ttf_parser::OutlineBuilder;
+use ttf_utils::Outline;
 
 // For flattening curves, how many segments per quad/cubic
 const CURVE_STEPS: usize = 8;
 
-impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
+impl<S: Clone + Debug> CSG<S>
+where S: Clone + Send + Sync {
     /// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
-    /// 
-    /// Each glyph’s closed contours become one or more `Polygon`s (with holes if needed), 
+    ///
+    /// Each glyph’s closed contours become one or more `Polygon`s (with holes if needed),
     /// and any open contours become `LineString`s.
     ///
     /// # Arguments
@@ -22,15 +26,10 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///
     /// # Returns
     /// A `CSG` whose `geometry` contains:
-    /// - One or more `Polygon`s for each glyph, 
-    /// - A set of `LineString`s for any open contours (rare in standard fonts), 
+    /// - One or more `Polygon`s for each glyph,
+    /// - A set of `LineString`s for any open contours (rare in standard fonts),
     /// all positioned in the XY plane at z=0.
-    pub fn text(
-        text: &str,
-        font_data: &[u8],
-        scale: Real,
-        metadata: Option<S>,
-    ) -> Self {
+    pub fn text(text: &str, font_data: &[u8], scale: Real, metadata: Option<S>) -> Self {
         // 1) Parse the TTF font
         let face = match ttf_parser::Face::from_slice(font_data, 0) {
             Ok(f) => f,
@@ -39,7 +38,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 return CSG::new();
             }
         };
-        
+
         // 1 font unit, 2048 font units / em, scale points / em, 0.352777 points / mm
         let font_scale = 1.0 / 2048.0 * scale * 0.3527777;
 
@@ -72,7 +71,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                     if !collector.contours.is_empty() {
                         // We can have multiple outer loops and multiple inner loops (holes).
                         let mut outer_rings = Vec::new();
-                        let mut hole_rings  = Vec::new();
+                        let mut hole_rings = Vec::new();
 
                         for closed_pts in collector.contours {
                             if closed_pts.len() < 3 {
@@ -148,7 +147,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
 /// A helper that implements `ttf_parser::OutlineBuilder`.
 /// It receives MoveTo/LineTo/QuadTo/CurveTo calls from `outline.emit(self)`.
-/// We flatten curves and accumulate polylines. 
+/// We flatten curves and accumulate polylines.
 ///
 /// - Whenever `close()` occurs, we finalize the current subpath as a closed polygon (`contours`).
 /// - If we start a new MoveTo while the old subpath is open, that old subpath is treated as open (`open_contours`).
@@ -271,7 +270,7 @@ impl OutlineFlattener {
         if n > 2 {
             // If the last point != the first, close it.
             let first = self.current[0];
-            let last  = self.current[n-1];
+            let last = self.current[n - 1];
             if (first.0 - last.0).abs() > Real::EPSILON || (first.1 - last.1).abs() > Real::EPSILON {
                 self.current.push(first);
             }
