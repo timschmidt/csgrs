@@ -1,8 +1,8 @@
-use std::ops::Neg;
-use crate::float_types::{Real, EPSILON};
+use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
+use std::ops::Neg;
 
 /// A plane in 3D space defined by a normal and an intercept
 #[derive(Debug, Clone)]

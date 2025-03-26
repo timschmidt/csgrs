@@ -1,10 +1,9 @@
-#[cfg(test)]
-use crate::float_types::{Real, EPSILON, FRAC_PI_2};
 use crate::bsp::Node;
-use crate::vertex::Vertex;
+use crate::csg::CSG;
+use crate::float_types::{EPSILON, FRAC_PI_2, Real};
 use crate::plane::Plane;
 use crate::polygon::Polygon;
-use crate::csg::CSG;
+use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 
 // --------------------------------------------------------
@@ -808,7 +807,10 @@ fn test_csg_transform_translate_rotate_scale() {
 #[test]
 fn test_csg_mirror() {
     let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    let plane_x = Plane { normal: Vector3::x(), w: 0.0 }; // x=0 plane
+    let plane_x = Plane {
+        normal: Vector3::x(),
+        w: 0.0,
+    }; // x=0 plane
     let mirror_x = c.mirror(plane_x);
     let bb_mx = mirror_x.bounding_box();
     // The original cube was from x=0..2, so mirrored across X=0 should be -2..0
@@ -1604,7 +1606,10 @@ fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::<()>::cylinder(1.0, 2.0, 32, None).center();
     // 2) Slice at z=0
-    let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
+    let cross_section = cyl.slice(Plane {
+        normal: Vector3::z(),
+        w: 0.0,
+    });
 
     // For a simple cylinder, the cross-section is typically 1 circle polygon
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
