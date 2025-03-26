@@ -1,6 +1,6 @@
 //! SVG input and output.
 
-use geo::{BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, MultiPolygon, Polygon};
+use geo::{BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon};
 use svg::node::element::path;
 
 use crate::csg::CSG;
