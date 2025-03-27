@@ -4,9 +4,8 @@ use crate::plane::Plane;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use geo::{
-    AffineOps, AffineTransform, BooleanOps, BoundingRect, Coord, CoordsIter, Geometry,
-    GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
-    orient::Direction,
+    AffineOps, AffineTransform, BooleanOps, BoundingRect, Coord, CoordsIter, orient::Direction,
+    Geometry, GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
 };
 use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
