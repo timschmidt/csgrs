@@ -1,3 +1,5 @@
+//! Create `CSG`s using ttf fonts
+
 use crate::csg::CSG;
 use crate::float_types::Real;
 use geo::{
