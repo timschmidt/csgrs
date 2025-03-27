@@ -4,7 +4,6 @@
 //! Unless stated otherwise, all tolerances are governed by
 //! `float_types::EPSILON`.
 
-use std::ops::Neg;
 use crate::float_types::{Real, EPSILON};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -33,18 +32,6 @@ pub struct Plane {
     pub point_a: Point3<Real>,
     pub point_b: Point3<Real>,
     pub point_c: Point3<Real>,
-}
-
-impl Neg for Plane {
-    type Output = Self;
-
-    /// [`flip`](Plane::flip) the `Plane`
-    fn neg(self) -> Self::Output {
-        Self {
-            normal: -self.normal,
-            w: -self.w,
-        }
-    }
 }
 
 impl Plane {

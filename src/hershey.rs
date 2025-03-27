@@ -1,3 +1,5 @@
+//! Create `CSG`s using Hershey fonts
+
 use crate::csg::CSG;
 use crate::float_types::Real;
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
