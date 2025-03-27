@@ -53,11 +53,11 @@ stl_io = { version = "0.8.5", optional = true }
 image = { version = "0.25.6", optional = true }
 svg = { version = "0.18.0", optional = true }
 # font
-ttf-utils = { version = "0.1.4", optional = true, git = "https://github.com/TimTheBig/ttf-utils.git" }
-ttf-parser = { version = "^0.25", optional = true }
-hershey = { version = "0.1.1", optional = true }
+ttf-utils = { version = "0.1", optional = true, package = "ttf-parser-utils"}
+ttf-parser = { version = "0.25", optional = true }
+hershey = { version = "0.1.2", optional = true }
 
-embed-doc-image = { version = "0.1.5", git = "https://github.com/TimTheBig/embed-doc-image.git" }
+doc-image-embed = { version = "0.2" }
 
 # wasm
 [target.'cfg(any(target_arch = "wasm32", target_arch = "wasm64"))'.dependencies]

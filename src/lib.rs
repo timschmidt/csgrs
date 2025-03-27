@@ -2,7 +2,7 @@
 //! built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in [BSP](bsp) trees.
 //!
 //! ![Example CSG output][Example CSG output]
-#![cfg_attr(doc, doc = embed_doc_image::embed_image!("Example CSG output", "docs/csg.png"))]
+#![cfg_attr(doc, doc = doc_image_embed::embed_image!("Example CSG output", "docs/csg.png"))]
 
 #![forbid(unsafe_code)]
 #![deny(unused)]

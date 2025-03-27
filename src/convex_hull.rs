@@ -3,7 +3,7 @@
 //!
 //! ![ConvexHull demo image][ConvexHull demo image]\
 //! <strong style="color:red">Red</strong> is the set and <strong style="color:#87CEEB">blue</strong> is the convex hull of the set.
-#![cfg_attr(doc, doc = embed_doc_image::embed_image!("ConvexHull demo image", "docs/convex_hull.svg"))]
+#![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull.svg"))]
 
 use crate::csg::CSG;
 use crate::float_types::Real;
