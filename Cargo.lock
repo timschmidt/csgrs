@@ -325,8 +325,8 @@ dependencies = [
  "chull",
  "contour_tracing",
  "core2",
+ "doc-image-embed",
  "dxf",
- "embed-doc-image",
  "fast-surface-nets",
  "geo",
  "geo-buf",
@@ -343,9 +343,22 @@ dependencies = [
  "rayon",
  "stl_io",
  "svg",
+ "thiserror 2.0.12",
  "ttf-parser",
- "ttf-utils",
+ "ttf-parser-utils",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "doc-image-embed"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b1c7e5bbb92b417588a5e733e095416c27c06eedc051065cc955a0a8c8389d9"
+dependencies = [
+ "base64",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -386,17 +399,6 @@ name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
-
-[[package]]
-name = "embed-doc-image"
-version = "0.1.5"
-source = "git+https://github.com/TimTheBig/embed-doc-image.git#0510cfb4c4af8a8328e6275ae66a536bbb48a554"
-dependencies = [
- "base64",
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "ena"
@@ -636,12 +638,12 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "hershey"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce68826993d2cfc80002b44fa5036064a1e5d543a19824c3891c05c705dcc2e4"
+checksum = "7d3cafa4047531c5386484c8f03dd90ff59c6dd96f8f011c32e13728692d1bbb"
 dependencies = [
- "itertools 0.10.5",
- "thiserror",
+ "itertools 0.14.0",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -774,15 +776,6 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.10.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
@@ -804,6 +797,15 @@ name = "itertools"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
 dependencies = [
  "either",
 ]
@@ -1083,9 +1085,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.21.1"
+version = "1.21.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d75b0bedcc4fe52caa0e03d9f1151a323e4aa5e2d78ba3580400cd3c9e2bc4bc"
+checksum = "c2806eaa3524762875e21c3dcd057bc4b7bfa01ce4da8d46be1cd43649e1cc6b"
 
 [[package]]
 name = "ordered-float"
@@ -1120,7 +1122,7 @@ dependencies = [
  "slab",
  "smallvec",
  "spade",
- "thiserror",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -1147,7 +1149,7 @@ dependencies = [
  "slab",
  "smallvec",
  "spade",
- "thiserror",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -1294,7 +1296,7 @@ dependencies = [
  "rayon",
  "rustc-hash",
  "simba",
- "thiserror",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -1319,7 +1321,7 @@ dependencies = [
  "rayon",
  "rustc-hash",
  "simba",
- "thiserror",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -1352,7 +1354,7 @@ dependencies = [
  "rand_chacha",
  "simd_helpers",
  "system-deps",
- "thiserror",
+ "thiserror 1.0.69",
  "v_frame",
  "wasm-bindgen",
 ]
@@ -1596,7 +1598,16 @@ version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
 dependencies = [
- "thiserror-impl",
+ "thiserror-impl 1.0.69",
+]
+
+[[package]]
+name = "thiserror"
+version = "2.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "567b8a2dae586314f7be2a752ec7474332959c6460e02bde30d702a66d488708"
+dependencies = [
+ "thiserror-impl 2.0.12",
 ]
 
 [[package]]
@@ -1604,6 +1615,17 @@ name = "thiserror-impl"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "2.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f7cf42b4507d8ea322120659672cf1b9dbb93f8f2d4ecfd6e51350ff5b17a1d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1662,9 +1684,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2df906b07856748fa3f6e0ad0cbaa047052d4a7dd609e231c4f72cee8c36f31"
 
 [[package]]
-name = "ttf-utils"
-version = "0.1.4"
-source = "git+https://github.com/TimTheBig/ttf-utils.git#8aa3d90950bba77a8338398ac42831d9c2721542"
+name = "ttf-parser-utils"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff2ad77abd4b1ab08adbab7f399be4cc1ff6958421cafa86af75824d9179b5c0"
 dependencies = [
  "ttf-parser",
 ]
