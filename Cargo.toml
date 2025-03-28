@@ -57,7 +57,7 @@ ttf-utils = { version = "0.1", optional = true, package = "ttf-parser-utils"}
 ttf-parser = { version = "0.25", optional = true }
 hershey = { version = "0.1.2", optional = true }
 
-doc-image-embed = { version = "0.2" }
+doc-image-embed = "0.2"
 
 # wasm
 [target.'cfg(any(target_arch = "wasm32", target_arch = "wasm64"))'.dependencies]

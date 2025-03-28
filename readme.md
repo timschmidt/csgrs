@@ -1,6 +1,13 @@
 # csgrs
 
-A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in BSP trees. **csgrs** provides data structures and methods for constructing 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, transforming, interrogating, and simulating it without leaving Rust.  **csgrs** aims to be light weight and full featured through integration with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)) and [`geo`](https://crates.io/crates/geo) for robust processing of [Simple Features](https://en.wikipedia.org/wiki/Simple_Features).  **csgrs** has a number of functions useful for generating CNC toolpaths.  The library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are 100% rust and nearly all optional. 
+[![Crates.io version](https://img.shields.io/crates/v/csgrs.svg)](https://crates.io/crates/csgrs)
+![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-brightgreen.svg)
+
+A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in BSP trees.
+
+**csgrs** provides data structures and methods for constructing 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, transforming, interrogating, and simulating it without leaving Rust.
+
+**csgrs** aims to be light weight and full featured through integration with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)) and [`geo`](https://crates.io/crates/geo) for robust processing of [Simple Features](https://en.wikipedia.org/wiki/Simple_Features).  **csgrs** has a number of functions useful for generating CNC toolpaths.  The library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are 100% rust and nearly all optional. 
 
 The BSP tree works with polygons made of lines.  **csgrs** interpolates all curves when working in 3D so that they can be processed using the BSP tree.  [`earcutr`](https://crates.io/crates/earcutr) is used by [`geo`](https://crates.io/crates/geo) for tessellation, and only works in 2D, so **csgrs** rotates 3D polygons into 2D for tessellation then back to 3D.
 
@@ -10,7 +17,7 @@ The BSP tree works with polygons made of lines.  **csgrs** interpolates all curv
 
 Install the [Rust](https://www.rust-lang.org/) language tools from [rustup.rs](https://rustup.rs/).
 
-```shell
+```sh
 cargo new my_cad_project
 cd my_cad_project
 cargo add csgrs
@@ -23,8 +30,10 @@ cargo add csgrs
 type CSG = csgrs::csg::CSG<()>;
 
 // Create two shapes:
-let cube = CSG::cube(2.0, 2.0, 2.0, None);  // 2×2×2 cube at origin, no metadata
-let sphere = CSG::sphere(1.0, 16, 8, None); // sphere of radius=1 at origin, no metadata
+// 2×2×2 cube at origin, no metadata
+let cube = CSG::cube(2.0, 2.0, 2.0, None);
+// sphere of radius=1 at origin, no metadata
+let sphere = CSG::sphere(1.0, 16, 8, None);
 
 // Difference one from the other:
 let difference_result = cube.difference(&sphere);
@@ -36,7 +45,7 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 
 ### Building for WASM
 
-```shell
+```sh
 cargo build --features="wasm" --target=wasm32-unknown-unknown --release
 ```
 
