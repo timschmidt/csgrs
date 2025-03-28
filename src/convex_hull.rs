@@ -1,13 +1,21 @@
-use chull::ConvexHullWrapper;
-use crate::csg::CSG;
-use std::fmt::Debug;
-use crate::float_types::Real;
-use crate::vertex::Vertex;
-use nalgebra::{Point3, Vector3};
-use crate::polygon::Polygon;
+//! The [convex hull](https://en.wikipedia.org/wiki/Convex_hull) of a shape is the smallest convex set that contains it.
+//! It may be visualized as the shape enclosed by a rubber band stretched around the subset.
+//!
+//! ![ConvexHull demo image][ConvexHull demo image]\
+//! <strong style="color:red">Red</strong> is the set and <strong style="color:#87CEEB">blue</strong> is the convex hull of the set.
+#![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull.svg"))]
 
-impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
-    /// Compute the convex hull of all vertices in this CSG.
+use crate::csg::CSG;
+use crate::float_types::Real;
+use crate::polygon::Polygon;
+use crate::vertex::Vertex;
+use chull::ConvexHullWrapper;
+use nalgebra::{Point3, Vector3};
+use std::fmt::Debug;
+
+impl<S: Clone + Debug> CSG<S>
+where S: Clone + Send + Sync {
+    /// Compute the [convex hull](https://en.wikipedia.org/wiki/Convex_hull) of all vertices in this CSG.
     pub fn convex_hull(&self) -> CSG<S> {
         // Gather all (x, y, z) coordinates from the polygons
         let points: Vec<Vec<Real>> = self
@@ -19,7 +27,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                     .map(|v| vec![v.pos.x, v.pos.y, v.pos.z])
             })
             .collect();
-    
+
         // Attempt to compute the convex hull using the robust wrapper
         let hull = match ConvexHullWrapper::try_new(&points, None) {
             Ok(h) => h,
@@ -28,9 +36,9 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 return CSG::new();
             }
         };
-    
+
         let (verts, indices) = hull.vertices_indices();
-    
+
         // Reconstruct polygons as triangles
         let mut polygons = Vec::new();
         for tri in indices.chunks(3) {
@@ -42,7 +50,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
-    
+
         CSG::from_polygons(&polygons)
     }
 

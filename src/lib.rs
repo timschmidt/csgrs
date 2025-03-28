@@ -1,5 +1,12 @@
-//#![allow(dead_code)]
+//! A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library,
+//! built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in [BSP](bsp) trees.
+//!
+//! ![Example CSG output][Example CSG output]
+#![cfg_attr(doc, doc = doc_image_embed::embed_image!("Example CSG output", "docs/csg.png"))]
+
 #![forbid(unsafe_code)]
+#![deny(unused)]
+#![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
 
 pub mod errors;
 pub mod float_types;

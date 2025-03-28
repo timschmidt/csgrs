@@ -1,13 +1,28 @@
-use crate::float_types::{Real, EPSILON};
+use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
+use std::ops::Neg;
 
-/// A plane in 3D space defined by a normal and a w-value
+/// A plane in 3D space defined by a normal and an intercept
 #[derive(Debug, Clone)]
 pub struct Plane {
+    /// The direction of the plane, which defines a vector that is perpendicular to the plane.
     pub normal: Vector3<Real>,
-    pub w: Real,
+    /// Y-intercept of the plane, the distance along the normal at which it's crossed by the plane.
+    pub intercept: Real,
+}
+
+impl Neg for Plane {
+    type Output = Self;
+
+    /// [`flip`](Plane::flip) the `Plane`
+    fn neg(self) -> Self::Output {
+        Self {
+            normal: -self.normal,
+            intercept: -self.intercept,
+        }
+    }
 }
 
 impl Plane {
@@ -17,15 +32,17 @@ impl Plane {
         if n.magnitude() < EPSILON {
             panic!("Degenerate polygon: vertices do not define a plane"); // todo: return error
         }
+
         Plane {
             normal: n,
-            w: n.dot(&a.coords),
+            intercept: n.dot(&a.coords),
         }
     }
 
+    /// Flips the normal of the plane, in place
     pub fn flip(&mut self) {
         self.normal = -self.normal;
-        self.w = -self.w;
+        self.intercept = -self.intercept;
     }
 
     /// Split `polygon` by this plane if needed, distributing the results into
@@ -48,7 +65,7 @@ impl Plane {
             .vertices
             .iter()
             .map(|v| {
-                let t = self.normal.dot(&v.pos.coords) - self.w;
+                let t = self.normal.dot(&v.pos.coords) - self.intercept;
                 if t < -EPSILON {
                     BACK
                 } else if t > EPSILON {
@@ -110,7 +127,7 @@ impl Plane {
                         let denom = self.normal.dot(&(vj.pos - vi.pos));
                         // Avoid dividing by zero
                         if denom.abs() > EPSILON {
-                            let t = (self.w - self.normal.dot(&vi.pos.coords)) / denom;
+                            let t = (self.intercept - self.normal.dot(&vi.pos.coords)) / denom;
                             let v_new = vi.interpolate(vj, t);
                             f.push(v_new.clone());
                             b.push(v_new);
@@ -155,7 +172,7 @@ impl Plane {
         //    (some point p0 with n·p0 = w) lands at z=0 in the new coords.
         // p0 = (plane.w / (n·n)) * n
         let denom = n.dot(&n);
-        let p0_3d = norm_dir * (self.w / denom);
+        let p0_3d = norm_dir * (self.intercept / denom);
         let p0_rot = iso_rot.transform_point(&Point3::from(p0_3d));
 
         // We want p0_rot.z = 0, so we shift by -p0_rot.z

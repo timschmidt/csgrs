@@ -1,12 +1,13 @@
-use geo_buf::{ buffer_polygon, buffer_multi_polygon, };
 use crate::csg::CSG;
-use std::fmt::Debug;
 use crate::float_types::Real;
 use geo::{Geometry, GeometryCollection};
+use geo_buf::{buffer_multi_polygon, buffer_polygon};
+use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
+impl<S: Clone + Debug> CSG<S>
+where S: Clone + Send + Sync {
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
-    /// for each Polygon we convert to a cavalier_contours Polyline<Real> and call parallel_offset
+    /// for each Polygon we convert to a cavalier_contours `Polyline<Real>` and call `parallel_offset`
     pub fn offset(&self, distance: Real) -> CSG<S> {
         // For each Geometry in the collection:
         //   - If it's a Polygon, buffer it and store the result as a MultiPolygon
@@ -16,20 +17,20 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             .iter()
             .filter_map(|geom| match geom {
                 Geometry::Polygon(poly) => {
-                    let new_mpoly = buffer_polygon(poly, distance);
+                    let new_mpoly = buffer_polygon(poly, distance.into());
                     Some(Geometry::MultiPolygon(new_mpoly))
                 }
                 Geometry::MultiPolygon(mpoly) => {
-                    let new_mpoly = buffer_multi_polygon(mpoly, distance);
+                    let new_mpoly = buffer_multi_polygon(mpoly, distance.into());
                     Some(Geometry::MultiPolygon(new_mpoly))
                 }
                 _ => None, // ignore other geometry types
             })
             .collect();
-    
+
         // Construct a new GeometryCollection from the offset geometries
-        let new_collection = GeometryCollection(offset_geoms);
-    
+        let new_collection = GeometryCollection::<Real>(offset_geoms);
+
         // Return a new CSG using the offset geometry collection and the old polygons/metadata
         CSG {
             polygons: self.polygons.clone(),
