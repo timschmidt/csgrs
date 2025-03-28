@@ -1,6 +1,6 @@
 //! SVG input and output.
 
-use geo::{BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, MultiPolygon, Polygon};
+use geo::{BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon};
 use svg::node::element::path;
 
 use crate::csg::CSG;
@@ -22,7 +22,7 @@ use super::IoError;
 /// - Method suffix `_by` indicates a command that uses relative coordinates
 ///
 /// **At the moment, curves are not supported.**
-/// When support for curves is implemented, the underlying data structure may change to accomodate that.
+/// When support for curves is implemented, the underlying data structure may change to accommodate that.
 ///
 /// [svg-paths]: https://www.w3.org/TR/SVG11/paths.html
 struct PathBuilder<F: CoordNum> {
@@ -52,7 +52,7 @@ impl<F: CoordNum> PathBuilder<F> {
 
     /// Get a mutable reference to the current path, or an error if no path has been started.
     ///
-    /// To accomodate for the semantics of [`close`], this function will automatically start a new path
+    /// To accommodate for the semantics of [`close`], this function will automatically start a new path
     /// if the last path has 2 or more points and is closed.
     /// For this reason, using this proxy is recommended for implementing any drawing command.
     fn get_path_mut_or_fail(&mut self) -> Result<&mut LineString<F>, IoError> {
@@ -327,6 +327,7 @@ impl<F: CoordNum> PathBuilder<F> {
 
 
 pub trait FromSVG: Sized {
+    #[allow(unused)]
     fn from_svg(doc: &str) -> Result<Self, IoError>;
 }
 
@@ -486,6 +487,7 @@ impl FromSVG for CSG<()> {
 
 
 pub trait ToSVG {
+    #[allow(unused)]
     fn to_svg(&self) -> String;
 }
 
