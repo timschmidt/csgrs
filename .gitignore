@@ -1,5 +1,5 @@
 /target/
-output.stl
+*.stl
 *.swp
 /src/*.swp
 prompt.txt

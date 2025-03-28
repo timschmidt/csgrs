@@ -90,7 +90,9 @@ where S: Clone + Send + Sync {
     ///
     /// # Example
     /// ```
-    /// let cylinder = CSG::cylinder(1.0, 2.0, 32, None);
+    /// # use csgrs::{csg::CSG, plane::Plane};
+    /// # use nalgebra::Vector3;
+    /// let cylinder: CSG<()> = CSG::cylinder(1.0, 2.0, 32, None);
     /// let plane_z0 = Plane { normal: Vector3::z(), w: 0.0 };
     /// let cross_section = cylinder.slice(plane_z0);
     /// // `cross_section` will contain:

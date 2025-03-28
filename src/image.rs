@@ -27,7 +27,7 @@ where S: Clone + Send + Sync {
     /// # use image::{GrayImage, Luma};
     /// # fn main() {
     /// let img: GrayImage = image::open("my_binary.png").unwrap().to_luma8();
-    /// let csg2d = CSG::from_image(&img, 128, true, None);
+    /// let csg2d = CSG::<()>::from_image(&img, 128, true, None);
     /// // optionally extrude it:
     /// let shape3d = csg2d.extrude(5.0);
     /// # }

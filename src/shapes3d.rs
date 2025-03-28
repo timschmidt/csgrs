@@ -164,10 +164,12 @@ where S: Clone + Send + Sync {
     ///
     /// # Example
     /// ```
+    /// # use csgrs::csg::CSG;
+    /// # use nalgebra::Point3;
     /// let bottom = Point3::new(0.0, 0.0, 0.0);
     /// let top = Point3::new(0.0, 0.0, 5.0);
     /// // This will create a cone (bottom degenerate) because radius1 is 0:
-    /// let cone = CSG::frustum_ptp_special(bottom, top, 0.0, 2.0, 32, None);
+    /// let cone = CSG::<()>::frustum_ptp(bottom, top, 0.0, 2.0, 32, None);
     /// ```
     pub fn frustum_ptp(
         start: Point3<Real>,
@@ -335,6 +337,8 @@ where S: Clone + Send + Sync {
     ///
     /// # Example
     /// ```
+    /// # use csgrs::csg::CSG;
+    /// # use nalgebra::Vector3;
     /// let pts = &[
     ///     [0.0, 0.0, 0.0], // point0
     ///     [1.0, 0.0, 0.0], // point1
@@ -352,7 +356,7 @@ where S: Clone + Send + Sync {
     ///     vec![3, 0, 4],
     /// ];
     ///
-    /// let csg_poly = CSG::polyhedron(pts, &fcs);
+    /// let csg_poly = CSG::<()>::polyhedron(pts, &fcs, None);
     /// ```
     pub fn polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>) -> CSG<S> {
         let mut polygons = Vec::new();
@@ -601,8 +605,10 @@ where S: Clone + Send + Sync {
     ///
     /// # Example
     /// ```
+    /// # use csgrs::csg::CSG;
+    /// # let shape = CSG::<()>::cube(3.0, 2.5, 6.7, None);
     /// // Suppose `shape` is a CSG volume, e.g. a box or sphere.
-    /// let gyroid_csg = shape.tpms_gyroid(50, 2.0, 0.0);
+    /// let gyroid_csg = shape.gyroid(50, 2.0, 0.0, None);
     /// ```
     pub fn gyroid(
         &self,

@@ -536,13 +536,11 @@ where S: Clone + Send + Sync {
     }
 
     /// Returns a new CSG translated by x, y, and z.
-    ///
     pub fn translate(&self, x: Real, y: Real, z: Real) -> CSG<S> {
         self.translate_vector(Vector3::new(x, y, z))
     }
 
     /// Returns a new CSG translated by vector.
-    ///
     pub fn translate_vector(&self, vector: Vector3<Real>) -> CSG<S> {
         let translation = Translation3::from(vector);
 
@@ -570,7 +568,8 @@ where S: Clone + Send + Sync {
     ///
     /// # Example
     /// ```
-    /// let csg = CSG::cube(1.0, 1.0, 3.0, None).translate(2.0, 1.0, -2.0);
+    /// # use csgrs::csg::CSG;
+    /// let csg = CSG::<()>::cube(1.0, 1.0, 3.0, None).translate(2.0, 1.0, -2.0);
     /// let floated = csg.float();
     /// assert_eq!(floated.bounding_box().mins.z, 0.0);
     /// ```
@@ -1005,8 +1004,9 @@ where S: Clone + Send + Sync {
     /// Convert this CSG to an **ASCII STL** string with the given `name`.
     ///
     /// ```
-    /// let csg = CSG::cube(None);
-    /// let stl_text = csg.to_stl("my_solid");
+    /// # use csgrs::csg::CSG;
+    /// let csg = CSG::<()>::cube(1.4, 5.0, 8.9, None);
+    /// let stl_text = csg.to_stl_ascii("my_solid");
     /// println!("{}", stl_text);
     /// ```
     pub fn to_stl_ascii(&self, name: &str) -> String {
@@ -1136,8 +1136,10 @@ where S: Clone + Send + Sync {
     /// The resulting `Vec<u8>` can then be written to a file or handled in memory:
     ///
     /// ```
-    /// let bytes = csg.to_stl_binary("my_solid")?;
-    /// std::fs::write("my_solid.stl", bytes)?;
+    /// # use csgrs::csg::CSG;
+    /// # let csg = CSG::<()>::new();
+    /// let bytes = csg.to_stl_binary("my_solid").unwrap(); // you should handle errors
+    /// std::fs::write("my_solid.stl", bytes);
     /// ```
     #[cfg(feature = "stl-io")]
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
