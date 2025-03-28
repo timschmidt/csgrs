@@ -209,7 +209,7 @@ where S: Clone + Send + Sync {
             .collect();
         let new_plane = Plane {
             normal: self.plane.normal,
-            w: self.plane.w + self.plane.normal.dot(&t),
+            intercept: self.plane.intercept + self.plane.normal.dot(&t),
         };
         Self {
             vertices: new_vertices,

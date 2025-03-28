@@ -614,7 +614,7 @@ where S: Clone + Send + Sync {
         // Unit normal:
         let n = plane.normal / len;
         // Adjusted offset = w / ||n||
-        let w = plane.w / len;
+        let w = plane.intercept / len;
 
         // Step 1) Translate so the plane crosses the origin
         // The plane’s offset vector from origin is (w * n).

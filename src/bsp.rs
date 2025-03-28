@@ -387,7 +387,7 @@ impl<S: Clone + Send + Sync> Node<S> {
             let mut types = Vec::with_capacity(vcount);
 
             for v in &poly.vertices {
-                let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.w;
+                let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.intercept;
                 let t = if dist < -EPSILON {
                     BACK
                 } else if dist > EPSILON {
@@ -432,7 +432,7 @@ impl<S: Clone + Send + Sync> Node<S> {
                             // Avoid dividing by zero:
                             let denom = slicing_plane.normal.dot(&(vj.pos - vi.pos));
                             if denom.abs() > EPSILON {
-                                let t = (slicing_plane.w
+                                let t = (slicing_plane.intercept
                                     - slicing_plane.normal.dot(&vi.pos.coords))
                                     / denom;
                                 // Interpolate:
