@@ -13,7 +13,7 @@ The built-in example interactive evaluates [Simple Expressions](#simple-expressi
 
 ## Unfinished
 
-Most features from the Java are now replicated or have equivalent functionality in realistic, but this still tidying up to do.
+Most features from the Java are now replicated or have equivalent functionality in realistic, but there is still tidying up to do.
 
 ## Unfaithful
 
@@ -21,7 +21,9 @@ To the extent this implementation reflects the intent of the original paper, cre
 
 On the other hand, if you encounter bugs or inadequacies in this code, chances are blame for those lies entirely with me as its programmer
 
-In some places the natural way to express the API in Rust differs from Java and I intend to explain such deviations below.
+In some places the natural way to express the API in Rust differs from Java and I intend to explain such deviations below. In several places
+the Java uses recursion but I expressed the same algorithm with iteration in Rust, sometimes taking the opportunity to incorporate the signal
+checking early termination.
 
 ### Conversions
 
@@ -49,6 +51,10 @@ I have chosen not to provide this capability for Computable, this might be revis
 No attempt has been made to measure the current performance of this Rust, compare it against the Java, or against similar code. Although the
 code was not specifically written with performance in mind, some care was taken to avoid needless re-calculations even beyond the core idea of
 the Computable type.
+
+Because some Computable reals would evaluate forever, you may want to use the Real::abort method before trying to evaluate a Real, this enables
+you to hook a signal (for example from a user interface thread) to the evaluation logic, in places which may run forever it will periodically
+check for your signal to abort the calculation.
 
 
 # Simple Expressions
