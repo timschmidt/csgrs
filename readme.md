@@ -140,8 +140,8 @@ let mirrored = cube.mirror(plane_x);
 
 ### STL
 
-- **Export ASCII STL**: `csg.to_stl_ascii("solid_name") -> String`
 - **Export Binary STL**: `csg.to_stl_binary("solid_name") -> io::Result<Vec<u8>>`
+- **Export ASCII STL**: `csg.to_stl_ascii("solid_name") -> String`
 - **Import STL**: `CSG::from_stl(&stl_data) -> io::Result<CSG<S>>`
 
 ```rust

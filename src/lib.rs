@@ -44,5 +44,15 @@ pub mod sdf;
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
 
+/// Prelude containing the common types defined by csgrs
+pub mod prelude {
+    pub use crate::csg::CSG;
+    pub use crate::polygon::Polygon;
+    pub use crate::plane::Plane;
+    pub use crate::vertex::Vertex;
+    #[cfg(feature = "metaballs")]
+    pub use crate::metaballs::MetaBall;
+}
+
 #[cfg(test)]
 mod tests;

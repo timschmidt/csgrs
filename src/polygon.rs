@@ -7,7 +7,7 @@ use nalgebra::{Point2, Point3, Vector3};
 /// A polygon, defined by a list of vertices and a plane.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
-pub struct Polygon<S: Clone> {
+pub struct Polygon<S: Clone = ()> {
     pub vertices: Vec<Vertex>,
     pub plane: Plane,
     pub metadata: Option<S>,
