@@ -75,6 +75,7 @@ where S: Clone + Send + Sync {
 
         if verts_a.is_empty() || verts_b.is_empty() {
             // Empty input to minkowski sum
+            // why not return?
         }
 
         // For Minkowski, add every point in A to every point in B
