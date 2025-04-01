@@ -13,7 +13,7 @@ use std::fmt::Debug;
 
 impl<S: Clone + Debug> CSG<S>
 where S: Clone + Send + Sync {
-    /// Return a CSG created by meshing a signed distance field within a bounding box
+    /// Return a CSG created by meshing a signed distance field within a (min, max) bounding box
     ///
     /// ```
     /// # use csgrs::{csg::CSG, float_types::Real};
@@ -26,7 +26,7 @@ where S: Clone + Send + Sync {
     /// let max_pt = Point3::new( 2.0,  2.0,  2.0);
     /// let iso_value = 0.0; // Typically zero for SDF-based surfaces
     ///
-    /// let csg_shape: CSG<()> = CSG::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
+    /// let csg_shape: CSG<()> = CSG::sdf(my_sdf, resolution, (min_pt, max_pt), iso_value, None);
     /// ```
     /// ```no_run
     /// # use csgrs::csg::CSG;
@@ -37,8 +37,7 @@ where S: Clone + Send + Sync {
     pub fn sdf<F>(
         sdf: F,
         resolution: (usize, usize, usize),
-        min_pt: Point3<Real>,
-        max_pt: Point3<Real>,
+        bounding_box: (Point3<Real>, Point3<Real>),
         iso_value: Real,
         metadata: Option<S>,
     ) -> CSG<S>
@@ -47,6 +46,8 @@ where S: Clone + Send + Sync {
         // Must be `Sync`/`Send` if you want to parallelize the sampling.
         F: Fn(&Point3<Real>) -> Real + Sync + Send,
     {
+        let (min_pt, max_pt) = bounding_box;
+
         // Early return if resolution is degenerate
         let nx = resolution.0.max(2) as u32;
         let ny = resolution.1.max(2) as u32;
