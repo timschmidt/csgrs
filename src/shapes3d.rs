@@ -399,6 +399,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// - `revolve_segments`: Number of segments for the revolution.
     /// - `outline_segments`: Number of segments for the 2D egg outline itself.
     /// - `metadata`: Optional metadata.
+    #[cfg(feature = "chull-io")]
     pub fn egg(
         width: Real,
         length: Real,
@@ -426,6 +427,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// - `revolve_segments`: Number of segments for the revolution (the "circular" direction).
     /// - `shape_segments`: Number of segments for the 2D teardrop outline itself.
     /// - `metadata`: Optional metadata.
+    #[cfg(feature = "chull-io")]
     pub fn teardrop(
         width: Real,
         length: Real,
@@ -455,6 +457,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// - `revolve_segments`: Number of segments for the revolution (the "circular" direction).
     /// - `shape_segments`: Number of segments for the 2D teardrop outline itself.
     /// - `metadata`: Optional metadata.
+    #[cfg(feature = "chull-io")]
     pub fn teardrop_cylinder(
         width: Real,
         length: Real,
