@@ -140,7 +140,7 @@ where S: Clone + Send + Sync {
             for _ in 0..subdivisions {
                 let mut next_level = Vec::new();
                 for t in queue {
-                    let subs = subdivide_triangle(t);
+                    let subs = subdivide_triangle(&t);
                     next_level.extend(subs);
                 }
                 queue = next_level;
@@ -259,13 +259,13 @@ pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real
     (u, v)
 }
 
-// Helper function to subdivide a triangle
-pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
+/// Helper function to subdivide a triangle
+pub fn subdivide_triangle(tri: &[Vertex; 3]) -> [[Vertex; 3]; 4] {
     let v01 = tri[0].interpolate(&tri[1], 0.5);
     let v12 = tri[1].interpolate(&tri[2], 0.5);
     let v20 = tri[2].interpolate(&tri[0], 0.5);
 
-    vec![
+    [
         [tri[0].clone(), v01.clone(), v20.clone()],
         [v01.clone(), tri[1].clone(), v12.clone()],
         [v20.clone(), v12.clone(), tri[2].clone()],

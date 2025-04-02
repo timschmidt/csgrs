@@ -3,6 +3,7 @@ use crate::csg::CSG;
 use crate::float_types::{EPSILON, Real};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
+use geo::Intersects;
 use geo::{
     BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
     Polygon as GeoPolygon, coord, orient::Direction,
@@ -20,10 +21,10 @@ where S: Clone + Send + Sync {
     /// - Otherwise, all `polygons` are tessellated, projected into XY, and unioned.
     /// - We also union any existing 2D geometry (`self.geometry`).
     /// - The output has `.polygons` empty and `.geometry` containing the final 2D shape.
-    pub fn flatten(&self) -> CSG<S> {
+    pub fn flatten(self) -> CSG<S> {
         // 1) If there are no 3D polygons, this is already purely 2D => return as-is
         if self.polygons.is_empty() {
-            return self.clone();
+            return self;
         }
 
         // 2) Convert all 3D polygons into a collection of 2D polygons
@@ -52,10 +53,12 @@ where S: Clone + Send + Sync {
             MultiPolygon::new(Vec::new())
         } else {
             // Start with the first polygon as a MultiPolygon
-            let mut mp_acc = MultiPolygon(vec![flattened_3d[0].clone()]);
+            // last == first so this is ok as long as the polygon is not use again
+            let mut mp_acc = MultiPolygon(vec![flattened_3d.swap_remove(0)]);
+            // todo benchmark to see if intersection test is worth it, it should be as intersection is cheap compared to alloc
             // Union in the rest
-            for p in flattened_3d.iter().skip(1) {
-                mp_acc = mp_acc.union(&MultiPolygon(vec![p.clone()]));
+            for p in flattened_3d.chunk_by(|a, b| !(a.intersects(b))) {
+                mp_acc = mp_acc.union(&MultiPolygon(p.to_vec()));
             }
             mp_acc
         };

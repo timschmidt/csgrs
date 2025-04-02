@@ -152,16 +152,14 @@ impl Plane {
     ///   with the plane’s normal going to +Z,
     /// - `T_inv` is the inverse transform, mapping back.
     pub fn to_xy_transform(&self) -> (Matrix4<Real>, Matrix4<Real>) {
-        // Normal
-        let n = self.normal;
-        let n_len = n.norm();
+        let n_len = self.normal.norm();
         if n_len < 1e-12 {
             // Degenerate plane, return identity
             return (Matrix4::identity(), Matrix4::identity());
         }
 
         // Normalize
-        let norm_dir = n / n_len;
+        let norm_dir = self.normal / n_len;
 
         // Rotate plane.normal -> +Z
         let rot = Rotation3::rotation_between(&norm_dir, &Vector3::z())
@@ -171,7 +169,7 @@ impl Plane {
         // We want to translate so that the plane’s reference point
         //    (some point p0 with n·p0 = w) lands at z=0 in the new coords.
         // p0 = (plane.w / (n·n)) * n
-        let denom = n.dot(&n);
+        let denom = self.normal.dot(&self.normal);
         let p0_3d = norm_dir * (self.intercept / denom);
         let p0_rot = iso_rot.transform_point(&Point3::from(p0_3d));
 

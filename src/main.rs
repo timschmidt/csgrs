@@ -46,7 +46,7 @@ fn main() {
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::cube(1.0, 1.0, 1.0, None);
     // 2) Flatten into the XY plane
-    let flattened = cube.flatten();
+    let flattened = cube.clone().flatten();
     let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
     
     // Create a frustum (start=-2, end=+2) with radius1 = 1, radius2 = 2, 32 slices
