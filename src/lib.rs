@@ -13,6 +13,9 @@ pub mod shapes3d;
 pub mod extrudes;
 pub mod io;
 
+#[cfg(any(all(feature = "delaunay", feature = "earcut"), not(any(feature = "delaunay", feature = "earcut"))))]
+compile_error!("Either 'delaunay' or 'earcut' feature must be specified, but not both");
+
 #[cfg(feature = "hashmap")]
 pub mod flatten_slice;
 
