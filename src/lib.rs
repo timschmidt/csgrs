@@ -15,6 +15,7 @@ pub mod plane;
 pub mod polygon;
 pub mod bsp;
 pub mod csg;
+pub use csg::CSG;
 pub mod shapes2d;
 pub mod shapes3d;
 pub mod extrudes;
@@ -43,6 +44,9 @@ pub mod sdf;
 
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
+
+#[cfg(any(feature = "stl-io", feature = "dxf-io"))]
+mod csg_io;
 
 /// Prelude containing the common types defined by csgrs
 pub mod prelude {

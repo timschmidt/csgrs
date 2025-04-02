@@ -27,32 +27,25 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/cube.stl", cube.to_stl_binary("cube").unwrap());
 
-    let sphere = CSG::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
-    #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/sphere.stl", sphere.to_stl_binary("sphere").unwrap());
+    // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
+    let sphere = CSG::sphere(1.0, 16, 8, None);
+
 
     let cylinder = CSG::cylinder(1.0, 2.0, 32, None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=32
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/cylinder.stl", cylinder.to_stl_binary("cylinder").unwrap());
 
-    // todo move: ..
-    // 14) Mass properties (just printing them)
-    let (mass, com, principal_frame) = cube.mass_properties(1.0);
-    println!("Cube mass = {mass}");
-    println!("Cube center of mass = {:?}", com);
-    println!("Cube principal inertia local frame = {:?}", principal_frame);
-    
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::cube(1.0, 1.0, 1.0, None);
     // 2) Flatten into the XY plane
     let flattened = cube.clone().flatten();
     let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
-    
+
     // Create a frustum (start=-2, end=+2) with radius1 = 1, radius2 = 2, 32 slices
     let frustum = CSG::frustum_ptp(Point3::new(0.0, 0.0, -2.0), Point3::new(0.0, 0.0, 2.0), 1.0, 2.0, 32, None);
     let _ = fs::write("stl/frustum.stl", frustum.to_stl_ascii("frustum"));
-    
+
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::frustum_ptp(Point3::new(0.0, 0.0, -1.0), Point3::new(0.0, 0.0, 1.0), 1.0, 1.0, 32, None);
     // 2) Slice at z=0
@@ -62,12 +55,12 @@ fn main() {
     let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));
     let _ = fs::write("stl/sliced_cylinder_slice.stl", cross_section.to_stl_ascii("sliced_cylinder_slice"));
     }
-    
-    //let poor_geometry_shape = moved_cube.difference(&sphere);
-    //#[cfg(feature = "earclip-io")]
-    //let retriangulated_shape = poor_geometry_shape.triangulate_earclip();
-    //#[cfg(all(feature = "earclip-io", feature = "stl-io"))]
-    //let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
+
+    // let poor_geometry_shape = moved_cube.difference(&sphere);
+    // #[cfg(feature = "earclip-io")]
+    // let retriangulated_shape = poor_geometry_shape.triangulate_earclip();
+    // #[cfg(all(feature = "earclip-io", feature = "stl-io"))]
+    // let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
     let sphere_test = CSG::sphere(1.0, 16, 8, None);
     let cube_test = CSG::cube(1.0, 1.0, 1.0, None);
@@ -76,54 +69,10 @@ fn main() {
     let _ = fs::write("stl/sphere_cube_test.stl", res.to_stl_binary("sphere_cube_test").unwrap());
     assert_eq!(res.bounding_box(), cube_test.bounding_box());
 
-    #[cfg(all(feature = "stl-io", feature = "metaballs"))]
-    {
-        // Suppose we want two overlapping metaballs
-        let balls = vec![
-            MetaBall::new(Point3::origin(), 1.0),
-            MetaBall::new(Point3::new(1.5, 0.0, 0.0), 1.0),
-        ];
-    
-        let resolution = (60, 60, 60);
-        let iso_value = 1.0;
-        let padding = 1.0;
-    
-        #[cfg(feature = "metaballs")]
-        let metaball_csg = CSG::metaballs(
-            &balls,
-            resolution,
-            iso_value,
-            padding,
-            None,
-        );
-        
-        // For instance, save to STL
-        let stl_data = metaball_csg.to_stl_binary("my_metaballs").unwrap();
-        std::fs::write("stl/metaballs.stl", stl_data)
-            .expect("Failed to write metaballs.stl");
-    }
-        
-    #[cfg(feature = "sdf")]
-    {
-        // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
-        let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
-    
-        let resolution = (60, 60, 60);
-        let min_pt = Point3::new(-2.0, -2.0, -2.0);
-        let max_pt = Point3::new( 2.0,  2.0,  2.0);
-        let iso_value = 0.0; // Typically zero for SDF-based surfaces
-    
-        let csg_shape = CSG::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
-    
-        // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
-        #[cfg(feature="stl-io")]
-        let _ = std::fs::write("stl/sdf_sphere.stl", csg_shape.to_stl_binary("sdf_sphere").unwrap());
-    }
-    
     // Create a pie slice of radius 2, from 0 to 90 degrees
     let wedge = CSG::pie_slice(2.0, 0.0, 90.0, 16, None);
     let _ = fs::write("stl/pie_slice.stl", wedge.to_stl_ascii("pie_slice"));
-    
+
     // Create a 2D "metaball" shape from 3 circles
     use nalgebra::Point2;
     let balls_2d = vec![
@@ -133,24 +82,27 @@ fn main() {
     ];
     let mb2d = CSG::metaball_2d(&balls_2d, (100, 100), 1.0, 0.25, None);
     let _ = fs::write("stl/mb2d.stl", mb2d.to_stl_ascii("metaballs2d"));
-    
+
     // Create a supershape
     let sshape = CSG::supershape(1.0, 1.0, 6.0, 1.0, 1.0, 1.0, 128, None);
     let _ = fs::write("stl/supershape.stl", sshape.to_stl_ascii("supershape"));
-    
+
     // Distribute a square along an arc
     let square = CSG::circle(1.0, 32, None);
-    let arc_array = square.distribute_arc(5, 5.0, 0.0, 180.0);
+    let arc_array = square.distribute_arc(5, 5.0, 0.0, 180.0)
+        .expect("count is not less then 1");
     let _ = fs::write("stl/arc_array.stl", arc_array.to_stl_ascii("arc_array"));
-    
+
     // Distribute that wedge along a linear axis
-    let wedge_line = wedge.distribute_linear(4, nalgebra::Vector3::new(1.0, 0.0, 0.0), 3.0);
+    let wedge_line = wedge.distribute_linear(4, nalgebra::Vector3::new(1.0, 0.0, 0.0), 3.0)
+        .expect("count is not less then 1");
     let _ = fs::write("stl/wedge_line.stl", wedge_line.to_stl_ascii("wedge_line"));
-    
+
     // Make a 4x4 grid of the supershape
-    let grid_of_ss = sshape.distribute_grid(4, 4, 3.0, 3.0);
+    let grid_of_ss = sshape.distribute_grid(4, 4, 3.0, 3.0)
+        .expect("count is not less then 1");
     let _ = fs::write("stl/grid_of_ss.stl", grid_of_ss.to_stl_ascii("grid_of_ss"));
-    
+
     // 1. Circle with keyway
     let keyway_shape = CSG::circle_with_keyway(10.0, 64, 2.0, 3.0, None);
     let _ = fs::write("stl/keyway_shape.stl", keyway_shape.to_stl_ascii("keyway_shape"));
@@ -169,23 +121,23 @@ fn main() {
     let _ = fs::write("stl/double_flat.stl", double_flat.to_stl_ascii("double_flat"));
     let df_3d = double_flat.extrude(0.5);
     let _ = fs::write("stl/df_3d.stl", df_3d.to_stl_ascii("df_3d"));
-    
+
     // A 3D teardrop shape
     let teardrop_solid = CSG::teardrop(3.0, 5.0, 32, 32, None);
     let _ = fs::write("stl/teardrop_solid.stl", teardrop_solid.to_stl_ascii("teardrop_solid"));
-    
+
     // A 3D egg shape
     let egg_solid = CSG::egg(2.0, 4.0, 8, 16, None);
     let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
-    
+
     // An ellipsoid with X radius=2, Y radius=1, Z radius=3
     let ellipsoid = CSG::ellipsoid(2.0, 1.0, 3.0, 16, 8, None);
     let _ = fs::write("stl/ellipsoid.stl", ellipsoid.to_stl_ascii("ellipsoid"));
-    
+
     // A teardrop 'blank' hole
     let teardrop_cylinder = CSG::teardrop_cylinder(2.0, 4.0, 32.0, 16, None);
     let _ = fs::write("stl/teardrop_cylinder.stl", teardrop_cylinder.to_stl_ascii("teardrop_cylinder"));
-    
+
     // 1) polygon()
     let polygon_2d = CSG::polygon(
         &[

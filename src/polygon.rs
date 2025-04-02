@@ -1,3 +1,4 @@
+use crate::csg::CSGError;
 use crate::float_types::{PI, Real};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
@@ -16,15 +17,32 @@ pub struct Polygon<S: Clone = ()> {
 impl<S: Clone> Polygon<S>
 where S: Clone + Send + Sync {
     /// Create a polygon from vertices
-    pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
+    ///
+    /// ## Error
+    /// Returns an error if less then 3 vertices are supplied,
+    /// if you always supply exactly three vertices use [`from_tri`](Polygon::from_tri)
+    pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Result<Self, CSGError> {
         let plane = if vertices.len() < 3 {
-            panic!(); // todo: return error
+            // todo give `Polygon` it's own error type, `PolygonError`
+            return Err(CSGError::FieldLessThen { name: "vertices.len()", min: 3 });
         } else {
-            Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos)
+            Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos)?
         };
 
-        Polygon {
+        Ok(Polygon {
             vertices,
+            plane,
+            metadata,
+        })
+    }
+
+    /// Create a polygon from three vertices
+    pub fn from_tri(vertices: &[Vertex; 3], metadata: Option<S>) -> Self {
+        let plane = Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos)
+            .expect("Expected the points are farther then epsilon apart");
+
+        Polygon {
+            vertices: vertices.to_vec(),
             plane,
             metadata,
         }
@@ -148,7 +166,7 @@ where S: Clone + Send + Sync {
             result.extend(queue);
         }
 
-        result // todo: return polygons
+        result
     }
 
     /// return a normal calculated from all polygon vertices

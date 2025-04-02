@@ -327,6 +327,7 @@ dependencies = [
  "core2",
  "doc-image-embed",
  "dxf",
+ "either",
  "fast-surface-nets",
  "geo",
  "geo-buf",

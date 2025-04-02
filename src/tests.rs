@@ -292,7 +292,25 @@ fn test_polygon_new() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly: Polygon<()> = Polygon::new(vertices.clone(), None);
+    let poly: Polygon<()> = Polygon::new(vertices.clone(), None).expect("Three are provided");
+
+    assert_eq!(poly.vertices.len(), 3);
+    assert_eq!(poly.metadata, None);
+    // Plane normal should be +Z for the above points
+    assert!(approx_eq(poly.plane.normal.x, 0.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal.y, 0.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal.z, 1.0, EPSILON));
+}
+
+#[test]
+fn test_polygon_from_tri() {
+    let vertices = [
+        Vertex::new(Point3::origin(), Vector3::z()),
+        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+    ];
+    let poly: Polygon<()> = Polygon::from_tri(&vertices, None);
+
     assert_eq!(poly.vertices.len(), 3);
     assert_eq!(poly.metadata, None);
     // Plane normal should be +Z for the above points
@@ -303,8 +321,8 @@ fn test_polygon_new() {
 
 #[test]
 fn test_polygon_flip() {
-    let mut poly: Polygon<()> = Polygon::new(
-        vec![
+    let mut poly: Polygon<()> = Polygon::from_tri(
+        &[
             Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
@@ -356,8 +374,8 @@ fn test_polygon_triangulate() {
 #[test]
 fn test_polygon_subdivide_triangles() {
     // A single triangle (level=1 should produce 4 sub-triangles)
-    let poly: Polygon<()> = Polygon::new(
-        vec![
+    let poly: Polygon<()> = Polygon::from_tri(
+        &[
             Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
@@ -375,8 +393,8 @@ fn test_polygon_subdivide_triangles() {
 
 #[test]
 fn test_polygon_recalc_plane_and_normals() {
-    let mut poly: Polygon<()> = Polygon::new(
-        vec![
+    let mut poly: Polygon<()> = Polygon::from_tri(
+        &[
             Vertex::new(Point3::origin(), Vector3::zeros()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::zeros()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::zeros()),
@@ -398,8 +416,8 @@ fn test_polygon_recalc_plane_and_normals() {
 #[test]
 fn test_node_new_and_build() {
     // A simple triangle:
-    let p: Polygon<()> = Polygon::new(
-        vec![
+    let p: Polygon<()> = Polygon::from_tri(
+        &[
             Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),

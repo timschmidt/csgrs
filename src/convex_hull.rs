@@ -48,7 +48,7 @@ where S: Clone + Send + Sync {
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
-            polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
+            polygons.push(Polygon::from_tri(&[vv0, vv1, vv2], None));
         }
 
         CSG::from_polygons(&polygons)
@@ -99,7 +99,7 @@ where S: Clone + Send + Sync {
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
-            polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
+            polygons.push(Polygon::from_tri(&[vv0, vv1, vv2], None));
         }
 
         CSG::from_polygons(&polygons)

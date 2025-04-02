@@ -22,7 +22,7 @@ fn main() {
     write_example(&moved_cube, "cube_transformed");
 
     let plane_x = Plane { normal: Vector3::x(), intercept: 0.0 };
-    let mirrored_cube = cube.mirror(plane_x);
+    let mirrored_cube = cube.mirror(plane_x).expect("plane_x is a valid plane");
     write_example(&mirrored_cube, "cube_mirrored_x");
 }
 

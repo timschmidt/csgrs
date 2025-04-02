@@ -401,7 +401,7 @@ where S: Clone + Send + Sync {
             let v2 = Vertex::new(p2_real, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
 
             // Each tri is turned into a Polygon with 3 vertices
-            let poly = Polygon::new(vec![v0, v2, v1], metadata.clone());
+            let poly = Polygon::from_tri(&[v0, v2, v1], metadata.clone());
             triangles.push(poly);
         }
 

@@ -1,4 +1,4 @@
-use crate::csg::CSG;
+use crate::csg::{CSGError, CSG};
 use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -56,7 +56,7 @@ where S: Clone + Send + Sync {
                         let v0 = Vertex::new(tri[2], -Vector3::z());
                         let v1 = Vertex::new(tri[1], -Vector3::z());
                         let v2 = Vertex::new(tri[0], -Vector3::z());
-                        out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
+                        out_polygons.push(Polygon::from_tri(&[v0, v1, v2], metadata.clone()));
                     }
                     // top
                     let top_tris = CSG::<()>::tessellate_2d(
@@ -70,7 +70,7 @@ where S: Clone + Send + Sync {
                         let v0 = Vertex::new(p0, Vector3::z());
                         let v1 = Vertex::new(p1, Vector3::z());
                         let v2 = Vertex::new(p2, Vector3::z());
-                        out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
+                        out_polygons.push(Polygon::from_tri(&[v0, v1, v2], metadata.clone()));
                     }
 
                     // sides
@@ -97,7 +97,7 @@ where S: Clone + Send + Sync {
                                     Vertex::new(t_i, Vector3::zeros()),
                                 ],
                                 metadata.clone(),
-                            ));
+                            ).expect("More then three points provided"));
                         }
                     }
                 }
@@ -189,7 +189,7 @@ where S: Clone + Send + Sync {
                     t_i.clone(), // top[i]
                 ],
                 bottom.metadata.clone(), // carry over bottom polygon metadata
-            );
+            ).expect("More then three points provided");
             polygons.push(side_poly);
         }
 
@@ -379,7 +379,7 @@ where S: Clone + Send + Sync {
     /// - `angle_degs`: how far to revolve, in degrees (e.g. 360 for a full revolve).
     /// - `segments`: number of subdivisions around the revolve.
     ///
-    /// # Key Points
+    /// ## Key Points
     /// - Only 2D geometry in `self.geometry` is used. Any `self.polygons` are ignored.
     /// - Axis of revolution: **Y-axis**. We treat each ring's (x,y) -> revolve_around_y(x,y,theta).
     /// - Exterior rings (CCW in Geo) produce outward-facing side polygons.
@@ -388,9 +388,13 @@ where S: Clone + Send + Sync {
     ///   - Cap orientation is set so that normals face outward, consistent with a solid.
     /// - Returns a new CSG with `.polygons` containing only the side walls + any caps.
     ///   The `.geometry` is empty, i.e. `GeometryCollection::default()`.
-    pub fn rotate_extrude(&self, angle_degs: Real, segments: usize) -> CSG<S> {
+    ///
+    /// ## Errors
+    /// Returns an error if `segments` is less then 2
+    pub fn rotate_extrude(&self, angle_degs: Real, segments: usize) -> Result<CSG<S>, CSGError> {
         if segments < 2 {
-            panic!("rotate_extrude requires at least 2 segments.");
+            // rotate_extrude requires at least 2 segments
+            return Err(CSGError::LessThen2ExtrudeSegments);
         }
 
         let angle_radians = angle_degs.to_radians();
@@ -473,7 +477,8 @@ where S: Clone + Send + Sync {
                     .map(|pos| Vertex::new(pos, Vector3::zeros()))
                     .collect();
 
-                    out_polygons.push(Polygon::new(quad_verts, metadata.clone()));
+                    out_polygons.push(Polygon::new(quad_verts, metadata.clone())
+                        .expect("Four points are provided"));
                 }
             }
             out_polygons
@@ -487,10 +492,11 @@ where S: Clone + Send + Sync {
             angle: Real,
             flip: bool,
             metadata: &Option<S>,
-        ) -> Option<Polygon<S>> {
+        ) -> Result<Polygon<S>, CSGError> {
             if ring_coords.len() < 3 {
-                return None;
+                return Err(CSGError::FieldLessThen { name: "ring_coords.len()", min: 3 });
             }
+
             // revolve each coordinate at the given angle
             let mut pts_3d: Vec<_> = ring_coords
                 .iter()
@@ -524,7 +530,7 @@ where S: Clone + Send + Sync {
 
             // Build the polygon
             let poly = Polygon::new(verts, metadata.clone());
-            Some(poly)
+            poly
         }
 
         //----------------------------------------------------------------------
@@ -554,7 +560,7 @@ where S: Clone + Send + Sync {
                     if do_caps {
                         // start-cap at angle=0
                         //   flip if ext_ccw == true
-                        if let Some(cap) = build_cap_polygon(
+                        if let Ok(cap) = build_cap_polygon(
                             &ext_ring.0,
                             0.0,
                             ext_ccw, // exterior ring => flip the start cap
@@ -565,7 +571,7 @@ where S: Clone + Send + Sync {
 
                         // end-cap at angle= angle_radians
                         //   flip if ext_ccw == false
-                        if let Some(cap) = build_cap_polygon(
+                        if let Ok(cap) = build_cap_polygon(
                             &ext_ring.0,
                             angle_radians,
                             !ext_ccw, // exterior ring => keep normal orientation for end
@@ -602,12 +608,15 @@ where S: Clone + Send + Sync {
                             &self.metadata,
                         ));
                         if do_caps {
-                            if let Some(cap) =
-                                build_cap_polygon(&ext_ring.0, 0.0, ext_ccw, &self.metadata)
-                            {
+                            if let Ok(cap) = build_cap_polygon(
+                                &ext_ring.0,
+                                0.0,
+                                ext_ccw,
+                                &self.metadata
+                            ) {
                                 new_polygons.push(cap);
                             }
-                            if let Some(cap) = build_cap_polygon(
+                            if let Ok(cap) = build_cap_polygon(
                                 &ext_ring.0,
                                 angle_radians,
                                 !ext_ccw,
@@ -639,11 +648,11 @@ where S: Clone + Send + Sync {
         //----------------------------------------------------------------------
         // 3) Return the new CSG:
         //----------------------------------------------------------------------
-        CSG {
+        Ok(CSG {
             polygons: new_polygons,
             geometry: GeometryCollection::default(),
             metadata: self.metadata.clone(),
-        }
+        })
     }
 
     // Sweep a 2D shape `shape_2d` (in XY plane, normal=+Z) along a 2D path `path_2d` (also in XY).
@@ -825,11 +834,12 @@ fn _polygon_from_slice<S: Clone + Send + Sync>(
     slice_pts: &[Point3<Real>],
     flip_winding: bool,
     metadata: Option<S>,
-) -> Polygon<S> {
+) -> Result<Polygon<S>, CSGError> {
     if slice_pts.len() < 3 {
         // degenerate polygon
-        return Polygon::new(vec![], metadata);
+        return Err(CSGError::FieldLessThen { name: "slice_pts.len()", min: 3 });
     }
+
     // Build the vertex list
     let mut verts: Vec<Vertex> = slice_pts
         .iter()
@@ -843,7 +853,8 @@ fn _polygon_from_slice<S: Clone + Send + Sync>(
         }
     }
 
-    let mut poly = Polygon::new(verts, metadata);
+    let mut poly = Polygon::new(verts, metadata)?;
     poly.set_new_normal(); // Recompute its plane & normal for consistency
-    poly
+
+    Ok(poly)
 }

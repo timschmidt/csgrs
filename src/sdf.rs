@@ -189,7 +189,7 @@ where S: Clone + Send + Sync {
             );
 
             // Note: reverse v1, v2 if you need to fix winding
-            let poly = Polygon::new(vec![v0, v1, v2], metadata.clone());
+            let poly = Polygon::from_tri(&[v0, v1, v2], metadata.clone());
             triangles.push(poly);
         }
 

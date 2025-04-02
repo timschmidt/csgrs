@@ -4,6 +4,16 @@ use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::ops::Neg;
 
+#[derive(Debug, thiserror::Error)]
+pub enum PlaneError {
+    #[error("Degenerate polygon: vertices do not define a plane")]
+    /// If input vertices do not define a plane
+    DegenerateFromPoints,
+    /// If the normal of a plane is to smaller then an epsilon
+    #[error("DegenerateNormal: the normal of the plane, {}, is to small", .0)]
+    DegenerateNormal(Vector3<Real>),
+}
+
 /// A plane in 3D space defined by a normal and an intercept
 #[derive(Debug, Clone)]
 pub struct Plane {
@@ -27,16 +37,16 @@ impl Neg for Plane {
 
 impl Plane {
     /// Create a plane from three points
-    pub fn from_points(a: &Point3<Real>, b: &Point3<Real>, c: &Point3<Real>) -> Plane {
+    pub fn from_points(a: &Point3<Real>, b: &Point3<Real>, c: &Point3<Real>) -> Result<Plane, PlaneError> {
         let n = (b - a).cross(&(c - a)).normalize();
         if n.magnitude() < EPSILON {
-            panic!("Degenerate polygon: vertices do not define a plane"); // todo: return error
+            return Err(PlaneError::DegenerateFromPoints);
         }
 
-        Plane {
+        Ok(Plane {
             normal: n,
             intercept: n.dot(&a.coords),
-        }
+        })
     }
 
     /// Flips the normal of the plane, in place
@@ -138,10 +148,12 @@ impl Plane {
                 // Build new polygons from the front/back vertex lists
                 // if they have at least 3 vertices
                 if f.len() >= 3 {
-                    front.push(Polygon::new(f, polygon.metadata.clone()));
+                    front.push(Polygon::new(f, polygon.metadata.clone())
+                        .expect("Three or more vertices are provided"));
                 }
                 if b.len() >= 3 {
-                    back.push(Polygon::new(b, polygon.metadata.clone()));
+                    back.push(Polygon::new(b, polygon.metadata.clone())
+                        .expect("Three or more vertices are provided"));
                 }
             }
         }
@@ -151,11 +163,11 @@ impl Plane {
     /// - `T`   maps a point on this plane into XY plane (z=0)
     ///   with the plane’s normal going to +Z,
     /// - `T_inv` is the inverse transform, mapping back.
-    pub fn to_xy_transform(&self) -> (Matrix4<Real>, Matrix4<Real>) {
+    pub fn to_xy_transform(&self) -> Result<(Matrix4<Real>, Matrix4<Real>), PlaneError> {
         let n_len = self.normal.norm();
         if n_len < 1e-12 {
-            // Degenerate plane, return identity
-            return (Matrix4::identity(), Matrix4::identity());
+            // Degenerate plane, return error
+            return Err(PlaneError::DegenerateNormal(self.normal));
         }
 
         // Normalize
@@ -184,6 +196,6 @@ impl Plane {
             .try_inverse()
             .unwrap_or_else(Matrix4::identity);
 
-        (transform_to_xy, transform_from_xy)
+        Ok((transform_to_xy, transform_from_xy))
     }
 }

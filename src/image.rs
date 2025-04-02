@@ -1,4 +1,4 @@
-use crate::csg::CSG;
+use crate::csg::{CSGError, CSG};
 use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -37,7 +37,7 @@ where S: Clone + Send + Sync {
         threshold: u8,
         closepaths: bool,
         metadata: Option<S>,
-    ) -> Self {
+    ) -> Result<Self, CSGError> {
         // Convert the image into a 2D array of bits for the contour_tracing::array::bits_to_paths function.
         // We treat pixels >= threshold as 1, else 0.
         let width = img.width() as usize;
@@ -83,12 +83,12 @@ where S: Clone + Send + Sync {
                 // close it
                 verts.push(verts.first().unwrap().clone());
             }
-            let poly = Polygon::new(verts, metadata.clone());
+            let poly = Polygon::new(verts, metadata.clone())?;
             all_polygons.push(poly);
         }
 
         // Build a CSG from those polygons
-        CSG::from_polygons(&all_polygons)
+        Ok(CSG::from_polygons(&all_polygons))
     }
 
     /// Internal helper to parse a minimal subset of SVG path commands:

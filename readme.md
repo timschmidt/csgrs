@@ -297,7 +297,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - fix shape of reuleaux
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere in main.rs - shapes are out of proximity
-- fix up error handling with result types, eliminate panics
 - ray intersection (singular)
 - expose geo traits on 2D shapes
 - https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d

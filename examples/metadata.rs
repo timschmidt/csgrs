@@ -27,7 +27,7 @@ fn main() {
             color: (255, 0, 0),
             label: "Triangle".into(),
         }),
-    );
+    ).expect("Three vertices are provided");
 
     // Retrieve metadata
     if let Some(data) = poly_w_metadata.metadata() {
