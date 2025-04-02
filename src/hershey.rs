@@ -1,9 +1,12 @@
-use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
-use crate::csg::CSG;
-use std::fmt::Debug;
-use crate::float_types::Real;
+//! Create `CSG`s using Hershey fonts
 
-impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
+use crate::csg::CSG;
+use crate::float_types::Real;
+use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
+use std::fmt::Debug;
+
+impl<S: Clone + Debug> CSG<S>
+where S: Clone + Send + Sync {
     /// Creates **2D line-stroke text** in the XY plane using a Hershey font.
     ///
     /// Each glyph’s strokes become one or more `LineString<Real>` entries in `geometry`.
@@ -18,12 +21,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// # Returns
     /// A new `CSG` where each glyph stroke is a `Geometry::LineString` in `geometry`.
     ///
-    pub fn from_hershey(
-        text: &str,
-        font: &Font,
-        size: Real,
-        metadata: Option<S>,
-    ) -> CSG<S> {
+    pub fn from_hershey(text: &str, font: &Font, size: Real, metadata: Option<S>) -> CSG<S> {
         use geo::{Geometry, GeometryCollection};
 
         let mut all_strokes = Vec::new();
@@ -65,7 +63,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         CSG {
             polygons: Vec::new(),
             geometry: geo_coll,
-            metadata: metadata,
+            metadata,
         }
     }
 }
@@ -77,7 +75,7 @@ fn build_hershey_glyph_lines(
     offset_x: Real,
     offset_y: Real,
 ) -> Vec<geo::LineString<Real>> {
-    use geo::{coord, LineString};
+    use geo::{LineString, coord};
 
     let mut strokes = Vec::new();
 

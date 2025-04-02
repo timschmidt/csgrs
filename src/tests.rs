@@ -1,10 +1,9 @@
-#[cfg(test)]
-use crate::float_types::{Real, EPSILON, FRAC_PI_2};
 use crate::bsp::Node;
-use crate::vertex::Vertex;
+use crate::csg::CSG;
+use crate::float_types::{EPSILON, FRAC_PI_2, Real};
 use crate::plane::Plane;
 use crate::polygon::Polygon;
-use crate::csg::CSG;
+use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 
 // --------------------------------------------------------
@@ -120,7 +119,7 @@ fn test_degenerate_polygon_after_clipping() {
     let polygon: Polygon<()> = Polygon::new(vertices.clone(), None);
     let plane = Plane {
         normal: Vector3::new(0.0, 0.0, 0.0),
-        w: 0.0,
+        intercept: 0.0,
     };
 
     let mut coplanar_front = Vec::new();
@@ -158,7 +157,7 @@ fn test_valid_polygon_clipping() {
 
     let plane = Plane {
         normal: -Vector3::y(),
-        w: -0.5,
+        intercept: -0.5,
     };
 
     let mut coplanar_front = Vec::new();
@@ -221,18 +220,18 @@ fn test_plane_from_points() {
     assert!(approx_eq(plane.normal.x, 0.0, EPSILON));
     assert!(approx_eq(plane.normal.y, 0.0, EPSILON));
     assert!(approx_eq(plane.normal.z, 1.0, EPSILON));
-    assert!(approx_eq(plane.w, 0.0, EPSILON));
+    assert!(approx_eq(plane.intercept, 0.0, EPSILON));
 }
 
 #[test]
 fn test_plane_flip() {
     let mut plane = Plane {
         normal: Vector3::y(),
-        w: 2.0,
+        intercept: 2.0,
     };
     plane.flip();
     assert_eq!(plane.normal, Vector3::new(0.0, -1.0, 0.0));
-    assert_eq!(plane.w, -2.0);
+    assert_eq!(plane.intercept, -2.0);
 }
 
 #[test]
@@ -240,7 +239,7 @@ fn test_plane_split_polygon() {
     // Define a plane that splits the XY plane at y=0
     let plane = Plane {
         normal: Vector3::new(0.0, 1.0, 0.0),
-        w: 0.0,
+        intercept: 0.0,
     };
 
     // A polygon that crosses y=0 line: a square from ( -1, -1 ) to (1, 1 )
@@ -446,7 +445,7 @@ fn test_node_clip_polygons2() {
     // A node with a single plane normal to +Z, passing through z=0
     let plane = Plane {
         normal: Vector3::z(),
-        w: 0.0,
+        intercept: 0.0,
     };
     let mut node: Node<()> = Node {
         plane: Some(plane),
@@ -808,7 +807,10 @@ fn test_csg_transform_translate_rotate_scale() {
 #[test]
 fn test_csg_mirror() {
     let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    let plane_x = Plane { normal: Vector3::x(), w: 0.0 }; // x=0 plane
+    let plane_x = Plane {
+        normal: Vector3::x(),
+        intercept: 0.0,
+    }; // x=0 plane
     let mirror_x = c.mirror(plane_x);
     let bb_mx = mirror_x.bounding_box();
     // The original cube was from x=0..2, so mirrored across X=0 should be -2..0
@@ -1604,7 +1606,10 @@ fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::<()>::cylinder(1.0, 2.0, 32, None).center();
     // 2) Slice at z=0
-    let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
+    let cross_section = cyl.slice(Plane {
+        normal: Vector3::z(),
+        intercept: 0.0,
+    });
 
     // For a simple cylinder, the cross-section is typically 1 circle polygon
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
