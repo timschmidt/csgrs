@@ -50,7 +50,7 @@ cargo build --features="wasm" --target=wasm32-unknown-unknown --release
   - a [`geo`](https://crates.io/crates/geo) [`GeometryCollection<Real>`](https://docs.rs/geo/latest/geo/geometry/struct.GeometryCollection.html)
   - another optional metadata field (`Option<S>`) also defined by you
 
-`CSG<S>` provides methods for working with 2D and 3D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from geo Geometries with `CSG::from_geo(...)`.  Polygons must be closed, planar, have 3 or more vertices, and are 3D.  Geometries can be open or closed, have holes, but must be planar in the XY.  Operations work on both 2D and 3D shapes though they generally do not interact except where one is explicitly transformed into the other as in extrude or slice.  Polygons and Geometries are triangulated with [`earcutr`](https://crates.io/crates/earcutr) when being exported as an STL, or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
+`CSG<S>` provides methods for working with 2D and 3D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from geo Geometries with `CSG::from_geo(...)`.  Polygons must be closed, planar, have 3 or more vertices, and are 3D.  Geometries can be open or closed, have holes, but must be planar in the XY.  Operations work on both 2D and 3D shapes though they generally do not interact except where one is explicitly transformed into the other as in extrude or slice.  Polygons and Geometries are triangulated when being exported as an STL, or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 
 ### 2D Shapes
 
