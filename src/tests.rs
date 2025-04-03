@@ -937,6 +937,7 @@ fn test_csg_offset_2d() {
     assert!(bb_shrunk.maxs.x < bb_square.maxs.x + 0.1);
 }
 
+#[cfg(feature = "truetype-text")]
 #[test]
 fn test_csg_text() {
     // We can’t easily test visually, but we can at least test that it doesn’t panic
