@@ -31,7 +31,13 @@ pub enum CSGError {
     /// `name` must not be less then `min`
     #[error("{} must be not be less then {}", .name, .min)]
     FieldLessThen { name: &'static str, min: i32 },
+    /// `name` must not be less then `min`
+    #[error("{} must be not be less then {}", .name, .min)]
+    FieldLessThenFloat { name: &'static str, min: Real },
     /// If a required index is higher then len
+    /// `name` must not be less or equal to 0.0
+    #[error("{} must be not be >= 0", .name)]
+    Zero { name: &'static str },
     #[error("Face index {} is out of range (points.len = {})", .index, .len)]
     IndexOutOfRange { index: usize, len: usize },
     /// `rotate_extrude` requires at least 2 segments
@@ -88,7 +94,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     }
 
     /// Convert internal polylines into polygons and return along with any existing internal polygons.
-    pub fn to_polygons(&self) -> Result<Vec<Polygon<S>>, CSGError> {
+    pub fn to_polygons(&self) -> Vec<Polygon<S>> {
         let mut all_polygons = Vec::new();
 
         for geom in &self.geometry {
@@ -101,7 +107,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
                 // Push as a new Polygon<S> if it has at least 3 vertices.
                 if outer_vertices_3d.len() >= 3 {
-                    all_polygons.push(Polygon::new(outer_vertices_3d, self.metadata.clone())?);
+                    all_polygons.push(Polygon::new(outer_vertices_3d, self.metadata.clone())
+                        .expect("checked above"));
                 }
 
                 // 2. Convert each interior ring (hole) into its own Polygon<S>.
@@ -117,7 +124,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                         // If your `Polygon<S>` type can represent holes internally,
                         // adjust this to store hole_vertices_3d as a hole rather
                         // than a new standalone polygon.
-                        all_polygons.push(Polygon::new(hole_vertices_3d, self.metadata.clone())?);
+                        all_polygons.push(Polygon::new(hole_vertices_3d, self.metadata.clone())
+                            .expect("checked above"));
                     }
                 }
             }
@@ -127,7 +135,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             // }
         }
 
-        Ok(all_polygons)
+        all_polygons
     }
 
     /// Create a CSG that holds *only* 2D geometry in a `geo::GeometryCollection`.
@@ -775,8 +783,18 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Subdivide all polygons in this CSG 'levels' times, in place.
     /// This results in a triangular mesh with more detail.
     ///
-    /// ## Errors
-    /// Returns an error if `levels` is zero
+    /// ## Example
+    /// ```
+    /// let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    /// // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
+    /// // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
+    /// cube.subdivide_triangles(1.try_into().expect("not zero"));
+    /// assert_eq!(cube.polygons.len(), 6 * 8);
+    ///
+    /// let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    /// cube.subdivide_triangles(2.try_into().expect("not zero"));
+    /// assert_eq!(cube.polygons.len(), 6 * 8 * 2);
+    /// ```
     pub fn subdivide_triangles(&mut self, levels: core::num::NonZeroU32) {
         // clear before error check for consistency
         self.geometry.0.clear();
@@ -791,7 +809,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 sub_tris.into_par_iter().map(move |tri| {
                     Polygon::from_tri(
                         &tri,
-                        poly.metadata,
+                        poly.metadata.clone(),
                     )
                 })
             })
@@ -818,8 +836,16 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Subdivide all polygons in this CSG 'levels' times, returning a new CSG.
     /// This results in a triangular mesh with more detail.
     ///
-    /// ## Errors
-    /// Returns an error if `levels` is zero
+    /// ## Example
+    /// ```
+    /// let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    /// // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
+    /// // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
+    /// let subdiv = cube.subdivided_triangles(1.try_into().expect("not zero"));
+    /// assert_eq!(subdiv.polygons.len(), 6 * 8);
+    /// let subdiv_2 = cube.subdivided_triangles(2.try_into().expect("not zero"));
+    /// assert_eq!(subdiv.polygons.len(), 6 * 8 * 2);
+    /// ```
     pub fn subdivided_triangles(&self, levels: core::num::NonZeroU32) -> CSG<S> {
         #[cfg(feature = "parallel")]
         let new_polygons: Vec<Polygon<S>> = self.polygons

@@ -10,7 +10,8 @@ fn main() {
     let _ = fs::create_dir_all(PATH);
 
     let square_2d = CSG::square(2.0, 2.0, None); // 2x2 square, centered
-    let circle_2d = CSG::circle(1.0, 32, None);
+    let circle_2d = CSG::circle(1.0, 32, None)
+        .expect("not less then 3 segments");
 
     // 8) Extrude & Rotate-Extrude
     let extruded_square = square_2d.extrude(1.0);

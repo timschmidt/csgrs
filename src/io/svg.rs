@@ -409,7 +409,7 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let csg = Self::circle(r, segments, None)
+                    let csg = Self::circle(r, segments, None).expect("At least six")
                         .translate(cx, cy, 0.0);
                     csg_union = csg_union.union(&csg);
                 },
@@ -426,7 +426,7 @@ impl FromSVG for CSG<()> {
                     let r = (rx + ry) / 2.0;
 
                     // TODO: add a way for the user to configure this?
-                    let segments = (r.ceil() as usize).max(6);
+                    let segments = (r.ceil() as u32).max(6);
 
                     let csg = Self::rounded_rectangle(w, h, r, segments, None)
                             .translate(x, y, 0.0);
@@ -442,7 +442,7 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (rx.max(ry).ceil() as usize).max(6);
 
-                    let csg = Self::ellipse(rx * 2.0, ry * 2.0, segments, None)
+                    let csg = Self::ellipse(rx * 2.0, ry * 2.0, segments, None).expect("At least six")
                         .translate(cx, cy, 0.0);
                     csg_union = csg_union.union(&csg);
                 },

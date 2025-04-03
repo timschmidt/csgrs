@@ -331,13 +331,16 @@ where S: Clone + Send + Sync {
     // todo add errors section
     /// Creates a CSG polyhedron from raw vertex data (`points`) and face indices.
     ///
-    /// # Parameters
+    /// ## Parameters
     ///
     /// - `points`: a slice of `[x,y,z]` coordinates.
     /// - `faces`: each element is a list of indices into `points`, describing one face.
     ///   Each face must have at least 3 indices.
     ///
-    /// # Example
+    /// ## Errors
+    /// Returns an error if any of the faces has an invalid indice
+    ///
+    /// ## Example
     /// ```
     /// # use csgrs::csg::CSG;
     /// # use nalgebra::Vector3;
@@ -350,12 +353,12 @@ where S: Clone + Send + Sync {
     /// ];
     ///
     /// // Two faces: bottom square [0,1,2,3], and a pyramid side [0,1,4]
-    /// let fcs = vec![
-    ///     vec![0, 1, 2, 3],
-    ///     vec![0, 1, 4],
-    ///     vec![1, 2, 4],
-    ///     vec![2, 3, 4],
-    ///     vec![3, 0, 4],
+    /// let fcs: Vec<&[usize]> = vec![
+    ///     &[0, 1, 2, 3],
+    ///     &[0, 1, 4],
+    ///     &[1, 2, 4],
+    ///     &[2, 3, 4],
+    ///     &[3, 0, 4],
     /// ];
     ///
     /// let csg_poly = CSG::<()>::polyhedron(pts, &fcs, None);
@@ -416,7 +419,7 @@ where S: Clone + Send + Sync {
             return Err(CSGError::LessThen2ExtrudeSegments);
         }
 
-        let egg_2d = Self::egg_outline(width, length, outline_segments, metadata.clone());
+        let egg_2d = Self::egg_outline(width, length, outline_segments, metadata.clone())?;
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
@@ -452,7 +455,7 @@ where S: Clone + Send + Sync {
         }
 
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
+        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone())?;
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
@@ -480,10 +483,11 @@ where S: Clone + Send + Sync {
         height: Real,
         shape_segments: usize,
         metadata: Option<S>,
-    ) -> Self {
+    ) -> Result<Self, CSGError> {
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
-        td_2d.extrude(height).convex_hull()
+        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone())?;
+
+        Ok(td_2d.extrude(height).convex_hull())
     }
 
     /// Creates an ellipsoid by taking a sphere of radius=1 and scaling it by (rx, ry, rz).

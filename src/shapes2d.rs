@@ -1,4 +1,4 @@
-use crate::csg::CSG;
+use crate::csg::{CSGError, CSG};
 use crate::float_types::{Real, PI, EPSILON, FRAC_PI_2, TAU};
 use geo::{line_string, GeometryCollection, Geometry, LineString, MultiPolygon, Polygon as GeoPolygon, BooleanOps};
 use std::fmt::Debug;
@@ -32,10 +32,13 @@ where S: Clone + Send + Sync {
         )
     }
 
-    /// Creates a 2D circle in the XY plane.
-    pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Self {
+    /// Creates a 2D circle on the XY plane.
+    ///
+    /// ## Errors
+    /// Returns an error if `segments` is less then 3.
+    pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Result<Self, CSGError> {
         if segments < 3 {
-            return CSG::new();
+            return Err(CSGError::FieldLessThen { name: "segments", min: 3 });
         }
         let mut coords = Vec::with_capacity(segments + 1);
         for i in 0..segments {
@@ -48,10 +51,10 @@ where S: Clone + Send + Sync {
         coords.push((coords[0].0, coords[0].1));
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
 
-        CSG::from_geo(
+        Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
-        )
+        ))
     }
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
@@ -100,7 +103,7 @@ where S: Clone + Send + Sync {
         width: Real,
         height: Real,
         corner_radius: Real,
-        corner_segments: usize,
+        corner_segments: u32,
         metadata: Option<S>,
     ) -> Self {
         let r = corner_radius.min(width * 0.5).min(height * 0.5);
@@ -163,9 +166,12 @@ where S: Clone + Send + Sync {
 
     /// Ellipse in XY plane, centered at (0,0), with full width `width`, full height `height`.
     /// `segments` is the number of polygon edges approximating the ellipse.
-    pub fn ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
+    ///
+    /// ## Errors
+    /// Returns an error if segments is less then 3
+    pub fn ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Result<Self, CSGError> {
         if segments < 3 {
-            return CSG::new();
+            return Err(CSGError::FieldLessThen { name: "segments", min: 3 });
         }
         let rx = 0.5 * width;
         let ry = 0.5 * height;
@@ -178,10 +184,11 @@ where S: Clone + Send + Sync {
         }
         coords.push(coords[0]);
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+
+        Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
-        )
+        ))
     }
 
     /// Regular N-gon in XY plane, centered at (0,0), with circumscribed radius `radius`.
@@ -268,16 +275,26 @@ where S: Clone + Send + Sync {
     /// - a circle arc for the "round" top
     /// - it tapers down to a cusp at bottom.
     /// This is just one of many possible "teardrop" definitions.
+    ///
+    /// ## Errors
+    /// Returns an error if segments is less then 2 or width/length are less then [`EPSILON`].
     // todo: center on focus of the arc
     pub fn teardrop_outline(
         width: Real,
         length: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
-        if segments < 2 || width < EPSILON || length < EPSILON {
-            return CSG::new();
+    ) -> Result<CSG<S>, CSGError> {
+        if segments < 2 {
+            return Err(CSGError::FieldLessThen { name: "segments", min: 2 });
         }
+        if width < EPSILON {
+            return Err(CSGError::FieldLessThenFloat { name: "width", min: EPSILON });
+        }
+        if length < EPSILON {
+            return Err(CSGError::FieldLessThenFloat { name: "length", min: EPSILON });
+        }
+
         let r = 0.5 * width;
         let center_y = length - r;
         let half_seg = segments / 2;
@@ -295,18 +312,21 @@ where S: Clone + Send + Sync {
         }
 
         coords.push(coords[0]);
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), Vec::new());
+        Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
-        )
+        ))
     }
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
-    pub fn egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
+    ///
+    /// ## Errors
+    /// Returns an error if segments is less then 3
+    pub fn egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>) -> Result<CSG<S>, CSGError> {
         if segments < 3 {
-            return CSG::new();
+            return Err(CSGError::FieldLessThen { name: "segments", min: 3 });
         }
         let rx = 0.5 * width;
         let ry = 0.5 * length;
@@ -322,17 +342,20 @@ where S: Clone + Send + Sync {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
-        )
+        ))
     }
 
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
     /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
-    pub fn squircle(width: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
+    ///
+    /// ## Errors
+    /// Returns an error if segments is less then 3
+    pub fn squircle(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Result<CSG<S>, CSGError> {
         if segments < 3 {
-            return CSG::new();
+            return Err(CSGError::FieldLessThen { name: "segments", min: 3 });
         }
         let rx = 0.5 * width;
         let ry = 0.5 * height;
@@ -349,24 +372,27 @@ where S: Clone + Send + Sync {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
-        )
+        ))
     }
 
     /// Keyhole shape (simple version): a large circle + a rectangle "handle".
     /// This does *not* have a hole.  If you want a literal hole, you'd do difference ops.
     /// Here we do union of a circle and a rectangle.
+    ///
+    /// ## Errors
+    /// Returns an error if segments is less then 3
     pub fn keyhole(
         circle_radius: Real,
         handle_width: Real,
         handle_height: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Result<CSG<S>, CSGError> {
         if segments < 3 {
-            return CSG::new();
+            return Err(CSGError::FieldLessThen { name: "segments", min: 3 });
         }
         // 1) Circle
         let mut circle_coords = Vec::with_capacity(segments + 1);
@@ -392,22 +418,25 @@ where S: Clone + Send + Sync {
         let mp2 = MultiPolygon(vec![rect_poly]);
         let multipolygon_2d = mp1.union(&mp2);
 
-        CSG::from_geo(
+        Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::MultiPolygon(multipolygon_2d)]),
             metadata,
-        )
+        ))
     }
 
     /// Reuleaux polygon with `sides` and "radius".  Approximates constant-width shape.
     /// This is a simplified approximation that arcs from each vertex to the next.
+    ///
+    /// ## Errors
+    /// Returns an error if `sides` is less then 3
     pub fn reuleaux_polygon(
         sides: usize,
         radius: Real,
-        arc_segments_per_side: usize,
+        arc_segments_per_side: core::num::NonZeroUsize,
         metadata: Option<S>,
-    ) -> CSG<S> {
-        if sides < 3 || arc_segments_per_side < 1 {
-            return CSG::new();
+    ) -> Result<CSG<S>, CSGError> {
+        if sides < 3 {
+            return Err(CSGError::FieldLessThen { name: "sides", min: 3 });
         }
         // Corner positions (the "center" of each arc is the next corner).
         let mut corners = Vec::with_capacity(sides);
@@ -436,8 +465,8 @@ where S: Clone + Send + Sync {
             while delta <= 0.0 {
                 delta += TAU;
             }
-            let step = delta / (arc_segments_per_side as Real);
-            for seg_i in 0..arc_segments_per_side {
+            let step = delta / (Into::<usize>::into(arc_segments_per_side) as Real);
+            for seg_i in 0..(arc_segments_per_side.into()) {
                 let a = start_angle + (seg_i as Real) * step;
                 let x = center.0 + radius * a.cos();
                 let y = center.1 + radius * a.sin();
@@ -447,10 +476,10 @@ where S: Clone + Send + Sync {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
-        )
+        ))
     }
 
     /// Ring with inner diameter = `id` and (radial) thickness = `thickness`.
@@ -462,9 +491,18 @@ where S: Clone + Send + Sync {
     ///   inner = circle(inner_radius)
     ///   ring = outer.difference(inner)
     /// Then we call `flatten()` to unify into a single shape that has a hole.
-    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
-        if id <= 0.0 || thickness <= 0.0 || segments < 3 {
-            return CSG::new();
+    ///
+    /// ## Errors
+    /// Returns an error if segments is less then 3, or if id/thickness are `>=` 0.0
+    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>) -> Result<CSG<S>, CSGError> {
+        if segments < 3 {
+            return Err(CSGError::FieldLessThen { name: "segments", min: 3 });
+        }
+        if id <= 0.0 {
+            return Err(CSGError::Zero { name: "id" });
+        }
+        if thickness <= 0.0 {
+            return Err(CSGError::Zero { name: "thickness" });
         }
         let inner_radius = 0.5 * id;
         let outer_radius = inner_radius + thickness;
@@ -491,10 +529,10 @@ where S: Clone + Send + Sync {
         inner.reverse(); // ensure hole is opposite winding from outer
 
         let polygon_2d = GeoPolygon::new(LineString::from(outer), vec![LineString::from(inner)]);
-        CSG::from_geo(
+        Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
-        )
+        ))
     }
 
     /// Create a 2D "pie slice" (wedge) in the XY plane.
@@ -597,15 +635,18 @@ where S: Clone + Send + Sync {
     }
 
     /// Creates a 2D circle with a rectangular keyway slot cut out on the +X side.
+    ///
+    /// ## Errors
+    /// Returns an error if `segments` is less then 3.
     pub fn circle_with_keyway(
         radius: Real,
         segments: usize,
         key_width: Real,
         key_depth: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Result<CSG<S>, CSGError> {
         // 1. Full circle
-        let circle = CSG::circle(radius, segments, metadata.clone());
+        let circle = CSG::circle(radius, segments, metadata.clone())?;
 
         // 2. Construct the keyway rectangle:
         //    - width along X = key_depth
@@ -619,7 +660,7 @@ where S: Clone + Send + Sync {
             0.0,
         );
 
-        circle.difference(&key_rect)
+        Ok(circle.difference(&key_rect))
     }
 
     /// Creates a 2D "D" shape (circle with one flat chord).
@@ -631,14 +672,17 @@ where S: Clone + Send + Sync {
     /// Solve for distance from center using width of flat:
     /// let half_c = chord_len / 2.0;
     /// let flat_dist = (radius*radius - half_c*half_c).sqrt();
+    ///
+    /// ## Errors
+    /// Returns an error if `segments` is less then 3.
     pub fn circle_with_flat(
         radius: Real,
         segments: usize,
         flat_dist: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Result<CSG<S>, CSGError> {
         // 1. Full circle
-        let circle = CSG::circle(radius, segments, metadata.clone());
+        let circle = CSG::circle(radius, segments, metadata.clone())?;
 
         // 2. Build a large rectangle that cuts off everything below y = -flat_dist
         //    (i.e., we remove that portion to create a chord).
@@ -651,7 +695,7 @@ where S: Clone + Send + Sync {
             .translate(0.0, -flat_dist, 0.0); // now top edge is at y = -flat_dist
 
         // 3. Subtract to produce the flat chord
-        circle.difference(&rect_cutter)
+        Ok(circle.difference(&rect_cutter))
     }
 
     /// Circle with two parallel flat chords on opposing sides (e.g., "double D" shape).
@@ -659,14 +703,17 @@ where S: Clone + Send + Sync {
     /// `segments` => how many segments in the circle approximation
     /// `flat_dist` => half-distance between flats measured from the center.
     ///   - chord at y=+flat_dist  and  chord at y=-flat_dist
+    ///
+    /// ## Errors
+    /// Returns an error if `segments` is less then 3.
     pub fn circle_with_two_flats(
         radius: Real,
         segments: usize,
         flat_dist: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Result<CSG<S>, CSGError> {
         // 1. Full circle
-        let circle = CSG::circle(radius, segments, metadata.clone());
+        let circle = CSG::circle(radius, segments, metadata.clone())?;
 
         // 2. Large rectangle to cut the TOP (above +flat_dist)
         let cutter_height = 9999.0;
@@ -683,6 +730,6 @@ where S: Clone + Send + Sync {
         let with_top_flat = circle.difference(&top_rect);
         let with_both_flats = with_top_flat.difference(&bottom_rect);
 
-        with_both_flats
+        Ok(with_both_flats)
     }
 }

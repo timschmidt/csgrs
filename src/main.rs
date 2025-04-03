@@ -30,10 +30,8 @@ fn main() {
     // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
     let sphere = CSG::sphere(1.0, 16, 8, None);
 
-
-    let cylinder = CSG::cylinder(1.0, 2.0, 32, None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=32
-    #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/cylinder.stl", cylinder.to_stl_binary("cylinder").unwrap());
+    // todo move:
+    // # special shapes:
 
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
@@ -88,7 +86,7 @@ fn main() {
     let _ = fs::write("stl/supershape.stl", sshape.to_stl_ascii("supershape"));
 
     // Distribute a square along an arc
-    let square = CSG::circle(1.0, 32, None);
+    let square = CSG::circle(1.0, 32, None).expect("not less then 3 segments");
     let arc_array = square.distribute_arc(5, 5.0, 0.0, 180.0)
         .expect("count is not less then 1");
     let _ = fs::write("stl/arc_array.stl", arc_array.to_stl_ascii("arc_array"));
@@ -104,30 +102,30 @@ fn main() {
     let _ = fs::write("stl/grid_of_ss.stl", grid_of_ss.to_stl_ascii("grid_of_ss"));
 
     // 1. Circle with keyway
-    let keyway_shape = CSG::circle_with_keyway(10.0, 64, 2.0, 3.0, None);
+    let keyway_shape = CSG::circle_with_keyway(10.0, 64, 2.0, 3.0, None).expect("not less then 3 segments");
     let _ = fs::write("stl/keyway_shape.stl", keyway_shape.to_stl_ascii("keyway_shape"));
     // Extrude it 2 units:
     let keyway_3d = keyway_shape.extrude(2.0);
     let _ = fs::write("stl/keyway_3d.stl", keyway_3d.to_stl_ascii("keyway_3d"));
 
     // 2. D-shape
-    let d_shape = CSG::circle_with_flat(5.0, 32, 2.0, None);
+    let d_shape = CSG::circle_with_flat(5.0, 32, 2.0, None).expect("not less then 3 segments");
     let _ = fs::write("stl/d_shape.stl", d_shape.to_stl_ascii("d_shape"));
     let d_3d = d_shape.extrude(1.0);
     let _ = fs::write("stl/d_3d.stl", d_3d.to_stl_ascii("d_3d"));
 
     // 3. Double-flat circle
-    let double_flat = CSG::circle_with_two_flats(8.0, 64, 3.0, None);
+    let double_flat = CSG::circle_with_two_flats(8.0, 64, 3.0, None).expect("not less then 3 segments");
     let _ = fs::write("stl/double_flat.stl", double_flat.to_stl_ascii("double_flat"));
     let df_3d = double_flat.extrude(0.5);
     let _ = fs::write("stl/df_3d.stl", df_3d.to_stl_ascii("df_3d"));
 
     // A 3D teardrop shape
-    let teardrop_solid = CSG::teardrop(3.0, 5.0, 32, 32, None);
+    let teardrop_solid = CSG::teardrop(3.0, 5.0, 32, 32, None).expect("more then 2 segments");
     let _ = fs::write("stl/teardrop_solid.stl", teardrop_solid.to_stl_ascii("teardrop_solid"));
 
     // A 3D egg shape
-    let egg_solid = CSG::egg(2.0, 4.0, 8, 16, None);
+    let egg_solid = CSG::egg(2.0, 4.0, 8, 16, None).expect("more then 2 segments");
     let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
 
     // An ellipsoid with X radius=2, Y radius=1, Z radius=3
@@ -135,7 +133,7 @@ fn main() {
     let _ = fs::write("stl/ellipsoid.stl", ellipsoid.to_stl_ascii("ellipsoid"));
 
     // A teardrop 'blank' hole
-    let teardrop_cylinder = CSG::teardrop_cylinder(2.0, 4.0, 32.0, 16, None);
+    let teardrop_cylinder = CSG::teardrop_cylinder(2.0, 4.0, 32.0, 16, None).expect("not less then 3 segments");
     let _ = fs::write("stl/teardrop_cylinder.stl", teardrop_cylinder.to_stl_ascii("teardrop_cylinder"));
 
     // 1) polygon()
@@ -155,7 +153,7 @@ fn main() {
     let _ = fs::write("stl/rounded_rectangle_2d.stl", rrect_2d.to_stl_ascii("rounded_rectangle_2d"));
 
     // 3) ellipse(width, height, segments)
-    let ellipse = CSG::ellipse(3.0, 1.5, 32, None);
+    let ellipse = CSG::ellipse(3.0, 1.5, 32, None).expect("not less then 3 segments");
     let _ = fs::write("stl/ellipse.stl", ellipse.to_stl_ascii("ellipse"));
 
     // 4) regular_ngon(sides, radius)
@@ -171,55 +169,56 @@ fn main() {
     let _ = fs::write("stl/star_2d.stl", star_2d.to_stl_ascii("star_2d"));
 
     // 8) teardrop(width, height, segments) [2D shape]
-    let teardrop_2d = CSG::teardrop_outline(2.0, 3.0, 16, None);
+    let teardrop_2d = CSG::teardrop_outline(2.0, 3.0, 16, None).expect("not less then 3 segments");
     let _ = fs::write("stl/teardrop_2d.stl", teardrop_2d.to_stl_ascii("teardrop_2d"));
 
     // 9) egg_outline(width, length, segments) [2D shape]
-    let egg_2d = CSG::egg_outline(2.0, 4.0, 32, None);
+    let egg_2d = CSG::egg_outline(2.0, 4.0, 32, None).expect("not less then 3 segments");
     let _ = fs::write("stl/egg_outline_2d.stl", egg_2d.to_stl_ascii("egg_outline_2d"));
 
     // 10) squircle(width, height, segments)
-    let squircle_2d = CSG::squircle(3.0, 3.0, 32, None);
+    let squircle_2d = CSG::squircle(3.0, 3.0, 32, None).expect("not less then 3 segments");
     let _ = fs::write("stl/squircle_2d.stl", squircle_2d.to_stl_ascii("squircle_2d"));
 
     // 11) keyhole(circle_radius, handle_width, handle_height, segments)
-    let keyhole_2d = CSG::keyhole(1.0, 1.0, 2.0, 16, None);
+    let keyhole_2d = CSG::keyhole(1.0, 1.0, 2.0, 16, None).expect("not less then 3 segments");
     let _ = fs::write("stl/keyhole_2d.stl", keyhole_2d.to_stl_ascii("keyhole_2d"));
 
     // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux3_2d = CSG::reuleaux_polygon(3, 2.0, 16, None); // Reuleaux triangle
+    let reuleaux3_2d = CSG::reuleaux_polygon(3, 2.0, 16.try_into().expect("not zero"), None) // Reuleaux triangle
+        .expect("not less then 3 sides");
     let _ = fs::write("stl/reuleaux3_2d.stl", reuleaux3_2d.to_stl_ascii("reuleaux_2d"));
 
-    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux4_2d = CSG::reuleaux_polygon(4, 2.0, 16, None); // Reuleaux triangle
+    let reuleaux4_2d = CSG::reuleaux_polygon(4, 2.0, 16.try_into().expect("not zero"), None) // Reuleaux square
+        .expect("not less then 3 sides");
     let _ = fs::write("stl/reuleaux4_2d.stl", reuleaux4_2d.to_stl_ascii("reuleaux_2d"));
 
-    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux5_2d = CSG::reuleaux_polygon(5, 2.0, 16, None); // Reuleaux triangle
+    let reuleaux5_2d = CSG::reuleaux_polygon(5, 2.0, 16.try_into().expect("not zero"), None) // Reuleaux triangle
+        .expect("not less then 3 sides");
     let _ = fs::write("stl/reuleaux5_2d.stl", reuleaux5_2d.to_stl_ascii("reuleaux_2d"));
-    
-    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux6_2d = CSG::reuleaux_polygon(6, 2.0, 16, None); // Reuleaux triangle
+
+    let reuleaux6_2d = CSG::reuleaux_polygon(6, 2.0, 16.try_into().expect("not zero"), None) // Reuleaux triangle
+        .expect("not less then 3 sides");
     let _ = fs::write("stl/reuleaux6_2d.stl", reuleaux6_2d.to_stl_ascii("reuleaux_2d"));
-    
-    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux7_2d = CSG::reuleaux_polygon(7, 2.0, 16, None); // Reuleaux triangle
+
+    let reuleaux7_2d = CSG::reuleaux_polygon(7, 2.0, 16.try_into().expect("not zero"), None) // Reuleaux triangle
+        .expect("not less then 3 sides");
     let _ = fs::write("stl/reuleaux7_2d.stl", reuleaux7_2d.to_stl_ascii("reuleaux_2d"));
-    
-    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux8_2d = CSG::reuleaux_polygon(8, 2.0, 16, None); // Reuleaux triangle
+
+    let reuleaux8_2d = CSG::reuleaux_polygon(8, 2.0, 16.try_into().expect("not zero"), None) // Reuleaux triangle
+        .expect("not less then 3 sdies");
     let _ = fs::write("stl/reuleaux8_2d.stl", reuleaux8_2d.to_stl_ascii("reuleaux_2d"));
-    
-    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux9_2d = CSG::reuleaux_polygon(9, 2.0, 16, None); // Reuleaux triangle
+
+    let reuleaux9_2d = CSG::reuleaux_polygon(9, 2.0, 16.try_into().expect("not zero"), None) // Reuleaux triangle
+        .expect("not less then 3 sides");
     let _ = fs::write("stl/reuleaux9_2d.stl", reuleaux9_2d.to_stl_ascii("reuleaux_2d"));
-    
-    // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux10_2d = CSG::reuleaux_polygon(10, 2.0, 16, None); // Reuleaux triangle
+
+    let reuleaux10_2d = CSG::reuleaux_polygon(10, 2.0, 16.try_into().expect("not zero"), None) // Reuleaux triangle
+        .expect("not less then 3 sides");
     let _ = fs::write("stl/reuleaux10_2d.stl", reuleaux10_2d.to_stl_ascii("reuleaux_2d"));
 
     // 13) ring(inner_diam, thickness, segments)
-    let ring_2d = CSG::ring(5.0, 1.0, 32, None);
+    let ring_2d = CSG::ring(5.0, 1.0, 32, None).expect("not less then 3 segments");
     let _ = fs::write("stl/ring_2d.stl", ring_2d.to_stl_ascii("ring_2d"));
 
     // 15) from_image(img, threshold, closepaths, metadata) [requires "image" feature]
@@ -238,7 +237,7 @@ fn main() {
                 }
             }
         }
-        let csg_img = CSG::from_image(&img, 128, true, None).center();
+        let csg_img = CSG::from_image(&img, 128, true, None).expect("valid image").center();
         let _ = fs::write("stl/from_image.stl", csg_img.to_stl_ascii("from_image"));
     }
 
@@ -298,7 +297,7 @@ fn main() {
 
     // Scene B: Demonstrate extrude_vector(direction)
     {
-        let circle2d = CSG::circle(1.0, 32, None);
+        let circle2d = CSG::circle(1.0, 32, None).expect("more then 2 segments");
         // extrude along an arbitrary vector
         let extruded_along_vec = circle2d.extrude_vector(Vector3::new(0.0, 0.0, 2.0));
         let _ = fs::write("stl/scene_extrude_vector.stl", extruded_along_vec.to_stl_ascii("scene_extrude_vector"));
@@ -306,7 +305,8 @@ fn main() {
 
     // Scene E: Demonstrate center() (moves shape so bounding box is centered on the origin)
     {
-        let off_center_circle = CSG::circle(1.0, 32, None).translate(5.0, 2.0, 0.0).extrude(0.1);
+        let off_center_circle = CSG::circle(1.0, 32, None).expect("more then 2 segments")
+            .translate(5.0, 2.0, 0.0).extrude(0.1);
         let centered_circle = off_center_circle.center();
         let _ = fs::write("stl/scene_circle_off_center.stl", off_center_circle.to_stl_ascii("scene_circle_off_center"));
         let _ = fs::write("stl/scene_circle_centered.stl", centered_circle.to_stl_ascii("scene_circle_centered"));
@@ -346,7 +346,8 @@ fn main() {
 
     // Scene J: Demonstrate re-computing vertices() or printing them
     {
-        let circle_extruded = CSG::circle(1.0, 32, None).extrude(0.5);
+        let circle_extruded = CSG::circle(1.0, 32, None).expect("more then 2 segments")
+            .extrude(0.5);
         let verts = circle_extruded.vertices();
         println!("Scene J circle_extruded has {} vertices", verts.len());
         // We'll still save an STL so there's a visual
@@ -356,22 +357,23 @@ fn main() {
     // Scene K: Demonstrate reuleaux_polygon with a typical triangle shape
     // (already used sides=4 above, so let's do sides=3 here)
     {
-        let reuleaux_tri = CSG::reuleaux_polygon(3, 2.0, 16, None).extrude(0.1);
+        let reuleaux_tri = CSG::reuleaux_polygon(3, 2.0, 16.try_into().expect("not zero"), None).expect("3 sides")
+            .extrude(0.1);
         let _ = fs::write("stl/scene_reuleaux_triangle.stl", reuleaux_tri.to_stl_ascii("scene_reuleaux_triangle"));
     }
 
     // Scene L: Demonstrate rotate_extrude (360 deg) on a square
     {
         let small_square = CSG::square(1.0, 1.0, None).translate(2.0, 0.0, 0.0);
-        let revolve = small_square.rotate_extrude(360.0, 24);
+        let revolve = small_square.rotate_extrude(360.0, 24).expect("more then 2 segments");
         let _ = fs::write("stl/scene_square_revolve_360.stl", revolve.to_stl_ascii("scene_square_revolve_360"));
     }
 
     // Scene M: Demonstrate “mirror” across a Y=0 plane
     {
-        let plane_y = Plane{ normal: Vector3::y(), intercept: 0.0 };
+        let plane_y = Plane { normal: Vector3::y(), intercept: 0.0 };
         let shape = CSG::square(2.0, 1.0, None).translate(1.0, 1.0, 0.0).extrude(0.1);
-        let mirrored = shape.mirror(plane_y);
+        let mirrored = shape.mirror(plane_y).expect("plane normal is valid");
         let _ = fs::write("stl/scene_square_mirrored_y.stl", mirrored.to_stl_ascii("scene_square_mirrored_y"));
     }
 

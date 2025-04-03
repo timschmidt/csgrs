@@ -16,12 +16,15 @@ where S: Clone + Send + Sync {
     /// - `closepaths`: if true, each traced path is closed with 'Z' in the SVG path commands
     /// - `metadata`: optional metadata to attach to the resulting polygons
     ///
-    /// # Returns
+    /// ## Returns
     /// A 2D shape in the XY plane (z=0) representing all traced contours. Each contour
     /// becomes a polygon. The polygons are *not* automatically unioned; they are simply
     /// collected in one `CSG`.
     ///
-    /// # Example
+    /// ## Errors
+    /// Returns an error if any `Polygon`s have less then three vertices.
+    ///
+    /// ## Example
     /// ```no_run
     /// # use csgrs::csg::CSG;
     /// # use image::{GrayImage, Luma};
@@ -39,9 +42,10 @@ where S: Clone + Send + Sync {
         metadata: Option<S>,
     ) -> Result<Self, CSGError> {
         // Convert the image into a 2D array of bits for the contour_tracing::array::bits_to_paths function.
-        // We treat pixels >= threshold as 1, else 0.
+        // We treat pixels >= threshold as 1, else 0. // todo maybe allow user to specify the threshold?
         let width = img.width() as usize;
         let height = img.height() as usize;
+
         let mut bits = Vec::with_capacity(height);
         for y in 0..height {
             let mut row = Vec::with_capacity(width);
