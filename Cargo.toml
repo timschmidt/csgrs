@@ -68,7 +68,7 @@ getrandom = { version = "0.3", features = ["wasm_js"], optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
-default = ["f64", "stl-io","svg-io", "dxf-io", "truetype-text", "hershey-text", "chull-io", "image-io", "metaballs", "hashmap", "sdf", "offset", "delaunay"]
+default = ["f64", "stl-io", "dxf-io", "chull-io", "metaballs", "hashmap", "sdf", "offset", "delaunay"]
 parallel = [
   "rayon",
   "geo/multithreading",
@@ -122,5 +122,9 @@ sdf = [
 offset = [
   "geo-buf",
 ]
-delaunay = []
-earcut = []
+delaunay = [
+  "geo/spade",
+]
+earcut = [
+  "geo/earcutr",
+]
