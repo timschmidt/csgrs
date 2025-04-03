@@ -1,4 +1,5 @@
 /target/
+/xtask/target/
 output.stl
 *.swp
 /src/*.swp
