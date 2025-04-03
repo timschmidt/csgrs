@@ -26,7 +26,7 @@ use rayon::prelude::*;
 #[derive(Debug, thiserror::Error)]
 pub enum CSGError {
     /// A [`PlaneError`](crate::plane::PlaneError)
-    #[error("{}", .0)]
+    #[error(transparent)]
     PlaneError(#[from] crate::plane::PlaneError),
     /// `name` must not be less then `min`
     #[error("{} must be not be less then {}", .name, .min)]
