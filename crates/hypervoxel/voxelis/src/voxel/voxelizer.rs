@@ -1,16 +1,12 @@
 use std::time::Instant;
 
-use glam::IVec3;
-use rayon::prelude::*;
+use glam::{DVec3, IVec3};
+// use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
-use crate::core::{triangle_cube_intersection, Freal, Vec3};
+use crate::core::triangle_cube_intersection;
 use crate::io::Obj;
 use crate::model::Model;
-use crate::world::VOXELS_PER_AXIS;
-
-pub const VOXEL_SIZE: Freal = 1.0 / VOXELS_PER_AXIS as Freal;
-pub const INV_VOXEL_SIZE: Freal = 1.0 / VOXEL_SIZE;
 
 // Helper function to calculate chunk index from coordinates
 fn calculate_chunk_index_from_coords(x: i32, y: i32, z: i32, chunks_size: IVec3) -> usize {
@@ -20,13 +16,14 @@ fn calculate_chunk_index_from_coords(x: i32, y: i32, z: i32, chunks_size: IVec3)
 }
 
 fn calculate_chunk_index(
+    voxels_per_axis: i32,
     world_voxel_position: IVec3,
     chunks_size: IVec3,
     chunks_len: usize,
 ) -> usize {
-    let chunk_x = world_voxel_position.x / VOXELS_PER_AXIS as i32;
-    let chunk_y = world_voxel_position.y / VOXELS_PER_AXIS as i32;
-    let chunk_z = world_voxel_position.z / VOXELS_PER_AXIS as i32;
+    let chunk_x = world_voxel_position.x / voxels_per_axis;
+    let chunk_y = world_voxel_position.y / voxels_per_axis;
+    let chunk_z = world_voxel_position.z / voxels_per_axis;
 
     let chunks_area = chunks_size.x * chunks_size.z;
 
@@ -37,10 +34,10 @@ fn calculate_chunk_index(
     chunk_index as usize
 }
 
-fn convert_voxel_world_to_local(current_min_voxel: IVec3) -> IVec3 {
-    let chunk_x = current_min_voxel.x % VOXELS_PER_AXIS as i32;
-    let chunk_y = current_min_voxel.y % VOXELS_PER_AXIS as i32;
-    let chunk_z = current_min_voxel.z % VOXELS_PER_AXIS as i32;
+fn convert_voxel_world_to_local(voxels_per_axis: i32, current_min_voxel: IVec3) -> IVec3 {
+    let chunk_x = current_min_voxel.x % voxels_per_axis;
+    let chunk_y = current_min_voxel.y % voxels_per_axis;
+    let chunk_z = current_min_voxel.z % voxels_per_axis;
 
     IVec3::new(chunk_x, chunk_y, chunk_z)
 }
@@ -51,7 +48,7 @@ pub struct Voxelizer {
 }
 
 impl Voxelizer {
-    pub fn new(mesh: Obj) -> Self {
+    pub fn new(max_depth: usize, chunk_size: f32, mesh: Obj) -> Self {
         let chunks_size_x = (mesh.size.x.ceil() as i32) + 1;
         let chunks_size_y = (mesh.size.y.ceil() as i32) + 1;
         let chunks_size_z = (mesh.size.z.ceil() as i32) + 1;
@@ -60,7 +57,7 @@ impl Voxelizer {
 
         Self {
             mesh,
-            model: Model::with_size(chunks_size),
+            model: Model::with_size(max_depth, chunk_size, chunks_size),
         }
     }
 
@@ -73,6 +70,10 @@ impl Voxelizer {
 
         let mesh_min = self.mesh.aabb.0;
 
+        let voxels_per_axis = self.model.voxels_per_axis();
+        let voxel_size: f64 = 1.0 / voxels_per_axis as f64;
+        let inv_voxel_size: f64 = 1.0 / voxel_size;
+
         for face in &self.mesh.faces {
             let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
             let v2 = self.mesh.vertices[(face.y - 1) as usize] - mesh_min;
@@ -81,12 +82,12 @@ impl Voxelizer {
             let min = v1.min(v2).min(v3);
             let max = v1.max(v2).max(v3);
 
-            let world_min_voxel = (min * INV_VOXEL_SIZE).floor().as_ivec3();
-            let world_max_voxel = (max * INV_VOXEL_SIZE).ceil().as_ivec3();
+            let world_min_voxel = (min * inv_voxel_size).floor().as_ivec3();
+            let world_max_voxel = (max * inv_voxel_size).ceil().as_ivec3();
 
             // Determine which chunks this face overlaps
-            let min_chunk = world_min_voxel / VOXELS_PER_AXIS as i32;
-            let max_chunk = world_max_voxel / VOXELS_PER_AXIS as i32;
+            let min_chunk = world_min_voxel / voxels_per_axis as i32;
+            let max_chunk = world_max_voxel / voxels_per_axis as i32;
 
             for chunk_y in min_chunk.y..=max_chunk.y {
                 for chunk_z in min_chunk.z..=max_chunk.z {
@@ -110,14 +111,18 @@ impl Voxelizer {
     }
 
     pub fn voxelize_mesh(&mut self, chunk_face_map: &FxHashMap<usize, Vec<IVec3>>) {
-        let epsilon = VOXEL_SIZE * 1e-7;
-        let splat = Vec3::splat(epsilon);
+        let voxels_per_axis = self.model.voxels_per_axis();
+        let voxel_size: f64 = 1.0 / voxels_per_axis as f64;
+
+        let epsilon = voxel_size * 1e-7;
+        let splat = DVec3::splat(epsilon);
 
         let mesh_min = self.mesh.aabb.0;
+        let voxels_per_axis = self.model.voxels_per_axis();
 
         self.model
             .chunks
-            .par_iter_mut()
+            .iter_mut()
             .enumerate()
             .for_each(|(chunk_index, chunk)| {
                 if let Some(faces) = chunk_face_map.get(&chunk_index) {
@@ -126,20 +131,20 @@ impl Voxelizer {
                     }
 
                     let chunk_position = chunk.get_position();
-                    let chunk_world_position = IVec3::new(
-                        chunk_position.x * VOXELS_PER_AXIS as i32,
-                        chunk_position.y * VOXELS_PER_AXIS as i32,
-                        chunk_position.z * VOXELS_PER_AXIS as i32,
+                    let chunk_world_position = DVec3::new(
+                        chunk_position.x as f64 * voxels_per_axis as f64,
+                        chunk_position.y as f64 * voxels_per_axis as f64,
+                        chunk_position.z as f64 * voxels_per_axis as f64,
                     );
 
                     // Compute the chunk's world bounding box
-                    let chunk_world_min = Vec3::new(
-                        chunk_world_position.x as Freal * VOXEL_SIZE,
-                        chunk_world_position.y as Freal * VOXEL_SIZE,
-                        chunk_world_position.z as Freal * VOXEL_SIZE,
+                    let chunk_world_min = DVec3::new(
+                        chunk_world_position.x * voxel_size,
+                        chunk_world_position.y * voxel_size,
+                        chunk_world_position.z * voxel_size,
                     );
                     let chunk_world_max =
-                        chunk_world_min + Vec3::splat(VOXELS_PER_AXIS as Freal * VOXEL_SIZE);
+                        chunk_world_min + DVec3::splat(voxels_per_axis as f64 * voxel_size);
 
                     for face in faces.iter() {
                         let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
@@ -164,18 +169,18 @@ impl Voxelizer {
                         }
 
                         // Map the overlapping region to voxel indices within the chunk
-                        let local_min_voxel = ((overlap_min - chunk_world_min) / VOXEL_SIZE)
+                        let local_min_voxel = ((overlap_min - chunk_world_min) / voxel_size)
                             .floor()
                             .as_ivec3();
-                        let local_max_voxel = ((overlap_max - chunk_world_min) / VOXEL_SIZE)
+                        let local_max_voxel = ((overlap_max - chunk_world_min) / voxel_size)
                             .ceil()
                             .as_ivec3();
 
                         // Clamp voxel indices to valid range [0, VOXELS_PER_AXIS - 1]
                         let local_min_voxel = local_min_voxel
-                            .clamp(IVec3::ZERO, IVec3::splat(VOXELS_PER_AXIS as i32 - 1));
+                            .clamp(IVec3::ZERO, IVec3::splat(voxels_per_axis as i32 - 1));
                         let local_max_voxel = local_max_voxel
-                            .clamp(IVec3::ZERO, IVec3::splat(VOXELS_PER_AXIS as i32 - 1));
+                            .clamp(IVec3::ZERO, IVec3::splat(voxels_per_axis as i32 - 1));
 
                         // Iterate over the voxels within the overlapping region
                         for y in local_min_voxel.y..=local_max_voxel.y {
@@ -183,13 +188,12 @@ impl Voxelizer {
                                 for x in local_min_voxel.x..=local_max_voxel.x {
                                     // Compute world position of the voxel
                                     let world_voxel_position = chunk_world_min
-                                        + Vec3::new(x as Freal, y as Freal, z as Freal)
-                                            * VOXEL_SIZE;
+                                        + DVec3::new(x as f64, y as f64, z as f64) * voxel_size;
 
                                     // Expand voxel bounds slightly by epsilon (if needed)
                                     let world_min_position = world_voxel_position - splat;
                                     let world_max_position =
-                                        world_voxel_position + Vec3::splat(VOXEL_SIZE) + splat;
+                                        world_voxel_position + DVec3::splat(voxel_size) + splat;
 
                                     // Perform the intersection test
                                     if triangle_cube_intersection(
@@ -214,6 +218,10 @@ impl Voxelizer {
         let chunks_size = self.model.chunks_size;
         let chunks_len = self.model.chunks_len;
 
+        let voxels_per_axis = self.model.voxels_per_axis();
+        let voxel_size: f64 = 1.0 / voxels_per_axis as f64;
+        let inv_voxel_size: f64 = 1.0 / voxel_size;
+
         let now = Instant::now();
 
         let mesh_min = self.mesh.aabb.0;
@@ -221,10 +229,11 @@ impl Voxelizer {
         for face in self.mesh.faces.iter() {
             for vertex_index in [face.x, face.y, face.z] {
                 let vertex = self.mesh.vertices[(vertex_index - 1) as usize] - mesh_min;
-                let voxel = (vertex * INV_VOXEL_SIZE).floor().as_ivec3();
-                let local_voxel = convert_voxel_world_to_local(voxel);
+                let voxel = (vertex * inv_voxel_size).floor().as_ivec3();
+                let local_voxel = convert_voxel_world_to_local(voxels_per_axis as i32, voxel);
 
-                let chunk_index = calculate_chunk_index(voxel, chunks_size, chunks_len);
+                let chunk_index =
+                    calculate_chunk_index(voxels_per_axis as i32, voxel, chunks_size, chunks_len);
                 let chunk = &mut self.model.chunks[chunk_index];
 
                 chunk.set_value(
@@ -255,6 +264,8 @@ impl Voxelizer {
 
         let voxelize_time = Instant::now();
 
+        println!("Voxelizing mesh");
+
         self.voxelize_mesh(&chunk_face_map);
 
         let voxelize_time = voxelize_time.elapsed();
@@ -271,7 +282,7 @@ impl Voxelizer {
         let empty_chunks = self
             .model
             .chunks
-            .par_iter()
+            .iter()
             .filter(|chunk| chunk.is_empty())
             .count();
 

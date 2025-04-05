@@ -49,21 +49,26 @@ pub const fn calculate_voxels_per_axis(lod_level: usize) -> usize {
 pub struct Chunk {
     data: Octree<i32>,
     position: IVec3,
+    chunk_size: f32,
+    max_depth: usize,
 }
 
 impl Chunk {
-    pub fn new() -> Self {
-        Self {
-            data: Octree::new(MAX_LOD_LEVEL as u8),
-            position: IVec3::ZERO,
-        }
-    }
-
-    pub fn with_position(x: i32, y: i32, z: i32) -> Self {
+    pub fn with_position(chunk_size: f32, max_depth: usize, x: i32, y: i32, z: i32) -> Self {
         Self {
             data: Octree::new(MAX_LOD_LEVEL as u8),
             position: IVec3::new(x, y, z),
+            chunk_size,
+            max_depth,
         }
+    }
+
+    pub fn voxel_size(&self) -> f32 {
+        self.chunk_size / self.voxels_per_axis() as f32
+    }
+
+    pub fn chunk_size(&self) -> f32 {
+        self.chunk_size
     }
 
     pub fn is_empty(&self) -> bool {
@@ -80,6 +85,10 @@ impl Chunk {
 
     pub fn get_position(&self) -> IVec3 {
         self.position
+    }
+
+    fn voxels_per_axis(&self) -> u32 {
+        1 << self.max_depth
     }
 
     pub fn set_value(&mut self, x: u8, y: u8, z: u8, value: i32) {

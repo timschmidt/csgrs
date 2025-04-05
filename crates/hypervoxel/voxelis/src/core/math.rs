@@ -1,7 +1,6 @@
-pub type Vec3 = glam::DVec3;
-pub type Freal = f64;
+use glam::DVec3;
 
-pub fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Vec3, Vec3)) -> bool {
+pub fn triangle_cube_intersection(triangle: (DVec3, DVec3, DVec3), cube: (DVec3, DVec3)) -> bool {
     let (tv0, tv1, tv2) = triangle;
     let (cube_min, cube_max) = cube;
 
@@ -27,14 +26,14 @@ pub fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Vec3, Vec
 
     // Define the vertices of the cube once for use throughout the function
     let cube_points = [
-        Vec3::new(cube_min.x, cube_min.y, cube_min.z),
-        Vec3::new(cube_max.x, cube_min.y, cube_min.z),
-        Vec3::new(cube_max.x, cube_max.y, cube_min.z),
-        Vec3::new(cube_min.x, cube_max.y, cube_min.z),
-        Vec3::new(cube_min.x, cube_min.y, cube_max.z),
-        Vec3::new(cube_max.x, cube_min.y, cube_max.z),
-        Vec3::new(cube_max.x, cube_max.y, cube_max.z),
-        Vec3::new(cube_min.x, cube_max.y, cube_max.z),
+        DVec3::new(cube_min.x, cube_min.y, cube_min.z),
+        DVec3::new(cube_max.x, cube_min.y, cube_min.z),
+        DVec3::new(cube_max.x, cube_max.y, cube_min.z),
+        DVec3::new(cube_min.x, cube_max.y, cube_min.z),
+        DVec3::new(cube_min.x, cube_min.y, cube_max.z),
+        DVec3::new(cube_max.x, cube_min.y, cube_max.z),
+        DVec3::new(cube_max.x, cube_max.y, cube_max.z),
+        DVec3::new(cube_min.x, cube_max.y, cube_max.z),
     ];
     let sign = (normal.dot(cube_points[0]) + d).signum();
 
@@ -66,42 +65,48 @@ pub fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Vec3, Vec
     // Check if any of the triangle's edges intersect with any of the cube's faces
     let triangle_edges = [(tv0, tv1), (tv1, tv2), (tv2, tv0)];
     let cube_faces = [
+        // Front
         (
             cube_points[0],
             cube_points[1],
             cube_points[2],
             cube_points[3],
-        ), // Front
+        ),
+        // Back
         (
             cube_points[4],
             cube_points[5],
             cube_points[6],
             cube_points[7],
-        ), // Back
+        ),
+        // Bottom
         (
             cube_points[0],
             cube_points[1],
             cube_points[5],
             cube_points[4],
-        ), // Bottom
+        ),
+        // Top
         (
             cube_points[2],
             cube_points[3],
             cube_points[7],
             cube_points[6],
-        ), // Top
+        ),
+        // Left
         (
             cube_points[0],
             cube_points[3],
             cube_points[7],
             cube_points[4],
-        ), // Left
+        ),
+        // Right
         (
             cube_points[1],
             cube_points[2],
             cube_points[6],
             cube_points[5],
-        ), // Right
+        ),
     ];
 
     for &edge in &triangle_edges {
@@ -115,7 +120,7 @@ pub fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Vec3, Vec
     false
 }
 
-pub fn point_in_or_on_cube(point: Vec3, cube: (Vec3, Vec3)) -> bool {
+pub fn point_in_or_on_cube(point: DVec3, cube: (DVec3, DVec3)) -> bool {
     let (cube_min, cube_max) = cube;
 
     // Calculate a dynamic epsilon based on the size of the cube
@@ -137,7 +142,7 @@ pub fn point_in_or_on_cube(point: Vec3, cube: (Vec3, Vec3)) -> bool {
         && point.z <= cube_max.z + epsilon
 }
 
-pub fn point_in_or_on_triangle(point: Vec3, triangle: (Vec3, Vec3, Vec3)) -> bool {
+pub fn point_in_or_on_triangle(point: DVec3, triangle: (DVec3, DVec3, DVec3)) -> bool {
     let (a, b, c) = triangle;
     let v0 = b - a;
     let v1 = c - a;
@@ -161,7 +166,7 @@ pub fn point_in_or_on_triangle(point: Vec3, triangle: (Vec3, Vec3, Vec3)) -> boo
     u >= 0.0 && v >= 0.0 && (u + v) <= 1.0
 }
 
-pub fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
+pub fn edge_quad_intersection(edge: (DVec3, DVec3), quad: (DVec3, DVec3, DVec3, DVec3)) -> bool {
     let (e1, e2) = edge;
 
     // First, check if the edge intersects the plane of the quad
@@ -184,7 +189,7 @@ pub fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)
     point_in_quad(intersection_point, quad)
 }
 
-pub fn point_in_quad(point: Vec3, quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
+pub fn point_in_quad(point: DVec3, quad: (DVec3, DVec3, DVec3, DVec3)) -> bool {
     let (a, b, c, d) = quad;
 
     // Check if the point is inside either of the two triangles formed by the quad
@@ -200,90 +205,90 @@ mod tests {
 
         #[test]
         fn test_inside_cube() {
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
             // Inside the cube
-            assert!(point_in_or_on_cube(Vec3::new(0.5, 0.5, 0.5), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.5, 0.5, 0.5), cube));
         }
 
         #[test]
         fn test_on_edges() {
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
             // On the edges
-            assert!(point_in_or_on_cube(Vec3::new(0.0, 0.5, 0.5), cube));
-            assert!(point_in_or_on_cube(Vec3::new(1.0, 0.5, 0.5), cube));
-            assert!(point_in_or_on_cube(Vec3::new(0.5, 0.0, 0.5), cube));
-            assert!(point_in_or_on_cube(Vec3::new(0.5, 1.0, 0.5), cube));
-            assert!(point_in_or_on_cube(Vec3::new(0.5, 0.5, 0.0), cube));
-            assert!(point_in_or_on_cube(Vec3::new(0.5, 0.5, 1.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.0, 0.5, 0.5), cube));
+            assert!(point_in_or_on_cube(DVec3::new(1.0, 0.5, 0.5), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.5, 0.0, 0.5), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.5, 1.0, 0.5), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.5, 0.5, 0.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.5, 0.5, 1.0), cube));
         }
 
         #[test]
         fn test_on_faces() {
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
             // On the faces
-            assert!(point_in_or_on_cube(Vec3::new(0.0, 0.0, 0.5), cube));
-            assert!(point_in_or_on_cube(Vec3::new(1.0, 1.0, 0.5), cube));
-            assert!(point_in_or_on_cube(Vec3::new(0.5, 0.0, 0.0), cube));
-            assert!(point_in_or_on_cube(Vec3::new(0.5, 1.0, 1.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.0, 0.0, 0.5), cube));
+            assert!(point_in_or_on_cube(DVec3::new(1.0, 1.0, 0.5), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.5, 0.0, 0.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.5, 1.0, 1.0), cube));
         }
 
         #[test]
         fn test_at_vertices() {
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
             // At the vertices
-            assert!(point_in_or_on_cube(Vec3::new(0.0, 0.0, 0.0), cube));
-            assert!(point_in_or_on_cube(Vec3::new(1.0, 0.0, 0.0), cube));
-            assert!(point_in_or_on_cube(Vec3::new(0.0, 1.0, 0.0), cube));
-            assert!(point_in_or_on_cube(Vec3::new(0.0, 0.0, 1.0), cube));
-            assert!(point_in_or_on_cube(Vec3::new(1.0, 1.0, 0.0), cube));
-            assert!(point_in_or_on_cube(Vec3::new(1.0, 0.0, 1.0), cube));
-            assert!(point_in_or_on_cube(Vec3::new(0.0, 1.0, 1.0), cube));
-            assert!(point_in_or_on_cube(Vec3::new(1.0, 1.0, 1.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.0, 0.0, 0.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(1.0, 0.0, 0.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.0, 1.0, 0.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.0, 0.0, 1.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(1.0, 1.0, 0.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(1.0, 0.0, 1.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.0, 1.0, 1.0), cube));
+            assert!(point_in_or_on_cube(DVec3::new(1.0, 1.0, 1.0), cube));
         }
 
         #[test]
         fn test_outside_cube() {
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
             // Outside the cube
-            assert!(!point_in_or_on_cube(Vec3::new(-0.1, 0.5, 0.5), cube));
-            assert!(!point_in_or_on_cube(Vec3::new(1.1, 0.5, 0.5), cube));
-            assert!(!point_in_or_on_cube(Vec3::new(0.5, -0.1, 0.5), cube));
-            assert!(!point_in_or_on_cube(Vec3::new(0.5, 1.1, 0.5), cube));
-            assert!(!point_in_or_on_cube(Vec3::new(0.5, 0.5, -0.1), cube));
-            assert!(!point_in_or_on_cube(Vec3::new(0.5, 0.5, 1.1), cube));
+            assert!(!point_in_or_on_cube(DVec3::new(-0.1, 0.5, 0.5), cube));
+            assert!(!point_in_or_on_cube(DVec3::new(1.1, 0.5, 0.5), cube));
+            assert!(!point_in_or_on_cube(DVec3::new(0.5, -0.1, 0.5), cube));
+            assert!(!point_in_or_on_cube(DVec3::new(0.5, 1.1, 0.5), cube));
+            assert!(!point_in_or_on_cube(DVec3::new(0.5, 0.5, -0.1), cube));
+            assert!(!point_in_or_on_cube(DVec3::new(0.5, 0.5, 1.1), cube));
         }
 
         #[test]
         fn test_very_close_to_cube_but_outside() {
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             let epsilon = 1e-5;
 
             // Very close to the cube but outside
             assert!(!point_in_or_on_cube(
-                Vec3::new(1.0 + epsilon, 0.5, 0.5),
+                DVec3::new(1.0 + epsilon, 0.5, 0.5),
                 cube
             ));
             assert!(!point_in_or_on_cube(
-                Vec3::new(0.5, 1.0 + epsilon, 0.5),
+                DVec3::new(0.5, 1.0 + epsilon, 0.5),
                 cube
             ));
             assert!(!point_in_or_on_cube(
-                Vec3::new(0.5, 0.5, 1.0 + epsilon),
+                DVec3::new(0.5, 0.5, 1.0 + epsilon),
                 cube
             ));
         }
 
         #[test]
         fn test_at_center_of_cube() {
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
             // At the center of the cube
-            assert!(point_in_or_on_cube(Vec3::new(0.5, 0.5, 0.5), cube));
+            assert!(point_in_or_on_cube(DVec3::new(0.5, 0.5, 0.5), cube));
         }
     }
 
@@ -293,14 +298,14 @@ mod tests {
         #[test]
         fn test_inside_triangle() {
             let triangle = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
 
             // Inside the triangle
             assert!(point_in_or_on_triangle(
-                Vec3::new(0.25, 0.25, 0.0),
+                DVec3::new(0.25, 0.25, 0.0),
                 triangle
             ));
         }
@@ -308,47 +313,50 @@ mod tests {
         #[test]
         fn test_on_edges() {
             let triangle = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
 
             // On the edges
-            assert!(point_in_or_on_triangle(Vec3::new(0.5, 0.0, 0.0), triangle));
-            assert!(point_in_or_on_triangle(Vec3::new(0.0, 0.5, 0.0), triangle));
-            assert!(point_in_or_on_triangle(Vec3::new(0.5, 0.5, 0.0), triangle));
+            assert!(point_in_or_on_triangle(DVec3::new(0.5, 0.0, 0.0), triangle));
+            assert!(point_in_or_on_triangle(DVec3::new(0.0, 0.5, 0.0), triangle));
+            assert!(point_in_or_on_triangle(DVec3::new(0.5, 0.5, 0.0), triangle));
         }
 
         #[test]
         fn test_on_vertices() {
             let triangle = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
 
             // On the vertices
-            assert!(point_in_or_on_triangle(Vec3::new(0.0, 0.0, 0.0), triangle));
-            assert!(point_in_or_on_triangle(Vec3::new(1.0, 0.0, 0.0), triangle));
-            assert!(point_in_or_on_triangle(Vec3::new(0.0, 1.0, 0.0), triangle));
+            assert!(point_in_or_on_triangle(DVec3::new(0.0, 0.0, 0.0), triangle));
+            assert!(point_in_or_on_triangle(DVec3::new(1.0, 0.0, 0.0), triangle));
+            assert!(point_in_or_on_triangle(DVec3::new(0.0, 1.0, 0.0), triangle));
         }
 
         #[test]
         fn test_outside_triangle_same_plane() {
             let triangle = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
 
             // Outside the triangle but in the same plane
-            assert!(!point_in_or_on_triangle(Vec3::new(1.0, 1.0, 0.0), triangle));
             assert!(!point_in_or_on_triangle(
-                Vec3::new(-0.1, 0.5, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
                 triangle
             ));
             assert!(!point_in_or_on_triangle(
-                Vec3::new(0.5, -0.1, 0.0),
+                DVec3::new(-0.1, 0.5, 0.0),
+                triangle
+            ));
+            assert!(!point_in_or_on_triangle(
+                DVec3::new(0.5, -0.1, 0.0),
                 triangle
             ));
         }
@@ -356,23 +364,23 @@ mod tests {
         #[test]
         fn test_very_close_to_triangle_but_outside() {
             let triangle = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
             let epsilon = 1e-5;
 
             // Very close to the triangle but outside
             assert!(!point_in_or_on_triangle(
-                Vec3::new(1.0 + epsilon, 0.0, 0.0),
+                DVec3::new(1.0 + epsilon, 0.0, 0.0),
                 triangle
             ));
             assert!(!point_in_or_on_triangle(
-                Vec3::new(0.0, 1.0 + epsilon, 0.0),
+                DVec3::new(0.0, 1.0 + epsilon, 0.0),
                 triangle
             ));
             assert!(!point_in_or_on_triangle(
-                Vec3::new(-epsilon, -epsilon, 0.0),
+                DVec3::new(-epsilon, -epsilon, 0.0),
                 triangle
             ));
         }
@@ -380,9 +388,9 @@ mod tests {
         #[test]
         fn test_at_centroid_of_triangle() {
             let triangle = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
 
             // At the centroid of the triangle
@@ -396,48 +404,48 @@ mod tests {
 
         #[test]
         fn test_edge_completely_outside_quad() {
-            let edge = (Vec3::new(1.5, 1.5, 0.0), Vec3::new(2.0, 1.5, 0.0));
+            let edge = (DVec3::new(1.5, 1.5, 0.0), DVec3::new(2.0, 1.5, 0.0));
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
             assert!(!edge_quad_intersection(edge, quad));
         }
 
         #[test]
         fn test_edge_intersecting_quad_not_touching_vertices_or_edges() {
-            let edge = (Vec3::new(0.5, 0.5, -0.5), Vec3::new(0.5, 0.5, 0.5));
+            let edge = (DVec3::new(0.5, 0.5, -0.5), DVec3::new(0.5, 0.5, 0.5));
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
             assert!(edge_quad_intersection(edge, quad));
         }
 
         #[test]
         fn test_edge_parallel_to_quad_outside() {
-            let edge = (Vec3::new(0.0, 0.0, 1.0), Vec3::new(1.0, 0.0, 1.0));
+            let edge = (DVec3::new(0.0, 0.0, 1.0), DVec3::new(1.0, 0.0, 1.0));
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
             assert!(!edge_quad_intersection(edge, quad));
         }
 
         #[test]
         fn test_edge_very_close_to_quad_but_outside() {
-            let edge = (Vec3::new(1.0 + 1e-4, 0.5, 0.0), Vec3::new(2.0, 0.5, 0.0));
+            let edge = (DVec3::new(1.0 + 1e-4, 0.5, 0.0), DVec3::new(2.0, 0.5, 0.0));
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
             assert!(!edge_quad_intersection(edge, quad));
         }
@@ -449,181 +457,181 @@ mod tests {
         #[test]
         fn test_point_inside_quad() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            assert!(point_in_quad(Vec3::new(0.5, 0.5, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(0.5, 0.5, 0.0), quad));
         }
 
         #[test]
         fn test_point_on_quad_edge() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            assert!(point_in_quad(Vec3::new(0.5, 0.0, 0.0), quad));
-            assert!(point_in_quad(Vec3::new(1.0, 0.5, 0.0), quad));
-            assert!(point_in_quad(Vec3::new(0.5, 1.0, 0.0), quad));
-            assert!(point_in_quad(Vec3::new(0.0, 0.5, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(0.5, 0.0, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(1.0, 0.5, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(0.5, 1.0, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(0.0, 0.5, 0.0), quad));
         }
 
         #[test]
         fn test_point_on_quad_vertex() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            assert!(point_in_quad(Vec3::new(0.0, 0.0, 0.0), quad));
-            assert!(point_in_quad(Vec3::new(1.0, 0.0, 0.0), quad));
-            assert!(point_in_quad(Vec3::new(1.0, 1.0, 0.0), quad));
-            assert!(point_in_quad(Vec3::new(0.0, 1.0, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(0.0, 0.0, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(1.0, 0.0, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(1.0, 1.0, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(0.0, 1.0, 0.0), quad));
         }
 
         #[test]
         fn test_point_outside_quad() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            assert!(!point_in_quad(Vec3::new(-0.5, 0.5, 0.0), quad));
-            assert!(!point_in_quad(Vec3::new(1.5, 0.5, 0.0), quad));
-            assert!(!point_in_quad(Vec3::new(0.5, -0.5, 0.0), quad));
-            assert!(!point_in_quad(Vec3::new(0.5, 1.5, 0.0), quad));
+            assert!(!point_in_quad(DVec3::new(-0.5, 0.5, 0.0), quad));
+            assert!(!point_in_quad(DVec3::new(1.5, 0.5, 0.0), quad));
+            assert!(!point_in_quad(DVec3::new(0.5, -0.5, 0.0), quad));
+            assert!(!point_in_quad(DVec3::new(0.5, 1.5, 0.0), quad));
         }
 
         #[test]
         fn test_point_in_non_planar_quad() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 1.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 1.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            assert!(point_in_quad(Vec3::new(0.5, 0.5, 0.25), quad));
+            assert!(point_in_quad(DVec3::new(0.5, 0.5, 0.25), quad));
         }
 
         #[test]
         fn test_point_outside_non_planar_quad() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 1.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 1.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            assert!(!point_in_quad(Vec3::new(0.5, 0.5, 1.0), quad));
+            assert!(!point_in_quad(DVec3::new(0.5, 0.5, 1.0), quad));
         }
 
         #[test]
         fn test_point_on_vertex() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            assert!(point_in_quad(Vec3::new(0.5, 0.0, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(0.5, 0.0, 0.0), quad));
         }
 
         #[test]
         fn test_point_outside_vertex() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            assert!(!point_in_quad(Vec3::new(-0.5, -0.5, 0.0), quad));
+            assert!(!point_in_quad(DVec3::new(-0.5, -0.5, 0.0), quad));
         }
 
         #[test]
         fn test_point_outside_edge_not_touching_vertex() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            assert!(!point_in_quad(Vec3::new(0.5, -0.5, 0.0), quad));
+            assert!(!point_in_quad(DVec3::new(0.5, -0.5, 0.0), quad));
         }
 
         #[test]
         fn test_point_far_from_quad() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            assert!(!point_in_quad(Vec3::new(10.0, 10.0, 10.0), quad));
+            assert!(!point_in_quad(DVec3::new(10.0, 10.0, 10.0), quad));
         }
 
         #[test]
         fn test_point_on_diagonal() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            assert!(point_in_quad(Vec3::new(0.5, 0.5, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(0.5, 0.5, 0.0), quad));
         }
 
         #[test]
         fn test_point_on_boundary_not_edge_or_vertex() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
 
             // Point on the boundary but not on the edges or vertices
-            assert!(point_in_quad(Vec3::new(0.5, 0.5, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(0.5, 0.5, 0.0), quad));
         }
 
         #[test]
         fn test_point_at_center_of_quad() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
 
             // Point exactly at the center of the quad
-            assert!(point_in_quad(Vec3::new(0.5, 0.5, 0.0), quad));
+            assert!(point_in_quad(DVec3::new(0.5, 0.5, 0.0), quad));
         }
 
         #[test]
         fn test_point_very_close_to_quad_but_outside() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
 
             // Point very close to the quad but outside (testing epsilon)
-            assert!(!point_in_quad(Vec3::new(1.0 + 1e-4, 0.5, 0.0), quad));
+            assert!(!point_in_quad(DVec3::new(1.0 + 1e-4, 0.5, 0.0), quad));
         }
 
         #[test]
         fn test_point_very_close_to_quad_but_inside() {
             let quad = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(1.0, 1.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(1.0, 1.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            let point = Vec3::new(1.0 - 1e-6, 0.5, 0.0);
+            let point = DVec3::new(1.0 - 1e-6, 0.5, 0.0);
             assert!(point_in_quad(point, quad));
         }
     }
@@ -634,66 +642,66 @@ mod tests {
         #[test]
         fn test_triangle_completely_inside_cube() {
             let triangle = (
-                Vec3::new(0.25, 0.25, 0.25),
-                Vec3::new(0.75, 0.25, 0.25),
-                Vec3::new(0.25, 0.75, 0.25),
+                DVec3::new(0.25, 0.25, 0.25),
+                DVec3::new(0.75, 0.25, 0.25),
+                DVec3::new(0.25, 0.75, 0.25),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(triangle_cube_intersection(triangle, cube));
         }
 
         #[test]
         fn test_triangle_completely_outside_cube() {
             let triangle = (
-                Vec3::new(1.5, 1.5, 1.5),
-                Vec3::new(2.5, 1.5, 1.5),
-                Vec3::new(1.5, 2.5, 1.5),
+                DVec3::new(1.5, 1.5, 1.5),
+                DVec3::new(2.5, 1.5, 1.5),
+                DVec3::new(1.5, 2.5, 1.5),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(!triangle_cube_intersection(triangle, cube));
         }
 
         #[test]
         fn test_triangle_vertex_inside_cube() {
             let triangle = (
-                Vec3::new(-0.5, 0.5, 0.5),
-                Vec3::new(0.5, 0.5, 0.5),
-                Vec3::new(1.5, 0.5, 0.5),
+                DVec3::new(-0.5, 0.5, 0.5),
+                DVec3::new(0.5, 0.5, 0.5),
+                DVec3::new(1.5, 0.5, 0.5),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(triangle_cube_intersection(triangle, cube));
         }
 
         #[test]
         fn test_triangle_edge_intersects_cube() {
             let triangle = (
-                Vec3::new(-0.5, 0.5, 0.5),
-                Vec3::new(0.5, 0.5, 0.5),
-                Vec3::new(0.5, 1.5, 0.5),
+                DVec3::new(-0.5, 0.5, 0.5),
+                DVec3::new(0.5, 0.5, 0.5),
+                DVec3::new(0.5, 1.5, 0.5),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(triangle_cube_intersection(triangle, cube));
         }
 
         #[test]
         fn test_triangle_face_intersects_cube() {
             let triangle = (
-                Vec3::new(0.5, 0.5, -0.5),
-                Vec3::new(0.5, 0.5, 0.5),
-                Vec3::new(0.5, 1.5, 0.5),
+                DVec3::new(0.5, 0.5, -0.5),
+                DVec3::new(0.5, 0.5, 0.5),
+                DVec3::new(0.5, 1.5, 0.5),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(triangle_cube_intersection(triangle, cube));
         }
 
         #[test]
         fn test_cube_above_triangle_no_intersection() {
             let triangle = (
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(1.0, 0.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(1.0, 0.0, 0.0),
+                DVec3::new(0.0, 1.0, 0.0),
             );
-            let cube = (Vec3::new(0.5, 0.5, 0.5), Vec3::new(1.5, 1.5, 1.5));
+            let cube = (DVec3::new(0.5, 0.5, 0.5), DVec3::new(1.5, 1.5, 1.5));
             assert!(!triangle_cube_intersection(triangle, cube));
         }
 
@@ -701,91 +709,91 @@ mod tests {
         fn test_triangle_crosses_cube() {
             // Test case 1: Current triangle crossing the cube
             let triangle = (
-                Vec3::new(-0.5, 0.5, 0.5),
-                Vec3::new(1.5, 0.5, 0.5),
-                Vec3::new(0.5, 2.0, 0.5),
+                DVec3::new(-0.5, 0.5, 0.5),
+                DVec3::new(1.5, 0.5, 0.5),
+                DVec3::new(0.5, 2.0, 0.5),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(triangle_cube_intersection(triangle, cube));
 
             // Test case 2: Triangle completely outside and above the cube
             let triangle = (
-                Vec3::new(0.5, 1.5, 1.5),
-                Vec3::new(1.5, 1.5, 1.5),
-                Vec3::new(1.0, 2.0, 1.5),
+                DVec3::new(0.5, 1.5, 1.5),
+                DVec3::new(1.5, 1.5, 1.5),
+                DVec3::new(1.0, 2.0, 1.5),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(!triangle_cube_intersection(triangle, cube));
 
             // Test case 3: Triangle with one vertex inside the cube
             let triangle = (
-                Vec3::new(0.5, 0.5, 0.5),
-                Vec3::new(2.0, 2.0, 2.0),
-                Vec3::new(1.5, 1.5, 2.0),
+                DVec3::new(0.5, 0.5, 0.5),
+                DVec3::new(2.0, 2.0, 2.0),
+                DVec3::new(1.5, 1.5, 2.0),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(triangle_cube_intersection(triangle, cube));
 
             // Test case 4: Triangle parallel to one face of the cube but fully outside
             let triangle = (
-                Vec3::new(1.5, 0.5, 0.5),
-                Vec3::new(2.5, 0.5, 0.5),
-                Vec3::new(2.0, 1.5, 0.5),
+                DVec3::new(1.5, 0.5, 0.5),
+                DVec3::new(2.5, 0.5, 0.5),
+                DVec3::new(2.0, 1.5, 0.5),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(!triangle_cube_intersection(triangle, cube));
 
             // Test case 5: Triangle fully inside the cube
             let triangle = (
-                Vec3::new(0.2, 0.2, 0.2),
-                Vec3::new(0.8, 0.2, 0.2),
-                Vec3::new(0.5, 0.8, 0.2),
+                DVec3::new(0.2, 0.2, 0.2),
+                DVec3::new(0.8, 0.2, 0.2),
+                DVec3::new(0.5, 0.8, 0.2),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(triangle_cube_intersection(triangle, cube));
         }
 
         #[test]
         fn test_no_intersection_triangle_behind_cube() {
             let triangle = (
-                Vec3::new(-1.5, -1.5, -1.5),
-                Vec3::new(-1.0, -1.5, -1.5),
-                Vec3::new(-1.5, -1.0, -1.5),
+                DVec3::new(-1.5, -1.5, -1.5),
+                DVec3::new(-1.0, -1.5, -1.5),
+                DVec3::new(-1.5, -1.0, -1.5),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(!triangle_cube_intersection(triangle, cube));
         }
 
         #[test]
         fn test_triangle_parallel_to_cube_face_no_intersection() {
             let triangle = (
-                Vec3::new(0.0, 0.0, 1.5),
-                Vec3::new(1.0, 0.0, 1.5),
-                Vec3::new(0.0, 1.0, 1.5),
+                DVec3::new(0.0, 0.0, 1.5),
+                DVec3::new(1.0, 0.0, 1.5),
+                DVec3::new(0.0, 1.0, 1.5),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(!triangle_cube_intersection(triangle, cube));
         }
 
         #[test]
         fn test_triangle_touching_cube_face() {
             let triangle = (
-                Vec3::new(0.5, 0.5, 1.0),
-                Vec3::new(0.75, 0.25, 1.0),
-                Vec3::new(0.25, 0.75, 1.0),
+                DVec3::new(0.5, 0.5, 1.0),
+                DVec3::new(0.75, 0.25, 1.0),
+                DVec3::new(0.25, 0.75, 1.0),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(triangle_cube_intersection(triangle, cube));
         }
 
         #[test]
         fn test_triangle_overlapping_cube_face_no_intersection() {
             let triangle = (
-                Vec3::new(0.5, 0.5, 2.0),
-                Vec3::new(1.5, 0.5, 2.0),
-                Vec3::new(0.5, 1.5, 2.0),
+                DVec3::new(0.5, 0.5, 2.0),
+                DVec3::new(1.5, 0.5, 2.0),
+                DVec3::new(0.5, 1.5, 2.0),
             );
-            let cube = (Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 1.0, 1.0));
+            let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(!triangle_cube_intersection(triangle, cube));
         }
     }

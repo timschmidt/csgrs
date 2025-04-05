@@ -85,7 +85,9 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
 
     assert_eq!(md5_hash, md5_hash_calculated.as_slice());
 
-    let mut model = Model::with_size(size);
+    let chunk_size = 1.28;
+
+    let mut model = Model::with_size(lod_level as usize, chunk_size, size);
     model.deserialize(&data, &offsets);
 
     model
