@@ -8,7 +8,6 @@ use wide::f32x8;
 use crate::io::consts::VTC_MAGIC;
 use crate::io::varint::{decode_varint, encode_varint};
 use crate::spatial::{Octree, Voxel};
-use crate::voxtree::calculate_voxels_per_axis;
 
 pub type Vec3 = glam::Vec3;
 pub type Freal = f32;
@@ -41,6 +40,10 @@ pub const HALF_VOXEL_SIZE_VEC3: Vec3 = Vec3::splat(HALF_VOXEL_SIZE);
 pub const INV_VOXEL_SIZE: Freal = 1.0 / VOXEL_SIZE;
 pub const SHIFT_Y: usize = 1 << (2 * MAX_LOD_LEVEL);
 pub const SHIFT_Z: usize = 1 << MAX_LOD_LEVEL;
+
+pub const fn calculate_voxels_per_axis(lod_level: usize) -> usize {
+    1 << lod_level
+}
 
 #[derive(Default)]
 pub struct Chunk {
