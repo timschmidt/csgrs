@@ -3,7 +3,7 @@ use rayon::prelude::*;
 
 mod chunk;
 
-pub use chunk::{Chunk, Vec3, MAX_LOD_LEVEL, VOXELS_PER_AXIS};
+pub use chunk::Chunk;
 
 #[derive(Default)]
 pub struct World {

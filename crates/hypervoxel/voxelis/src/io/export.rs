@@ -1,13 +1,16 @@
 use std::{io::Write, path::Path};
 
 use byteorder::{BigEndian, WriteBytesExt};
+use glam::Vec3;
 use md5::{Digest, Md5};
 
 use crate::io::Flags;
 use crate::model::Model;
-use crate::world::{Chunk, Vec3, MAX_LOD_LEVEL};
+use crate::world::Chunk;
 
 use super::consts::{RESERVED_1, RESERVED_2, VTM_MAGIC, VTM_VERSION};
+
+const MAX_LOD_LEVEL: usize = 5;
 
 pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model) {
     let mut vertices: Vec<Vec3> = Vec::new();
@@ -23,7 +26,7 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model
 
         let data = chunk.to_vec(0);
 
-        Chunk::generate_mesh_arrays(&data, &mut vertices, &mut normals, &mut indices, offset);
+        chunk.generate_mesh_arrays(&data, &mut vertices, &mut normals, &mut indices, offset);
     }
 
     let obj_file = std::fs::File::create(path).unwrap();

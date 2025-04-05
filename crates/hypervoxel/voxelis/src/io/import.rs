@@ -7,7 +7,8 @@ use md5::{Digest, Md5};
 use crate::io::consts::{VTM_MAGIC, VTM_VERSION};
 use crate::io::Flags;
 use crate::model::Model;
-use crate::world::MAX_LOD_LEVEL;
+
+const MAX_LOD_LEVEL: usize = 5;
 
 pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
     let mut vox_file = std::fs::File::open(path).unwrap();
