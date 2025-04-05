@@ -7,9 +7,9 @@ mod test;
 
 #[derive(Clone, Debug)]
 enum Class {
-    One,
-    Pi,
-    Sqrt(Rational),
+    One,            // Exactly one
+    Pi,             // Exactly pi
+    Sqrt(Rational), // Square root of some positive integer without an integer square root
     Exp(Rational),
     Ln(Rational),
     SinPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
@@ -380,7 +380,7 @@ impl Real {
         Ok(self.make_computable(Computable::exp))
     }
 
-    /// The natural logarithm of this Real
+    /// The natural logarithm of this Real or Problem::NotANumber if this Real is negative
     pub fn ln(self) -> Result<Real, Problem> {
         if self.best_sign() != Sign::Plus {
             return Err(Problem::NotANumber);
@@ -655,21 +655,65 @@ impl Real {
         self.exp_ln_powi(exp)
     }
 
+    /// Fractional (Non-integer) rational exponent
+    fn pow_fraction(self, exponent: Self) -> Result<Self, Problem> {
+        // TODO: Some ratios have a nicer result
+        self.pow_arb(exponent)
+    }
+
+    /// Arbitrary, possibly irrational exponent
+    /// NB: Assumed not to be integer
+    fn pow_arb(self, exponent: Self) -> Result<Self, Problem> {
+        match self.best_sign() {
+            Sign::NoSign => {
+                if exponent.best_sign() == Sign::Plus {
+                    Ok(Real::zero())
+                } else {
+                    Err(Problem::NotAnInteger)
+                }
+            }
+            Sign::Minus => Err(Problem::NotAnInteger),
+            Sign::Plus => {
+                let value = self.fold();
+                let exp = exponent.fold();
+
+                Ok(Self {
+                    rational: Rational::one(),
+                    class: Irrational,
+                    computable: value.ln().multiply(exp).exp(),
+                    signal: None,
+                })
+            }
+        }
+    }
+
     /// Raise this Real to some Real exponent
-    /// NB: Currently only integer powers are implemented - you can raise any real
-    /// but only to integer powers
-    pub fn pow(self, exp: Self) -> Result<Self, Problem> {
-        if exp.class == One {
-            match exp.rational.to_big_integer() {
+    pub fn pow(self, exponent: Self) -> Result<Self, Problem> {
+        if let Exp(ref n) = self.class {
+            if n == rationals::ONE.deref() {
+                if self.rational == *rationals::ONE.deref() {
+                    return exponent.exp();
+                } else {
+                    let left = Real::new(self.rational).pow(exponent.clone())?;
+                    return Ok(left * exponent.exp()?);
+                }
+            }
+        }
+        /* could handle self == 10 =>  10 ^ log10(exponent) specially */
+        if exponent.class == One {
+            match exponent.rational.to_big_integer() {
                 Some(n) => {
                     return self.powi(n);
                 }
                 None => {
-                    return Err(Problem::NotAnInteger);
+                    return self.pow_fraction(exponent);
                 }
             }
         }
-        Err(Problem::NotAnInteger)
+        if exponent.definitely_zero() {
+            return self.powi(BigInt::ZERO);
+        }
+        self.pow_arb(exponent)
     }
 
     /// Is this Real an integer ?
