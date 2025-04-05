@@ -4312,6 +4312,7 @@ dependencies = [
  "humanize-bytes",
  "log",
  "md-5",
+ "parking_lot",
  "rayon",
  "rustc-hash 2.0.0",
  "serde",

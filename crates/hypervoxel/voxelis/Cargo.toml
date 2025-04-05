@@ -17,6 +17,7 @@ glam.workspace = true
 humanize-bytes.workspace = true
 log.workspace = true
 md-5.workspace = true
+parking_lot.workspace = true
 rayon.workspace = true
 rustc-hash.workspace = true
 serde.workspace = true
