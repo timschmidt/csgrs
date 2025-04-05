@@ -171,7 +171,7 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for Svo {
 
     #[inline(always)]
     fn apply_batch(&mut self, _store: &mut NodeStore<T>, _batch: &Batch<T>) -> bool {
-        unimplemented!("Batch apply not implemented for Svo");
+        false
     }
 }
 
