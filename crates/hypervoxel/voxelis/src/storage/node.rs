@@ -1024,7 +1024,7 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
 
     pub fn dump_node(&self, node_id: BlockId, depth: u8, prefix: &str) {
         let discovered_nodes = self.dump_node_internal(node_id, depth, prefix);
-        // println!("{}Discovered nodes: {}", prefix, discovered_nodes);
+        println!("{}Discovered nodes: {}", prefix, discovered_nodes);
     }
 
     pub fn count_nodes(&self, node_id: BlockId) -> u32 {

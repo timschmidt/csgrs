@@ -3,6 +3,6 @@ mod octree;
 
 pub use aabb2d::Aabb2d;
 pub use octree::{
-    Octree, OctreeOps, OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh,
-    OctreeOpsRead, OctreeOpsState, OctreeOpsWrite, SvoDag, Voxel,
+    OctreeOps, OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead,
+    OctreeOpsState, OctreeOpsWrite, Svo, SvoDag,
 };

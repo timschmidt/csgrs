@@ -7,4 +7,4 @@ pub use ops::{
     OctreeOps, OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead,
     OctreeOpsState, OctreeOpsWrite,
 };
-pub use svo::{Octree, Voxel};
+pub use svo::Svo;
