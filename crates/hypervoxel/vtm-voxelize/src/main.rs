@@ -1,9 +1,6 @@
 use std::path::Path;
 
-use voxelis::{
-    io::{export::export_model_to_vtm, Obj},
-    voxel::voxelizer::Voxelizer,
-};
+use voxelis::{io::export::export_model_to_vtm, obj_reader::Obj, voxelizer::Voxelizer};
 
 fn main() {
     if std::env::args().len() < 5 {
