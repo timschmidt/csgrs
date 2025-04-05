@@ -5,7 +5,7 @@ use bevy::{
         render_asset::RenderAssetUsages,
     },
 };
-use voxelis::chunk::{Chunk, Vec3};
+use voxelis::world::{Chunk, Vec3};
 
 pub fn generate_mesh(chunk: &Chunk) -> Option<Mesh> {
     if chunk.is_empty() {

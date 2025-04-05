@@ -1,7 +1,7 @@
 pub type Vec3 = glam::DVec3;
 pub type Freal = f64;
 
-pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Vec3, Vec3)) -> bool {
+pub fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Vec3, Vec3)) -> bool {
     let (tv0, tv1, tv2) = triangle;
     let (cube_min, cube_max) = cube;
 
@@ -115,7 +115,7 @@ pub(crate) fn triangle_cube_intersection(triangle: (Vec3, Vec3, Vec3), cube: (Ve
     false
 }
 
-pub(crate) fn point_in_or_on_cube(point: Vec3, cube: (Vec3, Vec3)) -> bool {
+pub fn point_in_or_on_cube(point: Vec3, cube: (Vec3, Vec3)) -> bool {
     let (cube_min, cube_max) = cube;
 
     // Calculate a dynamic epsilon based on the size of the cube
@@ -137,7 +137,7 @@ pub(crate) fn point_in_or_on_cube(point: Vec3, cube: (Vec3, Vec3)) -> bool {
         && point.z <= cube_max.z + epsilon
 }
 
-pub(crate) fn point_in_or_on_triangle(point: Vec3, triangle: (Vec3, Vec3, Vec3)) -> bool {
+pub fn point_in_or_on_triangle(point: Vec3, triangle: (Vec3, Vec3, Vec3)) -> bool {
     let (a, b, c) = triangle;
     let v0 = b - a;
     let v1 = c - a;
@@ -161,7 +161,7 @@ pub(crate) fn point_in_or_on_triangle(point: Vec3, triangle: (Vec3, Vec3, Vec3))
     u >= 0.0 && v >= 0.0 && (u + v) <= 1.0
 }
 
-pub(crate) fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
+pub fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
     let (e1, e2) = edge;
 
     // First, check if the edge intersects the plane of the quad
@@ -184,7 +184,7 @@ pub(crate) fn edge_quad_intersection(edge: (Vec3, Vec3), quad: (Vec3, Vec3, Vec3
     point_in_quad(intersection_point, quad)
 }
 
-pub(crate) fn point_in_quad(point: Vec3, quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
+pub fn point_in_quad(point: Vec3, quad: (Vec3, Vec3, Vec3, Vec3)) -> bool {
     let (a, b, c, d) = quad;
 
     // Check if the point is inside either of the two triangles formed by the quad

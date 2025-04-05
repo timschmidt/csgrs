@@ -6,8 +6,7 @@ use std::{
 
 use glam::IVec3;
 
-use crate::math::Freal;
-use crate::math::Vec3;
+use crate::core::{Freal, Vec3};
 
 pub struct Obj {
     pub vertices: Vec<Vec3>,

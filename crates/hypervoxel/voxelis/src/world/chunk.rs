@@ -5,9 +5,9 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 use glam::IVec3;
 use wide::f32x8;
 
-use crate::io::VTC_MAGIC;
-use crate::io::{decode_varint, encode_varint};
-use crate::svo::{Octree, Voxel};
+use crate::io::consts::VTC_MAGIC;
+use crate::io::varint::{decode_varint, encode_varint};
+use crate::spatial::{Octree, Voxel};
 use crate::voxtree::calculate_voxels_per_axis;
 
 pub type Vec3 = glam::Vec3;

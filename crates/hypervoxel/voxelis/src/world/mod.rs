@@ -1,7 +1,9 @@
 use glam::IVec3;
 use rayon::prelude::*;
 
-use crate::chunk::Chunk;
+mod chunk;
+
+pub use chunk::{Chunk, Vec3, MAX_LOD_LEVEL, VOXELS_PER_AXIS};
 
 #[derive(Default)]
 pub struct World {

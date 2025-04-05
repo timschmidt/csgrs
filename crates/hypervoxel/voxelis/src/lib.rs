@@ -1,10 +1,10 @@
-pub mod chunk;
+pub mod core;
 pub mod io;
-pub(crate) mod math;
 pub mod model;
-pub mod obj_reader;
-pub mod svo;
-pub mod voxelizer;
+pub mod spatial;
+pub mod voxel;
 pub mod voxtree;
 pub mod voxtree_iterator;
 pub mod world;
+
+pub use voxel::VoxelTrait;

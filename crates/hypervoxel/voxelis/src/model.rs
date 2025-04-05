@@ -1,7 +1,7 @@
 use glam::IVec3;
 use rayon::prelude::*;
 
-use crate::chunk::Chunk;
+use crate::world::Chunk;
 
 #[derive(Default)]
 pub struct Model {

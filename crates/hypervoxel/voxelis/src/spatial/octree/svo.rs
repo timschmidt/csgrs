@@ -1,37 +1,28 @@
-use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 
 use glam::IVec3;
 
-pub trait RequiredVoxelTraits:
-    Clone + Copy + PartialEq + Default + Hash + std::fmt::Display + std::fmt::Debug
-{
-}
-
-impl<T> RequiredVoxelTraits for T where
-    T: Clone + Copy + PartialEq + Default + Hash + std::fmt::Display + std::fmt::Debug
-{
-}
+use crate::voxel::VoxelTrait;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Voxel<T: RequiredVoxelTraits> {
+pub struct Voxel<T: VoxelTrait> {
     pub value: T,
 }
 
 #[derive(Default, Debug)]
-pub struct Octree<T: RequiredVoxelTraits> {
+pub struct Octree<T: VoxelTrait> {
     max_depth: u8,
     root: Option<Box<OctreeNode<T>>>,
     _phantom: PhantomData<T>,
 }
 
 #[derive(Debug)]
-pub enum OctreeNode<T: RequiredVoxelTraits> {
+pub enum OctreeNode<T: VoxelTrait> {
     Branch(Box<[Option<OctreeNode<T>>; 8]>),
     Leaf(Voxel<T>),
 }
 
-pub struct OctreeIterator<'a, T: RequiredVoxelTraits> {
+pub struct OctreeIterator<'a, T: VoxelTrait> {
     stack: Vec<&'a OctreeNode<T>>,
 }
 
@@ -57,7 +48,7 @@ pub fn octree_calculate_voxels_per_axis(lod_level: usize) -> usize {
     1 << lod_level
 }
 
-fn octree_get_at_depth<T: RequiredVoxelTraits>(
+fn octree_get_at_depth<T: VoxelTrait>(
     node: &OctreeNode<T>,
     position: IVec3,
     depth: u8,
@@ -74,7 +65,7 @@ fn octree_get_at_depth<T: RequiredVoxelTraits>(
     }
 }
 
-fn octree_set_at_depth<T: RequiredVoxelTraits>(
+fn octree_set_at_depth<T: VoxelTrait>(
     node: &mut OctreeNode<T>,
     position: IVec3,
     depth: u8,
@@ -152,19 +143,13 @@ fn octree_set_at_depth<T: RequiredVoxelTraits>(
     }
 }
 
-fn octree_set_child<T: RequiredVoxelTraits>(
-    node: &mut OctreeNode<T>,
-    index: usize,
-    child: OctreeNode<T>,
-) {
+fn octree_set_child<T: VoxelTrait>(node: &mut OctreeNode<T>, index: usize, child: OctreeNode<T>) {
     if let OctreeNode::Branch(children) = node {
         children[index] = Some(child);
     }
 }
 
-fn octree_try_merge_children_into_leaf<T: RequiredVoxelTraits>(
-    node: &OctreeNode<T>,
-) -> Option<Voxel<T>> {
+fn octree_try_merge_children_into_leaf<T: VoxelTrait>(node: &OctreeNode<T>) -> Option<Voxel<T>> {
     if let OctreeNode::Branch(children) = node {
         // Get the first child (octant 0)
         let first_child = &children[0];
@@ -190,7 +175,7 @@ fn octree_try_merge_children_into_leaf<T: RequiredVoxelTraits>(
     None
 }
 
-fn octree_is_node_empty<T: RequiredVoxelTraits>(node: &OctreeNode<T>) -> bool {
+fn octree_is_node_empty<T: VoxelTrait>(node: &OctreeNode<T>) -> bool {
     match node {
         OctreeNode::Leaf(_) => false,
         OctreeNode::Branch(children) => children.iter().all(|child| {
@@ -201,7 +186,7 @@ fn octree_is_node_empty<T: RequiredVoxelTraits>(node: &OctreeNode<T>) -> bool {
     }
 }
 
-fn octree_is_node_full<T: RequiredVoxelTraits>(node: &OctreeNode<T>) -> bool {
+fn octree_is_node_full<T: VoxelTrait>(node: &OctreeNode<T>) -> bool {
     match node {
         OctreeNode::Leaf(_) => true,
         OctreeNode::Branch(children) => children.iter().all(|child| {
@@ -212,7 +197,7 @@ fn octree_is_node_full<T: RequiredVoxelTraits>(node: &OctreeNode<T>) -> bool {
     }
 }
 
-fn octree_node_memory_size<T: RequiredVoxelTraits>(node: &OctreeNode<T>) -> usize {
+fn octree_node_memory_size<T: VoxelTrait>(node: &OctreeNode<T>) -> usize {
     match node {
         OctreeNode::Leaf(_) => std::mem::size_of::<OctreeNode<T>>(),
         OctreeNode::Branch(children) => {
@@ -226,7 +211,7 @@ fn octree_node_memory_size<T: RequiredVoxelTraits>(node: &OctreeNode<T>) -> usiz
     }
 }
 
-impl<T: RequiredVoxelTraits> Octree<T> {
+impl<T: VoxelTrait> Octree<T> {
     pub fn new(max_depth: u8) -> Self {
         Self {
             max_depth,
@@ -363,20 +348,20 @@ impl<T: RequiredVoxelTraits> Octree<T> {
     }
 }
 
-impl<T: RequiredVoxelTraits> OctreeNode<T> {
+impl<T: VoxelTrait> OctreeNode<T> {
     fn new_branch() -> Self {
         OctreeNode::Branch(Box::new([None, None, None, None, None, None, None, None]))
     }
 }
 
-impl<'a, T: RequiredVoxelTraits> OctreeIterator<'a, T> {
+impl<'a, T: VoxelTrait> OctreeIterator<'a, T> {
     pub fn new(root: Option<&'a OctreeNode<T>>) -> Self {
         let stack = root.into_iter().collect();
         Self { stack }
     }
 }
 
-impl<'a, T: RequiredVoxelTraits> Iterator for OctreeIterator<'a, T> {
+impl<'a, T: VoxelTrait> Iterator for OctreeIterator<'a, T> {
     type Item = &'a Voxel<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -398,9 +383,6 @@ impl<'a, T: RequiredVoxelTraits> Iterator for OctreeIterator<'a, T> {
 #[cfg(test)]
 mod tests {
     use glam::IVec3;
-    use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
-    use crate::svo::{octree_calculate_voxels_per_axis, OctreeNode, RequiredVoxelTraits};
 
     use super::{Octree, Voxel};
 
