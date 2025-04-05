@@ -16,3 +16,6 @@ egui_extras.workspace = true
 log.workspace = true
 rayon.workspace = true
 rustc-hash.workspace = true
+
+[features]
+memory_stats = ["voxelis/memory_stats"]

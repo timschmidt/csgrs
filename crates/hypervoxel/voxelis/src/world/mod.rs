@@ -1,5 +1,5 @@
 use glam::IVec3;
-use rayon::prelude::*;
+use rustc_hash::FxHashMap;
 
 mod chunk;
 
@@ -46,17 +46,10 @@ impl World {
         self.chunks = Vec::with_capacity(self.chunks_len);
     }
 
-    pub fn update_lods(&mut self) {
-        self.chunks.par_iter_mut().for_each(|chunk| {
-            if !chunk.is_empty() {
-                chunk.update_lods();
-            }
-        });
-    }
-
     pub fn serialize(&self, data: &mut Vec<u8>) {
+        let id_map = FxHashMap::default();
         for chunk in self.chunks.iter() {
-            chunk.serialize(data);
+            chunk.serialize(&id_map, data);
         }
     }
 }

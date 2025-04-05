@@ -4,11 +4,12 @@ use byteorder::{BigEndian, ReadBytesExt};
 use glam::IVec3;
 use md5::{Digest, Md5};
 
-use crate::io::Flags;
-use crate::io::consts::{VTM_MAGIC, VTM_VERSION};
 use crate::model::Model;
 
-const MAX_LOD_LEVEL: usize = 5;
+use super::{
+    Flags,
+    consts::{VTM_MAGIC, VTM_VERSION},
+};
 
 pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
     let mut vox_file = std::fs::File::open(path).unwrap();
@@ -23,9 +24,13 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
 
     let flags = reader.read_u16::<BigEndian>().unwrap();
     let flags = Flags::from_bits(flags).unwrap();
+    println!("Flags: {:?}", flags);
 
     let lod_level = reader.read_u8().unwrap();
-    assert_eq!(lod_level, MAX_LOD_LEVEL as u8);
+    println!("LOD Level: {}", lod_level);
+
+    let chunk_size = reader.read_u32::<BigEndian>().unwrap() as i32;
+    println!("Chunk Size: {}cm", chunk_size);
 
     let _reserved_1 = reader.read_u32::<BigEndian>().unwrap();
     let _reserved_2 = reader.read_u32::<BigEndian>().unwrap();
@@ -35,50 +40,34 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
     let size_z = reader.read_u16::<BigEndian>().unwrap();
     let size = IVec3::new(size_x as i32, size_y as i32, size_z as i32);
 
+    println!("Size: {:?}", size);
+
     let name_len = reader.read_u8().unwrap();
     let mut name = vec![0u8; name_len as usize];
     reader.read_exact(&mut name).unwrap();
 
+    println!("Name: {:?}", std::str::from_utf8(&name).unwrap());
+
     let mut md5_hash = [0u8; 16];
     reader.read_exact(&mut md5_hash).unwrap();
 
-    let sizes_len = reader.read_u32::<BigEndian>().unwrap();
-    let mut sizes = vec![0u8; sizes_len as usize];
-    reader.read_exact(&mut sizes).unwrap();
+    println!("MD5 Hash: {:0X?}", md5_hash);
 
     let data_size = reader.read_u32::<BigEndian>().unwrap();
     let mut data = vec![0u8; data_size as usize];
     reader.read_exact(&mut data).unwrap();
 
-    let (sizes, data) = if flags.contains(Flags::COMPRESSED) {
-        let mut decoder = zstd::stream::Decoder::new(&sizes[..]).unwrap();
-        let mut sizes = Vec::new();
-        std::io::copy(&mut decoder, &mut sizes).unwrap();
+    println!("Data: {:?}", data_size);
 
+    let data = if flags.contains(Flags::COMPRESSED) {
         let mut decoder = zstd::stream::Decoder::new(&data[..]).unwrap();
         let mut data = Vec::new();
         std::io::copy(&mut decoder, &mut data).unwrap();
 
-        (sizes, data)
+        data
     } else {
-        (sizes, data)
+        data
     };
-
-    let mut sizes_data = Vec::new();
-
-    let mut sizes_reader = std::io::BufReader::new(sizes.as_slice());
-
-    for _ in 0..sizes.len() / 4 {
-        let size = sizes_reader.read_u32::<BigEndian>().unwrap();
-        sizes_data.push(size);
-    }
-
-    let mut offsets = Vec::new();
-    let mut offset = 0;
-    for chunk_size in sizes_data.iter() {
-        offsets.push(offset);
-        offset += *chunk_size as usize;
-    }
 
     let mut md5_hasher = Md5::new();
     md5_hasher.update(&data);
@@ -86,10 +75,12 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
 
     assert_eq!(md5_hash, md5_hash_calculated.as_slice());
 
+    println!("MD5 Hash calculated: {:0X?}", md5_hash_calculated);
+
     let chunk_size = 1.28;
 
     let mut model = Model::with_size(lod_level as usize, chunk_size, size);
-    model.deserialize(&data, &offsets);
+    model.deserialize(&data);
 
     model
 }

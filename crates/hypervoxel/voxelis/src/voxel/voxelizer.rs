@@ -4,9 +4,12 @@ use glam::{DVec3, IVec3};
 // use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
-use crate::core::triangle_cube_intersection;
-use crate::io::Obj;
-use crate::model::Model;
+use crate::{
+    core::triangle_cube_intersection,
+    io::Obj,
+    model::Model,
+    spatial::{OctreeOpsState, OctreeOpsWrite},
+};
 
 // Helper function to calculate chunk index from coordinates
 fn calculate_chunk_index_from_coords(x: i32, y: i32, z: i32, chunks_size: IVec3) -> usize {
@@ -120,6 +123,9 @@ impl Voxelizer {
         let mesh_min = self.mesh.aabb.0;
         let voxels_per_axis = self.model.voxels_per_axis();
 
+        let storage = self.model.get_store();
+        let mut storage = storage.write();
+
         self.model
             .chunks
             .iter_mut()
@@ -200,7 +206,7 @@ impl Voxelizer {
                                         (v1, v2, v3),
                                         (world_min_position, world_max_position),
                                     ) {
-                                        chunk.set_value(x as u8, y as u8, z as u8, 1);
+                                        chunk.set(&mut storage, IVec3::new(x, y, z), 1);
                                     }
                                 }
                             }
@@ -226,6 +232,9 @@ impl Voxelizer {
 
         let mesh_min = self.mesh.aabb.0;
 
+        let storage = self.model.get_store();
+        let mut storage = storage.write();
+
         for face in self.mesh.faces.iter() {
             for vertex_index in [face.x, face.y, face.z] {
                 let vertex = self.mesh.vertices[(vertex_index - 1) as usize] - mesh_min;
@@ -236,12 +245,7 @@ impl Voxelizer {
                     calculate_chunk_index(voxels_per_axis as i32, voxel, chunks_size, chunks_len);
                 let chunk = &mut self.model.chunks[chunk_index];
 
-                chunk.set_value(
-                    local_voxel.x as u8,
-                    local_voxel.y as u8,
-                    local_voxel.z as u8,
-                    1,
-                );
+                chunk.set(&mut storage, local_voxel, 1);
             }
         }
 
@@ -270,15 +274,6 @@ impl Voxelizer {
 
         let voxelize_time = voxelize_time.elapsed();
 
-        println!(
-            "Voxelize finished, updating LODs for {} chunks",
-            self.model.chunks.len()
-        );
-
-        let update_lods_time = Instant::now();
-
-        self.update_lods();
-
         let empty_chunks = self
             .model
             .chunks
@@ -286,16 +281,20 @@ impl Voxelizer {
             .filter(|chunk| chunk.is_empty())
             .count();
 
-        let update_lods_time = update_lods_time.elapsed();
-        let total = face_to_chunk_map_time + voxelize_time + update_lods_time;
+        let total = face_to_chunk_map_time + voxelize_time;
+
+        #[cfg(feature = "memory_stats")]
+        {
+            let storage = self.model.storage_stats();
+            println!("Storage stats: {:#?}", storage);
+        }
 
         println!(
-            "Done, {} chunks, empty: {}, face-to-chunk: {:?}, voxelized: {:?}, update lods: {:?}, total: {:?}",
+            "Done, {} chunks, empty: {}, face-to-chunk: {:?}, voxelized: {:?}, total: {:?}",
             self.model.chunks.len(),
             empty_chunks,
             face_to_chunk_map_time,
             voxelize_time,
-            update_lods_time,
             total
         );
     }

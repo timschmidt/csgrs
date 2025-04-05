@@ -2,9 +2,9 @@ use std::path::Path;
 use std::time::Instant;
 
 use bevy::color::palettes;
+use bevy::core_pipeline::Skybox;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::core_pipeline::tonemapping::Tonemapping;
-use bevy::core_pipeline::Skybox;
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 use bevy::pbr::{
     ScreenSpaceAmbientOcclusionBundle, ScreenSpaceAmbientOcclusionQualityLevel,
@@ -20,7 +20,7 @@ use rayon::prelude::*;
 
 use voxelis::io::import::import_model_from_vtm;
 use voxelis::model::Model;
-use voxelis_bevy::mesh::generate_mesh;
+use voxelis::spatial::OctreeOpsState;
 
 struct GamePlugin;
 
@@ -160,24 +160,41 @@ fn setup(
 
     println!("Generating meshes...");
 
-    let chunks_meshes: Vec<Option<Mesh>> = model.chunks.par_iter().map(generate_mesh).collect();
+    let single_mesh = false;
 
-    for (i, chunk_mesh) in chunks_meshes.iter().enumerate() {
-        if chunk_mesh.is_none() {
-            continue;
+    let storage = model.get_store();
+    let storage = storage.read();
+
+    if single_mesh {
+        let mut vertices = Vec::new();
+        let mut normals = Vec::new();
+        let mut indices = Vec::new();
+
+        for chunk in model.chunks.iter() {
+            if chunk.is_empty() {
+                continue;
+            }
+
+            chunk.generate_mesh_arrays(
+                &storage,
+                &mut vertices,
+                &mut normals,
+                &mut indices,
+                chunk.get_world_position(),
+            );
         }
 
-        let chunk_mesh = chunk_mesh.as_ref().unwrap();
+        let mesh = Mesh::new(
+            bevy::render::mesh::PrimitiveTopology::TriangleList,
+            bevy::render::render_asset::RenderAssetUsages::RENDER_WORLD,
+        )
+        .with_inserted_indices(bevy::render::mesh::Indices::U32(indices))
+        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
 
-        let mesh = meshes.add(chunk_mesh.clone());
+        let mesh = meshes.add(mesh);
 
-        let chunk_position = model.chunks[i].get_position();
-
-        let base_color = if model_settings.material_type == MaterialType::Checkered {
-            generate_chunk_color_checkered(chunk_position.x, chunk_position.y, chunk_position.z)
-        } else {
-            generate_chunk_color_gradient(i, model.chunks.len())
-        };
+        let base_color = Color::from(palettes::css::SILVER);
 
         let mesh_material = materials.add(StandardMaterial {
             base_color,
@@ -190,20 +207,102 @@ fn setup(
             .spawn(PbrBundle {
                 mesh,
                 material: mesh_material.clone(),
-                transform: Transform::from_translation(chunk_position.as_vec3()),
+                // transform: Transform::from_translation(chunk_position.as_vec3()),
                 ..default()
             })
             .insert(Chunk)
-            .insert(Name::new(
-                format!(
-                    "Chunk {}x{}x{}",
-                    chunk_position.x, chunk_position.y, chunk_position.z
+            // .insert(Name::new(
+            //     format!(
+            //         "Chunk {}x{}x{}",
+            //         chunk_position.x, chunk_position.y, chunk_position.z
+            //     )
+            //     .to_string(),
+            // ))
+            ;
+    } else {
+        let chunks_meshes: Vec<Option<Mesh>> = model
+            .chunks
+            .par_iter()
+            .map(|chunk| {
+                if chunk.is_empty() {
+                    return None;
+                }
+
+                let mut vertices = Vec::new();
+                let mut normals = Vec::new();
+                let mut indices = Vec::new();
+
+                chunk.generate_mesh_arrays(
+                    &storage,
+                    &mut vertices,
+                    &mut normals,
+                    &mut indices,
+                    Vec3::ZERO,
+                );
+
+                Some(
+                    Mesh::new(
+                        bevy::render::mesh::PrimitiveTopology::TriangleList,
+                        bevy::render::render_asset::RenderAssetUsages::RENDER_WORLD,
+                    )
+                    .with_inserted_indices(bevy::render::mesh::Indices::U32(indices))
+                    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
+                    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals),
                 )
-                .to_string(),
-            ));
+            })
+            .collect();
+
+        for (i, chunk_mesh) in chunks_meshes.iter().enumerate() {
+            if chunk_mesh.is_none() {
+                continue;
+            }
+
+            let chunk_mesh = chunk_mesh.as_ref().unwrap();
+
+            let mesh = meshes.add(chunk_mesh.clone());
+
+            let chunk_position = model.chunks[i].get_position();
+            let chunk_world_position = model.chunks[i].get_world_position();
+
+            let base_color = if model_settings.material_type == MaterialType::Checkered {
+                generate_chunk_color_checkered(chunk_position.x, chunk_position.y, chunk_position.z)
+            } else {
+                generate_chunk_color_gradient(i, model.chunks.len())
+            };
+
+            let mesh_material = materials.add(StandardMaterial {
+                base_color,
+                perceptual_roughness: 1.0,
+                reflectance: 0.0,
+                ..default()
+            });
+
+            commands
+                .spawn(PbrBundle {
+                    mesh,
+                    material: mesh_material.clone(),
+                    transform: Transform::from_translation(chunk_world_position),
+                    ..default()
+                })
+                .insert(Chunk)
+                .insert(Name::new(
+                    format!(
+                        "Chunk {}x{}x{}",
+                        chunk_position.x, chunk_position.y, chunk_position.z
+                    )
+                    .to_string(),
+                ));
+        }
     }
 
-    println!("\nGenerating meshes took {:?}", now.elapsed());
+    println!("Generating meshes took {:?}", now.elapsed());
+
+    // display_model_cache_statistics(model);
+    #[cfg(feature = "memory_stats")]
+    {
+        let storage = model.storage_stats();
+        println!("Storage stats: {:#?}", storage);
+    }
 
     commands.spawn(PbrBundle {
         mesh: meshes.add(
@@ -237,6 +336,12 @@ fn main() {
 
     println!("Opening VTM model {}", input.display());
     let model = import_model_from_vtm(&input);
+
+    #[cfg(feature = "memory_stats")]
+    {
+        let storage = model.storage_stats();
+        println!("Storage stats: {:#?}", storage);
+    }
 
     App::new()
         .add_plugins((

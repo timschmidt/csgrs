@@ -7,8 +7,12 @@ use rustc_hash::FxHashMap;
 use wide::f32x8;
 
 use crate::io::consts::VTC_MAGIC;
-use crate::io::varint::{decode_varint, decode_varint_u32_from_reader, encode_varint};
-use crate::spatial::{Octree, Voxel};
+use crate::io::varint::{decode_varint_u32_from_reader, encode_varint};
+use crate::spatial::{
+    OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead, OctreeOpsState,
+    OctreeOpsWrite, SvoDag,
+};
+use crate::{Batch, BlockId, NodeStore};
 
 const CUBE_VERTS: [Vec3; 8] = [
     Vec3::new(-1.0, 1.0, -1.0),
@@ -28,13 +32,8 @@ const VEC_LEFT: Vec3 = Vec3::new(-1.0, 0.0, 0.0);
 const VEC_FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 const VEC_BACK: Vec3 = Vec3::new(0.0, 0.0, 1.0);
 
-pub const fn calculate_voxels_per_axis(lod_level: usize) -> usize {
-    1 << lod_level
-}
-
-#[derive(Default)]
 pub struct Chunk {
-    data: Octree<i32>,
+    data: SvoDag,
     position: IVec3,
     chunk_size: f32,
     max_depth: usize,
@@ -43,7 +42,7 @@ pub struct Chunk {
 impl Chunk {
     pub fn with_position(chunk_size: f32, max_depth: usize, x: i32, y: i32, z: i32) -> Self {
         Self {
-            data: Octree::new(max_depth as u8),
+            data: SvoDag::new(max_depth as u8),
             position: IVec3::new(x, y, z),
             chunk_size,
             max_depth,
@@ -58,14 +57,6 @@ impl Chunk {
         self.chunk_size
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.data.is_empty()
-    }
-
-    pub fn clear(&mut self) {
-        self.data.clear();
-    }
-
     pub fn set_position(&mut self, x: i32, y: i32, z: i32) {
         self.position = IVec3::new(x, y, z);
     }
@@ -74,69 +65,56 @@ impl Chunk {
         self.position
     }
 
-    fn voxels_per_axis(&self) -> u32 {
-        1 << self.max_depth
+    pub fn get_world_position(&self) -> Vec3 {
+        self.position.as_vec3() * self.chunk_size
     }
 
-    pub fn set_value(&mut self, x: u8, y: u8, z: u8, value: i32) {
-        self.data
-            .set(IVec3::new(x as i32, y as i32, z as i32), Voxel { value });
-    }
-
-    pub fn get_value(&self, x: u8, y: u8, z: u8) -> i32 {
-        match self.data.get(IVec3::new(x as i32, y as i32, z as i32)) {
-            Some(voxel) => voxel.value,
-            None => 0,
-        }
-    }
-
-    pub fn update_lods(&mut self) {
-        // self.data.update_lods();
-    }
-
-    pub fn generate_test_data(&mut self) {
-        let voxels_per_axis = self.voxels_per_axis() as u8;
+    pub fn generate_test_data(&mut self, store: &mut NodeStore<i32>) {
+        let voxels_per_axis = self.voxels_per_axis() as i32;
+        let mut position = IVec3::ZERO;
         for y in 0..voxels_per_axis {
+            position.y = y;
             let offset = y % 2;
             for z in offset..voxels_per_axis - offset {
+                position.z = z;
                 for x in offset..voxels_per_axis - offset {
-                    self.set_value(x, y, z, y as i32 + 1);
-                }
-            }
-        }
-
-        self.update_lods();
-    }
-
-    pub fn fill(&mut self, value: i32) {
-        let voxels_per_axis = self.voxels_per_axis() as u8;
-        for y in 0..voxels_per_axis {
-            for z in 0..voxels_per_axis {
-                for x in 0..voxels_per_axis {
-                    self.set_value(x, y, z, value);
+                    position.x = x;
+                    self.set(store, position, y + 1);
                 }
             }
         }
     }
 
-    pub fn generate_test_sphere(&mut self, center: IVec3, radius: i32, value: i32) {
+    pub fn generate_test_sphere(
+        &mut self,
+        store: &mut NodeStore<i32>,
+        center: IVec3,
+        radius: i32,
+        value: i32,
+    ) {
         debug_assert!(radius > 0);
+
         let (cx, cy, cz) = (center.x, center.y, center.z);
         let radius_squared = radius * radius;
 
-        let voxels_per_axis = self.voxels_per_axis() as u8;
+        let voxels_per_axis = self.voxels_per_axis() as i32;
+
+        let mut position = IVec3::ZERO;
 
         for y in 0..voxels_per_axis {
+            position.y = y;
             for z in 0..voxels_per_axis {
+                position.z = z;
                 for x in 0..voxels_per_axis {
-                    let dx = x as i32 - cx;
-                    let dy = y as i32 - cy;
-                    let dz = z as i32 - cz;
+                    let dx = x - cx;
+                    let dy = y - cy;
+                    let dz = z - cz;
 
                     let distance_squared = dx * dx + dy * dy + dz * dz;
 
                     if distance_squared <= radius_squared {
-                        self.set_value(x, y, z, value);
+                        position.x = x;
+                        self.set(store, position, value);
                     }
                 }
             }
@@ -158,18 +136,75 @@ impl Chunk {
         indices.extend([index + 2, index + 1, index, index + 3, index, index + 1]);
     }
 
-    pub fn to_vec(&self, _lod: usize) -> Vec<i32> {
-        self.data.to_vec()
+    pub fn to_vec(&self, store: &NodeStore<i32>, _lod: usize) -> Vec<i32> {
+        self.data.to_vec(store)
     }
 
     pub fn generate_mesh_arrays(
         &self,
-        data: &[i32],
+        store: &NodeStore<i32>,
         vertices: &mut Vec<Vec3>,
         normals: &mut Vec<Vec3>,
         indices: &mut Vec<u32>,
         offset: Vec3,
     ) {
+        if self.data.is_leaf() {
+            let half_voxel_offset = 0.5 + offset;
+            let chunk_v0 = CUBE_VERTS[0] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v1 = CUBE_VERTS[1] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v2 = CUBE_VERTS[2] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v3 = CUBE_VERTS[3] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v4 = CUBE_VERTS[4] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v5 = CUBE_VERTS[5] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v6 = CUBE_VERTS[6] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v7 = CUBE_VERTS[7] * 0.5 * self.chunk_size + half_voxel_offset;
+
+            Self::add_quad(
+                vertices,
+                indices,
+                normals,
+                [chunk_v0, chunk_v2, chunk_v3, chunk_v1],
+                &VEC_UP,
+            );
+            Self::add_quad(
+                vertices,
+                indices,
+                normals,
+                [chunk_v2, chunk_v5, chunk_v6, chunk_v1],
+                &VEC_RIGHT,
+            );
+            Self::add_quad(
+                vertices,
+                indices,
+                normals,
+                [chunk_v7, chunk_v5, chunk_v4, chunk_v6],
+                &VEC_DOWN,
+            );
+            Self::add_quad(
+                vertices,
+                indices,
+                normals,
+                [chunk_v0, chunk_v7, chunk_v4, chunk_v3],
+                &VEC_LEFT,
+            );
+            Self::add_quad(
+                vertices,
+                indices,
+                normals,
+                [chunk_v3, chunk_v6, chunk_v7, chunk_v2],
+                &VEC_BACK,
+            );
+            Self::add_quad(
+                vertices,
+                indices,
+                normals,
+                [chunk_v1, chunk_v4, chunk_v5, chunk_v0],
+                &VEC_FORWARD,
+            );
+
+            return;
+        }
+
         let voxels_per_axis = self.voxels_per_axis();
         let voxel_size = self.voxel_size();
 
@@ -202,13 +237,15 @@ impl Chunk {
             chunk_v7.z,
         ]);
 
+        let data = self.data.to_vec(store);
+
         for y in 0..voxels_per_axis {
-            let base_index_y = (y as usize) * shift_y;
+            let base_index_y = y as usize * shift_y;
             let v_y = f32x8::splat(y as f32 * voxel_size_vec3.y) + chunk_v_y;
             let v_y_array = v_y.to_array();
 
             for z in 0..voxels_per_axis {
-                let base_index_z = base_index_y + (z as usize) * shift_z;
+                let base_index_z = base_index_y + z as usize * shift_z;
                 let v_z = f32x8::splat(z as f32 * voxel_size_vec3.z) + chunk_v_z;
                 let v_z_array = v_z.to_array();
 
@@ -228,6 +265,13 @@ impl Chunk {
                     let has_right =
                         x + 1 >= voxels_per_axis || unsafe { *data.get_unchecked(index + 1) } == 0;
                     let has_left = x == 0 || unsafe { *data.get_unchecked(index - 1) } == 0;
+
+                    // let has_top = false;
+                    // let has_bottom = false;
+                    // let has_front = false;
+                    // let has_back = false;
+                    // let has_right = false;
+                    // let has_left = false;
 
                     if !(has_top || has_bottom || has_left || has_right || has_back || has_front) {
                         continue;
@@ -268,103 +312,135 @@ impl Chunk {
         }
     }
 
-    pub fn serialize(&self, data: &mut Vec<u8>) {
+    pub fn serialize(&self, id_map: &FxHashMap<u32, u32>, data: &mut Vec<u8>) {
         let mut writer = std::io::BufWriter::new(data);
 
         writer.write_all(&VTC_MAGIC).unwrap();
 
         let position = self.position;
 
-        writer
-            .write_u16::<BigEndian>(position.x.try_into().unwrap())
-            .unwrap();
-        writer
-            .write_u16::<BigEndian>(position.y.try_into().unwrap())
-            .unwrap();
-        writer
-            .write_u16::<BigEndian>(position.z.try_into().unwrap())
-            .unwrap();
+        writer.write_i16::<BigEndian>(position.x as i16).unwrap();
+        writer.write_i16::<BigEndian>(position.y as i16).unwrap();
+        writer.write_i16::<BigEndian>(position.z as i16).unwrap();
 
-        let rle_data = self.encode_rle();
+        let root_id = self.data.get_root_id();
+        let new_id = *id_map.get(&root_id.index()).unwrap();
+        let new_id_bytes = encode_varint(new_id as usize);
 
-        writer
-            .write_u32::<BigEndian>(rle_data.len().try_into().unwrap())
-            .unwrap();
-        writer.write_all(&rle_data).unwrap();
+        writer.write_all(&new_id_bytes).unwrap();
     }
 
-    pub fn deserialize(&mut self, data: &[u8], chunk_index: usize, offsets: &[usize]) {
-        let offset = offsets[chunk_index];
-        let mut reader = BufReader::new(&data[offset..]);
-
+    pub fn deserialize(
+        &mut self,
+        store: &mut NodeStore<i32>,
+        leaf_patterns: &FxHashMap<u32, (BlockId, i32)>,
+        patterns: &FxHashMap<u32, (BlockId, [u32; 8])>,
+        reader: &mut BufReader<&[u8]>,
+    ) {
         let mut magic = [0; VTC_MAGIC.len()];
         reader.read_exact(&mut magic).unwrap();
         assert_eq!(magic, VTC_MAGIC);
 
-        let x = reader.read_u16::<BigEndian>().unwrap() as i32;
-        let y = reader.read_u16::<BigEndian>().unwrap() as i32;
-        let z = reader.read_u16::<BigEndian>().unwrap() as i32;
-        self.position = IVec3::new(x, y, z);
+        // println!("Magic: {:?}", std::str::from_utf8(&magic).unwrap());
 
-        let data_len = reader.read_u32::<BigEndian>().unwrap() as usize;
-        let mut data = vec![0; data_len];
-        reader.read_exact(&mut data).unwrap();
+        let x = reader.read_i16::<BigEndian>().unwrap();
+        let y = reader.read_i16::<BigEndian>().unwrap();
+        let z = reader.read_i16::<BigEndian>().unwrap();
+        self.position = IVec3::new(x as i32, y as i32, z as i32);
 
-        let rle_data = Self::decode_rle(&data);
+        // println!("Position: {:?}", self.position);
 
-        self.data.for_each_mut(|index, value| {
-            *value = rle_data[index];
-        });
-    }
+        let root_id = decode_varint_u32_from_reader(reader).unwrap();
 
-    fn encode_rle(&self) -> Vec<u8> {
-        let mut buffer = Vec::new();
-
-        let mut iter = self.data.iter().peekable();
-
-        while let Some(value) = iter.next() {
-            // Initialize count for the current run
-            let mut count = 1;
-
-            // Count how many times the current value repeats consecutively
-            while let Some(&next_value) = iter.peek() {
-                if next_value.value == value.value {
-                    iter.next();
-                    count += 1;
-                } else {
-                    break;
-                }
-            }
-
-            // Encode the count using variable-length encoding
-            let count_bytes = encode_varint(count);
-            buffer.extend(count_bytes);
-
-            // Encode the value using variable-length encoding
-            let value_bytes = encode_varint(value.value as usize);
-            buffer.extend_from_slice(&value_bytes);
+        if let Some((block_id, _)) = patterns.get(&root_id) {
+            self.data.set_root_id(store, *block_id);
+        } else {
+            let (block_id, _) = leaf_patterns.get(&root_id).unwrap();
+            self.data.set_root_id(store, *block_id);
         }
+    }
+}
 
-        buffer
+impl OctreeOpsRead<i32> for Chunk {
+    #[inline(always)]
+    fn get(&self, store: &NodeStore<i32>, position: IVec3) -> Option<i32> {
+        self.data.get(store, position)
+    }
+}
+
+impl OctreeOpsWrite<i32> for Chunk {
+    #[inline(always)]
+    fn set(&mut self, store: &mut NodeStore<i32>, position: IVec3, voxel: i32) -> bool {
+        self.data.set(store, position, voxel)
     }
 
-    fn decode_rle(input: &[u8]) -> Vec<i32> {
-        let mut output = Vec::new();
-        let mut iter = input.iter();
-
-        while let Some(count) = decode_varint(&mut iter) {
-            // Read the next 4 bytes for the i32 value
-            let value =
-                decode_varint(&mut iter).expect("Unexpected end of input during value read") as i32;
-
-            // Append 'value' to the output 'count' times
-            output.extend(std::iter::repeat(value).take(count));
-        }
-
-        output
+    #[inline(always)]
+    fn fill(&mut self, store: &mut NodeStore<i32>, value: i32) {
+        self.data.fill(store, value)
     }
 
-    pub fn total_memory_size(&self) -> usize {
-        self.data.total_memory_size()
+    #[inline(always)]
+    fn clear(&mut self, store: &mut NodeStore<i32>) {
+        self.data.clear(store)
+    }
+}
+
+impl OctreeOpsBatch<i32> for Chunk {
+    #[inline(always)]
+    fn create_batch(&self) -> Batch<i32> {
+        self.data.create_batch()
+    }
+
+    #[inline(always)]
+    fn apply_batch(&mut self, store: &mut NodeStore<i32>, batch: &Batch<i32>) -> bool {
+        self.data.apply_batch(store, batch)
+    }
+}
+
+impl OctreeOpsMesh<i32> for Chunk {
+    #[inline(always)]
+    fn to_vec(&self, store: &NodeStore<i32>) -> Vec<i32> {
+        self.data.to_vec(store)
+    }
+}
+
+impl OctreeOpsConfig for Chunk {
+    #[inline(always)]
+    fn max_depth(&self) -> u8 {
+        self.data.max_depth()
+    }
+
+    #[inline(always)]
+    fn voxels_per_axis(&self) -> u32 {
+        self.data.voxels_per_axis()
+    }
+}
+
+impl OctreeOpsState for Chunk {
+    #[inline(always)]
+    fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
+
+    #[inline(always)]
+    fn is_leaf(&self) -> bool {
+        self.data.is_leaf()
+    }
+}
+
+impl OctreeOpsDirty for Chunk {
+    #[inline(always)]
+    fn is_dirty(&self) -> bool {
+        self.data.is_dirty()
+    }
+
+    #[inline(always)]
+    fn mark_dirty(&mut self) {
+        self.data.mark_dirty();
+    }
+
+    #[inline(always)]
+    fn clear_dirty(&mut self) {
+        self.data.clear_dirty()
     }
 }
