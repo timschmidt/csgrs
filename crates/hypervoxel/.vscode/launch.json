@@ -7,58 +7,123 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "ad-altum (Release)",
+      "name": "vtm-viewer (Release)",
       "cargo": {
         "args": [
           "build",
           "--release",
-          "--bin=ad-altum",
-          "--package=ad-altum"
+          "--bin=vtm-viewer",
+          "--package=vtm-viewer"
         ],
         "filter": {
-          "name": "ad-altum",
+          "name": "vtm-viewer",
           "kind": "bin"
         }
       },
-      "args": [],
-      "cwd": "${workspaceFolder}"
+      "args": [
+        "vtm-viewer/assets/export/vtm/statue_03.vtm"
+      ],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
     },
     {
       "type": "lldb",
       "request": "launch",
-      "name": "ad-altum (Release With Debug)",
+      "name": "vtm-viewer (RelWithDebug)",
       "cargo": {
         "args": [
           "build",
           "--profile",
           "release-debug-info",
-          "--bin=ad-altum",
-          "--package=ad-altum"
+          "--bin=vtm-viewer",
+          "--package=vtm-viewer"
         ],
         "filter": {
-          "name": "ad-altum",
+          "name": "vtm-viewer",
           "kind": "bin"
         }
       },
       "args": [],
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
     },
     {
       "type": "lldb",
       "request": "launch",
-      "name": "ad-altum (Debug)",
+      "name": "vtm-viewer (Debug)",
       "cargo": {
         "args": [
           "build",
-          "--bin=ad-altum",
-          "--package=ad-altum"
+          "--bin=vtm-viewer",
+          "--package=vtm-viewer"
         ],
         "filter": {
-          "name": "ad-altum",
+          "name": "vtm-viewer",
+          "kind": "bin"
+        }
+      },
+      "args": [
+        "vtm-viewer/assets/export/vtm/worm_gear.vtm"
+      ],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "terrain (Debug)",
+      "cargo": {
+        "args": [
+          "build",
+          "--example=terrain",
+        ],
+        "filter": {
+          "name": "terrain",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "meshing-debugger (Debug)",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=meshing-debugger",
+          "--package=meshing-debugger"
+        ],
+        "filter": {
+          "name": "meshing-debugger",
           "kind": "bin"
         }
       },
       "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "rust: cargo build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "vtm-voxelize (Debug)",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=vtm-voxelize",
+          "--package=vtm-voxelize"
+        ],
+        "filter": {
+          "name": "vtm-voxelize",
+          "kind": "bin"
+        }
+      },
+      "args": [
+        "vtm-viewer/assets/import/statue_03.obj",
+        "vtm-viewer/assets/export/vtm/statue_03.vtm"
+      ],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "rust: cargo build"
     },
@@ -116,7 +181,9 @@
           "kind": "lib"
         }
       },
-      "args": [],
+      "args": [
+        "svo_dag::tests::test_multiple_assign"
+      ],
       "cwd": "${workspaceFolder}"
     }
   ]
