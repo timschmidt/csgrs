@@ -9,8 +9,8 @@ use wide::f32x8;
 use crate::io::consts::VTC_MAGIC;
 use crate::io::varint::{decode_varint_u32_from_reader, encode_varint};
 use crate::spatial::{
-    OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead, OctreeOpsState,
-    OctreeOpsWrite, SvoDag,
+    Octree, OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead,
+    OctreeOpsState, OctreeOpsWrite,
 };
 use crate::{Batch, BlockId, NodeStore};
 
@@ -33,7 +33,7 @@ const VEC_FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 const VEC_BACK: Vec3 = Vec3::new(0.0, 0.0, 1.0);
 
 pub struct Chunk {
-    data: SvoDag,
+    data: Octree,
     position: IVec3,
     chunk_size: f32,
     max_depth: usize,
@@ -42,7 +42,7 @@ pub struct Chunk {
 impl Chunk {
     pub fn with_position(chunk_size: f32, max_depth: usize, x: i32, y: i32, z: i32) -> Self {
         Self {
-            data: SvoDag::new(max_depth as u8),
+            data: Octree::make_static(max_depth as u8),
             position: IVec3::new(x, y, z),
             chunk_size,
             max_depth,
@@ -351,12 +351,18 @@ impl Chunk {
         // println!("Position: {:?}", self.position);
 
         let root_id = decode_varint_u32_from_reader(reader).unwrap();
-
-        if let Some((block_id, _)) = patterns.get(&root_id) {
-            self.data.set_root_id(store, *block_id);
-        } else {
-            let (block_id, _) = leaf_patterns.get(&root_id).unwrap();
-            self.data.set_root_id(store, *block_id);
+        match &mut self.data {
+            Octree::Static(octree) => {
+                if let Some((block_id, _)) = patterns.get(&root_id) {
+                    octree.set_root_id(store, *block_id);
+                } else {
+                    let (block_id, _) = leaf_patterns.get(&root_id).unwrap();
+                    octree.set_root_id(store, *block_id);
+                }
+            }
+            Octree::Dynamic(_) => {
+                panic!("Dynamic octree not supported");
+            }
         }
     }
 }
