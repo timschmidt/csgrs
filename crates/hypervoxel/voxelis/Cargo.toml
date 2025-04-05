@@ -5,6 +5,10 @@ authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
+[features]
+memory_stats = []
+
+
 [dependencies]
 bincode.workspace = true
 bitflags.workspace = true
