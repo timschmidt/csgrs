@@ -1,3 +1,5 @@
+#![allow(clippy::needless_range_loop)]
+
 pub mod core;
 pub mod io;
 pub mod model;
