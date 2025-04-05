@@ -1,13 +1,14 @@
 [package]
 name = "vtm-viewer"
-version = "24.2.0"
-authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
-edition = "2021"
-license = "MIT OR Apache-2.0"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition = "2024"
 
 [dependencies]
 voxelis.workspace = true
 voxelis-bevy.workspace = true
+
 bevy_egui.workspace = true
 bevy_panorbit_camera.workspace = true
 bevy_screen_diagnostics.workspace = true

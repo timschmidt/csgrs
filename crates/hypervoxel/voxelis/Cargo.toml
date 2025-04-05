@@ -1,9 +1,9 @@
 [package]
 name = "voxelis"
-version = "24.2.0"
-authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
+version.workspace = true
+authors.workspace = true
+license.workspace = true
 edition = "2024"
-license = "MIT OR Apache-2.0"
 
 [features]
 memory_stats = []

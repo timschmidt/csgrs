@@ -1,9 +1,9 @@
 [package]
 name = "vtm-voxelize"
-version = "24.2.0"
-authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
-edition = "2021"
-license = "MIT OR Apache-2.0"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition = "2024"
 
 [dependencies]
 voxelis.workspace = true
