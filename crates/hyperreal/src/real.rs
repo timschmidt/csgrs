@@ -656,9 +656,13 @@ impl Real {
     }
 
     /// Fractional (Non-integer) rational exponent
-    fn pow_fraction(self, exponent: Self) -> Result<Self, Problem> {
-        // TODO: Some ratios have a nicer result
-        self.pow_arb(exponent)
+    fn pow_fraction(self, exponent: Rational) -> Result<Self, Problem> {
+        if exponent.denominator() == unsigned::TWO.deref() {
+            let n = exponent.shifted_big_integer(1);
+            self.powi(n)?.sqrt()
+        } else {
+            self.pow_arb(Real::new(exponent))
+        }
     }
 
     /// Arbitrary, possibly irrational exponent
@@ -701,12 +705,13 @@ impl Real {
         }
         /* could handle self == 10 =>  10 ^ log10(exponent) specially */
         if exponent.class == One {
-            match exponent.rational.to_big_integer() {
+            let r = exponent.rational;
+            match r.to_big_integer() {
                 Some(n) => {
                     return self.powi(n);
                 }
                 None => {
-                    return self.pow_fraction(exponent);
+                    return self.pow_fraction(r);
                 }
             }
         }

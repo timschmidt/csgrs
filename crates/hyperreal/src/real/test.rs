@@ -167,6 +167,15 @@ mod tests {
     }
 
     #[test]
+    fn powi() {
+        let base: Real = 4.into();
+        let five_over_two: Real = "5/2".parse().unwrap();
+        let answer = base.pow(five_over_two).unwrap();
+        let correct: Real = 32.into();
+        assert_eq!(answer, correct);
+    }
+
+    #[test]
     fn sqrt_3045512() {
         use crate::real::Class::Sqrt;
 
@@ -176,6 +185,34 @@ mod tests {
         assert_eq!(sqrt.rational, root);
         let two = Rational::new(2);
         assert_eq!(sqrt.class, Sqrt(two));
+    }
+
+    fn closest_f64(r: Real, f: f64) -> bool {
+        let left = f64::from_bits(f.to_bits() - 1);
+        let right = f64::from_bits(f.to_bits() + 1);
+        let f: f64 = r.into();
+        if right > left {
+            left < f && right > f
+        } else {
+            left > f && right < f
+        }
+    }
+
+    #[test]
+    fn pow_pi() {
+        let pi = Real::pi();
+        let sq = pi.pow(Real::pi()).unwrap();
+        assert!(closest_f64(sq.clone(), 36.46215960720791));
+        let sqsq = sq.pow(Real::pi()).unwrap();
+        assert!(closest_f64(sqsq, 80662.6659385546));
+    }
+
+    #[test]
+    fn pow_fract() {
+        let frac: Real = "-1.3".parse().unwrap();
+        let five: Real = 5.into();
+        let answer = frac.pow(five).unwrap();
+        assert!(closest_f64(answer, -3.7129299999999996));
     }
 
     #[test]
