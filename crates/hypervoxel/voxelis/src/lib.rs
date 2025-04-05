@@ -7,6 +7,6 @@ pub mod utils;
 pub mod voxel;
 pub mod world;
 
-pub use core::{BlockId, Depth};
+pub use core::{Batch, BlockId, Depth};
 pub use storage::NodeStore;
 pub use voxel::VoxelTrait;

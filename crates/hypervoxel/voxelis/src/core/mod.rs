@@ -1,7 +1,9 @@
+mod batch;
 mod block_id;
 mod depth;
 mod math;
 
+pub use batch::Batch;
 pub use block_id::BlockId;
 pub use depth::Depth;
 pub use math::{
