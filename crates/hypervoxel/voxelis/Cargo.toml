@@ -23,17 +23,5 @@ zstd.workspace = true
 criterion = { version = "0.5.1", features = ["html_reports"] }
 
 [[bench]]
-name = "voxtree_bench"
-harness = false
-
-[[bench]]
-name = "voxelize_bench"
-harness = false
-
-[[bench]]
-name = "voxelize_mesh"
-harness = false
-
-[[bench]]
-name = "svo_bench"
+name = "octree_bench"
 harness = false

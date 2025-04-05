@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use glam::IVec3;
-use voxelis::svo::{Octree, Voxel};
+use voxelis::spatial::{Octree, Voxel};
 
 fn fill_octree(voxels_per_axis: i32, octree: &mut Octree<u8>) {
     for x in 0..voxels_per_axis {
@@ -283,54 +283,6 @@ fn benchmark_octree(c: &mut Criterion) {
         fill_octree(voxels_per_axis, &mut octree);
         b.iter(|| {
             black_box(octree.total_memory_size());
-        })
-    });
-
-    c.bench_function("octree_serialize_to_vec", |b| {
-        let mut octree = Octree::<u8>::new(max_depth);
-        fill_octree(voxels_per_axis, &mut octree);
-        b.iter(|| {
-            black_box(octree.serialize_to_vec().unwrap());
-        })
-    });
-
-    c.bench_function("octree_serialize_empty", |b| {
-        let octree = Octree::<u8>::new(max_depth);
-        b.iter(|| {
-            let mut buffer = Vec::new();
-            octree.serialize(&mut buffer).unwrap();
-            black_box(buffer);
-        })
-    });
-
-    c.bench_function("octree_serialize_sphere", |b| {
-        let mut octree = Octree::<u8>::new(max_depth);
-        insert_sphere(voxels_per_axis, &mut octree);
-        b.iter(|| {
-            let mut buffer = Vec::new();
-            octree.serialize(&mut buffer).unwrap();
-            black_box(buffer);
-        })
-    });
-
-    c.bench_function("octree_serialize_full", |b| {
-        let mut octree = Octree::<u8>::new(max_depth);
-        fill_octree(voxels_per_axis, &mut octree);
-        b.iter(|| {
-            let mut buffer = Vec::new();
-            octree.serialize(&mut buffer).unwrap();
-            black_box(buffer);
-        })
-    });
-
-    c.bench_function("octree_deserialize_full", |b| {
-        let mut octree = Octree::<u8>::new(max_depth);
-        fill_octree(voxels_per_axis, &mut octree);
-        let buffer = octree.serialize_to_vec().unwrap();
-        b.iter(|| {
-            let mut new_octree = Octree::<u8>::new(max_depth);
-            new_octree.deserialize(&mut buffer.as_slice()).unwrap();
-            black_box(new_octree);
         })
     });
 }

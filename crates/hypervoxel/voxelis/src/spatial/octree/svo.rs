@@ -384,6 +384,11 @@ impl<'a, T: VoxelTrait> Iterator for OctreeIterator<'a, T> {
 mod tests {
     use glam::IVec3;
 
+    use crate::{
+        spatial::octree::svo::{octree_calculate_voxels_per_axis, OctreeNode},
+        VoxelTrait,
+    };
+
     use super::{Octree, Voxel};
 
     #[test]
@@ -488,7 +493,7 @@ mod tests {
         octree.set(IVec3::new(0, 0, 0), Voxel { value: 0 });
 
         // Traverse the tree to ensure no Leaf nodes have default value
-        fn check_no_default_leaf<T: RequiredVoxelTraits>(node: &OctreeNode<T>) {
+        fn check_no_default_leaf<T: VoxelTrait>(node: &OctreeNode<T>) {
             match node {
                 OctreeNode::Leaf(voxel) => {
                     assert!(
