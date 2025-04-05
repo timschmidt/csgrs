@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0"
 
 [features]
 memory_stats = []
-
+debug_trace_ref_counts = []
 
 [dependencies]
 bincode.workspace = true
