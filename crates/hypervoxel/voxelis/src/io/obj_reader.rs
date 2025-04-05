@@ -4,15 +4,13 @@ use std::{
     path::Path,
 };
 
-use glam::IVec3;
-
-use crate::core::{Freal, Vec3};
+use glam::{DVec3, IVec3};
 
 pub struct Obj {
-    pub vertices: Vec<Vec3>,
+    pub vertices: Vec<DVec3>,
     pub faces: Vec<IVec3>,
-    pub aabb: (Vec3, Vec3),
-    pub size: Vec3,
+    pub aabb: (DVec3, DVec3),
+    pub size: DVec3,
 }
 
 impl Obj {
@@ -25,24 +23,24 @@ impl Obj {
         let mut vertices = Vec::new();
         let mut faces = Vec::new();
 
-        let mut min_x = Freal::MAX;
-        let mut min_y = Freal::MAX;
-        let mut min_z = Freal::MAX;
+        let mut min_x = f64::MAX;
+        let mut min_y = f64::MAX;
+        let mut min_z = f64::MAX;
 
-        let mut max_x = Freal::MIN;
-        let mut max_y = Freal::MIN;
-        let mut max_z = Freal::MIN;
+        let mut max_x = f64::MIN;
+        let mut max_y = f64::MIN;
+        let mut max_z = f64::MIN;
 
         for line in reader.lines() {
             let line = line.unwrap();
             let tokens: Vec<&str> = line.split_whitespace().collect();
             match tokens[0] {
                 "v" => {
-                    let x: Freal = tokens[1].parse().unwrap();
-                    let y: Freal = tokens[2].parse().unwrap();
-                    let z: Freal = tokens[3].parse().unwrap();
+                    let x: f64 = tokens[1].parse().unwrap();
+                    let y: f64 = tokens[2].parse().unwrap();
+                    let z: f64 = tokens[3].parse().unwrap();
 
-                    let vertex = Vec3::new(x, y, z);
+                    let vertex = DVec3::new(x, y, z);
 
                     min_x = min_x.min(x);
                     min_y = min_y.min(y);
@@ -67,10 +65,10 @@ impl Obj {
         }
 
         let aabb = (
-            Vec3::new(min_x, min_y, min_z),
-            Vec3::new(max_x, max_y, max_z),
+            DVec3::new(min_x, min_y, min_z),
+            DVec3::new(max_x, max_y, max_z),
         );
-        let size = Vec3::new(max_x - min_x, max_y - min_y, max_z - min_z);
+        let size = DVec3::new(max_x - min_x, max_y - min_y, max_z - min_z);
 
         println!("Parsed obj file: {}", path.as_ref().display());
         println!("Vertices: {}", vertices.len());
