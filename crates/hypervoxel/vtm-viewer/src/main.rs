@@ -3,19 +3,20 @@ use std::time::Instant;
 
 use bevy::color::palettes;
 use bevy::core_pipeline::Skybox;
-use bevy::core_pipeline::bloom::BloomSettings;
+use bevy::core_pipeline::bloom::Bloom;
+use bevy::core_pipeline::experimental::taa::{TemporalAntiAliasPlugin, TemporalAntiAliasing};
 use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 use bevy::pbr::{
-    ScreenSpaceAmbientOcclusionBundle, ScreenSpaceAmbientOcclusionQualityLevel,
-    ScreenSpaceAmbientOcclusionSettings, VolumetricFogSettings,
+    ScreenSpaceAmbientOcclusion, ScreenSpaceAmbientOcclusionQualityLevel, VolumetricFog,
 };
+use bevy::render::camera::TemporalJitter;
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, window::PresentMode};
 use bevy_egui::EguiPlugin;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use bevy_screen_diagnostics::{
-    ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
-};
+// use bevy_screen_diagnostics::{
+//     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
+// };
 use rayon::prelude::*;
 
 use voxelis::io::import::import_model_from_vtm;
@@ -95,8 +96,8 @@ fn setup(
 ) {
     let model = &mut model.0;
 
-    commands.spawn(DirectionalLightBundle {
-        directional_light: DirectionalLight {
+    commands.spawn((
+        DirectionalLight {
             color: Color::srgb(0.98, 0.95, 0.82),
             shadows_enabled: true,
             // illuminance: 3_000., //light_consts::lux::OVERCAST_DAY,
@@ -104,50 +105,50 @@ fn setup(
             // illuminance: light_consts::lux::AMBIENT_DAYLIGHT,
             ..default()
         },
-        transform: Transform::from_xyz(0.0, 0.0, 0.0)
-            .looking_at(Vec3::new(-0.15, -0.05, 0.25), Vec3::Y),
-        ..default()
-    });
+        Transform::from_xyz(0.0, 0.0, 0.0).looking_at(Vec3::new(-0.15, -0.05, 0.25), Vec3::Y),
+    ));
 
     commands
         .spawn((
-            Camera3dBundle {
-                camera: Camera {
-                    hdr: true,
-                    ..default()
-                },
-                // transform: Transform::from_xyz(0.0, 7., 14.0)
-                transform: Transform::from_xyz(2.2716377, 1.2876732, 3.9676127)
-                    // transform: Transform::from_xyz(-1.9573995, 1.9533201, -1.9587312)
-                    .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
+            Camera3d::default(),
+            Camera {
+                hdr: true,
                 ..default()
             },
+            Msaa::Off,
+            // transform: Transform::from_xyz(0.0, 7., 14.0)
+            Transform::from_xyz(2.2716377, 1.2876732, 3.9676127)
+                // transform: Transform::from_xyz(-1.9573995, 1.9533201, -1.9587312)
+                .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
+            TemporalJitter::default(),
             PanOrbitCamera::default(),
         ))
         .insert(Tonemapping::TonyMcMapface)
-        .insert(BloomSettings::default())
+        .insert(Bloom::default())
         .insert(Skybox {
             image: asset_server.load("environment_maps/pisa_specular_rgb9e5_zstd.ktx2"),
             brightness: 1000.0,
+            ..default()
         })
-        .insert(VolumetricFogSettings {
+        .insert(VolumetricFog {
             ambient_intensity: 0.1,
             ..default()
         })
-        .insert(ScreenSpaceAmbientOcclusionBundle::default())
-        .insert(ScreenSpaceAmbientOcclusionSettings {
+        .insert(ScreenSpaceAmbientOcclusion {
             quality_level: ScreenSpaceAmbientOcclusionQualityLevel::Ultra,
-        });
+            ..default()
+        })
+        .insert(TemporalAntiAliasing::default());
 
-    commands.spawn(
-        TextBundle::from_section("Press space to toggle wireframes", TextStyle::default())
-            .with_style(Style {
-                position_type: PositionType::Absolute,
-                top: Val::Px(12.0),
-                left: Val::Px(12.0),
-                ..default()
-            }),
-    );
+    commands.spawn((
+        Text::new("Press space to toggle wireframes"),
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(12.0),
+            left: Val::Px(12.0),
+            ..default()
+        },
+    ));
 
     let ground_material = materials.add(StandardMaterial {
         base_color: Color::from(palettes::css::GRAY),
@@ -204,12 +205,10 @@ fn setup(
         });
 
         commands
-            .spawn(PbrBundle {
-                mesh,
-                material: mesh_material.clone(),
-                // transform: Transform::from_translation(chunk_position.as_vec3()),
-                ..default()
-            })
+            .spawn((
+                Mesh3d(mesh),
+                MeshMaterial3d(mesh_material.clone()),
+            ))
             .insert(Chunk)
             // .insert(Name::new(
             //     format!(
@@ -278,12 +277,11 @@ fn setup(
             });
 
             commands
-                .spawn(PbrBundle {
-                    mesh,
-                    material: mesh_material.clone(),
-                    transform: Transform::from_translation(chunk_world_position),
-                    ..default()
-                })
+                .spawn((
+                    Mesh3d(mesh),
+                    MeshMaterial3d(mesh_material.clone()),
+                    Transform::from_translation(chunk_world_position),
+                ))
                 .insert(Chunk)
                 .insert(Name::new(
                     format!(
@@ -304,16 +302,17 @@ fn setup(
         println!("Storage stats: {:#?}", storage);
     }
 
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(
-            Plane3d::default()
-                .mesh()
-                .size(250.0, 250.0)
-                .subdivisions(32),
+    commands.spawn((
+        Mesh3d(
+            meshes.add(
+                Plane3d::default()
+                    .mesh()
+                    .size(250.0, 250.0)
+                    .subdivisions(32),
+            ),
         ),
-        material: ground_material,
-        ..default()
-    });
+        MeshMaterial3d(ground_material),
+    ));
 }
 
 fn toggle_wireframe(
@@ -344,6 +343,10 @@ fn main() {
     }
 
     App::new()
+        // .insert_resource(AmbientLight {
+        //     brightness: 1000.,
+        //     ..default()
+        // })
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
@@ -353,14 +356,15 @@ fn main() {
                 }),
                 ..default()
             }),
+            TemporalAntiAliasPlugin,
             EguiPlugin,
             GamePlugin,
             PanOrbitCameraPlugin,
             WireframePlugin,
             FrameTimeDiagnosticsPlugin,
-            ScreenDiagnosticsPlugin::default(),
-            ScreenFrameDiagnosticsPlugin,
-            ScreenEntityDiagnosticsPlugin,
+            // ScreenDiagnosticsPlugin::default(),
+            // ScreenFrameDiagnosticsPlugin,
+            // ScreenEntityDiagnosticsPlugin,
         ))
         .insert_resource(ClearColor(Color::Srgba(Srgba {
             red: 0.02,
@@ -372,7 +376,6 @@ fn main() {
         .insert_resource(ModelSettings {
             material_type: MaterialType::Checkered,
         })
-        .insert_resource(Msaa::Off)
         .run();
 
     println!("Exiting...");

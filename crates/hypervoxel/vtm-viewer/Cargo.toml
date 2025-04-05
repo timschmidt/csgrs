@@ -11,7 +11,7 @@ voxelis-bevy.workspace = true
 
 bevy_egui.workspace = true
 bevy_panorbit_camera.workspace = true
-bevy_screen_diagnostics.workspace = true
+# bevy_screen_diagnostics.workspace = true
 bevy.workspace = true
 egui_extras.workspace = true
 
