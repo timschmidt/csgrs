@@ -1,10 +1,9 @@
 use glam::IVec3;
 
 use crate::{
-    child_index_macro, child_index_macro_2,
+    Batch, BlockId, Depth, NodeStore, VoxelTrait, child_index_macro, child_index_macro_2,
     storage::node::{EMPTY_CHILD, MAX_ALLOWED_DEPTH, MAX_CHILDREN},
     utils::common::{get_at_depth, to_vec},
-    Batch, BlockId, Depth, NodeStore, VoxelTrait,
 };
 
 use super::{

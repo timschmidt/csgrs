@@ -4,8 +4,8 @@ use byteorder::{BigEndian, ReadBytesExt};
 use glam::IVec3;
 use md5::{Digest, Md5};
 
-use crate::io::consts::{VTM_MAGIC, VTM_VERSION};
 use crate::io::Flags;
+use crate::io::consts::{VTM_MAGIC, VTM_VERSION};
 use crate::model::Model;
 
 const MAX_LOD_LEVEL: usize = 5;

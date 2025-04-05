@@ -385,8 +385,8 @@ mod tests {
     use glam::IVec3;
 
     use crate::{
-        spatial::octree::svo::{octree_calculate_voxels_per_axis, OctreeNode},
         VoxelTrait,
+        spatial::octree::svo::{OctreeNode, octree_calculate_voxels_per_axis},
     };
 
     use super::{Octree, Voxel};
