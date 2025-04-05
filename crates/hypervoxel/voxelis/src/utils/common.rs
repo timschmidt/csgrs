@@ -1,6 +1,6 @@
 use glam::IVec3;
 
-use crate::{BlockId, Depth, NodeStore, VoxelTrait, storage::node::MAX_ALLOWED_DEPTH};
+use crate::{BlockId, Depth, NodeStore, VoxelTrait};
 
 #[inline(always)]
 pub const fn child_index(position: &IVec3, depth: &Depth) -> usize {
