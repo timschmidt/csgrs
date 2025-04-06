@@ -10,7 +10,7 @@ enum Class {
     Pi,              // Exactly pi
     Sqrt(Rational),  // Square root of some positive integer without an integer square root
     Exp(Rational),   // Rational is never zero
-    Ln(Rational),    // Rational > 1?
+    Ln(Rational),    // Rational > 1
     SinPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     Irrational,
 }
@@ -212,7 +212,7 @@ impl Real {
     /// This will be accurate for trivial Rationals and many but not all other cases.
     pub fn best_sign(&self) -> Sign {
         match &self.class {
-            One | Pi | Exp(_) | Sqrt(_) | SinPi(_) => self.rational.sign(),
+            One | Pi | Sqrt(_) | Exp(_) | Ln(_) | SinPi(_) => self.rational.sign(),
             _ => match (self.rational.sign(), self.computable.sign()) {
                 (Sign::NoSign, _) => Sign::NoSign,
                 (_, Sign::NoSign) => Sign::NoSign,
@@ -389,14 +389,27 @@ impl Real {
 
     /// The natural logarithm of this Real or Problem::NotANumber if this Real is negative.
     pub fn ln(self) -> Result<Real, Problem> {
+        use std::cmp::Ordering::*;
+
         if self.best_sign() != Sign::Plus {
             return Err(Problem::NotANumber);
         }
         match &self.class {
-            One => {
-                if self.rational == *rationals::ONE {
+            One => match self.rational.partial_cmp(rationals::ONE.deref()) {
+                Some(Less) => {
+                    let inv = self.rational.inverse();
+                    let new = Computable::rational(inv.clone());
+                    return Ok(Self {
+                        rational: Rational::new(-1),
+                        class: Ln(inv),
+                        computable: Computable::ln(new),
+                        signal: None,
+                    });
+                }
+                Some(Equal) => {
                     return Ok(Self::zero());
-                } else {
+                }
+                Some(Greater) => {
                     let new = Computable::rational(self.rational.clone());
                     return Ok(Self {
                         rational: Rational::one(),
@@ -405,7 +418,8 @@ impl Real {
                         signal: None,
                     });
                 }
-            }
+                _ => unreachable!(),
+            },
             Exp(exp) => {
                 if self.rational == *rationals::ONE {
                     return Ok(Self {
