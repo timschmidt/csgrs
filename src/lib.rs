@@ -48,9 +48,6 @@ pub mod flatten_slice;
 #[cfg(feature = "truetype-text")]
 pub mod truetype;
 
-#[cfg(feature = "image-io")]
-pub mod image;
-
 #[cfg(feature = "offset")]
 pub mod offset;
 

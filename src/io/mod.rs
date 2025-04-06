@@ -1,5 +1,12 @@
+//! This module contains various file format `CSG` parsers
+
 #[cfg(feature = "svg-io")]
 mod svg;
+
+#[cfg(feature = "image-io")]
+mod image;
+
+// todo move related tests to test.rs of this mod
 
 #[derive(Debug, thiserror::Error)]
 pub enum IoError {
