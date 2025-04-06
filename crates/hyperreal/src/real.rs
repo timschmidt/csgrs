@@ -54,7 +54,7 @@ mod rationals {
     pub(super) static HALF: LazyLock<Rational> =
         LazyLock::new(|| Rational::fraction(1, 2).unwrap());
     pub(super) static ONE: LazyLock<Rational> = LazyLock::new(|| Rational::new(1));
-    pub(super) static ZERO: LazyLock<Rational> = LazyLock::new(|| Rational::zero());
+    pub(super) static ZERO: LazyLock<Rational> = LazyLock::new(Rational::zero);
 }
 
 mod signed {
@@ -372,9 +372,9 @@ impl Real {
                 })
             }
             Ln(ln) => {
-                if self.rational == *rationals::ONE {
+                if let Some(int) = self.rational.to_big_integer() {
                     return Ok(Self {
-                        rational: ln.clone(),
+                        rational: ln.clone().powi(int)?,
                         class: One,
                         computable: Computable::one(),
                         signal: None,
