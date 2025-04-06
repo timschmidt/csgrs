@@ -711,7 +711,11 @@ impl PartialOrd for Rational {
         match self.sign.cmp(&other.sign) {
             Less => return Some(Less),
             Greater => return Some(Greater),
-            _ => (),
+            Equal => {
+                if self.sign == NoSign {
+                    return Some(Equal);
+                }
+            }
         }
         if self.denominator == other.denominator {
             match self.sign {
@@ -916,6 +920,24 @@ mod tests {
         assert!(Rational::new(5) > Rational::new(4));
         assert!(Rational::new(-10) < Rational::new(5));
         assert!(Rational::fraction(1, 4).unwrap() < Rational::fraction(1, 3).unwrap());
+    }
+
+    #[test]
+    fn same() {
+        use std::cmp::Ordering;
+
+        assert_eq!(
+            Rational::zero().partial_cmp(&Rational::zero()),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            Rational::one().partial_cmp(&Rational::one()),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            Rational::new(-10).partial_cmp(&Rational::new(-10)),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]
