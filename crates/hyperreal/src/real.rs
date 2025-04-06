@@ -1,17 +1,16 @@
 use crate::{Computable, Problem, Rational};
 use num::bigint::{BigInt, BigUint, Sign};
-use num::One;
 
 mod convert;
 mod test;
 
 #[derive(Clone, Debug)]
 enum Class {
-    One,            // Exactly one
-    Pi,             // Exactly pi
-    Sqrt(Rational), // Square root of some positive integer without an integer square root
-    Exp(Rational),
-    Ln(Rational),
+    One,             // Exactly one
+    Pi,              // Exactly pi
+    Sqrt(Rational),  // Square root of some positive integer without an integer square root
+    Exp(Rational),   // Rational is never zero
+    Ln(Rational),    // Rational > 1?
     SinPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     Irrational,
 }
@@ -40,7 +39,7 @@ impl Class {
     }
 
     fn make_exp(br: Rational) -> (Class, Computable) {
-        if br == Rational::zero() {
+        if br == *rationals::ZERO {
             (One, Computable::one())
         } else {
             (Exp(br.clone()), Computable::e(br))
@@ -55,12 +54,21 @@ mod rationals {
     pub(super) static HALF: LazyLock<Rational> =
         LazyLock::new(|| Rational::fraction(1, 2).unwrap());
     pub(super) static ONE: LazyLock<Rational> = LazyLock::new(|| Rational::new(1));
+    pub(super) static ZERO: LazyLock<Rational> = LazyLock::new(|| Rational::zero());
+}
+
+mod signed {
+    use num::{bigint::ToBigInt, BigInt};
+    use std::sync::LazyLock;
+
+    pub(super) static ONE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&1).unwrap());
 }
 
 mod unsigned {
     use num::{bigint::ToBigUint, BigUint};
     use std::sync::LazyLock;
 
+    pub(super) static ONE: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&1).unwrap());
     pub(super) static TWO: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&2).unwrap());
     pub(super) static THREE: LazyLock<BigUint> =
         LazyLock::new(|| ToBigUint::to_biguint(&3).unwrap());
@@ -179,11 +187,7 @@ fn curve(r: Rational) -> (bool, Rational) {
     if s > *rationals::HALF {
         s = Rational::one() - s;
     }
-    if whole.bit(0) {
-        (true, s)
-    } else {
-        (false, s)
-    }
+    (whole.bit(0), s)
 }
 
 impl Real {
@@ -303,7 +307,7 @@ impl Real {
             One => {
                 if self.rational.extract_square_will_succeed() {
                     let (square, rest) = self.rational.extract_square_reduced();
-                    if rest == Rational::one() {
+                    if rest == *rationals::ONE {
                         return Ok(Self {
                             rational: square,
                             class: One,
@@ -323,7 +327,7 @@ impl Real {
             Pi => {
                 if self.rational.extract_square_will_succeed() {
                     let (square, rest) = self.rational.clone().extract_square_reduced();
-                    if rest == Rational::one() {
+                    if rest == *rationals::ONE {
                         return Ok(Self {
                             rational: square,
                             class: Irrational,
@@ -336,7 +340,7 @@ impl Real {
             Exp(exp) => {
                 if self.rational.extract_square_will_succeed() {
                     let (square, rest) = self.rational.clone().extract_square_reduced();
-                    if rest == Rational::one() {
+                    if rest == *rationals::ONE {
                         let exp = exp.clone() / Rational::new(2);
                         return Ok(Self {
                             rational: square,
@@ -368,7 +372,7 @@ impl Real {
                 })
             }
             Ln(ln) => {
-                if self.rational == Rational::one() {
+                if self.rational == *rationals::ONE {
                     return Ok(Self {
                         rational: ln.clone(),
                         class: One,
@@ -390,7 +394,7 @@ impl Real {
         }
         match &self.class {
             One => {
-                if self.rational == Rational::one() {
+                if self.rational == *rationals::ONE {
                     return Ok(Self::zero());
                 } else {
                     let new = Computable::rational(self.rational.clone());
@@ -403,7 +407,7 @@ impl Real {
                 }
             }
             Exp(exp) => {
-                if self.rational == Rational::one() {
+                if self.rational == *rationals::ONE {
                     return Ok(Self {
                         rational: exp.clone(),
                         class: One,
@@ -526,7 +530,7 @@ impl Real {
     }
 
     fn recursive_powi(base: &Real, exp: &BigUint) -> Self {
-        if exp == &BigUint::one() {
+        if exp == unsigned::ONE.deref() {
             return base.clone();
         }
         let mut result = Self::new(Rational::one());
@@ -600,7 +604,7 @@ impl Real {
 
     /// Raise this Real to some integer exponent.
     pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
-        if exp == BigInt::one() {
+        if exp == *signed::ONE {
             return Ok(self);
         }
         if exp.sign() == Sign::NoSign {
@@ -698,7 +702,7 @@ impl Real {
     pub fn pow(self, exponent: Self) -> Result<Self, Problem> {
         if let Exp(ref n) = self.class {
             if n == rationals::ONE.deref() {
-                if self.rational == *rationals::ONE.deref() {
+                if self.rational == *rationals::ONE {
                     return exponent.exp();
                 } else {
                     let left = Real::new(self.rational).pow(exponent.clone())?;
@@ -863,7 +867,7 @@ impl Real {
             }
         } else {
             let product = x * y;
-            if product == Rational::zero() {
+            if product == *rationals::ZERO {
                 return Self {
                     rational: product,
                     class: One,
@@ -872,7 +876,7 @@ impl Real {
                 };
             }
             let (a, b) = product.extract_square_reduced();
-            if b == Rational::one() {
+            if b == *rationals::ONE {
                 return Self {
                     rational: a,
                     class: One,
