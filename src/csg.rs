@@ -43,6 +43,12 @@ pub enum CSGError {
     /// `rotate_extrude` requires at least 2 segments
     #[error("rotate_extrude requires at least 2 segments")]
     LessThen2ExtrudeSegments,
+    /// An error from spade triangulation
+    #[cfg(feature = "delaunay")]
+    #[error(transparent)]
+    TriangulationError(#[from] geo::triangulate_spade::TriangulationError),
+    #[error(transparent)]
+    TriMeshError(#[from] TriMeshBuilderError),
 }
 
 /// The main CSG solid structure. Contains a list of 3D polygons, 2D polylines, and some metadata.
@@ -997,17 +1003,20 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     }
 
     /// Triangulate each polygon in the CSG returning a CSG containing triangles
-    pub fn tessellate(&self) -> CSG<S> {
+    ///
+    /// ## Errors
+    /// If any 3d polygon has fewer than 3 vertices
+    pub fn tessellate(&self) -> Result<CSG<S>, CSGError> {
         let mut triangles = Vec::new();
 
         for poly in &self.polygons {
-            let tris = poly.tessellate();
+            let tris = poly.tessellate()?;
             for triangle in tris {
                 triangles.push(Polygon::from_tri(&triangle, poly.metadata.clone()));
             }
         }
 
-        CSG::from_polygons(&triangles)
+        Ok(CSG::from_polygons(&triangles))
     }
 
     /// Convert the polygons in this CSG to a Parry TriMesh.

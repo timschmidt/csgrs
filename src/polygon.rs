@@ -2,7 +2,7 @@ use crate::csg::CSGError;
 use crate::float_types::{PI, Real};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
-use geo::{LineString, Polygon as GeoPolygon, coord};
+use geo::{LineString, Polygon as GeoPolygon, Coord};
 use nalgebra::{Point2, Point3, Vector3};
 
 /// A polygon, defined by a list of vertices and a plane.
@@ -65,10 +65,18 @@ where S: Clone + Send + Sync {
     }
 
     /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
-    pub fn tessellate(&self) -> Vec<[Vertex; 3]> {
+    ///
+    /// ## Errors
+    /// If polygon has fewer than 3 vertices
+    #[cfg_attr(feature = "delaunay", doc = " or spade returns an error")]
+    pub fn tessellate(&self) -> Result<Vec<[Vertex; 3]>, CSGError> {
         // If polygon has fewer than 3 vertices, nothing to tessellate
         if self.vertices.len() < 3 {
-            return Vec::new();
+            return Err(CSGError::FieldLessThen { name: "vertices.len()", min: 3 });
+        }
+        // short cut
+        if self.vertices.len() == 3 {
+            return Ok(vec![[self.vertices[0].clone(), self.vertices[1].clone(), self.vertices[2].clone()]]);
         }
 
         //println!("{:#?}",  self.vertices);
@@ -83,7 +91,7 @@ where S: Clone + Send + Sync {
             let offset = vert.pos.coords - origin_3d.coords;
             let x = offset.dot(&u);
             let y = offset.dot(&v);
-            all_vertices_2d.push(coord! {x: x, y: y});
+            all_vertices_2d.push(Coord { x, y });
         }
 
         #[cfg(feature = "earcut")]
@@ -110,7 +118,7 @@ where S: Clone + Send + Sync {
                 }
                 triangles.push(tri_vertices);
             }
-            triangles
+            Ok(triangles)
         }
 
         #[cfg(feature = "delaunay")]
@@ -121,9 +129,7 @@ where S: Clone + Send + Sync {
                 // no holes if your polygon is always simple
                 Vec::new(),
             );
-            let Ok(tris) = polygon_2d.constrained_triangulation(Default::default()) else {
-                return Vec::new(); // or handle however you wish
-            };
+            let tris = polygon_2d.constrained_triangulation(Default::default())?;
 
             let mut final_triangles = Vec::with_capacity(tris.len());
             for tri2d in tris {
@@ -140,15 +146,15 @@ where S: Clone + Send + Sync {
                     Vertex::new(Point3::from(pos_c_3d), normal_3d),
                 ]);
             }
-            final_triangles
+            Ok(final_triangles)
         }
     }
 
     /// Subdivide this polygon into smaller triangles.
     /// Returns a list of new triangles (each is a [Vertex; 3]).
-    pub fn subdivide_triangles(&self, subdivisions: u32) -> Vec<[Vertex; 3]> {
+    pub fn subdivide_triangles(&self, subdivisions: u32) -> Result<Vec<[Vertex; 3]>, CSGError> {
         // 1) Triangulate the polygon as it is.
-        let base_tris = self.tessellate();
+        let base_tris = self.tessellate()?;
 
         // 2) For each triangle, subdivide 'subdivisions' times.
         let mut result = Vec::new();
@@ -166,7 +172,7 @@ where S: Clone + Send + Sync {
             result.extend(queue);
         }
 
-        result
+        Ok(result)
     }
 
     /// return a normal calculated from all polygon vertices
@@ -252,11 +258,11 @@ where S: Clone + Send + Sync {
     }
 }
 
-/// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v` so that
-/// {u, v, n} forms an orthonormal basis. `n` is assumed non‐zero.
-pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real>) {
+/// Given a normal vector, build two perpendicular unit vectors `u` and `v` so that
+/// {u, v, n} forms an orthonormal basis. `normal` is assumed non‐zero.
+fn build_orthonormal_basis(normal: Vector3<Real>) -> (Vector3<Real>, Vector3<Real>) {
     // Normalize the given normal
-    let n = n.normalize();
+    let n = normal.normalize();
 
     // Pick a vector that is not parallel to `n`. For instance, pick the axis
     // which has the smallest absolute component in `n`, and cross from there.

@@ -1,5 +1,5 @@
 use crate::bsp::Node;
-use crate::csg::CSG;
+use crate::csg::{CSGError, CSG};
 use crate::float_types::{EPSILON, Real};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
@@ -21,10 +21,13 @@ where S: Clone + Send + Sync {
     /// - Otherwise, all `polygons` are tessellated, projected into XY, and unioned.
     /// - We also union any existing 2D geometry (`self.geometry`).
     /// - The output has `.polygons` empty and `.geometry` containing the final 2D shape.
-    pub fn flatten(self) -> CSG<S> {
+    ///
+    /// ## Errors
+    /// If any 3d polygon has less then three vertices
+    pub fn flatten(self) -> Result<CSG<S>, CSGError> {
         // 1) If there are no 3D polygons, this is already purely 2D => return as-is
         if self.polygons.is_empty() {
-            return self;
+            return Ok(self);
         }
 
         // 2) Convert all 3D polygons into a collection of 2D polygons
@@ -32,7 +35,7 @@ where S: Clone + Send + Sync {
 
         for poly in &self.polygons {
             // Tessellate this polygon into triangles
-            let triangles = poly.tessellate();
+            let triangles = poly.tessellate()?;
             // Each triangle has 3 vertices [v0, v1, v2].
             // Project them onto XY => build a 2D polygon (triangle).
             for tri in triangles {
@@ -74,11 +77,11 @@ where S: Clone + Send + Sync {
         new_gc.0.push(Geometry::MultiPolygon(oriented));
 
         // 6) Return a purely 2D CSG: polygons empty, geometry has the final shape
-        CSG {
+        Ok(CSG {
             polygons: Vec::new(),
             geometry: new_gc,
             metadata: self.metadata.clone(),
-        }
+        })
     }
 
     /// Slice this solid by a given `plane`, returning a new `CSG` whose polygons
@@ -178,10 +181,12 @@ where S: Clone + Send + Sync {
     ///
     /// We should also check for zero-area triangles
     ///
-    /// # Returns
-    ///
+    /// ## Returns
     /// - `true`: If the CSG object is manifold.
     /// - `false`: If the CSG object is not manifold.
+    ///
+    /// ## Panics
+    /// Panics if the shape can't be triangulated
     pub fn is_manifold(&self) -> bool {
         fn approx_lt(a: &Point3<Real>, b: &Point3<Real>) -> bool {
             // Compare x
@@ -203,7 +208,7 @@ where S: Clone + Send + Sync {
         }
 
         // Triangulate the whole shape once
-        let tri_csg = self.tessellate();
+        let tri_csg = self.tessellate().unwrap();
         let mut edge_counts: HashMap<(String, String), u32> = HashMap::new();
 
         for poly in &tri_csg.polygons {
