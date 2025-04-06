@@ -38,6 +38,11 @@ impl Class {
         true
     }
 
+    // Any logarithmn can be added
+    fn is_ln(&self) -> bool {
+        matches!(self, Ln(_))
+    }
+
     fn make_exp(br: Rational) -> (Class, Computable) {
         if br == *rationals::ZERO {
             (One, Computable::one())
@@ -387,39 +392,43 @@ impl Real {
         Ok(self.make_computable(Computable::exp))
     }
 
-    /// The natural logarithm of this Real or Problem::NotANumber if this Real is negative.
-    pub fn ln(self) -> Result<Real, Problem> {
+    // Ensure the resulting Real uses r > 1 for Ln(r)
+    // this is convenient elsewhere and makes commonality more frequent
+    fn ln_rational(r: Rational) -> Self {
         use std::cmp::Ordering::*;
 
+        match r.partial_cmp(rationals::ONE.deref()) {
+            Some(Less) => {
+                let inv = r.inverse();
+                let new = Computable::rational(inv.clone());
+                Self {
+                    rational: Rational::new(-1),
+                    class: Ln(inv),
+                    computable: Computable::ln(new),
+                    signal: None,
+                }
+            }
+            Some(Equal) => Self::zero(),
+            Some(Greater) => {
+                let new = Computable::rational(r.clone());
+                Self {
+                    rational: Rational::one(),
+                    class: Ln(r),
+                    computable: Computable::ln(new),
+                    signal: None,
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    /// The natural logarithm of this Real or Problem::NotANumber if this Real is negative.
+    pub fn ln(self) -> Result<Real, Problem> {
         if self.best_sign() != Sign::Plus {
             return Err(Problem::NotANumber);
         }
         match &self.class {
-            One => match self.rational.partial_cmp(rationals::ONE.deref()) {
-                Some(Less) => {
-                    let inv = self.rational.inverse();
-                    let new = Computable::rational(inv.clone());
-                    return Ok(Self {
-                        rational: Rational::new(-1),
-                        class: Ln(inv),
-                        computable: Computable::ln(new),
-                        signal: None,
-                    });
-                }
-                Some(Equal) => {
-                    return Ok(Self::zero());
-                }
-                Some(Greater) => {
-                    let new = Computable::rational(self.rational.clone());
-                    return Ok(Self {
-                        rational: Rational::one(),
-                        class: Ln(self.rational),
-                        computable: Computable::ln(new),
-                        signal: None,
-                    });
-                }
-                _ => unreachable!(),
-            },
+            One => return Ok(Self::ln_rational(self.rational)),
             Exp(exp) => {
                 if self.rational == *rationals::ONE {
                     return Ok(Self {
@@ -821,6 +830,26 @@ impl std::str::FromStr for Real {
 
 use std::ops::*;
 
+impl Real {
+    fn simple_log_sum(
+        a: Rational,
+        b: Rational,
+        c: Rational,
+        d: Rational,
+    ) -> Result<Rational, Problem> {
+        let Some(a) = a.to_big_integer() else {
+            return Err(Problem::NotAnInteger);
+        };
+        let Some(c) = c.to_big_integer() else {
+            return Err(Problem::NotAnInteger);
+        };
+        /* TODO: Should not attempt to simplify once a, b, c, d are too big */
+        let left = b.powi(a)?;
+        let right = d.powi(c)?;
+        Ok(left * right)
+    }
+}
+
 impl Add for Real {
     type Output = Self;
 
@@ -838,6 +867,18 @@ impl Add for Real {
         }
         if other.definitely_zero() {
             return self;
+        }
+        if self.class.is_ln() && other.class.is_ln() {
+            let Ln(b) = self.class.clone() else {
+                unreachable!()
+            };
+            let Ln(d) = other.class.clone() else {
+                unreachable!()
+            };
+            if let Ok(r) = Self::simple_log_sum(self.rational.clone(), b, other.rational.clone(), d)
+            {
+                return Self::ln_rational(r);
+            }
         }
         let left = self.fold();
         let right = other.fold();
