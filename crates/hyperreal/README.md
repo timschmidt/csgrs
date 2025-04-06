@@ -46,6 +46,9 @@ I have chosen not to provide this capability for Computable, this might be revis
 
 `BoundedRational::to_big_integer` has a different name because in Rust `as` signifies that this conversion is cheap
 
+Many APIs use Option<T> where the analogous Java relies on nullability, others use Result<Real, Problem> to reflect the possibility of
+unrecoverable errors during either parsing or approximation of results.
+
 ## Performance
 
 No attempt has been made to measure the current performance of this Rust, compare it against the Java, or against similar code. Although the

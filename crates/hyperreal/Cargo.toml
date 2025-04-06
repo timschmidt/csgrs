@@ -3,8 +3,8 @@ name = "realistic"
 description = "Towards an API for the Real Numbers"
 license = "Apache-2.0"
 repository = "https://github.com/tialaramex/realistic/"
-version = "0.7.1"
-edition = "2021"
+version = "0.7.2"
+edition = "2024"
 
 [dependencies]
 num = { version = "0.4.3", features = ["num-bigint"] }
