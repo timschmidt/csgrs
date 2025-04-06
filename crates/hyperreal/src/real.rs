@@ -77,7 +77,7 @@ pub type Signal = Arc<AtomicBool>;
 /// (More) Real numbers
 ///
 /// This type is functionally the product of a [`Computable`] number
-/// and a [`Rational`]
+/// and a [`Rational`].
 ///
 /// # Examples
 ///
@@ -116,15 +116,15 @@ pub struct Real {
 }
 
 impl Real {
-    /// Provide an atomic flag to signal early abort of calculations
-    /// The provided flag can be used e.g. from another execution thread
-    /// Aborted calculations may have incorrect results
+    /// Provide an atomic flag to signal early abort of calculations.
+    /// The provided flag can be used e.g. from another execution thread.
+    /// Aborted calculations may have incorrect results.
     pub fn abort(&mut self, s: Signal) {
         self.signal = Some(s.clone());
         self.computable.abort(s);
     }
 
-    /// Zero, the additive identity
+    /// Zero, the additive identity.
     pub fn zero() -> Real {
         Self {
             rational: Rational::zero(),
@@ -134,7 +134,7 @@ impl Real {
         }
     }
 
-    /// The specified [`Rational`] as a Real
+    /// The specified [`Rational`] as a Real.
     pub fn new(rational: Rational) -> Real {
         Self {
             rational,
@@ -144,7 +144,7 @@ impl Real {
         }
     }
 
-    /// π, the ratio of a circle's circumference to its diameter
+    /// π, the ratio of a circle's circumference to its diameter.
     pub fn pi() -> Real {
         Self {
             rational: Rational::one(),
@@ -154,7 +154,7 @@ impl Real {
         }
     }
 
-    /// e, Euler's number and the base of the natural logarithm function
+    /// e, Euler's number and the base of the natural logarithm function.
     pub fn e() -> Real {
         let one = Rational::one();
         Self {
@@ -204,8 +204,8 @@ impl Real {
         /* ... TODO add more cases which definitely aren't equal */
     }
 
-    /// Our best attempt to discern the [`Sign`] of this Real
-    /// this will be accurate for trivial Rationals and some but not all other cases
+    /// Our best attempt to discern the [`Sign`] of this Real.
+    /// This will be accurate for trivial Rationals and many but not all other cases.
     pub fn best_sign(&self) -> Sign {
         match &self.class {
             One | Pi | Exp(_) | Sqrt(_) | SinPi(_) => self.rational.sign(),
@@ -220,6 +220,9 @@ impl Real {
         }
     }
 
+    // Given a function which makes a [`Computable`] from another
+    // Computable this method
+    // returns a Real of Irrational class with that value.
     fn make_computable<F>(self, convert: F) -> Self
     where
         F: FnOnce(Computable) -> Computable,
@@ -235,7 +238,7 @@ impl Real {
     }
 
     /// The inverse of this Real, or a [`Problem`] if that's impossible,
-    /// in particular Problem::DivideByZero if this real is zero
+    /// in particular Problem::DivideByZero if this real is zero.
     ///
     /// Example
     /// ```
@@ -288,7 +291,7 @@ impl Real {
     }
 
     /// The square root of this Real, or a [`Problem`] if that's impossible,
-    /// in particular Problem::SqrtNegative if this Real is negative
+    /// in particular Problem::SqrtNegative if this Real is negative.
     pub fn sqrt(self) -> Result<Real, Problem> {
         if self.best_sign() == Sign::Minus {
             return Err(Problem::SqrtNegative);
@@ -350,7 +353,7 @@ impl Real {
         Ok(self.make_computable(Computable::sqrt))
     }
 
-    /// Apply the exponential function to this Real parameter
+    /// Apply the exponential function to this Real parameter.
     pub fn exp(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
             return Ok(Self::new(Rational::one()));
@@ -380,7 +383,7 @@ impl Real {
         Ok(self.make_computable(Computable::exp))
     }
 
-    /// The natural logarithm of this Real or Problem::NotANumber if this Real is negative
+    /// The natural logarithm of this Real or Problem::NotANumber if this Real is negative.
     pub fn ln(self) -> Result<Real, Problem> {
         if self.best_sign() != Sign::Plus {
             return Err(Problem::NotANumber);
@@ -415,7 +418,7 @@ impl Real {
         Ok(self.make_computable(Computable::ln))
     }
 
-    /// The sine of this Real
+    /// The sine of this Real.
     pub fn sin(self) -> Real {
         if self.definitely_zero() {
             return Self::zero();
@@ -492,7 +495,7 @@ impl Real {
         self.make_computable(Computable::sin)
     }
 
-    /// The cosine of this Real
+    /// The cosine of this Real.
     pub fn cos(self) -> Real {
         if self.definitely_zero() {
             return Self::new(Rational::one());
@@ -595,7 +598,7 @@ impl Real {
         }
     }
 
-    /// Raise this Real to some integer exponent
+    /// Raise this Real to some integer exponent.
     pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
         if exp == BigInt::one() {
             return Ok(self);
@@ -655,7 +658,7 @@ impl Real {
         self.exp_ln_powi(exp)
     }
 
-    /// Fractional (Non-integer) rational exponent
+    /// Fractional (Non-integer) rational exponent.
     fn pow_fraction(self, exponent: Rational) -> Result<Self, Problem> {
         if exponent.denominator() == unsigned::TWO.deref() {
             let n = exponent.shifted_big_integer(1);
@@ -665,7 +668,7 @@ impl Real {
         }
     }
 
-    /// Arbitrary, possibly irrational exponent
+    /// Arbitrary, possibly irrational exponent.
     /// NB: Assumed not to be integer
     fn pow_arb(self, exponent: Self) -> Result<Self, Problem> {
         match self.best_sign() {
@@ -691,7 +694,7 @@ impl Real {
         }
     }
 
-    /// Raise this Real to some Real exponent
+    /// Raise this Real to some Real exponent.
     pub fn pow(self, exponent: Self) -> Result<Self, Problem> {
         if let Exp(ref n) = self.class {
             if n == rationals::ONE.deref() {
@@ -740,8 +743,8 @@ impl Real {
 use core::fmt;
 
 impl Real {
-    /// Format this Real as a decimal rather than rational
-    /// Scientific notation will be used if the value is very large or small
+    /// Format this Real as a decimal rather than rational.
+    /// Scientific notation will be used if the value is very large or small.
     pub fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let folded = self.clone().fold();
         match folded.iter_msd_stop(-20) {
@@ -968,7 +971,7 @@ impl Div for Real {
 
 // Best efforts only, definitely not adequate for Eq
 // Requirements: PartialEq should be transitive and symmetric
-// however it needn't be complete or reflexive
+// however it needn't be complete or reflexive.
 impl PartialEq for Real {
     fn eq(&self, other: &Self) -> bool {
         self.rational == other.rational && self.class == other.class

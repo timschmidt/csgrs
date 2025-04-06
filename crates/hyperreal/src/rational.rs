@@ -61,7 +61,7 @@ static FIVE: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&5).unwr
 static TEN: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&10).unwrap());
 
 impl Rational {
-    /// Zero, the additive identity
+    /// Zero, the additive identity.
     pub fn zero() -> Self {
         Self {
             sign: NoSign,
@@ -70,7 +70,7 @@ impl Rational {
         }
     }
 
-    /// One, the multiplicative identity
+    /// One, the multiplicative identity.
     pub fn one() -> Self {
         Self {
             sign: Plus,
@@ -79,18 +79,18 @@ impl Rational {
         }
     }
 
-    /// The non-negative Rational corresponding to the provided [`i64`]
+    /// The non-negative Rational corresponding to the provided [`i64`].
     pub fn new(n: i64) -> Self {
         Self::from_bigint(ToBigInt::to_bigint(&n).unwrap())
     }
 
-    /// The Rational corresponding to the provided [`BigInt`]
+    /// The Rational corresponding to the provided [`BigInt`].
     pub fn from_bigint(n: BigInt) -> Self {
         Self::from_bigint_fraction(n, BigUint::one()).unwrap()
     }
 
     /// The non-negative Rational corresponding to the provided [`i64`]
-    /// numerator and [`u64`] denominator as a fraction
+    /// numerator and [`u64`] denominator as a fraction.
     pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
         let numerator = ToBigInt::to_bigint(&n).unwrap();
         let denominator = ToBigUint::to_biguint(&d).unwrap();
@@ -98,7 +98,7 @@ impl Rational {
     }
 
     /// The Rational corresponding to the provided [`BigInt`]
-    /// numerator and [`BigUint`] denominator as a fraction
+    /// numerator and [`BigUint`] denominator as a fraction.
     pub fn from_bigint_fraction(n: BigInt, denominator: BigUint) -> Result<Self, Problem> {
         if denominator == BigUint::ZERO {
             return Err(Problem::DivideByZero);
@@ -137,7 +137,7 @@ impl Rational {
         }
     }
 
-    /// The inverse of this Rational
+    /// The inverse of this Rational.
     ///
     /// # Example
     ///
@@ -156,7 +156,7 @@ impl Rational {
         }
     }
 
-    /// Checks if the value is an integer
+    /// Checks if the value is an integer.
     ///
     /// # Example
     ///
@@ -170,7 +170,7 @@ impl Rational {
         self.denominator == *ONE.deref()
     }
 
-    /// The integer part of this Rational
+    /// The integer part of this Rational.
     ///
     /// Non integer rationals will thus be truncated towards zero
     ///
@@ -204,7 +204,7 @@ impl Rational {
         }
     }
 
-    /// The fractional part of this Rational
+    /// The fractional part of this Rational.
     ///
     /// If the rational was negative, this fraction will also be negative
     ///
@@ -241,7 +241,7 @@ impl Rational {
 
     /// Is this Rational better understood as a fraction?
     ///
-    /// If a decimal expansion of this fraction would never end this is true
+    /// If a decimal expansion of this fraction would never end this is true.
     ///
     /// # Example
     ///
@@ -265,7 +265,7 @@ impl Rational {
     }
 
     /// Left shift the value by any amount and return a [`BigInt`]
-    /// of the truncated integer value
+    /// of the truncated integer value.
     ///
     /// # Example
     ///
@@ -281,7 +281,7 @@ impl Rational {
         BigInt::from_biguint(self.sign, whole)
     }
 
-    /// Either the corresponding [`BigInt`] or None if this value is not an integer
+    /// Either the corresponding [`BigInt`] or None if this value is not an integer.
     pub fn to_big_integer(&self) -> Option<BigInt> {
         let whole = &self.numerator / &self.denominator;
         let round = &whole * &self.denominator;
@@ -294,7 +294,7 @@ impl Rational {
         }
     }
 
-    /// The [`Sign`] of this value
+    /// The [`Sign`] of this value.
     pub fn sign(&self) -> Sign {
         self.sign
     }
@@ -395,6 +395,11 @@ impl Rational {
         (root, rest)
     }
 
+    /// For a value n, the result of this function is a pair (a, b)
+    /// such that a * a * b = n.
+    ///
+    /// Where b is zero, a is the exact square root of n
+    /// Otherwise, b is a residual for which no exact rational square root exists.
     pub fn extract_square_reduced(self) -> (Self, Self) {
         if self.sign == NoSign {
             return (Self::zero(), Self::zero());
@@ -415,6 +420,8 @@ impl Rational {
         )
     }
 
+    /// For very big rationals, the algorithm used for calculating a square
+    /// root is not viable, in this case the predicate is false.
     pub fn extract_square_will_succeed(&self) -> bool {
         self.numerator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
             && self.denominator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
@@ -436,7 +443,7 @@ impl Rational {
         result
     }
 
-    /// Integer exponeniation
+    /// Integer exponeniation. Raise this Rational to an integer exponent.
     pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
         const TOO_MANY_BITS: u64 = 1000;
         // Arguably wrong if self is also zero

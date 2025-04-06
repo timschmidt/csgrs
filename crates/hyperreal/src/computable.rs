@@ -27,7 +27,7 @@ fn should_stop(signal: &Option<Signal>) -> bool {
     signal.as_ref().is_some_and(|s| s.load(Relaxed))
 }
 
-/// Computable approximation of a Real number
+/// Computable approximation of a Real number.
 #[derive(Clone, Debug)]
 pub struct Computable {
     internal: Box<Approximation>,
@@ -85,7 +85,7 @@ mod unsigned {
 }
 
 impl Computable {
-    /// Exactly one
+    /// Exactly one.
     pub fn one() -> Computable {
         Self {
             internal: Box::new(Approximation::Int(BigInt::one())),
@@ -94,7 +94,7 @@ impl Computable {
         }
     }
 
-    /// Approximate π, the ratio of a circle's circumference to its diameter
+    /// Approximate π, the ratio of a circle's circumference to its diameter.
     pub fn pi() -> Computable {
         let atan5 = Self::prescaled_atan(signed::FIVE.clone());
         let atan_239 = Self::prescaled_atan(signed::TWO_THREE_NINE.clone());
@@ -106,7 +106,7 @@ impl Computable {
         Self::multiply(four, sum)
     }
 
-    /// Any Rational
+    /// Any Rational.
     pub fn rational(r: Rational) -> Computable {
         Self {
             internal: Box::new(Approximation::Ratio(r)),
@@ -122,7 +122,7 @@ impl Computable {
         Self::exp(rational)
     }
 
-    /// Natural Exponential function, raise Euler's Number to this number
+    /// Natural Exponential function, raise Euler's Number to this number.
     pub fn exp(self) -> Computable {
         let low_prec: Precision = -10;
         let rough_appr: BigInt = self.approx(low_prec);
@@ -141,7 +141,7 @@ impl Computable {
         }
     }
 
-    /// Calculate nearby multiple of pi
+    /// Calculate nearby multiple of pi.
     fn pi_multiple(&self) -> BigInt {
         let mut rough_appr = self.approx(-1);
         let mut multiple = rough_appr / signed::SIX.deref();
@@ -160,7 +160,7 @@ impl Computable {
         }
     }
 
-    /// Cosine of this number
+    /// Cosine of this number.
     pub fn cos(self) -> Computable {
         let rough_appr = self.approx(-1);
         let abs_rough_appr = rough_appr.magnitude();
@@ -189,7 +189,7 @@ impl Computable {
         }
     }
 
-    /// Sine of this number
+    /// Sine of this number.
     pub fn sin(self) -> Computable {
         Self::pi().shift_right(1).add(self.negate()).cos()
     }
@@ -208,7 +208,7 @@ impl Computable {
         ln2_1.add(neg_ln2_2).add(ln2_3)
     }
 
-    /// Natural logarithm of this number
+    /// Natural logarithm of this number.
     pub fn ln(self) -> Computable {
         // Sixteenths, ie 8 == 0.5, 24 == 1.5
         let low_ln_limit = signed::EIGHT.deref();
@@ -257,7 +257,7 @@ impl Computable {
         Self::sqrt(rational)
     }
 
-    /// Square root of this number
+    /// Square root of this number.
     pub fn sqrt(self) -> Computable {
         Self {
             internal: Box::new(Approximation::Sqrt(self)),
@@ -274,7 +274,7 @@ impl Computable {
         }
     }
 
-    /// Negate this number
+    /// Negate this number.
     pub fn negate(self) -> Computable {
         Self {
             internal: Box::new(Approximation::Negate(self)),
@@ -283,7 +283,7 @@ impl Computable {
         }
     }
 
-    /// Multiplicative inverse of this number
+    /// Multiplicative inverse of this number.
     pub fn inverse(self) -> Computable {
         Self {
             internal: Box::new(Approximation::Inverse(self)),
@@ -308,7 +308,7 @@ impl Computable {
         }
     }
 
-    /// Square of this number
+    /// Square of this number.
     pub fn square(self) -> Self {
         Self {
             internal: Box::new(Approximation::Square(self)),
@@ -317,7 +317,7 @@ impl Computable {
         }
     }
 
-    /// Multiply this number by some other number
+    /// Multiply this number by some other number.
     pub fn multiply(self, other: Computable) -> Computable {
         Self {
             internal: Box::new(Approximation::Multiply(self, other)),
@@ -326,7 +326,7 @@ impl Computable {
         }
     }
 
-    /// Add some other number to this number
+    /// Add some other number to this number.
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, other: Computable) -> Computable {
         Self {
@@ -351,7 +351,7 @@ impl Computable {
     /// An approximation of this Computable scaled to a specific precision
     ///
     /// The approximation is scaled (thus, a larger value for more negative p)
-    /// and should be accurate to within +/- 1 at the scale provided
+    /// and should be accurate to within +/- 1 at the scale provided.
     ///
     /// Example: 0.875 is between 0 and 1 with zero bits of extra precision
     /// ```
@@ -376,7 +376,7 @@ impl Computable {
         self.approx_signal(&self.signal, p)
     }
 
-    /// Like `approx` but specifying an atomic stop signal
+    /// Like `approx` but specifying an atomic abort/ stop signal.
     pub fn approx_signal(&self, signal: &Option<Signal>, p: Precision) -> BigInt {
         // Check precision is OK?
 
@@ -415,7 +415,7 @@ impl Computable {
         }
     }
 
-    /// Do not call this function if `self` and `other` may be the same
+    /// Do not call this function if `self` and `other` may be the same.
     pub fn compare_to(&self, other: &Self) -> Ordering {
         let mut tolerance = -20;
         while tolerance > Precision::MIN {
@@ -428,7 +428,7 @@ impl Computable {
         panic!("Apparently called Computable::compare_to on equal values");
     }
 
-    /// Compare two values to a specified tolerance (more negative numbers are more precise)
+    /// Compare two values to a specified tolerance (more negative numbers are more precise).
     pub fn compare_absolute(&self, other: &Self, tolerance: Precision) -> Ordering {
         let needed = tolerance - 1;
         let this = self.approx(needed);
@@ -445,7 +445,7 @@ impl Computable {
     }
 
     /// Most Significant Digit (Bit) ?
-    /// May panic or give incorrect answers if not yet discovered
+    /// May panic or give incorrect answers if not yet discovered.
     fn known_msd(&self) -> Precision {
         if let Some((prec, appr)) = self.cached() {
             let length = appr.magnitude().bits() as Precision;
@@ -455,7 +455,7 @@ impl Computable {
         }
     }
 
-    /// MSD - or perhaps None if as yet undiscovered and less than p
+    /// MSD - or perhaps None if as yet undiscovered and less than p.
     fn msd(&self, p: Precision) -> Option<Precision> {
         let cache = self.cached();
         let mut try_once = false;
@@ -483,7 +483,8 @@ impl Computable {
 
     const STOP_PRECISION: Precision = Precision::MIN / 3;
 
-    /// MSD iteratively: 0, -16, -40, -76 etc. or p if that's lower
+    /// MSD iteratively: 0, -16, -40, -76 etc. or p if that's lower.
+    /// You can choose p to avoid unnecessary work.
     pub(super) fn iter_msd_stop(&self, p: Precision) -> Option<Precision> {
         let mut prec = 0;
 
@@ -503,7 +504,7 @@ impl Computable {
         self.msd(p)
     }
 
-    /// MSD but iteratively without a guess as to precision
+    /// MSD but iteratively without a guess as to precision.
     pub(super) fn iter_msd(&self) -> Precision {
         self.iter_msd_stop(Self::STOP_PRECISION)
             .unwrap_or(Self::STOP_PRECISION)
@@ -518,7 +519,7 @@ fn shift(n: BigInt, p: Precision) -> BigInt {
     }
 }
 
-/// Scale n by p bits, rounding if this makes n smaller
+/// Scale n by p bits, rounding if this makes n smaller.
 /// e.g. scale(10, 2) == 40
 ///      scale(10, -2) == 3
 fn scale(n: BigInt, p: Precision) -> BigInt {
