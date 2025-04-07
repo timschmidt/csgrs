@@ -696,13 +696,12 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
         let path = path_index << 3;
 
         let mut current_node_id = initial_node_id;
-        let mut current_depth = initial_depth;
 
         #[cfg(feature = "debug_trace_ref_counts")]
         println!("  path: 0x{:08X} {:09b}", path, path);
 
         let mut leaf_node_id = BlockId::EMPTY;
-        while current_depth < max_depth - 1 {
+        for current_depth in initial_depth..(max_depth - 1) {
             if current_node_id.is_branch() {
                 let index = (path >> ((max_depth - current_depth - 1) * 3)) & 0b111;
 
@@ -739,7 +738,9 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                 }
             }
 
-            current_depth += 1;
+            if current_node_id.is_empty() {
+                break;
+            }
         }
 
         let values = &batch.values()[path_index];
