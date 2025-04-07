@@ -8,7 +8,7 @@ fn main() {
     let cube = CSG::<()>::cube(2.0, 2.0, 2.0, None);
 
     // 14) Mass properties (just printing them)
-    let (mass, com, principal_frame) = cube.mass_properties(1.0);
+    let (mass, com, principal_frame) = cube.mass_properties(1.0).unwrap();
     println!("Cube mass = {mass}");
     println!("Cube center of mass = {:?}", com);
     println!("Cube principal inertia local frame = {:?}", principal_frame);

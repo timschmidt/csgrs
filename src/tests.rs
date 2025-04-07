@@ -1845,3 +1845,54 @@ fn test_flatten_and_union_debug() {
         "Should form at least a triangle"
     );
 }
+
+#[test]
+fn test_contains_vertex() {
+    let csg_cube = CSG::<()>::cube(6.0, 6.0, 6.0, None);
+
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)).unwrap());
+    assert!(csg_cube.contains_vertex(&Point3::new(1.0, 2.0, 5.9)).unwrap());
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0)).unwrap());
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, -6.0)).unwrap());
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.0)).unwrap());
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.01)).unwrap());
+
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.99999999999)).unwrap());
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-11)).unwrap());
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-14)).unwrap());
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.9 + 9e-9)).unwrap());
+
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, -3.0, 3.0)).unwrap());
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, -3.01, 3.0)).unwrap());
+    assert!(csg_cube.contains_vertex(&Point3::new(0.01, 4.0, 3.0)).unwrap());
+    assert!(!csg_cube.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)).unwrap());
+
+    let csg_cube_hole = CSG::<()>::cube(4.0, 4.0, 4.0, None);
+    let cube_with_hole = csg_cube.difference(&csg_cube_hole);
+
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(0.01, 4.0, 3.0)).unwrap());
+    assert!(cube_with_hole.contains_vertex(&Point3::new(0.01, 4.01, 3.0)).unwrap());
+
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)).unwrap());
+    assert!(cube_with_hole.contains_vertex(&Point3::new(1.0, 2.0, 5.9)).unwrap());
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(3.0, 3.0, 6.0)).unwrap());
+
+    let csg_sphere = CSG::<()>::sphere(6.0, 14, 14, None);
+
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 3.0)).unwrap());
+    assert!(csg_sphere.contains_vertex(&Point3::new(-3.0, -3.0, -3.0)).unwrap());
+    assert!(!csg_sphere.contains_vertex(&Point3::new(1.0, 2.0, 5.9)).unwrap());
+
+    assert!(!csg_sphere.contains_vertex(&Point3::new(1.0, 1.0, 5.8)).unwrap());
+    assert!(!csg_sphere.contains_vertex(&Point3::new(0.0, 3.0, 5.8)).unwrap());
+    assert!(csg_sphere.contains_vertex(&Point3::new(0.0, 0.0, 5.8)).unwrap());
+
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 6.0)).unwrap());
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -6.0)).unwrap());
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 0.0)).unwrap());
+
+    assert!(csg_sphere.contains_vertex(&Point3::new(0.0, 0.0, -5.8)).unwrap());
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -5.8)).unwrap());
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -6.01)).unwrap());
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 0.01)).unwrap());
+}
