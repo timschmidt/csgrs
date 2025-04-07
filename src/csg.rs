@@ -735,13 +735,62 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
     }
 
-    /// Subdivide all polygons in this CSG 'levels' times, returning a new CSG.
+    /// Subdivide all polygons in this CSG 'levels' times, in place.
     /// This results in a triangular mesh with more detail.
-    pub fn subdivide_triangles(&self, levels: u32) -> CSG<S> {
-        if levels == 0 {
-            return self.clone();
+    ///
+    /// ## Example
+    /// ```
+    /// let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    /// // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
+    /// // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
+    /// cube.subdivide_triangles(1.try_into().expect("not zero"));
+    /// assert_eq!(cube.polygons.len(), 6 * 8);
+    ///
+    /// let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    /// cube.subdivide_triangles(2.try_into().expect("not zero"));
+    /// assert_eq!(cube.polygons.len(), 6 * 8 * 2);
+    /// ```
+    pub fn subdivide_triangles(&mut self, levels: core::num::NonZeroU32) {
+        // clear before error check for consistency
+        self.geometry.0.clear();
+
+        #[cfg(feature = "parallel")]
+        {
+        self.polygons = self.polygons
+            .par_iter_mut()
+            .flat_map(|poly| {
+                let sub_tris = poly.subdivide_triangles(levels.into());
+                // Convert each small tri back to a Polygon
+                sub_tris.into_par_iter().map(move |tri| {
+                    Polygon::new(
+                        tri.to_vec(),
+                        poly.metadata.clone(),
+                    )
+                })
+            })
+            .collect();
         }
 
+        #[cfg(not(feature = "parallel"))]
+        {
+        self.polygons = self.polygons
+            .iter_mut()
+            .flat_map(|poly| {
+                let polytri = poly.subdivide_triangles(levels.into());
+                polytri.into_iter().map(move |tri| {
+                    Polygon::new(
+                        tri.to_vec(),
+                        poly.metadata.clone(),
+                    )
+                })
+            })
+            .collect();
+        }
+    }
+
+    /// Subdivide all polygons in this CSG 'levels' times, returning a new CSG.
+    /// This results in a triangular mesh with more detail.
+    pub fn subdivided_triangles(&self, levels: core::num::NonZeroU32) -> CSG<S> {
         #[cfg(feature = "parallel")]
         let new_polygons: Vec<Polygon<S>> = self
             .polygons
@@ -905,9 +954,12 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG::from_polygons(&triangles)
     }
 
-    /// Convert the polygons in this CSG to a Parry TriMesh.
+    /// Convert the polygons in this CSG to a Parry `TriMesh`, wrapped in a `SharedShape` to be used in Rapier.\
     /// Useful for collision detection or physics simulations.
-    pub fn to_trimesh(&self) -> SharedShape {
+    ///
+    /// ## Errors
+    /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
+    pub fn to_rapier_shape(&self) -> SharedShape {
         // 1) Gather all the triangles from each polygon
         // 2) Build a TriMesh from points + triangle indices
         // 3) Wrap that in a SharedShape to be used in Rapier
@@ -930,24 +982,79 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
 
         // TriMesh::new(Vec<[Real; 3]>, Vec<[u32; 3]>)
-        let trimesh = TriMesh::new(vertices, indices).unwrap(); // todo: handle error
+        let trimesh = TriMesh::new(vertices, indices).unwrap();
         SharedShape::new(trimesh)
+    }
+
+    /// Convert the polygons in this CSG to a Parry `TriMesh`.\
+    /// Useful for collision detection.
+    ///
+    /// ## Errors
+    /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
+    pub fn to_trimesh(&self) -> Option<TriMesh> {
+        // 1) Gather all the triangles from each polygon
+        // 2) Build a TriMesh from points + triangle indices
+        // 3) Wrap that in a SharedShape to be used in Rapier
+        let tri_csg = self.tessellate();
+        let mut vertices = Vec::new();
+        let mut indices = Vec::new();
+        let mut index_offset = 0;
+
+        for poly in &tri_csg.polygons {
+            let a = poly.vertices[0].pos;
+            let b = poly.vertices[1].pos;
+            let c = poly.vertices[2].pos;
+
+            vertices.push(a);
+            vertices.push(b);
+            vertices.push(c);
+
+            indices.push([index_offset, index_offset + 1, index_offset + 2]);
+            index_offset += 3;
+        }
+
+        // TriMesh::new(Vec<[Real; 3]>, Vec<[u32; 3]>)
+        let trimesh = match TriMesh::new(vertices, indices) {
+            Ok(mesh) => mesh,
+            Err(_) => { return None; },
+        };
+
+        Some(trimesh)
+    }
+
+    /// Uses Parry to check if a point is inside a `CSG`'s as a `TriMesh`.\
+    /// Note: this only use the 3d geometry of `CSG`
+    ///
+    /// ## Errors
+    /// If any 3d polygon has fewer than 3 vertices
+    ///
+    /// ## Example
+    /// ```
+    /// # use csgrs::CSG;
+    /// # use nalgebra::Point3;
+    /// # use nalgebra::Vector3;
+    /// let csg_cube = CSG::<()>::cube(6.0, 6.0, 6.0, None);
+    ///
+    /// assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)).unwrap());
+    /// assert!(csg_cube.contains_vertex(&Point3::new(1.0, 2.0, 5.9)).unwrap());
+    ///
+    /// assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0)).unwrap());
+    /// assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, -6.0)).unwrap());
+    /// ```
+    pub fn contains_vertex(&self, point: &Point3<Real>) -> bool {
+       self.ray_intersections(point, &Vector3::new(1.0, 1.0, 1.0)).len() % 2 == 1
     }
 
     /// Approximate mass properties using Rapier.
     pub fn mass_properties(&self, density: Real) -> (Real, Point3<Real>, Unit<Quaternion<Real>>) {
-        let shape = self.to_trimesh();
-        if let Some(trimesh) = shape.as_trimesh() {
-            let mp = trimesh.mass_properties(density);
-            (
-                mp.mass(),
-                mp.local_com,                     // a Point3<Real>
-                mp.principal_inertia_local_frame, // a Unit<Quaternion<Real>>
-            )
-        } else {
-            // fallback if not a TriMesh
-            (0.0, Point3::origin(), Unit::<Quaternion<Real>>::identity())
-        }
+        let trimesh = self.to_trimesh().unwrap();
+        let mp = trimesh.mass_properties(density);
+
+        (
+            mp.mass(),
+            mp.local_com,                     // a Point3<Real>
+            mp.principal_inertia_local_frame, // a Unit<Quaternion<Real>>
+        )
     }
 
     /// Create a Rapier rigid body + collider from this CSG, using
@@ -960,8 +1067,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         translation: Vector3<Real>,
         rotation: Vector3<Real>, // rotation axis scaled by angle (radians)
         density: Real,
-    ) -> RigidBodyHandle {
-        let shape = self.to_trimesh();
+    ) -> RigidBodyHandle{
+        let shape = self.to_rapier_shape();
 
         // Build a Rapier RigidBody
         let rb = RigidBodyBuilder::dynamic()
