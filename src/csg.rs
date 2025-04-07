@@ -238,8 +238,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     #[must_use = "Use new CSG representing space in both CSG's"]
     pub fn union(&self, other: &CSG<S>) -> anyhow::Result<CSG<S>> {
         // 3D union:
-        let mut a = Node::new(&self.polygons);
-        let mut b = Node::new(&other.polygons);
+        let mut a = Node::new(&self.polygons)?;
+        let mut b = Node::new(&other.polygons)?;
 
         a.clip_to(&b);
         b.clip_to(&a);
@@ -302,8 +302,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     #[must_use = "Use new CSG"]
     pub fn difference(&self, other: &CSG<S>) -> anyhow::Result<CSG<S>> {
         // 3D difference:
-        let mut a = Node::new(&self.polygons);
-        let mut b = Node::new(&other.polygons);
+        let mut a = Node::new(&self.polygons)?;
+        let mut b = Node::new(&other.polygons)?;
 
         a.invert();
         a.clip_to(&b);
@@ -357,8 +357,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// ```
     pub fn intersection(&self, other: &CSG<S>) -> anyhow::Result<CSG<S>> {
         // 3D intersection:
-        let mut a = Node::new(&self.polygons);
-        let mut b = Node::new(&other.polygons);
+        let mut a = Node::new(&self.polygons)?;
+        let mut b = Node::new(&other.polygons)?;
 
         a.invert();
         b.clip_to(&a);

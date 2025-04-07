@@ -380,7 +380,7 @@ fn test_node_new_and_build() {
         ],
         None,
     );
-    let node: Node<()> = Node::new(&[p.clone()]);
+    let node: Node<()> = Node::new(&[p.clone()]).unwrap();
     // The node should have built a tree with plane = p.plane, polygons = [p], no front/back children
     assert!(node.plane.is_some());
     assert_eq!(node.polygons.len(), 1);
@@ -398,7 +398,7 @@ fn test_node_invert() {
         ],
         None,
     );
-    let mut node: Node<()> = Node::new(&[p.clone()]);
+    let mut node: Node<()> = Node::new(&[p.clone()]).unwrap();
     let original_count = node.polygons.len();
     let original_normal = node.plane.as_ref().unwrap().normal;
     node.invert();
@@ -458,7 +458,7 @@ fn test_node_clip_polygons2() {
         poly_in_plane.clone(),
         poly_above.clone(),
         poly_below.clone(),
-    ]);
+    ]).unwrap();
     // Now node has polygons: [poly_in_plane], front child with poly_above, back child with poly_below
 
     // Clip a polygon that crosses from z=-0.5 to z=0.5
@@ -488,7 +488,7 @@ fn test_node_clip_to() {
         ],
         None,
     );
-    let mut node_a: Node<()> = Node::new(&[poly]);
+    let mut node_a: Node<()> = Node::new(&[poly]).unwrap();
     // Another polygon that fully encloses the above
     let big_poly: Polygon<()> = Polygon::new(
         vec![
@@ -499,7 +499,7 @@ fn test_node_clip_to() {
         ],
         None,
     );
-    let node_b: Node<()> = Node::new(&[big_poly]);
+    let node_b: Node<()> = Node::new(&[big_poly]).unwrap();
     node_a.clip_to(&node_b);
     // We expect nodeA's polygon to be present
     let all_a = node_a.all_polygons();
@@ -526,7 +526,7 @@ fn test_node_all_polygons() {
         None,
     );
 
-    let node: Node<()> = Node::new(&[poly1.clone(), poly2.clone()]);
+    let node: Node<()> = Node::new(&[poly1.clone(), poly2.clone()]).unwrap();
     let all_polys = node.all_polygons();
     // We expect to retrieve both polygons
     assert_eq!(all_polys.len(), 2);
@@ -1584,7 +1584,7 @@ fn test_slice_cylinder() {
     let cross_section = cyl.slice(Plane {
         normal: Vector3::z(),
         w: 0.0,
-    });
+    }).unwrap();
 
     // For a simple cylinder, the cross-section is typically 1 circle polygon
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).

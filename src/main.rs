@@ -176,7 +176,7 @@ fn main() {
     // 2) Slice at z=0
     #[cfg(feature = "hashmap")]
     {
-    let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
+    let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 }).unwrap();
     let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));
     let _ = fs::write("stl/sliced_cylinder_slice.stl", cross_section.to_stl_ascii("sliced_cylinder_slice"));
     }
@@ -504,7 +504,7 @@ fn main() {
     // Scene I: Demonstrate slice(plane) – slice a cube at z=0
     {
         let plane_z = Plane{ normal: Vector3::z(), w: 0.5 };
-        let sliced_polygons = cube.slice(plane_z);
+        let sliced_polygons = cube.slice(plane_z).unwrap();
         let _ = fs::write("stl/scene_sliced_cube.stl", cube.to_stl_ascii("sliced_cube"));
         // Save cross-section as well
         let _ = fs::write("stl/scene_sliced_cube_section.stl", sliced_polygons.to_stl_ascii("sliced_cube_section"));
