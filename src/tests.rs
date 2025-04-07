@@ -1,10 +1,10 @@
-#[cfg(test)]
-use crate::float_types::{Real, EPSILON, FRAC_PI_2};
 use crate::bsp::Node;
-use crate::vertex::Vertex;
+use crate::csg::CSG;
+#[cfg(test)]
+use crate::float_types::{EPSILON, FRAC_PI_2, Real};
 use crate::plane::Plane;
 use crate::polygon::Polygon;
-use crate::csg::CSG;
+use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 
 // --------------------------------------------------------
@@ -123,27 +123,16 @@ fn test_degenerate_polygon_after_clipping() {
         w: 0.0,
     };
 
-    let mut coplanar_front = Vec::new();
-    let mut coplanar_back = Vec::new();
-    let mut front = Vec::new();
-    let mut back = Vec::new();
-
     eprintln!("Original polygon: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
 
-    plane.split_polygon(
-        &polygon,
-        &mut coplanar_front,
-        &mut coplanar_back,
-        &mut front,
-        &mut back,
-    );
+    let (_cf, _cb, f, b) = plane.split_polygon(&polygon);
 
-    eprintln!("Front polygons: {:?}", front);
-    eprintln!("Back polygons: {:?}", back);
+    eprintln!("Front polygons: {:?}", f);
+    eprintln!("Back polygons: {:?}", b);
 
-    assert!(front.is_empty(), "Front should be empty for this test");
-    assert!(back.is_empty(), "Back should be empty for this test");
+    assert!(f.is_empty(), "Front should be empty for this test");
+    assert!(b.is_empty(), "Back should be empty for this test");
 }
 
 #[test]
@@ -161,27 +150,16 @@ fn test_valid_polygon_clipping() {
         w: -0.5,
     };
 
-    let mut coplanar_front = Vec::new();
-    let mut coplanar_back = Vec::new();
-    let mut front = Vec::new();
-    let mut back = Vec::new();
-
     eprintln!("Polygon before clipping: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
 
-    plane.split_polygon(
-        &polygon,
-        &mut coplanar_front,
-        &mut coplanar_back,
-        &mut front,
-        &mut back,
-    );
+    let (_cf, _cb, f, b) = plane.split_polygon(&polygon);
 
-    eprintln!("Front polygons: {:?}", front);
-    eprintln!("Back polygons: {:?}", back);
+    eprintln!("Front polygons: {:?}", f);
+    eprintln!("Back polygons: {:?}", b);
 
-    assert!(!front.is_empty(), "Front should not be empty");
-    assert!(!back.is_empty(), "Back should not be empty");
+    assert!(!f.is_empty(), "Front should not be empty");
+    assert!(!b.is_empty(), "Back should not be empty");
 }
 
 // ------------------------------------------------------------
@@ -254,12 +232,7 @@ fn test_plane_split_polygon() {
         None,
     );
 
-    let mut cf = Vec::new(); // coplanar_front
-    let mut cb = Vec::new(); // coplanar_back
-    let mut f = Vec::new(); // front
-    let mut b = Vec::new(); // back
-
-    plane.split_polygon(&poly, &mut cf, &mut cb, &mut f, &mut b);
+    let (cf, cb, f, b) = plane.split_polygon(&poly);
     // This polygon is spanning across y=0 plane => we expect no coplanar, but front/back polygons.
     assert_eq!(cf.len(), 0);
     assert_eq!(cb.len(), 0);
@@ -808,7 +781,10 @@ fn test_csg_transform_translate_rotate_scale() {
 #[test]
 fn test_csg_mirror() {
     let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    let plane_x = Plane { normal: Vector3::x(), w: 0.0 }; // x=0 plane
+    let plane_x = Plane {
+        normal: Vector3::x(),
+        w: 0.0,
+    }; // x=0 plane
     let mirror_x = c.mirror(plane_x);
     let bb_mx = mirror_x.bounding_box();
     // The original cube was from x=0..2, so mirrored across X=0 should be -2..0
@@ -1604,7 +1580,10 @@ fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::<()>::cylinder(1.0, 2.0, 32, None).center();
     // 2) Slice at z=0
-    let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
+    let cross_section = cyl.slice(Plane {
+        normal: Vector3::z(),
+        w: 0.0,
+    });
 
     // For a simple cylinder, the cross-section is typically 1 circle polygon
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
