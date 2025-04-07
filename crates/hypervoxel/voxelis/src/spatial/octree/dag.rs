@@ -745,11 +745,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
         let values = &batch.values()[path_index];
 
-        let first_value = values[set_mask.trailing_zeros() as usize];
-
-        let data_len = set_mask.count_ones() as usize;
-
-        let all_same = data_len == MAX_CHILDREN && values.iter().all(|v| *v == first_value);
+        let all_same = *set_mask == 0xFF && values.iter().all(|v| *v == values[0]);
 
         if !all_same {
             let (mut children, mut types, mut mask) = if !current_node_id.is_empty() {
@@ -760,6 +756,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                         current_node_id.mask(),
                     )
                 } else {
+                    let data_len = set_mask.count_ones() as usize;
                     let children = [leaf_node_id; MAX_CHILDREN];
                     store.inc_ref_by(&leaf_node_id, (MAX_CHILDREN - data_len) as u32);
 
@@ -797,6 +794,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             current_level_data[path_index] = branch_id;
             paths.push(path);
         } else {
+            let first_value = values[set_mask.trailing_zeros() as usize];
             let leaf_id = store.get_or_create_leaf(first_value);
 
             current_level_data[path_index] = leaf_id;
