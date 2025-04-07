@@ -2,6 +2,7 @@
 //!
 //! [DXF]: https://en.wikipedia.org/wiki/AutoCAD_DXF
 //! [STL]: https://en.wikipedia.org/wiki/STL_(file_format)
+// todo move to io mod
 
 use crate::csg::{CSG, CSGError};
 use crate::float_types::{PI, Real};
@@ -47,7 +48,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         //
         for poly in &self.polygons {
             // Ensure the polygon is tessellated, since STL is triangle-based.
-            let triangles = poly.tessellate();
+            let triangles = poly.tessellate().expect("expected at least three vertces");
             // A typical STL uses the face normal; we can take the polygon’s plane normal:
             let normal = poly.plane.normal.normalize();
 
@@ -181,7 +182,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         for poly in &self.polygons {
             let normal = poly.plane.normal.normalize();
             // Convert polygon to triangles
-            let tri_list = poly.tessellate();
+            let tri_list = poly.tessellate().expect("expected at least three vertces");
             for tri in tri_list {
                 triangles.push(Triangle {
                     normal: Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
@@ -473,7 +474,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         for poly in &self.polygons {
             // Triangulate the polygon if it has more than 3 vertices
             let triangles = if poly.vertices.len() > 3 {
-                poly.tessellate()
+                poly.tessellate()?
             } else {
                 vec![[
                     poly.vertices[0].clone(),

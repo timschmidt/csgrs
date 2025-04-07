@@ -363,7 +363,7 @@ fn test_polygon_triangulate() {
         ],
         None,
     ).expect("Three or more vertices are supplied");
-    let triangles = poly.tessellate();
+    let triangles = poly.tessellate().unwrap();
     // We expect 2 triangles from a quad
     assert_eq!(
         triangles.len(),
@@ -383,12 +383,12 @@ fn test_polygon_subdivide_triangles() {
         ],
         None,
     );
-    let subs = poly.subdivide_triangles(1);
+    let subs = poly.subdivide_triangles(1).unwrap();
     // One triangle subdivided once => 4 smaller triangles
     assert_eq!(subs.len(), 4);
 
     // If we subdivide the same single tri 2 levels, we expect 16 sub-triangles.
-    let subs2 = poly.subdivide_triangles(2);
+    let subs2 = poly.subdivide_triangles(2).unwrap();
     assert_eq!(subs2.len(), 16);
 }
 
@@ -1018,19 +1018,15 @@ fn test_csg_text() {
 #[test]
 fn test_csg_to_trimesh() {
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    let shape = cube.to_trimesh();
+    let trimesh = cube.to_trimesh().expect("Not less then three vertices");
     // Should be a TriMesh with 12 triangles
-    if let Some(trimesh) = shape.as_trimesh() {
-        assert_eq!(trimesh.indices().len(), 12); // 6 faces => 2 triangles each => 12
-    } else {
-        panic!("Expected a TriMesh");
-    }
+    assert_eq!(trimesh.indices().len(), 12); // 6 faces => 2 triangles each => 12
 }
 
 #[test]
 fn test_csg_mass_properties() {
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).center(); // side=2 => volume=8. If density=1 => mass=8
-    let (mass, com, _frame) = cube.mass_properties(1.0);
+    let (mass, com, _frame) = cube.mass_properties(1.0).unwrap();
     println!("{:#?}", mass);
     // For a centered cube with side 2, volume=8 => mass=8 => COM=(0,0,0)
     assert!(approx_eq(mass, 8.0, 0.1));
@@ -1051,7 +1047,7 @@ fn test_csg_to_rigid_body() {
         Vector3::new(10.0, 0.0, 0.0),
         Vector3::new(0.0, 0.0, FRAC_PI_2), // 90 deg around Z
         1.0,
-    );
+    ).unwrap();
     let rb = rb_set.get(handle).unwrap();
     let pos = rb.translation();
     assert!(approx_eq(pos.x, 10.0, EPSILON));
@@ -1599,7 +1595,7 @@ fn test_flatten_cube() {
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::<()>::cube(2.0, 2.0, 2.0, None);
     // 2) Flatten into the XY plane
-    let flattened = cube.flatten();
+    let flattened = cube.flatten().expect("Not less then three vertices");
 
     // The flattened cube should have 1 polygon1, now in z=0
     assert_eq!(
@@ -1717,7 +1713,7 @@ fn test_flatten_and_union_single_polygon() {
     let csg = CSG::from_polygons(&[square_poly]);
 
     // Flatten & union it
-    let flat_csg = csg.flatten();
+    let flat_csg = csg.flatten().expect("Not less then three vertices");
 
     // Expect the same bounding box
     assert!(!flat_csg.polygons.is_empty(), "Result should not be empty");
@@ -1738,7 +1734,7 @@ fn test_flatten_and_union_two_overlapping_squares() {
     let square2 = polygon_from_xy_points(&[[1.0, 0.0], [2.0, 0.0], [2.0, 1.0], [1.0, 1.0]]);
     let csg = CSG::from_polygons(&[square1, square2]);
 
-    let flat_csg = csg.flatten();
+    let flat_csg = csg.flatten().expect("Not less then three vertices");
     assert!(!flat_csg.polygons.is_empty(), "Union should not be empty");
 
     // The bounding box should now span x=0..2, y=0..1
@@ -1768,7 +1764,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
     let square_b = polygon_from_xy_points(&[[2.0, 2.0], [3.0, 2.0], [3.0, 3.0], [2.0, 3.0]]);
     let csg = CSG::from_polygons(&[square_a, square_b]);
 
-    let flat_csg = csg.flatten();
+    let flat_csg = csg.flatten().expect("Not less then three vertices");
     assert!(!flat_csg.polygons.is_empty());
 
     // Expect 2 disjoint polygons in the result
@@ -1796,7 +1792,7 @@ fn test_flatten_and_union_near_xy_plane() {
     ).expect("Three or more vertices supplied");
 
     let csg = CSG::from_polygons(&[poly1]);
-    let flat_csg = csg.flatten();
+    let flat_csg = csg.flatten().expect("Not less then three vertices");
 
     assert!(
         !flat_csg.polygons.is_empty(),
@@ -1823,7 +1819,7 @@ fn test_flatten_and_union_collinear_edges() {
     ]);
 
     let csg = CSG::<()>::from_polygons(&[rect1, rect2]);
-    let flat_csg = csg.flatten();
+    let flat_csg = csg.flatten().expect("Not less then three vertices");
 
     // Expect 1 polygon from x=0..4, y=0..~1.0ish
     assert!(!flat_csg.polygons.is_empty());
@@ -1839,7 +1835,7 @@ fn test_flatten_and_union_collinear_edges() {
 #[test]
 fn test_flatten_and_union_debug() {
     let csg_square = CSG::<()>::square(2.0, 2.0, None); // a 1×1 square at [0..1, 0..1]
-    let flattened = csg_square.flatten();
+    let flattened = csg_square.flatten().expect("Not less then three vertices");
     assert!(
         !flattened.polygons.is_empty(),
         "Flattened square should not be empty"

@@ -4,10 +4,10 @@ use geo::{Geometry, GeometryCollection};
 use geo_buf::{buffer_multi_polygon, buffer_polygon};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
-    /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using cavalier_contours parallel_offset.
-    /// for each Polygon we convert to a cavalier_contours `Polyline<Real>` and call `parallel_offset`
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
+    /// Grows/shrinks/offsets all polygons in the XY plane by `distance`
+    ///
+    /// Note: this does not affect the 3d polygons of the `CSG`, for now this may change
     pub fn offset(&self, distance: Real) -> CSG<S> {
         // For each Geometry in the collection:
         //   - If it's a Polygon, buffer it and store the result as a MultiPolygon
@@ -30,6 +30,8 @@ where S: Clone + Send + Sync {
 
         // Construct a new GeometryCollection from the offset geometries
         let new_collection = GeometryCollection::<Real>(offset_geoms);
+
+        // todo project 3d polygons to the XY plane then buffer them
 
         // Return a new CSG using the offset geometry collection and the old polygons/metadata
         CSG {
