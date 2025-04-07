@@ -236,7 +236,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///          +-------+            +-------+
     /// ```
     #[must_use = "Use new CSG representing space in both CSG's"]
-    pub fn union(&self, other: &CSG<S>) -> CSG<S> {
+    pub fn union(&self, other: &CSG<S>) -> anyhow::Result<CSG<S>> {
         // 3D union:
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
@@ -246,7 +246,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         b.invert();
         b.clip_to(&a);
         b.invert();
-        a.build(&b.all_polygons());
+        a.build(&b.all_polygons())?;
         
         // 2D union:
         // Extract multipolygon from geometry
@@ -279,11 +279,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             }
         }
 
-        CSG {
+        Ok(CSG {
             polygons: a.all_polygons(),
             geometry: final_gc,
             metadata: self.metadata.clone(),
-        }
+        })
     }
 
     /// Return a new CSG representing diffarence of the two CSG's.
@@ -300,7 +300,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///          +-------+
     /// ```
     #[must_use = "Use new CSG"]
-    pub fn difference(&self, other: &CSG<S>) -> CSG<S> {
+    pub fn difference(&self, other: &CSG<S>) -> anyhow::Result<CSG<S>> {
         // 3D difference:
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
@@ -335,11 +335,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             }
         }
     
-        CSG {
+        Ok(CSG {
             polygons: a.all_polygons(),
             geometry: final_gc,
             metadata: self.metadata.clone(),
-        }
+        })
     }
 
     /// Return a new CSG representing intersection of the two CSG's.
@@ -355,7 +355,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///          |       |
     ///          +-------+
     /// ```
-    pub fn intersection(&self, other: &CSG<S>) -> CSG<S> {
+    pub fn intersection(&self, other: &CSG<S>) -> anyhow::Result<CSG<S>> {
         // 3D intersection:
         let mut a = Node::new(&self.polygons);
         let mut b = Node::new(&other.polygons);
@@ -365,7 +365,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         b.invert();
         a.clip_to(&b);
         b.clip_to(&a);
-        a.build(&b.all_polygons());
+        a.build(&b.all_polygons())?;
         a.invert();
         
         // 2D intersection:
@@ -395,11 +395,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             }
         }
     
-        CSG {
+        Ok(CSG {
             polygons: a.all_polygons(),
             geometry: final_gc,
             metadata: self.metadata.clone(),
-        }
+        })
     }
     
     /// Return a new CSG representing space in this CSG excluding the space in the
@@ -416,13 +416,13 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    pub fn xor(&self, other: &CSG<S>) -> CSG<S> {
+    pub fn xor(&self, other: &CSG<S>) -> anyhow::Result<CSG<S>> {
         // 3D and 2D xor:
         // A \ B
-        let a_sub_b = self.difference(other);
+        let a_sub_b = self.difference(other)?;
     
         // B \ A
-        let b_sub_a = other.difference(self);
+        let b_sub_a = other.difference(self)?;
     
         // Union those two
         a_sub_b.union(&b_sub_a)
@@ -641,9 +641,9 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         radius: Real,
         start_angle_deg: Real,
         end_angle_deg: Real,
-    ) -> CSG<S> {
+    ) -> anyhow::Result<CSG<S>> {
         if count < 1 {
-            return self.clone();
+            return Ok(self.clone());
         }
         let start_rad = start_angle_deg.to_radians();
         let end_rad   = end_angle_deg.to_radians();
@@ -672,15 +672,15 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             let mat   = rot * trans;
 
             // Transform a copy of self and union with other copies
-            all_csg = all_csg.union(&self.transform(&mat));
+            all_csg = all_csg.union(&self.transform(&mat))?;
         }
 
         // Put it in a new CSG
-        CSG {
+        Ok(CSG {
             polygons: all_csg.polygons,
             geometry: all_csg.geometry,
             metadata: self.metadata.clone(),
-        }
+        })
     }
     
     /// Distribute this CSG `count` times along a straight line (vector),
@@ -692,9 +692,9 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         count: usize,
         dir: nalgebra::Vector3<Real>,
         spacing: Real,
-    ) -> CSG<S> {
+    ) -> anyhow::Result<CSG<S>> {
         if count < 1 {
-            return self.clone();
+            return Ok(self.clone());
         }
         let step = dir.normalize() * spacing;
     
@@ -706,22 +706,22 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             let trans   = nalgebra::Translation3::from(offset).to_homogeneous();
     
             // Transform a copy of self and union with other copies
-            all_csg = all_csg.union(&self.transform(&trans));
+            all_csg = all_csg.union(&self.transform(&trans))?;
         }
     
         // Put it in a new CSG
-        CSG {
+        Ok(CSG {
             polygons: all_csg.polygons,
             geometry: all_csg.geometry,
             metadata: self.metadata.clone(),
-        }
+        })
     }
 
     /// Distribute this CSG in a grid of `rows x cols`, with spacing dx, dy in XY plane.
     /// top-left or bottom-left depends on your usage of row/col iteration.
-    pub fn distribute_grid(&self, rows: usize, cols: usize, dx: Real, dy: Real) -> CSG<S> {
+    pub fn distribute_grid(&self, rows: usize, cols: usize, dx: Real, dy: Real) -> anyhow::Result<CSG<S>> {
         if rows < 1 || cols < 1 {
-            return self.clone();
+            return Ok(self.clone());
         }
         let step_x = nalgebra::Vector3::new(dx, 0.0, 0.0);
         let step_y = nalgebra::Vector3::new(0.0, dy, 0.0);
@@ -735,16 +735,16 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 let trans  = nalgebra::Translation3::from(offset).to_homogeneous();
     
                 // Transform a copy of self and union with other copies
-                all_csg = all_csg.union(&self.transform(&trans));
+                all_csg = all_csg.union(&self.transform(&trans))?;
             }
         }
     
         // Put it in a new CSG
-        CSG {
+        Ok(CSG {
             polygons: all_csg.polygons,
             geometry: all_csg.geometry,
             metadata: self.metadata.clone(),
-        }
+        })
     }
 
     /// Subdivide all polygons in this CSG 'levels' times, returning a new CSG.

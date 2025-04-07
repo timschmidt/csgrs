@@ -240,9 +240,9 @@ impl<S: Clone + Send + Sync> Node<S> {
 
     /// Build a BSP tree from the given polygons
     #[cfg(not(feature = "parallel"))]
-    pub fn build(&mut self, polygons: &[Polygon<S>]) {
+    pub fn build(&mut self, polygons: &[Polygon<S>]) -> anyhow::Result<()> {
         if polygons.is_empty() {
-            return;
+            return Ok(());
         }
 
         // Choose the first polygon's plane as the splitting plane if not already set.
@@ -265,16 +265,16 @@ impl<S: Clone + Send + Sync> Node<S> {
             back.extend(b);
         }
 
-        if front.len() == polygons.len() {
-        } else if back.len() == polygons.len() {
-        }
+        // following cases cause stack overflow
+        anyhow::ensure!(front.len() != polygons.len(), "all polygons are front");
+        anyhow::ensure!(back.len() != polygons.len(), "all polygons are back");
 
         // Recursively build the front subtree.
         if !front.is_empty() {
             if self.front.is_none() {
                 self.front = Some(Box::new(Node::new(&[])));
             }
-            self.front.as_mut().unwrap().build(&front);
+            self.front.as_mut().unwrap().build(&front)?;
         }
 
         // Recursively build the back subtree.
@@ -282,8 +282,10 @@ impl<S: Clone + Send + Sync> Node<S> {
             if self.back.is_none() {
                 self.back = Some(Box::new(Node::new(&[])));
             }
-            self.back.as_mut().unwrap().build(&back);
+            self.back.as_mut().unwrap().build(&back)?;
         }
+
+        Ok(())
     }
 
     // ------------------------------------------------------------------------
