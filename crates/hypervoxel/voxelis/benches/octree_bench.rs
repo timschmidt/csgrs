@@ -253,6 +253,38 @@ fn benchmark_octree(c: &mut Criterion) {
     }
 
     {
+        let mut group = c.benchmark_group("octree_batch_set_single_voxel");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+
+                    let mut v = 1;
+                    b.iter(|| {
+                        let mut batch = octree.create_batch();
+
+                        let next_v = if v + 1 != 0 { v + 1 } else { 1 };
+
+                        batch.set(&mut store, IVec3::new(0, 0, 0), next_v);
+
+                        octree.apply_batch(&mut store, black_box(&batch));
+
+                        v = next_v;
+                    });
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
         let mut group = c.benchmark_group("octree_set_uniform");
 
         for &(size, depth) in depths.iter() {
@@ -308,6 +340,87 @@ fn benchmark_octree(c: &mut Criterion) {
                         let mut batch = octree.create_batch();
 
                         for y in 0..size as i32 {
+                            for z in 0..size as i32 {
+                                for x in 0..size as i32 {
+                                    batch.set(&mut store, IVec3::new(x, y, z), v);
+                                }
+                            }
+                        }
+
+                        octree.apply_batch(&mut store, black_box(&batch));
+
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_set_uniform_half");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 24);
+
+                    let half_size = size / 2;
+
+                    let mut v = 1;
+                    b.iter(|| {
+                        for y in 0..half_size as i32 {
+                            for z in 0..size as i32 {
+                                for x in 0..size as i32 {
+                                    octree.set(
+                                        &mut store,
+                                        black_box(IVec3::new(x, y, z)),
+                                        black_box(v),
+                                    );
+                                }
+                            }
+                        }
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_batch_set_uniform_half");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 24);
+
+                    let half_size = size / 2;
+
+                    let mut v = 1;
+                    b.iter(|| {
+                        let mut batch = octree.create_batch();
+
+                        for y in 0..half_size as i32 {
                             for z in 0..size as i32 {
                                 for x in 0..size as i32 {
                                     batch.set(&mut store, IVec3::new(x, y, z), v);
