@@ -767,6 +767,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
         println!("  path: 0x{:08X} {:09b}", path, path);
 
         let mut leaf_node_id = BlockId::EMPTY;
+
         for current_depth in initial_depth..(max_depth - 1) {
             if current_node_id.is_branch() {
                 let index = (path >> ((max_depth - current_depth - 1) * 3)) & 0b111;
@@ -834,23 +835,39 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
             let mut modified_childs: u8 = 0;
 
-            for i in 0..MAX_CHILDREN {
-                if set_mask & (1 << i) == 0 {
+            let mut set_mask_bits = *set_mask;
+            while set_mask_bits != 0 {
+                let idx = set_mask_bits.trailing_zeros() as usize;
+                set_mask_bits &= !(1 << idx);
+
+                let value = &values[idx];
+
+                if !children[idx].is_empty() && store.get_value(&children[idx]) == value {
+                    // No change needed
                     continue;
                 }
 
-                children[i] = store.get_or_create_leaf(values[i]);
+                children[idx] = store.get_or_create_leaf(*value);
 
-                types |= 1 << i;
-                mask |= 1 << i;
-                modified_childs |= 1 << i;
+                types |= 1 << idx;
+                mask |= 1 << idx;
+                modified_childs |= 1 << idx;
+            }
+
+            if modified_childs == 0 {
+                // No changes made
+                continue;
             }
 
             if leaf_node_id.is_empty() {
-                for i in 0..MAX_CHILDREN {
-                    if modified_childs & (1 << i) == 0 && !children[i].is_empty() {
-                        // If the child is not modified, we need to increment its ref count
-                        store.inc_ref_by(&children[i], 1);
+                let mut non_modified_childs_bits = !modified_childs;
+                while non_modified_childs_bits != 0 {
+                    let idx = non_modified_childs_bits.trailing_zeros() as usize;
+                    non_modified_childs_bits &= !(1 << idx);
+
+                    if !children[idx].is_empty() {
+                        // If the child was not modified, we need to increment its ref count
+                        store.inc_ref_by(&children[idx], 1);
                     }
                 }
             }
@@ -901,7 +918,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
         let mut mask = 0;
 
         let mut current_id = BlockId::INVALID;
-        let mut current_path = path;
+        let current_path = path;
 
         let path_mask_depth = if target_depth > 1 {
             target_depth - 2
@@ -982,30 +999,35 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             println!("     children: {:#?}", children);
         }
 
-        let mut cloned_nodes: u8 = 0;
+        let existing_mask = current_id.mask();
+        let inv_mask = !mask;
+        let cloned_nodes = existing_mask & inv_mask;
 
-        if mask != 0xFF {
+        if mask != 0xFF && cloned_nodes != 0 {
             let existing_children = store.get_children(&current_id);
 
-            for idx in 0..MAX_CHILDREN {
-                if children[idx].is_empty() && !existing_children[idx].is_empty() {
-                    children[idx] = existing_children[idx];
-                    cloned_nodes |= 1 << idx;
-                    types |= (children[idx].is_leaf() as u8) << idx;
-                    mask |= 1 << idx;
-                }
+            let mut cloned_nodes_bits = cloned_nodes;
+
+            while cloned_nodes_bits != 0 {
+                let idx = cloned_nodes_bits.trailing_zeros() as usize;
+                cloned_nodes_bits &= !(1 << idx);
+
+                children[idx] = existing_children[idx];
+
+                types |= (children[idx].is_leaf() as u8) << idx;
+                mask |= 1 << idx;
             }
         }
 
-        let first_child = &children[0];
-        let all_same = types == 0xFF && children.iter().all(|item| item == first_child);
+        let all_same = types == 0xFF && children.iter().all(|item| item == &children[0]);
 
         let new_node_id = if !all_same {
-            let mut bits = cloned_nodes;
-            while bits != 0 {
-                let idx = bits.trailing_zeros() as usize;
+            let mut cloned_nodes_bits = cloned_nodes;
+            while cloned_nodes_bits != 0 {
+                let idx = cloned_nodes_bits.trailing_zeros() as usize;
+                cloned_nodes_bits &= !(1 << idx);
+
                 store.inc_ref(&children[idx]);
-                bits &= !(1 << idx);
             }
 
             store.get_or_create_branch(children, types, mask)
@@ -1016,9 +1038,9 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                 7
             };
 
-            store.dec_ref_by(first_child, dec_ref);
+            store.dec_ref_by(&children[0], dec_ref);
 
-            *first_child
+            children[0]
         };
 
         #[cfg(feature = "debug_trace_ref_counts")]
