@@ -528,6 +528,547 @@ fn benchmark_octree(c: &mut Criterion) {
     }
 
     {
+        let mut group = c.benchmark_group("octree_set_checkerboard");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+
+                    let mut v = 1;
+                    b.iter(|| {
+                        for y in 0..size as i32 {
+                            for z in 0..size as i32 {
+                                for x in 0..size as i32 {
+                                    if (x + y + z) % 2 == 0 {
+                                        octree.set(
+                                            &mut store,
+                                            black_box(IVec3::new(x, y, z)),
+                                            black_box(v),
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_batch_set_checkerboard");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+
+                    let mut v = 1;
+
+                    b.iter(|| {
+                        let mut batch = octree.create_batch();
+
+                        for y in 0..size as i32 {
+                            for z in 0..size as i32 {
+                                for x in 0..size as i32 {
+                                    if (x + y + z) % 2 == 0 {
+                                        batch.set(&mut store, IVec3::new(x, y, z), v);
+                                    }
+                                }
+                            }
+                        }
+
+                        octree.apply_batch(&mut store, black_box(&batch));
+
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+
+                    // #[cfg(feature = "memory_stats")]
+                    // println!("stats: {:#?}", store.stats());
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_set_sparse_fill");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+
+                    let mut v = 1;
+                    b.iter(|| {
+                        for y in (0..size as i32).step_by(4) {
+                            for z in (0..size as i32).step_by(4) {
+                                for x in (0..size as i32).step_by(4) {
+                                    octree.set(
+                                        &mut store,
+                                        black_box(IVec3::new(x, y, z)),
+                                        black_box(v),
+                                    );
+                                }
+                            }
+                        }
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_batch_set_sparse_fill");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+
+                    let mut v = 1;
+
+                    b.iter(|| {
+                        let mut batch = octree.create_batch();
+
+                        for y in (0..size as i32).step_by(4) {
+                            for z in (0..size as i32).step_by(4) {
+                                for x in (0..size as i32).step_by(4) {
+                                    batch.set(&mut store, IVec3::new(x, y, z), v);
+                                }
+                            }
+                        }
+
+                        octree.apply_batch(&mut store, black_box(&batch));
+
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+
+                    // #[cfg(feature = "memory_stats")]
+                    // println!("stats: {:#?}", store.stats());
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_set_gradient_fill");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 256);
+
+                    let mut v = 1;
+                    b.iter(|| {
+                        for x in 0..size as i32 {
+                            let value = (x + v) % 256;
+                            for y in 0..size as i32 {
+                                for z in 0..size as i32 {
+                                    octree.set(
+                                        &mut store,
+                                        black_box(IVec3::new(x, y, z)),
+                                        black_box(value),
+                                    );
+                                }
+                            }
+                        }
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_batch_set_gradient_fill");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+
+                    let mut v = 1;
+
+                    b.iter(|| {
+                        let mut batch = octree.create_batch();
+
+                        for x in 0..size as i32 {
+                            let value = (x + v) % 256;
+                            for y in 0..size as i32 {
+                                for z in 0..size as i32 {
+                                    batch.set(&mut store, IVec3::new(x, y, z), value);
+                                }
+                            }
+                        }
+
+                        octree.apply_batch(&mut store, black_box(&batch));
+
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+
+                    // #[cfg(feature = "memory_stats")]
+                    // println!("stats: {:#?}", store.stats());
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_set_hollow_cube");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+
+                    let mut v = 1;
+                    b.iter(|| {
+                        for y in 0..size as i32 {
+                            for z in 0..size as i32 {
+                                for x in 0..size as i32 {
+                                    let is_edge = x == 0
+                                        || x == (size as i32) - 1
+                                        || y == 0
+                                        || y == (size as i32) - 1
+                                        || z == 0
+                                        || z == (size as i32) - 1;
+                                    if is_edge {
+                                        octree.set(
+                                            &mut store,
+                                            black_box(IVec3::new(x, y, z)),
+                                            black_box(v),
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_batch_set_hollow_cube");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+
+                    let mut v = 1;
+
+                    b.iter(|| {
+                        let mut batch = octree.create_batch();
+
+                        for y in 0..size as i32 {
+                            for z in 0..size as i32 {
+                                for x in 0..size as i32 {
+                                    let is_edge = x == 0
+                                        || x == (size as i32) - 1
+                                        || y == 0
+                                        || y == (size as i32) - 1
+                                        || z == 0
+                                        || z == (size as i32) - 1;
+                                    if is_edge {
+                                        batch.set(&mut store, IVec3::new(x, y, z), v);
+                                    }
+                                }
+                            }
+                        }
+
+                        octree.apply_batch(&mut store, black_box(&batch));
+
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+
+                    // #[cfg(feature = "memory_stats")]
+                    // println!("stats: {:#?}", store.stats());
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_set_diagonal");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+
+                    let mut v = 1;
+                    b.iter(|| {
+                        for y in 0..size as i32 {
+                            for z in 0..size as i32 {
+                                for x in 0..size as i32 {
+                                    if x == y && x == z {
+                                        octree.set(
+                                            &mut store,
+                                            black_box(IVec3::new(x, y, z)),
+                                            black_box(v),
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_batch_set_diagonal");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+
+                    let mut v = 1;
+
+                    b.iter(|| {
+                        let mut batch = octree.create_batch();
+
+                        for y in 0..size as i32 {
+                            for z in 0..size as i32 {
+                                for x in 0..size as i32 {
+                                    if x == y && x == z {
+                                        batch.set(&mut store, IVec3::new(x, y, z), v);
+                                    }
+                                }
+                            }
+                        }
+
+                        octree.apply_batch(&mut store, black_box(&batch));
+
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+
+                    // #[cfg(feature = "memory_stats")]
+                    // println!("stats: {:#?}", store.stats());
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_set_sphere");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+
+                    let radius = (size / 2) as i32;
+                    let r1 = radius - 1;
+
+                    let (cx, cy, cz) = (r1, r1, r1);
+                    let radius_squared = radius * radius;
+
+                    let mut v = 1;
+                    b.iter(|| {
+                        for y in 0..size as i32 {
+                            for z in 0..size as i32 {
+                                for x in 0..size as i32 {
+                                    let dx = (x - cx).abs();
+                                    let dy = (y - cy).abs();
+                                    let dz = (z - cz).abs();
+
+                                    let distance_squared = dx * dx + dy * dy + dz * dz;
+
+                                    if distance_squared <= radius_squared {
+                                        octree.set(
+                                            &mut store,
+                                            black_box(IVec3::new(x, y, z)),
+                                            black_box(v),
+                                        );
+                                    }
+                                }
+                            }
+                        }
+
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("octree_batch_set_sphere");
+
+        for &(size, depth) in depths.iter() {
+            for octree_type in octree_types.iter() {
+                let bench_id = BenchmarkId::new(size.to_string(), octree_type.to_string());
+                group.bench_with_input(bench_id, &depth, |b, &depth| {
+                    let mut octree = match octree_type {
+                        OctreeType::Static => Octree::make_static(depth),
+                        OctreeType::Dynamic => Octree::make_dynamic(depth),
+                    };
+                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+
+                    let radius = (size / 2) as i32;
+                    let r1 = radius - 1;
+
+                    let (cx, cy, cz) = (r1, r1, r1);
+                    let radius_squared = radius * radius;
+
+                    let mut v = 1;
+
+                    b.iter(|| {
+                        let mut batch = octree.create_batch();
+
+                        for y in 0..size as i32 {
+                            for z in 0..size as i32 {
+                                for x in 0..size as i32 {
+                                    let dx = (x - cx).abs();
+                                    let dy = (y - cy).abs();
+                                    let dz = (z - cz).abs();
+
+                                    let distance_squared = dx * dx + dy * dy + dz * dz;
+
+                                    if distance_squared <= radius_squared {
+                                        batch.set(&mut store, IVec3::new(x, y, z), v);
+                                    }
+                                }
+                            }
+                        }
+
+                        octree.apply_batch(&mut store, black_box(&batch));
+
+                        v += 1;
+                        if v == 0 {
+                            v = 1;
+                        }
+                    });
+
+                    // #[cfg(feature = "memory_stats")]
+                    // println!("stats: {:#?}", store.stats());
+                });
+            }
+        }
+
+        group.finish();
+    }
+
+    {
         let mut group = c.benchmark_group("octree_set_terrain");
 
         for &(size, depth) in depths.iter() {
