@@ -1440,10 +1440,12 @@ mod tests {
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
-                    let position = IVec3::new(x, y, z);
-                    let value = if (x + y + z) % 2 == 0 { 2 } else { 1 };
-                    assert!(octree.set(&mut store, position, value));
-                    assert_eq!(octree.get(&store, position), Some(value));
+                    if (x + y + z) % 2 == 0 {
+                        let position = IVec3::new(x, y, z);
+                        let value = 2;
+                        assert!(octree.set(&mut store, position, value));
+                        assert_eq!(octree.get(&store, position), Some(value));
+                    }
                 }
             }
         }
@@ -1452,8 +1454,8 @@ mod tests {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    let value = if (x + y + z) % 2 == 0 { 2 } else { 1 };
-                    assert_eq!(octree.get(&store, position), Some(value));
+                    let value = if (x + y + z) % 2 == 0 { Some(2) } else { None };
+                    assert_eq!(octree.get(&store, position), value);
                 }
             }
         }
