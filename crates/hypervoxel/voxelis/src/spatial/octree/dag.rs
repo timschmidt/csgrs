@@ -694,7 +694,6 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
         }
 
         let path = path_index << 3;
-        paths.push(path);
 
         let mut current_node_id = initial_node_id;
         let mut current_depth = initial_depth;
@@ -795,10 +794,12 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             let branch_id = store.get_or_create_branch(children, types, mask);
 
             current_level_data[path_index] = branch_id;
+            paths.push(path);
         } else {
             let leaf_id = store.get_or_create_leaf(first_value);
 
             current_level_data[path_index] = leaf_id;
+            paths.push(path);
         };
     }
 
@@ -806,6 +807,14 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
     #[cfg(feature = "debug_trace_ref_counts")]
     {
         println!(" Phase 2 - Integrate dangling branches");
+    }
+
+    if paths.is_empty() {
+        #[cfg(feature = "debug_trace_ref_counts")]
+        {
+            println!("  No paths to process");
+        }
+        return BlockId::INVALID;
     }
 
     let mut target_depth = max_depth - 1;
