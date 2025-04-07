@@ -816,19 +816,16 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
         if !all_same {
             let (mut children, mut types, mut mask) = if !current_node_id.is_empty() {
-                if leaf_node_id.is_empty() {
-                    (
-                        store.get_children(&current_node_id),
-                        current_node_id.types(),
-                        current_node_id.mask(),
-                    )
-                } else {
-                    let data_len = set_mask.count_ones() as usize;
-                    let children = [leaf_node_id; MAX_CHILDREN];
-                    store.inc_ref_by(&leaf_node_id, (MAX_CHILDREN - data_len) as u32);
+                (
+                    store.get_children(&current_node_id),
+                    current_node_id.types(),
+                    current_node_id.mask(),
+                )
+            } else if leaf_node_id.is_leaf() {
+                let data_len = set_mask.count_ones() as usize;
+                store.inc_ref_by(&leaf_node_id, (MAX_CHILDREN - data_len) as u32);
 
-                    (children, 0xFF, 0xFF)
-                }
+                ([leaf_node_id; MAX_CHILDREN], 0xFF, 0xFF)
             } else {
                 (EMPTY_CHILD, 0, 0)
             };
@@ -918,7 +915,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
         let mut mask = 0;
 
         let mut current_id = BlockId::INVALID;
-        let current_path = path;
+        let mut leaf_id = BlockId::EMPTY;
 
         let path_mask_depth = if target_depth > 1 {
             target_depth - 2
@@ -933,9 +930,11 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             println!(" path: {:08X} {:09b}", path, path);
 
             current_id = initial_node_id;
+            leaf_id = BlockId::EMPTY;
 
             for current_depth in 0..target_depth {
                 if current_id.is_leaf() {
+                    leaf_id = current_id;
                     current_id = BlockId::EMPTY;
                 } else {
                     let index = (path >> ((max_depth - current_depth - 1) * 3)) & 0b111;
@@ -1003,19 +1002,36 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
         let inv_mask = !mask;
         let cloned_nodes = existing_mask & inv_mask;
 
-        if mask != 0xFF && cloned_nodes != 0 {
-            let existing_children = store.get_children(&current_id);
+        if mask != 0xFF {
+            if cloned_nodes != 0 {
+                let existing_children = store.get_children(&current_id);
 
-            let mut cloned_nodes_bits = cloned_nodes;
+                let mut cloned_nodes_bits = cloned_nodes;
 
-            while cloned_nodes_bits != 0 {
-                let idx = cloned_nodes_bits.trailing_zeros() as usize;
-                cloned_nodes_bits &= !(1 << idx);
+                while cloned_nodes_bits != 0 {
+                    let idx = cloned_nodes_bits.trailing_zeros() as usize;
+                    cloned_nodes_bits &= !(1 << idx);
 
-                children[idx] = existing_children[idx];
+                    children[idx] = existing_children[idx];
 
-                types |= (children[idx].is_leaf() as u8) << idx;
-                mask |= 1 << idx;
+                    types |= (children[idx].is_leaf() as u8) << idx;
+                    mask |= 1 << idx;
+                }
+            } else if !leaf_id.is_empty() {
+                let leafs_to_clone = inv_mask.count_ones();
+
+                let mut leafs_to_clone_bits = inv_mask;
+
+                types |= inv_mask;
+                mask |= inv_mask;
+
+                while leafs_to_clone_bits != 0 {
+                    let idx = leafs_to_clone_bits.trailing_zeros() as usize;
+                    children[idx] = leaf_id;
+                    leafs_to_clone_bits &= !(1 << idx);
+                }
+
+                store.inc_ref_by(&leaf_id, leafs_to_clone);
             }
         }
 
@@ -1050,7 +1066,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             store.get_ref(&new_node_id)
         );
 
-        let next_path = current_path & path_mask;
+        let next_path = path & path_mask;
         next_paths.push(next_path);
         next_level_data[next_path >> 3] = new_node_id;
 
