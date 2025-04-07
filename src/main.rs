@@ -48,15 +48,15 @@ fn main() {
     let _ = fs::write("stl/cube_mirrored_x.stl", mirrored_cube.to_stl_binary("cube_mirrored_x").unwrap());
 
     // 3) Boolean operations: Union, Subtract, Intersect
-    let union_shape = moved_cube.union(&sphere);
+    let union_shape = moved_cube.union(&sphere).unwrap();
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/union_cube_sphere.stl", union_shape.to_stl_binary("union_cube_sphere").unwrap());
 
-    let subtract_shape = moved_cube.difference(&sphere);
+    let subtract_shape = moved_cube.difference(&sphere).unwrap();
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/subtract_cube_sphere.stl", subtract_shape.to_stl_binary("subtract_cube_sphere").unwrap());
 
-    let intersect_shape = moved_cube.intersection(&sphere);
+    let intersect_shape = moved_cube.intersection(&sphere).unwrap();
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/intersect_cube_sphere.stl", intersect_shape.to_stl_binary("intersect_cube_sphere").unwrap());
 
@@ -189,7 +189,7 @@ fn main() {
 
     let sphere_test = CSG::sphere(1.0, 16, 8, None);
     let cube_test = CSG::cube(1.0, 1.0, 1.0, None);
-    let res = cube_test.difference(&sphere_test);
+    let res = cube_test.difference(&sphere_test).unwrap();
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/sphere_cube_test.stl", res.to_stl_binary("sphere_cube_test").unwrap());
     assert_eq!(res.bounding_box(), cube_test.bounding_box());
@@ -258,15 +258,15 @@ fn main() {
     
     // Distribute a square along an arc
     let square = CSG::circle(1.0, 32, None);
-    let arc_array = square.distribute_arc(5, 5.0, 0.0, 180.0);
+    let arc_array = square.distribute_arc(5, 5.0, 0.0, 180.0).unwrap();
     let _ = fs::write("stl/arc_array.stl", arc_array.to_stl_ascii("arc_array"));
     
     // Distribute that wedge along a linear axis
-    let wedge_line = wedge.distribute_linear(4, nalgebra::Vector3::new(1.0, 0.0, 0.0), 3.0);
+    let wedge_line = wedge.distribute_linear(4, nalgebra::Vector3::new(1.0, 0.0, 0.0), 3.0).unwrap();
     let _ = fs::write("stl/wedge_line.stl", wedge_line.to_stl_ascii("wedge_line"));
     
     // Make a 4x4 grid of the supershape
-    let grid_of_ss = sshape.distribute_grid(4, 4, 3.0, 3.0);
+    let grid_of_ss = sshape.distribute_grid(4, 4, 3.0, 3.0).unwrap();
     let _ = fs::write("stl/grid_of_ss.stl", grid_of_ss.to_stl_ascii("grid_of_ss"));
     
     // 1. Circle with keyway
@@ -458,7 +458,7 @@ fn main() {
             None::<()>,
         )
         .scale(0.05, 0.05, 0.05);
-        let scene = tri_2d.extrude(0.1).union(&arrow);
+        let scene = tri_2d.extrude(0.1).union(&arrow).unwrap();
         let _ = fs::write("stl/scene_right_triangle.stl", scene.to_stl_ascii("scene_right_triangle"));
     }
 

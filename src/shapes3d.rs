@@ -414,7 +414,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone())
             .translate(-cutter_height, -cutter_height/2.0, 0.0);
     
-        let half_egg = egg_2d.difference(&rect_cutter);
+        let half_egg = egg_2d.difference(&rect_cutter).unwrap();
         
         half_egg.rotate_extrude(360.0, revolve_segments).convex_hull()
     }
@@ -443,7 +443,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone())
             .translate(-cutter_height, -cutter_height/2.0, 0.0);
     
-        let half_teardrop = td_2d.difference(&rect_cutter);
+        let half_teardrop = td_2d.difference(&rect_cutter).unwrap();
 
         // revolve 360 degrees
         half_teardrop.rotate_extrude(360.0, revolve_segments).convex_hull()
@@ -548,7 +548,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         );
     
         // Combine the shaft and head.
-        let mut canonical_arrow = shaft.union(&head);
+        let mut canonical_arrow = shaft.union(&head).unwrap();
     
         // If the arrow should point toward start, mirror the geometry in canonical space.
         // The mirror transform about the plane z = arrow_length/2 maps any point (0,0,z) to (0,0, arrow_length - z).
@@ -845,7 +845,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         let gyroid_surf = CSG::from_polygons(&surf_polygons);
 
         // Intersect with `self` to keep only the portion of the gyroid inside this volume.
-        let clipped = gyroid_surf.intersection(self);
+        let clipped = gyroid_surf.intersection(self).unwrap();
 
         clipped
     }

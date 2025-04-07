@@ -569,7 +569,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         let key_rect = CSG::square(key_depth, key_width, metadata.clone())
             .translate(radius - key_depth, -key_width * 0.5, 0.0);
     
-        circle.difference(&key_rect)
+        circle.difference(&key_rect).unwrap()
     }
 
     /// Creates a 2D "D" shape (circle with one flat chord).
@@ -601,7 +601,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             .translate(0.0, -flat_dist, 0.0);        // now top edge is at y = -flat_dist
     
         // 3. Subtract to produce the flat chord
-        circle.difference(&rect_cutter)
+        circle.difference(&rect_cutter).unwrap()
     }
 
     /// Circle with two parallel flat chords on opposing sides (e.g., "double D" shape).
@@ -630,8 +630,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             .translate(-radius, -cutter_height - flat_dist, 0.0);
     
         // 4. Subtract both
-        let with_top_flat = circle.difference(&top_rect);
-        let with_both_flats = with_top_flat.difference(&bottom_rect);
+        let with_top_flat = circle.difference(&top_rect).unwrap();
+        let with_both_flats = with_top_flat.difference(&bottom_rect).unwrap();
     
         with_both_flats
     }
