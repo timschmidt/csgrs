@@ -826,11 +826,15 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
         let mut types = 0;
         let mut mask = 0;
 
+        let mut current_id = BlockId::INVALID;
+        let mut current_path = path;
+        let mut path_mask = 0;
+
         while !done {
             #[cfg(feature = "debug_trace_ref_counts")]
             println!(" path: {:08X} {:09b}", path, path);
 
-            let current_path = path;
+            current_path = path;
             let current_path_index = current_path >> 3;
 
             let next_path = paths.last();
@@ -843,7 +847,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             let mut current_depth = 0;
             let mut parent_depth = 0;
 
-            let mut current_id = initial_node_id;
+            current_id = initial_node_id;
 
             #[cfg(feature = "debug_trace_ref_counts")]
             let mut parent_id = current_id;
@@ -851,7 +855,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             let mut parent_index = 0xff;
 
             let mut index = 0xff;
-            let mut path_mask = 0;
+            path_mask = 0;
             let mut has_next_sibling = false;
 
             while current_depth < target_depth {
@@ -920,89 +924,89 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             #[cfg(feature = "debug_trace_ref_counts")]
             println!("     has_more_paths: {}", !paths.is_empty());
 
-            if done {
-                #[cfg(feature = "debug_trace_ref_counts")]
-                {
-                    println!(
-                        "     types: {:08b} mask: {:08b} current_path: {:09b}",
-                        types,
-                        mask,
-                        current_path & path_mask
-                    );
-                    println!("     children: {:#?}", children);
+            if done {}
+        }
+
+        #[cfg(feature = "debug_trace_ref_counts")]
+        {
+            println!(
+                "     types: {:08b} mask: {:08b} current_path: {:09b}",
+                types,
+                mask,
+                current_path & path_mask
+            );
+            println!("     children: {:#?}", children);
+        }
+
+        let mut cloned_nodes: u8 = 0;
+
+        if mask != 0xFF {
+            let existing_children = store.get_children(&current_id);
+
+            for idx in 0..MAX_CHILDREN {
+                if children[idx].is_empty() && !existing_children[idx].is_empty() {
+                    children[idx] = existing_children[idx];
+                    cloned_nodes |= 1 << idx;
+                    types |= (children[idx].is_leaf() as u8) << idx;
+                    mask |= 1 << idx;
                 }
+            }
+        }
 
-                let mut cloned_nodes: u8 = 0;
+        let first_child = &children[0];
+        let all_same = types == 0xFF && children.iter().all(|item| item == first_child);
 
-                if mask != 0xFF {
-                    let existing_children = store.get_children(&current_id);
+        let new_node_id = if !all_same {
+            let mut bits = cloned_nodes;
+            while bits != 0 {
+                let idx = bits.trailing_zeros() as usize;
+                store.inc_ref(&children[idx]);
+                bits &= !(1 << idx);
+            }
 
-                    for idx in 0..MAX_CHILDREN {
-                        if children[idx].is_empty() && !existing_children[idx].is_empty() {
-                            children[idx] = existing_children[idx];
-                            cloned_nodes |= 1 << idx;
-                            types |= (children[idx].is_leaf() as u8) << idx;
-                            mask |= 1 << idx;
-                        }
-                    }
-                }
+            store.get_or_create_branch(children, types, mask)
+        } else {
+            let dec_ref = if cloned_nodes != 0 {
+                cloned_nodes.count_ones().min(7)
+            } else {
+                7
+            };
 
-                let first_child = &children[0];
-                let all_same = types == 0xFF && children.iter().all(|item| item == first_child);
+            store.dec_ref_by(first_child, dec_ref);
 
-                let new_node_id = if !all_same {
-                    let mut bits = cloned_nodes;
-                    while bits != 0 {
-                        let idx = bits.trailing_zeros() as usize;
-                        store.inc_ref(&children[idx]);
-                        bits &= !(1 << idx);
-                    }
+            *first_child
+        };
 
-                    store.get_or_create_branch(children, types, mask)
-                } else {
-                    let dec_ref = if cloned_nodes != 0 {
-                        cloned_nodes.count_ones().min(7)
-                    } else {
-                        7
-                    };
+        #[cfg(feature = "debug_trace_ref_counts")]
+        println!(
+            "     new_node_id: {:?} ref_count: {}",
+            new_node_id,
+            store.get_ref(&new_node_id)
+        );
 
-                    store.dec_ref_by(first_child, dec_ref);
+        let next_path = current_path & path_mask;
+        next_paths.push(next_path);
+        next_level_data[next_path >> 3] = new_node_id;
 
-                    *first_child
-                };
+        #[cfg(feature = "debug_trace_ref_counts")]
+        println!(
+            "     done: {} has_more_paths: {} target_depth: {}",
+            done,
+            !paths.is_empty(),
+            target_depth
+        );
 
-                #[cfg(feature = "debug_trace_ref_counts")]
-                println!(
-                    "     new_node_id: {:?} ref_count: {}",
-                    new_node_id,
-                    store.get_ref(&new_node_id)
-                );
+        if paths.is_empty() {
+            std::mem::swap(&mut current_level_data, &mut next_level_data);
+            std::mem::swap(&mut paths, &mut next_paths);
+            next_paths.clear();
 
-                let next_path = current_path & path_mask;
-                next_paths.push(next_path);
-                next_level_data[next_path >> 3] = new_node_id;
+            #[cfg(feature = "debug_trace_ref_counts")]
+            println!("  paths: {:#?}", paths);
 
-                #[cfg(feature = "debug_trace_ref_counts")]
-                println!(
-                    "     done: {} has_more_paths: {} target_depth: {}",
-                    done,
-                    !paths.is_empty(),
-                    target_depth
-                );
-
-                if paths.is_empty() {
-                    std::mem::swap(&mut current_level_data, &mut next_level_data);
-                    std::mem::swap(&mut paths, &mut next_paths);
-                    next_paths.clear();
-
-                    #[cfg(feature = "debug_trace_ref_counts")]
-                    println!("  paths: {:#?}", paths);
-
-                    target_depth -= 1;
-                    if target_depth == 0 {
-                        break 'main;
-                    }
-                }
+            target_depth -= 1;
+            if target_depth == 0 {
+                break 'main;
             }
         }
     }
