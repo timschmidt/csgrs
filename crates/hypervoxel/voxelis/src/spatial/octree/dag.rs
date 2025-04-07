@@ -998,7 +998,11 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             println!("     children: {:#?}", children);
         }
 
-        let existing_mask = current_id.mask();
+        let existing_mask = if current_id.is_branch() {
+            current_id.mask()
+        } else {
+            0
+        };
         let inv_mask = !mask;
         let cloned_nodes = existing_mask & inv_mask;
 
@@ -1333,9 +1337,28 @@ mod tests {
     }
 
     #[test]
+    fn test_batch_double_apply() {
+        const TEST_VALUE: u8 = 3;
+        const MAX_DEPTH: u8 = 5;
+        const MEMORY_BUDGET: usize = 1024 * 1024;
+
+        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut octree = SvoDag::new(MAX_DEPTH);
+
+        let position = IVec3::new(0, 0, 0);
+
+        let mut batch = octree.create_batch();
+
+        batch.set(&mut store, position, TEST_VALUE);
+
+        assert!(octree.apply_batch(&mut store, &batch));
+        assert!(!octree.apply_batch(&mut store, &batch));
+    }
+
+    #[test]
     fn test_patterns_set_expand_shared_leaf() {
-        const FILL_VALUE: u8 = 1;
-        const TEST_VALUE: u8 = 2;
+        const START_VALUE: u8 = 1;
+        const END_VALUE: u8 = 6;
         const MAX_DEPTH: u8 = 5;
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
@@ -1343,19 +1366,21 @@ mod tests {
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis() as i32;
 
-        octree.fill(&mut store, FILL_VALUE);
-        octree.set(&mut store, IVec3::new(0, 0, 0), TEST_VALUE);
+        for value in START_VALUE..END_VALUE {
+            octree.fill(&mut store, value * 10);
+            octree.set(&mut store, IVec3::new(0, 0, 0), value);
 
-        for y in 0..voxels_per_axis {
-            for z in 0..voxels_per_axis {
-                for x in 0..voxels_per_axis {
-                    let position = IVec3::new(x, y, z);
-                    let value = if x == 0 && y == 0 && z == 0 {
-                        TEST_VALUE
-                    } else {
-                        FILL_VALUE
-                    };
-                    assert_eq!(octree.get(&store, position), Some(value));
+            for y in 0..voxels_per_axis {
+                for z in 0..voxels_per_axis {
+                    for x in 0..voxels_per_axis {
+                        let position = IVec3::new(x, y, z);
+                        let value = if x == 0 && y == 0 && z == 0 {
+                            value
+                        } else {
+                            value * 10
+                        };
+                        assert_eq!(octree.get(&store, position), Some(value));
+                    }
                 }
             }
         }
@@ -1543,6 +1568,99 @@ mod tests {
         }
         assert!(!octree.is_empty());
         assert!(octree.is_leaf());
+        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+    }
+
+    #[test]
+    fn test_patterns_set_solid_fill_half_one_by_one() {
+        const START_VALUE: u8 = 1;
+        const END_VALUE: u8 = 6;
+        const MAX_DEPTH: u8 = 5;
+        const MEMORY_BUDGET: usize = 1024 * 1024;
+
+        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut octree = SvoDag::new(MAX_DEPTH);
+        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let half_voxels_per_axis = voxels_per_axis / 2;
+
+        for value in START_VALUE..END_VALUE {
+            for y in 0..half_voxels_per_axis {
+                for z in 0..voxels_per_axis {
+                    for x in 0..voxels_per_axis {
+                        let position = IVec3::new(x, y, z);
+                        assert!(octree.set(&mut store, position, value));
+                        assert_eq!(octree.get(&store, position), Some(value));
+                    }
+                }
+            }
+
+            for y in 0..voxels_per_axis {
+                for z in 0..voxels_per_axis {
+                    for x in 0..voxels_per_axis {
+                        let position = IVec3::new(x, y, z);
+                        assert_eq!(
+                            octree.get(&store, position),
+                            if y < half_voxels_per_axis {
+                                Some(value)
+                            } else {
+                                None
+                            }
+                        );
+                    }
+                }
+            }
+        }
+
+        assert!(!octree.is_empty());
+        assert!(!octree.is_leaf());
+        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+    }
+
+    #[test]
+    fn test_patterns_batch_solid_fill_half_one_by_one() {
+        const START_VALUE: u8 = 1;
+        const END_VALUE: u8 = 6;
+        const MAX_DEPTH: u8 = 5;
+        const MEMORY_BUDGET: usize = 1024 * 1024;
+
+        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut octree = SvoDag::new(MAX_DEPTH);
+        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let half_voxels_per_axis = voxels_per_axis / 2;
+
+        for value in START_VALUE..END_VALUE {
+            let mut batch = octree.create_batch();
+
+            for y in 0..half_voxels_per_axis {
+                for z in 0..voxels_per_axis {
+                    for x in 0..voxels_per_axis {
+                        let position = IVec3::new(x, y, z);
+                        assert!(batch.set(&mut store, position, value));
+                    }
+                }
+            }
+
+            assert!(octree.apply_batch(&mut store, &batch));
+
+            for y in 0..voxels_per_axis {
+                for z in 0..voxels_per_axis {
+                    for x in 0..voxels_per_axis {
+                        let position = IVec3::new(x, y, z);
+                        assert_eq!(
+                            octree.get(&store, position),
+                            if y < half_voxels_per_axis {
+                                Some(value)
+                            } else {
+                                None
+                            }
+                        );
+                    }
+                }
+            }
+        }
+
+        assert!(!octree.is_empty());
+        assert!(!octree.is_leaf());
         assert_eq!(store.get_ref(&octree.get_root_id()), 1);
     }
 
