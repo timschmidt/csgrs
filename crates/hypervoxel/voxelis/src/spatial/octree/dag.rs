@@ -11,6 +11,72 @@ use super::{
     OctreeOpsWrite,
 };
 
+const PATH_MASKS: [[u32; MAX_ALLOWED_DEPTH - 1]; MAX_ALLOWED_DEPTH] = [
+    // max_depth == 0
+    [
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+    ],
+    // max_depth == 1
+    [
+        0b00_000_000_000_000_000_000_000_000_000_111,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+    ],
+    // max_depth == 2
+    [
+        0b00_000_000_000_000_000_000_000_000_111_000,
+        0b00_000_000_000_000_000_000_000_000_111_111,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+    ],
+    // max_depth == 3
+    [
+        0b00_000_000_000_000_000_000_000_111_000_000,
+        0b00_000_000_000_000_000_000_000_111_111_000,
+        0b00_000_000_000_000_000_000_000_111_111_111,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+    ],
+    // max_depth == 4
+    [
+        0b00_000_000_000_000_000_000_111_000_000_000,
+        0b00_000_000_000_000_000_000_111_111_000_000,
+        0b00_000_000_000_000_000_000_111_111_111_000,
+        0b00_000_000_000_000_000_000_111_111_111_111,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+    ],
+    // max_depth == 5
+    [
+        0b00_000_000_000_000_000_111_000_000_000_000,
+        0b00_000_000_000_000_000_111_111_000_000_000,
+        0b00_000_000_000_000_000_111_111_111_000_000,
+        0b00_000_000_000_000_000_111_111_111_111_000,
+        0b00_000_000_000_000_000_111_111_111_111_111,
+        0b00_000_000_000_000_000_000_000_000_000_000,
+    ],
+    // max_depth == 6
+    [
+        0b00_000_000_000_000_111_000_000_000_000_000,
+        0b00_000_000_000_000_111_111_000_000_000_000,
+        0b00_000_000_000_000_111_111_111_000_000_000,
+        0b00_000_000_000_000_111_111_111_111_000_000,
+        0b00_000_000_000_000_111_111_111_111_111_000,
+        0b00_000_000_000_000_111_111_111_111_111_111,
+    ],
+];
+
 pub struct SvoDag {
     max_depth: u8,
     root_id: BlockId,
@@ -836,15 +902,35 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
         let mut current_id = BlockId::INVALID;
         let mut current_path = path;
-        let mut path_mask = 0;
+
+        let path_mask_depth = if target_depth > 1 {
+            target_depth - 2
+        } else {
+            0
+        };
+
+        let path_mask = PATH_MASKS[max_depth][path_mask_depth] as usize;
 
         while !done {
             #[cfg(feature = "debug_trace_ref_counts")]
             println!(" path: {:08X} {:09b}", path, path);
 
-            current_path = path;
-            let current_path_index = current_path >> 3;
+            current_id = initial_node_id;
 
+            for current_depth in 0..target_depth {
+                if current_id.is_leaf() {
+                    current_id = BlockId::EMPTY;
+                } else {
+                    let index = (path >> ((max_depth - current_depth - 1) * 3)) & 0b111;
+                    current_id = store.get_child_id(&current_id, index);
+                }
+
+                if current_id.is_empty() {
+                    break;
+                }
+            }
+
+            let target_index = (path >> ((max_depth - target_depth) * 3)) & 0b111;
             let next_path = paths.last();
 
             #[cfg(feature = "debug_trace_ref_counts")]
@@ -852,69 +938,21 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                 println!("  next path: {:08X} {:09b}", next_path, next_path);
             }
 
-            let mut current_depth = 0;
-            let mut parent_depth = 0;
+            let has_next_sibling = if target_depth == 1 {
+                next_path.is_some()
+            } else if let Some(next_path) = next_path {
+                (path & path_mask) == (*next_path & path_mask)
+            } else {
+                false
+            };
 
-            current_id = initial_node_id;
-
-            #[cfg(feature = "debug_trace_ref_counts")]
-            let mut parent_id = current_id;
-            #[cfg(feature = "debug_trace_ref_counts")]
-            let mut parent_index = 0xff;
-
-            let mut index = 0xff;
-            path_mask = 0;
-            let mut has_next_sibling = false;
-
-            while current_depth < target_depth {
-                #[cfg(feature = "debug_trace_ref_counts")]
-                {
-                    parent_index = index;
-                }
-
-                index = (path >> ((max_depth - current_depth - 1) * 3)) & 0b111;
-                path_mask =
-                    (0..=parent_depth).fold(0, |acc, d| acc | (0b111 << (3 * (max_depth - d - 1))));
-
-                has_next_sibling = if target_depth == 1 {
-                    next_path.is_some()
-                } else if let Some(next_path) = next_path {
-                    (path & path_mask) == (*next_path & path_mask)
-                } else {
-                    false
-                };
-
-                #[cfg(feature = "debug_trace_ref_counts")]
-                println!(
-                    "  {}/{} path_mask: {:08X} {:09b} is_next_sibling: {}",
-                    current_depth, target_depth, path_mask, path_mask, has_next_sibling,
-                );
-
-                #[cfg(feature = "debug_trace_ref_counts")]
-                {
-                    parent_id = current_id;
-                }
-
-                current_id = store.get_child_id(&current_id, index);
-
-                #[cfg(feature = "debug_trace_ref_counts")]
-                println!(
-                    "  {:2x} current: {:?} ref_count: {}",
-                    index,
-                    current_id,
-                    store.get_ref(&current_id)
-                );
-
-                parent_depth = current_depth;
-                current_depth += 1;
-            }
-
+            let current_path_index = path >> 3;
             let current_level_id = current_level_data[current_path_index];
-            children[index] = current_level_id;
+            children[target_index] = current_level_id;
             current_level_data[current_path_index] = BlockId::INVALID;
 
-            types |= (current_level_id.is_leaf() as u8) << index;
-            mask |= 1 << index;
+            types |= (current_level_id.is_leaf() as u8) << target_index;
+            mask |= 1 << target_index;
 
             #[cfg(feature = "debug_trace_ref_counts")]
             println!(
@@ -931,8 +969,6 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
             #[cfg(feature = "debug_trace_ref_counts")]
             println!("     has_more_paths: {}", !paths.is_empty());
-
-            if done {}
         }
 
         #[cfg(feature = "debug_trace_ref_counts")]
