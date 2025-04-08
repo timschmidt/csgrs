@@ -395,7 +395,7 @@ impl FromSVG for CSG<()> {
                         if ls.is_closed() {
                             let polygon = Polygon::new(ls, vec![]);
                             let csg = Self::from_geo(polygon.into(), None);
-                            csg_union = csg_union.union(&csg);
+                            csg_union = csg_union.union(&csg).unwrap();
                         }
                     }
                 },
@@ -410,7 +410,7 @@ impl FromSVG for CSG<()> {
 
                     let csg = Self::circle(r, segments, None)
                         .translate(cx, cy, 0.0);
-                    csg_union = csg_union.union(&csg);
+                    csg_union = csg_union.union(&csg).unwrap();
                 },
 
                 Event::Tag(tag::Rectangle, Empty, attrs) => {
@@ -429,7 +429,7 @@ impl FromSVG for CSG<()> {
 
                     let csg = Self::rounded_rectangle(w, h, r, segments, None)
                             .translate(x, y, 0.0);
-                    csg_union = csg_union.union(&csg);
+                    csg_union = csg_union.union(&csg).unwrap();
                 },
 
                 Event::Tag(tag::Ellipse, Empty, attrs) => {
@@ -443,7 +443,7 @@ impl FromSVG for CSG<()> {
 
                     let csg = Self::ellipse(rx * 2.0, ry * 2.0, segments, None)
                         .translate(cx, cy, 0.0);
-                    csg_union = csg_union.union(&csg);
+                    csg_union = csg_union.union(&csg).unwrap();
                 },
 
                 Event::Tag(tag::Line, Empty, attrs) => {
@@ -462,7 +462,7 @@ impl FromSVG for CSG<()> {
                         vec![],
                     );
                     let csg = Self::from_geo(polygon.into(), None);
-                    csg_union = csg_union.union(&csg);
+                    csg_union = csg_union.union(&csg).unwrap();
                 },
 
                 Event::Tag(tag::Polyline, Empty, attrs) => {

@@ -26,6 +26,7 @@ opt-level = "z"
 lto = true
 
 [dependencies]
+anyhow = { version = "1.0.97" }
 # core2 = { version = "0.4.0", default_features = false, features = ["alloc"] } # no-std, still throws errors
 core2 = { version = "0.4.0", features = ["alloc"] }
 nalgebra = "0.33"

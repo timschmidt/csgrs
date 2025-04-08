@@ -93,9 +93,9 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// //   - Possibly an open or closed polygon(s) at z=0
     /// //   - Or empty if no intersection
     /// ```
-    pub fn slice(&self, plane: Plane) -> CSG<S> {
+    pub fn slice(&self, plane: Plane) -> anyhow::Result<CSG<S>> {
         // Build a BSP from all of our polygons:
-        let node = Node::new(&self.polygons.clone());
+        let node = Node::new(&self.polygons.clone())?;
 
         // Ask the BSP for coplanar polygons + intersection edges:
         let (coplanar_polys, intersection_edges) = node.slice(&plane);
@@ -142,11 +142,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
 
         // Return a purely 2D CSG: polygons empty, geometry has the final shape
-        CSG {
+        Ok(CSG {
             polygons: Vec::new(),
             geometry: new_gc,
             metadata: self.metadata.clone(),
-        }
+        })
     }
     
     /// Checks if the CSG object is manifold.

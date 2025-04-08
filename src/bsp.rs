@@ -19,7 +19,7 @@ pub struct Node<S: Clone> {
 }
 
 impl<S: Clone + Send + Sync> Node<S> {
-    pub fn new(polygons: &[Polygon<S>]) -> Self {
+    pub fn new(polygons: &[Polygon<S>]) -> anyhow::Result<Self> {
         let mut node = Node {
             plane: None,
             front: None,
@@ -27,9 +27,9 @@ impl<S: Clone + Send + Sync> Node<S> {
             polygons: Vec::new(),
         };
         if !polygons.is_empty() {
-            node.build(polygons);
+            node.build(polygons)?;
         }
-        node
+        Ok(node)
     }
 
     /// Invert all polygons in the BSP tree
@@ -79,13 +79,11 @@ impl<S: Clone + Send + Sync> Node<S> {
 
         // For each polygon, split it by the node's plane.
         for poly in polygons {
-            plane.split_polygon(
-                poly,
-                &mut coplanar_front,
-                &mut coplanar_back,
-                &mut front,
-                &mut back,
-            );
+            let (cf, cb, f, b) = plane.split_polygon(poly);
+            coplanar_front.extend(cf);
+            coplanar_back.extend(cb);
+            front.extend(f);
+            back.extend(b);
         }
 
         // Now decide where to send the coplanar polygons.  If the polygon’s normal
@@ -242,13 +240,14 @@ impl<S: Clone + Send + Sync> Node<S> {
 
     /// Build a BSP tree from the given polygons
     #[cfg(not(feature = "parallel"))]
-    pub fn build(&mut self, polygons: &[Polygon<S>]) {
+    pub fn build(&mut self, polygons: &[Polygon<S>]) -> anyhow::Result<()> {
         if polygons.is_empty() {
-            return;
+            return Ok(());
         }
 
         // Choose the first polygon's plane as the splitting plane if not already set.
-        if self.plane.is_none() {
+        let has_no_plane = self.plane.is_none();
+        if has_no_plane {
             self.plane = Some(polygons[0].plane.clone());
         }
         let plane = self.plane.clone().unwrap();
@@ -258,36 +257,38 @@ impl<S: Clone + Send + Sync> Node<S> {
 
         // For each polygon, split it relative to the current node's plane.
         for p in polygons {
-            let mut coplanar_front = Vec::new();
-            let mut coplanar_back = Vec::new();
+            let (coplanar_front, coplanar_back, f, b) = plane.split_polygon(p);
 
-            plane.split_polygon(
-                p,
-                &mut coplanar_front,
-                &mut coplanar_back,
-                &mut front,
-                &mut back,
-            );
+            self.polygons.extend(coplanar_front);
+            self.polygons.extend(coplanar_back);
 
-            self.polygons.append(&mut coplanar_front);
-            self.polygons.append(&mut coplanar_back);
+            front.extend(f);
+            back.extend(b);
         }
+
+        // the following cases cause stack overflow
+        // the first element of polygons is used to extract the plane, but the result of split is all in the same front/back,
+        // so the recursive build causes stack overflow
+        anyhow::ensure!(!has_no_plane || front.len() != polygons.len(), "all polygons are front");
+        anyhow::ensure!(!has_no_plane || back.len() != polygons.len(), "all polygons are back");
 
         // Recursively build the front subtree.
         if !front.is_empty() {
             if self.front.is_none() {
-                self.front = Some(Box::new(Node::new(&[])));
+                self.front = Some(Box::new(Node::new(&[])?));
             }
-            self.front.as_mut().unwrap().build(&front);
+            self.front.as_mut().unwrap().build(&front)?;
         }
 
         // Recursively build the back subtree.
         if !back.is_empty() {
             if self.back.is_none() {
-                self.back = Some(Box::new(Node::new(&[])));
+                self.back = Some(Box::new(Node::new(&[])?));
             }
-            self.back.as_mut().unwrap().build(&back);
+            self.back.as_mut().unwrap().build(&back)?;
         }
+
+        Ok(())
     }
 
     // ------------------------------------------------------------------------

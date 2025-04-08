@@ -1,10 +1,10 @@
-#[cfg(test)]
-use crate::float_types::{Real, EPSILON, FRAC_PI_2};
 use crate::bsp::Node;
-use crate::vertex::Vertex;
+use crate::csg::CSG;
+#[cfg(test)]
+use crate::float_types::{EPSILON, FRAC_PI_2, Real};
 use crate::plane::Plane;
 use crate::polygon::Polygon;
-use crate::csg::CSG;
+use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 
 // --------------------------------------------------------
@@ -123,27 +123,16 @@ fn test_degenerate_polygon_after_clipping() {
         w: 0.0,
     };
 
-    let mut coplanar_front = Vec::new();
-    let mut coplanar_back = Vec::new();
-    let mut front = Vec::new();
-    let mut back = Vec::new();
-
     eprintln!("Original polygon: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
 
-    plane.split_polygon(
-        &polygon,
-        &mut coplanar_front,
-        &mut coplanar_back,
-        &mut front,
-        &mut back,
-    );
+    let (_cf, _cb, f, b) = plane.split_polygon(&polygon);
 
-    eprintln!("Front polygons: {:?}", front);
-    eprintln!("Back polygons: {:?}", back);
+    eprintln!("Front polygons: {:?}", f);
+    eprintln!("Back polygons: {:?}", b);
 
-    assert!(front.is_empty(), "Front should be empty for this test");
-    assert!(back.is_empty(), "Back should be empty for this test");
+    assert!(f.is_empty(), "Front should be empty for this test");
+    assert!(b.is_empty(), "Back should be empty for this test");
 }
 
 #[test]
@@ -161,27 +150,16 @@ fn test_valid_polygon_clipping() {
         w: -0.5,
     };
 
-    let mut coplanar_front = Vec::new();
-    let mut coplanar_back = Vec::new();
-    let mut front = Vec::new();
-    let mut back = Vec::new();
-
     eprintln!("Polygon before clipping: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
 
-    plane.split_polygon(
-        &polygon,
-        &mut coplanar_front,
-        &mut coplanar_back,
-        &mut front,
-        &mut back,
-    );
+    let (_cf, _cb, f, b) = plane.split_polygon(&polygon);
 
-    eprintln!("Front polygons: {:?}", front);
-    eprintln!("Back polygons: {:?}", back);
+    eprintln!("Front polygons: {:?}", f);
+    eprintln!("Back polygons: {:?}", b);
 
-    assert!(!front.is_empty(), "Front should not be empty");
-    assert!(!back.is_empty(), "Back should not be empty");
+    assert!(!f.is_empty(), "Front should not be empty");
+    assert!(!b.is_empty(), "Back should not be empty");
 }
 
 // ------------------------------------------------------------
@@ -254,12 +232,7 @@ fn test_plane_split_polygon() {
         None,
     );
 
-    let mut cf = Vec::new(); // coplanar_front
-    let mut cb = Vec::new(); // coplanar_back
-    let mut f = Vec::new(); // front
-    let mut b = Vec::new(); // back
-
-    plane.split_polygon(&poly, &mut cf, &mut cb, &mut f, &mut b);
+    let (cf, cb, f, b) = plane.split_polygon(&poly);
     // This polygon is spanning across y=0 plane => we expect no coplanar, but front/back polygons.
     assert_eq!(cf.len(), 0);
     assert_eq!(cb.len(), 0);
@@ -407,7 +380,7 @@ fn test_node_new_and_build() {
         ],
         None,
     );
-    let node: Node<()> = Node::new(&[p.clone()]);
+    let node: Node<()> = Node::new(&[p.clone()]).unwrap();
     // The node should have built a tree with plane = p.plane, polygons = [p], no front/back children
     assert!(node.plane.is_some());
     assert_eq!(node.polygons.len(), 1);
@@ -425,7 +398,7 @@ fn test_node_invert() {
         ],
         None,
     );
-    let mut node: Node<()> = Node::new(&[p.clone()]);
+    let mut node: Node<()> = Node::new(&[p.clone()]).unwrap();
     let original_count = node.polygons.len();
     let original_normal = node.plane.as_ref().unwrap().normal;
     node.invert();
@@ -434,7 +407,7 @@ fn test_node_invert() {
     assert!(approx_eq(flipped_normal.x, -original_normal.x, EPSILON));
     assert!(approx_eq(flipped_normal.y, -original_normal.y, EPSILON));
     assert!(approx_eq(flipped_normal.z, -original_normal.z, EPSILON));
-    // We shouldn’t lose polygons by inverting
+    // We shouldn't lose polygons by inverting
     assert_eq!(node.polygons.len(), original_count);
     // If we invert back, we should get the same geometry
     node.invert();
@@ -485,7 +458,7 @@ fn test_node_clip_polygons2() {
         poly_in_plane.clone(),
         poly_above.clone(),
         poly_below.clone(),
-    ]);
+    ]).unwrap();
     // Now node has polygons: [poly_in_plane], front child with poly_above, back child with poly_below
 
     // Clip a polygon that crosses from z=-0.5 to z=0.5
@@ -515,7 +488,7 @@ fn test_node_clip_to() {
         ],
         None,
     );
-    let mut node_a: Node<()> = Node::new(&[poly]);
+    let mut node_a: Node<()> = Node::new(&[poly]).unwrap();
     // Another polygon that fully encloses the above
     let big_poly: Polygon<()> = Polygon::new(
         vec![
@@ -526,7 +499,7 @@ fn test_node_clip_to() {
         ],
         None,
     );
-    let node_b: Node<()> = Node::new(&[big_poly]);
+    let node_b: Node<()> = Node::new(&[big_poly]).unwrap();
     node_a.clip_to(&node_b);
     // We expect nodeA's polygon to be present
     let all_a = node_a.all_polygons();
@@ -553,7 +526,7 @@ fn test_node_all_polygons() {
         None,
     );
 
-    let node: Node<()> = Node::new(&[poly1.clone(), poly2.clone()]);
+    let node: Node<()> = Node::new(&[poly1.clone(), poly2.clone()]).unwrap();
     let all_polys = node.all_polygons();
     // We expect to retrieve both polygons
     assert_eq!(all_polys.len(), 2);
@@ -583,7 +556,7 @@ fn test_csg_union() {
     let cube1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).translate(-1.0, -1.0, -1.0); // from -1 to +1 in all coords
     let cube2: CSG<()> = CSG::cube(1.0, 1.0, 1.0, None).translate(0.5, 0.5, 0.5);
 
-    let union_csg = cube1.union(&cube2);
+    let union_csg = cube1.union(&cube2).unwrap();
     let polys = union_csg.to_polygons();
     assert!(
         !polys.is_empty(),
@@ -606,7 +579,7 @@ fn test_csg_difference() {
     let big_cube: CSG<()> = CSG::cube(4.0, 4.0, 4.0, None).translate(-2.0, -2.0, -2.0); // radius=2 => spans [-2,2]
     let small_cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).translate(-1.0, -1.0, -1.0); // radius=1 => spans [-1,1]
 
-    let result = big_cube.difference(&small_cube);
+    let result = big_cube.difference(&small_cube).unwrap();
     let polys = result.to_polygons();
     assert!(
         !polys.is_empty(),
@@ -624,8 +597,8 @@ fn test_csg_difference() {
 fn test_csg_union2() {
     let c1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None); // cube from (-1..+1) if that's how you set radius=1 by default
     let c2: CSG<()> = CSG::sphere(1.0, 16, 8, None); // default sphere radius=1
-    let unioned = c1.union(&c2);
-    // We can check bounding box is bigger or at least not smaller than either shape’s box
+    let unioned = c1.union(&c2).unwrap();
+    // We can check bounding box is bigger or at least not smaller than either shape's box
     let bb_union = unioned.bounding_box();
     let bb_cube = c1.bounding_box();
     let bb_sphere = c2.bounding_box();
@@ -637,7 +610,7 @@ fn test_csg_union2() {
 fn test_csg_intersect() {
     let c1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
     let c2: CSG<()> = CSG::sphere(1.0, 16, 8, None);
-    let isect = c1.intersection(&c2);
+    let isect = c1.intersection(&c2).unwrap();
     let bb_isect = isect.bounding_box();
     // The intersection bounding box should be smaller than or equal to each
     let bb_cube = c1.bounding_box();
@@ -653,7 +626,7 @@ fn test_csg_intersect2() {
     let sphere: CSG<()> = CSG::sphere(1.0, 16, 8, None);
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
 
-    let intersection = sphere.intersection(&cube);
+    let intersection = sphere.intersection(&cube).unwrap();
     let polys = intersection.to_polygons();
     assert!(
         !polys.is_empty(),
@@ -799,7 +772,7 @@ fn test_csg_transform_translate_rotate_scale() {
     for v in &poly0.vertices {
         // After a 90° rotation around X, the old Y should become old Z,
         // and the old Z should become -old Y.
-        // We can’t trivially guess each vertex's new coordinate but can do a sanity check:
+        // We can't trivially guess each vertex's new coordinate but can do a sanity check:
         // The bounding box in Y might be [-1..1], but let's check we have differences in Y from original.
         assert_ne!(v.pos.y, 0.0); // Expect something was changed if originally it was ±1 in Z
     }
@@ -808,7 +781,10 @@ fn test_csg_transform_translate_rotate_scale() {
 #[test]
 fn test_csg_mirror() {
     let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    let plane_x = Plane { normal: Vector3::x(), w: 0.0 }; // x=0 plane
+    let plane_x = Plane {
+        normal: Vector3::x(),
+        w: 0.0,
+    }; // x=0 plane
     let mirror_x = c.mirror(plane_x);
     let bb_mx = mirror_x.bounding_box();
     // The original cube was from x=0..2, so mirrored across X=0 should be -2..0
@@ -926,6 +902,7 @@ fn test_csg_extrude() {
 #[test]
 fn test_csg_rotate_extrude() {
     // Default square is from (0,0) to (1,1) in XY.
+    // Shift it so it's from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
     // Shift it so it’s from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
     // and rotate it 90 degrees so that it can be swept around Z
     let square: CSG<()> = CSG::square(2.0, 2.0, None)
@@ -1167,7 +1144,7 @@ fn test_union_metadata() {
     }
 
     // Union
-    let union_csg = sq1.union(&sq2);
+    let union_csg = sq1.union(&sq2).unwrap();
 
     // Depending on the library's polygon splitting, we often end up with multiple polygons.
     // We can at least confirm that each polygon's shared data is EITHER "Square1" or "Square2",
@@ -1198,7 +1175,7 @@ fn test_difference_metadata() {
         p.set_metadata("Cube2".to_string());
     }
 
-    let result = cube1.difference(&cube2);
+    let result = cube1.difference(&cube2).unwrap();
 
     // All polygons in the result should come from "Cube1" only.
     for poly in &result.polygons {
@@ -1225,7 +1202,7 @@ fn test_intersect_metadata() {
         p.set_metadata("Cube2".to_string());
     }
 
-    let result = cube1.intersection(&cube2);
+    let result = cube1.intersection(&cube2).unwrap();
 
     // Depending on the implementation, it's common that intersection polygons are
     // actually from both shapes or from shape A. Let's check that if they do have shared data,
@@ -1319,7 +1296,7 @@ fn test_complex_metadata_struct_in_boolean_ops() {
         p.set_metadata(Color(0, 255, 0));
     }
 
-    let unioned = csg1.union(&csg2);
+    let unioned = csg1.union(&csg2).unwrap();
     // Now polygons are either from csg1 (red) or csg2 (green).
     for poly in &unioned.polygons {
         let col = poly.metadata().unwrap();
@@ -1552,7 +1529,7 @@ fn test_union_of_extruded_shapes() {
     let csg2 = CSG::extrude_between(&bottom2, &top2, true);
 
     // Union them
-    let unioned = csg1.union(&csg2);
+    let unioned = csg1.union(&csg2).unwrap();
 
     // Sanity check: union shouldn’t be empty
     assert!(!unioned.polygons.is_empty());
@@ -1604,7 +1581,10 @@ fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::<()>::cylinder(1.0, 2.0, 32, None).center();
     // 2) Slice at z=0
-    let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
+    let cross_section = cyl.slice(Plane {
+        normal: Vector3::z(),
+        w: 0.0,
+    }).unwrap();
 
     // For a simple cylinder, the cross-section is typically 1 circle polygon
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
