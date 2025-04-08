@@ -63,14 +63,14 @@ mod rationals {
 }
 
 mod signed {
-    use num::{bigint::ToBigInt, BigInt};
+    use num::{BigInt, bigint::ToBigInt};
     use std::sync::LazyLock;
 
     pub(super) static ONE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&1).unwrap());
 }
 
 mod unsigned {
-    use num::{bigint::ToBigUint, BigUint};
+    use num::{BigUint, bigint::ToBigUint};
     use std::sync::LazyLock;
 
     pub(super) static ONE: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&1).unwrap());
@@ -82,8 +82,8 @@ mod unsigned {
     pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&6).unwrap());
 }
 
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
 pub type Signal = Arc<AtomicBool>;
 
@@ -374,7 +374,7 @@ impl Real {
                     class: Exp(self.rational.clone()),
                     computable: Computable::e(self.rational),
                     signal: None,
-                })
+                });
             }
             Ln(ln) => {
                 if let Some(int) = self.rational.to_big_integer() {

@@ -1,6 +1,6 @@
 use crate::Problem;
 use num::bigint::Sign::{self, *};
-use num::{bigint::ToBigInt, bigint::ToBigUint, BigInt, BigUint};
+use num::{BigInt, BigUint, bigint::ToBigInt, bigint::ToBigUint};
 use num::{One, Zero};
 use std::sync::LazyLock;
 

@@ -37,11 +37,7 @@ impl_integer_conversion!(u64);
 impl_integer_conversion!(u128);
 
 fn signed(n: Rational, neg: bool) -> Rational {
-    if neg {
-        -n
-    } else {
-        n
-    }
+    if neg { -n } else { n }
 }
 
 impl TryFrom<f32> for Rational {

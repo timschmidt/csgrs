@@ -49,7 +49,7 @@ impl TryFrom<f64> for Real {
 
 impl Real {
     pub(crate) fn fold(self) -> Computable {
-        use crate::real::{rationals, Class};
+        use crate::real::{Class, rationals};
 
         let mut c = if self.rational == *rationals::ONE {
             self.computable

@@ -1,7 +1,7 @@
-use crate::computable::approximation::Approximation;
 use crate::Rational;
+use crate::computable::approximation::Approximation;
 use core::cmp::Ordering;
-use num::{bigint::Sign, BigInt, BigUint};
+use num::{BigInt, BigUint, bigint::Sign};
 use num::{One, Zero};
 use std::cell::RefCell;
 use std::ops::Deref;
@@ -17,8 +17,8 @@ enum Cache {
     Valid((Precision, BigInt)),
 }
 
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
 pub type Signal = Arc<AtomicBool>;
 
@@ -49,7 +49,7 @@ mod rationals {
 
 mod signed {
     use num::One;
-    use num::{bigint::ToBigInt, BigInt};
+    use num::{BigInt, bigint::ToBigInt};
     use std::sync::LazyLock;
 
     pub(super) static MINUS_ONE: LazyLock<BigInt> =
@@ -72,7 +72,7 @@ mod signed {
 
 mod unsigned {
     use num::One;
-    use num::{bigint::ToBigUint, BigUint};
+    use num::{BigUint, bigint::ToBigUint};
     use std::sync::LazyLock;
 
     pub(super) static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);

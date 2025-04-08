@@ -1,5 +1,5 @@
-use crate::computable::{unsigned, Precision};
 use crate::Computable;
+use crate::computable::{Precision, unsigned};
 use core::fmt;
 use num::bigint::Sign::Minus;
 use num::{BigUint, Zero};
@@ -52,11 +52,7 @@ fn enough_bits(msd: Precision, prec: Option<usize>) -> Precision {
     }
 
     let bits = bits(prec.unwrap_or(DEFAULT_PRECISION)) as Precision;
-    if msd > 0 {
-        bits + msd
-    } else {
-        bits
-    }
+    if msd > 0 { bits + msd } else { bits }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -73,11 +69,7 @@ impl Places {
             Exp(n) => n + 1,
             Zero(n) => {
                 let places = n as i32 + exp + 1;
-                if places < 0 {
-                    0
-                } else {
-                    places as usize
-                }
+                if places < 0 { 0 } else { places as usize }
             }
         }
     }

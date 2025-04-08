@@ -25,6 +25,18 @@ In some places the natural way to express the API in Rust differs from Java and 
 the Java uses recursion but I expressed the same algorithm with iteration in Rust, sometimes taking the opportunity to incorporate the signal
 checking early termination.
 
+### Naming
+
+The Java class BoundedRational is `Rational` in realistic, while UnifiedReal is `Real`, CRPropery is named `Class` and CR is `Computable`.
+
+`Rational::to_big_integer` has a different name because in Rust `as` signifies that this conversion is cheap
+
+In some places these APIs provide a `Problem` where the Java throws various Exception classes. Some programming errors will panic but
+ordinary arithmetic operations should only fail with a `Problem` such a `Problem::DivideByZero`.
+
+Many APIs use `Option<T>` where the analogous Java relies on nullability, others use `Result<Real, Problem>` to reflect the possibility of
+unrecoverable errors during either parsing or approximation of results.
+
 ### Conversions
 
 Where applicable the Rust conversion APIs (From, Into, TryFrom, TryInto) are made available for these types.
@@ -33,7 +45,9 @@ You can convert f32 or f64 (IEEE floating point values) into a Rational or Real.
 value. This should round trip correctly, note that these convert to the closest binary fraction *not* to the decimal fraction as displayed.
 Conversions from f32 or f64 are fallible, as both NaN and Infinity do not have equivalents in these types.
 
-You can convert i32 or i64 directly into a Real.
+You can convert any of the integer types (such as i8 or u128) into a Rational or Real, this is an infallible conversion. You can also
+convert a Rational to any of the integer types, however if the Rational isn't an integer, or is outside the range of the integer target type
+this conversion fails with the appropriate Problem.
 
 ### Arithmetic operators on Rational and Real
 
@@ -41,13 +55,6 @@ Unlike Java, Rust has "Operator overloading" or rather, we can implement many ar
 where the Java API provides named functions, in many cases the Rust API provides operators, such as + (impl Add) and * (impl Multiply)
 
 I have chosen not to provide this capability for Computable, this might be revisited later
-
-### Naming
-
-`BoundedRational::to_big_integer` has a different name because in Rust `as` signifies that this conversion is cheap
-
-Many APIs use Option<T> where the analogous Java relies on nullability, others use Result<Real, Problem> to reflect the possibility of
-unrecoverable errors during either parsing or approximation of results.
 
 ## Performance
 
