@@ -125,6 +125,7 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
             branch_nodes: 1,
             max_alive_nodes: 0,
             max_node_id: 0,
+            max_ref_count: 0,
             max_generation: 0,
             generations_overflows: 0,
         };
@@ -224,6 +225,14 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
         );
 
         *self.ref_counts.get_mut(block_id.index()) += 1;
+
+        #[cfg(feature = "memory_stats")]
+        {
+            self.stats.max_ref_count = self
+                .stats
+                .max_ref_count
+                .max(*self.ref_counts.get(block_id.index()) as usize);
+        }
     }
 
     pub fn dec_ref(&mut self, block_id: &BlockId) -> bool {
@@ -336,6 +345,14 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
         );
 
         *self.ref_counts.get_mut(block_id.index()) += count;
+
+        #[cfg(feature = "memory_stats")]
+        {
+            self.stats.max_ref_count = self
+                .stats
+                .max_ref_count
+                .max(*self.ref_counts.get(block_id.index()) as usize);
+        }
     }
 
     pub fn dec_ref_by(&mut self, block_id: &BlockId, count: u32) {

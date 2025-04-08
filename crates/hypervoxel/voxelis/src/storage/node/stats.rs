@@ -16,6 +16,7 @@ pub struct StoreStats {
     pub branch_nodes: usize,
     pub max_alive_nodes: usize,
     pub max_node_id: usize,
+    pub max_ref_count: usize,
     pub max_generation: usize,
     pub generations_overflows: usize,
 }
