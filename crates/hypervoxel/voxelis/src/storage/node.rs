@@ -57,7 +57,7 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
         //     humanize_bytes::humanize_bytes_decimal!(requested_budget),
         //     humanize_bytes::humanize_bytes_decimal!(actual_budget),
         //     humanize_bytes::humanize_bytes_decimal!(single_node_size),
-        //     humanize_bytes::humanize_quantity!(nodes_count),
+        //     humanize_bytes::humanize_quantity!(nodes_capacity),
         // );
 
         assert!(nodes_capacity > 0, "Requested budget is too small");
