@@ -386,6 +386,17 @@ if let Some(data_mut) = poly.metadata_mut() {
 - [csgrs-egui-example](https://github.com/timschmidt/csgrs-egui-example)
 - [csgrs-druid-example](https://github.com/timschmidt/csgrs-druid-example)
 
+## Build tests
+A cargo xtask is included in the repository for testing building with various combinations of feature flags.  To use it, you must install cargo xtask:
+```rust
+cargo install xtask
+```
+
+To run the tests:
+```rust
+cargo xtask test-all
+```
+
 ## Performance
 Patterns we work to follow throughout the library to improve performance and memory usage:
 - functions should accept borrowed slices, this permits easy use of iterators
@@ -419,7 +430,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - reduce dependency feature sets
 - space filling curves, hilbert sort polygons / points
 - identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold
-- svg import/export using https://crates.io/crates/geo-svg-io
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - screw threads
 - support scale and translation along a vector in rotate extrude
@@ -459,7 +469,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - verify functions against robust predicates here: https://github.com/hayashi-stl/robust-geo/blob/main/src/geo.rs
   - https://github.com/georust/robust
   - https://proptest-rs.github.io/proptest/intro.html
-- https://github.com/u65xhd/meshvox
 - https://crates.io/crates/geo-validity-check as compile time option
 - https://crates.io/crates/geo-index
 - https://github.com/lelongg/geo-rand
