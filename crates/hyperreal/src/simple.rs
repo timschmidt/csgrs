@@ -462,4 +462,15 @@ mod tests {
         let ans = format!("{result:#.29}");
         assert_eq!(ans, "1231233424.00000000000000000000000000032");
     }
+
+    #[test]
+    fn tan() {
+        let empty = HashMap::new();
+        let xpr: Simple = "(/ (* (tan (* pi 3.8)) 7.9) (tan (/ pi 5)))"
+            .parse()
+            .unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
+        let m79: Real = "-7.9".parse().unwrap();
+        assert_eq!(result, m79);
+    }
 }
