@@ -1343,12 +1343,11 @@ where S: Clone + Send + Sync {
 
     /// Import a CSG object from DXF data.
     ///
-    /// # Parameters
-    ///
+    /// ## Parameters
     /// - `dxf_data`: A byte slice containing the DXF file data.
+    /// - `metadata`: metadata that will be attached to all polygons of the resulting `CSG`
     ///
-    /// # Returns
-    ///
+    /// ## Returns
     /// A `Result` containing the CSG object or an error if parsing fails.
     #[cfg(feature = "dxf-io")]
     pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>) -> Result<CSG<S>, Box<dyn Error>> {

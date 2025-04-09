@@ -209,10 +209,10 @@ where S: Clone + Send + Sync {
                 let p1 = &poly.vertices[i1].pos;
 
                 // Order them so (p0, p1) and (p1, p0) become the same key
-                let (a_key, b_key) = if approx_lt(&p0, &p1) {
-                    (point_key(&p0), point_key(&p1))
+                let (a_key, b_key) = if approx_lt(p0, p1) {
+                    (point_key(p0), point_key(p1))
                 } else {
-                    (point_key(&p1), point_key(&p0))
+                    (point_key(p1), point_key(p0))
                 };
 
                 *edge_counts.entry((a_key, b_key)).or_insert(0) += 1;
