@@ -145,15 +145,18 @@ impl Rational {
     /// use realistic::Rational;
     /// let five = Rational::new(5);
     /// let a_fifth = Rational::fraction(1, 5).unwrap();
-    /// assert_eq!(five.clone().inverse(), a_fifth);
-    /// assert_eq!(a_fifth.clone().inverse(), five);
+    /// assert_eq!(five.clone().inverse().unwrap(), a_fifth);
+    /// assert_eq!(a_fifth.clone().inverse().unwrap(), five);
     /// ```
-    pub fn inverse(self) -> Self {
-        Self {
+    pub fn inverse(self) -> Result<Self, Problem> {
+        if self.numerator == BigUint::ZERO {
+            return Err(Problem::DivideByZero);
+        }
+        Ok(Self {
             sign: self.sign,
             numerator: self.denominator,
             denominator: self.numerator,
-        }
+        })
     }
 
     /// Checks if the value is an integer.
@@ -465,7 +468,7 @@ impl Rational {
             return Err(Problem::Exhausted);
         }
         match exp.sign() {
-            Minus => Ok(self.inverse().pow_up(exp.magnitude())),
+            Minus => Ok(self.inverse()?.pow_up(exp.magnitude())),
             Plus => Ok(self.pow_up(exp.magnitude())),
             NoSign => unreachable!(),
         }
@@ -669,6 +672,7 @@ impl Div for Rational {
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
+        assert_ne!(other.numerator, BigUint::ZERO);
         let sign = self.sign * other.sign;
         let numerator = self.numerator * other.denominator;
         let denominator = self.denominator * other.numerator;
@@ -802,14 +806,14 @@ mod tests {
         let two = Rational::new(2);
         let zero = Rational::zero();
         let minus_two = zero - two;
-        let i2 = minus_two.inverse();
+        let i2 = minus_two.inverse().unwrap();
         assert_eq!(i2, minus_half);
     }
 
     #[test]
     fn half_plus_one_times_two() {
         let two = Rational::new(2);
-        let half = two.inverse();
+        let half = two.inverse().unwrap();
         let one = Rational::one();
         let two = Rational::new(2);
         let three = Rational::new(3);
@@ -943,6 +947,9 @@ mod tests {
     #[test]
     fn divide_by_zero() {
         let err = Rational::fraction(1, 0).unwrap_err();
+        assert_eq!(err, Problem::DivideByZero);
+        let zero = Rational::zero();
+        let err = zero.inverse().unwrap_err();
         assert_eq!(err, Problem::DivideByZero);
     }
 }

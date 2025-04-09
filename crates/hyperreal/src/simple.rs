@@ -110,7 +110,8 @@ impl Simple {
                     let mut value: Real = self.operands.first().unwrap().value(names)?;
                     let operands = self.operands.iter().skip(1);
                     for operand in operands {
-                        value = (value / operand.value(names)?)?;
+                        let inverse = operand.value(names)?.inverse()?;
+                        value = value * inverse;
                     }
                     Ok(value)
                 }

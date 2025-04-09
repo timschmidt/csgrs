@@ -263,7 +263,7 @@ impl Real {
         match &self.class {
             One => {
                 return Ok(Self {
-                    rational: self.rational.inverse(),
+                    rational: self.rational.inverse()?,
                     class: One,
                     computable: Computable::one(),
                     signal: None,
@@ -271,7 +271,7 @@ impl Real {
             }
             Sqrt(sqrt) => {
                 if let Some(sqrt) = sqrt.to_big_integer() {
-                    let rational = (self.rational * Rational::from_bigint(sqrt)).inverse();
+                    let rational = (self.rational * Rational::from_bigint(sqrt)).inverse()?;
                     return Ok(Self {
                         rational,
                         class: self.class,
@@ -283,7 +283,7 @@ impl Real {
             Exp(exp) => {
                 let exp = Neg::neg(exp.clone());
                 return Ok(Self {
-                    rational: self.rational.inverse(),
+                    rational: self.rational.inverse()?,
                     class: Exp(exp.clone()),
                     computable: Computable::e(exp),
                     signal: None,
@@ -292,7 +292,7 @@ impl Real {
             _ => (),
         }
         Ok(Self {
-            rational: self.rational.inverse(),
+            rational: self.rational.inverse()?,
             class: Irrational,
             computable: Computable::inverse(self.computable),
             signal: None,
@@ -394,29 +394,29 @@ impl Real {
 
     // Ensure the resulting Real uses r > 1 for Ln(r)
     // this is convenient elsewhere and makes commonality more frequent
-    fn ln_rational(r: Rational) -> Self {
+    fn ln_rational(r: Rational) -> Result<Real, Problem> {
         use std::cmp::Ordering::*;
 
         match r.partial_cmp(rationals::ONE.deref()) {
             Some(Less) => {
-                let inv = r.inverse();
+                let inv = r.inverse()?;
                 let new = Computable::rational(inv.clone());
-                Self {
+                Ok(Self {
                     rational: Rational::new(-1),
                     class: Ln(inv),
                     computable: Computable::ln(new),
                     signal: None,
-                }
+                })
             }
-            Some(Equal) => Self::zero(),
+            Some(Equal) => Ok(Self::zero()),
             Some(Greater) => {
                 let new = Computable::rational(r.clone());
-                Self {
+                Ok(Self {
                     rational: Rational::one(),
                     class: Ln(r),
                     computable: Computable::ln(new),
                     signal: None,
-                }
+                })
             }
             _ => unreachable!(),
         }
@@ -428,7 +428,7 @@ impl Real {
             return Err(Problem::NotANumber);
         }
         match &self.class {
-            One => return Ok(Self::ln_rational(self.rational)),
+            One => return Self::ln_rational(self.rational),
             Exp(exp) => {
                 if self.rational == *rationals::ONE {
                     return Ok(Self {
@@ -877,7 +877,9 @@ impl Add for Real {
             };
             if let Ok(r) = Self::simple_log_sum(self.rational.clone(), b, other.rational.clone(), d)
             {
-                return Self::ln_rational(r);
+                if let Ok(simple) = Self::ln_rational(r) {
+                    return simple;
+                }
             }
         }
         let left = self.fold();
