@@ -1351,6 +1351,8 @@ where S: Clone + Send + Sync {
     /// A `Result` containing the CSG object or an error if parsing fails.
     #[cfg(feature = "dxf-io")]
     pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>) -> Result<CSG<S>, Box<dyn Error>> {
+        use geo::line_string;
+
         // Load the DXF drawing from the provided data
         let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
 
@@ -1392,10 +1394,15 @@ where S: Clone + Send + Sync {
                         circle.center.z as Real,
                     );
                     let radius = circle.radius as Real;
+                    // FIXME: this seems a bit low maybe make it relative to the radius
                     let segments = 32; // Number of segments to approximate the circle
 
-                    let mut verts = Vec::new();
-                    let normal = Vector3::z(); // Assuming circle lies in XY plane
+                    let mut verts = Vec::with_capacity(segments + 1);
+                    let normal = Vector3::new(
+                        circle.normal.x as Real,
+                        circle.normal.y as Real,
+                        circle.normal.z as Real
+                    ).normalize();
 
                     for i in 0..segments {
                         let theta = 2.0 * PI * (i as Real) / (segments as Real);
@@ -1408,7 +1415,33 @@ where S: Clone + Send + Sync {
                     // Create a polygon from the approximated circle vertices
                     polygons.push(Polygon::new(verts, metadata.clone()));
                 }
-                // Handle other entity types as needed (e.g., Arc, Spline)
+                EntityType::Solid(solid) => {
+                    let thickness = solid.thickness as Real;
+                    let extrusion_direction = Vector3::new(
+                        solid.extrusion_direction.x as Real,
+                        solid.extrusion_direction.y as Real,
+                        solid.extrusion_direction.z as Real
+                    );
+
+                    let extruded = CSG::from_geo(
+                        GeoPolygon::new(line_string![
+                            (x: solid.first_corner.x as Real, y: solid.first_corner.y as Real),
+                            (x: solid.second_corner.x as Real, y: solid.second_corner.y as Real),
+                            (x: solid.third_corner.x as Real, y: solid.third_corner.y as Real),
+                            (x: solid.fourth_corner.x as Real, y: solid.fourth_corner.y as Real),
+                            (x: solid.first_corner.x as Real, y: solid.first_corner.y as Real),
+                        ], Vec::new()).into(),
+                        None,
+                        )
+                            .extrude_vector(extrusion_direction * thickness).polygons;
+
+                        polygons.extend(extruded);
+                }
+                // todo convert image to work with `from_image`
+                // EntityType::Image(image) => {}
+                // todo convert image to work with `text`, also try using system fonts for a better chance of having the font
+                // EntityType::Text(text) => {}
+                // Handle other entity types as needed (e.g., Line, Spline)
                 _ => {
                     // Ignore unsupported entity types for now
                 }
