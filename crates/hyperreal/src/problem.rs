@@ -21,6 +21,7 @@ pub enum Problem {
     InsufficientParameters,
     /// Tried to convert a floating point NaN, which has no equivalent
     /// or evaluated the Logarithm of a non-positive value
+    /// or evaluated some other function outside its domain
     NotANumber,
     /// Tried to convert a floating point Infinity which has no equivalent
     Infinity,

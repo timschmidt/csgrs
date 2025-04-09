@@ -12,6 +12,7 @@ enum Class {
     Exp(Rational),   // Rational is never zero
     Ln(Rational),    // Rational > 1
     SinPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
+    TanPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     Irrational,
 }
 
@@ -27,6 +28,7 @@ impl PartialEq for Class {
             (Exp(r), Exp(s)) => r == s,
             (Ln(r), Ln(s)) => r == s,
             (SinPi(r), SinPi(s)) => r == s,
+            (TanPi(r), TanPi(s)) => r == s,
             (_, _) => false,
         }
     }
@@ -176,6 +178,24 @@ impl Real {
             computable: Computable::e(one),
             signal: None,
         }
+    }
+}
+
+// Tan(r) is a repeating shape
+// returns whether to negate, and the (if necessary reflected) fraction
+// 0 < r < 0.5
+// Never actually used for exact zero or half
+fn tan_curve(r: Rational) -> (bool, Rational) {
+    let mut s = r.fract();
+    let mut flip = false;
+    if s.sign() == Sign::Minus {
+        flip = true;
+        s = s.neg();
+    }
+    if s > *rationals::HALF {
+        (!flip, Rational::one() - s)
+    } else {
+        (flip, s)
     }
 }
 
@@ -552,6 +572,84 @@ impl Real {
         self.make_computable(Computable::cos)
     }
 
+    /// The tangent of this Real.
+    pub fn tan(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            return Ok(Self::zero());
+        }
+
+        match &self.class {
+            One => {
+                let new = Computable::rational(self.rational.clone());
+                return Ok(Self {
+                    rational: Rational::one(),
+                    class: Irrational,
+                    computable: Computable::tan(new),
+                    signal: None,
+                });
+            }
+            Pi => {
+                if self.rational.is_integer() {
+                    return Ok(Self::zero());
+                }
+                let (neg, n) = tan_curve(self.rational);
+                let mut r: Option<Real> = None;
+                let d = n.denominator();
+                if d == unsigned::TWO.deref() {
+                    return Err(Problem::NotANumber);
+                }
+                if d == unsigned::THREE.deref() {
+                    r = Some(Self {
+                        rational: Rational::one(),
+                        class: Sqrt(Rational::new(3)),
+                        computable: Computable::sqrt_rational(Rational::new(3)),
+                        signal: None,
+                    });
+                }
+                if d == unsigned::FOUR.deref() {
+                    r = Some(Self::new(Rational::one()));
+                }
+                if d == unsigned::SIX.deref() {
+                    r = Some(Self {
+                        rational: Rational::fraction(1, 3).unwrap(),
+                        class: Sqrt(Rational::new(3)),
+                        computable: Computable::sqrt_rational(Rational::new(3)),
+                        signal: None,
+                    });
+                }
+                if let Some(real) = r {
+                    if neg {
+                        return Ok(real.neg());
+                    } else {
+                        return Ok(real);
+                    }
+                } else {
+                    let new =
+                        Computable::multiply(Computable::pi(), Computable::rational(n.clone()));
+                    if neg {
+                        return Ok(Self {
+                            rational: Rational::new(-1),
+                            class: TanPi(n),
+                            computable: Computable::tan(new),
+                            signal: None,
+                        });
+                    } else {
+                        return Ok(Self {
+                            rational: Rational::one(),
+                            class: TanPi(n),
+                            computable: Computable::tan(new),
+                            signal: None,
+                        });
+                    }
+                }
+            }
+            _ => (),
+        }
+        let s = self.clone().sin();
+        let c = self.cos();
+        s / c
+    }
+
     fn recursive_powi(base: &Real, exp: &BigUint) -> Self {
         if exp == unsigned::ONE.deref() {
             return base.clone();
@@ -808,6 +906,7 @@ impl fmt::Display for Real {
                 Ln(n) => write!(f, " x ln({})", &n),
                 Sqrt(n) => write!(f, " √({})", &n),
                 SinPi(n) => write!(f, " x sin({} x Pi)", &n),
+                TanPi(n) => write!(f, " x tan({} x Pi)", &n),
                 _ => write!(f, " x {:?}", self.class),
             }
         }
@@ -1010,6 +1109,12 @@ impl Div for Real {
     type Output = Result<Self, Problem>;
 
     fn div(self, other: Self) -> Result<Self, Problem> {
+        if other.definitely_zero() {
+            return Err(Problem::DivideByZero);
+        }
+        if self.definitely_zero() {
+            return Ok(Self::zero());
+        }
         if self.class == other.class {
             let rational = self.rational / other.rational;
             return Ok(Self::new(rational));
@@ -1017,12 +1122,6 @@ impl Div for Real {
         if other.class == One {
             let rational = self.rational / other.rational;
             return Ok(Self { rational, ..self });
-        }
-        if self.definitely_zero() {
-            return Ok(Self::zero());
-        }
-        if other.definitely_zero() {
-            return Err(Problem::DivideByZero);
         }
 
         let inverted = other.inverse()?;

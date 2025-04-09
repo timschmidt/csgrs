@@ -194,6 +194,12 @@ impl Computable {
         Self::pi().shift_right(1).add(self.negate()).cos()
     }
 
+    /// Tangent of this number.
+    pub fn tan(self) -> Computable {
+        let c = self.clone().cos().inverse();
+        self.sin().multiply(c)
+    }
+
     fn ln2() -> Self {
         let prescaled_9 = Self::rational(rationals::SHORT_9.clone()).prescaled_ln();
         let prescaled_24 = Self::rational(rationals::SHORT_24.clone()).prescaled_ln();

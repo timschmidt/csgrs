@@ -16,6 +16,7 @@ enum Operator {
     Ln,
     Cos,
     Sin,
+    Tan,
     Pow,
 }
 
@@ -156,6 +157,14 @@ impl Simple {
                 let value = operand.value(names)?.sin();
                 Ok(value)
             }
+            Tan => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                let operand = self.operands.first().unwrap();
+                let value = operand.value(names)?.tan()?;
+                Ok(value)
+            }
             Pow => {
                 if self.operands.len() != 2 {
                     return Err(Problem::ParseError);
@@ -190,6 +199,7 @@ impl Simple {
             "cos" => Ok(Cos),
             "sin" => Ok(Sin),
             "pow" => Ok(Pow),
+            "tan" => Ok(Tan),
             _ => Err("No such operator"),
         }
     }
