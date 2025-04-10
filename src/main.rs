@@ -299,7 +299,7 @@ fn main() {
     {
         let circle2d = CSG::circle(1.0, 32, None).expect("more then 2 segments");
         // extrude along an arbitrary vector
-        let extruded_along_vec = circle2d.extrude_vector(Vector3::new(0.0, 0.0, 2.0));
+        let extruded_along_vec = circle2d.extrude_vector(Vector3::new(0.0, 0.0, 2.0)).expect("direction is > then epsilon");
         let _ = fs::write("stl/scene_extrude_vector.stl", extruded_along_vec.to_stl_ascii("scene_extrude_vector"));
     }
 

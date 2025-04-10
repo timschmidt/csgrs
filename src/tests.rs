@@ -4,6 +4,7 @@ use crate::float_types::{EPSILON, FRAC_PI_2, Real};
 use crate::plane::Plane;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
+use geo::Area;
 use nalgebra::{Point3, Vector3};
 
 // --------------------------------------------------------
@@ -123,21 +124,10 @@ fn test_degenerate_polygon_after_clipping() {
         intercept: 0.0,
     };
 
-    let mut coplanar_front = Vec::new();
-    let mut coplanar_back = Vec::new();
-    let mut front = Vec::new();
-    let mut back = Vec::new();
-
     eprintln!("Original polygon: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
 
-    plane.split_polygon(
-        &polygon,
-        &mut coplanar_front,
-        &mut coplanar_back,
-        &mut front,
-        &mut back,
-    );
+    let (_, _, front, back) = plane.split_polygon(&polygon);
 
     eprintln!("Front polygons: {:?}", front);
     eprintln!("Back polygons: {:?}", back);
@@ -161,21 +151,10 @@ fn test_valid_polygon_clipping() {
         intercept: -0.5,
     };
 
-    let mut coplanar_front = Vec::new();
-    let mut coplanar_back = Vec::new();
-    let mut front = Vec::new();
-    let mut back = Vec::new();
-
     eprintln!("Polygon before clipping: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
 
-    plane.split_polygon(
-        &polygon,
-        &mut coplanar_front,
-        &mut coplanar_back,
-        &mut front,
-        &mut back,
-    );
+    let (_, _, front, back) = plane.split_polygon(&polygon);
 
     eprintln!("Front polygons: {:?}", front);
     eprintln!("Back polygons: {:?}", back);
@@ -254,22 +233,18 @@ fn test_plane_split_polygon() {
         None,
     ).expect("Three or more vertices are supplied");
 
-    let mut cf = Vec::new(); // coplanar_front
-    let mut cb = Vec::new(); // coplanar_back
-    let mut f = Vec::new(); // front
-    let mut b = Vec::new(); // back
+    let (coplanar_front, coplanar_back, front, back) = plane.split_polygon(&poly);
 
-    plane.split_polygon(&poly, &mut cf, &mut cb, &mut f, &mut b);
     // This polygon is spanning across y=0 plane => we expect no coplanar, but front/back polygons.
-    assert_eq!(cf.len(), 0);
-    assert_eq!(cb.len(), 0);
-    assert_eq!(f.len(), 1);
-    assert_eq!(b.len(), 1);
+    assert_eq!(coplanar_front.len(), 0);
+    assert_eq!(coplanar_back.len(), 0);
+    assert_eq!(front.len(), 1);
+    assert_eq!(back.len(), 1);
 
     // Check that each part has at least 3 vertices and is "above" or "below" the plane
     // in rough terms
-    let front_poly = &f[0];
-    let back_poly = &b[0];
+    let front_poly = &front[0];
+    let back_poly = &back[0];
     assert!(front_poly.vertices.len() >= 3);
     assert!(back_poly.vertices.len() >= 3);
 
@@ -1357,37 +1332,27 @@ fn test_complex_metadata_struct_in_boolean_ops() {
     }
 }
 
-/// Helper function to calculate the signed area of a polygon.
-/// Positive area indicates CCW ordering.
-fn signed_area(polygon: &Polygon<()>) -> Real {
-    let mut area = 0.0;
-    let verts = &polygon.vertices;
-    for i in 0..verts.len() {
-        let j = (i + 1) % verts.len();
-        area += (verts[i].pos.x * verts[j].pos.y) - (verts[j].pos.x * verts[i].pos.y);
-    }
-    area / 2.0
-}
+// Positive area indicates CCW ordering.
 
 #[test]
 fn test_square_ccw_ordering() {
-    let square = CSG::square(2.0, 2.0, None);
-    assert_eq!(square.polygons.len(), 1);
-    let poly = &square.polygons[0];
-    let area = signed_area(poly);
+    let square = CSG::<()>::square(2.0, 2.0, None);
+    assert_eq!(square.geometry.0.len(), 1);
+    let poly = &square.geometry[0];
+    let area = poly.signed_area();
     assert!(area > 0.0, "Square vertices are not CCW ordered");
 }
 
 #[test]
 fn test_offset_2d_positive_distance_grows() {
-    let square = CSG::square(2.0, 2.0, None); // Centered square with size 2x2
+    let square = CSG::<()>::square(2.0, 2.0, None); // Centered square with size 2x2
     let offset = square.offset(0.5); // Positive offset should grow the square
 
     // The original square has area 4.0
     // The offset square should have area greater than 4.0
-    assert_eq!(offset.polygons.len(), 1);
-    let poly = &offset.polygons[0];
-    let area = signed_area(poly);
+    assert_eq!(offset.geometry.len(), 1);
+    let poly = &offset.geometry[0];
+    let area = poly.signed_area();
     assert!(
         area > 4.0,
         "Offset with positive distance did not grow the square"
@@ -1396,14 +1361,14 @@ fn test_offset_2d_positive_distance_grows() {
 
 #[test]
 fn test_offset_2d_negative_distance_shrinks() {
-    let square = CSG::square(2.0, 2.0, None); // Centered square with size 2x2
+    let square = CSG::<()>::square(2.0, 2.0, None); // Centered square with size 2x2
     let offset = square.offset(-0.5); // Negative offset should shrink the square
 
     // The original square has area 4.0
     // The offset square should have area less than 4.0
-    assert_eq!(offset.polygons.len(), 1);
-    let poly = &offset.polygons[0];
-    let area = signed_area(poly);
+    assert_eq!(offset.geometry.len(), 1);
+    let poly = &offset.geometry[0];
+    let area = poly.signed_area();
     assert!(
         area < 4.0,
         "Offset with negative distance did not shrink the square"
@@ -1414,24 +1379,24 @@ fn test_offset_2d_negative_distance_shrinks() {
 fn test_polygon_2d_enforce_ccw_ordering() {
     // Define a triangle in CW order
     let points_cw = vec![[0.0, 0.0], [1.0, 0.0], [0.5, 1.0]];
-    let mut csg_cw = CSG::polygon(&points_cw, None);
+    let mut csg_cw = CSG::<()>::polygon(&points_cw, None);
     // Enforce CCW ordering
     csg_cw.renormalize();
-    let poly = &csg_cw.polygons[0];
-    let area = signed_area(poly);
+    let poly = &csg_cw.geometry[0];
+    let area = poly.signed_area();
     assert!(area > 0.0, "Polygon ordering was not corrected to CCW");
 }
 
 #[test]
 fn test_circle_offset_2d() {
-    let circle = CSG::circle(1.0, 32, None).expect("more then two segments");
+    let circle = CSG::<()>::circle(1.0, 32, None).expect("more then two segments");
     let offset_grow = circle.offset(0.2); // Should grow the circle
     let offset_shrink = circle.offset(-0.2); // Should shrink the circle
 
     // Original circle has area ~3.1416
     let original_area = 3.141592653589793;
-    let grow_area = signed_area(&offset_grow.polygons[0]);
-    let shrink_area = signed_area(&offset_shrink.polygons[0]);
+    let grow_area = offset_grow.geometry[0].signed_area();
+    let shrink_area = offset_shrink.geometry[0].signed_area();
 
     assert!(
         grow_area > original_area,
@@ -1850,49 +1815,49 @@ fn test_flatten_and_union_debug() {
 fn test_contains_vertex() {
     let csg_cube = CSG::<()>::cube(6.0, 6.0, 6.0, None);
 
-    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)).unwrap());
-    assert!(csg_cube.contains_vertex(&Point3::new(1.0, 2.0, 5.9)).unwrap());
-    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0)).unwrap());
-    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, -6.0)).unwrap());
-    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.0)).unwrap());
-    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.01)).unwrap());
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
+    assert!(csg_cube.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, -6.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.0)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.01)));
 
-    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.99999999999)).unwrap());
-    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-11)).unwrap());
-    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-14)).unwrap());
-    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.9 + 9e-9)).unwrap());
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.99999999999)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-11)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-14)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.9 + 9e-9)));
 
-    assert!(csg_cube.contains_vertex(&Point3::new(3.0, -3.0, 3.0)).unwrap());
-    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, -3.01, 3.0)).unwrap());
-    assert!(csg_cube.contains_vertex(&Point3::new(0.01, 4.0, 3.0)).unwrap());
-    assert!(!csg_cube.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)).unwrap());
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, -3.0, 3.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, -3.01, 3.0)));
+    assert!(csg_cube.contains_vertex(&Point3::new(0.01, 4.0, 3.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)));
 
     let csg_cube_hole = CSG::<()>::cube(4.0, 4.0, 4.0, None);
     let cube_with_hole = csg_cube.difference(&csg_cube_hole);
 
-    assert!(!cube_with_hole.contains_vertex(&Point3::new(0.01, 4.0, 3.0)).unwrap());
-    assert!(cube_with_hole.contains_vertex(&Point3::new(0.01, 4.01, 3.0)).unwrap());
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(0.01, 4.0, 3.0)));
+    assert!(cube_with_hole.contains_vertex(&Point3::new(0.01, 4.01, 3.0)));
 
-    assert!(!cube_with_hole.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)).unwrap());
-    assert!(cube_with_hole.contains_vertex(&Point3::new(1.0, 2.0, 5.9)).unwrap());
-    assert!(!cube_with_hole.contains_vertex(&Point3::new(3.0, 3.0, 6.0)).unwrap());
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)));
+    assert!(cube_with_hole.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
 
     let csg_sphere = CSG::<()>::sphere(6.0, 14, 14, None);
 
-    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 3.0)).unwrap());
-    assert!(csg_sphere.contains_vertex(&Point3::new(-3.0, -3.0, -3.0)).unwrap());
-    assert!(!csg_sphere.contains_vertex(&Point3::new(1.0, 2.0, 5.9)).unwrap());
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(-3.0, -3.0, -3.0)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
 
-    assert!(!csg_sphere.contains_vertex(&Point3::new(1.0, 1.0, 5.8)).unwrap());
-    assert!(!csg_sphere.contains_vertex(&Point3::new(0.0, 3.0, 5.8)).unwrap());
-    assert!(csg_sphere.contains_vertex(&Point3::new(0.0, 0.0, 5.8)).unwrap());
+    assert!(!csg_sphere.contains_vertex(&Point3::new(1.0, 1.0, 5.8)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(0.0, 3.0, 5.8)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(0.0, 0.0, 5.8)));
 
-    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 6.0)).unwrap());
-    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -6.0)).unwrap());
-    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 0.0)).unwrap());
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -6.0)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 0.0)));
 
-    assert!(csg_sphere.contains_vertex(&Point3::new(0.0, 0.0, -5.8)).unwrap());
-    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -5.8)).unwrap());
-    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -6.01)).unwrap());
-    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 0.01)).unwrap());
+    assert!(csg_sphere.contains_vertex(&Point3::new(0.0, 0.0, -5.8)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -5.8)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -6.01)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 0.01)));
 }

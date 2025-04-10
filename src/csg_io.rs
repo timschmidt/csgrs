@@ -465,7 +465,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                         solid.extrusion_direction.z as Real
                     );
 
-                    let extruded = CSG::from_geo(
+                    let shape_2d = CSG::from_geo(
                         GeoPolygon::new(line_string![
                             (x: solid.first_corner.x as Real, y: solid.first_corner.y as Real),
                             (x: solid.second_corner.x as Real, y: solid.second_corner.y as Real),
@@ -474,8 +474,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                             (x: solid.first_corner.x as Real, y: solid.first_corner.y as Real),
                         ], Vec::new()).into(),
                         None,
-                    )
-                        .extrude_vector(extrusion_direction * thickness).polygons;
+                    );
+                    let extruded = match shape_2d.extrude_vector(extrusion_direction * thickness) {
+                        Ok(csg) => csg.polygons,
+                        Err(e) => return Err(either::Either::Left(e)),
+                    };
 
                     polygons.extend(extruded);
                 }
