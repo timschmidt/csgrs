@@ -1,11 +1,11 @@
 use crate::csg::CSG;
-use crate::float_types::{Real, EPSILON};
+use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
+use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
+use geo::{CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point3, Vector3};
-use geo::{coord, GeometryCollection, Geometry, LineString, Polygon as GeoPolygon, CoordsIter};
 use std::fmt::Debug;
-use fast_surface_nets::{surface_nets, SurfaceNetsBuffer};
 
 #[derive(Debug, Clone)]
 pub struct MetaBall {
@@ -14,7 +14,7 @@ pub struct MetaBall {
 }
 
 impl MetaBall {
-    pub fn new(center: Point3<Real>, radius: Real) -> Self {
+    pub const fn new(center: Point3<Real>, radius: Real) -> Self {
         Self { center, radius }
     }
 
@@ -34,7 +34,8 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
     value
 }
 
-impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
+impl<S: Clone + Debug> CSG<S>
+where S: Clone + Send + Sync {
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
     /// - `balls`: array of (center, radius).
     /// - `resolution`: (nx, ny) grid resolution for marching squares.
@@ -46,13 +47,13 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         resolution: (usize, usize),
         iso_value: Real,
         padding: Real,
-        metadata: Option<S>
+        metadata: Option<S>,
     ) -> CSG<S> {
         let (nx, ny) = resolution;
         if balls.is_empty() || nx < 2 || ny < 2 {
             return CSG::new();
         }
-    
+
         // 1) Compute bounding box around all metaballs
         let mut min_x = Real::MAX;
         let mut min_y = Real::MAX;
@@ -65,61 +66,61 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             if center.y - rr < min_y { min_y = center.y - rr; }
             if center.y + rr > max_y { max_y = center.y + rr; }
         }
-    
+
         let dx = (max_x - min_x) / (nx as Real - 1.0);
         let dy = (max_y - min_y) / (ny as Real - 1.0);
-    
+
         // 2) Fill a grid with the summed “influence” minus iso_value
         fn scalar_field(balls: &[(nalgebra::Point2<Real>, Real)], x: Real, y: Real) -> Real {
             let mut v = 0.0;
             for (c, r) in balls {
                 let dx = x - c.x;
                 let dy = y - c.y;
-                let dist_sq = dx*dx + dy*dy + EPSILON;
-                v += (r*r) / dist_sq;
+                let dist_sq = dx * dx + dy * dy + EPSILON;
+                v += (r * r) / dist_sq;
             }
             v
         }
-    
+
         let mut grid = vec![0.0; nx * ny];
-        let index = |ix: usize, iy: usize| -> usize { iy*nx + ix };
+        let index = |ix: usize, iy: usize| -> usize { iy * nx + ix };
         for iy in 0..ny {
-            let yv = min_y + (iy as Real)*dy;
+            let yv = min_y + (iy as Real) * dy;
             for ix in 0..nx {
-                let xv = min_x + (ix as Real)*dx;
+                let xv = min_x + (ix as Real) * dx;
                 let val = scalar_field(balls, xv, yv) - iso_value;
                 grid[index(ix, iy)] = val;
             }
         }
-    
+
         // 3) Marching squares -> line segments
         let mut contours = Vec::<LineString<Real>>::new();
-    
+
         // Interpolator:
-        let interpolate = |(x1, y1, v1): (Real,Real,Real),
-                        (x2, y2, v2): (Real,Real,Real)| -> (Real,Real) {
-            let denom = (v2 - v1).abs();
-            if denom < EPSILON {
-                (x1, y1)
-            } else {
-                let t = -v1 / (v2 - v1); // crossing at 0
-                (x1 + t*(x2 - x1), y1 + t*(y2 - y1))
-            }
-        };
-    
+        let interpolate =
+            |(x1, y1, v1): (Real, Real, Real), (x2, y2, v2): (Real, Real, Real)| -> (Real, Real) {
+                let denom = (v2 - v1).abs();
+                if denom < EPSILON {
+                    (x1, y1)
+                } else {
+                    let t = -v1 / (v2 - v1); // crossing at 0
+                    (x1 + t * (x2 - x1), y1 + t * (y2 - y1))
+                }
+            };
+
         for iy in 0..(ny - 1) {
-            let y0 = min_y + (iy as Real)*dy;
-            let y1 = min_y + ((iy+1) as Real)*dy;
-    
+            let y0 = min_y + (iy as Real) * dy;
+            let y1 = min_y + ((iy + 1) as Real) * dy;
+
             for ix in 0..(nx - 1) {
-                let x0 = min_x + (ix as Real)*dx;
-                let x1 = min_x + ((ix+1) as Real)*dx;
-    
-                let v0 = grid[index(ix,   iy  )];
-                let v1 = grid[index(ix+1, iy  )];
-                let v2 = grid[index(ix+1, iy+1)];
-                let v3 = grid[index(ix,   iy+1)];
-    
+                let x0 = min_x + (ix as Real) * dx;
+                let x1 = min_x + ((ix + 1) as Real) * dx;
+
+                let v0 = grid[index(ix, iy)];
+                let v1 = grid[index(ix + 1, iy)];
+                let v2 = grid[index(ix + 1, iy + 1)];
+                let v3 = grid[index(ix, iy + 1)];
+
                 // classification
                 let mut c = 0u8;
                 if v0 >= 0.0 { c |= 1; }
@@ -129,14 +130,14 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 if c == 0 || c == 15 {
                     continue; // no crossing
                 }
-    
+
                 let corners = [
                     (x0, y0, v0),
                     (x1, y0, v1),
                     (x1, y1, v2),
                     (x0, y1, v3),
                 ];
-    
+
                 let mut pts = Vec::new();
                 // function to check each edge
                 let mut check_edge = |mask_a: u8, mask_b: u8, a: usize, b: usize| {
@@ -147,51 +148,53 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                         pts.push((px, py));
                     }
                 };
-    
+
                 check_edge(1, 2, 0, 1);
                 check_edge(2, 4, 1, 2);
                 check_edge(4, 8, 2, 3);
                 check_edge(8, 1, 3, 0);
-    
+
                 // we might get 2 intersection points => single line segment
                 // or 4 => two line segments, etc.
                 // For simplicity, we just store them in a small open polyline:
                 if pts.len() >= 2 {
                     let mut pl = LineString::new(vec![]);
                     for &(px, py) in &pts {
-                        pl.0.push(coord!{x: px, y: py});
+                        pl.0.push(coord! {x: px, y: py});
                     }
                     // Do not close. These are just line segments from this cell.
                     contours.push(pl);
                 }
             }
         }
-    
+
         // 4) Convert these line segments into geo::LineStrings or geo::Polygons if closed.
         //    We store them in a GeometryCollection.
         let mut gc = GeometryCollection::default();
-    
+
         // If you want to unify them into continuous lines, you can do so,
         // but for now let's just push each as a separate line or polygon if closed.
         for pl in contours {
             let n = pl.coords_count();
-            if n < 2 { continue; }
-    
+            if n < 2 {
+                continue;
+            }
+
             // gather coords
             let coords: Vec<_> = (0..n).map(|i| {
                 let v = pl.0[i];
                 (v.x, v.y)
             }).collect();
-    
+
             // Check if first == last => closed
             let closed = {
                 let first = coords[0];
-                let last  = coords[n-1];
+                let last = coords[n - 1];
                 let dx = first.0 - last.0;
                 let dy = first.1 - last.1;
-                (dx*dx + dy*dy).sqrt() < EPSILON
+                (dx * dx + dy * dy).sqrt() < EPSILON
             };
-    
+
             if closed {
                 // Turn it into a Polygon
                 let polygon_2d = GeoPolygon::new(LineString::from(coords.clone()), vec![]);
@@ -201,12 +204,12 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 gc.0.push(Geometry::LineString(LineString::from(coords)));
             }
         }
-    
+
         CSG::from_geo(gc, metadata)
     }
 
     /// **Creates a CSG from a list of metaballs** by sampling a 3D grid and using marching cubes.
-    /// 
+    ///
     /// - `balls`: slice of metaball definitions (center + radius).
     /// - `resolution`: (nx, ny, nz) defines how many steps along x, y, z.
     /// - `iso_value`: threshold at which the isosurface is extracted.
@@ -221,15 +224,15 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         if balls.is_empty() {
             return CSG::new();
         }
-    
+
         // Determine bounding box of all metaballs (plus padding).
         let mut min_pt = Point3::new(Real::MAX, Real::MAX, Real::MAX);
         let mut max_pt = Point3::new(-Real::MAX, -Real::MAX, -Real::MAX);
-    
+
         for mb in balls {
             let c = &mb.center;
             let r = mb.radius + padding;
-    
+
             if c.x - r < min_pt.x {
                 min_pt.x = c.x - r;
             }
@@ -239,7 +242,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             if c.z - r < min_pt.z {
                 min_pt.z = c.z - r;
             }
-    
+
             if c.x + r > max_pt.x {
                 max_pt.x = c.x + r;
             }
@@ -250,26 +253,26 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 max_pt.z = c.z + r;
             }
         }
-    
+
         // Resolution for X, Y, Z
         let nx = resolution.0.max(2) as u32;
         let ny = resolution.1.max(2) as u32;
         let nz = resolution.2.max(2) as u32;
-    
+
         // Spacing in each axis
         let dx = (max_pt.x - min_pt.x) / (nx as Real - 1.0);
         let dy = (max_pt.y - min_pt.y) / (ny as Real - 1.0);
         let dz = (max_pt.z - min_pt.z) / (nz as Real - 1.0);
-    
+
         // Create and fill the scalar-field array with "field_value - iso_value"
         // so that the isosurface will be at 0.
         let array_size = (nx * ny * nz) as usize;
-        let mut field_values = vec![0.0 as f32; array_size];
-    
+        let mut field_values = vec![0.0; array_size];
+
         let index_3d = |ix: u32, iy: u32, iz: u32| -> usize {
             (iz * ny + iy) as usize * (nx as usize) + ix as usize
         };
-    
+
         for iz in 0..nz {
             let zf = min_pt.z + (iz as Real) * dz;
             for iy in 0..ny {
@@ -277,7 +280,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 for ix in 0..nx {
                     let xf = min_pt.x + (ix as Real) * dx;
                     let p = Point3::new(xf, yf, zf);
-    
+
                     let val = scalar_field_metaballs(balls, &p) - iso_value;
                     field_values[index_3d(ix, iy, iz)] = val as f32;
                 }
@@ -323,72 +326,72 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
     
         let shape = GridShape { nx, ny, nz };
-    
+
         // We'll collect the output into a SurfaceNetsBuffer
         let mut sn_buffer = SurfaceNetsBuffer::default();
-    
+
         // The region we pass to surface_nets is the entire 3D range [0..nx, 0..ny, 0..nz]
         // minus 1 in each dimension to avoid indexing past the boundary:
         let (max_x, max_y, max_z) = (nx - 1, ny - 1, nz - 1);
-    
+
         surface_nets(
-            &field_values,      // SDF array
-            &shape,             // custom shape
-            [0, 0, 0],          // minimum corner in lattice coords
+            &field_values, // SDF array
+            &shape,        // custom shape
+            [0, 0, 0],     // minimum corner in lattice coords
             [max_x, max_y, max_z],
             &mut sn_buffer,
         );
-    
+
         // Convert the resulting surface net indices/positions into Polygons
         // for the csgrs data structures.
         let mut triangles = Vec::with_capacity(sn_buffer.indices.len() / 3);
-    
+
         for tri in sn_buffer.indices.chunks_exact(3) {
             let i0 = tri[0] as usize;
             let i1 = tri[1] as usize;
             let i2 = tri[2] as usize;
-    
+
             let p0_index = sn_buffer.positions[i0];
             let p1_index = sn_buffer.positions[i1];
             let p2_index = sn_buffer.positions[i2];
-            
+
             // Convert from index space to real (world) space:
             let p0_real = Point3::new(
                 min_pt.x + p0_index[0] as Real * dx,
                 min_pt.y + p0_index[1] as Real * dy,
-                min_pt.z + p0_index[2] as Real * dz
+                min_pt.z + p0_index[2] as Real * dz,
             );
-            
+
             let p1_real = Point3::new(
                 min_pt.x + p1_index[0] as Real * dx,
                 min_pt.y + p1_index[1] as Real * dy,
-                min_pt.z + p1_index[2] as Real * dz
+                min_pt.z + p1_index[2] as Real * dz,
             );
-            
+
             let p2_real = Point3::new(
                 min_pt.x + p2_index[0] as Real * dx,
                 min_pt.y + p2_index[1] as Real * dy,
-                min_pt.z + p2_index[2] as Real * dz
+                min_pt.z + p2_index[2] as Real * dz,
             );
-            
-            // Likewise for the normals if you want them in true world space. 
-            // Usually you'd need to do an inverse-transpose transform if your 
+
+            // Likewise for the normals if you want them in true world space.
+            // Usually you'd need to do an inverse-transpose transform if your
             // scale is non-uniform. For uniform voxels, scaling is simpler:
-            
+
             let n0 = sn_buffer.normals[i0];
             let n1 = sn_buffer.normals[i1];
             let n2 = sn_buffer.normals[i2];
-            
+
             // Construct your vertices:
             let v0 = Vertex::new(p0_real, Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real));
             let v1 = Vertex::new(p1_real, Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real));
             let v2 = Vertex::new(p2_real, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
-    
+
             // Each tri is turned into a Polygon with 3 vertices
             let poly = Polygon::new(vec![v0, v2, v1], metadata.clone());
             triangles.push(poly);
         }
-    
+
         // Build and return a CSG from these polygons
         CSG::from_polygons(&triangles)
     }

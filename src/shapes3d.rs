@@ -1,12 +1,13 @@
 use crate::csg::CSG;
-use std::fmt::Debug;
-use crate::float_types::{Real, PI, EPSILON, TAU};
+use crate::float_types::{EPSILON, PI, Real, TAU};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
-use nalgebra::{Point3, Vector3, Matrix4, Translation3, Rotation3};
+use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
+use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
-    /// Create a right prism (a box) that spans from (0, 0, 0) 
+impl<S: Clone + Debug> CSG<S>
+where S: Clone + Send + Sync {
+    /// Create a right prism (a box) that spans from (0, 0, 0)
     /// to (width, length, height). All dimensions must be >= 0.
     pub fn cube(width: Real, length: Real, height: Real, metadata: Option<S>) -> CSG<S> {
         // Define the eight corner points of the prism.
@@ -21,7 +22,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         let p111 = Point3::new(width,    length,   height);
         let p011 = Point3::new(0.0,      length,   height);
 
-        // We’ll define 6 faces (each a Polygon), in an order that keeps outward-facing normals 
+        // We’ll define 6 faces (each a Polygon), in an order that keeps outward-facing normals
         // and consistent (counter-clockwise) vertex winding as viewed from outside the prism.
 
         // Bottom face (z=0, normal approx. -Z)
@@ -45,7 +46,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 Vertex::new(p001, top_normal),
                 Vertex::new(p101, top_normal),
                 Vertex::new(p111, top_normal),
-                Vertex::new(p011, top_normal),                
+                Vertex::new(p011, top_normal),
             ],
             metadata.clone(),
         );
@@ -115,13 +116,10 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 let mut vertices = Vec::new();
 
                 let vertex = |theta: Real, phi: Real| {
-                    let dir = Vector3::new(theta.cos() * phi.sin(), phi.cos(), theta.sin() * phi.sin());
+                    let dir =
+                        Vector3::new(theta.cos() * phi.sin(), phi.cos(), theta.sin() * phi.sin());
                     Vertex::new(
-                        Point3::new(
-                            dir.x * radius,
-                            dir.y * radius,
-                            dir.z * radius,
-                        ),
+                        Point3::new(dir.x * radius, dir.y * radius, dir.z * radius),
                         dir,
                     )
                 };
@@ -150,12 +148,12 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
         CSG::from_polygons(&polygons)
     }
-    
+
     /// Constructs a frustum between `start` and `end` with bottom radius = `radius1` and
     /// top radius = `radius2`. In the normal case, it creates side quads and cap triangles.
     /// However, if one of the radii is 0 (within EPSILON), then the degenerate face is treated
     /// as a single point and the side is stitched using triangles.
-    /// 
+    ///
     /// # Parameters
     /// - `start`: the center of the bottom face
     /// - `end`: the center of the top face
@@ -163,7 +161,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// - `radius2`: the radius at the top face
     /// - `segments`: number of segments around the circle (must be ≥ 3)
     /// - `metadata`: optional metadata
-    /// 
+    ///
     /// # Example
     /// ```
     /// let bottom = Point3::new(0.0, 0.0, 0.0);
@@ -196,11 +194,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         .cross(&axis_z)
         .normalize();
         let axis_y = axis_x.cross(&axis_z).normalize();
-    
+
         // The cap centers for the bottom and top.
         let start_v = Vertex::new(start, -axis_z);
         let end_v = Vertex::new(end, axis_z);
-    
+
         // A closure that returns a vertex on the lateral surface.
         // For a given stack (0.0 for bottom, 1.0 for top), slice (fraction along the circle),
         // and a normal blend factor (used for cap smoothing), compute the vertex.
@@ -213,23 +211,23 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             let normal = radial_dir * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
             Vertex::new(Point3::from(pos), normal.normalize())
         };
-    
+
         let mut polygons = Vec::new();
-    
+
         // Special-case flags for degenerate faces.
         let bottom_degenerate = radius1.abs() < EPSILON;
         let top_degenerate = radius2.abs() < EPSILON;
-    
+
         // If both faces are degenerate, we cannot build a meaningful volume.
         if bottom_degenerate && top_degenerate {
             return CSG::new();
         }
-    
+
         // For each slice of the circle (0..segments)
         for i in 0..segments {
             let slice0 = i as Real / segments as Real;
             let slice1 = (i + 1) as Real / segments as Real;
-    
+
             // In the normal frustum_ptp, we always add a bottom cap triangle (fan) and a top cap triangle.
             // Here, we only add the cap triangle if the corresponding radius is not degenerate.
             if !bottom_degenerate {
@@ -254,7 +252,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                     metadata.clone(),
                 ));
             }
-    
+
             // For the side wall, we normally build a quad spanning from the bottom ring (stack=0)
             // to the top ring (stack=1). If one of the rings is degenerate, that ring reduces to a single point.
             // In that case, we output a triangle.
@@ -291,13 +289,19 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 ));
             }
         }
-    
+
         CSG::from_polygons(&polygons)
     }
-    
-    // A helper to create a vertical cylinder along Z from z=0..z=height
-    // with the specified radius (NOT diameter).
-    pub fn frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
+
+    /// A helper to create a vertical cylinder along Z from z=0..z=height
+    /// with the specified radius (NOT diameter).
+    pub fn frustum(
+        radius1: Real,
+        radius2: Real,
+        height: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> CSG<S> {
         CSG::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
@@ -308,7 +312,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         )
     }
     
-    // A helper to create a vertical cylinder along Z from z=0..z=height
+    /// A helper to create a vertical cylinder along Z from z=0..z=height
     // with the specified radius (NOT diameter).
     pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
         CSG::frustum_ptp(
@@ -390,7 +394,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
 
         CSG::from_polygons(&polygons)
     }
-    
+
     /// Creates a 3D "egg" shape by revolving the existing 2D `egg_outline` profile.
     ///
     /// # Parameters
@@ -408,17 +412,22 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         metadata: Option<S>,
     ) -> Self {
         let egg_2d = Self::egg_outline(width, length, outline_segments, metadata.clone());
-        
+
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone())
-            .translate(-cutter_height, -cutter_height/2.0, 0.0);
-    
+        let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone()).translate(
+            -cutter_height,
+            -cutter_height / 2.0,
+            0.0,
+        );
+
         let half_egg = egg_2d.difference(&rect_cutter);
-        
-        half_egg.rotate_extrude(360.0, revolve_segments).convex_hull()
+
+        half_egg
+            .rotate_extrude(360.0, revolve_segments)
+            .convex_hull()
     }
-    
+
     /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via rotate_extrude).
     ///
     /// # Parameters
@@ -441,8 +450,8 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
         let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone())
-            .translate(-cutter_height, -cutter_height/2.0, 0.0);
-    
+            .translate(-cutter_height, -cutter_height / 2.0, 0.0);
+
         let half_teardrop = td_2d.difference(&rect_cutter);
 
         // revolve 360 degrees
@@ -469,7 +478,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
         td_2d.extrude(height).convex_hull()
     }
-    
+
     /// Creates an ellipsoid by taking a sphere of radius=1 and scaling it by (rx, ry, rz).
     ///
     /// # Parameters
@@ -490,7 +499,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         let base_sphere = Self::sphere(1.0, segments, stacks, metadata.clone());
         base_sphere.scale(rx, ry, rz)
     }
-    
+
     /// Creates an arrow CSG. The arrow is composed of:
     ///   - a cylindrical shaft, and
     ///   - a cone–like head (a frustum from a larger base to a small tip)
@@ -522,21 +531,21 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
         }
         // Compute the unit direction.
         let unit_dir = direction / arrow_length;
-    
+
         // Define proportions:
         // - Arrow head occupies 20% of total length.
         // - Shaft occupies the remainder.
         let head_length = arrow_length * 0.2;
         let shaft_length = arrow_length - head_length;
-    
+
         // Define thickness parameters proportional to the arrow length.
-        let shaft_radius = arrow_length * 0.03;      // shaft radius
-        let head_base_radius = arrow_length * 0.06;    // head base radius (wider than shaft)
-        let tip_radius = arrow_length * 0.0;         // tip radius (nearly a point)
-    
+        let shaft_radius = arrow_length * 0.03; // shaft radius
+        let head_base_radius = arrow_length * 0.06; // head base radius (wider than shaft)
+        let tip_radius = arrow_length * 0.0; // tip radius (nearly a point)
+
         // Build the shaft as a vertical cylinder along Z from 0 to shaft_length.
         let shaft = CSG::cylinder(shaft_radius, shaft_length, segments, metadata.clone());
-    
+
         // Build the arrow head as a frustum from z = shaft_length to z = shaft_length + head_length.
         let head = CSG::frustum_ptp(
             Point3::new(0.0, 0.0, shaft_length),
@@ -546,42 +555,42 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             segments,
             metadata.clone(),
         );
-    
+
         // Combine the shaft and head.
         let mut canonical_arrow = shaft.union(&head);
-    
+
         // If the arrow should point toward start, mirror the geometry in canonical space.
         // The mirror transform about the plane z = arrow_length/2 maps any point (0,0,z) to (0,0, arrow_length - z).
         if orientation {
             let l = arrow_length;
             let mirror_mat: Matrix4<Real> =
-                Translation3::new(0.0, 0.0, l / 2.0).to_homogeneous() *
-                Matrix4::new_nonuniform_scaling(&Vector3::new(1.0, 1.0, -1.0)) *
-                Translation3::new(0.0, 0.0, -l / 2.0).to_homogeneous();
+                Translation3::new(0.0, 0.0, l / 2.0).to_homogeneous()
+                * Matrix4::new_nonuniform_scaling(&Vector3::new(1.0, 1.0, -1.0))
+                * Translation3::new(0.0, 0.0, -l / 2.0).to_homogeneous();
             canonical_arrow = canonical_arrow.transform(&mirror_mat).inverse();
         }
         // In both cases, we now have a canonical arrow that extends from z=0 to z=arrow_length.
         // For orientation == false, z=0 is the base.
         // For orientation == true, after mirroring z=0 is now the tip.
-    
+
         // Compute the rotation that maps the canonical +Z axis to the provided direction.
         let z_axis = Vector3::z();
         let rotation = Rotation3::rotation_between(&z_axis, &unit_dir)
-            .unwrap_or_else(|| Rotation3::identity());
+            .unwrap_or_else(Rotation3::identity);
         let rot_mat: Matrix4<Real> = rotation.to_homogeneous();
-    
+
         // Rotate the arrow.
         let rotated_arrow = canonical_arrow.transform(&rot_mat);
-    
+
         // Finally, translate the arrow so that the anchored vertex (canonical (0,0,0)) moves to 'start'.
         // In the false case, (0,0,0) is the base (arrow extends from start to start+direction).
         // In the true case, after mirroring, (0,0,0) is the tip (arrow extends from start to start+direction).
         let final_arrow = rotated_arrow.translate(start.x, start.y, start.z);
-    
+
         final_arrow
     }
     
-        /// Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`.
+    /// Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`.
     ///
     /// # Parameters
     ///
@@ -598,7 +607,13 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// // Suppose `shape` is a CSG volume, e.g. a box or sphere.
     /// let gyroid_csg = shape.tpms_gyroid(50, 2.0, 0.0);
     /// ```
-    pub fn gyroid(&self, resolution: usize, period: Real, iso_value: Real, metadata: Option<S>) -> CSG<S> {
+    pub fn gyroid(
+        &self,
+        resolution: usize,
+        period: Real,
+        iso_value: Real,
+        metadata: Option<S>,
+    ) -> CSG<S> {
         // Get bounding box of `self`.
         let aabb = self.bounding_box();
 
@@ -631,7 +646,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
                 + (y / period).sin() * (z / period).cos()
                 + (z / period).sin() * (x / period).cos()
         }
-        
+
         // A small helper to evaluate the Schwarz-P function at a given (x, y, z).
         fn _schwarz_p_f(x: Real, y: Real, z: Real, period: Real) -> Real {
             let px = x / period;
@@ -640,14 +655,11 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             (px).cos() + (py).cos() + (pz).cos()
         }
 
-
         // We’ll store sampled values in a 3D array, [nx * ny * nz].
         let mut grid_vals = vec![0.0; nx * ny * nz];
 
         // A small function to convert (i, j, k) => index in `grid_vals`.
-        let idx = |i: usize, j: usize, k: usize| -> usize {
-            (k * ny + j) * nx + i
-        };
+        let idx = |i: usize, j: usize, k: usize| -> usize { (k * ny + j) * nx + i };
 
         // Evaluate the gyroid function at each grid point
         for k in 0..nz {

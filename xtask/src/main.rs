@@ -90,4 +90,3 @@ fn run_cmd(args: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
     }
     Ok(())
 }
-
