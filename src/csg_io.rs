@@ -375,15 +375,16 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
     /// Import a CSG object from DXF data.
     ///
-    /// # Parameters
-    ///
+    /// ## Parameters
     /// - `dxf_data`: A byte slice containing the DXF file data.
+    /// - `metadata`: metadata that will be attached to all polygons of the resulting `CSG`
     ///
-    /// # Returns
-    ///
+    /// ## Returns
     /// A `Result` containing the CSG object or an error if parsing fails.
     #[cfg(feature = "dxf-io")]
     pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>) -> Result<CSG<S>, either::Either<CSGError, dxf::DxfError>> {
+        use geo::{line_string, Polygon as GeoPolygon};
+
         // Load the DXF drawing from the provided data
         let drawing = match Drawing::load(&mut Cursor::new(dxf_data)) {
             Ok(drawing) => drawing,
@@ -403,6 +404,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 EntityType::Polyline(polyline) => {
                     // Handle POLYLINE entities (which can be 2D or 3D)
                     if polyline.is_closed() {
+                        let normal = Vector3::new(polyline.normal.x, polyline.normal.y, polyline.normal.z);
+
                         let mut verts = Vec::new();
                         for vertex in polyline.vertices() {
                             verts.push(Vertex::new(
@@ -411,15 +414,16 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                                     vertex.location.y as Real,
                                     vertex.location.z as Real,
                                 ),
-                                Vector3::z(), // Assuming flat in XY
+                                normal,
                             ));
                         }
                         // Create a polygon from the polyline vertices
                         if verts.len() >= 3 {
-                            polygons.push(
-                                Polygon::new(verts, None)
-                                    .expect("Three or more vertices are provided")
-                            );
+                            let poly = match Polygon::new(verts, metadata.clone()) {
+                                Ok(p) => p,
+                                Err(e) => return Err(either::Either::Left(e)),
+                            };
+                            polygons.push(poly);
                         }
                     }
                 }
@@ -431,12 +435,15 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                         circle.center.z as Real,
                     );
                     let radius = circle.radius as Real;
-                    // ? This seems a bit low
-                    let segments: u32 = 32; // Number of segments to approximate the circle
-                    assert!(segments >= 3, "At least three segments are required, to make valid `Polygon`s");
+                    // FIXME: this seems a bit low maybe make it relative to the radius
+                    let segments = 32; // Number of segments to approximate the circle
 
-                    let mut verts = Vec::new();
-                    let normal = Vector3::z(); // Assuming circle lies in XY plane
+                    let mut verts = Vec::with_capacity(segments + 1);
+                    let normal = Vector3::new(
+                        circle.normal.x as Real,
+                        circle.normal.y as Real,
+                        circle.normal.z as Real
+                    ).normalize();
 
                     for i in 0..segments {
                         let theta = 2.0 * PI * (i as Real) / (segments as Real);
@@ -447,12 +454,39 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                     }
 
                     // Create a polygon from the approximated circle vertices
-                    polygons.push(
-                        Polygon::new(verts, metadata.clone())
-                            .expect("Three or more vertices are provided")
-                    );
+                    let poly = match Polygon::new(verts, metadata.clone()) {
+                        Ok(p) => p,
+                        Err(e) => return Err(either::Either::Left(e)),
+                    };
+                    polygons.push(poly);
                 }
-                // Handle other entity types as needed (e.g., Arc, Spline)
+                EntityType::Solid(solid) => {
+                    let thickness = solid.thickness as Real;
+                    let extrusion_direction = Vector3::new(
+                        solid.extrusion_direction.x as Real,
+                        solid.extrusion_direction.y as Real,
+                        solid.extrusion_direction.z as Real
+                    );
+
+                    let extruded = CSG::from_geo(
+                        GeoPolygon::new(line_string![
+                            (x: solid.first_corner.x as Real, y: solid.first_corner.y as Real),
+                            (x: solid.second_corner.x as Real, y: solid.second_corner.y as Real),
+                            (x: solid.third_corner.x as Real, y: solid.third_corner.y as Real),
+                            (x: solid.fourth_corner.x as Real, y: solid.fourth_corner.y as Real),
+                            (x: solid.first_corner.x as Real, y: solid.first_corner.y as Real),
+                        ], Vec::new()).into(),
+                        None,
+                    )
+                        .extrude_vector(extrusion_direction * thickness).polygons;
+
+                    polygons.extend(extruded);
+                }
+                // todo convert image to work with `from_image`
+                // EntityType::Image(image) => {}
+                // todo convert image to work with `text`, also try using system fonts for a better chance of having the font
+                // EntityType::Text(text) => {}
+                // Handle other entity types as needed (e.g., Line, Spline)
                 _ => {
                     // Ignore unsupported entity types for now
                 }
