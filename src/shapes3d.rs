@@ -318,7 +318,7 @@ where S: Clone + Send + Sync {
         CSG::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
-            radius.clone(),
+            radius,
             radius,
             segments,
             metadata,
@@ -515,7 +515,7 @@ where S: Clone + Send + Sync {
     /// - `direction`: the vector defining arrow length and intended pointing direction
     /// - `segments`: number of segments for approximating the cylinder and frustum
     /// - `orientation`: when false (default) the arrow points away from start (its base is at start);
-    ///                        when true the arrow points toward start (its tip is at start).
+    ///    when true the arrow points toward start (its tip is at start).
     /// - `metadata`: optional metadata for the generated polygons.
     pub fn arrow(
         start: Point3<Real>,

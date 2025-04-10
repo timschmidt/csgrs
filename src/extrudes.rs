@@ -523,8 +523,7 @@ where S: Clone + Send + Sync {
             }
 
             // Build the polygon
-            let poly = Polygon::new(verts, metadata.clone());
-            Some(poly)
+            Polygon::new(verts, metadata.clone())
         }
 
         //----------------------------------------------------------------------

@@ -267,6 +267,7 @@ where S: Clone + Send + Sync {
     /// Teardrop shape.  A simple approach:
     /// - a circle arc for the "round" top
     /// - it tapers down to a cusp at bottom.
+    ///
     /// This is just one of many possible "teardrop" definitions.
     // todo: center on focus of the arc
     pub fn teardrop_outline(
