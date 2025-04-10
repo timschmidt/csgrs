@@ -1,4 +1,4 @@
-use crate::csg::CSG;
+use crate::csg::{CSGError, CSG};
 use crate::float_types::{EPSILON, PI, Real, TAU};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -12,15 +12,15 @@ where S: Clone + Send + Sync {
     pub fn cube(width: Real, length: Real, height: Real, metadata: Option<S>) -> CSG<S> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
-        let p000 = Point3::new(0.0,      0.0,      0.0);
-        let p100 = Point3::new(width,    0.0,      0.0);
-        let p110 = Point3::new(width,    length,   0.0);
-        let p010 = Point3::new(0.0,      length,   0.0);
+        let p000 = Point3::new(0.0,    0.0,     0.0);
+        let p100 = Point3::new(width,  0.0,     0.0);
+        let p110 = Point3::new(width,  length,  0.0);
+        let p010 = Point3::new(0.0,    length,  0.0);
 
-        let p001 = Point3::new(0.0,      0.0,      height);
-        let p101 = Point3::new(width,    0.0,      height);
-        let p111 = Point3::new(width,    length,   height);
-        let p011 = Point3::new(0.0,      length,   height);
+        let p001 = Point3::new(0.0,    0.0,     height);
+        let p101 = Point3::new(width,  0.0,     height);
+        let p111 = Point3::new(width,  length,  height);
+        let p011 = Point3::new(0.0,    length,  height);
 
         // We’ll define 6 faces (each a Polygon), in an order that keeps outward-facing normals
         // and consistent (counter-clockwise) vertex winding as viewed from outside the prism.
@@ -36,7 +36,7 @@ where S: Clone + Send + Sync {
                 Vertex::new(p100, bottom_normal),
             ],
             metadata.clone(),
-        );
+        ).expect("More then three vertices are provided");
 
         // Top face (z=depth, normal approx. +Z)
         // p001 -> p011 -> p111 -> p101
@@ -49,7 +49,7 @@ where S: Clone + Send + Sync {
                 Vertex::new(p011, top_normal),
             ],
             metadata.clone(),
-        );
+        ).expect("More then three vertices are provided");
 
         // Front face (y=0, normal approx. -Y)
         // p000 -> p001 -> p101 -> p100
@@ -62,7 +62,7 @@ where S: Clone + Send + Sync {
                 Vertex::new(p001, front_normal),
             ],
             metadata.clone(),
-        );
+        ).expect("More then three vertices are provided");
 
         // Back face (y=height, normal approx. +Y)
         // p010 -> p110 -> p111 -> p011
@@ -75,7 +75,7 @@ where S: Clone + Send + Sync {
                 Vertex::new(p110, back_normal),
             ],
             metadata.clone(),
-        );
+        ).expect("More then three vertices are provided");
 
         // Left face (x=0, normal approx. -X)
         // p000 -> p010 -> p011 -> p001
@@ -88,7 +88,7 @@ where S: Clone + Send + Sync {
                 Vertex::new(p010, left_normal),
             ],
             metadata.clone(),
-        );
+        ).expect("More then three vertices are provided");
 
         // Right face (x=width, normal approx. +X)
         // p100 -> p101 -> p111 -> p110
@@ -101,7 +101,7 @@ where S: Clone + Send + Sync {
                 Vertex::new(p101, right_normal),
             ],
             metadata.clone(),
-        );
+        ).expect("More then three vertices are provided");
 
         // Combine all faces into a CSG
         CSG::from_polygons(&[bottom, top, front, back, left, right])
@@ -143,7 +143,8 @@ where S: Clone + Send + Sync {
                 }
                 vertices.push(vertex(theta0, phi1));
 
-                polygons.push(Polygon::new(vertices, metadata.clone()));
+                polygons.push(Polygon::new(vertices, metadata.clone())
+                    .expect("Expected three or more vertices are provided"));
             }
         }
         CSG::from_polygons(&polygons)
@@ -164,10 +165,12 @@ where S: Clone + Send + Sync {
     ///
     /// # Example
     /// ```
+    /// # use csgrs::csg::CSG;
+    /// # use nalgebra::Point3;
     /// let bottom = Point3::new(0.0, 0.0, 0.0);
     /// let top = Point3::new(0.0, 0.0, 5.0);
     /// // This will create a cone (bottom degenerate) because radius1 is 0:
-    /// let cone = CSG::frustum_ptp_special(bottom, top, 0.0, 2.0, 32, None);
+    /// let cone = CSG::<()>::frustum_ptp(bottom, top, 0.0, 2.0, 32, None);
     /// ```
     pub fn frustum_ptp(
         start: Point3<Real>,
@@ -239,7 +242,7 @@ where S: Clone + Send + Sync {
                         point(0.0, slice1, -1.0),
                     ],
                     metadata.clone(),
-                ));
+                ).expect("Three vertices are provided"));
             }
             if !top_degenerate {
                 // Top cap: a triangle fan from the top center to two consecutive points on the top ring.
@@ -250,7 +253,7 @@ where S: Clone + Send + Sync {
                         point(1.0, slice0, 1.0),
                     ],
                     metadata.clone(),
-                ));
+                ).expect("Three vertices are provided"));
             }
 
             // For the side wall, we normally build a quad spanning from the bottom ring (stack=0)
@@ -265,7 +268,7 @@ where S: Clone + Send + Sync {
                         point(1.0, slice1, 0.0),
                     ],
                     metadata.clone(),
-                ));
+                ).expect("Three vertices are provided"));
             } else if top_degenerate {
                 // Top is a point (end_v); create a triangle from two consecutive points on the bottom ring to end_v.
                 polygons.push(Polygon::new(
@@ -275,7 +278,7 @@ where S: Clone + Send + Sync {
                         end_v.clone(),
                     ],
                     metadata.clone(),
-                ));
+                ).expect("Three vertices are provided"));
             } else {
                 // Normal case: both rings are non-degenerate. Use a quad for the side wall.
                 polygons.push(Polygon::new(
@@ -286,7 +289,7 @@ where S: Clone + Send + Sync {
                         point(1.0, slice1, 0.0),
                     ],
                     metadata.clone(),
-                ));
+                ).expect("More then three vertices are provided"));
             }
         }
 
@@ -311,30 +314,36 @@ where S: Clone + Send + Sync {
             metadata,
         )
     }
-    
+
     /// A helper to create a vertical cylinder along Z from z=0..z=height
     // with the specified radius (NOT diameter).
     pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
         CSG::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
-            radius.clone(),
+            radius,
             radius,
             segments,
             metadata,
         )
     }
 
+    // todo add errors section
     /// Creates a CSG polyhedron from raw vertex data (`points`) and face indices.
     ///
-    /// # Parameters
+    /// ## Parameters
     ///
     /// - `points`: a slice of `[x,y,z]` coordinates.
     /// - `faces`: each element is a list of indices into `points`, describing one face.
     ///   Each face must have at least 3 indices.
     ///
-    /// # Example
+    /// ## Errors
+    /// Returns an error if any of the faces has an invalid indice
+    ///
+    /// ## Example
     /// ```
+    /// # use csgrs::csg::CSG;
+    /// # use nalgebra::Vector3;
     /// let pts = &[
     ///     [0.0, 0.0, 0.0], // point0
     ///     [1.0, 0.0, 0.0], // point1
@@ -344,17 +353,17 @@ where S: Clone + Send + Sync {
     /// ];
     ///
     /// // Two faces: bottom square [0,1,2,3], and a pyramid side [0,1,4]
-    /// let fcs = vec![
-    ///     vec![0, 1, 2, 3],
-    ///     vec![0, 1, 4],
-    ///     vec![1, 2, 4],
-    ///     vec![2, 3, 4],
-    ///     vec![3, 0, 4],
+    /// let fcs: Vec<&[usize]> = vec![
+    ///     &[0, 1, 2, 3],
+    ///     &[0, 1, 4],
+    ///     &[1, 2, 4],
+    ///     &[2, 3, 4],
+    ///     &[3, 0, 4],
     /// ];
     ///
-    /// let csg_poly = CSG::polyhedron(pts, &fcs);
+    /// let csg_poly = CSG::<()>::polyhedron(pts, &fcs, None);
     /// ```
-    pub fn polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>) -> CSG<S> {
+    pub fn polyhedron(points: &[[Real; 3]], faces: &[&[usize]], metadata: Option<S>) -> Result<CSG<S>, CSGError> {
         let mut polygons = Vec::new();
 
         for face in faces {
@@ -365,14 +374,10 @@ where S: Clone + Send + Sync {
 
             // Gather the vertices for this face
             let mut face_vertices = Vec::with_capacity(face.len());
-            for &idx in face {
+            for &idx in face.iter() {
                 // Ensure the index is valid
                 if idx >= points.len() {
-                    panic!( // todo return error
-                        "Face index {} is out of range (points.len = {}).",
-                        idx,
-                        points.len()
-                    );
+                    return Err(CSGError::IndexOutOfRange { index: idx, len: points.len() });
                 }
                 let [x, y, z] = points[idx];
                 face_vertices.push(Vertex::new(
@@ -382,7 +387,7 @@ where S: Clone + Send + Sync {
             }
 
             // Build the polygon (plane is auto-computed from first 3 vertices).
-            let mut poly = Polygon::new(face_vertices, metadata.clone());
+            let mut poly = Polygon::new(face_vertices, metadata.clone())?;
 
             // Set each vertex normal to match the polygon’s plane normal,
             let plane_normal = poly.plane.normal;
@@ -392,7 +397,7 @@ where S: Clone + Send + Sync {
             polygons.push(poly);
         }
 
-        CSG::from_polygons(&polygons)
+        Ok(CSG::from_polygons(&polygons))
     }
 
     /// Creates a 3D "egg" shape by revolving the existing 2D `egg_outline` profile.
@@ -410,8 +415,12 @@ where S: Clone + Send + Sync {
         revolve_segments: usize,
         outline_segments: usize,
         metadata: Option<S>,
-    ) -> Self {
-        let egg_2d = Self::egg_outline(width, length, outline_segments, metadata.clone());
+    ) -> Result<Self, CSGError> {
+        if revolve_segments < 2 {
+            return Err(CSGError::LessThen2ExtrudeSegments);
+        }
+
+        let egg_2d = Self::egg_outline(width, length, outline_segments, metadata.clone())?;
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
@@ -423,9 +432,8 @@ where S: Clone + Send + Sync {
 
         let half_egg = egg_2d.difference(&rect_cutter);
 
-        half_egg
-            .rotate_extrude(360.0, revolve_segments)
-            .convex_hull()
+        Ok(half_egg.rotate_extrude(360.0, revolve_segments)
+            .expect("Checked above").convex_hull())
     }
 
     /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via rotate_extrude).
@@ -443,9 +451,13 @@ where S: Clone + Send + Sync {
         revolve_segments: usize,
         shape_segments: usize,
         metadata: Option<S>,
-    ) -> Self {
+    ) -> Result<Self, CSGError> {
+        if revolve_segments < 2 {
+            return Err(CSGError::LessThen2ExtrudeSegments);
+        }
+
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
+        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone())?;
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
@@ -455,7 +467,8 @@ where S: Clone + Send + Sync {
         let half_teardrop = td_2d.difference(&rect_cutter);
 
         // revolve 360 degrees
-        half_teardrop.rotate_extrude(360.0, revolve_segments).convex_hull()
+        Ok(half_teardrop.rotate_extrude(360.0, revolve_segments)
+            .expect("Checked above").convex_hull())
     }
 
     /// Creates a 3D "teardrop cylinder" by extruding the existing 2D `teardrop` in the Z+ axis.
@@ -473,10 +486,11 @@ where S: Clone + Send + Sync {
         height: Real,
         shape_segments: usize,
         metadata: Option<S>,
-    ) -> Self {
+    ) -> Result<Self, CSGError> {
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
-        td_2d.extrude(height).convex_hull()
+        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone())?;
+
+        Ok(td_2d.extrude(height).convex_hull())
     }
 
     /// Creates an ellipsoid by taking a sphere of radius=1 and scaling it by (rx, ry, rz).
@@ -515,7 +529,7 @@ where S: Clone + Send + Sync {
     /// - `direction`: the vector defining arrow length and intended pointing direction
     /// - `segments`: number of segments for approximating the cylinder and frustum
     /// - `orientation`: when false (default) the arrow points away from start (its base is at start);
-    ///                        when true the arrow points toward start (its tip is at start).
+    ///    when true the arrow points toward start (its tip is at start).
     /// - `metadata`: optional metadata for the generated polygons.
     pub fn arrow(
         start: Point3<Real>,
@@ -575,8 +589,8 @@ where S: Clone + Send + Sync {
 
         // Compute the rotation that maps the canonical +Z axis to the provided direction.
         let z_axis = Vector3::z();
-        let rotation = Rotation3::rotation_between(&z_axis, &unit_dir)
-            .unwrap_or_else(Rotation3::identity);
+        let rotation =
+            Rotation3::rotation_between(&z_axis, &unit_dir).unwrap_or_else(Rotation3::identity);
         let rot_mat: Matrix4<Real> = rotation.to_homogeneous();
 
         // Rotate the arrow.
@@ -589,7 +603,7 @@ where S: Clone + Send + Sync {
 
         final_arrow
     }
-    
+
     /// Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`.
     ///
     /// # Parameters
@@ -604,8 +618,10 @@ where S: Clone + Send + Sync {
     ///
     /// # Example
     /// ```
+    /// # use csgrs::csg::CSG;
+    /// # let shape = CSG::<()>::cube(3.0, 2.5, 6.7, None);
     /// // Suppose `shape` is a CSG volume, e.g. a box or sphere.
-    /// let gyroid_csg = shape.tpms_gyroid(50, 2.0, 0.0);
+    /// let gyroid_csg = shape.gyroid(50, 2.0, 0.0, None);
     /// ```
     pub fn gyroid(
         &self,
@@ -842,8 +858,8 @@ where S: Clone + Send + Sync {
         let mut surf_polygons = Vec::with_capacity(triangles.len());
         for (a, b, c) in triangles {
             // Create a 3‐vertex polygon
-            let mut poly = Polygon::new(
-                vec![
+            let mut poly = Polygon::from_tri(
+                &[
                     Vertex::new(a, Vector3::zeros()),
                     Vertex::new(b, Vector3::zeros()),
                     Vertex::new(c, Vector3::zeros()),

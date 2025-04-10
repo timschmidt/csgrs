@@ -1,18 +1,18 @@
 use crate::bsp::Node;
-use crate::csg::CSG;
+use crate::csg::{CSGError, CSG};
 use crate::float_types::{EPSILON, Real};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
+
 use geo::{
     BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
-    Polygon as GeoPolygon, coord, orient::Direction,
+    Polygon as GeoPolygon, coord, orient::Direction, Intersects,
 };
 use hashbrown::HashMap;
 use nalgebra::Point3;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
     /// unifies them into one or more 2D polygons, and returns a purely 2D CSG.
     ///
@@ -20,10 +20,13 @@ where S: Clone + Send + Sync {
     /// - Otherwise, all `polygons` are tessellated, projected into XY, and unioned.
     /// - We also union any existing 2D geometry (`self.geometry`).
     /// - The output has `.polygons` empty and `.geometry` containing the final 2D shape.
-    pub fn flatten(&self) -> CSG<S> {
+    ///
+    /// ## Errors
+    /// If any 3d polygon has less then three vertices
+    pub fn flatten(self) -> Result<CSG<S>, CSGError> {
         // 1) If there are no 3D polygons, this is already purely 2D => return as-is
         if self.polygons.is_empty() {
-            return self.clone();
+            return Ok(self);
         }
 
         // 2) Convert all 3D polygons into a collection of 2D polygons
@@ -31,7 +34,7 @@ where S: Clone + Send + Sync {
 
         for poly in &self.polygons {
             // Tessellate this polygon into triangles
-            let triangles = poly.tessellate();
+            let triangles = poly.tessellate()?;
             // Each triangle has 3 vertices [v0, v1, v2].
             // Project them onto XY => build a 2D polygon (triangle).
             for tri in triangles {
@@ -52,10 +55,12 @@ where S: Clone + Send + Sync {
             MultiPolygon::new(Vec::new())
         } else {
             // Start with the first polygon as a MultiPolygon
-            let mut mp_acc = MultiPolygon(vec![flattened_3d[0].clone()]);
+            // last == first so this is ok as long as the polygon is not use again
+            let mut mp_acc = MultiPolygon(vec![flattened_3d.swap_remove(0)]);
+            // todo benchmark to see if intersection test is worth it, it should be as intersection is cheap compared to alloc
             // Union in the rest
-            for p in flattened_3d.iter().skip(1) {
-                mp_acc = mp_acc.union(&MultiPolygon(vec![p.clone()]));
+            for p in flattened_3d.chunk_by(|a, b| !(a.intersects(b))) {
+                mp_acc = mp_acc.union(&MultiPolygon(p.to_vec()));
             }
             mp_acc
         };
@@ -71,11 +76,11 @@ where S: Clone + Send + Sync {
         new_gc.0.push(Geometry::MultiPolygon(oriented));
 
         // 6) Return a purely 2D CSG: polygons empty, geometry has the final shape
-        CSG {
+        Ok(CSG {
             polygons: Vec::new(),
             geometry: new_gc,
             metadata: self.metadata.clone(),
-        }
+        })
     }
 
     /// Slice this solid by a given `plane`, returning a new `CSG` whose polygons
@@ -90,7 +95,9 @@ where S: Clone + Send + Sync {
     ///
     /// # Example
     /// ```
-    /// let cylinder = CSG::cylinder(1.0, 2.0, 32, None);
+    /// # use csgrs::{csg::CSG, plane::Plane};
+    /// # use nalgebra::Vector3;
+    /// let cylinder: CSG<()> = CSG::cylinder(1.0, 2.0, 32, None);
     /// let plane_z0 = Plane { normal: Vector3::z(), w: 0.0 };
     /// let cross_section = cylinder.slice(plane_z0);
     /// // `cross_section` will contain:
@@ -173,10 +180,12 @@ where S: Clone + Send + Sync {
     ///
     /// We should also check for zero-area triangles
     ///
-    /// # Returns
-    ///
+    /// ## Returns
     /// - `true`: If the CSG object is manifold.
     /// - `false`: If the CSG object is not manifold.
+    ///
+    /// ## Panics
+    /// Panics if the shape can't be triangulated
     pub fn is_manifold(&self) -> bool {
         fn approx_lt(a: &Point3<Real>, b: &Point3<Real>) -> bool {
             // Compare x
@@ -198,7 +207,7 @@ where S: Clone + Send + Sync {
         }
 
         // Triangulate the whole shape once
-        let tri_csg = self.tessellate();
+        let tri_csg = self.tessellate().unwrap();
         let mut edge_counts: HashMap<(String, String), u32> = HashMap::new();
 
         for poly in &tri_csg.polygons {

@@ -2,30 +2,57 @@ use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
+use std::ops::Neg;
 
-/// A plane in 3D space defined by a normal and a w-value
+#[derive(Debug, thiserror::Error)]
+pub enum PlaneError {
+    #[error("Degenerate polygon: vertices do not define a plane")]
+    /// If input vertices do not define a plane
+    DegenerateFromPoints,
+    /// If the normal of a plane is to smaller then an epsilon
+    #[error("DegenerateNormal: the normal of the plane, {}, is to small", .0)]
+    DegenerateNormal(Vector3<Real>),
+}
+
+/// A plane in 3D space defined by a normal and an intercept
 #[derive(Debug, Clone)]
 pub struct Plane {
+    /// The direction of the plane, which defines a vector that is perpendicular to the plane.
     pub normal: Vector3<Real>,
-    pub w: Real,
+    /// Y-intercept of the plane, the distance along the normal at which it's crossed by the plane.
+    pub intercept: Real,
+}
+
+impl Neg for Plane {
+    type Output = Self;
+
+    /// [`flip`](Plane::flip) the `Plane`
+    fn neg(self) -> Self::Output {
+        Self {
+            normal: -self.normal,
+            intercept: -self.intercept,
+        }
+    }
 }
 
 impl Plane {
     /// Create a plane from three points
-    pub fn from_points(a: &Point3<Real>, b: &Point3<Real>, c: &Point3<Real>) -> Plane {
+    pub fn from_points(a: &Point3<Real>, b: &Point3<Real>, c: &Point3<Real>) -> Result<Plane, PlaneError> {
         let n = (b - a).cross(&(c - a)).normalize();
         if n.magnitude() < EPSILON {
-            panic!("Degenerate polygon: vertices do not define a plane"); // todo: return error
+            return Err(PlaneError::DegenerateFromPoints);
         }
-        Plane {
+
+        Ok(Plane {
             normal: n,
-            w: n.dot(&a.coords),
-        }
+            intercept: n.dot(&a.coords),
+        })
     }
 
+    /// Flips the normal of the plane, in place
     pub fn flip(&mut self) {
         self.normal = -self.normal;
-        self.w = -self.w;
+        self.intercept = -self.intercept;
     }
 
     /// Split `polygon` by this plane if needed, distributing the results into
@@ -54,7 +81,7 @@ impl Plane {
             .vertices
             .iter()
             .map(|v| {
-                let t = self.normal.dot(&v.pos.coords) - self.w;
+                let t = self.normal.dot(&v.pos.coords) - self.intercept;
                 if t < -EPSILON {
                     BACK
                 } else if t > EPSILON {
@@ -116,7 +143,7 @@ impl Plane {
                         let denom = self.normal.dot(&(vj.pos - vi.pos));
                         // Avoid dividing by zero
                         if denom.abs() > EPSILON {
-                            let t = (self.w - self.normal.dot(&vi.pos.coords)) / denom;
+                            let t = (self.intercept - self.normal.dot(&vi.pos.coords)) / denom;
                             let v_new = vi.interpolate(vj, t);
                             f.push(v_new.clone());
                             b.push(v_new);
@@ -127,10 +154,12 @@ impl Plane {
                 // Build new polygons from the front/back vertex lists
                 // if they have at least 3 vertices
                 if f.len() >= 3 {
-                    front.push(Polygon::new(f, polygon.metadata.clone()));
+                    front.push(Polygon::new(f, polygon.metadata.clone())
+                        .expect("Three or more vertices are provided"));
                 }
                 if b.len() >= 3 {
-                    back.push(Polygon::new(b, polygon.metadata.clone()));
+                    back.push(Polygon::new(b, polygon.metadata.clone())
+                        .expect("Three or more vertices are provided"));
                 }
             }
         }
@@ -141,17 +170,15 @@ impl Plane {
     /// - `T`   maps a point on this plane into XY plane (z=0)
     ///   with the plane’s normal going to +Z,
     /// - `T_inv` is the inverse transform, mapping back.
-    pub fn to_xy_transform(&self) -> (Matrix4<Real>, Matrix4<Real>) {
-        // Normal
-        let n = self.normal;
-        let n_len = n.norm();
+    pub fn to_xy_transform(&self) -> Result<(Matrix4<Real>, Matrix4<Real>), PlaneError> {
+        let n_len = self.normal.norm();
         if n_len < 1e-12 {
-            // Degenerate plane, return identity
-            return (Matrix4::identity(), Matrix4::identity());
+            // Degenerate plane, return error
+            return Err(PlaneError::DegenerateNormal(self.normal));
         }
 
         // Normalize
-        let norm_dir = n / n_len;
+        let norm_dir = self.normal / n_len;
 
         // Rotate plane.normal -> +Z
         let rot = Rotation3::rotation_between(&norm_dir, &Vector3::z())
@@ -161,8 +188,8 @@ impl Plane {
         // We want to translate so that the plane’s reference point
         //    (some point p0 with n·p0 = w) lands at z=0 in the new coords.
         // p0 = (plane.w / (n·n)) * n
-        let denom = n.dot(&n);
-        let p0_3d = norm_dir * (self.w / denom);
+        let denom = self.normal.dot(&self.normal);
+        let p0_3d = norm_dir * (self.intercept / denom);
         let p0_rot = iso_rot.transform_point(&Point3::from(p0_3d));
 
         // We want p0_rot.z = 0, so we shift by -p0_rot.z
@@ -176,6 +203,6 @@ impl Plane {
             .try_inverse()
             .unwrap_or_else(Matrix4::identity);
 
-        (transform_to_xy, transform_from_xy)
+        Ok((transform_to_xy, transform_from_xy))
     }
 }

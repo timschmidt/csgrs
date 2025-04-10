@@ -1,10 +1,11 @@
+//! Create `CSG`s using Hershey fonts
+
 use crate::csg::CSG;
 use crate::float_types::Real;
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Creates **2D line-stroke text** in the XY plane using a Hershey font.
     ///
     /// Each glyph’s strokes become one or more `LineString<Real>` entries in `geometry`.
@@ -61,7 +62,7 @@ where S: Clone + Send + Sync {
         CSG {
             polygons: Vec::new(),
             geometry: geo_coll,
-            metadata: metadata,
+            metadata,
         }
     }
 }
