@@ -64,6 +64,12 @@ pub struct CSG<S: Clone = ()> {
     pub metadata: Option<S>,
 }
 
+impl<S: Clone + Debug + Send + Sync> Default for CSG<S> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Create an empty CSG
     pub fn new() -> Self {

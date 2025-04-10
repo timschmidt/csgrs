@@ -23,9 +23,6 @@ use dxf::Drawing;
 #[cfg(feature = "dxf-io")]
 use dxf::entities::*;
 
-#[cfg(feature = "stl-io")]
-use stl_io;
-
 impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Export to ASCII STL
     /// 1) 3D polygons in `self.polygons`,
@@ -86,7 +83,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                     // Collect holes
                     let holes_vec = poly2d
                         .interiors()
-                        .into_iter()
+                        .iter()
                         .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
                         .collect::<Vec<_>>();
                     let hole_refs = holes_vec
@@ -124,7 +121,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                         // Holes
                         let holes_vec = poly2d
                             .interiors()
-                            .into_iter()
+                            .iter()
                             .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
                             .collect::<Vec<_>>();
                         let hole_refs = holes_vec
@@ -367,7 +364,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                     ),
                 ),
             ];
-            polygons.push(Polygon::from_tri(&vertices, metadata.clone()));
+            polygons.push(Polygon::from_tri(vertices, metadata.clone()));
         }
 
         Ok(CSG::from_polygons(&polygons))
@@ -519,6 +516,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
             for tri in triangles {
                 // Create a 3DFACE entity for each triangle
+                #[allow(clippy::unnecessary_cast)]
                 let face = dxf::entities::Face3D::new(
                     // 3DFACE expects four vertices, but for triangles, the fourth is the same as the third
                     dxf::Point::new(

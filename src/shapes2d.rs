@@ -273,6 +273,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Teardrop shape.  A simple approach:
     /// - a circle arc for the "round" top
     /// - it tapers down to a cusp at bottom.
+    ///
     /// This is just one of many possible "teardrop" definitions.
     ///
     /// ## Errors
