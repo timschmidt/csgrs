@@ -297,7 +297,7 @@ where S: Clone + Send + Sync {
     }
 
     /// A helper to create a vertical cylinder along Z from z=0..z=height
-    // with the specified radius (NOT diameter).
+    /// with the specified radius (NOT diameter).
     pub fn frustum(
         radius1: Real,
         radius2: Real,
@@ -408,6 +408,7 @@ where S: Clone + Send + Sync {
     /// - `revolve_segments`: Number of segments for the revolution.
     /// - `outline_segments`: Number of segments for the 2D egg outline itself.
     /// - `metadata`: Optional metadata.
+    #[cfg(feature = "chull-io")]
     pub fn egg(
         width: Real,
         length: Real,
@@ -443,6 +444,7 @@ where S: Clone + Send + Sync {
     /// - `revolve_segments`: Number of segments for the revolution (the "circular" direction).
     /// - `shape_segments`: Number of segments for the 2D teardrop outline itself.
     /// - `metadata`: Optional metadata.
+    #[cfg(feature = "chull-io")]
     pub fn teardrop(
         width: Real,
         length: Real,
@@ -477,6 +479,7 @@ where S: Clone + Send + Sync {
     /// - `revolve_segments`: Number of segments for the revolution (the "circular" direction).
     /// - `shape_segments`: Number of segments for the 2D teardrop outline itself.
     /// - `metadata`: Optional metadata.
+    #[cfg(feature = "chull-io")]
     pub fn teardrop_cylinder(
         width: Real,
         length: Real,

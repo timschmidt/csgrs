@@ -13,8 +13,7 @@ use chull::ConvexHullWrapper;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Compute the [convex hull](https://en.wikipedia.org/wiki/Convex_hull) of all vertices in this CSG.
     pub fn convex_hull(&self) -> CSG<S> {
         // Gather all (x, y, z) coordinates from the polygons

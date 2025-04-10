@@ -78,13 +78,11 @@ impl<S: Clone + Send + Sync> Node<S> {
 
         // For each polygon, split it by the node's plane.
         for poly in polygons {
-            plane.split_polygon(
-                poly,
-                &mut coplanar_front,
-                &mut coplanar_back,
-                &mut front,
-                &mut back,
-            );
+            let (cf, cb, f, b) = plane.split_polygon(poly);
+            coplanar_front.extend(cf);
+            coplanar_back.extend(cb);
+            front.extend(f);
+            back.extend(b);
         }
 
         // Now decide where to send the coplanar polygons.  If the polygon’s normal
@@ -135,18 +133,9 @@ impl<S: Clone + Send + Sync> Node<S> {
         // Split each polygon in parallel; gather results
         let (coplanar_front, coplanar_back, mut front, mut back) = polygons
             .par_iter()
-            .map(|poly| {
-                let mut cf = Vec::new();
-                let mut cb = Vec::new();
-                let mut f = Vec::new();
-                let mut b = Vec::new();
-                plane.split_polygon(poly, &mut cf, &mut cb, &mut f, &mut b);
-                (cf, cb, f, b)
-            })
+            .map(|poly| plane.split_polygon(poly)) // <-- just pass poly
             .reduce(
-                // Identity
                 || (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
-                // Reduce function
                 |mut acc, x| {
                     acc.0.extend(x.0);
                     acc.1.extend(x.1);
@@ -257,19 +246,29 @@ impl<S: Clone + Send + Sync> Node<S> {
 
         // For each polygon, split it relative to the current node's plane.
         for p in polygons {
-            let mut coplanar_front = Vec::new();
-            let mut coplanar_back = Vec::new();
+            let (coplanar_front, coplanar_back, f, b) = plane.split_polygon(p);
 
-            plane.split_polygon(
-                p,
-                &mut coplanar_front,
-                &mut coplanar_back,
-                &mut front,
-                &mut back,
-            );
+            self.polygons.extend(coplanar_front);
+            self.polygons.extend(coplanar_back);
 
-            self.polygons.append(&mut coplanar_front);
-            self.polygons.append(&mut coplanar_back);
+            front.extend(f);
+            back.extend(b);
+        }
+
+        //  Treat this node as a leaf if all polygons ended up on the same side
+        if front.len() == polygons.len() {
+            // Everything is 'front': no meaningful split => store them here, no recursion
+            self.polygons = polygons.to_vec();
+            self.front = None;
+            self.back = None;
+            return;
+        }
+        if back.len() == polygons.len() {
+            // Everything is 'back': no meaningful split => store them here, no recursion
+            self.polygons = polygons.to_vec();
+            self.front = None;
+            self.back = None;
+            return;
         }
 
         // Recursively build the front subtree.
@@ -307,14 +306,7 @@ impl<S: Clone + Send + Sync> Node<S> {
         // Split polygons in parallel
         let (mut coplanar_front, mut coplanar_back, front, back) = polygons
             .par_iter()
-            .map(|p| {
-                let mut cf = Vec::new();
-                let mut cb = Vec::new();
-                let mut f = Vec::new();
-                let mut b = Vec::new();
-                plane.split_polygon(p, &mut cf, &mut cb, &mut f, &mut b);
-                (cf, cb, f, b)
-            })
+            .map(|p| plane.split_polygon(p)) // <-- just pass p
             .reduce(
                 || (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
                 |mut acc, x| {
@@ -329,6 +321,22 @@ impl<S: Clone + Send + Sync> Node<S> {
         // Append coplanar fronts/backs to self.polygons
         self.polygons.append(&mut coplanar_front);
         self.polygons.append(&mut coplanar_back);
+
+        //  Treat this node as a leaf if all polygons ended up on the same side
+        if front.len() == polygons.len() {
+            // Everything is 'front': no meaningful split => store them here, no recursion
+            self.polygons = polygons.to_vec();
+            self.front = None;
+            self.back = None;
+            return;
+        }
+        if back.len() == polygons.len() {
+            // Everything is 'back': no meaningful split => store them here, no recursion
+            self.polygons = polygons.to_vec();
+            self.front = None;
+            self.back = None;
+            return;
+        }
 
         // Recursively build front/back in parallel
         match (!front.is_empty(), !back.is_empty()) {

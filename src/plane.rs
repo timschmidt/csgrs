@@ -60,15 +60,21 @@ impl Plane {
     pub fn split_polygon<S: Clone + Send + Sync>(
         &self,
         polygon: &Polygon<S>,
-        coplanar_front: &mut Vec<Polygon<S>>,
-        coplanar_back: &mut Vec<Polygon<S>>,
-        front: &mut Vec<Polygon<S>>,
-        back: &mut Vec<Polygon<S>>,
+    ) -> (
+        Vec<Polygon<S>>,
+        Vec<Polygon<S>>,
+        Vec<Polygon<S>>,
+        Vec<Polygon<S>>,
     ) {
         const COPLANAR: i8 = 0;
         const FRONT: i8 = 1;
         const BACK: i8 = 2;
         const SPANNING: i8 = 3;
+        
+        let mut coplanar_front = Vec::new();
+        let mut coplanar_back = Vec::new();
+        let mut front = Vec::new();
+        let mut back = Vec::new();
 
         // Classify each vertex
         let (types, polygon_type) = polygon
@@ -157,6 +163,7 @@ impl Plane {
                 }
             }
         }
+        (coplanar_front, coplanar_back, front, back)
     }
 
     /// Returns (T, T_inv), where:

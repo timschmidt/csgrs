@@ -6,8 +6,7 @@ use geo::{Area, CoordsIter, GeometryCollection, LineString, Polygon as GeoPolygo
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
     /// This is just a convenience wrapper around extrude_vector using Vector3::new(0.0, 0.0, height)
@@ -608,12 +607,7 @@ where S: Clone + Send + Sync {
                             &self.metadata,
                         ));
                         if do_caps {
-                            if let Ok(cap) = build_cap_polygon(
-                                &ext_ring.0,
-                                0.0,
-                                ext_ccw,
-                                &self.metadata
-                            ) {
+                            if let Ok(cap) = build_cap_polygon(&ext_ring.0, 0.0, ext_ccw, &self.metadata) {
                                 new_polygons.push(cap);
                             }
                             if let Ok(cap) = build_cap_polygon(

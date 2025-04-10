@@ -2,6 +2,7 @@ use crate::csg::CSGError;
 use crate::float_types::{PI, Real};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
+
 use geo::{LineString, Polygon as GeoPolygon, Coord};
 use nalgebra::{Point2, Point3, Vector3};
 
@@ -129,6 +130,7 @@ where S: Clone + Send + Sync {
                 // no holes if your polygon is always simple
                 Vec::new(),
             );
+
             let tris = polygon_2d.constrained_triangulation(Default::default())?;
 
             let mut final_triangles = Vec::with_capacity(tris.len());
@@ -179,6 +181,7 @@ where S: Clone + Send + Sync {
     pub fn calculate_new_normal(&self) -> Vector3<Real> {
         let n = self.vertices.len();
         if n < 3 {
+            // todo return error
             return Vector3::z(); // degenerate or empty
         }
 
@@ -219,13 +222,11 @@ where S: Clone + Send + Sync {
 
     /// Returns a new Polygon translated by t.
     pub fn translate(&self, x: Real, y: Real, z: Real) -> Self {
-        // todo: modify for Vector2 in-plane translation
         self.translate_vector(Vector3::new(x, y, z))
     }
 
     /// Returns a new Polygon translated by t.
     pub fn translate_vector(&self, t: Vector3<Real>) -> Self {
-        // todo: modify for Vector2 in-plane translation
         let new_vertices = self
             .vertices
             .iter()

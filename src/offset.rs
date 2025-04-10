@@ -15,7 +15,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         //   - Otherwise, ignore (exclude) it from the new collection
         let offset_geoms = self.geometry
             .iter()
-            .filter_map(|geom| match geom {
+            .filter_map(|geom| match &geom {
                 Geometry::Polygon(poly) => {
                     let new_mpoly = buffer_polygon(poly, distance.into());
                     Some(Geometry::MultiPolygon(new_mpoly))

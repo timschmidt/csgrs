@@ -1,6 +1,8 @@
 /target/
 *.stl
 stl
+/xtask/target/
+output.stl
 *.swp
 /src/*.swp
 prompt.txt

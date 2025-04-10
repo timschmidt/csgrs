@@ -1103,10 +1103,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0)).unwrap());
     /// assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, -6.0)).unwrap());
     /// ```
-    pub fn contains_vertex(&self, point: &Point3<Real>) -> Result<bool, CSGError> {
-        Ok(
-            self.ray_intersections(point, &Vector3::new(1.0, 1.0, 1.0)).len() % 2 == 1
-        )
+    pub fn contains_vertex(&self, point: &Point3<Real>) -> bool {
+        self.ray_intersections(point, &Vector3::new(1.0, 1.0, 1.0)).len() % 2 == 1
     }
 
     /// Approximate mass properties using Rapier.

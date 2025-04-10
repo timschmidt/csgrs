@@ -9,7 +9,7 @@ A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library i
 
 **csgrs** aims to be light weight and full featured through integration with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)) and [`geo`](https://crates.io/crates/geo) for robust processing of [Simple Features](https://en.wikipedia.org/wiki/Simple_Features).  **csgrs** has a number of functions useful for generating CNC toolpaths.  The library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are 100% rust and nearly all optional. 
 
-The BSP tree works with polygons made of lines.  **csgrs** interpolates all curves when working in 3D so that they can be processed using the BSP tree.  [`earcutr`](https://crates.io/crates/earcutr) is used by [`geo`](https://crates.io/crates/geo) for tessellation, and only works in 2D, so **csgrs** rotates 3D polygons into 2D for tessellation then back to 3D.
+The BSP tree works with polygons made of lines.  **csgrs** interpolates all curves when working in 3D so that they can be processed using the BSP tree.  [earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html) and [constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation) algorithms used for tessellation only work in 2D, so **csgrs** rotates 3D polygons into 2D for tessellation then back to 3D.
 
 ![Example CSG output](docs/csg.png)
 
@@ -285,6 +285,17 @@ if let Some(data_mut) = poly.metadata_mut() {
 - [csgrs-egui-example](https://github.com/timschmidt/csgrs-egui-example)
 - [csgrs-druid-example](https://github.com/timschmidt/csgrs-druid-example)
 
+## Build tests
+A cargo xtask is included in the repository for testing building with various combinations of feature flags.  To use it, you must install cargo xtask:
+```rust
+cargo install xtask
+```
+
+To run the tests:
+```rust
+cargo xtask test-all
+```
+
 ## Performance
 Patterns we work to follow throughout the library to improve performance and memory usage:
 - functions should accept borrowed slices, this permits easy use of iterators
@@ -317,7 +328,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - reduce dependency feature sets
 - space filling curves, hilbert sort polygons / points
 - identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold
-- svg import/export using https://crates.io/crates/geo-svg-io
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - screw threads
 - support scale and translation along a vector in rotate extrude
@@ -357,7 +367,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - verify functions against robust predicates here: https://github.com/hayashi-stl/robust-geo/blob/main/src/geo.rs
   - https://github.com/georust/robust
   - https://proptest-rs.github.io/proptest/intro.html
-- https://github.com/u65xhd/meshvox
 - https://crates.io/crates/geo-validity-check as compile time option
 - https://crates.io/crates/geo-index
 - https://github.com/lelongg/geo-rand

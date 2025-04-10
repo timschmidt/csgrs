@@ -834,9 +834,9 @@ fn svg_points_to_line_string<F: CoordNum>(points: &str) -> Result<LineString<F>,
     }
 
     match all_points(points) {
-        Ok(("", points)) => return Ok(LineString::new(points)),
-        Ok(_) => return Err(IoError::MalformedInput(format!("Could not parse the list of points: {points}"))),
-        Err(err) => return Err(IoError::MalformedInput(format!("Could not parse the list of points ({err}): {points}"))),
+        Ok(("", points)) => Ok(LineString::new(points)),
+        Ok(_) => Err(IoError::MalformedInput(format!("Could not parse the list of points: {points}"))),
+        Err(err) => Err(IoError::MalformedInput(format!("Could not parse the list of points ({err}): {points}"))),
     }
 }
 

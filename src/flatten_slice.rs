@@ -3,17 +3,16 @@ use crate::csg::{CSGError, CSG};
 use crate::float_types::{EPSILON, Real};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
-use geo::Intersects;
+
 use geo::{
     BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
-    Polygon as GeoPolygon, coord, orient::Direction,
+    Polygon as GeoPolygon, coord, orient::Direction, Intersects,
 };
 use hashbrown::HashMap;
 use nalgebra::Point3;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
     /// unifies them into one or more 2D polygons, and returns a purely 2D CSG.
     ///

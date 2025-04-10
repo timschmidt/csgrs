@@ -3,8 +3,7 @@ use crate::float_types::{Real, PI, EPSILON, FRAC_PI_2, TAU};
 use geo::{line_string, GeometryCollection, Geometry, LineString, MultiPolygon, Polygon as GeoPolygon, BooleanOps};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Creates a 2D square in the XY plane.
     ///
     /// # Parameters
@@ -312,6 +311,7 @@ where S: Clone + Send + Sync {
         }
 
         coords.push(coords[0]);
+
         let polygon_2d = GeoPolygon::new(LineString::from(coords), Vec::new());
         Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
@@ -342,6 +342,7 @@ where S: Clone + Send + Sync {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+
         Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
@@ -372,6 +373,7 @@ where S: Clone + Send + Sync {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+
         Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
@@ -476,6 +478,7 @@ where S: Clone + Send + Sync {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+
         Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
@@ -529,6 +532,7 @@ where S: Clone + Send + Sync {
         inner.reverse(); // ensure hole is opposite winding from outer
 
         let polygon_2d = GeoPolygon::new(LineString::from(outer), vec![LineString::from(inner)]);
+
         Ok(CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
