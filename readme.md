@@ -1,6 +1,13 @@
 # csgrs
 
-A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in BSP trees. **csgrs** provides data structures and methods for constructing 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, transforming, interrogating, and simulating it without leaving Rust.  **csgrs** aims to be light weight and full featured through integration with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)) and [`geo`](https://crates.io/crates/geo) for robust processing of [Simple Features](https://en.wikipedia.org/wiki/Simple_Features).  **csgrs** has a number of functions useful for generating CNC toolpaths.  The library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are 100% rust and nearly all optional. 
+[![Crates.io version](https://img.shields.io/crates/v/csgrs.svg)](https://crates.io/crates/csgrs)
+![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-brightgreen.svg)
+
+A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in BSP trees.
+
+**csgrs** provides data structures and methods for constructing 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax, transforming, interrogating, and simulating it without leaving Rust.
+
+**csgrs** aims to be light weight and full featured through integration with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)) and [`geo`](https://crates.io/crates/geo) for robust processing of [Simple Features](https://en.wikipedia.org/wiki/Simple_Features).  **csgrs** has a number of functions useful for generating CNC toolpaths.  The library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are 100% rust and nearly all optional. 
 
 The BSP tree works with polygons made of lines.  **csgrs** interpolates all curves when working in 3D so that they can be processed using the BSP tree.  [earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html) and [constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation) algorithms used for tessellation only work in 2D, so **csgrs** rotates 3D polygons into 2D for tessellation then back to 3D.
 
@@ -10,7 +17,7 @@ The BSP tree works with polygons made of lines.  **csgrs** interpolates all curv
 
 Install the [Rust](https://www.rust-lang.org/) language tools from [rustup.rs](https://rustup.rs/).
 
-```shell
+```sh
 cargo new my_cad_project
 cd my_cad_project
 cargo add csgrs
@@ -23,8 +30,10 @@ cargo add csgrs
 type CSG = csgrs::csg::CSG<()>;
 
 // Create two shapes:
-let cube = CSG::cube(2.0, 2.0, 2.0, None);  // 2×2×2 cube at origin, no metadata
-let sphere = CSG::sphere(1.0, 16, 8, None); // sphere of radius=1 at origin, no metadata
+// 2×2×2 cube at origin, no metadata
+let cube = CSG::cube(2.0, 2.0, 2.0, None);
+// sphere of radius=1 at origin, no metadata
+let sphere = CSG::sphere(1.0, 16, 8, None);
 
 // Difference one from the other:
 let difference_result = cube.difference(&sphere);
@@ -36,7 +45,7 @@ std::fs::write("cube_sphere_difference.stl", stl).unwrap();
 
 ### Building for WASM
 
-```shell
+```sh
 cargo build --features="wasm" --target=wasm32-unknown-unknown --release
 ```
 
@@ -50,46 +59,7 @@ cargo build --features="wasm" --target=wasm32-unknown-unknown --release
   - a [`geo`](https://crates.io/crates/geo) [`GeometryCollection<Real>`](https://docs.rs/geo/latest/geo/geometry/struct.GeometryCollection.html)
   - another optional metadata field (`Option<S>`) also defined by you
 
-`CSG<S>` provides methods for working with 2D and 3D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from geo Geometries with `CSG::from_geo(...)`.  Polygons must be closed, planar, have 3 or more vertices, and are 3D.  Geometries can be open or closed, have holes, but must be planar in the XY.  Operations work on both 2D and 3D shapes though they generally do not interact except where one is explicitly transformed into the other as in extrude or slice.  Polygons and Geometries are triangulated when being exported as an STL, or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
-
-### 2D Shapes
-
-- **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
-- **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
-- **`CSG::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
-- **`CSG::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
-- **`CSG::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
-- **`CSG::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>)`**
-- **`CSG::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
-- **`CSG::teardrop(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::squircle(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::reuleaux_polygon(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`** final shape not yet achieved
-- **`CSG::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::metaball_2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`** failing at the moment, pending rework
-- **`CSG::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: Option<S>)`**
-- **`CSG::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
-- **`CSG::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
-- **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
-- **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
-
-```rust
-let square = CSG::square(1.0, 1.0, None); // 1×1 at origin
-let rect = CSG::square(2.0, 4.0, None);
-let circle = CSG::circle(1.0, 32, None); // radius=1, 32 segments
-let circle2 = CSG::circle(2.0, 64, None);
-
-let font_data = include_bytes!("../fonts/MyFont.ttf");
-let csg_text = CSG::text("Hello!", font_data, 20.0, None);
-
-// Then extrude the text to make it 3D:
-let text_3d = csg_text.extrude(1.0);
-```
+`CSG<S>` provides methods for working with 2D and 3D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from geo Geometries with `CSG::from_geo(...)`.  Polygons must be closed, planar, have 3 or more vertices, and are 3D.  Geometries can be open or closed, have holes, but must be planar in the XY.  Operations work on both 2D and 3D shapes though they generally do not interact except where one is explicitly transformed into the other as in extrude or slice.  Polygons and Geometries are triangulated with [`earcutr`](https://crates.io/crates/earcutr) when being exported as an STL, or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 
 ### Extrusions and Revolves
 
@@ -111,79 +81,8 @@ let polygon_top = polygon_bottom.translate(0.0, 0.0, 5.0);
 let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false);
 ```
 
-### 3D Shapes
-
-- **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
-- **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
-- **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum at origin with height and `radius1` and `radius2`.  If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
-- **`CSG::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum from `start` to `end` with `radius1` and `radius2`.  If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
-- **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
-- **`CSG::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: Option<S>)`**
-- **`CSG::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: Option<S>)`**
-- **`CSG::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, metadata: Option<S>)`**
-- **`CSG::ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
-- **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
-- **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: Option<S>)`** - Return a CSG created by meshing a signed distance field within a bounding box
-- **`CSG::arrow(start: Point3, direction: Vector3, segments: usize, orientation: bool, metadata: Option<S>)`** - Create an arrow at start, pointing along direction
-- **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self` - not yet working
-
-```rust
-// Unit cube at origin, no metadata
-let cube = CSG::cube(1.0, 1.0, 1.0, None);
-
-// Sphere of radius=2 at origin with 32 segments and 16 stacks
-let sphere = CSG::sphere(2.0, 32, 16, None);
-
-// Cylinder from radius=1, height=2, 16 segments, and no metadata
-let cyl = CSG::cylinder(1.0, 2.0, 16, None);
-
-// Create a custom polyhedron from points and face indices:
-let points = &[
-    [0.0, 0.0, 0.0],
-    [1.0, 0.0, 0.0],
-    [1.0, 1.0, 0.0],
-    [0.0, 1.0, 0.0],
-    [0.5, 0.5, 1.0],
-];
-let faces = vec![
-    vec![0, 1, 2, 3], // base rectangle
-    vec![0, 1, 4],    // triangular side
-    vec![1, 2, 4],
-    vec![2, 3, 4],
-    vec![3, 0, 4],
-];
-let pyramid = CSG::polyhedron(points, &faces, None);
-
-// Metaballs https://en.wikipedia.org/wiki/Metaballs
-use csgrs::csg::MetaBall;
-let balls = vec![
-    MetaBall::new(Point3::origin(), 1.0),
-    MetaBall::new(Point3::new(1.5, 0.0, 0.0), 1.0),
-];
-
-let resolution = (60, 60, 60);
-let iso_value = 1.0;
-let padding = 1.0;
-
-let metaball_csg = CSG::from_metaballs(
-    &balls,
-    resolution,
-    iso_value,
-    padding,
-    None,
-);
-
-// Example Signed Distance Field for a sphere of radius 1.5 centered at (0,0,0)
-let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
-
-let resolution = (60, 60, 60);
-let min_pt = Point3::new(-2.0, -2.0, -2.0);
-let max_pt = Point3::new( 2.0,  2.0,  2.0);
-let iso_value = 0.0; // Typically zero for SDF-based surfaces
-
-let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
-```
+### Shapes
+For the shapes see [shapes.md](shapes.md)
 
 ### CSG Boolean Operations
 
@@ -241,8 +140,8 @@ let mirrored = cube.mirror(plane_x);
 
 ### STL
 
-- **Export ASCII STL**: `csg.to_stl_ascii("solid_name") -> String`
 - **Export Binary STL**: `csg.to_stl_binary("solid_name") -> io::Result<Vec<u8>>`
+- **Export ASCII STL**: `csg.to_stl_ascii("solid_name") -> String`
 - **Import STL**: `CSG::from_stl(&stl_data) -> io::Result<CSG<S>>`
 
 ```rust
@@ -409,7 +308,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - fix shape of reuleaux
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere in main.rs - shapes are out of proximity
-- fix up error handling with result types, eliminate panics
 - ray intersection (singular)
 - expose geo traits on 2D shapes
 - https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d
@@ -424,7 +322,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - bending
 - gears
 - lead-ins, lead-outs
-- gpu accelleration
+- gpu acceleration
   - https://github.com/dimforge/wgmath
   - https://github.com/pcwalton/pathfinder
 - reduce dependency feature sets
@@ -451,7 +349,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - test geo_booleanop as alternative to geo's built-in boolean ops.
 - adapt cavalier_contours demo application
 - rethink metadata
-  - support storing UV[W] coordinates with vertexes at compile time (try to keep runtime cost low too)
+  - support storing UV[W] coordinates with vertices at compile time (try to keep runtime cost low too)
   - accomplish equivalence checks and memory usage reduction by using a hashmap or references instead of storing metadata with each node
   - with equivalence checks, returning sorted metadata becomes easy
 - chamfers

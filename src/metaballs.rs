@@ -1,3 +1,5 @@
+//! Implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
+
 use crate::csg::CSG;
 use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
@@ -7,6 +9,11 @@ use geo::{CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPo
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
+/// [Metaballs](https://en.wikipedia.org/wiki/Metaballs), organic-looking isosurface,
+/// characterised by their ability to meld together when in close proximity to create single objects.
+///
+/// ![Metaballs demo image][Metaballs demo image]
+#[cfg_attr(doc, doc = doc_image_embed::embed_image!("Metaballs demo image", "docs/metaballs.png"))]
 #[derive(Debug, Clone)]
 pub struct MetaBall {
     pub center: Point3<Real>,
@@ -31,11 +38,52 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
     for ball in balls {
         value += ball.influence(p);
     }
+
     value
 }
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+// Use fast-surface-nets to extract a mesh from this 3D scalar field.
+// We'll define a shape type for ndshape:
+/// The shape describing our discrete grid for Surface Nets
+#[allow(non_snake_case)]
+#[derive(Clone, Copy)]
+struct GridShape {
+    nx: u32,
+    ny: u32,
+    nz: u32,
+}
+
+impl fast_surface_nets::ndshape::Shape<3> for GridShape {
+    type Coord = u32;
+
+    #[inline]
+    fn as_array(&self) -> [Self::Coord; 3] {
+        [self.nx, self.ny, self.nz]
+    }
+
+    fn size(&self) -> Self::Coord {
+        self.nx * self.ny * self.nz
+    }
+
+    fn usize(&self) -> usize {
+        (self.nx * self.ny * self.nz) as usize
+    }
+
+    fn linearize(&self, coords: [Self::Coord; 3]) -> u32 {
+        let [x, y, z] = coords;
+        (z * self.ny + y) * self.nx + x
+    }
+
+    fn delinearize(&self, i: u32) -> [Self::Coord; 3] {
+        let x = i % (self.nx);
+        let yz = i / (self.nx);
+        let y = yz % (self.ny);
+        let z = yz / (self.ny);
+        [x, y, z]
+    }
+}
+
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
     /// - `balls`: array of (center, radius).
     /// - `resolution`: (nx, ny) grid resolution for marching squares.
@@ -286,45 +334,9 @@ where S: Clone + Send + Sync {
                 }
             }
         }
-    
+
         // Use fast-surface-nets to extract a mesh from this 3D scalar field.
         // We'll define a shape type for ndshape:
-        #[allow(non_snake_case)]
-        #[derive(Clone, Copy)]
-        struct GridShape {
-            nx: u32,
-            ny: u32,
-            nz: u32,
-        }
-        impl fast_surface_nets::ndshape::Shape<3> for GridShape {
-            type Coord = u32;
-            #[inline]
-            fn as_array(&self) -> [Self::Coord; 3] {
-                [self.nx, self.ny, self.nz]
-            }
-        
-            fn size(&self) -> Self::Coord {
-                self.nx * self.ny * self.nz
-            }
-        
-            fn usize(&self) -> usize {
-                (self.nx * self.ny * self.nz) as usize
-            }
-        
-            fn linearize(&self, coords: [Self::Coord; 3]) -> u32 {
-                let [x, y, z] = coords;
-                (z * self.ny + y) * self.nx + x
-            }
-        
-            fn delinearize(&self, i: u32) -> [Self::Coord; 3] {
-                let x = i % (self.nx);
-                let yz = i / (self.nx);
-                let y = yz % (self.ny);
-                let z = yz / (self.ny);
-                [x, y, z]
-            }
-        }
-    
         let shape = GridShape { nx, ny, nz };
 
         // We'll collect the output into a SurfaceNetsBuffer
@@ -388,7 +400,7 @@ where S: Clone + Send + Sync {
             let v2 = Vertex::new(p2_real, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
 
             // Each tri is turned into a Polygon with 3 vertices
-            let poly = Polygon::new(vec![v0, v2, v1], metadata.clone());
+            let poly = Polygon::from_tri(&[v0, v2, v1], metadata.clone());
             triangles.push(poly);
         }
 

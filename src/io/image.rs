@@ -1,4 +1,4 @@
-use crate::csg::CSG;
+use crate::csg::{CSGError, CSG};
 use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -6,8 +6,7 @@ use image::GrayImage;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Builds a new CSG from the “on” pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.
     ///
@@ -16,18 +15,21 @@ where S: Clone + Send + Sync {
     /// - `closepaths`: if true, each traced path is closed with 'Z' in the SVG path commands
     /// - `metadata`: optional metadata to attach to the resulting polygons
     ///
-    /// # Returns
+    /// ## Returns
     /// A 2D shape in the XY plane (z=0) representing all traced contours. Each contour
     /// becomes a polygon. The polygons are *not* automatically unioned; they are simply
     /// collected in one `CSG`.
     ///
-    /// # Example
+    /// ## Errors
+    /// Returns an error if any `Polygon`s have less then three vertices.
+    ///
+    /// ## Example
     /// ```no_run
     /// # use csgrs::csg::CSG;
     /// # use image::{GrayImage, Luma};
     /// # fn main() {
     /// let img: GrayImage = image::open("my_binary.png").unwrap().to_luma8();
-    /// let csg2d = CSG::from_image(&img, 128, true, None);
+    /// let csg2d = CSG::<()>::from_image(&img, 128, true, None);
     /// // optionally extrude it:
     /// let shape3d = csg2d.extrude(5.0);
     /// # }
@@ -37,11 +39,12 @@ where S: Clone + Send + Sync {
         threshold: u8,
         closepaths: bool,
         metadata: Option<S>,
-    ) -> Self {
+    ) -> Result<Self, CSGError> {
         // Convert the image into a 2D array of bits for the contour_tracing::array::bits_to_paths function.
-        // We treat pixels >= threshold as 1, else 0.
+        // We treat pixels >= threshold as 1, else 0. // todo maybe allow user to specify the threshold?
         let width = img.width() as usize;
         let height = img.height() as usize;
+
         let mut bits = Vec::with_capacity(height);
         for y in 0..height {
             let mut row = Vec::with_capacity(width);
@@ -83,12 +86,12 @@ where S: Clone + Send + Sync {
                 // close it
                 verts.push(verts.first().unwrap().clone());
             }
-            let poly = Polygon::new(verts, metadata.clone());
+            let poly = Polygon::new(verts, metadata.clone())?;
             all_polygons.push(poly);
         }
 
         // Build a CSG from those polygons
-        CSG::from_polygons(&all_polygons)
+        Ok(CSG::from_polygons(&all_polygons))
     }
 
     /// Internal helper to parse a minimal subset of SVG path commands:

@@ -1,15 +1,14 @@
+//! This module contains the implementation of the [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree data structure
+
 use crate::float_types::EPSILON;
 use crate::plane::Plane;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
+use rayon::{join, prelude::*};
 
-#[cfg(feature = "parallel")]
-use rayon::join;
-
-/// A BSP tree node, containing polygons plus optional front/back subtrees
+/// A [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node, containing polygons plus optional front/back subtrees
 #[derive(Debug, Clone)]
 pub struct Node<S: Clone> {
     pub plane: Option<Plane>,
@@ -305,7 +304,7 @@ impl<S: Clone + Send + Sync> Node<S> {
         let plane = self.plane.clone().unwrap();
 
         // Split polygons in parallel
-        let (mut coplanar_front, mut coplanar_back, mut front, mut back) = polygons
+        let (mut coplanar_front, mut coplanar_back, front, back) = polygons
             .par_iter()
             .map(|p| plane.split_polygon(p)) // <-- just pass p
             .reduce(
@@ -396,7 +395,7 @@ impl<S: Clone + Send + Sync> Node<S> {
             let mut types = Vec::with_capacity(vcount);
 
             for v in &poly.vertices {
-                let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.w;
+                let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.intercept;
                 let t = if dist < -EPSILON {
                     BACK
                 } else if dist > EPSILON {
@@ -441,7 +440,7 @@ impl<S: Clone + Send + Sync> Node<S> {
                             // Avoid dividing by zero:
                             let denom = slicing_plane.normal.dot(&(vj.pos - vi.pos));
                             if denom.abs() > EPSILON {
-                                let t = (slicing_plane.w
+                                let t = (slicing_plane.intercept
                                     - slicing_plane.normal.dot(&vi.pos.coords))
                                     / denom;
                                 // Interpolate:
@@ -499,7 +498,7 @@ impl<S: Clone + Send + Sync> Node<S> {
                 let mut types = Vec::with_capacity(vcount);
 
                 for v in &poly.vertices {
-                    let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.w;
+                    let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.intercept;
                     let t = if dist < -EPSILON {
                         BACK
                     } else if dist > EPSILON {
@@ -533,7 +532,7 @@ impl<S: Clone + Send + Sync> Node<S> {
                             if (ti | tj) == SPANNING {
                                 let denom = slicing_plane.normal.dot(&(vj.pos - vi.pos));
                                 if denom.abs() > EPSILON {
-                                    let t = (slicing_plane.w
+                                    let t = (slicing_plane.intercept
                                         - slicing_plane.normal.dot(&vi.pos.coords))
                                         / denom;
                                     let intersect_vert = vi.interpolate(vj, t);
