@@ -237,7 +237,7 @@ impl Real {
     /// This will be accurate for trivial Rationals and many but not all other cases.
     pub fn best_sign(&self) -> Sign {
         match &self.class {
-            One | Pi | Sqrt(_) | Exp(_) | Ln(_) | SinPi(_) => self.rational.sign(),
+            One | Pi | Sqrt(_) | Exp(_) | Ln(_) | SinPi(_) | TanPi(_) => self.rational.sign(),
             _ => match (self.rational.sign(), self.computable.sign()) {
                 (Sign::NoSign, _) => Sign::NoSign,
                 (_, Sign::NoSign) => Sign::NoSign,
