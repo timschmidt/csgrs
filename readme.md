@@ -496,6 +496,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - https://crates.io/crates/spherical_geometry
 - https://crates.io/crates/miniproj
 - examine https://crates.io/crates/geo-aid constraint solver
+- examine https://cadquery.readthedocs.io/en/latest/apireference.html for function ideas
 
 ## References
 > [Shape Interrogation for Computer Aided Design and Manufacturing](https://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/)
