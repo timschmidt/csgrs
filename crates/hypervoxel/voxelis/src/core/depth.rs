@@ -197,8 +197,8 @@ mod tests {
     #[test]
     fn test_display_and_debug() {
         let depth = Depth::new(3, 6);
-        assert_eq!(format!("{}", depth), "3/6");
-        assert_eq!(format!("{:?}", depth), "3/6");
+        assert_eq!(format!("{depth}"), "3/6");
+        assert_eq!(format!("{depth:?}"), "3/6");
     }
 
     #[test]
@@ -206,5 +206,59 @@ mod tests {
     #[should_panic(expected = "Current depth cannot be greater than max depth")]
     fn test_new_current_greater_than_max() {
         let _ = Depth::new(10, 5);
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "Current depth cannot be greater than max depth")]
+    fn test_increment_overflow() {
+        let depth = Depth::new(5, 5);
+        let _ = depth.increment();
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "Current depth cannot be less than zero")]
+    fn test_decrement_underflow() {
+        let depth = Depth::new(0, 5);
+        let _ = depth.decrement();
+    }
+
+    #[test]
+    #[should_panic(expected = "Max depth exceeds allowed limit")]
+    fn test_new_current_eq_max() {
+        let depth = Depth::new(7, 7);
+        assert_eq!(depth.current(), 7);
+        assert_eq!(depth.max(), 7);
+    }
+
+    #[test]
+    fn test_zero_zero_depth() {
+        let depth = Depth::new(0, 0);
+        assert_eq!(depth.current(), 0);
+        assert_eq!(depth.max(), 0);
+    }
+
+    #[test]
+    fn test_maximum_valid_depth() {
+        let max = MAX_ALLOWED_DEPTH as u8 - 1;
+        let depth = Depth::new(max, max);
+        assert_eq!(depth.current(), max);
+        assert_eq!(depth.max(), max);
+    }
+
+    #[test]
+    fn test_increment_to_max() {
+        let max = MAX_ALLOWED_DEPTH as u8 - 1;
+        let depth = Depth::new(max - 1, max);
+        let inc = depth.increment();
+        assert_eq!(inc.current(), max);
+    }
+
+    #[test]
+    fn test_decrement_to_zero() {
+        let depth = Depth::new(1, 5);
+        let dec = depth.decrement();
+        assert_eq!(dec.current(), 0);
     }
 }
