@@ -530,4 +530,79 @@ mod tests {
             "Max values should not be equal to INVALID",
         );
     }
+
+    #[test]
+    fn test_raw_roundtrip() {
+        let branch = BlockId::new_branch(123, 456, 0xAA, 0x55);
+        let raw: u64 = branch.into();
+        assert_eq!(raw, branch.raw());
+        assert_eq!(BlockId::from_raw(raw), branch);
+    }
+
+    #[test]
+    fn test_display_debug_variants() {
+        let invalid = BlockId::INVALID;
+        assert_eq!(format!("{invalid}"), "Id(INVALID)");
+        assert_eq!(format!("{invalid:?}"), "Id(INVALID)");
+
+        let empty = BlockId::EMPTY;
+        assert_eq!(format!("{empty}"), "Id(EMPTY)");
+        assert_eq!(format!("{empty:?}"), "Id(EMPTY)");
+
+        let leaf = BlockId::new_leaf(1, 2);
+        assert_eq!(format!("{leaf}"), format!("{leaf:?}"));
+        assert!(leaf.is_leaf());
+
+        let branch = BlockId::new_branch(3, 4, 0x0F, 0xF0);
+        assert_eq!(format!("{branch}",), format!("{branch:?}"));
+        assert!(branch.is_branch());
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "Generation overflow")]
+    fn test_generation_overflow() {
+        let _ = BlockId::new_leaf(0, BlockId::MAX_GENERATION + 1);
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "Cannot get types from a leaf node")]
+    fn test_types_on_leaf_panic() {
+        let leaf = BlockId::new_leaf(0, 0);
+        let _ = leaf.types();
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "Cannot get mask from a leaf node")]
+    fn test_mask_on_leaf_panic() {
+        let leaf = BlockId::new_leaf(0, 0);
+        let _ = leaf.mask();
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "Cannot check child on a leaf node")]
+    fn test_has_child_on_leaf_panic() {
+        let leaf = BlockId::new_leaf(0, 0);
+        let _ = leaf.has_child(0);
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "Child index out of bounds (0-7)")]
+    fn test_has_child_index_out_of_bounds() {
+        let branch = BlockId::new_branch(0, 0, 0xFF, 0xFF);
+        let _ = branch.has_child(8);
+    }
+
+    #[test]
+    fn test_has_child_logic() {
+        let branch = BlockId::new_branch(0, 0, 0, 0b1010_1010);
+        assert!(branch.has_child(1));
+        assert!(!branch.has_child(0));
+        assert!(branch.has_child(3));
+        assert!(!branch.has_child(2));
+    }
 }
