@@ -5,6 +5,7 @@ use glam::{IVec3, Vec3};
 use rand::Rng;
 
 use voxelis::{
+    Batch,
     spatial::{
         Octree, OctreeOpsBatch, OctreeOpsMesh, OctreeOpsRead, OctreeOpsState, OctreeOpsWrite,
     },
@@ -188,7 +189,7 @@ fn benchmark_octree(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("octree_fill_set");
+        let mut group = c.benchmark_group("octree_fill_then_set_single_voxel");
 
         for &(size, depth) in depths.iter() {
             for octree_type in octree_types.iter() {
@@ -335,23 +336,27 @@ fn benchmark_octree(c: &mut Criterion) {
                     };
                     let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 24);
 
-                    let mut v = 1;
-                    b.iter(|| {
-                        let mut batch = octree.create_batch();
+                    let mut batches: Vec<Batch<i32>> =
+                        vec![octree.create_batch(), octree.create_batch()];
 
-                        for y in 0..size as i32 {
-                            for z in 0..size as i32 {
-                                for x in 0..size as i32 {
-                                    batch.set(&mut store, IVec3::new(x, y, z), v);
-                                }
+                    for y in 0..size as i32 {
+                        for z in 0..size as i32 {
+                            for x in 0..size as i32 {
+                                batches[0].set(&mut store, IVec3::new(x, y, z), 1);
+                                batches[1].set(&mut store, IVec3::new(x, y, z), 2);
                             }
                         }
+                    }
 
-                        octree.apply_batch(&mut store, black_box(&batch));
+                    let mut batch_idx = 0;
 
-                        v += 1;
-                        if v == 0 {
-                            v = 1;
+                    b.iter(|| {
+                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+
+                        if batch_idx == 0 {
+                            batch_idx = 1;
+                        } else {
+                            batch_idx = 0;
                         }
                     });
                 });
@@ -493,28 +498,28 @@ fn benchmark_octree(c: &mut Criterion) {
                     };
                     let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
 
-                    let mut v = 1;
+                    let mut batches: Vec<Batch<i32>> =
+                        vec![octree.create_batch(), octree.create_batch()];
 
-                    b.iter(|| {
-                        let mut batch = octree.create_batch();
+                    let mut batch_idx = 0;
 
-                        for y in 0..size as i32 {
-                            for z in 0..size as i32 {
-                                for x in 0..size as i32 {
-                                    batch.set(
-                                        &mut store,
-                                        IVec3::new(x, y, z),
-                                        (x + y + z + v) % i32::MAX,
-                                    );
-                                }
+                    for y in 0..size as i32 {
+                        for z in 0..size as i32 {
+                            for x in 0..size as i32 {
+                                let position = IVec3::new(x, y, z);
+                                batches[0].set(&mut store, position, (x + y + z + 1) % i32::MAX);
+                                batches[1].set(&mut store, position, (x + y + z + 1000) % i32::MAX);
                             }
                         }
+                    }
 
-                        octree.apply_batch(&mut store, black_box(&batch));
+                    b.iter(|| {
+                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
 
-                        v += 1;
-                        if v == 0 {
-                            v = 1;
+                        if batch_idx == 0 {
+                            batch_idx = 1;
+                        } else {
+                            batch_idx = 0;
                         }
                     });
 
@@ -1127,31 +1132,35 @@ fn benchmark_octree(c: &mut Criterion) {
                     };
                     let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
 
-                    let mut v = 1;
                     let mut noise = fastnoise_lite::FastNoiseLite::new();
                     noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
 
-                    b.iter(|| {
-                        let mut batch = octree.create_batch();
+                    let mut batches: Vec<Batch<i32>> =
+                        vec![octree.create_batch(), octree.create_batch()];
 
-                        for z in 0..size as i32 {
-                            for x in 0..size as i32 {
-                                let y = ((noise
-                                    .get_noise_2d(x as f32 / size as f32, z as f32 / size as f32)
-                                    + 1.0)
-                                    / 2.0)
-                                    * size as f32;
-                                let y = y as i32;
-                                debug_assert!(y < size as i32);
-                                batch.set(&mut store, IVec3::new(x, y, z), v);
-                            }
+                    for z in 0..size as i32 {
+                        for x in 0..size as i32 {
+                            let y = ((noise
+                                .get_noise_2d(x as f32 / size as f32, z as f32 / size as f32)
+                                + 1.0)
+                                / 2.0)
+                                * size as f32;
+                            let y = y as i32;
+                            debug_assert!(y < size as i32);
+                            batches[0].set(&mut store, IVec3::new(x, y, z), 1);
+                            batches[1].set(&mut store, IVec3::new(x, y, z), 2);
                         }
+                    }
 
-                        octree.apply_batch(&mut store, black_box(&batch));
+                    let mut batch_idx = 0;
 
-                        v += 1;
-                        if v == 0 {
-                            v = 1;
+                    b.iter(|| {
+                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+
+                        if batch_idx == 0 {
+                            batch_idx = 1;
+                        } else {
+                            batch_idx = 0;
                         }
                     });
                 });
@@ -1222,33 +1231,37 @@ fn benchmark_octree(c: &mut Criterion) {
                     };
                     let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 14);
 
-                    let mut v = 1;
                     let mut noise = fastnoise_lite::FastNoiseLite::new();
                     noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
 
-                    b.iter(|| {
-                        let mut batch = octree.create_batch();
+                    let mut batches: Vec<Batch<i32>> =
+                        vec![octree.create_batch(), octree.create_batch()];
 
-                        for z in 0..size as i32 {
-                            for x in 0..size as i32 {
-                                let height = ((noise
-                                    .get_noise_2d(x as f32 / size as f32, z as f32 / size as f32)
-                                    + 1.0)
-                                    / 2.0)
-                                    * size as f32;
-                                let height = height as i32;
-                                debug_assert!(height < size as i32);
-                                for y in 0..=height {
-                                    batch.set(&mut store, IVec3::new(x, y, z), v);
-                                }
+                    for z in 0..size as i32 {
+                        for x in 0..size as i32 {
+                            let height = ((noise
+                                .get_noise_2d(x as f32 / size as f32, z as f32 / size as f32)
+                                + 1.0)
+                                / 2.0)
+                                * size as f32;
+                            let height = height as i32;
+                            debug_assert!(height < size as i32);
+                            for y in 0..=height {
+                                batches[0].set(&mut store, IVec3::new(x, y, z), 1);
+                                batches[1].set(&mut store, IVec3::new(x, y, z), 2);
                             }
                         }
+                    }
 
-                        octree.apply_batch(&mut store, black_box(&batch));
+                    let mut batch_idx = 0;
 
-                        v += 1;
-                        if v == 0 {
-                            v = 1;
+                    b.iter(|| {
+                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+
+                        if batch_idx == 0 {
+                            batch_idx = 1;
+                        } else {
+                            batch_idx = 0;
                         }
                     });
                 });
