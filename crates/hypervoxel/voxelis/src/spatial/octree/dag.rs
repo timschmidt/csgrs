@@ -1044,7 +1044,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
         if mask != 0xFF {
             if cloned_nodes != 0 {
-                let existing_children = store.get_children(&current_id);
+                let existing_children = store.get_children_ref(&current_id);
 
                 let mut cloned_nodes_bits = cloned_nodes;
 
