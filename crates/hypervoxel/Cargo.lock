@@ -4324,13 +4324,12 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3779b94aeb87e8bd4e834cee3650289ee9e0d5677f976ecdb6d219e5f4f6cd94"
+checksum = "9fbfd9d094a40bf3ae768db9361049ace4c0e04a4fd6b359518bd7b73a73dd97"
 dependencies = [
  "rand_chacha 0.9.0",
  "rand_core 0.9.3",
- "zerocopy 0.8.24",
 ]
 
 [[package]]
@@ -5404,7 +5403,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "voxelis"
-version = "25.3.0"
+version = "25.4.0"
 dependencies = [
  "ahash",
  "bitflags 2.9.0",
@@ -5416,7 +5415,7 @@ dependencies = [
  "log",
  "md-5",
  "parking_lot",
- "rand 0.9.0",
+ "rand 0.9.1",
  "rayon",
  "rustc-hash 2.1.1",
  "serde",
@@ -5426,7 +5425,7 @@ dependencies = [
 
 [[package]]
 name = "voxelis-bevy"
-version = "25.3.0"
+version = "25.4.0"
 dependencies = [
  "bevy",
  "voxelis",
@@ -5434,14 +5433,14 @@ dependencies = [
 
 [[package]]
 name = "vtm-export"
-version = "25.3.0"
+version = "25.4.0"
 dependencies = [
  "voxelis",
 ]
 
 [[package]]
 name = "vtm-viewer"
-version = "25.3.0"
+version = "25.4.0"
 dependencies = [
  "bevy",
  "bevy_egui",
@@ -5457,7 +5456,7 @@ dependencies = [
 
 [[package]]
 name = "vtm-voxelize"
-version = "25.3.0"
+version = "25.4.0"
 dependencies = [
  "voxelis",
 ]
