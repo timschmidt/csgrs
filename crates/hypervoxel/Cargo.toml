@@ -19,18 +19,19 @@ license = "MIT OR Apache-2.0"
 voxelis = { path = "voxelis" }
 voxelis-bevy = { path = "voxelis-bevy" }
 
+ahash = "0.8.11"
 bitflags = "2.9.0"
 byteorder = "1.5.0"
 fastnoise-lite = "1.1.1"
 glam = "0.29.3"
 humanize-bytes = "1.0.6"
-log = { version = "*", features = [
+log = { version = "0.4.27", features = [
   "max_level_debug",
   "release_max_level_warn",
 ] }
 md-5 = "0.10.6"
 parking_lot = "0.12.3"
-rand = { version = "0.9.0", features = ["small_rng"] }
+rand = { version = "0.9.1", features = ["small_rng"] }
 rayon = "1.10.0"
 rustc-hash = "2.1.1"
 serde = "1.0.219"

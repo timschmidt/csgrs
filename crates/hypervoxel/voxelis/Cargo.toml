@@ -10,10 +10,11 @@ memory_stats = []
 debug_trace_ref_counts = []
 
 [dependencies]
+ahash.workspace = true
 bitflags.workspace = true
 byteorder.workspace = true
-glam.workspace = true
 fastnoise-lite.workspace = true
+glam.workspace = true
 humanize-bytes.workspace = true
 log.workspace = true
 md-5.workspace = true
@@ -24,7 +25,6 @@ rustc-hash.workspace = true
 serde.workspace = true
 wide.workspace = true
 zstd.workspace = true
-ahash = "0.8.11"
 
 [dev-dependencies]
 # criterion = { version = "0.5.1", features = ["html_reports"] }
