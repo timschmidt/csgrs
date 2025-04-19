@@ -119,13 +119,19 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
             recycled_nodes: 0,
             alive_nodes: 1,
             patterns: 1,
-            cache_hits: 0,
-            cache_misses: 0,
+            total_cache_hits: 0,
+            total_cache_misses: 0,
+            branch_cache_hits: 0,
+            branch_cache_misses: 0,
+            leaf_cache_hits: 0,
+            leaf_cache_misses: 0,
+            collapsed_branches: 0,
             leaf_nodes: 0,
             branch_nodes: 1,
             max_alive_nodes: 0,
             max_node_id: 0,
-            max_ref_count: 0,
+            max_branch_ref_count: 0,
+            max_leaf_ref_count: 0,
             max_generation: 0,
             generations_overflows: 0,
         };
@@ -228,10 +234,17 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
 
         #[cfg(feature = "memory_stats")]
         {
-            self.stats.max_ref_count = self
-                .stats
-                .max_ref_count
-                .max(*self.ref_counts.get(block_id.index()) as usize);
+            if block_id.is_branch() {
+                self.stats.max_branch_ref_count = self
+                    .stats
+                    .max_branch_ref_count
+                    .max(*self.ref_counts.get(block_id.index()) as usize);
+            } else {
+                self.stats.max_leaf_ref_count = self
+                    .stats
+                    .max_leaf_ref_count
+                    .max(*self.ref_counts.get(block_id.index()) as usize);
+            }
         }
     }
 
@@ -348,10 +361,17 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
 
         #[cfg(feature = "memory_stats")]
         {
-            self.stats.max_ref_count = self
-                .stats
-                .max_ref_count
-                .max(*self.ref_counts.get(block_id.index()) as usize);
+            if block_id.is_branch() {
+                self.stats.max_branch_ref_count = self
+                    .stats
+                    .max_branch_ref_count
+                    .max(*self.ref_counts.get(block_id.index()) as usize);
+            } else {
+                self.stats.max_leaf_ref_count = self
+                    .stats
+                    .max_leaf_ref_count
+                    .max(*self.ref_counts.get(block_id.index()) as usize);
+            }
         }
     }
 
@@ -634,7 +654,8 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
 
                     #[cfg(feature = "memory_stats")]
                     {
-                        self.stats.cache_hits += 1;
+                        self.stats.total_cache_hits += 1;
+                        self.stats.leaf_cache_hits += 1;
                     }
 
                     existing_id
@@ -685,7 +706,8 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
                 {
                     self.stats.leaf_nodes += 1;
                     self.stats.patterns += 1;
-                    self.stats.cache_misses += 1;
+                    self.stats.total_cache_misses += 1;
+                    self.stats.leaf_cache_misses += 1;
                 }
 
                 block_id
@@ -759,7 +781,8 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
 
                 #[cfg(feature = "memory_stats")]
                 {
-                    self.stats.cache_hits += 1;
+                    self.stats.total_cache_hits += 1;
+                    self.stats.branch_cache_hits += 1;
                 }
 
                 existing_id
@@ -800,12 +823,18 @@ impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug>
                 {
                     self.stats.branch_nodes += 1;
                     self.stats.patterns += 1;
-                    self.stats.cache_misses += 1;
+                    self.stats.total_cache_misses += 1;
+                    self.stats.branch_cache_misses += 1;
                 }
 
                 block_id
             }
         }
+    }
+
+    #[cfg(feature = "memory_stats")]
+    pub fn bump_collapsed_branches(&mut self) {
+        self.stats.collapsed_branches += 1;
     }
 
     pub fn create_empty_branch(&mut self) -> BlockId {

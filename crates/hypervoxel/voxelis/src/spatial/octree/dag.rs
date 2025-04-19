@@ -907,6 +907,9 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             current_level_data[path_index] = branch_id;
             paths.push(path);
         } else {
+            #[cfg(feature = "memory_stats")]
+            store.bump_collapsed_branches();
+
             let first_value = values[set_mask.trailing_zeros() as usize];
             let leaf_id = store.get_or_create_leaf(first_value);
 
@@ -1085,6 +1088,9 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
             store.get_or_create_branch(children, types, mask)
         } else {
+            #[cfg(feature = "memory_stats")]
+            store.bump_collapsed_branches();
+
             let dec_ref = if cloned_nodes != 0 {
                 cloned_nodes.count_ones().min(7)
             } else {
