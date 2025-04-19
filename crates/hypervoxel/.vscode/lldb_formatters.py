@@ -50,11 +50,71 @@ def format_blockid(valobj, internal_dict):
     else:
         return None # Return None to let LLDB use default formatting if we failed
 
+def format_depth(valobj, internal_dict):
+    target_obj = None
+    is_pointer = valobj.TypeIsPointerType() or valobj.GetTypeName().endswith('&')
+
+    if is_pointer:
+        target_obj = valobj.Dereference()
+        if not target_obj or not target_obj.IsValid():
+            return "<Error: Dereference failed>"
+    else:
+        target_obj = valobj # Use the object directly
+
+    if not target_obj or not target_obj.IsValid():
+            return "<Error: Invalid target object>"
+
+    # --- Try to get value from the target_obj ---
+    value = None
+    error = lldb.SBError()
+    found_value = False
+
+    member_obj = target_obj.GetChildMemberWithName('__0')
+    if member_obj and member_obj.IsValid():
+        value = member_obj.GetValueAsUnsigned(error)
+        if error.Success():
+            found_value = True
+        else:
+            error.Clear()
+
+    if not found_value and target_obj.GetNumChildren() > 0:
+            member_obj = target_obj.GetChildAtIndex(0)
+            if member_obj and member_obj.IsValid():
+                child_type = member_obj.GetTypeName().lower()
+                if any(t in child_type for t in ['int', 'u16']):
+                    value = member_obj.GetValueAsUnsigned(error)
+                    if error.Success():
+                        found_value = True
+                    else:
+                        error.Clear()
+
+    if found_value:
+        current = (value >> 8) & 0xFF
+        max_depth = value & 0xFF
+        return f"Depth(current: {current}, max: {max_depth})"
+    else:
+        return None # Return None to let LLDB use default formatting if we failed
+
 def __lldb_init_module(debugger, internal_dict):
-    print("Loading custom LLDB formatters for voxelis::core::block_id::BlockId...")
-    type_name = "voxelis::core::block_id::BlockId"
-    function_name = "lldb_formatters.format_blockid"
-    command = f'type summary add --python-function {function_name} "{type_name}"'
+    print("Loading custom LLDB formatters for voxelis types...")
+
+    # Format for BlockId
+    blockid_type = "voxelis::core::block_id::BlockId"
+    blockid_func = "lldb_formatters.format_blockid"
+    command = f'type summary add --python-function {blockid_func} "{blockid_type}"'
+
+    print(f"Executing LLDB command: {command}")
+    result = debugger.HandleCommand(command)
+
+    if "error:" in result.lower() if result else True:
+        print(f"Warning/Error executing command: {result}")
+    else:
+        print("Custom LLDB formatter likely added successfully!")
+
+    # Format for Depth
+    depth_type = "voxelis::core::depth::Depth"
+    depth_func = "lldb_formatters.format_depth"
+    command = f'type summary add --python-function {depth_func} "{depth_type}"'
 
     print(f"Executing LLDB command: {command}")
     result = debugger.HandleCommand(command)
