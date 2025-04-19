@@ -10,10 +10,17 @@ members = [
 default-members = ["voxelis"]
 
 [workspace.package]
-version = "25.3.0"
+version = "25.4.0"
 authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
+description = "High-performance voxel engine using Sparse-Voxel-Octree DAG in pure Rust"
+homepage = "https://github.com/WildPixelGames/voxelis"
+repository = "https://github.com/WildPixelGames/voxelis"
+readme = "README.md"
+keywords = ["voxel", "svo", "dag", "octree", "3d"]
+categories = ["data-structures", "game-development", "graphics"]
+rust-version = "1.86"
 
 [workspace.dependencies]
 voxelis = { path = "voxelis" }
