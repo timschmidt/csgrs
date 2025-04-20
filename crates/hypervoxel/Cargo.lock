@@ -2174,6 +2174,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "egui_plot"
+version = "0.31.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1794c66fb727dac28dffed2e4b548e5118d1cccc331d368a35411d68725dde71"
+dependencies = [
+ "ahash",
+ "egui",
+ "emath",
+]
+
+[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5428,6 +5439,12 @@ name = "voxelis-bevy"
 version = "25.4.0"
 dependencies = [
  "bevy",
+ "bevy_egui",
+ "bevy_panorbit_camera",
+ "egui_extras",
+ "egui_plot",
+ "humanize-bytes",
+ "parking_lot",
  "voxelis",
 ]
 
