@@ -16,6 +16,6 @@ pub mod utils;
 pub mod voxel;
 pub mod world;
 
-pub use core::{Batch, BlockId, TraversalDepth};
+pub use core::{Batch, BlockId, MaxDepth, TraversalDepth};
 pub use storage::NodeStore;
 pub use voxel::VoxelTrait;
