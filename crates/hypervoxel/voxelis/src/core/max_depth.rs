@@ -1,6 +1,10 @@
 //! Module `core::max_depth`
 //!
-//! Defines the [`MaxDepth`] struct, a representation of maximum depth in a voxel storage node.
+//! Defines the [`MaxDepth`] struct, a compact and type-safe representation of the maximum allowed depth for an octree or voxel structure.
+//!
+//! # Usage
+//!
+//! Use [`MaxDepth`] to avoid confusion and bugs related to raw integer depth parameters. This type enforces invariants and provides clear API boundaries.
 //!
 //! # Examples
 //!
@@ -50,11 +54,13 @@ impl TryFrom<u8> for MaxDepth {
 impl MaxDepth {
     /// Creates a new [`MaxDepth`].
     ///
-    /// # Panics
-    /// - If `max >= MAX_ALLOWED_DEPTH`.
-    ///
     /// # Parameters
-    /// - `max` - Maximum allowed depth (`u8`), must be less than `MAX_ALLOWED_DEPTH`.
+    ///
+    /// - `max`: Maximum allowed depth (`u8`). Must be less than [`MAX_ALLOWED_DEPTH`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if `max >= MAX_ALLOWED_DEPTH`.
     ///
     /// # Examples
     ///
@@ -74,7 +80,7 @@ impl MaxDepth {
         Self(max)
     }
 
-    /// Returns the maximum depth.
+    /// Returns the maximum depth as `u8`.
     ///
     /// # Examples
     ///
@@ -147,8 +153,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Max depth exceeds allowed limit")]
     fn test_new_current_eq_max() {
-        let depth = MaxDepth::new(7);
-        assert_eq!(depth.max(), 7);
+        let _ = MaxDepth::new(MAX_ALLOWED_DEPTH as u8);
     }
 
     #[test]
@@ -162,5 +167,20 @@ mod tests {
         let max = MAX_ALLOWED_DEPTH as u8 - 1;
         let depth = MaxDepth::new(max);
         assert_eq!(depth.max(), max);
+    }
+
+    #[test]
+    fn test_try_from_ok() {
+        let val: u8 = 5;
+        let depth = MaxDepth::try_from(val);
+        assert!(depth.is_ok());
+        assert_eq!(depth.unwrap().max(), 5);
+    }
+
+    #[test]
+    fn test_try_from_err() {
+        let val: u8 = MAX_ALLOWED_DEPTH as u8;
+        let depth = MaxDepth::try_from(val);
+        assert!(depth.is_err());
     }
 }
