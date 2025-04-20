@@ -323,22 +323,6 @@ impl<S: Clone + Send + Sync> Node<S> {
         self.polygons.append(&mut coplanar_front);
         self.polygons.append(&mut coplanar_back);
 
-        //  Treat this node as a leaf if all polygons ended up on the same side
-        if front.len() == polygons.len() {
-            // Everything is 'front': no meaningful split => store them here, no recursion
-            self.polygons = polygons.to_vec();
-            self.front = None;
-            self.back = None;
-            return;
-        }
-        if back.len() == polygons.len() {
-            // Everything is 'back': no meaningful split => store them here, no recursion
-            self.polygons = polygons.to_vec();
-            self.front = None;
-            self.back = None;
-            return;
-        }
-
         // Recursively build front/back in parallel
         match (!front.is_empty(), !back.is_empty()) {
             (true, true) => {
