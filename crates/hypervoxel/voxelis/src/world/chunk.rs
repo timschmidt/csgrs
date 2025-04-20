@@ -12,7 +12,7 @@ use crate::spatial::{
     Octree, OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead,
     OctreeOpsState, OctreeOpsWrite,
 };
-use crate::{Batch, BlockId, MaxDepth, NodeStore};
+use crate::{Batch, BlockId, Lod, MaxDepth, NodeStore};
 
 const CUBE_VERTS: [Vec3; 8] = [
     Vec3::new(-1.0, 1.0, -1.0),
@@ -49,8 +49,8 @@ impl Chunk {
         }
     }
 
-    pub fn voxel_size(&self) -> f32 {
-        self.chunk_size / self.voxels_per_axis() as f32
+    pub fn voxel_size(&self, lod: Lod) -> f32 {
+        self.chunk_size / self.voxels_per_axis(lod) as f32
     }
 
     pub fn chunk_size(&self) -> f32 {
@@ -70,7 +70,7 @@ impl Chunk {
     }
 
     pub fn generate_test_data(&mut self, store: &mut NodeStore<i32>) {
-        let voxels_per_axis = self.voxels_per_axis() as i32;
+        let voxels_per_axis = self.voxels_per_axis(Lod::new(0)) as i32;
         let mut position = IVec3::ZERO;
         for y in 0..voxels_per_axis {
             position.y = y;
@@ -97,7 +97,7 @@ impl Chunk {
         let (cx, cy, cz) = (center.x, center.y, center.z);
         let radius_squared = radius * radius;
 
-        let voxels_per_axis = self.voxels_per_axis() as i32;
+        let voxels_per_axis = self.voxels_per_axis(Lod::new(0)) as i32;
 
         let mut position = IVec3::ZERO;
 
@@ -134,10 +134,6 @@ impl Chunk {
         vertices.extend(quad);
         normals.extend([normal, normal, normal, normal]);
         indices.extend([index + 2, index + 1, index, index + 3, index, index + 1]);
-    }
-
-    pub fn to_vec(&self, store: &NodeStore<i32>, _lod: usize) -> Vec<i32> {
-        self.data.to_vec(store)
     }
 
     pub fn generate_mesh_arrays(
@@ -205,8 +201,8 @@ impl Chunk {
             return;
         }
 
-        let voxels_per_axis = self.voxels_per_axis();
-        let voxel_size = self.voxel_size();
+        let voxels_per_axis = self.voxels_per_axis(Lod::new(0));
+        let voxel_size = self.voxel_size(Lod::new(0));
 
         let half_voxel_size = voxel_size / 2.0;
         let voxel_size_vec3 = Vec3::splat(voxel_size);
@@ -237,7 +233,7 @@ impl Chunk {
             chunk_v7.z,
         ]);
 
-        let data = self.data.to_vec(store);
+        let data = self.data.to_vec(store, Lod::new(0));
 
         for y in 0..voxels_per_axis {
             let base_index_y = y as usize * shift_y;
@@ -405,20 +401,20 @@ impl OctreeOpsBatch<i32> for Chunk {
 
 impl OctreeOpsMesh<i32> for Chunk {
     #[inline(always)]
-    fn to_vec(&self, store: &NodeStore<i32>) -> Vec<i32> {
-        self.data.to_vec(store)
+    fn to_vec(&self, store: &NodeStore<i32>, lod: Lod) -> Vec<i32> {
+        self.data.to_vec(store, lod)
     }
 }
 
 impl OctreeOpsConfig for Chunk {
     #[inline(always)]
-    fn max_depth(&self) -> MaxDepth {
-        self.data.max_depth()
+    fn max_depth(&self, lod: Lod) -> MaxDepth {
+        self.data.max_depth(lod)
     }
 
     #[inline(always)]
-    fn voxels_per_axis(&self) -> u32 {
-        self.data.voxels_per_axis()
+    fn voxels_per_axis(&self, lod: Lod) -> u32 {
+        self.data.voxels_per_axis(lod)
     }
 }
 

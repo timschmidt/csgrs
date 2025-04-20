@@ -5,7 +5,7 @@ use glam::{IVec3, Vec3};
 use rand::Rng;
 
 use voxelis::{
-    Batch, MaxDepth,
+    Batch, Lod, MaxDepth,
     spatial::{
         Octree, OctreeOpsBatch, OctreeOpsMesh, OctreeOpsRead, OctreeOpsState, OctreeOpsWrite,
     },
@@ -1656,8 +1656,10 @@ fn benchmark_octree(c: &mut Criterion) {
                     };
                     let store = NodeStore::<i32>::with_memory_budget(1024);
 
+                    let lod = Lod::new(0);
+
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&store));
+                        let _ = black_box(octree.to_vec(&store, lod));
                     });
                 });
             }
@@ -1681,8 +1683,10 @@ fn benchmark_octree(c: &mut Criterion) {
 
                     generate_test_sphere(&mut octree, &mut store, size, 1);
 
+                    let lod = Lod::new(0);
+
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&store));
+                        let _ = black_box(octree.to_vec(&store, lod));
                     });
                 });
             }
@@ -1706,8 +1710,10 @@ fn benchmark_octree(c: &mut Criterion) {
 
                     octree.fill(&mut store, 1);
 
+                    let lod = Lod::new(0);
+
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&store));
+                        let _ = black_box(octree.to_vec(&store, lod));
                     });
                 });
             }
@@ -1731,8 +1737,10 @@ fn benchmark_octree(c: &mut Criterion) {
 
                     fill_sum!(size, octree, store);
 
+                    let lod = Lod::new(0);
+
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&store));
+                        let _ = black_box(octree.to_vec(&store, lod));
                     });
                 });
             }
@@ -1770,8 +1778,10 @@ fn benchmark_octree(c: &mut Criterion) {
                         }
                     }
 
+                    let lod = Lod::new(0);
+
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&store));
+                        let _ = black_box(octree.to_vec(&store, lod));
                     });
                 });
             }

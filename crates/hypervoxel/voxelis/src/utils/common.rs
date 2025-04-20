@@ -1,6 +1,6 @@
 use glam::IVec3;
 
-use crate::{BlockId, NodeStore, TraversalDepth, VoxelTrait};
+use crate::{BlockId, MaxDepth, NodeStore, TraversalDepth, VoxelTrait};
 
 #[inline(always)]
 pub const fn child_index(position: &IVec3, depth: &TraversalDepth) -> usize {
@@ -141,7 +141,12 @@ pub fn get_at_depth<T: VoxelTrait>(
     None
 }
 
-pub fn to_vec<T: VoxelTrait>(store: &NodeStore<T>, root_id: &BlockId, max_depth: usize) -> Vec<T> {
+pub fn to_vec<T: VoxelTrait>(
+    store: &NodeStore<T>,
+    root_id: &BlockId,
+    max_depth: MaxDepth,
+) -> Vec<T> {
+    let max_depth = max_depth.max();
     let voxels_per_axis = 1 << max_depth;
     let size: usize = voxels_per_axis * voxels_per_axis * voxels_per_axis;
 
@@ -150,7 +155,7 @@ pub fn to_vec<T: VoxelTrait>(store: &NodeStore<T>, root_id: &BlockId, max_depth:
             let mut data = vec![T::default(); size];
             let shift_y: usize = 1 << (2 * max_depth);
             let shift_z: usize = voxels_per_axis;
-            let depth = TraversalDepth::new(0, max_depth as u8);
+            let depth = TraversalDepth::new(0, max_depth);
             let mut pos = IVec3::default();
 
             for y in 0..voxels_per_axis {

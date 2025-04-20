@@ -1,6 +1,6 @@
 use glam::IVec3;
 
-use crate::{Batch, BlockId, MaxDepth, NodeStore, VoxelTrait};
+use crate::{Batch, BlockId, Lod, MaxDepth, NodeStore, VoxelTrait};
 
 mod dag;
 mod ops;
@@ -43,7 +43,7 @@ impl Octree {
         match self {
             Self::Static(_) => panic!("Already static"),
             Self::Dynamic(svo) => {
-                let mut dag = SvoDag::new(svo.max_depth());
+                let mut dag = SvoDag::new(svo.max_depth(Lod::new(0)));
                 copy_octree(svo, &mut dag, store);
                 Self::Static(dag)
             }
@@ -53,7 +53,7 @@ impl Octree {
     pub fn to_dynamic<T: VoxelTrait>(&self, store: &mut NodeStore<T>) -> Self {
         match self {
             Self::Static(dag) => {
-                let mut svo = Svo::new(dag.max_depth());
+                let mut svo = Svo::new(dag.max_depth(Lod::new(0)));
                 copy_octree(dag, &mut svo, store);
                 Self::Dynamic(svo)
             }
@@ -125,28 +125,28 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for Octree {
 
 impl<T: VoxelTrait> OctreeOpsMesh<T> for Octree {
     #[inline(always)]
-    fn to_vec(&self, store: &NodeStore<T>) -> Vec<T> {
+    fn to_vec(&self, store: &NodeStore<T>, lod: Lod) -> Vec<T> {
         match self {
-            Self::Static(octree) => octree.to_vec(store),
-            Self::Dynamic(octree) => octree.to_vec(store),
+            Self::Static(octree) => octree.to_vec(store, lod),
+            Self::Dynamic(octree) => octree.to_vec(store, lod),
         }
     }
 }
 
 impl OctreeOpsConfig for Octree {
     #[inline(always)]
-    fn max_depth(&self) -> MaxDepth {
+    fn max_depth(&self, lod: Lod) -> MaxDepth {
         match self {
-            Self::Static(octree) => octree.max_depth(),
-            Self::Dynamic(octree) => octree.max_depth(),
+            Self::Static(octree) => octree.max_depth(lod),
+            Self::Dynamic(octree) => octree.max_depth(lod),
         }
     }
 
     #[inline(always)]
-    fn voxels_per_axis(&self) -> u32 {
+    fn voxels_per_axis(&self, lod: Lod) -> u32 {
         match self {
-            Self::Static(octree) => octree.voxels_per_axis(),
-            Self::Dynamic(octree) => octree.voxels_per_axis(),
+            Self::Static(octree) => octree.voxels_per_axis(lod),
+            Self::Dynamic(octree) => octree.voxels_per_axis(lod),
         }
     }
 }
@@ -208,7 +208,7 @@ fn copy_octree<
         return;
     }
 
-    let voxels_per_axis = src.voxels_per_axis() as i32;
+    let voxels_per_axis = src.voxels_per_axis(Lod::new(0)) as i32;
 
     for y in 0..voxels_per_axis {
         for z in 0..voxels_per_axis {

@@ -1,7 +1,7 @@
 use glam::IVec3;
 
 use crate::{
-    Batch, BlockId, MaxDepth, NodeStore, TraversalDepth, VoxelTrait, child_index_macro,
+    Batch, BlockId, Lod, MaxDepth, NodeStore, TraversalDepth, VoxelTrait, child_index_macro,
     child_index_macro_2,
     storage::node::{EMPTY_CHILD, MAX_ALLOWED_DEPTH, MAX_CHILDREN},
     utils::common::{get_at_depth, to_vec},
@@ -177,20 +177,20 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for Svo {
 }
 
 impl<T: VoxelTrait> OctreeOpsMesh<T> for Svo {
-    fn to_vec(&self, store: &NodeStore<T>) -> Vec<T> {
-        to_vec(store, &self.root_id, self.max_depth.as_usize())
+    fn to_vec(&self, store: &NodeStore<T>, lod: Lod) -> Vec<T> {
+        to_vec(store, &self.root_id, self.max_depth.for_lod(lod))
     }
 }
 
 impl OctreeOpsConfig for Svo {
     #[inline(always)]
-    fn max_depth(&self) -> MaxDepth {
-        self.max_depth
+    fn max_depth(&self, lod: Lod) -> MaxDepth {
+        self.max_depth.for_lod(lod)
     }
 
     #[inline(always)]
-    fn voxels_per_axis(&self) -> u32 {
-        1 << self.max_depth.max()
+    fn voxels_per_axis(&self, lod: Lod) -> u32 {
+        1 << self.max_depth.for_lod(lod).max()
     }
 }
 
@@ -610,8 +610,8 @@ mod tests {
     fn test_create() {
         let octree = Svo::new(MaxDepth::new(3));
         assert!(octree.is_empty());
-        assert_eq!(octree.max_depth().max(), 3);
-        assert_eq!(octree.voxels_per_axis(), 8);
+        assert_eq!(octree.max_depth(Lod::new(0)).max(), 3);
+        assert_eq!(octree.voxels_per_axis(Lod::new(0)), 8);
     }
 
     #[test]

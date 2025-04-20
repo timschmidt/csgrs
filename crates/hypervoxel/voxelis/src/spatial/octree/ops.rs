@@ -1,6 +1,6 @@
 use glam::IVec3;
 
-use crate::{Batch, MaxDepth, NodeStore, VoxelTrait};
+use crate::{Batch, Lod, MaxDepth, NodeStore, VoxelTrait};
 
 pub trait OctreeOpsRead<T: VoxelTrait> {
     fn get(&self, store: &NodeStore<T>, position: IVec3) -> Option<T>;
@@ -18,12 +18,12 @@ pub trait OctreeOpsBatch<T: VoxelTrait> {
 }
 
 pub trait OctreeOpsMesh<T: VoxelTrait> {
-    fn to_vec(&self, store: &NodeStore<T>) -> Vec<T>;
+    fn to_vec(&self, store: &NodeStore<T>, lod: Lod) -> Vec<T>;
 }
 
 pub trait OctreeOpsConfig {
-    fn max_depth(&self) -> MaxDepth;
-    fn voxels_per_axis(&self) -> u32;
+    fn max_depth(&self, lod: Lod) -> MaxDepth;
+    fn voxels_per_axis(&self, lod: Lod) -> u32;
 }
 
 pub trait OctreeOpsState {

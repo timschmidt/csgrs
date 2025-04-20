@@ -1,7 +1,7 @@
 use glam::IVec3;
 
 use crate::{
-    Batch, BlockId, MaxDepth, NodeStore, TraversalDepth, VoxelTrait, child_index_macro,
+    Batch, BlockId, Lod, MaxDepth, NodeStore, TraversalDepth, VoxelTrait, child_index_macro,
     child_index_macro_2,
     storage::node::{EMPTY_CHILD, MAX_ALLOWED_DEPTH, MAX_CHILDREN},
     utils::common::{get_at_depth, to_vec},
@@ -294,20 +294,20 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for SvoDag {
 }
 
 impl<T: VoxelTrait> OctreeOpsMesh<T> for SvoDag {
-    fn to_vec(&self, store: &NodeStore<T>) -> Vec<T> {
-        to_vec(store, &self.root_id, self.max_depth.as_usize())
+    fn to_vec(&self, store: &NodeStore<T>, lod: Lod) -> Vec<T> {
+        to_vec(store, &self.root_id, self.max_depth.for_lod(lod))
     }
 }
 
 impl OctreeOpsConfig for SvoDag {
     #[inline(always)]
-    fn max_depth(&self) -> MaxDepth {
-        self.max_depth
+    fn max_depth(&self, lod: Lod) -> MaxDepth {
+        self.max_depth.for_lod(lod)
     }
 
     #[inline(always)]
-    fn voxels_per_axis(&self) -> u32 {
-        1 << self.max_depth.max()
+    fn voxels_per_axis(&self, lod: Lod) -> u32 {
+        1 << self.max_depth.for_lod(lod).max()
     }
 }
 
@@ -1151,8 +1151,8 @@ mod tests {
     fn test_create() {
         let octree = SvoDag::new(MaxDepth::new(3));
         assert!(octree.is_empty());
-        assert_eq!(octree.max_depth().max(), 3);
-        assert_eq!(octree.voxels_per_axis(), 8);
+        assert_eq!(octree.max_depth(Lod::new(0)).max(), 3);
+        assert_eq!(octree.voxels_per_axis(Lod::new(0)), 8);
     }
 
     #[test]
@@ -1392,7 +1392,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         for value in START_VALUE..END_VALUE {
             octree.fill(&mut store, value * 10);
@@ -1427,7 +1427,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         let mut branch = octree.create_batch();
 
@@ -1462,7 +1462,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         // Create a checkerboard pattern
         for y in 0..voxels_per_axis {
@@ -1500,7 +1500,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         let mut batch = octree.create_batch();
 
@@ -1540,7 +1540,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -1573,7 +1573,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         let mut batch = octree.create_batch();
 
@@ -1610,7 +1610,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
         let half_voxels_per_axis = voxels_per_axis / 2;
 
         for value in START_VALUE..END_VALUE {
@@ -1655,7 +1655,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
         let half_voxels_per_axis = voxels_per_axis / 2;
 
         for value in START_VALUE..END_VALUE {
@@ -1702,7 +1702,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         octree.fill(&mut store, TEST_VALUE);
 
@@ -1728,7 +1728,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         let mut batch = octree.create_batch();
 
@@ -1758,7 +1758,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         for y in (0..voxels_per_axis).step_by(4) {
             for z in (0..voxels_per_axis).step_by(4) {
@@ -1797,7 +1797,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         let mut batch = octree.create_batch();
 
@@ -1838,7 +1838,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         for x in 0..voxels_per_axis {
             let value = (x % 256) as u8;
@@ -1879,7 +1879,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         let mut batch = octree.create_batch();
 
@@ -1921,7 +1921,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -1977,7 +1977,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         let mut batch = octree.create_batch();
 
@@ -2034,7 +2034,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         for i in 0..voxels_per_axis {
             let position = IVec3::new(i, i, i);
@@ -2071,7 +2071,7 @@ mod tests {
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         let mut batch = octree.create_batch();
 
@@ -2111,7 +2111,7 @@ mod tests {
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
 
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
         let size = 1 << (3 * MAX_DEPTH.max());
         let mut data = vec![0; size as usize];
 
@@ -2161,7 +2161,7 @@ mod tests {
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
 
-        let voxels_per_axis = octree.voxels_per_axis() as i32;
+        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
         let size = 1 << (3 * MAX_DEPTH.max());
         let mut data = vec![0; size as usize];
 
