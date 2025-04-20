@@ -3,7 +3,7 @@ use std::{
     hash::Hash,
 };
 
-use crate::{BlockId, get_next_index_macro};
+use crate::{BlockId, VoxelTrait, get_next_index_macro};
 
 use super::PoolAllocatorLite;
 
@@ -42,7 +42,7 @@ pub struct NodeStore<T> {
     stats: StoreStats,
 }
 
-impl<T: Default + Copy + Hash + PartialEq + std::fmt::Display + std::fmt::Debug> NodeStore<T> {
+impl<T: VoxelTrait> NodeStore<T> {
     const INITIAL_CAPACITY: usize = 16384; // 43ms
 
     pub fn with_memory_budget(requested_budget: usize) -> Self {
