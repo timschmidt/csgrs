@@ -346,6 +346,7 @@ dependencies = [
  "rapier3d",
  "rapier3d-f64",
  "rayon",
+ "robust",
  "stl_io",
  "svg",
  "ttf-parser",

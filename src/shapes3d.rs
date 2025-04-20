@@ -381,7 +381,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             let mut poly = Polygon::new(face_vertices, metadata.clone());
 
             // Set each vertex normal to match the polygon’s plane normal,
-            let plane_normal = poly.plane.normal;
+            let plane_normal = poly.plane.normal();
             for v in &mut poly.vertices {
                 v.normal = plane_normal;
             }

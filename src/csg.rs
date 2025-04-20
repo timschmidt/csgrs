@@ -600,16 +600,16 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     /// Returns a new CSG whose geometry is mirrored accordingly.
     pub fn mirror(&self, plane: Plane) -> Self {
         // Normal might not be unit, so compute its length:
-        let len = plane.normal.norm();
+        let len = plane.normal().norm();
         if len.abs() < EPSILON {
             // Degenerate plane? Just return clone (no transform)
             return self.clone();
         }
 
         // Unit normal:
-        let n = plane.normal / len;
+        let n = plane.normal() / len;
         // Adjusted offset = w / ||n||
-        let w = plane.w / len;
+        let w = plane.offset() / len;
 
         // Step 1) Translate so the plane crosses the origin
         // The plane’s offset vector from origin is (w * n).
@@ -1013,7 +1013,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
             // Ensure the polygon is tessellated, since STL is triangle-based.
             let triangles = poly.tessellate();
             // A typical STL uses the face normal; we can take the polygon’s plane normal:
-            let normal = poly.plane.normal.normalize();
+            let normal = poly.plane.normal().normalize();
     
             for tri in triangles {
                 out.push_str(&format!(
@@ -1141,7 +1141,7 @@ impl<S: Clone + Debug> CSG<S> where S: Clone + Send + Sync {
     
         // Triangulate all 3D polygons in self.polygons
         for poly in &self.polygons {
-            let normal = poly.plane.normal.normalize();
+            let normal = poly.plane.normal().normalize();
             // Convert polygon to triangles
             let tri_list = poly.tessellate();
             for tri in tri_list {

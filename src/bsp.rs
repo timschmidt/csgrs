@@ -89,14 +89,14 @@ impl<S: Clone + Send + Sync> Node<S> {
         // Now decide where to send the coplanar polygons.  If the polygon’s normal
         // aligns with this node’s plane.normal, treat it as “front,” else treat as “back.”
         for cp in coplanar_front {
-            if plane.normal.dot(&cp.plane.normal) > 0.0 {
+            if plane.normal().dot(&cp.plane.normal()) > 0.0 {
                 front.push(cp);
             } else {
                 back.push(cp);
             }
         }
         for cp in coplanar_back {
-            if plane.normal.dot(&cp.plane.normal) > 0.0 {
+            if plane.normal().dot(&cp.plane.normal()) > 0.0 {
                 front.push(cp);
             } else {
                 back.push(cp);
@@ -396,10 +396,10 @@ impl<S: Clone + Send + Sync> Node<S> {
             let mut types = Vec::with_capacity(vcount);
 
             for v in &poly.vertices {
-                let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.w;
-                let t = if dist < -EPSILON {
+                let offset = slicing_plane.normal().dot(&v.pos.coords) - slicing_plane.offset();
+                let t = if offset < -EPSILON {
                     BACK
-                } else if dist > EPSILON {
+                } else if offset > EPSILON {
                     FRONT
                 } else {
                     COPLANAR
@@ -439,10 +439,10 @@ impl<S: Clone + Send + Sync> Node<S> {
                         if (ti | tj) == SPANNING {
                             // The param t at which plane intersects the edge [vi -> vj].
                             // Avoid dividing by zero:
-                            let denom = slicing_plane.normal.dot(&(vj.pos - vi.pos));
+                            let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
                             if denom.abs() > EPSILON {
-                                let t = (slicing_plane.w
-                                    - slicing_plane.normal.dot(&vi.pos.coords))
+                                let t = (slicing_plane.offset()
+                                    - slicing_plane.normal().dot(&vi.pos.coords))
                                     / denom;
                                 // Interpolate:
                                 let intersect_vert = vi.interpolate(vj, t);
