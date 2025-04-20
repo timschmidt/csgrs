@@ -798,8 +798,13 @@ impl<T: VoxelTrait> NodeStore<T> {
                 // Cache the new node
                 entry.insert(block_id);
 
+                // Compute average value for the children - free LODs
+                let values: [T; 8] = std::array::from_fn(|i| *self.values.get(children[i].index()));
+                let average = T::average(&values);
+
                 // Set up the new branch node
                 *self.children.get_mut(index) = children;
+                *self.values.get_mut(index) = average;
                 *self.hashes.get_mut(index) = hash;
 
                 #[cfg(feature = "debug_trace_ref_counts")]
