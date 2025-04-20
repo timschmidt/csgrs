@@ -129,6 +129,10 @@ pub fn get_at_depth<T: VoxelTrait>(
     let mut depth = depth.current();
 
     while !node_id.is_empty() {
+        if depth >= max_depth {
+            return Some(*store.get_value(&node_id));
+        }
+
         if node_id.is_branch() {
             let index = child_index_macro_2!(position, depth, max_depth);
             node_id = store.get_child_id(&node_id, index);
