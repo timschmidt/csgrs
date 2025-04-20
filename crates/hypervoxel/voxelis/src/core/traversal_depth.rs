@@ -1,6 +1,6 @@
-//! Module `core::depth`
+//! Module `core::traversal_depth`
 //!
-//! Defines the [`Depth`] struct, a compact representation of current and maximum depth in a voxel storage node.
+//! Defines the [`TraversalDepth`] struct, a compact representation of current and maximum depth in a voxel storage node.
 //!
 //! # Layout
 //!
@@ -18,9 +18,9 @@
 //! # Examples
 //!
 //! ```rust
-//! use voxelis::Depth;
+//! use voxelis::TraversalDepth;
 //!
-//! let depth = Depth::new(3, 6);
+//! let depth = TraversalDepth::new(3, 6);
 //! assert_eq!(depth.current(), 3);
 //! assert_eq!(depth.max(), 6);
 //! ```
@@ -34,18 +34,18 @@ use crate::storage::node::MAX_ALLOWED_DEPTH;
 /// # Examples
 ///
 /// ```rust
-/// use voxelis::Depth;
+/// use voxelis::TraversalDepth;
 ///
-/// let depth = Depth::new(0, 6);
+/// let depth = TraversalDepth::new(0, 6);
 /// assert_eq!(depth.current(), 0);
 /// assert_eq!(depth.max(), 6);
 /// ```
 #[repr(transparent)]
 #[derive(Copy, Clone)]
-pub struct Depth(u16);
+pub struct TraversalDepth(u16);
 
-impl Depth {
-    /// Creates a new [`Depth`].
+impl TraversalDepth {
+    /// Creates a new [`TraversalDepth`].
     ///
     /// # Panics
     /// - If `current > max`.
@@ -58,9 +58,9 @@ impl Depth {
     /// # Examples
     ///
     /// ```rust
-    /// use voxelis::Depth;
+    /// use voxelis::TraversalDepth;
     ///
-    /// let depth = Depth::new(3, 6);
+    /// let depth = TraversalDepth::new(3, 6);
     /// assert_eq!(depth.current(), 3);
     /// assert_eq!(depth.max(), 6);
     /// ```
@@ -83,9 +83,9 @@ impl Depth {
     /// # Examples
     ///
     /// ```
-    /// use voxelis::Depth;
+    /// use voxelis::TraversalDepth;
     ///
-    /// let depth = Depth::new(3, 6);
+    /// let depth = TraversalDepth::new(3, 6);
     /// assert_eq!(depth.current(), 3);
     /// ```
     #[must_use]
@@ -99,9 +99,9 @@ impl Depth {
     /// # Examples
     ///
     /// ```
-    /// use voxelis::Depth;
+    /// use voxelis::TraversalDepth;
     ///
-    /// let depth = Depth::new(3, 6);
+    /// let depth = TraversalDepth::new(3, 6);
     /// assert_eq!(depth.max(), 6);
     /// ```
     #[must_use]
@@ -110,7 +110,7 @@ impl Depth {
         (self.0 & 0xFF) as u8
     }
 
-    /// Returns a new [`Depth`] with current incremented by 1.
+    /// Returns a new [`TraversalDepth`] with current incremented by 1.
     ///
     /// # Panics
     ///
@@ -119,9 +119,9 @@ impl Depth {
     /// # Examples
     ///
     /// ```
-    /// use voxelis::Depth;
+    /// use voxelis::TraversalDepth;
     ///
-    /// let depth = Depth::new(3, 6);
+    /// let depth = TraversalDepth::new(3, 6);
     /// let incremented = depth.increment();
     /// assert_eq!(incremented.current(), 4);
     /// assert_eq!(incremented.max(), 6);
@@ -132,7 +132,7 @@ impl Depth {
         Self::new(self.current() + 1, self.max())
     }
 
-    /// Returns a new [`Depth`] with current decremented by 1.
+    /// Returns a new [`TraversalDepth`] with current decremented by 1.
     ///
     /// # Panics
     ///
@@ -141,9 +141,9 @@ impl Depth {
     /// # Examples
     ///
     /// ```
-    /// use voxelis::Depth;
+    /// use voxelis::TraversalDepth;
     ///
-    /// let depth = Depth::new(3, 6);
+    /// let depth = TraversalDepth::new(3, 6);
     /// let decremented = depth.decrement();
     /// assert_eq!(decremented.current(), 2);
     /// assert_eq!(decremented.max(), 6);
@@ -156,15 +156,15 @@ impl Depth {
     }
 }
 
-/// Display implementation for [`Depth`] that provides a human-readable representation
-impl std::fmt::Display for Depth {
+/// Display implementation for [`TraversalDepth`] that provides a human-readable representation
+impl std::fmt::Display for TraversalDepth {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}/{}", self.current(), self.max())
     }
 }
 
-/// Debug implementation for [`Depth`] that provides a human-readable representation
-impl std::fmt::Debug for Depth {
+/// Debug implementation for [`TraversalDepth`] that provides a human-readable representation
+impl std::fmt::Debug for TraversalDepth {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}/{}", self.current(), self.max())
     }
@@ -176,7 +176,7 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let depth = Depth::new(3, 6);
+        let depth = TraversalDepth::new(3, 6);
         assert_eq!(depth.current(), 3);
         assert_eq!(depth.max(), 6);
     }
@@ -185,12 +185,12 @@ mod tests {
     #[cfg(debug_assertions)]
     #[should_panic(expected = "Max depth exceeds allowed limit")]
     fn test_max_allowed_depth() {
-        let _ = Depth::new(3, MAX_ALLOWED_DEPTH as u8);
+        let _ = TraversalDepth::new(3, MAX_ALLOWED_DEPTH as u8);
     }
 
     #[test]
     fn test_increment() {
-        let depth = Depth::new(3, 6);
+        let depth = TraversalDepth::new(3, 6);
         let incremented = depth.increment();
         assert_eq!(incremented.current(), 4);
         assert_eq!(incremented.max(), 6);
@@ -198,7 +198,7 @@ mod tests {
 
     #[test]
     fn test_decrement() {
-        let depth = Depth::new(3, 6);
+        let depth = TraversalDepth::new(3, 6);
         let decremented = depth.decrement();
         assert_eq!(decremented.current(), 2);
         assert_eq!(decremented.max(), 6);
@@ -206,7 +206,7 @@ mod tests {
 
     #[test]
     fn test_display_and_debug() {
-        let depth = Depth::new(3, 6);
+        let depth = TraversalDepth::new(3, 6);
         assert_eq!(format!("{depth}"), "3/6");
         assert_eq!(format!("{depth:?}"), "3/6");
     }
@@ -215,14 +215,14 @@ mod tests {
     #[cfg(debug_assertions)]
     #[should_panic(expected = "Current depth cannot be greater than max depth")]
     fn test_new_current_greater_than_max() {
-        let _ = Depth::new(10, 5);
+        let _ = TraversalDepth::new(10, 5);
     }
 
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic(expected = "Current depth cannot be greater than max depth")]
     fn test_increment_overflow() {
-        let depth = Depth::new(5, 5);
+        let depth = TraversalDepth::new(5, 5);
         let _ = depth.increment();
     }
 
@@ -230,21 +230,21 @@ mod tests {
     #[cfg(debug_assertions)]
     #[should_panic(expected = "Current depth cannot be less than zero")]
     fn test_decrement_underflow() {
-        let depth = Depth::new(0, 5);
+        let depth = TraversalDepth::new(0, 5);
         let _ = depth.decrement();
     }
 
     #[test]
     #[should_panic(expected = "Max depth exceeds allowed limit")]
     fn test_new_current_eq_max() {
-        let depth = Depth::new(7, 7);
+        let depth = TraversalDepth::new(7, 7);
         assert_eq!(depth.current(), 7);
         assert_eq!(depth.max(), 7);
     }
 
     #[test]
     fn test_zero_zero_depth() {
-        let depth = Depth::new(0, 0);
+        let depth = TraversalDepth::new(0, 0);
         assert_eq!(depth.current(), 0);
         assert_eq!(depth.max(), 0);
     }
@@ -252,7 +252,7 @@ mod tests {
     #[test]
     fn test_maximum_valid_depth() {
         let max = MAX_ALLOWED_DEPTH as u8 - 1;
-        let depth = Depth::new(max, max);
+        let depth = TraversalDepth::new(max, max);
         assert_eq!(depth.current(), max);
         assert_eq!(depth.max(), max);
     }
@@ -260,14 +260,14 @@ mod tests {
     #[test]
     fn test_increment_to_max() {
         let max = MAX_ALLOWED_DEPTH as u8 - 1;
-        let depth = Depth::new(max - 1, max);
+        let depth = TraversalDepth::new(max - 1, max);
         let inc = depth.increment();
         assert_eq!(inc.current(), max);
     }
 
     #[test]
     fn test_decrement_to_zero() {
-        let depth = Depth::new(1, 5);
+        let depth = TraversalDepth::new(1, 5);
         let dec = depth.decrement();
         assert_eq!(dec.current(), 0);
     }

@@ -91,7 +91,7 @@ def format_depth(valobj, internal_dict):
     if found_value:
         current = (value >> 8) & 0xFF
         max_depth = value & 0xFF
-        return f"Depth(current: {current}, max: {max_depth})"
+        return f"TraversalDepth(current: {current}, max: {max_depth})"
     else:
         return None # Return None to let LLDB use default formatting if we failed
 
@@ -111,8 +111,8 @@ def __lldb_init_module(debugger, internal_dict):
     else:
         print("Custom LLDB formatter likely added successfully!")
 
-    # Format for Depth
-    depth_type = "voxelis::core::depth::Depth"
+    # Format for TraversalDepth
+    depth_type = "voxelis::core::traversal_depth::TraversalDepth"
     depth_func = "lldb_formatters.format_depth"
     command = f'type summary add --python-function {depth_func} "{depth_type}"'
 

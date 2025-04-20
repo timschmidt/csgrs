@@ -1,7 +1,7 @@
 use glam::IVec3;
 
 use crate::{
-    Batch, BlockId, Depth, NodeStore, VoxelTrait, child_index_macro, child_index_macro_2,
+    Batch, BlockId, NodeStore, TraversalDepth, VoxelTrait, child_index_macro, child_index_macro_2,
     storage::node::{EMPTY_CHILD, MAX_ALLOWED_DEPTH, MAX_CHILDREN},
     utils::common::{get_at_depth, to_vec},
 };
@@ -137,7 +137,7 @@ impl<T: VoxelTrait> OctreeOpsRead<T> for SvoDag {
             store,
             self.root_id,
             &position,
-            &Depth::new(0, self.max_depth),
+            &TraversalDepth::new(0, self.max_depth),
         )
     }
 }
@@ -349,7 +349,7 @@ fn set_at_root<T: VoxelTrait>(
 ) -> BlockId {
     assert!(*node_id != BlockId::INVALID);
 
-    let depth = Depth::new(0, max_depth);
+    let depth = TraversalDepth::new(0, max_depth);
     if voxel != T::default() {
         set_at_depth_iterative(store, node_id, position, &depth, voxel)
     } else {
@@ -361,7 +361,7 @@ fn set_at_depth_iterative<T: VoxelTrait>(
     store: &mut NodeStore<T>,
     initial_node_id: &BlockId,
     position: &IVec3,
-    initial_depth: &Depth,
+    initial_depth: &TraversalDepth,
     voxel: T,
 ) -> BlockId {
     #[cfg(feature = "debug_trace_ref_counts")]
@@ -568,7 +568,7 @@ fn remove_at_depth<T: VoxelTrait>(
     store: &mut NodeStore<T>,
     node_id: &BlockId,
     position: &IVec3,
-    depth: &Depth,
+    depth: &TraversalDepth,
 ) -> BlockId {
     assert!(*node_id != BlockId::INVALID);
 
@@ -583,7 +583,7 @@ fn remove_at_depth_branch<T: VoxelTrait>(
     store: &mut NodeStore<T>,
     node_id: &BlockId,
     position: &IVec3,
-    depth: &Depth,
+    depth: &TraversalDepth,
 ) -> BlockId {
     #[cfg(feature = "debug_trace_ref_counts")]
     println!(
@@ -668,7 +668,7 @@ fn remove_at_depth_leaf<T: VoxelTrait>(
     store: &mut NodeStore<T>,
     node_id: &BlockId,
     position: &IVec3,
-    depth: &Depth,
+    depth: &TraversalDepth,
 ) -> BlockId {
     #[cfg(feature = "debug_trace_ref_counts")]
     println!(
@@ -718,7 +718,7 @@ fn set_batch_at_root<T: VoxelTrait>(
 ) -> BlockId {
     assert!(*node_id != BlockId::INVALID);
 
-    let depth = Depth::new(0, max_depth);
+    let depth = TraversalDepth::new(0, max_depth);
 
     set_batch_at_depth_iterative(store, node_id, &depth, batch)
 }
@@ -726,7 +726,7 @@ fn set_batch_at_root<T: VoxelTrait>(
 fn set_batch_at_depth_iterative<T: VoxelTrait>(
     store: &mut NodeStore<T>,
     initial_node_id: &BlockId,
-    initial_depth: &Depth,
+    initial_depth: &TraversalDepth,
     batch: &Batch<T>,
 ) -> BlockId {
     #[cfg(feature = "debug_trace_ref_counts")]
@@ -1163,7 +1163,8 @@ mod tests {
                     for z in 0..voxels_per_axis {
                         for x in 0..voxels_per_axis {
                             let position = IVec3::new(x, y, z);
-                            let result = child_index(&position, &Depth::new(depth, max_depth));
+                            let result =
+                                child_index(&position, &TraversalDepth::new(depth, max_depth));
                             assert!(result < 8);
                         }
                     }
