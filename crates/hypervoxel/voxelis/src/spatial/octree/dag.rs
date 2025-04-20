@@ -22,14 +22,6 @@ use super::{
 /// - The inner array index (`level`) corresponds to the current level within the octree (0-based).
 /// - Each mask is a bitfield where set bits indicate affected siblings at that level.
 ///
-/// # Example
-///
-/// ```
-/// // To get the mask for max_depth=4 and level=2:
-/// let mask = PATH_MASKS[4][2];
-/// // Use this mask to quickly scan or update siblings at level 2.
-/// ```
-///
 /// # Usage
 ///
 /// Used internally in SVO DAG batch algorithms for fast propagation of changes

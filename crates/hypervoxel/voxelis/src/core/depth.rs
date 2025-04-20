@@ -34,9 +34,11 @@ use crate::storage::node::MAX_ALLOWED_DEPTH;
 /// # Examples
 ///
 /// ```rust
-/// let depth = Depth::new(0, 10);
+/// use voxelis::Depth;
+///
+/// let depth = Depth::new(0, 6);
 /// assert_eq!(depth.current(), 0);
-/// assert_eq!(depth.max(), 10);
+/// assert_eq!(depth.max(), 6);
 /// ```
 #[repr(transparent)]
 #[derive(Copy, Clone)]
@@ -81,6 +83,8 @@ impl Depth {
     /// # Examples
     ///
     /// ```
+    /// use voxelis::Depth;
+    ///
     /// let depth = Depth::new(3, 6);
     /// assert_eq!(depth.current(), 3);
     /// ```
@@ -95,6 +99,8 @@ impl Depth {
     /// # Examples
     ///
     /// ```
+    /// use voxelis::Depth;
+    ///
     /// let depth = Depth::new(3, 6);
     /// assert_eq!(depth.max(), 6);
     /// ```
@@ -113,6 +119,8 @@ impl Depth {
     /// # Examples
     ///
     /// ```
+    /// use voxelis::Depth;
+    ///
     /// let depth = Depth::new(3, 6);
     /// let incremented = depth.increment();
     /// assert_eq!(incremented.current(), 4);
@@ -133,6 +141,8 @@ impl Depth {
     /// # Examples
     ///
     /// ```
+    /// use voxelis::Depth;
+    ///
     /// let depth = Depth::new(3, 6);
     /// let decremented = depth.decrement();
     /// assert_eq!(decremented.current(), 2);

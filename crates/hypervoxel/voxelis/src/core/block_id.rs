@@ -407,7 +407,7 @@ impl BlockId {
     /// use voxelis::BlockId;
     ///
     /// let block_id = BlockId::new_leaf(123, 456);
-    /// assert_eq!(block_id.raw(), 0x000000000000007B);
+    /// assert_eq!(block_id.raw(), 0x800001C80000007B);
     /// ```
     #[must_use]
     #[inline(always)]

@@ -6,7 +6,7 @@
 //! # Examples
 //!
 //! ```
-//! use voxelis::core::Batch;
+//! use voxelis::{Batch, storage::NodeStore, spatial::OctreeOpsWrite};
 //! use glam::IVec3;
 //!
 //! // Create storage for 8-bit voxels
