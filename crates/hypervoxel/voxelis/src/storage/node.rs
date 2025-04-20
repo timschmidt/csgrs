@@ -675,12 +675,12 @@ impl<T: VoxelTrait> NodeStore<T> {
                 // Create new block id
                 let block_id = BlockId::new_leaf(index, generation);
 
+                // Cache the new node
+                entry.insert(block_id);
+
                 // Set up the new leaf node
                 *self.values.get_mut(index) = value;
                 *self.hashes.get_mut(index) = hash;
-
-                // Cache the new node
-                entry.insert(block_id);
 
                 debug_assert_eq!(
                     self.get_ref(&block_id),
@@ -795,6 +795,9 @@ impl<T: VoxelTrait> NodeStore<T> {
 
                 debug_assert_ne!(block_id, BlockId::INVALID, "Invalid block id");
 
+                // Cache the new node
+                entry.insert(block_id);
+
                 // Set up the new branch node
                 *self.children.get_mut(index) = children;
                 *self.hashes.get_mut(index) = hash;
@@ -804,9 +807,6 @@ impl<T: VoxelTrait> NodeStore<T> {
                     "get_or_create_branch: children: {:?} hash = {:X} new_id: {:?} types: {:2X} mask: {:2X}",
                     children, hash, block_id, types, mask
                 );
-
-                // Cache the new node
-                entry.insert(block_id);
 
                 debug_assert_eq!(
                     self.get_ref(&block_id),
