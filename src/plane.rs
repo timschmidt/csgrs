@@ -90,109 +90,98 @@ impl Plane {
         Vec<Polygon<S>>,
     ) {
         const COPLANAR: i8 = 0;
-        const FRONT: i8 = 1;
-        const BACK: i8 = 2;
+        const FRONT:    i8 = 1;
+        const BACK:     i8 = 2;
         const SPANNING: i8 = 3;
-
+    
         let mut coplanar_front = Vec::new();
-        let mut coplanar_back = Vec::new();
-        let mut front = Vec::new();
-        let mut back = Vec::new();
-
-        let n = self.normal();
-        let d = self.offset();
-
-        // ───── vertex classification with Shewchuk orient3d ─────
+        let mut coplanar_back  = Vec::new();
+        let mut front          = Vec::new();
+        let mut back           = Vec::new();
+    
+        // -----------------------------------------------------------------
+        // 1.  classify all vertices with robust orient3d
+        // -----------------------------------------------------------------
         let classify = |pt: &Point3<Real>| -> i8 {
             let sign = orient3d(
-                Coord3D {
-                    x: self.point_a.x,
-                    y: self.point_a.y,
-                    z: self.point_a.z,
-                },
-                Coord3D {
-                    x: self.point_b.x,
-                    y: self.point_b.y,
-                    z: self.point_b.z,
-                },
-                Coord3D {
-                    x: self.point_c.x,
-                    y: self.point_c.y,
-                    z: self.point_c.z,
-                },
-                Coord3D {
-                    x: pt.x,
-                    y: pt.y,
-                    z: pt.z,
-                },
+                Coord3D { x: self.point_a.x, y: self.point_a.y, z: self.point_a.z },
+                Coord3D { x: self.point_b.x, y: self.point_b.y, z: self.point_b.z },
+                Coord3D { x: self.point_c.x, y: self.point_c.y, z: self.point_c.z },
+                Coord3D { x: pt.x,          y: pt.y,          z: pt.z          },
             );
             if sign > EPSILON as f64 {
-                FRONT
+                FRONT           // orient3d > 0  →  negative signed offset
             } else if sign < -(EPSILON as f64) {
                 BACK
             } else {
                 COPLANAR
             }
         };
-
-        let mut types = Vec::with_capacity(polygon.vertices.len());
-        let mut poly_mask = 0;
+    
+        let mut types        = Vec::with_capacity(polygon.vertices.len());
+        let mut polygon_type: i8 = 0;
         for v in &polygon.vertices {
-            let c = classify(&v.pos);
-            types.push(c);
-            poly_mask |= 1 << (c as u8); // bitmask 1|2 => spanning
+            let t = classify(&v.pos);
+            types.push(t);
+            polygon_type |= t; // bitwise OR verticies types to figure polygon type
         }
-
-        match poly_mask {
-            0b001 => {
-                // all coplanar
-                if n.dot(&polygon.plane.normal()) >= 0.0 {
+    
+        // -----------------------------------------------------------------
+        // 2.  dispatch the easy cases
+        // -----------------------------------------------------------------
+        match polygon_type {
+            COPLANAR => {
+                if self.normal().dot(&polygon.plane.normal()) > 0.0 {  // >= ?
                     coplanar_front.push(polygon.clone());
                 } else {
                     coplanar_back.push(polygon.clone());
                 }
             }
-            0b010 => front.push(polygon.clone()),
-            0b100 => back.push(polygon.clone()),
+            FRONT => front.push(polygon.clone()),
+            BACK  => back.push(polygon.clone()),
+    
+            // -------------------------------------------------------------
+            // 3.  true spanning – do the split
+            // -------------------------------------------------------------
             _ => {
-                // ───── real split ─────
-                let mut f: Vec<Vertex> = Vec::new();
-                let mut b: Vec<Vertex> = Vec::new();
-
+                let n = self.normal();
+    
+                let mut f = Vec::<Vertex>::new();
+                let mut b = Vec::<Vertex>::new();
+    
                 for i in 0..polygon.vertices.len() {
-                    let j = (i + 1) % polygon.vertices.len();
+                    let j  = (i + 1) % polygon.vertices.len();
                     let ti = types[i];
                     let tj = types[j];
                     let vi = &polygon.vertices[i];
                     let vj = &polygon.vertices[j];
-
-                    if ti != BACK {
-                        f.push(vi.clone());
-                    }
-                    if ti != FRONT {
-                        b.push(vi.clone());
-                    }
-
-                    // edge intersects the plane?
+    
+                    // If current vertex is definitely not behind plane, it goes to f (front side)
+                    if ti != BACK  { f.push(vi.clone()); }
+                    // If current vertex is definitely not in front, it goes to b (back side)
+                    if ti != FRONT { b.push(vi.clone()); }
+    
+                    // If the edge between these two vertices crosses the plane,
+                    // compute intersection and add that intersection to both sets
                     if (ti | tj) == SPANNING {
                         let denom = n.dot(&(vj.pos - vi.pos));
+                        // Avoid dividing by zero
                         if denom.abs() > EPSILON {
-                            let t = (d - n.dot(&vi.pos.coords)) / denom;
+                            let t = (self.offset() - n.dot(&vi.pos.coords)) / denom;
                             let v_new = vi.interpolate(vj, t);
                             f.push(v_new.clone());
                             b.push(v_new);
                         }
                     }
                 }
-
-                if f.len() >= 3 {
-                    front.push(Polygon::new(f, polygon.metadata.clone()));
-                }
-                if b.len() >= 3 {
-                    back.push(Polygon::new(b, polygon.metadata.clone()));
-                }
+    
+                // Build new polygons from the front/back vertex lists
+                // if they have at least 3 vertices
+                if f.len() >= 3 { front.push(Polygon::new(f, polygon.metadata.clone())); }
+                if b.len() >= 3 { back .push(Polygon::new(b, polygon.metadata.clone())); }
             }
         }
+    
         (coplanar_front, coplanar_back, front, back)
     }
 
