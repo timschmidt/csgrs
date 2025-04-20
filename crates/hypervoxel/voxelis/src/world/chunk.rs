@@ -12,7 +12,7 @@ use crate::spatial::{
     Octree, OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead,
     OctreeOpsState, OctreeOpsWrite,
 };
-use crate::{Batch, BlockId, NodeStore};
+use crate::{Batch, BlockId, MaxDepth, NodeStore};
 
 const CUBE_VERTS: [Vec3; 8] = [
     Vec3::new(-1.0, 1.0, -1.0),
@@ -36,13 +36,13 @@ pub struct Chunk {
     data: Octree,
     position: IVec3,
     chunk_size: f32,
-    max_depth: usize,
+    max_depth: MaxDepth,
 }
 
 impl Chunk {
-    pub fn with_position(chunk_size: f32, max_depth: usize, x: i32, y: i32, z: i32) -> Self {
+    pub fn with_position(chunk_size: f32, max_depth: MaxDepth, x: i32, y: i32, z: i32) -> Self {
         Self {
-            data: Octree::make_static(max_depth as u8),
+            data: Octree::make_static(max_depth),
             position: IVec3::new(x, y, z),
             chunk_size,
             max_depth,
@@ -211,8 +211,8 @@ impl Chunk {
         let half_voxel_size = voxel_size / 2.0;
         let voxel_size_vec3 = Vec3::splat(voxel_size);
         let half_voxel_size_vec3 = Vec3::splat(half_voxel_size);
-        let shift_y = (1 << (2 * self.max_depth)) as usize;
-        let shift_z = (1 << self.max_depth) as usize;
+        let shift_y = 1 << (2 * self.max_depth.as_usize());
+        let shift_z = 1 << self.max_depth.as_usize();
 
         let half_voxel_offset = half_voxel_size_vec3 + offset;
         let chunk_v0 = CUBE_VERTS[0] * half_voxel_size_vec3 + half_voxel_offset;
@@ -412,7 +412,7 @@ impl OctreeOpsMesh<i32> for Chunk {
 
 impl OctreeOpsConfig for Chunk {
     #[inline(always)]
-    fn max_depth(&self) -> u8 {
+    fn max_depth(&self) -> MaxDepth {
         self.data.max_depth()
     }
 

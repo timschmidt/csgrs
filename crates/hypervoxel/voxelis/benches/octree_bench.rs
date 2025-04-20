@@ -5,7 +5,7 @@ use glam::{IVec3, Vec3};
 use rand::Rng;
 
 use voxelis::{
-    Batch,
+    Batch, MaxDepth,
     spatial::{
         Octree, OctreeOpsBatch, OctreeOpsMesh, OctreeOpsRead, OctreeOpsState, OctreeOpsWrite,
     },
@@ -131,10 +131,10 @@ impl OctreeType {
 }
 
 fn benchmark_octree(c: &mut Criterion) {
-    let depths: Vec<(u32, u8)> = (3..=6)
+    let depths: Vec<(u32, MaxDepth)> = (3..=6)
         .map(|depth| {
             let voxels_per_axis = 1 << depth;
-            (voxels_per_axis as u32, depth as u8)
+            (voxels_per_axis as u32, MaxDepth::new(depth))
         })
         .collect();
 
@@ -1785,7 +1785,7 @@ fn benchmark_octree(c: &mut Criterion) {
 
         for &(size, depth) in depths.iter() {
             group.bench_with_input(BenchmarkId::from_parameter(size), &depth, |b, &depth| {
-                let mut chunk = Chunk::with_position(1.28, depth as usize, 0, 0, 0);
+                let mut chunk = Chunk::with_position(1.28, depth, 0, 0, 0);
 
                 let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
 
@@ -1820,7 +1820,7 @@ fn benchmark_octree(c: &mut Criterion) {
 
         for &(size, depth) in depths.iter() {
             group.bench_with_input(BenchmarkId::from_parameter(size), &depth, |b, &depth| {
-                let mut chunk = Chunk::with_position(1.28, depth as usize, 0, 0, 0);
+                let mut chunk = Chunk::with_position(1.28, depth, 0, 0, 0);
 
                 let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
 

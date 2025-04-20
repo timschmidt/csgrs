@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, hash_map::Entry},
-    hash::Hash,
-};
+use std::collections::{HashMap, hash_map::Entry};
 
 use crate::{BlockId, VoxelTrait, get_next_index_macro};
 

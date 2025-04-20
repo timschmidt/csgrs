@@ -72,7 +72,7 @@ pub fn export_model_to_vtm<P: AsRef<Path>>(name: String, path: &P, model: &Model
     writer.write_all(&VTM_MAGIC).unwrap();
     writer.write_u16::<BigEndian>(VTM_VERSION).unwrap();
     writer.write_u16::<BigEndian>(flags.bits()).unwrap();
-    writer.write_u8(max_depth as u8).unwrap();
+    writer.write_u8(max_depth.max()).unwrap();
     writer
         .write_u32::<BigEndian>(model.chunk_size as u32)
         .unwrap();

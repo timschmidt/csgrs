@@ -1,7 +1,8 @@
 use glam::IVec3;
 
 use crate::{
-    Batch, BlockId, NodeStore, TraversalDepth, VoxelTrait, child_index_macro, child_index_macro_2,
+    Batch, BlockId, MaxDepth, NodeStore, TraversalDepth, VoxelTrait, child_index_macro,
+    child_index_macro_2,
     storage::node::{EMPTY_CHILD, MAX_ALLOWED_DEPTH, MAX_CHILDREN},
     utils::common::{get_at_depth, to_vec},
 };
@@ -103,13 +104,13 @@ const PATH_MASKS: [[u32; MAX_ALLOWED_DEPTH - 1]; MAX_ALLOWED_DEPTH] = [
 ];
 
 pub struct SvoDag {
-    max_depth: u8,
+    max_depth: MaxDepth,
     root_id: BlockId,
     dirty: bool,
 }
 
 impl SvoDag {
-    pub fn new(max_depth: u8) -> Self {
+    pub fn new(max_depth: MaxDepth) -> Self {
         Self {
             max_depth,
             root_id: BlockId::EMPTY,
@@ -129,24 +130,24 @@ impl SvoDag {
 
 impl<T: VoxelTrait> OctreeOpsRead<T> for SvoDag {
     fn get(&self, store: &NodeStore<T>, position: IVec3) -> Option<T> {
-        assert!(position.x >= 0 && position.x < (1 << self.max_depth));
-        assert!(position.y >= 0 && position.y < (1 << self.max_depth));
-        assert!(position.z >= 0 && position.z < (1 << self.max_depth));
+        assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
+        assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
+        assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
 
         get_at_depth(
             store,
             self.root_id,
             &position,
-            &TraversalDepth::new(0, self.max_depth),
+            &TraversalDepth::new(0, self.max_depth.max()),
         )
     }
 }
 
 impl<T: VoxelTrait> OctreeOpsWrite<T> for SvoDag {
     fn set(&mut self, store: &mut NodeStore<T>, position: IVec3, voxel: T) -> bool {
-        assert!(position.x >= 0 && position.x < (1 << self.max_depth));
-        assert!(position.y >= 0 && position.y < (1 << self.max_depth));
-        assert!(position.z >= 0 && position.z < (1 << self.max_depth));
+        assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
+        assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
+        assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
 
         #[cfg(feature = "debug_trace_ref_counts")]
         {
@@ -162,7 +163,7 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for SvoDag {
             }
 
             // Existing root - modify
-            set_at_root(store, &self.root_id, &position, self.max_depth, voxel)
+            set_at_root(store, &self.root_id, &position, self.max_depth.max(), voxel)
         } else if voxel != T::default() {
             #[cfg(feature = "debug_trace_ref_counts")]
             {
@@ -170,7 +171,7 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for SvoDag {
                 store.dump_node(self.root_id, 0, "  ");
             }
 
-            set_at_root(store, &self.root_id, &position, self.max_depth, voxel)
+            set_at_root(store, &self.root_id, &position, self.max_depth.max(), voxel)
         } else {
             return false;
         };
@@ -267,7 +268,7 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for SvoDag {
     }
 
     fn apply_batch(&mut self, store: &mut NodeStore<T>, batch: &Batch<T>) -> bool {
-        let new_root_id = set_batch_at_root(store, &self.root_id, self.max_depth, batch);
+        let new_root_id = set_batch_at_root(store, &self.root_id, self.max_depth.max(), batch);
 
         if new_root_id != BlockId::INVALID {
             if !self.root_id.is_empty() {
@@ -294,19 +295,19 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for SvoDag {
 
 impl<T: VoxelTrait> OctreeOpsMesh<T> for SvoDag {
     fn to_vec(&self, store: &NodeStore<T>) -> Vec<T> {
-        to_vec(store, &self.root_id, self.max_depth as usize)
+        to_vec(store, &self.root_id, self.max_depth.as_usize())
     }
 }
 
 impl OctreeOpsConfig for SvoDag {
     #[inline(always)]
-    fn max_depth(&self) -> u8 {
+    fn max_depth(&self) -> MaxDepth {
         self.max_depth
     }
 
     #[inline(always)]
     fn voxels_per_axis(&self) -> u32 {
-        1 << self.max_depth
+        1 << self.max_depth.max()
     }
 }
 
@@ -1148,9 +1149,9 @@ mod tests {
 
     #[test]
     fn test_create() {
-        let octree = SvoDag::new(3);
+        let octree = SvoDag::new(MaxDepth::new(3));
         assert!(octree.is_empty());
-        assert_eq!(octree.max_depth(), 3);
+        assert_eq!(octree.max_depth().max(), 3);
         assert_eq!(octree.voxels_per_axis(), 8);
     }
 
@@ -1177,7 +1178,7 @@ mod tests {
     fn test_set_and_get() {
         let mut store = NodeStore::<u8>::with_memory_budget(1024 * 2);
 
-        let mut octree = SvoDag::new(3);
+        let mut octree = SvoDag::new(MaxDepth::new(3));
         let position = IVec3::new(0, 0, 0);
 
         // Test setting and getting a value
@@ -1222,7 +1223,7 @@ mod tests {
     fn test_is_empty() {
         let mut store = NodeStore::<u8>::with_memory_budget(1024);
 
-        let mut octree = SvoDag::new(3);
+        let mut octree = SvoDag::new(MaxDepth::new(3));
         assert!(octree.is_empty());
 
         // Setting a value makes it non-empty
@@ -1238,7 +1239,7 @@ mod tests {
     fn test_clear() {
         let mut store = NodeStore::<u8>::with_memory_budget(1024 * 2);
 
-        let mut octree = SvoDag::new(3);
+        let mut octree = SvoDag::new(MaxDepth::new(3));
 
         let positions = [
             IVec3::new(0, 0, 0),
@@ -1267,7 +1268,7 @@ mod tests {
     fn test_no_default_leaf_nodes() {
         let mut store = NodeStore::<u8>::with_memory_budget(1024);
 
-        let mut octree = SvoDag::new(3);
+        let mut octree = SvoDag::new(MaxDepth::new(3));
 
         // Set a value and then set it back to default
         let position = IVec3::new(0, 0, 0);
@@ -1286,7 +1287,7 @@ mod tests {
     fn test_dirty_flag() {
         let mut store = NodeStore::<u8>::with_memory_budget(1024);
 
-        let mut octree = SvoDag::new(3);
+        let mut octree = SvoDag::new(MaxDepth::new(3));
         assert!(!octree.is_dirty());
 
         // Setting a value should make it dirty
@@ -1306,8 +1307,8 @@ mod tests {
     fn test_shared_store_uniqueness() {
         let mut store = NodeStore::<u8>::with_memory_budget(1024);
 
-        let mut octree1 = SvoDag::new(3);
-        let mut octree2 = SvoDag::new(3);
+        let mut octree1 = SvoDag::new(MaxDepth::new(3));
+        let mut octree2 = SvoDag::new(MaxDepth::new(3));
 
         // Both trees should be empty initially
         assert!(octree1.is_empty());
@@ -1328,8 +1329,8 @@ mod tests {
     fn test_shared_store_deduplication() {
         let mut store = NodeStore::<u8>::with_memory_budget(1024);
 
-        let mut octree1 = SvoDag::new(3);
-        let mut octree2 = SvoDag::new(3);
+        let mut octree1 = SvoDag::new(MaxDepth::new(3));
+        let mut octree2 = SvoDag::new(MaxDepth::new(3));
 
         // Both trees should be empty initially
         assert!(octree1.is_empty());
@@ -1344,7 +1345,7 @@ mod tests {
     #[test]
     fn test_set_behaviour() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1366,7 +1367,7 @@ mod tests {
     #[test]
     fn test_batch_double_apply() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1386,7 +1387,7 @@ mod tests {
     fn test_patterns_set_expand_shared_leaf() {
         const START_VALUE: u8 = 1;
         const END_VALUE: u8 = 6;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1421,7 +1422,7 @@ mod tests {
     fn test_patterns_batch_expand_shared_leaf() {
         const FILL_VALUE: u8 = 1;
         const TEST_VALUE: u8 = 2;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1456,7 +1457,7 @@ mod tests {
 
     #[test]
     fn test_patterns_set_checkerboard() {
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1494,7 +1495,7 @@ mod tests {
 
     #[test]
     fn test_patterns_batch_checkerboard() {
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1534,7 +1535,7 @@ mod tests {
     #[test]
     fn test_patterns_set_solid_fill_one_by_one() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1567,7 +1568,7 @@ mod tests {
     #[test]
     fn test_patterns_batch_solid_fill_one_by_one() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1604,7 +1605,7 @@ mod tests {
     fn test_patterns_set_solid_fill_half_one_by_one() {
         const START_VALUE: u8 = 1;
         const END_VALUE: u8 = 6;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1649,7 +1650,7 @@ mod tests {
     fn test_patterns_batch_solid_fill_half_one_by_one() {
         const START_VALUE: u8 = 1;
         const END_VALUE: u8 = 6;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1696,7 +1697,7 @@ mod tests {
     #[test]
     fn test_patterns_set_solid_fill_fill_op() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1722,7 +1723,7 @@ mod tests {
     #[test]
     fn test_patterns_batch_solid_fill_fill_op() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1752,7 +1753,7 @@ mod tests {
     #[test]
     fn test_patterns_set_sparse_fill() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1791,7 +1792,7 @@ mod tests {
     #[test]
     fn test_patterns_batch_sparse_fill() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1832,7 +1833,7 @@ mod tests {
 
     #[test]
     fn test_patterns_set_gradient_fill() {
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1873,7 +1874,7 @@ mod tests {
 
     #[test]
     fn test_patterns_batch_gradient_fill() {
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1915,7 +1916,7 @@ mod tests {
     #[test]
     fn test_patterns_set_hollow_cube() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -1971,7 +1972,7 @@ mod tests {
     #[test]
     fn test_patterns_batch_hollow_cube() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -2028,7 +2029,7 @@ mod tests {
     #[test]
     fn test_patterns_set_diagonal() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -2065,7 +2066,7 @@ mod tests {
     #[test]
     fn test_patterns_batch_diagonal() {
         const TEST_VALUE: u8 = 3;
-        const MAX_DEPTH: u8 = 5;
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
@@ -2104,11 +2105,14 @@ mod tests {
 
     #[test]
     fn test_patterns_set_random_noise() {
-        let mut store = NodeStore::<u8>::with_memory_budget(1024 * 1024);
-        let max_depth = 5;
-        let mut octree = SvoDag::new(max_depth);
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
+        const MEMORY_BUDGET: usize = 1024 * 1024;
+
+        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut octree = SvoDag::new(MAX_DEPTH);
+
         let voxels_per_axis = octree.voxels_per_axis() as i32;
-        let size = 1 << (3 * max_depth);
+        let size = 1 << (3 * MAX_DEPTH.max());
         let mut data = vec![0; size as usize];
 
         let mut rng = rand::rng();
@@ -2151,11 +2155,14 @@ mod tests {
 
     #[test]
     fn test_patterns_batch_random_noise() {
-        let mut store = NodeStore::<u8>::with_memory_budget(1024 * 1024);
-        let max_depth = 5;
-        let mut octree = SvoDag::new(max_depth);
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
+        const MEMORY_BUDGET: usize = 1024 * 1024;
+
+        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut octree = SvoDag::new(MAX_DEPTH);
+
         let voxels_per_axis = octree.voxels_per_axis() as i32;
-        let size = 1 << (3 * max_depth);
+        let size = 1 << (3 * MAX_DEPTH.max());
         let mut data = vec![0; size as usize];
 
         let mut batch = octree.create_batch();
@@ -2201,9 +2208,11 @@ mod tests {
 
     #[test]
     fn test_max_depth_zero() {
-        let max_depth = 0;
-        let mut store = NodeStore::<u8>::with_memory_budget(1024 * 1024);
-        let mut octree = SvoDag::new(max_depth);
+        const MAX_DEPTH: MaxDepth = MaxDepth::new(0);
+        const MEMORY_BUDGET: usize = 1024 * 1024;
+
+        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut octree = SvoDag::new(MAX_DEPTH);
 
         let position = IVec3::new(0, 0, 0);
         println!("position: {:?}", position);

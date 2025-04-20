@@ -6,13 +6,13 @@
 //! # Examples
 //!
 //! ```
-//! use voxelis::{Batch, storage::NodeStore, spatial::OctreeOpsWrite};
+//! use voxelis::{Batch, MaxDepth, storage::NodeStore, spatial::OctreeOpsWrite};
 //! use glam::IVec3;
 //!
 //! // Create storage for 8-bit voxels
 //! let mut store = NodeStore::<u8>::with_memory_budget(1024);
 //!
-//! let mut batch = Batch::<u8>::new(4);
+//! let mut batch = Batch::<u8>::new(MaxDepth::new(4));
 //! // Fill the octree with a uniform voxel value
 //! batch.fill(&mut store, 2);
 //! // Set a voxel at position (1, 2, 3)
@@ -28,6 +28,8 @@ use crate::{
     utils::common::encode_child_index_path,
 };
 
+use super::MaxDepth;
+
 /// Accumulates per-node voxel modifications, enabling efficient bulk updates for an octree.
 ///
 /// # Type parameters
@@ -38,7 +40,7 @@ pub struct Batch<T: VoxelTrait> {
     masks: Vec<(u8, u8)>,
     values: Vec<[T; MAX_CHILDREN]>,
     to_fill: Option<T>,
-    max_depth: u8,
+    max_depth: MaxDepth,
     has_patches: bool,
 }
 
@@ -53,12 +55,17 @@ impl<T: VoxelTrait> Batch<T> {
     /// # Example
     ///
     /// ```rust
-    /// use voxelis::core::Batch;
+    /// use voxelis::{Batch, MaxDepth};
     ///
-    /// let batch = Batch::<u8>::new(4);
+    /// let batch = Batch::<u8>::new(MaxDepth::new(4));
     /// ```
-    pub fn new(max_depth: u8) -> Self {
-        let lower_depth = if max_depth > 0 { max_depth - 1 } else { 0 };
+    #[must_use]
+    pub fn new(max_depth: MaxDepth) -> Self {
+        let lower_depth = if max_depth.max() > 0 {
+            max_depth.max() - 1
+        } else {
+            0
+        };
         let size = 1 << (3 * lower_depth);
 
         Self {
@@ -118,9 +125,9 @@ impl<T: VoxelTrait> Batch<T> {
     ///
     /// Panics if `position` is out of bounds for the configured `max_depth`.
     pub fn just_set(&mut self, position: IVec3, voxel: T) -> bool {
-        assert!(position.x >= 0 && position.x < (1 << self.max_depth));
-        assert!(position.y >= 0 && position.y < (1 << self.max_depth));
-        assert!(position.z >= 0 && position.z < (1 << self.max_depth));
+        assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
+        assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
+        assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
 
         let full_path = encode_child_index_path(&position);
 
@@ -161,9 +168,9 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for Batch<T> {
     ///
     /// Panics if `position` is out of bounds for the configured `max_depth`.
     fn set(&mut self, _store: &mut NodeStore<T>, position: IVec3, voxel: T) -> bool {
-        assert!(position.x >= 0 && position.x < (1 << self.max_depth));
-        assert!(position.y >= 0 && position.y < (1 << self.max_depth));
-        assert!(position.z >= 0 && position.z < (1 << self.max_depth));
+        assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
+        assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
+        assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
 
         let full_path = encode_child_index_path(&position);
 

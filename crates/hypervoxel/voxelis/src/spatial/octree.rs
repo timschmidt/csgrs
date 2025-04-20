@@ -1,6 +1,6 @@
 use glam::IVec3;
 
-use crate::{Batch, BlockId, NodeStore, VoxelTrait};
+use crate::{Batch, BlockId, MaxDepth, NodeStore, VoxelTrait};
 
 mod dag;
 mod ops;
@@ -20,12 +20,12 @@ pub enum Octree {
 
 impl Octree {
     #[inline(always)]
-    pub fn make_static(max_depth: u8) -> Self {
+    pub fn make_static(max_depth: MaxDepth) -> Self {
         Self::Static(SvoDag::new(max_depth))
     }
 
     #[inline(always)]
-    pub fn make_dynamic(max_depth: u8) -> Self {
+    pub fn make_dynamic(max_depth: MaxDepth) -> Self {
         Self::Dynamic(Svo::new(max_depth))
     }
 
@@ -135,7 +135,7 @@ impl<T: VoxelTrait> OctreeOpsMesh<T> for Octree {
 
 impl OctreeOpsConfig for Octree {
     #[inline(always)]
-    fn max_depth(&self) -> u8 {
+    fn max_depth(&self) -> MaxDepth {
         match self {
             Self::Static(octree) => octree.max_depth(),
             Self::Dynamic(octree) => octree.max_depth(),

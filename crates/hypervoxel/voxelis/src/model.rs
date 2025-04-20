@@ -13,14 +13,14 @@ use rustc_hash::FxHashMap;
 #[cfg(feature = "memory_stats")]
 use crate::storage::node::StoreStats;
 use crate::{
-    BlockId, NodeStore,
+    BlockId, MaxDepth, NodeStore,
     io::varint::{decode_varint_u32_from_reader, encode_varint_u32},
     storage::node::EMPTY_CHILD,
     world::Chunk,
 };
 
 pub struct Model {
-    pub max_depth: usize,
+    pub max_depth: MaxDepth,
     pub voxels_per_axis: usize,
     pub chunk_size: f32,
     pub chunks_size: IVec3,
@@ -30,14 +30,14 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(max_depth: usize, chunk_size: f32) -> Self {
+    pub fn new(max_depth: MaxDepth, chunk_size: f32) -> Self {
         let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(
             1024 * 1024 * 256,
         )));
         let chunks_size = IVec3::new(32, 32, 32);
         let chunks_len = chunks_size.x as usize * chunks_size.y as usize * chunks_size.z as usize;
         let chunks = Self::init_chunks(max_depth, chunk_size, chunks_size, chunks_len);
-        let voxels_per_axis = 1 << max_depth;
+        let voxels_per_axis = 1 << max_depth.max();
 
         Self {
             max_depth,
@@ -50,7 +50,7 @@ impl Model {
         }
     }
 
-    pub fn with_size(max_depth: usize, chunk_size: f32, chunks_size: IVec3) -> Self {
+    pub fn with_size(max_depth: MaxDepth, chunk_size: f32, chunks_size: IVec3) -> Self {
         println!(
             "Creating model with size {:?}, chunk: {} depth: {}",
             chunks_size, chunk_size, max_depth
@@ -60,7 +60,7 @@ impl Model {
         )));
         let chunks_len = chunks_size.x as usize * chunks_size.y as usize * chunks_size.z as usize;
         let chunks = Self::init_chunks(max_depth, chunk_size, chunks_size, chunks_len);
-        let voxels_per_axis = 1 << max_depth;
+        let voxels_per_axis = 1 << max_depth.max();
 
         Self {
             max_depth,
@@ -96,7 +96,7 @@ impl Model {
         );
     }
 
-    fn init_chunks(max_depth: usize, chunk_size: f32, size: IVec3, len: usize) -> Vec<Chunk> {
+    fn init_chunks(max_depth: MaxDepth, chunk_size: f32, size: IVec3, len: usize) -> Vec<Chunk> {
         let mut chunks = Vec::with_capacity(len);
 
         for y in 0..size.y {
@@ -324,7 +324,7 @@ impl Model {
         println!("Deserializing chunks took {:?}", elapsed);
     }
 
-    pub fn max_depth(&self) -> usize {
+    pub fn max_depth(&self) -> MaxDepth {
         self.max_depth
     }
 

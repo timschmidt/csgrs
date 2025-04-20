@@ -5,6 +5,7 @@ use glam::{DVec3, IVec3};
 use rustc_hash::FxHashMap;
 
 use crate::{
+    MaxDepth,
     core::triangle_cube_intersection,
     io::Obj,
     model::Model,
@@ -51,7 +52,7 @@ pub struct Voxelizer {
 }
 
 impl Voxelizer {
-    pub fn new(max_depth: usize, chunk_size: f32, mesh: Obj) -> Self {
+    pub fn new(max_depth: MaxDepth, chunk_size: f32, mesh: Obj) -> Self {
         let chunks_size_x = (mesh.size.x.ceil() as i32) + 1;
         let chunks_size_y = (mesh.size.y.ceil() as i32) + 1;
         let chunks_size_z = (mesh.size.z.ceil() as i32) + 1;

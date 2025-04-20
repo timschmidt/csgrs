@@ -4,7 +4,7 @@ use byteorder::{BigEndian, ReadBytesExt};
 use glam::IVec3;
 use md5::{Digest, Md5};
 
-use crate::model::Model;
+use crate::{MaxDepth, model::Model};
 
 use super::{
     Flags,
@@ -79,7 +79,7 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
 
     let chunk_size = 1.28;
 
-    let mut model = Model::with_size(lod_level as usize, chunk_size, size);
+    let mut model = Model::with_size(MaxDepth::new(lod_level), chunk_size, size);
     model.deserialize(&data);
 
     model
