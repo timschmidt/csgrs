@@ -143,6 +143,7 @@ impl Chunk {
         normals: &mut Vec<Vec3>,
         indices: &mut Vec<u32>,
         offset: Vec3,
+        lod: Lod,
     ) {
         if self.data.is_leaf() {
             let half_voxel_offset = 0.5 + offset;
@@ -201,14 +202,15 @@ impl Chunk {
             return;
         }
 
-        let voxels_per_axis = self.voxels_per_axis(Lod::new(0));
-        let voxel_size = self.voxel_size(Lod::new(0));
+        let max_depth = self.max_depth.for_lod(lod);
+        let voxels_per_axis = self.voxels_per_axis(lod);
+        let voxel_size = self.voxel_size(lod);
 
         let half_voxel_size = voxel_size / 2.0;
         let voxel_size_vec3 = Vec3::splat(voxel_size);
         let half_voxel_size_vec3 = Vec3::splat(half_voxel_size);
-        let shift_y = 1 << (2 * self.max_depth.as_usize());
-        let shift_z = 1 << self.max_depth.as_usize();
+        let shift_y = 1 << (2 * max_depth.as_usize());
+        let shift_z = 1 << max_depth.as_usize();
 
         let half_voxel_offset = half_voxel_size_vec3 + offset;
         let chunk_v0 = CUBE_VERTS[0] * half_voxel_size_vec3 + half_voxel_offset;
@@ -233,7 +235,7 @@ impl Chunk {
             chunk_v7.z,
         ]);
 
-        let data = self.data.to_vec(store, Lod::new(0));
+        let data = self.data.to_vec(store, lod);
 
         for y in 0..voxels_per_axis {
             let base_index_y = y as usize * shift_y;

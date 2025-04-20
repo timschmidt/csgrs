@@ -4,7 +4,7 @@ use byteorder::{BigEndian, WriteBytesExt};
 use glam::Vec3;
 use md5::{Digest, Md5};
 
-use crate::{model::Model, spatial::OctreeOpsState};
+use crate::{Lod, model::Model, spatial::OctreeOpsState};
 
 use super::{
     Flags,
@@ -26,7 +26,14 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model
         let store = model.get_store();
         let store = store.read();
 
-        chunk.generate_mesh_arrays(&store, &mut vertices, &mut normals, &mut indices, offset);
+        chunk.generate_mesh_arrays(
+            &store,
+            &mut vertices,
+            &mut normals,
+            &mut indices,
+            offset,
+            Lod::new(0),
+        );
     }
 
     let obj_file = std::fs::File::create(path).unwrap();
