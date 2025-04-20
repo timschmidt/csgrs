@@ -17,6 +17,8 @@
 
 use crate::storage::node::MAX_ALLOWED_DEPTH;
 
+use super::Lod;
+
 /// A representation of maximum depth.
 ///
 /// # Examples
@@ -110,6 +112,32 @@ impl MaxDepth {
     pub const fn as_usize(&self) -> usize {
         self.0 as usize
     }
+
+    /// Returns a [`MaxDepth`] for a given [`Lod`].
+    ///
+    /// # Parameters
+    ///
+    /// - `lod`: Level of detail to subtract from the current max depth.
+    ///
+    /// # Returns
+    ///
+    /// New [`MaxDepth`] with value `self.max() - lod.lod()`, saturating at 0.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use voxelis::{MaxDepth, Lod};
+    ///
+    /// let max_depth = MaxDepth::new(6);
+    /// let lod = Lod::new(2);
+    /// let reduced = max_depth.for_lod(lod);
+    /// assert_eq!(reduced.max(), 4);
+    /// ```
+    #[must_use]
+    pub fn for_lod(&self, lod: Lod) -> Self {
+        let max = self.0.saturating_sub(lod.lod());
+        Self(max)
+    }
 }
 
 /// Display implementation for [`MaxDepth`] that provides a human-readable representation
@@ -182,5 +210,21 @@ mod tests {
         let val: u8 = MAX_ALLOWED_DEPTH as u8;
         let depth = MaxDepth::try_from(val);
         assert!(depth.is_err());
+    }
+
+    #[test]
+    fn test_for_lod() {
+        let max_depth = MaxDepth::new(6);
+        let lod = Lod::new(2);
+        let reduced = max_depth.for_lod(lod);
+        assert_eq!(reduced.max(), 4);
+    }
+
+    #[test]
+    fn test_for_lod_saturate() {
+        let max_depth = MaxDepth::new(2);
+        let lod = Lod::new(5);
+        let reduced = max_depth.for_lod(lod);
+        assert_eq!(reduced.max(), 0);
     }
 }
