@@ -162,7 +162,6 @@ impl<T: VoxelTrait> NodeStore<T> {
 
     #[inline(always)]
     pub fn get_value(&self, block_id: &BlockId) -> &T {
-        debug_assert!(block_id.is_leaf(), "Cannot get value for branch node",);
         debug_assert!(
             self.is_valid_block_id(block_id),
             "Invalid block id: {:?}",
