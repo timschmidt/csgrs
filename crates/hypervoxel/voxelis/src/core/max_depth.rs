@@ -100,6 +100,7 @@ impl MaxDepth {
     /// let depth = MaxDepth::new(6);
     /// assert_eq!(depth.as_usize(), 6usize);
     /// ```
+    #[must_use]
     pub const fn as_usize(&self) -> usize {
         self.0 as usize
     }

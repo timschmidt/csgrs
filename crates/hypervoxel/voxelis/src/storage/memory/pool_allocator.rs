@@ -246,12 +246,12 @@ mod tests {
         allocator.deallocate(id); // Should panic
     }
 
+    #[repr(align(16))]
+    struct Aligned16;
+
     #[test]
     fn test_pool_allocator_alignment() {
         assert_eq!(PoolAllocator::<u8>::block_size() % 8, 0);
-
-        #[repr(align(16))]
-        struct Aligned16(u64);
         assert_eq!(PoolAllocator::<Aligned16>::align(), 16);
     }
 

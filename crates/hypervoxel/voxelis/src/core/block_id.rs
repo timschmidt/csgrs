@@ -101,6 +101,7 @@ impl From<BlockId> for u64 {
         id.0
     }
 }
+
 impl From<u64> for BlockId {
     #[inline]
     fn from(raw: u64) -> Self {

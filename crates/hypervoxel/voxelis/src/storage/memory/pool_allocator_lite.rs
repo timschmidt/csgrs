@@ -201,10 +201,11 @@ mod tests {
         let _id3 = allocator.allocate(22, None); // Should panic
     }
 
+    #[repr(align(16))]
+    struct Aligned16;
+
     #[test]
     fn test_pool_allocator_alignment() {
-        #[repr(align(16))]
-        struct Aligned16(u64);
         let _allocator: PoolAllocatorLite<Aligned16> = PoolAllocatorLite::new(4);
         assert_eq!(PoolAllocatorLite::<Aligned16>::align(), 16);
     }
