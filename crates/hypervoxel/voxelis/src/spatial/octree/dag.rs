@@ -944,15 +944,6 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             paths.len(),
         );
 
-        let mut done = false;
-
-        let mut children = EMPTY_CHILD;
-        let mut types = 0;
-        let mut mask = 0;
-
-        let mut current_id = BlockId::INVALID;
-        let mut leaf_id = BlockId::EMPTY;
-
         let path_mask_depth = if target_depth > 1 {
             target_depth - 2
         } else {
@@ -961,26 +952,38 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
         let path_mask = PATH_MASKS[max_depth][path_mask_depth] as usize;
 
-        while !done {
+        let mut equivalent_id = initial_node_id;
+        let mut leaf_id = BlockId::EMPTY;
+
+        // Find equivalent node in the current tree
+        for current_depth in 0..(target_depth - 1) {
+            if equivalent_id.is_leaf() {
+                leaf_id = equivalent_id;
+                equivalent_id = BlockId::EMPTY;
+                break;
+            } else {
+                let index = (path >> ((max_depth - current_depth - 1) * 3)) & 0b111;
+                equivalent_id = store.get_child_id(&equivalent_id, index);
+            }
+
+            if equivalent_id.is_empty() {
+                break;
+            }
+        }
+
+        if equivalent_id.is_leaf() {
+            leaf_id = equivalent_id;
+            equivalent_id = BlockId::EMPTY;
+        };
+
+        let mut children = EMPTY_CHILD;
+        let mut types = 0;
+        let mut mask = 0;
+        let mut has_next_sibling = true;
+
+        while has_next_sibling {
             #[cfg(feature = "debug_trace_ref_counts")]
             println!(" path: {:08X} {:09b}", path, path);
-
-            current_id = initial_node_id;
-            leaf_id = BlockId::EMPTY;
-
-            for current_depth in 0..target_depth {
-                if current_id.is_leaf() {
-                    leaf_id = current_id;
-                    current_id = BlockId::EMPTY;
-                } else {
-                    let index = (path >> ((max_depth - current_depth - 1) * 3)) & 0b111;
-                    current_id = store.get_child_id(&current_id, index);
-                }
-
-                if current_id.is_empty() {
-                    break;
-                }
-            }
 
             let target_index = (path >> ((max_depth - target_depth) * 3)) & 0b111;
             let next_path = paths.last();
@@ -990,7 +993,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                 println!("  next path: {:08X} {:09b}", next_path, next_path);
             }
 
-            let has_next_sibling = if target_depth == 1 {
+            has_next_sibling = if target_depth == 1 {
                 next_path.is_some()
             } else if let Some(next_path) = next_path {
                 (path & path_mask) == (*next_path & path_mask)
@@ -1009,15 +1012,13 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             #[cfg(feature = "debug_trace_ref_counts")]
             println!(
                 "  new_path: {:08X} {:09b}",
-                current_path & path_mask,
-                current_path & path_mask
+                path & path_mask,
+                path & path_mask
             );
 
             if has_next_sibling && !paths.is_empty() {
-                path = paths.pop().unwrap();
+                path = paths.pop().expect("No path found");
             }
-
-            done = !has_next_sibling;
 
             #[cfg(feature = "debug_trace_ref_counts")]
             println!("     has_more_paths: {}", !paths.is_empty());
@@ -1029,22 +1030,20 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                 "     types: {:08b} mask: {:08b} current_path: {:09b}",
                 types,
                 mask,
-                current_path & path_mask
+                path & path_mask
             );
-            println!("     children: {:#?}", children);
+            for (child_idx, child) in children.iter().enumerate() {
+                println!("     child[{}]: {:?}", child_idx, child);
+            }
         }
 
-        let existing_mask = if current_id.is_branch() {
-            current_id.mask()
-        } else {
-            0
-        };
+        let existing_mask = equivalent_id.mask();
         let inv_mask = !mask;
         let cloned_nodes = existing_mask & inv_mask;
 
         if mask != 0xFF {
             if cloned_nodes != 0 {
-                let existing_children = store.get_children_ref(&current_id);
+                let existing_children = store.get_children_ref(&equivalent_id);
 
                 let mut cloned_nodes_bits = cloned_nodes;
 
@@ -1115,8 +1114,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
         #[cfg(feature = "debug_trace_ref_counts")]
         println!(
-            "     done: {} has_more_paths: {} target_depth: {}",
-            done,
+            "     has_more_paths: {} target_depth: {}",
             !paths.is_empty(),
             target_depth
         );
@@ -1135,9 +1133,6 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             }
         }
     }
-
-    #[cfg(feature = "debug_trace_ref_counts")]
-    println!(" current_level_data: {:#?}", current_level_data);
 
     let final_node_id = current_level_data[paths[0] >> 3];
 
