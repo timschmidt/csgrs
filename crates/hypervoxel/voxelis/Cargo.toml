@@ -6,6 +6,8 @@ license.workspace = true
 edition = "2024"
 
 [features]
+default = ["numeric_voxel_impls"]
+numeric_voxel_impls = []
 memory_stats = []
 debug_trace_ref_counts = []
 
