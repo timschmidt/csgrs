@@ -1,13 +1,15 @@
+use crate::csg::CSGError;
 use crate::float_types::{PI, Real};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
-use geo::{LineString, Polygon as GeoPolygon, coord};
+
+use geo::{LineString, Polygon as GeoPolygon, Coord};
 use nalgebra::{Point2, Point3, Vector3};
 
 /// A polygon, defined by a list of vertices and a plane.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
-pub struct Polygon<S: Clone> {
+pub struct Polygon<S: Clone = ()> {
     pub vertices: Vec<Vertex>,
     pub plane: Plane,
     pub metadata: Option<S>,
@@ -16,15 +18,32 @@ pub struct Polygon<S: Clone> {
 impl<S: Clone> Polygon<S>
 where S: Clone + Send + Sync {
     /// Create a polygon from vertices
-    pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
+    ///
+    /// ## Error
+    /// Returns an error if less then 3 vertices are supplied,
+    /// if you always supply exactly three vertices use [`from_tri`](Polygon::from_tri)
+    pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Result<Self, CSGError> {
         let plane = if vertices.len() < 3 {
-            panic!(); // todo: return error
+            // todo give `Polygon` it's own error type, `PolygonError`
+            return Err(CSGError::FieldLessThen { name: "vertices.len()", min: 3 });
         } else {
-            Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos)
+            Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos)?
         };
 
-        Polygon {
+        Ok(Polygon {
             vertices,
+            plane,
+            metadata,
+        })
+    }
+
+    /// Create a polygon from three vertices
+    pub fn from_tri(vertices: &[Vertex; 3], metadata: Option<S>) -> Self {
+        let plane = Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos)
+            .expect("Expected the points are farther then epsilon apart");
+
+        Polygon {
+            vertices: vertices.to_vec(),
             plane,
             metadata,
         }
@@ -47,10 +66,18 @@ where S: Clone + Send + Sync {
     }
 
     /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
-    pub fn tessellate(&self) -> Vec<[Vertex; 3]> {
+    ///
+    /// ## Errors
+    /// If polygon has fewer than 3 vertices
+    #[cfg_attr(feature = "delaunay", doc = " or spade returns an error")]
+    pub fn tessellate(&self) -> Result<Vec<[Vertex; 3]>, CSGError> {
         // If polygon has fewer than 3 vertices, nothing to tessellate
         if self.vertices.len() < 3 {
-            return Vec::new();
+            return Err(CSGError::FieldLessThen { name: "vertices.len()", min: 3 });
+        }
+        // short cut
+        if self.vertices.len() == 3 {
+            return Ok(vec![[self.vertices[0].clone(), self.vertices[1].clone(), self.vertices[2].clone()]]);
         }
 
         //println!("{:#?}",  self.vertices);
@@ -65,7 +92,7 @@ where S: Clone + Send + Sync {
             let offset = vert.pos.coords - origin_3d.coords;
             let x = offset.dot(&u);
             let y = offset.dot(&v);
-            all_vertices_2d.push(coord! {x: x, y: y});
+            all_vertices_2d.push(Coord { x, y });
         }
 
         #[cfg(feature = "earcut")]
@@ -92,7 +119,7 @@ where S: Clone + Send + Sync {
                 }
                 triangles.push(tri_vertices);
             }
-            triangles
+            Ok(triangles)
         }
 
         #[cfg(feature = "delaunay")]
@@ -103,9 +130,8 @@ where S: Clone + Send + Sync {
                 // no holes if your polygon is always simple
                 Vec::new(),
             );
-            let Ok(tris) = polygon_2d.constrained_triangulation(Default::default()) else {
-                return Vec::new(); // or handle however you wish
-            };
+
+            let tris = polygon_2d.constrained_triangulation(Default::default())?;
 
             let mut final_triangles = Vec::with_capacity(tris.len());
             for tri2d in tris {
@@ -122,15 +148,15 @@ where S: Clone + Send + Sync {
                     Vertex::new(Point3::from(pos_c_3d), normal_3d),
                 ]);
             }
-            final_triangles
+            Ok(final_triangles)
         }
     }
 
     /// Subdivide this polygon into smaller triangles.
     /// Returns a list of new triangles (each is a [Vertex; 3]).
-    pub fn subdivide_triangles(&self, subdivisions: u32) -> Vec<[Vertex; 3]> {
+    pub fn subdivide_triangles(&self, subdivisions: u32) -> Result<Vec<[Vertex; 3]>, CSGError> {
         // 1) Triangulate the polygon as it is.
-        let base_tris = self.tessellate();
+        let base_tris = self.tessellate()?;
 
         // 2) For each triangle, subdivide 'subdivisions' times.
         let mut result = Vec::new();
@@ -140,7 +166,7 @@ where S: Clone + Send + Sync {
             for _ in 0..subdivisions {
                 let mut next_level = Vec::new();
                 for t in queue {
-                    let subs = subdivide_triangle(t);
+                    let subs = subdivide_triangle(&t);
                     next_level.extend(subs);
                 }
                 queue = next_level;
@@ -148,13 +174,14 @@ where S: Clone + Send + Sync {
             result.extend(queue);
         }
 
-        result // todo: return polygons
+        Ok(result)
     }
 
     /// return a normal calculated from all polygon vertices
     pub fn calculate_new_normal(&self) -> Vector3<Real> {
         let n = self.vertices.len();
         if n < 3 {
+            // todo return error
             return Vector3::z(); // degenerate or empty
         }
 
@@ -195,13 +222,11 @@ where S: Clone + Send + Sync {
 
     /// Returns a new Polygon translated by t.
     pub fn translate(&self, x: Real, y: Real, z: Real) -> Self {
-        // todo: modify for Vector2 in-plane translation
         self.translate_vector(Vector3::new(x, y, z))
     }
 
     /// Returns a new Polygon translated by t.
     pub fn translate_vector(&self, t: Vector3<Real>) -> Self {
-        // todo: modify for Vector2 in-plane translation
         let new_vertices = self
             .vertices
             .iter()
@@ -209,7 +234,7 @@ where S: Clone + Send + Sync {
             .collect();
         let new_plane = Plane {
             normal: self.plane.normal,
-            w: self.plane.w + self.plane.normal.dot(&t),
+            intercept: self.plane.intercept + self.plane.normal.dot(&t),
         };
         Self {
             vertices: new_vertices,
@@ -219,12 +244,12 @@ where S: Clone + Send + Sync {
     }
 
     /// Returns a reference to the metadata, if any.
-    pub fn metadata(&self) -> Option<&S> {
+    pub const fn metadata(&self) -> Option<&S> {
         self.metadata.as_ref()
     }
 
     /// Returns a mutable reference to the metadata, if any.
-    pub fn metadata_mut(&mut self) -> Option<&mut S> {
+    pub const fn metadata_mut(&mut self) -> Option<&mut S> {
         self.metadata.as_mut()
     }
 
@@ -234,11 +259,11 @@ where S: Clone + Send + Sync {
     }
 }
 
-/// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v` so that
-/// {u, v, n} forms an orthonormal basis. `n` is assumed non‐zero.
-pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real>) {
+/// Given a normal vector, build two perpendicular unit vectors `u` and `v` so that
+/// {u, v, n} forms an orthonormal basis. `normal` is assumed non‐zero.
+fn build_orthonormal_basis(normal: Vector3<Real>) -> (Vector3<Real>, Vector3<Real>) {
     // Normalize the given normal
-    let n = n.normalize();
+    let n = normal.normalize();
 
     // Pick a vector that is not parallel to `n`. For instance, pick the axis
     // which has the smallest absolute component in `n`, and cross from there.
@@ -259,13 +284,13 @@ pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real
     (u, v)
 }
 
-// Helper function to subdivide a triangle
-pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
+/// Helper function to subdivide a triangle
+pub fn subdivide_triangle(tri: &[Vertex; 3]) -> [[Vertex; 3]; 4] {
     let v01 = tri[0].interpolate(&tri[1], 0.5);
     let v12 = tri[1].interpolate(&tri[2], 0.5);
     let v20 = tri[2].interpolate(&tri[0], 0.5);
 
-    vec![
+    [
         [tri[0].clone(), v01.clone(), v20.clone()],
         [v01.clone(), tri[1].clone(), v12.clone()],
         [v20.clone(), v12.clone(), tri[2].clone()],

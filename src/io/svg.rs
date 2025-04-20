@@ -52,7 +52,7 @@ impl<F: CoordNum> PathBuilder<F> {
 
     /// Get a mutable reference to the current path, or an error if no path has been started.
     ///
-    /// To accomodate for the semantics of [`close`], this function will automatically start a new path
+    /// To accommodate for the semantics of [`close`], this function will automatically start a new path
     /// if the last path has 2 or more points and is closed.
     /// For this reason, using this proxy is recommended for implementing any drawing command.
     fn get_path_mut_or_fail(&mut self) -> Result<&mut LineString<F>, IoError> {
@@ -327,6 +327,7 @@ impl<F: CoordNum> PathBuilder<F> {
 
 
 pub trait FromSVG: Sized {
+    #[allow(unused)]
     fn from_svg(doc: &str) -> Result<Self, IoError>;
 }
 
@@ -408,7 +409,7 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let csg = Self::circle(r, segments, None)
+                    let csg = Self::circle(r, segments, None).expect("At least six")
                         .translate(cx, cy, 0.0);
                     csg_union = csg_union.union(&csg);
                 },
@@ -425,7 +426,7 @@ impl FromSVG for CSG<()> {
                     let r = (rx + ry) / 2.0;
 
                     // TODO: add a way for the user to configure this?
-                    let segments = (r.ceil() as usize).max(6);
+                    let segments = (r.ceil() as u32).max(6);
 
                     let csg = Self::rounded_rectangle(w, h, r, segments, None)
                             .translate(x, y, 0.0);
@@ -441,7 +442,7 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (rx.max(ry).ceil() as usize).max(6);
 
-                    let csg = Self::ellipse(rx * 2.0, ry * 2.0, segments, None)
+                    let csg = Self::ellipse(rx * 2.0, ry * 2.0, segments, None).expect("At least six")
                         .translate(cx, cy, 0.0);
                     csg_union = csg_union.union(&csg);
                 },
@@ -486,6 +487,7 @@ impl FromSVG for CSG<()> {
 
 
 pub trait ToSVG {
+    #[allow(unused)]
     fn to_svg(&self) -> String;
 }
 

@@ -1,5 +1,33 @@
-//#![allow(dead_code)]
+//! A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library,
+//! built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in [BSP](bsp) trees.
+//!
+//! ![Example CSG output][Example CSG output]
+#![cfg_attr(doc, doc = doc_image_embed::embed_image!("Example CSG output", "docs/csg.png"))]
+//!
+//! # Features
+//! #### Default
+//! - **f64**: use f64 as Real
+//! - [**stl-io**](https://en.wikipedia.org/wiki/STL_(file_format)): `.stl` import/export
+//! - [**dxf-io**](https://en.wikipedia.org/wiki/AutoCAD_DXF): `.dxf` import/export
+//! - **chull-io**: convex hull and minkowski sum
+//! - **metaballs**: enables a `CSG` implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
+//! - **hashmap**: enables use of hashbrown for slice, related helper functions, and `is_manifold`
+//! - **sdf**: signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) using [fast-surface-nets](https://crates.io/crates/fast-surface-nets)
+//! - **offset**: use `geo-buf` for offset operations
+//! - **delaunay**: use `geo`s `spade` feature for triangulation
+//!
+//! #### Optional
+//! - **f32**: use f32 as Real, this conflicts with f64
+//! - **parallel**: use rayon for multithreading
+//! - **svg-io**: create `CSG`s from and convert `CSG`s to SVG's
+//! - **truetype-text**: create `CSG`s using TrueType fonts `.ttf`
+//! - **hershey-text**: create `CSG`s using Hershey fonts (`.jhf`)
+//! - **image-io**: make 2d `CSG`s from images
+//! - **earcut**: use `geo`s `earcutr` feature for triangulation
+
 #![forbid(unsafe_code)]
+#![deny(unused)]
+#![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
 
 pub mod errors;
 pub mod float_types;
@@ -8,6 +36,7 @@ pub mod plane;
 pub mod polygon;
 pub mod bsp;
 pub mod csg;
+pub use csg::CSG;
 pub mod shapes2d;
 pub mod shapes3d;
 pub mod extrudes;
@@ -21,9 +50,6 @@ pub mod flatten_slice;
 
 #[cfg(feature = "truetype-text")]
 pub mod truetype;
-
-#[cfg(feature = "image-io")]
-pub mod image;
 
 #[cfg(feature = "offset")]
 pub mod offset;
@@ -39,6 +65,19 @@ pub mod sdf;
 
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
+
+#[cfg(any(feature = "stl-io", feature = "dxf-io"))]
+mod csg_io;
+
+/// Prelude containing the common types defined by csgrs
+pub mod prelude {
+    pub use crate::csg::CSG;
+    pub use crate::polygon::Polygon;
+    pub use crate::plane::Plane;
+    pub use crate::vertex::Vertex;
+    #[cfg(feature = "metaballs")]
+    pub use crate::metaballs::MetaBall;
+}
 
 #[cfg(test)]
 mod tests;
