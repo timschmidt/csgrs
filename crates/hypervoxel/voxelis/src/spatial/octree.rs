@@ -198,7 +198,7 @@ impl OctreeOpsDirty for Octree {
 fn copy_octree<
     T: VoxelTrait,
     S: OctreeOpsRead<T> + OctreeOpsConfig + OctreeOpsState,
-    D: OctreeOpsWrite<T>,
+    D: OctreeOpsWrite<T> + OctreeOpsBatch<T>,
 >(
     src: &S,
     dst: &mut D,
@@ -210,14 +210,20 @@ fn copy_octree<
 
     let voxels_per_axis = src.voxels_per_axis(Lod::new(0)) as i32;
 
+    let mut batch = dst.create_batch();
+
     for y in 0..voxels_per_axis {
         for z in 0..voxels_per_axis {
             for x in 0..voxels_per_axis {
                 let position = IVec3::new(x, y, z);
                 if let Some(voxel) = src.get(store, position) {
-                    dst.set(store, position, voxel);
+                    batch.set(store, position, voxel);
                 }
             }
         }
+    }
+
+    if batch.has_patches() {
+        dst.apply_batch(store, &batch);
     }
 }
