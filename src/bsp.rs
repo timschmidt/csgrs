@@ -149,14 +149,14 @@ impl<S: Clone + Send + Sync> Node<S> {
 
         // Decide where to send the coplanar polygons
         for cp in coplanar_front {
-            if plane.normal.dot(&cp.plane.normal) > 0.0 {
+            if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
             }
         }
         for cp in coplanar_back {
-            if plane.normal.dot(&cp.plane.normal) > 0.0 {
+            if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
