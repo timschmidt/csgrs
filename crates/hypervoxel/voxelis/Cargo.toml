@@ -15,6 +15,7 @@ debug_trace_ref_counts = []
 ahash.workspace = true
 bitflags.workspace = true
 byteorder.workspace = true
+crossbeam.workspace = true
 fastnoise-lite.workspace = true
 glam.workspace = true
 humanize-bytes.workspace = true

@@ -1,15 +1,19 @@
-use std::time::Instant;
+use std::{
+    sync::{Arc, atomic::AtomicUsize},
+    time::Instant,
+};
 
+use crossbeam::channel::{Receiver, Sender, bounded};
 use glam::{DVec3, IVec3};
-// use rayon::prelude::*;
+use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 use crate::{
-    MaxDepth,
+    Batch, MaxDepth,
     core::triangle_cube_intersection,
     io::Obj,
     model::Model,
-    spatial::{OctreeOpsState, OctreeOpsWrite},
+    spatial::{OctreeOpsBatch, OctreeOpsState, OctreeOpsWrite},
 };
 
 // Helper function to calculate chunk index from coordinates
@@ -114,111 +118,201 @@ impl Voxelizer {
         chunk_face_map
     }
 
-    pub fn voxelize_mesh(&mut self, chunk_face_map: &FxHashMap<usize, Vec<IVec3>>) {
-        let voxels_per_axis = self.model.voxels_per_axis();
+    fn voxelize_chunk(
+        chunk_position: IVec3,
+        depth: MaxDepth,
+        voxels_per_axis: usize,
+        mesh_min: DVec3,
+        faces: &[IVec3],
+        vertices: &[DVec3],
+    ) -> Option<Batch<i32>> {
         let voxel_size: f64 = 1.0 / voxels_per_axis as f64;
-
         let epsilon = voxel_size * 1e-7;
         let splat = DVec3::splat(epsilon);
 
-        let mesh_min = self.mesh.aabb.0;
-        let voxels_per_axis = self.model.voxels_per_axis();
+        let mut batch = Batch::new(depth);
 
-        let storage = self.model.get_store();
-        let mut storage = storage.write();
+        let chunk_world_position = DVec3::new(
+            chunk_position.x as f64 * voxels_per_axis as f64,
+            chunk_position.y as f64 * voxels_per_axis as f64,
+            chunk_position.z as f64 * voxels_per_axis as f64,
+        );
 
-        self.model
-            .chunks
-            .iter_mut()
-            .enumerate()
-            .for_each(|(chunk_index, chunk)| {
-                if let Some(faces) = chunk_face_map.get(&chunk_index) {
-                    if faces.is_empty() {
-                        return;
-                    }
+        // Compute the chunk's world bounding box
+        let chunk_world_min = DVec3::new(
+            chunk_world_position.x * voxel_size,
+            chunk_world_position.y * voxel_size,
+            chunk_world_position.z * voxel_size,
+        );
+        let chunk_world_max = chunk_world_min + DVec3::splat(voxels_per_axis as f64 * voxel_size);
 
-                    let chunk_position = chunk.get_position();
-                    let chunk_world_position = DVec3::new(
-                        chunk_position.x as f64 * voxels_per_axis as f64,
-                        chunk_position.y as f64 * voxels_per_axis as f64,
-                        chunk_position.z as f64 * voxels_per_axis as f64,
-                    );
+        for face in faces.iter() {
+            let v1 = vertices[(face.x - 1) as usize] - mesh_min;
+            let v2 = vertices[(face.y - 1) as usize] - mesh_min;
+            let v3 = vertices[(face.z - 1) as usize] - mesh_min;
 
-                    // Compute the chunk's world bounding box
-                    let chunk_world_min = DVec3::new(
-                        chunk_world_position.x * voxel_size,
-                        chunk_world_position.y * voxel_size,
-                        chunk_world_position.z * voxel_size,
-                    );
-                    let chunk_world_max =
-                        chunk_world_min + DVec3::splat(voxels_per_axis as f64 * voxel_size);
+            // Compute the face's bounding box in world coordinates
+            let face_min = v1.min(v2).min(v3);
+            let face_max = v1.max(v2).max(v3);
 
-                    for face in faces.iter() {
-                        let v1 = self.mesh.vertices[(face.x - 1) as usize] - mesh_min;
-                        let v2 = self.mesh.vertices[(face.y - 1) as usize] - mesh_min;
-                        let v3 = self.mesh.vertices[(face.z - 1) as usize] - mesh_min;
+            // Compute the overlapping region between the face and the chunk
+            let overlap_min = face_min.max(chunk_world_min) - splat;
+            let overlap_max = face_max.min(chunk_world_max) + splat;
 
-                        // Compute the face's bounding box in world coordinates
-                        let face_min = v1.min(v2).min(v3);
-                        let face_max = v1.max(v2).max(v3);
+            // Check if there is any overlap
+            if overlap_min.x >= overlap_max.x
+                || overlap_min.y >= overlap_max.y
+                || overlap_min.z >= overlap_max.z
+            {
+                // No overlap with the current chunk, skip to the next face
+                continue;
+            }
 
-                        // Compute the overlapping region between the face and the chunk
-                        let overlap_min = face_min.max(chunk_world_min) - splat;
-                        let overlap_max = face_max.min(chunk_world_max) + splat;
+            // Map the overlapping region to voxel indices within the chunk
+            let local_min_voxel = ((overlap_min - chunk_world_min) / voxel_size)
+                .floor()
+                .as_ivec3();
+            let local_max_voxel = ((overlap_max - chunk_world_min) / voxel_size)
+                .ceil()
+                .as_ivec3();
 
-                        // Check if there is any overlap
-                        if overlap_min.x >= overlap_max.x
-                            || overlap_min.y >= overlap_max.y
-                            || overlap_min.z >= overlap_max.z
-                        {
-                            // No overlap with the current chunk, skip to the next face
-                            continue;
-                        }
+            // Clamp voxel indices to valid range [0, VOXELS_PER_AXIS - 1]
+            let local_min_voxel =
+                local_min_voxel.clamp(IVec3::ZERO, IVec3::splat(voxels_per_axis as i32 - 1));
+            let local_max_voxel =
+                local_max_voxel.clamp(IVec3::ZERO, IVec3::splat(voxels_per_axis as i32 - 1));
 
-                        // Map the overlapping region to voxel indices within the chunk
-                        let local_min_voxel = ((overlap_min - chunk_world_min) / voxel_size)
-                            .floor()
-                            .as_ivec3();
-                        let local_max_voxel = ((overlap_max - chunk_world_min) / voxel_size)
-                            .ceil()
-                            .as_ivec3();
+            // Iterate over the voxels within the overlapping region
+            for y in local_min_voxel.y..=local_max_voxel.y {
+                for z in local_min_voxel.z..=local_max_voxel.z {
+                    for x in local_min_voxel.x..=local_max_voxel.x {
+                        // Compute world position of the voxel
+                        let world_voxel_position =
+                            chunk_world_min + DVec3::new(x as f64, y as f64, z as f64) * voxel_size;
 
-                        // Clamp voxel indices to valid range [0, VOXELS_PER_AXIS - 1]
-                        let local_min_voxel = local_min_voxel
-                            .clamp(IVec3::ZERO, IVec3::splat(voxels_per_axis as i32 - 1));
-                        let local_max_voxel = local_max_voxel
-                            .clamp(IVec3::ZERO, IVec3::splat(voxels_per_axis as i32 - 1));
+                        // Expand voxel bounds slightly by epsilon (if needed)
+                        let world_min_position = world_voxel_position - splat;
+                        let world_max_position =
+                            world_voxel_position + DVec3::splat(voxel_size) + splat;
 
-                        // Iterate over the voxels within the overlapping region
-                        for y in local_min_voxel.y..=local_max_voxel.y {
-                            for z in local_min_voxel.z..=local_max_voxel.z {
-                                for x in local_min_voxel.x..=local_max_voxel.x {
-                                    // Compute world position of the voxel
-                                    let world_voxel_position = chunk_world_min
-                                        + DVec3::new(x as f64, y as f64, z as f64) * voxel_size;
-
-                                    // Expand voxel bounds slightly by epsilon (if needed)
-                                    let world_min_position = world_voxel_position - splat;
-                                    let world_max_position =
-                                        world_voxel_position + DVec3::splat(voxel_size) + splat;
-
-                                    // Perform the intersection test
-                                    if triangle_cube_intersection(
-                                        (v1, v2, v3),
-                                        (world_min_position, world_max_position),
-                                    ) {
-                                        chunk.set(&mut storage, IVec3::new(x, y, z), 1);
-                                    }
-                                }
-                            }
+                        // Perform the intersection test
+                        if triangle_cube_intersection(
+                            (v1, v2, v3),
+                            (world_min_position, world_max_position),
+                        ) {
+                            batch.just_set(IVec3::new(x, y, z), 1);
                         }
                     }
                 }
-            });
+            }
+        }
+
+        if batch.has_patches() {
+            Some(batch)
+        } else {
+            None
+        }
     }
 
-    pub fn update_lods(&mut self) {
-        // self.model.update_lods();
+    pub fn voxelize_mesh(&mut self, chunk_face_map: FxHashMap<usize, Vec<IVec3>>) {
+        let (tx, rx): (Sender<(usize, Batch<i32>)>, Receiver<(usize, Batch<i32>)>) = bounded(1024);
+
+        let depth = self.model.max_depth();
+        let voxels_per_axis = self.model.voxels_per_axis();
+        let mesh_min = self.mesh.aabb.0;
+        let vertices = self.mesh.vertices.clone();
+
+        let chunk_positions: Vec<(usize, IVec3)> = self
+            .model
+            .chunks
+            .iter()
+            .enumerate()
+            .filter(|(idx, _)| chunk_face_map.contains_key(idx))
+            .map(|(idx, chunk)| (idx, chunk.get_position()))
+            .collect();
+
+        println!(
+            " Chunk to process: {} / {} total, {:.1}% filtered ({})",
+            chunk_positions.len(),
+            self.model.chunks.len(),
+            ((self.model.chunks.len() - chunk_positions.len()) as f32
+                / self.model.chunks.len() as f32)
+                * 100.0,
+            self.model.chunks.len() - chunk_positions.len(),
+        );
+
+        let early_quit_no_faces = Arc::new(AtomicUsize::new(0));
+        let early_quit_empty_faces = Arc::new(AtomicUsize::new(0));
+        let early_quit_empty_batch = Arc::new(AtomicUsize::new(0));
+        let processed_chunks = Arc::new(AtomicUsize::new(0));
+
+        let early_quit_no_faces_clone = early_quit_no_faces.clone();
+        let early_quit_empty_faces_clone = early_quit_empty_faces.clone();
+        let early_quit_empty_batch_clone = early_quit_empty_batch.clone();
+        let processed_chunks_clone = processed_chunks.clone();
+
+        let handle = std::thread::spawn(move || {
+            println!("Voxelizing {} chunks in parallel", chunk_positions.len());
+
+            chunk_positions
+                .par_iter()
+                .for_each(|(chunk_index, chunk_position)| {
+                    let Some(faces) = chunk_face_map.get(chunk_index) else {
+                        early_quit_no_faces_clone.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                        return;
+                    };
+
+                    if faces.is_empty() {
+                        early_quit_empty_faces_clone
+                            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                        return;
+                    }
+
+                    let Some(batch) = Self::voxelize_chunk(
+                        *chunk_position,
+                        depth,
+                        voxels_per_axis,
+                        mesh_min,
+                        faces,
+                        &vertices,
+                    ) else {
+                        early_quit_empty_batch_clone
+                            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                        return;
+                    };
+
+                    if batch.has_patches() {
+                        processed_chunks_clone.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                        tx.send((*chunk_index, batch))
+                            .expect("Failed to send batch to main thread");
+                    }
+                });
+
+            drop(tx);
+
+            println!("Voxelization in parallel completed");
+        });
+
+        let storage_arc = self.model.get_store();
+        let mut storage = storage_arc.write();
+
+        println!("Applying batches to chunks");
+        for (idx, batch) in rx.iter() {
+            self.model.chunks[idx].apply_batch(&mut storage, &batch);
+        }
+
+        println!(
+            "Early quits: no faces: {}, empty faces: {}, empty batch: {}",
+            early_quit_no_faces.load(std::sync::atomic::Ordering::SeqCst),
+            early_quit_empty_faces.load(std::sync::atomic::Ordering::SeqCst),
+            early_quit_empty_batch.load(std::sync::atomic::Ordering::SeqCst)
+        );
+        println!(
+            "Processed chunks: {}",
+            processed_chunks.load(std::sync::atomic::Ordering::SeqCst)
+        );
+
+        handle.join().unwrap();
     }
 
     pub fn simple_voxelize(&mut self) {
@@ -250,8 +344,6 @@ impl Voxelizer {
             }
         }
 
-        self.update_lods();
-
         println!("Simple voxelize took: {:?}", now.elapsed());
     }
 
@@ -271,7 +363,7 @@ impl Voxelizer {
 
         println!("Voxelizing mesh");
 
-        self.voxelize_mesh(&chunk_face_map);
+        self.voxelize_mesh(chunk_face_map);
 
         let voxelize_time = voxelize_time.elapsed();
 

@@ -29,6 +29,7 @@ voxelis-bevy = { path = "voxelis-bevy" }
 ahash = "0.8.11"
 bitflags = "2.9.0"
 byteorder = "1.5.0"
+crossbeam = { version = "0.8.4" }
 fastnoise-lite = "1.1.1"
 glam = "0.29.3"
 humanize-bytes = "1.0.6"
