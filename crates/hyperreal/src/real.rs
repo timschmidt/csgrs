@@ -419,7 +419,8 @@ impl Real {
         Ok(self.make_computable(Computable::exp))
     }
 
-    pub fn log(self) -> Result<Real, Problem> {
+    /// The base 10 logarithm of this Real or Problem::NotANumber if this Real is negative.
+    pub fn log10(self) -> Result<Real, Problem> {
         use num::bigint::ToBigInt;
 
         self.ln()?
@@ -520,7 +521,7 @@ impl Real {
             Some(Less) => {
                 let inv = r.inverse()?;
                 if let Some(answer) = Self::ln_small(&inv) {
-                    return Ok(answer);
+                    return Ok(-answer);
                 }
                 let new = Computable::rational(inv.clone());
                 Ok(Self {

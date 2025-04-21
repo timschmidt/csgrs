@@ -238,4 +238,19 @@ mod tests {
         assert_eq!(format!("{pi:.32e}"), "3.14159265358979323846264338327950e0");
         assert_eq!(format!("{pi:e}"), "3.1415926535897932384626433832795e0");
     }
+
+    #[test]
+    fn integer_logs() {
+        for (n, log) in [
+            (1, 0),
+            (10, 1),
+            (10_000_000_000_000_000, 16),
+            (100_000_000_000_000_000, 17),
+            (1000_000_000_000_000_000, 18),
+        ] {
+            let n = Real::new(Rational::new(n));
+            let answer = n.log10();
+            assert_eq!(answer, Ok(Real::new(Rational::new(log))));
+        }
+    }
 }

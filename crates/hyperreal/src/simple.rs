@@ -130,7 +130,7 @@ impl Simple {
                     return Err(Problem::ParseError);
                 }
                 let operand = self.operands.first().unwrap();
-                let value = operand.value(names)?.log()?;
+                let value = operand.value(names)?.log10()?;
                 Ok(value)
             }
             Ln => {
