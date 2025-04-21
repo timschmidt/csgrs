@@ -431,17 +431,88 @@ impl Real {
             }
     }
 
+    // Find Some(m) integral log with respect to this base or else None
+    // n should be positive (not zero) and base should be >= 2
+    fn integer_log(n: &BigUint, base: u32) -> Option<u64> {
+        use num::Integer;
+        use num::bigint::ToBigUint;
+        // TODO weed out some large failure cases early and return None
+
+        // Calculate base^2 base^4 base^8 base^16 and so on until it is bigger than next
+        let mut result: Option<u64> = None;
+        let mut powers: Vec<BigUint> = Vec::new();
+        let mut next = ToBigUint::to_biguint(&base).unwrap();
+        powers.push(next.clone());
+
+        let mut reduced = n.clone();
+        let mut i = 1;
+        loop {
+            // TODO Looping, may need to handle cancellation
+            next = next.pow(2);
+            if next.bits() > reduced.bits() {
+                break;
+            }
+
+            let (div, rem) = reduced.div_rem(&next);
+            if rem != BigUint::ZERO {
+                return None;
+            }
+            powers.push(next.clone());
+            result = Some(result.unwrap_or(0) + (1 << i));
+            reduced = div;
+            i += 1;
+        }
+
+        while let Some(power) = powers.pop() {
+            if reduced == *unsigned::ONE {
+                break;
+            }
+            i -= 1;
+            if power.bits() > reduced.bits() {
+                continue;
+            }
+            let (div, rem) = reduced.div_rem(&power);
+            if rem != BigUint::ZERO {
+                return None;
+            }
+            result = Some(result.unwrap_or(0) + (1 << i));
+            reduced = div;
+        }
+
+        if reduced == *unsigned::ONE {
+            result
+        } else {
+            None
+        }
+    }
+
+    // For input y = ln(r) with r positive gives
+    // Some(k ln(s)) where there is a small integer m such that r = s^k.
+    // or None
     fn ln_small(r: &Rational) -> Option<Real> {
-        match r.to_big_integer() {
-            None => None,
-            Some(_n) => {
-                None
+        let n = r.to_big_integer()?;
+        let n = n.magnitude();
+
+        for base in [2, 3, 5, 6, 7, 10] {
+            if let Some(n) = Self::integer_log(n, base) {
+                let r = Rational::new(base as i64);
+                let new = Computable::rational(r.clone());
+                return Some(Self {
+                    rational: Rational::new(n as i64),
+                    class: Ln(r),
+                    computable: Computable::ln(new),
+                    signal: None,
+                });
             }
         }
+
+        None
     }
 
     // Ensure the resulting Real uses r > 1 for Ln(r)
     // this is convenient elsewhere and makes commonality more frequent
+    // e.g. use Ln(2) rather than Ln(0.5)
+    // Must be called with r > 0
     fn ln_rational(r: Rational) -> Result<Real, Problem> {
         use std::cmp::Ordering::*;
 
