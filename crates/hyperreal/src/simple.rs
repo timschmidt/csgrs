@@ -13,6 +13,7 @@ enum Operator {
     Slash,
     Sqrt,
     Exp,
+    Log10,
     Ln,
     Cos,
     Sin,
@@ -124,6 +125,14 @@ impl Simple {
                 let value = operand.value(names)?.exp()?;
                 Ok(value)
             }
+            Log10 => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                let operand = self.operands.first().unwrap();
+                let value = operand.value(names)?.log()?;
+                Ok(value)
+            }
             Ln => {
                 if self.operands.len() != 1 {
                     return Err(Problem::ParseError);
@@ -192,6 +201,7 @@ impl Simple {
 
         use Operator::*;
         match op.as_str() {
+            "log" | "log10" => Ok(Log10),
             "ln" | "l" => Ok(Ln),
             "exp" | "e" => Ok(Exp),
             "sqrt" | "s" => Ok(Sqrt),

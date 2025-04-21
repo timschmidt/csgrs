@@ -11,6 +11,7 @@ enum Class {
     Sqrt(Rational),  // Square root of some positive integer without an integer square root
     Exp(Rational),   // Rational is never zero
     Ln(Rational),    // Rational > 1
+    Log10(Rational), // Rational > 1 and never a multiple of ten
     SinPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     TanPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     Irrational,
@@ -27,6 +28,7 @@ impl PartialEq for Class {
             (Sqrt(r), Sqrt(s)) => r == s,
             (Exp(r), Exp(s)) => r == s,
             (Ln(r), Ln(s)) => r == s,
+            (Log10(r), Log10(s)) => r == s,
             (SinPi(r), SinPi(s)) => r == s,
             (TanPi(r), TanPi(s)) => r == s,
             (_, _) => false,
@@ -83,6 +85,9 @@ mod unsigned {
         LazyLock::new(|| ToBigUint::to_biguint(&4).unwrap());
     pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&6).unwrap());
 }
+
+use std::sync::LazyLock;
+static LN10: LazyLock<Class> = LazyLock::new(|| Ln(Rational::new(10)));
 
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
@@ -237,7 +242,9 @@ impl Real {
     /// This will be accurate for trivial Rationals and many but not all other cases.
     pub fn best_sign(&self) -> Sign {
         match &self.class {
-            One | Pi | Sqrt(_) | Exp(_) | Ln(_) | SinPi(_) | TanPi(_) => self.rational.sign(),
+            One | Pi | Sqrt(_) | Exp(_) | Ln(_) | Log10(_) | SinPi(_) | TanPi(_) => {
+                self.rational.sign()
+            }
             _ => match (self.rational.sign(), self.computable.sign()) {
                 (Sign::NoSign, _) => Sign::NoSign,
                 (_, Sign::NoSign) => Sign::NoSign,
@@ -412,6 +419,27 @@ impl Real {
         Ok(self.make_computable(Computable::exp))
     }
 
+    pub fn log(self) -> Result<Real, Problem> {
+        use num::bigint::ToBigInt;
+
+        self.ln()?
+            / Self {
+                rational: Rational::one(),
+                class: LN10.clone(),
+                computable: Computable::ln(Computable::integer(ToBigInt::to_bigint(&10).unwrap())),
+                signal: None,
+            }
+    }
+
+    fn ln_small(r: &Rational) -> Option<Real> {
+        match r.to_big_integer() {
+            None => None,
+            Some(_n) => {
+                None
+            }
+        }
+    }
+
     // Ensure the resulting Real uses r > 1 for Ln(r)
     // this is convenient elsewhere and makes commonality more frequent
     fn ln_rational(r: Rational) -> Result<Real, Problem> {
@@ -420,6 +448,9 @@ impl Real {
         match r.partial_cmp(rationals::ONE.deref()) {
             Some(Less) => {
                 let inv = r.inverse()?;
+                if let Some(answer) = Self::ln_small(&inv) {
+                    return Ok(answer);
+                }
                 let new = Computable::rational(inv.clone());
                 Ok(Self {
                     rational: Rational::new(-1),
@@ -430,6 +461,9 @@ impl Real {
             }
             Some(Equal) => Ok(Self::zero()),
             Some(Greater) => {
+                if let Some(answer) = Self::ln_small(&r) {
+                    return Ok(answer);
+                }
                 let new = Computable::rational(r.clone());
                 Ok(Self {
                     rational: Rational::one(),
