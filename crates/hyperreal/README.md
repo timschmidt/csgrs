@@ -32,7 +32,7 @@ The Java class BoundedRational is `Rational` in realistic, while UnifiedReal is 
 `Rational::to_big_integer` has a different name because in Rust `as` signifies that this conversion is cheap
 
 In some places these APIs provide a `Problem` where the Java throws various Exception classes. Some programming errors will panic but
-ordinary arithmetic operations should only fail with a `Problem` such a `Problem::DivideByZero`.
+ordinary arithmetic operations should only fail with a `Problem` such as `Problem::DivideByZero`.
 
 Many APIs use `Option<T>` where the analogous Java relies on nullability, others use `Result<Real, Problem>` to reflect the possibility of
 unrecoverable errors during either parsing or approximation of results.
