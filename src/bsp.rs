@@ -256,22 +256,6 @@ impl<S: Clone + Send + Sync> Node<S> {
             back.extend(b);
         }
 
-        //  Treat this node as a leaf if all polygons ended up on the same side
-        if front.len() == polygons.len() {
-            // Everything is 'front': no meaningful split => store them here, no recursion
-            self.polygons = polygons.to_vec();
-            self.front = None;
-            self.back = None;
-            return;
-        }
-        if back.len() == polygons.len() {
-            // Everything is 'back': no meaningful split => store them here, no recursion
-            self.polygons = polygons.to_vec();
-            self.front = None;
-            self.back = None;
-            return;
-        }
-
         // Recursively build the front subtree.
         if !front.is_empty() {
             if self.front.is_none() {
