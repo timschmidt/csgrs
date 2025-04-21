@@ -19,6 +19,7 @@ use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 // };
 use rayon::prelude::*;
 
+use voxelis::Lod;
 use voxelis::io::import::import_model_from_vtm;
 use voxelis::model::Model;
 use voxelis::spatial::OctreeOpsState;
@@ -40,6 +41,7 @@ pub enum MaterialType {
 #[derive(Resource)]
 pub struct ModelSettings {
     pub material_type: MaterialType,
+    pub lod: Lod,
 }
 
 impl Plugin for GamePlugin {
@@ -182,6 +184,7 @@ fn setup(
                 &mut normals,
                 &mut indices,
                 chunk.get_world_position(),
+                model_settings.lod,
             );
         }
 
@@ -237,6 +240,7 @@ fn setup(
                     &mut normals,
                     &mut indices,
                     Vec3::ZERO,
+                    model_settings.lod,
                 );
 
                 Some(
@@ -326,12 +330,20 @@ fn toggle_wireframe(
 
 fn main() {
     if std::env::args().len() < 2 {
-        println!("Usage: vtm-viewer <vtm-file>");
+        println!("Usage: vtm-viewer <vtm-file> <lod-level (0-7)>");
         std::process::exit(1);
     }
 
     let input = std::env::args().nth(1).unwrap();
     let input = Path::new(&input);
+
+    let lod = if let Some(lod) = std::env::args().nth(2) {
+        let lod: u8 = lod.parse().unwrap();
+        Lod::new(lod)
+    } else {
+        Lod::new(0)
+    };
+    println!("Using LOD level {}", lod);
 
     println!("Opening VTM model {}", input.display());
     let model = import_model_from_vtm(&input);
@@ -375,6 +387,7 @@ fn main() {
         .insert_resource(ModelResource(model))
         .insert_resource(ModelSettings {
             material_type: MaterialType::Checkered,
+            lod,
         })
         .run();
 
