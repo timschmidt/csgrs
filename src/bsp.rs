@@ -2,6 +2,7 @@ use crate::float_types::EPSILON;
 use crate::plane::Plane;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
+use robust::{orient3d, Coord3D};
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -363,17 +364,26 @@ impl<S: Clone + Send + Sync> Node<S> {
             let mut polygon_type = 0;
             let mut types = Vec::with_capacity(vcount);
 
-            for v in &poly.vertices {
-                let offset = slicing_plane.normal().dot(&v.pos.coords) - slicing_plane.offset();
-                let t = if offset < -EPSILON {
+            for vertex in &poly.vertices {
+                // Returns a positive value if the point `pd` lies below the plane passing through `pa`, `pb`, and `pc`
+                // ("below" is defined so that `pa`, `pb`, and `pc` appear in counterclockwise order when viewed from above the plane).  
+                // Returns a negative value if `pd` lies above the plane.  
+                // Returns `0` if they are **coplanar**.
+                let sign = orient3d(
+                    Coord3D { x: slicing_plane.point_a.x, y: slicing_plane.point_a.y, z: slicing_plane.point_a.z },
+                    Coord3D { x: slicing_plane.point_b.x, y: slicing_plane.point_b.y, z: slicing_plane.point_b.z },
+                    Coord3D { x: slicing_plane.point_c.x, y: slicing_plane.point_c.y, z: slicing_plane.point_c.z },
+                    Coord3D { x: vertex.pos.coords.x, y: vertex.pos.coords.y, z: vertex.pos.coords.z },
+                );
+                let vertex_type = if sign > EPSILON {
                     BACK
-                } else if offset > EPSILON {
+                } else if sign < -EPSILON {
                     FRONT
                 } else {
                     COPLANAR
                 };
-                polygon_type |= t;
-                types.push(t);
+                polygon_type |= vertex_type;
+                types.push(vertex_type);
             }
 
             // Based on the combined classification of its vertices:
@@ -466,17 +476,26 @@ impl<S: Clone + Send + Sync> Node<S> {
                 let mut polygon_type = 0;
                 let mut types = Vec::with_capacity(vcount);
 
-                for v in &poly.vertices {
-                    let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.w;
-                    let t = if dist < -EPSILON {
+                for vertex in &poly.vertices {
+                    // Returns a positive value if the point `pd` lies below the plane passing through `pa`, `pb`, and `pc`
+                    // ("below" is defined so that `pa`, `pb`, and `pc` appear in counterclockwise order when viewed from above the plane).  
+                    // Returns a negative value if `pd` lies above the plane.  
+                    // Returns `0` if they are **coplanar**.
+                    let sign = orient3d(
+                        Coord3D { x: slicing_plane.point_a.x, y: slicing_plane.point_a.y, z: slicing_plane.point_a.z },
+                        Coord3D { x: slicing_plane.point_b.x, y: slicing_plane.point_b.y, z: slicing_plane.point_b.z },
+                        Coord3D { x: slicing_plane.point_c.x, y: slicing_plane.point_c.y, z: slicing_plane.point_c.z },
+                        Coord3D { x: vertex.pos.coords.x, y: vertex.pos.coords.y, z: vertex.pos.coords.z },
+                    );
+                    let vertex_type = if sign > EPSILON {
                         BACK
-                    } else if dist > EPSILON {
+                    } else if sign < -EPSILON {
                         FRONT
                     } else {
                         COPLANAR
                     };
-                    polygon_type |= t;
-                    types.push(t);
+                    polygon_type |= vertex_type;
+                    types.push(vertex_type);
                 }
 
                 match polygon_type {
