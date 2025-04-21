@@ -1,5 +1,5 @@
 use crate::float_types::EPSILON;
-use crate::plane::{Plane, BACK, FRONT};
+use crate::plane::{Plane, BACK, FRONT, COPLANAR, SPANNING};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use robust::{orient3d, Coord3D};
@@ -353,35 +353,11 @@ impl<S: Clone + Send + Sync> Node<S> {
             if vcount < 2 {
                 continue; // degenerate polygon => skip
             }
-
-            // Classify each vertex relative to the slicing plane
-            // We store the classification (FRONT, BACK, COPLANAR) in `types`
-            const COPLANAR: i32 = 0;
-            const FRONT: i32 = 1;
-            const BACK: i32 = 2;
-            const SPANNING: i32 = 3;
-
             let mut polygon_type = 0;
             let mut types = Vec::with_capacity(vcount);
 
             for vertex in &poly.vertices {
-                // Returns a positive value if the point `pd` lies below the plane passing through `pa`, `pb`, and `pc`
-                // ("below" is defined so that `pa`, `pb`, and `pc` appear in counterclockwise order when viewed from above the plane).  
-                // Returns a negative value if `pd` lies above the plane.  
-                // Returns `0` if they are **coplanar**.
-                let sign = orient3d(
-                    Coord3D { x: slicing_plane.point_a.x, y: slicing_plane.point_a.y, z: slicing_plane.point_a.z },
-                    Coord3D { x: slicing_plane.point_b.x, y: slicing_plane.point_b.y, z: slicing_plane.point_b.z },
-                    Coord3D { x: slicing_plane.point_c.x, y: slicing_plane.point_c.y, z: slicing_plane.point_c.z },
-                    Coord3D { x: vertex.pos.coords.x, y: vertex.pos.coords.y, z: vertex.pos.coords.z },
-                );
-                let vertex_type = if sign > EPSILON {
-                    BACK
-                } else if sign < -EPSILON {
-                    FRONT
-                } else {
-                    COPLANAR
-                };
+                let vertex_type = slicing_plane.orient_point(&vertex.pos);
                 polygon_type |= vertex_type;
                 types.push(vertex_type);
             }
@@ -466,34 +442,11 @@ impl<S: Clone + Send + Sync> Node<S> {
                     // Degenerate => skip
                     return (Vec::new(), Vec::new());
                 }
-
-                // Classify each vertex relative to the slicing plane
-                const COPLANAR: i32 = 0;
-                const FRONT: i32 = 1;
-                const BACK: i32 = 2;
-                const SPANNING: i32 = 3;
-
                 let mut polygon_type = 0;
                 let mut types = Vec::with_capacity(vcount);
 
                 for vertex in &poly.vertices {
-                    // Returns a positive value if the point `pd` lies below the plane passing through `pa`, `pb`, and `pc`
-                    // ("below" is defined so that `pa`, `pb`, and `pc` appear in counterclockwise order when viewed from above the plane).  
-                    // Returns a negative value if `pd` lies above the plane.  
-                    // Returns `0` if they are **coplanar**.
-                    let sign = orient3d(
-                        Coord3D { x: slicing_plane.point_a.x, y: slicing_plane.point_a.y, z: slicing_plane.point_a.z },
-                        Coord3D { x: slicing_plane.point_b.x, y: slicing_plane.point_b.y, z: slicing_plane.point_b.z },
-                        Coord3D { x: slicing_plane.point_c.x, y: slicing_plane.point_c.y, z: slicing_plane.point_c.z },
-                        Coord3D { x: vertex.pos.coords.x, y: vertex.pos.coords.y, z: vertex.pos.coords.z },
-                    );
-                    let vertex_type = if sign > EPSILON {
-                        BACK
-                    } else if sign < -EPSILON {
-                        FRONT
-                    } else {
-                        COPLANAR
-                    };
+                    let vertex_type = slicing_plane.orient_point(&vertex.pos);
                     polygon_type |= vertex_type;
                     types.push(vertex_type);
                 }
