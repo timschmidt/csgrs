@@ -98,6 +98,8 @@ impl Plane {
         let mut coplanar_back  = Vec::new();
         let mut front          = Vec::new();
         let mut back           = Vec::new();
+        
+        let normal = self.normal();
     
         // -----------------------------------------------------------------
         // 1.  classify all vertices with robust orient3d
@@ -120,10 +122,10 @@ impl Plane {
     
         let mut types        = Vec::with_capacity(polygon.vertices.len());
         let mut polygon_type: i8 = 0;
-        for v in &polygon.vertices {
-            let t = classify(&v.pos);
-            types.push(t);
-            polygon_type |= t; // bitwise OR verticies types to figure polygon type
+        for vertex in &polygon.vertices {
+            let vertex_type = classify(&vertex.pos);
+            types.push(vertex_type);
+            polygon_type |= vertex_type; // bitwise OR verticies types to figure polygon type
         }
     
         // -----------------------------------------------------------------
@@ -131,7 +133,7 @@ impl Plane {
         // -----------------------------------------------------------------
         match polygon_type {
             COPLANAR => {
-                if self.normal().dot(&polygon.plane.normal()) > 0.0 {  // >= ?
+                if normal.dot(&polygon.plane.normal()) > 0.0 {  // >= ?
                     coplanar_front.push(polygon.clone());
                 } else {
                     coplanar_back.push(polygon.clone());
@@ -143,42 +145,40 @@ impl Plane {
             // -------------------------------------------------------------
             // 3.  true spanning – do the split
             // -------------------------------------------------------------
-            _ => {
-                let n = self.normal();
-    
-                let mut f = Vec::<Vertex>::new();
-                let mut b = Vec::<Vertex>::new();
+            _ => {    
+                let mut split_front = Vec::<Vertex>::new();
+                let mut split_back = Vec::<Vertex>::new();
     
                 for i in 0..polygon.vertices.len() {
                     let j  = (i + 1) % polygon.vertices.len();
-                    let ti = types[i];
-                    let tj = types[j];
-                    let vi = &polygon.vertices[i];
-                    let vj = &polygon.vertices[j];
+                    let type_i = types[i];
+                    let type_j = types[j];
+                    let vertex_i = &polygon.vertices[i];
+                    let vertex_j = &polygon.vertices[j];
     
                     // If current vertex is definitely not behind plane, it goes to f (front side)
-                    if ti != BACK  { f.push(vi.clone()); }
+                    if type_i != BACK  { split_front.push(vertex_i.clone()); }
                     // If current vertex is definitely not in front, it goes to b (back side)
-                    if ti != FRONT { b.push(vi.clone()); }
+                    if type_i != FRONT { split_back.push(vertex_i.clone()); }
     
                     // If the edge between these two vertices crosses the plane,
                     // compute intersection and add that intersection to both sets
-                    if (ti | tj) == SPANNING {
-                        let denom = n.dot(&(vj.pos - vi.pos));
+                    if (type_i | type_j) == SPANNING {
+                        let denom = normal.dot(&(vertex_j.pos - vertex_i.pos));
                         // Avoid dividing by zero
                         if denom.abs() > EPSILON {
-                            let t = (self.offset() - n.dot(&vi.pos.coords)) / denom;
-                            let v_new = vi.interpolate(vj, t);
-                            f.push(v_new.clone());
-                            b.push(v_new);
+                            let intersection = (self.offset() - normal.dot(&vertex_i.pos.coords)) / denom;
+                            let vertex_new = vertex_i.interpolate(vertex_j, intersection);
+                            split_front.push(vertex_new.clone());
+                            split_back.push(vertex_new);
                         }
                     }
                 }
     
                 // Build new polygons from the front/back vertex lists
                 // if they have at least 3 vertices
-                if f.len() >= 3 { front.push(Polygon::new(f, polygon.metadata.clone())); }
-                if b.len() >= 3 { back .push(Polygon::new(b, polygon.metadata.clone())); }
+                if split_front.len() >= 3 { front.push(Polygon::new(split_front, polygon.metadata.clone())); }
+                if split_back.len() >= 3 { back.push(Polygon::new(split_back, polygon.metadata.clone())); }
             }
         }
     
@@ -193,7 +193,7 @@ impl Plane {
         // Normal
         let n = self.normal();
         let n_len = n.norm();
-        if n_len < 1e-12 {
+        if n_len < EPSILON {
             // Degenerate plane, return identity
             return (Matrix4::identity(), Matrix4::identity());
         }
