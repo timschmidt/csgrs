@@ -150,6 +150,7 @@ impl Plane {
                 let mut split_back = Vec::<Vertex>::new();
     
                 for i in 0..polygon.vertices.len() {
+                    // j is the vertex following i, we modulo by len to wrap around to the first vertex after the last
                     let j  = (i + 1) % polygon.vertices.len();
                     let type_i = types[i];
                     let type_j = types[j];
