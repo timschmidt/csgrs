@@ -116,9 +116,9 @@ impl Plane {
                 Coord3D { x: pt.x,          y: pt.y,          z: pt.z          },
             );
             if sign > EPSILON {
-                FRONT
-            } else if sign < -EPSILON {
                 BACK
+            } else if sign < -EPSILON {
+                FRONT
             } else {
                 COPLANAR
             }
