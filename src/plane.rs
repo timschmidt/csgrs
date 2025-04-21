@@ -37,16 +37,16 @@ impl Plane {
 
         // Build an orthonormal basis {u, v} that spans the plane.
         // Pick the largest component of n to avoid numerical problems.
-        let mut u = if normal.x.abs() < normal.y.abs() {
-            // n is closer to (0,±1,0)
-            Vector3::new(0.0, normal.z, -normal.y)
+        let mut u = if normal.z.abs() > normal.x.abs() || normal.z.abs() > normal.y.abs() {
+            // n is closer to ±Z ⇒ cross with X
+            Vector3::x().cross(&normal)
         } else {
-            // n is closer to (±1,0,0)  or  z–axis
-            Vector3::new(normal.y, -normal.x, 0.0)
+            // otherwise cross with Z
+            Vector3::z().cross(&normal)
         };
         u.normalize_mut();
         let v = normal.cross(&u).normalize();
-
+        
         // Use p0, p0+u, p0+v  as the three defining points.
         Self {
             point_a: p0,
@@ -116,7 +116,7 @@ impl Plane {
                 Coord3D { x: pt.x,          y: pt.y,          z: pt.z          },
             );
             if sign > 0.0 {
-                BACK           // orient3d > 0  →  negative signed offset
+                BACK
             } else if sign < 0.0 {
                 FRONT
             } else {
