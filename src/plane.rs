@@ -29,7 +29,7 @@ impl Plane {
     pub fn from_normal(normal: Vector3<Real>, offset: Real) -> Self {
         let n2 = normal.norm_squared();
         if n2 < EPSILON * EPSILON {
-            panic!();                // degenerate normal
+            panic!(); // degenerate normal
         }
 
         // Point on the plane:  p0 = n * o / (n·n)
@@ -105,27 +105,31 @@ impl Plane {
         // 1.  classify all vertices with robust orient3d
         // -----------------------------------------------------------------
         let classify = |pt: &Point3<Real>| -> i8 {
+            // Returns a positive value if the point `pd` lies below the plane passing through `pa`, `pb`, and `pc`
+            // ("below" is defined so that `pa`, `pb`, and `pc` appear in counterclockwise order when viewed from above the plane).  
+            // Returns a negative value if `pd` lies above the plane.  
+            // Returns `0` if they are **coplanar**.
             let sign = orient3d(
                 Coord3D { x: self.point_a.x, y: self.point_a.y, z: self.point_a.z },
                 Coord3D { x: self.point_b.x, y: self.point_b.y, z: self.point_b.z },
                 Coord3D { x: self.point_c.x, y: self.point_c.y, z: self.point_c.z },
                 Coord3D { x: pt.x,          y: pt.y,          z: pt.z          },
             );
-            if sign > EPSILON as f64 {
-                FRONT           // orient3d > 0  →  negative signed offset
-            } else if sign < -(EPSILON as f64) {
-                BACK
+            if sign > 0.0 {
+                BACK           // orient3d > 0  →  negative signed offset
+            } else if sign < 0.0 {
+                FRONT
             } else {
                 COPLANAR
             }
         };
     
-        let mut types        = Vec::with_capacity(polygon.vertices.len());
+        let mut types = Vec::with_capacity(polygon.vertices.len());
         let mut polygon_type: i8 = 0;
         for vertex in &polygon.vertices {
             let vertex_type = classify(&vertex.pos);
             types.push(vertex_type);
-            polygon_type |= vertex_type; // bitwise OR verticies types to figure polygon type
+            polygon_type |= vertex_type; // bitwise OR vertex types to figure polygon type
         }
     
         // -----------------------------------------------------------------
@@ -157,9 +161,9 @@ impl Plane {
                     let vertex_i = &polygon.vertices[i];
                     let vertex_j = &polygon.vertices[j];
     
-                    // If current vertex is definitely not behind plane, it goes to f (front side)
+                    // If current vertex is definitely not behind plane, it goes to split_front
                     if type_i != BACK  { split_front.push(vertex_i.clone()); }
-                    // If current vertex is definitely not in front, it goes to b (back side)
+                    // If current vertex is definitely not in front, it goes to split_back
                     if type_i != FRONT { split_back.push(vertex_i.clone()); }
     
                     // If the edge between these two vertices crosses the plane,
