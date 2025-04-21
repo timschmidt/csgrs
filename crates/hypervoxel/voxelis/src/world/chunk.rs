@@ -332,7 +332,7 @@ impl Chunk {
         &mut self,
         store: &mut NodeStore<i32>,
         leaf_patterns: &FxHashMap<u32, (BlockId, i32)>,
-        patterns: &FxHashMap<u32, (BlockId, [u32; 8])>,
+        patterns: &FxHashMap<u32, (BlockId, [u32; 8], i32)>,
         reader: &mut BufReader<&[u8]>,
     ) {
         let mut magic = [0; VTC_MAGIC.len()];
@@ -351,7 +351,7 @@ impl Chunk {
         let root_id = decode_varint_u32_from_reader(reader).unwrap();
         match &mut self.data {
             Octree::Static(octree) => {
-                if let Some((block_id, _)) = patterns.get(&root_id) {
+                if let Some((block_id, _, _)) = patterns.get(&root_id) {
                     octree.set_root_id(store, *block_id);
                 } else {
                     let (block_id, _) = leaf_patterns.get(&root_id).unwrap();

@@ -976,6 +976,7 @@ impl<T: VoxelTrait> NodeStore<T> {
         children: Children,
         types: u8,
         mask: u8,
+        average: T,
     ) {
         // Compute hash for the new node
         let hash = compute_branch_hash_for_children(&children, types, mask);
@@ -990,6 +991,7 @@ impl<T: VoxelTrait> NodeStore<T> {
 
         // Set up the new branch node
         *self.children.get_mut(index) = children;
+        *self.values.get_mut(index) = average;
         *self.hashes.get_mut(index) = hash;
 
         // Cache the new node

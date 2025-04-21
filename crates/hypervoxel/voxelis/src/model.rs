@@ -194,6 +194,8 @@ impl Model {
                 // writer.write_u32::<BigEndian>(new_id).unwrap();
                 writer.write_all(&new_id_bytes).unwrap();
             }
+            let branch_lod_value = storage.get_value(id);
+            writer.write_all(&branch_lod_value.to_be_bytes()).unwrap();
         }
 
         let chunks_data: Vec<Vec<u8>> = self
@@ -238,11 +240,11 @@ impl Model {
         }
 
         let branch_size = reader.read_u32::<BigEndian>().unwrap();
-        let mut branch_patterns: FxHashMap<u32, (BlockId, [u32; 8])> =
+        let mut branch_patterns: FxHashMap<u32, (BlockId, [u32; 8], i32)> =
         // FxHashMap::with_capacity(branch_size as usize);
             FxHashMap::default();
 
-        branch_patterns.insert(0, (BlockId::EMPTY, [0u32; 8]));
+        branch_patterns.insert(0, (BlockId::EMPTY, [0u32; 8], 0));
 
         for _ in 0..branch_size {
             let id = decode_varint_u32_from_reader(&mut reader).unwrap();
@@ -263,10 +265,13 @@ impl Model {
                     types |= 1 << child_id;
                 }
             }
+            let mut lod_bytes = [0u8; std::mem::size_of::<i32>()];
+            reader.read_exact(&mut lod_bytes).unwrap();
+            let lod_value = i32::from_be_bytes(lod_bytes);
 
             let block_id = storage.preallocate_branch_id(id, types, mask);
 
-            branch_patterns.insert(id, (block_id, children));
+            branch_patterns.insert(id, (block_id, children, lod_value));
             // println!(
             //     " branch: mask: {:08b} types: {:08b} id: {:08X} [{:?}] -> {:08X?}",
             //     mask, types, id, block_id, children
@@ -276,7 +281,7 @@ impl Model {
 
         branch_patterns
             .iter()
-            .for_each(|(id, (block_id, children))| {
+            .for_each(|(id, (block_id, children, lod_value))| {
                 if *id == 0 {
                     return;
                 }
@@ -300,14 +305,14 @@ impl Model {
                 }
 
                 // println!("branch: {:?} -> {:?}", block_id, branch);
-                storage.deserialize_branch(*block_id, branch, types, mask);
+                storage.deserialize_branch(*block_id, branch, types, mask, *lod_value);
             });
 
         // drop(storage);
 
         let mut branch_ids = branch_patterns
             .iter()
-            .map(|(_, (block_id, _))| *block_id)
+            .map(|(_, (block_id, _, _))| *block_id)
             .collect::<Vec<_>>();
         branch_ids.sort_by_key(|id| id.index());
 

@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use voxelis::{
+    MaxDepth,
     io::{Obj, export::export_model_to_vtm},
     voxel::voxelizer::Voxelizer,
 };
@@ -22,8 +23,10 @@ fn main() {
     let max_depth: usize = max_depth.parse().unwrap();
     let chunk_size: f32 = chunk_size.parse().unwrap();
 
+    let max_depth = MaxDepth::new(max_depth as u8);
+
     println!("Max octree depth: {}", max_depth);
-    println!("Voxels per axis: {}", 1 << max_depth);
+    println!("Voxels per axis: {}", 1 << max_depth.max());
     println!("Chunk size: {}m", chunk_size);
 
     let input = Path::new(&input);
