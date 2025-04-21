@@ -4,6 +4,11 @@ use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 use robust::{orient3d, Coord3D};
 
+pub const COPLANAR: i8 = 0;
+pub const FRONT:    i8 = 1;
+pub const BACK:     i8 = 2;
+pub const SPANNING: i8 = 3;
+
 /// A plane in 3D space defined by three points
 #[derive(Debug, Clone)]
 pub struct Plane {
@@ -55,6 +60,34 @@ impl Plane {
         }
     }
     
+    #[inline] 
+    pub fn orient_plane(&self, other: &Plane) -> i8 {
+        // pick one vertex of the coplanar polygon and move along its normal
+        let test_point = other.point_a + other.normal();
+        self.orient_point(&test_point)
+    }
+    
+    #[inline]
+    pub fn orient_point(&self, point: &Point3<Real>) -> i8 {
+        // Returns a positive value if the point `pd` lies below the plane passing through `pa`, `pb`, and `pc`
+        // ("below" is defined so that `pa`, `pb`, and `pc` appear in counterclockwise order when viewed from above the plane).  
+        // Returns a negative value if `pd` lies above the plane.  
+        // Returns `0` if they are **coplanar**.
+        let sign = orient3d(
+            Coord3D { x: self.point_a.x, y: self.point_a.y, z: self.point_a.z },
+            Coord3D { x: self.point_b.x, y: self.point_b.y, z: self.point_b.z },
+            Coord3D { x: self.point_c.x, y: self.point_c.y, z: self.point_c.z },
+            Coord3D { x: point.x, y: point.y, z: point.z          },
+        );
+        if sign > EPSILON {
+            BACK
+        } else if sign < -EPSILON {
+            FRONT
+        } else {
+            COPLANAR
+        }
+    }
+    
     /// Return the (right‑handed) unit normal **n** of the plane
     /// `((b‑a) × (c‑a)).normalize()`.
     #[inline]
@@ -88,12 +121,7 @@ impl Plane {
         Vec<Polygon<S>>,
         Vec<Polygon<S>>,
         Vec<Polygon<S>>,
-    ) {
-        const COPLANAR: i8 = 0;
-        const FRONT:    i8 = 1;
-        const BACK:     i8 = 2;
-        const SPANNING: i8 = 3;
-    
+    ) {    
         let mut coplanar_front = Vec::new();
         let mut coplanar_back  = Vec::new();
         let mut front          = Vec::new();
@@ -101,33 +129,10 @@ impl Plane {
         
         let normal = self.normal();
     
-        // -----------------------------------------------------------------
-        // 1.  classify all vertices with robust orient3d
-        // -----------------------------------------------------------------
-        let classify = |pt: &Point3<Real>| -> i8 {
-            // Returns a positive value if the point `pd` lies below the plane passing through `pa`, `pb`, and `pc`
-            // ("below" is defined so that `pa`, `pb`, and `pc` appear in counterclockwise order when viewed from above the plane).  
-            // Returns a negative value if `pd` lies above the plane.  
-            // Returns `0` if they are **coplanar**.
-            let sign = orient3d(
-                Coord3D { x: self.point_a.x, y: self.point_a.y, z: self.point_a.z },
-                Coord3D { x: self.point_b.x, y: self.point_b.y, z: self.point_b.z },
-                Coord3D { x: self.point_c.x, y: self.point_c.y, z: self.point_c.z },
-                Coord3D { x: pt.x,          y: pt.y,          z: pt.z          },
-            );
-            if sign > EPSILON {
-                BACK
-            } else if sign < -EPSILON {
-                FRONT
-            } else {
-                COPLANAR
-            }
-        };
-    
         let mut types = Vec::with_capacity(polygon.vertices.len());
         let mut polygon_type: i8 = 0;
         for vertex in &polygon.vertices {
-            let vertex_type = classify(&vertex.pos);
+            let vertex_type = self.orient_point(&vertex.pos);
             types.push(vertex_type);
             polygon_type |= vertex_type; // bitwise OR vertex types to figure polygon type
         }

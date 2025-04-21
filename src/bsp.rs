@@ -1,5 +1,5 @@
 use crate::float_types::EPSILON;
-use crate::plane::Plane;
+use crate::plane::{Plane, BACK, FRONT};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use robust::{orient3d, Coord3D};
@@ -90,14 +90,14 @@ impl<S: Clone + Send + Sync> Node<S> {
         // Now decide where to send the coplanar polygons.  If the polygon’s normal
         // aligns with this node’s plane.normal, treat it as “front,” else treat as “back.”
         for cp in coplanar_front {
-            if plane.normal().dot(&cp.plane.normal()) > 0.0 {
+            if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
             }
         }
         for cp in coplanar_back {
-            if plane.normal().dot(&cp.plane.normal()) > 0.0 {
+            if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
