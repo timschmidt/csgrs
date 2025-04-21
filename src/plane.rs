@@ -115,10 +115,10 @@ impl Plane {
                 Coord3D { x: self.point_c.x, y: self.point_c.y, z: self.point_c.z },
                 Coord3D { x: pt.x,          y: pt.y,          z: pt.z          },
             );
-            if sign > 0.0 {
-                BACK
-            } else if sign < 0.0 {
+            if sign > EPSILON {
                 FRONT
+            } else if sign < -EPSILON {
+                BACK
             } else {
                 COPLANAR
             }
