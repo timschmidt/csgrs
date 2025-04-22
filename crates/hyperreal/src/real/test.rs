@@ -240,6 +240,16 @@ mod tests {
     }
 
     #[test]
+    fn ln_division() {
+        let fifth = Rational::fraction(2, 10).unwrap();
+        let twenty_fifth = Rational::fraction(4, 100).unwrap();
+        let ln_5th = Real::new(fifth).ln().unwrap();
+        let ln_25th = Real::new(twenty_fifth).ln().unwrap();
+        let answer = ln_25th / ln_5th;
+        assert_eq!(answer.unwrap(), Rational::new(2));
+    }
+
+    #[test]
     fn integer_logs() {
         for (n, log) in [
             (1, 0),
@@ -249,8 +259,8 @@ mod tests {
             (1000_000_000_000_000_000, 18),
         ] {
             let n = Real::new(Rational::new(n));
-            let answer = n.log10();
-            assert_eq!(answer, Ok(Real::new(Rational::new(log))));
+            let answer = n.log10().unwrap();
+            assert_eq!(answer, Rational::new(log));
         }
     }
 }
