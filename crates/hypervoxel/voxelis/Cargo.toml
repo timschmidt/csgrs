@@ -30,10 +30,7 @@ wide.workspace = true
 zstd.workspace = true
 
 [dev-dependencies]
-# criterion = { version = "0.5.1", features = ["html_reports"] }
-criterion = { git = "https://github.com/bheisler/criterion.rs", features = [
-  "html_reports",
-] }
+criterion2 = { version = "3.0.0" }
 
 [[bench]]
 name = "octree_bench"
