@@ -64,6 +64,7 @@ mod rationals {
         LazyLock::new(|| Rational::fraction(1, 2).unwrap());
     pub(super) static ONE: LazyLock<Rational> = LazyLock::new(|| Rational::new(1));
     pub(super) static ZERO: LazyLock<Rational> = LazyLock::new(Rational::zero);
+    pub(super) static TEN: LazyLock<Rational> = LazyLock::new(|| Rational::new(10));
 }
 
 mod signed {
@@ -1010,6 +1011,7 @@ impl fmt::Display for Real {
                 Pi => f.write_str(" Pi"),
                 Exp(n) => write!(f, " x e**({})", &n),
                 Ln(n) => write!(f, " x ln({})", &n),
+                Log10(n) => write!(f, " x log10({})", &n),
                 Sqrt(n) => write!(f, " √({})", &n),
                 SinPi(n) => write!(f, " x sin({} x Pi)", &n),
                 TanPi(n) => write!(f, " x tan({} x Pi)", &n),
@@ -1215,6 +1217,8 @@ impl Div for Real {
     type Output = Result<Self, Problem>;
 
     fn div(self, other: Self) -> Result<Self, Problem> {
+        use num::bigint::ToBigInt;
+
         if other.definitely_zero() {
             return Err(Problem::DivideByZero);
         }
@@ -1228,6 +1232,31 @@ impl Div for Real {
         if other.class == One {
             let rational = self.rational / other.rational;
             return Ok(Self { rational, ..self });
+        }
+
+        // Simplify ln(x) / ln(10) to just log10(x)
+        if other.class.is_ln() && self.class.is_ln() {
+            if let Ln(s) = other.class.clone() {
+                if s == *rationals::TEN {
+                    let Ln(r) = self.class else {
+                        unreachable!();
+                    };
+                    let rational = self.rational / other.rational;
+                    let computable = self.computable.multiply(
+                        Computable::integer(ToBigInt::to_bigint(&10).unwrap())
+                            .ln()
+                            .inverse(),
+                    );
+                    return Ok(Self {
+                        rational,
+                        class: Log10(r),
+                        computable,
+                        ..self
+                    });
+                }
+            } else {
+                unreachable!();
+            }
         }
 
         let inverted = other.inverse()?;
