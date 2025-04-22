@@ -42,7 +42,7 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/cube_transformed.stl", moved_cube.to_stl_binary("cube_transformed").unwrap());
 
-    let plane_x = Plane { normal: Vector3::x(), w: 0.0 };
+    let plane_x = Plane::from_normal(Vector3::x(), 0.0);
     let mirrored_cube = cube.mirror(plane_x);
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/cube_mirrored_x.stl", mirrored_cube.to_stl_binary("cube_mirrored_x").unwrap());
@@ -176,7 +176,7 @@ fn main() {
     // 2) Slice at z=0
     #[cfg(feature = "hashmap")]
     {
-    let cross_section = cyl.slice(Plane { normal: Vector3::z(), w: 0.0 });
+    let cross_section = cyl.slice(Plane::from_normal(Vector3::z(), 0.0));
     let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));
     let _ = fs::write("stl/sliced_cylinder_slice.stl", cross_section.to_stl_ascii("sliced_cylinder_slice"));
     }
@@ -503,7 +503,7 @@ fn main() {
 
     // Scene I: Demonstrate slice(plane) – slice a cube at z=0
     {
-        let plane_z = Plane{ normal: Vector3::z(), w: 0.5 };
+        let plane_z = Plane::from_normal(Vector3::z(), 0.5 );
         let sliced_polygons = cube.slice(plane_z);
         let _ = fs::write("stl/scene_sliced_cube.stl", cube.to_stl_ascii("sliced_cube"));
         // Save cross-section as well
@@ -535,7 +535,7 @@ fn main() {
 
     // Scene M: Demonstrate “mirror” across a Y=0 plane
     {
-        let plane_y = Plane{ normal: Vector3::y(), w: 0.0 };
+        let plane_y = Plane::from_normal(Vector3::y(), 0.0);
         let shape = CSG::square(2.0, 1.0, None).translate(1.0, 1.0, 0.0).extrude(0.1);
         let mirrored = shape.mirror(plane_y);
         let _ = fs::write("stl/scene_square_mirrored_y.stl", mirrored.to_stl_ascii("scene_square_mirrored_y"));

@@ -1,7 +1,8 @@
 use crate::float_types::EPSILON;
-use crate::plane::Plane;
+use crate::plane::{Plane, BACK, FRONT, COPLANAR, SPANNING};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
+use robust::{orient3d, Coord3D};
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -89,14 +90,14 @@ impl<S: Clone + Send + Sync> Node<S> {
         // Now decide where to send the coplanar polygons.  If the polygon’s normal
         // aligns with this node’s plane.normal, treat it as “front,” else treat as “back.”
         for cp in coplanar_front {
-            if plane.normal.dot(&cp.plane.normal) > 0.0 {
+            if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
             }
         }
         for cp in coplanar_back {
-            if plane.normal.dot(&cp.plane.normal) > 0.0 {
+            if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
@@ -148,14 +149,14 @@ impl<S: Clone + Send + Sync> Node<S> {
 
         // Decide where to send the coplanar polygons
         for cp in coplanar_front {
-            if plane.normal.dot(&cp.plane.normal) > 0.0 {
+            if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
             }
         }
         for cp in coplanar_back {
-            if plane.normal.dot(&cp.plane.normal) > 0.0 {
+            if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
@@ -256,22 +257,6 @@ impl<S: Clone + Send + Sync> Node<S> {
             back.extend(b);
         }
 
-        //  Treat this node as a leaf if all polygons ended up on the same side
-        if front.len() == polygons.len() {
-            // Everything is 'front': no meaningful split => store them here, no recursion
-            self.polygons = polygons.to_vec();
-            self.front = None;
-            self.back = None;
-            return;
-        }
-        if back.len() == polygons.len() {
-            // Everything is 'back': no meaningful split => store them here, no recursion
-            self.polygons = polygons.to_vec();
-            self.front = None;
-            self.back = None;
-            return;
-        }
-
         // Recursively build the front subtree.
         if !front.is_empty() {
             if self.front.is_none() {
@@ -323,22 +308,6 @@ impl<S: Clone + Send + Sync> Node<S> {
         self.polygons.append(&mut coplanar_front);
         self.polygons.append(&mut coplanar_back);
 
-        //  Treat this node as a leaf if all polygons ended up on the same side
-        if front.len() == polygons.len() {
-            // Everything is 'front': no meaningful split => store them here, no recursion
-            self.polygons = polygons.to_vec();
-            self.front = None;
-            self.back = None;
-            return;
-        }
-        if back.len() == polygons.len() {
-            // Everything is 'back': no meaningful split => store them here, no recursion
-            self.polygons = polygons.to_vec();
-            self.front = None;
-            self.back = None;
-            return;
-        }
-
         // Recursively build front/back in parallel
         match (!front.is_empty(), !back.is_empty()) {
             (true, true) => {
@@ -384,28 +353,13 @@ impl<S: Clone + Send + Sync> Node<S> {
             if vcount < 2 {
                 continue; // degenerate polygon => skip
             }
-
-            // Classify each vertex relative to the slicing plane
-            // We store the classification (FRONT, BACK, COPLANAR) in `types`
-            const COPLANAR: i32 = 0;
-            const FRONT: i32 = 1;
-            const BACK: i32 = 2;
-            const SPANNING: i32 = 3;
-
             let mut polygon_type = 0;
             let mut types = Vec::with_capacity(vcount);
 
-            for v in &poly.vertices {
-                let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.w;
-                let t = if dist < -EPSILON {
-                    BACK
-                } else if dist > EPSILON {
-                    FRONT
-                } else {
-                    COPLANAR
-                };
-                polygon_type |= t;
-                types.push(t);
+            for vertex in &poly.vertices {
+                let vertex_type = slicing_plane.orient_point(&vertex.pos);
+                polygon_type |= vertex_type;
+                types.push(vertex_type);
             }
 
             // Based on the combined classification of its vertices:
@@ -439,10 +393,10 @@ impl<S: Clone + Send + Sync> Node<S> {
                         if (ti | tj) == SPANNING {
                             // The param t at which plane intersects the edge [vi -> vj].
                             // Avoid dividing by zero:
-                            let denom = slicing_plane.normal.dot(&(vj.pos - vi.pos));
+                            let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
                             if denom.abs() > EPSILON {
-                                let t = (slicing_plane.w
-                                    - slicing_plane.normal.dot(&vi.pos.coords))
+                                let t = (slicing_plane.offset()
+                                    - slicing_plane.normal().dot(&vi.pos.coords))
                                     / denom;
                                 // Interpolate:
                                 let intersect_vert = vi.interpolate(vj, t);
@@ -488,27 +442,13 @@ impl<S: Clone + Send + Sync> Node<S> {
                     // Degenerate => skip
                     return (Vec::new(), Vec::new());
                 }
-
-                // Classify each vertex relative to the slicing plane
-                const COPLANAR: i32 = 0;
-                const FRONT: i32 = 1;
-                const BACK: i32 = 2;
-                const SPANNING: i32 = 3;
-
                 let mut polygon_type = 0;
                 let mut types = Vec::with_capacity(vcount);
 
-                for v in &poly.vertices {
-                    let dist = slicing_plane.normal.dot(&v.pos.coords) - slicing_plane.w;
-                    let t = if dist < -EPSILON {
-                        BACK
-                    } else if dist > EPSILON {
-                        FRONT
-                    } else {
-                        COPLANAR
-                    };
-                    polygon_type |= t;
-                    types.push(t);
+                for vertex in &poly.vertices {
+                    let vertex_type = slicing_plane.orient_point(&vertex.pos);
+                    polygon_type |= vertex_type;
+                    types.push(vertex_type);
                 }
 
                 match polygon_type {

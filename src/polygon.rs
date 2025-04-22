@@ -55,7 +55,7 @@ where S: Clone + Send + Sync {
 
         //println!("{:#?}",  self.vertices);
 
-        let normal_3d = self.plane.normal.normalize();
+        let normal_3d = self.plane.normal().normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
         let origin_3d = self.vertices[0].pos;
 
@@ -177,7 +177,7 @@ where S: Clone + Send + Sync {
         let mut poly_normal = normal.normalize();
 
         // Ensure the computed normal is in the same direction as the given normal.
-        if poly_normal.dot(&self.plane.normal) < 0.0 {
+        if poly_normal.dot(&self.plane.normal()) < 0.0 {
             poly_normal = -poly_normal;
         }
 
@@ -190,31 +190,6 @@ where S: Clone + Send + Sync {
         let new_normal = self.calculate_new_normal();
         for v in &mut self.vertices {
             v.normal = new_normal;
-        }
-    }
-
-    /// Returns a new Polygon translated by t.
-    pub fn translate(&self, x: Real, y: Real, z: Real) -> Self {
-        // todo: modify for Vector2 in-plane translation
-        self.translate_vector(Vector3::new(x, y, z))
-    }
-
-    /// Returns a new Polygon translated by t.
-    pub fn translate_vector(&self, t: Vector3<Real>) -> Self {
-        // todo: modify for Vector2 in-plane translation
-        let new_vertices = self
-            .vertices
-            .iter()
-            .map(|v| Vertex::new(v.pos + t, v.normal))
-            .collect();
-        let new_plane = Plane {
-            normal: self.plane.normal,
-            w: self.plane.w + self.plane.normal.dot(&t),
-        };
-        Self {
-            vertices: new_vertices,
-            plane: new_plane,
-            metadata: self.metadata.clone(),
         }
     }
 
