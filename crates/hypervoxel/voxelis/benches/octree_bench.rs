@@ -1806,6 +1806,8 @@ fn benchmark_octree(c: &mut Criterion) {
                 let mut normals = Vec::new();
                 let mut indices = Vec::new();
 
+                let lod = Lod::new(0);
+
                 b.iter(|| {
                     vertices.clear();
                     normals.clear();
@@ -1817,6 +1819,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         black_box(&mut normals),
                         black_box(&mut indices),
                         black_box(offset),
+                        black_box(lod),
                     );
                 });
             });
@@ -1855,6 +1858,8 @@ fn benchmark_octree(c: &mut Criterion) {
                 let mut normals = Vec::new();
                 let mut indices = Vec::new();
 
+                let lod = Lod::new(0);
+
                 b.iter(|| {
                     vertices.clear();
                     normals.clear();
@@ -1866,6 +1871,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         black_box(&mut normals),
                         black_box(&mut indices),
                         black_box(offset),
+                        black_box(lod),
                     );
                 });
             });
