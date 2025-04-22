@@ -407,7 +407,9 @@ Patterns we work to follow throughout the library to improve performance and mem
 - use https://docs.rs/parry3d/latest/parry3d/shape/struct.HalfSpace.html and https://docs.rs/parry3d/latest/parry3d/query/point/trait.PointQuery.html#method.contains_point for plane splitting
 - use https://docs.rs/parry3d/latest/parry3d/shape/struct.Polyline.html for Polygon
 - use https://docs.rs/parry3d/latest/parry3d/shape/struct.Segment.html
+- use https://docs.rs/nalgebra/latest/nalgebra/geometry/struct.Rotation.html#method.rotation_between-1 
 - https://docs.rs/parry3d/latest/parry3d/shape/struct.Triangle.html
+- use https://crates.io/crates/approx
 - transition sweep, linear_extrude, over to Polygon/Multipolygon native / polygon secondary
 - disengage chulls on 2D->3D shapes
 - fix shape of reuleaux
