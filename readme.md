@@ -404,6 +404,19 @@ Patterns we work to follow throughout the library to improve performance and mem
 - allocations should be kept to a minimum.  Memory should be read-only if possible, clone if necessary, and offer the choice of transmut in place or create new copy via appropriate functions
 
 ## Roadmap / Todo
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.HalfSpace.html and https://docs.rs/parry3d/latest/parry3d/query/point/trait.PointQuery.html#method.contains_point for plane splitting
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Polyline.html for Polygon
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Segment.html
+- evaluate https://docs.rs/nalgebra/latest/nalgebra/geometry/struct.Rotation.html#method.rotation_between-1 
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Triangle.html
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Segment.html#method.local_split_and_get_intersection in plane splitting and slicing
+- evaluate https://github.com/dimforge/parry/blob/master/src/query/clip/clip_halfspace_polygon.rs
+- evaluate https://github.com/dimforge/parry/blob/master/src/query/clip/clip_segment_segment.rs
+- evaluate https://github.com/dimforge/parry/blob/master/src/transformation/voxelization/voxel_set.rs and https://github.com/dimforge/parry/blob/master/src/transformation/voxelization/voxelized_volume.rs
+- evaluate https://github.com/dimforge/parry/blob/master/src/transformation/convex_hull3/convex_hull.rs instead of chull
+- evaluate https://github.com/dimforge/parry/blob/master/src/utils/ccw_face_normal.rs for normalization
+- implement wavefront obj output using https://github.com/dimforge/parry/blob/master/src/transformation/wavefront.rs
+- use https://crates.io/crates/approx
 - transition sweep, linear_extrude, over to Polygon/Multipolygon native / polygon secondary
 - disengage chulls on 2D->3D shapes
 - fix shape of reuleaux
@@ -434,13 +447,11 @@ Patterns we work to follow throughout the library to improve performance and mem
 - screw threads
 - support scale and translation along a vector in rotate extrude
 - reimplement 3D offsetting with https://github.com/u65xhd/meshvox or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
-- reimplement convex hull with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/fn.convex_hull.html
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
+  - https://github.com/dimforge/parry/blob/master/src/transformation/hertel_mehlhorn.rs for convex partitioning
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
+  - https://github.com/dimforge/parry/tree/master/src/transformation/to_outline or to_polyline
 - std::io::Cursor, std::error::Error - core2 no_std transition
-- identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
-  - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
-  - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
 - https://crates.io/crates/polylabel
   - pull in https://github.com/fschutt/polylabel-mini/blob/master/src/lib.rs and adjust f64 -> Real
 - reduce allocations
@@ -466,9 +477,7 @@ Patterns we work to follow throughout the library to improve performance and mem
   - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src
 - implement C FFI using https://rust-lang.github.io/rust-bindgen/
 - pull in https://crates.io/crates/geo-uom for units and dimensional analysis
-- verify functions against robust predicates here: https://github.com/hayashi-stl/robust-geo/blob/main/src/geo.rs
-  - https://github.com/georust/robust
-  - https://proptest-rs.github.io/proptest/intro.html
+- https://proptest-rs.github.io/proptest/intro.html
 - https://crates.io/crates/geo-validity-check as compile time option
 - https://crates.io/crates/geo-index
 - https://github.com/lelongg/geo-rand
@@ -496,6 +505,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - https://crates.io/crates/spherical_geometry
 - https://crates.io/crates/miniproj
 - examine https://crates.io/crates/geo-aid constraint solver
+- examine https://cadquery.readthedocs.io/en/latest/apireference.html for function ideas
 
 ## References
 > [Shape Interrogation for Computer Aided Design and Manufacturing](https://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/)

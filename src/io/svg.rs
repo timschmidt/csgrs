@@ -1,6 +1,6 @@
 //! SVG input and output.
 
-use geo::{BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, MultiPolygon, Polygon};
+use geo::{BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon};
 use svg::node::element::path;
 
 use crate::csg::CSG;
@@ -22,7 +22,7 @@ use super::IoError;
 /// - Method suffix `_by` indicates a command that uses relative coordinates
 ///
 /// **At the moment, curves are not supported.**
-/// When support for curves is implemented, the underlying data structure may change to accomodate that.
+/// When support for curves is implemented, the underlying data structure may change to accommodate that.
 ///
 /// [svg-paths]: https://www.w3.org/TR/SVG11/paths.html
 struct PathBuilder<F: CoordNum> {
@@ -832,9 +832,9 @@ fn svg_points_to_line_string<F: CoordNum>(points: &str) -> Result<LineString<F>,
     }
 
     match all_points(points) {
-        Ok(("", points)) => return Ok(LineString::new(points)),
-        Ok(_) => return Err(IoError::MalformedInput(format!("Could not parse the list of points: {points}"))),
-        Err(err) => return Err(IoError::MalformedInput(format!("Could not parse the list of points ({err}): {points}"))),
+        Ok(("", points)) => Ok(LineString::new(points)),
+        Ok(_) => Err(IoError::MalformedInput(format!("Could not parse the list of points: {points}"))),
+        Err(err) => Err(IoError::MalformedInput(format!("Could not parse the list of points ({err}): {points}"))),
     }
 }
 
