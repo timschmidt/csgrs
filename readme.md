@@ -404,6 +404,10 @@ Patterns we work to follow throughout the library to improve performance and mem
 - allocations should be kept to a minimum.  Memory should be read-only if possible, clone if necessary, and offer the choice of transmut in place or create new copy via appropriate functions
 
 ## Roadmap / Todo
+- use https://docs.rs/parry3d/latest/parry3d/shape/struct.HalfSpace.html and https://docs.rs/parry3d/latest/parry3d/query/point/trait.PointQuery.html#method.contains_point for plane splitting
+- use https://docs.rs/parry3d/latest/parry3d/shape/struct.Polyline.html for Polygon
+- use https://docs.rs/parry3d/latest/parry3d/shape/struct.Segment.html
+- https://docs.rs/parry3d/latest/parry3d/shape/struct.Triangle.html
 - transition sweep, linear_extrude, over to Polygon/Multipolygon native / polygon secondary
 - disengage chulls on 2D->3D shapes
 - fix shape of reuleaux
@@ -438,9 +442,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
 - std::io::Cursor, std::error::Error - core2 no_std transition
-- identify opportunities to use parry2d_f64 and parry3d_f64 modules and functions to simplify and enhance our own
-  - https://docs.rs/parry2d-f64/latest/parry2d_f64/index.html
-  - https://docs.rs/parry3d-f64/latest/parry3d_f64/index.html
 - https://crates.io/crates/polylabel
   - pull in https://github.com/fschutt/polylabel-mini/blob/master/src/lib.rs and adjust f64 -> Real
 - reduce allocations
