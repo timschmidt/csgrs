@@ -89,14 +89,14 @@ impl<S: Clone + Send + Sync> Node<S> {
         // Now decide where to send the coplanar polygons.  If the polygon’s normal
         // aligns with this node’s plane.normal, treat it as “front,” else treat as “back.”
         for cp in coplanar_front {
-            if plane.orient_plane(&cp.plane) == FRONT {
+            if plane.orient_plane(&cp.plane()) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
             }
         }
         for cp in coplanar_back {
-            if plane.orient_plane(&cp.plane) == FRONT {
+            if plane.orient_plane(&cp.plane()) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
@@ -238,7 +238,7 @@ impl<S: Clone + Send + Sync> Node<S> {
 
         // Choose the first polygon's plane as the splitting plane if not already set.
         if self.plane.is_none() {
-            self.plane = Some(polygons[0].plane.clone());
+            self.plane = Some(polygons[0].plane().clone());
         }
         let plane = self.plane.clone().unwrap();
 

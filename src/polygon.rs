@@ -9,7 +9,6 @@ use nalgebra::{Point2, Point3, Vector3};
 #[derive(Debug, Clone)]
 pub struct Polygon<S: Clone> {
     pub vertices: Vec<Vertex>,
-    pub plane: Plane,
     pub metadata: Option<S>,
 }
 
@@ -17,17 +16,14 @@ impl<S: Clone> Polygon<S>
 where S: Clone + Send + Sync {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
-        let plane = if vertices.len() < 3 {
-            panic!(); // todo: return error
-        } else {
-            Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos)
-        };
-
         Polygon {
             vertices,
-            plane,
             metadata,
         }
+    }
+    
+    pub fn plane(&self) -> Plane {
+        Plane::from_points(&self.vertices[0].pos, &self.vertices[1].pos, &self.vertices[2].pos)
     }
 
     /// Reverses winding order, flips vertices normals, and flips the plane normal
@@ -36,7 +32,7 @@ where S: Clone + Send + Sync {
         for v in &mut self.vertices {
             v.flip();
         }
-        self.plane.flip();
+        self.plane().flip();
     }
 
     /// Return an iterator over paired vertices each forming an edge of the polygon
@@ -55,7 +51,7 @@ where S: Clone + Send + Sync {
 
         //println!("{:#?}",  self.vertices);
 
-        let normal_3d = self.plane.normal().normalize();
+        let normal_3d = self.plane().normal().normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
         let origin_3d = self.vertices[0].pos;
 
@@ -177,7 +173,7 @@ where S: Clone + Send + Sync {
         let mut poly_normal = normal.normalize();
 
         // Ensure the computed normal is in the same direction as the given normal.
-        if poly_normal.dot(&self.plane.normal()) < 0.0 {
+        if poly_normal.dot(&self.plane().normal()) < 0.0 {
             poly_normal = -poly_normal;
         }
 

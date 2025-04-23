@@ -142,7 +142,7 @@ impl Plane {
         // -----------------------------------------------------------------
         match polygon_type {
             COPLANAR => {
-                if normal.dot(&polygon.plane.normal()) > 0.0 {  // >= ?
+                if normal.dot(&polygon.plane().normal()) > 0.0 {  // >= ?
                     coplanar_front.push(polygon.clone());
                 } else {
                     coplanar_back.push(polygon.clone());

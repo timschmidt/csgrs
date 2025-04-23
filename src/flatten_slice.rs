@@ -112,8 +112,7 @@ where S: Clone + Send + Sync {
 
         // Add the coplanar polygons. We can re‐assign their plane to `plane` to ensure
         // they share the exact plane definition (in case of numeric drift).
-        for mut p in coplanar_polys {
-            p.plane = plane.clone(); // unify plane data
+        for p in coplanar_polys {
             result_polygons.push(p);
         }
 
