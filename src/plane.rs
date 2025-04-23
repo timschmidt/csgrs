@@ -77,7 +77,7 @@ impl Plane {
             Coord3D { x: self.point_a.x, y: self.point_a.y, z: self.point_a.z },
             Coord3D { x: self.point_b.x, y: self.point_b.y, z: self.point_b.z },
             Coord3D { x: self.point_c.x, y: self.point_c.y, z: self.point_c.z },
-            Coord3D { x: point.x, y: point.y, z: point.z          },
+            Coord3D { x: point.x, y: point.y, z: point.z},
         );
         if sign > EPSILON {
             BACK

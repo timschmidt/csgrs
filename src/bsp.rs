@@ -391,15 +391,15 @@ impl<S: Clone + Send + Sync> Node<S> {
                         // "front" side (or vice versa), that edge crosses the plane.
                         // (Also if exactly one is COPLANAR and the other is FRONT or BACK, etc.)
                         if (ti | tj) == SPANNING {
-                            // The param t at which plane intersects the edge [vi -> vj].
+                            // The param intersection at which plane intersects the edge [vi -> vj].
                             // Avoid dividing by zero:
                             let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
                             if denom.abs() > EPSILON {
-                                let t = (slicing_plane.offset()
+                                let intersection = (slicing_plane.offset()
                                     - slicing_plane.normal().dot(&vi.pos.coords))
                                     / denom;
                                 // Interpolate:
-                                let intersect_vert = vi.interpolate(vj, t);
+                                let intersect_vert = vi.interpolate(vj, intersection);
                                 crossing_points.push(intersect_vert);
                             }
                         }
@@ -471,12 +471,15 @@ impl<S: Clone + Send + Sync> Node<S> {
                             let vj = &poly.vertices[j];
 
                             if (ti | tj) == SPANNING {
-                                let denom = slicing_plane.normal.dot(&(vj.pos - vi.pos));
+                                // The param intersection at which plane intersects the edge [vi -> vj].
+                                // Avoid dividing by zero:
+                                let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
                                 if denom.abs() > EPSILON {
-                                    let t = (slicing_plane.w
-                                        - slicing_plane.normal.dot(&vi.pos.coords))
+                                    let intersection = (slicing_plane.offset()
+                                        - slicing_plane.normal().dot(&vi.pos.coords))
                                         / denom;
-                                    let intersect_vert = vi.interpolate(vj, t);
+                                    // Interpolate:
+                                    let intersect_vert = vi.interpolate(vj, intersection);
                                     crossing_points.push(intersect_vert);
                                 }
                             }
