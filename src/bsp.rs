@@ -2,7 +2,6 @@ use crate::float_types::EPSILON;
 use crate::plane::{Plane, BACK, FRONT, COPLANAR, SPANNING};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
-use robust::{orient3d, Coord3D};
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
