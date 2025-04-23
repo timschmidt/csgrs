@@ -4,7 +4,7 @@ use crate::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point2, Point3, Vector3};
 
-/// A polygon, defined by a list of vertices and a plane.
+/// A polygon, defined by a list of vertices.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
 pub struct Polygon<S: Clone> {
