@@ -404,6 +404,8 @@ Patterns we work to follow throughout the library to improve performance and mem
 - allocations should be kept to a minimum.  Memory should be read-only if possible, clone if necessary, and offer the choice of transmut in place or create new copy via appropriate functions
 
 ## Roadmap / Todo
+- eliminate Plane and derive planes on demand from points in Polygon, move splitting / slicing code to Polygon
+- ensure re-triangulate unions all coplanar polygons
 - evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.HalfSpace.html and https://docs.rs/parry3d/latest/parry3d/query/point/trait.PointQuery.html#method.contains_point for plane splitting
 - evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Polyline.html for Polygon
 - evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Segment.html
