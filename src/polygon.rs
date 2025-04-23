@@ -22,6 +22,7 @@ where S: Clone + Send + Sync {
         }
     }
     
+    #[inline]
     pub fn plane(&self) -> Plane {
         Plane::from_points(&self.vertices[0].pos, &self.vertices[1].pos, &self.vertices[2].pos)
     }
