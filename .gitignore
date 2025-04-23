@@ -4,3 +4,5 @@ output.stl
 *.swp
 /src/*.swp
 prompt.txt
+*.stl
+stl
