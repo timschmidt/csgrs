@@ -101,6 +101,8 @@ impl Chunk {
 
         let mut position = IVec3::ZERO;
 
+        let mut batch = self.create_batch();
+
         for y in 0..voxels_per_axis {
             position.y = y;
             for z in 0..voxels_per_axis {
@@ -114,11 +116,13 @@ impl Chunk {
 
                     if distance_squared <= radius_squared {
                         position.x = x;
-                        self.set(store, position, value);
+                        batch.set(store, position, value);
                     }
                 }
             }
         }
+
+        self.apply_batch(store, &batch);
     }
 
     #[inline(always)]
