@@ -11,6 +11,7 @@ use hashbrown::HashMap;
 use nalgebra::Point3;
 use small_str::SmallStr;
 use std::fmt::Debug;
+use small_str::{ format_smallstr, SmallStr };
 
 impl<S: Clone + Debug> CSG<S>
 where S: Clone + Send + Sync {
