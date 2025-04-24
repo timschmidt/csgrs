@@ -1,6 +1,9 @@
 use std::path::Path;
 
-use voxelis::io::{export::export_model_to_obj, import::import_model_from_vtm};
+use voxelis::{
+    Lod,
+    io::{export::export_model_to_obj, import::import_model_from_vtm},
+};
 
 fn main() {
     if std::env::args().len() < 3 {
@@ -20,5 +23,5 @@ fn main() {
     let name = output.file_stem().unwrap().to_str().unwrap().to_string();
 
     let model = import_model_from_vtm(&input);
-    export_model_to_obj(name, &output, &model);
+    export_model_to_obj(name, &output, &model, Lod::new(0));
 }

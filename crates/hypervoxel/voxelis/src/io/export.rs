@@ -11,28 +11,26 @@ use super::{
     consts::{RESERVED_1, RESERVED_2, VTM_MAGIC, VTM_VERSION},
 };
 
-pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model) {
+pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model, lod: Lod) {
     let mut vertices: Vec<Vec3> = Vec::new();
     let mut normals: Vec<Vec3> = Vec::new();
     let mut indices: Vec<u32> = Vec::new();
+
+    let store = model.get_store();
+    let store = store.read();
 
     for chunk in model.chunks.iter() {
         if chunk.is_empty() {
             continue;
         }
 
-        let offset = chunk.get_position().as_vec3();
-
-        let store = model.get_store();
-        let store = store.read();
-
         chunk.generate_mesh_arrays(
             &store,
             &mut vertices,
             &mut normals,
             &mut indices,
-            offset,
-            Lod::new(0),
+            chunk.get_position().as_vec3(),
+            lod,
         );
     }
 
