@@ -192,14 +192,14 @@ where S: Clone + Send + Sync {
         }
 
         // Turn a 3D point into a string with limited decimal places
-        fn point_key(p: &Point3<Real>) -> SmallStr {
+        fn point_key(p: &Point3<Real>) -> SmallStr<27> {
             // Truncate/round to e.g. 6 decimals
-            format_smallstr!("{:.6},{:.6},{:.6}", p.x, p.y, p.z)
+            small_str::format_smallstr!("{:.6},{:.6},{:.6}", p.x, p.y, p.z)
         }
 
         // Triangulate the whole shape once
         let tri_csg = self.tessellate();
-        let mut edge_counts: HashMap<(SmallStr, SmallStr), u32> = HashMap::new();
+        let mut edge_counts: HashMap<(SmallStr<27>, SmallStr<27>), u32> = HashMap::new();
 
         for poly in &tri_csg.polygons {
             // Each tri is 3 vertices: [v0, v1, v2]
