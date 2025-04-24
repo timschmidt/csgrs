@@ -79,21 +79,15 @@ pub fn export_model_to_vtm<P: AsRef<Path>>(name: String, path: &P, model: &Model
     writer.write_u16::<BigEndian>(flags.bits()).unwrap();
     writer.write_u8(max_depth.max()).unwrap();
     writer
-        .write_u32::<BigEndian>(model.chunk_size as u32)
+        .write_f32::<BigEndian>(model.chunk_world_size)
         .unwrap();
     writer.write_u32::<BigEndian>(RESERVED_1).unwrap();
     writer.write_u32::<BigEndian>(RESERVED_2).unwrap();
 
-    let size = model.chunks_size;
-    writer
-        .write_u16::<BigEndian>(size.x.try_into().unwrap())
-        .unwrap();
-    writer
-        .write_u16::<BigEndian>(size.y.try_into().unwrap())
-        .unwrap();
-    writer
-        .write_u16::<BigEndian>(size.z.try_into().unwrap())
-        .unwrap();
+    let world_bounds = model.world_bounds;
+    writer.write_i32::<BigEndian>(world_bounds.x).unwrap();
+    writer.write_i32::<BigEndian>(world_bounds.y).unwrap();
+    writer.write_i32::<BigEndian>(world_bounds.z).unwrap();
 
     writer.write_u8(name.len().try_into().unwrap()).unwrap();
     writer.write_all(name.as_bytes()).unwrap();

@@ -346,7 +346,7 @@ fn main() {
     println!("Using LOD level {}", lod);
 
     println!("Opening VTM model {}", input.display());
-    let model = import_model_from_vtm(&input);
+    let model = import_model_from_vtm(&input, 1024 * 1024 * 1024, None);
 
     #[cfg(feature = "memory_stats")]
     {

@@ -21,53 +21,77 @@ use crate::{
 
 pub struct Model {
     pub max_depth: MaxDepth,
-    pub voxels_per_axis: usize,
-    pub chunk_size: f32,
-    pub chunks_size: IVec3,
-    pub chunks_len: usize,
+    pub chunk_world_size: f32,
+    pub world_bounds: IVec3,
     pub chunks: Vec<Chunk>,
     pub store: Arc<RwLock<NodeStore<i32>>>,
 }
 
+fn initialize_chunks(max_depth: MaxDepth, chunk_world_size: f32, bounds: IVec3) -> Vec<Chunk> {
+    let estimated_capacity = bounds.x as usize * bounds.y as usize * bounds.z as usize;
+
+    let mut chunks = Vec::with_capacity(estimated_capacity);
+
+    for y in 0..bounds.y {
+        for z in 0..bounds.z {
+            for x in 0..bounds.x {
+                chunks.push(Chunk::with_position(chunk_world_size, max_depth, x, y, z));
+            }
+        }
+    }
+
+    chunks
+}
+
 impl Model {
-    pub fn new(max_depth: MaxDepth, chunk_size: f32) -> Self {
+    pub fn empty(max_depth: MaxDepth, chunk_world_size: f32) -> Self {
         let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(
             1024 * 1024 * 256,
         )));
-        let chunks_size = IVec3::new(32, 32, 32);
-        let chunks_len = chunks_size.x as usize * chunks_size.y as usize * chunks_size.z as usize;
-        let chunks = Self::init_chunks(max_depth, chunk_size, chunks_size, chunks_len);
-        let voxels_per_axis = 1 << max_depth.max();
 
         Self {
             max_depth,
-            voxels_per_axis,
-            chunk_size,
-            chunks_size,
-            chunks_len,
+            chunk_world_size,
+            world_bounds: IVec3::ZERO,
+            chunks: Vec::new(),
+            store,
+        }
+    }
+
+    pub fn new(max_depth: MaxDepth, chunk_world_size: f32) -> Self {
+        let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(
+            1024 * 1024 * 256,
+        )));
+        let world_bounds = IVec3::new(32, 32, 32);
+        let chunks = initialize_chunks(max_depth, chunk_world_size, world_bounds);
+
+        Self {
+            max_depth,
+            chunk_world_size,
+            world_bounds,
             chunks,
             store,
         }
     }
 
-    pub fn with_size(max_depth: MaxDepth, chunk_size: f32, chunks_size: IVec3) -> Self {
+    pub fn with_dimensions(
+        max_depth: MaxDepth,
+        chunk_world_size: f32,
+        world_bounds: IVec3,
+    ) -> Self {
         println!(
             "Creating model with size {:?}, chunk: {} depth: {}",
-            chunks_size, chunk_size, max_depth
+            world_bounds, chunk_world_size, max_depth
         );
         let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(
             1024 * 1024 * 1024,
         )));
-        let chunks_len = chunks_size.x as usize * chunks_size.y as usize * chunks_size.z as usize;
-        let chunks = Self::init_chunks(max_depth, chunk_size, chunks_size, chunks_len);
-        let voxels_per_axis = 1 << max_depth.max();
+        let chunks = initialize_chunks(max_depth, chunk_world_size, world_bounds);
 
         Self {
             max_depth,
-            voxels_per_axis,
-            chunk_size,
-            chunks_size,
-            chunks_len,
+            chunk_world_size,
+            world_bounds,
             chunks,
             store,
         }
@@ -78,36 +102,41 @@ impl Model {
     }
 
     pub fn clear(&mut self) {
-        self.chunks_size = IVec3::ZERO;
-        self.chunks_len = 0;
+        self.world_bounds = IVec3::ZERO;
         self.chunks.clear();
     }
 
     pub fn resize(&mut self, size: IVec3) {
         self.chunks.clear();
 
-        self.chunks_size = size;
-        self.chunks_len = size.x as usize * size.y as usize * size.z as usize;
-        self.chunks = Self::init_chunks(
-            self.max_depth,
-            self.chunk_size,
-            self.chunks_size,
-            self.chunks_len,
-        );
+        self.world_bounds = size;
+        self.chunks = initialize_chunks(self.max_depth, self.chunk_world_size, self.world_bounds);
     }
 
-    fn init_chunks(max_depth: MaxDepth, chunk_size: f32, size: IVec3, len: usize) -> Vec<Chunk> {
-        let mut chunks = Vec::with_capacity(len);
+    pub fn get_bounds_size(&self) -> usize {
+        self.world_bounds.x as usize * self.world_bounds.y as usize * self.world_bounds.z as usize
+    }
 
-        for y in 0..size.y {
-            for z in 0..size.z {
-                for x in 0..size.x {
-                    chunks.push(Chunk::with_position(chunk_size, max_depth, x, y, z));
-                }
-            }
-        }
+    pub fn is_position_in_bounds(&self, position: IVec3) -> bool {
+        position.x >= 0
+            && position.x < self.world_bounds.x
+            && position.y >= 0
+            && position.y < self.world_bounds.y
+            && position.z >= 0
+            && position.z < self.world_bounds.z
+    }
 
-        chunks
+    pub fn max_depth(&self) -> MaxDepth {
+        self.max_depth
+    }
+
+    pub fn voxels_per_axis(&self) -> usize {
+        1 << self.max_depth.max()
+    }
+
+    #[cfg(feature = "memory_stats")]
+    pub fn storage_stats(&self) -> StoreStats {
+        self.store.read().stats()
     }
 
     pub fn serialize(&self, data: &mut Vec<u8>) {
@@ -327,19 +356,6 @@ impl Model {
 
         let elapsed = now.elapsed();
         println!("Deserializing chunks took {:?}", elapsed);
-    }
-
-    pub fn max_depth(&self) -> MaxDepth {
-        self.max_depth
-    }
-
-    pub fn voxels_per_axis(&self) -> usize {
-        self.voxels_per_axis
-    }
-
-    #[cfg(feature = "memory_stats")]
-    pub fn storage_stats(&self) -> StoreStats {
-        self.store.read().stats()
     }
 
     // #[cfg(feature = "memory_stats")]

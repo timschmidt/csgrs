@@ -14,7 +14,7 @@ use super::{
 pub fn import_model_from_vtm<P: AsRef<Path>>(
     path: &P,
     memory_budget: usize,
-    chunk_world_size: Option<f32>,
+    target_chunk_world_size: Option<f32>,
 ) -> Model {
     let mut vox_file = std::fs::File::open(path).unwrap();
     let mut reader = std::io::BufReader::new(&mut vox_file);
@@ -33,18 +33,18 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(
     let lod_level = reader.read_u8().unwrap();
     println!("LOD Level: {}", lod_level);
 
-    let chunk_size = reader.read_u32::<BigEndian>().unwrap() as i32;
-    println!("Chunk Size: {}m", chunk_size);
+    let chunk_world_size = reader.read_f32::<BigEndian>().unwrap();
+    println!("Chunk Size: {}m", chunk_world_size);
 
     let _reserved_1 = reader.read_u32::<BigEndian>().unwrap();
     let _reserved_2 = reader.read_u32::<BigEndian>().unwrap();
 
-    let size_x = reader.read_u16::<BigEndian>().unwrap();
-    let size_y = reader.read_u16::<BigEndian>().unwrap();
-    let size_z = reader.read_u16::<BigEndian>().unwrap();
-    let size = IVec3::new(size_x as i32, size_y as i32, size_z as i32);
+    let world_bounds_x = reader.read_i32::<BigEndian>().unwrap();
+    let world_bounds_y = reader.read_i32::<BigEndian>().unwrap();
+    let world_bounds_z = reader.read_i32::<BigEndian>().unwrap();
+    let world_bounds = IVec3::new(world_bounds_x, world_bounds_y, world_bounds_z);
 
-    println!("Size: {:?}", size);
+    println!("World Bounds: {:?}", world_bounds);
 
     let name_len = reader.read_u8().unwrap();
     let mut name = vec![0u8; name_len as usize];
@@ -81,9 +81,10 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(
 
     println!("MD5 Hash calculated: {:0X?}", md5_hash_calculated);
 
-    let chunk_world_size = chunk_world_size.unwrap_or(1.28);
+    let chunk_world_size = target_chunk_world_size.unwrap_or(chunk_world_size);
 
-    let mut model = Model::with_size(MaxDepth::new(lod_level), chunk_world_size, size);
+    let mut model =
+        Model::with_dimensions(MaxDepth::new(lod_level), chunk_world_size, world_bounds);
     model.deserialize(&data);
 
     model

@@ -65,7 +65,7 @@ impl Voxelizer {
 
         Self {
             mesh,
-            model: Model::with_size(max_depth, chunk_size, chunks_size),
+            model: Model::with_dimensions(max_depth, chunk_size, chunks_size),
         }
     }
 
@@ -104,10 +104,10 @@ impl Voxelizer {
                             chunk_x,
                             chunk_y,
                             chunk_z,
-                            self.model.chunks_size,
+                            self.model.world_bounds,
                         );
 
-                        if chunk_index < self.model.chunks_len {
+                        if chunk_index < self.model.get_bounds_size() {
                             chunk_face_map.entry(chunk_index).or_default().push(*face);
                         }
                     }
@@ -316,8 +316,8 @@ impl Voxelizer {
     }
 
     pub fn simple_voxelize(&mut self) {
-        let chunks_size = self.model.chunks_size;
-        let chunks_len = self.model.chunks_len;
+        let chunks_size = self.model.world_bounds;
+        let chunks_len = self.model.get_bounds_size();
 
         let voxels_per_axis = self.model.voxels_per_axis();
         let voxel_size: f64 = 1.0 / voxels_per_axis as f64;
