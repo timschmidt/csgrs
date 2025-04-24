@@ -140,6 +140,7 @@ fn main() {
 
     // 13) Text example (2D). Provide a valid TTF font data below:
     // (Replace "asar.ttf" with a real .ttf file in your project.)
+    #[cfg(feature = "truetype-text")]
     let font_data = include_bytes!("../asar.ttf");
     #[cfg(feature = "truetype-text")]
     let text_csg = CSG::text("HELLO", font_data, 15.0, None);
