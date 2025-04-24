@@ -191,7 +191,7 @@ version = "0.15.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d067ad48b8650848b989a59a86c6c36a995d02d2bf778d45c3c5d57bc2718f02"
 dependencies = [
- "smallvec",
+ "smallvec 1.13.2",
  "target-lexicon",
 ]
 
@@ -348,6 +348,7 @@ dependencies = [
  "rapier3d-f64",
  "rayon",
  "robust",
+ "small_str",
  "stl_io",
  "svg",
  "thiserror 2.0.12",
@@ -439,7 +440,7 @@ dependencies = [
  "lebe",
  "miniz_oxide",
  "rayon-core",
- "smallvec",
+ "smallvec 1.13.2",
  "zune-inflate",
 ]
 
@@ -1431,7 +1432,7 @@ checksum = "421400d13ccfd26dfa5858199c30a5d76f9c54e0dba7575273025b43c5175dbb"
 dependencies = [
  "heapless",
  "num-traits 0.2.19",
- "smallvec",
+ "smallvec 1.13.2",
 ]
 
 [[package]]
@@ -1528,10 +1529,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "small_str"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b7630599c133ab7e0f5e3eeabdac3bd35091211aec6a9f962150b3f558ca4444"
+dependencies = [
+ "serde",
+ "smallvec 2.0.0-alpha.11",
+]
+
+[[package]]
 name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
+
+[[package]]
+name = "smallvec"
+version = "2.0.0-alpha.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "87b96efa4bd6bdd2ff0c6615cc36fc4970cbae63cfd46ddff5cee35a1b4df570"
 
 [[package]]
 name = "spade"
@@ -1542,7 +1559,7 @@ dependencies = [
  "hashbrown 0.14.5",
  "num-traits 0.2.19",
  "robust",
- "smallvec",
+ "smallvec 1.13.2",
 ]
 
 [[package]]
