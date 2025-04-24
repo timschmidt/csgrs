@@ -321,9 +321,9 @@ impl Chunk {
 
         let position = self.position;
 
-        writer.write_i16::<BigEndian>(position.x as i16).unwrap();
-        writer.write_i16::<BigEndian>(position.y as i16).unwrap();
-        writer.write_i16::<BigEndian>(position.z as i16).unwrap();
+        writer.write_i32::<BigEndian>(position.x).unwrap();
+        writer.write_i32::<BigEndian>(position.y).unwrap();
+        writer.write_i32::<BigEndian>(position.z).unwrap();
 
         let root_id = self.data.get_root_id();
         let new_id = *id_map.get(&root_id.index()).unwrap();
@@ -345,10 +345,10 @@ impl Chunk {
 
         // println!("Magic: {:?}", std::str::from_utf8(&magic).unwrap());
 
-        let x = reader.read_i16::<BigEndian>().unwrap();
-        let y = reader.read_i16::<BigEndian>().unwrap();
-        let z = reader.read_i16::<BigEndian>().unwrap();
-        self.position = IVec3::new(x as i32, y as i32, z as i32);
+        let x = reader.read_i32::<BigEndian>().unwrap();
+        let y = reader.read_i32::<BigEndian>().unwrap();
+        let z = reader.read_i32::<BigEndian>().unwrap();
+        self.position = IVec3::new(x, y, z);
 
         // println!("Position: {:?}", self.position);
 
