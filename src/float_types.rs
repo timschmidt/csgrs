@@ -19,7 +19,7 @@ pub type Real = f64;
 #[cfg(feature = "f32")]
 pub const EPSILON: Real = 1e-5;
 #[cfg(feature = "f64")]
-pub const EPSILON: Real = 1e-12;
+pub const EPSILON: Real = 1e-5;
 
 // Pi
 #[cfg(feature = "f32")]

@@ -22,6 +22,12 @@ where S: Clone + Send + Sync {
         }
     }
     
+    // I think a worst-case can be constructed for any heuristic here
+    // the only optimal solution may be to calculate which vertices are far apart
+    // which we would need a fast solution for.  Finding the best solution is likely
+    // to be too intensive, but finding a "good enough" solution may still be quick.
+    // It may be useful to retain this version and implement a slower higher quality
+    // solution as a second function.
     #[inline]
     pub fn plane(&self) -> Plane {
         Plane::from_points(&self.vertices[0].pos, &self.vertices[1].pos, &self.vertices[2].pos)

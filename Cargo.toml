@@ -47,7 +47,7 @@ fast-surface-nets = { version = "0.2.1", optional = true }
 contour_tracing = { version = "1.0.12", features = ["array"], optional = true }
 either = "1.15"
 # doc
-doc-image-embed = "0.2"
+#doc-image-embed = "0.2" # fork of https://crates.io/crates/embed-doc-image - should be upstreamed.
 
 # io/load
 # core2 = { version = "0.4.0", default_features = false, features = ["alloc"] } # no-std, still throws errors

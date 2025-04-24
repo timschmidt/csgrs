@@ -115,12 +115,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "base64"
-version = "0.22.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
-
-[[package]]
 name = "bit-vec"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -337,7 +331,6 @@ dependencies = [
  "chull",
  "contour_tracing",
  "core2",
- "doc-image-embed",
  "dxf",
  "either",
  "fast-surface-nets",
@@ -361,18 +354,6 @@ dependencies = [
  "ttf-parser",
  "ttf-parser-utils",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "doc-image-embed"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b1c7e5bbb92b417588a5e733e095416c27c06eedc051065cc955a0a8c8389d9"
-dependencies = [
- "base64",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
