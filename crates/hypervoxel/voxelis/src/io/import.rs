@@ -11,7 +11,11 @@ use super::{
     consts::{VTM_MAGIC, VTM_VERSION},
 };
 
-pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
+pub fn import_model_from_vtm<P: AsRef<Path>>(
+    path: &P,
+    memory_budget: usize,
+    chunk_world_size: Option<f32>,
+) -> Model {
     let mut vox_file = std::fs::File::open(path).unwrap();
     let mut reader = std::io::BufReader::new(&mut vox_file);
 
@@ -30,7 +34,7 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
     println!("LOD Level: {}", lod_level);
 
     let chunk_size = reader.read_u32::<BigEndian>().unwrap() as i32;
-    println!("Chunk Size: {}cm", chunk_size);
+    println!("Chunk Size: {}m", chunk_size);
 
     let _reserved_1 = reader.read_u32::<BigEndian>().unwrap();
     let _reserved_2 = reader.read_u32::<BigEndian>().unwrap();
@@ -77,9 +81,9 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(path: &P) -> Model {
 
     println!("MD5 Hash calculated: {:0X?}", md5_hash_calculated);
 
-    let chunk_size = 1.28;
+    let chunk_world_size = chunk_world_size.unwrap_or(1.28);
 
-    let mut model = Model::with_size(MaxDepth::new(lod_level), chunk_size, size);
+    let mut model = Model::with_size(MaxDepth::new(lod_level), chunk_world_size, size);
     model.deserialize(&data);
 
     model
