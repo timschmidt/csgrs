@@ -19,7 +19,7 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model
     let store = model.get_store();
     let store = store.read();
 
-    for chunk in model.chunks.iter() {
+    for (_, chunk) in model.chunks.iter() {
         if chunk.is_empty() {
             continue;
         }

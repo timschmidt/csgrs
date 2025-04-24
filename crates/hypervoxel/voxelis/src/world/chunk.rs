@@ -333,12 +333,13 @@ impl Chunk {
     }
 
     pub fn deserialize(
-        &mut self,
         store: &mut NodeStore<i32>,
         leaf_patterns: &FxHashMap<u32, (BlockId, i32)>,
         patterns: &FxHashMap<u32, (BlockId, [u32; 8], i32)>,
         reader: &mut BufReader<&[u8]>,
-    ) {
+        chunk_size: f32,
+        max_depth: MaxDepth,
+    ) -> Self {
         let mut magic = [0; VTC_MAGIC.len()];
         reader.read_exact(&mut magic).unwrap();
         assert_eq!(magic, VTC_MAGIC);
@@ -348,12 +349,13 @@ impl Chunk {
         let x = reader.read_i32::<BigEndian>().unwrap();
         let y = reader.read_i32::<BigEndian>().unwrap();
         let z = reader.read_i32::<BigEndian>().unwrap();
-        self.position = IVec3::new(x, y, z);
+
+        let mut chunk = Chunk::with_position(chunk_size, max_depth, x, y, z);
 
         // println!("Position: {:?}", self.position);
 
         let root_id = decode_varint_u32_from_reader(reader).unwrap();
-        match &mut self.data {
+        match &mut chunk.data {
             Octree::Static(octree) => {
                 if let Some((block_id, _, _)) = patterns.get(&root_id) {
                     octree.set_root_id(store, *block_id);
@@ -366,6 +368,8 @@ impl Chunk {
                 panic!("Dynamic octree not supported");
             }
         }
+
+        chunk
     }
 }
 

@@ -14,10 +14,6 @@ use bevy::render::camera::TemporalJitter;
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, window::PresentMode};
 use bevy_egui::EguiPlugin;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-// use bevy_screen_diagnostics::{
-//     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
-// };
-use rayon::prelude::*;
 
 use voxelis::Lod;
 use voxelis::io::import::import_model_from_vtm;
@@ -173,7 +169,7 @@ fn setup(
         let mut normals = Vec::new();
         let mut indices = Vec::new();
 
-        for chunk in model.chunks.iter() {
+        for (_, chunk) in model.chunks.iter() {
             if chunk.is_empty() {
                 continue;
             }
@@ -222,55 +218,44 @@ fn setup(
             // ))
             ;
     } else {
-        let chunks_meshes: Vec<Option<Mesh>> = model
-            .chunks
-            .par_iter()
-            .map(|chunk| {
-                if chunk.is_empty() {
-                    return None;
-                }
-
-                let mut vertices = Vec::new();
-                let mut normals = Vec::new();
-                let mut indices = Vec::new();
-
-                chunk.generate_mesh_arrays(
-                    &storage,
-                    &mut vertices,
-                    &mut normals,
-                    &mut indices,
-                    Vec3::ZERO,
-                    model_settings.lod,
-                );
-
-                Some(
-                    Mesh::new(
-                        bevy::render::mesh::PrimitiveTopology::TriangleList,
-                        bevy::render::render_asset::RenderAssetUsages::RENDER_WORLD,
-                    )
-                    .with_inserted_indices(bevy::render::mesh::Indices::U32(indices))
-                    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
-                    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals),
-                )
-            })
-            .collect();
-
-        for (i, chunk_mesh) in chunks_meshes.iter().enumerate() {
-            if chunk_mesh.is_none() {
+        for (chunk_position, chunk) in model.chunks.iter() {
+            if chunk.is_empty() {
                 continue;
             }
 
-            let chunk_mesh = chunk_mesh.as_ref().unwrap();
+            let mut vertices = Vec::new();
+            let mut normals = Vec::new();
+            let mut indices = Vec::new();
 
-            let mesh = meshes.add(chunk_mesh.clone());
+            chunk.generate_mesh_arrays(
+                &storage,
+                &mut vertices,
+                &mut normals,
+                &mut indices,
+                Vec3::ZERO,
+                model_settings.lod,
+            );
 
-            let chunk_position = model.chunks[i].get_position();
-            let chunk_world_position = model.chunks[i].get_world_position();
+            let chunk_mesh = Mesh::new(
+                bevy::render::mesh::PrimitiveTopology::TriangleList,
+                bevy::render::render_asset::RenderAssetUsages::RENDER_WORLD,
+            )
+            .with_inserted_indices(bevy::render::mesh::Indices::U32(indices))
+            .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
+            .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+
+            let mesh = meshes.add(chunk_mesh);
+
+            let chunk_world_position = chunk.get_world_position();
 
             let base_color = if model_settings.material_type == MaterialType::Checkered {
                 generate_chunk_color_checkered(chunk_position.x, chunk_position.y, chunk_position.z)
             } else {
-                generate_chunk_color_gradient(i, model.chunks.len())
+                let bounds = model.world_bounds;
+                let area = bounds.z * bounds.x;
+                let i = chunk_position.x + chunk_position.y * bounds.x + chunk_position.z * area;
+
+                generate_chunk_color_gradient(i as usize, model.chunks.len())
             };
 
             let mesh_material = materials.add(StandardMaterial {
@@ -330,14 +315,20 @@ fn toggle_wireframe(
 
 fn main() {
     if std::env::args().len() < 2 {
-        println!("Usage: vtm-viewer <vtm-file> <lod-level (0-7)>");
+        println!("Usage: vtm-viewer <vtm-file> <chunk size in m> <lod-level (0-7)>");
         std::process::exit(1);
     }
 
     let input = std::env::args().nth(1).unwrap();
     let input = Path::new(&input);
 
-    let lod = if let Some(lod) = std::env::args().nth(2) {
+    let chunk_world_size = if let Some(chunk_size) = std::env::args().nth(2) {
+        let chunk_size: f32 = chunk_size.parse().unwrap();
+        chunk_size
+    } else {
+        1.28
+    };
+    let lod = if let Some(lod) = std::env::args().nth(3) {
         let lod: u8 = lod.parse().unwrap();
         Lod::new(lod)
     } else {
@@ -346,7 +337,7 @@ fn main() {
     println!("Using LOD level {}", lod);
 
     println!("Opening VTM model {}", input.display());
-    let model = import_model_from_vtm(&input, 1024 * 1024 * 1024, None);
+    let model = import_model_from_vtm(&input, 1024 * 1024 * 1024 * 4, Some(chunk_world_size));
 
     #[cfg(feature = "memory_stats")]
     {

@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     io::{BufReader, Read, Write},
     sync::Arc,
 };
@@ -23,19 +24,26 @@ pub struct Model {
     pub max_depth: MaxDepth,
     pub chunk_world_size: f32,
     pub world_bounds: IVec3,
-    pub chunks: Vec<Chunk>,
+    pub chunks: HashMap<IVec3, Chunk>,
     pub store: Arc<RwLock<NodeStore<i32>>>,
 }
 
-fn initialize_chunks(max_depth: MaxDepth, chunk_world_size: f32, bounds: IVec3) -> Vec<Chunk> {
+fn initialize_chunks(
+    max_depth: MaxDepth,
+    chunk_world_size: f32,
+    bounds: IVec3,
+) -> HashMap<IVec3, Chunk> {
     let estimated_capacity = bounds.x as usize * bounds.y as usize * bounds.z as usize;
 
-    let mut chunks = Vec::with_capacity(estimated_capacity);
+    let mut chunks = HashMap::with_capacity(estimated_capacity);
 
     for y in 0..bounds.y {
         for z in 0..bounds.z {
             for x in 0..bounds.x {
-                chunks.push(Chunk::with_position(chunk_world_size, max_depth, x, y, z));
+                chunks.insert(
+                    IVec3::new(x, y, z),
+                    Chunk::with_position(chunk_world_size, max_depth, x, y, z),
+                );
             }
         }
     }
@@ -44,24 +52,20 @@ fn initialize_chunks(max_depth: MaxDepth, chunk_world_size: f32, bounds: IVec3) 
 }
 
 impl Model {
-    pub fn empty(max_depth: MaxDepth, chunk_world_size: f32) -> Self {
-        let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(
-            1024 * 1024 * 256,
-        )));
+    pub fn empty(max_depth: MaxDepth, chunk_world_size: f32, memory_budget: usize) -> Self {
+        let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(memory_budget)));
 
         Self {
             max_depth,
             chunk_world_size,
             world_bounds: IVec3::ZERO,
-            chunks: Vec::new(),
+            chunks: HashMap::default(),
             store,
         }
     }
 
-    pub fn new(max_depth: MaxDepth, chunk_world_size: f32) -> Self {
-        let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(
-            1024 * 1024 * 256,
-        )));
+    pub fn new(max_depth: MaxDepth, chunk_world_size: f32, memory_budget: usize) -> Self {
+        let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(memory_budget)));
         let world_bounds = IVec3::new(32, 32, 32);
         let chunks = initialize_chunks(max_depth, chunk_world_size, world_bounds);
 
@@ -78,14 +82,13 @@ impl Model {
         max_depth: MaxDepth,
         chunk_world_size: f32,
         world_bounds: IVec3,
+        memory_budget: usize,
     ) -> Self {
         println!(
-            "Creating model with size {:?}, chunk: {} depth: {}",
+            "Creating model with bounds {:?}, chunk: {}m depth: {}",
             world_bounds, chunk_world_size, max_depth
         );
-        let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(
-            1024 * 1024 * 1024,
-        )));
+        let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(memory_budget)));
         let chunks = initialize_chunks(max_depth, chunk_world_size, world_bounds);
 
         Self {
@@ -97,6 +100,22 @@ impl Model {
         }
     }
 
+    pub fn get_or_create_chunk(&mut self, position: IVec3) -> &mut Chunk {
+        self.chunks.entry(position).or_insert_with(|| {
+            self.world_bounds.x = position.x.max(self.world_bounds.x);
+            self.world_bounds.y = position.y.max(self.world_bounds.y);
+            self.world_bounds.z = position.z.max(self.world_bounds.z);
+
+            Chunk::with_position(
+                self.chunk_world_size,
+                self.max_depth,
+                position.x,
+                position.y,
+                position.z,
+            )
+        })
+    }
+
     pub fn get_store(&self) -> Arc<RwLock<NodeStore<i32>>> {
         self.store.clone()
     }
@@ -106,10 +125,10 @@ impl Model {
         self.chunks.clear();
     }
 
-    pub fn resize(&mut self, size: IVec3) {
+    pub fn resize(&mut self, bounds: IVec3) {
         self.chunks.clear();
 
-        self.world_bounds = size;
+        self.world_bounds = bounds;
         self.chunks = initialize_chunks(self.max_depth, self.chunk_world_size, self.world_bounds);
     }
 
@@ -230,12 +249,17 @@ impl Model {
         let chunks_data: Vec<Vec<u8>> = self
             .chunks
             .par_iter()
-            .map(|chunk| {
+            .map(|(_, chunk)| {
                 let mut buffer = Vec::with_capacity(BUFFER_SIZE);
                 chunk.serialize(&id_map, &mut buffer);
                 buffer
             })
             .collect();
+
+        let actual_chunks_len = self.chunks.len();
+        writer
+            .write_u32::<BigEndian>(actual_chunks_len as u32)
+            .unwrap();
 
         for chunk_data in chunks_data.iter() {
             writer.write_all(chunk_data).unwrap();
@@ -350,9 +374,20 @@ impl Model {
         //     storage.dump_node(*branch_id, 0, "  ");
         // }
 
-        self.chunks.iter_mut().for_each(|chunk| {
-            chunk.deserialize(&mut storage, &leaf_patterns, &branch_patterns, &mut reader);
-        });
+        let actual_chunks_len = reader.read_u32::<BigEndian>().unwrap();
+
+        for _ in 0..actual_chunks_len {
+            let chunk = Chunk::deserialize(
+                &mut storage,
+                &leaf_patterns,
+                &branch_patterns,
+                &mut reader,
+                self.chunk_world_size,
+                self.max_depth,
+            );
+
+            self.chunks.insert(chunk.get_position(), chunk);
+        }
 
         let elapsed = now.elapsed();
         println!("Deserializing chunks took {:?}", elapsed);

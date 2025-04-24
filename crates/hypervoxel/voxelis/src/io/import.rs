@@ -83,8 +83,7 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(
 
     let chunk_world_size = target_chunk_world_size.unwrap_or(chunk_world_size);
 
-    let mut model =
-        Model::with_dimensions(MaxDepth::new(lod_level), chunk_world_size, world_bounds);
+    let mut model = Model::empty(MaxDepth::new(lod_level), chunk_world_size, memory_budget);
     model.deserialize(&data);
 
     model

@@ -36,7 +36,7 @@ fn main() {
 
     let obj = Obj::parse(&input);
 
-    let mut voxelizer = Voxelizer::new(max_depth, chunk_size, obj);
+    let mut voxelizer = Voxelizer::new(max_depth, chunk_size, obj, 1024 * 1024 * 1024);
     voxelizer.voxelize();
 
     export_model_to_vtm(name, &output, &voxelizer.model);
