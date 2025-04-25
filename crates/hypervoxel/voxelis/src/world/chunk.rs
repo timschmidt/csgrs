@@ -352,8 +352,6 @@ impl Chunk {
 
         let mut chunk = Chunk::with_position(chunk_size, max_depth, x, y, z);
 
-        // println!("Position: {:?}", self.position);
-
         let root_id = decode_varint_u32_from_reader(reader).unwrap();
         match &mut chunk.data {
             Octree::Static(octree) => {

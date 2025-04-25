@@ -44,7 +44,7 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(
     let world_bounds_z = reader.read_i32::<BigEndian>().unwrap();
     let world_bounds = IVec3::new(world_bounds_x, world_bounds_y, world_bounds_z);
 
-    println!("World Bounds: {:?}", world_bounds);
+    println!("World bounds: {:?}", world_bounds);
 
     let name_len = reader.read_u8().unwrap();
     let mut name = vec![0u8; name_len as usize];

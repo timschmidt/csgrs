@@ -29,7 +29,7 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model
             &mut vertices,
             &mut normals,
             &mut indices,
-            chunk.get_position().as_vec3(),
+            chunk.get_world_position(),
             lod,
         );
     }

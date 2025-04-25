@@ -24,10 +24,12 @@ fn main() {
     let chunk_size: f32 = chunk_size.parse().unwrap();
 
     let max_depth = MaxDepth::new(max_depth as u8);
+    let memory_budget = 1024 * 1024 * 1024 * 16;
 
     println!("Max octree depth: {}", max_depth);
     println!("Voxels per axis: {}", 1 << max_depth.max());
     println!("Chunk size: {}m", chunk_size);
+    println!("Memory budget: {} bytes", memory_budget);
 
     let input = Path::new(&input);
     let output = Path::new(&output);
@@ -36,8 +38,9 @@ fn main() {
 
     let obj = Obj::parse(&input);
 
-    let mut voxelizer = Voxelizer::new(max_depth, chunk_size, obj, 1024 * 1024 * 1024);
+    let mut voxelizer = Voxelizer::empty(max_depth, chunk_size, obj, memory_budget);
     voxelizer.voxelize();
 
+    println!("Exporting VTM model to {}", output.display());
     export_model_to_vtm(name, &output, &voxelizer.model);
 }
