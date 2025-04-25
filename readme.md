@@ -422,7 +422,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - use https://crates.io/crates/approx
 - transition sweep, linear_extrude, over to Polygon/Multipolygon native / polygon secondary
 - disengage chulls on 2D->3D shapes
-- fix shape of reuleaux
 - fix metaballs_2d
 - fix intersect_cube_sphere, subtract_cube_sphere in main.rs - shapes are out of proximity
 - fix up error handling with result types, eliminate panics
