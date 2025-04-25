@@ -33,6 +33,7 @@ crossbeam = { version = "0.8.4" }
 fastnoise-lite = "1.1.1"
 glam = "0.29.3"
 humanize-bytes = "1.0.6"
+indicatif = { version = "0.17.11", features = ["improved_unicode"] }
 log = { version = "0.4.27", features = [
   "max_level_debug",
   "release_max_level_warn",

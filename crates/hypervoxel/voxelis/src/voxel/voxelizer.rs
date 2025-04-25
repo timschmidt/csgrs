@@ -3,11 +3,17 @@ use std::{
         Arc,
         atomic::{AtomicBool, AtomicUsize, Ordering},
     },
-    time::Instant,
+    time::{Duration, Instant},
 };
+
+#[cfg(feature = "memory_stats")]
+use std::{fmt::Write, sync::Mutex};
 
 use crossbeam::channel::{Receiver, Sender, bounded};
 use glam::{DVec3, IVec3};
+#[cfg(feature = "memory_stats")]
+use indicatif::ProgressState;
+use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
@@ -19,11 +25,36 @@ use crate::{
     spatial::{OctreeOpsBatch, OctreeOpsState, OctreeOpsWrite},
 };
 
+#[cfg(feature = "memory_stats")]
+use crate::storage::StoreStats;
+
+#[cfg(feature = "memory_stats")]
+const PROGRESS_TEMPLATE: &str = "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({eta_precise:.0} {stats})";
+
+#[cfg(not(feature = "memory_stats"))]
+const PROGRESS_TEMPLATE: &str = "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({eta_precise:.0})";
+
 fn convert_voxel_world_to_chunk_position(
     voxel_world_position: IVec3,
     chunk_world_size: f32,
 ) -> IVec3 {
     voxel_world_position.as_vec3().floor().as_ivec3() * (chunk_world_size as i32)
+}
+
+pub struct ByteSize(pub usize);
+
+impl std::fmt::Display for ByteSize {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0 < 1024 {
+            write!(f, "{} B", self.0)
+        } else if self.0 < 1024 * 1024 {
+            write!(f, "{:.3} KB", self.0 as f64 / 1024.0)
+        } else if self.0 < 1024 * 1024 * 1024 {
+            write!(f, "{:.3} MB", self.0 as f64 / (1024.0 * 1024.0))
+        } else {
+            write!(f, "{:.3} GB", self.0 as f64 / (1024.0 * 1024.0 * 1024.0))
+        }
+    }
 }
 
 pub struct Voxelizer {
@@ -264,19 +295,54 @@ impl Voxelizer {
             });
 
             drop(tx);
-
-            println!("Voxelization in parallel completed");
         });
 
         let storage_arc = self.model.get_store();
         let mut storage = storage_arc.write();
 
         println!("Applying batches to chunks");
+
+        let bar = ProgressBar::new(chunks_to_process as u64);
+
+        #[cfg(feature = "memory_stats")]
+        let total_memory = storage.stats().requested_budget;
+        #[cfg(feature = "memory_stats")]
+        let store_stats = Arc::new(Mutex::new(StoreStats::default()));
+        #[cfg(feature = "memory_stats")]
+        let store_stats_clone = store_stats.clone();
+
+        let style = ProgressStyle::with_template(PROGRESS_TEMPLATE).unwrap();
+
+        #[cfg(feature = "memory_stats")]
+        let style = style.with_key("stats", move |_state: &ProgressState, w: &mut dyn Write| {
+            write!(w, "{}", {
+                let stats = store_stats_clone.lock().unwrap();
+                let used_memory = stats.alive_nodes * stats.node_size;
+
+                format!("{} / {}", ByteSize(used_memory), ByteSize(total_memory),)
+            })
+            .unwrap()
+        });
+
+        bar.set_style(style.progress_chars("#>-"));
+
+        bar.enable_steady_tick(Duration::from_millis(16));
+
         for (chunk_position, batch) in rx.iter() {
             self.model
                 .get_or_create_chunk(chunk_position)
                 .apply_batch(&mut storage, &batch);
+
+            #[cfg(feature = "memory_stats")]
+            {
+                let stats = storage.stats();
+                store_stats.lock().unwrap().clone_from(&stats);
+            }
+
+            bar.inc(1);
         }
+
+        bar.finish();
 
         println!(
             "Early quits: no faces: {}, empty faces: {}, empty batch: {}",

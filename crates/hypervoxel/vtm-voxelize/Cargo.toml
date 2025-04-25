@@ -9,4 +9,5 @@ edition = "2024"
 voxelis.workspace = true
 
 [features]
+default = ["memory_stats"]
 memory_stats = ["voxelis/memory_stats"]
