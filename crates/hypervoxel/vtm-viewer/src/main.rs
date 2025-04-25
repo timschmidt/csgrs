@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::Path;
 use std::time::Instant;
 
@@ -15,10 +16,10 @@ use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, window::PresentMo
 use bevy_egui::EguiPlugin;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
-use voxelis::Lod;
 use voxelis::io::import::import_model_from_vtm;
 use voxelis::model::Model;
 use voxelis::spatial::OctreeOpsState;
+use voxelis::{BlockId, Lod};
 
 struct GamePlugin;
 
@@ -32,6 +33,7 @@ pub struct ModelResource(pub Model);
 pub enum MaterialType {
     Checkered,
     Gradient,
+    Clay,
 }
 
 #[derive(Resource)]
@@ -204,58 +206,84 @@ fn setup(
         });
 
         commands
-            .spawn((
-                Mesh3d(mesh),
-                MeshMaterial3d(mesh_material.clone()),
-            ))
-            .insert(Chunk)
-            // .insert(Name::new(
-            //     format!(
-            //         "Chunk {}x{}x{}",
-            //         chunk_position.x, chunk_position.y, chunk_position.z
-            //     )
-            //     .to_string(),
-            // ))
-            ;
+            .spawn((Mesh3d(mesh), MeshMaterial3d(mesh_material.clone())))
+            .insert(Chunk);
     } else {
+        let mut existing_meshes: HashMap<BlockId, (Handle<Mesh>, usize, usize, usize)> =
+            HashMap::new();
+
+        let mut duplicates_found: usize = 0;
+        let mut total_vertices: usize = 0;
+        let mut total_indices: usize = 0;
+        let mut total_normals: usize = 0;
+        let mut saved_vertices: usize = 0;
+        let mut saved_indices: usize = 0;
+        let mut saved_normals: usize = 0;
+
         for (chunk_position, chunk) in model.chunks.iter() {
             if chunk.is_empty() {
                 continue;
             }
 
-            let mut vertices = Vec::new();
-            let mut normals = Vec::new();
-            let mut indices = Vec::new();
+            let mesh = if let Some((chunk_mesh, vertices, indices, normals)) =
+                existing_meshes.get(&chunk.get_root_id())
+            {
+                duplicates_found += 1;
+                saved_vertices += vertices;
+                saved_indices += indices;
+                saved_normals += normals;
+                chunk_mesh.clone()
+            } else {
+                let mut vertices = Vec::new();
+                let mut normals = Vec::new();
+                let mut indices = Vec::new();
 
-            chunk.generate_mesh_arrays(
-                &storage,
-                &mut vertices,
-                &mut normals,
-                &mut indices,
-                Vec3::ZERO,
-                model_settings.lod,
-            );
+                chunk.generate_mesh_arrays(
+                    &storage,
+                    &mut vertices,
+                    &mut normals,
+                    &mut indices,
+                    Vec3::ZERO,
+                    model_settings.lod,
+                );
 
-            let chunk_mesh = Mesh::new(
-                bevy::render::mesh::PrimitiveTopology::TriangleList,
-                bevy::render::render_asset::RenderAssetUsages::RENDER_WORLD,
-            )
-            .with_inserted_indices(bevy::render::mesh::Indices::U32(indices))
-            .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
-            .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+                let vertices_len = vertices.len();
+                let indices_len = indices.len();
+                let normals_len = normals.len();
 
-            let mesh = meshes.add(chunk_mesh);
+                total_vertices += vertices_len;
+                total_indices += indices_len;
+                total_normals += normals_len;
+
+                let chunk_mesh = Mesh::new(
+                    bevy::render::mesh::PrimitiveTopology::TriangleList,
+                    bevy::render::render_asset::RenderAssetUsages::RENDER_WORLD,
+                )
+                .with_inserted_indices(bevy::render::mesh::Indices::U32(indices))
+                .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
+                .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+
+                let mesh = meshes.add(chunk_mesh);
+
+                existing_meshes.insert(
+                    chunk.get_root_id(),
+                    (mesh.clone(), vertices_len, indices_len, normals_len),
+                );
+
+                mesh
+            };
 
             let chunk_world_position = chunk.get_world_position();
 
             let base_color = if model_settings.material_type == MaterialType::Checkered {
                 generate_chunk_color_checkered(chunk_position.x, chunk_position.y, chunk_position.z)
-            } else {
+            } else if model_settings.material_type == MaterialType::Gradient {
                 let bounds = model.world_bounds;
                 let area = bounds.z * bounds.x;
                 let i = chunk_position.x + chunk_position.y * bounds.x + chunk_position.z * area;
-
                 generate_chunk_color_gradient(i as usize, model.chunks.len())
+            } else {
+                Color::srgba_u8(191, 157, 133, 255)
             };
 
             let mesh_material = materials.add(StandardMaterial {
@@ -280,11 +308,32 @@ fn setup(
                     .to_string(),
                 ));
         }
+
+        println!(
+            "Found {} duplicates out of {} chunks ({:.1}%)",
+            duplicates_found,
+            model.chunks.len(),
+            (duplicates_found as f32 / model.chunks.len() as f32) * 100.0
+        );
+        println!(
+            " Vertices: {} - {} saved",
+            humanize_bytes::humanize_quantity!(total_vertices),
+            humanize_bytes::humanize_quantity!(saved_vertices),
+        );
+        println!(
+            " Normals: {} - {} saved",
+            humanize_bytes::humanize_quantity!(total_normals),
+            humanize_bytes::humanize_quantity!(saved_normals),
+        );
+        println!(
+            " Indices: {} - {} saved",
+            humanize_bytes::humanize_quantity!(total_indices),
+            humanize_bytes::humanize_quantity!(saved_indices),
+        );
     }
 
     println!("Generating meshes took {:?}", now.elapsed());
 
-    // display_model_cache_statistics(model);
     #[cfg(feature = "memory_stats")]
     {
         let storage = model.storage_stats();
@@ -328,6 +377,7 @@ fn main() {
     } else {
         1.28
     };
+
     let lod = if let Some(lod) = std::env::args().nth(3) {
         let lod: u8 = lod.parse().unwrap();
         Lod::new(lod)
@@ -377,7 +427,7 @@ fn main() {
         })))
         .insert_resource(ModelResource(model))
         .insert_resource(ModelSettings {
-            material_type: MaterialType::Checkered,
+            material_type: MaterialType::Gradient,
             lod,
         })
         .run();
