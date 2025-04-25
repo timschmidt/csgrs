@@ -69,6 +69,10 @@ impl Chunk {
         self.position.as_vec3() * self.chunk_size
     }
 
+    pub fn get_root_id(&self) -> BlockId {
+        self.data.get_root_id()
+    }
+
     pub fn generate_test_data(&mut self, store: &mut NodeStore<i32>) {
         let voxels_per_axis = self.voxels_per_axis(Lod::new(0)) as i32;
         let mut position = IVec3::ZERO;
