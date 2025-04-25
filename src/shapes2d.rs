@@ -446,9 +446,7 @@ where S: Clone + Send + Sync {
                 .translate(x, y, 0.0);
             acc.intersection(&disk)
         });
-    
-        // Because every circle we add carries its own metadata clone, we keep only
-        // the metadata of the *first* disk on the final shape to avoid duplication.
+
         CSG {
             geometry: shape.geometry,
             polygons: shape.polygons,
