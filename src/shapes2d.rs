@@ -398,59 +398,62 @@ where S: Clone + Send + Sync {
         )
     }
 
-    /// Reuleaux polygon with `sides` and "radius".  Approximates constant-width shape.
-    /// This is a simplified approximation that arcs from each vertex to the next.
+    /// Reuleaux polygon (constant–width curve) built as the *intersection* of
+    /// `sides` equal–radius disks whose centres are the vertices of a regular
+    /// n-gon.
+    ///
+    /// * `sides`                  ≥ 3  
+    /// * `side_len`               desired constant width (equals the distance
+    ///                            between adjacent vertices, i.e. the polygon’s
+    ///                            edge length)  
+    /// * `circle_segments`        how many segments to use for each disk
+    ///
+    /// For `sides == 3` this gives the canonical Reuleaux triangle; for any
+    /// larger `sides` it yields the natural generalisation (odd-sided shapes
+    /// retain constant width, even-sided ones do not but are still smooth).
     pub fn reuleaux_polygon(
         sides: usize,
-        radius: Real,
-        arc_segments_per_side: usize,
+        side_len: Real,
+        circle_segments: usize,
         metadata: Option<S>,
     ) -> CSG<S> {
-        if sides < 3 || arc_segments_per_side < 1 {
+        use crate::float_types::{PI, TAU};
+    
+        if sides < 3 || circle_segments < 6 || side_len <= EPSILON {
             return CSG::new();
         }
-        // Corner positions (the "center" of each arc is the next corner).
-        let mut corners = Vec::with_capacity(sides);
-        for i in 0..sides {
-            let theta = TAU * (i as Real) / (sides as Real);
-            corners.push((radius * theta.cos(), radius * theta.sin()));
-        }
-
-        // Build one big ring of points by tracing arcs corner->corner.
-        let mut coords = Vec::new();
-        for i in 0..sides {
-            let i_next = (i + 1) % sides;
-            let center = corners[i_next];
-            let start_pt = corners[i];
-            let end_pt = corners[(i + 2) % sides];
-
-            let vx_s = start_pt.0 - center.0;
-            let vy_s = start_pt.1 - center.1;
-            let start_angle = vy_s.atan2(vx_s);
-
-            let vx_e = end_pt.0 - center.0;
-            let vy_e = end_pt.1 - center.1;
-            let end_angle = vy_e.atan2(vx_e);
-
-            let mut delta = end_angle - start_angle;
-            while delta <= 0.0 {
-                delta += TAU;
-            }
-            let step = delta / (arc_segments_per_side as Real);
-            for seg_i in 0..arc_segments_per_side {
-                let a = start_angle + (seg_i as Real) * step;
-                let x = center.0 + radius * a.cos();
-                let y = center.1 + radius * a.sin();
-                coords.push((x, y));
-            }
-        }
-        coords.push(coords[0]);
-
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
+    
+        // Circumradius that gives the requested *side length* for the regular n-gon
+        //            s
+        //   R = -------------
+        //        2 sin(π/n)
+        let r_circ = side_len / (2.0 * (PI / sides as Real).sin());
+    
+        // Pre-compute vertex positions of the regular n-gon
+        let verts: Vec<(Real, Real)> = (0..sides)
+            .map(|i| {
+                let theta = TAU * (i as Real) / (sides as Real);
+                (r_circ * theta.cos(), r_circ * theta.sin())
+            })
+            .collect();
+    
+        // Build the first disk and use it as the running intersection
+        let base = CSG::circle(side_len, circle_segments, metadata.clone())
+            .translate(verts[0].0, verts[0].1, 0.0);
+    
+        let shape = verts.iter().skip(1).fold(base, |acc, &(x, y)| {
+            let disk = CSG::circle(side_len, circle_segments, metadata.clone())
+                .translate(x, y, 0.0);
+            acc.intersection(&disk)
+        });
+    
+        // Because every circle we add carries its own metadata clone, we keep only
+        // the metadata of the *first* disk on the final shape to avoid duplication.
+        CSG {
+            geometry: shape.geometry,
+            polygons: shape.polygons,
             metadata,
-        )
+        }
     }
 
     /// Ring with inner diameter = `id` and (radial) thickness = `thickness`.

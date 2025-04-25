@@ -194,7 +194,7 @@ where S: Clone + Send + Sync {
         // Turn a 3D point into a string with limited decimal places
         fn point_key(p: &Point3<Real>) -> SmallStr<27> {
             // Truncate/round to e.g. 6 decimals
-            small_str::format_smallstr!("{:.6},{:.6},{:.6}", p.x, p.y, p.z)
+            format_smallstr!("{:.6},{:.6},{:.6}", p.x, p.y, p.z)
         }
 
         // Triangulate the whole shape once
