@@ -403,9 +403,9 @@ where S: Clone + Send + Sync {
     /// n-gon.
     ///
     /// * `sides`                  ≥ 3  
-    /// * `side_len`               desired constant width (equals the distance
+    /// * `diameter`               desired constant width (equals the distance
     ///                            between adjacent vertices, i.e. the polygon’s
-    ///                            edge length)  
+    ///                            edge length)
     /// * `circle_segments`        how many segments to use for each disk
     ///
     /// For `sides == 3` this gives the canonical Reuleaux triangle; for any
@@ -413,21 +413,19 @@ where S: Clone + Send + Sync {
     /// retain constant width, even-sided ones do not but are still smooth).
     pub fn reuleaux_polygon(
         sides: usize,
-        side_len: Real,
+        diameter: Real,
         circle_segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
-        use crate::float_types::{PI, TAU};
-    
-        if sides < 3 || circle_segments < 6 || side_len <= EPSILON {
+    ) -> CSG<S> {    
+        if sides < 3 || circle_segments < 6 || diameter <= EPSILON {
             return CSG::new();
         }
     
-        // Circumradius that gives the requested *side length* for the regular n-gon
+        // Circumradius that gives the requested *diameter* for the regular n-gon
         //            s
         //   R = -------------
         //        2 sin(π/n)
-        let r_circ = side_len / (2.0 * (PI / sides as Real).sin());
+        let r_circ = diameter / (2.0 * (PI / sides as Real).sin());
     
         // Pre-compute vertex positions of the regular n-gon
         let verts: Vec<(Real, Real)> = (0..sides)
@@ -438,11 +436,11 @@ where S: Clone + Send + Sync {
             .collect();
     
         // Build the first disk and use it as the running intersection
-        let base = CSG::circle(side_len, circle_segments, metadata.clone())
+        let base = CSG::circle(diameter, circle_segments, metadata.clone())
             .translate(verts[0].0, verts[0].1, 0.0);
     
         let shape = verts.iter().skip(1).fold(base, |acc, &(x, y)| {
-            let disk = CSG::circle(side_len, circle_segments, metadata.clone())
+            let disk = CSG::circle(diameter, circle_segments, metadata.clone())
                 .translate(x, y, 0.0);
             acc.intersection(&disk)
         });
