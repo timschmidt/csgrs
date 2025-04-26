@@ -773,4 +773,141 @@ where S: Clone + Send + Sync {
             metadata,
         )
     }
+    
+    /// Sample an arbitrary-degree Bézier curve (de Casteljau).
+    /// Returns a poly-line (closed if the first = last point).
+    ///
+    /// * `control`: list of 2-D control points
+    /// * `segments`: number of straight-line segments used for the tessellation
+    pub fn bezier(
+        control: &[[Real; 2]],
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        if control.len() < 2 || segments < 1 {
+            return CSG::new();
+        }
+    
+        // de Casteljau evaluator -------------------------------------------------
+        fn de_casteljau(ctrl: &[[Real; 2]], t: Real) -> (Real, Real) {
+            let mut tmp: Vec<(Real, Real)> =
+                ctrl.iter().map(|&[x, y]| (x, y)).collect();
+            let n = tmp.len();
+            for k in 1..n {
+                for i in 0..(n - k) {
+                    tmp[i].0 = (1.0 - t) * tmp[i].0 + t * tmp[i + 1].0;
+                    tmp[i].1 = (1.0 - t) * tmp[i].1 + t * tmp[i + 1].1;
+                }
+            }
+            tmp[0]
+        }
+    
+        let mut pts = Vec::<(Real, Real)>::with_capacity(segments + 1);
+        for i in 0..=segments {
+            let t = i as Real / segments as Real;
+            pts.push(de_casteljau(control, t));
+        }
+    
+        // If the curve happens to be closed, make sure the polygon ring closes.
+        let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < EPSILON
+            && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < EPSILON;
+        if !closed {
+            // open curve → produce a LineString geometry, *not* a filled polygon
+            let ls: LineString<Real> = pts.into();
+            let mut gc = GeometryCollection::default();
+            gc.0.push(Geometry::LineString(ls));
+            return CSG::from_geo(gc, metadata);
+        }
+    
+        // closed curve → create a filled polygon
+        let poly_2d = GeoPolygon::new(LineString::from(pts), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
+    }
+    
+    /// Sample an open-uniform B-spline of arbitrary degree (`p`) using the
+    /// Cox-de Boor recursion. Returns a poly-line (or a filled region if closed).
+    ///
+    /// * `control`: control points  
+    /// * `p`:       spline degree (e.g. 3 for a cubic)  
+    /// * `segments_per_span`: tessellation resolution inside every knot span
+    pub fn bspline(
+        control: &[[Real; 2]],
+        p: usize,
+        segments_per_span: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        if control.len() < p + 1 || segments_per_span < 1 {
+            return CSG::new();
+        }
+    
+        let n = control.len() - 1;
+        let m = n + p + 1; // knot count
+        // open-uniform knot vector: 0,0,…,0,1,2,…,n-p-1,(n-p),…,(n-p)
+        let mut knot = Vec::<Real>::with_capacity(m + 1);
+        for i in 0..=m {
+            if i <= p {
+                knot.push(0.0);
+            } else if i >= m - p {
+                knot.push((n - p) as Real);
+            } else {
+                knot.push((i - p) as Real);
+            }
+        }
+    
+        // Cox-de Boor basis evaluation ------------------------------------------
+        fn basis(i: usize, p: usize, u: Real, knot: &[Real]) -> Real {
+            if p == 0 {
+                return if u >= knot[i] && u < knot[i + 1] { 1.0 } else { 0.0 };
+            }
+            let denom1 = knot[i + p] - knot[i];
+            let denom2 = knot[i + p + 1] - knot[i + 1];
+            let term1 = if denom1.abs() < EPSILON {
+                0.0
+            } else {
+                (u - knot[i]) / denom1 * basis(i, p - 1, u, knot)
+            };
+            let term2 = if denom2.abs() < EPSILON {
+                0.0
+            } else {
+                (knot[i + p + 1] - u) / denom2 * basis(i + 1, p - 1, u, knot)
+            };
+            term1 + term2
+        }
+    
+        let span_count = n - p;                   // #inner knot spans
+        let _max_u = span_count as Real;           // parametric upper bound
+        let dt = 1.0 / segments_per_span as Real; // step in local span coords
+    
+        let mut pts = Vec::<(Real, Real)>::new();
+        for span in 0..=span_count {
+            for s in 0..=segments_per_span {
+                if span == span_count && s == segments_per_span {
+                    // avoid duplicating final knot value
+                    continue;
+                }
+                let u = span as Real + s as Real * dt; // global param
+                let mut x = 0.0;
+                let mut y = 0.0;
+                for (idx, &[px, py]) in control.iter().enumerate() {
+                    let b = basis(idx, p, u, &knot);
+                    x += b * px;
+                    y += b * py;
+                }
+                pts.push((x, y));
+            }
+        }
+    
+        let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < EPSILON
+            && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < EPSILON;
+        if !closed {
+            let ls: LineString<Real> = pts.into();
+            let mut gc = GeometryCollection::default();
+            gc.0.push(Geometry::LineString(ls));
+            return CSG::from_geo(gc, metadata);
+        }
+    
+        let poly_2d = GeoPolygon::new(LineString::from(pts), vec![]);
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
+    }
+
 }
