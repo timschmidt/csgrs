@@ -116,7 +116,7 @@ metaballs = [
   "fast-surface-nets",
   "hashmap",
 ]
-hashmap = [ # slice and related helper functions, is_manifold()
+hashmap = [ # slice and related helper functions, is_manifold(), metaball_2d
   "hashbrown",
 ]
 sdf = [
