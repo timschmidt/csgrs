@@ -13,9 +13,7 @@ pub mod model;
 pub mod spatial;
 pub mod storage;
 pub mod utils;
-pub mod voxel;
 pub mod world;
 
-pub use core::{Batch, BlockId, Lod, MaxDepth, TraversalDepth};
+pub use core::{Batch, BlockId, Lod, MaxDepth, TraversalDepth, VoxelTrait};
 pub use storage::NodeStore;
-pub use voxel::VoxelTrait;

@@ -22,7 +22,7 @@ macro_rules! impl_voxel_trait_for_numerics {
 impl_voxel_trait_for_numerics!(u8, i8, u16, i16, u32, i32, u64, i64);
 
 #[inline(always)]
-fn calc_average<T>(children: &[T]) -> T
+pub fn calc_average<T>(children: &[T]) -> T
 where
     T: VoxelTrait,
 {
