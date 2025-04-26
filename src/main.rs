@@ -412,6 +412,19 @@ fn main() {
     let arrow_reversed_csg = CSG::arrow(start, direction, segments, false, None::<()>);
     let _ = fs::write("stl/arrow_reversed.stl", arrow_reversed_csg.to_stl_ascii("arrow_example"));
 
+    // 2-D profile for NACA 2412, 1 m chord, 100 pts / surface
+    let naca2412 = CSG::airfoil("2412", 1.0, 100, None);
+    let _ = fs::write("stl/naca2412.stl", naca2412.to_stl_ascii("2412"));
+    
+    // quick solid wing rib 5 mm thick
+    let rib = naca2412.extrude(0.005);
+    let _ = fs::write("stl/naca2412_extruded.stl", rib.to_stl_ascii("2412_extruded"));
+    
+    // symmetric foil for a centerboard
+    let naca0015 = CSG::airfoil("0015", 0.3, 80, None)
+                        .extrude_vector(nalgebra::Vector3::new(0.0, 0.0, 1.2));
+    let _ = fs::write("stl/naca0015.stl", naca0015.to_stl_ascii("naca0015"));
+    
 
     // ---------------------------------------------------------
     // Additional “SCENES” Demonstrating Each Function Minimally

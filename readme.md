@@ -487,7 +487,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - renderer integration
   - blueprint renders
   - exploded renders
-- airfoil cross-sections
 - implement 2D line, point, LineString functions for CSG
 - https://github.com/hmeyer/tessellation
 - emit TrueType glyphs into the same MultiPolygon for each call of text()
