@@ -1,8 +1,8 @@
 use std::collections::{HashMap, hash_map::Entry};
 
-use crate::{BlockId, VoxelTrait, get_next_index_macro};
+use voxelis_memory::PoolAllocatorLite;
 
-use super::PoolAllocatorLite;
+use crate::{BlockId, VoxelTrait, get_next_index_macro};
 
 mod consts;
 mod hash;

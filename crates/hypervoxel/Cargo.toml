@@ -2,12 +2,13 @@
 resolver = "3"
 members = [
   "voxelis",
+  "voxelis-memory",
   "voxelis-bevy",
   "vtm-export",
   "vtm-viewer",
   "vtm-voxelize",
 ]
-default-members = ["voxelis"]
+default-members = ["voxelis", "voxelis-memory"]
 
 [workspace.package]
 version = "25.4.0"
@@ -24,6 +25,7 @@ rust-version = "1.86"
 
 [workspace.dependencies]
 voxelis = { path = "voxelis" }
+voxelis-memory = { path = "voxelis-memory" }
 voxelis-bevy = { path = "voxelis-bevy" }
 
 ahash = "0.8.11"

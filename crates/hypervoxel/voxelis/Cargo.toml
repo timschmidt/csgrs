@@ -12,6 +12,7 @@ memory_stats = []
 debug_trace_ref_counts = []
 
 [dependencies]
+voxelis-memory.workspace = true
 ahash.workspace = true
 bitflags.workspace = true
 byteorder.workspace = true
