@@ -449,7 +449,7 @@ Patterns we work to follow throughout the library to improve performance and mem
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - screw threads
 - support scale and translation along a vector in rotate extrude
-- reimplement 3D offsetting with https://github.com/u65xhd/meshvox or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html
+- reimplement 3D offsetting with https://github.com/u65xhd/meshvox or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html or https://github.com/komadori/bevy_mod_outline/
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
   - https://github.com/dimforge/parry/blob/master/src/transformation/hertel_mehlhorn.rs for convex partitioning
 - reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
@@ -496,7 +496,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - implement trait geo::MetricSpace on nalgebra::Point, Point2, Point3
 - investigate https://github.com/TimTheBig/geo-3d for useful functions
 - gltf / obj / gerber output
-- 3d offset: https://github.com/komadori/bevy_mod_outline/
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
