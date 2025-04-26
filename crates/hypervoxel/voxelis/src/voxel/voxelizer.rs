@@ -17,9 +17,10 @@ use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
+use voxelis_math::triangle_cube_intersection;
+
 use crate::{
     Batch, MaxDepth,
-    core::triangle_cube_intersection,
     io::Obj,
     model::Model,
     spatial::{OctreeOpsBatch, OctreeOpsState, OctreeOpsWrite},

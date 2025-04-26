@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
   "voxelis",
+  "voxelis-math",
   "voxelis-memory",
   "voxelis-bevy",
   "vtm-export",
@@ -25,6 +26,7 @@ rust-version = "1.86"
 
 [workspace.dependencies]
 voxelis = { path = "voxelis" }
+voxelis-math = { path = "voxelis-math" }
 voxelis-memory = { path = "voxelis-memory" }
 voxelis-bevy = { path = "voxelis-bevy" }
 

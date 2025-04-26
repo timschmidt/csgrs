@@ -1,0 +1,9 @@
+[package]
+name = "voxelis-math"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition = "2024"
+
+[dependencies]
+glam.workspace = true
