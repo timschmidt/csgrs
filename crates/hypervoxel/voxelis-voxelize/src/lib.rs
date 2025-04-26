@@ -19,7 +19,7 @@ use rustc_hash::FxHashMap;
 
 use voxelis_math::triangle_cube_intersection;
 
-use crate::{
+use voxelis::{
     Batch, MaxDepth,
     io::Obj,
     model::Model,
@@ -27,7 +27,7 @@ use crate::{
 };
 
 #[cfg(feature = "memory_stats")]
-use crate::storage::StoreStats;
+use voxelis::storage::StoreStats;
 
 #[cfg(feature = "memory_stats")]
 const PROGRESS_TEMPLATE: &str = "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({eta_precise:.0} {stats})";

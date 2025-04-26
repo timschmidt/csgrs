@@ -7,7 +7,8 @@ edition = "2024"
 
 [dependencies]
 voxelis.workspace = true
+voxelis-voxelize.workspace = true
 
 [features]
 default = ["memory_stats"]
-memory_stats = ["voxelis/memory_stats"]
+memory_stats = ["voxelis/memory_stats", "voxelis-voxelize/memory_stats"]

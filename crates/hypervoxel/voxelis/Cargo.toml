@@ -12,23 +12,14 @@ memory_stats = []
 debug_trace_ref_counts = []
 
 [dependencies]
-voxelis-math.workspace = true
 voxelis-memory.workspace = true
-ahash.workspace = true
 bitflags.workspace = true
 byteorder.workspace = true
-crossbeam.workspace = true
-fastnoise-lite.workspace = true
 glam.workspace = true
-humanize-bytes.workspace = true
-indicatif.workspace = true
-log.workspace = true
 md-5.workspace = true
 parking_lot.workspace = true
-rand.workspace = true
 rayon.workspace = true
 rustc-hash.workspace = true
-serde.workspace = true
 wide.workspace = true
 zstd.workspace = true
 

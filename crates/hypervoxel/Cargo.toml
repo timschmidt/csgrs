@@ -4,6 +4,7 @@ members = [
   "voxelis",
   "voxelis-math",
   "voxelis-memory",
+  "voxelis-voxelize",
   "voxelis-bevy",
   "vtm-export",
   "vtm-viewer",
@@ -28,6 +29,7 @@ rust-version = "1.86"
 voxelis = { path = "voxelis" }
 voxelis-math = { path = "voxelis-math" }
 voxelis-memory = { path = "voxelis-memory" }
+voxelis-voxelize = { path = "voxelis-voxelize" }
 voxelis-bevy = { path = "voxelis-bevy" }
 
 ahash = "0.8.11"

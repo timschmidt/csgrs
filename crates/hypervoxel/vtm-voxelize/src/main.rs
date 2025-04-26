@@ -3,8 +3,8 @@ use std::path::Path;
 use voxelis::{
     MaxDepth,
     io::{Obj, export::export_model_to_vtm},
-    voxel::voxelizer::Voxelizer,
 };
+use voxelis_voxelize::Voxelizer;
 
 fn main() {
     if std::env::args().len() < 5 {
