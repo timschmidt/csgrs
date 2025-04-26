@@ -3,9 +3,10 @@ use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
-use geo::{CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord};
+use geo::{CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, Coord, coord};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
+use hashbrown::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct MetaBall {
@@ -32,6 +33,60 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
         value += ball.influence(p);
     }
     value
+}
+
+// helper – quantise to avoid FP noise
+#[inline]
+fn key(x: Real, y: Real) -> (i64, i64) {
+    ((x * 1e8).round() as i64, (y * 1e8).round() as i64)
+}
+
+/// stitch all 2-point segments into longer polylines,
+/// close them when the ends meet
+fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
+    // adjacency map  endpoint -> (line index, end-id 0|1)
+    let mut adj: HashMap<(i64,i64), Vec<(usize, usize)>> = HashMap::new();
+    for (idx, ls) in contours.iter().enumerate() {
+        let p0 = ls[0];                       // first point
+        let p1 = ls[1];                       // second point
+        adj.entry(key(p0.x, p0.y)).or_default().push((idx, 0));
+        adj.entry(key(p1.x, p1.y)).or_default().push((idx, 1));
+    }
+
+    let mut used = vec![false; contours.len()];
+    let mut chains = Vec::new();
+
+    for start in 0..contours.len() {
+        if used[start] { continue; }
+        used[start] = true;
+
+        // current chain of points
+        let mut chain = Vec::<Coord<Real>>::from(contours[start].0.clone());
+
+        // walk forward
+        loop {
+            let last = *chain.last().unwrap();
+            let Some(cands) = adj.get(&key(last.x, last.y)) else { break };
+            let mut found = None;
+            for &(idx,end_id) in cands {
+                if used[idx] { continue; }
+                used[idx] = true;
+                // choose the *other* endpoint
+                let other = contours[idx][1 - end_id];
+                chain.push(other);
+                found = Some(());
+                break;
+            }
+            if found.is_none() { break; }
+        }
+
+        // close if ends coincide
+        if chain.len() >= 3 && (chain[0] == *chain.last().unwrap()) == false {
+            chain.push(chain[0]);
+        }
+        chains.push(LineString::new(chain));
+    }
+    chains
 }
 
 impl<S: Clone + Debug> CSG<S>
@@ -172,36 +227,12 @@ where S: Clone + Send + Sync {
         //    We store them in a GeometryCollection.
         let mut gc = GeometryCollection::default();
 
-        // If you want to unify them into continuous lines, you can do so,
-        // but for now let's just push each as a separate line or polygon if closed.
-        for pl in contours {
-            let n = pl.coords_count();
-            if n < 2 {
-                continue;
-            }
+        let stitched = stitch(&contours);
 
-            // gather coords
-            let coords: Vec<_> = (0..n).map(|i| {
-                let v = pl.0[i];
-                (v.x, v.y)
-            }).collect();
-
-            // Check if first == last => closed
-            let closed = {
-                let first = coords[0];
-                let last = coords[n - 1];
-                let dx = first.0 - last.0;
-                let dy = first.1 - last.1;
-                (dx * dx + dy * dy).sqrt() < EPSILON
-            };
-
-            if closed {
-                // Turn it into a Polygon
-                let polygon_2d = GeoPolygon::new(LineString::from(coords.clone()), vec![]);
-                gc.0.push(Geometry::Polygon(polygon_2d));
-            } else {
-                // It's an open line
-                gc.0.push(Geometry::LineString(LineString::from(coords)));
+        for pl in stitched {
+            if pl.is_closed() && pl.coords_count() >= 4 {
+                let polygon = GeoPolygon::new(pl, vec![]);
+                gc.0.push(Geometry::Polygon(polygon));
             }
         }
 
