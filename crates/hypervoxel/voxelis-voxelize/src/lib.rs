@@ -27,7 +27,7 @@ use voxelis::{
 };
 
 #[cfg(feature = "memory_stats")]
-use voxelis::storage::StoreStats;
+use voxelis::interner::InternerStats;
 
 #[cfg(feature = "memory_stats")]
 const PROGRESS_TEMPLATE: &str = "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({eta_precise:.0} {stats})";
@@ -298,26 +298,26 @@ impl Voxelizer {
             drop(tx);
         });
 
-        let storage_arc = self.model.get_store();
-        let mut storage = storage_arc.write();
+        let interner_arc = self.model.get_interner();
+        let mut interner = interner_arc.write();
 
         println!("Applying batches to chunks");
 
         let bar = ProgressBar::new(chunks_to_process as u64);
 
         #[cfg(feature = "memory_stats")]
-        let total_memory = storage.stats().requested_budget;
+        let total_memory = interner.stats().requested_budget;
         #[cfg(feature = "memory_stats")]
-        let store_stats = Arc::new(Mutex::new(StoreStats::default()));
+        let interner_stats = Arc::new(Mutex::new(InternerStats::default()));
         #[cfg(feature = "memory_stats")]
-        let store_stats_clone = store_stats.clone();
+        let interner_stats_clone = interner_stats.clone();
 
         let style = ProgressStyle::with_template(PROGRESS_TEMPLATE).unwrap();
 
         #[cfg(feature = "memory_stats")]
         let style = style.with_key("stats", move |_state: &ProgressState, w: &mut dyn Write| {
             write!(w, "{}", {
-                let stats = store_stats_clone.lock().unwrap();
+                let stats = interner_stats_clone.lock().unwrap();
                 let used_memory = stats.alive_nodes * stats.node_size;
 
                 format!("{} / {}", ByteSize(used_memory), ByteSize(total_memory),)
@@ -332,12 +332,12 @@ impl Voxelizer {
         for (chunk_position, batch) in rx.iter() {
             self.model
                 .get_or_create_chunk(chunk_position)
-                .apply_batch(&mut storage, &batch);
+                .apply_batch(&mut interner, &batch);
 
             #[cfg(feature = "memory_stats")]
             {
-                let stats = storage.stats();
-                store_stats.lock().unwrap().clone_from(&stats);
+                let stats = interner.stats();
+                interner_stats.lock().unwrap().clone_from(&stats);
             }
 
             bar.inc(1);
@@ -368,8 +368,8 @@ impl Voxelizer {
 
         let mesh_min = self.mesh.aabb.0;
 
-        let storage = self.model.get_store();
-        let mut storage = storage.write();
+        let interner = self.model.get_interner();
+        let mut interner = interner.write();
 
         for face in self.mesh.faces.iter() {
             for vertex_index in [face.x, face.y, face.z] {
@@ -381,7 +381,7 @@ impl Voxelizer {
                     convert_voxel_world_to_chunk_position(voxel, self.model.chunk_world_size);
                 let chunk = &mut self.model.get_or_create_chunk(chunk_position);
 
-                chunk.set(&mut storage, local_voxel, 1);
+                chunk.set(&mut interner, local_voxel, 1);
             }
         }
 
@@ -419,8 +419,8 @@ impl Voxelizer {
 
         #[cfg(feature = "memory_stats")]
         {
-            let storage = self.model.storage_stats();
-            println!("Storage stats: {:#?}", storage);
+            let interner = self.model.interner_stats();
+            println!("Interner stats: {:#?}", interner);
         }
 
         println!(

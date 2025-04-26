@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
 
-use crate::storage::node::MAX_CHILDREN;
+use crate::interner::MAX_CHILDREN;
 
 pub trait VoxelTrait: Clone + Copy + PartialEq + Default + Hash + Display + Debug {
     #[inline(always)]

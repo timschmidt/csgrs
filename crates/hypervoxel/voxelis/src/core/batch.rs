@@ -1,30 +1,30 @@
 //! Module `core::batch`
 //!
-//! This module provides a buffer for batching set, clear, and fill operations on an octree node store.
+//! This module provides a buffer for batching set, clear, and fill operations on an octree node interner.
 //! It is designed to optimize voxel modifications by accumulating changes before applying them to the octree.
 //!
 //! # Examples
 //!
 //! ```
-//! use voxelis::{Batch, MaxDepth, storage::NodeStore, spatial::OctreeOpsWrite};
+//! use voxelis::{Batch, DagInterner, MaxDepth, spatial::OctreeOpsWrite};
 //! use glam::IVec3;
 //!
-//! // Create storage for 8-bit voxels
-//! let mut store = NodeStore::<u8>::with_memory_budget(1024);
+//! // Create interner for 8-bit voxels
+//! let mut interner = DagInterner::<u8>::with_memory_budget(1024);
 //!
 //! let mut batch = Batch::<u8>::new(MaxDepth::new(4));
 //! // Fill the octree with a uniform voxel value
-//! batch.fill(&mut store, 2);
+//! batch.fill(&mut interner, 2);
 //! // Set a voxel at position (1, 2, 3)
-//! batch.set(&mut store, IVec3::new(1, 2, 3), 1);
+//! batch.set(&mut interner, IVec3::new(1, 2, 3), 1);
 //! // Clear a voxel at position (4, 5, 6)
-//! batch.set(&mut store, IVec3::new(4, 5, 6), 0);
+//! batch.set(&mut interner, IVec3::new(4, 5, 6), 0);
 //! ```
 
 use glam::IVec3;
 
 use crate::{
-    NodeStore, VoxelTrait, spatial::OctreeOpsWrite, storage::node::MAX_CHILDREN,
+    DagInterner, VoxelTrait, interner::MAX_CHILDREN, spatial::OctreeOpsWrite,
     utils::common::encode_child_index_path,
 };
 
@@ -167,7 +167,7 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for Batch<T> {
     /// # Panics
     ///
     /// Panics if `position` is out of bounds for the configured `max_depth`.
-    fn set(&mut self, _store: &mut NodeStore<T>, position: IVec3, voxel: T) -> bool {
+    fn set(&mut self, _interner: &mut DagInterner<T>, position: IVec3, voxel: T) -> bool {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
         assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
@@ -197,13 +197,13 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for Batch<T> {
     }
 
     /// Clears existing operations and sets a uniform fill value for the batch.
-    fn fill(&mut self, store: &mut NodeStore<T>, value: T) {
-        self.clear(store);
+    fn fill(&mut self, interner: &mut DagInterner<T>, value: T) {
+        self.clear(interner);
         self.to_fill = Some(value);
     }
 
     /// Resets all recorded operations, clearing masks, values, and fill state.
-    fn clear(&mut self, _store: &mut NodeStore<T>) {
+    fn clear(&mut self, _interner: &mut DagInterner<T>) {
         self.masks.fill((0, 0));
         self.values.fill([T::default(); MAX_CHILDREN]);
         self.to_fill = None;

@@ -163,8 +163,8 @@ fn setup(
 
     let single_mesh = false;
 
-    let storage = model.get_store();
-    let storage = storage.read();
+    let interner = model.get_interner();
+    let interner = interner.read();
 
     if single_mesh {
         let mut vertices = Vec::new();
@@ -177,7 +177,7 @@ fn setup(
             }
 
             chunk.generate_mesh_arrays(
-                &storage,
+                &interner,
                 &mut vertices,
                 &mut normals,
                 &mut indices,
@@ -239,7 +239,7 @@ fn setup(
                 let mut indices = Vec::new();
 
                 chunk.generate_mesh_arrays(
-                    &storage,
+                    &interner,
                     &mut vertices,
                     &mut normals,
                     &mut indices,
@@ -336,8 +336,8 @@ fn setup(
 
     #[cfg(feature = "memory_stats")]
     {
-        let storage = model.storage_stats();
-        println!("Storage stats: {:#?}", storage);
+        let interner = model.interner_stats();
+        println!("Interner stats: {:#?}", interner);
     }
 
     commands.spawn((
@@ -391,8 +391,8 @@ fn main() {
 
     #[cfg(feature = "memory_stats")]
     {
-        let storage = model.storage_stats();
-        println!("Storage stats: {:#?}", storage);
+        let interner = model.interner_stats();
+        println!("Interner stats: {:#?}", interner);
     }
 
     App::new()

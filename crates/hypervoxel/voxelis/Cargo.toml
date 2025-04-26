@@ -25,6 +25,8 @@ zstd.workspace = true
 
 [dev-dependencies]
 criterion2 = { version = "3.0.0" }
+fastnoise-lite.workspace = true
+rand.workspace = true
 
 [[bench]]
 name = "octree_bench"

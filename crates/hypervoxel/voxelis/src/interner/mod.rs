@@ -13,7 +13,7 @@ mod stats;
 pub use consts::*;
 pub use hash::PatternsHashmap;
 #[cfg(feature = "memory_stats")]
-pub use stats::StoreStats;
+pub use stats::InternerStats;
 
 use hash::{
     IdentityHasherBuilder, compute_branch_hash_for_children, compute_empty_branch_hash,
@@ -22,7 +22,7 @@ use hash::{
 
 pub type Children = [BlockId; MAX_CHILDREN];
 
-pub struct NodeStore<T> {
+pub struct DagInterner<T> {
     patterns: [PatternsHashmap; 2],
     free_indices: Vec<u32>,
     next_index: u32,
@@ -36,10 +36,10 @@ pub struct NodeStore<T> {
     empty_branch_hash: u64,
     dec_ref_rec_stack: Vec<BlockId>,
     #[cfg(feature = "memory_stats")]
-    stats: StoreStats,
+    stats: InternerStats,
 }
 
-impl<T: VoxelTrait> NodeStore<T> {
+impl<T: VoxelTrait> DagInterner<T> {
     const INITIAL_CAPACITY: usize = 16384; // 43ms
 
     pub fn with_memory_budget(requested_budget: usize) -> Self {
@@ -105,7 +105,7 @@ impl<T: VoxelTrait> NodeStore<T> {
         }
 
         #[cfg(feature = "memory_stats")]
-        let stats = StoreStats {
+        let stats = InternerStats {
             requested_budget,
             actual_budget,
             node_size: single_node_size,
@@ -714,7 +714,7 @@ impl<T: VoxelTrait> NodeStore<T> {
     /// All non-empty blocks inside `children` must have bumped ref counts:
     /// - if there is no branch, ref counts will be kept
     /// - if there is a branch, ref counts will be decremented, and branch ref count will be bumped
-    /// There is no other way, since we can't act like Arc without access to store
+    /// There is no other way, since we can't act like Arc without access to interner
     pub fn get_or_create_branch(&mut self, children: Children, types: u8, mask: u8) -> BlockId {
         // Compute hash for the new node
         let hash = compute_branch_hash_for_children(&children, types, mask);
@@ -1046,7 +1046,7 @@ impl<T: VoxelTrait> NodeStore<T> {
     }
 
     #[cfg(feature = "memory_stats")]
-    pub fn stats(&self) -> StoreStats {
+    pub fn stats(&self) -> InternerStats {
         self.stats
     }
 

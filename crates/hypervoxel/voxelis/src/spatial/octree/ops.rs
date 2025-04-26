@@ -1,24 +1,24 @@
 use glam::IVec3;
 
-use crate::{Batch, Lod, MaxDepth, NodeStore, VoxelTrait};
+use crate::{Batch, DagInterner, Lod, MaxDepth, VoxelTrait};
 
 pub trait OctreeOpsRead<T: VoxelTrait> {
-    fn get(&self, store: &NodeStore<T>, position: IVec3) -> Option<T>;
+    fn get(&self, interner: &DagInterner<T>, position: IVec3) -> Option<T>;
 }
 
 pub trait OctreeOpsWrite<T: VoxelTrait> {
-    fn set(&mut self, store: &mut NodeStore<T>, position: IVec3, voxel: T) -> bool;
-    fn fill(&mut self, store: &mut NodeStore<T>, value: T);
-    fn clear(&mut self, store: &mut NodeStore<T>);
+    fn set(&mut self, interner: &mut DagInterner<T>, position: IVec3, voxel: T) -> bool;
+    fn fill(&mut self, interner: &mut DagInterner<T>, value: T);
+    fn clear(&mut self, interner: &mut DagInterner<T>);
 }
 
 pub trait OctreeOpsBatch<T: VoxelTrait> {
     fn create_batch(&self) -> Batch<T>;
-    fn apply_batch(&mut self, store: &mut NodeStore<T>, batch: &Batch<T>) -> bool;
+    fn apply_batch(&mut self, interner: &mut DagInterner<T>, batch: &Batch<T>) -> bool;
 }
 
 pub trait OctreeOpsMesh<T: VoxelTrait> {
-    fn to_vec(&self, store: &NodeStore<T>, lod: Lod) -> Vec<T>;
+    fn to_vec(&self, interner: &DagInterner<T>, lod: Lod) -> Vec<T>;
 }
 
 pub trait OctreeOpsConfig {

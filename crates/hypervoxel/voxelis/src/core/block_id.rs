@@ -31,7 +31,7 @@ const INDEX_MASK: u64 = 0xFFFF_FFFF;
 
 /// # [`BlockId`]
 ///
-/// Represents a node in an octree structure used for voxel storage.
+/// Represents a node in an octree structure used for voxel interner.
 ///
 /// ## Bit Layout (64-bit structure)
 ///

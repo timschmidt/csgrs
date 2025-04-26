@@ -1,9 +1,9 @@
 use glam::IVec3;
 
 use crate::{
-    Batch, BlockId, Lod, MaxDepth, NodeStore, TraversalDepth, VoxelTrait, child_index_macro,
+    Batch, BlockId, DagInterner, Lod, MaxDepth, TraversalDepth, VoxelTrait, child_index_macro,
     child_index_macro_2,
-    storage::node::{EMPTY_CHILD, MAX_ALLOWED_DEPTH, MAX_CHILDREN},
+    interner::{EMPTY_CHILD, MAX_ALLOWED_DEPTH, MAX_CHILDREN},
     utils::common::{get_at_depth, to_vec},
 };
 
@@ -122,20 +122,20 @@ impl SvoDag {
         self.root_id
     }
 
-    pub fn set_root_id<T: VoxelTrait>(&mut self, store: &mut NodeStore<T>, root_id: BlockId) {
+    pub fn set_root_id<T: VoxelTrait>(&mut self, interner: &mut DagInterner<T>, root_id: BlockId) {
         self.root_id = root_id;
-        store.inc_ref(&self.root_id);
+        interner.inc_ref(&self.root_id);
     }
 }
 
 impl<T: VoxelTrait> OctreeOpsRead<T> for SvoDag {
-    fn get(&self, store: &NodeStore<T>, position: IVec3) -> Option<T> {
+    fn get(&self, interner: &DagInterner<T>, position: IVec3) -> Option<T> {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
         assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
 
         get_at_depth(
-            store,
+            interner,
             self.root_id,
             &position,
             &TraversalDepth::new(0, self.max_depth.max()),
@@ -144,7 +144,7 @@ impl<T: VoxelTrait> OctreeOpsRead<T> for SvoDag {
 }
 
 impl<T: VoxelTrait> OctreeOpsWrite<T> for SvoDag {
-    fn set(&mut self, store: &mut NodeStore<T>, position: IVec3, voxel: T) -> bool {
+    fn set(&mut self, interner: &mut DagInterner<T>, position: IVec3, voxel: T) -> bool {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
         assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
@@ -159,19 +159,31 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for SvoDag {
             #[cfg(feature = "debug_trace_ref_counts")]
             {
                 println!("Some(root) set position: {:?} voxel: {}", position, voxel);
-                store.dump_node(self.root_id, 0, "  ");
+                interner.dump_node(self.root_id, 0, "  ");
             }
 
             // Existing root - modify
-            set_at_root(store, &self.root_id, &position, self.max_depth.max(), voxel)
+            set_at_root(
+                interner,
+                &self.root_id,
+                &position,
+                self.max_depth.max(),
+                voxel,
+            )
         } else if voxel != T::default() {
             #[cfg(feature = "debug_trace_ref_counts")]
             {
                 println!("None set position: {:?} voxel: {}", position, voxel);
-                store.dump_node(self.root_id, 0, "  ");
+                interner.dump_node(self.root_id, 0, "  ");
             }
 
-            set_at_root(store, &self.root_id, &position, self.max_depth.max(), voxel)
+            set_at_root(
+                interner,
+                &self.root_id,
+                &position,
+                self.max_depth.max(),
+                voxel,
+            )
         } else {
             return false;
         };
@@ -186,16 +198,16 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for SvoDag {
                 #[cfg(feature = "debug_trace_ref_counts")]
                 {
                     println!("existing_root_id:");
-                    store.dump_node(self.root_id, 0, "  ");
+                    interner.dump_node(self.root_id, 0, "  ");
                     println!("new_root_id:");
-                    store.dump_node(new_root_id, 0, "  ");
+                    interner.dump_node(new_root_id, 0, "  ");
                     println!(
                         "  existing_root_id: {:?} new_root: {:?}",
                         self.root_id, new_root_id,
                     );
                 }
 
-                store.dec_ref_recursive(&self.root_id);
+                interner.dec_ref_recursive(&self.root_id);
 
                 #[cfg(feature = "debug_trace_ref_counts")]
                 {
@@ -203,19 +215,19 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for SvoDag {
                         "new_root after recycling existing_root position: {:?}",
                         position
                     );
-                    store.dump_node(new_root_id, 0, "  ");
+                    interner.dump_node(new_root_id, 0, "  ");
                 }
             } else {
                 #[cfg(feature = "debug_trace_ref_counts")]
                 {
                     println!("new_root_id:");
-                    store.dump_node(new_root_id, 0, "  ");
+                    interner.dump_node(new_root_id, 0, "  ");
                     println!("  new_root: {:?}", new_root_id);
                 }
             }
 
             assert!(
-                store.is_valid_block_id(&new_root_id),
+                interner.is_valid_block_id(&new_root_id),
                 "Invalid new root id: {:?}",
                 new_root_id
             );
@@ -232,29 +244,29 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for SvoDag {
         }
     }
 
-    fn fill(&mut self, store: &mut NodeStore<T>, value: T) {
+    fn fill(&mut self, interner: &mut DagInterner<T>, value: T) {
         if value != T::default() {
             if !self.root_id.is_empty() {
-                store.dec_ref_recursive(&self.root_id);
+                interner.dec_ref_recursive(&self.root_id);
             }
-            self.root_id = store.get_or_create_leaf(value);
+            self.root_id = interner.get_or_create_leaf(value);
             self.dirty = true;
         } else {
-            self.clear(store);
+            self.clear(interner);
         }
     }
 
-    fn clear(&mut self, store: &mut NodeStore<T>) {
+    fn clear(&mut self, interner: &mut DagInterner<T>) {
         if !self.root_id.is_empty() {
             #[cfg(feature = "debug_trace_ref_counts")]
             println!("clear root_id: {:?}", self.root_id);
 
-            store.dec_ref_recursive(&self.root_id);
+            interner.dec_ref_recursive(&self.root_id);
 
             #[cfg(feature = "debug_trace_ref_counts")]
-            store.dump_patterns();
+            interner.dump_patterns();
 
-            assert!(store.patterns_empty());
+            assert!(interner.patterns_empty());
 
             self.root_id = BlockId::EMPTY;
             self.dirty = true;
@@ -267,18 +279,18 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for SvoDag {
         Batch::new(self.max_depth)
     }
 
-    fn apply_batch(&mut self, store: &mut NodeStore<T>, batch: &Batch<T>) -> bool {
-        let new_root_id = set_batch_at_root(store, &self.root_id, self.max_depth.max(), batch);
+    fn apply_batch(&mut self, interner: &mut DagInterner<T>, batch: &Batch<T>) -> bool {
+        let new_root_id = set_batch_at_root(interner, &self.root_id, self.max_depth.max(), batch);
 
         if new_root_id != BlockId::INVALID {
             if !self.root_id.is_empty() {
                 assert_ne!(new_root_id, self.root_id);
 
-                store.dec_ref_recursive(&self.root_id);
+                interner.dec_ref_recursive(&self.root_id);
             }
 
             assert!(
-                store.is_valid_block_id(&new_root_id),
+                interner.is_valid_block_id(&new_root_id),
                 "Invalid new root id: {:?}",
                 new_root_id
             );
@@ -294,8 +306,8 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for SvoDag {
 }
 
 impl<T: VoxelTrait> OctreeOpsMesh<T> for SvoDag {
-    fn to_vec(&self, store: &NodeStore<T>, lod: Lod) -> Vec<T> {
-        to_vec(store, &self.root_id, self.max_depth.for_lod(lod))
+    fn to_vec(&self, interner: &DagInterner<T>, lod: Lod) -> Vec<T> {
+        to_vec(interner, &self.root_id, self.max_depth.for_lod(lod))
     }
 }
 
@@ -342,7 +354,7 @@ impl OctreeOpsDirty for SvoDag {
 
 #[inline(always)]
 fn set_at_root<T: VoxelTrait>(
-    store: &mut NodeStore<T>,
+    interner: &mut DagInterner<T>,
     node_id: &BlockId,
     position: &IVec3,
     max_depth: u8,
@@ -352,14 +364,14 @@ fn set_at_root<T: VoxelTrait>(
 
     let depth = TraversalDepth::new(0, max_depth);
     if voxel != T::default() {
-        set_at_depth_iterative(store, node_id, position, &depth, voxel)
+        set_at_depth_iterative(interner, node_id, position, &depth, voxel)
     } else {
-        remove_at_depth(store, node_id, position, &depth)
+        remove_at_depth(interner, node_id, position, &depth)
     }
 }
 
 fn set_at_depth_iterative<T: VoxelTrait>(
-    store: &mut NodeStore<T>,
+    interner: &mut DagInterner<T>,
     initial_node_id: &BlockId,
     position: &IVec3,
     initial_depth: &TraversalDepth,
@@ -382,13 +394,13 @@ fn set_at_depth_iterative<T: VoxelTrait>(
     #[cfg(feature = "debug_trace_ref_counts")]
     {
         println!(" Phase 1 - Find the spot");
-        store.dump_node(current_node_id, 0, "  ");
+        interner.dump_node(current_node_id, 0, "  ");
     }
 
     let mut leaf_node_id = BlockId::EMPTY;
     while current_depth < max_depth {
         #[cfg(feature = "debug_trace_ref_counts")]
-        let current_node_ref_count = store.get_ref(&current_node_id);
+        let current_node_ref_count = interner.get_ref(&current_node_id);
 
         let index = child_index_macro_2!(position, current_depth, max_depth);
 
@@ -406,9 +418,9 @@ fn set_at_depth_iterative<T: VoxelTrait>(
 
             stack[current_depth] = (current_node_id, leaf_node_id, index as u8);
 
-            current_node_id = store.get_child_id(&current_node_id, index);
+            current_node_id = interner.get_child_id(&current_node_id, index);
         } else {
-            if store.get_value(&current_node_id) == &voxel {
+            if interner.get_value(&current_node_id) == &voxel {
                 return BlockId::INVALID; // Nothing changed
             }
 
@@ -442,24 +454,24 @@ fn set_at_depth_iterative<T: VoxelTrait>(
             current_depth,
             max_depth,
             current_node_id,
-            store.get_ref(&current_node_id),
-            store.is_valid_block_id(&current_node_id)
+            interner.get_ref(&current_node_id),
+            interner.is_valid_block_id(&current_node_id)
         );
     }
 
-    if current_node_id.is_leaf() && store.get_value(&current_node_id) == &voxel {
+    if current_node_id.is_leaf() && interner.get_value(&current_node_id) == &voxel {
         #[cfg(feature = "debug_trace_ref_counts")]
         println!("  voxel already exists, no change required");
         return BlockId::INVALID; // Nothing changed
     }
 
-    current_node_id = store.get_or_create_leaf(voxel);
+    current_node_id = interner.get_or_create_leaf(voxel);
 
     #[cfg(feature = "debug_trace_ref_counts")]
     println!(
         "   current: {:?} ref_count: {}",
         current_node_id,
-        store.get_ref(&current_node_id)
+        interner.get_ref(&current_node_id)
     );
 
     // Phase 3: propagate upwards and create new branch nodes
@@ -483,22 +495,22 @@ fn set_at_depth_iterative<T: VoxelTrait>(
             );
 
             #[cfg(feature = "debug_trace_ref_counts")]
-            for (child_idx, child) in store.get_children(&parent_node_id).iter().enumerate() {
+            for (child_idx, child) in interner.get_children(&parent_node_id).iter().enumerate() {
                 if child_idx == parent_node_index as usize {
                     println!(
                         "   child[{}]: {:?} [{}] => {:?} [{}]",
                         child_idx,
                         child,
-                        store.get_ref(child),
+                        interner.get_ref(child),
                         current_node_id,
-                        store.get_ref(&current_node_id),
+                        interner.get_ref(&current_node_id),
                     );
                 } else {
                     println!(
                         "   child[{}]: {:?} [{}]",
                         child_idx,
                         child,
-                        store.get_ref(child)
+                        interner.get_ref(child)
                     );
                 }
             }
@@ -506,15 +518,15 @@ fn set_at_depth_iterative<T: VoxelTrait>(
             let types =
                 parent_node_id.types() | ((current_node_id.is_leaf() as u8) << parent_node_index);
 
-            let mut branch = store.get_children(&parent_node_id);
+            let mut branch = interner.get_children(&parent_node_id);
             branch[parent_node_index as usize] = current_node_id;
 
             if !(types == 0xFF && branch.iter().all(|item| item == &current_node_id)) {
                 let mask = parent_node_id.mask() | (1 << parent_node_index);
 
-                store.inc_child_refs(&branch, parent_node_index as usize);
+                interner.inc_child_refs(&branch, parent_node_index as usize);
 
-                current_node_id = store.get_or_create_branch(branch, types, mask);
+                current_node_id = interner.get_or_create_branch(branch, types, mask);
             }
         } else if leaf_node_id.is_empty() {
             #[cfg(feature = "debug_trace_ref_counts")]
@@ -532,7 +544,7 @@ fn set_at_depth_iterative<T: VoxelTrait>(
             children[parent_node_index as usize] = current_node_id;
             let types = (current_node_id.is_leaf() as u8) << parent_node_index;
             let mask = 1 << parent_node_index;
-            current_node_id = store.get_or_create_branch(children, types, mask);
+            current_node_id = interner.get_or_create_branch(children, types, mask);
         } else {
             #[cfg(feature = "debug_trace_ref_counts")]
             println!(
@@ -546,12 +558,12 @@ fn set_at_depth_iterative<T: VoxelTrait>(
             );
 
             let mut children = [leaf_node_id; MAX_CHILDREN];
-            store.inc_ref_by(&leaf_node_id, 7);
+            interner.inc_ref_by(&leaf_node_id, 7);
             children[parent_node_index as usize] = current_node_id;
             let types = !(1 << parent_node_index)
                 | ((current_node_id.is_leaf() as u8) << parent_node_index);
             let mask = 0xFF;
-            current_node_id = store.get_or_create_branch(children, types, mask);
+            current_node_id = interner.get_or_create_branch(children, types, mask);
         }
     }
 
@@ -559,14 +571,14 @@ fn set_at_depth_iterative<T: VoxelTrait>(
     {
         println!(" Phase 4 - Finalize");
         println!("  new_root: {:?}", current_node_id);
-        store.dump_node(current_node_id, 0, "  ");
+        interner.dump_node(current_node_id, 0, "  ");
     }
 
     current_node_id
 }
 
 fn remove_at_depth<T: VoxelTrait>(
-    store: &mut NodeStore<T>,
+    interner: &mut DagInterner<T>,
     node_id: &BlockId,
     position: &IVec3,
     depth: &TraversalDepth,
@@ -574,14 +586,14 @@ fn remove_at_depth<T: VoxelTrait>(
     assert!(*node_id != BlockId::INVALID);
 
     if node_id.is_branch() {
-        remove_at_depth_branch(store, node_id, position, depth)
+        remove_at_depth_branch(interner, node_id, position, depth)
     } else {
-        remove_at_depth_leaf(store, node_id, position, depth)
+        remove_at_depth_leaf(interner, node_id, position, depth)
     }
 }
 
 fn remove_at_depth_branch<T: VoxelTrait>(
-    store: &mut NodeStore<T>,
+    interner: &mut DagInterner<T>,
     node_id: &BlockId,
     position: &IVec3,
     depth: &TraversalDepth,
@@ -592,19 +604,19 @@ fn remove_at_depth_branch<T: VoxelTrait>(
         node_id, position, depth
     );
 
-    assert!(store.is_valid_block_id(node_id));
+    assert!(interner.is_valid_block_id(node_id));
     assert!(depth.current() < depth.max(), "Branch node at max depth");
 
     let index = child_index_macro!(position, depth);
 
     if node_id.has_child(index as u8) {
-        let mut branch = store.get_children(node_id);
+        let mut branch = interner.get_children(node_id);
         let child_id = branch[index];
 
-        let new_child_id = remove_at_depth(store, &child_id, position, &depth.increment());
+        let new_child_id = remove_at_depth(interner, &child_id, position, &depth.increment());
 
         if new_child_id != BlockId::INVALID {
-            assert!(store.is_valid_block_id(&new_child_id));
+            assert!(interner.is_valid_block_id(&new_child_id));
 
             let is_empty = new_child_id.is_empty();
 
@@ -642,9 +654,9 @@ fn remove_at_depth_branch<T: VoxelTrait>(
                     node_id, position, depth
                 );
 
-                store.inc_child_refs(&branch, index);
+                interner.inc_child_refs(&branch, index);
 
-                store.get_or_create_branch(branch, types, mask)
+                interner.get_or_create_branch(branch, types, mask)
             }
         } else {
             #[cfg(feature = "debug_trace_ref_counts")]
@@ -666,7 +678,7 @@ fn remove_at_depth_branch<T: VoxelTrait>(
 }
 
 fn remove_at_depth_leaf<T: VoxelTrait>(
-    store: &mut NodeStore<T>,
+    interner: &mut DagInterner<T>,
     node_id: &BlockId,
     position: &IVec3,
     depth: &TraversalDepth,
@@ -677,16 +689,16 @@ fn remove_at_depth_leaf<T: VoxelTrait>(
         node_id, position, depth
     );
 
-    assert!(store.is_valid_block_id(node_id));
+    assert!(interner.is_valid_block_id(node_id));
 
     if depth.current() == depth.max() {
         // At max depth, just remove the leaf
         BlockId::EMPTY
     } else {
         // Remove the voxel in the appropriate child, splitting the leaf always results in a new branch
-        let new_node_id = remove_at_depth_leaf(store, node_id, position, &depth.increment());
+        let new_node_id = remove_at_depth_leaf(interner, node_id, position, &depth.increment());
 
-        assert!(store.is_valid_block_id(&new_node_id));
+        assert!(interner.is_valid_block_id(&new_node_id));
 
         // Convert leaf to branch
         let index = child_index_macro!(position, depth);
@@ -703,16 +715,16 @@ fn remove_at_depth_leaf<T: VoxelTrait>(
 
         // println!("types: {:b} mask: {:b}", types, mask);
 
-        store.inc_ref_by(node_id, 7);
+        interner.inc_ref_by(node_id, 7);
 
         // Create new branch node
-        store.get_or_create_branch(children, types, mask)
+        interner.get_or_create_branch(children, types, mask)
     }
 }
 
 #[inline(always)]
 fn set_batch_at_root<T: VoxelTrait>(
-    store: &mut NodeStore<T>,
+    interner: &mut DagInterner<T>,
     node_id: &BlockId,
     max_depth: u8,
     batch: &Batch<T>,
@@ -721,11 +733,11 @@ fn set_batch_at_root<T: VoxelTrait>(
 
     let depth = TraversalDepth::new(0, max_depth);
 
-    set_batch_at_depth_iterative(store, node_id, &depth, batch)
+    set_batch_at_depth_iterative(interner, node_id, &depth, batch)
 }
 
 fn set_batch_at_depth_iterative<T: VoxelTrait>(
-    store: &mut NodeStore<T>,
+    interner: &mut DagInterner<T>,
     initial_node_id: &BlockId,
     initial_depth: &TraversalDepth,
     batch: &Batch<T>,
@@ -742,11 +754,11 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
     #[cfg(feature = "debug_trace_ref_counts")]
     println!(" Phase 0 - Handle fill",);
     let initial_node_id = if let Some(voxel) = batch.to_fill() {
-        let node_id = store.get_or_create_leaf(voxel);
+        let node_id = interner.get_or_create_leaf(voxel);
 
         #[cfg(feature = "debug_trace_ref_counts")]
         {
-            let ref_count = store.get_ref(&node_id);
+            let ref_count = interner.get_ref(&node_id);
             println!(
                 "  current: {:?} value: {:?} ref_count: {}",
                 node_id, voxel, ref_count
@@ -769,7 +781,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
     #[cfg(feature = "debug_trace_ref_counts")]
     {
         println!(" Phase 1 - Prepare the chain & build dangling branches",);
-        store.dump_node(initial_node_id, 0, "  ");
+        interner.dump_node(initial_node_id, 0, "  ");
     }
 
     let data_len = batch.masks().len();
@@ -806,10 +818,10 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                     index,
                     current_node_id,
                     leaf_node_id,
-                    store.get_ref(&current_node_id)
+                    interner.get_ref(&current_node_id)
                 );
 
-                current_node_id = store.get_child_id(&current_node_id, index);
+                current_node_id = interner.get_child_id(&current_node_id, index);
             } else {
                 // Split leaf node
                 leaf_node_id = current_node_id;
@@ -826,7 +838,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                         index,
                         current_node_id,
                         leaf_node_id,
-                        store.get_ref(&current_node_id)
+                        interner.get_ref(&current_node_id)
                     );
                 }
             }
@@ -843,13 +855,13 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
         if !all_same {
             let (mut children, mut types, mut mask) = if !current_node_id.is_empty() {
                 (
-                    store.get_children(&current_node_id),
+                    interner.get_children(&current_node_id),
                     current_node_id.types(),
                     current_node_id.mask(),
                 )
             } else if leaf_node_id.is_leaf() {
                 let data_len = set_mask.count_ones() as usize;
-                store.inc_ref_by(&leaf_node_id, (MAX_CHILDREN - data_len) as u32);
+                interner.inc_ref_by(&leaf_node_id, (MAX_CHILDREN - data_len) as u32);
 
                 ([leaf_node_id; MAX_CHILDREN], 0xFF, 0xFF)
             } else {
@@ -865,12 +877,12 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
                 let value = &values[idx];
 
-                if !children[idx].is_empty() && store.get_value(&children[idx]) == value {
+                if !children[idx].is_empty() && interner.get_value(&children[idx]) == value {
                     // No change needed
                     continue;
                 }
 
-                children[idx] = store.get_or_create_leaf(*value);
+                children[idx] = interner.get_or_create_leaf(*value);
 
                 types |= 1 << idx;
                 mask |= 1 << idx;
@@ -890,21 +902,21 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
                     if !children[idx].is_empty() {
                         // If the child was not modified, we need to increment its ref count
-                        store.inc_ref_by(&children[idx], 1);
+                        interner.inc_ref_by(&children[idx], 1);
                     }
                 }
             }
 
-            let branch_id = store.get_or_create_branch(children, types, mask);
+            let branch_id = interner.get_or_create_branch(children, types, mask);
 
             current_level_data[path_index] = branch_id;
             paths.push(path);
         } else {
             #[cfg(feature = "memory_stats")]
-            store.bump_collapsed_branches();
+            interner.bump_collapsed_branches();
 
             let first_value = values[set_mask.trailing_zeros() as usize];
-            let leaf_id = store.get_or_create_leaf(first_value);
+            let leaf_id = interner.get_or_create_leaf(first_value);
 
             current_level_data[path_index] = leaf_id;
             paths.push(path);
@@ -956,7 +968,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                 break;
             } else {
                 let index = (path >> ((max_depth - current_depth - 1) * 3)) & 0b111;
-                equivalent_id = store.get_child_id(&equivalent_id, index);
+                equivalent_id = interner.get_child_id(&equivalent_id, index);
             }
 
             if equivalent_id.is_empty() {
@@ -1036,7 +1048,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
 
         if mask != 0xFF {
             if cloned_nodes != 0 {
-                let existing_children = store.get_children_ref(&equivalent_id);
+                let existing_children = interner.get_children_ref(&equivalent_id);
 
                 let mut cloned_nodes_bits = cloned_nodes;
 
@@ -1063,7 +1075,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                     leafs_to_clone_bits &= !(1 << idx);
                 }
 
-                store.inc_ref_by(&leaf_id, leafs_to_clone);
+                interner.inc_ref_by(&leaf_id, leafs_to_clone);
             }
         }
 
@@ -1075,13 +1087,13 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                 let idx = cloned_nodes_bits.trailing_zeros() as usize;
                 cloned_nodes_bits &= !(1 << idx);
 
-                store.inc_ref(&children[idx]);
+                interner.inc_ref(&children[idx]);
             }
 
-            store.get_or_create_branch(children, types, mask)
+            interner.get_or_create_branch(children, types, mask)
         } else {
             #[cfg(feature = "memory_stats")]
-            store.bump_collapsed_branches();
+            interner.bump_collapsed_branches();
 
             let dec_ref = if cloned_nodes != 0 {
                 cloned_nodes.count_ones().min(7)
@@ -1089,7 +1101,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                 7
             };
 
-            store.dec_ref_by(&children[0], dec_ref);
+            interner.dec_ref_by(&children[0], dec_ref);
 
             children[0]
         };
@@ -1098,7 +1110,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
         println!(
             "     new_node_id: {:?} ref_count: {}",
             new_node_id,
-            store.get_ref(&new_node_id)
+            interner.get_ref(&new_node_id)
         );
 
         let next_path = path & path_mask;
@@ -1133,7 +1145,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
     {
         println!(" Phase 3 - Finalize");
         println!("  new_root: {:?}", final_node_id);
-        store.dump_node(final_node_id, 0, "  ");
+        interner.dump_node(final_node_id, 0, "  ");
     }
 
     final_node_id
@@ -1176,28 +1188,28 @@ mod tests {
 
     #[test]
     fn test_set_and_get() {
-        let mut store = NodeStore::<u8>::with_memory_budget(1024 * 2);
+        let mut interner = DagInterner::<u8>::with_memory_budget(1024 * 2);
 
         let mut octree = SvoDag::new(MaxDepth::new(3));
         let position = IVec3::new(0, 0, 0);
 
         // Test setting and getting a value
-        assert!(octree.set(&mut store, position, 42));
-        assert_eq!(octree.get(&store, position), Some(42));
+        assert!(octree.set(&mut interner, position, 42));
+        assert_eq!(octree.get(&interner, position), Some(42));
 
         // Test overwriting a value
-        assert!(octree.set(&mut store, position, 24));
-        assert_eq!(octree.get(&store, position), Some(24));
+        assert!(octree.set(&mut interner, position, 24));
+        assert_eq!(octree.get(&interner, position), Some(24));
 
         // Test getting from an empty position
-        assert_eq!(octree.get(&store, IVec3::new(1, 1, 1)), None);
+        assert_eq!(octree.get(&interner, IVec3::new(1, 1, 1)), None);
 
         // Test setting at max depth
         let max_pos = IVec3::new(7, 7, 7); // 2^3 - 1
-        assert!(octree.set(&mut store, max_pos, 99));
-        assert_eq!(octree.get(&store, max_pos), Some(99));
+        assert!(octree.set(&mut interner, max_pos, 99));
+        assert_eq!(octree.get(&interner, max_pos), Some(99));
 
-        octree.clear(&mut store);
+        octree.clear(&mut interner);
 
         let positions = [
             IVec3::new(0, 0, 0),
@@ -1211,33 +1223,33 @@ mod tests {
         ];
 
         for (i, &pos) in positions.iter().enumerate() {
-            octree.set(&mut store, pos, (i + 1) as u8);
+            octree.set(&mut interner, pos, (i + 1) as u8);
         }
 
         for (i, &pos) in positions.iter().enumerate() {
-            assert_eq!(octree.get(&store, pos).unwrap(), (i + 1) as u8);
+            assert_eq!(octree.get(&interner, pos).unwrap(), (i + 1) as u8);
         }
     }
 
     #[test]
     fn test_is_empty() {
-        let mut store = NodeStore::<u8>::with_memory_budget(1024);
+        let mut interner = DagInterner::<u8>::with_memory_budget(1024);
 
         let mut octree = SvoDag::new(MaxDepth::new(3));
         assert!(octree.is_empty());
 
         // Setting a value makes it non-empty
-        assert!(octree.set(&mut store, IVec3::new(0, 0, 0), 1));
+        assert!(octree.set(&mut interner, IVec3::new(0, 0, 0), 1));
         assert!(!octree.is_empty());
 
         // Clearing makes it empty again
-        octree.clear(&mut store);
+        octree.clear(&mut interner);
         assert!(octree.is_empty());
     }
 
     #[test]
     fn test_clear() {
-        let mut store = NodeStore::<u8>::with_memory_budget(1024 * 2);
+        let mut interner = DagInterner::<u8>::with_memory_budget(1024 * 2);
 
         let mut octree = SvoDag::new(MaxDepth::new(3));
 
@@ -1253,45 +1265,45 @@ mod tests {
         ];
 
         for (i, &pos) in positions.iter().enumerate() {
-            octree.set(&mut store, pos, (i + 1) as u8);
+            octree.set(&mut interner, pos, (i + 1) as u8);
         }
 
-        octree.clear(&mut store);
+        octree.clear(&mut interner);
         assert!(octree.is_empty());
 
         for &pos in positions.iter() {
-            assert!(octree.get(&store, pos).is_none());
+            assert!(octree.get(&interner, pos).is_none());
         }
     }
 
     #[test]
     fn test_no_default_leaf_nodes() {
-        let mut store = NodeStore::<u8>::with_memory_budget(1024);
+        let mut interner = DagInterner::<u8>::with_memory_budget(1024);
 
         let mut octree = SvoDag::new(MaxDepth::new(3));
 
         // Set a value and then set it back to default
         let position = IVec3::new(0, 0, 0);
-        assert!(octree.set(&mut store, position, 42));
-        assert_eq!(octree.get(&store, position), Some(42));
+        assert!(octree.set(&mut interner, position, 42));
+        assert_eq!(octree.get(&interner, position), Some(42));
         assert!(!octree.is_empty());
 
         // 0 is default for u8
-        assert!(octree.set(&mut store, position, 0));
+        assert!(octree.set(&mut interner, position, 0));
         // The node should be removed when set to default
-        assert_eq!(octree.get(&store, position), None);
+        assert_eq!(octree.get(&interner, position), None);
         assert!(octree.is_empty());
     }
 
     #[test]
     fn test_dirty_flag() {
-        let mut store = NodeStore::<u8>::with_memory_budget(1024);
+        let mut interner = DagInterner::<u8>::with_memory_budget(1024);
 
         let mut octree = SvoDag::new(MaxDepth::new(3));
         assert!(!octree.is_dirty());
 
         // Setting a value should make it dirty
-        assert!(octree.set(&mut store, IVec3::new(0, 0, 0), 1));
+        assert!(octree.set(&mut interner, IVec3::new(0, 0, 0), 1));
         assert!(octree.is_dirty());
 
         // Clearing the dirty flag
@@ -1299,13 +1311,13 @@ mod tests {
         assert!(!octree.is_dirty());
 
         // Clearing the octree should make it dirty again
-        octree.clear(&mut store);
+        octree.clear(&mut interner);
         assert!(octree.is_dirty());
     }
 
     #[test]
-    fn test_shared_store_uniqueness() {
-        let mut store = NodeStore::<u8>::with_memory_budget(1024);
+    fn test_shared_interner_uniqueness() {
+        let mut interner = DagInterner::<u8>::with_memory_budget(1024);
 
         let mut octree1 = SvoDag::new(MaxDepth::new(3));
         let mut octree2 = SvoDag::new(MaxDepth::new(3));
@@ -1315,19 +1327,19 @@ mod tests {
         assert!(octree2.is_empty());
 
         // Setting in one tree should not affect the other
-        assert!(octree1.set(&mut store, IVec3::new(0, 0, 0), 42));
-        assert_eq!(octree1.get(&store, IVec3::new(0, 0, 0)), Some(42));
-        assert_eq!(octree2.get(&store, IVec3::new(0, 0, 0)), None);
+        assert!(octree1.set(&mut interner, IVec3::new(0, 0, 0), 42));
+        assert_eq!(octree1.get(&interner, IVec3::new(0, 0, 0)), Some(42));
+        assert_eq!(octree2.get(&interner, IVec3::new(0, 0, 0)), None);
 
-        // But they should share the same store for efficiency
-        assert!(octree2.set(&mut store, IVec3::new(0, 0, 0), 24));
-        assert_eq!(octree2.get(&store, IVec3::new(0, 0, 0)), Some(24));
+        // But they should share the same interner for efficiency
+        assert!(octree2.set(&mut interner, IVec3::new(0, 0, 0), 24));
+        assert_eq!(octree2.get(&interner, IVec3::new(0, 0, 0)), Some(24));
         assert_ne!(octree1.get_root_id(), octree2.get_root_id());
     }
 
     #[test]
-    fn test_shared_store_deduplication() {
-        let mut store = NodeStore::<u8>::with_memory_budget(1024);
+    fn test_shared_interner_deduplication() {
+        let mut interner = DagInterner::<u8>::with_memory_budget(1024);
 
         let mut octree1 = SvoDag::new(MaxDepth::new(3));
         let mut octree2 = SvoDag::new(MaxDepth::new(3));
@@ -1337,8 +1349,8 @@ mod tests {
         assert!(octree2.is_empty());
 
         // Setting same value in both trees should result in the same root id (deduplication)
-        assert!(octree1.set(&mut store, IVec3::new(0, 0, 0), 42));
-        assert!(octree2.set(&mut store, IVec3::new(0, 0, 0), 42));
+        assert!(octree1.set(&mut interner, IVec3::new(0, 0, 0), 42));
+        assert!(octree2.set(&mut interner, IVec3::new(0, 0, 0), 42));
         assert_eq!(octree1.get_root_id(), octree2.get_root_id());
     }
 
@@ -1348,20 +1360,20 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
 
         let position = IVec3::new(0, 0, 0);
-        assert!(octree.set(&mut store, position, TEST_VALUE));
-        assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+        assert!(octree.set(&mut interner, position, TEST_VALUE));
+        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
 
         // Test overwriting a value
-        assert!(octree.set(&mut store, position, TEST_VALUE + 1));
-        assert_eq!(octree.get(&store, position), Some(TEST_VALUE + 1));
+        assert!(octree.set(&mut interner, position, TEST_VALUE + 1));
+        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE + 1));
 
         // Test setting same value
-        assert!(!octree.set(&mut store, position, TEST_VALUE + 1));
-        assert_eq!(octree.get(&store, position), Some(TEST_VALUE + 1));
+        assert!(!octree.set(&mut interner, position, TEST_VALUE + 1));
+        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE + 1));
     }
 
     #[test]
@@ -1370,17 +1382,17 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
 
         let position = IVec3::new(0, 0, 0);
 
         let mut batch = octree.create_batch();
 
-        batch.set(&mut store, position, TEST_VALUE);
+        batch.set(&mut interner, position, TEST_VALUE);
 
-        assert!(octree.apply_batch(&mut store, &batch));
-        assert!(!octree.apply_batch(&mut store, &batch));
+        assert!(octree.apply_batch(&mut interner, &batch));
+        assert!(!octree.apply_batch(&mut interner, &batch));
     }
 
     #[test]
@@ -1390,13 +1402,13 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         for value in START_VALUE..END_VALUE {
-            octree.fill(&mut store, value * 10);
-            octree.set(&mut store, IVec3::new(0, 0, 0), value);
+            octree.fill(&mut interner, value * 10);
+            octree.set(&mut interner, IVec3::new(0, 0, 0), value);
 
             for y in 0..voxels_per_axis {
                 for z in 0..voxels_per_axis {
@@ -1407,7 +1419,7 @@ mod tests {
                         } else {
                             value * 10
                         };
-                        assert_eq!(octree.get(&store, position), Some(value));
+                        assert_eq!(octree.get(&interner, position), Some(value));
                     }
                 }
             }
@@ -1415,7 +1427,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1425,16 +1437,16 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         let mut branch = octree.create_batch();
 
-        branch.fill(&mut store, FILL_VALUE);
-        branch.set(&mut store, IVec3::new(0, 0, 0), TEST_VALUE);
+        branch.fill(&mut interner, FILL_VALUE);
+        branch.set(&mut interner, IVec3::new(0, 0, 0), TEST_VALUE);
 
-        assert!(octree.apply_batch(&mut store, &branch));
+        assert!(octree.apply_batch(&mut interner, &branch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -1445,14 +1457,14 @@ mod tests {
                     } else {
                         FILL_VALUE
                     };
-                    assert_eq!(octree.get(&store, position), Some(value));
+                    assert_eq!(octree.get(&interner, position), Some(value));
                 }
             }
         }
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1460,7 +1472,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1471,8 +1483,8 @@ mod tests {
                     if (x + y + z) % 2 == 0 {
                         let position = IVec3::new(x, y, z);
                         let value = 2;
-                        assert!(octree.set(&mut store, position, value));
-                        assert_eq!(octree.get(&store, position), Some(value));
+                        assert!(octree.set(&mut interner, position, value));
+                        assert_eq!(octree.get(&interner, position), Some(value));
                     }
                 }
             }
@@ -1483,14 +1495,14 @@ mod tests {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     let value = if (x + y + z) % 2 == 0 { Some(2) } else { None };
-                    assert_eq!(octree.get(&store, position), value);
+                    assert_eq!(octree.get(&interner, position), value);
                 }
             }
         }
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1498,7 +1510,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1510,26 +1522,26 @@ mod tests {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     let value = if (x + y + z) % 2 == 0 { 2 } else { 1 };
-                    assert!(batch.set(&mut store, position, value));
+                    assert!(batch.set(&mut interner, position, value));
                 }
             }
         }
 
-        assert!(octree.apply_batch(&mut store, &batch));
+        assert!(octree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     let value = if (x + y + z) % 2 == 0 { 2 } else { 1 };
-                    assert_eq!(octree.get(&store, position), Some(value));
+                    assert_eq!(octree.get(&interner, position), Some(value));
                 }
             }
         }
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1538,7 +1550,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1546,8 +1558,8 @@ mod tests {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert!(octree.set(&mut store, position, TEST_VALUE));
-                    assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+                    assert!(octree.set(&mut interner, position, TEST_VALUE));
+                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
@@ -1556,13 +1568,13 @@ mod tests {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
         assert!(!octree.is_empty());
         assert!(octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1571,7 +1583,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1581,24 +1593,24 @@ mod tests {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert!(batch.set(&mut store, position, TEST_VALUE));
+                    assert!(batch.set(&mut interner, position, TEST_VALUE));
                 }
             }
         }
 
-        assert!(octree.apply_batch(&mut store, &batch));
+        assert!(octree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
         assert!(!octree.is_empty());
         assert!(octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1608,7 +1620,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
         let half_voxels_per_axis = voxels_per_axis / 2;
@@ -1618,8 +1630,8 @@ mod tests {
                 for z in 0..voxels_per_axis {
                     for x in 0..voxels_per_axis {
                         let position = IVec3::new(x, y, z);
-                        assert!(octree.set(&mut store, position, value));
-                        assert_eq!(octree.get(&store, position), Some(value));
+                        assert!(octree.set(&mut interner, position, value));
+                        assert_eq!(octree.get(&interner, position), Some(value));
                     }
                 }
             }
@@ -1629,7 +1641,7 @@ mod tests {
                     for x in 0..voxels_per_axis {
                         let position = IVec3::new(x, y, z);
                         assert_eq!(
-                            octree.get(&store, position),
+                            octree.get(&interner, position),
                             if y < half_voxels_per_axis {
                                 Some(value)
                             } else {
@@ -1643,7 +1655,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1653,7 +1665,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
         let half_voxels_per_axis = voxels_per_axis / 2;
@@ -1665,19 +1677,19 @@ mod tests {
                 for z in 0..voxels_per_axis {
                     for x in 0..voxels_per_axis {
                         let position = IVec3::new(x, y, z);
-                        assert!(batch.set(&mut store, position, value));
+                        assert!(batch.set(&mut interner, position, value));
                     }
                 }
             }
 
-            assert!(octree.apply_batch(&mut store, &batch));
+            assert!(octree.apply_batch(&mut interner, &batch));
 
             for y in 0..voxels_per_axis {
                 for z in 0..voxels_per_axis {
                     for x in 0..voxels_per_axis {
                         let position = IVec3::new(x, y, z);
                         assert_eq!(
-                            octree.get(&store, position),
+                            octree.get(&interner, position),
                             if y < half_voxels_per_axis {
                                 Some(value)
                             } else {
@@ -1691,7 +1703,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1700,24 +1712,24 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
-        octree.fill(&mut store, TEST_VALUE);
+        octree.fill(&mut interner, TEST_VALUE);
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
 
         assert!(!octree.is_empty());
         assert!(octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1726,28 +1738,28 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         let mut batch = octree.create_batch();
 
-        batch.fill(&mut store, TEST_VALUE);
+        batch.fill(&mut interner, TEST_VALUE);
 
-        assert!(octree.apply_batch(&mut store, &batch));
+        assert!(octree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
 
         assert!(!octree.is_empty());
         assert!(octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1756,7 +1768,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1764,8 +1776,8 @@ mod tests {
             for z in (0..voxels_per_axis).step_by(4) {
                 for x in (0..voxels_per_axis).step_by(4) {
                     let position = IVec3::new(x, y, z);
-                    assert!(octree.set(&mut store, position, TEST_VALUE));
-                    assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+                    assert!(octree.set(&mut interner, position, TEST_VALUE));
+                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
@@ -1776,9 +1788,9 @@ mod tests {
                     let position = IVec3::new(x, y, z);
 
                     if x % 4 == 0 && y % 4 == 0 && z % 4 == 0 {
-                        assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+                        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
                     } else {
-                        assert_eq!(octree.get(&store, position), None);
+                        assert_eq!(octree.get(&interner, position), None);
                     }
                 }
             }
@@ -1786,7 +1798,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1795,7 +1807,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1805,12 +1817,12 @@ mod tests {
             for z in (0..voxels_per_axis).step_by(4) {
                 for x in (0..voxels_per_axis).step_by(4) {
                     let position = IVec3::new(x, y, z);
-                    assert!(batch.set(&mut store, position, TEST_VALUE));
+                    assert!(batch.set(&mut interner, position, TEST_VALUE));
                 }
             }
         }
 
-        assert!(octree.apply_batch(&mut store, &batch));
+        assert!(octree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -1818,9 +1830,9 @@ mod tests {
                     let position = IVec3::new(x, y, z);
 
                     if x % 4 == 0 && y % 4 == 0 && z % 4 == 0 {
-                        assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+                        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
                     } else {
-                        assert_eq!(octree.get(&store, position), None);
+                        assert_eq!(octree.get(&interner, position), None);
                     }
                 }
             }
@@ -1828,7 +1840,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1836,7 +1848,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1845,9 +1857,9 @@ mod tests {
             for y in 0..voxels_per_axis {
                 for z in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert_eq!(octree.set(&mut store, position, value), value > 0);
+                    assert_eq!(octree.set(&mut interner, position, value), value > 0);
                     assert_eq!(
-                        octree.get(&store, position),
+                        octree.get(&interner, position),
                         if value > 0 { Some(value) } else { None }
                     );
                 }
@@ -1860,7 +1872,7 @@ mod tests {
                 for z in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&store, position),
+                        octree.get(&interner, position),
                         if value > 0 { Some(value) } else { None }
                     );
                 }
@@ -1869,7 +1881,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1877,7 +1889,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1888,12 +1900,12 @@ mod tests {
             for y in 0..voxels_per_axis {
                 for z in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert!(batch.set(&mut store, position, value));
+                    assert!(batch.set(&mut interner, position, value));
                 }
             }
         }
 
-        assert!(octree.apply_batch(&mut store, &batch));
+        assert!(octree.apply_batch(&mut interner, &batch));
 
         for x in 0..voxels_per_axis {
             let value = (x % 256) as u8;
@@ -1901,7 +1913,7 @@ mod tests {
                 for z in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&store, position),
+                        octree.get(&interner, position),
                         if value > 0 { Some(value) } else { None }
                     );
                 }
@@ -1910,7 +1922,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1919,7 +1931,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1935,10 +1947,10 @@ mod tests {
 
                     let position = IVec3::new(x, y, z);
                     if is_edge {
-                        assert!(octree.set(&mut store, position, TEST_VALUE));
-                        assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+                        assert!(octree.set(&mut interner, position, TEST_VALUE));
+                        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
                     } else {
-                        assert_eq!(octree.get(&store, position), None);
+                        assert_eq!(octree.get(&interner, position), None);
                     }
                 }
             }
@@ -1956,9 +1968,9 @@ mod tests {
 
                     let position = IVec3::new(x, y, z);
                     if is_edge {
-                        assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+                        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
                     } else {
-                        assert_eq!(octree.get(&store, position), None);
+                        assert_eq!(octree.get(&interner, position), None);
                     }
                 }
             }
@@ -1966,7 +1978,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -1975,7 +1987,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1993,13 +2005,13 @@ mod tests {
 
                     let position = IVec3::new(x, y, z);
                     if is_edge {
-                        assert!(batch.set(&mut store, position, TEST_VALUE));
+                        assert!(batch.set(&mut interner, position, TEST_VALUE));
                     }
                 }
             }
         }
 
-        assert!(octree.apply_batch(&mut store, &batch));
+        assert!(octree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -2013,9 +2025,9 @@ mod tests {
 
                     let position = IVec3::new(x, y, z);
                     if is_edge {
-                        assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+                        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
                     } else {
-                        assert_eq!(octree.get(&store, position), None);
+                        assert_eq!(octree.get(&interner, position), None);
                     }
                 }
             }
@@ -2023,7 +2035,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -2032,14 +2044,14 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
         for i in 0..voxels_per_axis {
             let position = IVec3::new(i, i, i);
-            assert!(octree.set(&mut store, position, TEST_VALUE));
-            assert_eq!(octree.get(&store, position), Some(TEST_VALUE));
+            assert!(octree.set(&mut interner, position, TEST_VALUE));
+            assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
         }
 
         for y in 0..voxels_per_axis {
@@ -2047,7 +2059,7 @@ mod tests {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&store, position),
+                        octree.get(&interner, position),
                         if x == y && x == z {
                             Some(TEST_VALUE)
                         } else {
@@ -2060,7 +2072,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -2069,7 +2081,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -2077,17 +2089,17 @@ mod tests {
 
         for i in 0..voxels_per_axis {
             let position = IVec3::new(i, i, i);
-            assert!(batch.set(&mut store, position, TEST_VALUE));
+            assert!(batch.set(&mut interner, position, TEST_VALUE));
         }
 
-        assert!(octree.apply_batch(&mut store, &batch));
+        assert!(octree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&store, position),
+                        octree.get(&interner, position),
                         if x == y && x == z {
                             Some(TEST_VALUE)
                         } else {
@@ -2100,7 +2112,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -2108,7 +2120,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
 
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
@@ -2126,8 +2138,8 @@ mod tests {
             data[index as usize] = value;
             let position = IVec3::new(x, y, z);
 
-            assert!(octree.set(&mut store, position, value));
-            assert_eq!(octree.get(&store, position), Some(value));
+            assert!(octree.set(&mut interner, position, value));
+            assert_eq!(octree.get(&interner, position), Some(value));
         }
 
         for y in 0..voxels_per_axis {
@@ -2137,7 +2149,7 @@ mod tests {
                     let expected_value = data[index as usize];
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&store, position),
+                        octree.get(&interner, position),
                         if expected_value != 0 {
                             Some(expected_value)
                         } else {
@@ -2150,7 +2162,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -2158,7 +2170,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
 
         let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
@@ -2178,10 +2190,10 @@ mod tests {
             data[index as usize] = value;
             let position = IVec3::new(x, y, z);
 
-            assert!(batch.set(&mut store, position, value));
+            assert!(batch.set(&mut interner, position, value));
         }
 
-        assert!(octree.apply_batch(&mut store, &batch));
+        assert!(octree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -2190,7 +2202,7 @@ mod tests {
                     let expected_value = data[index as usize];
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&store, position),
+                        octree.get(&interner, position),
                         if expected_value != 0 {
                             Some(expected_value)
                         } else {
@@ -2203,7 +2215,7 @@ mod tests {
 
         assert!(!octree.is_empty());
         assert!(!octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 
     #[test]
@@ -2211,16 +2223,16 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(0);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut store = NodeStore::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
         let mut octree = SvoDag::new(MAX_DEPTH);
 
         let position = IVec3::new(0, 0, 0);
         println!("position: {:?}", position);
-        assert!(octree.set(&mut store, position, 1));
-        assert_eq!(octree.get(&store, position), Some(1));
+        assert!(octree.set(&mut interner, position, 1));
+        assert_eq!(octree.get(&interner, position), Some(1));
 
         assert!(!octree.is_empty());
         assert!(octree.is_leaf());
-        assert_eq!(store.get_ref(&octree.get_root_id()), 1);
+        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
     }
 }

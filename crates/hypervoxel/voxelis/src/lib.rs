@@ -8,12 +8,12 @@
 #![allow(clippy::if_not_else)]
 
 pub mod core;
+pub mod interner;
 pub mod io;
 pub mod model;
 pub mod spatial;
-pub mod storage;
 pub mod utils;
 pub mod world;
 
 pub use core::{Batch, BlockId, Lod, MaxDepth, TraversalDepth, VoxelTrait};
-pub use storage::NodeStore;
+pub use interner::DagInterner;

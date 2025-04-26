@@ -5,21 +5,20 @@ use glam::{IVec3, Vec3};
 use rand::Rng;
 
 use voxelis::{
-    Batch, Lod, MaxDepth,
+    Batch, DagInterner, Lod, MaxDepth,
     spatial::{
         Octree, OctreeOpsBatch, OctreeOpsMesh, OctreeOpsRead, OctreeOpsState, OctreeOpsWrite,
     },
-    storage::NodeStore,
     world::Chunk,
 };
 
 macro_rules! fill_sum {
-    ($size:expr, $octree:expr, $storage:expr) => {
+    ($size:expr, $octree:expr, $interner:expr) => {
         for x in 0..$size as i32 {
             for y in 0..$size as i32 {
                 for z in 0..$size as i32 {
                     $octree.set(
-                        &mut $storage,
+                        &mut $interner,
                         black_box(IVec3::new(x, y, z)),
                         black_box((x + y + z) % i32::MAX),
                     );
@@ -31,7 +30,7 @@ macro_rules! fill_sum {
 
 pub fn generate_test_sphere(
     octree: &mut Octree,
-    store: &mut NodeStore<i32>,
+    interner: &mut DagInterner<i32>,
     size: u32,
     value: i32,
 ) {
@@ -51,7 +50,7 @@ pub fn generate_test_sphere(
                 let distance_squared = dx * dx + dy * dy + dz * dz;
 
                 if distance_squared <= radius_squared {
-                    octree.set(store, black_box(IVec3::new(x, y, z)), black_box(value));
+                    octree.set(interner, black_box(IVec3::new(x, y, z)), black_box(value));
                 }
             }
         }
@@ -60,7 +59,7 @@ pub fn generate_test_sphere(
 
 pub fn chunk_generate_test_sphere(
     chunk: &mut Chunk,
-    store: &mut NodeStore<i32>,
+    interner: &mut DagInterner<i32>,
     size: u32,
     value: i32,
 ) {
@@ -80,14 +79,14 @@ pub fn chunk_generate_test_sphere(
                 let distance_squared = dx * dx + dy * dy + dz * dz;
 
                 if distance_squared <= radius_squared {
-                    chunk.set(store, IVec3::new(x, y, z), value);
+                    chunk.set(interner, IVec3::new(x, y, z), value);
                 }
             }
         }
     }
 }
 
-pub fn generate_test_sphere_sum(octree: &mut Octree, store: &mut NodeStore<i32>, size: u32) {
+pub fn generate_test_sphere_sum(octree: &mut Octree, interner: &mut DagInterner<i32>, size: u32) {
     let radius = (size / 2) as i32;
     let r1 = radius - 1;
 
@@ -105,7 +104,7 @@ pub fn generate_test_sphere_sum(octree: &mut Octree, store: &mut NodeStore<i32>,
 
                 if distance_squared <= radius_squared {
                     octree.set(
-                        store,
+                        interner,
                         black_box(IVec3::new(x, y, z)),
                         black_box((x + y + z) % i32::MAX),
                     );
@@ -169,12 +168,12 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024);
 
                     let mut v = 1;
 
                     b.iter(|| {
-                        octree.fill(&mut store, black_box(v));
+                        octree.fill(&mut interner, black_box(v));
 
                         v += 1;
                         if v == 0 {
@@ -199,15 +198,15 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     let mut v = 1;
                     b.iter(|| {
                         let next_v = if v + 1 != 0 { v + 1 } else { 1 };
 
-                        octree.fill(&mut store, black_box(v));
+                        octree.fill(&mut interner, black_box(v));
                         octree.set(
-                            &mut store,
+                            &mut interner,
                             black_box(IVec3::new(0, 0, 0)),
                             black_box(next_v),
                         );
@@ -232,14 +231,14 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     let mut v = 1;
                     b.iter(|| {
                         let next_v = if v + 1 != 0 { v + 1 } else { 1 };
 
                         octree.set(
-                            &mut store,
+                            &mut interner,
                             black_box(IVec3::new(0, 0, 0)),
                             black_box(next_v),
                         );
@@ -264,18 +263,18 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     let mut batches: Vec<Batch<i32>> =
                         vec![octree.create_batch(), octree.create_batch()];
 
-                    batches[0].set(&mut store, IVec3::new(0, 0, 0), 1);
-                    batches[1].set(&mut store, IVec3::new(0, 0, 0), 2);
+                    batches[0].set(&mut interner, IVec3::new(0, 0, 0), 1);
+                    batches[1].set(&mut interner, IVec3::new(0, 0, 0), 2);
 
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -301,7 +300,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 24);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                     let mut v = 1;
                     b.iter(|| {
@@ -309,7 +308,7 @@ fn benchmark_octree(c: &mut Criterion) {
                             for z in 0..size as i32 {
                                 for x in 0..size as i32 {
                                     octree.set(
-                                        &mut store,
+                                        &mut interner,
                                         black_box(IVec3::new(x, y, z)),
                                         black_box(v),
                                     );
@@ -339,7 +338,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 24);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                     let mut batches: Vec<Batch<i32>> =
                         vec![octree.create_batch(), octree.create_batch()];
@@ -347,8 +346,8 @@ fn benchmark_octree(c: &mut Criterion) {
                     for y in 0..size as i32 {
                         for z in 0..size as i32 {
                             for x in 0..size as i32 {
-                                batches[0].set(&mut store, IVec3::new(x, y, z), 1);
-                                batches[1].set(&mut store, IVec3::new(x, y, z), 2);
+                                batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
+                                batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
                             }
                         }
                     }
@@ -356,7 +355,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -382,7 +381,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 24);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                     let half_size = size / 2;
 
@@ -392,7 +391,7 @@ fn benchmark_octree(c: &mut Criterion) {
                             for z in 0..size as i32 {
                                 for x in 0..size as i32 {
                                     octree.set(
-                                        &mut store,
+                                        &mut interner,
                                         black_box(IVec3::new(x, y, z)),
                                         black_box(v),
                                     );
@@ -422,7 +421,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 24);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                     let mut batches: Vec<Batch<i32>> =
                         vec![octree.create_batch(), octree.create_batch()];
@@ -432,8 +431,8 @@ fn benchmark_octree(c: &mut Criterion) {
                     for y in 0..half_size as i32 {
                         for z in 0..size as i32 {
                             for x in 0..size as i32 {
-                                batches[0].set(&mut store, IVec3::new(x, y, z), 1);
-                                batches[1].set(&mut store, IVec3::new(x, y, z), 2);
+                                batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
+                                batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
                             }
                         }
                     }
@@ -441,7 +440,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -467,7 +466,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let mut v = 1;
                     b.iter(|| {
@@ -475,7 +474,7 @@ fn benchmark_octree(c: &mut Criterion) {
                             for z in 0..size as i32 {
                                 for x in 0..size as i32 {
                                     octree.set(
-                                        &mut store,
+                                        &mut interner,
                                         black_box(IVec3::new(x, y, z)),
                                         black_box((x + y + z + v) % i32::MAX),
                                     );
@@ -505,7 +504,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let mut batches: Vec<Batch<i32>> =
                         vec![octree.create_batch(), octree.create_batch()];
@@ -514,8 +513,12 @@ fn benchmark_octree(c: &mut Criterion) {
                         for z in 0..size as i32 {
                             for x in 0..size as i32 {
                                 let position = IVec3::new(x, y, z);
-                                batches[0].set(&mut store, position, (x + y + z + 1) % i32::MAX);
-                                batches[1].set(&mut store, position, (x + y + z + 1000) % i32::MAX);
+                                batches[0].set(&mut interner, position, (x + y + z + 1) % i32::MAX);
+                                batches[1].set(
+                                    &mut interner,
+                                    position,
+                                    (x + y + z + 1000) % i32::MAX,
+                                );
                             }
                         }
                     }
@@ -523,7 +526,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -533,7 +536,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     });
 
                     // #[cfg(feature = "memory_stats")]
-                    // println!("stats: {:#?}", store.stats());
+                    // println!("stats: {:#?}", interner.stats());
                 });
             }
         }
@@ -552,7 +555,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let mut v = 1;
                     b.iter(|| {
@@ -561,7 +564,7 @@ fn benchmark_octree(c: &mut Criterion) {
                                 for x in 0..size as i32 {
                                     if (x + y + z) % 2 == 0 {
                                         octree.set(
-                                            &mut store,
+                                            &mut interner,
                                             black_box(IVec3::new(x, y, z)),
                                             black_box(v),
                                         );
@@ -592,7 +595,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let mut batches: Vec<Batch<i32>> =
                         vec![octree.create_batch(), octree.create_batch()];
@@ -601,8 +604,8 @@ fn benchmark_octree(c: &mut Criterion) {
                         for z in 0..size as i32 {
                             for x in 0..size as i32 {
                                 if (x + y + z) % 2 == 0 {
-                                    batches[0].set(&mut store, IVec3::new(x, y, z), 1);
-                                    batches[1].set(&mut store, IVec3::new(x, y, z), 2);
+                                    batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
+                                    batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
                                 }
                             }
                         }
@@ -611,7 +614,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -621,7 +624,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     });
 
                     // #[cfg(feature = "memory_stats")]
-                    // println!("stats: {:#?}", store.stats());
+                    // println!("stats: {:#?}", interner.stats());
                 });
             }
         }
@@ -640,7 +643,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let mut v = 1;
                     b.iter(|| {
@@ -648,7 +651,7 @@ fn benchmark_octree(c: &mut Criterion) {
                             for z in (0..size as i32).step_by(4) {
                                 for x in (0..size as i32).step_by(4) {
                                     octree.set(
-                                        &mut store,
+                                        &mut interner,
                                         black_box(IVec3::new(x, y, z)),
                                         black_box(v),
                                     );
@@ -678,7 +681,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let mut batches: Vec<Batch<i32>> =
                         vec![octree.create_batch(), octree.create_batch()];
@@ -686,8 +689,8 @@ fn benchmark_octree(c: &mut Criterion) {
                     for y in (0..size as i32).step_by(4) {
                         for z in (0..size as i32).step_by(4) {
                             for x in (0..size as i32).step_by(4) {
-                                batches[0].set(&mut store, IVec3::new(x, y, z), 1);
-                                batches[1].set(&mut store, IVec3::new(x, y, z), 2);
+                                batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
+                                batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
                             }
                         }
                     }
@@ -695,7 +698,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -705,7 +708,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     });
 
                     // #[cfg(feature = "memory_stats")]
-                    // println!("stats: {:#?}", store.stats());
+                    // println!("stats: {:#?}", interner.stats());
                 });
             }
         }
@@ -724,7 +727,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 256);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 256);
 
                     let mut v = 1;
                     b.iter(|| {
@@ -733,7 +736,7 @@ fn benchmark_octree(c: &mut Criterion) {
                             for y in 0..size as i32 {
                                 for z in 0..size as i32 {
                                     octree.set(
-                                        &mut store,
+                                        &mut interner,
                                         black_box(IVec3::new(x, y, z)),
                                         black_box(value),
                                     );
@@ -763,7 +766,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let mut batches: Vec<Batch<i32>> =
                         vec![octree.create_batch(), octree.create_batch()];
@@ -773,8 +776,8 @@ fn benchmark_octree(c: &mut Criterion) {
                         let value2 = (x + 2) % 256;
                         for y in 0..size as i32 {
                             for z in 0..size as i32 {
-                                batches[0].set(&mut store, IVec3::new(x, y, z), value1);
-                                batches[1].set(&mut store, IVec3::new(x, y, z), value2);
+                                batches[0].set(&mut interner, IVec3::new(x, y, z), value1);
+                                batches[1].set(&mut interner, IVec3::new(x, y, z), value2);
                             }
                         }
                     }
@@ -782,7 +785,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -792,7 +795,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     });
 
                     // #[cfg(feature = "memory_stats")]
-                    // println!("stats: {:#?}", store.stats());
+                    // println!("stats: {:#?}", interner.stats());
                 });
             }
         }
@@ -811,7 +814,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let mut v = 1;
                     b.iter(|| {
@@ -826,7 +829,7 @@ fn benchmark_octree(c: &mut Criterion) {
                                         || z == (size as i32) - 1;
                                     if is_edge {
                                         octree.set(
-                                            &mut store,
+                                            &mut interner,
                                             black_box(IVec3::new(x, y, z)),
                                             black_box(v),
                                         );
@@ -857,7 +860,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let mut batches: Vec<Batch<i32>> =
                         vec![octree.create_batch(), octree.create_batch()];
@@ -872,8 +875,8 @@ fn benchmark_octree(c: &mut Criterion) {
                                     || z == 0
                                     || z == (size as i32) - 1;
                                 if is_edge {
-                                    batches[0].set(&mut store, IVec3::new(x, y, z), 1);
-                                    batches[1].set(&mut store, IVec3::new(x, y, z), 2);
+                                    batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
+                                    batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
                                 }
                             }
                         }
@@ -882,7 +885,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -892,7 +895,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     });
 
                     // #[cfg(feature = "memory_stats")]
-                    // println!("stats: {:#?}", store.stats());
+                    // println!("stats: {:#?}", interner.stats());
                 });
             }
         }
@@ -911,7 +914,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let mut v = 1;
                     b.iter(|| {
@@ -920,7 +923,7 @@ fn benchmark_octree(c: &mut Criterion) {
                                 for x in 0..size as i32 {
                                     if x == y && x == z {
                                         octree.set(
-                                            &mut store,
+                                            &mut interner,
                                             black_box(IVec3::new(x, y, z)),
                                             black_box(v),
                                         );
@@ -951,7 +954,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let mut batches: Vec<Batch<i32>> =
                         vec![octree.create_batch(), octree.create_batch()];
@@ -960,8 +963,8 @@ fn benchmark_octree(c: &mut Criterion) {
                         for z in 0..size as i32 {
                             for x in 0..size as i32 {
                                 if x == y && x == z {
-                                    batches[0].set(&mut store, IVec3::new(x, y, z), 1);
-                                    batches[1].set(&mut store, IVec3::new(x, y, z), 2);
+                                    batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
+                                    batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
                                 }
                             }
                         }
@@ -970,7 +973,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -980,7 +983,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     });
 
                     // #[cfg(feature = "memory_stats")]
-                    // println!("stats: {:#?}", store.stats());
+                    // println!("stats: {:#?}", interner.stats());
                 });
             }
         }
@@ -999,7 +1002,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let radius = (size / 2) as i32;
                     let r1 = radius - 1;
@@ -1020,7 +1023,7 @@ fn benchmark_octree(c: &mut Criterion) {
 
                                     if distance_squared <= radius_squared {
                                         octree.set(
-                                            &mut store,
+                                            &mut interner,
                                             black_box(IVec3::new(x, y, z)),
                                             black_box(v),
                                         );
@@ -1052,7 +1055,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let radius = (size / 2) as i32;
                     let r1 = radius - 1;
@@ -1073,8 +1076,8 @@ fn benchmark_octree(c: &mut Criterion) {
                                 let distance_squared = dx * dx + dy * dy + dz * dz;
 
                                 if distance_squared <= radius_squared {
-                                    batches[0].set(&mut store, IVec3::new(x, y, z), 1);
-                                    batches[1].set(&mut store, IVec3::new(x, y, z), 2);
+                                    batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
+                                    batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
                                 }
                             }
                         }
@@ -1083,7 +1086,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -1093,7 +1096,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     });
 
                     // #[cfg(feature = "memory_stats")]
-                    // println!("stats: {:#?}", store.stats());
+                    // println!("stats: {:#?}", interner.stats());
                 });
             }
         }
@@ -1112,7 +1115,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     let mut v = 1;
                     let mut noise = fastnoise_lite::FastNoiseLite::new();
@@ -1129,7 +1132,7 @@ fn benchmark_octree(c: &mut Criterion) {
                                 let y = y as i32;
                                 debug_assert!(y < size as i32);
                                 octree.set(
-                                    &mut store,
+                                    &mut interner,
                                     black_box(IVec3::new(x, y, z)),
                                     black_box(v),
                                 );
@@ -1158,7 +1161,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     let mut noise = fastnoise_lite::FastNoiseLite::new();
                     noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
@@ -1175,15 +1178,15 @@ fn benchmark_octree(c: &mut Criterion) {
                                 * size as f32;
                             let y = y as i32;
                             debug_assert!(y < size as i32);
-                            batches[0].set(&mut store, IVec3::new(x, y, z), 1);
-                            batches[1].set(&mut store, IVec3::new(x, y, z), 2);
+                            batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
+                            batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
                         }
                     }
 
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -1209,7 +1212,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 14);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
                     let mut v = 1;
                     let mut noise = fastnoise_lite::FastNoiseLite::new();
@@ -1227,7 +1230,7 @@ fn benchmark_octree(c: &mut Criterion) {
                                 debug_assert!(height < size as i32);
                                 for y in 0..=height {
                                     octree.set(
-                                        &mut store,
+                                        &mut interner,
                                         black_box(IVec3::new(x, y, z)),
                                         black_box(v),
                                     );
@@ -1257,7 +1260,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 14);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
                     let mut noise = fastnoise_lite::FastNoiseLite::new();
                     noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
@@ -1275,8 +1278,8 @@ fn benchmark_octree(c: &mut Criterion) {
                             let height = height as i32;
                             debug_assert!(height < size as i32);
                             for y in 0..=height {
-                                batches[0].set(&mut store, IVec3::new(x, y, z), 1);
-                                batches[1].set(&mut store, IVec3::new(x, y, z), 2);
+                                batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
+                                batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
                             }
                         }
                     }
@@ -1284,7 +1287,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     let mut batch_idx = 0;
 
                     b.iter(|| {
-                        octree.apply_batch(&mut store, black_box(&batches[batch_idx]));
+                        octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                         if batch_idx == 0 {
                             batch_idx = 1;
@@ -1310,7 +1313,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 24);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                     let mut rng = rand::rng();
                     let mut v = 1;
@@ -1320,7 +1323,11 @@ fn benchmark_octree(c: &mut Criterion) {
                         let x = rng.random_range(0..size as i32);
                         let y = rng.random_range(0..size as i32);
                         let z = rng.random_range(0..size as i32);
-                        octree.set(&mut store, black_box(IVec3::new(x, y, z)), black_box(value));
+                        octree.set(
+                            &mut interner,
+                            black_box(IVec3::new(x, y, z)),
+                            black_box(value),
+                        );
                         v += 1;
                         if v == 0 {
                             v = 1;
@@ -1344,7 +1351,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 185);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 185);
 
                     let mut rng = rand::rng();
                     let mut v = 1;
@@ -1354,7 +1361,11 @@ fn benchmark_octree(c: &mut Criterion) {
                         let y = rng.random_range(0..size as i32);
                         let z = rng.random_range(0..size as i32);
                         let value = rng.random_range(1..i32::MAX);
-                        octree.set(&mut store, black_box(IVec3::new(x, y, z)), black_box(value));
+                        octree.set(
+                            &mut interner,
+                            black_box(IVec3::new(x, y, z)),
+                            black_box(value),
+                        );
                         v += 1;
                         if v == 0 {
                             v = 1;
@@ -1378,14 +1389,14 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let store = NodeStore::<i32>::with_memory_budget(1024);
+                    let interner = DagInterner::<i32>::with_memory_budget(1024);
 
                     b.iter(|| {
                         for y in 0..size as i32 {
                             for z in 0..size as i32 {
                                 for x in 0..size as i32 {
                                     let _ = black_box(
-                                        octree.get(&store, black_box(IVec3::new(x, y, z))),
+                                        octree.get(&interner, black_box(IVec3::new(x, y, z))),
                                     );
                                 }
                             }
@@ -1409,16 +1420,16 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 14);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
-                    generate_test_sphere(&mut octree, &mut store, size, 1);
+                    generate_test_sphere(&mut octree, &mut interner, size, 1);
 
                     b.iter(|| {
                         for y in 0..size as i32 {
                             for z in 0..size as i32 {
                                 for x in 0..size as i32 {
                                     let _ = black_box(
-                                        octree.get(&store, black_box(IVec3::new(x, y, z))),
+                                        octree.get(&interner, black_box(IVec3::new(x, y, z))),
                                     );
                                 }
                             }
@@ -1442,16 +1453,16 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 14);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
-                    generate_test_sphere_sum(&mut octree, &mut store, size);
+                    generate_test_sphere_sum(&mut octree, &mut interner, size);
 
                     b.iter(|| {
                         for y in 0..size as i32 {
                             for z in 0..size as i32 {
                                 for x in 0..size as i32 {
                                     let _ = black_box(
-                                        octree.get(&store, black_box(IVec3::new(x, y, z))),
+                                        octree.get(&interner, black_box(IVec3::new(x, y, z))),
                                     );
                                 }
                             }
@@ -1475,16 +1486,16 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
-                    octree.fill(&mut store, 1);
+                    octree.fill(&mut interner, 1);
 
                     b.iter(|| {
                         for y in 0..size as i32 {
                             for z in 0..size as i32 {
                                 for x in 0..size as i32 {
                                     let _ = black_box(
-                                        octree.get(&store, black_box(IVec3::new(x, y, z))),
+                                        octree.get(&interner, black_box(IVec3::new(x, y, z))),
                                     );
                                 }
                             }
@@ -1508,16 +1519,16 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 24);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
-                    fill_sum!(size, octree, store);
+                    fill_sum!(size, octree, interner);
 
                     b.iter(|| {
                         for y in 0..size as i32 {
                             for z in 0..size as i32 {
                                 for x in 0..size as i32 {
                                     let _ = black_box(
-                                        octree.get(&store, black_box(IVec3::new(x, y, z))),
+                                        octree.get(&interner, black_box(IVec3::new(x, y, z))),
                                     );
                                 }
                             }
@@ -1560,8 +1571,8 @@ fn benchmark_octree(c: &mut Criterion) {
                     OctreeType::Static => Octree::make_static(depth),
                     OctreeType::Dynamic => Octree::make_dynamic(depth),
                 };
-                let mut store = NodeStore::<i32>::with_memory_budget(1024);
-                octree.fill(&mut store, 1);
+                let mut interner = DagInterner::<i32>::with_memory_budget(1024);
+                octree.fill(&mut interner, 1);
 
                 b.iter(|| {
                     let _ = black_box(octree.is_empty());
@@ -1583,10 +1594,10 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024);
 
                     b.iter(|| {
-                        octree.clear(black_box(&mut store));
+                        octree.clear(black_box(&mut interner));
                     });
                 });
             }
@@ -1606,11 +1617,11 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 22);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 22);
 
                     b.iter(|| {
-                        generate_test_sphere(&mut octree, &mut store, size, 1);
-                        octree.clear(&mut store);
+                        generate_test_sphere(&mut octree, &mut interner, size, 1);
+                        octree.clear(&mut interner);
                     });
                 });
             }
@@ -1630,11 +1641,11 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     b.iter(|| {
-                        octree.fill(&mut store, 1);
-                        octree.clear(&mut store);
+                        octree.fill(&mut interner, 1);
+                        octree.clear(&mut interner);
                     });
                 });
             }
@@ -1654,12 +1665,12 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let store = NodeStore::<i32>::with_memory_budget(1024);
+                    let interner = DagInterner::<i32>::with_memory_budget(1024);
 
                     let lod = Lod::new(0);
 
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&store, lod));
+                        let _ = black_box(octree.to_vec(&interner, lod));
                     });
                 });
             }
@@ -1679,14 +1690,14 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 14);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
-                    generate_test_sphere(&mut octree, &mut store, size, 1);
+                    generate_test_sphere(&mut octree, &mut interner, size, 1);
 
                     let lod = Lod::new(0);
 
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&store, lod));
+                        let _ = black_box(octree.to_vec(&interner, lod));
                     });
                 });
             }
@@ -1706,14 +1717,14 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
-                    octree.fill(&mut store, 1);
+                    octree.fill(&mut interner, 1);
 
                     let lod = Lod::new(0);
 
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&store, lod));
+                        let _ = black_box(octree.to_vec(&interner, lod));
                     });
                 });
             }
@@ -1733,14 +1744,14 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 24);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
-                    fill_sum!(size, octree, store);
+                    fill_sum!(size, octree, interner);
 
                     let lod = Lod::new(0);
 
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&store, lod));
+                        let _ = black_box(octree.to_vec(&interner, lod));
                     });
                 });
             }
@@ -1760,7 +1771,7 @@ fn benchmark_octree(c: &mut Criterion) {
                         OctreeType::Static => Octree::make_static(depth),
                         OctreeType::Dynamic => Octree::make_dynamic(depth),
                     };
-                    let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     let mut noise = fastnoise_lite::FastNoiseLite::new();
                     noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
@@ -1774,14 +1785,14 @@ fn benchmark_octree(c: &mut Criterion) {
                                 * size as f32;
                             let y = y as i32;
                             debug_assert!(y < size as i32);
-                            octree.set(&mut store, IVec3::new(x, y, z), 1);
+                            octree.set(&mut interner, IVec3::new(x, y, z), 1);
                         }
                     }
 
                     let lod = Lod::new(0);
 
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&store, lod));
+                        let _ = black_box(octree.to_vec(&interner, lod));
                     });
                 });
             }
@@ -1797,9 +1808,9 @@ fn benchmark_octree(c: &mut Criterion) {
             group.bench_with_input(BenchmarkId::from_parameter(size), &depth, |b, &depth| {
                 let mut chunk = Chunk::with_position(1.28, depth, 0, 0, 0);
 
-                let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+                let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
-                chunk_generate_test_sphere(&mut chunk, &mut store, size, 1);
+                chunk_generate_test_sphere(&mut chunk, &mut interner, size, 1);
 
                 let offset = Vec3::ZERO;
                 let mut vertices = Vec::new();
@@ -1814,7 +1825,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     indices.clear();
 
                     chunk.generate_mesh_arrays(
-                        &store,
+                        &interner,
                         black_box(&mut vertices),
                         black_box(&mut normals),
                         black_box(&mut indices),
@@ -1835,7 +1846,7 @@ fn benchmark_octree(c: &mut Criterion) {
             group.bench_with_input(BenchmarkId::from_parameter(size), &depth, |b, &depth| {
                 let mut chunk = Chunk::with_position(1.28, depth, 0, 0, 0);
 
-                let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024);
+                let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                 let mut noise = fastnoise_lite::FastNoiseLite::new();
                 noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
@@ -1849,7 +1860,7 @@ fn benchmark_octree(c: &mut Criterion) {
                             * size as f32;
                         let y = y as i32;
                         debug_assert!(y < size as i32);
-                        chunk.set(&mut store, IVec3::new(x, y, z), 1);
+                        chunk.set(&mut interner, IVec3::new(x, y, z), 1);
                     }
                 }
 
@@ -1866,7 +1877,7 @@ fn benchmark_octree(c: &mut Criterion) {
                     indices.clear();
 
                     chunk.generate_mesh_arrays(
-                        &store,
+                        &interner,
                         black_box(&mut vertices),
                         black_box(&mut normals),
                         black_box(&mut indices),

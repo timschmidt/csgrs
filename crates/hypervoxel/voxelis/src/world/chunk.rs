@@ -12,7 +12,7 @@ use crate::spatial::{
     Octree, OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead,
     OctreeOpsState, OctreeOpsWrite,
 };
-use crate::{Batch, BlockId, Lod, MaxDepth, NodeStore};
+use crate::{Batch, BlockId, DagInterner, Lod, MaxDepth};
 
 const CUBE_VERTS: [Vec3; 8] = [
     Vec3::new(-1.0, 1.0, -1.0),
@@ -73,7 +73,7 @@ impl Chunk {
         self.data.get_root_id()
     }
 
-    pub fn generate_test_data(&mut self, store: &mut NodeStore<i32>) {
+    pub fn generate_test_data(&mut self, interner: &mut DagInterner<i32>) {
         let voxels_per_axis = self.voxels_per_axis(Lod::new(0)) as i32;
         let mut position = IVec3::ZERO;
         for y in 0..voxels_per_axis {
@@ -83,7 +83,7 @@ impl Chunk {
                 position.z = z;
                 for x in offset..voxels_per_axis - offset {
                     position.x = x;
-                    self.set(store, position, y + 1);
+                    self.set(interner, position, y + 1);
                 }
             }
         }
@@ -91,7 +91,7 @@ impl Chunk {
 
     pub fn generate_test_sphere(
         &mut self,
-        store: &mut NodeStore<i32>,
+        interner: &mut DagInterner<i32>,
         center: IVec3,
         radius: i32,
         value: i32,
@@ -120,13 +120,13 @@ impl Chunk {
 
                     if distance_squared <= radius_squared {
                         position.x = x;
-                        batch.set(store, position, value);
+                        batch.set(interner, position, value);
                     }
                 }
             }
         }
 
-        self.apply_batch(store, &batch);
+        self.apply_batch(interner, &batch);
     }
 
     #[inline(always)]
@@ -146,7 +146,7 @@ impl Chunk {
 
     pub fn generate_mesh_arrays(
         &self,
-        store: &NodeStore<i32>,
+        interner: &DagInterner<i32>,
         vertices: &mut Vec<Vec3>,
         normals: &mut Vec<Vec3>,
         indices: &mut Vec<u32>,
@@ -243,7 +243,7 @@ impl Chunk {
             chunk_v7.z,
         ]);
 
-        let data = self.data.to_vec(store, lod);
+        let data = self.data.to_vec(interner, lod);
 
         for y in 0..voxels_per_axis {
             let base_index_y = y as usize * shift_y;
@@ -337,7 +337,7 @@ impl Chunk {
     }
 
     pub fn deserialize(
-        store: &mut NodeStore<i32>,
+        interner: &mut DagInterner<i32>,
         leaf_patterns: &FxHashMap<u32, (BlockId, i32)>,
         patterns: &FxHashMap<u32, (BlockId, [u32; 8], i32)>,
         reader: &mut BufReader<&[u8]>,
@@ -360,10 +360,10 @@ impl Chunk {
         match &mut chunk.data {
             Octree::Static(octree) => {
                 if let Some((block_id, _, _)) = patterns.get(&root_id) {
-                    octree.set_root_id(store, *block_id);
+                    octree.set_root_id(interner, *block_id);
                 } else {
                     let (block_id, _) = leaf_patterns.get(&root_id).unwrap();
-                    octree.set_root_id(store, *block_id);
+                    octree.set_root_id(interner, *block_id);
                 }
             }
             Octree::Dynamic(_) => {
@@ -377,25 +377,25 @@ impl Chunk {
 
 impl OctreeOpsRead<i32> for Chunk {
     #[inline(always)]
-    fn get(&self, store: &NodeStore<i32>, position: IVec3) -> Option<i32> {
-        self.data.get(store, position)
+    fn get(&self, interner: &DagInterner<i32>, position: IVec3) -> Option<i32> {
+        self.data.get(interner, position)
     }
 }
 
 impl OctreeOpsWrite<i32> for Chunk {
     #[inline(always)]
-    fn set(&mut self, store: &mut NodeStore<i32>, position: IVec3, voxel: i32) -> bool {
-        self.data.set(store, position, voxel)
+    fn set(&mut self, interner: &mut DagInterner<i32>, position: IVec3, voxel: i32) -> bool {
+        self.data.set(interner, position, voxel)
     }
 
     #[inline(always)]
-    fn fill(&mut self, store: &mut NodeStore<i32>, value: i32) {
-        self.data.fill(store, value)
+    fn fill(&mut self, interner: &mut DagInterner<i32>, value: i32) {
+        self.data.fill(interner, value)
     }
 
     #[inline(always)]
-    fn clear(&mut self, store: &mut NodeStore<i32>) {
-        self.data.clear(store)
+    fn clear(&mut self, interner: &mut DagInterner<i32>) {
+        self.data.clear(interner)
     }
 }
 
@@ -406,15 +406,15 @@ impl OctreeOpsBatch<i32> for Chunk {
     }
 
     #[inline(always)]
-    fn apply_batch(&mut self, store: &mut NodeStore<i32>, batch: &Batch<i32>) -> bool {
-        self.data.apply_batch(store, batch)
+    fn apply_batch(&mut self, interner: &mut DagInterner<i32>, batch: &Batch<i32>) -> bool {
+        self.data.apply_batch(interner, batch)
     }
 }
 
 impl OctreeOpsMesh<i32> for Chunk {
     #[inline(always)]
-    fn to_vec(&self, store: &NodeStore<i32>, lod: Lod) -> Vec<i32> {
-        self.data.to_vec(store, lod)
+    fn to_vec(&self, interner: &DagInterner<i32>, lod: Lod) -> Vec<i32> {
+        self.data.to_vec(interner, lod)
     }
 }
 

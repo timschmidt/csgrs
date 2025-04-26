@@ -1,6 +1,6 @@
 use glam::IVec3;
 
-use crate::{BlockId, MaxDepth, NodeStore, TraversalDepth, VoxelTrait};
+use crate::{BlockId, DagInterner, MaxDepth, TraversalDepth, VoxelTrait};
 
 #[inline(always)]
 pub const fn child_index(position: &IVec3, depth: &TraversalDepth) -> usize {
@@ -120,7 +120,7 @@ macro_rules! child_index_macro_2d {
 
 #[inline(always)]
 pub fn get_at_depth<T: VoxelTrait>(
-    store: &NodeStore<T>,
+    interner: &DagInterner<T>,
     mut node_id: BlockId,
     position: &IVec3,
     depth: &TraversalDepth,
@@ -130,15 +130,15 @@ pub fn get_at_depth<T: VoxelTrait>(
 
     while !node_id.is_empty() {
         if depth >= max_depth {
-            return Some(*store.get_value(&node_id));
+            return Some(*interner.get_value(&node_id));
         }
 
         if node_id.is_branch() {
             let index = child_index_macro_2!(position, depth, max_depth);
-            node_id = store.get_child_id(&node_id, index);
+            node_id = interner.get_child_id(&node_id, index);
             depth += 1;
         } else {
-            return Some(*store.get_value(&node_id));
+            return Some(*interner.get_value(&node_id));
         }
     }
 
@@ -146,7 +146,7 @@ pub fn get_at_depth<T: VoxelTrait>(
 }
 
 pub fn to_vec<T: VoxelTrait>(
-    store: &NodeStore<T>,
+    interner: &DagInterner<T>,
     root_id: &BlockId,
     max_depth: MaxDepth,
 ) -> Vec<T> {
@@ -172,7 +172,7 @@ pub fn to_vec<T: VoxelTrait>(
                     for x in 0..voxels_per_axis {
                         pos.x = x as i32;
 
-                        if let Some(voxel) = get_at_depth(store, *root_id, &pos, &depth) {
+                        if let Some(voxel) = get_at_depth(interner, *root_id, &pos, &depth) {
                             data[base_index_z + x] = voxel;
                         }
                     }
@@ -181,29 +181,33 @@ pub fn to_vec<T: VoxelTrait>(
 
             data
         } else {
-            vec![*store.get_value(root_id); size]
+            vec![*interner.get_value(root_id); size]
         }
     } else {
         vec![T::default(); size]
     }
 }
 
-pub fn dump_structure<T: VoxelTrait>(store: &NodeStore<T>, root_id: BlockId, max_depth: usize) {
+pub fn dump_structure<T: VoxelTrait>(
+    interner: &DagInterner<T>,
+    root_id: BlockId,
+    max_depth: usize,
+) {
     println!("\n=== Octree Structure Dump ===");
     println!("Max depth: {}", max_depth);
 
     if !root_id.is_empty() {
-        store.dump_node(root_id, 0, "  ");
+        interner.dump_node(root_id, 0, "  ");
     } else {
         println!("Empty octree (no root)");
     }
     println!("=== End of Structure Dump ===\n");
 }
 
-pub fn dump_root<T: VoxelTrait>(store: &NodeStore<T>, root_id: BlockId) {
+pub fn dump_root<T: VoxelTrait>(interner: &DagInterner<T>, root_id: BlockId) {
     println!("\n=== Octree Root Dump ===");
     if !root_id.is_empty() {
-        store.dump_node(root_id, 0, "");
+        interner.dump_node(root_id, 0, "");
     } else {
         println!("Empty octree (no root)");
     }
@@ -219,11 +223,11 @@ struct OctreeStats {
     nodes_by_depth: Vec<usize>,
 }
 
-pub fn dump_statistics<T: VoxelTrait>(store: &NodeStore<T>, root_id: BlockId) {
+pub fn dump_statistics<T: VoxelTrait>(interner: &DagInterner<T>, root_id: BlockId) {
     println!("\n=== Octree Statistics ===");
     if !root_id.is_empty() {
         let mut stats = OctreeStats::default();
-        collect_stats(store, root_id, 0, &mut stats);
+        collect_stats(interner, root_id, 0, &mut stats);
         println!("Total nodes: {}", stats.total_nodes);
         println!("Branch nodes: {}", stats.branch_nodes);
         println!("Leaf nodes: {}", stats.leaf_nodes);
@@ -239,7 +243,7 @@ pub fn dump_statistics<T: VoxelTrait>(store: &NodeStore<T>, root_id: BlockId) {
 }
 
 fn collect_stats<T: VoxelTrait>(
-    store: &NodeStore<T>,
+    interner: &DagInterner<T>,
     node_id: BlockId,
     depth: u8,
     stats: &mut OctreeStats,
@@ -261,10 +265,10 @@ fn collect_stats<T: VoxelTrait>(
         }
         false => {
             stats.branch_nodes += 1;
-            let children = store.get_children(&node_id);
+            let children = interner.get_children(&node_id);
             for child in children.iter() {
                 if !child.is_empty() {
-                    collect_stats(store, *child, depth + 1, stats);
+                    collect_stats(interner, *child, depth + 1, stats);
                 }
             }
         }

@@ -12,11 +12,11 @@ use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 #[cfg(feature = "memory_stats")]
-use crate::storage::node::StoreStats;
+use crate::interner::InternerStats;
 use crate::{
-    BlockId, MaxDepth, NodeStore,
+    BlockId, DagInterner, MaxDepth,
+    interner::EMPTY_CHILD,
     io::varint::{decode_varint_u32_from_reader, encode_varint_u32},
-    storage::node::EMPTY_CHILD,
     world::Chunk,
 };
 
@@ -25,7 +25,7 @@ pub struct Model {
     pub chunk_world_size: f32,
     pub world_bounds: IVec3,
     pub chunks: HashMap<IVec3, Chunk>,
-    pub store: Arc<RwLock<NodeStore<i32>>>,
+    pub interner: Arc<RwLock<DagInterner<i32>>>,
 }
 
 fn initialize_chunks(
@@ -53,19 +53,19 @@ fn initialize_chunks(
 
 impl Model {
     pub fn empty(max_depth: MaxDepth, chunk_world_size: f32, memory_budget: usize) -> Self {
-        let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(memory_budget)));
+        let interner = Arc::new(RwLock::new(DagInterner::with_memory_budget(memory_budget)));
 
         Self {
             max_depth,
             chunk_world_size,
             world_bounds: IVec3::ZERO,
             chunks: HashMap::default(),
-            store,
+            interner,
         }
     }
 
     pub fn new(max_depth: MaxDepth, chunk_world_size: f32, memory_budget: usize) -> Self {
-        let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(memory_budget)));
+        let interner = Arc::new(RwLock::new(DagInterner::with_memory_budget(memory_budget)));
         let world_bounds = IVec3::new(32, 32, 32);
         let chunks = initialize_chunks(max_depth, chunk_world_size, world_bounds);
 
@@ -74,7 +74,7 @@ impl Model {
             chunk_world_size,
             world_bounds,
             chunks,
-            store,
+            interner,
         }
     }
 
@@ -88,7 +88,7 @@ impl Model {
             "Creating model with bounds {:?}, chunk: {}m depth: {}",
             world_bounds, chunk_world_size, max_depth
         );
-        let store = Arc::new(RwLock::new(NodeStore::with_memory_budget(memory_budget)));
+        let interner = Arc::new(RwLock::new(DagInterner::with_memory_budget(memory_budget)));
         let chunks = initialize_chunks(max_depth, chunk_world_size, world_bounds);
 
         Self {
@@ -96,7 +96,7 @@ impl Model {
             chunk_world_size,
             world_bounds,
             chunks,
-            store,
+            interner,
         }
     }
 
@@ -116,8 +116,8 @@ impl Model {
         })
     }
 
-    pub fn get_store(&self) -> Arc<RwLock<NodeStore<i32>>> {
-        self.store.clone()
+    pub fn get_interner(&self) -> Arc<RwLock<DagInterner<i32>>> {
+        self.interner.clone()
     }
 
     pub fn clear(&mut self) {
@@ -154,17 +154,17 @@ impl Model {
     }
 
     #[cfg(feature = "memory_stats")]
-    pub fn storage_stats(&self) -> StoreStats {
-        self.store.read().stats()
+    pub fn interner_stats(&self) -> InternerStats {
+        self.interner.read().stats()
     }
 
     pub fn serialize(&self, data: &mut Vec<u8>) {
         const BUFFER_SIZE: usize = 256;
 
-        let storage = self.store.read();
+        let interner = self.interner.read();
 
-        let leaf_patterns = storage.leaf_patterns();
-        let branch_patterns = storage.branch_patterns();
+        let leaf_patterns = interner.leaf_patterns();
+        let branch_patterns = interner.branch_patterns();
 
         let mut id_map: FxHashMap<u32, u32> = FxHashMap::default();
         id_map.insert(0, 0);
@@ -214,7 +214,7 @@ impl Model {
             let new_id_bytes = encode_varint_u32(new_id);
             // writer.write_u32::<BigEndian>(new_id).unwrap();
             writer.write_all(&new_id_bytes).unwrap();
-            let value = storage.get_value(id);
+            let value = interner.get_value(id);
             writer.write_all(&value.to_be_bytes()).unwrap();
         }
 
@@ -230,7 +230,7 @@ impl Model {
             // writer.write_u32::<BigEndian>(new_id).unwrap();
             writer.write_all(&new_id_bytes).unwrap();
             writer.write_u8(id.mask()).unwrap();
-            let branch = storage.get_children_ref(id);
+            let branch = interner.get_children_ref(id);
             for child in branch.iter() {
                 if child.is_empty() {
                     // println!(" empty child");
@@ -242,7 +242,7 @@ impl Model {
                 // writer.write_u32::<BigEndian>(new_id).unwrap();
                 writer.write_all(&new_id_bytes).unwrap();
             }
-            let branch_lod_value = storage.get_value(id);
+            let branch_lod_value = interner.get_value(id);
             writer.write_all(&branch_lod_value.to_be_bytes()).unwrap();
         }
 
@@ -278,7 +278,7 @@ impl Model {
         //     HashMap<K, V, FxBuildHasher>(leaf_size as usize);
         let mut leaf_patterns: FxHashMap<u32, (BlockId, i32)> = FxHashMap::default();
 
-        let mut storage = self.store.write();
+        let mut interner = self.interner.write();
 
         for _ in 0..leaf_size {
             let id = decode_varint_u32_from_reader(&mut reader).unwrap();
@@ -286,7 +286,7 @@ impl Model {
             reader.read_exact(&mut bytes).unwrap();
             let value = i32::from_be_bytes(bytes);
 
-            let block_id = storage.deserialize_leaf(id, value);
+            let block_id = interner.deserialize_leaf(id, value);
             leaf_patterns.insert(id, (block_id, value));
 
             println!(" leaf id: {:?} -> {}", block_id, value);
@@ -322,7 +322,7 @@ impl Model {
             reader.read_exact(&mut lod_bytes).unwrap();
             let lod_value = i32::from_be_bytes(lod_bytes);
 
-            let block_id = storage.preallocate_branch_id(id, types, mask);
+            let block_id = interner.preallocate_branch_id(id, types, mask);
 
             branch_patterns.insert(id, (block_id, children, lod_value));
             // println!(
@@ -358,10 +358,10 @@ impl Model {
                 }
 
                 // println!("branch: {:?} -> {:?}", block_id, branch);
-                storage.deserialize_branch(*block_id, branch, types, mask, *lod_value);
+                interner.deserialize_branch(*block_id, branch, types, mask, *lod_value);
             });
 
-        // drop(storage);
+        // drop(interner);
 
         let mut branch_ids = branch_patterns
             .iter()
@@ -371,14 +371,14 @@ impl Model {
 
         // for branch_id in branch_ids.iter() {
         //     println!("Branch id: {:?}", branch_id);
-        //     storage.dump_node(*branch_id, 0, "  ");
+        //     interner.dump_node(*branch_id, 0, "  ");
         // }
 
         let actual_chunks_len = reader.read_u32::<BigEndian>().unwrap();
 
         for _ in 0..actual_chunks_len {
             let chunk = Chunk::deserialize(
-                &mut storage,
+                &mut interner,
                 &leaf_patterns,
                 &branch_patterns,
                 &mut reader,
@@ -392,33 +392,4 @@ impl Model {
         let elapsed = now.elapsed();
         println!("Deserializing chunks took {:?}", elapsed);
     }
-
-    // #[cfg(feature = "memory_stats")]
-    // pub fn allocator_stats(&self) -> StorageStats {
-    //     if let Some(shared_node_cache) = self.shared_node_cache.as_ref() {
-    //         shared_node_cache.as_ref().read().stats().clone()
-    //     } else {
-    //         StorageStats::default()
-    //     }
-    // }
-
-    // pub fn storage_stats(&self) -> StorageStats {
-    //     if let Some(shared_node_cache) = self.shared_node_cache.as_ref() {
-    //         shared_node_cache.storage_stats()
-    //     } else {
-    //         StorageStats::default()
-    //     }
-    // }
-
-    // pub fn cache_statistics(&self) -> CacheStatistics {
-    //     CacheStatistics::default()
-    //     // if let Some(shared_node_cache) = self.shared_node_cache.as_ref() {
-    //     //     get_cache_statistics(shared_node_cache)
-    //     // } else {
-    //     //     self.chunks
-    //     //         .par_iter()
-    //     //         .map(|chunk| chunk.cache_statistics())
-    //     //         .sum()
-    //     // }
-    // }
 }

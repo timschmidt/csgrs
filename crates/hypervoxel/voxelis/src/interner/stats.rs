@@ -1,5 +1,5 @@
 #[derive(Debug, Default, Copy, Clone)]
-pub struct StoreStats {
+pub struct InternerStats {
     pub requested_budget: usize,
     pub actual_budget: usize,
     pub node_size: usize,

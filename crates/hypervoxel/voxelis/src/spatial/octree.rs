@@ -1,6 +1,6 @@
 use glam::IVec3;
 
-use crate::{Batch, BlockId, Lod, MaxDepth, NodeStore, VoxelTrait};
+use crate::{Batch, BlockId, DagInterner, Lod, MaxDepth, VoxelTrait};
 
 mod dag;
 mod ops;
@@ -39,22 +39,22 @@ impl Octree {
         matches!(self, Self::Dynamic(_))
     }
 
-    pub fn to_static<T: VoxelTrait>(&self, store: &mut NodeStore<T>) -> Self {
+    pub fn to_static<T: VoxelTrait>(&self, interner: &mut DagInterner<T>) -> Self {
         match self {
             Self::Static(_) => panic!("Already static"),
             Self::Dynamic(svo) => {
                 let mut dag = SvoDag::new(svo.max_depth(Lod::new(0)));
-                copy_octree(svo, &mut dag, store);
+                copy_octree(svo, &mut dag, interner);
                 Self::Static(dag)
             }
         }
     }
 
-    pub fn to_dynamic<T: VoxelTrait>(&self, store: &mut NodeStore<T>) -> Self {
+    pub fn to_dynamic<T: VoxelTrait>(&self, interner: &mut DagInterner<T>) -> Self {
         match self {
             Self::Static(dag) => {
                 let mut svo = Svo::new(dag.max_depth(Lod::new(0)));
-                copy_octree(dag, &mut svo, store);
+                copy_octree(dag, &mut svo, interner);
                 Self::Dynamic(svo)
             }
             Self::Dynamic(_) => panic!("Already dynamic"),
@@ -71,36 +71,36 @@ impl Octree {
 
 impl<T: VoxelTrait> OctreeOpsRead<T> for Octree {
     #[inline(always)]
-    fn get(&self, store: &NodeStore<T>, position: IVec3) -> Option<T> {
+    fn get(&self, interner: &DagInterner<T>, position: IVec3) -> Option<T> {
         match self {
-            Self::Static(octree) => octree.get(store, position),
-            Self::Dynamic(octree) => octree.get(store, position),
+            Self::Static(octree) => octree.get(interner, position),
+            Self::Dynamic(octree) => octree.get(interner, position),
         }
     }
 }
 
 impl<T: VoxelTrait> OctreeOpsWrite<T> for Octree {
     #[inline(always)]
-    fn set(&mut self, store: &mut NodeStore<T>, position: IVec3, value: T) -> bool {
+    fn set(&mut self, interner: &mut DagInterner<T>, position: IVec3, value: T) -> bool {
         match self {
-            Self::Static(octree) => octree.set(store, position, value),
-            Self::Dynamic(octree) => octree.set(store, position, value),
+            Self::Static(octree) => octree.set(interner, position, value),
+            Self::Dynamic(octree) => octree.set(interner, position, value),
         }
     }
 
     #[inline(always)]
-    fn fill(&mut self, store: &mut NodeStore<T>, value: T) {
+    fn fill(&mut self, interner: &mut DagInterner<T>, value: T) {
         match self {
-            Self::Static(octree) => octree.fill(store, value),
-            Self::Dynamic(octree) => octree.fill(store, value),
+            Self::Static(octree) => octree.fill(interner, value),
+            Self::Dynamic(octree) => octree.fill(interner, value),
         }
     }
 
     #[inline(always)]
-    fn clear(&mut self, store: &mut NodeStore<T>) {
+    fn clear(&mut self, interner: &mut DagInterner<T>) {
         match self {
-            Self::Static(octree) => octree.clear(store),
-            Self::Dynamic(octree) => octree.clear(store),
+            Self::Static(octree) => octree.clear(interner),
+            Self::Dynamic(octree) => octree.clear(interner),
         }
     }
 }
@@ -115,20 +115,20 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for Octree {
     }
 
     #[inline(always)]
-    fn apply_batch(&mut self, store: &mut NodeStore<T>, batch: &Batch<T>) -> bool {
+    fn apply_batch(&mut self, interner: &mut DagInterner<T>, batch: &Batch<T>) -> bool {
         match self {
-            Self::Static(octree) => octree.apply_batch(store, batch),
-            Self::Dynamic(octree) => octree.apply_batch(store, batch),
+            Self::Static(octree) => octree.apply_batch(interner, batch),
+            Self::Dynamic(octree) => octree.apply_batch(interner, batch),
         }
     }
 }
 
 impl<T: VoxelTrait> OctreeOpsMesh<T> for Octree {
     #[inline(always)]
-    fn to_vec(&self, store: &NodeStore<T>, lod: Lod) -> Vec<T> {
+    fn to_vec(&self, interner: &DagInterner<T>, lod: Lod) -> Vec<T> {
         match self {
-            Self::Static(octree) => octree.to_vec(store, lod),
-            Self::Dynamic(octree) => octree.to_vec(store, lod),
+            Self::Static(octree) => octree.to_vec(interner, lod),
+            Self::Dynamic(octree) => octree.to_vec(interner, lod),
         }
     }
 }
@@ -202,7 +202,7 @@ fn copy_octree<
 >(
     src: &S,
     dst: &mut D,
-    store: &mut NodeStore<T>,
+    interner: &mut DagInterner<T>,
 ) {
     if src.is_empty() {
         return;
@@ -216,14 +216,14 @@ fn copy_octree<
         for z in 0..voxels_per_axis {
             for x in 0..voxels_per_axis {
                 let position = IVec3::new(x, y, z);
-                if let Some(voxel) = src.get(store, position) {
-                    batch.set(store, position, voxel);
+                if let Some(voxel) = src.get(interner, position) {
+                    batch.set(interner, position, voxel);
                 }
             }
         }
     }
 
     if batch.has_patches() {
-        dst.apply_batch(store, &batch);
+        dst.apply_batch(interner, &batch);
     }
 }

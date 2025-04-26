@@ -15,7 +15,7 @@
 //! assert_eq!(depth.max(), 6);
 //! ```
 
-use crate::storage::node::MAX_ALLOWED_DEPTH;
+use crate::interner::MAX_ALLOWED_DEPTH;
 
 use super::Lod;
 

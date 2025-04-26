@@ -16,8 +16,8 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model
     let mut normals: Vec<Vec3> = Vec::new();
     let mut indices: Vec<u32> = Vec::new();
 
-    let store = model.get_store();
-    let store = store.read();
+    let interner = model.get_interner();
+    let interner = interner.read();
 
     for (_, chunk) in model.chunks.iter() {
         if chunk.is_empty() {
@@ -25,7 +25,7 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model
         }
 
         chunk.generate_mesh_arrays(
-            &store,
+            &interner,
             &mut vertices,
             &mut normals,
             &mut indices,
