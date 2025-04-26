@@ -31,7 +31,7 @@ where S: Clone + Send + Sync {
     /// all positioned in the XY plane at z=0.
     pub fn text(text: &str, font_data: &[u8], scale: Real, metadata: Option<S>) -> Self {
         // 1) Parse the TTF font
-        let face = match ttf_parser::Face::from_slice(font_data, 0) {
+        let face = match ttf_parser::Face::parse(font_data, 0) {
             Ok(f) => f,
             Err(_) => {
                 // If the font fails to parse, return an empty 2D CSG
