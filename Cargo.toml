@@ -114,6 +114,7 @@ image-io = [
 ]
 metaballs = [
   "fast-surface-nets",
+  "hashmap",
 ]
 hashmap = [ # slice and related helper functions, is_manifold()
   "hashbrown",
