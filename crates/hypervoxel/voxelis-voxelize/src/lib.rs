@@ -22,8 +22,8 @@ use voxelis_math::triangle_cube_intersection;
 use voxelis::{
     Batch, MaxDepth,
     io::Obj,
-    model::Model,
     spatial::{VoxOpsBatch, VoxOpsState, VoxOpsWrite},
+    world::VoxModel,
 };
 
 #[cfg(feature = "memory_stats")]
@@ -60,7 +60,7 @@ impl std::fmt::Display for ByteSize {
 
 pub struct Voxelizer {
     pub mesh: Obj,
-    pub model: Model,
+    pub model: VoxModel,
 }
 
 impl Voxelizer {
@@ -72,7 +72,7 @@ impl Voxelizer {
     ) -> Self {
         Self {
             mesh,
-            model: Model::empty(max_depth, chunk_world_size, memory_budget),
+            model: VoxModel::empty(max_depth, chunk_world_size, memory_budget),
         }
     }
 
@@ -90,7 +90,12 @@ impl Voxelizer {
 
         Self {
             mesh,
-            model: Model::with_dimensions(max_depth, chunk_world_size, world_bounds, memory_budget),
+            model: VoxModel::with_dimensions(
+                max_depth,
+                chunk_world_size,
+                world_bounds,
+                memory_budget,
+            ),
         }
     }
 

@@ -10,7 +10,6 @@
 pub mod core;
 pub mod interner;
 pub mod io;
-pub mod model;
 pub mod spatial;
 pub mod utils;
 pub mod world;

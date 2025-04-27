@@ -4,14 +4,14 @@ use byteorder::{BigEndian, WriteBytesExt};
 use glam::Vec3;
 use md5::{Digest, Md5};
 
-use crate::{Lod, model::Model, spatial::VoxOpsState};
+use crate::{Lod, spatial::VoxOpsState, world::VoxModel};
 
 use super::{
     Flags,
     consts::{RESERVED_1, RESERVED_2, VTM_MAGIC, VTM_VERSION},
 };
 
-pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model, lod: Lod) {
+pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &VoxModel, lod: Lod) {
     let mut vertices: Vec<Vec3> = Vec::new();
     let mut normals: Vec<Vec3> = Vec::new();
     let mut indices: Vec<u32> = Vec::new();
@@ -65,7 +65,25 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &Model
     }
 }
 
-pub fn export_model_to_vtm<P: AsRef<Path>>(name: String, path: &P, model: &Model) {
+pub struct ByteSize(pub usize);
+
+impl std::fmt::Display for ByteSize {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0 < 1024 {
+            write!(f, "{} B", self.0)
+        } else if self.0 < 1024 * 1024 {
+            write!(f, "{:.3} KB", self.0 as f64 / 1024.0)
+        } else if self.0 < 1024 * 1024 * 1024 {
+            write!(f, "{:.3} MB", self.0 as f64 / (1024.0 * 1024.0))
+        } else {
+            write!(f, "{:.3} GB", self.0 as f64 / (1024.0 * 1024.0 * 1024.0))
+        }
+    }
+}
+
+pub fn export_model_to_vtm<P: AsRef<Path>>(name: String, path: &P, model: &VoxModel) {
+    print!("Exporting VTM model to {}", path.as_ref().display(),);
+
     let mut vox_file = std::fs::File::create(path).unwrap();
     let mut writer = std::io::BufWriter::new(&mut vox_file);
 
@@ -113,4 +131,8 @@ pub fn export_model_to_vtm<P: AsRef<Path>>(name: String, path: &P, model: &Model
         .write_u32::<BigEndian>(data.len().try_into().unwrap())
         .unwrap();
     writer.write_all(&data).unwrap();
+
+    let file_len = writer.get_ref().metadata().unwrap().len();
+
+    println!(" ({})", ByteSize(file_len as usize));
 }

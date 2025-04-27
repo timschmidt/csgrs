@@ -4,7 +4,7 @@ use byteorder::{BigEndian, ReadBytesExt};
 use glam::IVec3;
 use md5::{Digest, Md5};
 
-use crate::{MaxDepth, model::Model};
+use crate::{MaxDepth, world::VoxModel};
 
 use super::{
     Flags,
@@ -15,7 +15,7 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(
     path: &P,
     memory_budget: usize,
     target_chunk_world_size: Option<f32>,
-) -> Model {
+) -> VoxModel {
     let mut vox_file = std::fs::File::open(path).unwrap();
     let mut reader = std::io::BufReader::new(&mut vox_file);
 
@@ -83,7 +83,7 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(
 
     let chunk_world_size = target_chunk_world_size.unwrap_or(chunk_world_size);
 
-    let mut model = Model::empty(MaxDepth::new(lod_level), chunk_world_size, memory_budget);
+    let mut model = VoxModel::empty(MaxDepth::new(lod_level), chunk_world_size, memory_budget);
     model.deserialize(&data);
 
     model

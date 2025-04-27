@@ -16,10 +16,9 @@ use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, window::PresentMo
 use bevy_egui::EguiPlugin;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
-use voxelis::io::import::import_model_from_vtm;
-use voxelis::model::Model;
-use voxelis::spatial::VoxOpsState;
-use voxelis::{BlockId, Lod};
+use voxelis::{
+    BlockId, Lod, io::import::import_model_from_vtm, spatial::VoxOpsState, world::VoxModel,
+};
 
 struct GamePlugin;
 
@@ -27,7 +26,7 @@ struct GamePlugin;
 struct Chunk;
 
 #[derive(Resource)]
-pub struct ModelResource(pub Model);
+pub struct ModelResource(pub VoxModel);
 
 #[derive(Eq, PartialEq)]
 pub enum MaterialType {
@@ -333,12 +332,6 @@ fn setup(
     }
 
     println!("Generating meshes took {:?}", now.elapsed());
-
-    #[cfg(feature = "memory_stats")]
-    {
-        let interner = model.interner_stats();
-        println!("Interner stats: {:#?}", interner);
-    }
 
     commands.spawn((
         Mesh3d(

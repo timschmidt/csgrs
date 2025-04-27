@@ -20,7 +20,7 @@ use crate::{
     world::VoxChunk,
 };
 
-pub struct Model {
+pub struct VoxModel {
     pub max_depth: MaxDepth,
     pub chunk_world_size: f32,
     pub world_bounds: IVec3,
@@ -51,7 +51,7 @@ fn initialize_chunks(
     chunks
 }
 
-impl Model {
+impl VoxModel {
     pub fn empty(max_depth: MaxDepth, chunk_world_size: f32, memory_budget: usize) -> Self {
         let interner = Arc::new(RwLock::new(VoxInterner::with_memory_budget(memory_budget)));
 

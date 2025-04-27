@@ -41,6 +41,5 @@ fn main() {
     let mut voxelizer = Voxelizer::empty(max_depth, chunk_size, obj, memory_budget);
     voxelizer.voxelize();
 
-    println!("Exporting VTM model to {}", output.display());
     export_model_to_vtm(name, &output, &voxelizer.model);
 }
