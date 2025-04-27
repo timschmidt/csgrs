@@ -909,5 +909,197 @@ where S: Clone + Send + Sync {
         let poly_2d = GeoPolygon::new(LineString::from(pts), vec![]);
         CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
     }
+    
+    // -------------------------------------------------------------------------------------------------
+    // 2‑D gear outlines                                                                             //
+    // -------------------------------------------------------------------------------------------------
+    
+    /// Involute gear outline (2‑D).
+    #[allow(clippy::too_many_arguments)]
+    pub fn involute_gear_2d(
+        module_: Real,
+        teeth: usize,
+        pressure_angle_deg: Real,
+        clearance: Real,
+        backlash: Real,
+        segments_per_flank: usize,
+        metadata: Option<S>,
+    ) -> CSG<S> {
+        assert!(teeth >= 4, "Need at least 4 teeth for a valid gear");
+        assert!(segments_per_flank >= 3);
+    
+        // Standard proportions (ISO 21771)
+        let m = module_;
+        let z = teeth as Real;
+        let pitch_radius = 0.5 * m * z;
+        let addendum = m;
+        let dedendum = 1.25 * m + clearance;
+    
+        let rb = pitch_radius * (1.0_f64.to_radians() as Real * pressure_angle_deg).cos();
+        let ra = pitch_radius + addendum;
+        let rf = (pitch_radius - dedendum).max(0.0);
+    
+        // Angular pitch and base offsets
+        let ang_pitch = TAU / z;
+        let tooth_thick_ang = ang_pitch / 2.0 - backlash / pitch_radius;
+    
+        // φ at pitch and addendum circles
+        let phi_p = involute_angle_at_radius(pitch_radius, rb);
+        let phi_a = involute_angle_at_radius(ra, rb);
+    
+        // Helper to build a single half‑flank (left‑hand)
+        let mut half_flank = Vec::<(Real, Real)>::with_capacity(segments_per_flank + 1);
+        for i in 0..=segments_per_flank {
+            let phi = phi_p + (phi_a - phi_p) * (i as Real) / (segments_per_flank as Real);
+            let (ix, iy) = involute_xy(rb, phi);
+            let theta = (iy).atan2(ix); // polar angle of involute point
+            let global_theta = -tooth_thick_ang + theta; // left side offset
+            let r = (ix * ix + iy * iy).sqrt();
+            half_flank.push((r * global_theta.cos(), r * global_theta.sin()));
+        }
+    
+        // Mirror to get right‑hand flank (reverse order so outline is CCW)
+        let mut full_tooth = half_flank.clone();
+        for &(x, y) in half_flank.iter().rev() {
+            // mirror across X axis and shift right
+            let theta = ( -y).atan2(x);
+            let r = (x * x + y * y).sqrt();
+            let global_theta = tooth_thick_ang - theta;
+            full_tooth.push((r * global_theta.cos(), r * global_theta.sin()));
+        }
+    
+        // Root circle arc between successive teeth
+        let root_arc_steps = 4;
+        let arc_step = (ang_pitch - 2.0 * tooth_thick_ang) / (root_arc_steps as Real);
+        for i in 1..=root_arc_steps {
+            let ang = tooth_thick_ang + (i as Real) * arc_step;
+            full_tooth.push((rf * (ang).cos(), rf * (ang).sin()));
+        }
+    
+        // Replicate the tooth profile around the gear
+        let mut outline = Vec::<[Real; 2]>::with_capacity(full_tooth.len() * teeth + 1);
+        for tooth_idx in 0..teeth {
+            let rot = (tooth_idx as Real) * ang_pitch;
+            let (c, s) = (rot.cos(), rot.sin());
+            for &(x, y) in &full_tooth {
+                outline.push([x * c - y * s, x * s + y * c]);
+            }
+        }
+        // Close path
+        outline.push(outline[0]);
+    
+        CSG::polygon(&outline, metadata)
+    }
+    
+    /// (Epicyclic) cycloidal gear outline (2‑D).
+    #[allow(clippy::too_many_arguments)]
+    pub fn cycloidal_gear_2d(
+        module_: Real,
+        teeth: usize,
+        pin_teeth: usize,
+        clearance: Real,
+        segments_per_flank: usize,
+        metadata: Option<S>,
+    ) -> CSG<S> {
+        assert!(teeth >= 3 && pin_teeth >= 3);
+        let m = module_;
+        let z = teeth as Real;
+        let z_p = pin_teeth as Real; // for pin‑wheel pairing
+    
+        // Pitch and derived radii
+        let r_p = 0.5 * m * z; // gear pitch radius
+        let r_g = 0.5 * m * z_p; // (made‑up) mating wheel for hypocycloid – gives correct root
+        let r_pin = r_p / z; // generating circle radius (standard assumes z_p = z ± 1)
+    
+        let addendum = m;
+        let dedendum = 1.25 * m + clearance;
+        let _ra = r_p + addendum;
+        let rf = (r_p - dedendum).max(0.0);
+    
+        let ang_pitch = TAU / z;
+        let flank_steps = segments_per_flank.max(4);
+    
+        let mut tooth_points = Vec::<(Real, Real)>::new();
+    
+        // 1. addendum epicycloid (tip)
+        for i in 0..=flank_steps {
+            let t = (i as Real) / (flank_steps as Real);
+            let theta = t * ang_pitch / 2.0;
+            let (x, y) = epicycloid_xy(r_p, r_pin, theta);
+            tooth_points.push((x, y));
+        }
+        // 2. hypocycloid root (reverse order to keep CCW)
+        for i in (0..=flank_steps).rev() {
+            let t = (i as Real) / (flank_steps as Real);
+            let theta = t * ang_pitch / 2.0;
+            let (x, y) = hypocycloid_xy(r_g, r_pin, theta);
+            let r = (x * x + y * y).sqrt();
+            if r < rf - EPSILON {
+                tooth_points.push((rf * theta.cos(), rf * theta.sin()));
+            } else {
+                tooth_points.push((x, y));
+            }
+        }
+    
+        // Replicate
+        let mut outline = Vec::<[Real; 2]>::with_capacity(tooth_points.len() * teeth + 1);
+        for k in 0..teeth {
+            let rot = (k as Real) * ang_pitch;
+            let (c, s) = (rot.cos(), rot.sin());
+            for &(x, y) in &tooth_points {
+                outline.push([x * c - y * s, x * s + y * c]);
+            }
+        }
+        outline.push(outline[0]);
+    
+        CSG::polygon(&outline, metadata)
+    }
 
+}
+
+// -------------------------------------------------------------------------------------------------
+// Involute helper                                                                               //
+// -------------------------------------------------------------------------------------------------
+
+#[inline]
+fn involute_xy(rb: Real, phi: Real) -> (Real, Real) {
+    // Classic parametric involute of a circle (rb = base‑circle radius).
+    // x = rb( cosφ + φ·sinφ )
+    // y = rb( sinφ – φ·cosφ )
+    (
+        rb * (phi.cos() + phi * phi.sin()),
+        rb * (phi.sin() - phi * phi.cos()),
+    )
+}
+
+#[inline]
+fn involute_angle_at_radius(r: Real, rb: Real) -> Real {
+    // φ = sqrt( (r/rb)^2 – 1 )
+    ((r / rb).powi(2) - 1.0).max(0.0).sqrt()
+}
+
+// -------------------------------------------------------------------------------------------------
+// Cycloid helpers                                                                               //
+// -------------------------------------------------------------------------------------------------
+
+#[inline]
+fn epicycloid_xy(r_g: Real, r_p: Real, theta: Real) -> (Real, Real) {
+    // r_g : pitch‑circle radius, r_p : pin circle (generating circle) radius
+    // x = (r_g + r_p) (cos θ) – r_p cos((r_g + r_p)/r_p · θ)
+    // y = (r_g + r_p) (sin θ) – r_p sin((r_g + r_p)/r_p · θ)
+    let k = (r_g + r_p) / r_p;
+    (
+        (r_g + r_p) * theta.cos() - r_p * (k * theta).cos(),
+        (r_g + r_p) * theta.sin() - r_p * (k * theta).sin(),
+    )
+}
+
+#[inline]
+fn hypocycloid_xy(r_g: Real, r_p: Real, theta: Real) -> (Real, Real) {
+    // For root flank of a cycloidal tooth
+    let k = (r_g - r_p) / r_p;
+    (
+        (r_g - r_p) * theta.cos() + r_p * (k * theta).cos(),
+        (r_g - r_p) * theta.sin() - r_p * (k * theta).sin(),
+    )
 }

@@ -436,7 +436,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
 - bending
-- gears
 - lead-ins, lead-outs
 - gpu accelleration
   - https://github.com/dimforge/wgmath
@@ -466,7 +465,7 @@ Patterns we work to follow throughout the library to improve performance and mem
   - support storing UV[W] coordinates with vertexes at compile time (try to keep runtime cost low too)
   - accomplish equivalence checks and memory usage reduction by using a hashmap or references instead of storing metadata with each node
   - with equivalence checks, returning sorted metadata becomes easy
-- chamfers
+- chamfers - walk edges
   - make algorithm selectable at compile time
 - align_x_pos, align_x_neg, align_y_pos, align_y_neg, align_z_pos, align_z_neg, center_x, center_y, center_z,
 - attachment points / rapier integration
