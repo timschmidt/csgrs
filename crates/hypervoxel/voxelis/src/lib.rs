@@ -16,4 +16,4 @@ pub mod utils;
 pub mod world;
 
 pub use core::{Batch, BlockId, Lod, MaxDepth, TraversalDepth, VoxelTrait};
-pub use interner::DagInterner;
+pub use interner::VoxInterner;

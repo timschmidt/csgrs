@@ -1,24 +1,24 @@
 use glam::IVec3;
 
-use crate::{Batch, DagInterner, Lod, MaxDepth, VoxelTrait};
+use crate::{Batch, Lod, MaxDepth, VoxInterner, VoxelTrait};
 
 pub trait VoxOpsRead<T: VoxelTrait> {
-    fn get(&self, interner: &DagInterner<T>, position: IVec3) -> Option<T>;
+    fn get(&self, interner: &VoxInterner<T>, position: IVec3) -> Option<T>;
 }
 
 pub trait VoxOpsWrite<T: VoxelTrait> {
-    fn set(&mut self, interner: &mut DagInterner<T>, position: IVec3, voxel: T) -> bool;
-    fn fill(&mut self, interner: &mut DagInterner<T>, value: T);
-    fn clear(&mut self, interner: &mut DagInterner<T>);
+    fn set(&mut self, interner: &mut VoxInterner<T>, position: IVec3, voxel: T) -> bool;
+    fn fill(&mut self, interner: &mut VoxInterner<T>, value: T);
+    fn clear(&mut self, interner: &mut VoxInterner<T>);
 }
 
 pub trait VoxOpsBatch<T: VoxelTrait> {
     fn create_batch(&self) -> Batch<T>;
-    fn apply_batch(&mut self, interner: &mut DagInterner<T>, batch: &Batch<T>) -> bool;
+    fn apply_batch(&mut self, interner: &mut VoxInterner<T>, batch: &Batch<T>) -> bool;
 }
 
 pub trait VoxOpsMesh<T: VoxelTrait> {
-    fn to_vec(&self, interner: &DagInterner<T>, lod: Lod) -> Vec<T>;
+    fn to_vec(&self, interner: &VoxInterner<T>, lod: Lod) -> Vec<T>;
 }
 
 pub trait VoxOpsConfig {

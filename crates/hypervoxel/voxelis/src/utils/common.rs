@@ -1,6 +1,6 @@
 use glam::IVec3;
 
-use crate::{BlockId, DagInterner, MaxDepth, TraversalDepth, VoxelTrait};
+use crate::{BlockId, MaxDepth, TraversalDepth, VoxInterner, VoxelTrait};
 
 #[inline(always)]
 pub const fn child_index(position: &IVec3, depth: &TraversalDepth) -> usize {
@@ -120,7 +120,7 @@ macro_rules! child_index_macro_2d {
 
 #[inline(always)]
 pub fn get_at_depth<T: VoxelTrait>(
-    interner: &DagInterner<T>,
+    interner: &VoxInterner<T>,
     mut node_id: BlockId,
     position: &IVec3,
     depth: &TraversalDepth,
@@ -146,7 +146,7 @@ pub fn get_at_depth<T: VoxelTrait>(
 }
 
 pub fn to_vec<T: VoxelTrait>(
-    interner: &DagInterner<T>,
+    interner: &VoxInterner<T>,
     root_id: &BlockId,
     max_depth: MaxDepth,
 ) -> Vec<T> {
@@ -189,7 +189,7 @@ pub fn to_vec<T: VoxelTrait>(
 }
 
 pub fn dump_structure<T: VoxelTrait>(
-    interner: &DagInterner<T>,
+    interner: &VoxInterner<T>,
     root_id: BlockId,
     max_depth: usize,
 ) {
@@ -204,7 +204,7 @@ pub fn dump_structure<T: VoxelTrait>(
     println!("=== End of Structure Dump ===\n");
 }
 
-pub fn dump_root<T: VoxelTrait>(interner: &DagInterner<T>, root_id: BlockId) {
+pub fn dump_root<T: VoxelTrait>(interner: &VoxInterner<T>, root_id: BlockId) {
     println!("\n=== Octree Root Dump ===");
     if !root_id.is_empty() {
         interner.dump_node(root_id, 0, "");
@@ -223,7 +223,7 @@ struct OctreeStats {
     nodes_by_depth: Vec<usize>,
 }
 
-pub fn dump_statistics<T: VoxelTrait>(interner: &DagInterner<T>, root_id: BlockId) {
+pub fn dump_statistics<T: VoxelTrait>(interner: &VoxInterner<T>, root_id: BlockId) {
     println!("\n=== Octree Statistics ===");
     if !root_id.is_empty() {
         let mut stats = OctreeStats::default();
@@ -243,7 +243,7 @@ pub fn dump_statistics<T: VoxelTrait>(interner: &DagInterner<T>, root_id: BlockI
 }
 
 fn collect_stats<T: VoxelTrait>(
-    interner: &DagInterner<T>,
+    interner: &VoxInterner<T>,
     node_id: BlockId,
     depth: u8,
     stats: &mut OctreeStats,

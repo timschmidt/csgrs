@@ -12,7 +12,7 @@ use crate::spatial::{
     Octree, VoxOpsBatch, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState,
     VoxOpsWrite,
 };
-use crate::{Batch, BlockId, DagInterner, Lod, MaxDepth};
+use crate::{Batch, BlockId, Lod, MaxDepth, VoxInterner};
 
 const CUBE_VERTS: [Vec3; 8] = [
     Vec3::new(-1.0, 1.0, -1.0),
@@ -73,7 +73,7 @@ impl Chunk {
         self.data.get_root_id()
     }
 
-    pub fn generate_test_data(&mut self, interner: &mut DagInterner<i32>) {
+    pub fn generate_test_data(&mut self, interner: &mut VoxInterner<i32>) {
         let voxels_per_axis = self.voxels_per_axis(Lod::new(0)) as i32;
         let mut position = IVec3::ZERO;
         for y in 0..voxels_per_axis {
@@ -91,7 +91,7 @@ impl Chunk {
 
     pub fn generate_test_sphere(
         &mut self,
-        interner: &mut DagInterner<i32>,
+        interner: &mut VoxInterner<i32>,
         center: IVec3,
         radius: i32,
         value: i32,
@@ -146,7 +146,7 @@ impl Chunk {
 
     pub fn generate_mesh_arrays(
         &self,
-        interner: &DagInterner<i32>,
+        interner: &VoxInterner<i32>,
         vertices: &mut Vec<Vec3>,
         normals: &mut Vec<Vec3>,
         indices: &mut Vec<u32>,
@@ -337,7 +337,7 @@ impl Chunk {
     }
 
     pub fn deserialize(
-        interner: &mut DagInterner<i32>,
+        interner: &mut VoxInterner<i32>,
         leaf_patterns: &FxHashMap<u32, (BlockId, i32)>,
         patterns: &FxHashMap<u32, (BlockId, [u32; 8], i32)>,
         reader: &mut BufReader<&[u8]>,
@@ -377,24 +377,24 @@ impl Chunk {
 
 impl VoxOpsRead<i32> for Chunk {
     #[inline(always)]
-    fn get(&self, interner: &DagInterner<i32>, position: IVec3) -> Option<i32> {
+    fn get(&self, interner: &VoxInterner<i32>, position: IVec3) -> Option<i32> {
         self.data.get(interner, position)
     }
 }
 
 impl VoxOpsWrite<i32> for Chunk {
     #[inline(always)]
-    fn set(&mut self, interner: &mut DagInterner<i32>, position: IVec3, voxel: i32) -> bool {
+    fn set(&mut self, interner: &mut VoxInterner<i32>, position: IVec3, voxel: i32) -> bool {
         self.data.set(interner, position, voxel)
     }
 
     #[inline(always)]
-    fn fill(&mut self, interner: &mut DagInterner<i32>, value: i32) {
+    fn fill(&mut self, interner: &mut VoxInterner<i32>, value: i32) {
         self.data.fill(interner, value)
     }
 
     #[inline(always)]
-    fn clear(&mut self, interner: &mut DagInterner<i32>) {
+    fn clear(&mut self, interner: &mut VoxInterner<i32>) {
         self.data.clear(interner)
     }
 }
@@ -406,14 +406,14 @@ impl VoxOpsBatch<i32> for Chunk {
     }
 
     #[inline(always)]
-    fn apply_batch(&mut self, interner: &mut DagInterner<i32>, batch: &Batch<i32>) -> bool {
+    fn apply_batch(&mut self, interner: &mut VoxInterner<i32>, batch: &Batch<i32>) -> bool {
         self.data.apply_batch(interner, batch)
     }
 }
 
 impl VoxOpsMesh<i32> for Chunk {
     #[inline(always)]
-    fn to_vec(&self, interner: &DagInterner<i32>, lod: Lod) -> Vec<i32> {
+    fn to_vec(&self, interner: &VoxInterner<i32>, lod: Lod) -> Vec<i32> {
         self.data.to_vec(interner, lod)
     }
 }

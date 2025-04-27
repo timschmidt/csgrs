@@ -5,7 +5,7 @@ use glam::{IVec3, Vec3};
 use rand::Rng;
 
 use voxelis::{
-    Batch, DagInterner, Lod, MaxDepth,
+    Batch, Lod, MaxDepth, VoxInterner,
     spatial::{VoxOpsBatch, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite, VoxTree},
     world::Chunk,
 };
@@ -28,7 +28,7 @@ macro_rules! fill_sum {
 
 pub fn generate_test_sphere(
     tree: &mut VoxTree,
-    interner: &mut DagInterner<i32>,
+    interner: &mut VoxInterner<i32>,
     size: u32,
     value: i32,
 ) {
@@ -57,7 +57,7 @@ pub fn generate_test_sphere(
 
 pub fn generate_test_sphere_for_batch(
     batch: &mut Batch<i32>,
-    interner: &mut DagInterner<i32>,
+    interner: &mut VoxInterner<i32>,
     size: u32,
     value: i32,
 ) {
@@ -86,7 +86,7 @@ pub fn generate_test_sphere_for_batch(
 
 pub fn chunk_generate_test_sphere(
     chunk: &mut Chunk,
-    interner: &mut DagInterner<i32>,
+    interner: &mut VoxInterner<i32>,
     size: u32,
     value: i32,
 ) {
@@ -113,7 +113,7 @@ pub fn chunk_generate_test_sphere(
     }
 }
 
-pub fn generate_test_sphere_sum(tree: &mut VoxTree, interner: &mut DagInterner<i32>, size: u32) {
+pub fn generate_test_sphere_sum(tree: &mut VoxTree, interner: &mut VoxInterner<i32>, size: u32) {
     let radius = (size / 2) as i32;
     let r1 = radius - 1;
 
@@ -183,7 +183,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024);
 
                     match bench_type {
                         BenchType::Single => {
@@ -232,7 +232,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     match bench_type {
                         BenchType::Single => {
@@ -288,7 +288,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     match bench_type {
                         BenchType::Single => {
@@ -340,7 +340,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                     match bench_type {
                         BenchType::Single => {
@@ -405,7 +405,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                     let half_size = size / 2;
 
@@ -472,7 +472,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     match bench_type {
                         BenchType::Single => {
@@ -546,7 +546,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     match bench_type {
                         BenchType::Single => {
@@ -615,7 +615,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     match bench_type {
                         BenchType::Single => {
@@ -680,7 +680,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 256);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 256);
 
                     match bench_type {
                         BenchType::Single => {
@@ -748,7 +748,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     match bench_type {
                         BenchType::Single => {
@@ -829,7 +829,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     match bench_type {
                         BenchType::Single => {
@@ -898,7 +898,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let radius = (size / 2) as i32;
                     let r1 = radius - 1;
@@ -985,7 +985,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     let mut noise = fastnoise_lite::FastNoiseLite::new();
                     noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
@@ -1065,7 +1065,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
                     let mut noise = fastnoise_lite::FastNoiseLite::new();
                     noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
@@ -1149,7 +1149,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                     let mut rng = rand::rng();
 
@@ -1203,7 +1203,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
                     let mut tree = VoxTree::new(depth);
-                    let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 185);
+                    let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 185);
 
                     let mut rng = rand::rng();
 
@@ -1252,7 +1252,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
                 let tree = VoxTree::new(depth);
-                let interner = DagInterner::<i32>::with_memory_budget(1024);
+                let interner = VoxInterner::<i32>::with_memory_budget(1024);
 
                 b.iter(|| {
                     for y in 0..size as i32 {
@@ -1276,7 +1276,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
                 let mut tree = VoxTree::new(depth);
-                let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
+                let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
                 generate_test_sphere(&mut tree, &mut interner, size, 1);
 
@@ -1302,7 +1302,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
                 let mut tree = VoxTree::new(depth);
-                let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
+                let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
                 generate_test_sphere_sum(&mut tree, &mut interner, size);
 
@@ -1328,7 +1328,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
                 let mut tree = VoxTree::new(depth);
-                let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
+                let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
 
                 tree.fill(&mut interner, 1);
 
@@ -1354,7 +1354,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
                 let mut tree = VoxTree::new(depth);
-                let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
+                let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                 fill_sum!(size, tree, interner);
 
@@ -1389,7 +1389,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         c.bench_function("voxtree_is_empty_not_empty", |b| {
             let depth = depths[0].1;
             let mut tree = VoxTree::new(depth);
-            let mut interner = DagInterner::<i32>::with_memory_budget(1024);
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024);
             tree.fill(&mut interner, 1);
 
             b.iter(|| {
@@ -1404,7 +1404,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
                 let mut tree = VoxTree::new(depth);
-                let mut interner = DagInterner::<i32>::with_memory_budget(1024);
+                let mut interner = VoxInterner::<i32>::with_memory_budget(1024);
 
                 b.iter(|| {
                     tree.clear(black_box(&mut interner));
@@ -1421,7 +1421,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
                 let mut tree = VoxTree::new(depth);
-                let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 22);
+                let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 22);
 
                 let mut batch = tree.create_batch();
                 generate_test_sphere_for_batch(&mut batch, &mut interner, size, 1);
@@ -1442,7 +1442,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
                 let mut tree = VoxTree::new(depth);
-                let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
+                let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
 
                 b.iter(|| {
                     tree.fill(&mut interner, 1);
@@ -1459,7 +1459,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
         for &(size, depth) in depths.iter() {
             let tree = VoxTree::new(depth);
-            let interner = DagInterner::<i32>::with_memory_budget(1024);
+            let interner = VoxInterner::<i32>::with_memory_budget(1024);
 
             for lod in 0..depth.max() {
                 let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
@@ -1481,7 +1481,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
         for &(size, depth) in depths.iter() {
             let mut tree = VoxTree::new(depth);
-            let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
             let mut batch = tree.create_batch();
             generate_test_sphere_for_batch(&mut batch, &mut interner, size, 1);
@@ -1507,7 +1507,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
         for &(size, depth) in depths.iter() {
             let mut tree = VoxTree::new(depth);
-            let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
 
             tree.fill(&mut interner, 1);
 
@@ -1531,7 +1531,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
         for &(size, depth) in depths.iter() {
             let mut tree = VoxTree::new(depth);
-            let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
             fill_sum!(size, tree, interner);
 
@@ -1555,7 +1555,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
         for &(size, depth) in depths.iter() {
             let mut tree = VoxTree::new(depth);
-            let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
 
             let mut noise = fastnoise_lite::FastNoiseLite::new();
             noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
@@ -1597,7 +1597,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         for &(size, depth) in depths.iter() {
             let mut chunk = Chunk::with_position(1.28, depth, 0, 0, 0);
 
-            let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
 
             chunk_generate_test_sphere(&mut chunk, &mut interner, size, 1);
 
@@ -1638,7 +1638,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         for &(size, depth) in depths.iter() {
             let mut chunk = Chunk::with_position(1.28, depth, 0, 0, 0);
 
-            let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
 
             let mut noise = fastnoise_lite::FastNoiseLite::new();
             noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));

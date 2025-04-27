@@ -1,6 +1,6 @@
 use glam::IVec3;
 
-use crate::{Batch, BlockId, DagInterner, Lod, MaxDepth, VoxelTrait};
+use crate::{Batch, BlockId, Lod, MaxDepth, VoxInterner, VoxelTrait};
 
 mod svo;
 
@@ -36,7 +36,7 @@ impl Octree {
         matches!(self, Self::Dynamic(_))
     }
 
-    pub fn to_static<T: VoxelTrait>(&self, interner: &mut DagInterner<T>) -> Self {
+    pub fn to_static<T: VoxelTrait>(&self, interner: &mut VoxInterner<T>) -> Self {
         match self {
             Self::Static(_) => panic!("Already static"),
             Self::Dynamic(svo) => {
@@ -47,7 +47,7 @@ impl Octree {
         }
     }
 
-    pub fn to_dynamic<T: VoxelTrait>(&self, interner: &mut DagInterner<T>) -> Self {
+    pub fn to_dynamic<T: VoxelTrait>(&self, interner: &mut VoxInterner<T>) -> Self {
         match self {
             Self::Static(dag) => {
                 let mut svo = Svo::new(dag.max_depth(Lod::new(0)));
@@ -68,7 +68,7 @@ impl Octree {
 
 impl<T: VoxelTrait> VoxOpsRead<T> for Octree {
     #[inline(always)]
-    fn get(&self, interner: &DagInterner<T>, position: IVec3) -> Option<T> {
+    fn get(&self, interner: &VoxInterner<T>, position: IVec3) -> Option<T> {
         match self {
             Self::Static(octree) => octree.get(interner, position),
             Self::Dynamic(octree) => octree.get(interner, position),
@@ -78,7 +78,7 @@ impl<T: VoxelTrait> VoxOpsRead<T> for Octree {
 
 impl<T: VoxelTrait> VoxOpsWrite<T> for Octree {
     #[inline(always)]
-    fn set(&mut self, interner: &mut DagInterner<T>, position: IVec3, value: T) -> bool {
+    fn set(&mut self, interner: &mut VoxInterner<T>, position: IVec3, value: T) -> bool {
         match self {
             Self::Static(octree) => octree.set(interner, position, value),
             Self::Dynamic(octree) => octree.set(interner, position, value),
@@ -86,7 +86,7 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for Octree {
     }
 
     #[inline(always)]
-    fn fill(&mut self, interner: &mut DagInterner<T>, value: T) {
+    fn fill(&mut self, interner: &mut VoxInterner<T>, value: T) {
         match self {
             Self::Static(octree) => octree.fill(interner, value),
             Self::Dynamic(octree) => octree.fill(interner, value),
@@ -94,7 +94,7 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for Octree {
     }
 
     #[inline(always)]
-    fn clear(&mut self, interner: &mut DagInterner<T>) {
+    fn clear(&mut self, interner: &mut VoxInterner<T>) {
         match self {
             Self::Static(octree) => octree.clear(interner),
             Self::Dynamic(octree) => octree.clear(interner),
@@ -112,7 +112,7 @@ impl<T: VoxelTrait> VoxOpsBatch<T> for Octree {
     }
 
     #[inline(always)]
-    fn apply_batch(&mut self, interner: &mut DagInterner<T>, batch: &Batch<T>) -> bool {
+    fn apply_batch(&mut self, interner: &mut VoxInterner<T>, batch: &Batch<T>) -> bool {
         match self {
             Self::Static(octree) => octree.apply_batch(interner, batch),
             Self::Dynamic(octree) => octree.apply_batch(interner, batch),
@@ -122,7 +122,7 @@ impl<T: VoxelTrait> VoxOpsBatch<T> for Octree {
 
 impl<T: VoxelTrait> VoxOpsMesh<T> for Octree {
     #[inline(always)]
-    fn to_vec(&self, interner: &DagInterner<T>, lod: Lod) -> Vec<T> {
+    fn to_vec(&self, interner: &VoxInterner<T>, lod: Lod) -> Vec<T> {
         match self {
             Self::Static(octree) => octree.to_vec(interner, lod),
             Self::Dynamic(octree) => octree.to_vec(interner, lod),
@@ -199,7 +199,7 @@ fn copy_octree<
 >(
     src: &S,
     dst: &mut D,
-    interner: &mut DagInterner<T>,
+    interner: &mut VoxInterner<T>,
 ) {
     if src.is_empty() {
         return;

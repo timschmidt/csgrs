@@ -22,7 +22,7 @@ use hash::{
 
 pub type Children = [BlockId; MAX_CHILDREN];
 
-pub struct DagInterner<T> {
+pub struct VoxInterner<T> {
     patterns: [PatternsHashmap; 2],
     free_indices: Vec<u32>,
     next_index: u32,
@@ -39,7 +39,7 @@ pub struct DagInterner<T> {
     stats: InternerStats,
 }
 
-impl<T: VoxelTrait> DagInterner<T> {
+impl<T: VoxelTrait> VoxInterner<T> {
     const INITIAL_CAPACITY: usize = 16384; // 43ms
 
     pub fn with_memory_budget(requested_budget: usize) -> Self {

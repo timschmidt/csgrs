@@ -6,11 +6,11 @@
 //! # Examples
 //!
 //! ```
-//! use voxelis::{Batch, DagInterner, MaxDepth, spatial::VoxOpsWrite};
+//! use voxelis::{Batch, MaxDepth, VoxInterner, spatial::VoxOpsWrite};
 //! use glam::IVec3;
 //!
 //! // Create interner for 8-bit voxels
-//! let mut interner = DagInterner::<u8>::with_memory_budget(1024);
+//! let mut interner = VoxInterner::<u8>::with_memory_budget(1024);
 //!
 //! let mut batch = Batch::<u8>::new(MaxDepth::new(4));
 //! // Fill the octree with a uniform voxel value
@@ -24,11 +24,9 @@
 use glam::IVec3;
 
 use crate::{
-    DagInterner, VoxelTrait, interner::MAX_CHILDREN, spatial::VoxOpsWrite,
+    MaxDepth, VoxInterner, VoxelTrait, interner::MAX_CHILDREN, spatial::VoxOpsWrite,
     utils::common::encode_child_index_path,
 };
-
-use super::MaxDepth;
 
 /// Accumulates per-node voxel modifications, enabling efficient bulk updates for an octree.
 ///
@@ -167,7 +165,7 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for Batch<T> {
     /// # Panics
     ///
     /// Panics if `position` is out of bounds for the configured `max_depth`.
-    fn set(&mut self, _interner: &mut DagInterner<T>, position: IVec3, voxel: T) -> bool {
+    fn set(&mut self, _interner: &mut VoxInterner<T>, position: IVec3, voxel: T) -> bool {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
         assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
@@ -197,13 +195,13 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for Batch<T> {
     }
 
     /// Clears existing operations and sets a uniform fill value for the batch.
-    fn fill(&mut self, interner: &mut DagInterner<T>, value: T) {
+    fn fill(&mut self, interner: &mut VoxInterner<T>, value: T) {
         self.clear(interner);
         self.to_fill = Some(value);
     }
 
     /// Resets all recorded operations, clearing masks, values, and fill state.
-    fn clear(&mut self, _interner: &mut DagInterner<T>) {
+    fn clear(&mut self, _interner: &mut VoxInterner<T>) {
         self.masks.fill((0, 0));
         self.values.fill([T::default(); MAX_CHILDREN]);
         self.to_fill = None;

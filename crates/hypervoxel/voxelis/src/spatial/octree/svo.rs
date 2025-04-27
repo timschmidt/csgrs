@@ -1,7 +1,7 @@
 use glam::IVec3;
 
 use crate::{
-    Batch, BlockId, DagInterner, Lod, MaxDepth, TraversalDepth, VoxelTrait, child_index_macro,
+    Batch, BlockId, Lod, MaxDepth, TraversalDepth, VoxInterner, VoxelTrait, child_index_macro,
     child_index_macro_2,
     interner::{EMPTY_CHILD, MAX_ALLOWED_DEPTH, MAX_CHILDREN},
     utils::common::{get_at_depth, to_vec},
@@ -32,7 +32,7 @@ impl Svo {
 }
 
 impl<T: VoxelTrait> VoxOpsRead<T> for Svo {
-    fn get(&self, interner: &DagInterner<T>, position: IVec3) -> Option<T> {
+    fn get(&self, interner: &VoxInterner<T>, position: IVec3) -> Option<T> {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
         assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
@@ -47,7 +47,7 @@ impl<T: VoxelTrait> VoxOpsRead<T> for Svo {
 }
 
 impl<T: VoxelTrait> VoxOpsWrite<T> for Svo {
-    fn set(&mut self, interner: &mut DagInterner<T>, position: IVec3, voxel: T) -> bool {
+    fn set(&mut self, interner: &mut VoxInterner<T>, position: IVec3, voxel: T) -> bool {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
         assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
@@ -145,7 +145,7 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for Svo {
         }
     }
 
-    fn fill(&mut self, interner: &mut DagInterner<T>, value: T) {
+    fn fill(&mut self, interner: &mut VoxInterner<T>, value: T) {
         if value != T::default() {
             if !self.root_id.is_empty() {
                 interner.dec_ref_recursive(&self.root_id);
@@ -157,7 +157,7 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for Svo {
         }
     }
 
-    fn clear(&mut self, interner: &mut DagInterner<T>) {
+    fn clear(&mut self, interner: &mut VoxInterner<T>) {
         if !self.root_id.is_empty() {
             #[cfg(feature = "debug_trace_ref_counts")]
             println!("clear root_id: {:?}", self.root_id);
@@ -182,13 +182,13 @@ impl<T: VoxelTrait> VoxOpsBatch<T> for Svo {
     }
 
     #[inline(always)]
-    fn apply_batch(&mut self, _interner: &mut DagInterner<T>, _batch: &Batch<T>) -> bool {
+    fn apply_batch(&mut self, _interner: &mut VoxInterner<T>, _batch: &Batch<T>) -> bool {
         false
     }
 }
 
 impl<T: VoxelTrait> VoxOpsMesh<T> for Svo {
-    fn to_vec(&self, interner: &DagInterner<T>, lod: Lod) -> Vec<T> {
+    fn to_vec(&self, interner: &VoxInterner<T>, lod: Lod) -> Vec<T> {
         to_vec(interner, &self.root_id, self.max_depth.for_lod(lod))
     }
 }
@@ -236,7 +236,7 @@ impl VoxOpsDirty for Svo {
 
 #[inline(always)]
 fn set_at_root<T: VoxelTrait>(
-    interner: &mut DagInterner<T>,
+    interner: &mut VoxInterner<T>,
     node_id: &BlockId,
     position: &IVec3,
     max_depth: u8,
@@ -253,7 +253,7 @@ fn set_at_root<T: VoxelTrait>(
 }
 
 fn set_at_depth_iterative<T: VoxelTrait>(
-    interner: &mut DagInterner<T>,
+    interner: &mut VoxInterner<T>,
     initial_id: &BlockId,
     position: &IVec3,
     initial_depth: &TraversalDepth,
@@ -467,7 +467,7 @@ fn set_at_depth_iterative<T: VoxelTrait>(
 }
 
 fn remove_at_depth<T: VoxelTrait>(
-    interner: &mut DagInterner<T>,
+    interner: &mut VoxInterner<T>,
     node_id: &BlockId,
     position: &IVec3,
     depth: &TraversalDepth,
@@ -482,7 +482,7 @@ fn remove_at_depth<T: VoxelTrait>(
 }
 
 fn remove_at_depth_branch<T: VoxelTrait>(
-    interner: &mut DagInterner<T>,
+    interner: &mut VoxInterner<T>,
     node_id: &BlockId,
     position: &IVec3,
     depth: &TraversalDepth,
@@ -567,7 +567,7 @@ fn remove_at_depth_branch<T: VoxelTrait>(
 }
 
 fn remove_at_depth_leaf<T: VoxelTrait>(
-    interner: &mut DagInterner<T>,
+    interner: &mut VoxInterner<T>,
     node_id: &BlockId,
     position: &IVec3,
     depth: &TraversalDepth,
@@ -646,7 +646,7 @@ mod tests {
 
     #[test]
     fn test_set_and_get() {
-        let mut interner = DagInterner::<u8>::with_memory_budget(1024 * 1024 * 128);
+        let mut interner = VoxInterner::<u8>::with_memory_budget(1024 * 1024 * 128);
 
         let mut octree = Svo::new(MaxDepth::new(3));
         let position = IVec3::new(0, 0, 0);
@@ -691,7 +691,7 @@ mod tests {
 
     #[test]
     fn test_is_empty() {
-        let mut interner = DagInterner::<u8>::with_memory_budget(1024 * 1024 * 128);
+        let mut interner = VoxInterner::<u8>::with_memory_budget(1024 * 1024 * 128);
 
         let mut octree = Svo::new(MaxDepth::new(3));
         assert!(octree.is_empty());
@@ -707,7 +707,7 @@ mod tests {
 
     #[test]
     fn test_clear() {
-        let mut interner = DagInterner::<u8>::with_memory_budget(1024 * 1024 * 128);
+        let mut interner = VoxInterner::<u8>::with_memory_budget(1024 * 1024 * 128);
 
         let mut octree = Svo::new(MaxDepth::new(3));
 
@@ -736,7 +736,7 @@ mod tests {
 
     #[test]
     fn test_no_default_leaf_nodes() {
-        let mut interner = DagInterner::<u8>::with_memory_budget(1024 * 1024 * 128);
+        let mut interner = VoxInterner::<u8>::with_memory_budget(1024 * 1024 * 128);
 
         let mut octree = Svo::new(MaxDepth::new(3));
 
@@ -752,7 +752,7 @@ mod tests {
 
     #[test]
     fn test_dirty_flag() {
-        let mut interner = DagInterner::<u8>::with_memory_budget(1024 * 1024 * 128);
+        let mut interner = VoxInterner::<u8>::with_memory_budget(1024 * 1024 * 128);
 
         let mut octree = Svo::new(MaxDepth::new(3));
         assert!(!octree.is_dirty());
@@ -772,7 +772,7 @@ mod tests {
 
     #[test]
     fn test_shared_storage() {
-        let mut interner = DagInterner::<u8>::with_memory_budget(1024);
+        let mut interner = VoxInterner::<u8>::with_memory_budget(1024);
 
         let mut octree1 = Svo::new(MaxDepth::new(3));
         let mut octree2 = Svo::new(MaxDepth::new(3));

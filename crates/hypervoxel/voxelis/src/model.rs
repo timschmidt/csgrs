@@ -14,7 +14,7 @@ use rustc_hash::FxHashMap;
 #[cfg(feature = "memory_stats")]
 use crate::interner::InternerStats;
 use crate::{
-    BlockId, DagInterner, MaxDepth,
+    BlockId, MaxDepth, VoxInterner,
     interner::EMPTY_CHILD,
     io::varint::{decode_varint_u32_from_reader, encode_varint_u32},
     world::Chunk,
@@ -25,7 +25,7 @@ pub struct Model {
     pub chunk_world_size: f32,
     pub world_bounds: IVec3,
     pub chunks: HashMap<IVec3, Chunk>,
-    pub interner: Arc<RwLock<DagInterner<i32>>>,
+    pub interner: Arc<RwLock<VoxInterner<i32>>>,
 }
 
 fn initialize_chunks(
@@ -53,7 +53,7 @@ fn initialize_chunks(
 
 impl Model {
     pub fn empty(max_depth: MaxDepth, chunk_world_size: f32, memory_budget: usize) -> Self {
-        let interner = Arc::new(RwLock::new(DagInterner::with_memory_budget(memory_budget)));
+        let interner = Arc::new(RwLock::new(VoxInterner::with_memory_budget(memory_budget)));
 
         Self {
             max_depth,
@@ -65,7 +65,7 @@ impl Model {
     }
 
     pub fn new(max_depth: MaxDepth, chunk_world_size: f32, memory_budget: usize) -> Self {
-        let interner = Arc::new(RwLock::new(DagInterner::with_memory_budget(memory_budget)));
+        let interner = Arc::new(RwLock::new(VoxInterner::with_memory_budget(memory_budget)));
         let world_bounds = IVec3::new(32, 32, 32);
         let chunks = initialize_chunks(max_depth, chunk_world_size, world_bounds);
 
@@ -88,7 +88,7 @@ impl Model {
             "Creating model with bounds {:?}, chunk: {}m depth: {}",
             world_bounds, chunk_world_size, max_depth
         );
-        let interner = Arc::new(RwLock::new(DagInterner::with_memory_budget(memory_budget)));
+        let interner = Arc::new(RwLock::new(VoxInterner::with_memory_budget(memory_budget)));
         let chunks = initialize_chunks(max_depth, chunk_world_size, world_bounds);
 
         Self {
@@ -116,7 +116,7 @@ impl Model {
         })
     }
 
-    pub fn get_interner(&self) -> Arc<RwLock<DagInterner<i32>>> {
+    pub fn get_interner(&self) -> Arc<RwLock<VoxInterner<i32>>> {
         self.interner.clone()
     }
 
