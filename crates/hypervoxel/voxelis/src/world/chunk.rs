@@ -9,8 +9,8 @@ use wide::f32x8;
 use crate::io::consts::VTC_MAGIC;
 use crate::io::varint::{decode_varint_u32_from_reader, encode_varint};
 use crate::spatial::{
-    Octree, VoxOpsBatch, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState,
-    VoxOpsWrite,
+    VoxOpsBatch, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite,
+    VoxTree,
 };
 use crate::{Batch, BlockId, Lod, MaxDepth, VoxInterner};
 
@@ -33,7 +33,7 @@ const VEC_FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 const VEC_BACK: Vec3 = Vec3::new(0.0, 0.0, 1.0);
 
 pub struct Chunk {
-    data: Octree,
+    data: VoxTree,
     position: IVec3,
     chunk_size: f32,
     max_depth: MaxDepth,
@@ -42,7 +42,7 @@ pub struct Chunk {
 impl Chunk {
     pub fn with_position(chunk_size: f32, max_depth: MaxDepth, x: i32, y: i32, z: i32) -> Self {
         Self {
-            data: Octree::make_static(max_depth),
+            data: VoxTree::new(max_depth),
             position: IVec3::new(x, y, z),
             chunk_size,
             max_depth,
@@ -357,18 +357,11 @@ impl Chunk {
         let mut chunk = Chunk::with_position(chunk_size, max_depth, x, y, z);
 
         let root_id = decode_varint_u32_from_reader(reader).unwrap();
-        match &mut chunk.data {
-            Octree::Static(octree) => {
-                if let Some((block_id, _, _)) = patterns.get(&root_id) {
-                    octree.set_root_id(interner, *block_id);
-                } else {
-                    let (block_id, _) = leaf_patterns.get(&root_id).unwrap();
-                    octree.set_root_id(interner, *block_id);
-                }
-            }
-            Octree::Dynamic(_) => {
-                panic!("Dynamic octree not supported");
-            }
+        if let Some((block_id, _, _)) = patterns.get(&root_id) {
+            chunk.data.set_root_id(interner, *block_id);
+        } else {
+            let (block_id, _) = leaf_patterns.get(&root_id).unwrap();
+            chunk.data.set_root_id(interner, *block_id);
         }
 
         chunk
