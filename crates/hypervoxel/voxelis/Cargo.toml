@@ -29,5 +29,5 @@ fastnoise-lite.workspace = true
 rand.workspace = true
 
 [[bench]]
-name = "svodag_bench"
+name = "voxtree_bench"
 harness = false

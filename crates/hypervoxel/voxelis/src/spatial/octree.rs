@@ -2,24 +2,23 @@ use glam::IVec3;
 
 use crate::{Batch, BlockId, DagInterner, Lod, MaxDepth, VoxelTrait};
 
-mod dag;
 mod svo;
 
+use super::VoxTree;
 pub use super::{
     VoxOpsBatch, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite,
 };
-pub use dag::SvoDag;
 pub use svo::Svo;
 
 pub enum Octree {
-    Static(SvoDag),
+    Static(VoxTree),
     Dynamic(Svo),
 }
 
 impl Octree {
     #[inline(always)]
     pub fn make_static(max_depth: MaxDepth) -> Self {
-        Self::Static(SvoDag::new(max_depth))
+        Self::Static(VoxTree::new(max_depth))
     }
 
     #[inline(always)]
@@ -41,7 +40,7 @@ impl Octree {
         match self {
             Self::Static(_) => panic!("Already static"),
             Self::Dynamic(svo) => {
-                let mut dag = SvoDag::new(svo.max_depth(Lod::new(0)));
+                let mut dag = VoxTree::new(svo.max_depth(Lod::new(0)));
                 copy_octree(svo, &mut dag, interner);
                 Self::Static(dag)
             }

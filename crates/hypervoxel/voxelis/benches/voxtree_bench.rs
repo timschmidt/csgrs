@@ -6,16 +6,16 @@ use rand::Rng;
 
 use voxelis::{
     Batch, DagInterner, Lod, MaxDepth,
-    spatial::{SvoDag, VoxOpsBatch, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite},
+    spatial::{VoxOpsBatch, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite, VoxTree},
     world::Chunk,
 };
 
 macro_rules! fill_sum {
-    ($size:expr, $octree:expr, $interner:expr) => {
+    ($size:expr, $tree:expr, $interner:expr) => {
         for x in 0..$size as i32 {
             for y in 0..$size as i32 {
                 for z in 0..$size as i32 {
-                    $octree.set(
+                    $tree.set(
                         &mut $interner,
                         black_box(IVec3::new(x, y, z)),
                         black_box((x + y + z) % i32::MAX),
@@ -27,7 +27,7 @@ macro_rules! fill_sum {
 }
 
 pub fn generate_test_sphere(
-    octree: &mut SvoDag,
+    tree: &mut VoxTree,
     interner: &mut DagInterner<i32>,
     size: u32,
     value: i32,
@@ -48,7 +48,7 @@ pub fn generate_test_sphere(
                 let distance_squared = dx * dx + dy * dy + dz * dz;
 
                 if distance_squared <= radius_squared {
-                    octree.set(interner, black_box(IVec3::new(x, y, z)), black_box(value));
+                    tree.set(interner, black_box(IVec3::new(x, y, z)), black_box(value));
                 }
             }
         }
@@ -113,7 +113,7 @@ pub fn chunk_generate_test_sphere(
     }
 }
 
-pub fn generate_test_sphere_sum(octree: &mut SvoDag, interner: &mut DagInterner<i32>, size: u32) {
+pub fn generate_test_sphere_sum(tree: &mut VoxTree, interner: &mut DagInterner<i32>, size: u32) {
     let radius = (size / 2) as i32;
     let r1 = radius - 1;
 
@@ -130,7 +130,7 @@ pub fn generate_test_sphere_sum(octree: &mut SvoDag, interner: &mut DagInterner<
                 let distance_squared = dx * dx + dy * dy + dz * dz;
 
                 if distance_squared <= radius_squared {
-                    octree.set(
+                    tree.set(
                         interner,
                         black_box(IVec3::new(x, y, z)),
                         black_box((x + y + z) % i32::MAX),
@@ -156,7 +156,7 @@ impl BenchType {
     }
 }
 
-fn benchmark_svodag(c: &mut Criterion) {
+fn benchmark_voxtree(c: &mut Criterion) {
     let depths: Vec<(u32, MaxDepth)> = (3..=6)
         .map(|depth| {
             let voxels_per_axis = 1 << depth;
@@ -168,21 +168,21 @@ fn benchmark_svodag(c: &mut Criterion) {
 
     {
         let depth = depths[0].1;
-        c.bench_function("svodag_create", |b| {
+        c.bench_function("voxtree_create", |b| {
             b.iter(|| {
-                let _ = black_box(SvoDag::new(black_box(depth)));
+                let _ = black_box(VoxTree::new(black_box(depth)));
             });
         });
     }
 
     {
-        let mut group = c.benchmark_group("svodag_fill");
+        let mut group = c.benchmark_group("voxtree_fill");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024);
 
                     match bench_type {
@@ -190,7 +190,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut v = 1;
 
                             b.iter(|| {
-                                octree.fill(&mut interner, black_box(v));
+                                tree.fill(&mut interner, black_box(v));
 
                                 v += 1;
                                 if v == 0 {
@@ -199,7 +199,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             batches[0].fill(&mut interner, 1);
                             batches[1].fill(&mut interner, 2);
@@ -207,7 +207,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -225,13 +225,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_fill_then_set_single_voxel");
+        let mut group = c.benchmark_group("voxtree_fill_then_set_single_voxel");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     match bench_type {
@@ -241,8 +241,8 @@ fn benchmark_svodag(c: &mut Criterion) {
                             b.iter(|| {
                                 let next_v = if v + 1 != 0 { v + 1 } else { 1 };
 
-                                octree.fill(&mut interner, black_box(v));
-                                octree.set(
+                                tree.fill(&mut interner, black_box(v));
+                                tree.set(
                                     &mut interner,
                                     black_box(IVec3::new(0, 0, 0)),
                                     black_box(next_v),
@@ -252,7 +252,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             batches[0].fill(&mut interner, 1);
                             batches[0].set(&mut interner, IVec3::new(0, 0, 0), 2);
@@ -263,7 +263,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -281,13 +281,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_single_voxel");
+        let mut group = c.benchmark_group("voxtree_set_single_voxel");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     match bench_type {
@@ -297,7 +297,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             b.iter(|| {
                                 let next_v = if v + 1 != 0 { v + 1 } else { 1 };
 
-                                octree.set(
+                                tree.set(
                                     &mut interner,
                                     black_box(IVec3::new(0, 0, 0)),
                                     black_box(next_v),
@@ -307,7 +307,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             batches[0].set(&mut interner, IVec3::new(0, 0, 0), 1);
                             batches[1].set(&mut interner, IVec3::new(0, 0, 0), 2);
@@ -315,7 +315,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -333,13 +333,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_uniform");
+        let mut group = c.benchmark_group("voxtree_set_uniform");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                     match bench_type {
@@ -350,7 +350,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                 for y in 0..size as i32 {
                                     for z in 0..size as i32 {
                                         for x in 0..size as i32 {
-                                            octree.set(
+                                            tree.set(
                                                 &mut interner,
                                                 black_box(IVec3::new(x, y, z)),
                                                 black_box(v),
@@ -366,7 +366,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             for y in 0..size as i32 {
                                 for z in 0..size as i32 {
@@ -380,7 +380,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -398,13 +398,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_uniform_half");
+        let mut group = c.benchmark_group("voxtree_set_uniform_half");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                     let half_size = size / 2;
@@ -417,7 +417,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                 for y in 0..half_size as i32 {
                                     for z in 0..size as i32 {
                                         for x in 0..size as i32 {
-                                            octree.set(
+                                            tree.set(
                                                 &mut interner,
                                                 black_box(IVec3::new(x, y, z)),
                                                 black_box(v),
@@ -433,7 +433,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             for y in 0..half_size as i32 {
                                 for z in 0..size as i32 {
@@ -447,7 +447,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -465,13 +465,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_sum");
+        let mut group = c.benchmark_group("voxtree_set_sum");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     match bench_type {
@@ -482,7 +482,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                 for y in 0..size as i32 {
                                     for z in 0..size as i32 {
                                         for x in 0..size as i32 {
-                                            octree.set(
+                                            tree.set(
                                                 &mut interner,
                                                 black_box(IVec3::new(x, y, z)),
                                                 black_box((x + y + z + v) % i32::MAX),
@@ -498,7 +498,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             for y in 0..size as i32 {
                                 for z in 0..size as i32 {
@@ -521,7 +521,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -539,13 +539,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_checkerboard");
+        let mut group = c.benchmark_group("voxtree_set_checkerboard");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     match bench_type {
@@ -557,7 +557,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                     for z in 0..size as i32 {
                                         for x in 0..size as i32 {
                                             if (x + y + z) % 2 == 0 {
-                                                octree.set(
+                                                tree.set(
                                                     &mut interner,
                                                     black_box(IVec3::new(x, y, z)),
                                                     black_box(v),
@@ -574,7 +574,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             for y in 0..size as i32 {
                                 for z in 0..size as i32 {
@@ -590,7 +590,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -608,13 +608,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_sparse_fill");
+        let mut group = c.benchmark_group("voxtree_set_sparse_fill");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     match bench_type {
@@ -625,7 +625,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                 for y in (0..size as i32).step_by(4) {
                                     for z in (0..size as i32).step_by(4) {
                                         for x in (0..size as i32).step_by(4) {
-                                            octree.set(
+                                            tree.set(
                                                 &mut interner,
                                                 black_box(IVec3::new(x, y, z)),
                                                 black_box(v),
@@ -641,7 +641,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             for y in (0..size as i32).step_by(4) {
                                 for z in (0..size as i32).step_by(4) {
@@ -655,7 +655,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -673,13 +673,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_gradient_fill");
+        let mut group = c.benchmark_group("voxtree_set_gradient_fill");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 256);
 
                     match bench_type {
@@ -691,7 +691,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                     let value = (x + v) % 256;
                                     for y in 0..size as i32 {
                                         for z in 0..size as i32 {
-                                            octree.set(
+                                            tree.set(
                                                 &mut interner,
                                                 black_box(IVec3::new(x, y, z)),
                                                 black_box(value),
@@ -707,7 +707,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             for x in 0..size as i32 {
                                 let value1 = (x + 1) % 256;
@@ -723,7 +723,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -741,13 +741,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_hollow_cube");
+        let mut group = c.benchmark_group("voxtree_set_hollow_cube");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     match bench_type {
@@ -765,7 +765,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                                 || z == 0
                                                 || z == (size as i32) - 1;
                                             if is_edge {
-                                                octree.set(
+                                                tree.set(
                                                     &mut interner,
                                                     black_box(IVec3::new(x, y, z)),
                                                     black_box(v),
@@ -782,7 +782,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             for y in 0..size as i32 {
                                 for z in 0..size as i32 {
@@ -804,7 +804,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -822,13 +822,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_diagonal");
+        let mut group = c.benchmark_group("voxtree_set_diagonal");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     match bench_type {
@@ -840,7 +840,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                     for z in 0..size as i32 {
                                         for x in 0..size as i32 {
                                             if x == y && x == z {
-                                                octree.set(
+                                                tree.set(
                                                     &mut interner,
                                                     black_box(IVec3::new(x, y, z)),
                                                     black_box(v),
@@ -857,7 +857,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             for y in 0..size as i32 {
                                 for z in 0..size as i32 {
@@ -873,7 +873,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -891,13 +891,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_sphere");
+        let mut group = c.benchmark_group("voxtree_set_sphere");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 25);
 
                     let radius = (size / 2) as i32;
@@ -921,7 +921,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                             let distance_squared = dx * dx + dy * dy + dz * dz;
 
                                             if distance_squared <= radius_squared {
-                                                octree.set(
+                                                tree.set(
                                                     &mut interner,
                                                     black_box(IVec3::new(x, y, z)),
                                                     black_box(v),
@@ -938,7 +938,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             for y in 0..size as i32 {
                                 for z in 0..size as i32 {
@@ -960,7 +960,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -978,13 +978,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_terrain_surface_only");
+        let mut group = c.benchmark_group("voxtree_set_terrain_surface_only");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                     let mut noise = fastnoise_lite::FastNoiseLite::new();
@@ -1005,7 +1005,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                             * size as f32;
                                         let y = y as i32;
                                         debug_assert!(y < size as i32);
-                                        octree.set(
+                                        tree.set(
                                             &mut interner,
                                             black_box(IVec3::new(x, y, z)),
                                             black_box(v),
@@ -1020,7 +1020,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             for z in 0..size as i32 {
                                 for x in 0..size as i32 {
@@ -1040,7 +1040,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -1058,13 +1058,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_terrain_surface_and_below");
+        let mut group = c.benchmark_group("voxtree_set_terrain_surface_and_below");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
                     let mut noise = fastnoise_lite::FastNoiseLite::new();
@@ -1086,7 +1086,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                         let height = height as i32;
                                         debug_assert!(height < size as i32);
                                         for y in 0..=height {
-                                            octree.set(
+                                            tree.set(
                                                 &mut interner,
                                                 black_box(IVec3::new(x, y, z)),
                                                 black_box(v),
@@ -1102,7 +1102,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batches = [octree.create_batch(), octree.create_batch()];
+                            let mut batches = [tree.create_batch(), tree.create_batch()];
 
                             for z in 0..size as i32 {
                                 for x in 0..size as i32 {
@@ -1124,7 +1124,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             let mut batch_idx = 0;
 
                             b.iter(|| {
-                                octree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
+                                tree.apply_batch(&mut interner, black_box(&batches[batch_idx]));
 
                                 if batch_idx == 0 {
                                     batch_idx = 1;
@@ -1142,13 +1142,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_random_position_same_value");
+        let mut group = c.benchmark_group("voxtree_set_random_position_same_value");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
                     let mut rng = rand::rng();
@@ -1162,7 +1162,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                 let y = rng.random_range(0..size as i32);
                                 let z = rng.random_range(0..size as i32);
 
-                                octree.set(
+                                tree.set(
                                     &mut interner,
                                     black_box(IVec3::new(x, y, z)),
                                     black_box(value),
@@ -1171,18 +1171,18 @@ fn benchmark_svodag(c: &mut Criterion) {
                         }
                         BenchType::Batch => {
                             // TODO(aljen): fix this case
-                            // let mut batch = octree.create_batch();
+                            // let mut batch = tree.create_batch();
 
                             b.iter(|| {
                                 let x = rng.random_range(0..size as i32);
                                 let y = rng.random_range(0..size as i32);
                                 let z = rng.random_range(0..size as i32);
 
-                                let mut batch = octree.create_batch();
+                                let mut batch = tree.create_batch();
 
                                 batch.set(&mut interner, IVec3::new(x, y, z), value);
 
-                                octree.apply_batch(&mut interner, black_box(&batch));
+                                tree.apply_batch(&mut interner, black_box(&batch));
 
                                 // batch.set(&mut interner, IVec3::new(x, y, z), 0);
                             });
@@ -1196,13 +1196,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_set_random_position_and_value");
+        let mut group = c.benchmark_group("voxtree_set_random_position_and_value");
 
         for &(size, depth) in depths.iter() {
             for bench_type in bench_types.iter() {
                 let bench_id = BenchmarkId::new(size.to_string(), bench_type.to_string());
                 group.bench_with_input(bench_id, &depth, |b, &depth| {
-                    let mut octree = SvoDag::new(depth);
+                    let mut tree = VoxTree::new(depth);
                     let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 185);
 
                     let mut rng = rand::rng();
@@ -1215,7 +1215,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                                 let z = rng.random_range(0..size as i32);
                                 let value = rng.random_range(1..i32::MAX);
 
-                                octree.set(
+                                tree.set(
                                     &mut interner,
                                     black_box(IVec3::new(x, y, z)),
                                     black_box(value),
@@ -1223,7 +1223,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            let mut batch = octree.create_batch();
+                            let mut batch = tree.create_batch();
 
                             b.iter(|| {
                                 let x = rng.random_range(0..size as i32);
@@ -1233,7 +1233,7 @@ fn benchmark_svodag(c: &mut Criterion) {
 
                                 batch.set(&mut interner, IVec3::new(x, y, z), value);
 
-                                octree.apply_batch(&mut interner, black_box(&batch));
+                                tree.apply_batch(&mut interner, black_box(&batch));
 
                                 batch.set(&mut interner, IVec3::new(x, y, z), 0);
                             });
@@ -1247,20 +1247,19 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_get_empty");
+        let mut group = c.benchmark_group("voxtree_get_empty");
 
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
-                let octree = SvoDag::new(depth);
+                let tree = VoxTree::new(depth);
                 let interner = DagInterner::<i32>::with_memory_budget(1024);
 
                 b.iter(|| {
                     for y in 0..size as i32 {
                         for z in 0..size as i32 {
                             for x in 0..size as i32 {
-                                let _ = black_box(
-                                    octree.get(&interner, black_box(IVec3::new(x, y, z))),
-                                );
+                                let _ =
+                                    black_box(tree.get(&interner, black_box(IVec3::new(x, y, z))));
                             }
                         }
                     }
@@ -1272,22 +1271,21 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_get_sphere_uniform");
+        let mut group = c.benchmark_group("voxtree_get_sphere_uniform");
 
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
-                let mut octree = SvoDag::new(depth);
+                let mut tree = VoxTree::new(depth);
                 let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
-                generate_test_sphere(&mut octree, &mut interner, size, 1);
+                generate_test_sphere(&mut tree, &mut interner, size, 1);
 
                 b.iter(|| {
                     for y in 0..size as i32 {
                         for z in 0..size as i32 {
                             for x in 0..size as i32 {
-                                let _ = black_box(
-                                    octree.get(&interner, black_box(IVec3::new(x, y, z))),
-                                );
+                                let _ =
+                                    black_box(tree.get(&interner, black_box(IVec3::new(x, y, z))));
                             }
                         }
                     }
@@ -1299,22 +1297,21 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_get_sphere_sum");
+        let mut group = c.benchmark_group("voxtree_get_sphere_sum");
 
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
-                let mut octree = SvoDag::new(depth);
+                let mut tree = VoxTree::new(depth);
                 let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
-                generate_test_sphere_sum(&mut octree, &mut interner, size);
+                generate_test_sphere_sum(&mut tree, &mut interner, size);
 
                 b.iter(|| {
                     for y in 0..size as i32 {
                         for z in 0..size as i32 {
                             for x in 0..size as i32 {
-                                let _ = black_box(
-                                    octree.get(&interner, black_box(IVec3::new(x, y, z))),
-                                );
+                                let _ =
+                                    black_box(tree.get(&interner, black_box(IVec3::new(x, y, z))));
                             }
                         }
                     }
@@ -1326,22 +1323,21 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_get_full_uniform");
+        let mut group = c.benchmark_group("voxtree_get_full_uniform");
 
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
-                let mut octree = SvoDag::new(depth);
+                let mut tree = VoxTree::new(depth);
                 let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
-                octree.fill(&mut interner, 1);
+                tree.fill(&mut interner, 1);
 
                 b.iter(|| {
                     for y in 0..size as i32 {
                         for z in 0..size as i32 {
                             for x in 0..size as i32 {
-                                let _ = black_box(
-                                    octree.get(&interner, black_box(IVec3::new(x, y, z))),
-                                );
+                                let _ =
+                                    black_box(tree.get(&interner, black_box(IVec3::new(x, y, z))));
                             }
                         }
                     }
@@ -1353,22 +1349,21 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_get_full_sum");
+        let mut group = c.benchmark_group("voxtree_get_full_sum");
 
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
-                let mut octree = SvoDag::new(depth);
+                let mut tree = VoxTree::new(depth);
                 let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
-                fill_sum!(size, octree, interner);
+                fill_sum!(size, tree, interner);
 
                 b.iter(|| {
                     for y in 0..size as i32 {
                         for z in 0..size as i32 {
                             for x in 0..size as i32 {
-                                let _ = black_box(
-                                    octree.get(&interner, black_box(IVec3::new(x, y, z))),
-                                );
+                                let _ =
+                                    black_box(tree.get(&interner, black_box(IVec3::new(x, y, z))));
                             }
                         }
                     }
@@ -1380,39 +1375,39 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        c.bench_function("svodag_is_empty_empty", |b| {
+        c.bench_function("voxtree_is_empty_empty", |b| {
             let depth = depths[0].1;
-            let octree = SvoDag::new(depth);
+            let tree = VoxTree::new(depth);
 
             b.iter(|| {
-                let _ = black_box(octree.is_empty());
+                let _ = black_box(tree.is_empty());
             });
         });
     }
 
     {
-        c.bench_function("svodag_is_empty_not_empty", |b| {
+        c.bench_function("voxtree_is_empty_not_empty", |b| {
             let depth = depths[0].1;
-            let mut octree = SvoDag::new(depth);
+            let mut tree = VoxTree::new(depth);
             let mut interner = DagInterner::<i32>::with_memory_budget(1024);
-            octree.fill(&mut interner, 1);
+            tree.fill(&mut interner, 1);
 
             b.iter(|| {
-                let _ = black_box(octree.is_empty());
+                let _ = black_box(tree.is_empty());
             });
         });
     }
 
     {
-        let mut group = c.benchmark_group("svodag_clear_empty");
+        let mut group = c.benchmark_group("voxtree_clear_empty");
 
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
-                let mut octree = SvoDag::new(depth);
+                let mut tree = VoxTree::new(depth);
                 let mut interner = DagInterner::<i32>::with_memory_budget(1024);
 
                 b.iter(|| {
-                    octree.clear(black_box(&mut interner));
+                    tree.clear(black_box(&mut interner));
                 });
             });
         }
@@ -1421,19 +1416,19 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_clear_sphere");
+        let mut group = c.benchmark_group("voxtree_clear_sphere");
 
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
-                let mut octree = SvoDag::new(depth);
+                let mut tree = VoxTree::new(depth);
                 let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 22);
 
-                let mut batch = octree.create_batch();
+                let mut batch = tree.create_batch();
                 generate_test_sphere_for_batch(&mut batch, &mut interner, size, 1);
 
                 b.iter(|| {
-                    octree.apply_batch(&mut interner, black_box(&batch));
-                    octree.clear(&mut interner);
+                    tree.apply_batch(&mut interner, black_box(&batch));
+                    tree.clear(&mut interner);
                 });
             });
         }
@@ -1442,16 +1437,16 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_clear_filled");
+        let mut group = c.benchmark_group("voxtree_clear_filled");
 
         for &(size, depth) in depths.iter() {
             group.bench_with_input(size.to_string(), &depth, |b, &depth| {
-                let mut octree = SvoDag::new(depth);
+                let mut tree = VoxTree::new(depth);
                 let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
                 b.iter(|| {
-                    octree.fill(&mut interner, 1);
-                    octree.clear(&mut interner);
+                    tree.fill(&mut interner, 1);
+                    tree.clear(&mut interner);
                 });
             });
         }
@@ -1460,10 +1455,10 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_to_vec_empty");
+        let mut group = c.benchmark_group("voxtree_to_vec_empty");
 
         for &(size, depth) in depths.iter() {
-            let octree = SvoDag::new(depth);
+            let tree = VoxTree::new(depth);
             let interner = DagInterner::<i32>::with_memory_budget(1024);
 
             for lod in 0..depth.max() {
@@ -1472,7 +1467,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                     let lod = Lod::new(lod);
 
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&interner, black_box(lod)));
+                        let _ = black_box(tree.to_vec(&interner, black_box(lod)));
                     });
                 });
             }
@@ -1482,15 +1477,15 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_to_vec_sphere");
+        let mut group = c.benchmark_group("voxtree_to_vec_sphere");
 
         for &(size, depth) in depths.iter() {
-            let mut octree = SvoDag::new(depth);
+            let mut tree = VoxTree::new(depth);
             let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
-            let mut batch = octree.create_batch();
+            let mut batch = tree.create_batch();
             generate_test_sphere_for_batch(&mut batch, &mut interner, size, 1);
-            octree.apply_batch(&mut interner, &batch);
+            tree.apply_batch(&mut interner, &batch);
 
             for lod in 0..depth.max() {
                 let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
@@ -1498,7 +1493,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                     let lod = Lod::new(lod);
 
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&interner, black_box(lod)));
+                        let _ = black_box(tree.to_vec(&interner, black_box(lod)));
                     });
                 });
             }
@@ -1508,13 +1503,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_to_vec_uniform");
+        let mut group = c.benchmark_group("voxtree_to_vec_uniform");
 
         for &(size, depth) in depths.iter() {
-            let mut octree = SvoDag::new(depth);
+            let mut tree = VoxTree::new(depth);
             let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
-            octree.fill(&mut interner, 1);
+            tree.fill(&mut interner, 1);
 
             for lod in 0..depth.max() {
                 let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
@@ -1522,7 +1517,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                     let lod = Lod::new(lod);
 
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&interner, black_box(lod)));
+                        let _ = black_box(tree.to_vec(&interner, black_box(lod)));
                     });
                 });
             }
@@ -1532,13 +1527,13 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_to_vec_sum");
+        let mut group = c.benchmark_group("voxtree_to_vec_sum");
 
         for &(size, depth) in depths.iter() {
-            let mut octree = SvoDag::new(depth);
+            let mut tree = VoxTree::new(depth);
             let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024 * 24);
 
-            fill_sum!(size, octree, interner);
+            fill_sum!(size, tree, interner);
 
             for lod in 0..depth.max() {
                 let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
@@ -1546,7 +1541,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                     let lod = Lod::new(lod);
 
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&interner, black_box(lod)));
+                        let _ = black_box(tree.to_vec(&interner, black_box(lod)));
                     });
                 });
             }
@@ -1556,16 +1551,16 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_to_vec_terrain");
+        let mut group = c.benchmark_group("voxtree_to_vec_terrain");
 
         for &(size, depth) in depths.iter() {
-            let mut octree = SvoDag::new(depth);
+            let mut tree = VoxTree::new(depth);
             let mut interner = DagInterner::<i32>::with_memory_budget(1024 * 1024);
 
             let mut noise = fastnoise_lite::FastNoiseLite::new();
             noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
 
-            let mut batch = octree.create_batch();
+            let mut batch = tree.create_batch();
 
             for x in 0..size as i32 {
                 for z in 0..size as i32 {
@@ -1579,7 +1574,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                 }
             }
 
-            octree.apply_batch(&mut interner, &batch);
+            tree.apply_batch(&mut interner, &batch);
 
             for lod in 0..depth.max() {
                 let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
@@ -1587,7 +1582,7 @@ fn benchmark_svodag(c: &mut Criterion) {
                     let lod = Lod::new(lod);
 
                     b.iter(|| {
-                        let _ = black_box(octree.to_vec(&interner, black_box(lod)));
+                        let _ = black_box(tree.to_vec(&interner, black_box(lod)));
                     });
                 });
             }
@@ -1597,7 +1592,7 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_naive_mesh_sphere");
+        let mut group = c.benchmark_group("voxtree_naive_mesh_sphere");
 
         for &(size, depth) in depths.iter() {
             let mut chunk = Chunk::with_position(1.28, depth, 0, 0, 0);
@@ -1638,7 +1633,7 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 
     {
-        let mut group = c.benchmark_group("svodag_naive_mesh_terrain");
+        let mut group = c.benchmark_group("voxtree_naive_mesh_terrain");
 
         for &(size, depth) in depths.iter() {
             let mut chunk = Chunk::with_position(1.28, depth, 0, 0, 0);
@@ -1696,5 +1691,5 @@ fn benchmark_svodag(c: &mut Criterion) {
     }
 }
 
-criterion_group!(benches, benchmark_svodag);
+criterion_group!(benches, benchmark_voxtree);
 criterion_main!(benches);

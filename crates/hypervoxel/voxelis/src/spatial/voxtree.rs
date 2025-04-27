@@ -102,14 +102,14 @@ const PATH_MASKS: [[u32; MAX_ALLOWED_DEPTH - 1]; MAX_ALLOWED_DEPTH] = [
     ],
 ];
 
-/// High performance, SVO DAG (Sparse Voxel Octree Directed Acyclic Graph) structure.
-pub struct SvoDag {
+/// VoxTree - a high performance, SVO DAG (Sparse Voxel Octree Directed Acyclic Graph) structure.
+pub struct VoxTree {
     max_depth: MaxDepth,
     root_id: BlockId,
     dirty: bool,
 }
 
-impl SvoDag {
+impl VoxTree {
     pub fn new(max_depth: MaxDepth) -> Self {
         Self {
             max_depth,
@@ -128,7 +128,7 @@ impl SvoDag {
     }
 }
 
-impl<T: VoxelTrait> VoxOpsRead<T> for SvoDag {
+impl<T: VoxelTrait> VoxOpsRead<T> for VoxTree {
     fn get(&self, interner: &DagInterner<T>, position: IVec3) -> Option<T> {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
@@ -143,7 +143,7 @@ impl<T: VoxelTrait> VoxOpsRead<T> for SvoDag {
     }
 }
 
-impl<T: VoxelTrait> VoxOpsWrite<T> for SvoDag {
+impl<T: VoxelTrait> VoxOpsWrite<T> for VoxTree {
     fn set(&mut self, interner: &mut DagInterner<T>, position: IVec3, voxel: T) -> bool {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
@@ -274,7 +274,7 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for SvoDag {
     }
 }
 
-impl<T: VoxelTrait> VoxOpsBatch<T> for SvoDag {
+impl<T: VoxelTrait> VoxOpsBatch<T> for VoxTree {
     fn create_batch(&self) -> Batch<T> {
         Batch::new(self.max_depth)
     }
@@ -305,13 +305,13 @@ impl<T: VoxelTrait> VoxOpsBatch<T> for SvoDag {
     }
 }
 
-impl<T: VoxelTrait> VoxOpsMesh<T> for SvoDag {
+impl<T: VoxelTrait> VoxOpsMesh<T> for VoxTree {
     fn to_vec(&self, interner: &DagInterner<T>, lod: Lod) -> Vec<T> {
         to_vec(interner, &self.root_id, self.max_depth.for_lod(lod))
     }
 }
 
-impl VoxOpsConfig for SvoDag {
+impl VoxOpsConfig for VoxTree {
     #[inline(always)]
     fn max_depth(&self, lod: Lod) -> MaxDepth {
         self.max_depth.for_lod(lod)
@@ -323,7 +323,7 @@ impl VoxOpsConfig for SvoDag {
     }
 }
 
-impl VoxOpsState for SvoDag {
+impl VoxOpsState for VoxTree {
     #[inline(always)]
     fn is_empty(&self) -> bool {
         self.root_id.is_empty()
@@ -335,7 +335,7 @@ impl VoxOpsState for SvoDag {
     }
 }
 
-impl VoxOpsDirty for SvoDag {
+impl VoxOpsDirty for VoxTree {
     #[inline(always)]
     fn is_dirty(&self) -> bool {
         self.dirty
@@ -1161,10 +1161,10 @@ mod tests {
 
     #[test]
     fn test_create() {
-        let octree = SvoDag::new(MaxDepth::new(3));
-        assert!(octree.is_empty());
-        assert_eq!(octree.max_depth(Lod::new(0)).max(), 3);
-        assert_eq!(octree.voxels_per_axis(Lod::new(0)), 8);
+        let tree = VoxTree::new(MaxDepth::new(3));
+        assert!(tree.is_empty());
+        assert_eq!(tree.max_depth(Lod::new(0)).max(), 3);
+        assert_eq!(tree.voxels_per_axis(Lod::new(0)), 8);
     }
 
     #[test]
@@ -1190,26 +1190,26 @@ mod tests {
     fn test_set_and_get() {
         let mut interner = DagInterner::<u8>::with_memory_budget(1024 * 2);
 
-        let mut octree = SvoDag::new(MaxDepth::new(3));
+        let mut tree = VoxTree::new(MaxDepth::new(3));
         let position = IVec3::new(0, 0, 0);
 
         // Test setting and getting a value
-        assert!(octree.set(&mut interner, position, 42));
-        assert_eq!(octree.get(&interner, position), Some(42));
+        assert!(tree.set(&mut interner, position, 42));
+        assert_eq!(tree.get(&interner, position), Some(42));
 
         // Test overwriting a value
-        assert!(octree.set(&mut interner, position, 24));
-        assert_eq!(octree.get(&interner, position), Some(24));
+        assert!(tree.set(&mut interner, position, 24));
+        assert_eq!(tree.get(&interner, position), Some(24));
 
         // Test getting from an empty position
-        assert_eq!(octree.get(&interner, IVec3::new(1, 1, 1)), None);
+        assert_eq!(tree.get(&interner, IVec3::new(1, 1, 1)), None);
 
         // Test setting at max depth
         let max_pos = IVec3::new(7, 7, 7); // 2^3 - 1
-        assert!(octree.set(&mut interner, max_pos, 99));
-        assert_eq!(octree.get(&interner, max_pos), Some(99));
+        assert!(tree.set(&mut interner, max_pos, 99));
+        assert_eq!(tree.get(&interner, max_pos), Some(99));
 
-        octree.clear(&mut interner);
+        tree.clear(&mut interner);
 
         let positions = [
             IVec3::new(0, 0, 0),
@@ -1223,11 +1223,11 @@ mod tests {
         ];
 
         for (i, &pos) in positions.iter().enumerate() {
-            octree.set(&mut interner, pos, (i + 1) as u8);
+            tree.set(&mut interner, pos, (i + 1) as u8);
         }
 
         for (i, &pos) in positions.iter().enumerate() {
-            assert_eq!(octree.get(&interner, pos).unwrap(), (i + 1) as u8);
+            assert_eq!(tree.get(&interner, pos).unwrap(), (i + 1) as u8);
         }
     }
 
@@ -1235,23 +1235,23 @@ mod tests {
     fn test_is_empty() {
         let mut interner = DagInterner::<u8>::with_memory_budget(1024);
 
-        let mut octree = SvoDag::new(MaxDepth::new(3));
-        assert!(octree.is_empty());
+        let mut tree = VoxTree::new(MaxDepth::new(3));
+        assert!(tree.is_empty());
 
         // Setting a value makes it non-empty
-        assert!(octree.set(&mut interner, IVec3::new(0, 0, 0), 1));
-        assert!(!octree.is_empty());
+        assert!(tree.set(&mut interner, IVec3::new(0, 0, 0), 1));
+        assert!(!tree.is_empty());
 
         // Clearing makes it empty again
-        octree.clear(&mut interner);
-        assert!(octree.is_empty());
+        tree.clear(&mut interner);
+        assert!(tree.is_empty());
     }
 
     #[test]
     fn test_clear() {
         let mut interner = DagInterner::<u8>::with_memory_budget(1024 * 2);
 
-        let mut octree = SvoDag::new(MaxDepth::new(3));
+        let mut tree = VoxTree::new(MaxDepth::new(3));
 
         let positions = [
             IVec3::new(0, 0, 0),
@@ -1265,14 +1265,14 @@ mod tests {
         ];
 
         for (i, &pos) in positions.iter().enumerate() {
-            octree.set(&mut interner, pos, (i + 1) as u8);
+            tree.set(&mut interner, pos, (i + 1) as u8);
         }
 
-        octree.clear(&mut interner);
-        assert!(octree.is_empty());
+        tree.clear(&mut interner);
+        assert!(tree.is_empty());
 
         for &pos in positions.iter() {
-            assert!(octree.get(&interner, pos).is_none());
+            assert!(tree.get(&interner, pos).is_none());
         }
     }
 
@@ -1280,78 +1280,78 @@ mod tests {
     fn test_no_default_leaf_nodes() {
         let mut interner = DagInterner::<u8>::with_memory_budget(1024);
 
-        let mut octree = SvoDag::new(MaxDepth::new(3));
+        let mut tree = VoxTree::new(MaxDepth::new(3));
 
         // Set a value and then set it back to default
         let position = IVec3::new(0, 0, 0);
-        assert!(octree.set(&mut interner, position, 42));
-        assert_eq!(octree.get(&interner, position), Some(42));
-        assert!(!octree.is_empty());
+        assert!(tree.set(&mut interner, position, 42));
+        assert_eq!(tree.get(&interner, position), Some(42));
+        assert!(!tree.is_empty());
 
         // 0 is default for u8
-        assert!(octree.set(&mut interner, position, 0));
+        assert!(tree.set(&mut interner, position, 0));
         // The node should be removed when set to default
-        assert_eq!(octree.get(&interner, position), None);
-        assert!(octree.is_empty());
+        assert_eq!(tree.get(&interner, position), None);
+        assert!(tree.is_empty());
     }
 
     #[test]
     fn test_dirty_flag() {
         let mut interner = DagInterner::<u8>::with_memory_budget(1024);
 
-        let mut octree = SvoDag::new(MaxDepth::new(3));
-        assert!(!octree.is_dirty());
+        let mut tree = VoxTree::new(MaxDepth::new(3));
+        assert!(!tree.is_dirty());
 
         // Setting a value should make it dirty
-        assert!(octree.set(&mut interner, IVec3::new(0, 0, 0), 1));
-        assert!(octree.is_dirty());
+        assert!(tree.set(&mut interner, IVec3::new(0, 0, 0), 1));
+        assert!(tree.is_dirty());
 
         // Clearing the dirty flag
-        octree.clear_dirty();
-        assert!(!octree.is_dirty());
+        tree.clear_dirty();
+        assert!(!tree.is_dirty());
 
-        // Clearing the octree should make it dirty again
-        octree.clear(&mut interner);
-        assert!(octree.is_dirty());
+        // Clearing the voxtree should make it dirty again
+        tree.clear(&mut interner);
+        assert!(tree.is_dirty());
     }
 
     #[test]
     fn test_shared_interner_uniqueness() {
         let mut interner = DagInterner::<u8>::with_memory_budget(1024);
 
-        let mut octree1 = SvoDag::new(MaxDepth::new(3));
-        let mut octree2 = SvoDag::new(MaxDepth::new(3));
+        let mut tree1 = VoxTree::new(MaxDepth::new(3));
+        let mut tree2 = VoxTree::new(MaxDepth::new(3));
 
         // Both trees should be empty initially
-        assert!(octree1.is_empty());
-        assert!(octree2.is_empty());
+        assert!(tree1.is_empty());
+        assert!(tree2.is_empty());
 
         // Setting in one tree should not affect the other
-        assert!(octree1.set(&mut interner, IVec3::new(0, 0, 0), 42));
-        assert_eq!(octree1.get(&interner, IVec3::new(0, 0, 0)), Some(42));
-        assert_eq!(octree2.get(&interner, IVec3::new(0, 0, 0)), None);
+        assert!(tree1.set(&mut interner, IVec3::new(0, 0, 0), 42));
+        assert_eq!(tree1.get(&interner, IVec3::new(0, 0, 0)), Some(42));
+        assert_eq!(tree2.get(&interner, IVec3::new(0, 0, 0)), None);
 
         // But they should share the same interner for efficiency
-        assert!(octree2.set(&mut interner, IVec3::new(0, 0, 0), 24));
-        assert_eq!(octree2.get(&interner, IVec3::new(0, 0, 0)), Some(24));
-        assert_ne!(octree1.get_root_id(), octree2.get_root_id());
+        assert!(tree2.set(&mut interner, IVec3::new(0, 0, 0), 24));
+        assert_eq!(tree2.get(&interner, IVec3::new(0, 0, 0)), Some(24));
+        assert_ne!(tree1.get_root_id(), tree2.get_root_id());
     }
 
     #[test]
     fn test_shared_interner_deduplication() {
         let mut interner = DagInterner::<u8>::with_memory_budget(1024);
 
-        let mut octree1 = SvoDag::new(MaxDepth::new(3));
-        let mut octree2 = SvoDag::new(MaxDepth::new(3));
+        let mut tree1 = VoxTree::new(MaxDepth::new(3));
+        let mut tree2 = VoxTree::new(MaxDepth::new(3));
 
         // Both trees should be empty initially
-        assert!(octree1.is_empty());
-        assert!(octree2.is_empty());
+        assert!(tree1.is_empty());
+        assert!(tree2.is_empty());
 
         // Setting same value in both trees should result in the same root id (deduplication)
-        assert!(octree1.set(&mut interner, IVec3::new(0, 0, 0), 42));
-        assert!(octree2.set(&mut interner, IVec3::new(0, 0, 0), 42));
-        assert_eq!(octree1.get_root_id(), octree2.get_root_id());
+        assert!(tree1.set(&mut interner, IVec3::new(0, 0, 0), 42));
+        assert!(tree2.set(&mut interner, IVec3::new(0, 0, 0), 42));
+        assert_eq!(tree1.get_root_id(), tree2.get_root_id());
     }
 
     #[test]
@@ -1361,19 +1361,19 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
+        let mut tree = VoxTree::new(MAX_DEPTH);
 
         let position = IVec3::new(0, 0, 0);
-        assert!(octree.set(&mut interner, position, TEST_VALUE));
-        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+        assert!(tree.set(&mut interner, position, TEST_VALUE));
+        assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
 
         // Test overwriting a value
-        assert!(octree.set(&mut interner, position, TEST_VALUE + 1));
-        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE + 1));
+        assert!(tree.set(&mut interner, position, TEST_VALUE + 1));
+        assert_eq!(tree.get(&interner, position), Some(TEST_VALUE + 1));
 
         // Test setting same value
-        assert!(!octree.set(&mut interner, position, TEST_VALUE + 1));
-        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE + 1));
+        assert!(!tree.set(&mut interner, position, TEST_VALUE + 1));
+        assert_eq!(tree.get(&interner, position), Some(TEST_VALUE + 1));
     }
 
     #[test]
@@ -1383,16 +1383,16 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
+        let mut tree = VoxTree::new(MAX_DEPTH);
 
         let position = IVec3::new(0, 0, 0);
 
-        let mut batch = octree.create_batch();
+        let mut batch = tree.create_batch();
 
         batch.set(&mut interner, position, TEST_VALUE);
 
-        assert!(octree.apply_batch(&mut interner, &batch));
-        assert!(!octree.apply_batch(&mut interner, &batch));
+        assert!(tree.apply_batch(&mut interner, &batch));
+        assert!(!tree.apply_batch(&mut interner, &batch));
     }
 
     #[test]
@@ -1403,12 +1403,12 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
         for value in START_VALUE..END_VALUE {
-            octree.fill(&mut interner, value * 10);
-            octree.set(&mut interner, IVec3::new(0, 0, 0), value);
+            tree.fill(&mut interner, value * 10);
+            tree.set(&mut interner, IVec3::new(0, 0, 0), value);
 
             for y in 0..voxels_per_axis {
                 for z in 0..voxels_per_axis {
@@ -1419,15 +1419,15 @@ mod tests {
                         } else {
                             value * 10
                         };
-                        assert_eq!(octree.get(&interner, position), Some(value));
+                        assert_eq!(tree.get(&interner, position), Some(value));
                     }
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1438,15 +1438,15 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
-        let mut branch = octree.create_batch();
+        let mut branch = tree.create_batch();
 
         branch.fill(&mut interner, FILL_VALUE);
         branch.set(&mut interner, IVec3::new(0, 0, 0), TEST_VALUE);
 
-        assert!(octree.apply_batch(&mut interner, &branch));
+        assert!(tree.apply_batch(&mut interner, &branch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -1457,14 +1457,14 @@ mod tests {
                     } else {
                         FILL_VALUE
                     };
-                    assert_eq!(octree.get(&interner, position), Some(value));
+                    assert_eq!(tree.get(&interner, position), Some(value));
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1473,8 +1473,8 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
         // Create a checkerboard pattern
         for y in 0..voxels_per_axis {
@@ -1483,8 +1483,8 @@ mod tests {
                     if (x + y + z) % 2 == 0 {
                         let position = IVec3::new(x, y, z);
                         let value = 2;
-                        assert!(octree.set(&mut interner, position, value));
-                        assert_eq!(octree.get(&interner, position), Some(value));
+                        assert!(tree.set(&mut interner, position, value));
+                        assert_eq!(tree.get(&interner, position), Some(value));
                     }
                 }
             }
@@ -1495,14 +1495,14 @@ mod tests {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     let value = if (x + y + z) % 2 == 0 { Some(2) } else { None };
-                    assert_eq!(octree.get(&interner, position), value);
+                    assert_eq!(tree.get(&interner, position), value);
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1511,10 +1511,10 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
-        let mut batch = octree.create_batch();
+        let mut batch = tree.create_batch();
 
         // Create a checkerboard pattern
         for y in 0..voxels_per_axis {
@@ -1527,21 +1527,21 @@ mod tests {
             }
         }
 
-        assert!(octree.apply_batch(&mut interner, &batch));
+        assert!(tree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     let value = if (x + y + z) % 2 == 0 { 2 } else { 1 };
-                    assert_eq!(octree.get(&interner, position), Some(value));
+                    assert_eq!(tree.get(&interner, position), Some(value));
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1551,15 +1551,15 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert!(octree.set(&mut interner, position, TEST_VALUE));
-                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+                    assert!(tree.set(&mut interner, position, TEST_VALUE));
+                    assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
@@ -1568,13 +1568,13 @@ mod tests {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+                    assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
-        assert!(!octree.is_empty());
-        assert!(octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1584,10 +1584,10 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
-        let mut batch = octree.create_batch();
+        let mut batch = tree.create_batch();
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -1598,19 +1598,19 @@ mod tests {
             }
         }
 
-        assert!(octree.apply_batch(&mut interner, &batch));
+        assert!(tree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+                    assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
-        assert!(!octree.is_empty());
-        assert!(octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1621,8 +1621,8 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
         let half_voxels_per_axis = voxels_per_axis / 2;
 
         for value in START_VALUE..END_VALUE {
@@ -1630,8 +1630,8 @@ mod tests {
                 for z in 0..voxels_per_axis {
                     for x in 0..voxels_per_axis {
                         let position = IVec3::new(x, y, z);
-                        assert!(octree.set(&mut interner, position, value));
-                        assert_eq!(octree.get(&interner, position), Some(value));
+                        assert!(tree.set(&mut interner, position, value));
+                        assert_eq!(tree.get(&interner, position), Some(value));
                     }
                 }
             }
@@ -1641,7 +1641,7 @@ mod tests {
                     for x in 0..voxels_per_axis {
                         let position = IVec3::new(x, y, z);
                         assert_eq!(
-                            octree.get(&interner, position),
+                            tree.get(&interner, position),
                             if y < half_voxels_per_axis {
                                 Some(value)
                             } else {
@@ -1653,9 +1653,9 @@ mod tests {
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1666,12 +1666,12 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
         let half_voxels_per_axis = voxels_per_axis / 2;
 
         for value in START_VALUE..END_VALUE {
-            let mut batch = octree.create_batch();
+            let mut batch = tree.create_batch();
 
             for y in 0..half_voxels_per_axis {
                 for z in 0..voxels_per_axis {
@@ -1682,14 +1682,14 @@ mod tests {
                 }
             }
 
-            assert!(octree.apply_batch(&mut interner, &batch));
+            assert!(tree.apply_batch(&mut interner, &batch));
 
             for y in 0..voxels_per_axis {
                 for z in 0..voxels_per_axis {
                     for x in 0..voxels_per_axis {
                         let position = IVec3::new(x, y, z);
                         assert_eq!(
-                            octree.get(&interner, position),
+                            tree.get(&interner, position),
                             if y < half_voxels_per_axis {
                                 Some(value)
                             } else {
@@ -1701,9 +1701,9 @@ mod tests {
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1713,23 +1713,23 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
-        octree.fill(&mut interner, TEST_VALUE);
+        tree.fill(&mut interner, TEST_VALUE);
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+                    assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1739,27 +1739,27 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
-        let mut batch = octree.create_batch();
+        let mut batch = tree.create_batch();
 
         batch.fill(&mut interner, TEST_VALUE);
 
-        assert!(octree.apply_batch(&mut interner, &batch));
+        assert!(tree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+                    assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1769,15 +1769,15 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
         for y in (0..voxels_per_axis).step_by(4) {
             for z in (0..voxels_per_axis).step_by(4) {
                 for x in (0..voxels_per_axis).step_by(4) {
                     let position = IVec3::new(x, y, z);
-                    assert!(octree.set(&mut interner, position, TEST_VALUE));
-                    assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+                    assert!(tree.set(&mut interner, position, TEST_VALUE));
+                    assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
                 }
             }
         }
@@ -1788,17 +1788,17 @@ mod tests {
                     let position = IVec3::new(x, y, z);
 
                     if x % 4 == 0 && y % 4 == 0 && z % 4 == 0 {
-                        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+                        assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
                     } else {
-                        assert_eq!(octree.get(&interner, position), None);
+                        assert_eq!(tree.get(&interner, position), None);
                     }
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1808,10 +1808,10 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
-        let mut batch = octree.create_batch();
+        let mut batch = tree.create_batch();
 
         for y in (0..voxels_per_axis).step_by(4) {
             for z in (0..voxels_per_axis).step_by(4) {
@@ -1822,7 +1822,7 @@ mod tests {
             }
         }
 
-        assert!(octree.apply_batch(&mut interner, &batch));
+        assert!(tree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -1830,17 +1830,17 @@ mod tests {
                     let position = IVec3::new(x, y, z);
 
                     if x % 4 == 0 && y % 4 == 0 && z % 4 == 0 {
-                        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+                        assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
                     } else {
-                        assert_eq!(octree.get(&interner, position), None);
+                        assert_eq!(tree.get(&interner, position), None);
                     }
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1849,17 +1849,17 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
         for x in 0..voxels_per_axis {
             let value = (x % 256) as u8;
             for y in 0..voxels_per_axis {
                 for z in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
-                    assert_eq!(octree.set(&mut interner, position, value), value > 0);
+                    assert_eq!(tree.set(&mut interner, position, value), value > 0);
                     assert_eq!(
-                        octree.get(&interner, position),
+                        tree.get(&interner, position),
                         if value > 0 { Some(value) } else { None }
                     );
                 }
@@ -1872,16 +1872,16 @@ mod tests {
                 for z in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&interner, position),
+                        tree.get(&interner, position),
                         if value > 0 { Some(value) } else { None }
                     );
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1890,10 +1890,10 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
-        let mut batch = octree.create_batch();
+        let mut batch = tree.create_batch();
 
         for x in 0..voxels_per_axis {
             let value = (x % 256) as u8;
@@ -1905,7 +1905,7 @@ mod tests {
             }
         }
 
-        assert!(octree.apply_batch(&mut interner, &batch));
+        assert!(tree.apply_batch(&mut interner, &batch));
 
         for x in 0..voxels_per_axis {
             let value = (x % 256) as u8;
@@ -1913,16 +1913,16 @@ mod tests {
                 for z in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&interner, position),
+                        tree.get(&interner, position),
                         if value > 0 { Some(value) } else { None }
                     );
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1932,8 +1932,8 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -1947,10 +1947,10 @@ mod tests {
 
                     let position = IVec3::new(x, y, z);
                     if is_edge {
-                        assert!(octree.set(&mut interner, position, TEST_VALUE));
-                        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+                        assert!(tree.set(&mut interner, position, TEST_VALUE));
+                        assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
                     } else {
-                        assert_eq!(octree.get(&interner, position), None);
+                        assert_eq!(tree.get(&interner, position), None);
                     }
                 }
             }
@@ -1968,17 +1968,17 @@ mod tests {
 
                     let position = IVec3::new(x, y, z);
                     if is_edge {
-                        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+                        assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
                     } else {
-                        assert_eq!(octree.get(&interner, position), None);
+                        assert_eq!(tree.get(&interner, position), None);
                     }
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -1988,10 +1988,10 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
-        let mut batch = octree.create_batch();
+        let mut batch = tree.create_batch();
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -2011,7 +2011,7 @@ mod tests {
             }
         }
 
-        assert!(octree.apply_batch(&mut interner, &batch));
+        assert!(tree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -2025,17 +2025,17 @@ mod tests {
 
                     let position = IVec3::new(x, y, z);
                     if is_edge {
-                        assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+                        assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
                     } else {
-                        assert_eq!(octree.get(&interner, position), None);
+                        assert_eq!(tree.get(&interner, position), None);
                     }
                 }
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -2045,13 +2045,13 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
         for i in 0..voxels_per_axis {
             let position = IVec3::new(i, i, i);
-            assert!(octree.set(&mut interner, position, TEST_VALUE));
-            assert_eq!(octree.get(&interner, position), Some(TEST_VALUE));
+            assert!(tree.set(&mut interner, position, TEST_VALUE));
+            assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
         }
 
         for y in 0..voxels_per_axis {
@@ -2059,7 +2059,7 @@ mod tests {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&interner, position),
+                        tree.get(&interner, position),
                         if x == y && x == z {
                             Some(TEST_VALUE)
                         } else {
@@ -2070,9 +2070,9 @@ mod tests {
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -2082,24 +2082,24 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let mut tree = VoxTree::new(MAX_DEPTH);
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
-        let mut batch = octree.create_batch();
+        let mut batch = tree.create_batch();
 
         for i in 0..voxels_per_axis {
             let position = IVec3::new(i, i, i);
             assert!(batch.set(&mut interner, position, TEST_VALUE));
         }
 
-        assert!(octree.apply_batch(&mut interner, &batch));
+        assert!(tree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&interner, position),
+                        tree.get(&interner, position),
                         if x == y && x == z {
                             Some(TEST_VALUE)
                         } else {
@@ -2110,9 +2110,9 @@ mod tests {
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -2121,9 +2121,9 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
+        let mut tree = VoxTree::new(MAX_DEPTH);
 
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
         let size = 1 << (3 * MAX_DEPTH.max());
         let mut data = vec![0; size as usize];
 
@@ -2138,8 +2138,8 @@ mod tests {
             data[index as usize] = value;
             let position = IVec3::new(x, y, z);
 
-            assert!(octree.set(&mut interner, position, value));
-            assert_eq!(octree.get(&interner, position), Some(value));
+            assert!(tree.set(&mut interner, position, value));
+            assert_eq!(tree.get(&interner, position), Some(value));
         }
 
         for y in 0..voxels_per_axis {
@@ -2149,7 +2149,7 @@ mod tests {
                     let expected_value = data[index as usize];
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&interner, position),
+                        tree.get(&interner, position),
                         if expected_value != 0 {
                             Some(expected_value)
                         } else {
@@ -2160,9 +2160,9 @@ mod tests {
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -2171,13 +2171,13 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
+        let mut tree = VoxTree::new(MAX_DEPTH);
 
-        let voxels_per_axis = octree.voxels_per_axis(Lod::new(0)) as i32;
+        let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
         let size = 1 << (3 * MAX_DEPTH.max());
         let mut data = vec![0; size as usize];
 
-        let mut batch = octree.create_batch();
+        let mut batch = tree.create_batch();
 
         let mut rng = rand::rng();
 
@@ -2193,7 +2193,7 @@ mod tests {
             assert!(batch.set(&mut interner, position, value));
         }
 
-        assert!(octree.apply_batch(&mut interner, &batch));
+        assert!(tree.apply_batch(&mut interner, &batch));
 
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
@@ -2202,7 +2202,7 @@ mod tests {
                     let expected_value = data[index as usize];
                     let position = IVec3::new(x, y, z);
                     assert_eq!(
-                        octree.get(&interner, position),
+                        tree.get(&interner, position),
                         if expected_value != 0 {
                             Some(expected_value)
                         } else {
@@ -2213,9 +2213,9 @@ mod tests {
             }
         }
 
-        assert!(!octree.is_empty());
-        assert!(!octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(!tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 
     #[test]
@@ -2224,15 +2224,14 @@ mod tests {
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
         let mut interner = DagInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
-        let mut octree = SvoDag::new(MAX_DEPTH);
+        let mut tree = VoxTree::new(MAX_DEPTH);
 
         let position = IVec3::new(0, 0, 0);
-        println!("position: {:?}", position);
-        assert!(octree.set(&mut interner, position, 1));
-        assert_eq!(octree.get(&interner, position), Some(1));
+        assert!(tree.set(&mut interner, position, 1));
+        assert_eq!(tree.get(&interner, position), Some(1));
 
-        assert!(!octree.is_empty());
-        assert!(octree.is_leaf());
-        assert_eq!(interner.get_ref(&octree.get_root_id()), 1);
+        assert!(!tree.is_empty());
+        assert!(tree.is_leaf());
+        assert_eq!(interner.get_ref(&tree.get_root_id()), 1);
     }
 }
