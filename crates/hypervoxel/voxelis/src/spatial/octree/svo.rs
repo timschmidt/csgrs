@@ -8,8 +8,7 @@ use crate::{
 };
 
 use super::{
-    OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead, OctreeOpsState,
-    OctreeOpsWrite,
+    VoxOpsBatch, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite,
 };
 
 pub struct Svo {
@@ -32,7 +31,7 @@ impl Svo {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsRead<T> for Svo {
+impl<T: VoxelTrait> VoxOpsRead<T> for Svo {
     fn get(&self, interner: &DagInterner<T>, position: IVec3) -> Option<T> {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
@@ -47,7 +46,7 @@ impl<T: VoxelTrait> OctreeOpsRead<T> for Svo {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsWrite<T> for Svo {
+impl<T: VoxelTrait> VoxOpsWrite<T> for Svo {
     fn set(&mut self, interner: &mut DagInterner<T>, position: IVec3, voxel: T) -> bool {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
@@ -176,7 +175,7 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for Svo {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsBatch<T> for Svo {
+impl<T: VoxelTrait> VoxOpsBatch<T> for Svo {
     #[inline(always)]
     fn create_batch(&self) -> Batch<T> {
         Batch::new(self.max_depth)
@@ -188,13 +187,13 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for Svo {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsMesh<T> for Svo {
+impl<T: VoxelTrait> VoxOpsMesh<T> for Svo {
     fn to_vec(&self, interner: &DagInterner<T>, lod: Lod) -> Vec<T> {
         to_vec(interner, &self.root_id, self.max_depth.for_lod(lod))
     }
 }
 
-impl OctreeOpsConfig for Svo {
+impl VoxOpsConfig for Svo {
     #[inline(always)]
     fn max_depth(&self, lod: Lod) -> MaxDepth {
         self.max_depth.for_lod(lod)
@@ -206,7 +205,7 @@ impl OctreeOpsConfig for Svo {
     }
 }
 
-impl OctreeOpsState for Svo {
+impl VoxOpsState for Svo {
     #[inline(always)]
     fn is_empty(&self) -> bool {
         self.root_id.is_empty()
@@ -218,7 +217,7 @@ impl OctreeOpsState for Svo {
     }
 }
 
-impl OctreeOpsDirty for Svo {
+impl VoxOpsDirty for Svo {
     #[inline(always)]
     fn is_dirty(&self) -> bool {
         self.dirty

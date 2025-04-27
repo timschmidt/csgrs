@@ -18,7 +18,7 @@ use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
 use voxelis::io::import::import_model_from_vtm;
 use voxelis::model::Model;
-use voxelis::spatial::OctreeOpsState;
+use voxelis::spatial::VoxOpsState;
 use voxelis::{BlockId, Lod};
 
 struct GamePlugin;

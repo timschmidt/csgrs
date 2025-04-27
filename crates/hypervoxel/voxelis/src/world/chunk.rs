@@ -9,8 +9,8 @@ use wide::f32x8;
 use crate::io::consts::VTC_MAGIC;
 use crate::io::varint::{decode_varint_u32_from_reader, encode_varint};
 use crate::spatial::{
-    Octree, OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead,
-    OctreeOpsState, OctreeOpsWrite,
+    Octree, VoxOpsBatch, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState,
+    VoxOpsWrite,
 };
 use crate::{Batch, BlockId, DagInterner, Lod, MaxDepth};
 
@@ -375,14 +375,14 @@ impl Chunk {
     }
 }
 
-impl OctreeOpsRead<i32> for Chunk {
+impl VoxOpsRead<i32> for Chunk {
     #[inline(always)]
     fn get(&self, interner: &DagInterner<i32>, position: IVec3) -> Option<i32> {
         self.data.get(interner, position)
     }
 }
 
-impl OctreeOpsWrite<i32> for Chunk {
+impl VoxOpsWrite<i32> for Chunk {
     #[inline(always)]
     fn set(&mut self, interner: &mut DagInterner<i32>, position: IVec3, voxel: i32) -> bool {
         self.data.set(interner, position, voxel)
@@ -399,7 +399,7 @@ impl OctreeOpsWrite<i32> for Chunk {
     }
 }
 
-impl OctreeOpsBatch<i32> for Chunk {
+impl VoxOpsBatch<i32> for Chunk {
     #[inline(always)]
     fn create_batch(&self) -> Batch<i32> {
         self.data.create_batch()
@@ -411,14 +411,14 @@ impl OctreeOpsBatch<i32> for Chunk {
     }
 }
 
-impl OctreeOpsMesh<i32> for Chunk {
+impl VoxOpsMesh<i32> for Chunk {
     #[inline(always)]
     fn to_vec(&self, interner: &DagInterner<i32>, lod: Lod) -> Vec<i32> {
         self.data.to_vec(interner, lod)
     }
 }
 
-impl OctreeOpsConfig for Chunk {
+impl VoxOpsConfig for Chunk {
     #[inline(always)]
     fn max_depth(&self, lod: Lod) -> MaxDepth {
         self.data.max_depth(lod)
@@ -430,7 +430,7 @@ impl OctreeOpsConfig for Chunk {
     }
 }
 
-impl OctreeOpsState for Chunk {
+impl VoxOpsState for Chunk {
     #[inline(always)]
     fn is_empty(&self) -> bool {
         self.data.is_empty()
@@ -442,7 +442,7 @@ impl OctreeOpsState for Chunk {
     }
 }
 
-impl OctreeOpsDirty for Chunk {
+impl VoxOpsDirty for Chunk {
     #[inline(always)]
     fn is_dirty(&self) -> bool {
         self.data.is_dirty()

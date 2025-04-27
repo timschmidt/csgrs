@@ -4,7 +4,7 @@ use byteorder::{BigEndian, WriteBytesExt};
 use glam::Vec3;
 use md5::{Digest, Md5};
 
-use crate::{Lod, model::Model, spatial::OctreeOpsState};
+use crate::{Lod, model::Model, spatial::VoxOpsState};
 
 use super::{
     Flags,

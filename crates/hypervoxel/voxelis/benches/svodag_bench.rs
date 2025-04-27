@@ -6,9 +6,7 @@ use rand::Rng;
 
 use voxelis::{
     Batch, DagInterner, Lod, MaxDepth,
-    spatial::{
-        OctreeOpsBatch, OctreeOpsMesh, OctreeOpsRead, OctreeOpsState, OctreeOpsWrite, SvoDag,
-    },
+    spatial::{SvoDag, VoxOpsBatch, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite},
     world::Chunk,
 };
 

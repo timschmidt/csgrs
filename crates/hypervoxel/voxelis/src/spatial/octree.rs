@@ -3,14 +3,12 @@ use glam::IVec3;
 use crate::{Batch, BlockId, DagInterner, Lod, MaxDepth, VoxelTrait};
 
 mod dag;
-mod ops;
 mod svo;
 
-pub use dag::SvoDag;
-pub use ops::{
-    OctreeOps, OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead,
-    OctreeOpsState, OctreeOpsWrite,
+pub use super::{
+    VoxOpsBatch, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite,
 };
+pub use dag::SvoDag;
 pub use svo::Svo;
 
 pub enum Octree {
@@ -69,7 +67,7 @@ impl Octree {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsRead<T> for Octree {
+impl<T: VoxelTrait> VoxOpsRead<T> for Octree {
     #[inline(always)]
     fn get(&self, interner: &DagInterner<T>, position: IVec3) -> Option<T> {
         match self {
@@ -79,7 +77,7 @@ impl<T: VoxelTrait> OctreeOpsRead<T> for Octree {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsWrite<T> for Octree {
+impl<T: VoxelTrait> VoxOpsWrite<T> for Octree {
     #[inline(always)]
     fn set(&mut self, interner: &mut DagInterner<T>, position: IVec3, value: T) -> bool {
         match self {
@@ -105,7 +103,7 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for Octree {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsBatch<T> for Octree {
+impl<T: VoxelTrait> VoxOpsBatch<T> for Octree {
     #[inline(always)]
     fn create_batch(&self) -> Batch<T> {
         match self {
@@ -123,7 +121,7 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for Octree {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsMesh<T> for Octree {
+impl<T: VoxelTrait> VoxOpsMesh<T> for Octree {
     #[inline(always)]
     fn to_vec(&self, interner: &DagInterner<T>, lod: Lod) -> Vec<T> {
         match self {
@@ -133,7 +131,7 @@ impl<T: VoxelTrait> OctreeOpsMesh<T> for Octree {
     }
 }
 
-impl OctreeOpsConfig for Octree {
+impl VoxOpsConfig for Octree {
     #[inline(always)]
     fn max_depth(&self, lod: Lod) -> MaxDepth {
         match self {
@@ -151,7 +149,7 @@ impl OctreeOpsConfig for Octree {
     }
 }
 
-impl OctreeOpsState for Octree {
+impl VoxOpsState for Octree {
     #[inline(always)]
     fn is_empty(&self) -> bool {
         match self {
@@ -169,7 +167,7 @@ impl OctreeOpsState for Octree {
     }
 }
 
-impl OctreeOpsDirty for Octree {
+impl VoxOpsDirty for Octree {
     #[inline(always)]
     fn is_dirty(&self) -> bool {
         match self {
@@ -197,8 +195,8 @@ impl OctreeOpsDirty for Octree {
 
 fn copy_octree<
     T: VoxelTrait,
-    S: OctreeOpsRead<T> + OctreeOpsConfig + OctreeOpsState,
-    D: OctreeOpsWrite<T> + OctreeOpsBatch<T>,
+    S: VoxOpsRead<T> + VoxOpsConfig + VoxOpsState,
+    D: VoxOpsWrite<T> + VoxOpsBatch<T>,
 >(
     src: &S,
     dst: &mut D,

@@ -23,7 +23,7 @@ use voxelis::{
     Batch, MaxDepth,
     io::Obj,
     model::Model,
-    spatial::{OctreeOpsBatch, OctreeOpsState, OctreeOpsWrite},
+    spatial::{VoxOpsBatch, VoxOpsState, VoxOpsWrite},
 };
 
 #[cfg(feature = "memory_stats")]

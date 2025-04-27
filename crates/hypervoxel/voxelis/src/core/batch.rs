@@ -6,7 +6,7 @@
 //! # Examples
 //!
 //! ```
-//! use voxelis::{Batch, DagInterner, MaxDepth, spatial::OctreeOpsWrite};
+//! use voxelis::{Batch, DagInterner, MaxDepth, spatial::VoxOpsWrite};
 //! use glam::IVec3;
 //!
 //! // Create interner for 8-bit voxels
@@ -24,7 +24,7 @@
 use glam::IVec3;
 
 use crate::{
-    DagInterner, VoxelTrait, interner::MAX_CHILDREN, spatial::OctreeOpsWrite,
+    DagInterner, VoxelTrait, interner::MAX_CHILDREN, spatial::VoxOpsWrite,
     utils::common::encode_child_index_path,
 };
 
@@ -154,7 +154,7 @@ impl<T: VoxelTrait> Batch<T> {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsWrite<T> for Batch<T> {
+impl<T: VoxelTrait> VoxOpsWrite<T> for Batch<T> {
     /// Records a set or clear operation for the given `position`, delegating to `just_set`.
     /// Records a voxel set or clear operation at the specified 3D position.
     /// Returns `true` indicating that the state has changed.

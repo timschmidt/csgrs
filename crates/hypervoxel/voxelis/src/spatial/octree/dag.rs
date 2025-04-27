@@ -8,8 +8,7 @@ use crate::{
 };
 
 use super::{
-    OctreeOpsBatch, OctreeOpsConfig, OctreeOpsDirty, OctreeOpsMesh, OctreeOpsRead, OctreeOpsState,
-    OctreeOpsWrite,
+    VoxOpsBatch, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite,
 };
 
 /// Lookup table for fast sibling scanning in octree traversal using Morton-encoded paths.
@@ -103,6 +102,7 @@ const PATH_MASKS: [[u32; MAX_ALLOWED_DEPTH - 1]; MAX_ALLOWED_DEPTH] = [
     ],
 ];
 
+/// High performance, SVO DAG (Sparse Voxel Octree Directed Acyclic Graph) structure.
 pub struct SvoDag {
     max_depth: MaxDepth,
     root_id: BlockId,
@@ -128,7 +128,7 @@ impl SvoDag {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsRead<T> for SvoDag {
+impl<T: VoxelTrait> VoxOpsRead<T> for SvoDag {
     fn get(&self, interner: &DagInterner<T>, position: IVec3) -> Option<T> {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
@@ -143,7 +143,7 @@ impl<T: VoxelTrait> OctreeOpsRead<T> for SvoDag {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsWrite<T> for SvoDag {
+impl<T: VoxelTrait> VoxOpsWrite<T> for SvoDag {
     fn set(&mut self, interner: &mut DagInterner<T>, position: IVec3, voxel: T) -> bool {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
@@ -274,7 +274,7 @@ impl<T: VoxelTrait> OctreeOpsWrite<T> for SvoDag {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsBatch<T> for SvoDag {
+impl<T: VoxelTrait> VoxOpsBatch<T> for SvoDag {
     fn create_batch(&self) -> Batch<T> {
         Batch::new(self.max_depth)
     }
@@ -305,13 +305,13 @@ impl<T: VoxelTrait> OctreeOpsBatch<T> for SvoDag {
     }
 }
 
-impl<T: VoxelTrait> OctreeOpsMesh<T> for SvoDag {
+impl<T: VoxelTrait> VoxOpsMesh<T> for SvoDag {
     fn to_vec(&self, interner: &DagInterner<T>, lod: Lod) -> Vec<T> {
         to_vec(interner, &self.root_id, self.max_depth.for_lod(lod))
     }
 }
 
-impl OctreeOpsConfig for SvoDag {
+impl VoxOpsConfig for SvoDag {
     #[inline(always)]
     fn max_depth(&self, lod: Lod) -> MaxDepth {
         self.max_depth.for_lod(lod)
@@ -323,7 +323,7 @@ impl OctreeOpsConfig for SvoDag {
     }
 }
 
-impl OctreeOpsState for SvoDag {
+impl VoxOpsState for SvoDag {
     #[inline(always)]
     fn is_empty(&self) -> bool {
         self.root_id.is_empty()
@@ -335,7 +335,7 @@ impl OctreeOpsState for SvoDag {
     }
 }
 
-impl OctreeOpsDirty for SvoDag {
+impl VoxOpsDirty for SvoDag {
     #[inline(always)]
     fn is_dirty(&self) -> bool {
         self.dirty
