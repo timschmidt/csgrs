@@ -17,12 +17,30 @@ version = "25.4.0"
 authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
-description = "High-performance voxel engine using Sparse-Voxel-Octree DAG in pure Rust"
+description = "Sparse Voxel Octree DAG engine for building worlds, shaping matter, and mastering 3D space — powered by pure Rust."
 homepage = "https://github.com/WildPixelGames/voxelis"
 repository = "https://github.com/WildPixelGames/voxelis"
+documentation = "https://docs.rs/voxelis"
 readme = "README.md"
-keywords = ["voxel", "svo", "dag", "octree", "3d"]
-categories = ["data-structures", "game-development", "graphics"]
+keywords = [
+  "voxel",
+  "voxel-engine",
+  "sparse-voxel-octree",
+  "svo",
+  "dag",
+  "3d-engine",
+  "world-generation",
+  "geometry",
+  "compression",
+  "graphics",
+]
+categories = [
+  "data-structures",
+  "game-development",
+  "graphics",
+  "rendering",
+  "simulation",
+]
 rust-version = "1.86"
 
 [workspace.dependencies]
@@ -72,6 +90,7 @@ opt-level = 3
 [profile.release-debug-info]
 inherits = "release"
 debug = true
+strip = "none"
 
 [profile.final]
 inherits = "release"
