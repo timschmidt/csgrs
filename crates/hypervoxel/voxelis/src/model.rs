@@ -17,14 +17,14 @@ use crate::{
     BlockId, MaxDepth, VoxInterner,
     interner::EMPTY_CHILD,
     io::varint::{decode_varint_u32_from_reader, encode_varint_u32},
-    world::Chunk,
+    world::VoxChunk,
 };
 
 pub struct Model {
     pub max_depth: MaxDepth,
     pub chunk_world_size: f32,
     pub world_bounds: IVec3,
-    pub chunks: HashMap<IVec3, Chunk>,
+    pub chunks: HashMap<IVec3, VoxChunk>,
     pub interner: Arc<RwLock<VoxInterner<i32>>>,
 }
 
@@ -32,7 +32,7 @@ fn initialize_chunks(
     max_depth: MaxDepth,
     chunk_world_size: f32,
     bounds: IVec3,
-) -> HashMap<IVec3, Chunk> {
+) -> HashMap<IVec3, VoxChunk> {
     let estimated_capacity = bounds.x as usize * bounds.y as usize * bounds.z as usize;
 
     let mut chunks = HashMap::with_capacity(estimated_capacity);
@@ -42,7 +42,7 @@ fn initialize_chunks(
             for x in 0..bounds.x {
                 chunks.insert(
                     IVec3::new(x, y, z),
-                    Chunk::with_position(chunk_world_size, max_depth, x, y, z),
+                    VoxChunk::with_position(chunk_world_size, max_depth, x, y, z),
                 );
             }
         }
@@ -100,13 +100,13 @@ impl Model {
         }
     }
 
-    pub fn get_or_create_chunk(&mut self, position: IVec3) -> &mut Chunk {
+    pub fn get_or_create_chunk(&mut self, position: IVec3) -> &mut VoxChunk {
         self.chunks.entry(position).or_insert_with(|| {
             self.world_bounds.x = position.x.max(self.world_bounds.x);
             self.world_bounds.y = position.y.max(self.world_bounds.y);
             self.world_bounds.z = position.z.max(self.world_bounds.z);
 
-            Chunk::with_position(
+            VoxChunk::with_position(
                 self.chunk_world_size,
                 self.max_depth,
                 position.x,
@@ -377,7 +377,7 @@ impl Model {
         let actual_chunks_len = reader.read_u32::<BigEndian>().unwrap();
 
         for _ in 0..actual_chunks_len {
-            let chunk = Chunk::deserialize(
+            let chunk = VoxChunk::deserialize(
                 &mut interner,
                 &leaf_patterns,
                 &branch_patterns,

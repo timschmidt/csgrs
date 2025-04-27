@@ -1,18 +1,18 @@
 use glam::IVec3;
 use rustc_hash::FxHashMap;
 
-mod chunk;
+mod voxchunk;
 
-pub use chunk::Chunk;
+pub use voxchunk::VoxChunk;
 
 #[derive(Default)]
-pub struct World {
+pub struct VoxWorld {
     pub chunks_size: IVec3,
     pub chunks_len: usize,
-    pub chunks: Vec<Chunk>,
+    pub chunks: Vec<VoxChunk>,
 }
 
-impl World {
+impl VoxWorld {
     pub fn new() -> Self {
         let chunks_size = IVec3::new(32, 32, 32);
         let chunks_len = chunks_size.x as usize * chunks_size.y as usize * chunks_size.z as usize;

@@ -7,7 +7,7 @@ use rand::Rng;
 use voxelis::{
     Batch, Lod, MaxDepth, VoxInterner,
     spatial::{VoxOpsBatch, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite, VoxTree},
-    world::Chunk,
+    world::VoxChunk,
 };
 
 macro_rules! fill_sum {
@@ -85,7 +85,7 @@ pub fn generate_test_sphere_for_batch(
 }
 
 pub fn chunk_generate_test_sphere(
-    chunk: &mut Chunk,
+    chunk: &mut VoxChunk,
     interner: &mut VoxInterner<i32>,
     size: u32,
     value: i32,
@@ -1595,7 +1595,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         let mut group = c.benchmark_group("voxtree_naive_mesh_sphere");
 
         for &(size, depth) in depths.iter() {
-            let mut chunk = Chunk::with_position(1.28, depth, 0, 0, 0);
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
 
             let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
 
@@ -1636,7 +1636,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         let mut group = c.benchmark_group("voxtree_naive_mesh_terrain");
 
         for &(size, depth) in depths.iter() {
-            let mut chunk = Chunk::with_position(1.28, depth, 0, 0, 0);
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
 
             let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
 

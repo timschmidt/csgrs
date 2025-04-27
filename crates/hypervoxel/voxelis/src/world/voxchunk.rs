@@ -32,14 +32,14 @@ const VEC_LEFT: Vec3 = Vec3::new(-1.0, 0.0, 0.0);
 const VEC_FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 const VEC_BACK: Vec3 = Vec3::new(0.0, 0.0, 1.0);
 
-pub struct Chunk {
+pub struct VoxChunk {
     data: VoxTree,
     position: IVec3,
     chunk_size: f32,
     max_depth: MaxDepth,
 }
 
-impl Chunk {
+impl VoxChunk {
     pub fn with_position(chunk_size: f32, max_depth: MaxDepth, x: i32, y: i32, z: i32) -> Self {
         Self {
             data: VoxTree::new(max_depth),
@@ -354,7 +354,7 @@ impl Chunk {
         let y = reader.read_i32::<BigEndian>().unwrap();
         let z = reader.read_i32::<BigEndian>().unwrap();
 
-        let mut chunk = Chunk::with_position(chunk_size, max_depth, x, y, z);
+        let mut chunk = VoxChunk::with_position(chunk_size, max_depth, x, y, z);
 
         let root_id = decode_varint_u32_from_reader(reader).unwrap();
         if let Some((block_id, _, _)) = patterns.get(&root_id) {
@@ -368,14 +368,14 @@ impl Chunk {
     }
 }
 
-impl VoxOpsRead<i32> for Chunk {
+impl VoxOpsRead<i32> for VoxChunk {
     #[inline(always)]
     fn get(&self, interner: &VoxInterner<i32>, position: IVec3) -> Option<i32> {
         self.data.get(interner, position)
     }
 }
 
-impl VoxOpsWrite<i32> for Chunk {
+impl VoxOpsWrite<i32> for VoxChunk {
     #[inline(always)]
     fn set(&mut self, interner: &mut VoxInterner<i32>, position: IVec3, voxel: i32) -> bool {
         self.data.set(interner, position, voxel)
@@ -392,7 +392,7 @@ impl VoxOpsWrite<i32> for Chunk {
     }
 }
 
-impl VoxOpsBatch<i32> for Chunk {
+impl VoxOpsBatch<i32> for VoxChunk {
     #[inline(always)]
     fn create_batch(&self) -> Batch<i32> {
         self.data.create_batch()
@@ -404,14 +404,14 @@ impl VoxOpsBatch<i32> for Chunk {
     }
 }
 
-impl VoxOpsMesh<i32> for Chunk {
+impl VoxOpsMesh<i32> for VoxChunk {
     #[inline(always)]
     fn to_vec(&self, interner: &VoxInterner<i32>, lod: Lod) -> Vec<i32> {
         self.data.to_vec(interner, lod)
     }
 }
 
-impl VoxOpsConfig for Chunk {
+impl VoxOpsConfig for VoxChunk {
     #[inline(always)]
     fn max_depth(&self, lod: Lod) -> MaxDepth {
         self.data.max_depth(lod)
@@ -423,7 +423,7 @@ impl VoxOpsConfig for Chunk {
     }
 }
 
-impl VoxOpsState for Chunk {
+impl VoxOpsState for VoxChunk {
     #[inline(always)]
     fn is_empty(&self) -> bool {
         self.data.is_empty()
@@ -435,7 +435,7 @@ impl VoxOpsState for Chunk {
     }
 }
 
-impl VoxOpsDirty for Chunk {
+impl VoxOpsDirty for VoxChunk {
     #[inline(always)]
     fn is_dirty(&self) -> bool {
         self.data.is_dirty()
