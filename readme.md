@@ -406,7 +406,6 @@ Patterns we work to follow throughout the library to improve performance and mem
 ## Roadmap / Todo
 - when tessellating, detect T junctions with other polygons with shared edges, and insert splitting vertices into polygons to correct
 - implement as_indexed, from_indexed, and merge_vertices (using hashbrown, and a string expression of each float out to EPSILON significant digits)
-- eliminate Plane and derive planes on demand from points in Polygon, move splitting / slicing code to Polygon
 - ensure re-triangulate unions all coplanar polygons
 - evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.HalfSpace.html and https://docs.rs/parry3d/latest/parry3d/query/point/trait.PointQuery.html#method.contains_point for plane splitting
 - evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Polyline.html for Polygon
@@ -494,7 +493,8 @@ Patterns we work to follow throughout the library to improve performance and mem
 - mutable API for transmute, etc.
 - implement trait geo::MetricSpace on nalgebra::Point, Point2, Point3
 - investigate https://github.com/TimTheBig/geo-3d for useful functions
-- gltf / obj / gerber output
+- gltf output
+- gerber output
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
