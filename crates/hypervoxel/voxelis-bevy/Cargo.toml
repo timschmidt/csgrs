@@ -11,7 +11,12 @@ bevy.workspace = true
 bevy_egui.workspace = true
 bevy_panorbit_camera.workspace = true
 # bevy_screen_diagnostics.workspace = true
-egui_extras.workspace = true
+# egui_extras.workspace = true
 egui_plot.workspace = true
 parking_lot.workspace = true
+fastnoise-lite.workspace = true
 humanize-bytes.workspace = true
+
+[features]
+default = ["memory_stats"]
+memory_stats = ["voxelis/memory_stats"]

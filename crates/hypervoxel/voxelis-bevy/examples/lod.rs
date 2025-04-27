@@ -22,16 +22,22 @@ use bevy::{
 use bevy_egui::{EguiContexts, EguiPlugin, egui};
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
-use voxelis::{Lod, MaxDepth, NodeStore, world::Chunk};
+use voxelis::{Lod, MaxDepth, VoxInterner, world::VoxChunk};
 
 const MAX_DEPTH: MaxDepth = MaxDepth::new(6);
 const VOXELS_PER_AXIS: usize = 1 << MAX_DEPTH.max();
 const CHUNK_SIZE: f32 = 1.28;
 
+#[derive(Resource, Default)]
+pub struct StatsWindowState {
+    pub visible: bool,
+    pub show_details: bool,
+}
+
 #[derive(Resource)]
 pub struct World {
-    pub store: NodeStore<i32>,
-    pub chunk: Chunk,
+    pub interner: VoxInterner<i32>,
+    pub chunk: VoxChunk,
     pub mesh: Handle<Mesh>,
 }
 
@@ -43,17 +49,17 @@ pub struct LodSettings {
 impl World {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let mut store = NodeStore::<i32>::with_memory_budget(1024 * 1024 * 256);
+        let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 256);
 
-        let mut chunk = Chunk::with_position(CHUNK_SIZE, MAX_DEPTH, 0, 0, 0);
+        let mut chunk = VoxChunk::with_position(CHUNK_SIZE, MAX_DEPTH, 0, 0, 0);
         let half_size = VOXELS_PER_AXIS as i32 / 2;
         let center = IVec3::new(half_size, half_size, half_size);
         let radius = (VOXELS_PER_AXIS / 2) as i32;
         let value = 1;
-        chunk.generate_test_sphere(&mut store, center, radius, value);
+        chunk.generate_test_sphere(&mut interner, center, radius, value);
 
         Self {
-            store,
+            interner,
             chunk,
             mesh: Handle::default(),
         }
@@ -68,7 +74,7 @@ impl World {
     ) {
         let offset = Vec3::new(0.0, 0.0, 0.0);
         self.chunk
-            .generate_mesh_arrays(&self.store, vertices, normals, indices, offset, lod);
+            .generate_mesh_arrays(&self.interner, vertices, normals, indices, offset, lod);
         println!(
             "vertices: {} normals: {} indices: {}",
             humanize_bytes::humanize_quantity!(vertices.len()),
