@@ -1,9 +1,17 @@
 [package]
 name = "voxelis-memory"
-version.workspace = true
-authors.workspace = true
-license.workspace = true
+version = "25.4.0"
+authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
+license = "MIT OR Apache-2.0"
+description = "Memory utilities for the Voxelis voxel engine."
 edition = "2024"
+homepage = "https://github.com/WildPixelGames/voxelis"
+repository = "https://github.com/WildPixelGames/voxelis"
+documentation = "https://docs.rs/voxelis-memory"
+readme = "README.md"
+
+[package.metadata.docs.rs]
+all-features = true
 
 [features]
 memory_stats = []
