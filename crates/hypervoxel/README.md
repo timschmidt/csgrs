@@ -1,6 +1,6 @@
 <h1 align="center">
-  <img src="docs/voxelis_logo.png"
-       alt="Voxelis" width="640"><br>
+  <img src="https://raw.githubusercontent.com/WildPixelGames/voxelis/master/docs/voxelis_logo.png"
+       alt="Voxelis" width="480"><br>
   <sub>Tiny voxels. Huge worlds. Zero hassle.</sub>
 </h1>
 
@@ -38,11 +38,11 @@
 | **set_sum() (high-entropy)**     | 32K         | **5.92 ms** | **194.1 μs** | 🌪️ Complex pattern, ~30× faster |
 | **perlin dunes (high-entropy)**  | 32K         | -           | **~12 μs**  | 🌎 ~1380 chunks/frame (60 FPS) |
 
-> Full raw results? Check [benches-raw.md](./docs/benches-raw.md).
+> Full raw results? Check [benches-raw.md](https://github.com/WildPixelGames/voxelis/blob/master/docs/benches-raw.md).
 >
-> Summary tables? See [benches-tables.md](./docs/benches-tables.md).
+> Summary tables? See [benches-tables.md](https://github.com/WildPixelGames/voxelis/blob/master/docs/benches-tables.md).
 >
-> Full commentary and insights? Dive into [benches.md](./docs/benches.md).
+> Full commentary and insights? Dive into [benches.md](https://github.com/WildPixelGames/voxelis/blob/master/docs/benches.md).
 
 ---
 
@@ -82,7 +82,7 @@ cargo add voxelis # Requires Rust 1.86+, optionally use `wide` for SIMD meshing
 | **BlockId** | 64-bit magic to encode voxel state compactly. |
 | **Mesher** | SIMD greedy meshing (WIP) — turn voxels into worlds. |
 
-More? Crack open **The Voxelis Bible** ([docs/The Voxelis Bible_ From Pixels to Worlds - An In-Depth Guide v2.3.pdf](./docs/The%20Voxelis%20Bible_%20From%20Pixels%20to%20Worlds%20-%20An%20In-Depth%20Guide%20v2.3.pdf)) — 38 pages of dangerously concentrated nerdery.
+More? Crack open **The Voxelis Bible** ([docs/The Voxelis Bible_ From Pixels to Worlds - An In-Depth Guide v2.3.pdf](https://github.com/WildPixelGames/voxelis/blob/master/docs/The%20Voxelis%20Bible_%20From%20Pixels%20to%20Worlds%20-%20An%20In-Depth%20Guide%20v2.3.pdf)) — 38 pages of dangerously concentrated nerdery.
 
 ---
 
@@ -106,7 +106,7 @@ cargo bench -p voxelis_bench
 
 Hardware: Apple M3 Max, Rust 1.86 stable, `-C target-cpu=native`, final profile.
 
-Want real numbers? We've got them — [benches-tables.md](./docs/benches-tables.md) and [benches-raw.md](./docs/benches-raw.md) await.
+Want real numbers? We've got them — [benches-tables.md](https://github.com/WildPixelGames/voxelis/blob/master/docs/benches-tables.md) and [benches-raw.md](https://github.com/WildPixelGames/voxelis/blob/master/docs/benches-raw.md) await.
 
 ---
 
