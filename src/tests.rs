@@ -80,7 +80,7 @@ fn test_polygon_construction() {
     assert_eq!(poly.vertices.len(), 3);
     // Plane should be defined by these three points. We expect a normal near ±Y.
     assert!(
-        approx_eq(poly.plane.normal.dot(&Vector3::y()).abs(), 1.0, 1e-8),
+        approx_eq(poly.plane().normal().dot(&Vector3::y()).abs(), 1.0, 1e-8),
         "Expected plane normal to match ±Y"
     );
 }
@@ -117,26 +117,12 @@ fn test_degenerate_polygon_after_clipping() {
     ];
 
     let polygon: Polygon<()> = Polygon::new(vertices.clone(), None);
-    let plane = Plane {
-        normal: Vector3::new(0.0, 0.0, 0.0),
-        w: 0.0,
-    };
-
-    let mut coplanar_front = Vec::new();
-    let mut coplanar_back = Vec::new();
-    let mut front = Vec::new();
-    let mut back = Vec::new();
+    let plane = Plane::from_normal(Vector3::new(0.0, 0.0, 0.0), 0.0);
 
     eprintln!("Original polygon: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
 
-    plane.split_polygon(
-        &polygon,
-        &mut coplanar_front,
-        &mut coplanar_back,
-        &mut front,
-        &mut back,
-    );
+    let (_coplanar_front, _coplanar_back, front, back) = plane.split_polygon(&polygon);
 
     eprintln!("Front polygons: {:?}", front);
     eprintln!("Back polygons: {:?}", back);
@@ -155,26 +141,12 @@ fn test_valid_polygon_clipping() {
 
     let polygon: Polygon<()> = Polygon::new(vertices, None);
 
-    let plane = Plane {
-        normal: -Vector3::y(),
-        w: -0.5,
-    };
-
-    let mut coplanar_front = Vec::new();
-    let mut coplanar_back = Vec::new();
-    let mut front = Vec::new();
-    let mut back = Vec::new();
+    let plane = Plane::from_normal(-Vector3::y(), -0.5);
 
     eprintln!("Polygon before clipping: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
 
-    plane.split_polygon(
-        &polygon,
-        &mut coplanar_front,
-        &mut coplanar_back,
-        &mut front,
-        &mut back,
-    );
+    let (_coplanar_front, _coplanar_back, front, back) = plane.split_polygon(&polygon);
 
     eprintln!("Front polygons: {:?}", front);
     eprintln!("Back polygons: {:?}", back);
@@ -217,30 +189,24 @@ fn test_plane_from_points() {
     let b = Point3::new(1.0, 0.0, 0.0);
     let c = Point3::new(0.0, 1.0, 0.0);
     let plane = Plane::from_points(&a, &b, &c);
-    assert!(approx_eq(plane.normal.x, 0.0, EPSILON));
-    assert!(approx_eq(plane.normal.y, 0.0, EPSILON));
-    assert!(approx_eq(plane.normal.z, 1.0, EPSILON));
-    assert!(approx_eq(plane.w, 0.0, EPSILON));
+    assert!(approx_eq(plane.normal().x, 0.0, EPSILON));
+    assert!(approx_eq(plane.normal().y, 0.0, EPSILON));
+    assert!(approx_eq(plane.normal().z, 1.0, EPSILON));
+    assert!(approx_eq(plane.offset(), 0.0, EPSILON));
 }
 
 #[test]
 fn test_plane_flip() {
-    let mut plane = Plane {
-        normal: Vector3::y(),
-        w: 2.0,
-    };
+    let mut plane = Plane::from_normal(Vector3::y(), 2.0);
     plane.flip();
-    assert_eq!(plane.normal, Vector3::new(0.0, -1.0, 0.0));
-    assert_eq!(plane.w, -2.0);
+    assert_eq!(plane.normal(), Vector3::new(0.0, -1.0, 0.0));
+    assert_eq!(plane.offset(), -2.0);
 }
 
 #[test]
 fn test_plane_split_polygon() {
     // Define a plane that splits the XY plane at y=0
-    let plane = Plane {
-        normal: Vector3::new(0.0, 1.0, 0.0),
-        w: 0.0,
-    };
+    let plane = Plane::from_normal(Vector3::new(0.0, 1.0, 0.0), 0.0);
 
     // A polygon that crosses y=0 line: a square from ( -1, -1 ) to (1, 1 )
     let poly: Polygon<()> = Polygon::new(
@@ -253,12 +219,7 @@ fn test_plane_split_polygon() {
         None,
     );
 
-    let mut cf = Vec::new(); // coplanar_front
-    let mut cb = Vec::new(); // coplanar_back
-    let mut f = Vec::new(); // front
-    let mut b = Vec::new(); // back
-
-    plane.split_polygon(&poly, &mut cf, &mut cb, &mut f, &mut b);
+    let (cf, cb, f, b) = plane.split_polygon(&poly);
     // This polygon is spanning across y=0 plane => we expect no coplanar, but front/back polygons.
     assert_eq!(cf.len(), 0);
     assert_eq!(cb.len(), 0);
@@ -296,9 +257,9 @@ fn test_polygon_new() {
     assert_eq!(poly.vertices.len(), 3);
     assert_eq!(poly.metadata, None);
     // Plane normal should be +Z for the above points
-    assert!(approx_eq(poly.plane.normal.x, 0.0, EPSILON));
-    assert!(approx_eq(poly.plane.normal.y, 0.0, EPSILON));
-    assert!(approx_eq(poly.plane.normal.z, 1.0, EPSILON));
+    assert!(approx_eq(poly.plane().normal().x, 0.0, EPSILON));
+    assert!(approx_eq(poly.plane().normal().y, 0.0, EPSILON));
+    assert!(approx_eq(poly.plane().normal().z, 1.0, EPSILON));
 }
 
 #[test]
@@ -311,22 +272,22 @@ fn test_polygon_flip() {
         ],
         None,
     );
-    let plane_normal_before = poly.plane.normal;
+    let plane_normal_before = poly.plane().normal();
     poly.flip();
     // The vertices should be reversed, and normal flipped
     assert_eq!(poly.vertices.len(), 3);
     assert!(approx_eq(
-        poly.plane.normal.x,
+        poly.plane().normal().x,
         -plane_normal_before.x,
         EPSILON
     ));
     assert!(approx_eq(
-        poly.plane.normal.y,
+        poly.plane().normal().y,
         -plane_normal_before.y,
         EPSILON
     ));
     assert!(approx_eq(
-        poly.plane.normal.z,
+        poly.plane().normal().z,
         -plane_normal_before.z,
         EPSILON
     ));
@@ -384,7 +345,7 @@ fn test_polygon_recalc_plane_and_normals() {
         None,
     );
     poly.set_new_normal();
-    assert!(approx_eq(poly.plane.normal.z, 1.0, EPSILON));
+    assert!(approx_eq(poly.plane().normal().z, 1.0, EPSILON));
     for v in &poly.vertices {
         assert!(approx_eq(v.normal.x, 0.0, EPSILON));
         assert!(approx_eq(v.normal.y, 0.0, EPSILON));
@@ -426,10 +387,10 @@ fn test_node_invert() {
     );
     let mut node: Node<()> = Node::new(&[p.clone()]);
     let original_count = node.polygons.len();
-    let original_normal = node.plane.as_ref().unwrap().normal;
+    let original_normal = node.plane.as_ref().unwrap().normal();
     node.invert();
     // The plane normal should be flipped, polygons should be flipped, and front/back swapped (they were None).
-    let flipped_normal = node.plane.as_ref().unwrap().normal;
+    let flipped_normal = node.plane.as_ref().unwrap().normal();
     assert!(approx_eq(flipped_normal.x, -original_normal.x, EPSILON));
     assert!(approx_eq(flipped_normal.y, -original_normal.y, EPSILON));
     assert!(approx_eq(flipped_normal.z, -original_normal.z, EPSILON));
@@ -443,10 +404,7 @@ fn test_node_invert() {
 #[test]
 fn test_node_clip_polygons2() {
     // A node with a single plane normal to +Z, passing through z=0
-    let plane = Plane {
-        normal: Vector3::z(),
-        w: 0.0,
-    };
+    let plane = Plane::from_normal(Vector3::z(), 0.0);
     let mut node: Node<()> = Node {
         plane: Some(plane),
         front: None,
@@ -680,18 +638,18 @@ fn test_csg_inverse() {
     let orig_poly = &c1.polygons[0];
     let inv_poly = &inv.polygons[0];
     assert!(approx_eq(
-        orig_poly.plane.normal.x,
-        -inv_poly.plane.normal.x,
+        orig_poly.plane().normal().x,
+        -inv_poly.plane().normal().x,
         EPSILON
     ));
     assert!(approx_eq(
-        orig_poly.plane.normal.y,
-        -inv_poly.plane.normal.y,
+        orig_poly.plane().normal().y,
+        -inv_poly.plane().normal().y,
         EPSILON
     ));
     assert!(approx_eq(
-        orig_poly.plane.normal.z,
-        -inv_poly.plane.normal.z,
+        orig_poly.plane().normal().z,
+        -inv_poly.plane().normal().z,
         EPSILON
     ));
     assert_eq!(
@@ -807,10 +765,7 @@ fn test_csg_transform_translate_rotate_scale() {
 #[test]
 fn test_csg_mirror() {
     let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    let plane_x = Plane {
-        normal: Vector3::x(),
-        w: 0.0,
-    }; // x=0 plane
+    let plane_x = Plane::from_normal(Vector3::x(), 0.0); // x=0 plane
     let mirror_x = c.mirror(plane_x);
     let bb_mx = mirror_x.bounding_box();
     // The original cube was from x=0..2, so mirrored across X=0 should be -2..0
@@ -862,9 +817,9 @@ fn test_csg_renormalize() {
     // Now each polygon's vertices should match the plane's normal
     for poly in &cube.polygons {
         for v in &poly.vertices {
-            assert!(approx_eq(v.normal.x, poly.plane.normal.x, EPSILON));
-            assert!(approx_eq(v.normal.y, poly.plane.normal.y, EPSILON));
-            assert!(approx_eq(v.normal.z, poly.plane.normal.z, EPSILON));
+            assert!(approx_eq(v.normal.x, poly.plane().normal().x, EPSILON));
+            assert!(approx_eq(v.normal.y, poly.plane().normal().y, EPSILON));
+            assert!(approx_eq(v.normal.z, poly.plane().normal().z, EPSILON));
         }
     }
 }
@@ -1606,10 +1561,7 @@ fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = CSG::<()>::cylinder(1.0, 2.0, 32, None).center();
     // 2) Slice at z=0
-    let cross_section = cyl.slice(Plane {
-        normal: Vector3::z(),
-        w: 0.0,
-    });
+    let cross_section = cyl.slice(Plane::from_normal(Vector3::z(), 0.0));
 
     // For a simple cylinder, the cross-section is typically 1 circle polygon
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
