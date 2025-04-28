@@ -802,17 +802,34 @@ fn svg_path_to_multi_line_string<F: CoordNum>(path_data: path::Data) -> Result<M
 /// [points]: https://www.w3.org/TR/SVG11/shapes.html#PointsBNF
 fn svg_points_to_line_string<F: CoordNum>(points: &str) -> Result<LineString<F>, IoError> {
     use nom::IResult;
-    use nom::bytes::complete::tag;
-    use nom::character::complete::{multispace0, multispace1};
+    use nom::Parser;
+    use nom::branch::alt;
+    use nom::character::complete::{char, multispace0, multispace1};
+    use nom::combinator::opt;
     use nom::number::complete::float;
-    use nom::sequence::{delimited, preceded, separated_pair, terminated};
+    use nom::sequence::{pair, tuple, delimited, preceded, separated_pair, terminated};
     use nom::multi::separated_list1;
+
+    fn comma_wsp(i: &str) -> IResult<&str, ()> {
+        let (i, _) = alt((
+            tuple((
+                multispace1,
+                opt(char(',')),
+                multispace0,
+            )).map(|_| ()),
+            pair(
+                char(','),
+                multispace0,
+            ).map(|_| ()),
+        ))(i)?;
+        Ok((i, ()))
+    }
 
     fn point<F: CoordNum>(i: &str) -> IResult<&str, Coord<F>> {
         let (i, (x, y)) = separated_pair(
-            terminated(float, multispace0),
-            tag(","),
-            preceded(multispace0, float),
+            float,
+            comma_wsp,
+            float,
         )(i)?;
         Ok((i, Coord {
             x: F::from(x).unwrap(),
@@ -824,7 +841,7 @@ fn svg_points_to_line_string<F: CoordNum>(points: &str) -> Result<LineString<F>,
         delimited(
             multispace0,
             separated_list1(
-                multispace1,
+                comma_wsp,
                 point,
             ),
             multispace0,
@@ -841,6 +858,8 @@ fn svg_points_to_line_string<F: CoordNum>(points: &str) -> Result<LineString<F>,
 
 #[cfg(test)]
 mod tests {
+    use geo::line_string;
+
     use super::*;
 
     #[test]
@@ -857,5 +876,53 @@ mod tests {
         let svg_out = csg.to_svg();
 
         assert_eq!(svg_in.trim(), svg_out.trim());
+    }
+
+    #[test]
+    fn svg_points_parsing() {
+        let expected = line_string![
+            (x: 350.0, y:  75.0),
+            (x: 379.0, y: 161.0),
+            (x: 469.0, y: 161.0),
+            (x: 397.0, y: 215.0),
+            (x: 423.0, y: 301.0),
+            (x: 350.0, y: 250.0),
+            (x: 277.0, y: 301.0),
+            (x: 303.0, y: 215.0),
+            (x: 231.0, y: 161.0),
+            (x: 321.0, y: 161.0),
+        ];
+
+        let points = "
+            350,75  379,161 469,161 397,215
+            423,301 350,250 277,301 303,215
+            231,161 321,161
+        ";
+        let points = svg_points_to_line_string(points).unwrap();
+        assert_eq!(points, expected);
+
+        let points = "
+            350 75  379 161 469 161 397 215
+            423 301 350 250 277 301 303 215
+            231 161 321 161
+        ";
+        let points = svg_points_to_line_string(points).unwrap();
+        assert_eq!(points, expected);
+
+        let points = "
+            350,75,379,161,469,161,397,215,
+            423,301,350,250,277,301,303,215,
+            231,161,321,161
+        ";
+        let points = svg_points_to_line_string(points).unwrap();
+        assert_eq!(points, expected);
+
+        let points = "
+            350 , 75 , 379 , 161 , 469 , 161 , 397 , 215 ,
+            423 ,301, 350 ,250, 277 ,301, 303 ,215,
+            231    161    321    161
+        ";
+        let points = svg_points_to_line_string(points).unwrap();
+        assert_eq!(points, expected);
     }
 }
