@@ -1,14 +1,35 @@
 # csgrs
 
-A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library in Rust, built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons using BSP trees. **csgrs** provides data structures and methods for constructing 2D and 3D geometry with an [OpenSCAD](https://openscad.org/)-like syntax.  **csgrs** aims to be light weight and full featured through integration with the [Dimforge](https://www.dimforge.com/) ecosystem (e.g., [`nalgebra`](https://crates.io/crates/nalgebra), [`Parry`](https://crates.io/crates/parry3d), and [`Rapier`](https://crates.io/crates/rapier3d)) and [`geo`](https://crates.io/crates/geo) for robust processing of [Simple Features](https://en.wikipedia.org/wiki/Simple_Features).  **csgrs** has a number of functions useful for generating CNC toolpaths.  The library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are 100% rust and nearly all optional. 
+A fast, optionally multithreaded **Constructive Solid Geometry (CSG)**
+library in Rust, built around Boolean operations (*union*, *difference*,
+*intersection*, *xor*) on sets of polygons using BSP trees. **csgrs** provides
+data structures and methods for constructing 2D and 3D geometry with an
+[OpenSCAD](https://openscad.org/)-like syntax.  **csgrs** aims to be light
+weight and full featured through integration with the
+[Dimforge](https://www.dimforge.com/) ecosystem
+(e.g., [`nalgebra`](https://crates.io/crates/nalgebra),
+[`Parry`](https://crates.io/crates/parry3d),
+and [`Rapier`](https://crates.io/crates/rapier3d)) and
+[`geo`](https://crates.io/crates/geo) for robust processing of
+[Simple Features](https://en.wikipedia.org/wiki/Simple_Features).
+**csgrs** has a number of functions useful for generating CNC toolpaths.  The
+library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are
+100% rust and nearly all optional.
 
-The BSP tree works with polygons made of lines.  **csgrs** interpolates all curves when working in 3D so that they can be processed using the BSP tree.  [earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html) and [constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation) algorithms used for tessellation only work in 2D, so **csgrs** rotates 3D polygons into 2D for tessellation then back to 3D.
+The BSP tree works with polygons made of lines.  **csgrs** interpolates
+all curves when working in 3D so that they can be processed using the BSP
+tree.  [earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
+and
+[constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation)
+algorithms used for tessellation only work in 2D, so **csgrs** rotates
+3D polygons into 2D for tessellation then back to 3D.
 
 ![Example CSG output](docs/csg.png)
 
 ## Getting started
 
-Install the [Rust](https://www.rust-lang.org/) language tools from [rustup.rs](https://rustup.rs/).
+Install the [Rust](https://www.rust-lang.org/) language tools from
+[rustup.rs](https://rustup.rs/).
 
 ```shell
 cargo new my_cad_project
@@ -50,7 +71,14 @@ cargo build --features="wasm" --target=wasm32-unknown-unknown --release
   - a [`geo`](https://crates.io/crates/geo) [`GeometryCollection<Real>`](https://docs.rs/geo/latest/geo/geometry/struct.GeometryCollection.html)
   - another optional metadata field (`Option<S>`) also defined by you
 
-`CSG<S>` provides methods for working with 2D and 3D shapes. You can build a `CSG<S>` from polygons with `CSG::from_polygons(...)` or from geo Geometries with `CSG::from_geo(...)`.  Polygons must be closed, planar, have 3 or more vertices, and are 3D.  Geometries can be open or closed, have holes, but must be planar in the XY.  Operations work on both 2D and 3D shapes though they generally do not interact except where one is explicitly transformed into the other as in extrude or slice.  Polygons and Geometries are triangulated when being exported as an STL, or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
+`CSG<S>` provides methods for working with 2D and 3D shapes. You can build a
+`CSG<S>` from polygons with `CSG::from_polygons(...)` or from geo Geometries with
+`CSG::from_geo(...)`.  Polygons must be closed, planar, have 3 or more vertices,
+and are 3D.  Geometries can be open or closed, have holes, but must be planar in
+the XY.  Operations work on both 2D and 3D shapes though they generally do not
+interact except where one is explicitly transformed into the other as in extrude
+or slice.  Polygons and Geometries are triangulated when being exported as an STL,
+or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 
 ### 2D Shapes
 
@@ -116,8 +144,13 @@ let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.poly
 - **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
 - **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
 - **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum at origin with height and `radius1` and `radius2`.  If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
-- **`CSG::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments: usize, metadata: Option<S>)`** - Construct a frustum from `start` to `end` with `radius1` and `radius2`.  If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
+- **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** -
+Construct a frustum at origin with height and `radius1` and `radius2`.
+If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
+- **`CSG::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments:
+usize, metadata: Option<S>)`** -
+Construct a frustum from `start` to `end` with `radius1` and `radius2`.
+If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
 - **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
 - **`CSG::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: Option<S>)`**
 - **`CSG::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: Option<S>)`**
@@ -387,7 +420,8 @@ if let Some(data_mut) = poly.metadata_mut() {
 - [csgrs-druid-example](https://github.com/timschmidt/csgrs-druid-example)
 
 ## Build tests
-A cargo xtask is included in the repository for testing building with various combinations of feature flags.  To use it, you must install cargo xtask:
+A cargo xtask is included in the repository for testing building with various
+combinations of feature flags.  To use it, you must install cargo xtask:
 ```rust
 cargo install xtask
 ```
@@ -398,17 +432,25 @@ cargo xtask test-all
 ```
 
 ## Performance
-Patterns we work to follow throughout the library to improve performance and memory usage:
+Patterns we work to follow throughout the library to improve performance
+and memory usage:
 - functions should accept borrowed slices, this permits easy use of iterators
 - iterators should be used wherever parallelism may help (and rayon's par_iter)
-- allocations should be kept to a minimum.  Memory should be read-only if possible, clone if necessary, and offer the choice of transmut in place or create new copy via appropriate functions
+- allocations should be kept to a minimum.  Memory should be read-only if
+possible, clone if necessary, and offer the choice of transmut in place or
+create new copy via appropriate functions
 
 ## Roadmap / Todo
-- when tessellating, detect T junctions with other polygons with shared edges, and insert splitting vertices into polygons to correct
-- implement as_indexed, from_indexed, and merge_vertices (using hashbrown, and a string expression of each float out to EPSILON significant digits)
+- when tessellating, detect T junctions with other polygons with shared edges,
+and insert splitting vertices into polygons to correct
+- implement as_indexed, from_indexed, and merge_vertices (using hashbrown, and a
+string expression of each float out to EPSILON significant digits)
 - ensure re-triangulate unions all coplanar polygons
-- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.HalfSpace.html and https://docs.rs/parry3d/latest/parry3d/query/point/trait.PointQuery.html#method.contains_point for plane splitting
-- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Polyline.html for Polygon
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.HalfSpace.html and
+https://docs.rs/parry3d/latest/parry3d/query/point/trait.PointQuery.html#method.contains_point
+for plane splitting
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Polyline.html
+for Polygon
 - evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Segment.html
 - evaluate https://docs.rs/nalgebra/latest/nalgebra/geometry/struct.Rotation.html#method.rotation_between-1 
 - evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Triangle.html
