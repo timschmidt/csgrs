@@ -9,18 +9,7 @@ repository = "https://github.com/WildPixelGames/voxelis"
 documentation = "https://docs.rs/voxelis"
 edition = "2024"
 readme = "../README.md"
-keywords = [
-  "voxel",
-  "voxel-engine",
-  "sparse-voxel-octree",
-  "svo",
-  "dag",
-  "3d-engine",
-  "world-generation",
-  "geometry",
-  "compression",
-  "graphics",
-]
+keywords = ["voxel", "voxel-engine", "sparse-voxel-octree", "dag", "3d-engine"]
 categories = [
   "data-structures",
   "game-development",
