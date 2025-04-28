@@ -49,24 +49,28 @@
 ## 🔧 Quick Start
 
 ```rust
-use voxelis::{VoxTree, VoxInterner};
 use glam::IVec3;
+use voxelis::{
+    MaxDepth, VoxInterner,
+    spatial::{VoxOpsBatch, VoxOpsRead, VoxOpsWrite, VoxTree},
+};
 
-let mut interner = VoxInterner::<u8>::with_memory_budget(256 * 1024 * 1024);
-let mut tree = VoxTree::new(5); // 32³ voxels (chunk)
+fn main() {
+    let mut interner = VoxInterner::<u8>::with_memory_budget(256 * 1024 * 1024);
+    let mut tree = VoxTree::new(MaxDepth::new(5)); // 32³ voxels (chunk)
 
-let mut batch = tree.create_batch();
-batch.fill(&mut interner, 0); // air
-batch.set(&mut interner, IVec3::new(3,0,4), 1); // stone
+    let mut batch = tree.create_batch();
+    batch.set(&mut interner, IVec3::new(3, 0, 4), 1); // stone
 
-tree.apply_batch(&mut interner, &batch)?;
-assert_eq!(tree.get(&interner, IVec3::new(3,0,4)), Some(1));
+    tree.apply_batch(&mut interner, &batch);
+    assert_eq!(tree.get(&interner, IVec3::new(3, 0, 4)), Some(1));
+}
 ```
 
 Add via Cargo:
 
 ```bash
-cargo add voxelis # Requires Rust 1.86+, optionally use `wide` for SIMD meshing
+cargo add voxelis glam@0.29.3 # Requires Rust 1.86+, optionally use `wide` for SIMD meshing
 ```
 
 ---
