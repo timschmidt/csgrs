@@ -97,7 +97,7 @@ where S: Clone + Send + Sync {
     /// - `iso_value`: threshold for the iso-surface.
     /// - `padding`: extra boundary beyond each ball's radius.
     /// - `metadata`: optional user metadata.
-    pub fn metaball_2d(
+    pub fn metaballs2d(
         balls: &[(nalgebra::Point2<Real>, Real)],
         resolution: (usize, usize),
         iso_value: Real,
