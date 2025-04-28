@@ -5429,7 +5429,7 @@ dependencies = [
  "rand 0.9.1",
  "rayon",
  "rustc-hash 2.1.1",
- "voxelis-memory",
+ "voxelis-memory 25.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "wide",
  "zstd",
 ]
@@ -5458,6 +5458,12 @@ dependencies = [
 [[package]]
 name = "voxelis-memory"
 version = "25.4.0"
+
+[[package]]
+name = "voxelis-memory"
+version = "25.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5f721aa094c58da48cbae05f27725b215fb2c8bdd10b1d74d2111cd4a4ddada"
 
 [[package]]
 name = "voxelis-voxelize"

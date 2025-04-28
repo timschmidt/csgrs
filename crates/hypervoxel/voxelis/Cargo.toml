@@ -1,9 +1,34 @@
 [package]
 name = "voxelis"
-version.workspace = true
-authors.workspace = true
-license.workspace = true
+version = "25.4.0"
+authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
+license = "MIT OR Apache-2.0"
+description = "Sparse Voxel Octree DAG engine for building worlds, shaping matter, and mastering 3D space — powered by pure Rust."
+homepage = "https://github.com/WildPixelGames/voxelis"
+repository = "https://github.com/WildPixelGames/voxelis"
+documentation = "https://docs.rs/voxelis"
 edition = "2024"
+readme = "../README.md"
+keywords = [
+  "voxel",
+  "voxel-engine",
+  "sparse-voxel-octree",
+  "svo",
+  "dag",
+  "3d-engine",
+  "world-generation",
+  "geometry",
+  "compression",
+  "graphics",
+]
+categories = [
+  "data-structures",
+  "game-development",
+  "graphics",
+  "rendering",
+  "simulation",
+]
+rust-version = "1.86"
 
 [features]
 default = ["numeric_voxel_impls"]
@@ -12,7 +37,7 @@ memory_stats = []
 debug_trace_ref_counts = []
 
 [dependencies]
-voxelis-memory.workspace = true
+voxelis-memory = "25.4.0"
 bitflags.workspace = true
 byteorder.workspace = true
 glam.workspace = true

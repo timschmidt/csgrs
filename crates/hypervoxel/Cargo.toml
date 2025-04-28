@@ -46,7 +46,6 @@ rust-version = "1.86"
 [workspace.dependencies]
 voxelis = { path = "voxelis" }
 voxelis-math = { path = "voxelis-math" }
-voxelis-memory = { path = "voxelis-memory" }
 voxelis-voxelize = { path = "voxelis-voxelize" }
 voxelis-bevy = { path = "voxelis-bevy" }
 
