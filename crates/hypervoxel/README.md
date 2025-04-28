@@ -5,9 +5,9 @@
 </h1>
 
 <p align="center">
-  <a href="https://crates.io/crates/voxelis"><img src="https://img.shields.io/crates/v/voxelis.svg?style=for-the-badge&color=brightgreen"></a>
-  <a href="https://docs.rs/voxelis"><img src="https://img.shields.io/badge/docs‑rs-online-blue.svg?style=for-the-badge"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/WildPixelGames/voxelis?style=for-the-badge"></a>
+  <a href="https://crates.io/crates/voxelis"><img src="https://img.shields.io/crates/v/voxelis.svg?style=for-the-badge&color=orange"></a>
+  <a href="https://docs.rs/voxelis"><img src="https://img.shields.io/badge/docs‑rs-online-orange.svg?style=for-the-badge"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-orange?style=for-the-badge"></a>
 </p>
 
 > **"Need voxels? Reach for Voxelis."**
