@@ -117,7 +117,7 @@ fn test_degenerate_polygon_after_clipping() {
     ];
 
     let polygon: Polygon<()> = Polygon::new(vertices.clone(), None);
-    let plane = Plane::from_normal(Vector3::new(0.0, 0.0, 0.0), 0.0);
+    let plane = Plane::from_normal(Vector3::new(0.0, 0.0, 1.0), 0.0);
 
     eprintln!("Original polygon: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
