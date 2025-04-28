@@ -568,6 +568,73 @@ fn main() {
         let scene = grown.extrude(0.1);
         let _ = fs::write("stl/scene_offset_grown.stl", scene.to_stl_ascii("scene_offset_grown"));
     }
+    
+    let gear_involute_2d = CSG::involute_gear_2d(
+        2.0,   // module [mm]
+        20,    // z – number of teeth
+        20.0,  // α – pressure angle [deg]
+        0.05,  // radial clearance
+        0.02,  // backlash at pitch line
+        14,    // segments per involute flank
+        None,
+    );
+    let _ = fs::write("stl/gear_involute_2d.stl", gear_involute_2d.to_stl_ascii("gear_involute_2d"));
+
+    let gear_cycloid_2d = CSG::cycloidal_gear_2d(
+        2.0,   // module
+        17,    // gear teeth
+        18,    // mating pin-wheel teeth (zₚ = z±1)
+        0.05,  // clearance
+        20,    // segments per flank
+        None,
+    );
+    let _ = fs::write("stl/gear_cycloid_2d.stl", gear_cycloid_2d.to_stl_ascii("gear_cycloid_2d"));
+
+    let rack_involute = CSG::involute_rack_2d(
+        2.0,   // module
+        12,    // number of rack teeth to generate
+        20.0,  // pressure angle
+        0.05,  // clearance
+        0.02,  // backlash
+        None,
+    );
+    let _ = fs::write("stl/rack_involute.stl", rack_involute.to_stl_ascii("rack_involute"));
+
+    let rack_cycloid = CSG::cycloidal_rack_2d(
+        2.0,   // module
+        12,    // teeth
+        1.0,   // generating-circle radius  (≈ m/2 for a conventional pin-rack)
+        0.05,  // clearance
+        24,    // segments per flank
+        None,
+    );
+    let _ = fs::write("stl/rack_cycloid.stl", rack_cycloid.to_stl_ascii("rack_cycloid"));
+
+    let spur_involute = CSG::spur_gear_involute(
+        2.0, 20, 20.0, 0.05, 0.02, 14,
+        12.0,      // face-width (extrusion thickness)
+        None,
+    );
+    let _ = fs::write("stl/spur_involute.stl", spur_involute.to_stl_ascii("spur_involute"));
+
+    let spur_cycloid = CSG::spur_gear_cycloid(
+        2.0, 17, 18, 0.05, 20,
+        12.0,      // thickness
+        None,
+    );
+    let _ = fs::write("stl/spur_cycloid.stl", spur_cycloid.to_stl_ascii("spur_cycloid"));
+
+    let helical = CSG::helical_involute_gear(
+        2.0,   // module
+        20,    // z
+        20.0,  // pressure angle
+        0.05, 0.02, 14,
+        25.0,   // face-width
+        15.0,   // helix angle β [deg]
+        40,     // axial slices (resolution of the twist)
+        None,
+    );
+    let _ = fs::write("stl/helical.stl", helical.to_stl_ascii("helical"));
 
     // Done!
     println!("All scenes have been created and written to the 'stl' folder (where applicable).");
