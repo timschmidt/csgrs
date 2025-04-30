@@ -5,9 +5,9 @@ use geo_buf::{buffer_multi_polygon, buffer_polygon};
 use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> CSG<S> {
-    /// Grows/shrinks/offsets all polygons in the XY plane by `distance`
+    /// Grows/shrinks/offsets all 2D geometry by `distance`
     ///
-    /// Note: this does not affect the 3d polygons of the `CSG`, for now this may change
+    /// Note: this does not affect the 3d polygons of the `CSG`
     pub fn offset(&self, distance: Real) -> CSG<S> {
         // For each Geometry in the collection:
         //   - If it's a Polygon, buffer it and store the result as a MultiPolygon
