@@ -56,8 +56,6 @@ where S: Clone + Send + Sync {
             return Vec::new();
         }
 
-        //println!("{:#?}",  self.vertices);
-
         let normal_3d = self.plane().normal().normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
         let origin_3d = self.vertices[0].pos;
@@ -74,7 +72,6 @@ where S: Clone + Send + Sync {
         #[cfg(feature = "earcut")]
         {
             use geo::TriangulateEarcut;
-            //println!("{:#?}",  LineString::new(all_vertices_2d.clone()));
             let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new())
                 .earcut_triangles_raw();
             let triangle_indices = triangulation.triangle_indices;
@@ -107,7 +104,7 @@ where S: Clone + Send + Sync {
                 Vec::new(),
             );
             let Ok(tris) = polygon_2d.constrained_triangulation(Default::default()) else {
-                return Vec::new(); // or handle however you wish
+                return Vec::new();
             };
 
             let mut final_triangles = Vec::with_capacity(tris.len());
