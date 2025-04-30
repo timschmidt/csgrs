@@ -37,7 +37,7 @@ use stl_io;
 
 /// The main CSG solid structure. Contains a list of 3D polygons, 2D polylines, and some metadata.
 #[derive(Debug, Clone)]
-pub struct CSG<S: Clone> {
+pub struct CSG<S: Clone = ()> {
     /// 3D polygons for volumetric shapes
     pub polygons: Vec<Polygon<S>>,
 

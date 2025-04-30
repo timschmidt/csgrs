@@ -523,7 +523,7 @@ where S: Clone + Send + Sync {
             }
 
             // Build the polygon
-            Polygon::new(verts, metadata.clone())
+            Some(Polygon::new(verts, metadata.clone()))
         }
 
         //----------------------------------------------------------------------

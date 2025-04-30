@@ -76,8 +76,7 @@ fn test_polygon_construction() {
     let v2 = Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::y());
     let v3 = Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::y());
 
-    let poly: Polygon<()> = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], None)
-        .expect("Three vertices are supplied");
+    let poly: Polygon<()> = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], None);
     assert_eq!(poly.vertices.len(), 3);
     // Plane should be defined by these three points. We expect a normal near ±Y.
     assert!(
@@ -117,13 +116,8 @@ fn test_degenerate_polygon_after_clipping() {
         Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
-    let polygon: Polygon<()> = Polygon::from_tri(vertices);
+    let polygon: Polygon<()> = Polygon::from_tri(vertices, None);
     let plane = Plane::from_normal(Vector3::new(0.0, 0.0, 1.0), 0.0);
-
-    let mut coplanar_front = Vec::new();
-    let mut coplanar_back = Vec::new();
-    let mut front = Vec::new();
-    let mut back = Vec::new();
 
     eprintln!("Original polygon: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
@@ -223,7 +217,7 @@ fn test_plane_split_polygon() {
             Vertex::new(Point3::new(-1.0, 1.0, 0.0), Vector3::z()),
         ],
         None,
-    ).expect("Three or more vertices are supplied");
+    );
 
     let (cf, cb, f, b) = plane.split_polygon(&poly);
     // This polygon is spanning across y=0 plane => we expect no coplanar, but front/back polygons.
@@ -310,8 +304,8 @@ fn test_polygon_triangulate() {
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
         None,
-    ).expect("Three or more vertices are supplied");
-    let triangles = poly.tessellate().unwrap();
+    );
+    let triangles = poly.tessellate();
     // We expect 2 triangles from a quad
     assert_eq!(
         triangles.len(),
@@ -331,12 +325,12 @@ fn test_polygon_subdivide_triangles() {
         ],
         None,
     );
-    let subs = poly.subdivide_triangles(1).unwrap();
+    let subs = poly.subdivide_triangles(1);
     // One triangle subdivided once => 4 smaller triangles
     assert_eq!(subs.len(), 4);
 
     // If we subdivide the same single tri 2 levels, we expect 16 sub-triangles.
-    let subs2 = poly.subdivide_triangles(2).unwrap();
+    let subs2 = poly.subdivide_triangles(2);
     assert_eq!(subs2.len(), 16);
 }
 
@@ -477,7 +471,7 @@ fn test_node_clip_to() {
             Vertex::new(Point3::new(0.0, 0.5, 0.0), Vector3::z()),
         ],
         None,
-    ).expect("Three vertices are supplied");
+    );
     let mut node_a: Node<()> = Node::new(&[poly]);
     // Another polygon that fully encloses the above
     let big_poly: Polygon<()> = Polygon::new(
@@ -488,7 +482,7 @@ fn test_node_clip_to() {
             Vertex::new(Point3::new(-1.0, 1.0, 0.0), Vector3::z()),
         ],
         None,
-    ).expect("More then three vertices are supplied");
+    );
     let node_b: Node<()> = Node::new(&[big_poly]);
     node_a.clip_to(&node_b);
     // We expect nodeA's polygon to be present
@@ -732,7 +726,7 @@ fn test_csg_polyhedron() {
         [0.0, 0.0, 1.0], // 3
     ];
     let faces: Vec<&[usize]> = vec![&[0, 1, 2], &[0, 1, 3], &[1, 2, 3], &[2, 0, 3]];
-    let csg_tetra: CSG<()> = CSG::polyhedron(pts, &faces, None).expect("Indices are valid");
+    let csg_tetra: CSG<()> = CSG::polyhedron(pts, &faces, None);
     // We should have exactly 4 triangular faces
     assert_eq!(csg_tetra.polygons.len(), 4);
 }
@@ -806,7 +800,7 @@ fn test_csg_subdivide_triangles() {
     let mut cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
     // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
     // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
-    let subdiv = cube.subdivided_triangles(1.try_into().expect("not zero"));
+    let subdiv = cube.subdivide_triangles(1.try_into().expect("not zero"));
     assert_eq!(subdiv.polygons.len(), 6 * 8);
 
     // subdivide in place
@@ -859,7 +853,7 @@ fn test_csg_square() {
 
 #[test]
 fn test_csg_circle() {
-    let circle: CSG<()> = CSG::circle(2.0, 32, None).expect("more then 2 segments");
+    let circle: CSG<()> = CSG::circle(2.0, 32, None);
     // Single polygon with 32 segments => 32 vertices
     assert_eq!(circle.polygons.len(), 1);
     let poly = &circle.polygons[0];
@@ -900,7 +894,7 @@ fn test_csg_rotate_extrude() {
         .rotate(90.0, 0.0, 0.0);
 
     // Now revolve this translated square around the Z-axis, 360° in 16 segments.
-    let revolve = square.rotate_extrude(360.0, 16).expect("more then 2 segments");
+    let revolve = square.rotate_extrude(360.0, 16);
 
     // We expect a ring-like “tube” instead of a degenerate shape.
     assert!(!revolve.polygons.is_empty());
@@ -959,15 +953,15 @@ fn test_csg_text() {
 #[test]
 fn test_csg_to_trimesh() {
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    let trimesh = cube.to_trimesh().expect("Not less then three vertices");
+    let trimesh = cube.to_trimesh();
     // Should be a TriMesh with 12 triangles
-    assert_eq!(trimesh.indices().len(), 12); // 6 faces => 2 triangles each => 12
+    assert_eq!(trimesh.as_trimesh().unwrap().indices().len(), 12); // 6 faces => 2 triangles each => 12
 }
 
 #[test]
 fn test_csg_mass_properties() {
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).center(); // side=2 => volume=8. If density=1 => mass=8
-    let (mass, com, _frame) = cube.mass_properties(1.0).unwrap();
+    let (mass, com, _frame) = cube.mass_properties(1.0);
     println!("{:#?}", mass);
     // For a centered cube with side 2, volume=8 => mass=8 => COM=(0,0,0)
     assert!(approx_eq(mass, 8.0, 0.1));
@@ -988,7 +982,7 @@ fn test_csg_to_rigid_body() {
         Vector3::new(10.0, 0.0, 0.0),
         Vector3::new(0.0, 0.0, FRAC_PI_2), // 90 deg around Z
         1.0,
-    ).unwrap();
+    );
     let rb = rb_set.get(handle).unwrap();
     let pos = rb.translation();
     assert!(approx_eq(pos.x, 10.0, EPSILON));
@@ -1059,8 +1053,7 @@ fn test_polygon_metadata_integer() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly = Polygon::new(verts, Some(42u32))
-        .expect("Three or more vertices supplied");
+    let poly = Polygon::new(verts, Some(42u32));
 
     // Confirm data
     assert_eq!(poly.metadata(), Some(&42));
@@ -1078,8 +1071,7 @@ fn test_polygon_metadata_custom_struct() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly = Polygon::new(verts, Some(my_data.clone()))
-        .expect("Three or more vertices supplied");
+    let poly = Polygon::new(verts, Some(my_data.clone()));
 
     assert_eq!(poly.metadata(), Some(&my_data));
 }
@@ -1236,10 +1228,10 @@ fn test_subdivide_metadata() {
             Vertex::new(Point3::new(0.0, 2.0, 0.0), Vector3::z()),
         ],
         Some("LargeQuad".to_string()),
-    ).expect("More then three vertices supplied");
+    );
 
     let csg = CSG::from_polygons(&[poly]);
-    let subdivided = csg.subdivided_triangles(1.try_into().expect("not zero")); // one level of subdivision
+    let subdivided = csg.subdivide_triangles(1.try_into().expect("not zero")); // one level of subdivision
 
     // Now it's split into multiple triangles. Each should keep "LargeQuad" as metadata.
     assert!(subdivided.polygons.len() > 1);
@@ -1258,7 +1250,7 @@ fn test_transform_metadata() {
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
         Some("Tri".to_string()),
-    ).expect("Three vertices supplied");
+    );
     let csg = CSG::from_polygons(&[poly]);
     let csg_trans = csg.translate(10.0, 5.0, 0.0);
     let csg_scale = csg_trans.scale(2.0, 2.0, 1.0);
@@ -1312,23 +1304,27 @@ fn signed_area(polygon: &Polygon<()>) -> Real {
 
 #[test]
 fn test_square_ccw_ordering() {
-    let square = CSG::square(2.0, 2.0, None);
-    assert_eq!(square.polygons.len(), 1);
-    let poly = &square.polygons[0];
-    let area = signed_area(poly);
+    use geo::Area;
+
+    let square: CSG = CSG::square(2.0, 2.0, None);
+    assert_eq!(square.geometry.len(), 1);
+    let poly = &square.geometry[0];
+    let area = poly.signed_area();
     assert!(area > 0.0, "Square vertices are not CCW ordered");
 }
 
 #[test]
 fn test_offset_2d_positive_distance_grows() {
-    let square = CSG::square(2.0, 2.0, None); // Centered square with size 2x2
+    use geo::Area;
+
+    let square: CSG = CSG::square(2.0, 2.0, None); // Centered square with size 2x2
     let offset = square.offset(0.5); // Positive offset should grow the square
 
     // The original square has area 4.0
     // The offset square should have area greater than 4.0
-    assert_eq!(offset.polygons.len(), 1);
-    let poly = &offset.polygons[0];
-    let area = signed_area(poly);
+    assert_eq!(offset.geometry.len(), 1);
+    let poly = &offset.geometry[0];
+    let area = poly.signed_area();
     assert!(
         area > 4.0,
         "Offset with positive distance did not grow the square"
@@ -1365,7 +1361,7 @@ fn test_polygon_2d_enforce_ccw_ordering() {
 
 #[test]
 fn test_circle_offset_2d() {
-    let circle = CSG::circle(1.0, 32, None).expect("more then two segments");
+    let circle = CSG::circle(1.0, 32, None);
     let offset_grow = circle.offset(0.2); // Should grow the circle
     let offset_shrink = circle.offset(-0.2); // Should shrink the circle
 
@@ -1393,7 +1389,7 @@ fn make_polygon_3d(points: &[[Real; 3]]) -> Polygon<()> {
         let normal = Vector3::z();
         verts.push(Vertex::new(pos, normal));
     }
-    Polygon::new(verts, None).unwrap()
+    Polygon::new(verts, None)
 }
 
 #[test]
@@ -1536,25 +1532,14 @@ fn test_flatten_cube() {
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = CSG::<()>::cube(2.0, 2.0, 2.0, None);
     // 2) Flatten into the XY plane
-    let flattened = cube.flatten().expect("Not less then three vertices");
+    let flattened = cube.flatten();
 
     // The flattened cube should have 1 polygon1, now in z=0
     assert_eq!(
-        flattened.polygons.len(),
+        flattened.geometry.len(),
         1,
         "Flattened cube should have 1 face in z=0"
     );
-
-    // Check that all vertices lie at z=0
-    for poly in &flattened.polygons {
-        for v in &poly.vertices {
-            assert!(
-                (v.pos.z - 0.0).abs() < EPSILON,
-                "Flattened vertex must have z=0, found z={}",
-                v.pos.z
-            );
-        }
-    }
 
     // Optional: we can check the bounding box in z-dimension is effectively zero
     let bbox = flattened.bounding_box();
@@ -1577,13 +1562,13 @@ fn test_slice_cylinder() {
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
     // So we expect exactly 1 polygon.
     assert_eq!(
-        cross_section.polygons.len(),
+        cross_section.geometry.len(),
         1,
         "Slicing a cylinder at z=0 should yield exactly 1 cross-section polygon"
     );
 
-    let poly = &cross_section.polygons[0];
-    let vcount = poly.vertices.len();
+    let poly: geo::Polygon = cross_section.geometry[0].clone().try_into().unwrap();
+    let vcount = poly.exterior().0.len();
 
     // We used 32 slices for the cylinder, so we expect up to 32 edges
     // in the cross-section circle. Some slight differences might occur
@@ -1596,15 +1581,6 @@ fn test_slice_cylinder() {
         vcount
     );
 
-    // Check all vertices are on z=0
-    for v in &poly.vertices {
-        assert!(
-            (v.pos.z - 0.0).abs() < EPSILON,
-            "Sliced vertex must have z=0, found z={}",
-            v.pos.z
-        );
-    }
-
     // Optional: check approximate radius
     // The cross-section should be at radius ~1 around x=0,y=some, z=0
     // (Actually, the cylinder's axis is along Y, so we expect x^2+z^2=1.
@@ -1613,8 +1589,8 @@ fn test_slice_cylinder() {
     //  the cylinder we built is from (0,-1,0) to (0,1,0) with radius=1 around that axis,
     //  so the cross-section plane is z=0, meaning x^2 + y^2 = 1.
     //  We can check a couple of sample vertices.)
-    if !poly.vertices.is_empty() {
-        let first_v = &poly.vertices[0].pos;
+    if !poly.exterior().0.is_empty() {
+        let first_v = &poly.exterior().0[0];
         let r_approx = (first_v.x.powi(2) + first_v.y.powi(2)).sqrt();
         // We expect something close to radius=1:
         assert!(
@@ -1639,7 +1615,7 @@ fn polygon_from_xy_points(xy_points: &[[Real; 2]]) -> Polygon<()> {
         .map(|&[x, y]| Vertex::new(Point3::new(x, y, 0.0), normal))
         .collect();
 
-    Polygon::new(vertices, None).unwrap()
+    Polygon::new(vertices, None)
 }
 
 /// Test a simple case of `flatten_and_union` with a single square in the XY plane.
@@ -1651,7 +1627,7 @@ fn test_flatten_and_union_single_polygon() {
     let csg = CSG::from_polygons(&[square_poly]);
 
     // Flatten & union it
-    let flat_csg = csg.flatten().expect("Not less then three vertices");
+    let flat_csg = csg.flatten();
 
     // Expect the same bounding box
     assert!(!flat_csg.polygons.is_empty(), "Result should not be empty");
@@ -1672,7 +1648,7 @@ fn test_flatten_and_union_two_overlapping_squares() {
     let square2 = polygon_from_xy_points(&[[1.0, 0.0], [2.0, 0.0], [2.0, 1.0], [1.0, 1.0]]);
     let csg = CSG::from_polygons(&[square1, square2]);
 
-    let flat_csg = csg.flatten().expect("Not less then three vertices");
+    let flat_csg = csg.flatten();
     assert!(!flat_csg.polygons.is_empty(), "Union should not be empty");
 
     // The bounding box should now span x=0..2, y=0..1
@@ -1702,7 +1678,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
     let square_b = polygon_from_xy_points(&[[2.0, 2.0], [3.0, 2.0], [3.0, 3.0], [2.0, 3.0]]);
     let csg = CSG::from_polygons(&[square_a, square_b]);
 
-    let flat_csg = csg.flatten().expect("Not less then three vertices");
+    let flat_csg = csg.flatten();
     assert!(!flat_csg.polygons.is_empty());
 
     // Expect 2 disjoint polygons in the result
@@ -1727,10 +1703,10 @@ fn test_flatten_and_union_near_xy_plane() {
             Vertex::new(Point3::new(0.0, 1.0, 1e-6), normal),
         ],
         None,
-    ).expect("Three or more vertices supplied");
+    );
 
     let csg = CSG::from_polygons(&[poly1]);
-    let flat_csg = csg.flatten().expect("Not less then three vertices");
+    let flat_csg = csg.flatten();
 
     assert!(
         !flat_csg.polygons.is_empty(),
@@ -1757,7 +1733,7 @@ fn test_flatten_and_union_collinear_edges() {
     ]);
 
     let csg = CSG::<()>::from_polygons(&[rect1, rect2]);
-    let flat_csg = csg.flatten().expect("Not less then three vertices");
+    let flat_csg = csg.flatten();
 
     // Expect 1 polygon from x=0..4, y=0..~1.0ish
     assert!(!flat_csg.polygons.is_empty());
@@ -1773,7 +1749,7 @@ fn test_flatten_and_union_collinear_edges() {
 #[test]
 fn test_flatten_and_union_debug() {
     let csg_square = CSG::<()>::square(2.0, 2.0, None); // a 1×1 square at [0..1, 0..1]
-    let flattened = csg_square.flatten().expect("Not less then three vertices");
+    let flattened = csg_square.flatten();
     assert!(
         !flattened.polygons.is_empty(),
         "Flattened square should not be empty"

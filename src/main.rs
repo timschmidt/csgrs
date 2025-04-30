@@ -128,11 +128,11 @@ fn main() {
         [0.5, 1.0, 0.0],
         [0.5, 0.5, 1.0],
     ];
-    let faces = vec![
-        vec![0, 2, 1], // base triangle
-        vec![0, 1, 3], // side
-        vec![1, 2, 3],
-        vec![2, 0, 3],
+    let faces: Vec<&[usize]> = vec![
+        &[0, 2, 1], // base triangle
+        &[0, 1, 3], // side
+        &[1, 2, 3],
+        &[2, 0, 3],
     ];
     let poly = CSG::polyhedron(&points, &faces, None);
     #[cfg(feature = "stl-io")]
