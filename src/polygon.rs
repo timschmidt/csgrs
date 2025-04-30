@@ -15,19 +15,29 @@ pub struct Polygon<S: Clone> {
 impl<S: Clone> Polygon<S>
 where S: Clone + Send + Sync {
     /// Create a polygon from vertices
-    pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
+    pub const fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
         Polygon {
             vertices,
             metadata,
         }
     }
-    
+
+    /// Create a polygon from three vertices
+    pub fn from_tri(vertices: &[Vertex; 3], metadata: Option<S>) -> Self {
+        Polygon {
+            vertices: vertices.to_vec(),
+            metadata,
+        }
+    }
+
     // I think a worst-case can be constructed for any heuristic here
     // the only optimal solution may be to calculate which vertices are far apart
-    // which we would need a fast solution for.  Finding the best solution is likely
-    // to be too intensive, but finding a "good enough" solution may still be quick.
+    // which we would need a fast solution for.
+    // Finding the best solution is likely to be too intensive,
+    // but finding a "good enough" solution may still be quick.
     // It may be useful to retain this version and implement a slower higher quality
     // solution as a second function.
+    /// Gets the first three vertices as a [`Plane`]
     #[inline]
     pub fn plane(&self) -> Plane {
         Plane::from_points(&self.vertices[0].pos, &self.vertices[1].pos, &self.vertices[2].pos)
@@ -197,12 +207,12 @@ where S: Clone + Send + Sync {
     }
 
     /// Returns a reference to the metadata, if any.
-    pub fn metadata(&self) -> Option<&S> {
+    pub const fn metadata(&self) -> Option<&S> {
         self.metadata.as_ref()
     }
 
     /// Returns a mutable reference to the metadata, if any.
-    pub fn metadata_mut(&mut self) -> Option<&mut S> {
+    pub const fn metadata_mut(&mut self) -> Option<&mut S> {
         self.metadata.as_mut()
     }
 

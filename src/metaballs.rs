@@ -81,7 +81,7 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
         }
 
         // close if ends coincide
-        if chain.len() >= 3 && (chain[0] == *chain.last().unwrap()) == false {
+        if chain.len() >= 3 && chain[0] != *chain.last().unwrap() {
             chain.push(chain[0]);
         }
         chains.push(LineString::new(chain));

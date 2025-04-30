@@ -37,7 +37,7 @@ use stl_io;
 
 /// The main CSG solid structure. Contains a list of 3D polygons, 2D polylines, and some metadata.
 #[derive(Debug, Clone)]
-pub struct CSG<S: Clone> {
+pub struct CSG<S: Clone = ()> {
     /// 3D polygons for volumetric shapes
     pub polygons: Vec<Polygon<S>>,
 
@@ -48,8 +48,13 @@ pub struct CSG<S: Clone> {
     pub metadata: Option<S>,
 }
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> Default for CSG<S> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Create an empty CSG
     pub fn new() -> Self {
         CSG {
@@ -860,13 +865,13 @@ where S: Clone + Send + Sync {
         // 1) Gather from the 3D polygons
         for poly in &self.polygons {
             for v in &poly.vertices {
-                min_x = *partial_min(&min_x, &v.pos.x).unwrap();
-                min_y = *partial_min(&min_y, &v.pos.y).unwrap();
-                min_z = *partial_min(&min_z, &v.pos.z).unwrap();
+                min_x = min_x.min(v.pos.x);
+                min_y = min_y.min(v.pos.y);
+                min_z = min_z.min(v.pos.z);
 
-                max_x = *partial_max(&max_x, &v.pos.x).unwrap();
-                max_y = *partial_max(&max_y, &v.pos.y).unwrap();
-                max_z = *partial_max(&max_z, &v.pos.z).unwrap();
+                max_x = max_x.max(v.pos.x);
+                max_y = max_y.max(v.pos.y);
+                max_z = max_z.max(v.pos.z);
             }
         }
 
