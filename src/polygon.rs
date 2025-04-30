@@ -15,7 +15,7 @@ pub struct Polygon<S: Clone> {
 impl<S: Clone> Polygon<S>
 where S: Clone + Send + Sync {
     /// Create a polygon from vertices
-    pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
+    pub const fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
         Polygon {
             vertices,
             metadata,
@@ -207,7 +207,7 @@ where S: Clone + Send + Sync {
     }
 
     /// Returns a reference to the metadata, if any.
-    pub fn metadata(&self) -> Option<&S> {
+    pub const fn metadata(&self) -> Option<&S> {
         self.metadata.as_ref()
     }
 

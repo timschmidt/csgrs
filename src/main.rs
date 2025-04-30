@@ -5,7 +5,7 @@
 
 use csgrs::float_types::Real;
 use std::fs;
-use nalgebra::{Vector3, Point3};
+use nalgebra::{Vector3, Point3, Point2};
 use csgrs::plane::Plane;
 
 #[cfg(feature = "image")]
@@ -157,7 +157,7 @@ fn main() {
 
     // 14) Mass properties (just printing them)
     let (mass, com, principal_frame) = cube.mass_properties(1.0);
-    println!("Cube mass = {}", mass);
+    println!("Cube mass = {mass}");
     println!("Cube center of mass = {:?}", com);
     println!("Cube principal inertia local frame = {:?}", principal_frame);
     
@@ -244,7 +244,6 @@ fn main() {
     let _ = fs::write("stl/pie_slice.stl", wedge.to_stl_ascii("pie_slice"));
     
     // Create a 2D "metaball" shape from 3 circles
-    use nalgebra::Point2;
     let balls_2d = vec![
         (Point2::new(0.0, 0.0), 1.0),
         (Point2::new(1.5, 0.0), 1.0),

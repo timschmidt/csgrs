@@ -865,13 +865,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         // 1) Gather from the 3D polygons
         for poly in &self.polygons {
             for v in &poly.vertices {
-                min_x = *partial_min(&min_x, &v.pos.x).unwrap();
-                min_y = *partial_min(&min_y, &v.pos.y).unwrap();
-                min_z = *partial_min(&min_z, &v.pos.z).unwrap();
+                min_x = min_x.min(v.pos.x);
+                min_y = min_y.min(v.pos.y);
+                min_z = min_z.min(v.pos.z);
 
-                max_x = *partial_max(&max_x, &v.pos.x).unwrap();
-                max_y = *partial_max(&max_y, &v.pos.y).unwrap();
-                max_z = *partial_max(&max_z, &v.pos.z).unwrap();
+                max_x = max_x.max(v.pos.x);
+                max_y = max_y.max(v.pos.y);
+                max_z = max_z.max(v.pos.z);
             }
         }
 
