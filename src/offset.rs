@@ -30,9 +30,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         // Construct a new GeometryCollection from the offset geometries
         let new_collection = GeometryCollection::<Real>(offset_geoms);
-
-        // todo project 3d polygons to the XY plane then buffer them
-
+        
         // Return a new CSG using the offset geometry collection and the old polygons/metadata
         CSG {
             polygons: self.polygons.clone(),
