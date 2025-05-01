@@ -60,22 +60,17 @@ where S: Clone + Send + Sync {
         let (u, v) = build_orthonormal_basis(normal_3d);
         let origin_3d = self.vertices[0].pos;
 
-        // Flatten each vertex to 2D
-        // Here we clamp values within spade's minimum allowed value of  0.0 to 0.0
-        // because spade refuses to triangulate with values within it's minimum:
-        const MIN_ALLOWED_VALUE: f64 = 1.793662034335766e-43; // 1.0 * 2^-142
-        let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
-        for vert in &self.vertices {
-            let offset = vert.pos.coords - origin_3d.coords;
-            let x = offset.dot(&u);
-            let x_clamped = if x.abs() < MIN_ALLOWED_VALUE { 0.0 } else { x };
-            let y = offset.dot(&v);
-            let y_clamped = if y.abs() < MIN_ALLOWED_VALUE { 0.0 } else { y };
-            all_vertices_2d.push(coord! {x: x_clamped, y: y_clamped});
-        }
-
         #[cfg(feature = "earcut")]
         {
+            // Flatten each vertex to 2D
+            let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
+            for vert in &self.vertices {
+                let offset = vert.pos.coords - origin_3d.coords;
+                let x = offset.dot(&u);
+                let y = offset.dot(&v);
+                all_vertices_2d.push(coord! {x: x, y: y});
+            }
+        
             use geo::TriangulateEarcut;
             let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new())
                 .earcut_triangles_raw();
@@ -101,8 +96,23 @@ where S: Clone + Send + Sync {
         }
 
         #[cfg(feature = "delaunay")]
-        {
+        {        
             use geo::TriangulateSpade;
+            
+            // Flatten each vertex to 2D
+            // Here we clamp values within spade's minimum allowed value of  0.0 to 0.0
+            // because spade refuses to triangulate with values within it's minimum:
+            const MIN_ALLOWED_VALUE: f64 = 1.793662034335766e-43; // 1.0 * 2^-142
+            let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
+            for vert in &self.vertices {
+                let offset = vert.pos.coords - origin_3d.coords;
+                let x = offset.dot(&u);
+                let x_clamped = if x.abs() < MIN_ALLOWED_VALUE { 0.0 } else { x };
+                let y = offset.dot(&v);
+                let y_clamped = if y.abs() < MIN_ALLOWED_VALUE { 0.0 } else { y };
+                all_vertices_2d.push(coord! {x: x_clamped, y: y_clamped});
+            }
+            
             let polygon_2d = GeoPolygon::new(
                 LineString::new(all_vertices_2d),
                 // no holes if your polygon is always simple
