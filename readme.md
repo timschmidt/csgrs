@@ -526,7 +526,7 @@ for Polygon
   - make corners and centers of bb accessible by default, even in empty CSG
   - make corners, edge midpoints, and centroids of polygons accessible by default (calculate on demand using an iterator)
   - align_to_attachment(name, csg2, name2)
-  - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src
+- import functions from https://github.com/nical/lyon/tree/main/crates/geom/src for cubic and quadratic bezier
 - implement C FFI using https://rust-lang.github.io/rust-bindgen/
 - pull in https://crates.io/crates/geo-uom for units and dimensional analysis
 - https://proptest-rs.github.io/proptest/intro.html
