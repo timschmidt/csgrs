@@ -26,78 +26,71 @@ where S: Clone + Send + Sync {
         }
     }
     
-    // I think a worst-case can be constructed for any heuristic here
-    // the only optimal solution may be to calculate which vertices are far apart
-    // which we would need a fast solution for.  Finding the best solution is likely
-    // to be too intensive, but finding a "good enough" solution may still be quick.
-    // It may be useful to retain this version and implement a slower higher quality
-    // solution as a second function.
+    /// Return a [`Plane`] defined by the first three points in this [`Polygon`]
     #[inline]
-    pub fn plane(&self) -> Plane {
+    pub fn plane_lq(&self) -> Plane {
         Plane::from_points(&self.vertices[0].pos, &self.vertices[1].pos, &self.vertices[2].pos)
     }
     
-    /// Like `plane()` but tries to pick three vertices that span the largest
-    /// area triangle in the polygon (maximally well-spaced).
+    /// Like `plane_lq()` but tries to pick three vertices that span the largest
+    /// area triangle in the polygon (maximally well-spaced).  Care is taken to
+    /// preserve the original winding of the [`Polygon`].
     ///
     /// Cost: O(n^2)
     /// A lower cost option may be a grid sub-sampled farthest pair search
-    pub fn plane_hq(&self) -> Plane {
+    pub fn plane(&self) -> Plane {
         let n = self.vertices.len();
-        
-        // ---------------------------------------------------------------------
-        // 1) Farthest-pair search (maximises Euclidean distance)
-        // ---------------------------------------------------------------------
-        let mut i0 = 0usize;
-        let mut i1 = 1usize;
-        let mut max_d2 = (self.vertices[0].pos - self.vertices[1].pos).norm_squared();
     
+        //------------------------------------------------------------------
+        // 1.  longest chord (i0,i1)
+        //------------------------------------------------------------------
+        let (mut i0, mut i1, mut max_d2) = (0, 1, (self.vertices[0].pos - self.vertices[1].pos).norm_squared());
         for i in 0..n {
-            for j in i + 1..n {
+            for j in (i + 1)..n {
                 let d2 = (self.vertices[i].pos - self.vertices[j].pos).norm_squared();
                 if d2 > max_d2 {
-                    max_d2 = d2;
-                    i0 = i;
-                    i1 = j;
+                    (i0, i1, max_d2) = (i, j, d2);
                 }
             }
         }
     
         let p0 = self.vertices[i0].pos;
         let p1 = self.vertices[i1].pos;
-        let dir = p1 - p0; // direction of the longest chord
+        let dir = p1 - p0;
         if dir.norm_squared() < EPSILON * EPSILON {
-            // Extremely tiny chord – fall back
-            return self.plane();
+            return self.plane_lq();          // everything almost coincident
         }
     
-        // ---------------------------------------------------------------------
-        // 2) Pick the vertex that maximises distance to the line p0-p1
-        //    (equivalently, maximises the parallelogram area |(p - p0) × dir|)
-        // ---------------------------------------------------------------------
+        //------------------------------------------------------------------
+        // 2.  vertex farthest from the line  p0-p1  → i2
+        //------------------------------------------------------------------
         let mut i2 = None;
         let mut max_area2 = 0.0;
-    
         for (idx, v) in self.vertices.iter().enumerate() {
-            if idx == i0 || idx == i1 {
-                continue;
-            }
-            let cross = (v.pos - p0).cross(&dir);
-            let a2 = cross.norm_squared();
+            if idx == i0 || idx == i1 { continue; }
+            let a2 = (v.pos - p0).cross(&dir).norm_squared();   // ∝ area²
             if a2 > max_area2 {
                 max_area2 = a2;
                 i2 = Some(idx);
             }
         }
-    
-        // All vertices collinear ⇒ fall back
         let i2 = match i2 {
             Some(k) if max_area2 > EPSILON * EPSILON => k,
-            _ => return self.plane(),
+            _ => return self.plane_lq(),      // all vertices collinear
         };
-    
         let p2 = self.vertices[i2].pos;
-        Plane::from_points(&p0, &p1, &p2)
+    
+        //------------------------------------------------------------------
+        // 3.  build plane, then orient it to match original winding
+        //------------------------------------------------------------------
+        let mut plane_hq = Plane::from_points(&p0, &p1, &p2);
+    
+        // Reference normal from the “low-quality” plane that respects winding
+        let ref_norm = self.plane_lq().normal();
+        if plane_hq.normal().dot(&ref_norm) < 0.0 {
+            plane_hq.flip();                 // flip in-place to agree with winding
+        }
+        plane_hq
     }
 
     /// Reverses winding order, flips vertices normals, and flips the plane normal
