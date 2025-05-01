@@ -1,4 +1,4 @@
-use crate::float_types::{PI, Real};
+use crate::float_types::{PI, Real, EPSILON};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
@@ -65,8 +65,10 @@ where S: Clone + Send + Sync {
         for vert in &self.vertices {
             let offset = vert.pos.coords - origin_3d.coords;
             let x = offset.dot(&u);
+            let x_clamped = if x.abs() < EPSILON { 0.0 } else { x };
             let y = offset.dot(&v);
-            all_vertices_2d.push(coord! {x: x, y: y});
+            let y_clamped = if y.abs() < EPSILON { 0.0 } else { y };
+            all_vertices_2d.push(coord! {x: x_clamped, y: y_clamped});
         }
 
         #[cfg(feature = "earcut")]
