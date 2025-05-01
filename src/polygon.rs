@@ -1,4 +1,4 @@
-use crate::float_types::{PI, Real};
+use crate::float_types::{PI, Real, EPSILON};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
@@ -16,6 +16,10 @@ impl<S: Clone> Polygon<S>
 where S: Clone + Send + Sync {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
+        if vertices.len() < 3 {
+            panic!(); // degenerate polygon
+        }
+        
         Polygon {
             vertices,
             metadata,
@@ -31,6 +35,69 @@ where S: Clone + Send + Sync {
     #[inline]
     pub fn plane(&self) -> Plane {
         Plane::from_points(&self.vertices[0].pos, &self.vertices[1].pos, &self.vertices[2].pos)
+    }
+    
+    /// Like `plane()` but tries to pick three vertices that span the largest
+    /// area triangle in the polygon (maximally well-spaced).
+    ///
+    /// Cost: O(n^2)
+    /// A lower cost option may be a grid sub-sampled farthest pair search
+    pub fn plane_hq(&self) -> Plane {
+        let n = self.vertices.len();
+        
+        // ---------------------------------------------------------------------
+        // 1) Farthest-pair search (maximises Euclidean distance)
+        // ---------------------------------------------------------------------
+        let mut i0 = 0usize;
+        let mut i1 = 1usize;
+        let mut max_d2 = (self.vertices[0].pos - self.vertices[1].pos).norm_squared();
+    
+        for i in 0..n {
+            for j in i + 1..n {
+                let d2 = (self.vertices[i].pos - self.vertices[j].pos).norm_squared();
+                if d2 > max_d2 {
+                    max_d2 = d2;
+                    i0 = i;
+                    i1 = j;
+                }
+            }
+        }
+    
+        let p0 = self.vertices[i0].pos;
+        let p1 = self.vertices[i1].pos;
+        let dir = p1 - p0; // direction of the longest chord
+        if dir.norm_squared() < EPSILON * EPSILON {
+            // Extremely tiny chord – fall back
+            return self.plane();
+        }
+    
+        // ---------------------------------------------------------------------
+        // 2) Pick the vertex that maximises distance to the line p0-p1
+        //    (equivalently, maximises the parallelogram area |(p - p0) × dir|)
+        // ---------------------------------------------------------------------
+        let mut i2 = None;
+        let mut max_area2 = 0.0;
+    
+        for (idx, v) in self.vertices.iter().enumerate() {
+            if idx == i0 || idx == i1 {
+                continue;
+            }
+            let cross = (v.pos - p0).cross(&dir);
+            let a2 = cross.norm_squared();
+            if a2 > max_area2 {
+                max_area2 = a2;
+                i2 = Some(idx);
+            }
+        }
+    
+        // All vertices collinear ⇒ fall back
+        let i2 = match i2 {
+            Some(k) if max_area2 > EPSILON * EPSILON => k,
+            _ => return self.plane(),
+        };
+    
+        let p2 = self.vertices[i2].pos;
+        Plane::from_points(&p0, &p1, &p2)
     }
 
     /// Reverses winding order, flips vertices normals, and flips the plane normal
