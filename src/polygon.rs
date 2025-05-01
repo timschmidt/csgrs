@@ -40,6 +40,7 @@ where S: Clone + Send + Sync {
     /// A lower cost option may be a grid sub-sampled farthest pair search
     pub fn plane(&self) -> Plane {
         let n = self.vertices.len();
+        if n == 3 { return self.plane_lq(); } // Plane is already optimal
     
         //------------------------------------------------------------------
         // 1.  longest chord (i0,i1)
