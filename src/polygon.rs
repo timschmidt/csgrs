@@ -1,4 +1,4 @@
-use crate::float_types::{PI, Real, EPSILON};
+use crate::float_types::{PI, Real};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
