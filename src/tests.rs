@@ -80,7 +80,7 @@ fn test_polygon_construction() {
     assert_eq!(poly.vertices.len(), 3);
     // Plane should be defined by these three points. We expect a normal near ±Y.
     assert!(
-        approx_eq(poly.plane().normal().dot(&Vector3::y()).abs(), 1.0, 1e-8),
+        approx_eq(poly.plane.normal().dot(&Vector3::y()).abs(), 1.0, 1e-8),
         "Expected plane normal to match ±Y"
     );
 }
@@ -257,9 +257,9 @@ fn test_polygon_new() {
     assert_eq!(poly.vertices.len(), 3);
     assert_eq!(poly.metadata, None);
     // Plane normal should be +Z for the above points
-    assert!(approx_eq(poly.plane().normal().x, 0.0, EPSILON));
-    assert!(approx_eq(poly.plane().normal().y, 0.0, EPSILON));
-    assert!(approx_eq(poly.plane().normal().z, 1.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal().x, 0.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal().y, 0.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal().z, 1.0, EPSILON));
 }
 
 #[test]
@@ -272,22 +272,22 @@ fn test_polygon_flip() {
         ],
         None,
     );
-    let plane_normal_before = poly.plane().normal();
+    let plane_normal_before = poly.plane.normal();
     poly.flip();
     // The vertices should be reversed, and normal flipped
     assert_eq!(poly.vertices.len(), 3);
     assert!(approx_eq(
-        poly.plane().normal().x,
+        poly.plane.normal().x,
         -plane_normal_before.x,
         EPSILON
     ));
     assert!(approx_eq(
-        poly.plane().normal().y,
+        poly.plane.normal().y,
         -plane_normal_before.y,
         EPSILON
     ));
     assert!(approx_eq(
-        poly.plane().normal().z,
+        poly.plane.normal().z,
         -plane_normal_before.z,
         EPSILON
     ));
@@ -345,7 +345,7 @@ fn test_polygon_recalc_plane_and_normals() {
         None,
     );
     poly.set_new_normal();
-    assert!(approx_eq(poly.plane().normal().z, 1.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal().z, 1.0, EPSILON));
     for v in &poly.vertices {
         assert!(approx_eq(v.normal.x, 0.0, EPSILON));
         assert!(approx_eq(v.normal.y, 0.0, EPSILON));
@@ -638,18 +638,18 @@ fn test_csg_inverse() {
     let orig_poly = &c1.polygons[0];
     let inv_poly = &inv.polygons[0];
     assert!(approx_eq(
-        orig_poly.plane().normal().x,
-        -inv_poly.plane().normal().x,
+        orig_poly.plane.normal().x,
+        -inv_poly.plane.normal().x,
         EPSILON
     ));
     assert!(approx_eq(
-        orig_poly.plane().normal().y,
-        -inv_poly.plane().normal().y,
+        orig_poly.plane.normal().y,
+        -inv_poly.plane.normal().y,
         EPSILON
     ));
     assert!(approx_eq(
-        orig_poly.plane().normal().z,
-        -inv_poly.plane().normal().z,
+        orig_poly.plane.normal().z,
+        -inv_poly.plane.normal().z,
         EPSILON
     ));
     assert_eq!(
@@ -817,9 +817,9 @@ fn test_csg_renormalize() {
     // Now each polygon's vertices should match the plane's normal
     for poly in &cube.polygons {
         for v in &poly.vertices {
-            assert!(approx_eq(v.normal.x, poly.plane().normal().x, EPSILON));
-            assert!(approx_eq(v.normal.y, poly.plane().normal().y, EPSILON));
-            assert!(approx_eq(v.normal.z, poly.plane().normal().z, EPSILON));
+            assert!(approx_eq(v.normal.x, poly.plane.normal().x, EPSILON));
+            assert!(approx_eq(v.normal.y, poly.plane.normal().y, EPSILON));
+            assert!(approx_eq(v.normal.z, poly.plane.normal().z, EPSILON));
         }
     }
 }

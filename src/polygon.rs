@@ -1,4 +1,4 @@
-use crate::float_types::{PI, Real, EPSILON};
+use crate::float_types::{PI, Real};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
@@ -9,6 +9,7 @@ use nalgebra::{Point2, Point3, Vector3};
 #[derive(Debug, Clone)]
 pub struct Polygon<S: Clone> {
     pub vertices: Vec<Vertex>,
+    pub plane: Plane,
     pub metadata: Option<S>,
 }
 
@@ -16,91 +17,27 @@ impl<S: Clone> Polygon<S>
 where S: Clone + Send + Sync {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
-        if vertices.len() < 3 {
-            panic!(); // degenerate polygon
-        }
+        assert!(vertices.len() >= 3, "degenerate polygon");
+        
+        let plane = Plane::from_vertices(vertices.clone());
         
         Polygon {
             vertices,
+            plane,
             metadata,
         }
-    }
-    
-    /// Return a [`Plane`] defined by the first three points in this [`Polygon`]
-    #[inline]
-    pub fn plane_lq(&self) -> Plane {
-        Plane::from_points(&self.vertices[0].pos, &self.vertices[1].pos, &self.vertices[2].pos)
-    }
-    
-    /// Like `plane_lq()` but tries to pick three vertices that span the largest
-    /// area triangle in the polygon (maximally well-spaced).  Care is taken to
-    /// preserve the original winding of the [`Polygon`].
-    ///
-    /// Cost: O(n^2)
-    /// A lower cost option may be a grid sub-sampled farthest pair search
-    pub fn plane(&self) -> Plane {
-        let n = self.vertices.len();
-        if n == 3 { return self.plane_lq(); } // Plane is already optimal
-    
-        //------------------------------------------------------------------
-        // 1.  longest chord (i0,i1)
-        //------------------------------------------------------------------
-        let (mut i0, mut i1, mut max_d2) = (0, 1, (self.vertices[0].pos - self.vertices[1].pos).norm_squared());
-        for i in 0..n {
-            for j in (i + 1)..n {
-                let d2 = (self.vertices[i].pos - self.vertices[j].pos).norm_squared();
-                if d2 > max_d2 {
-                    (i0, i1, max_d2) = (i, j, d2);
-                }
-            }
-        }
-    
-        let p0 = self.vertices[i0].pos;
-        let p1 = self.vertices[i1].pos;
-        let dir = p1 - p0;
-        if dir.norm_squared() < EPSILON * EPSILON {
-            return self.plane_lq();          // everything almost coincident
-        }
-    
-        //------------------------------------------------------------------
-        // 2.  vertex farthest from the line  p0-p1  → i2
-        //------------------------------------------------------------------
-        let mut i2 = None;
-        let mut max_area2 = 0.0;
-        for (idx, v) in self.vertices.iter().enumerate() {
-            if idx == i0 || idx == i1 { continue; }
-            let a2 = (v.pos - p0).cross(&dir).norm_squared();   // ∝ area²
-            if a2 > max_area2 {
-                max_area2 = a2;
-                i2 = Some(idx);
-            }
-        }
-        let i2 = match i2 {
-            Some(k) if max_area2 > EPSILON * EPSILON => k,
-            _ => return self.plane_lq(),      // all vertices collinear
-        };
-        let p2 = self.vertices[i2].pos;
-    
-        //------------------------------------------------------------------
-        // 3.  build plane, then orient it to match original winding
-        //------------------------------------------------------------------
-        let mut plane_hq = Plane::from_points(&p0, &p1, &p2);
-    
-        // Reference normal from the “low-quality” plane that respects winding
-        let ref_norm = self.plane_lq().normal();
-        if plane_hq.normal().dot(&ref_norm) < 0.0 {
-            plane_hq.flip();                 // flip in-place to agree with winding
-        }
-        plane_hq
     }
 
     /// Reverses winding order, flips vertices normals, and flips the plane normal
     pub fn flip(&mut self) {
+        // 1) reverse vertices
         self.vertices.reverse();
+        // 2) flip all vertex normals
         for v in &mut self.vertices {
             v.flip();
         }
-        self.plane().flip();
+        // 3) flip the cached plane too
+        self.plane.flip();
     }
 
     /// Return an iterator over paired vertices each forming an edge of the polygon
@@ -117,7 +54,7 @@ where S: Clone + Send + Sync {
             return Vec::new();
         }
 
-        let normal_3d = self.plane().normal().normalize();
+        let normal_3d = self.plane.normal().normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
         let origin_3d = self.vertices[0].pos;
 
@@ -253,7 +190,7 @@ where S: Clone + Send + Sync {
         let mut poly_normal = normal.normalize();
 
         // Ensure the computed normal is in the same direction as the given normal.
-        if poly_normal.dot(&self.plane().normal()) < 0.0 {
+        if poly_normal.dot(&self.plane.normal()) < 0.0 {
             poly_normal = -poly_normal;
         }
 

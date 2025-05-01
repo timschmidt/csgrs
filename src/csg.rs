@@ -489,7 +489,11 @@ where S: Clone + Send + Sync {
                 // Normal
                 vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
             }
+            
+            // keep the cached plane consistent with the new vertex positions
+            poly.plane = Plane::from_vertices(poly.vertices.clone());
         }
+
 
         // Convert the top-left 2×2 submatrix + translation of a 4×4 into a geo::AffineTransform
         // The 4x4 looks like:
@@ -1009,7 +1013,7 @@ where S: Clone + Send + Sync {
             // Ensure the polygon is tessellated, since STL is triangle-based.
             let triangles = poly.tessellate();
             // A typical STL uses the face normal; we can take the polygon’s plane normal:
-            let normal = poly.plane().normal().normalize();
+            let normal = poly.plane.normal().normalize();
             for tri in triangles {
                 out.push_str(&format!(
                     "  facet normal {:.6} {:.6} {:.6}\n",
@@ -1136,7 +1140,7 @@ where S: Clone + Send + Sync {
 
         // Triangulate all 3D polygons in self.polygons
         for poly in &self.polygons {
-            let normal = poly.plane().normal().normalize();
+            let normal = poly.plane.normal().normalize();
             // Convert polygon to triangles
             let tri_list = poly.tessellate();
             for tri in tri_list {

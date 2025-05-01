@@ -27,6 +27,68 @@ impl Plane {
         }
     }
     
+    /// Tries to pick three vertices that span the largest area triangle 
+    /// (maximally well-spaced) and returns a plane defined by them.
+    /// Care is taken to preserve the original winding of the vertices.
+    ///
+    /// Cost: O(n^2)
+    /// A lower cost option may be a grid sub-sampled farthest pair search
+    pub fn from_vertices(vertices: Vec<Vertex>) -> Plane {
+        let n = vertices.len();
+        if n == 3 { return Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos); } // Plane is already optimal
+    
+        //------------------------------------------------------------------
+        // 1.  longest chord (i0,i1)
+        //------------------------------------------------------------------
+        let (mut i0, mut i1, mut max_d2) = (0, 1, (vertices[0].pos - vertices[1].pos).norm_squared());
+        for i in 0..n {
+            for j in (i + 1)..n {
+                let d2 = (vertices[i].pos - vertices[j].pos).norm_squared();
+                if d2 > max_d2 {
+                    (i0, i1, max_d2) = (i, j, d2);
+                }
+            }
+        }
+    
+        let p0 = vertices[i0].pos;
+        let p1 = vertices[i1].pos;
+        let dir = p1 - p0;
+        if dir.norm_squared() < EPSILON * EPSILON {
+            return Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos); // everything almost coincident
+        }
+    
+        //------------------------------------------------------------------
+        // 2.  vertex farthest from the line  p0-p1  → i2
+        //------------------------------------------------------------------
+        let mut i2 = None;
+        let mut max_area2 = 0.0;
+        for (idx, v) in vertices.iter().enumerate() {
+            if idx == i0 || idx == i1 { continue; }
+            let a2 = (v.pos - p0).cross(&dir).norm_squared();   // ∝ area²
+            if a2 > max_area2 {
+                max_area2 = a2;
+                i2 = Some(idx);
+            }
+        }
+        let i2 = match i2 {
+            Some(k) if max_area2 > EPSILON * EPSILON => k,
+            _ => return Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos), // all vertices collinear
+        };
+        let p2 = vertices[i2].pos;
+    
+        //------------------------------------------------------------------
+        // 3.  build plane, then orient it to match original winding
+        //------------------------------------------------------------------
+        let mut plane_hq = Plane::from_points(&p0, &p1, &p2);
+    
+        // Reference normal from first three points in order
+        let ref_norm = Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos).normal();
+        if plane_hq.normal().dot(&ref_norm) < 0.0 {
+            plane_hq.flip(); // flip in-place to agree with winding
+        }
+        plane_hq
+    }
+    
     /// Build a new `Plane` from a (not‑necessarily‑unit) normal **n**
     /// and signed offset *o* (in the sense `n · p == o`).
     ///
@@ -142,7 +204,7 @@ impl Plane {
         // -----------------------------------------------------------------
         match polygon_type {
             COPLANAR => {
-                if normal.dot(&polygon.plane().normal()) > 0.0 {  // >= ?
+                if normal.dot(&polygon.plane.normal()) > 0.0 {  // >= ?
                     coplanar_front.push(polygon.clone());
                 } else {
                     coplanar_back.push(polygon.clone());
