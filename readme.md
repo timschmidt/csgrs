@@ -546,6 +546,7 @@ for Polygon
 - investigate https://github.com/TimTheBig/geo-3d for useful functions
 - gltf output
 - gerber output
+- rework bezier and bspline using https://github.com/mattatz/curvo
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
