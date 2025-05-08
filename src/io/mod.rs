@@ -1,6 +1,12 @@
 #[cfg(feature = "svg-io")]
 mod svg;
 
+#[cfg(feature = "stl-io")]
+mod stl;
+
+#[cfg(feature = "dxf-io")]
+mod dxf;
+
 #[derive(Debug)]
 pub enum IoError {
     StdIo(std::io::Error),
