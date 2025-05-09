@@ -13,7 +13,6 @@ readme = "readme.md"
 
 keywords = ["geometry", "physics", "csg", "slicing", "offsetting"]
 categories = ["game-development", "graphics", "mathematics", "simulation", "wasm"]
-exclude = ["asar.ttf", "hershey-fonts/*"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
