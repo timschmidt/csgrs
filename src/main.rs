@@ -674,6 +674,9 @@ fn main() {
         bspline_2d.to_stl_ascii("bspline_2d"),
     );
     
+    #[cfg(feature = "bevymesh")]
+    println!("{:#?}", bezier_3d.to_bevy_mesh());
+    
     // a quick thickening just like the Bézier
     //let bspline_3d = bspline_2d.extrude(0.25);
     //let _ = fs::write(

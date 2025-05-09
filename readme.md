@@ -326,6 +326,17 @@ let font_data = include_bytes("../fonts/myfont.jhf");
 let csg_text = CSG::from_hershey("Hello!", font_data, 20.0, None);
 ```
 
+### Create a Bevy `Mesh`
+
+`csg.to_bevy_mesh()` returns a Bevy [`Mesh`](https://docs.rs/bevy/latest/bevy/prelude/struct.Mesh.html).
+
+```rust
+use csgrs::csg::CSG;
+use bevy::{prelude::*, render::render_asset::RenderAssetUsages, render::mesh::{Indices, PrimitiveTopology}};
+
+let bevy_mesh = csg_obj.to_bevy_mesh();
+```
+
 ### Create a Parry `TriMesh`
 
 `csg.to_trimesh()` returns a `SharedShape` containing a `TriMesh<Real>`.

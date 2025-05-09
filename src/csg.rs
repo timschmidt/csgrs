@@ -23,6 +23,9 @@ use std::fmt::Debug;
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
+#[cfg(feature = "bevymesh")]
+use bevy::{prelude::*, render::render_asset::RenderAssetUsages, render::mesh::{Indices, PrimitiveTopology}};
+
 /// The main CSG solid structure. Contains a list of 3D polygons, 2D polylines, and some metadata.
 #[derive(Debug, Clone)]
 pub struct CSG<S: Clone> {
@@ -976,5 +979,51 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         co_set.insert_with_parent(coll, rb_handle, rb_set);
 
         rb_handle
+    }
+    
+    /// Convert a CSG into a Bevy `Mesh`.
+    #[cfg(feature = "bevymesh")]
+    pub fn to_bevy_mesh(&self) -> Mesh {
+        let tessellated_csg = &self.tessellate();
+        let polygons = &tessellated_csg.polygons;
+    
+        // Prepare buffers
+        let mut positions_32 = Vec::new();
+        let mut normals_32   = Vec::new();
+        let mut indices      = Vec::new();
+    
+        let mut index_start = 0u32;
+    
+        // Each polygon is assumed to have exactly 3 vertices after tessellation.
+        for poly in polygons {
+            // skip any degenerate polygons
+            if poly.vertices.len() != 3 {
+                continue;
+            }
+    
+            // push 3 positions/normals
+            for v in &poly.vertices {
+                positions_32.push([v.pos.x as f32, v.pos.y as f32, v.pos.z as f32]);
+                normals_32.push([v.normal.x as f32, v.normal.y as f32, v.normal.z as f32]);
+            }
+    
+            // triangle indices
+            indices.push(index_start);
+            indices.push(index_start + 1);
+            indices.push(index_start + 2);
+            index_start += 3;
+        }
+    
+        // Create the mesh with the new 2-argument constructor
+        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default());
+    
+        // Insert attributes. Note the `<Vec<[f32; 3]>>` usage.
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions_32);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL,   normals_32);
+    
+        // Insert triangle indices
+        mesh.insert_indices(Indices::U32(indices));
+    
+        mesh
     }
 }
