@@ -131,6 +131,34 @@ where S: Clone + Send + Sync {
                         ], metadata.clone()));
                     }
                 }
+                // Line: single segment ribbon
+                geo::Geometry::Line(line) => {
+                    let c0 = line.start;
+                    let c1 = line.end;
+                    let b0 = Point3::new(c0.x, c0.y, 0.0);
+                    let b1 = Point3::new(c1.x, c1.y, 0.0);
+                    let t0 = b0 + direction;
+                    let t1 = b1 + direction;
+                    let normal = (b1 - b0).cross(&(t0 - b0)).normalize();
+                    out_polygons.push(Polygon::new(vec![
+                        Vertex::new(b0, normal),
+                        Vertex::new(b1, normal),
+                        Vertex::new(t1, normal),
+                        Vertex::new(t0, normal),
+                    ], metadata.clone()));
+                }
+
+                // Rect: convert to polygon and extrude
+                geo::Geometry::Rect(rect) => {
+                    let poly2d = rect.to_polygon();
+                    extrude_geometry(&geo::Geometry::Polygon(poly2d), direction, metadata, out_polygons);
+                }
+
+                // Triangle: convert to polygon and extrude
+                geo::Geometry::Triangle(tri) => {
+                    let poly2d = tri.to_polygon();
+                    extrude_geometry(&geo::Geometry::Polygon(poly2d), direction, metadata, out_polygons);
+                }
                 // Other geometry types (LineString, Point, etc.) are skipped or could be handled differently:
                 _ => { /* skip */ }
             }
