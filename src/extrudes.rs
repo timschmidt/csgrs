@@ -111,6 +111,26 @@ where S: Clone + Send + Sync {
                         extrude_geometry(sub, direction, metadata, out_polygons);
                     }
                 }
+                geo::Geometry::LineString(ls) => {
+                    // extrude line strings into side surfaces
+                    let coords: Vec<_> = ls.coords_iter().collect();
+                    for i in 0..coords.len()-1 {
+                        let c_i = coords[i];
+                        let c_j = coords[i+1];
+                        let b_i = Point3::new(c_i.x, c_i.y, 0.0);
+                        let b_j = Point3::new(c_j.x, c_j.y, 0.0);
+                        let t_i = b_i + direction;
+                        let t_j = b_j + direction;
+                        // compute face normal for lighting
+                        let normal = (b_j - b_i).cross(&(t_i - b_i)).normalize();
+                        out_polygons.push(Polygon::new(vec![
+                            Vertex::new(b_i, normal),
+                            Vertex::new(b_j, normal),
+                            Vertex::new(t_j, normal),
+                            Vertex::new(t_i, normal),
+                        ], metadata.clone()));
+                    }
+                }
                 // Other geometry types (LineString, Point, etc.) are skipped or could be handled differently:
                 _ => { /* skip */ }
             }
