@@ -1915,7 +1915,7 @@ checksum = "43da5946c66ffcc7745f48db692ffbb10a83bfe0afd96235c5c2a4fb23994929"
 
 [[package]]
 name = "csgrs"
-version = "0.17.3"
+version = "0.17.4"
 dependencies = [
  "bevy",
  "chull",

@@ -76,44 +76,54 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
     /// Convert internal polylines into polygons and return along with any existing internal polygons.
     pub fn to_polygons(&self) -> Vec<Polygon<S>> {
-        let mut all_polygons = Vec::new();
-
-        for geom in &self.geometry {
-            if let Geometry::Polygon(poly2d) = geom {
-                // 1. Convert the outer ring to 3D.
-                let mut outer_vertices_3d = Vec::new();
-                for c in poly2d.exterior().coords_iter() {
-                    outer_vertices_3d.push(Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()));
+    
+        /// Helper function to convert a geo::Polygon into one or more Polygon<S> entries.
+        fn process_polygon<S>(
+            poly2d: &geo::Polygon<Real>,
+            all_polygons: &mut Vec<Polygon<S>>,
+            metadata: &Option<S>,
+        ) where S: Clone + Send + Sync{
+            // 1. Convert the outer ring to 3D.
+            let mut outer_vertices_3d = Vec::new();
+            for c in poly2d.exterior().coords_iter() {
+                outer_vertices_3d.push(Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()));
+            }
+        
+            if outer_vertices_3d.len() >= 3 {
+                all_polygons.push(Polygon::new(outer_vertices_3d, metadata.clone()));
+            }
+        
+            // 2. Convert interior rings (holes), if needed as separate polygons.
+            for ring in poly2d.interiors() {
+                let mut hole_vertices_3d = Vec::new();
+                for c in ring.coords_iter() {
+                    hole_vertices_3d.push(Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()));
                 }
-
-                // Push as a new Polygon<S> if it has at least 3 vertices.
-                if outer_vertices_3d.len() >= 3 {
-                    all_polygons.push(Polygon::new(outer_vertices_3d, self.metadata.clone()));
-                }
-
-                // 2. Convert each interior ring (hole) into its own Polygon<S>.
-                for ring in poly2d.interiors() {
-                    let mut hole_vertices_3d = Vec::new();
-                    for c in ring.coords_iter() {
-                        hole_vertices_3d.push(
-                            Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z())
-                        );
-                    }
-
-                    if hole_vertices_3d.len() >= 3 {
-                        // If your `Polygon<S>` type can represent holes internally,
-                        // adjust this to store hole_vertices_3d as a hole rather
-                        // than a new standalone polygon.
-                        all_polygons.push(Polygon::new(hole_vertices_3d, self.metadata.clone()));
-                    }
+        
+                if hole_vertices_3d.len() >= 3 {
+                    // Note: adjust this if your `Polygon<S>` type supports interior rings.
+                    all_polygons.push(Polygon::new(hole_vertices_3d, metadata.clone()));
                 }
             }
-            // else if let Geometry::LineString(ls) = geom {
-            //     // Example of how you might convert a linestring to a polygon,
-            //     // if desired. Omitted for brevity.
-            // }
         }
+        
+        let mut all_polygons = Vec::new();
 
+        for geom in &self.geometry {    
+            match geom {
+                Geometry::Polygon(poly2d) => {
+                    process_polygon(poly2d, &mut all_polygons, &self.metadata);
+                }
+                Geometry::MultiPolygon(multipoly) => {
+                    for poly2d in multipoly {
+                        process_polygon(poly2d, &mut all_polygons, &self.metadata);
+                    }
+                }
+                // Optional: handle other geometry types like LineString here.
+                _ => {}
+            }
+        }
+    
         all_polygons
     }
 
