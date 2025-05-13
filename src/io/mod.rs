@@ -7,6 +7,11 @@ mod stl;
 #[cfg(feature = "dxf-io")]
 mod dxf;
 
+/// Generic I/O and format‑conversion errors.
+///
+/// Many I/O features are behind cargo feature‑flags.  
+/// When a feature is disabled the corresponding variant is *not*
+/// constructed in user code.
 #[derive(Debug)]
 pub enum IoError {
     StdIo(std::io::Error),
@@ -18,6 +23,7 @@ pub enum IoError {
 
 
     #[cfg(feature = "svg-io")]
+    /// Error bubbled up from the `svg` crate during parsing.
     SvgParsing(::svg::parser::Error),
 }
 

@@ -1,12 +1,29 @@
+//! Utilities for working with planes in 3‑space including robust
+//! orientation tests, point classification and polygon splitting.
+//!
+//! Unless stated otherwise, all tolerances are governed by
+//! `float_types::EPSILON`.
+
 use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 use robust::{orient3d, Coord3D};
 
+/// Classification of a polygon or point that lies exactly in the plane
+/// (i.e. within `±EPSILON` of the plane).
 pub const COPLANAR: i8 = 0;
+
+/// Classification of a polygon or point that lies strictly on the
+/// *front* side of the plane (the side the normal points toward).
 pub const FRONT:    i8 = 1;
+
+/// Classification of a polygon or point that lies strictly on the
+/// *back* side of the plane (opposite the normal direction).
 pub const BACK:     i8 = 2;
+
+/// A polygon or edge that straddles the plane, producing pieces
+/// on both the front **and** the back.
 pub const SPANNING: i8 = 3;
 
 /// A plane in 3D space defined by three points
