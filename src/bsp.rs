@@ -13,9 +13,18 @@ use rayon::join;
 /// A BSP tree node, containing polygons plus optional front/back subtrees
 #[derive(Debug, Clone)]
 pub struct Node<S: Clone> {
+    /// Splitting plane for this node *or* **None** for a leaf that
+    /// only stores polygons.
     pub plane: Option<Plane>,
+    
+    /// Polygons in *front* half‑spaces.
     pub front: Option<Box<Node<S>>>,
+    
+    /// Polygons in *back* half‑spaces.
     pub back: Option<Box<Node<S>>>,
+    
+    /// Polygons that lie *exactly* on `plane`
+    /// (after the node has been built).
     pub polygons: Vec<Polygon<S>>,
 }
 
