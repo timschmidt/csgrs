@@ -225,6 +225,24 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             result
         }
     }
+    
+    /// Split polygons into (may_touch, cannot_touch) using bounding‑box tests
+    fn partition_polys(
+        polys: &[Polygon<S>],
+        other_bb: &Aabb,
+    ) -> (Vec<Polygon<S>>, Vec<Polygon<S>>) {
+        let mut maybe = Vec::new();
+        let mut never = Vec::new();
+        for p in polys {
+            if p.bounding_box().intersects(other_bb) {
+                maybe.push(p.clone());
+            } else {
+                never.push(p.clone());
+            }
+        }
+        (maybe, never)
+    }
+
 
     /// Return a new CSG representing union of the two CSG's.
     ///
@@ -241,9 +259,16 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// ```
     #[must_use = "Use new CSG representing space in both CSG's"]
     pub fn union(&self, other: &CSG<S>) -> CSG<S> {
-        // 3D union:
-        let mut a = Node::new(&self.polygons);
-        let mut b = Node::new(&other.polygons);
+        // prune obvious non‑intersecting faces
+        let bb_a = self.bounding_box();
+        let bb_b = other.bounding_box();
+    
+        let (a_clip,  a_passthru) = Self::partition_polys(&self.polygons,  &bb_b);
+        let (b_clip,  b_passthru) = Self::partition_polys(&other.polygons, &bb_a);
+
+        // 3D union
+        let mut a = Node::new(&a_clip);
+        let mut b = Node::new(&b_clip);
 
         a.clip_to(&b);
         b.clip_to(&a);
@@ -251,8 +276,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         b.clip_to(&a);
         b.invert();
         a.build(&b.all_polygons());
+        
+        // combine results and untouched faces
+        let mut final_polys = a.all_polygons();
+        final_polys.extend(a_passthru);
+        final_polys.extend(b_passthru);
 
-        // 2D union:
+        // 2D union
         // Extract multipolygon from geometry
         let polys1 = self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
@@ -284,7 +314,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
 
         CSG {
-            polygons: a.all_polygons(),
+            polygons: final_polys,
             geometry: final_gc,
             bounding_box: OnceCell::new(),
             metadata: self.metadata.clone(),
