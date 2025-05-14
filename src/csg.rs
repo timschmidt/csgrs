@@ -259,14 +259,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// ```
     #[must_use = "Use new CSG representing space in both CSG's"]
     pub fn union(&self, other: &CSG<S>) -> CSG<S> {
-        // prune obvious non‑intersecting faces
-        let bb_a = self.bounding_box();
-        let bb_b = other.bounding_box();
-    
-        let (a_clip,  a_passthru) = Self::partition_polys(&self.polygons,  &bb_b);
-        let (b_clip,  b_passthru) = Self::partition_polys(&other.polygons, &bb_a);
+        // 3D union:
+        // avoid splitting obvious non‑intersecting faces
+        let (a_clip,  a_passthru) = Self::partition_polys(&self.polygons,  &other.bounding_box());
+        let (b_clip,  b_passthru) = Self::partition_polys(&other.polygons, &self.bounding_box());
 
-        // 3D union
         let mut a = Node::new(&a_clip);
         let mut b = Node::new(&b_clip);
 
@@ -282,7 +279,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         final_polys.extend(a_passthru);
         final_polys.extend(b_passthru);
 
-        // 2D union
+        // 2D union:
         // Extract multipolygon from geometry
         let polys1 = self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
@@ -337,8 +334,12 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     #[must_use = "Use new CSG"]
     pub fn difference(&self, other: &CSG<S>) -> CSG<S> {
         // 3D difference:
-        let mut a = Node::new(&self.polygons);
-        let mut b = Node::new(&other.polygons);
+        // avoid splitting obvious non‑intersecting faces
+        let (a_clip,  a_passthru) = Self::partition_polys(&self.polygons,  &other.bounding_box());
+        let (b_clip,  _b_passthru) = Self::partition_polys(&other.polygons, &self.bounding_box());
+
+        let mut a = Node::new(&a_clip);
+        let mut b = Node::new(&b_clip);
 
         a.invert();
         a.clip_to(&b);
@@ -348,6 +349,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         b.invert();
         a.build(&b.all_polygons());
         a.invert();
+        
+        // combine results and untouched faces
+        let mut final_polys = a.all_polygons();
+        final_polys.extend(a_passthru);
 
         // 2D difference:
         let polys1 = &self.to_multipolygon();
@@ -393,8 +398,12 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// ```
     pub fn intersection(&self, other: &CSG<S>) -> CSG<S> {
         // 3D intersection:
-        let mut a = Node::new(&self.polygons);
-        let mut b = Node::new(&other.polygons);
+        // avoid splitting obvious non‑intersecting faces
+        let (a_clip,  _a_passthru) = Self::partition_polys(&self.polygons,  &other.bounding_box());
+        let (b_clip,  _b_passthru) = Self::partition_polys(&other.polygons, &self.bounding_box());
+
+        let mut a = Node::new(&a_clip);
+        let mut b = Node::new(&b_clip);
 
         a.invert();
         b.clip_to(&a);

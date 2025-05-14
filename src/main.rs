@@ -56,7 +56,7 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/subtract_cube_sphere.stl", subtract_shape.to_stl_binary("subtract_cube_sphere").unwrap());
 
-    let intersect_shape = moved_cube.intersection(&sphere);
+    let intersect_shape = cube.intersection(&sphere);
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/intersect_cube_sphere.stl", intersect_shape.to_stl_binary("intersect_cube_sphere").unwrap());
 
