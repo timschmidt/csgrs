@@ -530,10 +530,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         let affine2 = AffineTransform::new(a, b, xoff, d, e, yoff);
 
-        // 4) Transform csg.geometry (the GeometryCollection) in 2D
-        //    Using geo’s map-coords approach or the built-in AffineOps trait.
-        //    Below we use the `AffineOps` trait if you have `use geo::AffineOps;`
+        // Transform csg.geometry (the GeometryCollection) in 2D
+        // Using geo’s map-coords approach or the built-in AffineOps trait.
+        // Below we use the `AffineOps` trait if you have `use geo::AffineOps;`
         csg.geometry = csg.geometry.affine_transform(&affine2);
+        
+        // invalidate the old cached bounding box
+        csg.bounding_box = OnceCell::new();
 
         csg
     }
