@@ -19,6 +19,7 @@ use crate::float_types::parry3d::{
 };
 use crate::float_types::rapier3d::prelude::*;
 use std::fmt::Debug;
+use std::cell::OnceCell;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -34,6 +35,9 @@ pub struct CSG<S: Clone> {
 
     /// 2D geometry
     pub geometry: GeometryCollection<Real>,
+    
+    /// Lazily calculated AABB that spans `polygons` **and** any 2‑D geometry.
+    pub bounding_box: OnceCell<Aabb>,
 
     /// Metadata
     pub metadata: Option<S>,
@@ -45,6 +49,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: Vec::new(),
             geometry: GeometryCollection::default(),
+            bounding_box: OnceCell::new(),
             metadata: None,
         }
     }
@@ -281,6 +286,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: a.all_polygons(),
             geometry: final_gc,
+            bounding_box: OnceCell::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -337,6 +343,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: a.all_polygons(),
             geometry: final_gc,
+            bounding_box: OnceCell::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -397,6 +404,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: a.all_polygons(),
             geometry: final_gc,
+            bounding_box: OnceCell::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -680,6 +688,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: all_csg.polygons,
             geometry: all_csg.geometry,
+            bounding_box: OnceCell::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -714,6 +723,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: all_csg.polygons,
             geometry: all_csg.geometry,
+            bounding_box: OnceCell::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -744,6 +754,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: all_csg.polygons,
             geometry: all_csg.geometry,
+            bounding_box: OnceCell::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -853,55 +864,57 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// 1. The 3D bounds of all `polygons`.
     /// 2. The 2D bounding rectangle of `self.geometry`, interpreted at z=0.
     pub fn bounding_box(&self) -> Aabb {
-        // Track overall min/max in x, y, z among all 3D polygons and the 2D geometry’s bounding_rect.
-        let mut min_x = Real::MAX;
-        let mut min_y = Real::MAX;
-        let mut min_z = Real::MAX;
-        let mut max_x = -Real::MAX;
-        let mut max_y = -Real::MAX;
-        let mut max_z = -Real::MAX;
-
-        // 1) Gather from the 3D polygons
-        for poly in &self.polygons {
-            for v in &poly.vertices {
-                min_x = *partial_min(&min_x, &v.pos.x).unwrap();
-                min_y = *partial_min(&min_y, &v.pos.y).unwrap();
-                min_z = *partial_min(&min_z, &v.pos.z).unwrap();
-
-                max_x = *partial_max(&max_x, &v.pos.x).unwrap();
-                max_y = *partial_max(&max_y, &v.pos.y).unwrap();
-                max_z = *partial_max(&max_z, &v.pos.z).unwrap();
+        *self.bounding_box.get_or_init(|| {
+            // Track overall min/max in x, y, z among all 3D polygons and the 2D geometry’s bounding_rect.
+            let mut min_x = Real::MAX;
+            let mut min_y = Real::MAX;
+            let mut min_z = Real::MAX;
+            let mut max_x = -Real::MAX;
+            let mut max_y = -Real::MAX;
+            let mut max_z = -Real::MAX;
+    
+            // 1) Gather from the 3D polygons
+            for poly in &self.polygons {
+                for v in &poly.vertices {
+                    min_x = *partial_min(&min_x, &v.pos.x).unwrap();
+                    min_y = *partial_min(&min_y, &v.pos.y).unwrap();
+                    min_z = *partial_min(&min_z, &v.pos.z).unwrap();
+    
+                    max_x = *partial_max(&max_x, &v.pos.x).unwrap();
+                    max_y = *partial_max(&max_y, &v.pos.y).unwrap();
+                    max_z = *partial_max(&max_z, &v.pos.z).unwrap();
+                }
             }
-        }
-
-        // 2) Gather from the 2D geometry using `geo::BoundingRect`
-        //    This gives us (min_x, min_y) / (max_x, max_y) in 2D. For 3D, treat z=0.
-        //    Explicitly capture the result of `.bounding_rect()` as an Option<Rect<Real>>
-        let maybe_rect: Option<Rect<Real>> = self.geometry.bounding_rect();
-
-        if let Some(rect) = maybe_rect {
-            let min_pt = rect.min();
-            let max_pt = rect.max();
-
-            // Merge the 2D bounds into our existing min/max, forcing z=0 for 2D geometry.
-            min_x = *partial_min(&min_x, &min_pt.x).unwrap();
-            min_y = *partial_min(&min_y, &min_pt.y).unwrap();
-            min_z = *partial_min(&min_z, &0.0).unwrap();
-
-            max_x = *partial_max(&max_x, &max_pt.x).unwrap();
-            max_y = *partial_max(&max_y, &max_pt.y).unwrap();
-            max_z = *partial_max(&max_z, &0.0).unwrap();
-        }
-
-        // If still uninitialized (e.g., no polygons or geometry), return a trivial AABB at origin
-        if min_x > max_x {
-            return Aabb::new(Point3::origin(), Point3::origin());
-        }
-
-        // Build a parry3d Aabb from these min/max corners
-        let mins = Point3::new(min_x, min_y, min_z);
-        let maxs = Point3::new(max_x, max_y, max_z);
-        Aabb::new(mins, maxs)
+    
+            // 2) Gather from the 2D geometry using `geo::BoundingRect`
+            //    This gives us (min_x, min_y) / (max_x, max_y) in 2D. For 3D, treat z=0.
+            //    Explicitly capture the result of `.bounding_rect()` as an Option<Rect<Real>>
+            let maybe_rect: Option<Rect<Real>> = self.geometry.bounding_rect();
+    
+            if let Some(rect) = maybe_rect {
+                let min_pt = rect.min();
+                let max_pt = rect.max();
+    
+                // Merge the 2D bounds into our existing min/max, forcing z=0 for 2D geometry.
+                min_x = *partial_min(&min_x, &min_pt.x).unwrap();
+                min_y = *partial_min(&min_y, &min_pt.y).unwrap();
+                min_z = *partial_min(&min_z, &0.0).unwrap();
+    
+                max_x = *partial_max(&max_x, &max_pt.x).unwrap();
+                max_y = *partial_max(&max_y, &max_pt.y).unwrap();
+                max_z = *partial_max(&max_z, &0.0).unwrap();
+            }
+    
+            // If still uninitialized (e.g., no polygons or geometry), return a trivial AABB at origin
+            if min_x > max_x {
+                return Aabb::new(Point3::origin(), Point3::origin());
+            }
+    
+            // Build a parry3d Aabb from these min/max corners
+            let mins = Point3::new(min_x, min_y, min_z);
+            let maxs = Point3::new(max_x, max_y, max_z);
+            Aabb::new(mins, maxs)
+        })
     }
 
     /// Triangulate each polygon in the CSG returning a CSG containing triangles
