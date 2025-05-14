@@ -4,6 +4,7 @@ use crate::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point2, Point3, Vector3};
 use crate::float_types::parry3d::bounding_volume::Aabb;
+use std::cell::OnceCell;
 
 /// A polygon, defined by a list of vertices.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
@@ -15,10 +16,10 @@ pub struct Polygon<S: Clone> {
     /// The plane on which this Polygon lies, used for splitting
     pub plane: Plane,
     
-    /// Axis‑aligned bounding box of this Polygon
-    pub bounding_box: Aabb,
+    /// Lazily‑computed axis‑aligned bounding box of the Polygon
+    pub bounding_box: OnceCell<Aabb>,
         
-    /// Generic metadata associated with this Polygon
+    /// Generic metadata associated with the Polygon
     pub metadata: Option<S>,
 }
 
@@ -30,25 +31,29 @@ where S: Clone + Send + Sync {
         
         let plane = Plane::from_vertices(vertices.clone());
         
-        // compute bounding box
-        let mut min = Point3::new(Real::MAX, Real::MAX, Real::MAX);
-        let mut max = Point3::new(Real::MIN, Real::MIN, Real::MIN);
-        for v in &vertices {
-            min.x = min.x.min(v.pos.x);
-            min.y = min.y.min(v.pos.y);
-            min.z = min.z.min(v.pos.z);
-            max.x = max.x.max(v.pos.x);
-            max.y = max.y.max(v.pos.y);
-            max.z = max.z.max(v.pos.z);
-        }
-        let bounding_box = Aabb::new(min, max);
-        
         Polygon {
             vertices,
             plane,
+            bounding_box: OnceCell::new(),
             metadata,
-            bounding_box,
         }
+    }
+    
+    /// Axis aligned bounding box of this Polygon (cached after first call)
+    pub fn bounding_box(&self) -> Aabb {
+        *self.bounding_box.get_or_init(|| {
+            let mut mins = Point3::new(Real::MAX, Real::MAX, Real::MAX);
+            let mut maxs = Point3::new(-Real::MAX, -Real::MAX, -Real::MAX);
+            for v in &self.vertices {
+                mins.x = mins.x.min(v.pos.x);
+                mins.y = mins.y.min(v.pos.y);
+                mins.z = mins.z.min(v.pos.z);
+                maxs.x = maxs.x.max(v.pos.x);
+                maxs.y = maxs.y.max(v.pos.y);
+                maxs.z = maxs.z.max(v.pos.z);
+            }
+            Aabb::new(mins, maxs)
+        })
     }
 
     /// Reverses winding order, flips vertices normals, and flips the plane normal
