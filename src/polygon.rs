@@ -3,13 +3,22 @@ use crate::plane::Plane;
 use crate::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point2, Point3, Vector3};
+use crate::float_types::parry3d::bounding_volume::Aabb;
 
 /// A polygon, defined by a list of vertices.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
 pub struct Polygon<S: Clone> {
+    /// Vertices defining the Polygon's shape
     pub vertices: Vec<Vertex>,
+    
+    /// The plane on which this Polygon lies, used for splitting
     pub plane: Plane,
+    
+    /// Axis‑aligned bounding box of this Polygon
+    pub bounding_box: Aabb,
+        
+    /// Generic metadata associated with this Polygon
     pub metadata: Option<S>,
 }
 
@@ -21,10 +30,24 @@ where S: Clone + Send + Sync {
         
         let plane = Plane::from_vertices(vertices.clone());
         
+        // compute bounding box
+        let mut min = Point3::new(Real::MAX, Real::MAX, Real::MAX);
+        let mut max = Point3::new(Real::MIN, Real::MIN, Real::MIN);
+        for v in &vertices {
+            min.x = min.x.min(v.pos.x);
+            min.y = min.y.min(v.pos.y);
+            min.z = min.z.min(v.pos.z);
+            max.x = max.x.max(v.pos.x);
+            max.y = max.y.max(v.pos.y);
+            max.z = max.z.max(v.pos.z);
+        }
+        let bounding_box = Aabb::new(min, max);
+        
         Polygon {
             vertices,
             plane,
             metadata,
+            bounding_box,
         }
     }
 
