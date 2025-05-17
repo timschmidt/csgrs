@@ -1,6 +1,6 @@
 use crate::csg::CSG;
 use crate::float_types::{Real, PI, EPSILON, FRAC_PI_2, TAU};
-use geo::{line_string, GeometryCollection, Geometry, LineString, MultiPolygon, Polygon as GeoPolygon, BooleanOps};
+use geo::{line_string, GeometryCollection, Geometry, LineString, MultiPolygon, Polygon as GeoPolygon, BooleanOps, Orient, orient::Direction};
 use std::fmt::Debug;
 use std::cell::OnceCell;
 
@@ -769,7 +769,7 @@ where S: Clone + Send + Sync {
     
         coords.push(coords[0]); // close
     
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]).orient(Direction::Default);
         CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
