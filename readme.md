@@ -84,32 +84,32 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 
 ### 2D Shapes
 
-- **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
-- **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
-- **`CSG::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
-- **`CSG::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
+- <img src="docs/square.png" width="128"/> **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
+- <img src="docs/circle.png" width="128"/> **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/polygon.png" width="128"/> **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
+- <img src="docs/rounded_rectangle.png" width="128"/> **`CSG::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
+- <img src="docs/ellipse.png" width="128"/> **`CSG::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/ngon.png" width="128"/> **`CSG::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
 - **`CSG::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
-- **`CSG::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>)`**
-- **`CSG::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
-- **`CSG::teardrop(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::squircle(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::reuleaux_polygon(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`**
-- **`CSG::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: Option<S>)`**
-- **`CSG::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
-- **`CSG::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
+- <img src="docs/trapezoid.png" width="128"/> **`CSG::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>)`**
+- <img src="docs/star.png" width="128"/> **`CSG::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
+- <img src="docs/teardrop.png" width="128"/> **`CSG::teardrop(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/egg_outline.png" width="128"/> **`CSG::egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/squircle.png" width="128"/> **`CSG::squircle(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/keyhole.png" width="128"/> **`CSG::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/reuleaux3.png" width="128"/> **`CSG::reuleaux_polygon(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`**
+- <img src="docs/ring.png" width="128"/> **`CSG::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/pie_slice.png" width="128"/> **`CSG::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/supershape.png" width="128"/> **`CSG::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/circle_with_keyway.png" width="128"/> **`CSG::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: Option<S>)`**
+- <img src="docs/d.png" width="128"/> **`CSG::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
+- <img src="docs/double_flat.png" width="128"/> **`CSG::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
 - **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
-- **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
-- **`CSG::metaballs2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`** - 
-- **`CSG::airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>)`** -
-- **`CSG::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`** - under construction
-- **`CSG::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`** - under construction
+- <img src="docs/truetype.png" width="128"/> **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
+- <img src="docs/metaballs_2d.png" width="128"/> **`CSG::metaballs2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`** - 
+- <img src="docs/airfoil.png" width="128"/> **`CSG::airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>)`** -
+- <img src="docs/bezier_extruded.png" width="128"/> **`CSG::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`** - under construction
+- <img src="docs/bspline.png" width="128"/> **`CSG::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`** - under construction
 - **`CSG::involute_gear_2d(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 - **`CSG::cycloidal_gear_2d(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 - **`CSG::involute_rack_2d(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: Option<S>)`** - under construction
