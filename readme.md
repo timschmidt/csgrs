@@ -135,7 +135,7 @@ Extrusions build 3D polygons from 2D Geometries.
 - **`CSG::extrude(height: Real)`** - Simple extrude in Z+
 - **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
 - **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Extrude Between Two BSP Polygons
-- **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
+- <img src="docs/rotate_extrude.png" width="128"/> **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
 
 ```rust
 let square = CSG::square(2.0, 2.0, None);
@@ -150,10 +150,10 @@ let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.poly
 
 ### 3D Shapes
 
-- **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
-- **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
+- <img src="docs/cube.png" width="128"/> **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
+- <img src="docs/sphere.png" width="128"/> **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
 - **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** -
+- <img src="docs/frustum.png" width="128"/> **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** -
 Construct a frustum at origin with height and `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
 - **`CSG::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments:
@@ -161,13 +161,13 @@ usize, metadata: Option<S>)`** -
 Construct a frustum from `start` to `end` with `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
 - **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
-- **`CSG::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: Option<S>)`**
+- <img src="docs/egg.png" width="128"/> **`CSG::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: Option<S>)`**
 - **`CSG::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: Option<S>)`**
 - **`CSG::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, metadata: Option<S>)`**
-- **`CSG::ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
-- **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
-- **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: Option<S>)`** - Return a CSG created by meshing a signed distance field within a bounding box
-- **`CSG::arrow(start: Point3, direction: Vector3, segments: usize, orientation: bool, metadata: Option<S>)`** - Create an arrow at start, pointing along direction
+- <img src="docs/ellipsoid.png" width="128"/> **`CSG::ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
+- <img src="docs/metaballs.png" width="128"/> **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
+- <img src="docs/sdf-sphere.png" width="128"/> **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: Option<S>)`** - Return a CSG created by meshing a signed distance field within a bounding box
+- <img src="docs/arrow_to.png" width="128"/> **`CSG::arrow(start: Point3, direction: Vector3, segments: usize, orientation: bool, metadata: Option<S>)`** - Create an arrow at start, pointing along direction
 - **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self` - under construction
 - **`CSG::helical_involute_gear(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: Option<S>)`** - under construction
 
