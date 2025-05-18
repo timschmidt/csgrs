@@ -485,7 +485,7 @@ for Polygon
 - use https://crates.io/crates/approx
 - transition sweep, linear_extrude, over to Polygon/Multipolygon native / polygon secondary
 - disengage chulls on 2D->3D shapes
-- fix intersect_cube_sphere, subtract_cube_sphere in main.rs - shapes are out of proximity
+- fix subtract_cube_sphere in main.rs - shapes are out of proximity
 - fix up error handling with result types, eliminate panics
 - ray intersection (singular)
 - expose geo traits on 2D shapes
@@ -494,7 +494,6 @@ for Polygon
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - document coordinate system / coordinate transformations / compounded transformations
-- produce renders for every function
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
@@ -528,8 +527,10 @@ for Polygon
   - support storing UV[W] coordinates with vertexes at compile time (try to keep runtime cost low too)
   - accomplish equivalence checks and memory usage reduction by using a hashmap or references instead of storing metadata with each node
   - with equivalence checks, returning sorted metadata becomes easy
-- chamfers - walk edges
-  - make algorithm selectable at compile time
+- implement half-edge, radial edge, etc to and from adapters
+  - chamfers
+  - fillets
+  - manifold tests
 - align_x_pos, align_x_neg, align_y_pos, align_y_neg, align_z_pos, align_z_neg, center_x, center_y, center_z,
 - attachment points / rapier integration
   - attachment is a Vertex (Point + normal)
@@ -537,12 +538,11 @@ for Polygon
   - make corners and centers of bb accessible by default, even in empty CSG
   - make corners, edge midpoints, and centroids of polygons accessible by default (calculate on demand using an iterator)
   - align_to_attachment(name, csg2, name2)
-- import functions from https://github.com/nical/lyon/tree/main/crates/geom/src for cubic and quadratic bezier
 - implement C FFI using https://rust-lang.github.io/rust-bindgen/
 - pull in https://crates.io/crates/geo-uom for units and dimensional analysis
 - https://proptest-rs.github.io/proptest/intro.html
 - https://crates.io/crates/geo-validity-check as compile time option
-- https://crates.io/crates/geo-index
+- https://crates.io/crates/geo-index - 2D only :(
 - https://github.com/lelongg/geo-rand
 - renderer integration
   - blueprint renders
@@ -558,6 +558,7 @@ for Polygon
 - gltf output
 - gerber output
 - rework bezier and bspline using https://github.com/mattatz/curvo
+  - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src for cubic and quadratic bezier
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
