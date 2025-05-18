@@ -248,9 +248,9 @@ They all return a new `CSG<S>`
 - **`CSG::center()`** - Returns the CSG centered at the origin
 - **`CSG::float()`** - Returns the CSG translated so that its bottommost point(s) sit exactly at z=0
 - **`CSG::transform(&Matrix4)`** - Returns the CSG after applying arbitrary affine transforms
-- **`CSG::distribute_arc(count: usize, radius: Real, start_angle_deg: Real, end_angle_deg: Real)`**
-- **`CSG::distribute_linear(count: usize, dir: nalgebra::Vector3, spacing: Real)`**
-- **`CSG::distribute_grid(rows: usize, cols: usize, dx: Real, dy: Real)`**
+- <img src="docs/distribute_arc.png" width="128"/> **`CSG::distribute_arc(count: usize, radius: Real, start_angle_deg: Real, end_angle_deg: Real)`**
+- <img src="docs/distribute_line.png" width="128"/> **`CSG::distribute_linear(count: usize, dir: nalgebra::Vector3, spacing: Real)`**
+- <img src="docs/distribute_grid.png" width="128"/> **`CSG::distribute_grid(rows: usize, cols: usize, dx: Real, dy: Real)`**
 
 ```rust
 use nalgebra::Vector3;
@@ -270,13 +270,13 @@ let mirrored = cube.mirror(plane_x);
 
 - **`CSG::vertices()`** — collect all vertices from the CSG
 - **`CSG::inverse()`** — flips the inside/outside orientation.
-- **`CSG::convex_hull()`** — uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
-- **`CSG::minkowski_sum(&other)`** — naive Minkowski sum, then takes the hull.
+- <img src="docs/convex_hull.png" width="128"/> **`CSG::convex_hull()`** — uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
+- <img src="docs/minkowski.png" width="128"/> **`CSG::minkowski_sum(&other)`** — naive Minkowski sum, then takes the hull.
 - **`CSG::ray_intersections(origin, direction)`** — returns all intersection points and distances.
 - **`CSG::flatten()`** — flattens a 3D shape into 2D (on the XY plane), unions the outlines.
 - **`CSG::slice(plane)`** — slices the CSG by a plane and returns the cross-section polygons.
 - **`CSG::offset(distance)`** — outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
-- **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
+- <img src="docs/subdivided.png" width="128"/> **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
 - **`CSG::bounding_box()`** — computes the bounding box of the shape.
 - **`CSG::tessellate()`** — triangulates all polygons returning a CSG containing triangles.
