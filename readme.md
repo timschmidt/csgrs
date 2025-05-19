@@ -90,7 +90,7 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 - <img src="docs/rounded_rectangle.png" width="128"/> **`CSG::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
 - <img src="docs/ellipse.png" width="128"/> **`CSG::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/ngon.png" width="128"/> **`CSG::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
-- **`CSG::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
+- <img src="docs/right_triangle.png" width="128"/> **`CSG::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
 - <img src="docs/trapezoid.png" width="128"/> **`CSG::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>)`**
 - <img src="docs/star.png" width="128"/> **`CSG::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
 - <img src="docs/teardrop.png" width="128"/> **`CSG::teardrop(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
@@ -152,7 +152,7 @@ let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.poly
 
 - <img src="docs/cube.png" width="128"/> **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
 - <img src="docs/sphere.png" width="128"/> **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
-- **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/cylinder.png" width="128"/> **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/frustum.png" width="128"/> **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** -
 Construct a frustum at origin with height and `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
@@ -162,7 +162,7 @@ Construct a frustum from `start` to `end` with `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
 - **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
 - <img src="docs/egg.png" width="128"/> **`CSG::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: Option<S>)`**
-- **`CSG::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: Option<S>)`**
+- <img src="docs/teardrop3d.png" width="128"/> **`CSG::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: Option<S>)`**
 - **`CSG::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, metadata: Option<S>)`**
 - <img src="docs/ellipsoid.png" width="128"/> **`CSG::ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
 - <img src="docs/metaballs.png" width="128"/> **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
@@ -271,7 +271,7 @@ let mirrored = cube.mirror(plane_x);
 ### Miscellaneous Operations
 
 - **`CSG::vertices()`** — collect all vertices from the CSG
-- **`CSG::inverse()`** — flips the inside/outside orientation.
+- <img src="docs/inverse_sphere.png" width="128"/> **`CSG::inverse()`** — flips the inside/outside orientation.
 - <img src="docs/convex_hull.png" width="128"/> **`CSG::convex_hull()`** — uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
 - <img src="docs/minkowski.png" width="128"/> **`CSG::minkowski_sum(&other)`** — naive Minkowski sum, then takes the hull.
 - **`CSG::ray_intersections(origin, direction)`** — returns all intersection points and distances.
