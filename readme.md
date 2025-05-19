@@ -563,6 +563,11 @@ for Polygon
 - rework bezier and bspline using https://github.com/mattatz/curvo
   - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src for cubic and quadratic bezier
 
+## Todo easy
+- finish naca airfoil implementations
+- stack transformation
+- additional renders
+
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
 - https://github.com/asny/tri-mesh port
