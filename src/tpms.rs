@@ -3,7 +3,7 @@
 
 use crate::csg::CSG;
 use crate::float_types::Real;
-use nalgebra::{Point3, Vector3};
+use nalgebra::Point3;
 use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> CSG<S> {
