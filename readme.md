@@ -156,11 +156,11 @@ let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.poly
 - <img src="docs/frustum.png" width="128"/> **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** -
 Construct a frustum at origin with height and `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
-- **`CSG::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments:
+- <img src="docs/frustum.png" width="128"/> **`CSG::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments:
 usize, metadata: Option<S>)`** -
 Construct a frustum from `start` to `end` with `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
-- **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
+- <img src="docs/polyhedron.png" width="128"/> **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
 - <img src="docs/egg.png" width="128"/> **`CSG::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: Option<S>)`**
 - <img src="docs/teardrop3d.png" width="128"/> **`CSG::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: Option<S>)`**
 - <img src="docs/teardrop_cylinder.png" width="128"/> **`CSG::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, metadata: Option<S>)`**
