@@ -163,7 +163,7 @@ fn main() {
     
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
-    let cube = CSG::cube(1.0, 1.0, 1.0, None);
+    let cube = CSG::cube(100.0, 100.0, 100.0, None);
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
     let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
@@ -393,7 +393,7 @@ fn main() {
     // Let's reuse the `cube` from above:
     #[cfg(feature = "stl-io")]
     {
-        let gyroid_inside_cube = cube.gyroid(32, 2.0, 0.0, None);
+        let gyroid_inside_cube = cube.gyroid(64, 2.0, 0.0, None);
         let _ = fs::write("stl/gyroid_cube.stl", gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap());
     }
     
