@@ -43,6 +43,9 @@ pub mod hershey;
 #[cfg(feature = "sdf")]
 pub mod sdf;
 
+#[cfg(feature = "sdf")]
+pub mod tpms;
+
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
 
