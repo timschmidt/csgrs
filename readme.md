@@ -484,7 +484,6 @@ for Polygon
 - evaluate https://github.com/dimforge/parry/blob/master/src/transformation/convex_hull3/convex_hull.rs instead of chull
 - evaluate https://github.com/dimforge/parry/blob/master/src/utils/ccw_face_normal.rs for normalization
 - implement wavefront obj output using https://github.com/dimforge/parry/blob/master/src/transformation/wavefront.rs
-- use https://crates.io/crates/approx
 - transition sweep, linear_extrude, over to Polygon/Multipolygon native / polygon secondary
 - disengage chulls on 2D->3D shapes
 - fix subtract_cube_sphere in main.rs - shapes are out of proximity
@@ -533,6 +532,8 @@ for Polygon
   - chamfers
   - fillets
   - manifold tests
+  - 3D offset
+  - attachments
 - align_x_pos, align_x_neg, align_y_pos, align_y_neg, align_z_pos, align_z_neg, center_x, center_y, center_z,
 - attachment points / rapier integration
   - attachment is a Vertex (Point + normal)
