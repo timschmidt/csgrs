@@ -393,13 +393,13 @@ fn main() {
     // Let's reuse the `cube` from above:
     #[cfg(feature = "stl-io")]
     {
-        let gyroid_inside_cube = cube.gyroid(64, 2.0, 0.0, None);
+        let gyroid_inside_cube = hull_of_union.scale(20.0, 20.0, 20.0).gyroid(64, 2.0, 0.0, None);
         let _ = fs::write("stl/gyroid_cube.stl", gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap());
         
-        let schwarzp_inside_cube = cube.schwarz_p(64, 2.0, 0.0, None);
+        let schwarzp_inside_cube = hull_of_union.scale(20.0, 20.0, 20.0).schwarz_p(64, 2.0, 0.0, None);
         let _ = fs::write("stl/schwarz_p_cube.stl", schwarzp_inside_cube.to_stl_binary("schwarz_p_cube").unwrap());
         
-        let schwarzd_inside_cube = cube.schwarz_d(64, 2.0, 0.0, None);
+        let schwarzd_inside_cube = hull_of_union.scale(20.0, 20.0, 20.0).schwarz_d(64, 2.0, 0.0, None);
         let _ = fs::write("stl/schwarz_d_cube.stl", schwarzd_inside_cube.to_stl_binary("schwarz_d_cube").unwrap());
     }
     
