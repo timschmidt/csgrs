@@ -109,8 +109,8 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 - <img src="docs/truetype.png" width="128"/> **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
 - <img src="docs/metaballs_2d.png" width="128"/> **`CSG::metaballs2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`** - 
 - <img src="docs/airfoil.png" width="128"/> **`CSG::airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>)`** -
-- <img src="docs/bezier_extruded.png" width="128"/> **`CSG::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`** - under construction
-- <img src="docs/bspline.png" width="128"/> **`CSG::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`** - under construction
+- <img src="docs/bezier_extruded.png" width="128"/> **`CSG::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`**
+- <img src="docs/bspline.png" width="128"/> **`CSG::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`**
 - **`CSG::involute_gear_2d(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 - **`CSG::cycloidal_gear_2d(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 - **`CSG::involute_rack_2d(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: Option<S>)`** - under construction
