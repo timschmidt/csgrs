@@ -169,8 +169,8 @@ If either radius is within EPSILON of 0.0, a cone terminating at a point is cons
 - <img src="docs/sdf-sphere.png" width="128"/> **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: Option<S>)`** - Return a CSG created by meshing a signed distance field within a bounding box
 - <img src="docs/arrow_to.png" width="128"/> **`CSG::arrow(start: Point3, direction: Vector3, segments: usize, orientation: bool, metadata: Option<S>)`** - Create an arrow at start, pointing along direction
 - <img src="docs/gyroid.png" width="128"/> **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
-- **`CSG::schwarz_p(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Schwarz P) inside the volume of `self`
-- **`CSG::schwarz_d(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Schwarz D) inside the volume of `self`
+- <img src="docs/schwarzp.png" width="128"/> **`CSG::schwarz_p(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Schwarz P) inside the volume of `self`
+- <img src="docs/schwarzd.png" width="128"/> **`CSG::schwarz_d(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Schwarz D) inside the volume of `self`
 - **`CSG::helical_involute_gear(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: Option<S>)`** - under construction
 
 ```rust
