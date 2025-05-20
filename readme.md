@@ -24,9 +24,10 @@ and
 algorithms used for tessellation only work in 2D, so **csgrs** rotates
 3D polygons into 2D for tessellation then back to 3D.
 
-Join the [csgrs discord server](https://discord.gg/9WkD3WFxMC)
-
 ![Example CSG output](docs/csg.png)
+
+## Community
+[![](https://dcbadge.limes.pink/api/server/https://discord.gg/9WkD3WFxMC)](https://discord.gg/9WkD3WFxMC)
 
 ## Getting started
 
