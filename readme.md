@@ -105,7 +105,7 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 - <img src="docs/circle_with_keyway.png" width="128"/> **`CSG::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: Option<S>)`**
 - <img src="docs/d.png" width="128"/> **`CSG::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
 - <img src="docs/double_flat.png" width="128"/> **`CSG::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
-- **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
+- <img src="docs/from_image.png" width="128"/> **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
 - <img src="docs/truetype.png" width="128"/> **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
 - <img src="docs/metaballs_2d.png" width="128"/> **`CSG::metaballs2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`** - 
 - <img src="docs/airfoil.png" width="128"/> **`CSG::airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>)`** -
