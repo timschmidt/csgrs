@@ -358,15 +358,15 @@ fn main() {
     let _ = fs::write("stl/keyhole_2d.stl", keyhole_2d.to_stl_ascii("keyhole_2d"));
 
     // 12) reuleaux_polygon(sides, side_len, segments)
-    let reuleaux3_2d = CSG::reuleaux_polygon(3, 2.0, 64, None); // Reuleaux triangle
+    let reuleaux3_2d = CSG::reuleaux(3, 2.0, 64, None); // Reuleaux triangle
     let _ = fs::write("stl/reuleaux3_2d.stl", reuleaux3_2d.to_stl_ascii("reuleaux_2d"));
 
     // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux4_2d = CSG::reuleaux_polygon(4, 2.0, 64, None); // Reuleaux triangle
+    let reuleaux4_2d = CSG::reuleaux(4, 2.0, 64, None); // Reuleaux triangle
     let _ = fs::write("stl/reuleaux4_2d.stl", reuleaux4_2d.to_stl_ascii("reuleaux_2d"));
 
     // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux5_2d = CSG::reuleaux_polygon(5, 2.0, 64, None); // Reuleaux triangle
+    let reuleaux5_2d = CSG::reuleaux(5, 2.0, 64, None); // Reuleaux triangle
     let _ = fs::write("stl/reuleaux5_2d.stl", reuleaux5_2d.to_stl_ascii("reuleaux_2d"));
 
     // 13) ring(inner_diam, thickness, segments)
@@ -435,6 +435,23 @@ fn main() {
                         .extrude_vector(nalgebra::Vector3::new(0.0, 0.0, 1.2));
     let _ = fs::write("stl/naca0015.stl", naca0015.to_stl_ascii("naca0015"));
     
+    let oct = CSG::octahedron(10.0, None);
+    let _ = fs::write("stl/octahedron.stl", oct.to_stl_ascii("octahedron"));
+    
+    //let dodec = CSG::dodecahedron(15.0, None);
+    //let _ = fs::write("stl/dodecahedron.stl", dodec.to_stl_ascii(""));
+    
+    let ico = CSG::icosahedron(12.0, None);
+    let _ = fs::write("stl/icosahedron.stl", ico.to_stl_ascii(""));
+    
+    let torus = CSG::torus(20.0, 5.0, 48, 24, None);
+    let _ = fs::write("stl/torus.stl", torus.to_stl_ascii(""));
+    
+    let heart2d = CSG::heart(30.0, 25.0, 128, None);
+    let _ = fs::write("stl/heart2d.stl", heart2d.to_stl_ascii(""));
+    
+    let crescent2d = CSG::crescent(10.0, 7.0, 4.0, 64, None);
+    let _ = fs::write("stl/crescent2d.stl", crescent2d.to_stl_ascii(""));
 
     // ---------------------------------------------------------
     // Additional “SCENES” Demonstrating Each Function Minimally
@@ -526,7 +543,7 @@ fn main() {
     // Scene K: Demonstrate reuleaux_polygon with a typical triangle shape
     // (already used sides=4 above, so let's do sides=3 here)
     {
-        let reuleaux_tri = CSG::reuleaux_polygon(3, 2.0, 16, None).extrude(0.1);
+        let reuleaux_tri = CSG::reuleaux(3, 2.0, 16, None).extrude(0.1);
         let _ = fs::write("stl/scene_reuleaux_triangle.stl", reuleaux_tri.to_stl_ascii("scene_reuleaux_triangle"));
     }
 
