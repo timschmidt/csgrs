@@ -88,11 +88,19 @@ fn main() {
 
     let shrunk_2d = square_2d.offset(-0.5);
     let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"));
+    
+    // star(num_points, outer_radius, inner_radius)
+    let star_2d = CSG::star(5, 2.0, 0.8, None);
+    let _ = fs::write("stl/star_2d.stl", star_2d.to_stl_ascii("star_2d"));
 
-    // 8) Extrude & Rotate-Extrude
-    let extruded_square = square_2d.extrude(1.0);
+    // Extrude & Rotate-Extrude
+    let extruded_star = star_2d.extrude(1.0);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/square_extrude.stl", extruded_square.to_stl_binary("square_extrude").unwrap());
+    let _ = fs::write("stl/star_extrude.stl", extruded_star.to_stl_binary("star_extrude").unwrap());
+    
+    let vector_extruded_star = star_2d.extrude_vector(Vector3::new(2.0, 1.0, 1.0));
+    #[cfg(feature = "stl-io")]
+    let _ = fs::write("stl/star_vec_extrude.stl", vector_extruded_star.to_stl_binary("star_extrude").unwrap());
 
     let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(360.0, 32);
     #[cfg(feature = "stl-io")]
@@ -332,10 +340,6 @@ fn main() {
     // 6) trapezoid(top_width, bottom_width, height)
     let trap_2d = CSG::trapezoid(1.0, 2.0, 2.0, 0.5, None);
     let _ = fs::write("stl/trapezoid_2d.stl", trap_2d.to_stl_ascii("trapezoid_2d"));
-
-    // 7) star(num_points, outer_radius, inner_radius)
-    let star_2d = CSG::star(5, 2.0, 0.8, None);
-    let _ = fs::write("stl/star_2d.stl", star_2d.to_stl_ascii("star_2d"));
 
     // 8) teardrop(width, height, segments) [2D shape]
     let teardrop_2d = CSG::teardrop_outline(2.0, 3.0, 16, None);

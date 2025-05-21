@@ -98,7 +98,7 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 - <img src="docs/egg_outline.png" width="128"/> **`CSG::egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/squircle.png" width="128"/> **`CSG::squircle(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/keyhole.png" width="128"/> **`CSG::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/reuleaux3.png" width="128"/> **`CSG::reuleaux_polygon(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`**
+- <img src="docs/reuleaux3.png" width="128"/> **`CSG::reuleaux(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`**
 - <img src="docs/ring.png" width="128"/> **`CSG::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/pie_slice.png" width="128"/> **`CSG::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/supershape.png" width="128"/> **`CSG::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: Option<S>)`**
@@ -133,8 +133,8 @@ let text_3d = csg_text.extrude(1.0);
 
 Extrusions build 3D polygons from 2D Geometries.
 
-- **`CSG::extrude(height: Real)`** - Simple extrude in Z+
-- **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
+- <img src="docs/extrude.png" width="128"/> **`CSG::extrude(height: Real)`** - Simple extrude in Z+
+- <img src="docs/extrude_vector.png" width="128"/> **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
 - **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Extrude Between Two BSP Polygons
 - <img src="docs/rotate_extrude.png" width="128"/> **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
 
