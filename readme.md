@@ -111,6 +111,8 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 - <img src="docs/airfoil.png" width="128"/> **`CSG::airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>)`** -
 - <img src="docs/bezier_extruded.png" width="128"/> **`CSG::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`**
 - <img src="docs/bspline.png" width="128"/> **`CSG::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`**
+- <img src="docs/heart.png" width="128"/> **`CSG::heart(width: Real, height: Real, segments: usize, metadata: Option<S>)`** - 
+- <img src="docs/crescent.png" width="128"/> **`CSG::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: Option<S>)`** - 
 - **`CSG::involute_gear_2d(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 - **`CSG::cycloidal_gear_2d(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 - **`CSG::involute_rack_2d(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: Option<S>)`** - under construction
@@ -162,6 +164,9 @@ usize, metadata: Option<S>)`** -
 Construct a frustum from `start` to `end` with `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
 - <img src="docs/polyhedron.png" width="128"/> **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
+- <img src="docs/octahedron.png" width="128"/> **`CSG::octahedron(radius: Real, metadata: Option<S>)`** -
+- <img src="docs/icosahedron.png" width="128"/> **`CSG::icosahedron(radius: Real, metadata: Option<S>)`** -
+- <img src="docs/torus.png" width="128"/> **`CSG::torus(major_r: Real, minor_r: Real, segments_major: usize, segments_minor: usize, metadata: Option<S>)`** -
 - <img src="docs/egg.png" width="128"/> **`CSG::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: Option<S>)`**
 - <img src="docs/teardrop3d.png" width="128"/> **`CSG::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: Option<S>)`**
 - <img src="docs/teardrop_cylinder.png" width="128"/> **`CSG::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, metadata: Option<S>)`**

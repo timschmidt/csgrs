@@ -412,7 +412,7 @@ where S: Clone + Send + Sync {
     /// For `sides == 3` this gives the canonical Reuleaux triangle; for any
     /// larger `sides` it yields the natural generalisation (odd-sided shapes
     /// retain constant width, even-sided ones do not but are still smooth).
-    pub fn reuleaux_polygon(
+    pub fn reuleaux(
         sides: usize,
         diameter: Real,
         circle_segments: usize,
@@ -912,12 +912,69 @@ where S: Clone + Send + Sync {
         CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
     }
     
+    /// 2-D heart outline (closed polygon) sized to `width` × `height`.
+    ///
+    /// `segments` controls smoothness (≥ 8 recommended).
+    pub fn heart(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
+        if segments < 8 { return Self::new(); }
+
+        let mut pts = Vec::<(Real, Real)>::with_capacity(segments + 1);
+        let step = crate::float_types::TAU / segments as Real;
+
+        // classic analytic “cardioid-style” heart
+        for i in 0..segments {
+            let t = i as Real * step;
+            let x = 16.0 * (t.sin().powi(3));
+            let y = 13.0 * t.cos() - 5.0 * (2.0 * t).cos()
+                    - 2.0 * (3.0 * t).cos() - (4.0 * t).cos();
+            pts.push((x, y));
+        }
+        pts.push(pts[0]); // close
+
+        // normalise & scale to desired bounding box ---------------------
+        let (min_x, max_x) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(x,_)|
+            (lo.min(x), hi.max(x)));
+        let (min_y, max_y) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(_,y)|
+            (lo.min(y), hi.max(y)));
+        let s_x = width  / (max_x - min_x);
+        let s_y = height / (max_y - min_y);
+
+        let coords: Vec<(Real, Real)> = pts.into_iter()
+            .map(|(x, y)| ((x - min_x) * s_x, (y - min_y) * s_y))
+            .collect();
+
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        Self::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
+    }
+
+    /// 2-D crescent obtained by subtracting a displaced smaller circle
+    /// from a larger one.  
+    /// `segments` controls circle smoothness.
+    ///
+    /// ```
+    /// let cres = CSG::crescent(2.0, 1.4, 0.8, 64, None);
+    /// ```
+    pub fn crescent(
+        outer_r: Real,
+        inner_r: Real,
+        offset: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        if outer_r <= inner_r + EPSILON || segments < 6 { return Self::new(); }
+
+        let big  = Self::circle(outer_r, segments, metadata.clone());
+        let small = Self::circle(inner_r, segments, metadata.clone())
+            .translate(offset, 0.0, 0.0);
+
+        big.difference(&small)
+    }
+    
     // -------------------------------------------------------------------------------------------------
     // 2‑D gear outlines                                                                             //
     // -------------------------------------------------------------------------------------------------
     
     /// Involute gear outline (2‑D).
-    #[allow(clippy::too_many_arguments)]
     pub fn involute_gear_2d(
         module_: Real,
         teeth: usize,
@@ -994,7 +1051,6 @@ where S: Clone + Send + Sync {
     }
     
     /// (Epicyclic) cycloidal gear outline (2‑D).
-    #[allow(clippy::too_many_arguments)]
     pub fn cycloidal_gear_2d(
         module_: Real,
         teeth: usize,
