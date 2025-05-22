@@ -5,7 +5,7 @@ use crate::vertex::Vertex;
 use geo::{Area, CoordsIter, GeometryCollection, LineString, Polygon as GeoPolygon};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
-use std::cell::OnceCell;
+use std::sync::OnceLock;
 
 impl<S: Clone + Debug> CSG<S>
 where S: Clone + Send + Sync {
@@ -183,7 +183,7 @@ where S: Clone + Send + Sync {
         CSG {
             polygons: final_polygons,
             geometry: self.geometry.clone(),
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -692,7 +692,7 @@ where S: Clone + Send + Sync {
         CSG {
             polygons: new_polygons,
             geometry: GeometryCollection::default(),
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }

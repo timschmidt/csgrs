@@ -4,7 +4,7 @@ use crate::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point2, Point3, Vector3};
 use crate::float_types::parry3d::bounding_volume::Aabb;
-use std::cell::OnceCell;
+use std::sync::OnceLock;
 
 /// A polygon, defined by a list of vertices.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
@@ -17,7 +17,7 @@ pub struct Polygon<S: Clone> {
     pub plane: Plane,
     
     /// Lazily‑computed axis‑aligned bounding box of the Polygon
-    pub bounding_box: OnceCell<Aabb>,
+    pub bounding_box: OnceLock<Aabb>,
         
     /// Generic metadata associated with the Polygon
     pub metadata: Option<S>,
@@ -34,7 +34,7 @@ where S: Clone + Send + Sync {
         Polygon {
             vertices,
             plane,
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata,
         }
     }
