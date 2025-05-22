@@ -1,0 +1,13 @@
+[package]
+name = "mfd"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+nalgebra = "0.33.2"
+num-traits = "0.2.19"
+parry3d = "0.21.0"
+
+[[example]]
+name = "main"
+path = "examples/main.rs"
