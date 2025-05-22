@@ -569,6 +569,19 @@ for Polygon
 - rework bezier and bspline using https://github.com/mattatz/curvo
   - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src for cubic and quadratic bezier
 
+## Todo shapes
+- geodesic domes / goldberg polyhedra
+- uniform polyhedra
+- molecular models
+- kepler-poinsot polyhedra
+- dodecahedron
+- Archimedean / Catalan solids
+- Johnson solids, near-miss johnson solids
+- deltahedrons
+- regular polytopes
+- regular skew polyhedra
+- toroidal polyhedra
+
 ## Todo easy
 - finish naca airfoil implementations
 - stack transformation
