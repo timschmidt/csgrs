@@ -2,7 +2,7 @@ use crate::csg::CSG;
 use crate::float_types::{Real, PI, EPSILON, FRAC_PI_2, TAU};
 use geo::{line_string, GeometryCollection, Geometry, LineString, MultiPolygon, Polygon as GeoPolygon, BooleanOps, Orient, orient::Direction};
 use std::fmt::Debug;
-use std::cell::OnceCell;
+use std::sync::OnceLock;
 
 impl<S: Clone + Debug> CSG<S>
 where S: Clone + Send + Sync {
@@ -449,7 +449,7 @@ where S: Clone + Send + Sync {
         CSG {
             geometry: shape.geometry,
             polygons: shape.polygons,
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata,
         }
     }

@@ -3,7 +3,7 @@ use crate::float_types::Real;
 use geo::{Geometry, GeometryCollection};
 use geo_buf::{buffer_multi_polygon, buffer_polygon};
 use std::fmt::Debug;
-use std::cell::OnceCell;
+use std::sync::OnceLock;
 
 impl<S: Clone + Debug> CSG<S>
 where S: Clone + Send + Sync {
@@ -35,7 +35,7 @@ where S: Clone + Send + Sync {
         CSG {
             polygons: self.polygons.clone(),
             geometry: new_collection,
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }

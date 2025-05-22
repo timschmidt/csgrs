@@ -19,7 +19,7 @@ use crate::float_types::parry3d::{
 };
 use crate::float_types::rapier3d::prelude::*;
 use std::fmt::Debug;
-use std::cell::OnceCell;
+use std::sync::OnceLock;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -37,7 +37,7 @@ pub struct CSG<S: Clone> {
     pub geometry: GeometryCollection<Real>,
     
     /// Lazily calculated AABB that spans `polygons` **and** any 2‑D geometry.
-    pub bounding_box: OnceCell<Aabb>,
+    pub bounding_box: OnceLock<Aabb>,
 
     /// Metadata
     pub metadata: Option<S>,
@@ -49,7 +49,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: Vec::new(),
             geometry: GeometryCollection::default(),
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: None,
         }
     }
@@ -313,7 +313,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: final_polys,
             geometry: final_gc,
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -378,7 +378,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: a.all_polygons(),
             geometry: final_gc,
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -443,7 +443,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: a.all_polygons(),
             geometry: final_gc,
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -575,7 +575,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         csg.geometry = csg.geometry.affine_transform(&affine2);
         
         // invalidate the old cached bounding box
-        csg.bounding_box = OnceCell::new();
+        csg.bounding_box = OnceLock::new();
 
         csg
     }
@@ -730,7 +730,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: all_csg.polygons,
             geometry: all_csg.geometry,
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -765,7 +765,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: all_csg.polygons,
             geometry: all_csg.geometry,
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -796,7 +796,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: all_csg.polygons,
             geometry: all_csg.geometry,
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }

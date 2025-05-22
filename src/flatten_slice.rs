@@ -10,7 +10,7 @@ use geo::{
 use hashbrown::HashMap;
 use nalgebra::Point3;
 use std::fmt::Debug;
-use std::cell::OnceCell;
+use std::sync::OnceLock;
 use small_str::{ format_smallstr, SmallStr };
 
 impl<S: Clone + Debug> CSG<S>
@@ -76,7 +76,7 @@ where S: Clone + Send + Sync {
         CSG {
             polygons: Vec::new(),
             geometry: new_gc,
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -158,7 +158,7 @@ where S: Clone + Send + Sync {
         CSG {
             polygons: Vec::new(),
             geometry: new_gc,
-            bounding_box: OnceCell::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
