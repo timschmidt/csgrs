@@ -581,6 +581,7 @@ for Polygon
 - regular polytopes
 - regular skew polyhedra
 - toroidal polyhedra
+- shapes from https://iquilezles.org/articles/
 
 ## Todo easy
 - finish naca airfoil implementations
