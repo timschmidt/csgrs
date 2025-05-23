@@ -1,5 +1,5 @@
 use crate::{CSG, Vertex};
-use crate::polygon::Polygon;
+use crate::mesh::polygon::Polygon;
 use crate::float_types::Real;
 
 use std::error::Error;

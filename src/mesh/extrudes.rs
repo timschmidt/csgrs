@@ -1,7 +1,7 @@
 use crate::csg::CSG;
 use crate::float_types::{EPSILON, Real};
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
+use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
 use geo::{Area, CoordsIter, GeometryCollection, LineString, Polygon as GeoPolygon};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
