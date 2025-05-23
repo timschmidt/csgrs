@@ -2,6 +2,7 @@ use crate::csg::CSG;
 use crate::float_types::Real;
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use std::fmt::Debug;
+use std::sync::OnceLock;
 
 impl<S: Clone + Debug> CSG<S>
 where S: Clone + Send + Sync {
@@ -61,6 +62,7 @@ where S: Clone + Send + Sync {
         CSG {
             polygons: Vec::new(),
             geometry: geo_coll,
+            bounding_box: OnceLock::new(),
             metadata: metadata,
         }
     }

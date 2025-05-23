@@ -1,6 +1,7 @@
 //#![allow(dead_code)]
 #![forbid(unsafe_code)]
 
+pub mod traits;
 pub mod errors;
 pub mod float_types;
 pub mod csg;
