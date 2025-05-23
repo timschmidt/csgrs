@@ -1,6 +1,6 @@
 use crate::float_types::{PI, Real};
-use crate::plane::Plane;
-use crate::vertex::Vertex;
+use crate::mesh::plane::Plane;
+use crate::mesh::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point2, Point3, Vector3};
 use crate::float_types::parry3d::bounding_volume::Aabb;

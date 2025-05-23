@@ -5,8 +5,8 @@
 //! `float_types::EPSILON`.
 
 use crate::float_types::{EPSILON, Real};
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
+use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 use robust::{orient3d, Coord3D};
 

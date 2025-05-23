@@ -1,8 +1,8 @@
-use crate::bsp::Node;
+use crate::mesh::bsp::Node;
 use crate::float_types::{EPSILON, Real};
-use crate::plane::Plane;
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
+use crate::mesh::plane::Plane;
+use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
 use geo::{
     AffineOps, AffineTransform, BooleanOps, BoundingRect, Coord, CoordsIter, Geometry,
     GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,

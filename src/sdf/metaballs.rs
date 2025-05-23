@@ -1,7 +1,7 @@
 use crate::csg::CSG;
 use crate::float_types::{EPSILON, Real};
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
+use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use geo::{CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, Coord, coord};
 use nalgebra::{Point3, Vector3};

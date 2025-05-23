@@ -1,6 +1,6 @@
 use crate::{CSG, Vertex};
 use crate::float_types::Real;
-use crate::polygon::Polygon;
+use crate::mesh::polygon::Polygon;
 
 use std::fmt::Debug;
 use geo::CoordsIter;

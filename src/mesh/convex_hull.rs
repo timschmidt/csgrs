@@ -1,7 +1,7 @@
 use crate::csg::CSG;
 use crate::float_types::Real;
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
+use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
 use chull::ConvexHullWrapper;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;

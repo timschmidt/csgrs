@@ -1,7 +1,7 @@
 use crate::csg::CSG;
 use crate::float_types::{EPSILON, PI, Real, TAU};
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
+use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 
