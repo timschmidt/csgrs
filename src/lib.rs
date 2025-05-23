@@ -8,10 +8,13 @@ pub mod plane;
 pub mod polygon;
 pub mod bsp;
 pub mod csg;
-pub mod shapes2d;
-pub mod shapes3d;
+pub mod shapes;
 pub mod extrudes;
 pub mod io;
+pub mod sketch;
+pub mod mesh;
+pub mod nurbs;
+pub mod voxels;
 
 #[cfg(any(all(feature = "delaunay", feature = "earcut"), not(any(feature = "delaunay", feature = "earcut"))))]
 compile_error!("Either 'delaunay' or 'earcut' feature must be specified, but not both");
