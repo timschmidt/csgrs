@@ -6,13 +6,13 @@
 use csgrs::float_types::Real;
 use std::fs;
 use nalgebra::{Vector3, Point3};
-use csgrs::plane::Plane;
+use csgrs::mesh::plane::Plane;
 
 #[cfg(feature = "image")]
 use image::{GrayImage, ImageBuffer};
 
 #[cfg(feature = "metaballs")]
-use csgrs::metaballs::MetaBall;
+use csgrs::sdf::metaballs::MetaBall;
 
 // A type alias for convenience: no shared data, i.e. S = ()
 type CSG = csgrs::csg::CSG<()>;
