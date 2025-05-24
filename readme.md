@@ -16,7 +16,7 @@ and [`Rapier`](https://crates.io/crates/rapier3d)) and
 library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are
 100% rust and nearly all optional.
 
-[earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
+[Earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
 and
 [constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation)
 algorithms used for triangulation only work in 2D, so **csgrs** rotates
