@@ -13,23 +13,23 @@ impl BooleanOps for Sketch {
     type Output = Self;
     fn union(&self, other: &Self)->Self {
     
-        Self { geom:self.geom[0].try_into().union(&other.geom[0].into_multi_polygon().into()) }
+        Self { geom: GeometryCollection::default() }
     }
     fn difference(&self, other: &Self)->Self {
     
-        Self { geom:self.geom[0].try_into().difference(&other.geom[0].into_multi_polygon().into()) }
+        Self { geom: GeometryCollection::default() }
     }
     fn intersection(&self, other: &Self)->Self {
     
-        Self { geom:self.geom[0].try_into().intersection(&other.geom[0].into_multi_polygon().into()) }
+        Self { geom: GeometryCollection::default() }
     }
 }
 
 impl TransformOps for Sketch {
     fn transform(&self, m:&Matrix4<Real>)->Self {
         // ignore Z after affine, keep XY
-        let a = geo::AffineTransform::from_4x4(m.fixed_view::<3,3>(0,0).clone_owned());
-        Self{ geom: self.geom.affine_transform(&a) }
+        //let a = geo::AffineTransform::from(m.fixed_view::<3,3>(0,0).clone_owned());
+        Self{ geom: GeometryCollection::default() }
     }
 }
 
