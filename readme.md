@@ -2,9 +2,9 @@
 
 A fast, optionally multithreaded **Constructive Solid Geometry (CSG)**
 library in Rust, built around Boolean operations (*union*, *difference*,
-*intersection*, *xor*) on sets of polygons using BSP trees. **csgrs** provides
-data structures and methods for constructing 2D and 3D geometry with an
-[OpenSCAD](https://openscad.org/)-like syntax.  **csgrs** aims to be light
+*intersection*, *xor*) on several different internal geometry representations.
+**csgrs** provides data structures and methods for constructing 2D and 3D geometry
+with an [OpenSCAD](https://openscad.org/)-like syntax.  **csgrs** aims to be light
 weight and full featured through integration with the
 [Dimforge](https://www.dimforge.com/) ecosystem
 (e.g., [`nalgebra`](https://crates.io/crates/nalgebra),
@@ -16,13 +16,11 @@ and [`Rapier`](https://crates.io/crates/rapier3d)) and
 library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are
 100% rust and nearly all optional.
 
-The BSP tree works with polygons made of lines.  **csgrs** interpolates
-all curves when working in 3D so that they can be processed using the BSP
-tree.  [earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
+[earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
 and
 [constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation)
-algorithms used for tessellation only work in 2D, so **csgrs** rotates
-3D polygons into 2D for tessellation then back to 3D.
+algorithms used for triangulation only work in 2D, so **csgrs** rotates
+3D polygons into 2D for triangulation then back to 3D.
 
 ![Example CSG output](docs/csg.png)
 
