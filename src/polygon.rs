@@ -169,7 +169,7 @@ where S: Clone + Send + Sync {
 
     /// Subdivide this polygon into smaller triangles.
     /// Returns a list of new triangles (each is a [Vertex; 3]).
-    pub fn subdivide_triangles(&self, subdivisions: u32) -> Vec<[Vertex; 3]> {
+    pub fn subdivide_triangles(&self, subdivisions: core::num::NonZeroU32) -> Vec<[Vertex; 3]> {
         // 1) Triangulate the polygon as it is.
         let base_tris = self.tessellate();
 
@@ -178,7 +178,7 @@ where S: Clone + Send + Sync {
         for tri in base_tris {
             // We'll keep a queue of triangles to process
             let mut queue = vec![tri];
-            for _ in 0..subdivisions {
+            for _ in 0..subdivisions.get() {
                 let mut next_level = Vec::new();
                 for t in queue {
                     let subs = subdivide_triangle(t);
