@@ -325,12 +325,12 @@ fn test_polygon_subdivide_triangles() {
         ],
         None,
     );
-    let subs = poly.subdivide_triangles(1);
+    let subs = poly.subdivide_triangles(1.try_into().expect("not 0"));
     // One triangle subdivided once => 4 smaller triangles
     assert_eq!(subs.len(), 4);
 
     // If we subdivide the same single tri 2 levels, we expect 16 sub-triangles.
-    let subs2 = poly.subdivide_triangles(2);
+    let subs2 = poly.subdivide_triangles(2.try_into().expect("not 0"));
     assert_eq!(subs2.len(), 16);
 }
 
@@ -800,7 +800,7 @@ fn test_csg_subdivide_triangles() {
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
     // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
     // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
-    let subdiv = cube.subdivide_triangles(1);
+    let subdiv = cube.subdivide_triangles(1.try_into().expect("not 0"));
     assert_eq!(subdiv.polygons.len(), 6 * 8);
 }
 
@@ -951,7 +951,7 @@ fn test_csg_to_trimesh() {
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
     let shape = cube.to_trimesh();
     // Should be a TriMesh with 12 triangles
-    if let Some(trimesh) = shape.as_trimesh() {
+    if let Some(trimesh) = shape {
         assert_eq!(trimesh.indices().len(), 12); // 6 faces => 2 triangles each => 12
     } else {
         panic!("Expected a TriMesh");
@@ -1229,7 +1229,7 @@ fn test_subdivide_metadata() {
         Some("LargeQuad".to_string()),
     );
     let csg = CSG::from_polygons(&[poly]);
-    let subdivided = csg.subdivide_triangles(1); // one level of subdivision
+    let subdivided = csg.subdivide_triangles(1.try_into().expect("not 0")); // one level of subdivision
 
     // Now it's split into multiple triangles. Each should keep "LargeQuad" as metadata.
     assert!(subdivided.polygons.len() > 1);
@@ -1772,4 +1772,55 @@ fn test_flatten_and_union_debug() {
         flattened.polygons[0].vertices.len() >= 3,
         "Should form at least a triangle"
     );
+}
+
+#[test]
+fn test_contains_vertex() {
+    let csg_cube = CSG::<()>::cube(6.0, 6.0, 6.0, None);
+
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
+    assert!(csg_cube.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, -6.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.0)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.01)));
+
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.99999999999)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-11)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-14)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.9 + 9e-9)));
+
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, -3.0, 3.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, -3.01, 3.0)));
+    assert!(csg_cube.contains_vertex(&Point3::new(0.01, 4.0, 3.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)));
+
+    let csg_cube_hole = CSG::<()>::cube(4.0, 4.0, 4.0, None);
+    let cube_with_hole = csg_cube.difference(&csg_cube_hole);
+
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(0.01, 4.0, 3.0)));
+    assert!(cube_with_hole.contains_vertex(&Point3::new(0.01, 4.01, 3.0)));
+
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)));
+    assert!(cube_with_hole.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
+
+    let csg_sphere = CSG::<()>::sphere(6.0, 14, 14, None);
+
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(-3.0, -3.0, -3.0)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
+
+    assert!(!csg_sphere.contains_vertex(&Point3::new(1.0, 1.0, 5.8)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(0.0, 3.0, 5.8)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(0.0, 0.0, 5.8)));
+
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -6.0)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 0.0)));
+
+    assert!(csg_sphere.contains_vertex(&Point3::new(0.0, 0.0, -5.8)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -5.8)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -6.01)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 0.01)));
 }

@@ -111,7 +111,7 @@ fn main() {
     let _ = fs::write("stl/circle_revolve_180.stl", partial_revolve.to_stl_binary("circle_revolve_180").unwrap());
 
     // 9) Subdivide triangles (for smoother sphere or shapes):
-    let subdiv_sphere = sphere.subdivide_triangles(2); // 2 subdivision levels
+    let subdiv_sphere = sphere.subdivide_triangles(2.try_into().expect("not 0")); // 2 subdivision levels
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/sphere_subdiv2.stl", subdiv_sphere.to_stl_binary("sphere_subdiv2").unwrap());
 
