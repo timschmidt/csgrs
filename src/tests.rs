@@ -800,7 +800,7 @@ fn test_csg_subdivide_triangles() {
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
     // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
     // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
-    let subdiv = cube.subdivided_triangles(1.try_into().expect("not 0"));
+    let subdiv = cube.subdivide_triangles(1.try_into().expect("not 0"));
     assert_eq!(subdiv.polygons.len(), 6 * 8);
 }
 
@@ -1229,7 +1229,7 @@ fn test_subdivide_metadata() {
         Some("LargeQuad".to_string()),
     );
     let csg = CSG::from_polygons(&[poly]);
-    let subdivided = csg.subdivided_triangles(1.try_into().expect("not 0")); // one level of subdivision
+    let subdivided = csg.subdivide_triangles(1.try_into().expect("not 0")); // one level of subdivision
 
     // Now it's split into multiple triangles. Each should keep "LargeQuad" as metadata.
     assert!(subdivided.polygons.len() > 1);
