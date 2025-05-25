@@ -750,7 +750,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// cube.subdivide_triangles(2.try_into().expect("not zero"));
     /// assert_eq!(cube.polygons.len(), 6 * 8 * 2);
     /// ```
-    pub fn subdivide_triangles(&mut self, levels: core::num::NonZeroU32) {
+    pub fn subdivide_triangles_mut(&mut self, levels: core::num::NonZeroU32) {
         // clear before error check for consistency
         self.geometry.0.clear();
 
@@ -790,7 +790,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
     /// Subdivide all polygons in this CSG 'levels' times, returning a new CSG.
     /// This results in a triangular mesh with more detail.
-    pub fn subdivided_triangles(&self, levels: core::num::NonZeroU32) -> CSG<S> {
+    pub fn subdivide_triangles(&self, levels: core::num::NonZeroU32) -> CSG<S> {
         #[cfg(feature = "parallel")]
         let new_polygons: Vec<Polygon<S>> = self
             .polygons
