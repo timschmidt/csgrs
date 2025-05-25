@@ -751,9 +751,6 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// assert_eq!(cube.polygons.len(), 6 * 8 * 2);
     /// ```
     pub fn subdivide_triangles_mut(&mut self, levels: core::num::NonZeroU32) {
-        // clear before error check for consistency
-        self.geometry.0.clear();
-
         #[cfg(feature = "parallel")]
         {
         self.polygons = self.polygons
