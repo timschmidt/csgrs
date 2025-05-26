@@ -578,6 +578,7 @@ for Polygon
 - gerber output
 - rework bezier and bspline using https://github.com/mattatz/curvo
   - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src for cubic and quadratic bezier
+- https://docs.rs/rgeometry/latest/rgeometry/algorithms/polygonization/fn.two_opt_moves.html and other algorithms from rgeometry crate
 
 ## Todo shapes
 - geodesic domes / goldberg polyhedra

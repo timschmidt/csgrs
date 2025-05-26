@@ -11,6 +11,7 @@ pub struct Sketch {
 
 impl BooleanOps for Sketch {
     type Output = Self;
+    
     fn union(&self, other: &Self)->Self {
     
         Self { geom: GeometryCollection::default() }
@@ -26,6 +27,9 @@ impl BooleanOps for Sketch {
 }
 
 impl TransformOps for Sketch {
+	fn new() -> Self {
+		Self { geom: GeometryCollection::default() }
+	}
     fn transform(&self, m:&Matrix4<Real>)->Self {
         // ignore Z after affine, keep XY
         //let a = geo::AffineTransform::from(m.fixed_view::<3,3>(0,0).clone_owned());
@@ -33,6 +37,12 @@ impl TransformOps for Sketch {
     }
 }
 
-//impl Convert<crate::mesh::Solid> for Sketch { /* extrude / revolve helpers */ }
-//impl Convert<crate::voxels::VoxelGrid> for Sketch { /* slice-and-fill */ }
-
+impl Convert<crate::mesh::mesh::Mesh> for Sketch {
+	fn to(&self) -> Target {
+		Self{ geom: GeometryCollection::default() }
+	}
+	
+	fn from(source: &Target) -> Self {
+		Self{ geom: GeometryCollection::default() }
+	}
+}

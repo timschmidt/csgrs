@@ -12,6 +12,7 @@ pub trait BooleanOps<Other = Self> {
 
 /// Rigid + affine transformations in *native* space.
 pub trait TransformOps {
+	fn new() -> Self;
     fn transform(&self, m: &Matrix4<Real>) -> Self;
     fn translate(&self, v: Vector3<Real>) -> Self where Self: Sized {
         self.transform(&nalgebra::Translation3::from(v).to_homogeneous())
