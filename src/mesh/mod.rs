@@ -1,3 +1,4 @@
+pub mod mesh;
 pub mod vertex;
 pub mod polygon;
 pub mod bsp;
