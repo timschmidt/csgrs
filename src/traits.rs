@@ -20,9 +20,3 @@ pub trait TransformOps {
     // rotate / scale convenience helpers...
 }
 
-/// Lossy or exact conversion between kernels.
-pub trait Convert<Target> {
-    fn to(&self)              -> Target;
-    fn from(source: &Target)  -> Self;
-}
-

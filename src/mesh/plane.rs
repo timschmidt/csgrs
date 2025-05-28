@@ -186,11 +186,7 @@ impl Plane {
         std::mem::swap(&mut self.point_a, &mut self.point_b);
     }
 
-    // ────────────────────────────────────────────────────────────────
-    //  Robust polygon split
-    // ────────────────────────────────────────────────────────────────
-    ///
-    /// Returns four buckets:
+    /// Splits a polygon by this plane, returning four buckets:
     /// `(coplanar_front, coplanar_back, front, back)`.
     pub fn split_polygon<S: Clone + Send + Sync>(
         &self,
