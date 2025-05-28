@@ -1,4 +1,4 @@
-use crate::traits::{BooleanOps, TransformOps, Convert};
+use crate::traits::{BooleanOps, TransformOps};
 use crate::float_types::Real;
 use geo::{GeometryCollection, BooleanOps as GeoBool, AffineOps};
 use nalgebra::{Matrix4, Vector3};
@@ -37,12 +37,9 @@ impl TransformOps for Mesh {
     }
 }
 
-impl Convert<crate::sketch::sketch::Sketch> for Mesh {
-	fn to(&self) -> Target {
-		Self{ geom: GeometryCollection::default() }
-	}
+impl From<crate::sketch::sketch::Sketch> for Mesh {
+	fn from(sketch: crate::sketch::sketch::Sketch) -> Self {
 	
-	fn from(source: &Target) -> Self {
-		Self{ geom: GeometryCollection::default() }
+		Mesh { geom: GeometryCollection::default() }
 	}
 }
