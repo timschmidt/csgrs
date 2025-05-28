@@ -9,7 +9,10 @@ use std::fmt::Debug;
 use hashbrown::HashMap;
 
 /// [Metaballs](https://en.wikipedia.org/wiki/Metaballs), organic-looking isosurface,
-/// characterised by their ability to meld together when in close proximity to create single objects.
+/// characterised by their ability to meld together when in close proximity to create single objects. 
+///
+/// ![Metaballs demo image][Metaballs demo image]
+#[cfg_attr(doc, doc = embed_doc_image::embed_image!("Metaballs demo image", "docs/metaballs.png"))]
 #[derive(Debug, Clone)]
 pub struct MetaBall {
     pub center: Point3<Real>,
