@@ -1,3 +1,5 @@
+//! Create `CSG`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
+
 use crate::csg::CSG;
 use crate::float_types::Real;
 use crate::polygon::Polygon;
