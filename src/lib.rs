@@ -24,6 +24,7 @@
 //! - **hershey-text**: create `CSG`s using Hershey fonts (`.jhf`)
 //! - **image-io**: make 2d `CSG`s from images
 //! - **earcut**: use `geo`s `earcutr` feature for triangulation
+//! - **bevymesh**: for conversion to a bevy `Mesh`
 
 #![forbid(unsafe_code)]
 #![deny(unused)]
