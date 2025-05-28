@@ -8,6 +8,8 @@ use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use hashbrown::HashMap;
 
+/// [Metaballs](https://en.wikipedia.org/wiki/Metaballs), organic-looking isosurface,
+/// characterised by their ability to meld together when in close proximity to create single objects.
 #[derive(Debug, Clone)]
 pub struct MetaBall {
     pub center: Point3<Real>,
