@@ -37,8 +37,8 @@ impl TransformOps for Sketch {
     }
 }
 
-impl From<crate::mesh::mesh::Mesh> for Sketch {
-	fn from(mesh: crate::mesh::mesh::Mesh) -> Self {
+impl<S: Clone> From<crate::mesh::mesh::Mesh<S>> for Sketch {
+	fn from(mesh: crate::mesh::mesh::Mesh<S>) -> Self {
 	
 		Sketch { geom: GeometryCollection::default() }
 	}
