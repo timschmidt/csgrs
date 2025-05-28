@@ -3,43 +3,76 @@ use crate::float_types::Real;
 use geo::{GeometryCollection, BooleanOps as GeoBool, AffineOps};
 use nalgebra::{Matrix4, Vector3};
 use std::convert::TryInto;
+use std::sync::OnceLock;
+use crate::mesh::polygon::Polygon;
+use crate::float_types::parry3d::bounding_volume::Aabb;
 
 #[derive(Clone, Debug)]
-pub struct Mesh {
-    pub geom: GeometryCollection<Real>,
+pub struct Mesh<S: Clone> {
+	/// 3D polygons for volumetric shapes
+    pub polygons: Vec<Polygon<S>>,
+    
+    /// Lazily calculated AABB that spans `polygons`.
+    pub bounding_box: OnceLock<Aabb>,
+
+    /// Metadata
+    pub metadata: Option<S>,
 }
 
-impl BooleanOps for Mesh {
+impl<S: Clone> BooleanOps for Mesh<S> {
     type Output = Self;
 
     fn union(&self, other: &Self)->Self {
     
-        Self { geom: GeometryCollection::default() }
+        Mesh { 
+			polygons: Vec::new(),
+			bounding_box: OnceLock::new(),
+			metadata: None,
+		}
     }
     fn difference(&self, other: &Self)->Self {
     
-        Self { geom: GeometryCollection::default() }
+        Mesh { 
+			polygons: Vec::new(),
+			bounding_box: OnceLock::new(),
+			metadata: None,
+		}
     }
     fn intersection(&self, other: &Self)->Self {
     
-        Self { geom: GeometryCollection::default() }
+        Mesh { 
+			polygons: Vec::new(),
+			bounding_box: OnceLock::new(),
+			metadata: None,
+		}
     }
 }
 
-impl TransformOps for Mesh {
+impl<S: Clone> TransformOps for Mesh<S> {
 	fn new() -> Self {
-		Self { geom: GeometryCollection::default() }
+		Mesh { 
+			polygons: Vec::new(),
+			bounding_box: OnceLock::new(),
+			metadata: None,
+		}
 	}
     fn transform(&self, m:&Matrix4<Real>)->Self {
-        // ignore Z after affine, keep XY
-        //let a = geo::AffineTransform::from(m.fixed_view::<3,3>(0,0).clone_owned());
-        Self{ geom: GeometryCollection::default() }
+
+        Mesh { 
+			polygons: Vec::new(),
+			bounding_box: OnceLock::new(),
+			metadata: None,
+		}
     }
 }
 
-impl From<crate::sketch::sketch::Sketch> for Mesh {
+impl<S: Clone> From<crate::sketch::sketch::Sketch> for Mesh<S> {
 	fn from(sketch: crate::sketch::sketch::Sketch) -> Self {
 	
-		Mesh { geom: GeometryCollection::default() }
+		Mesh { 
+			polygons: Vec::new(),
+			bounding_box: OnceLock::new(),
+			metadata: None,
+		}
 	}
 }
