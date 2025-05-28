@@ -5,41 +5,66 @@ use nalgebra::{Matrix4, Vector3};
 use std::convert::TryInto;
 
 #[derive(Clone, Debug)]
-pub struct Sketch {
-    pub geom: GeometryCollection<Real>,
+pub struct Sketch<S> {
+	/// 2D points, lines, polylines, polygons, and multipolygons
+    pub geometry: GeometryCollection<Real>,
+    
+    /// Metadata
+    pub metadata: Option<S>,
 }
 
-impl BooleanOps for Sketch {
+impl<S> BooleanOps for Sketch<S> {
     type Output = Self;
     
     fn union(&self, other: &Self)->Self {
     
-        Self { geom: GeometryCollection::default() }
+        Sketch {
+			geometry: GeometryCollection::default(),
+			metadata: None,
+		}
     }
+    
     fn difference(&self, other: &Self)->Self {
     
-        Self { geom: GeometryCollection::default() }
+        Sketch {
+			geometry: GeometryCollection::default(),
+			metadata: None,
+		}
     }
+    
     fn intersection(&self, other: &Self)->Self {
     
-        Self { geom: GeometryCollection::default() }
+        Sketch {
+			geometry: GeometryCollection::default(),
+			metadata: None,
+		}
     }
 }
 
-impl TransformOps for Sketch {
+impl<S> TransformOps for Sketch<S> {
 	fn new() -> Self {
-		Self { geom: GeometryCollection::default() }
+		Sketch {
+			geometry: GeometryCollection::default(),
+			metadata: None,
+		}
 	}
+	
     fn transform(&self, m:&Matrix4<Real>)->Self {
         // ignore Z after affine, keep XY
         //let a = geo::AffineTransform::from(m.fixed_view::<3,3>(0,0).clone_owned());
-        Self{ geom: GeometryCollection::default() }
+        Sketch {
+			geometry: GeometryCollection::default(),
+			metadata: None,
+		}
     }
 }
 
-impl<S: Clone> From<crate::mesh::mesh::Mesh<S>> for Sketch {
+impl<S: Clone> From<crate::mesh::mesh::Mesh<S>> for Sketch<S> {
 	fn from(mesh: crate::mesh::mesh::Mesh<S>) -> Self {
 	
-		Sketch { geom: GeometryCollection::default() }
+		Sketch {
+			geometry: GeometryCollection::default(),
+			metadata: None,
+		}
 	}
 }

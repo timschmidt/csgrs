@@ -30,6 +30,7 @@ impl<S: Clone> BooleanOps for Mesh<S> {
 			metadata: None,
 		}
     }
+    
     fn difference(&self, other: &Self)->Self {
     
         Mesh { 
@@ -38,6 +39,7 @@ impl<S: Clone> BooleanOps for Mesh<S> {
 			metadata: None,
 		}
     }
+    
     fn intersection(&self, other: &Self)->Self {
     
         Mesh { 
@@ -56,6 +58,7 @@ impl<S: Clone> TransformOps for Mesh<S> {
 			metadata: None,
 		}
 	}
+	
     fn transform(&self, m:&Matrix4<Real>)->Self {
 
         Mesh { 
@@ -66,8 +69,8 @@ impl<S: Clone> TransformOps for Mesh<S> {
     }
 }
 
-impl<S: Clone> From<crate::sketch::sketch::Sketch> for Mesh<S> {
-	fn from(sketch: crate::sketch::sketch::Sketch) -> Self {
+impl<S: Clone> From<crate::sketch::sketch::Sketch<S>> for Mesh<S> {
+	fn from(sketch: crate::sketch::sketch::Sketch<S>) -> Self {
 	
 		Mesh { 
 			polygons: Vec::new(),
