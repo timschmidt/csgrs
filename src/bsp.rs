@@ -13,9 +13,18 @@ use rayon::join;
 /// A BSP tree node, containing polygons plus optional front/back subtrees
 #[derive(Debug, Clone)]
 pub struct Node<S: Clone> {
+    /// Splitting plane for this node *or* **None** for a leaf that
+    /// only stores polygons.
     pub plane: Option<Plane>,
+    
+    /// Polygons in *front* half‑spaces.
     pub front: Option<Box<Node<S>>>,
+    
+    /// Polygons in *back* half‑spaces.
     pub back: Option<Box<Node<S>>>,
+    
+    /// Polygons that lie *exactly* on `plane`
+    /// (after the node has been built).
     pub polygons: Vec<Polygon<S>>,
 }
 
@@ -90,14 +99,14 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         // Now decide where to send the coplanar polygons.  If the polygon’s normal
         // aligns with this node’s plane.normal, treat it as “front,” else treat as “back.”
         for cp in coplanar_front {
-            if plane.orient_plane(&cp.plane()) == FRONT {
+            if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
             }
         }
         for cp in coplanar_back {
-            if plane.orient_plane(&cp.plane()) == FRONT {
+            if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
@@ -239,7 +248,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
         // Choose the first polygon's plane as the splitting plane if not already set.
         if self.plane.is_none() {
-            self.plane = Some(polygons[0].plane().clone());
+            self.plane = Some(polygons[0].plane.clone());
         }
         let plane = self.plane.clone().unwrap();
 

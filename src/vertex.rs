@@ -9,16 +9,24 @@ pub struct Vertex {
 }
 
 impl Vertex {
+    /// Create a new [`Vertex`].
+    ///
+    /// * `pos`    – the position in model space  
+    /// * `normal` – (optionally non‑unit) normal; it will be **copied
+    ///              verbatim**, so make sure it is oriented the way
+    ///              you need it for lighting / BSP tests.
     pub const fn new(pos: Point3<Real>, normal: Vector3<Real>) -> Self {
         Vertex { pos, normal }
     }
 
-    /// Flip orientation-specific data (like normals)
+    /// Flip vertex normal
     pub fn flip(&mut self) {
         self.normal = -self.normal;
     }
 
-    /// Linearly interpolate between `self` and `other` by parameter `t`.
+    /// Return the barycentric linear interpolation between `self` (`t = 0`) and `other` (`t = 1`).
+    ///
+    /// Normals are linearlly interpolated as well.
     pub fn interpolate(&self, other: &Vertex, t: Real) -> Vertex {
         // For positions (Point3): p(t) = p0 + t * (p1 - p0)
         let new_pos = self.pos + (other.pos - self.pos) * t;

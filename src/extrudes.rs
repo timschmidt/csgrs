@@ -5,6 +5,7 @@ use crate::vertex::Vertex;
 use geo::{Area, CoordsIter, GeometryCollection, LineString, Polygon as GeoPolygon};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
+use std::sync::OnceLock;
 
 impl<S: Clone + Debug> CSG<S>
 where S: Clone + Send + Sync {
@@ -111,6 +112,54 @@ where S: Clone + Send + Sync {
                         extrude_geometry(sub, direction, metadata, out_polygons);
                     }
                 }
+                geo::Geometry::LineString(ls) => {
+                    // extrude line strings into side surfaces
+                    let coords: Vec<_> = ls.coords_iter().collect();
+                    for i in 0..coords.len()-1 {
+                        let c_i = coords[i];
+                        let c_j = coords[i+1];
+                        let b_i = Point3::new(c_i.x, c_i.y, 0.0);
+                        let b_j = Point3::new(c_j.x, c_j.y, 0.0);
+                        let t_i = b_i + direction;
+                        let t_j = b_j + direction;
+                        // compute face normal for lighting
+                        let normal = (b_j - b_i).cross(&(t_i - b_i)).normalize();
+                        out_polygons.push(Polygon::new(vec![
+                            Vertex::new(b_i, normal),
+                            Vertex::new(b_j, normal),
+                            Vertex::new(t_j, normal),
+                            Vertex::new(t_i, normal),
+                        ], metadata.clone()));
+                    }
+                }
+                // Line: single segment ribbon
+                geo::Geometry::Line(line) => {
+                    let c0 = line.start;
+                    let c1 = line.end;
+                    let b0 = Point3::new(c0.x, c0.y, 0.0);
+                    let b1 = Point3::new(c1.x, c1.y, 0.0);
+                    let t0 = b0 + direction;
+                    let t1 = b1 + direction;
+                    let normal = (b1 - b0).cross(&(t0 - b0)).normalize();
+                    out_polygons.push(Polygon::new(vec![
+                        Vertex::new(b0, normal),
+                        Vertex::new(b1, normal),
+                        Vertex::new(t1, normal),
+                        Vertex::new(t0, normal),
+                    ], metadata.clone()));
+                }
+
+                // Rect: convert to polygon and extrude
+                geo::Geometry::Rect(rect) => {
+                    let poly2d = rect.to_polygon();
+                    extrude_geometry(&geo::Geometry::Polygon(poly2d), direction, metadata, out_polygons);
+                }
+
+                // Triangle: convert to polygon and extrude
+                geo::Geometry::Triangle(tri) => {
+                    let poly2d = tri.to_polygon();
+                    extrude_geometry(&geo::Geometry::Polygon(poly2d), direction, metadata, out_polygons);
+                }
                 // Other geometry types (LineString, Point, etc.) are skipped or could be handled differently:
                 _ => { /* skip */ }
             }
@@ -134,6 +183,7 @@ where S: Clone + Send + Sync {
         CSG {
             polygons: final_polygons,
             geometry: self.geometry.clone(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -641,6 +691,7 @@ where S: Clone + Send + Sync {
         CSG {
             polygons: new_polygons,
             geometry: GeometryCollection::default(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }

@@ -3,21 +3,38 @@ use crate::plane::Plane;
 use crate::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point2, Point3, Vector3};
+use crate::float_types::parry3d::bounding_volume::Aabb;
+use std::sync::OnceLock;
 
 /// A polygon, defined by a list of vertices.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
 pub struct Polygon<S: Clone> {
+    /// Vertices defining the Polygon's shape
     pub vertices: Vec<Vertex>,
+    
+    /// The plane on which this Polygon lies, used for splitting
+    pub plane: Plane,
+    
+    /// Lazily‑computed axis‑aligned bounding box of the Polygon
+    pub bounding_box: OnceLock<Aabb>,
+        
+    /// Generic metadata associated with the Polygon
     pub metadata: Option<S>,
 }
 
 impl<S: Clone> Polygon<S>
 where S: Clone + Send + Sync {
     /// Create a polygon from vertices
-    pub const fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
+    pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
+        assert!(vertices.len() >= 3, "degenerate polygon");
+        
+        let plane = Plane::from_vertices(vertices.clone());
+
         Polygon {
             vertices,
+            plane,
+            bounding_box: OnceLock::new(),
             metadata,
         }
     }
@@ -29,7 +46,7 @@ where S: Clone + Send + Sync {
             metadata,
         }
     }
-    
+
     /// Returns a [`Plane`] defined by the first three vertices of the [`Polygon`]
     ///
     /// I think a worst-case can be constructed for any heuristic here the
@@ -42,16 +59,36 @@ where S: Clone + Send + Sync {
     /// quality solution as a second function.
     #[inline]
     pub fn plane(&self) -> Plane {
-        Plane::from_points(&self.vertices[0].pos, &self.vertices[1].pos, &self.vertices[2].pos)
+        self.plane
+    }
+
+    /// Axis aligned bounding box of this Polygon (cached after first call)
+    pub fn bounding_box(&self) -> Aabb {
+        *self.bounding_box.get_or_init(|| {
+            let mut mins = Point3::new(Real::MAX, Real::MAX, Real::MAX);
+            let mut maxs = Point3::new(-Real::MAX, -Real::MAX, -Real::MAX);
+            for v in &self.vertices {
+                mins.x = mins.x.min(v.pos.x);
+                mins.y = mins.y.min(v.pos.y);
+                mins.z = mins.z.min(v.pos.z);
+                maxs.x = maxs.x.max(v.pos.x);
+                maxs.y = maxs.y.max(v.pos.y);
+                maxs.z = maxs.z.max(v.pos.z);
+            }
+            Aabb::new(mins, maxs)
+        })
     }
 
     /// Reverses winding order, flips vertices normals, and flips the plane normal
     pub fn flip(&mut self) {
+        // 1) reverse vertices
         self.vertices.reverse();
+        // 2) flip all vertex normals
         for v in &mut self.vertices {
             v.flip();
         }
-        self.plane().flip();
+        // 3) flip the cached plane too
+        self.plane.flip();
     }
 
     /// Return an iterator over paired vertices each forming an edge of the polygon
@@ -68,25 +105,22 @@ where S: Clone + Send + Sync {
             return Vec::new();
         }
 
-        //println!("{:#?}",  self.vertices);
-
-        let normal_3d = self.plane().normal().normalize();
+        let normal_3d = self.plane.normal().normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
         let origin_3d = self.vertices[0].pos;
 
-        // Flatten each vertex to 2D
-        let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
-        for vert in &self.vertices {
-            let offset = vert.pos.coords - origin_3d.coords;
-            let x = offset.dot(&u);
-            let y = offset.dot(&v);
-            all_vertices_2d.push(coord! {x: x, y: y});
-        }
-
         #[cfg(feature = "earcut")]
         {
+            // Flatten each vertex to 2D
+            let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
+            for vert in &self.vertices {
+                let offset = vert.pos.coords - origin_3d.coords;
+                let x = offset.dot(&u);
+                let y = offset.dot(&v);
+                all_vertices_2d.push(coord! {x: x, y: y});
+            }
+        
             use geo::TriangulateEarcut;
-            //println!("{:#?}",  LineString::new(all_vertices_2d.clone()));
             let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new())
                 .earcut_triangles_raw();
             let triangle_indices = triangulation.triangle_indices;
@@ -111,15 +145,30 @@ where S: Clone + Send + Sync {
         }
 
         #[cfg(feature = "delaunay")]
-        {
+        {        
             use geo::TriangulateSpade;
+            
+            // Flatten each vertex to 2D
+            // Here we clamp values within spade's minimum allowed value of  0.0 to 0.0
+            // because spade refuses to triangulate with values within it's minimum:
+            const MIN_ALLOWED_VALUE: f64 = 1.793662034335766e-43; // 1.0 * 2^-142
+            let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
+            for vert in &self.vertices {
+                let offset = vert.pos.coords - origin_3d.coords;
+                let x = offset.dot(&u);
+                let x_clamped = if x.abs() < MIN_ALLOWED_VALUE { 0.0 } else { x };
+                let y = offset.dot(&v);
+                let y_clamped = if y.abs() < MIN_ALLOWED_VALUE { 0.0 } else { y };
+                all_vertices_2d.push(coord! {x: x_clamped, y: y_clamped});
+            }
+            
             let polygon_2d = GeoPolygon::new(
                 LineString::new(all_vertices_2d),
                 // no holes if your polygon is always simple
                 Vec::new(),
             );
             let Ok(tris) = polygon_2d.constrained_triangulation(Default::default()) else {
-                return Vec::new(); // or handle however you wish
+                return Vec::new();
             };
 
             let mut final_triangles = Vec::with_capacity(tris.len());
@@ -143,7 +192,7 @@ where S: Clone + Send + Sync {
 
     /// Subdivide this polygon into smaller triangles.
     /// Returns a list of new triangles (each is a [Vertex; 3]).
-    pub fn subdivide_triangles(&self, subdivisions: u32) -> Vec<[Vertex; 3]> {
+    pub fn subdivide_triangles(&self, subdivisions: core::num::NonZeroU32) -> Vec<[Vertex; 3]> {
         // 1) Triangulate the polygon as it is.
         let base_tris = self.tessellate();
 
@@ -152,7 +201,7 @@ where S: Clone + Send + Sync {
         for tri in base_tris {
             // We'll keep a queue of triangles to process
             let mut queue = vec![tri];
-            for _ in 0..subdivisions {
+            for _ in 0..subdivisions.get() {
                 let mut next_level = Vec::new();
                 for t in queue {
                     let subs = subdivide_triangle(t);
@@ -192,7 +241,7 @@ where S: Clone + Send + Sync {
         let mut poly_normal = normal.normalize();
 
         // Ensure the computed normal is in the same direction as the given normal.
-        if poly_normal.dot(&self.plane().normal()) < 0.0 {
+        if poly_normal.dot(&self.plane.normal()) < 0.0 {
             poly_normal = -poly_normal;
         }
 

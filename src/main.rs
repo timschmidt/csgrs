@@ -56,7 +56,7 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/subtract_cube_sphere.stl", subtract_shape.to_stl_binary("subtract_cube_sphere").unwrap());
 
-    let intersect_shape = moved_cube.intersection(&sphere);
+    let intersect_shape = cube.intersection(&sphere);
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/intersect_cube_sphere.stl", intersect_shape.to_stl_binary("intersect_cube_sphere").unwrap());
 
@@ -88,11 +88,19 @@ fn main() {
 
     let shrunk_2d = square_2d.offset(-0.5);
     let _ = fs::write("stl/square_2d_shrink_0_5.stl", shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"));
+    
+    // star(num_points, outer_radius, inner_radius)
+    let star_2d = CSG::star(5, 2.0, 0.8, None);
+    let _ = fs::write("stl/star_2d.stl", star_2d.to_stl_ascii("star_2d"));
 
-    // 8) Extrude & Rotate-Extrude
-    let extruded_square = square_2d.extrude(1.0);
+    // Extrude & Rotate-Extrude
+    let extruded_star = star_2d.extrude(1.0);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/square_extrude.stl", extruded_square.to_stl_binary("square_extrude").unwrap());
+    let _ = fs::write("stl/star_extrude.stl", extruded_star.to_stl_binary("star_extrude").unwrap());
+    
+    let vector_extruded_star = star_2d.extrude_vector(Vector3::new(2.0, 1.0, 1.0));
+    #[cfg(feature = "stl-io")]
+    let _ = fs::write("stl/star_vec_extrude.stl", vector_extruded_star.to_stl_binary("star_extrude").unwrap());
 
     let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(360.0, 32);
     #[cfg(feature = "stl-io")]
@@ -103,7 +111,7 @@ fn main() {
     let _ = fs::write("stl/circle_revolve_180.stl", partial_revolve.to_stl_binary("circle_revolve_180").unwrap());
 
     // 9) Subdivide triangles (for smoother sphere or shapes):
-    let subdiv_sphere = sphere.subdivide_triangles(2); // 2 subdivision levels
+    let subdiv_sphere = sphere.subdivide_triangles(2.try_into().expect("not 0")); // 2 subdivision levels
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/sphere_subdiv2.stl", subdiv_sphere.to_stl_binary("sphere_subdiv2").unwrap());
 
@@ -163,7 +171,7 @@ fn main() {
     
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
-    let cube = CSG::cube(1.0, 1.0, 1.0, None);
+    let cube = CSG::cube(100.0, 100.0, 100.0, None);
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
     let _ = fs::write("stl/flattened_cube.stl", flattened.to_stl_ascii("flattened_cube"));
@@ -332,10 +340,6 @@ fn main() {
     let trap_2d = CSG::trapezoid(1.0, 2.0, 2.0, 0.5, None);
     let _ = fs::write("stl/trapezoid_2d.stl", trap_2d.to_stl_ascii("trapezoid_2d"));
 
-    // 7) star(num_points, outer_radius, inner_radius)
-    let star_2d = CSG::star(5, 2.0, 0.8, None);
-    let _ = fs::write("stl/star_2d.stl", star_2d.to_stl_ascii("star_2d"));
-
     // 8) teardrop(width, height, segments) [2D shape]
     let teardrop_2d = CSG::teardrop_outline(2.0, 3.0, 16, None);
     let _ = fs::write("stl/teardrop_2d.stl", teardrop_2d.to_stl_ascii("teardrop_2d"));
@@ -353,15 +357,15 @@ fn main() {
     let _ = fs::write("stl/keyhole_2d.stl", keyhole_2d.to_stl_ascii("keyhole_2d"));
 
     // 12) reuleaux_polygon(sides, side_len, segments)
-    let reuleaux3_2d = CSG::reuleaux_polygon(3, 2.0, 64, None); // Reuleaux triangle
+    let reuleaux3_2d = CSG::reuleaux(3, 2.0, 64, None); // Reuleaux triangle
     let _ = fs::write("stl/reuleaux3_2d.stl", reuleaux3_2d.to_stl_ascii("reuleaux_2d"));
 
     // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux4_2d = CSG::reuleaux_polygon(4, 2.0, 64, None); // Reuleaux triangle
+    let reuleaux4_2d = CSG::reuleaux(4, 2.0, 64, None); // Reuleaux triangle
     let _ = fs::write("stl/reuleaux4_2d.stl", reuleaux4_2d.to_stl_ascii("reuleaux_2d"));
 
     // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux5_2d = CSG::reuleaux_polygon(5, 2.0, 64, None); // Reuleaux triangle
+    let reuleaux5_2d = CSG::reuleaux(5, 2.0, 64, None); // Reuleaux triangle
     let _ = fs::write("stl/reuleaux5_2d.stl", reuleaux5_2d.to_stl_ascii("reuleaux_2d"));
 
     // 13) ring(inner_diam, thickness, segments)
@@ -392,8 +396,14 @@ fn main() {
     // Let's reuse the `cube` from above:
     #[cfg(feature = "stl-io")]
     {
-        let gyroid_inside_cube = cube.gyroid(32, 2.0, 0.0, None);
+        let gyroid_inside_cube = hull_of_union.scale(20.0, 20.0, 20.0).gyroid(64, 2.0, 0.0, None);
         let _ = fs::write("stl/gyroid_cube.stl", gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap());
+        
+        let schwarzp_inside_cube = hull_of_union.scale(20.0, 20.0, 20.0).schwarz_p(64, 2.0, 0.0, None);
+        let _ = fs::write("stl/schwarz_p_cube.stl", schwarzp_inside_cube.to_stl_binary("schwarz_p_cube").unwrap());
+        
+        let schwarzd_inside_cube = hull_of_union.scale(20.0, 20.0, 20.0).schwarz_d(64, 2.0, 0.0, None);
+        let _ = fs::write("stl/schwarz_d_cube.stl", schwarzd_inside_cube.to_stl_binary("schwarz_d_cube").unwrap());
     }
     
     // Define the start point and the arrow direction vector.
@@ -424,6 +434,23 @@ fn main() {
                         .extrude_vector(nalgebra::Vector3::new(0.0, 0.0, 1.2));
     let _ = fs::write("stl/naca0015.stl", naca0015.to_stl_ascii("naca0015"));
     
+    let oct = CSG::octahedron(10.0, None);
+    let _ = fs::write("stl/octahedron.stl", oct.to_stl_ascii("octahedron"));
+    
+    //let dodec = CSG::dodecahedron(15.0, None);
+    //let _ = fs::write("stl/dodecahedron.stl", dodec.to_stl_ascii(""));
+    
+    let ico = CSG::icosahedron(12.0, None);
+    let _ = fs::write("stl/icosahedron.stl", ico.to_stl_ascii(""));
+    
+    let torus = CSG::torus(20.0, 5.0, 48, 24, None);
+    let _ = fs::write("stl/torus.stl", torus.to_stl_ascii(""));
+    
+    let heart2d = CSG::heart(30.0, 25.0, 128, None);
+    let _ = fs::write("stl/heart2d.stl", heart2d.to_stl_ascii(""));
+    
+    let crescent2d = CSG::crescent(10.0, 7.0, 4.0, 64, None);
+    let _ = fs::write("stl/crescent2d.stl", crescent2d.to_stl_ascii(""));
 
     // ---------------------------------------------------------
     // Additional “SCENES” Demonstrating Each Function Minimally
@@ -515,7 +542,7 @@ fn main() {
     // Scene K: Demonstrate reuleaux_polygon with a typical triangle shape
     // (already used sides=4 above, so let's do sides=3 here)
     {
-        let reuleaux_tri = CSG::reuleaux_polygon(3, 2.0, 16, None).extrude(0.1);
+        let reuleaux_tri = CSG::reuleaux(3, 2.0, 16, None).extrude(0.1);
         let _ = fs::write("stl/scene_reuleaux_triangle.stl", reuleaux_tri.to_stl_ascii("scene_reuleaux_triangle"));
     }
 
@@ -672,6 +699,9 @@ fn main() {
         "stl/bspline_2d.stl",
         bspline_2d.to_stl_ascii("bspline_2d"),
     );
+    
+    #[cfg(feature = "bevymesh")]
+    println!("{:#?}", bezier_3d.to_bevy_mesh());
     
     // a quick thickening just like the Bézier
     //let bspline_3d = bspline_2d.extrude(0.25);

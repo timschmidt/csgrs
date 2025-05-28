@@ -2,9 +2,9 @@
 
 A fast, optionally multithreaded **Constructive Solid Geometry (CSG)**
 library in Rust, built around Boolean operations (*union*, *difference*,
-*intersection*, *xor*) on sets of polygons using BSP trees. **csgrs** provides
-data structures and methods for constructing 2D and 3D geometry with an
-[OpenSCAD](https://openscad.org/)-like syntax.  **csgrs** aims to be light
+*intersection*, *xor*) on several different internal geometry representations.
+**csgrs** provides data structures and methods for constructing 2D and 3D geometry
+with an [OpenSCAD](https://openscad.org/)-like syntax.  **csgrs** aims to be light
 weight and full featured through integration with the
 [Dimforge](https://www.dimforge.com/) ecosystem
 (e.g., [`nalgebra`](https://crates.io/crates/nalgebra),
@@ -16,17 +16,16 @@ and [`Rapier`](https://crates.io/crates/rapier3d)) and
 library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are
 100% rust and nearly all optional.
 
-The BSP tree works with polygons made of lines.  **csgrs** interpolates
-all curves when working in 3D so that they can be processed using the BSP
-tree.  [earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
+[Earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
 and
 [constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation)
-algorithms used for tessellation only work in 2D, so **csgrs** rotates
-3D polygons into 2D for tessellation then back to 3D.
-
-Join the [csgrs discord server](https://discord.gg/9WkD3WFxMC)
+algorithms used for triangulation only work in 2D, so **csgrs** rotates
+3D polygons into 2D for triangulation then back to 3D.
 
 ![Example CSG output](docs/csg.png)
+
+## Community
+[![](https://dcbadge.limes.pink/api/server/https://discord.gg/9WkD3WFxMC)](https://discord.gg/9WkD3WFxMC)
 
 ## Getting started
 
@@ -84,32 +83,34 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 
 ### 2D Shapes
 
-- **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
-- **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
-- **`CSG::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
-- **`CSG::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
-- **`CSG::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
-- **`CSG::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>)`**
-- **`CSG::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
-- **`CSG::teardrop(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::squircle(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::reuleaux_polygon(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`**
-- **`CSG::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: Option<S>)`**
-- **`CSG::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
-- **`CSG::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
-- **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
-- **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
-- **`CSG::metaballs2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`** - 
-- **`CSG::airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>)`** -
-- **`CSG::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`** - under construction
-- **`CSG::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`** - under construction
+- <img src="docs/square.png" width="128"/> **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
+- <img src="docs/circle.png" width="128"/> **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/polygon.png" width="128"/> **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
+- <img src="docs/rounded_rectangle.png" width="128"/> **`CSG::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
+- <img src="docs/ellipse.png" width="128"/> **`CSG::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/ngon.png" width="128"/> **`CSG::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
+- <img src="docs/right_triangle.png" width="128"/> **`CSG::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
+- <img src="docs/trapezoid.png" width="128"/> **`CSG::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>)`**
+- <img src="docs/star.png" width="128"/> **`CSG::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
+- <img src="docs/teardrop.png" width="128"/> **`CSG::teardrop(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/egg_outline.png" width="128"/> **`CSG::egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/squircle.png" width="128"/> **`CSG::squircle(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/keyhole.png" width="128"/> **`CSG::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/reuleaux3.png" width="128"/> **`CSG::reuleaux(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`**
+- <img src="docs/ring.png" width="128"/> **`CSG::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/pie_slice.png" width="128"/> **`CSG::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/supershape.png" width="128"/> **`CSG::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/circle_with_keyway.png" width="128"/> **`CSG::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: Option<S>)`**
+- <img src="docs/d.png" width="128"/> **`CSG::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
+- <img src="docs/double_flat.png" width="128"/> **`CSG::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
+- <img src="docs/from_image.png" width="128"/> **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
+- <img src="docs/truetype.png" width="128"/> **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
+- <img src="docs/metaballs_2d.png" width="128"/> **`CSG::metaballs2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`** - 
+- <img src="docs/airfoil.png" width="128"/> **`CSG::airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>)`** -
+- <img src="docs/bezier_extruded.png" width="128"/> **`CSG::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`**
+- <img src="docs/bspline.png" width="128"/> **`CSG::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`**
+- <img src="docs/heart.png" width="128"/> **`CSG::heart(width: Real, height: Real, segments: usize, metadata: Option<S>)`** - 
+- <img src="docs/crescent.png" width="128"/> **`CSG::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: Option<S>)`** - 
 - **`CSG::involute_gear_2d(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 - **`CSG::cycloidal_gear_2d(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 - **`CSG::involute_rack_2d(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: Option<S>)`** - under construction
@@ -132,10 +133,10 @@ let text_3d = csg_text.extrude(1.0);
 
 Extrusions build 3D polygons from 2D Geometries.
 
-- **`CSG::extrude(height: Real)`** - Simple extrude in Z+
-- **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
+- <img src="docs/extrude.png" width="128"/> **`CSG::extrude(height: Real)`** - Simple extrude in Z+
+- <img src="docs/extrude_vector.png" width="128"/> **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
 - **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Extrude Between Two BSP Polygons
-- **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
+- <img src="docs/rotate_extrude.png" width="128"/> **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
 
 ```rust
 let square = CSG::square(2.0, 2.0, None);
@@ -150,25 +151,30 @@ let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.poly
 
 ### 3D Shapes
 
-- **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
-- **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
-- **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** -
+- <img src="docs/cube.png" width="128"/> **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
+- <img src="docs/sphere.png" width="128"/> **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
+- <img src="docs/cylinder.png" width="128"/> **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/frustum.png" width="128"/> **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** -
 Construct a frustum at origin with height and `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
-- **`CSG::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments:
+- <img src="docs/frustum.png" width="128"/> **`CSG::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments:
 usize, metadata: Option<S>)`** -
 Construct a frustum from `start` to `end` with `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
-- **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
-- **`CSG::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: Option<S>)`**
-- **`CSG::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: Option<S>)`**
-- **`CSG::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, metadata: Option<S>)`**
-- **`CSG::ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
-- **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
-- **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: Option<S>)`** - Return a CSG created by meshing a signed distance field within a bounding box
-- **`CSG::arrow(start: Point3, direction: Vector3, segments: usize, orientation: bool, metadata: Option<S>)`** - Create an arrow at start, pointing along direction
-- **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self` - under construction
+- <img src="docs/polyhedron.png" width="128"/> **`CSG::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
+- <img src="docs/octahedron.png" width="128"/> **`CSG::octahedron(radius: Real, metadata: Option<S>)`** -
+- <img src="docs/icosahedron.png" width="128"/> **`CSG::icosahedron(radius: Real, metadata: Option<S>)`** -
+- <img src="docs/torus.png" width="128"/> **`CSG::torus(major_r: Real, minor_r: Real, segments_major: usize, segments_minor: usize, metadata: Option<S>)`** -
+- <img src="docs/egg.png" width="128"/> **`CSG::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: Option<S>)`**
+- <img src="docs/teardrop3d.png" width="128"/> **`CSG::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: Option<S>)`**
+- <img src="docs/teardrop_cylinder.png" width="128"/> **`CSG::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, metadata: Option<S>)`**
+- <img src="docs/ellipsoid.png" width="128"/> **`CSG::ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
+- <img src="docs/metaballs.png" width="128"/> **`CSG::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
+- <img src="docs/sdf-sphere.png" width="128"/> **`CSG::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: Option<S>)`** - Return a CSG created by meshing a signed distance field within a bounding box
+- <img src="docs/arrow_to.png" width="128"/> **`CSG::arrow(start: Point3, direction: Vector3, segments: usize, orientation: bool, metadata: Option<S>)`** - Create an arrow at start, pointing along direction
+- <img src="docs/gyroid.png" width="128"/> **`CSG::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
+- <img src="docs/schwarzp.png" width="128"/> **`CSG::schwarz_p(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Schwarz P) inside the volume of `self`
+- <img src="docs/schwarzd.png" width="128"/> **`CSG::schwarz_d(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Schwarz D) inside the volume of `self`
 - **`CSG::helical_involute_gear(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: Option<S>)`** - under construction
 
 ```rust
@@ -248,9 +254,9 @@ They all return a new `CSG<S>`
 - **`CSG::center()`** - Returns the CSG centered at the origin
 - **`CSG::float()`** - Returns the CSG translated so that its bottommost point(s) sit exactly at z=0
 - **`CSG::transform(&Matrix4)`** - Returns the CSG after applying arbitrary affine transforms
-- **`CSG::distribute_arc(count: usize, radius: Real, start_angle_deg: Real, end_angle_deg: Real)`**
-- **`CSG::distribute_linear(count: usize, dir: nalgebra::Vector3, spacing: Real)`**
-- **`CSG::distribute_grid(rows: usize, cols: usize, dx: Real, dy: Real)`**
+- <img src="docs/distribute_arc.png" width="128"/> **`CSG::distribute_arc(count: usize, radius: Real, start_angle_deg: Real, end_angle_deg: Real)`**
+- <img src="docs/distribute_line.png" width="128"/> **`CSG::distribute_linear(count: usize, dir: nalgebra::Vector3, spacing: Real)`**
+- <img src="docs/distribute_grid.png" width="128"/> **`CSG::distribute_grid(rows: usize, cols: usize, dx: Real, dy: Real)`**
 
 ```rust
 use nalgebra::Vector3;
@@ -269,14 +275,14 @@ let mirrored = cube.mirror(plane_x);
 ### Miscellaneous Operations
 
 - **`CSG::vertices()`** — collect all vertices from the CSG
-- **`CSG::inverse()`** — flips the inside/outside orientation.
-- **`CSG::convex_hull()`** — uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
-- **`CSG::minkowski_sum(&other)`** — naive Minkowski sum, then takes the hull.
+- <img src="docs/inverse_sphere.png" width="128"/> **`CSG::inverse()`** — flips the inside/outside orientation.
+- <img src="docs/convex_hull.png" width="128"/> **`CSG::convex_hull()`** — uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
+- <img src="docs/minkowski.png" width="128"/> **`CSG::minkowski_sum(&other)`** — naive Minkowski sum, then takes the hull.
 - **`CSG::ray_intersections(origin, direction)`** — returns all intersection points and distances.
 - **`CSG::flatten()`** — flattens a 3D shape into 2D (on the XY plane), unions the outlines.
 - **`CSG::slice(plane)`** — slices the CSG by a plane and returns the cross-section polygons.
 - **`CSG::offset(distance)`** — outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
-- **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
+- <img src="docs/subdivided.png" width="128"/> **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
 - **`CSG::bounding_box()`** — computes the bounding box of the shape.
 - **`CSG::tessellate()`** — triangulates all polygons returning a CSG containing triangles.
@@ -324,6 +330,17 @@ Hershey fonts are single stroke fonts which produce open ended polylines in the 
 ```rust
 let font_data = include_bytes("../fonts/myfont.jhf");
 let csg_text = CSG::from_hershey("Hello!", font_data, 20.0, None);
+```
+
+### Create a Bevy `Mesh`
+
+`csg.to_bevy_mesh()` returns a Bevy [`Mesh`](https://docs.rs/bevy/latest/bevy/prelude/struct.Mesh.html).
+
+```rust
+use csgrs::csg::CSG;
+use bevy::{prelude::*, render::render_asset::RenderAssetUsages, render::mesh::{Indices, PrimitiveTopology}};
+
+let bevy_mesh = csg_obj.to_bevy_mesh();
 ```
 
 ### Create a Parry `TriMesh`
@@ -471,10 +488,9 @@ for Polygon
 - evaluate https://github.com/dimforge/parry/blob/master/src/transformation/convex_hull3/convex_hull.rs instead of chull
 - evaluate https://github.com/dimforge/parry/blob/master/src/utils/ccw_face_normal.rs for normalization
 - implement wavefront obj output using https://github.com/dimforge/parry/blob/master/src/transformation/wavefront.rs
-- use https://crates.io/crates/approx
 - transition sweep, linear_extrude, over to Polygon/Multipolygon native / polygon secondary
 - disengage chulls on 2D->3D shapes
-- fix intersect_cube_sphere, subtract_cube_sphere in main.rs - shapes are out of proximity
+- fix subtract_cube_sphere in main.rs - shapes are out of proximity
 - fix up error handling with result types, eliminate panics
 - ray intersection (singular)
 - expose geo traits on 2D shapes
@@ -483,7 +499,6 @@ for Polygon
 - polygons_by_metadata public function of a CSG
   - draft implementation done, pending API discussion
 - document coordinate system / coordinate transformations / compounded transformations
-- produce renders for every function
 - determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
@@ -517,8 +532,12 @@ for Polygon
   - support storing UV[W] coordinates with vertexes at compile time (try to keep runtime cost low too)
   - accomplish equivalence checks and memory usage reduction by using a hashmap or references instead of storing metadata with each node
   - with equivalence checks, returning sorted metadata becomes easy
-- chamfers - walk edges
-  - make algorithm selectable at compile time
+- implement half-edge, radial edge, etc to and from adapters
+  - chamfers
+  - fillets
+  - manifold tests
+  - 3D offset
+  - attachments
 - align_x_pos, align_x_neg, align_y_pos, align_y_neg, align_z_pos, align_z_neg, center_x, center_y, center_z,
 - attachment points / rapier integration
   - attachment is a Vertex (Point + normal)
@@ -526,12 +545,11 @@ for Polygon
   - make corners and centers of bb accessible by default, even in empty CSG
   - make corners, edge midpoints, and centroids of polygons accessible by default (calculate on demand using an iterator)
   - align_to_attachment(name, csg2, name2)
-  - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src
 - implement C FFI using https://rust-lang.github.io/rust-bindgen/
 - pull in https://crates.io/crates/geo-uom for units and dimensional analysis
 - https://proptest-rs.github.io/proptest/intro.html
 - https://crates.io/crates/geo-validity-check as compile time option
-- https://crates.io/crates/geo-index
+- https://crates.io/crates/geo-index - 2D only :(
 - https://github.com/lelongg/geo-rand
 - renderer integration
   - blueprint renders
@@ -546,6 +564,27 @@ for Polygon
 - investigate https://github.com/TimTheBig/geo-3d for useful functions
 - gltf output
 - gerber output
+- rework bezier and bspline using https://github.com/mattatz/curvo
+  - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src for cubic and quadratic bezier
+
+## Todo shapes
+- geodesic domes / goldberg polyhedra
+- uniform polyhedra
+- molecular models
+- kepler-poinsot polyhedra
+- dodecahedron
+- Archimedean / Catalan solids
+- Johnson solids, near-miss johnson solids
+- deltahedrons
+- regular polytopes
+- regular skew polyhedra
+- toroidal polyhedra
+- shapes from https://iquilezles.org/articles/
+
+## Todo easy
+- finish naca airfoil implementations
+- stack transformation
+- additional renders
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh

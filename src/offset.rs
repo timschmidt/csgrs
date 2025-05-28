@@ -3,16 +3,17 @@ use crate::float_types::Real;
 use geo::{Geometry, GeometryCollection};
 use geo_buf::{buffer_multi_polygon, buffer_polygon};
 use std::fmt::Debug;
+use std::sync::OnceLock;
 
 impl<S: Clone + Debug + Send + Sync> CSG<S> {
-    /// Grows/shrinks/offsets all 2D geometry by `distance`
+    /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using georust.
+    /// For each Geometry in the collection:
+    ///   - If it's a Polygon, buffer it and store the result as a MultiPolygon
+    ///   - If it's a MultiPolygon, buffer it directly
+    ///   - Otherwise, ignore (exclude) it from the new collection
     ///
     /// Note: this does not affect the 3d polygons of the `CSG`
     pub fn offset(&self, distance: Real) -> CSG<S> {
-        // For each Geometry in the collection:
-        //   - If it's a Polygon, buffer it and store the result as a MultiPolygon
-        //   - If it's a MultiPolygon, buffer it directly
-        //   - Otherwise, ignore (exclude) it from the new collection
         let offset_geoms = self.geometry
             .iter()
             .filter_map(|geom| match geom {
@@ -35,6 +36,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         CSG {
             polygons: self.polygons.clone(),
             geometry: new_collection,
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }

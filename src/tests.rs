@@ -80,7 +80,7 @@ fn test_polygon_construction() {
     assert_eq!(poly.vertices.len(), 3);
     // Plane should be defined by these three points. We expect a normal near ±Y.
     assert!(
-        approx_eq(poly.plane().normal().dot(&Vector3::y()).abs(), 1.0, 1e-8),
+        approx_eq(poly.plane.normal().dot(&Vector3::y()).abs(), 1.0, 1e-8),
         "Expected plane normal to match ±Y"
     );
 }
@@ -257,9 +257,9 @@ fn test_polygon_new() {
     assert_eq!(poly.vertices.len(), 3);
     assert_eq!(poly.metadata, None);
     // Plane normal should be +Z for the above points
-    assert!(approx_eq(poly.plane().normal().x, 0.0, EPSILON));
-    assert!(approx_eq(poly.plane().normal().y, 0.0, EPSILON));
-    assert!(approx_eq(poly.plane().normal().z, 1.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal().x, 0.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal().y, 0.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal().z, 1.0, EPSILON));
 }
 
 #[test]
@@ -272,22 +272,22 @@ fn test_polygon_flip() {
         ],
         None,
     );
-    let plane_normal_before = poly.plane().normal();
+    let plane_normal_before = poly.plane.normal();
     poly.flip();
     // The vertices should be reversed, and normal flipped
     assert_eq!(poly.vertices.len(), 3);
     assert!(approx_eq(
-        poly.plane().normal().x,
+        poly.plane.normal().x,
         -plane_normal_before.x,
         EPSILON
     ));
     assert!(approx_eq(
-        poly.plane().normal().y,
+        poly.plane.normal().y,
         -plane_normal_before.y,
         EPSILON
     ));
     assert!(approx_eq(
-        poly.plane().normal().z,
+        poly.plane.normal().z,
         -plane_normal_before.z,
         EPSILON
     ));
@@ -325,12 +325,12 @@ fn test_polygon_subdivide_triangles() {
         ],
         None,
     );
-    let subs = poly.subdivide_triangles(1);
+    let subs = poly.subdivide_triangles(1.try_into().expect("not 0"));
     // One triangle subdivided once => 4 smaller triangles
     assert_eq!(subs.len(), 4);
 
     // If we subdivide the same single tri 2 levels, we expect 16 sub-triangles.
-    let subs2 = poly.subdivide_triangles(2);
+    let subs2 = poly.subdivide_triangles(2.try_into().expect("not 0"));
     assert_eq!(subs2.len(), 16);
 }
 
@@ -345,7 +345,7 @@ fn test_polygon_recalc_plane_and_normals() {
         None,
     );
     poly.set_new_normal();
-    assert!(approx_eq(poly.plane().normal().z, 1.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal().z, 1.0, EPSILON));
     for v in &poly.vertices {
         assert!(approx_eq(v.normal.x, 0.0, EPSILON));
         assert!(approx_eq(v.normal.y, 0.0, EPSILON));
@@ -638,18 +638,18 @@ fn test_csg_inverse() {
     let orig_poly = &c1.polygons[0];
     let inv_poly = &inv.polygons[0];
     assert!(approx_eq(
-        orig_poly.plane().normal().x,
-        -inv_poly.plane().normal().x,
+        orig_poly.plane.normal().x,
+        -inv_poly.plane.normal().x,
         EPSILON
     ));
     assert!(approx_eq(
-        orig_poly.plane().normal().y,
-        -inv_poly.plane().normal().y,
+        orig_poly.plane.normal().y,
+        -inv_poly.plane.normal().y,
         EPSILON
     ));
     assert!(approx_eq(
-        orig_poly.plane().normal().z,
-        -inv_poly.plane().normal().z,
+        orig_poly.plane.normal().z,
+        -inv_poly.plane.normal().z,
         EPSILON
     ));
     assert_eq!(
@@ -821,9 +821,9 @@ fn test_csg_renormalize() {
     // Now each polygon's vertices should match the plane's normal
     for poly in &cube.polygons {
         for v in &poly.vertices {
-            assert!(approx_eq(v.normal.x, poly.plane().normal().x, EPSILON));
-            assert!(approx_eq(v.normal.y, poly.plane().normal().y, EPSILON));
-            assert!(approx_eq(v.normal.z, poly.plane().normal().z, EPSILON));
+            assert!(approx_eq(v.normal.x, poly.plane.normal().x, EPSILON));
+            assert!(approx_eq(v.normal.y, poly.plane.normal().y, EPSILON));
+            assert!(approx_eq(v.normal.z, poly.plane.normal().z, EPSILON));
         }
     }
 }
@@ -1231,6 +1231,7 @@ fn test_subdivide_metadata() {
     );
 
     let csg = CSG::from_polygons(&[poly]);
+
     let subdivided = csg.subdivide_triangles(1.try_into().expect("not zero")); // one level of subdivision
 
     // Now it's split into multiple triangles. Each should keep "LargeQuad" as metadata.
@@ -1758,4 +1759,55 @@ fn test_flatten_and_union_debug() {
         flattened.polygons[0].vertices.len() >= 3,
         "Should form at least a triangle"
     );
+}
+
+#[test]
+fn test_contains_vertex() {
+    let csg_cube = CSG::<()>::cube(6.0, 6.0, 6.0, None);
+
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
+    assert!(csg_cube.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, -6.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.0)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.01)));
+
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.99999999999)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-11)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-14)));
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.9 + 9e-9)));
+
+    assert!(csg_cube.contains_vertex(&Point3::new(3.0, -3.0, 3.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(3.0, -3.01, 3.0)));
+    assert!(csg_cube.contains_vertex(&Point3::new(0.01, 4.0, 3.0)));
+    assert!(!csg_cube.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)));
+
+    let csg_cube_hole = CSG::<()>::cube(4.0, 4.0, 4.0, None);
+    let cube_with_hole = csg_cube.difference(&csg_cube_hole);
+
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(0.01, 4.0, 3.0)));
+    assert!(cube_with_hole.contains_vertex(&Point3::new(0.01, 4.01, 3.0)));
+
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)));
+    assert!(cube_with_hole.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
+    assert!(!cube_with_hole.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
+
+    let csg_sphere = CSG::<()>::sphere(6.0, 14, 14, None);
+
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(-3.0, -3.0, -3.0)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
+
+    assert!(!csg_sphere.contains_vertex(&Point3::new(1.0, 1.0, 5.8)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(0.0, 3.0, 5.8)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(0.0, 0.0, 5.8)));
+
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -6.0)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 0.0)));
+
+    assert!(csg_sphere.contains_vertex(&Point3::new(0.0, 0.0, -5.8)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -5.8)));
+    assert!(!csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, -6.01)));
+    assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 0.01)));
 }
