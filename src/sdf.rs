@@ -1,3 +1,5 @@
+//! Create `CSG`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
+
 use crate::csg::CSG;
 use crate::float_types::Real;
 use crate::polygon::Polygon;
@@ -6,22 +8,28 @@ use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Return a CSG created by meshing a signed distance field within a bounding box
     ///
-    ///    // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
-    ///    let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
+    /// ```
+    /// # use csgrs::{csg::CSG, float_types::Real};
+    /// # use nalgebra::Point3;
+    /// // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
+    /// let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
     ///
-    ///    let resolution = (60, 60, 60);
-    ///    let min_pt = Point3::new(-2.0, -2.0, -2.0);
-    ///    let max_pt = Point3::new( 2.0,  2.0,  2.0);
-    ///    let iso_value = 0.0; // Typically zero for SDF-based surfaces
+    /// let resolution = (60, 60, 60);
+    /// let min_pt = Point3::new(-2.0, -2.0, -2.0);
+    /// let max_pt = Point3::new( 2.0,  2.0,  2.0);
+    /// let iso_value = 0.0; // Typically zero for SDF-based surfaces
     ///
-    ///    let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
-    ///
-    ///    // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
-    ///    let _ = std::fs::write("stl/sdf_sphere.stl", csg_shape.to_stl_binary("sdf_sphere").unwrap());
+    /// let csg_shape: CSG<()> = CSG::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
+    /// ```
+    /// ```no_run
+    /// # use csgrs::csg::CSG;
+    /// # let csg_shape: CSG<()> = CSG::new();
+    /// // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
+    /// let _ = std::fs::write("stl/sdf_sphere.stl", csg_shape.to_stl_binary("sdf_sphere").unwrap());
+    /// ```
     pub fn sdf<F>(
         sdf: F,
         resolution: (usize, usize, usize),

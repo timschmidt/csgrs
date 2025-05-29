@@ -5,8 +5,7 @@ use geo_buf::{buffer_multi_polygon, buffer_polygon};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using georust.
     /// For each Geometry in the collection:
     ///   - If it's a Polygon, buffer it and store the result as a MultiPolygon
