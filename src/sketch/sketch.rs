@@ -3,6 +3,7 @@ use crate::float_types::Real;
 use geo::{GeometryCollection, BooleanOps as GeoBool, AffineOps};
 use nalgebra::{Matrix4, Vector3};
 use std::convert::TryInto;
+use std::fmt::Debug;
 
 #[derive(Clone, Debug)]
 pub struct Sketch<S> {
@@ -13,7 +14,7 @@ pub struct Sketch<S> {
     pub metadata: Option<S>,
 }
 
-impl<S> BooleanOps for Sketch<S> {
+impl<S: Clone + Send + Sync + Debug> BooleanOps for Sketch<S> {
     type Output = Self;
     
     fn union(&self, other: &Self)->Self {
@@ -39,9 +40,17 @@ impl<S> BooleanOps for Sketch<S> {
 			metadata: None,
 		}
     }
+    
+    fn xor(&self, other: &Self)->Self {
+    
+        Sketch {
+			geometry: GeometryCollection::default(),
+			metadata: None,
+		}
+    }
 }
 
-impl<S> TransformOps for Sketch<S> {
+impl<S: Clone + Send + Sync + Debug> TransformOps for Sketch<S> {
 	fn new() -> Self {
 		Sketch {
 			geometry: GeometryCollection::default(),
@@ -59,7 +68,7 @@ impl<S> TransformOps for Sketch<S> {
     }
 }
 
-impl<S: Clone> From<crate::mesh::mesh::Mesh<S>> for Sketch<S> {
+impl<S: Clone + Send + Sync + Debug> From<crate::mesh::mesh::Mesh<S>> for Sketch<S> {
 	fn from(mesh: crate::mesh::mesh::Mesh<S>) -> Self {
 	
 		Sketch {
