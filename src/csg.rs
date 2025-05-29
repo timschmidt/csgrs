@@ -4,9 +4,8 @@ use crate::plane::Plane;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use geo::{
-    AffineOps, AffineTransform, BooleanOps, BoundingRect, Coord, CoordsIter, Geometry,
-    GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
-    orient::Direction,
+    AffineOps, AffineTransform, BooleanOps, BoundingRect, Coord, CoordsIter, orient::Direction,
+    Geometry, GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
 };
 use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
@@ -23,9 +22,6 @@ use std::sync::OnceLock;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
-
-#[cfg(feature = "bevymesh")]
-use bevy::{prelude::*, render::render_asset::RenderAssetUsages, render::mesh::{Indices, PrimitiveTopology}};
 
 /// The main CSG solid structure. Contains a list of 3D polygons, 2D polylines, and some metadata.
 #[derive(Debug, Clone)]
@@ -957,6 +953,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Returns a [`parry3d::bounding_volume::Aabb`] by merging:
     /// 1. The 3D bounds of all `polygons`.
     /// 2. The 2D bounding rectangle of `self.geometry`, interpreted at z=0.
+    ///
+    /// [`parry3d::bounding_volume::Aabb`]: crate::float_types::parry3d::bounding_volume::Aabb
     pub fn bounding_box(&self) -> Aabb {
         // Track overall min/max in x, y, z among all 3D polygons and the 2D geometry’s bounding_rect.
         let mut min_x = Real::MAX;
@@ -1153,50 +1151,54 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         rb_handle
     }
-    
+
     /// Convert a CSG into a Bevy `Mesh`.
     #[cfg(feature = "bevymesh")]
-    pub fn to_bevy_mesh(&self) -> Mesh {
+    pub fn to_bevy_mesh(&self) -> bevy_mesh::Mesh {
+        use bevy_mesh::{Mesh, Indices};
+        use bevy_asset::RenderAssetUsages;
+        use wgpu_types::PrimitiveTopology;
+
         let tessellated_csg = &self.tessellate();
         let polygons = &tessellated_csg.polygons;
-    
+
         // Prepare buffers
         let mut positions_32 = Vec::new();
-        let mut normals_32   = Vec::new();
-        let mut indices      = Vec::new();
-    
+        let mut normals_32 = Vec::new();
+        let mut indices = Vec::with_capacity(polygons.len() * 3);
+
         let mut index_start = 0u32;
-    
+
         // Each polygon is assumed to have exactly 3 vertices after tessellation.
         for poly in polygons {
             // skip any degenerate polygons
             if poly.vertices.len() != 3 {
                 continue;
             }
-    
+
             // push 3 positions/normals
             for v in &poly.vertices {
                 positions_32.push([v.pos.x as f32, v.pos.y as f32, v.pos.z as f32]);
                 normals_32.push([v.normal.x as f32, v.normal.y as f32, v.normal.z as f32]);
             }
-    
+
             // triangle indices
             indices.push(index_start);
             indices.push(index_start + 1);
             indices.push(index_start + 2);
             index_start += 3;
         }
-    
+
         // Create the mesh with the new 2-argument constructor
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default());
-    
+
         // Insert attributes. Note the `<Vec<[f32; 3]>>` usage.
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions_32);
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL,   normals_32);
-    
+
         // Insert triangle indices
         mesh.insert_indices(Indices::U32(indices));
-    
+
         mesh
     }
 }

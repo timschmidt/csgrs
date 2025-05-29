@@ -27,6 +27,8 @@
 //! - **bevymesh**: for conversion to a bevy `Mesh`
 
 #![forbid(unsafe_code)]
+#![deny(unused)]
+#![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
 
 pub mod errors;
 pub mod float_types;

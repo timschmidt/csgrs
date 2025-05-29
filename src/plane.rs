@@ -4,7 +4,7 @@
 //! Unless stated otherwise, all tolerances are governed by
 //! `float_types::EPSILON`.
 
-use crate::float_types::{EPSILON, Real};
+use crate::float_types::{Real, EPSILON};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
@@ -43,7 +43,7 @@ impl Plane {
             point_c: *c,
         }
     }
-    
+
     /// Tries to pick three vertices that span the largest area triangle 
     /// (maximally well-spaced) and returns a plane defined by them.
     /// Care is taken to preserve the original winding of the vertices.
@@ -52,7 +52,7 @@ impl Plane {
     /// A lower cost option may be a grid sub-sampled farthest pair search
     pub fn from_vertices(vertices: Vec<Vertex>) -> Plane {
         let n = vertices.len();
-        if n == 3 { return Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos); } // Plane is already optimal
+        if n == 3 { return Plane { point_a: vertices[0].pos, point_b: vertices[1].pos, point_c: vertices[2].pos } }// Plane is already optimal
     
         //------------------------------------------------------------------
         // 1.  longest chord (i0,i1)
@@ -71,7 +71,7 @@ impl Plane {
         let p1 = vertices[i1].pos;
         let dir = p1 - p0;
         if dir.norm_squared() < EPSILON * EPSILON {
-            return Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos); // everything almost coincident
+            return Plane { point_a: vertices[0].pos, point_b: vertices[1].pos, point_c: vertices[2].pos } // everything almost coincident
         }
     
         //------------------------------------------------------------------
@@ -89,17 +89,17 @@ impl Plane {
         }
         let i2 = match i2 {
             Some(k) if max_area2 > EPSILON * EPSILON => k,
-            _ => return Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos), // all vertices collinear
+            _ => return Plane { point_a: vertices[0].pos, point_b: vertices[1].pos, point_c: vertices[2].pos } // all vertices collinear
         };
         let p2 = vertices[i2].pos;
     
         //------------------------------------------------------------------
         // 3.  build plane, then orient it to match original winding
         //------------------------------------------------------------------
-        let mut plane_hq = Plane::from_points(&p0, &p1, &p2);
+        let mut plane_hq = Plane { point_a: p0, point_b: p1, point_c: p2 };
     
         // Reference normal from first three points in order
-        let ref_norm = Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos).normal();
+        let ref_norm = Plane { point_a: vertices[0].pos, point_b: vertices[1].pos, point_c: vertices[2].pos }.normal();
         if plane_hq.normal().dot(&ref_norm) < 0.0 {
             plane_hq.flip(); // flip in-place to agree with winding
         }
