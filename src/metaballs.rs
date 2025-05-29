@@ -1,3 +1,5 @@
+//! Implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
+
 use crate::csg::CSG;
 use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
@@ -8,6 +10,11 @@ use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use hashbrown::HashMap;
 
+/// [Metaballs](https://en.wikipedia.org/wiki/Metaballs), organic-looking isosurface,
+/// characterised by their ability to meld together when in close proximity to create single objects. 
+///
+/// ![Metaballs demo image][Metaballs demo image]
+#[cfg_attr(doc, doc = doc_image_embed::embed_image!("Metaballs demo image", "docs/metaballs_nobackground.png"))]
 #[derive(Debug, Clone)]
 pub struct MetaBall {
     pub center: Point3<Real>,
@@ -32,6 +39,7 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
     for ball in balls {
         value += ball.influence(p);
     }
+
     value
 }
 
@@ -89,8 +97,7 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
     chains
 }
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
     /// - `balls`: array of (center, radius).
     /// - `resolution`: (nx, ny) grid resolution for marching squares.

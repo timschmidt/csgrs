@@ -18,24 +18,31 @@ pub type Real = f64;
 /// A small epsilon for geometric comparisons, adjusted per precision.
 #[cfg(feature = "f32")]
 pub const EPSILON: Real = 1e-5;
+/// A small epsilon for geometric comparisons, adjusted per precision.
 #[cfg(feature = "f64")]
 pub const EPSILON: Real = 1e-10;
 
 // Pi
+/// Archimedes' constant (π)
 #[cfg(feature = "f32")]
 pub const PI: Real = core::f32::consts::PI;
+/// Archimedes' constant (π)
 #[cfg(feature = "f64")]
 pub const PI: Real = core::f64::consts::PI;
 
 // Frac Pi 2
+/// π/2
 #[cfg(feature = "f32")]
 pub const FRAC_PI_2: Real = core::f32::consts::FRAC_PI_2;
+/// π/2
 #[cfg(feature = "f64")]
 pub const FRAC_PI_2: Real = core::f64::consts::FRAC_PI_2;
 
 // Tau
+/// The full circle constant (τ)
 #[cfg(feature = "f32")]
 pub const TAU: Real = core::f32::consts::TAU;
+/// The full circle constant (τ)
 #[cfg(feature = "f64")]
 pub const TAU: Real = core::f64::consts::TAU;
 

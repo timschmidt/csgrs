@@ -4,7 +4,7 @@
 //! Unless stated otherwise, all tolerances are governed by
 //! `float_types::EPSILON`.
 
-use crate::float_types::{EPSILON, Real};
+use crate::float_types::{Real, EPSILON};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
@@ -37,6 +37,7 @@ pub struct Plane {
 impl Plane {
     /// Create a plane from three points
     pub fn from_points(a: &Point3<Real>, b: &Point3<Real>, c: &Point3<Real>) -> Plane {
+
         Plane {
             point_a: *a,
             point_b: *b,
