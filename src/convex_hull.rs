@@ -1,9 +1,13 @@
 //! The [convex hull](https://en.wikipedia.org/wiki/Convex_hull) of a shape is the smallest convex set that contains it.
 //! It may be visualized as the shape enclosed by a rubber band stretched around the subset.
 //!
-//! ![ConvexHull demo image][ConvexHull demo image]\
-//! <strong style="color:red">Red</strong> is the set and <strong style="color:#87CEEB">blue</strong> is the convex hull of the set.
-#![cfg_attr(doc, doc = embed_doc_image::embed_image!("ConvexHull demo image", "docs/convex_hull.svg"))]
+//! This is the set:\
+//! ![Pre-ConvexHull demo image][Pre-ConvexHull demo image]
+//!
+//! And this is the convex hull of that set:\
+//! ![ConvexHull demo image][ConvexHull demo image]
+#![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
+#![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
 
 use crate::csg::CSG;
 use crate::float_types::Real;
