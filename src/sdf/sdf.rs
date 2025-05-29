@@ -7,7 +7,9 @@ use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
 impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+where
+    S: Clone + Send + Sync,
+{
     /// Return a CSG created by meshing a signed distance field within a bounding box
     ///
     ///    // Example SDF for a sphere of radius 1.5 centered at (0,0,0)

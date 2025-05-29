@@ -21,7 +21,6 @@ pub enum IoError {
     MalformedPath(String),
     Unimplemented(String),
 
-
     #[cfg(feature = "svg-io")]
     /// Error bubbled up from the `svg` crate during parsing.
     SvgParsing(::svg::parser::Error),

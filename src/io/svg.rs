@@ -1,12 +1,13 @@
 //! SVG input and output.
 
-use geo::{BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon};
+use geo::{
+    BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon,
+};
 use svg::node::element::path;
 
 use crate::csg::CSG;
 
 use super::IoError;
-
 
 /// A helper struct to build [`geo::MultiLineString`] from SVG Path commands.
 ///
@@ -44,7 +45,9 @@ impl<F: CoordNum> PathBuilder<F> {
 
     /// Get the current position to be used for relative moves.
     fn get_pos(&self) -> Coord<F> {
-        self.inner.0.last()
+        self.inner
+            .0
+            .last()
             .and_then(|ls| ls.0.last())
             .copied()
             .unwrap_or(Coord::zero())
@@ -56,7 +59,10 @@ impl<F: CoordNum> PathBuilder<F> {
     /// if the last path has 2 or more points and is closed.
     /// For this reason, using this proxy is recommended for implementing any drawing command.
     fn get_path_mut_or_fail(&mut self) -> Result<&mut LineString<F>, IoError> {
-        let start_new_path = self.inner.0.last()
+        let start_new_path = self
+            .inner
+            .0
+            .last()
             .map(|p| p.coords_count() >= 2 && p.is_closed())
             .unwrap_or(false);
 
@@ -64,8 +70,11 @@ impl<F: CoordNum> PathBuilder<F> {
             self.inner.0.push(LineString::new(vec![self.get_pos()]));
         }
 
-        self.inner.0.last_mut()
-            .ok_or_else(|| IoError::MalformedPath(format!("Attempted to extend the current path, but no path was started.")))
+        self.inner.0.last_mut().ok_or_else(|| {
+            IoError::MalformedPath(format!(
+                "Attempted to extend the current path, but no path was started."
+            ))
+        })
     }
 
     /// Start a new path at `point`.
@@ -162,8 +171,14 @@ impl<F: CoordNum> PathBuilder<F> {
     /// Can not be the first command.
     ///
     /// **Not implemented**
-    pub fn quadratic_curve_to(&mut self, _control: Coord<F>, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!("quadratic curveto (absolute quadratic Bézier curve)")))
+    pub fn quadratic_curve_to(
+        &mut self,
+        _control: Coord<F>,
+        _end: Coord<F>,
+    ) -> Result<(), IoError> {
+        Err(IoError::Unimplemented(format!(
+            "quadratic curveto (absolute quadratic Bézier curve)"
+        )))
     }
 
     /// Extend the current path with a quadratic Bézier curve from the current point using coordinates relative
@@ -176,8 +191,14 @@ impl<F: CoordNum> PathBuilder<F> {
     /// Can not be the first command.
     ///
     /// **Not implemented**
-    pub fn quadratic_curve_by(&mut self, _control: Coord<F>, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!("quadratic curveby (relative quadratic Bézier curve)")))
+    pub fn quadratic_curve_by(
+        &mut self,
+        _control: Coord<F>,
+        _end: Coord<F>,
+    ) -> Result<(), IoError> {
+        Err(IoError::Unimplemented(format!(
+            "quadratic curveby (relative quadratic Bézier curve)"
+        )))
     }
 
     /// Extend the current path with a *smooth* quadratic Bézier curve from the current point using absolute coordinates.
@@ -193,7 +214,9 @@ impl<F: CoordNum> PathBuilder<F> {
     ///
     /// **Not implemented**
     pub fn quadratic_smooth_curve_to(&mut self, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!("quadratic smooth curveto (absolute quadratic Bézier curve with a reflected control point)")))
+        Err(IoError::Unimplemented(format!(
+            "quadratic smooth curveto (absolute quadratic Bézier curve with a reflected control point)"
+        )))
     }
 
     /// Extend the current path with a *smooth* quadratic Bézier curve from the current point using coordinates relative
@@ -210,7 +233,9 @@ impl<F: CoordNum> PathBuilder<F> {
     ///
     /// **Not implemented**
     pub fn quadratic_smooth_curve_by(&mut self, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!("quadratic smooth curveby (relative quadratic Bézier curve with a reflected control point)")))
+        Err(IoError::Unimplemented(format!(
+            "quadratic smooth curveby (relative quadratic Bézier curve with a reflected control point)"
+        )))
     }
 
     /// Extend the current path with a cubic Bézier curve from the current point using absolute coordinates.
@@ -223,8 +248,15 @@ impl<F: CoordNum> PathBuilder<F> {
     /// Can not be the first command.
     ///
     /// **Not implemented**
-    pub fn curve_to(&mut self, _control_start: Coord<F>, _control_end: Coord<F>, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!("curveto (absolute cubic Bézier curve)")))
+    pub fn curve_to(
+        &mut self,
+        _control_start: Coord<F>,
+        _control_end: Coord<F>,
+        _end: Coord<F>,
+    ) -> Result<(), IoError> {
+        Err(IoError::Unimplemented(format!(
+            "curveto (absolute cubic Bézier curve)"
+        )))
     }
 
     /// Extend the current path with a cubic Bézier curve from the current point using coordinates relative
@@ -238,8 +270,15 @@ impl<F: CoordNum> PathBuilder<F> {
     /// Can not be the first command.
     ///
     /// **Not implemented**
-    pub fn curve_by(&mut self, _control_start: Coord<F>, _control_end: Coord<F>, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!("curveby (relative cubic Bézier curve)")))
+    pub fn curve_by(
+        &mut self,
+        _control_start: Coord<F>,
+        _control_end: Coord<F>,
+        _end: Coord<F>,
+    ) -> Result<(), IoError> {
+        Err(IoError::Unimplemented(format!(
+            "curveby (relative cubic Bézier curve)"
+        )))
     }
 
     /// Extend the current path with a *smooth* cubic Bézier curve from the current point using absolute coordinates.
@@ -254,8 +293,14 @@ impl<F: CoordNum> PathBuilder<F> {
     /// Can not be the first command.
     ///
     /// **Not implemented**
-    pub fn smooth_curve_to(&mut self, _control_end: Coord<F>, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!("smooth curveto (absolute cubic Bézier curve with a reflected start control point)")))
+    pub fn smooth_curve_to(
+        &mut self,
+        _control_end: Coord<F>,
+        _end: Coord<F>,
+    ) -> Result<(), IoError> {
+        Err(IoError::Unimplemented(format!(
+            "smooth curveto (absolute cubic Bézier curve with a reflected start control point)"
+        )))
     }
 
     /// Extend the current path with a *smooth* cubic Bézier curve from the current point using coordinates relative
@@ -271,8 +316,14 @@ impl<F: CoordNum> PathBuilder<F> {
     /// Can not be the first command.
     ///
     /// **Not implemented**
-    pub fn smooth_curve_by(&mut self, _control_end: Coord<F>, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!("smooth curveby (relative cubic Bézier curve with a reflected start control point)")))
+    pub fn smooth_curve_by(
+        &mut self,
+        _control_end: Coord<F>,
+        _end: Coord<F>,
+    ) -> Result<(), IoError> {
+        Err(IoError::Unimplemented(format!(
+            "smooth curveby (relative cubic Bézier curve with a reflected start control point)"
+        )))
     }
 
     /// Extend the current path with an elliptical arc from the current point using absolute coordinates.
@@ -325,19 +376,19 @@ impl<F: CoordNum> PathBuilder<F> {
     }
 }
 
-
 pub trait FromSVG: Sized {
     fn from_svg(doc: &str) -> Result<Self, IoError>;
 }
 
 impl FromSVG for CSG<()> {
     fn from_svg(doc: &str) -> Result<Self, IoError> {
-        use svg::parser::Event;
         use svg::node::element::tag::{self, Type::*};
+        use svg::parser::Event;
 
         macro_rules! expect_attr {
             ($attrs:expr, $attr:literal) => {
-                $attrs.get($attr)
+                $attrs
+                    .get($attr)
                     .ok_or_else(|| IoError::MalformedInput(format!("Missing attribute {}", $attr)))
             };
         }
@@ -352,23 +403,23 @@ impl FromSVG for CSG<()> {
 
         for event in svg::read(doc)? {
             match event {
-                | Event::Instruction(..)
+                Event::Instruction(..)
                 | Event::Declaration(..)
                 | Event::Text(..)
                 | Event::Comment(..)
                 | Event::Tag(tag::SVG, ..)
                 | Event::Tag(tag::Description, ..)
                 | Event::Tag(tag::Text, ..)
-                | Event::Tag(tag::Title, ..) => {},
+                | Event::Tag(tag::Title, ..) => {}
 
                 Event::Error(error) => {
                     return Err(error.into());
-                },
+                }
 
                 Event::Tag(tag::Group, ..) => {
                     // TODO: keep track of transforms
                     // TODO: keep track of style properties
-                },
+                }
 
                 Event::Tag(tag::Path, Empty, attrs) => {
                     let data = expect_attr!(attrs, "d")?;
@@ -398,7 +449,7 @@ impl FromSVG for CSG<()> {
                             csg_union = csg_union.union(&csg);
                         }
                     }
-                },
+                }
 
                 Event::Tag(tag::Circle, Empty, attrs) => {
                     let cx = expect_attr!(attrs, "cx")?.parse()?;
@@ -408,10 +459,9 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let csg = Self::circle(r, segments, None)
-                        .translate(cx, cy, 0.0);
+                    let csg = Self::circle(r, segments, None).translate(cx, cy, 0.0);
                     csg_union = csg_union.union(&csg);
-                },
+                }
 
                 Event::Tag(tag::Rectangle, Empty, attrs) => {
                     let x: f64 = expect_attr!(attrs, "x")?.parse()?;
@@ -427,10 +477,9 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let csg = Self::rounded_rectangle(w, h, r, segments, None)
-                            .translate(x, y, 0.0);
+                    let csg = Self::rounded_rectangle(w, h, r, segments, None).translate(x, y, 0.0);
                     csg_union = csg_union.union(&csg);
-                },
+                }
 
                 Event::Tag(tag::Ellipse, Empty, attrs) => {
                     let cx = expect_attr!(attrs, "cx")?.parse()?;
@@ -441,10 +490,10 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (rx.max(ry).ceil() as usize).max(6);
 
-                    let csg = Self::ellipse(rx * 2.0, ry * 2.0, segments, None)
-                        .translate(cx, cy, 0.0);
+                    let csg =
+                        Self::ellipse(rx * 2.0, ry * 2.0, segments, None).translate(cx, cy, 0.0);
                     csg_union = csg_union.union(&csg);
-                },
+                }
 
                 Event::Tag(tag::Line, Empty, attrs) => {
                     let _x1 = expect_attr!(attrs, "x1")?;
@@ -453,24 +502,21 @@ impl FromSVG for CSG<()> {
                     let _y2 = expect_attr!(attrs, "y2")?;
 
                     // TODO: This needs knowing current stroke-width
-                },
+                }
 
                 Event::Tag(tag::Polygon, Empty, attrs) => {
                     let points = expect_attr!(attrs, "points")?;
-                    let polygon = Polygon::new(
-                        svg_points_to_line_string(points)?,
-                        vec![],
-                    );
+                    let polygon = Polygon::new(svg_points_to_line_string(points)?, vec![]);
                     let csg = Self::from_geo(polygon.into(), None);
                     csg_union = csg_union.union(&csg);
-                },
+                }
 
                 Event::Tag(tag::Polyline, Empty, attrs) => {
                     let points = expect_attr!(attrs, "points")?;
                     let _ls = svg_points_to_line_string::<f64>(points)?;
 
                     // TODO: This needs knowing current stroke-width
-                },
+                }
 
                 tag => {
                     // TODO: Non-empty tags should also be supported
@@ -484,15 +530,14 @@ impl FromSVG for CSG<()> {
     }
 }
 
-
 pub trait ToSVG {
     fn to_svg(&self) -> String;
 }
 
 impl<S: Clone> ToSVG for CSG<S> {
     fn to_svg(&self) -> String {
-        use svg::node::element;
         use geo::Geometry::*;
+        use svg::node::element;
 
         let mut g = element::Group::new();
 
@@ -524,7 +569,7 @@ impl<S: Clone> ToSVG for CSG<S> {
                 exterior.0[..(exterior.0.len() - 1)]
                     .into_iter()
                     .flat_map(|c| [c.x as f32, c.y as f32])
-                    .collect::<Vec<f32>>()
+                    .collect::<Vec<f32>>(),
             );
 
             data = data.close();
@@ -535,7 +580,7 @@ impl<S: Clone> ToSVG for CSG<S> {
                     interior.0[..(interior.0.len() - 1)]
                         .into_iter()
                         .flat_map(|c| [c.x as f32, c.y as f32])
-                        .collect::<Vec<f32>>()
+                        .collect::<Vec<f32>>(),
                 );
 
                 data = data.close();
@@ -548,8 +593,10 @@ impl<S: Clone> ToSVG for CSG<S> {
                 .set("d", data)
         };
 
-        let bounds = self.geometry.bounding_rect()
-            .unwrap_or(geo::Rect::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 1.0, y: 1.0 }));
+        let bounds = self.geometry.bounding_rect().unwrap_or(geo::Rect::new(
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 1.0, y: 1.0 },
+        ));
 
         for geometry in self.geometry.iter() {
             match geometry {
@@ -562,53 +609,64 @@ impl<S: Clone> ToSVG for CSG<S> {
                             .set("x1", line.start.x)
                             .set("y1", line.start.y)
                             .set("x2", line.end.x)
-                            .set("y2", line.end.y)
+                            .set("y2", line.end.y),
                     );
-                },
+                }
 
                 LineString(line_string) => {
                     g = g.add(make_line_string(line_string));
-                },
+                }
                 Polygon(polygon) => {
                     g = g.add(make_polygon(polygon));
-                },
+                }
                 MultiLineString(multi_line_string) => {
                     for line_string in multi_line_string {
                         g = g.add(make_line_string(line_string));
                     }
-                },
+                }
                 MultiPolygon(multi_polygon) => {
                     for polygon in multi_polygon {
                         g = g.add(make_polygon(polygon));
                     }
-                },
+                }
 
                 Rect(rect) => {
                     g = g.add(make_polygon(&rect.to_polygon()));
-                },
+                }
 
                 Triangle(triangle) => {
                     g = g.add(make_polygon(&triangle.to_polygon()));
-                },
+                }
 
-                GeometryCollection(_) => unimplemented!("Exporting nested geometry collections to SVG"),
+                GeometryCollection(_) => {
+                    unimplemented!("Exporting nested geometry collections to SVG")
+                }
 
                 // Can't really export points to SVG
-                Point(_) => {},
-                MultiPoint(_) => {},
+                Point(_) => {}
+                MultiPoint(_) => {}
             }
         }
 
         let doc = svg::Document::new()
-            .set("viewBox", (bounds.min().x, bounds.min().y, bounds.width(), bounds.height()))
+            .set(
+                "viewBox",
+                (
+                    bounds.min().x,
+                    bounds.min().y,
+                    bounds.width(),
+                    bounds.height(),
+                ),
+            )
             .add(g);
 
         doc.to_string()
     }
 }
 
-
-fn svg_path_to_multi_line_string<F: CoordNum>(path_data: path::Data) -> Result<MultiLineString<F>, IoError> {
+fn svg_path_to_multi_line_string<F: CoordNum>(
+    path_data: path::Data,
+) -> Result<MultiLineString<F>, IoError> {
     // `svg` crate returns `f32`, so that's what is used here.
     let mut builder = PathBuilder::<f32>::new();
 
@@ -624,11 +682,9 @@ fn svg_path_to_multi_line_string<F: CoordNum>(path_data: path::Data) -> Result<M
         }
 
         let param_count = match cmd {
-            | Move(..)
-            | Line(..) => 2,
+            Move(..) | Line(..) => 2,
 
-            | HorizontalLine(..)
-            | VerticalLine(..) => 1,
+            HorizontalLine(..) | VerticalLine(..) => 1,
 
             QuadraticCurve(..) => 4,
             SmoothQuadraticCurve(..) => 2,
@@ -639,7 +695,7 @@ fn svg_path_to_multi_line_string<F: CoordNum>(path_data: path::Data) -> Result<M
             Close => {
                 builder.close()?;
                 continue;
-            },
+            }
         };
 
         match cmd {
@@ -655,7 +711,7 @@ fn svg_path_to_multi_line_string<F: CoordNum>(path_data: path::Data) -> Result<M
                 while let Some(&[x, y]) = coords.next() {
                     builder.line_to(Coord { x, y })?;
                 }
-            },
+            }
             Move(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut coords = params.chunks(param_count);
@@ -668,41 +724,41 @@ fn svg_path_to_multi_line_string<F: CoordNum>(path_data: path::Data) -> Result<M
                 while let Some(&[dx, dy]) = coords.next() {
                     builder.line_by(Coord { x: dx, y: dy })?;
                 }
-            },
+            }
             Line(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut coords = params.chunks(param_count);
                 while let Some(&[x, y]) = coords.next() {
                     builder.line_to(Coord { x, y })?;
                 }
-            },
+            }
             Line(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut coords = params.chunks(param_count);
                 while let Some(&[dx, dy]) = coords.next() {
                     builder.line_by(Coord { x: dx, y: dy })?;
                 }
-            },
+            }
             HorizontalLine(Absolute, params) => {
                 for &x in params.into_iter() {
                     builder.hline_to(x)?;
                 }
-            },
+            }
             HorizontalLine(Relative, params) => {
                 for &dx in params.into_iter() {
                     builder.hline_by(dx)?;
                 }
-            },
+            }
             VerticalLine(Absolute, params) => {
                 for &y in params.into_iter() {
                     builder.vline_to(y)?;
                 }
-            },
+            }
             VerticalLine(Relative, params) => {
                 for &dy in params.into_iter() {
                     builder.vline_by(dy)?;
                 }
-            },
+            }
 
             QuadraticCurve(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
@@ -710,57 +766,65 @@ fn svg_path_to_multi_line_string<F: CoordNum>(path_data: path::Data) -> Result<M
                 while let Some(&[cx, cy, x, y]) = params.next() {
                     builder.quadratic_curve_to(Coord { x: cx, y: cy }, Coord { x, y })?;
                 }
-            },
+            }
             QuadraticCurve(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[cx, cy, x, y]) = params.next() {
                     builder.quadratic_curve_by(Coord { x: cx, y: cy }, Coord { x, y })?;
                 }
-            },
+            }
             SmoothQuadraticCurve(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[x, y]) = params.next() {
                     builder.quadratic_smooth_curve_to(Coord { x, y })?;
                 }
-            },
+            }
             SmoothQuadraticCurve(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[x, y]) = params.next() {
                     builder.quadratic_smooth_curve_by(Coord { x, y })?;
                 }
-            },
+            }
 
             CubicCurve(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[c1x, c1y, c2x, c2y, x, y]) = params.next() {
-                    builder.curve_to(Coord { x: c1x, y: c1y }, Coord { x: c2x, y: c2y }, Coord { x, y })?;
+                    builder.curve_to(
+                        Coord { x: c1x, y: c1y },
+                        Coord { x: c2x, y: c2y },
+                        Coord { x, y },
+                    )?;
                 }
-            },
+            }
             CubicCurve(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[c1x, c1y, c2x, c2y, x, y]) = params.next() {
-                    builder.curve_by(Coord { x: c1x, y: c1y }, Coord { x: c2x, y: c2y }, Coord { x, y })?;
+                    builder.curve_by(
+                        Coord { x: c1x, y: c1y },
+                        Coord { x: c2x, y: c2y },
+                        Coord { x, y },
+                    )?;
                 }
-            },
+            }
             SmoothCubicCurve(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[c2x, c2y, x, y]) = params.next() {
                     builder.smooth_curve_to(Coord { x: c2x, y: c2y }, Coord { x, y })?;
                 }
-            },
+            }
             SmoothCubicCurve(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[c2x, c2y, x, y]) = params.next() {
                     builder.smooth_curve_by(Coord { x: c2x, y: c2y }, Coord { x, y })?;
                 }
-            },
+            }
 
             EllipticalArc(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
@@ -770,7 +834,7 @@ fn svg_path_to_multi_line_string<F: CoordNum>(path_data: path::Data) -> Result<M
                     let sweep = sweep == 1.0;
                     builder.elliptical_arc_to(rx, ry, x_rot, large_arc, sweep, Coord { x, y })?;
                 }
-            },
+            }
             EllipticalArc(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
@@ -779,11 +843,11 @@ fn svg_path_to_multi_line_string<F: CoordNum>(path_data: path::Data) -> Result<M
                     let sweep = sweep == 1.0;
                     builder.elliptical_arc_by(rx, ry, x_rot, large_arc, sweep, Coord { x, y })?;
                 }
-            },
+            }
 
             Close => {
                 unreachable!("Expected an early continue.");
-            },
+            }
         }
     }
 
@@ -796,7 +860,6 @@ fn svg_path_to_multi_line_string<F: CoordNum>(path_data: path::Data) -> Result<M
     Ok(mls)
 }
 
-
 /// Parse contents of the SVG <polyline/> and <polygon/> attribute [`points`][points] into a `LineString`.
 ///
 /// [points]: https://www.w3.org/TR/SVG11/shapes.html#PointsBNF
@@ -806,55 +869,43 @@ fn svg_points_to_line_string<F: CoordNum>(points: &str) -> Result<LineString<F>,
     use nom::branch::alt;
     use nom::character::complete::{char, multispace0, multispace1};
     use nom::combinator::opt;
-    use nom::number::complete::float;
-    use nom::sequence::{pair, tuple, delimited, preceded, separated_pair, terminated};
     use nom::multi::separated_list1;
+    use nom::number::complete::float;
+    use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
 
     fn comma_wsp(i: &str) -> IResult<&str, ()> {
         let (i, _) = alt((
-            tuple((
-                multispace1,
-                opt(char(',')),
-                multispace0,
-            )).map(|_| ()),
-            pair(
-                char(','),
-                multispace0,
-            ).map(|_| ()),
+            tuple((multispace1, opt(char(',')), multispace0)).map(|_| ()),
+            pair(char(','), multispace0).map(|_| ()),
         ))(i)?;
         Ok((i, ()))
     }
 
     fn point<F: CoordNum>(i: &str) -> IResult<&str, Coord<F>> {
-        let (i, (x, y)) = separated_pair(
-            float,
-            comma_wsp,
-            float,
-        )(i)?;
-        Ok((i, Coord {
-            x: F::from(x).unwrap(),
-            y: F::from(y).unwrap(),
-        }))
+        let (i, (x, y)) = separated_pair(float, comma_wsp, float)(i)?;
+        Ok((
+            i,
+            Coord {
+                x: F::from(x).unwrap(),
+                y: F::from(y).unwrap(),
+            },
+        ))
     }
 
     fn all_points<F: CoordNum>(i: &str) -> IResult<&str, Vec<Coord<F>>> {
-        delimited(
-            multispace0,
-            separated_list1(
-                comma_wsp,
-                point,
-            ),
-            multispace0,
-        )(i)
+        delimited(multispace0, separated_list1(comma_wsp, point), multispace0)(i)
     }
 
     match all_points(points) {
         Ok(("", points)) => Ok(LineString::new(points)),
-        Ok(_) => Err(IoError::MalformedInput(format!("Could not parse the list of points: {points}"))),
-        Err(err) => Err(IoError::MalformedInput(format!("Could not parse the list of points ({err}): {points}"))),
+        Ok(_) => Err(IoError::MalformedInput(format!(
+            "Could not parse the list of points: {points}"
+        ))),
+        Err(err) => Err(IoError::MalformedInput(format!(
+            "Could not parse the list of points ({err}): {points}"
+        ))),
     }
 }
-
 
 #[cfg(test)]
 mod tests {

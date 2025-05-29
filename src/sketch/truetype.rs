@@ -1,8 +1,8 @@
 use crate::csg::CSG;
 use crate::float_types::Real;
 use geo::{
-    Area, Geometry, GeometryCollection, LineString, Orient,
-    Polygon as GeoPolygon, orient::Direction,
+    Area, Geometry, GeometryCollection, LineString, Orient, Polygon as GeoPolygon,
+    orient::Direction,
 };
 use std::fmt::Debug;
 use ttf_parser::OutlineBuilder;
@@ -12,7 +12,9 @@ use ttf_utils::Outline;
 const CURVE_STEPS: usize = 8;
 
 impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+where
+    S: Clone + Send + Sync,
+{
     /// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
     ///
     /// Each glyph’s closed contours become one or more `Polygon`s (with holes if needed),
@@ -59,7 +61,8 @@ where S: Clone + Send + Sync {
                 // Extract the glyph outline (if any)
                 if let Some(outline) = Outline::new(&face, gid) {
                     // Flatten the outline into line segments
-                    let mut collector = OutlineFlattener::new(font_scale as Real, cursor_x as Real, 0.0);
+                    let mut collector =
+                        OutlineFlattener::new(font_scale as Real, cursor_x as Real, 0.0);
                     outline.emit(&mut collector);
 
                     // Now `collector.contours` holds closed subpaths,
@@ -122,7 +125,9 @@ where S: Clone + Send + Sync {
                     // -------------------------
                     for open_pts in collector.open_contours {
                         if open_pts.len() >= 2 {
-                            geo_coll.0.push(Geometry::LineString(LineString::from(open_pts)));
+                            geo_coll
+                                .0
+                                .push(Geometry::LineString(LineString::from(open_pts)));
                         }
                     }
 
@@ -229,8 +234,8 @@ impl OutlineFlattener {
         for i in 1..=steps {
             let t = i as Real / steps as Real;
             let mt = 1.0 - t;
-            let bx = mt*mt*px0 + 2.0*mt*t*px1 + t*t*px2;
-            let by = mt*mt*py0 + 2.0*mt*t*py1 + t*t*py2;
+            let bx = mt * mt * px0 + 2.0 * mt * t * px1 + t * t * px2;
+            let by = mt * mt * py0 + 2.0 * mt * t * py1 + t * t * py2;
             self.current.push((bx, by));
         }
         self.last_pt = (px2, py2);
@@ -248,16 +253,10 @@ impl OutlineFlattener {
         for i in 1..=steps {
             let t = i as Real / steps as Real;
             let mt = 1.0 - t;
-            let mt2 = mt*mt;
-            let t2  = t*t;
-            let bx = mt2*mt*px0
-                + 3.0*mt2*t*cx1
-                + 3.0*mt*t2*cx2
-                + t2*t*px3;
-            let by = mt2*mt*py0
-                + 3.0*mt2*t*cy1
-                + 3.0*mt*t2*cy2
-                + t2*t*py3;
+            let mt2 = mt * mt;
+            let t2 = t * t;
+            let bx = mt2 * mt * px0 + 3.0 * mt2 * t * cx1 + 3.0 * mt * t2 * cx2 + t2 * t * px3;
+            let by = mt2 * mt * py0 + 3.0 * mt2 * t * cy1 + 3.0 * mt * t2 * cy2 + t2 * t * py3;
             self.current.push((bx, by));
         }
         self.last_pt = (px3, py3);
@@ -271,7 +270,8 @@ impl OutlineFlattener {
             // If the last point != the first, close it.
             let first = self.current[0];
             let last = self.current[n - 1];
-            if (first.0 - last.0).abs() > Real::EPSILON || (first.1 - last.1).abs() > Real::EPSILON {
+            if (first.0 - last.0).abs() > Real::EPSILON || (first.1 - last.1).abs() > Real::EPSILON
+            {
                 self.current.push(first);
             }
             // That becomes one closed contour

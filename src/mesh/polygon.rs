@@ -1,9 +1,9 @@
+use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{PI, Real};
 use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point2, Point3, Vector3};
-use crate::float_types::parry3d::bounding_volume::Aabb;
 use std::sync::OnceLock;
 
 /// A polygon, defined by a list of vertices.
@@ -12,25 +12,27 @@ use std::sync::OnceLock;
 pub struct Polygon<S: Clone> {
     /// Vertices defining the Polygon's shape
     pub vertices: Vec<Vertex>,
-    
+
     /// The plane on which this Polygon lies, used for splitting
     pub plane: Plane,
-    
+
     /// Lazily‑computed axis‑aligned bounding box of the Polygon
     pub bounding_box: OnceLock<Aabb>,
-        
+
     /// Generic metadata associated with the Polygon
     pub metadata: Option<S>,
 }
 
 impl<S: Clone> Polygon<S>
-where S: Clone + Send + Sync {
+where
+    S: Clone + Send + Sync,
+{
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
         assert!(vertices.len() >= 3, "degenerate polygon");
-        
+
         let plane = Plane::from_vertices(vertices.clone());
-        
+
         Polygon {
             vertices,
             plane,
@@ -38,7 +40,7 @@ where S: Clone + Send + Sync {
             metadata,
         }
     }
-    
+
     /// Axis aligned bounding box of this Polygon (cached after first call)
     pub fn bounding_box(&self) -> Aabb {
         *self.bounding_box.get_or_init(|| {
@@ -96,7 +98,7 @@ where S: Clone + Send + Sync {
                 let y = offset.dot(&v);
                 all_vertices_2d.push(coord! {x: x, y: y});
             }
-        
+
             use geo::TriangulateEarcut;
             let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new())
                 .earcut_triangles_raw();
@@ -122,9 +124,9 @@ where S: Clone + Send + Sync {
         }
 
         #[cfg(feature = "delaunay")]
-        {        
+        {
             use geo::TriangulateSpade;
-            
+
             // Flatten each vertex to 2D
             // Here we clamp values within spade's minimum allowed value of  0.0 to 0.0
             // because spade refuses to triangulate with values within it's minimum:
@@ -138,7 +140,7 @@ where S: Clone + Send + Sync {
                 let y_clamped = if y.abs() < MIN_ALLOWED_VALUE { 0.0 } else { y };
                 all_vertices_2d.push(coord! {x: x_clamped, y: y_clamped});
             }
-            
+
             let polygon_2d = GeoPolygon::new(
                 LineString::new(all_vertices_2d),
                 // no holes if your polygon is always simple

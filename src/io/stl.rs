@@ -1,10 +1,10 @@
-use crate::{CSG, Vertex};
 use crate::float_types::Real;
 use crate::mesh::polygon::Polygon;
+use crate::{CSG, Vertex};
 
-use std::fmt::Debug;
 use geo::CoordsIter;
 use nalgebra::{Point3, Vector3};
+use std::fmt::Debug;
 
 #[cfg(any(feature = "stl-io", feature = "dxf-io"))]
 use core2::io::Cursor;
@@ -198,7 +198,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 geo::Geometry::Polygon(poly2d) => {
                     // Gather outer ring as [x,y]
                     let outer: Vec<[Real; 2]> = poly2d
-                        .exterior().coords_iter()
+                        .exterior()
+                        .coords_iter()
                         .map(|c| [c.x, c.y])
                         .collect();
 
@@ -244,7 +245,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                     // Same approach, but each Polygon in the MultiPolygon
                     for poly2d in &mpoly.0 {
                         let outer: Vec<[Real; 2]> = poly2d
-                            .exterior().coords_iter()
+                            .exterior()
+                            .coords_iter()
                             .map(|c| [c.x, c.y])
                             .collect();
 
@@ -254,7 +256,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                             .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
                             .collect();
 
-                        let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
+                        let hole_refs: Vec<&[[Real; 2]]> =
+                            holes_vec.iter().map(|h| &h[..]).collect();
                         let tri_2d = Self::tessellate_2d(&outer, &hole_refs);
 
                         for tri_pts in tri_2d {

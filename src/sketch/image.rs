@@ -7,7 +7,9 @@ use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
 impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+where
+    S: Clone + Send + Sync,
+{
     /// Builds a new CSG from the “on” pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.
     ///
