@@ -37,10 +37,6 @@ pub struct Plane {
 impl Plane {
     /// Create a plane from three points
     pub fn from_points(a: &Point3<Real>, b: &Point3<Real>, c: &Point3<Real>) -> Plane {
-        let n = (b - a).cross(&(c - a)).normalize();
-        if n.magnitude_squared() < EPSILON * EPSILON {
-            panic!("Degenerate polygon: vertices do not define a plane"); // todo: return error
-        }
 
         Plane {
             point_a: *a,
