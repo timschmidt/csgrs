@@ -52,7 +52,7 @@ impl<F: CoordNum> PathBuilder<F> {
 
     /// Get a mutable reference to the current path, or an error if no path has been started.
     ///
-    /// To accomodate for the semantics of [`close`], this function will automatically start a new path
+    /// To accommodate for the semantics of [`close`], this function will automatically start a new path
     /// if the last path has 2 or more points and is closed.
     /// For this reason, using this proxy is recommended for implementing any drawing command.
     fn get_path_mut_or_fail(&mut self) -> Result<&mut LineString<F>, IoError> {
