@@ -1,7 +1,4 @@
 //! Create `CSG`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
-//!
-//! ![signed distance fields demo][sdf demo image]
-#![cfg_attr(doc, doc = embed_doc_image::embed_image!("sdf demo image", "docs/signed_distance_field.gif"))]
 
 use crate::csg::CSG;
 use crate::float_types::Real;
