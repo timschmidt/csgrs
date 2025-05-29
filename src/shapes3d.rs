@@ -312,7 +312,6 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     }
     
     /// A helper to create a vertical cylinder along Z from z=0..z=height
-    /// A helper to create a vertical cylinder along Z from z=0..z=height
     // with the specified radius (NOT diameter).
     pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
         CSG::frustum_ptp(
