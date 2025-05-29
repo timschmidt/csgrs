@@ -6,7 +6,7 @@
 //!
 //! # Features
 //! #### Default
-//! - **f64**: use f64 as Real
+//! - **f64**: use f64 as `Real`
 //! - [**stl-io**](https://en.wikipedia.org/wiki/STL_(file_format)): `.stl` import/export
 //! - [**dxf-io**](https://en.wikipedia.org/wiki/AutoCAD_DXF): `.dxf` import/export
 //! - **chull-io**: convex hull and minkowski sum
@@ -17,13 +17,14 @@
 //! - **delaunay**: use `geo`s `spade` feature for triangulation
 //!
 //! #### Optional
-//! - **f32**: use f32 as Real, this conflicts with f64
+//! - **f32**: use f32 as `Real`, this conflicts with f64
 //! - **parallel**: use rayon for multithreading
 //! - **svg-io**: create `CSG`s from and convert `CSG`s to SVG's
 //! - **truetype-text**: create `CSG`s using TrueType fonts `.ttf`
 //! - **hershey-text**: create `CSG`s using Hershey fonts (`.jhf`)
 //! - **image-io**: make 2d `CSG`s from images
 //! - **earcut**: use `geo`s `earcutr` feature for triangulation
+//! - **bevymesh**: for conversion to a bevy `Mesh`
 
 #![forbid(unsafe_code)]
 
