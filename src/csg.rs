@@ -9,7 +9,6 @@ use geo::{
 };
 use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
-    partial_max, partial_min,
 };
 use crate::float_types::parry3d::{
     bounding_volume::Aabb,
@@ -956,50 +955,52 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///
     /// [`parry3d::bounding_volume::Aabb`]: crate::float_types::parry3d::bounding_volume::Aabb
     pub fn bounding_box(&self) -> Aabb {
-        // Track overall min/max in x, y, z among all 3D polygons and the 2D geometry’s bounding_rect.
-        let mut min_x = Real::MAX;
-        let mut min_y = Real::MAX;
-        let mut min_z = Real::MAX;
-        let mut max_x = -Real::MAX;
-        let mut max_y = -Real::MAX;
-        let mut max_z = -Real::MAX;
+        *self.bounding_box.get_or_init(|| {
+            // Track overall min/max in x, y, z among all 3D polygons and the 2D geometry’s bounding_rect.
+            let mut min_x = Real::MAX;
+            let mut min_y = Real::MAX;
+            let mut min_z = Real::MAX;
+            let mut max_x = -Real::MAX;
+            let mut max_y = -Real::MAX;
+            let mut max_z = -Real::MAX;
 
-        // 1) Gather from the 3D polygons
-        for poly in &self.polygons {
-            for v in &poly.vertices {
-                min_x = min_x.min(v.pos.x);
-                min_y = min_y.min(v.pos.y);
-                min_z = min_z.min(v.pos.z);
+            // 1) Gather from the 3D polygons
+            for poly in &self.polygons {
+                for v in &poly.vertices {
+                    min_x = min_x.min(v.pos.x);
+                    min_y = min_y.min(v.pos.y);
+                    min_z = min_z.min(v.pos.z);
 
-                max_x = max_x.max(v.pos.x);
-                max_y = max_y.max(v.pos.y);
-                max_z = max_z.max(v.pos.z);
+                    max_x = max_x.max(v.pos.x);
+                    max_y = max_y.max(v.pos.y);
+                    max_z = max_z.max(v.pos.z);
+                }
             }
-    
+
             // 2) Gather from the 2D geometry using `geo::BoundingRect`
             //    This gives us (min_x, min_y) / (max_x, max_y) in 2D. For 3D, treat z=0.
             //    Explicitly capture the result of `.bounding_rect()` as an Option<Rect<Real>>
             let maybe_rect: Option<Rect<Real>> = self.geometry.bounding_rect();
-    
+
             if let Some(rect) = maybe_rect {
                 let min_pt = rect.min();
                 let max_pt = rect.max();
-    
+
                 // Merge the 2D bounds into our existing min/max, forcing z=0 for 2D geometry.
-                min_x = *partial_min(&min_x, &min_pt.x).unwrap();
-                min_y = *partial_min(&min_y, &min_pt.y).unwrap();
-                min_z = *partial_min(&min_z, &0.0).unwrap();
-    
-                max_x = *partial_max(&max_x, &max_pt.x).unwrap();
-                max_y = *partial_max(&max_y, &max_pt.y).unwrap();
-                max_z = *partial_max(&max_z, &0.0).unwrap();
+                min_x = min_x.min(min_pt.x);
+                min_y = min_y.min(min_pt.y);
+                min_z = min_z.min(0.0);
+
+                max_x = max_x.max(max_pt.x);
+                max_y = max_y.max(max_pt.y);
+                max_z = max_z.max(0.0);
             }
-    
+
             // If still uninitialized (e.g., no polygons or geometry), return a trivial AABB at origin
             if min_x > max_x {
                 return Aabb::new(Point3::origin(), Point3::origin());
             }
-    
+
             // Build a parry3d Aabb from these min/max corners
             let mins = Point3::new(min_x, min_y, min_z);
             let maxs = Point3::new(max_x, max_y, max_z);

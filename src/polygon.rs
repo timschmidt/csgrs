@@ -12,13 +12,13 @@ use std::sync::OnceLock;
 pub struct Polygon<S: Clone> {
     /// Vertices defining the Polygon's shape
     pub vertices: Vec<Vertex>,
-    
+
     /// The plane on which this Polygon lies, used for splitting
     pub plane: Plane,
-    
+
     /// Lazily‑computed axis‑aligned bounding box of the Polygon
     pub bounding_box: OnceLock<Aabb>,
-        
+
     /// Generic metadata associated with the Polygon
     pub metadata: Option<S>,
 }
@@ -28,8 +28,20 @@ where S: Clone + Send + Sync {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
         assert!(vertices.len() >= 3, "degenerate polygon");
-        
+
         let plane = Plane::from_vertices(vertices.clone());
+
+        Polygon {
+            vertices,
+            plane,
+            bounding_box: OnceLock::new(),
+            metadata,
+        }
+    }
+
+    /// Create a polygon from vertices
+    pub fn new_with_plane(vertices: Vec<Vertex>, metadata: Option<S>, plane: Plane) -> Self {
+        assert!(vertices.len() >= 3, "degenerate polygon");
 
         Polygon {
             vertices,
@@ -44,22 +56,24 @@ where S: Clone + Send + Sync {
         Polygon {
             vertices: vertices.to_vec(),
             metadata,
+            plane: Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos),
+            bounding_box: OnceLock::new(),
         }
     }
 
-    /// Returns a [`Plane`] defined by the first three vertices of the [`Polygon`]
+    /// Returns the [`Plane`] of a [`Polygon`]
     ///
-    /// I think a worst-case can be constructed for any heuristic here the
-    /// only optimal solution may be to calculate which vertices are far apart
-    /// which we would need a fast solution for.
-    ///
-    /// Finding the best solution is likely to be too intensive,
-    /// but finding a "good enough" solution may still be quick.
-    /// It may be useful to retain this version and implement a slower higher
-    /// quality solution as a second function.
+    // I think a worst-case can be constructed for any heuristic here the
+    // only optimal solution may be to calculate which vertices are far apart
+    // which we would need a fast solution for.
+    //
+    // Finding the best solution is likely to be too intensive,
+    // but finding a "good enough" solution may still be quick.
+    // It may be useful to retain this version and implement a slower higher
+    // quality solution as a second function.
     #[inline]
-    pub fn plane(&self) -> Plane {
-        self.plane
+    pub fn plane(&self) -> &Plane {
+        &self.plane
     }
 
     /// Axis aligned bounding box of this Polygon (cached after first call)
