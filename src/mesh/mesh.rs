@@ -5,6 +5,7 @@ use nalgebra::{Matrix4, Vector3, Point3, partial_min, partial_max};
 use std::convert::TryInto;
 use std::sync::OnceLock;
 use crate::mesh::polygon::Polygon;
+use crate::mesh::plane::Plane;
 use crate::float_types::parry3d::bounding_volume::{Aabb, BoundingVolume};
 use crate::mesh::bsp::Node;
 use std::fmt::Debug;
@@ -231,14 +232,34 @@ impl<S: Clone + Send + Sync + Debug> TransformOps for Mesh<S> {
 			metadata: None,
 		}
 	}
-	
-    fn transform(&self, m:&Matrix4<Real>)->Self {
+    
+    /// Apply an arbitrary 3D transform (as a 4x4 matrix) to both polygons and polylines.
+    /// The polygon z-coordinates and normal vectors are fully transformed in 3D,
+    /// and the 2D polylines are updated by ignoring the resulting z after transform.
+    fn transform(&self, mat: &Matrix4<Real>) -> Mesh<S> {
+        let mat_inv_transpose = mat
+            .try_inverse().expect("Matrix not invertible?")
+            .transpose(); // todo catch error
+        let mut mesh = self.clone();
 
-        Mesh { 
-			polygons: Vec::new(),
-			bounding_box: OnceLock::new(),
-			metadata: None,
-		}
+        for poly in &mut mesh.polygons {
+            for vert in &mut poly.vertices {
+                // Position
+                let hom_pos = mat * vert.pos.to_homogeneous();
+                vert.pos = Point3::from_homogeneous(hom_pos).unwrap(); // todo catch error
+
+                // Normal
+                vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
+            }
+            
+            // keep the cached plane consistent with the new vertex positions
+            poly.plane = Plane::from_vertices(poly.vertices.clone());
+        }
+        
+        // invalidate the old cached bounding box
+        mesh.bounding_box = OnceLock::new();
+
+        mesh
     }
 }
 
