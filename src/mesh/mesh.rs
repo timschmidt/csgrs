@@ -5,9 +5,8 @@ use crate::mesh::plane::Plane;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::traits::{BooleanOps, TransformOps};
-use geo::{BooleanOps as GeoBool, CoordsIter, Geometry};
+use geo::{CoordsIter, Geometry};
 use nalgebra::{Matrix4, Point3, Vector3, partial_max, partial_min};
-use std::convert::TryInto;
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -39,42 +38,6 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             }
         }
         (maybe, never)
-    }
-
-    /// Returns a [`parry3d::bounding_volume::Aabb`] indicating the 3D bounds of all `polygons`.
-    pub fn bounding_box(&self) -> Aabb {
-        *self.bounding_box.get_or_init(|| {
-            // Track overall min/max in x, y, z among all 3D polygons
-            let mut min_x = Real::MAX;
-            let mut min_y = Real::MAX;
-            let mut min_z = Real::MAX;
-            let mut max_x = -Real::MAX;
-            let mut max_y = -Real::MAX;
-            let mut max_z = -Real::MAX;
-
-            // 1) Gather from the 3D polygons
-            for poly in &self.polygons {
-                for v in &poly.vertices {
-                    min_x = *partial_min(&min_x, &v.pos.x).unwrap();
-                    min_y = *partial_min(&min_y, &v.pos.y).unwrap();
-                    min_z = *partial_min(&min_z, &v.pos.z).unwrap();
-
-                    max_x = *partial_max(&max_x, &v.pos.x).unwrap();
-                    max_y = *partial_max(&max_y, &v.pos.y).unwrap();
-                    max_z = *partial_max(&max_z, &v.pos.z).unwrap();
-                }
-            }
-
-            // If still uninitialized (e.g., no polygons), return a trivial AABB at origin
-            if min_x > max_x {
-                return Aabb::new(Point3::origin(), Point3::origin());
-            }
-
-            // Build a parry3d Aabb from these min/max corners
-            let mins = Point3::new(min_x, min_y, min_z);
-            let maxs = Point3::new(max_x, max_y, max_z);
-            Aabb::new(mins, maxs)
-        })
     }
 }
 
@@ -259,6 +222,51 @@ impl<S: Clone + Send + Sync + Debug> TransformOps for Mesh<S> {
         // invalidate the old cached bounding box
         mesh.bounding_box = OnceLock::new();
 
+        mesh
+    }
+    
+	/// Returns a [`parry3d::bounding_volume::Aabb`] indicating the 3D bounds of all `polygons`.
+    fn bounding_box(&self) -> Aabb {
+        *self.bounding_box.get_or_init(|| {
+            // Track overall min/max in x, y, z among all 3D polygons
+            let mut min_x = Real::MAX;
+            let mut min_y = Real::MAX;
+            let mut min_z = Real::MAX;
+            let mut max_x = -Real::MAX;
+            let mut max_y = -Real::MAX;
+            let mut max_z = -Real::MAX;
+
+            // 1) Gather from the 3D polygons
+            for poly in &self.polygons {
+                for v in &poly.vertices {
+                    min_x = *partial_min(&min_x, &v.pos.x).unwrap();
+                    min_y = *partial_min(&min_y, &v.pos.y).unwrap();
+                    min_z = *partial_min(&min_z, &v.pos.z).unwrap();
+
+                    max_x = *partial_max(&max_x, &v.pos.x).unwrap();
+                    max_y = *partial_max(&max_y, &v.pos.y).unwrap();
+                    max_z = *partial_max(&max_z, &v.pos.z).unwrap();
+                }
+            }
+
+            // If still uninitialized (e.g., no polygons), return a trivial AABB at origin
+            if min_x > max_x {
+                return Aabb::new(Point3::origin(), Point3::origin());
+            }
+
+            // Build a parry3d Aabb from these min/max corners
+            let mins = Point3::new(min_x, min_y, min_z);
+            let maxs = Point3::new(max_x, max_y, max_z);
+            Aabb::new(mins, maxs)
+        })
+    }
+    
+    /// Invert this Mesh (flip inside vs. outside)
+    fn inverse(&self) -> Mesh<S> {
+        let mut mesh = self.clone();
+        for p in &mut mesh.polygons {
+            p.flip();
+        }
         mesh
     }
 }

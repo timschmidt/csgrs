@@ -1,12 +1,11 @@
 use crate::float_types::Real;
 use crate::traits::{BooleanOps, TransformOps};
 use geo::{
-    AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Coord, CoordsIter, Geometry,
-    GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
+    AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Geometry,
+    GeometryCollection, LineString, MultiPolygon, Orient, Rect,
     orient::Direction,
 };
-use nalgebra::{Matrix4, Vector3};
-use std::convert::TryInto;
+use nalgebra::{Matrix4, Point3, partial_min, partial_max};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 use crate::float_types::parry3d::bounding_volume::Aabb;
@@ -21,6 +20,10 @@ pub struct Sketch<S> {
 
     /// Metadata
     pub metadata: Option<S>,
+}
+
+impl<S: Clone + Send + Sync + Debug> Sketch<S> {
+
 }
 
 impl<S: Clone + Send + Sync + Debug> Sketch<S> {
@@ -252,10 +255,6 @@ impl<S: Clone + Send + Sync + Debug> TransformOps for Sketch<S> {
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D,
     /// and the 2D polylines are updated by ignoring the resulting z after transform.
     fn transform(&self, mat: &Matrix4<Real>) -> Sketch<S> {
-        let mat_inv_transpose = mat
-            .try_inverse()
-            .expect("Matrix not invertible?")
-            .transpose(); // todo catch error
         let mut sketch = self.clone();
 
         // Convert the top-left 2×2 submatrix + translation of a 4×4 into a geo::AffineTransform
@@ -293,12 +292,110 @@ impl<S: Clone + Send + Sync + Debug> TransformOps for Sketch<S> {
 
         sketch
     }
+    
+	/// Returns a [`parry3d::bounding_volume::Aabb`] containing:
+    /// The 2D bounding rectangle of `self.geometry`, interpreted at z=0.
+    fn bounding_box(&self) -> Aabb {
+        *self.bounding_box.get_or_init(|| {
+            // Track overall min/max in x, y, z among all 3D polygons and the 2D geometry’s bounding_rect.
+            let mut min_x = Real::MAX;
+            let mut min_y = Real::MAX;
+            let mut min_z = Real::MAX;
+            let mut max_x = -Real::MAX;
+            let mut max_y = -Real::MAX;
+            let mut max_z = -Real::MAX;
+
+            // Gather from the 2D geometry using `geo::BoundingRect`
+            // This gives us (min_x, min_y) / (max_x, max_y)
+            // Explicitly capture the result of `.bounding_rect()` as an Option<Rect<Real>>
+            let maybe_rect: Option<Rect<Real>> = self.geometry.bounding_rect();
+
+            if let Some(rect) = maybe_rect {
+                let min_pt = rect.min();
+                let max_pt = rect.max();
+
+                // Merge the 2D bounds into our existing min/max, forcing z=0 for 2D geometry.
+                min_x = *partial_min(&min_x, &min_pt.x).unwrap();
+                min_y = *partial_min(&min_y, &min_pt.y).unwrap();
+                min_z = *partial_min(&min_z, &0.0).unwrap();
+
+                max_x = *partial_max(&max_x, &max_pt.x).unwrap();
+                max_y = *partial_max(&max_y, &max_pt.y).unwrap();
+                max_z = *partial_max(&max_z, &0.0).unwrap();
+            }
+
+            // If still uninitialized (e.g., no geometry), return a trivial AABB at origin
+            if min_x > max_x {
+                return Aabb::new(Point3::origin(), Point3::origin());
+            }
+
+            // Build a parry3d Aabb from these min/max corners
+            let mins = Point3::new(min_x, min_y, min_z);
+            let maxs = Point3::new(max_x, max_y, max_z);
+            Aabb::new(mins, maxs)
+        })
+    }
+    
+    /// Invert this Mesh (flip inside vs. outside)
+    fn inverse(&self) -> Sketch<S> {
+        let sketch = self.clone();
+        //for p in &mut sketch.polygons {
+        //    p.flip();
+        //}
+        sketch
+    }
 }
 
 impl<S: Clone + Send + Sync + Debug> From<crate::mesh::mesh::Mesh<S>> for Sketch<S> {
     fn from(mesh: crate::mesh::mesh::Mesh<S>) -> Self {
+		// If mesh is empty, return empty Sketch
+        if mesh.polygons.is_empty() {
+            return Sketch::new();
+        }
+
+        // Convert mesh into a collection of 2D polygons
+        let mut flattened_3d = Vec::new(); // will store geo::Polygon<Real>
+
+        for poly in &mesh.polygons {
+            // Tessellate this polygon into triangles
+            let triangles = poly.tessellate();
+            // Each triangle has 3 vertices [v0, v1, v2].
+            // Project them onto XY => build a 2D polygon (triangle).
+            for tri in triangles {
+                let ring = vec![
+                    (tri[0].pos.x, tri[0].pos.y),
+                    (tri[1].pos.x, tri[1].pos.y),
+                    (tri[2].pos.x, tri[2].pos.y),
+                    (tri[0].pos.x, tri[0].pos.y), // close ring explicitly
+                ];
+                let polygon_2d = geo::Polygon::new(LineString::from(ring), vec![]);
+                flattened_3d.push(polygon_2d);
+            }
+        }
+
+        // Union all these polygons together into one MultiPolygon
+        // (We could chain them in a fold-based union.)
+        let unioned_from_3d = if flattened_3d.is_empty() {
+            MultiPolygon::new(Vec::new())
+        } else {
+            // Start with the first polygon as a MultiPolygon
+            let mut mp_acc = MultiPolygon(vec![flattened_3d[0].clone()]);
+            // Union in the rest
+            for p in flattened_3d.iter().skip(1) {
+                mp_acc = mp_acc.union(&MultiPolygon(vec![p.clone()]));
+            }
+            mp_acc
+        };
+
+        // Ensure consistent orientation (CCW for exteriors):
+        let oriented = unioned_from_3d.orient(Direction::Default);
+
+        // Store final polygons as a MultiPolygon in a new GeometryCollection
+        let mut new_gc = GeometryCollection::default();
+        new_gc.0.push(Geometry::MultiPolygon(oriented));
+		
         Sketch {
-            geometry: GeometryCollection::default(),
+            geometry: new_gc,
             bounding_box: OnceLock::new(),
             metadata: None,
         }
