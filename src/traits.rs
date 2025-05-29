@@ -8,6 +8,7 @@ pub trait BooleanOps<Other = Self> {
     fn union(&self, other: &Other)        -> Self::Output;
     fn difference(&self, other: &Other)   -> Self::Output;
     fn intersection(&self, other: &Other) -> Self::Output;
+    fn xor(&self, other: &Other) -> Self::Output;
 }
 
 /// Rigid + affine transformations in *native* space.
