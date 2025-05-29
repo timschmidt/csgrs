@@ -12,13 +12,13 @@ use std::sync::OnceLock;
 pub struct Polygon<S: Clone> {
     /// Vertices defining the Polygon's shape
     pub vertices: Vec<Vertex>,
-    
+
     /// The plane on which this Polygon lies, used for splitting
     pub plane: Plane,
-    
+
     /// Lazily‑computed axis‑aligned bounding box of the Polygon
     pub bounding_box: OnceLock<Aabb>,
-        
+
     /// Generic metadata associated with the Polygon
     pub metadata: Option<S>,
 }
@@ -28,9 +28,9 @@ where S: Clone + Send + Sync {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
         assert!(vertices.len() >= 3, "degenerate polygon");
-        
+
         let plane = Plane::from_vertices(vertices.clone());
-        
+
         Polygon {
             vertices,
             plane,

@@ -20,20 +20,6 @@ fn main() {
     let cube = CSG::cube(2.0, 2.0, 2.0, None);
     let sphere = CSG::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
 
-    // Create a pie slice of radius 2, from 0 to 90 degrees
-    let wedge = CSG::pie_slice(2.0, 0.0, 90.0, 16, None);
-    let _ = fs::write("stl/pie_slice.stl", wedge.to_stl_ascii("pie_slice"));
-    
-    // Create a 2D "metaball" shape from 3 circles
-    use nalgebra::Point2;
-    let balls_2d = vec![
-        (Point2::new(0.0, 0.0), 1.0),
-        (Point2::new(1.5, 0.0), 1.0),
-        (Point2::new(0.75, 1.0), 0.5),
-    ];
-    let mb2d = CSG::metaballs2d(&balls_2d, (100, 100), 1.0, 0.25, None);
-    let _ = fs::write("stl/mb2d.stl", mb2d.to_stl_ascii("metaballs2d"));
-    
     // Create a supershape
     let sshape = CSG::supershape(1.0, 1.0, 6.0, 1.0, 1.0, 1.0, 128, None);
     let _ = fs::write("stl/supershape.stl", sshape.to_stl_ascii("supershape"));
@@ -42,15 +28,11 @@ fn main() {
     let square = CSG::circle(1.0, 32, None);
     let arc_array = square.distribute_arc(5, 5.0, 0.0, 180.0);
     let _ = fs::write("stl/arc_array.stl", arc_array.to_stl_ascii("arc_array"));
-    
-    // Distribute that wedge along a linear axis
-    let wedge_line = wedge.distribute_linear(4, nalgebra::Vector3::new(1.0, 0.0, 0.0), 3.0);
-    let _ = fs::write("stl/wedge_line.stl", wedge_line.to_stl_ascii("wedge_line"));
-    
+
     // Make a 4x4 grid of the supershape
     let grid_of_ss = sshape.distribute_grid(4, 4, 3.0, 3.0);
     let _ = fs::write("stl/grid_of_ss.stl", grid_of_ss.to_stl_ascii("grid_of_ss"));
-    
+
     // 1. Circle with keyway
     let keyway_shape = CSG::circle_with_keyway(10.0, 64, 2.0, 3.0, None);
     let _ = fs::write("stl/keyway_shape.stl", keyway_shape.to_stl_ascii("keyway_shape"));
