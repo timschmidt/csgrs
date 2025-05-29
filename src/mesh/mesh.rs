@@ -3,8 +3,9 @@ use crate::float_types::parry3d::bounding_volume::{Aabb, BoundingVolume};
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
 use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
 use crate::traits::{BooleanOps, TransformOps};
-use geo::{AffineOps, BooleanOps as GeoBool, GeometryCollection};
+use geo::{BooleanOps as GeoBool, CoordsIter, Geometry};
 use nalgebra::{Matrix4, Point3, Vector3, partial_max, partial_min};
 use std::convert::TryInto;
 use std::fmt::Debug;
@@ -263,9 +264,59 @@ impl<S: Clone + Send + Sync + Debug> TransformOps for Mesh<S> {
 }
 
 impl<S: Clone + Send + Sync + Debug> From<crate::sketch::sketch::Sketch<S>> for Mesh<S> {
+	/// Convert a Sketch into a Mesh.
     fn from(sketch: crate::sketch::sketch::Sketch<S>) -> Self {
+        /// Helper function to convert a geo::Polygon into one or more Polygon<S> entries.
+        fn process_polygon<S>(
+            poly2d: &geo::Polygon<Real>,
+            all_polygons: &mut Vec<Polygon<S>>,
+            metadata: &Option<S>,
+        ) where
+            S: Clone + Send + Sync,
+        {
+            // 1. Convert the outer ring to 3D.
+            let mut outer_vertices_3d = Vec::new();
+            for c in poly2d.exterior().coords_iter() {
+                outer_vertices_3d.push(Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()));
+            }
+
+            if outer_vertices_3d.len() >= 3 {
+                all_polygons.push(Polygon::new(outer_vertices_3d, metadata.clone()));
+            }
+
+            // 2. Convert interior rings (holes), if needed as separate polygons.
+            for ring in poly2d.interiors() {
+                let mut hole_vertices_3d = Vec::new();
+                for c in ring.coords_iter() {
+                    hole_vertices_3d.push(Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()));
+                }
+
+                if hole_vertices_3d.len() >= 3 {
+                    // Note: adjust this if your `Polygon<S>` type supports interior rings.
+                    all_polygons.push(Polygon::new(hole_vertices_3d, metadata.clone()));
+                }
+            }
+        }
+
+        let mut all_polygons = Vec::new();
+
+        for geom in &sketch.geometry {
+            match geom {
+                Geometry::Polygon(poly2d) => {
+                    process_polygon(poly2d, &mut all_polygons, &sketch.metadata);
+                }
+                Geometry::MultiPolygon(multipoly) => {
+                    for poly2d in multipoly {
+                        process_polygon(poly2d, &mut all_polygons, &sketch.metadata);
+                    }
+                }
+                // Optional: handle other geometry types like LineString here.
+                _ => {}
+            }
+        }
+
         Mesh {
-            polygons: Vec::new(),
+            polygons: all_polygons,
             bounding_box: OnceLock::new(),
             metadata: None,
         }
