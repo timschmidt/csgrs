@@ -285,9 +285,7 @@ impl<S: Clone + Send + Sync + Debug> TransformOps for Sketch<S> {
 
         let affine2 = AffineTransform::new(a, b, xoff, d, e, yoff);
 
-        // Transform csg.geometry (the GeometryCollection) in 2D
-        // Using geo’s map-coords approach or the built-in AffineOps trait.
-        // Below we use the `AffineOps` trait if you have `use geo::AffineOps;`
+        // Transform sketch.geometry (the GeometryCollection) in 2D
         sketch.geometry = sketch.geometry.affine_transform(&affine2);
 
         // invalidate the old cached bounding box
