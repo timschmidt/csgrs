@@ -4,8 +4,7 @@ use geo::{line_string, GeometryCollection, Geometry, LineString, MultiPolygon, P
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Creates a 2D square in the XY plane.
     ///
     /// # Parameters

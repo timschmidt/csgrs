@@ -5,8 +5,7 @@ use crate::vertex::Vertex;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Create a right prism (a box) that spans from (0, 0, 0)
     /// to (width, length, height). All dimensions must be >= 0.
     pub fn cube(width: Real, length: Real, height: Real, metadata: Option<S>) -> CSG<S> {

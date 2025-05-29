@@ -208,7 +208,7 @@ fn main() {
         // Suppose we want two overlapping metaballs
         let balls = vec![
             MetaBall::new(Point3::origin(), 1.0),
-            MetaBall::new(Point3::new(1.5, 0.0, 0.0), 1.0),
+            MetaBall::new(Point3::new(1.75, 0.0, 0.0), 1.0),
         ];
     
         let resolution = (60, 60, 60);
@@ -223,7 +223,7 @@ fn main() {
             padding,
             None,
         );
-        
+
         // For instance, save to STL
         let stl_data = metaball_csg.to_stl_binary("my_metaballs").unwrap();
         std::fs::write("stl/metaballs.stl", stl_data)
