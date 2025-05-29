@@ -82,7 +82,7 @@ getrandom = { version = "0.3", features = ["wasm_js"], optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
-default = ["f64", "stl-io", "dxf-io", "chull-io", "metaballs", "hashmap", "sdf", "offset", "delaunay"]
+default = ["f64", "stl-io", "dxf-io", "chull-io", "image-io", "metaballs", "hashmap", "sdf", "offset", "delaunay", "truetype-text"]
 parallel = [
   "rayon",
   "geo/multithreading",
