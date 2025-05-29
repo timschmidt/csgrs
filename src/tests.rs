@@ -1607,10 +1607,7 @@ fn test_slice_cylinder() {
 /// Helper to create a `Polygon` in the XY plane from an array of (x,y) points,
 /// with z=0 and normal=+Z.
 fn polygon_from_xy_points(xy_points: &[[Real; 2]]) -> Polygon<()> {
-    assert!(
-        xy_points.len() >= 3,
-        "Need at least 3 points for a polygon."
-    );
+    assert!(xy_points.len() >= 3, "Need at least 3 points for a polygon.");
 
     let normal = Vector3::z();
     let vertices: Vec<Vertex> = xy_points
@@ -1626,7 +1623,8 @@ fn polygon_from_xy_points(xy_points: &[[Real; 2]]) -> Polygon<()> {
 #[test]
 fn test_flatten_and_union_single_polygon() {
     // Create a CSG with one polygon (a unit square).
-    let square_poly = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
+    let square_poly =
+        polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     let csg = CSG::from_polygons(&[square_poly]);
 
     // Flatten & union it

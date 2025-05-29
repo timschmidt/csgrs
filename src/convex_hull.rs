@@ -24,11 +24,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let points: Vec<Vec<Real>> = self
             .polygons
             .iter()
-            .flat_map(|poly| {
-                poly.vertices
-                    .iter()
-                    .map(|v| vec![v.pos.x, v.pos.y, v.pos.z])
-            })
+            .flat_map(|poly| poly.vertices.iter().map(|v| vec![v.pos.x, v.pos.y, v.pos.z]))
             .collect();
 
         // Attempt to compute the convex hull using the robust wrapper
@@ -37,7 +33,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             Err(_) => {
                 // Fallback to an empty CSG if hull generation fails
                 return CSG::new();
-            }
+            },
         };
 
         let (verts, indices) = hull.vertices_indices();
