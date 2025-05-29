@@ -16,7 +16,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run Check
-        run: cargo check --features parallel stl-io svg-io dxf-io truetype-text hershey-text image-io
+        run: cargo check --features "parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
 
   test:
     name: Test Suite
@@ -28,7 +28,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run Tests
-        run: cargo test --lib --features parallel stl-io svg-io dxf-io truetype-text hershey-text image-io
+        run: cargo test --lib --features "parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
 
   fmt:
     name: Formatting
@@ -50,7 +50,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run Clippy
-        run: cargo clippy --lib --features parallel stl-io svg-io dxf-io truetype-text hershey-text image-io -- -D warnings
+        run: cargo clippy --lib --features "parallel stl-io svg-io dxf-io truetype-text hershey-text image-io" -- -D warnings
 
   style:
     name: Check spelling and semver
