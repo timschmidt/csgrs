@@ -110,4 +110,3 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         )
     }
 }
-
