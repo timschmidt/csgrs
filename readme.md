@@ -107,7 +107,7 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 - <img src="docs/truetype.png" width="128" alt="top down view of the text 'HELLO'"/> **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
 - <img src="docs/metaballs_2d.png" width="128"/> **`CSG::metaballs2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
 - <img src="docs/airfoil.png" width="128" alt="a side view of an airfoil"/> **`CSG::airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>)`**
-- <img src="docs/bezier_extruded.png" width="128" alt="an algled view of a bezier cirve"/> **`CSG::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`**
+- <img src="docs/bezier_extruded.png" width="128" alt="an angled view of a bezier cirve"/> **`CSG::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`**
 - <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`CSG::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`**
 - <img src="docs/heart.png" width="128" alt="top down view of a cartune heart"/> **`CSG::heart(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/crescent.png" width="128"/> **`CSG::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: Option<S>)`** - 
@@ -133,8 +133,8 @@ let text_3d = csg_text.extrude(1.0);
 
 Extrusions build 3D polygons from 2D Geometries.
 
-- <img src="docs/extrude.png" width="128" alt="an algled view of an extruded star"/> **`CSG::extrude(height: Real)`** - Simple extrude in Z+
-- <img src="docs/extrude_vector.png" width="128"  alt="an algled view of a star extruded at an angle"/> **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
+- <img src="docs/extrude.png" width="128" alt="an angled view of an extruded star"/> **`CSG::extrude(height: Real)`** - Simple extrude in Z+
+- <img src="docs/extrude_vector.png" width="128"  alt="an angled view of a star extruded at an angle"/> **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
 - **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Extrude Between Two BSP Polygons
 - <img src="docs/rotate_extrude.png" width="128"  alt="an arch with round ends"/> **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
 
@@ -151,9 +151,9 @@ let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.poly
 
 ### 3D Shapes
 
-- <img src="docs/cube.png" width="128" alt="an algled view of a cube"/> **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
-- <img src="docs/sphere.png" width="128" alt="an algled view of a sphere"/> **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
-- <img src="docs/cylinder.png" width="128" alt="an algled view of a cylinder"/> **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/cube.png" width="128" alt="an angled view of a cube"/> **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
+- <img src="docs/sphere.png" width="128" alt="an angled view of a sphere"/> **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
+- <img src="docs/cylinder.png" width="128" alt="an angled view of a cylinder"/> **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/frustum.png" width="128"/> **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** -
 Construct a frustum at origin with height and `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
