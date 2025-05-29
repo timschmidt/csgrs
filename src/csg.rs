@@ -4,9 +4,8 @@ use crate::plane::Plane;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use geo::{
-    AffineOps, AffineTransform, BooleanOps, BoundingRect, Coord, CoordsIter, Geometry,
-    GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
-    orient::Direction,
+    AffineOps, AffineTransform, BooleanOps, BoundingRect, Coord, CoordsIter, orient::Direction,
+    Geometry, GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
 };
 use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
@@ -948,6 +947,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Returns a [`parry3d::bounding_volume::Aabb`] by merging:
     /// 1. The 3D bounds of all `polygons`.
     /// 2. The 2D bounding rectangle of `self.geometry`, interpreted at z=0.
+    ///
+    /// [`parry3d::bounding_volume::Aabb`]: crate::float_types::parry3d::bounding_volume::Aabb
     pub fn bounding_box(&self) -> Aabb {
         *self.bounding_box.get_or_init(|| {
             // Track overall min/max in x, y, z among all 3D polygons and the 2D geometry’s bounding_rect.

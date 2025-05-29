@@ -1,3 +1,14 @@
+//! The [convex hull](https://en.wikipedia.org/wiki/Convex_hull) of a shape is the smallest convex set that contains it.
+//! It may be visualized as the shape enclosed by a rubber band stretched around the subset.
+//!
+//! This is the set:\
+//! ![Pre-ConvexHull demo image][Pre-ConvexHull demo image]
+//!
+//! And this is the convex hull of that set:\
+//! ![ConvexHull demo image][ConvexHull demo image]
+#![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
+#![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
+
 use crate::csg::CSG;
 use crate::float_types::Real;
 use crate::polygon::Polygon;
@@ -7,7 +18,7 @@ use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> CSG<S> {
-    /// Compute the convex hull of all vertices in this CSG.
+    /// Compute the [convex hull](https://en.wikipedia.org/wiki/Convex_hull) of all vertices in this CSG.
     pub fn convex_hull(&self) -> CSG<S> {
         // Gather all (x, y, z) coordinates from the polygons
         let points: Vec<Vec<Real>> = self
