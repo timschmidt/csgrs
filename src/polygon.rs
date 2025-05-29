@@ -12,13 +12,13 @@ use std::sync::OnceLock;
 pub struct Polygon<S: Clone> {
     /// Vertices defining the Polygon's shape
     pub vertices: Vec<Vertex>,
-    
+
     /// The plane on which this Polygon lies, used for splitting
     pub plane: Plane,
-    
+
     /// Lazily‑computed axis‑aligned bounding box of the Polygon
     pub bounding_box: OnceLock<Aabb>,
-        
+
     /// Generic metadata associated with the Polygon
     pub metadata: Option<S>,
 }
@@ -28,9 +28,9 @@ where S: Clone + Send + Sync {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
         assert!(vertices.len() >= 3, "degenerate polygon");
-        
+
         let plane = Plane::from_vertices(vertices.clone());
-        
+
         Polygon {
             vertices,
             plane,
@@ -38,7 +38,44 @@ where S: Clone + Send + Sync {
             metadata,
         }
     }
-    
+
+    /// Create a polygon from vertices
+    pub fn new_with_plane(vertices: Vec<Vertex>, metadata: Option<S>, plane: Plane) -> Self {
+        assert!(vertices.len() >= 3, "degenerate polygon");
+
+        Polygon {
+            vertices,
+            plane,
+            bounding_box: OnceLock::new(),
+            metadata,
+        }
+    }
+
+    /// Create a polygon from three vertices
+    pub fn from_tri(vertices: &[Vertex; 3], metadata: Option<S>) -> Self {
+        Polygon {
+            vertices: vertices.to_vec(),
+            metadata,
+            plane: Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos),
+            bounding_box: OnceLock::new(),
+        }
+    }
+
+    /// Returns the [`Plane`] of a [`Polygon`]
+    ///
+    // I think a worst-case can be constructed for any heuristic here the
+    // only optimal solution may be to calculate which vertices are far apart
+    // which we would need a fast solution for.
+    //
+    // Finding the best solution is likely to be too intensive,
+    // but finding a "good enough" solution may still be quick.
+    // It may be useful to retain this version and implement a slower higher
+    // quality solution as a second function.
+    #[inline]
+    pub fn plane(&self) -> &Plane {
+        &self.plane
+    }
+
     /// Axis aligned bounding box of this Polygon (cached after first call)
     pub fn bounding_box(&self) -> Aabb {
         *self.bounding_box.get_or_init(|| {
@@ -179,10 +216,16 @@ where S: Clone + Send + Sync {
             // We'll keep a queue of triangles to process
             let mut queue = vec![tri];
             for _ in 0..subdivisions.get() {
-                let mut next_level = Vec::new();
+                let mut next_level = Vec::with_capacity(queue.len() * 4);
                 for t in queue {
                     let subs = subdivide_triangle(t);
-                    next_level.extend(subs);
+
+                    // only reserves if needed, this is unneeded as it's done ahead of time
+                    // next_level.reserve(4);
+                    // add to vec without copy
+                    for sub in subs.into_iter() {
+                        next_level.push(sub);
+                    }
                 }
                 queue = next_level;
             }
@@ -235,12 +278,12 @@ where S: Clone + Send + Sync {
     }
 
     /// Returns a reference to the metadata, if any.
-    pub fn metadata(&self) -> Option<&S> {
+    pub const fn metadata(&self) -> Option<&S> {
         self.metadata.as_ref()
     }
 
     /// Returns a mutable reference to the metadata, if any.
-    pub fn metadata_mut(&mut self) -> Option<&mut S> {
+    pub const fn metadata_mut(&mut self) -> Option<&mut S> {
         self.metadata.as_mut()
     }
 
@@ -275,13 +318,13 @@ pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real
     (u, v)
 }
 
-// Helper function to subdivide a triangle
-pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
+/// Helper function to subdivide a triangle into 4
+pub fn subdivide_triangle(tri: [Vertex; 3]) -> [[Vertex; 3]; 4] {
     let v01 = tri[0].interpolate(&tri[1], 0.5);
     let v12 = tri[1].interpolate(&tri[2], 0.5);
     let v20 = tri[2].interpolate(&tri[0], 0.5);
 
-    vec![
+    [
         [tri[0].clone(), v01.clone(), v20.clone()],
         [v01.clone(), tri[1].clone(), v12.clone()],
         [v20.clone(), v12.clone(), tri[2].clone()],

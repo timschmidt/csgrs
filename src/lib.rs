@@ -6,7 +6,7 @@
 //!
 //! # Features
 //! #### Default
-//! - **f64**: use f64 as Real
+//! - **f64**: use f64 as `Real`
 //! - [**stl-io**](https://en.wikipedia.org/wiki/STL_(file_format)): `.stl` import/export
 //! - [**dxf-io**](https://en.wikipedia.org/wiki/AutoCAD_DXF): `.dxf` import/export
 //! - **chull-io**: convex hull and minkowski sum
@@ -17,7 +17,7 @@
 //! - **delaunay**: use `geo`s `spade` feature for triangulation
 //!
 //! #### Optional
-//! - **f32**: use f32 as Real, this conflicts with f64
+//! - **f32**: use f32 as `Real`, this conflicts with f64
 //! - **parallel**: use rayon for multithreading
 //! - **svg-io**: create `CSG`s from and convert `CSG`s to SVG's
 //! - **truetype-text**: create `CSG`s using TrueType fonts `.ttf`
@@ -41,6 +41,9 @@ pub mod shapes2d;
 pub mod shapes3d;
 pub mod extrudes;
 pub mod io;
+
+#[cfg(any(all(feature = "f64", feature = "f32"), not(any(feature = "f64", feature = "f32"))))]
+compile_error!("Either 'f64' or 'f32' feature must be specified, but not both");
 
 #[cfg(any(all(feature = "delaunay", feature = "earcut"), not(any(feature = "delaunay", feature = "earcut"))))]
 compile_error!("Either 'delaunay' or 'earcut' feature must be specified, but not both");

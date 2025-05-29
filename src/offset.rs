@@ -11,6 +11,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///   - If it's a Polygon, buffer it and store the result as a MultiPolygon
     ///   - If it's a MultiPolygon, buffer it directly
     ///   - Otherwise, ignore (exclude) it from the new collection
+    ///
+    /// Note: this does not affect the 3d polygons of the `CSG`
     pub fn offset(&self, distance: Real) -> CSG<S> {
         let offset_geoms = self.geometry
             .iter()

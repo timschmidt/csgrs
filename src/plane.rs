@@ -35,6 +35,15 @@ pub struct Plane {
 }
 
 impl Plane {
+    /// Create a plane from three points
+    pub const fn from_points(a: &Point3<Real>, b: &Point3<Real>, c: &Point3<Real>) -> Plane {
+        Plane {
+            point_a: *a,
+            point_b: *b,
+            point_c: *c,
+        }
+    }
+
     /// Tries to pick three vertices that span the largest area triangle 
     /// (maximally well-spaced) and returns a plane defined by them.
     /// Care is taken to preserve the original winding of the vertices.
@@ -173,7 +182,7 @@ impl Plane {
         self.normal().dot(&self.point_a.coords)
     }
 
-    pub fn flip(&mut self) {
+    pub const fn flip(&mut self) {
         std::mem::swap(&mut self.point_a, &mut self.point_b);
     }
 
