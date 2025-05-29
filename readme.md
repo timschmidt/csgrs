@@ -83,33 +83,33 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 
 ### 2D Shapes
 
-- <img src="docs/square.png" width="128"/> **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
-- <img src="docs/circle.png" width="128"/> **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/polygon.png" width="128"/> **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
-- <img src="docs/rounded_rectangle.png" width="128"/> **`CSG::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
-- <img src="docs/ellipse.png" width="128"/> **`CSG::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/ngon.png" width="128"/> **`CSG::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
-- <img src="docs/right_triangle.png" width="128"/> **`CSG::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
-- <img src="docs/trapezoid.png" width="128"/> **`CSG::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>)`**
-- <img src="docs/star.png" width="128"/> **`CSG::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
-- <img src="docs/teardrop.png" width="128"/> **`CSG::teardrop(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/egg_outline.png" width="128"/> **`CSG::egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/squircle.png" width="128"/> **`CSG::squircle(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/keyhole.png" width="128"/> **`CSG::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
+- <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
+- <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`CSG::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
+- <img src="docs/ellipse.png" width="128" alt="top down view of an ellipse"/> **`CSG::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/ngon.png" width="128" alt="top down view of a 6 sided n-gon"/> **`CSG::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
+- <img src="docs/right_triangle.png" width="128" alt="top down view of a right triangle"/> **`CSG::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
+- <img src="docs/trapezoid.png" width="128" alt="top down view of trapezoid"/> **`CSG::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>)`**
+- <img src="docs/star.png" width="128" alt="top down view of star"/> **`CSG::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
+- <img src="docs/teardrop.png" width="128" alt="top down view of a teardrop"/> **`CSG::teardrop(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/egg_outline.png" width="128" alt="top down view of an egg shape"/> **`CSG::egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/squircle.png" width="128" alt="top down view of a squircle"/> **`CSG::squircle(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/keyhole.png" width="128" alt="top down view of a keyhole"/> **`CSG::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/reuleaux3.png" width="128"/> **`CSG::reuleaux(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`**
-- <img src="docs/ring.png" width="128"/> **`CSG::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/pie_slice.png" width="128"/> **`CSG::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/ring.png" width="128" alt="top down view of a ring"/> **`CSG::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/pie_slice.png" width="128" alt="top down view of a slice of a circle"/> **`CSG::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/supershape.png" width="128"/> **`CSG::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/circle_with_keyway.png" width="128"/> **`CSG::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: Option<S>)`**
-- <img src="docs/d.png" width="128"/> **`CSG::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
-- <img src="docs/double_flat.png" width="128"/> **`CSG::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
-- <img src="docs/from_image.png" width="128"/> **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
-- <img src="docs/truetype.png" width="128"/> **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
-- <img src="docs/metaballs_2d.png" width="128"/> **`CSG::metaballs2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`** - 
-- <img src="docs/airfoil.png" width="128"/> **`CSG::airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>)`** -
-- <img src="docs/bezier_extruded.png" width="128"/> **`CSG::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`**
-- <img src="docs/bspline.png" width="128"/> **`CSG::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`**
-- <img src="docs/heart.png" width="128"/> **`CSG::heart(width: Real, height: Real, segments: usize, metadata: Option<S>)`** - 
+- <img src="docs/circle_with_keyway.png" width="128" alt="top down view of a circle with a notch taken out of it"/> **`CSG::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: Option<S>)`**
+- <img src="docs/d.png" width="128" alt="top down view of a circle with a flat edge"/> **`CSG::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
+- <img src="docs/double_flat.png" width="128" alt="top down view of a circle with two flat edges"/> **`CSG::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
+- <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`CSG::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
+- <img src="docs/truetype.png" width="128" alt="top down view of the text 'HELLO'"/> **`CSG::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
+- <img src="docs/metaballs_2d.png" width="128"/> **`CSG::metaballs2d(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
+- <img src="docs/airfoil.png" width="128" alt="a side view of an airfoil"/> **`CSG::airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>)`**
+- <img src="docs/bezier_extruded.png" width="128" alt="an algled view of a bezier cirve"/> **`CSG::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`**
+- <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`CSG::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`**
+- <img src="docs/heart.png" width="128" alt="top down view of a cartune heart"/> **`CSG::heart(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/crescent.png" width="128"/> **`CSG::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: Option<S>)`** - 
 - **`CSG::involute_gear_2d(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 - **`CSG::cycloidal_gear_2d(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
@@ -133,10 +133,10 @@ let text_3d = csg_text.extrude(1.0);
 
 Extrusions build 3D polygons from 2D Geometries.
 
-- <img src="docs/extrude.png" width="128"/> **`CSG::extrude(height: Real)`** - Simple extrude in Z+
-- <img src="docs/extrude_vector.png" width="128"/> **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
+- <img src="docs/extrude.png" width="128" alt="an algled view of an extruded star"/> **`CSG::extrude(height: Real)`** - Simple extrude in Z+
+- <img src="docs/extrude_vector.png" width="128"  alt="an algled view of a star extruded at an angle"/> **`CSG::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
 - **`CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Extrude Between Two BSP Polygons
-- <img src="docs/rotate_extrude.png" width="128"/> **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
+- <img src="docs/rotate_extrude.png" width="128"  alt="an arch with round ends"/> **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
 
 ```rust
 let square = CSG::square(2.0, 2.0, None);
@@ -151,9 +151,9 @@ let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.poly
 
 ### 3D Shapes
 
-- <img src="docs/cube.png" width="128"/> **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
-- <img src="docs/sphere.png" width="128"/> **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
-- <img src="docs/cylinder.png" width="128"/> **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
+- <img src="docs/cube.png" width="128" alt="an algled view of a cube"/> **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
+- <img src="docs/sphere.png" width="128" alt="an algled view of a sphere"/> **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
+- <img src="docs/cylinder.png" width="128" alt="an algled view of a cylinder"/> **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/frustum.png" width="128"/> **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** -
 Construct a frustum at origin with height and `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
