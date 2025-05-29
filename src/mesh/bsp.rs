@@ -1,5 +1,5 @@
 use crate::float_types::EPSILON;
-use crate::mesh::plane::{Plane, BACK, FRONT, COPLANAR, SPANNING};
+use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
@@ -16,13 +16,13 @@ pub struct Node<S: Clone> {
     /// Splitting plane for this node *or* **None** for a leaf that
     /// only stores polygons.
     pub plane: Option<Plane>,
-    
+
     /// Polygons in *front* half‑spaces.
     pub front: Option<Box<Node<S>>>,
-    
+
     /// Polygons in *back* half‑spaces.
     pub back: Option<Box<Node<S>>>,
-    
+
     /// Polygons that lie *exactly* on `plane`
     /// (after the node has been built).
     pub polygons: Vec<Polygon<S>>,

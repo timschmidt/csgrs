@@ -5,7 +5,9 @@ use std::fmt::Debug;
 use std::sync::OnceLock;
 
 impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+where
+    S: Clone + Send + Sync,
+{
     /// Creates **2D line-stroke text** in the XY plane using a Hershey font.
     ///
     /// Each glyph’s strokes become one or more `LineString<Real>` entries in `geometry`.

@@ -1,5 +1,5 @@
-pub mod sketch;
-pub mod offset;
 pub mod hershey;
-pub mod truetype;
 pub mod image;
+pub mod offset;
+pub mod sketch;
+pub mod truetype;

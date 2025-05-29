@@ -1,10 +1,10 @@
-use crate::{CSG, Vertex};
-use crate::mesh::polygon::Polygon;
 use crate::float_types::Real;
+use crate::mesh::polygon::Polygon;
+use crate::{CSG, Vertex};
 
+use nalgebra::{Point3, Vector3};
 use std::error::Error;
 use std::fmt::Debug;
-use nalgebra::{Point3, Vector3};
 
 #[cfg(any(feature = "stl-io", feature = "dxf-io"))]
 use core2::io::Cursor;
@@ -25,7 +25,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// A `Result` containing the CSG object or an error if parsing fails.
     #[cfg(feature = "dxf-io")]
     pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>) -> Result<CSG<S>, Box<dyn Error>> {
-        use geo::{line_string, Polygon as GeoPolygon};
+        use geo::{Polygon as GeoPolygon, line_string};
 
         // Load the DXF drawing from the provided data
         let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
@@ -75,8 +75,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                     let normal = Vector3::new(
                         circle.normal.x as Real,
                         circle.normal.y as Real,
-                        circle.normal.z as Real
-                    ).normalize();
+                        circle.normal.z as Real,
+                    )
+                    .normalize();
 
                     for i in 0..segments {
                         let theta = 2.0 * crate::float_types::PI * (i as Real) / (segments as Real);
@@ -94,7 +95,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                     let extrusion_direction = Vector3::new(
                         solid.extrusion_direction.x as Real,
                         solid.extrusion_direction.y as Real,
-                        solid.extrusion_direction.z as Real
+                        solid.extrusion_direction.z as Real,
                     );
 
                     let extruded = CSG::from_geo(
@@ -109,7 +110,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                         )
                             .extrude_vector(extrusion_direction * thickness).polygons;
 
-                        polygons.extend(extruded);
+                    polygons.extend(extruded);
                 }
                 // todo convert image to work with `from_image`
                 // EntityType::Image(image) => {}
@@ -185,5 +186,4 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         Ok(buffer)
     }
-    
 }

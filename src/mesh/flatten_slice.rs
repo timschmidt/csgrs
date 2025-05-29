@@ -1,6 +1,6 @@
-use crate::mesh::bsp::Node;
 use crate::csg::CSG;
 use crate::float_types::{EPSILON, Real};
+use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
 use geo::{
@@ -9,12 +9,14 @@ use geo::{
 };
 use hashbrown::HashMap;
 use nalgebra::Point3;
+use small_str::{SmallStr, format_smallstr};
 use std::fmt::Debug;
 use std::sync::OnceLock;
-use small_str::{ format_smallstr, SmallStr };
 
 impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+where
+    S: Clone + Send + Sync,
+{
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
     /// unifies them into one or more 2D polygons, and returns a purely 2D CSG.
     ///

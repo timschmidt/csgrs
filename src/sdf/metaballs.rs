@@ -3,10 +3,12 @@ use crate::float_types::{EPSILON, Real};
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
-use geo::{CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, Coord, coord};
+use geo::{
+    Coord, CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord,
+};
+use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
-use hashbrown::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct MetaBall {
@@ -45,10 +47,10 @@ fn key(x: Real, y: Real) -> (i64, i64) {
 /// close them when the ends meet
 fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
     // adjacency map  endpoint -> (line index, end-id 0|1)
-    let mut adj: HashMap<(i64,i64), Vec<(usize, usize)>> = HashMap::new();
+    let mut adj: HashMap<(i64, i64), Vec<(usize, usize)>> = HashMap::new();
     for (idx, ls) in contours.iter().enumerate() {
-        let p0 = ls[0];                       // first point
-        let p1 = ls[1];                       // second point
+        let p0 = ls[0]; // first point
+        let p1 = ls[1]; // second point
         adj.entry(key(p0.x, p0.y)).or_default().push((idx, 0));
         adj.entry(key(p1.x, p1.y)).or_default().push((idx, 1));
     }
@@ -57,7 +59,9 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
     let mut chains = Vec::new();
 
     for start in 0..contours.len() {
-        if used[start] { continue; }
+        if used[start] {
+            continue;
+        }
         used[start] = true;
 
         // current chain of points
@@ -66,10 +70,14 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
         // walk forward
         loop {
             let last = *chain.last().unwrap();
-            let Some(cands) = adj.get(&key(last.x, last.y)) else { break };
+            let Some(cands) = adj.get(&key(last.x, last.y)) else {
+                break;
+            };
             let mut found = None;
-            for &(idx,end_id) in cands {
-                if used[idx] { continue; }
+            for &(idx, end_id) in cands {
+                if used[idx] {
+                    continue;
+                }
                 used[idx] = true;
                 // choose the *other* endpoint
                 let other = contours[idx][1 - end_id];
@@ -77,7 +85,9 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
                 found = Some(());
                 break;
             }
-            if found.is_none() { break; }
+            if found.is_none() {
+                break;
+            }
         }
 
         // close if ends coincide
@@ -90,7 +100,9 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
 }
 
 impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+where
+    S: Clone + Send + Sync,
+{
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
     /// - `balls`: array of (center, radius).
     /// - `resolution`: (nx, ny) grid resolution for marching squares.
@@ -116,10 +128,18 @@ where S: Clone + Send + Sync {
         let mut max_y = -Real::MAX;
         for (center, r) in balls {
             let rr = *r + padding;
-            if center.x - rr < min_x { min_x = center.x - rr; }
-            if center.x + rr > max_x { max_x = center.x + rr; }
-            if center.y - rr < min_y { min_y = center.y - rr; }
-            if center.y + rr > max_y { max_y = center.y + rr; }
+            if center.x - rr < min_x {
+                min_x = center.x - rr;
+            }
+            if center.x + rr > max_x {
+                max_x = center.x + rr;
+            }
+            if center.y - rr < min_y {
+                min_y = center.y - rr;
+            }
+            if center.y + rr > max_y {
+                max_y = center.y + rr;
+            }
         }
 
         let dx = (max_x - min_x) / (nx as Real - 1.0);
@@ -178,20 +198,23 @@ where S: Clone + Send + Sync {
 
                 // classification
                 let mut c = 0u8;
-                if v0 >= 0.0 { c |= 1; }
-                if v1 >= 0.0 { c |= 2; }
-                if v2 >= 0.0 { c |= 4; }
-                if v3 >= 0.0 { c |= 8; }
+                if v0 >= 0.0 {
+                    c |= 1;
+                }
+                if v1 >= 0.0 {
+                    c |= 2;
+                }
+                if v2 >= 0.0 {
+                    c |= 4;
+                }
+                if v3 >= 0.0 {
+                    c |= 8;
+                }
                 if c == 0 || c == 15 {
                     continue; // no crossing
                 }
 
-                let corners = [
-                    (x0, y0, v0),
-                    (x1, y0, v1),
-                    (x1, y1, v2),
-                    (x0, y1, v3),
-                ];
+                let corners = [(x0, y0, v0), (x1, y0, v1), (x1, y1, v2), (x0, y1, v3)];
 
                 let mut pts = Vec::new();
                 // function to check each edge
@@ -317,7 +340,7 @@ where S: Clone + Send + Sync {
                 }
             }
         }
-    
+
         // Use fast-surface-nets to extract a mesh from this 3D scalar field.
         // We'll define a shape type for ndshape:
         #[allow(non_snake_case)]
@@ -333,20 +356,20 @@ where S: Clone + Send + Sync {
             fn as_array(&self) -> [Self::Coord; 3] {
                 [self.nx, self.ny, self.nz]
             }
-        
+
             fn size(&self) -> Self::Coord {
                 self.nx * self.ny * self.nz
             }
-        
+
             fn usize(&self) -> usize {
                 (self.nx * self.ny * self.nz) as usize
             }
-        
+
             fn linearize(&self, coords: [Self::Coord; 3]) -> u32 {
                 let [x, y, z] = coords;
                 (z * self.ny + y) * self.nx + x
             }
-        
+
             fn delinearize(&self, i: u32) -> [Self::Coord; 3] {
                 let x = i % (self.nx);
                 let yz = i / (self.nx);
@@ -355,7 +378,7 @@ where S: Clone + Send + Sync {
                 [x, y, z]
             }
         }
-    
+
         let shape = GridShape { nx, ny, nz };
 
         // We'll collect the output into a SurfaceNetsBuffer
@@ -414,9 +437,18 @@ where S: Clone + Send + Sync {
             let n2 = sn_buffer.normals[i2];
 
             // Construct your vertices:
-            let v0 = Vertex::new(p0_real, Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real));
-            let v1 = Vertex::new(p1_real, Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real));
-            let v2 = Vertex::new(p2_real, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
+            let v0 = Vertex::new(
+                p0_real,
+                Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real),
+            );
+            let v1 = Vertex::new(
+                p1_real,
+                Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real),
+            );
+            let v2 = Vertex::new(
+                p2_real,
+                Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real),
+            );
 
             // Each tri is turned into a Polygon with 3 vertices
             let poly = Polygon::new(vec![v0, v2, v1], metadata.clone());

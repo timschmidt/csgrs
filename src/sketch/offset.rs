@@ -6,14 +6,17 @@ use std::fmt::Debug;
 use std::sync::OnceLock;
 
 impl<S: Clone + Debug> CSG<S>
-where S: Clone + Send + Sync {
+where
+    S: Clone + Send + Sync,
+{
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using georust.
     /// For each Geometry in the collection:
     ///   - If it's a Polygon, buffer it and store the result as a MultiPolygon
     ///   - If it's a MultiPolygon, buffer it directly
     ///   - Otherwise, ignore (exclude) it from the new collection
     pub fn offset(&self, distance: Real) -> CSG<S> {
-        let offset_geoms = self.geometry
+        let offset_geoms = self
+            .geometry
             .iter()
             .filter_map(|geom| match geom {
                 Geometry::Polygon(poly) => {
