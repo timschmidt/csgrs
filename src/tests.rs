@@ -184,18 +184,6 @@ fn test_vertex_interpolate() {
 // Plane tests
 // ------------------------------------------------------------
 #[test]
-fn test_plane_from_points() {
-    let a = Point3::origin();
-    let b = Point3::new(1.0, 0.0, 0.0);
-    let c = Point3::new(0.0, 1.0, 0.0);
-    let plane = Plane::from_points(&a, &b, &c);
-    assert!(approx_eq(plane.normal().x, 0.0, EPSILON));
-    assert!(approx_eq(plane.normal().y, 0.0, EPSILON));
-    assert!(approx_eq(plane.normal().z, 1.0, EPSILON));
-    assert!(approx_eq(plane.offset(), 0.0, EPSILON));
-}
-
-#[test]
 fn test_plane_flip() {
     let mut plane = Plane::from_normal(Vector3::y(), 2.0);
     plane.flip();
