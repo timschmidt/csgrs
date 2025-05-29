@@ -25,7 +25,7 @@ algorithms used for triangulation only work in 2D, so **csgrs** rotates
 ![Example CSG output](docs/csg.png)
 
 ## Community
-[![](https://dcbadge.limes.pink/api/server/https://discord.gg/9WkD3WFxMC)](https://discord.gg/9WkD3WFxMC)
+[![discord logo: csgrs | member count](https://dcbadge.limes.pink/api/server/https://discord.gg/9WkD3WFxMC)](https://discord.gg/9WkD3WFxMC)
 
 ## Getting started
 
