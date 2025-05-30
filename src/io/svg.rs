@@ -52,7 +52,7 @@ impl<F: CoordNum> PathBuilder<F> {
 
     /// Get a mutable reference to the current path, or an error if no path has been started.
     ///
-    /// To accomodate for the semantics of [`close`], this function will automatically start a new path
+    /// To accommodate for the semantics of [`close`], this function will automatically start a new path
     /// if the last path has 2 or more points and is closed.
     /// For this reason, using this proxy is recommended for implementing any drawing command.
     fn get_path_mut_or_fail(&mut self) -> Result<&mut LineString<F>, IoError> {
@@ -325,8 +325,8 @@ impl<F: CoordNum> PathBuilder<F> {
     }
 }
 
-
 pub trait FromSVG: Sized {
+    #[allow(unused)]
     fn from_svg(doc: &str) -> Result<Self, IoError>;
 }
 
@@ -486,6 +486,7 @@ impl FromSVG for CSG<()> {
 
 
 pub trait ToSVG {
+    #[allow(unused)]
     fn to_svg(&self) -> String;
 }
 
@@ -807,7 +808,7 @@ fn svg_points_to_line_string<F: CoordNum>(points: &str) -> Result<LineString<F>,
     use nom::character::complete::{char, multispace0, multispace1};
     use nom::combinator::opt;
     use nom::number::complete::float;
-    use nom::sequence::{pair, tuple, delimited, preceded, separated_pair, terminated};
+    use nom::sequence::{pair, tuple, delimited, separated_pair};
     use nom::multi::separated_list1;
 
     fn comma_wsp(i: &str) -> IResult<&str, ()> {

@@ -16,7 +16,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run Check
-        run: cargo check --features "parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+        run: cargo check --features "parallel stl-io svg-io dxf-io truetype-text hershey-text image-io" --all-targets
 
   test:
     name: Test Suite

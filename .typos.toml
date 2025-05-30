@@ -1,0 +1,15 @@
+[files]
+extend-exclude = [".git", "stl/**", "hershey-fonts/*"]
+
+[default]
+locale = "en"
+
+[default.extend-words]
+# allow list / custom corrections
+CSG = "CSG"
+csg = "csg"
+cgs = "CSG"
+CGS = "CSG"
+
+iy = "iy"
+toi = "toi"

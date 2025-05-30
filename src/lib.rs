@@ -50,6 +50,8 @@ compile_error!("Either 'f64' or 'f32' feature must be specified, but not both");
 
 pub use csg::CSG;
 pub use vertex::Vertex;
+pub use polygon::Polygon;
+pub use plane::Plane;
 
 #[cfg(feature = "hashmap")]
 pub mod flatten_slice;
