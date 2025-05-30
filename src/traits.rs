@@ -1,7 +1,7 @@
-use crate::float_types::{Real, EPSILON};
-use nalgebra::{Matrix3, Matrix4, Vector3, Translation3, Rotation3};
-use crate::mesh::plane::Plane;
 use crate::float_types::parry3d::bounding_volume::Aabb;
+use crate::float_types::{EPSILON, Real};
+use crate::mesh::plane::Plane;
+use nalgebra::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
 
 /// Boolean operations + transformations
 pub trait CSGOps: Sized + Clone {
@@ -14,18 +14,18 @@ pub trait CSGOps: Sized + Clone {
     fn bounding_box(&self) -> Aabb;
     fn invalidate_bounding_box(&mut self);
     fn inverse(&self) -> Self;
-    
-	/// Returns a new Self translated by vector.
+
+    /// Returns a new Self translated by vector.
     fn translate_vector(&self, vector: Vector3<Real>) -> Self {
         self.transform(&Translation3::from(vector).to_homogeneous())
     }
-    
-	/// Returns a new Self translated by x, y, and z.
+
+    /// Returns a new Self translated by x, y, and z.
     fn translate(&self, x: Real, y: Real, z: Real) -> Self {
         self.translate_vector(Vector3::new(x, y, z))
     }
-    
-	/// Returns a new CSG translated so that its bounding-box center is at the origin (0,0,0).
+
+    /// Returns a new CSG translated so that its bounding-box center is at the origin (0,0,0).
     fn center(&self) -> Self {
         let aabb = self.bounding_box();
 
@@ -111,7 +111,7 @@ pub trait CSGOps: Sized + Clone {
         // Apply to all polygons
         self.transform(&mirror_mat).inverse()
     }
-    
+
     /// Distribute this CSG `count` times around an arc (in XY plane) of radius,
     /// from `start_angle_deg` to `end_angle_deg`.
     /// Returns a new CSG with all copies (their polygons).
@@ -160,12 +160,7 @@ pub trait CSGOps: Sized + Clone {
     /// each copy spaced by `spacing`.
     /// E.g. if `dir=(1.0,0.0,0.0)` and `spacing=2.0`, you get copies at
     /// x=0, x=2, x=4, ... etc.
-    fn distribute_linear(
-        &self,
-        count: usize,
-        dir: nalgebra::Vector3<Real>,
-        spacing: Real,
-    ) -> Self {
+    fn distribute_linear(&self, count: usize, dir: nalgebra::Vector3<Real>, spacing: Real) -> Self {
         if count < 1 {
             return self.clone();
         }

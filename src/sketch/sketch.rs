@@ -1,33 +1,30 @@
 use crate::float_types::Real;
+use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::traits::CSGOps;
 use geo::{
     AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Geometry,
-    GeometryCollection, LineString, MultiPolygon, Orient, Rect,
-    orient::Direction,
+    GeometryCollection, LineString, MultiPolygon, Orient, Rect, orient::Direction,
 };
-use nalgebra::{Matrix4, Point3, partial_min, partial_max};
+use nalgebra::{Matrix4, Point3, partial_max, partial_min};
 use std::fmt::Debug;
 use std::sync::OnceLock;
-use crate::float_types::parry3d::bounding_volume::Aabb;
 
 #[derive(Clone, Debug)]
 pub struct Sketch<S> {
     /// 2D points, lines, polylines, polygons, and multipolygons
     pub geometry: GeometryCollection<Real>,
-    
-	/// Lazily calculated AABB that spans `geometry`.
+
+    /// Lazily calculated AABB that spans `geometry`.
     pub bounding_box: OnceLock<Aabb>,
 
     /// Metadata
     pub metadata: Option<S>,
 }
 
-impl<S: Clone + Send + Sync + Debug> Sketch<S> {
-
-}
+impl<S: Clone + Send + Sync + Debug> Sketch<S> {}
 
 impl<S: Clone + Send + Sync + Debug> Sketch<S> {
-	/// Take the [`geo::Polygon`]'s from the `CSG`'s geometry collection
+    /// Take the [`geo::Polygon`]'s from the `CSG`'s geometry collection
     pub fn to_multipolygon(&self) -> MultiPolygon<Real> {
         // allocate vec to fit all polygons
         let mut polygons = Vec::with_capacity(self.geometry.0.iter().fold(0, |len, geom| {
@@ -53,16 +50,16 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
 }
 
 impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
-	/// Returns a new empty Sketch
-	fn new() -> Self {
+    /// Returns a new empty Sketch
+    fn new() -> Self {
         Sketch {
             geometry: GeometryCollection::default(),
             bounding_box: OnceLock::new(),
             metadata: None,
         }
     }
-	
-	/// Return a new Sketch representing union of the two Sketches.
+
+    /// Return a new Sketch representing union of the two Sketches.
     ///
     /// ```no_run
     /// let c = a.union(b);
@@ -230,20 +227,20 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
         // Re-insert lines & points from both sets
         for g in &self.geometry.0 {
             match g {
-                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {} // skip
                 _ => final_gc.0.push(g.clone()),
             }
         }
         for g in &other.geometry.0 {
             match g {
-                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {} // skip
                 _ => final_gc.0.push(g.clone()),
             }
         }
 
         Sketch {
             geometry: final_gc,
-			bounding_box: OnceLock::new(),
+            bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -289,8 +286,8 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
 
         sketch
     }
-    
-	/// Returns a [`parry3d::bounding_volume::Aabb`] containing:
+
+    /// Returns a [`parry3d::bounding_volume::Aabb`] containing:
     /// The 2D bounding rectangle of `self.geometry`, interpreted at z=0.
     fn bounding_box(&self) -> Aabb {
         *self.bounding_box.get_or_init(|| {
@@ -332,12 +329,12 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
             Aabb::new(mins, maxs)
         })
     }
-    
+
     /// Invalidates object's cached bounding box.
     fn invalidate_bounding_box(&mut self) {
-		self.bounding_box = OnceLock::new();
-	}
-    
+        self.bounding_box = OnceLock::new();
+    }
+
     /// Invert this Mesh (flip inside vs. outside)
     fn inverse(&self) -> Sketch<S> {
         let sketch = self.clone();
@@ -350,7 +347,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
 
 impl<S: Clone + Send + Sync + Debug> From<crate::mesh::mesh::Mesh<S>> for Sketch<S> {
     fn from(mesh: crate::mesh::mesh::Mesh<S>) -> Self {
-		// If mesh is empty, return empty Sketch
+        // If mesh is empty, return empty Sketch
         if mesh.polygons.is_empty() {
             return Sketch::new();
         }
@@ -395,7 +392,7 @@ impl<S: Clone + Send + Sync + Debug> From<crate::mesh::mesh::Mesh<S>> for Sketch
         // Store final polygons as a MultiPolygon in a new GeometryCollection
         let mut new_gc = GeometryCollection::default();
         new_gc.0.push(Geometry::MultiPolygon(oriented));
-		
+
         Sketch {
             geometry: new_gc,
             bounding_box: OnceLock::new(),

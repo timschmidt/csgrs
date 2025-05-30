@@ -42,15 +42,15 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 }
 
 impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
-	/// Returns a new empty Mesh
-	fn new() -> Self {
+    /// Returns a new empty Mesh
+    fn new() -> Self {
         Mesh {
             polygons: Vec::new(),
             bounding_box: OnceLock::new(),
             metadata: None,
         }
     }
-	
+
     /// Return a new Mesh representing union of the two Meshes.
     ///
     /// ```no_run
@@ -193,7 +193,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
         // Union those two
         a_sub_b.union(&b_sub_a)
     }
-    
+
     /// Apply an arbitrary 3D transform (as a 4x4 matrix) to the mesh.
     fn transform(&self, mat: &Matrix4<Real>) -> Mesh<S> {
         let mat_inv_transpose = mat
@@ -221,8 +221,8 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
 
         mesh
     }
-    
-	/// Returns a [`parry3d::bounding_volume::Aabb`] indicating the 3D bounds of all `polygons`.
+
+    /// Returns a [`parry3d::bounding_volume::Aabb`] indicating the 3D bounds of all `polygons`.
     fn bounding_box(&self) -> Aabb {
         *self.bounding_box.get_or_init(|| {
             // Track overall min/max in x, y, z among all 3D polygons
@@ -257,12 +257,12 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
             Aabb::new(mins, maxs)
         })
     }
-    
+
     /// Invalidates object's cached bounding box.
     fn invalidate_bounding_box(&mut self) {
-		self.bounding_box = OnceLock::new();
-	}
-    
+        self.bounding_box = OnceLock::new();
+    }
+
     /// Invert this Mesh (flip inside vs. outside)
     fn inverse(&self) -> Mesh<S> {
         let mut mesh = self.clone();
@@ -274,7 +274,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
 }
 
 impl<S: Clone + Send + Sync + Debug> From<crate::sketch::sketch::Sketch<S>> for Mesh<S> {
-	/// Convert a Sketch into a Mesh.
+    /// Convert a Sketch into a Mesh.
     fn from(sketch: crate::sketch::sketch::Sketch<S>) -> Self {
         /// Helper function to convert a geo::Polygon into one or more Polygon<S> entries.
         fn process_polygon<S>(
