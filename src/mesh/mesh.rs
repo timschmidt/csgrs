@@ -42,6 +42,15 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 }
 
 impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
+	/// Returns a new empty Mesh
+	fn new() -> Self {
+        Mesh {
+            polygons: Vec::new(),
+            bounding_box: OnceLock::new(),
+            metadata: None,
+        }
+    }
+	
     /// Return a new Mesh representing union of the two Meshes.
     ///
     /// ```no_run
@@ -185,14 +194,6 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
         a_sub_b.union(&b_sub_a)
     }
     
-    fn new() -> Self {
-        Mesh {
-            polygons: Vec::new(),
-            bounding_box: OnceLock::new(),
-            metadata: None,
-        }
-    }
-
     /// Apply an arbitrary 3D transform (as a 4x4 matrix) to the mesh.
     fn transform(&self, mat: &Matrix4<Real>) -> Mesh<S> {
         let mat_inv_transpose = mat

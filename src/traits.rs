@@ -151,8 +151,6 @@ pub trait CSGOps: Sized + Clone {
             // Transform a copy of self and union with other copies
             all_csg = all_csg.union(&self.transform(&mat));
         }
-        
-        // invalidate bounding box cache
         all_csg.invalidate_bounding_box();
 
         all_csg
@@ -183,8 +181,6 @@ pub trait CSGOps: Sized + Clone {
             // Transform a copy of self and union with other copies
             all_csg = all_csg.union(&self.transform(&trans));
         }
-
-        // invalidate bounding box cache
         all_csg.invalidate_bounding_box();
 
         all_csg
@@ -211,8 +207,6 @@ pub trait CSGOps: Sized + Clone {
                 all_csg = all_csg.union(&self.transform(&trans));
             }
         }
-
-        // invalidate bounding box cache
         all_csg.invalidate_bounding_box();
 
         all_csg
