@@ -5,7 +5,7 @@ use crate::mesh::plane::Plane;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::traits::CSGOps;
-use geo::{CoordsIter, Geometry};
+use geo::{Coord, CoordsIter, Geometry, LineString, Polygon as GeoPolygon};
 use nalgebra::{Matrix4, Point3, Vector3, partial_max, partial_min};
 use std::fmt::Debug;
 use std::sync::OnceLock;
@@ -38,6 +38,87 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             }
         }
         (maybe, never)
+    }
+    
+	/// Helper to collect all vertices from the CSG.
+    #[cfg(not(feature = "parallel"))]
+    pub fn vertices(&self) -> Vec<Vertex> {
+        self.polygons
+            .iter()
+            .flat_map(|p| p.vertices.clone())
+            .collect()
+    }
+
+    /// Parallel helper to collect all vertices from the CSG.
+    #[cfg(feature = "parallel")]
+    pub fn vertices(&self) -> Vec<Vertex> {
+        self.polygons
+            .par_iter()
+            .flat_map(|p| p.vertices.clone())
+            .collect()
+    }
+    
+    /// Rotate polygons into 2D to perform triangulation, then rotate triangles back to original 3D position
+    pub fn triangulate_2d(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]> {
+        // Convert the outer ring into a `LineString`
+        let outer_coords: Vec<Coord<Real>> = outer.iter().map(|&[x, y]| Coord { x, y }).collect();
+
+        // Convert each hole into its own `LineString`
+        let holes_coords: Vec<LineString<Real>> = holes
+            .iter()
+            .map(|hole| {
+                let coords: Vec<Coord<Real>> = hole.iter().map(|&[x, y]| Coord { x, y }).collect();
+                LineString::new(coords)
+            })
+            .collect();
+
+        // Ear-cut triangulation on the polygon (outer + holes)
+        let polygon = GeoPolygon::new(LineString::new(outer_coords), holes_coords);
+
+        #[cfg(feature = "earcut")]
+        {
+            use geo::TriangulateEarcut;
+            let triangulation = polygon.earcut_triangles_raw();
+            let triangle_indices = triangulation.triangle_indices;
+            let vertices = triangulation.vertices;
+
+            // Convert the 2D result (x,y) into 3D triangles with z=0
+            let mut result = Vec::with_capacity(triangle_indices.len() / 3);
+            for tri in triangle_indices.chunks_exact(3) {
+                let pts = [
+                    Point3::new(vertices[2 * tri[0]], vertices[2 * tri[0] + 1], 0.0),
+                    Point3::new(vertices[2 * tri[1]], vertices[2 * tri[1] + 1], 0.0),
+                    Point3::new(vertices[2 * tri[2]], vertices[2 * tri[2] + 1], 0.0),
+                ];
+                result.push(pts);
+            }
+            result
+        }
+
+        #[cfg(feature = "delaunay")]
+        {
+            use geo::TriangulateSpade;
+            // We want polygons with holes => constrained triangulation.
+            // For safety, handle the Result the trait returns:
+            let Ok(tris) = polygon.constrained_triangulation(Default::default()) else {
+                // If a triangulation error is a possibility,
+                // pick the error-handling you want here:
+                return Vec::new();
+            };
+
+            let mut result = Vec::with_capacity(tris.len());
+            for triangle in tris {
+                // Each `triangle` is a geo_types::Triangle whose `.0, .1, .2`
+                // are the 2D coordinates. We'll embed them at z=0.
+                let [a, b, c] = [triangle.0, triangle.1, triangle.2];
+                result.push([
+                    Point3::new(a.x, a.y, 0.0),
+                    Point3::new(b.x, b.y, 0.0),
+                    Point3::new(c.x, c.y, 0.0),
+                ]);
+            }
+            result
+        }
     }
 }
 
