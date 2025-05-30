@@ -53,6 +53,15 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
 }
 
 impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
+	/// Returns a new empty Sketch
+	fn new() -> Self {
+        Sketch {
+            geometry: GeometryCollection::default(),
+            bounding_box: OnceLock::new(),
+            metadata: None,
+        }
+    }
+	
 	/// Return a new Sketch representing union of the two Sketches.
     ///
     /// ```no_run
@@ -236,14 +245,6 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
             geometry: final_gc,
 			bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
-        }
-    }
-
-    fn new() -> Self {
-        Sketch {
-            geometry: GeometryCollection::default(),
-            bounding_box: OnceLock::new(),
-            metadata: None,
         }
     }
 
