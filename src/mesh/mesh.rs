@@ -4,7 +4,7 @@ use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-use crate::traits::{BooleanOps, TransformOps};
+use crate::traits::CSGOps;
 use geo::{CoordsIter, Geometry};
 use nalgebra::{Matrix4, Point3, Vector3, partial_max, partial_min};
 use std::fmt::Debug;
@@ -41,9 +41,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> BooleanOps for Mesh<S> {
-    type Output = Self;
-
+impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
     /// Return a new Mesh representing union of the two Meshes.
     ///
     /// ```no_run
@@ -186,9 +184,7 @@ impl<S: Clone + Send + Sync + Debug> BooleanOps for Mesh<S> {
         // Union those two
         a_sub_b.union(&b_sub_a)
     }
-}
-
-impl<S: Clone + Send + Sync + Debug> TransformOps for Mesh<S> {
+    
     fn new() -> Self {
         Mesh {
             polygons: Vec::new(),
@@ -260,6 +256,11 @@ impl<S: Clone + Send + Sync + Debug> TransformOps for Mesh<S> {
             Aabb::new(mins, maxs)
         })
     }
+    
+    /// Invalidates object's cached bounding box.
+    fn invalidate_bounding_box(&mut self) {
+		self.bounding_box = OnceLock::new();
+	}
     
     /// Invert this Mesh (flip inside vs. outside)
     fn inverse(&self) -> Mesh<S> {
