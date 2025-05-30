@@ -5,7 +5,6 @@
 
 use std::fs;
 use nalgebra::{Vector3, Point3};
-use csgrs::Plane;
 
 #[cfg(feature = "image")]
 use image::{GrayImage, ImageBuffer};
@@ -17,36 +16,9 @@ fn main() {
     // Ensure the /stls folder exists
     let _ = fs::create_dir_all("stl");
 
-    let cube = CSG::cube(2.0, 2.0, 2.0, None);
-    let sphere = CSG::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
-
-    // 2. D-shape
-    let d_shape = CSG::circle_with_flat(5.0, 32, 2.0, None);
-    let _ = fs::write("stl/d_shape.stl", d_shape.to_stl_ascii("d_shape"));
-    let d_3d = d_shape.extrude(1.0);
-    let _ = fs::write("stl/d_3d.stl", d_3d.to_stl_ascii("d_3d"));
-
-    // 3. Double-flat circle
-    let double_flat = CSG::circle_with_two_flats(8.0, 64, 3.0, None);
-    let _ = fs::write("stl/double_flat.stl", double_flat.to_stl_ascii("double_flat"));
-    let df_3d = double_flat.extrude(0.5);
-    let _ = fs::write("stl/df_3d.stl", df_3d.to_stl_ascii("df_3d"));
-
-    // A 3D teardrop shape
-    let teardrop_solid = CSG::teardrop(3.0, 5.0, 32, 32, None);
-    let _ = fs::write("stl/teardrop_solid.stl", teardrop_solid.to_stl_ascii("teardrop_solid"));
-
-    // A 3D egg shape
-    let egg_solid = CSG::egg(2.0, 4.0, 8, 16, None);
-    let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
-
     // An ellipsoid with X radius=2, Y radius=1, Z radius=3
     let ellipsoid = CSG::ellipsoid(2.0, 1.0, 3.0, 16, 8, None);
     let _ = fs::write("stl/ellipsoid.stl", ellipsoid.to_stl_ascii("ellipsoid"));
-
-    // A teardrop 'blank' hole
-    let teardrop_cylinder = CSG::teardrop_cylinder(2.0, 4.0, 32.0, 16, None);
-    let _ = fs::write("stl/teardrop_cylinder.stl", teardrop_cylinder.to_stl_ascii("teardrop_cylinder"));
 
     // 1) polygon()
     let polygon_2d = CSG::polygon(
@@ -75,14 +47,6 @@ fn main() {
     // 6) trapezoid(top_width, bottom_width, height)
     let trap_2d = CSG::trapezoid(1.0, 2.0, 2.0, 0.5, None);
     let _ = fs::write("stl/trapezoid_2d.stl", trap_2d.to_stl_ascii("trapezoid_2d"));
-
-    // 8) teardrop(width, height, segments) [2D shape]
-    let teardrop_2d = CSG::teardrop_outline(2.0, 3.0, 16, None);
-    let _ = fs::write("stl/teardrop_2d.stl", teardrop_2d.to_stl_ascii("teardrop_2d"));
-
-    // 9) egg_outline(width, length, segments) [2D shape]
-    let egg_2d = CSG::egg_outline(2.0, 4.0, 32, None);
-    let _ = fs::write("stl/egg_outline_2d.stl", egg_2d.to_stl_ascii("egg_outline_2d"));
 
     // 10) squircle(width, height, segments)
     let squircle_2d = CSG::squircle(3.0, 3.0, 32, None);
@@ -132,6 +96,9 @@ fn main() {
     // Let's reuse the `cube` from above:
     #[cfg(all(feature = "stl-io", feature = "chull-io"))]
     {
+        let cube = CSG::cube(2.0, 2.0, 2.0, None);
+        let sphere = CSG::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
+
         let union_shape = cube.union(&sphere);
 
         let hull_of_union = union_shape.convex_hull();

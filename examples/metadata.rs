@@ -2,7 +2,7 @@
 //! Other use cases include storing speed, ID, or layer info.
 
 use nalgebra::{Vector3, Point3};
-use csgrs::{CSG, Vertex, polygon::Polygon};
+use csgrs::{Vertex, polygon::Polygon};
 
 /// Demo metadata type
 #[derive(Clone)]
