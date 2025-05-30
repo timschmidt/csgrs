@@ -3,21 +3,16 @@ use nalgebra::{Matrix3, Matrix4, Vector3, Translation3, Rotation3};
 use crate::mesh::plane::Plane;
 use crate::float_types::parry3d::bounding_volume::Aabb;
 
-/// Boolean operations
-pub trait BooleanOps<Other = Self> {
-    type Output;
-
-    fn union(&self, other: &Other) -> Self::Output;
-    fn difference(&self, other: &Other) -> Self::Output;
-    fn intersection(&self, other: &Other) -> Self::Output;
-    fn xor(&self, other: &Other) -> Self::Output;
-}
-
-/// Affine transformations
-pub trait TransformOps: Sized + Clone {
+/// Boolean operations + transformations
+pub trait CSGOps: Sized + Clone {
+    fn union(&self, other: &Self) -> Self;
+    fn difference(&self, other: &Self) -> Self;
+    fn intersection(&self, other: &Self) -> Self;
+    fn xor(&self, other: &Self) -> Self;
     fn new() -> Self;
     fn transform(&self, matrix: &Matrix4<Real>) -> Self;
     fn bounding_box(&self) -> Aabb;
+    fn invalidate_bounding_box(&mut self);
     fn inverse(&self) -> Self;
     
 	/// Returns a new Self translated by vector.
@@ -115,5 +110,111 @@ pub trait TransformOps: Sized + Clone {
 
         // Apply to all polygons
         self.transform(&mirror_mat).inverse()
+    }
+    
+    /// Distribute this CSG `count` times around an arc (in XY plane) of radius,
+    /// from `start_angle_deg` to `end_angle_deg`.
+    /// Returns a new CSG with all copies (their polygons).
+    fn distribute_arc(
+        &self,
+        count: usize,
+        radius: Real,
+        start_angle_deg: Real,
+        end_angle_deg: Real,
+    ) -> Self {
+        if count < 1 {
+            return self.clone();
+        }
+        let start_rad = start_angle_deg.to_radians();
+        let end_rad = end_angle_deg.to_radians();
+        let sweep = end_rad - start_rad;
+
+        // create a container to hold our unioned copies
+        let mut all_csg = Self::new();
+
+        for i in 0..count {
+            // pick an angle fraction
+            let t = if count == 1 {
+                0.5
+            } else {
+                i as Real / ((count - 1) as Real)
+            };
+
+            let angle = start_rad + t * sweep;
+            let rot = nalgebra::Rotation3::from_axis_angle(&nalgebra::Vector3::z_axis(), angle)
+                .to_homogeneous();
+
+            // translate out to radius in x
+            let trans = nalgebra::Translation3::new(radius, 0.0, 0.0).to_homogeneous();
+            let mat = rot * trans;
+
+            // Transform a copy of self and union with other copies
+            all_csg = all_csg.union(&self.transform(&mat));
+        }
+        
+        // invalidate bounding box cache
+        all_csg.invalidate_bounding_box();
+
+        all_csg
+    }
+
+    /// Distribute this CSG `count` times along a straight line (vector),
+    /// each copy spaced by `spacing`.
+    /// E.g. if `dir=(1.0,0.0,0.0)` and `spacing=2.0`, you get copies at
+    /// x=0, x=2, x=4, ... etc.
+    fn distribute_linear(
+        &self,
+        count: usize,
+        dir: nalgebra::Vector3<Real>,
+        spacing: Real,
+    ) -> Self {
+        if count < 1 {
+            return self.clone();
+        }
+        let step = dir.normalize() * spacing;
+
+        // create a container to hold our unioned copies
+        let mut all_csg = Self::new();
+
+        for i in 0..count {
+            let offset = step * (i as Real);
+            let trans = nalgebra::Translation3::from(offset).to_homogeneous();
+
+            // Transform a copy of self and union with other copies
+            all_csg = all_csg.union(&self.transform(&trans));
+        }
+
+        // invalidate bounding box cache
+        all_csg.invalidate_bounding_box();
+
+        all_csg
+    }
+
+    /// Distribute this CSG in a grid of `rows x cols`, with spacing dx, dy in XY plane.
+    /// top-left or bottom-left depends on your usage of row/col iteration.
+    fn distribute_grid(&self, rows: usize, cols: usize, dx: Real, dy: Real) -> Self {
+        if rows < 1 || cols < 1 {
+            return self.clone();
+        }
+        let step_x = nalgebra::Vector3::new(dx, 0.0, 0.0);
+        let step_y = nalgebra::Vector3::new(0.0, dy, 0.0);
+
+        // create a container to hold our unioned copies
+        let mut all_csg = Self::new();
+
+        for r in 0..rows {
+            for c in 0..cols {
+                let offset = step_x * (c as Real) + step_y * (r as Real);
+                let trans = nalgebra::Translation3::from(offset).to_homogeneous();
+
+                // Transform a copy of self and union with other copies
+                all_csg = all_csg.union(&self.transform(&trans));
+            }
+        }
+
+        // invalidate bounding box cache
+        all_csg.invalidate_bounding_box();
+
+        all_csg
     }
 }

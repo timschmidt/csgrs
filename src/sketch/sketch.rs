@@ -1,5 +1,5 @@
 use crate::float_types::Real;
-use crate::traits::{BooleanOps, TransformOps};
+use crate::traits::CSGOps;
 use geo::{
     AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Geometry,
     GeometryCollection, LineString, MultiPolygon, Orient, Rect,
@@ -52,9 +52,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> BooleanOps for Sketch<S> {
-    type Output = Self;
-    
+impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
 	/// Return a new Sketch representing union of the two Sketches.
     ///
     /// ```no_run
@@ -240,9 +238,7 @@ impl<S: Clone + Send + Sync + Debug> BooleanOps for Sketch<S> {
             metadata: self.metadata.clone(),
         }
     }
-}
 
-impl<S: Clone + Send + Sync + Debug> TransformOps for Sketch<S> {
     fn new() -> Self {
         Sketch {
             geometry: GeometryCollection::default(),
@@ -335,6 +331,11 @@ impl<S: Clone + Send + Sync + Debug> TransformOps for Sketch<S> {
             Aabb::new(mins, maxs)
         })
     }
+    
+    /// Invalidates object's cached bounding box.
+    fn invalidate_bounding_box(&mut self) {
+		self.bounding_box = OnceLock::new();
+	}
     
     /// Invert this Mesh (flip inside vs. outside)
     fn inverse(&self) -> Sketch<S> {
