@@ -11,7 +11,6 @@ fn main() {
 
     // 1) Basic shapes: cube, sphere, cylinder
     let cube = CSG::cube(2.0, 2.0, 2.0, None);
-    #[cfg(feature = "stl-io")]
     write_example(&cube, "cube");
 
     let sphere = CSG::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata

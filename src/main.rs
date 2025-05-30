@@ -5,13 +5,13 @@
 
 use std::fs;
 use nalgebra::{Vector3, Point3};
-use csgrs::plane::Plane;
+use csgrs::Plane;
 
 #[cfg(feature = "image")]
 use image::{GrayImage, ImageBuffer};
 
 // A type alias for convenience: no shared data, i.e. S = ()
-type CSG = csgrs::csg::CSG<()>;
+type CSG = csgrs::CSG<()>;
 
 fn main() {
     // Ensure the /stls folder exists
@@ -19,26 +19,6 @@ fn main() {
 
     let cube = CSG::cube(2.0, 2.0, 2.0, None);
     let sphere = CSG::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
-
-    // Create a supershape
-    let sshape = CSG::supershape(1.0, 1.0, 6.0, 1.0, 1.0, 1.0, 128, None);
-    let _ = fs::write("stl/supershape.stl", sshape.to_stl_ascii("supershape"));
-    
-    // Distribute a square along an arc
-    let square = CSG::circle(1.0, 32, None);
-    let arc_array = square.distribute_arc(5, 5.0, 0.0, 180.0);
-    let _ = fs::write("stl/arc_array.stl", arc_array.to_stl_ascii("arc_array"));
-
-    // Make a 4x4 grid of the supershape
-    let grid_of_ss = sshape.distribute_grid(4, 4, 3.0, 3.0);
-    let _ = fs::write("stl/grid_of_ss.stl", grid_of_ss.to_stl_ascii("grid_of_ss"));
-
-    // 1. Circle with keyway
-    let keyway_shape = CSG::circle_with_keyway(10.0, 64, 2.0, 3.0, None);
-    let _ = fs::write("stl/keyway_shape.stl", keyway_shape.to_stl_ascii("keyway_shape"));
-    // Extrude it 2 units:
-    let keyway_3d = keyway_shape.extrude(2.0);
-    let _ = fs::write("stl/keyway_3d.stl", keyway_3d.to_stl_ascii("keyway_3d"));
 
     // 2. D-shape
     let d_shape = CSG::circle_with_flat(5.0, 32, 2.0, None);
@@ -51,23 +31,23 @@ fn main() {
     let _ = fs::write("stl/double_flat.stl", double_flat.to_stl_ascii("double_flat"));
     let df_3d = double_flat.extrude(0.5);
     let _ = fs::write("stl/df_3d.stl", df_3d.to_stl_ascii("df_3d"));
-    
+
     // A 3D teardrop shape
     let teardrop_solid = CSG::teardrop(3.0, 5.0, 32, 32, None);
     let _ = fs::write("stl/teardrop_solid.stl", teardrop_solid.to_stl_ascii("teardrop_solid"));
-    
+
     // A 3D egg shape
     let egg_solid = CSG::egg(2.0, 4.0, 8, 16, None);
     let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
-    
+
     // An ellipsoid with X radius=2, Y radius=1, Z radius=3
     let ellipsoid = CSG::ellipsoid(2.0, 1.0, 3.0, 16, 8, None);
     let _ = fs::write("stl/ellipsoid.stl", ellipsoid.to_stl_ascii("ellipsoid"));
-    
+
     // A teardrop 'blank' hole
     let teardrop_cylinder = CSG::teardrop_cylinder(2.0, 4.0, 32.0, 16, None);
     let _ = fs::write("stl/teardrop_cylinder.stl", teardrop_cylinder.to_stl_ascii("teardrop_cylinder"));
-    
+
     // 1) polygon()
     let polygon_2d = CSG::polygon(
         &[
@@ -150,7 +130,7 @@ fn main() {
 
     // 16) gyroid(...) – uses the current CSG volume as a bounding region
     // Let's reuse the `cube` from above:
-        #[cfg(all(feature = "stl-io", feature = "chull-io"))]
+    #[cfg(all(feature = "stl-io", feature = "chull-io"))]
     {
         let union_shape = cube.union(&sphere);
 
