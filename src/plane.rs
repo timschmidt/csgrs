@@ -361,3 +361,57 @@ impl Plane {
         (transform_to_xy, transform_from_xy)
     }
 }
+
+#[test]
+fn test_plane_orientation() {
+    let vertices = [
+        Vertex {
+            pos: Point3::new(1152.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(1152.0, 256.0, 256.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(768.0, 256.0, 256.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(768.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(896.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(896.0, 256.0, 384.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(1024.0, 256.0, 384.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(1024.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+    ];
+
+    // Cycling the order of the vertices doesn't change the winding order of the shape,
+    // so it should not change the resulting plane's normal.
+    for cycle_rotation in 0..vertices.len() {
+        let mut vertices = vertices.clone();
+        vertices.rotate_right(cycle_rotation);
+        let plane = Plane::from_vertices(vertices.to_vec());
+
+        assert!(
+            plane.normal() == Vector3::new(0., 1., 0.),
+            "the vertices {vertices:?} form a plane with unexpected normal {}, \
+            expected (0., 1., 0.); \
+            point list obtained by rotating {cycle_rotation} times",
+            plane.normal(),
+        );
+    }
+}
