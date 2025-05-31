@@ -112,14 +112,16 @@ impl Plane {
             point_c: p2,
         };
 
-        // Reference normal from first three points in order
-        let ref_norm = Plane {
-            point_a: vertices[0].pos,
-            point_b: vertices[1].pos,
-            point_c: vertices[2].pos,
+        // Construct the reference normal for the original polygon using Newell's Method.
+        let mut reference_normal = Vector3::zeros();
+
+        // This computes the normal vector, with a magnitude of twice the area of the polygon.
+        for i in 0..vertices.len() {
+            reference_normal += (vertices[i].pos - Point3::origin())
+                .cross(&(vertices[(i + 1) % vertices.len()].pos - Point3::origin()));
         }
-        .normal();
-        if plane_hq.normal().dot(&ref_norm) < 0.0 {
+
+        if plane_hq.normal().dot(&reference_normal) < 0.0 {
             plane_hq.flip(); // flip in-place to agree with winding
         }
         plane_hq
