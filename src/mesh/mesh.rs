@@ -1,12 +1,15 @@
-use crate::float_types::Real;
+use crate::float_types::{EPSILON, Real};
+use crate::float_types::parry3d::query::RayCast;
+use crate::float_types::parry3d::shape::Shape;
 use crate::float_types::parry3d::bounding_volume::{Aabb, BoundingVolume};
+use crate::float_types::rapier3d::prelude::{ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet, SharedShape, Triangle, TriMesh};
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::traits::CSGOps;
 use geo::{Coord, CoordsIter, Geometry, LineString, Polygon as GeoPolygon};
-use nalgebra::{Matrix4, Point3, Vector3, partial_max, partial_min};
+use nalgebra::{Isometry3, Matrix4, Point3, Vector3, Quaternion, Unit, partial_max, partial_min};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -23,6 +26,13 @@ pub struct Mesh<S: Clone + Send + Sync + Debug> {
 }
 
 impl<S: Clone + Send + Sync + Debug> Mesh<S> {
+   /// Build a Mesh from an existing polygon list
+    pub fn from_polygons(polygons: &[Polygon<S>]) -> Self {
+        let mut mesh = Mesh::new();
+        mesh.polygons = polygons.to_vec();
+        mesh
+    }
+	
     /// Split polygons into (may_touch, cannot_touch) using bounding‑box tests
     fn partition_polys(
         polys: &[Polygon<S>],
@@ -57,7 +67,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             .flat_map(|p| p.vertices.clone())
             .collect()
     }
-    
+
     /// Rotate polygons into 2D to perform triangulation, then rotate triangles back to original 3D position
     pub fn triangulate_2d(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]> {
         // Convert the outer ring into a `LineString`
@@ -119,6 +129,240 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             }
             result
         }
+    }
+
+	/// Triangulate each polygon in the Mesh returning a Mesh containing triangles
+    pub fn triangulate(&self) -> Mesh<S> {
+        let mut triangles = Vec::new();
+
+        for poly in &self.polygons {
+            let tris = poly.tessellate();
+            for triangle in tris {
+                triangles.push(Polygon::new(triangle.to_vec(), poly.metadata.clone()));
+            }
+        }
+
+        Mesh::from_polygons(&triangles)
+    }
+
+	/// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
+    /// This results in a triangular mesh with more detail.
+    pub fn subdivide_triangles(&self, levels: u32) -> Mesh<S> {
+        if levels == 0 {
+            return self.clone();
+        }
+
+        #[cfg(feature = "parallel")]
+        let new_polygons: Vec<Polygon<S>> = self
+            .polygons
+            .par_iter()
+            .flat_map(|poly| {
+                let sub_tris = poly.subdivide_triangles(levels);
+                // Convert each small tri back to a Polygon
+                sub_tris.into_par_iter().map(move |tri| {
+                    Polygon::new(
+                        vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
+                        poly.metadata.clone(),
+                    )
+                })
+            })
+            .collect();
+
+        #[cfg(not(feature = "parallel"))]
+        let new_polygons: Vec<Polygon<S>> = self
+            .polygons
+            .iter()
+            .flat_map(|poly| {
+                let sub_tris = poly.subdivide_triangles(levels);
+                sub_tris.into_iter().map(move |tri| {
+                    Polygon::new(
+                        vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
+                        poly.metadata.clone(),
+                    )
+                })
+            })
+            .collect();
+
+        Mesh::from_polygons(&new_polygons)
+    }
+
+    /// Renormalize all polygons in this Mesh by re-computing each polygon’s plane
+    /// and assigning that plane’s normal to all vertices.
+    pub fn renormalize(&mut self) {
+        for poly in &mut self.polygons {
+            poly.set_new_normal();
+        }
+    }
+    
+	/// Casts a ray defined by `origin` + t * `direction` against all triangles
+    /// of this CSG and returns a list of (intersection_point, distance),
+    /// sorted by ascending distance.
+    ///
+    /// # Parameters
+    /// - `origin`: The ray’s start point.
+    /// - `direction`: The ray’s direction vector.
+    ///
+    /// # Returns
+    /// A `Vec` of `(Point3<Real>, Real)` where:
+    /// - `Point3<Real>` is the intersection coordinate in 3D,
+    /// - `Real` is the distance (the ray parameter t) from `origin`.
+    pub fn ray_intersections(
+        &self,
+        origin: &Point3<Real>,
+        direction: &Vector3<Real>,
+    ) -> Vec<(Point3<Real>, Real)> {
+        let ray = Ray::new(*origin, *direction);
+        let iso = Isometry3::identity(); // No transformation on the triangles themselves.
+
+        let mut hits = Vec::new();
+
+        // 1) For each polygon in the CSG:
+        for poly in &self.polygons {
+            // 2) Triangulate it if necessary:
+            let triangles = poly.tessellate();
+
+            // 3) For each triangle, do a ray–triangle intersection test:
+            for tri in triangles {
+                let a = tri[0].pos;
+                let b = tri[1].pos;
+                let c = tri[2].pos;
+
+                // Construct a parry Triangle shape from the 3 vertices:
+                let triangle = Triangle::new(a, b, c);
+
+                // Ray-cast against the triangle:
+                if let Some(hit) = triangle.cast_ray_and_get_normal(&iso, &ray, Real::MAX, true) {
+                    let point_on_ray = ray.point_at(hit.time_of_impact);
+                    hits.push((Point3::from(point_on_ray.coords), hit.time_of_impact));
+                }
+            }
+        }
+
+        // 4) Sort hits by ascending distance (toi):
+        hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        // 5) remove duplicate hits if they fall within tolerance
+        hits.dedup_by(|a, b| (a.1 - b.1).abs() < EPSILON);
+
+        hits
+    }
+
+    /// Convert the polygons in this Mesh to a Parry TriMesh.
+    /// Useful for collision detection or physics simulations.
+    pub fn to_trimesh(&self) -> SharedShape {
+        // 1) Gather all the triangles from each polygon
+        // 2) Build a TriMesh from points + triangle indices
+        // 3) Wrap that in a SharedShape to be used in Rapier
+        let tri_csg = self.triangulate();
+        let mut vertices = Vec::new();
+        let mut indices = Vec::new();
+        let mut index_offset = 0;
+
+        for poly in &tri_csg.polygons {
+            let a = poly.vertices[0].pos;
+            let b = poly.vertices[1].pos;
+            let c = poly.vertices[2].pos;
+
+            vertices.push(a);
+            vertices.push(b);
+            vertices.push(c);
+
+            indices.push([index_offset, index_offset + 1, index_offset + 2]);
+            index_offset += 3;
+        }
+
+        // TriMesh::new(Vec<[Real; 3]>, Vec<[u32; 3]>)
+        let trimesh = TriMesh::new(vertices, indices).unwrap(); // todo: handle error
+        SharedShape::new(trimesh)
+    }
+
+    /// Approximate mass properties using Rapier.
+    pub fn mass_properties(&self, density: Real) -> (Real, Point3<Real>, Unit<Quaternion<Real>>) {
+        let shape = self.to_trimesh();
+        if let Some(trimesh) = shape.as_trimesh() {
+            let mp = trimesh.mass_properties(density);
+            (
+                mp.mass(),
+                mp.local_com,                     // a Point3<Real>
+                mp.principal_inertia_local_frame, // a Unit<Quaternion<Real>>
+            )
+        } else {
+            // fallback if not a TriMesh
+            (0.0, Point3::origin(), Unit::<Quaternion<Real>>::identity())
+        }
+    }
+
+    /// Create a Rapier rigid body + collider from this Mesh, using
+    /// an axis-angle `rotation` in 3D (the vector’s length is the
+    /// rotation in radians, and its direction is the axis).
+    pub fn to_rigid_body(
+        &self,
+        rb_set: &mut RigidBodySet,
+        co_set: &mut ColliderSet,
+        translation: Vector3<Real>,
+        rotation: Vector3<Real>, // rotation axis scaled by angle (radians)
+        density: Real,
+    ) -> RigidBodyHandle {
+        let shape = self.to_trimesh();
+
+        // Build a Rapier RigidBody
+        let rb = RigidBodyBuilder::dynamic()
+            .translation(translation)
+            // Now `rotation(...)` expects an axis-angle Vector3.
+            .rotation(rotation)
+            .build();
+        let rb_handle = rb_set.insert(rb);
+
+        // Build the collider
+        let coll = ColliderBuilder::new(shape).density(density).build();
+        co_set.insert_with_parent(coll, rb_handle, rb_set);
+
+        rb_handle
+    }
+    
+    /// Convert a Mesh into a Bevy `Mesh`.
+    #[cfg(feature = "bevymesh")]
+    pub fn to_bevy_mesh(&self) -> Mesh {
+        let tessellated_csg = &self.tessellate();
+        let polygons = &tessellated_csg.polygons;
+    
+        // Prepare buffers
+        let mut positions_32 = Vec::new();
+        let mut normals_32   = Vec::new();
+        let mut indices      = Vec::new();
+    
+        let mut index_start = 0u32;
+    
+        // Each polygon is assumed to have exactly 3 vertices after tessellation.
+        for poly in polygons {
+            // skip any degenerate polygons
+            if poly.vertices.len() != 3 {
+                continue;
+            }
+    
+            // push 3 positions/normals
+            for v in &poly.vertices {
+                positions_32.push([v.pos.x as f32, v.pos.y as f32, v.pos.z as f32]);
+                normals_32.push([v.normal.x as f32, v.normal.y as f32, v.normal.z as f32]);
+            }
+    
+            // triangle indices
+            indices.push(index_start);
+            indices.push(index_start + 1);
+            indices.push(index_start + 2);
+            index_start += 3;
+        }
+    
+        // Create the mesh with the new 2-argument constructor
+        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default());
+    
+        // Insert attributes. Note the `<Vec<[f32; 3]>>` usage.
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions_32);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL,   normals_32);
+    
+        // Insert triangle indices
+        mesh.insert_indices(Indices::U32(indices));
+    
+        mesh
     }
 }
 
