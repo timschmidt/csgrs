@@ -11,15 +11,15 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     pub fn cube(width: Real, length: Real, height: Real, metadata: Option<S>) -> CSG<S> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
-        let p000 = Point3::new(0.0,      0.0,      0.0);
-        let p100 = Point3::new(width,    0.0,      0.0);
-        let p110 = Point3::new(width,    length,   0.0);
-        let p010 = Point3::new(0.0,      length,   0.0);
+        let p000 = Point3::new(0.0, 0.0, 0.0);
+        let p100 = Point3::new(width, 0.0, 0.0);
+        let p110 = Point3::new(width, length, 0.0);
+        let p010 = Point3::new(0.0, length, 0.0);
 
-        let p001 = Point3::new(0.0,      0.0,      height);
-        let p101 = Point3::new(width,    0.0,      height);
-        let p111 = Point3::new(width,    length,   height);
-        let p011 = Point3::new(0.0,      length,   height);
+        let p001 = Point3::new(0.0, 0.0, height);
+        let p101 = Point3::new(width, 0.0, height);
+        let p111 = Point3::new(width, length, height);
+        let p011 = Point3::new(0.0, length, height);
 
         // We’ll define 6 faces (each a Polygon), in an order that keeps outward-facing normals
         // and consistent (counter-clockwise) vertex winding as viewed from outside the prism.
@@ -107,7 +107,12 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     }
 
     /// Construct a sphere with radius, segments, stacks
-    pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>) -> CSG<S> {
+    pub fn sphere(
+        radius: Real,
+        segments: usize,
+        stacks: usize,
+        metadata: Option<S>,
+    ) -> CSG<S> {
         let mut polygons = Vec::new();
 
         for i in 0..segments {
@@ -115,8 +120,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 let mut vertices = Vec::new();
 
                 let vertex = |theta: Real, phi: Real| {
-                    let dir =
-                        Vector3::new(theta.cos() * phi.sin(), phi.cos(), theta.sin() * phi.sin());
+                    let dir = Vector3::new(
+                        theta.cos() * phi.sin(),
+                        phi.cos(),
+                        theta.sin() * phi.sin(),
+                    );
                     Vertex::new(
                         Point3::new(dir.x * radius, dir.y * radius, dir.z * radius),
                         dir,
@@ -310,10 +318,15 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             metadata,
         )
     }
-    
+
     /// A helper to create a vertical cylinder along Z from z=0..z=height
     // with the specified radius (NOT diameter).
-    pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
+    pub fn cylinder(
+        radius: Real,
+        height: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> CSG<S> {
         CSG::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
@@ -353,7 +366,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///
     /// let csg_poly = CSG::polyhedron(pts, &fcs);
     /// ```
-    pub fn polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>) -> CSG<S> {
+    pub fn polyhedron(
+        points: &[[Real; 3]],
+        faces: &[Vec<usize>],
+        metadata: Option<S>,
+    ) -> CSG<S> {
         let mut polygons = Vec::new();
 
         for face in faces {
@@ -367,7 +384,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             for &idx in face {
                 // Ensure the index is valid
                 if idx >= points.len() {
-                    panic!( // todo return error
+                    panic!(
+                        // todo return error
                         "Face index {} is out of range (points.len = {}).",
                         idx,
                         points.len()
@@ -414,17 +432,12 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone()).translate(
-            -cutter_height,
-            -cutter_height / 2.0,
-            0.0,
-        );
+        let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone())
+            .translate(-cutter_height, -cutter_height / 2.0, 0.0);
 
         let half_egg = egg_2d.difference(&rect_cutter);
 
-        half_egg
-            .rotate_extrude(360.0, revolve_segments)
-            .convex_hull()
+        half_egg.rotate_extrude(360.0, revolve_segments).convex_hull()
     }
 
     /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via rotate_extrude).
@@ -454,7 +467,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let half_teardrop = td_2d.difference(&rect_cutter);
 
         // revolve 360 degrees
-        half_teardrop.rotate_extrude(360.0, revolve_segments).convex_hull()
+        half_teardrop
+            .rotate_extrude(360.0, revolve_segments)
+            .convex_hull()
     }
 
     /// Creates a 3D "teardrop cylinder" by extruding the existing 2D `teardrop` in the Z+ axis.
@@ -562,8 +577,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         // The mirror transform about the plane z = arrow_length/2 maps any point (0,0,z) to (0,0, arrow_length - z).
         if orientation {
             let l = arrow_length;
-            let mirror_mat: Matrix4<Real> =
-                Translation3::new(0.0, 0.0, l / 2.0).to_homogeneous()
+            let mirror_mat: Matrix4<Real> = Translation3::new(0.0, 0.0, l / 2.0)
+                .to_homogeneous()
                 * Matrix4::new_nonuniform_scaling(&Vector3::new(1.0, 1.0, -1.0))
                 * Translation3::new(0.0, 0.0, -l / 2.0).to_homogeneous();
             canonical_arrow = canonical_arrow.transform(&mirror_mat).inverse();
@@ -588,22 +603,29 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         final_arrow
     }
-    
+
     /// Regular octahedron scaled by `radius`
     pub fn octahedron(radius: Real, metadata: Option<S>) -> Self {
         let pts = &[
-            [ 1.0,  0.0,  0.0],
-            [-1.0,  0.0,  0.0],
-            [ 0.0,  1.0,  0.0],
-            [ 0.0, -1.0,  0.0],
-            [ 0.0,  0.0,  1.0],
-            [ 0.0,  0.0, -1.0],
+            [1.0, 0.0, 0.0],
+            [-1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, -1.0, 0.0],
+            [0.0, 0.0, 1.0],
+            [0.0, 0.0, -1.0],
         ];
         let faces = vec![
-            vec![0, 2, 4], vec![2, 1, 4], vec![1, 3, 4], vec![3, 0, 4],
-            vec![5, 2, 0], vec![5, 1, 2], vec![5, 3, 1], vec![5, 0, 3],
+            vec![0, 2, 4],
+            vec![2, 1, 4],
+            vec![1, 3, 4],
+            vec![3, 0, 4],
+            vec![5, 2, 0],
+            vec![5, 1, 2],
+            vec![5, 3, 1],
+            vec![5, 0, 3],
         ];
-        let scaled: Vec<[Real; 3]> = pts.iter()
+        let scaled: Vec<[Real; 3]> = pts
+            .iter()
             .map(|&[x, y, z]| [x * radius, y * radius, z * radius])
             .collect();
         Self::polyhedron(&scaled, &faces, metadata)
@@ -619,25 +641,49 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let inv_len = (1.0 + phi * phi).sqrt().recip();
         let a = inv_len;
         let b = phi * inv_len;
-    
+
         // 12 vertices ----------------------------------------------------
         let pts: [[Real; 3]; 12] = [
-            [-a,  b,  0.0], [ a,  b,  0.0], [-a, -b,  0.0], [ a, -b,  0.0],
-            [ 0.0, -a,  b], [ 0.0,  a,  b], [ 0.0, -a, -b], [ 0.0,  a, -b],
-            [  b,  0.0, -a], [  b,  0.0,  a], [ -b,  0.0, -a], [ -b, 0.0,  a],
+            [-a, b, 0.0],
+            [a, b, 0.0],
+            [-a, -b, 0.0],
+            [a, -b, 0.0],
+            [0.0, -a, b],
+            [0.0, a, b],
+            [0.0, -a, -b],
+            [0.0, a, -b],
+            [b, 0.0, -a],
+            [b, 0.0, a],
+            [-b, 0.0, -a],
+            [-b, 0.0, a],
         ];
-    
+
         // 20 faces (counter-clockwise when viewed from outside) ----------
         let faces: [[usize; 3]; 20] = [
-            [0,11,5], [0,5,1], [0,1,7], [0,7,10], [0,10,11],
-            [1,5,9], [5,11,4], [11,10,2], [10,7,6], [7,1,8],
-            [3,9,4], [3,4,2], [3,2,6], [3,6,8], [3,8,9],
-            [4,9,5], [2,4,11], [6,2,10], [8,6,7], [9,8,1],
+            [0, 11, 5],
+            [0, 5, 1],
+            [0, 1, 7],
+            [0, 7, 10],
+            [0, 10, 11],
+            [1, 5, 9],
+            [5, 11, 4],
+            [11, 10, 2],
+            [10, 7, 6],
+            [7, 1, 8],
+            [3, 9, 4],
+            [3, 4, 2],
+            [3, 2, 6],
+            [3, 6, 8],
+            [3, 8, 9],
+            [4, 9, 5],
+            [2, 4, 11],
+            [6, 2, 10],
+            [8, 6, 7],
+            [9, 8, 1],
         ];
-    
-        let faces_vec: Vec<Vec<usize>> =
-            faces.iter().map(|f| f.to_vec()).collect();
-    
+
+        let faces_vec: Vec<Vec<usize>> = faces.iter().map(|f| f.to_vec()).collect();
+
         Self::polyhedron(&pts, &faces_vec, metadata).scale(factor, factor, factor)
     }
 
@@ -658,7 +704,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             .translate(major_r, 0.0, 0.0);
         circle.rotate_extrude(360.0, segments_major.max(3))
     }
-    
+
     pub fn spur_gear_involute(
         module_: Real,
         teeth: usize,
@@ -680,7 +726,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         )
         .extrude(thickness)
     }
-    
+
     pub fn spur_gear_cycloid(
         module_: Real,
         teeth: usize,
@@ -700,11 +746,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         )
         .extrude(thickness)
     }
-    
+
     // -------------------------------------------------------------------------------------------------
     // Helical involute gear (3‑D)                                                                    //
     // -------------------------------------------------------------------------------------------------
-    
+
     pub fn helical_involute_gear(
         module_: Real,
         teeth: usize,
@@ -713,8 +759,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         backlash: Real,
         segments_per_flank: usize,
         thickness: Real,
-        helix_angle_deg: Real,     // β
-        slices: usize,             // ≥ 2 – axial divisions
+        helix_angle_deg: Real, // β
+        slices: usize,         // ≥ 2 – axial divisions
         metadata: Option<S>,
     ) -> CSG<S> {
         assert!(slices >= 2);
@@ -727,10 +773,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             segments_per_flank,
             metadata.clone(),
         );
-    
+
         let dz = thickness / (slices as Real);
         let d_ψ = helix_angle_deg.to_radians() / (slices as Real);
-    
+
         let mut acc = CSG::<S>::new();
         let mut z_curr = 0.0;
         for i in 0..slices {
@@ -743,5 +789,4 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
         acc
     }
-
 }

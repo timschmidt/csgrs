@@ -12,17 +12,18 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///   - If it's a MultiPolygon, buffer it directly
     ///   - Otherwise, ignore (exclude) it from the new collection
     pub fn offset(&self, distance: Real) -> CSG<S> {
-        let offset_geoms = self.geometry
+        let offset_geoms = self
+            .geometry
             .iter()
             .filter_map(|geom| match geom {
                 Geometry::Polygon(poly) => {
                     let new_mpoly = buffer_polygon(poly, distance);
                     Some(Geometry::MultiPolygon(new_mpoly))
-                }
+                },
                 Geometry::MultiPolygon(mpoly) => {
                     let new_mpoly = buffer_multi_polygon(mpoly, distance);
                     Some(Geometry::MultiPolygon(new_mpoly))
-                }
+                },
                 _ => None, // ignore other geometry types
             })
             .collect();

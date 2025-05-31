@@ -170,18 +170,12 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             let n1 = sn_buffer.normals[i1];
             let n2 = sn_buffer.normals[i2];
 
-            let v0 = Vertex::new(
-                p0,
-                Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real),
-            );
-            let v1 = Vertex::new(
-                p1,
-                Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real),
-            );
-            let v2 = Vertex::new(
-                p2,
-                Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real),
-            );
+            let v0 =
+                Vertex::new(p0, Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real));
+            let v1 =
+                Vertex::new(p1, Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real));
+            let v2 =
+                Vertex::new(p2, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
 
             // Note: reverse v1, v2 if you need to fix winding
             let poly = Polygon::new(vec![v0, v1, v2], metadata.clone());
