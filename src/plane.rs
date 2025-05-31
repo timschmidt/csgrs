@@ -43,12 +43,13 @@ impl Plane {
     /// A lower cost option may be a grid sub-sampled farthest pair search
     pub fn from_vertices(vertices: Vec<Vertex>) -> Plane {
         let n = vertices.len();
+        let reference_plane = Plane {
+            point_a: vertices[0].pos,
+            point_b: vertices[1].pos,
+            point_c: vertices[2].pos,
+        };
         if n == 3 {
-            return Plane {
-                point_a: vertices[0].pos,
-                point_b: vertices[1].pos,
-                point_c: vertices[2].pos,
-            };
+            return reference_plane;
         } // Plane is already optimal
 
         //------------------------------------------------------------------
@@ -69,11 +70,7 @@ impl Plane {
         let p1 = vertices[i1].pos;
         let dir = p1 - p0;
         if dir.norm_squared() < EPSILON * EPSILON {
-            return Plane {
-                point_a: vertices[0].pos,
-                point_b: vertices[1].pos,
-                point_c: vertices[2].pos,
-            }; // everything almost coincident
+            return reference_plane; // everything almost coincident
         }
 
         //------------------------------------------------------------------
@@ -94,11 +91,7 @@ impl Plane {
         let i2 = match i2 {
             Some(k) if max_area2 > EPSILON * EPSILON => k,
             _ => {
-                return Plane {
-                    point_a: vertices[0].pos,
-                    point_b: vertices[1].pos,
-                    point_c: vertices[2].pos,
-                };
+                return reference_plane;
             }, // all vertices collinear
         };
         let p2 = vertices[i2].pos;
@@ -113,12 +106,7 @@ impl Plane {
         };
 
         // Reference normal from first three points in order
-        let ref_norm = Plane {
-            point_a: vertices[0].pos,
-            point_b: vertices[1].pos,
-            point_c: vertices[2].pos,
-        }
-        .normal();
+        let ref_norm = reference_plane.normal();
         if plane_hq.normal().dot(&ref_norm) < 0.0 {
             plane_hq.flip(); // flip in-place to agree with winding
         }
