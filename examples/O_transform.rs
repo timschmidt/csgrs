@@ -10,6 +10,9 @@ fn main() {
     let scale_mat = Matrix4::new_scaling(0.5);
     // Combine
     let transform_mat = xlate * scale_mat;
-    let shape = CSG::<()>::cube(1.0,1.0,1.0, None).transform(&transform_mat);
-    let _ = fs::write("stl/scene_transform_cube.stl", shape.to_stl_ascii("scene_transform_cube"));
+    let shape = CSG::<()>::cube(1.0, 1.0, 1.0, None).transform(&transform_mat);
+    let _ = fs::write(
+        "stl/scene_transform_cube.stl",
+        shape.to_stl_ascii("scene_transform_cube"),
+    );
 }

@@ -16,18 +16,16 @@ fn main() {
     let extruded_square = square_2d.extrude(1.0);
     write_example(&extruded_square, "square_extrude");
 
-    let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0)
-        .rotate_extrude(360.0, 32);
+    let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(360.0, 32);
     write_example(&revolve_circle, "circle_revolve_360");
 
-    let partial_revolve = circle_2d.translate(10.0, 0.0, 0.0)
-        .rotate_extrude(180.0, 32);
+    let partial_revolve = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(180.0, 32);
     write_example(&partial_revolve, "circle_revolve_180");
 }
 
 fn write_example(shape: &CSG, name: &str) {
     let _ = fs::write(
         Path::new(PATH).join(name).with_extension("stl"),
-        shape.to_stl_binary(name).unwrap()
+        shape.to_stl_binary(name).unwrap(),
     );
 }

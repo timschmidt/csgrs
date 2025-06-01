@@ -1,14 +1,16 @@
 //! This example shows creating a `CSG` from a list of metaballs
 
 use csgrs::{CSG, metaballs::MetaBall};
-use std::{fs, path::Path};
 use nalgebra::Point3;
+use std::{fs, path::Path};
 
 const PATH: &str = "stl/metaballs";
 
 fn main() {
     #[cfg(not(feature = "metaballs"))]
-    compile_error!("This example requires the metaballs feature, try adding '--features metaballs'");
+    compile_error!(
+        "This example requires the metaballs feature, try adding '--features metaballs'"
+    );
 
     // Ensure the folder exists
     let _ = fs::create_dir_all(PATH);
@@ -23,13 +25,7 @@ fn main() {
     let iso_value = 1.0;
     let padding = 1.5;
 
-    let metaball_csg = CSG::metaballs(
-        balls,
-        resolution,
-        iso_value,
-        padding,
-        None,
-    );
+    let metaball_csg = CSG::metaballs(balls, resolution, iso_value, padding, None);
 
     // For instance, save to STL
     // let stl_data = metaball_csg.to_stl_binary("my_metaballs").unwrap();
@@ -49,13 +45,7 @@ fn main() {
     let iso_value = 1.0;
     let padding = 1.9;
 
-    let metaball_csg = CSG::metaballs(
-        balls,
-        resolution,
-        iso_value,
-        padding,
-        None,
-    );
+    let metaball_csg = CSG::metaballs(balls, resolution, iso_value, padding, None);
 
     write_example(&metaball_csg, "four_metaballs");
 }
@@ -63,6 +53,6 @@ fn main() {
 fn write_example(shape: &CSG, name: &str) {
     let _ = fs::write(
         Path::new(PATH).join(name).with_extension("stl"),
-        shape.to_stl_binary(name).unwrap()
+        shape.to_stl_binary(name).unwrap(),
     );
 }

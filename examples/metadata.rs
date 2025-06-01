@@ -1,8 +1,8 @@
 //! This example shows using optional metadata for storing color and label.\
 //! Other use cases include storing speed, ID, or layer info.
 
-use nalgebra::{Vector3, Point3};
 use csgrs::{Vertex, polygon::Polygon};
+use nalgebra::{Point3, Vector3};
 
 /// Demo metadata type
 #[derive(Clone)]

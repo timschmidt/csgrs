@@ -1,8 +1,8 @@
 //! This example shows signed distance field (sdf) usage
 
 use csgrs::CSG;
-use std::{fs, path::Path};
 use nalgebra::Point3;
+use std::{fs, path::Path};
 
 const PATH: &str = "stl/sdf";
 
@@ -18,7 +18,7 @@ fn main() {
 
     let resolution = (60, 60, 60);
     let min_pt = Point3::new(-2.7, -2.7, -2.7);
-    let max_pt = Point3::new( 2.7,  2.7,  2.7);
+    let max_pt = Point3::new(2.7, 2.7, 2.7);
     let iso_value = 0.0; // Typically zero for SDF-based surfaces
 
     let csg_shape = CSG::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
@@ -30,6 +30,6 @@ fn main() {
 fn write_example(shape: &CSG, name: &str) {
     let _ = fs::write(
         Path::new(PATH).join(name).with_extension("stl"),
-        shape.to_stl_binary(name).unwrap()
+        shape.to_stl_binary(name).unwrap(),
     );
 }

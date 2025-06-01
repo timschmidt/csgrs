@@ -8,5 +8,8 @@ fn main() {
 
     let scaled = sphere.scale(1.0, 2.0, 0.5);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/scene_scaled_sphere.stl", scaled.to_stl_binary("scene_scaled_sphere").unwrap());
+    let _ = fs::write(
+        "stl/scene_scaled_sphere.stl",
+        scaled.to_stl_binary("scene_scaled_sphere").unwrap(),
+    );
 }

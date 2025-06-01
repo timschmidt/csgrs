@@ -1,8 +1,8 @@
 //! This example shows transformations: Translate, Rotate, Scale, Mirror
 
 use csgrs::{CSG, plane::Plane};
-use std::{fs, path::Path};
 use nalgebra::Vector3;
+use std::{fs, path::Path};
 
 const PATH: &str = "stl/transformations";
 
@@ -28,6 +28,6 @@ fn main() {
 fn write_example(shape: &CSG, name: &str) {
     let _ = fs::write(
         Path::new(PATH).join(name).with_extension("stl"),
-        shape.to_stl_binary(name).unwrap()
+        shape.to_stl_binary(name).unwrap(),
     );
 }

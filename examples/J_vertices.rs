@@ -8,5 +8,10 @@ fn main() {
     let verts = circle_extruded.vertices();
     println!("Scene J circle_extruded has {} vertices", verts.len());
     // We'll still save an STL so there's a visual
-    let _ = fs::write("stl/scene_j_circle_extruded.stl", circle_extruded.to_stl_binary("scene_j_circle_extruded").unwrap());
+    let _ = fs::write(
+        "stl/scene_j_circle_extruded.stl",
+        circle_extruded
+            .to_stl_binary("scene_j_circle_extruded")
+            .unwrap(),
+    );
 }

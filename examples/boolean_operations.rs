@@ -32,6 +32,6 @@ fn main() {
 fn write_example(shape: &CSG, name: &str) {
     let _ = fs::write(
         Path::new(PATH).join(name).with_extension("stl"),
-        shape.to_stl_binary(name).unwrap()
+        shape.to_stl_binary(name).unwrap(),
     );
 }

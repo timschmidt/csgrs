@@ -6,5 +6,8 @@ use std::fs;
 
 fn main() {
     let reuleaux_tri = CSG::<()>::reuleaux(3, 2.0, 16, None).extrude(0.1);
-    let _ = fs::write("stl/scene_reuleaux_triangle.stl", reuleaux_tri.to_stl_ascii("scene_reuleaux_triangle"));
+    let _ = fs::write(
+        "stl/scene_reuleaux_triangle.stl",
+        reuleaux_tri.to_stl_ascii("scene_reuleaux_triangle"),
+    );
 }

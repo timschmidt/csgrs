@@ -1,14 +1,16 @@
 //! This example shows creating a `CSG` from a list of 2d metaballs
 
 use csgrs::CSG;
-use std::{fs, path::Path};
 use nalgebra::Point2;
+use std::{fs, path::Path};
 
 const PATH: &str = "stl/metaballs_2d";
 
 fn main() {
     #[cfg(not(feature = "metaballs"))]
-    compile_error!("This example requires the metaballs feature, try adding '--features metaballs'");
+    compile_error!(
+        "This example requires the metaballs feature, try adding '--features metaballs'"
+    );
 
     // Ensure the folder exists
     let _ = fs::create_dir_all(PATH);
@@ -27,6 +29,6 @@ fn main() {
 fn write_example(shape: &CSG, name: &str) {
     let _ = fs::write(
         Path::new(PATH).join(name).with_extension("stl"),
-        shape.to_stl_binary(name).unwrap()
+        shape.to_stl_binary(name).unwrap(),
     );
 }
