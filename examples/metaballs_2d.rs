@@ -2,6 +2,7 @@
 
 use csgrs::CSG;
 use std::{fs, path::Path};
+use nalgebra::Point2;
 
 const PATH: &str = "stl/metaballs_2d";
 
@@ -13,7 +14,6 @@ fn main() {
     let _ = fs::create_dir_all(PATH);
 
     // Create a 2D "metaball" shape from 3 circles
-    use nalgebra::Point2;
     let balls_2d = vec![
         (Point2::new(0.0, 0.0), 1.0),
         (Point2::new(1.5, 0.0), 1.0),
