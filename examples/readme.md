@@ -2,7 +2,8 @@
 
 Minimal example of each function of csgrs.
 
-Here, we do not use any shared data, so we'll bind the generic S to ().
+These do not use any shared data, so we'll bind the generic S to ().\
+Almost all examples require the `stl-io` feature
 
 # Scenes
 

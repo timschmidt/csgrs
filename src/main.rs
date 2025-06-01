@@ -96,35 +96,6 @@ fn main() {
         let _ = fs::write("stl/from_image.stl", csg_img.to_stl_ascii("from_image"));
     }
 
-    // 16) gyroid(...) – uses the current CSG volume as a bounding region
-    // Let's reuse the `cube` from above:
-    #[cfg(all(feature = "stl-io", feature = "chull-io"))]
-    {
-        let gyroid_inside_cube = hull_of_union
-            .scale(20.0, 20.0, 20.0)
-            .gyroid(64, 2.0, 0.0, None);
-        let _ = fs::write(
-            "stl/gyroid_cube.stl",
-            gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap(),
-        );
-
-        let schwarzp_inside_cube = hull_of_union
-            .scale(20.0, 20.0, 20.0)
-            .schwarz_p(64, 2.0, 0.0, None);
-        let _ = fs::write(
-            "stl/schwarz_p_cube.stl",
-            schwarzp_inside_cube.to_stl_binary("schwarz_p_cube").unwrap(),
-        );
-
-        let schwarzd_inside_cube = hull_of_union
-            .scale(20.0, 20.0, 20.0)
-            .schwarz_d(64, 2.0, 0.0, None);
-        let _ = fs::write(
-            "stl/schwarz_d_cube.stl",
-            schwarzd_inside_cube.to_stl_binary("schwarz_d_cube").unwrap(),
-        );
-    }
-
     // Define the start point and the arrow direction vector.
     // The arrow’s length is the norm of the direction vector.
     let start = Point3::new(1.0, 1.0, 1.0);
@@ -259,44 +230,8 @@ fn main() {
     let _ = fs::write("stl/helical.stl", helical.to_stl_ascii("helical"));
     */
 
-    // ---------------------------------------------------------------------
-    // Bézier curve demo ----------------------------------------------------
-    let bezier_ctrl = &[
-        [0.0, 0.0], // P0
-        [1.0, 2.0], // P1
-        [3.0, 3.0], // P2
-        [4.0, 0.0], // P3
-    ];
-    let bezier_2d = CSG::bezier(bezier_ctrl, 128, None);
-    let _ = fs::write("stl/bezier_2d.stl", bezier_2d.to_stl_ascii("bezier_2d"));
-
-    // give it a little “body” so we can see it in a solid viewer
-    let bezier_3d = bezier_2d.extrude(0.25);
-    let _ = fs::write(
-        "stl/bezier_extruded.stl",
-        bezier_3d.to_stl_ascii("bezier_extruded"),
-    );
-
-    // ---------------------------------------------------------------------
-    // B-spline demo --------------------------------------------------------
-    let bspline_ctrl = &[[0.0, 0.0], [1.0, 2.5], [3.0, 3.0], [5.0, 0.0], [6.0, -1.5]];
-    let bspline_2d = CSG::bspline(
-        bspline_ctrl,
-        /* degree p = */ 3,
-        /* seg/span */ 32,
-        None,
-    );
-    let _ = fs::write("stl/bspline_2d.stl", bspline_2d.to_stl_ascii("bspline_2d"));
-
     #[cfg(feature = "bevymesh")]
     println!("{:#?}", bezier_3d.to_bevy_mesh());
-
-    // a quick thickening just like the Bézier
-    //let bspline_3d = bspline_2d.extrude(0.25);
-    //let _ = fs::write(
-    //    "stl/bspline_extruded.stl",
-    //    bspline_3d.to_stl_ascii("bspline_extruded"),
-    //);
 
     // Done!
     println!(

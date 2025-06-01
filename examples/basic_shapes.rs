@@ -6,7 +6,7 @@ use std::{fs, path::Path};
 const PATH: &str = "stl/basic_shapes";
 
 fn main() {
-    // Ensure the /stls folder exists
+    // Ensure the folder exists
     let _ = fs::create_dir_all(PATH);
 
     // 1) Basic shapes: cube, sphere, cylinder

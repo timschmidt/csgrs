@@ -12,19 +12,19 @@ use robust::{Coord3D, orient3d};
 
 /// Classification of a polygon or point that lies exactly in the plane
 /// (i.e. within `±EPSILON` of the plane).
-pub(crate) const COPLANAR: i8 = 0;
+pub const COPLANAR: i8 = 0;
 
 /// Classification of a polygon or point that lies strictly on the
 /// *front* side of the plane (the side the normal points toward).
-pub(crate) const FRONT:    i8 = 1;
+pub const FRONT:    i8 = 1;
 
 /// Classification of a polygon or point that lies strictly on the
 /// *back* side of the plane (opposite the normal direction).
-pub(crate) const BACK:     i8 = 2;
+pub const BACK:     i8 = 2;
 
 /// A polygon or edge that straddles the plane, producing pieces
 /// on both the front **and** the back.
-pub(crate) const SPANNING: i8 = 3;
+pub const SPANNING: i8 = 3;
 
 /// A plane in 3D space defined by three points
 #[derive(Debug, Clone)]
