@@ -298,7 +298,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         let plane = self.plane.clone().unwrap();
 
         // Split polygons in parallel
-        let (mut coplanar_front, mut coplanar_back, mut front, mut back) = polygons
+        let (mut coplanar_front, mut coplanar_back, front, back) = polygons
             .par_iter()
             .map(|p| plane.split_polygon(p)) // <-- just pass p
             .reduce(

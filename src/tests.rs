@@ -785,7 +785,7 @@ fn test_csg_minkowski_sum() {
 
 #[test]
 fn test_csg_subdivide_triangles() {
-    let mut cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
     // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
     // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
     let subdiv = cube.subdivide_triangles(1.try_into().expect("not zero"));
@@ -942,9 +942,9 @@ fn test_csg_text() {
 #[test]
 fn test_csg_to_trimesh() {
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    let trimesh = cube.to_trimesh();
+    let trimesh = cube.to_trimesh().unwrap();
     // Should be a TriMesh with 12 triangles
-    assert_eq!(trimesh.as_trimesh().unwrap().indices().len(), 12); // 6 faces => 2 triangles each => 12
+    assert_eq!(trimesh.indices().len(), 12); // 6 faces => 2 triangles each => 12
 }
 
 #[test]
@@ -1669,7 +1669,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
     let csg = CSG::from_polygons(&[square_a, square_b]);
 
     let flat_csg = csg.flatten();
-    assert!(!flat_csg.polygons.is_empty());
+    assert!(!flat_csg.geometry.is_empty());
 
     // Expect 2 disjoint polygons in the result
     assert_eq!(
@@ -1699,7 +1699,7 @@ fn test_flatten_and_union_near_xy_plane() {
     let flat_csg = csg.flatten();
 
     assert!(
-        !flat_csg.polygons.is_empty(),
+        !flat_csg.geometry.is_empty(),
         "Should flatten to a valid polygon"
     );
     let bb = flat_csg.bounding_box();
