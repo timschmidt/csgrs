@@ -1,10 +1,10 @@
-use crate::{CSG, Vertex};
 use crate::float_types::Real;
 use crate::polygon::Polygon;
+use crate::{CSG, Vertex};
 
-use std::fmt::Debug;
 use geo::CoordsIter;
 use nalgebra::{Point3, Vector3};
+use std::fmt::Debug;
 
 #[cfg(any(feature = "stl-io", feature = "dxf-io"))]
 use core2::io::Cursor;
@@ -94,7 +94,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                         out.push_str("    endloop\n");
                         out.push_str("  endfacet\n");
                     }
-                }
+                },
 
                 geo::Geometry::MultiPolygon(mp) => {
                     // Each polygon inside the MultiPolygon
@@ -109,7 +109,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                         let holes_vec = poly2d
                             .interiors()
                             .into_iter()
-                            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
+                            .map(|ring| {
+                                ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>()
+                            })
                             .collect::<Vec<_>>();
                         let hole_refs = holes_vec
                             .iter()
@@ -131,11 +133,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                             out.push_str("  endfacet\n");
                         }
                     }
-                }
+                },
 
                 // Skip all other geometry types (LineString, Point, etc.)
                 // You can optionally handle them if you like, or ignore them.
-                _ => {}
+                _ => {},
             }
         }
 
@@ -197,10 +199,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
                     // Gather outer ring as [x,y]
-                    let outer: Vec<[Real; 2]> = poly2d
-                        .exterior().coords_iter()
-                        .map(|c| [c.x, c.y])
-                        .collect();
+                    let outer: Vec<[Real; 2]> =
+                        poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
 
                     // Gather holes
                     let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
@@ -210,7 +210,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                         .collect();
 
                     // Convert each hole to a slice-reference for triangulation
-                    let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
+                    let hole_refs: Vec<&[[Real; 2]]> =
+                        holes_vec.iter().map(|h| &h[..]).collect();
 
                     // Triangulate using our geo-based helper
                     let tri_2d = Self::tessellate_2d(&outer, &hole_refs);
@@ -238,15 +239,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                             ],
                         });
                     }
-                }
+                },
 
                 geo::Geometry::MultiPolygon(mpoly) => {
                     // Same approach, but each Polygon in the MultiPolygon
                     for poly2d in &mpoly.0 {
-                        let outer: Vec<[Real; 2]> = poly2d
-                            .exterior().coords_iter()
-                            .map(|c| [c.x, c.y])
-                            .collect();
+                        let outer: Vec<[Real; 2]> =
+                            poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
 
                         let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
                             .interiors()
@@ -254,7 +253,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                             .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
                             .collect();
 
-                        let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
+                        let hole_refs: Vec<&[[Real; 2]]> =
+                            holes_vec.iter().map(|h| &h[..]).collect();
                         let tri_2d = Self::tessellate_2d(&outer, &hole_refs);
 
                         for tri_pts in tri_2d {
@@ -280,10 +280,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                             });
                         }
                     }
-                }
+                },
 
                 // Skip other geometry types: lines, points, etc.
-                _ => {}
+                _ => {},
             }
         }
 
