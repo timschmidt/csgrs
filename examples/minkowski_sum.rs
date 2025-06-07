@@ -8,6 +8,9 @@ use std::{fs, path::Path};
 const PATH: &str = "stl/minkowski";
 
 fn main() {
+    #[cfg(not(feature = "chull-io"))]
+    compile_error!("The 'chull-io' feature is required for this example");
+
     // Ensure the folder exists
     let _ = fs::create_dir_all(PATH);
 
@@ -15,9 +18,7 @@ fn main() {
     let sphere = CSG::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8
 
     // 5) Minkowski sum
-    #[cfg(feature = "chull-io")]
     let minkowski = cube.minkowski_sum(&sphere);
-    #[cfg(feature = "chull-io")]
     write_example(&minkowski, "minkowski_cube_sphere");
 }
 
