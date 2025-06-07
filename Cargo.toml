@@ -44,7 +44,7 @@ rapier3d = { version = "0.24.0", optional = true }
 parry3d-f64  = { version = "0.19.0", optional = true }
 parry3d  = { version = "0.19.0", optional = true }
 
-# bevy mesh convertion
+# bevy mesh conversion
 bevy_mesh = { version = "0.16", optional = true }
 bevy_asset = { version = "0.16", optional = true }
 wgpu-types = { version = "*", optional = true, default-features = false } # this will use the version that bevy_mesh does

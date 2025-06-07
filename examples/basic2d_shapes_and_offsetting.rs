@@ -14,10 +14,7 @@ fn main() {
     write_example(&square_2d, "square_2d");
 
     let circle_2d = CSG::<()>::circle(1.0, 32, None);
-    let _ = fs::write(
-        "stl/circle_2d.stl",
-        circle_2d.to_stl_binary("circle_2d").unwrap(),
-    );
+    write_example(&circle_2d, "circle_2d");
 
     let grown_2d = square_2d.offset(0.5);
     write_example(&grown_2d, "square_2d_grow_0_5");
@@ -29,6 +26,6 @@ fn main() {
 fn write_example(shape: &CSG, name: &str) {
     let _ = fs::write(
         Path::new(PATH).join(name).with_extension("stl"),
-        shape.to_stl_ascii(name),
+        shape.to_stl_binary(name).unwrap(),
     );
 }

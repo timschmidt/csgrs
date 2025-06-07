@@ -1,4 +1,4 @@
-//! This example shows polyhedron usage with a simple tetrahedron
+//! This example shows making regular polyhedra and a custom polyhedron with a simple tetrahedron
 
 use csgrs::CSG;
 use std::{fs, path::Path};
@@ -8,6 +8,15 @@ const PATH: &str = "stl/polyhedron";
 fn main() {
     // Ensure the folder exists
     let _ = fs::create_dir_all(PATH);
+
+    let oct = CSG::octahedron(10.0, None);
+    write_example(&oct, "octahedron");
+
+    //let dodec = CSG::dodecahedron(15.0, None);
+    // write_example(&dodec, "dodecahedron");
+
+    let ico = CSG::icosahedron(12.0, None);
+    write_example(&ico, "icosahedron");
 
     // 12) Polyhedron example (simple tetrahedron):
     let points = [
@@ -29,6 +38,6 @@ fn main() {
 fn write_example(shape: &CSG, name: &str) {
     let _ = fs::write(
         Path::new(PATH).join(name).with_extension("stl"),
-        shape.to_stl_ascii(name),
+        shape.to_stl_binary(name).unwrap(),
     );
 }
