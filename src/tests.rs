@@ -1271,7 +1271,7 @@ fn test_complex_metadata_struct_in_boolean_ops() {
 
 /// Helper function to calculate the signed area of a polygon.
 /// Positive area indicates CCW ordering.
-fn signed_area(polygon: &Polygon<()>) -> Real {
+fn signed_area_2d(polygon: &Polygon<()>) -> Real {
     let mut area = 0.0;
     let verts = &polygon.vertices;
     for i in 0..verts.len() {
@@ -1284,9 +1284,11 @@ fn signed_area(polygon: &Polygon<()>) -> Real {
 #[test]
 fn test_square_ccw_ordering() {
     let square = CSG::square(2.0, 2.0, None);
+
     assert_eq!(square.polygons.len(), 1);
     let poly = &square.polygons[0];
-    let area = signed_area(poly);
+    // todo needs to be a 2d test + polygon 3d area would be nice
+    let area = signed_area_2d(poly);
     assert!(area > 0.0, "Square vertices are not CCW ordered");
 }
 
@@ -1299,7 +1301,7 @@ fn test_offset_2d_positive_distance_grows() {
     // The offset square should have area greater than 4.0
     assert_eq!(offset.polygons.len(), 1);
     let poly = &offset.polygons[0];
-    let area = signed_area(poly);
+    let area = signed_area_2d(poly);
     assert!(
         area > 4.0,
         "Offset with positive distance did not grow the square"
@@ -1315,7 +1317,7 @@ fn test_offset_2d_negative_distance_shrinks() {
     // The offset square should have area less than 4.0
     assert_eq!(offset.polygons.len(), 1);
     let poly = &offset.polygons[0];
-    let area = signed_area(poly);
+    let area = signed_area_2d(poly);
     assert!(
         area < 4.0,
         "Offset with negative distance did not shrink the square"
@@ -1330,7 +1332,7 @@ fn test_polygon_2d_enforce_ccw_ordering() {
     // Enforce CCW ordering
     csg_cw.renormalize();
     let poly = &csg_cw.polygons[0];
-    let area = signed_area(poly);
+    let area = signed_area_2d(poly);
     assert!(area > 0.0, "Polygon ordering was not corrected to CCW");
 }
 
@@ -1342,8 +1344,8 @@ fn test_circle_offset_2d() {
 
     // Original circle has area ~3.1416
     let original_area = 3.141592653589793;
-    let grow_area = signed_area(&offset_grow.polygons[0]);
-    let shrink_area = signed_area(&offset_shrink.polygons[0]);
+    let grow_area = signed_area_2d(&offset_grow.polygons[0]);
+    let shrink_area = signed_area_2d(&offset_shrink.polygons[0]);
 
     assert!(
         grow_area > original_area,
