@@ -102,7 +102,10 @@ fn test_to_stl_ascii() {
     // Should contain some vertex lines
     assert!(stl_str.contains("vertex"));
 
-    assert_eq!(CSG::from_stl(stl_str.as_bytes(), None).unwrap().polygons, cube.tessellate().polygons);
+    assert_eq!(
+        CSG::from_stl(stl_str.as_bytes(), None).unwrap().polygons,
+        cube.tessellate().polygons
+    );
 }
 
 // --------------------------------------------------------

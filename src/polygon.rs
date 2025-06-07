@@ -26,8 +26,8 @@ pub struct Polygon<S: Clone> {
 impl<S: Clone + PartialEq> PartialEq for Polygon<S> {
     fn eq(&self, other: &Self) -> bool {
         self.vertices == other.vertices
-        && self.plane == other.plane
-        && self.metadata == other.metadata
+            && self.plane == other.plane
+            && self.metadata == other.metadata
     }
 }
 

@@ -55,9 +55,9 @@ compile_error!("Either 'delaunay' or 'earcut' feature must be specified, but not
 compile_error!("Either 'f64' or 'f32' feature must be specified, but not both");
 
 pub use csg::CSG;
-pub use vertex::Vertex;
-pub use polygon::Polygon;
 pub use plane::Plane;
+pub use polygon::Polygon;
+pub use vertex::Vertex;
 
 #[cfg(feature = "hashmap")]
 pub mod flatten_slice;
