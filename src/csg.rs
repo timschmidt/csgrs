@@ -26,7 +26,7 @@ use rayon::prelude::*;
 
 /// The main CSG solid structure. Contains a list of 3D polygons, 2D polylines, and some metadata.
 #[derive(Debug, Clone)]
-pub struct CSG<S: Clone> {
+pub struct CSG<S: Clone = ()> {
     /// 3D polygons for volumetric shapes
     pub polygons: Vec<Polygon<S>>,
 
@@ -537,8 +537,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         for poly in &mut csg.polygons {
             for vert in &mut poly.vertices {
                 // Position
-                let hom_pos = mat * vert.pos.to_homogeneous();
-                vert.pos = Point3::from_homogeneous(hom_pos).unwrap(); // todo catch error
+                let homog_pos = mat * vert.pos.to_homogeneous();
+                vert.pos = Point3::from_homogeneous(homog_pos).unwrap(); // todo catch error
 
                 // Normal
                 vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();

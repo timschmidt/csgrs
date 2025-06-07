@@ -25,7 +25,7 @@ algorithms used for triangulation only work in 2D, so **csgrs** rotates
 ![Example CSG output](docs/csg.png)
 
 ## Community
-[![](https://dcbadge.limes.pink/api/server/https://discord.gg/9WkD3WFxMC)](https://discord.gg/9WkD3WFxMC)
+[![discord logo: csgrs | member count](https://dcbadge.limes.pink/api/server/https://discord.gg/9WkD3WFxMC)](https://discord.gg/9WkD3WFxMC)
 
 ## Getting started
 
@@ -505,7 +505,7 @@ for Polygon
 - determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
 - bending
 - lead-ins, lead-outs
-- gpu accelleration
+- gpu acceleration
   - https://github.com/dimforge/wgmath
   - https://github.com/pcwalton/pathfinder
 - reduce dependency feature sets
@@ -530,7 +530,7 @@ for Polygon
 - test geo_booleanop as alternative to geo's built-in boolean ops.
 - adapt cavalier_contours demo application
 - rethink metadata
-  - support storing UV[W] coordinates with vertexes at compile time (try to keep runtime cost low too)
+  - support storing UV[W] coordinates with vertices at compile time (try to keep runtime cost low too)
   - accomplish equivalence checks and memory usage reduction by using a hashmap or references instead of storing metadata with each node
   - with equivalence checks, returning sorted metadata becomes easy
 - implement half-edge, radial edge, etc to and from adapters
