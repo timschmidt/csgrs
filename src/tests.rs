@@ -101,6 +101,8 @@ fn test_to_stl_ascii() {
     assert!(stl_str.contains("facet normal"));
     // Should contain some vertex lines
     assert!(stl_str.contains("vertex"));
+
+    assert_eq!(CSG::from_stl(stl_str.as_bytes(), None).unwrap().polygons, cube.tessellate().polygons);
 }
 
 // --------------------------------------------------------
@@ -978,27 +980,17 @@ fn test_csg_to_rigid_body() {
 }
 
 #[test]
-fn test_csg_to_stl_and_from_stl_file() -> Result<(), Box<dyn std::error::Error>> {
-    // We'll create a small shape, write to an STL, read it back.
-    // You can redirect to a temp file or do an in-memory test.
-    let tmp_path = "test_csg_output.stl";
-
+fn test_csg_to_stl_and_from_stl_file() {
     let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
-    let res = cube.to_stl_binary("A cube");
-    let _ = std::fs::write(tmp_path, res.as_ref().unwrap());
-    assert!(res.is_ok());
+    let res = cube.to_stl_binary("A cube").unwrap();
 
-    let stl_data: Vec<u8> = std::fs::read(tmp_path)?;
-    let csg_in: CSG<()> = CSG::from_stl(&stl_data, None)?;
-    // We expect to read the same number of triangular faces as the cube originally had
-    // (though the orientation/normals might differ).
+    let csg_from_stl: CSG<()> = CSG::from_stl(&res, None).unwrap();
+
     // The default cube -> 6 polygons x 1 polygon each with 4 vertices => 12 triangles in STL.
     // So from_stl_file => we get 12 triangles as 12 polygons (each is a tri).
-    assert_eq!(csg_in.polygons.len(), 12);
+    assert_eq!(csg_from_stl.polygons.len(), 12);
 
-    // Cleanup the temp file if desired
-    let _ = std::fs::remove_file(tmp_path);
-    Ok(())
+    assert_eq!(csg_from_stl.polygons, cube.tessellate().polygons);
 }
 
 /// A small, custom metadata type to demonstrate usage.
