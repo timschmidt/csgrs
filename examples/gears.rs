@@ -62,19 +62,17 @@ fn main() {
     );
     write_example(&spur_cycloid, "spur_cycloid");
 
-    /*
-    let helical = CSG::helical_involute_gear(
-        2.0,   // module
-        20,    // z
-        20.0,  // pressure angle
-        0.05, 0.02, 14,
-        25.0,   // face-width
-        15.0,   // helix angle β [deg]
-        40,     // axial slices (resolution of the twist)
-        None,
-    );
-    write_example(&helical, "helical_gear");
-    */
+    // let helical = CSG::helical_involute_gear(
+    // 2.0,   // module
+    // 20,    // z
+    // 20.0,  // pressure angle
+    // 0.05, 0.02, 14,
+    // 25.0,   // face-width
+    // 15.0,   // helix angle β [deg]
+    // 40,     // axial slices (resolution of the twist)
+    // None,
+    // );
+    // write_example(&helical, "helical_gear");
 }
 
 fn write_example(shape: &CSG, name: &str) {

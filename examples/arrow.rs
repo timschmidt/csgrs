@@ -1,8 +1,8 @@
 //! This example demos creating an arrow and an inverse of the same arrow
 
 use csgrs::CSG;
+use nalgebra::{Point3, Vector3};
 use std::{fs, path::Path};
-use nalgebra::{Vector3, Point3};
 
 const PATH: &str = "stl/arrow";
 

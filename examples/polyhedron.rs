@@ -12,7 +12,7 @@ fn main() {
     let oct = CSG::octahedron(10.0, None);
     write_example(&oct, "octahedron");
 
-    //let dodec = CSG::dodecahedron(15.0, None);
+    // let dodec = CSG::dodecahedron(15.0, None);
     // write_example(&dodec, "dodecahedron");
 
     let ico = CSG::icosahedron(12.0, None);

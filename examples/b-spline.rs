@@ -14,8 +14,10 @@ fn main() {
     let bspline_ctrl = &[[0.0, 0.0], [1.0, 2.5], [3.0, 3.0], [5.0, 0.0], [6.0, -1.5]];
     let bspline_2d = CSG::bspline(
         bspline_ctrl,
-        /* degree p = */ 3,
-        /* seg/span */ 32,
+        // degree p =
+        3,
+        // seg/span
+        32,
         None,
     );
     write_example(&bspline_2d, "bspline_2d");
