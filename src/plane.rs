@@ -4,11 +4,11 @@
 //! Unless stated otherwise, all tolerances are governed by
 //! `float_types::EPSILON`.
 
-use crate::float_types::{Real, EPSILON};
+use crate::float_types::{EPSILON, Real};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
-use robust::{orient3d, Coord3D};
+use robust::{Coord3D, orient3d};
 
 /// Classification of a polygon or point that lies exactly in the plane
 /// (i.e. within `±EPSILON` of the plane).
@@ -16,11 +16,11 @@ pub const COPLANAR: i8 = 0;
 
 /// Classification of a polygon or point that lies strictly on the
 /// *front* side of the plane (the side the normal points toward).
-pub const FRONT:    i8 = 1;
+pub const FRONT: i8 = 1;
 
 /// Classification of a polygon or point that lies strictly on the
 /// *back* side of the plane (opposite the normal direction).
-pub const BACK:     i8 = 2;
+pub const BACK: i8 = 2;
 
 /// A polygon or edge that straddles the plane, producing pieces
 /// on both the front **and** the back.
@@ -52,12 +52,20 @@ impl Plane {
     /// A lower cost option may be a grid sub-sampled farthest pair search
     pub fn from_vertices(vertices: Vec<Vertex>) -> Plane {
         let n = vertices.len();
-        if n == 3 { return Plane { point_a: vertices[0].pos, point_b: vertices[1].pos, point_c: vertices[2].pos } }// Plane is already optimal
-    
+        let reference_plane = Plane {
+            point_a: vertices[0].pos,
+            point_b: vertices[1].pos,
+            point_c: vertices[2].pos,
+        };
+        if n == 3 {
+            return reference_plane;
+        } // Plane is already optimal
+
         //------------------------------------------------------------------
         // 1.  longest chord (i0,i1)
         //------------------------------------------------------------------
-        let (mut i0, mut i1, mut max_d2) = (0, 1, (vertices[0].pos - vertices[1].pos).norm_squared());
+        let (mut i0, mut i1, mut max_d2) =
+            (0, 1, (vertices[0].pos - vertices[1].pos).norm_squared());
         for i in 0..n {
             for j in (i + 1)..n {
                 let d2 = (vertices[i].pos - vertices[j].pos).norm_squared();
@@ -66,22 +74,24 @@ impl Plane {
                 }
             }
         }
-    
+
         let p0 = vertices[i0].pos;
         let p1 = vertices[i1].pos;
         let dir = p1 - p0;
         if dir.norm_squared() < EPSILON * EPSILON {
-            return Plane { point_a: vertices[0].pos, point_b: vertices[1].pos, point_c: vertices[2].pos } // everything almost coincident
+            return reference_plane; // everything almost coincident
         }
-    
+
         //------------------------------------------------------------------
         // 2.  vertex farthest from the line  p0-p1  → i2
         //------------------------------------------------------------------
         let mut i2 = None;
         let mut max_area2 = 0.0;
         for (idx, v) in vertices.iter().enumerate() {
-            if idx == i0 || idx == i1 { continue; }
-            let a2 = (v.pos - p0).cross(&dir).norm_squared();   // ∝ area²
+            if idx == i0 || idx == i1 {
+                continue;
+            }
+            let a2 = (v.pos - p0).cross(&dir).norm_squared(); // ∝ area²
             if a2 > max_area2 {
                 max_area2 = a2;
                 i2 = Some(idx);
@@ -89,23 +99,36 @@ impl Plane {
         }
         let i2 = match i2 {
             Some(k) if max_area2 > EPSILON * EPSILON => k,
-            _ => return Plane { point_a: vertices[0].pos, point_b: vertices[1].pos, point_c: vertices[2].pos } // all vertices collinear
+            _ => {
+                return reference_plane;
+            }, // all vertices collinear
         };
         let p2 = vertices[i2].pos;
-    
+
         //------------------------------------------------------------------
         // 3.  build plane, then orient it to match original winding
         //------------------------------------------------------------------
-        let mut plane_hq = Plane { point_a: p0, point_b: p1, point_c: p2 };
-    
-        // Reference normal from first three points in order
-        let ref_norm = Plane { point_a: vertices[0].pos, point_b: vertices[1].pos, point_c: vertices[2].pos }.normal();
-        if plane_hq.normal().dot(&ref_norm) < 0.0 {
+        let mut plane_hq = Plane {
+            point_a: p0,
+            point_b: p1,
+            point_c: p2,
+        };
+
+        // Construct the reference normal for the original polygon using Newell's Method.
+        let mut reference_normal = Vector3::zeros();
+
+        // This computes the normal vector, with a magnitude of twice the area of the polygon.
+        for i in 0..vertices.len() {
+            reference_normal += (vertices[i].pos - Point3::origin())
+                .cross(&(vertices[(i + 1) % vertices.len()].pos - Point3::origin()));
+        }
+
+        if plane_hq.normal().dot(&reference_normal) < 0.0 {
             plane_hq.flip(); // flip in-place to agree with winding
         }
         plane_hq
     }
-    
+
     /// Build a new `Plane` from a (not‑necessarily‑unit) normal **n**
     /// and signed offset *o* (in the sense `n · p == o`).
     ///
@@ -130,7 +153,7 @@ impl Plane {
         };
         u.normalize_mut();
         let v = normal.cross(&u).normalize();
-        
+
         // Use p0, p0+u, p0+v  as the three defining points.
         Self {
             point_a: p0,
@@ -138,25 +161,41 @@ impl Plane {
             point_c: p0 + v,
         }
     }
-    
-    #[inline] 
+
+    #[inline]
     pub fn orient_plane(&self, other: &Plane) -> i8 {
         // pick one vertex of the coplanar polygon and move along its normal
         let test_point = other.point_a + other.normal();
         self.orient_point(&test_point)
     }
-    
+
     #[inline]
     pub fn orient_point(&self, point: &Point3<Real>) -> i8 {
         // Returns a positive value if the point `pd` lies below the plane passing through `pa`, `pb`, and `pc`
-        // ("below" is defined so that `pa`, `pb`, and `pc` appear in counterclockwise order when viewed from above the plane).  
-        // Returns a negative value if `pd` lies above the plane.  
+        // ("below" is defined so that `pa`, `pb`, and `pc` appear in counterclockwise order when viewed from above the plane).
+        // Returns a negative value if `pd` lies above the plane.
         // Returns `0` if they are **coplanar**.
         let sign = orient3d(
-            Coord3D { x: self.point_a.x, y: self.point_a.y, z: self.point_a.z },
-            Coord3D { x: self.point_b.x, y: self.point_b.y, z: self.point_b.z },
-            Coord3D { x: self.point_c.x, y: self.point_c.y, z: self.point_c.z },
-            Coord3D { x: point.x, y: point.y, z: point.z},
+            Coord3D {
+                x: self.point_a.x,
+                y: self.point_a.y,
+                z: self.point_a.z,
+            },
+            Coord3D {
+                x: self.point_b.x,
+                y: self.point_b.y,
+                z: self.point_b.z,
+            },
+            Coord3D {
+                x: self.point_c.x,
+                y: self.point_c.y,
+                z: self.point_c.z,
+            },
+            Coord3D {
+                x: point.x,
+                y: point.y,
+                z: point.z,
+            },
         );
         if sign > EPSILON {
             BACK
@@ -166,7 +205,7 @@ impl Plane {
             COPLANAR
         }
     }
-    
+
     /// Return the (right‑handed) unit normal **n** of the plane
     /// `((b‑a) × (c‑a)).normalize()`.
     #[inline]
@@ -200,14 +239,14 @@ impl Plane {
         Vec<Polygon<S>>,
         Vec<Polygon<S>>,
         Vec<Polygon<S>>,
-    ) {    
+    ) {
         let mut coplanar_front = Vec::new();
-        let mut coplanar_back  = Vec::new();
-        let mut front          = Vec::new();
-        let mut back           = Vec::new();
-        
+        let mut coplanar_back = Vec::new();
+        let mut front = Vec::new();
+        let mut back = Vec::new();
+
         let normal = self.normal();
-    
+
         let mut types = Vec::with_capacity(polygon.vertices.len());
         let mut polygon_type: i8 = 0;
         for vertex in &polygon.vertices {
@@ -215,62 +254,72 @@ impl Plane {
             types.push(vertex_type);
             polygon_type |= vertex_type; // bitwise OR vertex types to figure polygon type
         }
-    
+
         // -----------------------------------------------------------------
         // 2.  dispatch the easy cases
         // -----------------------------------------------------------------
         match polygon_type {
             COPLANAR => {
-                if normal.dot(&polygon.plane.normal()) > 0.0 {  // >= ?
+                if normal.dot(&polygon.plane.normal()) > 0.0 {
+                    // >= ?
                     coplanar_front.push(polygon.clone());
                 } else {
                     coplanar_back.push(polygon.clone());
                 }
-            }
+            },
             FRONT => front.push(polygon.clone()),
-            BACK  => back.push(polygon.clone()),
-    
+            BACK => back.push(polygon.clone()),
+
             // -------------------------------------------------------------
             // 3.  true spanning – do the split
             // -------------------------------------------------------------
-            _ => {    
+            _ => {
                 let mut split_front = Vec::<Vertex>::new();
                 let mut split_back = Vec::<Vertex>::new();
-    
+
                 for i in 0..polygon.vertices.len() {
                     // j is the vertex following i, we modulo by len to wrap around to the first vertex after the last
-                    let j  = (i + 1) % polygon.vertices.len();
+                    let j = (i + 1) % polygon.vertices.len();
                     let type_i = types[i];
                     let type_j = types[j];
                     let vertex_i = &polygon.vertices[i];
                     let vertex_j = &polygon.vertices[j];
-    
+
                     // If current vertex is definitely not behind plane, it goes to split_front
-                    if type_i != BACK  { split_front.push(vertex_i.clone()); }
+                    if type_i != BACK {
+                        split_front.push(vertex_i.clone());
+                    }
                     // If current vertex is definitely not in front, it goes to split_back
-                    if type_i != FRONT { split_back.push(vertex_i.clone()); }
-    
+                    if type_i != FRONT {
+                        split_back.push(vertex_i.clone());
+                    }
+
                     // If the edge between these two vertices crosses the plane,
                     // compute intersection and add that intersection to both sets
                     if (type_i | type_j) == SPANNING {
                         let denom = normal.dot(&(vertex_j.pos - vertex_i.pos));
                         // Avoid dividing by zero
                         if denom.abs() > EPSILON {
-                            let intersection = (self.offset() - normal.dot(&vertex_i.pos.coords)) / denom;
+                            let intersection =
+                                (self.offset() - normal.dot(&vertex_i.pos.coords)) / denom;
                             let vertex_new = vertex_i.interpolate(vertex_j, intersection);
                             split_front.push(vertex_new.clone());
                             split_back.push(vertex_new);
                         }
                     }
                 }
-    
+
                 // Build new polygons from the front/back vertex lists
                 // if they have at least 3 vertices
-                if split_front.len() >= 3 { front.push(Polygon::new(split_front, polygon.metadata.clone())); }
-                if split_back.len() >= 3 { back.push(Polygon::new(split_back, polygon.metadata.clone())); }
-            }
+                if split_front.len() >= 3 {
+                    front.push(Polygon::new(split_front, polygon.metadata.clone()));
+                }
+                if split_back.len() >= 3 {
+                    back.push(Polygon::new(split_back, polygon.metadata.clone()));
+                }
+            },
         }
-    
+
         (coplanar_front, coplanar_back, front, back)
     }
 
@@ -314,5 +363,59 @@ impl Plane {
             .unwrap_or_else(Matrix4::identity);
 
         (transform_to_xy, transform_from_xy)
+    }
+}
+
+#[test]
+fn test_plane_orientation() {
+    let vertices = [
+        Vertex {
+            pos: Point3::new(1152.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(1152.0, 256.0, 256.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(768.0, 256.0, 256.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(768.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(896.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(896.0, 256.0, 384.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(1024.0, 256.0, 384.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(1024.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+    ];
+
+    // Cycling the order of the vertices doesn't change the winding order of the shape,
+    // so it should not change the resulting plane's normal.
+    for cycle_rotation in 0..vertices.len() {
+        let mut vertices = vertices.clone();
+        vertices.rotate_right(cycle_rotation);
+        let plane = Plane::from_vertices(vertices.to_vec());
+
+        assert!(
+            plane.normal() == Vector3::new(0., 1., 0.),
+            "the vertices {vertices:?} form a plane with unexpected normal {}, \
+            expected (0., 1., 0.); \
+            point list obtained by rotating {cycle_rotation} times",
+            plane.normal(),
+        );
     }
 }

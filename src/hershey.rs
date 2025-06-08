@@ -45,11 +45,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
                     // Advance the pen in X
                     cursor_x += glyph_width * size * 0.8;
-                }
+                },
                 Err(_) => {
                     // Missing glyph => skip or just advance
                     cursor_x += 6.0 * size;
-                }
+                },
             }
         }
 
@@ -64,7 +64,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             polygons: Vec::new(),
             geometry: geo_coll,
             bounding_box: OnceLock::new(),
-            metadata: metadata,
+            metadata,
         }
     }
 }
@@ -96,12 +96,12 @@ fn build_hershey_glyph_lines(
                 let px = offset_x + (*x as Real) * scale;
                 let py = offset_y + (*y as Real) * scale;
                 current_coords.push(coord! { x: px, y: py });
-            }
+            },
             HersheyVector::LineTo { x, y } => {
                 let px = offset_x + (*x as Real) * scale;
                 let py = offset_y + (*y as Real) * scale;
                 current_coords.push(coord! { x: px, y: py });
-            }
+            },
         }
     }
 

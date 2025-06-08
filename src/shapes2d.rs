@@ -1,6 +1,9 @@
 use crate::csg::CSG;
-use crate::float_types::{Real, PI, EPSILON, FRAC_PI_2, TAU};
-use geo::{line_string, GeometryCollection, Geometry, LineString, MultiPolygon, Polygon as GeoPolygon, BooleanOps, Orient, orient::Direction};
+use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real, TAU};
+use geo::{
+    BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
+    Polygon as GeoPolygon, line_string, orient::Direction,
+};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -58,10 +61,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     pub fn right_triangle(width: Real, height: Real, metadata: Option<S>) -> Self {
         let line_string: LineString = vec![[0.0, 0.0], [width, 0.0], [0.0, height]].into();
         let polygon = GeoPolygon::new(line_string, vec![]);
-        CSG::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon)]),
-            metadata,
-        )
+        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon)]), metadata)
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -305,7 +305,12 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
-    pub fn egg_outline(width: Real, length: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
+    pub fn egg_outline(
+        width: Real,
+        length: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> CSG<S> {
         if segments < 3 {
             return CSG::new();
         }
@@ -331,7 +336,12 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
     /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
-    pub fn squircle(width: Real, height: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
+    pub fn squircle(
+        width: Real,
+        height: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> CSG<S> {
         if segments < 3 {
             return CSG::new();
         }
@@ -381,8 +391,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         // 2) Rectangle (handle), from -hw/2..+hw/2 in X and 0..handle_height in Y
         let rect_coords = vec![
             (-0.5 * handle_width, 0.0),
-            ( 0.5 * handle_width, 0.0),
-            ( 0.5 * handle_width, handle_height),
+            (0.5 * handle_width, 0.0),
+            (0.5 * handle_width, handle_height),
             (-0.5 * handle_width, handle_height),
             (-0.5 * handle_width, 0.0),
         ];
@@ -417,17 +427,17 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         diameter: Real,
         circle_segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {    
+    ) -> CSG<S> {
         if sides < 3 || circle_segments < 6 || diameter <= EPSILON {
             return CSG::new();
         }
-    
+
         // Circumradius that gives the requested *diameter* for the regular n-gon
         //            s
         //   R = -------------
         //        2 sin(π/n)
         let r_circ = diameter / (2.0 * (PI / sides as Real).sin());
-    
+
         // Pre-compute vertex positions of the regular n-gon
         let verts: Vec<(Real, Real)> = (0..sides)
             .map(|i| {
@@ -435,14 +445,14 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 (r_circ * theta.cos(), r_circ * theta.sin())
             })
             .collect();
-    
+
         // Build the first disk and use it as the running intersection
         let base = CSG::circle(diameter, circle_segments, metadata.clone())
             .translate(verts[0].0, verts[0].1, 0.0);
-    
+
         let shape = verts.iter().skip(1).fold(base, |acc, &(x, y)| {
-            let disk = CSG::circle(diameter, circle_segments, metadata.clone())
-                .translate(x, y, 0.0);
+            let disk =
+                CSG::circle(diameter, circle_segments, metadata.clone()).translate(x, y, 0.0);
             acc.intersection(&disk)
         });
 
@@ -491,7 +501,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         inner.push(inner[0]);
         inner.reverse(); // ensure hole is opposite winding from outer
 
-        let polygon_2d = GeoPolygon::new(LineString::from(outer), vec![LineString::from(inner)]);
+        let polygon_2d =
+            GeoPolygon::new(LineString::from(outer), vec![LineString::from(inner)]);
         CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
@@ -684,7 +695,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         with_both_flats
     }
-    
+
     /// Generate a NACA 4-digit airfoil (e.g. "2412", "0015").
     ///
     /// * `code` – 4 ASCII digits describing **camber**, **camber-pos**, **thickness**  
@@ -693,36 +704,28 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///
     /// The function returns a single closed polygon lying in the *XY* plane with its
     /// leading edge at the origin and the chord running along +X.
-    pub fn airfoil(
-        code: &str,
-        chord: Real,
-        samples: usize,
-        metadata: Option<S>,
-    ) -> CSG<S>
+    pub fn airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>) -> CSG<S>
     where
         S: Clone + Send + Sync,
-    {    
+    {
         assert!(
             code.len() == 4 && code.chars().all(|c| c.is_ascii_digit()),
             "NACA code must be exactly 4 digits"
         );
         assert!(samples >= 10, "Need at least 10 points per surface");
-    
+
         // --- decode code -------------------------------------------------------
-        let m  = code[0..1].parse::<Real>().unwrap() / 100.0; // max-camber %
-        let p  = code[1..2].parse::<Real>().unwrap() / 10.0;  // camber-pos
+        let m = code[0..1].parse::<Real>().unwrap() / 100.0; // max-camber %
+        let p = code[1..2].parse::<Real>().unwrap() / 10.0; // camber-pos
         let tt = code[2..4].parse::<Real>().unwrap() / 100.0; // thickness %
-    
+
         // thickness half-profile -----------------------------------------------
         let yt = |x: Real| -> Real {
             5.0 * tt
-                * (0.2969 * x.sqrt()
-                    - 0.1260 * x
-                    - 0.3516 * x * x
-                    + 0.2843 * x * x * x
+                * (0.2969 * x.sqrt() - 0.1260 * x - 0.3516 * x * x + 0.2843 * x * x * x
                     - 0.1015 * x * x * x * x)
         };
-    
+
         // mean-camber line & slope ---------------------------------------------
         let camber = |x: Real| -> (Real, Real) {
             if x < p {
@@ -730,70 +733,65 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 let dy = 2.0 * m / (p * p) * (p - x);
                 (yc, dy)
             } else {
-                let yc = m / ((1.0 - p).powi(2))
-                    * ((1.0 - 2.0 * p) + 2.0 * p * x - x * x);
+                let yc = m / ((1.0 - p).powi(2)) * ((1.0 - 2.0 * p) + 2.0 * p * x - x * x);
                 let dy = 2.0 * m / ((1.0 - p).powi(2)) * (p - x);
                 (yc, dy)
             }
         };
-    
+
         // --- sample upper & lower surfaces ------------------------------------
         let n = samples as Real;
         let mut coords: Vec<(Real, Real)> = Vec::with_capacity(2 * samples + 1);
-    
+
         // leading-edge → trailing-edge (upper)
         for i in 0..=samples {
-            let xc = i as Real / n;          // 0–1
-            let x  = xc * chord;             // physical
-            let t  = yt(xc);
+            let xc = i as Real / n; // 0–1
+            let x = xc * chord; // physical
+            let t = yt(xc);
             let (yc_val, dy) = camber(xc);
             let theta = dy.atan();
-    
+
             let xu = x - t * theta.sin();
             let yu = chord * (yc_val + t * theta.cos());
             coords.push((xu, yu));
         }
-    
+
         // trailing-edge → leading-edge (lower)
         for i in (1..samples).rev() {
             let xc = i as Real / n;
-            let x  = xc * chord;
-            let t  = yt(xc);
+            let x = xc * chord;
+            let t = yt(xc);
             let (yc_val, dy) = camber(xc);
             let theta = dy.atan();
-    
+
             let xl = x + t * theta.sin();
             let yl = chord * (yc_val - t * theta.cos());
             coords.push((xl, yl));
         }
-    
+
         coords.push(coords[0]); // close
-    
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]).orient(Direction::Default);
+
+        let polygon_2d =
+            GeoPolygon::new(LineString::from(coords), vec![]).orient(Direction::Default);
         CSG::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
     }
-    
+
     /// Sample an arbitrary-degree Bézier curve (de Casteljau).
     /// Returns a poly-line (closed if the first = last point).
     ///
     /// * `control`: list of 2-D control points
     /// * `segments`: number of straight-line segments used for the tessellation
-    pub fn bezier(
-        control: &[[Real; 2]],
-        segments: usize,
-        metadata: Option<S>,
-    ) -> Self {
+    pub fn bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>) -> Self {
         if control.len() < 2 || segments < 1 {
             return CSG::new();
         }
-    
+
         // de Casteljau evaluator -------------------------------------------------
         fn de_casteljau(ctrl: &[[Real; 2]], t: Real) -> (Real, Real) {
-            let mut tmp: Vec<(Real, Real)> =
-                ctrl.iter().map(|&[x, y]| (x, y)).collect();
+            let mut tmp: Vec<(Real, Real)> = ctrl.iter().map(|&[x, y]| (x, y)).collect();
             let n = tmp.len();
             for k in 1..n {
                 for i in 0..(n - k) {
@@ -803,13 +801,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             }
             tmp[0]
         }
-    
+
         let mut pts = Vec::<(Real, Real)>::with_capacity(segments + 1);
         for i in 0..=segments {
             let t = i as Real / segments as Real;
             pts.push(de_casteljau(control, t));
         }
-    
+
         // If the curve happens to be closed, make sure the polygon ring closes.
         let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < EPSILON
             && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < EPSILON;
@@ -820,12 +818,12 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             gc.0.push(Geometry::LineString(ls));
             return CSG::from_geo(gc, metadata);
         }
-    
+
         // closed curve → create a filled polygon
         let poly_2d = GeoPolygon::new(LineString::from(pts), vec![]);
         CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
     }
-    
+
     /// Sample an open-uniform B-spline of arbitrary degree (`p`) using the
     /// Cox-de Boor recursion. Returns a poly-line (or a filled region if closed).
     ///
@@ -841,7 +839,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         if control.len() < p + 1 || segments_per_span < 1 {
             return CSG::new();
         }
-    
+
         let n = control.len() - 1;
         let m = n + p + 1; // knot count
         // open-uniform knot vector: 0,0,…,0,1,2,…,n-p-1,(n-p),…,(n-p)
@@ -855,11 +853,15 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 knot.push((i - p) as Real);
             }
         }
-    
+
         // Cox-de Boor basis evaluation ------------------------------------------
         fn basis(i: usize, p: usize, u: Real, knot: &[Real]) -> Real {
             if p == 0 {
-                return if u >= knot[i] && u < knot[i + 1] { 1.0 } else { 0.0 };
+                return if u >= knot[i] && u < knot[i + 1] {
+                    1.0
+                } else {
+                    0.0
+                };
             }
             let denom1 = knot[i + p] - knot[i];
             let denom2 = knot[i + p + 1] - knot[i + 1];
@@ -875,11 +877,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             };
             term1 + term2
         }
-    
-        let span_count = n - p;                   // #inner knot spans
-        let _max_u = span_count as Real;           // parametric upper bound
+
+        let span_count = n - p; // #inner knot spans
+        let _max_u = span_count as Real; // parametric upper bound
         let dt = 1.0 / segments_per_span as Real; // step in local span coords
-    
+
         let mut pts = Vec::<(Real, Real)>::new();
         for span in 0..=span_count {
             for s in 0..=segments_per_span {
@@ -898,7 +900,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 pts.push((x, y));
             }
         }
-    
+
         let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < EPSILON
             && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < EPSILON;
         if !closed {
@@ -907,16 +909,18 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             gc.0.push(Geometry::LineString(ls));
             return CSG::from_geo(gc, metadata);
         }
-    
+
         let poly_2d = GeoPolygon::new(LineString::from(pts), vec![]);
         CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
     }
-    
+
     /// 2-D heart outline (closed polygon) sized to `width` × `height`.
     ///
     /// `segments` controls smoothness (≥ 8 recommended).
     pub fn heart(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
-        if segments < 8 { return Self::new(); }
+        if segments < 8 {
+            return Self::new();
+        }
 
         let mut pts = Vec::<(Real, Real)>::with_capacity(segments + 1);
         let step = crate::float_types::TAU / segments as Real;
@@ -925,26 +929,34 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         for i in 0..segments {
             let t = i as Real * step;
             let x = 16.0 * (t.sin().powi(3));
-            let y = 13.0 * t.cos() - 5.0 * (2.0 * t).cos()
-                    - 2.0 * (3.0 * t).cos() - (4.0 * t).cos();
+            let y = 13.0 * t.cos()
+                - 5.0 * (2.0 * t).cos()
+                - 2.0 * (3.0 * t).cos()
+                - (4.0 * t).cos();
             pts.push((x, y));
         }
         pts.push(pts[0]); // close
 
         // normalise & scale to desired bounding box ---------------------
-        let (min_x, max_x) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(x,_)|
-            (lo.min(x), hi.max(x)));
-        let (min_y, max_y) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(_,y)|
-            (lo.min(y), hi.max(y)));
-        let s_x = width  / (max_x - min_x);
+        let (min_x, max_x) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(x, _)| {
+            (lo.min(x), hi.max(x))
+        });
+        let (min_y, max_y) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(_, y)| {
+            (lo.min(y), hi.max(y))
+        });
+        let s_x = width / (max_x - min_x);
         let s_y = height / (max_y - min_y);
 
-        let coords: Vec<(Real, Real)> = pts.into_iter()
+        let coords: Vec<(Real, Real)> = pts
+            .into_iter()
             .map(|(x, y)| ((x - min_x) * s_x, (y - min_y) * s_y))
             .collect();
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Self::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon_2d)]), metadata)
+        Self::from_geo(
+            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
+            metadata,
+        )
     }
 
     /// 2-D crescent obtained by subtracting a displaced smaller circle
@@ -961,19 +973,21 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         segments: usize,
         metadata: Option<S>,
     ) -> Self {
-        if outer_r <= inner_r + EPSILON || segments < 6 { return Self::new(); }
+        if outer_r <= inner_r + EPSILON || segments < 6 {
+            return Self::new();
+        }
 
-        let big  = Self::circle(outer_r, segments, metadata.clone());
-        let small = Self::circle(inner_r, segments, metadata.clone())
-            .translate(offset, 0.0, 0.0);
+        let big = Self::circle(outer_r, segments, metadata.clone());
+        let small =
+            Self::circle(inner_r, segments, metadata.clone()).translate(offset, 0.0, 0.0);
 
         big.difference(&small)
     }
-    
+
     // -------------------------------------------------------------------------------------------------
     // 2‑D gear outlines                                                                             //
     // -------------------------------------------------------------------------------------------------
-    
+
     /// Involute gear outline (2‑D).
     pub fn involute_gear_2d(
         module_: Real,
@@ -986,26 +1000,26 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ) -> CSG<S> {
         assert!(teeth >= 4, "Need at least 4 teeth for a valid gear");
         assert!(segments_per_flank >= 3);
-    
+
         // Standard proportions (ISO 21771)
         let m = module_;
         let z = teeth as Real;
         let pitch_radius = 0.5 * m * z;
         let addendum = m;
         let dedendum = 1.25 * m + clearance;
-    
+
         let rb = pitch_radius * (1.0_f64.to_radians() as Real * pressure_angle_deg).cos();
         let ra = pitch_radius + addendum;
         let rf = (pitch_radius - dedendum).max(0.0);
-    
+
         // Angular pitch and base offsets
         let ang_pitch = TAU / z;
         let tooth_thick_ang = ang_pitch / 2.0 - backlash / pitch_radius;
-    
+
         // φ at pitch and addendum circles
         let phi_p = involute_angle_at_radius(pitch_radius, rb);
         let phi_a = involute_angle_at_radius(ra, rb);
-    
+
         // Helper to build a single half‑flank (left‑hand)
         let mut half_flank = Vec::<(Real, Real)>::with_capacity(segments_per_flank + 1);
         for i in 0..=segments_per_flank {
@@ -1016,17 +1030,17 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             let r = (ix * ix + iy * iy).sqrt();
             half_flank.push((r * global_theta.cos(), r * global_theta.sin()));
         }
-    
+
         // Mirror to get right‑hand flank (reverse order so outline is CCW)
         let mut full_tooth = half_flank.clone();
         for &(x, y) in half_flank.iter().rev() {
             // mirror across X axis and shift right
-            let theta = ( -y).atan2(x);
+            let theta = (-y).atan2(x);
             let r = (x * x + y * y).sqrt();
             let global_theta = tooth_thick_ang - theta;
             full_tooth.push((r * global_theta.cos(), r * global_theta.sin()));
         }
-    
+
         // Root circle arc between successive teeth
         let root_arc_steps = 4;
         let arc_step = (ang_pitch - 2.0 * tooth_thick_ang) / (root_arc_steps as Real);
@@ -1034,7 +1048,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             let ang = tooth_thick_ang + (i as Real) * arc_step;
             full_tooth.push((rf * (ang).cos(), rf * (ang).sin()));
         }
-    
+
         // Replicate the tooth profile around the gear
         let mut outline = Vec::<[Real; 2]>::with_capacity(full_tooth.len() * teeth + 1);
         for tooth_idx in 0..teeth {
@@ -1046,10 +1060,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
         // Close path
         outline.push(outline[0]);
-    
+
         CSG::polygon(&outline, metadata)
     }
-    
+
     /// (Epicyclic) cycloidal gear outline (2‑D).
     pub fn cycloidal_gear_2d(
         module_: Real,
@@ -1063,22 +1077,22 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let m = module_;
         let z = teeth as Real;
         let z_p = pin_teeth as Real; // for pin‑wheel pairing
-    
+
         // Pitch and derived radii
         let r_p = 0.5 * m * z; // gear pitch radius
         let r_g = 0.5 * m * z_p; // (made‑up) mating wheel for hypocycloid – gives correct root
         let r_pin = r_p / z; // generating circle radius (standard assumes z_p = z ± 1)
-    
+
         let addendum = m;
         let dedendum = 1.25 * m + clearance;
         let _ra = r_p + addendum;
         let rf = (r_p - dedendum).max(0.0);
-    
+
         let ang_pitch = TAU / z;
         let flank_steps = segments_per_flank.max(4);
-    
+
         let mut tooth_points = Vec::<(Real, Real)>::new();
-    
+
         // 1. addendum epicycloid (tip)
         for i in 0..=flank_steps {
             let t = (i as Real) / (flank_steps as Real);
@@ -1098,7 +1112,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 tooth_points.push((x, y));
             }
         }
-    
+
         // Replicate
         let mut outline = Vec::<[Real; 2]>::with_capacity(tooth_points.len() * teeth + 1);
         for k in 0..teeth {
@@ -1109,10 +1123,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             }
         }
         outline.push(outline[0]);
-    
+
         CSG::polygon(&outline, metadata)
     }
-    
+
     /// Linear **involute rack** profile (lying in the *XY* plane, pitch‑line on *Y = 0*).
     /// The returned polygon is CCW and spans `num_teeth` pitches along +X.
     pub fn involute_rack_2d(
@@ -1130,27 +1144,27 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let dedendum = 1.25 * m + clearance;
         let tip_y = addendum;
         let root_y = -dedendum;
-    
+
         // Tooth thickness at pitch‑line (centre) minus backlash.
         let t = p / 2.0 - backlash;
         let half_t = t / 2.0;
-    
+
         // Flank rises with slope = tan(pressure_angle)
         let alpha = pressure_angle_deg.to_radians();
         let rise = tip_y; // from pitch‑line (0) up to tip
         let run = rise / alpha.tan();
-    
+
         // Build one tooth (start at pitch centre) – CCW
         // Points: Root‑left → Flank‑left → Tip‑left → Tip‑right → Flank‑right → Root‑right
         let tooth: Vec<[Real; 2]> = vec![
-            [-half_t - run, root_y],  // root left beneath flank
-            [-half_t, 0.0],           // pitch left
-            [-half_t + run, tip_y],   // tip left
-            [half_t - run, tip_y],    // tip right
-            [half_t, 0.0],            // pitch right
-            [half_t + run, root_y],   // root right
+            [-half_t - run, root_y], // root left beneath flank
+            [-half_t, 0.0],          // pitch left
+            [-half_t + run, tip_y],  // tip left
+            [half_t - run, tip_y],   // tip right
+            [half_t, 0.0],           // pitch right
+            [half_t + run, root_y],  // root right
         ];
-    
+
         // Repeat teeth
         let mut outline = Vec::<[Real; 2]>::with_capacity(tooth.len() * num_teeth + 4);
         for i in 0..num_teeth {
@@ -1159,16 +1173,16 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 outline.push([x + dx, y]);
             }
         }
-    
+
         // Close rectangle ends (simple straight ends)
         // add right root extension then back to first point
         outline.push([outline.last().unwrap()[0], 0.0]);
         outline.push([outline[0][0], 0.0]);
         outline.push(outline[0]);
-    
+
         CSG::polygon(&outline, metadata)
     }
-    
+
     /// Linear **cycloidal rack** profile.
     /// The cycloidal rack is generated by rolling a circle of radius `r_p` along the
     /// rack’s pitch‑line.  The flanks become a *trochoid*; for practical purposes we
@@ -1188,13 +1202,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let dedendum = 1.25 * m + clearance;
         let _tip_y = addendum;
         let root_y = -dedendum;
-    
+
         let r = generating_radius;
-    
+
         // Curtate cycloid y(t) spans 0..2πr giving height 2r.
         // We scale t so that y range equals addendum (= m)
         let scale = addendum / (2.0 * r);
-    
+
         let mut flank: Vec<[Real; 2]> = Vec::with_capacity(segments_per_flank);
         for i in 0..=segments_per_flank {
             let t = PI * (i as Real) / (segments_per_flank as Real); // 0..π gives half‑trochoid
@@ -1202,7 +1216,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             let y = r * (1.0 - t.cos());
             flank.push([x * scale, y * scale]);
         }
-    
+
         // Build one tooth (CCW): left flank, mirrored right flank, root bridge
         let mut tooth: Vec<[Real; 2]> = Vec::with_capacity(flank.len() * 2 + 2);
         // Left side (reverse so CCW)
@@ -1217,7 +1231,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let bridge = tooth.last().unwrap()[0] + 2.0 * (r * scale - flank.last().unwrap()[0]);
         tooth.push([bridge, root_y]);
         tooth.push([-bridge, root_y]);
-    
+
         // Repeat
         let mut outline = Vec::<[Real; 2]>::with_capacity(tooth.len() * num_teeth + 1);
         for k in 0..num_teeth {
@@ -1227,7 +1241,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             }
         }
         outline.push(outline[0]);
-    
+
         CSG::polygon(&outline, metadata)
     }
 }

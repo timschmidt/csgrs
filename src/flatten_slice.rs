@@ -9,9 +9,9 @@ use geo::{
 };
 use hashbrown::HashMap;
 use nalgebra::Point3;
+use small_str::{SmallStr, format_smallstr};
 use std::fmt::Debug;
 use std::sync::OnceLock;
-use small_str::{ format_smallstr, SmallStr };
 
 impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
@@ -341,10 +341,10 @@ fn extend_chain_forward(
         match found_next {
             Some(v) => {
                 chain.push(v);
-            }
+            },
             None => {
                 break;
-            }
+            },
         }
     }
 }

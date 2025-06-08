@@ -1,9 +1,9 @@
+use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{PI, Real};
 use crate::plane::Plane;
 use crate::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point2, Point3, Vector3};
-use crate::float_types::parry3d::bounding_volume::Aabb;
 use std::sync::OnceLock;
 
 /// A polygon, defined by a list of vertices.
@@ -23,8 +23,7 @@ pub struct Polygon<S: Clone> {
     pub metadata: Option<S>,
 }
 
-impl<S: Clone> Polygon<S>
-where S: Clone + Send + Sync {
+impl<S: Clone + Send + Sync> Polygon<S> {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
         assert!(vertices.len() >= 3, "degenerate polygon");
@@ -55,9 +54,9 @@ where S: Clone + Send + Sync {
     pub fn from_tri(vertices: &[Vertex; 3], metadata: Option<S>) -> Self {
         Polygon {
             vertices: vertices.to_vec(),
-            metadata,
             plane: Plane::from_points(&vertices[0].pos, &vertices[1].pos, &vertices[2].pos),
             bounding_box: OnceLock::new(),
+            metadata,
         }
     }
 
@@ -107,9 +106,7 @@ where S: Clone + Send + Sync {
 
     /// Return an iterator over paired vertices each forming an edge of the polygon
     pub fn edges(&self) -> impl Iterator<Item = (&Vertex, &Vertex)> {
-        self.vertices
-            .iter()
-            .zip(self.vertices.iter().cycle().skip(1))
+        self.vertices.iter().zip(self.vertices.iter().cycle().skip(1))
     }
 
     /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
@@ -133,7 +130,7 @@ where S: Clone + Send + Sync {
                 let y = offset.dot(&v);
                 all_vertices_2d.push(coord! {x: x, y: y});
             }
-        
+
             use geo::TriangulateEarcut;
             let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new())
                 .earcut_triangles_raw();
@@ -159,9 +156,9 @@ where S: Clone + Send + Sync {
         }
 
         #[cfg(feature = "delaunay")]
-        {        
+        {
             use geo::TriangulateSpade;
-            
+
             // Flatten each vertex to 2D
             // Here we clamp values within spade's minimum allowed value of  0.0 to 0.0
             // because spade refuses to triangulate with values within it's minimum:
@@ -175,7 +172,7 @@ where S: Clone + Send + Sync {
                 let y_clamped = if y.abs() < MIN_ALLOWED_VALUE { 0.0 } else { y };
                 all_vertices_2d.push(coord! {x: x_clamped, y: y_clamped});
             }
-            
+
             let polygon_2d = GeoPolygon::new(
                 LineString::new(all_vertices_2d),
                 // no holes if your polygon is always simple
@@ -206,7 +203,10 @@ where S: Clone + Send + Sync {
 
     /// Subdivide this polygon into smaller triangles.
     /// Returns a list of new triangles (each is a [Vertex; 3]).
-    pub fn subdivide_triangles(&self, subdivisions: core::num::NonZeroU32) -> Vec<[Vertex; 3]> {
+    pub fn subdivide_triangles(
+        &self,
+        subdivisions: core::num::NonZeroU32,
+    ) -> Vec<[Vertex; 3]> {
         // 1) Triangulate the polygon as it is.
         let base_tris = self.tessellate();
 
@@ -348,7 +348,11 @@ const fn normalize_angle(mut a: Real) -> Real {
 ///
 /// This is a direct port of your snippet’s `centre(p1, p2, p3)`, but
 /// returning a `Point2<Real>` from nalgebra.
-fn naive_circle_center(p1: &Point2<Real>, p2: &Point2<Real>, p3: &Point2<Real>) -> Point2<Real> {
+fn naive_circle_center(
+    p1: &Point2<Real>,
+    p2: &Point2<Real>,
+    p3: &Point2<Real>,
+) -> Point2<Real> {
     // Coordinates
     let (x1, y1) = (p1.x, p1.y);
     let (x2, y2) = (p2.x, p2.y);

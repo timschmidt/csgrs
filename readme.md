@@ -444,6 +444,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 ## Examples
 - [csgrs-bevy-example](https://github.com/timschmidt/csgrs-bevy-example)
 - [csgrs-egui-example](https://github.com/timschmidt/csgrs-egui-example)
+- [csgrs-egui-wasm-example](https://github.com/timschmidt/csgrs-egui-wasm-example)
 - [csgrs-druid-example](https://github.com/timschmidt/csgrs-druid-example)
 
 ## Build tests
