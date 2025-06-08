@@ -11,7 +11,7 @@ fn main() {
 
     // A 3D egg shape
     let egg_solid = CSG::egg(2.0, 4.0, 8, 16, None);
-    write_example(&egg_solid, "egg_solid_2d");
+    write_example(&egg_solid, "egg_solid_3d");
 
     // 9) egg_outline(width, length, segments) [2D shape]
     let egg_2d = CSG::egg_outline(2.0, 4.0, 32, None);
