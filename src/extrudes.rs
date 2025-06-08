@@ -22,7 +22,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// you already had in `self.polygons`).
     pub fn extrude_vector(&self, direction: Vector3<Real>) -> Result<CSG<S>, CSGError> {
         // If the direction is near zero length, nothing to extrude:
-        if direction.norm() < EPSILON {
+        if direction.norm_squared().abs() < EPSILON * EPSILON {
             return Err(CSGError::FieldLessThenFloat { name: "direction.norm()", min: EPSILON })
         }
 
