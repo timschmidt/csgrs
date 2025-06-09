@@ -377,6 +377,7 @@ impl<F: CoordNum> PathBuilder<F> {
 }
 
 pub trait FromSVG: Sized {
+    #[allow(unused)]
     fn from_svg(doc: &str) -> Result<Self, IoError>;
 }
 
@@ -532,6 +533,7 @@ impl FromSVG for CSG<()> {
 }
 
 pub trait ToSVG {
+    #[allow(unused)]
     fn to_svg(&self) -> String;
 }
 
@@ -884,9 +886,9 @@ fn svg_points_to_line_string<F: CoordNum>(points: &str) -> Result<LineString<F>,
     use nom::branch::alt;
     use nom::character::complete::{char, multispace0, multispace1};
     use nom::combinator::opt;
-    use nom::multi::separated_list1;
     use nom::number::complete::float;
-    use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
+    use nom::sequence::{pair, tuple, delimited, separated_pair};
+    use nom::multi::separated_list1;
 
     fn comma_wsp(i: &str) -> IResult<&str, ()> {
         let (i, _) = alt((

@@ -16,7 +16,6 @@ use geo::{
 };
 use nalgebra::{
     Isometry3, Matrix3, Matrix4, Point3, Quaternion, Rotation3, Translation3, Unit, Vector3,
-    partial_max, partial_min,
 };
 use std::fmt::Debug;
 use std::sync::OnceLock;
@@ -26,7 +25,7 @@ use rayon::prelude::*;
 
 /// The main CSG solid structure. Contains a list of 3D polygons, 2D polylines, and some metadata.
 #[derive(Debug, Clone)]
-pub struct CSG<S: Clone> {
+pub struct CSG<S: Clone = ()> {
     /// 3D polygons for volumetric shapes
     pub polygons: Vec<Polygon<S>>,
 
@@ -38,6 +37,12 @@ pub struct CSG<S: Clone> {
 
     /// Metadata
     pub metadata: Option<S>,
+}
+
+impl<S: Clone + Debug + Send + Sync> Default for CSG<S> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<S: Clone + Debug + Send + Sync> CSG<S> {
@@ -968,13 +973,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             // 1) Gather from the 3D polygons
             for poly in &self.polygons {
                 for v in &poly.vertices {
-                    min_x = *partial_min(&min_x, &v.pos.x).unwrap();
-                    min_y = *partial_min(&min_y, &v.pos.y).unwrap();
-                    min_z = *partial_min(&min_z, &v.pos.z).unwrap();
+                    min_x = min_x.min(v.pos.x);
+                    min_y = min_y.min(v.pos.y);
+                    min_z = min_z.min(v.pos.z);
 
-                    max_x = *partial_max(&max_x, &v.pos.x).unwrap();
-                    max_y = *partial_max(&max_y, &v.pos.y).unwrap();
-                    max_z = *partial_max(&max_z, &v.pos.z).unwrap();
+                    max_x = max_x.max(v.pos.x);
+                    max_y = max_y.max(v.pos.y);
+                    max_z = max_z.max(v.pos.z);
                 }
             }
 
@@ -988,13 +993,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 let max_pt = rect.max();
 
                 // Merge the 2D bounds into our existing min/max, forcing z=0 for 2D geometry.
-                min_x = *partial_min(&min_x, &min_pt.x).unwrap();
-                min_y = *partial_min(&min_y, &min_pt.y).unwrap();
-                min_z = *partial_min(&min_z, &0.0).unwrap();
+                min_x = min_x.min(min_pt.x);
+                min_y = min_y.min(min_pt.y);
+                min_z = min_z.min(0.0);
 
-                max_x = *partial_max(&max_x, &max_pt.x).unwrap();
-                max_y = *partial_max(&max_y, &max_pt.y).unwrap();
-                max_z = *partial_max(&max_z, &0.0).unwrap();
+                max_x = max_x.max(max_pt.x);
+                max_y = max_y.max(max_pt.y);
+                max_z = max_z.max(0.0);
             }
 
             // If still uninitialized (e.g., no polygons or geometry), return a trivial AABB at origin

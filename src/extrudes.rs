@@ -593,8 +593,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             }
 
             // Build the polygon
-            let poly = Polygon::new(verts, metadata.clone());
-            Some(poly)
+            Some(Polygon::new(verts, metadata.clone()))
         }
 
         //----------------------------------------------------------------------
