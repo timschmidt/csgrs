@@ -8,7 +8,7 @@ use std::fmt::Debug;
 impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// Create a right prism (a box) that spans from (0, 0, 0)
     /// to (width, length, height). All dimensions must be >= 0.
-    pub fn cube(width: Real, length: Real, height: Real, metadata: Option<S>) -> CSG<S> {
+    pub fn cuboid(width: Real, length: Real, height: Real, metadata: Option<S>) -> CSG<S> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
         let p000 = Point3::new(0.0, 0.0, 0.0);
@@ -104,6 +104,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         // Combine all faces into a CSG
         CSG::from_polygons(&[bottom, top, front, back, left, right])
+    }
+
+    pub fn cube(width: Real, metadata: Option<S>) -> CSG<S> {
+        Self::cuboid(width, width, width, metadata)
     }
 
     /// Construct a sphere with radius, segments, stacks
@@ -432,7 +436,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone())
+        let rect_cutter = CSG::square(cutter_height, metadata.clone())
             .translate(-cutter_height, -cutter_height / 2.0, 0.0);
 
         let half_egg = egg_2d.difference(&rect_cutter);
@@ -461,7 +465,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = CSG::square(cutter_height, cutter_height, metadata.clone())
+        let rect_cutter = CSG::square(cutter_height, metadata.clone())
             .translate(-cutter_height, -cutter_height / 2.0, 0.0);
 
         let half_teardrop = td_2d.difference(&rect_cutter);
