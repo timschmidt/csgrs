@@ -284,7 +284,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///
     /// # Example
     /// ```
-    /// let shape_2d = CSG::square(2.0, 2.0, None); // a 2D square in XY
+    /// let shape_2d = CSG::square(2.0, None); // a 2D square in XY
     /// let extruded = shape_2d.linear_extrude(
     ///     direction = Vector3::new(0.0, 0.0, 10.0),
     ///     twist = 360.0,

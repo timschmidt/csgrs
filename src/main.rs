@@ -22,7 +22,7 @@ fn main() {
     let _ = fs::create_dir_all("stl");
 
     // 1) Basic shapes: cube, sphere, cylinder
-    let cube = CSG::cube(2.0, 2.0, 2.0, None);
+    let cube = CSG::cube(2.0, None);
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/cube.stl", cube.to_stl_binary("cube").unwrap());
 
@@ -101,7 +101,7 @@ fn main() {
     );
 
     // 7) 2D shapes and 2D offsetting
-    let square_2d = CSG::square(2.0, 2.0, None); // 2x2 square, centered
+    let square_2d = CSG::square(2.0, None); // 2x2 square, centered
     let _ = fs::write("stl/square_2d.stl", square_2d.to_stl_ascii("square_2d"));
 
     let circle_2d = CSG::circle(1.0, 32, None);
@@ -230,7 +230,7 @@ fn main() {
 
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
-    let cube = CSG::cube(100.0, 100.0, 100.0, None);
+    let cube = CSG::cube(100.0, None);
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
     let _ = fs::write(
@@ -276,7 +276,7 @@ fn main() {
     //let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
     let sphere_test = CSG::sphere(1.0, 16, 8, None);
-    let cube_test = CSG::cube(1.0, 1.0, 1.0, None);
+    let cube_test = CSG::cube(1.0, None);
     let res = cube_test.difference(&sphere_test);
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
@@ -696,7 +696,7 @@ fn main() {
 
     // Scene L: Demonstrate rotate_extrude (360 deg) on a square
     {
-        let small_square = CSG::square(1.0, 1.0, None).translate(2.0, 0.0, 0.0);
+        let small_square = CSG::square(1.0, None).translate(2.0, 0.0, 0.0);
         let revolve = small_square.rotate_extrude(360.0, 24);
         let _ = fs::write(
             "stl/scene_square_revolve_360.stl",
@@ -707,7 +707,7 @@ fn main() {
     // Scene M: Demonstrate “mirror” across a Y=0 plane
     {
         let plane_y = Plane::from_normal(Vector3::y(), 0.0);
-        let shape = CSG::square(2.0, 1.0, None)
+        let shape = CSG::rectangle(2.0, 1.0, None)
             .translate(1.0, 1.0, 0.0)
             .extrude(0.1);
         let mirrored = shape.mirror(plane_y);
@@ -735,7 +735,7 @@ fn main() {
         let scale_mat = Matrix4::new_scaling(0.5);
         // Combine
         let transform_mat = xlate * scale_mat;
-        let shape = CSG::cube(1.0, 1.0, 1.0, None).transform(&transform_mat);
+        let shape = CSG::cube(1.0, None).transform(&transform_mat);
         let _ = fs::write(
             "stl/scene_transform_cube.stl",
             shape.to_stl_ascii("scene_transform_cube"),

@@ -621,7 +621,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///
     /// # Example
     /// ```
-    /// let csg = CSG::cube(1.0, 1.0, 3.0, None).translate(2.0, 1.0, -2.0);
+    /// let csg = CSG::cuboid(1.0, 1.0, 3.0, None).translate(2.0, 1.0, -2.0);
     /// let floated = csg.float();
     /// assert_eq!(floated.bounding_box().mins.z, 0.0);
     /// ```
@@ -810,13 +810,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///
     /// ## Example
     /// ```
-    /// let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    /// let cube: CSG<()> = CSG::cube(2.0, None);
     /// // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
     /// // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
     /// cube.subdivide_triangles(1.try_into().expect("not zero"));
     /// assert_eq!(cube.polygons.len(), 6 * 8);
     ///
-    /// let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    /// let cube: CSG<()> = CSG::cube(2.0, None);
     /// cube.subdivide_triangles(2.try_into().expect("not zero"));
     /// assert_eq!(cube.polygons.len(), 6 * 8 * 2);
     /// ```
@@ -1104,7 +1104,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// # use csgrs::CSG;
     /// # use nalgebra::Point3;
     /// # use nalgebra::Vector3;
-    /// let csg_cube = CSG::<()>::cube(6.0, 6.0, 6.0, None);
+    /// let csg_cube = CSG::<()>::cube(6.0, None);
     ///
     /// assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)).unwrap());
     /// assert!(csg_cube.contains_vertex(&Point3::new(1.0, 2.0, 5.9)).unwrap());
