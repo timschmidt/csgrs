@@ -1,7 +1,7 @@
 use crate::csg::CSG;
 use crate::float_types::Real;
 use geo::{Geometry, GeometryCollection};
-use geo_buf::{buffer_multi_polygon, buffer_polygon,buffer_polygon_rounded, buffer_multi_polygon_rounded};
+use geo_buf::{buffer_multi_polygon, buffer_polygon, buffer_polygon_rounded, buffer_multi_polygon_rounded};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 

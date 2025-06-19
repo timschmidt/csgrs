@@ -383,7 +383,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
 
         CSG {
-            polygons: a.all_polygons(),
+            polygons: final_polys,
             geometry: final_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),

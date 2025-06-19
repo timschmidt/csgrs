@@ -1,6 +1,6 @@
 [package]
 name = "csgrs"
-version = "0.18.0"
+version = "0.18.1"
 edition = "2024"
 description = "Constructive solid geometry (CSG) on meshes using BSP trees in Rust"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -44,10 +44,10 @@ rapier3d = { version = "0.24.0", optional = true }
 parry3d-f64  = { version = "0.19.0", optional = true }
 parry3d  = { version = "0.19.0", optional = true }
 
-# bevy mesh convertion
+# bevy mesh conversion
 bevy_mesh = { version = "0.16", optional = true }
 bevy_asset = { version = "0.16", optional = true }
-wgpu-types = { version = "*", optional = true, default-features = false } # this will use the version that bevy_mesh does
+wgpu-types = { version = "24", optional = true, default-features = false }
 
 # utils
 rayon = { version = "1.10", optional = true }
