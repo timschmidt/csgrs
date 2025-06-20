@@ -84,7 +84,7 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 ### 2D Shapes
 
 - <img src="docs/square.png" width="128" alt="top down view of a square"/> **`CSG::square(width: Real, metadata: Option<S>)`**
-- **`CSG::rectangle(width: Real, length: Real, metadata: Option<S>)`**
+- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`CSG::rectangle(width: Real, length: Real, metadata: Option<S>)`**
 - <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
 - <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`CSG::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
@@ -152,7 +152,8 @@ let lofted = CSG::extrude_between(&polygon_bottom.polygons[0], &polygon_top.poly
 
 ### 3D Shapes
 
-- <img src="docs/cube.png" width="128" alt="an angled view of a cube"/> **`CSG::cube(width: Real, length: Real, height: Real, metadata: Option<S>)`**
+- <img src="docs/cube.png" width="128" alt="an angled view of a cube"/> **`CSG::cube(width: Real, metadata: Option<S>)`**
+- <img src="docs/cube.png" width="128" alt="an angled view of a cube"/> **`CSG::cuboid(width: Real, length: Real, height: Real, metadata: Option<S>)`**
 - <img src="docs/sphere.png" width="128" alt="an angled view of a sphere"/> **`CSG::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
 - <img src="docs/cylinder.png" width="128" alt="an angled view of a cylinder"/> **`CSG::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/frustum.png" width="128"/> **`CSG::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** -
