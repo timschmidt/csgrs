@@ -8,17 +8,17 @@ use std::fmt::Debug;
 use std::sync::OnceLock;
 
 impl<S: Clone + Debug + Send + Sync> CSG<S> {
-    /// Creates a 2D square in the XY plane.
+    /// Creates a 2D rectangle in the XY plane.
     ///
     /// # Parameters
     ///
-    /// - `width`: the width of the square
-    /// - `length`: the height of the square
+    /// - `width`: the width of the rectangle
+    /// - `length`: the height of the rectangle
     /// - `metadata`: optional metadata
     ///
     /// # Example
-    /// let sq2 = CSG::square(2.0, 3.0, None);
-    pub fn square(width: Real, length: Real, metadata: Option<S>) -> Self {
+    /// let rect = CSG::rectangle(2.0, 3.0, None);
+    pub fn rectangle(width: Real, length: Real, metadata: Option<S>) -> Self {
         // In geo, a Polygon is basically (outer: LineString, Vec<LineString> for holes).
         let outer = line_string![
             (x: 0.0,     y: 0.0),
@@ -34,6 +34,20 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             metadata,
         )
     }
+
+    /// Creates a 2D square in the XY plane.
+    ///
+    /// # Parameters
+    ///
+    /// - `width`: the width=length of the square
+    /// - `metadata`: optional metadata
+    ///
+    /// # Example
+    /// let sq2 = CSG::square(2.0, None);
+    pub fn square(width: Real, metadata: Option<S>) -> Self {
+        Self::rectangle(width,width,metadata)
+    }
+
 
     /// Creates a 2D circle in the XY plane.
     pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Self {
@@ -105,7 +119,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ) -> Self {
         let r = corner_radius.min(width * 0.5).min(height * 0.5);
         if r <= EPSILON {
-            return Self::square(width, height, metadata);
+            return Self::rectangle(width, height, metadata);
         }
         let mut coords = Vec::new();
         // We'll approximate each 90° corner with `corner_segments` arcs
@@ -622,7 +636,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         //    - its right edge at x = +radius
         //    - so it spans from x = (radius - key_depth) to x = radius
         //    - and from y = -key_width/2 to y = +key_width/2
-        let key_rect = CSG::square(key_depth, key_width, metadata.clone()).translate(
+        let key_rect = CSG::rectangle(key_depth, key_width, metadata.clone()).translate(
             radius - key_depth,
             -key_width * 0.5,
             0.0,
@@ -655,7 +669,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         //    Height = large enough, we just shift it so top edge is at y = -flat_dist.
         //    So that rectangle covers from y = -∞ up to y = -flat_dist.
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = CSG::square(2.0 * radius, cutter_height, metadata.clone())
+        let rect_cutter = CSG::rectangle(2.0 * radius, cutter_height, metadata.clone())
             .translate(-radius, -cutter_height, 0.0) // put its bottom near "negative infinity"
             .translate(0.0, -flat_dist, 0.0); // now top edge is at y = -flat_dist
 
@@ -679,12 +693,12 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         // 2. Large rectangle to cut the TOP (above +flat_dist)
         let cutter_height = 9999.0;
-        let top_rect = CSG::square(2.0 * radius, cutter_height, metadata.clone())
+        let top_rect = CSG::rectangle(2.0 * radius, cutter_height, metadata.clone())
             // place bottom at y=flat_dist
             .translate(-radius, flat_dist, 0.0);
 
         // 3. Large rectangle to cut the BOTTOM (below -flat_dist)
-        let bottom_rect = CSG::square(2.0 * radius, cutter_height, metadata.clone())
+        let bottom_rect = CSG::rectangle(2.0 * radius, cutter_height, metadata.clone())
             // place top at y=-flat_dist => bottom extends downward
             .translate(-radius, -cutter_height - flat_dist, 0.0);
 
