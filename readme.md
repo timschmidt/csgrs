@@ -45,7 +45,7 @@ cargo add csgrs
 type CSG = csgrs::csg::CSG<()>;
 
 // Create two shapes:
-let cube = CSG::cube(2.0, 2.0, 2.0, None);  // 2×2×2 cube at origin, no metadata
+let cube = CSG::cube(2.0, None);  // 2×2×2 cube at origin, no metadata
 let sphere = CSG::sphere(1.0, 16, 8, None); // sphere of radius=1 at origin, no metadata
 
 // Difference one from the other:
@@ -83,7 +83,8 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 
 ### 2D Shapes
 
-- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`CSG::square(width: Real, length: Real, metadata: Option<S>)`**
+- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`CSG::square(width: Real, metadata: Option<S>)`**
+- **`CSG::rectangle(width: Real, length: Real, metadata: Option<S>)`**
 - <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`CSG::circle(radius: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`CSG::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
 - <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`CSG::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
@@ -117,8 +118,8 @@ or when a Geometry is converted into polygons using `CSG::to_polygons(...)`.
 - **`CSG::cycloidal_rack_2d(module_: Real, num_teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 
 ```rust
-let square = CSG::square(1.0, 1.0, None); // 1×1 at origin
-let rect = CSG::square(2.0, 4.0, None);
+let square = CSG::square(1.0, None); // 1×1 at origin
+let rect = CSG::rectangle(2.0, 4.0, None);
 let circle = CSG::circle(1.0, 32, None); // radius=1, 32 segments
 let circle2 = CSG::circle(2.0, 64, None);
 
@@ -139,7 +140,7 @@ Extrusions build 3D polygons from 2D Geometries.
 - <img src="docs/rotate_extrude.png" width="128"  alt="an arch with round ends"/> **`CSG::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
 
 ```rust
-let square = CSG::square(2.0, 2.0, None);
+let square = CSG::square(2.0, None);
 let prism = square.extrude(5.0);
 
 let revolve_shape = square.rotate_extrude(360.0, 16);
@@ -179,7 +180,7 @@ If either radius is within EPSILON of 0.0, a cone terminating at a point is cons
 
 ```rust
 // Unit cube at origin, no metadata
-let cube = CSG::cube(1.0, 1.0, 1.0, None);
+let cube = CSG::cube(1.0, None);
 
 // Sphere of radius=2 at origin with 32 segments and 16 stacks
 let sphere = CSG::sphere(2.0, 32, 16, None);

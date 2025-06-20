@@ -91,7 +91,7 @@ fn test_polygon_construction() {
 
 #[test]
 fn test_to_stl_ascii() {
-    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let cube: CSG<()> = CSG::cube(2.0, None);
     let stl_str = cube.to_stl_ascii("test_cube");
     // Basic checks
     assert!(stl_str.contains("solid test_cube"));
@@ -525,8 +525,8 @@ fn test_csg_from_polygons_and_to_polygons() {
 
 #[test]
 fn test_csg_union() {
-    let cube1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).translate(-1.0, -1.0, -1.0); // from -1 to +1 in all coords
-    let cube2: CSG<()> = CSG::cube(1.0, 1.0, 1.0, None).translate(0.5, 0.5, 0.5);
+    let cube1: CSG<()> = CSG::cube(2.0, None).translate(-1.0, -1.0, -1.0); // from -1 to +1 in all coords
+    let cube2: CSG<()> = CSG::cube(1.0, None).translate(0.5, 0.5, 0.5);
 
     let union_csg = cube1.union(&cube2);
     let polys = union_csg.to_polygons();
@@ -548,8 +548,8 @@ fn test_csg_union() {
 #[test]
 fn test_csg_difference() {
     // Subtract a smaller cube from a bigger one
-    let big_cube: CSG<()> = CSG::cube(4.0, 4.0, 4.0, None).translate(-2.0, -2.0, -2.0); // radius=2 => spans [-2,2]
-    let small_cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).translate(-1.0, -1.0, -1.0); // radius=1 => spans [-1,1]
+    let big_cube: CSG<()> = CSG::cube(4.0, None).translate(-2.0, -2.0, -2.0); // radius=2 => spans [-2,2]
+    let small_cube: CSG<()> = CSG::cube(2.0, None).translate(-1.0, -1.0, -1.0); // radius=1 => spans [-1,1]
 
     let result = big_cube.difference(&small_cube);
     let polys = result.to_polygons();
@@ -567,7 +567,7 @@ fn test_csg_difference() {
 
 #[test]
 fn test_csg_union2() {
-    let c1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None); // cube from (-1..+1) if that's how you set radius=1 by default
+    let c1: CSG<()> = CSG::cube(2.0, None); // cube from (-1..+1) if that's how you set radius=1 by default
     let c2: CSG<()> = CSG::sphere(1.0, 16, 8, None); // default sphere radius=1
     let unioned = c1.union(&c2);
     // We can check bounding box is bigger or at least not smaller than either shape’s box
@@ -580,7 +580,7 @@ fn test_csg_union2() {
 
 #[test]
 fn test_csg_intersect() {
-    let c1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let c1: CSG<()> = CSG::cube(2.0, None);
     let c2: CSG<()> = CSG::sphere(1.0, 16, 8, None);
     let isect = c1.intersection(&c2);
     let bb_isect = isect.bounding_box();
@@ -596,7 +596,7 @@ fn test_csg_intersect() {
 #[test]
 fn test_csg_intersect2() {
     let sphere: CSG<()> = CSG::sphere(1.0, 16, 8, None);
-    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let cube: CSG<()> = CSG::cube(2.0, None);
 
     let intersection = sphere.intersection(&cube);
     let polys = intersection.to_polygons();
@@ -618,7 +618,7 @@ fn test_csg_intersect2() {
 
 #[test]
 fn test_csg_inverse() {
-    let c1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let c1: CSG<()> = CSG::cube(2.0, None);
     let inv = c1.inverse();
     // The polygons are flipped
     // We can check just that the polygon planes are reversed, etc.
@@ -649,7 +649,7 @@ fn test_csg_inverse() {
 
 #[test]
 fn test_csg_cube() {
-    let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let c: CSG<()> = CSG::cube(2.0, None);
     // By default, corner at (0,0,0)
     // We expect 6 faces, each 4 vertices = 6 polygons
     assert_eq!(c.polygons.len(), 6);
@@ -721,7 +721,7 @@ fn test_csg_polyhedron() {
 
 #[test]
 fn test_csg_transform_translate_rotate_scale() {
-    let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).center();
+    let c: CSG<()> = CSG::cube(2.0, None).center();
     let translated = c.translate(1.0, 2.0, 3.0);
     let rotated = c.rotate(90.0, 0.0, 0.0); // 90 deg about X
     let scaled = c.scale(2.0, 1.0, 1.0);
@@ -752,7 +752,7 @@ fn test_csg_transform_translate_rotate_scale() {
 
 #[test]
 fn test_csg_mirror() {
-    let c: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let c: CSG<()> = CSG::cube(2.0, None);
     let plane_x = Plane::from_normal(Vector3::x(), 0.0); // x=0 plane
     let mirror_x = c.mirror(plane_x);
     let bb_mx = mirror_x.bounding_box();
@@ -774,8 +774,8 @@ fn test_csg_convex_hull() {
 #[test]
 fn test_csg_minkowski_sum() {
     // Minkowski sum of two cubes => bigger cube offset by edges
-    let c1: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).center();
-    let c2: CSG<()> = CSG::cube(1.0, 1.0, 1.0, None).center();
+    let c1: CSG<()> = CSG::cube(2.0, None).center();
+    let c2: CSG<()> = CSG::cube(1.0, None).center();
     let sum = c1.minkowski_sum(&c2);
     let bb_sum = sum.bounding_box();
     // Expect bounding box from -1.5..+1.5 in each axis if both cubes were centered at (0,0,0).
@@ -785,7 +785,7 @@ fn test_csg_minkowski_sum() {
 
 #[test]
 fn test_csg_subdivide_triangles() {
-    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let cube: CSG<()> = CSG::cube(2.0, None);
     // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
     // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
     let subdiv = cube.subdivide_triangles(1.try_into().expect("not 0"));
@@ -794,7 +794,7 @@ fn test_csg_subdivide_triangles() {
 
 #[test]
 fn test_csg_renormalize() {
-    let mut cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let mut cube: CSG<()> = CSG::cube(2.0, None);
     // After we do some transforms, normals might be changed. We can artificially change them:
     for poly in &mut cube.polygons {
         for v in &mut poly.vertices {
@@ -814,7 +814,7 @@ fn test_csg_renormalize() {
 
 #[test]
 fn test_csg_ray_intersections() {
-    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).center();
+    let cube: CSG<()> = CSG::cube(2.0, None).center();
     // Ray from (-2,0,0) toward +X
     let origin = Point3::new(-2.0, 0.0, 0.0);
     let direction = Vector3::new(1.0, 0.0, 0.0);
@@ -828,7 +828,7 @@ fn test_csg_ray_intersections() {
 
 #[test]
 fn test_csg_square() {
-    let sq: CSG<()> = CSG::square(2.0, 2.0, None);
+    let sq: CSG<()> = CSG::square(2.0, None);
     // Single polygon, 4 vertices
     assert_eq!(sq.polygons.len(), 1);
     let poly = &sq.polygons[0];
@@ -854,7 +854,7 @@ fn test_csg_polygon_2d() {
 
 #[test]
 fn test_csg_extrude() {
-    let sq: CSG<()> = CSG::square(2.0, 2.0, None); // default 1x1 square at XY plane
+    let sq: CSG<()> = CSG::square(2.0, None); // default 1x1 square at XY plane
     let extruded = sq.extrude(5.0);
     // We expect:
     //   bottom polygon: 1
@@ -873,7 +873,7 @@ fn test_csg_rotate_extrude() {
     // Default square is from (0,0) to (1,1) in XY.
     // Shift it so it’s from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
     // and rotate it 90 degrees so that it can be swept around Z
-    let square: CSG<()> = CSG::square(2.0, 2.0, None)
+    let square: CSG<()> = CSG::square(2.0, None)
         .translate(1.0, 0.0, 0.0)
         .rotate(90.0, 0.0, 0.0);
 
@@ -899,7 +899,7 @@ fn test_csg_bounding_box() {
 
 #[test]
 fn test_csg_vertices() {
-    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let cube: CSG<()> = CSG::cube(2.0, None);
     let verts = cube.vertices();
     // 6 faces x 4 vertices each = 24
     assert_eq!(verts.len(), 24);
@@ -907,7 +907,7 @@ fn test_csg_vertices() {
 
 #[test]
 fn test_csg_offset_2d() {
-    let square: CSG<()> = CSG::square(2.0, 2.0, None);
+    let square: CSG<()> = CSG::square(2.0, None);
     let grown = square.offset(0.5);
     let shrunk = square.offset(-0.5);
     let bb_square = square.bounding_box();
@@ -937,7 +937,7 @@ fn test_csg_text() {
 
 #[test]
 fn test_csg_to_trimesh() {
-    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let cube: CSG<()> = CSG::cube(2.0, None);
     let shape = cube.to_trimesh();
     // Should be a TriMesh with 12 triangles
     if let Some(trimesh) = shape {
@@ -949,7 +949,7 @@ fn test_csg_to_trimesh() {
 
 #[test]
 fn test_csg_mass_properties() {
-    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None).center(); // side=2 => volume=8. If density=1 => mass=8
+    let cube: CSG<()> = CSG::cube(2.0, None).center(); // side=2 => volume=8. If density=1 => mass=8
     let (mass, com, _frame) = cube.mass_properties(1.0);
     println!("{:#?}", mass);
     // For a centered cube with side 2, volume=8 => mass=8 => COM=(0,0,0)
@@ -962,7 +962,7 @@ fn test_csg_mass_properties() {
 #[test]
 fn test_csg_to_rigid_body() {
     use crate::float_types::rapier3d::prelude::*;
-    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let cube: CSG<()> = CSG::cube(2.0, None);
     let mut rb_set = RigidBodySet::new();
     let mut co_set = ColliderSet::new();
     let handle = cube.to_rigid_body(
@@ -983,7 +983,7 @@ fn test_csg_to_stl_and_from_stl_file() -> Result<(), Box<dyn std::error::Error>>
     // You can redirect to a temp file or do an in-memory test.
     let tmp_path = "test_csg_output.stl";
 
-    let cube: CSG<()> = CSG::cube(2.0, 2.0, 2.0, None);
+    let cube: CSG<()> = CSG::cube(2.0, None);
     let res = cube.to_stl_binary("A cube");
     let _ = std::fs::write(tmp_path, res.as_ref().unwrap());
     assert!(res.is_ok());
@@ -1099,14 +1099,14 @@ fn test_union_metadata() {
     // each new polygon inherits the shared data from whichever polygon it came from.
 
     // Square1 from (0,0) to (1,1) => label "Square1"
-    let sq1 = CSG::square(1.0, 1.0, None); // bottom-left at (0,0), top-right at (1,1)
+    let sq1 = CSG::square(1.0, None); // bottom-left at (0,0), top-right at (1,1)
     let mut sq1 = sq1; // now let us set shared data for each polygon
     for p in &mut sq1.polygons {
         p.set_metadata("Square1".to_string());
     }
 
     // Translate Square2 so it partially overlaps. => label "Square2"
-    let sq2 = CSG::square(1.0, 1.0, None).translate(0.5, 0.0, 0.0);
+    let sq2 = CSG::square(1.0, None).translate(0.5, 0.0, 0.0);
     let mut sq2 = sq2;
     for p in &mut sq2.polygons {
         p.set_metadata("Square2".to_string());
@@ -1134,12 +1134,12 @@ fn test_difference_metadata() {
     // come from the *minuend* (the first shape) with *some* portion clipped out.
     // So the differenced portion from the second shape won't appear in the final.
 
-    let mut cube1 = CSG::cube(2.0, 2.0, 2.0, None);
+    let mut cube1 = CSG::cube(2.0, None);
     for p in &mut cube1.polygons {
         p.set_metadata("Cube1".to_string());
     }
 
-    let mut cube2 = CSG::cube(2.0, 2.0, 2.0, None).translate(0.5, 0.5, 0.5);
+    let mut cube2 = CSG::cube(2.0, None).translate(0.5, 0.5, 0.5);
     for p in &mut cube2.polygons {
         p.set_metadata("Cube2".to_string());
     }
@@ -1161,12 +1161,12 @@ fn test_intersect_metadata() {
     // keep the "side" from whichever shape is relevant. That might be shape A or B or both.
     // We'll check that we only see "Cube1" or "Cube2" but not random data.
 
-    let mut cube1 = CSG::cube(2.0, 2.0, 2.0, None);
+    let mut cube1 = CSG::cube(2.0, None);
     for p in &mut cube1.polygons {
         p.set_metadata("Cube1".to_string());
     }
 
-    let mut cube2 = CSG::cube(2.0, 2.0, 2.0, None).translate(0.5, 0.5, 0.5);
+    let mut cube2 = CSG::cube(2.0, None).translate(0.5, 0.5, 0.5);
     for p in &mut cube2.polygons {
         p.set_metadata("Cube2".to_string());
     }
@@ -1191,7 +1191,7 @@ fn test_flip_invert_metadata() {
     // Flipping or inverting a shape should NOT change the shared data;
     // it only flips normals/polygons.
 
-    let mut csg = CSG::cube(2.0, 2.0, 2.0, None);
+    let mut csg = CSG::cube(2.0, None);
     for p in &mut csg.polygons {
         p.set_metadata("MyCube".to_string());
     }
@@ -1256,11 +1256,11 @@ fn test_complex_metadata_struct_in_boolean_ops() {
     #[derive(Debug, Clone, PartialEq)]
     struct Color(u8, u8, u8);
 
-    let mut csg1 = CSG::cube(2.0, 2.0, 2.0, None);
+    let mut csg1 = CSG::cube(2.0, None);
     for p in &mut csg1.polygons {
         p.set_metadata(Color(255, 0, 0));
     }
-    let mut csg2 = CSG::cube(2.0, 2.0, 2.0, None).translate(0.5, 0.5, 0.5);
+    let mut csg2 = CSG::cube(2.0, None).translate(0.5, 0.5, 0.5);
     for p in &mut csg2.polygons {
         p.set_metadata(Color(0, 255, 0));
     }
@@ -1291,7 +1291,7 @@ fn signed_area(polygon: &Polygon<()>) -> Real {
 
 #[test]
 fn test_square_ccw_ordering() {
-    let square = CSG::square(2.0, 2.0, None);
+    let square = CSG::square(2.0, None);
     assert_eq!(square.polygons.len(), 1);
     let poly = &square.polygons[0];
     let area = signed_area(poly);
@@ -1300,7 +1300,7 @@ fn test_square_ccw_ordering() {
 
 #[test]
 fn test_offset_2d_positive_distance_grows() {
-    let square = CSG::square(2.0, 2.0, None); // Centered square with size 2x2
+    let square = CSG::square(2.0, None); // Centered square with size 2x2
     let offset = square.offset(0.5); // Positive offset should grow the square
 
     // The original square has area 4.0
@@ -1316,7 +1316,7 @@ fn test_offset_2d_positive_distance_grows() {
 
 #[test]
 fn test_offset_2d_negative_distance_shrinks() {
-    let square = CSG::square(2.0, 2.0, None); // Centered square with size 2x2
+    let square = CSG::square(2.0, None); // Centered square with size 2x2
     let offset = square.offset(-0.5); // Negative offset should shrink the square
 
     // The original square has area 4.0
@@ -1513,7 +1513,7 @@ fn test_union_of_extruded_shapes() {
 fn test_flatten_cube() {
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
-    let cube = CSG::<()>::cube(2.0, 2.0, 2.0, None);
+    let cube = CSG::<()>::cube(2.0, None);
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
 
@@ -1749,7 +1749,7 @@ fn test_flatten_and_union_collinear_edges() {
 /// you can println! debug info in `flatten_and_union`.
 #[test]
 fn test_flatten_and_union_debug() {
-    let csg_square = CSG::<()>::square(2.0, 2.0, None); // a 1×1 square at [0..1, 0..1]
+    let csg_square = CSG::<()>::square(2.0, None); // a 1×1 square at [0..1, 0..1]
     let flattened = csg_square.flatten();
     assert!(
         !flattened.polygons.is_empty(),
@@ -1763,7 +1763,7 @@ fn test_flatten_and_union_debug() {
 
 #[test]
 fn test_contains_vertex() {
-    let csg_cube = CSG::<()>::cube(6.0, 6.0, 6.0, None);
+    let csg_cube = CSG::<()>::cube(6.0, None);
 
     assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
     assert!(csg_cube.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
@@ -1782,7 +1782,7 @@ fn test_contains_vertex() {
     assert!(csg_cube.contains_vertex(&Point3::new(0.01, 4.0, 3.0)));
     assert!(!csg_cube.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)));
 
-    let csg_cube_hole = CSG::<()>::cube(4.0, 4.0, 4.0, None);
+    let csg_cube_hole = CSG::<()>::cube(4.0, None);
     let cube_with_hole = csg_cube.difference(&csg_cube_hole);
 
     assert!(!cube_with_hole.contains_vertex(&Point3::new(0.01, 4.0, 3.0)));
