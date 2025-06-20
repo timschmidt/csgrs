@@ -167,26 +167,26 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         outer: &[[Real; 2]],
         holes: &[&[[Real; 2]]],
     ) -> Vec<[Point3<Real>; 3]> {
-        // Convert the outer ring into a `LineString`
-        let outer_coords: Vec<Coord<Real>> =
-            outer.iter().map(|&[x, y]| Coord { x, y }).collect();
-
-        // Convert each hole into its own `LineString`
-        let holes_coords: Vec<LineString<Real>> = holes
-            .iter()
-            .map(|hole| {
-                let coords: Vec<Coord<Real>> =
-                    hole.iter().map(|&[x, y]| Coord { x, y }).collect();
-                LineString::new(coords)
-            })
-            .collect();
-
-        // Ear-cut triangulation on the polygon (outer + holes)
-        let polygon = GeoPolygon::new(LineString::new(outer_coords), holes_coords);
-
         #[cfg(feature = "earcut")]
         {
             use geo::TriangulateEarcut;
+            // Convert the outer ring into a `LineString`
+			let outer_coords: Vec<Coord<Real>> =
+				outer.iter().map(|&[x, y]| Coord { x, y }).collect();
+
+			// Convert each hole into its own `LineString`
+			let holes_coords: Vec<LineString<Real>> = holes
+				.iter()
+				.map(|hole| {
+					let coords: Vec<Coord<Real>> =
+						hole.iter().map(|&[x, y]| Coord { x, y }).collect();
+					LineString::new(coords)
+				})
+				.collect();
+
+			// Ear-cut triangulation on the polygon (outer + holes)
+			let polygon = GeoPolygon::new(LineString::new(outer_coords), holes_coords);
+            
             let triangulation = polygon.earcut_triangles_raw();
             let triangle_indices = triangulation.triangle_indices;
             let vertices = triangulation.vertices;
@@ -204,21 +204,52 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             result
         }
 
+		// Helper that forces |v| > SPADE_MIN or 0.0 to avoid a panic.
+        #[cfg(feature = "delaunay")]
+        #[inline]
+        fn clamp_spade(v: Real) -> Real {
+            // This should be shared with Polygon::tessellate()
+            const SPADE_MIN: f64 = 1.793662034335766e-43;
+            if v.abs() < SPADE_MIN {
+                0.0
+            } else {
+                v
+            }
+        }
+
         #[cfg(feature = "delaunay")]
         {
             use geo::TriangulateSpade;
-            // We want polygons with holes => constrained triangulation.
-            // For safety, handle the Result the trait returns:
+            // Apply clamping **before** building the geo‑polygon so that
+            // spade never sees an out‑of‑range coordinate.
+            let outer_coords: Vec<Coord<Real>> = outer
+                .iter()
+                .map(|&[x, y]| Coord {
+                    x: clamp_spade(x),
+                    y: clamp_spade(y),
+                })
+                .collect();
+            let holes_coords: Vec<LineString<Real>> = holes
+                .iter()
+                .map(|hole| {
+                    let coords: Vec<Coord<Real>> = hole
+                        .iter()
+                        .map(|&[x, y]| Coord {
+                            x: clamp_spade(x),
+                            y: clamp_spade(y),
+                        })
+                        .collect();
+                    LineString::new(coords)
+                })
+                .collect();
+            let polygon = GeoPolygon::new(LineString::new(outer_coords), holes_coords);
+
             let Ok(tris) = polygon.constrained_triangulation(Default::default()) else {
-                // If a triangulation error is a possibility,
-                // pick the error-handling you want here:
                 return Vec::new();
             };
 
             let mut result = Vec::with_capacity(tris.len());
             for triangle in tris {
-                // Each `triangle` is a geo_types::Triangle whose `.0, .1, .2`
-                // are the 2D coordinates. We'll embed them at z=0.
                 let [a, b, c] = [triangle.0, triangle.1, triangle.2];
                 result.push([
                     Point3::new(a.x, a.y, 0.0),
@@ -405,14 +436,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// ```
     pub fn intersection(&self, other: &CSG<S>) -> CSG<S> {
         // 3D intersection:
-        // avoid splitting obvious non‑intersecting faces
-        let (a_clip, _a_passthru) =
-            Self::partition_polys(&self.polygons, &other.bounding_box());
-        let (b_clip, _b_passthru) =
-            Self::partition_polys(&other.polygons, &self.bounding_box());
-
-        let mut a = Node::new(&a_clip);
-        let mut b = Node::new(&b_clip);
+        let mut a = Node::new(&self.polygons);
+        let mut b = Node::new(&other.polygons);
 
         a.invert();
         b.clip_to(&a);
@@ -421,7 +446,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         b.clip_to(&a);
         a.build(&b.all_polygons());
         a.invert();
-
+        
         // 2D intersection:
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
