@@ -4,8 +4,8 @@ A fast, optionally multithreaded **Constructive Solid Geometry (CSG)**
 library in Rust, built around Boolean operations (*union*, *difference*,
 *intersection*, *xor*) on several different internal geometry representations.
 **csgrs** provides data structures and methods for constructing 2D and 3D geometry
-with an [OpenSCAD](https://openscad.org/)-like syntax.  **csgrs** aims to be light
-weight and full featured through integration with the
+with an [OpenSCAD](https://openscad.org/)-like syntax.  Our aim is for **csgrs**
+to be light weight and full featured through integration with the
 [Dimforge](https://www.dimforge.com/) ecosystem
 (e.g., [`nalgebra`](https://crates.io/crates/nalgebra),
 [`Parry`](https://crates.io/crates/parry3d),
