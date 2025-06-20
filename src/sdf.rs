@@ -61,6 +61,17 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let index_3d = |ix: u32, iy: u32, iz: u32| -> usize {
             (iz * ny + iy) as usize * (nx as usize) + ix as usize
         };
+        
+        // Small helpers – keeps the loop readable
+		#[inline]
+		fn point_finite(p: &Point3<Real>) -> bool {
+			p.coords.iter().all(|c| c.is_finite())
+		}
+
+		#[inline]
+		fn vec_finite(v: &Vector3<Real>) -> bool {
+			v.iter().all(|c| c.is_finite())
+		}
 
         // Sample the SDF at each grid cell:
         // Note that for an "isosurface" at iso_value, we store (sdf_value - iso_value)
@@ -74,7 +85,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                     let p = Point3::new(xf, yf, zf);
                     let sdf_val = sdf(&p);
                     // Shift by iso_value so that the zero-level is the surface we want:
-                    field_values[index_3d(ix, iy, iz)] = (sdf_val - iso_value) as f32;
+                    field_values[index_3d(ix, iy, iz)] = if sdf_val.is_finite() {
+						(sdf_val - iso_value) as f32
+					} else {
+						f32::MAX   // “very outside”, keeps surface-nets happy
+					};
                 }
             }
         }
@@ -169,6 +184,19 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             let n0 = sn_buffer.normals[i0];
             let n1 = sn_buffer.normals[i1];
             let n2 = sn_buffer.normals[i2];
+            
+            // Normals come out as [f32;3] – promote to `Real`
+			let n0v = Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real);
+			let n1v = Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real);
+			let n2v = Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real);
+
+			// ── « gate » ────────────────────────────────────────────────
+			if !(point_finite(&p0) && point_finite(&p1) && point_finite(&p2)
+				&& vec_finite(&n0v) && vec_finite(&n1v) && vec_finite(&n2v))
+			{
+				// at least one coordinate was NaN/±∞ – ignore this triangle
+				continue;
+			}
 
             let v0 =
                 Vertex::new(p0, Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real));
