@@ -4,8 +4,8 @@ A fast, optionally multithreaded **Constructive Solid Geometry (CSG)**
 library in Rust, built around Boolean operations (*union*, *difference*,
 *intersection*, *xor*) on several different internal geometry representations.
 **csgrs** provides data structures and methods for constructing 2D and 3D geometry
-with an [OpenSCAD](https://openscad.org/)-like syntax.  **csgrs** aims to be light
-weight and full featured through integration with the
+with an [OpenSCAD](https://openscad.org/)-like syntax.  Our aim is for **csgrs**
+to be light weight and full featured through integration with the
 [Dimforge](https://www.dimforge.com/) ecosystem
 (e.g., [`nalgebra`](https://crates.io/crates/nalgebra),
 [`Parry`](https://crates.io/crates/parry3d),
@@ -284,6 +284,7 @@ let mirrored = cube.mirror(plane_x);
 - **`CSG::flatten()`** — flattens a 3D shape into 2D (on the XY plane), unions the outlines.
 - **`CSG::slice(plane)`** — slices the CSG by a plane and returns the cross-section polygons.
 - **`CSG::offset(distance)`** — outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
+- **`CSG::offset_rounded(distance)`** — outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
 - <img src="docs/subdivided.png" width="128"/> **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
 - **`CSG::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
 - **`CSG::bounding_box()`** — computes the bounding box of the shape.
