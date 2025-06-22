@@ -209,7 +209,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         #[inline]
         fn clamp_spade(v: Real) -> Real {
             // This should be shared with Polygon::tessellate()
-            const SPADE_MIN: f64 = 1.793662034335766e-43;
+            const SPADE_MIN: Real = 1.793662034335766e-43;
             if v.abs() < SPADE_MIN {
                 0.0
             } else {

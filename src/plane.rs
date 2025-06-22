@@ -188,9 +188,9 @@ impl Plane {
                 z: point.z,
             },
         );
-        if sign > EPSILON {
+        if sign > EPSILON.into() {
             BACK
-        } else if sign < -EPSILON {
+        } else if sign < (-EPSILON).into() {
             FRONT
         } else {
             COPLANAR

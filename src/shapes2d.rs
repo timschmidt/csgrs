@@ -1,7 +1,7 @@
 use crate::csg::CSG;
 use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real, TAU};
 use geo::{
-    BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
+    BooleanOps, coord, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
     Polygon as GeoPolygon, line_string, orient::Direction,
 };
 use std::fmt::Debug;
@@ -48,7 +48,6 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         Self::rectangle(width,width,metadata)
     }
 
-
     /// Creates a 2D circle in the XY plane.
     pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 3 {
@@ -73,7 +72,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
     pub fn right_triangle(width: Real, height: Real, metadata: Option<S>) -> Self {
-        let line_string: LineString = vec![[0.0, 0.0], [width, 0.0], [0.0, height]].into();
+        let line_string = LineString::new(vec![coord!{x: 0.0, y: 0.0}, coord!{x: width, y: 0.0}, coord!{x: 0.0, y: height}]);
         let polygon = GeoPolygon::new(line_string, vec![]);
         CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon)]), metadata)
     }
