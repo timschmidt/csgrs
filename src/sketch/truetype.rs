@@ -1,4 +1,5 @@
-use crate::csg::CSG;
+use crate::traits::CSGOps;
+use crate::sketch::sketch::Sketch;
 use crate::float_types::Real;
 use geo::{
     Area, Geometry, GeometryCollection, LineString, Orient, Polygon as GeoPolygon,
@@ -11,7 +12,7 @@ use ttf_utils::Outline;
 // For flattening curves, how many segments per quad/cubic
 const CURVE_STEPS: usize = 8;
 
-impl<S: Clone + Debug> CSG<S>
+impl<S: Clone + Debug> Sketch<S>
 where
     S: Clone + Send + Sync,
 {
@@ -24,10 +25,10 @@ where
     /// - `text`: the text string (no multiline logic here)
     /// - `font_data`: raw bytes of a TTF file
     /// - `scale`: a uniform scale factor for glyphs
-    /// - `metadata`: optional metadata for the resulting `CSG`
+    /// - `metadata`: optional metadata for the resulting `Sketch`
     ///
     /// # Returns
-    /// A `CSG` whose `geometry` contains:
+    /// A `Sketch` whose `geometry` contains:
     /// - One or more `Polygon`s for each glyph,
     /// - A set of `LineString`s for any open contours (rare in standard fonts),
     /// all positioned in the XY plane at z=0.
@@ -36,8 +37,8 @@ where
         let face = match ttf_parser::Face::parse(font_data, 0) {
             Ok(f) => f,
             Err(_) => {
-                // If the font fails to parse, return an empty 2D CSG
-                return CSG::new();
+                // If the font fails to parse, return an empty 2D Sketch
+                return Sketch::new();
             }
         };
 
@@ -145,8 +146,8 @@ where
             }
         }
 
-        // Build a 2D CSG from the collected geometry
-        CSG::from_geo(geo_coll, metadata)
+        // Build a 2D Sketch from the collected geometry
+        Sketch::from_geo(geo_coll, metadata)
     }
 }
 

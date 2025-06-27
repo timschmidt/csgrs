@@ -432,7 +432,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
     fn difference(&self, other: &Mesh<S>) -> Mesh<S> {
         // avoid splitting obvious non‑intersecting faces
         let (a_clip, a_passthru) = Self::partition_polys(&self.polygons, &other.bounding_box());
-        let (b_clip, _b_passthru) = Self::partition_polys(&other.polygons, &self.bounding_box());
+        let (b_clip, b_passthru) = Self::partition_polys(&other.polygons, &self.bounding_box());
 
         let mut a = Node::new(&a_clip);
         let mut b = Node::new(&b_clip);
@@ -449,6 +449,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
         // combine results and untouched faces
         let mut final_polys = a.all_polygons();
         final_polys.extend(a_passthru);
+        final_polys.extend(b_passthru);
 
         Mesh {
             polygons: final_polys,
@@ -472,8 +473,8 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
     /// ```
     fn intersection(&self, other: &Mesh<S>) -> Mesh<S> {
         // avoid splitting obvious non‑intersecting faces
-        let (a_clip, _a_passthru) = Self::partition_polys(&self.polygons, &other.bounding_box());
-        let (b_clip, _b_passthru) = Self::partition_polys(&other.polygons, &self.bounding_box());
+        let (a_clip, a_passthru) = Self::partition_polys(&self.polygons, &other.bounding_box());
+        let (b_clip, b_passthru) = Self::partition_polys(&other.polygons, &self.bounding_box());
 
         let mut a = Node::new(&a_clip);
         let mut b = Node::new(&b_clip);
@@ -485,9 +486,14 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
         b.clip_to(&a);
         a.build(&b.all_polygons());
         a.invert();
+        
+        // combine results and untouched faces
+        let mut final_polys = a.all_polygons();
+        final_polys.extend(a_passthru);
+        final_polys.extend(b_passthru);
 
         Mesh {
-            polygons: a.all_polygons(),
+            polygons: final_polys,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }

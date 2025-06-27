@@ -1,4 +1,4 @@
-use crate::csg::CSG;
+use crate::mesh::mesh::Mesh;
 use crate::float_types::Real;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
@@ -6,11 +6,11 @@ use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> CSG<S>
+impl<S: Clone + Debug> Mesh<S>
 where
     S: Clone + Send + Sync,
 {
-    /// Return a CSG created by meshing a signed distance field within a bounding box
+    /// Return a Mesh created by meshing a signed distance field within a bounding box
     ///
     ///    // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
     ///    let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
@@ -20,10 +20,10 @@ where
     ///    let max_pt = Point3::new( 2.0,  2.0,  2.0);
     ///    let iso_value = 0.0; // Typically zero for SDF-based surfaces
     ///
-    ///    let csg_shape = CSG::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
+    ///    let mesh_shape = Mesh::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
     ///
-    ///    // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
-    ///    let _ = std::fs::write("stl/sdf_sphere.stl", csg_shape.to_stl_binary("sdf_sphere").unwrap());
+    ///    // Now `mesh_shape` is your polygon mesh as a Mesh you can union, subtract, or export:
+    ///    let _ = std::fs::write("stl/sdf_sphere.stl", mesh_shape.to_stl_binary("sdf_sphere").unwrap());
     pub fn sdf<F>(
         sdf: F,
         resolution: (usize, usize, usize),
@@ -31,7 +31,7 @@ where
         max_pt: Point3<Real>,
         iso_value: Real,
         metadata: Option<S>,
-    ) -> CSG<S>
+    ) -> Mesh<S>
     where
         // F is a closure or function that takes a 3D point and returns the signed distance.
         // Must be `Sync`/`Send` if you want to parallelize the sampling.
@@ -130,7 +130,7 @@ where
             &mut sn_buffer,
         );
 
-        // Convert the resulting triangles into CSG polygons
+        // Convert the resulting triangles into Mesh polygons
         let mut triangles = Vec::with_capacity(sn_buffer.indices.len() / 3);
 
         for tri in sn_buffer.indices.chunks_exact(3) {
@@ -182,7 +182,7 @@ where
             triangles.push(poly);
         }
 
-        // Return as a CSG
-        CSG::from_polygons(&triangles)
+        // Return as a Mesh
+        Mesh::from_polygons(&triangles)
     }
 }

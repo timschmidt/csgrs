@@ -21,8 +21,6 @@ pub struct Sketch<S> {
     pub metadata: Option<S>,
 }
 
-impl<S: Clone + Send + Sync + Debug> Sketch<S> {}
-
 impl<S: Clone + Send + Sync + Debug> Sketch<S> {
     /// Take the [`geo::Polygon`]'s from the `CSG`'s geometry collection
     pub fn to_multipolygon(&self) -> MultiPolygon<Real> {
@@ -46,6 +44,14 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
         }
 
         MultiPolygon(polygons)
+    }
+    
+	/// Create a Sketch from a `geo::GeometryCollection`.
+    pub fn from_geo(geometry: GeometryCollection<Real>, metadata: Option<S>) -> Sketch<S> {
+        let mut new_sketch = Sketch::new();
+        new_sketch.geometry = geometry;
+        new_sketch.metadata = metadata;
+        new_sketch
     }
 }
 

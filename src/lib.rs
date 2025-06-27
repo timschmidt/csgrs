@@ -7,7 +7,6 @@ pub mod float_types;
 pub mod io;
 pub mod mesh;
 pub mod nurbs;
-pub mod shapes;
 pub mod sketch;
 pub mod traits;
 pub mod voxels;
@@ -26,9 +25,6 @@ compile_error!("Either 'f64' or 'f32' feature must be specified, but not both");
 
 pub use csg::CSG;
 pub use mesh::vertex::Vertex;
-
-#[cfg(feature = "sdf")]
-pub mod sdf;
 
 #[cfg(test)]
 mod tests;

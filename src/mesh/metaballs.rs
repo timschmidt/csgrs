@@ -1,7 +1,9 @@
-use crate::csg::CSG;
+use crate::traits::CSGOps;
+use crate::mesh::mesh::Mesh;
 use crate::float_types::{EPSILON, Real};
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
+use crate::sketch::sketch::Sketch;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use geo::{
     Coord, CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord,
@@ -99,7 +101,7 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
     chains
 }
 
-impl<S: Clone + Debug> CSG<S>
+impl<S: Clone + Debug> Mesh<S>
 where
     S: Clone + Send + Sync,
 {
@@ -115,10 +117,10 @@ where
         iso_value: Real,
         padding: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         let (nx, ny) = resolution;
         if balls.is_empty() || nx < 2 || ny < 2 {
-            return CSG::new();
+            return Sketch::new();
         }
 
         // 1) Compute bounding box around all metaballs
@@ -259,10 +261,10 @@ where
             }
         }
 
-        CSG::from_geo(gc, metadata)
+        Sketch::from_geo(gc, metadata)
     }
 
-    /// **Creates a CSG from a list of metaballs** by sampling a 3D grid and using marching cubes.
+    /// **Creates a Mesh from a list of metaballs** by sampling a 3D grid and using marching cubes.
     ///
     /// - `balls`: slice of metaball definitions (center + radius).
     /// - `resolution`: (nx, ny, nz) defines how many steps along x, y, z.
@@ -274,9 +276,9 @@ where
         iso_value: Real,
         padding: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Mesh<S> {
         if balls.is_empty() {
-            return CSG::new();
+            return Mesh::new();
         }
 
         // Determine bounding box of all metaballs (plus padding).
@@ -455,7 +457,7 @@ where
             triangles.push(poly);
         }
 
-        // Build and return a CSG from these polygons
-        CSG::from_polygons(&triangles)
+        // Build and return a Mesh from these polygons
+        Mesh::from_polygons(&triangles)
     }
 }

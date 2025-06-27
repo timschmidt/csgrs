@@ -5,11 +5,11 @@ use nalgebra::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
 
 /// Boolean operations + transformations
 pub trait CSGOps: Sized + Clone {
+	fn new() -> Self;
     fn union(&self, other: &Self) -> Self;
     fn difference(&self, other: &Self) -> Self;
     fn intersection(&self, other: &Self) -> Self;
     fn xor(&self, other: &Self) -> Self;
-    fn new() -> Self;
     fn transform(&self, matrix: &Matrix4<Real>) -> Self;
     fn bounding_box(&self) -> Aabb;
     fn invalidate_bounding_box(&mut self);

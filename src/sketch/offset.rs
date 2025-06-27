@@ -1,11 +1,11 @@
-use crate::csg::CSG;
+use crate::sketch::sketch::Sketch;
 use crate::float_types::Real;
 use geo::{Geometry, GeometryCollection};
 use geo_buf::{buffer_multi_polygon, buffer_polygon};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug> CSG<S>
+impl<S: Clone + Debug> Sketch<S>
 where
     S: Clone + Send + Sync,
 {
@@ -14,7 +14,7 @@ where
     ///   - If it's a Polygon, buffer it and store the result as a MultiPolygon
     ///   - If it's a MultiPolygon, buffer it directly
     ///   - Otherwise, ignore (exclude) it from the new collection
-    pub fn offset(&self, distance: Real) -> CSG<S> {
+    pub fn offset(&self, distance: Real) -> Sketch<S> {
         let offset_geoms = self
             .geometry
             .iter()
@@ -34,8 +34,8 @@ where
         // Construct a new GeometryCollection from the offset geometries
         let new_collection = GeometryCollection::<Real>(offset_geoms);
 
-        // Return a new CSG using the offset geometry collection and the old polygons/metadata
-        CSG {
+        // Return a new Sketch using the offset geometry collection and the old polygons/metadata
+        Sketch {
             polygons: self.polygons.clone(),
             geometry: new_collection,
             bounding_box: OnceLock::new(),
