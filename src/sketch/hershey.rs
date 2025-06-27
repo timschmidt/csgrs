@@ -1,10 +1,10 @@
-use crate::csg::CSG;
+use crate::sketch::sketch::Sketch;
 use crate::float_types::Real;
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug> CSG<S>
+impl<S: Clone + Debug> Sketch<S>
 where
     S: Clone + Send + Sync,
 {
@@ -17,12 +17,12 @@ where
     /// - `text`: The text to render
     /// - `font`: The Hershey font (e.g., `hershey::fonts::GOTHIC_ENG_SANS`)
     /// - `size`: Scale factor for glyphs
-    /// - `metadata`: Optional user data to store in the resulting CSG
+    /// - `metadata`: Optional user data to store in the resulting Sketch
     ///
     /// # Returns
-    /// A new `CSG` where each glyph stroke is a `Geometry::LineString` in `geometry`.
+    /// A new `Sketch` where each glyph stroke is a `Geometry::LineString` in `geometry`.
     ///
-    pub fn from_hershey(text: &str, font: &Font, size: Real, metadata: Option<S>) -> CSG<S> {
+    pub fn from_hershey(text: &str, font: &Font, size: Real, metadata: Option<S>) -> Sketch<S> {
         use geo::{Geometry, GeometryCollection};
 
         let mut all_strokes = Vec::new();
@@ -60,8 +60,8 @@ where
             geo_coll.0.push(Geometry::LineString(line_str));
         }
 
-        // Return a new CSG that has no 3D polygons, but has these lines in geometry.
-        CSG {
+        // Return a new Sketch that has no 3D polygons, but has these lines in geometry.
+        Sketch {
             polygons: Vec::new(),
             geometry: geo_coll,
             bounding_box: OnceLock::new(),

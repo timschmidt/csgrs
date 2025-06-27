@@ -907,4 +907,9 @@ fn main() {
 
     // Done!
     println!("All scenes have been created and written to the 'stl' folder (where applicable).");
+    
+    let cube1 = CSG::cube(3.0, 3.0, 3.0, None).translate(1.0, 1.0, 1.0);
+	let cube2 = cube1.translate(2.0, 2.0, 2.0);
+	let result = cube1.intersection(&cube2.inverse());
+	let _ = fs::write("stl/cube_difference.stl", result.to_stl_ascii("cube difference"));
 }

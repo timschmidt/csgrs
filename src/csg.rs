@@ -380,7 +380,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
 
         CSG {
-            polygons: a.all_polygons(),
+            polygons: final_polys,
             geometry: final_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
@@ -403,7 +403,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     pub fn intersection(&self, other: &CSG<S>) -> CSG<S> {
         // 3D intersection:
         // avoid splitting obvious non‑intersecting faces
-        let (a_clip, _a_passthru) = Self::partition_polys(&self.polygons, &other.bounding_box());
+        let (a_clip, a_passthru) = Self::partition_polys(&self.polygons, &other.bounding_box());
         let (b_clip, _b_passthru) = Self::partition_polys(&other.polygons, &self.bounding_box());
 
         let mut a = Node::new(&a_clip);
@@ -416,6 +416,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         b.clip_to(&a);
         a.build(&b.all_polygons());
         a.invert();
+        
+        // combine results and untouched faces
+        let mut final_polys = a.all_polygons();
+        final_polys.extend(a_passthru);
 
         // 2D intersection:
         let polys1 = &self.to_multipolygon();
@@ -445,7 +449,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
 
         CSG {
-            polygons: a.all_polygons(),
+            polygons: final_polys,
             geometry: final_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),

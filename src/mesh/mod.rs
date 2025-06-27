@@ -6,3 +6,7 @@ pub mod mesh;
 pub mod plane;
 pub mod polygon;
 pub mod vertex;
+pub mod shapes;
+pub mod sdf;
+pub mod metaballs;
+pub mod tpms;
