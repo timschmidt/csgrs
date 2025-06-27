@@ -1,7 +1,6 @@
 //#![allow(dead_code)]
 #![forbid(unsafe_code)]
 
-pub mod csg;
 pub mod errors;
 pub mod float_types;
 pub mod io;
@@ -22,9 +21,6 @@ compile_error!("Either 'delaunay' or 'earcut' feature must be specified, but not
     not(any(feature = "f64", feature = "f32"))
 ))]
 compile_error!("Either 'f64' or 'f32' feature must be specified, but not both");
-
-pub use csg::CSG;
-pub use mesh::vertex::Vertex;
 
 #[cfg(test)]
 mod tests;

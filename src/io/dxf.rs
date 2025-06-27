@@ -1,6 +1,6 @@
 use crate::float_types::Real;
 use crate::mesh::polygon::Polygon;
-use crate::{CSG, Vertex};
+use crate::mesh::vertex::Vertex;
 
 use nalgebra::{Point3, Vector3};
 use std::error::Error;
