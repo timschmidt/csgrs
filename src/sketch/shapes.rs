@@ -8,10 +8,7 @@ use geo::{
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug> Sketch<S>
-where
-    S: Clone + Send + Sync,
-{
+impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Creates a 2D square in the XY plane.
     ///
     /// # Parameters

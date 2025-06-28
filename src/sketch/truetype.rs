@@ -12,10 +12,7 @@ use ttf_utils::Outline;
 // For flattening curves, how many segments per quad/cubic
 const CURVE_STEPS: usize = 8;
 
-impl<S: Clone + Debug> Sketch<S>
-where
-    S: Clone + Send + Sync,
-{
+impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
     ///
     /// Each glyph’s closed contours become one or more `Polygon`s (with holes if needed),

@@ -23,10 +23,7 @@ pub struct Polygon<S: Clone> {
     pub metadata: Option<S>,
 }
 
-impl<S: Clone> Polygon<S>
-where
-    S: Clone + Send + Sync,
-{
+impl<S: Clone + Send + Sync> Polygon<S> {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
         assert!(vertices.len() >= 3, "degenerate polygon");
@@ -138,6 +135,12 @@ where
                 let x_clamped = if x.abs() < MIN_ALLOWED_VALUE { 0.0 } else { x };
                 let y = offset.dot(&v);
                 let y_clamped = if y.abs() < MIN_ALLOWED_VALUE { 0.0 } else { y };
+                // test for NaN/±∞
+				if !(x.is_finite() && y.is_finite() && x_clamped.is_finite() && y_clamped.is_finite())
+				{
+					// at least one coordinate was NaN/±∞ – ignore this triangle
+					continue;
+				}
                 all_vertices_2d.push(coord! {x: x_clamped, y: y_clamped});
             }
 
