@@ -9,17 +9,18 @@
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
 
-use crate::csg::CSG;
 use crate::float_types::Real;
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
+use crate::mesh::mesh::Mesh;
+use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
+use crate::traits::CSGOps;
 use chull::ConvexHullWrapper;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> CSG<S> {
-    /// Compute the [convex hull](https://en.wikipedia.org/wiki/Convex_hull) of all vertices in this CSG.
-    pub fn convex_hull(&self) -> CSG<S> {
+impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+    /// Compute the convex hull of all vertices in this Mesh.
+    pub fn convex_hull(&self) -> Mesh<S> {
         // Gather all (x, y, z) coordinates from the polygons
         let points: Vec<Vec<Real>> = self
             .polygons
@@ -31,8 +32,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let hull = match ConvexHullWrapper::try_new(&points, None) {
             Ok(h) => h,
             Err(_) => {
-                // Fallback to an empty CSG if hull generation fails
-                return CSG::new();
+                // Fallback to an empty Mesh if hull generation fails
+                return Mesh::new();
             },
         };
 
@@ -50,14 +51,14 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
 
-        CSG::from_polygons(&polygons)
+        Mesh::from_polygons(&polygons)
     }
 
     /// Compute the Minkowski sum: self ⊕ other
     ///
     /// Naive approach: Take every vertex in `self`, add it to every vertex in `other`,
     /// then compute the convex hull of all resulting points.
-    pub fn minkowski_sum(&self, other: &CSG<S>) -> CSG<S> {
+    pub fn minkowski_sum(&self, other: &Mesh<S>) -> Mesh<S> {
         // Collect all vertices (x, y, z) from self
         let verts_a: Vec<Point3<Real>> = self
             .polygons
@@ -100,6 +101,6 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
 
-        CSG::from_polygons(&polygons)
+        Mesh::from_polygons(&polygons)
     }
 }

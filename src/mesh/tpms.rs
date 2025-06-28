@@ -1,12 +1,13 @@
 //! Triply‑Periodic Minimal Surfaces rewritten to leverage the generic
 //! signed‑distance mesher in `sdf.rs`.
 
-use crate::csg::CSG;
 use crate::float_types::Real;
+use crate::mesh::mesh::Mesh;
+use crate::traits::CSGOps;
 use nalgebra::Point3;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> CSG<S> {
+impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// **Generic helper** – build a TPMS inside `self` from the provided SDF.
     ///
     /// * `sdf_fn`     – smooth signed‑distance field _f(p)_; 0‑level set is the surface
@@ -22,7 +23,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         resolution: (usize, usize, usize),
         iso_value: Real,
         metadata: Option<S>,
-    ) -> CSG<S>
+    ) -> Mesh<S>
     where
         F: Fn(&Point3<Real>) -> Real + Send + Sync,
     {
@@ -30,7 +31,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let min_pt = aabb.mins;
         let max_pt = aabb.maxs;
         // Mesh the implicit surface with the generic surface‑nets backend
-        let surf = CSG::sdf(sdf_fn, resolution, min_pt, max_pt, iso_value, metadata);
+        let surf = Mesh::sdf(sdf_fn, resolution, min_pt, max_pt, iso_value, metadata);
         // Clip the infinite TPMS down to the original shape’s volume
         surf.intersection(self)
     }
@@ -45,7 +46,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         period: Real,
         iso_value: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Mesh<S> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let period_inv = 1.0 / period;
         self.tpms_from_sdf(
@@ -68,7 +69,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         period: Real,
         iso_value: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Mesh<S> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let period_inv = 1.0 / period;
         self.tpms_from_sdf(
@@ -91,7 +92,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         period: Real,
         iso_value: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Mesh<S> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let period_inv = 1.0 / period;
         self.tpms_from_sdf(

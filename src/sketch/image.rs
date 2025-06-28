@@ -1,13 +1,10 @@
-use crate::csg::CSG;
 use crate::float_types::{EPSILON, Real};
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
+use crate::sketch::sketch::Sketch;
 use image::GrayImage;
-use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> CSG<S> {
-    /// Builds a new CSG from the “on” pixels of a grayscale image,
+impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+    /// Builds a new Sketch from the “on” pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.
     ///
     /// - `img`: a reference to a GrayImage
@@ -18,15 +15,15 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// # Returns
     /// A 2D shape in the XY plane (z=0) representing all traced contours. Each contour
     /// becomes a polygon. The polygons are *not* automatically unioned; they are simply
-    /// collected in one `CSG`.
+    /// collected in one `Sketch`.
     ///
     /// # Example
     /// ```no_run
-    /// # use csgrs::csg::CSG;
+    /// # use csgrs::sketch::Sketch;
     /// # use image::{GrayImage, Luma};
     /// # fn main() {
     /// let img: GrayImage = image::open("my_binary.png").unwrap().to_luma8();
-    /// let csg2d = CSG::from_image(&img, 128, true, None);
+    /// let csg2d = Sketch::from_image(&img, 128, true, None);
     /// // optionally extrude it:
     /// let shape3d = csg2d.extrude(5.0);
     /// # }
@@ -37,57 +34,64 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         closepaths: bool,
         metadata: Option<S>,
     ) -> Self {
-        // Convert the image into a 2D array of bits for the contour_tracing::array::bits_to_paths function.
-        // We treat pixels >= threshold as 1, else 0.
+        use geo::{Geometry, GeometryCollection, LineString, coord};
+
         let width = img.width() as usize;
         let height = img.height() as usize;
+
+        /* ---------- step 1 : bitmap → svg path (unchanged) ---------- */
         let mut bits = Vec::with_capacity(height);
         for y in 0..height {
             let mut row = Vec::with_capacity(width);
             for x in 0..width {
-                let px_val = img.get_pixel(x as u32, y as u32)[0];
-                if px_val >= threshold {
-                    row.push(1);
-                } else {
-                    row.push(0);
-                }
+                let v = img.get_pixel(x as u32, y as u32)[0];
+                row.push((v >= threshold) as i8);
             }
             bits.push(row);
         }
-
-        // Use contour_tracing::array::bits_to_paths to get a single SVG path string
-        // containing multiple “move” commands for each outline/hole.
         let svg_path = contour_tracing::array::bits_to_paths(bits, closepaths);
-        // This might look like: "M1 0H4V1H1M6 0H11V5H6 ..." etc.
-
-        // Parse the path string into one or more polylines. Each polyline
-        // starts with an 'M x y' and then “H x” or “V y” commands until the next 'M' or end.
         let polylines = Self::parse_svg_path_into_polylines(&svg_path);
 
-        // Convert each polyline into a Polygon in the XY plane at z=0,
-        // storing them in a `Vec<Polygon<S>>`.
-        let mut all_polygons = Vec::new();
-        for pl in polylines {
+        /* ---------- step 2 : polylines → geo geometries ---------- */
+        let mut gc = GeometryCollection::<Real>::default();
+
+        for mut pl in polylines {
             if pl.len() < 2 {
                 continue;
             }
-            // Build vertices with normal = +Z
-            let normal = Vector3::z();
-            let mut verts = Vec::with_capacity(pl.len());
-            for &(x, y) in &pl {
-                verts.push(Vertex::new(Point3::new(x as Real, y as Real, 0.0), normal));
+
+            // Are first & last points coincident?
+            let closed = {
+                let first = pl[0];
+                let last = pl[pl.len() - 1];
+                ((first.0 - last.0).abs() as Real) < EPSILON
+                    && ((first.1 - last.1).abs() as Real) < EPSILON
+            };
+
+            // Convert to Real coords (+ make sure polygons are explicitly closed)
+            if closed && pl.len() >= 4 {
+                // guarantee first==last for LineString
+                if ((pl[0].0 - pl[pl.len() - 1].0).abs() as Real) > EPSILON
+                    || ((pl[0].1 - pl[pl.len() - 1].1).abs() as Real) > EPSILON
+                {
+                    pl.push(pl[0]);
+                }
+                let ls: LineString<Real> = pl
+                    .into_iter()
+                    .map(|(x, y)| coord! { x: x as Real, y: y as Real })
+                    .collect();
+                gc.0.push(Geometry::Polygon(geo::Polygon::new(ls, vec![])));
+            } else {
+                let ls: LineString<Real> = pl
+                    .into_iter()
+                    .map(|(x, y)| coord! { x: x as Real, y: y as Real })
+                    .collect();
+                gc.0.push(Geometry::LineString(ls));
             }
-            // If the path was not closed and we used closepaths == true, we might need to ensure the first/last are the same.
-            if (verts.first().unwrap().pos - verts.last().unwrap().pos).norm() > EPSILON {
-                // close it
-                verts.push(verts.first().unwrap().clone());
-            }
-            let poly = Polygon::new(verts, metadata.clone());
-            all_polygons.push(poly);
         }
 
-        // Build a CSG from those polygons
-        CSG::from_polygons(&all_polygons)
+        /* ---------- step 3 : build the Sketch ---------- */
+        Sketch::from_geo(gc, metadata)
     }
 
     /// Internal helper to parse a minimal subset of SVG path commands:

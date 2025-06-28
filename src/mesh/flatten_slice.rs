@@ -1,8 +1,9 @@
-use crate::bsp::Node;
-use crate::csg::CSG;
 use crate::float_types::{EPSILON, Real};
-use crate::plane::Plane;
-use crate::vertex::Vertex;
+use crate::mesh::bsp::Node;
+use crate::mesh::mesh::Mesh;
+use crate::mesh::plane::Plane;
+use crate::mesh::vertex::Vertex;
+use crate::sketch::sketch::Sketch;
 use geo::{
     BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
     Polygon as GeoPolygon, coord, orient::Direction,
@@ -13,21 +14,14 @@ use small_str::{SmallStr, format_smallstr};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug + Send + Sync> CSG<S> {
+impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
-    /// unifies them into one or more 2D polygons, and returns a purely 2D CSG.
+    /// unifies them into one or more 2D polygons, and returns a purely 2D Sketch.
     ///
-    /// - If this CSG is already 2D (`self.polygons` is empty), just returns `self.clone()`.
-    /// - Otherwise, all `polygons` are tessellated, projected into XY, and unioned.
-    /// - We also union any existing 2D geometry (`self.geometry`).
-    /// - The output has `.polygons` empty and `.geometry` containing the final 2D shape.
-    pub fn flatten(&self) -> CSG<S> {
-        // 1) If there are no 3D polygons, this is already purely 2D => return as-is
-        if self.polygons.is_empty() {
-            return self.clone();
-        }
-
-        // 2) Convert all 3D polygons into a collection of 2D polygons
+    /// - All `polygons` in the Mesh are tessellated, projected into XY, and unioned.
+    /// - The output is a Sketch containing the final 2D shape.
+    pub fn flatten(&self) -> Sketch<S> {
+        // Convert all 3D polygons into a collection of 2D polygons
         let mut flattened_3d = Vec::new(); // will store geo::Polygon<Real>
 
         for poly in &self.polygons {
@@ -47,8 +41,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             }
         }
 
-        // 3) Union all these polygons together into one MultiPolygon
-        //    (We could chain them in a fold-based union.)
+        // Union all these polygons together into one MultiPolygon
+        // (We could chain them in a fold-based union.)
         let unioned_from_3d = if flattened_3d.is_empty() {
             MultiPolygon::new(Vec::new())
         } else {
@@ -61,45 +55,41 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             mp_acc
         };
 
-        // 4) Union this with any existing 2D geometry (polygons) from self.geometry
-        let existing_2d = &self.to_multipolygon(); // turns geometry -> MultiPolygon
-        let final_union = unioned_from_3d.union(existing_2d);
-        // Optionally ensure consistent orientation (CCW for exteriors):
-        let oriented = final_union.orient(Direction::Default);
+        // Ensure consistent orientation (CCW for exteriors):
+        let oriented = unioned_from_3d.orient(Direction::Default);
 
-        // 5) Store final polygons as a MultiPolygon in a new GeometryCollection
+        // Store final polygons as a MultiPolygon in a new GeometryCollection
         let mut new_gc = GeometryCollection::default();
         new_gc.0.push(Geometry::MultiPolygon(oriented));
 
-        // 6) Return a purely 2D CSG: polygons empty, geometry has the final shape
-        CSG {
-            polygons: Vec::new(),
+        // Return a Sketch: polygons empty, geometry has the final shape
+        Sketch {
             geometry: new_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
 
-    /// Slice this solid by a given `plane`, returning a new `CSG` whose polygons
+    /// Slice this solid by a given `plane`, returning a new `Sketch` whose polygons
     /// are either:
     /// - The polygons that lie exactly in the slicing plane (coplanar), or
     /// - Polygons formed by the intersection edges (each a line, possibly open or closed).
     ///
-    /// The returned `CSG` can contain:
+    /// The returned `Sketch` can contain:
     /// - **Closed polygons** that are coplanar,
     /// - **Open polygons** (poly-lines) if the plane cuts through edges,
     /// - Potentially **closed loops** if the intersection lines form a cycle.
     ///
     /// # Example
     /// ```
-    /// let cylinder = CSG::cylinder(1.0, 2.0, 32, None);
+    /// let cylinder = Mesh::cylinder(1.0, 2.0, 32, None);
     /// let plane_z0 = Plane { normal: Vector3::z(), w: 0.0 };
     /// let cross_section = cylinder.slice(plane_z0);
     /// // `cross_section` will contain:
     /// //   - Possibly an open or closed polygon(s) at z=0
     /// //   - Or empty if no intersection
     /// ```
-    pub fn slice(&self, plane: Plane) -> CSG<S> {
+    pub fn slice(&self, plane: Plane) -> Sketch<S> {
         // Build a BSP from all of our polygons:
         let node = Node::new(&self.polygons.clone());
 
@@ -153,20 +143,19 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             }
         }
 
-        // Return a purely 2D CSG: polygons empty, geometry has the final shape
-        CSG {
-            polygons: Vec::new(),
+        // Return Sketch
+        Sketch {
             geometry: new_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
 
-    /// Checks if the CSG object is manifold.
+    /// Checks if the Mesh object is manifold.
     ///
     /// This function defines a comparison function which takes EPSILON into account
     /// for Real coordinates, builds a hashmap key from the string representation of
-    /// the coordinates, tessellates the CSG polygons, gathers each of their three edges,
+    /// the coordinates, tessellates the Mesh polygons, gathers each of their three edges,
     /// counts how many times each edge appears across all triangles,
     /// and returns true if every edge appears exactly 2 times, else false.
     ///
@@ -177,8 +166,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///
     /// # Returns
     ///
-    /// - `true`: If the CSG object is manifold.
-    /// - `false`: If the CSG object is not manifold.
+    /// - `true`: If the Mesh object is manifold.
+    /// - `false`: If the Mesh object is not manifold.
     pub fn is_manifold(&self) -> bool {
         fn approx_lt(a: &Point3<Real>, b: &Point3<Real>) -> bool {
             // Compare x
@@ -200,7 +189,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
 
         // Triangulate the whole shape once
-        let tri_csg = self.tessellate();
+        let tri_csg = self.triangulate();
         let mut edge_counts: HashMap<(SmallStr<27>, SmallStr<27>), u32> = HashMap::new();
 
         for poly in &tri_csg.polygons {

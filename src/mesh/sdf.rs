@@ -1,15 +1,15 @@
-//! Create `CSG`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
+//! Create `Mesh`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
 
-use crate::csg::CSG;
 use crate::float_types::Real;
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
+use crate::mesh::mesh::Mesh;
+use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> CSG<S> {
-    /// Return a CSG created by meshing a signed distance field within a bounding box
+impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+    /// Return a Mesh created by meshing a signed distance field within a bounding box
     ///
     /// ```
     /// # use csgrs::{csg::CSG, float_types::Real};
@@ -22,14 +22,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// let max_pt = Point3::new( 2.0,  2.0,  2.0);
     /// let iso_value = 0.0; // Typically zero for SDF-based surfaces
     ///
-    /// let csg_shape: CSG<()> = CSG::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
-    /// ```
-    /// ```no_run
-    /// # use csgrs::csg::CSG;
-    /// # let csg_shape: CSG<()> = CSG::new();
-    /// // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
-    /// let _ = std::fs::write("stl/sdf_sphere.stl", csg_shape.to_stl_binary("sdf_sphere").unwrap());
-    /// ```
+    ///    let mesh_shape = Mesh::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
+    ///
+    ///    // Now `mesh_shape` is your polygon mesh as a Mesh you can union, subtract, or export:
+    ///    let _ = std::fs::write("stl/sdf_sphere.stl", mesh_shape.to_stl_binary("sdf_sphere").unwrap());
     pub fn sdf<F>(
         sdf: F,
         resolution: (usize, usize, usize),
@@ -37,7 +33,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         max_pt: Point3<Real>,
         iso_value: Real,
         metadata: Option<S>,
-    ) -> CSG<S>
+    ) -> Mesh<S>
     where
         // F is a closure or function that takes a 3D point and returns the signed distance.
         // Must be `Sync`/`Send` if you want to parallelize the sampling.
@@ -61,17 +57,17 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let index_3d = |ix: u32, iy: u32, iz: u32| -> usize {
             (iz * ny + iy) as usize * (nx as usize) + ix as usize
         };
-        
-        // Small helpers – keeps the loop readable
-		#[inline]
-		fn point_finite(p: &Point3<Real>) -> bool {
-			p.coords.iter().all(|c| c.is_finite())
-		}
 
-		#[inline]
-		fn vec_finite(v: &Vector3<Real>) -> bool {
-			v.iter().all(|c| c.is_finite())
-		}
+        // Small helpers – keeps the loop readable
+        #[inline]
+        fn point_finite(p: &Point3<Real>) -> bool {
+            p.coords.iter().all(|c| c.is_finite())
+        }
+
+        #[inline]
+        fn vec_finite(v: &Vector3<Real>) -> bool {
+            v.iter().all(|c| c.is_finite())
+        }
 
         // Sample the SDF at each grid cell:
         // Note that for an "isosurface" at iso_value, we store (sdf_value - iso_value)
@@ -86,10 +82,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                     let sdf_val = sdf(&p);
                     // Shift by iso_value so that the zero-level is the surface we want:
                     field_values[index_3d(ix, iy, iz)] = if sdf_val.is_finite() {
-						(sdf_val - iso_value) as f32
-					} else {
-						f32::MAX   // “very outside”, keeps surface-nets happy
-					};
+                        (sdf_val - iso_value) as f32
+                    } else {
+                        f32::MAX // “very outside”, keeps surface-nets happy
+                    };
                 }
             }
         }
@@ -151,7 +147,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             &mut sn_buffer,
         );
 
-        // Convert the resulting triangles into CSG polygons
+        // Convert the resulting triangles into Mesh polygons
         let mut triangles = Vec::with_capacity(sn_buffer.indices.len() / 3);
 
         for tri in sn_buffer.indices.chunks_exact(3) {
@@ -184,19 +180,23 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             let n0 = sn_buffer.normals[i0];
             let n1 = sn_buffer.normals[i1];
             let n2 = sn_buffer.normals[i2];
-            
-            // Normals come out as [f32;3] – promote to `Real`
-			let n0v = Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real);
-			let n1v = Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real);
-			let n2v = Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real);
 
-			// ── « gate » ────────────────────────────────────────────────
-			if !(point_finite(&p0) && point_finite(&p1) && point_finite(&p2)
-				&& vec_finite(&n0v) && vec_finite(&n1v) && vec_finite(&n2v))
-			{
-				// at least one coordinate was NaN/±∞ – ignore this triangle
-				continue;
-			}
+            // Normals come out as [f32;3] – promote to `Real`
+            let n0v = Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real);
+            let n1v = Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real);
+            let n2v = Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real);
+
+            // ── « gate » ────────────────────────────────────────────────
+            if !(point_finite(&p0)
+                && point_finite(&p1)
+                && point_finite(&p2)
+                && vec_finite(&n0v)
+                && vec_finite(&n1v)
+                && vec_finite(&n2v))
+            {
+                // at least one coordinate was NaN/±∞ – ignore this triangle
+                continue;
+            }
 
             let v0 =
                 Vertex::new(p0, Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real));
@@ -210,7 +210,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             triangles.push(poly);
         }
 
-        // Return as a CSG
-        CSG::from_polygons(&triangles)
+        // Return as a Mesh
+        Mesh::from_polygons(&triangles)
     }
 }

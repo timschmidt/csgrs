@@ -1,7 +1,9 @@
 use crate::float_types::Real;
-use crate::polygon::Polygon;
-use crate::{CSG, Vertex};
-
+use crate::mesh::mesh::Mesh;
+use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
+use crate::sketch::sketch::Sketch;
+use geo::{Polygon as GeoPolygon, line_string};
 use nalgebra::{Point3, Vector3};
 use std::error::Error;
 use std::fmt::Debug;
@@ -14,19 +16,17 @@ use dxf::Drawing;
 #[cfg(feature = "dxf-io")]
 use dxf::entities::*;
 
-impl<S: Clone + Debug + Send + Sync> CSG<S> {
-    /// Import a CSG object from DXF data.
+impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+    /// Import a Mesh object from DXF data.
     ///
     /// ## Parameters
     /// - `dxf_data`: A byte slice containing the DXF file data.
-    /// - `metadata`: metadata that will be attached to all polygons of the resulting `CSG`
+    /// - `metadata`: metadata that will be attached to all polygons of the resulting `Sketch`
     ///
     /// ## Returns
-    /// A `Result` containing the CSG object or an error if parsing fails.
+    /// A `Result` containing the Mesh object or an error if parsing fails.
     #[cfg(feature = "dxf-io")]
-    pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>) -> Result<CSG<S>, Box<dyn Error>> {
-        use geo::{Polygon as GeoPolygon, line_string};
-
+    pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>) -> Result<Mesh<S>, Box<dyn Error>> {
         // Load the DXF drawing from the provided data
         let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
 
@@ -99,7 +99,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                         solid.extrusion_direction.z as Real,
                     );
 
-                    let extruded = CSG::from_geo(
+                    let extruded = Sketch::from_geo(
                         GeoPolygon::new(line_string![
                             (x: solid.first_corner.x as Real, y: solid.first_corner.y as Real),
                             (x: solid.second_corner.x as Real, y: solid.second_corner.y as Real),
@@ -113,6 +113,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
                     polygons.extend(extruded);
                 },
+
                 // todo convert image to work with `from_image`
                 // EntityType::Image(image) => {}
                 // todo convert image to work with `text`, also try using system fonts for a better chance of having the font
@@ -124,10 +125,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             }
         }
 
-        Ok(CSG::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(&polygons))
     }
 
-    /// Export the CSG object to DXF format.
+    /// Export the Mesh object to DXF format.
     ///
     /// # Returns
     ///

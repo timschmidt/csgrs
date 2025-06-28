@@ -1,17 +1,19 @@
-use crate::csg::CSG;
 use crate::float_types::Real;
+use crate::sketch::sketch::Sketch;
 use geo::{Geometry, GeometryCollection};
-use geo_buf::{buffer_multi_polygon, buffer_polygon, buffer_polygon_rounded, buffer_multi_polygon_rounded};
+use geo_buf::{
+    buffer_multi_polygon, buffer_multi_polygon_rounded, buffer_polygon, buffer_polygon_rounded,
+};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug + Send + Sync> CSG<S> {
+impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using georust.
     /// For each Geometry in the collection:
     ///   - If it's a Polygon, buffer it and store the result as a MultiPolygon
     ///   - If it's a MultiPolygon, buffer it directly
     ///   - Otherwise, ignore (exclude) it from the new collection
-    pub fn offset(&self, distance: Real) -> CSG<S> {
+    pub fn offset(&self, distance: Real) -> Sketch<S> {
         let offset_geoms = self
             .geometry
             .iter()
@@ -32,8 +34,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let new_collection = GeometryCollection::<Real>(offset_geoms);
 
         // Return a new CSG using the offset geometry collection and the old polygons/metadata
-        CSG {
-            polygons: self.polygons.clone(),
+        Sketch {
             geometry: new_collection,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
@@ -46,7 +47,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///   - If it's a Polygon, buffer it and store the result as a MultiPolygon
     ///   - If it's a MultiPolygon, buffer it directly
     ///   - Otherwise, ignore (exclude) it from the new collection
-    pub fn offset_rounded(&self, distance: Real) -> CSG<S> {
+    pub fn offset_rounded(&self, distance: Real) -> Sketch<S> {
         let offset_geoms = self
             .geometry
             .iter()
@@ -66,9 +67,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         // Construct a new GeometryCollection from the offset geometries
         let new_collection = GeometryCollection::<Real>(offset_geoms);
 
-        // Return a new CSG using the offset geometry collection and the old polygons/metadata
-        CSG {
-            polygons: self.polygons.clone(),
+        // Return a new Sketch using the offset geometry collection and the old polygons/metadata
+        Sketch {
             geometry: new_collection,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),

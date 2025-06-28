@@ -1,9 +1,8 @@
-use crate::float_types::parry3d::bounding_volume::Aabb;
-use crate::float_types::{PI, Real};
-use crate::plane::Plane;
-use crate::vertex::Vertex;
+use crate::float_types::{Real, parry3d::bounding_volume::Aabb};
+use crate::mesh::plane::Plane;
+use crate::mesh::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
-use nalgebra::{Point2, Point3, Vector3};
+use nalgebra::{Point3, Vector3};
 use std::sync::OnceLock;
 
 /// A polygon, defined by a list of vertices.
@@ -82,7 +81,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         let normal_3d = self.plane.normal().normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
         let origin_3d = self.vertices[0].pos;
-        
+
         #[cfg(feature = "earcut")]
         {
             // Flatten each vertex to 2D
@@ -133,13 +132,16 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                 let x_clamped = if x.abs() < MIN_ALLOWED_VALUE { 0.0 } else { x };
                 let y = offset.dot(&v);
                 let y_clamped = if y.abs() < MIN_ALLOWED_VALUE { 0.0 } else { y };
-                
+
                 // test for NaN/±∞
-				if !(x.is_finite() && y.is_finite() && x_clamped.is_finite() && y_clamped.is_finite())
-				{
-					// at least one coordinate was NaN/±∞ – ignore this triangle
-					continue;
-				}
+                if !(x.is_finite()
+                    && y.is_finite()
+                    && x_clamped.is_finite()
+                    && y_clamped.is_finite())
+                {
+                    // at least one coordinate was NaN/±∞ – ignore this triangle
+                    continue;
+                }
                 all_vertices_2d.push(coord! {x: x_clamped, y: y_clamped});
             }
 
@@ -294,179 +296,4 @@ pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
         [v20.clone(), v12.clone(), tri[2].clone()],
         [v01, v12, v20],
     ]
-}
-
-/// Helper to normalize angles into (-π, π].
-const fn normalize_angle(mut a: Real) -> Real {
-    while a <= -PI {
-        a += 2.0 * PI;
-    }
-    while a > PI {
-        a -= 2.0 * PI;
-    }
-    a
-}
-
-/// Compute an initial guess of the circle center through three points p1, p2, p3
-/// (this is used purely as an initial guess).
-///
-/// This is a direct port of your snippet’s `centre(p1, p2, p3)`, but
-/// returning a `Point2<Real>` from nalgebra.
-fn naive_circle_center(
-    p1: &Point2<Real>,
-    p2: &Point2<Real>,
-    p3: &Point2<Real>,
-) -> Point2<Real> {
-    // Coordinates
-    let (x1, y1) = (p1.x, p1.y);
-    let (x2, y2) = (p2.x, p2.y);
-    let (x3, y3) = (p3.x, p3.y);
-
-    let x12 = x1 - x2;
-    let x13 = x1 - x3;
-    let y12 = y1 - y2;
-    let y13 = y1 - y3;
-
-    let y31 = y3 - y1;
-    let y21 = y2 - y1;
-    let x31 = x3 - x1;
-    let x21 = x2 - x1;
-
-    let sx13 = x1.powi(2) - x3.powi(2);
-    let sy13 = y1.powi(2) - y3.powi(2);
-    let sx21 = x2.powi(2) - x1.powi(2);
-    let sy21 = y2.powi(2) - y1.powi(2);
-
-    let xden = 2.0 * (x31 * y12 - x21 * y13);
-    let yden = 2.0 * (y31 * x12 - y21 * x13);
-
-    if xden.abs() < 1e-14 || yden.abs() < 1e-14 {
-        // fallback => just average the points
-        let cx = (x1 + x2 + x3) / 3.0;
-        let cy = (y1 + y2 + y3) / 3.0;
-        return Point2::new(cx, cy);
-    }
-
-    let g = (sx13 * y12 + sy13 * y12 + sx21 * y13 + sy21 * y13) / xden;
-    let f = (sx13 * x12 + sy13 * x12 + sx21 * x13 + sy21 * x13) / yden;
-
-    // Return the center as a Point2
-    Point2::new(-g, -f)
-}
-
-/// Fit a circle to the points `[pt_c, intermediates..., pt_n]` by adjusting an offset `d` from
-/// the midpoint. This uses nalgebra’s `Point2<Real>`.
-///
-/// # Returns
-///
-/// `(center, radius, cw, rms)`:
-/// - `center`: fitted circle center (Point2),
-/// - `radius`: circle radius,
-/// - `cw`: `true` if the arc is clockwise, `false` if ccw,
-/// - `rms`: root‐mean‐square error of the fit.
-pub fn fit_circle_arcfinder(
-    pt_c: &Point2<Real>,
-    pt_n: &Point2<Real>,
-    intermediates: &[Point2<Real>],
-) -> (Point2<Real>, Real, bool, Real) {
-    // 1) Distance between pt_c and pt_n, plus midpoint
-    let k = (pt_c - pt_n).norm();
-    if k < 1e-14 {
-        // Degenerate case => no unique circle
-        let center = *pt_c;
-        return (center, 0.0, false, 9999.0);
-    }
-    let mid = Point2::new(0.5 * (pt_c.x + pt_n.x), 0.5 * (pt_c.y + pt_n.y));
-
-    // 2) Pre‐compute the direction used for the offset:
-    //    This is the 2D +90 rotation of (pt_n - pt_c).
-    //    i.e. rotate( dx, dy ) => (dy, -dx ) or similar.
-    let vec_cn = pt_n - pt_c; // a Vector2
-    let rx = vec_cn.y; // +90 deg
-    let ry = -vec_cn.x; // ...
-
-    // collect all points in one array for the mismatch
-    let mut all_points = Vec::with_capacity(intermediates.len() + 2);
-    all_points.push(*pt_c);
-    all_points.extend_from_slice(intermediates);
-    all_points.push(*pt_n);
-
-    // The mismatch function g(d)
-    let g = |d: Real| -> Real {
-        let r_desired = (d * d + 0.25 * k * k).sqrt();
-        // circle center
-        let cx = mid.x + (d / k) * rx;
-        let cy = mid.y + (d / k) * ry;
-        let mut sum_sq = 0.0;
-        for p in &all_points {
-            let dx = p.x - cx;
-            let dy = p.y - cy;
-            let dist = (dx * dx + dy * dy).sqrt();
-            let diff = dist - r_desired;
-            sum_sq += diff * diff;
-        }
-        sum_sq
-    };
-
-    // derivative dg(d) => we’ll do a small finite difference
-    let dg = |d: Real| -> Real {
-        let h = 1e-6;
-        let g_p = g(d + h);
-        let g_m = g(d - h);
-        (g_p - g_m) / (2.0 * h)
-    };
-
-    // 3) choose an initial guess for d
-    let mut d_est = 0.0; // fallback
-    if !intermediates.is_empty() {
-        // pick p3 ~ the middle of intermediates
-        let mididx = intermediates.len() / 2;
-        let p3 = intermediates[mididx];
-        let c_est = naive_circle_center(pt_c, pt_n, &p3);
-        // project c_est - mid onto (rx, ry)/k => that is d
-        let dx = c_est.x - mid.x;
-        let dy = c_est.y - mid.y;
-        let dot = dx * (rx / k) + dy * (ry / k);
-        d_est = dot;
-    }
-
-    // 4) small secant iteration for ~10 steps
-    let mut d0 = d_est - 0.1 * k;
-    let mut d1 = d_est;
-    let mut dg0 = dg(d0);
-    let mut dg1 = dg(d1);
-
-    for _ in 0..10 {
-        if (dg1 - dg0).abs() < 1e-14 {
-            break;
-        }
-        let temp = d1;
-        d1 = d1 - dg1 * (d1 - d0) / (dg1 - dg0);
-        d0 = temp;
-        dg0 = dg1;
-        dg1 = dg(d1);
-    }
-
-    let d_opt = d1;
-    let cx = mid.x + (d_opt / k) * rx;
-    let cy = mid.y + (d_opt / k) * ry;
-    let center = Point2::new(cx, cy);
-    let radius_opt = (d_opt * d_opt + 0.25 * k * k).sqrt();
-
-    // sum of squares at d_opt
-    let sum_sq = g(d_opt);
-    let n_pts = all_points.len() as Real;
-    let rms = (sum_sq / n_pts).sqrt();
-
-    // 5) determine cw vs ccw
-    let dx0 = pt_c.x - cx;
-    let dy0 = pt_c.y - cy;
-    let dx1 = pt_n.x - cx;
-    let dy1 = pt_n.y - cy;
-    let angle0 = dy0.atan2(dx0);
-    let angle1 = dy1.atan2(dx1);
-    let total_sweep = normalize_angle(angle1 - angle0);
-    let cw = total_sweep < 0.0;
-
-    (center, radius_opt, cw, rms)
 }
