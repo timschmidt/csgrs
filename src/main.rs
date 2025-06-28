@@ -6,10 +6,11 @@
 use csgrs::traits::CSGOps;
 use csgrs::float_types::Real;
 use csgrs::mesh::plane::Plane;
-use csgrs::mesh::mesh::Mesh;
-use csgrs::sketch::sketch::Sketch;
 use nalgebra::{Point3, Vector3};
 use std::fs;
+
+type Mesh = csgrs::mesh::mesh::Mesh<()>;
+type Sketch = csgrs::sketch::sketch::Sketch<()>;
 
 #[cfg(feature = "image")]
 use image::{GrayImage, ImageBuffer};
