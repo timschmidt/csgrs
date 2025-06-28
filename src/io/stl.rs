@@ -2,6 +2,7 @@ use crate::float_types::Real;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::mesh::mesh::Mesh;
+use crate::sketch::sketch::Sketch;
 use geo::CoordsIter;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
@@ -14,14 +15,11 @@ use stl_io;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Export to ASCII STL
-    /// 1) 3D polygons in `self.polygons`,
-    /// 2) any 2D Polygons or MultiPolygons in `self.geometry` (tessellated in XY).
-    ///
-    /// Convert this CSG to an **ASCII STL** string with the given `name`.
+    /// Convert this Mesh to an **ASCII STL** string with the given `name`.
     ///
     /// ```
-    /// let csg = CSG::cube(None);
-    /// let stl_text = csg.to_stl("my_solid");
+    /// let mesh = Mesh::cube(1.0, None);
+    /// let stl_text = mesh.to_stl("my_solid");
     /// println!("{}", stl_text);
     /// ```
     pub fn to_stl_ascii(&self, name: &str) -> String {
@@ -53,104 +51,18 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        //
-        // (B) Write out all *2D* geometry from `self.geometry`
-        //     We only handle Polygon and MultiPolygon.  We tessellate in XY, set z=0.
-        //
-        for geom in &self.geometry {
-            match geom {
-                geo::Geometry::Polygon(poly2d) => {
-                    // Outer ring (in CCW for a typical “positive” polygon)
-                    let outer = poly2d
-                        .exterior()
-                        .coords_iter()
-                        .map(|c| [c.x, c.y])
-                        .collect::<Vec<[Real; 2]>>();
-
-                    // Collect holes
-                    let holes_vec = poly2d
-                        .interiors()
-                        .into_iter()
-                        .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
-                        .collect::<Vec<_>>();
-                    let hole_refs = holes_vec
-                        .iter()
-                        .map(|hole_coords| &hole_coords[..])
-                        .collect::<Vec<_>>();
-
-                    // Triangulate with our existing helper:
-                    let triangles_2d = Self::tessellate_2d(&outer, &hole_refs);
-
-                    // Write each tri as a facet in ASCII STL, with a normal of (0,0,1)
-                    for tri in triangles_2d {
-                        out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
-                        out.push_str("    outer loop\n");
-                        for pt in &tri {
-                            out.push_str(&format!(
-                                "      vertex {:.6} {:.6} {:.6}\n",
-                                pt.x, pt.y, pt.z
-                            ));
-                        }
-                        out.push_str("    endloop\n");
-                        out.push_str("  endfacet\n");
-                    }
-                }
-
-                geo::Geometry::MultiPolygon(mp) => {
-                    // Each polygon inside the MultiPolygon
-                    for poly2d in &mp.0 {
-                        let outer = poly2d
-                            .exterior()
-                            .coords_iter()
-                            .map(|c| [c.x, c.y])
-                            .collect::<Vec<[Real; 2]>>();
-
-                        // Holes
-                        let holes_vec = poly2d
-                            .interiors()
-                            .into_iter()
-                            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
-                            .collect::<Vec<_>>();
-                        let hole_refs = holes_vec
-                            .iter()
-                            .map(|hole_coords| &hole_coords[..])
-                            .collect::<Vec<_>>();
-
-                        let triangles_2d = Self::tessellate_2d(&outer, &hole_refs);
-
-                        for tri in triangles_2d {
-                            out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
-                            out.push_str("    outer loop\n");
-                            for pt in &tri {
-                                out.push_str(&format!(
-                                    "      vertex {:.6} {:.6} {:.6}\n",
-                                    pt.x, pt.y, pt.z
-                                ));
-                            }
-                            out.push_str("    endloop\n");
-                            out.push_str("  endfacet\n");
-                        }
-                    }
-                }
-
-                // Skip all other geometry types (LineString, Point, etc.)
-                // You can optionally handle them if you like, or ignore them.
-                _ => {}
-            }
-        }
-
         out.push_str(&format!("endsolid {}\n", name));
         out
     }
 
     /// Export to BINARY STL (returns Vec<u8>)
     ///
-    /// Convert this CSG to a **binary STL** byte vector with the given `name`.
+    /// Convert this Mesh to a **binary STL** byte vector with the given `name`.
     ///
     /// The resulting `Vec<u8>` can then be written to a file or handled in memory:
     ///
     /// ```
-    /// let bytes = csg.to_stl_binary("my_solid")?;
+    /// let bytes = mesh.to_stl_binary("my_solid")?;
     /// std::fs::write("my_solid.stl", bytes)?;
     /// ```
     #[cfg(feature = "stl-io")]
@@ -189,110 +101,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        //
-        // (B) Triangulate any 2D geometry from self.geometry (Polygon, MultiPolygon).
-        //     We treat these as lying in the XY plane, at Z=0, with a default normal of +Z.
-        //
-        for geom in &self.geometry {
-            match geom {
-                geo::Geometry::Polygon(poly2d) => {
-                    // Gather outer ring as [x,y]
-                    let outer: Vec<[Real; 2]> = poly2d
-                        .exterior()
-                        .coords_iter()
-                        .map(|c| [c.x, c.y])
-                        .collect();
-
-                    // Gather holes
-                    let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
-                        .interiors()
-                        .iter()
-                        .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
-                        .collect();
-
-                    // Convert each hole to a slice-reference for triangulation
-                    let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
-
-                    // Triangulate using our geo-based helper
-                    let tri_2d = Self::tessellate_2d(&outer, &hole_refs);
-
-                    // Each triangle is in XY, so normal = (0,0,1)
-                    for tri_pts in tri_2d {
-                        triangles.push(Triangle {
-                            normal: Normal::new([0.0, 0.0, 1.0]),
-                            vertices: [
-                                Vertex::new([
-                                    tri_pts[0].x as f32,
-                                    tri_pts[0].y as f32,
-                                    tri_pts[0].z as f32,
-                                ]),
-                                Vertex::new([
-                                    tri_pts[1].x as f32,
-                                    tri_pts[1].y as f32,
-                                    tri_pts[1].z as f32,
-                                ]),
-                                Vertex::new([
-                                    tri_pts[2].x as f32,
-                                    tri_pts[2].y as f32,
-                                    tri_pts[2].z as f32,
-                                ]),
-                            ],
-                        });
-                    }
-                }
-
-                geo::Geometry::MultiPolygon(mpoly) => {
-                    // Same approach, but each Polygon in the MultiPolygon
-                    for poly2d in &mpoly.0 {
-                        let outer: Vec<[Real; 2]> = poly2d
-                            .exterior()
-                            .coords_iter()
-                            .map(|c| [c.x, c.y])
-                            .collect();
-
-                        let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
-                            .interiors()
-                            .iter()
-                            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
-                            .collect();
-
-                        let hole_refs: Vec<&[[Real; 2]]> =
-                            holes_vec.iter().map(|h| &h[..]).collect();
-                        let tri_2d = Self::tessellate_2d(&outer, &hole_refs);
-
-                        for tri_pts in tri_2d {
-                            triangles.push(Triangle {
-                                normal: Normal::new([0.0, 0.0, 1.0]),
-                                vertices: [
-                                    Vertex::new([
-                                        tri_pts[0].x as f32,
-                                        tri_pts[0].y as f32,
-                                        tri_pts[0].z as f32,
-                                    ]),
-                                    Vertex::new([
-                                        tri_pts[1].x as f32,
-                                        tri_pts[1].y as f32,
-                                        tri_pts[1].z as f32,
-                                    ]),
-                                    Vertex::new([
-                                        tri_pts[2].x as f32,
-                                        tri_pts[2].y as f32,
-                                        tri_pts[2].z as f32,
-                                    ]),
-                                ],
-                            });
-                        }
-                    }
-                }
-
-                // Skip other geometry types: lines, points, etc.
-                _ => {}
-            }
-        }
-
-        //
-        // (C) Encode into a binary STL buffer
-        //
+        // Encode into a binary STL buffer
         let mut cursor = Cursor::new(Vec::new());
         write_stl(&mut cursor, triangles.iter())?;
         Ok(cursor.into_inner())
@@ -359,5 +168,231 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         }
 
         Ok(Mesh::from_polygons(&polygons))
+    }
+}
+
+impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+    /// Export to ASCII STL
+    /// Convert this Sketch to an **ASCII STL** string with the given `name`.
+    ///
+    /// ```
+    /// let sketch = Sketch::square(1.0, None);
+    /// let stl_text = sketch.to_stl("my_solid");
+    /// println!("{}", stl_text);
+    /// ```
+    pub fn to_stl_ascii(&self, name: &str) -> String {
+        let mut out = String::new();
+        out.push_str(&format!("solid {}\n", name));
+
+        // Write out all *2D* geometry from `self.geometry`
+        // We only handle Polygon and MultiPolygon.  We tessellate in XY, set z=0.
+        for geom in &self.geometry {
+            match geom {
+                geo::Geometry::Polygon(poly2d) => {
+                    // Outer ring (in CCW for a typical “positive” polygon)
+                    let outer = poly2d
+                        .exterior()
+                        .coords_iter()
+                        .map(|c| [c.x, c.y])
+                        .collect::<Vec<[Real; 2]>>();
+
+                    // Collect holes
+                    let holes_vec = poly2d
+                        .interiors()
+                        .into_iter()
+                        .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
+                        .collect::<Vec<_>>();
+                    let hole_refs = holes_vec
+                        .iter()
+                        .map(|hole_coords| &hole_coords[..])
+                        .collect::<Vec<_>>();
+
+                    // Triangulate with our existing helper:
+                    let triangles_2d = Mesh::<()>::triangulate_2d(&outer, &hole_refs);
+
+                    // Write each tri as a facet in ASCII STL, with a normal of (0,0,1)
+                    for tri in triangles_2d {
+                        out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
+                        out.push_str("    outer loop\n");
+                        for pt in &tri {
+                            out.push_str(&format!(
+                                "      vertex {:.6} {:.6} {:.6}\n",
+                                pt.x, pt.y, pt.z
+                            ));
+                        }
+                        out.push_str("    endloop\n");
+                        out.push_str("  endfacet\n");
+                    }
+                }
+
+                geo::Geometry::MultiPolygon(mp) => {
+                    // Each polygon inside the MultiPolygon
+                    for poly2d in &mp.0 {
+                        let outer = poly2d
+                            .exterior()
+                            .coords_iter()
+                            .map(|c| [c.x, c.y])
+                            .collect::<Vec<[Real; 2]>>();
+
+                        // Holes
+                        let holes_vec = poly2d
+                            .interiors()
+                            .into_iter()
+                            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
+                            .collect::<Vec<_>>();
+                        let hole_refs = holes_vec
+                            .iter()
+                            .map(|hole_coords| &hole_coords[..])
+                            .collect::<Vec<_>>();
+
+                        let triangles_2d = Mesh::<()>::triangulate_2d(&outer, &hole_refs);
+
+                        for tri in triangles_2d {
+                            out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
+                            out.push_str("    outer loop\n");
+                            for pt in &tri {
+                                out.push_str(&format!(
+                                    "      vertex {:.6} {:.6} {:.6}\n",
+                                    pt.x, pt.y, pt.z
+                                ));
+                            }
+                            out.push_str("    endloop\n");
+                            out.push_str("  endfacet\n");
+                        }
+                    }
+                }
+
+                // Skip all other geometry types (LineString, Point, etc.)
+                // You can optionally handle them if you like, or ignore them.
+                _ => {}
+            }
+        }
+
+        out.push_str(&format!("endsolid {}\n", name));
+        out
+    }
+
+    /// Export to BINARY STL (returns Vec<u8>)
+    ///
+    /// Convert this Sketch to a **binary STL** byte vector with the given `name`.
+    ///
+    /// The resulting `Vec<u8>` can then be written to a file or handled in memory:
+    ///
+    /// ```
+    /// let bytes = sketch.to_stl_binary("my_solid")?;
+    /// std::fs::write("my_solid.stl", bytes)?;
+    /// ```
+    #[cfg(feature = "stl-io")]
+    pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
+        use core2::io::Cursor;
+        use stl_io::{Normal, Triangle, Vertex, write_stl};
+
+        let mut triangles = Vec::new();
+
+        // Triangulate any 2D geometry from self.geometry (Polygon, MultiPolygon).
+        // We treat these as lying in the XY plane, at Z=0, with a default normal of +Z.
+        for geom in &self.geometry {
+            match geom {
+                geo::Geometry::Polygon(poly2d) => {
+                    // Gather outer ring as [x,y]
+                    let outer: Vec<[Real; 2]> = poly2d
+                        .exterior()
+                        .coords_iter()
+                        .map(|c| [c.x, c.y])
+                        .collect();
+
+                    // Gather holes
+                    let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
+                        .interiors()
+                        .iter()
+                        .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
+                        .collect();
+
+                    // Convert each hole to a slice-reference for triangulation
+                    let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
+
+                    // Triangulate using our geo-based helper
+                    let tri_2d = Mesh::<()>::triangulate_2d(&outer, &hole_refs);
+
+                    // Each triangle is in XY, so normal = (0,0,1)
+                    for tri_pts in tri_2d {
+                        triangles.push(Triangle {
+                            normal: Normal::new([0.0, 0.0, 1.0]),
+                            vertices: [
+                                Vertex::new([
+                                    tri_pts[0].x as f32,
+                                    tri_pts[0].y as f32,
+                                    tri_pts[0].z as f32,
+                                ]),
+                                Vertex::new([
+                                    tri_pts[1].x as f32,
+                                    tri_pts[1].y as f32,
+                                    tri_pts[1].z as f32,
+                                ]),
+                                Vertex::new([
+                                    tri_pts[2].x as f32,
+                                    tri_pts[2].y as f32,
+                                    tri_pts[2].z as f32,
+                                ]),
+                            ],
+                        });
+                    }
+                }
+
+                geo::Geometry::MultiPolygon(mpoly) => {
+                    // Same approach, but each Polygon in the MultiPolygon
+                    for poly2d in &mpoly.0 {
+                        let outer: Vec<[Real; 2]> = poly2d
+                            .exterior()
+                            .coords_iter()
+                            .map(|c| [c.x, c.y])
+                            .collect();
+
+                        let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
+                            .interiors()
+                            .iter()
+                            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
+                            .collect();
+
+                        let hole_refs: Vec<&[[Real; 2]]> =
+                            holes_vec.iter().map(|h| &h[..]).collect();
+                        let tri_2d = Mesh::<()>::triangulate_2d(&outer, &hole_refs);
+
+                        for tri_pts in tri_2d {
+                            triangles.push(Triangle {
+                                normal: Normal::new([0.0, 0.0, 1.0]),
+                                vertices: [
+                                    Vertex::new([
+                                        tri_pts[0].x as f32,
+                                        tri_pts[0].y as f32,
+                                        tri_pts[0].z as f32,
+                                    ]),
+                                    Vertex::new([
+                                        tri_pts[1].x as f32,
+                                        tri_pts[1].y as f32,
+                                        tri_pts[1].z as f32,
+                                    ]),
+                                    Vertex::new([
+                                        tri_pts[2].x as f32,
+                                        tri_pts[2].y as f32,
+                                        tri_pts[2].z as f32,
+                                    ]),
+                                ],
+                            });
+                        }
+                    }
+                }
+
+                // Skip other geometry types: lines, points, etc.
+                _ => {}
+            }
+        }
+
+        //
+        // (C) Encode into a binary STL buffer
+        //
+        let mut cursor = Cursor::new(Vec::new());
+        write_stl(&mut cursor, triangles.iter())?;
+        Ok(cursor.into_inner())
     }
 }
