@@ -1,9 +1,9 @@
 //! This module contains the implementation of the [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree data structure
 
 use crate::float_types::EPSILON;
-use crate::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
+use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
+use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]

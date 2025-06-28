@@ -1,13 +1,14 @@
-use crate::csg::CSG;
 use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real, TAU};
+use crate::sketch::sketch::Sketch;
+use crate::traits::CSGOps;
 use geo::{
-    BooleanOps, coord, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
-    Polygon as GeoPolygon, line_string, orient::Direction,
+    BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
+    Polygon as GeoPolygon, coord, line_string, orient::Direction,
 };
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug + Send + Sync> CSG<S> {
+impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Creates a 2D rectangle in the XY plane.
     ///
     /// # Parameters
@@ -17,7 +18,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// - `metadata`: optional metadata
     ///
     /// # Example
-    /// let rect = CSG::rectangle(2.0, 3.0, None);
+    /// let sq2 = Sketch::rectangle(2.0, 3.0, None);
     pub fn rectangle(width: Real, length: Real, metadata: Option<S>) -> Self {
         // In geo, a Polygon is basically (outer: LineString, Vec<LineString> for holes).
         let outer = line_string![
@@ -29,7 +30,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         ];
         let polygon_2d = GeoPolygon::new(outer, vec![]);
 
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -45,13 +46,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// # Example
     /// let sq2 = CSG::square(2.0, None);
     pub fn square(width: Real, metadata: Option<S>) -> Self {
-        Self::rectangle(width,width,metadata)
+        Self::rectangle(width, width, metadata)
     }
 
     /// Creates a 2D circle in the XY plane.
     pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 3 {
-            return CSG::new();
+            return Sketch::new();
         }
         let mut coords = Vec::with_capacity(segments + 1);
         for i in 0..segments {
@@ -64,7 +65,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         coords.push((coords[0].0, coords[0].1));
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
 
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -72,9 +73,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
     pub fn right_triangle(width: Real, height: Real, metadata: Option<S>) -> Self {
-        let line_string = LineString::new(vec![coord!{x: 0.0, y: 0.0}, coord!{x: width, y: 0.0}, coord!{x: 0.0, y: height}]);
+        let line_string = LineString::new(vec![
+            coord! {x: 0.0, y: 0.0},
+            coord! {x: width, y: 0.0},
+            coord! {x: 0.0, y: height},
+        ]);
         let polygon = GeoPolygon::new(line_string, vec![]);
-        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon)]), metadata)
+        Sketch::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon)]), metadata)
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -86,10 +91,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///
     /// # Example
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
-    /// let poly2d = CSG::polygon(&pts, metadata);
+    /// let poly2d = Sketch::polygon(&pts, metadata);
     pub fn polygon(points: &[[Real; 2]], metadata: Option<S>) -> Self {
         if points.len() < 3 {
-            return CSG::new();
+            return Sketch::new();
         }
         let mut coords = Vec::with_capacity(points.len() + 1);
         for p in points {
@@ -101,7 +106,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
 
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -168,7 +173,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -178,7 +183,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// `segments` is the number of polygon edges approximating the ellipse.
     pub fn ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 3 {
-            return CSG::new();
+            return Sketch::new();
         }
         let rx = 0.5 * width;
         let ry = 0.5 * height;
@@ -191,7 +196,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
         coords.push(coords[0]);
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -201,7 +206,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// `sides` is how many edges (>=3).
     pub fn regular_ngon(sides: usize, radius: Real, metadata: Option<S>) -> Self {
         if sides < 3 {
-            return CSG::new();
+            return Sketch::new();
         }
         let mut coords = Vec::with_capacity(sides + 1);
         for i in 0..sides {
@@ -212,7 +217,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
         coords.push(coords[0]);
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -235,7 +240,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             (0.0, 0.0), // close
         ];
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -250,7 +255,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         metadata: Option<S>,
     ) -> Self {
         if num_points < 2 {
-            return CSG::new();
+            return Sketch::new();
         }
         let mut coords = Vec::with_capacity(2 * num_points + 1);
         let step = TAU / (num_points as Real);
@@ -271,7 +276,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -282,14 +287,14 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// - it tapers down to a cusp at bottom.
     /// This is just one of many possible "teardrop" definitions.
     // todo: center on focus of the arc
-    pub fn teardrop_outline(
+    pub fn teardrop(
         width: Real,
         length: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         if segments < 2 || width < EPSILON || length < EPSILON {
-            return CSG::new();
+            return Sketch::new();
         }
         let r = 0.5 * width;
         let center_y = length - r;
@@ -309,7 +314,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         coords.push(coords[0]);
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -317,14 +322,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
-    pub fn egg_outline(
-        width: Real,
-        length: Real,
-        segments: usize,
-        metadata: Option<S>,
-    ) -> CSG<S> {
+    pub fn egg(width: Real, length: Real, segments: usize, metadata: Option<S>) -> Sketch<S> {
         if segments < 3 {
-            return CSG::new();
+            return Sketch::new();
         }
         let rx = 0.5 * width;
         let ry = 0.5 * length;
@@ -340,7 +340,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -353,9 +353,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         height: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         if segments < 3 {
-            return CSG::new();
+            return Sketch::new();
         }
         let rx = 0.5 * width;
         let ry = 0.5 * height;
@@ -372,7 +372,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -387,9 +387,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         handle_height: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         if segments < 3 {
-            return CSG::new();
+            return Sketch::new();
         }
         // 1) Circle
         let mut circle_coords = Vec::with_capacity(segments + 1);
@@ -415,7 +415,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let mp2 = MultiPolygon(vec![rect_poly]);
         let multipolygon_2d = mp1.union(&mp2);
 
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::MultiPolygon(multipolygon_2d)]),
             metadata,
         )
@@ -439,9 +439,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         diameter: Real,
         circle_segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         if sides < 3 || circle_segments < 6 || diameter <= EPSILON {
-            return CSG::new();
+            return Sketch::new();
         }
 
         // Circumradius that gives the requested *diameter* for the regular n-gon
@@ -459,18 +459,17 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             .collect();
 
         // Build the first disk and use it as the running intersection
-        let base = CSG::circle(diameter, circle_segments, metadata.clone())
+        let base = Sketch::circle(diameter, circle_segments, metadata.clone())
             .translate(verts[0].0, verts[0].1, 0.0);
 
         let shape = verts.iter().skip(1).fold(base, |acc, &(x, y)| {
-            let disk =
-                CSG::circle(diameter, circle_segments, metadata.clone()).translate(x, y, 0.0);
+            let disk = Sketch::circle(diameter, circle_segments, metadata.clone())
+                .translate(x, y, 0.0);
             acc.intersection(&disk)
         });
 
-        CSG {
+        Sketch {
             geometry: shape.geometry,
-            polygons: shape.polygons,
             bounding_box: OnceLock::new(),
             metadata,
         }
@@ -485,9 +484,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///   inner = circle(inner_radius)
     ///   ring = outer.difference(inner)
     /// Then we call `flatten()` to unify into a single shape that has a hole.
-    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>) -> CSG<S> {
+    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>) -> Sketch<S> {
         if id <= 0.0 || thickness <= 0.0 || segments < 3 {
-            return CSG::new();
+            return Sketch::new();
         }
         let inner_radius = 0.5 * id;
         let outer_radius = inner_radius + thickness;
@@ -515,7 +514,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         let polygon_2d =
             GeoPolygon::new(LineString::from(outer), vec![LineString::from(inner)]);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -533,9 +532,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         end_angle_deg: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         if segments < 1 {
-            return CSG::new();
+            return Sketch::new();
         }
 
         let start_rad = start_angle_deg.to_radians();
@@ -555,7 +554,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         coords.push((0.0, 0.0)); // close explicitly
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -574,9 +573,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         n3: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         if segments < 3 {
-            return CSG::new();
+            return Sketch::new();
         }
 
         // The typical superformula radius function
@@ -612,7 +611,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         coords.push(coords[0]);
 
         let polygon_2d = geo::Polygon::new(LineString::from(coords), vec![]);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -625,9 +624,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         key_width: Real,
         key_depth: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         // 1. Full circle
-        let circle = CSG::circle(radius, segments, metadata.clone());
+        let circle = Sketch::circle(radius, segments, metadata.clone());
 
         // 2. Construct the keyway rectangle:
         //    - width along X = key_depth
@@ -635,7 +634,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         //    - its right edge at x = +radius
         //    - so it spans from x = (radius - key_depth) to x = radius
         //    - and from y = -key_width/2 to y = +key_width/2
-        let key_rect = CSG::rectangle(key_depth, key_width, metadata.clone()).translate(
+        let key_rect = Sketch::square(key_width, metadata.clone()).translate(
             radius - key_depth,
             -key_width * 0.5,
             0.0,
@@ -658,9 +657,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         segments: usize,
         flat_dist: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         // 1. Full circle
-        let circle = CSG::circle(radius, segments, metadata.clone());
+        let circle = Sketch::circle(radius, segments, metadata.clone());
 
         // 2. Build a large rectangle that cuts off everything below y = -flat_dist
         //    (i.e., we remove that portion to create a chord).
@@ -668,7 +667,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         //    Height = large enough, we just shift it so top edge is at y = -flat_dist.
         //    So that rectangle covers from y = -∞ up to y = -flat_dist.
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = CSG::rectangle(2.0 * radius, cutter_height, metadata.clone())
+        let rect_cutter = Sketch::rectangle(2.0 * radius, cutter_height, metadata.clone())
             .translate(-radius, -cutter_height, 0.0) // put its bottom near "negative infinity"
             .translate(0.0, -flat_dist, 0.0); // now top edge is at y = -flat_dist
 
@@ -686,18 +685,18 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         segments: usize,
         flat_dist: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         // 1. Full circle
-        let circle = CSG::circle(radius, segments, metadata.clone());
+        let circle = Sketch::circle(radius, segments, metadata.clone());
 
         // 2. Large rectangle to cut the TOP (above +flat_dist)
         let cutter_height = 9999.0;
-        let top_rect = CSG::rectangle(2.0 * radius, cutter_height, metadata.clone())
+        let top_rect = Sketch::rectangle(2.0 * radius, cutter_height, metadata.clone())
             // place bottom at y=flat_dist
             .translate(-radius, flat_dist, 0.0);
 
         // 3. Large rectangle to cut the BOTTOM (below -flat_dist)
-        let bottom_rect = CSG::rectangle(2.0 * radius, cutter_height, metadata.clone())
+        let bottom_rect = Sketch::rectangle(2.0 * radius, cutter_height, metadata.clone())
             // place top at y=-flat_dist => bottom extends downward
             .translate(-radius, -cutter_height - flat_dist, 0.0);
 
@@ -716,7 +715,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///
     /// The function returns a single closed polygon lying in the *XY* plane with its
     /// leading edge at the origin and the chord running along +X.
-    pub fn airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>) -> CSG<S>
+    pub fn airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>) -> Sketch<S>
     where
         S: Clone + Send + Sync,
     {
@@ -785,7 +784,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         let polygon_2d =
             GeoPolygon::new(LineString::from(coords), vec![]).orient(Direction::Default);
-        CSG::from_geo(
+        Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
         )
@@ -798,7 +797,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// * `segments`: number of straight-line segments used for the tessellation
     pub fn bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>) -> Self {
         if control.len() < 2 || segments < 1 {
-            return CSG::new();
+            return Sketch::new();
         }
 
         // de Casteljau evaluator -------------------------------------------------
@@ -828,12 +827,12 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             let ls: LineString<Real> = pts.into();
             let mut gc = GeometryCollection::default();
             gc.0.push(Geometry::LineString(ls));
-            return CSG::from_geo(gc, metadata);
+            return Sketch::from_geo(gc, metadata);
         }
 
         // closed curve → create a filled polygon
         let poly_2d = GeoPolygon::new(LineString::from(pts), vec![]);
-        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
+        Sketch::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
     }
 
     /// Sample an open-uniform B-spline of arbitrary degree (`p`) using the
@@ -849,7 +848,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         metadata: Option<S>,
     ) -> Self {
         if control.len() < p + 1 || segments_per_span < 1 {
-            return CSG::new();
+            return Sketch::new();
         }
 
         let n = control.len() - 1;
@@ -919,11 +918,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             let ls: LineString<Real> = pts.into();
             let mut gc = GeometryCollection::default();
             gc.0.push(Geometry::LineString(ls));
-            return CSG::from_geo(gc, metadata);
+            return Sketch::from_geo(gc, metadata);
         }
 
         let poly_2d = GeoPolygon::new(LineString::from(pts), vec![]);
-        CSG::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
+        Sketch::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
     }
 
     /// 2-D heart outline (closed polygon) sized to `width` × `height`.
@@ -976,7 +975,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// `segments` controls circle smoothness.
     ///
     /// ```
-    /// let cres = CSG::crescent(2.0, 1.4, 0.8, 64, None);
+    /// let cres = Sketch::crescent(2.0, 1.4, 0.8, 64, None);
     /// ```
     pub fn crescent(
         outer_r: Real,
@@ -1001,7 +1000,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     // -------------------------------------------------------------------------------------------------
 
     /// Involute gear outline (2‑D).
-    pub fn involute_gear_2d(
+    pub fn involute_gear(
         module_: Real,
         teeth: usize,
         pressure_angle_deg: Real,
@@ -1009,7 +1008,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         backlash: Real,
         segments_per_flank: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         assert!(teeth >= 4, "Need at least 4 teeth for a valid gear");
         assert!(segments_per_flank >= 3);
 
@@ -1073,18 +1072,18 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         // Close path
         outline.push(outline[0]);
 
-        CSG::polygon(&outline, metadata)
+        Sketch::polygon(&outline, metadata)
     }
 
     /// (Epicyclic) cycloidal gear outline (2‑D).
-    pub fn cycloidal_gear_2d(
+    pub fn cycloidal_gear(
         module_: Real,
         teeth: usize,
         pin_teeth: usize,
         clearance: Real,
         segments_per_flank: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         assert!(teeth >= 3 && pin_teeth >= 3);
         let m = module_;
         let z = teeth as Real;
@@ -1136,19 +1135,19 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
         outline.push(outline[0]);
 
-        CSG::polygon(&outline, metadata)
+        Sketch::polygon(&outline, metadata)
     }
 
     /// Linear **involute rack** profile (lying in the *XY* plane, pitch‑line on *Y = 0*).
     /// The returned polygon is CCW and spans `num_teeth` pitches along +X.
-    pub fn involute_rack_2d(
+    pub fn involute_rack(
         module_: Real,
         num_teeth: usize,
         pressure_angle_deg: Real,
         clearance: Real,
         backlash: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         assert!(num_teeth >= 1);
         let m = module_;
         let p = PI * m; // linear pitch
@@ -1192,21 +1191,21 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         outline.push([outline[0][0], 0.0]);
         outline.push(outline[0]);
 
-        CSG::polygon(&outline, metadata)
+        Sketch::polygon(&outline, metadata)
     }
 
     /// Linear **cycloidal rack** profile.
     /// The cycloidal rack is generated by rolling a circle of radius `r_p` along the
     /// rack’s pitch‑line.  The flanks become a *trochoid*; for practical purposes we
     /// approximate with the classic curtate cycloid equations.
-    pub fn cycloidal_rack_2d(
+    pub fn cycloidal_rack(
         module_: Real,
         num_teeth: usize,
         generating_radius: Real, // usually = module_/2
         clearance: Real,
         segments_per_flank: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Sketch<S> {
         assert!(num_teeth >= 1 && segments_per_flank >= 4);
         let m = module_;
         let p = PI * m;
@@ -1254,7 +1253,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         }
         outline.push(outline[0]);
 
-        CSG::polygon(&outline, metadata)
+        Sketch::polygon(&outline, metadata)
     }
 }
 

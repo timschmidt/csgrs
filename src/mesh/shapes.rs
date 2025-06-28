@@ -1,14 +1,16 @@
-use crate::csg::CSG;
 use crate::float_types::{EPSILON, PI, Real, TAU};
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
+use crate::mesh::mesh::Mesh;
+use crate::mesh::polygon::Polygon;
+use crate::mesh::vertex::Vertex;
+use crate::sketch::sketch::Sketch;
+use crate::traits::CSGOps;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> CSG<S> {
+impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Create a right prism (a box) that spans from (0, 0, 0)
     /// to (width, length, height). All dimensions must be >= 0.
-    pub fn cuboid(width: Real, length: Real, height: Real, metadata: Option<S>) -> CSG<S> {
+    pub fn cuboid(width: Real, length: Real, height: Real, metadata: Option<S>) -> Mesh<S> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
         let p000 = Point3::new(0.0, 0.0, 0.0);
@@ -102,11 +104,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             metadata.clone(),
         );
 
-        // Combine all faces into a CSG
-        CSG::from_polygons(&[bottom, top, front, back, left, right])
+        // Combine all faces into a Mesh
+        Mesh::from_polygons(&[bottom, top, front, back, left, right])
     }
 
-    pub fn cube(width: Real, metadata: Option<S>) -> CSG<S> {
+    pub fn cube(width: Real, metadata: Option<S>) -> Mesh<S> {
         Self::cuboid(width, width, width, metadata)
     }
 
@@ -116,7 +118,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         segments: usize,
         stacks: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Mesh<S> {
         let mut polygons = Vec::new();
 
         for i in 0..segments {
@@ -157,7 +159,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
                 polygons.push(Polygon::new(vertices, metadata.clone()));
             }
         }
-        CSG::from_polygons(&polygons)
+        Mesh::from_polygons(&polygons)
     }
 
     /// Constructs a frustum between `start` and `end` with bottom radius = `radius1` and
@@ -178,7 +180,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     /// let bottom = Point3::new(0.0, 0.0, 0.0);
     /// let top = Point3::new(0.0, 0.0, 5.0);
     /// // This will create a cone (bottom degenerate) because radius1 is 0:
-    /// let cone = CSG::frustum_ptp_special(bottom, top, 0.0, 2.0, 32, None);
+    /// let cone = Mesh::frustum_ptp_special(bottom, top, 0.0, 2.0, 32, None);
     /// ```
     pub fn frustum_ptp(
         start: Point3<Real>,
@@ -187,13 +189,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         radius2: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Mesh<S> {
         // Compute the axis and check that start and end do not coincide.
         let s = start.coords;
         let e = end.coords;
         let ray = e - s;
         if ray.norm_squared() < EPSILON {
-            return CSG::new();
+            return Mesh::new();
         }
         let axis_z = ray.normalize();
         // Pick an axis not parallel to axis_z.
@@ -231,7 +233,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
         // If both faces are degenerate, we cannot build a meaningful volume.
         if bottom_degenerate && top_degenerate {
-            return CSG::new();
+            return Mesh::new();
         }
 
         // For each slice of the circle (0..segments)
@@ -301,7 +303,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             }
         }
 
-        CSG::from_polygons(&polygons)
+        Mesh::from_polygons(&polygons)
     }
 
     /// A helper to create a vertical cylinder along Z from z=0..z=height
@@ -312,8 +314,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         height: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
-        CSG::frustum_ptp(
+    ) -> Mesh<S> {
+        Mesh::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
             radius1,
@@ -324,14 +326,14 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     }
 
     /// A helper to create a vertical cylinder along Z from z=0..z=height
-    // with the specified radius (NOT diameter).
+    /// with the specified radius (NOT diameter).
     pub fn cylinder(
         radius: Real,
         height: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> CSG<S> {
-        CSG::frustum_ptp(
+    ) -> Mesh<S> {
+        Mesh::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
             radius.clone(),
@@ -341,7 +343,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         )
     }
 
-    /// Creates a CSG polyhedron from raw vertex data (`points`) and face indices.
+    /// Creates a Mesh polyhedron from raw vertex data (`points`) and face indices.
     ///
     /// # Parameters
     ///
@@ -368,13 +370,13 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
     ///     vec![3, 0, 4],
     /// ];
     ///
-    /// let csg_poly = CSG::polyhedron(pts, &fcs);
+    /// let mesh_poly = Mesh::polyhedron(pts, &fcs);
     /// ```
     pub fn polyhedron(
         points: &[[Real; 3]],
         faces: &[Vec<usize>],
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Mesh<S> {
         let mut polygons = Vec::new();
 
         for face in faces {
@@ -413,7 +415,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             polygons.push(poly);
         }
 
-        CSG::from_polygons(&polygons)
+        Mesh::from_polygons(&polygons)
     }
 
     /// Creates a 3D "egg" shape by revolving the existing 2D `egg_outline` profile.
@@ -432,12 +434,15 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         outline_segments: usize,
         metadata: Option<S>,
     ) -> Self {
-        let egg_2d = Self::egg_outline(width, length, outline_segments, metadata.clone());
+        let egg_2d = Sketch::egg(width, length, outline_segments, metadata.clone());
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = CSG::square(cutter_height, metadata.clone())
-            .translate(-cutter_height, -cutter_height / 2.0, 0.0);
+        let rect_cutter = Sketch::square(cutter_height, metadata.clone()).translate(
+            -cutter_height,
+            -cutter_height / 2.0,
+            0.0,
+        );
 
         let half_egg = egg_2d.difference(&rect_cutter);
 
@@ -461,12 +466,15 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         metadata: Option<S>,
     ) -> Self {
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
+        let td_2d = Sketch::teardrop(width, length, shape_segments, metadata.clone());
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = CSG::square(cutter_height, metadata.clone())
-            .translate(-cutter_height, -cutter_height / 2.0, 0.0);
+        let rect_cutter = Sketch::square(cutter_height, metadata.clone()).translate(
+            -cutter_height,
+            -cutter_height / 2.0,
+            0.0,
+        );
 
         let half_teardrop = td_2d.difference(&rect_cutter);
 
@@ -493,7 +501,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         metadata: Option<S>,
     ) -> Self {
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Self::teardrop_outline(width, length, shape_segments, metadata.clone());
+        let td_2d = Sketch::teardrop(width, length, shape_segments, metadata.clone());
         td_2d.extrude(height).convex_hull()
     }
 
@@ -518,7 +526,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         base_sphere.scale(rx, ry, rz)
     }
 
-    /// Creates an arrow CSG. The arrow is composed of:
+    /// Creates an arrow Mesh. The arrow is composed of:
     ///   - a cylindrical shaft, and
     ///   - a cone–like head (a frustum from a larger base to a small tip)
     /// built along the canonical +Z axis. The arrow is then rotated so that +Z aligns with the given
@@ -541,11 +549,11 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         segments: usize,
         orientation: bool,
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Mesh<S> {
         // Compute the arrow's total length.
         let arrow_length = direction.norm();
         if arrow_length < EPSILON {
-            return CSG::new();
+            return Mesh::new();
         }
         // Compute the unit direction.
         let unit_dir = direction / arrow_length;
@@ -562,10 +570,10 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let tip_radius = arrow_length * 0.0; // tip radius (nearly a point)
 
         // Build the shaft as a vertical cylinder along Z from 0 to shaft_length.
-        let shaft = CSG::cylinder(shaft_radius, shaft_length, segments, metadata.clone());
+        let shaft = Mesh::cylinder(shaft_radius, shaft_length, segments, metadata.clone());
 
         // Build the arrow head as a frustum from z = shaft_length to z = shaft_length + head_length.
-        let head = CSG::frustum_ptp(
+        let head = Mesh::frustum_ptp(
             Point3::new(0.0, 0.0, shaft_length),
             Point3::new(0.0, 0.0, shaft_length + head_length),
             head_base_radius,
@@ -704,7 +712,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         segments_minor: usize,
         metadata: Option<S>,
     ) -> Self {
-        let circle = CSG::circle(minor_r, segments_minor.max(3), metadata.clone())
+        let circle = Sketch::circle(minor_r, segments_minor.max(3), metadata.clone())
             .translate(major_r, 0.0, 0.0);
         circle.rotate_extrude(360.0, segments_major.max(3))
     }
@@ -718,8 +726,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         segments_per_flank: usize,
         thickness: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
-        CSG::involute_gear_2d(
+    ) -> Mesh<S> {
+        Sketch::involute_gear(
             module_,
             teeth,
             pressure_angle_deg,
@@ -739,8 +747,8 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         segments_per_flank: usize,
         thickness: Real,
         metadata: Option<S>,
-    ) -> CSG<S> {
-        CSG::cycloidal_gear_2d(
+    ) -> Mesh<S> {
+        Sketch::cycloidal_gear(
             module_,
             teeth,
             pin_teeth,
@@ -766,9 +774,9 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         helix_angle_deg: Real, // β
         slices: usize,         // ≥ 2 – axial divisions
         metadata: Option<S>,
-    ) -> CSG<S> {
+    ) -> Mesh<S> {
         assert!(slices >= 2);
-        let base_slice = CSG::involute_gear_2d(
+        let base_slice = Sketch::involute_gear(
             module_,
             teeth,
             pressure_angle_deg,
@@ -781,7 +789,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
         let dz = thickness / (slices as Real);
         let d_ψ = helix_angle_deg.to_radians() / (slices as Real);
 
-        let mut acc = CSG::<S>::new();
+        let mut acc = Mesh::<S>::new();
         let mut z_curr = 0.0;
         for i in 0..slices {
             let slice = base_slice

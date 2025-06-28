@@ -1,6 +1,6 @@
 [package]
 name = "csgrs"
-version = "0.19.1"
+version = "0.20.0"
 edition = "2024"
 description = "Constructive solid geometry (CSG) on meshes using BSP trees in Rust"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -73,6 +73,7 @@ nom = { version = "7.1", optional = true }
 ttf-utils = { version = "0.1", optional = true, package = "ttf-parser-utils"}
 ttf-parser = { version = "0.25", optional = true }
 hershey = { version = "0.1.2", optional = true }
+curvo = "0.1.52"
 
 doc-image-embed = "0.2.1"
 
@@ -82,7 +83,7 @@ getrandom = { version = "0.3", features = ["wasm_js"], optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
-default = ["f64", "stl-io", "dxf-io", "chull-io", "image-io", "metaballs", "hashmap", "sdf", "offset", "delaunay", "truetype-text"]
+default = ["f64", "stl-io", "dxf-io", "chull-io", "image-io", "metaballs", "hashmap", "sdf", "offset", "delaunay", "truetype-text", "hershey"]
 parallel = [
   "rayon",
   "geo/multithreading",

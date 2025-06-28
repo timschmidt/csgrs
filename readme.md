@@ -462,6 +462,16 @@ To run the tests:
 cargo xtask test-all
 ```
 
+## Roadmap
+- **Multi-modality** Sketch, mesh, nurbs, voxels, signed distance fields sub-kernels each implementing a geometry representation, booleans, transformations, and conversions to other types.  Some representations like Metaballs can be implemented entirely within another kernel like SDF.
+- **Attachments** Unless you make models containing just one object attachments features can revolutionize your modeling. They will let you position components of a model relative to other components so you don't have to keep track of the positions and orientations of parts of the model. You can instead place something on the TOP of something else, perhaps aligned to the RIGHT.
+- **Rounding and filleting** Provide modules like cuboid() to make a cube with any of the edges rounded, offset_sweep() to round the ends of a linear extrusion, and prism_connector() which works with the attachments feature to create filleted prisms between a variety of objects, or even rounded holes through a single object. Also edge_profile() to apply a variety of different mask profiles to chosen edges of a cubic shape, or directly subtract 3d mask shapes from an edge of objects that are not cubes.
+- **Complex object support** The path_sweep() function/module takes a 2d polygon moves it through space along a path and sweeps out a 3d shape as it moves. Link together a series of arbitrary polygons with skin() or vnf_vertex_array().  Build parts of an object in multiple different representations and combine.
+- **Texturing** Apply textures to many kinds of objects. Create knurling or any repeating pattern.  Applying a texture can actually replace the base object with something different based on repeating copies of the texture element. A texture can also be an image; using texturing you can emboss an arbitrary image onto your model.
+- **Parts library** The parts library will include many useful specific functional parts including gears, generic threading, and specific threading to match plastic bottles, pipe fittings, and standard screws. Also clips, hinges, and dovetail joints, aluminum extrusion, bearings, nuts, bolts, washers, etc.
+- **Shorthands** Shorthands to make your code a little shorter, and more importantly, make it significantly easier to read. Compare up(x) to translate([0,0,x]). Shorthands will include operations for creating copies of objects and for applying transformations to objects.  Drawing like turtle graphics will be possible.
+- **Non-linear solver** Composed of a tree which can contain operations and variables representing systems of equations describing constraints, and functionality to perterb variables, sample the solution space described by the tree expression, determine the local slope, and hill climb toward a solution.
+
 ## Performance
 Patterns we work to follow throughout the library to improve performance
 and memory usage:
@@ -471,7 +481,7 @@ and memory usage:
 possible, clone if necessary, and offer the choice of transmut in place or
 create new copy via appropriate functions
 
-## Roadmap / Todo
+## Todo
 - when tessellating, detect T junctions with other polygons with shared edges,
 and insert splitting vertices into polygons to correct
 - implement as_indexed, from_indexed, and merge_vertices (using hashbrown, and a
@@ -570,6 +580,7 @@ for Polygon
 - gerber output
 - rework bezier and bspline using https://github.com/mattatz/curvo
   - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src for cubic and quadratic bezier
+- https://docs.rs/rgeometry/latest/rgeometry/algorithms/polygonization/fn.two_opt_moves.html and other algorithms from rgeometry crate
 
 ## Todo shapes
 - geodesic domes / goldberg polyhedra
