@@ -14,10 +14,7 @@ use small_str::{SmallStr, format_smallstr};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug> Mesh<S>
-where
-    S: Clone + Send + Sync,
-{
+impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
     /// unifies them into one or more 2D polygons, and returns a purely 2D Sketch.
     ///
