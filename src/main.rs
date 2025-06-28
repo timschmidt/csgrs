@@ -346,7 +346,7 @@ fn main() {
         (Point2::new(1.5, 0.0), 1.0),
         (Point2::new(0.75, 1.0), 0.5),
     ];
-    let mb2d = Sketch::metaballs2d(&balls_2d, (100, 100), 1.0, 0.25, None);
+    let mb2d = Sketch::metaballs(&balls_2d, (100, 100), 1.0, 0.25, None);
     let _ = fs::write("stl/mb2d.stl", mb2d.to_stl_ascii("metaballs2d"));
 
     // Create a supershape
@@ -437,14 +437,14 @@ fn main() {
     let _ = fs::write("stl/trapezoid_2d.stl", trap_2d.to_stl_ascii("trapezoid_2d"));
 
     // 8) teardrop(width, height, segments) [2D shape]
-    let teardrop_2d = Sketch::teardrop_outline(2.0, 3.0, 16, None);
+    let teardrop_2d = Sketch::teardrop(2.0, 3.0, 16, None);
     let _ = fs::write(
         "stl/teardrop_2d.stl",
         teardrop_2d.to_stl_ascii("teardrop_2d"),
     );
 
     // 9) egg_outline(width, length, segments) [2D shape]
-    let egg_2d = Sketch::egg_outline(2.0, 4.0, 32, None);
+    let egg_2d = Sketch::egg(2.0, 4.0, 32, None);
     let _ = fs::write(
         "stl/egg_outline_2d.stl",
         egg_2d.to_stl_ascii("egg_outline_2d"),
@@ -782,7 +782,7 @@ fn main() {
         );
     }
 
-    let gear_involute_2d = Sketch::involute_gear_2d(
+    let gear_involute_2d = Sketch::involute_gear(
         2.0,  // module [mm]
         20,   // z – number of teeth
         20.0, // α – pressure angle [deg]
@@ -796,7 +796,7 @@ fn main() {
         gear_involute_2d.to_stl_ascii("gear_involute_2d"),
     );
 
-    let gear_cycloid_2d = Sketch::cycloidal_gear_2d(
+    let gear_cycloid_2d = Sketch::cycloidal_gear(
         2.0,  // module
         17,   // gear teeth
         18,   // mating pin-wheel teeth (zₚ = z±1)
@@ -809,7 +809,7 @@ fn main() {
         gear_cycloid_2d.to_stl_ascii("gear_cycloid_2d"),
     );
 
-    let rack_involute = Sketch::involute_rack_2d(
+    let rack_involute = Sketch::involute_rack(
         2.0,  // module
         12,   // number of rack teeth to generate
         20.0, // pressure angle
@@ -822,7 +822,7 @@ fn main() {
         rack_involute.to_stl_ascii("rack_involute"),
     );
 
-    let rack_cycloid = Sketch::cycloidal_rack_2d(
+    let rack_cycloid = Sketch::cycloidal_rack(
         2.0,  // module
         12,   // teeth
         1.0,  // generating-circle radius  (≈ m/2 for a conventional pin-rack)

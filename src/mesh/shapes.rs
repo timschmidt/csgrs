@@ -7,10 +7,7 @@ use crate::sketch::sketch::Sketch;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> Mesh<S>
-where
-    S: Clone + Send + Sync,
-{
+impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Create a right prism (a box) that spans from (0, 0, 0)
     /// to (width, length, height). All dimensions must be >= 0.
     pub fn cube(width: Real, length: Real, height: Real, metadata: Option<S>) -> Mesh<S> {
@@ -416,7 +413,7 @@ where
         outline_segments: usize,
         metadata: Option<S>,
     ) -> Self {
-        let egg_2d = Sketch::egg_outline(width, length, outline_segments, metadata.clone());
+        let egg_2d = Sketch::egg(width, length, outline_segments, metadata.clone());
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
@@ -450,7 +447,7 @@ where
         metadata: Option<S>,
     ) -> Self {
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Sketch::teardrop_outline(width, length, shape_segments, metadata.clone());
+        let td_2d = Sketch::teardrop(width, length, shape_segments, metadata.clone());
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
@@ -485,7 +482,7 @@ where
         metadata: Option<S>,
     ) -> Self {
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Sketch::teardrop_outline(width, length, shape_segments, metadata.clone());
+        let td_2d = Sketch::teardrop(width, length, shape_segments, metadata.clone());
         td_2d.extrude(height).convex_hull()
     }
 
@@ -710,7 +707,7 @@ where
         thickness: Real,
         metadata: Option<S>,
     ) -> Mesh<S> {
-        Sketch::involute_gear_2d(
+        Sketch::involute_gear(
             module_,
             teeth,
             pressure_angle_deg,
@@ -731,7 +728,7 @@ where
         thickness: Real,
         metadata: Option<S>,
     ) -> Mesh<S> {
-        Sketch::cycloidal_gear_2d(
+        Sketch::cycloidal_gear(
             module_,
             teeth,
             pin_teeth,
@@ -759,7 +756,7 @@ where
         metadata: Option<S>,
     ) -> Mesh<S> {
         assert!(slices >= 2);
-        let base_slice = Sketch::involute_gear_2d(
+        let base_slice = Sketch::involute_gear(
             module_,
             teeth,
             pressure_angle_deg,

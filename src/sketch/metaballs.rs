@@ -12,7 +12,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `iso_value`: threshold for the iso-surface.
     /// - `padding`: extra boundary beyond each ball's radius.
     /// - `metadata`: optional user metadata.
-    pub fn metaballs2d(
+    pub fn metaballs(
         balls: &[(nalgebra::Point2<Real>, Real)],
         resolution: (usize, usize),
         iso_value: Real,
