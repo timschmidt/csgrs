@@ -1,7 +1,7 @@
 use crate::float_types::Real;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-
+use crate::mesh::mesh::Mesh;
 use geo::CoordsIter;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
@@ -12,7 +12,7 @@ use core2::io::Cursor;
 #[cfg(feature = "stl-io")]
 use stl_io;
 
-impl<S: Clone + Debug + Send + Sync> CSG<S> {
+impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Export to ASCII STL
     /// 1) 3D polygons in `self.polygons`,
     /// 2) any 2D Polygons or MultiPolygons in `self.geometry` (tessellated in XY).
@@ -300,7 +300,7 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
 
     /// Create a CSG object from STL data using `stl_io`.
     #[cfg(feature = "stl-io")]
-    pub fn from_stl(stl_data: &[u8], metadata: Option<S>) -> Result<CSG<S>, std::io::Error> {
+    pub fn from_stl(stl_data: &[u8], metadata: Option<S>) -> Result<Mesh<S>, std::io::Error> {
         // Create an in-memory cursor from the STL data
         let mut cursor = Cursor::new(stl_data);
 
@@ -358,6 +358,6 @@ impl<S: Clone + Debug + Send + Sync> CSG<S> {
             polygons.push(Polygon::new(vertices, metadata.clone()));
         }
 
-        Ok(CSG::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(&polygons))
     }
 }
