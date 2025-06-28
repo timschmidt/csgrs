@@ -4,7 +4,7 @@ use crate::mesh::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::sketch::sketch::Sketch;
-use geo::{Area, CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon};
+use geo::{Area, CoordsIter, Geometry, LineString, Polygon as GeoPolygon};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
@@ -165,7 +165,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S>
         bottom: &Polygon<S>,
         top: &Polygon<S>,
         flip_bottom_polygon: bool,
-    ) -> CSG<S> {
+    ) -> Mesh<S> {
         let n = bottom.vertices.len();
         assert_eq!(
             n,
@@ -210,7 +210,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S>
             polygons.push(side_poly);
         }
 
-        CSG::from_polygons(&polygons)
+        Mesh::from_polygons(&polygons)
     }
 
     /*
@@ -405,7 +405,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S>
     ///   - Cap orientation is set so that normals face outward, consistent with a solid.
     /// - Returns a new CSG with `.polygons` containing only the side walls + any caps.
     ///   The `.geometry` is empty, i.e. `GeometryCollection::default()`.
-    pub fn rotate_extrude(&self, angle_degs: Real, segments: usize) -> CSG<S> {
+    pub fn rotate_extrude(&self, angle_degs: Real, segments: usize) -> Mesh<S> {
         if segments < 2 {
             panic!("rotate_extrude requires at least 2 segments.");
         }
@@ -656,9 +656,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S>
         //----------------------------------------------------------------------
         // 3) Return the new CSG:
         //----------------------------------------------------------------------
-        CSG {
+        Mesh {
             polygons: new_polygons,
-            geometry: GeometryCollection::default(),
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }

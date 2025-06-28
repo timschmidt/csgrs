@@ -58,11 +58,8 @@ where
             mp_acc
         };
 
-        // Union this with any existing 2D geometry (polygons) from self.geometry
-        let existing_2d = &self.to_multipolygon(); // turns geometry -> MultiPolygon
-        let final_union = unioned_from_3d.union(existing_2d);
-        // Optionally ensure consistent orientation (CCW for exteriors):
-        let oriented = final_union.orient(Direction::Default);
+        // Ensure consistent orientation (CCW for exteriors):
+        let oriented = unioned_from_3d.orient(Direction::Default);
 
         // Store final polygons as a MultiPolygon in a new GeometryCollection
         let mut new_gc = GeometryCollection::default();
