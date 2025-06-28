@@ -134,7 +134,7 @@ Extrusions build 3D polygons from 2D Geometries.
 - <img src="docs/rotate_extrude.png" width="128"  alt="an arch with round ends"/> **`Sketch::rotate_extrude(angle_degs, segments)`** - Extrude while rotating around the Y axis
 
 ```rust
-let square = CSG::square(2.0, None);
+let square = Sketch::square(2.0, None);
 let prism = square.extrude(5.0);
 
 let revolve_shape = square.rotate_extrude(360.0, 16);
