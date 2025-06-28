@@ -454,7 +454,6 @@ where
 
         Sketch {
             geometry: shape.geometry,
-            polygons: shape.polygons,
             bounding_box: OnceLock::new(),
             metadata,
         }
