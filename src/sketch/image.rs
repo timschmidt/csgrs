@@ -3,9 +3,7 @@ use crate::float_types::{EPSILON, Real};
 use image::GrayImage;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug> Sketch<S>
-where
-    S: Clone + Send + Sync,
+impl<S: Clone + Debug + Send + Sync> Sketch<S>
 {
     /// Builds a new Sketch from the “on” pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.

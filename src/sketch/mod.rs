@@ -5,3 +5,4 @@ pub mod sketch;
 pub mod truetype;
 pub mod shapes;
 pub mod extrudes;
+pub mod metaballs;
