@@ -387,9 +387,9 @@ impl FromSVG for CSG<()> {
 
         macro_rules! expect_attr {
             ($attrs:expr, $attr:literal) => {
-                $attrs
-                    .get($attr)
-                    .ok_or_else(|| IoError::MalformedInput(format!("Missing attribute {}", $attr)))
+                $attrs.get($attr).ok_or_else(|| {
+                    IoError::MalformedInput(format!("Missing attribute {}", $attr))
+                })
             };
         }
 
@@ -522,7 +522,7 @@ impl FromSVG for CSG<()> {
                     // TODO: Non-empty tags should also be supported
 
                     unimplemented!("Parsing tag {tag:?}");
-                }
+                },
             }
         }
 
@@ -640,7 +640,7 @@ impl<S: Clone> ToSVG for CSG<S> {
 
                 GeometryCollection(_) => {
                     unimplemented!("Exporting nested geometry collections to SVG")
-                }
+                },
 
                 // Can't really export points to SVG
                 Point(_) => {}
@@ -832,7 +832,14 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
                 while let Some(&[rx, ry, x_rot, large_arc, sweep, x, y]) = params.next() {
                     let large_arc = large_arc == 1.0;
                     let sweep = sweep == 1.0;
-                    builder.elliptical_arc_to(rx, ry, x_rot, large_arc, sweep, Coord { x, y })?;
+                    builder.elliptical_arc_to(
+                        rx,
+                        ry,
+                        x_rot,
+                        large_arc,
+                        sweep,
+                        Coord { x, y },
+                    )?;
                 }
             }
             EllipticalArc(Relative, params) => {
@@ -841,7 +848,14 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
                 while let Some(&[rx, ry, x_rot, large_arc, sweep, x, y]) = params.next() {
                     let large_arc = large_arc == 1.0;
                     let sweep = sweep == 1.0;
-                    builder.elliptical_arc_by(rx, ry, x_rot, large_arc, sweep, Coord { x, y })?;
+                    builder.elliptical_arc_by(
+                        rx,
+                        ry,
+                        x_rot,
+                        large_arc,
+                        sweep,
+                        Coord { x, y },
+                    )?;
                 }
             }
 

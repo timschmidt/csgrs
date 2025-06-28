@@ -1,3 +1,5 @@
+//! Create `Mesh`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
+
 use crate::mesh::mesh::Mesh;
 use crate::float_types::Real;
 use crate::mesh::polygon::Polygon;
@@ -6,16 +8,19 @@ use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> OnceLock{
+impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Return a Mesh created by meshing a signed distance field within a bounding box
     ///
-    ///    // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
-    ///    let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
+    /// ```
+    /// # use csgrs::{csg::CSG, float_types::Real};
+    /// # use nalgebra::Point3;
+    /// // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
+    /// let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
     ///
-    ///    let resolution = (60, 60, 60);
-    ///    let min_pt = Point3::new(-2.0, -2.0, -2.0);
-    ///    let max_pt = Point3::new( 2.0,  2.0,  2.0);
-    ///    let iso_value = 0.0; // Typically zero for SDF-based surfaces
+    /// let resolution = (60, 60, 60);
+    /// let min_pt = Point3::new(-2.0, -2.0, -2.0);
+    /// let max_pt = Point3::new( 2.0,  2.0,  2.0);
+    /// let iso_value = 0.0; // Typically zero for SDF-based surfaces
     ///
     ///    let mesh_shape = Mesh::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
     ///
@@ -189,18 +194,12 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> OnceLock{
 				continue;
 			}
 
-            let v0 = Vertex::new(
-                p0,
-                Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real),
-            );
-            let v1 = Vertex::new(
-                p1,
-                Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real),
-            );
-            let v2 = Vertex::new(
-                p2,
-                Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real),
-            );
+            let v0 =
+                Vertex::new(p0, Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real));
+            let v1 =
+                Vertex::new(p1, Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real));
+            let v2 =
+                Vertex::new(p2, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
 
             // Note: reverse v1, v2 if you need to fix winding
             let poly = Polygon::new(vec![v0, v1, v2], metadata.clone());

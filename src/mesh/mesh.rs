@@ -12,6 +12,7 @@ use geo::{Coord, CoordsIter, Geometry, LineString, Polygon as GeoPolygon};
 use nalgebra::{Isometry3, Matrix4, Point3, Vector3, Quaternion, Unit, partial_max, partial_min};
 use std::fmt::Debug;
 use std::sync::OnceLock;
+use std::num::NonZero;
 
 #[derive(Clone, Debug)]
 pub struct Mesh<S: Clone + Send + Sync + Debug> {
@@ -173,7 +174,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             .polygons
             .iter()
             .flat_map(|poly| {
-                let sub_tris = poly.subdivide_triangles(levels);
+                let sub_tris = poly.subdivide_triangles(NonZero::new(levels).unwrap());
                 sub_tris.into_iter().map(move |tri| {
                     Polygon::new(
                         vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],

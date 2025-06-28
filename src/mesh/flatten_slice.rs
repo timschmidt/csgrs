@@ -330,10 +330,10 @@ fn extend_chain_forward(
         match found_next {
             Some(v) => {
                 chain.push(v);
-            }
+            },
             None => {
                 break;
-            }
+            },
         }
     }
 }

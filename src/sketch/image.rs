@@ -114,7 +114,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         //  - whitespace or other
         //
         // This small scanner accumulates tokens so we can parse them easily.
-        fn read_number<I: Iterator<Item = char>>(iter: &mut std::iter::Peekable<I>) -> Option<f32> {
+        fn read_number<I: Iterator<Item = char>>(
+            iter: &mut std::iter::Peekable<I>,
+        ) -> Option<f32> {
             let mut buf = String::new();
             // skip leading spaces
             while let Some(&ch) = iter.peek() {
@@ -154,19 +156,19 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     current_x = nx;
                     current_y = ny;
                     current_poly.push((current_x, current_y));
-                }
+                },
                 'H' | 'h' => {
                     // Horizontal line => read 1 number for x
                     let nx = read_number(&mut chars).unwrap_or(current_x);
                     current_x = nx;
                     current_poly.push((current_x, current_y));
-                }
+                },
                 'V' | 'v' => {
                     // Vertical line => read 1 number for y
                     let ny = read_number(&mut chars).unwrap_or(current_y);
                     current_y = ny;
                     current_poly.push((current_x, current_y));
-                }
+                },
                 'Z' | 'z' => {
                     // Close path
                     // We'll let the calling code decide if it must explicitly connect back.
@@ -174,16 +176,16 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     if !current_poly.is_empty() {
                         polylines.push(std::mem::take(&mut current_poly));
                     }
-                }
+                },
                 // Possibly other characters (digits) or spaces:
                 c if c.is_whitespace() || c.is_ascii_digit() || c == '-' => {
                     // Could be an inlined number if the path commands had no letter.
                     // Typically bits_to_paths always has M/H/V so we might ignore it or handle gracefully.
                     // If you want robust parsing, you can push this char back and try read_number.
-                }
+                },
                 _ => {
                     // ignoring other
-                }
+                },
             }
         }
 

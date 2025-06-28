@@ -1,3 +1,14 @@
+//! The [convex hull](https://en.wikipedia.org/wiki/Convex_hull) of a shape is the smallest convex set that contains it.
+//! It may be visualized as the shape enclosed by a rubber band stretched around the subset.
+//!
+//! This is the set:\
+//! ![Pre-ConvexHull demo image][Pre-ConvexHull demo image]
+//!
+//! And this is the convex hull of that set:\
+//! ![ConvexHull demo image][ConvexHull demo image]
+#![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
+#![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
+
 use crate::traits::CSGOps;
 use crate::float_types::Real;
 use crate::mesh::polygon::Polygon;
@@ -14,11 +25,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let points: Vec<Vec<Real>> = self
             .polygons
             .iter()
-            .flat_map(|poly| {
-                poly.vertices
-                    .iter()
-                    .map(|v| vec![v.pos.x, v.pos.y, v.pos.z])
-            })
+            .flat_map(|poly| poly.vertices.iter().map(|v| vec![v.pos.x, v.pos.y, v.pos.z]))
             .collect();
 
         // Attempt to compute the convex hull using the robust wrapper

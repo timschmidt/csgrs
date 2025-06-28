@@ -43,12 +43,13 @@ impl Plane {
     /// A lower cost option may be a grid sub-sampled farthest pair search
     pub fn from_vertices(vertices: Vec<Vertex>) -> Plane {
         let n = vertices.len();
+        let reference_plane = Plane {
+            point_a: vertices[0].pos,
+            point_b: vertices[1].pos,
+            point_c: vertices[2].pos,
+        };
         if n == 3 {
-            return Plane {
-                point_a: vertices[0].pos,
-                point_b: vertices[1].pos,
-                point_c: vertices[2].pos,
-            };
+            return reference_plane;
         } // Plane is already optimal
 
         //------------------------------------------------------------------
@@ -69,11 +70,7 @@ impl Plane {
         let p1 = vertices[i1].pos;
         let dir = p1 - p0;
         if dir.norm_squared() < EPSILON * EPSILON {
-            return Plane {
-                point_a: vertices[0].pos,
-                point_b: vertices[1].pos,
-                point_c: vertices[2].pos,
-            }; // everything almost coincident
+            return reference_plane; // everything almost coincident
         }
 
         //------------------------------------------------------------------
@@ -94,12 +91,8 @@ impl Plane {
         let i2 = match i2 {
             Some(k) if max_area2 > EPSILON * EPSILON => k,
             _ => {
-                return Plane {
-                    point_a: vertices[0].pos,
-                    point_b: vertices[1].pos,
-                    point_c: vertices[2].pos,
-                };
-            } // all vertices collinear
+                return reference_plane;
+            }, // all vertices collinear
         };
         let p2 = vertices[i2].pos;
 
@@ -112,14 +105,16 @@ impl Plane {
             point_c: p2,
         };
 
-        // Reference normal from first three points in order
-        let ref_norm = Plane {
-            point_a: vertices[0].pos,
-            point_b: vertices[1].pos,
-            point_c: vertices[2].pos,
+        // Construct the reference normal for the original polygon using Newell's Method.
+        let mut reference_normal = Vector3::zeros();
+
+        // This computes the normal vector, with a magnitude of twice the area of the polygon.
+        for i in 0..vertices.len() {
+            reference_normal += (vertices[i].pos - Point3::origin())
+                .cross(&(vertices[(i + 1) % vertices.len()].pos - Point3::origin()));
         }
-        .normal();
-        if plane_hq.normal().dot(&ref_norm) < 0.0 {
+
+        if plane_hq.normal().dot(&reference_normal) < 0.0 {
             plane_hq.flip(); // flip in-place to agree with winding
         }
         plane_hq
@@ -193,9 +188,9 @@ impl Plane {
                 z: point.z,
             },
         );
-        if sign > EPSILON {
+        if sign > EPSILON.into() {
             BACK
-        } else if sign < -EPSILON {
+        } else if sign < (-EPSILON).into() {
             FRONT
         } else {
             COPLANAR
@@ -258,7 +253,7 @@ impl Plane {
                 } else {
                     coplanar_back.push(polygon.clone());
                 }
-            }
+            },
             FRONT => front.push(polygon.clone()),
             BACK => back.push(polygon.clone()),
 
@@ -309,7 +304,7 @@ impl Plane {
                 if split_back.len() >= 3 {
                     back.push(Polygon::new(split_back, polygon.metadata.clone()));
                 }
-            }
+            },
         }
 
         (coplanar_front, coplanar_back, front, back)
@@ -355,5 +350,59 @@ impl Plane {
             .unwrap_or_else(Matrix4::identity);
 
         (transform_to_xy, transform_from_xy)
+    }
+}
+
+#[test]
+fn test_plane_orientation() {
+    let vertices = [
+        Vertex {
+            pos: Point3::new(1152.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(1152.0, 256.0, 256.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(768.0, 256.0, 256.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(768.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(896.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(896.0, 256.0, 384.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(1024.0, 256.0, 384.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+        Vertex {
+            pos: Point3::new(1024.0, 256.0, 512.0),
+            normal: Vector3::new(0., 1., 0.),
+        },
+    ];
+
+    // Cycling the order of the vertices doesn't change the winding order of the shape,
+    // so it should not change the resulting plane's normal.
+    for cycle_rotation in 0..vertices.len() {
+        let mut vertices = vertices.clone();
+        vertices.rotate_right(cycle_rotation);
+        let plane = Plane::from_vertices(vertices.to_vec());
+
+        assert!(
+            plane.normal() == Vector3::new(0., 1., 0.),
+            "the vertices {vertices:?} form a plane with unexpected normal {}, \
+            expected (0., 1., 0.); \
+            point list obtained by rotating {cycle_rotation} times",
+            plane.normal(),
+        );
     }
 }
