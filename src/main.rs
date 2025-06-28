@@ -23,7 +23,8 @@ fn main() {
     let _ = fs::create_dir_all("stl");
 
     // 1) Basic shapes: cube, sphere, cylinder
-    let cube = Mesh::cube(2.0, 2.0, 2.0, None);
+    let cube = Mesh::cube(2.0, None);
+    
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/cube.stl", cube.to_stl_binary("cube").unwrap());
 
@@ -104,7 +105,7 @@ fn main() {
     );
 
     // 7) 2D shapes and 2D offsetting
-    let square_2d = Sketch::square(2.0, 2.0, None); // 2x2 square, centered
+    let square_2d = Sketch::square(2.0, None); // 2x2 square, centered
     let _ = fs::write("stl/square_2d.stl", square_2d.to_stl_ascii("square_2d"));
 
     let circle_2d = Sketch::circle(1.0, 32, None);
@@ -165,7 +166,7 @@ fn main() {
     );
 
     // 9) Subdivide triangles (for smoother sphere or shapes):
-    let subdiv_sphere = sphere.subdivide_triangles(2); // 2 subdivision levels
+    let subdiv_sphere = sphere.subdivide_triangles(2.try_into().expect("not 0")); // 2 subdivision levels
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
         "stl/sphere_subdiv2.stl",
@@ -237,7 +238,8 @@ fn main() {
 
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
-    let cube = Mesh::cube(100.0, 100.0, 100.0, None);
+    let cube = Mesh::cube(100.0, None);
+    
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
     let _ = fs::write(
@@ -286,7 +288,7 @@ fn main() {
     //let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
     let sphere_test = Mesh::sphere(1.0, 16, 8, None);
-    let cube_test = Mesh::cube(1.0, 1.0, 1.0, None);
+    let cube_test = Mesh::cube(1.0, None);
     let res = cube_test.difference(&sphere_test);
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
@@ -300,7 +302,7 @@ fn main() {
         // Suppose we want two overlapping metaballs
         let balls = vec![
             MetaBall::new(Point3::origin(), 1.0),
-            MetaBall::new(Point3::new(1.5, 0.0, 0.0), 1.0),
+            MetaBall::new(Point3::new(1.75, 0.0, 0.0), 1.0),
         ];
 
         let resolution = (60, 60, 60);
@@ -725,7 +727,7 @@ fn main() {
 
     // Scene L: Demonstrate rotate_extrude (360 deg) on a square
     {
-        let small_square = Sketch::square(1.0, 1.0, None).translate(2.0, 0.0, 0.0);
+        let small_square = Sketch::square(1.0, None).translate(2.0, 0.0, 0.0);
         let revolve = small_square.rotate_extrude(360.0, 24);
         let _ = fs::write(
             "stl/scene_square_revolve_360.stl",
@@ -736,7 +738,7 @@ fn main() {
     // Scene M: Demonstrate “mirror” across a Y=0 plane
     {
         let plane_y = Plane::from_normal(Vector3::y(), 0.0);
-        let shape = Sketch::square(2.0, 1.0, None)
+        let shape = Sketch::rectangle(2.0, 1.0, None)
             .translate(1.0, 1.0, 0.0)
             .extrude(0.1);
         let mirrored = shape.mirror(plane_y);
@@ -764,7 +766,7 @@ fn main() {
         let scale_mat = Matrix4::new_scaling(0.5);
         // Combine
         let transform_mat = xlate * scale_mat;
-        let shape = Mesh::cube(1.0, 1.0, 1.0, None).transform(&transform_mat);
+        let shape = Mesh::cube(1.0, None).transform(&transform_mat);
         let _ = fs::write(
             "stl/scene_transform_cube.stl",
             shape.to_stl_ascii("scene_transform_cube"),
@@ -909,7 +911,7 @@ fn main() {
     // Done!
     println!("All scenes have been created and written to the 'stl' folder (where applicable).");
     
-    let cube1 = Mesh::cube(3.0, 3.0, 3.0, None).translate(1.0, 1.0, 1.0);
+    let cube1 = Mesh::cube(3.0, None).translate(1.0, 1.0, 1.0);
 	let cube2 = cube1.translate(2.0, 2.0, 2.0);
 	let result = cube1.intersection(&cube2.inverse());
 	let _ = fs::write("stl/cube_difference.stl", result.to_stl_ascii("cube difference"));

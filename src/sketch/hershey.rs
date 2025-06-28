@@ -1,3 +1,5 @@
+//! Create `Sketch`s using Hershey fonts
+
 use crate::sketch::sketch::Sketch;
 use crate::float_types::Real;
 use geo::{Geometry, GeometryCollection, LineString, coord};
@@ -42,11 +44,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
                     // Advance the pen in X
                     cursor_x += glyph_width * size * 0.8;
-                }
+                },
                 Err(_) => {
                     // Missing glyph => skip or just advance
                     cursor_x += 6.0 * size;
-                }
+                },
             }
         }
 
@@ -90,12 +92,12 @@ fn build_hershey_glyph_lines(
                 let px = offset_x + (*x as Real) * scale;
                 let py = offset_y + (*y as Real) * scale;
                 current_coords.push(coord! { x: px, y: py });
-            }
+            },
             HersheyVector::LineTo { x, y } => {
                 let px = offset_x + (*x as Real) * scale;
                 let py = offset_y + (*y as Real) * scale;
                 current_coords.push(coord! { x: px, y: py });
-            }
+            },
         }
     }
 

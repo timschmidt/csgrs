@@ -10,7 +10,7 @@ use std::fmt::Debug;
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Create a right prism (a box) that spans from (0, 0, 0)
     /// to (width, length, height). All dimensions must be >= 0.
-    pub fn cube(width: Real, length: Real, height: Real, metadata: Option<S>) -> Mesh<S> {
+    pub fn cuboid(width: Real, length: Real, height: Real, metadata: Option<S>) -> Mesh<S> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
         let p000 = Point3::new(0.0, 0.0, 0.0);
@@ -108,6 +108,10 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         Mesh::from_polygons(&[bottom, top, front, back, left, right])
     }
 
+    pub fn cube(width: Real, metadata: Option<S>) -> Mesh<S> {
+        Self::cuboid(width, width, width, metadata)
+    }
+
     /// Construct a sphere with radius, segments, stacks
     pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>) -> Mesh<S> {
         let mut polygons = Vec::new();
@@ -117,8 +121,11 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 let mut vertices = Vec::new();
 
                 let vertex = |theta: Real, phi: Real| {
-                    let dir =
-                        Vector3::new(theta.cos() * phi.sin(), phi.cos(), theta.sin() * phi.sin());
+                    let dir = Vector3::new(
+                        theta.cos() * phi.sin(),
+                        phi.cos(),
+                        theta.sin() * phi.sin(),
+                    );
                     Vertex::new(
                         Point3::new(dir.x * radius, dir.y * radius, dir.z * radius),
                         dir,
@@ -314,7 +321,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     }
 
     /// A helper to create a vertical cylinder along Z from z=0..z=height
-    // with the specified radius (NOT diameter).
+    /// with the specified radius (NOT diameter).
     pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>) -> Mesh<S> {
         Mesh::frustum_ptp(
             Point3::origin(),
@@ -417,7 +424,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = Sketch::square(cutter_height, cutter_height, metadata.clone()).translate(
+        let rect_cutter = Sketch::square(cutter_height, metadata.clone()).translate(
             -cutter_height,
             -cutter_height / 2.0,
             0.0,
@@ -425,9 +432,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         let half_egg = egg_2d.difference(&rect_cutter);
 
-        half_egg
-            .rotate_extrude(360.0, revolve_segments)
-            .convex_hull()
+        half_egg.rotate_extrude(360.0, revolve_segments).convex_hull()
     }
 
     /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via rotate_extrude).
@@ -451,7 +456,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = Sketch::square(cutter_height, cutter_height, metadata.clone()).translate(
+        let rect_cutter = Sketch::square(cutter_height, metadata.clone()).translate(
             -cutter_height,
             -cutter_height / 2.0,
             0.0,

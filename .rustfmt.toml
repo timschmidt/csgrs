@@ -1,0 +1,11 @@
+max_width = 95
+fn_call_width = 62
+chain_width = 62
+
+use_field_init_shorthand = true
+match_block_trailing_comma = true
+
+# unstable
+reorder_impl_items = true
+where_single_line = true
+normalize_comments = true

@@ -1,3 +1,5 @@
+//! Create `Sketch`s using ttf fonts
+
 use crate::traits::CSGOps;
 use crate::sketch::sketch::Sketch;
 use crate::float_types::Real;

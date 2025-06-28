@@ -39,7 +39,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     // Alternatively, skip lines if they don't form closed loops
                     // Here, we'll skip standalone lines
                     // To form polygons from lines, you'd need to group connected lines into loops
-                }
+                },
                 EntityType::Polyline(polyline) => {
                     // Handle POLYLINE entities (which can be 2D or 3D)
                     if polyline.is_closed() {
@@ -59,7 +59,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                             polygons.push(Polygon::new(verts, None));
                         }
                     }
-                }
+                },
                 EntityType::Circle(circle) => {
                     // Approximate circles with regular polygons
                     let center = Point3::new(
@@ -80,7 +80,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     .normalize();
 
                     for i in 0..segments {
-                        let theta = 2.0 * crate::float_types::PI * (i as Real) / (segments as Real);
+                        let theta =
+                            2.0 * crate::float_types::PI * (i as Real) / (segments as Real);
                         let x = center.x as Real + radius * theta.cos();
                         let y = center.y as Real + radius * theta.sin();
                         let z = center.z as Real;
@@ -89,7 +90,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
                     // Create a polygon from the approximated circle vertices
                     polygons.push(Polygon::new(verts, metadata.clone()));
-                }
+                },
                 EntityType::Solid(solid) => {
                     let thickness = solid.thickness as Real;
                     let extrusion_direction = Vector3::new(
@@ -111,7 +112,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                             .extrude_vector(extrusion_direction * thickness).polygons;
 
                     polygons.extend(extruded);
-                }
+                },
+                
                 // todo convert image to work with `from_image`
                 // EntityType::Image(image) => {}
                 // todo convert image to work with `text`, also try using system fonts for a better chance of having the font
@@ -119,7 +121,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 // Handle other entity types as needed (e.g., Line, Spline)
                 _ => {
                     // Ignore unsupported entity types for now
-                }
+                },
             }
         }
 
@@ -173,7 +175,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     ), // Duplicate for triangular face
                 );
 
-                let entity = dxf::entities::Entity::new(dxf::entities::EntityType::Face3D(face));
+                let entity =
+                    dxf::entities::Entity::new(dxf::entities::EntityType::Face3D(face));
 
                 // Add the 3DFACE entity to the drawing
                 drawing.add_entity(entity);

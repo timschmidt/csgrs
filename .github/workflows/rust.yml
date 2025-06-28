@@ -1,0 +1,77 @@
+name: Rust
+
+on: [push, pull_request]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust/Cargo Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Check
+        run: cargo check --features "parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust/Cargo Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Tests
+        run: cargo test --lib --features "parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+
+  fmt:
+    name: Formatting
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Fmt
+        run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust/Cargo Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Clippy
+        run: cargo clippy --lib --features "parallel stl-io svg-io dxf-io truetype-text hershey-text image-io" -- -D warnings
+
+  style:
+    name: Check spelling and semver
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Remove untracked files
+        run: git clean -df
+
+      - name: Rust/Cargo Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check semver
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+
+      - name: Check spelling
+        run: |
+          if ! which typos > /dev/null; then
+            cargo install typos-cli
+          fi
+          typos

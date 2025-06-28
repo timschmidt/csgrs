@@ -29,6 +29,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // Collect 3-D polygons generated from every `geo` geometry in the sketch
         let mut out: Vec<Polygon<S>> = Vec::new();
+
         for geom in &self.geometry {
             Self::extrude_geometry(geom, dir, &self.metadata, &mut out);
         }
@@ -230,7 +231,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// # Example
     /// ```
-    /// let shape_2d = CSG::square(2.0, 2.0, None); // a 2D square in XY
+    /// let shape_2d = CSG::square(2.0, None); // a 2D square in XY
     /// let extruded = shape_2d.linear_extrude(
     ///     direction = Vector3::new(0.0, 0.0, 10.0),
     ///     twist = 360.0,
@@ -602,7 +603,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             &self.metadata,
                         ));
                     }
-                }
+                },
 
                 geo::Geometry::MultiPolygon(mpoly) => {
                     // Each Polygon inside
@@ -645,10 +646,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             ));
                         }
                     }
-                }
+                },
 
                 // Ignore lines, points, etc.
-                _ => {}
+                _ => {},
             }
         }
 

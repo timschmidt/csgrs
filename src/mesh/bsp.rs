@@ -1,3 +1,5 @@
+//! This module contains the implementation of the [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree data structure
+
 use crate::float_types::EPSILON;
 use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::mesh::polygon::Polygon;
@@ -5,12 +7,9 @@ use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
+use rayon::{join, prelude::*};
 
-#[cfg(feature = "parallel")]
-use rayon::join;
-
-/// A BSP tree node, containing polygons plus optional front/back subtrees
+/// A [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node, containing polygons plus optional front/back subtrees
 #[derive(Debug, Clone)]
 pub struct Node<S: Clone> {
     /// Splitting plane for this node *or* **None** for a leaf that
@@ -56,10 +55,10 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         match (&mut self.front, &mut self.back) {
             (Some(front_node), Some(back_node)) => {
                 join(|| front_node.invert(), || back_node.invert());
-            }
+            },
             (Some(front_node), None) => front_node.invert(),
             (None, Some(back_node)) => back_node.invert(),
-            (None, None) => {}
+            (None, None) => {},
         }
 
         #[cfg(not(feature = "parallel"))]
@@ -220,10 +219,10 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         match (&mut self.front, &mut self.back) {
             (Some(front_node), Some(back_node)) => {
                 join(|| front_node.clip_to(bsp), || back_node.clip_to(bsp));
-            }
+            },
             (Some(front_node), None) => front_node.clip_to(bsp),
             (None, Some(back_node)) => back_node.clip_to(bsp),
-            (None, None) => {}
+            (None, None) => {},
         }
     }
 
@@ -330,20 +329,20 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                 let front_node = self.front.as_mut().unwrap();
                 let back_node = self.back.as_mut().unwrap();
                 join(|| front_node.build(&front), || back_node.build(&back));
-            }
+            },
             (true, false) => {
                 if self.front.is_none() {
                     self.front = Some(Box::new(Node::new(&[])));
                 }
                 self.front.as_mut().unwrap().build(&front);
-            }
+            },
             (false, true) => {
                 if self.back.is_none() {
                     self.back = Some(Box::new(Node::new(&[])));
                 }
                 self.back.as_mut().unwrap().build(&back);
-            }
-            (false, false) => {}
+            },
+            (false, false) => {},
         }
     }
 
@@ -378,11 +377,11 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                     // Depending on normal alignment, it may be “coplanar_front” or “coplanar_back.”
                     // Usually we don’t care — we just return them as “in the plane.”
                     coplanar_polygons.push(poly.clone());
-                }
+                },
 
                 FRONT | BACK => {
                     // Entirely on one side => no intersection. We skip it.
-                }
+                },
 
                 SPANNING => {
                     // The polygon crosses the plane. We'll gather the intersection points
@@ -423,11 +422,11 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                     }
                     // If crossing_points.len() was not a multiple of 2, you can handle leftover
                     // points or flag them as errors, etc. We'll skip that detail here.
-                }
+                },
 
                 _ => {
                     // Shouldn't happen in a typical classification, but we can ignore
-                }
+                },
             }
         }
 
@@ -464,11 +463,11 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                     COPLANAR => {
                         // Entire polygon in plane
                         (vec![poly.clone()], Vec::new())
-                    }
+                    },
                     FRONT | BACK => {
                         // Entirely on one side => no intersection
                         (Vec::new(), Vec::new())
-                    }
+                    },
                     SPANNING => {
                         // The polygon crosses the plane => gather intersection edges
                         let mut crossing_points = Vec::new();
@@ -500,7 +499,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                             edges.push([chunk[0].clone(), chunk[1].clone()]);
                         }
                         (Vec::new(), edges)
-                    }
+                    },
                     _ => (Vec::new(), Vec::new()),
                 }
             })

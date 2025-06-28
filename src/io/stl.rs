@@ -3,6 +3,7 @@ use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::mesh::mesh::Mesh;
 use crate::sketch::sketch::Sketch;
+
 use geo::CoordsIter;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
