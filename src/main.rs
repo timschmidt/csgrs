@@ -3,8 +3,11 @@
 // Minimal example of each function of csgrs (which is now generic over the shared-data type S).
 // Here, we do not use any shared data, so we'll bind the generic S to ().
 
+use csgrs::traits::CSGOps;
 use csgrs::float_types::Real;
 use csgrs::mesh::plane::Plane;
+use csgrs::mesh::mesh::Mesh;
+use csgrs::sketch::sketch::Sketch;
 use nalgebra::{Point3, Vector3};
 use std::fs;
 
@@ -12,25 +15,22 @@ use std::fs;
 use image::{GrayImage, ImageBuffer};
 
 #[cfg(feature = "metaballs")]
-use csgrs::sdf::metaballs::MetaBall;
-
-// A type alias for convenience: no shared data, i.e. S = ()
-type CSG = csgrs::csg::CSG<()>;
+use csgrs::mesh::metaballs::MetaBall;
 
 fn main() {
     // Ensure the /stls folder exists
     let _ = fs::create_dir_all("stl");
 
     // 1) Basic shapes: cube, sphere, cylinder
-    let cube = CSG::cube(2.0, 2.0, 2.0, None);
+    let cube = Mesh::cube(2.0, 2.0, 2.0, None);
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/cube.stl", cube.to_stl_binary("cube").unwrap());
 
-    let sphere = CSG::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
+    let sphere = Mesh::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/sphere.stl", sphere.to_stl_binary("sphere").unwrap());
 
-    let cylinder = CSG::cylinder(1.0, 2.0, 32, None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=32
+    let cylinder = Mesh::cylinder(1.0, 2.0, 32, None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=32
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
         "stl/cylinder.stl",
@@ -103,10 +103,10 @@ fn main() {
     );
 
     // 7) 2D shapes and 2D offsetting
-    let square_2d = CSG::square(2.0, 2.0, None); // 2x2 square, centered
+    let square_2d = Sketch::square(2.0, 2.0, None); // 2x2 square, centered
     let _ = fs::write("stl/square_2d.stl", square_2d.to_stl_ascii("square_2d"));
 
-    let circle_2d = CSG::circle(1.0, 32, None);
+    let circle_2d = Sketch::circle(1.0, 32, None);
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
         "stl/circle_2d.stl",
@@ -127,7 +127,7 @@ fn main() {
     );
 
     // star(num_points, outer_radius, inner_radius)
-    let star_2d = CSG::star(5, 2.0, 0.8, None);
+    let star_2d = Sketch::star(5, 2.0, 0.8, None);
     let _ = fs::write("stl/star_2d.stl", star_2d.to_stl_ascii("star_2d"));
 
     // Extrude & Rotate-Extrude
@@ -201,7 +201,7 @@ fn main() {
         vec![1, 2, 3],
         vec![2, 0, 3],
     ];
-    let poly = CSG::polyhedron(&points, &faces, None);
+    let poly = Mesh::polyhedron(&points, &faces, None);
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/tetrahedron.stl", poly.to_stl_ascii("tetrahedron"));
 
@@ -210,7 +210,7 @@ fn main() {
     #[cfg(feature = "truetype-text")]
     let font_data = include_bytes!("../asar.ttf");
     #[cfg(feature = "truetype-text")]
-    let text_csg = CSG::text("HELLO", font_data, 15.0, None);
+    let text_csg = Sketch::text("HELLO", font_data, 15.0, None);
     #[cfg(feature = "stl-io")]
     #[cfg(feature = "truetype-text")]
     let _ = fs::write(
@@ -236,7 +236,7 @@ fn main() {
 
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
-    let cube = CSG::cube(100.0, 100.0, 100.0, None);
+    let cube = Mesh::cube(100.0, 100.0, 100.0, None);
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
     let _ = fs::write(
@@ -245,7 +245,7 @@ fn main() {
     );
 
     // Create a frustum (start=-2, end=+2) with radius1 = 1, radius2 = 2, 32 slices
-    let frustum = CSG::frustum_ptp(
+    let frustum = Mesh::frustum_ptp(
         Point3::new(0.0, 0.0, -2.0),
         Point3::new(0.0, 0.0, 2.0),
         1.0,
@@ -256,7 +256,7 @@ fn main() {
     let _ = fs::write("stl/frustum.stl", frustum.to_stl_ascii("frustum"));
 
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
-    let cyl = CSG::frustum_ptp(
+    let cyl = Mesh::frustum_ptp(
         Point3::new(0.0, 0.0, -1.0),
         Point3::new(0.0, 0.0, 1.0),
         1.0,
@@ -284,8 +284,8 @@ fn main() {
     //#[cfg(all(feature = "earclip-io", feature = "stl-io"))]
     //let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
-    let sphere_test = CSG::sphere(1.0, 16, 8, None);
-    let cube_test = CSG::cube(1.0, 1.0, 1.0, None);
+    let sphere_test = Mesh::sphere(1.0, 16, 8, None);
+    let cube_test = Mesh::cube(1.0, 1.0, 1.0, None);
     let res = cube_test.difference(&sphere_test);
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
@@ -307,7 +307,7 @@ fn main() {
         let padding = 1.0;
 
         #[cfg(feature = "metaballs")]
-        let metaball_csg = CSG::metaballs(&balls, resolution, iso_value, padding, None);
+        let metaball_csg = Mesh::metaballs(&balls, resolution, iso_value, padding, None);
 
         // For instance, save to STL
         let stl_data = metaball_csg.to_stl_binary("my_metaballs").unwrap();
@@ -324,7 +324,7 @@ fn main() {
         let max_pt = Point3::new(2.0, 2.0, 2.0);
         let iso_value = 0.0; // Typically zero for SDF-based surfaces
 
-        let csg_shape = CSG::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
+        let csg_shape = Mesh::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
 
         // Now `csg_shape` is your polygon mesh as a CSG you can union, subtract, or export:
         #[cfg(feature = "stl-io")]
@@ -335,7 +335,7 @@ fn main() {
     }
 
     // Create a pie slice of radius 2, from 0 to 90 degrees
-    let wedge = CSG::pie_slice(2.0, 0.0, 90.0, 16, None);
+    let wedge = Sketch::pie_slice(2.0, 0.0, 90.0, 16, None);
     let _ = fs::write("stl/pie_slice.stl", wedge.to_stl_ascii("pie_slice"));
 
     // Create a 2D "metaball" shape from 3 circles
@@ -345,15 +345,15 @@ fn main() {
         (Point2::new(1.5, 0.0), 1.0),
         (Point2::new(0.75, 1.0), 0.5),
     ];
-    let mb2d = CSG::metaballs2d(&balls_2d, (100, 100), 1.0, 0.25, None);
+    let mb2d = Sketch::metaballs2d(&balls_2d, (100, 100), 1.0, 0.25, None);
     let _ = fs::write("stl/mb2d.stl", mb2d.to_stl_ascii("metaballs2d"));
 
     // Create a supershape
-    let sshape = CSG::supershape(1.0, 1.0, 6.0, 1.0, 1.0, 1.0, 128, None);
+    let sshape = Sketch::supershape(1.0, 1.0, 6.0, 1.0, 1.0, 1.0, 128, None);
     let _ = fs::write("stl/supershape.stl", sshape.to_stl_ascii("supershape"));
 
     // Distribute a square along an arc
-    let square = CSG::circle(1.0, 32, None);
+    let square = Sketch::circle(1.0, 32, None);
     let arc_array = square.distribute_arc(5, 5.0, 0.0, 180.0);
     let _ = fs::write("stl/arc_array.stl", arc_array.to_stl_ascii("arc_array"));
 
@@ -366,7 +366,7 @@ fn main() {
     let _ = fs::write("stl/grid_of_ss.stl", grid_of_ss.to_stl_ascii("grid_of_ss"));
 
     // 1. Circle with keyway
-    let keyway_shape = CSG::circle_with_keyway(10.0, 64, 2.0, 3.0, None);
+    let keyway_shape = Sketch::circle_with_keyway(10.0, 64, 2.0, 3.0, None);
     let _ = fs::write(
         "stl/keyway_shape.stl",
         keyway_shape.to_stl_ascii("keyway_shape"),
@@ -376,13 +376,13 @@ fn main() {
     let _ = fs::write("stl/keyway_3d.stl", keyway_3d.to_stl_ascii("keyway_3d"));
 
     // 2. D-shape
-    let d_shape = CSG::circle_with_flat(5.0, 32, 2.0, None);
+    let d_shape = Sketch::circle_with_flat(5.0, 32, 2.0, None);
     let _ = fs::write("stl/d_shape.stl", d_shape.to_stl_ascii("d_shape"));
     let d_3d = d_shape.extrude(1.0);
     let _ = fs::write("stl/d_3d.stl", d_3d.to_stl_ascii("d_3d"));
 
     // 3. Double-flat circle
-    let double_flat = CSG::circle_with_two_flats(8.0, 64, 3.0, None);
+    let double_flat = Sketch::circle_with_two_flats(8.0, 64, 3.0, None);
     let _ = fs::write(
         "stl/double_flat.stl",
         double_flat.to_stl_ascii("double_flat"),
@@ -391,98 +391,98 @@ fn main() {
     let _ = fs::write("stl/df_3d.stl", df_3d.to_stl_ascii("df_3d"));
 
     // A 3D teardrop shape
-    let teardrop_solid = CSG::teardrop(3.0, 5.0, 32, 32, None);
+    let teardrop_solid = Mesh::teardrop(3.0, 5.0, 32, 32, None);
     let _ = fs::write(
         "stl/teardrop_solid.stl",
         teardrop_solid.to_stl_ascii("teardrop_solid"),
     );
 
     // A 3D egg shape
-    let egg_solid = CSG::egg(2.0, 4.0, 8, 16, None);
+    let egg_solid = Mesh::egg(2.0, 4.0, 8, 16, None);
     let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
 
     // An ellipsoid with X radius=2, Y radius=1, Z radius=3
-    let ellipsoid = CSG::ellipsoid(2.0, 1.0, 3.0, 16, 8, None);
+    let ellipsoid = Mesh::ellipsoid(2.0, 1.0, 3.0, 16, 8, None);
     let _ = fs::write("stl/ellipsoid.stl", ellipsoid.to_stl_ascii("ellipsoid"));
 
     // A teardrop 'blank' hole
-    let teardrop_cylinder = CSG::teardrop_cylinder(2.0, 4.0, 32.0, 16, None);
+    let teardrop_cylinder = Mesh::teardrop_cylinder(2.0, 4.0, 32.0, 16, None);
     let _ = fs::write(
         "stl/teardrop_cylinder.stl",
         teardrop_cylinder.to_stl_ascii("teardrop_cylinder"),
     );
 
     // 1) polygon()
-    let polygon_2d = CSG::polygon(&[[0.0, 0.0], [2.0, 0.0], [1.5, 1.0], [1.0, 2.0]], None);
+    let polygon_2d = Sketch::polygon(&[[0.0, 0.0], [2.0, 0.0], [1.5, 1.0], [1.0, 2.0]], None);
     let _ = fs::write("stl/polygon_2d.stl", polygon_2d.to_stl_ascii("polygon_2d"));
 
     // 2) rounded_rectangle(width, height, corner_radius, corner_segments)
-    let rrect_2d = CSG::rounded_rectangle(4.0, 2.0, 0.3, 8, None);
+    let rrect_2d = Sketch::rounded_rectangle(4.0, 2.0, 0.3, 8, None);
     let _ = fs::write(
         "stl/rounded_rectangle_2d.stl",
         rrect_2d.to_stl_ascii("rounded_rectangle_2d"),
     );
 
     // 3) ellipse(width, height, segments)
-    let ellipse = CSG::ellipse(3.0, 1.5, 32, None);
+    let ellipse = Sketch::ellipse(3.0, 1.5, 32, None);
     let _ = fs::write("stl/ellipse.stl", ellipse.to_stl_ascii("ellipse"));
 
     // 4) regular_ngon(sides, radius)
-    let ngon_2d = CSG::regular_ngon(6, 1.0, None); // Hexagon
+    let ngon_2d = Sketch::regular_ngon(6, 1.0, None); // Hexagon
     let _ = fs::write("stl/ngon_2d.stl", ngon_2d.to_stl_ascii("ngon_2d"));
 
     // 6) trapezoid(top_width, bottom_width, height)
-    let trap_2d = CSG::trapezoid(1.0, 2.0, 2.0, 0.5, None);
+    let trap_2d = Sketch::trapezoid(1.0, 2.0, 2.0, 0.5, None);
     let _ = fs::write("stl/trapezoid_2d.stl", trap_2d.to_stl_ascii("trapezoid_2d"));
 
     // 8) teardrop(width, height, segments) [2D shape]
-    let teardrop_2d = CSG::teardrop_outline(2.0, 3.0, 16, None);
+    let teardrop_2d = Sketch::teardrop_outline(2.0, 3.0, 16, None);
     let _ = fs::write(
         "stl/teardrop_2d.stl",
         teardrop_2d.to_stl_ascii("teardrop_2d"),
     );
 
     // 9) egg_outline(width, length, segments) [2D shape]
-    let egg_2d = CSG::egg_outline(2.0, 4.0, 32, None);
+    let egg_2d = Sketch::egg_outline(2.0, 4.0, 32, None);
     let _ = fs::write(
         "stl/egg_outline_2d.stl",
         egg_2d.to_stl_ascii("egg_outline_2d"),
     );
 
     // 10) squircle(width, height, segments)
-    let squircle_2d = CSG::squircle(3.0, 3.0, 32, None);
+    let squircle_2d = Sketch::squircle(3.0, 3.0, 32, None);
     let _ = fs::write(
         "stl/squircle_2d.stl",
         squircle_2d.to_stl_ascii("squircle_2d"),
     );
 
     // 11) keyhole(circle_radius, handle_width, handle_height, segments)
-    let keyhole_2d = CSG::keyhole(1.0, 1.0, 2.0, 16, None);
+    let keyhole_2d = Sketch::keyhole(1.0, 1.0, 2.0, 16, None);
     let _ = fs::write("stl/keyhole_2d.stl", keyhole_2d.to_stl_ascii("keyhole_2d"));
 
     // 12) reuleaux_polygon(sides, side_len, segments)
-    let reuleaux3_2d = CSG::reuleaux(3, 2.0, 64, None); // Reuleaux triangle
+    let reuleaux3_2d = Sketch::reuleaux(3, 2.0, 64, None); // Reuleaux triangle
     let _ = fs::write(
         "stl/reuleaux3_2d.stl",
         reuleaux3_2d.to_stl_ascii("reuleaux_2d"),
     );
 
     // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux4_2d = CSG::reuleaux(4, 2.0, 64, None); // Reuleaux triangle
+    let reuleaux4_2d = Sketch::reuleaux(4, 2.0, 64, None); // Reuleaux triangle
     let _ = fs::write(
         "stl/reuleaux4_2d.stl",
         reuleaux4_2d.to_stl_ascii("reuleaux_2d"),
     );
 
     // 12) reuleaux_polygon(sides, radius, arc_segments_per_side)
-    let reuleaux5_2d = CSG::reuleaux(5, 2.0, 64, None); // Reuleaux triangle
+    let reuleaux5_2d = Sketch::reuleaux(5, 2.0, 64, None); // Reuleaux triangle
     let _ = fs::write(
         "stl/reuleaux5_2d.stl",
         reuleaux5_2d.to_stl_ascii("reuleaux_2d"),
     );
 
     // 13) ring(inner_diam, thickness, segments)
-    let ring_2d = CSG::ring(5.0, 1.0, 32, None);
+    let ring_2d = Sketch::ring(5.0, 1.0, 32, None);
     let _ = fs::write("stl/ring_2d.stl", ring_2d.to_stl_ascii("ring_2d"));
 
     // 15) from_image(img, threshold, closepaths, metadata) [requires "image" feature]
@@ -501,7 +501,7 @@ fn main() {
                 }
             }
         }
-        let csg_img = CSG::from_image(&img, 128, true, None).center();
+        let csg_img = Sketch::from_image(&img, 128, true, None).center();
         let _ = fs::write("stl/from_image.stl", csg_img.to_stl_ascii("from_image"));
     }
 
@@ -547,17 +547,17 @@ fn main() {
     let segments = 16;
 
     // Create the arrow. We pass `None` for metadata.
-    let arrow_csg = CSG::arrow(start, direction, segments, true, None::<()>);
+    let arrow_csg = Mesh::arrow(start, direction, segments, true, None::<()>);
     let _ = fs::write("stl/arrow.stl", arrow_csg.to_stl_ascii("arrow_example"));
 
-    let arrow_reversed_csg = CSG::arrow(start, direction, segments, false, None::<()>);
+    let arrow_reversed_csg = Mesh::arrow(start, direction, segments, false, None::<()>);
     let _ = fs::write(
         "stl/arrow_reversed.stl",
         arrow_reversed_csg.to_stl_ascii("arrow_example"),
     );
 
     // 2-D profile for NACA 2412, 1 m chord, 100 pts / surface
-    let naca2412 = CSG::airfoil("2412", 1.0, 100, None);
+    let naca2412 = Sketch::airfoil("2412", 1.0, 100, None);
     let _ = fs::write("stl/naca2412.stl", naca2412.to_stl_ascii("2412"));
 
     // quick solid wing rib 5 mm thick
@@ -569,25 +569,25 @@ fn main() {
 
     // symmetric foil for a centerboard
     let naca0015 =
-        CSG::airfoil("0015", 0.3, 80, None).extrude_vector(nalgebra::Vector3::new(0.0, 0.0, 1.2));
+        Sketch::airfoil("0015", 0.3, 80, None).extrude_vector(nalgebra::Vector3::new(0.0, 0.0, 1.2));
     let _ = fs::write("stl/naca0015.stl", naca0015.to_stl_ascii("naca0015"));
 
-    let oct = CSG::octahedron(10.0, None);
+    let oct = Mesh::octahedron(10.0, None);
     let _ = fs::write("stl/octahedron.stl", oct.to_stl_ascii("octahedron"));
 
     //let dodec = CSG::dodecahedron(15.0, None);
     //let _ = fs::write("stl/dodecahedron.stl", dodec.to_stl_ascii(""));
 
-    let ico = CSG::icosahedron(12.0, None);
+    let ico = Mesh::icosahedron(12.0, None);
     let _ = fs::write("stl/icosahedron.stl", ico.to_stl_ascii(""));
 
-    let torus = CSG::torus(20.0, 5.0, 48, 24, None);
+    let torus = Mesh::torus(20.0, 5.0, 48, 24, None);
     let _ = fs::write("stl/torus.stl", torus.to_stl_ascii(""));
 
-    let heart2d = CSG::heart(30.0, 25.0, 128, None);
+    let heart2d = Sketch::heart(30.0, 25.0, 128, None);
     let _ = fs::write("stl/heart2d.stl", heart2d.to_stl_ascii(""));
 
-    let crescent2d = CSG::crescent(10.0, 7.0, 4.0, 64, None);
+    let crescent2d = Sketch::crescent(10.0, 7.0, 4.0, 64, None);
     let _ = fs::write("stl/crescent2d.stl", crescent2d.to_stl_ascii(""));
 
     // ---------------------------------------------------------
@@ -606,9 +606,9 @@ fn main() {
 
     // Scene A: Demonstrate a right_triangle(width=2, height=1)
     {
-        let tri_2d = CSG::right_triangle(2.0, 1.0, None);
+        let tri_2d = Sketch::right_triangle(2.0, 1.0, None);
         // A tiny arrow pointing from the right-angle corner outward:
-        let arrow = CSG::arrow(
+        let arrow = Mesh::arrow(
             Point3::new(0.0, 0.0, 0.1), // at corner
             Vector3::new(0.5, 0.0, 0.0),
             8,
@@ -625,7 +625,7 @@ fn main() {
 
     // Scene B: Demonstrate extrude_vector(direction)
     {
-        let circle2d = CSG::circle(1.0, 32, None);
+        let circle2d = Sketch::circle(1.0, 32, None);
         // extrude along an arbitrary vector
         let extruded_along_vec = circle2d.extrude_vector(Vector3::new(0.0, 0.0, 2.0));
         let _ = fs::write(
@@ -636,7 +636,7 @@ fn main() {
 
     // Scene E: Demonstrate center() (moves shape so bounding box is centered on the origin)
     {
-        let off_center_circle = CSG::circle(1.0, 32, None)
+        let off_center_circle = Sketch::circle(1.0, 32, None)
             .translate(5.0, 2.0, 0.0)
             .extrude(0.1);
         let centered_circle = off_center_circle.center();
@@ -652,7 +652,7 @@ fn main() {
 
     // Scene F: Demonstrate float() (moves shape so bottom is at z=0)
     {
-        let sphere_for_float = CSG::sphere(1.0, 16, 8, None).translate(0.0, 0.0, -1.5);
+        let sphere_for_float = Mesh::sphere(1.0, 16, 8, None).translate(0.0, 0.0, -1.5);
         let floated = sphere_for_float.float();
         let _ = fs::write(
             "stl/scene_sphere_before_float.stl",
@@ -677,7 +677,7 @@ fn main() {
 
     // Scene H: Demonstrate tessellate() (forces triangulation)
     {
-        let tri_sphere = sphere.tessellate();
+        let tri_sphere = sphere.triangulate();
         #[cfg(feature = "stl-io")]
         let _ = fs::write(
             "stl/scene_tessellate_sphere.stl",
@@ -702,7 +702,7 @@ fn main() {
 
     // Scene J: Demonstrate re-computing vertices() or printing them
     {
-        let circle_extruded = CSG::circle(1.0, 32, None).extrude(0.5);
+        let circle_extruded = Sketch::circle(1.0, 32, None).extrude(0.5);
         let verts = circle_extruded.vertices();
         println!("Scene J circle_extruded has {} vertices", verts.len());
         // We'll still save an STL so there's a visual
@@ -715,7 +715,7 @@ fn main() {
     // Scene K: Demonstrate reuleaux_polygon with a typical triangle shape
     // (already used sides=4 above, so let's do sides=3 here)
     {
-        let reuleaux_tri = CSG::reuleaux(3, 2.0, 16, None).extrude(0.1);
+        let reuleaux_tri = Sketch::reuleaux(3, 2.0, 16, None).extrude(0.1);
         let _ = fs::write(
             "stl/scene_reuleaux_triangle.stl",
             reuleaux_tri.to_stl_ascii("scene_reuleaux_triangle"),
@@ -724,7 +724,7 @@ fn main() {
 
     // Scene L: Demonstrate rotate_extrude (360 deg) on a square
     {
-        let small_square = CSG::square(1.0, 1.0, None).translate(2.0, 0.0, 0.0);
+        let small_square = Sketch::square(1.0, 1.0, None).translate(2.0, 0.0, 0.0);
         let revolve = small_square.rotate_extrude(360.0, 24);
         let _ = fs::write(
             "stl/scene_square_revolve_360.stl",
@@ -735,7 +735,7 @@ fn main() {
     // Scene M: Demonstrate “mirror” across a Y=0 plane
     {
         let plane_y = Plane::from_normal(Vector3::y(), 0.0);
-        let shape = CSG::square(2.0, 1.0, None)
+        let shape = Sketch::square(2.0, 1.0, None)
             .translate(1.0, 1.0, 0.0)
             .extrude(0.1);
         let mirrored = shape.mirror(plane_y);
@@ -763,7 +763,7 @@ fn main() {
         let scale_mat = Matrix4::new_scaling(0.5);
         // Combine
         let transform_mat = xlate * scale_mat;
-        let shape = CSG::cube(1.0, 1.0, 1.0, None).transform(&transform_mat);
+        let shape = Mesh::cube(1.0, 1.0, 1.0, None).transform(&transform_mat);
         let _ = fs::write(
             "stl/scene_transform_cube.stl",
             shape.to_stl_ascii("scene_transform_cube"),
@@ -772,7 +772,7 @@ fn main() {
 
     // Scene P: Demonstrate offset(distance)
     {
-        let poly_2d = CSG::polygon(&[[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]], None);
+        let poly_2d = Sketch::polygon(&[[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]], None);
         let grown = poly_2d.offset(0.2);
         let scene = grown.extrude(0.1);
         let _ = fs::write(
@@ -781,7 +781,7 @@ fn main() {
         );
     }
 
-    let gear_involute_2d = CSG::involute_gear_2d(
+    let gear_involute_2d = Sketch::involute_gear_2d(
         2.0,  // module [mm]
         20,   // z – number of teeth
         20.0, // α – pressure angle [deg]
@@ -795,7 +795,7 @@ fn main() {
         gear_involute_2d.to_stl_ascii("gear_involute_2d"),
     );
 
-    let gear_cycloid_2d = CSG::cycloidal_gear_2d(
+    let gear_cycloid_2d = Sketch::cycloidal_gear_2d(
         2.0,  // module
         17,   // gear teeth
         18,   // mating pin-wheel teeth (zₚ = z±1)
@@ -808,7 +808,7 @@ fn main() {
         gear_cycloid_2d.to_stl_ascii("gear_cycloid_2d"),
     );
 
-    let rack_involute = CSG::involute_rack_2d(
+    let rack_involute = Sketch::involute_rack_2d(
         2.0,  // module
         12,   // number of rack teeth to generate
         20.0, // pressure angle
@@ -821,7 +821,7 @@ fn main() {
         rack_involute.to_stl_ascii("rack_involute"),
     );
 
-    let rack_cycloid = CSG::cycloidal_rack_2d(
+    let rack_cycloid = Sketch::cycloidal_rack_2d(
         2.0,  // module
         12,   // teeth
         1.0,  // generating-circle radius  (≈ m/2 for a conventional pin-rack)
@@ -834,7 +834,7 @@ fn main() {
         rack_cycloid.to_stl_ascii("rack_cycloid"),
     );
 
-    let spur_involute = CSG::spur_gear_involute(
+    let spur_involute = Mesh::spur_gear_involute(
         2.0, 20, 20.0, 0.05, 0.02, 14, 12.0, // face-width (extrusion thickness)
         None,
     );
@@ -843,7 +843,7 @@ fn main() {
         spur_involute.to_stl_ascii("spur_involute"),
     );
 
-    let spur_cycloid = CSG::spur_gear_cycloid(
+    let spur_cycloid = Mesh::spur_gear_cycloid(
         2.0, 17, 18, 0.05, 20, 12.0, // thickness
         None,
     );
@@ -874,7 +874,7 @@ fn main() {
         [3.0, 3.0], // P2
         [4.0, 0.0], // P3
     ];
-    let bezier_2d = CSG::bezier(bezier_ctrl, 128, None);
+    let bezier_2d = Sketch::bezier(bezier_ctrl, 128, None);
     let _ = fs::write("stl/bezier_2d.stl", bezier_2d.to_stl_ascii("bezier_2d"));
 
     // give it a little “body” so we can see it in a solid viewer
@@ -887,7 +887,7 @@ fn main() {
     // ---------------------------------------------------------------------
     // B-spline demo --------------------------------------------------------
     let bspline_ctrl = &[[0.0, 0.0], [1.0, 2.5], [3.0, 3.0], [5.0, 0.0], [6.0, -1.5]];
-    let bspline_2d = CSG::bspline(
+    let bspline_2d = Sketch::bspline(
         bspline_ctrl,
         /* degree p = */ 3,
         /* seg/span */ 32,
@@ -908,7 +908,7 @@ fn main() {
     // Done!
     println!("All scenes have been created and written to the 'stl' folder (where applicable).");
     
-    let cube1 = CSG::cube(3.0, 3.0, 3.0, None).translate(1.0, 1.0, 1.0);
+    let cube1 = Mesh::cube(3.0, 3.0, 3.0, None).translate(1.0, 1.0, 1.0);
 	let cube2 = cube1.translate(2.0, 2.0, 2.0);
 	let result = cube1.intersection(&cube2.inverse());
 	let _ = fs::write("stl/cube_difference.stl", result.to_stl_ascii("cube difference"));
