@@ -67,7 +67,7 @@ cargo build --features="wasm" --target=wasm32-unknown-unknown --release
 - **`Sketch<S>`** is the main type. It stores:
   - a [`geo`](https://crates.io/crates/geo) [`GeometryCollection<Real>`](https://docs.rs/geo/latest/geo/geometry/struct.GeometryCollection.html)
   - a bounding box wrapped in a OnceLock (bounding_box: OnceLock<Aabb>)
-  - another optional metadata field (`Option<S>`) also defined by you
+  - an optional metadata field (`Option<S>`) also defined by you
 
 `Sketch<S>` provides methods for working with 2D shapes made of points and lines.
 You can build a `Sketch<S>` geo Geometries with `Sketch::from_geo(...)`.
