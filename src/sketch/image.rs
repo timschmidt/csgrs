@@ -1,5 +1,5 @@
-use crate::sketch::sketch::Sketch;
 use crate::float_types::{EPSILON, Real};
+use crate::sketch::sketch::Sketch;
 use image::GrayImage;
 use std::fmt::Debug;
 
@@ -29,69 +29,70 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # }
     /// ```
     pub fn from_image(
-		img: &GrayImage,
-		threshold: u8,
-		closepaths: bool,
-		metadata: Option<S>,
-	) -> Self {
-		use geo::{coord, Geometry, GeometryCollection, LineString};
+        img: &GrayImage,
+        threshold: u8,
+        closepaths: bool,
+        metadata: Option<S>,
+    ) -> Self {
+        use geo::{Geometry, GeometryCollection, LineString, coord};
 
-		let width = img.width() as usize;
-		let height = img.height() as usize;
+        let width = img.width() as usize;
+        let height = img.height() as usize;
 
-		/* ---------- step 1 : bitmap → svg path (unchanged) ---------- */
-		let mut bits = Vec::with_capacity(height);
-		for y in 0..height {
-			let mut row = Vec::with_capacity(width);
-			for x in 0..width {
-				let v = img.get_pixel(x as u32, y as u32)[0];
-				row.push((v >= threshold) as i8);
-			}
-			bits.push(row);
-		}
-		let svg_path = contour_tracing::array::bits_to_paths(bits, closepaths);
-		let polylines = Self::parse_svg_path_into_polylines(&svg_path);
+        /* ---------- step 1 : bitmap → svg path (unchanged) ---------- */
+        let mut bits = Vec::with_capacity(height);
+        for y in 0..height {
+            let mut row = Vec::with_capacity(width);
+            for x in 0..width {
+                let v = img.get_pixel(x as u32, y as u32)[0];
+                row.push((v >= threshold) as i8);
+            }
+            bits.push(row);
+        }
+        let svg_path = contour_tracing::array::bits_to_paths(bits, closepaths);
+        let polylines = Self::parse_svg_path_into_polylines(&svg_path);
 
-		/* ---------- step 2 : polylines → geo geometries ---------- */
-		let mut gc = GeometryCollection::<Real>::default();
+        /* ---------- step 2 : polylines → geo geometries ---------- */
+        let mut gc = GeometryCollection::<Real>::default();
 
-		for mut pl in polylines {
-			if pl.len() < 2 {
-				continue;
-			}
+        for mut pl in polylines {
+            if pl.len() < 2 {
+                continue;
+            }
 
-			// Are first & last points coincident?
-			let closed = {
-				let first = pl[0];
-				let last = pl[pl.len() - 1];
-				((first.0 - last.0).abs() as Real) < EPSILON && ((first.1 - last.1).abs() as Real) < EPSILON
-			};
+            // Are first & last points coincident?
+            let closed = {
+                let first = pl[0];
+                let last = pl[pl.len() - 1];
+                ((first.0 - last.0).abs() as Real) < EPSILON
+                    && ((first.1 - last.1).abs() as Real) < EPSILON
+            };
 
-			// Convert to Real coords (+ make sure polygons are explicitly closed)
-			if closed && pl.len() >= 4 {
-				// guarantee first==last for LineString
-				if ((pl[0].0 - pl[pl.len() - 1].0).abs() as Real) > EPSILON
-					|| ((pl[0].1 - pl[pl.len() - 1].1).abs() as Real) > EPSILON
-				{
-					pl.push(pl[0]);
-				}
-				let ls: LineString<Real> = pl
-					.into_iter()
-					.map(|(x, y)| coord! { x: x as Real, y: y as Real })
-					.collect();
-				gc.0.push(Geometry::Polygon(geo::Polygon::new(ls, vec![])));
-			} else {
-				let ls: LineString<Real> = pl
-					.into_iter()
-					.map(|(x, y)| coord! { x: x as Real, y: y as Real })
-					.collect();
-				gc.0.push(Geometry::LineString(ls));
-			}
-		}
+            // Convert to Real coords (+ make sure polygons are explicitly closed)
+            if closed && pl.len() >= 4 {
+                // guarantee first==last for LineString
+                if ((pl[0].0 - pl[pl.len() - 1].0).abs() as Real) > EPSILON
+                    || ((pl[0].1 - pl[pl.len() - 1].1).abs() as Real) > EPSILON
+                {
+                    pl.push(pl[0]);
+                }
+                let ls: LineString<Real> = pl
+                    .into_iter()
+                    .map(|(x, y)| coord! { x: x as Real, y: y as Real })
+                    .collect();
+                gc.0.push(Geometry::Polygon(geo::Polygon::new(ls, vec![])));
+            } else {
+                let ls: LineString<Real> = pl
+                    .into_iter()
+                    .map(|(x, y)| coord! { x: x as Real, y: y as Real })
+                    .collect();
+                gc.0.push(Geometry::LineString(ls));
+            }
+        }
 
-		/* ---------- step 3 : build the Sketch ---------- */
-		Sketch::from_geo(gc, metadata)
-	}
+        /* ---------- step 3 : build the Sketch ---------- */
+        Sketch::from_geo(gc, metadata)
+    }
 
     /// Internal helper to parse a minimal subset of SVG path commands:
     /// - M x y   => move absolute

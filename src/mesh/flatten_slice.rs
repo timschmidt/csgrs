@@ -1,6 +1,6 @@
 use crate::float_types::{EPSILON, Real};
-use crate::mesh::mesh::Mesh;
 use crate::mesh::bsp::Node;
+use crate::mesh::mesh::Mesh;
 use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
 use crate::sketch::sketch::Sketch;

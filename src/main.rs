@@ -3,9 +3,9 @@
 // Minimal example of each function of csgrs (which is now generic over the shared-data type S).
 // Here, we do not use any shared data, so we'll bind the generic S to ().
 
-use csgrs::traits::CSGOps;
 use csgrs::float_types::Real;
 use csgrs::mesh::plane::Plane;
+use csgrs::traits::CSGOps;
 use nalgebra::{Point3, Vector3};
 use std::fs;
 
@@ -24,7 +24,7 @@ fn main() {
 
     // 1) Basic shapes: cube, sphere, cylinder
     let cube = Mesh::cube(2.0, None);
-    
+
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/cube.stl", cube.to_stl_binary("cube").unwrap());
 
@@ -70,9 +70,7 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
         "stl/subtract_cube_sphere.stl",
-        subtract_shape
-            .to_stl_binary("subtract_cube_sphere")
-            .unwrap(),
+        subtract_shape.to_stl_binary("subtract_cube_sphere").unwrap(),
     );
 
     let intersect_shape = cube.intersection(&sphere);
@@ -147,18 +145,14 @@ fn main() {
         vector_extruded_star.to_stl_binary("star_extrude").unwrap(),
     );
 
-    let revolve_circle = circle_2d
-        .translate(10.0, 0.0, 0.0)
-        .rotate_extrude(360.0, 32);
+    let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(360.0, 32);
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
         "stl/circle_revolve_360.stl",
         revolve_circle.to_stl_binary("circle_revolve_360").unwrap(),
     );
 
-    let partial_revolve = circle_2d
-        .translate(10.0, 0.0, 0.0)
-        .rotate_extrude(180.0, 32);
+    let partial_revolve = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(180.0, 32);
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
         "stl/circle_revolve_180.stl",
@@ -239,7 +233,7 @@ fn main() {
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
     let cube = Mesh::cube(100.0, None);
-    
+
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
     let _ = fs::write(
@@ -271,10 +265,7 @@ fn main() {
     #[cfg(feature = "hashmap")]
     {
         let cross_section = cyl.slice(Plane::from_normal(Vector3::z(), 0.0));
-        let _ = fs::write(
-            "stl/sliced_cylinder.stl",
-            cyl.to_stl_ascii("sliced_cylinder"),
-        );
+        let _ = fs::write("stl/sliced_cylinder.stl", cyl.to_stl_ascii("sliced_cylinder"));
         let _ = fs::write(
             "stl/sliced_cylinder_slice.stl",
             cross_section.to_stl_ascii("sliced_cylinder_slice"),
@@ -386,10 +377,7 @@ fn main() {
 
     // 3. Double-flat circle
     let double_flat = Sketch::circle_with_two_flats(8.0, 64, 3.0, None);
-    let _ = fs::write(
-        "stl/double_flat.stl",
-        double_flat.to_stl_ascii("double_flat"),
-    );
+    let _ = fs::write("stl/double_flat.stl", double_flat.to_stl_ascii("double_flat"));
     let df_3d = double_flat.extrude(0.5);
     let _ = fs::write("stl/df_3d.stl", df_3d.to_stl_ascii("df_3d"));
 
@@ -440,10 +428,7 @@ fn main() {
 
     // 8) teardrop(width, height, segments) [2D shape]
     let teardrop_2d = Sketch::teardrop(2.0, 3.0, 16, None);
-    let _ = fs::write(
-        "stl/teardrop_2d.stl",
-        teardrop_2d.to_stl_ascii("teardrop_2d"),
-    );
+    let _ = fs::write("stl/teardrop_2d.stl", teardrop_2d.to_stl_ascii("teardrop_2d"));
 
     // 9) egg_outline(width, length, segments) [2D shape]
     let egg_2d = Sketch::egg(2.0, 4.0, 32, None);
@@ -454,10 +439,7 @@ fn main() {
 
     // 10) squircle(width, height, segments)
     let squircle_2d = Sketch::squircle(3.0, 3.0, 32, None);
-    let _ = fs::write(
-        "stl/squircle_2d.stl",
-        squircle_2d.to_stl_ascii("squircle_2d"),
-    );
+    let _ = fs::write("stl/squircle_2d.stl", squircle_2d.to_stl_ascii("squircle_2d"));
 
     // 11) keyhole(circle_radius, handle_width, handle_height, segments)
     let keyhole_2d = Sketch::keyhole(1.0, 1.0, 2.0, 16, None);
@@ -525,9 +507,7 @@ fn main() {
             .schwarz_p(64, 2.0, 0.0, None);
         let _ = fs::write(
             "stl/schwarz_p_cube.stl",
-            schwarzp_inside_cube
-                .to_stl_binary("schwarz_p_cube")
-                .unwrap(),
+            schwarzp_inside_cube.to_stl_binary("schwarz_p_cube").unwrap(),
         );
 
         let schwarzd_inside_cube = hull_of_union
@@ -535,9 +515,7 @@ fn main() {
             .schwarz_d(64, 2.0, 0.0, None);
         let _ = fs::write(
             "stl/schwarz_d_cube.stl",
-            schwarzd_inside_cube
-                .to_stl_binary("schwarz_d_cube")
-                .unwrap(),
+            schwarzd_inside_cube.to_stl_binary("schwarz_d_cube").unwrap(),
         );
     }
 
@@ -565,14 +543,11 @@ fn main() {
 
     // quick solid wing rib 5 mm thick
     let rib = naca2412.extrude(0.005);
-    let _ = fs::write(
-        "stl/naca2412_extruded.stl",
-        rib.to_stl_ascii("2412_extruded"),
-    );
+    let _ = fs::write("stl/naca2412_extruded.stl", rib.to_stl_ascii("2412_extruded"));
 
     // symmetric foil for a centerboard
-    let naca0015 =
-        Sketch::airfoil("0015", 0.3, 80, None).extrude_vector(nalgebra::Vector3::new(0.0, 0.0, 1.2));
+    let naca0015 = Sketch::airfoil("0015", 0.3, 80, None)
+        .extrude_vector(nalgebra::Vector3::new(0.0, 0.0, 1.2));
     let _ = fs::write("stl/naca0015.stl", naca0015.to_stl_ascii("naca0015"));
 
     let oct = Mesh::octahedron(10.0, None);
@@ -692,10 +667,7 @@ fn main() {
     {
         let plane_z = Plane::from_normal(Vector3::z(), 0.5);
         let sliced_polygons = cube.slice(plane_z);
-        let _ = fs::write(
-            "stl/scene_sliced_cube.stl",
-            cube.to_stl_ascii("sliced_cube"),
-        );
+        let _ = fs::write("stl/scene_sliced_cube.stl", cube.to_stl_ascii("sliced_cube"));
         // Save cross-section as well
         let _ = fs::write(
             "stl/scene_sliced_cube_section.stl",
@@ -909,10 +881,15 @@ fn main() {
     //);
 
     // Done!
-    println!("All scenes have been created and written to the 'stl' folder (where applicable).");
-    
+    println!(
+        "All scenes have been created and written to the 'stl' folder (where applicable)."
+    );
+
     let cube1 = Mesh::cube(3.0, None).translate(1.0, 1.0, 1.0);
-	let cube2 = cube1.translate(2.0, 2.0, 2.0);
-	let result = cube1.intersection(&cube2.inverse());
-	let _ = fs::write("stl/cube_difference.stl", result.to_stl_ascii("cube difference"));
+    let cube2 = cube1.translate(2.0, 2.0, 2.0);
+    let result = cube1.intersection(&cube2.inverse());
+    let _ = fs::write(
+        "stl/cube_difference.stl",
+        result.to_stl_ascii("cube difference"),
+    );
 }

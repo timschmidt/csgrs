@@ -1,7 +1,7 @@
 //! Create `Sketch`s using Hershey fonts
 
-use crate::sketch::sketch::Sketch;
 use crate::float_types::Real;
+use crate::sketch::sketch::Sketch;
 use geo::{Geometry, GeometryCollection, LineString, coord};
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use std::fmt::Debug;
@@ -22,7 +22,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # Returns
     /// A new `Sketch` where each glyph stroke is a `Geometry::LineString` in `geometry`.
     ///
-    pub fn from_hershey(text: &str, font: &Font, size: Real, metadata: Option<S>) -> Sketch<S> {
+    pub fn from_hershey(
+        text: &str,
+        font: &Font,
+        size: Real,
+        metadata: Option<S>,
+    ) -> Sketch<S> {
         let mut all_strokes = Vec::new();
         let mut cursor_x: Real = 0.0;
 
@@ -62,7 +67,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         Sketch {
             geometry: geo_coll,
             bounding_box: OnceLock::new(),
-            metadata: metadata,
+            metadata,
         }
     }
 }

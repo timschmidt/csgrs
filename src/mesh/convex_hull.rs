@@ -9,11 +9,11 @@
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
 
-use crate::traits::CSGOps;
 use crate::float_types::Real;
+use crate::mesh::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-use crate::mesh::mesh::Mesh;
+use crate::traits::CSGOps;
 use chull::ConvexHullWrapper;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
@@ -34,7 +34,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             Err(_) => {
                 // Fallback to an empty Mesh if hull generation fails
                 return Mesh::new();
-            }
+            },
         };
 
         let (verts, indices) = hull.vertices_indices();

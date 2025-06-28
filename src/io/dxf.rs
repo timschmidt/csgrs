@@ -1,12 +1,12 @@
 use crate::float_types::Real;
-use crate::sketch::sketch::Sketch;
+use crate::mesh::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-use crate::mesh::mesh::Mesh;
+use crate::sketch::sketch::Sketch;
+use geo::{Polygon as GeoPolygon, line_string};
 use nalgebra::{Point3, Vector3};
 use std::error::Error;
 use std::fmt::Debug;
-use geo::{Polygon as GeoPolygon, line_string};
 
 #[cfg(any(feature = "stl-io", feature = "dxf-io"))]
 use core2::io::Cursor;
@@ -113,7 +113,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
                     polygons.extend(extruded);
                 },
-                
+
                 // todo convert image to work with `from_image`
                 // EntityType::Image(image) => {}
                 // todo convert image to work with `text`, also try using system fonts for a better chance of having the font

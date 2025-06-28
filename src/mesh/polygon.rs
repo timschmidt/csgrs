@@ -1,4 +1,4 @@
-use crate::float_types::{parry3d::bounding_volume::Aabb, Real};
+use crate::float_types::{Real, parry3d::bounding_volume::Aabb};
 use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
@@ -81,7 +81,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         let normal_3d = self.plane.normal().normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
         let origin_3d = self.vertices[0].pos;
-        
+
         #[cfg(feature = "earcut")]
         {
             // Flatten each vertex to 2D
@@ -134,11 +134,14 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                 let y_clamped = if y.abs() < MIN_ALLOWED_VALUE { 0.0 } else { y };
 
                 // test for NaN/±∞
-				if !(x.is_finite() && y.is_finite() && x_clamped.is_finite() && y_clamped.is_finite())
-				{
-					// at least one coordinate was NaN/±∞ – ignore this triangle
-					continue;
-				}
+                if !(x.is_finite()
+                    && y.is_finite()
+                    && x_clamped.is_finite()
+                    && y_clamped.is_finite())
+                {
+                    // at least one coordinate was NaN/±∞ – ignore this triangle
+                    continue;
+                }
                 all_vertices_2d.push(coord! {x: x_clamped, y: y_clamped});
             }
 

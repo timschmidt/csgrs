@@ -1,7 +1,9 @@
-use crate::sketch::sketch::Sketch;
 use crate::float_types::Real;
+use crate::sketch::sketch::Sketch;
 use geo::{Geometry, GeometryCollection};
-use geo_buf::{buffer_multi_polygon, buffer_polygon, buffer_polygon_rounded, buffer_multi_polygon_rounded};
+use geo_buf::{
+    buffer_multi_polygon, buffer_multi_polygon_rounded, buffer_polygon, buffer_polygon_rounded,
+};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 

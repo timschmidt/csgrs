@@ -1,18 +1,23 @@
-use crate::float_types::{EPSILON, Real};
+use crate::float_types::parry3d::bounding_volume::{Aabb, BoundingVolume};
 use crate::float_types::parry3d::query::RayCast;
 use crate::float_types::parry3d::shape::Shape;
-use crate::float_types::parry3d::bounding_volume::{Aabb, BoundingVolume};
-use crate::float_types::rapier3d::prelude::{ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet, SharedShape, Triangle, TriMesh};
+use crate::float_types::rapier3d::prelude::{
+    ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
+    SharedShape, TriMesh, Triangle,
+};
+use crate::float_types::{EPSILON, Real};
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::traits::CSGOps;
 use geo::{Coord, CoordsIter, Geometry, LineString, Polygon as GeoPolygon};
-use nalgebra::{Isometry3, Matrix4, Point3, Vector3, Quaternion, Unit, partial_max, partial_min};
+use nalgebra::{
+    Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
+};
 use std::fmt::Debug;
-use std::sync::OnceLock;
 use std::num::NonZero;
+use std::sync::OnceLock;
 
 #[derive(Clone, Debug)]
 pub struct Mesh<S: Clone + Send + Sync + Debug> {
@@ -27,13 +32,13 @@ pub struct Mesh<S: Clone + Send + Sync + Debug> {
 }
 
 impl<S: Clone + Send + Sync + Debug> Mesh<S> {
-   /// Build a Mesh from an existing polygon list
+    /// Build a Mesh from an existing polygon list
     pub fn from_polygons(polygons: &[Polygon<S>]) -> Self {
         let mut mesh = Mesh::new();
         mesh.polygons = polygons.to_vec();
         mesh
     }
-	
+
     /// Split polygons into (may_touch, cannot_touch) using bounding‑box tests
     fn partition_polys(
         polys: &[Polygon<S>],
@@ -50,8 +55,8 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         }
         (maybe, never)
     }
-    
-	/// Helper to collect all vertices from the CSG.
+
+    /// Helper to collect all vertices from the CSG.
     #[cfg(not(feature = "parallel"))]
     pub fn vertices(&self) -> Vec<Vertex> {
         self.polygons
@@ -70,15 +75,20 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     }
 
     /// Rotate polygons into 2D to perform triangulation, then rotate triangles back to original 3D position
-    pub fn triangulate_2d(outer: &[[Real; 2]], holes: &[&[[Real; 2]]]) -> Vec<[Point3<Real>; 3]> {
+    pub fn triangulate_2d(
+        outer: &[[Real; 2]],
+        holes: &[&[[Real; 2]]],
+    ) -> Vec<[Point3<Real>; 3]> {
         // Convert the outer ring into a `LineString`
-        let outer_coords: Vec<Coord<Real>> = outer.iter().map(|&[x, y]| Coord { x, y }).collect();
+        let outer_coords: Vec<Coord<Real>> =
+            outer.iter().map(|&[x, y]| Coord { x, y }).collect();
 
         // Convert each hole into its own `LineString`
         let holes_coords: Vec<LineString<Real>> = holes
             .iter()
             .map(|hole| {
-                let coords: Vec<Coord<Real>> = hole.iter().map(|&[x, y]| Coord { x, y }).collect();
+                let coords: Vec<Coord<Real>> =
+                    hole.iter().map(|&[x, y]| Coord { x, y }).collect();
                 LineString::new(coords)
             })
             .collect();
@@ -132,7 +142,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         }
     }
 
-	/// Triangulate each polygon in the Mesh returning a Mesh containing triangles
+    /// Triangulate each polygon in the Mesh returning a Mesh containing triangles
     pub fn triangulate(&self) -> Mesh<S> {
         let mut triangles = Vec::new();
 
@@ -146,7 +156,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         Mesh::from_polygons(&triangles)
     }
 
-	/// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
+    /// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
     /// This results in a triangular mesh with more detail.
     pub fn subdivide_triangles(&self, levels: u32) -> Mesh<S> {
         if levels == 0 {
@@ -194,8 +204,8 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             poly.set_new_normal();
         }
     }
-    
-	/// Casts a ray defined by `origin` + t * `direction` against all triangles
+
+    /// Casts a ray defined by `origin` + t * `direction` against all triangles
     /// of this CSG and returns a list of (intersection_point, distance),
     /// sorted by ascending distance.
     ///
@@ -232,7 +242,9 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
                 let triangle = Triangle::new(a, b, c);
 
                 // Ray-cast against the triangle:
-                if let Some(hit) = triangle.cast_ray_and_get_normal(&iso, &ray, Real::MAX, true) {
+                if let Some(hit) =
+                    triangle.cast_ray_and_get_normal(&iso, &ray, Real::MAX, true)
+                {
                     let point_on_ray = ray.point_at(hit.time_of_impact);
                     hits.push((Point3::from(point_on_ray.coords), hit.time_of_impact));
                 }
@@ -277,7 +289,10 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     }
 
     /// Approximate mass properties using Rapier.
-    pub fn mass_properties(&self, density: Real) -> (Real, Point3<Real>, Unit<Quaternion<Real>>) {
+    pub fn mass_properties(
+        &self,
+        density: Real,
+    ) -> (Real, Point3<Real>, Unit<Quaternion<Real>>) {
         let shape = self.to_trimesh();
         if let Some(trimesh) = shape.as_trimesh() {
             let mp = trimesh.mass_properties(density);
@@ -319,50 +334,51 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         rb_handle
     }
-    
+
     /// Convert a Mesh into a Bevy `Mesh`.
     #[cfg(feature = "bevymesh")]
     pub fn to_bevy_mesh(&self) -> Mesh {
         let tessellated_csg = &self.tessellate();
         let polygons = &tessellated_csg.polygons;
-    
+
         // Prepare buffers
         let mut positions_32 = Vec::new();
-        let mut normals_32   = Vec::new();
-        let mut indices      = Vec::new();
-    
+        let mut normals_32 = Vec::new();
+        let mut indices = Vec::new();
+
         let mut index_start = 0u32;
-    
+
         // Each polygon is assumed to have exactly 3 vertices after tessellation.
         for poly in polygons {
             // skip any degenerate polygons
             if poly.vertices.len() != 3 {
                 continue;
             }
-    
+
             // push 3 positions/normals
             for v in &poly.vertices {
                 positions_32.push([v.pos.x as f32, v.pos.y as f32, v.pos.z as f32]);
                 normals_32.push([v.normal.x as f32, v.normal.y as f32, v.normal.z as f32]);
             }
-    
+
             // triangle indices
             indices.push(index_start);
             indices.push(index_start + 1);
             indices.push(index_start + 2);
             index_start += 3;
         }
-    
+
         // Create the mesh with the new 2-argument constructor
-        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default());
-    
+        let mut mesh =
+            Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default());
+
         // Insert attributes. Note the `<Vec<[f32; 3]>>` usage.
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions_32);
-        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL,   normals_32);
-    
+        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals_32);
+
         // Insert triangle indices
         mesh.insert_indices(Indices::U32(indices));
-    
+
         mesh
     }
 }
@@ -392,8 +408,10 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
     /// ```
     fn union(&self, other: &Mesh<S>) -> Mesh<S> {
         // avoid splitting obvious non‑intersecting faces
-        let (a_clip, a_passthru) = Self::partition_polys(&self.polygons, &other.bounding_box());
-        let (b_clip, b_passthru) = Self::partition_polys(&other.polygons, &self.bounding_box());
+        let (a_clip, a_passthru) =
+            Self::partition_polys(&self.polygons, &other.bounding_box());
+        let (b_clip, b_passthru) =
+            Self::partition_polys(&other.polygons, &self.bounding_box());
 
         let mut a = Node::new(&a_clip);
         let mut b = Node::new(&b_clip);
@@ -432,8 +450,10 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
     /// ```
     fn difference(&self, other: &Mesh<S>) -> Mesh<S> {
         // avoid splitting obvious non‑intersecting faces
-        let (a_clip, a_passthru) = Self::partition_polys(&self.polygons, &other.bounding_box());
-        let (b_clip, _b_passthru) = Self::partition_polys(&other.polygons, &self.bounding_box());
+        let (a_clip, a_passthru) =
+            Self::partition_polys(&self.polygons, &other.bounding_box());
+        let (b_clip, _b_passthru) =
+            Self::partition_polys(&other.polygons, &self.bounding_box());
 
         let mut a = Node::new(&a_clip);
         let mut b = Node::new(&b_clip);
@@ -518,10 +538,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
 
     /// Apply an arbitrary 3D transform (as a 4x4 matrix) to the mesh.
     fn transform(&self, mat: &Matrix4<Real>) -> Mesh<S> {
-        let mat_inv_transpose = mat
-            .try_inverse()
-            .expect("Matrix not invertible?")
-            .transpose(); // todo catch error
+        let mat_inv_transpose = mat.try_inverse().expect("Matrix not invertible?").transpose(); // todo catch error
         let mut mesh = self.clone();
 
         for poly in &mut mesh.polygons {
@@ -620,7 +637,8 @@ impl<S: Clone + Send + Sync + Debug> From<crate::sketch::sketch::Sketch<S>> for 
             for ring in poly2d.interiors() {
                 let mut hole_vertices_3d = Vec::new();
                 for c in ring.coords_iter() {
-                    hole_vertices_3d.push(Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()));
+                    hole_vertices_3d
+                        .push(Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()));
                 }
 
                 if hole_vertices_3d.len() >= 3 {
@@ -636,14 +654,14 @@ impl<S: Clone + Send + Sync + Debug> From<crate::sketch::sketch::Sketch<S>> for 
             match geom {
                 Geometry::Polygon(poly2d) => {
                     process_polygon(poly2d, &mut all_polygons, &sketch.metadata);
-                }
+                },
                 Geometry::MultiPolygon(multipoly) => {
                     for poly2d in multipoly {
                         process_polygon(poly2d, &mut all_polygons, &sketch.metadata);
                     }
-                }
+                },
                 // Optional: handle other geometry types like LineString here.
-                _ => {}
+                _ => {},
             }
         }
 
