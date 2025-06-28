@@ -1,4 +1,4 @@
-name: Rust
+name: Rust CI
 
 on: [push, pull_request]
 
@@ -68,6 +68,9 @@ jobs:
 
       - name: Check semver
         uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          package: csgrs
+          features: parallel stl-io svg-io dxf-io truetype-text hershey-text image-io
 
       - name: Check spelling
         run: |
