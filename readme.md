@@ -64,7 +64,7 @@ cargo build --features="wasm" --target=wasm32-unknown-unknown --release
 
 ### Sketch Structure
 
-- **`Sketch<S>`** is the main type. It stores:
+- **`Sketch<S>`** is the type which stores and manipulates 2D polygonal geometry.  It contains:
   - a [`geo`](https://crates.io/crates/geo) [`GeometryCollection<Real>`](https://docs.rs/geo/latest/geo/geometry/struct.GeometryCollection.html)
   - a bounding box wrapped in a OnceLock (bounding_box: OnceLock<Aabb>)
   - an optional metadata field (`Option<S>`) also defined by you
@@ -146,7 +146,7 @@ let lofted = Sketch::extrude_between(&polygon_bottom.polygons[0], &polygon_top.p
 
 ### Mesh Structure
 
-- **`Mesh<S>`** is the main type. It stores:
+- **`Mesh<S>`** is the type which stores and manipulates 3D polygonal geometry.  It contains:
   - a `Vec<Polygon<S>>` polygons, describing 3D shapes, each `Polygon<S>` holds:
     - a `Vec<Vertex>` (positions + normals),
     - a `Plane` describing the polygon’s orientation in 3D.
