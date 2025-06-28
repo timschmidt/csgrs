@@ -5,9 +5,7 @@ use geo_buf::{buffer_multi_polygon, buffer_polygon};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug> Sketch<S>
-where
-    S: Clone + Send + Sync,
+impl<S: Clone + Debug + Send + Sync> Sketch<S>
 {
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using georust.
     /// For each Geometry in the collection:
@@ -36,7 +34,6 @@ where
 
         // Return a new Sketch using the offset geometry collection and the old polygons/metadata
         Sketch {
-            polygons: self.polygons.clone(),
             geometry: new_collection,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),

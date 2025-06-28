@@ -192,7 +192,7 @@ where
         }
 
         // Triangulate the whole shape once
-        let tri_csg = self.tessellate();
+        let tri_csg = self.triangulate();
         let mut edge_counts: HashMap<(SmallStr<27>, SmallStr<27>), u32> = HashMap::new();
 
         for poly in &tri_csg.polygons {

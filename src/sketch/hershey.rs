@@ -1,12 +1,11 @@
 use crate::sketch::sketch::Sketch;
 use crate::float_types::Real;
+use geo::{Geometry, GeometryCollection, LineString, coord};
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug> Sketch<S>
-where
-    S: Clone + Send + Sync,
+impl<S: Clone + Debug + Send + Sync> Sketch<S>
 {
     /// Creates **2D line-stroke text** in the XY plane using a Hershey font.
     ///
@@ -23,8 +22,6 @@ where
     /// A new `Sketch` where each glyph stroke is a `Geometry::LineString` in `geometry`.
     ///
     pub fn from_hershey(text: &str, font: &Font, size: Real, metadata: Option<S>) -> Sketch<S> {
-        use geo::{Geometry, GeometryCollection};
-
         let mut all_strokes = Vec::new();
         let mut cursor_x: Real = 0.0;
 
@@ -62,7 +59,6 @@ where
 
         // Return a new Sketch that has no 3D polygons, but has these lines in geometry.
         Sketch {
-            polygons: Vec::new(),
             geometry: geo_coll,
             bounding_box: OnceLock::new(),
             metadata: metadata,
@@ -77,8 +73,6 @@ fn build_hershey_glyph_lines(
     offset_x: Real,
     offset_y: Real,
 ) -> Vec<geo::LineString<Real>> {
-    use geo::{LineString, coord};
-
     let mut strokes = Vec::new();
 
     // We'll accumulate each stroke’s points in `current_coords`,
