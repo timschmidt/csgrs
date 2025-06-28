@@ -1,9 +1,9 @@
-use crate::traits::CSGOps;
-use crate::sketch::sketch::Sketch;
 use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real, TAU};
+use crate::sketch::sketch::Sketch;
+use crate::traits::CSGOps;
 use geo::{
-    BooleanOps, coord, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
-    Polygon as GeoPolygon, line_string, orient::Direction,
+    BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
+    Polygon as GeoPolygon, coord, line_string, orient::Direction,
 };
 use std::fmt::Debug;
 use std::sync::OnceLock;
@@ -46,7 +46,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # Example
     /// let sq2 = CSG::square(2.0, None);
     pub fn square(width: Real, metadata: Option<S>) -> Self {
-        Self::rectangle(width,width,metadata)
+        Self::rectangle(width, width, metadata)
     }
 
     /// Creates a 2D circle in the XY plane.
@@ -73,12 +73,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
     pub fn right_triangle(width: Real, height: Real, metadata: Option<S>) -> Self {
-        let line_string = LineString::new(vec![coord!{x: 0.0, y: 0.0}, coord!{x: width, y: 0.0}, coord!{x: 0.0, y: height}]);
+        let line_string = LineString::new(vec![
+            coord! {x: 0.0, y: 0.0},
+            coord! {x: width, y: 0.0},
+            coord! {x: 0.0, y: height},
+        ]);
         let polygon = GeoPolygon::new(line_string, vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon)]),
-            metadata,
-        )
+        Sketch::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon)]), metadata)
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -347,7 +348,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
     /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
-    pub fn squircle(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Sketch<S> {
+    pub fn squircle(
+        width: Real,
+        height: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Sketch<S> {
         if segments < 3 {
             return Sketch::new();
         }
@@ -457,8 +463,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             .translate(verts[0].0, verts[0].1, 0.0);
 
         let shape = verts.iter().skip(1).fold(base, |acc, &(x, y)| {
-            let disk =
-                Sketch::circle(diameter, circle_segments, metadata.clone()).translate(x, y, 0.0);
+            let disk = Sketch::circle(diameter, circle_segments, metadata.clone())
+                .translate(x, y, 0.0);
             acc.intersection(&disk)
         });
 
@@ -506,7 +512,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         inner.push(inner[0]);
         inner.reverse(); // ensure hole is opposite winding from outer
 
-        let polygon_2d = GeoPolygon::new(LineString::from(outer), vec![LineString::from(inner)]);
+        let polygon_2d =
+            GeoPolygon::new(LineString::from(outer), vec![LineString::from(inner)]);
         Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
             metadata,
@@ -825,10 +832,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // closed curve → create a filled polygon
         let poly_2d = GeoPolygon::new(LineString::from(pts), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(poly_2d)]),
-            metadata,
-        )
+        Sketch::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
     }
 
     /// Sample an open-uniform B-spline of arbitrary degree (`p`) using the
@@ -918,10 +922,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         }
 
         let poly_2d = GeoPolygon::new(LineString::from(pts), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(poly_2d)]),
-            metadata,
-        )
+        Sketch::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
     }
 
     /// 2-D heart outline (closed polygon) sized to `width` × `height`.
@@ -939,23 +940,21 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         for i in 0..segments {
             let t = i as Real * step;
             let x = 16.0 * (t.sin().powi(3));
-            let y =
-                13.0 * t.cos() - 5.0 * (2.0 * t).cos() - 2.0 * (3.0 * t).cos() - (4.0 * t).cos();
+            let y = 13.0 * t.cos()
+                - 5.0 * (2.0 * t).cos()
+                - 2.0 * (3.0 * t).cos()
+                - (4.0 * t).cos();
             pts.push((x, y));
         }
         pts.push(pts[0]); // close
 
         // normalise & scale to desired bounding box ---------------------
-        let (min_x, max_x) = pts
-            .iter()
-            .fold((Real::MAX, -Real::MAX), |(lo, hi), &(x, _)| {
-                (lo.min(x), hi.max(x))
-            });
-        let (min_y, max_y) = pts
-            .iter()
-            .fold((Real::MAX, -Real::MAX), |(lo, hi), &(_, y)| {
-                (lo.min(y), hi.max(y))
-            });
+        let (min_x, max_x) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(x, _)| {
+            (lo.min(x), hi.max(x))
+        });
+        let (min_y, max_y) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(_, y)| {
+            (lo.min(y), hi.max(y))
+        });
         let s_x = width / (max_x - min_x);
         let s_y = height / (max_y - min_y);
 
@@ -990,7 +989,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         }
 
         let big = Self::circle(outer_r, segments, metadata.clone());
-        let small = Self::circle(inner_r, segments, metadata.clone()).translate(offset, 0.0, 0.0);
+        let small =
+            Self::circle(inner_r, segments, metadata.clone()).translate(offset, 0.0, 0.0);
 
         big.difference(&small)
     }

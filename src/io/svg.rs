@@ -410,16 +410,16 @@ impl FromSVG for CSG<()> {
                 | Event::Tag(tag::SVG, ..)
                 | Event::Tag(tag::Description, ..)
                 | Event::Tag(tag::Text, ..)
-                | Event::Tag(tag::Title, ..) => {}
+                | Event::Tag(tag::Title, ..) => {},
 
                 Event::Error(error) => {
                     return Err(error.into());
-                }
+                },
 
                 Event::Tag(tag::Group, ..) => {
                     // TODO: keep track of transforms
                     // TODO: keep track of style properties
-                }
+                },
 
                 Event::Tag(tag::Path, Empty, attrs) => {
                     let data = expect_attr!(attrs, "d")?;
@@ -449,7 +449,7 @@ impl FromSVG for CSG<()> {
                             csg_union = csg_union.union(&csg);
                         }
                     }
-                }
+                },
 
                 Event::Tag(tag::Circle, Empty, attrs) => {
                     let cx = expect_attr!(attrs, "cx")?.parse()?;
@@ -461,7 +461,7 @@ impl FromSVG for CSG<()> {
 
                     let csg = Self::circle(r, segments, None).translate(cx, cy, 0.0);
                     csg_union = csg_union.union(&csg);
-                }
+                },
 
                 Event::Tag(tag::Rectangle, Empty, attrs) => {
                     let x: f64 = expect_attr!(attrs, "x")?.parse()?;
@@ -477,9 +477,10 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let csg = Self::rounded_rectangle(w, h, r, segments, None).translate(x, y, 0.0);
+                    let csg =
+                        Self::rounded_rectangle(w, h, r, segments, None).translate(x, y, 0.0);
                     csg_union = csg_union.union(&csg);
-                }
+                },
 
                 Event::Tag(tag::Ellipse, Empty, attrs) => {
                     let cx = expect_attr!(attrs, "cx")?.parse()?;
@@ -490,10 +491,10 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (rx.max(ry).ceil() as usize).max(6);
 
-                    let csg =
-                        Self::ellipse(rx * 2.0, ry * 2.0, segments, None).translate(cx, cy, 0.0);
+                    let csg = Self::ellipse(rx * 2.0, ry * 2.0, segments, None)
+                        .translate(cx, cy, 0.0);
                     csg_union = csg_union.union(&csg);
-                }
+                },
 
                 Event::Tag(tag::Line, Empty, attrs) => {
                     let _x1 = expect_attr!(attrs, "x1")?;
@@ -502,21 +503,21 @@ impl FromSVG for CSG<()> {
                     let _y2 = expect_attr!(attrs, "y2")?;
 
                     // TODO: This needs knowing current stroke-width
-                }
+                },
 
                 Event::Tag(tag::Polygon, Empty, attrs) => {
                     let points = expect_attr!(attrs, "points")?;
                     let polygon = Polygon::new(svg_points_to_line_string(points)?, vec![]);
                     let csg = Self::from_geo(polygon.into(), None);
                     csg_union = csg_union.union(&csg);
-                }
+                },
 
                 Event::Tag(tag::Polyline, Empty, attrs) => {
                     let points = expect_attr!(attrs, "points")?;
                     let _ls = svg_points_to_line_string::<f64>(points)?;
 
                     // TODO: This needs knowing current stroke-width
-                }
+                },
 
                 tag => {
                     // TODO: Non-empty tags should also be supported
@@ -611,40 +612,40 @@ impl<S: Clone> ToSVG for CSG<S> {
                             .set("x2", line.end.x)
                             .set("y2", line.end.y),
                     );
-                }
+                },
 
                 LineString(line_string) => {
                     g = g.add(make_line_string(line_string));
-                }
+                },
                 Polygon(polygon) => {
                     g = g.add(make_polygon(polygon));
-                }
+                },
                 MultiLineString(multi_line_string) => {
                     for line_string in multi_line_string {
                         g = g.add(make_line_string(line_string));
                     }
-                }
+                },
                 MultiPolygon(multi_polygon) => {
                     for polygon in multi_polygon {
                         g = g.add(make_polygon(polygon));
                     }
-                }
+                },
 
                 Rect(rect) => {
                     g = g.add(make_polygon(&rect.to_polygon()));
-                }
+                },
 
                 Triangle(triangle) => {
                     g = g.add(make_polygon(&triangle.to_polygon()));
-                }
+                },
 
                 GeometryCollection(_) => {
                     unimplemented!("Exporting nested geometry collections to SVG")
                 },
 
                 // Can't really export points to SVG
-                Point(_) => {}
-                MultiPoint(_) => {}
+                Point(_) => {},
+                MultiPoint(_) => {},
             }
         }
 
@@ -695,7 +696,7 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
             Close => {
                 builder.close()?;
                 continue;
-            }
+            },
         };
 
         match cmd {
@@ -711,7 +712,7 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
                 while let Some(&[x, y]) = coords.next() {
                     builder.line_to(Coord { x, y })?;
                 }
-            }
+            },
             Move(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut coords = params.chunks(param_count);
@@ -724,41 +725,41 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
                 while let Some(&[dx, dy]) = coords.next() {
                     builder.line_by(Coord { x: dx, y: dy })?;
                 }
-            }
+            },
             Line(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut coords = params.chunks(param_count);
                 while let Some(&[x, y]) = coords.next() {
                     builder.line_to(Coord { x, y })?;
                 }
-            }
+            },
             Line(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut coords = params.chunks(param_count);
                 while let Some(&[dx, dy]) = coords.next() {
                     builder.line_by(Coord { x: dx, y: dy })?;
                 }
-            }
+            },
             HorizontalLine(Absolute, params) => {
                 for &x in params.into_iter() {
                     builder.hline_to(x)?;
                 }
-            }
+            },
             HorizontalLine(Relative, params) => {
                 for &dx in params.into_iter() {
                     builder.hline_by(dx)?;
                 }
-            }
+            },
             VerticalLine(Absolute, params) => {
                 for &y in params.into_iter() {
                     builder.vline_to(y)?;
                 }
-            }
+            },
             VerticalLine(Relative, params) => {
                 for &dy in params.into_iter() {
                     builder.vline_by(dy)?;
                 }
-            }
+            },
 
             QuadraticCurve(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
@@ -766,28 +767,28 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
                 while let Some(&[cx, cy, x, y]) = params.next() {
                     builder.quadratic_curve_to(Coord { x: cx, y: cy }, Coord { x, y })?;
                 }
-            }
+            },
             QuadraticCurve(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[cx, cy, x, y]) = params.next() {
                     builder.quadratic_curve_by(Coord { x: cx, y: cy }, Coord { x, y })?;
                 }
-            }
+            },
             SmoothQuadraticCurve(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[x, y]) = params.next() {
                     builder.quadratic_smooth_curve_to(Coord { x, y })?;
                 }
-            }
+            },
             SmoothQuadraticCurve(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[x, y]) = params.next() {
                     builder.quadratic_smooth_curve_by(Coord { x, y })?;
                 }
-            }
+            },
 
             CubicCurve(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
@@ -799,7 +800,7 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
                         Coord { x, y },
                     )?;
                 }
-            }
+            },
             CubicCurve(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
@@ -810,21 +811,21 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
                         Coord { x, y },
                     )?;
                 }
-            }
+            },
             SmoothCubicCurve(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[c2x, c2y, x, y]) = params.next() {
                     builder.smooth_curve_to(Coord { x: c2x, y: c2y }, Coord { x, y })?;
                 }
-            }
+            },
             SmoothCubicCurve(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
                 while let Some(&[c2x, c2y, x, y]) = params.next() {
                     builder.smooth_curve_by(Coord { x: c2x, y: c2y }, Coord { x, y })?;
                 }
-            }
+            },
 
             EllipticalArc(Absolute, params) => {
                 ensure_param_count!(params.len(), param_count);
@@ -841,7 +842,7 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
                         Coord { x, y },
                     )?;
                 }
-            }
+            },
             EllipticalArc(Relative, params) => {
                 ensure_param_count!(params.len(), param_count);
                 let mut params = params.chunks(param_count);
@@ -857,11 +858,11 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
                         Coord { x, y },
                     )?;
                 }
-            }
+            },
 
             Close => {
                 unreachable!("Expected an early continue.");
-            }
+            },
         }
     }
 

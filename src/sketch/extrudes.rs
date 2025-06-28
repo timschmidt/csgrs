@@ -1,9 +1,9 @@
-use crate::traits::CSGOps;
 use crate::float_types::{EPSILON, Real};
 use crate::mesh::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::sketch::sketch::Sketch;
+use crate::traits::CSGOps;
 use geo::{Area, CoordsIter, Geometry, LineString, Polygon as GeoPolygon};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
@@ -53,34 +53,34 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 for poly in &mp.0 {
                     Self::extrude_polygon(poly, dir, meta, acc);
                 }
-            }
+            },
             Geometry::GeometryCollection(gc) => {
                 for sub in &gc.0 {
                     Self::extrude_geometry(sub, dir, meta, acc);
                 }
-            }
+            },
             Geometry::LineString(ls) if ls.0.len() >= 2 => {
                 // turn every segment into a quad side-wall
                 for seg in ls.lines() {
                     Self::push_quad(
                         Point3::new(seg.start.x, seg.start.y, 0.0),
-                        Point3::new(seg.end.x,   seg.end.y,   0.0),
+                        Point3::new(seg.end.x, seg.end.y, 0.0),
                         dir,
                         meta,
                         acc,
                     );
                 }
-            }
+            },
             Geometry::Line(line) => {
                 Self::push_quad(
                     Point3::new(line.start.x, line.start.y, 0.0),
-                    Point3::new(line.end.x,   line.end.y,   0.0),
+                    Point3::new(line.end.x, line.end.y, 0.0),
                     dir,
                     meta,
                     acc,
                 );
-            }
-            _ => { /* ignore Points etc. */ }
+            },
+            _ => { /* ignore Points etc. */ },
         }
     }
 

@@ -5,7 +5,7 @@ use nalgebra::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
 
 /// Boolean operations + transformations
 pub trait CSGOps: Sized + Clone {
-	fn new() -> Self;
+    fn new() -> Self;
     fn union(&self, other: &Self) -> Self;
     fn difference(&self, other: &Self) -> Self;
     fn intersection(&self, other: &Self) -> Self;
@@ -141,8 +141,9 @@ pub trait CSGOps: Sized + Clone {
             };
 
             let angle = start_rad + t * sweep;
-            let rot = nalgebra::Rotation3::from_axis_angle(&nalgebra::Vector3::z_axis(), angle)
-                .to_homogeneous();
+            let rot =
+                nalgebra::Rotation3::from_axis_angle(&nalgebra::Vector3::z_axis(), angle)
+                    .to_homogeneous();
 
             // translate out to radius in x
             let trans = nalgebra::Translation3::new(radius, 0.0, 0.0).to_homogeneous();
@@ -160,7 +161,12 @@ pub trait CSGOps: Sized + Clone {
     /// each copy spaced by `spacing`.
     /// E.g. if `dir=(1.0,0.0,0.0)` and `spacing=2.0`, you get copies at
     /// x=0, x=2, x=4, ... etc.
-    fn distribute_linear(&self, count: usize, dir: nalgebra::Vector3<Real>, spacing: Real) -> Self {
+    fn distribute_linear(
+        &self,
+        count: usize,
+        dir: nalgebra::Vector3<Real>,
+        spacing: Real,
+    ) -> Self {
         if count < 1 {
             return self.clone();
         }

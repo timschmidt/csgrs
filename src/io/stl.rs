@@ -1,7 +1,7 @@
 use crate::float_types::Real;
+use crate::mesh::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-use crate::mesh::mesh::Mesh;
 use crate::sketch::sketch::Sketch;
 
 use geo::CoordsIter;
@@ -224,7 +224,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         out.push_str("    endloop\n");
                         out.push_str("  endfacet\n");
                     }
-                }
+                },
 
                 geo::Geometry::MultiPolygon(mp) => {
                     // Each polygon inside the MultiPolygon
@@ -239,7 +239,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         let holes_vec = poly2d
                             .interiors()
                             .into_iter()
-                            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
+                            .map(|ring| {
+                                ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>()
+                            })
                             .collect::<Vec<_>>();
                         let hole_refs = holes_vec
                             .iter()
@@ -261,11 +263,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             out.push_str("  endfacet\n");
                         }
                     }
-                }
+                },
 
                 // Skip all other geometry types (LineString, Point, etc.)
                 // You can optionally handle them if you like, or ignore them.
-                _ => {}
+                _ => {},
             }
         }
 
@@ -296,11 +298,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
                     // Gather outer ring as [x,y]
-                    let outer: Vec<[Real; 2]> = poly2d
-                        .exterior()
-                        .coords_iter()
-                        .map(|c| [c.x, c.y])
-                        .collect();
+                    let outer: Vec<[Real; 2]> =
+                        poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
 
                     // Gather holes
                     let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
@@ -310,7 +309,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         .collect();
 
                     // Convert each hole to a slice-reference for triangulation
-                    let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
+                    let hole_refs: Vec<&[[Real; 2]]> =
+                        holes_vec.iter().map(|h| &h[..]).collect();
 
                     // Triangulate using our geo-based helper
                     let tri_2d = Mesh::<()>::triangulate_2d(&outer, &hole_refs);
@@ -338,16 +338,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             ],
                         });
                     }
-                }
+                },
 
                 geo::Geometry::MultiPolygon(mpoly) => {
                     // Same approach, but each Polygon in the MultiPolygon
                     for poly2d in &mpoly.0 {
-                        let outer: Vec<[Real; 2]> = poly2d
-                            .exterior()
-                            .coords_iter()
-                            .map(|c| [c.x, c.y])
-                            .collect();
+                        let outer: Vec<[Real; 2]> =
+                            poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
 
                         let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
                             .interiors()
@@ -382,10 +379,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             });
                         }
                     }
-                }
+                },
 
                 // Skip other geometry types: lines, points, etc.
-                _ => {}
+                _ => {},
             }
         }
 

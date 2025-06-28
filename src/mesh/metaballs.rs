@@ -1,8 +1,8 @@
-use crate::traits::CSGOps;
-use crate::mesh::mesh::Mesh;
 use crate::float_types::{EPSILON, Real};
+use crate::mesh::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
+use crate::traits::CSGOps;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
@@ -34,8 +34,7 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
     value
 }
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S>
-{
+impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// **Creates a Mesh from a list of metaballs** by sampling a 3D grid and using marching cubes.
     ///
     /// - `balls`: slice of metaball definitions (center + radius).

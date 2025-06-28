@@ -39,14 +39,14 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
                 Geometry::Polygon(poly) => polygons.push(poly.clone()),
                 Geometry::MultiPolygon(mp) => polygons.extend(mp.0.clone()),
                 // ignore lines, points, etc.
-                _ => {}
+                _ => {},
             }
         }
 
         MultiPolygon(polygons)
     }
-    
-	/// Create a Sketch from a `geo::GeometryCollection`.
+
+    /// Create a Sketch from a `geo::GeometryCollection`.
     pub fn from_geo(geometry: GeometryCollection<Real>, metadata: Option<S>) -> Sketch<S> {
         let mut new_sketch = Sketch::new();
         new_sketch.geometry = geometry;
@@ -96,7 +96,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
                     // skip [multi]polygons
-                }
+                },
                 _ => final_gc.0.push(g.clone()),
             }
         }
@@ -104,7 +104,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
                     // skip [multi]polygons
-                }
+                },
                 _ => final_gc.0.push(g.clone()),
             }
         }
@@ -145,7 +145,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
         // (If you need to exclude lines/points that lie inside other, you'd need more checks here.)
         for g in &self.geometry.0 {
             match g {
-                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {} // skip
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
                 _ => final_gc.0.push(g.clone()),
             }
         }
@@ -186,13 +186,13 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
         // todo: detect intersection of non-polygons
         for g in &self.geometry.0 {
             match g {
-                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {} // skip
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
                 _ => final_gc.0.push(g.clone()),
             }
         }
         for g in &other.geometry.0 {
             match g {
-                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {} // skip
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
                 _ => final_gc.0.push(g.clone()),
             }
         }
@@ -233,13 +233,13 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
         // Re-insert lines & points from both sets
         for g in &self.geometry.0 {
             match g {
-                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {} // skip
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
                 _ => final_gc.0.push(g.clone()),
             }
         }
         for g in &other.geometry.0 {
             match g {
-                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {} // skip
+                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
                 _ => final_gc.0.push(g.clone()),
             }
         }

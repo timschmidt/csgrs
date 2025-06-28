@@ -1,8 +1,8 @@
 //! Create `Sketch`s using ttf fonts
 
-use crate::traits::CSGOps;
-use crate::sketch::sketch::Sketch;
 use crate::float_types::Real;
+use crate::sketch::sketch::Sketch;
+use crate::traits::CSGOps;
 use geo::{
     Area, Geometry, GeometryCollection, LineString, Orient, Polygon as GeoPolygon,
     orient::Direction,
@@ -38,7 +38,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             Err(_) => {
                 // If the font fails to parse, return an empty 2D Sketch
                 return Sketch::new();
-            }
+            },
         };
 
         // 1 font unit, 2048 font units / em, scale points / em, 0.352777 points / mm
@@ -270,7 +270,8 @@ impl OutlineFlattener {
             // If the last point != the first, close it.
             let first = self.current[0];
             let last = self.current[n - 1];
-            if (first.0 - last.0).abs() > Real::EPSILON || (first.1 - last.1).abs() > Real::EPSILON
+            if (first.0 - last.0).abs() > Real::EPSILON
+                || (first.1 - last.1).abs() > Real::EPSILON
             {
                 self.current.push(first);
             }

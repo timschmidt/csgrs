@@ -1,9 +1,11 @@
-use crate::traits::CSGOps;
-use crate::sketch::sketch::Sketch;
 use crate::float_types::{EPSILON, Real};
-use geo::{coord, Coord, CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon};
-use std::fmt::Debug;
+use crate::sketch::sketch::Sketch;
+use crate::traits::CSGOps;
+use geo::{
+    Coord, CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord,
+};
 use hashbrown::HashMap;
+use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
@@ -75,16 +77,17 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut contours = Vec::<LineString<Real>>::new();
 
         // Interpolator:
-        let interpolate =
-            |(x1, y1, v1): (Real, Real, Real), (x2, y2, v2): (Real, Real, Real)| -> (Real, Real) {
-                let denom = (v2 - v1).abs();
-                if denom < EPSILON {
-                    (x1, y1)
-                } else {
-                    let t = -v1 / (v2 - v1); // crossing at 0
-                    (x1 + t * (x2 - x1), y1 + t * (y2 - y1))
-                }
-            };
+        let interpolate = |(x1, y1, v1): (Real, Real, Real),
+                           (x2, y2, v2): (Real, Real, Real)|
+         -> (Real, Real) {
+            let denom = (v2 - v1).abs();
+            if denom < EPSILON {
+                (x1, y1)
+            } else {
+                let t = -v1 / (v2 - v1); // crossing at 0
+                (x1 + t * (x2 - x1), y1 + t * (y2 - y1))
+            }
+        };
 
         for iy in 0..(ny - 1) {
             let y0 = min_y + (iy as Real) * dy;

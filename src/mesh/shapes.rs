@@ -1,9 +1,9 @@
-use crate::traits::CSGOps;
 use crate::float_types::{EPSILON, PI, Real, TAU};
 use crate::mesh::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::sketch::sketch::Sketch;
+use crate::traits::CSGOps;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 
@@ -113,7 +113,12 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     }
 
     /// Construct a sphere with radius, segments, stacks
-    pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>) -> Mesh<S> {
+    pub fn sphere(
+        radius: Real,
+        segments: usize,
+        stacks: usize,
+        metadata: Option<S>,
+    ) -> Mesh<S> {
         let mut polygons = Vec::new();
 
         for i in 0..segments {
@@ -322,7 +327,12 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
     /// A helper to create a vertical cylinder along Z from z=0..z=height
     /// with the specified radius (NOT diameter).
-    pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>) -> Mesh<S> {
+    pub fn cylinder(
+        radius: Real,
+        height: Real,
+        segments: usize,
+        metadata: Option<S>,
+    ) -> Mesh<S> {
         Mesh::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
@@ -362,7 +372,11 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// let mesh_poly = Mesh::polyhedron(pts, &fcs);
     /// ```
-    pub fn polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>) -> Mesh<S> {
+    pub fn polyhedron(
+        points: &[[Real; 3]],
+        faces: &[Vec<usize>],
+        metadata: Option<S>,
+    ) -> Mesh<S> {
         let mut polygons = Vec::new();
 
         for face in faces {
@@ -575,7 +589,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // The mirror transform about the plane z = arrow_length/2 maps any point (0,0,z) to (0,0, arrow_length - z).
         if orientation {
             let l = arrow_length;
-            let mirror_mat: Matrix4<Real> = Translation3::new(0.0, 0.0, l / 2.0).to_homogeneous()
+            let mirror_mat: Matrix4<Real> = Translation3::new(0.0, 0.0, l / 2.0)
+                .to_homogeneous()
                 * Matrix4::new_nonuniform_scaling(&Vector3::new(1.0, 1.0, -1.0))
                 * Translation3::new(0.0, 0.0, -l / 2.0).to_homogeneous();
             canonical_arrow = canonical_arrow.transform(&mirror_mat).inverse();
@@ -586,8 +601,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // Compute the rotation that maps the canonical +Z axis to the provided direction.
         let z_axis = Vector3::z();
-        let rotation =
-            Rotation3::rotation_between(&z_axis, &unit_dir).unwrap_or_else(Rotation3::identity);
+        let rotation = Rotation3::rotation_between(&z_axis, &unit_dir)
+            .unwrap_or_else(Rotation3::identity);
         let rot_mat: Matrix4<Real> = rotation.to_homogeneous();
 
         // Rotate the arrow.
