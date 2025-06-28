@@ -70,7 +70,7 @@ jobs:
         uses: obi1kenobi/cargo-semver-checks-action@v2
         with:
           package: csgrs
-          features: parallel stl-io svg-io dxf-io truetype-text hershey-text image-io
+          features: parallel, stl-io, svg-io, dxf-io, truetype-text, hershey-text, image-io
 
       - name: Check spelling
         run: |
