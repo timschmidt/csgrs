@@ -26,6 +26,9 @@ use nalgebra::{
 };
 use std::{fmt::Debug, num::NonZero, sync::OnceLock};
 
+#[cfg(feature = "parallel")]
+use rayon::{prelude::*, iter::IntoParallelRefIterator};
+
 pub mod bsp;
 pub mod bsp_parallel;
 pub mod convex_hull;
@@ -187,7 +190,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             .polygons
             .par_iter()
             .flat_map(|poly| {
-                let sub_tris = poly.subdivide_triangles(levels);
+                let sub_tris = poly.subdivide_triangles(NonZero::new(levels).unwrap());
                 // Convert each small tri back to a Polygon
                 sub_tris.into_par_iter().map(move |tri| {
                     Polygon::new(
