@@ -4,7 +4,19 @@ use crate::mesh::bsp::Node;
 use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]
+use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING}; 
+
+#[cfg(feature = "parallel")]
 use rayon::{join, prelude::*};
+
+#[cfg(feature = "parallel")]
+use crate::mesh::Polygon;
+
+#[cfg(feature = "parallel")]
+use crate::mesh::Vertex;
+
+#[cfg(feature = "parallel")]
+use crate::float_types::EPSILON;
 
 impl<S: Clone + Send + Sync + Debug> Node<S> {
 	/// Invert all polygons in the BSP tree
@@ -29,9 +41,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         std::mem::swap(&mut self.front, &mut self.back);
     }
 	
-    // ------------------------------------------------------------------------
-    // Clip Polygons (parallel version)
-    // ------------------------------------------------------------------------
+    /// Parallel version of clip Polygons
     #[cfg(feature = "parallel")]
     pub fn clip_polygons(&self, polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
         // If this node has no plane, just return the original set
@@ -114,9 +124,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         }
     }
 
-    // ------------------------------------------------------------------------
-    // Build (parallel version)
-    // ------------------------------------------------------------------------
+    /// Parallel version of `build`.
     #[cfg(feature = "parallel")]
     pub fn build(&mut self, polygons: &[Polygon<S>]) {
         if polygons.is_empty() {
@@ -125,12 +133,12 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
         // Choose splitting plane if not already set
         if self.plane.is_none() {
-            self.plane = Some(polygons[0].plane.clone());
+            self.plane = Some(self.pick_best_splitting_plane(polygons));
         }
-        let plane = self.plane.clone().unwrap();
+        let plane = self.plane.as_ref().unwrap();
 
         // Split polygons in parallel
-        let (mut coplanar_front, mut coplanar_back, mut front, mut back) = polygons
+        let (mut coplanar_front, mut coplanar_back, front, back) = polygons
             .par_iter()
             .map(|p| plane.split_polygon(p)) // <-- just pass p
             .reduce(
@@ -148,34 +156,23 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         self.polygons.append(&mut coplanar_front);
         self.polygons.append(&mut coplanar_back);
 
-        // Recursively build front/back in parallel
-        match (!front.is_empty(), !back.is_empty()) {
-            (true, true) => {
-                if self.front.is_none() {
-                    self.front = Some(Box::new(Node::new(&[])));
+        // Parallelize the recursive building of child nodes
+        rayon::join(
+            || {
+                if !front.is_empty() {
+                    let mut front_node = Box::new(Node::new());
+                    front_node.build(&front);
+                    self.front = Some(front_node);
                 }
-                if self.back.is_none() {
-                    self.back = Some(Box::new(Node::new(&[])));
-                }
-
-                let front_node = self.front.as_mut().unwrap();
-                let back_node = self.back.as_mut().unwrap();
-                join(|| front_node.build(&front), || back_node.build(&back));
             },
-            (true, false) => {
-                if self.front.is_none() {
-                    self.front = Some(Box::new(Node::new(&[])));
+            || {
+                if !back.is_empty() {
+                    let mut back_node = Box::new(Node::new());
+                    back_node.build(&back);
+                    self.back = Some(back_node);
                 }
-                self.front.as_mut().unwrap().build(&front);
             },
-            (false, true) => {
-                if self.back.is_none() {
-                    self.back = Some(Box::new(Node::new(&[])));
-                }
-                self.back.as_mut().unwrap().build(&back);
-            },
-            (false, false) => {},
-        }
+        );
     }
 
     // ------------------------------------------------------------------------

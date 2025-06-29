@@ -1,9 +1,14 @@
 //! [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node structure and operations
 
-use crate::float_types::{EPSILON, Real};
+#[cfg(not(feature = "parallel"))]
+use crate::float_types::EPSILON;
+
+#[cfg(not(feature = "parallel"))]
+use crate::mesh::vertex::Vertex;
+
+use crate::float_types::Real;
 use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::mesh::polygon::Polygon;
-use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
 
 /// A [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node, containing polygons plus optional front/back subtrees
