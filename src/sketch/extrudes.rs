@@ -1,3 +1,5 @@
+//! Functions to extrude, revolve, loft, and otherwise transform 2D `Sketch`s into 3D `Mesh`s
+
 use crate::float_types::{EPSILON, Real};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;

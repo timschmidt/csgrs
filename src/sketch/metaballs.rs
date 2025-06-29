@@ -1,3 +1,5 @@
+//! Provides a `MetaBall` struct and functions for creating a `Sketch` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
+
 use crate::float_types::{EPSILON, Real};
 use crate::sketch::Sketch;
 use crate::traits::CSGOps;

@@ -1,3 +1,5 @@
+//! `Sketch` struct and implementations of the `CSGOps` trait for `Sketch`
+
 use crate::float_types::Real;
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::traits::CSGOps;
