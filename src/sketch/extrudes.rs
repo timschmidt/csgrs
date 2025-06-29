@@ -1,8 +1,8 @@
 use crate::float_types::{EPSILON, Real};
-use crate::mesh::mesh::Mesh;
+use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-use crate::sketch::sketch::Sketch;
+use crate::sketch::Sketch;
 use crate::traits::CSGOps;
 use geo::{Area, CoordsIter, Geometry, LineString, Polygon as GeoPolygon};
 use nalgebra::{Point3, Vector3};
@@ -100,7 +100,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             .collect();
         let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|h| &h[..]).collect();
 
-        for tri in crate::mesh::mesh::Mesh::<()>::triangulate_2d(&exterior, &hole_refs) {
+        for tri in Mesh::<()>::triangulate_2d(&exterior, &hole_refs) {
             // bottom (CCW – faces down)
             acc.push(Polygon::new(
                 vec![

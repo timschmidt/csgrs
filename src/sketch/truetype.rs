@@ -1,7 +1,7 @@
 //! Create `Sketch`s using ttf fonts
 
 use crate::float_types::Real;
-use crate::sketch::sketch::Sketch;
+use crate::sketch::Sketch;
 use crate::traits::CSGOps;
 use geo::{
     Area, Geometry, GeometryCollection, LineString, Orient, Polygon as GeoPolygon,

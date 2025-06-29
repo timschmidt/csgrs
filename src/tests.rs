@@ -1,10 +1,10 @@
 use crate::float_types::{EPSILON, FRAC_PI_2, Real};
 use crate::mesh::bsp::Node;
-use crate::mesh::mesh::Mesh;
+use crate::mesh::Mesh;
 use crate::mesh::plane::Plane;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-use crate::sketch::sketch::Sketch;
+use crate::sketch::Sketch;
 use nalgebra::{Point3, Vector3};
 
 // --------------------------------------------------------

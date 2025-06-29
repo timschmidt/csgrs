@@ -1,5 +1,5 @@
 use crate::float_types::{EPSILON, Real};
-use crate::mesh::mesh::Mesh;
+use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::traits::CSGOps;

@@ -9,8 +9,8 @@ use csgrs::traits::CSGOps;
 use nalgebra::{Point3, Vector3};
 use std::fs;
 
-type Mesh = csgrs::mesh::mesh::Mesh<()>;
-type Sketch = csgrs::sketch::sketch::Sketch<()>;
+type Mesh = csgrs::mesh::Mesh<()>;
+type Sketch = csgrs::sketch::Sketch<()>;
 
 #[cfg(feature = "image")]
 use image::{GrayImage, ImageBuffer};
