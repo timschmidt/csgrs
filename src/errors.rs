@@ -22,13 +22,19 @@ pub enum ValidationError {
     TooFewPoints(Point3<Real>),
     /// (InvalidCoordinate) The coordinate has a NaN or infinite
     InvalidCoordinate(Point3<Real>),
-    /// (RingNotClosed) The ring’s first/last points differ
+    /// (RingNotClosed) The ring's first/last points differ
     RingNotClosed(Point3<Real>),
+    /// (MismatchedVertices) operation requires polygons with same number of vertices
+    MismatchedVertices,
+    /// (IndexOutOfRange) operation requires polygons with same number of vertices
+    IndexOutOfRange,
+    /// (InvalidArguments) operation requires polygons with same number of vertices
+    InvalidArguments,
     /// In general, anything else
     Other(String, Option<Point3<Real>>),
 }
 
 // Plane::from_points "Degenerate polygon: vertices do not define a plane"
-// CSG::polyhedron "Face index {} is out of range (points.len = {})."
-// CSG::rotate_extrude "rotate_extrude requires at least 2 segments"
-// CSG::extrude_between "extrude_between: both polygons must have the same number of vertices"
+// Mesh::polyhedron "Face index {} is out of range (points.len = {})."
+// Sketch::rotate_extrude "rotate_extrude requires at least 2 segments"
+// Sketch::extrude_between "extrude_between: both polygons must have the same number of vertices"
