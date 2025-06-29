@@ -25,6 +25,7 @@ use nalgebra::{
 use std::{fmt::Debug, num::NonZero, sync::OnceLock};
 
 pub mod bsp;
+pub mod bsp_parallel;
 pub mod convex_hull;
 pub mod flatten_slice;
 pub mod metaballs;

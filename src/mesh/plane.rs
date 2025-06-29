@@ -283,6 +283,16 @@ impl Plane {
     pub fn flip(&mut self) {
         std::mem::swap(&mut self.point_a, &mut self.point_b);
     }
+    
+    /// Classify a polygon with respect to the plane.
+    /// Returns a bitmask of `COPLANAR`, `FRONT`, and `BACK`.
+    pub fn classify_polygon<S: Clone>(&self, polygon: &Polygon<S>) -> i8 {
+        let mut polygon_type: i8 = 0;
+        for vertex in &polygon.vertices {
+            polygon_type |= self.orient_point(&vertex.pos);
+        }
+        polygon_type
+    }
 
     /// Splits a polygon by this plane, returning four buckets:
     /// `(coplanar_front, coplanar_back, front, back)`.
