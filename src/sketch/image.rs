@@ -6,7 +6,7 @@ use image::GrayImage;
 use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
-    /// Builds a new Sketch from the “on” pixels of a grayscale image,
+    /// Builds a new Sketch from the "on" pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.
     ///
     /// - `img`: a reference to a GrayImage
@@ -25,9 +25,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # use image::{GrayImage, Luma};
     /// # fn main() {
     /// let img: GrayImage = image::open("my_binary.png").unwrap().to_luma8();
-    /// let csg2d = Sketch::from_image(&img, 128, true, None);
+    /// let my_sketch = Sketch::from_image(&img, 128, true, None);
     /// // optionally extrude it:
-    /// let shape3d = csg2d.extrude(5.0);
+    /// let my_mesh = my_sketch.extrude(5.0);
     /// # }
     /// ```
     pub fn from_image(
@@ -113,7 +113,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // We'll read tokens that could be:
         //  - a letter (M/H/V/Z)
-        //  - a number (which may be float, but from bits_to_paths it’s all integer steps)
+        //  - a number (which may be float, but from bits_to_paths it's all integer steps)
         //  - whitespace or other
         //
         // This small scanner accumulates tokens so we can parse them easily.
