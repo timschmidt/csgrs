@@ -432,8 +432,8 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
         let (b_clip, b_passthru) =
             Self::partition_polys(&other.polygons, &self.bounding_box());
 
-        let mut a = Node::new(&a_clip);
-        let mut b = Node::new(&b_clip);
+        let mut a = Node::from_polygons(&a_clip);
+        let mut b = Node::from_polygons(&b_clip);
 
         a.clip_to(&b);
         b.clip_to(&a);
@@ -474,8 +474,8 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
         let (b_clip, _b_passthru) =
             Self::partition_polys(&other.polygons, &self.bounding_box());
 
-        let mut a = Node::new(&a_clip);
-        let mut b = Node::new(&b_clip);
+        let mut a = Node::from_polygons(&a_clip);
+        let mut b = Node::from_polygons(&b_clip);
 
         a.invert();
         a.clip_to(&b);
@@ -511,8 +511,8 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
     ///          +-------+
     /// ```
     fn intersection(&self, other: &Mesh<S>) -> Mesh<S> {
-        let mut a = Node::new(&self.polygons);
-        let mut b = Node::new(&other.polygons);
+        let mut a = Node::from_polygons(&self.polygons);
+        let mut b = Node::from_polygons(&other.polygons);
 
         a.invert();
         b.clip_to(&a);
