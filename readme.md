@@ -139,9 +139,9 @@ let prism = square.extrude(5.0);
 
 let revolve_shape = square.revolve(360.0, 16);
 
-let polygon_bottom = Sketch::circle(2.0, 64, None);
-let polygon_top = polygon_bottom.translate(0.0, 0.0, 5.0);
-let lofted = Sketch::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false);
+let bottom = Sketch::circle(2.0, 64, None);
+let top = bottom.translate(0.0, 0.0, 5.0);
+let lofted = Sketch::loft(&bottom.polygons[0], &top.polygons[0], false);
 ```
 
 ### Mesh Structure
