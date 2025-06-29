@@ -1,5 +1,5 @@
 use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real, TAU};
-use crate::sketch::sketch::Sketch;
+use crate::sketch::Sketch;
 use crate::traits::CSGOps;
 use geo::{
     BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,

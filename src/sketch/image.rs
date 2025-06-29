@@ -1,5 +1,5 @@
 use crate::float_types::{EPSILON, Real};
-use crate::sketch::sketch::Sketch;
+use crate::sketch::Sketch;
 use image::GrayImage;
 use std::fmt::Debug;
 

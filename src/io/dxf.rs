@@ -1,8 +1,8 @@
 use crate::float_types::Real;
-use crate::mesh::mesh::Mesh;
+use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-use crate::sketch::sketch::Sketch;
+use crate::sketch::Sketch;
 use geo::{Polygon as GeoPolygon, line_string};
 use nalgebra::{Point3, Vector3};
 use std::error::Error;

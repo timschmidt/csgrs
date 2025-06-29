@@ -41,8 +41,8 @@ cargo add csgrs
 ### Example main.rs
 
 ```rust
-// Alias the library’s generic CSG type with empty metadata:
-type Mesh = csgrs::mesh::mesh::Mesh<()>;
+// Alias the library’s generic Mesh type with empty metadata:
+type Mesh = csgrs::mesh::Mesh<()>;
 
 // Create two shapes:
 let cube = Mesh::cube(2.0, None);  // 2×2×2 cube at origin, no metadata
@@ -112,6 +112,9 @@ converted into a `Mesh<S>`.
 - **`Sketch::cycloidal_rack(module_: Real, num_teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 
 ```rust
+// Alias the library’s generic Sketch type with empty metadata:
+type Sketch = csgrs::sketch::Sketch<()>;
+
 let square = Sketch::square(1.0, None); // 1×1 at origin
 let rect = Sketch::rectangle(2.0, 4.0, None);
 let circle = Sketch::circle(1.0, 32, None); // radius=1, 32 segments
@@ -378,7 +381,7 @@ use nalgebra::Vector3;
 use csgrs::float_types::rapier3d::prelude::*;  // re-exported for f32/f64 support
 use csgrs::float_types::FRAC_PI_2;
 use csgrs::traits::CSGOps;
-use csgrs::mesh::mesh::Mesh;
+use csgrs::mesh::Mesh;
 
 let mut rb_set = RigidBodySet::new();
 let mut co_set = ColliderSet::new();
@@ -431,7 +434,7 @@ struct MyMetadata {
     label: String,
 }
 
-type Mesh = csgrs::mesh::mesh::Mesh<MyMetadata>;
+type Mesh = csgrs::mesh::Mesh<MyMetadata>;
 
 // For a single polygon:
 let mut poly = Polygon::new(

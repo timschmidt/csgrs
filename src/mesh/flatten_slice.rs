@@ -1,9 +1,9 @@
 use crate::float_types::{EPSILON, Real};
 use crate::mesh::bsp::Node;
-use crate::mesh::mesh::Mesh;
+use crate::mesh::Mesh;
 use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
-use crate::sketch::sketch::Sketch;
+use crate::sketch::Sketch;
 use geo::{
     BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
     Polygon as GeoPolygon, coord, orient::Direction,

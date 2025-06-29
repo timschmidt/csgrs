@@ -1,5 +1,5 @@
 use crate::float_types::{EPSILON, Real};
-use crate::sketch::sketch::Sketch;
+use crate::sketch::Sketch;
 use crate::traits::CSGOps;
 use geo::{
     Coord, CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord,

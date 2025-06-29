@@ -1,7 +1,7 @@
 //! Create `Sketch`s using Hershey fonts
 
 use crate::float_types::Real;
-use crate::sketch::sketch::Sketch;
+use crate::sketch::Sketch;
 use geo::{Geometry, GeometryCollection, LineString, coord};
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use std::fmt::Debug;
