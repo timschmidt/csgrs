@@ -22,6 +22,14 @@ pub struct Polygon<S: Clone> {
     pub metadata: Option<S>,
 }
 
+impl<S: Clone + PartialEq> PartialEq for Polygon<S> {
+    fn eq(&self, other: &Self) -> bool {
+        self.vertices == other.vertices
+            && self.plane == other.plane
+            && self.metadata == other.metadata
+    }
+}
+
 impl<S: Clone + Send + Sync> Polygon<S> {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {

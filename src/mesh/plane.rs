@@ -34,6 +34,74 @@ pub struct Plane {
     pub point_c: Point3<Real>,
 }
 
+impl PartialEq for Plane {
+    fn eq(&self, other: &Self) -> bool {
+        if self.point_a == other.point_a
+            && self.point_b == other.point_b
+            && self.point_c == other.point_c
+        {
+            true
+        } else {
+            // check if co-planar
+            robust::orient3d(
+                point_to_coord3d(self.point_a),
+                point_to_coord3d(self.point_b),
+                point_to_coord3d(self.point_c),
+                point_to_coord3d(other.point_a),
+            ) == 0.0
+                && robust::orient3d(
+                    point_to_coord3d(self.point_a),
+                    point_to_coord3d(self.point_b),
+                    point_to_coord3d(self.point_c),
+                    point_to_coord3d(other.point_b),
+                ) == 0.0
+                && robust::orient3d(
+                    point_to_coord3d(self.point_a),
+                    point_to_coord3d(self.point_b),
+                    point_to_coord3d(self.point_c),
+                    point_to_coord3d(other.point_c),
+                ) == 0.0
+        }
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        if self.point_a != other.point_a
+            || self.point_b != other.point_b
+            || self.point_c != other.point_c
+        {
+            true
+        } else {
+            // check if co-planar
+            robust::orient3d(
+                point_to_coord3d(self.point_a),
+                point_to_coord3d(self.point_b),
+                point_to_coord3d(self.point_c),
+                point_to_coord3d(other.point_a),
+            ) != 0.0
+                || robust::orient3d(
+                    point_to_coord3d(self.point_a),
+                    point_to_coord3d(self.point_b),
+                    point_to_coord3d(self.point_c),
+                    point_to_coord3d(other.point_b),
+                ) != 0.0
+                || robust::orient3d(
+                    point_to_coord3d(self.point_a),
+                    point_to_coord3d(self.point_b),
+                    point_to_coord3d(self.point_c),
+                    point_to_coord3d(other.point_c),
+                ) != 0.0
+        }
+    }
+}
+
+fn point_to_coord3d(point: Point3<Real>) -> robust::Coord3D<Real> {
+    robust::Coord3D {
+        x: point.coords.x,
+        y: point.coords.y,
+        z: point.coords.z,
+    }
+}
+
 impl Plane {
     /// Tries to pick three vertices that span the largest area triangle
     /// (maximally well-spaced) and returns a plane defined by them.
