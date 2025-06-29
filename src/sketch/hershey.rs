@@ -1,4 +1,4 @@
-//! Create `Sketch`s using Hershey fonts
+//! Create `Sketch`s using single stroke Hershey fonts
 
 use crate::float_types::Real;
 use crate::sketch::Sketch;

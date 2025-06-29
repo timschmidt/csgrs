@@ -1,3 +1,5 @@
+//! Offset `Sketch`s outward or inward, with or without rounded edges.
+
 use crate::float_types::Real;
 use crate::sketch::Sketch;
 use geo::{Geometry, GeometryCollection};

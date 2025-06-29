@@ -1,4 +1,4 @@
-//! Utilities for working with planes in 3‑space including robust
+//! Utilities for working with `Plane`s in 3‑space including robust
 //! orientation tests, point classification and polygon splitting.
 //!
 //! Unless stated otherwise, all tolerances are governed by

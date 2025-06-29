@@ -1,3 +1,5 @@
+//! Create `Sketch`s from images
+
 use crate::float_types::{EPSILON, Real};
 use crate::sketch::Sketch;
 use image::GrayImage;

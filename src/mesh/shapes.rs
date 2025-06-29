@@ -1,3 +1,5 @@
+//! 3D Shapes as `Mesh`s
+
 use crate::float_types::{EPSILON, PI, Real, TAU};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;

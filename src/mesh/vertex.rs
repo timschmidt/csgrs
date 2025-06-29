@@ -1,3 +1,5 @@
+//! Struct and functions for working with `Vertex`s from which `Polygon`s are composed.
+
 use crate::float_types::Real;
 use nalgebra::{Point3, Vector3};
 

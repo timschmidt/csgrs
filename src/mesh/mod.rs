@@ -1,3 +1,5 @@
+//! `Mesh` struct and implementations of the `CSGOps` trait for `Mesh`
+
 use crate::float_types::{
     parry3d::{
         bounding_volume::{Aabb, BoundingVolume},
