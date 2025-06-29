@@ -118,10 +118,10 @@ let circle = Sketch::circle(1.0, 32, None); // radius=1, 32 segments
 let circle2 = Sketch::circle(2.0, 64, None);
 
 let font_data = include_bytes!("../fonts/MyFont.ttf");
-let csg_text = Sketch::text("Hello!", font_data, 20.0, None);
+let sketch_text = Sketch::text("Hello!", font_data, 20.0, None);
 
 // Then extrude the text to make it 3D:
-let text_3d = csg_text.extrude(1.0);
+let text_3d = sketch_text.extrude(1.0);
 ```
 
 ### Extrusions and Revolves
@@ -131,7 +131,7 @@ Extrusions build 3D polygons from 2D Geometries.
 - <img src="docs/extrude.png" width="128" alt="an angled view of an extruded star"/> **`Sketch::extrude(height: Real)`** - Simple extrude in Z+
 - <img src="docs/extrude_vector.png" width="128"  alt="an angled view of a star extruded at an angle"/> **`Sketch::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
 - <img src="docs/rotate_extrude.png" width="128"  alt="an arch with round ends"/> **`Sketch::revolve(angle_degs, segments)`** - Extrude while rotating around the Y axis
-- **`Sketch::extrude_between(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Helper function which extrudes between two Mesh Polygons, optionally with caps
+- **`Sketch::loft(&polygon_bottom.polygons[0], &polygon_top.polygons[0], false)`** - Helper function which extrudes between two Mesh Polygons, optionally with caps
 
 ```rust
 let square = Sketch::square(2.0, None);
