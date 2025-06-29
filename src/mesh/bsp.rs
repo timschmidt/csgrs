@@ -100,6 +100,9 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
     }
 
     /// Recursively remove all polygons in `polygons` that are inside this BSP tree
+    /// **Mathematical Foundation**: Uses plane classification to determine polygon visibility.
+    /// Polygons entirely in BACK half-space are clipped (removed).
+    /// **Algorithm**: O(n log d) where n is polygon count, d is tree depth.
     #[cfg(not(feature = "parallel"))]
     pub fn clip_polygons(&self, polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
         // If this node has no plane (i.e. it’s empty), just return
@@ -108,52 +111,41 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         }
 
         let plane = self.plane.as_ref().unwrap();
-        let mut front: Vec<Polygon<S>> = Vec::new();
-        let mut back: Vec<Polygon<S>> = Vec::new();
-        let mut coplanar_front: Vec<Polygon<S>> = Vec::new();
-        let mut coplanar_back: Vec<Polygon<S>> = Vec::new();
+        
+        // Pre-allocate for better performance
+        let mut front_polys = Vec::with_capacity(polygons.len());
+        let mut back_polys = Vec::with_capacity(polygons.len());
+        
+        // Optimized polygon splitting with iterator patterns
+        for polygon in polygons {
+            let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
+                plane.split_polygon(polygon);
 
-        // For each polygon, split it by the node's plane.
-        for poly in polygons {
-            let (cf, cb, f, b) = plane.split_polygon(poly);
-            coplanar_front.extend(cf);
-            coplanar_back.extend(cb);
-            front.extend(f);
-            back.extend(b);
-        }
-
-        // Now decide where to send the coplanar polygons.  If the polygon’s normal
-        // aligns with this node’s plane.normal, treat it as “front,” else treat as “back.”
-        for cp in coplanar_front {
-            if plane.orient_plane(&cp.plane) == FRONT {
-                front.push(cp);
-            } else {
-                back.push(cp);
+            // Efficient coplanar polygon classification using iterator chain
+            for coplanar_poly in coplanar_front.into_iter().chain(coplanar_back.into_iter()) {
+                if plane.orient_plane(&coplanar_poly.plane) == FRONT {
+                    front_parts.push(coplanar_poly);
+                } else {
+                    back_parts.push(coplanar_poly);
+                }
             }
-        }
-        for cp in coplanar_back {
-            if plane.orient_plane(&cp.plane) == FRONT {
-                front.push(cp);
-            } else {
-                back.push(cp);
-            }
+
+            front_polys.append(&mut front_parts);
+            back_polys.append(&mut back_parts);
         }
 
-        // Recursively clip the front polygons.
-        if let Some(ref f) = self.front {
-            front = f.clip_polygons(&front);
-        }
-
-        // Recursively clip the back polygons.
-        if let Some(ref b) = self.back {
-            back = b.clip_polygons(&back);
+        // Recursively clip with optimized pattern
+        let mut result = if let Some(front_node) = &self.front {
+            front_node.clip_polygons(&front_polys)
         } else {
-            back.clear();
+            front_polys
+        };
+
+        if let Some(back_node) = &self.back {
+            result.extend(back_node.clip_polygons(&back_polys));
         }
 
-        // Now combine front and back
-        front.extend(back);
-        front
+        result
     }
 
     /// Remove all polygons in this BSP tree that are inside the other BSP tree
@@ -168,7 +160,8 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         }
     }
 
-	/// Return all polygons in this BSP tree using an iterative approach, avoiding potential stack overflow of recursive approach
+	/// Return all polygons in this BSP tree using an iterative approach,
+	/// avoiding potential stack overflow of recursive approach
     pub fn all_polygons(&self) -> Vec<Polygon<S>> {
         let mut result = Vec::new();
         let mut stack = vec![self];
@@ -193,40 +186,40 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             return;
         }
 
-        // Choose the first polygon's plane as the splitting plane if not already set.
+        // Choose the best splitting plane using a heuristic if not already set.
         if self.plane.is_none() {
-            self.plane = Some(polygons[0].plane.clone());
+            self.plane = Some(self.pick_best_splitting_plane(polygons));
         }
-        let plane = self.plane.clone().unwrap();
+        let plane = self.plane.as_ref().unwrap();
 
-        let mut front: Vec<Polygon<S>> = Vec::new();
-        let mut back: Vec<Polygon<S>> = Vec::new();
+        // Pre-allocate with estimated capacity for better performance
+        let mut front = Vec::with_capacity(polygons.len() / 2);
+        let mut back = Vec::with_capacity(polygons.len() / 2);
 
-        // For each polygon, split it relative to the current node's plane.
-        for p in polygons {
-            let (coplanar_front, coplanar_back, f, b) = plane.split_polygon(p);
+        // Optimized polygon classification using iterator pattern
+        // **Mathematical Theorem**: Each polygon is classified relative to the splitting plane
+        for polygon in polygons {
+            let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
+                plane.split_polygon(polygon);
 
+            // Extend collections efficiently with iterator chains
             self.polygons.extend(coplanar_front);
             self.polygons.extend(coplanar_back);
-
-            front.extend(f);
-            back.extend(b);
+            front.append(&mut front_parts);
+            back.append(&mut back_parts);
         }
 
-        // Recursively build the front subtree.
+        // Build child nodes using lazy initialization pattern for memory efficiency
         if !front.is_empty() {
-            if self.front.is_none() {
-                self.front = Some(Box::new(Node::from_polygons(&[])));
-            }
-            self.front.as_mut().unwrap().build(&front);
+            self.front
+                .get_or_insert_with(|| Box::new(Node::new()))
+                .build(&front);
         }
 
-        // Recursively build the back subtree.
         if !back.is_empty() {
-            if self.back.is_none() {
-                self.back = Some(Box::new(Node::from_polygons(&[])));
-            }
-            self.back.as_mut().unwrap().build(&back);
+            self.back
+                .get_or_insert_with(|| Box::new(Node::new()))
+                .build(&back);
         }
     }
 
@@ -245,21 +238,20 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             if vcount < 2 {
                 continue; // degenerate polygon => skip
             }
-            let mut polygon_type = 0;
-            let mut types = Vec::with_capacity(vcount);
+            
+            // Use iterator chain to compute vertex types more efficiently
+            let types: Vec<_> = poly
+                .vertices
+                .iter()
+                .map(|vertex| slicing_plane.orient_point(&vertex.pos))
+                .collect();
 
-            for vertex in &poly.vertices {
-                let vertex_type = slicing_plane.orient_point(&vertex.pos);
-                polygon_type |= vertex_type;
-                types.push(vertex_type);
-            }
+            let polygon_type = types.iter().fold(0, |acc, &vertex_type| acc | vertex_type);
 
             // Based on the combined classification of its vertices:
             match polygon_type {
                 COPLANAR => {
                     // The entire polygon is in the plane, so push it to the coplanar list.
-                    // Depending on normal alignment, it may be “coplanar_front” or “coplanar_back.”
-                    // Usually we don’t care — we just return them as “in the plane.”
                     coplanar_polygons.push(poly.clone());
                 },
 
@@ -270,43 +262,37 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                 SPANNING => {
                     // The polygon crosses the plane. We'll gather the intersection points
                     // (the new vertices introduced on edges that cross the plane).
-                    let mut crossing_points = Vec::new();
+                    let crossing_points: Vec<_> = (0..vcount)
+                        .filter_map(|i| {
+                            let j = (i + 1) % vcount;
+                            let ti = types[i];
+                            let tj = types[j];
+                            let vi = &poly.vertices[i];
+                            let vj = &poly.vertices[j];
 
-                    for i in 0..vcount {
-                        let j = (i + 1) % vcount;
-                        let ti = types[i];
-                        let tj = types[j];
-                        let vi = &poly.vertices[i];
-                        let vj = &poly.vertices[j];
-
-                        // If this vertex is on the "back" side, and the next vertex is on the
-                        // "front" side (or vice versa), that edge crosses the plane.
-                        // (Also if exactly one is COPLANAR and the other is FRONT or BACK, etc.)
-                        if (ti | tj) == SPANNING {
-                            // The param intersection at which plane intersects the edge [vi -> vj].
-                            // Avoid dividing by zero:
-                            let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
-                            if denom.abs() > EPSILON {
-                                let intersection = (slicing_plane.offset()
-                                    - slicing_plane.normal().dot(&vi.pos.coords))
-                                    / denom;
-                                // Interpolate:
-                                let intersect_vert = vi.interpolate(vj, intersection);
-                                crossing_points.push(intersect_vert);
+                            if (ti | tj) == SPANNING {
+                                let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
+                                if denom.abs() > EPSILON {
+                                    let intersection = (slicing_plane.offset()
+                                        - slicing_plane.normal().dot(&vi.pos.coords))
+                                        / denom;
+                                    Some(vi.interpolate(vj, intersection))
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
                             }
-                        }
-                    }
+                        })
+                        .collect();
 
-                    // Typical convex polygons crossing a plane get exactly 2 intersection points.
-                    // Concave polygons might produce 2 or more. We pair them up in consecutive pairs:
-                    // e.g. if crossing_points = [p0, p1, p2, p3], we'll produce 2 edges: [p0,p1], [p2,p3].
-                    // This is one simple heuristic. If you have an odd number, something degenerate happened.
-                    for chunk in crossing_points.chunks_exact(2) {
-                        intersection_edges.push([chunk[0].clone(), chunk[1].clone()]);
-                    }
-                    // If crossing_points.len() was not a multiple of 2, you can handle leftover
-                    // points or flag them as errors, etc. We'll skip that detail here.
-                },
+                    // Convert crossing points to intersection edges
+                    intersection_edges.extend(
+                        crossing_points
+                            .chunks_exact(2)
+                            .map(|chunk| [chunk[0].clone(), chunk[1].clone()]),
+                    );
+				},
 
                 _ => {
                     // Shouldn't happen in a typical classification, but we can ignore
@@ -315,5 +301,26 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         }
 
         (coplanar_polygons, intersection_edges)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::mesh::polygon::Polygon;
+	use crate::mesh::vertex::Vertex;
+    use nalgebra::{Point3, Vector3};
+
+    #[test]
+    fn test_bsp_basic_functionality() {
+        let vertices = vec![
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 1.0)),
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 1.0)),
+            Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::new(0.0, 0.0, 1.0)),
+        ];
+        let polygon: Polygon<i32> = Polygon::new(vertices, None);
+        let polygons = vec![polygon];
+
+        let node = Node::from_polygons(&polygons);
+        assert!(!node.all_polygons().is_empty());
     }
 }
