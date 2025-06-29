@@ -83,7 +83,7 @@ getrandom = { version = "0.3", features = ["wasm_js"], optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
-default = ["f64", "stl-io", "dxf-io", "chull-io", "image-io", "metaballs", "hashmap", "sdf", "offset", "delaunay", "truetype-text", "hershey"]
+default = ["f64", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "chull-io", "image-io", "metaballs", "hashmap", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
 parallel = [
   "rayon",
   "geo/multithreading",
@@ -114,6 +114,15 @@ svg-io = [
 ]
 dxf-io = [
   "dxf",
+]
+obj-io = [
+  # OBJ format support - no external dependencies needed
+]
+ply-io = [
+  # PLY format support - no external dependencies needed
+]
+amf-io = [
+  # AMF format support - no external dependencies needed
 ]
 truetype-text = [
   "ttf-parser",

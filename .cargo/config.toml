@@ -1,2 +1,39 @@
+# Cargo configuration for Windows GNU toolchain linker fixes
+# Addresses the "export ordinal too large" error when building/testing
+
+[target.x86_64-pc-windows-gnu]
+rustflags = [
+    # Disable stdcall fixup to reduce symbol table size
+    "-C", "link-arg=-Wl,--disable-stdcall-fixup",
+
+    # Enable long section names for better symbol handling
+    "-C", "link-arg=-Wl,--enable-long-section-names",
+
+    # Reduce export table size by disabling auto-import
+    "-C", "link-arg=-Wl,--disable-auto-import",
+
+    # Use more efficient symbol handling
+    "-C", "link-arg=-Wl,--no-insert-timestamp",
+]
+
+# Alternative approach: use static linking for tests to avoid DLL export limits
+[profile.test]
+# Uncomment the following line if the above rustflags don't work
+# panic = "abort"
+
+# Optional: Optimize for faster builds during development
+[profile.dev]
+# Reduce debug info to speed up linking
+debug = 1
+# Enable incremental compilation
+incremental = true
+
+# Ensure release builds are fully optimized
+[profile.release]
+debug = false
+lto = true
+codegen-units = 1
+panic = "abort"
+
 [alias]
 xtask = "run --manifest-path ./xtask/Cargo.toml --"

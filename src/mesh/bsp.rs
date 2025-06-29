@@ -1,4 +1,4 @@
-//! This module contains the implementation of the [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree data structure
+//! [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node structure and basic operations
 
 use crate::float_types::EPSILON;
 use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
@@ -43,9 +43,8 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
     /// Invert all polygons in the BSP tree
     pub fn invert(&mut self) {
-        for p in &mut self.polygons {
-            p.flip();
-        }
+        // Flip all polygons and plane in this node
+        self.polygons.iter_mut().for_each(|p| p.flip());
         if let Some(ref mut plane) = self.plane {
             plane.flip();
         }
@@ -62,13 +61,15 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         }
 
         #[cfg(not(feature = "parallel"))]
-        if let Some(ref mut front) = self.front {
-            front.invert();
+        {
+            if let Some(ref mut front) = self.front {
+                front.invert();
+            }
+            if let Some(ref mut back) = self.back {
+                back.invert();
+            }
         }
-        #[cfg(not(feature = "parallel"))]
-        if let Some(ref mut back) = self.back {
-            back.invert();
-        }
+        
         std::mem::swap(&mut self.front, &mut self.back);
     }
 
@@ -226,14 +227,20 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         }
     }
 
-    /// Return all polygons in this BSP tree
+	/// Return all polygons in this BSP tree using an iterative approach, avoiding potential stack overflow of recursive approach
     pub fn all_polygons(&self) -> Vec<Polygon<S>> {
-        let mut result = self.polygons.clone();
-        if let Some(ref front) = self.front {
-            result.extend(front.all_polygons());
-        }
-        if let Some(ref back) = self.back {
-            result.extend(back.all_polygons());
+        let mut result = Vec::new();
+        let mut stack = vec![self];
+
+        while let Some(node) = stack.pop() {
+            result.extend_from_slice(&node.polygons);
+
+            // Use iterator to add child nodes more efficiently
+            stack.extend(
+                [&node.front, &node.back]
+                    .iter()
+                    .filter_map(|child| child.as_ref().map(|boxed| boxed.as_ref())),
+            );
         }
         result
     }
