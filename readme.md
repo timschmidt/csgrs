@@ -305,7 +305,7 @@ let mirrored = cube.mirror(plane_x);
 - **`Mesh::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
 - **`::bounding_box()`** — computes the bounding box of the shape.
 - **`::invalidate_bounding_box()`** — invalidates the bounding box of the shape, causing it to be recomputed on next access
-- **`Mesh::tessellate()`** — triangulates all polygons returning a CSG containing triangles.
+- **`Mesh::triangulate()`** — triangulates all polygons returning a CSG containing triangles.
 - **`Mesh::from_polygons(polygons: &[Polygon<S>])`** - create a new CSG from Polygons.
 
 ### STL
@@ -497,7 +497,7 @@ possible, clone if necessary, and offer the choice of transmut in place or
 create new copy via appropriate functions
 
 ## Todo
-- when tessellating, detect T junctions with other polygons with shared edges,
+- when triangulating, detect T junctions with other polygons with shared edges,
 and insert splitting vertices into polygons to correct
 - implement as_indexed, from_indexed, and merge_vertices (using hashbrown, and a
 string expression of each float out to EPSILON significant digits)
