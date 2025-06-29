@@ -157,11 +157,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
     /// Extrudes (or "lofts") a closed 3D volume between two polygons in space.
     /// - `bottom` and `top` each have the same number of vertices `n`, in matching order.
-    /// - Returns a new CSG whose faces are:
+    /// - Returns a new Mesh whose faces are:
     ///   - The `bottom` polygon,
     ///   - The `top` polygon,
     ///   - `n` rectangular side polygons bridging each edge of `bottom` to the corresponding edge of `top`.
-    pub fn extrude_between(
+    pub fn loft(
         bottom: &Polygon<S>,
         top: &Polygon<S>,
         flip_bottom_polygon: bool,
@@ -170,7 +170,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         assert_eq!(
             n,
             top.vertices.len(),
-            "extrude_between: both polygons must have the same number of vertices" // todo: return error
+            "loft: both polygons must have the same number of vertices" // todo: return error
         );
 
         // Conditionally flip the bottom polygon if requested.
@@ -387,27 +387,23 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     }
     */
 
-    /// Rotate-extrude (revolve) only the Polygon and MultiPolygon geometry in `self.geometry`
-    /// around the Y-axis from 0..`angle_degs` in `segments` steps, producing side walls
-    /// in an orientation consistent with the polygon's winding.
+    /// Revolve a Sketch around the Y-axis from 0..`angle_degs` in `segments` steps,
+    /// producing side walls in an orientation consistent with the polygon's winding.
     ///
-    /// - Ignores `self.polygons`.
-    /// - Returns a new CSG containing **only** the newly extruded side polygons (no end caps).
+    /// - Returns a new Mesh containing **only** the newly extruded side polygons (no end caps).
     /// - `angle_degs`: how far to revolve, in degrees (e.g. 360 for a full revolve).
     /// - `segments`: number of subdivisions around the revolve.
     ///
     /// # Key Points
-    /// - Only 2D geometry in `self.geometry` is used. Any `self.polygons` are ignored.
     /// - Axis of revolution: **Y-axis**. We treat each ring's (x,y) -> revolve_around_y(x,y,theta).
     /// - Exterior rings (CCW in Geo) produce outward-facing side polygons.
     /// - Interior rings (CW) produce inward-facing side polygons ("holes").
     /// - If `angle_degs < 360`, we add **two caps**: one at angle=0, one at angle=angle_degs.
     ///   - Cap orientation is set so that normals face outward, consistent with a solid.
-    /// - Returns a new CSG with `.polygons` containing only the side walls + any caps.
-    ///   The `.geometry` is empty, i.e. `GeometryCollection::default()`.
-    pub fn rotate_extrude(&self, angle_degs: Real, segments: usize) -> Mesh<S> {
+    /// - Returns a new Mesh with `.polygons` containing only the side walls + any caps.
+    pub fn revolve(&self, angle_degs: Real, segments: usize) -> Mesh<S> {
         if segments < 2 {
-            panic!("rotate_extrude requires at least 2 segments.");
+            panic!("revolve requires at least 2 segments.");
         }
 
         let angle_radians = angle_degs.to_radians();

@@ -145,14 +145,14 @@ fn main() {
         vector_extruded_star.to_stl_binary("star_extrude").unwrap(),
     );
 
-    let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(360.0, 32);
+    let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).revolve(360.0, 32);
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
         "stl/circle_revolve_360.stl",
         revolve_circle.to_stl_binary("circle_revolve_360").unwrap(),
     );
 
-    let partial_revolve = circle_2d.translate(10.0, 0.0, 0.0).rotate_extrude(180.0, 32);
+    let partial_revolve = circle_2d.translate(10.0, 0.0, 0.0).revolve(180.0, 32);
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
         "stl/circle_revolve_180.stl",
@@ -697,10 +697,10 @@ fn main() {
         );
     }
 
-    // Scene L: Demonstrate rotate_extrude (360 deg) on a square
+    // Scene L: Demonstrate revolve (360 deg) on a square
     {
         let small_square = Sketch::square(1.0, None).translate(2.0, 0.0, 0.0);
-        let revolve = small_square.rotate_extrude(360.0, 24);
+        let revolve = small_square.revolve(360.0, 24);
         let _ = fs::write(
             "stl/scene_square_revolve_360.stl",
             revolve.to_stl_ascii("scene_square_revolve_360"),

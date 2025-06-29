@@ -870,7 +870,7 @@ fn test_csg_extrude() {
 }
 
 #[test]
-fn test_csg_rotate_extrude() {
+fn test_csg_revolve() {
     // Default square is from (0,0) to (1,1) in XY.
     // Shift it so it’s from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
     // and rotate it 90 degrees so that it can be swept around Z
@@ -879,7 +879,7 @@ fn test_csg_rotate_extrude() {
         .rotate(90.0, 0.0, 0.0);
 
     // Now revolve this translated square around the Z-axis, 360° in 16 segments.
-    let revolve = square.rotate_extrude(360.0, 16);
+    let revolve = square.revolve(360.0, 16);
 
     // We expect a ring-like “tube” instead of a degenerate shape.
     assert!(!revolve.polygons.is_empty());
@@ -1384,7 +1384,7 @@ fn test_same_number_of_vertices() {
     let top = make_polygon_3d(&[[0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [0.5, 0.5, 1.0]]);
 
     // This should succeed with no panic:
-    let csg = Sketch::extrude_between(&bottom, &top, true);
+    let csg = Sketch::loft(&bottom, &top, true);
 
     // Expect:
     //  - bottom polygon
@@ -1410,7 +1410,7 @@ fn test_different_number_of_vertices_panics() {
     ]);
 
     // This should panic due to unequal vertex counts
-    let _ = Sketch::extrude_between(&bottom, &top, true);
+    let _ = Sketch::loft(&bottom, &top, true);
 }
 
 #[test]
@@ -1430,7 +1430,7 @@ fn test_consistent_winding() {
         [0.0, 1.0, 1.0],
     ]);
 
-    let csg = Sketch::extrude_between(&bottom, &top, false);
+    let csg = Sketch::loft(&bottom, &top, false);
 
     // Expect 1 bottom + 1 top + 4 side faces = 6 polygons
     assert_eq!(csg.polygons.len(), 6);
@@ -1461,7 +1461,7 @@ fn test_inverted_orientation() {
     // We can fix by flipping `top`:
     top.flip();
 
-    let csg = Sketch::extrude_between(&bottom, &top, false);
+    let csg = Sketch::loft(&bottom, &top, false);
 
     // Expect 1 bottom + 1 top + 4 sides = 6 polygons
     assert_eq!(csg.polygons.len(), 6);
@@ -1481,7 +1481,7 @@ fn test_union_of_extruded_shapes() {
     // First shape: triangle
     let bottom1 = make_polygon_3d(&[[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [1.0, 1.0, 0.0]]);
     let top1 = make_polygon_3d(&[[0.0, 0.0, 1.0], [2.0, 0.0, 1.0], [1.0, 1.0, 1.0]]);
-    let csg1 = Sketch::extrude_between(&bottom1, &top1, true);
+    let csg1 = Sketch::loft(&bottom1, &top1, true);
 
     // Second shape: small shifted square
     let bottom2 = make_polygon_3d(&[
@@ -1496,7 +1496,7 @@ fn test_union_of_extruded_shapes() {
         [2.0, 0.8, 1.5],
         [1.0, 0.8, 1.5],
     ]);
-    let csg2 = Sketch::extrude_between(&bottom2, &top2, true);
+    let csg2 = Sketch::loft(&bottom2, &top2, true);
 
     // Union them
     let unioned = csg1.union(&csg2);
@@ -1944,7 +1944,7 @@ fn test_union_crash() {
                 None,
             ),
         ]),
-        Mesh::from_polygons(&[
+        Meshrotate::from_polygons(&[
             Polygon::new(
                 vec![
                     Vertex {
