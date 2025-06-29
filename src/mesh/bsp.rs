@@ -25,13 +25,19 @@ pub struct Node<S: Clone> {
 }
 
 impl<S: Clone + Send + Sync + Debug> Node<S> {
-    pub fn new(polygons: &[Polygon<S>]) -> Self {
-        let mut node = Node {
+	/// Create a new empty BSP node
+    pub fn new() -> Self {
+        Self {
             plane: None,
             front: None,
             back: None,
             polygons: Vec::new(),
-        };
+        }
+    }
+	
+	/// Creates a new BSP node from polygons
+    pub fn from_polygons(polygons: &[Polygon<S>]) -> Self {
+        let mut node = Self::new();
         if !polygons.is_empty() {
             node.build(polygons);
         }
@@ -210,7 +216,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         // Recursively build the front subtree.
         if !front.is_empty() {
             if self.front.is_none() {
-                self.front = Some(Box::new(Node::new(&[])));
+                self.front = Some(Box::new(Node::from_polygons(&[])));
             }
             self.front.as_mut().unwrap().build(&front);
         }
@@ -218,7 +224,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         // Recursively build the back subtree.
         if !back.is_empty() {
             if self.back.is_none() {
-                self.back = Some(Box::new(Node::new(&[])));
+                self.back = Some(Box::new(Node::from_polygons(&[])));
             }
             self.back.as_mut().unwrap().build(&back);
         }
