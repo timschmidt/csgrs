@@ -21,7 +21,7 @@ pub struct Sketch<S> {
     pub metadata: Option<S>,
 }
 
-impl<S: Clone + Send + Sync + Debug> Sketch<S> {
+impl<S: Clone + Send + Sync> Sketch<S> {
     /// Take the [`geo::Polygon`]'s from the `CSG`'s geometry collection
     pub fn to_multipolygon(&self) -> MultiPolygon<Real> {
         // allocate vec to fit all polygons
@@ -55,7 +55,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
+impl<S: Clone + Send + Sync> CSGOps for Sketch<S> {
     /// Returns a new empty Sketch
     fn new() -> Self {
         Sketch {
