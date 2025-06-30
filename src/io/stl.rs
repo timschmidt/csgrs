@@ -32,7 +32,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         //
         for poly in &self.polygons {
             // Ensure the polygon is tessellated, since STL is triangle-based.
-            let triangles = poly.tessellate();
+            let triangles = poly.triangulate();
             // A typical STL uses the face normal; we can take the polygon’s plane normal:
             let normal = poly.plane.normal().normalize();
             for tri in triangles {
@@ -77,7 +77,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         for poly in &self.polygons {
             let normal = poly.plane.normal().normalize();
             // Convert polygon to triangles
-            let tri_list = poly.tessellate();
+            let tri_list = poly.triangulate();
             for tri in tri_list {
                 triangles.push(Triangle {
                     normal: Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),

@@ -53,7 +53,6 @@ wgpu-types = { version = "24", optional = true, default-features = false }
 rayon = { version = "1.10", optional = true }
 thiserror = "2.0"
 hashbrown = { version = "0.15", optional = true }
-small_str = "0.1"
 fast-surface-nets = { version = "0.2.1", optional = true }
 contour_tracing = { version = "1.0.12", features = ["array"], optional = true }
 either = "1.15"
@@ -73,7 +72,6 @@ nom = { version = "7.1", optional = true }
 ttf-utils = { version = "0.1", optional = true, package = "ttf-parser-utils"}
 ttf-parser = { version = "0.25", optional = true }
 hershey = { version = "0.1.2", optional = true }
-curvo = "0.1.52"
 
 doc-image-embed = "0.2.1"
 

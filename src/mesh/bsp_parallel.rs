@@ -106,22 +106,40 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         result
     }
     
-    /// Parallel remove all polygons in this BSP tree that are inside the other BSP tree
+    /// Parallel version of `clip_to`
     #[cfg(feature = "parallel")]
     pub fn clip_to(&mut self, bsp: &Node<S>) {
-        // clip self.polygons in parallel
-        let new_polygons = bsp.clip_polygons(&self.polygons);
-        self.polygons = new_polygons;
+        // The clipping of polygons can be done in parallel for different nodes.
+        let (polygons, front_opt, back_opt) =
+            (std::mem::take(&mut self.polygons), self.front.take(), self.back.take());
 
-        // Recurse in parallel over front/back
-        match (&mut self.front, &mut self.back) {
-            (Some(front_node), Some(back_node)) => {
-                join(|| front_node.clip_to(bsp), || back_node.clip_to(bsp));
+        let (clipped_polygons, (clipped_front, clipped_back)) = rayon::join(
+            || bsp.clip_polygons(&polygons),
+            || {
+                rayon::join(
+                    || {
+                        if let Some(mut front) = front_opt {
+                            front.clip_to(bsp);
+                            Some(front)
+                        } else {
+                            None
+                        }
+                    },
+                    || {
+                        if let Some(mut back) = back_opt {
+                            back.clip_to(bsp);
+                            Some(back)
+                        } else {
+                            None
+                        }
+                    },
+                )
             },
-            (Some(front_node), None) => front_node.clip_to(bsp),
-            (None, Some(back_node)) => back_node.clip_to(bsp),
-            (None, None) => {},
-        }
+        );
+
+        self.polygons = clipped_polygons;
+        self.front = clipped_front;
+        self.back = clipped_back;
     }
 
     /// Parallel version of `build`.
@@ -175,9 +193,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         );
     }
 
-    // ------------------------------------------------------------------------
-    // Slice (parallel version)
-    // ------------------------------------------------------------------------
+    // Parallel slice
     #[cfg(feature = "parallel")]
     pub fn slice(&self, slicing_plane: &Plane) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
         // Collect all polygons (this can be expensive, but let's do it).

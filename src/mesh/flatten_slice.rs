@@ -13,7 +13,6 @@ use geo::{
 };
 use hashbrown::HashMap;
 use nalgebra::Point3;
-use small_str::{SmallStr, format_smallstr};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -29,7 +28,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         for poly in &self.polygons {
             // Tessellate this polygon into triangles
-            let triangles = poly.tessellate();
+            let triangles = poly.triangulate();
             // Each triangle has 3 vertices [v0, v1, v2].
             // Project them onto XY => build a 2D polygon (triangle).
             for tri in triangles {
@@ -156,70 +155,6 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
-    }
-
-    /// Checks if the Mesh object is manifold.
-    ///
-    /// This function defines a comparison function which takes EPSILON into account
-    /// for Real coordinates, builds a hashmap key from the string representation of
-    /// the coordinates, tessellates the Mesh polygons, gathers each of their three edges,
-    /// counts how many times each edge appears across all triangles,
-    /// and returns true if every edge appears exactly 2 times, else false.
-    ///
-    /// We should also check that all faces have consistent orientation and no neighbors
-    /// have flipped normals.
-    ///
-    /// We should also check for zero-area triangles
-    ///
-    /// # Returns
-    ///
-    /// - `true`: If the Mesh object is manifold.
-    /// - `false`: If the Mesh object is not manifold.
-    pub fn is_manifold(&self) -> bool {
-        fn approx_lt(a: &Point3<Real>, b: &Point3<Real>) -> bool {
-            // Compare x
-            if (a.x - b.x).abs() > EPSILON {
-                return a.x < b.x;
-            }
-            // If x is "close", compare y
-            if (a.y - b.y).abs() > EPSILON {
-                return a.y < b.y;
-            }
-            // If y is also close, compare z
-            a.z < b.z
-        }
-
-        // Turn a 3D point into a string with limited decimal places
-        fn point_key(p: &Point3<Real>) -> SmallStr<27> {
-            // Truncate/round to e.g. 6 decimals
-            format_smallstr!("{:.6},{:.6},{:.6}", p.x, p.y, p.z)
-        }
-
-        // Triangulate the whole shape once
-        let tri_csg = self.triangulate();
-        let mut edge_counts: HashMap<(SmallStr<27>, SmallStr<27>), u32> = HashMap::new();
-
-        for poly in &tri_csg.polygons {
-            // Each tri is 3 vertices: [v0, v1, v2]
-            // We'll look at edges (0->1, 1->2, 2->0).
-            for &(i0, i1) in &[(0, 1), (1, 2), (2, 0)] {
-                let p0 = &poly.vertices[i0].pos;
-                let p1 = &poly.vertices[i1].pos;
-
-                // Order them so (p0, p1) and (p1, p0) become the same key
-                let (a_key, b_key) = if approx_lt(p0, p1) {
-                    (point_key(p0), point_key(p1))
-                } else {
-                    (point_key(p1), point_key(p0))
-                };
-
-                *edge_counts.entry((a_key, b_key)).or_insert(0) += 1;
-            }
-        }
-
-        // For a perfectly closed manifold surface (with no boundary),
-        // each edge should appear exactly 2 times.
-        edge_counts.values().all(|&count| count == 2)
     }
 }
 

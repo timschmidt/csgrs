@@ -24,7 +24,7 @@ use geo::{Coord, CoordsIter, Geometry, LineString, Polygon as GeoPolygon};
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
-use std::{fmt::Debug, num::NonZero, sync::OnceLock};
+use std::{fmt::Debug, num::NonZeroU32, sync::OnceLock};
 
 #[cfg(feature = "parallel")]
 use rayon::{prelude::*, iter::IntoParallelRefIterator};
@@ -40,6 +40,10 @@ pub mod sdf;
 pub mod shapes;
 pub mod tpms;
 pub mod vertex;
+pub mod quality;
+pub mod manifold;
+pub mod connectivity;
+pub mod smoothing;
 
 #[derive(Clone, Debug)]
 pub struct Mesh<S: Clone + Send + Sync + Debug> {
@@ -166,31 +170,28 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
     /// Triangulate each polygon in the Mesh returning a Mesh containing triangles
     pub fn triangulate(&self) -> Mesh<S> {
-        let mut triangles = Vec::new();
-
-        for poly in &self.polygons {
-            let tris = poly.tessellate();
-            for triangle in tris {
-                triangles.push(Polygon::new(triangle.to_vec(), poly.metadata.clone()));
-            }
-        }
+        let triangles = self
+            .polygons
+            .iter()
+            .flat_map(|poly| {
+                poly.triangulate().into_iter().map(move |triangle| {
+                    Polygon::new(triangle.to_vec(), poly.metadata.clone())
+                })
+            })
+            .collect::<Vec<_>>();
 
         Mesh::from_polygons(&triangles)
     }
 
     /// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
     /// This results in a triangular mesh with more detail.
-    pub fn subdivide_triangles(&self, levels: u32) -> Mesh<S> {
-        if levels == 0 {
-            return self.clone();
-        }
-
+    pub fn subdivide_triangles(&self, levels: NonZeroU32) -> Mesh<S> {
         #[cfg(feature = "parallel")]
         let new_polygons: Vec<Polygon<S>> = self
             .polygons
             .par_iter()
             .flat_map(|poly| {
-                let sub_tris = poly.subdivide_triangles(NonZero::new(levels).unwrap());
+                let sub_tris = poly.subdivide_triangles(levels);
                 // Convert each small tri back to a Polygon
                 sub_tris.into_par_iter().map(move |tri| {
                     Polygon::new(
@@ -206,7 +207,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             .polygons
             .iter()
             .flat_map(|poly| {
-                let sub_tris = poly.subdivide_triangles(NonZero::new(levels).unwrap());
+                let sub_tris = poly.subdivide_triangles(levels);
                 sub_tris.into_iter().map(move |tri| {
                     Polygon::new(
                         vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
@@ -218,6 +219,54 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         Mesh::from_polygons(&new_polygons)
     }
+    
+    /// Subdivide all polygons in this CSG 'levels' times, in place.
+    /// This results in a triangular mesh with more detail.
+    ///
+    /// ## Example
+    /// ```
+    /// use csgrs::CSG;
+    /// use core::num::NonZeroU32;
+    /// let mut cube: CSG<()> = CSG::cube(2.0, None);
+    /// // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
+    /// // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
+    /// cube.subdivide_triangles_mut(1.try_into().expect("not zero"));
+    /// assert_eq!(cube.polygons.len(), 48);
+    ///
+    /// let mut cube: CSG<()> = CSG::cube(2.0, None);
+    /// cube.subdivide_triangles_mut(2.try_into().expect("not zero"));
+    /// assert_eq!(cube.polygons.len(), 192);
+    /// ```
+    pub fn subdivide_triangles_mut(&mut self, levels: NonZeroU32) {
+        #[cfg(feature = "parallel")]
+        {
+            self.polygons = self
+                .polygons
+                .par_iter_mut()
+                .flat_map(|poly| {
+                    let sub_tris = poly.subdivide_triangles(levels.into());
+                    // Convert each small tri back to a Polygon
+                    sub_tris
+                        .into_par_iter()
+                        .map(move |tri| Polygon::new(tri.to_vec(), poly.metadata.clone()))
+                })
+                .collect();
+        }
+
+        #[cfg(not(feature = "parallel"))]
+        {
+            self.polygons = self
+                .polygons
+                .iter()
+                .flat_map(|poly| {
+                    let polytri = poly.subdivide_triangles(levels.into());
+                    polytri
+                        .into_iter()
+                        .map(move |tri| Polygon::new(tri.to_vec(), poly.metadata.clone()))
+                })
+                .collect();
+        }
+    }
 
     /// Renormalize all polygons in this Mesh by re-computing each polygon’s plane
     /// and assigning that plane’s normal to all vertices.
@@ -226,7 +275,39 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             poly.set_new_normal();
         }
     }
+    
+	/// **Mathematical Foundation: Dihedral Angle Calculation**
+    ///
+    /// Computes the dihedral angle between two polygons sharing an edge.
+    /// The angle is computed as the angle between the normal vectors of the two polygons.
+    ///
+    /// Returns the angle in radians.
+    fn dihedral_angle(p1: &Polygon<S>, p2: &Polygon<S>) -> Real {
+        let n1 = p1.plane.normal();
+        let n2 = p2.plane.normal();
+        let dot = n1.dot(&n2).clamp(-1.0, 1.0);
+        dot.acos()
+    }
+    
+    /// Extracts vertices and indices from the Mesh's tessellated polygons.
+    fn get_vertices_and_indices(&self) -> (Vec<Point3<Real>>, Vec<[u32; 3]>) {
+        let tri_csg = self.triangulate();
+        let vertices = tri_csg
+            .polygons
+            .iter()
+            .flat_map(|p| [p.vertices[0].pos, p.vertices[1].pos, p.vertices[2].pos])
+            .collect();
 
+        let indices = (0..tri_csg.polygons.len())
+            .map(|i| {
+                let offset = i as u32 * 3;
+                [offset, offset + 1, offset + 2]
+            })
+            .collect();
+
+        (vertices, indices)
+    }
+    
     /// Casts a ray defined by `origin` + t * `direction` against all triangles
     /// of this CSG and returns a list of (intersection_point, distance),
     /// sorted by ascending distance.
@@ -252,7 +333,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         // 1) For each polygon in the CSG:
         for poly in &self.polygons {
             // 2) Triangulate it if necessary:
-            let triangles = poly.tessellate();
+            let triangles = poly.triangulate();
 
             // 3) For each triangle, do a ray–triangle intersection test:
             for tri in triangles {
@@ -281,33 +362,51 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         hits
     }
 
-    /// Convert the polygons in this Mesh to a Parry TriMesh.
+    /// Convert the polygons in this CSG to a Parry `TriMesh`, wrapped in a `SharedShape` to be used in Rapier.\
     /// Useful for collision detection or physics simulations.
-    pub fn to_trimesh(&self) -> SharedShape {
-        // 1) Gather all the triangles from each polygon
-        // 2) Build a TriMesh from points + triangle indices
-        // 3) Wrap that in a SharedShape to be used in Rapier
-        let tri_csg = self.triangulate();
-        let mut vertices = Vec::new();
-        let mut indices = Vec::new();
-        let mut index_offset = 0;
-
-        for poly in &tri_csg.polygons {
-            let a = poly.vertices[0].pos;
-            let b = poly.vertices[1].pos;
-            let c = poly.vertices[2].pos;
-
-            vertices.push(a);
-            vertices.push(b);
-            vertices.push(c);
-
-            indices.push([index_offset, index_offset + 1, index_offset + 2]);
-            index_offset += 3;
-        }
-
-        // TriMesh::new(Vec<[Real; 3]>, Vec<[u32; 3]>)
-        let trimesh = TriMesh::new(vertices, indices).unwrap(); // todo: handle error
+    ///
+    /// ## Errors
+    /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
+    pub fn to_rapier_shape(&self) -> SharedShape {
+        let (vertices, indices) = self.get_vertices_and_indices();
+        let trimesh = TriMesh::new(vertices, indices).unwrap();
         SharedShape::new(trimesh)
+    }
+    
+    /// Convert the polygons in this CSG to a Parry `TriMesh`.\
+    /// Useful for collision detection.
+    ///
+    /// ## Errors
+    /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
+    pub fn to_trimesh(&self) -> Option<TriMesh> {
+        let (vertices, indices) = self.get_vertices_and_indices();
+        TriMesh::new(vertices, indices).ok()
+    }
+
+    /// Uses Parry to check if a point is inside a `CSG`'s as a `TriMesh`.\
+    /// Note: this only use the 3d geometry of `CSG`
+    ///
+    /// ## Errors
+    /// If any 3d polygon has fewer than 3 vertices
+    ///
+    /// ## Example
+    /// ```
+    /// # use csgrs::CSG;
+    /// # use nalgebra::Point3;
+    /// # use nalgebra::Vector3;
+    /// let csg_cube = CSG::<()>::cube(6.0, None);
+    ///
+    /// assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
+    /// assert!(csg_cube.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
+    ///
+    /// assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
+    /// assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, -6.0)));
+    /// ```
+    pub fn contains_vertex(&self, point: &Point3<Real>) -> bool {
+        self.ray_intersections(point, &Vector3::new(1.0, 1.0, 1.0))
+            .len()
+            % 2
+            == 1
     }
 
     /// Approximate mass properties using Rapier.
@@ -315,18 +414,14 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         &self,
         density: Real,
     ) -> (Real, Point3<Real>, Unit<Quaternion<Real>>) {
-        let shape = self.to_trimesh();
-        if let Some(trimesh) = shape.as_trimesh() {
-            let mp = trimesh.mass_properties(density);
-            (
-                mp.mass(),
-                mp.local_com,                     // a Point3<Real>
-                mp.principal_inertia_local_frame, // a Unit<Quaternion<Real>>
-            )
-        } else {
-            // fallback if not a TriMesh
-            (0.0, Point3::origin(), Unit::<Quaternion<Real>>::identity())
-        }
+        let trimesh = self.to_trimesh().unwrap();
+        let mp = trimesh.mass_properties(density);
+
+        (
+            mp.mass(),
+            mp.local_com,                     // a Point3<Real>
+            mp.principal_inertia_local_frame, // a Unit<Quaternion<Real>>
+        )
     }
 
     /// Create a Rapier rigid body + collider from this Mesh, using
@@ -340,7 +435,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         rotation: Vector3<Real>, // rotation axis scaled by angle (radians)
         density: Real,
     ) -> RigidBodyHandle {
-        let shape = self.to_trimesh();
+        let shape = self.to_rapier_shape();
 
         // Build a Rapier RigidBody
         let rb = RigidBodyBuilder::dynamic()
@@ -359,14 +454,18 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
     /// Convert a Mesh into a Bevy `Mesh`.
     #[cfg(feature = "bevymesh")]
-    pub fn to_bevy_mesh(&self) -> Mesh {
-        let tessellated_csg = &self.tessellate();
-        let polygons = &tessellated_csg.polygons;
+    pub fn to_bevy_mesh(&self) -> bevy_mesh::Mesh {
+        use bevy_asset::RenderAssetUsages;
+        use bevy_mesh::{Indices, Mesh};
+        use wgpu_types::PrimitiveTopology;
+
+        let triangulated_mesh = &self.triangulate();
+        let polygons = &triangulated_mesh.polygons;
 
         // Prepare buffers
         let mut positions_32 = Vec::new();
         let mut normals_32 = Vec::new();
-        let mut indices = Vec::new();
+        let mut indices = Vec::with_capacity(polygons.len() * 3);
 
         let mut index_start = 0u32;
 
