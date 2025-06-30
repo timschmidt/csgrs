@@ -7,6 +7,15 @@ mod stl;
 #[cfg(feature = "dxf-io")]
 mod dxf;
 
+#[cfg(feature = "obj-io")]
+mod obj;
+
+#[cfg(feature = "ply-io")]
+mod ply;
+
+#[cfg(feature = "amf-io")]
+mod amf;
+
 /// Generic I/O and format‑conversion errors.
 ///
 /// Many I/O features are behind cargo feature‑flags.  
@@ -24,6 +33,18 @@ pub enum IoError {
     #[cfg(feature = "svg-io")]
     /// Error bubbled up from the `svg` crate during parsing.
     SvgParsing(::svg::parser::Error),
+    
+    #[cfg(feature = "obj-io")]
+    /// Error during OBJ file processing.
+    ObjParsing(String),
+
+    #[cfg(feature = "ply-io")]
+    /// Error during PLY file processing.
+    PlyParsing(String),
+
+    #[cfg(feature = "amf-io")]
+    /// Error during AMF file processing.
+    AmfParsing(String),
 }
 
 impl std::fmt::Display for IoError {
@@ -40,6 +61,15 @@ impl std::fmt::Display for IoError {
 
             #[cfg(feature = "svg-io")]
             SvgParsing(error) => write!(f, "SVG Parsing error: {error}"),
+            
+			#[cfg(feature = "obj-io")]
+            ObjParsing(error) => write!(f, "OBJ Parsing error: {error}"),
+
+            #[cfg(feature = "ply-io")]
+            PlyParsing(error) => write!(f, "PLY Parsing error: {error}"),
+
+            #[cfg(feature = "amf-io")]
+            AmfParsing(error) => write!(f, "AMF Parsing error: {error}"),
         }
     }
 }
@@ -62,5 +92,12 @@ impl From<std::num::ParseFloatError> for IoError {
 impl From<::svg::parser::Error> for IoError {
     fn from(value: ::svg::parser::Error) -> Self {
         Self::SvgParsing(value)
+    }
+}
+
+#[cfg(feature = "obj-io")]
+impl From<String> for IoError {
+    fn from(value: String) -> Self {
+        Self::ObjParsing(value)
     }
 }

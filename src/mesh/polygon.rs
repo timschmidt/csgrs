@@ -81,7 +81,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         self.vertices.iter().zip(self.vertices.iter().cycle().skip(1))
     }
 
-    /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
+    /// Rotate polygons into 2D to perform triangulation, then rotate triangles back to original 3D position
     pub fn triangulate(&self) -> Vec<[Vertex; 3]> {
         // If polygon has fewer than 3 vertices, nothing to tessellate
         if self.vertices.len() < 3 {

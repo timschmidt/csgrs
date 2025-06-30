@@ -11,9 +11,9 @@ pub trait CSGOps: Sized + Clone {
     fn intersection(&self, other: &Self) -> Self;
     fn xor(&self, other: &Self) -> Self;
     fn transform(&self, matrix: &Matrix4<Real>) -> Self;
+	fn inverse(&self) -> Self;
     fn bounding_box(&self) -> Aabb;
     fn invalidate_bounding_box(&mut self);
-    fn inverse(&self) -> Self;
 
     /// Returns a new Self translated by vector.
     fn translate_vector(&self, vector: Vector3<Real>) -> Self {
@@ -25,7 +25,7 @@ pub trait CSGOps: Sized + Clone {
         self.translate_vector(Vector3::new(x, y, z))
     }
 
-    /// Returns a new CSG translated so that its bounding-box center is at the origin (0,0,0).
+    /// Returns a new Self translated so that its bounding-box center is at the origin (0,0,0).
     fn center(&self) -> Self {
         let aabb = self.bounding_box();
 
@@ -38,14 +38,14 @@ pub trait CSGOps: Sized + Clone {
         self.translate(-center_x, -center_y, -center_z)
     }
 
-    /// Translates the object so that its bottommost point(s) sit exactly at z=0.
+    /// Translates Self so that its bottommost point(s) sit exactly at z=0.
     ///
     /// - Shifts all vertices up or down such that the minimum z coordinate of the bounding box becomes 0.
     ///
     /// # Example
     /// ```
-    /// let csg = CSG::cube(1.0, 1.0, 3.0, None).translate(2.0, 1.0, -2.0);
-    /// let floated = csg.float();
+    /// let mesh = Mesh::cube(1.0, None).translate(2.0, 1.0, -2.0);
+    /// let floated = mesh.float();
     /// assert_eq!(floated.bounding_box().mins.z, 0.0);
     /// ```
     fn float(&self) -> Self {
@@ -54,7 +54,7 @@ pub trait CSGOps: Sized + Clone {
         self.translate(0.0, 0.0, -min_z)
     }
 
-    /// Rotates the CSG by x_degrees, y_degrees, z_degrees
+    /// Rotates Self by x_degrees, y_degrees, z_degrees
     fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
         let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg.to_radians());
         let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg.to_radians());
@@ -65,7 +65,7 @@ pub trait CSGOps: Sized + Clone {
         self.transform(&rot.to_homogeneous())
     }
 
-    /// Scales the CSG by scale_x, scale_y, scale_z
+    /// Scales Self by scale_x, scale_y, scale_z
     fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
         let mat4 = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
         self.transform(&mat4)
@@ -114,7 +114,7 @@ pub trait CSGOps: Sized + Clone {
     /// **Note**: The result is inverted (.inverse()) because reflection reverses
     /// the orientation of polygons, affecting inside/outside semantics in CSG.
     ///
-    /// Returns a new CSG whose geometry is mirrored accordingly.
+    /// Returns a new Self whose geometry is mirrored accordingly.
     fn mirror(&self, plane: Plane) -> Self {
         // Normal might not be unit, so compute its length:
         let len = plane.normal().norm();
@@ -149,7 +149,7 @@ pub trait CSGOps: Sized + Clone {
         self.transform(&mirror_mat).inverse()
     }
 
-    /// Distribute this shape `count` times around an arc (in XY plane) of radius,
+    /// Distribute Self `count` times around an arc (in XY plane) of radius,
     /// from `start_angle_deg` to `end_angle_deg`.
     /// Returns a new shape with all copies
     fn distribute_arc(
@@ -188,7 +188,7 @@ pub trait CSGOps: Sized + Clone {
             .unwrap()
     }
 
-    /// Distribute this shape `count` times along a straight line (vector),
+    /// Distribute Self `count` times along a straight line (vector),
     /// each copy spaced by `spacing`.
     /// E.g. if `dir=(1.0,0.0,0.0)` and `spacing=2.0`, you get copies at
     /// x=0, x=2, x=4, ... etc.
@@ -213,7 +213,7 @@ pub trait CSGOps: Sized + Clone {
             .unwrap()
     }
 
-    /// Distribute this shape in a grid of `rows x cols`, with spacing dx, dy in XY plane.
+    /// Distribute Self in a grid of `rows x cols`, with spacing dx, dy in XY plane.
     /// top-left or bottom-left depends on your usage of row/col iteration.
     fn distribute_grid(&self, rows: usize, cols: usize, dx: Real, dy: Real) -> Self {
         if rows < 1 || cols < 1 {
