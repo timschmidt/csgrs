@@ -5,33 +5,33 @@ edition = "2024"
 
 [dependencies]
 nalgebra = "0.33.2"
+bvh = "0.11.0"
 num-traits = "0.2.19"
-parry3d = "0.21.1"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 
 tobj = {version = "4.0.3"}
 bevy = { version = "0.16.1", optional = true }
 bevy_obj = { version = "0.16.1", optional = true }
+bevy_panorbit_camera = { version = "0.26.0", optional = true }
 #bevy_egui = { version = "0.30.0", optional = true }
 #bevy-inspector-egui = { version = "0.27.0", optional = true }
 #bevy_infinite_grid = { version = "0.13.0", optional = true }
 #bevy_normal_material = { version = "0.6.0", optional = true }
-#bevy_panorbit_camera = { version = "0.19.3", optional = true }
 #bevy_points = { version = "0.6.0", optional = true }
 
 
 [features]
 default = []
-# default = ["bevy"] # for debugging example
 bevy = [
     "dep:bevy",
     "dep:bevy_obj",
+    "dep:bevy_obj",
+    "dep:bevy_panorbit_camera",
     #"dep:bevy_egui",
     #"dep:bevy-inspector-egui",
     #"dep:bevy_infinite_grid",
     #"dep:bevy_normal_material",
-    #"dep:bevy_panorbit_camera",
     #"dep:bevy_points",
     #"nalgebra/convert-glam027"
 ]
@@ -39,4 +39,14 @@ bevy = [
 [[example]]
 name = "main"
 path = "examples/main.rs"
+required-features = ["bevy"]
+
+[[example]]
+name = "bvh_test"
+path = "examples/bvh_test.rs"
+required-features = ["bevy"]
+
+[[example]]
+name = "hmesh_test"
+path = "examples/hmesh_viewer.rs"
 required-features = ["bevy"]

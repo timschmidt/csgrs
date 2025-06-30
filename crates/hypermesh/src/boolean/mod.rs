@@ -8,6 +8,7 @@ use crate::boolean::kernel02::Kernel02;
 use crate::boolean::kernel11::Kernel11;
 use crate::boolean::kernel12::Kernel12;
 use crate::bounds::BoundingBox;
+use crate::collider::Recorder;
 use crate::manifold::Manifold;
 
 /**
@@ -33,12 +34,49 @@ use crate::manifold::Manifold;
 // 1st check point
 pub fn simple_boolean() {}
 
+struct SimpleRecorder<F> where F: FnMut(usize, usize) {
+    callback: F,
+}
+
+impl<F> SimpleRecorder<F> where F: FnMut(usize, usize) {
+    fn new(callback: F) -> Self {
+        Self { callback }
+    }
+}
+
+impl<'a, F> Recorder for SimpleRecorder<F> where F: FnMut(usize, usize) {
+    fn record(&mut self, query_idx: usize, leaf_idx: usize) {
+        (self.callback)(query_idx, leaf_idx);
+    }
+}
+
+
+
 struct Intersection12Recorder<'a> {
+    pub mfd_a: &'a Manifold,
+    pub mfd_b: &'a Manifold,
     pub k12: &'a Kernel12<'a>,
     pub forward: bool,
     pub p1q2: Vec<[i64; 2]>,
-    pub x12: Vec<i64>,
+    pub x12: Vec<i32>,
     pub v12: Vec<Vector3<f64>>,
+}
+
+impl <'a> Recorder for Intersection12Recorder<'a> {
+    fn record(&mut self, query_idx: usize, leaf_idx: usize) {
+        let h = self.mfd_a.hmesh.edges[query_idx].half(); //todo check
+        let (x12, op_v12) = self.k12.op(h.id, leaf_idx);
+        if let Some(v12) = op_v12 {
+            if self.forward {
+                self.p1q2.push([query_idx as i64, leaf_idx as i64]);
+            } else {
+                self.p1q2.push([leaf_idx as i64, query_idx as i64]);
+                self.x12.push(x12);
+                self.v12.push(v12);
+                
+            }
+        }
+    }
 }
 
 
@@ -76,21 +114,22 @@ fn intersect12 (
         k11,
     };
 
-    let bbs = a.hmesh.edges.iter().map(|e| BoundingBox::new(
+    let bboxes = a.hmesh.edges.iter().map(|e| BoundingBox::new(
         e.vert0().pos().transpose(),
         e.vert1().pos().transpose()
-    ));
+    )).collect::<Vec<BoundingBox>>();
 
-    let rec = Intersection12Recorder{
+    let mut rec = Intersection12Recorder{
+        mfd_a: a,
+        mfd_b: b,
         k12: &k12,
         p1q2: Vec::new(),
         x12: Vec::new(),
         v12: Vec::new(),
         forward,
-};
+    };
 
-    // todo: record collisions
-    // b.collider_.Collisions<false, Box, Kernel12Recorder>(AEdgeBB.cview(), recorder);
+     b.collider.collision(&bboxes, &mut rec);
 
     let mut x12: Vec<i64> = vec![];
     let mut v12: Vec<Vector3<f64>> = vec![];
@@ -99,7 +138,7 @@ fn intersect12 (
 
     for i in 0..seq.len() {
         p1q2.push(rec.p1q2[seq[i]]);
-        x12.push(rec.x12[seq[i]]);
+        x12.push(rec.x12[seq[i]] as i64);
         v12.push(rec.v12[seq[i]]);
     }
 
@@ -111,7 +150,7 @@ fn winding03(p: &Manifold, q: &Manifold, expand_p: f64, forward: bool) -> Vec<i6
     let a = if forward {p} else {q};
     let b = if forward {q} else {p};
 
-    let w03 = vec![];
+    let mut w03: Vec<i64> = vec![];
     let k02 = Kernel02 {
         verts_p: &a.hmesh.verts,
         verts_q: &b.hmesh.verts,
@@ -120,9 +159,21 @@ fn winding03(p: &Manifold, q: &Manifold, expand_p: f64, forward: bool) -> Vec<i6
         forward,
     };
 
-    // todo: record collisions
-    // auto recorder = MakeSimpleRecorder(f);
-    // b.collider_.Collisions<false>(a.vertPos_.cview(), recorder);
+    let bboxes = a.hmesh.verts.iter().map(|v| BoundingBox::new(
+        v.pos().transpose(),
+        v.pos().transpose()
+    )).collect::<Vec<BoundingBox>>();
+
+    
+
+    let mut rec = SimpleRecorder::new(
+        |a, b| {
+            let (s02, z02) = k02.op(a, b);
+            if z02.is_some() { w03[a] += s02 * if forward {1} else {-1}; }
+        }
+    );
+    
+    b.collider.collision(&bboxes, &mut rec);
 
     w03
 }
@@ -131,8 +182,8 @@ struct Boolean3<'a> {
     mfd_p: &'a Manifold,
     mfd_q: &'a Manifold,
     expand_p: f64,
-    p1q2: Vec<[i32; 2]>, 
-    p2q1: Vec<[i32; 2]>, 
+    p1q2: Vec<[i32; 2]>,
+    p2q1: Vec<[i32; 2]>,
     x12: Vec<i32>,
     x21: Vec<i32>,
     w03: Vec<i32>,
@@ -142,32 +193,32 @@ struct Boolean3<'a> {
     valid: bool,
 }
 
-/*
 impl<'a> Boolean3<'a> {
-    fn new(&self, p: &'a Manifold, q: &'a Manifold, op :OpType) -> Self {
-        self.mfd_p = p;
-        self.mfd_q = q;
-        self.expand_p = if op == OpType::Add {1.} else {0.};
-        self.valid = true;
-
-        // todo assert mfd_p has bounds
-
-        // Level 3
-        // Build up the intersection of the edges and triangles, keeping only those
-        // that intersect and record the direction the edge is passing through the triangle.
-        (self.x12, self.v12) = intersect12();
-        (self.x21, self.v21) = intersect12();
-
-        // Sum up the winding numbers of all vertices.
-        self.w03 = Winding03(inP, inQ, expandP_, true);
-        self.w30 = Winding03(inP, inQ, expandP_, false);
-    }
-
-    pub fn result() {
-
-    }
-}
-*/
+    /*
+fn new(&self, p: &'a Manifold, q: &'a Manifold, op :OpType) -> Self {
+            self.mfd_p = p;
+            self.mfd_q = q;
+            self.expand_p = if op == OpType::Add {1.} else {0.};
+            self.valid = true;
+    
+            // todo assert mfd_p has bounds
+    
+            // Level 3
+            // Build up the intersection of the edges and triangles, keeping only those
+            // that intersect and record the direction the edge is passing through the triangle.
+            (self.x12, self.v12) = intersect12();
+            (self.x21, self.v21) = intersect12();
+    
+            // Sum up the winding numbers of all vertices.
+            self.w03 = Winding03(inP, inQ, expandP_, true);
+            self.w30 = Winding03(inP, inQ, expandP_, false);
+            }
+    */
+        
+            pub fn result() {
+        
+            }
+        }
 
 pub enum OpType { Add, Subtract, Intersect }
 

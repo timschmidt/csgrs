@@ -1,5 +1,6 @@
 use nalgebra::Vector3;
 
+#[derive(Clone)]
 pub struct BoundingBox {
     pub min: Vector3<f64>,
     pub max: Vector3<f64>,

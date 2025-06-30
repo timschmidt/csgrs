@@ -1,5 +1,5 @@
 use nalgebra::{Vector3, Vector4};
-use crate::{Half, Vert};
+use crate::hmesh::{Vert, Half};
 use crate::boolean::intersect::intersect;
 use crate::boolean::shadow::{shadows, shadows01};
 
@@ -93,7 +93,7 @@ impl<'a> Kernel11<'a> {
 }
 
 #[cfg(test)]
-mod tests {
-
+mod kernel11_tests {
+    //assert_eq!(1, 1);
 }
 

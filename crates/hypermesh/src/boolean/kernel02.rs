@@ -1,7 +1,7 @@
 use nalgebra::Vector3;
-use crate::{Half, Vert};
 use crate::boolean::intersect::interpolate;
 use crate::boolean::shadow::{shadows, shadows01};
+use crate::hmesh::{Vert, Half};
 
 pub struct Kernel02<'a> {
     pub verts_p: &'a[Vert],
@@ -12,7 +12,6 @@ pub struct Kernel02<'a> {
 }
 
 impl<'a> Kernel02<'a> {
-
     pub fn op (&self, p0: usize, q2: usize) -> (i64, Option<f64>) {
         let mut s02 = 0;
         let mut z02 = Some(0.);
@@ -82,3 +81,54 @@ impl<'a> Kernel02<'a> {
         (s02, z02)
     }
 }
+
+#[cfg(test)]
+mod kernel02_tests {
+    use std::sync::Arc;
+    use nalgebra::DMatrix;
+    use crate::boolean::kernel02::Kernel02;
+    use crate::Hmesh;
+
+    fn gen_tet_a() -> Arc<Hmesh> {
+        let mut pos = DMatrix::zeros(4, 3);
+        let mut idx = DMatrix::zeros(4, 3);
+        pos.row_mut(0).copy_from_slice(&[0.000000, -1.000000, -1.000000]);
+        pos.row_mut(1).copy_from_slice(&[0.866025, -1.000000, 0.500000]);
+        pos.row_mut(2).copy_from_slice(&[-0.866025, -1.000000, 0.500000]);
+        pos.row_mut(3).copy_from_slice(&[0.000000, 1.000000, 0.000000]);
+        idx.row_mut(0).copy_from_slice(&[0, 3, 1]);
+        idx.row_mut(1).copy_from_slice(&[0, 1, 2]);
+        idx.row_mut(2).copy_from_slice(&[1, 3, 2]);
+        idx.row_mut(3).copy_from_slice(&[2, 3, 0]);
+        Hmesh::new(pos, idx)
+    }
+
+    fn gen_tet_c() -> Arc<Hmesh> {
+        let mut pos = DMatrix::zeros(4, 3);
+        let mut idx = DMatrix::zeros(4, 3);
+        pos.row_mut(0).copy_from_slice(&[-2.000000, -0.000000, -1.000000]);
+        pos.row_mut(1).copy_from_slice(&[-2.000000, -0.866025, 0.500000]);
+        pos.row_mut(2).copy_from_slice(&[-2.000000, 0.866025, 0.500000]);
+        pos.row_mut(3).copy_from_slice(&[0.000000, 0.000000, 0.000000]);
+        idx.row_mut(0).copy_from_slice(&[0, 3, 1]);
+        idx.row_mut(1).copy_from_slice(&[0, 1, 2]);
+        idx.row_mut(2).copy_from_slice(&[1, 3, 2]);
+        idx.row_mut(3).copy_from_slice(&[2, 3, 0]);
+        Hmesh::new(pos, idx)
+    }
+
+    #[test]
+    fn kernel02_test() {
+        let mfd_p = gen_tet_a();
+        let mfd_q = gen_tet_c();
+        //let k02 = Kernel02 {
+        //    verts_p: &mfd_p.verts,
+        //    verts_q: &mfd_q.verts,
+        //    halfs_q: &mfd_q.halfs,
+        //    expand_p: 1.,
+        //    forward: true
+        //};
+        //k02.op(0, 0);
+    }
+}
+

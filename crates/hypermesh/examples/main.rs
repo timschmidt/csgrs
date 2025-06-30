@@ -25,7 +25,6 @@ fn load_mesh(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
-
     let (models, _) = tobj::load_obj(
         "assets/models/quad_with_hole.obj",
         &tobj::LoadOptions {

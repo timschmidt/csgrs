@@ -33,6 +33,9 @@ pub struct Hmesh {
     pub halfs: Vec<Half>,
     pub vert_normal: DMatrix<f64>,
     pub face_normal: DMatrix<f64>,
+    pub face_basis_x: DMatrix<f64>,
+    pub face_basis_y: DMatrix<f64>,
+    pub face_area: Vec<f64>,
 }
 
 #[derive(Debug, Clone)]
@@ -210,6 +213,7 @@ impl Hmesh {
             ib += 1;
         }
 
+
         Arc::new_cyclic(|weak_ptr| {
             let mut faces = vec![];
             let mut verts = vec![];
@@ -219,6 +223,38 @@ impl Hmesh {
             for i in 0..nv { verts.push(Vert{id: i, hm: weak_ptr.clone()}); }
             for i in 0..ne { edges.push(Edge{id: i, hm: weak_ptr.clone()}); }
             for i in 0..nh { halfs.push(Half{id: i, hm: weak_ptr.clone()}); }
+
+            let mut vert_normal  = DMatrix::<f64>::zeros(nv, 3);
+            let mut face_normal  = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_basis_x = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_basis_y = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_area    = vec![0.; nf];
+
+            for i in 0..nf {
+                let ih = face2half[i];
+                let p2 = pos.fixed_view::<1, 3>(head[ih], 0);
+                let p1 = pos.fixed_view::<1, 3>(tail[ih], 0);
+                let p0 = pos.fixed_view::<1, 3>(tail[prev[ih]], 0);
+                let x = p2 - p1;
+                let t = (p1 - p0) * -1.;
+                let n = x.cross(&t);
+                face_normal.row_mut(i).copy_from_slice(n.normalize().as_ref());
+                face_basis_x.row_mut(i).copy_from_slice(x.normalize().as_ref());
+                face_basis_y.row_mut(i).copy_from_slice((-x.cross(&n)).normalize().as_ref());
+                face_area[i] = n.norm() * 0.5;
+            }
+
+            for i in 0..nf {
+            for j in 0..3 {
+                let n = vert_normal.row(idx[(i, j)]) + face_normal.row(i) * face_area[i];
+                vert_normal.row_mut(idx[(i, j)]).copy_from_slice(n.as_ref());
+            }}
+
+            for i in 0..vert_normal.nrows() {
+                if let Some(n) = vert_normal.row(i).try_normalize(0.) {
+                    vert_normal.row_mut(i).copy_from(&n);
+                }
+            }
 
             Self {
                 pos,
@@ -245,8 +281,11 @@ impl Hmesh {
                 edges,
                 faces,
                 halfs,
-                vert_normal: DMatrix::zeros(nv, 3),
-                face_normal: DMatrix::zeros(nf, 3),
+                vert_normal,
+                face_normal,
+                face_basis_x,
+                face_basis_y,
+                face_area
             }
         })
     }
@@ -285,6 +324,11 @@ impl Vert {
 }
 
 impl Face {
+    pub fn half(&self) -> Half {
+        let m = self.hm.upgrade().unwrap();
+        m.halfs[m.face2half[self.id]].clone()
+    }
+
     pub fn normal(&self) -> RowVector3<f64> {
         let m = self.hm.upgrade().unwrap();
         let p = m.face_normal.row(self.id);
@@ -293,6 +337,13 @@ impl Face {
 }
 
 impl Half {
+    pub fn vec(&self) -> RowVector3<f64> {
+        let m = self.hm.upgrade().unwrap();
+        //(m.pos.row(m.head[self.id]) - m.pos.row(m.tail[self.id])).into()
+        let head_pos = m.pos.fixed_view::<1, 3>(m.head[self.id], 0);
+        let tail_pos = m.pos.fixed_view::<1, 3>(m.tail[self.id], 0);
+        head_pos - tail_pos
+    }
     pub fn edge(&self) -> Edge { let m = self.hm.upgrade().unwrap(); m.edges[m.edge[self.id]].clone() }
     pub fn tail(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.tail[self.id]].clone() }
     pub fn head(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.head[self.id]].clone() }
@@ -304,7 +355,7 @@ impl Half {
 
     pub fn is_boundary(&self) -> bool { self.hm.upgrade().unwrap().face[self.id] == usize::MAX }
     pub fn is_interior(&self) -> bool { self.hm.upgrade().unwrap().face[self.id] != usize::MAX }
-    
+
 
     pub fn is_canonical(&self) -> bool { self.edge().half() == *self }
 }
@@ -331,4 +382,5 @@ impl_hmesh_partial_eq!(Face);
 
 #[cfg(test)]
 mod tests;
+mod obj_io;
 
