@@ -9,7 +9,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// This function defines a comparison function which takes EPSILON into account
     /// for Real coordinates, builds a hashmap key from the string representation of
-    /// the coordinates, tessellates the Mesh polygons, gathers each of their three edges,
+    /// the coordinates, triangulates the Mesh polygons, gathers each of their three edges,
     /// counts how many times each edge appears across all triangles,
     /// and returns true if every edge appears exactly 2 times, else false.
     ///
