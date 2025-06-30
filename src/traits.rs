@@ -71,11 +71,48 @@ pub trait CSGOps: Sized + Clone {
         self.transform(&mat4)
     }
 
-    /// Reflect (mirror) this CSG about an arbitrary plane `plane`.
+    /// **Mathematical Foundation: Reflection Across Arbitrary Planes**
     ///
+    /// Reflect (mirror) this object about an arbitrary plane `plane`.
+    /// This implements the complete mathematical theory of 3D reflections:
+    ///
+    /// ## **Reflection Mathematics**
+    ///
+    /// ### **Plane Representation**
     /// The plane is specified by:
-    ///   `plane.normal` = the plane’s normal vector (need not be unit),
-    ///   `plane.w`      = the dot-product with that normal for points on the plane (offset).
+    /// - `plane.normal` = the plane's normal vector n⃗ (need not be unit)
+    /// - `plane.offset` = the signed distance d from origin to plane
+    /// - **Plane Equation**: n⃗·p⃗ + d = 0
+    ///
+    /// ### **Reflection Matrix Derivation**
+    /// For a unit normal n̂ and plane through origin, the reflection matrix is:
+    /// ```text
+    /// R = I - 2n̂n̂ᵀ
+    /// ```
+    /// **Proof**: For any vector v⃗, the reflection is:
+    /// - **Component parallel to n̂**: v∥ = (v⃗·n̂)n̂  → reflected to -v∥
+    /// - **Component perpendicular**: v⊥ = v⃗ - v∥  → unchanged
+    /// - **Result**: v'⃗ = v⊥ - v∥ = v⃗ - 2(v⃗·n̂)n̂ = (I - 2n̂n̂ᵀ)v⃗
+    ///
+    /// ### **General Plane Reflection Algorithm**
+    /// 1. **Normalize**: n̂ = n⃗/|n⃗|, d̂ = d/|n⃗|
+    /// 2. **Translate to Origin**: T₁ = translate by -d̂n̂
+    /// 3. **Reflect at Origin**: R = I - 2n̂n̂ᵀ
+    /// 4. **Translate Back**: T₂ = translate by +d̂n̂
+    /// 5. **Compose**: M = T₂ · R · T₁
+    ///
+    /// ### **Normal Vector Transformation**
+    /// Normals transform by the inverse transpose: n'⃗ = (M⁻¹)ᵀn⃗
+    /// For reflections, this simplifies to the same matrix M.
+    ///
+    /// ## **Geometric Properties**
+    /// - **Isometry**: Preserves distances and angles
+    /// - **Orientation Reversal**: Changes handedness (det(M) = -1)
+    /// - **Involution**: M² = I (reflecting twice gives identity)
+    /// - **Plane Invariance**: Points on the plane remain fixed
+    ///
+    /// **Note**: The result is inverted (.inverse()) because reflection reverses
+    /// the orientation of polygons, affecting inside/outside semantics in CSG.
     ///
     /// Returns a new CSG whose geometry is mirrored accordingly.
     fn mirror(&self, plane: Plane) -> Self {

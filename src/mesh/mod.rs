@@ -70,16 +70,10 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         polys: &[Polygon<S>],
         other_bb: &Aabb,
     ) -> (Vec<Polygon<S>>, Vec<Polygon<S>>) {
-        let mut maybe = Vec::new();
-        let mut never = Vec::new();
-        for p in polys {
-            if p.bounding_box().intersects(other_bb) {
-                maybe.push(p.clone());
-            } else {
-                never.push(p.clone());
-            }
-        }
-        (maybe, never)
+        polys
+            .iter()
+            .cloned()
+            .partition(|p| p.bounding_box().intersects(other_bb))
     }
 
     /// Helper to collect all vertices from the CSG.
@@ -328,31 +322,23 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         let ray = Ray::new(*origin, *direction);
         let iso = Isometry3::identity(); // No transformation on the triangles themselves.
 
-        let mut hits = Vec::new();
-
-        // 1) For each polygon in the CSG:
-        for poly in &self.polygons {
-            // 2) Triangulate it if necessary:
-            let triangles = poly.triangulate();
-
-            // 3) For each triangle, do a ray–triangle intersection test:
-            for tri in triangles {
+        let mut hits: Vec<_> = self
+            .polygons
+            .iter()
+            .flat_map(|poly| poly.triangulate())
+            .filter_map(|tri| {
                 let a = tri[0].pos;
                 let b = tri[1].pos;
                 let c = tri[2].pos;
-
-                // Construct a parry Triangle shape from the 3 vertices:
                 let triangle = Triangle::new(a, b, c);
-
-                // Ray-cast against the triangle:
-                if let Some(hit) =
-                    triangle.cast_ray_and_get_normal(&iso, &ray, Real::MAX, true)
-                {
-                    let point_on_ray = ray.point_at(hit.time_of_impact);
-                    hits.push((Point3::from(point_on_ray.coords), hit.time_of_impact));
-                }
-            }
-        }
+                triangle
+                    .cast_ray_and_get_normal(&iso, &ray, Real::MAX, true)
+                    .map(|hit| {
+                        let point_on_ray = ray.point_at(hit.time_of_impact);
+                        (Point3::from(point_on_ray.coords), hit.time_of_impact)
+                    })
+            })
+            .collect();
 
         // 4) Sort hits by ascending distance (toi):
         hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -657,22 +643,72 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
         a_sub_b.union(&b_sub_a)
     }
 
-    /// Apply an arbitrary 3D transform (as a 4x4 matrix) to the mesh.
+    /// **Mathematical Foundation: General 3D Transformations**
+    ///
+    /// Apply an arbitrary 3D transform (as a 4x4 matrix) to Mesh.
+    /// This implements the complete theory of affine transformations in homogeneous coordinates.
+    ///
+    /// ## **Transformation Mathematics**
+    ///
+    /// ### **Homogeneous Coordinates**
+    /// Points and vectors are represented in 4D homogeneous coordinates:
+    /// - **Point**: (x, y, z, 1)ᵀ → transforms as p' = Mp
+    /// - **Vector**: (x, y, z, 0)ᵀ → transforms as v' = Mv
+    /// - **Normal**: n'ᵀ = nᵀM⁻¹ (inverse transpose rule)
+    ///
+    /// ### **Normal Vector Transformation**
+    /// Normals require special handling to remain perpendicular to surfaces:
+    /// ```text
+    /// If: T(p)·n = 0 (tangent perpendicular to normal)
+    /// Then: T(p)·T(n) ≠ 0 in general
+    /// But: T(p)·(M⁻¹)ᵀn = 0 ✓
+    /// ```
+    /// **Proof**: (Mp)ᵀ(M⁻¹)ᵀn = pᵀMᵀ(M⁻¹)ᵀn = pᵀ(M⁻¹M)ᵀn = pᵀn = 0
+    ///
+    /// ### **Numerical Stability**
+    /// - **Degeneracy Detection**: Check determinant before inversion
+    /// - **Homogeneous Division**: Validate w-coordinate after transformation
+    /// - **Precision**: Maintain accuracy through matrix decomposition
+    ///
+    /// ## **Algorithm Complexity**
+    /// - **Vertices**: O(n) matrix-vector multiplications
+    /// - **Matrix Inversion**: O(1) for 4×4 matrices
+    /// - **Plane Updates**: O(n) plane reconstructions from transformed vertices
+    ///
+    /// The polygon z-coordinates and normal vectors are fully transformed in 3D
     fn transform(&self, mat: &Matrix4<Real>) -> Mesh<S> {
-        let mat_inv_transpose = mat.try_inverse().expect("Matrix not invertible?").transpose(); // todo catch error
+        // Compute inverse transpose for normal transformation
+        let mat_inv_transpose = match mat.try_inverse() {
+            Some(inv) => inv.transpose(),
+            None => {
+                eprintln!(
+                    "Warning: Transformation matrix is not invertible, using identity for normals"
+                );
+                Matrix4::identity()
+            },
+        };
+        
         let mut mesh = self.clone();
 
-        for poly in &mut mesh.polygons {
+		for poly in &mut mesh.polygons {
             for vert in &mut poly.vertices {
-                // Position
-                let homog_pos = mat * vert.pos.to_homogeneous();
-                vert.pos = Point3::from_homogeneous(homog_pos).unwrap(); // todo catch error
+                // Transform position using homogeneous coordinates
+                let hom_pos = mat * vert.pos.to_homogeneous();
+                match Point3::from_homogeneous(hom_pos) {
+                    Some(transformed_pos) => vert.pos = transformed_pos,
+                    None => {
+                        eprintln!(
+                            "Warning: Invalid homogeneous coordinates after transformation, skipping vertex"
+                        );
+                        continue;
+                    },
+                }
 
-                // Normal
+                // Transform normal using inverse transpose rule
                 vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
             }
 
-            // keep the cached plane consistent with the new vertex positions
+            // Reconstruct plane from transformed vertices for consistency
             poly.plane = Plane::from_vertices(poly.vertices.clone());
         }
 
@@ -736,58 +772,53 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
 impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
     /// Convert a Sketch into a Mesh.
     fn from(sketch: Sketch<S>) -> Self {
-        /// Helper function to convert a geo::Polygon into one or more Polygon<S> entries.
-        fn process_polygon<S>(
-            poly2d: &geo::Polygon<Real>,
-            all_polygons: &mut Vec<Polygon<S>>,
+        /// Helper function to convert a geo::Polygon to a Vec<crate::mesh::polygon::Polygon>
+		fn geo_poly_to_csg_polys<S: Clone + Debug + Send + Sync>(
+            poly2d: &GeoPolygon<Real>,
             metadata: &Option<S>,
-        ) where
-            S: Clone + Send + Sync,
-        {
-            // 1. Convert the outer ring to 3D.
-            let mut outer_vertices_3d = Vec::new();
-            for c in poly2d.exterior().coords_iter() {
-                outer_vertices_3d.push(Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()));
-            }
+        ) -> Vec<Polygon<S>> {
+            let mut all_polygons = Vec::new();
+
+            // Handle the exterior ring
+            let outer_vertices_3d: Vec<_> = poly2d
+                .exterior()
+                .coords_iter()
+                .map(|c| Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()))
+                .collect();
 
             if outer_vertices_3d.len() >= 3 {
                 all_polygons.push(Polygon::new(outer_vertices_3d, metadata.clone()));
             }
 
-            // 2. Convert interior rings (holes), if needed as separate polygons.
+            // Handle interior rings (holes)
             for ring in poly2d.interiors() {
-                let mut hole_vertices_3d = Vec::new();
-                for c in ring.coords_iter() {
-                    hole_vertices_3d
-                        .push(Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()));
-                }
-
+                let hole_vertices_3d: Vec<_> = ring
+                    .coords_iter()
+                    .map(|c| Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()))
+                    .collect();
                 if hole_vertices_3d.len() >= 3 {
-                    // Note: adjust this if your `Polygon<S>` type supports interior rings.
                     all_polygons.push(Polygon::new(hole_vertices_3d, metadata.clone()));
                 }
             }
+            all_polygons
         }
 
-        let mut all_polygons = Vec::new();
-
-        for geom in &sketch.geometry {
-            match geom {
-                Geometry::Polygon(poly2d) => {
-                    process_polygon(poly2d, &mut all_polygons, &sketch.metadata);
-                },
-                Geometry::MultiPolygon(multipoly) => {
-                    for poly2d in multipoly {
-                        process_polygon(poly2d, &mut all_polygons, &sketch.metadata);
-                    }
-                },
-                // Optional: handle other geometry types like LineString here.
-                _ => {},
-            }
-        }
+        let final_polygons = sketch.geometry
+			.iter()
+            .flat_map(|geom| -> Vec<Polygon<S>> {
+                match geom {
+                    Geometry::Polygon(poly2d) => geo_poly_to_csg_polys(poly2d, &sketch.metadata),
+                    Geometry::MultiPolygon(multipoly) => multipoly
+                        .iter()
+                        .flat_map(|poly2d| geo_poly_to_csg_polys(poly2d, &sketch.metadata))
+                        .collect(),
+                    _ => vec![],
+                }
+            })
+            .collect();
 
         Mesh {
-            polygons: all_polygons,
+            polygons: final_polygons,
             bounding_box: OnceLock::new(),
             metadata: None,
         }

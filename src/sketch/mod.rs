@@ -35,24 +35,15 @@ pub struct Sketch<S> {
 impl<S: Clone + Send + Sync + Debug> Sketch<S> {
     /// Take the [`geo::Polygon`]'s from the `CSG`'s geometry collection
     pub fn to_multipolygon(&self) -> MultiPolygon<Real> {
-        // allocate vec to fit all polygons
-        let mut polygons = Vec::with_capacity(self.geometry.0.iter().fold(0, |len, geom| {
-            len + match geom {
-                Geometry::Polygon(_) => len + 1,
-                Geometry::MultiPolygon(mp) => len + mp.0.len(),
-                // ignore lines, points, etc.
-                _ => len,
-            }
-        }));
-
-        for geom in &self.geometry.0 {
-            match geom {
-                Geometry::Polygon(poly) => polygons.push(poly.clone()),
-                Geometry::MultiPolygon(mp) => polygons.extend(mp.0.clone()),
-                // ignore lines, points, etc.
-                _ => {},
-            }
-        }
+        let polygons = self
+            .geometry
+            .iter()
+            .flat_map(|geom| match geom {
+                Geometry::Polygon(poly) => vec![poly.clone()],
+                Geometry::MultiPolygon(mp) => mp.0.clone(),
+                _ => vec![],
+            })
+            .collect();
 
         MultiPolygon(polygons)
     }
