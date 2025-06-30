@@ -140,7 +140,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         for poly in &self.polygons {
             // Triangulate the polygon if it has more than 3 vertices
             let triangles = if poly.vertices.len() > 3 {
-                poly.tessellate()
+                poly.triangulate()
             } else {
                 vec![[
                     poly.vertices[0].clone(),

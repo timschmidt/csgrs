@@ -374,7 +374,7 @@ impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for Sketch<S> {
 
         for poly in &mesh.polygons {
             // Tessellate this polygon into triangles
-            let triangles = poly.tessellate();
+            let triangles = poly.triangulate();
             // Each triangle has 3 vertices [v0, v1, v2].
             // Project them onto XY => build a 2D polygon (triangle).
             for tri in triangles {
