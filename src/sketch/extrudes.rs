@@ -120,7 +120,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 					.map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
 					.collect();
 
-				let tris = Mesh::<()>::triangulate_2d(
+				let tris = Sketch::<()>::triangulate_2d(
 					&exterior_coords,
 					&interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>(),
 				);

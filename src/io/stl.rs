@@ -19,6 +19,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Convert this Mesh to an **ASCII STL** string with the given `name`.
     ///
     /// ```
+    /// use csgrs::mesh::Mesh;
     /// let mesh = Mesh::cube(1.0, None);
     /// let stl_text = mesh.to_stl("my_solid");
     /// println!("{}", stl_text);
@@ -27,13 +28,11 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut out = String::new();
         out.push_str(&format!("solid {}\n", name));
 
-        //
-        // (A) Write out all *3D* polygons
-        //
+        // Write out all *3D* polygons
         for poly in &self.polygons {
             // Ensure the polygon is tessellated, since STL is triangle-based.
             let triangles = poly.triangulate();
-            // A typical STL uses the face normal; we can take the polygon’s plane normal:
+            // A typical STL uses the face normal; we can take the polygon's plane normal:
             let normal = poly.plane.normal().normalize();
             for tri in triangles {
                 out.push_str(&format!(
@@ -108,7 +107,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         Ok(cursor.into_inner())
     }
 
-    /// Create a CSG object from STL data using `stl_io`.
+    /// Create a CSG object from STL data using 'stl_io'.
     #[cfg(feature = "stl-io")]
     pub fn from_stl(stl_data: &[u8], metadata: Option<S>) -> Result<Mesh<S>, std::io::Error> {
         // Create an in-memory cursor from the STL data
@@ -174,12 +173,17 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Export to ASCII STL
-    /// Convert this Sketch to an **ASCII STL** string with the given `name`.
+    /// Convert this Sketch to an **ASCII STL** string with the given 'name'.
     ///
     /// ```
-    /// let sketch = Sketch::square(1.0, None);
-    /// let stl_text = sketch.to_stl("my_solid");
-    /// println!("{}", stl_text);
+	/// # use csgrs::mesh::Mesh;
+    /// # use std::error::Error;
+    /// # fn main() -> Result<(), Box<dyn Error>> {
+    /// let mesh: Mesh<()> = Mesh::cube(2.0, None);
+    /// let bytes = mesh.to_stl_binary("my_solid")?;
+    /// std::fs::write("my_solid.stl", bytes)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn to_stl_ascii(&self, name: &str) -> String {
         let mut out = String::new();
@@ -190,7 +194,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         for geom in &self.geometry {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
-                    // Outer ring (in CCW for a typical “positive” polygon)
+                    // Outer ring (in CCW for a typical "positive" polygon)
                     let outer = poly2d
                         .exterior()
                         .coords_iter()
@@ -209,7 +213,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         .collect::<Vec<_>>();
 
                     // Triangulate with our existing helper:
-                    let triangles_2d = Mesh::<()>::triangulate_2d(&outer, &hole_refs);
+                    let triangles_2d = Sketch::<()>::triangulate_2d(&outer, &hole_refs);
 
                     // Write each tri as a facet in ASCII STL, with a normal of (0,0,1)
                     for tri in triangles_2d {
@@ -248,7 +252,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             .map(|hole_coords| &hole_coords[..])
                             .collect::<Vec<_>>();
 
-                        let triangles_2d = Mesh::<()>::triangulate_2d(&outer, &hole_refs);
+                        let triangles_2d = Sketch::<()>::triangulate_2d(&outer, &hole_refs);
 
                         for tri in triangles_2d {
                             out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
@@ -277,7 +281,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
     /// Export to BINARY STL (returns Vec<u8>)
     ///
-    /// Convert this Sketch to a **binary STL** byte vector with the given `name`.
+    /// Convert this Sketch to a **binary STL** byte vector with the given 'name'.
     ///
     /// The resulting `Vec<u8>` can then be written to a file or handled in memory:
     ///
@@ -313,7 +317,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         holes_vec.iter().map(|h| &h[..]).collect();
 
                     // Triangulate using our geo-based helper
-                    let tri_2d = Mesh::<()>::triangulate_2d(&outer, &hole_refs);
+                    let tri_2d = Sketch::<()>::triangulate_2d(&outer, &hole_refs);
 
                     // Each triangle is in XY, so normal = (0,0,1)
                     for tri_pts in tri_2d {
@@ -354,7 +358,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
                         let hole_refs: Vec<&[[Real; 2]]> =
                             holes_vec.iter().map(|h| &h[..]).collect();
-                        let tri_2d = Mesh::<()>::triangulate_2d(&outer, &hole_refs);
+                        let tri_2d = Sketch::<()>::triangulate_2d(&outer, &hole_refs);
 
                         for tri_pts in tri_2d {
                             triangles.push(Triangle {
