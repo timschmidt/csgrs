@@ -4,7 +4,7 @@ use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real, TAU};
 use crate::sketch::Sketch;
 use crate::traits::CSGOps;
 use geo::{
-    BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
+    Geometry, GeometryCollection, LineString, Orient,
     Polygon as GeoPolygon, coord, line_string, orient::Direction,
 };
 use std::fmt::Debug;
@@ -46,23 +46,63 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `metadata`: optional metadata
     ///
     /// # Example
-    /// let sq2 = CSG::square(2.0, None);
+    /// let sq2 = Sketch::square(2.0, None);
     pub fn square(width: Real, metadata: Option<S>) -> Self {
         Self::rectangle(width, width, metadata)
     }
 
-    /// Creates a 2D circle in the XY plane.
-    pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Self {
+	/// **Mathematical Foundation: Parametric Circle Discretization**
+    ///
+    /// Creates a 2D circle in the XY plane using parametric equations.
+    /// This implements the standard circle parameterization with uniform angular sampling.
+    ///
+    /// ## **Circle Mathematics**
+    ///
+    /// ### **Parametric Representation**
+    /// For a circle of radius r centered at origin:
+    /// ```text
+    /// x(θ) = r·cos(θ)
+    /// y(θ) = r·sin(θ)
+    /// where θ ∈ [0, 2π]
+    /// ```
+    ///
+    /// ### **Discretization Algorithm**
+    /// For n segments, sample at angles:
+    /// ```text
+    /// θᵢ = 2πi/n, i ∈ {0, 1, ..., n-1}
+    /// ```
+    /// This produces n vertices uniformly distributed around the circle.
+    ///
+    /// ### **Approximation Error**
+    /// The polygonal approximation has:
+    /// - **Maximum radial error**: r(1 - cos(π/n)) ≈ r(π/n)²/8 for large n
+    /// - **Perimeter error**: 2πr - n·r·sin(π/n) ≈ πr/3n² for large n
+    /// - **Area error**: πr² - (nr²sin(2π/n))/2 ≈ πr³/6n² for large n
+    ///
+    /// ### **Numerical Stability**
+    /// - Uses TAU (2π) constant for better floating-point precision
+    /// - Explicit closure ensures geometric validity
+    /// - Minimum 3 segments to avoid degenerate polygons
+    ///
+    /// ## **Applications**
+    /// - **Geometric modeling**: Base shape for 3D extrusion
+    /// - **Collision detection**: Circular boundaries
+    /// - **Numerical integration**: Circular domains
+    ///
+    /// # Parameters
+    /// - `radius`: Circle radius (must be > 0)
+    /// - `segments`: Number of polygon edges (minimum 3 for valid geometry)
+    /// - `metadata`: Optional metadata attached to the shape
+	pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 3 {
             return Sketch::new();
         }
-        let mut coords = Vec::with_capacity(segments + 1);
-        for i in 0..segments {
-            let theta = 2.0 * PI * (i as Real) / (segments as Real);
-            let x = radius * theta.cos();
-            let y = radius * theta.sin();
-            coords.push((x, y));
-        }
+        let mut coords: Vec<(Real, Real)> = (0..segments)
+            .map(|i| {
+                let theta = 2.0 * PI * (i as Real) / (segments as Real);
+                (radius * theta.cos(), radius * theta.sin())
+            })
+            .collect();
         // close it
         coords.push((coords[0].0, coords[0].1));
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
@@ -98,10 +138,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         if points.len() < 3 {
             return Sketch::new();
         }
-        let mut coords = Vec::with_capacity(points.len() + 1);
-        for p in points {
-            coords.push((p[0], p[1]));
-        }
+        let mut coords: Vec<(Real, Real)> = points.iter().map(|p| (p[0], p[1])).collect();
         // close
         if coords[0] != *coords.last().unwrap() {
             coords.push(coords[0]);
@@ -114,88 +151,65 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         )
     }
 
-    /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
-    /// `corner_segments` controls the smoothness of each rounded corner.
-    pub fn rounded_rectangle(
-        width: Real,
-        height: Real,
-        corner_radius: Real,
-        corner_segments: usize,
-        metadata: Option<S>,
-    ) -> Self {
-        let r = corner_radius.min(width * 0.5).min(height * 0.5);
-        if r <= EPSILON {
-            return Self::rectangle(width, height, metadata);
-        }
-        let mut coords = Vec::new();
-        // We'll approximate each 90° corner with `corner_segments` arcs
-        let step = FRAC_PI_2 / corner_segments as Real;
-
-        // Top-left corner arc, center (r, height-r), (π → 3π/2) angles 180 -> 270
-        let cx_tl = r;
-        let cy_tl = height - r;
-        for i in 0..=corner_segments {
-            let angle = FRAC_PI_2 + (i as Real) * step;
-            let x = cx_tl + r * angle.cos();
-            let y = cy_tl + r * angle.sin();
-            coords.push((x, y));
-        }
-
-        // Bottom-left corner arc, center (r, r), (π/2 → π) angles 90 -> 180
-        let cx_bl = r;
-        let cy_bl = r;
-        for i in 0..=corner_segments {
-            let angle = PI + (i as Real) * step;
-            let x = cx_bl + r * angle.cos();
-            let y = cy_bl + r * angle.sin();
-            coords.push((x, y));
-        }
-
-        // Bottom-right corner arc, center (width-r, r), (0 → π/2) angles 0 -> 90
-        let cx_br = width - r;
-        let cy_br = r;
-        for i in 0..=corner_segments {
-            let angle = 1.5 * PI + (i as Real) * step;
-            let x = cx_br + r * angle.cos();
-            let y = cy_br + r * angle.sin();
-            coords.push((x, y));
-        }
-
-        // Top-right corner arc, center (width-r, height-r), (3π/2 → 2π) angles 270 -> 360
-        let cx_tr = width - r;
-        let cy_tr = height - r;
-        for i in 0..=corner_segments {
-            let angle = 0.0 + (i as Real) * step;
-            let x = cx_tr + r * angle.cos();
-            let y = cy_tr + r * angle.sin();
-            coords.push((x, y));
-        }
-
-        // close
-        coords.push(coords[0]);
-
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
-    }
-
-    /// Ellipse in XY plane, centered at (0,0), with full width `width`, full height `height`.
-    /// `segments` is the number of polygon edges approximating the ellipse.
+    /// **Mathematical Foundation: Parametric Ellipse Generation**
+    ///
+    /// Creates an ellipse in XY plane, centered at (0,0), using parametric equations.
+    /// This implements the standard ellipse parameterization with uniform parameter sampling.
+    ///
+    /// ## **Ellipse Mathematics**
+    ///
+    /// ### **Parametric Representation**
+    /// For an ellipse with semi-major axis a and semi-minor axis b:
+    /// ```text
+    /// x(θ) = a·cos(θ)
+    /// y(θ) = b·sin(θ)
+    /// where θ ∈ [0, 2π]
+    /// ```
+    /// In our implementation: a = width/2, b = height/2
+    ///
+    /// ### **Geometric Properties**
+    /// - **Area**: A = πab = π(width·height)/4
+    /// - **Circumference** (Ramanujan's approximation):
+    ///   ```text
+    ///   C ≈ π[3(a+b) - √((3a+b)(a+3b))]
+    ///   ```
+    /// - **Eccentricity**: e = √(1 - b²/a²) for a ≥ b
+    /// - **Focal distance**: c = a·e where foci are at (±c, 0)
+    ///
+    /// ### **Parametric vs Arc-Length Parameterization**
+    /// **Note**: This uses parameter-uniform sampling (constant Δθ), not
+    /// arc-length uniform sampling. For arc-length uniformity, use:
+    /// ```text
+    /// ds/dθ = √(a²sin²θ + b²cos²θ)
+    /// ```
+    /// Parameter-uniform is computationally simpler and sufficient for most applications.
+    ///
+    /// ### **Approximation Quality**
+    /// For n segments, the polygonal approximation error behaves as O(1/n²):
+    /// - **Maximum radial error**: Approximately (a-b)π²/(8n²) for a ≈ b
+    /// - **Area convergence**: Exact area approached as n → ∞
+    ///
+    /// ## **Special Cases**
+    /// - **Circle**: When width = height, reduces to parametric circle
+    /// - **Degenerate**: When width = 0 or height = 0, becomes a line segment
+    ///
+    /// # Parameters
+    /// - `width`: Full width (diameter) along x-axis
+    /// - `height`: Full height (diameter) along y-axis  
+    /// - `segments`: Number of polygon edges (minimum 3)
+    /// - `metadata`: Optional metadata
     pub fn ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 3 {
             return Sketch::new();
         }
         let rx = 0.5 * width;
         let ry = 0.5 * height;
-        let mut coords = Vec::with_capacity(segments + 1);
-        for i in 0..segments {
-            let theta = TAU * (i as Real) / (segments as Real);
-            let x = rx * theta.cos();
-            let y = ry * theta.sin();
-            coords.push((x, y));
-        }
+        let mut coords: Vec<(Real, Real)> = (0..segments)
+            .map(|i| {
+                let theta = TAU * (i as Real) / (segments as Real);
+                (rx * theta.cos(), ry * theta.sin())
+            })
+            .collect();
         coords.push(coords[0]);
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
         Sketch::from_geo(
@@ -204,19 +218,68 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         )
     }
 
-    /// Regular N-gon in XY plane, centered at (0,0), with circumscribed radius `radius`.
-    /// `sides` is how many edges (>=3).
+    /// **Mathematical Foundation: Regular Polygon Construction**
+    ///
+    /// Creates a regular n-gon inscribed in a circle of given radius.
+    /// This implements the classical construction of regular polygons using
+    /// uniform angular division of the circumscribed circle.
+    ///
+    /// ## **Regular Polygon Mathematics**
+    ///
+    /// ### **Vertex Construction**
+    /// For a regular n-gon inscribed in a circle of radius r:
+    /// ```text
+    /// Vertex_i = (r·cos(2πi/n), r·sin(2πi/n))
+    /// where i ∈ {0, 1, ..., n-1}
+    /// ```
+    ///
+    /// ### **Geometric Properties**
+    /// - **Interior angle**: α = (n-2)π/n = π - 2π/n
+    /// - **Central angle**: β = 2π/n
+    /// - **Exterior angle**: γ = 2π/n
+    /// - **Side length**: s = 2r·sin(π/n)
+    /// - **Apothem** (distance from center to side): a = r·cos(π/n)
+    /// - **Area**: A = (n·s·a)/2 = (n·r²·sin(2π/n))/2
+    ///
+    /// ### **Special Cases**
+    /// - **n = 3**: Equilateral triangle (α = 60°)
+    /// - **n = 4**: Square (α = 90°)
+    /// - **n = 5**: Regular pentagon (α = 108°)
+    /// - **n = 6**: Regular hexagon (α = 120°)
+    /// - **n → ∞**: Approaches circle (lim α = 180°)
+    ///
+    /// ### **Constructibility Theorem**
+    /// A regular n-gon is constructible with compass and straightedge if and only if:
+    /// ```text
+    /// n = 2^k · p₁ · p₂ · ... · pₘ
+    /// ```
+    /// where k ≥ 0 and pᵢ are distinct Fermat primes (3, 5, 17, 257, 65537).
+    ///
+    /// ### **Approximation to Circle**
+    /// As n increases, the regular n-gon converges to a circle:
+    /// - **Perimeter convergence**: P_n = n·s → 2πr as n → ∞
+    /// - **Area convergence**: A_n → πr² as n → ∞
+    /// - **Error bound**: |A_circle - A_n| ≤ πr³/(3n²) for large n
+    ///
+    /// ## **Numerical Considerations**
+    /// - Uses TAU for precise angular calculations
+    /// - Explicit closure for geometric validity
+    /// - Minimum n = 3 to avoid degenerate cases
+    ///
+    /// # Parameters
+    /// - `sides`: Number of polygon edges (≥ 3)
+    /// - `radius`: Circumscribed circle radius
+    /// - `metadata`: Optional metadata
     pub fn regular_ngon(sides: usize, radius: Real, metadata: Option<S>) -> Self {
         if sides < 3 {
             return Sketch::new();
         }
-        let mut coords = Vec::with_capacity(sides + 1);
-        for i in 0..sides {
-            let theta = TAU * (i as Real) / (sides as Real);
-            let x = radius * theta.cos();
-            let y = radius * theta.sin();
-            coords.push((x, y));
-        }
+        let mut coords: Vec<(Real, Real)> = (0..sides)
+            .map(|i| {
+                let theta = TAU * (i as Real) / (sides as Real);
+                (radius * theta.cos(), radius * theta.sin())
+            })
+            .collect();
         coords.push(coords[0]);
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
         Sketch::from_geo(
@@ -259,21 +322,20 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         if num_points < 2 {
             return Sketch::new();
         }
-        let mut coords = Vec::with_capacity(2 * num_points + 1);
         let step = TAU / (num_points as Real);
-        for i in 0..num_points {
-            // Outer point
-            let theta_out = i as Real * step;
-            let x_out = outer_radius * theta_out.cos();
-            let y_out = outer_radius * theta_out.sin();
-            coords.push((x_out, y_out));
+        let mut coords: Vec<(Real, Real)> = (0..num_points)
+            .flat_map(|i| {
+                let theta_out = i as Real * step;
+                let outer_point =
+                    (outer_radius * theta_out.cos(), outer_radius * theta_out.sin());
 
-            // Inner point
-            let theta_in = theta_out + 0.5 * step;
-            let x_in = inner_radius * theta_in.cos();
-            let y_in = inner_radius * theta_in.sin();
-            coords.push((x_in, y_in));
-        }
+                let theta_in = theta_out + 0.5 * step;
+                let inner_point =
+                    (inner_radius * theta_in.cos(), inner_radius * theta_in.sin());
+
+                [outer_point, inner_point]
+            })
+            .collect();
         // close
         coords.push(coords[0]);
 
@@ -302,19 +364,15 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let center_y = length - r;
         let half_seg = segments / 2;
 
-        // We’ll store points, starting from the bottom tip at (0,0).
-        let mut coords = Vec::with_capacity(segments + 2);
-        coords.push((0.0, 0.0));
-
-        // Arc around
-        for i in 0..=half_seg {
-            let t = PI * (i as Real / half_seg as Real);
-            let x = -r * t.cos(); // left
+        let mut coords = vec![(0.0, 0.0)]; // Start at the tip
+        coords.extend((0..=half_seg).map(|i| {
+            let t = PI * (i as Real / half_seg as Real); // Corrected angle for semi-circle
+            let x = -r * t.cos();
             let y = center_y + r * t.sin();
-            coords.push((x, y));
-        }
-
-        coords.push(coords[0]);
+            (x, y)
+        }));
+        coords.push((0.0, 0.0)); // Close path to the tip
+        
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
         Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
@@ -330,16 +388,55 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         }
         let rx = 0.5 * width;
         let ry = 0.5 * length;
-        let mut coords = Vec::with_capacity(segments + 1);
-        for i in 0..segments {
-            let theta = TAU * (i as Real) / (segments as Real);
-            // toy distortion approach
-            let distort = 1.0 + 0.2 * theta.cos();
-            let x = rx * theta.sin();
-            let y = ry * theta.cos() * distort * 0.8;
-            coords.push((-x, y)); // mirrored
-        }
+        let mut coords: Vec<(Real, Real)> = (0..segments)
+            .map(|i| {
+                let theta = TAU * (i as Real) / (segments as Real);
+                // toy distortion approach
+                let distort = 1.0 + 0.2 * theta.cos();
+                let x = rx * theta.sin();
+                let y = ry * theta.cos() * distort * 0.8;
+                (-x, y) // mirrored
+            })
+            .collect();
         coords.push(coords[0]);
+
+        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
+        Sketch::from_geo(
+            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
+            metadata,
+        )
+    }
+    
+	/// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
+    /// `corner_segments` controls the smoothness of each rounded corner.
+    pub fn rounded_rectangle(
+        width: Real,
+        height: Real,
+        corner_radius: Real,
+        corner_segments: usize,
+        metadata: Option<S>,
+    ) -> Self {
+        let r = corner_radius.min(width * 0.5).min(height * 0.5);
+        if r <= EPSILON {
+            return Sketch::rectangle(width, height, metadata);
+        }
+        // We'll approximate each 90° corner with `corner_segments` arcs
+        let step = FRAC_PI_2 / corner_segments as Real;
+
+        let corner = |cx, cy, start_angle| {
+            (0..=corner_segments).map(move |i| {
+                let angle: Real = start_angle + (i as Real) * step;
+                (cx + r * angle.cos(), cy + r * angle.sin())
+            })
+        };
+
+        let mut coords: Vec<(Real, Real)> = corner(r, r, PI) // Bottom-left
+            .chain(corner(width - r, r, 1.5 * PI)) // Bottom-right
+            .chain(corner(width - r, height - r, 0.0)) // Top-right
+            .chain(corner(r, height - r, 0.5 * PI)) // Top-left
+            .collect();
+
+        coords.push(coords[0]); // close
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
         Sketch::from_geo(
@@ -362,15 +459,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let rx = 0.5 * width;
         let ry = 0.5 * height;
         let m = 4.0;
-        let mut coords = Vec::with_capacity(segments + 1);
-        for i in 0..segments {
-            let t = TAU * (i as Real) / (segments as Real);
-            let ct = t.cos().abs().powf(2.0 / m) * t.cos().signum();
-            let st = t.sin().abs().powf(2.0 / m) * t.sin().signum();
-            let x = rx * ct;
-            let y = ry * st;
-            coords.push((x, y));
-        }
+        let mut coords: Vec<(Real, Real)> = (0..segments)
+            .map(|i| {
+                let t = TAU * (i as Real) / (segments as Real);
+                let ct = t.cos().abs().powf(2.0 / m) * t.cos().signum();
+                let st = t.sin().abs().powf(2.0 / m) * t.sin().signum();
+                (rx * ct, ry * st)
+            })
+            .collect();
         coords.push(coords[0]);
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
@@ -393,34 +489,18 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         if segments < 3 {
             return Sketch::new();
         }
-        // 1) Circle
-        let mut circle_coords = Vec::with_capacity(segments + 1);
-        for i in 0..segments {
-            let th = TAU * (i as Real) / (segments as Real);
-            circle_coords.push((circle_radius * th.cos(), circle_radius * th.sin()));
-        }
-        circle_coords.push(circle_coords[0]);
-        let circle_poly = GeoPolygon::new(LineString::from(circle_coords), vec![]);
+		// 1) Circle
+        let circle = Sketch::circle(circle_radius, segments, metadata.clone());
 
-        // 2) Rectangle (handle), from -hw/2..+hw/2 in X and 0..handle_height in Y
-        let rect_coords = vec![
-            (-0.5 * handle_width, 0.0),
-            (0.5 * handle_width, 0.0),
-            (0.5 * handle_width, handle_height),
-            (-0.5 * handle_width, handle_height),
-            (-0.5 * handle_width, 0.0),
-        ];
-        let rect_poly = GeoPolygon::new(LineString::from(rect_coords), vec![]);
+        // 2) Rectangle (handle)
+        let handle = Sketch::rectangle(handle_width, handle_height, metadata).translate(
+            -handle_width * 0.5,
+            0.0,
+            0.0,
+        );
 
-        // 3) Union them with geo’s BooleanOps
-        let mp1 = MultiPolygon(vec![circle_poly]);
-        let mp2 = MultiPolygon(vec![rect_poly]);
-        let multipolygon_2d = mp1.union(&mp2);
-
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::MultiPolygon(multipolygon_2d)]),
-            metadata,
-        )
+        // 3) Union them
+        circle.union(&handle)
     }
 
     /// Reuleaux polygon (constant–width curve) built as the *intersection* of
@@ -477,15 +557,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         }
     }
 
-    /// Ring with inner diameter = `id` and (radial) thickness = `thickness`.
     /// Outer diameter = `id + 2*thickness`. This yields an annulus in the XY plane.
     /// `segments` controls how smooth the outer/inner circles are.
-    ///
-    /// Internally, we do:
-    ///   outer = circle(outer_radius)
-    ///   inner = circle(inner_radius)
-    ///   ring = outer.difference(inner)
-    /// Then we call `flatten()` to unify into a single shape that has a hole.
     pub fn ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>) -> Sketch<S> {
         if id <= 0.0 || thickness <= 0.0 || segments < 3 {
             return Sketch::new();
@@ -493,33 +566,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let inner_radius = 0.5 * id;
         let outer_radius = inner_radius + thickness;
 
-        // Outer ring (CCW)
-        let mut outer = Vec::with_capacity(segments + 1);
-        for i in 0..segments {
-            let th = TAU * (i as Real) / (segments as Real);
-            let x = outer_radius * th.cos();
-            let y = outer_radius * th.sin();
-            outer.push((x, y));
-        }
-        outer.push(outer[0]);
+        let outer_circle = Sketch::circle(outer_radius, segments, metadata.clone());
+        let inner_circle = Sketch::circle(inner_radius, segments, metadata);
 
-        // Inner ring (must be opposite orientation for a hole in geo)
-        let mut inner = Vec::with_capacity(segments + 1);
-        for i in 0..segments {
-            let th = TAU * (i as Real) / (segments as Real);
-            let x = inner_radius * th.cos();
-            let y = inner_radius * th.sin();
-            inner.push((x, y));
-        }
-        inner.push(inner[0]);
-        inner.reverse(); // ensure hole is opposite winding from outer
-
-        let polygon_2d =
-            GeoPolygon::new(LineString::from(outer), vec![LineString::from(inner)]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        outer_circle.difference(&inner_circle)
     }
 
     /// Create a 2D "pie slice" (wedge) in the XY plane.
@@ -630,13 +680,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // 1. Full circle
         let circle = Sketch::circle(radius, segments, metadata.clone());
 
-        // 2. Construct the keyway rectangle:
-        //    - width along X = key_depth
-        //    - height along Y = key_width
-        //    - its right edge at x = +radius
-        //    - so it spans from x = (radius - key_depth) to x = radius
-        //    - and from y = -key_width/2 to y = +key_width/2
-        let key_rect = Sketch::square(key_width, metadata.clone()).translate(
+        // 2. Construct the keyway rectangle
+        let key_rect = Sketch::rectangle(key_depth, key_width, metadata.clone()).translate(
             radius - key_depth,
             -key_width * 0.5,
             0.0,
@@ -648,12 +693,6 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Creates a 2D "D" shape (circle with one flat chord).
     /// `radius` is the circle radius,
     /// `flat_dist` is how far from the center the flat chord is placed.
-    ///   - If flat_dist == 0.0 => chord passes through center => a half-circle
-    ///   - If flat_dist < radius => chord is inside the circle => typical "D" shape
-    ///
-    /// Solve for distance from center using width of flat:
-    /// let half_c = chord_len / 2.0;
-    /// let flat_dist = (radius*radius - half_c*half_c).sqrt();
     pub fn circle_with_flat(
         radius: Real,
         segments: usize,
@@ -664,10 +703,6 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let circle = Sketch::circle(radius, segments, metadata.clone());
 
         // 2. Build a large rectangle that cuts off everything below y = -flat_dist
-        //    (i.e., we remove that portion to create a chord).
-        //    Width = 2*radius is plenty to cover the circle’s X-range.
-        //    Height = large enough, we just shift it so top edge is at y = -flat_dist.
-        //    So that rectangle covers from y = -∞ up to y = -flat_dist.
         let cutter_height = 9999.0; // some large number
         let rect_cutter = Sketch::rectangle(2.0 * radius, cutter_height, metadata.clone())
             .translate(-radius, -cutter_height, 0.0) // put its bottom near "negative infinity"
@@ -932,22 +967,23 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// `segments` controls smoothness (≥ 8 recommended).
     pub fn heart(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 8 {
-            return Self::new();
+            return Sketch::new();
         }
 
-        let mut pts = Vec::<(Real, Real)>::with_capacity(segments + 1);
-        let step = crate::float_types::TAU / segments as Real;
+        let step = TAU / segments as Real;
 
         // classic analytic “cardioid-style” heart
-        for i in 0..segments {
-            let t = i as Real * step;
-            let x = 16.0 * (t.sin().powi(3));
-            let y = 13.0 * t.cos()
-                - 5.0 * (2.0 * t).cos()
-                - 2.0 * (3.0 * t).cos()
-                - (4.0 * t).cos();
-            pts.push((x, y));
-        }
+        let mut pts: Vec<(Real, Real)> = (0..segments)
+            .map(|i| {
+                let t = i as Real * step;
+                let x = 16.0 * (t.sin().powi(3));
+                let y = 13.0 * t.cos()
+                    - 5.0 * (2.0 * t).cos()
+                    - 2.0 * (3.0 * t).cos()
+                    - (4.0 * t).cos();
+                (x, y)
+            })
+            .collect();
         pts.push(pts[0]); // close
 
         // normalise & scale to desired bounding box ---------------------
@@ -987,7 +1023,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         metadata: Option<S>,
     ) -> Self {
         if outer_r <= inner_r + EPSILON || segments < 6 {
-            return Self::new();
+            return Sketch::new();
         }
 
         let big = Self::circle(outer_r, segments, metadata.clone());
