@@ -199,7 +199,7 @@ fn main() {
     ];
     let poly = Mesh::polyhedron(&points, &faces, None);
     #[cfg(feature = "stl-io")]
-    let _ = fs::write("stl/tetrahedron.stl", poly.to_stl_ascii("tetrahedron"));
+    let _ = fs::write("stl/tetrahedron.stl", poly.unwrap().to_stl_ascii("tetrahedron"));
 
     // 13) Text example (2D). Provide a valid TTF font data below:
     // (Replace "asar.ttf" with a real .ttf file in your project.)

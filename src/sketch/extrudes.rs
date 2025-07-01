@@ -263,7 +263,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ) -> Result<Mesh<S>, ValidationError> {
         let n = bottom.vertices.len();
         if n != top.vertices.len() {
-            return Err(ValidationError::MismatchedVertices);
+            return Err(ValidationError::MismatchedVertices(n, top.vertices.len()));
         }
 
         // Conditionally flip the bottom polygon if requested.
@@ -553,7 +553,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Returns Mesh with revolution surfaces only
     pub fn revolve(&self, angle_degs: Real, segments: usize) -> Result<Mesh<S>, ValidationError> {
         if segments < 2 {
-            return Err(ValidationError::InvalidArguments);
+            return Err(ValidationError::FieldLessThen { name: "segments", min: 2 });
         }
 
         let angle_radians = angle_degs.to_radians();

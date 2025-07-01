@@ -1,5 +1,6 @@
 //! 3D Shapes as `Mesh`s
 
+use crate::errors::ValidationError;
 use crate::float_types::{EPSILON, PI, Real, TAU};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
@@ -484,7 +485,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             for &idx in face {
                 // Ensure the index is valid
                 if idx >= points.len() {
-                    return Err(ValidationError::IndexOutOfRange);
+                    return Err(ValidationError::IndexOutOfRange { index: idx, len: points.len() });
                 }
                 let [x, y, z] = points[idx];
                 face_vertices.push(Vertex::new(
@@ -729,7 +730,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             .iter()
             .map(|&[x, y, z]| [x * radius, y * radius, z * radius])
             .collect();
-        Self::polyhedron(&scaled, &faces, metadata)
+        Self::polyhedron(&scaled, &faces, metadata).unwrap()
     }
 
     /// Regular icosahedron scaled by `radius`
@@ -785,7 +786,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         let faces_vec: Vec<Vec<usize>> = faces.iter().map(|f| f.to_vec()).collect();
 
-        Self::polyhedron(&pts, &faces_vec, metadata).scale(factor, factor, factor)
+        Self::polyhedron(&pts, &faces_vec, metadata).unwrap().scale(factor, factor, factor)
     }
 
     /// Torus centred at the origin in the *XY* plane.

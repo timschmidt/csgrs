@@ -88,6 +88,16 @@ pub const BACK: i8 = 2;
 /// on both the front **and** the back.
 pub const SPANNING: i8 = 3;
 
+#[derive(Clone, Debug, thiserror::Error, PartialEq)]
+pub enum PlaneError {
+    #[error("Degenerate polygon: vertices do not define a plane")]
+    /// If input vertices do not define a plane
+    DegenerateFromPoints,
+    /// If the normal of a plane is to smaller then an epsilon
+    #[error("DegenerateNormal: the normal of the plane, {}, is to small", .0)]
+    DegenerateNormal(Vector3<Real>),
+}
+
 /// A plane in 3D space defined by three points
 #[derive(Debug, Clone)]
 pub struct Plane {
