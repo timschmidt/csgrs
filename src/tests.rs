@@ -714,8 +714,8 @@ fn test_csg_polyhedron() {
         [0.0, 1.0, 0.0], // 2
         [0.0, 0.0, 1.0], // 3
     ];
-    let faces = vec![vec![0, 1, 2], vec![0, 1, 3], vec![1, 2, 3], vec![2, 0, 3]];
-    let csg_tetra: Mesh<()> = Mesh::polyhedron(pts, &faces, None);
+    let faces: [&[usize]; 4] = [&[0, 1, 2], &[0, 1, 3], &[1, 2, 3], &[2, 0, 3]];
+    let csg_tetra: Mesh<()> = Mesh::polyhedron(pts, &faces, None).unwrap();
     // We should have exactly 4 triangular faces
     assert_eq!(csg_tetra.polygons.len(), 4);
 }
