@@ -5,6 +5,7 @@ use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point3, Vector3};
+use core::num::NonZeroU32;
 use std::sync::OnceLock;
 
 /// A polygon, defined by a list of vertices.
@@ -218,18 +219,20 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         }
     }
 
-    /// **Mathematical Foundation: Triangle Subdivision for Mesh Refinement**
-    ///
     /// Subdivide this polygon into smaller triangles using recursive triangle splitting.
-    /// This implements the mathematical theory of uniform mesh refinement:
+    /// This implements the mathematical theory of uniform mesh refinement
+    /// 
+    /// ## Returns
+    /// Returns a list of refined triangles (each is a [Vertex; 3]).
+    /// For polygon applications, these can be converted back to triangular polygons.
     ///
-    /// ## **Subdivision Algorithm**
+    /// ## Subdivision Algorithm
     ///
-    /// ### **Base Triangulation**
+    /// ### Base Triangulation
     /// 1. **Initial Tessellation**: Convert polygon to base triangles using tessellate()
     /// 2. **Triangle Count**: n base triangles from polygon
     ///
-    /// ### **Recursive Subdivision**
+    /// ### Recursive Subdivision
     /// For each subdivision level, each triangle T is split into 4 smaller triangles:
     /// ```text
     /// Original Triangle:     Subdivided Triangle:
@@ -243,35 +246,26 @@ impl<S: Clone + Send + Sync> Polygon<S> {
     ///                         B     M₃     C
     /// ```
     ///
-    /// ### **Midpoint Calculation**
+    /// ### Midpoint Calculation
     /// For triangle vertices (A, B, C):
     /// - **M₁ = midpoint(A,B)**: Linear interpolation at t=0.5
     /// - **M₂ = midpoint(A,C)**: Linear interpolation at t=0.5  
     /// - **M₃ = midpoint(B,C)**: Linear interpolation at t=0.5
     ///
-    /// ### **Subdivision Pattern**
+    /// ### Subdivision Pattern
     /// Creates 4 congruent triangles:
     /// 1. **Corner triangles**: (A,M₁,M₂), (M₁,B,M₃), (M₂,M₃,C)
     /// 2. **Center triangle**: (M₁,M₂,M₃)
     ///
-    /// ## **Mathematical Properties**
+    /// ## Mathematical Properties
     /// - **Area Preservation**: Total area remains constant
     /// - **Similarity**: All subtriangles are similar to original
     /// - **Scaling Factor**: Each subtriangle has 1/4 the area
     /// - **Growth Rate**: Triangle count × 4ᵏ after k subdivisions
     /// - **Smoothness**: C¹ continuity maintained across edges
-    ///
-    /// ## **Applications**
-    /// - **Level of Detail**: Adaptive mesh resolution
-    /// - **Smooth Surfaces**: Approximating curved surfaces with flat triangles
-    /// - **Numerical Methods**: Finite element mesh refinement
-    /// - **Rendering**: Progressive mesh detail for distance-based LOD
-    ///
-    /// Returns a list of refined triangles (each is a [Vertex; 3]).
-    /// For polygon applications, these can be converted back to triangular polygons.
     pub fn subdivide_triangles(
         &self,
-        subdivisions: core::num::NonZeroU32,
+        subdivisions: NonZeroU32,
     ) -> Vec<[Vertex; 3]> {
         // 1) Triangulate the polygon as it is.
         let base_tris = self.triangulate();
@@ -282,16 +276,19 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             // We'll keep a queue of triangles to process
             let mut queue = vec![tri];
             for _ in 0..subdivisions.get() {
-                let mut next_level = Vec::new();
+                let mut next_level = Vec::with_capacity(queue.len() * 4);
                 for t in queue {
                     let subs = subdivide_triangle(t);
-                    next_level.extend(subs);
+
+                    // add to vec without copy
+                    for sub in subs.into_iter() {
+                        next_level.push(sub);
+                    }
                 }
                 queue = next_level;
             }
             result.extend(queue);
         }
-
         result // todo: return polygons
     }
     
@@ -299,7 +296,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
     /// Each triangle becomes a triangular polygon with the same metadata
     pub fn subdivide_to_polygons(
         &self,
-        subdivisions: core::num::NonZeroU32,
+        subdivisions: NonZeroU32,
     ) -> Vec<Polygon<S>> {
         self.subdivide_triangles(subdivisions)
             .into_iter()
@@ -394,12 +391,12 @@ pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real
 }
 
 // Helper function to subdivide a triangle
-pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
+pub fn subdivide_triangle(tri: [Vertex; 3]) -> [[Vertex; 3]; 4] {
     let v01 = tri[0].interpolate(&tri[1], 0.5);
     let v12 = tri[1].interpolate(&tri[2], 0.5);
     let v20 = tri[2].interpolate(&tri[0], 0.5);
 
-    vec![
+    [
         [tri[0].clone(), v01.clone(), v20.clone()],
         [v01.clone(), tri[1].clone(), v12.clone()],
         [v20.clone(), v12.clone(), tri[2].clone()],
