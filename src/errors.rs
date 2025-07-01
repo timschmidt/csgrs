@@ -13,6 +13,7 @@ pub enum PointError {
 
 /// All the possible validation issues we might encounter, with genaric errors and wrappers for suberrors
 #[derive(Clone, Debug, thiserror::Error, PartialEq)]
+#[non_exhaustive]
 pub enum ValidationError {
     /// A [`PlaneError`](crate::plane::PlaneError)
     #[error(transparent)]
