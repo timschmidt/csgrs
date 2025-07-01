@@ -152,6 +152,8 @@ let lofted = Sketch::loft(&bottom.polygons[0], &top.polygons[0], false);
 - **`Sketch::offset(distance)`** - outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
 - **`Sketch::offset_rounded(distance)`** - outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
 - **`Sketch::straight_skeleton(&self, orientation: bool)`** - returns a Sketch containing the inside (orientation: true) or outside (orientation: false) straight skeleton
+- **`Sketch::bounding_box()`** - computes the bounding box of the shape.
+- **`Sketch::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
 
 ### Mesh Structure
 
@@ -307,8 +309,8 @@ let mirrored = cube.mirror(plane_x);
 - **`Mesh::slice(plane)`** - slices the CSG by a plane and returns the cross-section polygons.
 - <img src="docs/subdivided.png" width="128"/> **`Mesh::subdivide_triangles(subdivisions)`** - subdivides each polygon’s triangles, increasing mesh density.
 - **`Mesh::renormalize()`** - re-computes each polygon’s plane from its vertices, resetting all normals.
-- **`::bounding_box()`** - computes the bounding box of the shape.
-- **`::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
+- **`Mesh::bounding_box()`** - computes the bounding box of the shape.
+- **`Mesh::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
 - **`Mesh::triangulate()`** - triangulates all polygons returning a CSG containing triangles.
 - **`Mesh::from_polygons(polygons: &[Polygon<S>])`** - create a new CSG from Polygons.
 

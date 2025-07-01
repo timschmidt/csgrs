@@ -31,13 +31,23 @@ use rayon::{prelude::*, iter::IntoParallelRefIterator};
 
 pub mod bsp;
 pub mod bsp_parallel;
+
+#[cfg(feature = "chull")]
 pub mod convex_hull;
+
+#[cfg(feature = "hashmap")]
 pub mod flatten_slice;
+
+#[cfg(feature = "metaballs")]
 pub mod metaballs;
 pub mod plane;
 pub mod polygon;
+
+#[cfg(feature = "sdf")]
 pub mod sdf;
 pub mod shapes;
+
+#[cfg(feature = "sdf")]
 pub mod tpms;
 pub mod vertex;
 pub mod quality;

@@ -13,11 +13,21 @@ use std::fmt::Debug;
 use std::sync::OnceLock;
 
 pub mod extrudes;
-pub mod hershey;
-pub mod image;
-pub mod metaballs;
-pub mod offset;
 pub mod shapes;
+
+#[cfg(feature = "hershey-text")]
+pub mod hershey;
+
+#[cfg(feature = "image-io")]
+pub mod image;
+
+#[cfg(feature = "metaballs")]
+pub mod metaballs;
+
+#[cfg(feature = "offset")]
+pub mod offset;
+
+#[cfg(feature = "truetype-text")]
 pub mod truetype;
 
 #[derive(Clone, Debug)]
