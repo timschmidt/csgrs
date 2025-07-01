@@ -480,23 +480,80 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     }
     */
 
-    /// Revolve a Sketch around the Y-axis from 0..`angle_degs` in `segments` steps,
-    /// producing side walls in an orientation consistent with the polygon's winding.
+    /// **Mathematical Foundation: Surface of Revolution Generation**
     ///
-    /// - Returns a new Mesh containing **only** the newly extruded side polygons (no end caps).
-    /// - `angle_degs`: how far to revolve, in degrees (e.g. 360 for a full revolve).
-    /// - `segments`: number of subdivisions around the revolve.
+    /// Revolve 2D Sketch around the Y-axis to create surfaces of revolution.
+    /// This implements the complete mathematical theory of revolution surfaces with
+    /// proper orientation handling and cap generation.
     ///
-    /// # Key Points
-    /// - Axis of revolution: **Y-axis**. We treat each ring's (x,y) -> revolve_around_y(x,y,theta).
-    /// - Exterior rings (CCW in Geo) produce outward-facing side polygons.
-    /// - Interior rings (CW) produce inward-facing side polygons ("holes").
-    /// - If `angle_degs < 360`, we add **two caps**: one at angle=0, one at angle=angle_degs.
-    ///   - Cap orientation is set so that normals face outward, consistent with a solid.
-    /// - Returns a new Mesh with `.polygons` containing only the side walls + any caps.
-    pub fn revolve(&self, angle_degs: Real, segments: usize) -> Mesh<S> {
+    /// ## **Revolution Mathematics**
+    ///
+    /// ### **Parametric Surface Generation**
+    /// For each 2D boundary point (x,y), generate revolution surface:
+    /// ```text
+    /// S(θ) = (x·cos(θ), y, x·sin(θ))
+    /// where θ ∈ [0, angle_radians]
+    /// ```
+    ///
+    /// ### **Surface Mesh Construction**
+    /// The algorithm creates quadrilateral strips:
+    /// 1. **Vertex Grid**: (n_segments+1) × (n_boundary_points) vertices
+    /// 2. **Quad Formation**: Connect adjacent vertices in parameter space
+    /// 3. **Orientation**: Preserve winding from 2D profile
+    ///
+    /// ### **Normal Vector Calculation**
+    /// For each quad, compute normals using right-hand rule:
+    /// ```text
+    /// n⃗ = (v⃗₁ - v⃗₀) × (v⃗₂ - v⃗₀)
+    /// ```
+    /// Direction depends on profile curve orientation.
+    ///
+    /// ### **Boundary Orientation Handling**
+    /// - **Exterior boundaries (CCW)**: Generate outward-facing surfaces
+    /// - **Interior boundaries (CW)**: Generate inward-facing surfaces (holes)
+    /// - **Winding preservation**: Essential for manifold topology
+    ///
+    /// ### **Partial Revolution Caps**
+    /// For angle < 360°, generate planar caps:
+    /// 1. **Start cap** (θ=0): Triangulated profile at initial position
+    /// 2. **End cap** (θ=angle): Triangulated profile at final position
+    /// 3. **Cap normals**: Point outward from solid interior
+    /// 4. **Manifold closure**: Ensures watertight geometry
+    ///
+    /// ### **Multi-Polygon Support**
+    /// - **Exterior polygons**: Create main solid boundaries
+    /// - **Interior polygons**: Create holes and cavities
+    /// - **Nesting rules**: Interior must be properly contained
+    ///
+    /// ## **Algorithm Complexity**
+    /// - **Boundary Processing**: O(n) for n boundary edges
+    /// - **Surface Generation**: O(n×s) for s segments
+    /// - **Cap Triangulation**: O(n log n) for complex profiles
+    ///
+    /// ## **Geometric Properties**
+    /// - **Surface continuity**: C⁰ (positional) at segment boundaries
+    /// - **Normal continuity**: Discontinuous at segment boundaries (faceted)
+    /// - **Manifold property**: Maintained for valid input profiles
+    ///
+    /// ## **Applications**
+    /// - **Turned objects**: Lathe-created components
+    /// - **Vessels**: Bowls, vases, containers
+    /// - **Mechanical parts**: Pulleys, gears, shafts
+    /// - **Architectural elements**: Columns, balusters
+    ///
+    /// ## **Numerical Considerations**
+    /// - **Trigonometric precomputation**: Improves performance
+    /// - **Degeneracy handling**: Skips zero-length edges
+    /// - **Precision**: Maintains accuracy for small angles
+    ///
+    /// # Parameters
+    /// - `angle_degs`: Revolution angle in degrees (0-360)
+    /// - `segments`: Number of angular subdivisions (≥ 2)
+    ///
+    /// Returns Mesh with revolution surfaces only
+    pub fn revolve(&self, angle_degs: Real, segments: usize) -> Result<Mesh<S>, ValidationError> {
         if segments < 2 {
-            panic!("revolve requires at least 2 segments.");
+            return Err(ValidationError::InvalidArguments);
         }
 
         let angle_radians = angle_degs.to_radians();
@@ -737,7 +794,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     }
                 },
 
-                // Ignore lines, points, etc.
+                // We should implement revolve for Lines and PolyLines, but we may ignore points, etc.
                 _ => {},
             }
         }
@@ -745,11 +802,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         //----------------------------------------------------------------------
         // 3) Return the new CSG:
         //----------------------------------------------------------------------
-        Mesh {
+        Ok(Mesh {
             polygons: new_polygons,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
-        }
+        })
     }
 
     // Sweep a 2D shape `shape_2d` (in XY plane, normal=+Z) along a 2D path `path_2d` (also in XY).
