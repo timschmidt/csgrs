@@ -10,8 +10,45 @@ use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
-    /// Create a right prism (a box) that spans from (0, 0, 0)
-    /// to (width, length, height). All dimensions must be >= 0.
+    /// **Mathematical Foundations for 3D Box Geometry**
+	///
+	/// This module implements mathematically rigorous algorithms for generating
+	/// axis-aligned rectangular prisms (cuboids) and cubes based on solid geometry
+	/// and computational topology principles.
+	///
+	/// ## **Theoretical Foundations**
+	///
+	/// ### **Cuboid Geometry**
+	/// A right rectangular prism (cuboid) in 3D space is defined by:
+	/// - **Vertices**: 8 corner points forming a rectangular parallelepiped
+	/// - **Edges**: 12 edges connecting adjacent vertices
+	/// - **Faces**: 6 rectangular faces, each with consistent outward normal
+	///
+	/// ### **Coordinate System**
+	/// Standard axis-aligned cuboid from origin:
+	/// ```text
+	/// (0,0,0) → (width, length, height)
+	/// ```
+	/// This creates a right-handed coordinate system with consistent face orientations.
+	///
+	/// ### **Face Normal Calculation**
+	/// Each face normal is computed using the right-hand rule:
+	/// ```text
+	/// n⃗ = (v⃗₁ - v⃗₀) × (v⃗₂ - v⃗₀)
+	/// ```
+	/// where vertices are ordered counter-clockwise when viewed from outside.
+	///
+	/// ### **Winding Order Convention**
+	/// All faces use counter-clockwise vertex ordering when viewed from exterior:
+	/// - **Ensures consistent outward normals**
+	/// - **Enables proper backface culling**
+	/// - **Maintains manifold topology for CSG operations**
+	///
+	/// ## **Geometric Properties**
+	/// - **Volume**: V = width × length × height
+	/// - **Surface Area**: A = 2(wl + wh + lh)
+	/// - **Diagonal**: d = √(w² + l² + h²)
+	/// - **Centroid**: (w/2, l/2, h/2)
     pub fn cuboid(width: Real, length: Real, height: Real, metadata: Option<S>) -> Mesh<S> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
@@ -114,7 +151,61 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         Self::cuboid(width, width, width, metadata)
     }
 
-    /// Construct a sphere with radius, segments, stacks
+    /// **Mathematical Foundation: Spherical Mesh Generation**
+    ///
+    /// Construct a sphere using UV-parameterized quadrilateral tessellation.
+    /// This implements the standard spherical coordinate parameterization
+    /// with adaptive handling of polar degeneracies.
+    ///
+    /// ## **Sphere Mathematics**
+    ///
+    /// ### **Parametric Surface Equations**
+    /// The sphere surface is defined by:
+    /// ```text
+    /// S(u,v) = r(sin(πv)cos(2πu), cos(πv), sin(πv)sin(2πu))
+    /// where u ∈ [0,1], v ∈ [0,1]
+    /// ```
+    ///
+    /// ### **Tessellation Algorithm**
+    /// 1. **Parameter Grid**: Create (segments+1) × (stacks+1) parameter values
+    /// 2. **Vertex Generation**: Evaluate S(u,v) at grid points
+    /// 3. **Quadrilateral Formation**: Connect adjacent grid points
+    /// 4. **Degeneracy Handling**: Poles require triangle adaptation
+    ///
+    /// ### **Pole Degeneracy Resolution**
+    /// At poles (v=0 or v=1), the parameterization becomes singular:
+    /// - **North pole** (v=0): All u values map to same point (0, r, 0)
+    /// - **South pole** (v=1): All u values map to same point (0, -r, 0)
+    /// - **Solution**: Use triangles instead of quads for polar caps
+    ///
+    /// ### **Normal Vector Computation**
+    /// Sphere normals are simply the normalized position vectors:
+    /// ```text
+    /// n⃗ = p⃗/|p⃗| = (x,y,z)/r
+    /// ```
+    /// This is mathematically exact for spheres (no approximation needed).
+    ///
+    /// ### **Mesh Quality Metrics**
+    /// - **Aspect Ratio**: Best when segments ≈ 2×stacks
+    /// - **Area Distortion**: Minimal at equator, maximal at poles
+    /// - **Angular Distortion**: Increases towards poles (unavoidable)
+    ///
+    /// ### **Numerical Considerations**
+    /// - **Trigonometric Precision**: Uses TAU and PI for accuracy
+    /// - **Pole Handling**: Avoids division by zero at singularities
+    /// - **Winding Consistency**: Maintains outward-facing orientation
+    ///
+    /// ## **Geometric Properties**
+    /// - **Surface Area**: A = 4πr²
+    /// - **Volume**: V = (4/3)πr³
+    /// - **Circumference** (any great circle): C = 2πr
+    /// - **Curvature**: Gaussian K = 1/r², Mean H = 1/r
+    ///
+    /// # Parameters
+    /// - `radius`: Sphere radius (> 0)
+    /// - `segments`: Longitude divisions (≥ 3, recommend ≥ 8)
+    /// - `stacks`: Latitude divisions (≥ 2, recommend ≥ 6)
+    /// - `metadata`: Optional metadata for all faces
     pub fn sphere(
         radius: Real,
         segments: usize,
@@ -179,6 +270,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// # Example
     /// ```
+    /// use csgrs::mesh::Mesh;
     /// let bottom = Point3::new(0.0, 0.0, 0.0);
     /// let top = Point3::new(0.0, 0.0, 5.0);
     /// // This will create a cone (bottom degenerate) because radius1 is 0:
@@ -378,7 +470,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         points: &[[Real; 3]],
         faces: &[Vec<usize>],
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Result<Mesh<S>, ValidationError> {
         let mut polygons = Vec::new();
 
         for face in faces {
@@ -392,12 +484,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             for &idx in face {
                 // Ensure the index is valid
                 if idx >= points.len() {
-                    panic!(
-                        // todo return error
-                        "Face index {} is out of range (points.len = {}).",
-                        idx,
-                        points.len()
-                    );
+                    return Err(ValidationError::IndexOutOfRange);
                 }
                 let [x, y, z] = points[idx];
                 face_vertices.push(Vertex::new(
@@ -417,7 +504,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             polygons.push(poly);
         }
 
-        Mesh::from_polygons(&polygons)
+        Ok(Mesh::from_polygons(&polygons))
     }
 
     /// Creates a 3D "egg" shape by revolving the existing 2D `egg_outline` profile.
@@ -648,7 +735,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Regular icosahedron scaled by `radius`
     pub fn icosahedron(radius: Real, metadata: Option<S>) -> Self {
         // radius scale factor
-        let factor = radius * 0.5878;
+        let factor = radius * 0.5878;  // empirically determined todo: eliminate this
         // golden ratio
         let phi: Real = (1.0 + 5.0_f64.sqrt() as Real) * 0.5;
         // normalise so the circum-radius is 1
@@ -760,10 +847,6 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         )
         .extrude(thickness)
     }
-
-    // -------------------------------------------------------------------------------------------------
-    // Helical involute gear (3‑D)                                                                    //
-    // -------------------------------------------------------------------------------------------------
 
     pub fn helical_involute_gear(
         module_: Real,
