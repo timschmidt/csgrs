@@ -191,13 +191,13 @@ fn main() {
         [0.5, 1.0, 0.0],
         [0.5, 0.5, 1.0],
     ];
-    let faces = vec![
-        vec![0, 2, 1], // base triangle
-        vec![0, 1, 3], // side
-        vec![1, 2, 3],
-        vec![2, 0, 3],
+    let faces: [&[usize]; 4] = [
+        &[0, 2, 1], // base triangle
+        &[0, 1, 3], // side
+        &[1, 2, 3],
+        &[2, 0, 3],
     ];
-    let poly = Mesh::polyhedron(&points, &faces, None);
+    let poly = Mesh::polyhedron(&points, &faces, None).unwrap();
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/tetrahedron.stl", poly.to_stl_ascii("tetrahedron"));
 
