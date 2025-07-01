@@ -448,7 +448,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         let half_egg = egg_2d.difference(&rect_cutter);
 
-        half_egg.revolve(360.0, revolve_segments).convex_hull()
+        half_egg.revolve(360.0, revolve_segments).expect("Revolve failed").convex_hull()
     }
 
     /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via revolve).
@@ -482,7 +482,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // revolve 360 degrees
         half_teardrop
-            .revolve(360.0, revolve_segments)
+            .revolve(360.0, revolve_segments).expect("Revolve failed")
             .convex_hull()
     }
 
@@ -716,7 +716,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ) -> Self {
         let circle = Sketch::circle(minor_r, segments_minor.max(3), metadata.clone())
             .translate(major_r, 0.0, 0.0);
-        circle.revolve(360.0, segments_major.max(3))
+        circle.revolve(360.0, segments_major.max(3)).expect("Revolve failed")
     }
 
     pub fn spur_gear_involute(

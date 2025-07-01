@@ -52,16 +52,27 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let dx = (max_x - min_x) / (nx as Real - 1.0);
         let dy = (max_y - min_y) / (ny as Real - 1.0);
 
-        // 2) Fill a grid with the summed “influence” minus iso_value
+        // 2) Fill a grid with the summed "influence" minus iso_value
+        /// **Mathematical Foundation**: 2D metaball influence I(p) = r²/(|p-c|² + ε)
+        /// **Optimization**: Iterator-based computation with early termination for distant points.
         fn scalar_field(balls: &[(nalgebra::Point2<Real>, Real)], x: Real, y: Real) -> Real {
-            let mut v = 0.0;
-            for (c, r) in balls {
-                let dx = x - c.x;
-                let dy = y - c.y;
-                let dist_sq = dx * dx + dy * dy + EPSILON;
-                v += (r * r) / dist_sq;
-            }
-            v
+            balls
+                .iter()
+                .map(|(center, radius)| {
+                    let dx = x - center.x;
+                    let dy = y - center.y;
+                    let distance_sq = dx * dx + dy * dy;
+
+                    // Early termination for very distant points
+                    let threshold_distance_sq = radius * radius * 1000.0;
+                    if distance_sq > threshold_distance_sq {
+                        0.0
+                    } else {
+                        let denominator = distance_sq + EPSILON;
+                        (radius * radius) / denominator
+                    }
+                })
+                .sum()
         }
 
         let mut grid = vec![0.0; nx * ny];
