@@ -510,7 +510,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         Ok(Mesh::from_polygons(&polygons))
     }
 
-    /// Creates a 3D "egg" shape by revolving the existing 2D `egg_outline` profile.
+    /// Creates a 3D "egg" shape by revolving `Sketch::egg()`.
     ///
     /// # Parameters
     /// - `width`: The "width" of the 2D egg outline.

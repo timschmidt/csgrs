@@ -59,7 +59,7 @@ fn main() {
     );
 
     // 3) Boolean operations: Union, Subtract, Intersect
-    let union_shape = moved_cube.union(&sphere);
+    let union_shape = moved_cube.translate(-1.0, 0.0, 0.0).union(&sphere);
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
         "stl/union_cube_sphere.stl",
