@@ -147,6 +147,12 @@ let top = bottom.translate(0.0, 0.0, 5.0);
 let lofted = Sketch::loft(&bottom.polygons[0], &top.polygons[0], false);
 ```
 
+### Misc Sketch operations
+
+- **`Sketch::offset(distance)`** - outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
+- **`Sketch::offset_rounded(distance)`** - outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
+- **`Sketch::straight_skeleton(&self, orientation: bool)`** - returns a Sketch containing the inside (orientation: true) or outside (orientation: false) straight skeleton
+
 ### Mesh Structure
 
 - **`Mesh<S>`** is the type which stores and manipulates 3D polygonal geometry.  It contains:
@@ -271,9 +277,10 @@ Types implementing the CSGOps trait also provide the following transformation fu
 - **`::center()`** - Returns the CSG centered at the origin
 - **`::float()`** - Returns the CSG translated so that its bottommost point(s) sit exactly at z=0
 - **`::transform(&Matrix4)`** - Returns the CSG after applying arbitrary affine transforms
-- <img src="docs/distribute_arc.png" width="128"/> **`CSG::distribute_arc(count: usize, radius: Real, start_angle_deg: Real, end_angle_deg: Real)`**
-- <img src="docs/distribute_line.png" width="128"/> **`CSG::distribute_linear(count: usize, dir: nalgebra::Vector3, spacing: Real)`**
-- <img src="docs/distribute_grid.png" width="128"/> **`CSG::distribute_grid(rows: usize, cols: usize, dx: Real, dy: Real)`**
+- <img src="docs/distribute_arc.png" width="128"/> **`::distribute_arc(count: usize, radius: Real, start_angle_deg: Real, end_angle_deg: Real)`**
+- <img src="docs/distribute_line.png" width="128"/> **`::distribute_linear(count: usize, dir: nalgebra::Vector3, spacing: Real)`**
+- <img src="docs/distribute_grid.png" width="128"/> **`::distribute_grid(rows: usize, cols: usize, dx: Real, dy: Real)`**
+- <img src="docs/inverse_sphere.png" width="128"/> **`::inverse()`** - flips the inside/outside orientation.
 
 ```rust
 use nalgebra::Vector3;
@@ -290,22 +297,19 @@ let plane_z = Plane { normal: Vector3::z(), w: 0.0 }; // z=0 plane
 let mirrored = cube.mirror(plane_x);
 ```
 
-### Miscellaneous Operations
+### Miscellaneous Mesh Operations
 
-- **`Mesh::vertices()`** — collect all vertices from the CSG
-- <img src="docs/inverse_sphere.png" width="128"/> **`::inverse()`** — flips the inside/outside orientation.
-- <img src="docs/convex_hull.png" width="128"/> **`Mesh::convex_hull()`** — uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
-- <img src="docs/minkowski.png" width="128"/> **`Mesh::minkowski_sum(&other)`** — naive Minkowski sum, then takes the hull.
+- **`Mesh::vertices()`** - collect all vertices from the `Mesh`
+- <img src="docs/convex_hull.png" width="128"/> **`Mesh::convex_hull()`** - uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
+- <img src="docs/minkowski.png" width="128"/> **`Mesh::minkowski_sum(&other)`** - naive Minkowski sum, then takes the hull.
 - **`Mesh::ray_intersections(origin, direction)`** — returns all intersection points and distances.
-- **`Mesh::flatten()`** — flattens a 3D shape into 2D (on the XY plane), unions the outlines.
-- **`Mesh::slice(plane)`** — slices the CSG by a plane and returns the cross-section polygons.
-- **`Sketch::offset(distance)`** — outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
-- **`Sketch::offset_rounded(distance)`** — outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
-- <img src="docs/subdivided.png" width="128"/> **`CSG::subdivide_triangles(subdivisions)`** — subdivides each polygon’s triangles, increasing mesh density.
-- **`Mesh::renormalize()`** — re-computes each polygon’s plane from its vertices, resetting all normals.
-- **`::bounding_box()`** — computes the bounding box of the shape.
-- **`::invalidate_bounding_box()`** — invalidates the bounding box of the shape, causing it to be recomputed on next access
-- **`Mesh::triangulate()`** — triangulates all polygons returning a CSG containing triangles.
+- **`Mesh::flatten()`** - flattens a 3D shape into 2D (on the XY plane), unions the outlines.
+- **`Mesh::slice(plane)`** - slices the CSG by a plane and returns the cross-section polygons.
+- <img src="docs/subdivided.png" width="128"/> **`Mesh::subdivide_triangles(subdivisions)`** - subdivides each polygon’s triangles, increasing mesh density.
+- **`Mesh::renormalize()`** - re-computes each polygon’s plane from its vertices, resetting all normals.
+- **`::bounding_box()`** - computes the bounding box of the shape.
+- **`::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
+- **`Mesh::triangulate()`** - triangulates all polygons returning a CSG containing triangles.
 - **`Mesh::from_polygons(polygons: &[Polygon<S>])`** - create a new CSG from Polygons.
 
 ### STL
