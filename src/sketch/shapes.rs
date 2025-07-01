@@ -762,19 +762,19 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         );
         assert!(samples >= 10, "Need at least 10 points per surface");
 
-        // --- decode code -------------------------------------------------------
+        // decode code
         let m = code[0..1].parse::<Real>().unwrap() / 100.0; // max-camber %
         let p = code[1..2].parse::<Real>().unwrap() / 10.0; // camber-pos
         let tt = code[2..4].parse::<Real>().unwrap() / 100.0; // thickness %
 
-        // thickness half-profile -----------------------------------------------
+        // thickness half-profile
         let yt = |x: Real| -> Real {
             5.0 * tt
                 * (0.2969 * x.sqrt() - 0.1260 * x - 0.3516 * x * x + 0.2843 * x * x * x
                     - 0.1015 * x * x * x * x)
         };
 
-        // mean-camber line & slope ---------------------------------------------
+        // mean-camber line & slope
         let camber = |x: Real| -> (Real, Real) {
             if x < p {
                 let yc = m / (p * p) * (2.0 * p * x - x * x);
@@ -787,7 +787,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             }
         };
 
-        // --- sample upper & lower surfaces ------------------------------------
+        // sample upper & lower surfaces
         let n = samples as Real;
         let mut coords: Vec<(Real, Real)> = Vec::with_capacity(2 * samples + 1);
 
@@ -837,9 +837,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             return Sketch::new();
         }
 
-        // de Casteljau evaluator -------------------------------------------------
-        fn de_casteljau(ctrl: &[[Real; 2]], t: Real) -> (Real, Real) {
-            let mut tmp: Vec<(Real, Real)> = ctrl.iter().map(|&[x, y]| (x, y)).collect();
+        // de Casteljau evaluator
+        fn de_casteljau(
+            ctrl: &[[Real; 2]],
+            t: Real,
+            tmp: &mut Vec<(Real, Real)>,
+        ) -> (Real, Real) {
+            tmp.clear();
+            tmp.extend(ctrl.iter().map(|&[x, y]| (x, y)));
             let n = tmp.len();
             for k in 1..n {
                 for i in 0..(n - k) {
@@ -851,9 +856,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         }
 
         let mut pts = Vec::<(Real, Real)>::with_capacity(segments + 1);
+        let mut tmp = Vec::with_capacity(control.len());
         for i in 0..=segments {
             let t = i as Real / segments as Real;
-            pts.push(de_casteljau(control, t));
+            pts.push(de_casteljau(control, t, &mut tmp));
         }
 
         // If the curve happens to be closed, make sure the polygon ring closes.
@@ -902,7 +908,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             }
         }
 
-        // Cox-de Boor basis evaluation ------------------------------------------
+        // Cox-de Boor basis evaluation
         fn basis(i: usize, p: usize, u: Real, knot: &[Real]) -> Real {
             if p == 0 {
                 return if u >= knot[i] && u < knot[i + 1] {
@@ -1033,11 +1039,16 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         big.difference(&small)
     }
 
-    // -------------------------------------------------------------------------------------------------
-    // 2‑D gear outlines                                                                             //
-    // -------------------------------------------------------------------------------------------------
-
-    /// Involute gear outline (2‑D).
+    /// Generate an involute gear outline
+    ///
+    /// # Parameters
+    /// - `module_`: gear module (pitch diameter / number of teeth)
+    /// - `teeth`: number of teeth (>= 4)
+    /// - `pressure_angle_deg`: pressure angle in degrees (typically 20°)
+    /// - `clearance`: additional clearance for dedendum
+    /// - `backlash`: backlash allowance
+    /// - `segments_per_flank`: tessellation resolution per tooth flank
+    /// - `metadata`: optional metadata
     pub fn involute_gear(
         module_: Real,
         teeth: usize,
@@ -1113,7 +1124,15 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         Sketch::polygon(&outline, metadata)
     }
 
-    /// (Epicyclic) cycloidal gear outline (2‑D).
+    /// Generate an (epicyclic) cycloidal gear outline
+    ///
+    /// # Parameters
+    /// - `module_`: gear module
+    /// - `teeth`: number of teeth (>= 3)
+    /// - `pin_teeth`: number of teeth in the pin wheel for pairing
+    /// - `clearance`: additional clearance for dedendum
+    /// - `segments_per_flank`: tessellation resolution per tooth flank
+    /// - `metadata`: optional metadata
     pub fn cycloidal_gear(
         module_: Real,
         teeth: usize,
@@ -1176,8 +1195,16 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         Sketch::polygon(&outline, metadata)
     }
 
-    /// Linear **involute rack** profile (lying in the *XY* plane, pitch‑line on *Y = 0*).
+    /// Generate a linear involute rack profile (lying in the XY plane, pitch‑line on Y = 0).
     /// The returned polygon is CCW and spans `num_teeth` pitches along +X.
+    ///
+    /// # Parameters
+    /// - `module_`: gear module
+    /// - `num_teeth`: number of teeth along the rack
+    /// - `pressure_angle_deg`: pressure angle in degrees
+    /// - `clearance`: additional clearance for dedendum
+    /// - `backlash`: backlash allowance
+    /// - `metadata`: optional metadata
     pub fn involute_rack(
         module_: Real,
         num_teeth: usize,
@@ -1232,10 +1259,18 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         Sketch::polygon(&outline, metadata)
     }
 
-    /// Linear **cycloidal rack** profile.
+    /// Generate a linear cycloidal rack profile.
     /// The cycloidal rack is generated by rolling a circle of radius `r_p` along the
-    /// rack’s pitch‑line.  The flanks become a *trochoid*; for practical purposes we
+    /// rack's pitch‑line. The flanks become a trochoid; for practical purposes we
     /// approximate with the classic curtate cycloid equations.
+    ///
+    /// # Parameters
+    /// - `module_`: gear module
+    /// - `num_teeth`: number of teeth along the rack
+    /// - `generating_radius`: radius of the generating circle (usually = module_/2)
+    /// - `clearance`: additional clearance for dedendum
+    /// - `segments_per_flank`: tessellation resolution per tooth flank
+    /// - `metadata`: optional metadata
     pub fn cycloidal_rack(
         module_: Real,
         num_teeth: usize,
@@ -1299,20 +1334,35 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 // Involute helper                                                                               //
 // -------------------------------------------------------------------------------------------------
 
+/// Classic parametric involute of a circle calculation.
+///
+/// # Parameters
+/// - `rb`: base-circle radius
+/// - `phi`: involute parameter
+///
+/// x = rb( cosφ + φ·sinφ )
+/// y = rb( sinφ – φ·cosφ )
+/// 
+/// # Returns
+/// Cartesian coordinates (x, y) of the involute point
 #[inline]
 fn involute_xy(rb: Real, phi: Real) -> (Real, Real) {
-    // Classic parametric involute of a circle (rb = base‑circle radius).
-    // x = rb( cosφ + φ·sinφ )
-    // y = rb( sinφ – φ·cosφ )
     (
         rb * (phi.cos() + phi * phi.sin()),
         rb * (phi.sin() - phi * phi.cos()),
     )
 }
 
+/// Calculate the involute angle at a given radius.
+///
+/// # Parameters
+/// - `r`: radius at which to calculate the angle
+/// - `rb`: base circle radius
+///
+/// # Returns
+/// The involute angle φ = sqrt((r/rb)² - 1)
 #[inline]
 fn involute_angle_at_radius(r: Real, rb: Real) -> Real {
-    // φ = sqrt( (r/rb)^2 – 1 )
     ((r / rb).powi(2) - 1.0).max(0.0).sqrt()
 }
 
@@ -1320,6 +1370,15 @@ fn involute_angle_at_radius(r: Real, rb: Real) -> Real {
 // Cycloid helpers                                                                               //
 // -------------------------------------------------------------------------------------------------
 
+/// Generate epicycloid coordinates for gear tooth profiles.
+///
+/// # Parameters
+/// - `r_g`: pitch-circle radius
+/// - `r_p`: pin circle (generating circle) radius
+/// - `theta`: parameter angle
+///
+/// # Returns
+/// Cartesian coordinates (x, y) of the epicycloid point
 #[inline]
 fn epicycloid_xy(r_g: Real, r_p: Real, theta: Real) -> (Real, Real) {
     // r_g : pitch‑circle radius, r_p : pin circle (generating circle) radius
@@ -1332,6 +1391,15 @@ fn epicycloid_xy(r_g: Real, r_p: Real, theta: Real) -> (Real, Real) {
     )
 }
 
+/// Generate hypocycloid coordinates for gear root flanks.
+///
+/// # Parameters
+/// - `r_g`: pitch-circle radius
+/// - `r_p`: pin circle (generating circle) radius
+/// - `theta`: parameter angle
+///
+/// # Returns
+/// Cartesian coordinates (x, y) of the hypocycloid point
 #[inline]
 fn hypocycloid_xy(r_g: Real, r_p: Real, theta: Real) -> (Real, Real) {
     // For root flank of a cycloidal tooth
