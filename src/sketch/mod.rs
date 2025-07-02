@@ -133,6 +133,32 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
             result
         }
     }
+    
+    /// Return a copy of this `Sketch` whose polygons are normalised so that
+	/// exterior rings wind counter-clockwise and interior rings clockwise.
+    pub fn orient(&self) -> Sketch<S> {
+        // Re-build the collection, orienting only what’s supported.
+		let oriented_geoms: Vec<Geometry<Real>> = self
+			.geometry
+			.iter()
+			.map(|geom| match geom {
+				Geometry::Polygon(p) => {
+					Geometry::Polygon(p.clone().orient(Direction::Default))
+				}
+				Geometry::MultiPolygon(mp) => {
+					Geometry::MultiPolygon(mp.clone().orient(Direction::Default))
+				}
+				// Everything else keeps its original orientation.
+				_ => geom.clone(),
+			})
+			.collect();
+
+		Sketch {
+			geometry: GeometryCollection(oriented_geoms),
+			bounding_box: OnceLock::new(),
+			metadata: self.metadata.clone(),
+		}
+    }
 }
 
 impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
@@ -421,7 +447,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
         self.bounding_box = OnceLock::new();
     }
 
-    /// Invert this Mesh (flip inside vs. outside)
+    /// Invert this Sketch (flip inside vs. outside)
     fn inverse(&self) -> Sketch<S> {
         let sketch = self.clone();
         //for p in &mut sketch.polygons {
