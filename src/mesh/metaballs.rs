@@ -20,9 +20,10 @@ impl MetaBall {
         Self { center, radius }
     }
 
-	/// **Mathematical Foundation**: Metaball influence function I(p) = r²/(|p-c|² + ε)
-    /// where ε prevents division by zero and maintains numerical stability.
-    /// **Optimization**: Early termination for distant points and vectorized computation.
+    /// Finds the influence of a `Metaball` on point `p`
+    ///
+    /// #### Mathematical Foundation
+    /// Metaball influence function `I(p) = r²/(|p-c|² + ε)`
     pub fn influence(&self, p: &Point3<Real>) -> Real {
         let distance_squared = (p - self.center).norm_squared();
 
@@ -39,20 +40,22 @@ impl MetaBall {
     }
 }
 
-/// **Mathematical Foundation**: Scalar field F(p) = Σ I_i(p) where I_i is the influence
-/// function of the i-th metaball. This creates smooth isosurfaces at threshold values.
-/// **Optimization**: Iterator-based summation with potential for vectorization.
+/// Finds the total influence of all `Metaball`s on point `p`, this creates smooth isosurfaces at threshold values
+///
+/// #### Mathematical Foundation
+/// Scalar field `F(p) = Σ I_i(p)` where I_i is the influence function of the i-th metaball
 fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
     balls.iter().map(|ball| ball.influence(p)).sum()
 }
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
-    /// **Creates a Mesh from a list of metaballs** by sampling a 3D grid and using marching cubes.
+    /// Creates a Mesh from a list of metaballs, by sampling a 3D grid and using marching cubes.
     ///
+    /// ### Arguments
     /// - `balls`: slice of metaball definitions (center + radius).
     /// - `resolution`: (nx, ny, nz) defines how many steps along x, y, z.
     /// - `iso_value`: threshold at which the isosurface is extracted.
-    /// - `padding`: extra margin around the bounding region (e.g. 0.5) so the surface doesn't get truncated.
+    /// - `padding`: a small extra margin around the bounding region (e.g. 0.5) so the surface doesn't get truncated.
     pub fn metaballs(
         balls: &[MetaBall],
         resolution: (usize, usize, usize),
