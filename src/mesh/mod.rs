@@ -585,51 +585,21 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
         a_sub_b.union(&b_sub_a)
     }
 
-    /// **Mathematical Foundation: General 3D Transformations**
-    ///
     /// Apply an arbitrary 3D transform (as a 4x4 matrix) to Mesh.
-    /// This implements the complete theory of affine transformations in homogeneous coordinates.
+    /// This implements complete affine transformations in homogeneous coordinates.
     ///
-    /// ## **Transformation Mathematics**
+    /// ### Notes
+    /// - Normals will remain perpendicular to surfaces
     ///
     /// ### **Homogeneous Coordinates**
     /// Points and vectors are represented in 4D homogeneous coordinates:
     /// - **Point**: (x, y, z, 1)ᵀ → transforms as p' = Mp
     /// - **Vector**: (x, y, z, 0)ᵀ → transforms as v' = Mv
     /// - **Normal**: n'ᵀ = nᵀM⁻¹ (inverse transpose rule)
-    ///
-    /// ### **Normal Vector Transformation**
-    /// Normals require special handling to remain perpendicular to surfaces:
-    /// ```text
-    /// If: T(p)·n = 0 (tangent perpendicular to normal)
-    /// Then: T(p)·T(n) ≠ 0 in general
-    /// But: T(p)·(M⁻¹)ᵀn = 0 ✓
-    /// ```
-    /// **Proof**: (Mp)ᵀ(M⁻¹)ᵀn = pᵀMᵀ(M⁻¹)ᵀn = pᵀ(M⁻¹M)ᵀn = pᵀn = 0
-    ///
-    /// ### **Numerical Stability**
-    /// - **Degeneracy Detection**: Check determinant before inversion
-    /// - **Homogeneous Division**: Validate w-coordinate after transformation
-    /// - **Precision**: Maintain accuracy through matrix decomposition
-    ///
-    /// ## **Algorithm Complexity**
-    /// - **Vertices**: O(n) matrix-vector multiplications
-    /// - **Matrix Inversion**: O(1) for 4×4 matrices
-    /// - **Plane Updates**: O(n) plane reconstructions from transformed vertices
-    ///
-    /// The polygon z-coordinates and normal vectors are fully transformed in 3D
     fn transform(&self, mat: &Matrix4<Real>) -> Mesh<S> {
         // Compute inverse transpose for normal transformation
-        let mat_inv_transpose = match mat.try_inverse() {
-            Some(inv) => inv.transpose(),
-            None => {
-                eprintln!(
-                    "Warning: Transformation matrix is not invertible, using identity for normals"
-                );
-                Matrix4::identity()
-            },
-        };
-        
+        let mat_inv_transpose = mat.try_inverse().expect("Transformation matrix is not invertible, using identity for normals");
+
         let mut mesh = self.clone();
 
 		for poly in &mut mesh.polygons {

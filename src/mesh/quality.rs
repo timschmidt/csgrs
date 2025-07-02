@@ -47,7 +47,7 @@ pub struct TriangleQuality {
     pub quality_score: Real,
 }
 
-/// **Mathematical Foundation: Mesh Quality Assessment and Optimization**
+/// Mesh Quality Assessment and Optimization
 ///
 /// Advanced mesh processing algorithms for quality improvement:
 ///

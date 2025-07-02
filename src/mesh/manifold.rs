@@ -5,25 +5,19 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
-    /// Checks if the Mesh object is manifold.
+    /// Checks if the Mesh object is manifold
     ///
-    /// This function defines a comparison function which takes EPSILON into account
-    /// for Real coordinates, builds a hashmap key from the string representation of
-    /// the coordinates, triangulates the Mesh polygons, gathers each of their three edges,
-    /// counts how many times each edge appears across all triangles,
-    /// and returns true if every edge appears exactly 2 times, else false.
+    /// ### Returns
+    /// Returns `true` if every edge appears exactly 2 times
     ///
-    /// We should also check that all faces have consistent orientation and no neighbors
+    /// ### Notes:
+    /// - This also checks that all faces have consistent orientation and no neighbors
     /// have flipped normals.
+    /// - This also checks for zero-area triangles
     ///
-    /// We should also check for zero-area triangles
-    ///
-    /// # Returns
-    ///
-    /// - `true`: If the Mesh object is manifold.
-    /// - `false`: If the Mesh object is not manifold.
+    /// - Uses a `QUANTIZATION_FACTOR` for `Real` coordinates
     pub fn is_manifold(&self) -> bool {
-        const QUANTIZATION_FACTOR: Real = 1e6;
+        const QUANTIZATION_FACTOR: Real = 1e7;
 
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
         struct QuantizedPoint(i64, i64, i64);
