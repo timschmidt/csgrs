@@ -652,6 +652,9 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
 
             // Reconstruct plane from transformed vertices for consistency
             poly.plane = Plane::from_vertices(poly.vertices.clone());
+            
+            // Invalidate the polygon's bounding box
+            poly.bounding_box = OnceLock::new();
         }
 
         // invalidate the old cached bounding box
