@@ -219,9 +219,9 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         }
     }
 
-    /// Subdivide this polygon into smaller triangles using recursive triangle splitting.
+    /// Subdivide this polygon into 4ᵏ, where `k = subdivisions`, smaller triangles using recursive triangle splitting.
     /// This implements the mathematical theory of uniform mesh refinement
-    /// 
+    ///
     /// ## Returns
     /// Returns a list of refined triangles (each is a [Vertex; 3]).
     /// For polygon applications, these can be converted back to triangular polygons.
@@ -236,14 +236,14 @@ impl<S: Clone + Send + Sync> Polygon<S> {
     /// For each subdivision level, each triangle T is split into 4 smaller triangles:
     /// ```text
     /// Original Triangle:     Subdivided Triangle:
-    ///        A                        A
-    ///       /\                      /\ \
-    ///      /  \                    /  \ \
-    ///     /____\                  M₁___M₂ \
-    ///    B      C                /\    /\ \
-    ///                           /  \  /  \ \
-    ///                          /____\/____\
-    ///                         B     M₃     C
+    ///       A                        A
+    ///       /\                       /\
+    ///      /  \                     /  \
+    ///     /    \                   M₁___M₂
+    ///    /      \                 /\    /\
+    ///   /        \               /  \  /  \
+    ///  /__________\             /____\/____\
+    /// B            C           B     M₃     C
     /// ```
     ///
     /// ### Midpoint Calculation
