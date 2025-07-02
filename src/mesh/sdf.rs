@@ -22,10 +22,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// let max_pt = Point3::new( 2.0,  2.0,  2.0);
     /// let iso_value = 0.0; // Typically zero for SDF-based surfaces
     ///
-    ///    let mesh_shape = Mesh::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
-    ///
-    ///    // Now `mesh_shape` is your polygon mesh as a Mesh you can union, subtract, or export:
-    ///    let _ = std::fs::write("stl/sdf_sphere.stl", mesh_shape.to_stl_binary("sdf_sphere").unwrap());
+    /// let mesh_shape = Mesh::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value);
+    /// ```
     pub fn sdf<F>(
         sdf: F,
         resolution: (usize, usize, usize),
