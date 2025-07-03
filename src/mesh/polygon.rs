@@ -32,6 +32,14 @@ impl<S: Clone + PartialEq> PartialEq for Polygon<S> {
     }
 }
 
+#[allow(unused)]
+impl<S: Clone + Send + Sync + PartialEq> Polygon<S>
+{
+	fn same_metadata(&self, metadata: Option<S>) -> bool {
+		self.metadata == metadata
+	}
+}
+
 impl<S: Clone + Send + Sync> Polygon<S> {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {

@@ -1,4 +1,4 @@
-//! AMF file format support for CSG objects
+//! AMF file format support for Mesh objects
 //!
 //! This module provides export functionality for AMF (Additive Manufacturing File Format),
 //! an XML-based format specifically designed for 3D printing and additive manufacturing.
@@ -119,10 +119,10 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::CSG;
+    /// use csgrs::mesh::Mesh;
     /// use std::fs::File;
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let csg: CSG<()> = CSG::cube(10.0, None);
+    /// let csg: Mesh<()> = Mesh::cube(10.0, None);
     /// let mut file = File::create("output.amf")?;
     /// csg.write_amf(&mut file, "my_cube", "millimeter")?;
     /// # Ok(())
@@ -138,7 +138,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         writer.write_all(amf_content.as_bytes())
     }
 
-    /// Export this CSG to AMF format with color information
+    /// Export this Mesh to AMF format with color information
     ///
     /// Creates an AMF file with color/material information for enhanced 3D printing.
     ///
@@ -149,8 +149,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::CSG;
-    /// let csg: CSG<()> = CSG::cube(10.0, None);
+    /// use csgrs::mesh::Mesh;
+    /// let csg: Mesh<()> = Mesh::cube(10.0, None);
     /// let amf_content = csg.to_amf_with_color("red_cube", "millimeter", (1.0, 0.0, 0.0));
     /// println!("{}", amf_content);
     /// ```
@@ -344,7 +344,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         amf_content
     }
     
-        /// Export this CSG to AMF format with color information
+	/// Export this Mesh to AMF format with color information
     ///
     /// Creates an AMF file with color/material information for enhanced 3D printing.
     ///
@@ -355,8 +355,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::CSG;
-    /// let csg: CSG<()> = CSG::cube(10.0, None);
+    /// use csgrs::mesh::Mesh;
+    /// let csg: Mesh<()> = Mesh::cube(10.0, None);
     /// let amf_content = csg.to_amf_with_color("red_cube", "millimeter", (1.0, 0.0, 0.0));
     /// println!("{}", amf_content);
     /// ```
@@ -497,10 +497,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::CSG;
+    /// use csgrs::mesh::Mesh;
     /// use std::fs::File;
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let csg: CSG<()> = CSG::cube(10.0, None);
+    /// let csg: Mesh<()> = Mesh::cube(10.0, None);
     /// let mut file = File::create("output.amf")?;
     /// csg.write_amf(&mut file, "my_cube", "millimeter")?;
     /// # Ok(())

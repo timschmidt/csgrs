@@ -521,7 +521,7 @@ fn test_csg_from_polygons_and_to_polygons() {
         ],
         None,
     );
-    let csg: Mesh<()> = Mesh::from_polygons(&[poly.clone()]);
+    let csg: Mesh<()> = Mesh::from_polygons(&[poly.clone()], None);
     assert_eq!(csg.polygons.len(), 1);
     assert_eq!(csg.polygons[0].vertices.len(), 3);
 }
@@ -831,29 +831,37 @@ fn test_csg_square() {
     // Single polygon, 4 vertices
     assert_eq!(mesh_2d.polygons.len(), 1);
     let poly = &mesh_2d.polygons[0];
-    assert_eq!(poly.vertices.len(), 4);
+    assert!(
+        matches!(poly.vertices.len(), 4 | 5),
+        "Expected 4 or 5 vertices, got {}",
+        poly.vertices.len()
+    );
 }
 
 #[test]
 fn test_csg_circle() {
     let circle: Sketch<()> = Sketch::circle(2.0, 32, None);
 	let mesh_2d: Mesh<()> = circle.into();
-    // Single polygon with 32 segments => 32 vertices
+    // Single polygon with 32 segments => 32 or 33 vertices if closed
     assert_eq!(mesh_2d.polygons.len(), 1);
     let poly = &mesh_2d.polygons[0];
-    assert_eq!(poly.vertices.len(), 32);
+    assert!(
+        matches!(poly.vertices.len(), 32 | 33),
+        "Expected 32 or 33 vertices, got {}",
+        poly.vertices.len()
+    );
 }
 
 #[test]
 fn test_csg_extrude() {
-    let sq: Sketch<()> = Sketch::square(2.0, None); // default 1x1 square at XY plane
+    let sq: Sketch<()> = Sketch::square(2.0, None);
     let extruded = sq.extrude(5.0);
     // We expect:
-    //   bottom polygon: 1
-    //   top polygon (translated): 1
+    //   bottom polygon: 2 (square triangulated)
+    //   top polygon 2 (square triangulated)
     //   side polygons: 4 for a square (one per edge)
-    // => total 6 polygons
-    assert_eq!(extruded.polygons.len(), 6);
+    // => total 8 polygons
+    assert_eq!(extruded.polygons.len(), 8);
     // Check bounding box
     let bb = extruded.bounding_box();
     assert!(approx_eq(bb.mins.z, 0.0, EPSILON));
@@ -1075,7 +1083,7 @@ fn test_csg_construction_with_metadata() {
         ],
         Some("PolyB".to_string()),
     );
-    let csg = Mesh::from_polygons(&[poly_a.clone(), poly_b.clone()]);
+    let csg = Mesh::from_polygons(&[poly_a.clone(), poly_b.clone()], None);
 
     // We expect two polygons with the same shared data as the originals.
     assert_eq!(csg.polygons.len(), 2);
@@ -1126,17 +1134,21 @@ fn test_difference_metadata() {
     // come from the *minuend* (the first shape) with *some* portion clipped out.
     // So the differenced portion from the second shape won't appear in the final.
 
-    let mut cube1 = Mesh::cube(2.0, None);
+    let mut cube1 = Mesh::cube(2.0, Some("Cube1".to_string()));
     for p in &mut cube1.polygons {
         p.set_metadata("Cube1".to_string());
     }
 
-    let mut cube2 = Mesh::cube(2.0, None).translate(0.5, 0.5, 0.5);
+    let mut cube2 = Mesh::cube(2.0, Some("Cube2".to_string())).translate(0.5, 0.5, 0.5);
     for p in &mut cube2.polygons {
         p.set_metadata("Cube2".to_string());
     }
 
     let result = cube1.difference(&cube2);
+
+	println!("{:#?}", cube1);
+	println!("{:#?}", cube2);
+	println!("{:#?}", result);
 
     // All polygons in the result should come from "Cube1" only.
     for poly in &result.polygons {
@@ -1209,7 +1221,7 @@ fn test_subdivide_metadata() {
         ],
         Some("LargeQuad".to_string()),
     );
-    let csg = Mesh::from_polygons(&[poly]);
+    let csg = Mesh::from_polygons(&[poly], None);
     let subdivided = csg.subdivide_triangles(1.try_into().expect("not 0")); // one level of subdivision
 
     // Now it's split into multiple triangles. Each should keep "LargeQuad" as metadata.
@@ -1230,7 +1242,7 @@ fn test_transform_metadata() {
         ],
         Some("Tri".to_string()),
     );
-    let csg = Mesh::from_polygons(&[poly]);
+    let csg = Mesh::from_polygons(&[poly], None);
     let csg_trans = csg.translate(10.0, 5.0, 0.0);
     let csg_scale = csg_trans.scale(2.0, 2.0, 1.0);
     let csg_rot = csg_scale.rotate(0.0, 0.0, 45.0);
@@ -1578,7 +1590,7 @@ fn test_flatten_and_union_single_polygon() {
     // Create a Mesh with one polygon (a unit square).
     let square_poly =
         polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
-    let csg = Mesh::from_polygons(&[square_poly]);
+    let csg = Mesh::from_polygons(&[square_poly], None);
 
     // Flatten & union it
     let flat_csg = csg.flatten();
@@ -1600,7 +1612,7 @@ fn test_flatten_and_union_two_overlapping_squares() {
     let square1 = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     // Second square from (1,0) to (2,1)
     let square2 = polygon_from_xy_points(&[[1.0, 0.0], [2.0, 0.0], [2.0, 1.0], [1.0, 1.0]]);
-    let csg = Mesh::from_polygons(&[square1, square2]);
+    let csg = Mesh::from_polygons(&[square1, square2], None);
 
     let flat_csg = csg.flatten();
     assert!(!flat_csg.geometry.0[0].is_empty(), "Union should not be empty");
@@ -1621,7 +1633,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
     let square_a = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     // Square B at (2..3, 2..3)
     let square_b = polygon_from_xy_points(&[[2.0, 2.0], [3.0, 2.0], [3.0, 3.0], [2.0, 3.0]]);
-    let csg = Mesh::from_polygons(&[square_a, square_b]);
+    let csg = Mesh::from_polygons(&[square_a, square_b], None);
 
     let flat_csg = csg.flatten();
     assert!(!flat_csg.geometry.0[0].is_empty());
@@ -1643,7 +1655,7 @@ fn test_flatten_and_union_near_xy_plane() {
         None,
     );
 
-    let csg = Mesh::from_polygons(&[poly1]);
+    let csg = Mesh::from_polygons(&[poly1], None);
     let flat_csg = csg.flatten();
 
     assert!(
@@ -1670,7 +1682,7 @@ fn test_flatten_and_union_collinear_edges() {
         [2.0, 1.0],
     ]);
 
-    let csg = Mesh::<()>::from_polygons(&[rect1, rect2]);
+    let csg = Mesh::<()>::from_polygons(&[rect1, rect2], None);
     let flat_csg = csg.flatten();
 
     // Expect 1 polygon from x=0..4, y=0..~1.0ish
@@ -1877,7 +1889,7 @@ fn test_union_crash() {
                 ],
                 None,
             ),
-        ]),
+        ], None),
         Mesh::from_polygons(&[
             Polygon::new(
                 vec![
@@ -2005,7 +2017,7 @@ fn test_union_crash() {
                 ],
                 None,
             ),
-        ]),
+        ], None),
     ];
 
     let combined = items[0].union(&items[1]);

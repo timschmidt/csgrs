@@ -303,7 +303,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             polygons.push(side_poly);
         }
 
-        Ok(Mesh::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(&polygons, bottom.metadata.clone()))
     }
 
     /*

@@ -20,8 +20,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// ```
     /// use csgrs::mesh::Mesh;
-    /// let mesh = Mesh::cube(1.0, None);
-    /// let stl_text = mesh.to_stl("my_solid");
+    /// let mesh = Mesh::<()>::cube(1.0, None);
+    /// let stl_text = mesh.to_stl_ascii("my_solid");
     /// println!("{}", stl_text);
     /// ```
     pub fn to_stl_ascii(&self, name: &str) -> String {
@@ -62,6 +62,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// The resulting `Vec<u8>` can then be written to a file or handled in memory:
     ///
     /// ```
+    /// use csgrs::mesh::Mesh;
+    /// let mesh = Mesh::<()>::cube(1.0, None);
     /// let bytes = mesh.to_stl_binary("my_solid")?;
     /// std::fs::write("my_solid.stl", bytes)?;
     /// ```
@@ -107,7 +109,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         Ok(cursor.into_inner())
     }
 
-    /// Create a CSG object from STL data using 'stl_io'.
+    /// Create a Mesh object from STL data using 'stl_io'.
     #[cfg(feature = "stl-io")]
     pub fn from_stl(stl_data: &[u8], metadata: Option<S>) -> Result<Mesh<S>, std::io::Error> {
         // Create an in-memory cursor from the STL data
@@ -167,7 +169,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             polygons.push(Polygon::new(vertices, metadata.clone()));
         }
 
-        Ok(Mesh::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(&polygons, metadata))
     }
 }
 
@@ -286,7 +288,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// The resulting `Vec<u8>` can then be written to a file or handled in memory:
     ///
     /// ```
-    /// let bytes = sketch.to_stl_binary("my_solid")?;
+    /// use csgrs::mesh::Mesh;
+    /// let object = Mesh::<()>::cube(1.0, None);
+    /// let bytes = object.to_stl_binary("my_solid")?;
     /// std::fs::write("my_solid.stl", bytes)?;
     /// ```
     #[cfg(feature = "stl-io")]

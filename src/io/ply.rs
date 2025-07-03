@@ -1,4 +1,4 @@
-//! PLY file format support for CSG objects
+//! PLY file format support for Mesh objects
 //!
 //! This module provides export functionality for Stanford PLY files,
 //! a popular format for 3D scanning, research, and mesh processing applications.
@@ -19,7 +19,7 @@ struct PlyVertex {
 }
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
-    /// Export this CSG to PLY format as a string
+    /// Export this Mesh to PLY format as a string
     ///
     /// Creates a Stanford PLY file containing:
     /// 1. All 3D polygons from `self.polygons` (tessellated to triangles)
@@ -30,9 +30,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::CSG;
-    /// let csg: CSG<()> = CSG::cube(10.0, None);
-    /// let ply_content = csg.to_ply("Generated from CSG operations");
+    /// use csgrs::mesh::Mesh;
+    /// let csg: Mesh<()> = Mesh::cube(10.0, None);
+    /// let ply_content = csg.to_ply("Generated from Mesh operations");
     /// println!("{}", ply_content);
     /// ```
     pub fn to_ply(&self, comment: &str) -> String {
@@ -98,7 +98,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         ply_content
     }
 
-    /// Export this CSG to a PLY file
+    /// Export this Mesh to a PLY file
     ///
     /// # Arguments
     /// * `writer` - Where to write the PLY data
@@ -106,12 +106,12 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::CSG;
+    /// use csgrs::mesh::Mesh;
     /// use std::fs::File;
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let csg: CSG<()> = CSG::cube(10.0, None);
+    /// let csg: Mesh<()> = Mesh::cube(10.0, None);
     /// let mut file = File::create("output.ply")?;
-    /// csg.write_ply(&mut file, "My CSG model")?;
+    /// csg.write_ply(&mut file, "My Mesh model")?;
     /// # Ok(())
     /// # }
     /// ```
@@ -122,7 +122,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 }
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
-	/// Export this CSG to PLY format as a string
+	/// Export this Sketch to PLY format as a string
     ///
     /// Creates a Stanford PLY file containing:
     /// 1. All 3D polygons from `self.polygons` (tessellated to triangles)
@@ -133,9 +133,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::CSG;
-    /// let csg: CSG<()> = CSG::cube(10.0, None);
-    /// let ply_content = csg.to_ply("Generated from CSG operations");
+    /// use csgrs::mesh::Mesh;
+    /// let csg: Mesh<()> = Mesh::cube(10.0, None);
+    /// let ply_content = csg.to_ply("Generated from Mesh operations");
     /// println!("{}", ply_content);
     /// ```
     pub fn to_ply(&self, comment: &str) -> String {
@@ -196,7 +196,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         ply_content
     }
 
-    /// Export this CSG to a PLY file
+    /// Export this Mesh to a PLY file
     ///
     /// # Arguments
     /// * `writer` - Where to write the PLY data
@@ -204,12 +204,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::CSG;
+    /// use csgrs::mesh::Mesh;
     /// use std::fs::File;
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let csg: CSG<()> = CSG::cube(10.0, None);
+    /// let csg: Mesh<()> = Mesh::cube(10.0, None);
     /// let mut file = File::create("output.ply")?;
-    /// csg.write_ply(&mut file, "My CSG model")?;
+    /// csg.write_ply(&mut file, "My Mesh model")?;
     /// # Ok(())
     /// # }
     /// ```

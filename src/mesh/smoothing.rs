@@ -111,7 +111,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        Mesh::from_polygons(&smoothed_polygons)
+        Mesh::from_polygons(&smoothed_polygons, self.metadata.clone())
     }
 
     /// **Mathematical Foundation: Taubin Mesh Smoothing**
@@ -249,7 +249,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             polygon.set_new_normal();
         }
 
-        Mesh::from_polygons(&smoothed_polygons)
+        Mesh::from_polygons(&smoothed_polygons, self.metadata.clone())
     }
 
     /// **Mathematical Foundation: Adaptive Mesh Refinement**
@@ -338,7 +338,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        Mesh::from_polygons(&refined_polygons)
+        Mesh::from_polygons(&refined_polygons, self.metadata.clone())
     }
 
     /// Calculate maximum edge length in a polygon
@@ -392,6 +392,6 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        Mesh::from_polygons(&filtered_polygons)
+        Mesh::from_polygons(&filtered_polygons, self.metadata.clone())
     }
 }

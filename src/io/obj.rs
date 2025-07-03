@@ -1,4 +1,4 @@
-//! OBJ file format support for CSG objects
+//! OBJ file format support for Mesh objects
 //!
 //! This module provides import and export functionality for Wavefront OBJ files,
 //! a widely-supported 3D file format used by many modeling and rendering applications.
@@ -14,7 +14,7 @@ use std::fmt::Debug;
 use std::io::{BufRead, Write};
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
-    /// Export this CSG to OBJ format as a string
+    /// Export this Mesh to OBJ format as a string
     ///
     /// Creates a Wavefront OBJ file containing:
     /// 1. All 3D polygons from `self.polygons` (tessellated to triangles)
@@ -25,8 +25,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::CSG;
-    /// let csg: CSG<()> = CSG::cube(10.0, None);
+    /// use csgrs::mesh::Mesh;
+    /// let csg: Mesh<()> = Mesh::cube(10.0, None);
     /// let obj_content = csg.to_obj("my_cube");
     /// println!("{}", obj_content);
     /// ```
@@ -97,7 +97,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         obj_content
     }
 
-    /// Export this CSG to an OBJ file
+    /// Export this Mesh to an OBJ file
     ///
     /// # Arguments
     /// * `writer` - Where to write the OBJ data
@@ -105,10 +105,10 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::CSG;
+    /// use csgrs::mesh::Mesh;
     /// use std::fs::File;
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let csg: CSG<()> = CSG::cube(10.0, None);
+    /// let csg: Mesh<()> = Mesh::cube(10.0, None);
     /// let mut file = File::create("output.obj")?;
     /// csg.write_obj(&mut file, "my_cube")?;
     /// # Ok(())
@@ -123,7 +123,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         writer.write_all(obj_content.as_bytes())
     }
 
-    /// Import a CSG from OBJ file data
+    /// Import a Mesh from OBJ file data
     ///
     /// # Arguments
     /// * `reader` - Source of OBJ data
@@ -131,13 +131,13 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// # Example
     /// ```no_run
-    /// use csgrs::CSG;
+    /// use csgrs::mesh::Mesh;
     /// use std::fs::File;
     /// use std::io::BufReader;
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let file = File::open("input.obj")?;
     /// let reader = BufReader::new(file);
-    /// let csg: CSG<()> = CSG::from_obj(reader, None)?;
+    /// let csg: Mesh<()> = Mesh::from_obj(reader, None)?;
     /// # Ok(())
     /// # }
     /// ```
@@ -233,7 +233,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        Ok(Mesh::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(&polygons, metadata))
     }
 
     // Helper function to parse OBJ face definitions
@@ -295,7 +295,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 }
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
-	/// Export this CSG to OBJ format as a string
+	/// Export this Mesh to OBJ format as a string
     ///
     /// Creates a Wavefront OBJ file containing:
     /// 1. All 3D polygons from `self.polygons` (tessellated to triangles)
@@ -306,8 +306,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::CSG;
-    /// let csg: CSG<()> = CSG::cube(10.0, None);
+    /// use csgrs::mesh::Mesh;
+    /// let csg: Mesh<()> = Mesh::cube(10.0, None);
     /// let obj_content = csg.to_obj("my_cube");
     /// println!("{}", obj_content);
     /// ```
