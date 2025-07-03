@@ -313,6 +313,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 mod tests {
 	use crate::mesh::polygon::Polygon;
 	use crate::mesh::vertex::Vertex;
+	use crate::mesh::bsp::Node;
     use nalgebra::{Point3, Vector3};
 
     #[test]
