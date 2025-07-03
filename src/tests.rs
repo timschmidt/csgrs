@@ -8,6 +8,7 @@ use crate::sketch::Sketch;
 use crate::traits::CSGOps;
 use geo::{Area, Geometry, HasDimensions};
 use nalgebra::{Point3, Vector3};
+use crate::errors::ValidationError;
 
 // --------------------------------------------------------
 //   Helpers
@@ -1393,8 +1394,9 @@ fn test_different_number_of_vertices_panics() {
         [0.0, 2.0, 2.0],
     ]);
 
-    // This should panic due to unequal vertex counts
-    let _ = Sketch::loft(&bottom, &top, true);
+    // Call the API and assert the specific error variant is returned
+    let result = Sketch::loft(&bottom, &top, true);
+    assert!(matches!(result, Err(ValidationError::MismatchedVertices)));
 }
 
 #[test]
