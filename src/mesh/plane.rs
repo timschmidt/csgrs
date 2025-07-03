@@ -182,9 +182,7 @@ impl Plane {
             return reference_plane;
         } // Plane is already optimal
 
-        //------------------------------------------------------------------
-        // 1.  longest chord (i0,i1)
-        //------------------------------------------------------------------
+        // longest chord (i0,i1)
         let Some((i0, i1, _)) = (0..n)
             .flat_map(|i| (i + 1..n).map(move |j| (i, j)))
             .map(|(i, j)| {
@@ -203,9 +201,7 @@ impl Plane {
             return reference_plane; // everything almost coincident
         }
 
-        //------------------------------------------------------------------
-        // 2.  vertex farthest from the line  p0-p1  → i2
-        //------------------------------------------------------------------
+        // vertex farthest from the line  p0-p1  → i2
         let Some((i2, max_area2)) = vertices
             .iter()
             .enumerate()
@@ -226,9 +222,7 @@ impl Plane {
         };
         let p2 = vertices[i2].pos;
 
-        //------------------------------------------------------------------
-        // 3.  build plane, then orient it to match original winding
-        //------------------------------------------------------------------
+        // build plane, then orient it to match original winding
         let mut plane_hq = Plane {
             point_a: p0,
             point_b: p1,
@@ -330,9 +324,14 @@ impl Plane {
     /// `((b‑a) × (c‑a)).normalize()`.
     #[inline]
     pub fn normal(&self) -> Vector3<Real> {
-        (self.point_b - self.point_a)
-            .cross(&(self.point_c - self.point_a))
-            .normalize()
+        let n = (self.point_b - self.point_a)
+            .cross(&(self.point_c - self.point_a));
+        let len = n.norm();
+        if len < EPSILON {
+			Vector3::zeros()
+        } else {
+            n / len
+        }
     }
 
     /// Signed offset of the plane from the origin: `d = n · a`.

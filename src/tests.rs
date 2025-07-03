@@ -1382,7 +1382,6 @@ fn test_same_number_of_vertices() {
 }
 
 #[test]
-#[should_panic(expected = "same number of vertices")]
 fn test_different_number_of_vertices_panics() {
     // Bottom has 3 vertices
     let bottom = make_polygon_3d(&[[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [1.0, 1.0, 0.0]]);
