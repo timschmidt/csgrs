@@ -20,7 +20,7 @@ pub type Real = f64;
 pub const EPSILON: Real = 1e-5;
 /// A small epsilon for geometric comparisons, adjusted per precision.
 #[cfg(feature = "f64")]
-pub const EPSILON: Real = 1e-10;
+pub const EPSILON: Real = 1e-8;
 
 // Pi
 /// Archimedes' constant (π)
