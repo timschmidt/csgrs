@@ -54,7 +54,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
 
-        Mesh::from_polygons(&polygons)
+        Mesh::from_polygons(&polygons, self.metadata.clone())
     }
 
     /// Compute the Minkowski sum: self ⊕ other
@@ -132,6 +132,6 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             })
             .collect();
 
-        Mesh::from_polygons(&polygons)
+        Mesh::from_polygons(&polygons, self.metadata.clone())
     }
 }

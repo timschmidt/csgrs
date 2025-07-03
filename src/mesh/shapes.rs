@@ -145,7 +145,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         );
 
         // Combine all faces into a Mesh
-        Mesh::from_polygons(&[bottom, top, front, back, left, right])
+        Mesh::from_polygons(&[bottom, top, front, back, left, right], metadata)
     }
 
     pub fn cube(width: Real, metadata: Option<S>) -> Mesh<S> {
@@ -253,7 +253,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 polygons.push(Polygon::new(vertices, metadata.clone()));
             }
         }
-        Mesh::from_polygons(&polygons)
+        Mesh::from_polygons(&polygons, metadata)
     }
 
     /// Constructs a frustum between `start` and `end` with bottom radius = `radius1` and
@@ -272,10 +272,11 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// # Example
     /// ```
     /// use csgrs::mesh::Mesh;
+    /// use nalgebra::Point3;
     /// let bottom = Point3::new(0.0, 0.0, 0.0);
     /// let top = Point3::new(0.0, 0.0, 5.0);
     /// // This will create a cone (bottom degenerate) because radius1 is 0:
-    /// let cone = Mesh::frustum_ptp_special(bottom, top, 0.0, 2.0, 32, None);
+    /// let cone = Mesh::<()>::frustum_ptp(bottom, top, 0.0, 2.0, 32, None);
     /// ```
     pub fn frustum_ptp(
         start: Point3<Real>,
@@ -398,7 +399,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        Mesh::from_polygons(&polygons)
+        Mesh::from_polygons(&polygons, metadata)
     }
 
     /// A helper to create a vertical cylinder along Z from z=0..z=height
@@ -507,7 +508,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             polygons.push(poly);
         }
 
-        Ok(Mesh::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(&polygons, metadata))
     }
 
     /// Creates a 3D "egg" shape by revolving `Sketch::egg()`.

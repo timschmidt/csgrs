@@ -88,7 +88,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// use csgrs::mesh::plane::Plane;
 	/// use csgrs::sketch::Sketch;
     /// use nalgebra::Vector3;
-    /// let cylinder = Mesh::cylinder(1.0, 2.0, 32, None);
+    /// let cylinder = Mesh::<()>::cylinder(1.0, 2.0, 32, None);
     /// let plane_z0 = Plane::from_normal(Vector3::z(), 0.0);
     /// let cross_section = cylinder.slice(plane_z0);
     /// // `cross_section` will contain:

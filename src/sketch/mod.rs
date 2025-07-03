@@ -174,7 +174,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
 
     /// Return a new Sketch representing union of the two Sketches.
     ///
-    /// ```no_run
+    /// ```text
     /// let c = a.union(b);
     ///     +-------+            +-------+
     ///     |       |            |       |
@@ -225,7 +225,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
 
     /// Return a new Sketch representing diffarence of the two Sketches.
     ///
-    /// ```no_run
+    /// ```text
     /// let c = a.difference(b);
     ///     +-------+            +-------+
     ///     |       |            |       |
@@ -266,7 +266,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
 
     /// Return a new Sketch representing intersection of the two Sketches.
     ///
-    /// ```no_run
+    /// ```text
     /// let c = a.intersect(b);
     ///     +-------+
     ///     |       |
@@ -314,7 +314,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
     /// Return a new Sketch representing space in this Sketch excluding the space in the
     /// other Sketch plus the space in the other Sketch excluding the space in this Sketch.
     ///
-    /// ```no_run
+    /// ```text
     /// let c = a.xor(b);
     ///     +-------+            +-------+
     ///     |       |            |       |

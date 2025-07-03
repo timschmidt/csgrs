@@ -24,7 +24,7 @@ use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
-use std::{fmt::Debug, num::NonZeroU32, sync::OnceLock};
+use std::{fmt::Debug, num::NonZeroU32, sync::OnceLock, cmp::PartialEq};
 
 #[cfg(feature = "parallel")]
 use rayon::{prelude::*, iter::IntoParallelRefIterator};
@@ -67,11 +67,38 @@ pub struct Mesh<S: Clone + Send + Sync + Debug> {
     pub metadata: Option<S>,
 }
 
+impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S>
+{
+    /// Compare just the `metadata` fields of two meshes
+    #[inline]
+    pub fn same_metadata(&self, other: &Self) -> bool {
+        self.metadata == other.metadata
+    }
+
+    /// Example: retain only polygons whose metadata matches `needle`
+    #[inline]
+    pub fn filter_polygons_by_metadata(&self, needle: &S) -> Mesh<S> {
+        let polys = self
+            .polygons
+            .iter()
+            .cloned()
+            .filter(|p| p.metadata.as_ref() == Some(needle))
+            .collect();
+
+        Mesh {
+            polygons: polys,
+            bounding_box: std::sync::OnceLock::new(),
+            metadata: self.metadata.clone(),
+        }
+    }
+}
+
 impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     /// Build a Mesh from an existing polygon list
-    pub fn from_polygons(polygons: &[Polygon<S>]) -> Self {
+    pub fn from_polygons(polygons: &[Polygon<S>], metadata: Option<S>) -> Self {
         let mut mesh = Mesh::new();
         mesh.polygons = polygons.to_vec();
+        mesh.metadata = metadata;
         mesh
     }
 
@@ -116,7 +143,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             })
             .collect::<Vec<_>>();
 
-        Mesh::from_polygons(&triangles)
+        Mesh::from_polygons(&triangles, self.metadata.clone())
     }
 
     /// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
@@ -153,23 +180,23 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             })
             .collect();
 
-        Mesh::from_polygons(&new_polygons)
+        Mesh::from_polygons(&new_polygons, self.metadata.clone())
     }
     
-    /// Subdivide all polygons in this CSG 'levels' times, in place.
+    /// Subdivide all polygons in this Mesh 'levels' times, in place.
     /// This results in a triangular mesh with more detail.
     ///
     /// ## Example
     /// ```
-    /// use csgrs::CSG;
+    /// use csgrs::mesh::Mesh;
     /// use core::num::NonZeroU32;
-    /// let mut cube: CSG<()> = CSG::cube(2.0, None);
+    /// let mut cube: Mesh<()> = Mesh::cube(2.0, None);
     /// // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
     /// // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
     /// cube.subdivide_triangles_mut(1.try_into().expect("not zero"));
     /// assert_eq!(cube.polygons.len(), 48);
     ///
-    /// let mut cube: CSG<()> = CSG::cube(2.0, None);
+    /// let mut cube: Mesh<()> = Mesh::cube(2.0, None);
     /// cube.subdivide_triangles_mut(2.try_into().expect("not zero"));
     /// assert_eq!(cube.polygons.len(), 192);
     /// ```
@@ -245,7 +272,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     }
     
     /// Casts a ray defined by `origin` + t * `direction` against all triangles
-    /// of this CSG and returns a list of (intersection_point, distance),
+    /// of this Mesh and returns a list of (intersection_point, distance),
     /// sorted by ascending distance.
     ///
     /// # Parameters
@@ -290,7 +317,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         hits
     }
 
-    /// Convert the polygons in this CSG to a Parry `TriMesh`, wrapped in a `SharedShape` to be used in Rapier.\
+    /// Convert the polygons in this Mesh to a Parry `TriMesh`, wrapped in a `SharedShape` to be used in Rapier.\
     /// Useful for collision detection or physics simulations.
     ///
     /// ## Errors
@@ -301,7 +328,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         SharedShape::new(trimesh)
     }
     
-    /// Convert the polygons in this CSG to a Parry `TriMesh`.\
+    /// Convert the polygons in this Mesh to a Parry `TriMesh`.\
     /// Useful for collision detection.
     ///
     /// ## Errors
@@ -311,7 +338,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         TriMesh::new(vertices, indices).ok()
     }
 
-    /// Uses Parry to check if a point is inside a `CSG`'s as a `TriMesh`.\
+    /// Uses Parry to check if a point is inside a `Mesh`'s as a `TriMesh`.\
     /// Note: this only use the 3d geometry of `CSG`
     ///
     /// ## Errors
@@ -319,10 +346,10 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     ///
     /// ## Example
     /// ```
-    /// # use csgrs::CSG;
+    /// # use csgrs::mesh::Mesh;
     /// # use nalgebra::Point3;
     /// # use nalgebra::Vector3;
-    /// let csg_cube = CSG::<()>::cube(6.0, None);
+    /// let csg_cube = Mesh::<()>::cube(6.0, None);
     ///
     /// assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
     /// assert!(csg_cube.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
@@ -444,7 +471,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
 
     /// Return a new Mesh representing union of the two Meshes.
     ///
-    /// ```no_run
+    /// ```text
     /// let c = a.union(b);
     ///     +-------+            +-------+
     ///     |       |            |       |
@@ -486,7 +513,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
 
     /// Return a new Mesh representing diffarence of the two Meshes.
     ///
-    /// ```no_run
+    /// ```text
     /// let c = a.difference(b);
     ///     +-------+            +-------+
     ///     |       |            |       |
@@ -503,9 +530,20 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
             Self::partition_polys(&self.polygons, &other.bounding_box());
         let (b_clip, _b_passthru) =
             Self::partition_polys(&other.polygons, &self.bounding_box());
+        
+        // propagate self.metadata to new polygons by overwriting intersecting
+        // polygon.metadata in other.
+		let b_clip_retagged: Vec<Polygon<S>> = b_clip
+        .iter()
+        .map(|poly| {
+            let mut p = poly.clone();
+            p.metadata = self.metadata.clone();
+            p
+        })
+        .collect();
 
         let mut a = Node::from_polygons(&a_clip);
-        let mut b = Node::from_polygons(&b_clip);
+        let mut b = Node::from_polygons(&b_clip_retagged);
 
         a.invert();
         a.clip_to(&b);
@@ -529,7 +567,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
 
     /// Return a new CSG representing intersection of the two CSG's.
     ///
-    /// ```no_run
+    /// ```text
     /// let c = a.intersect(b);
     ///     +-------+
     ///     |       |
@@ -562,7 +600,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
     /// Return a new CSG representing space in this CSG excluding the space in the
     /// other CSG plus the space in the other CSG excluding the space in this CSG.
     ///
-    /// ```no_run
+    /// ```text
     /// let c = a.xor(b);
     ///     +-------+            +-------+
     ///     |       |            |       |

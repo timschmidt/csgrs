@@ -125,7 +125,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        Ok(Mesh::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(&polygons, metadata))
     }
 
     /// Export the Mesh object to DXF format.

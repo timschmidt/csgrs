@@ -230,6 +230,6 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         }
 
         // Build and return a Mesh from these polygons
-        Mesh::from_polygons(&triangles)
+        Mesh::from_polygons(&triangles, metadata)
     }
 }

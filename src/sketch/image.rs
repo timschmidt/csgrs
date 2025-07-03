@@ -25,7 +25,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # use image::{GrayImage, Luma};
     /// # fn main() {
     /// let img: GrayImage = image::open("my_binary.png").unwrap().to_luma8();
-    /// let my_sketch = Sketch::from_image(&img, 128, true, None);
+    /// let my_sketch = Sketch::<()>::from_image(&img, 128, true, None);
     /// // optionally extrude it:
     /// let my_mesh = my_sketch.extrude(5.0);
     /// # }

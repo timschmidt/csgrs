@@ -44,7 +44,9 @@ pub trait CSGOps: Sized + Clone {
     ///
     /// # Example
     /// ```
-    /// let mesh = Mesh::cube(1.0, None).translate(2.0, 1.0, -2.0);
+    /// use csgrs::mesh::Mesh;
+    /// use crate::csgrs::traits::CSGOps;
+    /// let mesh = Mesh::<()>::cube(1.0, None).translate(2.0, 1.0, -2.0);
     /// let floated = mesh.float();
     /// assert_eq!(floated.bounding_box().mins.z, 0.0);
     /// ```

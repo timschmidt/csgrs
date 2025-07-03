@@ -1019,7 +1019,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// `segments` controls circle smoothness.
     ///
     /// ```
-    /// let cres = Sketch::crescent(2.0, 1.4, 0.8, 64, None);
+    /// use csgrs::sketch::Sketch;
+    /// let cres = Sketch::<()>::crescent(2.0, 1.4, 0.8, 64, None);
     /// ```
     pub fn crescent(
         outer_r: Real,
