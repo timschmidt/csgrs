@@ -941,8 +941,8 @@ mod tests {
 </svg>
         "#;
 
-        let csg = CSG::from_svg(svg_in).unwrap();
-        let svg_out = csg.to_svg();
+        let sketch = Sketch::from_svg(svg_in).unwrap();
+        let svg_out = sketch.to_svg();
 
         assert_eq!(svg_in.trim(), svg_out.trim());
     }
