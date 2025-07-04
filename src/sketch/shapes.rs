@@ -738,7 +738,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // 4. Subtract both
         let with_top_flat = circle.difference(&top_rect);
-        
+
         with_top_flat.difference(&bottom_rect)
     }
 

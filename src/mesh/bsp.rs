@@ -30,11 +30,11 @@ pub struct Node<S: Clone> {
 }
 
 impl<S: Clone + Send + Sync + Debug> Node<S> {
-	#[allow(unused)]
-	const fn default() -> Self {
+    #[allow(unused)]
+    const fn default() -> Self {
         Self::new()
     }
-	
+
     /// Create a new empty BSP node
     pub const fn new() -> Self {
         Self {
