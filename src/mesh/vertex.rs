@@ -1,6 +1,6 @@
 //! Struct and functions for working with `Vertex`s from which `Polygon`s are composed.
 
-use crate::float_types::{Real, PI};
+use crate::float_types::{PI, Real};
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
 
@@ -482,7 +482,7 @@ impl Vertex {
                 .fold(Vector3::zeros(), |acc, &n| acc + n)
                 / neighbor_normals.len() as Real;
             (self.normal - avg_normal).norm() // normal deviation
-			} else {
+        } else {
             0.0
         };
 

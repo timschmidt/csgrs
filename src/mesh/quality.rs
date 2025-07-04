@@ -1,4 +1,4 @@
-use crate::float_types::{Real, PI};
+use crate::float_types::{PI, Real};
 use crate::mesh::Mesh;
 use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
@@ -198,7 +198,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let shape_quality = (1.0 / aspect_ratio).min(1.0);
         let edge_quality = (3.0 / edge_ratio).min(1.0);
 
-        let quality_score = (0.4 * angle_quality + 0.4 * shape_quality + 0.2 * edge_quality).clamp(0.0, 1.0);
+        let quality_score =
+            (0.4 * angle_quality + 0.4 * shape_quality + 0.2 * edge_quality).clamp(0.0, 1.0);
 
         TriangleQuality {
             aspect_ratio,
