@@ -198,9 +198,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let shape_quality = (1.0 / aspect_ratio).min(1.0);
         let edge_quality = (3.0 / edge_ratio).min(1.0);
 
-        let quality_score = (0.4 * angle_quality + 0.4 * shape_quality + 0.2 * edge_quality)
-            .max(0.0)
-            .min(1.0);
+        let quality_score = (0.4 * angle_quality + 0.4 * shape_quality + 0.2 * edge_quality).clamp(0.0, 1.0);
 
         TriangleQuality {
             aspect_ratio,

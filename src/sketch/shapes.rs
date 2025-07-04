@@ -349,6 +349,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Teardrop shape.  A simple approach:
     /// - a circle arc for the "round" top
     /// - it tapers down to a cusp at bottom.
+    ///
     /// This is just one of many possible "teardrop" definitions.
     // todo: center on focus of the arc
     pub fn teardrop(
@@ -508,9 +509,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// n-gon.
     ///
     /// * `sides`                  ≥ 3  
-    /// * `diameter`               desired constant width (equals the distance
-    ///                            between adjacent vertices, i.e. the polygon’s
-    ///                            edge length)
+    /// * `diameter`               desired constant width (equals the distance between adjacent vertices, i.e. the polygon’s edge length)
     /// * `circle_segments`        how many segments to use for each disk
     ///
     /// For `sides == 3` this gives the canonical Reuleaux triangle; for any

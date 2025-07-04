@@ -15,9 +15,7 @@ impl Vertex {
     /// Create a new [`Vertex`].
     ///
     /// * `pos`    – the position in model space  
-    /// * `normal` – (optionally non‑unit) normal; it will be **copied
-    ///              verbatim**, so make sure it is oriented the way
-    ///              you need it for lighting / BSP tests.
+    /// * `normal` – (optionally non‑unit) normal; it will be **copied verbatim**, so make sure it is oriented the way you need it for lighting / BSP tests.
     pub const fn new(pos: Point3<Real>, normal: Vector3<Real>) -> Self {
         Vertex { pos, normal }
     }
@@ -483,9 +481,8 @@ impl Vertex {
                 .iter()
                 .fold(Vector3::zeros(), |acc, &n| acc + n)
                 / neighbor_normals.len() as Real;
-            let normal_deviation = (self.normal - avg_normal).norm();
-            normal_deviation // Higher = more curved
-        } else {
+            (self.normal - avg_normal).norm() // normal deviation
+			} else {
             0.0
         };
 
@@ -545,7 +542,7 @@ impl VertexCluster {
     }
 
     /// Convert cluster back to a representative vertex
-    pub fn to_vertex(&self) -> Vertex {
+    pub const fn to_vertex(&self) -> Vertex {
         Vertex::new(self.position, self.normal)
     }
 }
