@@ -24,7 +24,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// # fn main() -> Result<(), Box<dyn Error>> {
     /// let mesh  = Mesh::<()>::cube(1.0, None);
     /// let bytes = mesh.to_stl_ascii("my_solid");
-    /// std::fs::write("my_solid.stl", bytes)?;
+    /// std::fs::write("stl/my_solid.stl", bytes)?;
     /// # Ok(())
     /// # }
     /// ```
@@ -188,7 +188,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # fn main() -> Result<(), Box<dyn Error>> {
     /// let sketch: Sketch<()> = Sketch::square(2.0, None);
     /// let bytes = sketch.to_stl_ascii("my_sketch");
-    /// std::fs::write("my_sketch.stl", bytes)?;
+    /// std::fs::write("stl/my_sketch.stl", bytes)?;
     /// # Ok(())
     /// # }
     /// ```

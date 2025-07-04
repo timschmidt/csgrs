@@ -360,12 +360,12 @@ impl<S: Clone + Send + Sync> Polygon<S> {
     }
 
     /// Returns a reference to the metadata, if any.
-    pub fn metadata(&self) -> Option<&S> {
+    pub const fn metadata(&self) -> Option<&S> {
         self.metadata.as_ref()
     }
 
     /// Returns a mutable reference to the metadata, if any.
-    pub fn metadata_mut(&mut self) -> Option<&mut S> {
+    pub const fn metadata_mut(&mut self) -> Option<&mut S> {
         self.metadata.as_mut()
     }
 

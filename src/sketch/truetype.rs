@@ -30,6 +30,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// A `Sketch` whose `geometry` contains:
     /// - One or more `Polygon`s for each glyph,
     /// - A set of `LineString`s for any open contours (rare in standard fonts),
+    ///
     /// all positioned in the XY plane at z=0.
     pub fn text(text: &str, font_data: &[u8], scale: Real, metadata: Option<S>) -> Self {
         // 1) Parse the TTF font
