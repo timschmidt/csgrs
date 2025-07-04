@@ -4,7 +4,7 @@ use crate::float_types::{EPSILON, Real};
 use crate::sketch::Sketch;
 use crate::traits::CSGOps;
 use geo::{
-    Coord, CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord,
+    CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord,
 };
 use hashbrown::HashMap;
 use std::fmt::Debug;
@@ -210,7 +210,7 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
         used[start] = true;
 
         // current chain of points
-        let mut chain = Vec::<Coord<Real>>::from(contours[start].0.clone());
+        let mut chain = contours[start].0.clone();
 
         // walk forward
         loop {
@@ -236,7 +236,7 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
         }
 
         // close if ends coincide
-        if chain.len() >= 3 && (chain[0] == *chain.last().unwrap()) == false {
+        if chain.len() >= 3 && (chain[0] != *chain.last().unwrap()) {
             chain.push(chain[0]);
         }
         chains.push(LineString::new(chain));

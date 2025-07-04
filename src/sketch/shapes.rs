@@ -739,9 +739,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // 4. Subtract both
         let with_top_flat = circle.difference(&top_rect);
-        let with_both_flats = with_top_flat.difference(&bottom_rect);
-
-        with_both_flats
+        
+        with_top_flat.difference(&bottom_rect)
     }
 
     /// Generate a NACA 4-digit airfoil (e.g. "2412", "0015").

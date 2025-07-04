@@ -432,7 +432,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         Mesh::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
-            radius.clone(),
+            radius,
             radius,
             segments,
             metadata,
@@ -626,6 +626,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Creates an arrow Mesh. The arrow is composed of:
     ///   - a cylindrical shaft, and
     ///   - a cone–like head (a frustum from a larger base to a small tip)
+    ///
     /// built along the canonical +Z axis. The arrow is then rotated so that +Z aligns with the given
     /// direction, and finally translated so that either its base (if `orientation` is false)
     /// or its tip (if `orientation` is true) is located at `start`.
@@ -637,8 +638,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// - `start`: the reference point (base or tip, depending on orientation)
     /// - `direction`: the vector defining arrow length and intended pointing direction
     /// - `segments`: number of segments for approximating the cylinder and frustum
-    /// - `orientation`: when false (default) the arrow points away from start (its base is at start);
-    ///                        when true the arrow points toward start (its tip is at start).
+    /// - `orientation`: when false (default) the arrow points away from start (its base is at start); when true the arrow points toward start (its tip is at start).
     /// - `metadata`: optional metadata for the generated polygons.
     pub fn arrow(
         start: Point3<Real>,
@@ -708,9 +708,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // Finally, translate the arrow so that the anchored vertex (canonical (0,0,0)) moves to 'start'.
         // In the false case, (0,0,0) is the base (arrow extends from start to start+direction).
         // In the true case, after mirroring, (0,0,0) is the tip (arrow extends from start to start+direction).
-        let final_arrow = rotated_arrow.translate(start.x, start.y, start.z);
-
-        final_arrow
+        rotated_arrow.translate(start.x, start.y, start.z)
     }
 
     /// Regular octahedron scaled by `radius`

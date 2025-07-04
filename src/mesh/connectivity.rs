@@ -57,7 +57,7 @@ impl VertexIndexMap {
     }
 
     /// Get all vertex positions and their indices (for iteration)
-    pub fn get_vertex_positions(&self) -> &Vec<(Point3<Real>, usize)> {
+    pub const fn get_vertex_positions(&self) -> &Vec<(Point3<Real>, usize)> {
         &self.position_to_index
     }
 }

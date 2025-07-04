@@ -339,7 +339,7 @@ impl Plane {
         self.normal().dot(&self.point_a.coords)
     }
 
-    pub fn flip(&mut self) {
+    pub const fn flip(&mut self) {
         std::mem::swap(&mut self.point_a, &mut self.point_b);
     }
 
