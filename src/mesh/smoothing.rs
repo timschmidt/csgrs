@@ -381,7 +381,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 let quality = &qualities[i];
                 quality.quality_score >= min_quality
                     && quality.area > Real::EPSILON
-                    && quality.min_angle > (5.0_f64.to_radians())
+                    && quality.min_angle > (5.0 as Real).to_radians()
                     && quality.aspect_ratio < 20.0
             } else {
                 true // Keep if we can't assess quality
