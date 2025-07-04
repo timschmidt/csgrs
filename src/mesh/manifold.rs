@@ -62,4 +62,4 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // each edge should appear exactly 2 times.
         edge_counts.values().all(|&count| count == 2)
     }
-} 
+}

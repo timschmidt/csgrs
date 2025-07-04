@@ -122,7 +122,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 }
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
-	/// Export this Sketch to PLY format as a string
+    /// Export this Sketch to PLY format as a string
     ///
     /// Creates a Stanford PLY file containing:
     /// 1. All 3D polygons from `self.polygons` (tessellated to triangles)
@@ -217,7 +217,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let ply_content = self.to_ply(comment);
         writer.write_all(ply_content.as_bytes())
     }
-	
+
     // Helper function to add 2D polygon to PLY data
     fn add_2d_polygon_to_ply(
         &self,
@@ -262,22 +262,22 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
 // Helper function to add unique vertex with normal for PLY
 fn add_unique_vertex_ply(
-	vertices: &mut Vec<PlyVertex>,
-	position: Point3<Real>,
-	normal: Vector3<Real>,
+    vertices: &mut Vec<PlyVertex>,
+    position: Point3<Real>,
+    normal: Vector3<Real>,
 ) -> usize {
-	const EPSILON: Real = 1e-6;
+    const EPSILON: Real = 1e-6;
 
-	// Check if vertex already exists (within tolerance)
-	for (i, existing) in vertices.iter().enumerate() {
-		if (existing.position.coords - position.coords).norm() < EPSILON
-			&& (existing.normal - normal).norm() < EPSILON
-		{
-			return i;
-		}
-	}
+    // Check if vertex already exists (within tolerance)
+    for (i, existing) in vertices.iter().enumerate() {
+        if (existing.position.coords - position.coords).norm() < EPSILON
+            && (existing.normal - normal).norm() < EPSILON
+        {
+            return i;
+        }
+    }
 
-	// Add new vertex
-	vertices.push(PlyVertex { position, normal });
-	vertices.len() - 1
+    // Add new vertex
+    vertices.push(PlyVertex { position, normal });
+    vertices.len() - 1
 }

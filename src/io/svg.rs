@@ -5,7 +5,8 @@ use geo::{
 };
 use svg::node::element::path;
 
-use crate::csg::CSG;
+use crate::sketch::Sketch;
+use crate::traits::CSGOps;
 
 use super::IoError;
 
@@ -376,11 +377,12 @@ impl<F: CoordNum> PathBuilder<F> {
     }
 }
 
+#[allow(unused)]
 pub trait FromSVG: Sized {
     fn from_svg(doc: &str) -> Result<Self, IoError>;
 }
 
-impl FromSVG for CSG<()> {
+impl FromSVG for Sketch<()> {
     fn from_svg(doc: &str) -> Result<Self, IoError> {
         use svg::node::element::tag::{self, Type::*};
         use svg::parser::Event;
@@ -399,7 +401,7 @@ impl FromSVG for CSG<()> {
             };
         }
 
-        let mut csg_union = Self::new();
+        let mut sketch_union = Sketch::<()>::new();
 
         for event in svg::read(doc)? {
             match event {
@@ -445,8 +447,8 @@ impl FromSVG for CSG<()> {
                     for ls in mls.0.into_iter() {
                         if ls.is_closed() {
                             let polygon = Polygon::new(ls, vec![]);
-                            let csg = Self::from_geo(polygon.into(), None);
-                            csg_union = csg_union.union(&csg);
+                            let sketch = Self::from_geo(polygon.into(), None);
+                            sketch_union = sketch_union.union(&sketch);
                         }
                     }
                 },
@@ -459,8 +461,8 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let csg = Self::circle(r, segments, None).translate(cx, cy, 0.0);
-                    csg_union = csg_union.union(&csg);
+                    let sketch = Self::circle(r, segments, None).translate(cx, cy, 0.0);
+                    sketch_union = sketch_union.union(&sketch);
                 },
 
                 Event::Tag(tag::Rectangle, Empty, attrs) => {
@@ -477,9 +479,9 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let csg =
+                    let sketch =
                         Self::rounded_rectangle(w, h, r, segments, None).translate(x, y, 0.0);
-                    csg_union = csg_union.union(&csg);
+                    sketch_union = sketch_union.union(&sketch);
                 },
 
                 Event::Tag(tag::Ellipse, Empty, attrs) => {
@@ -491,9 +493,9 @@ impl FromSVG for CSG<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (rx.max(ry).ceil() as usize).max(6);
 
-                    let csg = Self::ellipse(rx * 2.0, ry * 2.0, segments, None)
+                    let sketch = Self::ellipse(rx * 2.0, ry * 2.0, segments, None)
                         .translate(cx, cy, 0.0);
-                    csg_union = csg_union.union(&csg);
+                    sketch_union = sketch_union.union(&sketch);
                 },
 
                 Event::Tag(tag::Line, Empty, attrs) => {
@@ -508,8 +510,8 @@ impl FromSVG for CSG<()> {
                 Event::Tag(tag::Polygon, Empty, attrs) => {
                     let points = expect_attr!(attrs, "points")?;
                     let polygon = Polygon::new(svg_points_to_line_string(points)?, vec![]);
-                    let csg = Self::from_geo(polygon.into(), None);
-                    csg_union = csg_union.union(&csg);
+                    let sketch = Self::from_geo(polygon.into(), None);
+                    sketch_union = sketch_union.union(&sketch);
                 },
 
                 Event::Tag(tag::Polyline, Empty, attrs) => {
@@ -527,15 +529,16 @@ impl FromSVG for CSG<()> {
             }
         }
 
-        Ok(csg_union)
+        Ok(sketch_union)
     }
 }
 
+#[allow(unused)]
 pub trait ToSVG {
     fn to_svg(&self) -> String;
 }
 
-impl<S: Clone> ToSVG for CSG<S> {
+impl<S: Clone> ToSVG for Sketch<S> {
     fn to_svg(&self) -> String {
         use geo::Geometry::*;
         use svg::node::element;
@@ -886,7 +889,7 @@ fn svg_points_to_line_string<F: CoordNum>(points: &str) -> Result<LineString<F>,
     use nom::combinator::opt;
     use nom::multi::separated_list1;
     use nom::number::complete::float;
-    use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
+    use nom::sequence::{delimited, pair, separated_pair, tuple};
 
     fn comma_wsp(i: &str) -> IResult<&str, ()> {
         let (i, _) = alt((

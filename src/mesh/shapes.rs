@@ -12,44 +12,44 @@ use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// **Mathematical Foundations for 3D Box Geometry**
-	///
-	/// This module implements mathematically rigorous algorithms for generating
-	/// axis-aligned rectangular prisms (cuboids) and cubes based on solid geometry
-	/// and computational topology principles.
-	///
-	/// ## **Theoretical Foundations**
-	///
-	/// ### **Cuboid Geometry**
-	/// A right rectangular prism (cuboid) in 3D space is defined by:
-	/// - **Vertices**: 8 corner points forming a rectangular parallelepiped
-	/// - **Edges**: 12 edges connecting adjacent vertices
-	/// - **Faces**: 6 rectangular faces, each with consistent outward normal
-	///
-	/// ### **Coordinate System**
-	/// Standard axis-aligned cuboid from origin:
-	/// ```text
-	/// (0,0,0) → (width, length, height)
-	/// ```
-	/// This creates a right-handed coordinate system with consistent face orientations.
-	///
-	/// ### **Face Normal Calculation**
-	/// Each face normal is computed using the right-hand rule:
-	/// ```text
-	/// n⃗ = (v⃗₁ - v⃗₀) × (v⃗₂ - v⃗₀)
-	/// ```
-	/// where vertices are ordered counter-clockwise when viewed from outside.
-	///
-	/// ### **Winding Order Convention**
-	/// All faces use counter-clockwise vertex ordering when viewed from exterior:
-	/// - **Ensures consistent outward normals**
-	/// - **Enables proper backface culling**
-	/// - **Maintains manifold topology for CSG operations**
-	///
-	/// ## **Geometric Properties**
-	/// - **Volume**: V = width × length × height
-	/// - **Surface Area**: A = 2(wl + wh + lh)
-	/// - **Diagonal**: d = √(w² + l² + h²)
-	/// - **Centroid**: (w/2, l/2, h/2)
+    ///
+    /// This module implements mathematically rigorous algorithms for generating
+    /// axis-aligned rectangular prisms (cuboids) and cubes based on solid geometry
+    /// and computational topology principles.
+    ///
+    /// ## **Theoretical Foundations**
+    ///
+    /// ### **Cuboid Geometry**
+    /// A right rectangular prism (cuboid) in 3D space is defined by:
+    /// - **Vertices**: 8 corner points forming a rectangular parallelepiped
+    /// - **Edges**: 12 edges connecting adjacent vertices
+    /// - **Faces**: 6 rectangular faces, each with consistent outward normal
+    ///
+    /// ### **Coordinate System**
+    /// Standard axis-aligned cuboid from origin:
+    /// ```text
+    /// (0,0,0) → (width, length, height)
+    /// ```
+    /// This creates a right-handed coordinate system with consistent face orientations.
+    ///
+    /// ### **Face Normal Calculation**
+    /// Each face normal is computed using the right-hand rule:
+    /// ```text
+    /// n⃗ = (v⃗₁ - v⃗₀) × (v⃗₂ - v⃗₀)
+    /// ```
+    /// where vertices are ordered counter-clockwise when viewed from outside.
+    ///
+    /// ### **Winding Order Convention**
+    /// All faces use counter-clockwise vertex ordering when viewed from exterior:
+    /// - **Ensures consistent outward normals**
+    /// - **Enables proper backface culling**
+    /// - **Maintains manifold topology for CSG operations**
+    ///
+    /// ## **Geometric Properties**
+    /// - **Volume**: V = width × length × height
+    /// - **Surface Area**: A = 2(wl + wh + lh)
+    /// - **Diagonal**: d = √(w² + l² + h²)
+    /// - **Centroid**: (w/2, l/2, h/2)
     pub fn cuboid(width: Real, length: Real, height: Real, metadata: Option<S>) -> Mesh<S> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
@@ -539,7 +539,10 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         let half_egg = egg_2d.difference(&rect_cutter);
 
-        half_egg.revolve(360.0, revolve_segments).expect("Revolve failed").convex_hull()
+        half_egg
+            .revolve(360.0, revolve_segments)
+            .expect("Revolve failed")
+            .convex_hull()
     }
 
     /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via revolve).
@@ -573,7 +576,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // revolve 360 degrees
         half_teardrop
-            .revolve(360.0, revolve_segments).expect("Revolve failed")
+            .revolve(360.0, revolve_segments)
+            .expect("Revolve failed")
             .convex_hull()
     }
 
@@ -739,7 +743,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Regular icosahedron scaled by `radius`
     pub fn icosahedron(radius: Real, metadata: Option<S>) -> Self {
         // radius scale factor
-        let factor = radius * 0.5878;  // empirically determined todo: eliminate this
+        let factor = radius * 0.5878; // empirically determined todo: eliminate this
         // golden ratio
         let phi: Real = (1.0 + 5.0_f64.sqrt() as Real) * 0.5;
         // normalise so the circum-radius is 1
@@ -787,7 +791,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             &[9, 8, 1],
         ];
 
-        Self::polyhedron(&pts, &faces, metadata).unwrap().scale(factor, factor, factor)
+        Self::polyhedron(&pts, &faces, metadata)
+            .unwrap()
+            .scale(factor, factor, factor)
     }
 
     /// Torus centred at the origin in the *XY* plane.
@@ -805,7 +811,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ) -> Self {
         let circle = Sketch::circle(minor_r, segments_minor.max(3), metadata.clone())
             .translate(major_r, 0.0, 0.0);
-        circle.revolve(360.0, segments_major.max(3)).expect("Revolve failed")
+        circle
+            .revolve(360.0, segments_major.max(3))
+            .expect("Revolve failed")
     }
 
     pub fn spur_gear_involute(

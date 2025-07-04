@@ -1,8 +1,8 @@
 //! Struct and functions for working with `Vertex`s from which `Polygon`s are composed.
 
 use crate::float_types::Real;
-use nalgebra::{Point3, Vector3};
 use hashbrown::HashMap;
+use nalgebra::{Point3, Vector3};
 
 /// A vertex of a polygon, holding position and normal.
 #[derive(Debug, Clone, PartialEq)]
@@ -60,8 +60,8 @@ impl Vertex {
         let new_normal = self.normal + (other.normal - self.normal) * t;
         Vertex::new(new_pos, new_normal)
     }
-    
-	/// **Mathematical Foundation: Spherical Linear Interpolation (SLERP) for Normals**
+
+    /// **Mathematical Foundation: Spherical Linear Interpolation (SLERP) for Normals**
     ///
     /// Compute spherical linear interpolation for normal vectors, preserving unit length:
     ///

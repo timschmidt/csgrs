@@ -45,8 +45,9 @@ use crate::float_types::Real;
 use crate::sketch::Sketch;
 use geo::{Geometry, GeometryCollection, MultiPolygon};
 use geo_buf::{
-    buffer_multi_polygon, buffer_multi_polygon_rounded, buffer_polygon, buffer_polygon_rounded, buffer_point,
-    skeleton_of_polygon_to_linestring, skeleton_of_multi_polygon_to_linestring,
+    buffer_multi_polygon, buffer_multi_polygon_rounded, buffer_point, buffer_polygon,
+    buffer_polygon_rounded, skeleton_of_multi_polygon_to_linestring,
+    skeleton_of_polygon_to_linestring,
 };
 use std::fmt::Debug;
 use std::sync::OnceLock;
@@ -205,33 +206,38 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             metadata: self.metadata.clone(),
         }
     }
-    
+
     /// This function returns a Sketch which represents an instantiated straight skeleton of Sketch upon which it's called.
-	/// Each segment of the straight skeleton is represented as a single `LineString`.
-	/// If either endpoints of a `LineString` is infinitely far from the other, then this `LineString` will be clipped to one which has shorter length.
-	/// The order of these `LineString`s is arbitrary. (There is no gauranteed order on segments of the straight skeleton.)
-	///
-	/// # Arguments
-	///
-	/// + `orientation`: determines the region where the straight skeleton created. The value of this `boolean` variable will be:
-	///     * `true` to create the staright skeleton on the inward region of the polygon, and,
-	///     * `false` to create on the outward region of the polygon.
+    /// Each segment of the straight skeleton is represented as a single `LineString`.
+    /// If either endpoints of a `LineString` is infinitely far from the other, then this `LineString` will be clipped to one which has shorter length.
+    /// The order of these `LineString`s is arbitrary. (There is no gauranteed order on segments of the straight skeleton.)
+    ///
+    /// # Arguments
+    ///
+    /// + `orientation`: determines the region where the straight skeleton created. The value of this `boolean` variable will be:
+    ///     * `true` to create the staright skeleton on the inward region of the polygon, and,
+    ///     * `false` to create on the outward region of the polygon.
     pub fn straight_skeleton(&self, orientation: bool) -> Sketch<S> {
-		let skeleton = self
-            .geometry
-            .iter()
-            .filter_map(|geom| match geom {
-                Geometry::Polygon(poly) => {
-					let mls = geo::MultiLineString(skeleton_of_polygon_to_linestring(poly, orientation));
-					Some(Geometry::MultiLineString(mls))
-				}
-                Geometry::MultiPolygon(mpoly) => {
-                    let mls = geo::MultiLineString(skeleton_of_multi_polygon_to_linestring(mpoly, orientation));
-                    Some(Geometry::MultiLineString(mls))
-                },
-                _ => None, // ignore other geometry types
-            })
-            .collect();
+        let skeleton =
+            self.geometry
+                .iter()
+                .filter_map(|geom| match geom {
+                    Geometry::Polygon(poly) => {
+                        let mls = geo::MultiLineString(skeleton_of_polygon_to_linestring(
+                            poly,
+                            orientation,
+                        ));
+                        Some(Geometry::MultiLineString(mls))
+                    },
+                    Geometry::MultiPolygon(mpoly) => {
+                        let mls = geo::MultiLineString(
+                            skeleton_of_multi_polygon_to_linestring(mpoly, orientation),
+                        );
+                        Some(Geometry::MultiLineString(mls))
+                    },
+                    _ => None, // ignore other geometry types
+                })
+                .collect();
 
         // Construct a new GeometryCollection from the offset geometries
         let new_collection = GeometryCollection::<Real>(skeleton);
@@ -242,5 +248,5 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
-	}
+    }
 }

@@ -89,8 +89,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             .flat_map(|a| verts_b.iter().map(move |b| a + b.coords))
             .map(|v| vec![v.x, v.y, v.z])
             .collect();
-            
-		// Early return if no points generated
+
+        // Early return if no points generated
         if sum_points.is_empty() {
             return Mesh::new();
         }

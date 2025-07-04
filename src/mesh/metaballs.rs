@@ -20,7 +20,7 @@ impl MetaBall {
         Self { center, radius }
     }
 
-	/// **Mathematical Foundation**: Metaball influence function I(p) = r²/(|p-c|² + ε)
+    /// **Mathematical Foundation**: Metaball influence function I(p) = r²/(|p-c|² + ε)
     /// where ε prevents division by zero and maintains numerical stability.
     /// **Optimization**: Early termination for distant points and vectorized computation.
     pub fn influence(&self, p: &Point3<Real>) -> Real {

@@ -1,6 +1,7 @@
+use crate::errors::ValidationError;
 use crate::float_types::{EPSILON, FRAC_PI_2, Real};
-use crate::mesh::bsp::Node;
 use crate::mesh::Mesh;
+use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
@@ -8,7 +9,6 @@ use crate::sketch::Sketch;
 use crate::traits::CSGOps;
 use geo::{Area, Geometry, HasDimensions};
 use nalgebra::{Point3, Vector3};
-use crate::errors::ValidationError;
 
 // --------------------------------------------------------
 //   Helpers
@@ -687,7 +687,10 @@ fn test_csg_sphere() {
 fn test_csg_cylinder() {
     // Default cylinder => from (0,0,0) to (0,2,0) with radius=1
     let cylinder: Mesh<()> = Mesh::cylinder(1.0, 2.0, 16, None);
-    assert!(!cylinder.polygons.is_empty(), "Cylinder should generate polygons");
+    assert!(
+        !cylinder.polygons.is_empty(),
+        "Cylinder should generate polygons"
+    );
 
     let bb = bounding_box(&cylinder.polygons);
     // Expect x in [-1,1], y in [-1,1], z in [-1,1].
@@ -841,7 +844,7 @@ fn test_csg_square() {
 #[test]
 fn test_csg_circle() {
     let circle: Sketch<()> = Sketch::circle(2.0, 32, None);
-	let mesh_2d: Mesh<()> = circle.into();
+    let mesh_2d: Mesh<()> = circle.into();
     // Single polygon with 32 segments => 32 or 33 vertices if closed
     assert_eq!(mesh_2d.polygons.len(), 1);
     let poly = &mesh_2d.polygons[0];
@@ -1146,9 +1149,9 @@ fn test_difference_metadata() {
 
     let result = cube1.difference(&cube2);
 
-	println!("{:#?}", cube1);
-	println!("{:#?}", cube2);
-	println!("{:#?}", result);
+    println!("{:#?}", cube1);
+    println!("{:#?}", cube2);
+    println!("{:#?}", result);
 
     // All polygons in the result should come from "Cube1" only.
     for poly in &result.polygons {
@@ -1343,8 +1346,8 @@ fn test_circle_offset_2d() {
     let offset_grow = circle.offset(0.2); // Should grow the circle
     let offset_shrink = circle.offset(-0.2); // Should shrink the circle
 
-	let grow = offset_grow.to_multipolygon();
-	let shrink = offset_shrink.to_multipolygon();
+    let grow = offset_grow.to_multipolygon();
+    let shrink = offset_shrink.to_multipolygon();
     let grow_area = grow.0[0].signed_area();
     let shrink_area = shrink.0[0].signed_area();
 
@@ -1596,7 +1599,10 @@ fn test_flatten_and_union_single_polygon() {
     let flat_csg = csg.flatten();
 
     // Expect the same bounding box
-    assert!(!flat_csg.geometry.0[0].is_empty(), "Result should not be empty");
+    assert!(
+        !flat_csg.geometry.0[0].is_empty(),
+        "Result should not be empty"
+    );
     let bb = flat_csg.bounding_box();
     assert_eq!(bb.mins.x, 0.0);
     assert_eq!(bb.mins.y, 0.0);
@@ -1615,7 +1621,10 @@ fn test_flatten_and_union_two_overlapping_squares() {
     let csg = Mesh::from_polygons(&[square1, square2], None);
 
     let flat_csg = csg.flatten();
-    assert!(!flat_csg.geometry.0[0].is_empty(), "Union should not be empty");
+    assert!(
+        !flat_csg.geometry.0[0].is_empty(),
+        "Union should not be empty"
+    );
 
     // The bounding box should now span x=0..2, y=0..1
     let bb = flat_csg.bounding_box();
@@ -1762,262 +1771,348 @@ fn test_contains_vertex() {
 #[test]
 fn test_union_crash() {
     let items: [Mesh<()>; 2] = [
-        Mesh::from_polygons(&[
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(640.0, 0.0, 640.0),
-                        normal: Vector3::new(0.0, -1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(768.0, 0.0, 128.0),
-                        normal: Vector3::new(0.0, -1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 0.0, 256.0),
-                        normal: Vector3::new(0.0, -1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(1024.0, 0.0, 640.0),
-                        normal: Vector3::new(0.0, -1.0, 0.0),
-                    },
-                ],
-                None,
-            ),
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(1024.0, 256.0, 640.0),
-                        normal: Vector3::new(0.0, 1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 256.0, 256.0),
-                        normal: Vector3::new(0.0, 1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(768.0, 256.0, 128.0),
-                        normal: Vector3::new(0.0, 1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(640.0, 256.0, 640.0),
-                        normal: Vector3::new(0.0, 1.0, 0.0),
-                    },
-                ],
-                None,
-            ),
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(640.0, 0.0, 640.0),
-                        normal: Vector3::new(0.9701425433158875, -0.0, 0.24253563582897186),
-                    },
-                    Vertex {
-                        pos: Point3::new(640.0, 256.0, 640.0),
-                        normal: Vector3::new(0.9701425433158875, -0.0, 0.24253563582897186),
-                    },
-                    Vertex {
-                        pos: Point3::new(768.0, 256.0, 128.0),
-                        normal: Vector3::new(0.9701425433158875, -0.0, 0.24253563582897186),
-                    },
-                    Vertex {
-                        pos: Point3::new(768.0, 0.0, 128.0),
-                        normal: Vector3::new(0.9701425433158875, -0.0, 0.24253563582897186),
-                    },
-                ],
-                None,
-            ),
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(768.0, 0.0, 128.0),
-                        normal: Vector3::new(-0.24253563582897186, 0.0, 0.9701425433158875),
-                    },
-                    Vertex {
-                        pos: Point3::new(768.0, 256.0, 128.0),
-                        normal: Vector3::new(-0.24253563582897186, 0.0, 0.9701425433158875),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 256.0, 256.0),
-                        normal: Vector3::new(-0.24253563582897186, 0.0, 0.9701425433158875),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 0.0, 256.0),
-                        normal: Vector3::new(-0.24253563582897186, 0.0, 0.9701425433158875),
-                    },
-                ],
-                None,
-            ),
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(1280.0, 0.0, 256.0),
-                        normal: Vector3::new(-0.8320503234863281, 0.0, -0.5547001957893372),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 256.0, 256.0),
-                        normal: Vector3::new(-0.8320503234863281, 0.0, -0.5547001957893372),
-                    },
-                    Vertex {
-                        pos: Point3::new(1024.0, 256.0, 640.0),
-                        normal: Vector3::new(-0.8320503234863281, 0.0, -0.5547001957893372),
-                    },
-                    Vertex {
-                        pos: Point3::new(1024.0, 0.0, 640.0),
-                        normal: Vector3::new(-0.8320503234863281, 0.0, -0.5547001957893372),
-                    },
-                ],
-                None,
-            ),
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(1024.0, 0.0, 640.0),
-                        normal: Vector3::new(0.0, 0.0, -1.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(1024.0, 256.0, 640.0),
-                        normal: Vector3::new(0.0, 0.0, -1.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(640.0, 256.0, 640.0),
-                        normal: Vector3::new(0.0, 0.0, -1.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(640.0, 0.0, 640.0),
-                        normal: Vector3::new(0.0, 0.0, -1.0),
-                    },
-                ],
-                None,
-            ),
-        ], None),
-        Mesh::from_polygons(&[
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(896.0, 0.0, 768.0),
-                        normal: Vector3::new(0.0, -1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(768.0, 0.0, 512.0),
-                        normal: Vector3::new(0.0, -1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 0.0, 384.0),
-                        normal: Vector3::new(0.0, -1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 0.0, 640.0),
-                        normal: Vector3::new(0.0, -1.0, 0.0),
-                    },
-                ],
-                None,
-            ),
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(1280.0, 256.0, 640.0),
-                        normal: Vector3::new(0.0, 1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 256.0, 384.0),
-                        normal: Vector3::new(0.0, 1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(768.0, 256.0, 512.0),
-                        normal: Vector3::new(0.0, 1.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(896.0, 256.0, 768.0),
-                        normal: Vector3::new(0.0, 1.0, 0.0),
-                    },
-                ],
-                None,
-            ),
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(896.0, 0.0, 768.0),
-                        normal: Vector3::new(0.8944271802902222, 0.0, -0.4472135901451111),
-                    },
-                    Vertex {
-                        pos: Point3::new(896.0, 256.0, 768.0),
-                        normal: Vector3::new(0.8944271802902222, 0.0, -0.4472135901451111),
-                    },
-                    Vertex {
-                        pos: Point3::new(768.0, 256.0, 512.0),
-                        normal: Vector3::new(0.8944271802902222, 0.0, -0.4472135901451111),
-                    },
-                    Vertex {
-                        pos: Point3::new(768.0, 0.0, 512.0),
-                        normal: Vector3::new(0.8944271802902222, 0.0, -0.4472135901451111),
-                    },
-                ],
-                None,
-            ),
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(768.0, 0.0, 512.0),
-                        normal: Vector3::new(0.24253563582897186, -0.0, 0.9701425433158875),
-                    },
-                    Vertex {
-                        pos: Point3::new(768.0, 256.0, 512.0),
-                        normal: Vector3::new(0.24253563582897186, -0.0, 0.9701425433158875),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 256.0, 384.0),
-                        normal: Vector3::new(0.24253563582897186, -0.0, 0.9701425433158875),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 0.0, 384.0),
-                        normal: Vector3::new(0.24253563582897186, -0.0, 0.9701425433158875),
-                    },
-                ],
-                None,
-            ),
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(1280.0, 0.0, 384.0),
-                        normal: Vector3::new(-1.0, 0.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 256.0, 384.0),
-                        normal: Vector3::new(-1.0, 0.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 256.0, 640.0),
-                        normal: Vector3::new(-1.0, 0.0, 0.0),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 0.0, 640.0),
-                        normal: Vector3::new(-1.0, 0.0, 0.0),
-                    },
-                ],
-                None,
-            ),
-            Polygon::new(
-                vec![
-                    Vertex {
-                        pos: Point3::new(1280.0, 0.0, 640.0),
-                        normal: Vector3::new(-0.3162277638912201, 0.0, -0.9486832618713379),
-                    },
-                    Vertex {
-                        pos: Point3::new(1280.0, 256.0, 640.0),
-                        normal: Vector3::new(-0.3162277638912201, 0.0, -0.9486832618713379),
-                    },
-                    Vertex {
-                        pos: Point3::new(896.0, 256.0, 768.0),
-                        normal: Vector3::new(-0.3162277638912201, 0.0, -0.9486832618713379),
-                    },
-                    Vertex {
-                        pos: Point3::new(896.0, 0.0, 768.0),
-                        normal: Vector3::new(-0.3162277638912201, 0.0, -0.9486832618713379),
-                    },
-                ],
-                None,
-            ),
-        ], None),
+        Mesh::from_polygons(
+            &[
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(640.0, 0.0, 640.0),
+                            normal: Vector3::new(0.0, -1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(768.0, 0.0, 128.0),
+                            normal: Vector3::new(0.0, -1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 0.0, 256.0),
+                            normal: Vector3::new(0.0, -1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(1024.0, 0.0, 640.0),
+                            normal: Vector3::new(0.0, -1.0, 0.0),
+                        },
+                    ],
+                    None,
+                ),
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(1024.0, 256.0, 640.0),
+                            normal: Vector3::new(0.0, 1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 256.0, 256.0),
+                            normal: Vector3::new(0.0, 1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(768.0, 256.0, 128.0),
+                            normal: Vector3::new(0.0, 1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(640.0, 256.0, 640.0),
+                            normal: Vector3::new(0.0, 1.0, 0.0),
+                        },
+                    ],
+                    None,
+                ),
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(640.0, 0.0, 640.0),
+                            normal: Vector3::new(
+                                0.9701425433158875,
+                                -0.0,
+                                0.24253563582897186,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(640.0, 256.0, 640.0),
+                            normal: Vector3::new(
+                                0.9701425433158875,
+                                -0.0,
+                                0.24253563582897186,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(768.0, 256.0, 128.0),
+                            normal: Vector3::new(
+                                0.9701425433158875,
+                                -0.0,
+                                0.24253563582897186,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(768.0, 0.0, 128.0),
+                            normal: Vector3::new(
+                                0.9701425433158875,
+                                -0.0,
+                                0.24253563582897186,
+                            ),
+                        },
+                    ],
+                    None,
+                ),
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(768.0, 0.0, 128.0),
+                            normal: Vector3::new(
+                                -0.24253563582897186,
+                                0.0,
+                                0.9701425433158875,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(768.0, 256.0, 128.0),
+                            normal: Vector3::new(
+                                -0.24253563582897186,
+                                0.0,
+                                0.9701425433158875,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 256.0, 256.0),
+                            normal: Vector3::new(
+                                -0.24253563582897186,
+                                0.0,
+                                0.9701425433158875,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 0.0, 256.0),
+                            normal: Vector3::new(
+                                -0.24253563582897186,
+                                0.0,
+                                0.9701425433158875,
+                            ),
+                        },
+                    ],
+                    None,
+                ),
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(1280.0, 0.0, 256.0),
+                            normal: Vector3::new(
+                                -0.8320503234863281,
+                                0.0,
+                                -0.5547001957893372,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 256.0, 256.0),
+                            normal: Vector3::new(
+                                -0.8320503234863281,
+                                0.0,
+                                -0.5547001957893372,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(1024.0, 256.0, 640.0),
+                            normal: Vector3::new(
+                                -0.8320503234863281,
+                                0.0,
+                                -0.5547001957893372,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(1024.0, 0.0, 640.0),
+                            normal: Vector3::new(
+                                -0.8320503234863281,
+                                0.0,
+                                -0.5547001957893372,
+                            ),
+                        },
+                    ],
+                    None,
+                ),
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(1024.0, 0.0, 640.0),
+                            normal: Vector3::new(0.0, 0.0, -1.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(1024.0, 256.0, 640.0),
+                            normal: Vector3::new(0.0, 0.0, -1.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(640.0, 256.0, 640.0),
+                            normal: Vector3::new(0.0, 0.0, -1.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(640.0, 0.0, 640.0),
+                            normal: Vector3::new(0.0, 0.0, -1.0),
+                        },
+                    ],
+                    None,
+                ),
+            ],
+            None,
+        ),
+        Mesh::from_polygons(
+            &[
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(896.0, 0.0, 768.0),
+                            normal: Vector3::new(0.0, -1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(768.0, 0.0, 512.0),
+                            normal: Vector3::new(0.0, -1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 0.0, 384.0),
+                            normal: Vector3::new(0.0, -1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 0.0, 640.0),
+                            normal: Vector3::new(0.0, -1.0, 0.0),
+                        },
+                    ],
+                    None,
+                ),
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(1280.0, 256.0, 640.0),
+                            normal: Vector3::new(0.0, 1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 256.0, 384.0),
+                            normal: Vector3::new(0.0, 1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(768.0, 256.0, 512.0),
+                            normal: Vector3::new(0.0, 1.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(896.0, 256.0, 768.0),
+                            normal: Vector3::new(0.0, 1.0, 0.0),
+                        },
+                    ],
+                    None,
+                ),
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(896.0, 0.0, 768.0),
+                            normal: Vector3::new(0.8944271802902222, 0.0, -0.4472135901451111),
+                        },
+                        Vertex {
+                            pos: Point3::new(896.0, 256.0, 768.0),
+                            normal: Vector3::new(0.8944271802902222, 0.0, -0.4472135901451111),
+                        },
+                        Vertex {
+                            pos: Point3::new(768.0, 256.0, 512.0),
+                            normal: Vector3::new(0.8944271802902222, 0.0, -0.4472135901451111),
+                        },
+                        Vertex {
+                            pos: Point3::new(768.0, 0.0, 512.0),
+                            normal: Vector3::new(0.8944271802902222, 0.0, -0.4472135901451111),
+                        },
+                    ],
+                    None,
+                ),
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(768.0, 0.0, 512.0),
+                            normal: Vector3::new(
+                                0.24253563582897186,
+                                -0.0,
+                                0.9701425433158875,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(768.0, 256.0, 512.0),
+                            normal: Vector3::new(
+                                0.24253563582897186,
+                                -0.0,
+                                0.9701425433158875,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 256.0, 384.0),
+                            normal: Vector3::new(
+                                0.24253563582897186,
+                                -0.0,
+                                0.9701425433158875,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 0.0, 384.0),
+                            normal: Vector3::new(
+                                0.24253563582897186,
+                                -0.0,
+                                0.9701425433158875,
+                            ),
+                        },
+                    ],
+                    None,
+                ),
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(1280.0, 0.0, 384.0),
+                            normal: Vector3::new(-1.0, 0.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 256.0, 384.0),
+                            normal: Vector3::new(-1.0, 0.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 256.0, 640.0),
+                            normal: Vector3::new(-1.0, 0.0, 0.0),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 0.0, 640.0),
+                            normal: Vector3::new(-1.0, 0.0, 0.0),
+                        },
+                    ],
+                    None,
+                ),
+                Polygon::new(
+                    vec![
+                        Vertex {
+                            pos: Point3::new(1280.0, 0.0, 640.0),
+                            normal: Vector3::new(
+                                -0.3162277638912201,
+                                0.0,
+                                -0.9486832618713379,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(1280.0, 256.0, 640.0),
+                            normal: Vector3::new(
+                                -0.3162277638912201,
+                                0.0,
+                                -0.9486832618713379,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(896.0, 256.0, 768.0),
+                            normal: Vector3::new(
+                                -0.3162277638912201,
+                                0.0,
+                                -0.9486832618713379,
+                            ),
+                        },
+                        Vertex {
+                            pos: Point3::new(896.0, 0.0, 768.0),
+                            normal: Vector3::new(
+                                -0.3162277638912201,
+                                0.0,
+                                -0.9486832618713379,
+                            ),
+                        },
+                    ],
+                    None,
+                ),
+            ],
+            None,
+        ),
     ];
 
     let combined = items[0].union(&items[1]);

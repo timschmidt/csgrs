@@ -4,7 +4,7 @@ use crate::mesh::bsp::Node;
 use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]
-use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING}; 
+use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 
 #[cfg(feature = "parallel")]
 use rayon::{join, prelude::*};
@@ -19,7 +19,7 @@ use crate::mesh::Vertex;
 use crate::float_types::EPSILON;
 
 impl<S: Clone + Send + Sync + Debug> Node<S> {
-	/// Invert all polygons in the BSP tree
+    /// Invert all polygons in the BSP tree
     #[cfg(feature = "parallel")]
     pub fn invert(&mut self) {
         // Flip all polygons and plane in this node
@@ -37,10 +37,10 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             (None, Some(back_node)) => back_node.invert(),
             (None, None) => {},
         }
-        
+
         std::mem::swap(&mut self.front, &mut self.back);
     }
-	
+
     /// Parallel version of clip Polygons
     #[cfg(feature = "parallel")]
     pub fn clip_polygons(&self, polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
@@ -105,13 +105,16 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         result.extend(back_clipped);
         result
     }
-    
+
     /// Parallel version of `clip_to`
     #[cfg(feature = "parallel")]
     pub fn clip_to(&mut self, bsp: &Node<S>) {
         // The clipping of polygons can be done in parallel for different nodes.
-        let (polygons, front_opt, back_opt) =
-            (std::mem::take(&mut self.polygons), self.front.take(), self.back.take());
+        let (polygons, front_opt, back_opt) = (
+            std::mem::take(&mut self.polygons),
+            self.front.take(),
+            self.back.take(),
+        );
 
         let (clipped_polygons, (clipped_front, clipped_back)) = rayon::join(
             || bsp.clip_polygons(&polygons),

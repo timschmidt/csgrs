@@ -2,8 +2,8 @@
 //! or slicing a `Mesh` with an arbitrary `Plane` into a `Sketch`
 
 use crate::float_types::{EPSILON, Real};
-use crate::mesh::bsp::Node;
 use crate::mesh::Mesh;
+use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
 use crate::sketch::Sketch;
@@ -84,9 +84,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// # Example
     /// ```
-	/// use csgrs::mesh::Mesh;
+    /// use csgrs::mesh::Mesh;
     /// use csgrs::mesh::plane::Plane;
-	/// use csgrs::sketch::Sketch;
+    /// use csgrs::sketch::Sketch;
     /// use nalgebra::Vector3;
     /// let cylinder = Mesh::<()>::cylinder(1.0, 2.0, 32, None);
     /// let plane_z0 = Plane::from_normal(Vector3::z(), 0.0);

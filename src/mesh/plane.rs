@@ -324,11 +324,10 @@ impl Plane {
     /// `((b‑a) × (c‑a)).normalize()`.
     #[inline]
     pub fn normal(&self) -> Vector3<Real> {
-        let n = (self.point_b - self.point_a)
-            .cross(&(self.point_c - self.point_a));
+        let n = (self.point_b - self.point_a).cross(&(self.point_c - self.point_a));
         let len = n.norm();
         if len < EPSILON {
-			Vector3::zeros()
+            Vector3::zeros()
         } else {
             n / len
         }
@@ -343,7 +342,7 @@ impl Plane {
     pub fn flip(&mut self) {
         std::mem::swap(&mut self.point_a, &mut self.point_b);
     }
-    
+
     /// Classify a polygon with respect to the plane.
     /// Returns a bitmask of `COPLANAR`, `FRONT`, and `BACK`.
     pub fn classify_polygon<S: Clone>(&self, polygon: &Polygon<S>) -> i8 {
@@ -448,7 +447,7 @@ impl Plane {
     }
 
     /// Returns (T, T_inv), where:
-	/// - `T` maps a point on this plane into XY plane (z=0) with the plane's normal going to +Z
+    /// - `T` maps a point on this plane into XY plane (z=0) with the plane's normal going to +Z
     /// - `T_inv` is the inverse transform, mapping back
     ///
     /// **Mathematical Foundation**: This implements an orthonormal transformation:
