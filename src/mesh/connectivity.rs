@@ -1,8 +1,8 @@
 use crate::float_types::Real;
 use crate::mesh::Mesh;
 use nalgebra::Point3;
-use std::collections::HashMap;
 use std::fmt::Debug;
+use hashbrown::HashMap;
 
 /// **Mathematical Foundation: Robust Vertex Indexing for Mesh Connectivity**
 ///
