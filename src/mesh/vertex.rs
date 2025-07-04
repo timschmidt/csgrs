@@ -1,6 +1,6 @@
 //! Struct and functions for working with `Vertex`s from which `Polygon`s are composed.
 
-use crate::float_types::Real;
+use crate::float_types::{Real, PI};
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
 
@@ -388,7 +388,7 @@ impl Vertex {
         };
 
         // Discrete mean curvature
-        let angle_deficit = 2.0 * std::f64::consts::PI - angle_sum;
+        let angle_deficit = 2.0 * PI - angle_sum;
         if mixed_area > Real::EPSILON {
             angle_deficit / mixed_area
         } else {
@@ -472,7 +472,7 @@ impl Vertex {
             }
 
             // Normalize to [0,1] where 1 = perfectly consistent
-            1.0 - (max_angle / std::f64::consts::PI).min(1.0)
+            1.0 - (max_angle / PI).min(1.0)
         } else {
             1.0
         };

@@ -130,10 +130,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         for tri_result in stl_reader {
             // Handle potential errors from the STL reader
-            let tri = match tri_result {
-                Ok(t) => t,
-                Err(e) => return Err(e), // Propagate the error
-            };
+            let tri = tri_result?;
 
             // Construct vertices and a polygon
             let vertices = vec![
@@ -214,7 +211,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     // Collect holes
                     let holes_vec = poly2d
                         .interiors()
-                        .into_iter()
+                        .iter()
                         .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>())
                         .collect::<Vec<_>>();
                     let hole_refs = holes_vec
@@ -252,7 +249,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         // Holes
                         let holes_vec = poly2d
                             .interiors()
-                            .into_iter()
+                            .iter()
                             .map(|ring| {
                                 ring.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>()
                             })
