@@ -589,7 +589,6 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// - `revolve_segments`: Number of segments for the revolution (the "circular" direction).
     /// - `shape_segments`: Number of segments for the 2D teardrop outline itself.
     /// - `metadata`: Optional metadata.
-    #[cfg(feature = "chull-io")]
     pub fn teardrop_cylinder(
         width: Real,
         length: Real,
@@ -599,7 +598,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ) -> Self {
         // Make a 2D teardrop in the XY plane.
         let td_2d = Sketch::teardrop(width, length, shape_segments, metadata.clone());
-        td_2d.extrude(height).convex_hull()
+        td_2d.extrude(height)
     }
 
     /// Creates an ellipsoid by taking a sphere of radius=1 and scaling it by (rx, ry, rz).

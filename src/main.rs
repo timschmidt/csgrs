@@ -3,7 +3,9 @@
 // Minimal example of each function of csgrs (which is now generic over the shared-data type S).
 // Here, we do not use any shared data, so we'll bind the generic S to ().
 
+#[cfg(feature = "sdf")]
 use csgrs::float_types::Real;
+
 use csgrs::mesh::plane::Plane;
 use csgrs::traits::CSGOps;
 use nalgebra::{Point3, Vector3};
@@ -113,18 +115,20 @@ fn main() {
         circle_2d.to_stl_binary("circle_2d").unwrap(),
     );
 
-    let grown_2d = square_2d.offset(0.5);
-    #[cfg(feature = "stl-io")]
-    let _ = fs::write(
-        "stl/square_2d_grow_0_5.stl",
-        grown_2d.to_stl_ascii("square_2d_grow_0_5"),
-    );
+	#[cfg(all(feature = "offset", feature = "stl-io"))]
+	{
+		let grown_2d = square_2d.offset(0.5);
+		let _ = fs::write(
+			"stl/square_2d_grow_0_5.stl",
+			grown_2d.to_stl_ascii("square_2d_grow_0_5"),
+		);
 
-    let shrunk_2d = square_2d.offset(-0.5);
-    let _ = fs::write(
-        "stl/square_2d_shrink_0_5.stl",
-        shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"),
-    );
+		let shrunk_2d = square_2d.offset(-0.5);
+		let _ = fs::write(
+			"stl/square_2d_shrink_0_5.stl",
+			shrunk_2d.to_stl_ascii("square_2d_shrink_0_5"),
+		);
+	}
 
     // star(num_points, outer_radius, inner_radius)
     let star_2d = Sketch::star(5, 2.0, 0.8, None);
@@ -339,14 +343,17 @@ fn main() {
     let _ = fs::write("stl/pie_slice.stl", wedge.to_stl_ascii("pie_slice"));
 
     // Create a 2D "metaball" shape from 3 circles
-    use nalgebra::Point2;
-    let balls_2d = vec![
-        (Point2::new(0.0, 0.0), 1.0),
-        (Point2::new(1.5, 0.0), 1.0),
-        (Point2::new(0.75, 1.0), 0.5),
-    ];
-    let mb2d = Sketch::metaballs(&balls_2d, (100, 100), 1.0, 0.25, None);
-    let _ = fs::write("stl/mb2d.stl", mb2d.to_stl_ascii("metaballs2d"));
+	#[cfg(all(feature = "metaballs", feature = "stl-io"))]
+	{
+		use nalgebra::Point2;
+		let balls_2d = vec![
+			(Point2::new(0.0, 0.0), 1.0),
+			(Point2::new(1.5, 0.0), 1.0),
+			(Point2::new(0.75, 1.0), 0.5),
+		];
+		let mb2d = Sketch::metaballs(&balls_2d, (100, 100), 1.0, 0.25, None);
+		let _ = fs::write("stl/mb2d.stl", mb2d.to_stl_ascii("metaballs2d"));
+	}
 
     // Create a supershape
     let sshape = Sketch::supershape(1.0, 1.0, 6.0, 1.0, 1.0, 1.0, 128, None);
@@ -388,15 +395,18 @@ fn main() {
     let _ = fs::write("stl/df_3d.stl", df_3d.to_stl_ascii("df_3d"));
 
     // A 3D teardrop shape
-    let teardrop_solid = Mesh::teardrop(3.0, 5.0, 32, 32, None);
-    let _ = fs::write(
-        "stl/teardrop_solid.stl",
-        teardrop_solid.to_stl_ascii("teardrop_solid"),
-    );
+    #[cfg(all(feature = "chull", feature = "stl-io"))]
+	{
+		let teardrop_solid = Mesh::teardrop(3.0, 5.0, 32, 32, None);
+		let _ = fs::write(
+			"stl/teardrop_solid.stl",
+			teardrop_solid.to_stl_ascii("teardrop_solid"),
+		);
 
-    // A 3D egg shape
-    let egg_solid = Mesh::egg(2.0, 4.0, 8, 16, None);
-    let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
+		// A 3D egg shape
+		let egg_solid = Mesh::egg(2.0, 4.0, 8, 16, None);
+		let _ = fs::write("stl/egg_solid.stl", egg_solid.to_stl_ascii("egg_solid"));
+	}
 
     // An ellipsoid with X radius=2, Y radius=1, Z radius=3
     let ellipsoid = Mesh::ellipsoid(2.0, 1.0, 3.0, 16, 8, None);
@@ -498,9 +508,10 @@ fn main() {
 
     // 16) gyroid(...) – uses the current CSG volume as a bounding region
     // Let's reuse the `cube` from above:
-    #[cfg(feature = "stl-io")]
+    #[cfg(all(feature = "stl-io", feature = "sdf"))]
     {
-        let gyroid_inside_cube = hull_of_union
+		let tpms_volume = Mesh::sphere(100.0, 50, 50, None);
+        let gyroid_inside_cube = tpms_volume
             .scale(20.0, 20.0, 20.0)
             .gyroid(64, 2.0, 0.0, None);
         let _ = fs::write(
@@ -508,7 +519,7 @@ fn main() {
             gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap(),
         );
 
-        let schwarzp_inside_cube = hull_of_union
+        let schwarzp_inside_cube = tpms_volume
             .scale(20.0, 20.0, 20.0)
             .schwarz_p(64, 2.0, 0.0, None);
         let _ = fs::write(
@@ -516,7 +527,7 @@ fn main() {
             schwarzp_inside_cube.to_stl_binary("schwarz_p_cube").unwrap(),
         );
 
-        let schwarzd_inside_cube = hull_of_union
+        let schwarzd_inside_cube = tpms_volume
             .scale(20.0, 20.0, 20.0)
             .schwarz_d(64, 2.0, 0.0, None);
         let _ = fs::write(
@@ -750,6 +761,7 @@ fn main() {
     }
 
     // Scene P: Demonstrate offset(distance)
+    #[cfg(all(feature = "offset", feature = "stl-io"))]
     {
         let poly_2d = Sketch::polygon(&[[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]], None);
         let grown = poly_2d.offset(0.2);
