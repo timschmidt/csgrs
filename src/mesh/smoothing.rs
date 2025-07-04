@@ -1,10 +1,10 @@
+use crate::float_types::Real;
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
-use crate::float_types::Real;
 use crate::mesh::vertex::Vertex;
-use std::fmt::Debug;
 use nalgebra::Point3;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// **Mathematical Foundation: True Laplacian Mesh Smoothing with Global Connectivity**

@@ -7,27 +7,22 @@ use crate::float_types::{
         shape::Shape,
     },
     rapier3d::prelude::{
-        ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle,
-        RigidBodySet, SharedShape, TriMesh, Triangle,
+        ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
+        SharedShape, TriMesh, Triangle,
     },
     {EPSILON, Real},
 };
-use crate::mesh::{
-    bsp::Node,
-    plane::Plane,
-    polygon::Polygon,
-    vertex::Vertex,
-};
+use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
 use crate::sketch::Sketch;
 use crate::traits::CSGOps;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
-use std::{fmt::Debug, num::NonZeroU32, sync::OnceLock, cmp::PartialEq};
+use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 
 #[cfg(feature = "parallel")]
-use rayon::{prelude::*, iter::IntoParallelRefIterator};
+use rayon::{iter::IntoParallelRefIterator, prelude::*};
 
 pub mod bsp;
 pub mod bsp_parallel;
@@ -47,13 +42,13 @@ pub mod polygon;
 pub mod sdf;
 pub mod shapes;
 
+pub mod connectivity;
+pub mod manifold;
+pub mod quality;
+pub mod smoothing;
 #[cfg(feature = "sdf")]
 pub mod tpms;
 pub mod vertex;
-pub mod quality;
-pub mod manifold;
-pub mod connectivity;
-pub mod smoothing;
 
 #[derive(Clone, Debug)]
 pub struct Mesh<S: Clone + Send + Sync + Debug> {
@@ -67,8 +62,7 @@ pub struct Mesh<S: Clone + Send + Sync + Debug> {
     pub metadata: Option<S>,
 }
 
-impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S>
-{
+impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S> {
     /// Compare just the `metadata` fields of two meshes
     #[inline]
     pub fn same_metadata(&self, other: &Self) -> bool {
@@ -182,7 +176,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         Mesh::from_polygons(&new_polygons, self.metadata.clone())
     }
-    
+
     /// Subdivide all polygons in this Mesh 'levels' times, in place.
     /// This results in a triangular mesh with more detail.
     ///
@@ -238,8 +232,8 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             poly.set_new_normal();
         }
     }
-    
-	/// **Mathematical Foundation: Dihedral Angle Calculation**
+
+    /// **Mathematical Foundation: Dihedral Angle Calculation**
     ///
     /// Computes the dihedral angle between two polygons sharing an edge.
     /// The angle is computed as the angle between the normal vectors of the two polygons.
@@ -251,7 +245,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         let dot = n1.dot(&n2).clamp(-1.0, 1.0);
         dot.acos()
     }
-    
+
     /// Extracts vertices and indices from the Mesh's tessellated polygons.
     fn get_vertices_and_indices(&self) -> (Vec<Point3<Real>>, Vec<[u32; 3]>) {
         let tri_csg = self.triangulate();
@@ -270,7 +264,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         (vertices, indices)
     }
-    
+
     /// Casts a ray defined by `origin` + t * `direction` against all triangles
     /// of this Mesh and returns a list of (intersection_point, distance),
     /// sorted by ascending distance.
@@ -327,7 +321,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         let trimesh = TriMesh::new(vertices, indices).unwrap();
         SharedShape::new(trimesh)
     }
-    
+
     /// Convert the polygons in this Mesh to a Parry `TriMesh`.\
     /// Useful for collision detection.
     ///
@@ -530,17 +524,17 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
             Self::partition_polys(&self.polygons, &other.bounding_box());
         let (b_clip, _b_passthru) =
             Self::partition_polys(&other.polygons, &self.bounding_box());
-        
+
         // propagate self.metadata to new polygons by overwriting intersecting
         // polygon.metadata in other.
-		let b_clip_retagged: Vec<Polygon<S>> = b_clip
-        .iter()
-        .map(|poly| {
-            let mut p = poly.clone();
-            p.metadata = self.metadata.clone();
-            p
-        })
-        .collect();
+        let b_clip_retagged: Vec<Polygon<S>> = b_clip
+            .iter()
+            .map(|poly| {
+                let mut p = poly.clone();
+                p.metadata = self.metadata.clone();
+                p
+            })
+            .collect();
 
         let mut a = Node::from_polygons(&a_clip);
         let mut b = Node::from_polygons(&b_clip_retagged);
@@ -667,10 +661,10 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
                 Matrix4::identity()
             },
         };
-        
+
         let mut mesh = self.clone();
 
-		for poly in &mut mesh.polygons {
+        for poly in &mut mesh.polygons {
             for vert in &mut poly.vertices {
                 // Transform position using homogeneous coordinates
                 let hom_pos = mat * vert.pos.to_homogeneous();
@@ -690,7 +684,7 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
 
             // Reconstruct plane from transformed vertices for consistency
             poly.plane = Plane::from_vertices(poly.vertices.clone());
-            
+
             // Invalidate the polygon's bounding box
             poly.bounding_box = OnceLock::new();
         }
@@ -756,7 +750,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
     /// Convert a Sketch into a Mesh.
     fn from(sketch: Sketch<S>) -> Self {
         /// Helper function to convert a geo::Polygon to a Vec<crate::mesh::polygon::Polygon>
-		fn geo_poly_to_csg_polys<S: Clone + Debug + Send + Sync>(
+        fn geo_poly_to_csg_polys<S: Clone + Debug + Send + Sync>(
             poly2d: &GeoPolygon<Real>,
             metadata: &Option<S>,
         ) -> Vec<Polygon<S>> {
@@ -786,11 +780,14 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
             all_polygons
         }
 
-        let final_polygons = sketch.geometry
-			.iter()
+        let final_polygons = sketch
+            .geometry
+            .iter()
             .flat_map(|geom| -> Vec<Polygon<S>> {
                 match geom {
-                    Geometry::Polygon(poly2d) => geo_poly_to_csg_polys(poly2d, &sketch.metadata),
+                    Geometry::Polygon(poly2d) => {
+                        geo_poly_to_csg_polys(poly2d, &sketch.metadata)
+                    },
                     Geometry::MultiPolygon(multipoly) => multipoly
                         .iter()
                         .flat_map(|poly2d| geo_poly_to_csg_polys(poly2d, &sketch.metadata))

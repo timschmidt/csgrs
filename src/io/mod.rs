@@ -33,7 +33,7 @@ pub enum IoError {
     #[cfg(feature = "svg-io")]
     /// Error bubbled up from the `svg` crate during parsing.
     SvgParsing(::svg::parser::Error),
-    
+
     #[cfg(feature = "obj-io")]
     /// Error during OBJ file processing.
     ObjParsing(String),
@@ -61,8 +61,8 @@ impl std::fmt::Display for IoError {
 
             #[cfg(feature = "svg-io")]
             SvgParsing(error) => write!(f, "SVG Parsing error: {error}"),
-            
-			#[cfg(feature = "obj-io")]
+
+            #[cfg(feature = "obj-io")]
             ObjParsing(error) => write!(f, "OBJ Parsing error: {error}"),
 
             #[cfg(feature = "ply-io")]

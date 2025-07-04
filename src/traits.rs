@@ -11,7 +11,7 @@ pub trait CSGOps: Sized + Clone {
     fn intersection(&self, other: &Self) -> Self;
     fn xor(&self, other: &Self) -> Self;
     fn transform(&self, matrix: &Matrix4<Real>) -> Self;
-	fn inverse(&self) -> Self;
+    fn inverse(&self) -> Self;
     fn bounding_box(&self) -> Aabb;
     fn invalidate_bounding_box(&mut self);
 

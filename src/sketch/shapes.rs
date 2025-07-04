@@ -4,8 +4,8 @@ use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real, TAU};
 use crate::sketch::Sketch;
 use crate::traits::CSGOps;
 use geo::{
-    Geometry, GeometryCollection, LineString, Orient,
-    Polygon as GeoPolygon, coord, line_string, orient::Direction,
+    Geometry, GeometryCollection, LineString, Orient, Polygon as GeoPolygon, coord,
+    line_string, orient::Direction,
 };
 use std::fmt::Debug;
 use std::sync::OnceLock;
@@ -51,7 +51,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         Self::rectangle(width, width, metadata)
     }
 
-	/// **Mathematical Foundation: Parametric Circle Discretization**
+    /// **Mathematical Foundation: Parametric Circle Discretization**
     ///
     /// Creates a 2D circle in the XY plane using parametric equations.
     /// This implements the standard circle parameterization with uniform angular sampling.
@@ -93,7 +93,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `radius`: Circle radius (must be > 0)
     /// - `segments`: Number of polygon edges (minimum 3 for valid geometry)
     /// - `metadata`: Optional metadata attached to the shape
-	pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Self {
+    pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 3 {
             return Sketch::new();
         }
@@ -372,7 +372,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             (x, y)
         }));
         coords.push((0.0, 0.0)); // Close path to the tip
-        
+
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
         Sketch::from_geo(
             GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
@@ -406,8 +406,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             metadata,
         )
     }
-    
-	/// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
+
+    /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
     /// `corner_segments` controls the smoothness of each rounded corner.
     pub fn rounded_rectangle(
         width: Real,
@@ -489,7 +489,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         if segments < 3 {
             return Sketch::new();
         }
-		// 1) Circle
+        // 1) Circle
         let circle = Sketch::circle(circle_radius, segments, metadata.clone());
 
         // 2) Rectangle (handle)
@@ -1343,7 +1343,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 ///
 /// x = rb( cosφ + φ·sinφ )
 /// y = rb( sinφ – φ·cosφ )
-/// 
+///
 /// # Returns
 /// Cartesian coordinates (x, y) of the involute point
 #[inline]

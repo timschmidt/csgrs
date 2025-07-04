@@ -30,7 +30,7 @@ pub struct Node<S: Clone> {
 }
 
 impl<S: Clone + Send + Sync + Debug> Node<S> {
-	/// Create a new empty BSP node
+    /// Create a new empty BSP node
     pub fn new() -> Self {
         Self {
             plane: None,
@@ -39,8 +39,8 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             polygons: Vec::new(),
         }
     }
-	
-	/// Creates a new BSP node from polygons
+
+    /// Creates a new BSP node from polygons
     pub fn from_polygons(polygons: &[Polygon<S>]) -> Self {
         let mut node = Self::new();
         if !polygons.is_empty() {
@@ -58,16 +58,16 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             plane.flip();
         }
 
-		if let Some(ref mut front) = self.front {
-			front.invert();
-		}
-		if let Some(ref mut back) = self.back {
-			back.invert();
-		}
-        
+        if let Some(ref mut front) = self.front {
+            front.invert();
+        }
+        if let Some(ref mut back) = self.back {
+            back.invert();
+        }
+
         std::mem::swap(&mut self.front, &mut self.back);
     }
-    
+
     pub fn pick_best_splitting_plane(&self, polygons: &[Polygon<S>]) -> Plane {
         const K_SPANS: Real = 8.0; // Weight for spanning polygons
         const K_BALANCE: Real = 1.0; // Weight for front/back balance
@@ -116,11 +116,11 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         }
 
         let plane = self.plane.as_ref().unwrap();
-        
+
         // Pre-allocate for better performance
         let mut front_polys = Vec::with_capacity(polygons.len());
         let mut back_polys = Vec::with_capacity(polygons.len());
-        
+
         // Optimized polygon splitting with iterator patterns
         for polygon in polygons {
             let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
@@ -165,8 +165,8 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         }
     }
 
-	/// Return all polygons in this BSP tree using an iterative approach,
-	/// avoiding potential stack overflow of recursive approach
+    /// Return all polygons in this BSP tree using an iterative approach,
+    /// avoiding potential stack overflow of recursive approach
     pub fn all_polygons(&self) -> Vec<Polygon<S>> {
         let mut result = Vec::new();
         let mut stack = vec![self];
@@ -243,7 +243,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             if vcount < 2 {
                 continue; // degenerate polygon => skip
             }
-            
+
             // Use iterator chain to compute vertex types more efficiently
             let types: Vec<_> = poly
                 .vertices
@@ -297,7 +297,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                             .chunks_exact(2)
                             .map(|chunk| [chunk[0].clone(), chunk[1].clone()]),
                     );
-				},
+                },
 
                 _ => {
                     // Shouldn't happen in a typical classification, but we can ignore
@@ -311,9 +311,9 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
 #[cfg(test)]
 mod tests {
-	use crate::mesh::polygon::Polygon;
-	use crate::mesh::vertex::Vertex;
-	use crate::mesh::bsp::Node;
+    use crate::mesh::bsp::Node;
+    use crate::mesh::polygon::Polygon;
+    use crate::mesh::vertex::Vertex;
     use nalgebra::{Point3, Vector3};
 
     #[test]

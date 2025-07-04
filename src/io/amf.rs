@@ -2,9 +2,9 @@
 //!
 //! This module provides export functionality for AMF (Additive Manufacturing File Format),
 //! an XML-based format specifically designed for 3D printing and additive manufacturing.
+use crate::float_types::Real;
 use crate::mesh::Mesh;
 use crate::sketch::Sketch;
-use crate::float_types::Real;
 use geo::CoordsIter;
 use nalgebra::Point3;
 use std::fmt::Debug;
@@ -343,8 +343,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         amf_content
     }
-    
-	/// Export this Mesh to AMF format with color information
+
+    /// Export this Mesh to AMF format with color information
     ///
     /// Creates an AMF file with color/material information for enhanced 3D printing.
     ///
@@ -449,8 +449,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         amf_content
     }
-    
-	// Helper function to add 2D polygon to AMF data
+
+    // Helper function to add 2D polygon to AMF data
     fn add_2d_polygon_to_amf(
         &self,
         poly2d: &geo::Polygon<Real>,
@@ -487,7 +487,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             }
         }
     }
-    
+
     /// Export this Mesh to an AMF file
     ///
     /// # Arguments
@@ -519,16 +519,16 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
 // Helper function to add unique vertex and return its index for AMF
 fn add_unique_vertex_amf(vertices: &mut Vec<Point3<Real>>, vertex: Point3<Real>) -> usize {
-	const EPSILON: Real = 1e-6;
+    const EPSILON: Real = 1e-6;
 
-	// Check if vertex already exists (within tolerance)
-	for (i, existing) in vertices.iter().enumerate() {
-		if (existing.coords - vertex.coords).norm() < EPSILON {
-			return i;
-		}
-	}
+    // Check if vertex already exists (within tolerance)
+    for (i, existing) in vertices.iter().enumerate() {
+        if (existing.coords - vertex.coords).norm() < EPSILON {
+            return i;
+        }
+    }
 
-	// Add new vertex
-	vertices.push(vertex);
-	vertices.len() - 1
+    // Add new vertex
+    vertices.push(vertex);
+    vertices.len() - 1
 }

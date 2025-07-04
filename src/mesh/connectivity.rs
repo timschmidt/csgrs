@@ -119,4 +119,4 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         (vertex_map, adjacency)
     }
-} 
+}

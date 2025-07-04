@@ -1,5 +1,6 @@
 //! Functions to extrude, revolve, loft, and otherwise transform 2D `Sketch`s into 3D `Mesh`s
 
+use crate::errors::ValidationError;
 use crate::float_types::{EPSILON, Real};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
@@ -10,7 +11,6 @@ use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
-use crate::errors::ValidationError;
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
@@ -104,151 +104,151 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     }
 
     /// A helper to handle any Geometry
-	fn extrude_geometry(
-		geom: &geo::Geometry<Real>,
-		direction: Vector3<Real>,
-		metadata: &Option<S>,
-		out_polygons: &mut Vec<Polygon<S>>,
-	) {
-		match geom {
-			geo::Geometry::Polygon(poly) => {
-				let exterior_coords: Vec<[Real; 2]> =
-					poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
-				let interior_rings: Vec<Vec<[Real; 2]>> = poly
-					.interiors()
-					.into_iter()
-					.map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
-					.collect();
+    fn extrude_geometry(
+        geom: &geo::Geometry<Real>,
+        direction: Vector3<Real>,
+        metadata: &Option<S>,
+        out_polygons: &mut Vec<Polygon<S>>,
+    ) {
+        match geom {
+            geo::Geometry::Polygon(poly) => {
+                let exterior_coords: Vec<[Real; 2]> =
+                    poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
+                let interior_rings: Vec<Vec<[Real; 2]>> = poly
+                    .interiors()
+                    .into_iter()
+                    .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
+                    .collect();
 
-				let tris = Sketch::<()>::triangulate_2d(
-					&exterior_coords,
-					&interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>(),
-				);
+                let tris = Sketch::<()>::triangulate_2d(
+                    &exterior_coords,
+                    &interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>(),
+                );
 
-				// bottom
-				for tri in &tris {
-					let v0 = Vertex::new(tri[2], -Vector3::z());
-					let v1 = Vertex::new(tri[1], -Vector3::z());
-					let v2 = Vertex::new(tri[0], -Vector3::z());
-					out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
-				}
-				// top
-				for tri in &tris {
-					let p0 = tri[0] + direction;
-					let p1 = tri[1] + direction;
-					let p2 = tri[2] + direction;
-					let v0 = Vertex::new(p0, Vector3::z());
-					let v1 = Vertex::new(p1, Vector3::z());
-					let v2 = Vertex::new(p2, Vector3::z());
-					out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
-				}
+                // bottom
+                for tri in &tris {
+                    let v0 = Vertex::new(tri[2], -Vector3::z());
+                    let v1 = Vertex::new(tri[1], -Vector3::z());
+                    let v2 = Vertex::new(tri[0], -Vector3::z());
+                    out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
+                }
+                // top
+                for tri in &tris {
+                    let p0 = tri[0] + direction;
+                    let p1 = tri[1] + direction;
+                    let p2 = tri[2] + direction;
+                    let v0 = Vertex::new(p0, Vector3::z());
+                    let v1 = Vertex::new(p1, Vector3::z());
+                    let v2 = Vertex::new(p2, Vector3::z());
+                    out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
+                }
 
-				// sides
-				let all_rings = std::iter::once(poly.exterior()).chain(poly.interiors());
-				for ring in all_rings {
-					let coords: Vec<_> = ring.coords_iter().collect();
-					for window in coords.windows(2) {
-						let c_i = window[0];
-						let c_j = window[1];
-						let b_i = Point3::new(c_i.x, c_i.y, 0.0);
-						let b_j = Point3::new(c_j.x, c_j.y, 0.0);
-						let t_i = b_i + direction;
-						let t_j = b_j + direction;
-						out_polygons.push(Polygon::new(
-							vec![
-								Vertex::new(b_i, Vector3::zeros()),
-								Vertex::new(b_j, Vector3::zeros()),
-								Vertex::new(t_j, Vector3::zeros()),
-								Vertex::new(t_i, Vector3::zeros()),
-							],
-							metadata.clone(),
-						));
-					}
-				}
-			},
-			geo::Geometry::MultiPolygon(mp) => {
-				for poly in &mp.0 {
-					Self::extrude_geometry(
-						&geo::Geometry::Polygon(poly.clone()),
-						direction,
-						metadata,
-						out_polygons,
-					);
-				}
-			},
-			geo::Geometry::GeometryCollection(gc) => {
-				for sub in &gc.0 {
-					Self::extrude_geometry(sub, direction, metadata, out_polygons);
-				}
-			},
-			geo::Geometry::LineString(ls) => {
-				// extrude line strings into side surfaces
-				let coords: Vec<_> = ls.coords_iter().collect();
-				for i in 0..coords.len() - 1 {
-					let c_i = coords[i];
-					let c_j = coords[i + 1];
-					let b_i = Point3::new(c_i.x, c_i.y, 0.0);
-					let b_j = Point3::new(c_j.x, c_j.y, 0.0);
-					let t_i = b_i + direction;
-					let t_j = b_j + direction;
-					// compute face normal for lighting
-					let normal = (b_j - b_i).cross(&(t_i - b_i)).normalize();
-					out_polygons.push(Polygon::new(
-						vec![
-							Vertex::new(b_i, normal),
-							Vertex::new(b_j, normal),
-							Vertex::new(t_j, normal),
-							Vertex::new(t_i, normal),
-						],
-						metadata.clone(),
-					));
-				}
-			},
-			// Line: single segment ribbon
-			geo::Geometry::Line(line) => {
-				let c0 = line.start;
-				let c1 = line.end;
-				let b0 = Point3::new(c0.x, c0.y, 0.0);
-				let b1 = Point3::new(c1.x, c1.y, 0.0);
-				let t0 = b0 + direction;
-				let t1 = b1 + direction;
-				let normal = (b1 - b0).cross(&(t0 - b0)).normalize();
-				out_polygons.push(Polygon::new(
-					vec![
-						Vertex::new(b0, normal),
-						Vertex::new(b1, normal),
-						Vertex::new(t1, normal),
-						Vertex::new(t0, normal),
-					],
-					metadata.clone(),
-				));
-			},
+                // sides
+                let all_rings = std::iter::once(poly.exterior()).chain(poly.interiors());
+                for ring in all_rings {
+                    let coords: Vec<_> = ring.coords_iter().collect();
+                    for window in coords.windows(2) {
+                        let c_i = window[0];
+                        let c_j = window[1];
+                        let b_i = Point3::new(c_i.x, c_i.y, 0.0);
+                        let b_j = Point3::new(c_j.x, c_j.y, 0.0);
+                        let t_i = b_i + direction;
+                        let t_j = b_j + direction;
+                        out_polygons.push(Polygon::new(
+                            vec![
+                                Vertex::new(b_i, Vector3::zeros()),
+                                Vertex::new(b_j, Vector3::zeros()),
+                                Vertex::new(t_j, Vector3::zeros()),
+                                Vertex::new(t_i, Vector3::zeros()),
+                            ],
+                            metadata.clone(),
+                        ));
+                    }
+                }
+            },
+            geo::Geometry::MultiPolygon(mp) => {
+                for poly in &mp.0 {
+                    Self::extrude_geometry(
+                        &geo::Geometry::Polygon(poly.clone()),
+                        direction,
+                        metadata,
+                        out_polygons,
+                    );
+                }
+            },
+            geo::Geometry::GeometryCollection(gc) => {
+                for sub in &gc.0 {
+                    Self::extrude_geometry(sub, direction, metadata, out_polygons);
+                }
+            },
+            geo::Geometry::LineString(ls) => {
+                // extrude line strings into side surfaces
+                let coords: Vec<_> = ls.coords_iter().collect();
+                for i in 0..coords.len() - 1 {
+                    let c_i = coords[i];
+                    let c_j = coords[i + 1];
+                    let b_i = Point3::new(c_i.x, c_i.y, 0.0);
+                    let b_j = Point3::new(c_j.x, c_j.y, 0.0);
+                    let t_i = b_i + direction;
+                    let t_j = b_j + direction;
+                    // compute face normal for lighting
+                    let normal = (b_j - b_i).cross(&(t_i - b_i)).normalize();
+                    out_polygons.push(Polygon::new(
+                        vec![
+                            Vertex::new(b_i, normal),
+                            Vertex::new(b_j, normal),
+                            Vertex::new(t_j, normal),
+                            Vertex::new(t_i, normal),
+                        ],
+                        metadata.clone(),
+                    ));
+                }
+            },
+            // Line: single segment ribbon
+            geo::Geometry::Line(line) => {
+                let c0 = line.start;
+                let c1 = line.end;
+                let b0 = Point3::new(c0.x, c0.y, 0.0);
+                let b1 = Point3::new(c1.x, c1.y, 0.0);
+                let t0 = b0 + direction;
+                let t1 = b1 + direction;
+                let normal = (b1 - b0).cross(&(t0 - b0)).normalize();
+                out_polygons.push(Polygon::new(
+                    vec![
+                        Vertex::new(b0, normal),
+                        Vertex::new(b1, normal),
+                        Vertex::new(t1, normal),
+                        Vertex::new(t0, normal),
+                    ],
+                    metadata.clone(),
+                ));
+            },
 
-			// Rect: convert to polygon and extrude
-			geo::Geometry::Rect(rect) => {
-				let poly2d = rect.to_polygon();
-				Self::extrude_geometry(
-					&geo::Geometry::Polygon(poly2d),
-					direction,
-					metadata,
-					out_polygons,
-				);
-			},
+            // Rect: convert to polygon and extrude
+            geo::Geometry::Rect(rect) => {
+                let poly2d = rect.to_polygon();
+                Self::extrude_geometry(
+                    &geo::Geometry::Polygon(poly2d),
+                    direction,
+                    metadata,
+                    out_polygons,
+                );
+            },
 
-			// Triangle: convert to polygon and extrude
-			geo::Geometry::Triangle(tri) => {
-				let poly2d = tri.to_polygon();
-				Self::extrude_geometry(
-					&geo::Geometry::Polygon(poly2d),
-					direction,
-					metadata,
-					out_polygons,
-				);
-			},
-			// Other geometry types (Point, etc.) are skipped or could be handled differently:
-			_ => { /* skip */ },
-		}
-	}
+            // Triangle: convert to polygon and extrude
+            geo::Geometry::Triangle(tri) => {
+                let poly2d = tri.to_polygon();
+                Self::extrude_geometry(
+                    &geo::Geometry::Polygon(poly2d),
+                    direction,
+                    metadata,
+                    out_polygons,
+                );
+            },
+            // Other geometry types (Point, etc.) are skipped or could be handled differently:
+            _ => { /* skip */ },
+        }
+    }
 
     /// Extrudes (or "lofts") a closed 3D volume between two polygons in space.
     /// - `bottom` and `top` each have the same number of vertices `n`, in matching order.
@@ -551,7 +551,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `segments`: Number of angular subdivisions (≥ 2)
     ///
     /// Returns Mesh with revolution surfaces only
-    pub fn revolve(&self, angle_degs: Real, segments: usize) -> Result<Mesh<S>, ValidationError> {
+    pub fn revolve(
+        &self,
+        angle_degs: Real,
+        segments: usize,
+    ) -> Result<Mesh<S>, ValidationError> {
         if segments < 2 {
             return Err(ValidationError::InvalidArguments);
         }

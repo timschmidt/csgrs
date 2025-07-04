@@ -19,15 +19,15 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Convert this Mesh to an **ASCII STL** string with the given `name`.
     ///
     /// ```rust
-	/// # use csgrs::mesh::Mesh;
-	/// # use std::error::Error;
-	/// # fn main() -> Result<(), Box<dyn Error>> {
-	/// let mesh  = Mesh::<()>::cube(1.0, None);
-	/// let bytes = mesh.to_stl_ascii("my_solid");
-	/// std::fs::write("my_solid.stl", bytes)?;
-	/// # Ok(())
-	/// # }
-	/// ```
+    /// # use csgrs::mesh::Mesh;
+    /// # use std::error::Error;
+    /// # fn main() -> Result<(), Box<dyn Error>> {
+    /// let mesh  = Mesh::<()>::cube(1.0, None);
+    /// let bytes = mesh.to_stl_ascii("my_solid");
+    /// std::fs::write("my_solid.stl", bytes)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn to_stl_ascii(&self, name: &str) -> String {
         let mut out = String::new();
         out.push_str(&format!("solid {}\n", name));
@@ -65,16 +65,16 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// The resulting `Vec<u8>` can then be written to a file or handled in memory:
     ///
-	/// ```rust
-	/// # use csgrs::mesh::Mesh;
-	/// # use std::error::Error;
-	/// # fn main() -> Result<(), Box<dyn Error>> {
-	/// let object = Mesh::<()>::cube(1.0, None);
-	/// let bytes  = object.to_stl_binary("my_solid")?;
-	/// std::fs::write("my_solid.stl", bytes)?;
-	/// # Ok(())
-	/// # }
-	/// ```
+    /// ```rust
+    /// # use csgrs::mesh::Mesh;
+    /// # use std::error::Error;
+    /// # fn main() -> Result<(), Box<dyn Error>> {
+    /// let object = Mesh::<()>::cube(1.0, None);
+    /// let bytes  = object.to_stl_binary("my_solid")?;
+    /// std::fs::write("my_solid.stl", bytes)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[cfg(feature = "stl-io")]
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
         use core2::io::Cursor;
@@ -186,7 +186,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Convert this Sketch to an **ASCII STL** string with the given 'name'.
     ///
     /// ```
-	/// # use csgrs::sketch::Sketch;
+    /// # use csgrs::sketch::Sketch;
     /// # use std::error::Error;
     /// # fn main() -> Result<(), Box<dyn Error>> {
     /// let sketch: Sketch<()> = Sketch::square(2.0, None);
@@ -296,15 +296,15 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// The resulting `Vec<u8>` can then be written to a file or handled in memory:
     ///
     /// ```rust
-	/// # use csgrs::sketch::Sketch;
-	/// # use std::error::Error;
-	/// # fn main() -> Result<(), Box<dyn Error>> {
-	/// let object = Sketch::<()>::square(1.0, None);
-	/// let bytes  = object.to_stl_binary("my_sketch")?;
-	/// std::fs::write("my_sketch.stl", bytes)?;
-	/// # Ok(())
-	/// # }
-	/// ```
+    /// # use csgrs::sketch::Sketch;
+    /// # use std::error::Error;
+    /// # fn main() -> Result<(), Box<dyn Error>> {
+    /// let object = Sketch::<()>::square(1.0, None);
+    /// let bytes  = object.to_stl_binary("my_sketch")?;
+    /// std::fs::write("my_sketch.stl", bytes)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[cfg(feature = "stl-io")]
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
         use core2::io::Cursor;

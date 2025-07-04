@@ -33,11 +33,10 @@ impl<S: Clone + PartialEq> PartialEq for Polygon<S> {
 }
 
 #[allow(unused)]
-impl<S: Clone + Send + Sync + PartialEq> Polygon<S>
-{
-	fn same_metadata(&self, metadata: Option<S>) -> bool {
-		self.metadata == metadata
-	}
+impl<S: Clone + Send + Sync + PartialEq> Polygon<S> {
+    fn same_metadata(&self, metadata: Option<S>) -> bool {
+        self.metadata == metadata
+    }
 }
 
 impl<S: Clone + Send + Sync> Polygon<S> {
@@ -302,7 +301,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
 
         result // todo: return polygons
     }
-    
+
     /// Convert subdivision triangles back to polygons for CSG operations
     /// Each triangle becomes a triangular polygon with the same metadata
     pub fn subdivide_to_polygons(

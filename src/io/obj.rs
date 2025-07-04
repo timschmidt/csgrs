@@ -2,11 +2,11 @@
 //!
 //! This module provides import and export functionality for Wavefront OBJ files,
 //! a widely-supported 3D file format used by many modeling and rendering applications.
-use crate::mesh::Mesh;
-use crate::sketch::Sketch;
 use crate::float_types::Real;
+use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
+use crate::sketch::Sketch;
 use geo::CoordsIter;
 use nalgebra::{Point3, Vector3};
 
@@ -295,7 +295,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 }
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
-	/// Export this Mesh to OBJ format as a string
+    /// Export this Mesh to OBJ format as a string
     ///
     /// Creates a Wavefront OBJ file containing:
     /// 1. All 3D polygons from `self.polygons` (tessellated to triangles)
@@ -381,7 +381,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         obj_content
     }
-	
+
     // Helper function to add 2D polygon to OBJ data
     fn add_2d_polygon_to_obj(
         &self,
@@ -428,32 +428,32 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
 // Helper function to add unique vertex and return its index
 fn add_unique_vertex(vertices: &mut Vec<Point3<Real>>, vertex: Point3<Real>) -> usize {
-	const EPSILON: Real = 1e-6;
+    const EPSILON: Real = 1e-6;
 
-	// Check if vertex already exists (within tolerance)
-	for (i, existing) in vertices.iter().enumerate() {
-		if (existing.coords - vertex.coords).norm() < EPSILON {
-			return i;
-		}
-	}
+    // Check if vertex already exists (within tolerance)
+    for (i, existing) in vertices.iter().enumerate() {
+        if (existing.coords - vertex.coords).norm() < EPSILON {
+            return i;
+        }
+    }
 
-	// Add new vertex
-	vertices.push(vertex);
-	vertices.len() - 1
+    // Add new vertex
+    vertices.push(vertex);
+    vertices.len() - 1
 }
 
 // Helper function to add unique normal and return its index
 fn add_unique_normal(normals: &mut Vec<Vector3<Real>>, normal: Vector3<Real>) -> usize {
-	const EPSILON: Real = 1e-6;
+    const EPSILON: Real = 1e-6;
 
-	// Check if normal already exists (within tolerance)
-	for (i, existing) in normals.iter().enumerate() {
-		if (existing - normal).norm() < EPSILON {
-			return i;
-		}
-	}
+    // Check if normal already exists (within tolerance)
+    for (i, existing) in normals.iter().enumerate() {
+        if (existing - normal).norm() < EPSILON {
+            return i;
+        }
+    }
 
-	// Add new normal
-	normals.push(normal);
-	normals.len() - 1
+    // Add new normal
+    normals.push(normal);
+    normals.len() - 1
 }

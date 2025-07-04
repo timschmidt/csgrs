@@ -2,13 +2,14 @@
 
 use crate::float_types::Real;
 use crate::float_types::parry3d::bounding_volume::Aabb;
-use crate::traits::CSGOps;
 use crate::mesh::Mesh;
+use crate::traits::CSGOps;
+use geo::algorithm::winding_order::Winding;
 use geo::{
     AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Coord, Geometry,
-    GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect, orient::Direction,
+    GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
+    orient::Direction,
 };
-use geo::algorithm::winding_order::Winding;
 use nalgebra::{Matrix4, Point3, partial_max, partial_min};
 use std::fmt::Debug;
 use std::sync::OnceLock;
@@ -66,7 +67,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
         new_sketch.metadata = metadata;
         new_sketch
     }
-    
+
     /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
     pub fn triangulate_2d(
         outer: &[[Real; 2]],
@@ -134,31 +135,31 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
             result
         }
     }
-    
+
     /// Return a copy of this `Sketch` whose polygons are normalised so that
-	/// exterior rings wind counter-clockwise and interior rings clockwise.
+    /// exterior rings wind counter-clockwise and interior rings clockwise.
     pub fn renormalize(&self) -> Sketch<S> {
         // Re-build the collection, orienting only what’s supported.
-		let oriented_geoms: Vec<Geometry<Real>> = self
-			.geometry
-			.iter()
-			.map(|geom| match geom {
-				Geometry::Polygon(p) => {
-					Geometry::Polygon(p.clone().orient(Direction::Default))
-				}
-				Geometry::MultiPolygon(mp) => {
-					Geometry::MultiPolygon(mp.clone().orient(Direction::Default))
-				}
-				// Everything else keeps its original orientation.
-				_ => geom.clone(),
-			})
-			.collect();
+        let oriented_geoms: Vec<Geometry<Real>> = self
+            .geometry
+            .iter()
+            .map(|geom| match geom {
+                Geometry::Polygon(p) => {
+                    Geometry::Polygon(p.clone().orient(Direction::Default))
+                },
+                Geometry::MultiPolygon(mp) => {
+                    Geometry::MultiPolygon(mp.clone().orient(Direction::Default))
+                },
+                // Everything else keeps its original orientation.
+                _ => geom.clone(),
+            })
+            .collect();
 
-		Sketch {
-			geometry: GeometryCollection(oriented_geoms),
-			bounding_box: OnceLock::new(),
-			metadata: self.metadata.clone(),
-		}
+        Sketch {
+            geometry: GeometryCollection(oriented_geoms),
+            bounding_box: OnceLock::new(),
+            metadata: self.metadata.clone(),
+        }
     }
 }
 
@@ -451,44 +452,43 @@ impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
     /// Invert this Sketch (flip inside vs. outside)
     fn inverse(&self) -> Sketch<S> {
         // Re-build the collection, orienting only what’s supported.
-		let oriented_geoms: Vec<Geometry<Real>> = self
-			.geometry
-			.iter()
-			.map(|geom| match geom {
-				Geometry::Polygon(p) => {
-					let flipped = if p.exterior().is_ccw() {
-						p.clone().orient(Direction::Reversed)
-					} else {
-						p.clone().orient(Direction::Default)
-					};
-					Geometry::Polygon(flipped)
-				}
-				Geometry::MultiPolygon(mp) => {
-					// Loop over every polygon inside and apply the same rule.
-					let flipped_polys: Vec<GeoPolygon<Real>> = mp
-						.0
-						.iter()
-						.map(|p| {
-							if p.exterior().is_ccw() {
-								p.clone().orient(Direction::Reversed)
-							} else {
-								p.clone().orient(Direction::Default)
-							}
-						})
-						.collect();
+        let oriented_geoms: Vec<Geometry<Real>> = self
+            .geometry
+            .iter()
+            .map(|geom| match geom {
+                Geometry::Polygon(p) => {
+                    let flipped = if p.exterior().is_ccw() {
+                        p.clone().orient(Direction::Reversed)
+                    } else {
+                        p.clone().orient(Direction::Default)
+                    };
+                    Geometry::Polygon(flipped)
+                },
+                Geometry::MultiPolygon(mp) => {
+                    // Loop over every polygon inside and apply the same rule.
+                    let flipped_polys: Vec<GeoPolygon<Real>> =
+                        mp.0.iter()
+                            .map(|p| {
+                                if p.exterior().is_ccw() {
+                                    p.clone().orient(Direction::Reversed)
+                                } else {
+                                    p.clone().orient(Direction::Default)
+                                }
+                            })
+                            .collect();
 
-					Geometry::MultiPolygon(MultiPolygon(flipped_polys))
-				}
-				// Everything else keeps its original orientation.
-				_ => geom.clone(),
-			})
-			.collect();
+                    Geometry::MultiPolygon(MultiPolygon(flipped_polys))
+                },
+                // Everything else keeps its original orientation.
+                _ => geom.clone(),
+            })
+            .collect();
 
-		Sketch {
-			geometry: GeometryCollection(oriented_geoms),
-			bounding_box: OnceLock::new(),
-			metadata: self.metadata.clone(),
-		}
+        Sketch {
+            geometry: GeometryCollection(oriented_geoms),
+            bounding_box: OnceLock::new(),
+            metadata: self.metadata.clone(),
+        }
     }
 }
 

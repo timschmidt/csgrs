@@ -145,14 +145,20 @@ fn main() {
         vector_extruded_star.to_stl_binary("star_extrude").unwrap(),
     );
 
-    let revolve_circle = circle_2d.translate(10.0, 0.0, 0.0).revolve(360.0, 32).expect("Revolve failed");
+    let revolve_circle = circle_2d
+        .translate(10.0, 0.0, 0.0)
+        .revolve(360.0, 32)
+        .expect("Revolve failed");
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
         "stl/circle_revolve_360.stl",
         revolve_circle.to_stl_binary("circle_revolve_360").unwrap(),
     );
 
-    let partial_revolve = circle_2d.translate(10.0, 0.0, 0.0).revolve(180.0, 32).expect("Revolve failed");
+    let partial_revolve = circle_2d
+        .translate(10.0, 0.0, 0.0)
+        .revolve(180.0, 32)
+        .expect("Revolve failed");
     #[cfg(feature = "stl-io")]
     let _ = fs::write(
         "stl/circle_revolve_180.stl",
