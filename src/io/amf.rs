@@ -501,7 +501,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// use std::fs::File;
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let csg: Mesh<()> = Mesh::cube(10.0, None);
-    /// let mut file = File::create("output.amf")?;
+    /// let mut file = File::create("stl/output.amf")?;
     /// csg.write_amf(&mut file, "my_cube", "millimeter")?;
     /// # Ok(())
     /// # }
