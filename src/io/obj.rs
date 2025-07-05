@@ -109,7 +109,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// use std::fs::File;
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let csg: Mesh<()> = Mesh::cube(10.0, None);
-    /// let mut file = File::create("output.obj")?;
+    /// let mut file = File::create("stl/output.obj")?;
     /// csg.write_obj(&mut file, "my_cube")?;
     /// # Ok(())
     /// # }
