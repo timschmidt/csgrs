@@ -6,7 +6,7 @@ use geo::{
 use svg::node::element::path;
 
 use crate::sketch::Sketch;
-use crate::traits::CSGOps;
+use crate::traits::CSG;
 
 use super::IoError;
 

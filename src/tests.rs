@@ -1,5 +1,5 @@
 use crate::errors::ValidationError;
-use crate::float_types::{EPSILON, PI, FRAC_PI_2, Real};
+use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
@@ -8,8 +8,8 @@ use crate::mesh::vertex::{Vertex, VertexCluster};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{Area, Geometry, HasDimensions};
-use nalgebra::{Point3, Vector3};
 use hashbrown::HashMap;
+use nalgebra::{Point3, Vector3};
 
 // --------------------------------------------------------
 //   Helpers
@@ -2150,10 +2150,7 @@ fn test_mesh_quality_analysis() {
         );
         assert!(quality.area > 0.0, "Triangle area should be positive");
         assert!(quality.min_angle > 0.0, "Minimum angle should be positive");
-        assert!(
-            quality.max_angle < PI,
-            "Maximum angle should be less than π"
-        );
+        assert!(quality.max_angle < PI, "Maximum angle should be less than π");
     }
 
     // Compute overall mesh quality metrics

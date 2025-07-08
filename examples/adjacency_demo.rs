@@ -1,3 +1,4 @@
+use csgrs::float_types::Real;
 /// **Adjacency Map Usage Demonstration**
 ///
 /// This example demonstrates that the adjacency map is now properly used
@@ -10,7 +11,6 @@
 /// 3. **True Laplacian Smoothing**: uses proper neighbor relationships from adjacency map
 /// 4. **Comprehensive Quality Analysis**: vertex valence, regularity, and mesh metrics
 use csgrs::mesh::Mesh;
-use csgrs::float_types::Real;
 
 fn main() {
     println!("=== ADJACENCY MAP USAGE DEMONSTRATION ===\n");
