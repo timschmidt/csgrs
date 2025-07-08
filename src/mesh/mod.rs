@@ -36,12 +36,12 @@ pub mod metaballs;
 pub mod plane;
 pub mod polygon;
 
-#[cfg(feature = "sdf")]
-pub mod sdf;
-pub mod shapes;
 pub mod connectivity;
 pub mod manifold;
 pub mod quality;
+#[cfg(feature = "sdf")]
+pub mod sdf;
+pub mod shapes;
 pub mod smoothing;
 #[cfg(feature = "sdf")]
 pub mod tpms;

@@ -1,4 +1,3 @@
-
 //! Example: Multi-Format Export Demo  
 //!
 //! This example demonstrates exporting Mesh objects to multiple 3D file formats:
