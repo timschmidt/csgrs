@@ -29,8 +29,6 @@ pub mod bsp_parallel;
 
 #[cfg(feature = "chull")]
 pub mod convex_hull;
-
-#[cfg(feature = "hashmap")]
 pub mod flatten_slice;
 
 #[cfg(feature = "metaballs")]
@@ -41,7 +39,6 @@ pub mod polygon;
 #[cfg(feature = "sdf")]
 pub mod sdf;
 pub mod shapes;
-
 pub mod connectivity;
 pub mod manifold;
 pub mod quality;

@@ -1,5 +1,5 @@
 use crate::errors::ValidationError;
-use crate::float_types::{EPSILON, FRAC_PI_2, Real};
+use crate::float_types::{EPSILON, PI, FRAC_PI_2, Real};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
@@ -95,6 +95,7 @@ fn test_polygon_construction() {
 // --------------------------------------------------------
 
 #[test]
+#[cfg(feature = "stl-io")]
 fn test_to_stl_ascii() {
     let cube: Mesh<()> = Mesh::cube(2.0, None);
     let stl_str = cube.to_stl_ascii("test_cube");
@@ -764,6 +765,7 @@ fn test_csg_mirror() {
 }
 
 #[test]
+#[cfg(feature = "chull-io")]
 fn test_csg_convex_hull() {
     // If we take a shape with some random points, the hull should just enclose them
     let c1: Mesh<()> = Mesh::sphere(1.0, 16, 8, None);
@@ -774,6 +776,7 @@ fn test_csg_convex_hull() {
 }
 
 #[test]
+#[cfg(feature = "chull-io")]
 fn test_csg_minkowski_sum() {
     // Minkowski sum of two cubes => bigger cube offset by edges
     let c1: Mesh<()> = Mesh::cube(2.0, None).center();
@@ -910,6 +913,7 @@ fn test_csg_vertices() {
 }
 
 #[test]
+#[cfg(feature = "offset")]
 fn test_csg_offset_2d() {
     let square: Sketch<()> = Sketch::square(2.0, None);
     let grown = square.offset(0.5);
@@ -982,6 +986,7 @@ fn test_csg_to_rigid_body() {
 }
 
 #[test]
+#[cfg(feature = "stl-io")]
 fn test_csg_to_stl_and_from_stl_file() -> Result<(), Box<dyn std::error::Error>> {
     // We'll create a small shape, write to an STL, read it back.
     // You can redirect to a temp file or do an in-memory test.
@@ -1296,6 +1301,7 @@ fn test_square_ccw_ordering() {
 }
 
 #[test]
+#[cfg(feature = "offset")]
 fn test_offset_2d_positive_distance_grows() {
     let square = Sketch::<()>::square(2.0, None); // Centered square with size 2x2
     let offset = square.offset(0.5); // Positive offset should grow the square
@@ -1313,6 +1319,7 @@ fn test_offset_2d_positive_distance_grows() {
 }
 
 #[test]
+#[cfg(feature = "offset")]
 fn test_offset_2d_negative_distance_shrinks() {
     let square = Sketch::<()>::square(2.0, None); // Centered square with size 2x2
     let offset = square.offset(-0.5); // Negative offset should shrink the square
@@ -1342,6 +1349,7 @@ fn test_polygon_2d_enforce_ccw_ordering() {
 }
 
 #[test]
+#[cfg(feature = "offset")]
 fn test_circle_offset_2d() {
     let circle = Sketch::<()>::circle(1.0, 32, None);
     let offset_grow = circle.offset(0.2); // Should grow the circle
@@ -1535,7 +1543,6 @@ fn test_flatten_cube() {
 }
 
 #[test]
-#[cfg(feature = "hashmap")]
 fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
     let cyl = Mesh::<()>::cylinder(1.0, 2.0, 32, None).center();
@@ -2144,7 +2151,7 @@ fn test_mesh_quality_analysis() {
         assert!(quality.area > 0.0, "Triangle area should be positive");
         assert!(quality.min_angle > 0.0, "Minimum angle should be positive");
         assert!(
-            quality.max_angle < std::f64::consts::PI,
+            quality.max_angle < PI,
             "Maximum angle should be less than π"
         );
     }
@@ -2283,7 +2290,7 @@ fn test_vertex_distance_operations() {
     // Test normal angle
     let angle = v1.normal_angle_to(&v2);
     assert!(
-        (angle - std::f64::consts::PI / 2.0).abs() < 1e-10,
+        (angle - PI / 2.0).abs() < 1e-10,
         "Angle between x and y normals should be π/2"
     );
 }
@@ -2463,7 +2470,7 @@ fn test_vertex_connectivity_analysis() {
         vertex_count += 1;
     }
 
-    let avg_regularity = total_regularity / vertex_count as f64;
+    let avg_regularity = total_regularity / vertex_count as Real;
     println!("Average regularity: {:.3}", avg_regularity);
 
     // Sphere vertices should have reasonable regularity
@@ -2484,14 +2491,14 @@ fn test_mesh_quality_with_adjacency() {
     println!("  Number of triangles: {}", qualities.len());
 
     if !qualities.is_empty() {
-        let avg_quality: f64 =
-            qualities.iter().map(|q| q.quality_score).sum::<f64>() / qualities.len() as f64;
+        let avg_quality: Real =
+            qualities.iter().map(|q| q.quality_score).sum::<Real>() / qualities.len() as Real;
         println!("  Average quality score: {:.3}", avg_quality);
 
         let min_quality = qualities
             .iter()
             .map(|q| q.quality_score)
-            .fold(f64::INFINITY, |a, b| a.min(b));
+            .fold(Real::INFINITY, |a, b| a.min(b));
         println!("  Minimum quality score: {:.3}", min_quality);
 
         // Cube triangles should have reasonable quality

@@ -52,7 +52,7 @@ wgpu-types = { version = "24", optional = true, default-features = false }
 # utils
 rayon = { version = "1.10", optional = true }
 thiserror = "2.0"
-hashbrown = { version = "0.15", optional = true }
+hashbrown = { version = "0.15" }
 fast-surface-nets = { version = "0.2.1", optional = true }
 contour_tracing = { version = "1.0.12", features = ["array"], optional = true }
 either = "1.15"
@@ -81,11 +81,11 @@ getrandom = { version = "0.3", features = ["wasm_js"], optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
-default = ["f64", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "chull-io", "image-io", "metaballs", "hashmap", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
+default = ["f64", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
 parallel = [
   "rayon",
   "geo/multithreading",
-  "hashbrown?/rayon",
+  "hashbrown/rayon",
   "parry3d?/parallel",
   "parry3d-f64?/parallel",
   "rapier3d?/parallel",
@@ -135,11 +135,6 @@ image-io = [
 ]
 metaballs = [
   "fast-surface-nets",
-  "hashmap",
-]
-# slice and related helper functions, is_manifold(), metaball_2d
-hashmap = [
-  "dep:hashbrown",
 ]
 sdf = [
   "fast-surface-nets",
