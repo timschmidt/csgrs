@@ -11,7 +11,6 @@
 //! - [**dxf-io**](https://en.wikipedia.org/wiki/AutoCAD_DXF): `.dxf` import/export
 //! - **chull-io**: convex hull and minkowski sum
 //! - **metaballs**: enables a `CSG` implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
-//! - **hashmap**: enables use of hashbrown for slice, related helper functions, and `is_manifold`
 //! - **sdf**: signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) using [fast-surface-nets](https://crates.io/crates/fast-surface-nets)
 //! - **offset**: use `geo-buf` for offset operations
 //! - **delaunay**: use `geo`s `spade` feature for triangulation

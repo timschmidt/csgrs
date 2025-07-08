@@ -10,6 +10,7 @@
 /// 3. **True Laplacian Smoothing**: uses proper neighbor relationships from adjacency map
 /// 4. **Comprehensive Quality Analysis**: vertex valence, regularity, and mesh metrics
 use csgrs::mesh::Mesh;
+use csgrs::float_types::Real;
 
 fn main() {
     println!("=== ADJACENCY MAP USAGE DEMONSTRATION ===\n");
@@ -47,7 +48,7 @@ fn main() {
     }
 
     valence_stats.sort();
-    let avg_valence = total_edges as f64 / adjacency_map.len() as f64;
+    let avg_valence = total_edges as Real / adjacency_map.len() as Real;
     let min_valence = valence_stats.first().unwrap_or(&0);
     let max_valence = valence_stats.last().unwrap_or(&0);
 
@@ -76,8 +77,8 @@ fn main() {
         }
     }
 
-    let avg_regularity: f64 =
-        regularity_samples.iter().sum::<f64>() / regularity_samples.len() as f64;
+    let avg_regularity: Real =
+        regularity_samples.iter().sum::<Real>() / regularity_samples.len() as Real;
     println!("   Average regularity (sample): {:.3}", avg_regularity);
 
     // Demonstrate Laplacian smoothing using the adjacency map
@@ -124,12 +125,12 @@ fn main() {
     let qualities = tessellated.analyze_triangle_quality();
 
     if !qualities.is_empty() {
-        let avg_quality: f64 =
-            qualities.iter().map(|q| q.quality_score).sum::<f64>() / qualities.len() as f64;
+        let avg_quality: Real =
+            qualities.iter().map(|q| q.quality_score).sum::<Real>() / qualities.len() as Real;
         let min_quality = qualities
             .iter()
             .map(|q| q.quality_score)
-            .fold(f64::INFINITY, |a, b| a.min(b));
+            .fold(Real::INFINITY, |a, b| a.min(b));
 
         println!("   Triangle count: {}", qualities.len());
         println!("   Average quality: {:.3}", avg_quality);
