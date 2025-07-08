@@ -256,18 +256,18 @@ let iso_value = 0.0; // Typically zero for SDF-based surfaces
 let csg_shape = Mesh::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
 ```
 
-### CSGOps Boolean Operations
+### CSG Boolean Operations
 
 ```rust
-use csgrs::traits::CSGOps;
+use csgrs::traits::CSG;
 
 let union_result = cube.union(&sphere);
 let difference_result = cube.difference(&sphere);
 let intersection_result = cylinder.intersection(&sphere);
 ```
 
-Booleans on any type implementing the CSGOps trait such as `Mesh<S>` or `Sketch<S>` return their own type.
-Types implementing the CSGOps trait also provide the following transformation functions:
+Booleans on any type implementing the CSG trait such as `Mesh<S>` or `Sketch<S>` return their own type.
+Types implementing the CSG trait also provide the following transformation functions:
 
 ### Transformations
 
@@ -287,7 +287,7 @@ Types implementing the CSGOps trait also provide the following transformation fu
 ```rust
 use nalgebra::Vector3;
 use csgrs::mesh::plane::Plane;
-use csgrs::traits::CSGOps;
+use csgrs::traits::CSG;
 
 let moved = cube.translate(3.0, 0.0, 0.0);
 let moved2 = cube.translate_vector(Vector3::new(3.0, 0.0, 0.0));
@@ -386,7 +386,7 @@ let trimesh_shape = mesh_obj.to_trimesh(); // SharedShape with a TriMesh
 use nalgebra::Vector3;
 use csgrs::float_types::rapier3d::prelude::*;  // re-exported for f32/f64 support
 use csgrs::float_types::FRAC_PI_2;
-use csgrs::traits::CSGOps;
+use csgrs::traits::CSG;
 use csgrs::mesh::Mesh;
 
 let mut rb_set = RigidBodySet::new();

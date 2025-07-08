@@ -13,7 +13,7 @@ use crate::float_types::Real;
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-use crate::traits::CSGOps;
+use crate::traits::CSG;
 use chull::ConvexHullWrapper;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;

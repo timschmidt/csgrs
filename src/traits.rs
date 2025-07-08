@@ -4,7 +4,7 @@ use crate::mesh::plane::Plane;
 use nalgebra::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
 
 /// Boolean operations + transformations
-pub trait CSGOps: Sized + Clone {
+pub trait CSG: Sized + Clone {
     fn new() -> Self;
     fn union(&self, other: &Self) -> Self;
     fn difference(&self, other: &Self) -> Self;
@@ -45,7 +45,7 @@ pub trait CSGOps: Sized + Clone {
     /// # Example
     /// ```
     /// use csgrs::mesh::Mesh;
-    /// use crate::csgrs::traits::CSGOps;
+    /// use crate::csgrs::traits::CSG;
     /// let mesh = Mesh::<()>::cube(1.0, None).translate(2.0, 1.0, -2.0);
     /// let floated = mesh.float();
     /// assert_eq!(floated.bounding_box().mins.z, 0.0);
