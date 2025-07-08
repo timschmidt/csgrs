@@ -9,7 +9,7 @@
 /// 2. **Global Connectivity Graph**: actual mesh connectivity instead of local polygon edges
 /// 3. **True Laplacian Smoothing**: uses proper neighbor relationships from adjacency map
 /// 4. **Comprehensive Quality Analysis**: vertex valence, regularity, and mesh metrics
-use csgrs::*;
+use csgrs::mesh::Mesh;
 
 fn main() {
     println!("=== ADJACENCY MAP USAGE DEMONSTRATION ===\n");
@@ -21,7 +21,7 @@ fn main() {
 
     // Build mesh connectivity - this is where adjacency map is created and used
     println!("\n2. Building mesh connectivity graph...");
-    let (vertex_map, adjacency_map) = sphere.build_mesh_connectivity();
+    let (vertex_map, adjacency_map) = sphere.build_connectivity();
 
     println!("   Unique vertices found: {}", vertex_map.vertex_count());
     println!("   Adjacency entries: {}", adjacency_map.len());
@@ -61,7 +61,7 @@ fn main() {
 
     for &vertex_idx in adjacency_map.keys().take(10) {
         let (valence, regularity) =
-            csgrs::geometry::vertex::Vertex::analyze_connectivity_with_index(
+            csgrs::mesh::vertex::Vertex::analyze_connectivity_with_index(
                 vertex_idx,
                 &adjacency_map,
             );
@@ -91,8 +91,8 @@ fn main() {
     );
 
     // Apply smoothing with different lambda values
-    let smoothed_weak = sphere.laplacian_smooth_global(0.1, 1, false);
-    let smoothed_strong = sphere.laplacian_smooth_global(0.3, 1, false);
+    let smoothed_weak = sphere.laplacian_smooth(0.1, 1, false);
+    let smoothed_strong = sphere.laplacian_smooth(0.3, 1, false);
 
     let weak_pos = smoothed_weak.polygons[0].vertices[0].pos;
     let strong_pos = smoothed_strong.polygons[0].vertices[0].pos;
@@ -120,7 +120,7 @@ fn main() {
 
     // Demonstrate mesh quality analysis
     println!("\n6. Mesh quality analysis:");
-    let tessellated = sphere.tessellate();
+    let tessellated = sphere.triangulate();
     let qualities = tessellated.analyze_triangle_quality();
 
     if !qualities.is_empty() {
@@ -144,7 +144,7 @@ fn main() {
     // Demonstrate adaptive refinement
     println!("\n7. Adaptive mesh refinement:");
     let refined = tessellated.adaptive_refine(0.5, 2.0, 15.0);
-    let (refined_vertex_map, refined_adjacency_map) = refined.build_mesh_connectivity();
+    let (refined_vertex_map, refined_adjacency_map) = refined.build_connectivity();
     println!("   Original triangles: {}", tessellated.polygons.len());
     println!("   After refinement: {}", refined.polygons.len());
 

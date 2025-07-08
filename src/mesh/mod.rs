@@ -14,7 +14,7 @@ use crate::float_types::{
 };
 use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
 use crate::sketch::Sketch;
-use crate::traits::CSGOps;
+use crate::traits::CSG;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
@@ -453,7 +453,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> CSGOps for Mesh<S> {
+impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     /// Returns a new empty Mesh
     fn new() -> Self {
         Mesh {

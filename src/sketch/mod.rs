@@ -3,7 +3,7 @@
 use crate::float_types::Real;
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::mesh::Mesh;
-use crate::traits::CSGOps;
+use crate::traits::CSG;
 use geo::algorithm::winding_order::Winding;
 use geo::{
     AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Coord, Geometry,
@@ -163,7 +163,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> CSGOps for Sketch<S> {
+impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     /// Returns a new empty Sketch
     fn new() -> Self {
         Sketch {
