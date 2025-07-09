@@ -2,45 +2,23 @@ name: Rust CI
 
 on: [push, pull_request]
 
-env:
-  CARGO_TERM_COLOR: always
-
-  # ---------- crate-specific switches ----------
-  # Exactly ONE of {f32, f64}:
-  FLOAT_FEATURE: f32
-  # Exactly ONE of {earcut, delaunay}:
-  TESSELLATION_FEATURE: earcut
-
-  # Extra features you want in every build:
-  EXTRA_FEATURES: |
-    parallel
-    stl-io
-    svg-io
-    dxf-io
-    truetype-text
-    hershey-text
-    image-io
-
 jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
-    env:
-      FEATURES: "${{ env.FLOAT_FEATURE }} ${{ env.TESSELLATION_FEATURE }} ${{ env.EXTRA_FEATURES }}"
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Rust/Cargo Cache
         uses: Swatinem/rust-cache@v2
-
+        
       - name: Run Check
-        run: cargo check --no-default-features --features "${FEATURES}"
+        run: cargo check --no-default-features --features
+          "f32 earcut parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
 
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    env:
-      FEATURES: "${{ env.FLOAT_FEATURE }} ${{ env.TESSELLATION_FEATURE }} ${{ env.EXTRA_FEATURES }}"
     steps:
       - uses: actions/checkout@v4
 
@@ -48,7 +26,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run Tests
-        run: cargo test --lib --no-default-features --features "${FEATURES}"
+        run: cargo test --lib --no-default-features --features
+          "f32 earcut parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
 
   fmt:
     name: Formatting
@@ -70,13 +49,13 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run Clippy
-        run: cargo clippy --lib --no-default-features --features "${FEATURES}" -- -D warnings
+        run: cargo clippy --lib --no-default-features --features
+          "f32 earcut parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          -- -D warnings
 
   style:
     name: Check spelling and semver
     runs-on: ubuntu-latest
-    env:
-      FEATURES: "${{ env.FLOAT_FEATURE }} ${{ env.TESSELLATION_FEATURE }} ${{ env.EXTRA_FEATURES }}"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -92,7 +71,16 @@ jobs:
         with:
           package: csgrs
           no-default-features: true
-          features: ${{ env.FEATURES }}
+          features: |
+            f32
+            earcut
+            parallel
+            stl-io
+            svg-io
+            dxf-io
+            truetype-text
+            hershey-text
+            image-io
       - name: Check spelling
         run: |
           if ! command -v typos >/dev/null; then
