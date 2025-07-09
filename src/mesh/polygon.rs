@@ -129,6 +129,15 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         if self.vertices.len() < 3 {
             return Vec::new();
         }
+        
+        // A polygon that is already a triangle: no need to call earcut/spade.
+        // Returning it directly avoids robustness problems with very thin
+        // triangles and makes the fast-path cheaper.
+        if self.vertices.len() == 3 {
+            return vec![[self.vertices[0].clone(),
+                         self.vertices[1].clone(),
+                         self.vertices[2].clone()]];
+        }
 
         let normal_3d = self.plane.normal().normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
