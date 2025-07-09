@@ -21,13 +21,12 @@ env:
     hershey-text
     image-io
 
-  # Convenience: the complete list we’ll pass to Cargo
-  FEATURES: "${{ env.FLOAT_FEATURE }} ${{ env.TESSELLATION_FEATURE }} ${{ env.EXTRA_FEATURES }}"
-
 jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
+    env:
+      FEATURES: "${{ env.FLOAT_FEATURE }} ${{ env.TESSELLATION_FEATURE }} ${{ env.EXTRA_FEATURES }}"
     steps:
       - uses: actions/checkout@v4
 
@@ -40,6 +39,8 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    env:
+      FEATURES: "${{ env.FLOAT_FEATURE }} ${{ env.TESSELLATION_FEATURE }} ${{ env.EXTRA_FEATURES }}"
     steps:
       - uses: actions/checkout@v4
 
@@ -74,7 +75,8 @@ jobs:
   style:
     name: Check spelling and semver
     runs-on: ubuntu-latest
-
+    env:
+      FEATURES: "${{ env.FLOAT_FEATURE }} ${{ env.TESSELLATION_FEATURE }} ${{ env.EXTRA_FEATURES }}"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -90,8 +92,7 @@ jobs:
         with:
           package: csgrs
           no-default-features: true
-          features: ${{ env.FLOAT_FEATURE }},${{ env.TESSELLATION_FEATURE }},${{ env.EXTRA_FEATURES }}
-
+          features: ${{ env.FEATURES }}
       - name: Check spelling
         run: |
           if ! command -v typos >/dev/null; then
