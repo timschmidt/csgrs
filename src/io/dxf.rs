@@ -151,6 +151,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
             for tri in triangles {
                 // Create a 3DFACE entity for each triangle
+                #[allow(clippy::unnecessary_cast)]
                 let face = dxf::entities::Face3D::new(
                     // 3DFACE expects four vertices, but for triangles, the fourth is the same as the third
                     dxf::Point::new(
