@@ -266,16 +266,8 @@ jobs:
         with:
           package: csgrs
           no-default-features: true
-          features: |
-            f32
-            earcut
-            parallel
-            stl-io
-            svg-io
-            dxf-io
-            truetype-text
-            hershey-text
-            image-io
+          features: >
+            f32 earcut parallel stl-io svg-io dxf-io truetype-text hershey-text image-io
       - name: Check spelling
         run: |
           if ! command -v typos >/dev/null; then
