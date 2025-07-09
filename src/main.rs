@@ -116,6 +116,12 @@ fn main() {
     // 4) Convex hull
     #[cfg(all(feature = "chull-io", feature = "stl-io"))]
     {
+        let moved_cube = cube
+            .translate(1.0, 0.0, 0.0)
+            .rotate(0.0, 45.0, 0.0)
+            .scale(1.0, 0.5, 2.0);
+        let sphere = Mesh::sphere(1.0, 16, 8, None);
+        let union_shape = moved_cube.translate(-1.0, 0.0, 0.0).union(&sphere);
         let hull_of_union = union_shape.convex_hull();
         let _ = fs::write(
             "stl/hull_union.stl",
@@ -126,6 +132,7 @@ fn main() {
     // 5) Minkowski sum
     #[cfg(all(feature = "stl-io", feature = "chull-io"))]
     {
+        let sphere = Mesh::sphere(1.0, 16, 8, None);
         let minkowski = cube.minkowski_sum(&sphere);
         let _ = fs::write(
             "stl/minkowski_cube_sphere.stl",
@@ -149,6 +156,7 @@ fn main() {
 
     #[cfg(all(feature = "offset", feature = "stl-io"))]
     {
+        let square_2d = Sketch::square(2.0, None);
         let grown_2d = square_2d.offset(0.5);
         let _ = fs::write(
             "stl/square_2d_grow_0_5.stl",
