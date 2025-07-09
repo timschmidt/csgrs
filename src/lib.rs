@@ -1,5 +1,5 @@
 //! A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library,
-//! built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in [BSP](bsp) trees.
+//! built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) trees.
 //!
 //! ![Example CSG output][Example CSG output]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Example CSG output", "docs/csg.png"))]
@@ -10,7 +10,7 @@
 //! - [**stl-io**](https://en.wikipedia.org/wiki/STL_(file_format)): `.stl` import/export
 //! - [**dxf-io**](https://en.wikipedia.org/wiki/AutoCAD_DXF): `.dxf` import/export
 //! - **chull-io**: convex hull and minkowski sum
-//! - **metaballs**: enables a `CSG` implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
+//! - **metaballs**: enables an implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
 //! - **sdf**: signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) using [fast-surface-nets](https://crates.io/crates/fast-surface-nets)
 //! - **offset**: use `geo-buf` for offset operations
 //! - **delaunay**: use `geo`s `spade` feature for triangulation
@@ -18,10 +18,10 @@
 //! #### Optional
 //! - **f32**: use f32 as Real, this conflicts with f64
 //! - **parallel**: use rayon for multithreading
-//! - **svg-io**: create `CSG`s from and convert `CSG`s to SVG's
-//! - **truetype-text**: create `CSG`s using TrueType fonts `.ttf`
-//! - **hershey-text**: create `CSG`s using Hershey fonts (`.jhf`)
-//! - **image-io**: make 2d `CSG`s from images
+//! - **svg-io**: create `Sketch`s from and convert `Sketch`s to SVG's
+//! - **truetype-text**: create `Sketch`s using TrueType fonts `.ttf`
+//! - **hershey-text**: create `Sketch`s using Hershey fonts (`.jhf`)
+//! - **image-io**: make `Sketch`s from images
 //! - **earcut**: use `geo`s `earcutr` feature for triangulation
 //! - **bevymesh**: for conversion to a bevy `Mesh`
 
