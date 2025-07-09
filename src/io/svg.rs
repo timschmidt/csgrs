@@ -73,9 +73,9 @@ impl<F: CoordNum> PathBuilder<F> {
         }
 
         self.inner.0.last_mut().ok_or_else(|| {
-            IoError::MalformedPath(format!(
-                "Attempted to extend the current path, but no path was started."
-            ))
+            IoError::MalformedPath(
+                "Attempted to extend the current path, but no path was started.".to_string()
+            )
         })
     }
 
@@ -178,9 +178,9 @@ impl<F: CoordNum> PathBuilder<F> {
         _control: Coord<F>,
         _end: Coord<F>,
     ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!(
-            "quadratic curveto (absolute quadratic Bézier curve)"
-        )))
+        Err(IoError::Unimplemented(
+            "quadratic curveto (absolute quadratic Bézier curve)".to_string()
+        ))
     }
 
     /// Extend the current path with a quadratic Bézier curve from the current point using coordinates relative
@@ -198,9 +198,9 @@ impl<F: CoordNum> PathBuilder<F> {
         _control: Coord<F>,
         _end: Coord<F>,
     ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!(
-            "quadratic curveby (relative quadratic Bézier curve)"
-        )))
+        Err(IoError::Unimplemented(
+            "quadratic curveby (relative quadratic Bézier curve)".to_string()
+        ))
     }
 
     /// Extend the current path with a *smooth* quadratic Bézier curve from the current point using absolute coordinates.
@@ -216,9 +216,9 @@ impl<F: CoordNum> PathBuilder<F> {
     ///
     /// **Not implemented**
     pub fn quadratic_smooth_curve_to(&mut self, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!(
-            "quadratic smooth curveto (absolute quadratic Bézier curve with a reflected control point)"
-        )))
+        Err(IoError::Unimplemented(
+            "quadratic smooth curveto (absolute quadratic Bézier curve with a reflected control point)".to_string()
+        ))
     }
 
     /// Extend the current path with a *smooth* quadratic Bézier curve from the current point using coordinates relative
@@ -235,9 +235,9 @@ impl<F: CoordNum> PathBuilder<F> {
     ///
     /// **Not implemented**
     pub fn quadratic_smooth_curve_by(&mut self, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!(
-            "quadratic smooth curveby (relative quadratic Bézier curve with a reflected control point)"
-        )))
+        Err(IoError::Unimplemented(
+            "quadratic smooth curveby (relative quadratic Bézier curve with a reflected control point)".to_string()
+        ))
     }
 
     /// Extend the current path with a cubic Bézier curve from the current point using absolute coordinates.
@@ -256,9 +256,9 @@ impl<F: CoordNum> PathBuilder<F> {
         _control_end: Coord<F>,
         _end: Coord<F>,
     ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!(
-            "curveto (absolute cubic Bézier curve)"
-        )))
+        Err(IoError::Unimplemented(
+            "curveto (absolute cubic Bézier curve)".to_string()
+        ))
     }
 
     /// Extend the current path with a cubic Bézier curve from the current point using coordinates relative
@@ -278,9 +278,9 @@ impl<F: CoordNum> PathBuilder<F> {
         _control_end: Coord<F>,
         _end: Coord<F>,
     ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!(
-            "curveby (relative cubic Bézier curve)"
-        )))
+        Err(IoError::Unimplemented(
+            "curveby (relative cubic Bézier curve)".to_string()
+        ))
     }
 
     /// Extend the current path with a *smooth* cubic Bézier curve from the current point using absolute coordinates.
@@ -300,9 +300,9 @@ impl<F: CoordNum> PathBuilder<F> {
         _control_end: Coord<F>,
         _end: Coord<F>,
     ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!(
-            "smooth curveto (absolute cubic Bézier curve with a reflected start control point)"
-        )))
+        Err(IoError::Unimplemented(
+            "smooth curveto (absolute cubic Bézier curve with a reflected start control point)".to_string()
+        ))
     }
 
     /// Extend the current path with a *smooth* cubic Bézier curve from the current point using coordinates relative
@@ -323,9 +323,9 @@ impl<F: CoordNum> PathBuilder<F> {
         _control_end: Coord<F>,
         _end: Coord<F>,
     ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!(
-            "smooth curveby (relative cubic Bézier curve with a reflected start control point)"
-        )))
+        Err(IoError::Unimplemented(
+            "smooth curveby (relative cubic Bézier curve with a reflected start control point)".to_string()
+        ))
     }
 
     /// Extend the current path with an elliptical arc from the current point using absolute coordinates.
@@ -349,7 +349,7 @@ impl<F: CoordNum> PathBuilder<F> {
         _sweep_flag: bool,
         _end: Coord<F>,
     ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!("elliptical arc to")))
+        Err(IoError::Unimplemented("elliptical arc to".to_string()))
     }
 
     /// Extend the current path with an elliptical arc from the current point using coordinates relative
@@ -374,7 +374,7 @@ impl<F: CoordNum> PathBuilder<F> {
         _sweep_flag: bool,
         _end: Coord<F>,
     ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(format!("elliptical arc by")))
+        Err(IoError::Unimplemented("elliptical arc by".to_string()))
     }
 }
 
@@ -568,13 +568,14 @@ impl<S: Clone> ToSVG for Sketch<S> {
         let make_polygon = |polygon: &geo::Polygon<Real>| {
             let mut data = path::Data::new();
 
+			// `svg::Data` accepts a `Vec<f32>` here, so always cast to `f32`.
             let exterior = polygon.exterior();
             data = data.move_to(
                 // Skip the last point because it is equal to the first one
                 exterior.0[..(exterior.0.len() - 1)]
                     .into_iter()
-                    .flat_map(|c| [c.x as Real, c.y as Real])
-                    .collect::<Vec<Real>>(),
+                    .flat_map(|c| [c.x as f32, c.y as f32])
+                    .collect::<Vec<f32>>(),
             );
 
             data = data.close();
@@ -584,8 +585,8 @@ impl<S: Clone> ToSVG for Sketch<S> {
                     // Skip the last point because it is equal to the first one
                     interior.0[..(interior.0.len() - 1)]
                         .into_iter()
-                        .flat_map(|c| [c.x as Real, c.y as Real])
-                        .collect::<Vec<Real>>(),
+                        .flat_map(|c| [c.x as f32, c.y as f32])
+                        .collect::<Vec<f32>>(),
                 );
 
                 data = data.close();
@@ -870,7 +871,7 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
         }
     }
 
-    let mls: MultiLineString<Real> = builder.into();
+    let mls: MultiLineString<f32> = builder.into();
     let mls = mls.map_coords(|c| Coord {
         x: F::from(c.x).unwrap(),
         y: F::from(c.y).unwrap(),
