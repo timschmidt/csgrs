@@ -40,10 +40,10 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let tri_csg = self.triangulate();
         let mut edge_counts: HashMap<(QuantizedPoint, QuantizedPoint), u32> = HashMap::new();
 
-        for poly in &tri_csg.polygons {
+        tri_csg.polygons.iter().for_each(|poly| {
             // Each tri is 3 vertices: [v0, v1, v2]
             // We'll look at edges (0->1, 1->2, 2->0).
-            for &(i0, i1) in &[(0, 1), (1, 2), (2, 0)] {
+            [(0, 1), (1, 2), (2, 0)].iter().for_each(|&(i0, i1)| {
                 let p0 = quantize_point(&poly.vertices[i0].pos);
                 let p1 = quantize_point(&poly.vertices[i1].pos);
 
@@ -55,8 +55,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 };
 
                 *edge_counts.entry((a_key, b_key)).or_insert(0) += 1;
-            }
-        }
+            });
+        });
 
         // For a perfectly closed manifold surface (with no boundary),
         // each edge should appear exactly 2 times.

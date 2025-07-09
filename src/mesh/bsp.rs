@@ -82,13 +82,13 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
         // Take a sample of polygons as candidate planes
         let sample_size = polygons.len().min(20);
-        for p in polygons.iter().take(sample_size) {
+        polygons.iter().take(sample_size).for_each(|p| {
             let plane = &p.plane;
             let mut num_front = 0;
             let mut num_back = 0;
             let mut num_spanning = 0;
 
-            for poly in polygons {
+            polygons.iter().for_each(|poly| {
                 match plane.classify_polygon(poly) {
                     COPLANAR => {}, // Not counted for balance
                     FRONT => num_front += 1,
@@ -96,7 +96,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                     SPANNING => num_spanning += 1,
                     _ => num_spanning += 1, // Treat any other combination as spanning
                 }
-            }
+            });
 
             let score = K_SPANS * num_spanning as Real
                 + K_BALANCE * ((num_front - num_back) as Real).abs();
@@ -105,7 +105,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                 best_score = score;
                 best_plane = plane.clone();
             }
-        }
+        });
         best_plane
     }
 
@@ -127,22 +127,22 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         let mut back_polys = Vec::with_capacity(polygons.len());
 
         // Optimized polygon splitting with iterator patterns
-        for polygon in polygons {
+        polygons.iter().for_each(|polygon| {
             let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
                 plane.split_polygon(polygon);
 
             // Efficient coplanar polygon classification using iterator chain
-            for coplanar_poly in coplanar_front.into_iter().chain(coplanar_back.into_iter()) {
+            coplanar_front.into_iter().chain(coplanar_back.into_iter()).for_each(|coplanar_poly| {
                 if plane.orient_plane(&coplanar_poly.plane) == FRONT {
                     front_parts.push(coplanar_poly);
                 } else {
                     back_parts.push(coplanar_poly);
                 }
-            }
+            });
 
             front_polys.append(&mut front_parts);
             back_polys.append(&mut back_parts);
-        }
+        });
 
         // Recursively clip with optimized pattern
         let mut result = if let Some(front_node) = &self.front {
@@ -208,7 +208,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
         // Optimized polygon classification using iterator pattern
         // **Mathematical Theorem**: Each polygon is classified relative to the splitting plane
-        for polygon in polygons {
+        polygons.iter().for_each(|polygon| {
             let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
                 plane.split_polygon(polygon);
 
@@ -217,7 +217,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             self.polygons.extend(coplanar_back);
             front.append(&mut front_parts);
             back.append(&mut back_parts);
-        }
+        });
 
         // Build child nodes using lazy initialization pattern for memory efficiency
         if !front.is_empty() {
@@ -243,10 +243,10 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         let mut coplanar_polygons = Vec::new();
         let mut intersection_edges = Vec::new();
 
-        for poly in &all_polys {
+        all_polys.iter().for_each(|poly| {
             let vcount = poly.vertices.len();
             if vcount < 2 {
-                continue; // degenerate polygon => skip
+                return; // degenerate polygon => skip
             }
 
             // Use iterator chain to compute vertex types more efficiently
@@ -308,7 +308,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                     // Shouldn't happen in a typical classification, but we can ignore
                 },
             }
-        }
+        });
 
         (coplanar_polygons, intersection_edges)
     }

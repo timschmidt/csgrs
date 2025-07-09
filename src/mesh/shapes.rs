@@ -213,46 +213,47 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         stacks: usize,
         metadata: Option<S>,
     ) -> Mesh<S> {
-        let mut polygons = Vec::new();
+        let vertex = |theta: Real, phi: Real| {
+            let dir = Vector3::new(
+                theta.cos() * phi.sin(),
+                phi.cos(),
+                theta.sin() * phi.sin(),
+            );
+            Vertex::new(
+                Point3::new(dir.x * radius, dir.y * radius, dir.z * radius),
+                dir,
+            )
+        };
 
-        for i in 0..segments {
-            for j in 0..stacks {
-                let mut vertices = Vec::new();
+        let polygons: Vec<Polygon<S>> = (0..segments)
+            .flat_map(|i| {
+                let metadata = metadata.clone();
+                (0..stacks).map(move |j| {
+                    let mut vertices = Vec::new();
 
-                let vertex = |theta: Real, phi: Real| {
-                    let dir = Vector3::new(
-                        theta.cos() * phi.sin(),
-                        phi.cos(),
-                        theta.sin() * phi.sin(),
-                    );
-                    Vertex::new(
-                        Point3::new(dir.x * radius, dir.y * radius, dir.z * radius),
-                        dir,
-                    )
-                };
+                    let t0 = i as Real / segments as Real;
+                    let t1 = (i + 1) as Real / segments as Real;
+                    let p0 = j as Real / stacks as Real;
+                    let p1 = (j + 1) as Real / stacks as Real;
 
-                let t0 = i as Real / segments as Real;
-                let t1 = (i + 1) as Real / segments as Real;
-                let p0 = j as Real / stacks as Real;
-                let p1 = (j + 1) as Real / stacks as Real;
+                    let theta0 = t0 * TAU;
+                    let theta1 = t1 * TAU;
+                    let phi0 = p0 * PI;
+                    let phi1 = p1 * PI;
 
-                let theta0 = t0 * TAU;
-                let theta1 = t1 * TAU;
-                let phi0 = p0 * PI;
-                let phi1 = p1 * PI;
+                    vertices.push(vertex(theta0, phi0));
+                    if j > 0 {
+                        vertices.push(vertex(theta1, phi0));
+                    }
+                    if j < stacks - 1 {
+                        vertices.push(vertex(theta1, phi1));
+                    }
+                    vertices.push(vertex(theta0, phi1));
 
-                vertices.push(vertex(theta0, phi0));
-                if j > 0 {
-                    vertices.push(vertex(theta1, phi0));
-                }
-                if j < stacks - 1 {
-                    vertices.push(vertex(theta1, phi1));
-                }
-                vertices.push(vertex(theta0, phi1));
-
-                polygons.push(Polygon::new(vertices, metadata.clone()));
-            }
-        }
+                    Polygon::new(vertices, metadata.clone())
+                })
+            })
+            .collect();
         Mesh::from_polygons(&polygons, metadata)
     }
 
@@ -333,7 +334,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         }
 
         // For each slice of the circle (0..segments)
-        for i in 0..segments {
+        (0..segments).for_each(|i| {
             let slice0 = i as Real / segments as Real;
             let slice1 = (i + 1) as Real / segments as Real;
 
@@ -397,7 +398,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     metadata.clone(),
                 ));
             }
-        }
+        });
 
         Mesh::from_polygons(&polygons, metadata)
     }
@@ -477,36 +478,38 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ) -> Result<Mesh<S>, ValidationError> {
         let mut polygons = Vec::new();
 
-        for face in faces {
+        faces.iter().try_for_each(|face| -> Result<(), ValidationError> {
             // Skip degenerate faces
             if face.len() < 3 {
-                continue;
+                return Ok(());
             }
 
             // Gather the vertices for this face
-            let mut face_vertices = Vec::with_capacity(face.len());
-            for &idx in face.iter() {
+            let face_vertices: Result<Vec<_>, _> = face.iter().map(|&idx| {
                 // Ensure the index is valid
                 if idx >= points.len() {
                     return Err(ValidationError::IndexOutOfRange);
                 }
                 let [x, y, z] = points[idx];
-                face_vertices.push(Vertex::new(
+                Ok(Vertex::new(
                     Point3::new(x, y, z),
                     Vector3::zeros(), // we'll set this later
-                ));
-            }
+                ))
+            }).collect();
+            
+            let face_vertices = face_vertices?;
 
             // Build the polygon (plane is auto-computed from first 3 vertices).
             let mut poly = Polygon::new(face_vertices, metadata.clone());
 
-            // Set each vertex normal to match the polygon’s plane normal,
+            // Set each vertex normal to match the polygon's plane normal,
             let plane_normal = poly.plane.normal();
-            for v in &mut poly.vertices {
+            poly.vertices.iter_mut().for_each(|v| {
                 v.normal = plane_normal;
-            }
+            });
             polygons.push(poly);
-        }
+            Ok(())
+        })?;
 
         Ok(Mesh::from_polygons(&polygons, metadata))
     }
@@ -881,16 +884,13 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let dz = thickness / (slices as Real);
         let d_ψ = helix_angle_deg.to_radians() / (slices as Real);
 
-        let mut acc = Mesh::<S>::new();
-        let mut z_curr = 0.0;
-        for i in 0..slices {
+        (0..slices).fold((Mesh::<S>::new(), 0.0), |(acc, z_curr), i| {
             let slice = base_slice
                 .rotate(0.0, 0.0, (i as Real) * d_ψ.to_degrees())
                 .extrude(dz)
                 .translate(0.0, 0.0, z_curr);
-            acc = if i == 0 { slice } else { acc.union(&slice) };
-            z_curr += dz;
-        }
-        acc
+            let new_acc = if i == 0 { slice } else { acc.union(&slice) };
+            (new_acc, z_curr + dz)
+        }).0
     }
 }

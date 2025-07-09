@@ -77,20 +77,20 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             );
 
         // Decide where to send the coplanar polygons
-        for cp in coplanar_front {
+        coplanar_front.into_iter().for_each(|cp| {
             if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
             }
-        }
-        for cp in coplanar_back {
+        });
+        coplanar_back.into_iter().for_each(|cp| {
             if plane.orient_plane(&cp.plane) == FRONT {
                 front.push(cp);
             } else {
                 back.push(cp);
             }
-        }
+        });
 
         // Recursively clip front & back in parallel
         let (front_clipped, back_clipped) = join(
@@ -228,14 +228,13 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                     // Degenerate => skip
                     return (Vec::new(), Vec::new());
                 }
-                let mut polygon_type = 0;
                 let mut types = Vec::with_capacity(vcount);
 
-                for vertex in &poly.vertices {
+                let polygon_type = poly.vertices.iter().fold(0, |acc, vertex| {
                     let vertex_type = slicing_plane.orient_point(&vertex.pos);
-                    polygon_type |= vertex_type;
                     types.push(vertex_type);
-                }
+                    acc | vertex_type
+                });
 
                 match polygon_type {
                     COPLANAR => {
@@ -248,34 +247,39 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                     },
                     SPANNING => {
                         // The polygon crosses the plane => gather intersection edges
-                        let mut crossing_points = Vec::new();
-                        for i in 0..vcount {
-                            let j = (i + 1) % vcount;
-                            let ti = types[i];
-                            let tj = types[j];
-                            let vi = &poly.vertices[i];
-                            let vj = &poly.vertices[j];
+                        let crossing_points: Vec<_> = (0..vcount)
+                            .filter_map(|i| {
+                                let j = (i + 1) % vcount;
+                                let ti = types[i];
+                                let tj = types[j];
+                                let vi = &poly.vertices[i];
+                                let vj = &poly.vertices[j];
 
-                            if (ti | tj) == SPANNING {
-                                // The param intersection at which plane intersects the edge [vi -> vj].
-                                // Avoid dividing by zero:
-                                let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
-                                if denom.abs() > EPSILON {
-                                    let intersection = (slicing_plane.offset()
-                                        - slicing_plane.normal().dot(&vi.pos.coords))
-                                        / denom;
-                                    // Interpolate:
-                                    let intersect_vert = vi.interpolate(vj, intersection);
-                                    crossing_points.push(intersect_vert);
+                                if (ti | tj) == SPANNING {
+                                    // The param intersection at which plane intersects the edge [vi -> vj].
+                                    // Avoid dividing by zero:
+                                    let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
+                                    if denom.abs() > EPSILON {
+                                        let intersection = (slicing_plane.offset()
+                                            - slicing_plane.normal().dot(&vi.pos.coords))
+                                            / denom;
+                                        // Interpolate:
+                                        let intersect_vert = vi.interpolate(vj, intersection);
+                                        Some(intersect_vert)
+                                    } else {
+                                        None
+                                    }
+                                } else {
+                                    None
                                 }
-                            }
-                        }
+                            })
+                            .collect();
 
                         // Pair up intersection points => edges
-                        let mut edges = Vec::new();
-                        for chunk in crossing_points.chunks_exact(2) {
-                            edges.push([chunk[0].clone(), chunk[1].clone()]);
-                        }
+                        let edges = crossing_points
+                            .chunks_exact(2)
+                            .map(|chunk| [chunk[0].clone(), chunk[1].clone()])
+                            .collect();
                         (Vec::new(), edges)
                     },
                     _ => (Vec::new(), Vec::new()),

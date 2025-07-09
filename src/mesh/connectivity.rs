@@ -79,24 +79,23 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut adjacency: HashMap<usize, Vec<usize>> = HashMap::new();
 
         // First pass: build vertex index mapping
-        for polygon in &self.polygons {
-            for vertex in &polygon.vertices {
+        self.polygons
+            .iter()
+            .flat_map(|polygon| polygon.vertices.iter())
+            .for_each(|vertex| {
                 vertex_map.get_or_create_index(vertex.pos);
-            }
-        }
+            });
 
         // Second pass: build adjacency graph
-        for polygon in &self.polygons {
-            let mut vertex_indices = Vec::new();
-
+        self.polygons.iter().for_each(|polygon| {
             // Get indices for this polygon's vertices
-            for vertex in &polygon.vertices {
-                let index = vertex_map.get_or_create_index(vertex.pos);
-                vertex_indices.push(index);
-            }
+            let vertex_indices: Vec<usize> = polygon.vertices
+                .iter()
+                .map(|vertex| vertex_map.get_or_create_index(vertex.pos))
+                .collect();
 
             // Build adjacency for this polygon's edges
-            for i in 0..vertex_indices.len() {
+            (0..vertex_indices.len()).for_each(|i| {
                 let current = vertex_indices[i];
                 let next = vertex_indices[(i + 1) % vertex_indices.len()];
                 let prev =
@@ -107,8 +106,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 adjacency.entry(current).or_default().push(prev);
                 adjacency.entry(next).or_default().push(current);
                 adjacency.entry(prev).or_default().push(current);
-            }
-        }
+            });
+        });
 
         // Clean up adjacency lists - remove duplicates and self-references
         for (vertex_idx, neighbors) in adjacency.iter_mut() {

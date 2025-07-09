@@ -45,54 +45,54 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut faces = Vec::new();
 
         // Process 3D polygons
-        for poly in &self.polygons {
+        self.polygons.iter().for_each(|poly| {
             // Tessellate polygon to triangles
             let triangles = poly.triangulate();
             let normal = poly.plane.normal().normalize();
 
-            for triangle in triangles {
+            triangles.into_iter().for_each(|triangle| {
                 let mut face_indices = Vec::new();
                 let normal_idx = add_unique_normal(&mut normals, normal);
 
-                for vertex in triangle {
+                triangle.into_iter().for_each(|vertex| {
                     let vertex_idx = add_unique_vertex(&mut vertices, vertex.pos);
                     face_indices.push((vertex_idx, normal_idx));
-                }
+                });
 
                 if face_indices.len() == 3 {
                     faces.push(face_indices);
                 }
-            }
-        }
+            });
+        });
 
         // Write vertices
-        for vertex in &vertices {
+        vertices.iter().for_each(|vertex| {
             obj_content.push_str(&format!(
                 "v {:.6} {:.6} {:.6}\n",
                 vertex.x, vertex.y, vertex.z
             ));
-        }
+        });
 
         obj_content.push('\n');
 
         // Write normals
-        for normal in &normals {
+        normals.iter().for_each(|normal| {
             obj_content.push_str(&format!(
                 "vn {:.6} {:.6} {:.6}\n",
                 normal.x, normal.y, normal.z
             ));
-        }
+        });
 
         obj_content.push('\n');
 
         // Write faces (1-indexed in OBJ format)
-        for face in &faces {
+        faces.iter().for_each(|face| {
             obj_content.push_str("f");
-            for (vertex_idx, normal_idx) in face {
+            face.iter().for_each(|(vertex_idx, normal_idx)| {
                 obj_content.push_str(&format!(" {}//{}", vertex_idx + 1, normal_idx + 1));
-            }
+            });
             obj_content.push('\n');
-        }
+        });
 
         obj_content
     }
@@ -106,10 +106,11 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// # Example
     /// ```
     /// use csgrs::mesh::Mesh;
-    /// use std::fs::File;
+    /// use std::fs::{create_dir_all, File};
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let csg: Mesh<()> = Mesh::cube(10.0, None);
-    /// let mut file = File::create("stl/output.obj")?;
+    /// create_dir_all("target/test-output")?;
+    /// let mut file = File::create("target/test-output/output.obj")?;
     /// csg.write_obj(&mut file, "my_cube")?;
     /// # Ok(())
     /// # }
@@ -146,18 +147,18 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut normals = Vec::new();
         let mut polygons = Vec::new();
 
-        for line_result in reader.lines() {
+        reader.lines().try_for_each(|line_result| -> std::io::Result<()> {
             let line = line_result?;
             let line = line.trim();
 
             // Skip comments and empty lines
             if line.is_empty() || line.starts_with('#') {
-                continue;
+                return Ok(());
             }
 
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.is_empty() {
-                continue;
+                return Ok(());
             }
 
             match parts[0] {
@@ -216,14 +217,14 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                             Self::parse_obj_face(&parts[1..], &vertices, &normals)?;
                         if face_vertices.len() >= 3 {
                             // Convert to triangles if more than 3 vertices
-                            for i in 1..face_vertices.len() - 1 {
+                            (1..face_vertices.len() - 1).for_each(|i| {
                                 let triangle = vec![
                                     face_vertices[0].clone(),
                                     face_vertices[i].clone(),
                                     face_vertices[i + 1].clone(),
                                 ];
                                 polygons.push(Polygon::new(triangle, metadata.clone()));
-                            }
+                            });
                         }
                     }
                 },
@@ -231,7 +232,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     // Ignore other OBJ elements (materials, groups, etc.)
                 },
             }
-        }
+            Ok(())
+        })?;
 
         Ok(Mesh::from_polygons(&polygons, metadata))
     }
@@ -244,7 +246,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ) -> std::io::Result<Vec<Vertex>> {
         let mut face_vertices = Vec::new();
 
-        for part in face_parts {
+        face_parts.iter().try_for_each(|part| -> std::io::Result<()> {
             // Parse face element: vertex_idx[/texture_idx][/normal_idx]
             let indices: Vec<&str> = part.split('/').collect();
 
@@ -288,7 +290,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             };
 
             face_vertices.push(Vertex::new(position, normal));
-        }
+            Ok(())
+        })?;
 
         Ok(face_vertices)
     }
@@ -326,7 +329,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut faces = Vec::new();
 
         // Process 2D geometry (project to XY plane at Z=0)
-        for geom in &self.geometry.0 {
+        self.geometry.0.iter().for_each(|geom| {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
                     self.add_2d_polygon_to_obj(
@@ -337,47 +340,47 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     );
                 },
                 geo::Geometry::MultiPolygon(mp) => {
-                    for poly2d in &mp.0 {
+                    mp.0.iter().for_each(|poly2d| {
                         self.add_2d_polygon_to_obj(
                             poly2d,
                             &mut vertices,
                             &mut normals,
                             &mut faces,
                         );
-                    }
+                    });
                 },
                 _ => {}, // Skip other geometry types
             }
-        }
+        });
 
         // Write vertices
-        for vertex in &vertices {
+        vertices.iter().for_each(|vertex| {
             obj_content.push_str(&format!(
                 "v {:.6} {:.6} {:.6}\n",
                 vertex.x, vertex.y, vertex.z
             ));
-        }
+        });
 
         obj_content.push('\n');
 
         // Write normals
-        for normal in &normals {
+        normals.iter().for_each(|normal| {
             obj_content.push_str(&format!(
                 "vn {:.6} {:.6} {:.6}\n",
                 normal.x, normal.y, normal.z
             ));
-        }
+        });
 
         obj_content.push('\n');
 
         // Write faces (1-indexed in OBJ format)
-        for face in &faces {
+        faces.iter().for_each(|face| {
             obj_content.push_str("f");
-            for (vertex_idx, normal_idx) in face {
+            face.iter().for_each(|(vertex_idx, normal_idx)| {
                 obj_content.push_str(&format!(" {}//{}", vertex_idx + 1, normal_idx + 1));
-            }
+            });
             obj_content.push('\n');
-        }
+        });
 
         obj_content
     }
@@ -410,19 +413,19 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let normal = Vector3::new(0.0, 0.0, 1.0);
         let normal_idx = add_unique_normal(normals, normal);
 
-        for triangle in triangles_2d {
+        triangles_2d.into_iter().for_each(|triangle| {
             let mut face_indices = Vec::new();
 
-            for point in triangle {
+            triangle.into_iter().for_each(|point| {
                 let vertex_3d = Point3::new(point.x, point.y, point.z);
                 let vertex_idx = add_unique_vertex(vertices, vertex_3d);
                 face_indices.push((vertex_idx, normal_idx));
-            }
+            });
 
             if face_indices.len() == 3 {
                 faces.push(face_indices);
             }
-        }
+        });
     }
 }
 
@@ -431,10 +434,10 @@ fn add_unique_vertex(vertices: &mut Vec<Point3<Real>>, vertex: Point3<Real>) -> 
     const EPSILON: Real = 1e-6;
 
     // Check if vertex already exists (within tolerance)
-    for (i, existing) in vertices.iter().enumerate() {
-        if (existing.coords - vertex.coords).norm() < EPSILON {
-            return i;
-        }
+    if let Some((i, _)) = vertices.iter().enumerate().find(|(_, existing)| {
+        (existing.coords - vertex.coords).norm() < EPSILON
+    }) {
+        return i;
     }
 
     // Add new vertex
@@ -447,10 +450,10 @@ fn add_unique_normal(normals: &mut Vec<Vector3<Real>>, normal: Vector3<Real>) ->
     const EPSILON: Real = 1e-6;
 
     // Check if normal already exists (within tolerance)
-    for (i, existing) in normals.iter().enumerate() {
-        if (existing - normal).norm() < EPSILON {
-            return i;
-        }
+    if let Some((i, _)) = normals.iter().enumerate().find(|(_, existing)| {
+        (*existing - normal).norm() < EPSILON
+    }) {
+        return i;
     }
 
     // Add new normal

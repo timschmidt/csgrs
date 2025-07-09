@@ -101,19 +101,19 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             (iz * ny + iy) as usize * (nx as usize) + ix as usize
         };
 
-        for iz in 0..nz {
+        (0..nz).for_each(|iz| {
             let zf = min_pt.z + (iz as Real) * dz;
-            for iy in 0..ny {
+            (0..ny).for_each(|iy| {
                 let yf = min_pt.y + (iy as Real) * dy;
-                for ix in 0..nx {
+                (0..nx).for_each(|ix| {
                     let xf = min_pt.x + (ix as Real) * dx;
                     let p = Point3::new(xf, yf, zf);
 
                     let val = scalar_field_metaballs(balls, &p) - iso_value;
                     field_values[index_3d(ix, iy, iz)] = val as f32;
-                }
-            }
-        }
+                });
+            });
+        });
 
         // Use fast-surface-nets to extract a mesh from this 3D scalar field.
         // We'll define a shape type for ndshape:
@@ -174,7 +174,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // for the csgrs data structures.
         let mut triangles = Vec::with_capacity(sn_buffer.indices.len() / 3);
 
-        for tri in sn_buffer.indices.chunks_exact(3) {
+        sn_buffer.indices.chunks_exact(3).for_each(|tri| {
             let i0 = tri[0] as usize;
             let i1 = tri[1] as usize;
             let i2 = tri[2] as usize;
@@ -227,7 +227,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             // Each tri is turned into a Polygon with 3 vertices
             let poly = Polygon::new(vec![v0, v2, v1], metadata.clone());
             triangles.push(poly);
-        }
+        });
 
         // Build and return a Mesh from these polygons
         Mesh::from_polygons(&triangles, metadata)

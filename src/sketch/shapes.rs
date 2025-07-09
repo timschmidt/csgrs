@@ -595,13 +595,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Build a ring of coordinates starting at (0,0), going around the arc, and closing at (0,0).
         let mut coords = Vec::with_capacity(segments + 2);
         coords.push((0.0, 0.0));
-        for i in 0..=segments {
+        (0..=segments).for_each(|i| {
             let t = i as Real / (segments as Real);
             let angle = start_rad + t * sweep;
             let x = radius * angle.cos();
             let y = radius * angle.sin();
             coords.push((x, y));
-        }
+        });
         coords.push((0.0, 0.0)); // close explicitly
 
         let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
@@ -648,16 +648,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             (term1 + term2).powf(-1.0 / n1)
         }
 
-        let mut coords = Vec::with_capacity(segments + 1);
-        for i in 0..segments {
-            let frac = i as Real / (segments as Real);
-            let theta = TAU * frac;
-            let r = supershape_r(theta, a, b, m, n1, n2, n3);
-
-            let x = r * theta.cos();
-            let y = r * theta.sin();
-            coords.push((x, y));
-        }
+        let mut coords: Vec<(Real, Real)> = (0..segments)
+            .map(|i| {
+                let frac = i as Real / (segments as Real);
+                let theta = TAU * frac;
+                let r = supershape_r(theta, a, b, m, n1, n2, n3);
+                (r * theta.cos(), r * theta.sin())
+            })
+            .collect();
         // close it
         coords.push(coords[0]);
 
@@ -790,7 +788,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut coords: Vec<(Real, Real)> = Vec::with_capacity(2 * samples + 1);
 
         // leading-edge → trailing-edge (upper)
-        for i in 0..=samples {
+        (0..=samples).for_each(|i| {
             let xc = i as Real / n; // 0–1
             let x = xc * chord; // physical
             let t = yt(xc);
@@ -800,10 +798,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             let xu = x - t * theta.sin();
             let yu = chord * (yc_val + t * theta.cos());
             coords.push((xu, yu));
-        }
+        });
 
         // trailing-edge → leading-edge (lower)
-        for i in (1..samples).rev() {
+        (1..samples).rev().for_each(|i| {
             let xc = i as Real / n;
             let x = xc * chord;
             let t = yt(xc);
@@ -813,7 +811,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             let xl = x + t * theta.sin();
             let yl = chord * (yc_val - t * theta.cos());
             coords.push((xl, yl));
-        }
+        });
 
         coords.push(coords[0]); // close
 
@@ -844,21 +842,21 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             tmp.clear();
             tmp.extend(ctrl.iter().map(|&[x, y]| (x, y)));
             let n = tmp.len();
-            for k in 1..n {
-                for i in 0..(n - k) {
+            (1..n).for_each(|k| {
+                (0..(n - k)).for_each(|i| {
                     tmp[i].0 = (1.0 - t) * tmp[i].0 + t * tmp[i + 1].0;
                     tmp[i].1 = (1.0 - t) * tmp[i].1 + t * tmp[i + 1].1;
-                }
-            }
+                });
+            });
             tmp[0]
         }
 
         let mut pts = Vec::<(Real, Real)>::with_capacity(segments + 1);
         let mut tmp = Vec::with_capacity(control.len());
-        for i in 0..=segments {
+        (0..=segments).for_each(|i| {
             let t = i as Real / segments as Real;
             pts.push(de_casteljau(control, t, &mut tmp));
-        }
+        });
 
         // If the curve happens to be closed, make sure the polygon ring closes.
         let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < EPSILON
@@ -896,7 +894,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let m = n + p + 1; // knot count
         // open-uniform knot vector: 0,0,…,0,1,2,…,n-p-1,(n-p),…,(n-p)
         let mut knot = Vec::<Real>::with_capacity(m + 1);
-        for i in 0..=m {
+        (0..=m).for_each(|i| {
             if i <= p {
                 knot.push(0.0);
             } else if i >= m - p {
@@ -904,7 +902,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             } else {
                 knot.push((i - p) as Real);
             }
-        }
+        });
 
         // Cox-de Boor basis evaluation
         fn basis(i: usize, p: usize, u: Real, knot: &[Real]) -> Real {
@@ -935,23 +933,23 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let dt = 1.0 / segments_per_span as Real; // step in local span coords
 
         let mut pts = Vec::<(Real, Real)>::new();
-        for span in 0..=span_count {
-            for s in 0..=segments_per_span {
+        (0..=span_count).for_each(|span| {
+            (0..=segments_per_span).for_each(|s| {
                 if span == span_count && s == segments_per_span {
                     // avoid duplicating final knot value
-                    continue;
+                    return;
                 }
                 let u = span as Real + s as Real * dt; // global param
                 let mut x = 0.0;
                 let mut y = 0.0;
-                for (idx, &[px, py]) in control.iter().enumerate() {
+                control.iter().enumerate().for_each(|(idx, &[px, py])| {
                     let b = basis(idx, p, u, &knot);
                     x += b * px;
                     y += b * py;
-                }
+                });
                 pts.push((x, y));
-            }
-        }
+            });
+        });
 
         let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < EPSILON
             && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < EPSILON;
@@ -1081,14 +1079,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // Helper to build a single half‑flank (left‑hand)
         let mut half_flank = Vec::<(Real, Real)>::with_capacity(segments_per_flank + 1);
-        for i in 0..=segments_per_flank {
+        (0..=segments_per_flank).for_each(|i| {
             let phi = phi_p + (phi_a - phi_p) * (i as Real) / (segments_per_flank as Real);
             let (ix, iy) = involute_xy(rb, phi);
             let theta = (iy).atan2(ix); // polar angle of involute point
             let global_theta = -tooth_thick_ang + theta; // left side offset
             let r = (ix * ix + iy * iy).sqrt();
             half_flank.push((r * global_theta.cos(), r * global_theta.sin()));
-        }
+        });
 
         // Mirror to get right‑hand flank (reverse order so outline is CCW)
         let mut full_tooth = half_flank.clone();
@@ -1103,20 +1101,20 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Root circle arc between successive teeth
         let root_arc_steps = 4;
         let arc_step = (ang_pitch - 2.0 * tooth_thick_ang) / (root_arc_steps as Real);
-        for i in 1..=root_arc_steps {
+        (1..=root_arc_steps).for_each(|i| {
             let ang = tooth_thick_ang + (i as Real) * arc_step;
             full_tooth.push((rf * (ang).cos(), rf * (ang).sin()));
-        }
+        });
 
         // Replicate the tooth profile around the gear
         let mut outline = Vec::<[Real; 2]>::with_capacity(full_tooth.len() * teeth + 1);
-        for tooth_idx in 0..teeth {
+        (0..teeth).for_each(|tooth_idx| {
             let rot = (tooth_idx as Real) * ang_pitch;
             let (c, s) = (rot.cos(), rot.sin());
-            for &(x, y) in &full_tooth {
+            full_tooth.iter().for_each(|&(x, y)| {
                 outline.push([x * c - y * s, x * s + y * c]);
-            }
-        }
+            });
+        });
         // Close path
         outline.push(outline[0]);
 
@@ -1161,14 +1159,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut tooth_points = Vec::<(Real, Real)>::new();
 
         // 1. addendum epicycloid (tip)
-        for i in 0..=flank_steps {
+        (0..=flank_steps).for_each(|i| {
             let t = (i as Real) / (flank_steps as Real);
             let theta = t * ang_pitch / 2.0;
             let (x, y) = epicycloid_xy(r_p, r_pin, theta);
             tooth_points.push((x, y));
-        }
+        });
         // 2. hypocycloid root (reverse order to keep CCW)
-        for i in (0..=flank_steps).rev() {
+        (0..=flank_steps).rev().for_each(|i| {
             let t = (i as Real) / (flank_steps as Real);
             let theta = t * ang_pitch / 2.0;
             let (x, y) = hypocycloid_xy(r_g, r_pin, theta);
@@ -1178,17 +1176,17 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             } else {
                 tooth_points.push((x, y));
             }
-        }
+        });
 
         // Replicate
         let mut outline = Vec::<[Real; 2]>::with_capacity(tooth_points.len() * teeth + 1);
-        for k in 0..teeth {
+        (0..teeth).for_each(|k| {
             let rot = (k as Real) * ang_pitch;
             let (c, s) = (rot.cos(), rot.sin());
-            for &(x, y) in &tooth_points {
+            tooth_points.iter().for_each(|&(x, y)| {
                 outline.push([x * c - y * s, x * s + y * c]);
-            }
-        }
+            });
+        });
         outline.push(outline[0]);
 
         Sketch::polygon(&outline, metadata)
@@ -1242,12 +1240,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // Repeat teeth
         let mut outline = Vec::<[Real; 2]>::with_capacity(tooth.len() * num_teeth + 4);
-        for i in 0..num_teeth {
+        (0..num_teeth).for_each(|i| {
             let dx = (i as Real) * p;
-            for &[x, y] in &tooth {
+            tooth.iter().for_each(|&[x, y]| {
                 outline.push([x + dx, y]);
-            }
-        }
+            });
+        });
 
         // Close rectangle ends (simple straight ends)
         // add right root extension then back to first point
@@ -1293,12 +1291,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let scale = addendum / (2.0 * r);
 
         let mut flank: Vec<[Real; 2]> = Vec::with_capacity(segments_per_flank);
-        for i in 0..=segments_per_flank {
+        (0..=segments_per_flank).for_each(|i| {
             let t = PI * (i as Real) / (segments_per_flank as Real); // 0..π gives half‑trochoid
             let x = r * (t - t.sin());
             let y = r * (1.0 - t.cos());
             flank.push([x * scale, y * scale]);
-        }
+        });
 
         // Build one tooth (CCW): left flank, mirrored right flank, root bridge
         let mut tooth: Vec<[Real; 2]> = Vec::with_capacity(flank.len() * 2 + 2);
@@ -1317,12 +1315,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // Repeat
         let mut outline = Vec::<[Real; 2]>::with_capacity(tooth.len() * num_teeth + 1);
-        for k in 0..num_teeth {
+        (0..num_teeth).for_each(|k| {
             let dx = (k as Real) * p;
-            for &[x, y] in &tooth {
+            tooth.iter().for_each(|&[x, y]| {
                 outline.push([x + dx, y]);
-            }
-        }
+            });
+        });
         outline.push(outline[0]);
 
         Sketch::polygon(&outline, metadata)

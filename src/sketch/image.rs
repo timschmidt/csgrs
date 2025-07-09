@@ -42,24 +42,25 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let height = img.height() as usize;
 
         /* ---------- step 1 : bitmap → svg path (unchanged) ---------- */
-        let mut bits = Vec::with_capacity(height);
-        for y in 0..height {
-            let mut row = Vec::with_capacity(width);
-            for x in 0..width {
-                let v = img.get_pixel(x as u32, y as u32)[0];
-                row.push((v >= threshold) as i8);
-            }
-            bits.push(row);
-        }
+        let bits: Vec<Vec<i8>> = (0..height)
+            .map(|y| {
+                (0..width)
+                    .map(|x| {
+                        let v = img.get_pixel(x as u32, y as u32)[0];
+                        (v >= threshold) as i8
+                    })
+                    .collect()
+            })
+            .collect();
         let svg_path = contour_tracing::array::bits_to_paths(bits, closepaths);
         let polylines = Self::parse_svg_path_into_polylines(&svg_path);
 
         /* ---------- step 2 : polylines → geo geometries ---------- */
         let mut gc = GeometryCollection::<Real>::default();
 
-        for mut pl in polylines {
+        polylines.into_iter().for_each(|mut pl| {
             if pl.len() < 2 {
-                continue;
+                return;
             }
 
             // Are first & last points coincident?
@@ -90,7 +91,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     .collect();
                 gc.0.push(Geometry::LineString(ls));
             }
-        }
+        });
 
         /* ---------- step 3 : build the Sketch ---------- */
         Sketch::from_geo(gc, metadata)

@@ -43,16 +43,15 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let (verts, indices) = hull.vertices_indices();
 
         // Reconstruct polygons as triangles
-        let mut polygons = Vec::new();
-        for tri in indices.chunks(3) {
+        let polygons: Vec<_> = indices.chunks(3).map(|tri| {
             let v0 = &verts[tri[0]];
             let v1 = &verts[tri[1]];
             let v2 = &verts[tri[2]];
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
-            polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
-        }
+            Polygon::new(vec![vv0, vv1, vv2], None)
+        }).collect();
 
         Mesh::from_polygons(&polygons, self.metadata.clone())
     }

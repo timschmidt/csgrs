@@ -51,10 +51,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // 3) A simple "pen" cursor for horizontal text layout
         let mut cursor_x = 0.0 as Real;
 
-        for ch in text.chars() {
+        text.chars().for_each(|ch| {
             // Skip control chars:
             if ch.is_control() {
-                continue;
+                return;
             }
 
             // Find glyph index in the font
@@ -77,9 +77,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         let mut outer_rings = Vec::new();
                         let mut hole_rings = Vec::new();
 
-                        for closed_pts in collector.contours {
+                        collector.contours.into_iter().for_each(|closed_pts| {
                             if closed_pts.len() < 3 {
-                                continue; // degenerate
+                                return; // degenerate
                             }
 
                             let ring = LineString::from(closed_pts);
@@ -97,7 +97,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                                 // This is a hole ring
                                 hole_rings.push(ring);
                             }
-                        }
+                        });
 
                         // Typically, a TrueType glyph has exactly one outer ring and 0+ holes.
                         // But in some tricky glyphs, you might see multiple separate outer rings.
@@ -113,24 +113,24 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
                             // If there are leftover outer rings, push them each as a separate polygon (no holes):
                             // todo: test bounding boxes and sort holes appropriately
-                            for extra_outer in outer_rings {
+                            outer_rings.into_iter().for_each(|extra_outer| {
                                 let poly_2d = GeoPolygon::new(extra_outer, vec![]);
                                 let oriented = poly_2d.orient(Direction::Default);
                                 geo_coll.0.push(Geometry::Polygon(oriented));
-                            }
+                            });
                         }
                     }
 
                     // -------------------------
                     // Handle all OPEN subpaths => store as LineStrings:
                     // -------------------------
-                    for open_pts in collector.open_contours {
+                    collector.open_contours.into_iter().for_each(|open_pts| {
                         if open_pts.len() >= 2 {
                             geo_coll
                                 .0
                                 .push(Geometry::LineString(LineString::from(open_pts)));
                         }
-                    }
+                    });
 
                     // Finally, advance our pen by the glyph's bounding-box width
                     let bbox = outline.bbox();
@@ -144,7 +144,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 // Missing glyph => small blank advance
                 cursor_x += font_scale as Real * 0.3;
             }
-        }
+        });
 
         // Build a 2D Sketch from the collected geometry
         Sketch::from_geo(geo_coll, metadata)
@@ -232,13 +232,13 @@ impl OutlineFlattener {
         let (px2, py2) = self.tx(x2, y2);
 
         // B(t) = (1 - t)^2 * p0 + 2(1 - t)t * cp + t^2 * p2
-        for i in 1..=steps {
+        (1..=steps).for_each(|i| {
             let t = i as Real / steps as Real;
             let mt = 1.0 - t;
             let bx = mt * mt * px0 + 2.0 * mt * t * px1 + t * t * px2;
             let by = mt * mt * py0 + 2.0 * mt * t * py1 + t * t * py2;
             self.current.push((bx, by));
-        }
+        });
         self.last_pt = (px2, py2);
     }
 
@@ -251,7 +251,7 @@ impl OutlineFlattener {
         let (px3, py3) = self.tx(x3, y3);
 
         // B(t) = (1-t)^3 p0 + 3(1-t)^2 t c1 + 3(1-t) t^2 c2 + t^3 p3
-        for i in 1..=steps {
+        (1..=steps).for_each(|i| {
             let t = i as Real / steps as Real;
             let mt = 1.0 - t;
             let mt2 = mt * mt;
@@ -259,7 +259,7 @@ impl OutlineFlattener {
             let bx = mt2 * mt * px0 + 3.0 * mt2 * t * cx1 + 3.0 * mt * t2 * cx2 + t2 * t * px3;
             let by = mt2 * mt * py0 + 3.0 * mt2 * t * cy1 + 3.0 * mt * t2 * cy2 + t2 * t * py3;
             self.current.push((bx, by));
-        }
+        });
         self.last_pt = (px3, py3);
     }
 

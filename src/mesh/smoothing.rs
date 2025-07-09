@@ -36,20 +36,20 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let (vertex_map, adjacency) = self.build_connectivity();
         let mut smoothed_polygons = self.polygons.clone();
 
-        for iteration in 0..iterations {
+        (0..iterations).for_each(|iteration| {
             // Build current vertex position mapping
             let mut current_positions: HashMap<usize, Point3<Real>> = HashMap::new();
-            for polygon in &smoothed_polygons {
-                for vertex in &polygon.vertices {
+            smoothed_polygons
+                .iter()
+                .flat_map(|polygon| polygon.vertices.iter())
+                .for_each(|vertex| {
                     // Find the global index for this position (with tolerance)
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.pos);
-                            break;
-                        }
+                    if let Some((_, idx)) = vertex_map.position_to_index
+                        .iter()
+                        .find(|(pos, _)| (vertex.pos - *pos).norm() < vertex_map.epsilon) {
+                        current_positions.insert(*idx, vertex.pos);
                     }
-                }
-            }
+                });
 
             // Compute Laplacian for each vertex
             let mut laplacian_updates: HashMap<usize, Point3<Real>> = HashMap::new();
@@ -85,21 +85,20 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
 
             // Apply updates to mesh vertices
-            for polygon in &mut smoothed_polygons {
-                for vertex in &mut polygon.vertices {
+            smoothed_polygons.iter_mut().for_each(|polygon| {
+                polygon.vertices.iter_mut().for_each(|vertex| {
                     // Find the global index for this vertex
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            if let Some(&new_pos) = laplacian_updates.get(idx) {
-                                vertex.pos = new_pos;
-                            }
-                            break;
+                    if let Some((_, idx)) = vertex_map.position_to_index
+                        .iter()
+                        .find(|(pos, _)| (vertex.pos - *pos).norm() < vertex_map.epsilon) {
+                        if let Some(&new_pos) = laplacian_updates.get(idx) {
+                            vertex.pos = new_pos;
                         }
                     }
-                }
+                });
                 // Recompute polygon plane and normals after smoothing
                 polygon.set_new_normal();
-            }
+            });
 
             // Progress feedback for long smoothing operations
             if iterations > 10 && iteration % (iterations / 10) == 0 {
@@ -109,7 +108,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     iterations
                 );
             }
-        }
+        });
 
         Mesh::from_polygons(&smoothed_polygons, self.metadata.clone())
     }
@@ -140,36 +139,33 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let (vertex_map, adjacency) = self.build_connectivity();
         let mut smoothed_polygons = self.polygons.clone();
 
-        for _ in 0..iterations {
+        (0..iterations).for_each(|_| {
             // --- Lambda (shrinking) pass ---
             let mut current_positions: HashMap<usize, Point3<Real>> = HashMap::new();
-            for polygon in &smoothed_polygons {
-                for vertex in &polygon.vertices {
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.pos);
-                            break;
-                        }
+            smoothed_polygons
+                .iter()
+                .flat_map(|polygon| polygon.vertices.iter())
+                .for_each(|vertex| {
+                    if let Some((_, idx)) = vertex_map.position_to_index
+                        .iter()
+                        .find(|(pos, _)| (vertex.pos - *pos).norm() < vertex_map.epsilon) {
+                        current_positions.insert(*idx, vertex.pos);
                     }
-                }
-            }
+                });
 
             let mut updates: HashMap<usize, Point3<Real>> = HashMap::new();
-            for (&vertex_idx, neighbors) in &adjacency {
+            adjacency.iter().for_each(|(&vertex_idx, neighbors)| {
                 if let Some(&current_pos) = current_positions.get(&vertex_idx) {
                     if preserve_boundaries && neighbors.len() < 4 {
                         updates.insert(vertex_idx, current_pos);
-                        continue;
+                        return;
                     }
 
-                    let mut neighbor_sum = Point3::origin();
-                    let mut valid_neighbors = 0;
-                    for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_pos) = current_positions.get(&neighbor_idx) {
-                            neighbor_sum += neighbor_pos.coords;
-                            valid_neighbors += 1;
-                        }
-                    }
+                    let (neighbor_sum, valid_neighbors) = neighbors.iter()
+                        .filter_map(|&neighbor_idx| current_positions.get(&neighbor_idx))
+                        .fold((Point3::origin(), 0), |(sum, count), &neighbor_pos| {
+                            (sum + neighbor_pos.coords, count + 1)
+                        });
 
                     if valid_neighbors > 0 {
                         let neighbor_avg = neighbor_sum / valid_neighbors as Real;
@@ -177,50 +173,46 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                         updates.insert(vertex_idx, current_pos + laplacian * lambda);
                     }
                 }
-            }
+            });
 
-            for polygon in &mut smoothed_polygons {
-                for vertex in &mut polygon.vertices {
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            if let Some(&new_pos) = updates.get(idx) {
-                                vertex.pos = new_pos;
-                            }
-                            break;
+            smoothed_polygons.iter_mut().for_each(|polygon| {
+                polygon.vertices.iter_mut().for_each(|vertex| {
+                    if let Some((_, idx)) = vertex_map.position_to_index
+                        .iter()
+                        .find(|(pos, _)| (vertex.pos - *pos).norm() < vertex_map.epsilon) {
+                        if let Some(&new_pos) = updates.get(idx) {
+                            vertex.pos = new_pos;
                         }
                     }
-                }
-            }
+                });
+            });
 
             // --- Mu (inflating) pass ---
             current_positions.clear();
-            for polygon in &smoothed_polygons {
-                for vertex in &polygon.vertices {
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.pos);
-                            break;
-                        }
+            smoothed_polygons
+                .iter()
+                .flat_map(|polygon| polygon.vertices.iter())
+                .for_each(|vertex| {
+                    if let Some((_, idx)) = vertex_map.position_to_index
+                        .iter()
+                        .find(|(pos, _)| (vertex.pos - *pos).norm() < vertex_map.epsilon) {
+                        current_positions.insert(*idx, vertex.pos);
                     }
-                }
-            }
+                });
 
             updates.clear();
-            for (&vertex_idx, neighbors) in &adjacency {
+            adjacency.iter().for_each(|(&vertex_idx, neighbors)| {
                 if let Some(&current_pos) = current_positions.get(&vertex_idx) {
                     if preserve_boundaries && neighbors.len() < 4 {
                         updates.insert(vertex_idx, current_pos);
-                        continue;
+                        return;
                     }
 
-                    let mut neighbor_sum = Point3::origin();
-                    let mut valid_neighbors = 0;
-                    for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_pos) = current_positions.get(&neighbor_idx) {
-                            neighbor_sum += neighbor_pos.coords;
-                            valid_neighbors += 1;
-                        }
-                    }
+                    let (neighbor_sum, valid_neighbors) = neighbors.iter()
+                        .filter_map(|&neighbor_idx| current_positions.get(&neighbor_idx))
+                        .fold((Point3::origin(), 0), |(sum, count), &neighbor_pos| {
+                            (sum + neighbor_pos.coords, count + 1)
+                        });
 
                     if valid_neighbors > 0 {
                         let neighbor_avg = neighbor_sum / valid_neighbors as Real;
@@ -228,26 +220,25 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                         updates.insert(vertex_idx, current_pos + laplacian * mu);
                     }
                 }
-            }
+            });
 
-            for polygon in &mut smoothed_polygons {
-                for vertex in &mut polygon.vertices {
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            if let Some(&new_pos) = updates.get(idx) {
-                                vertex.pos = new_pos;
-                            }
-                            break;
+            smoothed_polygons.iter_mut().for_each(|polygon| {
+                polygon.vertices.iter_mut().for_each(|vertex| {
+                    if let Some((_, idx)) = vertex_map.position_to_index
+                        .iter()
+                        .find(|(pos, _)| (vertex.pos - *pos).norm() < vertex_map.epsilon) {
+                        if let Some(&new_pos) = updates.get(idx) {
+                            vertex.pos = new_pos;
                         }
                     }
-                }
-            }
-        }
+                });
+            });
+        });
 
         // Final pass to recompute normals
-        for polygon in &mut smoothed_polygons {
+        smoothed_polygons.iter_mut().for_each(|polygon| {
             polygon.set_new_normal();
-        }
+        });
 
         Mesh::from_polygons(&smoothed_polygons, self.metadata.clone())
     }
@@ -279,14 +270,14 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut refined_polygons = Vec::new();
         let mut polygon_map: HashMap<usize, Vec<usize>> = HashMap::new();
 
-        for (poly_idx, poly) in self.polygons.iter().enumerate() {
-            for vertex in &poly.vertices {
+        self.polygons.iter().enumerate().for_each(|(poly_idx, poly)| {
+            poly.vertices.iter().for_each(|vertex| {
                 let v_idx = vertex_map.get_or_create_index(vertex.pos);
                 polygon_map.entry(v_idx).or_default().push(poly_idx);
-            }
-        }
+            });
+        });
 
-        for (i, polygon) in self.polygons.iter().enumerate() {
+        self.polygons.iter().enumerate().for_each(|(i, polygon)| {
             let mut should_refine = false;
 
             // Quality and edge length check
@@ -308,20 +299,17 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     if let (Some(p1_indices), Some(p2_indices)) =
                         (polygon_map.get(&v1_idx), polygon_map.get(&v2_idx))
                     {
-                        for &p1_idx in p1_indices {
-                            if p1_idx == i {
-                                continue;
-                            }
-                            for &p2_idx in p2_indices {
-                                if p1_idx == p2_idx {
+                        if p1_indices.iter().any(|&p1_idx| {
+                            p1_idx != i && p2_indices.iter().any(|&p2_idx| {
+                                p1_idx == p2_idx && {
                                     let other_poly = &self.polygons[p1_idx];
                                     let angle = Self::dihedral_angle(polygon, other_poly);
-                                    if angle > curvature_threshold_deg.to_radians() {
-                                        should_refine = true;
-                                        break 'edge_loop;
-                                    }
+                                    angle > curvature_threshold_deg.to_radians()
                                 }
-                            }
+                            })
+                        }) {
+                            should_refine = true;
+                            break 'edge_loop;
                         }
                     }
                 }
@@ -329,14 +317,14 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
             if should_refine {
                 let subdivided = polygon.subdivide_triangles(1.try_into().unwrap());
-                for triangle in subdivided {
+                subdivided.into_iter().for_each(|triangle| {
                     let vertices = triangle.to_vec();
                     refined_polygons.push(Polygon::new(vertices, polygon.metadata.clone()));
-                }
+                });
             } else {
                 refined_polygons.push(polygon.clone());
             }
-        }
+        });
 
         Mesh::from_polygons(&refined_polygons, self.metadata.clone())
     }
@@ -347,13 +335,12 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             return 0.0;
         }
 
-        let mut max_length: Real = 0.0;
-        for i in 0..vertices.len() {
-            let j = (i + 1) % vertices.len();
-            let edge_length = (vertices[j].pos - vertices[i].pos).norm();
-            max_length = max_length.max(edge_length);
-        }
-        max_length
+        (0..vertices.len())
+            .map(|i| {
+                let j = (i + 1) % vertices.len();
+                (vertices[j].pos - vertices[i].pos).norm()
+            })
+            .fold(0.0, |max_length, edge_length| max_length.max(edge_length))
     }
 
     /// **Mathematical Foundation: Feature-Preserving Mesh Optimization**
@@ -376,7 +363,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let qualities = self.analyze_triangle_quality();
         let mut filtered_polygons = Vec::new();
 
-        for (i, polygon) in self.polygons.iter().enumerate() {
+        self.polygons.iter().enumerate().for_each(|(i, polygon)| {
             let keep_triangle = if i < qualities.len() {
                 let quality = &qualities[i];
                 quality.quality_score >= min_quality
@@ -390,7 +377,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             if keep_triangle {
                 filtered_polygons.push(polygon.clone());
             }
-        }
+        });
 
         Mesh::from_polygons(&filtered_polygons, self.metadata.clone())
     }

@@ -225,9 +225,9 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     /// Renormalize all polygons in this Mesh by re-computing each polygon’s plane
     /// and assigning that plane’s normal to all vertices.
     pub fn renormalize(&mut self) {
-        for poly in &mut self.polygons {
+        self.polygons.iter_mut().for_each(|poly| {
             poly.set_new_normal();
-        }
+        });
     }
 
     /// **Mathematical Foundation: Dihedral Angle Calculation**
@@ -661,8 +661,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
 
         let mut mesh = self.clone();
 
-        for poly in &mut mesh.polygons {
-            for vert in &mut poly.vertices {
+        mesh.polygons.iter_mut().for_each(|poly| {
+            poly.vertices.iter_mut().for_each(|vert| {
                 // Transform position using homogeneous coordinates
                 let hom_pos = mat * vert.pos.to_homogeneous();
                 match Point3::from_homogeneous(hom_pos) {
@@ -671,20 +671,20 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
                         eprintln!(
                             "Warning: Invalid homogeneous coordinates after transformation, skipping vertex"
                         );
-                        continue;
+                        return;
                     },
                 }
 
                 // Transform normal using inverse transpose rule
                 vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
-            }
+            });
 
             // Reconstruct plane from transformed vertices for consistency
             poly.plane = Plane::from_vertices(poly.vertices.clone());
 
             // Invalidate the polygon's bounding box
             poly.bounding_box = OnceLock::new();
-        }
+        });
 
         // invalidate the old cached bounding box
         mesh.bounding_box = OnceLock::new();
@@ -704,8 +704,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
             let mut max_z = -Real::MAX;
 
             // 1) Gather from the 3D polygons
-            for poly in &self.polygons {
-                for v in &poly.vertices {
+            self.polygons.iter().for_each(|poly| {
+                poly.vertices.iter().for_each(|v| {
                     min_x = *partial_min(&min_x, &v.pos.x).unwrap();
                     min_y = *partial_min(&min_y, &v.pos.y).unwrap();
                     min_z = *partial_min(&min_z, &v.pos.z).unwrap();
@@ -713,8 +713,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
                     max_x = *partial_max(&max_x, &v.pos.x).unwrap();
                     max_y = *partial_max(&max_y, &v.pos.y).unwrap();
                     max_z = *partial_max(&max_z, &v.pos.z).unwrap();
-                }
-            }
+                });
+            });
 
             // If still uninitialized (e.g., no polygons), return a trivial AABB at origin
             if min_x > max_x {
@@ -736,9 +736,9 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     /// Invert this Mesh (flip inside vs. outside)
     fn inverse(&self) -> Mesh<S> {
         let mut mesh = self.clone();
-        for p in &mut mesh.polygons {
+        mesh.polygons.iter_mut().for_each(|p| {
             p.flip();
-        }
+        });
         mesh
     }
 }
@@ -765,7 +765,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
             }
 
             // Handle interior rings (holes)
-            for ring in poly2d.interiors() {
+            poly2d.interiors().iter().for_each(|ring| {
                 let hole_vertices_3d: Vec<_> = ring
                     .coords_iter()
                     .map(|c| Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()))
@@ -773,7 +773,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
                 if hole_vertices_3d.len() >= 3 {
                     all_polygons.push(Polygon::new(hole_vertices_3d, metadata.clone()));
                 }
-            }
+            });
             all_polygons
         }
 

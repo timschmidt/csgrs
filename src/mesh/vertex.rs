@@ -239,7 +239,7 @@ impl Vertex {
         let mut cot_sum = 0.0;
         let mut weight_count = 0;
 
-        for i in 0..triangle_vertices.len() {
+        (0..triangle_vertices.len()).for_each(|i| {
             let v1 = triangle_vertices[i];
             let v2 = triangle_vertices[(i + 1) % triangle_vertices.len()];
             let v3 = triangle_vertices[(i + 2) % triangle_vertices.len()];
@@ -273,7 +273,7 @@ impl Vertex {
                     weight_count += 1;
                 }
             }
-        }
+        });
 
         if weight_count > 0 {
             cot_sum / (2.0 * weight_count as Real)
@@ -335,13 +335,10 @@ impl Vertex {
         epsilon: Real,
     ) -> (usize, Real) {
         // Find the vertex index by position matching
-        let mut vertex_index = None;
-        for (&idx, &pos) in vertex_positions {
-            if (self.pos - pos).norm() < epsilon {
-                vertex_index = Some(idx);
-                break;
-            }
-        }
+        let vertex_index = vertex_positions
+            .iter()
+            .find(|&(_, &pos)| (self.pos - pos).norm() < epsilon)
+            .map(|(&idx, _)| idx);
 
         if let Some(idx) = vertex_index {
             Self::analyze_connectivity_with_index(idx, adjacency_map)
@@ -366,8 +363,7 @@ impl Vertex {
         }
 
         // Compute angle sum around vertex
-        let mut angle_sum = 0.0;
-        for i in 0..neighbors.len() {
+        let angle_sum = (0..neighbors.len()).map(|i| {
             let prev = &neighbors[(i + neighbors.len() - 1) % neighbors.len()];
             let next = &neighbors[(i + 1) % neighbors.len()];
 
@@ -375,8 +371,8 @@ impl Vertex {
             let v2 = (next.pos - self.pos).normalize();
 
             let dot = v1.dot(&v2).clamp(-1.0, 1.0);
-            angle_sum += dot.acos();
-        }
+            dot.acos()
+        }).sum::<Real>();
 
         // Compute mixed area (average of face areas)
         let mixed_area = if !face_areas.is_empty() {
@@ -430,7 +426,7 @@ impl Vertex {
         let mut edge_lengths = Vec::new();
         let mut neighbor_normals = Vec::new();
 
-        for &neighbor_idx in neighbors {
+        neighbors.iter().for_each(|&neighbor_idx| {
             if let Some(&neighbor_pos) = vertex_positions.get(&neighbor_idx) {
                 let edge_length = (self.pos - neighbor_pos).norm();
                 edge_lengths.push(edge_length);
@@ -439,7 +435,7 @@ impl Vertex {
                     neighbor_normals.push(neighbor_normal);
                 }
             }
-        }
+        });
 
         // Edge uniformity (lower standard deviation = more uniform)
         let edge_uniformity = if edge_lengths.len() > 1 {
@@ -459,15 +455,13 @@ impl Vertex {
 
         // Normal variation (lower = more consistent normals)
         let normal_variation = if neighbor_normals.len() > 1 {
-            let mut max_angle: Real = 0.0;
-            for &neighbor_normal in &neighbor_normals {
-                let angle = self
+            let max_angle: Real = neighbor_normals.iter().map(|&neighbor_normal| {
+                self
                     .normal
                     .normalize()
                     .dot(&neighbor_normal.normalize())
-                    .acos();
-                max_angle = max_angle.max(angle);
-            }
+                    .acos()
+            }).fold(0.0, |a, b| a.max(b));
 
             // Normalize to [0,1] where 1 = perfectly consistent
             1.0 - (max_angle / PI).min(1.0)

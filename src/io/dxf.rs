@@ -32,7 +32,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         let mut polygons = Vec::new();
 
-        for entity in drawing.entities() {
+        drawing.entities().for_each(|entity| {
             match &entity.specific {
                 EntityType::Line(_line) => {
                     // Convert a line to a thin rectangular polygon (optional)
@@ -44,7 +44,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     // Handle POLYLINE entities (which can be 2D or 3D)
                     if polyline.is_closed() {
                         let mut verts = Vec::new();
-                        for vertex in polyline.vertices() {
+                        polyline.vertices().for_each(|vertex| {
                             verts.push(Vertex::new(
                                 Point3::new(
                                     vertex.location.x as Real,
@@ -53,7 +53,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                                 ),
                                 Vector3::z(), // Assuming flat in XY
                             ));
-                        }
+                        });
                         // Create a polygon from the polyline vertices
                         if verts.len() >= 3 {
                             polygons.push(Polygon::new(verts, None));
@@ -79,14 +79,14 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     )
                     .normalize();
 
-                    for i in 0..segments {
+                    (0..segments).for_each(|i| {
                         let theta =
                             2.0 * crate::float_types::PI * (i as Real) / (segments as Real);
                         let x = center.x as Real + radius * theta.cos();
                         let y = center.y as Real + radius * theta.sin();
                         let z = center.z as Real;
                         verts.push(Vertex::new(Point3::new(x, y, z), normal));
-                    }
+                    });
 
                     // Create a polygon from the approximated circle vertices
                     polygons.push(Polygon::new(verts, metadata.clone()));
@@ -123,7 +123,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     // Ignore unsupported entity types for now
                 },
             }
-        }
+        });
 
         Ok(Mesh::from_polygons(&polygons, metadata))
     }
@@ -137,7 +137,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
         let mut drawing = Drawing::new();
 
-        for poly in &self.polygons {
+        self.polygons.iter().for_each(|poly| {
             // Triangulate the polygon if it has more than 3 vertices
             let triangles = if poly.vertices.len() > 3 {
                 poly.triangulate()
@@ -149,7 +149,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 ]]
             };
 
-            for tri in triangles {
+            triangles.iter().for_each(|tri| {
                 // Create a 3DFACE entity for each triangle
                 let face = dxf::entities::Face3D::new(
                     // 3DFACE expects four vertices, but for triangles, the fourth is the same as the third
@@ -180,8 +180,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
                 // Add the 3DFACE entity to the drawing
                 drawing.add_entity(entity);
-            }
-        }
+            });
+        });
 
         // Serialize the DXF drawing to bytes
         let mut buffer = Vec::new();
