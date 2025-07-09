@@ -1761,7 +1761,6 @@ fn test_contains_vertex() {
 
     assert!(!cube_with_hole.contains_vertex(&Point3::new(0.01, 4.0, 3.0)));
     assert!(cube_with_hole.contains_vertex(&Point3::new(0.01, 4.01, 3.0)));
-
     assert!(!cube_with_hole.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)));
     assert!(cube_with_hole.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
     assert!(!cube_with_hole.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
