@@ -87,6 +87,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             let normal = poly.plane.normal().normalize();
             // Convert polygon to triangles
             let tri_list = poly.triangulate();
+            #[allow(clippy::unnecessary_cast)]
             for tri in tri_list {
                 triangles.push(Triangle {
                     normal: Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
@@ -333,6 +334,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     let tri_2d = Sketch::<()>::triangulate_2d(&outer, &hole_refs);
 
                     // Each triangle is in XY, so normal = (0,0,1)
+                    #[allow(clippy::unnecessary_cast)]
                     for tri_pts in tri_2d {
                         triangles.push(Triangle {
                             normal: Normal::new([0.0, 0.0, 1.0]),
@@ -373,6 +375,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             holes_vec.iter().map(|h| &h[..]).collect();
                         let tri_2d = Sketch::<()>::triangulate_2d(&outer, &hole_refs);
 
+                        #[allow(clippy::unnecessary_cast)]
                         for tri_pts in tri_2d {
                             triangles.push(Triangle {
                                 normal: Normal::new([0.0, 0.0, 1.0]),

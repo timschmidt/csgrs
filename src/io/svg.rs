@@ -32,9 +32,9 @@ struct PathBuilder<F: CoordNum> {
     inner: MultiLineString<F>,
 }
 
-impl<F: CoordNum> Into<MultiLineString<F>> for PathBuilder<F> {
-    fn into(self) -> MultiLineString<F> {
-        self.inner
+impl<F: CoordNum> From<PathBuilder<F>> for MultiLineString<F> {
+    fn from(val: PathBuilder<F>) -> Self {
+        val.inner
     }
 }
 
@@ -565,6 +565,7 @@ impl<S: Clone> ToSVG for Sketch<S> {
                 .set("d", data)
         };
 
+        #[allow(clippy::unnecessary_cast)]
         let make_polygon = |polygon: &geo::Polygon<Real>| {
             let mut data = path::Data::new();
 
@@ -580,6 +581,7 @@ impl<S: Clone> ToSVG for Sketch<S> {
 
             data = data.close();
 
+            #[allow(clippy::unnecessary_cast)]
             for interior in polygon.interiors() {
                 data = data.move_to(
                     // Skip the last point because it is equal to the first one
