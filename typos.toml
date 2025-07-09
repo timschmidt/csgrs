@@ -13,3 +13,9 @@ CGS = "CSG"
 
 iy = "iy"
 toi = "toi"
+
+# Abbreviation for homogeneous coordinates
+hom = "hom"
+# Acronym for Level-of-Detail
+LOD = "LOD"
+lod = "LOD"

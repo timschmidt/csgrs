@@ -210,12 +210,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// This function returns a Sketch which represents an instantiated straight skeleton of Sketch upon which it's called.
     /// Each segment of the straight skeleton is represented as a single `LineString`.
     /// If either endpoints of a `LineString` is infinitely far from the other, then this `LineString` will be clipped to one which has shorter length.
-    /// The order of these `LineString`s is arbitrary. (There is no gauranteed order on segments of the straight skeleton.)
+    /// The order of these `LineString`s is arbitrary. (There is no guaranteed order on segments of the straight skeleton.)
     ///
     /// # Arguments
     ///
     /// + `orientation`: determines the region where the straight skeleton created. The value of this `boolean` variable will be:
-    ///     * `true` to create the staright skeleton on the inward region of the polygon, and,
+    ///     * `true` to create the straight skeleton on the inward region of the polygon, and,
     ///     * `false` to create on the outward region of the polygon.
     pub fn straight_skeleton(&self, orientation: bool) -> Sketch<S> {
         let skeleton =
