@@ -30,98 +30,98 @@ fn main() {
     #[cfg(feature = "stl-io")]
     let _ = fs::write("stl/cube.stl", cube.to_stl_binary("cube").unwrap());
 
-	#[cfg(feature = "stl-io")]
-	{
-		let sphere = Mesh::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
-		let _ = fs::write("stl/sphere.stl", sphere.to_stl_binary("sphere").unwrap());
-	}
+    #[cfg(feature = "stl-io")]
+    {
+        let sphere = Mesh::sphere(1.0, 16, 8, None); // center=(0,0,0), radius=1, slices=16, stacks=8, no metadata
+        let _ = fs::write("stl/sphere.stl", sphere.to_stl_binary("sphere").unwrap());
+    }
 
-	#[cfg(feature = "stl-io")]
-	{
-		let cylinder = Mesh::cylinder(1.0, 2.0, 32, None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=32
-		let _ = fs::write(
-			"stl/cylinder.stl",
-			cylinder.to_stl_binary("cylinder").unwrap(),
-		);
-	}
+    #[cfg(feature = "stl-io")]
+    {
+        let cylinder = Mesh::cylinder(1.0, 2.0, 32, None); // start=(0,-1,0), end=(0,1,0), radius=1.0, slices=32
+        let _ = fs::write(
+            "stl/cylinder.stl",
+            cylinder.to_stl_binary("cylinder").unwrap(),
+        );
+    }
 
     // 2) Transformations: Translate, Rotate, Scale, Mirror
     #[cfg(feature = "stl-io")]
     {
-		let moved_cube = cube
-			.translate(1.0, 0.0, 0.0)
-			.rotate(0.0, 45.0, 0.0)
-			.scale(1.0, 0.5, 2.0);
-		let _ = fs::write(
-			"stl/cube_transformed.stl",
-			moved_cube.to_stl_binary("cube_transformed").unwrap(),
-		);
-	}
+        let moved_cube = cube
+            .translate(1.0, 0.0, 0.0)
+            .rotate(0.0, 45.0, 0.0)
+            .scale(1.0, 0.5, 2.0);
+        let _ = fs::write(
+            "stl/cube_transformed.stl",
+            moved_cube.to_stl_binary("cube_transformed").unwrap(),
+        );
+    }
 
-	#[cfg(feature = "stl-io")]
-	{
-		let moved_cube = cube
-			.translate(1.0, 0.0, 0.0)
-			.rotate(0.0, 45.0, 0.0)
-			.scale(1.0, 0.5, 2.0);
-		let plane_x = Plane::from_normal(Vector3::x(), 0.0);
-		let mirrored_cube = cube.mirror(plane_x);
-		let _ = fs::write(
-			"stl/cube_mirrored_x.stl",
-			mirrored_cube.to_stl_binary("cube_mirrored_x").unwrap(),
-		);
-	}
+    #[cfg(feature = "stl-io")]
+    {
+        let moved_cube = cube
+            .translate(1.0, 0.0, 0.0)
+            .rotate(0.0, 45.0, 0.0)
+            .scale(1.0, 0.5, 2.0);
+        let plane_x = Plane::from_normal(Vector3::x(), 0.0);
+        let mirrored_cube = cube.mirror(plane_x);
+        let _ = fs::write(
+            "stl/cube_mirrored_x.stl",
+            mirrored_cube.to_stl_binary("cube_mirrored_x").unwrap(),
+        );
+    }
 
     // 3) Boolean operations: Union, Subtract, Intersect
     #[cfg(feature = "stl-io")]
     {
-		let moved_cube = cube
-			.translate(1.0, 0.0, 0.0)
-			.rotate(0.0, 45.0, 0.0)
-			.scale(1.0, 0.5, 2.0);
-		let sphere = Mesh::sphere(1.0, 16, 8, None);
-		let union_shape = moved_cube.translate(-1.0, 0.0, 0.0).union(&sphere);
-		let _ = fs::write(
-			"stl/union_cube_sphere.stl",
-			union_shape.to_stl_binary("union_cube_sphere").unwrap(),
-		);
-	}
+        let moved_cube = cube
+            .translate(1.0, 0.0, 0.0)
+            .rotate(0.0, 45.0, 0.0)
+            .scale(1.0, 0.5, 2.0);
+        let sphere = Mesh::sphere(1.0, 16, 8, None);
+        let union_shape = moved_cube.translate(-1.0, 0.0, 0.0).union(&sphere);
+        let _ = fs::write(
+            "stl/union_cube_sphere.stl",
+            union_shape.to_stl_binary("union_cube_sphere").unwrap(),
+        );
+    }
 
     #[cfg(feature = "stl-io")]
     {
-		let moved_cube = cube
-			.translate(1.0, 0.0, 0.0)
-			.rotate(0.0, 45.0, 0.0)
-			.scale(1.0, 0.5, 2.0);
-		let sphere = Mesh::sphere(1.0, 16, 8, None);
-		let subtract_shape = moved_cube.difference(&sphere);
-		let _ = fs::write(
-			"stl/subtract_cube_sphere.stl",
-			subtract_shape.to_stl_binary("subtract_cube_sphere").unwrap(),
-		);
-	}
+        let moved_cube = cube
+            .translate(1.0, 0.0, 0.0)
+            .rotate(0.0, 45.0, 0.0)
+            .scale(1.0, 0.5, 2.0);
+        let sphere = Mesh::sphere(1.0, 16, 8, None);
+        let subtract_shape = moved_cube.difference(&sphere);
+        let _ = fs::write(
+            "stl/subtract_cube_sphere.stl",
+            subtract_shape.to_stl_binary("subtract_cube_sphere").unwrap(),
+        );
+    }
 
-	#[cfg(feature = "stl-io")]
-	{
-		let sphere = Mesh::sphere(1.0, 16, 8, None);
-		let intersect_shape = cube.intersection(&sphere);
-		let _ = fs::write(
-			"stl/intersect_cube_sphere.stl",
-			intersect_shape
-				.to_stl_binary("intersect_cube_sphere")
-				.unwrap(),
-		);
-	}
+    #[cfg(feature = "stl-io")]
+    {
+        let sphere = Mesh::sphere(1.0, 16, 8, None);
+        let intersect_shape = cube.intersection(&sphere);
+        let _ = fs::write(
+            "stl/intersect_cube_sphere.stl",
+            intersect_shape
+                .to_stl_binary("intersect_cube_sphere")
+                .unwrap(),
+        );
+    }
 
     // 4) Convex hull
     #[cfg(all(feature = "chull-io", feature = "stl-io"))]
     {
-		let hull_of_union = union_shape.convex_hull();
-		let _ = fs::write(
-			"stl/hull_union.stl",
-			hull_of_union.to_stl_binary("hull_union").unwrap(),
-		);
-	}
+        let hull_of_union = union_shape.convex_hull();
+        let _ = fs::write(
+            "stl/hull_union.stl",
+            hull_of_union.to_stl_binary("hull_union").unwrap(),
+        );
+    }
 
     // 5) Minkowski sum
     #[cfg(all(feature = "stl-io", feature = "chull-io"))]
@@ -172,7 +172,7 @@ fn main() {
     // Extrude & Rotate-Extrude
     #[cfg(feature = "stl-io")]
     {
-		let star_2d = Sketch::star(5, 2.0, 0.8, None);
+        let star_2d = Sketch::star(5, 2.0, 0.8, None);
         let extruded_star = star_2d.extrude(1.0);
         let _ = fs::write(
             "stl/star_extrude.stl",
@@ -182,7 +182,7 @@ fn main() {
 
     #[cfg(feature = "stl-io")]
     {
-		let star_2d = Sketch::star(5, 2.0, 0.8, None);
+        let star_2d = Sketch::star(5, 2.0, 0.8, None);
         let vector_extruded_star = star_2d.extrude_vector(Vector3::new(2.0, 1.0, 1.0));
         let _ = fs::write(
             "stl/star_vec_extrude.stl",
@@ -203,45 +203,45 @@ fn main() {
         );
     }
 
-	#[cfg(feature = "stl-io")]
-	{
-		let partial_revolve = circle_2d
-			.translate(10.0, 0.0, 0.0)
-			.revolve(180.0, 32)
-			.expect("Revolve failed");
-		let _ = fs::write(
-			"stl/circle_revolve_180.stl",
-			partial_revolve.to_stl_binary("circle_revolve_180").unwrap(),
-		);
-	}
+    #[cfg(feature = "stl-io")]
+    {
+        let partial_revolve = circle_2d
+            .translate(10.0, 0.0, 0.0)
+            .revolve(180.0, 32)
+            .expect("Revolve failed");
+        let _ = fs::write(
+            "stl/circle_revolve_180.stl",
+            partial_revolve.to_stl_binary("circle_revolve_180").unwrap(),
+        );
+    }
 
     // 9) Subdivide triangles (for smoother sphere or shapes):
     #[cfg(feature = "stl-io")]
-	{
-		let sphere = Mesh::sphere(1.0, 16, 8, None);
-		let subdiv_sphere = sphere.subdivide_triangles(2.try_into().expect("not 0")); // 2 subdivision levels
-		let _ = fs::write(
-			"stl/sphere_subdiv2.stl",
-			subdiv_sphere.to_stl_binary("sphere_subdiv2").unwrap(),
-		);
-	}
+    {
+        let sphere = Mesh::sphere(1.0, 16, 8, None);
+        let subdiv_sphere = sphere.subdivide_triangles(2.try_into().expect("not 0")); // 2 subdivision levels
+        let _ = fs::write(
+            "stl/sphere_subdiv2.stl",
+            subdiv_sphere.to_stl_binary("sphere_subdiv2").unwrap(),
+        );
+    }
 
     // 10) Renormalize polygons (flat shading):
     #[cfg(feature = "stl-io")]
     {
-		let moved_cube = cube
-			.translate(1.0, 0.0, 0.0)
-			.rotate(0.0, 45.0, 0.0)
-			.scale(1.0, 0.5, 2.0);
-		let sphere = Mesh::sphere(1.0, 16, 8, None);
-		let union_shape = moved_cube.translate(-1.0, 0.0, 0.0).union(&sphere);
-		let mut union_clone = union_shape.clone();
-		union_clone.renormalize();
-		let _ = fs::write(
-			"stl/union_renormalized.stl",
-			union_clone.to_stl_binary("union_renormalized").unwrap(),
-		);
-	}
+        let moved_cube = cube
+            .translate(1.0, 0.0, 0.0)
+            .rotate(0.0, 45.0, 0.0)
+            .scale(1.0, 0.5, 2.0);
+        let sphere = Mesh::sphere(1.0, 16, 8, None);
+        let union_shape = moved_cube.translate(-1.0, 0.0, 0.0).union(&sphere);
+        let mut union_clone = union_shape.clone();
+        union_clone.renormalize();
+        let _ = fs::write(
+            "stl/union_renormalized.stl",
+            union_clone.to_stl_binary("union_renormalized").unwrap(),
+        );
+    }
 
     // 11) Ray intersection demo (just printing the results)
     {
@@ -439,7 +439,7 @@ fn main() {
     // Distribute that wedge along a linear axis
     #[cfg(feature = "stl-io")]
     {
-		let wedge = Sketch::pie_slice(2.0, 0.0, 90.0, 16, None);
+        let wedge = Sketch::pie_slice(2.0, 0.0, 90.0, 16, None);
         let wedge_line =
             wedge.distribute_linear(4, nalgebra::Vector3::new(1.0, 0.0, 0.0), 3.0);
         let _ = fs::write("stl/wedge_line.stl", wedge_line.to_stl_ascii("wedge_line"));
@@ -448,7 +448,7 @@ fn main() {
     // Make a 4x4 grid of the supershape
     #[cfg(feature = "stl-io")]
     {
-		let sshape = Sketch::supershape(1.0, 1.0, 6.0, 1.0, 1.0, 1.0, 128, None);
+        let sshape = Sketch::supershape(1.0, 1.0, 6.0, 1.0, 1.0, 1.0, 128, None);
         let grid_of_ss = sshape.distribute_grid(4, 4, 3.0, 3.0);
         let _ = fs::write("stl/grid_of_ss.stl", grid_of_ss.to_stl_ascii("grid_of_ss"));
     }
@@ -705,7 +705,7 @@ fn main() {
     // quick solid wing rib 5 mm thick
     #[cfg(feature = "stl-io")]
     {
-		let naca2412 = Sketch::airfoil("2412", 1.0, 100, None);
+        let naca2412 = Sketch::airfoil("2412", 1.0, 100, None);
         let rib = naca2412.extrude(0.005);
         let _ = fs::write("stl/naca2412_extruded.stl", rib.to_stl_ascii("2412_extruded"));
     }
@@ -827,7 +827,7 @@ fn main() {
     // Scene G: Demonstrate inverse() (flips inside/outside)
     #[cfg(feature = "stl-io")]
     {
-		let sphere = Mesh::sphere(1.0, 16, 8, None);
+        let sphere = Mesh::sphere(1.0, 16, 8, None);
         let inv_sphere = sphere.inverse();
         #[cfg(feature = "stl-io")]
         let _ = fs::write(
@@ -839,7 +839,7 @@ fn main() {
     // Scene H: Demonstrate tessellate() (forces triangulation)
     #[cfg(feature = "stl-io")]
     {
-		let sphere = Mesh::sphere(1.0, 16, 8, None);
+        let sphere = Mesh::sphere(1.0, 16, 8, None);
         let tri_sphere = sphere.triangulate();
         #[cfg(feature = "stl-io")]
         let _ = fs::write(
@@ -913,7 +913,7 @@ fn main() {
     // Scene N: Demonstrate scale()
     #[cfg(feature = "stl-io")]
     {
-		let sphere = Mesh::sphere(1.0, 16, 8, None);
+        let sphere = Mesh::sphere(1.0, 16, 8, None);
         let scaled = sphere.scale(1.0, 2.0, 0.5);
         let _ = fs::write(
             "stl/scene_scaled_sphere.stl",
