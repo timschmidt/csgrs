@@ -12,37 +12,69 @@ jobs:
       - name: Rust/Cargo Cache
         uses: Swatinem/rust-cache@v2
         
+      - name: Run Check minimal f32 single threaded earcut
+        run: cargo check --no-default-features --features
+          "f32 earcut"
+          
+      - name: Run Check minimal f32 parallel threaded earcut
+        run: cargo check --no-default-features --features
+          "f32 parallel earcut"
+          
+      - name: Run Check minimal f32 single threaded delaunay
+        run: cargo check --no-default-features --features
+          "f32 delaunay"
+          
+      - name: Run Check minimal f32 parallel threaded delaunay
+        run: cargo check --no-default-features --features
+          "f32 parallel delaunay"
+          
+      - name: Run Check minimal f64 single threaded earcut
+        run: cargo check --no-default-features --features
+          "f64 earcut"
+          
+      - name: Run Check minimal f32 parallel threaded earcut
+        run: cargo check --no-default-features --features
+          "f64 parallel earcut"
+          
+      - name: Run Check minimal f64 single threaded delaunay
+        run: cargo check --no-default-features --features
+          "f64 delaunay"
+          
+      - name: Run Check minimal f64 parallel threaded delaunay
+        run: cargo check --no-default-features --features
+          "f64 parallel delaunay"
+        
       - name: Run Check f32 single threaded earcut
         run: cargo check --no-default-features --features
-          "f32 earcut stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f32 earcut stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
         
       - name: Run Check f32 parallel earcut
         run: cargo check --no-default-features --features
-          "f32 earcut parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f32 earcut parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
           
       - name: Run Check f32 single threaded delaunay
         run: cargo check --no-default-features --features
-          "f32 delaunay stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f32 delaunay stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
         
       - name: Run Check f32 parallel delaunay
         run: cargo check --no-default-features --features
-          "f32 delaunay parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f32 delaunay parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
           
       - name: Run Check f64 single threaded earcut
         run: cargo check --no-default-features --features
-          "f64 earcut stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f64 earcut stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
         
       - name: Run Check f64 parallel earcut
         run: cargo check --no-default-features --features
-          "f64 earcut parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f64 earcut parallel stl-io svg-io amf-io obj-io ply-io dxf-io truetype-text hershey-text image-io"
           
       - name: Run Check f64 single threaded delaunay
         run: cargo check --no-default-features --features
-          "f64 delaunay stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f64 delaunay stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
         
       - name: Run Check f64 parallel delaunay
         run: cargo check --no-default-features --features
-          "f64 delaunay parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f64 delaunay parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
 
   test:
     name: Test Suite
@@ -52,38 +84,70 @@ jobs:
 
       - name: Rust/Cargo Cache
         uses: Swatinem/rust-cache@v2
+        
+      - name: Run Check minimal f32 single threaded earcut
+        run: cargo test --lib --no-default-features --features
+          "f32 earcut"
+          
+      - name: Run Test minimal f32 parallel threaded earcut
+        run: cargo test --lib --no-default-features --features
+          "f32 parallel earcut"
+          
+      - name: Run Test minimal f32 single threaded delaunay
+        run: cargo test --lib --no-default-features --features
+          "f32 delaunay"
+          
+      - name: Run Test minimal f32 parallel threaded delaunay
+        run: cargo test --lib --no-default-features --features
+          "f32 parallel delaunay"
+          
+      - name: Run Test minimal f64 single threaded earcut
+        run: cargo test --lib --no-default-features --features
+          "f64 earcut"
+          
+      - name: Run Test minimal f32 parallel threaded earcut
+        run: cargo test --lib --no-default-features --features
+          "f64 parallel earcut"
+          
+      - name: Run Test minimal f64 single threaded delaunay
+        run: cargo test --lib --no-default-features --features
+          "f64 delaunay"
+          
+      - name: Run Test minimal f64 parallel threaded delaunay
+        run: cargo test --lib --no-default-features --features
+          "f64 parallel delaunay"
           
       - name: Run Test f32 single threaded earcut
         run: cargo test --lib --no-default-features --features
-          "f32 earcut stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f32 earcut stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
         
       - name: Run Test f32 parallel earcut
         run: cargo test --lib --no-default-features --features
-          "f32 earcut parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f32 earcut parallel stl-io svg-io amf-io obj-io ply-io dxf-io truetype-text hershey-text image-io"
           
       - name: Run Test f32 single threaded delaunay
         run: cargo test --lib --no-default-features --features
-          "f32 delaunay stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f32 delaunay stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
         
       - name: Run Test f32 parallel delaunay
         run: cargo test --lib --no-default-features --features
-          "f32 delaunay parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f32 delaunay parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
           
       - name: Run Test f64 single threaded earcut
         run: cargo test --lib --no-default-features --features
-          "f64 earcut stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f64 earcut stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
         
       - name: Run Test f64 parallel earcut
         run: cargo test --lib --no-default-features --features
-          "f64 earcut parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f64 earcut parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
           
       - name: Run Test f64 single threaded delaunay
         run: cargo test --lib --no-default-features --features
-          "f64 delaunay stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f64 delaunay stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
         
       - name: Run Test f64 parallel delaunay
         run: cargo test --lib --no-default-features --features
-          "f64 delaunay parallel stl-io svg-io dxf-io truetype-text hershey-text image-io"
+          "f64 delaunay parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io"
 
   fmt:
     name: Formatting
