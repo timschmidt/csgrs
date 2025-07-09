@@ -187,6 +187,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             // Flatten each vertex to 2D
             // Here we clamp values within spade's minimum allowed value of  0.0 to 0.0
             // because spade refuses to triangulate with values within it's minimum:
+            #[allow(clippy::excessive_precision)]
             const MIN_ALLOWED_VALUE: Real = 1.793662034335766e-43; // 1.0 * 2^-142
             let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
             for vert in &self.vertices {
