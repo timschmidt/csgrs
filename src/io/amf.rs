@@ -46,8 +46,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         amf_content
             .push_str("  <metadata type=\"cad\">Constructive Solid Geometry</metadata>\n");
         amf_content.push_str(&format!(
-            "  <metadata type=\"description\">{}</metadata>\n",
-            object_name
+            "  <metadata type=\"description\">{object_name}</metadata>\n"
         ));
 
         let mut vertices = Vec::new();
@@ -73,13 +72,13 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         }
 
         // Start object definition
-        amf_content.push_str(&format!("  <object id=\"{}\">\n", object_name));
+        amf_content.push_str(&format!("  <object id=\"{object_name}\">\n"));
         amf_content.push_str("    <mesh>\n");
 
         // Write vertices
         amf_content.push_str("      <vertices>\n");
         for (i, vertex) in vertices.iter().enumerate() {
-            amf_content.push_str(&format!("        <vertex id=\"{}\">\n", i));
+            amf_content.push_str(&format!("        <vertex id=\"{i}\">\n"));
             amf_content.push_str("          <coordinates>\n");
             amf_content.push_str(&format!("            <x>{:.6}</x>\n", vertex.x));
             amf_content.push_str(&format!("            <y>{:.6}</y>\n", vertex.y));
@@ -92,7 +91,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // Write triangles (volume definition)
         amf_content.push_str("      <volume>\n");
         for (i, triangle) in triangles.iter().enumerate() {
-            amf_content.push_str(&format!("        <triangle id=\"{}\">\n", i));
+            amf_content.push_str(&format!("        <triangle id=\"{i}\">\n"));
             amf_content.push_str(&format!("          <v1>{}</v1>\n", triangle[0]));
             amf_content.push_str(&format!("          <v2>{}</v2>\n", triangle[1]));
             amf_content.push_str(&format!("          <v3>{}</v3>\n", triangle[2]));
@@ -173,8 +172,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         amf_content
             .push_str("  <metadata type=\"cad\">Constructive Solid Geometry</metadata>\n");
         amf_content.push_str(&format!(
-            "  <metadata type=\"description\">{}</metadata>\n",
-            object_name
+            "  <metadata type=\"description\">{object_name}</metadata>\n"
         ));
 
         // Material definition with color
@@ -210,13 +208,13 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         }
 
         // Start object definition
-        amf_content.push_str(&format!("  <object id=\"{}\">\n", object_name));
+        amf_content.push_str(&format!("  <object id=\"{object_name}\">\n"));
         amf_content.push_str("    <mesh>\n");
 
         // Write vertices
         amf_content.push_str("      <vertices>\n");
         for (i, vertex) in vertices.iter().enumerate() {
-            amf_content.push_str(&format!("        <vertex id=\"{}\">\n", i));
+            amf_content.push_str(&format!("        <vertex id=\"{i}\">\n"));
             amf_content.push_str("          <coordinates>\n");
             amf_content.push_str(&format!("            <x>{:.6}</x>\n", vertex.x));
             amf_content.push_str(&format!("            <y>{:.6}</y>\n", vertex.y));
@@ -229,7 +227,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // Write triangles with material reference
         amf_content.push_str("      <volume materialid=\"material1\">\n");
         for (i, triangle) in triangles.iter().enumerate() {
-            amf_content.push_str(&format!("        <triangle id=\"{}\">\n", i));
+            amf_content.push_str(&format!("        <triangle id=\"{i}\">\n"));
             amf_content.push_str(&format!("          <v1>{}</v1>\n", triangle[0]));
             amf_content.push_str(&format!("          <v2>{}</v2>\n", triangle[1]));
             amf_content.push_str(&format!("          <v3>{}</v3>\n", triangle[2]));
@@ -284,8 +282,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         amf_content
             .push_str("  <metadata type=\"cad\">Constructive Solid Geometry</metadata>\n");
         amf_content.push_str(&format!(
-            "  <metadata type=\"description\">{}</metadata>\n",
-            object_name
+            "  <metadata type=\"description\">{object_name}</metadata>\n"
         ));
 
         let mut vertices = Vec::new();
@@ -307,13 +304,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         }
 
         // Start object definition
-        amf_content.push_str(&format!("  <object id=\"{}\">\n", object_name));
+        amf_content.push_str(&format!("  <object id=\"{object_name}\">\n"));
         amf_content.push_str("    <mesh>\n");
 
         // Write vertices
         amf_content.push_str("      <vertices>\n");
         for (i, vertex) in vertices.iter().enumerate() {
-            amf_content.push_str(&format!("        <vertex id=\"{}\">\n", i));
+            amf_content.push_str(&format!("        <vertex id=\"{i}\">\n"));
             amf_content.push_str("          <coordinates>\n");
             amf_content.push_str(&format!("            <x>{:.6}</x>\n", vertex.x));
             amf_content.push_str(&format!("            <y>{:.6}</y>\n", vertex.y));
@@ -326,7 +323,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Write triangles (volume definition)
         amf_content.push_str("      <volume>\n");
         for (i, triangle) in triangles.iter().enumerate() {
-            amf_content.push_str(&format!("        <triangle id=\"{}\">\n", i));
+            amf_content.push_str(&format!("        <triangle id=\"{i}\">\n"));
             amf_content.push_str(&format!("          <v1>{}</v1>\n", triangle[0]));
             amf_content.push_str(&format!("          <v2>{}</v2>\n", triangle[1]));
             amf_content.push_str(&format!("          <v3>{}</v3>\n", triangle[2]));
@@ -379,8 +376,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         amf_content
             .push_str("  <metadata type=\"cad\">Constructive Solid Geometry</metadata>\n");
         amf_content.push_str(&format!(
-            "  <metadata type=\"description\">{}</metadata>\n",
-            object_name
+            "  <metadata type=\"description\">{object_name}</metadata>\n"
         ));
 
         // Material definition with color
@@ -413,13 +409,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         }
 
         // Start object definition
-        amf_content.push_str(&format!("  <object id=\"{}\">\n", object_name));
+        amf_content.push_str(&format!("  <object id=\"{object_name}\">\n"));
         amf_content.push_str("    <mesh>\n");
 
         // Write vertices
         amf_content.push_str("      <vertices>\n");
         for (i, vertex) in vertices.iter().enumerate() {
-            amf_content.push_str(&format!("        <vertex id=\"{}\">\n", i));
+            amf_content.push_str(&format!("        <vertex id=\"{i}\">\n"));
             amf_content.push_str("          <coordinates>\n");
             amf_content.push_str(&format!("            <x>{:.6}</x>\n", vertex.x));
             amf_content.push_str(&format!("            <y>{:.6}</y>\n", vertex.y));
@@ -432,7 +428,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Write triangles with material reference
         amf_content.push_str("      <volume materialid=\"material1\">\n");
         for (i, triangle) in triangles.iter().enumerate() {
-            amf_content.push_str(&format!("        <triangle id=\"{}\">\n", i));
+            amf_content.push_str(&format!("        <triangle id=\"{i}\">\n"));
             amf_content.push_str(&format!("          <v1>{}</v1>\n", triangle[0]));
             amf_content.push_str(&format!("          <v2>{}</v2>\n", triangle[1]));
             amf_content.push_str(&format!("          <v3>{}</v3>\n", triangle[2]));
