@@ -307,7 +307,7 @@ fn main() {
 
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
-    let cube = Mesh::cube(100.0, None);
+    let cube = Mesh::cube(2.0, None);
 
     // 2) Flatten into the XY plane
     #[cfg(feature = "stl-io")]
@@ -651,28 +651,32 @@ fn main() {
     }
 
     // 16) gyroid(...) – uses the current CSG volume as a bounding region
-    // Let's reuse the `cube` from above:
+    // Let's use a cube to properly demonstrate the TPMS structure:
+    // 16) TPMS (Triply Periodic Minimal Surfaces) – gyroid, Schwarz P, Schwarz D
+    // Uses a cube as the bounding volume to properly demonstrate the TPMS structure
     #[cfg(all(feature = "stl-io", feature = "sdf"))]
     {
-        let tpms_volume = Mesh::sphere(100.0, 50, 50, None);
+        let tpms_volume = Mesh::cube(4.0, None); // Use cube instead of sphere
+        
+        // Use smaller period (0.5) to show more TPMS structure within the cube
+        // Period controls the spatial frequency - smaller values = more repetitions
+        // Higher resolution (64) provides more detail
         let gyroid_inside_cube =
-            tpms_volume.scale(20.0, 20.0, 20.0).gyroid(64, 2.0, 0.0, None);
+            tpms_volume.gyroid(64, 0.5, 0.0, None);
         let _ = fs::write(
             "stl/gyroid_cube.stl",
             gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap(),
         );
 
         let schwarzp_inside_cube = tpms_volume
-            .scale(20.0, 20.0, 20.0)
-            .schwarz_p(64, 2.0, 0.0, None);
+            .schwarz_p(64, 0.5, 0.0, None);
         let _ = fs::write(
             "stl/schwarz_p_cube.stl",
             schwarzp_inside_cube.to_stl_binary("schwarz_p_cube").unwrap(),
         );
 
         let schwarzd_inside_cube = tpms_volume
-            .scale(20.0, 20.0, 20.0)
-            .schwarz_d(64, 2.0, 0.0, None);
+            .schwarz_d(64, 0.5, 0.0, None);
         let _ = fs::write(
             "stl/schwarz_d_cube.stl",
             schwarzd_inside_cube.to_stl_binary("schwarz_d_cube").unwrap(),
@@ -1078,6 +1082,9 @@ fn main() {
             "stl/bezier_extruded.stl",
             bezier_3d.to_stl_ascii("bezier_extruded"),
         );
+        
+        #[cfg(feature = "bevymesh")]
+        println!("{:#?}", bezier_3d.to_bevy_mesh());
     }
 
     // B-spline demo
@@ -1092,9 +1099,6 @@ fn main() {
         );
         let _ = fs::write("stl/bspline_2d.stl", bspline_2d.to_stl_ascii("bspline_2d"));
     }
-
-    #[cfg(feature = "bevymesh")]
-    println!("{:#?}", bezier_3d.to_bevy_mesh());
 
     // a quick thickening just like the Bézier
     //let bspline_3d = bspline_2d.extrude(0.25);

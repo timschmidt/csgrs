@@ -64,8 +64,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 let (sin_z, cos_z) = z_scaled.sin_cos();
 
                 // **Mathematical Formula**: Gyroid surface equation
-                // G(x,y,z) = sin(x)cos(y) + sin(y)cos(z) + sin(z)cos(x)
-                (sin_x * cos_y) + (sin_y * cos_z) + (sin_z * cos_x)
+                // G(x,y,z) = cos(x)sin(y) + cos(y)sin(z) + cos(z)sin(x)
+                (cos_x * sin_y) + (cos_y * sin_z) + (cos_z * sin_x)
             },
             res,
             iso_value,
