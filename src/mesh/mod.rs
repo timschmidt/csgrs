@@ -72,8 +72,8 @@ impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S> {
         let polys = self
             .polygons
             .iter()
+            .filter(|&p| p.metadata.as_ref() == Some(needle))
             .cloned()
-            .filter(|p| p.metadata.as_ref() == Some(needle))
             .collect();
 
         Mesh {
@@ -198,7 +198,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
                 .polygons
                 .par_iter_mut()
                 .flat_map(|poly| {
-                    let sub_tris = poly.subdivide_triangles(levels.into());
+                    let sub_tris = poly.subdivide_triangles(levels);
                     // Convert each small tri back to a Polygon
                     sub_tris
                         .into_par_iter()
@@ -213,7 +213,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
                 .polygons
                 .iter()
                 .flat_map(|poly| {
-                    let polytri = poly.subdivide_triangles(levels.into());
+                    let polytri = poly.subdivide_triangles(levels);
                     polytri
                         .into_iter()
                         .map(move |tri| Polygon::new(tri.to_vec(), poly.metadata.clone()))

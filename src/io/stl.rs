@@ -30,7 +30,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// ```
     pub fn to_stl_ascii(&self, name: &str) -> String {
         let mut out = String::new();
-        out.push_str(&format!("solid {}\n", name));
+        out.push_str(&format!("solid {name}\n"));
 
         // Write out all *3D* polygons
         for poly in &self.polygons {
@@ -55,7 +55,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        out.push_str(&format!("endsolid {}\n", name));
+        out.push_str(&format!("endsolid {name}\n"));
         out
     }
 
@@ -194,7 +194,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// ```
     pub fn to_stl_ascii(&self, name: &str) -> String {
         let mut out = String::new();
-        out.push_str(&format!("solid {}\n", name));
+        out.push_str(&format!("solid {name}\n"));
 
         // Write out all *2D* geometry from `self.geometry`
         // We only handle Polygon and MultiPolygon.  We tessellate in XY, set z=0.
@@ -282,7 +282,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             }
         }
 
-        out.push_str(&format!("endsolid {}\n", name));
+        out.push_str(&format!("endsolid {name}\n"));
         out
     }
 

@@ -188,8 +188,7 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
 
     // Collect all endpoints
     for (i, edge) in edges.iter().enumerate() {
-        for end_idx in 0..2 {
-            let v = &edge[end_idx];
+        for (end_idx, v) in edge.iter().enumerate() {
             let k = make_key(&v.pos);
             adjacency.entry(k).or_default().push((i, end_idx));
         }

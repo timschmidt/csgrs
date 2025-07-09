@@ -615,6 +615,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// The superformula parameters are typically:
     ///   r(θ) = [ (|cos(mθ/4)/a|^n2 + |sin(mθ/4)/b|^n3) ^ (-1/n1) ]
     /// Adjust as needed for your use-case.
+    #[allow(clippy::too_many_arguments)]
     pub fn supershape(
         a: Real,
         b: Real,

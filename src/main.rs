@@ -60,10 +60,6 @@ fn main() {
 
     #[cfg(feature = "stl-io")]
     {
-        let moved_cube = cube
-            .translate(1.0, 0.0, 0.0)
-            .rotate(0.0, 45.0, 0.0)
-            .scale(1.0, 0.5, 2.0);
         let plane_x = Plane::from_normal(Vector3::x(), 0.0);
         let mirrored_cube = cube.mirror(plane_x);
         let _ = fs::write(

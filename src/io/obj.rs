@@ -87,6 +87,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // Write faces (1-indexed in OBJ format)
         for face in &faces {
+            #[allow(clippy::single_char_add_str)]
             obj_content.push_str("f");
             for (vertex_idx, normal_idx) in face {
                 obj_content.push_str(&format!(" {}//{}", vertex_idx + 1, normal_idx + 1));
@@ -372,6 +373,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // Write faces (1-indexed in OBJ format)
         for face in &faces {
+            #[allow(clippy::single_char_add_str)]
             obj_content.push_str("f");
             for (vertex_idx, normal_idx) in face {
                 obj_content.push_str(&format!(" {}//{}", vertex_idx + 1, normal_idx + 1));

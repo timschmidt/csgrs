@@ -573,7 +573,7 @@ impl<S: Clone> ToSVG for Sketch<S> {
             data = data.move_to(
                 // Skip the last point because it is equal to the first one
                 exterior.0[..(exterior.0.len() - 1)]
-                    .into_iter()
+                    .iter()
                     .flat_map(|c| [c.x as f32, c.y as f32])
                     .collect::<Vec<f32>>(),
             );
@@ -584,7 +584,7 @@ impl<S: Clone> ToSVG for Sketch<S> {
                 data = data.move_to(
                     // Skip the last point because it is equal to the first one
                     interior.0[..(interior.0.len() - 1)]
-                        .into_iter()
+                        .iter()
                         .flat_map(|c| [c.x as f32, c.y as f32])
                         .collect::<Vec<f32>>(),
                 );
@@ -676,7 +676,7 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
     // `svg` crate returns `f32`, so that's what is used here.
     let mut builder = PathBuilder::<f32>::new();
 
-    for cmd in path_data.into_iter() {
+    for cmd in path_data.iter() {
         use svg::node::element::path::{Command::*, Position::*};
 
         macro_rules! ensure_param_count {
@@ -746,22 +746,22 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
                 }
             },
             HorizontalLine(Absolute, params) => {
-                for &x in params.into_iter() {
+                for &x in params.iter() {
                     builder.hline_to(x)?;
                 }
             },
             HorizontalLine(Relative, params) => {
-                for &dx in params.into_iter() {
+                for &dx in params.iter() {
                     builder.hline_by(dx)?;
                 }
             },
             VerticalLine(Absolute, params) => {
-                for &y in params.into_iter() {
+                for &y in params.iter() {
                     builder.vline_to(y)?;
                 }
             },
             VerticalLine(Relative, params) => {
-                for &dy in params.into_iter() {
+                for &dy in params.iter() {
                     builder.vline_by(dy)?;
                 }
             },
