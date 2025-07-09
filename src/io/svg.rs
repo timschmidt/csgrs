@@ -74,7 +74,7 @@ impl<F: CoordNum> PathBuilder<F> {
 
         self.inner.0.last_mut().ok_or_else(|| {
             IoError::MalformedPath(
-                "Attempted to extend the current path, but no path was started.".to_string()
+                "Attempted to extend the current path, but no path was started.".to_string(),
             )
         })
     }
@@ -179,7 +179,7 @@ impl<F: CoordNum> PathBuilder<F> {
         _end: Coord<F>,
     ) -> Result<(), IoError> {
         Err(IoError::Unimplemented(
-            "quadratic curveto (absolute quadratic Bézier curve)".to_string()
+            "quadratic curveto (absolute quadratic Bézier curve)".to_string(),
         ))
     }
 
@@ -199,7 +199,7 @@ impl<F: CoordNum> PathBuilder<F> {
         _end: Coord<F>,
     ) -> Result<(), IoError> {
         Err(IoError::Unimplemented(
-            "quadratic curveby (relative quadratic Bézier curve)".to_string()
+            "quadratic curveby (relative quadratic Bézier curve)".to_string(),
         ))
     }
 
@@ -257,7 +257,7 @@ impl<F: CoordNum> PathBuilder<F> {
         _end: Coord<F>,
     ) -> Result<(), IoError> {
         Err(IoError::Unimplemented(
-            "curveto (absolute cubic Bézier curve)".to_string()
+            "curveto (absolute cubic Bézier curve)".to_string(),
         ))
     }
 
@@ -279,7 +279,7 @@ impl<F: CoordNum> PathBuilder<F> {
         _end: Coord<F>,
     ) -> Result<(), IoError> {
         Err(IoError::Unimplemented(
-            "curveby (relative cubic Bézier curve)".to_string()
+            "curveby (relative cubic Bézier curve)".to_string(),
         ))
     }
 
@@ -568,7 +568,7 @@ impl<S: Clone> ToSVG for Sketch<S> {
         let make_polygon = |polygon: &geo::Polygon<Real>| {
             let mut data = path::Data::new();
 
-			// `svg::Data` accepts a `Vec<f32>` here, so always cast to `f32`.
+            // `svg::Data` accepts a `Vec<f32>` here, so always cast to `f32`.
             let exterior = polygon.exterior();
             data = data.move_to(
                 // Skip the last point because it is equal to the first one
