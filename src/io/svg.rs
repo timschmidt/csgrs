@@ -5,6 +5,7 @@ use geo::{
 };
 use svg::node::element::path;
 
+use crate::float_types::Real;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 
@@ -456,7 +457,7 @@ impl FromSVG for Sketch<()> {
                 Event::Tag(tag::Circle, Empty, attrs) => {
                     let cx = expect_attr!(attrs, "cx")?.parse()?;
                     let cy = expect_attr!(attrs, "cy")?.parse()?;
-                    let r: f64 = expect_attr!(attrs, "r")?.parse()?;
+                    let r: Real = expect_attr!(attrs, "r")?.parse()?;
 
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
@@ -466,12 +467,12 @@ impl FromSVG for Sketch<()> {
                 },
 
                 Event::Tag(tag::Rectangle, Empty, attrs) => {
-                    let x: f64 = expect_attr!(attrs, "x")?.parse()?;
-                    let y: f64 = expect_attr!(attrs, "y")?.parse()?;
-                    let w: f64 = expect_attr!(attrs, "width")?.parse()?;
-                    let h: f64 = expect_attr!(attrs, "height")?.parse()?;
-                    let rx: f64 = option_attr!(attrs, "rx").map_or(Ok(0.0), |a| a.parse())?;
-                    let ry: f64 = option_attr!(attrs, "ry").map_or(Ok(0.0), |a| a.parse())?;
+                    let x: Real = expect_attr!(attrs, "x")?.parse()?;
+                    let y: Real = expect_attr!(attrs, "y")?.parse()?;
+                    let w: Real = expect_attr!(attrs, "width")?.parse()?;
+                    let h: Real = expect_attr!(attrs, "height")?.parse()?;
+                    let rx: Real = option_attr!(attrs, "rx").map_or(Ok(0.0), |a| a.parse())?;
+                    let ry: Real = option_attr!(attrs, "ry").map_or(Ok(0.0), |a| a.parse())?;
 
                     // TODO: support rx != ry
                     let r = (rx + ry) / 2.0;
@@ -487,8 +488,8 @@ impl FromSVG for Sketch<()> {
                 Event::Tag(tag::Ellipse, Empty, attrs) => {
                     let cx = expect_attr!(attrs, "cx")?.parse()?;
                     let cy = expect_attr!(attrs, "cy")?.parse()?;
-                    let rx: f64 = expect_attr!(attrs, "rx")?.parse()?;
-                    let ry: f64 = expect_attr!(attrs, "ry")?.parse()?;
+                    let rx: Real = expect_attr!(attrs, "rx")?.parse()?;
+                    let ry: Real = expect_attr!(attrs, "ry")?.parse()?;
 
                     // TODO: add a way for the user to configure this?
                     let segments = (rx.max(ry).ceil() as usize).max(6);
@@ -516,7 +517,7 @@ impl FromSVG for Sketch<()> {
 
                 Event::Tag(tag::Polyline, Empty, attrs) => {
                     let points = expect_attr!(attrs, "points")?;
-                    let _ls = svg_points_to_line_string::<f64>(points)?;
+                    let _ls = svg_points_to_line_string::<Real>(points)?;
 
                     // TODO: This needs knowing current stroke-width
                 },
@@ -545,7 +546,7 @@ impl<S: Clone> ToSVG for Sketch<S> {
 
         let mut g = element::Group::new();
 
-        let make_line_string = |line_string: &geo::LineString| {
+        let make_line_string = |line_string: &geo::LineString<Real>| {
             let mut data = path::Data::new();
             let mut points = line_string.coords();
 
@@ -564,7 +565,7 @@ impl<S: Clone> ToSVG for Sketch<S> {
                 .set("d", data)
         };
 
-        let make_polygon = |polygon: &geo::Polygon| {
+        let make_polygon = |polygon: &geo::Polygon<Real>| {
             let mut data = path::Data::new();
 
             let exterior = polygon.exterior();
@@ -572,8 +573,8 @@ impl<S: Clone> ToSVG for Sketch<S> {
                 // Skip the last point because it is equal to the first one
                 exterior.0[..(exterior.0.len() - 1)]
                     .into_iter()
-                    .flat_map(|c| [c.x as f32, c.y as f32])
-                    .collect::<Vec<f32>>(),
+                    .flat_map(|c| [c.x as Real, c.y as Real])
+                    .collect::<Vec<Real>>(),
             );
 
             data = data.close();
@@ -583,8 +584,8 @@ impl<S: Clone> ToSVG for Sketch<S> {
                     // Skip the last point because it is equal to the first one
                     interior.0[..(interior.0.len() - 1)]
                         .into_iter()
-                        .flat_map(|c| [c.x as f32, c.y as f32])
-                        .collect::<Vec<f32>>(),
+                        .flat_map(|c| [c.x as Real, c.y as Real])
+                        .collect::<Vec<Real>>(),
                 );
 
                 data = data.close();
@@ -869,7 +870,7 @@ fn svg_path_to_multi_line_string<F: CoordNum>(
         }
     }
 
-    let mls: MultiLineString<f32> = builder.into();
+    let mls: MultiLineString<Real> = builder.into();
     let mls = mls.map_coords(|c| Coord {
         x: F::from(c.x).unwrap(),
         y: F::from(c.y).unwrap(),
