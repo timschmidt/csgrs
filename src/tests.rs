@@ -1736,19 +1736,19 @@ fn test_contains_vertex() {
     assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.0)));
     assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 0.01)));
 
-	#[cfg(feature = "f64")]
-	{
-		assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.99999999)));
-		assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-11)));
-		assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-14)));
-		assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.9 + 9e-9)));
+    #[cfg(feature = "f64")]
+    {
+        assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.99999999)));
+        assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-11)));
+        assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-14)));
+        assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.9 + 9e-9)));
     }
-    
+
     #[cfg(feature = "f32")]
     {
-		assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.999999)));
-		assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-6)));
-		assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.9 + 9e-9)));
+        assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.999999)));
+        assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0 - 1e-6)));
+        assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 5.9 + 9e-9)));
     }
 
     assert!(csg_cube.contains_vertex(&Point3::new(3.0, -3.0, 3.0)));
