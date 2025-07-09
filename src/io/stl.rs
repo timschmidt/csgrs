@@ -59,7 +59,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         out
     }
 
-    /// Export to BINARY STL (returns Vec<u8>)
+    /// Export to BINARY STL (returns `Vec<u8>`)
     ///
     /// Convert this Mesh to a **binary STL** byte vector with the given `name`.
     ///
@@ -71,7 +71,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// # fn main() -> Result<(), Box<dyn Error>> {
     /// let object = Mesh::<()>::cube(1.0, None);
     /// let bytes  = object.to_stl_binary("my_solid")?;
-    /// std::fs::write("my_solid.stl", bytes)?;
+    /// std::fs::write("stl/my_solid.stl", bytes)?;
     /// # Ok(())
     /// # }
     /// ```
@@ -286,7 +286,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         out
     }
 
-    /// Export to BINARY STL (returns Vec<u8>)
+    /// Export to BINARY STL (returns `Vec<u8>`)
     ///
     /// Convert this Sketch to a **binary STL** byte vector with the given 'name'.
     ///
@@ -298,7 +298,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # fn main() -> Result<(), Box<dyn Error>> {
     /// let object = Sketch::<()>::square(1.0, None);
     /// let bytes  = object.to_stl_binary("my_sketch")?;
-    /// std::fs::write("my_sketch.stl", bytes)?;
+    /// std::fs::write("stl/my_sketch.stl", bytes)?;
     /// # Ok(())
     /// # }
     /// ```
