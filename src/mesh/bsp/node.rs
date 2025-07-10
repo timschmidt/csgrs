@@ -38,4 +38,4 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             polygons: Vec::new(),
         }
     }
-} 
+}

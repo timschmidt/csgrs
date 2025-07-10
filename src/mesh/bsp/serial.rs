@@ -3,15 +3,24 @@
 use crate::float_types::EPSILON;
 use crate::mesh::bsp::node::Node;
 use crate::mesh::bsp::traits::{BalancedSplittingStrategy, BspOps, SplittingPlaneStrategy};
-use crate::mesh::plane::{Plane, BACK, COPLANAR, FRONT, SPANNING};
+use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
 
 /// Serial implementation of BSP operations
-pub struct SerialBspOps<SP: SplittingPlaneStrategy<S> = BalancedSplittingStrategy, S: Clone = ()> {
+pub struct SerialBspOps<
+    SP: SplittingPlaneStrategy<S> = BalancedSplittingStrategy,
+    S: Clone = (),
+> {
     splitting_strategy: SP,
     _phantom: std::marker::PhantomData<S>,
+}
+
+impl<S: Clone> Default for SerialBspOps<BalancedSplittingStrategy, S> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<S: Clone> SerialBspOps<BalancedSplittingStrategy, S> {
@@ -24,7 +33,7 @@ impl<S: Clone> SerialBspOps<BalancedSplittingStrategy, S> {
 }
 
 impl<SP: SplittingPlaneStrategy<S>, S: Clone> SerialBspOps<SP, S> {
-    pub fn with_strategy(strategy: SP) -> Self {
+    pub const fn with_strategy(strategy: SP) -> Self {
         Self {
             splitting_strategy: strategy,
             _phantom: std::marker::PhantomData,
@@ -32,9 +41,9 @@ impl<SP: SplittingPlaneStrategy<S>, S: Clone> SerialBspOps<SP, S> {
     }
 }
 
-
-
-impl<SP: SplittingPlaneStrategy<S>, S: Clone + Send + Sync + Debug> BspOps<S> for SerialBspOps<SP, S> {
+impl<SP: SplittingPlaneStrategy<S>, S: Clone + Send + Sync + Debug> BspOps<S>
+    for SerialBspOps<SP, S>
+{
     fn invert(&self, node: &mut Node<S>) {
         // Use iterative approach with a stack
         let mut stack = vec![node];
@@ -108,11 +117,11 @@ impl<SP: SplittingPlaneStrategy<S>, S: Clone + Send + Sync + Debug> BspOps<S> fo
 
     fn clip_to(&self, node: &mut Node<S>, bsp: &Node<S>) {
         node.polygons = self.clip_polygons(bsp, &node.polygons);
-        
+
         if let Some(ref mut front) = node.front {
             self.clip_to(front, bsp);
         }
-        
+
         if let Some(ref mut back) = node.back {
             self.clip_to(back, bsp);
         }
@@ -164,19 +173,21 @@ impl<SP: SplittingPlaneStrategy<S>, S: Clone + Send + Sync + Debug> BspOps<S> fo
 
         // Build child nodes using lazy initialization pattern
         if !front.is_empty() {
-            node.front
-                .get_or_insert_with(|| Box::new(Node::new()));
+            node.front.get_or_insert_with(|| Box::new(Node::new()));
             self.build(node.front.as_mut().unwrap(), &front);
         }
 
         if !back.is_empty() {
-            node.back
-                .get_or_insert_with(|| Box::new(Node::new()));
+            node.back.get_or_insert_with(|| Box::new(Node::new()));
             self.build(node.back.as_mut().unwrap(), &back);
         }
     }
 
-    fn slice(&self, node: &Node<S>, slicing_plane: &Plane) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
+    fn slice(
+        &self,
+        node: &Node<S>,
+        slicing_plane: &Plane,
+    ) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
         let all_polys = self.all_polygons(node);
 
         let mut coplanar_polygons = Vec::new();
@@ -245,4 +256,4 @@ impl<SP: SplittingPlaneStrategy<S>, S: Clone + Send + Sync + Debug> BspOps<S> fo
 
         (coplanar_polygons, intersection_edges)
     }
-} 
+}

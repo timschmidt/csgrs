@@ -1,5 +1,5 @@
 //! Binary Space Partitioning (BSP) tree implementation
-//! 
+//!
 //! This module provides BSP tree operations with dependency inversion,
 //! allowing for different algorithm implementations (serial/parallel).
 
@@ -14,7 +14,7 @@ pub mod parallel;
 
 // Re-export core types for backward compatibility
 pub use node::Node;
-pub use traits::{BspOps, SplittingPlaneStrategy, BalancedSplittingStrategy};
+pub use traits::{BalancedSplittingStrategy, BspOps, SplittingPlaneStrategy};
 
 #[cfg(not(feature = "parallel"))]
 pub use serial::SerialBspOps;
@@ -23,10 +23,10 @@ pub use serial::SerialBspOps;
 pub use parallel::ParallelBspOps;
 
 // Backward compatibility implementations on Node
-use std::fmt::Debug;
 use crate::mesh::plane::Plane;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
+use std::fmt::Debug;
 
 impl<S: Clone + Send + Sync + Debug> Node<S> {
     /// Creates a new BSP node from polygons
@@ -89,7 +89,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         let ops = SerialBspOps::new();
         #[cfg(feature = "parallel")]
         let ops = ParallelBspOps::new();
-        
+
         ops.all_polygons(self)
     }
 
@@ -118,4 +118,4 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         let ops = ParallelBspOps::new();
         ops.slice(self, slicing_plane)
     }
-} 
+}
