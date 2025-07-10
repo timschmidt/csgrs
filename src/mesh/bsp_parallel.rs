@@ -24,7 +24,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
     pub fn invert(&mut self) {
         // Use iterative approach with a stack to avoid recursive stack overflow
         let mut stack = vec![self];
-        
+
         while let Some(node) = stack.pop() {
             // Flip all polygons and plane in this node
             node.polygons.par_iter_mut().for_each(|p| p.flip());
@@ -34,7 +34,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
             // Swap front and back children
             std::mem::swap(&mut node.front, &mut node.back);
-            
+
             // Add children to stack for processing
             if let Some(ref mut front) = node.front {
                 stack.push(front.as_mut());
@@ -91,7 +91,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         } else {
             front
         };
-        
+
         if let Some(ref b) = self.back {
             result.extend(b.clip_polygons(&back));
         }
@@ -105,11 +105,11 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
     pub fn clip_to(&mut self, bsp: &Node<S>) {
         // Use iterative approach with a stack to avoid recursive stack overflow
         let mut stack = vec![self];
-        
+
         while let Some(node) = stack.pop() {
             // Clip polygons at this node
             node.polygons = bsp.clip_polygons(&node.polygons);
-            
+
             // Add children to stack for processing
             if let Some(ref mut front) = node.front {
                 stack.push(front.as_mut());
@@ -157,7 +157,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             front_node.build(&front);
             self.front = Some(front_node);
         }
-        
+
         if !back.is_empty() {
             let mut back_node = self.back.take().unwrap_or_else(|| Box::new(Node::new()));
             back_node.build(&back);
