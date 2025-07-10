@@ -132,6 +132,7 @@ hershey-text = [
 image-io = [
   "image",
   "contour_tracing",
+  "svg-io",
 ]
 metaballs = [
   "fast-surface-nets",
