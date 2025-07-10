@@ -29,12 +29,13 @@ pub struct Node<S: Clone> {
     pub polygons: Vec<Polygon<S>>,
 }
 
-impl<S: Clone + Send + Sync + Debug> Node<S> {
-    #[allow(unused)]
-    const fn default() -> Self {
+impl<S: Clone + Send + Sync + Debug> Default for Node<S> {
+    fn default() -> Self {
         Self::new()
     }
+}
 
+impl<S: Clone + Send + Sync + Debug> Node<S> {
     /// Create a new empty BSP node
     pub const fn new() -> Self {
         Self {

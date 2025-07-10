@@ -125,35 +125,6 @@ impl PartialEq for Plane {
                 ) == 0.0
         }
     }
-
-    fn ne(&self, other: &Self) -> bool {
-        if self.point_a != other.point_a
-            || self.point_b != other.point_b
-            || self.point_c != other.point_c
-        {
-            true
-        } else {
-            // check if co-planar
-            robust::orient3d(
-                point_to_coord3d(self.point_a),
-                point_to_coord3d(self.point_b),
-                point_to_coord3d(self.point_c),
-                point_to_coord3d(other.point_a),
-            ) != 0.0
-                || robust::orient3d(
-                    point_to_coord3d(self.point_a),
-                    point_to_coord3d(self.point_b),
-                    point_to_coord3d(self.point_c),
-                    point_to_coord3d(other.point_b),
-                ) != 0.0
-                || robust::orient3d(
-                    point_to_coord3d(self.point_a),
-                    point_to_coord3d(self.point_b),
-                    point_to_coord3d(self.point_c),
-                    point_to_coord3d(other.point_c),
-                ) != 0.0
-        }
-    }
 }
 
 fn point_to_coord3d(point: Point3<Real>) -> robust::Coord3D<Real> {
@@ -311,6 +282,7 @@ impl Plane {
                 z: point.z,
             },
         );
+        #[allow(clippy::useless_conversion)]
         if sign > EPSILON.into() {
             BACK
         } else if sign < (-EPSILON).into() {
@@ -354,6 +326,7 @@ impl Plane {
 
     /// Splits a polygon by this plane, returning four buckets:
     /// `(coplanar_front, coplanar_back, front, back)`.
+    #[allow(clippy::type_complexity)]
     pub fn split_polygon<S: Clone + Send + Sync>(
         &self,
         polygon: &Polygon<S>,

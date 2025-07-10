@@ -60,10 +60,6 @@ fn main() {
 
     #[cfg(feature = "stl-io")]
     {
-        let moved_cube = cube
-            .translate(1.0, 0.0, 0.0)
-            .rotate(0.0, 45.0, 0.0)
-            .scale(1.0, 0.5, 2.0);
         let plane_x = Plane::from_normal(Vector3::x(), 0.0);
         let mirrored_cube = cube.mirror(plane_x);
         let _ = fs::write(
@@ -656,30 +652,27 @@ fn main() {
     // Uses a cube as the bounding volume to properly demonstrate the TPMS structure
     #[cfg(all(feature = "stl-io", feature = "sdf"))]
     {
-        let tpms_volume = Mesh::cube(4.0, None); // Use cube instead of sphere
-        
-        // Use smaller period (0.5) to show more TPMS structure within the cube
-        // Period controls the spatial frequency - smaller values = more repetitions
-        // Higher resolution (64) provides more detail
-        let gyroid_inside_cube =
-            tpms_volume.gyroid(64, 0.5, 0.0, None);
+        let tpms_volume = Mesh::sphere(20.0, 10, 10, None);
+        let gyroid_inside_sphere = tpms_volume.gyroid(64, 2.0, 0.0, None);
         let _ = fs::write(
-            "stl/gyroid_cube.stl",
-            gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap(),
+            "stl/gyroid_sphere.stl",
+            gyroid_inside_sphere.to_stl_binary("gyroid_cube").unwrap(),
         );
 
-        let schwarzp_inside_cube = tpms_volume
-            .schwarz_p(64, 0.5, 0.0, None);
+        let schwarzp_inside_sphere = tpms_volume.schwarz_p(64, 2.0, 0.0, None);
         let _ = fs::write(
-            "stl/schwarz_p_cube.stl",
-            schwarzp_inside_cube.to_stl_binary("schwarz_p_cube").unwrap(),
+            "stl/schwarz_p_sphere.stl",
+            schwarzp_inside_sphere
+                .to_stl_binary("schwarz_p_cube")
+                .unwrap(),
         );
 
-        let schwarzd_inside_cube = tpms_volume
-            .schwarz_d(64, 0.5, 0.0, None);
+        let schwarzd_inside_sphere = tpms_volume.schwarz_d(64, 2.0, 0.0, None);
         let _ = fs::write(
-            "stl/schwarz_d_cube.stl",
-            schwarzd_inside_cube.to_stl_binary("schwarz_d_cube").unwrap(),
+            "stl/schwarz_d_sphere.stl",
+            schwarzd_inside_sphere
+                .to_stl_binary("schwarz_d_cube")
+                .unwrap(),
         );
     }
 
@@ -710,14 +703,14 @@ fn main() {
     // 2-D profile for NACA 2412, 1 m chord, 100 pts / surface
     #[cfg(feature = "stl-io")]
     {
-        let naca2412 = Sketch::airfoil("2412", 1.0, 100, None);
+        let naca2412 = Sketch::airfoil_naca4(2.0, 4.0, 12.0, 1.0, 100, None);
         let _ = fs::write("stl/naca2412.stl", naca2412.to_stl_ascii("2412"));
     }
 
     // quick solid wing rib 5 mm thick
     #[cfg(feature = "stl-io")]
     {
-        let naca2412 = Sketch::airfoil("2412", 1.0, 100, None);
+        let naca2412 = Sketch::airfoil_naca4(2.0, 4.0, 12.0, 1.0, 100, None);
         let rib = naca2412.extrude(0.005);
         let _ = fs::write("stl/naca2412_extruded.stl", rib.to_stl_ascii("2412_extruded"));
     }
@@ -725,7 +718,7 @@ fn main() {
     // symmetric foil for a centerboard
     #[cfg(feature = "stl-io")]
     {
-        let naca0015 = Sketch::airfoil("0015", 0.3, 80, None)
+        let naca0015 = Sketch::airfoil_naca4(0.0, 0.0, 15.0, 0.3, 80, None)
             .extrude_vector(nalgebra::Vector3::new(0.0, 0.0, 1.2));
         let _ = fs::write("stl/naca0015.stl", naca0015.to_stl_ascii("naca0015"));
 

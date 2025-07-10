@@ -816,6 +816,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             .expect("Revolve failed")
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn spur_gear_involute(
         module_: Real,
         teeth: usize,
@@ -858,6 +859,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         .extrude(thickness)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn helical_involute_gear(
         module_: Real,
         teeth: usize,

@@ -32,7 +32,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// ```
     pub fn to_stl_ascii(&self, name: &str) -> String {
         let mut out = String::new();
-        out.push_str(&format!("solid {}\n", name));
+        out.push_str(&format!("solid {name}\n"));
 
         // Write out all *3D* polygons
         self.polygons.iter().for_each(|poly| {
@@ -57,7 +57,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             });
         });
 
-        out.push_str(&format!("endsolid {}\n", name));
+        out.push_str(&format!("endsolid {name}\n"));
         out
     }
 
@@ -92,6 +92,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             // Convert polygon to triangles
             let tri_list = poly.triangulate();
             tri_list.iter().for_each(|tri| {
+            #[allow(clippy::unnecessary_cast)]
                 triangles.push(Triangle {
                     normal: Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
                     vertices: [
@@ -201,7 +202,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// ```
     pub fn to_stl_ascii(&self, name: &str) -> String {
         let mut out = String::new();
-        out.push_str(&format!("solid {}\n", name));
+        out.push_str(&format!("solid {name}\n"));
 
         // Write out all *2D* geometry from `self.geometry`
         // We only handle Polygon and MultiPolygon.  We tessellate in XY, set z=0.
@@ -289,7 +290,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             }
         });
 
-        out.push_str(&format!("endsolid {}\n", name));
+        out.push_str(&format!("endsolid {name}\n"));
         out
     }
 
@@ -343,6 +344,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
                     // Each triangle is in XY, so normal = (0,0,1)
                     tri_2d.iter().for_each(|tri_pts| {
+                    #[allow(clippy::unnecessary_cast)]
                         triangles.push(Triangle {
                             normal: Normal::new([0.0, 0.0, 1.0]),
                             vertices: [
@@ -383,6 +385,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         let tri_2d = Sketch::<()>::triangulate_2d(&outer, &hole_refs);
 
                         tri_2d.iter().for_each(|tri_pts| {
+                        #[allow(clippy::unnecessary_cast)]
                             triangles.push(Triangle {
                                 normal: Normal::new([0.0, 0.0, 1.0]),
                                 vertices: [

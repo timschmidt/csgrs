@@ -20,7 +20,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `metadata`: optional metadata
     ///
     /// # Example
+    /// ```
     /// let sq2 = Sketch::rectangle(2.0, 3.0, None);
+    /// ```
     pub fn rectangle(width: Real, length: Real, metadata: Option<S>) -> Self {
         // In geo, a Polygon is basically (outer: LineString, Vec<LineString> for holes).
         let outer = line_string![
@@ -615,6 +617,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// The superformula parameters are typically:
     ///   r(θ) = [ (|cos(mθ/4)/a|^n2 + |sin(mθ/4)/b|^n3) ^ (-1/n1) ]
     /// Adjust as needed for your use-case.
+    #[allow(clippy::too_many_arguments)]
     pub fn supershape(
         a: Real,
         b: Real,
@@ -738,89 +741,6 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let with_top_flat = circle.difference(&top_rect);
 
         with_top_flat.difference(&bottom_rect)
-    }
-
-    /// Generate a NACA 4-digit airfoil (e.g. "2412", "0015").
-    ///
-    /// * `code` – 4 ASCII digits describing **camber**, **camber-pos**, **thickness**  
-    /// * `chord` – physical chord length you want (same units as the rest of your model)  
-    /// * `samples` – number of points per surface (≥ 10 is sensible; NP total = 2 × samples + 1)  
-    ///
-    /// The function returns a single closed polygon lying in the *XY* plane with its
-    /// leading edge at the origin and the chord running along +X.
-    pub fn airfoil(code: &str, chord: Real, samples: usize, metadata: Option<S>) -> Sketch<S>
-    where
-        S: Clone + Send + Sync,
-    {
-        assert!(
-            code.len() == 4 && code.chars().all(|c| c.is_ascii_digit()),
-            "NACA code must be exactly 4 digits"
-        );
-        assert!(samples >= 10, "Need at least 10 points per surface");
-
-        // decode code
-        let m = code[0..1].parse::<Real>().unwrap() / 100.0; // max-camber %
-        let p = code[1..2].parse::<Real>().unwrap() / 10.0; // camber-pos
-        let tt = code[2..4].parse::<Real>().unwrap() / 100.0; // thickness %
-
-        // thickness half-profile
-        let yt = |x: Real| -> Real {
-            5.0 * tt
-                * (0.2969 * x.sqrt() - 0.1260 * x - 0.3516 * x * x + 0.2843 * x * x * x
-                    - 0.1015 * x * x * x * x)
-        };
-
-        // mean-camber line & slope
-        let camber = |x: Real| -> (Real, Real) {
-            if x < p {
-                let yc = m / (p * p) * (2.0 * p * x - x * x);
-                let dy = 2.0 * m / (p * p) * (p - x);
-                (yc, dy)
-            } else {
-                let yc = m / ((1.0 - p).powi(2)) * ((1.0 - 2.0 * p) + 2.0 * p * x - x * x);
-                let dy = 2.0 * m / ((1.0 - p).powi(2)) * (p - x);
-                (yc, dy)
-            }
-        };
-
-        // sample upper & lower surfaces
-        let n = samples as Real;
-        let mut coords: Vec<(Real, Real)> = Vec::with_capacity(2 * samples + 1);
-
-        // leading-edge → trailing-edge (upper)
-        (0..=samples).for_each(|i| {
-            let xc = i as Real / n; // 0–1
-            let x = xc * chord; // physical
-            let t = yt(xc);
-            let (yc_val, dy) = camber(xc);
-            let theta = dy.atan();
-
-            let xu = x - t * theta.sin();
-            let yu = chord * (yc_val + t * theta.cos());
-            coords.push((xu, yu));
-        });
-
-        // trailing-edge → leading-edge (lower)
-        (1..samples).rev().for_each(|i| {
-            let xc = i as Real / n;
-            let x = xc * chord;
-            let t = yt(xc);
-            let (yc_val, dy) = camber(xc);
-            let theta = dy.atan();
-
-            let xl = x + t * theta.sin();
-            let yl = chord * (yc_val - t * theta.cos());
-            coords.push((xl, yl));
-        });
-
-        coords.push(coords[0]); // close
-
-        let polygon_2d =
-            GeoPolygon::new(LineString::from(coords), vec![]).orient(Direction::Default);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
     }
 
     /// Sample an arbitrary-degree Bézier curve (de Casteljau).
@@ -1324,6 +1244,93 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         outline.push(outline[0]);
 
         Sketch::polygon(&outline, metadata)
+    }
+
+    /// Generate a NACA 4-digit airfoil (e.g. "2412", "0015").
+    ///
+    /// ## Parameters
+    /// - `max_camber`: max camber %, the first digit
+    /// - `camber_position`: camber position, the second digit
+    /// - `thickness`: thickness %, the last two digits
+    /// - `chord`: physical chord length you want (same units as the rest of your model)
+    /// - `samples`: number of points per surface (≥ 10 is required; NP total = 2 × samples + 1)
+    /// - `metadata`: optional metadata
+    ///
+    /// The function returns a single closed polygon lying in the *XY* plane with its
+    /// leading edge at the origin and the chord running along +X.
+    pub fn airfoil_naca4(
+        max_camber: Real,
+        camber_position: Real,
+        thickness: Real,
+        chord: Real,
+        samples: usize,
+        metadata: Option<S>,
+    ) -> Sketch<S> {
+        let max_camber_percentage = max_camber / 100.0;
+        let camber_pos = camber_position / 10.0;
+
+        // thickness half-profile
+        let half_profile = |x: Real| -> Real {
+            5.0 * thickness / 100.0
+                * (0.2969 * x.sqrt() - 0.1260 * x - 0.3516 * x * x + 0.2843 * x * x * x
+                    - 0.1015 * x * x * x * x)
+        };
+
+        // mean-camber line & slope
+        let camber = |x: Real| -> (Real, Real) {
+            if x < camber_pos {
+                let yc = max_camber_percentage / (camber_pos * camber_pos)
+                    * (2.0 * camber_pos * x - x * x);
+                let dy =
+                    2.0 * max_camber_percentage / (camber_pos * camber_pos) * (camber_pos - x);
+                (yc, dy)
+            } else {
+                let yc = max_camber_percentage / ((1.0 - camber_pos).powi(2))
+                    * ((1.0 - 2.0 * camber_pos) + 2.0 * camber_pos * x - x * x);
+                let dy = 2.0 * max_camber_percentage / ((1.0 - camber_pos).powi(2))
+                    * (camber_pos - x);
+                (yc, dy)
+            }
+        };
+
+        // sample upper & lower surfaces
+        let n = samples as Real;
+        let mut coords: Vec<(Real, Real)> = Vec::with_capacity(2 * samples + 1);
+
+        // leading-edge → trailing-edge (upper)
+        for i in 0..=samples {
+            let xc = i as Real / n; // 0–1
+            let x = xc * chord; // physical
+            let t = half_profile(xc);
+            let (yc_val, dy) = camber(xc);
+            let theta = dy.atan();
+
+            let xu = x - t * theta.sin();
+            let yu = chord * (yc_val + t * theta.cos());
+            coords.push((xu, yu));
+        }
+
+        // trailing-edge → leading-edge (lower)
+        for i in (1..samples).rev() {
+            let xc = i as Real / n;
+            let x = xc * chord;
+            let t = half_profile(xc);
+            let (yc_val, dy) = camber(xc);
+            let theta = dy.atan();
+
+            let xl = x + t * theta.sin();
+            let yl = chord * (yc_val - t * theta.cos());
+            coords.push((xl, yl));
+        }
+
+        coords.push(coords[0]); // close
+
+        let polygon_2d =
+            GeoPolygon::new(LineString::from(coords), vec![]).orient(Direction::Default);
+        Sketch::from_geo(
+            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
+            metadata,
+        )
     }
 }
 
