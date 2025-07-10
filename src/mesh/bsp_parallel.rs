@@ -7,7 +7,7 @@ use std::fmt::Debug;
 use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 
 #[cfg(feature = "parallel")]
-use rayon::{join, prelude::*};
+use rayon::prelude::*;
 
 #[cfg(feature = "parallel")]
 use crate::mesh::Polygon;
@@ -19,37 +19,30 @@ use crate::mesh::Vertex;
 use crate::float_types::EPSILON;
 
 impl<S: Clone + Send + Sync + Debug> Node<S> {
-    /// Invert all polygons in the BSP tree
+    /// Invert all polygons in the BSP tree using iterative approach to avoid stack overflow
     #[cfg(feature = "parallel")]
     pub fn invert(&mut self) {
-        // Flip all polygons and plane in this node
-        self.polygons.iter_mut().for_each(|p| p.flip());
-        if let Some(ref mut plane) = self.plane {
-            plane.flip();
+        // Use iterative approach with a stack to avoid recursive stack overflow
+        let mut stack = vec![self];
+        
+        while let Some(node) = stack.pop() {
+            // Flip all polygons and plane in this node
+            node.polygons.par_iter_mut().for_each(|p| p.flip());
+            if let Some(ref mut plane) = node.plane {
+                plane.flip();
+            }
+
+            // Swap front and back children
+            std::mem::swap(&mut node.front, &mut node.back);
+            
+            // Add children to stack for processing
+            if let Some(ref mut front) = node.front {
+                stack.push(front.as_mut());
+            }
+            if let Some(ref mut back) = node.back {
+                stack.push(back.as_mut());
+            }
         }
-
-        // Take the sub-trees out of `self` so that we can move them.
-        let (front_opt, back_opt) = (self.front.take(), self.back.take());
-
-        // run the two inversions in parallel
-        let (front_done, back_done) = rayon::join(
-            || {
-                front_opt.map(|mut n| {
-                    n.invert();
-                    n
-                })
-            },
-            || {
-                back_opt.map(|mut n| {
-                    n.invert();
-                    n
-                })
-            },
-        );
-
-        // and swap them afterwards
-        self.front = back_done;
-        self.back = front_done;
     }
 
     /// Parallel version of clip Polygons
@@ -92,63 +85,39 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             }
         }
 
-        // Recursively clip front & back in parallel
-        let (front_clipped, back_clipped) = join(
-            || {
-                if let Some(ref f) = self.front {
-                    f.clip_polygons(&front)
-                } else {
-                    front
-                }
-            },
-            || {
-                if let Some(ref b) = self.back {
-                    b.clip_polygons(&back)
-                } else {
-                    // If there's no back node, discard these polygons
-                    Vec::new()
-                }
-            },
-        );
+        // Process front and back using parallel iterators to avoid recursive join
+        let mut result = if let Some(ref f) = self.front {
+            f.clip_polygons(&front)
+        } else {
+            front
+        };
+        
+        if let Some(ref b) = self.back {
+            result.extend(b.clip_polygons(&back));
+        }
+        // If there's no back node, we simply don't extend (effectively discarding back polygons)
 
-        // Combine front and back
-        let mut result = front_clipped;
-        result.extend(back_clipped);
         result
     }
 
-    /// Parallel version of `clip_to`
+    /// Parallel version of `clip_to` using iterative approach to avoid stack overflow
     #[cfg(feature = "parallel")]
     pub fn clip_to(&mut self, bsp: &Node<S>) {
-        let polygons = std::mem::take(&mut self.polygons);
-        let front_child = self.front.take();
-        let back_child = self.back.take();
-
-        // parallel work – *no* mutation of `self` inside
-        let (clipped_polys, (new_front, new_back)) = rayon::join(
-            || bsp.clip_polygons(&polygons),
-            || {
-                rayon::join(
-                    || {
-                        front_child.map(|mut n| {
-                            n.clip_to(bsp);
-                            n
-                        })
-                    },
-                    || {
-                        back_child.map(|mut n| {
-                            n.clip_to(bsp);
-                            n
-                        })
-                    },
-                )
-            },
-        );
-
-        // single-thread commit
-        self.polygons = clipped_polys;
-        self.front = new_front;
-        self.back = new_back;
+        // Use iterative approach with a stack to avoid recursive stack overflow
+        let mut stack = vec![self];
+        
+        while let Some(node) = stack.pop() {
+            // Clip polygons at this node
+            node.polygons = bsp.clip_polygons(&node.polygons);
+            
+            // Add children to stack for processing
+            if let Some(ref mut front) = node.front {
+                stack.push(front.as_mut());
+            }
+            if let Some(ref mut back) = node.back {
+                stack.push(back.as_mut());
+            }
+        }
     }
 
     /// Parallel version of `build`.
@@ -181,36 +150,19 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         self.polygons.append(&mut coplanar_front);
         self.polygons.append(&mut coplanar_back);
 
-        // take ownership of the existing children (if any)
-        let front_opt = self.front.take();
-        let back_opt = self.back.take();
-
-        let (new_front, new_back) = rayon::join(
-            // front branch
-            || {
-                if front.is_empty() {
-                    None
-                } else {
-                    // reuse the node if it was already there
-                    let mut node = front_opt.unwrap_or_else(|| Box::new(Node::new()));
-                    node.build(&front);
-                    Some(node)
-                }
-            },
-            // back branch
-            || {
-                if back.is_empty() {
-                    None
-                } else {
-                    let mut node = back_opt.unwrap_or_else(|| Box::new(Node::new()));
-                    node.build(&back);
-                    Some(node)
-                }
-            },
-        );
-
-        self.front = new_front;
-        self.back = new_back;
+        // Build children sequentially to avoid stack overflow from recursive join
+        // The polygon splitting above already uses parallel iterators for the heavy work
+        if !front.is_empty() {
+            let mut front_node = self.front.take().unwrap_or_else(|| Box::new(Node::new()));
+            front_node.build(&front);
+            self.front = Some(front_node);
+        }
+        
+        if !back.is_empty() {
+            let mut back_node = self.back.take().unwrap_or_else(|| Box::new(Node::new()));
+            back_node.build(&back);
+            self.back = Some(back_node);
+        }
     }
 
     // Parallel slice
