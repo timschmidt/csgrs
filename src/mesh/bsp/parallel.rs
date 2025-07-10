@@ -6,14 +6,17 @@ use rayon::prelude::*;
 use crate::float_types::EPSILON;
 use crate::mesh::bsp::node::Node;
 use crate::mesh::bsp::traits::{BalancedSplittingStrategy, BspOps, SplittingPlaneStrategy};
-use crate::mesh::plane::{Plane, BACK, COPLANAR, FRONT, SPANNING};
+use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
 
 /// Parallel implementation of BSP operations
 #[cfg(feature = "parallel")]
-pub struct ParallelBspOps<SP: SplittingPlaneStrategy<S> = BalancedSplittingStrategy, S: Clone = ()> {
+pub struct ParallelBspOps<
+    SP: SplittingPlaneStrategy<S> = BalancedSplittingStrategy,
+    S: Clone = (),
+> {
     splitting_strategy: SP,
     _phantom: std::marker::PhantomData<S>,
 }
@@ -39,7 +42,9 @@ impl<SP: SplittingPlaneStrategy<S>, S: Clone> ParallelBspOps<SP, S> {
 }
 
 #[cfg(feature = "parallel")]
-impl<SP: SplittingPlaneStrategy<S> + Sync, S: Clone + Send + Sync + Debug> BspOps<S> for ParallelBspOps<SP, S> {
+impl<SP: SplittingPlaneStrategy<S> + Sync, S: Clone + Send + Sync + Debug> BspOps<S>
+    for ParallelBspOps<SP, S>
+{
     fn invert(&self, node: &mut Node<S>) {
         // Use iterative approach with a stack to avoid stack overflow
         let mut stack = vec![node];
@@ -179,7 +184,7 @@ impl<SP: SplittingPlaneStrategy<S> + Sync, S: Clone + Send + Sync + Debug> BspOp
 
         while let Some(current) = stack.pop() {
             result.extend_from_slice(&current.polygons);
-            
+
             // Use iterator to add child nodes more efficiently
             stack.extend(
                 [&current.front, &current.back]
@@ -190,7 +195,11 @@ impl<SP: SplittingPlaneStrategy<S> + Sync, S: Clone + Send + Sync + Debug> BspOp
         result
     }
 
-    fn slice(&self, node: &Node<S>, slicing_plane: &Plane) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
+    fn slice(
+        &self,
+        node: &Node<S>,
+        slicing_plane: &Plane,
+    ) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
         // Collect all polygons
         let all_polys = self.all_polygons(node);
 
@@ -203,7 +212,7 @@ impl<SP: SplittingPlaneStrategy<S> + Sync, S: Clone + Send + Sync + Debug> BspOp
                     // Degenerate => skip
                     return (Vec::new(), Vec::new());
                 }
-                
+
                 let types: Vec<_> = poly
                     .vertices
                     .iter()
@@ -254,7 +263,7 @@ impl<SP: SplittingPlaneStrategy<S> + Sync, S: Clone + Send + Sync + Debug> BspOp
                             .chunks_exact(2)
                             .map(|chunk| [chunk[0].clone(), chunk[1].clone()])
                             .collect();
-                            
+
                         (Vec::new(), edges)
                     },
                     _ => (Vec::new(), Vec::new()),
@@ -271,4 +280,4 @@ impl<SP: SplittingPlaneStrategy<S> + Sync, S: Clone + Send + Sync + Debug> BspOp
 
         (coplanar_polygons, intersection_edges)
     }
-} 
+}

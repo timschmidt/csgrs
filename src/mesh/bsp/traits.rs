@@ -24,7 +24,11 @@ pub trait BspOps<S: Clone + Send + Sync> {
     fn all_polygons(&self, node: &Node<S>) -> Vec<Polygon<S>>;
 
     /// Slices this BSP node with the given plane
-    fn slice(&self, node: &Node<S>, slicing_plane: &Plane) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>);
+    fn slice(
+        &self,
+        node: &Node<S>,
+        slicing_plane: &Plane,
+    ) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>);
 }
 
 /// Trait for picking optimal splitting planes
@@ -55,7 +59,7 @@ impl<S: Clone> SplittingPlaneStrategy<S> for BalancedSplittingStrategy {
 
         // Take a sample of polygons as candidate planes
         let sample_size = polygons.len().min(20);
-        
+
         polygons.iter().take(sample_size).for_each(|p| {
             let plane = &p.plane;
             let (num_front, num_back, num_spanning) = polygons
@@ -79,4 +83,4 @@ impl<S: Clone> SplittingPlaneStrategy<S> for BalancedSplittingStrategy {
 
         best_plane
     }
-} 
+}
