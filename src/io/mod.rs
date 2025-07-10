@@ -1,5 +1,5 @@
 #[cfg(feature = "svg-io")]
-mod svg;
+pub mod svg;
 
 #[cfg(feature = "stl-io")]
 mod stl;

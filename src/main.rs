@@ -650,28 +650,26 @@ fn main() {
     // Let's reuse the `cube` from above:
     #[cfg(all(feature = "stl-io", feature = "sdf"))]
     {
-        let tpms_volume = Mesh::sphere(100.0, 50, 50, None);
-        let gyroid_inside_cube =
-            tpms_volume.scale(20.0, 20.0, 20.0).gyroid(64, 2.0, 0.0, None);
+        let tpms_volume = Mesh::sphere(20.0, 10, 10, None);
+        let gyroid_inside_sphere =
+            tpms_volume.gyroid(64, 2.0, 0.0, None);
         let _ = fs::write(
-            "stl/gyroid_cube.stl",
-            gyroid_inside_cube.to_stl_binary("gyroid_cube").unwrap(),
+            "stl/gyroid_sphere.stl",
+            gyroid_inside_sphere.to_stl_binary("gyroid_cube").unwrap(),
         );
 
-        let schwarzp_inside_cube = tpms_volume
-            .scale(20.0, 20.0, 20.0)
+        let schwarzp_inside_sphere = tpms_volume
             .schwarz_p(64, 2.0, 0.0, None);
         let _ = fs::write(
-            "stl/schwarz_p_cube.stl",
-            schwarzp_inside_cube.to_stl_binary("schwarz_p_cube").unwrap(),
+            "stl/schwarz_p_sphere.stl",
+            schwarzp_inside_sphere.to_stl_binary("schwarz_p_cube").unwrap(),
         );
 
-        let schwarzd_inside_cube = tpms_volume
-            .scale(20.0, 20.0, 20.0)
+        let schwarzd_inside_sphere = tpms_volume
             .schwarz_d(64, 2.0, 0.0, None);
         let _ = fs::write(
-            "stl/schwarz_d_cube.stl",
-            schwarzd_inside_cube.to_stl_binary("schwarz_d_cube").unwrap(),
+            "stl/schwarz_d_sphere.stl",
+            schwarzd_inside_sphere.to_stl_binary("schwarz_d_cube").unwrap(),
         );
     }
 
