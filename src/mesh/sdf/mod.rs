@@ -3,8 +3,13 @@
 //! This module provides SDF meshing operations with dependency inversion,
 //! allowing for different algorithm implementations (serial/parallel).
 
+<<<<<<< HEAD
 pub mod grid;
 pub mod traits;
+=======
+pub mod traits;
+pub mod grid;
+>>>>>>> fff8770013ce723baabeaab7bc5c693c2d64bce5
 
 #[cfg(not(feature = "parallel"))]
 pub mod serial;
@@ -13,8 +18,13 @@ pub mod serial;
 pub mod parallel;
 
 // Re-export core types
+<<<<<<< HEAD
 pub use grid::GridShape;
 pub use traits::SdfOps;
+=======
+pub use traits::SdfOps;
+pub use grid::GridShape;
+>>>>>>> fff8770013ce723baabeaab7bc5c693c2d64bce5
 
 #[cfg(not(feature = "parallel"))]
 pub use serial::SerialSdfOps;
