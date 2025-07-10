@@ -43,7 +43,7 @@
 //! to the planar projections stored in the geometry collection.
 use crate::float_types::Real;
 use crate::sketch::Sketch;
-use geo::{Geometry, GeometryCollection, MultiPolygon};
+use geo::{Coord, Geometry, GeometryCollection, LineString, MultiPolygon, Point, Polygon};
 use geo_buf::{
     buffer_multi_polygon, buffer_multi_polygon_rounded, buffer_point, buffer_polygon,
     buffer_polygon_rounded, skeleton_of_multi_polygon_to_linestring,
@@ -51,6 +51,91 @@ use geo_buf::{
 };
 use std::fmt::Debug;
 use std::sync::OnceLock;
+
+use geo::algorithm::map_coords::MapCoords; // coordinate casting :contentReference[oaicite:0]{index=0}
+
+/// Cast a geometry to `f64`, call the supplied operation, then cast the result
+/// back to `Real`.  The closure is only ever executed on `f64` values so we
+/// don’t duplicate code for the two precisions.
+macro_rules! cast_through_f64 {
+    ($geom:expr, $op:expr) => {{
+        // promote to f64
+        let g_f64 = $geom.map_coords(|c| Coord {
+            x: c.x as f64,
+            y: c.y as f64,
+        });
+
+        // run the f64-only operation
+        let out_f64 = $op(&g_f64);
+
+        // demote back to Real
+        out_f64.map_coords(|c| Coord {
+            x: c.x as Real,
+            y: c.y as Real,
+        })
+    }};
+}
+
+fn buf_poly(poly: &Polygon<Real>, d: Real) -> MultiPolygon<Real> {
+    cast_through_f64!(poly, |p: &Polygon<f64>| buffer_polygon(p, d as f64))
+}
+
+fn buf_poly_round(poly: &Polygon<Real>, d: Real) -> MultiPolygon<Real> {
+    cast_through_f64!(poly, |p: &Polygon<f64>| buffer_polygon_rounded(p, d as f64))
+}
+
+fn buf_multi_poly(mpoly: &MultiPolygon<Real>, d: Real) -> MultiPolygon<Real> {
+    cast_through_f64!(mpoly, |m: &MultiPolygon<f64>| buffer_multi_polygon(
+        m, d as f64
+    ))
+}
+
+fn buf_multi_poly_round(mpoly: &MultiPolygon<Real>, d: Real) -> MultiPolygon<Real> {
+    cast_through_f64!(mpoly, |m: &MultiPolygon<f64>| buffer_multi_polygon_rounded(
+        m, d as f64
+    ))
+}
+
+fn buf_point(pt: &Point<Real>, d: Real, res: usize) -> Polygon<Real> {
+    // buffer_point takes f64 Point, so just build one and cast result back
+    let pt_f64 = Point::new(pt.x() as f64, pt.y() as f64);
+    buffer_point(&pt_f64, d as f64, res).map_coords(|c| Coord {
+        x: c.x as Real,
+        y: c.y as Real,
+    })
+}
+
+fn skel_poly(poly: &Polygon<Real>, inward: bool) -> Vec<LineString<Real>> {
+    let poly_f64 = poly.map_coords(|c| Coord {
+        x: c.x as f64,
+        y: c.y as f64,
+    });
+    skeleton_of_polygon_to_linestring(&poly_f64, inward)
+        .into_iter()
+        .map(|ls| {
+            ls.map_coords(|c| Coord {
+                x: c.x as Real,
+                y: c.y as Real,
+            })
+        })
+        .collect()
+}
+
+fn skel_multi_poly(mpoly: &MultiPolygon<Real>, inward: bool) -> Vec<LineString<Real>> {
+    let mpoly_f64 = mpoly.map_coords(|c| Coord {
+        x: c.x as f64,
+        y: c.y as f64,
+    });
+    skeleton_of_multi_polygon_to_linestring(&mpoly_f64, inward)
+        .into_iter()
+        .map(|ls| {
+            ls.map_coords(|c| Coord {
+                x: c.x as Real,
+                y: c.y as Real,
+            })
+        })
+        .collect()
+}
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// **Mathematical Foundation: Sharp Corner Polygon Offsetting**
@@ -92,21 +177,22 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - **Holes**: Correctly handled with opposite offset direction
     ///
     /// **Note**: Sharp corners may create very acute angles for large offset distances.
+    #[allow(clippy::unnecessary_cast)]
     pub fn offset(&self, distance: Real) -> Sketch<S> {
         let offset_geoms = self
             .geometry
             .iter()
             .filter_map(|geom| match geom {
                 Geometry::Polygon(poly) => {
-                    let new_mpoly = buffer_polygon(poly, distance);
+                    let new_mpoly = buf_poly(poly, distance);
                     Some(Geometry::MultiPolygon(new_mpoly))
                 },
                 Geometry::MultiPolygon(mpoly) => {
-                    let new_mpoly = buffer_multi_polygon(mpoly, distance);
+                    let new_mpoly = buf_multi_poly(mpoly, distance);
                     Some(Geometry::MultiPolygon(new_mpoly))
                 },
                 Geometry::Point(point) => {
-                    let new_poly = buffer_point(point, distance, 64); // todo: avoid hard coding resolution somehow
+                    let new_poly = buf_point(point, distance, 64); // todo: avoid hard coding resolution somehow
                     let new_mpoly = MultiPolygon::new(vec![new_poly]);
                     Some(Geometry::MultiPolygon(new_mpoly))
                 },
@@ -174,21 +260,22 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - **Polygon**: Buffer and convert to MultiPolygon  
     /// - **MultiPolygon**: Buffer directly preserving holes
     /// - **Other geometries**: Excluded from processing
+    #[allow(clippy::unnecessary_cast)]
     pub fn offset_rounded(&self, distance: Real) -> Sketch<S> {
         let offset_geoms = self
             .geometry
             .iter()
             .filter_map(|geom| match geom {
                 Geometry::Polygon(poly) => {
-                    let new_mpoly = buffer_polygon_rounded(poly, distance);
+                    let new_mpoly = buf_poly_round(poly, distance);
                     Some(Geometry::MultiPolygon(new_mpoly))
                 },
                 Geometry::MultiPolygon(mpoly) => {
-                    let new_mpoly = buffer_multi_polygon_rounded(mpoly, distance);
+                    let new_mpoly = buf_multi_poly_round(mpoly, distance);
                     Some(Geometry::MultiPolygon(new_mpoly))
                 },
                 Geometry::Point(point) => {
-                    let new_poly = buffer_point(point, distance, 64); // todo: avoid hard coding resolution somehow
+                    let new_poly = buf_point(point, distance, 64); // todo: avoid hard coding resolution somehow
                     let new_mpoly = MultiPolygon::new(vec![new_poly]);
                     Some(Geometry::MultiPolygon(new_mpoly))
                 },
@@ -218,26 +305,21 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///     * `true` to create the straight skeleton on the inward region of the polygon, and,
     ///     * `false` to create on the outward region of the polygon.
     pub fn straight_skeleton(&self, orientation: bool) -> Sketch<S> {
-        let skeleton =
-            self.geometry
-                .iter()
-                .filter_map(|geom| match geom {
-                    Geometry::Polygon(poly) => {
-                        let mls = geo::MultiLineString(skeleton_of_polygon_to_linestring(
-                            poly,
-                            orientation,
-                        ));
-                        Some(Geometry::MultiLineString(mls))
-                    },
-                    Geometry::MultiPolygon(mpoly) => {
-                        let mls = geo::MultiLineString(
-                            skeleton_of_multi_polygon_to_linestring(mpoly, orientation),
-                        );
-                        Some(Geometry::MultiLineString(mls))
-                    },
-                    _ => None, // ignore other geometry types
-                })
-                .collect();
+        let skeleton = self
+            .geometry
+            .iter()
+            .filter_map(|geom| match geom {
+                Geometry::Polygon(poly) => {
+                    let mls = geo::MultiLineString(skel_poly(poly, orientation));
+                    Some(Geometry::MultiLineString(mls))
+                },
+                Geometry::MultiPolygon(mpoly) => {
+                    let mls = geo::MultiLineString(skel_multi_poly(mpoly, orientation));
+                    Some(Geometry::MultiLineString(mls))
+                },
+                _ => None, // ignore other geometry types
+            })
+            .collect();
 
         // Construct a new GeometryCollection from the offset geometries
         let new_collection = GeometryCollection::<Real>(skeleton);
