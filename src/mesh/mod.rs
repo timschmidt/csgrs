@@ -25,7 +25,6 @@ use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 use rayon::{iter::IntoParallelRefIterator, prelude::*};
 
 pub mod bsp;
-pub mod bsp_parallel;
 
 #[cfg(feature = "chull")]
 pub mod convex_hull;
