@@ -501,6 +501,10 @@ and memory usage:
 - allocations should be kept to a minimum.  Memory should be read-only if
 possible, clone if necessary, and offer the choice of transmut in place or
 create new copy via appropriate functions
+- For performance-critical operations like BSP and SDF, we use a modular backend
+system with dependency inversion. This allows switching between serial and parallel
+implementations at compile time via the "parallel" feature flag, ensuring both
+flexibility and high performance.
 
 ## Todo
 - when triangulating, detect T junctions with other polygons with shared edges,
