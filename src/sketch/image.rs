@@ -1,16 +1,16 @@
 //! Create `Sketch`s from images
 
+use crate::io::svg::FromSVG;
 use crate::sketch::Sketch;
+use crate::traits::CSG;
 use image::GrayImage;
 use std::fmt::Debug;
-use crate::io::svg::FromSVG;
-use crate::traits::CSG;
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Builds a new Sketch from the "on" pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.
     ///
-	/// - `img` – The raster source (`image::GrayImage`).
+    /// - `img` – The raster source (`image::GrayImage`).
     /// - `threshold` – Pixels whose value is **≥ `threshold`** are treated as *solid*; all others are ignored.
     /// - `closepaths` – Forwarded to the contour tracer; when `true` it will attempt to close any open contours so that we get valid closed polygons wherever possible.
     /// - `metadata`: optional metadata to attach to the resulting polygons
@@ -61,20 +61,20 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // ------------------------------------------------------------------
         // 3. Preferred path: convert via the full SVG parser (if available).
         // ------------------------------------------------------------------
-		let svg_doc = format!(
-			r#"<svg viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg">
+        let svg_doc = format!(
+            r#"<svg viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg">
 <path d="{d}" fill="black" stroke="none" fill-rule="evenodd"/>
 </svg>"#,
-			w = img.width(),
-			h = img.height(),
-			d = svg_path
-		);
+            w = img.width(),
+            h = img.height(),
+            d = svg_path
+        );
 
-		if let Ok(parsed) = <Sketch<()>>::from_svg(&svg_doc) {
-			// Re‑use the extracted geometry but attach the requested metadata.
-			Sketch::from_geo(parsed.geometry.clone(), metadata)
-		} else {
-			Sketch::new()
-		}
-	}
+        if let Ok(parsed) = <Sketch<()>>::from_svg(&svg_doc) {
+            // Re‑use the extracted geometry but attach the requested metadata.
+            Sketch::from_geo(parsed.geometry.clone(), metadata)
+        } else {
+            Sketch::new()
+        }
+    }
 }

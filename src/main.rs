@@ -651,25 +651,26 @@ fn main() {
     #[cfg(all(feature = "stl-io", feature = "sdf"))]
     {
         let tpms_volume = Mesh::sphere(20.0, 10, 10, None);
-        let gyroid_inside_sphere =
-            tpms_volume.gyroid(64, 2.0, 0.0, None);
+        let gyroid_inside_sphere = tpms_volume.gyroid(64, 2.0, 0.0, None);
         let _ = fs::write(
             "stl/gyroid_sphere.stl",
             gyroid_inside_sphere.to_stl_binary("gyroid_cube").unwrap(),
         );
 
-        let schwarzp_inside_sphere = tpms_volume
-            .schwarz_p(64, 2.0, 0.0, None);
+        let schwarzp_inside_sphere = tpms_volume.schwarz_p(64, 2.0, 0.0, None);
         let _ = fs::write(
             "stl/schwarz_p_sphere.stl",
-            schwarzp_inside_sphere.to_stl_binary("schwarz_p_cube").unwrap(),
+            schwarzp_inside_sphere
+                .to_stl_binary("schwarz_p_cube")
+                .unwrap(),
         );
 
-        let schwarzd_inside_sphere = tpms_volume
-            .schwarz_d(64, 2.0, 0.0, None);
+        let schwarzd_inside_sphere = tpms_volume.schwarz_d(64, 2.0, 0.0, None);
         let _ = fs::write(
             "stl/schwarz_d_sphere.stl",
-            schwarzd_inside_sphere.to_stl_binary("schwarz_d_cube").unwrap(),
+            schwarzd_inside_sphere
+                .to_stl_binary("schwarz_d_cube")
+                .unwrap(),
         );
     }
 
