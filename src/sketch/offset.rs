@@ -76,26 +76,31 @@ macro_rules! cast_through_f64 {
     }};
 }
 
+#[allow(clippy::unnecessary_cast)]
 fn buf_poly(poly: &Polygon<Real>, d: Real) -> MultiPolygon<Real> {
     cast_through_f64!(poly, |p: &Polygon<f64>| buffer_polygon(p, d as f64))
 }
 
+#[allow(clippy::unnecessary_cast)]
 fn buf_poly_round(poly: &Polygon<Real>, d: Real) -> MultiPolygon<Real> {
     cast_through_f64!(poly, |p: &Polygon<f64>| buffer_polygon_rounded(p, d as f64))
 }
 
+#[allow(clippy::unnecessary_cast)]
 fn buf_multi_poly(mpoly: &MultiPolygon<Real>, d: Real) -> MultiPolygon<Real> {
     cast_through_f64!(mpoly, |m: &MultiPolygon<f64>| buffer_multi_polygon(
         m, d as f64
     ))
 }
 
+#[allow(clippy::unnecessary_cast)]
 fn buf_multi_poly_round(mpoly: &MultiPolygon<Real>, d: Real) -> MultiPolygon<Real> {
     cast_through_f64!(mpoly, |m: &MultiPolygon<f64>| buffer_multi_polygon_rounded(
         m, d as f64
     ))
 }
 
+#[allow(clippy::unnecessary_cast)]
 fn buf_point(pt: &Point<Real>, d: Real, res: usize) -> Polygon<Real> {
     // buffer_point takes f64 Point, so just build one and cast result back
     let pt_f64 = Point::new(pt.x() as f64, pt.y() as f64);
@@ -105,6 +110,7 @@ fn buf_point(pt: &Point<Real>, d: Real, res: usize) -> Polygon<Real> {
     })
 }
 
+#[allow(clippy::unnecessary_cast)]
 fn skel_poly(poly: &Polygon<Real>, inward: bool) -> Vec<LineString<Real>> {
     let poly_f64 = poly.map_coords(|c| Coord {
         x: c.x as f64,
@@ -121,6 +127,7 @@ fn skel_poly(poly: &Polygon<Real>, inward: bool) -> Vec<LineString<Real>> {
         .collect()
 }
 
+#[allow(clippy::unnecessary_cast)]
 fn skel_multi_poly(mpoly: &MultiPolygon<Real>, inward: bool) -> Vec<LineString<Real>> {
     let mpoly_f64 = mpoly.map_coords(|c| Coord {
         x: c.x as f64,
