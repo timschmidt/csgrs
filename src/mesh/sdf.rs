@@ -69,6 +69,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // **Mathematical Foundation**: For SDF f(p), we sample at regular intervals
         // and store (f(p) - iso_value) so surface_nets finds zero-crossings at iso_value.
         // **Optimization**: Linear memory access pattern with better cache locality.
+        #[allow(clippy::unnecessary_cast)]
         for i in 0..(nx * ny * nz) {
             let iz = i / (nx * ny);
             let remainder = i % (nx * ny);
