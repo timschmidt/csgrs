@@ -3,15 +3,6 @@
 use crate::float_types::Real;
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
-<<<<<<< HEAD
-use crate::mesh::sdf::grid::GridShape;
-use crate::mesh::sdf::traits::SdfOps;
-use crate::mesh::vertex::Vertex;
-use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
-use nalgebra::{Point3, Vector3};
-use rayon::prelude::*;
-use std::fmt::Debug;
-=======
 use crate::mesh::vertex::Vertex;
 use crate::mesh::sdf::traits::SdfOps;
 use crate::mesh::sdf::grid::GridShape;
@@ -19,7 +10,6 @@ use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use rayon::prelude::*;
->>>>>>> fff8770013ce723baabeaab7bc5c693c2d64bce5
 
 /// Parallel implementation of SDF meshing
 pub struct ParallelSdfOps;
@@ -64,30 +54,6 @@ impl<S: Clone + Debug + Send + Sync> SdfOps<S> for ParallelSdfOps {
         let mut field_values = vec![0.0_f32; array_size];
 
         // Sample the SDF at each grid cell in parallel
-<<<<<<< HEAD
-        field_values
-            .par_iter_mut()
-            .enumerate()
-            .for_each(|(i, value)| {
-                let iz = i / (nx * ny) as usize;
-                let remainder = i % (nx * ny) as usize;
-                let iy = remainder / nx as usize;
-                let ix = remainder % nx as usize;
-
-                let xf = min_pt.x + (ix as Real) * dx;
-                let yf = min_pt.y + (iy as Real) * dy;
-                let zf = min_pt.z + (iz as Real) * dz;
-
-                let p = Point3::new(xf, yf, zf);
-                let sdf_val = sdf(&p);
-
-                *value = if sdf_val.is_finite() {
-                    (sdf_val - iso_value) as f32
-                } else {
-                    1e10_f32
-                };
-            });
-=======
         field_values.par_iter_mut().enumerate().for_each(|(i, value)| {
             let iz = i / (nx * ny) as usize;
             let remainder = i % (nx * ny) as usize;
@@ -107,7 +73,6 @@ impl<S: Clone + Debug + Send + Sync> SdfOps<S> for ParallelSdfOps {
                 1e10_f32
             };
         });
->>>>>>> fff8770013ce723baabeaab7bc5c693c2d64bce5
 
         // Optimized finite value checking with iterator patterns
         #[inline]
@@ -134,61 +99,6 @@ impl<S: Clone + Debug + Send + Sync> SdfOps<S> for ParallelSdfOps {
             &mut sn_buffer,
         );
 
-<<<<<<< HEAD
-        let triangles: Vec<Polygon<S>> = sn_buffer
-            .indices
-            .par_chunks_exact(3)
-            .filter_map(|tri| {
-                let i0 = tri[0] as usize;
-                let i1 = tri[1] as usize;
-                let i2 = tri[2] as usize;
-
-                let p0i = sn_buffer.positions[i0];
-                let p1i = sn_buffer.positions[i1];
-                let p2i = sn_buffer.positions[i2];
-
-                let p0 = Point3::new(
-                    min_pt.x + p0i[0] as Real * dx,
-                    min_pt.y + p0i[1] as Real * dy,
-                    min_pt.z + p0i[2] as Real * dz,
-                );
-                let p1 = Point3::new(
-                    min_pt.x + p1i[0] as Real * dx,
-                    min_pt.y + p1i[1] as Real * dy,
-                    min_pt.z + p1i[2] as Real * dz,
-                );
-                let p2 = Point3::new(
-                    min_pt.x + p2i[0] as Real * dx,
-                    min_pt.y + p2i[1] as Real * dy,
-                    min_pt.z + p2i[2] as Real * dz,
-                );
-
-                let n0 = sn_buffer.normals[i0];
-                let n1 = sn_buffer.normals[i1];
-                let n2 = sn_buffer.normals[i2];
-
-                let n0v = Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real);
-                let n1v = Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real);
-                let n2v = Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real);
-
-                if !(point_finite(&p0)
-                    && point_finite(&p1)
-                    && point_finite(&p2)
-                    && vec_finite(&n0v)
-                    && vec_finite(&n1v)
-                    && vec_finite(&n2v))
-                {
-                    return None;
-                }
-
-                let v0 = Vertex::new(p0, n0v);
-                let v1 = Vertex::new(p1, n1v);
-                let v2 = Vertex::new(p2, n2v);
-
-                Some(Polygon::new(vec![v0, v1, v2], metadata.clone()))
-            })
-            .collect();
-=======
         let triangles: Vec<Polygon<S>> = sn_buffer.indices.par_chunks_exact(3).filter_map(|tri| {
             let i0 = tri[0] as usize;
             let i1 = tri[1] as usize;
@@ -238,7 +148,6 @@ impl<S: Clone + Debug + Send + Sync> SdfOps<S> for ParallelSdfOps {
 
             Some(Polygon::new(vec![v0, v1, v2], metadata.clone()))
         }).collect();
->>>>>>> fff8770013ce723baabeaab7bc5c693c2d64bce5
 
         Mesh::from_polygons(&triangles, metadata)
     }
