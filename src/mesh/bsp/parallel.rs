@@ -32,8 +32,15 @@ impl<S: Clone> ParallelBspOps<BalancedSplittingStrategy, S> {
 }
 
 #[cfg(feature = "parallel")]
+impl<S: Clone> Default for ParallelBspOps<BalancedSplittingStrategy, S> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(feature = "parallel")]
 impl<SP: SplittingPlaneStrategy<S>, S: Clone> ParallelBspOps<SP, S> {
-    pub fn with_strategy(strategy: SP) -> Self {
+    pub const fn with_strategy(strategy: SP) -> Self {
         Self {
             splitting_strategy: strategy,
             _phantom: std::marker::PhantomData,
@@ -94,7 +101,7 @@ impl<SP: SplittingPlaneStrategy<S> + Sync, S: Clone + Send + Sync + Debug> BspOp
         // Decide where to send the coplanar polygons
         coplanar_front
             .into_iter()
-            .chain(coplanar_back.into_iter())
+            .chain(coplanar_back)
             .for_each(|cp| {
                 if plane.orient_plane(&cp.plane) == FRONT {
                     front.push(cp);
