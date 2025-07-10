@@ -42,24 +42,24 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut faces = Vec::new();
 
         // Process 3D polygons
-        for poly in &self.polygons {
+        self.polygons.iter().for_each(|poly| {
             // Tessellate polygon to triangles
             let triangles = poly.triangulate();
 
-            for triangle in triangles {
+            triangles.iter().for_each(|triangle| {
                 let mut face_indices = Vec::new();
 
-                for vertex in triangle {
+                triangle.iter().for_each(|vertex| {
                     let vertex_idx =
                         add_unique_vertex_ply(&mut vertices, vertex.pos, vertex.normal);
                     face_indices.push(vertex_idx);
-                }
+                });
 
                 if face_indices.len() == 3 {
                     faces.push(face_indices);
                 }
-            }
-        }
+            });
+        });
 
         // Write PLY header
         ply_content.push_str("ply\n");
@@ -78,7 +78,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         ply_content.push_str("end_header\n");
 
         // Write vertices
-        for vertex in &vertices {
+        vertices.iter().for_each(|vertex| {
             ply_content.push_str(&format!(
                 "{:.6} {:.6} {:.6} {:.6} {:.6} {:.6}\n",
                 vertex.position.x,
@@ -88,12 +88,12 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 vertex.normal.y,
                 vertex.normal.z
             ));
-        }
+        });
 
         // Write faces (each face is a triangle: 3 v1 v2 v3)
-        for face in &faces {
+        faces.iter().for_each(|face| {
             ply_content.push_str(&format!("3 {} {} {}\n", face[0], face[1], face[2]));
-        }
+        });
 
         ply_content
     }
@@ -107,10 +107,11 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// # Example
     /// ```
     /// use csgrs::mesh::Mesh;
-    /// use std::fs::File;
+    /// use std::fs::{create_dir_all, File};
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let csg: Mesh<()> = Mesh::cube(10.0, None);
-    /// let mut file = File::create("stl/output.ply")?;
+    /// create_dir_all("target/test-output")?;
+    /// let mut file = File::create("target/test-output/output.ply")?;
     /// csg.write_ply(&mut file, "My Mesh model")?;
     /// # Ok(())
     /// # }
@@ -145,19 +146,19 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut faces = Vec::new();
 
         // Process 2D geometry (project to XY plane at Z=0)
-        for geom in &self.geometry.0 {
+        self.geometry.0.iter().for_each(|geom| {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
                     self.add_2d_polygon_to_ply(poly2d, &mut vertices, &mut faces);
                 },
                 geo::Geometry::MultiPolygon(mp) => {
-                    for poly2d in &mp.0 {
+                    mp.0.iter().for_each(|poly2d| {
                         self.add_2d_polygon_to_ply(poly2d, &mut vertices, &mut faces);
-                    }
+                    });
                 },
                 _ => {}, // Skip other geometry types
             }
-        }
+        });
 
         // Write PLY header
         ply_content.push_str("ply\n");
@@ -176,7 +177,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         ply_content.push_str("end_header\n");
 
         // Write vertices
-        for vertex in &vertices {
+        vertices.iter().for_each(|vertex| {
             ply_content.push_str(&format!(
                 "{:.6} {:.6} {:.6} {:.6} {:.6} {:.6}\n",
                 vertex.position.x,
@@ -186,12 +187,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 vertex.normal.y,
                 vertex.normal.z
             ));
-        }
+        });
 
         // Write faces (each face is a triangle: 3 v1 v2 v3)
-        for face in &faces {
+        faces.iter().for_each(|face| {
             ply_content.push_str(&format!("3 {} {} {}\n", face[0], face[1], face[2]));
-        }
+        });
 
         ply_content
     }
@@ -205,10 +206,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # Example
     /// ```
     /// use csgrs::mesh::Mesh;
-    /// use std::fs::File;
+    /// use std::fs::{create_dir_all, File};
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let csg: Mesh<()> = Mesh::cube(10.0, None);
-    /// let mut file = File::create("stl/output.ply")?;
+    /// create_dir_all("target/test-output")?;
+    /// let mut file = File::create("target/test-output/output.ply")?;
     /// csg.write_ply(&mut file, "My Mesh model")?;
     /// # Ok(())
     /// # }
@@ -244,19 +246,19 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Add triangles with normal pointing up (positive Z)
         let normal = Vector3::new(0.0, 0.0, 1.0);
 
-        for triangle in triangles_2d {
+        triangles_2d.iter().for_each(|triangle| {
             let mut face_indices = Vec::new();
 
-            for point in triangle {
+            triangle.iter().for_each(|point| {
                 let vertex_3d = Point3::new(point.x, point.y, point.z);
                 let vertex_idx = add_unique_vertex_ply(vertices, vertex_3d, normal);
                 face_indices.push(vertex_idx);
-            }
+            });
 
             if face_indices.len() == 3 {
                 faces.push(face_indices);
             }
-        }
+        });
     }
 }
 
@@ -269,12 +271,11 @@ fn add_unique_vertex_ply(
     const EPSILON: Real = 1e-6;
 
     // Check if vertex already exists (within tolerance)
-    for (i, existing) in vertices.iter().enumerate() {
-        if (existing.position.coords - position.coords).norm() < EPSILON
+    if let Some((i, _)) = vertices.iter().enumerate().find(|(_, existing)| {
+        (existing.position.coords - position.coords).norm() < EPSILON
             && (existing.normal - normal).norm() < EPSILON
-        {
-            return i;
-        }
+    }) {
+        return i;
     }
 
     // Add new vertex

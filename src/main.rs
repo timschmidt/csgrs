@@ -303,7 +303,7 @@ fn main() {
 
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
-    let cube = Mesh::cube(100.0, None);
+    let cube = Mesh::cube(2.0, None);
 
     // 2) Flatten into the XY plane
     #[cfg(feature = "stl-io")]
@@ -647,7 +647,9 @@ fn main() {
     }
 
     // 16) gyroid(...) – uses the current CSG volume as a bounding region
-    // Let's reuse the `cube` from above:
+    // Let's use a cube to properly demonstrate the TPMS structure:
+    // 16) TPMS (Triply Periodic Minimal Surfaces) – gyroid, Schwarz P, Schwarz D
+    // Uses a cube as the bounding volume to properly demonstrate the TPMS structure
     #[cfg(all(feature = "stl-io", feature = "sdf"))]
     {
         let tpms_volume = Mesh::sphere(20.0, 10, 10, None);
@@ -1073,6 +1075,9 @@ fn main() {
             "stl/bezier_extruded.stl",
             bezier_3d.to_stl_ascii("bezier_extruded"),
         );
+        
+        #[cfg(feature = "bevymesh")]
+        println!("{:#?}", bezier_3d.to_bevy_mesh());
     }
 
     // B-spline demo
@@ -1087,9 +1092,6 @@ fn main() {
         );
         let _ = fs::write("stl/bspline_2d.stl", bspline_2d.to_stl_ascii("bspline_2d"));
     }
-
-    #[cfg(feature = "bevymesh")]
-    println!("{:#?}", bezier_3d.to_bevy_mesh());
 
     // a quick thickening just like the Bézier
     //let bspline_3d = bspline_2d.extrude(0.25);

@@ -53,23 +53,23 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut triangles = Vec::new();
 
         // Process 3D polygons
-        for poly in &self.polygons {
+        self.polygons.iter().for_each(|poly| {
             // Tessellate polygon to triangles
             let poly_triangles = poly.triangulate();
 
-            for triangle in poly_triangles {
+            poly_triangles.iter().for_each(|triangle| {
                 let mut triangle_indices = Vec::new();
 
-                for vertex in triangle {
+                triangle.iter().for_each(|vertex| {
                     let vertex_idx = add_unique_vertex_amf(&mut vertices, vertex.pos);
                     triangle_indices.push(vertex_idx);
-                }
+                });
 
                 if triangle_indices.len() == 3 {
                     triangles.push(triangle_indices);
                 }
-            }
-        }
+            });
+        });
 
         // Start object definition
         amf_content.push_str(&format!("  <object id=\"{object_name}\">\n"));
@@ -77,7 +77,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // Write vertices
         amf_content.push_str("      <vertices>\n");
-        for (i, vertex) in vertices.iter().enumerate() {
+        vertices.iter().enumerate().for_each(|(i, vertex)| {
             amf_content.push_str(&format!("        <vertex id=\"{i}\">\n"));
             amf_content.push_str("          <coordinates>\n");
             amf_content.push_str(&format!("            <x>{:.6}</x>\n", vertex.x));
@@ -85,18 +85,18 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             amf_content.push_str(&format!("            <z>{:.6}</z>\n", vertex.z));
             amf_content.push_str("          </coordinates>\n");
             amf_content.push_str("        </vertex>\n");
-        }
+        });
         amf_content.push_str("      </vertices>\n");
 
         // Write triangles (volume definition)
         amf_content.push_str("      <volume>\n");
-        for (i, triangle) in triangles.iter().enumerate() {
+        triangles.iter().enumerate().for_each(|(i, triangle)| {
             amf_content.push_str(&format!("        <triangle id=\"{i}\">\n"));
             amf_content.push_str(&format!("          <v1>{}</v1>\n", triangle[0]));
             amf_content.push_str(&format!("          <v2>{}</v2>\n", triangle[1]));
             amf_content.push_str(&format!("          <v3>{}</v3>\n", triangle[2]));
             amf_content.push_str("        </triangle>\n");
-        }
+        });
         amf_content.push_str("      </volume>\n");
 
         // Close mesh and object
@@ -119,10 +119,11 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// # Example
     /// ```
     /// use csgrs::mesh::Mesh;
-    /// use std::fs::File;
+    /// use std::fs::{create_dir_all, File};
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let csg: Mesh<()> = Mesh::cube(10.0, None);
-    /// let mut file = File::create("stl/output.amf")?;
+    /// create_dir_all("target/test-output")?;
+    /// let mut file = File::create("target/test-output/output.amf")?;
     /// csg.write_amf(&mut file, "my_cube", "millimeter")?;
     /// # Ok(())
     /// # }
@@ -190,22 +191,22 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut triangles = Vec::new();
 
         // Process 3D polygons
-        for poly in &self.polygons {
+        self.polygons.iter().for_each(|poly| {
             let poly_triangles = poly.triangulate();
 
-            for triangle in poly_triangles {
+            poly_triangles.iter().for_each(|triangle| {
                 let mut triangle_indices = Vec::new();
 
-                for vertex in triangle {
+                triangle.iter().for_each(|vertex| {
                     let vertex_idx = add_unique_vertex_amf(&mut vertices, vertex.pos);
                     triangle_indices.push(vertex_idx);
-                }
+                });
 
                 if triangle_indices.len() == 3 {
                     triangles.push(triangle_indices);
                 }
-            }
-        }
+            });
+        });
 
         // Start object definition
         amf_content.push_str(&format!("  <object id=\"{object_name}\">\n"));
@@ -289,19 +290,19 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut triangles = Vec::new();
 
         // Process 2D geometry (project to XY plane at Z=0)
-        for geom in &self.geometry.0 {
+        self.geometry.0.iter().for_each(|geom| {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
                     self.add_2d_polygon_to_amf(poly2d, &mut vertices, &mut triangles);
                 },
                 geo::Geometry::MultiPolygon(mp) => {
-                    for poly2d in &mp.0 {
+                    mp.0.iter().for_each(|poly2d| {
                         self.add_2d_polygon_to_amf(poly2d, &mut vertices, &mut triangles);
-                    }
+                    });
                 },
                 _ => {}, // Skip other geometry types
             }
-        }
+        });
 
         // Start object definition
         amf_content.push_str(&format!("  <object id=\"{object_name}\">\n"));
@@ -309,7 +310,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // Write vertices
         amf_content.push_str("      <vertices>\n");
-        for (i, vertex) in vertices.iter().enumerate() {
+        vertices.iter().enumerate().for_each(|(i, vertex)| {
             amf_content.push_str(&format!("        <vertex id=\"{i}\">\n"));
             amf_content.push_str("          <coordinates>\n");
             amf_content.push_str(&format!("            <x>{:.6}</x>\n", vertex.x));
@@ -317,18 +318,18 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             amf_content.push_str(&format!("            <z>{:.6}</z>\n", vertex.z));
             amf_content.push_str("          </coordinates>\n");
             amf_content.push_str("        </vertex>\n");
-        }
+        });
         amf_content.push_str("      </vertices>\n");
 
         // Write triangles (volume definition)
         amf_content.push_str("      <volume>\n");
-        for (i, triangle) in triangles.iter().enumerate() {
+        triangles.iter().enumerate().for_each(|(i, triangle)| {
             amf_content.push_str(&format!("        <triangle id=\"{i}\">\n"));
             amf_content.push_str(&format!("          <v1>{}</v1>\n", triangle[0]));
             amf_content.push_str(&format!("          <v2>{}</v2>\n", triangle[1]));
             amf_content.push_str(&format!("          <v3>{}</v3>\n", triangle[2]));
             amf_content.push_str("        </triangle>\n");
-        }
+        });
         amf_content.push_str("      </volume>\n");
 
         // Close mesh and object
@@ -394,19 +395,19 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut triangles = Vec::new();
 
         // Process 2D geometry
-        for geom in &self.geometry.0 {
+        self.geometry.0.iter().for_each(|geom| {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
                     self.add_2d_polygon_to_amf(poly2d, &mut vertices, &mut triangles);
                 },
                 geo::Geometry::MultiPolygon(mp) => {
-                    for poly2d in &mp.0 {
+                    mp.0.iter().for_each(|poly2d| {
                         self.add_2d_polygon_to_amf(poly2d, &mut vertices, &mut triangles);
-                    }
+                    });
                 },
                 _ => {},
             }
-        }
+        });
 
         // Start object definition
         amf_content.push_str(&format!("  <object id=\"{object_name}\">\n"));
@@ -469,19 +470,19 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Tessellate the 2D polygon
         let triangles_2d = Self::triangulate_2d(&exterior, &hole_refs);
 
-        for triangle in triangles_2d {
+        triangles_2d.iter().for_each(|triangle| {
             let mut triangle_indices = Vec::new();
 
-            for point in triangle {
+            triangle.iter().for_each(|point| {
                 let vertex_3d = Point3::new(point.x, point.y, point.z);
                 let vertex_idx = add_unique_vertex_amf(vertices, vertex_3d);
                 triangle_indices.push(vertex_idx);
-            }
+            });
 
             if triangle_indices.len() == 3 {
                 triangles.push(triangle_indices);
             }
-        }
+        });
     }
 
     /// Export this Mesh to an AMF file
@@ -494,10 +495,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # Example
     /// ```
     /// use csgrs::mesh::Mesh;
-    /// use std::fs::File;
+    /// use std::fs::{create_dir_all, File};
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let csg: Mesh<()> = Mesh::cube(10.0, None);
-    /// let mut file = File::create("stl/output.amf")?;
+    /// create_dir_all("target/test-output")?;
+    /// let mut file = File::create("target/test-output/output.amf")?;
     /// csg.write_amf(&mut file, "my_cube", "millimeter")?;
     /// # Ok(())
     /// # }
@@ -518,10 +520,12 @@ fn add_unique_vertex_amf(vertices: &mut Vec<Point3<Real>>, vertex: Point3<Real>)
     const EPSILON: Real = 1e-6;
 
     // Check if vertex already exists (within tolerance)
-    for (i, existing) in vertices.iter().enumerate() {
-        if (existing.coords - vertex.coords).norm() < EPSILON {
-            return i;
-        }
+    if let Some((i, _)) = vertices
+        .iter()
+        .enumerate()
+        .find(|&(_, existing)| (existing.coords - vertex.coords).norm() < EPSILON)
+    {
+        return i;
     }
 
     // Add new vertex

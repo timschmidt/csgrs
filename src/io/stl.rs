@@ -21,10 +21,12 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// ```rust
     /// # use csgrs::mesh::Mesh;
     /// # use std::error::Error;
+    /// # use std::fs::{create_dir_all, File};
     /// # fn main() -> Result<(), Box<dyn Error>> {
     /// let mesh  = Mesh::<()>::cube(1.0, None);
     /// let bytes = mesh.to_stl_ascii("my_solid");
-    /// std::fs::write("stl/my_solid.stl", bytes)?;
+    /// create_dir_all("target/test-output")?;
+    /// std::fs::write("target/test-output/my_solid.stl", bytes)?;
     /// # Ok(())
     /// # }
     /// ```
@@ -33,27 +35,27 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         out.push_str(&format!("solid {name}\n"));
 
         // Write out all *3D* polygons
-        for poly in &self.polygons {
+        self.polygons.iter().for_each(|poly| {
             // Ensure the polygon is tessellated, since STL is triangle-based.
             let triangles = poly.triangulate();
             // A typical STL uses the face normal; we can take the polygon's plane normal:
             let normal = poly.plane.normal().normalize();
-            for tri in triangles {
+            triangles.iter().for_each(|tri| {
                 out.push_str(&format!(
                     "  facet normal {:.6} {:.6} {:.6}\n",
                     normal.x, normal.y, normal.z
                 ));
                 out.push_str("    outer loop\n");
-                for vertex in &tri {
+                tri.iter().for_each(|vertex| {
                     out.push_str(&format!(
                         "      vertex {:.6} {:.6} {:.6}\n",
                         vertex.pos.x, vertex.pos.y, vertex.pos.z
                     ));
-                }
+                });
                 out.push_str("    endloop\n");
                 out.push_str("  endfacet\n");
-            }
-        }
+            });
+        });
 
         out.push_str(&format!("endsolid {name}\n"));
         out
@@ -68,10 +70,12 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// ```rust
     /// # use csgrs::mesh::Mesh;
     /// # use std::error::Error;
+    /// # use std::fs::{create_dir_all, File};
     /// # fn main() -> Result<(), Box<dyn Error>> {
     /// let object = Mesh::<()>::cube(1.0, None);
     /// let bytes  = object.to_stl_binary("my_solid")?;
-    /// std::fs::write("stl/my_solid.stl", bytes)?;
+    /// create_dir_all("target/test-output")?;
+    /// std::fs::write("target/test-output/my_solid.stl", bytes)?;
     /// # Ok(())
     /// # }
     /// ```
@@ -83,12 +87,12 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut triangles = Vec::new();
 
         // Triangulate all 3D polygons in self.polygons
-        for poly in &self.polygons {
+        self.polygons.iter().for_each(|poly| {
             let normal = poly.plane.normal().normalize();
             // Convert polygon to triangles
             let tri_list = poly.triangulate();
+            tri_list.iter().for_each(|tri| {
             #[allow(clippy::unnecessary_cast)]
-            for tri in tri_list {
                 triangles.push(Triangle {
                     normal: Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
                     vertices: [
@@ -109,8 +113,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                         ]),
                     ],
                 });
-            }
-        }
+            });
+        });
 
         // Encode into a binary STL buffer
         let mut cursor = Cursor::new(Vec::new());
@@ -125,11 +129,11 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut cursor = Cursor::new(stl_data);
 
         // Create an STL reader from the cursor
-        let stl_reader = stl_io::create_stl_reader(&mut cursor)?;
+        let mut stl_reader = stl_io::create_stl_reader(&mut cursor)?;
 
         let mut polygons = Vec::new();
 
-        for tri_result in stl_reader {
+        stl_reader.try_for_each(|tri_result| -> Result<_, std::io::Error> {
             // Handle potential errors from the STL reader
             let tri = tri_result?;
 
@@ -173,7 +177,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 ),
             ];
             polygons.push(Polygon::new(vertices, metadata.clone()));
-        }
+            Ok(())
+        })?;
 
         Ok(Mesh::from_polygons(&polygons, metadata))
     }
@@ -186,10 +191,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// ```
     /// # use csgrs::sketch::Sketch;
     /// # use std::error::Error;
+    /// # use std::fs::{create_dir_all, File};
     /// # fn main() -> Result<(), Box<dyn Error>> {
     /// let sketch: Sketch<()> = Sketch::square(2.0, None);
     /// let bytes = sketch.to_stl_ascii("my_sketch");
-    /// std::fs::write("stl/my_sketch.stl", bytes)?;
+    /// create_dir_all("target/test-output")?;
+    /// std::fs::write("target/test-output/my_sketch.stl", bytes)?;
     /// # Ok(())
     /// # }
     /// ```
@@ -199,7 +206,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // Write out all *2D* geometry from `self.geometry`
         // We only handle Polygon and MultiPolygon.  We tessellate in XY, set z=0.
-        for geom in &self.geometry {
+        self.geometry.iter().for_each(|geom| {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
                     // Outer ring (in CCW for a typical "positive" polygon)
@@ -224,23 +231,23 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     let triangles_2d = Sketch::<()>::triangulate_2d(&outer, &hole_refs);
 
                     // Write each tri as a facet in ASCII STL, with a normal of (0,0,1)
-                    for tri in triangles_2d {
+                    triangles_2d.iter().for_each(|tri| {
                         out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
                         out.push_str("    outer loop\n");
-                        for pt in &tri {
+                        tri.iter().for_each(|pt| {
                             out.push_str(&format!(
                                 "      vertex {:.6} {:.6} {:.6}\n",
                                 pt.x, pt.y, pt.z
                             ));
-                        }
+                        });
                         out.push_str("    endloop\n");
                         out.push_str("  endfacet\n");
-                    }
+                    });
                 },
 
                 geo::Geometry::MultiPolygon(mp) => {
                     // Each polygon inside the MultiPolygon
-                    for poly2d in &mp.0 {
+                    mp.0.iter().for_each(|poly2d| {
                         let outer = poly2d
                             .exterior()
                             .coords_iter()
@@ -262,26 +269,26 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
                         let triangles_2d = Sketch::<()>::triangulate_2d(&outer, &hole_refs);
 
-                        for tri in triangles_2d {
+                        triangles_2d.iter().for_each(|tri| {
                             out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
                             out.push_str("    outer loop\n");
-                            for pt in &tri {
+                            tri.iter().for_each(|pt| {
                                 out.push_str(&format!(
                                     "      vertex {:.6} {:.6} {:.6}\n",
                                     pt.x, pt.y, pt.z
                                 ));
-                            }
+                            });
                             out.push_str("    endloop\n");
                             out.push_str("  endfacet\n");
-                        }
-                    }
+                        });
+                    });
                 },
 
                 // Skip all other geometry types (LineString, Point, etc.)
                 // You can optionally handle them if you like, or ignore them.
                 _ => {},
             }
-        }
+        });
 
         out.push_str(&format!("endsolid {name}\n"));
         out
@@ -296,10 +303,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// ```rust
     /// # use csgrs::sketch::Sketch;
     /// # use std::error::Error;
+    /// # use std::fs::{create_dir_all, File};
     /// # fn main() -> Result<(), Box<dyn Error>> {
     /// let object = Sketch::<()>::square(1.0, None);
     /// let bytes  = object.to_stl_binary("my_sketch")?;
-    /// std::fs::write("stl/my_sketch.stl", bytes)?;
+    /// create_dir_all("target/test-output")?;
+    /// std::fs::write("target/test-output/my_sketch.stl", bytes)?;
     /// # Ok(())
     /// # }
     /// ```
@@ -312,7 +321,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         // Triangulate any 2D geometry from self.geometry (Polygon, MultiPolygon).
         // We treat these as lying in the XY plane, at Z=0, with a default normal of +Z.
-        for geom in &self.geometry {
+        self.geometry.iter().for_each(|geom| {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
                     // Gather outer ring as [x,y]
@@ -334,8 +343,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     let tri_2d = Sketch::<()>::triangulate_2d(&outer, &hole_refs);
 
                     // Each triangle is in XY, so normal = (0,0,1)
+                    tri_2d.iter().for_each(|tri_pts| {
                     #[allow(clippy::unnecessary_cast)]
-                    for tri_pts in tri_2d {
                         triangles.push(Triangle {
                             normal: Normal::new([0.0, 0.0, 1.0]),
                             vertices: [
@@ -356,12 +365,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                                 ]),
                             ],
                         });
-                    }
+                    });
                 },
 
                 geo::Geometry::MultiPolygon(mpoly) => {
                     // Same approach, but each Polygon in the MultiPolygon
-                    for poly2d in &mpoly.0 {
+                    mpoly.0.iter().for_each(|poly2d| {
                         let outer: Vec<[Real; 2]> =
                             poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
 
@@ -375,8 +384,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             holes_vec.iter().map(|h| &h[..]).collect();
                         let tri_2d = Sketch::<()>::triangulate_2d(&outer, &hole_refs);
 
+                        tri_2d.iter().for_each(|tri_pts| {
                         #[allow(clippy::unnecessary_cast)]
-                        for tri_pts in tri_2d {
                             triangles.push(Triangle {
                                 normal: Normal::new([0.0, 0.0, 1.0]),
                                 vertices: [
@@ -397,14 +406,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                                     ]),
                                 ],
                             });
-                        }
-                    }
+                        });
+                    });
                 },
 
                 // Skip other geometry types: lines, points, etc.
                 _ => {},
             }
-        }
+        });
 
         //
         // (C) Encode into a binary STL buffer

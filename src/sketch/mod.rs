@@ -99,14 +99,14 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
 
             // Convert the 2D result (x,y) into 3D triangles with z=0
             let mut result = Vec::with_capacity(triangle_indices.len() / 3);
-            for tri in triangle_indices.chunks_exact(3) {
+            triangle_indices.chunks_exact(3).for_each(|tri| {
                 let pts = [
                     Point3::new(vertices[2 * tri[0]], vertices[2 * tri[0] + 1], 0.0),
                     Point3::new(vertices[2 * tri[1]], vertices[2 * tri[1] + 1], 0.0),
                     Point3::new(vertices[2 * tri[2]], vertices[2 * tri[2] + 1], 0.0),
                 ];
                 result.push(pts);
-            }
+            });
             result
         }
 
@@ -122,7 +122,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
             };
 
             let mut result = Vec::with_capacity(tris.len());
-            for triangle in tris {
+            tris.into_iter().for_each(|triangle| {
                 // Each `triangle` is a geo_types::Triangle whose `.0, .1, .2`
                 // are the 2D coordinates. We'll embed them at z=0.
                 let [a, b, c] = [triangle.0, triangle.1, triangle.2];
@@ -131,7 +131,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
                     Point3::new(b.x, b.y, 0.0),
                     Point3::new(c.x, c.y, 0.0),
                 ]);
-            }
+            });
             result
         }
     }
@@ -200,22 +200,22 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
         final_gc.0.push(Geometry::MultiPolygon(oriented));
 
         // re-insert lines & points from both sets:
-        for g in &self.geometry.0 {
+        self.geometry.0.iter().for_each(|g| {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
                     // skip [multi]polygons
                 },
                 _ => final_gc.0.push(g.clone()),
             }
-        }
-        for g in &other.geometry.0 {
+        });
+        other.geometry.0.iter().for_each(|g| {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
                     // skip [multi]polygons
                 },
                 _ => final_gc.0.push(g.clone()),
             }
-        }
+        });
 
         Sketch {
             geometry: final_gc,
@@ -251,12 +251,12 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
 
         // Re-insert lines & points from self only
         // (If you need to exclude lines/points that lie inside other, you'd need more checks here.)
-        for g in &self.geometry.0 {
+        self.geometry.0.iter().for_each(|g| {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
                 _ => final_gc.0.push(g.clone()),
             }
-        }
+        });
 
         Sketch {
             geometry: final_gc,
@@ -292,18 +292,18 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
 
         // For lines and points: keep them only if they intersect in both sets
         // todo: detect intersection of non-polygons
-        for g in &self.geometry.0 {
+        self.geometry.0.iter().for_each(|g| {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
                 _ => final_gc.0.push(g.clone()),
             }
-        }
-        for g in &other.geometry.0 {
+        });
+        other.geometry.0.iter().for_each(|g| {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
                 _ => final_gc.0.push(g.clone()),
             }
-        }
+        });
 
         Sketch {
             geometry: final_gc,
@@ -339,18 +339,18 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
         final_gc.0.push(Geometry::MultiPolygon(oriented));
 
         // Re-insert lines & points from both sets
-        for g in &self.geometry.0 {
+        self.geometry.0.iter().for_each(|g| {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
                 _ => final_gc.0.push(g.clone()),
             }
-        }
-        for g in &other.geometry.0 {
+        });
+        other.geometry.0.iter().for_each(|g| {
             match g {
                 Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {}, // skip
                 _ => final_gc.0.push(g.clone()),
             }
-        }
+        });
 
         Sketch {
             geometry: final_gc,
@@ -502,12 +502,12 @@ impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for Sketch<S> {
         // Convert mesh into a collection of 2D polygons
         let mut flattened_3d = Vec::new(); // will store geo::Polygon<Real>
 
-        for poly in &mesh.polygons {
+        mesh.polygons.iter().for_each(|poly| {
             // Tessellate this polygon into triangles
             let triangles = poly.triangulate();
             // Each triangle has 3 vertices [v0, v1, v2].
             // Project them onto XY => build a 2D polygon (triangle).
-            for tri in triangles {
+            triangles.into_iter().for_each(|tri| {
                 let ring = vec![
                     (tri[0].pos.x, tri[0].pos.y),
                     (tri[1].pos.x, tri[1].pos.y),
@@ -516,8 +516,8 @@ impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for Sketch<S> {
                 ];
                 let polygon_2d = geo::Polygon::new(LineString::from(ring), vec![]);
                 flattened_3d.push(polygon_2d);
-            }
-        }
+            });
+        });
 
         // Union all these polygons together into one MultiPolygon
         // (We could chain them in a fold-based union.)
@@ -527,9 +527,9 @@ impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for Sketch<S> {
             // Start with the first polygon as a MultiPolygon
             let mut mp_acc = MultiPolygon(vec![flattened_3d[0].clone()]);
             // Union in the rest
-            for p in flattened_3d.iter().skip(1) {
+            flattened_3d.iter().skip(1).for_each(|p| {
                 mp_acc = mp_acc.union(&MultiPolygon(vec![p.clone()]));
-            }
+            });
             mp_acc
         };
 

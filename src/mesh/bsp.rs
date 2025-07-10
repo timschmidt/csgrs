@@ -83,13 +83,13 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
         // Take a sample of polygons as candidate planes
         let sample_size = polygons.len().min(20);
-        for p in polygons.iter().take(sample_size) {
+        polygons.iter().take(sample_size).for_each(|p| {
             let plane = &p.plane;
             let mut num_front = 0;
             let mut num_back = 0;
             let mut num_spanning = 0;
 
-            for poly in polygons {
+            polygons.iter().for_each(|poly| {
                 match plane.classify_polygon(poly) {
                     COPLANAR => {}, // Not counted for balance
                     FRONT => num_front += 1,
@@ -97,7 +97,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                     SPANNING => num_spanning += 1,
                     _ => num_spanning += 1, // Treat any other combination as spanning
                 }
-            }
+            });
 
             let score = K_SPANS * num_spanning as Real
                 + K_BALANCE * ((num_front - num_back) as Real).abs();
@@ -106,7 +106,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                 best_score = score;
                 best_plane = plane.clone();
             }
-        }
+        });
         best_plane
     }
 
@@ -116,58 +116,64 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
     /// **Algorithm**: O(n log d) where n is polygon count, d is tree depth.
     #[cfg(not(feature = "parallel"))]
     pub fn clip_polygons(&self, polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
-        // If this node has no plane (i.e. it’s empty), just return
-        if self.plane.is_none() {
-            return polygons.to_vec();
-        }
+        let mut result = Vec::new();
+        let mut stack = vec![(self, polygons.to_vec())];
 
-        let plane = self.plane.as_ref().unwrap();
+        while let Some((node, polys)) = stack.pop() {
+            if node.plane.is_none() {
+                result.extend(polys);
+                continue;
+            }
+            let plane = node.plane.as_ref().unwrap();
 
-        // Pre-allocate for better performance
-        let mut front_polys = Vec::with_capacity(polygons.len());
-        let mut back_polys = Vec::with_capacity(polygons.len());
+            let mut front_polys = Vec::with_capacity(polys.len());
+            let mut back_polys = Vec::with_capacity(polys.len());
 
-        // Optimized polygon splitting with iterator patterns
-        for polygon in polygons {
-            let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
-                plane.split_polygon(polygon);
+            polys.iter().for_each(|polygon| {
+                let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
+                    plane.split_polygon(polygon);
 
-            // Efficient coplanar polygon classification using iterator chain
-            for coplanar_poly in coplanar_front.into_iter().chain(coplanar_back.into_iter()) {
-                if plane.orient_plane(&coplanar_poly.plane) == FRONT {
-                    front_parts.push(coplanar_poly);
-                } else {
-                    back_parts.push(coplanar_poly);
+                coplanar_front.into_iter().chain(coplanar_back.into_iter()).for_each(|coplanar_poly| {
+                    if plane.orient_plane(&coplanar_poly.plane) == FRONT {
+                        front_parts.push(coplanar_poly);
+                    } else {
+                        back_parts.push(coplanar_poly);
+                    }
+                });
+
+                front_polys.append(&mut front_parts);
+                back_polys.append(&mut back_parts);
+            });
+
+            if let Some(front_node) = &node.front {
+                if !front_polys.is_empty() {
+                    stack.push((front_node, front_polys));
                 }
+            } else {
+                result.extend(front_polys);
             }
 
-            front_polys.append(&mut front_parts);
-            back_polys.append(&mut back_parts);
+            if let Some(back_node) = &node.back {
+                if !back_polys.is_empty() {
+                    stack.push((back_node, back_polys));
+                }
+            }
         }
-
-        // Recursively clip with optimized pattern
-        let mut result = if let Some(front_node) = &self.front {
-            front_node.clip_polygons(&front_polys)
-        } else {
-            front_polys
-        };
-
-        if let Some(back_node) = &self.back {
-            result.extend(back_node.clip_polygons(&back_polys));
-        }
-
         result
     }
 
     /// Remove all polygons in this BSP tree that are inside the other BSP tree
     #[cfg(not(feature = "parallel"))]
     pub fn clip_to(&mut self, bsp: &Node<S>) {
-        self.polygons = bsp.clip_polygons(&self.polygons);
-        if let Some(ref mut front) = self.front {
-            front.clip_to(bsp);
-        }
-        if let Some(ref mut back) = self.back {
-            back.clip_to(bsp);
+        let mut stack = vec![self];
+        while let Some(node) = stack.pop() {
+            node.polygons = bsp.clip_polygons(&node.polygons);
+            if let Some(front) = node.front.as_mut() {
+                stack.push(front);
+            }
+            if let Some(back) = node.back.as_mut() {
+                stack.push(back);
+            }
         }
     }
 
@@ -197,40 +203,40 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             return;
         }
 
-        // Choose the best splitting plane using a heuristic if not already set.
-        if self.plane.is_none() {
-            self.plane = Some(self.pick_best_splitting_plane(polygons));
-        }
-        let plane = self.plane.as_ref().unwrap();
+        let mut stack = vec![(self, polygons.to_vec())];
 
-        // Pre-allocate with estimated capacity for better performance
-        let mut front = Vec::with_capacity(polygons.len() / 2);
-        let mut back = Vec::with_capacity(polygons.len() / 2);
+        while let Some((node, polys)) = stack.pop() {
+            if polys.is_empty() {
+                continue;
+            }
 
-        // Optimized polygon classification using iterator pattern
-        // **Mathematical Theorem**: Each polygon is classified relative to the splitting plane
-        for polygon in polygons {
-            let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
-                plane.split_polygon(polygon);
+            if node.plane.is_none() {
+                node.plane = Some(node.pick_best_splitting_plane(&polys));
+            }
+            let plane = node.plane.as_ref().unwrap();
 
-            // Extend collections efficiently with iterator chains
-            self.polygons.extend(coplanar_front);
-            self.polygons.extend(coplanar_back);
-            front.append(&mut front_parts);
-            back.append(&mut back_parts);
-        }
+            let mut front = Vec::with_capacity(polys.len() / 2);
+            let mut back = Vec::with_capacity(polys.len() / 2);
 
-        // Build child nodes using lazy initialization pattern for memory efficiency
-        if !front.is_empty() {
-            self.front
-                .get_or_insert_with(|| Box::new(Node::new()))
-                .build(&front);
-        }
+            polys.iter().for_each(|polygon| {
+                let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
+                    plane.split_polygon(polygon);
 
-        if !back.is_empty() {
-            self.back
-                .get_or_insert_with(|| Box::new(Node::new()))
-                .build(&back);
+                node.polygons.extend(coplanar_front);
+                node.polygons.extend(coplanar_back);
+                front.append(&mut front_parts);
+                back.append(&mut back_parts);
+            });
+
+            if !front.is_empty() {
+                let front_node = node.front.get_or_insert_with(|| Box::new(Node::new()));
+                stack.push((front_node, front));
+            }
+
+            if !back.is_empty() {
+                let back_node = node.back.get_or_insert_with(|| Box::new(Node::new()));
+                stack.push((back_node, back));
+            }
         }
     }
 
@@ -244,10 +250,10 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         let mut coplanar_polygons = Vec::new();
         let mut intersection_edges = Vec::new();
 
-        for poly in &all_polys {
+        all_polys.iter().for_each(|poly| {
             let vcount = poly.vertices.len();
             if vcount < 2 {
-                continue; // degenerate polygon => skip
+                return; // degenerate polygon => skip
             }
 
             // Use iterator chain to compute vertex types more efficiently
@@ -309,7 +315,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                     // Shouldn't happen in a typical classification, but we can ignore
                 },
             }
-        }
+        });
 
         (coplanar_polygons, intersection_edges)
     }

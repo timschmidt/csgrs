@@ -31,10 +31,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut all_strokes = Vec::new();
         let mut cursor_x: Real = 0.0;
 
-        for ch in text.chars() {
+        text.chars().for_each(|ch| {
             // Skip control chars or spaces as needed
             if ch.is_control() {
-                continue;
+                return;
             }
 
             // Attempt to find a glyph in this font
@@ -55,13 +55,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     cursor_x += 6.0 * size;
                 },
             }
-        }
+        });
 
         // Insert each stroke as a separate LineString in the geometry
         let mut geo_coll = GeometryCollection::default();
-        for line_str in all_strokes {
+        all_strokes.into_iter().for_each(|line_str| {
             geo_coll.0.push(Geometry::LineString(line_str));
-        }
+        });
 
         // Return a new Sketch that has no 3D polygons, but has these lines in geometry.
         Sketch {
@@ -85,12 +85,12 @@ fn build_hershey_glyph_lines(
     // resetting whenever Hershey issues a "MoveTo"
     let mut current_coords = Vec::new();
 
-    for vector_cmd in &glyph.vectors {
+    glyph.vectors.iter().for_each(|vector_cmd| {
         match vector_cmd {
             HersheyVector::MoveTo { x, y } => {
                 // If we already had 2+ points, that stroke is complete:
                 if current_coords.len() >= 2 {
-                    strokes.push(LineString::from(current_coords));
+                    strokes.push(LineString::from(current_coords.clone()));
                 }
                 // Start a new stroke
                 current_coords = Vec::new();
@@ -104,7 +104,7 @@ fn build_hershey_glyph_lines(
                 current_coords.push(coord! { x: px, y: py });
             },
         }
-    }
+    });
 
     // End-of-glyph: if our final stroke has 2+ points, convert to a line string
     if current_coords.len() >= 2 {

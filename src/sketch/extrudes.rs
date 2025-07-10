@@ -92,9 +92,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Collect 3-D polygons generated from every `geo` geometry in the sketch
         let mut out: Vec<Polygon<S>> = Vec::new();
 
-        for geom in &self.geometry {
+        self.geometry.iter().for_each(|geom| {
             Self::extrude_geometry(geom, direction, &self.metadata, &mut out);
-        }
+        });
 
         Mesh {
             polygons: out,
@@ -126,14 +126,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 );
 
                 // bottom
-                for tri in &tris {
+                tris.iter().for_each(|tri| {
                     let v0 = Vertex::new(tri[2], -Vector3::z());
                     let v1 = Vertex::new(tri[1], -Vector3::z());
                     let v2 = Vertex::new(tri[0], -Vector3::z());
                     out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
-                }
+                });
                 // top
-                for tri in &tris {
+                tris.iter().for_each(|tri| {
                     let p0 = tri[0] + direction;
                     let p1 = tri[1] + direction;
                     let p2 = tri[2] + direction;
@@ -141,13 +141,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     let v1 = Vertex::new(p1, Vector3::z());
                     let v2 = Vertex::new(p2, Vector3::z());
                     out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
-                }
+                });
 
                 // sides
                 let all_rings = std::iter::once(poly.exterior()).chain(poly.interiors());
-                for ring in all_rings {
+                all_rings.for_each(|ring| {
                     let coords: Vec<_> = ring.coords_iter().collect();
-                    for window in coords.windows(2) {
+                    coords.windows(2).for_each(|window| {
                         let c_i = window[0];
                         let c_j = window[1];
                         let b_i = Point3::new(c_i.x, c_i.y, 0.0);
@@ -163,30 +163,30 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             ],
                             metadata.clone(),
                         ));
-                    }
-                }
+                    });
+                });
             },
             geo::Geometry::MultiPolygon(mp) => {
-                for poly in &mp.0 {
+                mp.0.iter().for_each(|poly| {
                     Self::extrude_geometry(
                         &geo::Geometry::Polygon(poly.clone()),
                         direction,
                         metadata,
                         out_polygons,
                     );
-                }
+                });
             },
             geo::Geometry::GeometryCollection(gc) => {
-                for sub in &gc.0 {
+                gc.0.iter().for_each(|sub| {
                     Self::extrude_geometry(sub, direction, metadata, out_polygons);
-                }
+                });
             },
             geo::Geometry::LineString(ls) => {
                 // extrude line strings into side surfaces
                 let coords: Vec<_> = ls.coords_iter().collect();
-                for i in 0..coords.len() - 1 {
-                    let c_i = coords[i];
-                    let c_j = coords[i + 1];
+                coords.windows(2).for_each(|window| {
+                    let c_i = window[0];
+                    let c_j = window[1];
                     let b_i = Point3::new(c_i.x, c_i.y, 0.0);
                     let b_j = Point3::new(c_j.x, c_j.y, 0.0);
                     let t_i = b_i + direction;
@@ -202,7 +202,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         ],
                         metadata.clone(),
                     ));
-                }
+                });
             },
             // Line: single segment ribbon
             geo::Geometry::Line(line) => {
@@ -281,7 +281,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut polygons = vec![bottom_poly.clone(), top.clone()];
 
         // For each edge (i -> i+1) in bottom, connect to the corresponding edge in top.
-        for i in 0..n {
+        (0..n).for_each(|i| {
             let j = (i + 1) % n;
             let b_i = &bottom.vertices[i];
             let b_j = &bottom.vertices[j];
@@ -301,7 +301,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 bottom.metadata.clone(), // carry over bottom polygon metadata
             );
             polygons.push(side_poly);
-        }
+        });
 
         Ok(Mesh::from_polygons(&polygons, bottom.metadata.clone()))
     }
@@ -362,24 +362,25 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // The axis to rotate around is the unit of `direction`. We'll do final alignment after constructing them along +Z.
         let axis_dir = direction.normalize();
 
-        for i in 0..=segments {
-            let f = i as Real / segments as Real;
-            let s_i = 1.0 + (scale_top - 1.0) * f;  // lerp(1, scale_top, f)
-            let twist_rad = twist_degs.to_radians() * f;
-            let z_i = height * f;
+        slices = (0..=segments)
+            .map(|i| {
+                let f = i as Real / segments as Real;
+                let s_i = 1.0 + (scale_top - 1.0) * f;  // lerp(1, scale_top, f)
+                let twist_rad = twist_degs.to_radians() * f;
+                let z_i = height * f;
 
-            // Build transform T = Tz * Rz * Sxy
-            //  - scale in XY
-            //  - twist around Z
-            //  - translate in Z
-            let mat_scale = Matrix4::new_nonuniform_scaling(&Vector3::new(s_i, s_i, 1.0));
-            let mat_rot = Rotation3::from_axis_angle(&Vector3::z_axis(), twist_rad).to_homogeneous();
-            let mat_trans = Translation3::new(0.0, 0.0, z_i).to_homogeneous();
-            let slice_mat = mat_trans * mat_rot * mat_scale;
+                // Build transform T = Tz * Rz * Sxy
+                //  - scale in XY
+                //  - twist around Z
+                //  - translate in Z
+                let mat_scale = Matrix4::new_nonuniform_scaling(&Vector3::new(s_i, s_i, 1.0));
+                let mat_rot = Rotation3::from_axis_angle(&Vector3::z_axis(), twist_rad).to_homogeneous();
+                let mat_trans = Translation3::new(0.0, 0.0, z_i).to_homogeneous();
+                let slice_mat = mat_trans * mat_rot * mat_scale;
 
-            let slice_3d = project_shape_3d(shape, &slice_mat);
-            slices.push(slice_3d);
-        }
+                project_shape_3d(shape, &slice_mat)
+            })
+            .collect();
 
         // Step 2) “Stitch” consecutive slices to form side polygons.
         // For each pair of slices[i], slices[i+1], for each boundary polyline j,
@@ -407,17 +408,17 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         );
 
         // b) side walls
-        for i in 0..segments {
+        (0..segments).for_each(|i| {
             let bottom_slice = &slices[i];
             let top_slice = &slices[i + 1];
 
             // We know bottom_slice has shape.ccw_plines.len() + shape.cw_plines.len() polylines
             // in the same order. Each polyline has the same vertex_count as in top_slice.
             // So we can do a direct 1:1 match: bottom_slice[j] <-> top_slice[j].
-            for (pline_idx, bot3d) in bottom_slice.iter().enumerate() {
+            bottom_slice.iter().enumerate().for_each(|(pline_idx, bot3d)| {
                 let top3d = &top_slice[pline_idx];
                 if bot3d.len() < 2 {
-                    continue;
+                    return;
                 }
                 // is it closed? We can check shape’s corresponding polyline
                 let is_closed = if pline_idx < shape.ccw_plines.len() {
@@ -428,7 +429,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 let n = bot3d.len();
                 let edge_count = if is_closed { n } else { n - 1 };
 
-                for k in 0..edge_count {
+                (0..edge_count).for_each(|k| {
                     let k_next = (k + 1) % n;
                     let b_i = bot3d[k];
                     let b_j = bot3d[k_next];
@@ -445,9 +446,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         metadata.clone(),
                     );
                     polygons_3d.push(poly_side);
-                }
-            }
-        }
+                });
+            });
+        });
 
         // Step 3) If direction is not along +Z, rotate final mesh so +Z aligns with your direction
         // (This is optional or can be done up front. Typical OpenSCAD style is to do everything
@@ -463,14 +464,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 let mat = rot.to_homogeneous();
                 // transform the polygons
                 let mut final_polys = Vec::with_capacity(polygons_3d.len());
-                for mut poly in polygons_3d {
-                    for v in &mut poly.vertices {
+                polygons_3d.into_iter().for_each(|mut poly| {
+                    poly.vertices.iter_mut().for_each(|v| {
                         let pos4 = mat * nalgebra::Vector4::new(v.pos.x, v.pos.y, v.pos.z, 1.0);
                         v.pos = Point3::new(pos4.x / pos4.w, pos4.y / pos4.w, pos4.z / pos4.w);
-                    }
+                    });
                     poly.set_new_normal();
                     final_polys.push(poly);
-                }
+                });
                 return CSG::from_polygons(&final_polys);
             }
         }
@@ -606,17 +607,17 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             let step = angle_radians / (segments as Real);
 
             // For each edge in the ring:
-            for i in 0..(ring_coords.len() - 1) {
+            (0..(ring_coords.len() - 1)).for_each(|i| {
                 let c_i = ring_coords[i];
                 let c_j = ring_coords[i + 1];
 
                 // If these two points are the same, skip degenerate edge
                 if (c_i.x - c_j.x).abs() < EPSILON && (c_i.y - c_j.y).abs() < EPSILON {
-                    continue;
+                    return;
                 }
 
                 // For each revolve slice j..j+1
-                for s in 0..segments {
+                (0..segments).for_each(|s| {
                     let th0 = s as Real * step;
                     let th1 = (s as Real + 1.0) * step;
 
@@ -641,8 +642,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     .collect();
 
                     out_polygons.push(Polygon::new(quad_verts, metadata.clone()));
-                }
-            }
+                });
+            });
             out_polygons
         }
 
@@ -684,9 +685,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             // If flip == true, reverse them and flip each vertex
             if flip {
                 verts.reverse();
-                for v in &mut verts {
-                    v.flip();
-                }
+                verts.iter_mut().for_each(|v| v.flip());
             }
 
             // Build the polygon
@@ -701,7 +700,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let full_revolve = (angle_degs - 360.0).abs() < EPSILON; // or angle_degs >= 359.999..., etc.
         let do_caps = !full_revolve && (angle_degs > 0.0);
 
-        for geom in &self.geometry {
+        self.geometry.iter().for_each(|geom| {
             match geom {
                 geo::Geometry::Polygon(poly2d) => {
                     // Exterior ring
@@ -743,7 +742,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     }
 
                     // Interior rings (holes)
-                    for hole in poly2d.interiors() {
+                    poly2d.interiors().iter().for_each(|hole| {
                         let hole_ccw = is_ccw(hole);
                         new_polygons.extend(revolve_ring(
                             &hole.0,
@@ -752,12 +751,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             segments,
                             &self.metadata,
                         ));
-                    }
+                    });
                 },
 
                 geo::Geometry::MultiPolygon(mpoly) => {
                     // Each Polygon inside
-                    for poly2d in &mpoly.0 {
+                    mpoly.0.iter().for_each(|poly2d| {
                         let ext_ring = poly2d.exterior();
                         let ext_ccw = is_ccw(ext_ring);
 
@@ -785,7 +784,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         }
 
                         // holes
-                        for hole in poly2d.interiors() {
+                        poly2d.interiors().iter().for_each(|hole| {
                             let hole_ccw = is_ccw(hole);
                             new_polygons.extend(revolve_ring(
                                 &hole.0,
@@ -794,14 +793,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                                 segments,
                                 &self.metadata,
                             ));
-                        }
-                    }
+                        });
+                    });
                 },
 
                 // We should implement revolve for Lines and PolyLines, but we may ignore points, etc.
                 _ => {},
             }
-        }
+        });
 
         //----------------------------------------------------------------------
         // 3) Return the new CSG:
@@ -836,11 +835,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let path_is_closed = !path_2d.open;  // If false => open path, if true => closed path
 
         // Extract path points (x,y,0) from path_2d
-        let mut path_points = Vec::with_capacity(path_2d.vertices.len());
-        for v in &path_2d.vertices {
-            // We only take X & Y; Z is typically 0 for a 2D path
-            path_points.push(Point3::new(v.pos.x, v.pos.y, 0.0));
-        }
+        let path_points: Vec<_> = path_2d.vertices.iter()
+            .map(|v| Point3::new(v.pos.x, v.pos.y, 0.0))
+            .collect();
 
         // Convert the shape_2d into a list of its vertices in local coords (usually in XY).
         // We assume shape_2d is a single polygon (can also handle multiple if needed).
@@ -852,7 +849,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let n_path = path_points.len();
         let mut slices: Vec<Vec<Point3<Real>>> = Vec::with_capacity(n_path);
 
-        for i in 0..n_path {
+        (0..n_path).for_each(|i| {
             // The path tangent is p[i+1] - p[i] (or wrap if path is closed)
             // If open and i == n_path-1 => we’ll copy the tangent from the last segment
             let next_i = if i == n_path - 1 {
@@ -896,15 +893,16 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             let mat = trans.to_homogeneous() * rot;
 
             // Apply that transform to all shape_2d vertices => slice[i]
-            let mut slice_i = Vec::with_capacity(shape_count);
-            for sv in &shape_2d.vertices {
-                let local_pt = sv.pos;  // (x, y, z=0)
-                let p4 = local_pt.to_homogeneous();
-                let p4_trans = mat * p4;
-                slice_i.push(Point3::from_homogeneous(p4_trans).unwrap());
-            }
+            let slice_i: Vec<_> = shape_2d.vertices.iter()
+                .map(|sv| {
+                    let local_pt = sv.pos;  // (x, y, z=0)
+                    let p4 = local_pt.to_homogeneous();
+                    let p4_trans = mat * p4;
+                    Point3::from_homogeneous(p4_trans).unwrap()
+                })
+                .collect();
             slices.push(slice_i);
-        }
+        });
 
         // Build polygons for the new 3D swept solid.
         // - (A) “Cap” polygons at start & end if path is open.
@@ -941,7 +939,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Side walls: For i in [0..n_path-1], or [0..n_path] if closed
         let end_index = if path_is_closed { n_path } else { n_path - 1 };
 
-        for i in 0..end_index {
+        (0..end_index).for_each(|i| {
             let i_next = (i + 1) % n_path;  // wraps if closed
             let slice_i = &slices[i];
             let slice_next = &slices[i_next];
@@ -954,7 +952,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 shape_count - 1
             };
 
-            for k in 0..edge_count {
+            (0..edge_count).for_each(|k| {
                 let k_next = (k + 1) % shape_count;
 
                 let v_i_k     = slice_i[k];
@@ -976,8 +974,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     shape_2d.metadata.clone(),
                 );
                 all_polygons.push(side_poly);
-            }
-        }
+            });
+        });
 
         // Combine into a final CSG
         CSG::from_polygons(&all_polygons)
@@ -1005,9 +1003,7 @@ fn _polygon_from_slice<S: Clone + Send + Sync>(
 
     if flip_winding {
         verts.reverse();
-        for v in &mut verts {
-            v.flip();
-        }
+        verts.iter_mut().for_each(|v| v.flip());
     }
 
     Polygon::new(verts, metadata)

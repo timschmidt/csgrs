@@ -33,7 +33,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut min_y = Real::MAX;
         let mut max_x = -Real::MAX;
         let mut max_y = -Real::MAX;
-        for (center, r) in balls {
+        balls.iter().for_each(|(center, r)| {
             let rr = *r + padding;
             if center.x - rr < min_x {
                 min_x = center.x - rr;
@@ -47,7 +47,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             if center.y + rr > max_y {
                 max_y = center.y + rr;
             }
-        }
+        });
 
         let dx = (max_x - min_x) / (nx as Real - 1.0);
         let dy = (max_y - min_y) / (ny as Real - 1.0);
@@ -77,14 +77,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         let mut grid = vec![0.0; nx * ny];
         let index = |ix: usize, iy: usize| -> usize { iy * nx + ix };
-        for iy in 0..ny {
+        (0..ny).for_each(|iy| {
             let yv = min_y + (iy as Real) * dy;
-            for ix in 0..nx {
+            (0..nx).for_each(|ix| {
                 let xv = min_x + (ix as Real) * dx;
                 let val = scalar_field(balls, xv, yv) - iso_value;
                 grid[index(ix, iy)] = val;
-            }
-        }
+            });
+        });
 
         // 3) Marching squares -> line segments
         let mut contours = Vec::<LineString<Real>>::new();
@@ -102,11 +102,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             }
         };
 
-        for iy in 0..(ny - 1) {
+        (0..(ny - 1)).for_each(|iy| {
             let y0 = min_y + (iy as Real) * dy;
             let y1 = min_y + ((iy + 1) as Real) * dy;
 
-            for ix in 0..(nx - 1) {
+            (0..(nx - 1)).for_each(|ix| {
                 let x0 = min_x + (ix as Real) * dx;
                 let x1 = min_x + ((ix + 1) as Real) * dx;
 
@@ -130,7 +130,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     c |= 8;
                 }
                 if c == 0 || c == 15 {
-                    continue; // no crossing
+                    return; // no crossing
                 }
 
                 let corners = [(x0, y0, v0), (x1, y0, v1), (x1, y1, v2), (x0, y1, v3)];
@@ -156,14 +156,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 // For simplicity, we just store them in a small open polyline:
                 if pts.len() >= 2 {
                     let mut pl = LineString::new(vec![]);
-                    for &(px, py) in &pts {
+                    pts.iter().for_each(|&(px, py)| {
                         pl.0.push(coord! {x: px, y: py});
-                    }
+                    });
                     // Do not close. These are just line segments from this cell.
                     contours.push(pl);
                 }
-            }
-        }
+            });
+        });
 
         // 4) Convert these line segments into geo::LineStrings or geo::Polygons if closed.
         //    We store them in a GeometryCollection.
@@ -171,12 +171,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
         let stitched = stitch(&contours);
 
-        for pl in stitched {
+        stitched.into_iter().for_each(|pl| {
             if pl.is_closed() && pl.coords_count() >= 4 {
                 let polygon = GeoPolygon::new(pl, vec![]);
                 gc.0.push(Geometry::Polygon(polygon));
             }
-        }
+        });
 
         Sketch::from_geo(gc, metadata)
     }
@@ -193,19 +193,19 @@ fn key(x: Real, y: Real) -> (i64, i64) {
 fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
     // adjacency map  endpoint -> (line index, end-id 0|1)
     let mut adj: HashMap<(i64, i64), Vec<(usize, usize)>> = HashMap::new();
-    for (idx, ls) in contours.iter().enumerate() {
+    contours.iter().enumerate().for_each(|(idx, ls)| {
         let p0 = ls[0]; // first point
         let p1 = ls[1]; // second point
         adj.entry(key(p0.x, p0.y)).or_default().push((idx, 0));
         adj.entry(key(p1.x, p1.y)).or_default().push((idx, 1));
-    }
+    });
 
     let mut used = vec![false; contours.len()];
     let mut chains = Vec::new();
 
-    for start in 0..contours.len() {
+    (0..contours.len()).for_each(|start| {
         if used[start] {
-            continue;
+            return;
         }
         used[start] = true;
 
@@ -240,6 +240,6 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
             chain.push(chain[0]);
         }
         chains.push(LineString::new(chain));
-    }
+    });
     chains
 }

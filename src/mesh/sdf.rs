@@ -69,7 +69,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // **Mathematical Foundation**: For SDF f(p), we sample at regular intervals
         // and store (f(p) - iso_value) so surface_nets finds zero-crossings at iso_value.
         // **Optimization**: Linear memory access pattern with better cache locality.
-        for i in 0..(nx * ny * nz) {
+        (0..(nx * ny * nz)).for_each(|i| {
             let iz = i / (nx * ny);
             let remainder = i % (nx * ny);
             let iy = remainder / nx;
@@ -90,7 +90,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 // This preserves the mathematical properties of the distance field
                 1e10_f32
             };
-        }
+        });
 
         // The shape describing our discrete grid for Surface Nets:
         #[derive(Clone, Copy)]
@@ -152,7 +152,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // Convert the resulting triangles into Mesh polygons
         let mut triangles = Vec::with_capacity(sn_buffer.indices.len() / 3);
 
-        for tri in sn_buffer.indices.chunks_exact(3) {
+        sn_buffer.indices.chunks_exact(3).for_each(|tri| {
             let i0 = tri[0] as usize;
             let i1 = tri[1] as usize;
             let i2 = tri[2] as usize;
@@ -197,7 +197,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 && vec_finite(&n2v))
             {
                 // at least one coordinate was NaN/±∞ – ignore this triangle
-                continue;
+                return;
             }
 
             let v0 =
@@ -210,7 +210,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             // Note: reverse v1, v2 if you need to fix winding
             let poly = Polygon::new(vec![v0, v1, v2], metadata.clone());
             triangles.push(poly);
-        }
+        });
 
         // Return as a Mesh
         Mesh::from_polygons(&triangles, metadata)

@@ -57,16 +57,18 @@ impl<S: Clone + Send + Sync> Polygon<S> {
     /// Axis aligned bounding box of this Polygon (cached after first call)
     pub fn bounding_box(&self) -> Aabb {
         *self.bounding_box.get_or_init(|| {
-            let mut mins = Point3::new(Real::MAX, Real::MAX, Real::MAX);
-            let mut maxs = Point3::new(-Real::MAX, -Real::MAX, -Real::MAX);
-            for v in &self.vertices {
-                mins.x = mins.x.min(v.pos.x);
-                mins.y = mins.y.min(v.pos.y);
-                mins.z = mins.z.min(v.pos.z);
-                maxs.x = maxs.x.max(v.pos.x);
-                maxs.y = maxs.y.max(v.pos.y);
-                maxs.z = maxs.z.max(v.pos.z);
-            }
+            let (mins, maxs) = self.vertices.iter().fold(
+                (Point3::new(Real::MAX, Real::MAX, Real::MAX), Point3::new(-Real::MAX, -Real::MAX, -Real::MAX)),
+                |(mut mins, mut maxs), v| {
+                    mins.x = mins.x.min(v.pos.x);
+                    mins.y = mins.y.min(v.pos.y);
+                    mins.z = mins.z.min(v.pos.z);
+                    maxs.x = maxs.x.max(v.pos.x);
+                    maxs.y = maxs.y.max(v.pos.y);
+                    maxs.z = maxs.z.max(v.pos.z);
+                    (mins, maxs)
+                }
+            );
             Aabb::new(mins, maxs)
         })
     }
@@ -76,9 +78,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         // 1) reverse vertices
         self.vertices.reverse();
         // 2) flip all vertex normals
-        for v in &mut self.vertices {
-            v.flip();
-        }
+        self.vertices.iter_mut().for_each(|v| v.flip());
         // 3) flip the cached plane too
         self.plane.flip();
     }
@@ -148,13 +148,12 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         #[cfg(feature = "earcut")]
         {
             // Flatten each vertex to 2D
-            let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
-            for vert in &self.vertices {
+            let all_vertices_2d: Vec<_> = self.vertices.iter().map(|vert| {
                 let offset = vert.pos.coords - origin_3d.coords;
                 let x = offset.dot(&u);
                 let y = offset.dot(&v);
-                all_vertices_2d.push(coord! {x: x, y: y});
-            }
+                coord! {x: x, y: y}
+            }).collect();
 
             use geo::TriangulateEarcut;
             let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new())
@@ -163,21 +162,16 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             let vertices = triangulation.vertices;
 
             // Convert back into 3D triangles
-            let mut triangles = Vec::with_capacity(triangle_indices.len() / 3);
-            for tri_chunk in triangle_indices.chunks_exact(3) {
-                let mut tri_vertices = [const {
-                    Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0))
-                }; 3];
-                for (k, &idx) in tri_chunk.iter().enumerate() {
+            triangle_indices.chunks_exact(3).map(|tri_chunk| {
+                let tri_vertices: [Vertex; 3] = tri_chunk.iter().enumerate().map(|(k, &idx)| {
                     let base = idx * 2;
                     let x = vertices[base];
                     let y = vertices[base + 1];
                     let pos_3d = origin_3d.coords + (x * u) + (y * v);
-                    tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
-                }
-                triangles.push(tri_vertices);
-            }
-            triangles
+                    Vertex::new(Point3::from(pos_3d), normal_3d)
+                }).collect::<Vec<_>>().try_into().unwrap();
+                tri_vertices
+            }).collect()
         }
 
         #[cfg(feature = "delaunay")]
@@ -189,8 +183,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             // because spade refuses to triangulate with values within it's minimum:
             #[allow(clippy::excessive_precision)]
             const MIN_ALLOWED_VALUE: Real = 1.793662034335766e-43; // 1.0 * 2^-142
-            let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
-            for vert in &self.vertices {
+            let all_vertices_2d: Vec<_> = self.vertices.iter().filter_map(|vert| {
                 let offset = vert.pos.coords - origin_3d.coords;
                 let x = offset.dot(&u);
                 let x_clamped = if x.abs() < MIN_ALLOWED_VALUE { 0.0 } else { x };
@@ -198,16 +191,17 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                 let y_clamped = if y.abs() < MIN_ALLOWED_VALUE { 0.0 } else { y };
 
                 // test for NaN/±∞
-                if !(x.is_finite()
+                if x.is_finite()
                     && y.is_finite()
                     && x_clamped.is_finite()
-                    && y_clamped.is_finite())
+                    && y_clamped.is_finite()
                 {
+                    Some(coord! {x: x_clamped, y: y_clamped})
+                } else {
                     // at least one coordinate was NaN/±∞ – ignore this triangle
-                    continue;
+                    None
                 }
-                all_vertices_2d.push(coord! {x: x_clamped, y: y_clamped});
-            }
+            }).collect();
 
             let polygon_2d = GeoPolygon::new(
                 LineString::new(all_vertices_2d),
@@ -218,8 +212,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                 return Vec::new();
             };
 
-            let mut final_triangles = Vec::with_capacity(tris.len());
-            for tri2d in tris {
+            tris.into_iter().map(|tri2d| {
                 // tri2d is a geo::Triangle in 2D
                 // Convert each corner from (x,y) to 3D again
                 let [coord_a, coord_b, coord_c] = [tri2d.0, tri2d.1, tri2d.2];
@@ -227,13 +220,12 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                 let pos_b_3d = origin_3d.coords + coord_b.x * u + coord_b.y * v;
                 let pos_c_3d = origin_3d.coords + coord_c.x * u + coord_c.y * v;
 
-                final_triangles.push([
+                [
                     Vertex::new(Point3::from(pos_a_3d), normal_3d),
                     Vertex::new(Point3::from(pos_b_3d), normal_3d),
                     Vertex::new(Point3::from(pos_c_3d), normal_3d),
-                ]);
-            }
-            final_triangles
+                ]
+            }).collect()
         }
     }
 
@@ -296,22 +288,14 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         let base_tris = self.triangulate();
 
         // 2) For each triangle, subdivide 'subdivisions' times.
-        let mut result = Vec::new();
-        for tri in base_tris {
+        base_tris.into_iter().flat_map(|tri| {
             // We'll keep a queue of triangles to process
-            let mut queue = vec![tri];
-            for _ in 0..subdivisions.get() {
-                let mut next_level = Vec::new();
-                for t in queue {
-                    let subs = subdivide_triangle(t);
-                    next_level.extend(subs);
-                }
-                queue = next_level;
-            }
-            result.extend(queue);
-        }
-
-        result // todo: return polygons
+            (0..subdivisions.get()).fold(vec![tri], |queue, _| {
+                queue.into_iter().flat_map(|t| {
+                    subdivide_triangle(t)
+                }).collect()
+            })
+        }).collect() // todo: return polygons
     }
 
     /// Convert subdivision triangles back to polygons for CSG operations
@@ -336,20 +320,18 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             return Vector3::z(); // degenerate or empty
         }
 
-        let mut points = Vec::new();
-        for vertex in &self.vertices {
-            points.push(vertex.pos);
-        }
+        let points: Vec<_> = self.vertices.iter().map(|vertex| vertex.pos).collect();
         let mut normal = Vector3::zeros();
 
         // Loop over each edge of the polygon.
-        for i in 0..n {
+        normal = (0..n).fold(normal, |mut acc, i| {
             let current = points[i];
             let next = points[(i + 1) % n]; // wrap around using modulo
-            normal.x += (current.y - next.y) * (current.z + next.z);
-            normal.y += (current.z - next.z) * (current.x + next.x);
-            normal.z += (current.x - next.x) * (current.y + next.y);
-        }
+            acc.x += (current.y - next.y) * (current.z + next.z);
+            acc.y += (current.z - next.z) * (current.x + next.x);
+            acc.z += (current.x - next.x) * (current.y + next.y);
+            acc
+        });
 
         // Normalize the computed normal.
         let mut poly_normal = normal.normalize();
@@ -366,9 +348,9 @@ impl<S: Clone + Send + Sync> Polygon<S> {
     pub fn set_new_normal(&mut self) {
         // Assign each vertex's normal to match the plane
         let new_normal = self.calculate_new_normal();
-        for v in &mut self.vertices {
+        self.vertices.iter_mut().for_each(|v| {
             v.normal = new_normal;
-        }
+        });
     }
 
     /// Returns a reference to the metadata, if any.

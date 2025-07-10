@@ -318,11 +318,10 @@ impl Plane {
     /// Classify a polygon with respect to the plane.
     /// Returns a bitmask of `COPLANAR`, `FRONT`, and `BACK`.
     pub fn classify_polygon<S: Clone>(&self, polygon: &Polygon<S>) -> i8 {
-        let mut polygon_type: i8 = 0;
-        for vertex in &polygon.vertices {
-            polygon_type |= self.orient_point(&vertex.pos);
-        }
-        polygon_type
+        polygon
+            .vertices
+            .iter()
+            .fold(0, |acc, vertex| acc | self.orient_point(&vertex.pos))
     }
 
     /// Splits a polygon by this plane, returning four buckets:
@@ -373,7 +372,7 @@ impl Plane {
                 let mut split_front = Vec::<Vertex>::new();
                 let mut split_back = Vec::<Vertex>::new();
 
-                for i in 0..polygon.vertices.len() {
+                (0..polygon.vertices.len()).for_each(|i| {
                     // j is the vertex following i, we modulo by len to wrap around to the first vertex after the last
                     let j = (i + 1) % polygon.vertices.len();
                     let type_i = types[i];
@@ -403,7 +402,7 @@ impl Plane {
                             split_back.push(vertex_new);
                         }
                     }
-                }
+                });
 
                 // Build new polygons from the front/back vertex lists
                 // if they have at least 3 vertices
@@ -508,7 +507,7 @@ fn test_plane_orientation() {
 
     // Cycling the order of the vertices doesn't change the winding order of the shape,
     // so it should not change the resulting plane's normal.
-    for cycle_rotation in 0..vertices.len() {
+    (0..vertices.len()).for_each(|cycle_rotation| {
         let mut vertices = vertices.clone();
         vertices.rotate_right(cycle_rotation);
         let plane = Plane::from_vertices(vertices.to_vec());
@@ -520,5 +519,5 @@ fn test_plane_orientation() {
             point list obtained by rotating {cycle_rotation} times",
             plane.normal(),
         );
-    }
+    });
 }

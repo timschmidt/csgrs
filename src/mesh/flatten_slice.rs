@@ -24,24 +24,21 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// - The output is a Sketch containing the final 2D shape.
     pub fn flatten(&self) -> Sketch<S> {
         // Convert all 3D polygons into a collection of 2D polygons
-        let mut flattened_3d = Vec::new(); // will store geo::Polygon<Real>
-
-        for poly in &self.polygons {
+        let flattened_3d: Vec<GeoPolygon<Real>> = self.polygons.iter().flat_map(|poly| {
             // Tessellate this polygon into triangles
             let triangles = poly.triangulate();
             // Each triangle has 3 vertices [v0, v1, v2].
             // Project them onto XY => build a 2D polygon (triangle).
-            for tri in triangles {
+            triangles.into_iter().map(|tri| {
                 let ring = vec![
                     (tri[0].pos.x, tri[0].pos.y),
                     (tri[1].pos.x, tri[1].pos.y),
                     (tri[2].pos.x, tri[2].pos.y),
                     (tri[0].pos.x, tri[0].pos.y), // close ring explicitly
                 ];
-                let polygon_2d = geo::Polygon::new(LineString::from(ring), vec![]);
-                flattened_3d.push(polygon_2d);
-            }
-        }
+                geo::Polygon::new(LineString::from(ring), vec![])
+            })
+        }).collect();
 
         // Union all these polygons together into one MultiPolygon
         // (We could chain them in a fold-based union.)
@@ -51,9 +48,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             // Start with the first polygon as a MultiPolygon
             let mut mp_acc = MultiPolygon(vec![flattened_3d[0].clone()]);
             // Union in the rest
-            for p in flattened_3d.iter().skip(1) {
+            flattened_3d.iter().skip(1).for_each(|p| {
                 mp_acc = mp_acc.union(&MultiPolygon(vec![p.clone()]));
-            }
+            });
             mp_acc
         };
 
@@ -110,18 +107,16 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // Add the coplanar polygons. We can re‐assign their plane to `plane` to ensure
         // they share the exact plane definition (in case of numeric drift).
-        for p in coplanar_polys {
-            result_polygons.push(p);
-        }
+        result_polygons.extend(coplanar_polys);
 
         let mut new_gc = GeometryCollection::default();
 
         // Convert the "chains" or loops into open/closed polygons
-        for mut chain in polylines_3d {
+        polylines_3d.into_iter().for_each(|mut chain| {
             let n = chain.len();
             if n < 2 {
                 // degenerate
-                continue;
+                return;
             }
 
             // check if first and last point are within EPSILON of each other
@@ -147,7 +142,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             } else {
                 new_gc.0.push(Geometry::LineString(polyline));
             }
-        }
+        });
 
         // Return Sketch
         Sketch {
@@ -187,12 +182,13 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
     let mut adjacency: HashMap<EndKey, Vec<(usize, usize)>> = HashMap::new();
 
     // Collect all endpoints
-    for (i, edge) in edges.iter().enumerate() {
-        for (end_idx, v) in edge.iter().enumerate() {
+    edges.iter().enumerate().for_each(|(i, edge)| {
+        (0..2).for_each(|end_idx| {
+            let v = &edge[end_idx];
             let k = make_key(&v.pos);
             adjacency.entry(k).or_default().push((i, end_idx));
-        }
-    }
+        });
+    });
 
     // We'll keep track of which edges have been “visited” in the final polylines.
     let mut visited = vec![false; edges.len()];
@@ -200,9 +196,9 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
     let mut chains: Vec<Vec<Vertex>> = Vec::new();
 
     // For each edge not yet visited, we "walk" outward from one end, building a chain
-    for start_edge_idx in 0..edges.len() {
+    (0..edges.len()).for_each(|start_edge_idx| {
         if visited[start_edge_idx] {
-            continue;
+            return;
         }
         // Mark it visited
         visited[start_edge_idx] = true;
@@ -224,7 +220,7 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
         chain.reverse();
 
         chains.push(chain);
-    }
+    });
 
     chains
 }
@@ -249,10 +245,9 @@ fn extend_chain_forward(
 
         // Among these candidates, we want one whose "other endpoint" we can follow
         // and is not visited yet.
-        let mut found_next = None;
-        for &(edge_idx, end_idx) in candidates {
+        let found_next = candidates.iter().find_map(|&(edge_idx, end_idx)| {
             if visited[edge_idx] {
-                continue;
+                return None;
             }
             // If this is edges[edge_idx][end_idx], the "other" end is edges[edge_idx][1-end_idx].
             // We want that other end to continue the chain.
@@ -264,9 +259,8 @@ fn extend_chain_forward(
 
             // Mark visited
             visited[edge_idx] = true;
-            found_next = Some(next_vertex.clone());
-            break;
-        }
+            Some(next_vertex.clone())
+        });
 
         match found_next {
             Some(v) => {
