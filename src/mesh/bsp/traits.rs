@@ -68,7 +68,7 @@ impl<S: Clone> SplittingPlaneStrategy<S> for BalancedSplittingStrategy {
                     crate::mesh::plane::COPLANAR => (0, 0, 0),
                     crate::mesh::plane::FRONT => (1, 0, 0),
                     crate::mesh::plane::BACK => (0, 1, 0),
-                    crate::mesh::plane::SPANNING | _ => (0, 0, 1),
+                    _ => (0, 0, 1),
                 })
                 .fold((0, 0, 0), |acc, x| (acc.0 + x.0, acc.1 + x.1, acc.2 + x.2));
 
