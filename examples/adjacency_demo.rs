@@ -145,9 +145,23 @@ fn main() {
     // Demonstrate adaptive refinement
     println!("\n7. Adaptive mesh refinement:");
     let refined = tessellated.adaptive_refine(0.5, 2.0, 15.0);
-    let (refined_vertex_map, refined_adjacency_map) = refined.build_connectivity();
     println!("   Original triangles: {}", tessellated.polygons.len());
     println!("   After refinement: {}", refined.polygons.len());
+
+    // Re-analyze connectivity to show changes
+    let (refined_vertex_map, refined_adjacency_map) = refined.build_connectivity();
+    let refined_avg_valence = if !refined_adjacency_map.is_empty() {
+        refined_adjacency_map.values().map(|v| v.len()).sum::<usize>() as Real
+            / refined_adjacency_map.len() as Real
+    } else {
+        0.0
+    };
+
+    println!(
+        "   Refined unique vertices: {}",
+        refined_vertex_map.vertex_count()
+    );
+    println!("   Refined average valence: {:.2}", refined_avg_valence);
 
     if refined.polygons.len() > tessellated.polygons.len() {
         println!("   ✓ Mesh was refined based on quality criteria");
