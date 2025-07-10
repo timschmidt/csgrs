@@ -701,14 +701,14 @@ fn main() {
     // 2-D profile for NACA 2412, 1 m chord, 100 pts / surface
     #[cfg(feature = "stl-io")]
     {
-        let naca2412 = Sketch::airfoil("2412", 1.0, 100, None);
+        let naca2412 = Sketch::airfoil_naca4(2.0, 4.0, 12.0, 1.0, 100, None);
         let _ = fs::write("stl/naca2412.stl", naca2412.to_stl_ascii("2412"));
     }
 
     // quick solid wing rib 5 mm thick
     #[cfg(feature = "stl-io")]
     {
-        let naca2412 = Sketch::airfoil("2412", 1.0, 100, None);
+        let naca2412 = Sketch::airfoil_naca4(2.0, 4.0, 12.0, 1.0, 100, None);
         let rib = naca2412.extrude(0.005);
         let _ = fs::write("stl/naca2412_extruded.stl", rib.to_stl_ascii("2412_extruded"));
     }
@@ -716,7 +716,7 @@ fn main() {
     // symmetric foil for a centerboard
     #[cfg(feature = "stl-io")]
     {
-        let naca0015 = Sketch::airfoil("0015", 0.3, 80, None)
+        let naca0015 = Sketch::airfoil_naca4(0.0, 0.0, 15.0, 0.3, 80, None)
             .extrude_vector(nalgebra::Vector3::new(0.0, 0.0, 1.2));
         let _ = fs::write("stl/naca0015.stl", naca0015.to_stl_ascii("naca0015"));
 
