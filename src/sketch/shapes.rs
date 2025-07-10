@@ -1252,7 +1252,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// ## Parameters
     /// - `max_camber`: max camber %, the first digit
-    /// - `camber_pos`: camber position, the second digit
+    /// - `camber_position`: camber position, the second digit
     /// - `thickness`: thickness %, the last two digits
     /// - `chord`: physical chord length you want (same units as the rest of your model)
     /// - `samples`: number of points per surface (≥ 10 is required; NP total = 2 × samples + 1)
