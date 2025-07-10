@@ -1,40 +1,37 @@
+//! Serial implementations of mesh smoothing operations.
+
+use super::traits::SmoothingOps;
 use crate::float_types::Real;
-use crate::mesh::Mesh;
-use crate::mesh::polygon::Polygon;
-use crate::mesh::vertex::Vertex;
+use crate::mesh::{Mesh, polygon::Polygon, vertex::Vertex};
 use nalgebra::Point3;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
-    /// **Mathematical Foundation: True Laplacian Mesh Smoothing with Global Connectivity**
-    ///
-    /// Implements proper discrete Laplacian smoothing using global mesh connectivity:
-    ///
-    /// ## **Discrete Laplacian Operator**
-    /// For each vertex v with neighbors N(v):
-    /// ```text
-    /// L(v) = (1/|N(v)|) · Σ(n∈N(v)) (n - v)
-    /// ```
-    ///
-    /// ## **Global Connectivity Benefits**
-    /// - **Proper Neighborhoods**: Uses actual mesh connectivity, not just polygon edges
-    /// - **Uniform Weighting**: Each neighbor contributes equally to smoothing
-    /// - **Boundary Detection**: Automatically detects and preserves mesh boundaries
-    /// - **Volume Preservation**: Better volume preservation than local smoothing
-    ///
-    /// ## **Algorithm Improvements**
-    /// - **Epsilon-based Vertex Matching**: Robust floating-point coordinate handling
-    /// - **Manifold Preservation**: Ensures mesh topology is maintained
-    /// - **Feature Detection**: Can preserve sharp features based on neighbor count
-    pub fn laplacian_smooth(
+/// Serial implementation of `SmoothingOps`.
+pub struct SerialSmoothingOps;
+
+impl Default for SerialSmoothingOps {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SerialSmoothingOps {
+    pub const fn new() -> Self {
+        Self
+    }
+}
+
+impl<S: Clone + Debug + Send + Sync> SmoothingOps<S> for SerialSmoothingOps {
+    fn laplacian_smooth(
         &self,
+        mesh: &Mesh<S>,
         lambda: Real,
         iterations: usize,
         preserve_boundaries: bool,
     ) -> Mesh<S> {
-        let (vertex_map, adjacency) = self.build_connectivity();
-        let mut smoothed_polygons = self.polygons.clone();
+        let (vertex_map, adjacency) = mesh.build_connectivity();
+        let mut smoothed_polygons = mesh.polygons.clone();
 
         for iteration in 0..iterations {
             // Build current vertex position mapping
@@ -111,34 +108,19 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        Mesh::from_polygons(&smoothed_polygons, self.metadata.clone())
+        Mesh::from_polygons(&smoothed_polygons, mesh.metadata.clone())
     }
 
-    /// **Mathematical Foundation: Taubin Mesh Smoothing**
-    ///
-    /// Implements Taubin's feature-preserving mesh smoothing algorithm, which reduces
-    /// shrinkage compared to standard Laplacian smoothing.
-    ///
-    /// ## **Taubin's Algorithm**
-    /// This method involves two steps per iteration:
-    /// 1. **Shrinking Step**: Apply standard Laplacian smoothing with a positive factor `lambda`.
-    ///    `v' = v + λ * L(v)`
-    /// 2. **Inflating Step**: Apply a second Laplacian step with a negative factor `mu`.
-    ///    `v'' = v' + μ * L(v')`
-    ///
-    /// Typically, `0 < λ < -μ`. A common choice is `mu = -λ / (1 - λ)`.
-    /// This combination effectively smooths the mesh while minimizing volume loss.
-    ///
-    /// Returns a new, smoothed CSG object.
-    pub fn taubin_smooth(
+    fn taubin_smooth(
         &self,
+        mesh: &Mesh<S>,
         lambda: Real,
         mu: Real,
         iterations: usize,
         preserve_boundaries: bool,
     ) -> Mesh<S> {
-        let (vertex_map, adjacency) = self.build_connectivity();
-        let mut smoothed_polygons = self.polygons.clone();
+        let (vertex_map, adjacency) = mesh.build_connectivity();
+        let mut smoothed_polygons = mesh.polygons.clone();
 
         for _ in 0..iterations {
             // --- Lambda (shrinking) pass ---
@@ -249,44 +231,29 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             polygon.set_new_normal();
         }
 
-        Mesh::from_polygons(&smoothed_polygons, self.metadata.clone())
+        Mesh::from_polygons(&smoothed_polygons, mesh.metadata.clone())
     }
 
-    /// **Mathematical Foundation: Adaptive Mesh Refinement**
-    ///
-    /// Intelligently refine mesh based on geometric criteria:
-    ///
-    /// ## **Refinement Criteria**
-    /// - **Quality threshold**: Refine triangles with quality score < threshold
-    /// - **Size variation**: Refine where edge lengths vary significantly
-    /// - **Curvature**: Refine high-curvature regions (based on normal variation)
-    /// - **Feature detection**: Preserve sharp edges and corners
-    ///
-    /// ## **Refinement Strategy**
-    /// 1. **Quality-based**: Subdivide poor-quality triangles
-    /// 2. **Size-based**: Subdivide triangles larger than target size
-    /// 3. **Curvature-based**: Subdivide where surface curves significantly
-    ///
-    /// This provides better mesh quality compared to uniform subdivision.
-    pub fn adaptive_refine(
+    fn adaptive_refine(
         &self,
+        mesh: &Mesh<S>,
         quality_threshold: Real,
         max_edge_length: Real,
         curvature_threshold_deg: Real,
     ) -> Mesh<S> {
-        let qualities = self.analyze_triangle_quality();
-        let (mut vertex_map, _adjacency) = self.build_connectivity();
+        let qualities = mesh.analyze_triangle_quality();
+        let (mut vertex_map, _adjacency) = mesh.build_connectivity();
         let mut refined_polygons = Vec::new();
         let mut polygon_map: HashMap<usize, Vec<usize>> = HashMap::new();
 
-        for (poly_idx, poly) in self.polygons.iter().enumerate() {
+        for (poly_idx, poly) in mesh.polygons.iter().enumerate() {
             for vertex in &poly.vertices {
                 let v_idx = vertex_map.get_or_create_index(vertex.pos);
                 polygon_map.entry(v_idx).or_default().push(poly_idx);
             }
         }
 
-        for (i, polygon) in self.polygons.iter().enumerate() {
+        for (i, polygon) in mesh.polygons.iter().enumerate() {
             let mut should_refine = false;
 
             // Quality and edge length check
@@ -314,8 +281,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                             }
                             for &p2_idx in p2_indices {
                                 if p1_idx == p2_idx {
-                                    let other_poly = &self.polygons[p1_idx];
-                                    let angle = Self::dihedral_angle(polygon, other_poly);
+                                    let other_poly = &mesh.polygons[p1_idx];
+                                    let angle = Mesh::dihedral_angle(polygon, other_poly);
                                     if angle > curvature_threshold_deg.to_radians() {
                                         should_refine = true;
                                         break 'edge_loop;
@@ -338,45 +305,14 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        Mesh::from_polygons(&refined_polygons, self.metadata.clone())
+        Mesh::from_polygons(&refined_polygons, mesh.metadata.clone())
     }
 
-    /// Calculate maximum edge length in a polygon
-    fn max_edge_length(vertices: &[Vertex]) -> Real {
-        if vertices.len() < 2 {
-            return 0.0;
-        }
-
-        let mut max_length: Real = 0.0;
-        for i in 0..vertices.len() {
-            let j = (i + 1) % vertices.len();
-            let edge_length = (vertices[j].pos - vertices[i].pos).norm();
-            max_length = max_length.max(edge_length);
-        }
-        max_length
-    }
-
-    /// **Mathematical Foundation: Feature-Preserving Mesh Optimization**
-    ///
-    /// Remove poor-quality triangles while preserving important geometric features:
-    ///
-    /// ## **Quality-Based Filtering**
-    /// Remove triangles that meet criteria:
-    /// - **Sliver triangles**: min_angle < threshold (typically 5°)
-    /// - **Needle triangles**: aspect_ratio > threshold (typically 20)
-    /// - **Small triangles**: area < threshold
-    ///
-    /// ## **Feature Preservation**
-    /// - **Sharp edges**: Preserve edges with large dihedral angles
-    /// - **Boundaries**: Maintain mesh boundaries
-    /// - **Topology**: Ensure mesh remains manifold
-    ///
-    /// Returns cleaned mesh with improved triangle quality.
-    pub fn remove_poor_triangles(&self, min_quality: Real) -> Mesh<S> {
-        let qualities = self.analyze_triangle_quality();
+    fn remove_poor_triangles(&self, mesh: &Mesh<S>, min_quality: Real) -> Mesh<S> {
+        let qualities = mesh.analyze_triangle_quality();
         let mut filtered_polygons = Vec::new();
 
-        for (i, polygon) in self.polygons.iter().enumerate() {
+        for (i, polygon) in mesh.polygons.iter().enumerate() {
             let keep_triangle = if i < qualities.len() {
                 let quality = &qualities[i];
                 quality.quality_score >= min_quality
@@ -392,6 +328,23 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
         }
 
-        Mesh::from_polygons(&filtered_polygons, self.metadata.clone())
+        Mesh::from_polygons(&filtered_polygons, mesh.metadata.clone())
+    }
+}
+
+impl SerialSmoothingOps {
+    /// Calculate maximum edge length in a polygon
+    pub fn max_edge_length(vertices: &[Vertex]) -> Real {
+        if vertices.len() < 2 {
+            return 0.0;
+        }
+
+        let mut max_length: Real = 0.0;
+        for i in 0..vertices.len() {
+            let j = (i + 1) % vertices.len();
+            let edge_length = (vertices[j].pos - vertices[i].pos).norm();
+            max_length = max_length.max(edge_length);
+        }
+        max_length
     }
 }

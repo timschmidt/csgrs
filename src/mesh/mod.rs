@@ -12,7 +12,13 @@ use crate::float_types::{
     },
     {EPSILON, Real},
 };
-use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
+use crate::mesh::{
+    algorithm::{convex_hull::traits::ConvexHullOps, smoothing::traits::SmoothingOps},
+    bsp::Node,
+    plane::Plane,
+    polygon::Polygon,
+    vertex::Vertex,
+};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
@@ -24,10 +30,9 @@ use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 #[cfg(feature = "parallel")]
 use rayon::{iter::IntoParallelRefIterator, prelude::*};
 
+pub mod algorithm;
 pub mod bsp;
 
-#[cfg(feature = "chull")]
-pub mod convex_hull;
 pub mod flatten_slice;
 
 #[cfg(feature = "metaballs")]
@@ -41,7 +46,6 @@ pub mod quality;
 #[cfg(feature = "sdf")]
 pub mod sdf;
 pub mod shapes;
-pub mod smoothing;
 #[cfg(feature = "sdf")]
 pub mod tpms;
 pub mod vertex;
@@ -92,7 +96,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         mesh
     }
 
-    /// Split polygons into (may_touch, cannot_touch) using bounding‑box tests
+    /// Split polygons into (may_touch, cannot_touch) using bounding-box tests
     fn partition_polys(
         polys: &[Polygon<S>],
         other_bb: &Aabb,
@@ -235,7 +239,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     /// The angle is computed as the angle between the normal vectors of the two polygons.
     ///
     /// Returns the angle in radians.
-    fn dihedral_angle(p1: &Polygon<S>, p2: &Polygon<S>) -> Real {
+    pub(crate) fn dihedral_angle(p1: &Polygon<S>, p2: &Polygon<S>) -> Real {
         let n1 = p1.plane.normal();
         let n2 = p2.plane.normal();
         let dot = n1.dot(&n2).clamp(-1.0, 1.0);
@@ -447,6 +451,87 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         mesh
     }
+
+    /// Applies Laplacian smoothing to the mesh.
+    pub fn laplacian_smooth(
+        &self,
+        lambda: Real,
+        iterations: usize,
+        preserve_boundaries: bool,
+    ) -> Mesh<S> {
+        #[cfg(not(feature = "parallel"))]
+        let ops = algorithm::smoothing::SerialSmoothingOps::new();
+        #[cfg(feature = "parallel")]
+        let ops = algorithm::smoothing::ParallelSmoothingOps::new();
+
+        ops.laplacian_smooth(self, lambda, iterations, preserve_boundaries)
+    }
+
+    /// Applies Taubin smoothing to the mesh.
+    pub fn taubin_smooth(
+        &self,
+        lambda: Real,
+        mu: Real,
+        iterations: usize,
+        preserve_boundaries: bool,
+    ) -> Mesh<S> {
+        #[cfg(not(feature = "parallel"))]
+        let ops = algorithm::smoothing::SerialSmoothingOps::new();
+        #[cfg(feature = "parallel")]
+        let ops = algorithm::smoothing::ParallelSmoothingOps::new();
+
+        ops.taubin_smooth(self, lambda, mu, iterations, preserve_boundaries)
+    }
+
+    /// Adaptively refines the mesh based on geometric criteria.
+    pub fn adaptive_refine(
+        &self,
+        quality_threshold: Real,
+        max_edge_length: Real,
+        curvature_threshold_deg: Real,
+    ) -> Mesh<S> {
+        #[cfg(not(feature = "parallel"))]
+        let ops = algorithm::smoothing::SerialSmoothingOps::new();
+        #[cfg(feature = "parallel")]
+        let ops = algorithm::smoothing::ParallelSmoothingOps::new();
+
+        ops.adaptive_refine(
+            self,
+            quality_threshold,
+            max_edge_length,
+            curvature_threshold_deg,
+        )
+    }
+
+    /// Removes poor-quality triangles from the mesh.
+    pub fn remove_poor_triangles(&self, min_quality: Real) -> Mesh<S> {
+        #[cfg(not(feature = "parallel"))]
+        let ops = algorithm::smoothing::SerialSmoothingOps::new();
+        #[cfg(feature = "parallel")]
+        let ops = algorithm::smoothing::ParallelSmoothingOps::new();
+
+        ops.remove_poor_triangles(self, min_quality)
+    }
+
+    /// Computes the convex hull of the mesh.
+    pub fn convex_hull(&self) -> Mesh<S> {
+        #[cfg(not(feature = "parallel"))]
+        let ops = algorithm::convex_hull::SerialConvexHullOps::new();
+        #[cfg(feature = "parallel")]
+        let ops = algorithm::convex_hull::ParallelConvexHullOps::new();
+
+        ops.convex_hull(self)
+    }
+
+    /// Computes the Minkowski sum of two meshes.
+    pub fn minkowski_sum(&self, other: &Mesh<S>) -> Mesh<S> {
+        #[cfg(not(feature = "parallel"))]
+        let ops = algorithm::convex_hull::SerialConvexHullOps::new();
+        #[cfg(feature = "parallel")]
+        let ops = algorithm::convex_hull::ParallelConvexHullOps::new();
+
+        ops.minkowski_sum(self, other)
+    }
 }
 
 impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
@@ -473,7 +558,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     ///          +-------+            +-------+
     /// ```
     fn union(&self, other: &Mesh<S>) -> Mesh<S> {
-        // avoid splitting obvious non‑intersecting faces
+        // avoid splitting obvious non-intersecting faces
         let (a_clip, a_passthru) =
             Self::partition_polys(&self.polygons, &other.bounding_box());
         let (b_clip, b_passthru) =
@@ -515,7 +600,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     ///          +-------+
     /// ```
     fn difference(&self, other: &Mesh<S>) -> Mesh<S> {
-        // avoid splitting obvious non‑intersecting faces
+        // avoid splitting obvious non-intersecting faces
         let (a_clip, a_passthru) =
             Self::partition_polys(&self.polygons, &other.bounding_box());
         let (b_clip, _b_passthru) =

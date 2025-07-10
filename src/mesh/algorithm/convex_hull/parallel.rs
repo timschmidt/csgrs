@@ -1,35 +1,34 @@
-//! The [convex hull](https://en.wikipedia.org/wiki/Convex_hull) of a shape is the smallest convex set that contains it.
-//! It may be visualized as the shape enclosed by a rubber band stretched around the subset.
-//!
-//! This is the set:\
-//! ![Pre-ConvexHull demo image][Pre-ConvexHull demo image]
-//!
-//! And this is the convex hull of that set:\
-//! ![ConvexHull demo image][ConvexHull demo image]
-#![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
-#![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
+//! Parallel implementations of convex hull operations.
 
+use super::traits::ConvexHullOps;
 use crate::float_types::Real;
-use crate::mesh::Mesh;
-use crate::mesh::polygon::Polygon;
-use crate::mesh::vertex::Vertex;
+use crate::mesh::{Mesh, polygon::Polygon, vertex::Vertex};
 use crate::traits::CSG;
 use chull::ConvexHullWrapper;
 use nalgebra::{Point3, Vector3};
+use rayon::prelude::*;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
-    /// Compute the convex hull of all vertices in this Mesh.
-    pub fn convex_hull(&self) -> Mesh<S> {
-        // Gather all (x, y, z) coordinates from the polygons
-        let points: Vec<Point3<Real>> = self
+/// Parallel implementation of `ConvexHullOps`.
+pub struct ParallelConvexHullOps;
+
+impl ParallelConvexHullOps {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl<S: Clone + Debug + Send + Sync> ConvexHullOps<S> for ParallelConvexHullOps {
+    fn convex_hull(&self, mesh: &Mesh<S>) -> Mesh<S> {
+        // Gather all (x, y, z) coordinates from the polygons in parallel
+        let points: Vec<Point3<Real>> = mesh
             .polygons
-            .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
+            .par_iter()
+            .flat_map(|poly| poly.vertices.par_iter().map(|v| v.pos))
             .collect();
 
         let points_for_hull: Vec<Vec<Real>> =
-            points.iter().map(|p| vec![p.x, p.y, p.z]).collect();
+            points.par_iter().map(|p| vec![p.x, p.y, p.z]).collect();
 
         // Attempt to compute the convex hull using the robust wrapper
         let hull = match ConvexHullWrapper::try_new(&points_for_hull, None) {
@@ -54,29 +53,22 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
         }
 
-        Mesh::from_polygons(&polygons, self.metadata.clone())
+        Mesh::from_polygons(&polygons, mesh.metadata.clone())
     }
 
-    /// Compute the Minkowski sum: self ⊕ other
-    ///
-    /// **Mathematical Foundation**: For convex sets A and B, A ⊕ B = {a + b | a ∈ A, b ∈ B}.
-    /// By the Minkowski sum theorem, the convex hull of all pairwise vertex sums equals
-    /// the Minkowski sum of the convex hulls of A and B.
-    ///
-    /// **Algorithm**: O(|A| × |B|) vertex combinations followed by O(n log n) convex hull computation.
-    pub fn minkowski_sum(&self, other: &Mesh<S>) -> Mesh<S> {
+    fn minkowski_sum(&self, mesh: &Mesh<S>, other: &Mesh<S>) -> Mesh<S> {
         // Collect all vertices (x, y, z) from self
-        let verts_a: Vec<Point3<Real>> = self
+        let verts_a: Vec<Point3<Real>> = mesh
             .polygons
-            .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
+            .par_iter()
+            .flat_map(|poly| poly.vertices.par_iter().map(|v| v.pos))
             .collect();
 
         // Collect all vertices from other
         let verts_b: Vec<Point3<Real>> = other
             .polygons
-            .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
+            .par_iter()
+            .flat_map(|poly| poly.vertices.par_iter().map(|v| v.pos))
             .collect();
 
         if verts_a.is_empty() || verts_b.is_empty() {
@@ -85,8 +77,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // For Minkowski, add every point in A to every point in B
         let sum_points: Vec<_> = verts_a
-            .iter()
-            .flat_map(|a| verts_b.iter().map(move |b| a + b.coords))
+            .par_iter()
+            .flat_map(|a| verts_b.par_iter().map(move |b| a + b.coords))
             .map(|v| vec![v.x, v.y, v.z])
             .collect();
 
@@ -104,7 +96,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // Reconstruct polygons with proper normal vector calculation
         let polygons: Vec<Polygon<S>> = indices
-            .chunks_exact(3)
+            .par_chunks_exact(3)
             .filter_map(|tri| {
                 let v0 = &verts[tri[0]];
                 let v1 = &verts[tri[1]];
@@ -132,6 +124,6 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             })
             .collect();
 
-        Mesh::from_polygons(&polygons, self.metadata.clone())
+        Mesh::from_polygons(&polygons, mesh.metadata.clone())
     }
 }

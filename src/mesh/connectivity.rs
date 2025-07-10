@@ -46,6 +46,16 @@ impl VertexIndexMap {
         new_index
     }
 
+    /// Get the index for a vertex position
+    pub fn get_index(&self, pos: &Point3<Real>) -> Option<usize> {
+        for (existing_pos, existing_index) in &self.position_to_index {
+            if (pos - existing_pos).norm() < self.epsilon {
+                return Some(*existing_index);
+            }
+        }
+        None
+    }
+
     /// Get the position for a given index
     pub fn get_position(&self, index: usize) -> Option<Point3<Real>> {
         self.index_to_position.get(&index).copied()
