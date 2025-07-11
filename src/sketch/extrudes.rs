@@ -812,242 +812,221 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             metadata: self.metadata.clone(),
         })
     }
-    
+
     /// Sweep (a.k.a. “extrude along path”) –
-	/// duplicates the 2-D sketch at every vertex of `path`,
-	/// aims the sketch’s +Z at the local path tangent,
-	/// stitches side walls, and caps open ends.
-	///
-	/// * `path` – ordered list of 3-D points.  
-	///            If the first and last points coincide (‖p0 − pn‖ < EPSILON)
-	///            the path is treated as **closed** and no caps are added.
-	///
-	/// * returns – a `Mesh<S>` containing all side quads plus automatically
-	///             triangulated caps (respecting any holes).
-	pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<S> {
-		use nalgebra::{Matrix4, Rotation3, Translation3};
-		use crate::mesh::{polygon::Polygon, vertex::Vertex, Mesh};
+    /// duplicates the 2-D sketch at every vertex of `path`,
+    /// aims the sketch’s +Z at the local path tangent,
+    /// stitches side walls, and caps open ends.
+    ///
+    /// * `path` - ordered list of 3-D points.  If the first and last points coincide (‖p[0] − p[n]‖ < EPSILON) the path is treated as **closed** and no caps are added.
+    ///
+    /// * returns - a `Mesh<S>` containing all side quads plus automatically triangulated caps (respecting any holes).
+    pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<S> {
+        use crate::mesh::{Mesh, polygon::Polygon, vertex::Vertex};
+        use nalgebra::{Matrix4, Rotation3, Translation3};
 
-		// sanity checks
-		if path.len() < 2 || self.geometry.0.is_empty() {
-			return Mesh::new();
-		}
-		let n_path = path.len();
-		let path_is_closed = (path[0] - path[n_path - 1]).norm() < EPSILON;
+        // sanity checks
+        if path.len() < 2 || self.geometry.0.is_empty() {
+            return Mesh::new();
+        }
+        let n_path = path.len();
+        let path_is_closed = (path[0] - path[n_path - 1]).norm() < EPSILON;
 
-		// pre-compute a transform for each path vertex
-		let mut slice_xforms: Vec<Matrix4<Real>> = Vec::with_capacity(n_path);
+        // pre-compute a transform for each path vertex
+        let mut slice_xforms: Vec<Matrix4<Real>> = Vec::with_capacity(n_path);
 
-		// first slice
-		let mut dir_prev = (path[1] - path[0]).normalize();
-		if dir_prev.norm_squared() < EPSILON * EPSILON {
-			dir_prev = Vector3::z();
-		}
-		let mut orientation = Rotation3::rotation_between(&Vector3::z(), &dir_prev)
-			.unwrap_or_else(Rotation3::identity)
-			.to_homogeneous();
-		slice_xforms.push(Translation3::from(path[0].coords).to_homogeneous() * orientation);
+        // first slice
+        let mut dir_prev = (path[1] - path[0]).normalize();
+        if dir_prev.norm_squared() < EPSILON * EPSILON {
+            dir_prev = Vector3::z();
+        }
+        let mut orientation = Rotation3::rotation_between(&Vector3::z(), &dir_prev)
+            .unwrap_or_else(Rotation3::identity)
+            .to_homogeneous();
+        slice_xforms.push(Translation3::from(path[0].coords).to_homogeneous() * orientation);
 
-		// propagate frame with parallel transport
-		for i in 1..n_path {
-			// pick the outgoing tangent _now_
-			let mut dir_curr = if i == n_path - 1 && !path_is_closed {
-				(path[i] - path[i - 1]).normalize() // look back at the end
-			} else {
-				(path[(i + 1) % n_path] - path[i]).normalize()
-			};
-			if dir_curr.norm_squared() < EPSILON * EPSILON {
-				dir_curr = dir_prev;
-			}
+        // propagate frame with parallel transport
+        for i in 1..n_path {
+            // pick the outgoing tangent _now_
+            let mut dir_curr = if i == n_path - 1 && !path_is_closed {
+                (path[i] - path[i - 1]).normalize() // look back at the end
+            } else {
+                (path[(i + 1) % n_path] - path[i]).normalize()
+            };
+            if dir_curr.norm_squared() < EPSILON * EPSILON {
+                dir_curr = dir_prev;
+            }
 
-			// rotate the frame exactly **once**
-			let rot_between = Rotation3::rotation_between(&dir_prev, &dir_curr)
-				.unwrap_or_else(Rotation3::identity)
-				.to_homogeneous();
-			orientation = rot_between * orientation;
+            // rotate the frame exactly **once**
+            let rot_between = Rotation3::rotation_between(&dir_prev, &dir_curr)
+                .unwrap_or_else(Rotation3::identity)
+                .to_homogeneous();
+            orientation = rot_between * orientation;
 
-			// now the slice that lives at path[i]
-			slice_xforms.push(
-				Translation3::from(path[i].coords).to_homogeneous() *
-				orientation
-			);
+            // now the slice that lives at path[i]
+            slice_xforms
+                .push(Translation3::from(path[i].coords).to_homogeneous() * orientation);
 
-			// ...and _immediately_ remember this tangent for the next turn
-			dir_prev = dir_curr;
-		}
+            // ...and _immediately_ remember this tangent for the next turn
+            dir_prev = dir_curr;
+        }
 
-		// helper: map a 2-D point (x,y,0) through a slice transform
-		#[inline]
-		fn map_pt(p2: [Real; 2], m: &Matrix4<Real>) -> Point3<Real> {
-			Point3::from_homogeneous(*m * Point3::new(p2[0], p2[1], 0.0).to_homogeneous())
-				.expect("homogeneous w != 0")
-		}
+        // helper: map a 2-D point (x,y,0) through a slice transform
+        #[inline]
+        fn map_pt(p2: [Real; 2], m: &Matrix4<Real>) -> Point3<Real> {
+            Point3::from_homogeneous(*m * Point3::new(p2[0], p2[1], 0.0).to_homogeneous())
+                .expect("homogeneous w != 0")
+        }
 
-		// collect every exterior & interior ring of the sketch
-		#[derive(Debug)]
-		struct Ring {
-			coords_2d: Vec<[Real; 2]>, // original XY coords (first == last)
-			slices: Vec<Vec<Point3<Real>>>, // one Vec<Point3> per path vertex
-		}
-		let mut rings: Vec<Ring> = Vec::new();
+        // collect every exterior & interior ring of the sketch
+        #[derive(Debug)]
+        struct Ring {
+            coords_2d: Vec<[Real; 2]>,      // original XY coords (first == last)
+            slices: Vec<Vec<Point3<Real>>>, // one Vec<Point3> per path vertex
+        }
+        let mut rings: Vec<Ring> = Vec::new();
 
-		let mut add_ring = |coords: Vec<[Real; 2]>| {
-			if coords.len() < 2 {
-				return;
-			}
-			let mut slices: Vec<Vec<Point3<Real>>> = Vec::with_capacity(n_path);
-			for xf in &slice_xforms {
-				let slice: Vec<Point3<Real>> = coords.iter().map(|&p| map_pt(p, xf)).collect();
-				slices.push(slice);
-			}
-			rings.push(Ring { coords_2d: coords, slices });
-		};
+        let mut add_ring = |coords: Vec<[Real; 2]>| {
+            if coords.len() < 2 {
+                return;
+            }
+            let mut slices: Vec<Vec<Point3<Real>>> = Vec::with_capacity(n_path);
+            for xf in &slice_xforms {
+                let slice: Vec<Point3<Real>> = coords.iter().map(|&p| map_pt(p, xf)).collect();
+                slices.push(slice);
+            }
+            rings.push(Ring {
+                coords_2d: coords,
+                slices,
+            });
+        };
 
-		use geo::Geometry;
-		for geom in &self.geometry {
-			match geom {
-				Geometry::Polygon(poly) => {
-					add_ring(
-						poly.exterior()
-							.coords_iter()
-							.map(|c| [c.x, c.y])
-							.collect(),
-					);
-					for hole in poly.interiors() {
-						add_ring(
-							hole.coords_iter()
-								.map(|c| [c.x, c.y])
-								.collect(),
-						);
-					}
-				}
-				Geometry::MultiPolygon(mp) => {
-					for poly in &mp.0 {
-						add_ring(
-							poly.exterior()
-								.coords_iter()
-								.map(|c| [c.x, c.y])
-								.collect(),
-						);
-						for hole in poly.interiors() {
-							add_ring(
-								hole.coords_iter()
-									.map(|c| [c.x, c.y])
-									.collect(),
-							);
-						}
-					}
-				}
-				_ => {}
-			}
-		}
+        use geo::Geometry;
+        for geom in &self.geometry {
+            match geom {
+                Geometry::Polygon(poly) => {
+                    add_ring(poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect());
+                    for hole in poly.interiors() {
+                        add_ring(hole.coords_iter().map(|c| [c.x, c.y]).collect());
+                    }
+                },
+                Geometry::MultiPolygon(mp) => {
+                    for poly in &mp.0 {
+                        add_ring(poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect());
+                        for hole in poly.interiors() {
+                            add_ring(hole.coords_iter().map(|c| [c.x, c.y]).collect());
+                        }
+                    }
+                },
+                _ => {},
+            }
+        }
 
-		// build polygons
-		let mut out_polys: Vec<Polygon<S>> = Vec::new();
+        // build polygons
+        let mut out_polys: Vec<Polygon<S>> = Vec::new();
 
-		// side walls, ring-by-ring
-		let end_idx = if path_is_closed { n_path } else { n_path - 1 };
+        // side walls, ring-by-ring
+        let end_idx = if path_is_closed { n_path } else { n_path - 1 };
 
-		for ring in &rings {
-			let v_per_ring = ring.coords_2d.len() - 1; // last == first
-			for i in 0..end_idx {
-				let j = (i + 1) % n_path;
-				let slice_i = &ring.slices[i];
-				let slice_j = &ring.slices[j];
+        for ring in &rings {
+            let v_per_ring = ring.coords_2d.len() - 1; // last == first
+            for i in 0..end_idx {
+                let j = (i + 1) % n_path;
+                let slice_i = &ring.slices[i];
+                let slice_j = &ring.slices[j];
 
-				for k in 0..v_per_ring {
-					let v0 = slice_i[k];
-					let v1 = slice_i[k + 1];
-					let v2 = slice_j[k + 1];
-					let v3 = slice_j[k];
+                for k in 0..v_per_ring {
+                    let v0 = slice_i[k];
+                    let v1 = slice_i[k + 1];
+                    let v2 = slice_j[k + 1];
+                    let v3 = slice_j[k];
 
-					// triangle 1  (v0-v1-v2)
-					out_polys.push(Polygon::new(
-						vec![
-							Vertex::new(v0, Vector3::zeros()),
-							Vertex::new(v1, Vector3::zeros()),
-							Vertex::new(v2, Vector3::zeros()),
-						],
-						self.metadata.clone(),
-					));
-					// triangle 2  (v0-v2-v3)
-					out_polys.push(Polygon::new(
-						vec![
-							Vertex::new(v0, Vector3::zeros()),
-							Vertex::new(v2, Vector3::zeros()),
-							Vertex::new(v3, Vector3::zeros()),
-						],
-						self.metadata.clone(),
-					));
-				}
-			}
-		}
+                    // triangle 1  (v0-v1-v2)
+                    out_polys.push(Polygon::new(
+                        vec![
+                            Vertex::new(v0, Vector3::zeros()),
+                            Vertex::new(v1, Vector3::zeros()),
+                            Vertex::new(v2, Vector3::zeros()),
+                        ],
+                        self.metadata.clone(),
+                    ));
+                    // triangle 2  (v0-v2-v3)
+                    out_polys.push(Polygon::new(
+                        vec![
+                            Vertex::new(v0, Vector3::zeros()),
+                            Vertex::new(v2, Vector3::zeros()),
+                            Vertex::new(v3, Vector3::zeros()),
+                        ],
+                        self.metadata.clone(),
+                    ));
+                }
+            }
+        }
 
-		// caps for open paths
-		if !path_is_closed {
-			// Triangulate every 2-D polygon (outer + holes) once,
-			// then reuse the triangles for both ends.
-			
-			// helper so we don’t repeat the capping code twice
-			let mut add_caps = |poly2d: &GeoPolygon<Real>| {
-				let ext : Vec<[Real;2]> =
-					poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
-				let holes : Vec<Vec<[Real;2]>> = poly2d
-					.interiors()
-					.iter()
-					.map(|r| r.coords_iter().map(|c| [c.x, c.y]).collect())
-					.collect();
-				let hole_refs : Vec<&[[Real;2]]> = holes.iter().map(|v| &v[..]).collect();
+        // caps for open paths
+        if !path_is_closed {
+            // Triangulate every 2-D polygon (outer + holes) once,
+            // then reuse the triangles for both ends.
 
-				let tris = Sketch::<()>::triangulate_2d(&ext, &hole_refs);
+            // helper so we don’t repeat the capping code twice
+            let mut add_caps = |poly2d: &GeoPolygon<Real>| {
+                let ext: Vec<[Real; 2]> =
+                    poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
+                let holes: Vec<Vec<[Real; 2]>> = poly2d
+                    .interiors()
+                    .iter()
+                    .map(|r| r.coords_iter().map(|c| [c.x, c.y]).collect())
+                    .collect();
+                let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
 
-				// cap at the start of the path (flip winding)
-				for t in &tris {
-					let p0 = map_pt([t[0].x, t[0].y], &slice_xforms[0]);
-					let p1 = map_pt([t[1].x, t[1].y], &slice_xforms[0]);
-					let p2 = map_pt([t[2].x, t[2].y], &slice_xforms[0]);
-					out_polys.push(Polygon::new(
-						vec![
-							Vertex::new(p2, Vector3::zeros()),
-							Vertex::new(p1, Vector3::zeros()),
-							Vertex::new(p0, Vector3::zeros()),
-						],
-						self.metadata.clone(),
-					));
-				}
+                let tris = Sketch::<()>::triangulate_2d(&ext, &hole_refs);
 
-				// cap at the end of the path
-				for t in &tris {
-					let p0 = map_pt([t[0].x, t[0].y], &slice_xforms[n_path - 1]);
-					let p1 = map_pt([t[1].x, t[1].y], &slice_xforms[n_path - 1]);
-					let p2 = map_pt([t[2].x, t[2].y], &slice_xforms[n_path - 1]);
-					out_polys.push(Polygon::new(
-						vec![
-							Vertex::new(p0, Vector3::zeros()),
-							Vertex::new(p1, Vector3::zeros()),
-							Vertex::new(p2, Vector3::zeros()),
-						],
-						self.metadata.clone(),
-					));
-				}
-			};
+                // cap at the start of the path (flip winding)
+                for t in &tris {
+                    let p0 = map_pt([t[0].x, t[0].y], &slice_xforms[0]);
+                    let p1 = map_pt([t[1].x, t[1].y], &slice_xforms[0]);
+                    let p2 = map_pt([t[2].x, t[2].y], &slice_xforms[0]);
+                    out_polys.push(Polygon::new(
+                        vec![
+                            Vertex::new(p2, Vector3::zeros()),
+                            Vertex::new(p1, Vector3::zeros()),
+                            Vertex::new(p0, Vector3::zeros()),
+                        ],
+                        self.metadata.clone(),
+                    ));
+                }
 
-			for geom in &self.geometry {
-				match geom {
-					Geometry::Polygon(poly2d) => add_caps(poly2d),
-					Geometry::MultiPolygon(mp) => {
-						for poly2d in &mp.0 {
-							add_caps(poly2d);
-						}
-					}
-					_ => {}
-				}
-			}
-		}
+                // cap at the end of the path
+                for t in &tris {
+                    let p0 = map_pt([t[0].x, t[0].y], &slice_xforms[n_path - 1]);
+                    let p1 = map_pt([t[1].x, t[1].y], &slice_xforms[n_path - 1]);
+                    let p2 = map_pt([t[2].x, t[2].y], &slice_xforms[n_path - 1]);
+                    out_polys.push(Polygon::new(
+                        vec![
+                            Vertex::new(p0, Vector3::zeros()),
+                            Vertex::new(p1, Vector3::zeros()),
+                            Vertex::new(p2, Vector3::zeros()),
+                        ],
+                        self.metadata.clone(),
+                    ));
+                }
+            };
 
-		Mesh::from_polygons(&out_polys, self.metadata.clone())
-	}
+            for geom in &self.geometry {
+                match geom {
+                    Geometry::Polygon(poly2d) => add_caps(poly2d),
+                    Geometry::MultiPolygon(mp) => {
+                        for poly2d in &mp.0 {
+                            add_caps(poly2d);
+                        }
+                    },
+                    _ => {},
+                }
+            }
+        }
 
+        Mesh::from_polygons(&out_polys, self.metadata.clone())
+    }
 }
 
 /// Helper to build a single Polygon from a “slice” of 3D points.

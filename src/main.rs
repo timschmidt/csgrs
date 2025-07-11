@@ -1113,24 +1113,21 @@ fn main() {
             result.to_stl_ascii("cube difference"),
         );
     }
-    
+
     #[cfg(feature = "stl-io")]
     {
-		let outer   = Sketch::square(200.0, None).center();
-		let inner   = Sketch::square(160.0, None).center();
-		let profile = outer.difference(&inner);
-		
-		let path: Vec<Point3<Real>> = vec![
-			Point3::new(  0.0,   0.0,  0.0),    // start
-			Point3::new( 50.0,  10.0, 10.0),
-			Point3::new(100.0,   0.0, 25.0),
-			Point3::new(150.0, -20.0, 40.0),    // end
-		];
-		
-		let tube: Mesh = profile.sweep(&path);
-		let _ = fs::write(
-            "stl/swept_tube.stl",
-            tube.to_stl_ascii("swept_tube"),
-        );
-	}
+        let outer = Sketch::square(200.0, None).center();
+        let inner = Sketch::square(160.0, None).center();
+        let profile = outer.difference(&inner);
+
+        let path: Vec<Point3<Real>> = vec![
+            Point3::new(0.0, 0.0, 0.0), // start
+            Point3::new(50.0, 10.0, 10.0),
+            Point3::new(100.0, 0.0, 25.0),
+            Point3::new(150.0, -20.0, 40.0), // end
+        ];
+
+        let tube: Mesh = profile.sweep(&path);
+        let _ = fs::write("stl/swept_tube.stl", tube.to_stl_ascii("swept_tube"));
+    }
 }
