@@ -828,17 +828,17 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 		use nalgebra::{Matrix4, Rotation3, Translation3};
 		use crate::mesh::{polygon::Polygon, vertex::Vertex, Mesh};
 
-		// ---------- sanity checks ----------
+		// sanity checks
 		if path.len() < 2 || self.geometry.0.is_empty() {
 			return Mesh::new();
 		}
 		let n_path = path.len();
 		let path_is_closed = (path[0] - path[n_path - 1]).norm() < EPSILON;
 
-		// ---------- pre-compute a transform for each path vertex ----------
+		// pre-compute a transform for each path vertex
 		let mut slice_xforms: Vec<Matrix4<Real>> = Vec::with_capacity(n_path);
 
-		// --- first slice ---------------------------------------------------------
+		// first slice
 		let mut dir_prev = (path[1] - path[0]).normalize();
 		if dir_prev.norm_squared() < EPSILON * EPSILON {
 			dir_prev = Vector3::z();
@@ -848,41 +848,46 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 			.to_homogeneous();
 		slice_xforms.push(Translation3::from(path[0].coords).to_homogeneous() * orientation);
 
-		// --- propagate frame with parallel transport -----------------------------
+		// propagate frame with parallel transport
 		for i in 1..n_path {
-			// choose forward or backward vector for the current point
+			// pick the outgoing tangent _now_
 			let mut dir_curr = if i == n_path - 1 && !path_is_closed {
-				(path[i] - path[i - 1]).normalize()            // open path → look back
+				(path[i] - path[i - 1]).normalize() // look back at the end
 			} else {
-				(path[(i + 1) % n_path] - path[i]).normalize() // otherwise → look forward
+				(path[(i + 1) % n_path] - path[i]).normalize()
 			};
 			if dir_curr.norm_squared() < EPSILON * EPSILON {
-				dir_curr = dir_prev;                           // degenerate segment
+				dir_curr = dir_prev;
 			}
 
-			// rotation that takes dir_prev to dir_curr (minimal-twist)
+			// rotate the frame exactly **once**
 			let rot_between = Rotation3::rotation_between(&dir_prev, &dir_curr)
 				.unwrap_or_else(Rotation3::identity)
 				.to_homogeneous();
-
-			// accumulate on top of previous orientation
 			orientation = rot_between * orientation;
 
-			slice_xforms.push(Translation3::from(path[i].coords).to_homogeneous() * orientation);
+			// now the slice that lives at path[i]
+			slice_xforms.push(
+				Translation3::from(path[i].coords).to_homogeneous() *
+				orientation
+			);
+
+			// ...and _immediately_ remember this tangent for the next turn
 			dir_prev = dir_curr;
 		}
 
-		// ---------- helper: map a 2-D point (x,y,0) through a slice transform ----------
+		// helper: map a 2-D point (x,y,0) through a slice transform
 		#[inline]
 		fn map_pt(p2: [Real; 2], m: &Matrix4<Real>) -> Point3<Real> {
 			Point3::from_homogeneous(*m * Point3::new(p2[0], p2[1], 0.0).to_homogeneous())
 				.expect("homogeneous w != 0")
 		}
 
-		// ---------- collect every exterior & interior ring of the sketch ----------
+		// collect every exterior & interior ring of the sketch
+		#[derive(Debug)]
 		struct Ring {
-			coords_2d: Vec<[Real; 2]>,              // original XY coords (first == last)
-			slices: Vec<Vec<Point3<Real>>>,         // one Vec<Point3> per path vertex
+			coords_2d: Vec<[Real; 2]>, // original XY coords (first == last)
+			slices: Vec<Vec<Point3<Real>>>, // one Vec<Point3> per path vertex
 		}
 		let mut rings: Vec<Ring> = Vec::new();
 
@@ -937,14 +942,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 			}
 		}
 
-		// ---------- build polygons ----------
+		// build polygons
 		let mut out_polys: Vec<Polygon<S>> = Vec::new();
 
-		// ---- (A) side walls, ring-by-ring ----
+		// side walls, ring-by-ring
 		let end_idx = if path_is_closed { n_path } else { n_path - 1 };
 
 		for ring in &rings {
-			let v_per_ring = ring.coords_2d.len() - 1; // last point == first
+			let v_per_ring = ring.coords_2d.len() - 1; // last == first
 			for i in 0..end_idx {
 				let j = (i + 1) % n_path;
 				let slice_i = &ring.slices[i];
@@ -956,10 +961,19 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 					let v2 = slice_j[k + 1];
 					let v3 = slice_j[k];
 
+					// triangle 1  (v0-v1-v2)
 					out_polys.push(Polygon::new(
 						vec![
 							Vertex::new(v0, Vector3::zeros()),
 							Vertex::new(v1, Vector3::zeros()),
+							Vertex::new(v2, Vector3::zeros()),
+						],
+						self.metadata.clone(),
+					));
+					// triangle 2  (v0-v2-v3)
+					out_polys.push(Polygon::new(
+						vec![
+							Vertex::new(v0, Vector3::zeros()),
 							Vertex::new(v2, Vector3::zeros()),
 							Vertex::new(v3, Vector3::zeros()),
 						],
@@ -969,7 +983,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 			}
 		}
 
-		// ---- (B) caps for open paths ----
+		// caps for open paths
 		if !path_is_closed {
 			// Triangulate every 2-D polygon (outer + holes) once,
 			// then reuse the triangles for both ends.
@@ -987,7 +1001,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
 				let tris = Sketch::<()>::triangulate_2d(&ext, &hole_refs);
 
-				// ----- cap at the start of the path (flip winding) -----
+				// cap at the start of the path (flip winding)
 				for t in &tris {
 					let p0 = map_pt([t[0].x, t[0].y], &slice_xforms[0]);
 					let p1 = map_pt([t[1].x, t[1].y], &slice_xforms[0]);
@@ -1002,7 +1016,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 					));
 				}
 
-				// ----- cap at the end of the path -----
+				// cap at the end of the path
 				for t in &tris {
 					let p0 = map_pt([t[0].x, t[0].y], &slice_xforms[n_path - 1]);
 					let p1 = map_pt([t[1].x, t[1].y], &slice_xforms[n_path - 1]);
@@ -1031,7 +1045,6 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 			}
 		}
 
-		// ---------- done ----------
 		Mesh::from_polygons(&out_polys, self.metadata.clone())
 	}
 
