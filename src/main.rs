@@ -1122,9 +1122,9 @@ fn main() {
 
         let path: Vec<Point3<Real>> = vec![
             Point3::new(0.0, 0.0, 0.0), // start
-            Point3::new(50.0, 10.0, 10.0),
-            Point3::new(100.0, 0.0, 25.0),
-            Point3::new(150.0, -20.0, 40.0), // end
+            Point3::new(150.0, 20.0, 20.0),
+            Point3::new(300.0, -20.0, -20.0),
+            Point3::new(450.0, 20.0, 20.0), // end
         ];
 
         let tube: Mesh = profile.sweep(&path);
