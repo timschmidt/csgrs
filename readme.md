@@ -135,6 +135,7 @@ Extrusions build 3D polygons from 2D Geometries.
 - <img src="docs/extrude_vector.png" width="128"  alt="an angled view of a star extruded at an angle"/> **`Sketch::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
 - <img src="docs/rotate_extrude.png" width="128"  alt="an arch with round ends"/> **`Sketch::revolve(angle_degs, segments)`** - Extrude while rotating around the Y axis
 - **`Sketch::loft(&bottom_polygon, &top_polygon, false)`** - Helper function which extrudes between two Mesh Polygons, optionally with caps
+- <img src="docs/sweep.png" width="128" alt="a Sketch swept along a 3D path"/> **`Sketch::sweep(path: &[Point3<Real>])`** - Sweep a Sketch along a path defined by a series of Points
 
 ```rust
 let square = Sketch::square(2.0, None);
