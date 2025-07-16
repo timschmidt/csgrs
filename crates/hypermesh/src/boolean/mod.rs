@@ -3,7 +3,10 @@ mod shadow;
 mod kernel02;
 mod kernel11;
 mod kernel12;
-use nalgebra::Vector3;
+mod test;
+mod boolean46;
+
+use nalgebra::{RowVector3, Vector3};
 use crate::boolean::kernel02::Kernel02;
 use crate::boolean::kernel11::Kernel11;
 use crate::boolean::kernel12::Kernel12;
@@ -59,7 +62,7 @@ struct Intersection12Recorder<'a> {
     pub forward: bool,
     pub p1q2: Vec<[i64; 2]>,
     pub x12: Vec<i32>,
-    pub v12: Vec<Vector3<f64>>,
+    pub v12: Vec<RowVector3<f64>>,
 }
 
 impl <'a> Recorder for Intersection12Recorder<'a> {
@@ -86,7 +89,7 @@ fn intersect12 (
     p1q2: &mut Vec<[i64; 2]>,
     expand_p: f64,
     forward: bool
-) -> (Vec<i64>, Vec<Vector3<f64>>) {
+) -> (Vec<i64>, Vec<RowVector3<f64>>) {
     let a = if forward { p } else { q };
     let b = if forward { q } else { p };
 
@@ -132,7 +135,7 @@ fn intersect12 (
      b.collider.collision(&bboxes, &mut rec);
 
     let mut x12: Vec<i64> = vec![];
-    let mut v12: Vec<Vector3<f64>> = vec![];
+    let mut v12: Vec<RowVector3<f64>> = vec![];
     let mut seq: Vec<usize> = (0..p1q2.len()).collect();
     seq.sort_by(|&a, &b| (rec.p1q2[a][0], rec.p1q2[a][1]).cmp(&(rec.p1q2[b][0], rec.p1q2[b][1])));
 
@@ -200,25 +203,22 @@ fn new(&self, p: &'a Manifold, q: &'a Manifold, op :OpType) -> Self {
             self.mfd_q = q;
             self.expand_p = if op == OpType::Add {1.} else {0.};
             self.valid = true;
-    
+
             // todo assert mfd_p has bounds
-    
+
             // Level 3
             // Build up the intersection of the edges and triangles, keeping only those
             // that intersect and record the direction the edge is passing through the triangle.
             (self.x12, self.v12) = intersect12();
             (self.x21, self.v21) = intersect12();
-    
+
             // Sum up the winding numbers of all vertices.
             self.w03 = Winding03(inP, inQ, expandP_, true);
             self.w30 = Winding03(inP, inQ, expandP_, false);
             }
     */
-        
-            pub fn result() {
-        
-            }
-        }
+}
 
+#[derive(PartialEq)]
 pub enum OpType { Add, Subtract, Intersect }
 

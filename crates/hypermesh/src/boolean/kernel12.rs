@@ -1,6 +1,6 @@
-use nalgebra::{Vector3};
+use nalgebra::{RowVector3};
 use std::mem;
-use crate::{Half, Vert};
+use crate::hmesh::{Half, Vert};
 use crate::boolean::intersect::intersect;
 use crate::boolean::kernel02::Kernel02;
 use crate::boolean::kernel11::Kernel11;
@@ -16,11 +16,11 @@ pub struct Kernel12<'a> {
 
 
 impl<'a> Kernel12<'a> {
-    pub fn op (&self, p1: usize, q2: usize) -> (i32, Option<Vector3<f64>>) {
+    pub fn op (&self, p1: usize, q2: usize) -> (i32, Option<RowVector3<f64>>) {
         let mut x12 = 0;
-        let mut v12: Option<Vector3<f64>> = None;
-        let mut xzy_lr0 = [Vector3::zeros(); 2];
-        let mut xzy_lr1 = [Vector3::zeros(); 2];
+        let mut v12: Option<RowVector3<f64>> = None;
+        let mut xzy_lr0 = [RowVector3::zeros(); 2];
+        let mut xzy_lr1 = [RowVector3::zeros(); 2];
         let mut shadows = false;
         let h = self.halfs_p[p1].clone();
 
@@ -33,7 +33,7 @@ impl<'a> Kernel12<'a> {
                 x12 += s as i32 * if f { 1 } else { -1 };
                 if k < 2 && (k == 0 || (s != 0) != shadows) {
                     shadows = s != 0;
-                    xzy_lr0[k] = self.verts_p[*vid].pos().transpose();
+                    xzy_lr0[k] = self.verts_p[*vid].pos();
                     // Swap y and z
                     let temp = xzy_lr0[k].y;
                     xzy_lr0[k].y = xzy_lr0[k].z;

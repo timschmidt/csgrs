@@ -1,4 +1,4 @@
-use nalgebra::{Vector2, Vector3, Vector4};
+use nalgebra::{RowVector2, RowVector3, RowVector4, Vector2, Vector3, Vector4};
 
 /**
  * These two functions (Interpolate and Intersect) are the only places where
@@ -9,10 +9,10 @@ use nalgebra::{Vector2, Vector3, Vector4};
 
 // not checked yet
 pub fn interpolate(
-    pl: Vector3<f64>,
-    pr: Vector3<f64>,
+    pl: RowVector3<f64>,
+    pr: RowVector3<f64>,
     x: f64
-) -> Vector2<f64> {
+) -> RowVector2<f64> {
     let dx_l = x - pl.x;
     let dx_r = x - pr.x;
     let use_l = dx_l.abs() < dx_r.abs();
@@ -20,10 +20,10 @@ pub fn interpolate(
     let lambda = if use_l { dx_l / diff.x } else { dx_r / diff.x };
 
     if lambda.is_infinite() || diff.y.is_infinite() || diff.z.is_infinite() {
-        return Vector2::new(pl.y, pl.z);
+        return RowVector2::new(pl.y, pl.z);
     }
 
-    Vector2::new(
+    RowVector2::new(
         lambda * diff.y + if use_l { pl.y } else { pr.y },
         lambda * diff.z + if use_l { pl.z } else { pr.z }
     )
@@ -31,11 +31,11 @@ pub fn interpolate(
 
 // not checked yet
 pub fn intersect(
-    pl: Vector3<f64>,
-    pr: Vector3<f64>,
-    ql: Vector3<f64>,
-    qr: Vector3<f64>,
-) -> Vector4<f64> {
+    pl: RowVector3<f64>,
+    pr: RowVector3<f64>,
+    ql: RowVector3<f64>,
+    qr: RowVector3<f64>,
+) -> RowVector4<f64> {
     let dy_l = ql.y - pl.y;
     let dy_r = qr.y - pr.y;
     assert!(dy_l * dy_r <= 0., "Boolean manifold error: no intersection");
@@ -43,7 +43,7 @@ pub fn intersect(
     let dx = pr.x - pl.x;
     let mut lambda = if use_l {dy_l} else {dy_r} / (dy_l - dy_r);
     if lambda.is_infinite() { lambda = 0.; }
-    let mut xyzz: Vector4<f64> = Default::default();
+    let mut xyzz = RowVector4::default();
     xyzz.x = lambda * dx + if use_l {pl.x} else {pr.x};
     let p_dy = pr.y - pl.y;
     let q_dy = qr.y - ql.y;

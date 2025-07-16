@@ -1,4 +1,4 @@
-use nalgebra::{Vector2, Vector3};
+use nalgebra::{RowVector2, Vector2, Vector3};
 use crate::boolean::intersect::interpolate;
 use crate::{Half, Vert};
 
@@ -12,7 +12,7 @@ pub fn shadows01(
     hq: &[Half],
     expand_p: f64,
     reverse: bool
-) -> (i64, Vector2<f64>) {
+) -> Option<(i64, RowVector2<f64>)> {
     let q1s = hq[q1].tail().id;
     let q1e = hq[q1].head().id;
     let p0x  = vp[p0].pos().x;
@@ -29,9 +29,8 @@ pub fn shadows01(
         sa - sb
     };
 
-    let mut yz01 = Vector2::new(0., 0.);
     if s01 != 0 {
-        yz01 = interpolate(vq[q1s].pos().transpose(), vq[q1e].pos().transpose(), vp[p0].pos().x);
+        let yz01 = interpolate(vq[q1s].pos(), vq[q1e].pos(), vp[p0].pos().x);
         if reverse {
             let diff = vq[q1s].pos() - vp[p0].pos();
             let sta2 = diff.clone().dot(&diff);
@@ -42,6 +41,7 @@ pub fn shadows01(
         } else {
             if!shadows(vp[p0].pos().y, yz01[0], expand_p * vp[p0].normal().y) { s01 = 0; }
         }
+        return Some((s01, yz01));
     }
-    (s01, yz01)
+    None
 }

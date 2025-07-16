@@ -1,4 +1,4 @@
-use nalgebra::{Vector3, Vector4};
+use nalgebra::{RowVector3, RowVector4, Vector3, Vector4};
 use crate::hmesh::{Vert, Half};
 use crate::boolean::intersect::intersect;
 use crate::boolean::shadow::{shadows, shadows01};
@@ -12,14 +12,14 @@ pub struct Kernel11<'a> {
 }
 
 impl<'a> Kernel11<'a> {
-    pub fn op (&self, p1: usize, q1: usize) -> (i64, Option<Vector4<f64>>) {
+    pub fn op (&self, p1: usize, q1: usize) -> (i64, Option<RowVector4<f64>>) {
         let mut xyzz11 = None;
         let mut s11 = 0;
 
         // For pRL[k], qRL[k], k==0 is the left and k==1 is the right.
         let mut k = 0;
-        let mut p_rl = [Vector3::zeros(); 2];
-        let mut q_rl = [Vector3::zeros(); 2];
+        let mut p_rl = [RowVector3::zeros(); 2];
+        let mut q_rl = [RowVector3::zeros(); 2];
         // Either the left or right must shadow, but not both. This ensures the
         // intersection is between the left and right.
         let mut shadows_ = false;
@@ -29,7 +29,7 @@ impl<'a> Kernel11<'a> {
         let q0 = [self.halfs_q[q1].tail(), self.halfs_q[q1].head()];
 
         for i in 0..2 {
-            let (s01, yz01) = shadows01(
+            let s = shadows01(
                 p0[i].id, q1,
                 self.verts_p,
                 self.verts_q,
@@ -38,19 +38,19 @@ impl<'a> Kernel11<'a> {
                 false
             );
             // If the value is NaN, then these do not overlap.
-            if yz01[0].is_finite() {
+            if let Some((s01, yz01)) = s {
                 s11 += s01 * if i == 0 {-1} else {1};
                 if k < 2 && (k == 0 || (s01 != 0) != shadows_) {
                     shadows_ = s01 != 0;
-                    p_rl[k] = self.verts_p[p0[i].id].pos().transpose();
-                    q_rl[k] = Vector3::new(p_rl[k].x, yz01.x, yz01.y);
+                    p_rl[k] = self.verts_p[p0[i].id].pos();
+                    q_rl[k] = RowVector3::new(p_rl[k].x, yz01.x, yz01.y);
                     k += 1;
                 }
             }
         }
 
         for i in 0..2 {
-            let (s10, yz10) = shadows01(
+            let s = shadows01(
                 q0[i].id, p1,
                 self.verts_q,
                 self.verts_p,
@@ -59,12 +59,12 @@ impl<'a> Kernel11<'a> {
                 true
             );
             // If the value is NaN, then these do not overlap.
-            if yz10[0].is_finite() {
+            if let Some((s10, yz10)) = s {
                 s11 += s10 * if i == 0 {-1} else {1};
                 if k < 2 && (k == 0 || (s10 != 0) != shadows_) {
                     shadows_ = s10 != 0;
-                    q_rl[k] = self.verts_q[q0[i].id].pos().transpose();
-                    p_rl[k] = Vector3::new(q_rl[k].x, yz10.x, yz10.y);
+                    q_rl[k] = self.verts_q[q0[i].id].pos();
+                    p_rl[k] = RowVector3::new(q_rl[k].x, yz10.x, yz10.y);
                     k += 1;
                 }
             }

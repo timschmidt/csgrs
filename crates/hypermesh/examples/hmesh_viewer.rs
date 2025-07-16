@@ -5,7 +5,7 @@ use bevy::pbr::wireframe::{WireframePlugin, Wireframe, WireframeColor};
 use bevy::render::mesh::Indices;
 use bevy::{color::palettes::css::*, math::Isometry2d};
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use nalgebra::DMatrix;
+use nalgebra::{DMatrix, RowVector3};
 use mfd::Hmesh;
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
 use std::sync::Arc;
@@ -33,7 +33,7 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>
 ) {
-    let (models, _) = tobj::load_obj("assets/models/icosphere_3.obj", &tobj::LoadOptions { ..Default::default() },
+    let (models, _) = tobj::load_obj("assets/models/torus.obj", &tobj::LoadOptions { ..Default::default() },
     ).expect("Failed to OBJ load file");
     let model = &models[0];
     let mesh = &model.mesh;
@@ -89,6 +89,16 @@ fn draw_example_collection(
             Vec3::new(p0.x as f32, p0.y as f32, p0.z as f32),
             Vec3::new(p1.x as f32, p1.y as f32, p1.z as f32),
             RED
+        );
+    }
+
+    for i in 0..hmesh_handle.0.n_face {
+        let p0 = hmesh_handle.0.bary_center.row(i);
+        let p1 = p0 + hmesh_handle.0.face_normal.row(i) * 0.05;
+        gizmos.line(
+            Vec3::new(p0[0] as f32, p0[1] as f32, p0[2] as f32),
+            Vec3::new(p1[0] as f32, p1[1] as f32, p1[2] as f32),
+            BLUE
         );
     }
 }

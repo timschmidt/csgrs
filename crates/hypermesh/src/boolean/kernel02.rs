@@ -1,4 +1,4 @@
-use nalgebra::Vector3;
+use nalgebra::{RowVector3};
 use crate::boolean::intersect::interpolate;
 use crate::boolean::shadow::{shadows, shadows01};
 use crate::hmesh::{Vert, Half};
@@ -18,15 +18,14 @@ impl<'a> Kernel02<'a> {
 
         // For yzzLR[k], k==0 is the left and k==1 is the right.
         let mut k = 0;
-        let mut yzz_rl = [Vector3::zeros(); 2];
+        let mut yzz_rl = [RowVector3::zeros(); 2];
         // Either the left or right must shadow, but not both. This ensures the
         // intersection is between the left and right.
         let mut shadows_ = false;
         let mut closest_vid = usize::MAX;
         let mut min_metric = f64::INFINITY;
-        s02 = 0;
 
-        let pos_p = self.verts_p[p0].pos().transpose();
+        let pos_p = self.verts_p[p0].pos();
 
         for i in 0..3 {
             let q1 = 3 * q2 + i;
@@ -35,7 +34,7 @@ impl<'a> Kernel02<'a> {
 
             if !self.forward {
                 let q_vert = self.halfs_q[q1_f].tail();
-                let diff = pos_p - self.verts_q[q_vert.id].pos().transpose();
+                let diff = pos_p - self.verts_q[q_vert.id].pos();
                 let metric = diff.dot(&diff);
                 if metric < min_metric {
                     min_metric = metric;
@@ -43,7 +42,9 @@ impl<'a> Kernel02<'a> {
                 }
             }
 
-            let syz01 = shadows01(
+            // If the value is NaN, then these do not overlap.
+            s02 = 0;
+            if let Some((s01, yz01)) = shadows01(
                 p0,
                 q1_f,
                 self.verts_p,
@@ -51,17 +52,12 @@ impl<'a> Kernel02<'a> {
                 self.halfs_q,
                 self.expand_p,
                 !self.forward
-            );
-
-            let s01 = syz01.0;
-            let yz01 = syz01.1;
-            // If the value is NaN, then these do not overlap.
-            if yz01[0].is_finite() {
+            ) {
                 s02 += s01 * if self.forward == half.is_forward() {-1} else {1};
                 if k < 2 && (k == 0 || (s01 != 0) != shadows_) {
                     shadows_ = s01 != 0;
                     k += 1;
-                    yzz_rl[k] = Vector3::new(yz01[0], yz01[1], yz01[1]);
+                    yzz_rl[k] = RowVector3::new(yz01[0], yz01[1], yz01[1]);
                 }
             }
         }
@@ -81,6 +77,7 @@ impl<'a> Kernel02<'a> {
         (s02, z02)
     }
 }
+
 
 #[cfg(test)]
 mod kernel02_tests {
@@ -121,14 +118,14 @@ mod kernel02_tests {
     fn kernel02_test() {
         let mfd_p = gen_tet_a();
         let mfd_q = gen_tet_c();
-        //let k02 = Kernel02 {
-        //    verts_p: &mfd_p.verts,
-        //    verts_q: &mfd_q.verts,
-        //    halfs_q: &mfd_q.halfs,
-        //    expand_p: 1.,
-        //    forward: true
-        //};
-        //k02.op(0, 0);
+        let k02 = Kernel02 {
+            verts_p: &mfd_p.verts,
+            verts_q: &mfd_q.verts,
+            halfs_q: &mfd_q.halfs,
+            expand_p: 1.,
+            forward: true
+        };
+        k02.op(1, 1);
     }
 }
 

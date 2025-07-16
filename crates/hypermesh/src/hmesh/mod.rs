@@ -33,6 +33,7 @@ pub struct Hmesh {
     pub halfs: Vec<Half>,
     pub vert_normal: DMatrix<f64>,
     pub face_normal: DMatrix<f64>,
+    pub bary_center: DMatrix<f64>,
     pub face_basis_x: DMatrix<f64>,
     pub face_basis_y: DMatrix<f64>,
     pub face_area: Vec<f64>,
@@ -226,6 +227,7 @@ impl Hmesh {
 
             let mut vert_normal  = DMatrix::<f64>::zeros(nv, 3);
             let mut face_normal  = DMatrix::<f64>::zeros(nf, 3);
+            let mut bary_center  = DMatrix::<f64>::zeros(nf, 3);
             let mut face_basis_x = DMatrix::<f64>::zeros(nf, 3);
             let mut face_basis_y = DMatrix::<f64>::zeros(nf, 3);
             let mut face_area    = vec![0.; nf];
@@ -238,6 +240,8 @@ impl Hmesh {
                 let x = p2 - p1;
                 let t = (p1 - p0) * -1.;
                 let n = x.cross(&t);
+                let c = (p0 + p1 + p2) / 3.;
+                bary_center.row_mut(i).copy_from_slice(c.as_ref());
                 face_normal.row_mut(i).copy_from_slice(n.normalize().as_ref());
                 face_basis_x.row_mut(i).copy_from_slice(x.normalize().as_ref());
                 face_basis_y.row_mut(i).copy_from_slice((-x.cross(&n)).normalize().as_ref());
@@ -283,6 +287,7 @@ impl Hmesh {
                 halfs,
                 vert_normal,
                 face_normal,
+                bary_center,
                 face_basis_x,
                 face_basis_y,
                 face_area
@@ -312,14 +317,12 @@ impl Edge {
 impl Vert {
     pub fn pos(&self) -> RowVector3<f64> {
         let m = self.hm.upgrade().unwrap();
-        let p = m.pos.row(self.id);
-        RowVector3::new(p[0], p[1], p[2])
+        m.pos.fixed_view::<1,3>(self.id, 0).into()
     }
 
     pub fn normal(&self) -> RowVector3<f64> {
         let m = self.hm.upgrade().unwrap();
-        let p = m.vert_normal.row(self.id);
-        RowVector3::new(p[3], p[4], p[5])
+        m.vert_normal.fixed_view::<1,3>(self.id, 0).into()
     }
 }
 
@@ -331,20 +334,19 @@ impl Face {
 
     pub fn normal(&self) -> RowVector3<f64> {
         let m = self.hm.upgrade().unwrap();
-        let p = m.face_normal.row(self.id);
-        RowVector3::new(p[3], p[4], p[5])
+        m.face_normal.fixed_view::<1,3>(self.id, 0).into()
     }
 }
 
 impl Half {
     pub fn vec(&self) -> RowVector3<f64> {
         let m = self.hm.upgrade().unwrap();
-        //(m.pos.row(m.head[self.id]) - m.pos.row(m.tail[self.id])).into()
-        let head_pos = m.pos.fixed_view::<1, 3>(m.head[self.id], 0);
-        let tail_pos = m.pos.fixed_view::<1, 3>(m.tail[self.id], 0);
-        head_pos - tail_pos
+        let p0 = m.pos.fixed_view::<1, 3>(m.tail[self.id], 0);
+        let p1 = m.pos.fixed_view::<1, 3>(m.head[self.id], 0);
+        p1 - p0
     }
     pub fn edge(&self) -> Edge { let m = self.hm.upgrade().unwrap(); m.edges[m.edge[self.id]].clone() }
+    pub fn face(&self) -> Face { let m = self.hm.upgrade().unwrap(); m.faces[m.face[self.id]].clone() }
     pub fn tail(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.tail[self.id]].clone() }
     pub fn head(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.head[self.id]].clone() }
     pub fn next(&self) -> Half { let m = self.hm.upgrade().unwrap(); m.halfs[m.next[self.id]].clone() }
@@ -355,7 +357,6 @@ impl Half {
 
     pub fn is_boundary(&self) -> bool { self.hm.upgrade().unwrap().face[self.id] == usize::MAX }
     pub fn is_interior(&self) -> bool { self.hm.upgrade().unwrap().face[self.id] != usize::MAX }
-
 
     pub fn is_canonical(&self) -> bool { self.edge().half() == *self }
 }
@@ -383,4 +384,3 @@ impl_hmesh_partial_eq!(Face);
 #[cfg(test)]
 mod tests;
 mod obj_io;
-
