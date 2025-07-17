@@ -1,7 +1,7 @@
-use nalgebra::Vector3;
+use nalgebra::{RowVector3, Vector3};
 use num_traits::real::Real;
 use crate::boolean::Boolean3;
-use crate::{Manifold, OpType};
+use crate::{Half, Manifold, OpType};
 
 fn duplicate_verts(
     inclusion : &[i32],
@@ -39,7 +39,7 @@ fn size_output(
     p1q2: Vec<[i32; 2]>,
     p2q1: Vec<[i32; 2]>,
     invert_q: bool,
-) -> () {
+) -> (Vec<i32>, Vec<i32>) {
     let mut side_p = vec![0; mfd_p.hmesh.n_face];
     let mut side_q = vec![0; mfd_q.hmesh.n_face];
     let nfp = mfd_p.hmesh.n_face;
@@ -65,15 +65,29 @@ fn size_output(
         side_p[p2q1[i][0] as usize] += inclusion;
     }
 
+    // a map from face_p and face_q to face_r
     let mut face_pq2r = vec![0; nfr + 1];
     let side_pq = [&side_p[..], &side_q[..]].concat();
     let keep_fs = side_pq.iter().map(|&x| if x > 0 { 1 } else { 0 }).collect::<Vec<i32>>();
     inclusive_scan(&keep_fs, &mut face_pq2r[1..]);
-    let num_face_r = *face_pq2r.last().unwrap();
+    let n_face_r = *face_pq2r.last().unwrap() as usize;
     face_pq2r.truncate(nfr);
+    mfd_r.f_normal.resize(n_face_r, RowVector3::zeros());
 
+    // fill the face normals face by face...
+    let mut fid_r = 0;
+    for f in mfd_p.hmesh.faces.iter() { if side_p[f.id] > 0 { mfd_r.f_normal[fid_r] = f.normal().clone(); fid_r += 1; } }
+    for f in mfd_q.hmesh.faces.iter() { if side_q[f.id] > 0 { mfd_r.f_normal[fid_r] = f.normal().clone(); fid_r += 1; } }
 
+    // count the number of halfedges todo: very suspicious...
+    mfd_r.n_halfs = face_pq2r.iter().sum::<i32>() as usize;
+    let mut nh_per_f = vec![];
+    inclusive_scan(
+        &side_pq.iter().filter(|s| **s > 0).map(|s| *s).collect::<Vec<_>>(),
+        nh_per_f.as_mut_slice()
+    );
 
+    (nh_per_f, face_pq2r)
 }
 
 fn add_new_edge_verts() {
