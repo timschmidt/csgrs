@@ -79,15 +79,15 @@ fn size_output(
     for f in mfd_p.hmesh.faces.iter() { if side_p[f.id] > 0 { mfd_r.f_normal[fid_r] = f.normal().clone(); fid_r += 1; } }
     for f in mfd_q.hmesh.faces.iter() { if side_q[f.id] > 0 { mfd_r.f_normal[fid_r] = f.normal().clone(); fid_r += 1; } }
 
-    // count the number of halfedges todo: very suspicious...
+    // starting half idx per face todo: very suspicious...
     mfd_r.n_halfs = face_pq2r.iter().sum::<i32>() as usize;
-    let mut nh_per_f = vec![];
+    let mut ih_per_f = vec![];
     inclusive_scan(
         &side_pq.iter().filter(|s| **s > 0).map(|s| *s).collect::<Vec<_>>(),
-        nh_per_f.as_mut_slice()
+        ih_per_f.as_mut_slice()
     );
 
-    (nh_per_f, face_pq2r)
+    (ih_per_f, face_pq2r)
 }
 
 fn add_new_edge_verts() {
