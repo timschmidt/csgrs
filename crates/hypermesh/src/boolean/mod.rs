@@ -3,7 +3,6 @@ mod shadow;
 mod kernel02;
 mod kernel11;
 mod kernel12;
-mod test;
 mod boolean46;
 
 use nalgebra::{RowVector3, Vector3};
@@ -184,7 +183,6 @@ fn winding03(p: &Manifold, q: &Manifold, expand_p: f64, forward: bool) -> Vec<i6
 struct Boolean3<'a> {
     mfd_p: &'a Manifold,
     mfd_q: &'a Manifold,
-    expand_p: f64,
     p1q2: Vec<[i32; 2]>,
     p2q1: Vec<[i32; 2]>,
     x12: Vec<i32>,
@@ -193,7 +191,6 @@ struct Boolean3<'a> {
     w30: Vec<i32>,
     v12: Vec<Vector3<f64>>,
     v21: Vec<Vector3<f64>>,
-    valid: bool,
 }
 
 impl<'a> Boolean3<'a> {
@@ -222,3 +219,5 @@ fn new(&self, p: &'a Manifold, q: &'a Manifold, op :OpType) -> Self {
 #[derive(PartialEq)]
 pub enum OpType { Add, Subtract, Intersect }
 
+#[cfg(test)]
+mod tests;
