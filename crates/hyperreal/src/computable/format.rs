@@ -147,7 +147,12 @@ fn digits(
         }
         let digit = &left / &divisor;
         left -= &digit * &divisor;
-        num.push(digit.try_into().unwrap());
+        if k == 0 && digit == *unsigned::TEN {
+            exp += 1;
+            num.push(1);
+        } else {
+            num.push(digit.try_into().unwrap());
+        }
     }
     left *= &*unsigned::TWO;
     if left > divisor && up(&mut num) {
@@ -231,6 +236,7 @@ impl fmt::UpperExp for Computable {
         let exact = precision.unwrap_or(DEFAULT_PRECISION);
         let bits = enough_bits(msd, f.precision());
         let appr = self.approx(msd - bits);
+
         let (num, exp) = digits(
             appr.magnitude(),
             Places::Exp(exact),
@@ -264,6 +270,7 @@ impl fmt::LowerExp for Computable {
         let exact = precision.unwrap_or(DEFAULT_PRECISION);
         let bits = enough_bits(msd, f.precision());
         let appr = self.approx(msd - bits);
+
         let (num, exp) = digits(
             appr.magnitude(),
             Places::Exp(exact),
@@ -456,6 +463,62 @@ mod tests {
         assert_eq!(format!("{sp:.16}"), "188.4955592153875943");
         assert_eq!(format!("{sp:.32}"), "188.49555921538759430775860299677017");
         assert_eq!(format!("{sp}"), "188.49555921538759430775860299677017");
+    }
+
+    fn check_ninth(s: &str, places: usize) -> bool {
+        if s.len() != places + 2 {
+            return false;
+        }
+        let Some(rest) = s.strip_prefix("0.") else {
+            return false;
+        };
+        rest.chars().all(|c| c == '1')
+    }
+
+    #[test]
+    fn disp_ninth() {
+        let ninth = Computable::rational(Rational::fraction(1, 9).unwrap());
+        assert_eq!(format!("{ninth}"), "0.11111111111111111111111111111111");
+        for places in [3, 17, 123, 4567] {
+            let formatted = format!("{ninth:.*}", places);
+            assert!(check_ninth(&formatted, places), "{formatted} was not formatted as expected to {places} decimal places");
+        }
+    }
+
+    #[test]
+    fn digits_round_exp_false() {
+        let magn: BigUint = "680564733841876926926749214863536422911".parse().unwrap();
+        let (v,exp) = digits(&magn,Places::Exp(32),128,-1,false);
+        assert_eq!(exp, 0);
+        assert_eq!(v, [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn digits_round_zero_true() {
+        let magn: BigUint = "680564733841876926926749214863536422911".parse().unwrap();
+        let (v,exp) = digits(&magn,Places::Zero(32),128,-1,true);
+        assert_eq!(exp, 0);
+        assert_eq!(v, [1]);
+    }
+
+    #[test]
+    fn disp_almost_one_exp() {
+        let dp38: Rational = "0.99999999999999999999999999999999999999".parse().unwrap();
+        let almost = Computable::rational(dp38);
+        assert_eq!(format!("{almost:e}"), "1e0");
+        let dp39: Rational = "0.999999999999999999999999999999999999999".parse().unwrap();
+        let almost = Computable::rational(dp39);
+        assert_eq!(format!("{almost:e}"), "1e0");
+    }
+
+    #[test]
+    fn disp_almost_one() {
+        let dp38: Rational = "0.99999999999999999999999999999999999999".parse().unwrap();
+        let almost = Computable::rational(dp38);
+        assert_eq!(format!("{almost}"), "1");
+        let dp39: Rational = "0.999999999999999999999999999999999999999".parse().unwrap();
+        let almost = Computable::rational(dp39);
+        assert_eq!(format!("{almost}"), "1");
     }
 
     #[test]
