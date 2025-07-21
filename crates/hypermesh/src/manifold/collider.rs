@@ -1,7 +1,6 @@
 use bvh::aabb::{Aabb, Bounded};
-use bvh::bounding_hierarchy::{BHShape, BHValue};
+use bvh::bounding_hierarchy::{BHShape};
 use bvh::bvh::Bvh;
-use nalgebra::{Point, SVector, Vector3};
 use crate::bounds::BoundingBox;
 
 /*
@@ -48,7 +47,10 @@ struct AabbNode {
 
 impl Bounded<f64, 3> for AabbNode {
     fn aabb(&self) -> Aabb<f64, 3> {
-        Aabb::with_bounds(self.bbox.min.into(), self.bbox.max.into())
+        Aabb::with_bounds(
+            self.bbox.min.transpose().into(),
+            self.bbox.max.transpose().into()
+        )
     }
 }
 
@@ -71,7 +73,7 @@ impl BvhCollider {
 impl Collider for BvhCollider {
     fn collision(&self, queries: &[BoundingBox], recorder: &mut dyn Recorder) {
         for (i, q) in queries.iter().enumerate() {
-            let q_aabb = Aabb::with_bounds(q.min.into(), q.max.into());
+            let q_aabb = Aabb::with_bounds(q.min.transpose().into(), q.max.transpose().into());
             let subset = self.bvh.traverse_iterator(&q_aabb, &self.aabbs);
             for v in subset { recorder.record(i, v.id); }
         }

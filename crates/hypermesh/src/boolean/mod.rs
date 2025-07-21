@@ -116,10 +116,8 @@ fn intersect12 (
         k11,
     };
 
-    let bboxes = a.hmesh.edges.iter().map(|e| BoundingBox::new(
-        e.vert0().pos().transpose(),
-        e.vert1().pos().transpose()
-    )).collect::<Vec<BoundingBox>>();
+    let bboxes = a.hmesh.edges.iter()
+        .map(|e| BoundingBox::new(vec![e.vert0().pos(), e.vert1().pos()])).collect::<Vec<_>>();
 
     let mut rec = Intersection12Recorder{
         mfd_a: a,
@@ -161,12 +159,7 @@ fn winding03(p: &Manifold, q: &Manifold, expand_p: f64, forward: bool) -> Vec<i6
         forward,
     };
 
-    let bboxes = a.hmesh.verts.iter().map(|v| BoundingBox::new(
-        v.pos().transpose(),
-        v.pos().transpose()
-    )).collect::<Vec<BoundingBox>>();
-
-    
+    let bboxes = a.hmesh.verts.iter().map(|v| BoundingBox::new(vec![v.pos(), v.pos()])).collect::<Vec<_>>();
 
     let mut rec = SimpleRecorder::new(
         |a, b| {

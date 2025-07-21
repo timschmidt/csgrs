@@ -5,6 +5,9 @@ use nalgebra::{DMatrix, RealField, RowVector3};
 
 pub trait FloatType: RealField + Clone {}
 
+
+/// Hmesh preserves the order of pos and idx in any cases.
+/// Edges are ordered so as the edge is forward (tail idx < head idx)
 #[derive(Debug, Clone)]
 pub struct Hmesh {
     pub n_vert: usize,
@@ -139,9 +142,181 @@ fn edge_topology(
 }
 
 impl Hmesh {
+    fn new_cyclic(
+        pos: DMatrix<f64>,
+        idx: DMatrix<usize>,
+        edge2vert: DMatrix<usize>,
+        edge2face: DMatrix<usize>,
+        face2edge: DMatrix<usize>,
+        nv: usize,
+        ne: usize,
+        nf: usize,
+        nh: usize,
+        vert2half: Vec<usize>,
+        edge2half: Vec<usize>,
+        face2half: Vec<usize>,
+        next: Vec<usize>,
+        prev: Vec<usize>,
+        twin: Vec<usize>,
+        head: Vec<usize>,
+        tail: Vec<usize>,
+        edge: Vec<usize>,
+        face: Vec<usize>,
+    ) -> Arc<Self> {
+        Arc::new_cyclic(|weak_ptr| {
+            let mut faces = vec![];
+            let mut verts = vec![];
+            let mut edges = vec![];
+            let mut halfs = vec![];
+            for i in 0..nf { faces.push(Face{id: i, hm: weak_ptr.clone()}); }
+            for i in 0..nv { verts.push(Vert{id: i, hm: weak_ptr.clone()}); }
+            for i in 0..ne { edges.push(Edge{id: i, hm: weak_ptr.clone()}); }
+            for i in 0..nh { halfs.push(Half{id: i, hm: weak_ptr.clone()}); }
+
+            let mut vert_normal  = DMatrix::<f64>::zeros(nv, 3);
+            let mut face_normal  = DMatrix::<f64>::zeros(nf, 3);
+            let mut bary_center  = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_basis_x = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_basis_y = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_area    = vec![0.; nf];
+
+            for i in 0..nf {
+                let ih = face2half[i];
+                let p2 = pos.fixed_view::<1, 3>(head[ih], 0);
+                let p1 = pos.fixed_view::<1, 3>(tail[ih], 0);
+                let p0 = pos.fixed_view::<1, 3>(tail[prev[ih]], 0);
+                let x = p2 - p1;
+                let t = (p1 - p0) * -1.;
+                let n = x.cross(&t);
+                let c = (p0 + p1 + p2) / 3.;
+                bary_center.row_mut(i).copy_from_slice(c.as_ref());
+                face_normal.row_mut(i).copy_from_slice(n.normalize().as_ref());
+                face_basis_x.row_mut(i).copy_from_slice(x.normalize().as_ref());
+                face_basis_y.row_mut(i).copy_from_slice((-x.cross(&n)).normalize().as_ref());
+                face_area[i] = n.norm() * 0.5;
+            }
+
+            for i in 0..nf {
+                for j in 0..3 {
+                    let n = vert_normal.row(idx[(i, j)]) + face_normal.row(i) * face_area[i];
+                    vert_normal.row_mut(idx[(i, j)]).copy_from_slice(n.as_ref());
+                }}
+
+            for i in 0..vert_normal.nrows() {
+                if let Some(n) = vert_normal.row(i).try_normalize(0.) {
+                    vert_normal.row_mut(i).copy_from(&n);
+                }
+            }
+
+            Self {
+                pos,
+                idx,
+                n_vert: nv,
+                n_face: nf,
+                n_edge: ne,
+                n_half: nh,
+                n_boundary: usize::MAX, // temp. better having loop2half
+                edge2vert,
+                edge2face,
+                face2edge,
+                vert2half,
+                edge2half,
+                face2half,
+                next,
+                prev,
+                twin,
+                head,
+                tail,
+                edge,
+                face,
+                verts,
+                edges,
+                faces,
+                halfs,
+                vert_normal,
+                face_normal,
+                bary_center,
+                face_basis_x,
+                face_basis_y,
+                face_area
+            }
+        })
+    }
+
+    pub fn new_with_halfs(
+        pos: DMatrix<f64>,
+        idx: DMatrix<usize>,
+        tail: Vec<usize>,
+        head: Vec<usize>,
+    ) -> Arc<Self> {
+        assert_eq!(tail.len(), head.len());
+        assert_eq!(tail.len() % 2, 0);
+        assert_eq!(tail.len(), idx.nrows() * 3); // currently suppose a closed surface...
+        let mut edge2vert = Default::default();
+        let mut edge2face = Default::default();
+        let mut face2edge = Default::default();
+        edge_topology(&pos, &idx, &mut edge2vert, &mut edge2face, &mut face2edge);
+
+        let nv = pos.nrows();
+        let nf = idx.nrows();
+        let ne = edge2vert.nrows();
+        let nh = edge2vert.nrows() * 2;
+        let mut vert2half = vec![usize::MAX; nv];
+        let mut edge2half = vec![usize::MAX; ne];
+        let mut face2half = vec![usize::MAX; nf];
+        let mut next = vec![usize::MAX; nh];
+        let mut prev = vec![usize::MAX; nh];
+        let mut twin = vec![usize::MAX; nh];
+        let mut edge = vec![usize::MAX; nh];
+        let mut face = vec![usize::MAX; nh];
+
+        for it in 0..nf {
+            let ivs = (0..3).map(|i| idx[(it, i)]).collect::<Vec<_>>();
+            let ies = (0..3).map(|i| face2edge[(it, i)]).collect::<Vec<_>>();
+            let ihs = (0..3).map(|i| (0..nh)
+                .find(|&j| tail[j] == ivs[i] && head[j] == ivs[(i + 1) % 3]).unwrap())
+                .collect::<Vec<_>>();
+            for i in 0..3 {
+                next[ihs[i]] = ihs[(i + 1) % 3];
+                prev[ihs[i]] = ihs[(i + 2) % 3];
+                edge[ihs[i]] = ies[i];
+                face[ihs[i]] = it;
+                if face2half[it]     == usize::MAX { face2half[it] = ihs[i]; }
+                if vert2half[ivs[i]] == usize::MAX { vert2half[ivs[i]] = ihs[i]; }
+                if edge2half[ies[i]] == usize::MAX { edge2half[ies[i]] = ihs[i]; }
+                else {
+                    twin[ihs[i]] = edge2half[ies[i]];
+                    twin[edge2half[ies[i]]] = ihs[i];
+                }
+            }
+        }
+
+        Self::new_cyclic(
+            pos,
+            idx,
+            edge2vert,
+            edge2face,
+            face2edge,
+            nv,
+            ne,
+            nf,
+            nh,
+            vert2half,
+            edge2half,
+            face2half,
+            next,
+            prev,
+            twin,
+            head,
+            tail,
+            edge,
+            face,
+        )
+    }
+
     pub fn new(
-        pos: DMatrix<f64>,   // moved here
-        idx: DMatrix<usize>, // moved here
+        pos: DMatrix<f64>,
+        idx: DMatrix<usize>,
     ) -> Arc<Self> {
         let mut edge2vert = Default::default();
         let mut edge2face = Default::default();
@@ -214,88 +389,29 @@ impl Hmesh {
             ib += 1;
         }
 
-
-        Arc::new_cyclic(|weak_ptr| {
-            let mut faces = vec![];
-            let mut verts = vec![];
-            let mut edges = vec![];
-            let mut halfs = vec![];
-            for i in 0..nf { faces.push(Face{id: i, hm: weak_ptr.clone()}); }
-            for i in 0..nv { verts.push(Vert{id: i, hm: weak_ptr.clone()}); }
-            for i in 0..ne { edges.push(Edge{id: i, hm: weak_ptr.clone()}); }
-            for i in 0..nh { halfs.push(Half{id: i, hm: weak_ptr.clone()}); }
-
-            let mut vert_normal  = DMatrix::<f64>::zeros(nv, 3);
-            let mut face_normal  = DMatrix::<f64>::zeros(nf, 3);
-            let mut bary_center  = DMatrix::<f64>::zeros(nf, 3);
-            let mut face_basis_x = DMatrix::<f64>::zeros(nf, 3);
-            let mut face_basis_y = DMatrix::<f64>::zeros(nf, 3);
-            let mut face_area    = vec![0.; nf];
-
-            for i in 0..nf {
-                let ih = face2half[i];
-                let p2 = pos.fixed_view::<1, 3>(head[ih], 0);
-                let p1 = pos.fixed_view::<1, 3>(tail[ih], 0);
-                let p0 = pos.fixed_view::<1, 3>(tail[prev[ih]], 0);
-                let x = p2 - p1;
-                let t = (p1 - p0) * -1.;
-                let n = x.cross(&t);
-                let c = (p0 + p1 + p2) / 3.;
-                bary_center.row_mut(i).copy_from_slice(c.as_ref());
-                face_normal.row_mut(i).copy_from_slice(n.normalize().as_ref());
-                face_basis_x.row_mut(i).copy_from_slice(x.normalize().as_ref());
-                face_basis_y.row_mut(i).copy_from_slice((-x.cross(&n)).normalize().as_ref());
-                face_area[i] = n.norm() * 0.5;
-            }
-
-            for i in 0..nf {
-            for j in 0..3 {
-                let n = vert_normal.row(idx[(i, j)]) + face_normal.row(i) * face_area[i];
-                vert_normal.row_mut(idx[(i, j)]).copy_from_slice(n.as_ref());
-            }}
-
-            for i in 0..vert_normal.nrows() {
-                if let Some(n) = vert_normal.row(i).try_normalize(0.) {
-                    vert_normal.row_mut(i).copy_from(&n);
-                }
-            }
-
-            Self {
-                pos,
-                idx,
-                n_vert: nv,
-                n_face: nf,
-                n_edge: ne,
-                n_half: nh,
-                n_boundary: usize::MAX, // temp. better having loop2half
-                edge2vert,
-                edge2face,
-                face2edge,
-                vert2half,
-                edge2half,
-                face2half,
-                next,
-                prev,
-                twin,
-                head,
-                tail,
-                edge,
-                face,
-                verts,
-                edges,
-                faces,
-                halfs,
-                vert_normal,
-                face_normal,
-                bary_center,
-                face_basis_x,
-                face_basis_y,
-                face_area
-            }
-        })
+        Self::new_cyclic(
+            pos,
+            idx,
+            edge2vert,
+            edge2face,
+            face2edge,
+            nv,
+            ne,
+            nf,
+            nh,
+            vert2half,
+            edge2half,
+            face2half,
+            next,
+            prev,
+            twin,
+            head,
+            tail,
+            edge,
+            face,
+        )
     }
 }
-
 
 impl Edge {
     pub fn half(&self) -> Half {

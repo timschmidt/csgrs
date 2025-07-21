@@ -29,11 +29,3 @@ pub fn gen_tet_c() -> Arc<Hmesh> {
     idx.row_mut(3).copy_from_slice(&[2, 3, 0]);
     Hmesh::new(pos, idx)
 }
-
-pub fn gen_mfd_tet_a() -> Manifold {
-    let m = gen_tet_a();
-    Manifold {
-        hmesh: Arc::try_unwrap(m).unwrap(),
-        b
-    }
-}

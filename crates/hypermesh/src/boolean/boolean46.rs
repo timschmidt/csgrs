@@ -305,13 +305,11 @@ fn append_whole_edges(
     mfd_r: &mut MfdBuffer,
     mfd_p_half: &[Halfedge],
     face_ptr_r: &mut[i32],
-    edges_new: &mut HashMap<(usize, usize), Vec<EdgePos>>,
     whole_he_p: &[bool],
     half_ref: &mut [TriRef],
     i03: &[i32],
     fid_p2r: &[usize],
     vid_p2r: &[usize],
-    nfaces_p: usize,
     forward: bool,
 ) {
     for i in 0..mfd_r.halfs.len() {

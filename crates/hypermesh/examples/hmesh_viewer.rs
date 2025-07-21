@@ -23,7 +23,7 @@ fn main() {
         .add_plugins(PanOrbitCameraPlugin)
         .init_gizmo_group::<MyRoundGizmos>()
         .add_systems(Startup, setup)
-        .add_systems(Update, draw_example_collection.run_if(resource_exists::<HmeshHandle>))
+        //.add_systems(Update, draw_example_collection.run_if(resource_exists::<HmeshHandle>))
         .run();
 }
 
