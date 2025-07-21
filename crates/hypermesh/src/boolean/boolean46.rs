@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::mem;
 use crate::boolean::Boolean3;
 use crate::{Half, Halfedge, Manifold, MfdBuffer, OpType};
+use crate::bounds::BoundingBox;
 
 fn duplicate_verts(
     inclusion : &[i32],
@@ -157,7 +158,7 @@ fn pair_up(
 ) -> Vec<Halfedge> {
     assert_eq!(edge_pos.len() % 2, 0);
     let ne = edge_pos.len() / 2;
-    
+
     //auto middle = std::partition(edgePos.begin(), edgePos.end(), [](EdgePos x) { return x.isStart; });
     //auto cmp = [](EdgePos a, EdgePos b) {
     //    return a.edgePos < b.edgePos ||
@@ -253,12 +254,78 @@ fn append_partial_edges(
 
 fn append_new_edges(
     mfd_r: &mut MfdBuffer,
+    face_ptr_r: &mut[i32],
+    edges_new: &mut HashMap<(usize, usize), Vec<EdgePos>>,
+    half_ref: &mut [TriRef],
+    face_pq2r: &[i32],
+    nfaces_p: usize,
 ) {
+    for val in edges_new.into_iter() { // values??
+        let (face_p, face_q) = val.0;
+        let epos = val.1;
+        let mut bbox = BoundingBox::new(vec![]);
+        for ep in epos.iter() {
+            bbox.union(mfd_r.pos[ep.vid]);
+        }
 
+        let d = bbox.longest_dim();
+        for ep in epos.iter_mut() {
+            ep.val = mfd_r.pos[ep.vid][d];
+        }
+
+        let mut edges = pair_up(&epos);
+        let face_l = face_pq2r[*face_p] as usize;
+        let face_r = face_pq2r[*face_q + nfaces_p] as usize;
+
+        // Negative inclusion means the halfedges are reversed, which means our
+        // reference is now to the endVert instead of the startVert, which is one
+        // position advanced CCW. This is only valid if this is a retained vert; it
+        // will be ignored later if the vert is new.
+
+        let fw_ref = TriRef{ mesh_id: 0, face_id: *face_p};
+        let bk_ref = TriRef{ mesh_id: 1, face_id: *face_q};
+
+        for h in edges.iter_mut() {
+            let fw_edge = { let ptr = face_ptr_r[face_l]; face_ptr_r[face_l] += 1; ptr };
+            let bk_edge = { let ptr = face_ptr_r[face_r]; face_ptr_r[face_r] += 1; ptr };
+
+            h.pair = bk_edge;
+            mfd_r.halfs[fw_edge as usize] = h.clone();
+            half_ref[fw_edge as usize] = fw_ref.clone();
+
+            //std::swap(e.startVert, e.endVert);
+            mem::swap(&mut h.tail, &mut h.head);
+            h.pair = fw_edge;
+            mfd_r.halfs[bk_edge as usize] = h.clone();
+            half_ref[bk_edge as usize] = bk_ref.clone();
+        }
+    }
 }
 
-fn append_whole_edges() {
-
+fn append_whole_edges(
+    mfd_r: &mut MfdBuffer,
+    mfd_p_half: &mut [Halfedge],
+    face_ptr_r: &mut[i32],
+    edges_new: &mut HashMap<(usize, usize), Vec<EdgePos>>,
+    whole_he_p: &[bool],
+    half_ref: &mut [TriRef],
+    face_pq2r: &[i32],
+    i03: &[i32],
+    vp2r: &[usize],
+    nfaces_p: usize,
+    forward: bool,
+) {
+    for i in 0..mfd_r.halfs.len() {
+        // duplicate halfedge 
+        if !whole_he_p[i] { continue; }
+        let mut he = &mfd_p_half[i];
+        if !he.is_forward() { continue; }
+        
+        let inclusion = i03[he.tail as usize];
+        if inclusion == 0 { continue; }
+        // todo check: is this changing data in mfd_p???
+        //if inclusion < 0 { mem::swap(&mut he.tail, &mut he.head); }
+    }
 }
 
 impl<'a> Boolean3<'a> {
