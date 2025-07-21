@@ -293,7 +293,6 @@ fn append_new_edges(
             mfd_r.halfs[fw_edge as usize] = h.clone();
             half_ref[fw_edge as usize] = fw_ref.clone();
 
-            //std::swap(e.startVert, e.endVert);
             mem::swap(&mut h.tail, &mut h.head);
             h.pair = fw_edge;
             mfd_r.halfs[bk_edge as usize] = h.clone();
@@ -304,27 +303,48 @@ fn append_new_edges(
 
 fn append_whole_edges(
     mfd_r: &mut MfdBuffer,
-    mfd_p_half: &mut [Halfedge],
+    mfd_p_half: &[Halfedge],
     face_ptr_r: &mut[i32],
     edges_new: &mut HashMap<(usize, usize), Vec<EdgePos>>,
     whole_he_p: &[bool],
     half_ref: &mut [TriRef],
-    face_pq2r: &[i32],
     i03: &[i32],
-    vp2r: &[usize],
+    fid_p2r: &[usize],
+    vid_p2r: &[usize],
     nfaces_p: usize,
     forward: bool,
 ) {
     for i in 0..mfd_r.halfs.len() {
-        // duplicate halfedge 
+        // duplicate halfedge
         if !whole_he_p[i] { continue; }
-        let mut he = &mfd_p_half[i];
-        if !he.is_forward() { continue; }
-        
-        let inclusion = i03[he.tail as usize];
+        let mut h = mfd_p_half[i].clone();
+        if !h.is_forward() { continue; }
+
+        let inclusion = i03[h.tail as usize];
         if inclusion == 0 { continue; }
-        // todo check: is this changing data in mfd_p???
-        //if inclusion < 0 { mem::swap(&mut he.tail, &mut he.head); }
+        if inclusion < 0 { mem::swap(&mut h.tail, &mut h.head); }
+
+        h.tail = vid_p2r[h.tail as usize] as i32;
+        h.head = vid_p2r[h.head as usize] as i32;
+
+        let fid_l = i / 3;
+        let fid_r = (h.pair / 3) as usize;
+        let face_l = fid_p2r[fid_l];
+        let face_r = fid_p2r[fid_r];
+        let fw_ref = TriRef{ mesh_id: if forward {0} else {1}, face_id: fid_l};
+        let bk_ref = TriRef{ mesh_id: if forward {0} else {1}, face_id: fid_r};
+
+        for _ in 0..inclusion.abs() as usize {
+            let fw_edge = face_ptr_r[face_l] + 1;
+            let bk_edge = face_ptr_r[face_r] + 1;
+            h.pair = bk_edge;
+            mfd_r.halfs[fw_edge as usize] = h.clone();
+            mfd_r.halfs[bk_edge as usize] = Halfedge{tail: h.head, head: h.tail, pair: fw_edge};
+            half_ref[fw_edge as usize] = fw_ref.clone();
+            half_ref[bk_edge as usize] = bk_ref.clone();
+            h.tail += 1;
+            h.head += 1;
+        }
     }
 }
 
