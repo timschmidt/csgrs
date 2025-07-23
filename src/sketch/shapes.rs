@@ -755,45 +755,41 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             return Sketch::new();
         }
 
-        // de Casteljau evaluator
-        fn de_casteljau(
-            ctrl: &[[Real; 2]],
-            t: Real,
-            tmp: &mut Vec<(Real, Real)>,
-        ) -> (Real, Real) {
-            tmp.clear();
-            tmp.extend(ctrl.iter().map(|&[x, y]| (x, y)));
-            let n = tmp.len();
-            for k in 1..n {
-                for i in 0..(n - k) {
-                    tmp[i].0 = (1.0 - t) * tmp[i].0 + t * tmp[i + 1].0;
-                    tmp[i].1 = (1.0 - t) * tmp[i].1 + t * tmp[i + 1].1;
-                }
-            }
-            tmp[0]
-        }
+        /// Evaluates a Bézier curve at a given parameter `t` using de Casteljau's algorithm.
+		fn de_casteljau(control: &[[Real; 2]], t: Real) -> (Real, Real) {
+			let mut points = control.to_vec();
+			let n = points.len();
 
-        let mut pts = Vec::<(Real, Real)>::with_capacity(segments + 1);
-        let mut tmp = Vec::with_capacity(control.len());
-        for i in 0..=segments {
-            let t = i as Real / segments as Real;
-            pts.push(de_casteljau(control, t, &mut tmp));
-        }
+			for k in 1..n {
+				for i in 0..(n - k) {
+					points[i][0] = (1.0 - t) * points[i][0] + t * points[i + 1][0];
+					points[i][1] = (1.0 - t) * points[i][1] + t * points[i + 1][1];
+				}
+			}
+			(points[0][0], points[0][1])
+		}
 
-        // If the curve happens to be closed, make sure the polygon ring closes.
-        let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < EPSILON
-            && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < EPSILON;
-        if !closed {
-            // open curve → produce a LineString geometry, *not* a filled polygon
-            let ls: LineString<Real> = pts.into();
-            let mut gc = GeometryCollection::default();
-            gc.0.push(Geometry::LineString(ls));
-            return Sketch::from_geo(gc, metadata);
-        }
+		let pts: Vec<(Real, Real)> = (0..=segments)
+			.map(|i| {
+				let t = i as Real / segments as Real;
+				de_casteljau(control, t)
+			})
+			.collect();
 
-        // closed curve → create a filled polygon
-        let poly_2d = GeoPolygon::new(LineString::from(pts), vec![]);
-        Sketch::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
+		let is_closed = {
+			let first = pts[0];
+			let last = pts[segments];
+			(first.0 - last.0).abs() < EPSILON && (first.1 - last.1).abs() < EPSILON
+		};
+
+		let geometry = if is_closed {
+			let ring: LineString<Real> = pts.into();
+			Geometry::Polygon(GeoPolygon::new(ring, vec![]))
+		} else {
+			Geometry::LineString(pts.into())
+		};
+
+		Sketch::from_geo(GeometryCollection(vec![geometry]), metadata)
     }
 
     /// Sample an open-uniform B-spline of arbitrary degree (`p`) using the
