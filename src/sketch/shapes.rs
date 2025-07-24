@@ -756,40 +756,40 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         }
 
         /// Evaluates a Bézier curve at a given parameter `t` using de Casteljau's algorithm.
-		fn de_casteljau(control: &[[Real; 2]], t: Real) -> (Real, Real) {
-			let mut points = control.to_vec();
-			let n = points.len();
+        fn de_casteljau(control: &[[Real; 2]], t: Real) -> (Real, Real) {
+            let mut points = control.to_vec();
+            let n = points.len();
 
-			for k in 1..n {
-				for i in 0..(n - k) {
-					points[i][0] = (1.0 - t) * points[i][0] + t * points[i + 1][0];
-					points[i][1] = (1.0 - t) * points[i][1] + t * points[i + 1][1];
-				}
-			}
-			(points[0][0], points[0][1])
-		}
+            for k in 1..n {
+                for i in 0..(n - k) {
+                    points[i][0] = (1.0 - t) * points[i][0] + t * points[i + 1][0];
+                    points[i][1] = (1.0 - t) * points[i][1] + t * points[i + 1][1];
+                }
+            }
+            (points[0][0], points[0][1])
+        }
 
-		let pts: Vec<(Real, Real)> = (0..=segments)
-			.map(|i| {
-				let t = i as Real / segments as Real;
-				de_casteljau(control, t)
-			})
-			.collect();
+        let pts: Vec<(Real, Real)> = (0..=segments)
+            .map(|i| {
+                let t = i as Real / segments as Real;
+                de_casteljau(control, t)
+            })
+            .collect();
 
-		let is_closed = {
-			let first = pts[0];
-			let last = pts[segments];
-			(first.0 - last.0).abs() < EPSILON && (first.1 - last.1).abs() < EPSILON
-		};
+        let is_closed = {
+            let first = pts[0];
+            let last = pts[segments];
+            (first.0 - last.0).abs() < EPSILON && (first.1 - last.1).abs() < EPSILON
+        };
 
-		let geometry = if is_closed {
-			let ring: LineString<Real> = pts.into();
-			Geometry::Polygon(GeoPolygon::new(ring, vec![]))
-		} else {
-			Geometry::LineString(pts.into())
-		};
+        let geometry = if is_closed {
+            let ring: LineString<Real> = pts.into();
+            Geometry::Polygon(GeoPolygon::new(ring, vec![]))
+        } else {
+            Geometry::LineString(pts.into())
+        };
 
-		Sketch::from_geo(GeometryCollection(vec![geometry]), metadata)
+        Sketch::from_geo(GeometryCollection(vec![geometry]), metadata)
     }
 
     /// Sample an open-uniform B-spline of arbitrary degree (`p`) using the
