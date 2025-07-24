@@ -17,7 +17,7 @@ pub type Real = f64;
 
 /// A small epsilon for geometric comparisons, adjusted per precision.
 #[cfg(feature = "f32")]
-pub const EPSILON: Real = 1e-5;
+pub const EPSILON: Real = 1e-4;
 /// A small epsilon for geometric comparisons, adjusted per precision.
 #[cfg(feature = "f64")]
 pub const EPSILON: Real = 1e-8;

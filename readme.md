@@ -135,6 +135,7 @@ Extrusions build 3D polygons from 2D Geometries.
 - <img src="docs/extrude_vector.png" width="128"  alt="an angled view of a star extruded at an angle"/> **`Sketch::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
 - <img src="docs/rotate_extrude.png" width="128"  alt="an arch with round ends"/> **`Sketch::revolve(angle_degs, segments)`** - Extrude while rotating around the Y axis
 - **`Sketch::loft(&bottom_polygon, &top_polygon, false)`** - Helper function which extrudes between two Mesh Polygons, optionally with caps
+- <img src="docs/sweep.png" width="128" alt="a Sketch swept along a 3D path"/> **`Sketch::sweep(path: &[Point3<Real>])`** - Sweep a Sketch along a path defined by a series of Points
 
 ```rust
 let square = Sketch::square(2.0, None);
@@ -505,8 +506,7 @@ create new copy via appropriate functions
 ## Todo
 - when triangulating, detect T junctions with other polygons with shared edges,
 and insert splitting vertices into polygons to correct
-- implement as_indexed, from_indexed, and merge_vertices (using hashbrown, and a
-string expression of each float out to EPSILON significant digits)
+- implement as_indexed, from_indexed, and merge_vertices (using hashbrown, and an expression of each float out to EPSILON significant digits)
 - ensure re-triangulate unions all coplanar polygons
 - evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.HalfSpace.html and
 https://docs.rs/parry3d/latest/parry3d/query/point/trait.PointQuery.html#method.contains_point
@@ -522,21 +522,13 @@ for Polygon
 - evaluate https://github.com/dimforge/parry/blob/master/src/transformation/voxelization/voxel_set.rs and https://github.com/dimforge/parry/blob/master/src/transformation/voxelization/voxelized_volume.rs
 - evaluate https://github.com/dimforge/parry/blob/master/src/transformation/convex_hull3/convex_hull.rs instead of chull
 - evaluate https://github.com/dimforge/parry/blob/master/src/utils/ccw_face_normal.rs for normalization
-- implement wavefront obj output using https://github.com/dimforge/parry/blob/master/src/transformation/wavefront.rs
-- transition sweep, linear_extrude, over to Polygon/Multipolygon native / polygon secondary
+- update linear_extrude
 - disengage chulls on 2D->3D shapes
-- fix subtract_cube_sphere in main.rs - shapes are out of proximity
 - fix up error handling with result types, eliminate panics
 - ray intersection (singular)
 - expose geo traits on 2D shapes
 - https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d
-- convert more for loops to iterators - csg::transform
-- polygons_by_metadata public function of a CSG
-  - draft implementation done, pending API discussion
 - document coordinate system / coordinate transformations / compounded transformations
-- determine why flattened_cube.stl produces invalid output with to_stl_binary but not to_stl_ascii
-- determine why square_2d_shrink.stl produces invalid output with to_stl_binary but not to_stl_ascii
-- determine why square_2d produces invalid output with to_stl_binary but not to_stl_ascii
 - bending
 - lead-ins, lead-outs
 - gpu acceleration
@@ -547,7 +539,7 @@ for Polygon
 - identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold
 - http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
 - screw threads
-- support scale and translation along a vector in rotate extrude
+- support scale and translation along a vector in revolve
 - reimplement 3D offsetting with https://github.com/u65xhd/meshvox or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html or https://github.com/komadori/bevy_mod_outline/
 - implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
   - https://github.com/dimforge/parry/blob/master/src/transformation/hertel_mehlhorn.rs for convex partitioning
@@ -556,10 +548,8 @@ for Polygon
 - std::io::Cursor, std::error::Error - core2 no_std transition
 - https://crates.io/crates/polylabel
   - pull in https://github.com/fschutt/polylabel-mini/blob/master/src/lib.rs and adjust f64 -> Real
-- reduce allocations
 - history tree
   - STEP/IGES import / export
-  - curves?
 - constraintt solving tree
 - test geo_booleanop as alternative to geo's built-in boolean ops.
 - rethink metadata
@@ -617,8 +607,7 @@ for Polygon
 
 ## Todo easy
 - finish naca airfoil implementations
-- stack transformation
-- additional renders
+- additional renders for documentation
 
 ## Todo maybe
 - https://github.com/PsichiX/density-mesh
