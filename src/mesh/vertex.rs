@@ -16,7 +16,22 @@ impl Vertex {
     ///
     /// * `pos`    – the position in model space  
     /// * `normal` – (optionally non‑unit) normal; it will be **copied verbatim**, so make sure it is oriented the way you need it for lighting / BSP tests.
-    pub const fn new(pos: Point3<Real>, normal: Vector3<Real>) -> Self {
+    #[inline]
+    pub fn new(mut pos: Point3<Real>, mut normal: Vector3<Real>) -> Self {
+        // Sanitise position
+        for c in pos.coords.iter_mut() {
+            if !c.is_finite() {
+                *c = 0.0;
+            }
+        }
+
+        // Sanitise normal
+        for c in normal.iter_mut() {
+            if !c.is_finite() {
+                *c = 0.0;
+            }
+        }
+
         Vertex { pos, normal }
     }
 
@@ -542,7 +557,7 @@ impl VertexCluster {
     }
 
     /// Convert cluster back to a representative vertex
-    pub const fn to_vertex(&self) -> Vertex {
+    pub fn to_vertex(&self) -> Vertex {
         Vertex::new(self.position, self.normal)
     }
 }

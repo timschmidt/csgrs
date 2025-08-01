@@ -21,7 +21,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// # Example
     /// ```
-    /// let sq2 = Sketch::rectangle(2.0, 3.0, None);
+    /// use csgrs::sketch::Sketch;
+    /// let sq2 = Sketch::<()>::rectangle(2.0, 3.0, None);
     /// ```
     pub fn rectangle(width: Real, length: Real, metadata: Option<S>) -> Self {
         // In geo, a Polygon is basically (outer: LineString, Vec<LineString> for holes).
