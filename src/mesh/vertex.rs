@@ -5,7 +5,7 @@ use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
 
 /// A vertex of a polygon, holding position and normal.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Vertex {
     pub pos: Point3<Real>,
     pub normal: Vector3<Real>,

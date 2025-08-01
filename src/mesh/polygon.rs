@@ -165,9 +165,8 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             // Convert back into 3D triangles
             let mut triangles = Vec::with_capacity(triangle_indices.len() / 3);
             for tri_chunk in triangle_indices.chunks_exact(3) {
-                let mut tri_vertices = [const {
-                    Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0))
-                }; 3];
+                let mut tri_vertices =
+                    [Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0)); 3];
                 for (k, &idx) in tri_chunk.iter().enumerate() {
                     let base = idx * 2;
                     let x = vertices[base];
