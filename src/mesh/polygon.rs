@@ -278,10 +278,9 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             for _ in 0..subdivisions.get() {
                 let mut next_level = Vec::with_capacity(queue.len() * 4);
                 for t in queue {
-                    let mut subs = subdivide_triangle(t);
+                    let subs = subdivide_triangle(t);
 
-                    // add to vec without copy
-                    next_level.append(&mut subs);
+                    next_level.extend(subs);
                 }
                 queue = next_level;
             }
