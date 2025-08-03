@@ -157,41 +157,83 @@ pub fn to_vec<T: VoxelTrait>(
     root_id: &BlockId,
     max_depth: MaxDepth,
 ) -> Vec<T> {
-    let max_depth = max_depth.max();
+    let max_depth = max_depth.max() as u32;
     let voxels_per_axis = 1 << max_depth;
-    let size: usize = voxels_per_axis * voxels_per_axis * voxels_per_axis;
+    let size = voxels_per_axis * voxels_per_axis * voxels_per_axis;
 
-    if !root_id.is_empty() {
-        if root_id.is_branch() {
-            let mut data = vec![T::default(); size];
-            let shift_y: usize = 1 << (2 * max_depth);
-            let shift_z: usize = voxels_per_axis;
-            let depth = TraversalDepth::new(0, max_depth);
-            let mut pos = IVec3::default();
+    if !root_id.is_branch() {
+        return vec![*interner.get_value(root_id); size];
+    }
 
-            for y in 0..voxels_per_axis {
-                pos.y = y as i32;
-                let base_index_y = y * shift_y;
-                for z in 0..voxels_per_axis {
-                    pos.z = z as i32;
+    let default_t = T::default();
 
-                    let base_index_z = base_index_y + z * shift_z;
-                    for x in 0..voxels_per_axis {
-                        pos.x = x as i32;
+    let mut data = vec![default_t; size];
 
-                        if let Some(voxel) = get_at_depth(interner, *root_id, &pos, &depth) {
-                            data[base_index_z + x] = voxel;
-                        }
-                    }
+    if root_id.is_empty() {
+        return data;
+    }
+
+    let mut stack: Vec<(BlockId, IVec3, u32)> = Vec::with_capacity(64);
+    stack.push((*root_id, IVec3::ZERO, 0));
+
+    while let Some((node_id, pos, depth)) = stack.pop() {
+        if node_id.is_branch() && (depth < max_depth) {
+            let child_cube_half_side = 1 << (max_depth - depth - 1);
+            let childs = interner.get_children_ref(&node_id);
+            for i in (0..8).rev() {
+                let child_id = unsafe { *childs.get_unchecked(i) };
+
+                if !child_id.is_empty() {
+                    let offset = IVec3::new(
+                        (i & 1) as i32 * child_cube_half_side,
+                        ((i & 2) >> 1) as i32 * child_cube_half_side,
+                        ((i & 4) >> 2) as i32 * child_cube_half_side,
+                    );
+
+                    stack.push((child_id, pos + offset, depth + 1));
                 }
             }
-
-            data
         } else {
-            vec![*interner.get_value(root_id); size]
+            let value = *interner.get_value(&node_id);
+            if value != default_t {
+                let cube_side = (1 << (max_depth - depth)) as usize;
+                fill_sub_volume(&mut data, pos, cube_side, voxels_per_axis, value);
+            }
         }
-    } else {
-        vec![T::default(); size]
+    }
+
+    data
+}
+
+#[inline(always)]
+fn fill_sub_volume<T: VoxelTrait>(
+    data: &mut [T],
+    pos: IVec3,
+    cube_side: usize,
+    voxels_per_axis: usize,
+    value: T,
+) {
+    let pos_x = pos.x as usize;
+    let pos_y = pos.y as usize;
+    let pos_z = pos.z as usize;
+
+    // Pre-kalkulacja mnożników dla wydajności
+    let stride_y = voxels_per_axis * voxels_per_axis;
+    let stride_z = voxels_per_axis;
+
+    for y in pos_y..(pos_y + cube_side) {
+        let base_y = y * stride_y;
+        for z in pos_z..(pos_z + cube_side) {
+            let base_z = base_y + z * stride_z;
+
+            let start_index = base_z + pos_x;
+            let end_index = start_index + cube_side;
+
+            unsafe {
+                let slice = data.get_unchecked_mut(start_index..end_index);
+                slice.fill(value);
+            }
+        }
     }
 }
 
