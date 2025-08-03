@@ -88,6 +88,7 @@ pub fn import_model_from_vtm<P: AsRef<Path>>(
     let chunk_world_size = target_chunk_world_size.unwrap_or(chunk_world_size);
 
     let mut model = VoxModel::empty(MaxDepth::new(lod_level), chunk_world_size, memory_budget);
+    model.world_bounds = world_bounds;
     model.deserialize(&data);
 
     model
