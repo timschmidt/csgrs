@@ -8,13 +8,20 @@ pub trait VoxelTrait: Clone + Copy + PartialEq + Default + Hash + Display + Debu
     fn average(children: &[Self]) -> Self {
         calc_average(children)
     }
+
+    fn material_id(&self) -> usize;
 }
 
 macro_rules! impl_voxel_trait_for_numerics {
     ($($t:ty),+) => {
         $(
             #[cfg(feature = "numeric_voxel_impls")]
-            impl VoxelTrait for $t {}
+            impl VoxelTrait for $t {
+                #[inline(always)]
+                fn material_id(&self) -> usize {
+                    *self as usize
+                }
+            }
         )+
     };
 }
