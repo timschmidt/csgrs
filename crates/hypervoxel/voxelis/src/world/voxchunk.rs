@@ -245,55 +245,6 @@ impl VoxChunk {
             }
         }
     }
-
-    pub fn serialize(&self, id_map: &FxHashMap<u32, u32>, data: &mut Vec<u8>) {
-        let mut writer = std::io::BufWriter::new(data);
-
-        writer.write_all(&VTC_MAGIC).unwrap();
-
-        let position = self.position;
-
-        writer.write_i32::<BigEndian>(position.x).unwrap();
-        writer.write_i32::<BigEndian>(position.y).unwrap();
-        writer.write_i32::<BigEndian>(position.z).unwrap();
-
-        let root_id = self.data.get_root_id();
-        let new_id = *id_map.get(&root_id.index()).unwrap();
-        let new_id_bytes = encode_varint(new_id as usize);
-
-        writer.write_all(&new_id_bytes).unwrap();
-    }
-
-    pub fn deserialize(
-        interner: &mut VoxInterner<i32>,
-        leaf_patterns: &FxHashMap<u32, (BlockId, i32)>,
-        patterns: &FxHashMap<u32, (BlockId, [u32; 8], i32)>,
-        reader: &mut BufReader<&[u8]>,
-        chunk_size: f32,
-        max_depth: MaxDepth,
-    ) -> Self {
-        let mut magic = [0; VTC_MAGIC.len()];
-        reader.read_exact(&mut magic).unwrap();
-        assert_eq!(magic, VTC_MAGIC);
-
-        // println!("Magic: {:?}", std::str::from_utf8(&magic).unwrap());
-
-        let x = reader.read_i32::<BigEndian>().unwrap();
-        let y = reader.read_i32::<BigEndian>().unwrap();
-        let z = reader.read_i32::<BigEndian>().unwrap();
-
-        let mut chunk = VoxChunk::with_position(chunk_size, max_depth, x, y, z);
-
-        let root_id = decode_varint_u32_from_reader(reader).unwrap();
-        if let Some((block_id, _, _)) = patterns.get(&root_id) {
-            chunk.data.set_root_id(interner, *block_id);
-        } else {
-            let (block_id, _) = leaf_patterns.get(&root_id).unwrap();
-            chunk.data.set_root_id(interner, *block_id);
-        }
-
-        chunk
-    }
 }
 
 impl VoxOpsRead<i32> for VoxChunk {
@@ -420,4 +371,53 @@ impl VoxOpsChunkConfig for VoxChunk {
     fn voxel_size(&self, lod: Lod) -> f32 {
         self.chunk_size / self.data.voxels_per_axis(lod) as f32
     }
+}
+
+pub fn chunk_serialize(chunk: &VoxChunk, id_map: &FxHashMap<u32, u32>, data: &mut Vec<u8>) {
+    let mut writer = std::io::BufWriter::new(data);
+
+    writer.write_all(&VTC_MAGIC).unwrap();
+
+    let position = chunk.position_3d();
+
+    writer.write_i32::<BigEndian>(position.x).unwrap();
+    writer.write_i32::<BigEndian>(position.y).unwrap();
+    writer.write_i32::<BigEndian>(position.z).unwrap();
+
+    let root_id = chunk.get_root_id();
+    let new_id = *id_map.get(&root_id.index()).unwrap();
+    let new_id_bytes = encode_varint(new_id as usize);
+
+    writer.write_all(&new_id_bytes).unwrap();
+}
+
+pub fn chunk_deserialize(
+    interner: &mut VoxInterner<i32>,
+    leaf_patterns: &FxHashMap<u32, (BlockId, i32)>,
+    patterns: &FxHashMap<u32, (BlockId, [u32; 8], i32)>,
+    reader: &mut BufReader<&[u8]>,
+    chunk_size: f32,
+    max_depth: MaxDepth,
+) -> VoxChunk {
+    let mut magic = [0; VTC_MAGIC.len()];
+    reader.read_exact(&mut magic).unwrap();
+    assert_eq!(magic, VTC_MAGIC);
+
+    // println!("Magic: {:?}", std::str::from_utf8(&magic).unwrap());
+
+    let x = reader.read_i32::<BigEndian>().unwrap();
+    let y = reader.read_i32::<BigEndian>().unwrap();
+    let z = reader.read_i32::<BigEndian>().unwrap();
+
+    let mut chunk = VoxChunk::with_position(chunk_size, max_depth, x, y, z);
+
+    let root_id = decode_varint_u32_from_reader(reader).unwrap();
+    if let Some((block_id, _, _)) = patterns.get(&root_id) {
+        chunk.data.set_root_id(interner, *block_id);
+    } else {
+        let (block_id, _) = leaf_patterns.get(&root_id).unwrap();
+        chunk.data.set_root_id(interner, *block_id);
+    }
+
+    chunk
 }

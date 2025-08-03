@@ -1,6 +1,8 @@
 use glam::IVec3;
 use rustc_hash::FxHashMap;
 
+use crate::world::voxchunk::chunk_serialize;
+
 use super::VoxChunk;
 
 #[derive(Default)]
@@ -47,7 +49,7 @@ impl VoxWorld {
     pub fn serialize(&self, data: &mut Vec<u8>) {
         let id_map = FxHashMap::default();
         for chunk in self.chunks.iter() {
-            chunk.serialize(&id_map, data);
+            chunk_serialize(chunk, &id_map, data);
         }
     }
 }

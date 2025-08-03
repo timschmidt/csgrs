@@ -18,7 +18,10 @@ use crate::{
     interner::EMPTY_CHILD,
     io::varint::{decode_varint_u32_from_reader, encode_varint_u32},
     spatial::VoxOpsSpatial3D,
-    world::VoxChunk,
+    world::{
+        VoxChunk,
+        voxchunk::{chunk_deserialize, chunk_serialize},
+    },
 };
 
 pub struct VoxModel {
@@ -251,7 +254,7 @@ impl VoxModel {
             .par_iter()
             .map(|(_, chunk)| {
                 let mut buffer = Vec::with_capacity(BUFFER_SIZE);
-                chunk.serialize(&id_map, &mut buffer);
+                chunk_serialize(chunk, &id_map, &mut buffer);
                 buffer
             })
             .collect();
@@ -376,7 +379,7 @@ impl VoxModel {
         let actual_chunks_len = reader.read_u32::<BigEndian>().unwrap();
 
         for _ in 0..actual_chunks_len {
-            let chunk = VoxChunk::deserialize(
+            let chunk = chunk_deserialize(
                 &mut interner,
                 &leaf_patterns,
                 &branch_patterns,
