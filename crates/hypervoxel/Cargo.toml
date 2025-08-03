@@ -49,25 +49,25 @@ voxelis-math = { path = "voxelis-math" }
 voxelis-voxelize = { path = "voxelis-voxelize" }
 voxelis-bevy = { path = "voxelis-bevy" }
 
-ahash = "0.8.11"
-bitflags = "2.9.0"
+ahash = "0.8.12"
+bitflags = "2.9.1"
 byteorder = "1.5.0"
 crossbeam = { version = "0.8.4" }
 fastnoise-lite = "1.1.1"
 glam = "0.29.3"
 humanize-bytes = "1.0.6"
-indicatif = { version = "0.17.11", features = ["improved_unicode"] }
+indicatif = { version = "0.18.0", features = ["improved_unicode"] }
 log = { version = "0.4.27", features = [
   "max_level_debug",
   "release_max_level_warn",
 ] }
 md-5 = "0.10.6"
-parking_lot = "0.12.3"
-rand = { version = "0.9.1", features = ["small_rng"] }
+parking_lot = "0.12.4"
+rand = { version = "0.9.2", features = ["small_rng"] }
 rayon = "1.10.0"
 rustc-hash = "2.1.1"
 serde = "1.0.219"
-wide = "0.7.32"
+wide = "0.7.33"
 zstd = "0.13.3"
 
 # Bevy & EGUI
