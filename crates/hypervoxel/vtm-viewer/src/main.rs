@@ -309,8 +309,7 @@ fn setup(
         }
 
         println!(
-            "Found {} duplicates out of {} chunks ({:.1}%)",
-            duplicates_found,
+            "Found {duplicates_found} duplicates out of {} chunks ({:.1}%)",
             model.chunks.len(),
             (duplicates_found as f32 / model.chunks.len() as f32) * 100.0
         );
@@ -377,7 +376,7 @@ fn main() {
     } else {
         Lod::new(0)
     };
-    println!("Using LOD level {}", lod);
+    println!("Using LOD level {lod}");
 
     println!("Opening VTM model {}", input.display());
     let model = import_model_from_vtm(&input, 1024 * 1024 * 1024 * 4, Some(chunk_world_size));
@@ -385,7 +384,7 @@ fn main() {
     #[cfg(feature = "memory_stats")]
     {
         let interner = model.interner_stats();
-        println!("Interner stats: {:#?}", interner);
+        println!("Interner stats: {interner:#?}");
     }
 
     App::new()

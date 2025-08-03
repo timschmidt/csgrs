@@ -194,7 +194,7 @@ pub fn dump_structure<T: VoxelTrait>(
     max_depth: usize,
 ) {
     println!("\n=== Octree Structure Dump ===");
-    println!("Max depth: {}", max_depth);
+    println!("Max depth: {max_depth}");
 
     if !root_id.is_empty() {
         interner.dump_node(root_id, 0, "  ");
@@ -234,7 +234,7 @@ pub fn dump_statistics<T: VoxelTrait>(interner: &VoxInterner<T>, root_id: BlockI
         println!("Max depth reached: {}", stats.max_depth_reached);
         println!("Nodes by depth:");
         for (depth, count) in stats.nodes_by_depth.iter().enumerate() {
-            println!("  Depth {}: {} nodes", depth, count);
+            println!("  Depth {depth}: {count} nodes");
         }
     } else {
         println!("Empty octree (no statistics available)");

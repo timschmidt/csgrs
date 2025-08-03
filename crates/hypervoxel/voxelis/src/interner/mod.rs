@@ -99,9 +99,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
         #[cfg(feature = "debug_trace_ref_counts")]
         {
-            println!("empty_branch_hash: {:X}", empty_branch_hash);
-            println!("empty_branch_id: {:?}", empty_branch_id);
-            println!("next_index: {}", next_index);
+            println!("empty_branch_hash: {empty_branch_hash:X}");
+            println!("empty_branch_id: {empty_branch_id:?}");
+            println!("next_index: {next_index}");
         }
 
         #[cfg(feature = "memory_stats")]
@@ -164,8 +164,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
     pub fn get_value(&self, block_id: &BlockId) -> &T {
         debug_assert!(
             self.is_valid_block_id(block_id),
-            "Invalid block id: {:?}",
-            block_id
+            "Invalid block id: {block_id:?}"
         );
 
         self.values.get(block_id.index())
@@ -176,8 +175,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
         debug_assert!(block_id.is_branch(), "Cannot get children for value node",);
         debug_assert!(
             self.is_valid_block_id(block_id),
-            "Invalid block id: {:?}",
-            block_id
+            "Invalid block id: {block_id:?}"
         );
 
         *self.children.get(block_id.index())
@@ -188,8 +186,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
         debug_assert!(block_id.is_branch(), "Cannot get children for value node",);
         debug_assert!(
             self.is_valid_block_id(block_id),
-            "Invalid block id: {:?}",
-            block_id
+            "Invalid block id: {block_id:?}"
         );
 
         self.children.get(block_id.index())
@@ -200,8 +197,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
         debug_assert!(block_id.is_branch(), "Cannot get children for value node",);
         debug_assert!(
             self.is_valid_block_id(block_id),
-            "Invalid block id: {:?}",
-            block_id
+            "Invalid block id: {block_id:?}"
         );
 
         self.children.get(block_id.index())[index]
@@ -211,8 +207,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
     pub fn get_ref(&self, block_id: &BlockId) -> u32 {
         debug_assert!(
             self.is_valid_block_id(block_id),
-            "Invalid block id: {:?}",
-            block_id
+            "Invalid block id: {block_id:?}"
         );
 
         *self.ref_counts.get(block_id.index())
@@ -222,8 +217,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
     pub fn inc_ref(&mut self, block_id: &BlockId) {
         debug_assert!(
             self.is_valid_block_id(block_id),
-            "Invalid block id: {:?}",
-            block_id
+            "Invalid block id: {block_id:?}"
         );
 
         *self.ref_counts.get_mut(block_id.index()) += 1;
@@ -247,8 +241,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
     pub fn dec_ref(&mut self, block_id: &BlockId) -> bool {
         debug_assert!(
             self.is_valid_block_id(block_id),
-            "Invalid block id: {:?}",
-            block_id
+            "Invalid block id: {block_id:?}"
         );
 
         let block_index = block_id.index();
@@ -257,8 +250,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
         debug_assert!(
             *ref_count > 0,
-            "Ref count should be greater than zero, id: {:?}",
-            block_id,
+            "Ref count should be greater than zero, id: {block_id:?}"
         );
 
         *ref_count -= 1;
@@ -281,12 +273,12 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
     pub fn inc_child_refs(&mut self, children: &Children, index: usize) {
         #[cfg(feature = "debug_trace_ref_counts")]
-        println!("Incrementing ref count for children: {:?}", children);
+        println!("Incrementing ref count for children: {children:?}");
 
         for (i, child_id) in children.iter().enumerate() {
             if i == index {
                 #[cfg(feature = "debug_trace_ref_counts")]
-                println!("  [{}] Skipping child_id: {:?}", i, child_id);
+                println!("  [{i}] Skipping child_id: {child_id:?}");
 
                 continue;
             }
@@ -299,10 +291,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
                 #[cfg(feature = "debug_trace_ref_counts")]
                 println!(
-                    "  [{}] Incrementing ref count for child_id: {:?} ref_count: {} -> {}",
-                    i,
-                    child_id,
-                    current_ref_count,
+                    "  [{i}] Incrementing ref count for child_id: {child_id:?} ref_count: {current_ref_count} -> {}",
                     self.get_ref(child_id),
                 );
             }
@@ -311,7 +300,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
     pub fn inc_all_child_refs(&mut self, children: &Children) {
         #[cfg(feature = "debug_trace_ref_counts")]
-        println!("Incrementing ref count for children: {:?}", children);
+        println!("Incrementing ref count for children: {children:?}");
 
         #[cfg(feature = "debug_trace_ref_counts")]
         let mut i = 0;
@@ -325,10 +314,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
                 #[cfg(feature = "debug_trace_ref_counts")]
                 println!(
-                    "  [{}] Incrementing ref count for child_id: {:?} ref_count: {} -> {}",
-                    i,
-                    child_id,
-                    current_ref_count,
+                    "  [{i}] Incrementing ref count for child_id: {child_id:?} ref_count: {current_ref_count} -> {}",
                     self.get_ref(child_id),
                 );
             }
@@ -342,15 +328,11 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
     pub fn inc_ref_by(&mut self, block_id: &BlockId, count: u32) {
         #[cfg(feature = "debug_trace_ref_counts")]
-        println!(
-            "Incrementing ref count for block: {:?} by {}",
-            block_id, count
-        );
+        println!("Incrementing ref count for block: {block_id:?} by {count}");
 
         debug_assert!(
             self.is_valid_block_id(block_id),
-            "Invalid block id: {:?}",
-            block_id,
+            "Invalid block id: {block_id:?}"
         );
 
         *self.ref_counts.get_mut(block_id.index()) += count;
@@ -373,10 +355,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
     pub fn dec_ref_by(&mut self, block_id: &BlockId, count: u32) {
         #[cfg(feature = "debug_trace_ref_counts")]
-        println!(
-            "Decrementing ref count for block: {:?} by {}",
-            block_id, count
-        );
+        println!("Decrementing ref count for block: {block_id:?} by {count}");
 
         let block_index = block_id.index();
 
@@ -384,8 +363,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
         debug_assert!(
             ((*ref_count as i64) + count as i64) >= 0,
-            "Ref count should be greater or equal than zero, id: {:?}",
-            block_id,
+            "Ref count should be greater or equal than zero, id: {block_id:?}"
         );
 
         *ref_count -= count;
@@ -405,8 +383,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
     pub fn dec_ref_recursive(&mut self, block_id: &BlockId) {
         debug_assert!(
             self.is_valid_block_id(block_id),
-            "Invalid block id: {:?}",
-            block_id
+            "Invalid block id: {block_id:?}"
         );
 
         #[cfg(debug_assertions)]
@@ -426,7 +403,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
         #[cfg(feature = "debug_trace_ref_counts")]
         {
-            println!("dec_ref_recursive block_id: {:?}", block_id);
+            println!("dec_ref_recursive block_id: {block_id:?}");
             self.dump_node(*block_id, 0, "  ");
         }
 
@@ -435,11 +412,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
             read_idx += 1;
 
             #[cfg(debug_assertions)]
-            assert!(
-                read_idx < max_idx,
-                "dec_ref_rec_stack overflow: {}",
-                read_idx
-            );
+            assert!(read_idx < max_idx, "dec_ref_rec_stack overflow: {read_idx}");
 
             #[cfg(debug_assertions)]
             assert!(self.is_valid_block_id(&current_id));
@@ -447,11 +420,8 @@ impl<T: VoxelTrait> VoxInterner<T> {
             #[cfg(feature = "debug_trace_ref_counts")]
             {
                 println!(
-                    " {}/{}/{} Processing: {:?}",
+                    " {}/{write_idx}/{max_idx} Processing: {current_id:?}",
                     read_idx - 1,
-                    write_idx,
-                    max_idx,
-                    current_id
                 );
                 self.dump_node(current_id, 0, "  ");
             }
@@ -464,14 +434,13 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
             debug_assert!(
                 *ref_count > 0,
-                "Ref count should be greater than zero, id: {:?}",
-                current_id,
+                "Ref count should be greater than zero, id: {current_id:?}"
             );
 
             *ref_count -= 1;
 
             #[cfg(feature = "debug_trace_ref_counts")]
-            println!("    ref_count = {} -> {}", current_ref_count, ref_count);
+            println!("    ref_count = {current_ref_count} -> {ref_count}");
 
             if *ref_count == 0 {
                 for child in self.children.get(current_index) {
@@ -483,9 +452,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
                         if *child_ref_count > 1 {
                             #[cfg(feature = "debug_trace_ref_counts")]
                             println!(
-                                "      handling child: {:?} at {} ref_count: {} -> {} in place",
-                                child,
-                                write_idx,
+                                "      handling child: {child:?} at {write_idx} ref_count: {} -> {} in place",
                                 *child_ref_count,
                                 *child_ref_count - 1,
                             );
@@ -493,8 +460,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
                         } else {
                             #[cfg(feature = "debug_trace_ref_counts")]
                             println!(
-                                "      adding child:   {:?} at {} ref_count: {}",
-                                child, write_idx, child_ref_count
+                                "      adding child:   {child:?} at {write_idx} ref_count: {child_ref_count}",
                             );
                             unsafe {
                                 *stack_ptr.add(write_idx) = *child;
@@ -504,9 +470,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
                             #[cfg(debug_assertions)]
                             assert!(
                                 write_idx < max_idx,
-                                "dec_ref_rec_stack overflow: {}, capacity: {}",
-                                write_idx,
-                                max_idx
+                                "dec_ref_rec_stack overflow: {write_idx}, capacity: {max_idx}"
                             );
                         }
                     }
@@ -525,9 +489,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
         #[cfg(feature = "debug_trace_ref_counts")]
         println!(
-            " ...done read_idx: {}, write_idx: {} capacity: {}",
-            read_idx,
-            write_idx,
+            " ...done read_idx: {read_idx}, write_idx: {write_idx} capacity: {}",
             self.dec_ref_rec_stack.capacity()
         );
     }
@@ -535,7 +497,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
     pub fn dec_child_refs(&mut self, children: &Children) {
         #[cfg(feature = "debug_trace_ref_counts")]
         {
-            println!("Decrementing ref count for children: {:?}", children);
+            println!("Decrementing ref count for children: {children:?}");
 
             for (i, child_id) in children.iter().enumerate() {
                 if !child_id.is_empty() {
@@ -544,10 +506,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
                     let _recycled = self.dec_ref(child_id);
 
                     println!(
-                        "  [{}] Decrementing ref count for child_id: {:?} ref_count: {} -> {}",
-                        i,
-                        child_id,
-                        current_ref_count,
+                        "  [{i}] Decrementing ref count for child_id: {child_id:?} ref_count: {current_ref_count} -> {}",
                         if _recycled { 0 } else { self.get_ref(child_id) },
                     );
                 }
@@ -564,7 +523,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
     pub fn recycle(&mut self, block_id: &BlockId) {
         #[cfg(feature = "debug_trace_ref_counts")]
-        println!("recycle block_id: {:?}", block_id);
+        println!("recycle block_id: {block_id:?}");
 
         debug_assert!(
             block_id != &self.empty_branch_id,
@@ -635,10 +594,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
                     #[cfg(feature = "debug_trace_ref_counts")]
                     println!(
-                        "get_or_create_leaf: value: {} hash = {:X} existing_id = {:?} ref_count: {}",
-                        value,
-                        hash,
-                        existing_id,
+                        "get_or_create_leaf: value: {value} hash = {hash:X} existing_id = {existing_id:?} ref_count: {}",
                         self.get_ref(&existing_id)
                     );
 
@@ -659,10 +615,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
                     #[cfg(feature = "debug_trace_ref_counts")]
                     self.dump_patterns();
 
-                    panic!(
-                        "Expired node in patterns: {:?} hash = {:X}",
-                        existing_id, hash
-                    );
+                    panic!("Expired node in patterns: {existing_id:?} hash = {hash:X}");
                 }
             }
             Entry::Vacant(entry) => {
@@ -691,10 +644,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
                 #[cfg(feature = "debug_trace_ref_counts")]
                 println!(
-                    "get_or_create_leaf: value: {} hash = {:X} new_id = {:?} ref_count: {}",
-                    value,
-                    hash,
-                    block_id,
+                    "get_or_create_leaf: value: {value} hash = {hash:X} new_id = {block_id:?} ref_count: {}",
                     self.get_ref(&block_id)
                 );
 
@@ -721,8 +671,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
         debug_assert_ne!(
             hash, self.empty_branch_hash,
-            "Empty branch hash collision: {:?}",
-            children
+            "Empty branch hash collision: {children:?}"
         );
 
         match self.patterns[PATTERNS_TYPE_BRANCH].entry(hash) {
@@ -732,22 +681,18 @@ impl<T: VoxelTrait> VoxInterner<T> {
                 debug_assert_ne!(
                     existing_id,
                     BlockId::EMPTY,
-                    "Empty branch id in patterns: {:?}",
-                    children
+                    "Empty branch id in patterns: {children:?}"
                 );
 
                 #[cfg(feature = "debug_trace_ref_counts")]
                 println!(
-                    "get_or_create_branch: children: {:?} hash = {:X} existing_id = {:?}",
-                    children, hash, existing_id
+                    "get_or_create_branch: children: {children:?} hash = {hash:X} existing_id = {existing_id:?}"
                 );
 
                 // Verify the node is still valid
                 debug_assert!(
                     self.is_valid_block_id(&existing_id),
-                    "Expired node in patterns: {:?} hash = {:X}",
-                    existing_id,
-                    hash
+                    "Expired node in patterns: {existing_id:?} hash = {hash:X}"
                 );
 
                 debug_assert_eq!(
@@ -808,8 +753,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
                 #[cfg(feature = "debug_trace_ref_counts")]
                 println!(
-                    "get_or_create_branch: children: {:?} hash = {:X} new_id: {:?} types: {:2X} mask: {:2X}",
-                    children, hash, block_id, types, mask
+                    "get_or_create_branch: children: {children:?} hash = {hash:X} new_id: {block_id:?} types: {types:2X} mask: {mask:2X}"
                 );
 
                 debug_assert_eq!(
@@ -853,7 +797,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
         *self.children.get_mut(index) = EMPTY_CHILD;
 
         #[cfg(feature = "debug_trace_ref_counts")]
-        println!("create_empty_branch: new_id: {:?}", block_id);
+        println!("create_empty_branch: new_id: {block_id:?}");
 
         #[cfg(feature = "memory_stats")]
         {
@@ -887,8 +831,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
         #[cfg(feature = "debug_trace_ref_counts")]
         println!(
-            "create_branch: children: {:?} new_id: {:?} types: {:2X} mask: {:2X}",
-            children, block_id, types, mask
+            "create_branch: children: {children:?} new_id: {block_id:?} types: {types:2X} mask: {mask:2X}"
         );
 
         #[cfg(feature = "memory_stats")]
@@ -927,8 +870,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
         #[cfg(feature = "debug_trace_ref_counts")]
         println!(
-            "update_branch: block_id: {:?} child_id: {:?} child_index: {} new_id: {:?} types: {:2X} mask: {:2X}",
-            block_id, child_id, child_index, new_block_id, types, mask
+            "update_branch: block_id: {block_id:?} child_id: {child_id:?} child_index: {child_index} new_id: {new_block_id:?} types: {types:2X} mask: {mask:2X}"
         );
 
         new_block_id
@@ -985,8 +927,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
         debug_assert_ne!(
             hash, self.empty_branch_hash,
-            "Empty branch hash collision: {:?}",
-            children
+            "Empty branch hash collision: {children:?}"
         );
 
         // Set up the new branch node
@@ -1020,8 +961,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
             if !child_id.is_empty() {
                 assert!(
                     self.is_valid_block_id(child_id),
-                    "Invalid child id: {:?}",
-                    child_id
+                    "Invalid child id: {child_id:?}"
                 );
             }
         }
@@ -1053,7 +993,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
     pub fn dump_patterns(&self) {
         println!("=== Leaf Patterns ===");
         for (hash, id) in self.patterns[PATTERNS_TYPE_LEAF].iter() {
-            println!("{:X} -> {:?}", hash, id);
+            println!("{hash:X} -> {id:?}");
             self.dump_node(*id, 0, "  ");
         }
         println!("=== End of Patterns ===\n");
@@ -1061,10 +1001,10 @@ impl<T: VoxelTrait> VoxInterner<T> {
         println!("=== Branch Patterns ===");
         for (hash, id) in self.patterns[PATTERNS_TYPE_BRANCH].iter() {
             if *hash == self.empty_branch_hash {
-                println!("{:X} -> EMPTY", hash);
+                println!("{hash:X} -> EMPTY");
                 continue;
             } else {
-                println!("{:X} -> {:?}", hash, id);
+                println!("{hash:X} -> {id:?}");
                 self.dump_node(*id, 0, "  ");
             }
         }
@@ -1073,7 +1013,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
     pub fn dump_node(&self, node_id: BlockId, depth: u8, prefix: &str) {
         let discovered_nodes = self.dump_node_internal(node_id, depth, prefix);
-        println!("{}Discovered nodes: {}", prefix, discovered_nodes);
+        println!("{prefix}Discovered nodes: {discovered_nodes}");
     }
 
     pub fn count_nodes(&self, node_id: BlockId) -> u32 {
@@ -1102,12 +1042,12 @@ impl<T: VoxelTrait> VoxInterner<T> {
         let current_prefix = prefix.repeat((depth + 1) as usize).to_string();
 
         if !self.is_valid_block_id(&node_id) {
-            println!("{}Invalid block id: {:?}", current_prefix, node_id);
+            println!("{current_prefix}Invalid block id: {node_id:?}");
             return 0;
         }
 
         if depth > MAX_ALLOWED_DEPTH as u8 {
-            panic!("{}Max depth reached", current_prefix);
+            panic!("{current_prefix}Max depth reached");
         }
 
         let mut discovered_nodes = 1;
@@ -1119,23 +1059,16 @@ impl<T: VoxelTrait> VoxInterner<T> {
         if depth == 0 {
             if !is_leaf {
                 println!(
-                    "{}Branch[{}, {}] hash: {:X}, ref_count: {}",
-                    current_prefix,
+                    "{current_prefix}Branch[{}, {}] hash: {node_hash:X}, ref_count: {node_ref_count}",
                     node_id.index(),
                     node_id.generation(),
-                    node_hash,
-                    node_ref_count,
                 );
             } else {
                 let value = self.get_value(&node_id);
                 println!(
-                    "{}Leaf[{}, {}] value: {}, hash: {:X}, ref_count: {}",
-                    current_prefix,
+                    "{current_prefix}Leaf[{}, {}] value: {value}, hash: {node_hash:X}, ref_count: {node_ref_count}",
                     node_id.index(),
                     node_id.generation(),
-                    value,
-                    node_hash,
-                    node_ref_count,
                 );
                 return discovered_nodes;
             }
@@ -1143,42 +1076,33 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
         let children = self.get_children(&node_id);
 
-        let new_prefix = format!("{}{}", current_prefix, prefix);
+        let new_prefix = format!("{current_prefix}{prefix}");
 
         for (idx, child_id) in children.iter().enumerate() {
             match child_id {
                 &BlockId::EMPTY => {
-                    println!("{}[{}]: -", new_prefix, idx);
+                    println!("{new_prefix}[{idx}]: -");
                 }
                 _ => {
                     if !self.is_valid_block_id(child_id) {
-                        println!("{}[{}]: Invalid id: {:?}", new_prefix, idx, child_id);
+                        println!("{new_prefix}[{idx}]: Invalid id: {child_id:?}");
                     } else if child_id.is_leaf() {
                         let value = self.get_value(child_id);
                         let node_hash = self.hashes.get(child_id.index());
                         let node_ref_count = self.get_ref(child_id);
                         println!(
-                            "{}[{}]: Leaf[{}, {}] value: {}, hash: {:X}, ref_count: {}",
-                            new_prefix,
-                            idx,
+                            "{new_prefix}[{idx}]: Leaf[{}, {}] value: {value}, hash: {node_hash:X}, ref_count: {node_ref_count}",
                             child_id.index(),
                             child_id.generation(),
-                            value,
-                            node_hash,
-                            node_ref_count,
                         );
                         discovered_nodes += 1;
                     } else {
                         let node_hash = self.hashes.get(child_id.index());
                         let node_ref_count = self.get_ref(child_id);
                         println!(
-                            "{}[{}]: Branch[{}, {}] hash: {:X}, ref_count: {}",
-                            new_prefix,
-                            idx,
+                            "{new_prefix}[{idx}]: Branch[{}, {}] hash: {node_hash:X}, ref_count: {node_ref_count}",
                             child_id.index(),
                             child_id.generation(),
-                            node_hash,
-                            node_ref_count,
                         );
                         discovered_nodes += self.dump_node_internal(*child_id, depth + 1, prefix);
                     }

@@ -37,9 +37,7 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &VoxMo
     let obj_file = std::fs::File::create(path).unwrap();
     let mut writer = std::io::BufWriter::new(obj_file);
 
-    writer
-        .write_all(format!("o {}\n", name).as_bytes())
-        .unwrap();
+    writer.write_all(format!("o {name}\n").as_bytes()).unwrap();
 
     for vertex in vertices.iter() {
         writer

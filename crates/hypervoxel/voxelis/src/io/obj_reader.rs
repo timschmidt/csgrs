@@ -73,7 +73,7 @@ impl Obj {
         println!("Parsed obj file: {}", path.as_ref().display());
         println!("Vertices: {}", vertices.len());
         println!("Faces: {}", faces.len());
-        println!("Size: {:?}", size);
+        println!("Size: {size:?}");
         println!("AABB: {:?}, {:?}", aabb.0, aabb.1);
 
         Self {

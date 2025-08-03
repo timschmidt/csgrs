@@ -85,8 +85,7 @@ impl VoxModel {
         memory_budget: usize,
     ) -> Self {
         println!(
-            "Creating model with bounds {:?}, chunk: {}m depth: {}",
-            world_bounds, chunk_world_size, max_depth
+            "Creating model with bounds {world_bounds:?}, chunk: {chunk_world_size}m depth: {max_depth}"
         );
         let interner = Arc::new(RwLock::new(VoxInterner::with_memory_budget(memory_budget)));
         let chunks = initialize_chunks(max_depth, chunk_world_size, world_bounds);
@@ -210,7 +209,7 @@ impl VoxModel {
         writer.write_u32::<BigEndian>(leaf_size).unwrap();
         for id in leaf_patterns.iter() {
             let new_id = *id_map.get(&id.index()).unwrap();
-            // println!(" leaf id: {} -> {}", id.index(), new_id);
+            // println!(" leaf id: {} -> {new_id}", id.index());
             let new_id_bytes = encode_varint_u32(new_id);
             // writer.write_u32::<BigEndian>(new_id).unwrap();
             writer.write_all(&new_id_bytes).unwrap();
@@ -225,7 +224,7 @@ impl VoxModel {
             }
 
             let new_id = *id_map.get(&id.index()).unwrap();
-            // println!("branch id: {} -> {}", id.index(), new_id);
+            // println!("branch id: {} -> {new_id}", id.index());
             let new_id_bytes = encode_varint_u32(new_id);
             // writer.write_u32::<BigEndian>(new_id).unwrap();
             writer.write_all(&new_id_bytes).unwrap();
@@ -237,7 +236,7 @@ impl VoxModel {
                     continue;
                 }
                 let new_id = *id_map.get(&child.index()).unwrap();
-                // println!("  child id: {} -> {}", child.index(), new_id);
+                // println!("  child id: {} -> {new_id}", child.index());
                 let new_id_bytes = encode_varint_u32(new_id);
                 // writer.write_u32::<BigEndian>(new_id).unwrap();
                 writer.write_all(&new_id_bytes).unwrap();
@@ -289,7 +288,7 @@ impl VoxModel {
             let block_id = interner.deserialize_leaf(id, value);
             leaf_patterns.insert(id, (block_id, value));
 
-            println!(" leaf id: {:?} -> {}", block_id, value);
+            println!(" leaf id: {block_id:?} -> {value}");
         }
 
         let branch_size = reader.read_u32::<BigEndian>().unwrap();
@@ -309,10 +308,10 @@ impl VoxModel {
             let mut children = [0u32; 8];
             for child_id in 0..8 {
                 if mask & (1 << child_id) == 0 {
-                    // println!(" skipping child {}", child_id);
+                    // println!(" skipping child {child_id}");
                     continue;
                 }
-                // println!(" reading child {}", child_id);
+                // println!(" reading child {child_id}");
                 children[child_id] = decode_varint_u32_from_reader(&mut reader).unwrap();
                 if leaf_patterns.contains_key(&children[child_id]) {
                     types |= 1 << child_id;
@@ -326,8 +325,7 @@ impl VoxModel {
 
             branch_patterns.insert(id, (block_id, children, lod_value));
             // println!(
-            //     " branch: mask: {:08b} types: {:08b} id: {:08X} [{:?}] -> {:08X?}",
-            //     mask, types, id, block_id, children
+            //     " branch: mask: {mask:08b} types: {types:08b} id: {id:08X} [{block_id:?}] -> {children:08X?}"
             // );
             assert_ne!(mask, 0);
         }
@@ -357,7 +355,7 @@ impl VoxModel {
                     }
                 }
 
-                // println!("branch: {:?} -> {:?}", block_id, branch);
+                // println!("branch: {block_id:?} -> {branch:?}");
                 interner.deserialize_branch(*block_id, branch, types, mask, *lod_value);
             });
 
@@ -370,7 +368,7 @@ impl VoxModel {
         branch_ids.sort_by_key(|id| id.index());
 
         // for branch_id in branch_ids.iter() {
-        //     println!("Branch id: {:?}", branch_id);
+        //     println!("Branch id: {branch_id:?}");
         //     interner.dump_node(*branch_id, 0, "  ");
         // }
 
@@ -390,6 +388,6 @@ impl VoxModel {
         }
 
         let elapsed = now.elapsed();
-        println!("Deserializing chunks took {:?}", elapsed);
+        println!("Deserializing chunks took {elapsed:?}");
     }
 }

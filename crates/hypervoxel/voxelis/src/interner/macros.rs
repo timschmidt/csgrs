@@ -3,7 +3,7 @@ macro_rules! get_next_index_macro {
     ($self:expr) => {{
         if let Some(index) = $self.free_indices.pop() {
             #[cfg(feature = "debug_trace_ref_counts")]
-            println!("get_next_index: Recycled index: {}", index);
+            println!("get_next_index: Recycled index: {index}");
 
             #[cfg(feature = "memory_stats")]
             {
@@ -19,7 +19,7 @@ macro_rules! get_next_index_macro {
             let index = $self.next_index;
 
             #[cfg(feature = "debug_trace_ref_counts")]
-            println!("get_next_index: New index: {}", index);
+            println!("get_next_index: New index: {index}");
 
             $self.next_index += 1;
 

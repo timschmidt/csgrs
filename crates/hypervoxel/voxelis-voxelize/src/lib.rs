@@ -246,7 +246,7 @@ impl Voxelizer {
         let chunk_positions = chunk_face_map.keys().cloned().collect::<Vec<_>>();
 
         let chunks_to_process = chunk_positions.len();
-        println!(" Chunks to process: {}", chunks_to_process);
+        println!(" Chunks to process: {chunks_to_process}");
 
         let early_quit_no_faces = Arc::new(AtomicUsize::new(0));
         let early_quit_empty_faces = Arc::new(AtomicUsize::new(0));
@@ -425,16 +425,12 @@ impl Voxelizer {
         #[cfg(feature = "memory_stats")]
         {
             let interner = self.model.interner_stats();
-            println!("Interner stats: {:#?}", interner);
+            println!("Interner stats: {interner:#?}");
         }
 
         println!(
-            "Done, {} chunks, empty: {}, face-to-chunk: {:?}, voxelized: {:?}, total: {:?}",
+            "Done, {} chunks, empty: {empty_chunks}, face-to-chunk: {face_to_chunk_map_time:?}, voxelized: {voxelize_time:?}, total: {total:?}",
             self.model.chunks.len(),
-            empty_chunks,
-            face_to_chunk_map_time,
-            voxelize_time,
-            total
         );
     }
 }

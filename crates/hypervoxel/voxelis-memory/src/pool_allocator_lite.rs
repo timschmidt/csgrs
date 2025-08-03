@@ -81,8 +81,7 @@ impl<T> PoolAllocatorLite<T> {
     pub fn get(&self, index: u32) -> &T {
         debug_assert!(
             index < self.capacity as u32,
-            "Block index out of bounds index: {} capacity: {}",
-            index,
+            "Block index out of bounds index: {index} capacity: {}",
             self.capacity
         );
 
@@ -93,8 +92,7 @@ impl<T> PoolAllocatorLite<T> {
     pub fn get_mut(&mut self, index: u32) -> &mut T {
         debug_assert!(
             index < self.capacity as u32,
-            "Block index out of bounds index: {} capacity: {}",
-            index,
+            "Block index out of bounds index: {index} capacity: {}",
             self.capacity
         );
 
@@ -130,8 +128,7 @@ impl<T> PoolAllocatorLite<T> {
 
         debug_assert!(
             index < self.capacity as u32,
-            "Block index out of bounds index: {} capacity: {}",
-            index,
+            "Block index out of bounds index: {index} capacity: {}",
             self.capacity
         );
 
@@ -144,8 +141,7 @@ impl<T> PoolAllocatorLite<T> {
     pub fn deallocate(&mut self, index: u32) {
         debug_assert!(
             index < self.capacity as u32,
-            "Block index out of bounds index: {} capacity: {}",
-            index,
+            "Block index out of bounds index: {index} capacity: {}",
             self.capacity
         );
 

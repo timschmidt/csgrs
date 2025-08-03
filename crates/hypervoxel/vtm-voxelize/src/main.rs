@@ -26,10 +26,10 @@ fn main() {
     let max_depth = MaxDepth::new(max_depth as u8);
     let memory_budget = 1024 * 1024 * 1024 * 16;
 
-    println!("Max octree depth: {}", max_depth);
+    println!("Max octree depth: {max_depth}");
     println!("Voxels per axis: {}", 1 << max_depth.max());
-    println!("Chunk size: {}m", chunk_size);
-    println!("Memory budget: {} bytes", memory_budget);
+    println!("Chunk size: {chunk_size}m");
+    println!("Memory budget: {memory_budget} bytes");
 
     let input = Path::new(&input);
     let output = Path::new(&output);
