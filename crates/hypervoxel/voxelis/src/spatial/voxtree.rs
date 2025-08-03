@@ -261,11 +261,6 @@ impl<T: VoxelTrait> VoxOpsBulkWrite<T> for VoxTree {
 
             interner.dec_ref_recursive(&self.root_id);
 
-            #[cfg(feature = "debug_trace_ref_counts")]
-            interner.dump_patterns();
-
-            assert!(interner.patterns_empty());
-
             self.root_id = BlockId::EMPTY;
             self.dirty = true;
         }
@@ -1107,7 +1102,7 @@ mod tests {
 
     #[test]
     fn test_set_and_get() {
-        let mut interner = VoxInterner::<u8>::with_memory_budget(1024 * 2);
+        let mut interner = VoxInterner::with_memory_budget(1024 * 2);
 
         let mut tree = VoxTree::new(MaxDepth::new(3));
         let position = IVec3::new(0, 0, 0);
@@ -1152,7 +1147,7 @@ mod tests {
 
     #[test]
     fn test_is_empty() {
-        let mut interner = VoxInterner::<u8>::with_memory_budget(1024);
+        let mut interner = VoxInterner::with_memory_budget(1024);
 
         let mut tree = VoxTree::new(MaxDepth::new(3));
         assert!(tree.is_empty());
@@ -1168,7 +1163,7 @@ mod tests {
 
     #[test]
     fn test_clear() {
-        let mut interner = VoxInterner::<u8>::with_memory_budget(1024 * 2);
+        let mut interner = VoxInterner::with_memory_budget(1024 * 2);
 
         let mut tree = VoxTree::new(MaxDepth::new(3));
 
@@ -1197,7 +1192,7 @@ mod tests {
 
     #[test]
     fn test_no_default_leaf_nodes() {
-        let mut interner = VoxInterner::<u8>::with_memory_budget(1024);
+        let mut interner = VoxInterner::with_memory_budget(1024);
 
         let mut tree = VoxTree::new(MaxDepth::new(3));
 
@@ -1216,7 +1211,7 @@ mod tests {
 
     #[test]
     fn test_dirty_flag() {
-        let mut interner = VoxInterner::<u8>::with_memory_budget(1024);
+        let mut interner = VoxInterner::with_memory_budget(1024);
 
         let mut tree = VoxTree::new(MaxDepth::new(3));
         assert!(!tree.is_dirty());
@@ -1236,7 +1231,7 @@ mod tests {
 
     #[test]
     fn test_shared_interner_uniqueness() {
-        let mut interner = VoxInterner::<u8>::with_memory_budget(1024);
+        let mut interner = VoxInterner::with_memory_budget(1024);
 
         let mut tree1 = VoxTree::new(MaxDepth::new(3));
         let mut tree2 = VoxTree::new(MaxDepth::new(3));
@@ -1258,7 +1253,7 @@ mod tests {
 
     #[test]
     fn test_shared_interner_deduplication() {
-        let mut interner = VoxInterner::<u8>::with_memory_budget(1024);
+        let mut interner = VoxInterner::with_memory_budget(1024);
 
         let mut tree1 = VoxTree::new(MaxDepth::new(3));
         let mut tree2 = VoxTree::new(MaxDepth::new(3));
@@ -1279,7 +1274,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
 
         let position = IVec3::new(0, 0, 0);
@@ -1301,7 +1296,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
 
         let position = IVec3::new(0, 0, 0);
@@ -1321,7 +1316,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1356,7 +1351,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1391,7 +1386,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1429,7 +1424,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1469,7 +1464,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1502,7 +1497,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1539,7 +1534,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
         let half_voxels_per_axis = voxels_per_axis / 2;
@@ -1584,7 +1579,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
         let half_voxels_per_axis = voxels_per_axis / 2;
@@ -1631,7 +1626,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1657,7 +1652,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1687,7 +1682,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1726,7 +1721,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1767,7 +1762,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1808,7 +1803,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1850,7 +1845,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1906,7 +1901,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -1963,7 +1958,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -2000,7 +1995,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
@@ -2039,7 +2034,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
 
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
@@ -2089,7 +2084,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(5);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
 
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
@@ -2142,7 +2137,7 @@ mod tests {
         const MAX_DEPTH: MaxDepth = MaxDepth::new(0);
         const MEMORY_BUDGET: usize = 1024 * 1024;
 
-        let mut interner = VoxInterner::<u8>::with_memory_budget(MEMORY_BUDGET);
+        let mut interner = VoxInterner::with_memory_budget(MEMORY_BUDGET);
         let mut tree = VoxTree::new(MAX_DEPTH);
 
         let position = IVec3::new(0, 0, 0);
