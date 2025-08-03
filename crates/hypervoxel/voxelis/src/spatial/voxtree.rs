@@ -8,7 +8,8 @@ use crate::{
 };
 
 use super::{
-    VoxOpsBatch, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite,
+    VoxOpsBatch, VoxOpsBulkWrite, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState,
+    VoxOpsWrite,
 };
 
 /// Lookup table for fast sibling scanning in octree traversal using Morton-encoded paths.
@@ -239,7 +240,9 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for VoxTree {
             false
         }
     }
+}
 
+impl<T: VoxelTrait> VoxOpsBulkWrite<T> for VoxTree {
     fn fill(&mut self, interner: &mut VoxInterner<T>, value: T) {
         if value != T::default() {
             if !self.root_id.is_empty() {

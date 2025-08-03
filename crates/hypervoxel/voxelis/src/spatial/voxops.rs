@@ -8,6 +8,9 @@ pub trait VoxOpsRead<T: VoxelTrait> {
 
 pub trait VoxOpsWrite<T: VoxelTrait> {
     fn set(&mut self, interner: &mut VoxInterner<T>, position: IVec3, voxel: T) -> bool;
+}
+
+pub trait VoxOpsBulkWrite<T: VoxelTrait> {
     fn fill(&mut self, interner: &mut VoxInterner<T>, value: T);
     fn clear(&mut self, interner: &mut VoxInterner<T>);
 }

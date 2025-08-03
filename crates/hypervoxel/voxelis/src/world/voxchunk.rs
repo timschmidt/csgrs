@@ -9,8 +9,8 @@ use wide::f32x8;
 use crate::io::consts::VTC_MAGIC;
 use crate::io::varint::{decode_varint_u32_from_reader, encode_varint};
 use crate::spatial::{
-    VoxOpsBatch, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite,
-    VoxTree,
+    VoxOpsBatch, VoxOpsBulkWrite, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState,
+    VoxOpsWrite, VoxTree,
 };
 use crate::{Batch, BlockId, Lod, MaxDepth, VoxInterner};
 
@@ -380,7 +380,9 @@ impl VoxOpsWrite<i32> for VoxChunk {
     fn set(&mut self, interner: &mut VoxInterner<i32>, position: IVec3, voxel: i32) -> bool {
         self.data.set(interner, position, voxel)
     }
+}
 
+impl VoxOpsBulkWrite<i32> for VoxChunk {
     #[inline(always)]
     fn fill(&mut self, interner: &mut VoxInterner<i32>, value: i32) {
         self.data.fill(interner, value)

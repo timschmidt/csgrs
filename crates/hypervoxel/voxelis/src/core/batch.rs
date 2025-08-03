@@ -6,7 +6,7 @@
 //! # Examples
 //!
 //! ```
-//! use voxelis::{Batch, MaxDepth, VoxInterner, spatial::VoxOpsWrite};
+//! use voxelis::{Batch, MaxDepth, VoxInterner, spatial::{VoxOpsBulkWrite, VoxOpsWrite}};
 //! use glam::IVec3;
 //!
 //! // Create interner for 8-bit voxels
@@ -24,7 +24,9 @@
 use glam::IVec3;
 
 use crate::{
-    MaxDepth, VoxInterner, VoxelTrait, interner::MAX_CHILDREN, spatial::VoxOpsWrite,
+    MaxDepth, VoxInterner, VoxelTrait,
+    interner::MAX_CHILDREN,
+    spatial::{VoxOpsBulkWrite, VoxOpsWrite},
     utils::common::encode_child_index_path,
 };
 
@@ -193,7 +195,9 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for Batch<T> {
 
         true
     }
+}
 
+impl<T: VoxelTrait> VoxOpsBulkWrite<T> for Batch<T> {
     /// Clears existing operations and sets a uniform fill value for the batch.
     fn fill(&mut self, interner: &mut VoxInterner<T>, value: T) {
         self.clear(interner);
