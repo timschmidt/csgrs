@@ -20,7 +20,7 @@ use crate::{
     spatial::VoxOpsSpatial3D,
     world::{
         VoxChunk,
-        voxchunk::{chunk_deserialize, chunk_serialize},
+        voxchunk::{deserialize_chunk, serialize_chunk},
     },
 };
 
@@ -254,7 +254,7 @@ impl VoxModel {
             .par_iter()
             .map(|(_, chunk)| {
                 let mut buffer = Vec::with_capacity(BUFFER_SIZE);
-                chunk_serialize(chunk, &id_map, &mut buffer);
+                serialize_chunk(chunk, &id_map, &mut buffer);
                 buffer
             })
             .collect();
@@ -379,7 +379,7 @@ impl VoxModel {
         let actual_chunks_len = reader.read_u32::<BigEndian>().unwrap();
 
         for _ in 0..actual_chunks_len {
-            let chunk = chunk_deserialize(
+            let chunk = deserialize_chunk(
                 &mut interner,
                 &leaf_patterns,
                 &branch_patterns,

@@ -316,7 +316,7 @@ impl VoxOpsMesh<i32> for VoxChunk {
     }
 }
 
-pub fn chunk_serialize(chunk: &VoxChunk, id_map: &FxHashMap<u32, u32>, data: &mut Vec<u8>) {
+pub fn serialize_chunk(chunk: &VoxChunk, id_map: &FxHashMap<u32, u32>, data: &mut Vec<u8>) {
     let mut writer = std::io::BufWriter::new(data);
 
     writer.write_all(&VTC_MAGIC).unwrap();
@@ -334,7 +334,7 @@ pub fn chunk_serialize(chunk: &VoxChunk, id_map: &FxHashMap<u32, u32>, data: &mu
     writer.write_all(&new_id_bytes).unwrap();
 }
 
-pub fn chunk_deserialize(
+pub fn deserialize_chunk(
     interner: &mut VoxInterner<i32>,
     leaf_patterns: &FxHashMap<u32, (BlockId, i32)>,
     patterns: &FxHashMap<u32, (BlockId, [u32; 8], i32)>,
