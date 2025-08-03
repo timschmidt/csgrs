@@ -1,12 +1,12 @@
 use std::{io::Write, path::Path};
 
 use byteorder::{BigEndian, WriteBytesExt};
-use glam::Vec3;
 use md5::{Digest, Md5};
 
 use crate::{
     Lod,
     spatial::{VoxOpsSpatial3D, VoxOpsState},
+    utils::mesh::MeshData,
     world::VoxModel,
 };
 
@@ -16,9 +16,7 @@ use super::{
 };
 
 pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &VoxModel, lod: Lod) {
-    let mut vertices: Vec<Vec3> = Vec::new();
-    let mut normals: Vec<Vec3> = Vec::new();
-    let mut indices: Vec<u32> = Vec::new();
+    let mut mesh_data = MeshData::default();
 
     let interner = model.get_interner();
     let interner = interner.read();
@@ -28,14 +26,7 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &VoxMo
             continue;
         }
 
-        chunk.generate_mesh_arrays(
-            &interner,
-            &mut vertices,
-            &mut normals,
-            &mut indices,
-            chunk.world_position_3d(),
-            lod,
-        );
+        chunk.generate_mesh_arrays(&interner, &mut mesh_data, chunk.world_position_3d(), lod);
     }
 
     let obj_file = std::fs::File::create(path).unwrap();
@@ -43,19 +34,19 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &VoxMo
 
     writer.write_all(format!("o {name}\n").as_bytes()).unwrap();
 
-    for vertex in vertices.iter() {
+    for vertex in mesh_data.vertices.iter() {
         writer
             .write_fmt(format_args!("v {} {} {}\n", vertex.x, vertex.y, vertex.z))
             .unwrap();
     }
 
-    for normal in normals.iter() {
+    for normal in mesh_data.normals.iter() {
         writer
             .write_fmt(format_args!("vn {} {} {}\n", normal.x, normal.y, normal.z))
             .unwrap();
     }
 
-    for index in indices.chunks(3) {
+    for index in mesh_data.indices.chunks(3) {
         writer
             .write_fmt(format_args!(
                 "f {} {} {}\n",

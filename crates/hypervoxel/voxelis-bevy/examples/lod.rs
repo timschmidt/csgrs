@@ -22,7 +22,9 @@ use bevy::{
 use bevy_egui::{EguiContexts, EguiPlugin, egui};
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
-use voxelis::{Lod, MaxDepth, VoxInterner, spatial::VoxOpsSpatial3D, world::VoxChunk};
+use voxelis::{
+    Lod, MaxDepth, VoxInterner, spatial::VoxOpsSpatial3D, utils::mesh::MeshData, world::VoxChunk,
+};
 
 const MAX_DEPTH: MaxDepth = MaxDepth::new(6);
 const VOXELS_PER_AXIS: usize = 1 << MAX_DEPTH.max();
@@ -60,56 +62,46 @@ impl World {
         }
     }
 
-    pub fn generate_mesh_arrays(
-        &self,
-        vertices: &mut Vec<Vec3>,
-        normals: &mut Vec<Vec3>,
-        indices: &mut Vec<u32>,
-        lod: Lod,
-    ) {
+    pub fn generate_mesh_arrays(&self, mesh_data: &mut MeshData, lod: Lod) {
         let offset = Vec3::new(0.0, 0.0, 0.0);
         self.chunk
-            .generate_mesh_arrays(&self.interner, vertices, normals, indices, offset, lod);
+            .generate_mesh_arrays(&self.interner, mesh_data, offset, lod);
         println!(
             "vertices: {} normals: {} indices: {}",
-            humanize_bytes::humanize_quantity!(vertices.len()),
-            humanize_bytes::humanize_quantity!(normals.len()),
-            humanize_bytes::humanize_quantity!(indices.len())
+            humanize_bytes::humanize_quantity!(mesh_data.vertices.len()),
+            humanize_bytes::humanize_quantity!(mesh_data.normals.len()),
+            humanize_bytes::humanize_quantity!(mesh_data.indices.len())
         );
     }
 
     pub fn generate_mesh(&mut self, meshes: &mut ResMut<Assets<Mesh>>, lod: Lod) {
-        let mut vertices = Vec::new();
-        let mut normals = Vec::new();
-        let mut indices = Vec::new();
+        let mut mesh_data = MeshData::default();
 
-        self.generate_mesh_arrays(&mut vertices, &mut normals, &mut indices, lod);
+        self.generate_mesh_arrays(&mut mesh_data, lod);
 
         let mesh = Mesh::new(
             PrimitiveTopology::TriangleList,
             RenderAssetUsages::RENDER_WORLD,
         )
-        .with_inserted_indices(Indices::U32(indices))
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+        .with_inserted_indices(Indices::U32(mesh_data.indices))
+        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, mesh_data.vertices)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_data.normals);
 
         self.mesh = meshes.add(mesh);
     }
 
     pub fn regenerate_mesh(&mut self, meshes: &mut ResMut<Assets<Mesh>>, lod: Lod) {
-        let mut vertices = Vec::new();
-        let mut normals = Vec::new();
-        let mut indices = Vec::new();
+        let mut mesh_data = MeshData::default();
 
-        self.generate_mesh_arrays(&mut vertices, &mut normals, &mut indices, lod);
+        self.generate_mesh_arrays(&mut mesh_data, lod);
 
         let mesh = Mesh::new(
             PrimitiveTopology::TriangleList,
             RenderAssetUsages::RENDER_WORLD,
         )
-        .with_inserted_indices(Indices::U32(indices))
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+        .with_inserted_indices(Indices::U32(mesh_data.indices))
+        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, mesh_data.vertices)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_data.normals);
 
         meshes.insert(&mut self.mesh, mesh);
     }

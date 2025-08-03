@@ -12,25 +12,8 @@ use crate::spatial::{
     VoxOpsBatch, VoxOpsBulkWrite, VoxOpsChunkConfig, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh,
     VoxOpsRead, VoxOpsSpatial3D, VoxOpsState, VoxOpsWrite, VoxTree,
 };
+use crate::utils::mesh::{self, MeshData};
 use crate::{Batch, BlockId, Lod, MaxDepth, VoxInterner};
-
-const CUBE_VERTS: [Vec3; 8] = [
-    Vec3::new(-1.0, 1.0, -1.0),
-    Vec3::new(1.0, 1.0, -1.0),
-    Vec3::new(1.0, 1.0, 1.0),
-    Vec3::new(-1.0, 1.0, 1.0),
-    Vec3::new(-1.0, -1.0, -1.0),
-    Vec3::new(1.0, -1.0, -1.0),
-    Vec3::new(1.0, -1.0, 1.0),
-    Vec3::new(-1.0, -1.0, 1.0),
-];
-
-const VEC_UP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
-const VEC_RIGHT: Vec3 = Vec3::new(1.0, 0.0, 0.0);
-const VEC_DOWN: Vec3 = Vec3::new(0.0, -1.0, 0.0);
-const VEC_LEFT: Vec3 = Vec3::new(-1.0, 0.0, 0.0);
-const VEC_FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
-const VEC_BACK: Vec3 = Vec3::new(0.0, 0.0, 1.0);
 
 pub struct VoxChunk {
     data: VoxTree,
@@ -57,82 +40,53 @@ impl VoxChunk {
         self.data.get_root_id()
     }
 
-    #[inline(always)]
-    fn add_quad(
-        vertices: &mut Vec<Vec3>,
-        indices: &mut Vec<u32>,
-        normals: &mut Vec<Vec3>,
-        quad: [Vec3; 4],
-        normal: &Vec3,
-    ) {
-        let index = vertices.len() as u32;
-
-        vertices.extend(quad);
-        normals.extend([normal, normal, normal, normal]);
-        indices.extend([index + 2, index + 1, index, index + 3, index, index + 1]);
-    }
-
     pub fn generate_mesh_arrays(
         &self,
         interner: &VoxInterner<i32>,
-        vertices: &mut Vec<Vec3>,
-        normals: &mut Vec<Vec3>,
-        indices: &mut Vec<u32>,
+        mesh_data: &mut MeshData,
         offset: Vec3,
         lod: Lod,
     ) {
         if self.data.is_leaf() {
             let half_voxel_offset = 0.5 + offset;
-            let chunk_v0 = CUBE_VERTS[0] * 0.5 * self.chunk_size + half_voxel_offset;
-            let chunk_v1 = CUBE_VERTS[1] * 0.5 * self.chunk_size + half_voxel_offset;
-            let chunk_v2 = CUBE_VERTS[2] * 0.5 * self.chunk_size + half_voxel_offset;
-            let chunk_v3 = CUBE_VERTS[3] * 0.5 * self.chunk_size + half_voxel_offset;
-            let chunk_v4 = CUBE_VERTS[4] * 0.5 * self.chunk_size + half_voxel_offset;
-            let chunk_v5 = CUBE_VERTS[5] * 0.5 * self.chunk_size + half_voxel_offset;
-            let chunk_v6 = CUBE_VERTS[6] * 0.5 * self.chunk_size + half_voxel_offset;
-            let chunk_v7 = CUBE_VERTS[7] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v0 = mesh::CUBE_VERTS[0] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v1 = mesh::CUBE_VERTS[1] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v2 = mesh::CUBE_VERTS[2] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v3 = mesh::CUBE_VERTS[3] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v4 = mesh::CUBE_VERTS[4] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v5 = mesh::CUBE_VERTS[5] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v6 = mesh::CUBE_VERTS[6] * 0.5 * self.chunk_size + half_voxel_offset;
+            let chunk_v7 = mesh::CUBE_VERTS[7] * 0.5 * self.chunk_size + half_voxel_offset;
 
-            Self::add_quad(
-                vertices,
-                indices,
-                normals,
+            mesh::add_quad(
+                mesh_data,
                 [chunk_v0, chunk_v2, chunk_v3, chunk_v1],
-                &VEC_UP,
+                &mesh::VEC_UP,
             );
-            Self::add_quad(
-                vertices,
-                indices,
-                normals,
+            mesh::add_quad(
+                mesh_data,
                 [chunk_v2, chunk_v5, chunk_v6, chunk_v1],
-                &VEC_RIGHT,
+                &mesh::VEC_RIGHT,
             );
-            Self::add_quad(
-                vertices,
-                indices,
-                normals,
+            mesh::add_quad(
+                mesh_data,
                 [chunk_v7, chunk_v5, chunk_v4, chunk_v6],
-                &VEC_DOWN,
+                &mesh::VEC_DOWN,
             );
-            Self::add_quad(
-                vertices,
-                indices,
-                normals,
+            mesh::add_quad(
+                mesh_data,
                 [chunk_v0, chunk_v7, chunk_v4, chunk_v3],
-                &VEC_LEFT,
+                &mesh::VEC_LEFT,
             );
-            Self::add_quad(
-                vertices,
-                indices,
-                normals,
+            mesh::add_quad(
+                mesh_data,
                 [chunk_v3, chunk_v6, chunk_v7, chunk_v2],
-                &VEC_BACK,
+                &mesh::VEC_BACK,
             );
-            Self::add_quad(
-                vertices,
-                indices,
-                normals,
+            mesh::add_quad(
+                mesh_data,
                 [chunk_v1, chunk_v4, chunk_v5, chunk_v0],
-                &VEC_FORWARD,
+                &mesh::VEC_FORWARD,
             );
 
             return;
@@ -149,14 +103,14 @@ impl VoxChunk {
         let shift_z = 1 << max_depth.as_usize();
 
         let half_voxel_offset = half_voxel_size_vec3 + offset;
-        let chunk_v0 = CUBE_VERTS[0] * half_voxel_size_vec3 + half_voxel_offset;
-        let chunk_v1 = CUBE_VERTS[1] * half_voxel_size_vec3 + half_voxel_offset;
-        let chunk_v2 = CUBE_VERTS[2] * half_voxel_size_vec3 + half_voxel_offset;
-        let chunk_v3 = CUBE_VERTS[3] * half_voxel_size_vec3 + half_voxel_offset;
-        let chunk_v4 = CUBE_VERTS[4] * half_voxel_size_vec3 + half_voxel_offset;
-        let chunk_v5 = CUBE_VERTS[5] * half_voxel_size_vec3 + half_voxel_offset;
-        let chunk_v6 = CUBE_VERTS[6] * half_voxel_size_vec3 + half_voxel_offset;
-        let chunk_v7 = CUBE_VERTS[7] * half_voxel_size_vec3 + half_voxel_offset;
+        let chunk_v0 = mesh::CUBE_VERTS[0] * half_voxel_size_vec3 + half_voxel_offset;
+        let chunk_v1 = mesh::CUBE_VERTS[1] * half_voxel_size_vec3 + half_voxel_offset;
+        let chunk_v2 = mesh::CUBE_VERTS[2] * half_voxel_size_vec3 + half_voxel_offset;
+        let chunk_v3 = mesh::CUBE_VERTS[3] * half_voxel_size_vec3 + half_voxel_offset;
+        let chunk_v4 = mesh::CUBE_VERTS[4] * half_voxel_size_vec3 + half_voxel_offset;
+        let chunk_v5 = mesh::CUBE_VERTS[5] * half_voxel_size_vec3 + half_voxel_offset;
+        let chunk_v6 = mesh::CUBE_VERTS[6] * half_voxel_size_vec3 + half_voxel_offset;
+        let chunk_v7 = mesh::CUBE_VERTS[7] * half_voxel_size_vec3 + half_voxel_offset;
 
         let chunk_v_x = f32x8::from([
             chunk_v0.x, chunk_v1.x, chunk_v2.x, chunk_v3.x, chunk_v4.x, chunk_v5.x, chunk_v6.x,
@@ -224,22 +178,22 @@ impl VoxChunk {
                     let v7 = Vec3::new(v_x_array[7], v_y_array[7], v_z_array[7]);
 
                     if has_top {
-                        Self::add_quad(vertices, indices, normals, [v0, v2, v3, v1], &VEC_UP);
+                        mesh::add_quad(mesh_data, [v0, v2, v3, v1], &mesh::VEC_UP);
                     }
                     if has_right {
-                        Self::add_quad(vertices, indices, normals, [v2, v5, v6, v1], &VEC_RIGHT);
+                        mesh::add_quad(mesh_data, [v2, v5, v6, v1], &mesh::VEC_RIGHT);
                     }
                     if has_bottom {
-                        Self::add_quad(vertices, indices, normals, [v7, v5, v4, v6], &VEC_DOWN);
+                        mesh::add_quad(mesh_data, [v7, v5, v4, v6], &mesh::VEC_DOWN);
                     }
                     if has_left {
-                        Self::add_quad(vertices, indices, normals, [v0, v7, v4, v3], &VEC_LEFT);
+                        mesh::add_quad(mesh_data, [v0, v7, v4, v3], &mesh::VEC_LEFT);
                     }
                     if has_front {
-                        Self::add_quad(vertices, indices, normals, [v3, v6, v7, v2], &VEC_BACK);
+                        mesh::add_quad(mesh_data, [v3, v6, v7, v2], &mesh::VEC_BACK);
                     }
                     if has_back {
-                        Self::add_quad(vertices, indices, normals, [v1, v4, v5, v0], &VEC_FORWARD);
+                        mesh::add_quad(mesh_data, [v1, v4, v5, v0], &mesh::VEC_FORWARD);
                     }
                 }
             }

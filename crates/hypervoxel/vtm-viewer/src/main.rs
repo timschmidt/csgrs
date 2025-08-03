@@ -20,6 +20,7 @@ use voxelis::{
     BlockId, Lod,
     io::import::import_model_from_vtm,
     spatial::{VoxOpsSpatial3D, VoxOpsState},
+    utils::mesh::MeshData,
     world::VoxModel,
 };
 
@@ -169,9 +170,7 @@ fn setup(
     let interner = interner.read();
 
     if single_mesh {
-        let mut vertices = Vec::new();
-        let mut normals = Vec::new();
-        let mut indices = Vec::new();
+        let mut mesh_data = MeshData::default();
 
         for (_, chunk) in model.chunks.iter() {
             if chunk.is_empty() {
@@ -180,9 +179,7 @@ fn setup(
 
             chunk.generate_mesh_arrays(
                 &interner,
-                &mut vertices,
-                &mut normals,
-                &mut indices,
+                &mut mesh_data,
                 chunk.world_position_3d(),
                 model_settings.lod,
             );
@@ -192,9 +189,9 @@ fn setup(
             bevy::render::mesh::PrimitiveTopology::TriangleList,
             bevy::render::render_asset::RenderAssetUsages::RENDER_WORLD,
         )
-        .with_inserted_indices(bevy::render::mesh::Indices::U32(indices))
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+        .with_inserted_indices(bevy::render::mesh::Indices::U32(mesh_data.indices))
+        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, mesh_data.vertices)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_data.normals);
 
         let mesh = meshes.add(mesh);
 
@@ -236,22 +233,18 @@ fn setup(
                 saved_normals += normals;
                 chunk_mesh.clone()
             } else {
-                let mut vertices = Vec::new();
-                let mut normals = Vec::new();
-                let mut indices = Vec::new();
+                let mut mesh_data = MeshData::default();
 
                 chunk.generate_mesh_arrays(
                     &interner,
-                    &mut vertices,
-                    &mut normals,
-                    &mut indices,
+                    &mut mesh_data,
                     Vec3::ZERO,
                     model_settings.lod,
                 );
 
-                let vertices_len = vertices.len();
-                let indices_len = indices.len();
-                let normals_len = normals.len();
+                let vertices_len = mesh_data.vertices.len();
+                let indices_len = mesh_data.indices.len();
+                let normals_len = mesh_data.normals.len();
 
                 total_vertices += vertices_len;
                 total_indices += indices_len;
@@ -261,9 +254,9 @@ fn setup(
                     bevy::render::mesh::PrimitiveTopology::TriangleList,
                     bevy::render::render_asset::RenderAssetUsages::RENDER_WORLD,
                 )
-                .with_inserted_indices(bevy::render::mesh::Indices::U32(indices))
-                .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
-                .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+                .with_inserted_indices(bevy::render::mesh::Indices::U32(mesh_data.indices))
+                .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, mesh_data.vertices)
+                .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_data.normals);
 
                 let mesh = meshes.add(chunk_mesh);
 
