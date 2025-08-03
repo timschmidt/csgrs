@@ -128,9 +128,16 @@ pub fn get_at_depth<T: VoxelTrait>(
     let max_depth = depth.max();
     let mut depth = depth.current();
 
+    let default_t = T::default();
+
     while !node_id.is_empty() {
         if depth >= max_depth {
-            return Some(*interner.get_value(&node_id));
+            let v = interner.get_value(&node_id);
+            if v != &default_t {
+                return Some(*v);
+            } else {
+                return None;
+            }
         }
 
         if node_id.is_branch() {
