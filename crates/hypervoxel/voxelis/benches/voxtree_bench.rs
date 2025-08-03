@@ -1,12 +1,27 @@
 use std::hint::black_box;
 
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{
+    BenchmarkGroup, BenchmarkId, Criterion, criterion_group, criterion_main,
+    measurement::Measurement,
+};
 use glam::{IVec3, Vec3};
 use rand::Rng;
 
 use voxelis::{
     Batch, Lod, MaxDepth, VoxInterner,
-    spatial::{VoxOpsBatch, VoxOpsMesh, VoxOpsRead, VoxOpsState, VoxOpsWrite, VoxTree},
+    spatial::{
+        VoxOpsBatch, VoxOpsBulkWrite, VoxOpsConfig, VoxOpsMesh, VoxOpsRead, VoxOpsState,
+        VoxOpsWrite, VoxTree,
+    },
+    utils::{
+        common::to_vec,
+        mesh::MeshData,
+        shapes::{
+            generate_checkerboard_batch, generate_corners_batch, generate_diagonal_batch,
+            generate_hollow_cube_batch, generate_perlin_3d_batch, generate_sparse_fill_batch,
+            generate_sphere_batch, generate_terrain_batch,
+        },
+    },
     world::VoxChunk,
 };
 
@@ -55,12 +70,7 @@ pub fn generate_test_sphere(
     }
 }
 
-pub fn generate_test_sphere_for_batch(
-    batch: &mut Batch<i32>,
-    interner: &mut VoxInterner<i32>,
-    size: u32,
-    value: i32,
-) {
+pub fn generate_test_sphere_for_batch(batch: &mut Batch<i32>, size: u32, value: i32) {
     let radius = (size / 2) as i32;
     let r1 = radius - 1;
 
@@ -77,7 +87,7 @@ pub fn generate_test_sphere_for_batch(
                 let distance_squared = dx * dx + dy * dy + dz * dz;
 
                 if distance_squared <= radius_squared {
-                    batch.set(interner, IVec3::new(x, y, z), value);
+                    batch.just_set(IVec3::new(x, y, z), value);
                 }
             }
         }
@@ -147,6 +157,11 @@ enum BenchType {
     Batch,
 }
 
+#[derive(Copy, Clone)]
+enum MeshType {
+    Naive,
+}
+
 impl BenchType {
     pub fn to_string(self) -> &'static str {
         match self {
@@ -156,15 +171,123 @@ impl BenchType {
     }
 }
 
+impl MeshType {
+    pub fn to_string(self) -> &'static str {
+        match self {
+            Self::Naive => "naive",
+        }
+    }
+}
+
+fn benchmark_meshing<M: Measurement>(
+    group: &mut BenchmarkGroup<'_, M>,
+    size: u32,
+    depth: MaxDepth,
+    max_lod: u8,
+    mesh_types: &[MeshType],
+    interner: &VoxInterner<i32>,
+    chunk: &VoxChunk,
+) {
+    for lod in 0..max_lod {
+        for mesh_type in mesh_types.iter() {
+            let bench_id = BenchmarkId::new(
+                size.to_string(),
+                format!("LOD_{lod}/{}", mesh_type.to_string()),
+            );
+
+            let offset = Vec3::ZERO;
+            let mut mesh_data = MeshData::default();
+
+            let lod = Lod::new(lod);
+
+            match mesh_type {
+                MeshType::Naive => {
+                    group.bench_with_input(bench_id, &depth, |b, _| {
+                        b.iter(|| {
+                            mesh_data.clear();
+
+                            chunk.generate_naive_mesh_arrays(
+                                interner,
+                                black_box(&mut mesh_data),
+                                black_box(offset),
+                                black_box(lod),
+                            );
+                        });
+                    });
+                }
+            }
+        }
+    }
+}
+
+fn benchmark_to_vec<M: Measurement>(
+    group: &mut BenchmarkGroup<'_, M>,
+    size: u32,
+    depth: MaxDepth,
+    max_lod: u8,
+    interner: &VoxInterner<i32>,
+    tree: &VoxTree,
+) {
+    for lod in 0..max_lod {
+        let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{lod}"));
+        group.bench_with_input(bench_id, &depth, |b, _| {
+            let lod = Lod::new(lod);
+
+            let max_depth = tree.max_depth(lod);
+
+            b.iter(|| {
+                let _ = black_box(to_vec(
+                    interner,
+                    black_box(&tree.get_root_id()),
+                    black_box(max_depth),
+                ));
+            });
+        });
+    }
+}
+
 fn benchmark_voxtree(c: &mut Criterion) {
-    let depths: Vec<(u32, MaxDepth)> = (3..=6)
+    const MIN_DEPTH: u8 = 3;
+    const MAX_DEPTH: u8 = 6;
+
+    let min_depth_env = std::env::var("VOXTREE_MIN_DEPTH");
+    let min_depth = match min_depth_env {
+        Ok(val) => val.parse::<u8>().unwrap_or(MIN_DEPTH),
+        Err(_) => MIN_DEPTH,
+    };
+    let max_depth_env = std::env::var("VOXTREE_MAX_DEPTH");
+    let max_depth = match max_depth_env {
+        Ok(val) => val.parse::<u8>().unwrap_or(MAX_DEPTH),
+        Err(_) => MAX_DEPTH,
+    };
+    let bench_types_env = std::env::var("VOXTREE_BENCHMARK_TYPES");
+    let bench_types = match bench_types_env {
+        Ok(val) => {
+            if val == "single" {
+                vec![BenchType::Single]
+            } else if val == "batch" {
+                vec![BenchType::Batch]
+            } else {
+                vec![BenchType::Single, BenchType::Batch]
+            }
+        }
+        Err(_) => vec![BenchType::Single, BenchType::Batch],
+    };
+    let mesh_types = vec![MeshType::Naive];
+    let max_lod_env = std::env::var("VOXTREE_MAX_LOD");
+    let max_lod = match max_lod_env {
+        Ok(val) => val.parse::<u8>().unwrap_or(max_depth),
+        Err(_) => max_depth,
+    };
+
+    let max_lod = max_lod.clamp(1, max_depth);
+
+    let depths: Vec<(u32, MaxDepth)> = (min_depth..=max_depth)
         .map(|depth| {
             let voxels_per_axis = 1 << depth;
             (voxels_per_axis as u32, MaxDepth::new(depth))
         })
         .collect();
-
-    let bench_types = [BenchType::Single, BenchType::Batch];
 
     {
         let depth = depths[0].1;
@@ -201,8 +324,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                         BenchType::Batch => {
                             let mut batches = [tree.create_batch(), tree.create_batch()];
 
-                            batches[0].fill(&mut interner, 1);
-                            batches[1].fill(&mut interner, 2);
+                            batches[0].just_fill(1);
+                            batches[1].just_fill(2);
 
                             let mut batch_idx = 0;
 
@@ -254,11 +377,11 @@ fn benchmark_voxtree(c: &mut Criterion) {
                         BenchType::Batch => {
                             let mut batches = [tree.create_batch(), tree.create_batch()];
 
-                            batches[0].fill(&mut interner, 1);
-                            batches[0].set(&mut interner, IVec3::new(0, 0, 0), 2);
+                            batches[0].just_fill(1);
+                            batches[0].just_set(IVec3::new(0, 0, 0), 2);
 
-                            batches[1].fill(&mut interner, 2);
-                            batches[1].set(&mut interner, IVec3::new(0, 0, 0), 3);
+                            batches[1].just_fill(2);
+                            batches[1].just_set(IVec3::new(0, 0, 0), 3);
 
                             let mut batch_idx = 0;
 
@@ -309,8 +432,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                         BenchType::Batch => {
                             let mut batches = [tree.create_batch(), tree.create_batch()];
 
-                            batches[0].set(&mut interner, IVec3::new(0, 0, 0), 1);
-                            batches[1].set(&mut interner, IVec3::new(0, 0, 0), 2);
+                            batches[0].just_set(IVec3::new(0, 0, 0), 1);
+                            batches[1].just_set(IVec3::new(0, 0, 0), 2);
 
                             let mut batch_idx = 0;
 
@@ -371,8 +494,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                             for y in 0..size as i32 {
                                 for z in 0..size as i32 {
                                     for x in 0..size as i32 {
-                                        batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
-                                        batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
+                                        batches[0].just_set(IVec3::new(x, y, z), 1);
+                                        batches[1].just_set(IVec3::new(x, y, z), 2);
                                     }
                                 }
                             }
@@ -438,8 +561,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                             for y in 0..half_size as i32 {
                                 for z in 0..size as i32 {
                                     for x in 0..size as i32 {
-                                        batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
-                                        batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
+                                        batches[0].just_set(IVec3::new(x, y, z), 1);
+                                        batches[1].just_set(IVec3::new(x, y, z), 2);
                                     }
                                 }
                             }
@@ -492,6 +615,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 }
 
                                 v += 1;
+
                                 if v == 0 {
                                     v = 1;
                                 }
@@ -504,16 +628,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 for z in 0..size as i32 {
                                     for x in 0..size as i32 {
                                         let position = IVec3::new(x, y, z);
-                                        batches[0].set(
-                                            &mut interner,
-                                            position,
-                                            (x + y + z + 1) % i32::MAX,
-                                        );
-                                        batches[1].set(
-                                            &mut interner,
-                                            position,
-                                            (x + y + z + 1000) % i32::MAX,
-                                        );
+                                        batches[0].just_set(position, (x + y + z + 1) % i32::MAX);
+                                        batches[1]
+                                            .just_set(position, (x + y + z + 1000) % i32::MAX);
                                     }
                                 }
                             }
@@ -568,6 +685,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 }
 
                                 v += 1;
+
                                 if v == 0 {
                                     v = 1;
                                 }
@@ -580,8 +698,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 for z in 0..size as i32 {
                                     for x in 0..size as i32 {
                                         if (x + y + z) % 2 == 0 {
-                                            batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
-                                            batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
+                                            batches[0].just_set(IVec3::new(x, y, z), 1);
+                                            batches[1].just_set(IVec3::new(x, y, z), 2);
                                         }
                                     }
                                 }
@@ -635,6 +753,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 }
 
                                 v += 1;
+
                                 if v == 0 {
                                     v = 1;
                                 }
@@ -646,8 +765,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                             for y in (0..size as i32).step_by(4) {
                                 for z in (0..size as i32).step_by(4) {
                                     for x in (0..size as i32).step_by(4) {
-                                        batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
-                                        batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
+                                        batches[0].just_set(IVec3::new(x, y, z), 1);
+                                        batches[1].just_set(IVec3::new(x, y, z), 2);
                                     }
                                 }
                             }
@@ -701,6 +820,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 }
 
                                 v += 1;
+
                                 if v == 0 {
                                     v = 1;
                                 }
@@ -714,8 +834,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 let value2 = (x + 2) % 256;
                                 for y in 0..size as i32 {
                                     for z in 0..size as i32 {
-                                        batches[0].set(&mut interner, IVec3::new(x, y, z), value1);
-                                        batches[1].set(&mut interner, IVec3::new(x, y, z), value2);
+                                        batches[0].just_set(IVec3::new(x, y, z), value1);
+                                        batches[1].just_set(IVec3::new(x, y, z), value2);
                                     }
                                 }
                             }
@@ -776,6 +896,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 }
 
                                 v += 1;
+
                                 if v == 0 {
                                     v = 1;
                                 }
@@ -794,8 +915,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                             || z == 0
                                             || z == (size as i32) - 1;
                                         if is_edge {
-                                            batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
-                                            batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
+                                            batches[0].just_set(IVec3::new(x, y, z), 1);
+                                            batches[1].just_set(IVec3::new(x, y, z), 2);
                                         }
                                     }
                                 }
@@ -851,6 +972,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 }
 
                                 v += 1;
+
                                 if v == 0 {
                                     v = 1;
                                 }
@@ -863,8 +985,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 for z in 0..size as i32 {
                                     for x in 0..size as i32 {
                                         if x == y && x == z {
-                                            batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
-                                            batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
+                                            batches[0].just_set(IVec3::new(x, y, z), 1);
+                                            batches[1].just_set(IVec3::new(x, y, z), 2);
                                         }
                                     }
                                 }
@@ -932,6 +1054,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 }
 
                                 v += 1;
+
                                 if v == 0 {
                                     v = 1;
                                 }
@@ -950,8 +1073,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                         let distance_squared = dx * dx + dy * dy + dz * dz;
 
                                         if distance_squared <= radius_squared {
-                                            batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
-                                            batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
+                                            batches[0].just_set(IVec3::new(x, y, z), 1);
+                                            batches[1].just_set(IVec3::new(x, y, z), 2);
                                         }
                                     }
                                 }
@@ -1014,6 +1137,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 }
 
                                 v += 1;
+
                                 if v == 0 {
                                     v = 1;
                                 }
@@ -1032,8 +1156,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                         * size as f32;
                                     let y = y as i32;
                                     debug_assert!(y < size as i32);
-                                    batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
-                                    batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
+                                    batches[0].just_set(IVec3::new(x, y, z), 1);
+                                    batches[1].just_set(IVec3::new(x, y, z), 2);
                                 }
                             }
 
@@ -1096,6 +1220,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 }
 
                                 v += 1;
+
                                 if v == 0 {
                                     v = 1;
                                 }
@@ -1115,8 +1240,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                     let height = height as i32;
                                     debug_assert!(height < size as i32);
                                     for y in 0..=height {
-                                        batches[0].set(&mut interner, IVec3::new(x, y, z), 1);
-                                        batches[1].set(&mut interner, IVec3::new(x, y, z), 2);
+                                        batches[0].just_set(IVec3::new(x, y, z), 1);
+                                        batches[1].just_set(IVec3::new(x, y, z), 2);
                                     }
                                 }
                             }
@@ -1180,11 +1305,11 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
                                 let mut batch = tree.create_batch();
 
-                                batch.set(&mut interner, IVec3::new(x, y, z), value);
+                                batch.just_set(IVec3::new(x, y, z), value);
 
                                 tree.apply_batch(&mut interner, black_box(&batch));
 
-                                // batch.set(&mut interner, IVec3::new(x, y, z), 0);
+                                // batch.just_set(IVec3::new(x, y, z), 0);
                             });
                         }
                     }
@@ -1231,11 +1356,11 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 let z = rng.random_range(0..size as i32);
                                 let value = rng.random_range(1..i32::MAX);
 
-                                batch.set(&mut interner, IVec3::new(x, y, z), value);
+                                batch.just_set(IVec3::new(x, y, z), value);
 
                                 tree.apply_batch(&mut interner, black_box(&batch));
 
-                                batch.set(&mut interner, IVec3::new(x, y, z), 0);
+                                batch.just_set(IVec3::new(x, y, z), 0);
                             });
                         }
                     }
@@ -1424,7 +1549,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 22);
 
                 let mut batch = tree.create_batch();
-                generate_test_sphere_for_batch(&mut batch, &mut interner, size, 1);
+                generate_test_sphere_for_batch(&mut batch, size, 1);
 
                 b.iter(|| {
                     tree.apply_batch(&mut interner, black_box(&batch));
@@ -1461,16 +1586,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
             let tree = VoxTree::new(depth);
             let interner = VoxInterner::<i32>::with_memory_budget(1024);
 
-            for lod in 0..depth.max() {
-                let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
-                group.bench_with_input(bench_id, &depth, |b, _| {
-                    let lod = Lod::new(lod);
+            let max_lod = max_lod.clamp(1, depth.max());
 
-                    b.iter(|| {
-                        let _ = black_box(tree.to_vec(&interner, black_box(lod)));
-                    });
-                });
-            }
+            benchmark_to_vec(&mut group, size, depth, max_lod, &interner, &tree);
         }
 
         group.finish();
@@ -1484,19 +1602,12 @@ fn benchmark_voxtree(c: &mut Criterion) {
             let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 14);
 
             let mut batch = tree.create_batch();
-            generate_test_sphere_for_batch(&mut batch, &mut interner, size, 1);
+            generate_test_sphere_for_batch(&mut batch, size, 1);
             tree.apply_batch(&mut interner, &batch);
 
-            for lod in 0..depth.max() {
-                let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
-                group.bench_with_input(bench_id, &depth, |b, _| {
-                    let lod = Lod::new(lod);
+            let max_lod = max_lod.clamp(1, depth.max());
 
-                    b.iter(|| {
-                        let _ = black_box(tree.to_vec(&interner, black_box(lod)));
-                    });
-                });
-            }
+            benchmark_to_vec(&mut group, size, depth, max_lod, &interner, &tree);
         }
 
         group.finish();
@@ -1511,16 +1622,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
             tree.fill(&mut interner, 1);
 
-            for lod in 0..depth.max() {
-                let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
-                group.bench_with_input(bench_id, &depth, |b, _| {
-                    let lod = Lod::new(lod);
+            let max_lod = max_lod.clamp(1, depth.max());
 
-                    b.iter(|| {
-                        let _ = black_box(tree.to_vec(&interner, black_box(lod)));
-                    });
-                });
-            }
+            benchmark_to_vec(&mut group, size, depth, max_lod, &interner, &tree);
         }
 
         group.finish();
@@ -1535,16 +1639,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
             fill_sum!(size, tree, interner);
 
-            for lod in 0..depth.max() {
-                let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
-                group.bench_with_input(bench_id, &depth, |b, _| {
-                    let lod = Lod::new(lod);
+            let max_lod = max_lod.clamp(1, depth.max());
 
-                    b.iter(|| {
-                        let _ = black_box(tree.to_vec(&interner, black_box(lod)));
-                    });
-                });
-            }
+            benchmark_to_vec(&mut group, size, depth, max_lod, &interner, &tree);
         }
 
         group.finish();
@@ -1570,121 +1667,393 @@ fn benchmark_voxtree(c: &mut Criterion) {
                         * size as f32;
                     let y = y as i32;
                     debug_assert!(y < size as i32);
-                    batch.set(&mut interner, IVec3::new(x, y, z), 1);
+                    batch.just_set(IVec3::new(x, y, z), 1);
                 }
             }
 
             tree.apply_batch(&mut interner, &batch);
 
-            for lod in 0..depth.max() {
-                let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
-                group.bench_with_input(bench_id, &depth, |b, _| {
-                    let lod = Lod::new(lod);
+            let max_lod = max_lod.clamp(1, depth.max());
 
-                    b.iter(|| {
-                        let _ = black_box(tree.to_vec(&interner, black_box(lod)));
-                    });
-                });
-            }
+            benchmark_to_vec(&mut group, size, depth, max_lod, &interner, &tree);
         }
 
         group.finish();
     }
 
     {
-        let mut group = c.benchmark_group("voxtree_naive_mesh_sphere");
+        let mut group = c.benchmark_group("voxtree_mesh_sphere");
 
         for &(size, depth) in depths.iter() {
             let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
 
             let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
-
-            chunk_generate_test_sphere(&mut chunk, &mut interner, size, 1);
-
-            for lod in 0..depth.max() {
-                let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
-                group.bench_with_input(bench_id, &depth, |b, _| {
-                    let offset = Vec3::ZERO;
-                    let mut vertices = Vec::new();
-                    let mut normals = Vec::new();
-                    let mut indices = Vec::new();
-
-                    let lod = Lod::new(lod);
-
-                    b.iter(|| {
-                        vertices.clear();
-                        normals.clear();
-                        indices.clear();
-
-                        chunk.generate_mesh_arrays(
-                            &interner,
-                            black_box(&mut vertices),
-                            black_box(&mut normals),
-                            black_box(&mut indices),
-                            black_box(offset),
-                            black_box(lod),
-                        );
-                    });
-                });
-            }
-        }
-
-        group.finish();
-    }
-
-    {
-        let mut group = c.benchmark_group("voxtree_naive_mesh_terrain");
-
-        for &(size, depth) in depths.iter() {
-            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
-
-            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
-
-            let mut noise = fastnoise_lite::FastNoiseLite::new();
-            noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
 
             let mut batch = chunk.create_batch();
 
-            for x in 0..size as i32 {
-                for z in 0..size as i32 {
-                    let y = ((noise.get_noise_2d(x as f32 / size as f32, z as f32 / size as f32)
-                        + 1.0)
-                        / 2.0)
-                        * size as f32;
-                    let y = y as i32;
-                    debug_assert!(y < size as i32);
-                    batch.set(&mut interner, IVec3::new(x, y, z), 1);
-                }
-            }
+            let half_size = size as i32 / 2;
+            let center = IVec3::new(half_size, half_size, half_size);
+            let radius = (size / 2) as i32;
+            let value = 1;
+
+            generate_sphere_batch(&mut batch, center, radius, value);
 
             chunk.apply_batch(&mut interner, &batch);
 
-            for lod in 0..depth.max() {
-                let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{}", lod));
-                group.bench_with_input(bench_id, &depth, |b, _| {
-                    let offset = Vec3::ZERO;
-                    let mut vertices = Vec::new();
-                    let mut normals = Vec::new();
-                    let mut indices = Vec::new();
+            let max_lod = max_lod.clamp(1, depth.max());
 
-                    let lod = Lod::new(lod);
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
 
-                    b.iter(|| {
-                        vertices.clear();
-                        normals.clear();
-                        indices.clear();
+        group.finish();
+    }
 
-                        chunk.generate_mesh_arrays(
-                            &interner,
-                            black_box(&mut vertices),
-                            black_box(&mut normals),
-                            black_box(&mut indices),
-                            black_box(offset),
-                            black_box(lod),
-                        );
-                    });
-                });
-            }
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_terrain_surface");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            let offset = Vec3::ZERO;
+            let scale = 26.0;
+            let voxel_size = 1.28 / size as f32;
+
+            generate_terrain_batch(&mut batch, voxel_size, scale, offset, true);
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_terrain_full");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            let offset = Vec3::ZERO;
+            let scale = 26.0;
+            let voxel_size = 1.28 / size as f32;
+
+            generate_terrain_batch(&mut batch, voxel_size, scale, offset, false);
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_corners_all");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            generate_corners_batch(&mut batch, [true; 8]);
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_corners_min");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            generate_corners_batch(
+                &mut batch,
+                [true, false, false, false, false, false, false, false],
+            );
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_corners_max");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            generate_corners_batch(
+                &mut batch,
+                [false, false, false, false, false, false, false, true],
+            );
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_checkerboard");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            generate_checkerboard_batch(&mut batch);
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_sparse_fill");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            generate_sparse_fill_batch(&mut batch);
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_hollow_cube");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            generate_hollow_cube_batch(&mut batch);
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_diagonal");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            generate_diagonal_batch(&mut batch);
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_perlin3d");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            let offset = Vec3::ZERO;
+            let scale = 183.0;
+            let voxel_size = 1.28 / size as f32;
+            let threshold = 0.51;
+
+            generate_perlin_3d_batch(&mut batch, voxel_size, scale, offset, threshold);
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_uniform");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            chunk.fill(&mut interner, 1);
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
         }
 
         group.finish();

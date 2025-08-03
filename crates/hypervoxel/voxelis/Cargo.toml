@@ -29,6 +29,7 @@ debug_trace_ref_counts = []
 voxelis-memory = "25.4.0"
 bitflags.workspace = true
 byteorder.workspace = true
+fastnoise-lite.workspace = true
 glam.workspace = true
 md-5.workspace = true
 parking_lot.workspace = true
@@ -39,7 +40,6 @@ zstd.workspace = true
 
 [dev-dependencies]
 criterion2 = { version = "3.0.0" }
-fastnoise-lite.workspace = true
 rand.workspace = true
 
 [[bench]]
