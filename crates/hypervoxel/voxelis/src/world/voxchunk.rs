@@ -2,15 +2,15 @@ use std::io::{BufReader, Read, Write};
 
 use byteorder::BigEndian;
 use byteorder::{ReadBytesExt, WriteBytesExt};
-use glam::{IVec3, Vec3};
+use glam::{IVec3, UVec3, Vec3};
 use rustc_hash::FxHashMap;
 use wide::f32x8;
 
 use crate::io::consts::VTC_MAGIC;
 use crate::io::varint::{decode_varint_u32_from_reader, encode_varint};
 use crate::spatial::{
-    VoxOpsBatch, VoxOpsBulkWrite, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead,
-    VoxOpsSpatial3D, VoxOpsState, VoxOpsWrite, VoxTree,
+    VoxOpsBatch, VoxOpsBulkWrite, VoxOpsChunkConfig, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh,
+    VoxOpsRead, VoxOpsSpatial3D, VoxOpsState, VoxOpsWrite, VoxTree,
 };
 use crate::{Batch, BlockId, Lod, MaxDepth, VoxInterner};
 
@@ -47,14 +47,6 @@ impl VoxChunk {
             chunk_size,
             max_depth,
         }
-    }
-
-    pub fn voxel_size(&self, lod: Lod) -> f32 {
-        self.chunk_size / self.voxels_per_axis(lod) as f32
-    }
-
-    pub fn chunk_size(&self) -> f32 {
-        self.chunk_size
     }
 
     pub fn set_position(&mut self, x: i32, y: i32, z: i32) {
@@ -466,5 +458,22 @@ impl VoxOpsDirty for VoxChunk {
     #[inline(always)]
     fn clear_dirty(&mut self) {
         self.data.clear_dirty()
+    }
+}
+
+impl VoxOpsChunkConfig for VoxChunk {
+    #[inline(always)]
+    fn chunk_dimensions(&self) -> UVec3 {
+        UVec3::splat(1)
+    }
+
+    #[inline(always)]
+    fn chunk_size(&self) -> f32 {
+        self.chunk_size
+    }
+
+    #[inline(always)]
+    fn voxel_size(&self, lod: Lod) -> f32 {
+        self.chunk_size / self.data.voxels_per_axis(lod) as f32
     }
 }

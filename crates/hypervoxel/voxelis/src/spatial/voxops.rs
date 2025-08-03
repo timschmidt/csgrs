@@ -1,4 +1,4 @@
-use glam::{IVec3, Vec3};
+use glam::{IVec3, UVec3, Vec3};
 
 use crate::{Batch, Lod, MaxDepth, VoxInterner, VoxelTrait};
 
@@ -87,4 +87,16 @@ pub trait VoxOpsSpatial3D {
 
     /// Returns the world size in 3D.
     fn world_size_3d(&self) -> Vec3;
+}
+
+/// Trait for chunk configuration in voxel operations.
+pub trait VoxOpsChunkConfig {
+    /// Returns the chunk dimensions in chunks.
+    fn chunk_dimensions(&self) -> UVec3;
+
+    /// Returns the chunk size in world units.
+    fn chunk_size(&self) -> f32;
+
+    /// Returns the voxel size in world units for the given level of detail.
+    fn voxel_size(&self, lod: Lod) -> f32;
 }
