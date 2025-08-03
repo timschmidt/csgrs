@@ -19,7 +19,7 @@ use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use voxelis::{
     BlockId, Lod,
     io::import::import_model_from_vtm,
-    spatial::{VoxOpsSpatial3D, VoxOpsState},
+    spatial::{VoxOpsMesh, VoxOpsSpatial3D, VoxOpsState},
     utils::mesh::MeshData,
     world::VoxModel,
 };
@@ -177,7 +177,7 @@ fn setup(
                 continue;
             }
 
-            chunk.generate_mesh_arrays(
+            chunk.generate_naive_mesh_arrays(
                 &interner,
                 &mut mesh_data,
                 chunk.world_position_3d(),
@@ -235,7 +235,7 @@ fn setup(
             } else {
                 let mut mesh_data = MeshData::default();
 
-                chunk.generate_mesh_arrays(
+                chunk.generate_naive_mesh_arrays(
                     &interner,
                     &mut mesh_data,
                     Vec3::ZERO,

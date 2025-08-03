@@ -23,7 +23,10 @@ use bevy_egui::{EguiContexts, EguiPlugin, egui};
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
 use voxelis::{
-    Lod, MaxDepth, VoxInterner, spatial::VoxOpsSpatial3D, utils::mesh::MeshData, world::VoxChunk,
+    Lod, MaxDepth, VoxInterner,
+    spatial::{VoxOpsMesh, VoxOpsSpatial3D},
+    utils::mesh::MeshData,
+    world::VoxChunk,
 };
 
 const MAX_DEPTH: MaxDepth = MaxDepth::new(6);
@@ -65,7 +68,7 @@ impl World {
     pub fn generate_mesh_arrays(&self, mesh_data: &mut MeshData, lod: Lod) {
         let offset = Vec3::new(0.0, 0.0, 0.0);
         self.chunk
-            .generate_mesh_arrays(&self.interner, mesh_data, offset, lod);
+            .generate_naive_mesh_arrays(&self.interner, mesh_data, offset, lod);
         println!(
             "vertices: {} normals: {} indices: {}",
             humanize_bytes::humanize_quantity!(mesh_data.vertices.len()),

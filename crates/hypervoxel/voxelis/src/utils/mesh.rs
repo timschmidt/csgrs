@@ -1,14 +1,14 @@
 use glam::Vec3;
 
 pub const CUBE_VERTS: [Vec3; 8] = [
-    Vec3::new(-1.0, 1.0, -1.0),
-    Vec3::new(1.0, 1.0, -1.0),
+    Vec3::new(0.0, 1.0, 0.0),
+    Vec3::new(1.0, 1.0, 0.0),
     Vec3::new(1.0, 1.0, 1.0),
-    Vec3::new(-1.0, 1.0, 1.0),
-    Vec3::new(-1.0, -1.0, -1.0),
-    Vec3::new(1.0, -1.0, -1.0),
-    Vec3::new(1.0, -1.0, 1.0),
-    Vec3::new(-1.0, -1.0, 1.0),
+    Vec3::new(0.0, 1.0, 1.0),
+    Vec3::new(0.0, 0.0, 0.0),
+    Vec3::new(1.0, 0.0, 0.0),
+    Vec3::new(1.0, 0.0, 1.0),
+    Vec3::new(0.0, 0.0, 1.0),
 ];
 
 pub const VEC_RIGHT: Vec3 = Vec3::X;

@@ -5,7 +5,7 @@ use md5::{Digest, Md5};
 
 use crate::{
     Lod,
-    spatial::{VoxOpsSpatial3D, VoxOpsState},
+    spatial::{VoxOpsMesh, VoxOpsSpatial3D, VoxOpsState},
     utils::mesh::MeshData,
     world::VoxModel,
 };
@@ -26,7 +26,7 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &VoxMo
             continue;
         }
 
-        chunk.generate_mesh_arrays(&interner, &mut mesh_data, chunk.world_position_3d(), lod);
+        chunk.generate_naive_mesh_arrays(&interner, &mut mesh_data, chunk.world_position_3d(), lod);
     }
 
     let obj_file = std::fs::File::create(path).unwrap();

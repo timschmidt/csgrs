@@ -4,12 +4,11 @@ use crate::{
     Batch, BlockId, Lod, MaxDepth, TraversalDepth, VoxInterner, VoxelTrait, child_index_macro,
     child_index_macro_2,
     interner::{EMPTY_CHILD, MAX_ALLOWED_DEPTH, MAX_CHILDREN},
-    utils::common::{get_at_depth, to_vec},
+    utils::common::get_at_depth,
 };
 
 use super::{
-    VoxOpsBatch, VoxOpsBulkWrite, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState,
-    VoxOpsWrite,
+    VoxOpsBatch, VoxOpsBulkWrite, VoxOpsConfig, VoxOpsDirty, VoxOpsRead, VoxOpsState, VoxOpsWrite,
 };
 
 /// Lookup table for fast sibling scanning in octree traversal using Morton-encoded paths.
@@ -300,12 +299,6 @@ impl<T: VoxelTrait> VoxOpsBatch<T> for VoxTree {
         } else {
             false
         }
-    }
-}
-
-impl<T: VoxelTrait> VoxOpsMesh<T> for VoxTree {
-    fn to_vec(&self, interner: &VoxInterner<T>, lod: Lod) -> Vec<T> {
-        to_vec(interner, &self.root_id, self.max_depth.for_lod(lod))
     }
 }
 

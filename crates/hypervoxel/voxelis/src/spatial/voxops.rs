@@ -1,6 +1,6 @@
 use glam::{IVec3, UVec3, Vec3};
 
-use crate::{Batch, Lod, MaxDepth, VoxInterner, VoxelTrait};
+use crate::{Batch, Lod, MaxDepth, VoxInterner, VoxelTrait, utils::mesh::MeshData};
 
 /// Trait for reading voxels.
 pub trait VoxOpsRead<T: VoxelTrait> {
@@ -34,7 +34,14 @@ pub trait VoxOpsBatch<T: VoxelTrait> {
 
 /// Trait for generating meshes from voxels.
 pub trait VoxOpsMesh<T: VoxelTrait> {
-    fn to_vec(&self, interner: &VoxInterner<T>, lod: Lod) -> Vec<T>;
+    /// Generates a naive mesh from the voxels.
+    fn generate_naive_mesh_arrays(
+        &self,
+        interner: &VoxInterner<T>,
+        mesh_data: &mut MeshData,
+        offset: Vec3,
+        lod: Lod,
+    );
 }
 
 /// Trait for configuration of voxel operations.
