@@ -24,9 +24,9 @@
 use glam::IVec3;
 
 use crate::{
-    MaxDepth, VoxInterner, VoxelTrait,
+    Lod, MaxDepth, VoxInterner, VoxelTrait,
     interner::MAX_CHILDREN,
-    spatial::{VoxOpsBulkWrite, VoxOpsWrite},
+    spatial::{VoxOpsBulkWrite, VoxOpsConfig, VoxOpsWrite},
     utils::common::encode_child_index_path,
 };
 
@@ -69,7 +69,7 @@ impl<T: VoxelTrait> Batch<T> {
         let size = 1 << (3 * lower_depth);
 
         Self {
-            masks: vec![(0, 0); size],
+            masks: vec![const { (0, 0) }; size],
             values: vec![[T::default(); MAX_CHILDREN]; size],
             to_fill: None,
             max_depth,
@@ -125,9 +125,9 @@ impl<T: VoxelTrait> Batch<T> {
     ///
     /// Panics if `position` is out of bounds for the configured `max_depth`.
     pub fn just_set(&mut self, position: IVec3, voxel: T) -> bool {
-        assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
-        assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
-        assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
+        debug_assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
+        debug_assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
+        debug_assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
 
         let full_path = encode_child_index_path(&position);
 
@@ -151,6 +151,20 @@ impl<T: VoxelTrait> Batch<T> {
         self.has_patches = true;
 
         true
+    }
+
+    /// Clears existing operations and sets a uniform fill value for the batch.
+    pub fn just_fill(&mut self, value: T) {
+        self.just_clear();
+        self.to_fill = Some(value);
+    }
+
+    /// Resets all recorded operations, clearing masks, values, and fill state.
+    pub fn just_clear(&mut self) {
+        self.masks.fill((0, 0));
+        self.values.fill([T::default(); MAX_CHILDREN]);
+        self.to_fill = None;
+        self.has_patches = false;
     }
 }
 
@@ -168,47 +182,32 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for Batch<T> {
     ///
     /// Panics if `position` is out of bounds for the configured `max_depth`.
     fn set(&mut self, _interner: &mut VoxInterner<T>, position: IVec3, voxel: T) -> bool {
-        assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
-        assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
-        assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
-
-        let full_path = encode_child_index_path(&position);
-
-        let path = full_path & !0b111;
-        let path_index = (path >> 3) as usize;
-        let index = (full_path & 0b111) as usize;
-        let bit = 1 << index;
-
-        let (set_mask, clear_mask) = &mut self.masks[path_index];
-
-        if voxel != T::default() {
-            *set_mask |= bit;
-            *clear_mask &= !bit;
-        } else {
-            *set_mask &= !bit;
-            *clear_mask |= bit;
-        }
-
-        self.values[path_index][index] = voxel;
-
-        self.has_patches = true;
-
-        true
+        self.just_set(position, voxel)
     }
 }
 
 impl<T: VoxelTrait> VoxOpsBulkWrite<T> for Batch<T> {
     /// Clears existing operations and sets a uniform fill value for the batch.
-    fn fill(&mut self, interner: &mut VoxInterner<T>, value: T) {
-        self.clear(interner);
-        self.to_fill = Some(value);
+    fn fill(&mut self, _interner: &mut VoxInterner<T>, value: T) {
+        self.just_fill(value);
     }
 
     /// Resets all recorded operations, clearing masks, values, and fill state.
     fn clear(&mut self, _interner: &mut VoxInterner<T>) {
-        self.masks.fill((0, 0));
-        self.values.fill([T::default(); MAX_CHILDREN]);
-        self.to_fill = None;
-        self.has_patches = false;
+        self.just_clear();
+    }
+}
+
+impl<T: VoxelTrait> VoxOpsConfig for Batch<T> {
+    /// Returns the maximum depth of the octree this batch is configured for.
+    #[inline(always)]
+    fn max_depth(&self, lod: Lod) -> MaxDepth {
+        self.max_depth.for_lod(lod)
+    }
+
+    /// Returns the number of voxels per axis at the current LOD.
+    #[inline(always)]
+    fn voxels_per_axis(&self, lod: Lod) -> u32 {
+        1 << self.max_depth.for_lod(lod).max()
     }
 }
