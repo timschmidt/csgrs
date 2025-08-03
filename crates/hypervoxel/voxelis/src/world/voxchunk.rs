@@ -9,8 +9,8 @@ use wide::f32x8;
 use crate::io::consts::VTC_MAGIC;
 use crate::io::varint::{decode_varint_u32_from_reader, encode_varint};
 use crate::spatial::{
-    VoxOpsBatch, VoxOpsBulkWrite, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead, VoxOpsState,
-    VoxOpsWrite, VoxTree,
+    VoxOpsBatch, VoxOpsBulkWrite, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead,
+    VoxOpsSpatial3D, VoxOpsState, VoxOpsWrite, VoxTree,
 };
 use crate::{Batch, BlockId, Lod, MaxDepth, VoxInterner};
 
@@ -59,14 +59,6 @@ impl VoxChunk {
 
     pub fn set_position(&mut self, x: i32, y: i32, z: i32) {
         self.position = IVec3::new(x, y, z);
-    }
-
-    pub fn get_position(&self) -> IVec3 {
-        self.position
-    }
-
-    pub fn get_world_position(&self) -> Vec3 {
-        self.position.as_vec3() * self.chunk_size
     }
 
     pub fn get_root_id(&self) -> BlockId {
@@ -403,6 +395,29 @@ impl VoxOpsBatch<i32> for VoxChunk {
     #[inline(always)]
     fn apply_batch(&mut self, interner: &mut VoxInterner<i32>, batch: &Batch<i32>) -> bool {
         self.data.apply_batch(interner, batch)
+    }
+}
+
+impl VoxOpsSpatial3D for VoxChunk {
+    #[inline(always)]
+    fn position_3d(&self) -> IVec3 {
+        self.position
+    }
+
+    #[inline(always)]
+    fn world_position_3d(&self) -> Vec3 {
+        self.position.as_vec3() * Vec3::splat(self.chunk_size)
+    }
+
+    #[inline(always)]
+    fn world_center_position_3d(&self) -> Vec3 {
+        let half_size = self.chunk_size / 2.0;
+        self.world_position_3d() + Vec3::splat(half_size)
+    }
+
+    #[inline(always)]
+    fn world_size_3d(&self) -> Vec3 {
+        Vec3::splat(self.chunk_size)
     }
 }
 

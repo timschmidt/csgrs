@@ -22,7 +22,7 @@ use bevy::{
 use bevy_egui::{EguiContexts, EguiPlugin, egui};
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
-use voxelis::{Lod, MaxDepth, VoxInterner, world::VoxChunk};
+use voxelis::{Lod, MaxDepth, VoxInterner, spatial::VoxOpsSpatial3D, world::VoxChunk};
 
 const MAX_DEPTH: MaxDepth = MaxDepth::new(6);
 const VOXELS_PER_AXIS: usize = 1 << MAX_DEPTH.max();
@@ -207,7 +207,7 @@ fn setup_world(
 
     world.generate_mesh(&mut meshes, Lod::new(0));
 
-    let world_position = world.chunk.get_world_position();
+    let world_position = world.chunk.world_position_3d();
     let world_position = Vec3::new(world_position.x, 0.0, world_position.y);
 
     commands

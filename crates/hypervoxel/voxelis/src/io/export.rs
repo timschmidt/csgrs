@@ -4,7 +4,11 @@ use byteorder::{BigEndian, WriteBytesExt};
 use glam::Vec3;
 use md5::{Digest, Md5};
 
-use crate::{Lod, spatial::VoxOpsState, world::VoxModel};
+use crate::{
+    Lod,
+    spatial::{VoxOpsSpatial3D, VoxOpsState},
+    world::VoxModel,
+};
 
 use super::{
     Flags,
@@ -29,7 +33,7 @@ pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &VoxMo
             &mut vertices,
             &mut normals,
             &mut indices,
-            chunk.get_world_position(),
+            chunk.world_position_3d(),
             lod,
         );
     }

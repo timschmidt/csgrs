@@ -17,7 +17,10 @@ use bevy_egui::EguiPlugin;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
 use voxelis::{
-    BlockId, Lod, io::import::import_model_from_vtm, spatial::VoxOpsState, world::VoxModel,
+    BlockId, Lod,
+    io::import::import_model_from_vtm,
+    spatial::{VoxOpsSpatial3D, VoxOpsState},
+    world::VoxModel,
 };
 
 struct GamePlugin;
@@ -180,7 +183,7 @@ fn setup(
                 &mut vertices,
                 &mut normals,
                 &mut indices,
-                chunk.get_world_position(),
+                chunk.world_position_3d(),
                 model_settings.lod,
             );
         }
@@ -272,7 +275,7 @@ fn setup(
                 mesh
             };
 
-            let chunk_world_position = chunk.get_world_position();
+            let chunk_world_position = chunk.world_position_3d();
 
             let base_color = if model_settings.material_type == MaterialType::Checkered {
                 generate_chunk_color_checkered(chunk_position.x, chunk_position.y, chunk_position.z)

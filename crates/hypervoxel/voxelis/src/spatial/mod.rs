@@ -5,6 +5,6 @@ mod voxtree;
 pub use aabb2d::Aabb2d;
 pub use voxops::{
     VoxOps, VoxOpsBatch, VoxOpsBulkWrite, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh, VoxOpsRead,
-    VoxOpsState, VoxOpsWrite,
+    VoxOpsSpatial3D, VoxOpsState, VoxOpsWrite,
 };
 pub use voxtree::VoxTree;

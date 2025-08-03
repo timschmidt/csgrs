@@ -17,6 +17,7 @@ use crate::{
     BlockId, MaxDepth, VoxInterner,
     interner::EMPTY_CHILD,
     io::varint::{decode_varint_u32_from_reader, encode_varint_u32},
+    spatial::VoxOpsSpatial3D,
     world::VoxChunk,
 };
 
@@ -384,7 +385,7 @@ impl VoxModel {
                 self.max_depth,
             );
 
-            self.chunks.insert(chunk.get_position(), chunk);
+            self.chunks.insert(chunk.position_3d(), chunk);
         }
 
         let elapsed = now.elapsed();

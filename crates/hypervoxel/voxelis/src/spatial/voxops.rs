@@ -1,4 +1,4 @@
-use glam::IVec3;
+use glam::{IVec3, Vec3};
 
 use crate::{Batch, Lod, MaxDepth, VoxInterner, VoxelTrait};
 
@@ -71,4 +71,20 @@ pub trait VoxOpsDirty {
 pub trait VoxOps<T: VoxelTrait>:
     VoxOpsRead<T> + VoxOpsWrite<T> + VoxOpsConfig + VoxOpsState + VoxOpsDirty
 {
+}
+
+/// Trait for spatial operations in 3D.
+pub trait VoxOpsSpatial3D {
+    /// Returns the position in 3D.
+    /// For chunks, the units are chunks.
+    fn position_3d(&self) -> IVec3;
+
+    /// Returns the world position in 3D.
+    fn world_position_3d(&self) -> Vec3;
+
+    /// Returns the world position of the center in 3D.
+    fn world_center_position_3d(&self) -> Vec3;
+
+    /// Returns the world size in 3D.
+    fn world_size_3d(&self) -> Vec3;
 }
