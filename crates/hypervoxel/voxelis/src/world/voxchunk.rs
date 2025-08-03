@@ -57,62 +57,6 @@ impl VoxChunk {
         self.data.get_root_id()
     }
 
-    pub fn generate_test_data(&mut self, interner: &mut VoxInterner<i32>) {
-        let voxels_per_axis = self.voxels_per_axis(Lod::new(0)) as i32;
-        let mut position = IVec3::ZERO;
-        for y in 0..voxels_per_axis {
-            position.y = y;
-            let offset = y % 2;
-            for z in offset..voxels_per_axis - offset {
-                position.z = z;
-                for x in offset..voxels_per_axis - offset {
-                    position.x = x;
-                    self.set(interner, position, y + 1);
-                }
-            }
-        }
-    }
-
-    pub fn generate_test_sphere(
-        &mut self,
-        interner: &mut VoxInterner<i32>,
-        center: IVec3,
-        radius: i32,
-        value: i32,
-    ) {
-        debug_assert!(radius > 0);
-
-        let (cx, cy, cz) = (center.x, center.y, center.z);
-        let radius_squared = radius * radius;
-
-        let voxels_per_axis = self.voxels_per_axis(Lod::new(0)) as i32;
-
-        let mut position = IVec3::ZERO;
-
-        let mut batch = self.create_batch();
-
-        for y in 0..voxels_per_axis {
-            position.y = y;
-            for z in 0..voxels_per_axis {
-                position.z = z;
-                for x in 0..voxels_per_axis {
-                    let dx = x - cx;
-                    let dy = y - cy;
-                    let dz = z - cz;
-
-                    let distance_squared = dx * dx + dy * dy + dz * dz;
-
-                    if distance_squared <= radius_squared {
-                        position.x = x;
-                        batch.set(interner, position, value);
-                    }
-                }
-            }
-        }
-
-        self.apply_batch(interner, &batch);
-    }
-
     #[inline(always)]
     fn add_quad(
         vertices: &mut Vec<Vec3>,

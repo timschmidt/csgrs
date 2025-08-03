@@ -49,14 +49,9 @@ pub struct LodSettings {
 impl World {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 256);
+        let interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 256);
 
-        let mut chunk = VoxChunk::with_position(CHUNK_SIZE, MAX_DEPTH, 0, 0, 0);
-        let half_size = VOXELS_PER_AXIS as i32 / 2;
-        let center = IVec3::new(half_size, half_size, half_size);
-        let radius = (VOXELS_PER_AXIS / 2) as i32;
-        let value = 1;
-        chunk.generate_test_sphere(&mut interner, center, radius, value);
+        let chunk = VoxChunk::with_position(CHUNK_SIZE, MAX_DEPTH, 0, 0, 0);
 
         Self {
             interner,
