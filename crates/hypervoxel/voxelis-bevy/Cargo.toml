@@ -22,3 +22,12 @@ tracy-client = { workspace = true, optional = true }
 default = ["memory_stats"]
 memory_stats = ["voxelis/memory_stats"]
 tracy = ["voxelis/tracy", "dep:tracy-client"]
+trace_greedy_timings = ["voxelis/trace_greedy_timings"]
+
+[[example]]
+name = "lod"
+path = "examples/lod.rs"
+
+[[example]]
+name = "greedy_meshing"
+path = "examples/greedy_meshing.rs"
