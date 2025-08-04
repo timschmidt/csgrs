@@ -19,9 +19,12 @@ use bevy::{
     },
     window::PresentMode,
 };
-use bevy_egui::{EguiContexts, EguiPlugin, egui};
+use bevy_egui::{EguiContexts, EguiPlugin, EguiPrimaryContextPass, egui};
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
+use bevy_screen_diagnostics::{
+    ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
+};
 use voxelis::{
     Lod, MaxDepth, VoxInterner,
     spatial::{VoxOpsBatch, VoxOpsConfig, VoxOpsMesh, VoxOpsSpatial3D},
@@ -97,7 +100,7 @@ impl World {
 
         let mesh = Mesh::new(
             PrimitiveTopology::TriangleList,
-            RenderAssetUsages::RENDER_WORLD,
+            RenderAssetUsages::default(),
         )
         .with_inserted_indices(Indices::U32(mesh_data.indices))
         .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, mesh_data.vertices)
@@ -113,7 +116,7 @@ impl World {
 
         let mesh = Mesh::new(
             PrimitiveTopology::TriangleList,
-            RenderAssetUsages::RENDER_WORLD,
+            RenderAssetUsages::default(),
         )
         .with_inserted_indices(Indices::U32(mesh_data.indices))
         .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, mesh_data.vertices)
@@ -128,8 +131,8 @@ fn lod_ui(
     mut lod_settings: ResMut<LodSettings>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut world: ResMut<World>,
-) {
-    egui::Window::new("LOD Settings").show(contexts.ctx_mut(), |ui| {
+) -> Result {
+    egui::Window::new("LOD Settings").show(contexts.ctx_mut()?, |ui| {
         let response = ui.add(
             egui::Slider::new(&mut lod_settings.level, 0..=MAX_DEPTH.as_usize()).text("LOD Level"),
         );
@@ -143,6 +146,8 @@ fn lod_ui(
             );
         }
     });
+
+    Ok(())
 }
 
 fn setup_world(
@@ -243,13 +248,13 @@ fn main() {
                 ..default()
             }),
             TemporalAntiAliasPlugin,
-            EguiPlugin,
+            EguiPlugin::default(),
             PanOrbitCameraPlugin,
-            WireframePlugin,
-            FrameTimeDiagnosticsPlugin,
-            // ScreenDiagnosticsPlugin::default(),
-            // ScreenFrameDiagnosticsPlugin,
-            // ScreenEntityDiagnosticsPlugin,
+            WireframePlugin::default(),
+            FrameTimeDiagnosticsPlugin::default(),
+            ScreenDiagnosticsPlugin::default(),
+            ScreenFrameDiagnosticsPlugin,
+            ScreenEntityDiagnosticsPlugin,
         ))
         .insert_resource(ClearColor(Color::from(
             bevy::color::palettes::tailwind::BLUE_300,
@@ -259,6 +264,6 @@ fn main() {
         .init_resource::<LodSettings>()
         .add_systems(Startup, setup_world)
         .add_systems(Update, toggle_wireframe)
-        .add_systems(Update, lod_ui)
+        .add_systems(EguiPrimaryContextPass, lod_ui)
         .run();
 }

@@ -72,12 +72,12 @@ wide = "0.7"
 zstd = "0.13"
 
 # Bevy & EGUI
-bevy = "0.15"
-bevy_egui = "0.33"
-bevy_panorbit_camera = { version = "0.25", features = ["bevy_egui"] }
-bevy_screen_diagnostics = "0.7"
-egui_extras = "0.31"
-egui_plot = "0.31"
+bevy = "0.16"
+bevy_egui = "0.35"
+bevy_panorbit_camera = { version = "0.27", features = ["bevy_egui"] }
+bevy_screen_diagnostics = "0.8"
+egui_extras = "0.32"
+egui_plot = "0.33"
 
 # Enable a small amount of optimization in debug mode
 # [profile.dev]
