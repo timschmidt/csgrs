@@ -17,7 +17,7 @@ use crate::{
     BlockId, Lod, MaxDepth, VoxInterner, VoxelTrait,
     interner::EMPTY_CHILD,
     io::varint::{decode_varint_u32_from_reader, encode_varint_u32},
-    spatial::{VoxOpsChunkConfig, VoxOpsConfig, VoxOpsSpatial3D},
+    spatial::{VoxOpsChunkConfig, VoxOpsChunkLocalContainer, VoxOpsConfig, VoxOpsSpatial3D},
     world::{
         VoxChunk,
         voxchunk::{deserialize_chunk, serialize_chunk},
@@ -438,5 +438,31 @@ impl<T: VoxelTrait> VoxOpsChunkConfig for VoxModel<T> {
     fn voxel_size(&self, lod: Lod) -> f32 {
         let max_depth = self.max_depth.for_lod(lod);
         1.0 / (1 << max_depth.max()) as f32 * self.chunk_world_size
+    }
+}
+
+impl<T: VoxelTrait> VoxOpsChunkLocalContainer<T> for VoxModel<T> {
+    fn has_local_chunk(&self, position: UVec3) -> bool {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxModel::has_local_chunk");
+
+        let position = position.as_ivec3();
+        self.chunks.contains_key(&position)
+    }
+
+    fn local_chunk(&self, position: UVec3) -> Option<&VoxChunk<T>> {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxModel::chunk");
+
+        let position = position.as_ivec3();
+        self.chunks.get(&position)
+    }
+
+    fn local_chunk_mut(&mut self, position: UVec3) -> Option<&mut VoxChunk<T>> {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxModel::chunk_mut");
+
+        let position = position.as_ivec3();
+        self.chunks.get_mut(&position)
     }
 }
