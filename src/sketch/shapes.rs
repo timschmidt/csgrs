@@ -4,8 +4,8 @@ use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real, TAU};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{
-    Geometry, GeometryCollection, LineString, Orient, Polygon as GeoPolygon, coord,
-    line_string, orient::Direction, BoundingRect, Contains, Point,
+    BoundingRect, Contains, Geometry, GeometryCollection, LineString, Orient, Point,
+    Polygon as GeoPolygon, coord, line_string, orient::Direction,
 };
 use std::fmt::Debug;
 use std::sync::OnceLock;
@@ -1331,14 +1331,18 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             metadata,
         )
     }
-    
+
     /// Build a Hilbert-curve path that fills this sketch.
     /// - `order`: recursion order (number of points ≈ 4^order).
     /// - `padding`: optional inset from the bounding-box edges (same units as the sketch).
     /// Returns a new `Sketch` containing only the inside segments as `LineString`s.
     pub fn hilbert_curve(&self, order: usize, padding: Real) -> Sketch<S> {
-        if order == 0 { return Sketch::new(); }
-        let Some(rect) = self.geometry.bounding_rect() else { return Sketch::new(); };
+        if order == 0 {
+            return Sketch::new();
+        }
+        let Some(rect) = self.geometry.bounding_rect() else {
+            return Sketch::new();
+        };
 
         // Bounding box and usable region (with padding).
         let min = rect.min();
@@ -1368,17 +1372,27 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             let a = w[0];
             let b = w[1];
             let mid = Point::new((a.0 + b.0) * 0.5, (a.1 + b.1) * 0.5);
-            let keep = if has_shell { shell.contains(&mid) } else { true };
+            let keep = if has_shell {
+                shell.contains(&mid)
+            } else {
+                true
+            };
 
             if keep {
-                if run.is_empty() { run.push(a); }
+                if run.is_empty() {
+                    run.push(a);
+                }
                 run.push(b);
             } else {
-                if run.len() >= 2 { runs.push(std::mem::take(&mut run)); }
+                if run.len() >= 2 {
+                    runs.push(std::mem::take(&mut run));
+                }
                 run.clear();
             }
         }
-        if run.len() >= 2 { runs.push(run); }
+        if run.len() >= 2 {
+            runs.push(run);
+        }
 
         // Emit as LineStrings only (no original geometry).
         let mut geoms = Vec::with_capacity(runs.len());
@@ -1394,9 +1408,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 fn hilbert_points(order: usize) -> Vec<(Real, Real)> {
     fn recur(
         out: &mut Vec<(Real, Real)>,
-        x0: Real, y0: Real,
-        xi: Real, xj: Real,
-        yi: Real, yj: Real,
+        x0: Real,
+        y0: Real,
+        xi: Real,
+        xj: Real,
+        yi: Real,
+        yj: Real,
         n: usize,
     ) {
         if n == 0 {
@@ -1404,10 +1421,19 @@ fn hilbert_points(order: usize) -> Vec<(Real, Real)> {
         } else {
             let (xi2, xj2) = (xi * 0.5, xj * 0.5);
             let (yi2, yj2) = (yi * 0.5, yj * 0.5);
-            recur(out, x0,                 y0,                 yi2, yj2, xi2,  xj2,  n - 1);
-            recur(out, x0 + xi2,           y0 + xj2,           xi2,  xj2, yi2,  yj2,  n - 1);
-            recur(out, x0 + xi2 + yi2,     y0 + xj2 + yj2,     xi2,  xj2, yi2,  yj2,  n - 1);
-            recur(out, x0 + xi2 + yi,      y0 + xj2 + yj,     -yi2, -yj2, -xi2, -xj2, n - 1);
+            recur(out, x0, y0, yi2, yj2, xi2, xj2, n - 1);
+            recur(out, x0 + xi2, y0 + xj2, xi2, xj2, yi2, yj2, n - 1);
+            recur(out, x0 + xi2 + yi2, y0 + xj2 + yj2, xi2, xj2, yi2, yj2, n - 1);
+            recur(
+                out,
+                x0 + xi2 + yi,
+                y0 + xj2 + yj,
+                -yi2,
+                -yj2,
+                -xi2,
+                -xj2,
+                n - 1,
+            );
         }
     }
     let shift: u32 = ((2 * order) as u32).min(usize::BITS - 1);

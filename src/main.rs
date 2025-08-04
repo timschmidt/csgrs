@@ -1130,9 +1130,12 @@ fn main() {
         let tube: Mesh = profile.sweep(&path);
         let _ = fs::write("stl/swept_tube.stl", tube.to_stl_ascii("swept_tube"));
     }
-    
+
     let rect = Sketch::rectangle(100.0, 60.0, None);
-	let hilbert = rect.hilbert_curve(6, 2.0);
-	let hilbert_extruded = hilbert.extrude(10.0);
-	let _ = fs::write("stl/hilbert_extruded.stl", hilbert_extruded.to_stl_ascii("hilbert"));
+    let hilbert = rect.hilbert_curve(6, 2.0);
+    let hilbert_extruded = hilbert.extrude(10.0);
+    let _ = fs::write(
+        "stl/hilbert_extruded.stl",
+        hilbert_extruded.to_stl_ascii("hilbert"),
+    );
 }
