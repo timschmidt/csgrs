@@ -226,7 +226,6 @@ fn fill_sub_volume<T: VoxelTrait>(
     let pos_y = pos.y as usize;
     let pos_z = pos.z as usize;
 
-    // Pre-kalkulacja mnożników dla wydajności
     let stride_y = voxels_per_axis * voxels_per_axis;
     let stride_z = voxels_per_axis;
 

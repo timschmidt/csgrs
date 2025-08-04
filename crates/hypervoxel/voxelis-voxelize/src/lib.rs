@@ -20,9 +20,9 @@ use rustc_hash::FxHashMap;
 use voxelis_math::triangle_cube_intersection;
 
 use voxelis::{
-    Batch, MaxDepth,
+    Batch, Lod, MaxDepth,
     io::Obj,
-    spatial::{VoxOpsBatch, VoxOpsState, VoxOpsWrite},
+    spatial::{VoxOpsBatch, VoxOpsConfig, VoxOpsState, VoxOpsWrite},
     world::VoxModel,
 };
 
@@ -120,7 +120,7 @@ impl Voxelizer {
 
         let mesh_min = self.mesh.aabb.0;
 
-        let voxels_per_axis = self.model.voxels_per_axis();
+        let voxels_per_axis = self.model.voxels_per_axis(Lod::new(0));
         let voxel_size: f64 = self.model.chunk_world_size as f64 / voxels_per_axis as f64;
         let inv_voxel_size: f64 = 1.0 / voxel_size;
 
@@ -254,8 +254,10 @@ impl Voxelizer {
 
         let (tx, rx): (Sender<(IVec3, Batch<i32>)>, Receiver<(IVec3, Batch<i32>)>) = bounded(1024);
 
-        let depth = self.model.max_depth();
-        let voxels_per_axis = self.model.voxels_per_axis();
+        let lod = Lod::new(0);
+
+        let depth = self.model.max_depth(lod);
+        let voxels_per_axis = self.model.voxels_per_axis(lod) as usize;
         let voxel_size = self.model.chunk_world_size as f64 / voxels_per_axis as f64;
         let chunk_world_size = self.model.chunk_world_size as f64;
         let mesh_min = self.mesh.aabb.0;
@@ -386,7 +388,7 @@ impl Voxelizer {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("Voxelizer::simple_voxelize");
 
-        let voxels_per_axis = self.model.voxels_per_axis();
+        let voxels_per_axis = self.model.voxels_per_axis(Lod::new(0));
         let voxel_size: f64 = 1.0 / voxels_per_axis as f64;
         let inv_voxel_size: f64 = 1.0 / voxel_size;
 

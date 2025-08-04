@@ -5,7 +5,7 @@ use md5::{Digest, Md5};
 
 use crate::{
     Lod, VoxelTrait,
-    spatial::{VoxOpsMesh, VoxOpsSpatial3D, VoxOpsState},
+    spatial::{VoxOpsConfig, VoxOpsMesh, VoxOpsSpatial3D, VoxOpsState},
     utils::mesh::MeshData,
     world::VoxModel,
 };
@@ -103,7 +103,7 @@ pub fn export_model_to_vtm<T: VoxelTrait, P: AsRef<Path>>(
     let flags = Flags::DEFAULT;
     // let flags = Flags::NONE;
 
-    let max_depth = model.max_depth();
+    let max_depth = model.max_depth(Lod::new(0));
 
     writer.write_all(&VTM_MAGIC).unwrap();
     writer.write_u16::<BigEndian>(VTM_VERSION).unwrap();

@@ -169,14 +169,6 @@ impl<T: VoxelTrait> VoxModel<T> {
             && position.z < self.world_bounds.z
     }
 
-    pub fn max_depth(&self) -> MaxDepth {
-        self.max_depth
-    }
-
-    pub fn voxels_per_axis(&self) -> usize {
-        1 << self.max_depth.max()
-    }
-
     #[cfg(feature = "memory_stats")]
     pub fn interner_stats(&self) -> InternerStats {
         self.interner.read().stats()
@@ -436,8 +428,7 @@ impl<T: VoxelTrait> VoxOpsChunkConfig for VoxModel<T> {
     }
 
     fn voxel_size(&self, lod: Lod) -> f32 {
-        let max_depth = self.max_depth.for_lod(lod);
-        1.0 / (1 << max_depth.max()) as f32 * self.chunk_world_size
+        1.0 / self.voxels_per_axis(lod) as f32 * self.chunk_world_size
     }
 }
 

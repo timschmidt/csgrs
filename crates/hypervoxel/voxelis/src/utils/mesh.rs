@@ -402,7 +402,7 @@ fn fill_masks_for_region(
         .and_modify(|count| *count += volume)
         .or_insert(volume);
 
-    if side != 64 {
+    if side != MAX_VOXELS_PER_AXIS {
         let occupancy_per_axis = builder
             .per_material
             .entry(material_id)
@@ -942,7 +942,7 @@ pub fn generate_greedy_mesh_arrays_stride<
     let chunk_size = container.chunk_size();
     let voxels_per_axis = container.voxels_per_axis(lod);
     let max_depth = container.max_depth(lod);
-    let voxel_size = chunk_size / voxels_per_axis as f32;
+    let voxel_size = container.voxel_size(lod);
 
     let mesh_max_depth = MaxDepth::new(6);
 

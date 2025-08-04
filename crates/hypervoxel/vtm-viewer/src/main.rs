@@ -135,7 +135,7 @@ fn setup(
 
     let mut mesh_data = MeshData::default();
 
-    generate_greedy_mesh_arrays_stride(model, &interner, Lod::new(0), &mut mesh_data);
+    generate_greedy_mesh_arrays_stride(model, &interner, model_settings.lod, &mut mesh_data);
 
     let total_vertices = mesh_data.vertices.len();
     let total_indices = mesh_data.indices.len();
