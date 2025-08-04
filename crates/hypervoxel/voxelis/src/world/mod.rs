@@ -1,7 +1,11 @@
 mod voxchunk;
-mod voxmodel;
 mod voxworld;
 
 pub use voxchunk::VoxChunk;
-pub use voxmodel::VoxModel;
 pub use voxworld::VoxWorld;
+
+#[cfg(feature = "vtm")]
+mod voxmodel;
+
+#[cfg(feature = "vtm")]
+pub use voxmodel::VoxModel;

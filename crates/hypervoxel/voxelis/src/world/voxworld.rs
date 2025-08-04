@@ -1,7 +1,4 @@
 use glam::IVec3;
-use rustc_hash::FxHashMap;
-
-use crate::world::voxchunk::serialize_chunk;
 
 use super::VoxChunk;
 
@@ -44,12 +41,5 @@ impl VoxWorld {
         self.chunks_size = size;
         self.chunks_len = size.x as usize * size.y as usize * size.z as usize;
         self.chunks = Vec::with_capacity(self.chunks_len);
-    }
-
-    pub fn serialize(&self, data: &mut Vec<u8>) {
-        let id_map = FxHashMap::default();
-        for chunk in self.chunks.iter() {
-            serialize_chunk(chunk, &id_map, data);
-        }
     }
 }

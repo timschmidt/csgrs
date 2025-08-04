@@ -1,15 +1,22 @@
+#[cfg(feature = "vtm")]
 use std::io::{BufReader, Read, Write};
 
+#[cfg(feature = "vtm")]
 use byteorder::BigEndian;
+#[cfg(feature = "vtm")]
 use byteorder::{ReadBytesExt, WriteBytesExt};
-use glam::{IVec3, UVec3, Vec3};
+#[cfg(feature = "vtm")]
 use rustc_hash::FxHashMap;
+
+use glam::{IVec3, UVec3, Vec3};
 use wide::f32x8;
 
+#[cfg(feature = "vtm")]
 use crate::io::{
     consts::VTC_MAGIC,
     varint::{decode_varint_u32_from_reader, encode_varint},
 };
+
 use crate::spatial::{
     VoxOpsBatch, VoxOpsBulkWrite, VoxOpsChunkConfig, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh,
     VoxOpsRead, VoxOpsSpatial3D, VoxOpsState, VoxOpsWrite, VoxTree,
@@ -316,6 +323,7 @@ impl VoxOpsMesh<i32> for VoxChunk {
     }
 }
 
+#[cfg(feature = "vtm")]
 pub fn serialize_chunk(chunk: &VoxChunk, id_map: &FxHashMap<u32, u32>, data: &mut Vec<u8>) {
     let mut writer = std::io::BufWriter::new(data);
 
@@ -334,6 +342,7 @@ pub fn serialize_chunk(chunk: &VoxChunk, id_map: &FxHashMap<u32, u32>, data: &mu
     writer.write_all(&new_id_bytes).unwrap();
 }
 
+#[cfg(feature = "vtm")]
 pub fn deserialize_chunk(
     interner: &mut VoxInterner<i32>,
     leaf_patterns: &FxHashMap<u32, (BlockId, i32)>,

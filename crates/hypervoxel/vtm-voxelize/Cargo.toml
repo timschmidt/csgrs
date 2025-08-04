@@ -10,5 +10,5 @@ voxelis.workspace = true
 voxelis-voxelize.workspace = true
 
 [features]
-default = ["memory_stats"]
+default = ["memory_stats", "voxelis/vtm"]
 memory_stats = ["voxelis/memory_stats", "voxelis-voxelize/memory_stats"]

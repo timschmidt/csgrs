@@ -6,6 +6,7 @@ license.workspace = true
 edition = "2024"
 
 [features]
+default = []
 memory_stats = ["voxelis/memory_stats"]
 
 [dependencies]

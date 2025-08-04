@@ -14,4 +14,5 @@ readme = "README.md"
 all-features = true
 
 [features]
+default = []
 memory_stats = []
