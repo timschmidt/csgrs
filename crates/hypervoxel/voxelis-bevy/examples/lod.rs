@@ -24,8 +24,8 @@ use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
 use voxelis::{
     Lod, MaxDepth, VoxInterner,
-    spatial::{VoxOpsMesh, VoxOpsSpatial3D},
-    utils::mesh::MeshData,
+    spatial::{VoxOpsBatch, VoxOpsConfig, VoxOpsMesh, VoxOpsSpatial3D},
+    utils::{mesh::MeshData, shapes::generate_sphere_batch},
     world::VoxChunk,
 };
 
@@ -54,9 +54,22 @@ pub struct LodSettings {
 impl World {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 256);
+        let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024 * 256);
 
-        let chunk = VoxChunk::with_position(CHUNK_SIZE, MAX_DEPTH, 0, 0, 0);
+        let mut chunk = VoxChunk::with_position(CHUNK_SIZE, MAX_DEPTH, 0, 0, 0);
+
+        let mut batch = chunk.create_batch();
+
+        let voxels_per_axis = chunk.voxels_per_axis(Lod::new(0));
+
+        let half_size = voxels_per_axis as i32 / 2;
+        let center = IVec3::new(half_size, half_size, half_size);
+        let radius = (voxels_per_axis / 2) as i32;
+        let value = 1;
+
+        generate_sphere_batch(&mut batch, center, radius, value);
+
+        chunk.apply_batch(&mut interner, &batch);
 
         Self {
             interner,
