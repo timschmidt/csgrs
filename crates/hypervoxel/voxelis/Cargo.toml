@@ -40,7 +40,7 @@ byteorder = { workspace = true, optional = true }
 zstd = { workspace = true, optional = true }
 
 [dev-dependencies]
-criterion2 = { version = "3.0.2" }
+criterion2 = { version = "3.0" }
 rand.workspace = true
 
 [[bench]]
