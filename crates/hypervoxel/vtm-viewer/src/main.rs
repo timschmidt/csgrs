@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::path::Path;
 use std::time::Instant;
 
@@ -20,10 +19,9 @@ use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
 use voxelis::{
-    BlockId, Lod,
+    Lod,
     io::import::import_model_from_vtm,
-    spatial::{VoxOpsMesh, VoxOpsSpatial3D, VoxOpsState},
-    utils::mesh::MeshData,
+    utils::mesh::{MeshData, generate_greedy_mesh_arrays_stride},
     world::VoxModel,
 };
 
@@ -35,16 +33,8 @@ struct Chunk;
 #[derive(Resource)]
 pub struct ModelResource(pub VoxModel<i32>);
 
-#[derive(Eq, PartialEq)]
-pub enum MaterialType {
-    Checkered,
-    Gradient,
-    Clay,
-}
-
 #[derive(Resource)]
 pub struct ModelSettings {
-    pub material_type: MaterialType,
     pub lod: Lod,
 }
 
@@ -54,43 +44,6 @@ impl Plugin for GamePlugin {
         app.add_systems(Update, toggle_wireframe);
         #[cfg(feature = "tracy")]
         app.add_systems(Last, tracy_mark_frame);
-    }
-}
-
-fn generate_chunk_color_gradient(index: usize, total: usize) -> Color {
-    // Normalize the index to generate distinct hues
-    let hue = (index as f32 / total as f32) * 360.0;
-
-    // Convert HSL to RGB
-    let rgb = hsl_to_rgb(hue, 0.7, 0.5); // Saturation: 0.7, Lightness: 0.5
-    Color::srgba(rgb.0, rgb.1, rgb.2, 1.0)
-}
-
-fn hsl_to_rgb(hue: f32, saturation: f32, lightness: f32) -> (f32, f32, f32) {
-    let c = (1.0 - (2.0 * lightness - 1.0).abs()) * saturation;
-    let x = c * (1.0 - ((hue / 60.0) % 2.0 - 1.0).abs());
-    let m = lightness - c / 2.0;
-
-    let (r, g, b) = match hue {
-        0.0..=60.0 => (c, x, 0.0),
-        60.0..=120.0 => (x, c, 0.0),
-        120.0..=180.0 => (0.0, c, x),
-        180.0..=240.0 => (0.0, x, c),
-        240.0..=300.0 => (x, 0.0, c),
-        _ => (c, 0.0, x),
-    };
-
-    (r + m, g + m, b + m)
-}
-
-fn generate_chunk_color_checkered(x: i32, y: i32, z: i32) -> Color {
-    // Determine if the chunk should be black based on the sum of its coordinates
-    let is_black = (x + y + z) % 2 == 0;
-
-    if is_black {
-        Color::from(palettes::css::SILVER)
-    } else {
-        Color::WHITE
     }
 }
 
@@ -177,167 +130,50 @@ fn setup(
 
     println!("Generating meshes...");
 
-    let single_mesh = false;
-
     let interner = model.get_interner();
     let interner = interner.read();
 
-    if single_mesh {
-        let mut mesh_data = MeshData::default();
+    let mut mesh_data = MeshData::default();
 
-        for (_, chunk) in model.chunks.iter() {
-            if chunk.is_empty() {
-                continue;
-            }
+    generate_greedy_mesh_arrays_stride(model, &interner, Lod::new(0), &mut mesh_data);
 
-            chunk.generate_naive_mesh_arrays(
-                &interner,
-                &mut mesh_data,
-                chunk.world_position_3d(),
-                model_settings.lod,
-            );
-        }
+    let total_vertices = mesh_data.vertices.len();
+    let total_indices = mesh_data.indices.len();
+    let total_normals = mesh_data.normals.len();
 
-        let mesh = Mesh::new(
-            bevy::render::mesh::PrimitiveTopology::TriangleList,
-            bevy::render::render_asset::RenderAssetUsages::RENDER_WORLD,
-        )
-        .with_inserted_indices(bevy::render::mesh::Indices::U32(mesh_data.indices))
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, mesh_data.vertices)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_data.normals);
+    let mesh = Mesh::new(
+        bevy::render::mesh::PrimitiveTopology::TriangleList,
+        bevy::render::render_asset::RenderAssetUsages::RENDER_WORLD,
+    )
+    .with_inserted_indices(bevy::render::mesh::Indices::U32(mesh_data.indices))
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, mesh_data.vertices)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_data.normals);
 
-        let mesh = meshes.add(mesh);
+    let mesh = meshes.add(mesh);
 
-        let base_color = Color::from(palettes::css::SILVER);
+    let mesh_material = materials.add(StandardMaterial {
+        base_color: Color::srgba_u8(191, 157, 133, 255),
+        perceptual_roughness: 1.0,
+        reflectance: 0.0,
+        ..default()
+    });
 
-        let mesh_material = materials.add(StandardMaterial {
-            base_color,
-            perceptual_roughness: 1.0,
-            reflectance: 0.0,
-            ..default()
-        });
+    commands
+        .spawn((Mesh3d(mesh), MeshMaterial3d(mesh_material.clone())))
+        .insert(Chunk);
 
-        commands
-            .spawn((Mesh3d(mesh), MeshMaterial3d(mesh_material.clone())))
-            .insert(Chunk);
-    } else {
-        let mut existing_meshes: HashMap<BlockId, (Handle<Mesh>, usize, usize, usize)> =
-            HashMap::new();
-
-        let mut duplicates_found: usize = 0;
-        let mut total_vertices: usize = 0;
-        let mut total_indices: usize = 0;
-        let mut total_normals: usize = 0;
-        let mut saved_vertices: usize = 0;
-        let mut saved_indices: usize = 0;
-        let mut saved_normals: usize = 0;
-
-        for (chunk_position, chunk) in model.chunks.iter() {
-            if chunk.is_empty() {
-                continue;
-            }
-
-            let mesh = if let Some((chunk_mesh, vertices, indices, normals)) =
-                existing_meshes.get(&chunk.get_root_id())
-            {
-                duplicates_found += 1;
-                saved_vertices += vertices;
-                saved_indices += indices;
-                saved_normals += normals;
-                chunk_mesh.clone()
-            } else {
-                let mut mesh_data = MeshData::default();
-
-                chunk.generate_naive_mesh_arrays(
-                    &interner,
-                    &mut mesh_data,
-                    Vec3::ZERO,
-                    model_settings.lod,
-                );
-
-                let vertices_len = mesh_data.vertices.len();
-                let indices_len = mesh_data.indices.len();
-                let normals_len = mesh_data.normals.len();
-
-                total_vertices += vertices_len;
-                total_indices += indices_len;
-                total_normals += normals_len;
-
-                let chunk_mesh = Mesh::new(
-                    bevy::render::mesh::PrimitiveTopology::TriangleList,
-                    bevy::render::render_asset::RenderAssetUsages::RENDER_WORLD,
-                )
-                .with_inserted_indices(bevy::render::mesh::Indices::U32(mesh_data.indices))
-                .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, mesh_data.vertices)
-                .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_data.normals);
-
-                let mesh = meshes.add(chunk_mesh);
-
-                existing_meshes.insert(
-                    chunk.get_root_id(),
-                    (mesh.clone(), vertices_len, indices_len, normals_len),
-                );
-
-                mesh
-            };
-
-            let chunk_world_position = chunk.world_position_3d();
-
-            let base_color = if model_settings.material_type == MaterialType::Checkered {
-                generate_chunk_color_checkered(chunk_position.x, chunk_position.y, chunk_position.z)
-            } else if model_settings.material_type == MaterialType::Gradient {
-                let bounds = model.world_bounds;
-                let area = bounds.z * bounds.x;
-                let i = chunk_position.x + chunk_position.y * bounds.x + chunk_position.z * area;
-                generate_chunk_color_gradient(i as usize, model.chunks.len())
-            } else {
-                Color::srgba_u8(191, 157, 133, 255)
-            };
-
-            let mesh_material = materials.add(StandardMaterial {
-                base_color,
-                perceptual_roughness: 1.0,
-                reflectance: 0.0,
-                ..default()
-            });
-
-            commands
-                .spawn((
-                    Mesh3d(mesh),
-                    MeshMaterial3d(mesh_material.clone()),
-                    Transform::from_translation(chunk_world_position),
-                ))
-                .insert(Chunk)
-                .insert(Name::new(
-                    format!(
-                        "Chunk {}x{}x{}",
-                        chunk_position.x, chunk_position.y, chunk_position.z
-                    )
-                    .to_string(),
-                ));
-        }
-
-        println!(
-            "Found {duplicates_found} duplicates out of {} chunks ({:.1}%)",
-            model.chunks.len(),
-            (duplicates_found as f32 / model.chunks.len() as f32) * 100.0
-        );
-        println!(
-            " Vertices: {} - {} saved",
-            humanize_bytes::humanize_quantity!(total_vertices),
-            humanize_bytes::humanize_quantity!(saved_vertices),
-        );
-        println!(
-            " Normals: {} - {} saved",
-            humanize_bytes::humanize_quantity!(total_normals),
-            humanize_bytes::humanize_quantity!(saved_normals),
-        );
-        println!(
-            " Indices: {} - {} saved",
-            humanize_bytes::humanize_quantity!(total_indices),
-            humanize_bytes::humanize_quantity!(saved_indices),
-        );
-    }
+    println!(
+        " Vertices: {}",
+        humanize_bytes::humanize_quantity!(total_vertices),
+    );
+    println!(
+        " Normals: {}",
+        humanize_bytes::humanize_quantity!(total_normals),
+    );
+    println!(
+        " Indices: {}",
+        humanize_bytes::humanize_quantity!(total_indices),
+    );
 
     println!("Generating meshes took {:?}", now.elapsed());
 
@@ -433,10 +269,7 @@ fn main() {
             alpha: 1.0,
         })))
         .insert_resource(ModelResource(model))
-        .insert_resource(ModelSettings {
-            material_type: MaterialType::Clay,
-            lod,
-        })
+        .insert_resource(ModelSettings { lod })
         .run();
 
     println!("Exiting...");
