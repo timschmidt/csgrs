@@ -1932,9 +1932,9 @@ dependencies = [
 
 [[package]]
 name = "criterion2"
-version = "3.0.0"
+version = "3.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b43b9cdbf592c78d882f2a3b9e6ebe8aedc749ef84915103a0248802ce2f6b3"
+checksum = "77cd1059d67baa066c334993d8d6e757ad257d21030db6a9a945dddbb559d4fe"
 dependencies = [
  "anes",
  "bpaf",
