@@ -1,4 +1,4 @@
-use glam::{IVec3, UVec3, Vec3};
+use glam::{IVec2, IVec3, UVec3, Vec2, Vec3};
 
 use crate::{Batch, Lod, MaxDepth, VoxInterner, VoxelTrait, utils::mesh::MeshData};
 
@@ -80,6 +80,22 @@ pub trait VoxOps<T: VoxelTrait>:
 {
 }
 
+/// Trait for spatial operations in 2D.
+pub trait VoxOpsSpatial2D {
+    /// Returns the position in 2D.
+    /// For columns, the units are columns, for sectors, the units are sectors.
+    fn position_2d(&self) -> IVec2;
+
+    /// Returns the world position in 2D.
+    fn world_position_2d(&self) -> Vec2;
+
+    /// Returns the world position of the center in 2D.
+    fn world_center_position_2d(&self) -> Vec2;
+
+    /// Returns the world size in 2D.
+    fn world_size_2d(&self) -> Vec2;
+}
+
 /// Trait for spatial operations in 3D.
 pub trait VoxOpsSpatial3D {
     /// Returns the position in 3D.
@@ -95,6 +111,9 @@ pub trait VoxOpsSpatial3D {
     /// Returns the world size in 3D.
     fn world_size_3d(&self) -> Vec3;
 }
+
+/// Combined trait for spatial operations in both 2D and 3D.
+pub trait VoxOpsSpatial: VoxOpsSpatial2D + VoxOpsSpatial3D {}
 
 /// Trait for chunk configuration in voxel operations.
 pub trait VoxOpsChunkConfig {
