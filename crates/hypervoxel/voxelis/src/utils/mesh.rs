@@ -27,6 +27,9 @@ pub struct MeshData {
 
 impl MeshData {
     pub fn clear(&mut self) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("MeshData::clear");
+
         self.vertices.clear();
         self.normals.clear();
         self.indices.clear();
@@ -35,11 +38,14 @@ impl MeshData {
 
 #[inline(always)]
 pub fn add_quad(mesh_data: &mut MeshData, quad: [Vec3; 4], normal: &Vec3) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("add_quad");
+
     let index = mesh_data.vertices.len() as u32;
 
     mesh_data.vertices.extend(quad);
     mesh_data.normals.extend([normal, normal, normal, normal]);
     mesh_data
         .indices
-        .extend([index + 2, index + 1, index, index + 3, index, index + 1])
+        .extend([index + 2, index + 1, index, index + 3, index, index + 1]);
 }

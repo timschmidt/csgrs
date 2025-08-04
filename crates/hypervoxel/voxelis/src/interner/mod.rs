@@ -43,6 +43,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
     const INITIAL_CAPACITY: usize = 16384; // 43ms
 
     pub fn with_memory_budget(requested_budget: usize) -> Self {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::with_memory_budget");
+
         let single_node_size = Self::node_size();
 
         // Calculate how many complete nodes fit in the budget
@@ -167,6 +170,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
             "Invalid block id: {block_id:?}"
         );
 
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::get_value");
+
         self.values.get(block_id.index())
     }
 
@@ -177,6 +183,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
             self.is_valid_block_id(block_id),
             "Invalid block id: {block_id:?}"
         );
+
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::get_children");
 
         *self.children.get(block_id.index())
     }
@@ -189,6 +198,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
             "Invalid block id: {block_id:?}"
         );
 
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::get_children_ref");
+
         self.children.get(block_id.index())
     }
 
@@ -200,6 +212,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
             "Invalid block id: {block_id:?}"
         );
 
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::get_child_id");
+
         self.children.get(block_id.index())[index]
     }
 
@@ -210,6 +225,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
             "Invalid block id: {block_id:?}"
         );
 
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::get_ref");
+
         *self.ref_counts.get(block_id.index())
     }
 
@@ -219,6 +237,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
             self.is_valid_block_id(block_id),
             "Invalid block id: {block_id:?}"
         );
+
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::inc_ref");
 
         *self.ref_counts.get_mut(block_id.index()) += 1;
 
@@ -243,6 +264,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
             self.is_valid_block_id(block_id),
             "Invalid block id: {block_id:?}"
         );
+
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::dec_ref");
 
         let block_index = block_id.index();
 
@@ -275,6 +299,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
         #[cfg(feature = "debug_trace_ref_counts")]
         println!("Incrementing ref count for children: {children:?}");
 
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::inc_child_refs");
+
         for (i, child_id) in children.iter().enumerate() {
             if i == index {
                 #[cfg(feature = "debug_trace_ref_counts")]
@@ -301,6 +328,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
     pub fn inc_all_child_refs(&mut self, children: &Children) {
         #[cfg(feature = "debug_trace_ref_counts")]
         println!("Incrementing ref count for children: {children:?}");
+
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::inc_all_child_refs");
 
         #[cfg(feature = "debug_trace_ref_counts")]
         let mut i = 0;
@@ -335,6 +365,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
             "Invalid block id: {block_id:?}"
         );
 
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::inc_ref_by");
+
         *self.ref_counts.get_mut(block_id.index()) += count;
 
         #[cfg(feature = "memory_stats")]
@@ -354,6 +387,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
     }
 
     pub fn dec_ref_by(&mut self, block_id: &BlockId, count: u32) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::dec_ref_by");
+
         #[cfg(feature = "debug_trace_ref_counts")]
         println!("Decrementing ref count for block: {block_id:?} by {count}");
 
@@ -385,6 +421,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
             self.is_valid_block_id(block_id),
             "Invalid block id: {block_id:?}"
         );
+
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::dec_ref_recursive");
 
         #[cfg(debug_assertions)]
         let max_idx = self.dec_ref_rec_stack.capacity();
@@ -513,6 +552,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
             }
         }
 
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::dec_child_refs");
+
         #[cfg(not(feature = "debug_trace_ref_counts"))]
         for child_id in children.iter() {
             if !child_id.is_empty() {
@@ -529,6 +571,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
             block_id != &self.empty_branch_id,
             "Cannot recycle empty branch",
         );
+
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::recycle");
 
         let block_index = block_id.index();
 
@@ -581,6 +626,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
     pub fn get_or_create_leaf(&mut self, value: T) -> BlockId {
         debug_assert_ne!(value, T::default(), "Leaf value should not be default");
+
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::get_or_create_leaf");
 
         // Compute hash for the new node
         let hash = compute_leaf_hash_for_value(&value);
@@ -666,6 +714,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
     /// - if there is a branch, ref counts will be decremented, and branch ref count will be bumped
     /// There is no other way, since we can't act like Arc without access to interner
     pub fn get_or_create_branch(&mut self, children: Children, types: u8, mask: u8) -> BlockId {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxInterner::get_or_create_branch");
+
         // Compute hash for the new node
         let hash = compute_branch_hash_for_children(&children, types, mask);
 

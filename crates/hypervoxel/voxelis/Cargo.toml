@@ -25,6 +25,7 @@ numeric_voxel_impls = []
 vtm = ["dep:bitflags", "dep:byteorder", "dep:md-5", "dep:zstd"]
 memory_stats = []
 debug_trace_ref_counts = []
+tracy = ["dep:tracy-client"]
 
 [dependencies]
 voxelis-memory = "25.4.0"
@@ -34,9 +35,10 @@ parking_lot.workspace = true
 rayon.workspace = true
 rustc-hash.workspace = true
 wide.workspace = true
-md-5 = { workspace = true, optional = true }
 bitflags = { workspace = true, optional = true }
 byteorder = { workspace = true, optional = true }
+md-5 = { workspace = true, optional = true }
+tracy-client = { workspace = true, optional = true }
 zstd = { workspace = true, optional = true }
 
 [dev-dependencies]

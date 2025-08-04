@@ -70,6 +70,9 @@ impl Voxelizer {
         mesh: Obj,
         memory_budget: usize,
     ) -> Self {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Voxelizer::empty");
+
         Self {
             mesh,
             model: VoxModel::empty(max_depth, chunk_world_size, memory_budget),
@@ -82,6 +85,9 @@ impl Voxelizer {
         mesh: Obj,
         memory_budget: usize,
     ) -> Self {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Voxelizer::new");
+
         let world_bounds_x = (mesh.size.x.ceil() as i32) + 1;
         let world_bounds_y = (mesh.size.y.ceil() as i32) + 1;
         let world_bounds_z = (mesh.size.z.ceil() as i32) + 1;
@@ -100,10 +106,16 @@ impl Voxelizer {
     }
 
     pub fn clear(&mut self) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Voxelizer::clear");
+
         self.model.clear();
     }
 
     pub fn build_face_to_chunk_map(&mut self) -> FxHashMap<IVec3, Vec<IVec3>> {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Voxelizer::build_face_to_chunk_map");
+
         let mut chunk_face_map: FxHashMap<IVec3, Vec<IVec3>> = FxHashMap::default();
 
         let mesh_min = self.mesh.aabb.0;
@@ -154,6 +166,9 @@ impl Voxelizer {
         faces: &[IVec3],
         vertices: &[DVec3],
     ) -> Option<Batch<i32>> {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Voxelizer::voxelize_chunk");
+
         let epsilon = voxel_size * 1e-7;
         let splat = DVec3::splat(epsilon);
 
@@ -234,6 +249,9 @@ impl Voxelizer {
     }
 
     pub fn voxelize_mesh(&mut self, chunk_face_map: FxHashMap<IVec3, Vec<IVec3>>) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Voxelizer::voxelize_mesh");
+
         let (tx, rx): (Sender<(IVec3, Batch<i32>)>, Receiver<(IVec3, Batch<i32>)>) = bounded(1024);
 
         let depth = self.model.max_depth();
@@ -365,6 +383,9 @@ impl Voxelizer {
     }
 
     pub fn simple_voxelize(&mut self) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Voxelizer::simple_voxelize");
+
         let voxels_per_axis = self.model.voxels_per_axis();
         let voxel_size: f64 = 1.0 / voxels_per_axis as f64;
         let inv_voxel_size: f64 = 1.0 / voxel_size;
@@ -394,6 +415,9 @@ impl Voxelizer {
     }
 
     pub fn voxelize(&mut self) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Voxelizer::voxelize");
+
         println!("Voxelize started");
 
         let face_to_chunk_map_time = Instant::now();

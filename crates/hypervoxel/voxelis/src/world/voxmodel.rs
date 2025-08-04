@@ -37,6 +37,9 @@ fn initialize_chunks<T: VoxelTrait>(
     chunk_world_size: f32,
     bounds: IVec3,
 ) -> HashMap<IVec3, VoxChunk<T>> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("initialize_chunks");
+
     let estimated_capacity = bounds.x as usize * bounds.y as usize * bounds.z as usize;
 
     let mut chunks = HashMap::with_capacity(estimated_capacity);
@@ -57,6 +60,9 @@ fn initialize_chunks<T: VoxelTrait>(
 
 impl<T: VoxelTrait> VoxModel<T> {
     pub fn empty(max_depth: MaxDepth, chunk_world_size: f32, memory_budget: usize) -> Self {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxModel::empty");
+
         let interner = Arc::new(RwLock::new(VoxInterner::with_memory_budget(memory_budget)));
 
         Self {
@@ -69,6 +75,9 @@ impl<T: VoxelTrait> VoxModel<T> {
     }
 
     pub fn new(max_depth: MaxDepth, chunk_world_size: f32, memory_budget: usize) -> Self {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxModel::new");
+
         let interner = Arc::new(RwLock::new(VoxInterner::with_memory_budget(memory_budget)));
         let world_bounds = IVec3::new(32, 32, 32);
         let chunks = initialize_chunks(max_depth, chunk_world_size, world_bounds);
@@ -88,6 +97,9 @@ impl<T: VoxelTrait> VoxModel<T> {
         world_bounds: IVec3,
         memory_budget: usize,
     ) -> Self {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxModel::with_dimensions");
+
         println!(
             "Creating model with bounds {world_bounds:?}, chunk: {chunk_world_size}m depth: {max_depth}"
         );
@@ -104,6 +116,9 @@ impl<T: VoxelTrait> VoxModel<T> {
     }
 
     pub fn get_or_create_chunk(&mut self, position: IVec3) -> &mut VoxChunk<T> {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxModel::get_or_create_chunk");
+
         self.chunks.entry(position).or_insert_with(|| {
             self.world_bounds.x = position.x.max(self.world_bounds.x);
             self.world_bounds.y = position.y.max(self.world_bounds.y);
@@ -124,11 +139,17 @@ impl<T: VoxelTrait> VoxModel<T> {
     }
 
     pub fn clear(&mut self) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxModel::clear");
+
         self.world_bounds = IVec3::ZERO;
         self.chunks.clear();
     }
 
     pub fn resize(&mut self, bounds: IVec3) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxModel::resize");
+
         self.chunks.clear();
 
         self.world_bounds = bounds;
@@ -162,6 +183,9 @@ impl<T: VoxelTrait> VoxModel<T> {
     }
 
     pub fn serialize(&self, data: &mut Vec<u8>) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxModel::serialize");
+
         const BUFFER_SIZE: usize = 256;
 
         let interner = self.interner.read();
@@ -267,6 +291,9 @@ impl<T: VoxelTrait> VoxModel<T> {
     }
 
     pub fn deserialize(&mut self, data: &[u8]) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxModel::deserialize");
+
         println!("Deserializing chunks...");
 
         let now = std::time::Instant::now();

@@ -6,6 +6,12 @@ use voxelis::{
 };
 
 fn main() {
+    #[cfg(feature = "tracy")]
+    tracy_client::Client::start();
+
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("vtm-export");
+
     if std::env::args().len() < 3 {
         eprintln!(
             "Usage: {} <input.vtm> <output.obj>",

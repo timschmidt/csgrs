@@ -67,6 +67,7 @@ rand = { version = "0.9", features = ["small_rng"] }
 rayon = "1.10"
 rustc-hash = "2.1"
 serde = "1.0"
+tracy-client = "0.18"
 wide = "0.7"
 zstd = "0.13"
 

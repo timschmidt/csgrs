@@ -13,6 +13,10 @@ readme = "README.md"
 [package.metadata.docs.rs]
 all-features = true
 
+[dependencies]
+tracy-client = { workspace = true, optional = true }
+
 [features]
 default = []
 memory_stats = []
+tracy = ["dep:tracy-client"]

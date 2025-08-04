@@ -15,6 +15,9 @@ pub struct Obj {
 
 impl Obj {
     pub fn parse<P: AsRef<Path>>(path: &P) -> Self {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Obj::parse");
+
         println!("Parsing obj file: {}", path.as_ref().display());
 
         let file = File::open(path).unwrap();

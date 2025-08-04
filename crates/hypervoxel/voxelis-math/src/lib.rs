@@ -1,6 +1,9 @@
 use glam::DVec3;
 
 pub fn triangle_cube_intersection(triangle: (DVec3, DVec3, DVec3), cube: (DVec3, DVec3)) -> bool {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("triangle_cube_intersection");
+
     let (tv0, tv1, tv2) = triangle;
     let (cube_min, cube_max) = cube;
 
@@ -121,6 +124,9 @@ pub fn triangle_cube_intersection(triangle: (DVec3, DVec3, DVec3), cube: (DVec3,
 }
 
 pub fn point_in_or_on_cube(point: DVec3, cube: (DVec3, DVec3)) -> bool {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("point_in_or_on_cube");
+
     let (cube_min, cube_max) = cube;
 
     // Calculate a dynamic epsilon based on the size of the cube
@@ -143,6 +149,9 @@ pub fn point_in_or_on_cube(point: DVec3, cube: (DVec3, DVec3)) -> bool {
 }
 
 pub fn point_in_or_on_triangle(point: DVec3, triangle: (DVec3, DVec3, DVec3)) -> bool {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("point_in_or_on_triangle");
+
     let (a, b, c) = triangle;
     let v0 = b - a;
     let v1 = c - a;
@@ -167,6 +176,9 @@ pub fn point_in_or_on_triangle(point: DVec3, triangle: (DVec3, DVec3, DVec3)) ->
 }
 
 pub fn edge_quad_intersection(edge: (DVec3, DVec3), quad: (DVec3, DVec3, DVec3, DVec3)) -> bool {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("edge_quad_intersection");
+
     let (e1, e2) = edge;
 
     // First, check if the edge intersects the plane of the quad
@@ -190,6 +202,9 @@ pub fn edge_quad_intersection(edge: (DVec3, DVec3), quad: (DVec3, DVec3, DVec3, 
 }
 
 pub fn point_in_quad(point: DVec3, quad: (DVec3, DVec3, DVec3, DVec3)) -> bool {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("point_in_quad");
+
     let (a, b, c, d) = quad;
 
     // Check if the point is inside either of the two triangles formed by the quad

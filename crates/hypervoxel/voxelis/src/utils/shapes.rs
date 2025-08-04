@@ -3,6 +3,9 @@ use glam::{IVec3, Vec3};
 use crate::{Batch, Lod, spatial::VoxOpsConfig};
 
 pub fn generate_corners<T: VoxOpsConfig>(tree: &T, corners: [bool; 8]) -> Batch<i32> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_corners");
+
     let mut batch = Batch::<i32>::new(tree.max_depth(Lod::new(0)));
 
     generate_corners_batch(&mut batch, corners);
@@ -22,6 +25,9 @@ pub fn generate_corners<T: VoxOpsConfig>(tree: &T, corners: [bool; 8]) -> Batch<
 /// * 6: top-left-front
 /// * 7: top-right-front
 pub fn generate_corners_batch(batch: &mut Batch<i32>, corners: [bool; 8]) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_corners_batch");
+
     let voxels_per_axis = batch.voxels_per_axis(Lod::new(0)) as i32;
 
     let max = voxels_per_axis - 1;
@@ -73,6 +79,9 @@ pub fn generate_sphere<T: VoxOpsConfig>(
     radius: i32,
     value: i32,
 ) -> Batch<i32> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_sphere");
+
     let mut batch = Batch::<i32>::new(tree.max_depth(Lod::new(0)));
 
     generate_sphere_batch(&mut batch, center, radius, value);
@@ -82,6 +91,9 @@ pub fn generate_sphere<T: VoxOpsConfig>(
 
 pub fn generate_sphere_batch(batch: &mut Batch<i32>, center: IVec3, radius: i32, value: i32) {
     debug_assert!(radius > 0);
+
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_sphere_batch");
 
     let (cx, cy, cz) = (center.x, center.y, center.z);
     let radius_squared = radius * radius;
@@ -111,6 +123,9 @@ pub fn generate_sphere_batch(batch: &mut Batch<i32>, center: IVec3, radius: i32,
 }
 
 pub fn generate_checkerboard<T: VoxOpsConfig>(tree: &T) -> Batch<i32> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_checkerboard");
+
     let lod = Lod::new(0);
 
     let mut batch = Batch::<i32>::new(tree.max_depth(lod));
@@ -121,6 +136,9 @@ pub fn generate_checkerboard<T: VoxOpsConfig>(tree: &T) -> Batch<i32> {
 }
 
 pub fn generate_checkerboard_batch(batch: &mut Batch<i32>) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_checkerboard_batch");
+
     let lod = Lod::new(0);
     let voxels_per_axis = batch.voxels_per_axis(lod) as i32;
 
@@ -136,6 +154,9 @@ pub fn generate_checkerboard_batch(batch: &mut Batch<i32>) {
 }
 
 pub fn generate_sparse_fill<T: VoxOpsConfig>(tree: &T) -> Batch<i32> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_sparse_fill");
+
     let lod = Lod::new(0);
 
     let mut batch = Batch::<i32>::new(tree.max_depth(lod));
@@ -146,6 +167,9 @@ pub fn generate_sparse_fill<T: VoxOpsConfig>(tree: &T) -> Batch<i32> {
 }
 
 pub fn generate_sparse_fill_batch(batch: &mut Batch<i32>) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_sparse_fill_batch");
+
     let lod = Lod::new(0);
     let voxels_per_axis = batch.voxels_per_axis(lod) as i32;
 
@@ -159,6 +183,9 @@ pub fn generate_sparse_fill_batch(batch: &mut Batch<i32>) {
 }
 
 pub fn generate_hollow_cube<T: VoxOpsConfig>(tree: &T) -> Batch<i32> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_hollow_cube");
+
     let lod = Lod::new(0);
 
     let mut batch = Batch::<i32>::new(tree.max_depth(lod));
@@ -169,6 +196,9 @@ pub fn generate_hollow_cube<T: VoxOpsConfig>(tree: &T) -> Batch<i32> {
 }
 
 pub fn generate_hollow_cube_batch(batch: &mut Batch<i32>) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_hollow_cube_batch");
+
     let lod = Lod::new(0);
     let voxels_per_axis = batch.voxels_per_axis(lod) as i32;
 
@@ -190,6 +220,9 @@ pub fn generate_hollow_cube_batch(batch: &mut Batch<i32>) {
 }
 
 pub fn generate_diagonal<T: VoxOpsConfig>(tree: &T) -> Batch<i32> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_diagonal");
+
     let lod = Lod::new(0);
 
     let mut batch = Batch::<i32>::new(tree.max_depth(lod));
@@ -200,6 +233,9 @@ pub fn generate_diagonal<T: VoxOpsConfig>(tree: &T) -> Batch<i32> {
 }
 
 pub fn generate_diagonal_batch(batch: &mut Batch<i32>) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_diagonal_batch");
+
     let lod = Lod::new(0);
     let voxels_per_axis = batch.voxels_per_axis(lod) as i32;
 
@@ -221,6 +257,9 @@ pub fn generate_terrain<T: VoxOpsConfig>(
     offset: Vec3,
     surface_only: bool,
 ) -> Batch<i32> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_terrain");
+
     let mut batch = Batch::<i32>::new(tree.max_depth(Lod::new(0)));
 
     generate_terrain_batch(&mut batch, voxel_size, scale, offset, surface_only);
@@ -235,6 +274,9 @@ pub fn generate_terrain_batch(
     offset: Vec3,
     surface_only: bool,
 ) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_terrain_batch");
+
     let lod = Lod::new(0);
     let voxels_per_axis = batch.voxels_per_axis(lod) as i32;
 
@@ -273,6 +315,9 @@ pub fn generate_perlin_3d<T: VoxOpsConfig>(
     offset: Vec3,
     threshold: f32,
 ) -> Batch<i32> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_perlin_3d");
+
     let lod = Lod::new(0);
 
     let mut batch = Batch::<i32>::new(tree.max_depth(lod));
@@ -289,6 +334,9 @@ pub fn generate_perlin_3d_batch(
     offset: Vec3,
     threshold: f32,
 ) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_perlin_3d_batch");
+
     let lod = Lod::new(0);
     let voxels_per_axis = batch.voxels_per_axis(lod) as i32;
 

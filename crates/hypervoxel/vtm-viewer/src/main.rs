@@ -49,6 +49,8 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup);
         app.add_systems(Update, toggle_wireframe);
+        #[cfg(feature = "tracy")]
+        app.add_systems(Last, tracy_mark_frame);
     }
 }
 
@@ -89,6 +91,11 @@ fn generate_chunk_color_checkered(x: i32, y: i32, z: i32) -> Color {
     }
 }
 
+#[cfg(feature = "tracy")]
+fn tracy_mark_frame() {
+    tracy_client::frame_mark();
+}
+
 fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -97,6 +104,9 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("setup");
+
     let model = &mut model.0;
 
     commands.spawn((
@@ -351,6 +361,12 @@ fn toggle_wireframe(
 }
 
 fn main() {
+    #[cfg(feature = "tracy")]
+    tracy_client::Client::start();
+
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("vtm-viewer");
+
     if std::env::args().len() < 2 {
         println!("Usage: vtm-viewer <vtm-file> <chunk size in m> <lod-level (0-7)>");
         std::process::exit(1);

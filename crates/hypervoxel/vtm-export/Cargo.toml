@@ -7,6 +7,8 @@ edition = "2024"
 
 [dependencies]
 voxelis.workspace = true
+tracy-client = { workspace = true, optional = true }
 
 [features]
 default = ["voxelis/vtm"]
+tracy = ["dep:tracy-client", "voxelis/tracy"]

@@ -33,6 +33,9 @@ pub struct VoxChunk<T: VoxelTrait> {
 
 impl<T: VoxelTrait> VoxChunk<T> {
     pub fn with_position(chunk_size: f32, max_depth: MaxDepth, x: i32, y: i32, z: i32) -> Self {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxChunk::with_position");
+
         Self {
             data: VoxTree::new(max_depth),
             position: IVec3::new(x, y, z),
@@ -176,6 +179,9 @@ impl<T: VoxelTrait> VoxOpsMesh<T> for VoxChunk<T> {
         offset: Vec3,
         lod: Lod,
     ) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("VoxChunk::generate_naive_mesh_arrays");
+
         let chunk_size = self.chunk_size;
 
         if self.data.is_leaf() {
@@ -330,6 +336,9 @@ pub fn serialize_chunk<T: VoxelTrait>(
     id_map: &FxHashMap<u32, u32>,
     data: &mut Vec<u8>,
 ) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("serialize_chunk");
+
     let mut writer = std::io::BufWriter::new(data);
 
     writer.write_all(&VTC_MAGIC).unwrap();
@@ -356,6 +365,9 @@ pub fn deserialize_chunk<T: VoxelTrait>(
     chunk_size: f32,
     max_depth: MaxDepth,
 ) -> VoxChunk<T> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("deserialize_chunk");
+
     let mut magic = [0; VTC_MAGIC.len()];
     reader.read_exact(&mut magic).unwrap();
     assert_eq!(magic, VTC_MAGIC);

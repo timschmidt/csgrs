@@ -33,6 +33,9 @@ impl<T> PoolAllocatorLite<T> {
             "Capacity must be less than u32::MAX"
         );
 
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("PoolAllocatorLite::new");
+
         let block_size = Self::block_size();
         let block_align = Self::align();
         let actual_size = block_size * capacity;
@@ -85,6 +88,9 @@ impl<T> PoolAllocatorLite<T> {
             self.capacity
         );
 
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("PoolAllocatorLite::get");
+
         unsafe { &*self.memory.add(index as usize) }
     }
 
@@ -96,10 +102,16 @@ impl<T> PoolAllocatorLite<T> {
             self.capacity
         );
 
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("PoolAllocatorLite::get_mut");
+
         unsafe { &mut *self.memory.add(index as usize) }
     }
 
     pub fn allocate(&mut self, value: T, next_free: Option<u32>) -> u32 {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("PoolAllocatorLite::allocate");
+
         let index = match next_free {
             Some(index) => {
                 #[cfg(feature = "memory_stats")]
@@ -145,6 +157,9 @@ impl<T> PoolAllocatorLite<T> {
             self.capacity
         );
 
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("PoolAllocatorLite::deallocate");
+
         let ptr = unsafe { self.memory.add(index as usize) };
         unsafe { std::ptr::drop_in_place(ptr) };
 
@@ -158,6 +173,9 @@ impl<T> PoolAllocatorLite<T> {
 
 impl<T> Drop for PoolAllocatorLite<T> {
     fn drop(&mut self) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("PoolAllocatorLite::drop");
+
         unsafe {
             std::alloc::dealloc(self.memory as *mut u8, self.layout);
         }

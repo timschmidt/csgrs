@@ -61,6 +61,9 @@ impl<T: VoxelTrait> Batch<T> {
     /// ```
     #[must_use]
     pub fn new(max_depth: MaxDepth) -> Self {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Batch::new");
+
         let lower_depth = if max_depth.max() > 0 {
             max_depth.max() - 1
         } else {
@@ -81,6 +84,9 @@ impl<T: VoxelTrait> Batch<T> {
     #[inline(always)]
     /// Returns the internal vector of (`set_mask`, `clear_mask`) pairs per node.
     pub fn masks(&self) -> &Vec<(u8, u8)> {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Batch::masks");
+
         &self.masks
     }
 
@@ -88,6 +94,9 @@ impl<T: VoxelTrait> Batch<T> {
     #[inline(always)]
     /// Returns the buffered voxel values array for each child of every node.
     pub fn values(&self) -> &Vec<[T; MAX_CHILDREN]> {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Batch::values");
+
         &self.values
     }
 
@@ -95,12 +104,18 @@ impl<T: VoxelTrait> Batch<T> {
     #[inline(always)]
     /// Returns the uniform fill value if `fill` was invoked; otherwise `None`.
     pub fn to_fill(&self) -> Option<T> {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Batch::to_fill");
+
         self.to_fill
     }
 
     /// Counts and returns the number of recorded set or clear operations.
     #[must_use]
     pub fn size(&self) -> usize {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Batch::size");
+
         self.masks
             .iter()
             .filter(|(set_mask, clear_mask)| *set_mask != 0 || *clear_mask != 0)
@@ -110,6 +125,9 @@ impl<T: VoxelTrait> Batch<T> {
     /// Indicates whether any operations have been recorded in this batch.
     #[must_use]
     pub fn has_patches(&self) -> bool {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Batch::has_patches");
+
         self.has_patches
     }
 
@@ -128,6 +146,9 @@ impl<T: VoxelTrait> Batch<T> {
         debug_assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         debug_assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
         debug_assert!(position.z >= 0 && position.z < (1 << self.max_depth.max()));
+
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Batch::just_set");
 
         let full_path = encode_child_index_path(&position);
 
@@ -155,12 +176,18 @@ impl<T: VoxelTrait> Batch<T> {
 
     /// Clears existing operations and sets a uniform fill value for the batch.
     pub fn just_fill(&mut self, value: T) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Batch::just_fill");
+
         self.just_clear();
         self.to_fill = Some(value);
     }
 
     /// Resets all recorded operations, clearing masks, values, and fill state.
     pub fn just_clear(&mut self) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("Batch::just_clear");
+
         self.masks.fill((0, 0));
         self.values.fill([T::default(); MAX_CHILDREN]);
         self.to_fill = None;

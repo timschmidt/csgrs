@@ -125,6 +125,9 @@ pub fn get_at_depth<T: VoxelTrait>(
     position: &IVec3,
     depth: &TraversalDepth,
 ) -> Option<T> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("get_at_depth");
+
     let max_depth = depth.max();
     let mut depth = depth.current();
 
@@ -157,6 +160,9 @@ pub fn to_vec<T: VoxelTrait>(
     root_id: &BlockId,
     max_depth: MaxDepth,
 ) -> Vec<T> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("to_vec");
+
     let max_depth = max_depth.max() as u32;
     let voxels_per_axis = 1 << max_depth;
     let size = voxels_per_axis * voxels_per_axis * voxels_per_axis;
@@ -213,6 +219,9 @@ fn fill_sub_volume<T: VoxelTrait>(
     voxels_per_axis: usize,
     value: T,
 ) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("fill_sub_volume");
+
     let pos_x = pos.x as usize;
     let pos_y = pos.y as usize;
     let pos_z = pos.z as usize;

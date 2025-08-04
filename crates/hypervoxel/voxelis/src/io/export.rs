@@ -21,6 +21,9 @@ pub fn export_model_to_obj<T: VoxelTrait, P: AsRef<Path>>(
     model: &VoxModel<T>,
     lod: Lod,
 ) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("export_model_to_obj");
+
     let mut mesh_data = MeshData::default();
 
     let interner = model.get_interner();
@@ -84,6 +87,9 @@ pub fn export_model_to_vtm<T: VoxelTrait, P: AsRef<Path>>(
     path: &P,
     model: &VoxModel<T>,
 ) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("export_model_to_vtm");
+
     print!("Exporting VTM model to {}", path.as_ref().display(),);
 
     let mut vox_file = std::fs::File::create(path).unwrap();

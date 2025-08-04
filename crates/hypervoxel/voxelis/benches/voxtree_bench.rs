@@ -42,7 +42,7 @@ macro_rules! fill_sum {
 }
 
 pub fn generate_test_sphere(
-    tree: &mut VoxTree,
+    tree: &mut VoxTree<i32>,
     interner: &mut VoxInterner<i32>,
     size: u32,
     value: i32,
@@ -212,6 +212,9 @@ fn benchmark_meshing<M: Measurement>(
                                 black_box(offset),
                                 black_box(lod),
                             );
+
+                            #[cfg(feature = "tracy")]
+                            tracy_client::frame_mark();
                         });
                     });
                 }
@@ -294,6 +297,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
         c.bench_function("voxtree_create", |b| {
             b.iter(|| {
                 let _ = black_box(VoxTree::new(black_box(depth)));
+
+                #[cfg(feature = "tracy")]
+                tracy_client::frame_mark();
             });
         });
     }
@@ -319,6 +325,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -337,6 +346,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     };
@@ -372,6 +384,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 );
 
                                 v = next_v;
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -393,6 +408,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     };
@@ -427,6 +445,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 );
 
                                 v = next_v;
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -445,6 +466,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -486,6 +510,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -510,6 +537,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -553,6 +583,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -577,6 +610,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -619,6 +655,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -645,6 +684,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -689,6 +731,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -715,6 +760,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -757,6 +805,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -781,6 +832,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -824,6 +878,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -850,6 +907,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -900,6 +960,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -932,6 +995,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -976,6 +1042,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -1002,6 +1071,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -1058,6 +1130,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -1090,6 +1165,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -1141,6 +1219,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -1171,6 +1252,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -1224,6 +1308,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 if v == 0 {
                                     v = 1;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -1256,6 +1343,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 } else {
                                     batch_idx = 0;
                                 }
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -1292,6 +1382,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                     black_box(IVec3::new(x, y, z)),
                                     black_box(value),
                                 );
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -1310,6 +1403,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 tree.apply_batch(&mut interner, black_box(&batch));
 
                                 // batch.just_set(IVec3::new(x, y, z), 0);
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -1345,6 +1441,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                     black_box(IVec3::new(x, y, z)),
                                     black_box(value),
                                 );
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                         BenchType::Batch => {
@@ -1361,6 +1460,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 tree.apply_batch(&mut interner, black_box(&batch));
 
                                 batch.just_set(IVec3::new(x, y, z), 0);
+
+                                #[cfg(feature = "tracy")]
+                                tracy_client::frame_mark();
                             });
                         }
                     }
@@ -1388,6 +1490,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                             }
                         }
                     }
+
+                    #[cfg(feature = "tracy")]
+                    tracy_client::frame_mark();
                 });
             });
         }
@@ -1414,6 +1519,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                             }
                         }
                     }
+
+                    #[cfg(feature = "tracy")]
+                    tracy_client::frame_mark();
                 });
             });
         }
@@ -1440,6 +1548,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                             }
                         }
                     }
+
+                    #[cfg(feature = "tracy")]
+                    tracy_client::frame_mark();
                 });
             });
         }
@@ -1466,6 +1577,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                             }
                         }
                     }
+
+                    #[cfg(feature = "tracy")]
+                    tracy_client::frame_mark();
                 });
             });
         }
@@ -1492,6 +1606,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                             }
                         }
                     }
+
+                    #[cfg(feature = "tracy")]
+                    tracy_client::frame_mark();
                 })
             });
         }
@@ -1506,6 +1623,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
             b.iter(|| {
                 let _ = black_box(tree.is_empty());
+
+                #[cfg(feature = "tracy")]
+                tracy_client::frame_mark();
             });
         });
     }
@@ -1519,6 +1639,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
             b.iter(|| {
                 let _ = black_box(tree.is_empty());
+
+                #[cfg(feature = "tracy")]
+                tracy_client::frame_mark();
             });
         });
     }
@@ -1533,6 +1656,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
                 b.iter(|| {
                     tree.clear(black_box(&mut interner));
+
+                    #[cfg(feature = "tracy")]
+                    tracy_client::frame_mark();
                 });
             });
         }
@@ -1554,6 +1680,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 b.iter(|| {
                     tree.apply_batch(&mut interner, black_box(&batch));
                     tree.clear(&mut interner);
+
+                    #[cfg(feature = "tracy")]
+                    tracy_client::frame_mark();
                 });
             });
         }
@@ -1572,6 +1701,9 @@ fn benchmark_voxtree(c: &mut Criterion) {
                 b.iter(|| {
                     tree.fill(&mut interner, 1);
                     tree.clear(&mut interner);
+
+                    #[cfg(feature = "tracy")]
+                    tracy_client::frame_mark();
                 });
             });
         }

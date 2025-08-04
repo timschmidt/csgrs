@@ -16,6 +16,9 @@ pub fn import_model_from_vtm<T: VoxelTrait, P: AsRef<Path>>(
     memory_budget: usize,
     target_chunk_world_size: Option<f32>,
 ) -> VoxModel<T> {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("import_model_from_vtm");
+
     let mut vox_file = std::fs::File::open(path).unwrap();
     let mut reader = std::io::BufReader::new(&mut vox_file);
 

@@ -7,6 +7,12 @@ use voxelis::{
 use voxelis_voxelize::Voxelizer;
 
 fn main() {
+    #[cfg(feature = "tracy")]
+    tracy_client::Client::start();
+
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("vtm-voxelize");
+
     if std::env::args().len() < 5 {
         eprintln!(
             "Usage: {} <max_depth> <chunk_size_in_m> <input.obj> <output.vtm>",

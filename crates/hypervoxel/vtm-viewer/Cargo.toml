@@ -19,7 +19,9 @@ humanize-bytes.workspace = true
 log.workspace = true
 rayon.workspace = true
 rustc-hash.workspace = true
+tracy-client = { workspace = true, optional = true }
 
 [features]
 default = ["memory_stats", "voxelis/vtm"]
 memory_stats = ["voxelis/memory_stats"]
+tracy = ["dep:tracy-client", "voxelis/tracy"]
