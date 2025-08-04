@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    io::{BufReader, Read, Write},
+    io::{BufReader, Write},
     sync::Arc,
 };
 
@@ -8,13 +8,13 @@ use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use glam::IVec3;
 use parking_lot::RwLock;
 
-use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 #[cfg(feature = "memory_stats")]
 use crate::interner::InternerStats;
+
 use crate::{
-    BlockId, MaxDepth, VoxInterner,
+    BlockId, MaxDepth, VoxInterner, VoxelTrait,
     interner::EMPTY_CHILD,
     io::varint::{decode_varint_u32_from_reader, encode_varint_u32},
     spatial::VoxOpsSpatial3D,
@@ -24,19 +24,19 @@ use crate::{
     },
 };
 
-pub struct VoxModel {
+pub struct VoxModel<T: VoxelTrait> {
     pub max_depth: MaxDepth,
     pub chunk_world_size: f32,
     pub world_bounds: IVec3,
-    pub chunks: HashMap<IVec3, VoxChunk>,
-    pub interner: Arc<RwLock<VoxInterner<i32>>>,
+    pub chunks: HashMap<IVec3, VoxChunk<T>>,
+    pub interner: Arc<RwLock<VoxInterner<T>>>,
 }
 
-fn initialize_chunks(
+fn initialize_chunks<T: VoxelTrait>(
     max_depth: MaxDepth,
     chunk_world_size: f32,
     bounds: IVec3,
-) -> HashMap<IVec3, VoxChunk> {
+) -> HashMap<IVec3, VoxChunk<T>> {
     let estimated_capacity = bounds.x as usize * bounds.y as usize * bounds.z as usize;
 
     let mut chunks = HashMap::with_capacity(estimated_capacity);
@@ -55,7 +55,7 @@ fn initialize_chunks(
     chunks
 }
 
-impl VoxModel {
+impl<T: VoxelTrait> VoxModel<T> {
     pub fn empty(max_depth: MaxDepth, chunk_world_size: f32, memory_budget: usize) -> Self {
         let interner = Arc::new(RwLock::new(VoxInterner::with_memory_budget(memory_budget)));
 
@@ -103,7 +103,7 @@ impl VoxModel {
         }
     }
 
-    pub fn get_or_create_chunk(&mut self, position: IVec3) -> &mut VoxChunk {
+    pub fn get_or_create_chunk(&mut self, position: IVec3) -> &mut VoxChunk<T> {
         self.chunks.entry(position).or_insert_with(|| {
             self.world_bounds.x = position.x.max(self.world_bounds.x);
             self.world_bounds.y = position.y.max(self.world_bounds.y);
@@ -119,7 +119,7 @@ impl VoxModel {
         })
     }
 
-    pub fn get_interner(&self) -> Arc<RwLock<VoxInterner<i32>>> {
+    pub fn get_interner(&self) -> Arc<RwLock<VoxInterner<T>>> {
         self.interner.clone()
     }
 
@@ -173,10 +173,7 @@ impl VoxModel {
         id_map.insert(0, 0);
 
         let mut leaf_patterns = leaf_patterns.iter().map(|(_, id)| *id).collect::<Vec<_>>();
-        let mut branch_patterns = branch_patterns
-            .iter()
-            .map(|(_, id)| *id)
-            .collect::<Vec<_>>();
+        let mut branch_patterns = branch_patterns.values().map(|id| *id).collect::<Vec<_>>();
 
         let mut next_id = 1;
 
@@ -218,7 +215,7 @@ impl VoxModel {
             // writer.write_u32::<BigEndian>(new_id).unwrap();
             writer.write_all(&new_id_bytes).unwrap();
             let value = interner.get_value(id);
-            writer.write_all(&value.to_be_bytes()).unwrap();
+            value.write_as_be(&mut writer).unwrap();
         }
 
         writer.write_u32::<BigEndian>(branch_size - 1).unwrap();
@@ -246,12 +243,12 @@ impl VoxModel {
                 writer.write_all(&new_id_bytes).unwrap();
             }
             let branch_lod_value = interner.get_value(id);
-            writer.write_all(&branch_lod_value.to_be_bytes()).unwrap();
+            branch_lod_value.write_as_be(&mut writer).unwrap();
         }
 
         let chunks_data: Vec<Vec<u8>> = self
             .chunks
-            .par_iter()
+            .iter() // .par_iter() needs Send + Sync for VoxelTrait
             .map(|(_, chunk)| {
                 let mut buffer = Vec::with_capacity(BUFFER_SIZE);
                 serialize_chunk(chunk, &id_map, &mut buffer);
@@ -279,15 +276,13 @@ impl VoxModel {
         let leaf_size = reader.read_u32::<BigEndian>().unwrap();
         // let mut leaf_patterns: HashMap<u32, (BlockId, i32)> =
         //     HashMap<K, V, FxBuildHasher>(leaf_size as usize);
-        let mut leaf_patterns: FxHashMap<u32, (BlockId, i32)> = FxHashMap::default();
+        let mut leaf_patterns: FxHashMap<u32, (BlockId, T)> = FxHashMap::default();
 
         let mut interner = self.interner.write();
 
         for _ in 0..leaf_size {
             let id = decode_varint_u32_from_reader(&mut reader).unwrap();
-            let mut bytes = [0u8; std::mem::size_of::<i32>()];
-            reader.read_exact(&mut bytes).unwrap();
-            let value = i32::from_be_bytes(bytes);
+            let value = T::read_from_be(&mut reader).unwrap();
 
             let block_id = interner.deserialize_leaf(id, value);
             leaf_patterns.insert(id, (block_id, value));
@@ -296,11 +291,11 @@ impl VoxModel {
         }
 
         let branch_size = reader.read_u32::<BigEndian>().unwrap();
-        let mut branch_patterns: FxHashMap<u32, (BlockId, [u32; 8], i32)> =
+        let mut branch_patterns: FxHashMap<u32, (BlockId, [u32; 8], T)> =
         // FxHashMap::with_capacity(branch_size as usize);
             FxHashMap::default();
 
-        branch_patterns.insert(0, (BlockId::EMPTY, [0u32; 8], 0));
+        branch_patterns.insert(0, (BlockId::EMPTY, [0u32; 8], T::default()));
 
         for _ in 0..branch_size {
             let id = decode_varint_u32_from_reader(&mut reader).unwrap();
@@ -321,9 +316,7 @@ impl VoxModel {
                     types |= 1 << child_id;
                 }
             }
-            let mut lod_bytes = [0u8; std::mem::size_of::<i32>()];
-            reader.read_exact(&mut lod_bytes).unwrap();
-            let lod_value = i32::from_be_bytes(lod_bytes);
+            let lod_value = T::read_from_be(&mut reader).unwrap();
 
             let block_id = interner.preallocate_branch_id(id, types, mask);
 

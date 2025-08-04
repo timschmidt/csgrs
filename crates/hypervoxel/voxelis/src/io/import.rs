@@ -4,18 +4,18 @@ use byteorder::{BigEndian, ReadBytesExt};
 use glam::IVec3;
 use md5::{Digest, Md5};
 
-use crate::{MaxDepth, world::VoxModel};
+use crate::{MaxDepth, VoxelTrait, world::VoxModel};
 
 use super::{
     Flags,
     consts::{VTM_MAGIC, VTM_VERSION},
 };
 
-pub fn import_model_from_vtm<P: AsRef<Path>>(
+pub fn import_model_from_vtm<T: VoxelTrait, P: AsRef<Path>>(
     path: &P,
     memory_budget: usize,
     target_chunk_world_size: Option<f32>,
-) -> VoxModel {
+) -> VoxModel<T> {
     let mut vox_file = std::fs::File::open(path).unwrap();
     let mut reader = std::io::BufReader::new(&mut vox_file);
 

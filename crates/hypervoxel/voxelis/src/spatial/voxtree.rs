@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use glam::IVec3;
 
 use crate::{
@@ -103,18 +105,20 @@ const PATH_MASKS: [[u32; MAX_ALLOWED_DEPTH - 1]; MAX_ALLOWED_DEPTH] = [
 ];
 
 /// VoxTree - a high performance, SVO DAG (Sparse Voxel Octree Directed Acyclic Graph) structure.
-pub struct VoxTree {
+pub struct VoxTree<T: VoxelTrait> {
     max_depth: MaxDepth,
     root_id: BlockId,
     dirty: bool,
+    _marker: PhantomData<T>,
 }
 
-impl VoxTree {
+impl<T: VoxelTrait> VoxTree<T> {
     pub fn new(max_depth: MaxDepth) -> Self {
         Self {
             max_depth,
             root_id: BlockId::EMPTY,
             dirty: false,
+            _marker: PhantomData,
         }
     }
 
@@ -122,13 +126,13 @@ impl VoxTree {
         self.root_id
     }
 
-    pub fn set_root_id<T: VoxelTrait>(&mut self, interner: &mut VoxInterner<T>, root_id: BlockId) {
+    pub fn set_root_id(&mut self, interner: &mut VoxInterner<T>, root_id: BlockId) {
         self.root_id = root_id;
         interner.inc_ref(&self.root_id);
     }
 }
 
-impl<T: VoxelTrait> VoxOpsRead<T> for VoxTree {
+impl<T: VoxelTrait> VoxOpsRead<T> for VoxTree<T> {
     fn get(&self, interner: &VoxInterner<T>, position: IVec3) -> Option<T> {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
@@ -143,7 +147,7 @@ impl<T: VoxelTrait> VoxOpsRead<T> for VoxTree {
     }
 }
 
-impl<T: VoxelTrait> VoxOpsWrite<T> for VoxTree {
+impl<T: VoxelTrait> VoxOpsWrite<T> for VoxTree<T> {
     fn set(&mut self, interner: &mut VoxInterner<T>, position: IVec3, voxel: T) -> bool {
         assert!(position.x >= 0 && position.x < (1 << self.max_depth.max()));
         assert!(position.y >= 0 && position.y < (1 << self.max_depth.max()));
@@ -241,7 +245,7 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for VoxTree {
     }
 }
 
-impl<T: VoxelTrait> VoxOpsBulkWrite<T> for VoxTree {
+impl<T: VoxelTrait> VoxOpsBulkWrite<T> for VoxTree<T> {
     fn fill(&mut self, interner: &mut VoxInterner<T>, value: T) {
         if value != T::default() {
             if !self.root_id.is_empty() {
@@ -267,7 +271,7 @@ impl<T: VoxelTrait> VoxOpsBulkWrite<T> for VoxTree {
     }
 }
 
-impl<T: VoxelTrait> VoxOpsBatch<T> for VoxTree {
+impl<T: VoxelTrait> VoxOpsBatch<T> for VoxTree<T> {
     fn create_batch(&self) -> Batch<T> {
         Batch::new(self.max_depth)
     }
@@ -297,7 +301,7 @@ impl<T: VoxelTrait> VoxOpsBatch<T> for VoxTree {
     }
 }
 
-impl VoxOpsConfig for VoxTree {
+impl<T: VoxelTrait> VoxOpsConfig for VoxTree<T> {
     #[inline(always)]
     fn max_depth(&self, lod: Lod) -> MaxDepth {
         self.max_depth.for_lod(lod)
@@ -309,7 +313,7 @@ impl VoxOpsConfig for VoxTree {
     }
 }
 
-impl VoxOpsState for VoxTree {
+impl<T: VoxelTrait> VoxOpsState for VoxTree<T> {
     #[inline(always)]
     fn is_empty(&self) -> bool {
         self.root_id.is_empty()
@@ -321,7 +325,7 @@ impl VoxOpsState for VoxTree {
     }
 }
 
-impl VoxOpsDirty for VoxTree {
+impl<T: VoxelTrait> VoxOpsDirty for VoxTree<T> {
     #[inline(always)]
     fn is_dirty(&self) -> bool {
         self.dirty
@@ -1075,7 +1079,7 @@ mod tests {
 
     #[test]
     fn test_create() {
-        let tree = VoxTree::new(MaxDepth::new(3));
+        let tree = VoxTree::<u8>::new(MaxDepth::new(3));
         assert!(tree.is_empty());
         assert_eq!(tree.max_depth(Lod::new(0)).max(), 3);
         assert_eq!(tree.voxels_per_axis(Lod::new(0)), 8);

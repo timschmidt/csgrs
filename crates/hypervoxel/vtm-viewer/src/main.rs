@@ -30,7 +30,7 @@ struct GamePlugin;
 struct Chunk;
 
 #[derive(Resource)]
-pub struct ModelResource(pub VoxModel);
+pub struct ModelResource(pub VoxModel<i32>);
 
 #[derive(Eq, PartialEq)]
 pub enum MaterialType {

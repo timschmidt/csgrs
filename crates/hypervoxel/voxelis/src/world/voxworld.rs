@@ -1,15 +1,17 @@
 use glam::IVec3;
 
+use crate::VoxelTrait;
+
 use super::VoxChunk;
 
 #[derive(Default)]
-pub struct VoxWorld {
+pub struct VoxWorld<T: VoxelTrait> {
     pub chunks_size: IVec3,
     pub chunks_len: usize,
-    pub chunks: Vec<VoxChunk>,
+    pub chunks: Vec<VoxChunk<T>>,
 }
 
-impl VoxWorld {
+impl<T: VoxelTrait> VoxWorld<T> {
     pub fn new() -> Self {
         let chunks_size = IVec3::new(32, 32, 32);
         let chunks_len = chunks_size.x as usize * chunks_size.y as usize * chunks_size.z as usize;

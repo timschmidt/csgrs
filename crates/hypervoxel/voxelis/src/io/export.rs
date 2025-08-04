@@ -4,7 +4,7 @@ use byteorder::{BigEndian, WriteBytesExt};
 use md5::{Digest, Md5};
 
 use crate::{
-    Lod,
+    Lod, VoxelTrait,
     spatial::{VoxOpsMesh, VoxOpsSpatial3D, VoxOpsState},
     utils::mesh::MeshData,
     world::VoxModel,
@@ -15,7 +15,12 @@ use super::{
     consts::{RESERVED_1, RESERVED_2, VTM_MAGIC, VTM_VERSION},
 };
 
-pub fn export_model_to_obj<P: AsRef<Path>>(name: String, path: &P, model: &VoxModel, lod: Lod) {
+pub fn export_model_to_obj<T: VoxelTrait, P: AsRef<Path>>(
+    name: String,
+    path: &P,
+    model: &VoxModel<T>,
+    lod: Lod,
+) {
     let mut mesh_data = MeshData::default();
 
     let interner = model.get_interner();
@@ -74,7 +79,11 @@ impl std::fmt::Display for ByteSize {
     }
 }
 
-pub fn export_model_to_vtm<P: AsRef<Path>>(name: String, path: &P, model: &VoxModel) {
+pub fn export_model_to_vtm<T: VoxelTrait, P: AsRef<Path>>(
+    name: String,
+    path: &P,
+    model: &VoxModel<T>,
+) {
     print!("Exporting VTM model to {}", path.as_ref().display(),);
 
     let mut vox_file = std::fs::File::create(path).unwrap();

@@ -2,9 +2,7 @@
 use std::io::{BufReader, Read, Write};
 
 #[cfg(feature = "vtm")]
-use byteorder::BigEndian;
-#[cfg(feature = "vtm")]
-use byteorder::{ReadBytesExt, WriteBytesExt};
+use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 #[cfg(feature = "vtm")]
 use rustc_hash::FxHashMap;
 
@@ -25,15 +23,15 @@ use crate::utils::{
     common::to_vec,
     mesh::{self, MeshData},
 };
-use crate::{Batch, BlockId, Lod, MaxDepth, VoxInterner};
+use crate::{Batch, BlockId, Lod, MaxDepth, VoxInterner, VoxelTrait};
 
-pub struct VoxChunk {
-    data: VoxTree,
+pub struct VoxChunk<T: VoxelTrait> {
+    data: VoxTree<T>,
     position: IVec3,
     chunk_size: f32,
 }
 
-impl VoxChunk {
+impl<T: VoxelTrait> VoxChunk<T> {
     pub fn with_position(chunk_size: f32, max_depth: MaxDepth, x: i32, y: i32, z: i32) -> Self {
         Self {
             data: VoxTree::new(max_depth),
@@ -51,45 +49,45 @@ impl VoxChunk {
     }
 }
 
-impl VoxOpsRead<i32> for VoxChunk {
+impl<T: VoxelTrait> VoxOpsRead<T> for VoxChunk<T> {
     #[inline(always)]
-    fn get(&self, interner: &VoxInterner<i32>, position: IVec3) -> Option<i32> {
+    fn get(&self, interner: &VoxInterner<T>, position: IVec3) -> Option<T> {
         self.data.get(interner, position)
     }
 }
 
-impl VoxOpsWrite<i32> for VoxChunk {
+impl<T: VoxelTrait> VoxOpsWrite<T> for VoxChunk<T> {
     #[inline(always)]
-    fn set(&mut self, interner: &mut VoxInterner<i32>, position: IVec3, voxel: i32) -> bool {
+    fn set(&mut self, interner: &mut VoxInterner<T>, position: IVec3, voxel: T) -> bool {
         self.data.set(interner, position, voxel)
     }
 }
 
-impl VoxOpsBulkWrite<i32> for VoxChunk {
+impl<T: VoxelTrait> VoxOpsBulkWrite<T> for VoxChunk<T> {
     #[inline(always)]
-    fn fill(&mut self, interner: &mut VoxInterner<i32>, value: i32) {
+    fn fill(&mut self, interner: &mut VoxInterner<T>, value: T) {
         self.data.fill(interner, value)
     }
 
     #[inline(always)]
-    fn clear(&mut self, interner: &mut VoxInterner<i32>) {
+    fn clear(&mut self, interner: &mut VoxInterner<T>) {
         self.data.clear(interner)
     }
 }
 
-impl VoxOpsBatch<i32> for VoxChunk {
+impl<T: VoxelTrait> VoxOpsBatch<T> for VoxChunk<T> {
     #[inline(always)]
-    fn create_batch(&self) -> Batch<i32> {
+    fn create_batch(&self) -> Batch<T> {
         self.data.create_batch()
     }
 
     #[inline(always)]
-    fn apply_batch(&mut self, interner: &mut VoxInterner<i32>, batch: &Batch<i32>) -> bool {
+    fn apply_batch(&mut self, interner: &mut VoxInterner<T>, batch: &Batch<T>) -> bool {
         self.data.apply_batch(interner, batch)
     }
 }
 
-impl VoxOpsConfig for VoxChunk {
+impl<T: VoxelTrait> VoxOpsConfig for VoxChunk<T> {
     #[inline(always)]
     fn max_depth(&self, lod: Lod) -> MaxDepth {
         self.data.max_depth(lod)
@@ -101,7 +99,7 @@ impl VoxOpsConfig for VoxChunk {
     }
 }
 
-impl VoxOpsState for VoxChunk {
+impl<T: VoxelTrait> VoxOpsState for VoxChunk<T> {
     #[inline(always)]
     fn is_empty(&self) -> bool {
         self.data.is_empty()
@@ -113,7 +111,7 @@ impl VoxOpsState for VoxChunk {
     }
 }
 
-impl VoxOpsDirty for VoxChunk {
+impl<T: VoxelTrait> VoxOpsDirty for VoxChunk<T> {
     #[inline(always)]
     fn is_dirty(&self) -> bool {
         self.data.is_dirty()
@@ -130,7 +128,7 @@ impl VoxOpsDirty for VoxChunk {
     }
 }
 
-impl VoxOpsChunkConfig for VoxChunk {
+impl<T: VoxelTrait> VoxOpsChunkConfig for VoxChunk<T> {
     #[inline(always)]
     fn chunk_dimensions(&self) -> UVec3 {
         UVec3::splat(1)
@@ -147,7 +145,7 @@ impl VoxOpsChunkConfig for VoxChunk {
     }
 }
 
-impl VoxOpsSpatial3D for VoxChunk {
+impl<T: VoxelTrait> VoxOpsSpatial3D for VoxChunk<T> {
     #[inline(always)]
     fn position_3d(&self) -> IVec3 {
         self.position
@@ -170,10 +168,10 @@ impl VoxOpsSpatial3D for VoxChunk {
     }
 }
 
-impl VoxOpsMesh<i32> for VoxChunk {
+impl<T: VoxelTrait> VoxOpsMesh<T> for VoxChunk<T> {
     fn generate_naive_mesh_arrays(
         &self,
-        interner: &VoxInterner<i32>,
+        interner: &VoxInterner<T>,
         mesh_data: &mut MeshData,
         offset: Vec3,
         lod: Lod,
@@ -269,19 +267,22 @@ impl VoxOpsMesh<i32> for VoxChunk {
                 for x in 0..voxels_per_axis {
                     let index = base_index_z + x as usize;
 
-                    if unsafe { *data.get_unchecked(index) } == 0 {
+                    if unsafe { *data.get_unchecked(index) } == T::default() {
                         continue;
                     }
 
                     let has_top = y + 1 >= voxels_per_axis
-                        || unsafe { *data.get_unchecked(index + shift_y) } == 0;
-                    let has_bottom = y == 0 || unsafe { *data.get_unchecked(index - shift_y) } == 0;
+                        || unsafe { *data.get_unchecked(index + shift_y) } == T::default();
+                    let has_bottom =
+                        y == 0 || unsafe { *data.get_unchecked(index - shift_y) } == T::default();
                     let has_front = z + 1 >= voxels_per_axis
-                        || unsafe { *data.get_unchecked(index + shift_z) } == 0;
-                    let has_back = z == 0 || unsafe { *data.get_unchecked(index - shift_z) } == 0;
-                    let has_right =
-                        x + 1 >= voxels_per_axis || unsafe { *data.get_unchecked(index + 1) } == 0;
-                    let has_left = x == 0 || unsafe { *data.get_unchecked(index - 1) } == 0;
+                        || unsafe { *data.get_unchecked(index + shift_z) } == T::default();
+                    let has_back =
+                        z == 0 || unsafe { *data.get_unchecked(index - shift_z) } == T::default();
+                    let has_right = x + 1 >= voxels_per_axis
+                        || unsafe { *data.get_unchecked(index + 1) } == T::default();
+                    let has_left =
+                        x == 0 || unsafe { *data.get_unchecked(index - 1) } == T::default();
 
                     if !(has_top || has_bottom || has_left || has_right || has_back || has_front) {
                         continue;
@@ -324,7 +325,11 @@ impl VoxOpsMesh<i32> for VoxChunk {
 }
 
 #[cfg(feature = "vtm")]
-pub fn serialize_chunk(chunk: &VoxChunk, id_map: &FxHashMap<u32, u32>, data: &mut Vec<u8>) {
+pub fn serialize_chunk<T: VoxelTrait>(
+    chunk: &VoxChunk<T>,
+    id_map: &FxHashMap<u32, u32>,
+    data: &mut Vec<u8>,
+) {
     let mut writer = std::io::BufWriter::new(data);
 
     writer.write_all(&VTC_MAGIC).unwrap();
@@ -343,14 +348,14 @@ pub fn serialize_chunk(chunk: &VoxChunk, id_map: &FxHashMap<u32, u32>, data: &mu
 }
 
 #[cfg(feature = "vtm")]
-pub fn deserialize_chunk(
-    interner: &mut VoxInterner<i32>,
-    leaf_patterns: &FxHashMap<u32, (BlockId, i32)>,
-    patterns: &FxHashMap<u32, (BlockId, [u32; 8], i32)>,
+pub fn deserialize_chunk<T: VoxelTrait>(
+    interner: &mut VoxInterner<T>,
+    leaf_patterns: &FxHashMap<u32, (BlockId, T)>,
+    patterns: &FxHashMap<u32, (BlockId, [u32; 8], T)>,
     reader: &mut BufReader<&[u8]>,
     chunk_size: f32,
     max_depth: MaxDepth,
-) -> VoxChunk {
+) -> VoxChunk<T> {
     let mut magic = [0; VTC_MAGIC.len()];
     reader.read_exact(&mut magic).unwrap();
     assert_eq!(magic, VTC_MAGIC);

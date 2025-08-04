@@ -42,7 +42,7 @@ pub struct StatsWindowState {
 #[derive(Resource)]
 pub struct World {
     pub interner: VoxInterner<i32>,
-    pub chunk: VoxChunk,
+    pub chunk: VoxChunk<i32>,
     pub mesh: Handle<Mesh>,
 }
 

@@ -60,7 +60,7 @@ impl std::fmt::Display for ByteSize {
 
 pub struct Voxelizer {
     pub mesh: Obj,
-    pub model: VoxModel,
+    pub model: VoxModel<i32>,
 }
 
 impl Voxelizer {
