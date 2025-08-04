@@ -196,8 +196,8 @@ impl<T: VoxelTrait> VoxModel<T> {
         let mut id_map: FxHashMap<u32, u32> = FxHashMap::default();
         id_map.insert(0, 0);
 
-        let mut leaf_patterns = leaf_patterns.iter().map(|(_, id)| *id).collect::<Vec<_>>();
-        let mut branch_patterns = branch_patterns.values().map(|id| *id).collect::<Vec<_>>();
+        let mut leaf_patterns = leaf_patterns.values().map(|id| *id).collect::<Vec<_>>();
+        let mut branch_patterns = branch_patterns.values().copied().collect::<Vec<_>>();
 
         let mut next_id = 1;
 

@@ -3,6 +3,7 @@ use std::path::Path;
 use voxelis::{
     Lod,
     io::{export::export_model_to_obj, import::import_model_from_vtm},
+    world::VoxModel,
 };
 
 fn main() {
@@ -28,6 +29,6 @@ fn main() {
 
     let name = output.file_stem().unwrap().to_str().unwrap().to_string();
 
-    let model = import_model_from_vtm(&input, 1024 * 1024 * 1024, None);
+    let model: VoxModel<i32> = import_model_from_vtm(&input, 1024 * 1024 * 1024, None);
     export_model_to_obj(name, &output, &model, Lod::new(0));
 }
