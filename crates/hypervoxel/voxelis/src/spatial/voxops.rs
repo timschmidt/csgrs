@@ -44,6 +44,15 @@ pub trait VoxOpsMesh<T: VoxelTrait> {
         offset: Vec3,
         lod: Lod,
     );
+
+    /// Generates a greedy mesh from the voxels.
+    fn generate_greedy_mesh_arrays(
+        &self,
+        interner: &VoxInterner<T>,
+        mesh_data: &mut MeshData,
+        offset: Vec3,
+        lod: Lod,
+    );
 }
 
 /// Trait for configuration of voxel operations.

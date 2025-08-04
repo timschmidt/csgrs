@@ -34,7 +34,12 @@ pub fn export_model_to_obj<T: VoxelTrait, P: AsRef<Path>>(
             continue;
         }
 
-        chunk.generate_naive_mesh_arrays(&interner, &mut mesh_data, chunk.world_position_3d(), lod);
+        chunk.generate_greedy_mesh_arrays(
+            &interner,
+            &mut mesh_data,
+            chunk.world_position_3d(),
+            lod,
+        );
     }
 
     let obj_file = std::fs::File::create(path).unwrap();

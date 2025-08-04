@@ -1,6 +1,9 @@
 #[cfg(feature = "vtm")]
 use std::io::{BufReader, Read, Write};
 
+#[cfg(feature = "trace_greedy_timings")]
+use std::time::Instant;
+
 #[cfg(feature = "vtm")]
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 #[cfg(feature = "vtm")]
@@ -15,14 +18,20 @@ use crate::io::{
     varint::{decode_varint_u32_from_reader, encode_varint},
 };
 
-use crate::spatial::{
-    VoxOpsBatch, VoxOpsBulkWrite, VoxOpsChunkConfig, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh,
-    VoxOpsRead, VoxOpsSpatial3D, VoxOpsState, VoxOpsWrite, VoxTree,
+use crate::{
+    spatial::{
+        VoxOpsBatch, VoxOpsBulkWrite, VoxOpsChunkConfig, VoxOpsConfig, VoxOpsDirty, VoxOpsMesh,
+        VoxOpsRead, VoxOpsSpatial3D, VoxOpsState, VoxOpsWrite, VoxTree,
+    },
+    utils::{
+        common::to_vec,
+        mesh::{self, MeshData, OccupancyDataBuilder},
+    },
 };
-use crate::utils::{
-    common::to_vec,
-    mesh::{self, MeshData},
-};
+
+#[cfg(feature = "trace_greedy_timings")]
+use crate::utils::mesh::GreedyTimings;
+
 use crate::{Batch, BlockId, Lod, MaxDepth, VoxInterner, VoxelTrait};
 
 pub struct VoxChunk<T: VoxelTrait> {
@@ -327,6 +336,48 @@ impl<T: VoxelTrait> VoxOpsMesh<T> for VoxChunk<T> {
                 }
             }
         }
+    }
+
+    fn generate_greedy_mesh_arrays(
+        &self,
+        interner: &VoxInterner<T>,
+        mesh_data: &mut MeshData,
+        offset: Vec3,
+        lod: Lod,
+    ) {
+        #[cfg(feature = "tracy")]
+        let _span = tracy_client::span!("chunk_generate_greedy_mesh_arrays");
+
+        let voxel_size = self.voxel_size(lod);
+
+        let mut builder = OccupancyDataBuilder::default();
+
+        let max_depth = self.max_depth(lod);
+
+        #[cfg(feature = "trace_greedy_timings")]
+        let mut timings = GreedyTimings::default();
+
+        mesh::generate_occupancy_masks(
+            interner,
+            &mut builder,
+            &self.data.get_root_id(),
+            max_depth,
+            UVec3::ZERO,
+            #[cfg(feature = "trace_greedy_timings")]
+            &mut timings,
+        );
+
+        let occupancy_data = builder.build();
+
+        mesh::generate_greedy_mesh_arrays(
+            &occupancy_data,
+            mesh_data,
+            max_depth,
+            offset,
+            voxel_size,
+            #[cfg(feature = "trace_greedy_timings")]
+            &mut greedy_timings,
+        );
     }
 }
 

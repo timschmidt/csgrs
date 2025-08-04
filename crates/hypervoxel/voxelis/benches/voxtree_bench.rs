@@ -160,6 +160,7 @@ enum BenchType {
 #[derive(Copy, Clone)]
 enum MeshType {
     Naive,
+    Greedy,
 }
 
 impl BenchType {
@@ -175,6 +176,7 @@ impl MeshType {
     pub fn to_string(self) -> &'static str {
         match self {
             Self::Naive => "naive",
+            Self::Greedy => "greedy",
         }
     }
 }
@@ -207,6 +209,23 @@ fn benchmark_meshing<M: Measurement>(
                             mesh_data.clear();
 
                             chunk.generate_naive_mesh_arrays(
+                                interner,
+                                black_box(&mut mesh_data),
+                                black_box(offset),
+                                black_box(lod),
+                            );
+
+                            #[cfg(feature = "tracy")]
+                            tracy_client::frame_mark();
+                        });
+                    });
+                }
+                MeshType::Greedy => {
+                    group.bench_with_input(bench_id, &depth, |b, _| {
+                        b.iter(|| {
+                            mesh_data.clear();
+
+                            chunk.generate_greedy_mesh_arrays(
                                 interner,
                                 black_box(&mut mesh_data),
                                 black_box(offset),
@@ -276,7 +295,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         }
         Err(_) => vec![BenchType::Single, BenchType::Batch],
     };
-    let mesh_types = vec![MeshType::Naive];
+    let mesh_types = vec![MeshType::Naive, MeshType::Greedy];
     let max_lod_env = std::env::var("VOXTREE_MAX_LOD");
     let max_lod = match max_lod_env {
         Ok(val) => val.parse::<u8>().unwrap_or(max_depth),
