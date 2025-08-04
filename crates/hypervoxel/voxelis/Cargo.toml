@@ -17,7 +17,7 @@ categories = [
   "rendering",
   "simulation",
 ]
-rust-version = "1.86"
+rust-version = "1.88"
 
 [features]
 default = ["numeric_voxel_impls"]
