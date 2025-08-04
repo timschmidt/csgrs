@@ -115,6 +115,15 @@ pub trait VoxOpsSpatial3D {
 /// Combined trait for spatial operations in both 2D and 3D.
 pub trait VoxOpsSpatial: VoxOpsSpatial2D + VoxOpsSpatial3D {}
 
+/// Trait for converting positions between local and world coordinates.
+pub trait VoxOpsConvertPositions {
+    /// Converts a local position to a world position.
+    fn local_to_world(&self, position: UVec3) -> IVec3;
+
+    /// Converts a world position to a local position.
+    fn world_to_local(&self, position: IVec3) -> UVec3;
+}
+
 /// Trait for chunk configuration in voxel operations.
 pub trait VoxOpsChunkConfig {
     /// Returns the chunk dimensions in chunks.
