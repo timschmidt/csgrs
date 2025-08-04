@@ -16,6 +16,9 @@ use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, window::PresentMo
 use bevy_egui::EguiPlugin;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
+use bevy_screen_diagnostics::{
+    ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
+};
 use voxelis::{
     BlockId, Lod,
     io::import::import_model_from_vtm,
@@ -419,9 +422,9 @@ fn main() {
             PanOrbitCameraPlugin,
             WireframePlugin,
             FrameTimeDiagnosticsPlugin,
-            // ScreenDiagnosticsPlugin::default(),
-            // ScreenFrameDiagnosticsPlugin,
-            // ScreenEntityDiagnosticsPlugin,
+            ScreenDiagnosticsPlugin::default(),
+            ScreenFrameDiagnosticsPlugin,
+            ScreenEntityDiagnosticsPlugin,
         ))
         .insert_resource(ClearColor(Color::Srgba(Srgba {
             red: 0.02,
@@ -431,7 +434,7 @@ fn main() {
         })))
         .insert_resource(ModelResource(model))
         .insert_resource(ModelSettings {
-            material_type: MaterialType::Gradient,
+            material_type: MaterialType::Clay,
             lod,
         })
         .run();

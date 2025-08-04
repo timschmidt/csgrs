@@ -1147,6 +1147,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_screen_diagnostics"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3327e1b337b1c4dbb7d5a608eebb3001fcbc0acfbe1261e0a284bd4310b520f6"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_sprite"
 version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5521,6 +5530,7 @@ dependencies = [
  "bevy",
  "bevy_egui",
  "bevy_panorbit_camera",
+ "bevy_screen_diagnostics",
  "egui_plot",
  "fastnoise-lite",
  "humanize-bytes",
@@ -5579,6 +5589,7 @@ dependencies = [
  "bevy",
  "bevy_egui",
  "bevy_panorbit_camera",
+ "bevy_screen_diagnostics",
  "egui_extras",
  "humanize-bytes",
  "log",

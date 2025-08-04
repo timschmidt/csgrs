@@ -75,7 +75,7 @@ zstd = "0.13"
 bevy = "0.15"
 bevy_egui = "0.33"
 bevy_panorbit_camera = { version = "0.25", features = ["bevy_egui"] }
-# bevy_screen_diagnostics = "0.6.0"
+bevy_screen_diagnostics = "0.7"
 egui_extras = "0.31"
 egui_plot = "0.31"
 
