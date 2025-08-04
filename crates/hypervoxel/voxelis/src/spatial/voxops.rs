@@ -1,6 +1,8 @@
 use glam::{IVec2, IVec3, UVec3, Vec2, Vec3};
 
-use crate::{Batch, Lod, MaxDepth, VoxInterner, VoxelTrait, utils::mesh::MeshData};
+use crate::{
+    Batch, Lod, MaxDepth, VoxInterner, VoxelTrait, utils::mesh::MeshData, world::VoxChunk,
+};
 
 /// Trait for reading voxels.
 pub trait VoxOpsRead<T: VoxelTrait> {
@@ -134,4 +136,28 @@ pub trait VoxOpsChunkConfig {
 
     /// Returns the voxel size in world units for the given level of detail.
     fn voxel_size(&self, lod: Lod) -> f32;
+}
+
+/// Trait for local chunk container operations.
+pub trait VoxOpsChunkLocalContainer<T: VoxelTrait> {
+    /// Returns true if the local chunk at the given position exists.
+    fn has_local_chunk(&self, position: UVec3) -> bool;
+
+    /// Returns a reference to the local chunk at the given position.
+    fn local_chunk(&self, position: UVec3) -> Option<&VoxChunk<T>>;
+
+    /// Returns a mutable reference to the local chunk at the given position.
+    fn local_chunk_mut(&mut self, position: UVec3) -> Option<&mut VoxChunk<T>>;
+}
+
+/// Trait for world chunk container operations.
+pub trait VoxOpsChunkWorldContainer<T: VoxelTrait> {
+    /// Returns true if the world chunk at the given position exists.
+    fn has_world_chunk(&self, position: IVec3) -> bool;
+
+    /// Returns a reference to the world chunk at the given position.
+    fn world_chunk(&self, position: IVec3) -> Option<&VoxChunk<T>>;
+
+    /// Returns a mutable reference to the world chunk at the given position.
+    fn world_chunk_mut(&mut self, position: IVec3) -> Option<&mut VoxChunk<T>>;
 }
