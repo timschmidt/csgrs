@@ -95,7 +95,7 @@ pub fn generate_test_sphere_for_batch(batch: &mut Batch<i32>, size: u32, value: 
 }
 
 pub fn chunk_generate_test_sphere(
-    chunk: &mut VoxChunk,
+    chunk: &mut VoxChunk<i32>,
     interner: &mut VoxInterner<i32>,
     size: u32,
     value: i32,
@@ -123,7 +123,11 @@ pub fn chunk_generate_test_sphere(
     }
 }
 
-pub fn generate_test_sphere_sum(tree: &mut VoxTree, interner: &mut VoxInterner<i32>, size: u32) {
+pub fn generate_test_sphere_sum(
+    tree: &mut VoxTree<i32>,
+    interner: &mut VoxInterner<i32>,
+    size: u32,
+) {
     let radius = (size / 2) as i32;
     let r1 = radius - 1;
 
@@ -188,7 +192,7 @@ fn benchmark_meshing<M: Measurement>(
     max_lod: u8,
     mesh_types: &[MeshType],
     interner: &VoxInterner<i32>,
-    chunk: &VoxChunk,
+    chunk: &VoxChunk<i32>,
 ) {
     for lod in 0..max_lod {
         for mesh_type in mesh_types.iter() {
@@ -248,7 +252,7 @@ fn benchmark_to_vec<M: Measurement>(
     depth: MaxDepth,
     max_lod: u8,
     interner: &VoxInterner<i32>,
-    tree: &VoxTree,
+    tree: &VoxTree<i32>,
 ) {
     for lod in 0..max_lod {
         let bench_id = BenchmarkId::new(size.to_string(), format!("LOD_{lod}"));
@@ -315,7 +319,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
         let depth = depths[0].1;
         c.bench_function("voxtree_create", |b| {
             b.iter(|| {
-                let _ = black_box(VoxTree::new(black_box(depth)));
+                let _ = black_box(VoxTree::<i32>::new(black_box(depth)));
 
                 #[cfg(feature = "tracy")]
                 tracy_client::frame_mark();
@@ -1638,7 +1642,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
     {
         c.bench_function("voxtree_is_empty_empty", |b| {
             let depth = depths[0].1;
-            let tree = VoxTree::new(depth);
+            let tree = VoxTree::<i32>::new(depth);
 
             b.iter(|| {
                 let _ = black_box(tree.is_empty());
