@@ -5,7 +5,7 @@ use std::{
 };
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use glam::IVec3;
+use glam::{IVec3, UVec3};
 use parking_lot::RwLock;
 
 use rustc_hash::FxHashMap;
@@ -14,10 +14,10 @@ use rustc_hash::FxHashMap;
 use crate::interner::InternerStats;
 
 use crate::{
-    BlockId, MaxDepth, VoxInterner, VoxelTrait,
+    BlockId, Lod, MaxDepth, VoxInterner, VoxelTrait,
     interner::EMPTY_CHILD,
     io::varint::{decode_varint_u32_from_reader, encode_varint_u32},
-    spatial::VoxOpsSpatial3D,
+    spatial::{VoxOpsChunkConfig, VoxOpsConfig, VoxOpsSpatial3D},
     world::{
         VoxChunk,
         voxchunk::{deserialize_chunk, serialize_chunk},
@@ -413,5 +413,30 @@ impl<T: VoxelTrait> VoxModel<T> {
 
         let elapsed = now.elapsed();
         println!("Deserializing chunks took {elapsed:?}");
+    }
+}
+
+impl<T: VoxelTrait> VoxOpsConfig for VoxModel<T> {
+    fn max_depth(&self, lod: Lod) -> MaxDepth {
+        self.max_depth.for_lod(lod)
+    }
+
+    fn voxels_per_axis(&self, lod: Lod) -> u32 {
+        1 << self.max_depth.for_lod(lod).max()
+    }
+}
+
+impl<T: VoxelTrait> VoxOpsChunkConfig for VoxModel<T> {
+    fn chunk_dimensions(&self) -> UVec3 {
+        self.world_bounds.as_uvec3() + UVec3::ONE
+    }
+
+    fn chunk_size(&self) -> f32 {
+        self.chunk_world_size
+    }
+
+    fn voxel_size(&self, lod: Lod) -> f32 {
+        let max_depth = self.max_depth.for_lod(lod);
+        1.0 / (1 << max_depth.max()) as f32 * self.chunk_world_size
     }
 }
