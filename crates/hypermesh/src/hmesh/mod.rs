@@ -244,11 +244,13 @@ fn new_cyclic(
 
 
 impl Hmesh {
-    pub fn new_with_halfs(
+    pub fn new_for_boolean_test(
         pos: DMatrix<f64>,
         idx: DMatrix<usize>,
         tail: Vec<usize>,
         head: Vec<usize>,
+        vert_normal: DMatrix<f64>,
+        face_normal: DMatrix<f64>,
     ) -> Arc<Self> {
         assert_eq!(tail.len(), head.len());
         assert_eq!(tail.len() % 2, 0);
@@ -292,8 +294,69 @@ impl Hmesh {
             }
         }
 
-        new_cyclic(pos, idx, e2v, e2f, f2e, nv, ne, nf, nh,
-                   v2h, e2h, f2h, next, prev, twin, head, tail, edge, face)
+        Arc::new_cyclic(|weak_ptr| {
+            let mut faces = vec![];
+            let mut verts = vec![];
+            let mut edges = vec![];
+            let mut halfs = vec![];
+            for i in 0..nf { faces.push(Face{id: i, hm: weak_ptr.clone()}); }
+            for i in 0..nv { verts.push(Vert{id: i, hm: weak_ptr.clone()}); }
+            for i in 0..ne { edges.push(Edge{id: i, hm: weak_ptr.clone()}); }
+            for i in 0..nh { halfs.push(Half{id: i, hm: weak_ptr.clone()}); }
+
+            let mut bary_center  = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_basis_x = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_basis_y = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_area    = vec![0.; nf];
+
+            for i in 0..nf {
+                let ih = f2h[i];
+                let p2 = pos.fixed_view::<1, 3>(head[ih], 0);
+                let p1 = pos.fixed_view::<1, 3>(tail[ih], 0);
+                let p0 = pos.fixed_view::<1, 3>(tail[prev[ih]], 0);
+                let x = p2 - p1;
+                let t = (p1 - p0) * -1.;
+                let n = x.cross(&t);
+                let c = (p0 + p1 + p2) / 3.;
+                bary_center.row_mut(i).copy_from_slice(c.as_ref());
+                face_basis_x.row_mut(i).copy_from_slice(x.normalize().as_ref());
+                face_basis_y.row_mut(i).copy_from_slice((-x.cross(&n)).normalize().as_ref());
+                face_area[i] = n.norm() * 0.5;
+            }
+
+            Hmesh {
+                pos,
+                idx,
+                n_vert: nv,
+                n_face: nf,
+                n_edge: ne,
+                n_half: nh,
+                n_boundary: usize::MAX, // temp. better having loop2half
+                edge2vert : e2v,
+                edge2face : e2f,
+                face2edge : f2e,
+                vert2half : v2h,
+                edge2half : e2h,
+                face2half : f2h,
+                next,
+                prev,
+                twin,
+                head,
+                tail,
+                edge,
+                face,
+                verts,
+                edges,
+                faces,
+                halfs,
+                vert_normal,
+                face_normal,
+                bary_center,
+                face_basis_x,
+                face_basis_y,
+                face_area
+            }
+        })
     }
 
     pub fn new(

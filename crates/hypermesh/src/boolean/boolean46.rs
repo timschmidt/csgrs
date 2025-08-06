@@ -397,6 +397,7 @@ impl<'a> Boolean3<'a> {
     }
 }
 
+/*
 #[cfg(test)]
 mod test_boolean_result {
     use crate::boolean::{tests, Boolean3};
@@ -413,3 +414,4 @@ mod test_boolean_result {
         //};
     }
 }
+*/

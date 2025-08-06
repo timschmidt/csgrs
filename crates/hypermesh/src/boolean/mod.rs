@@ -212,6 +212,3 @@ fn new(&self, p: &'a Manifold, q: &'a Manifold, op :OpType) -> Self {
 
 #[derive(PartialEq)]
 pub enum OpType { Add, Subtract, Intersect }
-
-#[cfg(test)]
-mod tests;

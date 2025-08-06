@@ -81,12 +81,12 @@ impl<'a> Kernel02<'a> {
 #[cfg(test)]
 mod kernel02_tests {
     use crate::boolean::kernel02::Kernel02;
-    use crate::boolean::tests;
+    use crate::boolean::test_data;
 
     #[test]
     fn kernel02_test() {
-        let mfd_p = tests::gen_tet_a();
-        let mfd_q = tests::gen_tet_c();
+        let mfd_p = test_data::gen_tet_a();
+        let mfd_q = test_data::gen_tet_c();
         let k02 = Kernel02 {
             verts_p: &mfd_p.verts,
             verts_q: &mfd_q.verts,

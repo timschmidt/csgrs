@@ -23,7 +23,7 @@ fn main() {
         .add_plugins(PanOrbitCameraPlugin)
         .init_gizmo_group::<MyRoundGizmos>()
         .add_systems(Startup, setup)
-        //.add_systems(Update, draw_example_collection.run_if(resource_exists::<HmeshHandle>))
+        .add_systems(Update, draw_example_collection.run_if(resource_exists::<HmeshHandle>))
         .run();
 }
 
@@ -43,7 +43,11 @@ fn setup(
     //let pos: DMatrix<f64>   = DMatrix::from_row_slice(mesh_.positions.len() / 3, 3, &pos_buf).into();
     //let idx: DMatrix<usize> = DMatrix::from_row_slice(mesh_.indices.len() / 3, 3, &idx_buf).into();
     //let hmesh = Hmesh::new(pos, idx);
-    let hmesh = mfd::boolean::test_data::gen_tet_c();
+    let tet_a = mfd::boolean::test_data::gen_tet_a();
+    let tet_c = mfd::boolean::test_data::gen_tet_c();
+    let hmeshes = vec![tet_c];
+
+    for hmesh in hmeshes {
 
     let mut bevy_mesh = Mesh::new(
         bevy::render::mesh::PrimitiveTopology::TriangleList,
@@ -76,12 +80,13 @@ fn setup(
         WireframeColor { color: WHITE.into() },
     ));
 
+    cmds.insert_resource(HmeshHandle(hmesh));
+    }
+
     let sin_t_scaled = ops::sin(0.) * 50.;
     gizmos.line_2d(Vec2::Y * -sin_t_scaled, Vec2::splat(-80.), WHITE);
-
     cmds.spawn((PointLight::default(), Transform::from_xyz(3., 4., 3.)));
     cmds.spawn((Transform::from_translation(Vec3::new(0., 1.5, 5.)), PanOrbitCamera::default(),));
-    cmds.insert_resource(HmeshHandle(hmesh));
 
 }
 
@@ -91,7 +96,7 @@ fn draw_example_collection(
 ) {
     for i in 0..hmesh_handle.0.n_vert {
         let p0 = hmesh_handle.0.verts[i].pos();
-        let p1 = p0 + hmesh_handle.0.vert_normal.row(i) * 0.05;
+        let p1 = p0 + hmesh_handle.0.vert_normal.row(i) * 0.1;
         gizmos.line(
             Vec3::new(p0.x as f32, p0.y as f32, p0.z as f32),
             Vec3::new(p1.x as f32, p1.y as f32, p1.z as f32),
@@ -101,7 +106,7 @@ fn draw_example_collection(
 
     for i in 0..hmesh_handle.0.n_face {
         let p0 = hmesh_handle.0.bary_center.row(i);
-        let p1 = p0 + hmesh_handle.0.face_normal.row(i) * 0.05;
+        let p1 = p0 + hmesh_handle.0.face_normal.row(i) * 0.1;
         gizmos.line(
             Vec3::new(p0[0] as f32, p0[1] as f32, p0[2] as f32),
             Vec3::new(p1[0] as f32, p1[1] as f32, p1[2] as f32),
