@@ -4,6 +4,7 @@ mod kernel02;
 mod kernel11;
 mod kernel12;
 mod boolean46;
+pub mod test_data;
 
 use nalgebra::{RowVector3, Vector3};
 use crate::boolean::kernel02::Kernel02;

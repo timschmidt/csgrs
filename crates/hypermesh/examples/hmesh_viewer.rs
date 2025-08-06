@@ -27,36 +27,43 @@ fn main() {
         .run();
 }
 
+
 fn setup(
     mut cmds: Commands,
     mut gizmos: Gizmos,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>
 ) {
-    let (models, _) = tobj::load_obj("assets/models/torus.obj", &tobj::LoadOptions { ..Default::default() },
-    ).expect("Failed to OBJ load file");
-    let model = &models[0];
-    let mesh = &model.mesh;
-    let pos_buf: Vec<f64>   = mesh.positions.iter().map(|&v| v as f64).collect();
-    let idx_buf: Vec<usize> = mesh.indices.iter().map(|&v| v as usize).collect();
-    let pos: DMatrix<f64>   = DMatrix::from_row_slice(mesh.positions.len() / 3, 3, &pos_buf).into();
-    let idx: DMatrix<usize> = DMatrix::from_row_slice(mesh.indices.len() / 3, 3, &idx_buf).into();
-    let hmesh = Hmesh::new(pos, idx);
+    //let (models, _) = tobj::load_obj("assets/models/torus.obj", &tobj::LoadOptions { ..Default::default() },
+    //).expect("Failed to OBJ load file");
+    //let model = &models[0];
+    //let mesh_ = &model.mesh;
+    //let pos_buf: Vec<f64>   = mesh_.positions.iter().map(|&v| v as f64).collect();
+    //let idx_buf: Vec<usize> = mesh_.indices.iter().map(|&v| v as usize).collect();
+    //let pos: DMatrix<f64>   = DMatrix::from_row_slice(mesh_.positions.len() / 3, 3, &pos_buf).into();
+    //let idx: DMatrix<usize> = DMatrix::from_row_slice(mesh_.indices.len() / 3, 3, &idx_buf).into();
+    //let hmesh = Hmesh::new(pos, idx);
+    let hmesh = mfd::boolean::test_data::gen_tet_c();
 
     let mut bevy_mesh = Mesh::new(
         bevy::render::mesh::PrimitiveTopology::TriangleList,
         RenderAssetUsages::default()
     );
 
-    bevy_mesh.insert_indices(
-        Indices::U32(mesh.indices.iter().map(|&i| i).collect())
-    );
+    let mut idcs = vec![];
+    for i in 0..hmesh.idx.nrows() {
+        idcs.push(hmesh.idx[(i, 0)] as u32);
+        idcs.push(hmesh.idx[(i, 1)] as u32);
+        idcs.push(hmesh.idx[(i, 2)] as u32);
+    }
+
+    bevy_mesh.insert_indices(Indices::U32(idcs));
     bevy_mesh.insert_attribute(
         Mesh::ATTRIBUTE_POSITION,
-        (0..mesh.positions.len() / 3).map(|i| [
-            mesh.positions[i * 3],
-            mesh.positions[i * 3 + 1],
-            mesh.positions[i * 3 + 2],
+        (0..hmesh.pos.nrows()).map(|i| [
+            hmesh.pos[(i, 0)] as f32,
+            hmesh.pos[(i, 1)] as f32,
+            hmesh.pos[(i, 2)] as f32,
         ]).collect::<Vec<_>>()
     );
 

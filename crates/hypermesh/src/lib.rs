@@ -1,6 +1,6 @@
-mod hmesh;
-mod boolean;
-mod manifold;
+pub mod hmesh;
+pub mod boolean;
+pub mod manifold;
 
 pub use crate::hmesh::*;
 pub use crate::boolean::*;

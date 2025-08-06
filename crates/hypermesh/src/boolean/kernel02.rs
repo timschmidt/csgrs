@@ -78,7 +78,6 @@ impl<'a> Kernel02<'a> {
     }
 }
 
-
 #[cfg(test)]
 mod kernel02_tests {
     use crate::boolean::kernel02::Kernel02;
