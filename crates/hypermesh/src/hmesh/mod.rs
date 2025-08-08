@@ -254,7 +254,7 @@ impl Hmesh {
     ) -> Arc<Self> {
         assert_eq!(tail.len(), head.len());
         assert_eq!(tail.len() % 2, 0);
-        assert_eq!(tail.len(), idx.nrows() * 3); // currently suppose a closed surface...
+        //assert_eq!(tail.len(), idx.nrows() * 3); // currently suppose a closed surface...
         let mut e2v = Default::default();
         let mut e2f = Default::default();
         let mut f2e = Default::default();
@@ -525,5 +525,3 @@ impl_hmesh_partial_eq!(Face);
 
 #[cfg(test)]
 mod tests;
-
-mod obj_io;

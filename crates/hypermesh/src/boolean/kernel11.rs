@@ -1,4 +1,4 @@
-use nalgebra::{RowVector3, RowVector4, Vector3, Vector4};
+use nalgebra::{RowVector3, RowVector4, Vector3};
 use crate::hmesh::{Vert, Half};
 use crate::boolean::intersect::intersect;
 use crate::boolean::shadow::{shadows, shadows01};
@@ -8,7 +8,7 @@ pub struct Kernel11<'a> {
     pub verts_q: &'a [Vert],
     pub halfs_p: &'a [Half],
     pub halfs_q: &'a [Half],
-    pub expand_p: f64,
+    pub expand: f64,
 }
 
 impl<'a> Kernel11<'a> {
@@ -34,7 +34,7 @@ impl<'a> Kernel11<'a> {
                 self.verts_p,
                 self.verts_q,
                 &self.halfs_q,
-                self.expand_p,
+                self.expand,
                 false
             );
             // If the value is NaN, then these do not overlap.
@@ -55,7 +55,7 @@ impl<'a> Kernel11<'a> {
                 self.verts_q,
                 self.verts_p,
                 self.halfs_p,
-                self.expand_p,
+                self.expand,
                 true
             );
             // If the value is NaN, then these do not overlap.
@@ -84,7 +84,7 @@ impl<'a> Kernel11<'a> {
             let end2 = diff.dot(&diff);
             let dir = if start2 < end2 {self.verts_p[p1s].normal().z} else {self.verts_p[p1e].normal().z};
 
-            if !shadows(xyzz11_.z, xyzz11_.w, self.expand_p * dir) { s11 = 0; }
+            if !shadows(xyzz11_.z, xyzz11_.w, self.expand * dir) { s11 = 0; }
             xyzz11 = Some(xyzz11_);
         }
 
@@ -94,6 +94,27 @@ impl<'a> Kernel11<'a> {
 
 #[cfg(test)]
 mod kernel11_tests {
-    //assert_eq!(1, 1);
+    use crate::boolean::kernel11::Kernel11;
+    use crate::boolean::test_data;
+
+    #[test]
+    fn kernel11_test() {
+        //edge.isforward: 1
+        //p1: 9
+        //q1F: 0
+        //s: 0
+        //xyzz: {-0.532938,-0.230769,0.307692,0.133235}
+        let mfd_p = test_data::gen_tet_a();
+        let mfd_q = test_data::gen_tet_c();
+        let k11 = Kernel11 {
+            verts_p: &mfd_p.verts,
+            verts_q: &mfd_q.verts,
+            halfs_p: &mfd_p.halfs,
+            halfs_q: &mfd_q.halfs,
+            expand: 1.,
+        };
+        let (s, z) = k11.op(9, 0);
+        println!("s: {}, z: {:?}", s, z);
+    }
 }
 

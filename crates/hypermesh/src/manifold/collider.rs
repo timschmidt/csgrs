@@ -34,7 +34,7 @@ pub trait Collider {
 
 ///======== below is a simple bvh collider ========///
 
-struct BvhCollider {
+pub struct BvhCollider {
     bvh: Bvh<f64, 3>,
     aabbs: Vec<AabbNode>,
 }

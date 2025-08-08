@@ -1,4 +1,4 @@
-use nalgebra::{RowVector3};
+use nalgebra::{DMatrix, RowVector3};
 
 #[derive(Clone)]
 pub struct BoundingBox {
@@ -7,7 +7,7 @@ pub struct BoundingBox {
 }
 
 impl BoundingBox {
-    pub fn new(pts: Vec<RowVector3<f64>>) -> Self {
+    pub fn new(pts: &Vec<RowVector3<f64>>) -> Self {
         let mut b = BoundingBox {
             min: RowVector3::new(f64::MAX, f64::MAX, f64::MAX),
             max: RowVector3::new(f64::MIN, f64::MIN, f64::MIN),
@@ -16,10 +16,21 @@ impl BoundingBox {
         b
     }
 
+    pub fn new_from_matrix(pts: &DMatrix<f64>) -> Self {
+        let mut b = BoundingBox {
+            min: RowVector3::new(f64::MAX, f64::MAX, f64::MAX),
+            max: RowVector3::new(f64::MIN, f64::MIN, f64::MIN),
+        };
+        for i in 0..pts.nrows() {
+            b.union(&pts.fixed_view::<1, 3>(i, 0).into_owned());
+        }
+        b
+    }
+
     pub fn size(&self) -> RowVector3<f64> { self.max - self.min }
     
 
-    pub fn union(&mut self, p: RowVector3<f64>) {
+    pub fn union(&mut self, p: &RowVector3<f64>) {
         self.min = RowVector3::new(self.min.x.min(p.x), self.min.y.min(p.y), self.min.z.min(p.z));
         self.max = RowVector3::new(self.max.x.max(p.x), self.max.y.max(p.y), self.max.z.max(p.z));
     }

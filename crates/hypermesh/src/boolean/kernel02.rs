@@ -7,7 +7,7 @@ pub struct Kernel02<'a> {
     pub verts_p: &'a[Vert],
     pub verts_q: &'a[Vert],
     pub halfs_q: &'a[Half],
-    pub expand_p: f64,
+    pub expand: f64,
     pub forward: bool
 }
 
@@ -28,9 +28,9 @@ impl<'a> Kernel02<'a> {
         let pos_p = self.verts_p[p0].pos();
 
         for i in 0..3 {
-            let q1 = 3 * q2 + i;
+            let q1 = 3 * q2 + i; // make sure fid * 3 + i = hid
             let half = self.halfs_q[q1].clone();
-            let q1_f = if half.is_forward() {q1} else {half.twin().id};
+            let q1_f = if half.is_forward() { q1 } else {half.twin().id};
 
             if !self.forward {
                 let q_vert = self.halfs_q[q1_f].tail();
@@ -43,14 +43,13 @@ impl<'a> Kernel02<'a> {
             }
 
             // If the value is NaN, then these do not overlap.
-            s02 = 0;
             if let Some((s01, yz01)) = shadows01(
                 p0,
                 q1_f,
                 self.verts_p,
                 self.verts_q,
                 self.halfs_q,
-                self.expand_p,
+                self.expand,
                 !self.forward
             ) {
                 s02 += s01 * if self.forward == half.is_forward() {-1} else {1};
@@ -66,12 +65,12 @@ impl<'a> Kernel02<'a> {
             z02 = None;
         } else {
             assert_eq!(k, 2, "Boolean manifold error: s02");
-            let vert_pos = self.verts_p[p0].pos().transpose();
+            let vert_pos = self.verts_p[p0].pos();
             z02 = Some(interpolate(yzz_rl[0], yzz_rl[1], vert_pos.y)[1]);
             if self.forward {
-                if !shadows(vert_pos.z, z02.unwrap(), self.expand_p * self.verts_p[p0].normal().z) { s02 = 0; }
+                if !shadows(vert_pos.z, z02.unwrap(), self.expand * self.verts_p[p0].normal().z) { s02 = 0; }
             } else {
-                if !shadows(z02.unwrap(), vert_pos.z, self.expand_p * self.verts_p[closest_vid].normal().z) { s02 = 0; }
+                if !shadows(z02.unwrap(), vert_pos.z, self.expand * self.verts_p[closest_vid].normal().z) { s02 = 0; }
             }
         }
         (s02, z02)
@@ -91,9 +90,10 @@ mod kernel02_tests {
             verts_p: &mfd_p.verts,
             verts_q: &mfd_q.verts,
             halfs_q: &mfd_q.halfs,
-            expand_p: 1.,
-            forward: true
+            expand: -1.,
+            forward: false
         };
-        k02.op(1, 1);
+        let (s, z) = k02.op(3, 0);
+        println!("s: {}, z: {:?}", s, z);
     }
 }

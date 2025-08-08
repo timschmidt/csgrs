@@ -13,6 +13,7 @@ use crate::boolean::kernel12::Kernel12;
 use crate::bounds::BoundingBox;
 use crate::collider::Recorder;
 use crate::manifold::Manifold;
+use crate::test_data::{gen_tet_a, gen_tet_c};
 
 /**
  * The notation in these files is abbreviated due to the complexity of the
@@ -97,7 +98,7 @@ fn intersect12 (
         verts_p: &a.hmesh.verts,
         verts_q: &b.hmesh.verts,
         halfs_q: &b.hmesh.halfs,
-        expand_p,
+        expand: expand_p,
         forward
     };
     let k11 = Kernel11{
@@ -105,7 +106,7 @@ fn intersect12 (
         halfs_p: &p.hmesh.halfs,
         verts_q: &q.hmesh.verts,
         halfs_q: &q.hmesh.halfs,
-        expand_p,
+        expand: expand_p,
     };
 
     let k12 = Kernel12{
@@ -118,7 +119,7 @@ fn intersect12 (
     };
 
     let bboxes = a.hmesh.edges.iter()
-        .map(|e| BoundingBox::new(vec![e.vert0().pos(), e.vert1().pos()])).collect::<Vec<_>>();
+        .map(|e| BoundingBox::new(&vec![e.vert0().pos(), e.vert1().pos()])).collect::<Vec<_>>();
 
     let mut rec = Intersection12Recorder{
         mfd_a: a,
@@ -147,7 +148,7 @@ fn intersect12 (
 }
 
 
-fn winding03(p: &Manifold, q: &Manifold, expand_p: f64, forward: bool) -> Vec<i64> {
+fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<i64> {
     let a = if forward {p} else {q};
     let b = if forward {q} else {p};
 
@@ -156,19 +157,17 @@ fn winding03(p: &Manifold, q: &Manifold, expand_p: f64, forward: bool) -> Vec<i6
         verts_p: &a.hmesh.verts,
         verts_q: &b.hmesh.verts,
         halfs_q: &b.hmesh.halfs,
-        expand_p,
+        expand,
         forward,
     };
 
-    let bboxes = a.hmesh.verts.iter().map(|v| BoundingBox::new(vec![v.pos(), v.pos()])).collect::<Vec<_>>();
-
+    let bboxes = a.hmesh.verts.iter().map(|v| BoundingBox::new(&vec![v.pos(), v.pos()])).collect::<Vec<_>>();
     let mut rec = SimpleRecorder::new(
         |a, b| {
             let (s02, z02) = k02.op(a, b);
             if z02.is_some() { w03[a] += s02 * if forward {1} else {-1}; }
         }
     );
-    
     b.collider.collision(&bboxes, &mut rec);
 
     w03
@@ -212,3 +211,41 @@ fn new(&self, p: &'a Manifold, q: &'a Manifold, op :OpType) -> Self {
 
 #[derive(PartialEq)]
 pub enum OpType { Add, Subtract, Intersect }
+
+
+#[test]
+fn test_winding03(){
+    let hm_p = gen_tet_a();
+    let hm_q = gen_tet_c();
+
+    let k02 = Kernel02 {
+        verts_p: &hm_p.verts,
+        verts_q: &hm_p.verts,
+        halfs_q: &hm_q.halfs,
+        expand: -1.,
+        forward: false,
+    };
+
+    for i in 0..4 {
+        for j in 0..4 {
+            let (s02, z02) = k02.op(i, j);
+            println!("{} {} {}", i, j, s02);
+        }
+    }
+
+    let k02 = Kernel02 {
+        verts_p: &hm_q.verts,
+        verts_q: &hm_q.verts,
+        halfs_q: &hm_p.halfs,
+        expand: -1.,
+        forward: true,
+    };
+
+    for i in 0..4 {
+        for j in 0..4 {
+            let (s02, z02) = k02.op(i, j);
+            println!("{} {} {}", i, j, s02);
+        }
+    }
+
+}

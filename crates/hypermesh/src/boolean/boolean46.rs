@@ -263,9 +263,9 @@ fn append_new_edges(
     for val in edges_new.into_iter() { // values??
         let (face_p, face_q) = val.0;
         let epos = val.1;
-        let mut bbox = BoundingBox::new(vec![]);
+        let mut bbox = BoundingBox::new(&vec![]);
         for ep in epos.iter() {
-            bbox.union(mfd_r.pos[ep.vid]);
+            bbox.union(&mfd_r.pos[ep.vid]);
         }
 
         let d = bbox.longest_dim();

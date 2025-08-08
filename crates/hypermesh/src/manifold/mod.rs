@@ -31,3 +31,16 @@ pub struct Manifold {
     pub bbox: BoundingBox,
     pub collider: dyn Collider,
 }
+
+/*
+impl Manifold {
+    pub fn new(hmesh: Hmesh) -> Self {
+        let bbox = BoundingBox::new_from_matrix(&hmesh.pos);
+        Manifold{
+            hmesh,
+            bbox,
+            collider:,
+        }
+    }
+}
+*/
