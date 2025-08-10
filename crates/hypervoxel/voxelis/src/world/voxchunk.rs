@@ -1,9 +1,6 @@
 #[cfg(feature = "vtm")]
 use std::io::{BufReader, Read, Write};
 
-#[cfg(feature = "trace_greedy_timings")]
-use std::time::Instant;
-
 #[cfg(feature = "vtm")]
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 #[cfg(feature = "vtm")]
@@ -376,7 +373,7 @@ impl<T: VoxelTrait> VoxOpsMesh<T> for VoxChunk<T> {
             offset,
             voxel_size,
             #[cfg(feature = "trace_greedy_timings")]
-            &mut greedy_timings,
+            &mut timings,
         );
     }
 }

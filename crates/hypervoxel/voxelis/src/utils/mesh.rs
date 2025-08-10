@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+#[cfg(feature = "trace_greedy_timings")]
+use std::time::{Duration, Instant};
+
 use glam::{IVec3, UVec2, UVec3, Vec3};
 
 use crate::{
@@ -1181,7 +1184,7 @@ pub fn generate_greedy_mesh_arrays_stride<
                     offset,
                     voxel_size,
                     #[cfg(feature = "trace_greedy_timings")]
-                    &mut greedy_timings,
+                    &mut timings,
                 );
             }
         }
