@@ -299,7 +299,19 @@ fn benchmark_voxtree(c: &mut Criterion) {
         }
         Err(_) => vec![BenchType::Single, BenchType::Batch],
     };
-    let mesh_types = vec![MeshType::Naive, MeshType::Greedy];
+    let mesh_types_env = std::env::var("VOXTREE_MESH_TYPES");
+    let mesh_types = match mesh_types_env {
+        Ok(val) => {
+            if val == "naive" {
+                vec![MeshType::Naive]
+            } else if val == "greedy" {
+                vec![MeshType::Greedy]
+            } else {
+                vec![MeshType::Naive, MeshType::Greedy]
+            }
+        }
+        Err(_) => vec![MeshType::Naive, MeshType::Greedy],
+    };
     let max_lod_env = std::env::var("VOXTREE_MAX_LOD");
     let max_lod = match max_lod_env {
         Ok(val) => val.parse::<u8>().unwrap_or(max_depth),
