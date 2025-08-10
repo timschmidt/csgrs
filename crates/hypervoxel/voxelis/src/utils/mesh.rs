@@ -510,8 +510,8 @@ pub fn generate_occupancy_masks<T: VoxelTrait>(
         return;
     }
 
-    let mut stack: Vec<(BlockId, IVec3, u32)> = Vec::with_capacity(64);
-    stack.push((*root_id, IVec3::ZERO, 0));
+    let mut stack: Vec<(BlockId, UVec3, u32)> = Vec::with_capacity(64);
+    stack.push((*root_id, UVec3::ZERO, 0));
 
     while let Some((node_id, pos, depth)) = stack.pop() {
         if node_id.is_branch() && (depth < max_depth) {
@@ -520,13 +520,13 @@ pub fn generate_occupancy_masks<T: VoxelTrait>(
             for i in (0..8).rev() {
                 let child_id = unsafe { childs.get_unchecked(i) };
 
-                let i = i as i32;
+                let i = i as u32;
 
                 if !child_id.is_empty() {
                     let x = (i & 1) * child_cube_half_side;
                     let y = ((i & 2) >> 1) * child_cube_half_side;
                     let z = ((i & 4) >> 2) * child_cube_half_side;
-                    let offset = IVec3::new(x, y, z);
+                    let offset = UVec3::new(x, y, z);
                     let pos = pos + offset;
                     let depth = depth + 1;
 
@@ -537,7 +537,7 @@ pub fn generate_occupancy_masks<T: VoxelTrait>(
             let value = *interner.get_value(&node_id);
             if value != default_t {
                 let cube_side = 1 << (max_depth - depth);
-                let global_pos = offset + pos.as_uvec3();
+                let global_pos = offset + pos;
                 let material_id = value.material_id();
                 fill_masks_for_region(builder, global_pos, cube_side, material_id);
             }
