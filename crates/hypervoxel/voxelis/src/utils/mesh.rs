@@ -150,7 +150,7 @@ pub type ExternalOccupancyMasks = [u64; MAX_VOXELS_PER_AXIS];
 
 pub struct OccupancyData {
     pub global: Vec<u64>,
-    pub external: [ExternalOccupancyMasks; 6],
+    pub external: Vec<u64>,
     pub external_exists: [bool; 6],
     pub per_material: Vec<Vec<u64>>,
     pub materials: Vec<(usize, usize)>,
@@ -160,7 +160,7 @@ pub struct OccupancyDataBuilder {
     /// Global occupancy masks for all axes.
     pub global: Vec<u64>,
     /// External occupancy masks for each axis - front, back, top, bottom, left, right.
-    pub external: [ExternalOccupancyMasks; 6],
+    pub external: Vec<u64>,
     /// Flags indicating if there are any voxels on the external sides.
     pub external_exists: [bool; 6],
     /// Per material occupancy masks for each axis.
@@ -219,7 +219,7 @@ impl Default for OccupancyDataBuilder {
 
         Self {
             global: vec![0u64; PLANE_SIZE_ALL_AXES],
-            external: [const { [0u64; MAX_VOXELS_PER_AXIS] }; 6],
+            external: vec![0u64; MAX_VOXELS_PER_AXIS * 6],
             external_exists: [false; 6],
             per_material: HashMap::new(),
             materials: HashMap::new(),
@@ -254,14 +254,18 @@ impl OccupancyDataBuilder {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("OccupancyDataBuilder::fill_external_side");
 
-        self.external[external_plane as usize].fill(u64::MAX);
+        let start = external_plane as usize * MAX_VOXELS_PER_AXIS;
+        let end = start + MAX_VOXELS_PER_AXIS;
+        self.external[start..end].fill(u64::MAX);
     }
 
     pub fn clear_external_side(&mut self, external_plane: ExternalPlane) {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("OccupancyDataBuilder::clear_external_side");
 
-        self.external[external_plane as usize].fill(0);
+        let start = external_plane as usize * MAX_VOXELS_PER_AXIS;
+        let end = start + MAX_VOXELS_PER_AXIS;
+        self.external[start..end].fill(0);
     }
 }
 
@@ -296,7 +300,10 @@ pub fn generate_external_occupancy_mask<T: VoxelTrait>(
 
     let (plane, dir) = extract_plane_dir(external_plane);
 
-    let external_plane = &mut builder.external[external_plane as usize];
+    let offset_start = external_plane as usize * MAX_VOXELS_PER_AXIS;
+    let offset_end = offset_start + MAX_VOXELS_PER_AXIS;
+
+    let external_plane = &mut builder.external[offset_start..offset_end];
 
     let depth = TraversalDepth::new(0, max_depth);
 
@@ -565,10 +572,7 @@ pub fn generate_greedy_mesh_arrays(
     #[cfg(feature = "trace_greedy_timings")]
     let now = std::time::Instant::now();
 
-    let enclosed = occupancy_data
-        .external
-        .iter()
-        .all(|&exists| exists.iter().all(|&mask| mask == u64::MAX));
+    let enclosed = occupancy_data.external.iter().all(|&mask| mask == u64::MAX);
 
     #[cfg(feature = "trace_greedy_timings")]
     {
@@ -612,8 +616,13 @@ pub fn generate_greedy_mesh_arrays(
         material_count_opt_pos.fill(0);
         material_count_opt_neg.fill(0);
 
-        let external_pos = &occupancy_data.external[plane_data.pos as usize];
-        let external_neg = &occupancy_data.external[plane_data.neg as usize];
+        let external_pos_start = plane_data.pos as usize * MAX_VOXELS_PER_AXIS;
+        let external_pos_end = external_pos_start + MAX_VOXELS_PER_AXIS;
+        let external_pos = &occupancy_data.external[external_pos_start..external_pos_end];
+
+        let external_neg_start = plane_data.neg as usize * MAX_VOXELS_PER_AXIS;
+        let external_neg_end = external_neg_start + MAX_VOXELS_PER_AXIS;
+        let external_neg = &occupancy_data.external[external_neg_start..external_neg_end];
 
         #[cfg(feature = "trace_greedy_timings")]
         let now = Instant::now();
