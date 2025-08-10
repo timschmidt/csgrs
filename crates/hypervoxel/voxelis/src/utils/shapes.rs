@@ -2,13 +2,17 @@ use glam::{IVec3, Vec3};
 
 use crate::{Batch, Lod, spatial::VoxOpsConfig};
 
-pub fn generate_corners<T: VoxOpsConfig>(tree: &T, corners: [bool; 8]) -> Batch<i32> {
+pub fn generate_corners<T: VoxOpsConfig>(
+    tree: &T,
+    corners: [bool; 8],
+    unique_mats: bool,
+) -> Batch<i32> {
     #[cfg(feature = "tracy")]
     let _span = tracy_client::span!("generate_corners");
 
     let mut batch = Batch::<i32>::new(tree.max_depth(Lod::new(0)));
 
-    generate_corners_batch(&mut batch, corners);
+    generate_corners_batch(&mut batch, corners, unique_mats);
 
     batch
 }
@@ -24,7 +28,7 @@ pub fn generate_corners<T: VoxOpsConfig>(tree: &T, corners: [bool; 8]) -> Batch<
 /// * 5: top-right-back
 /// * 6: top-left-front
 /// * 7: top-right-front
-pub fn generate_corners_batch(batch: &mut Batch<i32>, corners: [bool; 8]) {
+pub fn generate_corners_batch(batch: &mut Batch<i32>, corners: [bool; 8], unique_mats: bool) {
     #[cfg(feature = "tracy")]
     let _span = tracy_client::span!("generate_corners_batch");
 
@@ -39,37 +43,37 @@ pub fn generate_corners_batch(batch: &mut Batch<i32>, corners: [bool; 8]) {
 
     // bottom-right-back corner
     if corners[1] {
-        batch.just_set(IVec3::new(max, 0, 0), 1);
+        batch.just_set(IVec3::new(max, 0, 0), if unique_mats { 2 } else { 1 });
     }
 
     // bottom-left-front corner
     if corners[2] {
-        batch.just_set(IVec3::new(0, 0, max), 1);
+        batch.just_set(IVec3::new(0, 0, max), if unique_mats { 3 } else { 1 });
     }
 
     // bottom-right-front corner
     if corners[3] {
-        batch.just_set(IVec3::new(max, 0, max), 1);
+        batch.just_set(IVec3::new(max, 0, max), if unique_mats { 4 } else { 1 });
     }
 
     // top-left-back corner
     if corners[4] {
-        batch.just_set(IVec3::new(0, max, 0), 1);
+        batch.just_set(IVec3::new(0, max, 0), if unique_mats { 5 } else { 1 });
     }
 
     // top-right-back corner
     if corners[5] {
-        batch.just_set(IVec3::new(max, max, 0), 1);
+        batch.just_set(IVec3::new(max, max, 0), if unique_mats { 6 } else { 1 });
     }
 
     // top-left-front corner
     if corners[6] {
-        batch.just_set(IVec3::new(0, max, max), 1);
+        batch.just_set(IVec3::new(0, max, max), if unique_mats { 7 } else { 1 });
     }
 
     // top-right-front corner
     if corners[7] {
-        batch.just_set(IVec3::new(max, max, max), 1);
+        batch.just_set(IVec3::new(max, max, max), if unique_mats { 8 } else { 1 });
     }
 }
 
@@ -302,6 +306,54 @@ pub fn generate_terrain_batch(
                 for local_y in 0..=local_y {
                     assert!(local_y < voxels_per_axis);
                     batch.just_set(IVec3::new(x, local_y, z), 1);
+                }
+            }
+        }
+    }
+}
+
+pub fn generate_terrain_batch_3_mats(
+    batch: &mut Batch<i32>,
+    voxel_size: f32,
+    scale: f32,
+    offset: Vec3,
+    surface_only: bool,
+) {
+    #[cfg(feature = "tracy")]
+    let _span = tracy_client::span!("generate_terrain_batch_3_mats");
+
+    let lod = Lod::new(0);
+    let voxels_per_axis = batch.voxels_per_axis(lod) as i32;
+
+    let mut noise = fastnoise_lite::FastNoiseLite::new();
+    noise.set_noise_type(Some(fastnoise_lite::NoiseType::OpenSimplex2));
+
+    for z in 0..voxels_per_axis {
+        for x in 0..voxels_per_axis {
+            let noise_value = noise.get_noise_2d(
+                (offset.x + (x as f32 * voxel_size)) * scale,
+                (offset.z + (z as f32 * voxel_size)) * scale,
+            );
+            let noise_value = (noise_value + 1.0) / 2.0;
+            let y = noise_value * voxels_per_axis as f32;
+            let y = y as u32;
+
+            let local_y = (y % voxels_per_axis as u32) as i32;
+
+            if surface_only {
+                assert!(local_y < voxels_per_axis);
+                batch.just_set(IVec3::new(x, local_y, z), 1);
+            } else {
+                for y in 0..=local_y {
+                    assert!(y < voxels_per_axis);
+                    let value = if y >= local_y - 2 {
+                        1
+                    } else if y >= local_y - 4 {
+                        2
+                    } else {
+                        3
+                    };
+                    batch.just_set(IVec3::new(x, y, z), value);
                 }
             }
         }

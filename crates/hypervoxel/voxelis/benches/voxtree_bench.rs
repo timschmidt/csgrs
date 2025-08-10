@@ -19,7 +19,7 @@ use voxelis::{
         shapes::{
             generate_checkerboard_batch, generate_corners_batch, generate_diagonal_batch,
             generate_hollow_cube_batch, generate_perlin_3d_batch, generate_sparse_fill_batch,
-            generate_sphere_batch, generate_terrain_batch,
+            generate_sphere_batch, generate_terrain_batch, generate_terrain_batch_3_mats,
         },
     },
     world::VoxChunk,
@@ -1940,6 +1940,40 @@ fn benchmark_voxtree(c: &mut Criterion) {
     }
 
     {
+        let mut group = c.benchmark_group("voxtree_mesh_terrain_full_3_mats");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            let offset = Vec3::ZERO;
+            let scale = 26.0;
+            let voxel_size = 1.28 / size as f32;
+
+            generate_terrain_batch_3_mats(&mut batch, voxel_size, scale, offset, false);
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
         let mut group = c.benchmark_group("voxtree_mesh_corners_all");
 
         for &(size, depth) in depths.iter() {
@@ -1949,7 +1983,37 @@ fn benchmark_voxtree(c: &mut Criterion) {
 
             let mut batch = chunk.create_batch();
 
-            generate_corners_batch(&mut batch, [true; 8]);
+            generate_corners_batch(&mut batch, [true; 8], false);
+
+            chunk.apply_batch(&mut interner, &batch);
+
+            let max_lod = max_lod.clamp(1, depth.max());
+
+            benchmark_meshing(
+                &mut group,
+                size,
+                depth,
+                max_lod,
+                &mesh_types,
+                &interner,
+                &chunk,
+            );
+        }
+
+        group.finish();
+    }
+
+    {
+        let mut group = c.benchmark_group("voxtree_mesh_corners_all_unique");
+
+        for &(size, depth) in depths.iter() {
+            let mut chunk = VoxChunk::with_position(1.28, depth, 0, 0, 0);
+
+            let mut interner = VoxInterner::<i32>::with_memory_budget(1024 * 1024);
+
+            let mut batch = chunk.create_batch();
+
+            generate_corners_batch(&mut batch, [true; 8], true);
 
             chunk.apply_batch(&mut interner, &batch);
 
@@ -1982,6 +2046,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
             generate_corners_batch(
                 &mut batch,
                 [true, false, false, false, false, false, false, false],
+                false,
             );
 
             chunk.apply_batch(&mut interner, &batch);
@@ -2015,6 +2080,7 @@ fn benchmark_voxtree(c: &mut Criterion) {
             generate_corners_batch(
                 &mut batch,
                 [false, false, false, false, false, false, false, true],
+                false,
             );
 
             chunk.apply_batch(&mut interner, &batch);
