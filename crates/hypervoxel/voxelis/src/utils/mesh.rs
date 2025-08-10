@@ -819,7 +819,7 @@ pub fn generate_greedy_mesh_arrays(
     }
 }
 
-pub fn generate_greedy_faces_for_slice(
+fn generate_greedy_faces_for_slice(
     mesh_data: &mut MeshData,
     (plane, dir, global_offset): (Plane, Dir, Vec3),
     (voxel_size, faces_total, slice): (f32, usize, f32),
@@ -916,7 +916,7 @@ pub fn add_quad(mesh_data: &mut MeshData, quad: [Vec3; 4], normal: &Vec3) {
 }
 
 #[inline(always)]
-pub const fn find_contiguous_bits(mask: u64, start: usize) -> u64 {
+const fn find_contiguous_bits(mask: u64, start: usize) -> u64 {
     // if the mask is all ones, return it as is
     if mask == u64::MAX {
         return !0u64 << start;
