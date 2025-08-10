@@ -37,7 +37,7 @@ pub const VERTS_XZ_POS: [usize; 4] = [0, 2, 3, 1];
 pub const VERTS_XZ_NEG: [usize; 4] = [7, 5, 4, 6];
 pub const VERTS_XY_POS: [usize; 4] = [3, 6, 7, 2];
 pub const VERTS_XY_NEG: [usize; 4] = [1, 4, 5, 0];
-pub const IJK_YZ: [usize; 3] = [2, 0, 1];
+pub const IJK_YZ: [usize; 3] = [2, 1, 0];
 pub const IJK_XZ: [usize; 3] = [0, 2, 1];
 pub const IJK_XY: [usize; 3] = [0, 1, 2];
 pub const NORMAL_YZ_POS: usize = 1;
@@ -295,8 +295,8 @@ pub fn generate_external_occupancy_mask<T: VoxelTrait>(
     let max_depth = max_depth.max();
     let voxels_per_axis = 1 << max_depth;
 
-    let start_x = offset.x as usize;
-    let start_y = offset.y as usize;
+    let start_col = offset.x as usize;
+    let start_row = offset.y as usize;
 
     let (plane, dir) = extract_plane_dir(external_plane);
 
@@ -321,14 +321,14 @@ pub fn generate_external_occupancy_mask<T: VoxelTrait>(
                     pos.x = pos_vox;
 
                     for y in 0..voxels_per_axis {
-                        pos.z = y as i32;
-                        let mask_y = start_y + y;
+                        pos.y = y as i32;
+                        let row = start_row + y;
 
                         for z in 0..voxels_per_axis {
-                            pos.y = z as i32;
+                            pos.z = z as i32;
 
                             if get_at_depth(interner, *root_id, &pos, &depth).is_some() {
-                                external_plane[mask_y] |= 1u64 << (start_x + z);
+                                external_plane[row] |= 1u64 << (start_col + z);
                             }
                         }
                     }
@@ -338,13 +338,13 @@ pub fn generate_external_occupancy_mask<T: VoxelTrait>(
 
                     for z in 0..voxels_per_axis {
                         pos.z = z as i32;
-                        let mask_z = start_y + z;
+                        let row = start_row + z;
 
                         for x in 0..voxels_per_axis {
                             pos.x = x as i32;
 
                             if get_at_depth(interner, *root_id, &pos, &depth).is_some() {
-                                external_plane[mask_z] |= 1u64 << (start_x + x);
+                                external_plane[row] |= 1u64 << (start_col + x);
                             }
                         }
                     }
@@ -354,41 +354,28 @@ pub fn generate_external_occupancy_mask<T: VoxelTrait>(
 
                     for y in 0..voxels_per_axis {
                         pos.y = y as i32;
-                        let mask_y = start_y + y;
+                        let row = start_row + y;
 
                         for x in 0..voxels_per_axis {
                             pos.x = x as i32;
 
                             if get_at_depth(interner, *root_id, &pos, &depth).is_some() {
-                                external_plane[mask_y] |= 1u64 << (start_x + x);
+                                external_plane[row] |= 1u64 << (start_col + x);
                             }
                         }
                     }
                 }
             }
         } else {
-            match plane {
-                Plane::YZ => {
-                    let bit_mask = ((1u64 << voxels_per_axis) - 1) << start_x;
-                    for y in 0..voxels_per_axis {
-                        let mask_y = start_y + y;
-                        external_plane[mask_y] |= bit_mask;
-                    }
-                }
-                Plane::XZ => {
-                    let bit_mask = ((1u64 << voxels_per_axis) - 1) << start_x;
-                    for z in 0..voxels_per_axis {
-                        let mask_z = start_y + z;
-                        external_plane[mask_z] |= bit_mask;
-                    }
-                }
-                Plane::XY => {
-                    let bit_mask = ((1u64 << voxels_per_axis) - 1) << start_x;
-                    for y in 0..voxels_per_axis {
-                        let mask_y = start_y + y;
-                        external_plane[mask_y] |= bit_mask;
-                    }
-                }
+            let bit_mask = if voxels_per_axis == 64 {
+                u64::MAX
+            } else {
+                ((1u64 << voxels_per_axis) - 1) << start_col
+            };
+
+            for r in 0..voxels_per_axis {
+                let row = start_row + r;
+                external_plane[row] |= bit_mask;
             }
         }
     }
@@ -435,7 +422,7 @@ fn fill_masks_for_region(
 
             let index_base_y = PLANE_XZ_OFFSET + z * MAX_VOXELS_PER_AXIS + start_x;
             let index_base_z = PLANE_XY_OFFSET + y * MAX_VOXELS_PER_AXIS + start_x;
-            let index_base_x = z * MAX_VOXELS_PER_AXIS + start_y;
+            let index_base_x = PLANE_YZ_OFFSET + y * MAX_VOXELS_PER_AXIS + start_z;
 
             for j in 0..side {
                 let index_y = index_base_y + j;
@@ -1056,7 +1043,7 @@ pub fn generate_greedy_mesh_arrays_stride<
                                 &chunk.get_root_id(),
                                 max_depth,
                                 ExternalPlane::YZNeg,
-                                UVec2::new(j as u32 * voxels_per_axis, i as u32 * voxels_per_axis),
+                                UVec2::new(i as u32 * voxels_per_axis, j as u32 * voxels_per_axis),
                             );
                         }
                     }
@@ -1084,7 +1071,7 @@ pub fn generate_greedy_mesh_arrays_stride<
                                 &chunk.get_root_id(),
                                 max_depth,
                                 ExternalPlane::YZPos,
-                                UVec2::new(j as u32 * voxels_per_axis, i as u32 * voxels_per_axis),
+                                UVec2::new(i as u32 * voxels_per_axis, j as u32 * voxels_per_axis),
                             );
                         }
                     }
