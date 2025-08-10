@@ -69,6 +69,7 @@ pub const PLANE_XY_OFFSET: usize = PLANE_SIZE * 2;
 struct PlaneData {
     pub plane: Plane,
     pub offset: usize,
+    pub global_active_idx: usize,
     pub pos: ExternalPlane,
     pub neg: ExternalPlane,
 }
@@ -77,18 +78,21 @@ const PLANES: [PlaneData; 3] = [
     PlaneData {
         plane: Plane::YZ,
         offset: PLANE_YZ_OFFSET,
+        global_active_idx: 0,
         pos: ExternalPlane::YZPos,
         neg: ExternalPlane::YZNeg,
     },
     PlaneData {
         plane: Plane::XZ,
         offset: PLANE_XZ_OFFSET,
+        global_active_idx: 2,
         pos: ExternalPlane::XZPos,
         neg: ExternalPlane::XZNeg,
     },
     PlaneData {
         plane: Plane::XY,
         offset: PLANE_XY_OFFSET,
+        global_active_idx: 4,
         pos: ExternalPlane::XYPos,
         neg: ExternalPlane::XYNeg,
     },
@@ -107,19 +111,36 @@ pub enum Plane {
     YZ,
 }
 
+pub struct AxisOccupancy {
+    pub active: u64,
+    pub min: usize,
+    pub max: usize,
+}
+
+impl AxisOccupancy {
+    pub fn new(active: u64) -> Self {
+        if active == 0 {
+            Self {
+                active,
+                min: 0,
+                max: 0,
+            }
+        } else {
+            let min = active.trailing_zeros() as usize;
+            let max = (64 - active.leading_zeros()) as usize;
+
+            Self { active, min, max }
+        }
+    }
+}
+
 struct DirectionData<'a> {
     dir: Dir,
     masks: &'a [u64],
     total: usize,
-    active_row: u64,
-    active_col: u64,
-    active_depth: u64,
-    active_row_min: usize,
-    active_row_max: usize,
-    active_col_min: usize,
-    active_col_max: usize,
-    active_depth_min: usize,
-    active_depth_max: usize,
+    active_row: AxisOccupancy,
+    active_col: AxisOccupancy,
+    active_depth: AxisOccupancy,
 }
 
 #[derive(Default)]
@@ -150,6 +171,7 @@ pub type ExternalOccupancyMasks = [u64; MAX_VOXELS_PER_AXIS];
 
 pub struct OccupancyData {
     pub global: Vec<u64>,
+    pub global_active: [AxisOccupancy; 6],
     pub external: Vec<u64>,
     pub external_exists: [bool; 6],
     pub per_material: Vec<Vec<u64>>,
@@ -159,6 +181,7 @@ pub struct OccupancyData {
 pub struct OccupancyDataBuilder {
     /// Global occupancy masks for all axes.
     pub global: Vec<u64>,
+    pub global_active: [u64; 6],
     /// External occupancy masks for each axis - front, back, top, bottom, left, right.
     pub external: Vec<u64>,
     /// Flags indicating if there are any voxels on the external sides.
@@ -178,6 +201,15 @@ impl MeshData {
         self.normals.clear();
         self.indices.clear();
     }
+}
+
+struct SliceData {
+    global_offset: Vec3,
+    voxel_size: f32,
+    min_row: usize,
+    max_row: usize,
+    plane: Plane,
+    dir: Dir,
 }
 
 #[cfg(feature = "trace_greedy_timings")]
@@ -219,6 +251,7 @@ impl Default for OccupancyDataBuilder {
 
         Self {
             global: vec![0u64; PLANE_SIZE_ALL_AXES],
+            global_active: [0u64; 6],
             external: vec![0u64; MAX_VOXELS_PER_AXIS * 6],
             external_exists: [false; 6],
             per_material: HashMap::new(),
@@ -243,6 +276,7 @@ impl OccupancyDataBuilder {
 
         OccupancyData {
             global: self.global,
+            global_active: self.global_active.map(AxisOccupancy::new),
             external: self.external,
             external_exists: self.external_exists,
             per_material,
@@ -416,6 +450,18 @@ fn fill_masks_for_region(
         let start_z = region_offset.z as usize;
         let z_mask = run_mask << start_z;
 
+        // YZ masks
+        builder.global_active[0] |= y_mask; // rows
+        builder.global_active[1] |= z_mask; // cols
+
+        // XZ masks
+        builder.global_active[2] |= z_mask; // rows
+        builder.global_active[3] |= x_mask; // cols
+
+        // XY masks
+        builder.global_active[4] |= y_mask; // rows
+        builder.global_active[5] |= x_mask; // cols
+
         for i in 0..side {
             let z = start_z + i;
             let y = start_y + i;
@@ -451,6 +497,18 @@ fn fill_masks_for_region(
         }
 
         builder.global.fill(u64::MAX);
+
+        // YZ masks
+        builder.global_active[0] = u64::MAX; // rows
+        builder.global_active[1] = u64::MAX; // cols
+
+        // ZX masks
+        builder.global_active[2] = u64::MAX; // rows
+        builder.global_active[3] = u64::MAX; // cols
+
+        // YX masks
+        builder.global_active[4] = u64::MAX; // rows
+        builder.global_active[5] = u64::MAX; // cols
     }
 }
 
@@ -577,21 +635,12 @@ pub fn generate_greedy_mesh_arrays(
 
     let max_depth = max_depth.as_usize();
     let max_voxels_per_axis = 1 << max_depth;
+    let max_voxels_per_axis_min_one = max_voxels_per_axis - 1;
 
     let mut global_face_masks_pos = [const { 0u64 }; PLANE_SIZE];
     let mut global_face_masks_neg = [const { 0u64 }; PLANE_SIZE];
-    let mut active_row_pos: u64 = 0;
-    let mut active_row_neg: u64 = 0;
-    let mut active_col_pos: u64 = 0;
-    let mut active_col_neg: u64 = 0;
-    let mut active_depth_pos: u64 = 0;
-    let mut active_depth_neg: u64 = 0;
-    let mut material_face_masks_pos = vec![0; PLANE_SIZE * materials_len];
-    let mut material_face_masks_neg = vec![0; PLANE_SIZE * materials_len];
-    let mut material_count_opt_pos = vec![0; materials_len];
-    let mut material_count_opt_neg = vec![0; materials_len];
-    let mut faces = [const { 0u64 }; MAX_VOXELS_PER_AXIS];
-    let mut used = [const { 0u64 }; MAX_VOXELS_PER_AXIS];
+    let mut material_face_masks_pos = [0; PLANE_SIZE];
+    let mut material_face_masks_neg = [0; PLANE_SIZE];
 
     #[cfg(feature = "trace_greedy_timings")]
     {
@@ -600,9 +649,6 @@ pub fn generate_greedy_mesh_arrays(
 
     // we iterate over all planes first, to not process global occupancy masks for each material separately
     for plane_data in &PLANES {
-        material_count_opt_pos.fill(0);
-        material_count_opt_neg.fill(0);
-
         let external_pos_start = plane_data.pos as usize * MAX_VOXELS_PER_AXIS;
         let external_pos_end = external_pos_start + MAX_VOXELS_PER_AXIS;
         let external_pos = &occupancy_data.external[external_pos_start..external_pos_end];
@@ -611,14 +657,31 @@ pub fn generate_greedy_mesh_arrays(
         let external_neg_end = external_neg_start + MAX_VOXELS_PER_AXIS;
         let external_neg = &occupancy_data.external[external_neg_start..external_neg_end];
 
+        let global_active_rows = &occupancy_data.global_active[plane_data.global_active_idx];
+        let global_active_cols = &occupancy_data.global_active[plane_data.global_active_idx + 1];
+
+        let min_row = global_active_rows.min;
+        let max_row = global_active_rows.max;
+
+        let min_col = global_active_cols.min;
+        let max_col = global_active_cols.max;
+
         #[cfg(feature = "trace_greedy_timings")]
         let now = Instant::now();
 
-        // process global & per material occupancy masks for the plane
-        for row in 0..max_voxels_per_axis {
+        // process global occupancy masks for the plane
+        for row in min_row..max_row {
+            if ((global_active_rows.active >> row) & 1) == 0 {
+                continue;
+            }
+
             let base_idx = row * MAX_VOXELS_PER_AXIS;
 
-            for col in 0..max_voxels_per_axis {
+            for col in min_col..max_col {
+                if ((global_active_cols.active >> col) & 1) == 0 {
+                    continue;
+                }
+
                 let idx = base_idx + col;
 
                 // process global occupancy masks for the plane
@@ -629,51 +692,12 @@ pub fn generate_greedy_mesh_arrays(
                 let mut global_mask_neg = !(mask << 1) & mask; // -AXIS faces
 
                 // remove faces adjacent to external neighbors
-                global_mask_pos &= !((external_pos[row] >> col & 1) << (max_voxels_per_axis - 1));
-                global_mask_neg &= !(external_neg[row] >> col & 1);
-
-                let mask_pos_active = (global_mask_pos != 0) as u64;
-                let mask_neg_active = (global_mask_neg != 0) as u64;
-
-                active_row_pos |= mask_pos_active << row;
-                active_col_pos |= mask_pos_active << col;
-                active_depth_pos |= global_mask_pos;
-
-                active_row_neg |= mask_neg_active << row;
-                active_col_neg |= mask_neg_active << col;
-                active_depth_neg |= global_mask_neg;
+                global_mask_pos &=
+                    !(((external_pos[row] >> col) & 1) << max_voxels_per_axis_min_one);
+                global_mask_neg &= !((external_neg[row] >> col) & 1);
 
                 global_face_masks_pos[idx] = global_mask_pos;
                 global_face_masks_neg[idx] = global_mask_neg;
-
-                // process per material occupancy masks for the plane
-                for material_idx in 0..materials_len {
-                    // take bitmask occupancy for the current material
-                    //   for example - material mask: 0 0 0 1 1 1 0 0 <- 3 voxels with material 'X'
-                    //            global voxels mask: 0 0 1 1 1 1 0 0 <- 4 voxels in total
-                    //               global mask pos: 0 0 1 0 0 0 0 0 <- first face for column
-                    //               global mask neg: 0 0 0 0 0 1 0 0 <- last face for column
-                    let mask = occupancy_data.per_material[material_idx][plane_data.offset + idx];
-                    // select only faces if they are at the same spot as start/end on the global mask
-                    // for example - global mask pos: 0 0 1 0 0 0 0 0
-                    //                 material mask: 0 0 0 1 1 1 0 0 &
-                    //                      pos_mask: 0 0 0 0 0 0 0 0
-                    let material_mask_pos = mask & global_mask_pos;
-                    // for example - global mask neg: 0 0 0 0 0 1 0 0
-                    //                 material mask: 0 0 0 1 1 1 0 0 &
-                    //                      neg_mask: 0 0 0 0 0 1 0 0
-                    let material_mask_neg = mask & global_mask_neg;
-
-                    // count how many faces we have for the material
-                    material_count_opt_pos[material_idx] += material_mask_pos.count_ones() as usize;
-                    material_count_opt_neg[material_idx] += material_mask_neg.count_ones() as usize;
-
-                    // put masks into the material face masks
-                    let material_idx_offset = idx + material_idx * PLANE_SIZE;
-
-                    material_face_masks_pos[material_idx_offset] = material_mask_pos;
-                    material_face_masks_neg[material_idx_offset] = material_mask_neg;
-                }
             }
         }
 
@@ -685,125 +709,159 @@ pub fn generate_greedy_mesh_arrays(
         #[cfg(feature = "trace_greedy_timings")]
         let now = Instant::now();
 
-        let min_col_pos = active_col_pos.trailing_zeros() as usize;
-        let max_col_pos = (64 - active_col_pos.leading_zeros()) as usize;
-        let min_col_neg = active_col_neg.trailing_zeros() as usize;
-        let max_col_neg = (64 - active_col_neg.leading_zeros()) as usize;
-        let min_row_pos = active_row_pos.trailing_zeros() as usize;
-        let max_row_pos = (64 - active_row_pos.leading_zeros()) as usize;
-        let min_row_neg = active_row_neg.trailing_zeros() as usize;
-        let max_row_neg = (64 - active_row_neg.leading_zeros()) as usize;
-        let min_depth_pos = active_depth_pos.trailing_zeros() as usize;
-        let max_depth_pos = (64 - active_depth_pos.leading_zeros()) as usize;
-        let min_depth_neg = active_depth_neg.trailing_zeros() as usize;
-        let max_depth_neg = (64 - active_depth_neg.leading_zeros()) as usize;
-
-        #[cfg(feature = "trace_greedy_timings")]
-        {
-            timings.phase_2 += now.elapsed();
-        }
-
-        #[cfg(feature = "trace_greedy_timings")]
-        let now = Instant::now();
-
         // generate greedy faces per material and direction of the plane
         for material_idx in 0..materials_len {
-            let material_faces_start = material_idx * PLANE_SIZE;
-            let material_faces_end = material_faces_start + PLANE_SIZE;
+            let occupancy_per_material = &occupancy_data.per_material[material_idx];
+
+            let mut active_row_pos = 0;
+            let mut active_col_pos = 0;
+            let mut active_depth_pos = 0;
+            let mut material_count_opt_pos = 0;
+
+            let mut active_row_neg = 0;
+            let mut active_col_neg = 0;
+            let mut active_depth_neg = 0;
+            let mut material_count_opt_neg = 0;
+
+            // process per material occupancy masks for the plane
+            for row in min_row..max_row {
+                let base_idx = row * MAX_VOXELS_PER_AXIS;
+
+                for col in min_col..max_col {
+                    let idx = base_idx + col;
+
+                    // take bitmask occupancy for the current material
+                    //   for example - material mask: 0 0 0 1 1 1 0 0 <- 3 voxels with material 'X'
+                    //            global voxels mask: 0 0 1 1 1 1 0 0 <- 4 voxels in total
+                    //               global mask pos: 0 0 1 0 0 0 0 0 <- first face for column
+                    //               global mask neg: 0 0 0 0 0 1 0 0 <- last face for column
+                    let mask = occupancy_per_material[plane_data.offset + idx];
+
+                    // select only faces if they are at the same spot as start/end on the global mask
+                    // for example - global mask pos: 0 0 1 0 0 0 0 0
+                    //                 material mask: 0 0 0 1 1 1 0 0 &
+                    //                      pos_mask: 0 0 0 0 0 0 0 0
+                    let material_mask_pos = mask & global_face_masks_pos[idx];
+                    active_depth_pos |= material_mask_pos;
+
+                    // put masks into the material face masks
+                    material_face_masks_pos[idx] = material_mask_pos;
+
+                    // count how many faces we have for the material
+                    material_count_opt_pos += material_mask_pos.count_ones() as usize;
+
+                    let mask_pos_active = (material_mask_pos != 0) as u64;
+                    active_row_pos |= mask_pos_active << row;
+                    active_col_pos |= mask_pos_active << col;
+
+                    // select only faces if they are at the same spot as start/end on the global mask
+                    // for example - global mask neg: 0 0 0 0 0 1 0 0
+                    //                 material mask: 0 0 0 1 1 1 0 0 &
+                    //                      neg_mask: 0 0 0 0 0 1 0 0
+                    let material_mask_neg = mask & global_face_masks_neg[idx];
+                    active_depth_neg |= material_mask_neg;
+
+                    // put masks into the material face masks
+                    material_face_masks_neg[idx] = material_mask_neg;
+
+                    // count how many faces we have for the material
+                    material_count_opt_neg += material_mask_neg.count_ones() as usize;
+
+                    let mask_neg_active = (material_mask_neg != 0) as u64;
+                    active_row_neg |= mask_neg_active << row;
+                    active_col_neg |= mask_neg_active << col;
+                }
+            }
+
+            if material_count_opt_pos == 0 && material_count_opt_neg == 0 {
+                continue;
+            }
+
+            let active_depth_pos = AxisOccupancy::new(active_depth_pos);
+            let active_row_pos = AxisOccupancy::new(active_row_pos);
+            let active_col_pos = AxisOccupancy::new(active_col_pos);
+            let active_depth_neg = AxisOccupancy::new(active_depth_neg);
+            let active_row_neg = AxisOccupancy::new(active_row_neg);
+            let active_col_neg = AxisOccupancy::new(active_col_neg);
 
             let dirs_data = [
                 DirectionData {
                     dir: Dir::Pos,
-                    masks: &material_face_masks_pos[material_faces_start..material_faces_end],
-                    total: material_count_opt_pos[material_idx],
+                    masks: &material_face_masks_pos,
+                    total: material_count_opt_pos,
                     active_row: active_row_pos,
-                    active_row_min: min_row_pos,
-                    active_row_max: max_row_pos,
                     active_col: active_col_pos,
-                    active_col_min: min_col_pos,
-                    active_col_max: max_col_pos,
                     active_depth: active_depth_pos,
-                    active_depth_min: min_depth_pos,
-                    active_depth_max: max_depth_pos,
                 },
                 DirectionData {
                     dir: Dir::Neg,
-                    masks: &material_face_masks_neg[material_faces_start..material_faces_end],
-                    total: material_count_opt_neg[material_idx],
+                    masks: &material_face_masks_neg,
+                    total: material_count_opt_neg,
                     active_row: active_row_neg,
-                    active_row_min: min_row_neg,
-                    active_row_max: max_row_neg,
                     active_col: active_col_neg,
-                    active_col_min: min_col_neg,
-                    active_col_max: max_col_neg,
                     active_depth: active_depth_neg,
-                    active_depth_min: min_depth_neg,
-                    active_depth_max: max_depth_neg,
                 },
             ];
 
             for dir_data in &dirs_data {
-                let active_row = dir_data.active_row;
-                let active_row_min = dir_data.active_row_min;
-                let active_row_max = dir_data.active_row_max;
-                let active_col = dir_data.active_col;
-                let active_col_min = dir_data.active_col_min;
-                let active_col_max = dir_data.active_col_max;
-                let active_depth = dir_data.active_depth;
-                let active_depth_min = dir_data.active_depth_min;
-                let active_depth_max = dir_data.active_depth_max;
+                if dir_data.total == 0 {
+                    continue;
+                }
+
+                let masks = dir_data.masks;
 
                 let mut faces_left = dir_data.total;
 
-                for slice in active_depth_min..active_depth_max {
-                    if (active_depth >> slice) & 1 == 0 {
+                let slice_data = SliceData {
+                    global_offset: offset,
+                    voxel_size,
+                    min_row: dir_data.active_row.min,
+                    max_row: dir_data.active_row.max,
+                    plane: plane_data.plane,
+                    dir: dir_data.dir,
+                };
+
+                for slice in dir_data.active_depth.min..dir_data.active_depth.max {
+                    if (dir_data.active_depth.active >> slice) & 1 == 0 {
                         continue;
                     }
 
-                    let mut faces_in_slice = 0;
+                    let current_faces_left = faces_left;
 
-                    if faces_left == 0 {
-                        break;
-                    }
+                    let mut faces = [const { 0u64 }; MAX_VOXELS_PER_AXIS];
 
-                    faces.fill(0);
-                    used.fill(0);
-
-                    let mut have_faces = false;
-
-                    for row in active_row_min..active_row_max {
-                        if (active_row >> row) & 1 == 0 {
+                    for row in dir_data.active_row.min..dir_data.active_row.max {
+                        if ((dir_data.active_row.active >> row) & 1) == 0 {
                             continue;
                         }
 
                         let base_idx = row * MAX_VOXELS_PER_AXIS;
-                        for col in active_col_min..active_col_max {
-                            if (active_col >> col) & 1 == 0 {
+                        for col in dir_data.active_col.min..dir_data.active_col.max {
+                            if ((dir_data.active_col.active >> col) & 1) == 0 {
                                 continue;
                             }
 
                             let idx = base_idx + col;
-                            if (dir_data.masks[idx] >> slice) & 1 != 0 {
+                            if ((masks[idx] >> slice) & 1) != 0 {
                                 faces[row] |= 1 << col;
                                 faces_left -= 1;
-                                faces_in_slice += 1;
-                                have_faces = true;
                             }
                         }
                     }
 
-                    if !have_faces {
-                        continue;
-                    }
+                    let faces_total = current_faces_left - faces_left;
 
                     generate_greedy_faces_for_slice(
                         mesh_data,
-                        (plane_data.plane, dir_data.dir, offset),
-                        (voxel_size, faces_in_slice, slice as f32),
-                        &mut used,
+                        &slice_data,
+                        slice as f32,
+                        faces_total,
                         &faces,
-                        max_voxels_per_axis,
                     );
+
+                    if faces_left == 0 {
+                        break;
+                    }
                 }
             }
         }
@@ -815,20 +873,22 @@ pub fn generate_greedy_mesh_arrays(
     }
 }
 
+#[inline(never)]
 fn generate_greedy_faces_for_slice(
     mesh_data: &mut MeshData,
-    (plane, dir, global_offset): (Plane, Dir, Vec3),
-    (voxel_size, faces_total, slice): (f32, usize, f32),
-    used: &mut [u64; MAX_VOXELS_PER_AXIS],
+    slice_data: &SliceData,
+    slice: f32,
+    faces_total: usize,
     faces: &[u64; MAX_VOXELS_PER_AXIS],
-    max_voxels_per_axis: usize,
 ) {
     #[cfg(feature = "tracy")]
     let _span = tracy_client::span!("generate_greedy_faces_for_slice");
 
     let mut faces_left = faces_total;
 
-    'main: for start_row in 0..max_voxels_per_axis {
+    let mut used = [const { 0u64 }; MAX_VOXELS_PER_AXIS];
+
+    'main: for start_row in slice_data.min_row..slice_data.max_row {
         let mut available = faces[start_row] & !used[start_row];
 
         while available != 0 {
@@ -838,7 +898,7 @@ fn generate_greedy_faces_for_slice(
 
             let mut height = 1;
 
-            for row in start_row + 1..max_voxels_per_axis {
+            for row in start_row + 1..slice_data.max_row {
                 let row_mask = faces[row] & !used[row];
                 if (row_mask & width_mask) == width_mask {
                     height += 1;
@@ -849,17 +909,17 @@ fn generate_greedy_faces_for_slice(
             }
 
             let ijk_scale = [
-                voxel_size * width as f32,
-                voxel_size * height as f32,
-                voxel_size,
+                slice_data.voxel_size * width as f32,
+                slice_data.voxel_size * height as f32,
+                slice_data.voxel_size,
             ];
             let ijk_offset = [
-                voxel_size * start_col as f32,
-                voxel_size * start_row as f32,
-                voxel_size * slice,
+                slice_data.voxel_size * start_col as f32,
+                slice_data.voxel_size * start_row as f32,
+                slice_data.voxel_size * slice,
             ];
 
-            let (v_ids, ijk_ids, normal_id) = match (plane, dir) {
+            let (v_ids, ijk_ids, normal_id) = match (slice_data.plane, slice_data.dir) {
                 (Plane::YZ, Dir::Pos) => (VERTS_YZ_POS, IJK_YZ, NORMAL_YZ_POS),
                 (Plane::YZ, Dir::Neg) => (VERTS_YZ_NEG, IJK_YZ, NORMAL_YZ_NEG),
                 (Plane::XZ, Dir::Pos) => (VERTS_XZ_POS, IJK_XZ, NORMAL_XZ_POS),
@@ -879,10 +939,10 @@ fn generate_greedy_faces_for_slice(
                 ijk_offset[ijk_ids[2]],
             );
 
-            let v0 = CUBE_VERTS[v_ids[0]] * scale + offset + global_offset;
-            let v1 = CUBE_VERTS[v_ids[1]] * scale + offset + global_offset;
-            let v2 = CUBE_VERTS[v_ids[2]] * scale + offset + global_offset;
-            let v3 = CUBE_VERTS[v_ids[3]] * scale + offset + global_offset;
+            let v0 = CUBE_VERTS[v_ids[0]] * scale + offset + slice_data.global_offset;
+            let v1 = CUBE_VERTS[v_ids[1]] * scale + offset + slice_data.global_offset;
+            let v2 = CUBE_VERTS[v_ids[2]] * scale + offset + slice_data.global_offset;
+            let v3 = CUBE_VERTS[v_ids[3]] * scale + offset + slice_data.global_offset;
 
             add_quad(mesh_data, [v0, v1, v2, v3], &CUBE_NORMALS[normal_id]);
 
