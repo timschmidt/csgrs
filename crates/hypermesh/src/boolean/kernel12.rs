@@ -74,9 +74,10 @@ impl<'a> Kernel12<'a> {
         } else {
             assert_eq!(k, 2, "Boolean manifold error: v12");
             let xzyy = intersect(xzy_lr0[0], xzy_lr0[1], xzy_lr1[0], xzy_lr1[1]);
-            v12.unwrap().x = xzyy[0]; // fix unwrap
-            v12.unwrap().y = xzyy[2];
-            v12.unwrap().z = xzyy[1];
+            v12 = Some(RowVector3::new(xzyy[0], xzyy[2], xzyy[1]));
+            //v12.unwrap().x = xzyy[0]; // fix unwrap
+            //v12.unwrap().y = xzyy[2];
+            //v12.unwrap().z = xzyy[1];
         }
 
         (x12, v12)

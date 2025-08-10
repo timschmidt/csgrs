@@ -55,8 +55,8 @@ impl<'a> Kernel02<'a> {
                 s02 += s01 * if self.forward == half.is_forward() {-1} else {1};
                 if k < 2 && (k == 0 || (s01 != 0) != shadows_) {
                     shadows_ = s01 != 0;
+                    yzz_rl[k] = RowVector3::new(yz01.x, yz01.y, yz01.y);
                     k += 1;
-                    yzz_rl[k] = RowVector3::new(yz01[0], yz01[1], yz01[1]);
                 }
             }
         }

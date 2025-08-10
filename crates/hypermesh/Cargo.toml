@@ -50,3 +50,8 @@ required-features = ["bevy"]
 name = "hmesh_test"
 path = "examples/hmesh_viewer.rs"
 required-features = ["bevy"]
+
+[[example]]
+name = "kernel_check"
+path = "examples/kernel_check.rs"
+required-features = ["bevy"]

@@ -99,7 +99,7 @@ mod kernel11_tests {
 
     #[test]
     fn kernel11_test() {
-        //edge.isforward: 1
+        //edge.isforward: 0
         //p1: 9
         //q1F: 0
         //s: 0
@@ -113,7 +113,7 @@ mod kernel11_tests {
             halfs_q: &mfd_q.halfs,
             expand: 1.,
         };
-        let (s, z) = k11.op(9, 0);
+        let (s, z) = k11.op(0, 9);
         println!("s: {}, z: {:?}", s, z);
     }
 }

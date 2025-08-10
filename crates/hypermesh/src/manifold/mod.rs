@@ -3,7 +3,7 @@ pub mod collider;
 
 use nalgebra::{RowVector3, Vector3};
 use bounds::BoundingBox;
-use crate::collider::Collider;
+use crate::collider::{BvhCollider, Collider};
 use crate::{Half, Hmesh};
 
 #[derive(Clone)]
@@ -29,18 +29,26 @@ pub struct MfdBuffer {
 pub struct Manifold {
     pub hmesh: Hmesh,
     pub bbox: BoundingBox,
-    pub collider: dyn Collider,
+    pub collider: BvhCollider,
 }
 
-/*
 impl Manifold {
-    pub fn new(hmesh: Hmesh) -> Self {
-        let bbox = BoundingBox::new_from_matrix(&hmesh.pos);
+    // todo: better accepting move. find out a way to do it
+    pub fn new(hmesh: &Hmesh) -> Self {
+        let leaf = hmesh.faces.iter().map(|f| {
+            BoundingBox::new(
+                &vec![
+                    f.half().tail().pos(),
+                    f.half().next().tail().pos(),
+                    f.half().prev().tail().pos()
+                ]
+            )
+        }).collect::<Vec<BoundingBox>>();
+
         Manifold{
-            hmesh,
-            bbox,
-            collider:,
+            hmesh: hmesh.clone(),
+            bbox: BoundingBox::new_from_matrix(&hmesh.pos),
+            collider: BvhCollider::new(&leaf)
         }
     }
 }
-*/

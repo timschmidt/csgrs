@@ -60,7 +60,7 @@ impl BHShape<f64, 3> for AabbNode {
 }
 
 impl BvhCollider {
-    fn new(leaf_boxes: &[BoundingBox]) -> Self {
+    pub fn new(leaf_boxes: &[BoundingBox]) -> Self {
         let mut aabbs = vec![];
         for (i, b) in leaf_boxes.iter().enumerate() {
             aabbs.push(AabbNode { bbox: b.clone(), id: i, nid: i });

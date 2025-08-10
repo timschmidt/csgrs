@@ -32,7 +32,7 @@ pub fn shadows01(
         let a = if shadows(p0x, q1ex, expand * vp[p0].normal().x) {1} else {0};
         let b = if shadows(p0x, q1sx, expand * vp[p0].normal().x) {1} else {0};
 
-        println!("p0x: {}, q1ex: {}, a: {}, b: {}", p0x, q1ex, a, b);
+        //println!("p0x: {}, q1ex: {}, a: {}, b: {}", p0x, q1ex, a, b);
         a - b
     };
 

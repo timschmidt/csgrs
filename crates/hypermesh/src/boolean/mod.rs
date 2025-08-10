@@ -11,7 +11,7 @@ use crate::boolean::kernel02::Kernel02;
 use crate::boolean::kernel11::Kernel11;
 use crate::boolean::kernel12::Kernel12;
 use crate::bounds::BoundingBox;
-use crate::collider::Recorder;
+use crate::collider::{Collider, Recorder};
 use crate::manifold::Manifold;
 use crate::test_data::{gen_tet_a, gen_tet_c};
 
@@ -88,7 +88,7 @@ fn intersect12 (
     p: &Manifold,
     q: &Manifold,
     p1q2: &mut Vec<[i64; 2]>,
-    expand_p: f64,
+    expand: f64,
     forward: bool
 ) -> (Vec<i64>, Vec<RowVector3<f64>>) {
     let a = if forward { p } else { q };
@@ -98,7 +98,7 @@ fn intersect12 (
         verts_p: &a.hmesh.verts,
         verts_q: &b.hmesh.verts,
         halfs_q: &b.hmesh.halfs,
-        expand: expand_p,
+        expand,
         forward
     };
     let k11 = Kernel11{
@@ -106,7 +106,7 @@ fn intersect12 (
         halfs_p: &p.hmesh.halfs,
         verts_q: &q.hmesh.verts,
         halfs_q: &q.hmesh.halfs,
-        expand: expand_p,
+        expand,
     };
 
     let k12 = Kernel12{
@@ -214,38 +214,58 @@ pub enum OpType { Add, Subtract, Intersect }
 
 
 #[test]
-fn test_winding03(){
+fn test_kernel03(){
     let hm_p = gen_tet_a();
     let hm_q = gen_tet_c();
 
     let k02 = Kernel02 {
         verts_p: &hm_p.verts,
-        verts_q: &hm_p.verts,
-        halfs_q: &hm_q.halfs,
-        expand: -1.,
-        forward: false,
-    };
-
-    for i in 0..4 {
-        for j in 0..4 {
-            let (s02, z02) = k02.op(i, j);
-            println!("{} {} {}", i, j, s02);
-        }
-    }
-
-    let k02 = Kernel02 {
-        verts_p: &hm_q.verts,
         verts_q: &hm_q.verts,
-        halfs_q: &hm_p.halfs,
+        halfs_q: &hm_q.halfs,
         expand: -1.,
         forward: true,
     };
 
     for i in 0..4 {
-        for j in 0..4 {
-            let (s02, z02) = k02.op(i, j);
-            println!("{} {} {}", i, j, s02);
-        }
-    }
+    for j in 0..4 {
+        let (s02, z02) = k02.op(i, j);
+        println!("i: {}, j: {}, s02: {}, z02: {}", i, j, s02, z02.unwrap_or(-100.));
+    }}
 
+    let k02 = Kernel02 {
+        verts_p: &hm_q.verts,
+        verts_q: &hm_p.verts,
+        halfs_q: &hm_p.halfs,
+        expand: -1.,
+        forward: false,
+    };
+
+    for i in 0..4 {
+    for j in 0..4 {
+        let (s02, z02) = k02.op(i, j);
+        println!("i: {}, j: {}, s02: {}, z02: {}", i, j, s02, z02.unwrap_or(-100.));
+    }}
+}
+
+#[test]
+fn test_kernel12(){
+    //x12:
+    //v12:
+    //x21: -1, -1, -1,
+    //v21: {-0.224009,0,-0.112005}, {-0.294367,0.127465,0.0735918}, {-0.395087,-0.171077,0.0987716},
+
+    let hm_p = gen_tet_a();
+    let hm_q = gen_tet_c();
+    let mfd_p = Manifold::new(&hm_p);
+    let mfd_q = Manifold::new(&hm_q);
+
+    let mut p1q2 = vec![];
+    let mut p2q1 = vec![];
+
+    let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, -1., true);
+    let (x21, v21) = intersect12(&mfd_p, &mfd_q, &mut p2q1, -1., false);
+    println!("x12: {:?}, v12: {:?}", x12, v12);
+    println!("x21: {:?}, v21: {:?}", x21, v21);
+    println!("p1q2: {:?}", p1q2);
+    println!("p2q1: {:?}", p2q1);
 }
