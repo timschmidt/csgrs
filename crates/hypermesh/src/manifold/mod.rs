@@ -37,6 +37,7 @@ impl Manifold {
     pub fn new(hmesh: &Hmesh) -> Self {
         let leaf = hmesh.faces.iter().map(|f| {
             BoundingBox::new(
+                f.id,
                 &vec![
                     f.half().tail().pos(),
                     f.half().next().tail().pos(),
@@ -47,7 +48,7 @@ impl Manifold {
 
         Manifold{
             hmesh: hmesh.clone(),
-            bbox: BoundingBox::new_from_matrix(&hmesh.pos),
+            bbox: BoundingBox::new_from_matrix(usize::MAX, &hmesh.pos),
             collider: BvhCollider::new(&leaf)
         }
     }

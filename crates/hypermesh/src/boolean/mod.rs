@@ -68,17 +68,14 @@ struct Intersection12Recorder<'a> {
 
 impl <'a> Recorder for Intersection12Recorder<'a> {
     fn record(&mut self, query_idx: usize, leaf_idx: usize) {
-        let h = self.mfd_a.hmesh.edges[query_idx].half(); //todo check
+        let h = &self.mfd_a.hmesh.halfs[query_idx];
         let (x12, op_v12) = self.k12.op(h.id, leaf_idx);
         if let Some(v12) = op_v12 {
-            if self.forward {
-                self.p1q2.push([query_idx as i64, leaf_idx as i64]);
-            } else {
-                self.p1q2.push([leaf_idx as i64, query_idx as i64]);
-                self.x12.push(x12);
-                self.v12.push(v12);
-                
-            }
+            //println!("hid: {}, lid: {}, x12: {}, v12: {:?}", h.id, leaf_idx, x12, v12);
+            if self.forward { self.p1q2.push([query_idx as i64, leaf_idx as i64]); }
+            else            { self.p1q2.push([leaf_idx as i64, query_idx as i64]); }
+            self.x12.push(x12);
+            self.v12.push(v12);
         }
     }
 }
@@ -110,16 +107,17 @@ fn intersect12 (
     };
 
     let k12 = Kernel12{
+        verts_p: &a.hmesh.verts,
         halfs_p: &a.hmesh.halfs,
         halfs_q: &b.hmesh.halfs,
-        verts_p: &a.hmesh.verts,
         forward,
         k02,
         k11,
     };
 
-    let bboxes = a.hmesh.edges.iter()
-        .map(|e| BoundingBox::new(&vec![e.vert0().pos(), e.vert1().pos()])).collect::<Vec<_>>();
+    let bboxes = a.hmesh.halfs.iter()
+        .filter(|h| h.tail().id < h.head().id)
+        .map(|h| BoundingBox::new(h.id, &vec![h.tail().pos(), h.head().pos()])).collect::<Vec<_>>();
 
     let mut rec = Intersection12Recorder{
         mfd_a: a,
@@ -135,7 +133,7 @@ fn intersect12 (
 
     let mut x12: Vec<i64> = vec![];
     let mut v12: Vec<RowVector3<f64>> = vec![];
-    let mut seq: Vec<usize> = (0..p1q2.len()).collect();
+    let mut seq: Vec<usize> = (0..rec.p1q2.len()).collect();
     seq.sort_by(|&a, &b| (rec.p1q2[a][0], rec.p1q2[a][1]).cmp(&(rec.p1q2[b][0], rec.p1q2[b][1])));
 
     for i in 0..seq.len() {
@@ -161,7 +159,7 @@ fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<i64>
         forward,
     };
 
-    let bboxes = a.hmesh.verts.iter().map(|v| BoundingBox::new(&vec![v.pos(), v.pos()])).collect::<Vec<_>>();
+    let bboxes = a.hmesh.verts.iter().map(|v| BoundingBox::new(v.id, &vec![v.pos(), v.pos()])).collect::<Vec<_>>();
     let mut rec = SimpleRecorder::new(
         |a, b| {
             let (s02, z02) = k02.op(a, b);
@@ -198,7 +196,7 @@ fn new(&self, p: &'a Manifold, q: &'a Manifold, op :OpType) -> Self {
 
             // Level 3
             // Build up the intersection of the edges and triangles, keeping only those
-            // that intersect and record the direction the edge is passing through the triangle.
+            // that intersect and  the direction the edge is passing through the triangle.
             (self.x12, self.v12) = intersect12();
             (self.x21, self.v21) = intersect12();
 
@@ -259,13 +257,16 @@ fn test_kernel12(){
     let mfd_p = Manifold::new(&hm_p);
     let mfd_q = Manifold::new(&hm_q);
 
+
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
 
     let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, -1., true);
     let (x21, v21) = intersect12(&mfd_p, &mfd_q, &mut p2q1, -1., false);
-    println!("x12: {:?}, v12: {:?}", x12, v12);
-    println!("x21: {:?}, v21: {:?}", x21, v21);
+    println!("x12: {:?}", x12);
+    println!("v12: {:?}", v12);
+    println!("x21: {:?}", x21);
+    println!("v21: {:?}", v21);
     println!("p1q2: {:?}", p1q2);
     println!("p2q1: {:?}", p2q1);
 }

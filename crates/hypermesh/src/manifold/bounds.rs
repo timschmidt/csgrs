@@ -2,13 +2,15 @@ use nalgebra::{DMatrix, RowVector3};
 
 #[derive(Clone)]
 pub struct BoundingBox {
+    pub id: usize,
     pub min: RowVector3<f64>,
     pub max: RowVector3<f64>,
 }
 
 impl BoundingBox {
-    pub fn new(pts: &Vec<RowVector3<f64>>) -> Self {
+    pub fn new(id: usize, pts: &Vec<RowVector3<f64>>) -> Self {
         let mut b = BoundingBox {
+            id,
             min: RowVector3::new(f64::MAX, f64::MAX, f64::MAX),
             max: RowVector3::new(f64::MIN, f64::MIN, f64::MIN),
         };
@@ -16,8 +18,9 @@ impl BoundingBox {
         b
     }
 
-    pub fn new_from_matrix(pts: &DMatrix<f64>) -> Self {
+    pub fn new_from_matrix(id: usize, pts: &DMatrix<f64>) -> Self {
         let mut b = BoundingBox {
+            id,
             min: RowVector3::new(f64::MAX, f64::MAX, f64::MAX),
             max: RowVector3::new(f64::MIN, f64::MIN, f64::MIN),
         };

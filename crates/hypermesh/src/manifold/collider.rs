@@ -72,10 +72,10 @@ impl BvhCollider {
 
 impl Collider for BvhCollider {
     fn collision(&self, queries: &[BoundingBox], recorder: &mut dyn Recorder) {
-        for (i, q) in queries.iter().enumerate() {
+        for q in queries.iter() {
             let q_aabb = Aabb::with_bounds(q.min.transpose().into(), q.max.transpose().into());
             let subset = self.bvh.traverse_iterator(&q_aabb, &self.aabbs);
-            for v in subset { recorder.record(i, v.id); }
+            for v in subset { recorder.record(q.id, v.id); }
         }
     }
 }
