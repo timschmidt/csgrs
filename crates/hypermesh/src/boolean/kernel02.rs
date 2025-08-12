@@ -12,7 +12,7 @@ pub struct Kernel02<'a> {
 }
 
 impl<'a> Kernel02<'a> {
-    pub fn op (&self, p0: usize, q2: usize) -> (i64, Option<f64>) {
+    pub fn op (&self, p0: usize, q2: usize) -> (i32, Option<f64>) {
         let mut s02 = 0;
         let mut z02 = Some(0.);
 

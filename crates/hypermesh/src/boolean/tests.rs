@@ -1,10 +1,10 @@
 use nalgebra::RowVector3;
-use crate::boolean::{intersect12, winding03};
-use crate::Manifold;
+use crate::boolean::{intersect12, winding03, Boolean3};
+use crate::{Manifold, OpType};
 use crate::test_data::{gen_tet_a, gen_tet_b, gen_tet_c};
 
 #[test]
-fn test_tet_inclusion_case(){
+fn test_tet_sub_inclusion_case(){
     let expand = -1.;
     let hm_p = gen_tet_a();
     let hm_q = gen_tet_c();
@@ -30,10 +30,16 @@ fn test_tet_inclusion_case(){
     for i in 0..3 {
         assert!((v21[i] - v21_[i]).norm() < 1e-6);
     }
+
+    let boolean = Boolean3{
+        mfd_p: &mfd_p, mfd_q: &mfd_q,
+        p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
+    
+    boolean.get_result(OpType::Subtract);
 }
 
 #[test]
-fn test_tet_penetration_case(){
+fn test_tet_sub_penetration_case(){
     let expand = -1.;
     let hm_p = gen_tet_a();
     let hm_q = gen_tet_b();

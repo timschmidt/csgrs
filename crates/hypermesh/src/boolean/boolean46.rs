@@ -8,8 +8,8 @@ use crate::bounds::BoundingBox;
 fn duplicate_verts(
     inclusion : &[i32],
     vert_r    : &[i32],
-    vert_pos_p: &[Vector3<f64>],
-    vert_pos_r: &mut [Vector3<f64>],
+    vert_pos_p: &[RowVector3<f64>],
+    vert_pos_r: &mut [RowVector3<f64>],
     vid: usize
 ) {
     let n = inclusion[vid].abs() as usize;
@@ -282,8 +282,8 @@ fn append_new_edges(
         // position advanced CCW. This is only valid if this is a retained vert; it
         // will be ignored later if the vert is new.
 
-        let fw_ref = TriRef{ mesh_id: 0, face_id: *face_p};
-        let bk_ref = TriRef{ mesh_id: 1, face_id: *face_q};
+        let fw_ref = TriRef{ mesh_id: 0, face_id: *face_p };
+        let bk_ref = TriRef{ mesh_id: 1, face_id: *face_q };
 
         for h in edges.iter_mut() {
             let fw_edge = { let ptr = face_ptr_r[face_l]; face_ptr_r[face_l] += 1; ptr };
@@ -353,18 +353,15 @@ impl<'a> Boolean3<'a> {
         let c3 = if op == OpType::Intersect {1} else {-1};
 
         let i12: Vec<i32> = self.x12.iter().map(|v| c3 * v).collect();
-        let i21: Vec<i32> = self.x12.iter().map(|v| c3 * v).collect();
+        let i21: Vec<i32> = self.x21.iter().map(|v| c3 * v).collect();
         let i03: Vec<i32> = self.w03.iter().map(|v| c1 + c3 * v).collect();
         let i30: Vec<i32> = self.w30.iter().map(|v| c1 + c3 * v).collect();
 
-        let vpos_p = &vec![]; // need to be filled in
-        let vpos_q = &vec![]; // need to be filled in
         let nv_p = self.mfd_p.hmesh.n_vert;
         let nh_p = self.mfd_p.hmesh.n_half;
         let nv_q = self.mfd_q.hmesh.n_vert;
         let nh_q = self.mfd_q.hmesh.n_half;
         let mut nv_r = 0;
-        let mut vpos_r = vec![];
 
         let mut v_p2r: Vec<i32> = vec![0; nv_p];
         let mut v_q2r: Vec<i32> = vec![0; nv_q];
@@ -372,28 +369,45 @@ impl<'a> Boolean3<'a> {
         let mut v_21r: Vec<i32> = vec![0; self.v21.len()];
 
         exclusive_scan(&i03.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_p2r, nv_r);
-        nv_r = v_p2r.last().unwrap().clone().abs() + i03.last().unwrap().abs(); // why adding i03 back??
+        nv_r = v_p2r.last().unwrap().clone().abs() + i03.last().unwrap().abs(); // exclusive_scan not count the last element of i03 so.
         let nv_rp = nv_r;
 
         exclusive_scan(&i30.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_q2r, nv_r);
-        nv_r = v_q2r.last().unwrap().clone().abs() + i03.last().unwrap().abs(); // why adding i30 back??
+        nv_r = v_q2r.last().unwrap().clone().abs() + i03.last().unwrap().abs();
         let nv_rq = nv_r - nv_rp;
 
-        exclusive_scan(&i12.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_12r, nv_r);
-        nv_r = v_12r.last().unwrap().clone().abs() + i12.last().unwrap().abs(); 
+        if self.v12.len() > 0 {
+            exclusive_scan(&i12.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_12r, nv_r);
+            nv_r = v_12r.last().unwrap().clone().abs() + i12.last().unwrap().abs();
+        }
         let nv_12 = nv_r - nv_rp - nv_rq;
 
-        exclusive_scan(&i21.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_21r, nv_r);
-        nv_r = v_21r.last().unwrap().clone().abs() + i21.last().unwrap().abs();
+        if self.v21.len() > 0 {
+            exclusive_scan(&i21.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_21r, nv_r);
+            nv_r = v_21r.last().unwrap().clone().abs() + i21.last().unwrap().abs();
+        }
         let nv_21 = nv_r - nv_rp - nv_rq - nv_12;
 
-        for i in 0..nv_p      { duplicate_verts(&i03, &v_p2r, vpos_p, &mut vpos_r, i); }
-        for i in 0..nv_q      { duplicate_verts(&i30, &v_q2r, vpos_q, &mut vpos_r, i); }
-        for i in 0..i12.len() { duplicate_verts(&i12, &v_12r, &self.v12, &mut vpos_r, i); }
-        for i in 0..i21.len() { duplicate_verts(&i21, &v_21r, &self.v21, &mut vpos_r, i); }
+        /*
+        let mut vpos_p = vec![];
+        let mut vpos_q = vec![];
+        let mut vpos_r = vec![RowVector3::zeros(); nv_r as usize];
+        for r in self.mfd_p.hmesh.pos.row_iter() { vpos_p.push(RowVector3::new(r[0], r[1], r[2])); }
+        for r in self.mfd_q.hmesh.pos.row_iter() { vpos_q.push(RowVector3::new(r[0], r[1], r[2])); }
 
-        let mut whole_he_p = vec![true; nh_p];
-        let mut whole_he_q = vec![true; nh_q];
+        for i in 0..nv_p  { duplicate_verts(&i03, &v_p2r, &vpos_p, &mut vpos_r, i); }
+        for i in 0..nv_q  { duplicate_verts(&i30, &v_q2r, &vpos_q, &mut vpos_r, i); }
+        for i in 0..nv_12 { duplicate_verts(&i12, &v_12r, &self.v12, &mut vpos_r, i as usize); }
+        for i in 0..nv_21 { duplicate_verts(&i21, &v_21r, &self.v21, &mut vpos_r, i as usize); }
+        */
+
+        println!("nPV: {}", nv_rp);
+        println!("nQV: {}", nv_rq);
+        println!("n12: {}", nv_12);
+        println!("n21: {}", nv_21);
+
+        //let mut whole_he_p = vec![true; nh_p];
+        //let mut whole_he_q = vec![true; nh_q];
     }
 }
 

@@ -16,7 +16,7 @@ pub fn shadows01(
     hq: &[Half],
     expand: f64,  // sign of normal
     reverse: bool //
-) -> Option<(i64, RowVector2<f64>)> {
+) -> Option<(i32, RowVector2<f64>)> {
     let q1s = hq[q1].tail().id;
     let q1e = hq[q1].head().id;
     let p0x  = vp[p0].pos().x;

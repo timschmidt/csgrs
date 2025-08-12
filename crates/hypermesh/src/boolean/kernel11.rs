@@ -12,7 +12,7 @@ pub struct Kernel11<'a> {
 }
 
 impl<'a> Kernel11<'a> {
-    pub fn op (&self, p1: usize, q1: usize) -> (i64, Option<RowVector4<f64>>) {
+    pub fn op (&self, p1: usize, q1: usize) -> (i32, Option<RowVector4<f64>>) {
         let mut xyzz11 = None;
         let mut s11 = 0;
 

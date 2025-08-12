@@ -60,7 +60,7 @@ struct Intersection12Recorder<'a> {
     pub mfd_b: &'a Manifold,
     pub k12: &'a Kernel12<'a>,
     pub forward: bool,
-    pub p1q2: Vec<[i64; 2]>,
+    pub p1q2: Vec<[i32; 2]>,
     pub x12: Vec<i32>,
     pub v12: Vec<RowVector3<f64>>,
 }
@@ -71,8 +71,8 @@ impl <'a> Recorder for Intersection12Recorder<'a> {
         let (x12, op_v12) = self.k12.op(h.id, leaf_idx);
         if let Some(v12) = op_v12 {
             //println!("hid: {}, lid: {}, x12: {}, v12: {:?}", h.id, leaf_idx, x12, v12);
-            if self.forward { self.p1q2.push([query_idx as i64, leaf_idx as i64]); }
-            else            { self.p1q2.push([leaf_idx as i64, query_idx as i64]); }
+            if self.forward { self.p1q2.push([query_idx as i32, leaf_idx as i32]); }
+            else            { self.p1q2.push([leaf_idx as i32, query_idx as i32]); }
             self.x12.push(x12);
             self.v12.push(v12);
         }
@@ -83,10 +83,10 @@ impl <'a> Recorder for Intersection12Recorder<'a> {
 fn intersect12 (
     p: &Manifold,
     q: &Manifold,
-    p1q2: &mut Vec<[i64; 2]>,
+    p1q2: &mut Vec<[i32; 2]>,
     expand: f64,
     forward: bool
-) -> (Vec<i64>, Vec<RowVector3<f64>>) {
+) -> (Vec<i32>, Vec<RowVector3<f64>>) {
     let a = if forward { p } else { q };
     let b = if forward { q } else { p };
 
@@ -130,14 +130,14 @@ fn intersect12 (
 
      b.collider.collision(&bboxes, &mut rec);
 
-    let mut x12: Vec<i64> = vec![];
+    let mut x12: Vec<i32> = vec![];
     let mut v12: Vec<RowVector3<f64>> = vec![];
     let mut seq: Vec<usize> = (0..rec.p1q2.len()).collect();
     seq.sort_by(|&a, &b| (rec.p1q2[a][0], rec.p1q2[a][1]).cmp(&(rec.p1q2[b][0], rec.p1q2[b][1])));
 
     for i in 0..seq.len() {
         p1q2.push(rec.p1q2[seq[i]]);
-        x12.push(rec.x12[seq[i]] as i64);
+        x12.push(rec.x12[seq[i]]);
         v12.push(rec.v12[seq[i]]);
     }
 
@@ -145,7 +145,7 @@ fn intersect12 (
 }
 
 
-fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<i64> {
+fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<i32> {
     let a = if forward {p} else {q};
     let b = if forward {q} else {p};
 
@@ -179,8 +179,8 @@ struct Boolean3<'a> {
     x21: Vec<i32>,
     w03: Vec<i32>,
     w30: Vec<i32>,
-    v12: Vec<Vector3<f64>>,
-    v21: Vec<Vector3<f64>>,
+    v12: Vec<RowVector3<f64>>,
+    v21: Vec<RowVector3<f64>>,
 }
 
 impl<'a> Boolean3<'a> {
