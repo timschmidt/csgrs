@@ -48,12 +48,12 @@ impl<'a> Kernel12<'a> {
         for i in 0..3 {
             let q1 = 3 * q2 + i;
             let half = &self.halfs_q[q1];
-            let q1f = if half.is_canonical() { q1 } else { half.id }; // Using cannonical as equivalent to IsForward
+            let q1f = if half.is_forward() { q1 } else { half.twin().id };
 
             let (s, op_xyzz) = if self.forward { self.k11.op(p1, q1f) } else { self.k11.op(q1f, p1) };
 
             if let Some(xyzz) = op_xyzz {
-                x12 -= s as i32 * if half.is_canonical() { 1 } else { -1 };
+                x12 -= s as i32 * if half.is_forward() { 1 } else { -1 };
                 if k < 2 && (k == 0 || (s != 0) != shadows) {
                     shadows = s != 0;
                     xzy_lr0[k].x = xyzz.x;
@@ -75,9 +75,6 @@ impl<'a> Kernel12<'a> {
             assert_eq!(k, 2, "Boolean manifold error: v12");
             let xzyy = intersect(xzy_lr0[0], xzy_lr0[1], xzy_lr1[0], xzy_lr1[1]);
             v12 = Some(RowVector3::new(xzyy[0], xzyy[2], xzyy[1]));
-            //v12.unwrap().x = xzyy[0]; // fix unwrap
-            //v12.unwrap().y = xzyy[2];
-            //v12.unwrap().z = xzyy[1];
         }
 
         (x12, v12)

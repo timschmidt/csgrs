@@ -35,10 +35,10 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>
 ) {
     let tet_a = mfd::boolean::test_data::gen_tet_a();
-    let tet_c = mfd::boolean::test_data::gen_tet_c();
+    let tet_b = mfd::boolean::test_data::gen_tet_b();
     let mut hmesh_handles = Vec::new();
 
-    for hm in vec![tet_a, tet_c] {
+    for hm in vec![tet_a, tet_b] {
         let mut bevy_mesh = Mesh::new(
             bevy::render::mesh::PrimitiveTopology::TriangleList,
             RenderAssetUsages::default()

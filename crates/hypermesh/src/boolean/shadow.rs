@@ -58,7 +58,7 @@ pub fn shadows01(
 
 #[test]
 fn shadow01_test() {
-    let mfd_p = test_data::gen_tri_b();
+    let mfd_p = test_data::gen_tri_c();
     let mfd_q = test_data::gen_tri_a();
 
     for ip0 in 0..3 {

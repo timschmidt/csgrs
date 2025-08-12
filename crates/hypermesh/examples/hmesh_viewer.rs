@@ -43,8 +43,8 @@ fn setup(
     //let pos: DMatrix<f64>   = DMatrix::from_row_slice(mesh_.positions.len() / 3, 3, &pos_buf).into();
     //let idx: DMatrix<usize> = DMatrix::from_row_slice(mesh_.indices.len() / 3, 3, &idx_buf).into();
     //let hmesh = Hmesh::new(pos, idx);
-    let tet_a = mfd::boolean::test_data::gen_tri_b();
-    let tet_c = mfd::boolean::test_data::gen_tri_c();
+    let tet_a = mfd::boolean::test_data::gen_tet_a();
+    let tet_c = mfd::boolean::test_data::gen_tet_b();
     let hmeshes = vec![tet_a, tet_c];
 
     for hmesh in hmeshes {
