@@ -2,7 +2,6 @@ use std::{mem, usize};
 use std::cmp::PartialEq;
 use std::sync::{Arc, Weak};
 use nalgebra::{DMatrix, RealField, RowVector3};
-
 pub trait FloatType: RealField + Clone {}
 
 

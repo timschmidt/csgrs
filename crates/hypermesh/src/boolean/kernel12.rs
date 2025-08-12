@@ -14,7 +14,6 @@ pub struct Kernel12<'a> {
     pub forward: bool,
 }
 
-
 impl<'a> Kernel12<'a> {
     pub fn op (&self, p1: usize, q2: usize) -> (i32, Option<RowVector3<f64>>) {
         let mut x12 = 0;

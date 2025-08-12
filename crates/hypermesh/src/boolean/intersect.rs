@@ -7,7 +7,6 @@ use nalgebra::{RowVector2, RowVector3, RowVector4, Vector2, Vector3, Vector4};
  * cases to ensure consistency.
  */
 
-// not checked yet
 pub fn interpolate(
     pl: RowVector3<f64>,
     pr: RowVector3<f64>,
@@ -29,7 +28,6 @@ pub fn interpolate(
     )
 }
 
-// not checked yet
 pub fn intersect(
     pl: RowVector3<f64>,
     pr: RowVector3<f64>,
