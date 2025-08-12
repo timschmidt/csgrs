@@ -34,7 +34,7 @@ fn test_tet_sub_inclusion_case(){
     let boolean = Boolean3{
         mfd_p: &mfd_p, mfd_q: &mfd_q,
         p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
-    
+
     boolean.get_result(OpType::Subtract);
 }
 
@@ -73,4 +73,10 @@ fn test_tet_sub_penetration_case(){
         assert!((v12[i] - v12_[i]).norm() < 1e-6);
         assert!((v21[i] - v21_[i]).norm() < 1e-6);
     }
+
+    let boolean = Boolean3{
+        mfd_p: &mfd_p, mfd_q: &mfd_q,
+        p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
+
+    boolean.get_result(OpType::Subtract);
 }

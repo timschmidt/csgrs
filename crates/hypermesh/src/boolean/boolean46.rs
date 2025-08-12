@@ -30,11 +30,10 @@ fn inclusive_scan(input: &[i32], output: &mut [i32], offset: i32) {
 }
 
 // consider moving this to a util function module
-// not checked yet
 fn exclusive_scan(input: &[i32], output: &mut [i32], offset: i32) {
     if input.is_empty() || output.is_empty() { return; }
     let mut sum = offset;
-    output[0] = 0;
+    output[0] = sum;
     for i in 1..input.len() {
         sum += input[i - 1];
         if i < output.len() { output[i] = sum; }
@@ -355,7 +354,11 @@ impl<'a> Boolean3<'a> {
         let i12: Vec<i32> = self.x12.iter().map(|v| c3 * v).collect();
         let i21: Vec<i32> = self.x21.iter().map(|v| c3 * v).collect();
         let i03: Vec<i32> = self.w03.iter().map(|v| c1 + c3 * v).collect();
-        let i30: Vec<i32> = self.w30.iter().map(|v| c1 + c3 * v).collect();
+        let i30: Vec<i32> = self.w30.iter().map(|v| c2 + c3 * v).collect();
+        //println!("i03: {:?}", i03);
+        //println!("i30: {:?}", i30);
+        //println!("i12: {:?}", i12);
+        //println!("i21: {:?}", i21);
 
         let nv_p = self.mfd_p.hmesh.n_vert;
         let nh_p = self.mfd_p.hmesh.n_half;
@@ -373,7 +376,7 @@ impl<'a> Boolean3<'a> {
         let nv_rp = nv_r;
 
         exclusive_scan(&i30.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_q2r, nv_r);
-        nv_r = v_q2r.last().unwrap().clone().abs() + i03.last().unwrap().abs();
+        nv_r = v_q2r.last().unwrap().clone().abs() + i30.last().unwrap().abs();
         let nv_rq = nv_r - nv_rp;
 
         if self.v12.len() > 0 {
@@ -388,23 +391,24 @@ impl<'a> Boolean3<'a> {
         }
         let nv_21 = nv_r - nv_rp - nv_rq - nv_12;
 
-        /*
         let mut vpos_p = vec![];
         let mut vpos_q = vec![];
         let mut vpos_r = vec![RowVector3::zeros(); nv_r as usize];
         for r in self.mfd_p.hmesh.pos.row_iter() { vpos_p.push(RowVector3::new(r[0], r[1], r[2])); }
         for r in self.mfd_q.hmesh.pos.row_iter() { vpos_q.push(RowVector3::new(r[0], r[1], r[2])); }
 
+        //println!("v_p2r: {:?}", v_p2r);
+        //println!("v_q2r: {:?}", v_q2r);
         for i in 0..nv_p  { duplicate_verts(&i03, &v_p2r, &vpos_p, &mut vpos_r, i); }
         for i in 0..nv_q  { duplicate_verts(&i30, &v_q2r, &vpos_q, &mut vpos_r, i); }
         for i in 0..nv_12 { duplicate_verts(&i12, &v_12r, &self.v12, &mut vpos_r, i as usize); }
         for i in 0..nv_21 { duplicate_verts(&i21, &v_21r, &self.v21, &mut vpos_r, i as usize); }
-        */
 
         println!("nPV: {}", nv_rp);
         println!("nQV: {}", nv_rq);
         println!("n12: {}", nv_12);
         println!("n21: {}", nv_21);
+        for v in vpos_r.iter() { println!("{:?}", v); }
 
         //let mut whole_he_p = vec![true; nh_p];
         //let mut whole_he_q = vec![true; nh_q];
