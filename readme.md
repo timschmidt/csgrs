@@ -604,6 +604,7 @@ for Polygon
 - regular skew polyhedra
 - toroidal polyhedra
 - shapes from https://iquilezles.org/articles/
+- https://graphite.rs/libraries/bezier-rs/
 
 ## Todo easy
 - finish naca airfoil implementations
