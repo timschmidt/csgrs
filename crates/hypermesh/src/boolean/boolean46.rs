@@ -41,63 +41,66 @@ fn exclusive_scan(input: &[i32], output: &mut [i32], offset: i32) {
 }
 
 fn size_output(
-    mfd_r: &mut MfdBuffer,
     mfd_p: &Manifold,
     mfd_q: &Manifold,
     i03: &[i32],
     i30: &[i32],
     i12: &[i32],
     i21: &[i32],
-    p1q2: Vec<[i32; 2]>,
-    p2q1: Vec<[i32; 2]>,
+    p1q2: &Vec<[i32; 2]>,
+    p2q1: &Vec<[i32; 2]>,
     invert_q: bool,
+    fnmls: &mut Vec<RowVector3<f64>>,
 ) -> (Vec<i32>, Vec<i32>) {
     let mut side_p = vec![0; mfd_p.hmesh.n_face];
     let mut side_q = vec![0; mfd_q.hmesh.n_face];
     let nfp = mfd_p.hmesh.n_face;
     let nfq = mfd_q.hmesh.n_face;
-    let nfr = nfp + nfq;
 
-    for h in mfd_p.hmesh.halfs.iter() { side_p[h.face().id] += i03[h.tail().id]; }
-    for h in mfd_q.hmesh.halfs.iter() { side_q[h.face().id] += i30[h.tail().id]; }
+    // equivalent to CountVerts
+    for h in mfd_p.hmesh.halfs.iter() { side_p[h.face().id] += i03[h.tail().id].abs(); }
+    for h in mfd_q.hmesh.halfs.iter() { side_q[h.face().id] += i30[h.tail().id].abs(); }
 
+    // equivalent to CountNewVerts
     for i in 0..i12.len() {
-        let hp = &mfd_p.hmesh.halfs[p1q2[i][0] as usize];
-        let inclusion = i12[i].abs();
-        side_p[hp.face().id] += inclusion;
-        side_p[hp.twin().face().id] += inclusion;
-        side_q[p1q2[i][1] as usize] += inclusion;
+        let h = &mfd_p.hmesh.halfs[p1q2[i][0] as usize];
+        let inc = i12[i].abs();
+        side_p[h.face().id] += inc;
+        side_p[h.twin().face().id] += inc;
+        side_q[p1q2[i][1] as usize] += inc;
     }
 
     for i in 0..i21.len() {
-        let hq = &mfd_q.hmesh.halfs[p2q1[i][1] as usize];
-        let inclusion = i21[i].abs();
-        side_q[hq.face().id] += inclusion;
-        side_q[hq.twin().face().id] += inclusion;
-        side_p[p2q1[i][0] as usize] += inclusion;
+        let h = &mfd_q.hmesh.halfs[p2q1[i][1] as usize];
+        let inc = i21[i].abs();
+        side_q[h.face().id] += inc;
+        side_q[h.twin().face().id] += inc;
+        side_p[p2q1[i][0] as usize] += inc;
     }
 
     // a map from face_p and face_q to face_r
-    let mut face_pq2r = vec![0; nfr + 1];
+    let mut face_pq2r = vec![0; nfp + nfq + 1];
     let side_pq = [&side_p[..], &side_q[..]].concat();
+    //println!("side_pq: {:?}", side_pq);
+
     let keep_fs = side_pq.iter().map(|&x| if x > 0 { 1 } else { 0 }).collect::<Vec<i32>>();
+
     inclusive_scan(&keep_fs, &mut face_pq2r[1..], 0);
     let n_face_r = *face_pq2r.last().unwrap() as usize;
-    face_pq2r.truncate(nfr);
-    mfd_r.fnmls.resize(n_face_r, RowVector3::zeros());
+    face_pq2r.truncate(nfp + nfq);
+    fnmls.resize(n_face_r, RowVector3::zeros());
 
-    // fill the face normals face by face...
     let mut fid_r = 0;
-    for f in mfd_p.hmesh.faces.iter() { if side_p[f.id] > 0 { mfd_r.fnmls[fid_r] = f.normal().clone(); fid_r += 1; } }
-    for f in mfd_q.hmesh.faces.iter() { if side_q[f.id] > 0 { mfd_r.fnmls[fid_r] = f.normal().clone(); fid_r += 1; } }
+    for f in mfd_p.hmesh.faces.iter() { if side_p[f.id] > 0 { fnmls[fid_r] = f.normal().clone(); fid_r += 1; } }
+    for f in mfd_q.hmesh.faces.iter() { if side_q[f.id] > 0 { fnmls[fid_r] = f.normal().clone() * if invert_q {-1.} else {1.}; fid_r += 1; } }
 
     // starting half idx per face todo: very suspicious...
-    mfd_r.halfs = vec![Halfedge::default(); face_pq2r.iter().sum::<i32>() as usize];
-    let mut ih_per_f = vec![];
-    inclusive_scan(
-        &side_pq.iter().filter(|s| **s > 0).map(|s| *s).collect::<Vec<_>>(),
-        ih_per_f.as_mut_slice(), 0
-    );
+    //mfd_r.halfs = vec![Halfedge::default(); face_pq2r.iter().sum::<i32>() as usize];
+    let truncated = side_pq.iter().filter(|s| **s > 0).map(|s| *s).collect::<Vec<i32>>();
+    let mut ih_per_f = vec![0; truncated.len()];
+
+    inclusive_scan(&truncated, &mut ih_per_f, 0);
+    ih_per_f.insert(0, 0);
 
     (ih_per_f, face_pq2r)
 }
@@ -416,8 +419,32 @@ impl<'a> Boolean3<'a> {
         add_new_edge_verts(&self.p1q2, &i12, &v_12r, &self.mfd_p.hmesh.halfs, true, 0, &mut edges_pos_p, &mut edges_new);
         add_new_edge_verts(&self.p2q1, &i21, &v_21r, &self.mfd_q.hmesh.halfs, false, self.p1q2.len(), &mut edges_pos_q, &mut edges_new);
 
-        println!("edge_pos_p: {:#?}", edges_pos_p);
-        println!("edge_pos_q: {:#?}", edges_pos_q);
-        println!("edge_new: {:#?}", edges_new);
+        //println!("edge_pos_p: {:#?}", edges_pos_p);
+        //println!("edge_pos_q: {:#?}", edges_pos_q);
+        //println!("edge_new: {:#?}", edges_new);
+
+        let mut fnmls = vec![];
+        let (ih_per_f, face_pq2r) = size_output(
+            &self.mfd_p,
+            &self.mfd_q,
+            &i03,
+            &i30,
+            &i12,
+            &i21,
+            &self.p1q2,
+            &self.p2q1,
+            op == OpType::Subtract,
+            &mut fnmls
+        );
+
+        println!("ih_per_face: {:?}", ih_per_f);
+        println!("face: {:?}", face_pq2r);
+        for n in fnmls.iter() { println!("n: ({}, {}, {})", n.x, n.y, n.z); }
+
+        let nh = ih_per_f.last().unwrap().clone() as usize;
+        let face_ptr_r = ih_per_f.clone();
+        let mut whole_half_p = vec![true; nh_p];
+        let mut whole_half_q = vec![true; nh_q];
+        let mut half_ref = vec![TriRef{ mesh_id: 0, face_id: 0}; nh];
     }
 }
