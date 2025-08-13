@@ -102,7 +102,7 @@ fn size_output(
     (ih_per_f, face_pq2r)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct EdgePos {
     val: f64, // dot value of edge
     vid: usize,
@@ -117,7 +117,7 @@ struct TriRef {
 }
 
 fn add_new_edge_verts(
-    p1q2: Vec<[i32; 2]>,
+    p1q2: &Vec<[i32; 2]>,
     i12: &[i32],
     v12_r: &[i32],
     halfs_p: &[Half],
@@ -137,17 +137,30 @@ fn add_new_edge_verts(
         let key_l = if forward { (h0.face().id, fid_q) } else { (fid_q, h0.face().id) };
         let key_r = if forward { (h1.face().id, fid_q) } else { (fid_q, h1.face().id) };
         let mut direction = inclusion < 0;
-        edges_pos.insert(hid_p, vec![]);
-        edges_new.insert(key_l, vec![]);
-        edges_new.insert(key_r, vec![]);
+        edges_pos.entry(hid_p).or_insert_with(Vec::new);
+        edges_new.entry(key_l).or_insert_with(Vec::new);
+        edges_new.entry(key_r).or_insert_with(Vec::new);
+        let dir0 = direction ^ !forward;
+        let dir1 = direction ^ forward;
 
-        // need to check what is going on here...
+        //println!("-----");
         for j in 0..inclusion.abs() as usize {
-            edges_pos.get_mut(&hid_p).unwrap().push(EdgePos{ val: 0., vid: i + offset, cid: 0, is_tail: direction });
-            direction = !direction;
-            edges_new.get_mut(&key_l).unwrap().push(EdgePos{ val: 0., vid: vid_r + j, cid: i + offset, is_tail: direction ^ forward });
-            direction = !direction;
-            edges_new.get_mut(&key_r).unwrap().push(EdgePos{ val: 0., vid: vid_r + j, cid: i + offset, is_tail: direction ^ !forward });
+            //println!("inclusion: {}, direction: {}, vert: {}, edgeP: {}, faceQ: {}", inclusion, direction, vid_r, hid_p, fid_q);
+            edges_pos.get_mut(&hid_p).unwrap().push(EdgePos { val: 0., vid: vid_r + j, cid: i + offset, is_tail: direction });
+        }
+
+        direction = !direction;
+
+        for j in 0..inclusion.abs() as usize {
+            //println!("inclusion: {}, direction: {}, vert: {}, edgeP: {}, faceQ: {}", inclusion, direction, vid_r, hid_p, fid_q);
+            edges_new.get_mut(&key_r).unwrap().push(EdgePos{ val: 0., vid: vid_r + j, cid: i + offset, is_tail: dir0 });
+        }
+
+        direction = !direction;
+
+        for j in 0..inclusion.abs() as usize {
+            //println!("inclusion: {}, direction: {}, vert: {}, edgeP: {}, faceQ: {}", inclusion, direction, vid_r, hid_p, fid_q);
+            edges_new.get_mut(&key_l).unwrap().push(EdgePos{ val: 0., vid: vid_r + j, cid: i + offset, is_tail: dir1 });
         }
     }
 }
@@ -355,24 +368,19 @@ impl<'a> Boolean3<'a> {
         let i21: Vec<i32> = self.x21.iter().map(|v| c3 * v).collect();
         let i03: Vec<i32> = self.w03.iter().map(|v| c1 + c3 * v).collect();
         let i30: Vec<i32> = self.w30.iter().map(|v| c2 + c3 * v).collect();
-        //println!("i03: {:?}", i03);
-        //println!("i30: {:?}", i30);
-        //println!("i12: {:?}", i12);
-        //println!("i21: {:?}", i21);
 
         let nv_p = self.mfd_p.hmesh.n_vert;
         let nh_p = self.mfd_p.hmesh.n_half;
         let nv_q = self.mfd_q.hmesh.n_vert;
         let nh_q = self.mfd_q.hmesh.n_half;
         let mut nv_r = 0;
-
-        let mut v_p2r: Vec<i32> = vec![0; nv_p];
-        let mut v_q2r: Vec<i32> = vec![0; nv_q];
-        let mut v_12r: Vec<i32> = vec![0; self.v12.len()];
-        let mut v_21r: Vec<i32> = vec![0; self.v21.len()];
+        let mut v_p2r = vec![0; nv_p];
+        let mut v_q2r = vec![0; nv_q];
+        let mut v_12r = vec![0; self.v12.len()];
+        let mut v_21r = vec![0; self.v21.len()];
 
         exclusive_scan(&i03.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_p2r, nv_r);
-        nv_r = v_p2r.last().unwrap().clone().abs() + i03.last().unwrap().abs(); // exclusive_scan not count the last element of i03 so.
+        nv_r = v_p2r.last().unwrap().clone().abs() + i03.last().unwrap().abs();
         let nv_rp = nv_r;
 
         exclusive_scan(&i30.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_q2r, nv_r);
@@ -397,39 +405,19 @@ impl<'a> Boolean3<'a> {
         for r in self.mfd_p.hmesh.pos.row_iter() { vpos_p.push(RowVector3::new(r[0], r[1], r[2])); }
         for r in self.mfd_q.hmesh.pos.row_iter() { vpos_q.push(RowVector3::new(r[0], r[1], r[2])); }
 
-        //println!("v_p2r: {:?}", v_p2r);
-        //println!("v_q2r: {:?}", v_q2r);
         for i in 0..nv_p  { duplicate_verts(&i03, &v_p2r, &vpos_p, &mut vpos_r, i); }
         for i in 0..nv_q  { duplicate_verts(&i30, &v_q2r, &vpos_q, &mut vpos_r, i); }
         for i in 0..nv_12 { duplicate_verts(&i12, &v_12r, &self.v12, &mut vpos_r, i as usize); }
         for i in 0..nv_21 { duplicate_verts(&i21, &v_21r, &self.v21, &mut vpos_r, i as usize); }
 
-        println!("nPV: {}", nv_rp);
-        println!("nQV: {}", nv_rq);
-        println!("n12: {}", nv_12);
-        println!("n21: {}", nv_21);
-        for v in vpos_r.iter() { println!("{:?}", v); }
+        let mut edges_pos_p: HashMap<usize, Vec<EdgePos>> = HashMap::new();
+        let mut edges_pos_q: HashMap<usize, Vec<EdgePos>> = HashMap::new();
+        let mut edges_new: HashMap<(usize, usize), Vec<EdgePos>> = HashMap::new();
+        add_new_edge_verts(&self.p1q2, &i12, &v_12r, &self.mfd_p.hmesh.halfs, true, 0, &mut edges_pos_p, &mut edges_new);
+        add_new_edge_verts(&self.p2q1, &i21, &v_21r, &self.mfd_q.hmesh.halfs, false, self.p1q2.len(), &mut edges_pos_q, &mut edges_new);
 
-        //let mut whole_he_p = vec![true; nh_p];
-        //let mut whole_he_q = vec![true; nh_q];
+        println!("edge_pos_p: {:#?}", edges_pos_p);
+        println!("edge_pos_q: {:#?}", edges_pos_q);
+        println!("edge_new: {:#?}", edges_new);
     }
 }
-
-/*
-#[cfg(test)]
-mod test_boolean_result {
-    use crate::boolean::{tests, Boolean3};
-
-    #[test]
-    fn boolean_test() {
-        let mfd_p = tests::gen_tet_a();
-        let mfd_q = tests::gen_tet_c();
-
-
-        //let boolean = Boolean3{
-        //    mfd_p,
-        //    mfd_q,
-        //};
-    }
-}
-*/

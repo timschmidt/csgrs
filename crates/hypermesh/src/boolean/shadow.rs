@@ -7,7 +7,7 @@ pub fn shadows(p: f64, q: f64, dir: f64) -> bool { if p == q { dir < 0. } else {
 
 
 // This is equivalent to Kernel01 or X01 in the thesis
-// given vert from mfd_p and half from mfd_q, find out wether
+// given vert from mfd_p and half from mfd_q, find out whether
 pub fn shadows01(
     p0: usize,
     q1: usize,
