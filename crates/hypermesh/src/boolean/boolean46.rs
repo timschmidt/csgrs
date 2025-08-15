@@ -2,7 +2,7 @@ use nalgebra::{RowVector3, Vector3};
 use std::collections::HashMap;
 use std::mem;
 use crate::boolean::Boolean3;
-use crate::{Half, Halfedge, Manifold, MfdBuffer, OpType};
+use crate::{Half, Halfedge, Manifold, OpType};
 use crate::bounds::BoundingBox;
 
 fn duplicate_verts(
@@ -168,105 +168,128 @@ fn add_new_edge_verts(
     }
 }
 
-fn pair_up(
-    edge_pos: &Vec<EdgePos>
-) -> Vec<Halfedge> {
+// creating a partial halfedges from a list of positions,
+// it's very confusing, but it's not aiming to pair twins (pair is -1),
+// more like to say pairing sta-end vertex and make a halfedge
+fn pair_up(edge_pos: &mut Vec<EdgePos>) -> Vec<Halfedge> {
     assert_eq!(edge_pos.len() % 2, 0);
     let ne = edge_pos.len() / 2;
+    let mid_idx = {
+        let mut sta_idx = 0;
+        let mut end_idx = edge_pos.len();
 
-    //auto middle = std::partition(edgePos.begin(), edgePos.end(), [](EdgePos x) { return x.isStart; });
-    //auto cmp = [](EdgePos a, EdgePos b) {
-    //    return a.edgePos < b.edgePos ||
-    //        // we also sort by collisionId to make things deterministic
-    //        (a.edgePos == b.edgePos && a.collisionId < b.collisionId);
-    //};
-    //std::stable_sort(edgePos.begin(), middle, cmp);
-    //std::stable_sort(middle, edgePos.end(), cmp);
-    //std::vector<Halfedge> edges;
-    //for (size_t i = 0; i < nEdges; ++i)
-    //edges.push_back({edgePos[i].vert, edgePos[i + nEdges].vert, -1});
-    //return edges;
+        while sta_idx < end_idx {
+            if edge_pos[sta_idx].is_tail {
+                sta_idx += 1;
+            } else {
+                end_idx -= 1;
+                edge_pos.swap(sta_idx, end_idx);
+            }
+        }
+        sta_idx
+    };
 
-    panic!()
+    let cmp = |a: &EdgePos, b: &EdgePos| {
+        a.val.partial_cmp(&b.val)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.cid.cmp(&b.cid))
+    };
+
+    edge_pos[..mid_idx].sort_by(cmp);
+    edge_pos[mid_idx..].sort_by(cmp);
+
+    let mut edges = Vec::with_capacity(ne);
+    for i in 0..ne {
+        edges.push(Halfedge {
+            tail: edge_pos[i].vid as i32,
+            head: edge_pos[i + ne].vid as i32,
+            pair: -1,
+        });
+    }
+
+    edges
 }
 
 fn append_partial_edges(
-    mfd_r: &mut MfdBuffer,
-    face_ptr_r: &mut [i32],
-    half_ref: &mut [TriRef],
-    whole_he_p: &mut [bool],
-    mfd_p_half: &[Half],
-    i03: &[i32],
-    vp2r: &[usize],
-    edges_pos: &mut HashMap<usize, Vec<EdgePos>>,
-    forward: bool,
+    i03: &[i32],                                 //
+    half_p: &[Half],                             // halfedge of mfd_p
+    vid_p2r: &[i32],                             // the table from vid of mfd_p to vid of mfd_r
+    forward: bool,                               //
+    vpos_res: &[RowVector3<f64>],                // the vert pos of mfd_r, already fulfilled so far
+    half_res: &mut [Halfedge],                   // the halfedge data of mfd_r, empty yet
+    half_tri: &mut [TriRef],                     // the table from halfedge of mfd_r to triangle information
+    half_pos: &mut HashMap<usize, Vec<EdgePos>>, //
+    face_ptr_r: &mut [i32],                      //
+    whole_flag: &mut [bool],                     // a flag to find out a halfedge from mfd_p is entirely usable in mfd_r
 ) {
-    for e in edges_pos {
+    for e in half_pos {
         let hid_p = e.0.clone();
-        let pos_p = e.1;
-        let h = &mfd_p_half[hid_p];
-        whole_he_p[h.id] = false;
-        whole_he_p[h.twin().id] = false;
-        let dif: RowVector3<f64> = h.head().pos() - h.tail().pos();
+        let mut hpos_p = e.1;
+        let h = &half_p[hid_p];
+        whole_flag[h.id] = false;
+        whole_flag[h.twin().id] = false;
 
-        for p in pos_p.iter_mut() {
-            p.val = dif.dot(&mfd_r.pos[p.vid]);
+        // assigning 0-1 value to hpos_p
+        let dif = h.head().pos() - h.tail().pos();
+        for p in hpos_p.iter_mut() {
+            p.val = dif.dot(&vpos_res[p.vid]);
         }
 
-        let i_tail = i03[h.tail().id];
-        let i_head = i03[h.head().id];
-        let p_tail = mfd_r.pos[vp2r[h.tail().id]];
-        let p_head = mfd_r.pos[vp2r[h.head().id]];
+        let inc_tail = i03[h.tail().id]; // mostly 0 or 1
+        let inc_head = i03[h.head().id]; // mostly 0 or 1
+        let p_tail = vpos_res[vid_p2r[h.tail().id] as usize];
+        let p_head = vpos_res[vid_p2r[h.head().id] as usize];
 
-        for i in 0..i_tail.abs() as usize {
-            pos_p.push(EdgePos{
+        for i in 0..inc_tail.abs() as usize {
+            hpos_p.push(EdgePos{
                 val: p_tail.dot(&dif),
-                vid: vp2r[h.tail().id] + i, // need to check
+                vid: vid_p2r[h.tail().id] as usize + i,
                 cid: usize::MAX,
-                is_tail: i_tail > 0
+                is_tail: inc_tail > 0
             });
         }
 
-        for i in 0..i_head.abs() as usize {
-            pos_p.push(EdgePos{
+        for i in 0..inc_head.abs() as usize {
+            hpos_p.push(EdgePos{
                 val: p_head.dot(&dif),
-                vid: vp2r[h.head().id] + i, // need to check
+                vid: vid_p2r[h.head().id] as usize + i,
                 cid: usize::MAX,
-                is_tail: i_tail < 0
+                is_tail: inc_tail < 0
             });
         }
 
-        let mut edges = pair_up(&pos_p);
+        let mut half_seq = pair_up(&mut hpos_p);
         let face_l = h.face();
         let face_r = h.twin().face();
 
         // Negative inclusion means the halfedges are reversed, which means our
         // reference is now to the endVert instead of the startVert, which is one
-        // position advanced CCW. This is only valid if this is a retained vert; it
-        // will be ignored later if the vert is new.
+        // position advanced CCW. This is only valid if this is a retained vert;
+        // it will be ignored later if the vert is new.
 
-        let fw_ref = TriRef{ mesh_id: if forward {0} else {1}, face_id: face_l.id};
-        let bk_ref = TriRef{ mesh_id: if forward {0} else {1}, face_id: face_r.id};
+        let fw_tri = TriRef{ mesh_id: if forward {0} else {1}, face_id: face_l.id};
+        let bk_tri = TriRef{ mesh_id: if forward {0} else {1}, face_id: face_r.id};
 
-        for h in edges.iter_mut() {
+        for h in half_seq.iter_mut() {
             face_ptr_r[face_l.id] += 1;
             face_ptr_r[face_r.id] += 1;
             let fw_edge = face_ptr_r[face_l.id];
             let bk_edge = face_ptr_r[face_l.id];
 
             h.pair = bk_edge;
-            mfd_r.halfs[fw_edge as usize] = h.clone();
-            half_ref[fw_edge as usize] = fw_ref.clone();
+            half_res[fw_edge as usize] = h.clone();
+            half_tri[fw_edge as usize] = fw_tri.clone();
 
-            //std::swap(e.startVert, e.endVert);
             mem::swap(&mut h.tail, &mut h.head);
+
             h.pair = fw_edge;
-            mfd_r.halfs[bk_edge as usize] = h.clone();
-            half_ref[bk_edge as usize] = bk_ref.clone();
+            half_res[bk_edge as usize] = h.clone();
+            half_tri[bk_edge as usize] = bk_tri.clone();
         }
     }
 }
 
+/*
 fn append_new_edges(
     mfd_r: &mut MfdBuffer,
     face_ptr_r: &mut[i32],
@@ -277,7 +300,7 @@ fn append_new_edges(
 ) {
     for val in edges_new.into_iter() { // values??
         let (face_p, face_q) = val.0;
-        let epos = val.1;
+        let mut epos = val.1;
         let mut bbox = BoundingBox::new(usize::MAX, &vec![]);
         for ep in epos.iter() {
             bbox.union(&mfd_r.pos[ep.vid]);
@@ -288,7 +311,7 @@ fn append_new_edges(
             ep.val = mfd_r.pos[ep.vid][d];
         }
 
-        let mut edges = pair_up(&epos);
+        let mut edges = pair_up(&mut epos);
         let face_l = face_pq2r[*face_p] as usize;
         let face_r = face_pq2r[*face_q + nfaces_p] as usize;
 
@@ -360,6 +383,7 @@ fn append_whole_edges(
         }
     }
 }
+*/
 
 impl<'a> Boolean3<'a> {
     pub fn get_result(&self, op: OpType) -> () {
@@ -377,28 +401,28 @@ impl<'a> Boolean3<'a> {
         let nv_q = self.mfd_q.hmesh.n_vert;
         let nh_q = self.mfd_q.hmesh.n_half;
         let mut nv_r = 0;
-        let mut v_p2r = vec![0; nv_p];
-        let mut v_q2r = vec![0; nv_q];
-        let mut v_12r = vec![0; self.v12.len()];
-        let mut v_21r = vec![0; self.v21.len()];
+        let mut vid_p2r = vec![0; nv_p];
+        let mut vid_q2r = vec![0; nv_q];
+        let mut vid_12r = vec![0; self.v12.len()];
+        let mut vid_21r = vec![0; self.v21.len()];
 
-        exclusive_scan(&i03.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_p2r, nv_r);
-        nv_r = v_p2r.last().unwrap().clone().abs() + i03.last().unwrap().abs();
+        exclusive_scan(&i03.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_p2r, nv_r);
+        nv_r = vid_p2r.last().unwrap().clone().abs() + i03.last().unwrap().abs();
         let nv_rp = nv_r;
 
-        exclusive_scan(&i30.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_q2r, nv_r);
-        nv_r = v_q2r.last().unwrap().clone().abs() + i30.last().unwrap().abs();
+        exclusive_scan(&i30.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_q2r, nv_r);
+        nv_r = vid_q2r.last().unwrap().clone().abs() + i30.last().unwrap().abs();
         let nv_rq = nv_r - nv_rp;
 
         if self.v12.len() > 0 {
-            exclusive_scan(&i12.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_12r, nv_r);
-            nv_r = v_12r.last().unwrap().clone().abs() + i12.last().unwrap().abs();
+            exclusive_scan(&i12.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_12r, nv_r);
+            nv_r = vid_12r.last().unwrap().clone().abs() + i12.last().unwrap().abs();
         }
         let nv_12 = nv_r - nv_rp - nv_rq;
 
         if self.v21.len() > 0 {
-            exclusive_scan(&i21.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut v_21r, nv_r);
-            nv_r = v_21r.last().unwrap().clone().abs() + i21.last().unwrap().abs();
+            exclusive_scan(&i21.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_21r, nv_r);
+            nv_r = vid_21r.last().unwrap().clone().abs() + i21.last().unwrap().abs();
         }
         let nv_21 = nv_r - nv_rp - nv_rq - nv_12;
 
@@ -408,16 +432,17 @@ impl<'a> Boolean3<'a> {
         for r in self.mfd_p.hmesh.pos.row_iter() { vpos_p.push(RowVector3::new(r[0], r[1], r[2])); }
         for r in self.mfd_q.hmesh.pos.row_iter() { vpos_q.push(RowVector3::new(r[0], r[1], r[2])); }
 
-        for i in 0..nv_p  { duplicate_verts(&i03, &v_p2r, &vpos_p, &mut vpos_r, i); }
-        for i in 0..nv_q  { duplicate_verts(&i30, &v_q2r, &vpos_q, &mut vpos_r, i); }
-        for i in 0..nv_12 { duplicate_verts(&i12, &v_12r, &self.v12, &mut vpos_r, i as usize); }
-        for i in 0..nv_21 { duplicate_verts(&i21, &v_21r, &self.v21, &mut vpos_r, i as usize); }
+        for i in 0..nv_p  { duplicate_verts(&i03, &vid_p2r, &vpos_p, &mut vpos_r, i); }
+        for i in 0..nv_q  { duplicate_verts(&i30, &vid_q2r, &vpos_q, &mut vpos_r, i); }
+        for i in 0..nv_12 { duplicate_verts(&i12, &vid_12r, &self.v12, &mut vpos_r, i as usize); }
+        for i in 0..nv_21 { duplicate_verts(&i21, &vid_21r, &self.v21, &mut vpos_r, i as usize); }
+
 
         let mut edges_pos_p: HashMap<usize, Vec<EdgePos>> = HashMap::new();
         let mut edges_pos_q: HashMap<usize, Vec<EdgePos>> = HashMap::new();
         let mut edges_new: HashMap<(usize, usize), Vec<EdgePos>> = HashMap::new();
-        add_new_edge_verts(&self.p1q2, &i12, &v_12r, &self.mfd_p.hmesh.halfs, true, 0, &mut edges_pos_p, &mut edges_new);
-        add_new_edge_verts(&self.p2q1, &i21, &v_21r, &self.mfd_q.hmesh.halfs, false, self.p1q2.len(), &mut edges_pos_q, &mut edges_new);
+        add_new_edge_verts(&self.p1q2, &i12, &vid_12r, &self.mfd_p.hmesh.halfs, true, 0, &mut edges_pos_p, &mut edges_new);
+        add_new_edge_verts(&self.p2q1, &i21, &vid_21r, &self.mfd_q.hmesh.halfs, false, self.p1q2.len(), &mut edges_pos_q, &mut edges_new);
 
         //println!("edge_pos_p: {:#?}", edges_pos_p);
         //println!("edge_pos_q: {:#?}", edges_pos_q);
@@ -438,13 +463,21 @@ impl<'a> Boolean3<'a> {
         );
 
         println!("ih_per_face: {:?}", ih_per_f);
-        println!("face: {:?}", face_pq2r);
+        println!("face_pq2r: {:?}", face_pq2r);
         for n in fnmls.iter() { println!("n: ({}, {}, {})", n.x, n.y, n.z); }
 
         let nh = ih_per_f.last().unwrap().clone() as usize;
-        let face_ptr_r = ih_per_f.clone();
-        let mut whole_half_p = vec![true; nh_p];
-        let mut whole_half_q = vec![true; nh_q];
-        let mut half_ref = vec![TriRef{ mesh_id: 0, face_id: 0}; nh];
+        let mut face_ptr_r = ih_per_f.clone();
+        let mut whole_flag_p = vec![true; nh_p];
+        let mut whole_flag_q = vec![true; nh_q];
+        let mut half_tri = vec![TriRef{ mesh_id: 0, face_id: 0}; nh];
+        let mut half_res = vec![Halfedge::default(); nh];
+
+        //   AppendPartialEdges(outR, wholeHalfedgeP, facePtrR, edgesP, halfedgeRef, inP_, i03, vP2R, facePQ2R.begin(), true);
+        //   AppendPartialEdges(outR, wholeHalfedgeQ, facePtrR, edgesQ, halfedgeRef, inQ_, i30, vQ2R, facePQ2R.begin() + inP_.NumTri(), false);
+
+        append_partial_edges(&i03, &self.mfd_p.hmesh.halfs, &vid_p2r, true, &vpos_r, &mut half_res, &mut half_tri, &mut edges_pos_p, &mut face_ptr_r, &mut whole_flag_p);
+        append_partial_edges(&i30, &self.mfd_q.hmesh.halfs, &vid_q2r, true, &vpos_r, &mut half_res, &mut half_tri, &mut edges_pos_q, &mut face_ptr_r, &mut whole_flag_q);
+        
     }
 }

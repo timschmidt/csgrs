@@ -19,13 +19,6 @@ impl Halfedge {
     // need partial eq
 }
 
-pub struct MfdBuffer {
-    pub pos: Vec<RowVector3<f64>>,
-    pub idx: Vec<RowVector3<i32>>,
-    pub fnmls: Vec<RowVector3<f64>>,
-    pub halfs: Vec<Halfedge>,
-}
-
 pub struct Manifold {
     pub hmesh: Hmesh,
     pub bbox: BoundingBox,
