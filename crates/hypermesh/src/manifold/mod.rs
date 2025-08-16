@@ -6,7 +6,7 @@ use bounds::BoundingBox;
 use crate::collider::{BvhCollider, Collider};
 use crate::{Half, Hmesh};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Halfedge {
     pub tail: i32,
     pub head: i32,
