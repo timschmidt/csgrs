@@ -383,11 +383,11 @@ impl Plane {
 
                     // If current vertex is definitely not behind plane, it goes to split_front
                     if type_i != BACK {
-                        split_front.push(vertex_i.clone());
+                        split_front.push(*vertex_i);
                     }
                     // If current vertex is definitely not in front, it goes to split_back
                     if type_i != FRONT {
-                        split_back.push(vertex_i.clone());
+                        split_back.push(*vertex_i);
                     }
 
                     // If the edge between these two vertices crosses the plane,
@@ -399,7 +399,7 @@ impl Plane {
                             let intersection =
                                 (self.offset() - normal.dot(&vertex_i.pos.coords)) / denom;
                             let vertex_new = vertex_i.interpolate(vertex_j, intersection);
-                            split_front.push(vertex_new.clone());
+                            split_front.push(vertex_new);
                             split_back.push(vertex_new);
                         }
                     }
@@ -509,7 +509,7 @@ fn test_plane_orientation() {
     // Cycling the order of the vertices doesn't change the winding order of the shape,
     // so it should not change the resulting plane's normal.
     for cycle_rotation in 0..vertices.len() {
-        let mut vertices = vertices.clone();
+        let mut vertices = vertices;
         vertices.rotate_right(cycle_rotation);
         let plane = Plane::from_vertices(vertices.to_vec());
 
