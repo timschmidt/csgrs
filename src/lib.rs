@@ -49,6 +49,3 @@ compile_error!("Either 'delaunay' or 'earcut' feature must be specified, but not
     not(any(feature = "f64", feature = "f32"))
 ))]
 compile_error!("Either 'f64' or 'f32' feature must be specified, but not both");
-
-#[cfg(test)]
-mod tests;

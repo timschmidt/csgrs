@@ -28,6 +28,7 @@ overflow-checks = false
 inherits = "release"
 opt-level = "z"
 
+
 [dependencies]
 # geometry
 nalgebra = "0.33"
@@ -74,6 +75,10 @@ ttf-parser = { version = "0.25", optional = true }
 hershey = { version = "0.1.2", optional = true }
 
 doc-image-embed = "0.2.1"
+
+[dependencies.approx]
+version = "^0.5"
+default-features = false
 
 # wasm
 [target.'cfg(any(target_arch = "wasm32", target_arch = "wasm64"))'.dependencies]
