@@ -219,9 +219,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                             // Convert to triangles if more than 3 vertices
                             for i in 1..face_vertices.len() - 1 {
                                 let triangle = vec![
-                                    face_vertices[0].clone(),
-                                    face_vertices[i].clone(),
-                                    face_vertices[i + 1].clone(),
+                                    face_vertices[0],
+                                    face_vertices[i],
+                                    face_vertices[i + 1],
                                 ];
                                 polygons.push(Polygon::new(triangle, metadata.clone()));
                             }

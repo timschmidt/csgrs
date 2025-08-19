@@ -293,10 +293,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             // (depending on the orientation of bottom vs. top).
             let side_poly = Polygon::new(
                 vec![
-                    b_i.clone(), // bottom[i]
-                    b_j.clone(), // bottom[i+1]
-                    t_j.clone(), // top[i+1]
-                    t_i.clone(), // top[i]
+                    *b_i, // bottom[i]
+                    *b_j, // bottom[i+1]
+                    *t_j, // top[i+1]
+                    *t_i, // top[i]
                 ],
                 bottom.metadata.clone(), // carry over bottom polygon metadata
             );
