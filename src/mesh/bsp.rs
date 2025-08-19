@@ -301,7 +301,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                     intersection_edges.extend(
                         crossing_points
                             .chunks_exact(2)
-                            .map(|chunk| [chunk[0].clone(), chunk[1].clone()]),
+                            .map(|chunk| [chunk[0], chunk[1]]),
                     );
                 },
 

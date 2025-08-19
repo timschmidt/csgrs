@@ -142,11 +142,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             let triangles = if poly.vertices.len() > 3 {
                 poly.triangulate()
             } else {
-                vec![[
-                    poly.vertices[0].clone(),
-                    poly.vertices[1].clone(),
-                    poly.vertices[2].clone(),
-                ]]
+                vec![[poly.vertices[0], poly.vertices[1], poly.vertices[2]]]
             };
 
             for tri in triangles {

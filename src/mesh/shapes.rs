@@ -342,22 +342,14 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             if !bottom_degenerate {
                 // Bottom cap: a triangle fan from the bottom center to two consecutive points on the bottom ring.
                 polygons.push(Polygon::new(
-                    vec![
-                        start_v.clone(),
-                        point(0.0, slice0, -1.0),
-                        point(0.0, slice1, -1.0),
-                    ],
+                    vec![start_v, point(0.0, slice0, -1.0), point(0.0, slice1, -1.0)],
                     metadata.clone(),
                 ));
             }
             if !top_degenerate {
                 // Top cap: a triangle fan from the top center to two consecutive points on the top ring.
                 polygons.push(Polygon::new(
-                    vec![
-                        end_v.clone(),
-                        point(1.0, slice1, 1.0),
-                        point(1.0, slice0, 1.0),
-                    ],
+                    vec![end_v, point(1.0, slice1, 1.0), point(1.0, slice0, 1.0)],
                     metadata.clone(),
                 ));
             }
@@ -368,21 +360,13 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             if bottom_degenerate {
                 // Bottom is a point (start_v); create a triangle from start_v to two consecutive points on the top ring.
                 polygons.push(Polygon::new(
-                    vec![
-                        start_v.clone(),
-                        point(1.0, slice0, 0.0),
-                        point(1.0, slice1, 0.0),
-                    ],
+                    vec![start_v, point(1.0, slice0, 0.0), point(1.0, slice1, 0.0)],
                     metadata.clone(),
                 ));
             } else if top_degenerate {
                 // Top is a point (end_v); create a triangle from two consecutive points on the bottom ring to end_v.
                 polygons.push(Polygon::new(
-                    vec![
-                        point(0.0, slice1, 0.0),
-                        point(0.0, slice0, 0.0),
-                        end_v.clone(),
-                    ],
+                    vec![point(0.0, slice1, 0.0), point(0.0, slice0, 0.0), end_v],
                     metadata.clone(),
                 ));
             } else {

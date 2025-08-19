@@ -8,10 +8,8 @@ use geo::CoordsIter;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-#[cfg(any(feature = "stl-io", feature = "dxf-io"))]
 use core2::io::Cursor;
 
-#[cfg(feature = "stl-io")]
 use stl_io;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
@@ -75,7 +73,6 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// # Ok(())
     /// # }
     /// ```
-    #[cfg(feature = "stl-io")]
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
         use core2::io::Cursor;
         use stl_io::{Normal, Triangle, Vertex, write_stl};
@@ -303,7 +300,6 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # Ok(())
     /// # }
     /// ```
-    #[cfg(feature = "stl-io")]
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
         use core2::io::Cursor;
         use stl_io::{Normal, Triangle, Vertex, write_stl};
