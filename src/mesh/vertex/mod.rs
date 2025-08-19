@@ -4,6 +4,11 @@ use crate::float_types::{PI, Real};
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
 
+mod vertex_cluster;
+pub use vertex_cluster::*;
+
+mod interpolation_methods;
+
 /// A vertex of a polygon, holding position and normal.
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Vertex {
@@ -16,6 +21,7 @@ impl Vertex {
     ///
     /// * `pos`    – the position in model space  
     /// * `normal` – (optionally non‑unit) normal; it will be **copied verbatim**, so make sure it is oriented the way you need it for lighting / BSP tests.
+    ///
     #[inline]
     pub fn new(mut pos: Point3<Real>, mut normal: Vector3<Real>) -> Self {
         // Sanitise position
@@ -35,94 +41,20 @@ impl Vertex {
         Vertex { pos, normal }
     }
 
-    /// Flip vertex normal
+    /// Flip vertex normal in place.
+    ///
+    ///
+    /// # Example
+    /// ```rust
+    /// # use nalgebra::{Point3, Vector3};
+    /// # use csgrs::mesh::vertex::Vertex;
+    /// let mut v = Vertex::new(Point3::new(1.0, 2.0, 3.0), Vector3::x());
+    /// v.flip();
+    /// assert_eq!(v.pos, Point3::new(1.0, 2.0, 3.0), "position remains the same");
+    /// assert_eq!(v.normal, -Vector3::x(), "the normal is negated");
+    /// ```
     pub fn flip(&mut self) {
         self.normal = -self.normal;
-    }
-
-    /// **Mathematical Foundation: Barycentric Linear Interpolation**
-    ///
-    /// Compute the barycentric linear interpolation between `self` (`t = 0`) and `other` (`t = 1`).
-    /// This implements the fundamental linear interpolation formula:
-    ///
-    /// ## **Interpolation Formula**
-    /// For parameter t ∈ [0,1]:
-    /// - **Position**: p(t) = (1-t)·p₀ + t·p₁ = p₀ + t·(p₁ - p₀)
-    /// - **Normal**: n(t) = (1-t)·n₀ + t·n₁ = n₀ + t·(n₁ - n₀)
-    ///
-    /// ## **Mathematical Properties**
-    /// - **Affine Combination**: Coefficients sum to 1: (1-t) + t = 1
-    /// - **Endpoint Preservation**: p(0) = p₀, p(1) = p₁
-    /// - **Linearity**: Second derivatives are zero (straight line in parameter space)
-    /// - **Convexity**: Result lies on line segment between endpoints
-    ///
-    /// ## **Geometric Interpretation**
-    /// The interpolated vertex represents a point on the edge connecting the two vertices,
-    /// with both position and normal vectors smoothly blended. This is fundamental for:
-    /// - **Polygon Splitting**: Creating intersection vertices during BSP operations
-    /// - **Triangle Subdivision**: Generating midpoints for mesh refinement
-    /// - **Smooth Shading**: Interpolating normals across polygon edges
-    ///
-    /// **Note**: Normals are linearly interpolated (not spherically), which is appropriate
-    /// for most geometric operations but may require renormalization for lighting calculations.
-    pub fn interpolate(&self, other: &Vertex, t: Real) -> Vertex {
-        // For positions (Point3): p(t) = p0 + t * (p1 - p0)
-        let new_pos = self.pos + (other.pos - self.pos) * t;
-
-        // For normals (Vector3): n(t) = n0 + t * (n1 - n0)
-        let new_normal = self.normal + (other.normal - self.normal) * t;
-        Vertex::new(new_pos, new_normal)
-    }
-
-    /// **Mathematical Foundation: Spherical Linear Interpolation (SLERP) for Normals**
-    ///
-    /// Compute spherical linear interpolation for normal vectors, preserving unit length:
-    ///
-    /// ## **SLERP Formula**
-    /// For unit vectors n₀, n₁ and parameter t ∈ [0,1]:
-    /// ```text
-    /// slerp(n₀, n₁, t) = (sin((1-t)·Ω) · n₀ + sin(t·Ω) · n₁) / sin(Ω)
-    /// ```
-    /// Where Ω = arccos(n₀ · n₁) is the angle between vectors.
-    ///
-    /// ## **Mathematical Properties**
-    /// - **Arc Interpolation**: Follows great circle on unit sphere
-    /// - **Constant Speed**: Angular velocity is constant
-    /// - **Unit Preservation**: Result is always unit length
-    /// - **Orientation**: Shortest path between normals
-    ///
-    /// This is preferred over linear interpolation for normal vectors in lighting
-    /// calculations and smooth shading applications.
-    pub fn slerp_interpolate(&self, other: &Vertex, t: Real) -> Vertex {
-        // Linear interpolation for position
-        let new_pos = self.pos + (other.pos - self.pos) * t;
-
-        // Spherical linear interpolation for normals
-        let n0 = self.normal.normalize();
-        let n1 = other.normal.normalize();
-
-        let dot = n0.dot(&n1).clamp(-1.0, 1.0);
-
-        // If normals are nearly parallel, use linear interpolation
-        if (dot.abs() - 1.0).abs() < Real::EPSILON {
-            let new_normal = (self.normal + (other.normal - self.normal) * t).normalize();
-            return Vertex::new(new_pos, new_normal);
-        }
-
-        let omega = dot.acos();
-        let sin_omega = omega.sin();
-
-        if sin_omega.abs() < Real::EPSILON {
-            // Fallback to linear interpolation
-            let new_normal = (self.normal + (other.normal - self.normal) * t).normalize();
-            return Vertex::new(new_pos, new_normal);
-        }
-
-        let a = ((1.0 - t) * omega).sin() / sin_omega;
-        let b = (t * omega).sin() / sin_omega;
-
-        let new_normal = (a * n0 + b * n1).normalize();
-        Vertex::new(new_pos, new_normal)
     }
 
     /// **Mathematical Foundation: Distance Metrics**
@@ -197,38 +129,6 @@ impl Vertex {
         };
 
         Some(Vertex::new(Point3::from(weighted_pos), normalized_normal))
-    }
-
-    /// **Mathematical Foundation: Barycentric Coordinates Interpolation**
-    ///
-    /// Interpolate vertex using barycentric coordinates (u, v, w) with u + v + w = 1:
-    /// ```text
-    /// p = u·p₁ + v·p₂ + w·p₃
-    /// n = normalize(u·n₁ + v·n₂ + w·n₃)
-    /// ```
-    ///
-    /// This is fundamental for triangle interpolation and surface parameterization.
-    pub fn barycentric_interpolate(
-        v1: &Vertex,
-        v2: &Vertex,
-        v3: &Vertex,
-        u: Real,
-        v: Real,
-        w: Real,
-    ) -> Vertex {
-        // Ensure barycentric coordinates sum to 1 (normalize if needed)
-        let total = u + v + w;
-        let (u, v, w) = if total.abs() > Real::EPSILON {
-            (u / total, v / total, w / total)
-        } else {
-            (1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0) // Fallback to centroid
-        };
-
-        let new_pos = Point3::from(u * v1.pos.coords + v * v2.pos.coords + w * v3.pos.coords);
-
-        let new_normal = (u * v1.normal + v * v2.normal + w * v3.normal).normalize();
-
-        Vertex::new(new_pos, new_normal)
     }
 
     /// **Mathematical Foundation: Edge-Length-Based Weighting**
@@ -505,59 +405,121 @@ impl Vertex {
     }
 }
 
-/// **Mathematical Foundation: Vertex Clustering for Mesh Simplification**
-///
-/// Advanced vertex operations for mesh processing and optimization.
-pub struct VertexCluster {
-    /// Representative position (typically centroid)
-    pub position: Point3<Real>,
-    /// Averaged normal vector
-    pub normal: Vector3<Real>,
-    /// Number of vertices in cluster
-    pub count: usize,
-    /// Bounding radius of cluster
-    pub radius: Real,
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+pub struct VertexEpsilon {
+    pub position: <Point3<Real> as approx::AbsDiffEq>::Epsilon,
+    pub normal: <Vector3<Real> as approx::AbsDiffEq>::Epsilon,
 }
 
-impl VertexCluster {
-    /// Create a new vertex cluster from a collection of vertices
-    pub fn from_vertices(vertices: &[Vertex]) -> Option<Self> {
-        if vertices.is_empty() {
-            return None;
+impl approx::AbsDiffEq for Vertex {
+    type Epsilon = VertexEpsilon;
+
+    fn default_epsilon() -> Self::Epsilon {
+        Self::Epsilon {
+            position: Point3::<Real>::default_epsilon(),
+            normal: Vector3::<Real>::default_epsilon(),
         }
-
-        // Compute centroid position
-        let centroid = vertices
-            .iter()
-            .fold(Point3::origin(), |acc, v| acc + v.pos.coords)
-            / vertices.len() as Real;
-
-        // Compute average normal
-        let avg_normal = vertices
-            .iter()
-            .fold(Vector3::zeros(), |acc, v| acc + v.normal);
-        let normalized_normal = if avg_normal.norm() > Real::EPSILON {
-            avg_normal.normalize()
-        } else {
-            Vector3::z()
-        };
-
-        // Compute bounding radius
-        let radius = vertices
-            .iter()
-            .map(|v| (v.pos - Point3::from(centroid)).norm())
-            .fold(0.0, |a: Real, b| a.max(b));
-
-        Some(VertexCluster {
-            position: Point3::from(centroid),
-            normal: normalized_normal,
-            count: vertices.len(),
-            radius,
-        })
     }
 
-    /// Convert cluster back to a representative vertex
-    pub fn to_vertex(&self) -> Vertex {
-        Vertex::new(self.position, self.normal)
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+        approx::AbsDiffEq::abs_diff_eq(&self.pos, &other.pos, epsilon.position)
+            && approx::AbsDiffEq::abs_diff_eq(&self.normal, &other.normal, epsilon.normal)
+    }
+}
+
+impl approx::RelativeEq for Vertex {
+    fn default_max_relative() -> Self::Epsilon {
+        Self::Epsilon {
+            position: Point3::<Real>::default_max_relative(),
+            normal: Vector3::<Real>::default_max_relative(),
+        }
+    }
+
+    fn relative_eq(
+        &self,
+        other: &Self,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        approx::RelativeEq::relative_eq(
+            &self.pos,
+            &other.pos,
+            epsilon.position,
+            max_relative.position,
+        ) && approx::RelativeEq::relative_eq(
+            &self.normal,
+            &other.normal,
+            epsilon.normal,
+            max_relative.normal,
+        )
+    }
+}
+
+impl approx::UlpsEq for Vertex {
+    fn default_max_ulps() -> u32 {
+        debug_assert_eq!(
+            Point3::<Real>::default_max_ulps(),
+            Vector3::<Real>::default_max_ulps()
+        );
+
+        Point3::<Real>::default_max_ulps()
+    }
+
+    fn ulps_eq(&self, other: &Self, epsilon: Self::Epsilon, max_ulps: u32) -> bool {
+        approx::UlpsEq::ulps_eq(&self.pos, &other.pos, epsilon.position, max_ulps)
+            && approx::UlpsEq::ulps_eq(&self.normal, &other.normal, epsilon.normal, max_ulps)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_vertex_new() {
+        let pos = Point3::new(1.0, 2.0, 3.0);
+        let normal = Vector3::new(0.0, 1.0, 0.0);
+        let v = Vertex::new(pos, normal);
+        assert_eq!(v.pos, pos);
+        assert_eq!(v.normal, normal);
+    }
+
+    #[test]
+    fn test_vertex_interpolate() {
+        let v1 = Vertex::new(Point3::origin(), Vector3::x());
+        let v2 = Vertex::new(Point3::new(2.0, 2.0, 2.0), Vector3::y());
+        let v_mid = v1.interpolate(&v2, 0.5);
+
+        approx::assert_relative_eq!(
+            v_mid,
+            Vertex::new(Point3::new(1.0, 1.0, 1.0), Vector3::new(0.5, 0.5, 0.0))
+        );
+    }
+
+    #[test]
+    fn distance() {
+        let v1 = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::x());
+        let v2 = Vertex::new(Point3::new(3.0, 4.0, 0.0), Vector3::y());
+
+        // Test distance calculation
+        let distance = v1.distance_to(&v2);
+        assert!(
+            (distance - 5.0).abs() < 1e-10,
+            "Distance should be 5.0 (3-4-5 triangle)"
+        );
+
+        // Test squared distance (should be 25.0)
+        let distance_sq = v1.distance_squared_to(&v2);
+        assert!(
+            (distance_sq - 25.0).abs() < 1e-10,
+            "Squared distance should be 25.0"
+        );
+
+        // Test normal angle
+        let angle = v1.normal_angle_to(&v2);
+        assert!(
+            (angle - PI / 2.0).abs() < 1e-10,
+            "Angle between x and y normals should be π/2"
+        );
     }
 }

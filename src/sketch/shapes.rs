@@ -1335,7 +1335,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Build a Hilbert-curve path that fills this sketch.
     /// - `order`: recursion order (number of points ≈ 4^order).
     /// - `padding`: optional inset from the bounding-box edges (same units as the sketch).
-    /// Returns a new `Sketch` containing only the inside segments as `LineString`s.
+    ///   Returns a new `Sketch` containing only the inside segments as `LineString`s.
     pub fn hilbert_curve(&self, order: usize, padding: Real) -> Sketch<S> {
         if order == 0 {
             return Sketch::new();

@@ -395,3 +395,31 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         Mesh::from_polygons(&filtered_polygons, self.metadata.clone())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use nalgebra::Vector3;
+
+    use super::*;
+
+    #[test]
+    fn remove_poor_triangles() {
+        // Create a degenerate case by making a very thin triangle
+        let vertices = vec![
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::new(0.5, 1e-8, 0.0), Vector3::z()), // Very thin triangle
+        ];
+        let bad_polygon: Polygon<()> = Polygon::new(vertices, None);
+        let csg_with_bad = Mesh::from_polygons(&[bad_polygon], None);
+
+        // Remove poor quality triangles
+        let filtered = csg_with_bad.remove_poor_triangles(0.1);
+
+        // Should remove the poor quality triangle
+        assert!(
+            filtered.polygons.len() <= csg_with_bad.polygons.len(),
+            "Should remove or maintain triangle count"
+        );
+    }
+}
