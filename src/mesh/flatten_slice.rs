@@ -128,7 +128,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             let dist_sq = (chain[0].pos - chain[n - 1].pos).norm_squared();
             if dist_sq < EPSILON * EPSILON {
                 // Force them to be exactly the same, closing the line
-                chain[n - 1] = chain[0].clone();
+                chain[n - 1] = chain[0];
             }
 
             let polyline = LineString::new(
@@ -210,7 +210,7 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
         // Our chain starts with `edges[start_edge_idx]`. We can build a small function to “walk”:
         // We'll store it in the direction edge[0] -> edge[1]
         let e = &edges[start_edge_idx];
-        let mut chain = vec![e[0].clone(), e[1].clone()];
+        let mut chain = vec![e[0], e[1]];
 
         // We walk "forward" from edge[1] if possible
         extend_chain_forward(&mut chain, &adjacency, &mut visited, edges);
@@ -264,7 +264,7 @@ fn extend_chain_forward(
 
             // Mark visited
             visited[edge_idx] = true;
-            found_next = Some(next_vertex.clone());
+            found_next = Some(*next_vertex);
             break;
         }
 

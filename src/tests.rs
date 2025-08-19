@@ -81,7 +81,7 @@ fn test_polygon_construction() {
     let v2 = Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::y());
     let v3 = Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::y());
 
-    let poly: Polygon<()> = Polygon::new(vec![v1.clone(), v2.clone(), v3.clone()], None);
+    let poly: Polygon<()> = Polygon::new(vec![v1, v2, v3], None);
     assert_eq!(poly.vertices.len(), 3);
     // Plane should be defined by these three points. We expect a normal near ±Y.
     assert!(
@@ -1574,7 +1574,7 @@ fn test_slice_cylinder() {
     // Typically, you might see vcount = 32 or vcount = 34, etc.
     // Let's just check it's > 3 and in a plausible range:
     assert!(
-        vcount >= 3 && vcount <= 40,
+        (3..=40).contains(&vcount),
         "Expected cross-section circle to have a number of edges ~32, got {}",
         vcount
     );
@@ -2401,7 +2401,7 @@ fn test_mesh_connectivity_adjacency_usage() {
         vertex_map.vertex_count() > 0,
         "Vertex map should not be empty"
     );
-    assert!(adjacency_map.len() > 0, "Adjacency map should not be empty");
+    assert!(!adjacency_map.is_empty(), "Adjacency map should not be empty");
 
     // Test that each vertex has some neighbors
     let mut total_neighbors = 0;
@@ -2409,7 +2409,7 @@ fn test_mesh_connectivity_adjacency_usage() {
         total_neighbors += neighbors.len();
         println!("  Vertex {} has {} neighbors", vertex_idx, neighbors.len());
         assert!(
-            neighbors.len() > 0,
+            !neighbors.is_empty(),
             "Each vertex should have at least one neighbor"
         );
     }
@@ -2468,7 +2468,7 @@ fn test_vertex_connectivity_analysis() {
 
         assert!(valence > 0, "Vertex should have positive valence");
         assert!(
-            regularity >= 0.0 && regularity <= 1.0,
+            (0.0..=1.0).contains(&regularity),
             "Regularity should be in [0,1]"
         );
 
@@ -2623,7 +2623,7 @@ fn test_cube_intersection() {
 
     // The intersection should have some polygons
     assert!(
-        intersection.polygons.len() > 0,
+        !intersection.polygons.is_empty(),
         "Intersection should produce some polygons"
     );
 

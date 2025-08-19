@@ -134,11 +134,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         // Returning it directly avoids robustness problems with very thin
         // triangles and makes the fast-path cheaper.
         if self.vertices.len() == 3 {
-            return vec![[
-                self.vertices[0].clone(),
-                self.vertices[1].clone(),
-                self.vertices[2].clone(),
-            ]];
+            return vec![[self.vertices[0], self.vertices[1], self.vertices[2]]];
         }
 
         let normal_3d = self.plane.normal().normalize();
@@ -418,9 +414,9 @@ pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
     let v20 = tri[2].interpolate(&tri[0], 0.5);
 
     vec![
-        [tri[0].clone(), v01.clone(), v20.clone()],
-        [v01.clone(), tri[1].clone(), v12.clone()],
-        [v20.clone(), v12.clone(), tri[2].clone()],
+        [tri[0], v01, v20],
+        [v01, tri[1], v12],
+        [v20, v12, tri[2]],
         [v01, v12, v20],
     ]
 }
