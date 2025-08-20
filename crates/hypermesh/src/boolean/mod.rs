@@ -211,4 +211,5 @@ pub enum OpType { Add, Subtract, Intersect }
 
 #[cfg(test)]
 mod tests;
+mod triangulate;
 

@@ -1,0 +1,114 @@
+use std::collections::BTreeMap;
+use bevy::log::warn;
+use nalgebra::{Matrix2x3, Matrix3x2, RowVector3};
+use crate::Halfedge;
+
+
+fn get_axis_aligned_projection(normal: &RowVector3<f64>) -> Matrix2x3<f64> {
+    let abs = normal.abs();
+    let max: f64;
+    let mut proj: Matrix3x2<f64>;
+
+    if abs.z > abs.x && abs.z > abs.y {
+        proj = Matrix3x2::new(
+            1., 0.,
+            0., 1.,
+            0., 0.
+        );
+        max = normal.z;
+    } else if abs.y > abs.x {
+        proj = Matrix3x2::new(
+            0., 1.,
+            0., 0.,
+            1., 0.
+        );
+        max = normal.y;
+    } else {
+        proj = Matrix3x2::new(
+            0., 0.,
+            1., 0.,
+            0., 1.
+        );
+        max = normal.x;
+    }
+
+    if max < 0. { proj.set_column(0, &(-proj.column(0))); }
+    proj.transpose()
+}
+
+fn is_ccw(
+    p0: &RowVector3<f64>,
+    p1: &RowVector3<f64>,
+    p2: &RowVector3<f64>,
+    nor: &RowVector3<f64>,
+    tol: f64,
+) -> i32 {
+    let proj = get_axis_aligned_projection(&nor);
+    let p0 = proj * p0.transpose();
+    let p1 = proj * p1.transpose();
+    let p2 = proj * p2.transpose();
+    let v1 = p1 - p0;
+    let v2 = p2 - p0;
+    let area = v1.x * v2.y - v1.y * v2.x;
+    let base = v1.norm_squared().max(v2.norm_squared());
+    if area.powi(2) * 4. <= base * tol.powi(2) { return 0; }
+    if area > 0. { 1 } else { -1 }
+}
+
+fn assemble_halfs(halfs: &[Halfedge], hid_offset: i32) -> Vec<Vec<i32>>{
+    let mut v2h: BTreeMap<i32, Vec<i32>> = BTreeMap::new();
+
+    for (i, h) in halfs.iter().enumerate() {
+        v2h.entry(h.tail).or_insert_with(Vec::new).push(i as i32);
+    }
+
+    for (_, hids) in &v2h {
+        if hids.len() == 0 { panic!("Never expected a vertex is alone"); }
+        if hids.len() > 1 { warn!("Never imagined this non-obvious case"); }
+    }
+
+    let mut polys: Vec<Vec<i32>> = Vec::new();
+    let mut sta_hid = 0;
+    let mut cur_hid = sta_hid;
+
+    loop {
+        if cur_hid == sta_hid {
+            let next = v2h.values().flatten().next().copied();
+            match next {
+                Some(hid) => {
+                    sta_hid = hid;
+                    cur_hid = sta_hid;
+                    polys.push(Vec::new());
+                }
+                None => break,
+            }
+        }
+
+        polys.last_mut().unwrap().push(hid_offset + cur_hid);
+
+        let curr_he = &halfs[cur_hid as usize];
+        let head_id = curr_he.head;
+        let next_hid = v2h
+            .get_mut(&head_id)
+            .and_then(|hs| {
+                if !hs.is_empty() { Some(hs.remove(0)) } else { None }
+            });
+
+        match next_hid {
+            Some(hid) => {
+                cur_hid = hid;
+
+                // needless?
+                if let Some(hs) = v2h.get(&head_id) {
+                    if hs.is_empty() { v2h.remove(&head_id); }
+                }
+            }
+            None => {
+                panic!("Non-manifold edge: no continuation found for vertex {}", head_id);
+            }
+        }
+    }
+
+    polys
+
+}

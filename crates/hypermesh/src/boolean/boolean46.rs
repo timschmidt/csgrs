@@ -390,6 +390,18 @@ fn append_whole_edges(
     }
 }
 
+fn compute_faces(
+    vpos: &[RowVector3<f64>],
+    half: &[Halfedge],
+    fnml: &[RowVector3<f64>],
+
+) {
+    //let process_face = || {};
+    //let general_triangulation = |fid: usize| {
+    //    let n = fnml[fid];
+    //};
+}
+
 impl<'a> Boolean3<'a> {
     pub fn get_result(&self, op: OpType) -> () {
         let c1 = if op == OpType::Intersect {0} else {1};
@@ -498,9 +510,10 @@ impl<'a> Boolean3<'a> {
         append_whole_edges(&i03, &self.mfd_p.hmesh.halfs, fid_p2r, &vid_p2r, &whole_flag_p, true,  &mut face_ptr_r, &mut half_res, &mut half_tri);
         append_whole_edges(&i30, &self.mfd_q.hmesh.halfs, fid_q2r, &vid_q2r, &whole_flag_q, false, &mut face_ptr_r, &mut half_res, &mut half_tri);
 
-        println!("====== half_res");
+        println!("====== half_res: {}", half_res.len());
         for h in half_res.iter() { println!("h: {:?}", h); }
 
+        //compute_faces(&vpos_r, &half_res);
         //println!("====== half_tri");   for t in half_tri.iter() { println!("t: {:?}", t); }
         //println!("====== half_pos_p"); for h in half_pos_p.iter() { println!("h: {:?}", h); }
         //println!("====== half_pos_q"); for h in half_pos_q.iter() { println!("h: {:?}", h); }
