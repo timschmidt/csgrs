@@ -1,4 +1,4 @@
-use nalgebra::{RowVector3, Vector3};
+use nalgebra::{Point3, RowVector3, Vector3};
 use std::collections::HashMap;
 use std::mem;
 use crate::boolean::Boolean3;
@@ -403,7 +403,7 @@ fn compute_faces(
 }
 
 impl<'a> Boolean3<'a> {
-    pub fn get_result(&self, op: OpType) -> () {
+    pub fn get_result(&self, op: OpType) -> (Vec<RowVector3<f64>>, Vec<Halfedge>) {
         let c1 = if op == OpType::Intersect {0} else {1};
         let c2 = if op == OpType::Add       {1} else {0};
         let c3 = if op == OpType::Intersect {1} else {-1};
@@ -454,7 +454,6 @@ impl<'a> Boolean3<'a> {
         for i in 0..nv_q  { duplicate_verts(&i30, &vid_q2r, &vpos_q, &mut vpos_r, i); }
         for i in 0..nv_12 { duplicate_verts(&i12, &vid_12r, &self.v12, &mut vpos_r, i as usize); }
         for i in 0..nv_21 { duplicate_verts(&i21, &vid_21r, &self.v21, &mut vpos_r, i as usize); }
-
 
         let mut half_pos_p: HashMap<usize, Vec<EdgePos>> = HashMap::new();
         let mut half_pos_q: HashMap<usize, Vec<EdgePos>> = HashMap::new();
@@ -512,6 +511,8 @@ impl<'a> Boolean3<'a> {
 
         println!("====== half_res: {}", half_res.len());
         for h in half_res.iter() { println!("h: {:?}", h); }
+
+        (vpos_r, half_res)
 
         //compute_faces(&vpos_r, &half_res);
         //println!("====== half_tri");   for t in half_tri.iter() { println!("t: {:?}", t); }

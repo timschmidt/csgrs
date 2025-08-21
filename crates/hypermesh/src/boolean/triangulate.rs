@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use bevy::log::warn;
 use nalgebra::{Matrix2x3, Matrix3x2, RowVector3};
 use crate::Halfedge;
 
@@ -64,7 +63,7 @@ fn assemble_halfs(halfs: &[Halfedge], hid_offset: i32) -> Vec<Vec<i32>>{
 
     for (_, hids) in &v2h {
         if hids.len() == 0 { panic!("Never expected a vertex is alone"); }
-        if hids.len() > 1 { warn!("Never imagined this non-obvious case"); }
+        if hids.len() > 1 { panic!("Never imagined this non-obvious case"); }
     }
 
     let mut polys: Vec<Vec<i32>> = Vec::new();
