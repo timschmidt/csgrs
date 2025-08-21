@@ -80,7 +80,7 @@ impl <'a> Recorder for Intersection12Recorder<'a> {
 }
 
 
-fn intersect12 (
+pub fn intersect12 (
     p: &Manifold,
     q: &Manifold,
     p1q2: &mut Vec<[i32; 2]>,
@@ -94,6 +94,7 @@ fn intersect12 (
         verts_p: &a.hmesh.verts,
         verts_q: &b.hmesh.verts,
         halfs_q: &b.hmesh.halfs,
+        normals: &p.hmesh.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
         expand,
         forward
     };
@@ -145,7 +146,7 @@ fn intersect12 (
 }
 
 
-fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<i32> {
+pub fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<i32> {
     let a = if forward {p} else {q};
     let b = if forward {q} else {p};
 
@@ -154,6 +155,7 @@ fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<i32>
         verts_p: &a.hmesh.verts,
         verts_q: &b.hmesh.verts,
         halfs_q: &b.hmesh.halfs,
+        normals: &p.hmesh.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
         expand,
         forward,
     };
@@ -170,17 +172,17 @@ fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<i32>
     w03
 }
 
-struct Boolean3<'a> {
-    mfd_p: &'a Manifold,
-    mfd_q: &'a Manifold,
-    p1q2: Vec<[i32; 2]>,
-    p2q1: Vec<[i32; 2]>,
-    x12: Vec<i32>,
-    x21: Vec<i32>,
-    w03: Vec<i32>,
-    w30: Vec<i32>,
-    v12: Vec<RowVector3<f64>>,
-    v21: Vec<RowVector3<f64>>,
+pub struct Boolean3<'a> {
+    pub mfd_p: &'a Manifold,
+    pub mfd_q: &'a Manifold,
+    pub p1q2: Vec<[i32; 2]>,
+    pub p2q1: Vec<[i32; 2]>,
+    pub x12: Vec<i32>,
+    pub x21: Vec<i32>,
+    pub w03: Vec<i32>,
+    pub w30: Vec<i32>,
+    pub v12: Vec<RowVector3<f64>>,
+    pub v21: Vec<RowVector3<f64>>,
 }
 
 impl<'a> Boolean3<'a> {

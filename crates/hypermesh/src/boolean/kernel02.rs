@@ -7,6 +7,7 @@ pub struct Kernel02<'a> {
     pub verts_p: &'a[Vert],
     pub verts_q: &'a[Vert],
     pub halfs_q: &'a[Half],
+    pub normals: &'a[RowVector3<f64>],
     pub expand: f64,
     pub forward: bool
 }
@@ -49,6 +50,7 @@ impl<'a> Kernel02<'a> {
                 self.verts_p,
                 self.verts_q,
                 self.halfs_q,
+                self.normals,
                 self.expand,
                 !self.forward
             ) {
@@ -68,9 +70,9 @@ impl<'a> Kernel02<'a> {
             let vert_pos = self.verts_p[p0].pos();
             z02 = Some(interpolate(yzz_rl[0], yzz_rl[1], vert_pos.y)[1]);
             if self.forward {
-                if !shadows(vert_pos.z, z02.unwrap(), self.expand * self.verts_p[p0].normal().z) { s02 = 0; }
+                if !shadows(vert_pos.z, z02.unwrap(), self.expand * self.normals[p0].z) { s02 = 0; }
             } else {
-                if !shadows(z02.unwrap(), vert_pos.z, self.expand * self.verts_p[closest_vid].normal().z) { s02 = 0; }
+                if !shadows(z02.unwrap(), vert_pos.z, self.expand * self.normals[closest_vid].z) { s02 = 0; }
             }
         }
         (s02, z02)
@@ -90,6 +92,7 @@ mod kernel02_tests {
             verts_p: &mfd_p.verts,
             verts_q: &mfd_q.verts,
             halfs_q: &mfd_q.halfs,
+            normals: &mfd_p.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
             expand: -1.,
             forward: false
         };

@@ -34,6 +34,7 @@ impl<'a> Kernel11<'a> {
                 self.verts_p,
                 self.verts_q,
                 &self.halfs_q,
+                &self.verts_p.iter().map(|v| v.normal()).collect::<Vec<_>>(),
                 self.expand,
                 false
             );
@@ -55,6 +56,7 @@ impl<'a> Kernel11<'a> {
                 self.verts_q,
                 self.verts_p,
                 self.halfs_p,
+                &self.verts_p.iter().map(|v| v.normal()).collect::<Vec<_>>(),
                 self.expand,
                 true
             );
@@ -77,7 +79,7 @@ impl<'a> Kernel11<'a> {
             let xyzz11_ = intersect(p_rl[0], p_rl[1], q_rl[0], q_rl[1]);
 
             let p1s = self.halfs_p[p1].tail().id;
-            let p1e = self.halfs_q[p1].head().id;
+            let p1e = self.halfs_p[p1].head().id;
             let mut diff = self.verts_p[p1s].pos().transpose() - Vector3::new(xyzz11_.x, xyzz11_.y, xyzz11_.z);
             let start2 = diff.dot(&diff);
             diff = self.verts_p[p1e].pos().transpose() - Vector3::new(xyzz11_.x, xyzz11_.y, xyzz11_.z);
