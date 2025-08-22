@@ -248,6 +248,7 @@ impl Hmesh {
         idx: DMatrix<usize>,
         tail: Vec<usize>,
         head: Vec<usize>,
+        twin_: Option<Vec<usize>>,
         vert_normal: DMatrix<f64>,
         face_normal: DMatrix<f64>,
     ) -> Arc<Self> {
@@ -291,6 +292,10 @@ impl Hmesh {
                     twin[e2h[ies[i]]] = ihs[i];
                 }
             }
+        }
+
+        if let Some(t) = twin_ {
+            twin = t;
         }
 
         Arc::new_cyclic(|weak_ptr| {

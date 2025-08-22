@@ -14,6 +14,7 @@ pub fn gen_tri_a() -> Arc<Hmesh> {
         DMatrix::from_row_slice(1, 3, &idx),
         tails,
         heads,
+        None,
         DMatrix::from_row_slice(3, 3, &v_nor),
         DMatrix::from_row_slice(1, 3, &f_nor),
     )
@@ -32,6 +33,7 @@ pub fn gen_tri_c() -> Arc<Hmesh> {
         DMatrix::from_row_slice(1, 3, &idx),
         tails,
         heads,
+        None,
         DMatrix::from_row_slice(3, 3, &v_nor),
         DMatrix::from_row_slice(1, 3, &f_nor),
     )
@@ -49,6 +51,7 @@ pub fn gen_tet_a() -> Arc<Hmesh> {
         DMatrix::from_row_slice(4, 3, &idx),
         tails,
         heads,
+        None,
         DMatrix::from_row_slice(4, 3, &v_nor),
         DMatrix::from_row_slice(4, 3, &f_nor),
     )
@@ -66,6 +69,7 @@ pub fn gen_tet_b() -> Arc<Hmesh> {
         DMatrix::from_row_slice(4, 3, &idx),
         tails,
         heads,
+        None,
         DMatrix::from_row_slice(4, 3, &v_nor),
         DMatrix::from_row_slice(4, 3, &f_nor),
     )
@@ -83,6 +87,7 @@ pub fn gen_tet_c() -> Arc<Hmesh> {
         DMatrix::from_row_slice(4, 3, &idx),
         tails,
         heads,
+        None,
         DMatrix::from_row_slice(4, 3, &v_nor),
         DMatrix::from_row_slice(4, 3, &f_nor),
     )
