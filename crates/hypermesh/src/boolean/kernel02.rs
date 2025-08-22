@@ -24,7 +24,7 @@ impl<'a> Kernel02<'a> {
         // intersection is between the left and right.
         let mut shadows_ = false;
         let mut closest_vid = usize::MAX;
-        let mut min_metric = f64::INFINITY;
+        let mut min_metric = f64::MAX;
 
         let pos_p = self.verts_p[p0].pos();
 

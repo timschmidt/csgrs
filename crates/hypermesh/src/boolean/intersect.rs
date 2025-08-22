@@ -1,4 +1,5 @@
-use nalgebra::{RowVector2, RowVector3, RowVector4, Vector2, Vector3, Vector4};
+use nalgebra::{RowVector2, RowVector3, RowVector4};
+use num_traits::float::FloatCore;
 
 /**
  * These two functions (Interpolate and Intersect) are the only places where
@@ -18,7 +19,12 @@ pub fn interpolate(
     let diff = pr - pl;
     let lambda = if use_l { dx_l / diff.x } else { dx_r / diff.x };
 
-    if lambda.is_infinite() || diff.y.is_infinite() || diff.z.is_infinite() {
+    if lambda.is_infinite() || // todo: need to consider how to handle 0 divide case
+       diff.y.is_infinite() ||
+       diff.z.is_infinite() ||
+       lambda.is_nan() ||
+       diff.y.is_nan() ||
+       diff.z.is_nan() {
         return RowVector2::new(pl.y, pl.z);
     }
 
@@ -40,14 +46,13 @@ pub fn intersect(
     let use_l = dy_l.abs() < dy_r.abs();
     let dx = pr.x - pl.x;
     let mut lambda = if use_l {dy_l} else {dy_r} / (dy_l - dy_r);
-    if lambda.is_infinite() { lambda = 0.; }
+    if lambda.is_infinite() || lambda.is_nan() { lambda = 0.; }
     let mut xyzz = RowVector4::default();
     xyzz.x = lambda * dx + if use_l {pl.x} else {pr.x};
     let p_dy = pr.y - pl.y;
     let q_dy = qr.y - ql.y;
     let use_p = p_dy.abs() < q_dy.abs();
-    xyzz.y = lambda * if use_p {p_dy} else{q_dy} +
-        (if use_l {if use_p {pl.y} else {ql.y}} else {if use_p {pr.y} else {qr.y}});
+    xyzz.y = lambda * if use_p {p_dy} else{q_dy} + (if use_l {if use_p {pl.y} else {ql.y}} else {if use_p {pr.y} else {qr.y}});
     xyzz.z = lambda * (pr.z - pl.z) + if use_l {pl.z} else {pr.z};
     xyzz.w = lambda * (qr.z - ql.z) + if use_l {ql.z} else {qr.z};
     xyzz

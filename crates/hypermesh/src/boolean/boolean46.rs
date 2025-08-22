@@ -227,7 +227,6 @@ fn append_partial_edges(
 ) {
     for e in half_pos {
         let hid_p = e.0.clone();
-        println!("edgeP: {}, ", hid_p);
         let mut hpos_p = e.1;
         let h = &half_p[hid_p];
         whole_flag[h.id] = false;
