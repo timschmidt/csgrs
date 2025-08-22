@@ -17,19 +17,34 @@ impl Vertex {
     /// * `pos`    – the position in model space  
     /// * `normal` – (optionally non‑unit) normal; it will be **copied verbatim**, so make sure it is oriented the way you need it for lighting / BSP tests.
     #[inline]
-    pub fn new(mut pos: Point3<Real>, mut normal: Vector3<Real>) -> Self {
+    pub const fn new(mut pos: Point3<Real>, mut normal: Vector3<Real>) -> Self {
         // Sanitise position
-        for c in pos.coords.iter_mut() {
-            if !c.is_finite() {
-                *c = 0.0;
-            }
+        // Nasty loop unrolling to allow for const-context evaluations.
+        // Can be replaced with proper for _ in _ {} loops once
+        // https://github.com/rust-lang/rust/issues/87575 is merged
+        let [[x, y, z]]: &mut [[_; 3]; 1] = &mut pos.coords.data.0;
+
+        if !x.is_finite() {
+            *x = 0.0;
+        }
+        if !y.is_finite() {
+            *y = 0.0;
+        }
+        if !z.is_finite() {
+            *z = 0.0;
         }
 
         // Sanitise normal
-        for c in normal.iter_mut() {
-            if !c.is_finite() {
-                *c = 0.0;
-            }
+        let [[nx, ny, nz]]: &mut [[_; 3]; 1] = &mut normal.data.0;
+
+        if !nx.is_finite() {
+            *nx = 0.0;
+        }
+        if !ny.is_finite() {
+            *ny = 0.0;
+        }
+        if !nz.is_finite() {
+            *nz = 0.0;
         }
 
         Vertex { pos, normal }
@@ -557,7 +572,26 @@ impl VertexCluster {
     }
 
     /// Convert cluster back to a representative vertex
-    pub fn to_vertex(&self) -> Vertex {
+    pub const fn to_vertex(&self) -> Vertex {
         Vertex::new(self.position, self.normal)
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use nalgebra::{Const, OPoint};
+
+    use super::*;
+
+    #[test]
+    pub fn test_sanitise_vertices() {
+        let vertex = Vertex::new(
+            OPoint::<Real, Const<3>>::new(Real::INFINITY, Real::INFINITY, Real::INFINITY),
+            Vector3::new(Real::INFINITY, Real::NEG_INFINITY, Real::NEG_INFINITY),
+        );
+
+        assert!(vertex.pos.iter().copied().all(Real::is_finite));
+        assert!(vertex.normal.iter().copied().all(Real::is_finite));
     }
 }
