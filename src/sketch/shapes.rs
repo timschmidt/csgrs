@@ -1335,7 +1335,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Build a Hilbert-curve path that fills this sketch.
     /// - `order`: recursion order (number of points ≈ 4^order).
     /// - `padding`: optional inset from the bounding-box edges (same units as the sketch).
-    /// Returns a new `Sketch` containing only the inside segments as `LineString`s.
+    ///   Returns a new `Sketch` containing only the inside segments as `LineString`s.
     pub fn hilbert_curve(&self, order: usize, padding: Real) -> Sketch<S> {
         if order == 0 {
             return Sketch::new();
@@ -1406,6 +1406,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 /// Generate Hilbert-curve points normalized to the unit square.
 /// Order `n` yields 4^n points, ordered along the path.
 fn hilbert_points(order: usize) -> Vec<(Real, Real)> {
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "This should be refactored in the future, but it's blocking CI at the moment."
+    )]
     fn recur(
         out: &mut Vec<(Real, Real)>,
         x0: Real,

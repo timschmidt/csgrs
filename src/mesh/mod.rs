@@ -148,10 +148,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
                 let sub_tris = poly.subdivide_triangles(levels);
                 // Convert each small tri back to a Polygon
                 sub_tris.into_par_iter().map(move |tri| {
-                    Polygon::new(
-                        vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
-                        poly.metadata.clone(),
-                    )
+                    Polygon::new(vec![tri[0], tri[1], tri[2]], poly.metadata.clone())
                 })
             })
             .collect();
