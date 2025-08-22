@@ -1,7 +1,6 @@
-use nalgebra::{RowVector2, RowVector3, Vector2, Vector3};
+use nalgebra::{RowVector2, RowVector3};
 use crate::boolean::intersect::interpolate;
-use crate::{test_data, Half, Vert};
-use crate::boolean::kernel02::Kernel02;
+use crate::{Half};
 
 pub fn shadows(p: f64, q: f64, dir: f64) -> bool { if p == q { dir < 0. } else { p < q } }
 
@@ -11,8 +10,8 @@ pub fn shadows(p: f64, q: f64, dir: f64) -> bool { if p == q { dir < 0. } else {
 pub fn shadows01(
     p0: usize,
     q1: usize,
-    vp: &[Vert],
-    vq: &[Vert],
+    vpos_p: &[RowVector3<f64>],
+    vpos_q: &[RowVector3<f64>],
     hq: &[Half],
     normal: &[RowVector3<f64>],
     expand: f64,  // sign of normal
@@ -20,9 +19,9 @@ pub fn shadows01(
 ) -> Option<(i32, RowVector2<f64>)> {
     let q1s = hq[q1].tail().id;
     let q1e = hq[q1].head().id;
-    let p0x  = vp[p0].pos().x;
-    let q1sx = vq[q1s].pos().x;
-    let q1ex = vq[q1e].pos().x;
+    let p0x  = vpos_p[p0].x;
+    let q1sx = vpos_q[q1s].x;
+    let q1ex = vpos_q[q1e].x;
 
     // check weather the vert is in between the half from the x-axis point of view
     let mut s01 = if reverse {
@@ -32,52 +31,28 @@ pub fn shadows01(
     } else {
         let a = if shadows(p0x, q1ex, expand * normal[p0].x) {1} else {0};
         let b = if shadows(p0x, q1sx, expand * normal[p0].x) {1} else {0};
-
-        //println!("p0x: {}, q1ex: {}, a: {}, b: {}", p0x, q1ex, a, b);
         a - b
     };
 
     // if in between...
     if s01 != 0 {
-        let yz01 = interpolate(vq[q1s].pos(), vq[q1e].pos(), vp[p0].pos().x);
+        let yz01 = interpolate(
+            vpos_q[q1s],
+            vpos_q[q1e],
+            vpos_p[p0].x
+        );
         if reverse {
-            let diff = vq[q1s].pos() - vp[p0].pos();
+            let diff = vpos_q[q1s] - vpos_p[p0];
             let sta2 = diff.clone().dot(&diff);
-            let diff = vq[q1e].pos() - vp[p0].pos();
+            let diff = vpos_q[q1e] - vpos_p[p0];
             let end2 = diff.clone().dot(&diff);
             let dir = if sta2 < end2 { normal[q1s].y } else { normal[q1e].y };
-            if !shadows(yz01[0], vp[p0].pos().y, expand * dir) { s01 = 0; }
+            if !shadows(yz01[0], vpos_p[p0].y, expand * dir) { s01 = 0; }
         } else {
             // return sign as 0 if vert from mfd_p is above
-            if !shadows(vp[p0].pos().y, yz01[0], expand * normal[p0].y) { s01 = 0; }
+            if !shadows(vpos_p[p0].y, yz01[0], expand * normal[p0].y) { s01 = 0; }
         }
         return Some((s01, yz01));
     }
     None
-}
-
-
-#[test]
-fn shadow01_test() {
-    let mfd_p = test_data::gen_tri_c();
-    let mfd_q = test_data::gen_tri_a();
-
-    for ip0 in 0..3 {
-        for iq1 in 0..3 {
-            println!("ip0: {}, iq1: {}", ip0, iq1);
-            let res = shadows01(
-                ip0,
-                iq1,
-                &mfd_p.verts,
-                &mfd_q.verts,
-                &mfd_q.halfs,
-                &mfd_p.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
-                1.,
-                false
-            );
-            if res.is_some() {
-                println!("s: {}, pos: {:#}", res.unwrap().0, res.unwrap().1);
-            }
-        }
-    }
 }

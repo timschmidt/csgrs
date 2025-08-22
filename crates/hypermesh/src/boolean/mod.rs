@@ -91,18 +91,19 @@ pub fn intersect12 (
     let b = if forward { q } else { p };
 
     let k02 = Kernel02{
-        verts_p: &a.hmesh.verts,
-        verts_q: &b.hmesh.verts,
-        halfs_q: &b.hmesh.halfs,
-        normals: &p.hmesh.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
+        vpos_p: &a.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
+        vpos_q: &b.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
+        half_q: &b.hmesh.halfs,
+        normal: &p.hmesh.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
         expand,
         forward
     };
     let k11 = Kernel11{
-        verts_p: &p.hmesh.verts,
-        halfs_p: &p.hmesh.halfs,
-        verts_q: &q.hmesh.verts,
-        halfs_q: &q.hmesh.halfs,
+        vpos_p: &p.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
+        half_p: &p.hmesh.halfs,
+        vpos_q: &q.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
+        half_q: &q.hmesh.halfs,
+        normal: &p.hmesh.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
         expand,
     };
 
@@ -152,10 +153,10 @@ pub fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<
 
     let mut w03 = vec![0; a.hmesh.verts.len()];
     let k02 = Kernel02 {
-        verts_p: &a.hmesh.verts,
-        verts_q: &b.hmesh.verts,
-        halfs_q: &b.hmesh.halfs,
-        normals: &p.hmesh.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
+        vpos_p: &a.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
+        vpos_q: &b.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
+        half_q: &b.hmesh.halfs,
+        normal: &p.hmesh.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
         expand,
         forward,
     };

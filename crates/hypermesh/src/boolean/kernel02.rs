@@ -4,10 +4,10 @@ use crate::boolean::shadow::{shadows, shadows01};
 use crate::hmesh::{Vert, Half};
 
 pub struct Kernel02<'a> {
-    pub verts_p: &'a[Vert],
-    pub verts_q: &'a[Vert],
-    pub halfs_q: &'a[Half],
-    pub normals: &'a[RowVector3<f64>],
+    pub vpos_p: &'a[RowVector3<f64>],
+    pub vpos_q: &'a[RowVector3<f64>],
+    pub half_q: &'a[Half],
+    pub normal: &'a[RowVector3<f64>],
     pub expand: f64,
     pub forward: bool
 }
@@ -26,16 +26,16 @@ impl<'a> Kernel02<'a> {
         let mut closest_vid = usize::MAX;
         let mut min_metric = f64::MAX;
 
-        let pos_p = self.verts_p[p0].pos();
+        let pos_p = self.vpos_p[p0];
 
         for i in 0..3 {
             let q1 = 3 * q2 + i; // make sure fid * 3 + i = hid
-            let half = self.halfs_q[q1].clone();
+            let half = self.half_q[q1].clone();
             let q1_f = if half.is_forward() { q1 } else {half.twin().id};
 
             if !self.forward {
-                let q_vert = self.halfs_q[q1_f].tail();
-                let diff = pos_p - self.verts_q[q_vert.id].pos();
+                let q_vert = self.half_q[q1_f].tail();
+                let diff = pos_p - self.vpos_q[q_vert.id];
                 let metric = diff.dot(&diff);
                 if metric < min_metric {
                     min_metric = metric;
@@ -47,10 +47,10 @@ impl<'a> Kernel02<'a> {
             if let Some((s01, yz01)) = shadows01(
                 p0,
                 q1_f,
-                self.verts_p,
-                self.verts_q,
-                self.halfs_q,
-                self.normals,
+                self.vpos_p,
+                self.vpos_q,
+                self.half_q,
+                self.normal,
                 self.expand,
                 !self.forward
             ) {
@@ -67,12 +67,12 @@ impl<'a> Kernel02<'a> {
             z02 = None;
         } else {
             assert_eq!(k, 2, "Boolean manifold error: s02");
-            let vert_pos = self.verts_p[p0].pos();
+            let vert_pos = self.vpos_p[p0];
             z02 = Some(interpolate(yzz_rl[0], yzz_rl[1], vert_pos.y)[1]);
             if self.forward {
-                if !shadows(vert_pos.z, z02.unwrap(), self.expand * self.normals[p0].z) { s02 = 0; }
+                if !shadows(vert_pos.z, z02.unwrap(), self.expand * self.normal[p0].z) { s02 = 0; }
             } else {
-                if !shadows(z02.unwrap(), vert_pos.z, self.expand * self.normals[closest_vid].z) { s02 = 0; }
+                if !shadows(z02.unwrap(), vert_pos.z, self.expand * self.normal[closest_vid].z) { s02 = 0; }
             }
         }
         (s02, z02)
@@ -89,10 +89,10 @@ mod kernel02_tests {
         let mfd_p = test_data::gen_tet_a();
         let mfd_q = test_data::gen_tet_c();
         let k02 = Kernel02 {
-            verts_p: &mfd_p.verts,
-            verts_q: &mfd_q.verts,
-            halfs_q: &mfd_q.halfs,
-            normals: &mfd_p.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
+            vpos_p: &mfd_p.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
+            vpos_q: &mfd_q.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
+            half_q: &mfd_q.halfs,
+            normal: &mfd_p.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
             expand: -1.,
             forward: false
         };
