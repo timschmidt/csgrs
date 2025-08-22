@@ -226,7 +226,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                         // Pair up intersection points => edges
                         let mut edges = Vec::new();
                         for chunk in crossing_points.chunks_exact(2) {
-                            edges.push([chunk[0].clone(), chunk[1].clone()]);
+                            edges.push([chunk[0], chunk[1]]);
                         }
                         (Vec::new(), edges)
                     },
