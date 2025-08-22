@@ -1,9 +1,9 @@
-mod intersect;
-mod shadow;
-mod kernel02;
-mod kernel11;
-mod kernel12;
-mod boolean46;
+pub mod intersect;
+pub mod shadow;
+pub mod kernel02;
+pub mod kernel11;
+pub mod kernel12;
+pub mod boolean46;
 pub mod test_data;
 
 use nalgebra::{RowVector3, Vector3};

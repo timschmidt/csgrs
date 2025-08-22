@@ -35,14 +35,14 @@ pub trait Collider {
 ///======== below is a simple bvh collider ========///
 
 pub struct BvhCollider {
-    bvh: Bvh<f64, 3>,
-    aabbs: Vec<AabbNode>,
+    pub bvh: Bvh<f64, 3>,
+    pub aabbs: Vec<AabbNode>,
 }
 
-struct AabbNode {
-    bbox: BoundingBox,
-    id: usize,
-    nid: usize,
+pub struct AabbNode {
+    pub bbox: BoundingBox,
+    pub id: usize,
+    pub nid: usize,
 }
 
 impl Bounded<f64, 3> for AabbNode {
