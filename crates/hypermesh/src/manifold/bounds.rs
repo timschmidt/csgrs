@@ -8,6 +8,14 @@ pub struct BoundingBox {
 }
 
 impl BoundingBox {
+    pub fn default() -> Self {
+        BoundingBox {
+            id: usize::MAX,
+            min: RowVector3::new(f64::MAX, f64::MAX, f64::MAX),
+            max: RowVector3::new(f64::MIN, f64::MIN, f64::MIN),
+        }
+    }
+    
     pub fn new(id: usize, pts: &Vec<RowVector3<f64>>) -> Self {
         let mut b = BoundingBox {
             id,

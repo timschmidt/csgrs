@@ -1,4 +1,3 @@
-use bevy::render::render_resource::encase::private::RuntimeSizedArray;
 use bvh::aabb::{Aabb, Bounded};
 use bvh::bounding_hierarchy::{BHShape};
 use bvh::bvh::Bvh;
@@ -14,8 +13,8 @@ fn spread_bits_3(v: u32) -> u32 {
     v
 }
 
-fn morton_code(pos: RowVector3<f64>, bbox: BoundingBox) -> u32 {
-    let mut xyz = (pos - bbox.min).component_div(&(bbox.max - bbox.min));
+pub fn morton_code(p: &RowVector3<f64>, bb: &BoundingBox) -> u32 {
+    let mut xyz = (p - bb.min).component_div(&(bb.max - bb.min));
     xyz = (1024. * xyz).sup(&RowVector3::zeros()).inf(&RowVector3::new(1023., 1023., 1023.));
     let x = spread_bits_3(xyz.x as u32);
     let y = spread_bits_3(xyz.y as u32);
@@ -72,8 +71,8 @@ impl<'a> RadixTree<'a> {
 
     fn find_split(&self, bgn: i32, end: i32) -> i32 {
         let common = self.prefix_length(bgn, end);
-        // Find the furthest object that shares more than common_prefix bits with the
-        // first one, using binary search.
+        // Find the furthest object that shares more than common_prefix bits
+        // with the first one, using binary search.
         let mut split = bgn;
         let mut step = end - bgn;
 
@@ -109,43 +108,42 @@ impl<'a> RadixTree<'a> {
 
 fn find_collisions(
     queries: &[BoundingBox], // either bb or vec3
-    node_bb: &mut [BoundingBox],
+    node_bb: &[BoundingBox],
     intl_children: &[(i32, i32)],
     query_idx: i32,
-    recorder: &mut dyn Recorder,
+    rec: &mut dyn Recorder,
     self_collision: bool,
 ) {
+    // depth-first search
     let mut stack = [0; 64];
     let mut top = -1i32;
-
-    // depth-first search
     let mut node = K_ROOT;
 
-    let mut record_collision = |node, query_idx: i32| {
+    let mut rec_collision = |node, query_idx: i32| {
         let overlap = node_bb[node as usize].overlaps(&queries[query_idx as usize]);
         if overlap && is_leaf(node) {
             let leaf_idx = node2leaf(node);
             if !self_collision || leaf_idx != query_idx {
-                recorder.record(query_idx as usize, leaf_idx as usize);
+                rec.record(query_idx as usize, leaf_idx as usize);
             }
         }
         overlap && is_intl(node) //should traverse into node
     };
 
     loop {
-        let internal = node2intl(node);
-        let (child1, child2) = intl_children[internal as usize];
-        let traverse1 = record_collision(child1, query_idx);
-        let traverse2 = record_collision(child2, query_idx);
+        let intl = node2intl(node);
+        let (c1, c2) = intl_children[intl as usize];
+        let traverse1 = rec_collision(c1, query_idx);
+        let traverse2 = rec_collision(c2, query_idx);
         if !traverse1 && !traverse2 {
             if top < 0 { break; } // done
             node = stack[top as usize];
             top -= 1;
         } else {
-            node = if traverse1 { child1 } else { child2 }; // go here next
+            node = if traverse1 { c1 } else { c2 }; // go here next
             if traverse1 && traverse2 {
                 top += 1;
-                stack[top as usize] = child2; // save the other for later
+                stack[top as usize] = c2; // save the other for later
             }
         }
     }
@@ -187,13 +185,13 @@ pub trait Collider {
 pub struct MortonCollider {
     node_bb: Vec<BoundingBox>,
     node_parent: Vec<i32>,
-    internal_children: Vec<(i32, i32)>,
+    intl_children: Vec<(i32, i32)>,
 }
 
 impl MortonCollider {
 
-    fn num_intl(&self) -> usize { self.internal_children.len() }
-    fn num_leaf(&self) -> usize { if self.internal_children.is_empty() { 0 } else { self.num_intl() + 1 } }
+    fn num_intl(&self) -> usize { self.intl_children.len() }
+    fn num_leaf(&self) -> usize { if self.intl_children.is_empty() { 0 } else { self.num_intl() + 1 } }
 
     fn update_boxes(&mut self, leaf_bb: &[BoundingBox]) {
         for (i, box_val) in leaf_bb.iter().enumerate() {
@@ -205,40 +203,41 @@ impl MortonCollider {
                 &mut self.node_bb,
                 &mut counter,
                 &self.node_parent,
-                &self.internal_children,
+                &self.intl_children,
                 i as i32,
             );
         }
     }
 
-
     pub fn new(
-        &mut self,
         leaf_bb: &[BoundingBox],
         leaf_morton: &[u32]
     ) -> Self {
-        let n0 = leaf_bb.len() - 1;
-        let n1 = 2 * leaf_bb.len() - 1;
-        let mut node_bb = vec![BoundingBox::new(0, &vec![]); n1];
-        let mut node_parent = vec![i32::MAX; n1];
-        let mut internal_children = vec![(0, 0); n0];
-        let tree = RadixTree {
+        let n_intl = leaf_bb.len() - 1;
+        let n_node = 2 * leaf_bb.len() - 1;
+        let mut node_parent = vec![i32::MAX; n_node];
+        let mut intl_children = vec![(0, 0); n_intl];
+        let mut tree = RadixTree {
             parent: &mut node_parent,
-            children: &mut internal_children,
+            children: &mut intl_children,
             leaf_morton: &leaf_morton,
         };
-
-        self.update_boxes(leaf_bb);
-
-        MortonCollider { node_bb, node_parent, internal_children }
+        for i in 0..n_intl { tree.op(i as i32); }
+        let mut res = MortonCollider {
+            node_bb: vec![BoundingBox::default(); n_node],
+            node_parent,
+            intl_children
+        };
+        res.update_boxes(leaf_bb);
+        res
     }
 
-    pub fn collision(&mut self, queries: &[BoundingBox], recorder: &mut dyn Recorder) {
+    pub fn collision(&self, queries: &[BoundingBox], recorder: &mut dyn Recorder) {
         for i in 0..queries.len() {
             find_collisions(
                 &queries,
-                &mut self.node_bb,
-                &self.internal_children,
+                &self.node_bb,
+                &self.intl_children,
                 i as i32,
                 recorder,
                 false,
