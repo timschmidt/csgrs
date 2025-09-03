@@ -72,28 +72,28 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>
 ) {
     let mut hms = vec![];
-    let (m1, _) = tobj::load_obj("assets/models/cube_x_plus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    let (m0, _) = tobj::load_obj("assets/models/tet_b.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
 
-    for m in vec![m0, m1] {
-        let mesh = &m[0].mesh;
-        let pos_buf = mesh.positions.iter().map(|&v| v as f64).collect::<Vec<f64>>();
-        let idx_buf = mesh.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>();
-        let hm = Hmesh::new(
-            DMatrix::from_row_slice(mesh.positions.len() / 3, 3, &pos_buf).into(),
-            DMatrix::from_row_slice(mesh.indices.len() / 3, 3, &idx_buf).into()
-        );
-        for f in hm.faces.iter() {
-            assert_eq!(f.id * 3 + 0, f.half().id);
-            assert_eq!(f.id * 3 + 1, f.half().next().id);
-            assert_eq!(f.id * 3 + 2, f.half().prev().id);
-        }
-        hms.push(hm);
-    }
+    //let (m1, _) = tobj::load_obj("assets/models/cube_x_plus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    //let (m0, _) = tobj::load_obj("assets/models/tet_b.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    //for m in vec![m0, m1] {
+    //    let mesh = &m[0].mesh;
+    //    let pos_buf = mesh.positions.iter().map(|&v| v as f64).collect::<Vec<f64>>();
+    //    let idx_buf = mesh.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>();
+    //    let hm = Hmesh::new(
+    //        DMatrix::from_row_slice(mesh.positions.len() / 3, 3, &pos_buf).into(),
+    //        DMatrix::from_row_slice(mesh.indices.len() / 3, 3, &idx_buf).into()
+    //    );
+    //    for f in hm.faces.iter() {
+    //        assert_eq!(f.id * 3 + 0, f.half().id);
+    //        assert_eq!(f.id * 3 + 1, f.half().next().id);
+    //        assert_eq!(f.id * 3 + 2, f.half().prev().id);
+    //    }
+    //    hms.push(hm);
+    //}
 
 
-    //hms.push(gen_tet_a());
-    //hms.push(gen_tet_b());
+    hms.push(gen_tet_a());
+    hms.push(gen_tet_c());
     let mf0 = Manifold::new(&hms[0]);
     let mf1 = Manifold::new(&hms[1]);
     let mfs = vec![&mf0, &mf1];
@@ -125,7 +125,6 @@ fn setup(
     }
 
 
-    /*
     let boolean = Boolean3{
         mfd_p: &mfs[0], mfd_q: &mfs[1],
         p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
@@ -140,6 +139,7 @@ fn setup(
             Vec3::new(p1[0] as f32, p1[1] as f32, p1[2] as f32),
         ));
     }
+    /*
     */
 
     cmds.insert_resource(
@@ -194,14 +194,14 @@ fn draw_example_collection(
     mut gizmos: Gizmos,
 ) {
 
-    for (i, aabb) in mfd_handle0.0.collider.aabbs.iter().enumerate() {
-        let min = aabb.bbox.min.cast::<f32>();
-        let max = aabb.bbox.max.cast::<f32>();
-        let cen = (min + max) / 2.0;
-        let size = max - min;
-        let transform = Transform::from_translation(Vec3::new(cen.x, cen.y, cen.z)).with_scale(Vec3::new(size.x, size.y, size.z));
-        gizmos.cuboid(transform, RED);
-    }
+    //for (i, aabb) in mfd_handle0.0.collider.aabbs.iter().enumerate() {
+    //    let min = aabb.bbox.min.cast::<f32>();
+    //    let max = aabb.bbox.max.cast::<f32>();
+    //    let cen = (min + max) / 2.0;
+    //    let size = max - min;
+    //    let transform = Transform::from_translation(Vec3::new(cen.x, cen.y, cen.z)).with_scale(Vec3::new(size.x, size.y, size.z));
+    //    gizmos.cuboid(transform, RED);
+    //}
 
     for unit in &drawings.units {
         for pt in &unit.pts { gizmos.sphere(*pt, 0.01, unit.col); }

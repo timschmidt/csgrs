@@ -31,7 +31,15 @@ impl BoundingBox {
     }
 
     pub fn size(&self) -> RowVector3<f64> { self.max - self.min }
-    
+
+    pub fn overlaps(&self, b: &BoundingBox) -> bool {
+        self.min.x <= b.max.x &&
+        self.min.y <= b.max.y &&
+        self.min.z <= b.max.z &&
+        self.max.x >= b.min.x &&
+        self.max.y >= b.min.y &&
+        self.max.z >= b.min.z
+    }
 
     pub fn union(&mut self, p: &RowVector3<f64>) {
         self.min = RowVector3::new(self.min.x.min(p.x), self.min.y.min(p.y), self.min.z.min(p.z));
@@ -44,6 +52,13 @@ impl BoundingBox {
         else if s.y > s.z { 1 }
         else { 2 }
     }
+}
+
+
+pub fn union_bbs(b0: &BoundingBox, b1: &BoundingBox) -> BoundingBox {
+    let min = RowVector3::new(b0.min.x.min(b1.min.x), b0.min.y.min(b1.min.y), b0.min.z.min(b1.min.z));
+    let max = RowVector3::new(b0.max.x.max(b1.max.x), b0.max.y.max(b1.max.y), b0.max.z.max(b1.max.z));
+    BoundingBox::new(usize::MAX, &vec![min, max])
 }
 
 
