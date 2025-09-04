@@ -70,7 +70,7 @@ impl <'a> Recorder for Intersection12Recorder<'a> {
         let h = &self.mfd_a.hmesh.halfs[query_idx];
         let (x12, op_v12) = self.k12.op(h.id, leaf_idx);
         if let Some(v12) = op_v12 {
-            //println!("hid: {}, lid: {}, x12: {}, v12: {:?}", h.id, leaf_idx, x12, v12);
+            println!("hid: {}, lid: {}, x12: {}, v12: {:?}", h.id, leaf_idx, x12, v12);
             if self.forward { self.p1q2.push([query_idx as i32, leaf_idx as i32]); }
             else            { self.p1q2.push([leaf_idx as i32, query_idx as i32]); }
             self.x12.push(x12);

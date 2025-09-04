@@ -1,6 +1,6 @@
 use nalgebra::{DMatrix, RowVector3};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BoundingBox {
     pub id: usize,
     pub min: RowVector3<f64>,

@@ -1,21 +1,22 @@
 use bvh::aabb::{Aabb, Bounded};
 use bvh::bounding_hierarchy::{BHShape};
 use bvh::bvh::Bvh;
-use nalgebra::RowVector3;
+use nalgebra::RowVector3 as Row3;
 use crate::bounds::{union_bbs, BoundingBox};
 
 fn spread_bits_3(v: u32) -> u32 {
+    assert!(v <= 1023);
     let mut v = v;
-    v = 0xFF0000FFu32 & (v * 0x00010001u32);
-    v = 0x0F00F00Fu32 & (v * 0x00000101u32);
-    v = 0xC30C30C3u32 & (v * 0x00000011u32);
-    v = 0x49249249u32 & (v * 0x00000005u32);
+    v = 0xFF0000FFu32 & v.wrapping_mul(0x00010001u32);
+    v = 0x0F00F00Fu32 & v.wrapping_mul(0x00000101u32);
+    v = 0xC30C30C3u32 & v.wrapping_mul(0x00000011u32);
+    v = 0x49249249u32 & v.wrapping_mul(0x00000005u32);
     v
 }
 
-pub fn morton_code(p: &RowVector3<f64>, bb: &BoundingBox) -> u32 {
+pub fn morton_code(p: &Row3<f64>, bb: &BoundingBox) -> u32 {
     let mut xyz = (p - bb.min).component_div(&(bb.max - bb.min));
-    xyz = (1024. * xyz).sup(&RowVector3::zeros()).inf(&RowVector3::new(1023., 1023., 1023.));
+    xyz = (1024. * xyz).sup(&Row3::zeros()).inf(&Row3::new(1023., 1023., 1023.));
     let x = spread_bits_3(xyz.x as u32);
     let y = spread_bits_3(xyz.y as u32);
     let z = spread_bits_3(xyz.z as u32);
@@ -28,9 +29,9 @@ const K_ROOT: i32 = 1;
 
 fn is_leaf(node: i32) -> bool { node % 2 == 0 }
 fn is_intl(node: i32) -> bool { node % 2 == 1 }
-fn node2intl(node: i32) -> i32 { (node - 1) / 2 }
+fn node2intl(node: i32) -> i32 { assert!(is_intl(node)); (node - 1) / 2 }
+fn node2leaf(node: i32) -> i32 { assert!(is_leaf(node)); node / 2 }
 fn intl2node(intl: i32) -> i32 { intl * 2 + 1 }
-fn node2leaf(node: i32) -> i32 { node / 2 }
 fn leaf2node(leaf: i32) -> i32 { leaf * 2 }
 fn prefix_length(a: u32, b: u32) -> u32 { (a ^ b).leading_zeros() } // need check
 
@@ -43,7 +44,7 @@ struct RadixTree<'a> {
 
 impl<'a> RadixTree<'a> {
     fn prefix_length(&self, i: i32, j: i32) -> i32 {
-        if j < 0 || j > self.leaf_morton.len() as i32 { return -1; }
+        if j < 0 || j >= self.leaf_morton.len() as i32 { return -1; }
         let lmi = self.leaf_morton[i as usize];
         let lmj = self.leaf_morton[j as usize];
         if lmi == lmj { return 32 + prefix_length(i as u32, j as u32) as i32; }
@@ -109,7 +110,7 @@ impl<'a> RadixTree<'a> {
 fn find_collisions(
     queries: &[BoundingBox], // either bb or vec3
     node_bb: &[BoundingBox],
-    intl_children: &[(i32, i32)],
+    children: &[(i32, i32)],
     query_idx: i32,
     rec: &mut dyn Recorder,
     self_collision: bool,
@@ -124,6 +125,7 @@ fn find_collisions(
         if overlap && is_leaf(node) {
             let leaf_idx = node2leaf(node);
             if !self_collision || leaf_idx != query_idx {
+                println!("query_idx: {}, leaf_idx: {}", query_idx, leaf_idx);
                 rec.record(query_idx as usize, leaf_idx as usize);
             }
         }
@@ -132,7 +134,7 @@ fn find_collisions(
 
     loop {
         let intl = node2intl(node);
-        let (c1, c2) = intl_children[intl as usize];
+        let (c1, c2) = children[intl as usize];
         let traverse1 = rec_collision(c1, query_idx);
         let traverse2 = rec_collision(c2, query_idx);
         if !traverse1 && !traverse2 {
@@ -155,16 +157,20 @@ fn build_internal_boxes(
     counter: &mut [i32],
     node_parent: &[i32],
     intl_children: &[(i32, i32)],
-    leaf_idx: i32,
+    leaf: i32,
 ) {
-    let mut node_idx = leaf2node(leaf_idx);
+    let mut node = leaf2node(leaf);
     let mut flag = false;
     loop {
-        if flag && node_idx == K_ROOT { break; }
-        node_idx = node_parent[node_idx as usize];
-        let intl_idx = node2intl(node_idx);
-        if counter[intl_idx as usize] == 0 { break; }
-        node_bb[node_idx as usize] = union_bbs(
+        if flag && node == K_ROOT { return; }
+        node = node_parent[node as usize];
+        let intl_idx = node2intl(node);
+        println!("node parent: {}, intl idx: {}", node, intl_idx);
+        let c = counter[intl_idx as usize];
+        counter[intl_idx as usize] += 1;
+        if c == 0 { return; }
+        println!("node: {}, intl: {}, counter: {}", node, intl_idx, counter[intl_idx as usize]);
+        node_bb[node as usize] = union_bbs(
             &node_bb[intl_children[intl_idx as usize].0 as usize],
             &node_bb[intl_children[intl_idx as usize].1 as usize]
         );
@@ -180,16 +186,13 @@ pub trait Collider {
     fn collision(&self, queries: &[BoundingBox], recorder: &mut dyn Recorder);
 }
 
-///======== below is a morton code collider ========///
-
 pub struct MortonCollider {
-    node_bb: Vec<BoundingBox>,
-    node_parent: Vec<i32>,
-    intl_children: Vec<(i32, i32)>,
+    pub node_bb: Vec<BoundingBox>,
+    pub node_parent: Vec<i32>,
+    pub intl_children: Vec<(i32, i32)>,
 }
 
 impl MortonCollider {
-
     fn num_intl(&self) -> usize { self.intl_children.len() }
     fn num_leaf(&self) -> usize { if self.intl_children.is_empty() { 0 } else { self.num_intl() + 1 } }
 
@@ -213,22 +216,36 @@ impl MortonCollider {
         leaf_bb: &[BoundingBox],
         leaf_morton: &[u32]
     ) -> Self {
+
+        for i in 0..leaf_bb.len() { println!("min: {:?}, max: {:?}", leaf_bb[i].min, leaf_bb[i].max); }
+        println!("leaf_morton: {:?}", leaf_morton);
+
         let n_intl = leaf_bb.len() - 1;
         let n_node = 2 * leaf_bb.len() - 1;
-        let mut node_parent = vec![i32::MAX; n_node];
+        let mut node_parent = vec![-1; n_node];
         let mut intl_children = vec![(0, 0); n_intl];
         let mut tree = RadixTree {
             parent: &mut node_parent,
             children: &mut intl_children,
             leaf_morton: &leaf_morton,
         };
+
+
         for i in 0..n_intl { tree.op(i as i32); }
+
+        println!("tree parent: {:?}", tree.parent);
+        println!("tree children: {:?}", tree.children);
+
         let mut res = MortonCollider {
             node_bb: vec![BoundingBox::default(); n_node],
             node_parent,
             intl_children
         };
+
         res.update_boxes(leaf_bb);
+        for i in 0..n_node {
+            println!("node bb: {:?}", res.node_bb[i]);
+        }
         res
     }
 
@@ -247,9 +264,43 @@ impl MortonCollider {
 }
 
 
+#[cfg(test)]
+mod collider_test {
+    use crate::boolean::test_data;
+    use crate::collider::spread_bits_3;
+    use crate::{intersect12, Manifold};
 
+    #[test]
+    fn morton_code_test() {
+        let v = spread_bits_3(341.333 as u32);
+        assert_eq!(v, 17043521);
+        let v = spread_bits_3(1023);
+        assert_eq!(v, 153391689);
+        let v = spread_bits_3(682.667 as u32);
+        assert_eq!(v, 136348168);
+    }
+
+    #[test]
+    fn morton_radix_tree_test() {
+        let expand = -1.;
+        let hm_p = test_data::gen_tet_a();
+        let mfd_p = Manifold::new(&hm_p);
+        println!("===================");
+        let hm_q = test_data::gen_tet_c();
+        let mfd_q = Manifold::new(&hm_q);
+
+        let mut p1q2 = vec![];
+        let mut p2q1 = vec![];
+        let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, expand, true);
+        let (x21, v21) = intersect12(&mfd_p, &mfd_q, &mut p2q1, expand, false);
+        //println!("x21: {:?}", x21);
+        //println!("v21: {:?}", v21);
+    }
+}
+
+
+/*
 ///======== below is a simple bvh collider ========///
-
 pub struct BvhCollider {
     pub bvh: Bvh<f64, 3>,
     pub aabbs: Vec<AabbNode>,
@@ -295,4 +346,4 @@ impl Collider for BvhCollider {
         }
     }
 }
-
+*/

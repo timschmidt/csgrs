@@ -3,7 +3,7 @@ pub mod collider;
 
 use nalgebra::{RowVector3, Vector3};
 use bounds::BoundingBox;
-use crate::collider::{morton_code, BvhCollider, Collider, MortonCollider};
+use crate::collider::{morton_code, Collider, MortonCollider};
 use crate::{Half, Hmesh};
 
 #[derive(Clone, Debug)]
@@ -30,7 +30,7 @@ fn get_face_morton(hmesh: &Hmesh, bbox: &BoundingBox) -> (Vec<BoundingBox>, Vec<
         let p2 = f.half().prev().tail().pos();
         fbs[f.id].union(&p0);
         fbs[f.id].union(&p1);
-        fbs[f.id].union(&p1);
+        fbs[f.id].union(&p2);
         fms[f.id] = morton_code(&((p0 + p1 + p2) / 3.), bbox);
     }
     (fbs, fms)
