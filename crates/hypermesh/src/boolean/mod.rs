@@ -10,7 +10,7 @@ use nalgebra::{RowVector3, Vector3};
 use crate::boolean::kernel02::Kernel02;
 use crate::boolean::kernel11::Kernel11;
 use crate::boolean::kernel12::Kernel12;
-use crate::bounds::BoundingBox;
+use crate::bounds::{BoundingBox, Query};
 use crate::collider::{Collider, Recorder};
 use crate::manifold::Manifold;
 
@@ -53,8 +53,6 @@ impl<'a, F> Recorder for SimpleRecorder<F> where F: FnMut(usize, usize) {
     }
 }
 
-
-
 struct Intersection12Recorder<'a> {
     pub mfd_a: &'a Manifold,
     pub mfd_b: &'a Manifold,
@@ -67,10 +65,10 @@ struct Intersection12Recorder<'a> {
 
 impl <'a> Recorder for Intersection12Recorder<'a> {
     fn record(&mut self, query_idx: usize, leaf_idx: usize) {
-        let h = &self.mfd_a.hmesh.halfs[query_idx];
+        let h = &self.mfd_a.hmesh.halfs[query_idx]; // to buffer between query idx to element's idx, the original uses TmpEdge
         let (x12, op_v12) = self.k12.op(h.id, leaf_idx);
         if let Some(v12) = op_v12 {
-            println!("hid: {}, lid: {}, x12: {}, v12: {:?}", h.id, leaf_idx, x12, v12);
+            //println!("hid: {}, fid: {}, x12: {}", h.id, leaf_idx, x12);
             if self.forward { self.p1q2.push([query_idx as i32, leaf_idx as i32]); }
             else            { self.p1q2.push([leaf_idx as i32, query_idx as i32]); }
             self.x12.push(x12);
@@ -116,9 +114,11 @@ pub fn intersect12 (
         k11,
     };
 
-    let bboxes = a.hmesh.halfs.iter()
+    let bbs = a.hmesh.halfs.iter()
         .filter(|h| h.tail().id < h.head().id)
-        .map(|h| BoundingBox::new(h.id, &vec![h.tail().pos(), h.head().pos()])).collect::<Vec<_>>();
+        .map(|h|
+            Query::Bb(BoundingBox::new(h.id, &vec![h.tail().pos(), h.head().pos()]))
+            ).collect::<Vec<_>>();
 
     let mut rec = Intersection12Recorder{
         mfd_a: a,
@@ -130,7 +130,7 @@ pub fn intersect12 (
         forward,
     };
 
-     b.collider.collision(&bboxes, &mut rec);
+     b.collider.collision(&bbs, &mut rec);
 
     let mut x12: Vec<i32> = vec![];
     let mut v12: Vec<RowVector3<f64>> = vec![];
@@ -161,14 +161,17 @@ pub fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<
         forward,
     };
 
-    let bboxes = a.hmesh.verts.iter().map(|v| BoundingBox::new(v.id, &vec![v.pos(), v.pos()])).collect::<Vec<_>>();
+    let bbs = a.hmesh.verts.iter().map(|v|
+        Query::Pt(BoundingBox::new(v.id, &vec![v.pos(), v.pos()]))
+    ).collect::<Vec<_>>();
     let mut rec = SimpleRecorder::new(
         |a, b| {
+            //println!("w03, a: {}, b: {}", a, b);
             let (s02, z02) = k02.op(a, b);
             if z02.is_some() { w03[a] += s02 * if forward {1} else {-1}; }
         }
     );
-    b.collider.collision(&bboxes, &mut rec);
+    b.collider.collision(&bbs, &mut rec);
 
     w03
 }

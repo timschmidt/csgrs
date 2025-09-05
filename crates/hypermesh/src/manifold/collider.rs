@@ -2,7 +2,7 @@ use bvh::aabb::{Aabb, Bounded};
 use bvh::bounding_hierarchy::{BHShape};
 use bvh::bvh::Bvh;
 use nalgebra::RowVector3 as Row3;
-use crate::bounds::{union_bbs, BoundingBox};
+use crate::bounds::{union_bbs, BoundingBox, Query};
 
 fn spread_bits_3(v: u32) -> u32 {
     assert!(v <= 1023);
@@ -108,7 +108,7 @@ impl<'a> RadixTree<'a> {
 }
 
 fn find_collisions(
-    queries: &[BoundingBox], // either bb or vec3
+    queries: &[Query], // either bb or vec3
     node_bb: &[BoundingBox],
     children: &[(i32, i32)],
     query_idx: i32,
@@ -125,8 +125,13 @@ fn find_collisions(
         if overlap && is_leaf(node) {
             let leaf_idx = node2leaf(node);
             if !self_collision || leaf_idx != query_idx {
-                println!("query_idx: {}, leaf_idx: {}", query_idx, leaf_idx);
-                rec.record(query_idx as usize, leaf_idx as usize);
+                let q = &queries[query_idx as usize];
+                // todo temporally use q instead of query_idx
+                //rec.record(query_idx as usize, leaf_idx as usize);
+                match q {
+                    Query::Bb(q_bb) => { rec.record(q_bb.id, leaf_idx as usize); },
+                    Query::Pt(q_pt) => { rec.record(q_pt.id, leaf_idx as usize); }
+                }
             }
         }
         overlap && is_intl(node) //should traverse into node
@@ -163,13 +168,15 @@ fn build_internal_boxes(
     let mut flag = false;
     loop {
         if flag && node == K_ROOT { return; }
+        //println!("node: {}", node);
         node = node_parent[node as usize];
+        //println!("node parent: {}", node);
         let intl_idx = node2intl(node);
-        println!("node parent: {}, intl idx: {}", node, intl_idx);
+        //println!("intl idx: {}", intl_idx);
         let c = counter[intl_idx as usize];
         counter[intl_idx as usize] += 1;
         if c == 0 { return; }
-        println!("node: {}, intl: {}, counter: {}", node, intl_idx, counter[intl_idx as usize]);
+        //println!("node: {}, intl: {}, counter: {}", node, intl_idx, counter[intl_idx as usize]);
         node_bb[node as usize] = union_bbs(
             &node_bb[intl_children[intl_idx as usize].0 as usize],
             &node_bb[intl_children[intl_idx as usize].1 as usize]
@@ -217,8 +224,8 @@ impl MortonCollider {
         leaf_morton: &[u32]
     ) -> Self {
 
-        for i in 0..leaf_bb.len() { println!("min: {:?}, max: {:?}", leaf_bb[i].min, leaf_bb[i].max); }
-        println!("leaf_morton: {:?}", leaf_morton);
+        //for i in 0..leaf_bb.len() { println!("min: {:?}, max: {:?}", leaf_bb[i].min, leaf_bb[i].max); }
+        //println!("leaf_morton: {:?}", leaf_morton);
 
         let n_intl = leaf_bb.len() - 1;
         let n_node = 2 * leaf_bb.len() - 1;
@@ -233,8 +240,8 @@ impl MortonCollider {
 
         for i in 0..n_intl { tree.op(i as i32); }
 
-        println!("tree parent: {:?}", tree.parent);
-        println!("tree children: {:?}", tree.children);
+        //println!("tree parent: {:?}", tree.parent);
+        //println!("tree children: {:?}", tree.children);
 
         let mut res = MortonCollider {
             node_bb: vec![BoundingBox::default(); n_node],
@@ -243,13 +250,11 @@ impl MortonCollider {
         };
 
         res.update_boxes(leaf_bb);
-        for i in 0..n_node {
-            println!("node bb: {:?}", res.node_bb[i]);
-        }
+        //for i in 0..n_node { println!("node bb: {:?}", res.node_bb[i]); }
         res
     }
 
-    pub fn collision(&self, queries: &[BoundingBox], recorder: &mut dyn Recorder) {
+    pub fn collision(&self, queries: &[Query], recorder: &mut dyn Recorder) {
         for i in 0..queries.len() {
             find_collisions(
                 &queries,
@@ -266,9 +271,11 @@ impl MortonCollider {
 
 #[cfg(test)]
 mod collider_test {
+    use nalgebra::RowVector3;
     use crate::boolean::test_data;
-    use crate::collider::spread_bits_3;
+    use crate::collider::{spread_bits_3, MortonCollider};
     use crate::{intersect12, Manifold};
+    use crate::bounds::BoundingBox;
 
     #[test]
     fn morton_code_test() {
@@ -296,6 +303,54 @@ mod collider_test {
         //println!("x21: {:?}", x21);
         //println!("v21: {:?}", v21);
     }
+
+    #[test]
+    fn morton_radix_tree_test_0() {
+        let mut leaf_bb = vec![];
+        let mut leaf_mt = vec![];
+
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,-1.,1.)]));
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,1.,-1.)]));
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(-0.8,1.,1.)]));
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(-0.8,1.,1.)]));
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,1. ), RowVector3::new(1.2,1.,1.)]));
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,1.,-1. ), RowVector3::new(1.2,1.,1.)]));
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(1.2,-1.,-1. ), RowVector3::new(1.2,1.,1.)]));
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,-1.,1.)]));
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,1. ), RowVector3::new(1.2,1.,1.)]));
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,1.,-1.)]));
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,1.,-1. ), RowVector3::new(1.2,1.,1.)]));
+        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(1.2,-1.,-1. ), RowVector3::new(1.2,1.,1.)]));
+        leaf_mt.push(85217605);
+        leaf_mt.push(102261126);
+        leaf_mt.push(170435210);
+        leaf_mt.push(289739857);
+        leaf_mt.push(494262109);
+        leaf_mt.push(511305630);
+        leaf_mt.push(664697319);
+        leaf_mt.push(681740840);
+        leaf_mt.push(732871403);
+        leaf_mt.push(818089008);
+        leaf_mt.push(869219571);
+        leaf_mt.push(1022611260);
+
+        let table = vec![11, 0, 8, 1, 10, 4, 5, 3, 6, 2, 7, 9];
+
+        let mut leaf_bb_alt = leaf_bb.clone();
+        let mut leaf_mt_alt = leaf_mt.clone();
+        for i in 0..table.len() {
+            leaf_bb_alt[i] = leaf_bb[table[i]].clone();
+            leaf_mt_alt[i] = leaf_mt[table[i]].clone();
+            //leaf_bb_alt[i] = leaf_bb[(i + 1) % leaf_bb.len()].clone();
+            //leaf_mt_alt[i] = leaf_mt[(i + 1) % leaf_bb.len()].clone();
+        }
+        //for i in 1..leaf_mt.len() {
+        //    assert!(leaf_mt_alt[i - 1] <= leaf_mt_alt[i]);
+        //}
+
+        let col = MortonCollider::new(leaf_bb_alt.as_slice(), leaf_mt_alt.as_slice());
+    }
+
 }
 
 

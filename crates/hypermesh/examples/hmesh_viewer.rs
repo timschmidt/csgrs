@@ -26,6 +26,7 @@ struct MyRoundGizmos {}
 struct DrawingUnit {
     pts: Vec<Vec3>,
     lines: Vec<(Vec3, Vec3)>,
+    boxes: Vec<(Vec3, Vec3)>,
     col: Srgba,
 }
 
@@ -71,40 +72,44 @@ fn setup(
     mut mats: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>
 ) {
-    let mut hms = vec![];
 
-    //let (m1, _) = tobj::load_obj("assets/models/cube_x_plus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    //let (m0, _) = tobj::load_obj("assets/models/tet_b.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    //for m in vec![m0, m1] {
-    //    let mesh = &m[0].mesh;
-    //    let pos_buf = mesh.positions.iter().map(|&v| v as f64).collect::<Vec<f64>>();
-    //    let idx_buf = mesh.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>();
-    //    let hm = Hmesh::new(
-    //        DMatrix::from_row_slice(mesh.positions.len() / 3, 3, &pos_buf).into(),
-    //        DMatrix::from_row_slice(mesh.indices.len() / 3, 3, &idx_buf).into()
-    //    );
-    //    for f in hm.faces.iter() {
-    //        assert_eq!(f.id * 3 + 0, f.half().id);
-    //        assert_eq!(f.id * 3 + 1, f.half().next().id);
-    //        assert_eq!(f.id * 3 + 2, f.half().prev().id);
-    //    }
-    //    hms.push(hm);
-    //}
+    //let (m0, _) = tobj::load_obj("assets/models/cube_x_plus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m1, _) = tobj::load_obj("assets/models/gargoyle.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    //let (m1, _) = tobj::load_obj("assets/models/tet_b.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m0, _) = tobj::load_obj("assets/models/double-torus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let mut hms_ = vec![];
+    for m in vec![m0, m1] {
+        let mesh = &m[0].mesh;
+        let pos_buf = mesh.positions.iter().map(|&v| v as f64).collect::<Vec<f64>>();
+        let idx_buf = mesh.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>();
+        let hm = Hmesh::new(
+            DMatrix::from_row_slice(mesh.positions.len() / 3, 3, &pos_buf).into(),
+            DMatrix::from_row_slice(mesh.indices.len() / 3, 3, &idx_buf).into()
+        );
+        for f in hm.faces.iter() {
+            assert_eq!(f.id * 3 + 0, f.half().id);
+            assert_eq!(f.id * 3 + 1, f.half().next().id);
+            assert_eq!(f.id * 3 + 2, f.half().prev().id);
+        }
+        hms_.push(hm);
+    }
 
 
-    hms.push(gen_tet_a());
-    hms.push(gen_tet_c());
-    let mf0 = Manifold::new(&hms[0]);
-    let mf1 = Manifold::new(&hms[1]);
+    //hms.push(gen_tet_a());
+    //hms.push(gen_tet_c());
+    let mf0 = Manifold::new(&hms_[0]);
+    let mf1 = Manifold::new(&hms_[1]);
     let mfs = vec![&mf0, &mf1];
 
-    let expand = 1.;
+    let expand = -1.;
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
-    let (x12, v12) = intersect12(&mfs[0], &mfs[1], &mut p1q2, expand, true);
-    let (x21, v21) = intersect12(&mfs[0], &mfs[1], &mut p2q1, expand, false);
+    //println!("intersect12, forward");
+    let (x12, v12) = intersect12(mfs[0], mfs[1], &mut p1q2, expand, true);
+    //println!("intersect12, backward");
+    let (x21, v21) = intersect12(mfs[0], mfs[1], &mut p2q1, expand, false);
     let w03 = winding03(mfs[0], mfs[1], expand, true);
-    let w30 = winding03(&mfs[0], &mfs[1], expand, false);
+    let w30 = winding03(mfs[0], mfs[1], expand, false);
 
     let mut pts_i = Vec::new();
     let mut pts_w = Vec::new();
@@ -132,24 +137,22 @@ fn setup(
     for h in halfs {
         let p0 = pos[h.tail as usize];
         let p1 = pos[h.head as usize];
-        println!("p0: {:?}", p0);
-        println!("p1: {:?}", p1);
+        //println!("p0: {:?}", p0);
+        //println!("p1: {:?}", p1);
         edges.push((
             Vec3::new(p0[0] as f32, p0[1] as f32, p0[2] as f32),
             Vec3::new(p1[0] as f32, p1[1] as f32, p1[2] as f32),
         ));
     }
-    /*
-    */
 
     cmds.insert_resource(
         DrawingData{ units: vec![
-            DrawingUnit { pts: pts_i, lines: vec![], col: RED },
-            DrawingUnit { pts: pts_w, lines: vec![], col: BLUE },
-            DrawingUnit { pts: vec![], lines: edges, col: WHITE },
+            DrawingUnit { pts: pts_i, lines: vec![], boxes: vec![], col: RED },
+            DrawingUnit { pts: pts_w, lines: vec![], boxes: vec![], col: BLUE },
+            DrawingUnit { pts: vec![], lines: edges, boxes: vec![], col: WHITE },
         ]});
 
-    for hm in hms {
+    for hm in vec![&mf0.hmesh, &mf1.hmesh] {
         let mut bm = Mesh::new(
             bevy::render::mesh::PrimitiveTopology::TriangleList,
             RenderAssetUsages::default()
@@ -204,7 +207,7 @@ fn draw_example_collection(
     //}
 
     for unit in &drawings.units {
-        for pt in &unit.pts { gizmos.sphere(*pt, 0.01, unit.col); }
+        for pt in &unit.pts { gizmos.sphere(*pt, 0.005, unit.col); }
         for (sta, end) in &unit.lines { gizmos.line(*sta, *end, unit.col); }
     }
 

@@ -1,7 +1,8 @@
 pub mod bounds;
 pub mod collider;
 
-use nalgebra::{RowVector3, Vector3};
+use std::sync::Arc;
+use nalgebra::{DMatrix, RowVector3, Vector3};
 use bounds::BoundingBox;
 use crate::collider::{morton_code, Collider, MortonCollider};
 use crate::{Half, Hmesh};
@@ -37,30 +38,42 @@ fn get_face_morton(hmesh: &Hmesh, bbox: &BoundingBox) -> (Vec<BoundingBox>, Vec<
 }
 
 
+fn sort_faces(
+    hmesh: &Hmesh,
+    face_bboxes: &mut Vec<BoundingBox>,
+    face_morton: &mut Vec<u32>
+) -> Arc<Hmesh> {
+    let mut table = (0..face_morton.len()).collect::<Vec<_>>();
+    table.sort_by_key(|&i| face_morton[i]);
+    *face_bboxes = table.iter().map(|&i| face_bboxes[i].clone()).collect::<Vec<_>>();
+    *face_morton = table.iter().map(|&i| face_morton[i]).collect::<Vec<_>>();
+    // sort faces...
+    let mut idx = DMatrix::<usize>::zeros(table.len(), 3);
+    for i in 0..table.len() {
+        idx.set_row(i, &hmesh.idx.fixed_view::<1, 3>(table[i], 0));
+    }
+    //println!("{:#}", idx);
+    Hmesh::new(hmesh.pos.clone(), idx)
+}
 
 pub struct Manifold {
-    pub hmesh: Hmesh,
+    pub hmesh: Arc<Hmesh>,
     pub bbox: BoundingBox,
     pub collider: MortonCollider,
 }
 
 impl Manifold {
     // todo: better accepting move hmesh. find out a way to do it
+    //
     pub fn new(hmesh: &Hmesh) -> Self {
         let bbox = BoundingBox::new_from_matrix(usize::MAX, &hmesh.pos);
-        let (f_bboxes, f_morton) = get_face_morton(&hmesh, &bbox);
+        let (mut f_bboxes, mut f_morton) = get_face_morton(&hmesh, &bbox);
+        let hm = sort_faces(&hmesh, &mut f_bboxes, &mut f_morton);
         Manifold {
-            hmesh: hmesh.clone(),
+            hmesh: hm.clone(),
             bbox,
             collider: MortonCollider::new(&f_bboxes, &f_morton)
         }
     }
 
-    //fn sort_faces(
-    //    &mut self,
-    //    face_bboxes: &mut Vec<BoundingBox>,
-    //    face_morton: &mut Vec<u32>
-    //) {
-    //    panic!("not implemented. not sure if this is necessary");
-    //}
 }

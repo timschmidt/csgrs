@@ -313,7 +313,7 @@ fn append_new_edges(
         let mut bbox = BoundingBox::new(usize::MAX, &vec![]);
         for p in epos.iter() { bbox.union(&pos_res[p.vid]); }
 
-        println!("fid_p: {}, fid_q: {}", fid_p, fid_q);
+        //println!("fid_p: {}, fid_q: {}", fid_p, fid_q);
 
         let d = bbox.longest_dim();
         for p in epos.iter_mut() {
@@ -508,8 +508,8 @@ impl<'a> Boolean3<'a> {
         append_whole_edges(&i03, &self.mfd_p.hmesh.halfs, fid_p2r, &vid_p2r, &whole_flag_p, true,  &mut face_ptr_r, &mut half_res, &mut half_tri);
         append_whole_edges(&i30, &self.mfd_q.hmesh.halfs, fid_q2r, &vid_q2r, &whole_flag_q, false, &mut face_ptr_r, &mut half_res, &mut half_tri);
 
-        println!("====== half_res: {}", half_res.len());
-        for h in half_res.iter() { println!("h: {:?}", h); }
+        //println!("====== half_res: {}", half_res.len());
+        //for h in half_res.iter() { println!("h: {:?}", h); }
 
         (vpos_r, half_res)
 
