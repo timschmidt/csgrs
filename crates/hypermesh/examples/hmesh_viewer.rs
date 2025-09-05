@@ -73,14 +73,12 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>
 ) {
 
-    //let (m0, _) = tobj::load_obj("assets/models/cube_x_plus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    let (m1, _) = tobj::load_obj("assets/models/gargoyle.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    //let (m1, _) = tobj::load_obj("assets/models/tet_b.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    let (m0, _) = tobj::load_obj("assets/models/double-torus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m0, _) = tobj::load_obj("assets/models/soccerball.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m1, _) = tobj::load_obj("assets/models/cube_twist.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
     let mut hms_ = vec![];
-    for m in vec![m0, m1] {
+    for (m, s) in vec![(m0, 1.), (m1, 0.7)] {
         let mesh = &m[0].mesh;
-        let pos_buf = mesh.positions.iter().map(|&v| v as f64).collect::<Vec<f64>>();
+        let pos_buf = mesh.positions.iter().map(|&v| (v * s) as f64).collect::<Vec<f64>>();
         let idx_buf = mesh.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>();
         let hm = Hmesh::new(
             DMatrix::from_row_slice(mesh.positions.len() / 3, 3, &pos_buf).into(),
@@ -179,7 +177,7 @@ fn setup(
             MeshMaterial3d(mats.add(StandardMaterial { ..default() })),
             Transform::default(),
             Wireframe,
-            WireframeColor { color: WHITE.into() },
+            WireframeColor { color: GRAY.into() },
             ToggleableMesh,
         ));
     }
@@ -207,7 +205,7 @@ fn draw_example_collection(
     //}
 
     for unit in &drawings.units {
-        for pt in &unit.pts { gizmos.sphere(*pt, 0.005, unit.col); }
+        for pt in &unit.pts { gizmos.sphere(*pt, 0.001, unit.col); }
         for (sta, end) in &unit.lines { gizmos.line(*sta, *end, unit.col); }
     }
 

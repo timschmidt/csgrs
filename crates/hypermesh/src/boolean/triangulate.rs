@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 use nalgebra::{Matrix2x3, Matrix3x2, RowVector3};
 use crate::Halfedge;
 
-
 fn get_axis_aligned_projection(normal: &RowVector3<f64>) -> Matrix2x3<f64> {
     let abs = normal.abs();
     let max: f64;

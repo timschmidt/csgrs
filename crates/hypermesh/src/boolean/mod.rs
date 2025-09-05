@@ -6,12 +6,12 @@ pub mod kernel12;
 pub mod boolean46;
 pub mod test_data;
 
-use nalgebra::{RowVector3, Vector3};
+use nalgebra::{RowVector3};
 use crate::boolean::kernel02::Kernel02;
 use crate::boolean::kernel11::Kernel11;
 use crate::boolean::kernel12::Kernel12;
 use crate::bounds::{BoundingBox, Query};
-use crate::collider::{Collider, Recorder};
+use crate::collider::{Recorder};
 use crate::manifold::Manifold;
 
 /**

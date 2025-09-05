@@ -41,29 +41,10 @@ pub struct Hmesh {
     pub face_area: Vec<f64>,
 }
 
-#[derive(Debug, Clone)]
-pub struct Vert {
-    pub hm: Weak<Hmesh>,
-    pub id: usize
-}
-
-#[derive(Debug, Clone)]
-pub struct Edge {
-    pub hm: Weak<Hmesh>,
-    pub id: usize
-}
-
-#[derive(Debug, Clone)]
-pub struct Face {
-    pub hm: Weak<Hmesh>,
-    pub id: usize
-}
-
-#[derive(Debug, Clone)]
-pub struct Half {
-    pub hm: Weak<Hmesh>,
-    pub id: usize
-}
+#[derive(Debug, Clone)] pub struct Vert { pub hm: Weak<Hmesh>, pub id: usize }
+#[derive(Debug, Clone)] pub struct Edge { pub hm: Weak<Hmesh>, pub id: usize }
+#[derive(Debug, Clone)] pub struct Face { pub hm: Weak<Hmesh>, pub id: usize }
+#[derive(Debug, Clone)] pub struct Half { pub hm: Weak<Hmesh>, pub id: usize }
 
 fn edge_topology(
     pos: &DMatrix<f64>,
