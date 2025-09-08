@@ -31,6 +31,7 @@
 
 pub mod errors;
 pub mod float_types;
+pub mod IndexedMesh;
 pub mod io;
 pub mod mesh;
 pub mod nurbs;
