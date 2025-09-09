@@ -1,14 +1,23 @@
 //! Create `IndexedMesh`s by meshing signed distance fields with optimized indexed connectivity
 
+#[cfg(feature = "sdf")]
 use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
+#[cfg(feature = "sdf")]
 use crate::float_types::Real;
+#[cfg(feature = "sdf")]
 use crate::mesh::{plane::Plane, vertex::Vertex};
+#[cfg(feature = "sdf")]
 use fast_surface_nets::ndshape::Shape;
+#[cfg(feature = "sdf")]
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
+#[cfg(feature = "sdf")]
 use nalgebra::{Point3, Vector3};
+#[cfg(feature = "sdf")]
 use std::collections::HashMap;
+#[cfg(feature = "sdf")]
 use std::fmt::Debug;
 
+#[cfg(feature = "sdf")]
 impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     /// **Mathematical Foundation: SDF Meshing with Optimized Indexed Connectivity**
     ///
@@ -111,6 +120,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             nz: u32,
         }
 
+        #[cfg(feature = "sdf")]
         impl fast_surface_nets::ndshape::Shape<3> for GridShape {
             type Coord = u32;
 

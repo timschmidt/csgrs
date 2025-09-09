@@ -4,6 +4,8 @@
 //! Uses rayon for parallel processing of BSP tree operations.
 
 #[cfg(feature = "parallel")]
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+#[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
 use crate::IndexedMesh::IndexedMesh;
@@ -25,7 +27,95 @@ enum PolygonClassification {
 }
 
 #[cfg(feature = "parallel")]
+#[cfg(feature = "parallel")]
 impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
+    /// **Mathematical Foundation: Parallel BSP Tree Construction**
+    ///
+    /// Build BSP tree using parallel processing for optimal performance on large meshes.
+    /// This is the parallel version of the regular build method.
+    ///
+    /// ## **Parallel Algorithm**
+    /// 1. **Plane Selection**: Choose optimal splitting plane using parallel evaluation
+    /// 2. **Polygon Classification**: Classify polygons in parallel using rayon
+    /// 3. **Recursive Subdivision**: Build front and back subtrees in parallel
+    /// 4. **Index Preservation**: Maintain polygon indices throughout construction
+    ///
+    /// ## **Performance Benefits**
+    /// - **Scalability**: Linear speedup with number of cores for large meshes
+    /// - **Cache Efficiency**: Better memory access patterns through parallelization
+    /// - **Load Balancing**: Automatic work distribution via rayon
+    pub fn build(&mut self, mesh: &IndexedMesh<S>) {
+        self.build_parallel(mesh);
+    }
+
+    /// **Build BSP Tree with Depth Limit (Parallel Version)**
+    ///
+    /// Construct BSP tree with maximum recursion depth to prevent stack overflow.
+    /// Uses parallel processing for optimal performance.
+    ///
+    /// ## **Mathematical Foundation**
+    /// - **Depth Control**: Limits recursion to prevent exponential memory growth
+    /// - **Parallel Processing**: Leverages multiple cores for large polygon sets
+    /// - **Memory Management**: Prevents excessive stack frame allocation
+    ///
+    /// # Parameters
+    /// - `mesh`: The IndexedMesh containing the polygons
+    /// - `max_depth`: Maximum recursion depth (recommended: 15-25)
+    pub fn build_with_depth_limit(&mut self, mesh: &IndexedMesh<S>, max_depth: usize) {
+        self.build_with_depth_limit_recursive(mesh, 0, max_depth);
+    }
+
+    /// Recursive helper for depth-limited BSP construction (parallel version)
+    fn build_with_depth_limit_recursive(
+        &mut self,
+        mesh: &IndexedMesh<S>,
+        current_depth: usize,
+        max_depth: usize,
+    ) {
+        if self.polygons.is_empty() || current_depth >= max_depth {
+            return;
+        }
+
+        // Choose optimal splitting plane if not already set
+        if self.plane.is_none() {
+            self.plane = Some(self.choose_splitting_plane(mesh));
+        }
+
+        let plane = self.plane.as_ref().unwrap();
+
+        // Use parallel classification for better performance
+        let (front_polygons, back_polygons): (Vec<_>, Vec<_>) = self
+            .polygons
+            .par_iter()
+            .map(|&poly_idx| {
+                let polygon = &mesh.polygons[poly_idx];
+                let classification = self.classify_polygon_to_plane(mesh, polygon, plane);
+                (poly_idx, classification)
+            })
+            .partition_map(|(poly_idx, classification)| {
+                match classification {
+                    PolygonClassification::Front => rayon::iter::Either::Left(poly_idx),
+                    PolygonClassification::Back => rayon::iter::Either::Right(poly_idx),
+                    _ => rayon::iter::Either::Left(poly_idx), // Coplanar and spanning go to front
+                }
+            });
+
+        // Build subtrees recursively with incremented depth
+        if !front_polygons.is_empty() {
+            let mut front_node = IndexedNode::new();
+            front_node.polygons = front_polygons;
+            front_node.build_with_depth_limit_recursive(mesh, current_depth + 1, max_depth);
+            self.front = Some(Box::new(front_node));
+        }
+
+        if !back_polygons.is_empty() {
+            let mut back_node = IndexedNode::new();
+            back_node.polygons = back_polygons;
+            back_node.build_with_depth_limit_recursive(mesh, current_depth + 1, max_depth);
+            self.back = Some(Box::new(back_node));
+        }
+    }
+
     /// **Mathematical Foundation: Parallel BSP Tree Construction with Indexed Connectivity**
     ///
     /// Builds a balanced BSP tree using parallel processing for polygon classification
@@ -115,6 +205,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
     }
 
     /// Choose optimal splitting plane (parallel version)
+    #[cfg(feature = "parallel")]
     fn choose_splitting_plane(&self, mesh: &IndexedMesh<S>) -> crate::mesh::plane::Plane {
         if self.polygons.is_empty() {
             return crate::mesh::plane::Plane::from_normal(nalgebra::Vector3::z(), 0.0);
@@ -141,6 +232,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
     }
 
     /// Evaluate splitting plane quality (parallel version)
+    #[cfg(feature = "parallel")]
     fn evaluate_splitting_plane(
         &self,
         mesh: &IndexedMesh<S>,
@@ -168,6 +260,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
     }
 
     /// Classify polygon relative to plane (parallel version)
+    #[cfg(feature = "parallel")]
     fn classify_polygon_to_plane(
         &self,
         mesh: &IndexedMesh<S>,
@@ -228,6 +321,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
     }
 
     /// Compute signed distance from a point to a plane (parallel version)
+    #[cfg(feature = "parallel")]
     fn signed_distance_to_point(
         &self,
         plane: &crate::mesh::plane::Plane,
