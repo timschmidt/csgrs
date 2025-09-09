@@ -75,7 +75,6 @@ fn create_test_cube() -> IndexedMesh<i32> {
 
 #[test]
 fn test_plane_operations_classify_indexed_polygon() {
-    use csgrs::IndexedMesh::plane::IndexedPlaneOperations;
 
     let cube = create_test_cube();
     let test_plane = IndexedPlane::from_points(
@@ -86,7 +85,7 @@ fn test_plane_operations_classify_indexed_polygon() {
 
     // Test polygon classification
     let bottom_face = &cube.polygons[0]; // Should span the plane
-    let classification = test_plane.classify_indexed_polygon(bottom_face, &cube.vertices);
+    let classification = test_plane.classify_polygon(bottom_face, &cube.vertices);
 
     // Bottom face should span the vertical plane at x=0.5
     assert_ne!(classification, 0, "Polygon classification should not be zero");
@@ -94,7 +93,6 @@ fn test_plane_operations_classify_indexed_polygon() {
 
 #[test]
 fn test_plane_operations_split_indexed_polygon() {
-    use csgrs::IndexedMesh::plane::IndexedPlaneOperations;
 
     let cube = create_test_cube();
     let mut vertices = cube.vertices.clone();
@@ -132,7 +130,7 @@ fn test_indexed_polygon_subdivide_triangles() {
     let bottom_face = &cube.polygons[0];
 
     let subdivisions = std::num::NonZeroU32::new(1).unwrap();
-    let triangles = bottom_face.subdivide_triangles(subdivisions);
+    let triangles = bottom_face.subdivide_triangles(&mut cube.clone(), subdivisions);
 
     assert!(!triangles.is_empty(), "Subdivision should produce triangles");
 }

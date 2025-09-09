@@ -117,6 +117,22 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
         self.plane.flip();
     }
 
+    /// Flip this polygon and also flip the normals of its vertices
+    pub fn flip_with_vertices(&mut self, vertices: &mut [vertex::IndexedVertex]) {
+        // Reverse vertex indices to flip winding order
+        self.indices.reverse();
+
+        // Flip the plane normal
+        self.plane.flip();
+
+        // Flip normals of all vertices referenced by this polygon
+        for &idx in &self.indices {
+            if idx < vertices.len() {
+                vertices[idx].flip();
+            }
+        }
+    }
+
     /// Return an iterator over paired indices each forming an edge of the polygon
     pub fn edges(&self) -> impl Iterator<Item = (usize, usize)> + '_ {
         self.indices
@@ -2033,6 +2049,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         let (a_clip, a_passthru) = Self::partition_polygons(&self.polygons, &self.vertices, &other.bounding_box());
         let (b_clip, b_passthru) = Self::partition_polygons(&other.polygons, &other.vertices, &self.bounding_box());
 
+
         // Union operation preserves original metadata from each source
         // Do NOT retag b_clip polygons (unlike difference operation)
 
@@ -2080,11 +2097,11 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         // Deduplicate vertices to prevent holes and improve manifold properties
         result.merge_vertices(Real::EPSILON);
 
-        // Recompute vertex normals after CSG operation
-        result.compute_vertex_normals();
-
-        // Ensure consistent polygon winding and normal orientation
+        // Ensure consistent polygon winding and normal orientation BEFORE computing normals
         result.ensure_consistent_winding();
+
+        // Recompute vertex normals after CSG operation and winding correction
+        result.compute_vertex_normals();
 
         result
     }
@@ -2177,11 +2194,11 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         // Deduplicate vertices to prevent holes and improve manifold properties
         result.merge_vertices(Real::EPSILON);
 
-        // Recompute vertex normals after CSG operation
-        result.compute_vertex_normals();
-
-        // Ensure consistent polygon winding and normal orientation
+        // Ensure consistent polygon winding and normal orientation BEFORE computing normals
         result.ensure_consistent_winding();
+
+        // Recompute vertex normals after CSG operation and winding correction
+        result.compute_vertex_normals();
 
         result
     }
@@ -2259,11 +2276,11 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         // Deduplicate vertices to prevent holes and improve manifold properties
         result.merge_vertices(Real::EPSILON);
 
-        // Recompute vertex normals after CSG operation
-        result.compute_vertex_normals();
-
-        // Ensure consistent polygon winding and normal orientation
+        // Ensure consistent polygon winding and normal orientation BEFORE computing normals
         result.ensure_consistent_winding();
+
+        // Recompute vertex normals after CSG operation and winding correction
+        result.compute_vertex_normals();
 
         result
     }

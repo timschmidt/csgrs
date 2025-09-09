@@ -7,6 +7,7 @@
 use crate::IndexedMesh::{IndexedPolygon, vertex::IndexedVertex};
 use crate::float_types::{EPSILON, Real};
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
+use robust;
 use std::fmt::Debug;
 
 // Plane classification constants (matching mesh::plane constants)
@@ -176,13 +177,57 @@ impl Plane {
         }
     }
 
-    /// Classify a point relative to the plane (matches regular Mesh API)
+    /// Classify a point relative to the plane using robust geometric predicates
+    /// This matches the regular Mesh API but uses the IndexedMesh (normal, w) representation
     pub fn orient_point(&self, point: &Point3<Real>) -> i8 {
-        let distance = self.normal.dot(&point.coords) - self.w;
-        if distance > EPSILON {
-            FRONT
-        } else if distance < -EPSILON {
+        // For robust geometric classification, we need three points on the plane
+        // Generate them from the normal and offset
+        let p0 = Point3::from(self.normal * (self.w / self.normal.norm_squared()));
+
+        // Build an orthonormal basis {u, v} that spans the plane
+        let mut u = if self.normal.z.abs() > self.normal.x.abs() || self.normal.z.abs() > self.normal.y.abs() {
+            // normal is closer to ±Z ⇒ cross with X
+            Vector3::x().cross(&self.normal)
+        } else {
+            // otherwise cross with Z
+            Vector3::z().cross(&self.normal)
+        };
+        u.normalize_mut();
+        let v = self.normal.cross(&u).normalize();
+
+        // Use p0, p0+u, p0+v as the three defining points
+        let point_a = p0;
+        let point_b = p0 + u;
+        let point_c = p0 + v;
+
+        // Use robust orient3d predicate (same as regular Mesh)
+        let sign = robust::orient3d(
+            robust::Coord3D {
+                x: point_a.x,
+                y: point_a.y,
+                z: point_a.z,
+            },
+            robust::Coord3D {
+                x: point_b.x,
+                y: point_b.y,
+                z: point_b.z,
+            },
+            robust::Coord3D {
+                x: point_c.x,
+                y: point_c.y,
+                z: point_c.z,
+            },
+            robust::Coord3D {
+                x: point.x,
+                y: point.y,
+                z: point.z,
+            },
+        );
+
+        if sign > EPSILON as f64 {
             BACK
+        } else if sign < -(EPSILON as f64) {
+            FRONT
         } else {
             COPLANAR
         }
@@ -191,27 +236,19 @@ impl Plane {
     /// Classify an IndexedPolygon with respect to the plane.
     /// Returns a bitmask of COPLANAR, FRONT, and BACK.
     /// This method matches the regular Mesh classify_polygon method.
-    pub fn classify_polygon<S: Clone>(&self, polygon: &IndexedPolygon<S>) -> i8 {
-        // For IndexedPolygon, we can use the polygon's own plane for classification
-        // This is more efficient than checking individual vertices
-        let poly_plane = &polygon.plane;
+    pub fn classify_polygon<S: Clone>(&self, polygon: &IndexedPolygon<S>, vertices: &[IndexedVertex]) -> i8 {
+        // Match the regular Mesh approach: check each vertex individually
+        // This is more robust than plane-to-plane comparison
+        let mut polygon_type: i8 = 0;
 
-        // Check if planes are coplanar (same normal and distance)
-        let normal_dot = self.normal.dot(&poly_plane.normal);
-        let distance_diff = (self.w - poly_plane.w).abs();
-
-        if normal_dot > 0.999 && distance_diff < EPSILON {
-            // Planes are coplanar and facing same direction
-            COPLANAR
-        } else if normal_dot < -0.999 && distance_diff < EPSILON {
-            // Planes are coplanar but facing opposite directions
-            COPLANAR
-        } else {
-            // Planes are not coplanar, classify based on polygon's plane center
-            // Calculate a representative point on the polygon's plane
-            let poly_center = poly_plane.normal * poly_plane.w; // Point on plane closest to origin
-            self.orient_point(&Point3::from(poly_center))
+        for &vertex_idx in &polygon.indices {
+            if vertex_idx < vertices.len() {
+                let classification = self.orient_point(&vertices[vertex_idx].pos);
+                polygon_type |= classification;
+            }
         }
+
+        polygon_type
     }
 
     /// Splits an IndexedPolygon by this plane, returning four buckets:
@@ -411,12 +448,14 @@ impl Plane {
         let mut back = Vec::new();
 
         // Check if planes are coplanar first (optimization)
+        // Use very strict criteria for coplanar detection to avoid false positives
         let poly_plane = &polygon.plane;
         let normal_dot = self.normal.dot(&poly_plane.normal);
-        let distance_diff = (self.w - poly_plane.w).abs();
 
-        // Use same epsilon tolerance as Mesh implementation
-        if normal_dot.abs() > 0.999 && distance_diff < EPSILON {
+        // Only treat as coplanar if:
+        // 1. Normals are extremely close (almost exactly the same direction)
+        // 2. Distances from origin are very close
+        if normal_dot.abs() > 0.999999 && (self.w - poly_plane.w).abs() < EPSILON {
             // Planes are effectively coplanar
             if normal_dot > 0.0 {
                 coplanar_front.push(polygon.clone());

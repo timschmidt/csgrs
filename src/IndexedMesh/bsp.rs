@@ -1,7 +1,7 @@
 ﻿//! [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node structure and operations
 
 use crate::float_types::{Real, EPSILON};
-use crate::IndexedMesh::polygon::IndexedPolygon;
+use crate::IndexedMesh::IndexedPolygon;
 use crate::IndexedMesh::plane::{Plane, FRONT, BACK, COPLANAR, SPANNING};
 use crate::IndexedMesh::vertex::IndexedVertex;
 use std::fmt::Debug;
@@ -55,7 +55,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
 
 
     /// Pick the best splitting plane from a set of polygons using a heuristic
-    pub fn pick_best_splitting_plane(&self, polygons: &[IndexedPolygon<S>]) -> Plane {
+    pub fn pick_best_splitting_plane(&self, polygons: &[IndexedPolygon<S>], vertices: &[IndexedVertex]) -> Plane {
         const K_SPANS: Real = 8.0; // Weight for spanning polygons
         const K_BALANCE: Real = 1.0; // Weight for front/back balance
 
@@ -71,7 +71,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
             let mut num_spanning = 0;
 
             for poly in polygons {
-                match plane.classify_polygon(poly) {
+                match plane.classify_polygon(poly, vertices) {
                     COPLANAR => {}, // Not counted for balance
                     FRONT => num_front += 1,
                     BACK => num_back += 1,
@@ -122,46 +122,36 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
         }
         let plane = self.plane.as_ref().unwrap();
 
-        // Split each polygon; gather results
-        let (coplanar_front, coplanar_back, mut front, mut back) = polygons
-            .iter()
-            .map(|poly| plane.split_indexed_polygon(poly, vertices))
-            .fold(
-                (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
-                |mut acc, x| {
-                    acc.0.extend(x.0);
-                    acc.1.extend(x.1);
-                    acc.2.extend(x.2);
-                    acc.3.extend(x.3);
-                    acc
-                },
-            );
+        // Process each polygon individually (like regular Mesh)
+        let mut front_polys = Vec::with_capacity(polygons.len());
+        let mut back_polys = Vec::with_capacity(polygons.len());
 
-        // Decide where to send the coplanar polygons
-        for cp in coplanar_front {
-            if plane.orient_plane(&cp.plane) == FRONT {
-                front.push(cp);
-            } else {
-                back.push(cp);
+        for polygon in polygons {
+            let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
+                plane.split_indexed_polygon(polygon, vertices);
+
+            // Handle coplanar polygons like regular Mesh
+            for cp in coplanar_front.into_iter().chain(coplanar_back.into_iter()) {
+                if plane.orient_plane(&cp.plane) == FRONT {
+                    front_parts.push(cp);
+                } else {
+                    back_parts.push(cp);
+                }
             }
-        }
-        for cp in coplanar_back {
-            if plane.orient_plane(&cp.plane) == FRONT {
-                front.push(cp);
-            } else {
-                back.push(cp);
-            }
+
+            front_polys.append(&mut front_parts);
+            back_polys.append(&mut back_parts);
         }
 
-        // Process front and back
+        // Process front and back recursively
         let mut result = if let Some(ref f) = self.front {
-            f.clip_polygons(&front, vertices)
+            f.clip_polygons(&front_polys, vertices)
         } else {
-            front
+            front_polys
         };
 
         if let Some(ref b) = self.back {
-            result.extend(b.clip_polygons(&back, vertices));
+            result.extend(b.clip_polygons(&back_polys, vertices));
         }
 
         result
@@ -255,7 +245,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
 
         // Choose splitting plane if not already set
         if self.plane.is_none() {
-            self.plane = Some(self.pick_best_splitting_plane(polygons));
+            self.plane = Some(self.pick_best_splitting_plane(polygons, vertices));
         }
         let plane = self.plane.as_ref().unwrap();
 

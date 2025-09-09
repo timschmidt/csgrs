@@ -98,7 +98,7 @@ fn export_indexed_mesh_to_stl(mesh: &IndexedMesh<String>, filename: &str) -> Res
             let v1 = triangulated.vertices[polygon.indices[1]].pos;
             let v2 = triangulated.vertices[polygon.indices[2]].pos;
 
-            // Calculate normal
+            // Calculate normal from triangle vertices (more reliable for STL)
             let edge1 = v1 - v0;
             let edge2 = v2 - v0;
             let normal = edge1.cross(&edge2).normalize();
