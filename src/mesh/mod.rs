@@ -27,7 +27,7 @@ use rayon::{iter::IntoParallelRefIterator, prelude::*};
 pub mod bsp;
 pub mod bsp_parallel;
 
-#[cfg(feature = "chull")]
+#[cfg(feature = "chull-io")]
 pub mod convex_hull;
 pub mod flatten_slice;
 

@@ -8,7 +8,8 @@ use crate::float_types::{
     },
     {EPSILON, Real},
 };
-use crate::mesh::{plane::Plane, polygon::Polygon, vertex::Vertex};
+// Only import mesh types for compatibility conversions
+use crate::mesh::vertex::Vertex;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
@@ -42,6 +43,7 @@ pub mod flatten_slice;
 pub mod sdf;
 
 /// Convex hull operations for IndexedMesh
+#[cfg(feature = "chull-io")]
 pub mod convex_hull;
 
 /// Metaball (implicit surface) generation for IndexedMesh
@@ -55,6 +57,12 @@ pub mod tpms;
 /// Plane operations optimized for IndexedMesh
 pub mod plane;
 
+/// Vertex operations optimized for IndexedMesh
+pub mod vertex;
+
+/// Polygon operations optimized for IndexedMesh
+pub mod polygon;
+
 /// An indexed polygon, defined by indices into a vertex array.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
@@ -63,7 +71,7 @@ pub struct IndexedPolygon<S: Clone> {
     pub indices: Vec<usize>,
 
     /// The plane on which this Polygon lies, used for splitting
-    pub plane: Plane,
+    pub plane: plane::Plane,
 
     /// Lazily‑computed axis‑aligned bounding box of the Polygon
     pub bounding_box: OnceLock<Aabb>,
@@ -74,7 +82,7 @@ pub struct IndexedPolygon<S: Clone> {
 
 impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
     /// Create an indexed polygon from indices
-    pub fn new(indices: Vec<usize>, plane: Plane, metadata: Option<S>) -> Self {
+    pub fn new(indices: Vec<usize>, plane: plane::Plane, metadata: Option<S>) -> Self {
         assert!(indices.len() >= 3, "degenerate polygon");
 
         IndexedPolygon {
@@ -234,7 +242,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
                 })
                 .collect();
 
-            self.plane = Plane::from_vertices(vertex_positions);
+            self.plane = plane::Plane::from_vertices(vertex_positions);
         }
 
         // Update all vertex normals in this polygon to match the face normal
@@ -287,8 +295,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
     /// 3. **Spanning Detection**: Check if polygon crosses the plane
     ///
     /// Uses epsilon-based tolerance for numerical stability.
-    pub fn classify_against_plane(&self, plane: &Plane, mesh: &IndexedMesh<S>) -> i8 {
-        use crate::mesh::plane::{BACK, COPLANAR, FRONT, SPANNING};
+    pub fn classify_against_plane(&self, plane: &plane::Plane, mesh: &IndexedMesh<S>) -> i8 {
+        use crate::IndexedMesh::plane::{BACK, COPLANAR, FRONT, SPANNING};
 
         let mut front_count = 0;
         let mut back_count = 0;
@@ -341,8 +349,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
     /// **Mathematical Foundation: Polygon Splitting by Plane**
     ///
     /// Split this polygon by a plane, returning front and back parts.
-    /// This is a placeholder implementation - full splitting would require
-    /// more complex geometry processing.
+    /// Uses the IndexedPlane's split_indexed_polygon method for robust
+    /// geometric processing with indexed connectivity.
     ///
     /// ## **Splitting Algorithm**
     /// 1. **Edge Intersection**: Find where plane intersects polygon edges
@@ -352,16 +360,19 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
     /// Returns (front_polygons, back_polygons) as separate IndexedPolygons.
     pub fn split_by_plane(
         &self,
-        plane: &Plane,
+        plane: &plane::Plane,
         mesh: &IndexedMesh<S>,
     ) -> (Vec<IndexedPolygon<S>>, Vec<IndexedPolygon<S>>) {
-        // Placeholder implementation - return original polygon based on centroid
-        let centroid = self.centroid(mesh);
-        if plane.orient_point(&centroid) >= crate::mesh::plane::COPLANAR {
-            (vec![self.clone()], vec![])
-        } else {
-            (vec![], vec![self.clone()])
-        }
+        use crate::IndexedMesh::plane::IndexedPlaneOperations;
+
+        // Create a mutable copy of vertices for potential new intersection vertices
+        let mut vertices = mesh.vertices.clone();
+
+        // Use the plane's split method
+        let (_front_vertex_indices, _new_vertex_indices, front_polygons, back_polygons) =
+            plane.split_indexed_polygon(self, &mut vertices);
+
+        (front_polygons, back_polygons)
     }
 }
 
@@ -408,7 +419,10 @@ impl<S: Clone + Send + Sync + Debug + PartialEq> IndexedMesh<S> {
 
 impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// Build an IndexedMesh from an existing polygon list
-    pub fn from_polygons(polygons: &[Polygon<S>], metadata: Option<S>) -> Self {
+    pub fn from_polygons(
+        polygons: &[crate::mesh::polygon::Polygon<S>],
+        metadata: Option<S>,
+    ) -> Self {
         let mut vertices = Vec::new();
         let mut indexed_polygons = Vec::new();
         let mut vertex_map = std::collections::HashMap::new();
@@ -429,7 +443,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
                 indices.push(idx);
             }
             let indexed_poly =
-                IndexedPolygon::new(indices, poly.plane.clone(), poly.metadata.clone());
+                IndexedPolygon::new(indices, poly.plane.clone().into(), poly.metadata.clone());
             indexed_polygons.push(indexed_poly);
         }
 
@@ -1481,7 +1495,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for IndexedMesh<S> {
             // Reconstruct plane from transformed vertices
             let vertices: Vec<Vertex> =
                 poly.indices.iter().map(|&idx| mesh.vertices[idx]).collect();
-            poly.plane = Plane::from_vertices(vertices);
+            poly.plane = plane::Plane::from_vertices(vertices);
 
             // Invalidate the polygon's bounding box
             poly.bounding_box = OnceLock::new();
@@ -1621,7 +1635,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// Compute A - B using Binary Space Partitioning for robust boolean operations
     /// with manifold preservation and indexed connectivity.
     ///
-    /// ## **Algorithm: Simplified CSG Difference**
+    /// ## **Algorithm: Direct CSG Difference**
     /// Based on the working regular Mesh difference algorithm:
     /// 1. **BSP Construction**: Build BSP trees from both meshes
     /// 2. **Invert A**: Flip A inside/outside
@@ -1636,6 +1650,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// - **Memory Efficiency**: Reuses vertices where possible
     /// - **Topology Preservation**: Preserves manifold structure
     pub fn difference_indexed(&self, other: &IndexedMesh<S>) -> IndexedMesh<S> {
+        use crate::IndexedMesh::bsp::IndexedBSPNode;
+
         // Handle empty mesh cases
         if self.polygons.is_empty() {
             return IndexedMesh::new();
@@ -1644,16 +1660,121 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
             return self.clone();
         }
 
-        // **Temporary fallback to regular Mesh for stability**
-        // The direct IndexedMesh BSP implementation needs more work to match regular Mesh behavior
-        // TODO: Complete direct BSP implementation to eliminate conversion overhead
-        let mesh_a = self.to_mesh();
-        let mesh_b = other.to_mesh();
+        // **Phase 1: Setup Combined Vertex Array**
+        // Combine vertices from both meshes for BSP operations
+        let mut combined_vertices = self.vertices.clone();
+        let vertex_offset = combined_vertices.len();
+        combined_vertices.extend(other.vertices.iter().cloned());
 
-        let result_mesh = mesh_a.difference(&mesh_b);
+        // **Phase 2: Create Adjusted Polygon Copies**
+        // Create polygon copies that reference the combined vertex array
+        let a_polygons = self.polygons.clone();
+        let mut b_polygons = Vec::new();
 
-        // Convert back to IndexedMesh with optimized vertex sharing
-        IndexedMesh::from_polygons(&result_mesh.polygons, result_mesh.metadata)
+        for polygon in &other.polygons {
+            let mut adjusted_polygon = polygon.clone();
+            // Adjust indices to reference combined vertex array
+            for idx in &mut adjusted_polygon.indices {
+                *idx += vertex_offset;
+            }
+            // Propagate metadata from self to intersecting polygons
+            adjusted_polygon.metadata = self.metadata.clone();
+            b_polygons.push(adjusted_polygon);
+        }
+
+        // **Phase 3: Create Combined Mesh for BSP Operations**
+        let mut combined_mesh = IndexedMesh {
+            vertices: combined_vertices,
+            polygons: Vec::new(),
+            bounding_box: OnceLock::new(),
+            metadata: self.metadata.clone(),
+        };
+
+        // Add A polygons first, then B polygons
+        combined_mesh.polygons.extend(a_polygons);
+        let a_polygon_count = combined_mesh.polygons.len();
+        combined_mesh.polygons.extend(b_polygons);
+
+        // **Phase 4: Build BSP Trees**
+        // Create BSP trees for A and B polygon sets
+        let a_indices: Vec<usize> = (0..a_polygon_count).collect();
+        let b_indices: Vec<usize> = (a_polygon_count..combined_mesh.polygons.len()).collect();
+
+        let mut a_bsp = IndexedBSPNode::from_polygon_indices(&a_indices);
+        let mut b_bsp = IndexedBSPNode::from_polygon_indices(&b_indices);
+
+        a_bsp.build(&combined_mesh);
+        b_bsp.build(&combined_mesh);
+
+        // **Phase 5: Execute Difference Algorithm**
+        // Follow the exact algorithm from regular Mesh difference
+        a_bsp.invert_indexed(&combined_mesh);
+        a_bsp.clip_to_indexed(&b_bsp, &combined_mesh, &combined_mesh);
+        b_bsp.clip_to_indexed(&a_bsp, &combined_mesh, &combined_mesh);
+        b_bsp.invert_indexed(&combined_mesh);
+        b_bsp.clip_to_indexed(&a_bsp, &combined_mesh, &combined_mesh);
+        b_bsp.invert_indexed(&combined_mesh);
+
+        // Build A with B's remaining polygons
+        let b_polygon_indices = b_bsp.all_polygon_indices();
+        let b_result_polygons: Vec<IndexedPolygon<S>> = b_polygon_indices
+            .iter()
+            .filter_map(|&idx| {
+                if idx < combined_mesh.polygons.len() {
+                    Some(combined_mesh.polygons[idx].clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // Add B polygons to A's BSP tree
+        for polygon in b_result_polygons {
+            combined_mesh.polygons.push(polygon);
+        }
+        let new_b_indices: Vec<usize> =
+            (combined_mesh.polygons.len() - b_polygon_indices.len()
+                ..combined_mesh.polygons.len())
+                .collect();
+        for &idx in &new_b_indices {
+            a_bsp.polygons.push(idx);
+        }
+
+        a_bsp.invert_indexed(&combined_mesh);
+
+        // **Phase 6: Build Result**
+        // Collect final polygon indices and build result mesh
+        let final_polygon_indices = a_bsp.all_polygon_indices();
+        let mut result_polygons = Vec::new();
+
+        for &idx in &final_polygon_indices {
+            if idx < combined_mesh.polygons.len() {
+                result_polygons.push(combined_mesh.polygons[idx].clone());
+            }
+        }
+
+        // Create result mesh with optimized vertex sharing
+        IndexedMesh::from_polygons(
+            &result_polygons
+                .iter()
+                .map(|p| {
+                    // Convert IndexedPolygon back to regular Polygon for from_polygons
+                    let vertices: Vec<crate::mesh::vertex::Vertex> = p
+                        .indices
+                        .iter()
+                        .filter_map(|&idx| {
+                            if idx < combined_mesh.vertices.len() {
+                                Some(combined_mesh.vertices[idx])
+                            } else {
+                                None
+                            }
+                        })
+                        .collect();
+                    crate::mesh::polygon::Polygon::new(vertices, p.metadata.clone())
+                })
+                .collect::<Vec<_>>(),
+            self.metadata.clone(),
+        )
     }
 
     /// **Mathematical Foundation: BSP-Based Intersection Operation**
@@ -1661,7 +1782,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// Compute A ∩ B using Binary Space Partitioning for robust boolean operations
     /// with manifold preservation and indexed connectivity.
     ///
-    /// ## **Algorithm: Simplified CSG Intersection**
+    /// ## **Algorithm: Direct CSG Intersection**
     /// Based on the working regular Mesh intersection algorithm:
     /// 1. **BSP Construction**: Build BSP trees from both meshes
     /// 2. **Invert A**: Flip A inside/outside
@@ -1676,21 +1797,125 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// - **Memory Efficiency**: Reuses vertices where possible
     /// - **Topology Preservation**: Preserves manifold structure
     pub fn intersection_indexed(&self, other: &IndexedMesh<S>) -> IndexedMesh<S> {
+        use crate::IndexedMesh::bsp::IndexedBSPNode;
+
         // Handle empty mesh cases
         if self.polygons.is_empty() || other.polygons.is_empty() {
             return IndexedMesh::new();
         }
 
-        // **Temporary fallback to regular Mesh for stability**
-        // The direct IndexedMesh BSP implementation needs more work to match regular Mesh behavior
-        // TODO: Complete direct BSP implementation to eliminate conversion overhead
-        let mesh_a = self.to_mesh();
-        let mesh_b = other.to_mesh();
+        // **Phase 1: Setup Combined Vertex Array**
+        // Combine vertices from both meshes for BSP operations
+        let mut combined_vertices = self.vertices.clone();
+        let vertex_offset = combined_vertices.len();
+        combined_vertices.extend(other.vertices.iter().cloned());
 
-        let result_mesh = mesh_a.intersection(&mesh_b);
+        // **Phase 2: Create Adjusted Polygon Copies**
+        // Create polygon copies that reference the combined vertex array
+        let a_polygons = self.polygons.clone();
+        let mut b_polygons = Vec::new();
 
-        // Convert back to IndexedMesh with optimized vertex sharing
-        IndexedMesh::from_polygons(&result_mesh.polygons, result_mesh.metadata)
+        for polygon in &other.polygons {
+            let mut adjusted_polygon = polygon.clone();
+            // Adjust indices to reference combined vertex array
+            for idx in &mut adjusted_polygon.indices {
+                *idx += vertex_offset;
+            }
+            b_polygons.push(adjusted_polygon);
+        }
+
+        // **Phase 3: Create Combined Mesh for BSP Operations**
+        let mut combined_mesh = IndexedMesh {
+            vertices: combined_vertices,
+            polygons: Vec::new(),
+            bounding_box: OnceLock::new(),
+            metadata: self.metadata.clone(),
+        };
+
+        // Add A polygons first, then B polygons
+        combined_mesh.polygons.extend(a_polygons);
+        let a_polygon_count = combined_mesh.polygons.len();
+        combined_mesh.polygons.extend(b_polygons);
+
+        // **Phase 4: Build BSP Trees**
+        // Create BSP trees for A and B polygon sets
+        let a_indices: Vec<usize> = (0..a_polygon_count).collect();
+        let b_indices: Vec<usize> = (a_polygon_count..combined_mesh.polygons.len()).collect();
+
+        let mut a_bsp = IndexedBSPNode::from_polygon_indices(&a_indices);
+        let mut b_bsp = IndexedBSPNode::from_polygon_indices(&b_indices);
+
+        a_bsp.build(&combined_mesh);
+        b_bsp.build(&combined_mesh);
+
+        // **Phase 5: Execute Intersection Algorithm**
+        // Follow the exact algorithm from regular Mesh intersection
+        a_bsp.invert_indexed(&combined_mesh);
+        b_bsp.clip_to_indexed(&a_bsp, &combined_mesh, &combined_mesh);
+        b_bsp.invert_indexed(&combined_mesh);
+        a_bsp.clip_to_indexed(&b_bsp, &combined_mesh, &combined_mesh);
+        b_bsp.clip_to_indexed(&a_bsp, &combined_mesh, &combined_mesh);
+
+        // Build A with B's remaining polygons
+        let b_polygon_indices = b_bsp.all_polygon_indices();
+        let b_result_polygons: Vec<IndexedPolygon<S>> = b_polygon_indices
+            .iter()
+            .filter_map(|&idx| {
+                if idx < combined_mesh.polygons.len() {
+                    Some(combined_mesh.polygons[idx].clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // Add B polygons to A's BSP tree
+        for polygon in b_result_polygons {
+            combined_mesh.polygons.push(polygon);
+        }
+        let new_b_indices: Vec<usize> =
+            (combined_mesh.polygons.len() - b_polygon_indices.len()
+                ..combined_mesh.polygons.len())
+                .collect();
+        for &idx in &new_b_indices {
+            a_bsp.polygons.push(idx);
+        }
+
+        a_bsp.invert_indexed(&combined_mesh);
+
+        // **Phase 6: Build Result**
+        // Collect final polygon indices and build result mesh
+        let final_polygon_indices = a_bsp.all_polygon_indices();
+        let mut result_polygons = Vec::new();
+
+        for &idx in &final_polygon_indices {
+            if idx < combined_mesh.polygons.len() {
+                result_polygons.push(combined_mesh.polygons[idx].clone());
+            }
+        }
+
+        // Create result mesh with optimized vertex sharing
+        IndexedMesh::from_polygons(
+            &result_polygons
+                .iter()
+                .map(|p| {
+                    // Convert IndexedPolygon back to regular Polygon for from_polygons
+                    let vertices: Vec<crate::mesh::vertex::Vertex> = p
+                        .indices
+                        .iter()
+                        .filter_map(|&idx| {
+                            if idx < combined_mesh.vertices.len() {
+                                Some(combined_mesh.vertices[idx])
+                            } else {
+                                None
+                            }
+                        })
+                        .collect();
+                    crate::mesh::polygon::Polygon::new(vertices, p.metadata.clone())
+                })
+                .collect::<Vec<_>>(),
+            self.metadata.clone(),
+        )
     }
 
     /// **Mathematical Foundation: BSP-based XOR Operation with Indexed Connectivity**
@@ -1747,7 +1972,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for IndexedMesh<S> {
                 indices.push(idx);
             }
 
-            let plane = Plane::from_vertices(vec![
+            let plane = plane::Plane::from_vertices(vec![
                 Vertex::new(vertices[indices[0]].pos, Vector3::z()),
                 Vertex::new(vertices[indices[1]].pos, Vector3::z()),
                 Vertex::new(vertices[indices[2]].pos, Vector3::z()),

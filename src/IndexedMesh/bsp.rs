@@ -3,10 +3,10 @@
 //! This module provides BSP tree functionality optimized for IndexedMesh's indexed connectivity model.
 //! BSP trees are used for efficient spatial partitioning and CSG operations.
 
+use crate::IndexedMesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
 #[cfg(not(feature = "parallel"))]
 use crate::float_types::Real;
-use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::mesh::vertex::Vertex;
 #[cfg(not(feature = "parallel"))]
 use nalgebra::Point3;
@@ -362,9 +362,9 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
             let classification = plane.classify_indexed_polygon(polygon, vertices);
 
             match classification {
-                crate::mesh::plane::FRONT => front_polys.push(polygon.clone()),
-                crate::mesh::plane::BACK => {}, // Clipped (inside)
-                crate::mesh::plane::COPLANAR => {
+                crate::IndexedMesh::plane::FRONT => front_polys.push(polygon.clone()),
+                crate::IndexedMesh::plane::BACK => {}, // Clipped (inside)
+                crate::IndexedMesh::plane::COPLANAR => {
                     // Check orientation to determine if it's inside or outside
                     let poly_normal = polygon.plane.normal();
                     let plane_normal = plane.normal();
@@ -460,7 +460,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
             let classification = plane.classify_indexed_polygon(polygon, vertices);
 
             match classification {
-                crate::mesh::plane::FRONT => {
+                crate::IndexedMesh::plane::FRONT => {
                     // Polygon is in front, check front subtree
                     if let Some(ref front) = self.front {
                         front.clip_polygon_outside(polygon, vertices)
@@ -469,7 +469,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
                         vec![polygon.clone()]
                     }
                 },
-                crate::mesh::plane::BACK => {
+                crate::IndexedMesh::plane::BACK => {
                     // Polygon is behind, check back subtree
                     if let Some(ref back) = self.back {
                         back.clip_polygon_outside(polygon, vertices)
@@ -478,7 +478,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
                         Vec::new()
                     }
                 },
-                crate::mesh::plane::COPLANAR => {
+                crate::IndexedMesh::plane::COPLANAR => {
                     // Coplanar polygon, check orientation
                     let poly_normal = polygon.plane.normal();
                     let plane_normal = plane.normal();
@@ -577,12 +577,11 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
     /// ```
     pub fn slice_indexed(
         &self,
-        slicing_plane: &crate::mesh::plane::Plane,
+        slicing_plane: &crate::IndexedMesh::plane::Plane,
         mesh: &IndexedMesh<S>,
     ) -> (Vec<IndexedPolygon<S>>, Vec<[crate::mesh::vertex::Vertex; 2]>) {
         use crate::IndexedMesh::plane::IndexedPlaneOperations;
         use crate::float_types::EPSILON;
-        use crate::mesh::plane::{COPLANAR, SPANNING};
 
         // Collect all polygon indices from the BSP tree
         let all_polygon_indices = self.all_polygon_indices();
@@ -1063,7 +1062,7 @@ mod tests {
 
         // Test that the IndexedMesh slice method (which uses slice_indexed internally) works
         let plane = Plane::from_normal(Vector3::z(), 0.0);
-        let sketch = cube.slice(plane);
+        let sketch = cube.slice(plane.into());
 
         // The slice should produce some 2D geometry
         assert!(
@@ -1088,7 +1087,7 @@ mod tests {
 
         // Slice at z=0 (should intersect the bottom face)
         let plane = Plane::from_normal(Vector3::z(), 0.0);
-        let sketch = indexed_cube.slice(plane);
+        let sketch = indexed_cube.slice(plane.into());
 
         // Should produce exactly one square polygon
         assert_eq!(

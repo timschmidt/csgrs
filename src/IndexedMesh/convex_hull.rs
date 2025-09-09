@@ -6,6 +6,9 @@
 use crate::IndexedMesh::IndexedMesh;
 use std::fmt::Debug;
 
+#[cfg(feature = "chull-io")]
+use chull::ConvexHullWrapper;
+
 impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// **Mathematical Foundation: Robust Convex Hull with Indexed Connectivity**
     ///
@@ -19,6 +22,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// 4. **Manifold Validation**: Ensure result is a valid 2-manifold
     ///
     /// Returns a new IndexedMesh representing the convex hull.
+    #[cfg(feature = "chull-io")]
     pub fn convex_hull(&self) -> Result<IndexedMesh<S>, String> {
         if self.vertices.is_empty() {
             return Err("Cannot compute convex hull of empty mesh".to_string());
@@ -37,7 +41,6 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         }
 
         // Compute convex hull using chull library with robust error handling
-        use chull::ConvexHullWrapper;
         let hull = match ConvexHullWrapper::try_new(&points, None) {
             Ok(h) => h,
             Err(e) => return Err(format!("Convex hull computation failed: {e:?}")),
@@ -109,6 +112,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// 4. **Optimization**: Leverage vertex sharing for memory efficiency
     ///
     /// **Note**: Both input meshes should be convex for correct results.
+    #[cfg(feature = "chull-io")]
     pub fn minkowski_sum(&self, other: &IndexedMesh<S>) -> Result<IndexedMesh<S>, String> {
         if self.vertices.is_empty() || other.vertices.is_empty() {
             return Err("Cannot compute Minkowski sum with empty mesh".to_string());
@@ -129,7 +133,6 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         }
 
         // Compute convex hull of sum points
-        use chull::ConvexHullWrapper;
         let hull = match ConvexHullWrapper::try_new(&sum_points, None) {
             Ok(h) => h,
             Err(e) => return Err(format!("Minkowski sum hull computation failed: {e:?}")),
@@ -188,6 +191,30 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         result.compute_vertex_normals();
 
         Ok(result)
+    }
+
+    /// **Stub Implementation: Convex Hull (chull-io feature disabled)**
+    ///
+    /// Returns an error when the chull-io feature is not enabled.
+    /// Enable the chull-io feature to use convex hull functionality.
+    #[cfg(not(feature = "chull-io"))]
+    pub fn convex_hull(&self) -> Result<IndexedMesh<S>, String> {
+        Err(
+            "Convex hull computation requires the 'chull-io' feature to be enabled"
+                .to_string(),
+        )
+    }
+
+    /// **Stub Implementation: Minkowski Sum (chull-io feature disabled)**
+    ///
+    /// Returns an error when the chull-io feature is not enabled.
+    /// Enable the chull-io feature to use Minkowski sum functionality.
+    #[cfg(not(feature = "chull-io"))]
+    pub fn minkowski_sum(&self, _other: &IndexedMesh<S>) -> Result<IndexedMesh<S>, String> {
+        Err(
+            "Minkowski sum computation requires the 'chull-io' feature to be enabled"
+                .to_string(),
+        )
     }
 }
 

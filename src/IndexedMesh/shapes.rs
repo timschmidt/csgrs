@@ -1,9 +1,10 @@
 //! 3D Shapes as `IndexedMesh`s with optimized indexed connectivity
 
+use crate::IndexedMesh::plane::Plane;
 use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
 use crate::errors::ValidationError;
 use crate::float_types::{EPSILON, PI, Real, TAU};
-use crate::mesh::{plane::Plane, vertex::Vertex};
+use crate::mesh::vertex::Vertex;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};

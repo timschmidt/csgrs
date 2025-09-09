@@ -312,7 +312,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
                     .collect();
 
                 if vertices.len() == 3 {
-                    polygon.plane = crate::mesh::plane::Plane::from_vertices(vertices);
+                    polygon.plane = crate::IndexedMesh::plane::Plane::from_vertices(vertices);
                 }
             }
 

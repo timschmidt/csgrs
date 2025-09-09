@@ -6,7 +6,6 @@
 #[cfg(feature = "sdf")]
 use csgrs::float_types::Real;
 
-use csgrs::mesh::plane::Plane;
 use csgrs::traits::CSG;
 use nalgebra::{Point3, Vector3};
 use std::fs;
@@ -252,7 +251,7 @@ fn main() {
         let ray_origin = Point3::new(0.0, 0.0, -5.0);
         let ray_dir = Vector3::new(0.0, 0.0, 1.0); // pointing along +Z
         let hits = cube.ray_intersections(&ray_origin, &ray_dir);
-        println!("Ray hits on the cube: {:?}", hits);
+        println!("Ray hits on the cube: {hits:?}");
     }
 
     // 12) Polyhedron example (simple tetrahedron):
@@ -297,9 +296,9 @@ fn main() {
 
     // 14) Mass properties (just printing them)
     let (mass, com, principal_frame) = cube.mass_properties(1.0);
-    println!("Cube mass = {}", mass);
-    println!("Cube center of mass = {:?}", com);
-    println!("Cube principal inertia local frame = {:?}", principal_frame);
+    println!("Cube mass = {mass}");
+    println!("Cube center of mass = {com:?}");
+    println!("Cube principal inertia local frame = {principal_frame:?}");
 
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)

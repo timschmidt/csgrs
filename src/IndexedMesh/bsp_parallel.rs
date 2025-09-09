@@ -349,8 +349,9 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::IndexedMesh::plane::Plane;
     use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
-    use crate::mesh::{plane::Plane, vertex::Vertex};
+    use crate::mesh::vertex::Vertex;
     use nalgebra::{Point3, Vector3};
 
     #[test]
