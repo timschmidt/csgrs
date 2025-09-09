@@ -2,7 +2,7 @@
 
 use crate::IndexedMesh::IndexedMesh;
 use crate::float_types::{PI, Real};
-use crate::mesh::vertex::Vertex;
+
 use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]
@@ -129,7 +129,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     /// ```
     /// Where each component is normalized to [0,1] range.
     fn compute_triangle_quality_indexed(
-        vertices: &[Vertex],
+        vertices: &[crate::IndexedMesh::vertex::IndexedVertex],
         indices: &[usize],
     ) -> TriangleQuality {
         if indices.len() != 3 {

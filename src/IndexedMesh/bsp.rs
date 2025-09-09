@@ -7,7 +7,7 @@ use crate::IndexedMesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
 #[cfg(not(feature = "parallel"))]
 use crate::float_types::Real;
-use crate::mesh::vertex::Vertex;
+
 #[cfg(not(feature = "parallel"))]
 use nalgebra::Point3;
 use std::fmt::Debug;
@@ -346,7 +346,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
     pub fn clip_indexed_polygons(
         &self,
         polygons: &[IndexedPolygon<S>],
-        vertices: &[Vertex],
+        vertices: &[crate::IndexedMesh::vertex::IndexedVertex],
     ) -> Vec<IndexedPolygon<S>> {
         if self.plane.is_none() {
             return polygons.to_vec();
@@ -452,7 +452,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
     pub fn clip_polygon_outside(
         &self,
         polygon: &IndexedPolygon<S>,
-        vertices: &[Vertex],
+        vertices: &[crate::IndexedMesh::vertex::IndexedVertex],
     ) -> Vec<IndexedPolygon<S>> {
         if let Some(ref plane) = self.plane {
             use crate::IndexedMesh::plane::IndexedPlaneOperations;
@@ -660,7 +660,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
                         // Create line segments from pairs of intersection points
                         for chunk in crossing_points.chunks(2) {
                             if chunk.len() == 2 {
-                                intersection_edges.push([chunk[0], chunk[1]]);
+                                intersection_edges.push([chunk[0].into(), chunk[1].into()]);
                             }
                         }
                     }
@@ -913,16 +913,25 @@ enum PolygonClassification {
 mod tests {
     use super::*;
     use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
-    use crate::mesh::vertex::Vertex;
+
     use nalgebra::{Point3, Vector3};
 
     #[test]
     fn test_indexed_bsp_basic_functionality() {
         // Create a simple mesh with one triangle
         let vertices = vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 1.0)),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 1.0)),
-            Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::new(0.0, 0.0, 1.0)),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(0.0, 0.0, 0.0),
+                Vector3::new(0.0, 0.0, 1.0),
+            ),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(1.0, 0.0, 0.0),
+                Vector3::new(0.0, 0.0, 1.0),
+            ),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(0.5, 1.0, 0.0),
+                Vector3::new(0.0, 0.0, 1.0),
+            ),
         ];
 
         let plane_vertices = vec![
@@ -932,7 +941,7 @@ mod tests {
         ];
         let polygons = vec![IndexedPolygon::<i32>::new(
             vec![0, 1, 2],
-            Plane::from_vertices(plane_vertices),
+            Plane::from_indexed_vertices(plane_vertices),
             None,
         )];
 
@@ -980,13 +989,22 @@ mod tests {
 
         // Create a simple triangle that spans the XY plane
         let vertices = vec![
-            Vertex::new(Point3::new(0.0, 0.0, -1.0), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::z()),
-            Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::z()),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(0.0, 0.0, -1.0),
+                Vector3::z(),
+            ),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(1.0, 0.0, 1.0),
+                Vector3::z(),
+            ),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(0.0, 1.0, 1.0),
+                Vector3::z(),
+            ),
         ];
 
         // Create plane from vertices
-        let plane = Plane::from_vertices(vertices.clone());
+        let plane = Plane::from_indexed_vertices(vertices.clone());
         let triangle_polygon: IndexedPolygon<()> =
             IndexedPolygon::new(vec![0, 1, 2], plane, None);
         let mut mesh: IndexedMesh<()> = IndexedMesh::new();
@@ -1021,10 +1039,22 @@ mod tests {
 
         // Create a cube above the slicing plane
         let vertices = vec![
-            Vertex::new(Point3::new(-1.0, -1.0, 1.0), Vector3::z()),
-            Vertex::new(Point3::new(1.0, -1.0, 1.0), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 1.0, 1.0), Vector3::z()),
-            Vertex::new(Point3::new(-1.0, 1.0, 1.0), Vector3::z()),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(-1.0, -1.0, 1.0),
+                Vector3::z(),
+            ),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(1.0, -1.0, 1.0),
+                Vector3::z(),
+            ),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(1.0, 1.0, 1.0),
+                Vector3::z(),
+            ),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(-1.0, 1.0, 1.0),
+                Vector3::z(),
+            ),
         ];
 
         // Create plane from first 3 vertices
@@ -1033,7 +1063,7 @@ mod tests {
             vertices[1].clone(),
             vertices[2].clone(),
         ];
-        let plane = Plane::from_vertices(plane_vertices);
+        let plane = Plane::from_indexed_vertices(plane_vertices);
         let quad_polygon: IndexedPolygon<()> =
             IndexedPolygon::new(vec![0, 1, 2, 3], plane, None);
         let mut mesh: IndexedMesh<()> = IndexedMesh::new();

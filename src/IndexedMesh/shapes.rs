@@ -4,7 +4,7 @@ use crate::IndexedMesh::plane::Plane;
 use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
 use crate::errors::ValidationError;
 use crate::float_types::{EPSILON, PI, Real, TAU};
-use crate::mesh::vertex::Vertex;
+
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
@@ -48,16 +48,40 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         height: Real,
         metadata: Option<S>,
     ) -> IndexedMesh<S> {
-        // Define the eight corner vertices once
+        // Define the eight corner vertices once using IndexedVertex
         let vertices = vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::zeros()), // 0: origin
-            Vertex::new(Point3::new(width, 0.0, 0.0), Vector3::zeros()), // 1: +X
-            Vertex::new(Point3::new(width, length, 0.0), Vector3::zeros()), // 2: +X+Y
-            Vertex::new(Point3::new(0.0, length, 0.0), Vector3::zeros()), // 3: +Y
-            Vertex::new(Point3::new(0.0, 0.0, height), Vector3::zeros()), // 4: +Z
-            Vertex::new(Point3::new(width, 0.0, height), Vector3::zeros()), // 5: +X+Z
-            Vertex::new(Point3::new(width, length, height), Vector3::zeros()), // 6: +X+Y+Z
-            Vertex::new(Point3::new(0.0, length, height), Vector3::zeros()), // 7: +Y+Z
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(0.0, 0.0, 0.0),
+                Vector3::zeros(),
+            ), // 0: origin
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(width, 0.0, 0.0),
+                Vector3::zeros(),
+            ), // 1: +X
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(width, length, 0.0),
+                Vector3::zeros(),
+            ), // 2: +X+Y
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(0.0, length, 0.0),
+                Vector3::zeros(),
+            ), // 3: +Y
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(0.0, 0.0, height),
+                Vector3::zeros(),
+            ), // 4: +Z
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(width, 0.0, height),
+                Vector3::zeros(),
+            ), // 5: +X+Z
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(width, length, height),
+                Vector3::zeros(),
+            ), // 6: +X+Y+Z
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(0.0, length, height),
+                Vector3::zeros(),
+            ), // 7: +Y+Z
         ];
 
         // Define faces using vertex indices with proper winding order (CCW from outside)
@@ -128,8 +152,8 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         let mut vertices = Vec::new();
         let mut polygons = Vec::new();
 
-        // Add north pole
-        vertices.push(Vertex::new(
+        // Add north pole using IndexedVertex
+        vertices.push(crate::IndexedMesh::vertex::IndexedVertex::new(
             Point3::new(0.0, radius, 0.0),
             Vector3::new(0.0, 1.0, 0.0),
         ));
@@ -149,12 +173,12 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
 
                 let pos = Point3::new(x, y, z);
                 let normal = pos.coords.normalize();
-                vertices.push(Vertex::new(pos, normal));
+                vertices.push(crate::IndexedMesh::vertex::IndexedVertex::new(pos, normal));
             }
         }
 
-        // Add south pole
-        vertices.push(Vertex::new(
+        // Add south pole using IndexedVertex
+        vertices.push(crate::IndexedMesh::vertex::IndexedVertex::new(
             Point3::new(0.0, -radius, 0.0),
             Vector3::new(0.0, -1.0, 0.0),
         ));
@@ -170,8 +194,11 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             let v1 = 1 + i;
             let v2 = 1 + next_i;
 
-            let plane =
-                Plane::from_vertices(vec![vertices[north_pole], vertices[v2], vertices[v1]]);
+            let plane = Plane::from_indexed_vertices(vec![
+                vertices[north_pole],
+                vertices[v2],
+                vertices[v1],
+            ]);
             polygons.push(IndexedPolygon::new(
                 vec![north_pole, v2, v1],
                 plane,
@@ -193,8 +220,11 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
                 let v4 = next_ring_start + next_i;
 
                 // First triangle of quad (counter-clockwise from outside)
-                let plane1 =
-                    Plane::from_vertices(vec![vertices[v1], vertices[v3], vertices[v2]]);
+                let plane1 = Plane::from_indexed_vertices(vec![
+                    vertices[v1],
+                    vertices[v3],
+                    vertices[v2],
+                ]);
                 polygons.push(IndexedPolygon::new(
                     vec![v1, v3, v2],
                     plane1,
@@ -202,8 +232,11 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
                 ));
 
                 // Second triangle of quad (counter-clockwise from outside)
-                let plane2 =
-                    Plane::from_vertices(vec![vertices[v2], vertices[v3], vertices[v4]]);
+                let plane2 = Plane::from_indexed_vertices(vec![
+                    vertices[v2],
+                    vertices[v3],
+                    vertices[v4],
+                ]);
                 polygons.push(IndexedPolygon::new(
                     vec![v2, v3, v4],
                     plane2,
@@ -221,7 +254,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
                 let v1 = last_ring_start + i;
                 let v2 = last_ring_start + next_i;
 
-                let plane = Plane::from_vertices(vec![
+                let plane = Plane::from_indexed_vertices(vec![
                     vertices[v1],
                     vertices[v2],
                     vertices[south_pole],
@@ -271,12 +304,18 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         let mut vertices = Vec::new();
         let mut polygons = Vec::new();
 
-        // Center vertices for caps
+        // Center vertices for caps using IndexedVertex
         let bottom_center = vertices.len();
-        vertices.push(Vertex::new(Point3::new(0.0, 0.0, 0.0), -Vector3::z()));
+        vertices.push(crate::IndexedMesh::vertex::IndexedVertex::new(
+            Point3::new(0.0, 0.0, 0.0),
+            -Vector3::z(),
+        ));
 
         let top_center = vertices.len();
-        vertices.push(Vertex::new(Point3::new(0.0, 0.0, height), Vector3::z()));
+        vertices.push(crate::IndexedMesh::vertex::IndexedVertex::new(
+            Point3::new(0.0, 0.0, height),
+            Vector3::z(),
+        ));
 
         // Ring vertices for bottom and top
         let bottom_ring_start = vertices.len();
@@ -284,7 +323,10 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             let angle = (i as Real / segments as Real) * TAU;
             let x = angle.cos() * radius1;
             let y = angle.sin() * radius1;
-            vertices.push(Vertex::new(Point3::new(x, y, 0.0), -Vector3::z()));
+            vertices.push(crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(x, y, 0.0),
+                -Vector3::z(),
+            ));
         }
 
         let top_ring_start = vertices.len();
@@ -292,7 +334,10 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             let angle = (i as Real / segments as Real) * TAU;
             let x = angle.cos() * radius2;
             let y = angle.sin() * radius2;
-            vertices.push(Vertex::new(Point3::new(x, y, height), Vector3::z()));
+            vertices.push(crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(x, y, height),
+                Vector3::z(),
+            ));
         }
 
         // Generate faces
@@ -398,10 +443,15 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         faces: &[&[usize]],
         metadata: Option<S>,
     ) -> Result<IndexedMesh<S>, ValidationError> {
-        // Convert points to vertices (normals will be computed later)
-        let vertices: Vec<Vertex> = points
+        // Convert points to IndexedVertex (normals will be computed later)
+        let vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> = points
             .iter()
-            .map(|&[x, y, z]| Vertex::new(Point3::new(x, y, z), Vector3::zeros()))
+            .map(|&[x, y, z]| {
+                crate::IndexedMesh::vertex::IndexedVertex::new(
+                    Point3::new(x, y, z),
+                    Vector3::zeros(),
+                )
+            })
             .collect();
 
         let mut polygons = Vec::new();
@@ -420,9 +470,10 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             }
 
             // Create indexed polygon
-            let face_vertices: Vec<Vertex> = face.iter().map(|&idx| vertices[idx]).collect();
+            let face_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> =
+                face.iter().map(|&idx| vertices[idx]).collect();
 
-            let plane = Plane::from_vertices(face_vertices);
+            let plane = Plane::from_indexed_vertices(face_vertices);
             let indexed_poly = IndexedPolygon::new(face.to_vec(), plane, metadata.clone());
             polygons.push(indexed_poly);
         }

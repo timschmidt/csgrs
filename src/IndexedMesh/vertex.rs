@@ -12,11 +12,162 @@ use nalgebra::{Point3, Vector3};
 ///
 /// Enhanced vertex structure optimized for IndexedMesh operations.
 /// Maintains the same core data as regular Vertex but with additional
-/// index-aware functionality.
+/// index-aware functionality and GPU-ready memory layout.
 #[derive(Debug, Clone, PartialEq, Copy)]
+#[repr(C)] // Ensure predictable memory layout for SIMD and GPU operations
 pub struct IndexedVertex {
     pub pos: Point3<Real>,
     pub normal: Vector3<Real>,
+}
+
+/// **GPU-Ready Vertex Buffer**
+///
+/// Optimized vertex buffer structure designed for efficient GPU upload
+/// and SIMD operations. Uses separate arrays for positions and normals
+/// to enable vectorized processing.
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct VertexBuffer {
+    /// Vertex positions in [x, y, z] format for GPU compatibility
+    pub positions: Vec<[Real; 3]>,
+    /// Vertex normals in [x, y, z] format for GPU compatibility
+    pub normals: Vec<[Real; 3]>,
+}
+
+/// **GPU-Ready Index Buffer**
+///
+/// Optimized index buffer structure for efficient GPU upload.
+/// Uses u32 indices for maximum compatibility with graphics APIs.
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct IndexBuffer {
+    /// Triangle indices in GPU-ready format
+    pub indices: Vec<u32>,
+}
+
+impl Default for VertexBuffer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl VertexBuffer {
+    /// Create a new empty vertex buffer
+    #[inline]
+    pub const fn new() -> Self {
+        Self {
+            positions: Vec::new(),
+            normals: Vec::new(),
+        }
+    }
+
+    /// Create vertex buffer with specified capacity
+    #[inline]
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            positions: Vec::with_capacity(capacity),
+            normals: Vec::with_capacity(capacity),
+        }
+    }
+
+    /// Create vertex buffer from IndexedVertex slice (zero-copy when possible)
+    #[inline]
+    pub fn from_indexed_vertices(vertices: &[IndexedVertex]) -> Self {
+        let mut buffer = Self::with_capacity(vertices.len());
+        for vertex in vertices {
+            buffer
+                .positions
+                .push([vertex.pos.x, vertex.pos.y, vertex.pos.z]);
+            buffer
+                .normals
+                .push([vertex.normal.x, vertex.normal.y, vertex.normal.z]);
+        }
+        buffer
+    }
+
+    /// Get number of vertices in buffer
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.positions.len()
+    }
+
+    /// Check if buffer is empty
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.positions.is_empty()
+    }
+
+    /// Get position slice for SIMD operations
+    #[inline]
+    pub fn positions(&self) -> &[[Real; 3]] {
+        &self.positions
+    }
+
+    /// Get normal slice for SIMD operations
+    #[inline]
+    pub fn normals(&self) -> &[[Real; 3]] {
+        &self.normals
+    }
+}
+
+impl Default for IndexBuffer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl IndexBuffer {
+    /// Create a new empty index buffer
+    #[inline]
+    pub const fn new() -> Self {
+        Self {
+            indices: Vec::new(),
+        }
+    }
+
+    /// Create index buffer with specified capacity
+    #[inline]
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            indices: Vec::with_capacity(capacity),
+        }
+    }
+
+    /// Create index buffer from triangle indices
+    #[inline]
+    pub fn from_triangles(triangles: &[[usize; 3]]) -> Self {
+        let mut buffer = Self::with_capacity(triangles.len() * 3);
+        for triangle in triangles {
+            buffer.indices.push(triangle[0] as u32);
+            buffer.indices.push(triangle[1] as u32);
+            buffer.indices.push(triangle[2] as u32);
+        }
+        buffer
+    }
+
+    /// Get number of indices in buffer
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.indices.len()
+    }
+
+    /// Check if buffer is empty
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.indices.is_empty()
+    }
+
+    /// Get index slice for GPU upload
+    #[inline]
+    pub fn indices(&self) -> &[u32] {
+        &self.indices
+    }
+
+    /// Get number of triangles
+    #[inline]
+    pub fn triangle_count(&self) -> usize {
+        self.indices.len() / 3
+    }
 }
 
 impl IndexedVertex {
@@ -494,8 +645,7 @@ impl IndexedVertexClustering {
                     } else {
                         Vector3::z()
                     };
-                    cluster_centers[cluster_idx] =
-                        IndexedVertex::new(avg_pos, avg_normal).into();
+                    cluster_centers[cluster_idx] = IndexedVertex::new(avg_pos, avg_normal);
                 }
             }
         }

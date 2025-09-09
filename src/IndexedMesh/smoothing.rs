@@ -1,8 +1,7 @@
 //! Mesh smoothing algorithms optimized for IndexedMesh with indexed connectivity
 
-use crate::IndexedMesh::IndexedMesh;
+use crate::IndexedMesh::{IndexedMesh, vertex::IndexedVertex};
 use crate::float_types::Real;
-use crate::mesh::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -303,16 +302,19 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         // Recompute polygon planes from updated vertex positions
         for polygon in &mut self.polygons {
             if polygon.indices.len() >= 3 {
-                // Get vertices for plane computation
-                let vertices: Vec<Vertex> = polygon
+                // Get vertices for plane computation using IndexedVertex
+                let indexed_vertices: Vec<IndexedVertex> = polygon
                     .indices
                     .iter()
                     .take(3)
                     .map(|&idx| self.vertices[idx])
                     .collect();
 
-                if vertices.len() == 3 {
-                    polygon.plane = crate::IndexedMesh::plane::Plane::from_vertices(vertices);
+                if indexed_vertices.len() == 3 {
+                    // Use the optimized IndexedVertex plane computation
+                    polygon.plane = crate::IndexedMesh::plane::Plane::from_indexed_vertices(
+                        indexed_vertices,
+                    );
                 }
             }
 

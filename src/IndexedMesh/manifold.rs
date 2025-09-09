@@ -418,7 +418,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     /// Remove duplicate vertices and faces
     fn remove_duplicates(&self) -> IndexedMesh<S> {
         // Build vertex deduplication map
-        let mut unique_vertices: Vec<crate::mesh::vertex::Vertex> = Vec::new();
+        let mut unique_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> = Vec::new();
         let mut vertex_map = HashMap::new();
 
         for (old_idx, vertex) in self.vertices.iter().enumerate() {

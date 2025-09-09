@@ -351,16 +351,25 @@ mod tests {
     use super::*;
     use crate::IndexedMesh::plane::Plane;
     use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
-    use crate::mesh::vertex::Vertex;
+
     use nalgebra::{Point3, Vector3};
 
     #[test]
     fn test_parallel_bsp_basic_functionality() {
         // Create a simple mesh with one triangle
         let vertices = vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 1.0)),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 1.0)),
-            Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::new(0.0, 0.0, 1.0)),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(0.0, 0.0, 0.0),
+                Vector3::new(0.0, 0.0, 1.0),
+            ),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(1.0, 0.0, 0.0),
+                Vector3::new(0.0, 0.0, 1.0),
+            ),
+            crate::IndexedMesh::vertex::IndexedVertex::new(
+                Point3::new(0.5, 1.0, 0.0),
+                Vector3::new(0.0, 0.0, 1.0),
+            ),
         ];
 
         let plane_vertices = vec![
@@ -370,7 +379,7 @@ mod tests {
         ];
         let polygons = vec![IndexedPolygon::<i32>::new(
             vec![0, 1, 2],
-            Plane::from_vertices(plane_vertices),
+            Plane::from_indexed_vertices(plane_vertices),
             None,
         )];
 

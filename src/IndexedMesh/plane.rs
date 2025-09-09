@@ -63,6 +63,23 @@ impl Plane {
         Self::from_points(p1, p2, p3)
     }
 
+    /// Create a plane from IndexedVertex vertices (optimized for IndexedMesh)
+    pub fn from_indexed_vertices(
+        vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex>,
+    ) -> Self {
+        if vertices.len() < 3 {
+            return Plane {
+                normal: Vector3::z(),
+                w: 0.0,
+            };
+        }
+
+        let p1 = vertices[0].pos;
+        let p2 = vertices[1].pos;
+        let p3 = vertices[2].pos;
+        Self::from_points(p1, p2, p3)
+    }
+
     /// Get the plane normal
     pub const fn normal(&self) -> Vector3<Real> {
         self.normal
@@ -137,7 +154,7 @@ pub trait IndexedPlaneOperations {
     fn classify_indexed_polygon<S: Clone + Send + Sync + Debug>(
         &self,
         polygon: &IndexedPolygon<S>,
-        vertices: &[Vertex],
+        vertices: &[crate::IndexedMesh::vertex::IndexedVertex],
     ) -> i8;
 
     /// **Split Indexed Polygon with Zero-Copy Optimization**
@@ -147,7 +164,7 @@ pub trait IndexedPlaneOperations {
     fn split_indexed_polygon<S: Clone + Send + Sync + Debug>(
         &self,
         polygon: &IndexedPolygon<S>,
-        vertices: &mut Vec<Vertex>,
+        vertices: &mut Vec<crate::IndexedMesh::vertex::IndexedVertex>,
     ) -> (
         Vec<usize>,
         Vec<usize>,
@@ -171,7 +188,7 @@ impl IndexedPlaneOperations for Plane {
     fn classify_indexed_polygon<S: Clone + Send + Sync + Debug>(
         &self,
         polygon: &IndexedPolygon<S>,
-        vertices: &[Vertex],
+        vertices: &[crate::IndexedMesh::vertex::IndexedVertex],
     ) -> i8 {
         let mut front_count = 0;
         let mut back_count = 0;
@@ -204,7 +221,7 @@ impl IndexedPlaneOperations for Plane {
     fn split_indexed_polygon<S: Clone + Send + Sync + Debug>(
         &self,
         polygon: &IndexedPolygon<S>,
-        vertices: &mut Vec<Vertex>,
+        vertices: &mut Vec<crate::IndexedMesh::vertex::IndexedVertex>,
     ) -> (
         Vec<usize>,
         Vec<usize>,
@@ -301,7 +318,7 @@ impl IndexedPlaneOperations for Plane {
                         let v0 = &vertices[front_indices[0]];
                         let v1 = &vertices[front_indices[1]];
                         let v2 = &vertices[front_indices[2]];
-                        Plane::from_vertices(vec![*v0, *v1, *v2])
+                        Plane::from_indexed_vertices(vec![*v0, *v1, *v2])
                     } else {
                         polygon.plane.clone()
                     };
@@ -319,7 +336,7 @@ impl IndexedPlaneOperations for Plane {
                         let v0 = &vertices[back_indices[0]];
                         let v1 = &vertices[back_indices[1]];
                         let v2 = &vertices[back_indices[2]];
-                        Plane::from_vertices(vec![*v0, *v1, *v2])
+                        Plane::from_indexed_vertices(vec![*v0, *v1, *v2])
                     } else {
                         polygon.plane.clone()
                     };

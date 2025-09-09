@@ -1,8 +1,7 @@
 //! Flattening and slicing operations for IndexedMesh with optimized indexed connectivity
 
-use crate::IndexedMesh::IndexedMesh;
+use crate::IndexedMesh::{IndexedMesh, IndexedPolygon, bsp::IndexedNode, plane::Plane};
 use crate::float_types::{EPSILON, Real};
-use crate::mesh::{bsp::Node, plane::Plane};
 use crate::sketch::Sketch;
 use geo::{
     BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
@@ -158,13 +157,13 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         &self,
         plane: &Plane,
         intersection_points: &mut Vec<Point3<Real>>,
-        coplanar_polygons: &mut Vec<crate::mesh::polygon::Polygon<S>>,
+        coplanar_polygons: &mut Vec<IndexedPolygon<S>>,
     ) {
         let epsilon = EPSILON;
 
         for polygon in &self.polygons {
             let mut coplanar_count = 0;
-            let mut polygon_vertices = Vec::new();
+            let mut coplanar_indices = Vec::new();
 
             // Process each edge of the indexed polygon
             for i in 0..polygon.indices.len() {
@@ -180,7 +179,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
                 // Check for coplanar vertices
                 if d1.abs() < epsilon {
                     coplanar_count += 1;
-                    polygon_vertices.push(*v1);
+                    coplanar_indices.push(v1_idx);
                 }
 
                 // Check for edge-plane intersection
@@ -192,9 +191,10 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             }
 
             // If polygon is mostly coplanar, add it to coplanar polygons
-            if coplanar_count >= polygon.indices.len() - 1 && !polygon_vertices.is_empty() {
-                let coplanar_poly = crate::mesh::polygon::Polygon::new(
-                    polygon_vertices,
+            if coplanar_count >= polygon.indices.len() - 1 && coplanar_indices.len() >= 3 {
+                let coplanar_poly = IndexedPolygon::new(
+                    coplanar_indices,
+                    polygon.plane.clone(),
                     polygon.metadata.clone(),
                 );
                 coplanar_polygons.push(coplanar_poly);
@@ -215,22 +215,28 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     #[allow(dead_code)]
     fn collect_slice_geometry(
         &self,
-        node: &Node<S>,
+        node: &IndexedNode<S>,
         plane: &Plane,
         intersection_points: &mut Vec<Point3<Real>>,
-        coplanar_polygons: &mut Vec<crate::mesh::polygon::Polygon<S>>,
+        coplanar_polygons: &mut Vec<IndexedPolygon<S>>,
     ) {
         let epsilon = EPSILON;
 
-        // Process polygons in this node
-        for polygon in &node.polygons {
+        // Process polygon indices in this node
+        for &polygon_idx in &node.polygons {
+            let polygon = &self.polygons[polygon_idx];
+
             // Check if polygon is coplanar with slicing plane
             let mut coplanar_vertices = 0;
             let mut intersection_edges = Vec::new();
+            let mut coplanar_indices = Vec::new();
 
-            for i in 0..polygon.vertices.len() {
-                let v1 = &polygon.vertices[i];
-                let v2 = &polygon.vertices[(i + 1) % polygon.vertices.len()];
+            for i in 0..polygon.indices.len() {
+                let v1_idx = polygon.indices[i];
+                let v2_idx = polygon.indices[(i + 1) % polygon.indices.len()];
+
+                let v1 = &self.vertices[v1_idx];
+                let v2 = &self.vertices[v2_idx];
 
                 let d1 = self.signed_distance_to_point(plane, &v1.pos);
                 let d2 = self.signed_distance_to_point(plane, &v2.pos);
@@ -238,6 +244,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
                 // Check for coplanar vertices
                 if d1.abs() < epsilon {
                     coplanar_vertices += 1;
+                    coplanar_indices.push(v1_idx);
                 }
 
                 // Check for edge-plane intersection
@@ -251,39 +258,13 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             }
 
             // If most vertices are coplanar, consider the polygon coplanar
-            if coplanar_vertices >= polygon.vertices.len() - 1 {
-                coplanar_polygons.push(polygon.clone());
-            }
-        }
-
-        // Check if any polygons in this node are coplanar with the slicing plane
-        for polygon in &node.polygons {
-            // Convert regular polygon to indexed representation for processing
-            if !polygon.vertices.is_empty() {
-                let distance_to_plane =
-                    plane.normal().dot(&(polygon.vertices[0].pos - plane.point_a));
-
-                if distance_to_plane.abs() < EPSILON {
-                    // Polygon is coplanar with slicing plane
-                    coplanar_polygons.push(polygon.clone());
-                } else {
-                    // Check for edge intersections with the plane
-                    for i in 0..polygon.vertices.len() {
-                        let v1 = &polygon.vertices[i];
-                        let v2 = &polygon.vertices[(i + 1) % polygon.vertices.len()];
-
-                        let d1 = plane.normal().dot(&(v1.pos - plane.point_a));
-                        let d2 = plane.normal().dot(&(v2.pos - plane.point_a));
-
-                        // Check if edge crosses the plane
-                        if d1 * d2 < 0.0 {
-                            // Edge crosses plane - compute intersection point
-                            let t = d1.abs() / (d1.abs() + d2.abs());
-                            let intersection = v1.pos + (v2.pos - v1.pos) * t;
-                            intersection_points.push(intersection);
-                        }
-                    }
-                }
+            if coplanar_vertices >= polygon.indices.len() - 1 && coplanar_indices.len() >= 3 {
+                let coplanar_poly = IndexedPolygon::new(
+                    coplanar_indices,
+                    polygon.plane.clone(),
+                    polygon.metadata.clone(),
+                );
+                coplanar_polygons.push(coplanar_poly);
             }
         }
 
@@ -300,7 +281,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     fn build_slice_sketch(
         &self,
         intersection_points: Vec<Point3<Real>>,
-        coplanar_polygons: Vec<crate::mesh::polygon::Polygon<S>>,
+        coplanar_polygons: Vec<IndexedPolygon<S>>,
         plane: Plane,
     ) -> Sketch<S> {
         let mut geometry_collection = GeometryCollection::default();
@@ -308,9 +289,9 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         // Convert coplanar 3D polygons to 2D by projecting onto the slicing plane
         for polygon in coplanar_polygons {
             let projected_coords: Vec<(Real, Real)> = polygon
-                .vertices
+                .indices
                 .iter()
-                .map(|v| self.project_point_to_plane_2d(&v.pos, &plane))
+                .map(|&idx| self.project_point_to_plane_2d(&self.vertices[idx].pos, &plane))
                 .collect();
 
             if projected_coords.len() >= 3 {
@@ -374,8 +355,13 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             std::collections::HashMap::new();
         let connection_threshold = 0.001; // Adjust based on mesh scale
 
+        // Initialize all entries first
         for i in 0..points.len() {
             adjacency.insert(i, Vec::new());
+        }
+
+        // Build connections
+        for i in 0..points.len() {
             for j in (i + 1)..points.len() {
                 let distance = (points[i] - points[j]).norm();
                 if distance < connection_threshold {
