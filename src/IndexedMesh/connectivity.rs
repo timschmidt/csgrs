@@ -1,7 +1,7 @@
-use crate::float_types::Real;
 use crate::IndexedMesh::IndexedMesh;
-use std::collections::HashMap;
+use crate::float_types::Real;
 use nalgebra::Point3;
+use std::collections::HashMap;
 use std::fmt::Debug;
 
 /// **Mathematical Foundation: Robust Vertex Indexing for Mesh Connectivity**
@@ -91,7 +91,8 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             for i in 0..vertex_indices.len() {
                 let current = vertex_indices[i];
                 let next = vertex_indices[(i + 1) % vertex_indices.len()];
-                let prev = vertex_indices[(i + vertex_indices.len() - 1) % vertex_indices.len()];
+                let prev =
+                    vertex_indices[(i + vertex_indices.len() - 1) % vertex_indices.len()];
 
                 // Add bidirectional edges
                 adjacency.entry(current).or_default().push(next);

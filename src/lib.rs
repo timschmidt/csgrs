@@ -3,7 +3,6 @@
 //!
 //! ![Example CSG output][Example CSG output]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Example CSG output", "docs/csg.png"))]
-//!
 //! # Features
 //! #### Default
 //! - **f64**: use f64 as Real
@@ -29,9 +28,9 @@
 #![deny(unused)]
 #![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
 
+pub mod IndexedMesh;
 pub mod errors;
 pub mod float_types;
-pub mod IndexedMesh;
 pub mod io;
 pub mod mesh;
 pub mod nurbs;

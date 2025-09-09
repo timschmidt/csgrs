@@ -1,7 +1,7 @@
 //! Mesh quality analysis and optimization for IndexedMesh with indexed connectivity
 
-use crate::float_types::{PI, Real};
 use crate::IndexedMesh::IndexedMesh;
+use crate::float_types::{PI, Real};
 use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
 
@@ -95,14 +95,18 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         let qualities: Vec<TriangleQuality> = triangulated
             .polygons
             .par_iter()
-            .map(|poly| Self::compute_triangle_quality_indexed(&triangulated.vertices, &poly.indices))
+            .map(|poly| {
+                Self::compute_triangle_quality_indexed(&triangulated.vertices, &poly.indices)
+            })
             .collect();
 
         #[cfg(not(feature = "parallel"))]
         let qualities: Vec<TriangleQuality> = triangulated
             .polygons
             .iter()
-            .map(|poly| Self::compute_triangle_quality_indexed(&triangulated.vertices, &poly.indices))
+            .map(|poly| {
+                Self::compute_triangle_quality_indexed(&triangulated.vertices, &poly.indices)
+            })
             .collect();
 
         qualities
@@ -124,7 +128,10 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     /// Q = 0.4 × angle_quality + 0.4 × shape_quality + 0.2 × edge_quality
     /// ```
     /// Where each component is normalized to [0,1] range.
-    fn compute_triangle_quality_indexed(vertices: &[Vertex], indices: &[usize]) -> TriangleQuality {
+    fn compute_triangle_quality_indexed(
+        vertices: &[Vertex],
+        indices: &[usize],
+    ) -> TriangleQuality {
         if indices.len() != 3 {
             return TriangleQuality {
                 aspect_ratio: Real::INFINITY,
@@ -177,9 +184,15 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         }
 
         // Interior angles using law of cosines with numerical stability
-        let angle_a = Self::safe_acos((len_bc.powi(2) + len_ca.powi(2) - len_ab.powi(2)) / (2.0 * len_bc * len_ca));
-        let angle_b = Self::safe_acos((len_ca.powi(2) + len_ab.powi(2) - len_bc.powi(2)) / (2.0 * len_ca * len_ab));
-        let angle_c = Self::safe_acos((len_ab.powi(2) + len_bc.powi(2) - len_ca.powi(2)) / (2.0 * len_ab * len_bc));
+        let angle_a = Self::safe_acos(
+            (len_bc.powi(2) + len_ca.powi(2) - len_ab.powi(2)) / (2.0 * len_bc * len_ca),
+        );
+        let angle_b = Self::safe_acos(
+            (len_ca.powi(2) + len_ab.powi(2) - len_bc.powi(2)) / (2.0 * len_ca * len_ab),
+        );
+        let angle_c = Self::safe_acos(
+            (len_ab.powi(2) + len_bc.powi(2) - len_ca.powi(2)) / (2.0 * len_ab * len_bc),
+        );
 
         let min_angle = angle_a.min(angle_b).min(angle_c);
         let max_angle = angle_a.max(angle_b).max(angle_c);

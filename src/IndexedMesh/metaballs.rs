@@ -1,7 +1,7 @@
 //! Metaball (implicit surface) generation for IndexedMesh with optimized indexed connectivity
 
-use crate::float_types::Real;
 use crate::IndexedMesh::IndexedMesh;
+use crate::float_types::Real;
 use crate::traits::CSG;
 use nalgebra::Point3;
 use std::fmt::Debug;
@@ -35,7 +35,7 @@ pub struct Metaball {
 
 impl Metaball {
     /// Create a new metaball
-    pub fn new(center: Point3<Real>, radius: Real, strength: Real) -> Self {
+    pub const fn new(center: Point3<Real>, radius: Real, strength: Real) -> Self {
         Self {
             center,
             radius,
@@ -49,7 +49,7 @@ impl Metaball {
         if distance_sq < Real::EPSILON {
             return Real::INFINITY; // Avoid division by zero
         }
-        
+
         let radius_sq = self.radius * self.radius;
         self.strength * radius_sq / distance_sq
     }
@@ -84,12 +84,12 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     /// ```
     /// # use csgrs::IndexedMesh::{IndexedMesh, metaballs::Metaball};
     /// # use nalgebra::Point3;
-    /// 
+    ///
     /// let metaballs = vec![
     ///     Metaball::new(Point3::new(-0.5, 0.0, 0.0), 1.0, 1.0),
     ///     Metaball::new(Point3::new(0.5, 0.0, 0.0), 1.0, 1.0),
     /// ];
-    /// 
+    ///
     /// let mesh = IndexedMesh::<()>::from_metaballs(
     ///     &metaballs,
     ///     1.0,
@@ -117,7 +117,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
                 .iter()
                 .map(|metaball| metaball.potential(point))
                 .sum();
-            
+
             // Convert potential to signed distance (approximate)
             // For metaballs, we use threshold - potential as the SDF
             threshold - total_potential
@@ -162,15 +162,15 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
 
         for metaball in metaballs {
             let margin = metaball.radius * 2.0; // Extend bounds by 2x radius
-            
+
             min_bounds.x = min_bounds.x.min(metaball.center.x - margin);
             min_bounds.y = min_bounds.y.min(metaball.center.y - margin);
             min_bounds.z = min_bounds.z.min(metaball.center.z - margin);
-            
+
             max_bounds.x = max_bounds.x.max(metaball.center.x + margin);
             max_bounds.y = max_bounds.y.max(metaball.center.y + margin);
             max_bounds.z = max_bounds.z.max(metaball.center.z + margin);
-            
+
             max_radius = max_radius.max(metaball.radius);
         }
 
@@ -252,6 +252,8 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         let bounds_min = Point3::new(-separation / 2.0 - margin, -margin, -margin);
         let bounds_max = Point3::new(separation / 2.0 + margin, margin, margin);
 
-        Self::from_metaballs(&metaballs, threshold, resolution, bounds_min, bounds_max, metadata)
+        Self::from_metaballs(
+            &metaballs, threshold, resolution, bounds_min, bounds_max, metadata,
+        )
     }
 }

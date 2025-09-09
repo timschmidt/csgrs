@@ -25,7 +25,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         }
 
         // Extract vertex positions for hull computation
-        let points: Vec<Vec<crate::float_types::Real>> = self.vertices
+        let points: Vec<Vec<crate::float_types::Real>> = self
+            .vertices
             .iter()
             .map(|v| vec![v.pos.x, v.pos.y, v.pos.z])
             .collect();
@@ -39,7 +40,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         use chull::ConvexHullWrapper;
         let hull = match ConvexHullWrapper::try_new(&points, None) {
             Ok(h) => h,
-            Err(e) => return Err(format!("Convex hull computation failed: {:?}", e)),
+            Err(e) => return Err(format!("Convex hull computation failed: {e:?}")),
         };
 
         let (hull_vertices, hull_indices) = hull.vertices_indices();
@@ -71,7 +72,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
                 let edge2 = v2 - v0;
                 let normal = edge1.cross(&edge2).normalize();
 
-                let plane = crate::mesh::plane::Plane::from_normal(normal, normal.dot(&v0.coords));
+                let plane =
+                    crate::mesh::plane::Plane::from_normal(normal, normal.dot(&v0.coords));
 
                 polygons.push(crate::IndexedMesh::IndexedPolygon {
                     indices,
@@ -130,7 +132,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         use chull::ConvexHullWrapper;
         let hull = match ConvexHullWrapper::try_new(&sum_points, None) {
             Ok(h) => h,
-            Err(e) => return Err(format!("Minkowski sum hull computation failed: {:?}", e)),
+            Err(e) => return Err(format!("Minkowski sum hull computation failed: {e:?}")),
         };
 
         let (hull_vertices, hull_indices) = hull.vertices_indices();
@@ -162,7 +164,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
                 let edge2 = v2 - v0;
                 let normal = edge1.cross(&edge2).normalize();
 
-                let plane = crate::mesh::plane::Plane::from_normal(normal, normal.dot(&v0.coords));
+                let plane =
+                    crate::mesh::plane::Plane::from_normal(normal, normal.dot(&v0.coords));
 
                 polygons.push(crate::IndexedMesh::IndexedPolygon {
                     indices,

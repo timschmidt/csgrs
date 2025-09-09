@@ -402,7 +402,6 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             }
         }
 
-        //
         // (C) Encode into a binary STL buffer
         //
         let mut cursor = Cursor::new(Vec::new());

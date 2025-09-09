@@ -1,8 +1,8 @@
 //! 3D Shapes as `IndexedMesh`s with optimized indexed connectivity
 
+use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
 use crate::errors::ValidationError;
 use crate::float_types::{EPSILON, PI, Real, TAU};
-use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
 use crate::mesh::{plane::Plane, vertex::Vertex};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
@@ -41,14 +41,19 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     /// - **Back**: [3,7,6,2] (y=length, normal +Y)
     /// - **Left**: [0,4,7,3] (x=0, normal -X)
     /// - **Right**: [1,2,6,5] (x=width, normal +X)
-    pub fn cuboid(width: Real, length: Real, height: Real, metadata: Option<S>) -> IndexedMesh<S> {
+    pub fn cuboid(
+        width: Real,
+        length: Real,
+        height: Real,
+        metadata: Option<S>,
+    ) -> IndexedMesh<S> {
         // Define the eight corner vertices once
         let vertices = vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::zeros()),      // 0: origin
-            Vertex::new(Point3::new(width, 0.0, 0.0), Vector3::zeros()),    // 1: +X
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::zeros()), // 0: origin
+            Vertex::new(Point3::new(width, 0.0, 0.0), Vector3::zeros()), // 1: +X
             Vertex::new(Point3::new(width, length, 0.0), Vector3::zeros()), // 2: +X+Y
-            Vertex::new(Point3::new(0.0, length, 0.0), Vector3::zeros()),   // 3: +Y
-            Vertex::new(Point3::new(0.0, 0.0, height), Vector3::zeros()),   // 4: +Z
+            Vertex::new(Point3::new(0.0, length, 0.0), Vector3::zeros()), // 3: +Y
+            Vertex::new(Point3::new(0.0, 0.0, height), Vector3::zeros()), // 4: +Z
             Vertex::new(Point3::new(width, 0.0, height), Vector3::zeros()), // 5: +X+Z
             Vertex::new(Point3::new(width, length, height), Vector3::zeros()), // 6: +X+Y+Z
             Vertex::new(Point3::new(0.0, length, height), Vector3::zeros()), // 7: +Y+Z
@@ -67,7 +72,8 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
 
         let mut polygons = Vec::new();
         for (indices, normal) in face_definitions {
-            let plane = Plane::from_normal(normal, normal.dot(&vertices[indices[0]].pos.coords));
+            let plane =
+                Plane::from_normal(normal, normal.dot(&vertices[indices[0]].pos.coords));
             let indexed_poly = IndexedPolygon::new(indices, plane, metadata.clone());
             polygons.push(indexed_poly);
         }
@@ -121,84 +127,109 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         let mut vertices = Vec::new();
         let mut polygons = Vec::new();
 
-        // Generate vertices in a structured grid
-        for j in 0..=stacks {
-            for i in 0..=segments {
+        // Add north pole
+        vertices.push(Vertex::new(
+            Point3::new(0.0, radius, 0.0),
+            Vector3::new(0.0, 1.0, 0.0),
+        ));
+
+        // Generate vertices for intermediate stacks
+        for j in 1..stacks {
+            let v = j as Real / stacks as Real;
+            let phi = v * PI;
+            let y = radius * phi.cos();
+            let ring_radius = radius * phi.sin();
+
+            for i in 0..segments {
                 let u = i as Real / segments as Real;
-                let v = j as Real / stacks as Real;
-                
                 let theta = u * TAU;
-                let phi = v * PI;
-                
-                let dir = Vector3::new(
-                    theta.cos() * phi.sin(),
-                    phi.cos(),
-                    theta.sin() * phi.sin(),
-                );
-                
-                let pos = Point3::new(dir.x * radius, dir.y * radius, dir.z * radius);
-                vertices.push(Vertex::new(pos, dir));
+                let x = ring_radius * theta.cos();
+                let z = ring_radius * theta.sin();
+
+                let pos = Point3::new(x, y, z);
+                let normal = pos.coords.normalize();
+                vertices.push(Vertex::new(pos, normal));
             }
         }
 
-        // Generate indexed faces
-        for j in 0..stacks {
-            for i in 0..segments {
-                let current = j * (segments + 1) + i;
-                let next = j * (segments + 1) + (i + 1) % (segments + 1);
-                let below = (j + 1) * (segments + 1) + i;
-                let below_next = (j + 1) * (segments + 1) + (i + 1) % (segments + 1);
+        // Add south pole
+        vertices.push(Vertex::new(
+            Point3::new(0.0, -radius, 0.0),
+            Vector3::new(0.0, -1.0, 0.0),
+        ));
 
-                if j == 0 {
-                    // Top cap - triangles from north pole
-                    let plane = Plane::from_vertices(vec![
-                        vertices[current].clone(),
-                        vertices[next].clone(),
-                        vertices[below].clone(),
-                    ]);
-                    polygons.push(IndexedPolygon::new(
-                        vec![current, next, below],
-                        plane,
-                        metadata.clone(),
-                    ));
-                } else if j == stacks - 1 {
-                    // Bottom cap - triangles to south pole
-                    let plane = Plane::from_vertices(vec![
-                        vertices[current].clone(),
-                        vertices[below].clone(),
-                        vertices[next].clone(),
-                    ]);
-                    polygons.push(IndexedPolygon::new(
-                        vec![current, below, next],
-                        plane,
-                        metadata.clone(),
-                    ));
-                } else {
-                    // Middle section - quads split into triangles
-                    // First triangle
-                    let plane1 = Plane::from_vertices(vec![
-                        vertices[current].clone(),
-                        vertices[next].clone(),
-                        vertices[below].clone(),
-                    ]);
-                    polygons.push(IndexedPolygon::new(
-                        vec![current, next, below],
-                        plane1,
-                        metadata.clone(),
-                    ));
-                    
-                    // Second triangle
-                    let plane2 = Plane::from_vertices(vec![
-                        vertices[next].clone(),
-                        vertices[below_next].clone(),
-                        vertices[below].clone(),
-                    ]);
-                    polygons.push(IndexedPolygon::new(
-                        vec![next, below_next, below],
-                        plane2,
-                        metadata.clone(),
-                    ));
-                }
+        // Generate faces
+        let north_pole = 0;
+        let south_pole = vertices.len() - 1;
+
+        // Top cap triangles (connecting to north pole)
+        // Winding order: counter-clockwise when viewed from outside (above north pole)
+        for i in 0..segments {
+            let next_i = (i + 1) % segments;
+            let v1 = 1 + i;
+            let v2 = 1 + next_i;
+
+            let plane =
+                Plane::from_vertices(vec![vertices[north_pole], vertices[v2], vertices[v1]]);
+            polygons.push(IndexedPolygon::new(
+                vec![north_pole, v2, v1],
+                plane,
+                metadata.clone(),
+            ));
+        }
+
+        // Middle section quads (split into triangles)
+        for j in 1..stacks - 1 {
+            let ring_start = 1 + (j - 1) * segments;
+            let next_ring_start = 1 + j * segments;
+
+            for i in 0..segments {
+                let next_i = (i + 1) % segments;
+
+                let v1 = ring_start + i;
+                let v2 = ring_start + next_i;
+                let v3 = next_ring_start + i;
+                let v4 = next_ring_start + next_i;
+
+                // First triangle of quad (counter-clockwise from outside)
+                let plane1 =
+                    Plane::from_vertices(vec![vertices[v1], vertices[v3], vertices[v2]]);
+                polygons.push(IndexedPolygon::new(
+                    vec![v1, v3, v2],
+                    plane1,
+                    metadata.clone(),
+                ));
+
+                // Second triangle of quad (counter-clockwise from outside)
+                let plane2 =
+                    Plane::from_vertices(vec![vertices[v2], vertices[v3], vertices[v4]]);
+                polygons.push(IndexedPolygon::new(
+                    vec![v2, v3, v4],
+                    plane2,
+                    metadata.clone(),
+                ));
+            }
+        }
+
+        // Bottom cap triangles (connecting to south pole)
+        // Winding order: counter-clockwise when viewed from outside (below south pole)
+        if stacks > 1 {
+            let last_ring_start = 1 + (stacks - 2) * segments;
+            for i in 0..segments {
+                let next_i = (i + 1) % segments;
+                let v1 = last_ring_start + i;
+                let v2 = last_ring_start + next_i;
+
+                let plane = Plane::from_vertices(vec![
+                    vertices[v1],
+                    vertices[v2],
+                    vertices[south_pole],
+                ]);
+                polygons.push(IndexedPolygon::new(
+                    vec![v1, v2, south_pole],
+                    plane,
+                    metadata.clone(),
+                ));
             }
         }
 
@@ -242,7 +273,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         // Center vertices for caps
         let bottom_center = vertices.len();
         vertices.push(Vertex::new(Point3::new(0.0, 0.0, 0.0), -Vector3::z()));
-        
+
         let top_center = vertices.len();
         vertices.push(Vertex::new(Point3::new(0.0, 0.0, height), Vector3::z()));
 
@@ -266,55 +297,57 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         // Generate faces
         for i in 0..segments {
             let next_i = (i + 1) % segments;
-            
-            // Bottom cap triangle
+
+            // Bottom cap triangle (counter-clockwise when viewed from below)
             if radius1 > EPSILON {
                 let plane = Plane::from_normal(-Vector3::z(), 0.0);
                 polygons.push(IndexedPolygon::new(
-                    vec![bottom_center, bottom_ring_start + i, bottom_ring_start + next_i],
+                    vec![
+                        bottom_center,
+                        bottom_ring_start + next_i,
+                        bottom_ring_start + i,
+                    ],
                     plane,
                     metadata.clone(),
                 ));
             }
-            
-            // Top cap triangle
+
+            // Top cap triangle (counter-clockwise when viewed from above)
             if radius2 > EPSILON {
                 let plane = Plane::from_normal(Vector3::z(), height);
                 polygons.push(IndexedPolygon::new(
-                    vec![top_center, top_ring_start + next_i, top_ring_start + i],
+                    vec![top_center, top_ring_start + i, top_ring_start + next_i],
                     plane,
                     metadata.clone(),
                 ));
             }
-            
+
             // Side faces (quads split into triangles)
             let b1 = bottom_ring_start + i;
             let b2 = bottom_ring_start + next_i;
             let t1 = top_ring_start + i;
             let t2 = top_ring_start + next_i;
-            
+
             // Calculate side normal
             let side_normal = Vector3::new(
                 (vertices[b1].pos.x + vertices[t1].pos.x) / 2.0,
                 (vertices[b1].pos.y + vertices[t1].pos.y) / 2.0,
                 0.0,
-            ).normalize();
-            
-            let plane = Plane::from_normal(side_normal, side_normal.dot(&vertices[b1].pos.coords));
-            
-            // First triangle of quad
+            )
+            .normalize();
+
+            let plane =
+                Plane::from_normal(side_normal, side_normal.dot(&vertices[b1].pos.coords));
+
+            // First triangle of quad (counter-clockwise from outside)
             polygons.push(IndexedPolygon::new(
-                vec![b1, b2, t1],
+                vec![b1, t1, b2],
                 plane.clone(),
                 metadata.clone(),
             ));
-            
-            // Second triangle of quad
-            polygons.push(IndexedPolygon::new(
-                vec![b2, t2, t1],
-                plane,
-                metadata.clone(),
-            ));
+
+            // Second triangle of quad (counter-clockwise from outside)
+            polygons.push(IndexedPolygon::new(vec![b2, t1, t2], plane, metadata.clone()));
         }
 
         let mut mesh = IndexedMesh {
@@ -327,8 +360,6 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         mesh.compute_vertex_normals();
         mesh
     }
-
-
 
     /// Creates an IndexedMesh polyhedron from raw vertex data and face indices.
     /// This leverages the indexed representation directly for optimal performance.
@@ -388,10 +419,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             }
 
             // Create indexed polygon
-            let face_vertices: Vec<Vertex> = face
-                .iter()
-                .map(|&idx| vertices[idx].clone())
-                .collect();
+            let face_vertices: Vec<Vertex> = face.iter().map(|&idx| vertices[idx]).collect();
 
             let plane = Plane::from_vertices(face_vertices);
             let indexed_poly = IndexedPolygon::new(face.to_vec(), plane, metadata.clone());
@@ -576,7 +604,8 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         let tip_radius = arrow_length * 0.0; // tip radius (nearly a point)
 
         // Build the shaft as a vertical cylinder along Z from 0 to shaft_length.
-        let shaft = IndexedMesh::cylinder(shaft_radius, shaft_length, segments, metadata.clone());
+        let shaft =
+            IndexedMesh::cylinder(shaft_radius, shaft_length, segments, metadata.clone());
 
         // Build the arrow head as a frustum from z = shaft_length to z = shaft_length + head_length.
         let head = IndexedMesh::frustum_indexed(
@@ -585,7 +614,8 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             head_length,
             segments,
             metadata.clone(),
-        ).translate(0.0, 0.0, shaft_length);
+        )
+        .translate(0.0, 0.0, shaft_length);
 
         // Combine the shaft and head.
         let mut canonical_arrow = shaft.union(&head);

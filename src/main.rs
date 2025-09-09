@@ -349,11 +349,11 @@ fn main() {
         );
     }
 
-    //let poor_geometry_shape = moved_cube.difference(&sphere);
+    // let poor_geometry_shape = moved_cube.difference(&sphere);
     //#[cfg(feature = "earclip-io")]
-    //let retriangulated_shape = poor_geometry_shape.triangulate_earclip();
+    // let retriangulated_shape = poor_geometry_shape.triangulate_earclip();
     //#[cfg(all(feature = "earclip-io", feature = "stl-io"))]
-    //let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
+    // let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
     let sphere_test = Mesh::sphere(1.0, 16, 8, None);
     let cube_test = Mesh::cube(1.0, None);
@@ -724,8 +724,8 @@ fn main() {
         let _ = fs::write("stl/octahedron.stl", oct.to_stl_ascii("octahedron"));
     }
 
-    //let dodec = CSG::dodecahedron(15.0, None);
-    //let _ = fs::write("stl/dodecahedron.stl", dodec.to_stl_ascii(""));
+    // let dodec = CSG::dodecahedron(15.0, None);
+    // let _ = fs::write("stl/dodecahedron.stl", dodec.to_stl_ascii(""));
 
     #[cfg(feature = "stl-io")]
     {
@@ -1041,19 +1041,17 @@ fn main() {
         );
     }
 
-    /*
-    let helical = CSG::helical_involute_gear(
-        2.0,   // module
-        20,    // z
-        20.0,  // pressure angle
-        0.05, 0.02, 14,
-        25.0,   // face-width
-        15.0,   // helix angle β [deg]
-        40,     // axial slices (resolution of the twist)
-        None,
-    );
-    let _ = fs::write("stl/helical.stl", helical.to_stl_ascii("helical"));
-    */
+    // let helical = CSG::helical_involute_gear(
+    // 2.0,   // module
+    // 20,    // z
+    // 20.0,  // pressure angle
+    // 0.05, 0.02, 14,
+    // 25.0,   // face-width
+    // 15.0,   // helix angle β [deg]
+    // 40,     // axial slices (resolution of the twist)
+    // None,
+    // );
+    // let _ = fs::write("stl/helical.stl", helical.to_stl_ascii("helical"));
 
     // Bézier curve demo
     #[cfg(feature = "stl-io")]
@@ -1081,8 +1079,10 @@ fn main() {
         let bspline_ctrl = &[[0.0, 0.0], [1.0, 2.5], [3.0, 3.0], [5.0, 0.0], [6.0, -1.5]];
         let bspline_2d = Sketch::bspline(
             bspline_ctrl,
-            /* degree p = */ 3,
-            /* seg/span */ 32,
+            // degree p =
+            3,
+            // seg/span
+            32,
             None,
         );
         let _ = fs::write("stl/bspline_2d.stl", bspline_2d.to_stl_ascii("bspline_2d"));
@@ -1092,8 +1092,8 @@ fn main() {
     println!("{:#?}", bezier_3d.to_bevy_mesh());
 
     // a quick thickening just like the Bézier
-    //let bspline_3d = bspline_2d.extrude(0.25);
-    //let _ = fs::write(
+    // let bspline_3d = bspline_2d.extrude(0.25);
+    // let _ = fs::write(
     //    "stl/bspline_extruded.stl",
     //    bspline_3d.to_stl_ascii("bspline_extruded"),
     //);

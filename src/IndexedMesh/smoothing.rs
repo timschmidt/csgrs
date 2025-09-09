@@ -1,7 +1,7 @@
 //! Mesh smoothing algorithms optimized for IndexedMesh with indexed connectivity
 
-use crate::float_types::Real;
 use crate::IndexedMesh::IndexedMesh;
+use crate::float_types::Real;
 use crate::mesh::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 use std::collections::HashMap;
@@ -49,7 +49,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         for _iteration in 0..iterations {
             // Compute Laplacian updates for all vertices
             let mut position_updates: HashMap<usize, Point3<Real>> = HashMap::new();
-            
+
             for (&vertex_idx, neighbors) in &adjacency {
                 if vertex_idx >= smoothed_mesh.vertices.len() {
                     continue;
@@ -130,10 +130,12 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
 
         for _iteration in 0..iterations {
             // Step 1: Apply λ smoothing (expansion)
-            smoothed_mesh = smoothed_mesh.apply_laplacian_step(&adjacency, lambda, preserve_boundaries);
-            
+            smoothed_mesh =
+                smoothed_mesh.apply_laplacian_step(&adjacency, lambda, preserve_boundaries);
+
             // Step 2: Apply μ smoothing (contraction/correction)
-            smoothed_mesh = smoothed_mesh.apply_laplacian_step(&adjacency, mu, preserve_boundaries);
+            smoothed_mesh =
+                smoothed_mesh.apply_laplacian_step(&adjacency, mu, preserve_boundaries);
         }
 
         smoothed_mesh
@@ -302,24 +304,25 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         for polygon in &mut self.polygons {
             if polygon.indices.len() >= 3 {
                 // Get vertices for plane computation
-                let vertices: Vec<Vertex> = polygon.indices
+                let vertices: Vec<Vertex> = polygon
+                    .indices
                     .iter()
                     .take(3)
-                    .map(|&idx| self.vertices[idx].clone())
+                    .map(|&idx| self.vertices[idx])
                     .collect();
-                
+
                 if vertices.len() == 3 {
                     polygon.plane = crate::mesh::plane::Plane::from_vertices(vertices);
                 }
             }
-            
+
             // Invalidate cached bounding box
             polygon.bounding_box = std::sync::OnceLock::new();
         }
 
         // Recompute vertex normals based on adjacent faces
         self.compute_vertex_normals_from_faces();
-        
+
         // Invalidate mesh bounding box
         self.bounding_box = std::sync::OnceLock::new();
     }

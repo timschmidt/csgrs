@@ -1,10 +1,10 @@
 //! Create `IndexedMesh`s by meshing signed distance fields with optimized indexed connectivity
 
-use crate::float_types::Real;
 use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
+use crate::float_types::Real;
 use crate::mesh::{plane::Plane, vertex::Vertex};
-use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use fast_surface_nets::ndshape::Shape;
+use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use nalgebra::{Point3, Vector3};
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -143,7 +143,13 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
 
         // Extract surface using Surface Nets algorithm
         let mut buffer = SurfaceNetsBuffer::default();
-        surface_nets(&field_values, &shape, [0; 3], shape.as_array().map(|x| x - 1), &mut buffer);
+        surface_nets(
+            &field_values,
+            &shape,
+            [0; 3],
+            shape.as_array().map(|x| x - 1),
+            &mut buffer,
+        );
 
         // Convert Surface Nets output to IndexedMesh with optimized vertex sharing
         Self::from_surface_nets_buffer(buffer, min_pt, dx, dy, dz, metadata)
@@ -213,7 +219,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
 
         // Create indexed polygons from Surface Nets triangles
         let mut polygons = Vec::new();
-        
+
         for triangle in buffer.indices.chunks_exact(3) {
             let idx0 = vertex_map[&(triangle[0] as usize)];
             let idx1 = vertex_map[&(triangle[1] as usize)];
@@ -232,13 +238,13 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
 
                 if normal.norm_squared() > Real::EPSILON * Real::EPSILON {
                     let normalized_normal = normal.normalize();
-                    let plane = Plane::from_normal(normalized_normal, normalized_normal.dot(&v0.coords));
-
-                    let indexed_poly = IndexedPolygon::new(
-                        vec![idx0, idx1, idx2],
-                        plane,
-                        metadata.clone(),
+                    let plane = Plane::from_normal(
+                        normalized_normal,
+                        normalized_normal.dot(&v0.coords),
                     );
+
+                    let indexed_poly =
+                        IndexedPolygon::new(vec![idx0, idx1, idx2], plane, metadata.clone());
                     polygons.push(indexed_poly);
                 }
             }
@@ -258,8 +264,6 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         mesh
     }
 
-
-
     /// **Mathematical Foundation: Common SDF Primitives**
     ///
     /// Pre-defined SDF functions for common geometric primitives optimized
@@ -276,7 +280,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         let margin = radius * 0.2;
         let min_pt = center - Vector3::new(radius + margin, radius + margin, radius + margin);
         let max_pt = center + Vector3::new(radius + margin, radius + margin, radius + margin);
-        
+
         Self::sdf(sdf, resolution, min_pt, max_pt, 0.0, metadata)
     }
 
@@ -293,11 +297,11 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             let inside = d.x.max(d.y).max(d.z).min(0.0);
             outside + inside
         };
-        
+
         let margin = half_extents.norm() * 0.2;
         let min_pt = center - half_extents - Vector3::new(margin, margin, margin);
         let max_pt = center + half_extents + Vector3::new(margin, margin, margin);
-        
+
         Self::sdf(sdf, resolution, min_pt, max_pt, 0.0, metadata)
     }
 }

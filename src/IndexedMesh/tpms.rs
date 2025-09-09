@@ -1,7 +1,7 @@
 //! Triply Periodic Minimal Surfaces (TPMS) generation for IndexedMesh with optimized indexed connectivity
 
-use crate::float_types::Real;
 use crate::IndexedMesh::IndexedMesh;
+use crate::float_types::Real;
 use nalgebra::Point3;
 use std::fmt::Debug;
 
@@ -41,7 +41,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     /// ```
     /// # use csgrs::IndexedMesh::IndexedMesh;
     /// # use nalgebra::Point3;
-    /// 
+    ///
     /// let gyroid = IndexedMesh::<()>::gyroid(
     ///     2.0 * std::f64::consts::PI,  // One period
     ///     0.1,                         // Thin walls
@@ -63,9 +63,9 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             let x = point.x * scale;
             let y = point.y * scale;
             let z = point.z * scale;
-            
+
             let gyroid_value = x.sin() * y.cos() + y.sin() * z.cos() + z.sin() * x.cos();
-            
+
             // Convert to signed distance with thickness
             gyroid_value.abs() - thickness
         };
@@ -107,14 +107,21 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             let x = point.x * scale;
             let y = point.y * scale;
             let z = point.z * scale;
-            
+
             let schwarz_value = x.cos() + y.cos() + z.cos();
-            
+
             // Convert to signed distance with thickness
             schwarz_value.abs() - thickness
         };
 
-        Self::sdf(schwarz_p_sdf, resolution, bounds_min, bounds_max, 0.0, metadata)
+        Self::sdf(
+            schwarz_p_sdf,
+            resolution,
+            bounds_min,
+            bounds_max,
+            0.0,
+            metadata,
+        )
     }
 
     /// **Mathematical Foundation: Schwarz D TPMS with Indexed Connectivity**
@@ -124,7 +131,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     /// ## **Schwarz D Mathematics**
     /// The Schwarz D surface is defined by:
     /// ```text
-    /// F(x,y,z) = sin(x)sin(y)sin(z) + sin(x)cos(y)cos(z) + 
+    /// F(x,y,z) = sin(x)sin(y)sin(z) + sin(x)cos(y)cos(z) +
     ///            cos(x)sin(y)cos(z) + cos(x)cos(y)sin(z) = 0
     /// ```
     ///
@@ -152,17 +159,24 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             let x = point.x * scale;
             let y = point.y * scale;
             let z = point.z * scale;
-            
-            let schwarz_d_value = x.sin() * y.sin() * z.sin() +
-                                  x.sin() * y.cos() * z.cos() +
-                                  x.cos() * y.sin() * z.cos() +
-                                  x.cos() * y.cos() * z.sin();
-            
+
+            let schwarz_d_value = x.sin() * y.sin() * z.sin()
+                + x.sin() * y.cos() * z.cos()
+                + x.cos() * y.sin() * z.cos()
+                + x.cos() * y.cos() * z.sin();
+
             // Convert to signed distance with thickness
             schwarz_d_value.abs() - thickness
         };
 
-        Self::sdf(schwarz_d_sdf, resolution, bounds_min, bounds_max, 0.0, metadata)
+        Self::sdf(
+            schwarz_d_sdf,
+            resolution,
+            bounds_min,
+            bounds_max,
+            0.0,
+            metadata,
+        )
     }
 
     /// **Mathematical Foundation: Neovius TPMS with Indexed Connectivity**
@@ -199,10 +213,10 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             let x = point.x * scale;
             let y = point.y * scale;
             let z = point.z * scale;
-            
-            let neovius_value = 3.0 * (x.cos() + y.cos() + z.cos()) + 
-                               4.0 * x.cos() * y.cos() * z.cos();
-            
+
+            let neovius_value =
+                3.0 * (x.cos() + y.cos() + z.cos()) + 4.0 * x.cos() * y.cos() * z.cos();
+
             // Convert to signed distance with thickness
             neovius_value.abs() - thickness
         };
@@ -217,7 +231,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     /// ## **I-WP Mathematics**
     /// The I-WP surface is defined by:
     /// ```text
-    /// F(x,y,z) = cos(x)cos(y) + cos(y)cos(z) + cos(z)cos(x) - 
+    /// F(x,y,z) = cos(x)cos(y) + cos(y)cos(z) + cos(z)cos(x) -
     ///            cos(x)cos(y)cos(z) = 0
     /// ```
     ///
@@ -245,10 +259,10 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             let x = point.x * scale;
             let y = point.y * scale;
             let z = point.z * scale;
-            
-            let i_wp_value = x.cos() * y.cos() + y.cos() * z.cos() + z.cos() * x.cos() -
-                            x.cos() * y.cos() * z.cos();
-            
+
+            let i_wp_value = x.cos() * y.cos() + y.cos() * z.cos() + z.cos() * x.cos()
+                - x.cos() * y.cos() * z.cos();
+
             // Convert to signed distance with thickness
             i_wp_value.abs() - thickness
         };
@@ -278,7 +292,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     /// ```
     /// # use csgrs::IndexedMesh::IndexedMesh;
     /// # use nalgebra::Point3;
-    /// 
+    ///
     /// // Custom TPMS combining Gyroid and Schwarz P
     /// let custom_tpms = |point: &Point3<f64>| -> f64 {
     ///     let x = point.x * 2.0 * std::f64::consts::PI;
@@ -290,7 +304,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     ///     
     ///     0.5 * gyroid + 0.5 * schwarz_p
     /// };
-    /// 
+    ///
     /// let mesh = IndexedMesh::<()>::custom_tpms(
     ///     custom_tpms,
     ///     0.1,
@@ -313,7 +327,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     {
         let tpms_sdf = move |point: &Point3<Real>| -> Real {
             let tpms_value = tpms_function(point);
-            
+
             // Convert to signed distance with thickness
             tpms_value.abs() - thickness
         };

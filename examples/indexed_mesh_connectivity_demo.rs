@@ -5,10 +5,9 @@
 //! 2. Build connectivity analysis using build_connectivity_indexed
 //! 3. Analyze vertex connectivity and mesh properties
 
-
-use csgrs::mesh::vertex::Vertex;
 use csgrs::IndexedMesh::{IndexedMesh, connectivity::VertexIndexMap};
 use csgrs::mesh::plane::Plane;
+use csgrs::mesh::vertex::Vertex;
 use csgrs::traits::CSG;
 use nalgebra::{Point3, Vector3};
 use std::collections::HashMap;
@@ -20,8 +19,11 @@ fn main() {
 
     // Create a simple cube mesh as an example
     let cube = create_simple_cube();
-    println!("Created IndexedMesh with {} vertices and {} polygons",
-             cube.vertices.len(), cube.polygons.len());
+    println!(
+        "Created IndexedMesh with {} vertices and {} polygons",
+        cube.vertices.len(),
+        cube.polygons.len()
+    );
 
     // Build connectivity analysis
     println!("\nBuilding connectivity analysis...");
@@ -60,43 +62,103 @@ fn main() {
 fn create_simple_cube() -> IndexedMesh<()> {
     // Define cube vertices with correct normals based on their face orientations
     let vertices = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(-1.0, -1.0, -1.0).normalize()), // 0: bottom-front-left (corner)
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(1.0, -1.0, -1.0).normalize()),  // 1: bottom-front-right
-        Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::new(1.0, 1.0, -1.0).normalize()),   // 2: bottom-back-right
-        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::new(-1.0, 1.0, -1.0).normalize()),  // 3: bottom-back-left
-        Vertex::new(Point3::new(0.0, 0.0, 1.0), Vector3::new(-1.0, -1.0, 1.0).normalize()),  // 4: top-front-left
-        Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::new(1.0, -1.0, 1.0).normalize()),   // 5: top-front-right
-        Vertex::new(Point3::new(1.0, 1.0, 1.0), Vector3::new(1.0, 1.0, 1.0).normalize()),    // 6: top-back-right
-        Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::new(-1.0, 1.0, 1.0).normalize()),   // 7: top-back-left
+        Vertex::new(
+            Point3::new(0.0, 0.0, 0.0),
+            Vector3::new(-1.0, -1.0, -1.0).normalize(),
+        ), // 0: bottom-front-left (corner)
+        Vertex::new(
+            Point3::new(1.0, 0.0, 0.0),
+            Vector3::new(1.0, -1.0, -1.0).normalize(),
+        ), // 1: bottom-front-right
+        Vertex::new(
+            Point3::new(1.0, 1.0, 0.0),
+            Vector3::new(1.0, 1.0, -1.0).normalize(),
+        ), // 2: bottom-back-right
+        Vertex::new(
+            Point3::new(0.0, 1.0, 0.0),
+            Vector3::new(-1.0, 1.0, -1.0).normalize(),
+        ), // 3: bottom-back-left
+        Vertex::new(
+            Point3::new(0.0, 0.0, 1.0),
+            Vector3::new(-1.0, -1.0, 1.0).normalize(),
+        ), // 4: top-front-left
+        Vertex::new(
+            Point3::new(1.0, 0.0, 1.0),
+            Vector3::new(1.0, -1.0, 1.0).normalize(),
+        ), // 5: top-front-right
+        Vertex::new(
+            Point3::new(1.0, 1.0, 1.0),
+            Vector3::new(1.0, 1.0, 1.0).normalize(),
+        ), // 6: top-back-right
+        Vertex::new(
+            Point3::new(0.0, 1.0, 1.0),
+            Vector3::new(-1.0, 1.0, 1.0).normalize(),
+        ), // 7: top-back-left
     ];
 
     // Define cube faces as indexed polygons (6 faces, each with 4 vertices)
     // Vertices are ordered counter-clockwise when viewed from outside the cube
     let polygons = vec![
         // Bottom face (z=0) - normal (0,0,-1) - viewed from below: counter-clockwise
-        csgrs::IndexedMesh::IndexedPolygon::new(vec![0, 3, 2, 1], Plane::from_vertices(vec![
-            vertices[0].clone(), vertices[3].clone(), vertices[2].clone()
-        ]), None),
+        csgrs::IndexedMesh::IndexedPolygon::new(
+            vec![0, 3, 2, 1],
+            Plane::from_vertices(vec![
+                vertices[0].clone(),
+                vertices[3].clone(),
+                vertices[2].clone(),
+            ]),
+            None,
+        ),
         // Top face (z=1) - normal (0,0,1) - viewed from above: counter-clockwise
-        csgrs::IndexedMesh::IndexedPolygon::new(vec![4, 5, 6, 7], Plane::from_vertices(vec![
-            vertices[4].clone(), vertices[5].clone(), vertices[6].clone()
-        ]), None),
+        csgrs::IndexedMesh::IndexedPolygon::new(
+            vec![4, 5, 6, 7],
+            Plane::from_vertices(vec![
+                vertices[4].clone(),
+                vertices[5].clone(),
+                vertices[6].clone(),
+            ]),
+            None,
+        ),
         // Front face (y=0) - normal (0,-1,0) - viewed from front: counter-clockwise
-        csgrs::IndexedMesh::IndexedPolygon::new(vec![0, 1, 5, 4], Plane::from_vertices(vec![
-            vertices[0].clone(), vertices[1].clone(), vertices[5].clone()
-        ]), None),
+        csgrs::IndexedMesh::IndexedPolygon::new(
+            vec![0, 1, 5, 4],
+            Plane::from_vertices(vec![
+                vertices[0].clone(),
+                vertices[1].clone(),
+                vertices[5].clone(),
+            ]),
+            None,
+        ),
         // Back face (y=1) - normal (0,1,0) - viewed from back: counter-clockwise
-        csgrs::IndexedMesh::IndexedPolygon::new(vec![3, 7, 6, 2], Plane::from_vertices(vec![
-            vertices[3].clone(), vertices[7].clone(), vertices[6].clone()
-        ]), None),
+        csgrs::IndexedMesh::IndexedPolygon::new(
+            vec![3, 7, 6, 2],
+            Plane::from_vertices(vec![
+                vertices[3].clone(),
+                vertices[7].clone(),
+                vertices[6].clone(),
+            ]),
+            None,
+        ),
         // Left face (x=0) - normal (-1,0,0) - viewed from left: counter-clockwise
-        csgrs::IndexedMesh::IndexedPolygon::new(vec![0, 4, 7, 3], Plane::from_vertices(vec![
-            vertices[0].clone(), vertices[4].clone(), vertices[7].clone()
-        ]), None),
+        csgrs::IndexedMesh::IndexedPolygon::new(
+            vec![0, 4, 7, 3],
+            Plane::from_vertices(vec![
+                vertices[0].clone(),
+                vertices[4].clone(),
+                vertices[7].clone(),
+            ]),
+            None,
+        ),
         // Right face (x=1) - normal (1,0,0) - viewed from right: counter-clockwise
-        csgrs::IndexedMesh::IndexedPolygon::new(vec![1, 2, 6, 5], Plane::from_vertices(vec![
-            vertices[1].clone(), vertices[2].clone(), vertices[6].clone()
-        ]), None),
+        csgrs::IndexedMesh::IndexedPolygon::new(
+            vec![1, 2, 6, 5],
+            Plane::from_vertices(vec![
+                vertices[1].clone(),
+                vertices[2].clone(),
+                vertices[6].clone(),
+            ]),
+            None,
+        ),
     ];
 
     let cube = IndexedMesh {
@@ -115,7 +177,7 @@ fn create_simple_cube() -> IndexedMesh<()> {
 
 fn analyze_connectivity<S: Clone + Send + Sync + std::fmt::Debug>(
     mesh: &IndexedMesh<S>,
-    adjacency_map: &HashMap<usize, Vec<usize>>
+    adjacency_map: &HashMap<usize, Vec<usize>>,
 ) {
     println!("\nConnectivity Analysis:");
     println!("======================");
@@ -171,7 +233,10 @@ fn analyze_open_edges<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &IndexedMe
     for (face_idx, polygon) in mesh.polygons.iter().enumerate() {
         for &(i, j) in &polygon.edges().collect::<Vec<_>>() {
             let edge = if i < j { (i, j) } else { (j, i) };
-            edge_to_faces.entry(edge).or_insert_with(Vec::new).push(face_idx);
+            edge_to_faces
+                .entry(edge)
+                .or_insert_with(Vec::new)
+                .push(face_idx);
         }
     }
 
@@ -210,7 +275,8 @@ fn analyze_open_edges<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &IndexedMe
             let _found_loop = false;
 
             // Follow the boundary by finding adjacent open edges
-            for _ in 0..open_edges.len() { // Prevent infinite loops
+            for _ in 0..open_edges.len() {
+                // Prevent infinite loops
                 if visited.contains(&current_edge) {
                     break;
                 }
@@ -270,7 +336,9 @@ fn analyze_open_edges<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &IndexedMe
 
             print!("  Vertices: ");
             for (i, &vertex) in vertex_list.iter().enumerate() {
-                if i > 0 { print!(", "); }
+                if i > 0 {
+                    print!(", ");
+                }
                 print!("{}", vertex);
             }
             println!();
@@ -279,7 +347,13 @@ fn analyze_open_edges<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &IndexedMe
             println!("  Edges:");
             for (i, &(v1, v2)) in loop_edges.iter().enumerate() {
                 let faces = edge_to_faces.get(&(v1, v2)).unwrap();
-                println!("    Edge {}: vertices ({}, {}) in face {}", i + 1, v1, v2, faces[0]);
+                println!(
+                    "    Edge {}: vertices ({}, {}) in face {}",
+                    i + 1,
+                    v1,
+                    v2,
+                    faces[0]
+                );
             }
         }
 
@@ -293,7 +367,10 @@ fn analyze_open_edges<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &IndexedMe
         println!("\nBoundary Vertices:");
         println!("Total boundary vertices: {}", boundary_vertices.len());
         println!("Total vertices in mesh: {}", mesh.vertices.len());
-        println!("Ratio: {:.1}%", (boundary_vertices.len() as f64 / mesh.vertices.len() as f64) * 100.0);
+        println!(
+            "Ratio: {:.1}%",
+            (boundary_vertices.len() as f64 / mesh.vertices.len() as f64) * 100.0
+        );
 
         // Check for isolated boundary edges
         let mut isolated_edges = Vec::new();
@@ -334,7 +411,7 @@ fn analyze_open_edges<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &IndexedMe
 fn demonstrate_vertex_analysis<S: Clone + Send + Sync + std::fmt::Debug>(
     _mesh: &IndexedMesh<S>,
     adjacency_map: &HashMap<usize, Vec<usize>>,
-    _vertex_map: &VertexIndexMap
+    _vertex_map: &VertexIndexMap,
 ) {
     println!("\nVertex Analysis Examples:");
     println!("========================");
@@ -355,12 +432,17 @@ fn demonstrate_vertex_analysis<S: Clone + Send + Sync + std::fmt::Debug>(
                 _ => "Irregular vertex",
             };
 
-            println!("Vertex {}: {} neighbors - {}", vertex_idx, valence, vertex_type);
+            println!(
+                "Vertex {}: {} neighbors - {}",
+                vertex_idx, valence, vertex_type
+            );
 
             // Show neighbor connections
             print!("  Connected to vertices: ");
             for (i, &neighbor) in neighbors.iter().enumerate() {
-                if i > 0 { print!(", "); }
+                if i > 0 {
+                    print!(", ");
+                }
                 print!("{}", neighbor);
             }
             println!();
@@ -384,8 +466,10 @@ fn compare_mesh_vs_indexed_mesh_normals() {
 
     println!("IndexedMesh vertices with their normals:");
     for (i, vertex) in indexed_cube.vertices.iter().enumerate() {
-        println!("  Vertex {}: pos={:?}, normal={:?}",
-                i, vertex.pos, vertex.normal);
+        println!(
+            "  Vertex {}: pos={:?}, normal={:?}",
+            i, vertex.pos, vertex.normal
+        );
     }
 
     println!("\nRegular Mesh triangles with their normals (after triangulation):");
@@ -457,8 +541,7 @@ fn demonstrate_csg_cube_minus_cylinder() {
     // Cylinder is created along Z-axis from (0,0,0) to (0,0,3), so we need to:
     // 1. Translate it to center horizontally (x=1, y=1)
     // 2. Translate it down so it extends below the cube (z=-0.5 to start at z=-0.5)
-    let positioned_cylinder = cylinder
-        .translate(1.0, 1.0, -0.5);
+    let positioned_cylinder = cylinder.translate(1.0, 1.0, -0.5);
 
     println!("Positioned cylinder at center of cube");
 
@@ -467,14 +550,21 @@ fn demonstrate_csg_cube_minus_cylinder() {
     println!("After CSG difference: {} polygons", result.polygons.len());
 
     // Convert to IndexedMesh for analysis
-    let indexed_result = csgrs::IndexedMesh::IndexedMesh::from_polygons(&result.polygons, result.metadata);
-    println!("Converted to IndexedMesh: {} vertices, {} polygons",
-             indexed_result.vertices.len(), indexed_result.polygons.len());
+    let indexed_result =
+        csgrs::IndexedMesh::IndexedMesh::from_polygons(&result.polygons, result.metadata);
+    println!(
+        "Converted to IndexedMesh: {} vertices, {} polygons",
+        indexed_result.vertices.len(),
+        indexed_result.polygons.len()
+    );
 
     // Analyze the result
     let (vertex_map, adjacency_map) = indexed_result.build_connectivity_indexed();
-    println!("Result connectivity: {} vertices, {} adjacency entries",
-             vertex_map.position_to_index.len(), adjacency_map.len());
+    println!(
+        "Result connectivity: {} vertices, {} adjacency entries",
+        vertex_map.position_to_index.len(),
+        adjacency_map.len()
+    );
 
     // Analyze open edges in the CSG result
     analyze_open_edges(&indexed_result);
@@ -500,51 +590,59 @@ fn export_to_stl<S: Clone + Send + Sync + std::fmt::Debug>(indexed_mesh: &Indexe
 
     // Export as binary STL
     match mesh.to_stl_binary("IndexedMesh_Cube") {
-        Ok(stl_data) => {
-            match fs::write("stl/indexed_mesh_cube.stl", stl_data) {
-                Ok(_) => println!("✓ Successfully exported binary STL: stl/indexed_mesh_cube.stl"),
-                Err(e) => println!("✗ Failed to write binary STL file: {}", e),
-            }
-        }
+        Ok(stl_data) => match fs::write("stl/indexed_mesh_cube.stl", stl_data) {
+            Ok(_) => println!("✓ Successfully exported binary STL: stl/indexed_mesh_cube.stl"),
+            Err(e) => println!("✗ Failed to write binary STL file: {}", e),
+        },
         Err(e) => println!("✗ Failed to generate binary STL: {}", e),
     }
 
     // Export as ASCII STL
     let stl_ascii = mesh.to_stl_ascii("IndexedMesh_Cube");
     match fs::write("stl/indexed_mesh_cube_ascii.stl", stl_ascii) {
-        Ok(_) => println!("✓ Successfully exported ASCII STL: stl/indexed_mesh_cube_ascii.stl"),
+        Ok(_) => {
+            println!("✓ Successfully exported ASCII STL: stl/indexed_mesh_cube_ascii.stl")
+        },
         Err(e) => println!("✗ Failed to write ASCII STL file: {}", e),
     }
 
     println!("  Mesh statistics:");
     println!("  - {} vertices", mesh.vertices().len());
     println!("  - {} polygons", mesh.polygons.len());
-    println!("  - {} triangles (after triangulation)", mesh.triangulate().polygons.len());
+    println!(
+        "  - {} triangles (after triangulation)",
+        mesh.triangulate().polygons.len()
+    );
 }
 
 fn export_csg_result<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &csgrs::mesh::Mesh<S>) {
     // Export as binary STL
     match mesh.to_stl_binary("CSG_Cube_Minus_Cylinder") {
-        Ok(stl_data) => {
-            match fs::write("stl/csg_cube_minus_cylinder.stl", stl_data) {
-                Ok(_) => println!("✓ Successfully exported CSG binary STL: stl/csg_cube_minus_cylinder.stl"),
-                Err(e) => println!("✗ Failed to write CSG binary STL file: {}", e),
-            }
-        }
+        Ok(stl_data) => match fs::write("stl/csg_cube_minus_cylinder.stl", stl_data) {
+            Ok(_) => println!(
+                "✓ Successfully exported CSG binary STL: stl/csg_cube_minus_cylinder.stl"
+            ),
+            Err(e) => println!("✗ Failed to write CSG binary STL file: {}", e),
+        },
         Err(e) => println!("✗ Failed to generate CSG binary STL: {}", e),
     }
 
     // Export as ASCII STL
     let stl_ascii = mesh.to_stl_ascii("CSG_Cube_Minus_Cylinder");
     match fs::write("stl/csg_cube_minus_cylinder_ascii.stl", stl_ascii) {
-        Ok(_) => println!("✓ Successfully exported CSG ASCII STL: stl/csg_cube_minus_cylinder_ascii.stl"),
+        Ok(_) => println!(
+            "✓ Successfully exported CSG ASCII STL: stl/csg_cube_minus_cylinder_ascii.stl"
+        ),
         Err(e) => println!("✗ Failed to write CSG ASCII STL file: {}", e),
     }
 
     println!("  CSG Mesh statistics:");
     println!("  - {} vertices", mesh.vertices().len());
     println!("  - {} polygons", mesh.polygons.len());
-    println!("  - {} triangles (after triangulation)", mesh.triangulate().polygons.len());
+    println!(
+        "  - {} triangles (after triangulation)",
+        mesh.triangulate().polygons.len()
+    );
 }
 
 fn demonstrate_indexed_mesh_connectivity_issues() {
@@ -559,12 +657,18 @@ fn demonstrate_indexed_mesh_connectivity_issues() {
 
     // Analyze connectivity of original
     let (orig_vertex_map, orig_adjacency) = original_cube.build_connectivity_indexed();
-    println!("  - Connectivity: {} vertices, {} adjacency entries",
-             orig_vertex_map.position_to_index.len(), orig_adjacency.len());
+    println!(
+        "  - Connectivity: {} vertices, {} adjacency entries",
+        orig_vertex_map.position_to_index.len(),
+        orig_adjacency.len()
+    );
 
     // Convert to regular Mesh and back to IndexedMesh (simulating CSG round-trip)
     let regular_mesh = original_cube.to_mesh();
-    let reconstructed_cube = csgrs::IndexedMesh::IndexedMesh::from_polygons(&regular_mesh.polygons, regular_mesh.metadata);
+    let reconstructed_cube = csgrs::IndexedMesh::IndexedMesh::from_polygons(
+        &regular_mesh.polygons,
+        regular_mesh.metadata,
+    );
 
     println!("\nAfter Mesh ↔ IndexedMesh round-trip:");
     println!("  - {} vertices", reconstructed_cube.vertices.len());
@@ -572,25 +676,37 @@ fn demonstrate_indexed_mesh_connectivity_issues() {
 
     // Analyze connectivity of reconstructed
     let (recon_vertex_map, recon_adjacency) = reconstructed_cube.build_connectivity_indexed();
-    println!("  - Connectivity: {} vertices, {} adjacency entries",
-             recon_vertex_map.position_to_index.len(), recon_adjacency.len());
+    println!(
+        "  - Connectivity: {} vertices, {} adjacency entries",
+        recon_vertex_map.position_to_index.len(),
+        recon_adjacency.len()
+    );
 
     // Check for issues
     let mut issues_found = Vec::new();
 
     // Check vertex count difference
     if original_cube.vertices.len() != reconstructed_cube.vertices.len() {
-        issues_found.push(format!("Vertex count changed: {} → {}",
-                                original_cube.vertices.len(), reconstructed_cube.vertices.len()));
+        issues_found.push(format!(
+            "Vertex count changed: {} → {}",
+            original_cube.vertices.len(),
+            reconstructed_cube.vertices.len()
+        ));
     }
 
     // Check for duplicate vertices that should have been merged
     let mut vertex_positions = std::collections::HashMap::new();
     for (i, vertex) in reconstructed_cube.vertices.iter().enumerate() {
-        let key = (vertex.pos.x.to_bits(), vertex.pos.y.to_bits(), vertex.pos.z.to_bits());
+        let key = (
+            vertex.pos.x.to_bits(),
+            vertex.pos.y.to_bits(),
+            vertex.pos.z.to_bits(),
+        );
         if let Some(&existing_idx) = vertex_positions.get(&key) {
-            issues_found.push(format!("Duplicate vertices at same position: indices {}, {}",
-                                    existing_idx, i));
+            issues_found.push(format!(
+                "Duplicate vertices at same position: indices {}, {}",
+                existing_idx, i
+            ));
         } else {
             vertex_positions.insert(key, i);
         }
@@ -600,8 +716,12 @@ fn demonstrate_indexed_mesh_connectivity_issues() {
     for (vertex_idx, neighbors) in &orig_adjacency {
         if let Some(recon_neighbors) = recon_adjacency.get(vertex_idx) {
             if neighbors.len() != recon_neighbors.len() {
-                issues_found.push(format!("Vertex {} adjacency changed: {} → {} neighbors",
-                                        vertex_idx, neighbors.len(), recon_neighbors.len()));
+                issues_found.push(format!(
+                    "Vertex {} adjacency changed: {} → {} neighbors",
+                    vertex_idx,
+                    neighbors.len(),
+                    recon_neighbors.len()
+                ));
             }
         } else {
             issues_found.push(format!("Vertex {} lost adjacency information", vertex_idx));
@@ -627,7 +747,10 @@ fn demonstrate_indexed_mesh_connectivity_issues() {
     let csg_result_mesh = cube_mesh.difference(&positioned_cylinder);
 
     // Convert CSG result to IndexedMesh
-    let csg_indexed = csgrs::IndexedMesh::IndexedMesh::from_polygons(&csg_result_mesh.polygons, csg_result_mesh.metadata);
+    let csg_indexed = csgrs::IndexedMesh::IndexedMesh::from_polygons(
+        &csg_result_mesh.polygons,
+        csg_result_mesh.metadata,
+    );
 
     println!("CSG result as IndexedMesh:");
     println!("  - {} vertices", csg_indexed.vertices.len());
@@ -637,10 +760,18 @@ fn demonstrate_indexed_mesh_connectivity_issues() {
     let (_csg_vertex_map, csg_adjacency) = csg_indexed.build_connectivity_indexed();
 
     // Check for isolated vertices (common issue after CSG)
-    let isolated_count = csg_adjacency.values().filter(|neighbors| neighbors.is_empty()).count();
+    let isolated_count = csg_adjacency
+        .values()
+        .filter(|neighbors| neighbors.is_empty())
+        .count();
     if isolated_count > 0 {
-        println!("⚠ Found {} isolated vertices (vertices with no adjacent faces)", isolated_count);
-        println!("  This is a common issue after CSG operations due to improper vertex welding");
+        println!(
+            "⚠ Found {} isolated vertices (vertices with no adjacent faces)",
+            isolated_count
+        );
+        println!(
+            "  This is a common issue after CSG operations due to improper vertex welding"
+        );
     }
 
     // Check for non-manifold edges
@@ -656,17 +787,26 @@ fn demonstrate_indexed_mesh_connectivity_issues() {
 
     let non_manifold_count = edge_count.values().filter(|&&count| count > 2).count();
     if non_manifold_count > 0 {
-        println!("⚠ Found {} non-manifold edges (edges shared by more than 2 faces)", non_manifold_count);
+        println!(
+            "⚠ Found {} non-manifold edges (edges shared by more than 2 faces)",
+            non_manifold_count
+        );
         println!("  This indicates mesh topology issues after CSG operations");
     }
 
     // Summary of IndexedMesh connectivity issues
     println!("\nIndexedMesh Connectivity Issues Summary:");
     println!("=========================================");
-    println!("1. **CSG Round-trip Problem**: Converting Mesh ↔ IndexedMesh loses connectivity");
-    println!("2. **Vertex Deduplication**: Bit-perfect comparison misses near-coincident vertices");
+    println!(
+        "1. **CSG Round-trip Problem**: Converting Mesh ↔ IndexedMesh loses connectivity"
+    );
+    println!(
+        "2. **Vertex Deduplication**: Bit-perfect comparison misses near-coincident vertices"
+    );
     println!("3. **Adjacency Loss**: Edge connectivity information is not preserved");
-    println!("4. **Isolated Vertices**: CSG operations often create vertices with no adjacent faces");
+    println!(
+        "4. **Isolated Vertices**: CSG operations often create vertices with no adjacent faces"
+    );
     println!("5. **Non-manifold Edges**: Boolean operations can create invalid mesh topology");
     println!("6. **Open Edges**: CSG naturally creates boundaries that need proper handling");
 
