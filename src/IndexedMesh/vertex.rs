@@ -186,7 +186,7 @@ impl IndexedVertex {
             *z = 0.0;
         }
 
-        // Sanitise normal
+        // Sanitise normal - handle both non-finite and near-zero cases
         let [[nx, ny, nz]]: &mut [[_; 3]; 1] = &mut normal.data.0;
         if !nx.is_finite() {
             *nx = 0.0;
@@ -196,6 +196,15 @@ impl IndexedVertex {
         }
         if !nz.is_finite() {
             *nz = 0.0;
+        }
+
+        // Check if normal is near-zero and provide default if needed
+        let normal_length_sq = (*nx) * (*nx) + (*ny) * (*ny) + (*nz) * (*nz);
+        if normal_length_sq < 1e-12 {
+            // Near-zero normal - use default Z-up normal
+            *nx = 0.0;
+            *ny = 0.0;
+            *nz = 1.0;
         }
 
         IndexedVertex { pos, normal }
@@ -212,8 +221,29 @@ impl IndexedVertex {
     /// during edge splitting operations in IndexedMesh.
     pub fn interpolate(&self, other: &IndexedVertex, t: Real) -> IndexedVertex {
         let new_pos = self.pos + (other.pos - self.pos) * t;
-        let new_normal = self.normal + (other.normal - self.normal) * t;
-        IndexedVertex::new(new_pos, new_normal)
+
+        // Interpolate normals with proper normalization
+        let n1 = self.normal.normalize();
+        let n2 = other.normal.normalize();
+
+        // Use slerp for better normal interpolation (spherical linear interpolation)
+        let dot = n1.dot(&n2);
+        if dot > 0.9999 {
+            // Nearly identical normals - use linear interpolation
+            let new_normal = (1.0 - t) * n1 + t * n2;
+            IndexedVertex::new(new_pos, new_normal.normalize())
+        } else if dot < -0.9999 {
+            // Opposite normals - handle discontinuity
+            let new_normal = (1.0 - t) * n1 + t * (-n1);
+            IndexedVertex::new(new_pos, new_normal.normalize())
+        } else {
+            // Standard slerp
+            let omega = dot.acos();
+            let sin_omega = omega.sin();
+            let new_normal = (omega * (1.0 - t)).sin() / sin_omega * n1 +
+                           (omega * t).sin() / sin_omega * n2;
+            IndexedVertex::new(new_pos, new_normal.normalize())
+        }
     }
 
     /// **Spherical Linear Interpolation for Normals**

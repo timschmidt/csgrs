@@ -2,7 +2,7 @@
 //!
 //! This example shows how to:
 //! 1. Create an IndexedMesh from basic shapes
-//! 2. Build connectivity analysis using build_connectivity_indexed
+//! 2. Build connectivity analysis using build_connectivity
 //! 3. Analyze vertex connectivity and mesh properties
 
 use csgrs::IndexedMesh::{IndexedMesh, connectivity::VertexIndexMap};
@@ -10,7 +10,7 @@ use csgrs::mesh::plane::Plane;
 use csgrs::mesh::vertex::Vertex;
 use csgrs::traits::CSG;
 use nalgebra::{Point3, Vector3};
-use std::collections::HashMap;
+use hashbrown::HashMap;
 use std::fs;
 
 fn main() {
@@ -27,7 +27,7 @@ fn main() {
 
     // Build connectivity analysis
     println!("\nBuilding connectivity analysis...");
-    let (vertex_map, adjacency_map) = cube.build_connectivity_indexed();
+    let (vertex_map, adjacency_map) = cube.build_connectivity();
 
     println!("Connectivity analysis complete:");
     println!("- Vertex map size: {}", vertex_map.position_to_index.len());
@@ -559,7 +559,7 @@ fn demonstrate_csg_cube_minus_cylinder() {
     );
 
     // Analyze the result
-    let (vertex_map, adjacency_map) = indexed_result.build_connectivity_indexed();
+    let (vertex_map, adjacency_map) = indexed_result.build_connectivity();
     println!(
         "Result connectivity: {} vertices, {} adjacency entries",
         vertex_map.position_to_index.len(),
@@ -656,7 +656,7 @@ fn demonstrate_indexed_mesh_connectivity_issues() {
     println!("  - {} polygons", original_cube.polygons.len());
 
     // Analyze connectivity of original
-    let (orig_vertex_map, orig_adjacency) = original_cube.build_connectivity_indexed();
+    let (orig_vertex_map, orig_adjacency) = original_cube.build_connectivity();
     println!(
         "  - Connectivity: {} vertices, {} adjacency entries",
         orig_vertex_map.position_to_index.len(),
@@ -675,7 +675,7 @@ fn demonstrate_indexed_mesh_connectivity_issues() {
     println!("  - {} polygons", reconstructed_cube.polygons.len());
 
     // Analyze connectivity of reconstructed
-    let (recon_vertex_map, recon_adjacency) = reconstructed_cube.build_connectivity_indexed();
+    let (recon_vertex_map, recon_adjacency) = reconstructed_cube.build_connectivity();
     println!(
         "  - Connectivity: {} vertices, {} adjacency entries",
         recon_vertex_map.position_to_index.len(),
@@ -757,7 +757,7 @@ fn demonstrate_indexed_mesh_connectivity_issues() {
     println!("  - {} polygons", csg_indexed.polygons.len());
 
     // Analyze connectivity
-    let (_csg_vertex_map, csg_adjacency) = csg_indexed.build_connectivity_indexed();
+    let (_csg_vertex_map, csg_adjacency) = csg_indexed.build_connectivity();
 
     // Check for isolated vertices (common issue after CSG)
     let isolated_count = csg_adjacency

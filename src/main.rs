@@ -7,6 +7,7 @@
 use csgrs::float_types::Real;
 
 use csgrs::traits::CSG;
+use csgrs::mesh::plane::Plane;
 use nalgebra::{Point3, Vector3};
 use std::fs;
 

@@ -1,7 +1,7 @@
-use crate::IndexedMesh::IndexedMesh;
 use crate::float_types::Real;
+use crate::IndexedMesh::IndexedMesh;
+use hashbrown::HashMap;
 use nalgebra::Point3;
-use std::collections::HashMap;
 use std::fmt::Debug;
 
 /// **Mathematical Foundation: Robust Vertex Indexing for Mesh Connectivity**
@@ -74,7 +74,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     /// 4. **Manifold Validation**: Ensure each edge is shared by at most 2 triangles
     ///
     /// Returns (vertex_map, adjacency_graph) for robust mesh processing.
-    pub fn build_connectivity_indexed(&self) -> (VertexIndexMap, HashMap<usize, Vec<usize>>) {
+    pub fn build_connectivity(&self) -> (VertexIndexMap, HashMap<usize, Vec<usize>>) {
         let mut vertex_map = VertexIndexMap::new(Real::EPSILON * 100.0); // Tolerance for vertex matching
         let mut adjacency: HashMap<usize, Vec<usize>> = HashMap::new();
 

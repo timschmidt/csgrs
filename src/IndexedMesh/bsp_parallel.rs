@@ -1,400 +1,266 @@
-//! Parallel BSP (Binary Space Partitioning) tree operations for IndexedMesh.
-//!
-//! This module provides parallel BSP tree functionality optimized for IndexedMesh's indexed connectivity model.
-//! Uses rayon for parallel processing of BSP tree operations.
+//! Parallel versions of [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) operations for IndexedMesh
+
+use crate::IndexedMesh::bsp::IndexedNode;
+use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use crate::IndexedMesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
+
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
+#[cfg(feature = "parallel")]
+use crate::IndexedMesh::IndexedPolygon;
+
+#[cfg(feature = "parallel")]
+use crate::IndexedMesh::vertex::IndexedVertex;
+
+#[cfg(feature = "parallel")]
+use crate::float_types::EPSILON;
+
+#[cfg(feature = "parallel")]
 use crate::IndexedMesh::IndexedMesh;
 
-use std::fmt::Debug;
-
-/// Parallel BSP tree node for IndexedMesh
-pub use crate::IndexedMesh::bsp::IndexedNode;
-
-/// Classification of a polygon relative to a plane (parallel version)
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[allow(dead_code)]
-enum PolygonClassification {
-    Front,
-    Back,
-    CoplanarFront,
-    CoplanarBack,
-    Spanning,
-}
-
-#[cfg(feature = "parallel")]
-#[cfg(feature = "parallel")]
 impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
-    /// **Mathematical Foundation: Parallel BSP Tree Construction**
-    ///
-    /// Build BSP tree using parallel processing for optimal performance on large meshes.
-    /// This is the parallel version of the regular build method.
-    ///
-    /// ## **Parallel Algorithm**
-    /// 1. **Plane Selection**: Choose optimal splitting plane using parallel evaluation
-    /// 2. **Polygon Classification**: Classify polygons in parallel using rayon
-    /// 3. **Recursive Subdivision**: Build front and back subtrees in parallel
-    /// 4. **Index Preservation**: Maintain polygon indices throughout construction
-    ///
-    /// ## **Performance Benefits**
-    /// - **Scalability**: Linear speedup with number of cores for large meshes
-    /// - **Cache Efficiency**: Better memory access patterns through parallelization
-    /// - **Load Balancing**: Automatic work distribution via rayon
-    pub fn build(&mut self, mesh: &IndexedMesh<S>) {
-        self.build_parallel(mesh);
-    }
-
-    /// **Build BSP Tree with Depth Limit (Parallel Version)**
-    ///
-    /// Construct BSP tree with maximum recursion depth to prevent stack overflow.
-    /// Uses parallel processing for optimal performance.
-    ///
-    /// ## **Mathematical Foundation**
-    /// - **Depth Control**: Limits recursion to prevent exponential memory growth
-    /// - **Parallel Processing**: Leverages multiple cores for large polygon sets
-    /// - **Memory Management**: Prevents excessive stack frame allocation
-    ///
-    /// # Parameters
-    /// - `mesh`: The IndexedMesh containing the polygons
-    /// - `max_depth`: Maximum recursion depth (recommended: 15-25)
-    pub fn build_with_depth_limit(&mut self, mesh: &IndexedMesh<S>, max_depth: usize) {
-        self.build_with_depth_limit_recursive(mesh, 0, max_depth);
-    }
-
-    /// Recursive helper for depth-limited BSP construction (parallel version)
-    fn build_with_depth_limit_recursive(
-        &mut self,
-        mesh: &IndexedMesh<S>,
-        current_depth: usize,
-        max_depth: usize,
-    ) {
-        if self.polygons.is_empty() || current_depth >= max_depth {
-            return;
-        }
-
-        // Choose optimal splitting plane if not already set
-        if self.plane.is_none() {
-            self.plane = Some(self.choose_splitting_plane(mesh));
-        }
-
-        let plane = self.plane.as_ref().unwrap();
-
-        // Use parallel classification for better performance
-        let (front_polygons, back_polygons): (Vec<_>, Vec<_>) = self
-            .polygons
-            .par_iter()
-            .map(|&poly_idx| {
-                let polygon = &mesh.polygons[poly_idx];
-                let classification = self.classify_polygon_to_plane(mesh, polygon, plane);
-                (poly_idx, classification)
-            })
-            .partition_map(|(poly_idx, classification)| {
-                match classification {
-                    PolygonClassification::Front => rayon::iter::Either::Left(poly_idx),
-                    PolygonClassification::Back => rayon::iter::Either::Right(poly_idx),
-                    _ => rayon::iter::Either::Left(poly_idx), // Coplanar and spanning go to front
-                }
-            });
-
-        // Build subtrees recursively with incremented depth
-        if !front_polygons.is_empty() {
-            let mut front_node = IndexedNode::new();
-            front_node.polygons = front_polygons;
-            front_node.build_with_depth_limit_recursive(mesh, current_depth + 1, max_depth);
-            self.front = Some(Box::new(front_node));
-        }
-
-        if !back_polygons.is_empty() {
-            let mut back_node = IndexedNode::new();
-            back_node.polygons = back_polygons;
-            back_node.build_with_depth_limit_recursive(mesh, current_depth + 1, max_depth);
-            self.back = Some(Box::new(back_node));
-        }
-    }
-
-    /// **Mathematical Foundation: Parallel BSP Tree Construction with Indexed Connectivity**
-    ///
-    /// Builds a balanced BSP tree using parallel processing for polygon classification
-    /// and recursive subtree construction.
-    ///
-    /// ## **Parallel Optimization Strategies**
-    /// - **Parallel Classification**: Classify polygons to planes using rayon
-    /// - **Concurrent Subtree Building**: Build front/back subtrees in parallel
-    /// - **Work Stealing**: Efficient load balancing across threads
-    /// - **Memory Locality**: Minimize data movement between threads
-    ///
-    /// ## **Performance Benefits**
-    /// - **Scalability**: Linear speedup with number of cores for large meshes
-    /// - **Cache Efficiency**: Better memory access patterns through parallelization
-    /// - **Load Balancing**: Automatic work distribution via rayon
-    pub fn build_parallel(&mut self, mesh: &IndexedMesh<S>) {
-        if self.polygons.is_empty() {
-            return;
-        }
-
-        // Choose optimal splitting plane
-        if self.plane.is_none() {
-            self.plane = Some(self.choose_splitting_plane(mesh));
-        }
-
-        let plane = self.plane.as_ref().unwrap();
-
-        // Parallel polygon classification
-        let classifications: Vec<_> = self
-            .polygons
-            .par_iter()
-            .map(|&poly_idx| {
-                let polygon = &mesh.polygons[poly_idx];
-                (poly_idx, self.classify_polygon_to_plane(mesh, polygon, plane))
-            })
-            .collect();
-
-        // Partition polygons based on classification
-        let mut front_polygons = Vec::new();
-        let mut back_polygons = Vec::new();
-        let mut coplanar_polygons = Vec::new();
-
-        for (poly_idx, classification) in classifications {
-            match classification {
-                PolygonClassification::Front => front_polygons.push(poly_idx),
-                PolygonClassification::Back => back_polygons.push(poly_idx),
-                PolygonClassification::CoplanarFront | PolygonClassification::CoplanarBack => {
-                    coplanar_polygons.push(poly_idx);
-                },
-                PolygonClassification::Spanning => {
-                    // Add to both sides for spanning polygons
-                    front_polygons.push(poly_idx);
-                    back_polygons.push(poly_idx);
-                },
-            }
-        }
-
-        // Store coplanar polygons in this node
-        self.polygons = coplanar_polygons;
-
-        // Build subtrees in parallel using rayon::join
-        let (front_result, back_result) = rayon::join(
-            || {
-                if !front_polygons.is_empty() {
-                    let mut front_node = IndexedNode::new();
-                    front_node.polygons = front_polygons;
-                    front_node.build_parallel(mesh);
-                    Some(Box::new(front_node))
-                } else {
-                    None
-                }
-            },
-            || {
-                if !back_polygons.is_empty() {
-                    let mut back_node = IndexedNode::new();
-                    back_node.polygons = back_polygons;
-                    back_node.build_parallel(mesh);
-                    Some(Box::new(back_node))
-                } else {
-                    None
-                }
-            },
-        );
-
-        self.front = front_result;
-        self.back = back_result;
-    }
-
-    /// Choose optimal splitting plane (parallel version)
+    /// Invert all polygons in the BSP tree using iterative approach to avoid stack overflow
     #[cfg(feature = "parallel")]
-    fn choose_splitting_plane(&self, mesh: &IndexedMesh<S>) -> crate::mesh::plane::Plane {
-        if self.polygons.is_empty() {
-            return crate::mesh::plane::Plane::from_normal(nalgebra::Vector3::z(), 0.0);
-        }
-
-        // Use parallel evaluation for plane selection
-        let sample_size = (self.polygons.len().min(10)).max(1);
-        let candidates: Vec<_> = (0..sample_size)
-            .into_par_iter()
-            .map(|i| {
-                let poly_idx = self.polygons[i * self.polygons.len() / sample_size];
-                let plane = mesh.polygons[poly_idx].plane.clone();
-                let score = self.evaluate_splitting_plane(mesh, &plane);
-                (plane, score)
-            })
-            .collect();
-
-        // Find best plane
-        candidates
-            .into_iter()
-            .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
-            .map(|(plane, _)| plane)
-            .unwrap_or_else(|| mesh.polygons[self.polygons[0]].plane.clone())
-    }
-
-    /// Evaluate splitting plane quality (parallel version)
-    #[cfg(feature = "parallel")]
-    fn evaluate_splitting_plane(
-        &self,
-        mesh: &IndexedMesh<S>,
-        plane: &crate::mesh::plane::Plane,
-    ) -> f64 {
-        let counts = self
-            .polygons
-            .par_iter()
-            .map(|&poly_idx| {
-                let polygon = &mesh.polygons[poly_idx];
-                match self.classify_polygon_to_plane(mesh, polygon, plane) {
-                    PolygonClassification::Front => (1, 0, 0),
-                    PolygonClassification::Back => (0, 1, 0),
-                    PolygonClassification::Spanning => (0, 0, 1),
-                    _ => (0, 0, 0),
-                }
-            })
-            .reduce(|| (0, 0, 0), |a, b| (a.0 + b.0, a.1 + b.1, a.2 + b.2));
-
-        let (front_count, back_count, split_count) = counts;
-        let balance_penalty = ((front_count as f64) - (back_count as f64)).abs();
-        let split_penalty = (split_count as f64) * 3.0;
-
-        balance_penalty + split_penalty
-    }
-
-    /// Classify polygon relative to plane (parallel version)
-    #[cfg(feature = "parallel")]
-    fn classify_polygon_to_plane(
-        &self,
-        mesh: &IndexedMesh<S>,
-        polygon: &crate::IndexedMesh::IndexedPolygon<S>,
-        plane: &crate::mesh::plane::Plane,
-    ) -> PolygonClassification {
-        let mut front_count = 0;
-        let mut back_count = 0;
-        let epsilon = crate::float_types::EPSILON;
-
-        for &vertex_idx in &polygon.indices {
-            let vertex_pos = mesh.vertices[vertex_idx].pos;
-            let distance = self.signed_distance_to_point(plane, &vertex_pos);
-
-            if distance > epsilon {
-                front_count += 1;
-            } else if distance < -epsilon {
-                back_count += 1;
-            }
-        }
-
-        if front_count > 0 && back_count > 0 {
-            PolygonClassification::Spanning
-        } else if front_count > 0 {
-            PolygonClassification::Front
-        } else if back_count > 0 {
-            PolygonClassification::Back
-        } else {
-            let polygon_normal = polygon.plane.normal();
-            let plane_normal = plane.normal();
-
-            if polygon_normal.dot(&plane_normal) > 0.0 {
-                PolygonClassification::CoplanarFront
-            } else {
-                PolygonClassification::CoplanarBack
-            }
-        }
-    }
-
-    /// Return all polygon indices in this BSP tree using parallel processing
-    pub fn all_polygon_indices_parallel(&self) -> Vec<usize> {
-        let mut result = Vec::new();
+    pub fn invert(&mut self) {
+        // Use iterative approach with a stack to avoid recursive stack overflow
         let mut stack = vec![self];
 
         while let Some(node) = stack.pop() {
-            result.extend_from_slice(&node.polygons);
-
-            // Add child nodes to stack
-            if let Some(ref front) = node.front {
-                stack.push(front.as_ref());
+            // Flip all polygons and plane in this node
+            node.polygons.par_iter_mut().for_each(|p| p.flip());
+            if let Some(ref mut plane) = node.plane {
+                plane.flip();
             }
-            if let Some(ref back) = node.back {
-                stack.push(back.as_ref());
+
+            // Swap front and back children
+            std::mem::swap(&mut node.front, &mut node.back);
+
+            // Add children to stack for processing
+            if let Some(ref mut front) = node.front {
+                stack.push(front.as_mut());
+            }
+            if let Some(ref mut back) = node.back {
+                stack.push(back.as_mut());
             }
         }
+    }
+
+    /// Parallel version of clip Polygons
+    #[cfg(feature = "parallel")]
+    pub fn clip_polygons(&self, polygons: &[IndexedPolygon<S>]) -> Vec<IndexedPolygon<S>> {
+        // If this node has no plane, just return the original set
+        if self.plane.is_none() {
+            return polygons.to_vec();
+        }
+        let plane = self.plane.as_ref().unwrap();
+
+        // Split each polygon in parallel; gather results
+        let (coplanar_front, coplanar_back, mut front, mut back) = polygons
+            .par_iter()
+            .map(|poly| plane.split_indexed_polygon(poly))
+            .reduce(
+                || (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+                |mut acc, x| {
+                    acc.0.extend(x.0);
+                    acc.1.extend(x.1);
+                    acc.2.extend(x.2);
+                    acc.3.extend(x.3);
+                    acc
+                },
+            );
+
+        // Decide where to send the coplanar polygons
+        for cp in coplanar_front {
+            if plane.orient_plane(&cp.plane) == FRONT {
+                front.push(cp);
+            } else {
+                back.push(cp);
+            }
+        }
+        for cp in coplanar_back {
+            if plane.orient_plane(&cp.plane) == FRONT {
+                front.push(cp);
+            } else {
+                back.push(cp);
+            }
+        }
+
+        // Process front and back using parallel iterators to avoid recursive join
+        let mut result = if let Some(ref f) = self.front {
+            f.clip_polygons(&front)
+        } else {
+            front
+        };
+
+        if let Some(ref b) = self.back {
+            result.extend(b.clip_polygons(&back));
+        }
+        // If there's no back node, we simply don't extend (effectively discarding back polygons)
 
         result
     }
 
-    /// Compute signed distance from a point to a plane (parallel version)
+    /// Parallel version of `clip_to` using iterative approach to avoid stack overflow
     #[cfg(feature = "parallel")]
-    fn signed_distance_to_point(
-        &self,
-        plane: &crate::mesh::plane::Plane,
-        point: &nalgebra::Point3<crate::float_types::Real>,
-    ) -> crate::float_types::Real {
-        let normal = plane.normal();
-        let offset = plane.offset();
-        normal.dot(&point.coords) - offset
+    pub fn clip_to(&mut self, bsp: &IndexedNode<S>) {
+        // Use iterative approach with a stack to avoid recursive stack overflow
+        let mut stack = vec![self];
+
+        while let Some(node) = stack.pop() {
+            // Clip polygons at this node
+            node.polygons = bsp.clip_polygons(&node.polygons);
+
+            // Add children to stack for processing
+            if let Some(ref mut front) = node.front {
+                stack.push(front.as_mut());
+            }
+            if let Some(ref mut back) = node.back {
+                stack.push(back.as_mut());
+            }
+        }
     }
-}
 
-#[cfg(not(feature = "parallel"))]
-impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
-    /// Fallback to sequential implementation when parallel feature is disabled
-    pub fn build_parallel(&mut self, mesh: &IndexedMesh<S>) {
-        self.build(mesh);
+    /// Parallel version of `build`.
+    #[cfg(feature = "parallel")]
+    pub fn build(&mut self, polygons: &[IndexedPolygon<S>]) {
+        if polygons.is_empty() {
+            return;
+        }
+
+        // Choose splitting plane if not already set
+        if self.plane.is_none() {
+            self.plane = Some(self.pick_best_splitting_plane(polygons));
+        }
+        let plane = self.plane.as_ref().unwrap();
+
+        // Split polygons in parallel
+        let (mut coplanar_front, mut coplanar_back, front, back) =
+            polygons.par_iter().map(|p| plane.split_indexed_polygon(p)).reduce(
+                || (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+                |mut acc, x| {
+                    acc.0.extend(x.0);
+                    acc.1.extend(x.1);
+                    acc.2.extend(x.2);
+                    acc.3.extend(x.3);
+                    acc
+                },
+            );
+
+        // Append coplanar fronts/backs to self.polygons
+        self.polygons.append(&mut coplanar_front);
+        self.polygons.append(&mut coplanar_back);
+
+        // Build children sequentially to avoid stack overflow from recursive join
+        // The polygon splitting above already uses parallel iterators for the heavy work
+        if !front.is_empty() {
+            let mut front_node = self.front.take().unwrap_or_else(|| Box::new(IndexedNode::new()));
+            front_node.build(&front);
+            self.front = Some(front_node);
+        }
+
+        if !back.is_empty() {
+            let mut back_node = self.back.take().unwrap_or_else(|| Box::new(IndexedNode::new()));
+            back_node.build(&back);
+            self.back = Some(back_node);
+        }
     }
 
-    /// Fallback to sequential implementation when parallel feature is disabled
-    pub fn all_polygon_indices_parallel(&self) -> Vec<usize> {
-        self.all_polygon_indices()
-    }
-}
+    // Parallel slice
+    #[cfg(feature = "parallel")]
+    pub fn slice(&self, slicing_plane: &Plane, mesh: &IndexedMesh<S>) -> (Vec<IndexedPolygon<S>>, Vec<[IndexedVertex; 2]>) {
+        // Collect all polygons (this can be expensive, but let's do it).
+        let all_polys = self.all_polygons();
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::IndexedMesh::plane::Plane;
-    use crate::IndexedMesh::{IndexedMesh, IndexedPolygon};
+        // Process polygons in parallel
+        let (coplanar_polygons, intersection_edges) = all_polys
+            .par_iter()
+            .map(|poly| {
+                let vcount = poly.indices.len();
+                if vcount < 2 {
+                    // Degenerate => skip
+                    return (Vec::new(), Vec::new());
+                }
+                let mut polygon_type = 0;
+                let mut types = Vec::with_capacity(vcount);
 
-    use nalgebra::{Point3, Vector3};
+                for &vertex_idx in &poly.indices {
+                    if vertex_idx >= mesh.vertices.len() {
+                        continue; // Skip invalid indices
+                    }
+                    let vertex = &mesh.vertices[vertex_idx];
+                    let vertex_type = slicing_plane.orient_point(&vertex.pos);
+                    polygon_type |= vertex_type;
+                    types.push(vertex_type);
+                }
 
-    #[test]
-    fn test_parallel_bsp_basic_functionality() {
-        // Create a simple mesh with one triangle
-        let vertices = vec![
-            crate::IndexedMesh::vertex::IndexedVertex::new(
-                Point3::new(0.0, 0.0, 0.0),
-                Vector3::new(0.0, 0.0, 1.0),
-            ),
-            crate::IndexedMesh::vertex::IndexedVertex::new(
-                Point3::new(1.0, 0.0, 0.0),
-                Vector3::new(0.0, 0.0, 1.0),
-            ),
-            crate::IndexedMesh::vertex::IndexedVertex::new(
-                Point3::new(0.5, 1.0, 0.0),
-                Vector3::new(0.0, 0.0, 1.0),
-            ),
-        ];
+                match polygon_type {
+                    COPLANAR => {
+                        // Entire polygon in plane
+                        (vec![poly.clone()], Vec::new())
+                    },
+                    FRONT | BACK => {
+                        // Entirely on one side => no intersection
+                        (Vec::new(), Vec::new())
+                    },
+                    SPANNING => {
+                        // The polygon crosses the plane => gather intersection edges
+                        let mut crossing_points = Vec::new();
+                        for i in 0..vcount {
+                            let j = (i + 1) % vcount;
+                            let ti = types[i];
+                            let tj = types[j];
 
-        let plane_vertices = vec![
-            vertices[0].clone(),
-            vertices[1].clone(),
-            vertices[2].clone(),
-        ];
-        let polygons = vec![IndexedPolygon::<i32>::new(
-            vec![0, 1, 2],
-            Plane::from_indexed_vertices(plane_vertices),
-            None,
-        )];
+                            if i >= poly.indices.len() || j >= poly.indices.len() {
+                                continue;
+                            }
 
-        let mesh = IndexedMesh {
-            vertices,
-            polygons,
-            bounding_box: std::sync::OnceLock::new(),
-            metadata: None,
-        };
+                            let vi_idx = poly.indices[i];
+                            let vj_idx = poly.indices[j];
 
-        let polygon_indices = vec![0];
-        let mut node = IndexedNode::from_polygon_indices(&polygon_indices);
-        node.build_parallel(&mesh);
+                            if vi_idx >= mesh.vertices.len() || vj_idx >= mesh.vertices.len() {
+                                continue;
+                            }
 
-        // Basic test that node was created
-        assert!(!node.all_polygon_indices_parallel().is_empty());
+                            let vi = &mesh.vertices[vi_idx];
+                            let vj = &mesh.vertices[vj_idx];
+
+                            if (ti | tj) == SPANNING {
+                                // The param intersection at which plane intersects the edge [vi -> vj].
+                                // Avoid dividing by zero:
+                                let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
+                                if denom.abs() > EPSILON {
+                                    let intersection = (slicing_plane.offset()
+                                        - slicing_plane.normal().dot(&vi.pos.coords))
+                                        / denom;
+                                    // Interpolate:
+                                    let intersect_vert = vi.interpolate(vj, intersection);
+                                    crossing_points.push(intersect_vert);
+                                }
+                            }
+                        }
+
+                        // Pair up intersection points => edges
+                        let mut edges = Vec::new();
+                        for chunk in crossing_points.chunks_exact(2) {
+                            edges.push([chunk[0], chunk[1]]);
+                        }
+                        (Vec::new(), edges)
+                    },
+                    _ => (Vec::new(), Vec::new()),
+                }
+            })
+            .reduce(
+                || (Vec::new(), Vec::new()),
+                |mut acc, x| {
+                    acc.0.extend(x.0);
+                    acc.1.extend(x.1);
+                    acc
+                },
+            );
+
+        (coplanar_polygons, intersection_edges)
     }
 }

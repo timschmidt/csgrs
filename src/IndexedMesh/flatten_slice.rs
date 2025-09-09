@@ -222,9 +222,8 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     ) {
         let epsilon = EPSILON;
 
-        // Process polygon indices in this node
-        for &polygon_idx in &node.polygons {
-            let polygon = &self.polygons[polygon_idx];
+        // Process polygons in this node
+        for polygon in &node.polygons {
 
             // Check if polygon is coplanar with slicing plane
             let mut coplanar_vertices = 0;

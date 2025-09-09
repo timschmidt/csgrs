@@ -254,15 +254,21 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
                     );
 
                     let indexed_poly =
-                        IndexedPolygon::new(vec![idx0, idx1, idx2], plane, metadata.clone());
+                        IndexedPolygon::new(vec![idx0, idx1, idx2], plane.into(), metadata.clone());
                     polygons.push(indexed_poly);
                 }
             }
         }
 
+        // Convert vertices to IndexedVertex
+        let indexed_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> = unique_vertices
+            .into_iter()
+            .map(|v| v.into())
+            .collect();
+
         // Create IndexedMesh
         let mut mesh = IndexedMesh {
-            vertices: unique_vertices,
+            vertices: indexed_vertices,
             polygons,
             bounding_box: std::sync::OnceLock::new(),
             metadata,

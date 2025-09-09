@@ -6,10 +6,12 @@
 
 use crate::IndexedMesh::IndexedMesh;
 use crate::IndexedMesh::plane::Plane;
+use crate::IndexedMesh::vertex::IndexedVertex;
 use crate::float_types::{Real, parry3d::bounding_volume::Aabb};
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point3, Vector3};
 use std::sync::OnceLock;
+use std::fmt::Debug;
 
 /// **IndexedPolygon: Zero-Copy Polygon for IndexedMesh**
 ///
@@ -38,7 +40,7 @@ impl<S: Clone + PartialEq> PartialEq for IndexedPolygon<S> {
     }
 }
 
-impl<S: Clone + Send + Sync> IndexedPolygon<S> {
+impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
     /// Create a new IndexedPolygon from vertex indices
     pub fn new(indices: Vec<usize>, plane: Plane, metadata: Option<S>) -> Self {
         assert!(indices.len() >= 3, "degenerate indexed polygon");
@@ -51,33 +53,7 @@ impl<S: Clone + Send + Sync> IndexedPolygon<S> {
         }
     }
 
-    /// Create IndexedPolygon from mesh and vertex indices, computing plane automatically
-    pub fn from_mesh_indices<T: Clone + Send + Sync + std::fmt::Debug>(
-        mesh: &IndexedMesh<T>,
-        indices: Vec<usize>,
-        metadata: Option<S>,
-    ) -> Option<Self> {
-        if indices.len() < 3 {
-            return None;
-        }
 
-        // Validate indices
-        if indices.iter().any(|&idx| idx >= mesh.vertices.len()) {
-            return None;
-        }
-
-        // Compute plane from first three vertices
-        let v0 = mesh.vertices[indices[0]].pos;
-        let v1 = mesh.vertices[indices[1]].pos;
-        let v2 = mesh.vertices[indices[2]].pos;
-
-        let edge1 = v1 - v0;
-        let edge2 = v2 - v0;
-        let normal = edge1.cross(&edge2).normalize();
-        let plane = Plane::from_normal(normal, normal.dot(&v0.coords));
-
-        Some(IndexedPolygon::new(indices, plane, metadata))
-    }
 
     /// **Index-Aware Bounding Box Computation**
     ///
@@ -107,24 +83,31 @@ impl<S: Clone + Send + Sync> IndexedPolygon<S> {
 
     /// **Index-Aware Polygon Flipping**
     ///
-    /// Reverse winding order and flip normals using indexed operations.
-    /// This modifies the mesh's vertex normals directly.
-    pub fn flip<T: Clone + Send + Sync + std::fmt::Debug>(
-        &mut self,
-        mesh: &mut IndexedMesh<T>,
-    ) {
-        // Reverse vertex indices
+    /// Reverse winding order and flip plane normal using indexed operations.
+    /// Unlike Mesh, we cannot flip shared vertex normals without affecting other polygons.
+    /// Instead, we reverse indices and flip the plane.
+    pub fn flip(&mut self) {
+        // Reverse vertex indices to flip winding order
         self.indices.reverse();
 
-        // Flip vertex normals in the mesh
+        // Flip the plane normal
+        self.plane.flip();
+    }
+
+    /// Flip this polygon and also flip the normals of its vertices
+    pub fn flip_with_vertices(&mut self, vertices: &mut [IndexedVertex]) {
+        // Reverse vertex indices to flip winding order
+        self.indices.reverse();
+
+        // Flip the plane normal
+        self.plane.flip();
+
+        // Flip normals of all vertices referenced by this polygon
         for &idx in &self.indices {
-            if idx < mesh.vertices.len() {
-                mesh.vertices[idx].flip();
+            if idx < vertices.len() {
+                vertices[idx].flip();
             }
         }
-
-        // Flip the plane
-        self.plane.flip();
     }
 
     /// **Index-Aware Edge Iterator**
@@ -231,7 +214,7 @@ impl<S: Clone + Send + Sync> IndexedPolygon<S> {
             if let Ok(tris) = polygon_2d.constrained_triangulation(Default::default()) {
                 // Convert back to mesh indices
                 let mut triangles = Vec::with_capacity(tris.len());
-                for tri2d in tris {
+                for _tri2d in tris {
                     // Map 2D triangle vertices back to original indices
                     // This is a simplified mapping - in practice, you'd need to
                     // match the 2D coordinates back to the original vertex indices
@@ -256,10 +239,11 @@ impl<S: Clone + Send + Sync> IndexedPolygon<S> {
     /// **Index-Aware Subdivision**
     ///
     /// Subdivide polygon triangles using indexed operations.
-    /// Returns new vertex indices that should be added to the mesh.
+    /// Creates new vertices at midpoints and adds them to the mesh.
+    /// Returns triangle indices referencing both existing and newly created vertices.
     pub fn subdivide_indices<T: Clone + Send + Sync + std::fmt::Debug>(
         &self,
-        mesh: &IndexedMesh<T>,
+        mesh: &mut IndexedMesh<T>,
         subdivisions: core::num::NonZeroU32,
     ) -> Vec<[usize; 3]> {
         let base_triangles = self.triangulate_indices(mesh);
@@ -271,10 +255,9 @@ impl<S: Clone + Send + Sync> IndexedPolygon<S> {
             for _ in 0..subdivisions.get() {
                 let mut next_level = Vec::new();
                 for tri in queue {
-                    // For subdivision, we'd need to create new vertices at midpoints
-                    // This would require modifying the mesh to add new vertices
-                    // For now, return the original triangles
-                    next_level.push(tri);
+                    // Subdivide this triangle by creating midpoint vertices
+                    let subdivided = self.subdivide_triangle_indices(mesh, tri);
+                    next_level.extend(subdivided);
                 }
                 queue = next_level;
             }
@@ -282,6 +265,48 @@ impl<S: Clone + Send + Sync> IndexedPolygon<S> {
         }
 
         result
+    }
+
+    /// **Helper: Subdivide Single Triangle with Indices**
+    ///
+    /// Subdivide a single triangle into 4 smaller triangles by creating midpoint vertices.
+    /// Adds new vertices to the mesh and returns triangle indices.
+    fn subdivide_triangle_indices<T: Clone + Send + Sync + std::fmt::Debug>(
+        &self,
+        mesh: &mut IndexedMesh<T>,
+        tri: [usize; 3],
+    ) -> Vec<[usize; 3]> {
+        // Get the three vertices of the triangle
+        if tri[0] >= mesh.vertices.len() || tri[1] >= mesh.vertices.len() || tri[2] >= mesh.vertices.len() {
+            return vec![tri]; // Return original if indices are invalid
+        }
+
+        let v0 = mesh.vertices[tri[0]];
+        let v1 = mesh.vertices[tri[1]];
+        let v2 = mesh.vertices[tri[2]];
+
+        // Create midpoint vertices
+        let v01 = v0.interpolate(&v1, 0.5);
+        let v12 = v1.interpolate(&v2, 0.5);
+        let v20 = v2.interpolate(&v0, 0.5);
+
+        // Add new vertices to the mesh and get their indices
+        let idx01 = mesh.vertices.len();
+        mesh.vertices.push(v01);
+
+        let idx12 = mesh.vertices.len();
+        mesh.vertices.push(v12);
+
+        let idx20 = mesh.vertices.len();
+        mesh.vertices.push(v20);
+
+        // Return 4 new triangles using the original and midpoint vertices
+        vec![
+            [tri[0], idx01, idx20],     // Corner triangle 0
+            [idx01, tri[1], idx12],     // Corner triangle 1
+            [idx20, idx12, tri[2]],     // Corner triangle 2
+            [idx01, idx12, idx20],      // Center triangle
+        ]
     }
 
     /// **Index-Aware Normal Calculation**
@@ -334,6 +359,182 @@ impl<S: Clone + Send + Sync> IndexedPolygon<S> {
     pub fn set_metadata(&mut self, data: S) {
         self.metadata = Some(data);
     }
+
+    /// **Set New Normal (Index-Aware)**
+    ///
+    /// Recompute this polygon's normal from all vertices, then set all vertices' normals to match (flat shading).
+    /// This modifies the mesh's vertex normals directly using indexed operations.
+    /// This method matches the regular Mesh polygon.set_new_normal() method.
+    pub fn set_new_normal<T: Clone + Send + Sync + std::fmt::Debug>(
+        &mut self,
+        mesh: &mut IndexedMesh<T>,
+    ) {
+        // Calculate the new normal
+        let new_normal = self.calculate_normal(mesh);
+
+        // Update the plane normal
+        self.plane.normal = new_normal;
+
+        // Set all referenced vertices' normals to match the plane (flat shading)
+        for &idx in &self.indices {
+            if let Some(vertex) = mesh.vertices.get_mut(idx) {
+                vertex.normal = new_normal;
+            }
+        }
+    }
+
+    /// **Index-Aware Edge Iterator with Vertex References**
+    ///
+    /// Returns iterator over edge pairs with actual vertex references.
+    /// This matches the regular Mesh polygon.edges() method signature.
+    pub fn edges<'a, T: Clone + Send + Sync + std::fmt::Debug>(
+        &'a self,
+        mesh: &'a IndexedMesh<T>,
+    ) -> impl Iterator<Item = (&'a crate::IndexedMesh::vertex::IndexedVertex, &'a crate::IndexedMesh::vertex::IndexedVertex)> + 'a {
+        self.indices
+            .iter()
+            .zip(self.indices.iter().cycle().skip(1))
+            .filter_map(move |(&start_idx, &end_idx)| {
+                if let (Some(start_vertex), Some(end_vertex)) = (
+                    mesh.vertices.get(start_idx),
+                    mesh.vertices.get(end_idx)
+                ) {
+                    Some((start_vertex, end_vertex))
+                } else {
+                    None
+                }
+            })
+    }
+
+    /// **Index-Aware Triangulation with Vertex Data**
+    ///
+    /// Triangulate polygon returning actual triangles (not just indices).
+    /// This matches the regular Mesh polygon.triangulate() method signature.
+    pub fn triangulate<T: Clone + Send + Sync + std::fmt::Debug>(
+        &self,
+        mesh: &IndexedMesh<T>,
+    ) -> Vec<[crate::IndexedMesh::vertex::IndexedVertex; 3]> {
+        let triangle_indices = self.triangulate_indices(mesh);
+
+        triangle_indices
+            .into_iter()
+            .filter_map(|[i0, i1, i2]| {
+                if let (Some(v0), Some(v1), Some(v2)) = (
+                    mesh.vertices.get(i0),
+                    mesh.vertices.get(i1),
+                    mesh.vertices.get(i2)
+                ) {
+                    Some([*v0, *v1, *v2])
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
+    /// **Index-Aware Triangle Subdivision with Vertex Data**
+    ///
+    /// Subdivide polygon triangles returning actual triangles (not just indices).
+    /// This matches the regular Mesh polygon.subdivide_triangles() method signature.
+    pub fn subdivide_triangles<T: Clone + Send + Sync + std::fmt::Debug>(
+        &self,
+        mesh: &IndexedMesh<T>,
+        subdivisions: core::num::NonZeroU32,
+    ) -> Vec<[crate::IndexedMesh::vertex::IndexedVertex; 3]> {
+        // Get base triangles
+        let base_triangles = self.triangulate(mesh);
+
+        // Subdivide each triangle
+        let mut result = Vec::new();
+        for triangle in base_triangles {
+            let mut current_triangles = vec![triangle];
+
+            // Apply subdivision levels
+            for _ in 0..subdivisions.get() {
+                let mut next_triangles = Vec::new();
+                for tri in current_triangles {
+                    next_triangles.extend(subdivide_triangle(tri));
+                }
+                current_triangles = next_triangles;
+            }
+
+            result.extend(current_triangles);
+        }
+
+        result
+    }
+
+    /// **Convert Subdivision Triangles to IndexedPolygons**
+    ///
+    /// Convert subdivision triangles back to polygons for CSG operations.
+    /// Each triangle becomes a triangular polygon with the same metadata.
+    /// This matches the regular Mesh polygon.subdivide_to_polygons() method signature.
+    pub fn subdivide_to_polygons<T: Clone + Send + Sync + std::fmt::Debug>(
+        &self,
+        mesh: &mut IndexedMesh<T>,
+        subdivisions: core::num::NonZeroU32,
+    ) -> Vec<IndexedPolygon<S>> {
+        // Use subdivide_indices to get triangle indices (vertices already added to mesh)
+        let triangle_indices = self.subdivide_indices(mesh, subdivisions);
+
+        triangle_indices
+            .into_iter()
+            .filter_map(|indices| {
+                // Validate indices
+                if indices.len() == 3 && indices.iter().all(|&idx| idx < mesh.vertices.len()) {
+                    // Create plane from the triangle vertices
+                    let v0 = mesh.vertices[indices[0]];
+                    let v1 = mesh.vertices[indices[1]];
+                    let v2 = mesh.vertices[indices[2]];
+
+                    let plane = crate::IndexedMesh::plane::Plane::from_indexed_vertices(
+                        vec![v0, v1, v2]
+                    );
+
+                    Some(IndexedPolygon::new(indices.to_vec(), plane, self.metadata.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
+    /// **Convert IndexedPolygon to Regular Polygon**
+    ///
+    /// Convert this indexed polygon to a regular polygon by resolving
+    /// vertex indices to actual vertex positions.
+    ///
+    /// # Parameters
+    /// - `vertices`: The vertex array to resolve indices against
+    ///
+    /// # Returns
+    /// A regular Polygon with resolved vertex positions
+    ///
+    /// **⚠️ DEPRECATED**: This method creates a dependency on the regular Mesh module.
+    /// Use native IndexedPolygon operations instead for better performance and memory efficiency.
+    #[deprecated(since = "0.20.1", note = "Use native IndexedPolygon operations instead of converting to regular Polygon")]
+    pub fn to_regular_polygon(&self, vertices: &[crate::IndexedMesh::vertex::IndexedVertex]) -> crate::mesh::polygon::Polygon<S> {
+        let resolved_vertices: Vec<crate::mesh::vertex::Vertex> = self.indices.iter()
+            .filter_map(|&idx| {
+                if idx < vertices.len() {
+                    // IndexedVertex has pos field, regular Vertex needs position and normal
+                    let pos = vertices[idx].pos;
+                    let normal = Vector3::zeros(); // Default normal, will be recalculated
+                    Some(crate::mesh::vertex::Vertex::new(pos, normal))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        crate::mesh::polygon::Polygon::new(resolved_vertices, self.metadata.clone())
+    }
+
+
+
+
+
+
 }
 
 /// Build orthonormal basis for 2D projection
@@ -354,241 +555,23 @@ pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real
     (u, v)
 }
 
-/// **IndexedPolygonOperations: Advanced Index-Aware Polygon Operations**
+
+
+
+
+/// **Helper function to subdivide a triangle**
 ///
-/// Collection of static methods for performing advanced polygon operations
-/// on IndexedMesh structures using index-based algorithms for maximum efficiency.
-pub struct IndexedPolygonOperations;
+/// Subdivides a single triangle into 4 smaller triangles by adding midpoint vertices.
+/// This matches the regular Mesh polygon.subdivide_triangle() helper function.
+pub fn subdivide_triangle(tri: [crate::IndexedMesh::vertex::IndexedVertex; 3]) -> Vec<[crate::IndexedMesh::vertex::IndexedVertex; 3]> {
+    let v01 = tri[0].interpolate(&tri[1], 0.5);
+    let v12 = tri[1].interpolate(&tri[2], 0.5);
+    let v20 = tri[2].interpolate(&tri[0], 0.5);
 
-impl IndexedPolygonOperations {
-    /// **Index-Based Polygon Area Computation**
-    ///
-    /// Compute polygon area using the shoelace formula with indexed vertices.
-    /// More efficient than copying vertex data.
-    pub fn compute_area<
-        S: Clone + Send + Sync + std::fmt::Debug,
-        T: Clone + Send + Sync + std::fmt::Debug,
-    >(
-        polygon: &IndexedPolygon<S>,
-        mesh: &IndexedMesh<T>,
-    ) -> Real {
-        if polygon.indices.len() < 3 {
-            return 0.0;
-        }
-
-        let mut area = 0.0;
-        let n = polygon.indices.len();
-
-        // Use shoelace formula in 3D by projecting to the polygon's plane
-        let normal = polygon.plane.normal().normalize();
-        let (u, v) = build_orthonormal_basis(normal);
-
-        if polygon.indices[0] >= mesh.vertices.len() {
-            return 0.0;
-        }
-        let origin = mesh.vertices[polygon.indices[0]].pos;
-
-        // Project vertices to 2D and apply shoelace formula
-        let mut projected_vertices = Vec::with_capacity(n);
-        for &idx in &polygon.indices {
-            if idx < mesh.vertices.len() {
-                let pos = mesh.vertices[idx].pos;
-                let offset = pos.coords - origin.coords;
-                let x = offset.dot(&u);
-                let y = offset.dot(&v);
-                projected_vertices.push((x, y));
-            }
-        }
-
-        // Shoelace formula
-        for i in 0..projected_vertices.len() {
-            let j = (i + 1) % projected_vertices.len();
-            area += projected_vertices[i].0 * projected_vertices[j].1;
-            area -= projected_vertices[j].0 * projected_vertices[i].1;
-        }
-
-        (area * 0.5).abs()
-    }
-
-    /// **Index-Based Polygon Centroid**
-    ///
-    /// Compute polygon centroid using indexed vertices.
-    pub fn compute_centroid<
-        S: Clone + Send + Sync + std::fmt::Debug,
-        T: Clone + Send + Sync + std::fmt::Debug,
-    >(
-        polygon: &IndexedPolygon<S>,
-        mesh: &IndexedMesh<T>,
-    ) -> Option<Point3<Real>> {
-        if polygon.indices.is_empty() {
-            return None;
-        }
-
-        let mut sum = Point3::origin();
-        let mut valid_count = 0;
-
-        for &idx in &polygon.indices {
-            if idx < mesh.vertices.len() {
-                sum += mesh.vertices[idx].pos.coords;
-                valid_count += 1;
-            }
-        }
-
-        if valid_count > 0 {
-            Some(Point3::from(sum.coords / valid_count as Real))
-        } else {
-            None
-        }
-    }
-
-    /// **Index-Based Polygon Splitting**
-    ///
-    /// Split polygon by a plane using indexed operations.
-    /// Returns (front_indices, back_indices) for new polygons.
-    pub fn split_by_plane<
-        S: Clone + Send + Sync + std::fmt::Debug,
-        T: Clone + Send + Sync + std::fmt::Debug,
-    >(
-        polygon: &IndexedPolygon<S>,
-        plane: &crate::IndexedMesh::plane::Plane,
-        mesh: &IndexedMesh<T>,
-    ) -> (Vec<usize>, Vec<usize>) {
-        use crate::IndexedMesh::plane::{BACK, COPLANAR, FRONT};
-
-        let mut front_indices = Vec::new();
-        let mut back_indices = Vec::new();
-        let mut coplanar_indices = Vec::new();
-
-        // Classify vertices
-        for &idx in &polygon.indices {
-            if idx < mesh.vertices.len() {
-                let vertex = &mesh.vertices[idx];
-                let classification = plane.orient_point(&vertex.pos);
-
-                match classification {
-                    FRONT => front_indices.push(idx),
-                    BACK => back_indices.push(idx),
-                    COPLANAR => coplanar_indices.push(idx),
-                    _ => {},
-                }
-            }
-        }
-
-        // Add coplanar vertices to both sides
-        front_indices.extend(&coplanar_indices);
-        back_indices.extend(&coplanar_indices);
-
-        (front_indices, back_indices)
-    }
-
-    /// **Index-Based Polygon Quality Assessment**
-    ///
-    /// Assess polygon quality using various geometric metrics.
-    /// Returns (aspect_ratio, area, perimeter, regularity_score).
-    pub fn assess_quality<
-        S: Clone + Send + Sync + std::fmt::Debug,
-        T: Clone + Send + Sync + std::fmt::Debug,
-    >(
-        polygon: &IndexedPolygon<S>,
-        mesh: &IndexedMesh<T>,
-    ) -> (Real, Real, Real, Real) {
-        if polygon.indices.len() < 3 {
-            return (0.0, 0.0, 0.0, 0.0);
-        }
-
-        let area = Self::compute_area(polygon, mesh);
-        let perimeter = Self::compute_perimeter(polygon, mesh);
-
-        // Aspect ratio (4π * area / perimeter²) - measures how close to circular
-        let aspect_ratio = if perimeter > Real::EPSILON {
-            4.0 * std::f64::consts::PI as Real * area / (perimeter * perimeter)
-        } else {
-            0.0
-        };
-
-        // Regularity score based on edge length uniformity
-        let regularity = Self::compute_regularity(polygon, mesh);
-
-        (aspect_ratio, area, perimeter, regularity)
-    }
-
-    /// **Index-Based Perimeter Computation**
-    ///
-    /// Compute polygon perimeter by summing edge lengths.
-    fn compute_perimeter<
-        S: Clone + Send + Sync + std::fmt::Debug,
-        T: Clone + Send + Sync + std::fmt::Debug,
-    >(
-        polygon: &IndexedPolygon<S>,
-        mesh: &IndexedMesh<T>,
-    ) -> Real {
-        let mut perimeter = 0.0;
-        let n = polygon.indices.len();
-
-        for i in 0..n {
-            let curr_idx = polygon.indices[i];
-            let next_idx = polygon.indices[(i + 1) % n];
-
-            if curr_idx < mesh.vertices.len() && next_idx < mesh.vertices.len() {
-                let curr_pos = mesh.vertices[curr_idx].pos;
-                let next_pos = mesh.vertices[next_idx].pos;
-                perimeter += (next_pos - curr_pos).norm();
-            }
-        }
-
-        perimeter
-    }
-
-    /// **Index-Based Regularity Computation**
-    ///
-    /// Compute regularity score based on edge length uniformity.
-    fn compute_regularity<
-        S: Clone + Send + Sync + std::fmt::Debug,
-        T: Clone + Send + Sync + std::fmt::Debug,
-    >(
-        polygon: &IndexedPolygon<S>,
-        mesh: &IndexedMesh<T>,
-    ) -> Real {
-        let n = polygon.indices.len();
-        if n < 3 {
-            return 0.0;
-        }
-
-        let mut edge_lengths = Vec::with_capacity(n);
-
-        for i in 0..n {
-            let curr_idx = polygon.indices[i];
-            let next_idx = polygon.indices[(i + 1) % n];
-
-            if curr_idx < mesh.vertices.len() && next_idx < mesh.vertices.len() {
-                let curr_pos = mesh.vertices[curr_idx].pos;
-                let next_pos = mesh.vertices[next_idx].pos;
-                edge_lengths.push((next_pos - curr_pos).norm());
-            }
-        }
-
-        if edge_lengths.is_empty() {
-            return 0.0;
-        }
-
-        // Compute coefficient of variation (std_dev / mean)
-        let mean_length: Real = edge_lengths.iter().sum::<Real>() / edge_lengths.len() as Real;
-
-        if mean_length < Real::EPSILON {
-            return 0.0;
-        }
-
-        let variance: Real = edge_lengths
-            .iter()
-            .map(|&len| (len - mean_length).powi(2))
-            .sum::<Real>()
-            / edge_lengths.len() as Real;
-
-        let std_dev = variance.sqrt();
-        let coefficient_of_variation = std_dev / mean_length;
-
-        // Regularity score: 1 / (1 + coefficient_of_variation)
-        // Higher score = more regular (uniform edge lengths)
-        1.0 / (1.0 + coefficient_of_variation)
-    }
+    vec![
+        [tri[0], v01, v20],     // Corner triangle 0
+        [v01, tri[1], v12],     // Corner triangle 1 - FIXED: Now matches Mesh ordering
+        [v20, v12, tri[2]],     // Corner triangle 2 - FIXED: Now matches Mesh ordering
+        [v01, v12, v20],        // Center triangle
+    ]
 }

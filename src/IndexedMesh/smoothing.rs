@@ -3,7 +3,7 @@
 use crate::IndexedMesh::{IndexedMesh, vertex::IndexedVertex};
 use crate::float_types::Real;
 use nalgebra::{Point3, Vector3};
-use std::collections::HashMap;
+use hashbrown::HashMap;
 use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
@@ -14,7 +14,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
     ///
     /// ## **Indexed Connectivity Advantages**
     /// - **Direct Vertex Access**: O(1) vertex lookup using indices
-    /// - **Efficient Adjacency**: Pre-computed connectivity graph from build_connectivity_indexed
+    /// - **Efficient Adjacency**: Pre-computed connectivity graph from build_connectivity
     /// - **Memory Locality**: Better cache performance through structured vertex access
     /// - **Precision Preservation**: No coordinate quantization or floating-point drift
     ///
@@ -42,7 +42,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         preserve_boundaries: bool,
     ) -> IndexedMesh<S> {
         // Build connectivity once for all iterations - major performance optimization
-        let (_vertex_map, adjacency) = self.build_connectivity_indexed();
+        let (_vertex_map, adjacency) = self.build_connectivity();
         let mut smoothed_mesh = self.clone();
 
         for _iteration in 0..iterations {
@@ -124,7 +124,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         iterations: usize,
         preserve_boundaries: bool,
     ) -> IndexedMesh<S> {
-        let (_vertex_map, adjacency) = self.build_connectivity_indexed();
+        let (_vertex_map, adjacency) = self.build_connectivity();
         let mut smoothed_mesh = self.clone();
 
         for _iteration in 0..iterations {
@@ -224,7 +224,7 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         iterations: usize,
         preserve_boundaries: bool,
     ) -> IndexedMesh<S> {
-        let (_vertex_map, adjacency) = self.build_connectivity_indexed();
+        let (_vertex_map, adjacency) = self.build_connectivity();
         let mut smoothed_mesh = self.clone();
 
         // Precompute spatial and range factors for efficiency

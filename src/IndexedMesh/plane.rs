@@ -1,13 +1,12 @@
-//! **IndexedMesh-Optimized Plane Operations**
+﻿//! IndexedMesh-Optimized Plane Operations
 //!
 //! This module implements robust geometric operations for planes optimized for
-//! IndexedMesh's indexed connectivity model, providing superior performance
-//! compared to coordinate-based approaches.
+//! IndexedMesh's indexed connectivity model while maintaining compatibility
+//! with the regular Mesh plane operations.
 
-use crate::IndexedMesh::IndexedPolygon;
+use crate::IndexedMesh::{IndexedPolygon, vertex::IndexedVertex};
 use crate::float_types::{EPSILON, Real};
-use crate::mesh::vertex::Vertex;
-use nalgebra::{Matrix4, Point3, Vector3};
+use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 
 // Plane classification constants (matching mesh::plane constants)
@@ -16,7 +15,7 @@ pub const FRONT: i8 = 1;
 pub const BACK: i8 = 2;
 pub const SPANNING: i8 = 3;
 
-/// **IndexedMesh-Optimized Plane**
+/// IndexedMesh-Optimized Plane
 ///
 /// A plane representation optimized for IndexedMesh operations.
 /// Maintains the same mathematical properties as the regular Plane
@@ -40,16 +39,27 @@ impl Plane {
     }
 
     /// Create a plane from three points
+    /// The normal direction follows the right-hand rule: (p2-p1) × (p3-p1)
     pub fn from_points(p1: Point3<Real>, p2: Point3<Real>, p3: Point3<Real>) -> Self {
         let v1 = p2 - p1;
         let v2 = p3 - p1;
-        let normal = v1.cross(&v2).normalize();
+        let normal = v1.cross(&v2);
+
+        if normal.norm_squared() < Real::EPSILON * Real::EPSILON {
+            // Degenerate triangle, return default plane
+            return Plane {
+                normal: Vector3::z(),
+                w: 0.0,
+            };
+        }
+
+        let normal = normal.normalize();
         let w = normal.dot(&p1.coords);
         Plane { normal, w }
     }
 
-    /// Create a plane from vertices (for compatibility)
-    pub fn from_vertices(vertices: Vec<Vertex>) -> Self {
+    /// Create a plane from vertices (for compatibility with regular Mesh)
+    pub fn from_vertices(vertices: Vec<crate::mesh::vertex::Vertex>) -> Self {
         if vertices.len() < 3 {
             return Plane {
                 normal: Vector3::z(),
@@ -64,25 +74,92 @@ impl Plane {
     }
 
     /// Create a plane from IndexedVertex vertices (optimized for IndexedMesh)
-    pub fn from_indexed_vertices(
-        vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex>,
-    ) -> Self {
-        if vertices.len() < 3 {
+    /// Uses the same robust algorithm as Mesh::from_vertices for consistency
+    pub fn from_indexed_vertices(vertices: Vec<IndexedVertex>) -> Self {
+        let n = vertices.len();
+        if n < 3 {
             return Plane {
                 normal: Vector3::z(),
                 w: 0.0,
             };
         }
 
-        let p1 = vertices[0].pos;
-        let p2 = vertices[1].pos;
-        let p3 = vertices[2].pos;
-        Self::from_points(p1, p2, p3)
+        let reference_plane = Plane {
+            normal: (vertices[1].pos - vertices[0].pos).cross(&(vertices[2].pos - vertices[0].pos)).normalize(),
+            w: vertices[0].pos.coords.dot(&(vertices[1].pos - vertices[0].pos).cross(&(vertices[2].pos - vertices[0].pos)).normalize()),
+        };
+
+        if n == 3 {
+            return reference_plane;
+        }
+
+        // Find the longest chord (farthest pair of points) - same as Mesh implementation
+        let Some((i0, i1, _)) = (0..n)
+            .flat_map(|i| (i + 1..n).map(move |j| (i, j)))
+            .map(|(i, j)| {
+                let d2 = (vertices[i].pos - vertices[j].pos).norm_squared();
+                (i, j, d2)
+            })
+            .max_by(|a, b| a.2.total_cmp(&b.2))
+        else {
+            return reference_plane;
+        };
+
+        let p0 = vertices[i0].pos;
+        let p1 = vertices[i1].pos;
+        let dir = p1 - p0;
+        if dir.norm_squared() < EPSILON * EPSILON {
+            return reference_plane; // everything almost coincident
+        }
+
+        // Find vertex farthest from the line p0-p1
+        let Some((i2, max_area2)) = vertices
+            .iter()
+            .enumerate()
+            .filter(|(idx, _)| *idx != i0 && *idx != i1)
+            .map(|(idx, v)| {
+                let a2 = (v.pos - p0).cross(&dir).norm_squared(); // ∝ area²
+                (idx, a2)
+            })
+            .max_by(|a, b| a.1.total_cmp(&b.1))
+        else {
+            return reference_plane;
+        };
+
+        let i2 = if max_area2 > EPSILON * EPSILON {
+            i2
+        } else {
+            return reference_plane; // all vertices collinear
+        };
+        let p2 = vertices[i2].pos;
+
+        // Build plane using the optimal triangle
+        let mut plane_hq = Self::from_points(p0, p1, p2);
+
+        // Construct the reference normal for the original polygon using Newell's Method
+        let reference_normal = vertices.iter().zip(vertices.iter().cycle().skip(1)).fold(
+            Vector3::zeros(),
+            |acc, (curr, next)| {
+                acc + (curr.pos - Point3::origin()).cross(&(next.pos - Point3::origin()))
+            },
+        );
+
+        // Orient the plane to match original winding
+        if plane_hq.normal().dot(&reference_normal) < 0.0 {
+            plane_hq.flip(); // flip in-place to agree with winding
+        }
+
+        plane_hq
     }
 
-    /// Get the plane normal
+    /// Get the plane normal (matches regular Mesh API)
     pub const fn normal(&self) -> Vector3<Real> {
         self.normal
+    }
+
+    /// Get the offset (distance from origin) (matches regular Mesh API)
+    pub const fn offset(&self) -> Real {
+        self.w
     }
 
     /// Flip the plane (reverse normal and distance)
@@ -91,7 +168,15 @@ impl Plane {
         self.w = -self.w;
     }
 
-    /// Classify a point relative to the plane
+    /// Return a flipped copy of this plane
+    pub fn flipped(&self) -> Self {
+        Plane {
+            normal: -self.normal,
+            w: -self.w,
+        }
+    }
+
+    /// Classify a point relative to the plane (matches regular Mesh API)
     pub fn orient_point(&self, point: &Point3<Real>) -> i8 {
         let distance = self.normal.dot(&point.coords) - self.w;
         if distance > EPSILON {
@@ -103,9 +188,410 @@ impl Plane {
         }
     }
 
-    /// Get the offset (distance from origin) for compatibility with BSP
-    pub const fn offset(&self) -> Real {
-        self.w
+    /// Classify an IndexedPolygon with respect to the plane.
+    /// Returns a bitmask of COPLANAR, FRONT, and BACK.
+    /// This method matches the regular Mesh classify_polygon method.
+    pub fn classify_polygon<S: Clone>(&self, polygon: &IndexedPolygon<S>) -> i8 {
+        // For IndexedPolygon, we can use the polygon's own plane for classification
+        // This is more efficient than checking individual vertices
+        let poly_plane = &polygon.plane;
+
+        // Check if planes are coplanar (same normal and distance)
+        let normal_dot = self.normal.dot(&poly_plane.normal);
+        let distance_diff = (self.w - poly_plane.w).abs();
+
+        if normal_dot > 0.999 && distance_diff < EPSILON {
+            // Planes are coplanar and facing same direction
+            COPLANAR
+        } else if normal_dot < -0.999 && distance_diff < EPSILON {
+            // Planes are coplanar but facing opposite directions
+            COPLANAR
+        } else {
+            // Planes are not coplanar, classify based on polygon's plane center
+            // Calculate a representative point on the polygon's plane
+            let poly_center = poly_plane.normal * poly_plane.w; // Point on plane closest to origin
+            self.orient_point(&Point3::from(poly_center))
+        }
+    }
+
+    /// Splits an IndexedPolygon by this plane, returning four buckets:
+    /// `(coplanar_front, coplanar_back, front, back)`.
+    /// This method matches the regular Mesh split_polygon implementation.
+    #[allow(clippy::type_complexity)]
+    pub fn split_polygon<S: Clone + Send + Sync + Debug>(
+        &self,
+        polygon: &IndexedPolygon<S>,
+        vertices: &mut Vec<IndexedVertex>,
+    ) -> (
+        Vec<IndexedPolygon<S>>,
+        Vec<IndexedPolygon<S>>,
+        Vec<IndexedPolygon<S>>,
+        Vec<IndexedPolygon<S>>,
+    ) {
+        let mut coplanar_front = Vec::new();
+        let mut coplanar_back = Vec::new();
+        let mut front = Vec::new();
+        let mut back = Vec::new();
+
+        let normal = self.normal();
+
+        // Classify each vertex of the polygon
+        let types: Vec<i8> = polygon
+            .indices
+            .iter()
+            .map(|&idx| {
+                if idx < vertices.len() {
+                    self.orient_point(&vertices[idx].pos)
+                } else {
+                    COPLANAR
+                }
+            })
+            .collect();
+
+        let polygon_type = types.iter().fold(0, |acc, &t| acc | t);
+
+        // Dispatch the easy cases
+        match polygon_type {
+            COPLANAR => {
+                if normal.dot(&polygon.plane.normal()) > 0.0 {
+                    coplanar_front.push(polygon.clone());
+                } else {
+                    coplanar_back.push(polygon.clone());
+                }
+            },
+            FRONT => front.push(polygon.clone()),
+            BACK => back.push(polygon.clone()),
+
+            // True spanning – do the split
+            _ => {
+                let mut split_front = Vec::<IndexedVertex>::new();
+                let mut split_back = Vec::<IndexedVertex>::new();
+
+                for i in 0..polygon.indices.len() {
+                    // j is the vertex following i, we modulo by len to wrap around to the first vertex after the last
+                    let j = (i + 1) % polygon.indices.len();
+                    let type_i = types[i];
+                    let type_j = types[j];
+                    let idx_i = polygon.indices[i];
+                    let idx_j = polygon.indices[j];
+
+                    if idx_i >= vertices.len() || idx_j >= vertices.len() {
+                        continue;
+                    }
+
+                    let vertex_i = &vertices[idx_i];
+                    let vertex_j = &vertices[idx_j];
+
+                    // If current vertex is definitely not behind plane, it goes to split_front
+                    if type_i != BACK {
+                        split_front.push(*vertex_i);
+                    }
+                    // If current vertex is definitely not in front, it goes to split_back
+                    if type_i != FRONT {
+                        split_back.push(*vertex_i);
+                    }
+
+                    // If the edge between these two vertices crosses the plane,
+                    // compute intersection and add that intersection to both sets
+                    if (type_i | type_j) == SPANNING {
+                        let denom = normal.dot(&(vertex_j.pos - vertex_i.pos));
+                        // Avoid dividing by zero
+                        if denom.abs() > EPSILON {
+                            let intersection =
+                                (self.offset() - normal.dot(&vertex_i.pos.coords)) / denom;
+                            let vertex_new = vertex_i.interpolate(vertex_j, intersection);
+                            split_front.push(vertex_new);
+                            split_back.push(vertex_new);
+                        }
+                    }
+                }
+
+                // Build new polygons from the front/back vertex lists
+                // if they have at least 3 vertices
+                if split_front.len() >= 3 {
+                    // Add new vertices to the vertex array and get their indices
+                    let mut front_indices = Vec::new();
+                    for vertex in split_front {
+                        vertices.push(vertex);
+                        front_indices.push(vertices.len() - 1);
+                    }
+                    // **CRITICAL**: Recompute plane from actual split polygon vertices
+                    // Don't just clone the original polygon's plane!
+                    let front_plane = Plane::from_indexed_vertices(
+                        front_indices.iter().map(|&idx| vertices[idx]).collect()
+                    );
+                    front.push(IndexedPolygon::new(front_indices, front_plane, polygon.metadata.clone()));
+                }
+                if split_back.len() >= 3 {
+                    // Add new vertices to the vertex array and get their indices
+                    let mut back_indices = Vec::new();
+                    for vertex in split_back {
+                        vertices.push(vertex);
+                        back_indices.push(vertices.len() - 1);
+                    }
+                    // **CRITICAL**: Recompute plane from actual split polygon vertices
+                    // Don't just clone the original polygon's plane!
+                    let back_plane = Plane::from_indexed_vertices(
+                        back_indices.iter().map(|&idx| vertices[idx]).collect()
+                    );
+                    back.push(IndexedPolygon::new(back_indices, back_plane, polygon.metadata.clone()));
+                }
+            },
+        }
+
+        (coplanar_front, coplanar_back, front, back)
+    }
+
+    /// Returns (T, T_inv), where:
+    /// - `T` maps a point on this plane into XY plane (z=0) with the plane's normal going to +Z
+    /// - `T_inv` is the inverse transform, mapping back
+    ///
+    /// **Mathematical Foundation**: This implements an orthonormal transformation:
+    /// 1. **Rotation Matrix**: R = rotation_between(plane_normal, +Z)
+    /// 2. **Translation**: Translate so plane passes through origin
+    /// 3. **Combined Transform**: T = T₂ · R · T₁
+    ///
+    /// The transformation preserves distances and angles, enabling 2D algorithms
+    /// to be applied to 3D planar geometry.
+    pub fn to_xy_transform(&self) -> (Matrix4<Real>, Matrix4<Real>) {
+        // Normal
+        let n = self.normal();
+        let n_len = n.norm();
+        if n_len < EPSILON {
+            // Degenerate plane, return identity
+            return (Matrix4::identity(), Matrix4::identity());
+        }
+
+        // Normalize
+        let norm_dir = n / n_len;
+
+        // Rotate plane.normal -> +Z
+        let rot = Rotation3::rotation_between(&norm_dir, &Vector3::z())
+            .unwrap_or_else(Rotation3::identity);
+        let iso_rot = Isometry3::from_parts(Translation3::identity(), rot.into());
+
+        // We want to translate so that the plane's reference point
+        //    (some point p0 with n·p0 = w) lands at z=0 in the new coords.
+        // p0 = (plane.w / (n·n)) * n
+        let denom = n.dot(&n);
+        let p0_3d = norm_dir * (self.offset() / denom);
+        let p0_rot = iso_rot.transform_point(&Point3::from(p0_3d));
+
+        // We want p0_rot.z = 0, so we shift by -p0_rot.z
+        let shift_z = -p0_rot.z;
+        let iso_trans = Translation3::new(0.0, 0.0, shift_z);
+
+        let transform_to_xy = iso_trans.to_homogeneous() * iso_rot.to_homogeneous();
+
+        // Inverse for going back
+        let transform_from_xy = transform_to_xy
+            .try_inverse()
+            .unwrap_or_else(Matrix4::identity);
+
+        (transform_to_xy, transform_from_xy)
+    }
+
+    /// Split an IndexedPolygon by this plane for BSP operations
+    /// Returns (coplanar_front, coplanar_back, front, back)
+    /// This version properly handles spanning polygons by creating intersection vertices
+    #[allow(clippy::type_complexity)]
+    pub fn split_indexed_polygon<S: Clone + Send + Sync + Debug>(
+        &self,
+        polygon: &IndexedPolygon<S>,
+        vertices: &mut Vec<IndexedVertex>,
+    ) -> (
+        Vec<IndexedPolygon<S>>,
+        Vec<IndexedPolygon<S>>,
+        Vec<IndexedPolygon<S>>,
+        Vec<IndexedPolygon<S>>,
+    ) {
+        let mut coplanar_front = Vec::new();
+        let mut coplanar_back = Vec::new();
+        let mut front = Vec::new();
+        let mut back = Vec::new();
+
+        // Check if planes are coplanar first (optimization)
+        let poly_plane = &polygon.plane;
+        let normal_dot = self.normal.dot(&poly_plane.normal);
+        let distance_diff = (self.w - poly_plane.w).abs();
+
+        // Use same epsilon tolerance as Mesh implementation
+        if normal_dot.abs() > 0.999 && distance_diff < EPSILON {
+            // Planes are effectively coplanar
+            if normal_dot > 0.0 {
+                coplanar_front.push(polygon.clone());
+            } else {
+                coplanar_back.push(polygon.clone());
+            }
+            return (coplanar_front, coplanar_back, front, back);
+        }
+
+        // Not coplanar - need to check individual vertices for spanning case
+        let mut types: Vec<i8> = Vec::new();
+        let mut has_front = false;
+        let mut has_back = false;
+
+        // Classify all vertices
+        for &idx in &polygon.indices {
+            if idx >= vertices.len() {
+                // Invalid vertex index - treat as coplanar
+                types.push(COPLANAR);
+                continue;
+            }
+            let vertex_type = self.orient_point(&vertices[idx].pos);
+            types.push(vertex_type);
+
+            if vertex_type == FRONT {
+                has_front = true;
+            } else if vertex_type == BACK {
+                has_back = true;
+            }
+        }
+
+        let polygon_type = if has_front && has_back {
+            SPANNING
+        } else if has_front {
+            FRONT
+        } else if has_back {
+            BACK
+        } else {
+            COPLANAR
+        };
+
+        // Dispatch based on classification
+        match polygon_type {
+            COPLANAR => {
+                // All vertices coplanar - check orientation relative to this plane
+                if self.normal().dot(&polygon.plane.normal()) > 0.0 {
+                    coplanar_front.push(polygon.clone());
+                } else {
+                    coplanar_back.push(polygon.clone());
+                }
+            },
+            FRONT => front.push(polygon.clone()),
+            BACK => back.push(polygon.clone()),
+            SPANNING => {
+                // Polygon spans the plane - need to split it
+                let mut front_vertices = Vec::new();
+                let mut back_vertices = Vec::new();
+
+                for i in 0..polygon.indices.len() {
+                    let j = (i + 1) % polygon.indices.len();
+                    let idx_i = polygon.indices[i];
+                    let idx_j = polygon.indices[j];
+
+                    if idx_i >= vertices.len() || idx_j >= vertices.len() {
+                        continue;
+                    }
+
+                    let vertex_i = &vertices[idx_i];
+                    let vertex_j = &vertices[idx_j];
+                    let type_i = types[i];
+                    let type_j = types[j];
+
+                    // Add current vertex to appropriate lists
+                    if type_i != BACK {
+                        front_vertices.push(*vertex_i);
+                    }
+                    if type_i != FRONT {
+                        back_vertices.push(*vertex_i);
+                    }
+
+                    // If edge crosses plane, compute intersection
+                    if (type_i | type_j) == SPANNING {
+                        let denom = self.normal().dot(&(vertex_j.pos - vertex_i.pos));
+                        if denom.abs() > EPSILON {
+                            let t = (self.offset() - self.normal().dot(&vertex_i.pos.coords)) / denom;
+                            let intersection_vertex = vertex_i.interpolate(vertex_j, t);
+
+                            // Add intersection vertex to both lists
+                            front_vertices.push(intersection_vertex);
+                            back_vertices.push(intersection_vertex);
+                        }
+                    }
+                }
+
+                // Create new polygons from vertex lists
+                if front_vertices.len() >= 3 {
+                    // Add vertices to global array and create polygon
+                    let mut front_indices = Vec::new();
+                    for vertex in front_vertices {
+                        vertices.push(vertex);
+                        front_indices.push(vertices.len() - 1);
+                    }
+                    // **CRITICAL**: Recompute plane from actual split polygon vertices
+                    // Don't just clone the original polygon's plane!
+                    let front_plane = Plane::from_indexed_vertices(
+                        front_indices.iter().map(|&idx| vertices[idx]).collect()
+                    );
+                    front.push(IndexedPolygon::new(front_indices, front_plane, polygon.metadata.clone()));
+                }
+
+                if back_vertices.len() >= 3 {
+                    // Add vertices to global array and create polygon
+                    let mut back_indices = Vec::new();
+                    for vertex in back_vertices {
+                        vertices.push(vertex);
+                        back_indices.push(vertices.len() - 1);
+                    }
+                    // **CRITICAL**: Recompute plane from actual split polygon vertices
+                    // Don't just clone the original polygon's plane!
+                    let back_plane = Plane::from_indexed_vertices(
+                        back_indices.iter().map(|&idx| vertices[idx]).collect()
+                    );
+                    back.push(IndexedPolygon::new(back_indices, back_plane, polygon.metadata.clone()));
+                }
+            },
+            _ => {
+                // Fallback - shouldn't happen
+                coplanar_front.push(polygon.clone());
+            }
+        }
+
+        (coplanar_front, coplanar_back, front, back)
+    }
+
+    /// Determine the orientation of another plane relative to this plane
+    /// Uses a more robust geometric approach similar to Mesh implementation
+    pub fn orient_plane(&self, other_plane: &Plane) -> i8 {
+        // First check if planes are coplanar by comparing normals and distances
+        let normal_dot = self.normal.dot(&other_plane.normal);
+        let distance_diff = (self.w - other_plane.w).abs();
+
+        if normal_dot.abs() > 0.999 && distance_diff < EPSILON {
+            // Planes are coplanar - need to determine relative orientation
+            if normal_dot > 0.0 {
+                // Same orientation - check which side of self the other plane's point lies
+                // Use a point on the other plane relative to self's origin
+                let test_distance = other_plane.w - self.normal.dot(&Point3::origin().coords);
+                if test_distance > EPSILON {
+                    FRONT
+                } else if test_distance < -EPSILON {
+                    BACK
+                } else {
+                    COPLANAR
+                }
+            } else {
+                // Opposite orientation
+                let test_distance = other_plane.w - self.normal.dot(&Point3::origin().coords);
+                if test_distance > EPSILON {
+                    BACK  // Opposite normal means flipped orientation
+                } else if test_distance < -EPSILON {
+                    FRONT
+                } else {
+                    COPLANAR
+                }
+            }
+        } else {
+            // Planes are not coplanar - use normal comparison
+            if normal_dot > EPSILON {
+                FRONT
+            } else if normal_dot < -EPSILON {
+                BACK
+            } else {
+                COPLANAR
+            }
+        }
     }
 }
 
@@ -142,249 +628,16 @@ impl From<Plane> for crate::mesh::plane::Plane {
     }
 }
 
-/// **IndexedMesh-Optimized Plane Operations**
-///
-/// Extension trait providing plane operations optimized for IndexedMesh's
-/// indexed connectivity model.
-pub trait IndexedPlaneOperations {
-    /// **Classify Indexed Polygon with Optimal Performance**
-    ///
-    /// Classify a polygon with respect to the plane using direct vertex index access.
-    /// Returns a bitmask of `COPLANAR`, `FRONT`, `BACK`, and `SPANNING`.
-    fn classify_indexed_polygon<S: Clone + Send + Sync + Debug>(
-        &self,
-        polygon: &IndexedPolygon<S>,
-        vertices: &[crate::IndexedMesh::vertex::IndexedVertex],
-    ) -> i8;
-
-    /// **Split Indexed Polygon with Zero-Copy Optimization**
-    ///
-    /// Split a polygon by the plane, returning new vertices and polygon parts.
-    /// Uses indexed operations to minimize memory allocation and copying.
-    fn split_indexed_polygon<S: Clone + Send + Sync + Debug>(
-        &self,
-        polygon: &IndexedPolygon<S>,
-        vertices: &mut Vec<crate::IndexedMesh::vertex::IndexedVertex>,
-    ) -> (
-        Vec<usize>,
-        Vec<usize>,
-        Vec<IndexedPolygon<S>>,
-        Vec<IndexedPolygon<S>>,
-    );
-
-    /// **Robust Point Orientation with Exact Arithmetic**
-    ///
-    /// Classify a point with respect to the plane using robust geometric predicates.
-    /// Returns `FRONT`, `BACK`, or `COPLANAR`.
-    fn orient_point_robust(&self, point: &Point3<Real>) -> i8;
-
-    /// **2D Projection Transform for Indexed Operations**
-    ///
-    /// Returns transformation matrices for projecting indexed polygons to 2D.
-    fn to_xy_transform_indexed(&self) -> (Matrix4<Real>, Matrix4<Real>);
-}
-
-impl IndexedPlaneOperations for Plane {
-    fn classify_indexed_polygon<S: Clone + Send + Sync + Debug>(
-        &self,
-        polygon: &IndexedPolygon<S>,
-        vertices: &[crate::IndexedMesh::vertex::IndexedVertex],
-    ) -> i8 {
-        let mut front_count = 0;
-        let mut back_count = 0;
-
-        for &vertex_idx in &polygon.indices {
-            if vertex_idx >= vertices.len() {
-                continue;
-            }
-            let vertex = &vertices[vertex_idx];
-            let orientation = self.orient_point(&vertex.pos);
-
-            if orientation == FRONT {
-                front_count += 1;
-            } else if orientation == BACK {
-                back_count += 1;
-            }
-        }
-
-        if front_count > 0 && back_count > 0 {
-            SPANNING
-        } else if front_count > 0 {
-            FRONT
-        } else if back_count > 0 {
-            BACK
-        } else {
-            COPLANAR
-        }
-    }
-
-    fn split_indexed_polygon<S: Clone + Send + Sync + Debug>(
-        &self,
-        polygon: &IndexedPolygon<S>,
-        vertices: &mut Vec<crate::IndexedMesh::vertex::IndexedVertex>,
-    ) -> (
-        Vec<usize>,
-        Vec<usize>,
-        Vec<IndexedPolygon<S>>,
-        Vec<IndexedPolygon<S>>,
-    ) {
-        let classification = self.classify_indexed_polygon(polygon, vertices);
-
-        match classification {
-            FRONT => (vec![], vec![], vec![polygon.clone()], vec![]),
-            BACK => (vec![], vec![], vec![], vec![polygon.clone()]),
-            COPLANAR => {
-                // Check orientation to decide front or back
-                if self.normal.dot(&polygon.plane.normal) > 0.0 {
-                    (vec![], vec![], vec![polygon.clone()], vec![])
-                } else {
-                    (vec![], vec![], vec![], vec![polygon.clone()])
-                }
-            },
-            _ => {
-                // SPANNING case - implement proper polygon splitting
-                let mut front_indices = Vec::new();
-                let mut back_indices = Vec::new();
-                let mut new_vertex_indices = Vec::new();
-
-                let vertex_count = polygon.indices.len();
-
-                // Classify each vertex
-                let types: Vec<i8> = polygon
-                    .indices
-                    .iter()
-                    .map(|&idx| {
-                        if idx < vertices.len() {
-                            self.orient_point(&vertices[idx].pos)
-                        } else {
-                            COPLANAR
-                        }
-                    })
-                    .collect();
-
-                // Process each edge for intersections
-                for i in 0..vertex_count {
-                    let j = (i + 1) % vertex_count;
-                    let type_i = types[i];
-                    let type_j = types[j];
-                    let idx_i = polygon.indices[i];
-                    let idx_j = polygon.indices[j];
-
-                    if idx_i >= vertices.len() || idx_j >= vertices.len() {
-                        continue;
-                    }
-
-                    let vertex_i = &vertices[idx_i];
-                    let vertex_j = &vertices[idx_j];
-
-                    // Add current vertex to appropriate side
-                    match type_i {
-                        FRONT => front_indices.push(idx_i),
-                        BACK => back_indices.push(idx_i),
-                        COPLANAR => {
-                            front_indices.push(idx_i);
-                            back_indices.push(idx_i);
-                        },
-                        _ => {},
-                    }
-
-                    // Check for edge intersection
-                    if (type_i | type_j) == SPANNING {
-                        let denom = self.normal.dot(&(vertex_j.pos - vertex_i.pos));
-                        if denom.abs() > crate::float_types::EPSILON {
-                            let intersection =
-                                (self.w - self.normal.dot(&vertex_i.pos.coords)) / denom;
-                            let new_vertex = vertex_i.interpolate(vertex_j, intersection);
-
-                            // Add new vertex to the vertex array
-                            let new_idx = vertices.len();
-                            vertices.push(new_vertex);
-                            new_vertex_indices.push(new_idx);
-
-                            // Add intersection to both sides
-                            front_indices.push(new_idx);
-                            back_indices.push(new_idx);
-                        }
-                    }
-                }
-
-                // Create new polygons if they have enough vertices
-                let mut front_polygons = Vec::new();
-                let mut back_polygons = Vec::new();
-
-                if front_indices.len() >= 3 {
-                    // Calculate plane for front polygon
-                    let front_plane = if front_indices.len() >= 3 {
-                        let v0 = &vertices[front_indices[0]];
-                        let v1 = &vertices[front_indices[1]];
-                        let v2 = &vertices[front_indices[2]];
-                        Plane::from_indexed_vertices(vec![*v0, *v1, *v2])
-                    } else {
-                        polygon.plane.clone()
-                    };
-
-                    front_polygons.push(IndexedPolygon::new(
-                        front_indices,
-                        front_plane,
-                        polygon.metadata.clone(),
-                    ));
-                }
-
-                if back_indices.len() >= 3 {
-                    // Calculate plane for back polygon
-                    let back_plane = if back_indices.len() >= 3 {
-                        let v0 = &vertices[back_indices[0]];
-                        let v1 = &vertices[back_indices[1]];
-                        let v2 = &vertices[back_indices[2]];
-                        Plane::from_indexed_vertices(vec![*v0, *v1, *v2])
-                    } else {
-                        polygon.plane.clone()
-                    };
-
-                    back_polygons.push(IndexedPolygon::new(
-                        back_indices,
-                        back_plane,
-                        polygon.metadata.clone(),
-                    ));
-                }
-
-                (vec![], new_vertex_indices, front_polygons, back_polygons)
-            },
-        }
-    }
-
-    fn orient_point_robust(&self, point: &Point3<Real>) -> i8 {
-        // Use robust orientation test
-        let distance = self.normal.dot(&point.coords) - self.w;
-        if distance > EPSILON {
-            FRONT
-        } else if distance < -EPSILON {
-            BACK
-        } else {
-            COPLANAR
-        }
-    }
-
-    fn to_xy_transform_indexed(&self) -> (Matrix4<Real>, Matrix4<Real>) {
-        // Create orthonormal basis for the plane
-        let n = self.normal;
-        let u = if n.x.abs() < 0.9 {
-            Vector3::x().cross(&n).normalize()
-        } else {
-            Vector3::y().cross(&n).normalize()
-        };
-        let v = n.cross(&u);
-
-        // Transform to XY plane
-        let transform = Matrix4::new(
-            u.x, u.y, u.z, 0.0, v.x, v.y, v.z, 0.0, n.x, n.y, n.z, -self.w, 0.0, 0.0, 0.0, 1.0,
-        );
-
-        // Inverse transform
-        let inv_transform = Matrix4::new(
-            u.x, v.x, n.x, 0.0, u.y, v.y, n.y, 0.0, u.z, v.z, n.z, self.w, 0.0, 0.0, 0.0, 1.0,
-        );
-
-        (transform, inv_transform)
-    }
+// External function for BSP operations that need to split polygons
+pub fn split_indexed_polygon<S: Clone + Send + Sync + Debug>(
+    plane: &Plane,
+    polygon: &IndexedPolygon<S>,
+    vertices: &mut Vec<IndexedVertex>,
+) -> (
+    Vec<IndexedPolygon<S>>,
+    Vec<IndexedPolygon<S>>,
+    Vec<IndexedPolygon<S>>,
+    Vec<IndexedPolygon<S>>,
+) {
+    plane.split_indexed_polygon(polygon, vertices)
 }

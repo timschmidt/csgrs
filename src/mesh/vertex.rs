@@ -34,7 +34,7 @@ impl Vertex {
             *z = 0.0;
         }
 
-        // Sanitise normal
+        // Sanitise normal - handle both non-finite and near-zero cases
         let [[nx, ny, nz]]: &mut [[_; 3]; 1] = &mut normal.data.0;
 
         if !nx.is_finite() {
@@ -47,6 +47,15 @@ impl Vertex {
             *nz = 0.0;
         }
 
+        // Check if normal is near-zero and provide default if needed
+        let normal_length_sq = (*nx) * (*nx) + (*ny) * (*ny) + (*nz) * (*nz);
+        if normal_length_sq < 1e-12 {
+            // Near-zero normal - use default Z-up normal
+            *nx = 0.0;
+            *ny = 0.0;
+            *nz = 1.0;
+        }
+
         Vertex { pos, normal }
     }
 
@@ -55,38 +64,58 @@ impl Vertex {
         self.normal = -self.normal;
     }
 
-    /// **Mathematical Foundation: Barycentric Linear Interpolation**
+    /// **Mathematical Foundation: Barycentric Linear Interpolation with Spherical Normal Interpolation**
     ///
     /// Compute the barycentric linear interpolation between `self` (`t = 0`) and `other` (`t = 1`).
-    /// This implements the fundamental linear interpolation formula:
+    /// Uses spherical linear interpolation (SLERP) for normals to preserve unit length.
     ///
     /// ## **Interpolation Formula**
     /// For parameter t ∈ [0,1]:
     /// - **Position**: p(t) = (1-t)·p₀ + t·p₁ = p₀ + t·(p₁ - p₀)
-    /// - **Normal**: n(t) = (1-t)·n₀ + t·n₁ = n₀ + t·(n₁ - n₀)
+    /// - **Normal**: n(t) = SLERP(n₀, n₁, t) to preserve unit length
+    ///
+    /// ## **SLERP for Normals**
+    /// Spherical linear interpolation ensures interpolated normals remain unit-length,
+    /// which is critical for proper lighting and shading calculations.
     ///
     /// ## **Mathematical Properties**
-    /// - **Affine Combination**: Coefficients sum to 1: (1-t) + t = 1
-    /// - **Endpoint Preservation**: p(0) = p₀, p(1) = p₁
-    /// - **Linearity**: Second derivatives are zero (straight line in parameter space)
-    /// - **Convexity**: Result lies on line segment between endpoints
+    /// - **Affine Combination**: Position coefficients sum to 1: (1-t) + t = 1
+    /// - **Endpoint Preservation**: p(0) = p₀, p(1) = p₁, n(0) = n₀, n(1) = n₁
+    /// - **Unit Normal Preservation**: ||n(t)|| = 1 for all t ∈ [0,1]
+    /// - **Smooth Interpolation**: Constant angular velocity along great circle
     ///
     /// ## **Geometric Interpretation**
     /// The interpolated vertex represents a point on the edge connecting the two vertices,
-    /// with both position and normal vectors smoothly blended. This is fundamental for:
+    /// with position linearly interpolated and normal spherically interpolated. This ensures:
     /// - **Polygon Splitting**: Creating intersection vertices during BSP operations
     /// - **Triangle Subdivision**: Generating midpoints for mesh refinement
-    /// - **Smooth Shading**: Interpolating normals across polygon edges
-    ///
-    /// **Note**: Normals are linearly interpolated (not spherically), which is appropriate
-    /// for most geometric operations but may require renormalization for lighting calculations.
+    /// - **Smooth Shading**: Interpolating normals across polygon edges with proper unit length
     pub fn interpolate(&self, other: &Vertex, t: Real) -> Vertex {
         // For positions (Point3): p(t) = p0 + t * (p1 - p0)
         let new_pos = self.pos + (other.pos - self.pos) * t;
 
-        // For normals (Vector3): n(t) = n0 + t * (n1 - n0)
-        let new_normal = self.normal + (other.normal - self.normal) * t;
-        Vertex::new(new_pos, new_normal)
+        // For normals: Use SLERP to preserve unit length
+        let n1 = self.normal.normalize();
+        let n2 = other.normal.normalize();
+
+        // Use spherical linear interpolation (SLERP) for normals
+        let dot = n1.dot(&n2);
+        if dot > 0.9999 {
+            // Nearly identical normals - use linear interpolation
+            let new_normal = (1.0 - t) * n1 + t * n2;
+            Vertex::new(new_pos, new_normal.normalize())
+        } else if dot < -0.9999 {
+            // Opposite normals - handle discontinuity
+            let new_normal = (1.0 - t) * n1 + t * (-n1);
+            Vertex::new(new_pos, new_normal.normalize())
+        } else {
+            // Standard SLERP
+            let omega = dot.acos();
+            let sin_omega = omega.sin();
+            let new_normal = (omega * (1.0 - t)).sin() / sin_omega * n1 +
+                           (omega * t).sin() / sin_omega * n2;
+            Vertex::new(new_pos, new_normal.normalize())
+        }
     }
 
     /// **Mathematical Foundation: Spherical Linear Interpolation (SLERP) for Normals**

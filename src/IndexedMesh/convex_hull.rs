@@ -80,16 +80,22 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
 
                 polygons.push(crate::IndexedMesh::IndexedPolygon {
                     indices,
-                    plane,
+                    plane: plane.into(),
                     bounding_box: std::sync::OnceLock::new(),
                     metadata: None,
                 });
             }
         }
 
+        // Convert vertices to IndexedVertex
+        let indexed_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> = vertices
+            .into_iter()
+            .map(|v| v.into())
+            .collect();
+
         // Update vertex normals based on adjacent faces
         let mut result = IndexedMesh {
-            vertices,
+            vertices: indexed_vertices,
             polygons,
             bounding_box: std::sync::OnceLock::new(),
             metadata: self.metadata.clone(),
@@ -172,16 +178,22 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
 
                 polygons.push(crate::IndexedMesh::IndexedPolygon {
                     indices,
-                    plane,
+                    plane: plane.into(),
                     bounding_box: std::sync::OnceLock::new(),
                     metadata: None,
                 });
             }
         }
 
+        // Convert vertices to IndexedVertex
+        let indexed_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> = vertices
+            .into_iter()
+            .map(|v| v.into())
+            .collect();
+
         // Create result mesh
         let mut result = IndexedMesh {
-            vertices,
+            vertices: indexed_vertices,
             polygons,
             bounding_box: std::sync::OnceLock::new(),
             metadata: self.metadata.clone(),
@@ -340,8 +352,14 @@ mod tests {
             Vertex::new(Point3::new(0.5, 0.5, 1.0), Vector3::new(0.0, 0.0, 1.0)),
         ];
 
+        // Convert vertices to IndexedVertex
+        let indexed_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> = vertices
+            .into_iter()
+            .map(|v| v.into())
+            .collect();
+
         let mesh: IndexedMesh<i32> = IndexedMesh {
-            vertices,
+            vertices: indexed_vertices,
             polygons: Vec::new(),
             bounding_box: std::sync::OnceLock::new(),
             metadata: None,

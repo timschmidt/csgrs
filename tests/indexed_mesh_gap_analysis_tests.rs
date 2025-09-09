@@ -4,9 +4,10 @@
 //! feature parity between IndexedMesh and the regular Mesh module.
 
 use csgrs::IndexedMesh::{IndexedMesh, IndexedPolygon};
+use csgrs::IndexedMesh::plane::Plane as IndexedPlane;
+use csgrs::IndexedMesh::vertex::IndexedVertex;
 use csgrs::float_types::Real;
-use csgrs::mesh::plane::Plane;
-use csgrs::mesh::vertex::Vertex;
+// Removed unused imports: mesh::plane::Plane, mesh::vertex::Vertex
 use nalgebra::{Point3, Vector3};
 use std::sync::OnceLock;
 
@@ -14,52 +15,52 @@ use std::sync::OnceLock;
 fn create_test_cube() -> IndexedMesh<i32> {
     let vertices = vec![
         // Bottom face vertices
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, -1.0)),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 0.0, -1.0)),
-        Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::new(0.0, 0.0, -1.0)),
-        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::new(0.0, 0.0, -1.0)),
+        IndexedVertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, -1.0)),
+        IndexedVertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 0.0, -1.0)),
+        IndexedVertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::new(0.0, 0.0, -1.0)),
+        IndexedVertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::new(0.0, 0.0, -1.0)),
         // Top face vertices
-        Vertex::new(Point3::new(0.0, 0.0, 1.0), Vector3::new(0.0, 0.0, 1.0)),
-        Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::new(0.0, 0.0, 1.0)),
-        Vertex::new(Point3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 1.0)),
-        Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 1.0)),
+        IndexedVertex::new(Point3::new(0.0, 0.0, 1.0), Vector3::new(0.0, 0.0, 1.0)),
+        IndexedVertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::new(0.0, 0.0, 1.0)),
+        IndexedVertex::new(Point3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 1.0)),
+        IndexedVertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 1.0)),
     ];
 
     let polygons = vec![
         // Bottom face
         IndexedPolygon::new(
             vec![0, 1, 2, 3],
-            Plane::from_vertices(vec![vertices[0], vertices[1], vertices[2]]),
+            IndexedPlane::from_points(vertices[0].pos, vertices[1].pos, vertices[2].pos),
             Some(1),
         ),
         // Top face
         IndexedPolygon::new(
             vec![4, 7, 6, 5],
-            Plane::from_vertices(vec![vertices[4], vertices[7], vertices[6]]),
+            IndexedPlane::from_points(vertices[4].pos, vertices[7].pos, vertices[6].pos),
             Some(2),
         ),
         // Front face
         IndexedPolygon::new(
             vec![0, 4, 5, 1],
-            Plane::from_vertices(vec![vertices[0], vertices[4], vertices[5]]),
+            IndexedPlane::from_points(vertices[0].pos, vertices[4].pos, vertices[5].pos),
             Some(3),
         ),
         // Back face
         IndexedPolygon::new(
             vec![2, 6, 7, 3],
-            Plane::from_vertices(vec![vertices[2], vertices[6], vertices[7]]),
+            IndexedPlane::from_points(vertices[2].pos, vertices[6].pos, vertices[7].pos),
             Some(4),
         ),
         // Left face
         IndexedPolygon::new(
             vec![0, 3, 7, 4],
-            Plane::from_vertices(vec![vertices[0], vertices[3], vertices[7]]),
+            IndexedPlane::from_points(vertices[0].pos, vertices[3].pos, vertices[7].pos),
             Some(5),
         ),
         // Right face
         IndexedPolygon::new(
             vec![1, 5, 6, 2],
-            Plane::from_vertices(vec![vertices[1], vertices[5], vertices[6]]),
+            IndexedPlane::from_points(vertices[1].pos, vertices[5].pos, vertices[6].pos),
             Some(6),
         ),
     ];
@@ -77,11 +78,11 @@ fn test_plane_operations_classify_indexed_polygon() {
     use csgrs::IndexedMesh::plane::IndexedPlaneOperations;
 
     let cube = create_test_cube();
-    let test_plane = Plane::from_vertices(vec![
-        Vertex::new(Point3::new(0.5, 0.0, 0.0), Vector3::x()),
-        Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::x()),
-        Vertex::new(Point3::new(0.5, 0.0, 1.0), Vector3::x()),
-    ]);
+    let test_plane = IndexedPlane::from_points(
+        Point3::new(0.5, 0.0, 0.0),
+        Point3::new(0.5, 1.0, 0.0),
+        Point3::new(0.5, 0.0, 1.0),
+    );
 
     // Test polygon classification
     let bottom_face = &cube.polygons[0]; // Should span the plane
@@ -97,11 +98,11 @@ fn test_plane_operations_split_indexed_polygon() {
 
     let cube = create_test_cube();
     let mut vertices = cube.vertices.clone();
-    let test_plane = Plane::from_vertices(vec![
-        Vertex::new(Point3::new(0.5, 0.0, 0.0), Vector3::x()),
-        Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::x()),
-        Vertex::new(Point3::new(0.5, 0.0, 1.0), Vector3::x()),
-    ]);
+    let test_plane = IndexedPlane::from_points(
+        Point3::new(0.5, 0.0, 0.0),
+        Point3::new(0.5, 1.0, 0.0),
+        Point3::new(0.5, 0.0, 1.0),
+    );
 
     let bottom_face = &cube.polygons[0];
     let (coplanar_front, coplanar_back, front, back) =
@@ -127,7 +128,7 @@ fn test_indexed_polygon_edges_iterator() {
 #[test]
 fn test_indexed_polygon_subdivide_triangles() {
     let cube = create_test_cube();
-    let mut vertices = cube.vertices.clone();
+    let _vertices = cube.vertices.clone();
     let bottom_face = &cube.polygons[0];
 
     let subdivisions = std::num::NonZeroU32::new(1).unwrap();
@@ -165,22 +166,22 @@ fn test_mesh_validation() {
 fn test_mesh_validation_with_issues() {
     // Create a mesh with validation issues
     let vertices = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::z()),
+        IndexedVertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+        IndexedVertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
+        IndexedVertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::z()),
     ];
 
     let polygons = vec![
         // Polygon with duplicate indices
         IndexedPolygon::new(
             vec![0, 1, 1], // Duplicate index
-            Plane::from_vertices(vec![vertices[0], vertices[1], vertices[2]]),
+            IndexedPlane::from_points(vertices[0].pos, vertices[1].pos, vertices[2].pos),
             None,
         ),
         // Polygon with out-of-bounds index
         IndexedPolygon::new(
             vec![0, 1, 5], // Index 5 is out of bounds
-            Plane::from_vertices(vec![vertices[0], vertices[1], vertices[2]]),
+            IndexedPlane::from_points(vertices[0].pos, vertices[1].pos, vertices[2].pos),
             None,
         ),
     ];
@@ -210,7 +211,7 @@ fn test_merge_vertices() {
     let original_vertex_count = cube.vertices.len();
 
     // Add a duplicate vertex very close to an existing one
-    let duplicate_vertex = Vertex::new(
+    let duplicate_vertex = IndexedVertex::new(
         Point3::new(0.0001, 0.0, 0.0), // Very close to vertex 0
         Vector3::new(0.0, 0.0, -1.0),
     );
@@ -219,7 +220,7 @@ fn test_merge_vertices() {
     // Add a polygon using the duplicate vertex
     cube.polygons.push(IndexedPolygon::new(
         vec![8, 1, 2], // Using the duplicate vertex
-        Plane::from_vertices(vec![cube.vertices[8], cube.vertices[1], cube.vertices[2]]),
+        IndexedPlane::from_points(cube.vertices[8].pos, cube.vertices[1].pos, cube.vertices[2].pos),
         Some(99),
     ));
 

@@ -222,11 +222,11 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
                 // First triangle of quad (counter-clockwise from outside)
                 let plane1 = Plane::from_indexed_vertices(vec![
                     vertices[v1],
-                    vertices[v3],
                     vertices[v2],
+                    vertices[v3],
                 ]);
                 polygons.push(IndexedPolygon::new(
-                    vec![v1, v3, v2],
+                    vec![v1, v2, v3],
                     plane1,
                     metadata.clone(),
                 ));
@@ -234,11 +234,11 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
                 // Second triangle of quad (counter-clockwise from outside)
                 let plane2 = Plane::from_indexed_vertices(vec![
                     vertices[v2],
-                    vertices[v3],
                     vertices[v4],
+                    vertices[v3],
                 ]);
                 polygons.push(IndexedPolygon::new(
-                    vec![v2, v3, v4],
+                    vec![v2, v4, v3],
                     plane2,
                     metadata.clone(),
                 ));
@@ -369,10 +369,11 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             }
 
             // Side faces (quads split into triangles)
-            let b1 = bottom_ring_start + i;
-            let b2 = bottom_ring_start + next_i;
-            let t1 = top_ring_start + i;
-            let t2 = top_ring_start + next_i;
+            // Following regular Mesh winding order: [b2, b1, t1, t2]
+            let b1 = bottom_ring_start + i;      // bottom current
+            let b2 = bottom_ring_start + next_i; // bottom next
+            let t1 = top_ring_start + i;         // top current
+            let t2 = top_ring_start + next_i;    // top next
 
             // Calculate side normal
             let side_normal = Vector3::new(
@@ -385,15 +386,15 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             let plane =
                 Plane::from_normal(side_normal, side_normal.dot(&vertices[b1].pos.coords));
 
-            // First triangle of quad (counter-clockwise from outside)
+            // First triangle of quad: [b1, b2, t1] (counter-clockwise from outside)
             polygons.push(IndexedPolygon::new(
-                vec![b1, t1, b2],
+                vec![b1, b2, t1],
                 plane.clone(),
                 metadata.clone(),
             ));
 
-            // Second triangle of quad (counter-clockwise from outside)
-            polygons.push(IndexedPolygon::new(vec![b2, t1, t2], plane, metadata.clone()));
+            // Second triangle of quad: [b2, t2, t1] (counter-clockwise from outside)
+            polygons.push(IndexedPolygon::new(vec![b2, t2, t1], plane, metadata.clone()));
         }
 
         let mut mesh = IndexedMesh {

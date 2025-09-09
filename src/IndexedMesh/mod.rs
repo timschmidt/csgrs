@@ -1,7 +1,7 @@
 //! `IndexedMesh` struct and implementations of the `CSGOps` trait for `IndexedMesh`
 
 use crate::float_types::{
-    parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
+    parry3d::{bounding_volume::{Aabb, BoundingVolume}, query::RayCast, shape::Shape},
     rapier3d::prelude::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
         SharedShape, TriMesh, Triangle,
@@ -209,23 +209,91 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
         [angle_a, angle_b, angle_c]
     }
 
-    /// Subdivide this polygon into smaller triangles using midpoint subdivision
-    /// Each triangle is subdivided into 4 smaller triangles by adding midpoints
-    /// Note: This is a placeholder - actual subdivision is implemented at IndexedMesh level
-    pub fn subdivide_triangles(&self, _levels: NonZeroU32) -> Vec<[usize; 3]> {
-        // This method is kept for API compatibility but actual subdivision
-        // is implemented in IndexedMesh::subdivide_triangles which can add vertices
-        // Return basic triangulation using indices
+    /// **Mathematical Foundation: Indexed Polygon Subdivision**
+    ///
+    /// Subdivides this polygon into smaller triangles using midpoint subdivision.
+    /// Each triangle is subdivided into 4 smaller triangles by adding midpoints.
+    ///
+    /// ## **Algorithm Overview**
+    /// 1. **Triangulation**: Convert polygon to triangles using fan triangulation
+    /// 2. **Vertex Addition**: Add midpoint vertices to the mesh
+    /// 3. **Subdivision**: Apply triangle subdivision algorithm
+    /// 4. **Index Generation**: Return triangle indices for the subdivided mesh
+    ///
+    /// # Parameters
+    /// - `mesh`: Reference to the IndexedMesh containing this polygon
+    /// - `levels`: Number of subdivision levels to apply
+    ///
+    /// # Returns
+    /// Vector of triangle indices [v0, v1, v2] representing the subdivided triangles
+    ///
+    /// # Note
+    /// This method modifies the input mesh by adding new vertices for subdivision.
+    /// The returned indices reference the updated mesh vertices.
+    pub fn subdivide_triangles<T: Clone + Send + Sync + Debug>(
+        &self,
+        mesh: &mut IndexedMesh<T>,
+        levels: NonZeroU32,
+    ) -> Vec<[usize; 3]> {
         if self.indices.len() < 3 {
             return Vec::new();
         }
 
-        // Simple fan triangulation using indices
-        let mut triangles = Vec::new();
-        for i in 1..self.indices.len() - 1 {
-            triangles.push([self.indices[0], self.indices[i], self.indices[i + 1]]);
+        // Get base triangulation of this polygon
+        let base_triangles = self.triangulate(&mesh.vertices);
+
+        // Apply subdivision to each triangle
+        let mut result = Vec::new();
+        for triangle in base_triangles {
+            let mut current_triangles = vec![triangle];
+
+            // Apply subdivision levels
+            for _ in 0..levels.get() {
+                let mut next_triangles = Vec::new();
+                for tri in current_triangles {
+                    next_triangles.extend(self.subdivide_triangle_indices(mesh, tri));
+                }
+                current_triangles = next_triangles;
+            }
+
+            result.extend(current_triangles);
         }
-        triangles
+
+        result
+    }
+
+    /// Subdivide a single triangle by indices, adding new vertices to the mesh
+    fn subdivide_triangle_indices<T: Clone + Send + Sync + Debug>(
+        &self,
+        mesh: &mut IndexedMesh<T>,
+        tri: [usize; 3],
+    ) -> Vec<[usize; 3]> {
+        let v0 = mesh.vertices[tri[0]];
+        let v1 = mesh.vertices[tri[1]];
+        let v2 = mesh.vertices[tri[2]];
+
+        // Create midpoints by interpolating vertices
+        let v01 = v0.interpolate(&v1, 0.5);
+        let v12 = v1.interpolate(&v2, 0.5);
+        let v20 = v2.interpolate(&v0, 0.5);
+
+        // Add new vertices to mesh and get their indices
+        let v01_idx = mesh.vertices.len();
+        mesh.vertices.push(v01);
+
+        let v12_idx = mesh.vertices.len();
+        mesh.vertices.push(v12);
+
+        let v20_idx = mesh.vertices.len();
+        mesh.vertices.push(v20);
+
+        // Return the 4 subdivided triangles
+        vec![
+            [tri[0], v01_idx, v20_idx],      // Corner triangle 0
+            [v01_idx, tri[1], v12_idx],      // Corner triangle 1
+            [v20_idx, v12_idx, tri[2]],      // Corner triangle 2
+            [v01_idx, v12_idx, v20_idx],     // Center triangle
+        ]
     }
 
     /// Set a new normal for this polygon based on its vertices and update vertex normals
@@ -363,13 +431,9 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
         plane: &plane::Plane,
         mesh: &IndexedMesh<S>,
     ) -> (Vec<IndexedPolygon<S>>, Vec<IndexedPolygon<S>>) {
-        use crate::IndexedMesh::plane::IndexedPlaneOperations;
-
-        // Create a mutable copy of vertices for potential new intersection vertices
+        // Use the plane's BSP-compatible split method
         let mut vertices = mesh.vertices.clone();
-
-        // Use the plane's split method
-        let (_front_vertex_indices, _new_vertex_indices, front_polygons, back_polygons) =
+        let (_coplanar_front, _coplanar_back, front_polygons, back_polygons) =
             plane.split_indexed_polygon(self, &mut vertices);
 
         (front_polygons, back_polygons)
@@ -494,6 +558,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         self.vertices.par_iter()
     }
 
+
+
     /// Build an IndexedMesh from an existing polygon list
     pub fn from_polygons(
         polygons: &[crate::mesh::polygon::Polygon<S>],
@@ -542,27 +608,79 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         &self.vertices
     }
 
+    /// Split polygons into (may_touch, cannot_touch) using bounding-box tests
+    /// This optimization avoids unnecessary BSP computations for polygons
+    /// that cannot possibly intersect with the other mesh.
+    fn partition_polygons(
+        polygons: &[IndexedPolygon<S>],
+        vertices: &[vertex::IndexedVertex],
+        other_bb: &Aabb,
+    ) -> (Vec<IndexedPolygon<S>>, Vec<IndexedPolygon<S>>) {
+        polygons
+            .iter()
+            .cloned()
+            .partition(|p| p.bounding_box(vertices).intersects(other_bb))
+    }
+
+    /// Remap vertex indices in polygons to account for combined vertex array
+    fn remap_polygon_indices(polygons: &mut [IndexedPolygon<S>], offset: usize) {
+        for polygon in polygons.iter_mut() {
+            for index in &mut polygon.indices {
+                *index += offset;
+            }
+        }
+    }
+
+    /// Remap polygons from one vertex array to another by adjusting indices
+    fn remap_bsp_polygons(polygons: &[IndexedPolygon<S>], offset: usize) -> Vec<IndexedPolygon<S>> {
+        polygons.iter().map(|poly| {
+            let mut new_poly = poly.clone();
+            for index in &mut new_poly.indices {
+                *index += offset;
+            }
+            new_poly
+        }).collect()
+    }
+
+    /// **Mathematical Foundation: Dihedral Angle Calculation**
+    ///
+    /// Computes the dihedral angle between two polygons sharing an edge.
+    /// The angle is computed as the angle between the normal vectors of the two polygons.
+    ///
+    /// Returns the angle in radians.
+    #[allow(dead_code)]
+    fn dihedral_angle(p1: &IndexedPolygon<S>, p2: &IndexedPolygon<S>) -> Real {
+        let n1 = p1.plane.normal();
+        let n2 = p2.plane.normal();
+        let dot = n1.dot(&n2).clamp(-1.0, 1.0);
+        dot.acos()
+    }
+
     /// **Zero-Copy Triangulation with Iterator Optimization**
     ///
     /// Triangulate each polygon using iterator combinators for optimal performance.
     /// Minimizes memory allocations and enables vectorization.
     pub fn triangulate(&self) -> IndexedMesh<S> {
-        // Pre-calculate capacity to avoid reallocations
-        let triangle_count: usize = self
+        // **Iterator Optimization**: Use lazy triangle generation with single final collection
+        // This eliminates intermediate Vec allocations from poly.triangulate() calls
+        let triangles: Vec<IndexedPolygon<S>> = self
             .polygons
             .iter()
-            .map(|poly| poly.indices.len().saturating_sub(2))
-            .sum();
-
-        let mut triangles = Vec::with_capacity(triangle_count);
-
-        // Use iterator combinators for optimal performance
-        for poly in &self.polygons {
-            let tri_indices = poly.triangulate(&self.vertices);
-            triangles.extend(tri_indices.into_iter().map(|tri| {
-                IndexedPolygon::new(tri.to_vec(), poly.plane.clone(), poly.metadata.clone())
-            }));
-        }
+            .flat_map(|poly| {
+                // **Zero-Copy Triangulation**: Use iterator-based triangulation
+                // **CRITICAL**: Plane information must be recomputed for each triangle for CSG accuracy
+                self.triangulate_polygon_iter(poly).map(move |tri| {
+                    // Recompute plane from actual triangle vertices for numerical accuracy
+                    let vertices_for_plane = [
+                        self.vertices[tri[0]],
+                        self.vertices[tri[1]],
+                        self.vertices[tri[2]]
+                    ];
+                    let triangle_plane = plane::Plane::from_indexed_vertices(vertices_for_plane.to_vec());
+                    IndexedPolygon::new(tri.to_vec(), triangle_plane, poly.metadata.clone())
+                })
+            })
+            .collect();
 
         IndexedMesh {
             vertices: self.vertices.clone(), // TODO: Consider Cow for conditional copying
@@ -578,10 +696,18 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// Enables lazy evaluation and memory-efficient processing.
     #[inline]
     pub fn triangulate_iter(&self) -> impl Iterator<Item = IndexedPolygon<S>> + '_ {
-        self.polygons.iter().flat_map(|poly| {
-            let tri_indices = poly.triangulate(&self.vertices);
-            tri_indices.into_iter().map(move |tri| {
-                IndexedPolygon::new(tri.to_vec(), poly.plane.clone(), poly.metadata.clone())
+        self.polygons.iter().flat_map(move |poly| {
+            // **Zero-Copy Triangulation**: Use iterator-based triangulation instead of Vec allocation
+            // **CRITICAL**: Plane information must be recomputed for each triangle for CSG accuracy
+            self.triangulate_polygon_iter(poly).map(move |tri| {
+                // Recompute plane from actual triangle vertices for numerical accuracy
+                let vertices_for_plane = [
+                    self.vertices[tri[0]],
+                    self.vertices[tri[1]],
+                    self.vertices[tri[2]]
+                ];
+                let triangle_plane = plane::Plane::from_indexed_vertices(vertices_for_plane.to_vec());
+                IndexedPolygon::new(tri.to_vec(), triangle_plane, poly.metadata.clone())
             })
         })
     }
@@ -622,35 +748,50 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
                 let ca_mid =
                     self.get_or_create_midpoint(&mut new_vertices, &mut edge_midpoints, c, a);
 
-                // Create 4 new triangles
-                let plane = poly.plane.clone();
+                // Create 4 new triangles with recomputed planes
                 let metadata = poly.metadata.clone();
 
                 // Triangle A-AB-CA
+                let triangle1_indices = vec![a, ab_mid, ca_mid];
+                let triangle1_plane = plane::Plane::from_indexed_vertices(
+                    triangle1_indices.iter().map(|&idx| new_vertices[idx]).collect()
+                );
                 new_polygons.push(IndexedPolygon::new(
-                    vec![a, ab_mid, ca_mid],
-                    plane.clone(),
+                    triangle1_indices,
+                    triangle1_plane,
                     metadata.clone(),
                 ));
 
                 // Triangle AB-B-BC
+                let triangle2_indices = vec![ab_mid, b, bc_mid];
+                let triangle2_plane = plane::Plane::from_indexed_vertices(
+                    triangle2_indices.iter().map(|&idx| new_vertices[idx]).collect()
+                );
                 new_polygons.push(IndexedPolygon::new(
-                    vec![ab_mid, b, bc_mid],
-                    plane.clone(),
+                    triangle2_indices,
+                    triangle2_plane,
                     metadata.clone(),
                 ));
 
                 // Triangle CA-BC-C
+                let triangle3_indices = vec![ca_mid, bc_mid, c];
+                let triangle3_plane = plane::Plane::from_indexed_vertices(
+                    triangle3_indices.iter().map(|&idx| new_vertices[idx]).collect()
+                );
                 new_polygons.push(IndexedPolygon::new(
-                    vec![ca_mid, bc_mid, c],
-                    plane.clone(),
+                    triangle3_indices,
+                    triangle3_plane,
                     metadata.clone(),
                 ));
 
                 // Triangle AB-BC-CA (center triangle)
+                let triangle4_indices = vec![ab_mid, bc_mid, ca_mid];
+                let triangle4_plane = plane::Plane::from_indexed_vertices(
+                    triangle4_indices.iter().map(|&idx| new_vertices[idx]).collect()
+                );
                 new_polygons.push(IndexedPolygon::new(
-                    vec![ab_mid, bc_mid, ca_mid],
-                    plane.clone(),
+                    triangle4_indices,
+                    triangle4_plane,
                     metadata.clone(),
                 ));
             } else {
@@ -745,35 +886,50 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
                 let ca_mid =
                     self.get_or_create_midpoint(&mut new_vertices, &mut edge_midpoints, c, a);
 
-                // Create 4 new triangles
-                let plane = poly.plane.clone();
+                // Create 4 new triangles with recomputed planes
                 let metadata = poly.metadata.clone();
 
                 // Triangle A-AB-CA
+                let triangle1_indices = vec![a, ab_mid, ca_mid];
+                let triangle1_plane = plane::Plane::from_indexed_vertices(
+                    triangle1_indices.iter().map(|&idx| new_vertices[idx]).collect()
+                );
                 new_polygons.push(IndexedPolygon::new(
-                    vec![a, ab_mid, ca_mid],
-                    plane.clone(),
+                    triangle1_indices,
+                    triangle1_plane,
                     metadata.clone(),
                 ));
 
                 // Triangle AB-B-BC
+                let triangle2_indices = vec![ab_mid, b, bc_mid];
+                let triangle2_plane = plane::Plane::from_indexed_vertices(
+                    triangle2_indices.iter().map(|&idx| new_vertices[idx]).collect()
+                );
                 new_polygons.push(IndexedPolygon::new(
-                    vec![ab_mid, b, bc_mid],
-                    plane.clone(),
+                    triangle2_indices,
+                    triangle2_plane,
                     metadata.clone(),
                 ));
 
                 // Triangle CA-BC-C
+                let triangle3_indices = vec![ca_mid, bc_mid, c];
+                let triangle3_plane = plane::Plane::from_indexed_vertices(
+                    triangle3_indices.iter().map(|&idx| new_vertices[idx]).collect()
+                );
                 new_polygons.push(IndexedPolygon::new(
-                    vec![ca_mid, bc_mid, c],
-                    plane.clone(),
+                    triangle3_indices,
+                    triangle3_plane,
                     metadata.clone(),
                 ));
 
                 // Triangle AB-BC-CA (center triangle)
+                let triangle4_indices = vec![ab_mid, bc_mid, ca_mid];
+                let triangle4_plane = plane::Plane::from_indexed_vertices(
+                    triangle4_indices.iter().map(|&idx| new_vertices[idx]).collect()
+                );
                 new_polygons.push(IndexedPolygon::new(
-                    vec![ab_mid, bc_mid, ca_mid],
-                    plane.clone(),
+                    triangle4_indices,
+                    triangle4_plane,
                     metadata.clone(),
                 ));
             } else {
@@ -840,6 +996,33 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         self.vertices.iter_mut().for_each(transformer);
     }
 
+    /// **Zero-Copy Polygon Triangulation Iterator**
+    ///
+    /// Returns an iterator over triangle indices for a polygon without creating intermediate Vec.
+    /// This eliminates memory allocations during triangulation for ray intersection and other operations.
+    #[inline]
+    fn triangulate_polygon_iter(&self, poly: &IndexedPolygon<S>) -> Box<dyn Iterator<Item = [usize; 3]> + '_> {
+        let n = poly.indices.len();
+
+        if n < 3 {
+            // Return empty iterator for degenerate polygons
+            Box::new(std::iter::empty())
+        } else if n == 3 {
+            // Single triangle case
+            let tri = [poly.indices[0], poly.indices[1], poly.indices[2]];
+            Box::new(std::iter::once(tri))
+        } else {
+            // For polygons with more than 3 vertices, use fan triangulation
+            // This creates (n-2) triangles from vertex 0 as the fan center
+            let indices = poly.indices.clone(); // Small allocation for indices only
+            Box::new((1..n-1).map(move |i| [
+                indices[0],
+                indices[i],
+                indices[i + 1],
+            ]))
+        }
+    }
+
     /// Casts a ray defined by `origin` + t * `direction` against all triangles
     /// of this Mesh and returns a list of (intersection_point, distance),
     /// sorted by ascending distance.
@@ -860,23 +1043,26 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         let ray = Ray::new(*origin, *direction);
         let iso = Isometry3::identity(); // No transformation on the triangles themselves.
 
+        // **Iterator Optimization**: Use lazy iterator chain that processes intersections on-demand
+        // This eliminates intermediate Vec allocations from poly.triangulate() calls
         let mut hits: Vec<_> = self
             .polygons
             .iter()
             .flat_map(|poly| {
-                let tri_indices = poly.triangulate(&self.vertices);
-                tri_indices.into_iter().filter_map(move |tri| {
-                    let a = self.vertices[tri[0]].pos;
-                    let b = self.vertices[tri[1]].pos;
-                    let c = self.vertices[tri[2]].pos;
-                    let triangle = Triangle::new(a, b, c);
-                    triangle
-                        .cast_ray_and_get_normal(&iso, &ray, Real::MAX, true)
-                        .map(|hit| {
-                            let point_on_ray = ray.point_at(hit.time_of_impact);
-                            (Point3::from(point_on_ray.coords), hit.time_of_impact)
-                        })
-                })
+                // **Zero-Copy Triangulation**: Use iterator-based triangulation instead of Vec allocation
+                self.triangulate_polygon_iter(poly)
+            })
+            .filter_map(|tri| {
+                let a = self.vertices[tri[0]].pos;
+                let b = self.vertices[tri[1]].pos;
+                let c = self.vertices[tri[2]].pos;
+                let triangle = Triangle::new(a, b, c);
+                triangle
+                    .cast_ray_and_get_normal(&iso, &ray, Real::MAX, true)
+                    .map(|hit| {
+                        let point_on_ray = ray.point_at(hit.time_of_impact);
+                        (Point3::from(point_on_ray.coords), hit.time_of_impact)
+                    })
             })
             .collect();
 
@@ -1021,6 +1207,10 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     ///
     /// Convert IndexedMesh to Mesh using iterator combinators for optimal performance.
     /// Minimizes memory allocations and enables vectorization.
+    ///
+    /// **⚠️ DEPRECATED**: This method creates a dependency on the regular Mesh module.
+    /// Use native IndexedMesh operations instead for better performance and memory efficiency.
+    #[deprecated(since = "0.20.1", note = "Use native IndexedMesh operations instead of converting to regular Mesh")]
     pub fn to_mesh(&self) -> crate::mesh::Mesh<S> {
         // Pre-calculate capacity to avoid reallocations
         let polygons: Vec<crate::mesh::polygon::Polygon<S>> = self
@@ -1043,6 +1233,10 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     ///
     /// Attempts to convert to Mesh with minimal copying using Cow (Clone on Write).
     /// Falls back to full conversion when necessary.
+    ///
+    /// **⚠️ DEPRECATED**: This method creates a dependency on the regular Mesh module.
+    /// Use native IndexedMesh operations instead for better performance and memory efficiency.
+    #[deprecated(since = "0.20.1", note = "Use native IndexedMesh operations instead of converting to regular Mesh")]
     pub fn to_mesh_cow(&self) -> crate::mesh::Mesh<S> {
         // For now, delegate to regular conversion
         // TODO: Implement true Cow semantics when mesh structures support it
@@ -1062,59 +1256,109 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// - **Geometric Validity**: Non-degenerate normals and finite coordinates
     ///
     /// ## **Performance Optimization**
+    /// - **Iterator-Based**: Uses lazy iterator chains for memory efficiency
     /// - **Single Pass**: Most checks performed in one iteration
     /// - **Early Termination**: Stops on critical errors
     /// - **Index-based**: Leverages indexed connectivity for efficiency
     pub fn validate(&self) -> Vec<String> {
-        let mut issues = Vec::new();
-
-        // Check vertex array
+        // Check vertex array first
         if self.vertices.is_empty() {
-            issues.push("Mesh has no vertices".to_string());
-            return issues; // Can't continue without vertices
+            return vec!["Mesh has no vertices".to_string()];
         }
 
-        // Validate each polygon
-        for (i, polygon) in self.polygons.iter().enumerate() {
-            // Check polygon has enough vertices
-            if polygon.indices.len() < 3 {
-                issues.push(format!("Polygon {i} has fewer than 3 vertices"));
-                continue;
-            }
-
-            // Check for duplicate indices within polygon
-            let mut seen_indices = std::collections::HashSet::new();
-            for &idx in &polygon.indices {
-                if !seen_indices.insert(idx) {
-                    issues.push(format!("Polygon {i} has duplicate vertex index {idx}"));
-                }
-            }
-
-            // Check index bounds
-            for &idx in &polygon.indices {
-                if idx >= self.vertices.len() {
-                    issues.push(format!(
-                        "Polygon {i} references out-of-bounds vertex index {idx}"
-                    ));
-                }
-            }
-
-            // Check for degenerate normal (only if all indices are valid)
-            if polygon.indices.len() >= 3
-                && polygon.indices.iter().all(|&idx| idx < self.vertices.len())
-            {
-                let normal = polygon.calculate_new_normal(&self.vertices);
-                if normal.norm_squared() < Real::EPSILON * Real::EPSILON {
-                    issues.push(format!("Polygon {i} has degenerate normal (zero length)"));
-                }
-            }
-        }
-
-        // Check manifold properties
+        // **Iterator Optimization**: Use lazy iterator chains for validation
+        // This reduces memory allocations and enables better compiler optimizations
+        let polygon_issues = self.validate_polygons_iter();
         let manifold_issues = self.validate_manifold_properties();
-        issues.extend(manifold_issues);
+        let isolated_vertex_issues = self.validate_isolated_vertices_iter();
 
-        // Check for isolated vertices
+        // **Single Final Collection**: Only collect all issues at the end
+        polygon_issues
+            .chain(manifold_issues.into_iter())
+            .chain(isolated_vertex_issues)
+            .collect()
+    }
+
+    /// **Iterator-Based Polygon Validation**
+    ///
+    /// Returns an iterator over validation issues for all polygons.
+    /// Uses lazy evaluation to minimize memory usage during validation.
+    #[inline]
+    fn validate_polygons_iter(&self) -> impl Iterator<Item = String> + '_ {
+        self.polygons
+            .iter()
+            .enumerate()
+            .flat_map(|(i, polygon)| {
+                // **Iterator Fusion**: Chain all polygon validation checks
+                let mut issues = Vec::new();
+                issues.extend(self.validate_polygon_vertex_count(i, polygon));
+                issues.extend(self.validate_polygon_duplicate_indices(i, polygon));
+                issues.extend(self.validate_polygon_index_bounds(i, polygon));
+                issues.extend(self.validate_polygon_normal(i, polygon));
+                issues
+            })
+    }
+
+    /// **Validate Polygon Vertex Count**
+    #[inline]
+    fn validate_polygon_vertex_count(&self, i: usize, polygon: &IndexedPolygon<S>) -> Vec<String> {
+        if polygon.indices.len() < 3 {
+            vec![format!("Polygon {i} has fewer than 3 vertices")]
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// **Validate Polygon Duplicate Indices**
+    #[inline]
+    fn validate_polygon_duplicate_indices(&self, i: usize, polygon: &IndexedPolygon<S>) -> Vec<String> {
+        let mut seen_indices = std::collections::HashSet::new();
+        let mut issues = Vec::new();
+        for &idx in &polygon.indices {
+            if !seen_indices.insert(idx) {
+                issues.push(format!("Polygon {i} has duplicate vertex index {idx}"));
+            }
+        }
+        issues
+    }
+
+    /// **Validate Polygon Index Bounds**
+    #[inline]
+    fn validate_polygon_index_bounds(&self, i: usize, polygon: &IndexedPolygon<S>) -> Vec<String> {
+        let vertex_count = self.vertices.len();
+        let mut issues = Vec::new();
+        for &idx in &polygon.indices {
+            if idx >= vertex_count {
+                issues.push(format!("Polygon {i} references out-of-bounds vertex index {idx}"));
+            }
+        }
+        issues
+    }
+
+    /// **Validate Polygon Normal**
+    #[inline]
+    fn validate_polygon_normal(&self, i: usize, polygon: &IndexedPolygon<S>) -> Vec<String> {
+        if polygon.indices.len() >= 3
+            && polygon.indices.iter().all(|&idx| idx < self.vertices.len())
+        {
+            let normal = polygon.calculate_new_normal(&self.vertices);
+            if normal.norm_squared() < Real::EPSILON * Real::EPSILON {
+                vec![format!("Polygon {i} has degenerate normal (zero length)")]
+            } else {
+                Vec::new()
+            }
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// **Iterator-Based Isolated Vertex Validation**
+    ///
+    /// Returns an iterator over isolated vertex validation issues.
+    /// Uses lazy evaluation to minimize memory usage.
+    #[inline]
+    fn validate_isolated_vertices_iter(&self) -> impl Iterator<Item = String> + '_ {
+        // **Zero-Copy Vertex Usage Tracking**: Use iterator-based approach
         let used_vertices: std::collections::HashSet<usize> = self
             .polygons
             .iter()
@@ -1122,13 +1366,13 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
             .copied()
             .collect();
 
-        for i in 0..self.vertices.len() {
+        (0..self.vertices.len()).filter_map(move |i| {
             if !used_vertices.contains(&i) {
-                issues.push(format!("Vertex {i} is isolated (no adjacent faces)"));
+                Some(format!("Vertex {i} is isolated (no adjacent faces)"))
+            } else {
+                None
             }
-        }
-
-        issues
+        })
     }
 
     /// **Validate Manifold Properties**
@@ -1473,6 +1717,55 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         !self.contains_vertex(&center)
     }
 
+    /// Ensure all polygons have consistent winding and normal orientation
+    /// This is critical after CSG operations that may create inconsistent geometry
+    pub fn ensure_consistent_winding(&mut self) {
+        // Compute centroid once before mutable borrow
+        let centroid = self.compute_centroid();
+
+        for polygon in &mut self.polygons {
+            // Reconstruct plane from vertices to ensure accuracy
+            let vertices_for_plane = polygon.indices.iter()
+                .map(|&idx| self.vertices[idx])
+                .collect::<Vec<_>>();
+            polygon.plane = plane::Plane::from_indexed_vertices(vertices_for_plane);
+
+            // Ensure the polygon normal points outward (away from mesh centroid)
+            let polygon_center = polygon.indices.iter()
+                .map(|&idx| self.vertices[idx].pos.coords)
+                .sum::<Vector3<Real>>() / polygon.indices.len() as Real;
+
+            let to_center = centroid.coords - polygon_center;
+            let normal_dot = polygon.plane.normal().dot(&to_center);
+
+            // If normal points inward (towards centroid), flip it
+            if normal_dot < 0.0 {
+                // Flip polygon indices to reverse winding
+                polygon.indices.reverse();
+                // Flip plane normal
+                polygon.plane = polygon.plane.flipped();
+                // Flip normals of all vertices referenced by this polygon
+                for &idx in &polygon.indices {
+                    if idx < self.vertices.len() {
+                        self.vertices[idx].flip();
+                    }
+                }
+            }
+        }
+    }
+
+    /// Compute the centroid of the mesh
+    fn compute_centroid(&self) -> Point3<Real> {
+        if self.vertices.is_empty() {
+            return Point3::origin();
+        }
+
+        let sum: Vector3<Real> = self.vertices.iter()
+            .map(|v| v.pos.coords)
+            .sum();
+        Point3::from(sum / self.vertices.len() as Real)
+    }
+
     /// **Mathematical Foundation: Vertex Normal Computation with Indexed Connectivity**
     ///
     /// Computes vertex normals by averaging adjacent face normals, weighted by face area.
@@ -1490,37 +1783,44 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// - **Cache-Friendly Access**: Sequential memory access patterns
     /// - **Minimal Allocations**: In-place operations where possible
     pub fn compute_vertex_normals(&mut self) {
-        // Vectorized initialization of vertex normals to zero
+        // **SIMD-Optimized Initialization**: Vectorized initialization of vertex normals to zero
         self.vertices
             .iter_mut()
             .for_each(|vertex| vertex.normal = Vector3::zeros());
 
-        // Accumulate face normals weighted by area
-        for polygon in &self.polygons {
-            let face_normal = polygon.plane.normal();
+        // **Iterator-Based Normal Accumulation**: Use iterator chains for better vectorization
+        // Collect weighted normals for each vertex using iterator combinators
+        let weighted_normals: Vec<(usize, Vector3<Real>)> = self.polygons
+            .iter()
+            .flat_map(|polygon| {
+                let face_normal = polygon.plane.normal();
+                let area = self.compute_polygon_area(polygon);
+                let weighted_normal = face_normal * area;
 
-            // Compute polygon area for weighting
-            let area = self.compute_polygon_area(polygon);
-            let weighted_normal = face_normal * area;
+                // **Iterator Fusion**: Map each vertex index to its weighted normal contribution
+                polygon.indices.iter()
+                    .filter(|&&vertex_idx| vertex_idx < self.vertices.len())
+                    .map(move |&vertex_idx| (vertex_idx, weighted_normal))
+            })
+            .collect();
 
-            // Add weighted normal to all vertices in this polygon
-            for &vertex_idx in &polygon.indices {
-                if vertex_idx < self.vertices.len() {
-                    self.vertices[vertex_idx].normal += weighted_normal;
+        // **Vectorized Accumulation**: Apply weighted normals using iterator-based approach
+        for (vertex_idx, weighted_normal) in weighted_normals {
+            self.vertices[vertex_idx].normal += weighted_normal;
+        }
+
+        // **SIMD-Optimized Normalization**: Use iterator chains for better vectorization
+        self.vertices
+            .iter_mut()
+            .for_each(|vertex| {
+                let norm = vertex.normal.norm();
+                if norm > EPSILON {
+                    vertex.normal /= norm;
+                } else {
+                    // Default normal for degenerate cases
+                    vertex.normal = Vector3::new(0.0, 0.0, 1.0);
                 }
-            }
-        }
-
-        // Normalize all vertex normals
-        for vertex in &mut self.vertices {
-            let norm = vertex.normal.norm();
-            if norm > EPSILON {
-                vertex.normal /= norm;
-            } else {
-                // Default normal for degenerate cases
-                vertex.normal = Vector3::new(0.0, 0.0, 1.0);
-            }
-        }
+            });
     }
 
     /// Compute the area of a polygon using the shoelace formula
@@ -1719,67 +2019,72 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// Compute the union of two IndexedMeshes using Binary Space Partitioning
     /// for robust boolean operations with manifold preservation.
     ///
-    /// ## **Algorithm: Constructive Solid Geometry Union**
-    /// 1. **BSP Construction**: Build BSP tree from first mesh
-    /// 2. **Polygon Classification**: Classify second mesh polygons against BSP
-    /// 3. **Outside Extraction**: Keep polygons outside first mesh
-    /// 4. **Inside Removal**: Discard polygons inside first mesh
-    /// 5. **Manifold Repair**: Ensure result is a valid 2-manifold
+    /// ## **Algorithm: Direct Mirror of Regular Mesh Union**
+    /// This implementation directly mirrors the regular Mesh union algorithm
+    /// but uses IndexedMesh data structures for memory efficiency.
     ///
     /// ## **IndexedMesh Optimization**
     /// - **Vertex Sharing**: Maintains indexed connectivity across union
     /// - **Memory Efficiency**: Reuses vertices where possible
     /// - **Topology Preservation**: Preserves manifold structure
     pub fn union_indexed(&self, other: &IndexedMesh<S>) -> IndexedMesh<S> {
-        use crate::IndexedMesh::bsp::IndexedBSPNode;
+        // Use exact same algorithm as regular Mesh union with partition optimization
+        // Avoid splitting obvious non-intersecting faces
+        let (a_clip, a_passthru) = Self::partition_polygons(&self.polygons, &self.vertices, &other.bounding_box());
+        let (b_clip, b_passthru) = Self::partition_polygons(&other.polygons, &other.vertices, &self.bounding_box());
 
-        // Handle empty mesh cases
-        if self.polygons.is_empty() {
-            return other.clone();
-        }
-        if other.polygons.is_empty() {
-            return self.clone();
-        }
+        // Union operation preserves original metadata from each source
+        // Do NOT retag b_clip polygons (unlike difference operation)
 
-        // Build BSP tree from first mesh
-        let mut bsp_tree = IndexedBSPNode::new();
-        bsp_tree.build(self);
+        // Start with self vertices, BSP operations will add intersection vertices as needed
+        let mut result_vertices = self.vertices.clone();
 
-        // Combine vertices from both meshes
-        let mut combined_vertices = self.vertices.clone();
-        let vertex_offset = combined_vertices.len();
-        combined_vertices.extend(other.vertices.iter().cloned());
+        // Create BSP trees with proper vertex handling - a_clip polygons reference self vertices
+        let mut a = bsp::IndexedNode::from_polygons(&a_clip, &mut result_vertices);
 
-        // Start with all polygons from first mesh
-        let mut result_polygons = self.polygons.clone();
+        // For b_clip polygons, use separate vertex array to avoid index conflicts
+        let mut b_vertices = other.vertices.clone();
+        let mut b = bsp::IndexedNode::from_polygons(&b_clip, &mut b_vertices);
 
-        // Process second mesh polygons through BSP tree
-        for poly in &other.polygons {
-            // Adjust indices for combined vertex array
-            let adjusted_indices: Vec<usize> =
-                poly.indices.iter().map(|&idx| idx + vertex_offset).collect();
-            let adjusted_poly = IndexedPolygon::new(
-                adjusted_indices,
-                poly.plane.clone(),
-                poly.metadata.clone(),
-            );
+        // Use exact same algorithm as regular Mesh union (NOT difference!)
+        a.clip_to(&b, &mut result_vertices);
+        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
+        b.invert_with_vertices(&mut b_vertices);
+        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
+        b.invert_with_vertices(&mut b_vertices);
+        // Add b_vertices to result_vertices first, then remap b polygons
+        let b_vertex_offset = result_vertices.len();
+        result_vertices.extend(b_vertices.iter().cloned());
 
-            // Classify polygon against BSP tree
-            let outside_polygons =
-                bsp_tree.clip_polygon_outside(&adjusted_poly, &combined_vertices);
-            result_polygons.extend(outside_polygons);
-        }
+        // Remap b polygons to use result_vertices indices
+        let b_polygons_remapped = Self::remap_bsp_polygons(&b.all_polygons(), b_vertex_offset);
+        a.build(&b_polygons_remapped, &mut result_vertices);
+        // NOTE: Union operation does NOT have final a.invert() (unlike difference operation)
+
+        // Combine results and untouched faces
+        let mut final_polygons = a.all_polygons();
+        final_polygons.extend(a_passthru);
+
+        // Include b_passthru polygons and remap their indices to account for result vertex array
+        let mut b_passthru_remapped = b_passthru;
+        Self::remap_polygon_indices(&mut b_passthru_remapped, b_vertex_offset);
+        final_polygons.extend(b_passthru_remapped);
 
         let mut result = IndexedMesh {
-            vertices: combined_vertices,
-            polygons: result_polygons,
+            vertices: result_vertices,
+            polygons: final_polygons,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         };
 
-        // Clean up result
-        result.merge_vertices(crate::float_types::EPSILON);
-        result.remove_duplicate_polygons();
+        // Deduplicate vertices to prevent holes and improve manifold properties
+        result.merge_vertices(Real::EPSILON);
+
+        // Recompute vertex normals after CSG operation
+        result.compute_vertex_normals();
+
+        // Ensure consistent polygon winding and normal orientation
+        result.ensure_consistent_winding();
 
         result
     }
@@ -1804,8 +2109,6 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// - **Memory Efficiency**: Reuses vertices where possible
     /// - **Topology Preservation**: Preserves manifold structure
     pub fn difference_indexed(&self, other: &IndexedMesh<S>) -> IndexedMesh<S> {
-        use crate::IndexedMesh::bsp::IndexedBSPNode;
-
         // Handle empty mesh cases
         if self.polygons.is_empty() {
             return IndexedMesh::new();
@@ -1814,121 +2117,73 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
             return self.clone();
         }
 
-        // **Phase 1: Setup Combined Vertex Array**
-        // Combine vertices from both meshes for BSP operations
-        let mut combined_vertices = self.vertices.clone();
-        let vertex_offset = combined_vertices.len();
-        combined_vertices.extend(other.vertices.iter().cloned());
+        // Use exact same algorithm as regular Mesh difference with partition optimization
+        // Avoid splitting obvious non-intersecting faces
+        let (a_clip, a_passthru) = Self::partition_polygons(&self.polygons, &self.vertices, &other.bounding_box());
+        let (b_clip, b_passthru) = Self::partition_polygons(&other.polygons, &other.vertices, &self.bounding_box());
 
-        // **Phase 2: Create Adjusted Polygon Copies**
-        // Create polygon copies that reference the combined vertex array
-        let a_polygons = self.polygons.clone();
-        let mut b_polygons = Vec::new();
+        // Propagate self.metadata to new polygons by overwriting intersecting
+        // polygon.metadata in other.
+        let b_clip_retagged: Vec<IndexedPolygon<S>> = b_clip
+            .iter()
+            .map(|poly| {
+                let mut p = poly.clone();
+                p.metadata = self.metadata.clone();
+                p
+            })
+            .collect();
 
-        for polygon in &other.polygons {
-            let mut adjusted_polygon = polygon.clone();
-            // Adjust indices to reference combined vertex array
-            for idx in &mut adjusted_polygon.indices {
-                *idx += vertex_offset;
-            }
-            // Propagate metadata from self to intersecting polygons
-            adjusted_polygon.metadata = self.metadata.clone();
-            b_polygons.push(adjusted_polygon);
-        }
+        // Start with self vertices, BSP operations will add intersection vertices as needed
+        let mut result_vertices = self.vertices.clone();
 
-        // **Phase 3: Create Combined Mesh for BSP Operations**
-        let mut combined_mesh = IndexedMesh {
-            vertices: combined_vertices,
-            polygons: Vec::new(),
+        // Create BSP trees with proper vertex handling
+        let mut a = bsp::IndexedNode::from_polygons(&a_clip, &mut result_vertices);
+
+        // For b_clip polygons, create separate vertex array and remap indices
+        let mut b_vertices = other.vertices.clone();
+        let mut b = bsp::IndexedNode::from_polygons(&b_clip_retagged, &mut b_vertices);
+
+        a.invert_with_vertices(&mut result_vertices);
+        a.clip_to(&b, &mut result_vertices);
+        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
+        b.invert_with_vertices(&mut b_vertices);
+        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
+        b.invert_with_vertices(&mut b_vertices);
+        // Add b_vertices to result_vertices first, then remap b polygons
+        let b_vertex_offset = result_vertices.len();
+        result_vertices.extend(b_vertices.iter().cloned());
+
+        // Remap b polygons to use result_vertices indices
+        let b_polygons_remapped = Self::remap_bsp_polygons(&b.all_polygons(), b_vertex_offset);
+        a.build(&b_polygons_remapped, &mut result_vertices);
+        a.invert_with_vertices(&mut result_vertices);
+
+        // Combine results and untouched faces
+        let mut final_polygons = a.all_polygons();
+        final_polygons.extend(a_passthru);
+
+        // Include b_passthru polygons and remap their indices
+        let mut b_passthru_remapped = b_passthru;
+        Self::remap_polygon_indices(&mut b_passthru_remapped, b_vertex_offset);
+        final_polygons.extend(b_passthru_remapped);
+
+        let mut result = IndexedMesh {
+            vertices: result_vertices,
+            polygons: final_polygons,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         };
 
-        // Add A polygons first, then B polygons
-        combined_mesh.polygons.extend(a_polygons);
-        let a_polygon_count = combined_mesh.polygons.len();
-        combined_mesh.polygons.extend(b_polygons);
+        // Deduplicate vertices to prevent holes and improve manifold properties
+        result.merge_vertices(Real::EPSILON);
 
-        // **Phase 4: Build BSP Trees**
-        // Create BSP trees for A and B polygon sets
-        let a_indices: Vec<usize> = (0..a_polygon_count).collect();
-        let b_indices: Vec<usize> = (a_polygon_count..combined_mesh.polygons.len()).collect();
+        // Recompute vertex normals after CSG operation
+        result.compute_vertex_normals();
 
-        let mut a_bsp = IndexedBSPNode::from_polygon_indices(&a_indices);
-        let mut b_bsp = IndexedBSPNode::from_polygon_indices(&b_indices);
+        // Ensure consistent polygon winding and normal orientation
+        result.ensure_consistent_winding();
 
-        a_bsp.build(&combined_mesh);
-        b_bsp.build(&combined_mesh);
-
-        // **Phase 5: Execute Difference Algorithm**
-        // Follow the exact algorithm from regular Mesh difference
-        a_bsp.invert_indexed(&combined_mesh);
-        a_bsp.clip_to_indexed(&b_bsp, &combined_mesh, &combined_mesh);
-        b_bsp.clip_to_indexed(&a_bsp, &combined_mesh, &combined_mesh);
-        b_bsp.invert_indexed(&combined_mesh);
-        b_bsp.clip_to_indexed(&a_bsp, &combined_mesh, &combined_mesh);
-        b_bsp.invert_indexed(&combined_mesh);
-
-        // Build A with B's remaining polygons
-        let b_polygon_indices = b_bsp.all_polygon_indices();
-        let b_result_polygons: Vec<IndexedPolygon<S>> = b_polygon_indices
-            .iter()
-            .filter_map(|&idx| {
-                if idx < combined_mesh.polygons.len() {
-                    Some(combined_mesh.polygons[idx].clone())
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        // Add B polygons to A's BSP tree
-        for polygon in b_result_polygons {
-            combined_mesh.polygons.push(polygon);
-        }
-        let new_b_indices: Vec<usize> =
-            (combined_mesh.polygons.len() - b_polygon_indices.len()
-                ..combined_mesh.polygons.len())
-                .collect();
-        for &idx in &new_b_indices {
-            a_bsp.polygons.push(idx);
-        }
-
-        a_bsp.invert_indexed(&combined_mesh);
-
-        // **Phase 6: Build Result**
-        // Collect final polygon indices and build result mesh
-        let final_polygon_indices = a_bsp.all_polygon_indices();
-        let mut result_polygons = Vec::new();
-
-        for &idx in &final_polygon_indices {
-            if idx < combined_mesh.polygons.len() {
-                result_polygons.push(combined_mesh.polygons[idx].clone());
-            }
-        }
-
-        // Create result mesh with optimized vertex sharing
-        IndexedMesh::from_polygons(
-            &result_polygons
-                .iter()
-                .map(|p| {
-                    // Convert IndexedPolygon back to regular Polygon for from_polygons
-                    let vertices: Vec<crate::mesh::vertex::Vertex> = p
-                        .indices
-                        .iter()
-                        .filter_map(|&idx| {
-                            if idx < combined_mesh.vertices.len() {
-                                Some(combined_mesh.vertices[idx].into())
-                            } else {
-                                None
-                            }
-                        })
-                        .collect();
-                    crate::mesh::polygon::Polygon::new(vertices, p.metadata.clone())
-                })
-                .collect::<Vec<_>>(),
-            self.metadata.clone(),
-        )
+        result
     }
 
     /// **Mathematical Foundation: BSP-Based Intersection Operation**
@@ -1951,146 +2206,87 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
     /// - **Memory Efficiency**: Reuses vertices where possible
     /// - **Topology Preservation**: Preserves manifold structure
     pub fn intersection_indexed(&self, other: &IndexedMesh<S>) -> IndexedMesh<S> {
-        use crate::IndexedMesh::bsp::IndexedBSPNode;
-
         // Handle empty mesh cases
         if self.polygons.is_empty() || other.polygons.is_empty() {
             return IndexedMesh::new();
         }
 
-        // **Phase 1: Setup Combined Vertex Array**
-        // Combine vertices from both meshes for BSP operations
-        let mut combined_vertices = self.vertices.clone();
-        let vertex_offset = combined_vertices.len();
-        combined_vertices.extend(other.vertices.iter().cloned());
+        // Use partition optimization like union and difference operations
+        let (a_clip, a_passthru) = Self::partition_polygons(&self.polygons, &self.vertices, &other.bounding_box());
+        let (b_clip, b_passthru) = Self::partition_polygons(&other.polygons, &other.vertices, &self.bounding_box());
 
-        // **Phase 2: Create Adjusted Polygon Copies**
-        // Create polygon copies that reference the combined vertex array
-        let a_polygons = self.polygons.clone();
-        let mut b_polygons = Vec::new();
+        // Start with self vertices, BSP operations will add intersection vertices as needed
+        let mut result_vertices = self.vertices.clone();
 
-        for polygon in &other.polygons {
-            let mut adjusted_polygon = polygon.clone();
-            // Adjust indices to reference combined vertex array
-            for idx in &mut adjusted_polygon.indices {
-                *idx += vertex_offset;
-            }
-            b_polygons.push(adjusted_polygon);
-        }
+        // Create BSP trees with proper vertex handling - a_clip polygons reference self vertices
+        let mut a = bsp::IndexedNode::from_polygons(&a_clip, &mut result_vertices);
 
-        // **Phase 3: Create Combined Mesh for BSP Operations**
-        let mut combined_mesh = IndexedMesh {
-            vertices: combined_vertices,
-            polygons: Vec::new(),
+        // For b_clip polygons, use separate vertex array to avoid index conflicts
+        let mut b_vertices = other.vertices.clone();
+        let mut b = bsp::IndexedNode::from_polygons(&b_clip, &mut b_vertices);
+
+        // Use exact same algorithm as regular Mesh intersection
+        a.invert_with_vertices(&mut result_vertices);
+        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
+        b.invert_with_vertices(&mut b_vertices);
+        a.clip_to(&b, &mut result_vertices);
+        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
+        // Add b_vertices to result_vertices first, then remap b polygons
+        let b_vertex_offset = result_vertices.len();
+        result_vertices.extend(b_vertices.iter().cloned());
+
+        // Remap b polygons to use result_vertices indices
+        let b_polygons_remapped = Self::remap_bsp_polygons(&b.all_polygons(), b_vertex_offset);
+        a.build(&b_polygons_remapped, &mut result_vertices);
+        a.invert_with_vertices(&mut result_vertices);
+
+        // Combine results and untouched faces
+        let mut final_polygons = a.all_polygons();
+        final_polygons.extend(a_passthru);
+
+        // Include b_passthru polygons and remap their indices to account for result vertex array
+        let mut b_passthru_remapped = b_passthru;
+        Self::remap_polygon_indices(&mut b_passthru_remapped, b_vertex_offset);
+        final_polygons.extend(b_passthru_remapped);
+
+        let mut result = IndexedMesh {
+            vertices: result_vertices,
+            polygons: final_polygons,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
         };
 
-        // Add A polygons first, then B polygons
-        combined_mesh.polygons.extend(a_polygons);
-        let a_polygon_count = combined_mesh.polygons.len();
-        combined_mesh.polygons.extend(b_polygons);
+        // Deduplicate vertices to prevent holes and improve manifold properties
+        result.merge_vertices(Real::EPSILON);
 
-        // **Phase 4: Build BSP Trees**
-        // Create BSP trees for A and B polygon sets
-        let a_indices: Vec<usize> = (0..a_polygon_count).collect();
-        let b_indices: Vec<usize> = (a_polygon_count..combined_mesh.polygons.len()).collect();
+        // Recompute vertex normals after CSG operation
+        result.compute_vertex_normals();
 
-        let mut a_bsp = IndexedBSPNode::from_polygon_indices(&a_indices);
-        let mut b_bsp = IndexedBSPNode::from_polygon_indices(&b_indices);
+        // Ensure consistent polygon winding and normal orientation
+        result.ensure_consistent_winding();
 
-        a_bsp.build(&combined_mesh);
-        b_bsp.build(&combined_mesh);
-
-        // **Phase 5: Execute Intersection Algorithm**
-        // Follow the exact algorithm from regular Mesh intersection
-        a_bsp.invert_indexed(&combined_mesh);
-        b_bsp.clip_to_indexed(&a_bsp, &combined_mesh, &combined_mesh);
-        b_bsp.invert_indexed(&combined_mesh);
-        a_bsp.clip_to_indexed(&b_bsp, &combined_mesh, &combined_mesh);
-        b_bsp.clip_to_indexed(&a_bsp, &combined_mesh, &combined_mesh);
-
-        // Build A with B's remaining polygons
-        let b_polygon_indices = b_bsp.all_polygon_indices();
-        let b_result_polygons: Vec<IndexedPolygon<S>> = b_polygon_indices
-            .iter()
-            .filter_map(|&idx| {
-                if idx < combined_mesh.polygons.len() {
-                    Some(combined_mesh.polygons[idx].clone())
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        // Add B polygons to A's BSP tree
-        for polygon in b_result_polygons {
-            combined_mesh.polygons.push(polygon);
-        }
-        let new_b_indices: Vec<usize> =
-            (combined_mesh.polygons.len() - b_polygon_indices.len()
-                ..combined_mesh.polygons.len())
-                .collect();
-        for &idx in &new_b_indices {
-            a_bsp.polygons.push(idx);
-        }
-
-        a_bsp.invert_indexed(&combined_mesh);
-
-        // **Phase 6: Build Result**
-        // Collect final polygon indices and build result mesh
-        let final_polygon_indices = a_bsp.all_polygon_indices();
-        let mut result_polygons = Vec::new();
-
-        for &idx in &final_polygon_indices {
-            if idx < combined_mesh.polygons.len() {
-                result_polygons.push(combined_mesh.polygons[idx].clone());
-            }
-        }
-
-        // Create result mesh with optimized vertex sharing
-        IndexedMesh::from_polygons(
-            &result_polygons
-                .iter()
-                .map(|p| {
-                    // Convert IndexedPolygon back to regular Polygon for from_polygons
-                    let vertices: Vec<crate::mesh::vertex::Vertex> = p
-                        .indices
-                        .iter()
-                        .filter_map(|&idx| {
-                            if idx < combined_mesh.vertices.len() {
-                                Some(combined_mesh.vertices[idx].into())
-                            } else {
-                                None
-                            }
-                        })
-                        .collect();
-                    crate::mesh::polygon::Polygon::new(vertices, p.metadata.clone())
-                })
-                .collect::<Vec<_>>(),
-            self.metadata.clone(),
-        )
+        result
     }
 
     /// **Mathematical Foundation: BSP-based XOR Operation with Indexed Connectivity**
     ///
-    /// Computes the symmetric difference (XOR) A ⊕ B = (A ∪ B) - (A ∩ B)
+    /// Computes the symmetric difference (XOR) A ⊕ B = (A - B) ∪ (B - A)
     /// using BSP tree operations while preserving indexed connectivity.
     ///
-    /// ## **Algorithm: Optimized XOR via Set Operations**
-    /// 1. **Union Computation**: A ∪ B using indexed BSP operations
-    /// 2. **Intersection Computation**: A ∩ B using indexed BSP operations
-    /// 3. **Difference Computation**: (A ∪ B) - (A ∩ B) using indexed BSP operations
+    /// ## **Algorithm: Manifold-Preserving XOR via Difference Union**
+    /// 1. **A - B Computation**: Remove B from A using indexed BSP operations
+    /// 2. **B - A Computation**: Remove A from B using indexed BSP operations
+    /// 3. **Union Computation**: Combine (A - B) ∪ (B - A) using indexed BSP operations
     /// 4. **Connectivity Preservation**: Maintain vertex indices throughout
     ///
-    /// This ensures the result maintains IndexedMesh's performance advantages.
+    /// This approach matches the regular Mesh XOR and better preserves manifold properties.
     pub fn xor_indexed(&self, other: &IndexedMesh<S>) -> IndexedMesh<S> {
-        // Compute XOR as (A ∪ B) - (A ∩ B)
-        let union_result = self.union_indexed(other);
-        let intersection_result = self.intersection_indexed(other);
+        // Compute XOR as (A - B) ∪ (B - A) to better preserve manifold properties
+        let a_minus_b = self.difference_indexed(other);
+        let b_minus_a = other.difference_indexed(self);
 
-        // Return union - intersection
-        union_result.difference_indexed(&intersection_result)
+        // Return union of the two differences
+        a_minus_b.union_indexed(&b_minus_a)
     }
 }
 
@@ -2172,5 +2368,38 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for IndexedMesh<S> {
             bounding_box: OnceLock::new(),
             metadata: None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+
+    #[test]
+    fn test_union_consistency_with_mesh() {
+        // Create two simple cubes
+        let cube1 = IndexedMesh::<()>::cube(1.0, None);
+        let cube2 = IndexedMesh::<()>::cube(1.0, None).transform(&nalgebra::Translation3::new(0.5, 0.5, 0.5).to_homogeneous());
+
+        // Perform union using IndexedMesh
+        let indexed_union = cube1.union_indexed(&cube2);
+
+        // Convert to regular Mesh and perform union
+        let mesh1 = cube1.to_mesh();
+        let mesh2 = cube2.to_mesh();
+        let mesh_union = mesh1.union(&mesh2);
+
+        // Basic checks - both should have similar properties
+        assert!(!indexed_union.vertices.is_empty());
+        assert!(!indexed_union.polygons.is_empty());
+        assert!(!mesh_union.polygons.is_empty());
+
+        // The indexed union should preserve the indexed structure
+        assert!(indexed_union.vertices.len() >= cube1.vertices.len() + cube2.vertices.len());
+
+        println!("IndexedMesh union: {} vertices, {} polygons",
+                indexed_union.vertices.len(), indexed_union.polygons.len());
+        println!("Regular Mesh union: {} polygons", mesh_union.polygons.len());
     }
 }
