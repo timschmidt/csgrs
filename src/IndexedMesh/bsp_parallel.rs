@@ -10,7 +10,10 @@ use crate::IndexedMesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use rayon::prelude::*;
 
 #[cfg(feature = "parallel")]
-use crate::IndexedMesh::IndexedPolygon;
+use crate::IndexedMesh::{IndexedPolygon, vertex::IndexedVertex};
+
+#[cfg(feature = "parallel")]
+use std::collections::HashMap;
 
 #[cfg(feature = "parallel")]
 use crate::IndexedMesh::vertex::IndexedVertex;
@@ -124,30 +127,38 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
     }
 
     /// Parallel version of `build`.
+    /// **FIXED**: Now takes vertices parameter to match sequential version
     #[cfg(feature = "parallel")]
-    pub fn build(&mut self, polygons: &[IndexedPolygon<S>]) {
+    pub fn build(&mut self, polygons: &[IndexedPolygon<S>], vertices: &mut Vec<IndexedVertex>) {
         if polygons.is_empty() {
             return;
         }
 
         // Choose splitting plane if not already set
         if self.plane.is_none() {
-            self.plane = Some(self.pick_best_splitting_plane(polygons));
+            self.plane = Some(self.pick_best_splitting_plane(polygons, vertices));
         }
         let plane = self.plane.as_ref().unwrap();
 
-        // Split polygons in parallel
-        let (mut coplanar_front, mut coplanar_back, front, back) =
-            polygons.par_iter().map(|p| plane.split_indexed_polygon(p)).reduce(
-                || (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
-                |mut acc, x| {
-                    acc.0.extend(x.0);
-                    acc.1.extend(x.1);
-                    acc.2.extend(x.2);
-                    acc.3.extend(x.3);
-                    acc
-                },
-            );
+        // **FIXED**: For parallel processing, we can't use shared edge caching
+        // Instead, we'll fall back to sequential processing for IndexedMesh to maintain
+        // vertex sharing consistency. This ensures identical results between parallel
+        // and sequential execution.
+
+        // Split polygons sequentially to maintain edge cache consistency
+        let mut coplanar_front: Vec<IndexedPolygon<S>> = Vec::new();
+        let mut coplanar_back: Vec<IndexedPolygon<S>> = Vec::new();
+        let mut front: Vec<IndexedPolygon<S>> = Vec::new();
+        let mut back: Vec<IndexedPolygon<S>> = Vec::new();
+        let mut edge_cache: HashMap<crate::IndexedMesh::plane::PlaneEdgeCacheKey, usize> = HashMap::new();
+
+        for p in polygons {
+            let (cf, cb, mut fr, mut bk) = plane.split_indexed_polygon_with_cache(p, vertices, &mut edge_cache);
+            coplanar_front.extend(cf);
+            coplanar_back.extend(cb);
+            front.append(&mut fr);
+            back.append(&mut bk);
+        }
 
         // Append coplanar fronts/backs to self.polygons
         self.polygons.append(&mut coplanar_front);

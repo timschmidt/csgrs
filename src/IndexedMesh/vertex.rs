@@ -217,33 +217,19 @@ impl IndexedVertex {
 
     /// **Index-Aware Linear Interpolation**
     ///
-    /// Optimized interpolation that can be used for creating new vertices
-    /// during edge splitting operations in IndexedMesh.
+    /// Simple, reliable interpolation matching the regular Mesh approach.
+    /// Uses linear interpolation for both position and normals, which is
+    /// more stable and consistent than complex spherical interpolation.
+    /// **FIXED**: Simplified to match regular Mesh behavior and eliminate bugs.
     pub fn interpolate(&self, other: &IndexedVertex, t: Real) -> IndexedVertex {
+        // Linear interpolation for position: p(t) = p0 + t * (p1 - p0)
         let new_pos = self.pos + (other.pos - self.pos) * t;
 
-        // Interpolate normals with proper normalization
-        let n1 = self.normal.normalize();
-        let n2 = other.normal.normalize();
+        // Linear interpolation for normals: n(t) = n0 + t * (n1 - n0)
+        let new_normal = self.normal + (other.normal - self.normal) * t;
 
-        // Use slerp for better normal interpolation (spherical linear interpolation)
-        let dot = n1.dot(&n2);
-        if dot > 0.9999 {
-            // Nearly identical normals - use linear interpolation
-            let new_normal = (1.0 - t) * n1 + t * n2;
-            IndexedVertex::new(new_pos, new_normal.normalize())
-        } else if dot < -0.9999 {
-            // Opposite normals - handle discontinuity
-            let new_normal = (1.0 - t) * n1 + t * (-n1);
-            IndexedVertex::new(new_pos, new_normal.normalize())
-        } else {
-            // Standard slerp
-            let omega = dot.acos();
-            let sin_omega = omega.sin();
-            let new_normal = (omega * (1.0 - t)).sin() / sin_omega * n1 +
-                           (omega * t).sin() / sin_omega * n2;
-            IndexedVertex::new(new_pos, new_normal.normalize())
-        }
+        // Create new vertex with normalized normal
+        IndexedVertex::new(new_pos, new_normal.normalize())
     }
 
     /// **Spherical Linear Interpolation for Normals**

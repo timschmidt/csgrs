@@ -11,6 +11,46 @@ use robust;
 use std::fmt::Debug;
 use std::collections::HashMap;
 
+/// **Plane-Edge Cache Key**
+///
+/// Proper cache key that includes both the edge vertices and the plane information
+/// to ensure intersection vertices are only shared for the same plane-edge combination.
+/// This prevents the critical bug where different planes incorrectly share intersection
+/// vertices for the same edge.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct PlaneEdgeCacheKey {
+    /// Canonical edge representation (smaller index first)
+    edge: (usize, usize),
+    /// Plane normal quantized to avoid floating-point precision issues
+    plane_normal_quantized: (i64, i64, i64),
+    /// Plane offset quantized to avoid floating-point precision issues
+    plane_offset_quantized: i64,
+}
+
+impl PlaneEdgeCacheKey {
+    /// Create a cache key for a specific plane-edge combination
+    pub fn new(plane: &Plane, idx_i: usize, idx_j: usize) -> Self {
+        // Create canonical edge key (smaller index first)
+        let edge = if idx_i < idx_j { (idx_i, idx_j) } else { (idx_j, idx_i) };
+
+        // Quantize plane parameters to avoid floating-point precision issues
+        // Use a reasonable precision that distinguishes different planes but handles numerical noise
+        const QUANTIZATION_SCALE: Real = 1e6;
+        let plane_normal_quantized = (
+            (plane.normal.x * QUANTIZATION_SCALE).round() as i64,
+            (plane.normal.y * QUANTIZATION_SCALE).round() as i64,
+            (plane.normal.z * QUANTIZATION_SCALE).round() as i64,
+        );
+        let plane_offset_quantized = (plane.w * QUANTIZATION_SCALE).round() as i64;
+
+        PlaneEdgeCacheKey {
+            edge,
+            plane_normal_quantized,
+            plane_offset_quantized,
+        }
+    }
+}
+
 
 // Plane classification constants (matching mesh::plane constants)
 pub const COPLANAR: i8 = 0;
@@ -433,12 +473,13 @@ impl Plane {
     /// Split an IndexedPolygon by this plane for BSP operations
     /// Returns (coplanar_front, coplanar_back, front, back)
     /// This version properly handles spanning polygons by creating intersection vertices
+    /// **FIXED**: Now uses plane-aware cache keys to prevent incorrect vertex sharing
     #[allow(clippy::type_complexity)]
     pub fn split_indexed_polygon_with_cache<S: Clone + Send + Sync + Debug>(
         &self,
         polygon: &IndexedPolygon<S>,
         vertices: &mut Vec<IndexedVertex>,
-        edge_cache: &mut HashMap<(usize, usize), usize>,
+        edge_cache: &mut HashMap<PlaneEdgeCacheKey, usize>,
     ) -> (
         Vec<IndexedPolygon<S>>,
         Vec<IndexedPolygon<S>>,
@@ -544,8 +585,8 @@ impl Plane {
                         let denom = self.normal().dot(&(vertex_j.pos - vertex_i.pos));
                         if denom.abs() > EPSILON {
                             let t = (self.offset() - self.normal().dot(&vertex_i.pos.coords)) / denom;
-                            // Use canonical edge key to share the same split vertex across adjacent polygons for this plane
-                            let key = if idx_i < idx_j { (idx_i, idx_j) } else { (idx_j, idx_i) };
+                            // **FIXED**: Use plane-aware cache key to prevent incorrect vertex sharing across different planes
+                            let key = PlaneEdgeCacheKey::new(self, idx_i, idx_j);
                             let v_idx = if let Some(&existing) = edge_cache.get(&key) {
                                 existing
                             } else {
@@ -665,11 +706,12 @@ impl From<Plane> for crate::mesh::plane::Plane {
 }
 
 // External function for BSP operations that need to split polygons
+// **FIXED**: Updated to use plane-aware cache keys
 pub fn split_indexed_polygon<S: Clone + Send + Sync + Debug>(
     plane: &Plane,
     polygon: &IndexedPolygon<S>,
     vertices: &mut Vec<IndexedVertex>,
-    edge_cache: &mut HashMap<(usize, usize), usize>,
+    edge_cache: &mut HashMap<PlaneEdgeCacheKey, usize>,
 ) -> (
     Vec<IndexedPolygon<S>>,
     Vec<IndexedPolygon<S>>,

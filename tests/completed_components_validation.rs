@@ -340,11 +340,10 @@ fn test_bsp_tree_construction() {
 
     // Test BSP tree building
     let mut bsp_node = IndexedNode::new();
-    let polygon_indices: Vec<usize> = (0..cube.polygons.len()).collect();
-    bsp_node.polygons = polygon_indices;
+    let mut vertices = cube.vertices.clone();
 
-    // Build BSP tree with depth limit
-    bsp_node.build_with_depth_limit(&cube, 20);
+    // Build BSP tree from polygons
+    bsp_node.build(&cube.polygons, &mut vertices);
 
     // Verify BSP tree structure
     assert!(
@@ -353,10 +352,10 @@ fn test_bsp_tree_construction() {
     );
 
     // Test polygon retrieval
-    let all_polygons = bsp_node.all_polygon_indices();
+    let all_polygons = bsp_node.all_polygons();
     assert!(
         !all_polygons.is_empty(),
-        "BSP tree should contain polygon indices"
+        "BSP tree should contain polygons"
     );
 
     println!(
@@ -372,13 +371,12 @@ fn test_parallel_bsp_construction() {
 
     let cube = IndexedMesh::<()>::cube(2.0, None);
 
-    // Test parallel BSP tree building
+    // Test BSP tree building (IndexedMesh doesn't have separate parallel build)
     let mut bsp_node = IndexedNode::new();
-    let polygon_indices: Vec<usize> = (0..cube.polygons.len()).collect();
-    bsp_node.polygons = polygon_indices;
+    let mut vertices = cube.vertices.clone();
 
-    // Build BSP tree in parallel
-    bsp_node.build_parallel(&cube);
+    // Build BSP tree from polygons
+    bsp_node.build(&cube.polygons, &mut vertices);
 
     // Verify BSP tree structure
     assert!(
@@ -386,18 +384,18 @@ fn test_parallel_bsp_construction() {
         "Parallel BSP node should have a splitting plane"
     );
 
-    // Test parallel polygon retrieval
-    let all_polygons = bsp_node.all_polygon_indices_parallel();
+    // Test polygon retrieval
+    let all_polygons = bsp_node.all_polygons();
     assert!(
         !all_polygons.is_empty(),
-        "Parallel BSP tree should contain polygon indices"
+        "BSP tree should contain polygons"
     );
 
     println!(
-        "Parallel BSP tree built successfully with {} polygons",
+        "BSP tree built successfully with {} polygons",
         all_polygons.len()
     );
-    println!("✅ Parallel BSP tree construction validated");
+    println!("✅ BSP tree construction validated");
 }
 
 #[test]

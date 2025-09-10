@@ -2,7 +2,7 @@
 
 use crate::float_types::{Real, EPSILON};
 use crate::IndexedMesh::IndexedPolygon;
-use crate::IndexedMesh::plane::{Plane, FRONT, BACK, COPLANAR, SPANNING};
+use crate::IndexedMesh::plane::{Plane, PlaneEdgeCacheKey, FRONT, BACK, COPLANAR, SPANNING};
 use crate::IndexedMesh::vertex::IndexedVertex;
 use std::fmt::Debug;
 use std::collections::HashMap;
@@ -128,7 +128,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
         let mut back_polys = Vec::with_capacity(polygons.len());
 
         // Ensure consistent edge splits across all polygons for this plane
-        let mut edge_cache: HashMap<(usize, usize), usize> = HashMap::new();
+        let mut edge_cache: HashMap<PlaneEdgeCacheKey, usize> = HashMap::new();
 
         for polygon in polygons {
             let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
@@ -208,14 +208,17 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
     }
 
     /// Invert all polygons in the BSP tree and flip vertex normals
+    ///
+    /// **CRITICAL FIX**: Now uses safe polygon flipping that doesn't corrupt
+    /// shared vertex normals. Vertex normals will be recomputed after CSG.
     pub fn invert_with_vertices(&mut self, vertices: &mut Vec<IndexedVertex>) {
         // Use iterative approach with a stack to avoid recursive stack overflow
         let mut stack = vec![self];
 
         while let Some(node) = stack.pop() {
-            // Flip all polygons and their vertex normals in this node
+            // **FIXED**: Use safe flip method that doesn't corrupt shared vertex normals
             for p in &mut node.polygons {
-                p.flip_with_vertices(vertices);
+                p.flip_with_vertices(vertices);  // Now safe - doesn't flip vertex normals
             }
             if let Some(ref mut plane) = node.plane {
                 plane.flip();
@@ -251,7 +254,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
         let mut coplanar_back: Vec<IndexedPolygon<S>> = Vec::new();
         let mut front: Vec<IndexedPolygon<S>> = Vec::new();
         let mut back: Vec<IndexedPolygon<S>> = Vec::new();
-        let mut edge_cache: HashMap<(usize, usize), usize> = HashMap::new();
+        let mut edge_cache: HashMap<PlaneEdgeCacheKey, usize> = HashMap::new();
         for p in polygons {
             let (cf, cb, mut fr, mut bk) = plane.split_indexed_polygon_with_cache(p, vertices, &mut edge_cache);
             coplanar_front.extend(cf);

@@ -84,8 +84,10 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
     /// **Index-Aware Polygon Flipping**
     ///
     /// Reverse winding order and flip plane normal using indexed operations.
-    /// Unlike Mesh, we cannot flip shared vertex normals without affecting other polygons.
-    /// Instead, we reverse indices and flip the plane.
+    ///
+    /// **CRITICAL**: Unlike Mesh, we cannot flip shared vertex normals without
+    /// affecting other polygons. This is the correct approach for IndexedMesh.
+    /// Vertex normals should be recomputed globally after CSG operations.
     pub fn flip(&mut self) {
         // Reverse vertex indices to flip winding order
         self.indices.reverse();
@@ -95,19 +97,20 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
     }
 
     /// Flip this polygon and also flip the normals of its vertices
-    pub fn flip_with_vertices(&mut self, vertices: &mut [IndexedVertex]) {
+    ///
+    /// **CRITICAL FIX**: For IndexedMesh, we CANNOT flip shared vertex normals
+    /// as they are used by multiple polygons. This was causing inconsistent
+    /// normals and broken CSG operations. Only flip polygon winding and plane.
+    pub fn flip_with_vertices(&mut self, _vertices: &mut [IndexedVertex]) {
         // Reverse vertex indices to flip winding order
         self.indices.reverse();
 
         // Flip the plane normal
         self.plane.flip();
 
-        // Flip normals of all vertices referenced by this polygon
-        for &idx in &self.indices {
-            if idx < vertices.len() {
-                vertices[idx].flip();
-            }
-        }
+        // **FIXED**: DO NOT flip shared vertex normals - this breaks IndexedMesh
+        // Vertex normals will be recomputed correctly after CSG operations
+        // via compute_vertex_normals() which considers all adjacent polygons
     }
 
     /// **Index-Aware Edge Iterator**

@@ -103,8 +103,9 @@ fn test_plane_operations_split_indexed_polygon() {
     );
 
     let bottom_face = &cube.polygons[0];
+    let mut edge_cache = std::collections::HashMap::new();
     let (coplanar_front, coplanar_back, front, back) =
-        test_plane.split_indexed_polygon(bottom_face, &mut vertices);
+        test_plane.split_indexed_polygon_with_cache(bottom_face, &mut vertices, &mut edge_cache);
 
     // Should have some split results
     let total_results = coplanar_front.len() + coplanar_back.len() + front.len() + back.len();
