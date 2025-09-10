@@ -234,16 +234,9 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
         }
     }
 
-    /// Build BSP tree from polygons with depth limit to prevent stack overflow
+    /// Build BSP tree from polygons (matches regular Mesh implementation)
     pub fn build(&mut self, polygons: &[IndexedPolygon<S>], vertices: &mut Vec<IndexedVertex>) {
-        self.build_with_depth(polygons, vertices, 0, 15); // Limit depth to 15
-    }
-
-    /// Build BSP tree from polygons with depth limit
-    fn build_with_depth(&mut self, polygons: &[IndexedPolygon<S>], vertices: &mut Vec<IndexedVertex>, depth: usize, max_depth: usize) {
-        if polygons.is_empty() || depth >= max_depth {
-            // If we hit max depth, just store all polygons in this node
-            self.polygons.extend_from_slice(polygons);
+        if polygons.is_empty() {
             return;
         }
 
@@ -271,23 +264,17 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
         self.polygons.append(&mut coplanar_front);
         self.polygons.append(&mut coplanar_back);
 
-        // Build children with incremented depth
-        if !front.is_empty() && front.len() < polygons.len() { // Prevent infinite recursion
-            let mut front_node = self.front.take().unwrap_or_else(|| Box::new(IndexedNode::new()));
-            front_node.build_with_depth(&front, vertices, depth + 1, max_depth);
-            self.front = Some(front_node);
-        } else if !front.is_empty() {
-            // If no progress made, store polygons in this node
-            self.polygons.extend_from_slice(&front);
+        // Build child nodes using lazy initialization pattern for memory efficiency
+        if !front.is_empty() {
+            self.front
+                .get_or_insert_with(|| Box::new(IndexedNode::new()))
+                .build(&front, vertices);
         }
 
-        if !back.is_empty() && back.len() < polygons.len() { // Prevent infinite recursion
-            let mut back_node = self.back.take().unwrap_or_else(|| Box::new(IndexedNode::new()));
-            back_node.build_with_depth(&back, vertices, depth + 1, max_depth);
-            self.back = Some(back_node);
-        } else if !back.is_empty() {
-            // If no progress made, store polygons in this node
-            self.polygons.extend_from_slice(&back);
+        if !back.is_empty() {
+            self.back
+                .get_or_insert_with(|| Box::new(IndexedNode::new()))
+                .build(&back, vertices);
         }
     }
 
