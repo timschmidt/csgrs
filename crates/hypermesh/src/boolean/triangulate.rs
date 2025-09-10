@@ -1,55 +1,48 @@
 use std::collections::BTreeMap;
-use nalgebra::{Matrix2x3, Matrix3x2, RowVector3};
+use nalgebra::{Matrix2x3 as Mat23, Matrix3x2 as Mat32, RowVector3 as Row3, RowVector2 as Row2};
+use crate::boolean::ear_clip::{PolyVert, PolygonsIdcs};
 use crate::Halfedge;
 
-fn get_axis_aligned_projection(normal: &RowVector3<f64>) -> Matrix2x3<f64> {
+
+fn get_axis_aligned_projection(normal: &Row3<f64>) -> Mat23<f64> {
     let abs = normal.abs();
     let max: f64;
-    let mut proj: Matrix3x2<f64>;
+    let mut prj: Mat32<f64>;
 
     if abs.z > abs.x && abs.z > abs.y {
-        proj = Matrix3x2::new(
-            1., 0.,
-            0., 1.,
-            0., 0.
-        );
+        prj = Mat32::new(1., 0., 0., 1., 0., 0.);
         max = normal.z;
     } else if abs.y > abs.x {
-        proj = Matrix3x2::new(
-            0., 1.,
-            0., 0.,
-            1., 0.
-        );
+        prj = Mat32::new(0., 1., 0., 0., 1., 0.);
         max = normal.y;
     } else {
-        proj = Matrix3x2::new(
-            0., 0.,
-            1., 0.,
-            0., 1.
-        );
+        prj = Mat32::new(0., 0., 1., 0., 0., 1.);
         max = normal.x;
     }
 
-    if max < 0. { proj.set_column(0, &(-proj.column(0))); }
-    proj.transpose()
+    if max < 0. { prj.set_column(0, &(-prj.column(0))); }
+    prj.transpose()
 }
 
-fn is_ccw(
-    p0: &RowVector3<f64>,
-    p1: &RowVector3<f64>,
-    p2: &RowVector3<f64>,
-    nor: &RowVector3<f64>,
-    tol: f64,
-) -> i32 {
-    let proj = get_axis_aligned_projection(&nor);
-    let p0 = proj * p0.transpose();
-    let p1 = proj * p1.transpose();
-    let p2 = proj * p2.transpose();
+pub fn is_ccw_2d(p0: &Row2<f64>, p1: &Row2<f64>, p2: &Row2<f64>, t: f64) -> i32 {
     let v1 = p1 - p0;
     let v2 = p2 - p0;
     let area = v1.x * v2.y - v1.y * v2.x;
     let base = v1.norm_squared().max(v2.norm_squared());
-    if area.powi(2) * 4. <= base * tol.powi(2) { return 0; }
+    if area.powi(2) * 4. <= base * t.powi(2) { return 0; }
+    if area > 0. { 1 } else { -1 }
+}
+
+pub fn is_ccw_3d(p0: &Row3<f64>, p1: &Row3<f64>, p2: &Row3<f64>, n: &Row3<f64>, t: f64) -> i32 {
+    let prj = get_axis_aligned_projection(&n);
+    let p0 = prj * p0.transpose();
+    let p1 = prj * p1.transpose();
+    let p2 = prj * p2.transpose();
+    let v1 = p1 - p0;
+    let v2 = p2 - p0;
+    let area = v1.x * v2.y - v1.y * v2.x;
+    let base = v1.norm_squared().max(v2.norm_squared());
+    if area.powi(2) * 4. <= base * t.powi(2) { return 0; }
     if area > 0. { 1 } else { -1 }
 }
 
@@ -95,7 +88,6 @@ fn assemble_halfs(halfs: &[Halfedge], hid_offset: i32) -> Vec<Vec<i32>>{
         match next_hid {
             Some(hid) => {
                 cur_hid = hid;
-
                 // needless?
                 if let Some(hs) = v2h.get(&head_id) {
                     if hs.is_empty() { v2h.remove(&head_id); }
@@ -106,7 +98,47 @@ fn assemble_halfs(halfs: &[Halfedge], hid_offset: i32) -> Vec<Vec<i32>>{
             }
         }
     }
-
     polys
+}
 
+
+/// Add the vertex position projection to the indexed polygons.
+fn project_polygons(
+    polys: &Vec<Vec<i32>>,
+    halfs: &Vec<Halfedge>,
+    vpos: &Vec<Row3<f64>>,
+    proj: &Mat32<f64>,
+) -> PolygonsIdcs {
+    let mut ps = vec![];
+    for poly in polys {
+        let mut buff = vec![];
+        for e in poly {
+            buff.push(PolyVert{pos: proj * halfs[e].tail, idx: *e as usize});
+        }
+        ps.push(buff);
+    }
+    ps
+}
+
+fn process_face() {
+
+}
+
+
+fn general_triangulation(fid: usize) {
+
+}
+
+pub fn face_to_triangle(
+    vpos: &[Row3<f64>],
+    fnmls: &[Row3<f64>],
+    halfs: &[Halfedge],
+) {
+    //let process_face = || {};
+    //let general_triangulation = |fid: usize| {
+    //    let n = fnml[fid];
+    //};
+    for i in 0..halfs.len() {
+
+    }
 }
