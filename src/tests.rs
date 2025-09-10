@@ -1401,7 +1401,7 @@ fn test_same_number_of_vertices() {
     //  - 3 side polygons (one for each edge of the triangle)
     assert_eq!(
         csg.polygons.len(),
-        1 /*bottom*/ + 1 /*top*/ + 3 // sides
+        1 /*bottom*/ + 1 /*top*/ + 3 /*sides*/
     );
 }
 

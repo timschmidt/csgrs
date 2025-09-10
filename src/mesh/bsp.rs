@@ -190,18 +190,10 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         result
     }
 
-    /// Build BSP tree from polygons with depth limit to prevent stack overflow
+    /// Build a BSP tree from the given polygons
     #[cfg(not(feature = "parallel"))]
     pub fn build(&mut self, polygons: &[Polygon<S>]) {
-        self.build_with_depth(polygons, 0, 15); // Limit depth to 15
-    }
-
-    /// Build BSP tree from polygons with depth limit
-    #[cfg(not(feature = "parallel"))]
-    fn build_with_depth(&mut self, polygons: &[Polygon<S>], depth: usize, max_depth: usize) {
-        if polygons.is_empty() || depth >= max_depth {
-            // If we hit max depth, just store all polygons in this node
-            self.polygons.extend_from_slice(polygons);
+        if polygons.is_empty() {
             return;
         }
 
@@ -228,23 +220,17 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             back.append(&mut back_parts);
         }
 
-        // Build children with incremented depth
-        if !front.is_empty() && front.len() < polygons.len() { // Prevent infinite recursion
+        // Build child nodes using lazy initialization pattern for memory efficiency
+        if !front.is_empty() {
             self.front
                 .get_or_insert_with(|| Box::new(Node::new()))
-                .build_with_depth(&front, depth + 1, max_depth);
-        } else if !front.is_empty() {
-            // If no progress made, store polygons in this node
-            self.polygons.extend_from_slice(&front);
+                .build(&front);
         }
 
-        if !back.is_empty() && back.len() < polygons.len() { // Prevent infinite recursion
+        if !back.is_empty() {
             self.back
                 .get_or_insert_with(|| Box::new(Node::new()))
-                .build_with_depth(&back, depth + 1, max_depth);
-        } else if !back.is_empty() {
-            // If no progress made, store polygons in this node
-            self.polygons.extend_from_slice(&back);
+                .build(&back);
         }
     }
 

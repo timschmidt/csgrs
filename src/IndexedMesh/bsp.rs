@@ -5,6 +5,7 @@ use crate::IndexedMesh::IndexedPolygon;
 use crate::IndexedMesh::plane::{Plane, FRONT, BACK, COPLANAR, SPANNING};
 use crate::IndexedMesh::vertex::IndexedVertex;
 use std::fmt::Debug;
+use std::collections::HashMap;
 
 /// A [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node, containing polygons plus optional front/back subtrees
 #[derive(Debug, Clone)]
@@ -126,9 +127,12 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
         let mut front_polys = Vec::with_capacity(polygons.len());
         let mut back_polys = Vec::with_capacity(polygons.len());
 
+        // Ensure consistent edge splits across all polygons for this plane
+        let mut edge_cache: HashMap<(usize, usize), usize> = HashMap::new();
+
         for polygon in polygons {
             let (coplanar_front, coplanar_back, mut front_parts, mut back_parts) =
-                plane.split_indexed_polygon(polygon, vertices);
+                plane.split_indexed_polygon_with_cache(polygon, vertices, &mut edge_cache);
 
             // Handle coplanar polygons like regular Mesh
             for cp in coplanar_front.into_iter().chain(coplanar_back.into_iter()) {
@@ -249,18 +253,19 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
         }
         let plane = self.plane.as_ref().unwrap();
 
-        // Split polygons
-        let (mut coplanar_front, mut coplanar_back, front, back) =
-            polygons.iter().map(|p| plane.split_indexed_polygon(p, vertices)).fold(
-                (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
-                |mut acc, x| {
-                    acc.0.extend(x.0);
-                    acc.1.extend(x.1);
-                    acc.2.extend(x.2);
-                    acc.3.extend(x.3);
-                    acc
-                },
-            );
+        // Split polygons using a shared edge split cache for this plane
+        let mut coplanar_front: Vec<IndexedPolygon<S>> = Vec::new();
+        let mut coplanar_back: Vec<IndexedPolygon<S>> = Vec::new();
+        let mut front: Vec<IndexedPolygon<S>> = Vec::new();
+        let mut back: Vec<IndexedPolygon<S>> = Vec::new();
+        let mut edge_cache: HashMap<(usize, usize), usize> = HashMap::new();
+        for p in polygons {
+            let (cf, cb, mut fr, mut bk) = plane.split_indexed_polygon_with_cache(p, vertices, &mut edge_cache);
+            coplanar_front.extend(cf);
+            coplanar_back.extend(cb);
+            front.append(&mut fr);
+            back.append(&mut bk);
+        }
 
         // Append coplanar fronts/backs to self.polygons
         self.polygons.append(&mut coplanar_front);

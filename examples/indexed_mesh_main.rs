@@ -29,33 +29,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Union: Cube ∪ Sphere
     println!("Computing union (cube ∪ sphere)...");
-    let union_result = cube.union_indexed(&sphere);
+    let union_result = cube.union_indexed(&sphere).repair_manifold();
     let union_analysis = union_result.analyze_manifold();
-    println!("Union result: {} vertices, {} polygons, {} boundary edges", 
+    println!("Union result: {} vertices, {} polygons, {} boundary edges",
              union_result.vertices.len(), union_result.polygons.len(), union_analysis.boundary_edges);
     export_indexed_mesh_to_stl(&union_result, "indexed_stl/04_union_cube_sphere.stl")?;
 
     // Difference: Cube - Sphere
     println!("Computing difference (cube - sphere)...");
-    let difference_result = cube.difference_indexed(&sphere);
+    let difference_result = cube.difference_indexed(&sphere).repair_manifold();
     let diff_analysis = difference_result.analyze_manifold();
-    println!("Difference result: {} vertices, {} polygons, {} boundary edges", 
+    println!("Difference result: {} vertices, {} polygons, {} boundary edges",
              difference_result.vertices.len(), difference_result.polygons.len(), diff_analysis.boundary_edges);
     export_indexed_mesh_to_stl(&difference_result, "indexed_stl/05_difference_cube_sphere.stl")?;
 
     // Intersection: Cube ∩ Sphere
     println!("Computing intersection (cube ∩ sphere)...");
-    let intersection_result = cube.intersection_indexed(&sphere);
+    let intersection_result = cube.intersection_indexed(&sphere).repair_manifold();
     let int_analysis = intersection_result.analyze_manifold();
-    println!("Intersection result: {} vertices, {} polygons, {} boundary edges", 
+    println!("IndexedMesh intersection result: {} vertices, {} polygons, {} boundary edges",
              intersection_result.vertices.len(), intersection_result.polygons.len(), int_analysis.boundary_edges);
     export_indexed_mesh_to_stl(&intersection_result, "indexed_stl/06_intersection_cube_sphere.stl")?;
 
+    // Compare with regular Mesh intersection
+    println!("Comparing with regular Mesh intersection...");
+    let cube_mesh = cube.to_mesh();
+    let sphere_mesh = sphere.to_mesh();
+    let mesh_intersection = cube_mesh.intersection(&sphere_mesh);
+    println!("Regular Mesh intersection result: {} polygons", mesh_intersection.polygons.len());
+
+    // Verify intersection is smaller than both inputs
+    println!("Intersection validation:");
+    println!("  - Cube polygons: {}", cube.polygons.len());
+    println!("  - Sphere polygons: {}", sphere.polygons.len());
+    println!("  - Intersection polygons: {}", intersection_result.polygons.len());
+    println!("  - Regular Mesh intersection polygons: {}", mesh_intersection.polygons.len());
+
     // XOR: Cube ⊕ Sphere
     println!("Computing XOR (cube ⊕ sphere)...");
-    let xor_result = cube.xor_indexed(&sphere);
+    let xor_result = cube.xor_indexed(&sphere).repair_manifold();
     let xor_analysis = xor_result.analyze_manifold();
-    println!("XOR result: {} vertices, {} polygons, {} boundary edges", 
+    println!("XOR result: {} vertices, {} polygons, {} boundary edges",
              xor_result.vertices.len(), xor_result.polygons.len(), xor_analysis.boundary_edges);
     export_indexed_mesh_to_stl(&xor_result, "indexed_stl/07_xor_cube_sphere.stl")?;
 
@@ -72,7 +86,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Cube corner intersection
     println!("Computing cube corner intersection...");
-    let corner_intersection = cube1.intersection_indexed(&cube2);
+    let corner_intersection = cube1.intersection_indexed(&cube2).repair_manifold();
     let corner_int_analysis = corner_intersection.analyze_manifold();
     println!("Corner intersection: {} vertices, {} polygons, {} boundary edges",
              corner_intersection.vertices.len(), corner_intersection.polygons.len(), corner_int_analysis.boundary_edges);
@@ -80,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Cube corner union
     println!("Computing cube corner union...");
-    let corner_union = cube1.union_indexed(&cube2);
+    let corner_union = cube1.union_indexed(&cube2).repair_manifold();
     let corner_union_analysis = corner_union.analyze_manifold();
     println!("Corner union: {} vertices, {} polygons, {} boundary edges",
              corner_union.vertices.len(), corner_union.polygons.len(), corner_union_analysis.boundary_edges);
@@ -88,7 +102,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Cube corner difference
     println!("Computing cube corner difference (cube1 - cube2)...");
-    let corner_difference = cube1.difference_indexed(&cube2);
+    let corner_difference = cube1.difference_indexed(&cube2).repair_manifold();
     let corner_diff_analysis = corner_difference.analyze_manifold();
     println!("Corner difference: {} vertices, {} polygons, {} boundary edges",
              corner_difference.vertices.len(), corner_difference.polygons.len(), corner_diff_analysis.boundary_edges);
@@ -96,7 +110,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Complex operations: (Cube ∪ Sphere) - Cylinder
     println!("\nComplex operation: (cube ∪ sphere) - cylinder...");
-    let complex_result = union_result.difference_indexed(&cylinder);
+    let complex_result = union_result.difference_indexed(&cylinder).repair_manifold();
     let complex_analysis = complex_result.analyze_manifold();
     println!("Complex result: {} vertices, {} polygons, {} boundary edges",
              complex_result.vertices.len(), complex_result.polygons.len(), complex_analysis.boundary_edges);

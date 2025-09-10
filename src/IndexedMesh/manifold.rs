@@ -1,7 +1,7 @@
 //! Manifold validation and topology analysis for IndexedMesh with optimized indexed connectivity
 
 use crate::IndexedMesh::IndexedMesh;
-use crate::float_types::EPSILON;
+use crate::float_types::{EPSILON, Real};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 
@@ -288,8 +288,9 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             repaired = repaired.fix_orientation();
         }
 
-        // Remove duplicate vertices and faces
-        repaired = repaired.remove_duplicates();
+        // Remove duplicate vertices and faces with a slightly relaxed tolerance
+        // This helps merge nearly-identical split vertices produced independently on adjacent faces
+        repaired = repaired.remove_duplicates_with_tolerance(EPSILON * 1000.0);
 
         repaired
     }
@@ -415,17 +416,22 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
         true // Default to consistent if no shared edge found
     }
 
-    /// Remove duplicate vertices and faces
-    fn remove_duplicates(&self) -> IndexedMesh<S> {
+    /// Remove duplicate vertices and faces using default tolerance (EPSILON)
+    pub fn remove_duplicates(&self) -> IndexedMesh<S> {
+        self.remove_duplicates_with_tolerance(EPSILON)
+    }
+
+    /// Remove duplicate vertices and faces with a custom positional tolerance
+    pub fn remove_duplicates_with_tolerance(&self, tolerance: Real) -> IndexedMesh<S> {
         // Build vertex deduplication map
         let mut unique_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> = Vec::new();
         let mut vertex_map = HashMap::new();
 
         for (old_idx, vertex) in self.vertices.iter().enumerate() {
-            // Find if this vertex already exists (within epsilon)
+            // Find if this vertex already exists (within tolerance)
             let mut found_idx = None;
             for (new_idx, unique_vertex) in unique_vertices.iter().enumerate() {
-                if (vertex.pos - unique_vertex.pos).norm() < EPSILON {
+                if (vertex.pos - unique_vertex.pos).norm() < tolerance {
                     found_idx = Some(new_idx);
                     break;
                 }

@@ -9,6 +9,8 @@ use crate::float_types::{EPSILON, Real};
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 use robust;
 use std::fmt::Debug;
+use std::collections::HashMap;
+
 
 // Plane classification constants (matching mesh::plane constants)
 pub const COPLANAR: i8 = 0;
@@ -432,10 +434,11 @@ impl Plane {
     /// Returns (coplanar_front, coplanar_back, front, back)
     /// This version properly handles spanning polygons by creating intersection vertices
     #[allow(clippy::type_complexity)]
-    pub fn split_indexed_polygon<S: Clone + Send + Sync + Debug>(
+    pub fn split_indexed_polygon_with_cache<S: Clone + Send + Sync + Debug>(
         &self,
         polygon: &IndexedPolygon<S>,
         vertices: &mut Vec<IndexedVertex>,
+        edge_cache: &mut HashMap<(usize, usize), usize>,
     ) -> (
         Vec<IndexedPolygon<S>>,
         Vec<IndexedPolygon<S>>,
@@ -511,8 +514,8 @@ impl Plane {
             BACK => back.push(polygon.clone()),
             SPANNING => {
                 // Polygon spans the plane - need to split it
-                let mut front_vertices = Vec::new();
-                let mut back_vertices = Vec::new();
+                let mut front_indices: Vec<usize> = Vec::new();
+                let mut back_indices: Vec<usize> = Vec::new();
 
                 for i in 0..polygon.indices.len() {
                     let j = (i + 1) % polygon.indices.len();
@@ -530,10 +533,10 @@ impl Plane {
 
                     // Add current vertex to appropriate lists
                     if type_i != BACK {
-                        front_vertices.push(*vertex_i);
+                        front_indices.push(idx_i);
                     }
                     if type_i != FRONT {
-                        back_vertices.push(*vertex_i);
+                        back_indices.push(idx_i);
                     }
 
                     // If edge crosses plane, compute intersection
@@ -541,40 +544,34 @@ impl Plane {
                         let denom = self.normal().dot(&(vertex_j.pos - vertex_i.pos));
                         if denom.abs() > EPSILON {
                             let t = (self.offset() - self.normal().dot(&vertex_i.pos.coords)) / denom;
-                            let intersection_vertex = vertex_i.interpolate(vertex_j, t);
-
-                            // Add intersection vertex to both lists
-                            front_vertices.push(intersection_vertex);
-                            back_vertices.push(intersection_vertex);
+                            // Use canonical edge key to share the same split vertex across adjacent polygons for this plane
+                            let key = if idx_i < idx_j { (idx_i, idx_j) } else { (idx_j, idx_i) };
+                            let v_idx = if let Some(&existing) = edge_cache.get(&key) {
+                                existing
+                            } else {
+                                let intersection_vertex = vertex_i.interpolate(vertex_j, t);
+                                vertices.push(intersection_vertex);
+                                let new_index = vertices.len() - 1;
+                                edge_cache.insert(key, new_index);
+                                new_index
+                            };
+                            front_indices.push(v_idx);
+                            back_indices.push(v_idx);
                         }
                     }
                 }
 
                 // Create new polygons from vertex lists
-                if front_vertices.len() >= 3 {
-                    // Add vertices to global array and create polygon
-                    let mut front_indices = Vec::new();
-                    for vertex in front_vertices {
-                        vertices.push(vertex);
-                        front_indices.push(vertices.len() - 1);
-                    }
+                if front_indices.len() >= 3 {
                     // **CRITICAL**: Recompute plane from actual split polygon vertices
-                    // Don't just clone the original polygon's plane!
                     let front_plane = Plane::from_indexed_vertices(
                         front_indices.iter().map(|&idx| vertices[idx]).collect()
                     );
                     front.push(IndexedPolygon::new(front_indices, front_plane, polygon.metadata.clone()));
                 }
 
-                if back_vertices.len() >= 3 {
-                    // Add vertices to global array and create polygon
-                    let mut back_indices = Vec::new();
-                    for vertex in back_vertices {
-                        vertices.push(vertex);
-                        back_indices.push(vertices.len() - 1);
-                    }
+                if back_indices.len() >= 3 {
                     // **CRITICAL**: Recompute plane from actual split polygon vertices
-                    // Don't just clone the original polygon's plane!
                     let back_plane = Plane::from_indexed_vertices(
                         back_indices.iter().map(|&idx| vertices[idx]).collect()
                     );
@@ -672,11 +669,12 @@ pub fn split_indexed_polygon<S: Clone + Send + Sync + Debug>(
     plane: &Plane,
     polygon: &IndexedPolygon<S>,
     vertices: &mut Vec<IndexedVertex>,
+    edge_cache: &mut HashMap<(usize, usize), usize>,
 ) -> (
     Vec<IndexedPolygon<S>>,
     Vec<IndexedPolygon<S>>,
     Vec<IndexedPolygon<S>>,
     Vec<IndexedPolygon<S>>,
 ) {
-    plane.split_indexed_polygon(polygon, vertices)
+    plane.split_indexed_polygon_with_cache(polygon, vertices, edge_cache)
 }

@@ -449,8 +449,9 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
     ) -> (Vec<IndexedPolygon<S>>, Vec<IndexedPolygon<S>>) {
         // Use the plane's BSP-compatible split method
         let mut vertices = mesh.vertices.clone();
+        let mut edge_cache: std::collections::HashMap<(usize, usize), usize> = std::collections::HashMap::new();
         let (_coplanar_front, _coplanar_back, front_polygons, back_polygons) =
-            plane.split_indexed_polygon(self, &mut vertices);
+            plane.split_indexed_polygon_with_cache(self, &mut vertices, &mut edge_cache);
 
         (front_polygons, back_polygons)
     }
@@ -2228,19 +2229,18 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
             return IndexedMesh::new();
         }
 
-        // Use partition optimization like union and difference operations
-        let (a_clip, _a_passthru) = Self::partition_polygons(&self.polygons, &self.vertices, &other.bounding_box());
-        let (b_clip, _b_passthru) = Self::partition_polygons(&other.polygons, &other.vertices, &self.bounding_box());
+        // For intersection operations, don't use partition optimization to ensure correctness
+        // The regular Mesh intersection also doesn't use partition optimization
 
         // Start with self vertices, BSP operations will add intersection vertices as needed
         let mut result_vertices = self.vertices.clone();
 
-        // Create BSP trees with proper vertex handling - a_clip polygons reference self vertices
-        let mut a = bsp::IndexedNode::from_polygons(&a_clip, &mut result_vertices);
+        // Create BSP trees with proper vertex handling for ALL polygons (no partition optimization)
+        let mut a = bsp::IndexedNode::from_polygons(&self.polygons, &mut result_vertices);
 
-        // For b_clip polygons, use separate vertex array to avoid index conflicts
+        // For b polygons, use separate vertex array to avoid index conflicts
         let mut b_vertices = other.vertices.clone();
-        let mut b = bsp::IndexedNode::from_polygons(&b_clip, &mut b_vertices);
+        let mut b = bsp::IndexedNode::from_polygons(&other.polygons, &mut b_vertices);
 
         // Use exact same algorithm as regular Mesh intersection
         a.invert_with_vertices(&mut result_vertices);
@@ -2248,6 +2248,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         b.invert_with_vertices(&mut b_vertices);
         a.clip_to(&b, &mut result_vertices);
         b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
+
         // Add b_vertices to result_vertices first, then remap b polygons
         let b_vertex_offset = result_vertices.len();
         result_vertices.extend(b_vertices.iter().cloned());
@@ -2257,13 +2258,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         a.build(&b_polygons_remapped, &mut result_vertices);
         a.invert_with_vertices(&mut result_vertices);
 
-        // Combine results - for intersection, only include polygons from BSP operations
-        // Do NOT include a_passthru or b_passthru as they are outside the intersection volume
-        let mut final_polygons = a.all_polygons();
-
-        // Include b polygons from BSP operations and remap their indices
-        let b_polygons_remapped_final = Self::remap_bsp_polygons(&b.all_polygons(), b_vertex_offset);
-        final_polygons.extend(b_polygons_remapped_final);
+        // Combine results - only use polygons from the final BSP tree (same as regular Mesh)
+        let final_polygons = a.all_polygons();
 
         let mut result = IndexedMesh {
             vertices: result_vertices,

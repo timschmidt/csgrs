@@ -27,7 +27,7 @@ use rayon::{iter::IntoParallelRefIterator, prelude::*};
 pub mod bsp;
 pub mod bsp_parallel;
 
-#[cfg(feature = "chull-io")]
+#[cfg(feature = "chull")]
 pub mod convex_hull;
 pub mod flatten_slice;
 
@@ -468,17 +468,6 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     ///          +-------+            +-------+
     /// ```
     fn union(&self, other: &Mesh<S>) -> Mesh<S> {
-        // Handle empty mesh cases for consistency with IndexedMesh
-        if self.polygons.is_empty() && other.polygons.is_empty() {
-            return Mesh::new();
-        }
-        if self.polygons.is_empty() {
-            return other.clone();
-        }
-        if other.polygons.is_empty() {
-            return self.clone();
-        }
-
         // avoid splitting obvious non‑intersecting faces
         let (a_clip, a_passthru) =
             Self::partition_polys(&self.polygons, &other.bounding_box());
@@ -521,14 +510,6 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     ///          +-------+
     /// ```
     fn difference(&self, other: &Mesh<S>) -> Mesh<S> {
-        // Handle empty mesh cases for consistency with IndexedMesh
-        if self.polygons.is_empty() {
-            return Mesh::new();
-        }
-        if other.polygons.is_empty() {
-            return self.clone();
-        }
-
         // avoid splitting obvious non‑intersecting faces
         let (a_clip, a_passthru) =
             Self::partition_polys(&self.polygons, &other.bounding_box());
@@ -583,11 +564,6 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     ///          +-------+
     /// ```
     fn intersection(&self, other: &Mesh<S>) -> Mesh<S> {
-        // Handle empty mesh cases for consistency with IndexedMesh
-        if self.polygons.is_empty() || other.polygons.is_empty() {
-            return Mesh::new();
-        }
-
         let mut a = Node::from_polygons(&self.polygons);
         let mut b = Node::from_polygons(&other.polygons);
 

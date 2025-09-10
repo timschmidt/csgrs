@@ -6,8 +6,8 @@
 #[cfg(feature = "sdf")]
 use csgrs::float_types::Real;
 
-use csgrs::traits::CSG;
 use csgrs::mesh::plane::Plane;
+use csgrs::traits::CSG;
 use nalgebra::{Point3, Vector3};
 use std::fs;
 
@@ -23,283 +23,6 @@ type Sketch = csgrs::sketch::Sketch<()>;
 fn main() {
     // Ensure the /stls folder exists
     let _ = fs::create_dir_all("stl");
-
-    // DEBUG: Compare IndexedMesh and regular Mesh plane operations
-    println!("=== DEBUG: Plane Operations Comparison ===\n");
-
-    // Create a simple cube using both representations
-    let indexed_cube = csgrs::IndexedMesh::IndexedMesh::<()>::cube(2.0, None);
-    let mesh_cube = Mesh::cube(2.0, None);
-
-    println!("IndexedMesh Cube: {} polygons", indexed_cube.polygons.len());
-    println!("Regular Mesh Cube: {} polygons", mesh_cube.polygons.len());
-
-    // Create equivalent planes
-    let plane_point = nalgebra::Point3::new(1.5, 1.5, 1.5);
-    let plane_normal = nalgebra::Vector3::new(0.577, 0.577, 0.577).normalize();
-
-    // IndexedMesh plane
-    let indexed_plane = csgrs::IndexedMesh::plane::Plane::from_normal(plane_normal, plane_normal.dot(&plane_point.coords));
-
-    // Regular Mesh plane
-    let mesh_plane = csgrs::mesh::plane::Plane::from_normal(plane_normal, plane_normal.dot(&plane_point.coords));
-
-    println!("IndexedMesh plane: normal={:?}, w={}", indexed_plane.normal, indexed_plane.w);
-    println!("Regular Mesh plane: normal={:?}, offset={}", mesh_plane.normal(), mesh_plane.offset());
-
-    // Compare polygon classifications
-    println!("\n=== Polygon Classification Comparison ===");
-
-    println!("IndexedMesh polygons:");
-    for (i, polygon) in indexed_cube.polygons.iter().enumerate() {
-        let classification = indexed_plane.classify_polygon(polygon, &indexed_cube.vertices);
-        let desc = match classification {
-            0 => "COPLANAR",
-            1 => "FRONT",
-            2 => "BACK",
-            3 => "SPANNING",
-            _ => "UNKNOWN",
-        };
-        println!("  Polygon {}: {}", i, desc);
-    }
-
-    println!("\nRegular Mesh polygons:");
-    for (i, polygon) in mesh_cube.polygons.iter().enumerate() {
-        let classification = mesh_plane.classify_polygon(polygon);
-        let desc = match classification {
-            0 => "COPLANAR",
-            1 => "FRONT",
-            2 => "BACK",
-            3 => "SPANNING",
-            _ => "UNKNOWN",
-        };
-        println!("  Polygon {}: {}", i, desc);
-    }
-
-    // Test basic CSG operations
-    println!("\n=== Testing CSG Operations ===");
-
-    let cube1 = csgrs::IndexedMesh::IndexedMesh::<()>::cube(2.0, None);
-    let sphere = csgrs::IndexedMesh::IndexedMesh::<()>::sphere(1.5, 8, 6, None);
-
-    println!("Cube: {} vertices, {} polygons", cube1.vertices.len(), cube1.polygons.len());
-    println!("Sphere: {} vertices, {} polygons", sphere.vertices.len(), sphere.polygons.len());
-
-
-    // Test union
-    println!("\nPerforming union...");
-    let union_result = cube1.union_indexed(&sphere);
-    println!("Union result: {} vertices, {} polygons", union_result.vertices.len(), union_result.polygons.len());
-
-    // Test splitting behavior comparison
-    println!("\n=== Splitting Behavior Test ===");
-
-    // Create a simple test case - a square that gets split by a diagonal plane
-    let test_vertices = vec![
-        nalgebra::Point3::new(0.0, 0.0, 0.0),  // bottom-left
-        nalgebra::Point3::new(2.0, 0.0, 0.0),  // bottom-right
-        nalgebra::Point3::new(2.0, 2.0, 0.0),  // top-right
-        nalgebra::Point3::new(0.0, 2.0, 0.0),  // top-left
-    ];
-
-    // Create IndexedMesh version
-    let indexed_test_vertices: Vec<_> = test_vertices.iter().enumerate().map(|(i, &pos)| {
-        csgrs::IndexedMesh::vertex::IndexedVertex::new(pos, nalgebra::Vector3::z())
-    }).collect();
-
-    let indexed_square = csgrs::IndexedMesh::IndexedPolygon::new(
-        vec![0, 1, 2, 3],
-        csgrs::IndexedMesh::plane::Plane::from_points(test_vertices[0], test_vertices[1], test_vertices[2]),
-        None::<()>
-    );
-
-    let indexed_test_mesh = csgrs::IndexedMesh::IndexedMesh {
-        vertices: indexed_test_vertices,
-        polygons: vec![indexed_square],
-        bounding_box: std::sync::OnceLock::new(),
-        metadata: None,
-    };
-
-    // Create regular Mesh version
-    let regular_test_vertices: Vec<_> = test_vertices.iter().map(|&pos| {
-        csgrs::mesh::vertex::Vertex::new(pos, nalgebra::Vector3::z())
-    }).collect();
-
-    let regular_square = csgrs::mesh::polygon::Polygon::new(regular_test_vertices, None::<()>);
-
-    let regular_test_mesh = Mesh {
-        polygons: vec![regular_square],
-        bounding_box: std::sync::OnceLock::new(),
-        metadata: None,
-    };
-
-    // Create a diagonal plane that should split the square
-    let diagonal_plane_point = nalgebra::Point3::new(1.0, 1.0, 0.0);
-    let diagonal_plane_normal = nalgebra::Vector3::new(1.0, -1.0, 0.0).normalize();
-
-    // IndexedMesh plane
-    let indexed_test_plane = csgrs::IndexedMesh::plane::Plane::from_normal(diagonal_plane_normal, diagonal_plane_normal.dot(&diagonal_plane_point.coords));
-
-    // Regular Mesh plane
-    let regular_test_plane = csgrs::mesh::plane::Plane::from_normal(diagonal_plane_normal, diagonal_plane_normal.dot(&diagonal_plane_point.coords));
-
-    println!("Test plane: normal={:?}", diagonal_plane_normal);
-
-    // Test vertex classifications
-    println!("\nVertex classifications:");
-    for (i, &pos) in test_vertices.iter().enumerate() {
-        let indexed_classification = indexed_test_plane.orient_point(&pos);
-        let regular_classification = regular_test_plane.orient_point(&pos);
-
-        let indexed_desc = match indexed_classification {
-            0 => "COPLANAR",
-            1 => "FRONT",
-            2 => "BACK",
-            _ => "UNKNOWN",
-        };
-
-        let regular_desc = match regular_classification {
-            0 => "COPLANAR",
-            1 => "FRONT",
-            2 => "BACK",
-            _ => "UNKNOWN",
-        };
-
-        println!("  Vertex {}: IndexedMesh={}, Regular Mesh={}", i, indexed_desc, regular_desc);
-    }
-
-    // Test polygon classifications
-    let indexed_poly_classification = indexed_test_plane.classify_polygon(&indexed_test_mesh.polygons[0], &indexed_test_mesh.vertices);
-    let regular_poly_classification = regular_test_plane.classify_polygon(&regular_test_mesh.polygons[0]);
-
-    let indexed_poly_desc = match indexed_poly_classification {
-        0 => "COPLANAR",
-        1 => "FRONT",
-        2 => "BACK",
-        3 => "SPANNING",
-        _ => "UNKNOWN",
-    };
-
-    let regular_poly_desc = match regular_poly_classification {
-        0 => "COPLANAR",
-        1 => "FRONT",
-        2 => "BACK",
-        3 => "SPANNING",
-        _ => "UNKNOWN",
-    };
-
-    println!("\nPolygon classification: IndexedMesh={}, Regular Mesh={}", indexed_poly_desc, regular_poly_desc);
-
-    // Test splitting if polygon spans
-    if indexed_poly_classification == 3 || regular_poly_classification == 3 {
-        println!("\nSplitting test:");
-
-        let mut temp_vertices = indexed_test_mesh.vertices.clone();
-        let (cf, cb, f, b) = indexed_test_plane.split_indexed_polygon(&indexed_test_mesh.polygons[0], &mut temp_vertices);
-
-        println!("  IndexedMesh results:");
-        println!("    Coplanar front: {}", cf.len());
-        println!("    Coplanar back: {}", cb.len());
-        println!("    Front polygons: {}", f.len());
-        println!("    Back polygons: {}", b.len());
-
-        let (rcf, rcb, rf, rb) = regular_test_plane.split_polygon(&regular_test_mesh.polygons[0]);
-
-        println!("  Regular Mesh results:");
-        println!("    Coplanar front: {}", rcf.len());
-        println!("    Coplanar back: {}", rcb.len());
-        println!("    Front polygons: {}", rf.len());
-        println!("    Back polygons: {}", rb.len());
-    }
-
-    // Test intersection
-    println!("\nPerforming intersection...");
-    let intersection_result = cube1.intersection_indexed(&sphere);
-    println!("Intersection result: {} vertices, {} polygons", intersection_result.vertices.len(), intersection_result.polygons.len());
-
-    // Test difference
-    println!("\nPerforming difference...");
-    let difference_result = cube1.difference_indexed(&sphere);
-    println!("Difference result: {} vertices, {} polygons", difference_result.vertices.len(), difference_result.polygons.len());
-
-    // Cube corner intersection test
-    println!("\n=== Cube Corner Intersection Test ===");
-
-    // Create two cubes that intersect at a corner
-    // Cube 1: positioned at origin, size 2x2x2
-    let cube_corner1 = csgrs::IndexedMesh::IndexedMesh::<()>::cube(2.0, None);
-    println!("Cube 1: {} vertices, {} polygons", cube_corner1.vertices.len(), cube_corner1.polygons.len());
-
-    // Cube 2: positioned to intersect cube1's corner at (1,1,1)
-    // We'll translate it so its corner is at cube1's corner
-    let mut cube_corner2 = csgrs::IndexedMesh::IndexedMesh::<()>::cube(2.0, None);
-    cube_corner2.translate(1.0, 1.0, 1.0);
-    println!("Cube 2: {} vertices, {} polygons (translated to intersect)", cube_corner2.vertices.len(), cube_corner2.polygons.len());
-
-    // Check if vertices are shared/intersecting
-    println!("\n=== Checking for shared vertices ===");
-    let mut shared_vertices = 0;
-    for v1 in &cube_corner1.vertices {
-        for v2 in &cube_corner2.vertices {
-            let distance = (v1.pos - v2.pos).magnitude();
-            if distance < 1e-6 {
-                shared_vertices += 1;
-                println!("Shared vertex at: {:?}", v1.pos);
-                break;
-            }
-        }
-    }
-    println!("Found {} shared vertices", shared_vertices);
-
-    // Perform intersection
-    println!("\n=== Performing intersection ===");
-    let intersection_result = cube_corner1.intersection_indexed(&cube_corner2);
-    println!("Intersection result: {} vertices, {} polygons", intersection_result.vertices.len(), intersection_result.polygons.len());
-
-    // Check vertices in result
-    println!("\n=== Checking intersection vertices ===");
-    for (i, vertex) in intersection_result.vertices.iter().enumerate() {
-        println!("Vertex {}: {:?}", i, vertex.pos);
-    }
-
-    // Export results for inspection
-    println!("\n=== Exporting results ===");
-    // Convert to regular mesh for export since IndexedMesh doesn't have direct export methods
-    let intersection_mesh = intersection_result.to_mesh();
-    let obj_data = intersection_mesh.to_obj("cube_corner_intersection");
-    fs::write("cube_corner_intersection.obj", obj_data).unwrap();
-    let stl_data = intersection_mesh.to_stl_ascii("cube_corner_intersection");
-    fs::write("cube_corner_intersection.stl", stl_data).unwrap();
-    println!("Exported intersection to cube_corner_intersection.obj and .stl");
-
-    // Also export the individual cubes for comparison
-    let cube1_mesh = cube_corner1.to_mesh();
-    let cube2_mesh = cube_corner2.to_mesh();
-    let cube1_obj = cube1_mesh.to_obj("cube1");
-    let cube2_obj = cube2_mesh.to_obj("cube2");
-    fs::write("cube1.obj", cube1_obj).unwrap();
-    fs::write("cube2.obj", cube2_obj).unwrap();
-    println!("Exported individual cubes for comparison");
-
-    // Compare with regular Mesh results
-    println!("\n=== Comparing with regular Mesh ===");
-
-    let mesh_cube = Mesh::cube(2.0, None);
-    let mesh_sphere = Mesh::sphere(1.5, 8, 6, None);
-
-    println!("Mesh Cube: {} polygons", mesh_cube.polygons.len());
-    println!("Mesh Sphere: {} polygons", mesh_sphere.polygons.len());
-
-    let mesh_union = mesh_cube.union(&mesh_sphere);
-    println!("Mesh Union: {} polygons", mesh_union.polygons.len());
-
-    let mesh_intersection = mesh_cube.intersection(&mesh_sphere);
-    println!("Mesh Intersection: {} polygons", mesh_intersection.polygons.len());
-
-    let mesh_difference = mesh_cube.difference(&mesh_sphere);
-    println!("Mesh Difference: {} polygons", mesh_difference.polygons.len());
-
-    println!("\n=== DEBUG Complete ===\n");
 
     // 1) Basic shapes: cube, sphere, cylinder
     let cube = Mesh::cube(2.0, None);
@@ -529,7 +252,7 @@ fn main() {
         let ray_origin = Point3::new(0.0, 0.0, -5.0);
         let ray_dir = Vector3::new(0.0, 0.0, 1.0); // pointing along +Z
         let hits = cube.ray_intersections(&ray_origin, &ray_dir);
-        println!("Ray hits on the cube: {hits:?}");
+        println!("Ray hits on the cube: {:?}", hits);
     }
 
     // 12) Polyhedron example (simple tetrahedron):
@@ -574,9 +297,9 @@ fn main() {
 
     // 14) Mass properties (just printing them)
     let (mass, com, principal_frame) = cube.mass_properties(1.0);
-    println!("Cube mass = {mass}");
-    println!("Cube center of mass = {com:?}");
-    println!("Cube principal inertia local frame = {principal_frame:?}");
+    println!("Cube mass = {}", mass);
+    println!("Cube center of mass = {:?}", com);
+    println!("Cube principal inertia local frame = {:?}", principal_frame);
 
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
     //    (By default, CSG::cube(None) is from -1..+1 if the "radius" is [1,1,1].)
@@ -626,11 +349,11 @@ fn main() {
         );
     }
 
-    // let poor_geometry_shape = moved_cube.difference(&sphere);
+    //let poor_geometry_shape = moved_cube.difference(&sphere);
     //#[cfg(feature = "earclip-io")]
-    // let retriangulated_shape = poor_geometry_shape.triangulate_earclip();
+    //let retriangulated_shape = poor_geometry_shape.triangulate_earclip();
     //#[cfg(all(feature = "earclip-io", feature = "stl-io"))]
-    // let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
+    //let _ = fs::write("stl/retriangulated.stl", retriangulated_shape.to_stl_binary("retriangulated").unwrap());
 
     let sphere_test = Mesh::sphere(1.0, 16, 8, None);
     let cube_test = Mesh::cube(1.0, None);
@@ -1001,8 +724,8 @@ fn main() {
         let _ = fs::write("stl/octahedron.stl", oct.to_stl_ascii("octahedron"));
     }
 
-    // let dodec = CSG::dodecahedron(15.0, None);
-    // let _ = fs::write("stl/dodecahedron.stl", dodec.to_stl_ascii(""));
+    //let dodec = CSG::dodecahedron(15.0, None);
+    //let _ = fs::write("stl/dodecahedron.stl", dodec.to_stl_ascii(""));
 
     #[cfg(feature = "stl-io")]
     {
@@ -1318,17 +1041,19 @@ fn main() {
         );
     }
 
-    // let helical = CSG::helical_involute_gear(
-    // 2.0,   // module
-    // 20,    // z
-    // 20.0,  // pressure angle
-    // 0.05, 0.02, 14,
-    // 25.0,   // face-width
-    // 15.0,   // helix angle β [deg]
-    // 40,     // axial slices (resolution of the twist)
-    // None,
-    // );
-    // let _ = fs::write("stl/helical.stl", helical.to_stl_ascii("helical"));
+    /*
+    let helical = CSG::helical_involute_gear(
+        2.0,   // module
+        20,    // z
+        20.0,  // pressure angle
+        0.05, 0.02, 14,
+        25.0,   // face-width
+        15.0,   // helix angle β [deg]
+        40,     // axial slices (resolution of the twist)
+        None,
+    );
+    let _ = fs::write("stl/helical.stl", helical.to_stl_ascii("helical"));
+    */
 
     // Bézier curve demo
     #[cfg(feature = "stl-io")]
@@ -1356,10 +1081,8 @@ fn main() {
         let bspline_ctrl = &[[0.0, 0.0], [1.0, 2.5], [3.0, 3.0], [5.0, 0.0], [6.0, -1.5]];
         let bspline_2d = Sketch::bspline(
             bspline_ctrl,
-            // degree p =
-            3,
-            // seg/span
-            32,
+            /* degree p = */ 3,
+            /* seg/span */ 32,
             None,
         );
         let _ = fs::write("stl/bspline_2d.stl", bspline_2d.to_stl_ascii("bspline_2d"));
@@ -1369,8 +1092,8 @@ fn main() {
     println!("{:#?}", bezier_3d.to_bevy_mesh());
 
     // a quick thickening just like the Bézier
-    // let bspline_3d = bspline_2d.extrude(0.25);
-    // let _ = fs::write(
+    //let bspline_3d = bspline_2d.extrude(0.25);
+    //let _ = fs::write(
     //    "stl/bspline_extruded.stl",
     //    bspline_3d.to_stl_ascii("bspline_extruded"),
     //);

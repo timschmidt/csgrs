@@ -14,15 +14,12 @@ use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::traits::CSG;
+use chull::ConvexHullWrapper;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-#[cfg(feature = "chull-io")]
-use chull::ConvexHullWrapper;
-
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Compute the convex hull of all vertices in this Mesh.
-    #[cfg(feature = "chull-io")]
     pub fn convex_hull(&self) -> Mesh<S> {
         // Gather all (x, y, z) coordinates from the polygons
         let points: Vec<Point3<Real>> = self
@@ -67,7 +64,6 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// the Minkowski sum of the convex hulls of A and B.
     ///
     /// **Algorithm**: O(|A| × |B|) vertex combinations followed by O(n log n) convex hull computation.
-    #[cfg(feature = "chull-io")]
     pub fn minkowski_sum(&self, other: &Mesh<S>) -> Mesh<S> {
         // Collect all vertices (x, y, z) from self
         let verts_a: Vec<Point3<Real>> = self
@@ -137,23 +133,5 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             .collect();
 
         Mesh::from_polygons(&polygons, self.metadata.clone())
-    }
-
-    /// **Stub Implementation: Convex Hull (chull-io feature disabled)**
-    ///
-    /// Returns an empty mesh when the chull-io feature is not enabled.
-    /// Enable the chull-io feature to use convex hull functionality.
-    #[cfg(not(feature = "chull-io"))]
-    pub fn convex_hull(&self) -> Mesh<S> {
-        Mesh::new()
-    }
-
-    /// **Stub Implementation: Minkowski Sum (chull-io feature disabled)**
-    ///
-    /// Returns an empty mesh when the chull-io feature is not enabled.
-    /// Enable the chull-io feature to use Minkowski sum functionality.
-    #[cfg(not(feature = "chull-io"))]
-    pub fn minkowski_sum(&self, _other: &Mesh<S>) -> Mesh<S> {
-        Mesh::new()
     }
 }
