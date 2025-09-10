@@ -1755,7 +1755,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
             let normal_dot = polygon.plane.normal().dot(&to_center);
 
             // If normal points inward (towards centroid), flip it
-            if normal_dot < 0.0 {
+            // normal_dot > 0 means normal and to_center point in same direction (inward)
+            if normal_dot > 0.0 {
                 // Flip polygon indices to reverse winding
                 polygon.indices.reverse();
                 // Flip plane normal
@@ -2137,7 +2138,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         // Use exact same algorithm as regular Mesh difference with partition optimization
         // Avoid splitting obvious non-intersecting faces
         let (a_clip, a_passthru) = Self::partition_polygons(&self.polygons, &self.vertices, &other.bounding_box());
-        let (b_clip, b_passthru) = Self::partition_polygons(&other.polygons, &other.vertices, &self.bounding_box());
+        let (b_clip, _b_passthru) = Self::partition_polygons(&other.polygons, &other.vertices, &self.bounding_box());
 
         // Propagate self.metadata to new polygons by overwriting intersecting
         // polygon.metadata in other.
@@ -2175,14 +2176,12 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         a.build(&b_polygons_remapped, &mut result_vertices);
         a.invert_with_vertices(&mut result_vertices);
 
-        // Combine results and untouched faces
+        // Combine results - for difference, only include polygons from BSP operations and a_passthru
+        // Do NOT include b_passthru as they are outside the difference volume
         let mut final_polygons = a.all_polygons();
         final_polygons.extend(a_passthru);
 
-        // Include b_passthru polygons and remap their indices
-        let mut b_passthru_remapped = b_passthru;
-        Self::remap_polygon_indices(&mut b_passthru_remapped, b_vertex_offset);
-        final_polygons.extend(b_passthru_remapped);
+        // Note: b_passthru polygons are intentionally excluded from difference result
 
         let mut result = IndexedMesh {
             vertices: result_vertices,
@@ -2194,10 +2193,11 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         // Deduplicate vertices to prevent holes and improve manifold properties
         result.merge_vertices(Real::EPSILON);
 
-        // Ensure consistent polygon winding and normal orientation BEFORE computing normals
-        result.ensure_consistent_winding();
+        // NOTE: Difference operations should NOT have winding correction applied
+        // The cut boundary faces need to point inward toward the removed volume
+        // Regular mesh difference operations work correctly without winding correction
 
-        // Recompute vertex normals after CSG operation and winding correction
+        // Recompute vertex normals after CSG operation
         result.compute_vertex_normals();
 
         result
@@ -2229,8 +2229,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         }
 
         // Use partition optimization like union and difference operations
-        let (a_clip, a_passthru) = Self::partition_polygons(&self.polygons, &self.vertices, &other.bounding_box());
-        let (b_clip, b_passthru) = Self::partition_polygons(&other.polygons, &other.vertices, &self.bounding_box());
+        let (a_clip, _a_passthru) = Self::partition_polygons(&self.polygons, &self.vertices, &other.bounding_box());
+        let (b_clip, _b_passthru) = Self::partition_polygons(&other.polygons, &other.vertices, &self.bounding_box());
 
         // Start with self vertices, BSP operations will add intersection vertices as needed
         let mut result_vertices = self.vertices.clone();
@@ -2257,14 +2257,13 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         a.build(&b_polygons_remapped, &mut result_vertices);
         a.invert_with_vertices(&mut result_vertices);
 
-        // Combine results and untouched faces
+        // Combine results - for intersection, only include polygons from BSP operations
+        // Do NOT include a_passthru or b_passthru as they are outside the intersection volume
         let mut final_polygons = a.all_polygons();
-        final_polygons.extend(a_passthru);
 
-        // Include b_passthru polygons and remap their indices to account for result vertex array
-        let mut b_passthru_remapped = b_passthru;
-        Self::remap_polygon_indices(&mut b_passthru_remapped, b_vertex_offset);
-        final_polygons.extend(b_passthru_remapped);
+        // Include b polygons from BSP operations and remap their indices
+        let b_polygons_remapped_final = Self::remap_bsp_polygons(&b.all_polygons(), b_vertex_offset);
+        final_polygons.extend(b_polygons_remapped_final);
 
         let mut result = IndexedMesh {
             vertices: result_vertices,

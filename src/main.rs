@@ -222,6 +222,65 @@ fn main() {
     let difference_result = cube1.difference_indexed(&sphere);
     println!("Difference result: {} vertices, {} polygons", difference_result.vertices.len(), difference_result.polygons.len());
 
+    // Cube corner intersection test
+    println!("\n=== Cube Corner Intersection Test ===");
+
+    // Create two cubes that intersect at a corner
+    // Cube 1: positioned at origin, size 2x2x2
+    let cube_corner1 = csgrs::IndexedMesh::IndexedMesh::<()>::cube(2.0, None);
+    println!("Cube 1: {} vertices, {} polygons", cube_corner1.vertices.len(), cube_corner1.polygons.len());
+
+    // Cube 2: positioned to intersect cube1's corner at (1,1,1)
+    // We'll translate it so its corner is at cube1's corner
+    let mut cube_corner2 = csgrs::IndexedMesh::IndexedMesh::<()>::cube(2.0, None);
+    cube_corner2.translate(1.0, 1.0, 1.0);
+    println!("Cube 2: {} vertices, {} polygons (translated to intersect)", cube_corner2.vertices.len(), cube_corner2.polygons.len());
+
+    // Check if vertices are shared/intersecting
+    println!("\n=== Checking for shared vertices ===");
+    let mut shared_vertices = 0;
+    for v1 in &cube_corner1.vertices {
+        for v2 in &cube_corner2.vertices {
+            let distance = (v1.pos - v2.pos).magnitude();
+            if distance < 1e-6 {
+                shared_vertices += 1;
+                println!("Shared vertex at: {:?}", v1.pos);
+                break;
+            }
+        }
+    }
+    println!("Found {} shared vertices", shared_vertices);
+
+    // Perform intersection
+    println!("\n=== Performing intersection ===");
+    let intersection_result = cube_corner1.intersection_indexed(&cube_corner2);
+    println!("Intersection result: {} vertices, {} polygons", intersection_result.vertices.len(), intersection_result.polygons.len());
+
+    // Check vertices in result
+    println!("\n=== Checking intersection vertices ===");
+    for (i, vertex) in intersection_result.vertices.iter().enumerate() {
+        println!("Vertex {}: {:?}", i, vertex.pos);
+    }
+
+    // Export results for inspection
+    println!("\n=== Exporting results ===");
+    // Convert to regular mesh for export since IndexedMesh doesn't have direct export methods
+    let intersection_mesh = intersection_result.to_mesh();
+    let obj_data = intersection_mesh.to_obj("cube_corner_intersection");
+    fs::write("cube_corner_intersection.obj", obj_data).unwrap();
+    let stl_data = intersection_mesh.to_stl_ascii("cube_corner_intersection");
+    fs::write("cube_corner_intersection.stl", stl_data).unwrap();
+    println!("Exported intersection to cube_corner_intersection.obj and .stl");
+
+    // Also export the individual cubes for comparison
+    let cube1_mesh = cube_corner1.to_mesh();
+    let cube2_mesh = cube_corner2.to_mesh();
+    let cube1_obj = cube1_mesh.to_obj("cube1");
+    let cube2_obj = cube2_mesh.to_obj("cube2");
+    fs::write("cube1.obj", cube1_obj).unwrap();
+    fs::write("cube2.obj", cube2_obj).unwrap();
+    println!("Exported individual cubes for comparison");
+
     // Compare with regular Mesh results
     println!("\n=== Comparing with regular Mesh ===");
 

@@ -59,11 +59,46 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
              xor_result.vertices.len(), xor_result.polygons.len(), xor_analysis.boundary_edges);
     export_indexed_mesh_to_stl(&xor_result, "indexed_stl/07_xor_cube_sphere.stl")?;
 
+    // Cube corner CSG examples - demonstrating precision CSG operations
+    println!("\n=== Cube Corner CSG Examples ===");
+
+    // Create two cubes that intersect at a corner
+    println!("Creating overlapping cubes for corner intersection test...");
+    let cube1 = IndexedMesh::<String>::cube(2.0, Some("cube1".to_string()));
+    let cube2 = IndexedMesh::<String>::cube(2.0, Some("cube2".to_string())).translate(1.0, 1.0, 1.0); // Move cube2 to intersect cube1 at corner
+
+    println!("Cube 1: {} vertices, {} polygons", cube1.vertices.len(), cube1.polygons.len());
+    println!("Cube 2: {} vertices, {} polygons (translated to intersect)", cube2.vertices.len(), cube2.polygons.len());
+
+    // Cube corner intersection
+    println!("Computing cube corner intersection...");
+    let corner_intersection = cube1.intersection_indexed(&cube2);
+    let corner_int_analysis = corner_intersection.analyze_manifold();
+    println!("Corner intersection: {} vertices, {} polygons, {} boundary edges",
+             corner_intersection.vertices.len(), corner_intersection.polygons.len(), corner_int_analysis.boundary_edges);
+    export_indexed_mesh_to_stl(&corner_intersection, "indexed_stl/09_cube_corner_intersection.stl")?;
+
+    // Cube corner union
+    println!("Computing cube corner union...");
+    let corner_union = cube1.union_indexed(&cube2);
+    let corner_union_analysis = corner_union.analyze_manifold();
+    println!("Corner union: {} vertices, {} polygons, {} boundary edges",
+             corner_union.vertices.len(), corner_union.polygons.len(), corner_union_analysis.boundary_edges);
+    export_indexed_mesh_to_stl(&corner_union, "indexed_stl/10_cube_corner_union.stl")?;
+
+    // Cube corner difference
+    println!("Computing cube corner difference (cube1 - cube2)...");
+    let corner_difference = cube1.difference_indexed(&cube2);
+    let corner_diff_analysis = corner_difference.analyze_manifold();
+    println!("Corner difference: {} vertices, {} polygons, {} boundary edges",
+             corner_difference.vertices.len(), corner_difference.polygons.len(), corner_diff_analysis.boundary_edges);
+    export_indexed_mesh_to_stl(&corner_difference, "indexed_stl/11_cube_corner_difference.stl")?;
+
     // Complex operations: (Cube ∪ Sphere) - Cylinder
     println!("\nComplex operation: (cube ∪ sphere) - cylinder...");
     let complex_result = union_result.difference_indexed(&cylinder);
     let complex_analysis = complex_result.analyze_manifold();
-    println!("Complex result: {} vertices, {} polygons, {} boundary edges", 
+    println!("Complex result: {} vertices, {} polygons, {} boundary edges",
              complex_result.vertices.len(), complex_result.polygons.len(), complex_analysis.boundary_edges);
     export_indexed_mesh_to_stl(&complex_result, "indexed_stl/08_complex_operation.stl")?;
 
