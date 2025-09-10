@@ -108,13 +108,61 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
              corner_difference.vertices.len(), corner_difference.polygons.len(), corner_diff_analysis.boundary_edges);
     export_indexed_mesh_to_stl(&corner_difference, "indexed_stl/11_cube_corner_difference.stl")?;
 
-    // Complex operations: (Cube ∪ Sphere) - Cylinder
-    println!("\nComplex operation: (cube ∪ sphere) - cylinder...");
-    let complex_result = union_result.difference_indexed(&cylinder).repair_manifold();
-    let complex_analysis = complex_result.analyze_manifold();
-    println!("Complex result: {} vertices, {} polygons, {} boundary edges",
-             complex_result.vertices.len(), complex_result.polygons.len(), complex_analysis.boundary_edges);
-    export_indexed_mesh_to_stl(&complex_result, "indexed_stl/08_complex_operation.stl")?;
+    // Complex operations comparison: IndexedMesh vs Regular Mesh
+    // This demonstrates the performance and memory trade-offs between the two approaches
+    println!("\n=== Complex Operation Comparison: (Cube ∪ Sphere) - Cylinder ===");
+
+    // 08a: IndexedMesh complex operation
+    println!("\n08a: IndexedMesh complex operation: (cube ∪ sphere) - cylinder...");
+    let start_time = std::time::Instant::now();
+    let indexed_complex_result = union_result.difference_indexed(&cylinder).repair_manifold();
+    let indexed_duration = start_time.elapsed();
+    let indexed_analysis = indexed_complex_result.analyze_manifold();
+
+    println!("IndexedMesh complex result:");
+    println!("  - {} vertices, {} polygons, {} boundary edges",
+             indexed_complex_result.vertices.len(), indexed_complex_result.polygons.len(), indexed_analysis.boundary_edges);
+    println!("  - Computation time: {:?}", indexed_duration);
+    println!("  - Memory usage: ~{} bytes (estimated)",
+             indexed_complex_result.vertices.len() * std::mem::size_of::<csgrs::IndexedMesh::vertex::IndexedVertex>() +
+             indexed_complex_result.polygons.len() * 64); // Rough estimate
+    export_indexed_mesh_to_stl(&indexed_complex_result, "indexed_stl/08a_indexed_complex_operation.stl")?;
+
+    // 08b: Regular Mesh complex operation for comparison
+    println!("\n08b: Regular Mesh complex operation: (cube ∪ sphere) - cylinder...");
+    let cube_mesh = cube.to_mesh();
+    let sphere_mesh = sphere.to_mesh();
+    let cylinder_mesh = cylinder.to_mesh();
+
+    let start_time = std::time::Instant::now();
+    let mesh_union = cube_mesh.union(&sphere_mesh);
+    let regular_complex_result = mesh_union.difference(&cylinder_mesh);
+    let regular_duration = start_time.elapsed();
+
+    println!("Regular Mesh complex result:");
+    println!("  - {} polygons", regular_complex_result.polygons.len());
+    println!("  - Computation time: {:?}", regular_duration);
+    println!("  - Memory usage: ~{} bytes (estimated)",
+             regular_complex_result.polygons.len() * 200); // Rough estimate for regular mesh
+
+    // Export regular mesh result by converting to IndexedMesh for STL export
+    let regular_as_indexed = IndexedMesh::from_polygons(&regular_complex_result.polygons, regular_complex_result.metadata);
+    export_indexed_mesh_to_stl(&regular_as_indexed, "indexed_stl/08b_regular_complex_operation.stl")?;
+
+    // Performance comparison
+    println!("\nPerformance Comparison:");
+    println!("  - IndexedMesh: {:?} ({} vertices, {} polygons)",
+             indexed_duration, indexed_complex_result.vertices.len(), indexed_complex_result.polygons.len());
+    println!("  - Regular Mesh: {:?} ({} polygons)",
+             regular_duration, regular_complex_result.polygons.len());
+
+    if indexed_duration < regular_duration {
+        println!("  → IndexedMesh was {:.2}x faster!",
+                 regular_duration.as_secs_f64() / indexed_duration.as_secs_f64());
+    } else {
+        println!("  → Regular Mesh was {:.2}x faster!",
+                 indexed_duration.as_secs_f64() / regular_duration.as_secs_f64());
+    }
 
     // Demonstrate IndexedMesh memory efficiency
     println!("\n=== Memory Efficiency Analysis ===");

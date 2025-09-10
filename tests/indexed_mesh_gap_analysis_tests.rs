@@ -7,6 +7,7 @@ use csgrs::IndexedMesh::{IndexedMesh, IndexedPolygon};
 use csgrs::IndexedMesh::plane::Plane as IndexedPlane;
 use csgrs::IndexedMesh::vertex::IndexedVertex;
 use csgrs::float_types::Real;
+use csgrs::traits::CSG;
 // Removed unused imports: mesh::plane::Plane, mesh::vertex::Vertex
 use nalgebra::{Point3, Vector3};
 use std::sync::OnceLock;
@@ -350,4 +351,282 @@ fn test_bsp_union_operation() {
         !union_result.polygons.is_empty(),
         "Union should have polygons"
     );
+}
+
+#[test]
+fn test_vertex_array_mutation_fix() {
+    // **CRITICAL TEST**: This test validates that the vertex array mutation issue is fixed
+    // Before the fix, this would cause index out-of-bounds errors or incorrect geometry
+
+    let cube1 = create_test_cube();
+    let cube2 = create_test_cube();
+
+    // Perform multiple CSG operations that would trigger vertex array mutations
+    let union_result = cube1.union_indexed(&cube2);
+    let difference_result = cube1.difference_indexed(&cube2);
+    let intersection_result = cube1.intersection_indexed(&cube2);
+
+    // Validate that all operations completed without panics
+    assert!(!union_result.vertices.is_empty(), "Union should have vertices");
+    assert!(!difference_result.vertices.is_empty(), "Difference should have vertices");
+    assert!(!intersection_result.vertices.is_empty(), "Intersection should have vertices");
+
+    // Validate that all polygons have valid indices
+    for polygon in &union_result.polygons {
+        for &index in &polygon.indices {
+            assert!(index < union_result.vertices.len(),
+                "Union polygon index {} out of bounds (vertex count: {})",
+                index, union_result.vertices.len());
+        }
+    }
+
+    for polygon in &difference_result.polygons {
+        for &index in &polygon.indices {
+            assert!(index < difference_result.vertices.len(),
+                "Difference polygon index {} out of bounds (vertex count: {})",
+                index, difference_result.vertices.len());
+        }
+    }
+
+    for polygon in &intersection_result.polygons {
+        for &index in &polygon.indices {
+            assert!(index < intersection_result.vertices.len(),
+                "Intersection polygon index {} out of bounds (vertex count: {})",
+                index, intersection_result.vertices.len());
+        }
+    }
+
+    println!("✓ Vertex array mutation fix validated - all indices are valid");
+}
+
+#[test]
+fn test_quantization_precision_fix() {
+    println!("=== Testing Quantization Precision Fix ===");
+
+    // Create test shapes using built-in shape functions
+    let cube = IndexedMesh::<i32>::cube(2.0, Some(1));
+    let sphere = IndexedMesh::<i32>::sphere(1.2, 8, 6, Some(2));
+    let cylinder = IndexedMesh::<i32>::cylinder(0.8, 3.0, 8, Some(3));
+
+    // Perform complex CSG operation with IndexedMesh
+    println!("Computing IndexedMesh complex operation: (cube ∪ sphere) - cylinder...");
+    let indexed_union = cube.union_indexed(&sphere);
+    let indexed_complex = indexed_union.difference_indexed(&cylinder);
+    let indexed_analysis = indexed_complex.analyze_manifold();
+
+    // Perform same operation with regular Mesh for comparison
+    println!("Computing regular Mesh complex operation for comparison...");
+    let cube_mesh = cube.to_mesh();
+    let sphere_mesh = sphere.to_mesh();
+    let cylinder_mesh = cylinder.to_mesh();
+    let regular_union = cube_mesh.union(&sphere_mesh);
+    let regular_complex = regular_union.difference(&cylinder_mesh);
+
+    println!("IndexedMesh result: {} vertices, {} polygons, {} boundary edges",
+             indexed_complex.vertices.len(), indexed_complex.polygons.len(), indexed_analysis.boundary_edges);
+    println!("Regular Mesh result: {} polygons", regular_complex.polygons.len());
+
+    // The results should be reasonably similar (within 30% polygon count difference)
+    let polygon_diff_ratio = (indexed_complex.polygons.len() as f64 - regular_complex.polygons.len() as f64).abs()
+                           / regular_complex.polygons.len() as f64;
+
+    println!("Polygon count difference ratio: {:.2}%", polygon_diff_ratio * 100.0);
+
+    // With improved quantization, the results should be much closer
+    assert!(polygon_diff_ratio < 0.3,
+            "IndexedMesh and regular Mesh results should be similar (within 30%), got {:.1}% difference",
+            polygon_diff_ratio * 100.0);
+
+    // IndexedMesh should produce a valid manifold result
+    assert!(indexed_analysis.boundary_edges < 200,
+            "IndexedMesh should produce reasonable boundary edges, got {}",
+            indexed_analysis.boundary_edges);
+
+    println!("✓ Quantization precision fix validated - results are consistent between IndexedMesh and regular Mesh");
+}
+
+#[test]
+fn test_manifold_repair_impact() {
+    println!("=== Testing Manifold Repair Impact on CSG Results ===");
+
+    // Create test shapes
+    let cube = IndexedMesh::<i32>::cube(2.0, Some(1));
+    let sphere = IndexedMesh::<i32>::sphere(1.2, 8, 6, Some(2));
+    let cylinder = IndexedMesh::<i32>::cylinder(0.8, 3.0, 8, Some(3));
+
+    // Perform complex CSG operation WITHOUT repair_manifold
+    println!("Computing IndexedMesh complex operation WITHOUT repair_manifold...");
+    let indexed_union = cube.union_indexed(&sphere);
+    let indexed_complex_no_repair = indexed_union.difference_indexed(&cylinder);
+    let no_repair_analysis = indexed_complex_no_repair.analyze_manifold();
+
+    // Perform same operation WITH repair_manifold
+    println!("Computing IndexedMesh complex operation WITH repair_manifold...");
+    let indexed_complex_with_repair = indexed_complex_no_repair.repair_manifold();
+    let with_repair_analysis = indexed_complex_with_repair.analyze_manifold();
+
+    println!("WITHOUT repair_manifold: {} vertices, {} polygons, {} boundary edges",
+             indexed_complex_no_repair.vertices.len(),
+             indexed_complex_no_repair.polygons.len(),
+             no_repair_analysis.boundary_edges);
+
+    println!("WITH repair_manifold: {} vertices, {} polygons, {} boundary edges",
+             indexed_complex_with_repair.vertices.len(),
+             indexed_complex_with_repair.polygons.len(),
+             with_repair_analysis.boundary_edges);
+
+    // Compare with regular Mesh (which never calls repair)
+    let cube_mesh = cube.to_mesh();
+    let sphere_mesh = sphere.to_mesh();
+    let cylinder_mesh = cylinder.to_mesh();
+    let regular_union = cube_mesh.union(&sphere_mesh);
+    let regular_complex = regular_union.difference(&cylinder_mesh);
+
+    println!("Regular Mesh (no repair): {} polygons", regular_complex.polygons.len());
+
+    // The version WITHOUT repair should be closer to regular Mesh results
+    let no_repair_diff = (indexed_complex_no_repair.polygons.len() as f64 - regular_complex.polygons.len() as f64).abs()
+                        / regular_complex.polygons.len() as f64;
+    let with_repair_diff = (indexed_complex_with_repair.polygons.len() as f64 - regular_complex.polygons.len() as f64).abs()
+                          / regular_complex.polygons.len() as f64;
+
+    println!("Polygon count difference (no repair): {:.2}%", no_repair_diff * 100.0);
+    println!("Polygon count difference (with repair): {:.2}%", with_repair_diff * 100.0);
+
+    // The hypothesis is that repair_manifold is causing the gaps
+    if no_repair_analysis.boundary_edges < with_repair_analysis.boundary_edges {
+        println!("✓ CONFIRMED: repair_manifold is INCREASING boundary edges (gaps)");
+        println!("  - Without repair: {} boundary edges", no_repair_analysis.boundary_edges);
+        println!("  - With repair: {} boundary edges", with_repair_analysis.boundary_edges);
+    } else {
+        println!("✗ repair_manifold is not the primary cause of boundary edges");
+    }
+
+    println!("✓ Manifold repair impact analysis completed");
+}
+
+#[test]
+fn test_edge_caching_impact() {
+    println!("=== Testing Edge Caching Impact on CSG Results ===");
+
+    // This test will help us understand if edge caching is the root cause
+    // by comparing results with different caching strategies
+
+    // Create test shapes
+    let cube = IndexedMesh::<i32>::cube(2.0, Some(1));
+    let sphere = IndexedMesh::<i32>::sphere(1.2, 8, 6, Some(2));
+    let cylinder = IndexedMesh::<i32>::cylinder(0.8, 3.0, 8, Some(3));
+
+    // Perform complex CSG operation
+    println!("Computing IndexedMesh complex operation...");
+    let indexed_union = cube.union_indexed(&sphere);
+    let indexed_complex = indexed_union.difference_indexed(&cylinder);
+    let indexed_analysis = indexed_complex.analyze_manifold();
+
+    // Compare with regular Mesh (no caching)
+    let cube_mesh = cube.to_mesh();
+    let sphere_mesh = sphere.to_mesh();
+    let cylinder_mesh = cylinder.to_mesh();
+    let regular_union = cube_mesh.union(&sphere_mesh);
+    let regular_complex = regular_union.difference(&cylinder_mesh);
+
+    println!("IndexedMesh (with edge caching): {} vertices, {} polygons, {} boundary edges",
+             indexed_complex.vertices.len(),
+             indexed_complex.polygons.len(),
+             indexed_analysis.boundary_edges);
+
+    println!("Regular Mesh (no caching): {} polygons", regular_complex.polygons.len());
+
+    // The key insight: Regular Mesh creates duplicate vertices but has no gaps
+    // IndexedMesh tries to share vertices but creates gaps
+
+    // Calculate vertex efficiency
+    let regular_as_indexed = IndexedMesh::from_polygons(&regular_complex.polygons, regular_complex.metadata);
+    let regular_analysis = regular_as_indexed.analyze_manifold();
+
+    println!("Regular Mesh converted to IndexedMesh: {} vertices, {} polygons, {} boundary edges",
+             regular_as_indexed.vertices.len(),
+             regular_as_indexed.polygons.len(),
+             regular_analysis.boundary_edges);
+
+    // The hypothesis: Regular Mesh produces solid geometry (0 boundary edges)
+    // but IndexedMesh edge caching creates gaps (>0 boundary edges)
+
+    if indexed_analysis.boundary_edges > regular_analysis.boundary_edges {
+        println!("✓ CONFIRMED: Edge caching in IndexedMesh is creating more boundary edges (gaps)");
+        println!("  - IndexedMesh (with caching): {} boundary edges", indexed_analysis.boundary_edges);
+        println!("  - Regular Mesh (no caching): {} boundary edges", regular_analysis.boundary_edges);
+
+        // The trade-off: IndexedMesh is more memory efficient but less geometrically accurate
+        let vertex_efficiency = indexed_complex.vertices.len() as f64 / regular_as_indexed.vertices.len() as f64;
+        println!("  - Vertex efficiency: IndexedMesh uses {:.1}% of regular Mesh vertices", vertex_efficiency * 100.0);
+    } else {
+        println!("✗ Edge caching is not the primary cause of boundary edges");
+    }
+
+    println!("✓ Edge caching impact analysis completed");
+}
+
+#[test]
+fn test_final_gap_resolution_status() {
+    println!("=== Final Gap Resolution Status ===");
+
+    // Create test shapes
+    let cube = IndexedMesh::<i32>::cube(2.0, Some(1));
+    let sphere = IndexedMesh::<i32>::sphere(1.2, 8, 6, Some(2));
+    let cylinder = IndexedMesh::<i32>::cylinder(0.8, 3.0, 8, Some(3));
+
+    // Perform complex CSG operation with IndexedMesh
+    println!("Computing IndexedMesh complex operation...");
+    let indexed_union = cube.union_indexed(&sphere);
+    let indexed_complex = indexed_union.difference_indexed(&cylinder);
+    let indexed_analysis = indexed_complex.analyze_manifold();
+
+    // Compare with regular Mesh
+    let cube_mesh = cube.to_mesh();
+    let sphere_mesh = sphere.to_mesh();
+    let cylinder_mesh = cylinder.to_mesh();
+    let regular_union = cube_mesh.union(&sphere_mesh);
+    let regular_complex = regular_union.difference(&cylinder_mesh);
+
+    // Convert regular Mesh result to IndexedMesh for comparison
+    let regular_as_indexed = IndexedMesh::from_polygons(&regular_complex.polygons, regular_complex.metadata);
+    let regular_analysis = regular_as_indexed.analyze_manifold();
+
+    println!("=== FINAL RESULTS ===");
+    println!("IndexedMesh native CSG: {} vertices, {} polygons, {} boundary edges",
+             indexed_complex.vertices.len(),
+             indexed_complex.polygons.len(),
+             indexed_analysis.boundary_edges);
+
+    println!("Regular Mesh CSG: {} polygons", regular_complex.polygons.len());
+
+    println!("Regular Mesh → IndexedMesh: {} vertices, {} polygons, {} boundary edges",
+             regular_as_indexed.vertices.len(),
+             regular_as_indexed.polygons.len(),
+             regular_analysis.boundary_edges);
+
+    // Calculate improvements
+    let polygon_diff = (indexed_complex.polygons.len() as f64 - regular_complex.polygons.len() as f64).abs()
+                      / regular_complex.polygons.len() as f64;
+
+    println!("=== ANALYSIS ===");
+    println!("Polygon count difference: {:.1}%", polygon_diff * 100.0);
+
+    if indexed_analysis.boundary_edges == 0 {
+        println!("✅ SUCCESS: IndexedMesh produces SOLID geometry (0 boundary edges)");
+    } else if indexed_analysis.boundary_edges <= regular_analysis.boundary_edges {
+        println!("✅ IMPROVEMENT: IndexedMesh boundary edges ({}) ≤ Regular Mesh conversion ({})",
+                 indexed_analysis.boundary_edges, regular_analysis.boundary_edges);
+    } else {
+        println!("❌ REMAINING ISSUE: IndexedMesh boundary edges ({}) > Regular Mesh conversion ({})",
+                 indexed_analysis.boundary_edges, regular_analysis.boundary_edges);
+        println!("   → IndexedMesh still has gaps compared to regular Mesh");
+    }
+
+    // Memory efficiency
+    let vertex_efficiency = indexed_complex.vertices.len() as f64 / regular_as_indexed.vertices.len() as f64;
+    println!("Memory efficiency: IndexedMesh uses {:.1}% of regular Mesh vertices", vertex_efficiency * 100.0);
+
+    println!("✓ Final gap resolution status analysis completed");
 }

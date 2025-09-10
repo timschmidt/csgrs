@@ -288,9 +288,11 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
             repaired = repaired.fix_orientation();
         }
 
-        // Remove duplicate vertices and faces with a slightly relaxed tolerance
-        // This helps merge nearly-identical split vertices produced independently on adjacent faces
-        repaired = repaired.remove_duplicates_with_tolerance(EPSILON * 1000.0);
+        // Remove duplicate vertices and faces with a conservative tolerance
+        // **CRITICAL FIX**: Reduced from EPSILON * 1000.0 to EPSILON * 10.0 to prevent
+        // aggressive merging of vertices that should remain separate, which was causing gaps
+        // in complex CSG operations. The previous 1000x tolerance was too aggressive.
+        repaired = repaired.remove_duplicates_with_tolerance(EPSILON * 10.0);
 
         repaired
     }

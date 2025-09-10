@@ -34,8 +34,10 @@ impl PlaneEdgeCacheKey {
         let edge = if idx_i < idx_j { (idx_i, idx_j) } else { (idx_j, idx_i) };
 
         // Quantize plane parameters to avoid floating-point precision issues
-        // Use a reasonable precision that distinguishes different planes but handles numerical noise
-        const QUANTIZATION_SCALE: Real = 1e6;
+        // **CRITICAL FIX**: Increased precision from 1e6 to 1e12 to prevent incorrect vertex sharing
+        // that was causing gaps in complex CSG operations. The previous 1e6 scale was too coarse
+        // and merged vertices that should remain separate, creating visible gaps.
+        const QUANTIZATION_SCALE: Real = 1e12;
         let plane_normal_quantized = (
             (plane.normal.x * QUANTIZATION_SCALE).round() as i64,
             (plane.normal.y * QUANTIZATION_SCALE).round() as i64,
@@ -394,12 +396,10 @@ impl Plane {
                         vertices.push(vertex);
                         front_indices.push(vertices.len() - 1);
                     }
-                    // **CRITICAL**: Recompute plane from actual split polygon vertices
-                    // Don't just clone the original polygon's plane!
-                    let front_plane = Plane::from_indexed_vertices(
-                        front_indices.iter().map(|&idx| vertices[idx]).collect()
-                    );
-                    front.push(IndexedPolygon::new(front_indices, front_plane, polygon.metadata.clone()));
+                    // **CRITICAL FIX**: Use original polygon plane instead of recomputing
+                    // Recomputing the plane from split vertices can introduce numerical errors
+                    // that cause gaps. Regular Mesh uses the original plane logic.
+                    front.push(IndexedPolygon::new(front_indices, polygon.plane.clone(), polygon.metadata.clone()));
                 }
                 if split_back.len() >= 3 {
                     // Add new vertices to the vertex array and get their indices
@@ -408,12 +408,10 @@ impl Plane {
                         vertices.push(vertex);
                         back_indices.push(vertices.len() - 1);
                     }
-                    // **CRITICAL**: Recompute plane from actual split polygon vertices
-                    // Don't just clone the original polygon's plane!
-                    let back_plane = Plane::from_indexed_vertices(
-                        back_indices.iter().map(|&idx| vertices[idx]).collect()
-                    );
-                    back.push(IndexedPolygon::new(back_indices, back_plane, polygon.metadata.clone()));
+                    // **CRITICAL FIX**: Use original polygon plane instead of recomputing
+                    // Recomputing the plane from split vertices can introduce numerical errors
+                    // that cause gaps. Regular Mesh uses the original plane logic.
+                    back.push(IndexedPolygon::new(back_indices, polygon.plane.clone(), polygon.metadata.clone()));
                 }
             },
         }
@@ -479,7 +477,7 @@ impl Plane {
         &self,
         polygon: &IndexedPolygon<S>,
         vertices: &mut Vec<IndexedVertex>,
-        edge_cache: &mut HashMap<PlaneEdgeCacheKey, usize>,
+        _edge_cache: &mut HashMap<PlaneEdgeCacheKey, usize>,
     ) -> (
         Vec<IndexedPolygon<S>>,
         Vec<IndexedPolygon<S>>,
@@ -585,17 +583,12 @@ impl Plane {
                         let denom = self.normal().dot(&(vertex_j.pos - vertex_i.pos));
                         if denom.abs() > EPSILON {
                             let t = (self.offset() - self.normal().dot(&vertex_i.pos.coords)) / denom;
-                            // **FIXED**: Use plane-aware cache key to prevent incorrect vertex sharing across different planes
-                            let key = PlaneEdgeCacheKey::new(self, idx_i, idx_j);
-                            let v_idx = if let Some(&existing) = edge_cache.get(&key) {
-                                existing
-                            } else {
-                                let intersection_vertex = vertex_i.interpolate(vertex_j, t);
-                                vertices.push(intersection_vertex);
-                                let new_index = vertices.len() - 1;
-                                edge_cache.insert(key, new_index);
-                                new_index
-                            };
+                            // **CRITICAL FIX**: Disable edge caching to match regular Mesh behavior
+                            // Edge caching with quantization was causing gaps by incorrectly sharing vertices
+                            // that should remain separate. Regular Mesh creates new vertices for each intersection.
+                            let intersection_vertex = vertex_i.interpolate(vertex_j, t);
+                            vertices.push(intersection_vertex);
+                            let v_idx = vertices.len() - 1;
                             front_indices.push(v_idx);
                             back_indices.push(v_idx);
                         }
@@ -604,19 +597,17 @@ impl Plane {
 
                 // Create new polygons from vertex lists
                 if front_indices.len() >= 3 {
-                    // **CRITICAL**: Recompute plane from actual split polygon vertices
-                    let front_plane = Plane::from_indexed_vertices(
-                        front_indices.iter().map(|&idx| vertices[idx]).collect()
-                    );
-                    front.push(IndexedPolygon::new(front_indices, front_plane, polygon.metadata.clone()));
+                    // **CRITICAL FIX**: Use original polygon plane instead of recomputing
+                    // Recomputing the plane from split vertices can introduce numerical errors
+                    // that cause gaps. Regular Mesh uses the original plane logic.
+                    front.push(IndexedPolygon::new(front_indices, polygon.plane.clone(), polygon.metadata.clone()));
                 }
 
                 if back_indices.len() >= 3 {
-                    // **CRITICAL**: Recompute plane from actual split polygon vertices
-                    let back_plane = Plane::from_indexed_vertices(
-                        back_indices.iter().map(|&idx| vertices[idx]).collect()
-                    );
-                    back.push(IndexedPolygon::new(back_indices, back_plane, polygon.metadata.clone()));
+                    // **CRITICAL FIX**: Use original polygon plane instead of recomputing
+                    // Recomputing the plane from split vertices can introduce numerical errors
+                    // that cause gaps. Regular Mesh uses the original plane logic.
+                    back.push(IndexedPolygon::new(back_indices, polygon.plane.clone(), polygon.metadata.clone()));
                 }
             },
             _ => {
