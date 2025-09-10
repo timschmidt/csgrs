@@ -648,16 +648,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         }
     }
 
-    /// Remap polygons from one vertex array to another by adjusting indices
-    fn remap_bsp_polygons(polygons: &[IndexedPolygon<S>], offset: usize) -> Vec<IndexedPolygon<S>> {
-        polygons.iter().map(|poly| {
-            let mut new_poly = poly.clone();
-            for index in &mut new_poly.indices {
-                *index += offset;
-            }
-            new_poly
-        }).collect()
-    }
+
 
     /// **Mathematical Foundation: Dihedral Angle Calculation**
     ///
@@ -2055,29 +2046,26 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         // Union operation preserves original metadata from each source
         // Do NOT retag b_clip polygons (unlike difference operation)
 
-        // Start with self vertices, BSP operations will add intersection vertices as needed
+        // CRITICAL FIX: Create a single combined vertex array for both BSP trees
         let mut result_vertices = self.vertices.clone();
+        let b_vertex_offset = result_vertices.len();
+        result_vertices.extend(other.vertices.iter().cloned());
 
-        // Create BSP trees with proper vertex handling - a_clip polygons reference self vertices
+        // Remap b_clip polygon indices to reference the combined vertex array
+        let mut b_clip_remapped = b_clip.clone();
+        Self::remap_polygon_indices(&mut b_clip_remapped, b_vertex_offset);
+
+        // Create BSP trees using the same combined vertex array
         let mut a = bsp::IndexedNode::from_polygons(&a_clip, &mut result_vertices);
-
-        // For b_clip polygons, use separate vertex array to avoid index conflicts
-        let mut b_vertices = other.vertices.clone();
-        let mut b = bsp::IndexedNode::from_polygons(&b_clip, &mut b_vertices);
+        let mut b = bsp::IndexedNode::from_polygons(&b_clip_remapped, &mut result_vertices);
 
         // Use exact same algorithm as regular Mesh union (NOT difference!)
         a.clip_to(&b, &mut result_vertices);
-        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
-        b.invert_with_vertices(&mut b_vertices);
-        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
-        b.invert_with_vertices(&mut b_vertices);
-        // Add b_vertices to result_vertices first, then remap b polygons
-        let b_vertex_offset = result_vertices.len();
-        result_vertices.extend(b_vertices.iter().cloned());
-
-        // Remap b polygons to use result_vertices indices
-        let b_polygons_remapped = Self::remap_bsp_polygons(&b.all_polygons(), b_vertex_offset);
-        a.build(&b_polygons_remapped, &mut result_vertices);
+        b.clip_to(&a, &mut result_vertices);
+        b.invert_with_vertices(&mut result_vertices);
+        b.clip_to(&a, &mut result_vertices);
+        b.invert_with_vertices(&mut result_vertices);
+        a.build(&b.all_polygons(), &mut result_vertices);
         // NOTE: Union operation does NOT have final a.invert() (unlike difference operation)
 
         // Combine results and untouched faces
@@ -2152,29 +2140,26 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
             })
             .collect();
 
-        // Start with self vertices, BSP operations will add intersection vertices as needed
+        // CRITICAL FIX: Create a single combined vertex array for both BSP trees
         let mut result_vertices = self.vertices.clone();
+        let b_vertex_offset = result_vertices.len();
+        result_vertices.extend(other.vertices.iter().cloned());
 
-        // Create BSP trees with proper vertex handling
+        // Remap b_clip_retagged polygon indices to reference the combined vertex array
+        let mut b_clip_retagged_remapped = b_clip_retagged.clone();
+        Self::remap_polygon_indices(&mut b_clip_retagged_remapped, b_vertex_offset);
+
+        // Create BSP trees using the same combined vertex array
         let mut a = bsp::IndexedNode::from_polygons(&a_clip, &mut result_vertices);
-
-        // For b_clip polygons, create separate vertex array and remap indices
-        let mut b_vertices = other.vertices.clone();
-        let mut b = bsp::IndexedNode::from_polygons(&b_clip_retagged, &mut b_vertices);
+        let mut b = bsp::IndexedNode::from_polygons(&b_clip_retagged_remapped, &mut result_vertices);
 
         a.invert_with_vertices(&mut result_vertices);
         a.clip_to(&b, &mut result_vertices);
-        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
-        b.invert_with_vertices(&mut b_vertices);
-        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
-        b.invert_with_vertices(&mut b_vertices);
-        // Add b_vertices to result_vertices first, then remap b polygons
-        let b_vertex_offset = result_vertices.len();
-        result_vertices.extend(b_vertices.iter().cloned());
-
-        // Remap b polygons to use result_vertices indices
-        let b_polygons_remapped = Self::remap_bsp_polygons(&b.all_polygons(), b_vertex_offset);
-        a.build(&b_polygons_remapped, &mut result_vertices);
+        b.clip_to(&a, &mut result_vertices);
+        b.invert_with_vertices(&mut result_vertices);
+        b.clip_to(&a, &mut result_vertices);
+        b.invert_with_vertices(&mut result_vertices);
+        a.build(&b.all_polygons(), &mut result_vertices);
         a.invert_with_vertices(&mut result_vertices);
 
         // Combine results - for difference, only include polygons from BSP operations and a_passthru
@@ -2232,30 +2217,27 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         // For intersection operations, don't use partition optimization to ensure correctness
         // The regular Mesh intersection also doesn't use partition optimization
 
-        // Start with self vertices, BSP operations will add intersection vertices as needed
+        // CRITICAL FIX: Create a single combined vertex array for both BSP trees
+        // This ensures all BSP operations use the same vertex indices
         let mut result_vertices = self.vertices.clone();
+        let b_vertex_offset = result_vertices.len();
+        result_vertices.extend(other.vertices.iter().cloned());
 
-        // Create BSP trees with proper vertex handling for ALL polygons (no partition optimization)
+        // Remap other's polygon indices to reference the combined vertex array
+        let mut other_polygons_remapped = other.polygons.clone();
+        Self::remap_polygon_indices(&mut other_polygons_remapped, b_vertex_offset);
+
+        // Create BSP trees using the same combined vertex array
         let mut a = bsp::IndexedNode::from_polygons(&self.polygons, &mut result_vertices);
-
-        // For b polygons, use separate vertex array to avoid index conflicts
-        let mut b_vertices = other.vertices.clone();
-        let mut b = bsp::IndexedNode::from_polygons(&other.polygons, &mut b_vertices);
+        let mut b = bsp::IndexedNode::from_polygons(&other_polygons_remapped, &mut result_vertices);
 
         // Use exact same algorithm as regular Mesh intersection
         a.invert_with_vertices(&mut result_vertices);
-        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
-        b.invert_with_vertices(&mut b_vertices);
+        b.clip_to(&a, &mut result_vertices);
+        b.invert_with_vertices(&mut result_vertices);
         a.clip_to(&b, &mut result_vertices);
-        b.clip_to(&a, &mut b_vertices);  // b's polygons reference b_vertices
-
-        // Add b_vertices to result_vertices first, then remap b polygons
-        let b_vertex_offset = result_vertices.len();
-        result_vertices.extend(b_vertices.iter().cloned());
-
-        // Remap b polygons to use result_vertices indices
-        let b_polygons_remapped = Self::remap_bsp_polygons(&b.all_polygons(), b_vertex_offset);
-        a.build(&b_polygons_remapped, &mut result_vertices);
+        b.clip_to(&a, &mut result_vertices);
+        a.build(&b.all_polygons(), &mut result_vertices);
         a.invert_with_vertices(&mut result_vertices);
 
         // Combine results - only use polygons from the final BSP tree (same as regular Mesh)
