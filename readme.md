@@ -652,6 +652,8 @@ for Polygon
 
 > [Shewchuk, J.R., 1996, May. Robust adaptive floating-point geometric predicates. In Proceedings of the twelfth annual symposium on Computational geometry (pp. 141-150).](https://dl.acm.org/doi/abs/10.1145/237218.237337)
 
+> [Floating Point Visually Explained](https://fabiensanglard.net/floating_point_visually_explained/)
+
 ## License
 
 ```
