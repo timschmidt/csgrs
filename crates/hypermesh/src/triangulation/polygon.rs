@@ -1,6 +1,6 @@
 use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
-use crate::boolean::ear_clip::{det2x2, EarClip, Polygons, PolygonsIdcs};
-
+use crate::common::PolygonsIdcs;
+use crate::ear_clip::{det2x2, EarClip};
 
 ///
 /// step 1: convex case
