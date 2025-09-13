@@ -7,6 +7,8 @@ use nalgebra::{
 
 pub const K_PRECISION: f64 = 1e-12;
 
+pub fn det2x2(a: &Row2<f64>, b: &Row2<f64>) -> f64 { a.x * b.y - a.y * b.x }
+
 fn get_axis_aligned_projection(normal: &Row3<f64>) -> Mat23<f64> {
     let abs = normal.abs();
     let max: f64;
