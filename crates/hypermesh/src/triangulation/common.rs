@@ -5,6 +5,8 @@ use nalgebra::{
     RowVector2 as Row2
 };
 
+pub const K_PRECISION: f64 = 1e-12;
+
 fn get_axis_aligned_projection(normal: &Row3<f64>) -> Mat23<f64> {
     let abs = normal.abs();
     let max: f64;
@@ -79,9 +81,9 @@ impl Rect {
         self.max - self.min
     }
 
-    pub fn longer_length(&self) -> f64 {
+    pub fn scale(&self) -> f64 {
         let s = self.size();
-        s.x.max(s.y)
+        s.x.abs().max(s.y.abs())
     }
 }
 

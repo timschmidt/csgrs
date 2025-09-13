@@ -1,10 +1,10 @@
 use std::cell::RefCell;
-use std::cmp::PartialEq;
-use std::collections::BTreeMap;
+use std::cmp::{Ordering, PartialEq};
+use std::collections::{BTreeMap, BTreeSet};
 use std::rc::{Rc, Weak};
 use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
 use num_traits::Float;
-use crate::common::{is_ccw_2d, safe_normalize, PolyVert, Rect};
+use crate::common::{is_ccw_2d, safe_normalize, PolyVert, PolygonsIdcs, Rect, K_PRECISION};
 use crate::quetry_2d_tree::compute_query_2d_tree;
 
 pub fn det2x2(a: &Row2<f64>, b: &Row2<f64>) -> f64 { a.x * b.y - a.y * b.x }
@@ -13,6 +13,7 @@ struct Ecvt {
     idx: usize,     // mesh idx, but it is more likely to say vert idx
     pos: Row2<f64>, // vert pos
     dir: Row2<f64>, // right dir
+    ear: BTreeSet<Rc<RefCell<Ecvt>>>,
     vl: Weak<RefCell<Ecvt>>,
     vr: Weak<RefCell<Ecvt>>,
     cost: f64,
@@ -21,10 +22,10 @@ struct Ecvt {
 impl Ecvt {
     pub fn ptr_l(&self) -> Rc<RefCell<Ecvt>> { self.vl.upgrade().unwrap() }
     pub fn ptr_r(&self) -> Rc<RefCell<Ecvt>> { self.vr.upgrade().unwrap() }
-    pub fn pos_l(&self) -> Row2<f64> { self.vl.upgrade().unwrap().borrow().pos }
-    pub fn pos_r(&self) -> Row2<f64> { self.vr.upgrade().unwrap().borrow().pos }
-    pub fn dir_l(&self) -> Row2<f64> { self.vl.upgrade().unwrap().borrow().dir }
-    pub fn dir_r(&self) -> Row2<f64> { self.vr.upgrade().unwrap().borrow().dir }
+    pub fn pos_l(&self) -> Row2<f64> { self.ptr_l().borrow().pos }
+    pub fn pos_r(&self) -> Row2<f64> { self.ptr_r().borrow().pos }
+    pub fn dir_l(&self) -> Row2<f64> { self.ptr_l().borrow().dir }
+    pub fn dir_r(&self) -> Row2<f64> { self.ptr_r().borrow().dir }
     pub fn ptr_l_of_r(&self) -> Rc<RefCell<Ecvt>> { self.ptr_r().borrow().ptr_l() }
     pub fn is_lr_same(&self) -> bool { self.ptr_r() == self.ptr_l() }
 
@@ -87,7 +88,11 @@ impl Ecvt {
     /// costs are designed to always give values < -epsilon so they will never affect validity.
     /// The first totalCost is designed to give priority to sharper angles.
     /// Any cost < (-1 - epsilon) has satisfied the Delaunay condition.
-    pub fn ear_cost(&self, epsilon: f64, collider: ) -> f64 {
+    pub fn ear_cost(
+        &self,
+        epsilon: f64,
+        //collider:
+    ) -> f64 {
         let s_vl_pos = self.vl.upgrade().unwrap().borrow().pos;
         let s_vl_dir = self.vl.upgrade().unwrap().borrow().dir;
         let s_vr_pos = self.vr.upgrade().unwrap().borrow().pos;
@@ -107,14 +112,18 @@ impl Ecvt {
         ear_box.union(&self.pos);
         ear_box.min -= Row2::new(epsilon, epsilon);
         ear_box.max += Row2::new(epsilon, epsilon);
-        compute_query_2d_tree(&, &ear_box, |v| {});
+        //compute_query_2d_tree(&, &ear_box, |v| {});
         total
     }
 }
 
 impl PartialEq for Ecvt {
-    fn eq(&self, other: &Self) -> bool {
-        todo!()
+    fn eq(&self, other: &Self) -> bool { self.cost == other.cost }
+}
+
+impl PartialOrd for Ecvt {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.cost.partial_cmp(&other.cost)
     }
 }
 
@@ -145,18 +154,31 @@ pub struct EarClip {
     eque: BTreeMap<usize, Rc<RefCell<Ecvt>>>,
     hols: BTreeMap<(usize, usize), (Rc<RefCell<Ecvt>>, Rect)>, // (cost, uuid) to (ptr, rect)
     tris: Vec<Row3<usize>>,
+    bbox: Rect,
     epsilon: f64
 }
 
 impl EarClip {
-    pub fn new() -> Self {
-        Self {
+    pub fn new(polys: &PolygonsIdcs, epsilon: f64) -> Self {
+        let mut ec = Self {
             polygon: vec![],
+            simples: vec![],
+            contour: vec![],
+            eque: BTreeMap::new(),
+            hols: BTreeMap::new(),
+            tris: vec![],
+            bbox: Rect::default(),
+            epsilon,
+        };
+
+        //do clip_degenerate()
+        for v in ec.polygon.iter() {}
+
+        for v in ec.initialize(polys).iter_mut() {
+            ec.find_start(v);
         }
-    }
 
-    pub fn init() {
-
+        ec
     }
 
     pub fn get_epsilon(&self) -> f64 {
@@ -170,11 +192,11 @@ impl EarClip {
     /// This function and JoinPolygons are the only functions that affect
     /// the circular list data structure. This helps ensure it remains circular.
     pub fn link(vl: &Rc<RefCell<Ecvt>>, vr: &Rc<RefCell<Ecvt>>) {
-        let mut l = vl.borrow_mut();
-        let mut r = vr.borrow_mut();
-        l.vr = Rc::downgrade(vr);
-        r.vl = Rc::downgrade(vl);
-        vl.borrow_mut().dir = safe_normalize(vr.borrow().pos - vl.borrow().pos);
+        let mut vl_ = vl.borrow_mut();
+        let mut vr_ = vr.borrow_mut();
+        vl_.vr = Rc::downgrade(vr);
+        vr_.vl = Rc::downgrade(vl);
+        vl.borrow_mut().dir = safe_normalize(vr_.pos - vl_.pos);
     }
 
     /// When an ear vert is clipped, its neighbors get linked, so they get unlinked
@@ -219,7 +241,50 @@ impl EarClip {
         panic!();
     }
 
-    pub fn initialize() {}
+    pub fn initialize(&mut self, polys: &PolygonsIdcs) -> Vec<Rc<RefCell<Ecvt>>> {
+        let mut bgns = vec![];
+        let bgn = Rc::clone(self.polygon.first().unwrap());
+        for poly in polys.iter() {
+            let v = poly.first().unwrap();
+            self.polygon.push(Rc::new(RefCell::new(Ecvt{
+                idx: v.idx,
+                pos: v.pos,
+                dir: Row2::new(0., 0.),
+                ear: BTreeSet::new(),
+                vl: Rc::downgrade(&bgn),
+                vr: Rc::downgrade(&bgn),
+                cost: 0.,
+            })));
+            let first = Rc::clone(self.polygon.last().unwrap());
+            let mut last = Rc::clone(&first);
+            self.bbox.union(&first.borrow().pos);
+            bgns.push(Rc::clone(&first));
+
+            for p in poly.iter().skip(1) {
+                self.bbox.union(&p.pos);
+                self.polygon.push(Rc::new(RefCell::new(Ecvt{
+                    idx: v.idx,
+                    pos: v.pos,
+                    dir: Row2::new(0., 0.),
+                    ear: BTreeSet::new(),
+                    vl: Rc::downgrade(&bgn),
+                    vr: Rc::downgrade(&bgn),
+                    cost: 0.,
+                })));
+                let next = Rc::clone(self.polygon.last().unwrap());
+                Self::link(&last, &next);
+                last = Rc::clone(&next);
+            }
+            Self::link(&last, &first);
+        }
+
+        if self.epsilon < 0. { self.bbox.scale() * K_PRECISION; }
+
+        // Slightly more than enough, since each hole can cause two extra triangles.
+        self.tris.reserve(self.polygon.len() + 2 * bgns.len());
+
+        bgns
+    }
 
     pub fn find_start(&mut self, first: &mut Rc<RefCell<Ecvt>>) {
         let origin = first.borrow().pos;
@@ -227,7 +292,7 @@ impl EarClip {
         let mut max = f64::MIN;
         let mut bbox = Rect::default();
         let mut area = 0.;
-        let mut comp = 0.;
+        let mut comp = 0.; // For Kahan summation
 
         let add_point = |v: &Rc<RefCell<Ecvt>>| {
             bbox.union(&v.borrow().pos);
@@ -244,7 +309,7 @@ impl EarClip {
         if Self::do_loop(first, add_point).is_none() { return; }
 
         area += comp;
-        let min_area = self.epsilon * bbox.longer_length();
+        let min_area = self.epsilon * bbox.scale();
 
         if max.is_finite() && area > -min_area {
             let cost = 0;
@@ -260,7 +325,7 @@ impl EarClip {
 
     /// Create a collider of all vertices in this polygon, each expanded by epsilon_.
     /// Each ear uses this BVH to quickly find a subset of vertices to check for cost.
-    fn vert_collider() -> (Vec<PolyVert>, Vec<PolyVert) {}
+    //fn vert_collider() -> (Vec<PolyVert>, Vec<PolyVert) {}
 
 
     pub fn triangulate_poly(vid: usize) {
