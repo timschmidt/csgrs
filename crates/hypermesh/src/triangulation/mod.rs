@@ -5,10 +5,10 @@ pub mod quetry_2d_tree;
 
 use std::collections::BTreeMap;
 use nalgebra::{Matrix3x2 as Mat32, RowVector3 as Row3};
+use crate::boolean46::TriRef;
+use crate::bounds::union_bbs;
 use crate::common::{PolyVert, PolygonsIdcs};
 use crate::Halfedge;
-
-
 
 fn assemble_halfs(halfs: &[Halfedge], hid_offset: i32) -> Vec<Vec<i32>>{
     let mut v2h: BTreeMap<i32, Vec<i32>> = BTreeMap::new();
@@ -77,26 +77,76 @@ fn project_polygons(
     for poly in polys {
         let mut buff = vec![];
         for e in poly {
-            buff.push(PolyVert{pos: proj * halfs[e].tail, idx: *e as usize});
+            //buff.push(PolyVert{pos: proj * halfs[e].tail, idx: *e as usize});
         }
         ps.push(buff);
     }
     ps
 }
 
-fn process_face() {
-
-}
 
 
 fn general_triangulation(fid: usize) {
 
 }
 
+pub struct Triangulator<'a> {
+    vpos: &'a [Row3<f64>],
+    fnmls: &'a [Row3<f64>],
+    halfs: &'a [Halfedge],
+    ih_per_f: &'a [i32],
+    half_tri: &'a [TriRef],
+}
+
+impl <'a> Triangulator<'a>  {
+    pub fn triangulate(&self) -> Vec<Row3<usize>> {
+        panic!()
+    }
+
+    fn add_triangle(&self) {
+
+    }
+
+    fn general_triangulate(&self, fid: usize) -> Vec<Row3<usize>> {
+        panic!()
+    }
+
+    fn process_face<F1, F2>(
+        &self,
+        mut general: F1,
+        mut add_tri: F2,
+        fid: usize,
+    ) where F1 : FnMut(usize) -> Vec<Row3<i32>>,
+            F2 : FnMut(usize, &Row3<i32>, &Row3<f64>, &TriRef)
+    {
+        let e0 = self.ih_per_f[fid];
+        let e1 = self.ih_per_f[fid + 1];
+        let ne = e1 - e0;
+        let n = self.fnmls[fid];
+
+        if ne == 3 {
+
+        } else if ne == 4 {
+
+        } else {
+            for t in general(fid) {
+                add_tri(fid, &t, &n, &self.half_tri[e0 as usize]);
+            }
+        }
+    }
+}
+
+
+
+
+
+
 pub fn face_to_triangle(
     vpos: &[Row3<f64>],
     fnmls: &[Row3<f64>],
     halfs: &[Halfedge],
+    ih_per_face: &[i32],
+    half_tri: &[TriRef],
 ) {
     //let process_face = || {};
     //let general_triangulation = |fid: usize| {

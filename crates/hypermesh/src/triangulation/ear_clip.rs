@@ -3,7 +3,7 @@ use std::cmp::{Ordering, PartialEq};
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::{Rc, Weak};
 use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
-use crate::common::{det2x2, is_ccw_2d, safe_normalize, PolyVert, PolygonsIdcs, Rect, K_PRECISION};
+use crate::common::{det2x2, is_ccw_2d, safe_normalize, PolyVert, PolygonsIdcs, Rect, K_BEST, K_PRECISION};
 use crate::quetry_2d_tree::compute_query_2d_tree;
 
 
@@ -43,9 +43,20 @@ impl Ecvt {
         panic!();
     }
 
-    pub fn is_convex(&self) -> bool { panic!(); }
-    pub fn is_reflex(&self) -> bool { panic!(); }
-    pub fn inter_y2x(&self, y: f64) -> f64 { panic!(); }
+    /// Returns true for convex or collinear ears.
+    pub fn is_convex(&self, epsilon: f64) -> bool {
+        is_ccw_2d(&self.pos_l(), &self.pos, &self.pos_r(), epsilon) > 0
+    }
+
+    /// Subtly different from !IsConvex because IsConvex will return true for collinear
+    /// non-folded verts, while IsReflex will always check until actual certainty is determined.
+    pub fn is_reflex(&self, epsilon: f64) -> bool {
+        //return !left->InsideEdge(left->right, epsilon, true);
+        panic!();
+    }
+    pub fn inter_y2x(&self, y: f64) -> f64 {
+        panic!();
+    }
 
     /// This finds the cost of this vert relative to one of the two closed sides of the ear.
     /// Points are valid even when they touch, so long as their edge goes to the outside.
@@ -89,7 +100,7 @@ impl Ecvt {
     pub fn ear_cost(
         &self,
         epsilon: f64,
-        //collider:
+        collider: &IdxCollider,
     ) -> f64 {
         let s_vl_pos = self.vl.upgrade().unwrap().borrow().pos;
         let s_vl_dir = self.vl.upgrade().unwrap().borrow().dir;
@@ -121,6 +132,7 @@ type EvPtr = Rc<RefCell<Ecvt>>;
 impl PartialEq  for Ecvt { fn eq(&self, other: &Self) -> bool { self.cost == other.cost } }
 impl PartialOrd for Ecvt { fn partial_cmp(&self, other: &Self) -> Option<Ordering> { self.cost.partial_cmp(&other.cost) } }
 
+#[derive(Clone)]
 struct EvPtrA(EvPtr);
 struct EvPtrB(EvPtr, Rect);
 
@@ -209,11 +221,7 @@ impl EarClip {
 
         //do clip_degenerate()
         for v in ec.polygon.iter() {}
-
-        for v in ec.initialize(polys).iter_mut() {
-            ec.find_start(v);
-        }
-
+        for v in ec.initialize(polys).iter_mut() { ec.find_start(v); }
         ec
     }
 
@@ -221,13 +229,22 @@ impl EarClip {
         panic!("Not implemented");
     }
 
-    pub fn triangulate(&self) -> Vec<Row3<usize>> {
-        panic!("Not implemented");
+    pub fn triangulate(&mut self) -> Vec<Row3<usize>> {
+        let vs = self.hols.iter().map(|h| Rc::clone(&h.0)).collect::<Vec<_>>();
+        for v in vs {
+            panic!("Not implemented");
+            // self.cut_keyhole(&mut start); // Implement this when needed
+        }
+
+        let vs = self.simples.iter().map(|s| Rc::clone(s)).collect::<Vec<_>>();
+        for mut v in vs { self.triangulate_poly(&mut v); }
+
+        std::mem::take(&mut self.tris)
     }
 
     /// This function and JoinPolygons are the only functions that affect
     /// the circular list data structure. This helps ensure it remains circular.
-    pub fn link(vl: &EvPtr, vr: &EvPtr) {
+    fn link(vl: &EvPtr, vr: &EvPtr) {
         let mut vl_ = vl.borrow_mut();
         let mut vr_ = vr.borrow_mut();
         vl_.vr = Rc::downgrade(vr);
@@ -238,7 +255,7 @@ impl EarClip {
     /// When an ear vert is clipped, its neighbors get linked, so they get unlinked
     /// from it, but it is still linked to them.
     /// todo: check carefully this code
-    pub fn clipped(v: &EvPtr) -> bool {
+    fn clipped(v: &EvPtr) -> bool {
         !Rc::ptr_eq(&v.borrow().ptr_l_of_r(), v)
     }
 
@@ -247,8 +264,7 @@ impl EarClip {
     /// The C++ returns `polygon_.end()` when it detects a degenerate (right == left).
     /// In Rust, we return `None` in that case. Otherwise, we return `Some(v)` where
     /// `v` is the iterator position at the loop end (i.e., when we come back to `first`).
-    pub fn do_loop<F>(v: &mut EvPtr, mut func: F) -> Option<Rc<RefCell<Ecvt>>>
-    where F: FnMut(&mut EvPtr) {
+    fn do_loop<F>(v: &mut EvPtr, mut func: F) -> Option<EvPtr> where F: FnMut(&mut EvPtr) {
         let mut w = Rc::clone(v);
         loop {
             if Self::clipped(&w) {
@@ -276,7 +292,7 @@ impl EarClip {
         panic!();
     }
 
-    pub fn initialize(&mut self, polys: &PolygonsIdcs) -> Vec<EvPtr> {
+    fn initialize(&mut self, polys: &PolygonsIdcs) -> Vec<EvPtr> {
         let mut bgns = vec![];
         let bgn = Rc::clone(self.polygon.first().unwrap());
         for poly in polys.iter() {
@@ -321,7 +337,7 @@ impl EarClip {
         bgns
     }
 
-    pub fn find_start(&mut self, first: &mut EvPtr) {
+    fn find_start(&mut self, first: &mut EvPtr) {
         let origin = first.borrow().pos;
         let mut bgn = Rc::clone(first);
         let mut max = f64::MIN;
@@ -374,35 +390,54 @@ impl EarClip {
 
     /// Recalculate the cost of the Vert v ear,
     /// updating it in the queue by removing and reinserting it.
-    fn process_ear(&mut self, v: &mut EvPtr, collider: &IdxCollider) {
-        if let Some(ear) = &v.borrow().ear {
-            let pt = EvPtrA(ear.upgrade().unwrap());
-            self.eque.remove(&pt);
+    fn process_ear(&mut self, v: &mut EvPtr, c: &IdxCollider) {
+        if let Some(ear) = &v.borrow_mut().ear {
+            let ptr = EvPtrA(ear.upgrade().unwrap());
+            self.eque.remove(&ptr);
+        }
+        v.borrow_mut().ear = None;
+
+        if v.borrow().is_short(self.epsilon) {
+            let ptr = EvPtrA(Rc::clone(v));
+            self.eque.insert(ptr.clone());
+            v.borrow_mut().cost = K_BEST;
+            v.borrow_mut().ear = Some(Rc::downgrade(&ptr.0));
+        } else if v.borrow().is_convex(2. * self.epsilon) {
+            let ptr = EvPtrA(Rc::clone(v));
+            self.eque.insert(ptr.clone());
+            v.borrow_mut().cost = v.borrow().ear_cost(self.epsilon, c);
+            v.borrow_mut().ear = Some(Rc::downgrade(&ptr.0));
+        } else {
+            v.borrow_mut().cost = 1.; // not used, but marks reflex verts for debug
         }
     }
 
     pub fn triangulate_poly(&mut self, start: &mut EvPtr) {
-        let vert_collider = Self::vert_collider(start);
-
-        if vert_collider.rfs.is_empty() { return; }
+        let c = Self::vert_collider(start);
+        if c.rfs.is_empty() { return; }
 
         let mut num_tri = -2;
         self.eque.clear();
 
-        let mut v = Self::do_loop(start, |v| {
-            self.process_ear(v, &vert_collider);
+        let v_op = Self::do_loop(start, |v| {
+            self.process_ear(v, &c);
             num_tri += 1;
         });
-        if v.is_none() { return; }
 
-        while num_tri > 0 {
-            if let Some(ear) = self.eque.first() {
-                v = Some(Rc::clone(&ear.0));
-                self.eque.remove(&(ear.clone()));// todo: not correctly working
+        if let Some(mut v) = v_op {
+            while num_tri > 0 {
+                if let Some(ear) = self.eque.first().cloned() {
+                    v = Rc::clone(&ear.0);
+                    self.eque.remove(&ear);
+                }
+                Self::clip_ear();
+                num_tri -= 1;
+                self.process_ear(&mut v.borrow().ptr_l(), &c);
+                self.process_ear(&mut v.borrow().ptr_r(), &c);
+                let ptr_r = v.borrow().ptr_r();
+                v = Rc::clone(&ptr_r);
             }
         }
-
-        panic!();
     }
 }
 

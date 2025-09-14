@@ -6,6 +6,7 @@ use nalgebra::{
 };
 
 pub const K_PRECISION: f64 = 1e-12;
+pub const K_BEST: f64 = f64::MIN;
 
 pub fn det2x2(a: &Row2<f64>, b: &Row2<f64>) -> f64 { a.x * b.y - a.y * b.x }
 

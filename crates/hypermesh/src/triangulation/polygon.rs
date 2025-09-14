@@ -1,6 +1,6 @@
 use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
-use crate::common::PolygonsIdcs;
-use crate::ear_clip::{det2x2, EarClip};
+use crate::common::{det2x2, PolygonsIdcs};
+use crate::ear_clip::{EarClip};
 
 ///
 /// step 1: convex case
@@ -62,13 +62,10 @@ pub fn triangulate_from_poly_idx(
     allow_convex: bool
 ) -> Vec<Row3<usize>> {
     let mut t = vec![];
-    let mut e = epsilon;
     if allow_convex && is_convex(poly_idcs, epsilon) {
         t = triangulate_convex(poly_idcs);
     } else {
-        let c = EarClip::new();
-        t = c.triangulate();
-        e = c.get_epsilon();
+        t = EarClip::new(&poly_idcs, epsilon).triangulate();
     }
     t
 }

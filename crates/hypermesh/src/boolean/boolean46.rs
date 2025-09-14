@@ -114,7 +114,7 @@ struct EdgePos {
 }
 
 #[derive(Clone, Debug)]
-struct TriRef {
+pub struct TriRef {
     mesh_id: usize,
     origin_id: i32,
     face_id: usize,
