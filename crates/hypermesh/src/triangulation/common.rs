@@ -10,7 +10,7 @@ pub const K_BEST: f64 = f64::MIN;
 
 pub fn det2x2(a: &Row2<f64>, b: &Row2<f64>) -> f64 { a.x * b.y - a.y * b.x }
 
-fn get_axis_aligned_projection(normal: &Row3<f64>) -> Mat23<f64> {
+pub fn get_axis_aligned_projection(normal: &Row3<f64>) -> Mat23<f64> {
     let abs = normal.abs();
     let max: f64;
     let mut prj: Mat32<f64>;
