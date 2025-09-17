@@ -42,7 +42,7 @@ fn triangulate_convex(polygon_idcs: &PolygonsIdcs) -> Vec<Row3<usize>> {
 ///
 
 /// @brief Triangulates a set of &epsilon;-valid polygons. If the input is not
-/// &epsilon;-valid, the triangulation may overlap, but will always return a
+/// &epsilon;-valid, the triangulation may overlap but will always return a
 /// manifold result that matches the input edge directions.
 ///
 /// @param polys The set of polygons, wound CCW and representing multiple
@@ -50,23 +50,19 @@ fn triangulate_convex(polygon_idcs: &PolygonsIdcs) -> Vec<Row3<usize>> {
 /// references back to the original vertices.
 /// @param epsilon The value of &epsilon;, bounding the uncertainty of the
 /// input.
-/// @param allowConvex If true (default), the triangulator will use a fast
+/// @param allowConvex If true (default), the triangulator will use fast
 /// triangulation if the input is convex, falling back to ear-clipping if not.
 /// The triangle quality may be lower, so set to false to disable this
 /// optimization.
 /// @return std::vector<ivec3> The triangles, referencing the original
 /// vertex indicies.
-pub fn triangulate_from_poly_idx(
+pub fn triangulate_from_poly_idcs(
     poly_idcs: &PolygonsIdcs,
     epsilon: f64,
     allow_convex: bool
 ) -> Vec<Row3<usize>> {
-    let mut t = vec![];
-    if allow_convex && is_convex(poly_idcs, epsilon) {
-        t = triangulate_convex(poly_idcs);
-    } else {
-        t = EarClip::new(&poly_idcs, epsilon).triangulate();
-    }
-    t
+    let f = allow_convex && is_convex(poly_idcs, epsilon);
+    if f { triangulate_convex(poly_idcs) }
+    else { EarClip::new(&poly_idcs, epsilon).triangulate() }
 }
 

@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use nalgebra::RowVector3;
 use crate::boolean::{intersect12, winding03, Boolean3};
 use crate::{Manifold, OpType};
@@ -79,4 +80,18 @@ fn test_tet_sub_penetration_case(){
         p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
 
     boolean.get_result(OpType::Subtract);
+}
+
+#[test]
+fn b_tree_map_test() {
+    let mut map = BTreeMap::new();
+    map.insert((3, 1), "C");
+    map.insert((2, 1), "X");
+    map.insert((2, 2), "U");
+    map.insert((5, 1), "E");
+    map.insert((1, 1), "Z");
+    map.insert((4, 1), "D");
+    for (k, v) in map.iter() {
+        println!("{}, {}: {}", k.0, k.1, v);
+    }
 }

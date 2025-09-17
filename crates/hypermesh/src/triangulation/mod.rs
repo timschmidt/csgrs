@@ -2,35 +2,12 @@ pub mod common;
 pub mod ear_clip;
 pub mod polygon;
 pub mod quetry_2d_tree;
-
 use std::collections::{BTreeMap, VecDeque};
-use nalgebra::{Matrix3x2 as Mat32, RowVector3 as Row3};
+use nalgebra::{Matrix2x3 as Mat23, RowVector3 as Row3};
 use crate::boolean46::TriRef;
-use crate::bounds::union_bbs;
-use crate::common::{get_axis_aligned_projection, is_ccw_2d, is_ccw_3d, PolyVert, PolygonsIdcs};
+use crate::common::{get_axis_aligned_projection, is_ccw_3d, PolyVert, PolygonsIdcs};
 use crate::Halfedge;
-
-/// Add the vertex position projection to the indexed polygons.
-fn project_polygons(
-    polys: &Vec<Vec<i32>>,
-    halfs: &Vec<Halfedge>,
-    vpos: &Vec<Row3<f64>>,
-    proj: &Mat32<f64>,
-) -> PolygonsIdcs {
-    let mut ps = vec![];
-    for poly in polys {
-        let mut buff = vec![];
-        for e in poly {
-            //buff.push(PolyVert{pos: proj * halfs[e].tail, idx: *e as usize});
-        }
-        ps.push(buff);
-    }
-    ps
-}
-
-fn general_triangulation(fid: usize) {
-
-}
+use crate::polygon::triangulate_from_poly_idcs;
 
 pub struct Triangulator<'a> {
     vpos:  &'a [Row3<f64>],
@@ -49,7 +26,7 @@ impl <'a> Triangulator<'a>  {
         panic!()
     }
 
-    fn add_triangle(&mut self, t: Row3<usize>) {
+    fn add_triangle(&mut self, t: &Row3<usize>) {
         self.out_idcs.push(
             Row3::new(
             self.halfs[t.x].tail as usize,
@@ -58,8 +35,10 @@ impl <'a> Triangulator<'a>  {
         ));
     }
 
-    /// This function considers vertex-joint cases.
-    /// But not sure when some inner loops in an outer loop come...
+    /// This function considers vertex-joint cases like Hierholzer's algorithm.
+    /// https://algorithms.discrete.ma.tum.de/graph-algorithms/hierholzer/index_en.html
+    /// But not sure when some inner loops in an outer loop case happen...
+    /// Or, two separate loops could be happened.
     fn assemble_halfs(&self, bgn: usize, num: usize) -> Vec<Vec<usize>> {
         let mut v2h: BTreeMap<i32, VecDeque<usize>> = BTreeMap::new();
 
@@ -86,6 +65,16 @@ impl <'a> Triangulator<'a>  {
         loops
     }
 
+    /// Add the vertex position projection to the indexed polygons.
+    fn project_polygons(&self, polys: &Vec<Vec<usize>>, prj: &Mat23<f64>) -> PolygonsIdcs {
+        polys.iter().map(|p|
+            p.iter().map(|&e| {
+                let pos = prj * self.vpos[self.halfs[e].tail as usize].transpose();
+                PolyVert { pos: pos.transpose(), idx: e }
+            }).collect()).collect()
+    }
+
+
     fn single_triangulate(&mut self, hid: usize) {
         let mut idcs = [hid, hid + 1, hid + 2];
         let mut ts = vec![];
@@ -103,67 +92,56 @@ impl <'a> Triangulator<'a>  {
             ));
     }
 
-    fn square_triangulate(&self, fid: usize, nor: &Row3<f64>) {
-        let ccw = |tri| {
+    fn square_triangulate(&mut self, fid: usize) {
+        let ccw = |tri: Row3<usize>| {
             is_ccw_3d(
                 &self.vpos[self.halfs[tri[0]].tail as usize],
                 &self.vpos[self.halfs[tri[1]].tail as usize],
                 &self.vpos[self.halfs[tri[2]].tail as usize],
-                &nor,
+                &self.fnmls[fid],
                 self.epsilon
             ) >= 0
         };
 
-        //let quad: Vec<Vec<i32>> = assemble_halfs();
+        let hid_bgn = self.hid_f[fid];
+        let hid_end = self.hid_f[fid + 1];
+        let hid_num = hid_end - hid_bgn;
+        let quad = &self.assemble_halfs(hid_bgn as usize, hid_num as usize)[0];
+        let tris = vec![
+            vec![Row3::new(quad[0], quad[1], quad[2]), Row3::new(quad[0], quad[2], quad[3])],
+            vec![Row3::new(quad[1], quad[2], quad[3]), Row3::new(quad[0], quad[1], quad[3])],
+        ];
+        let mut choice: usize = 0;
 
-    }
-
-    fn general_triangulate(&self, fid: usize) -> Vec<Row3<usize>> {
-        panic!()
-    }
-
-    fn process_face<F1, F2>(
-        &self,
-        mut general: F1,
-        mut add_tri: F2,
-        fid: usize,
-    ) where F1 : FnMut(usize) -> Vec<Row3<i32>>,
-            F2 : FnMut(usize, &Row3<i32>, &Row3<f64>, &TriRef)
-    {
-        let e0 = self.hid_f[fid];
-        let e1 = self.hid_f[fid + 1];
-        let ne = e1 - e0;
-        let n = self.fnmls[fid];
-
-        if ne == 3 {
-
-        } else if ne == 4 {
-
-        } else {
-            for t in general(fid) {
-                add_tri(fid, &t, &n, &self.trefs[e0 as usize]);
-            }
+        if !(ccw(tris[0][0]) && ccw(tris[0][1])) {
+            choice = 1;
+        } else if ccw(tris[1][0]) && ccw(tris[1][1]) {
+            let diag0 = self.vpos[self.halfs[quad[0]].tail as usize] -
+                        self.vpos[self.halfs[quad[2]].tail as usize];
+            let diag1 = self.vpos[self.halfs[quad[1]].tail as usize] -
+                        self.vpos[self.halfs[quad[3]].tail as usize];
+            if diag0.norm() > diag1.norm() { choice = 1; }
         }
-    }
+
+        for t in tris[choice].iter() { self.add_triangle(t) }
 }
 
+    fn general_triangulate(&mut self, fid: usize, allow_convex: bool) {
+        let prj = get_axis_aligned_projection(&self.fnmls[fid]);
+        let loops = self.assemble_halfs(self.hid_f[fid] as usize, self.hid_f[fid + 1] as usize);
+        let polys = self.project_polygons(&loops, &prj);
+        for t in triangulate_from_poly_idcs(&polys, self.epsilon, allow_convex) {
+            self.add_triangle(&t);
+        }
+    }
 
-
-
-
-
-pub fn face_to_triangle(
-    vpos: &[Row3<f64>],
-    fnmls: &[Row3<f64>],
-    halfs: &[Halfedge],
-    ih_per_face: &[i32],
-    half_tri: &[TriRef],
-) {
-    //let process_face = || {};
-    //let general_triangulation = |fid: usize| {
-    //    let n = fnml[fid];
-    //};
-    for i in 0..halfs.len() {
-
+    pub fn process_face(&mut self, fid: usize, allow_convex: bool) {
+        let e0 = self.hid_f[fid] as usize;
+        let e1 = self.hid_f[fid + 1] as usize;
+        match  e1 - e0 {
+            3 => { self.single_triangulate(e0); }
+            4 => { self.square_triangulate(fid); }
+            _ => { self.general_triangulate(fid, allow_convex); }
+        }
     }
 }
