@@ -3,9 +3,11 @@ pub mod collider;
 
 use std::sync::Arc;
 use nalgebra::{DMatrix, RowVector3, Vector3};
+use num_traits::float::FloatCore;
 use bounds::BoundingBox;
 use crate::collider::{morton_code, Collider, MortonCollider};
 use crate::{Half, Hmesh};
+use crate::common::K_PRECISION;
 
 #[derive(Clone, Debug)]
 pub struct Halfedge {
@@ -60,20 +62,34 @@ pub struct Manifold {
     pub hmesh: Arc<Hmesh>,
     pub bbox: BoundingBox,
     pub collider: MortonCollider,
+    pub epsilon: f64,
+    pub tolerance: f64,
 }
 
 impl Manifold {
+    //
     // todo: better accepting move hmesh. find out a way to do it
     //
     pub fn new(hmesh: &Hmesh) -> Self {
         let bbox = BoundingBox::new_from_matrix(usize::MAX, &hmesh.pos);
         let (mut f_bboxes, mut f_morton) = get_face_morton(&hmesh, &bbox);
-        let hm = sort_faces(&hmesh, &mut f_bboxes, &mut f_morton);
-        Manifold {
-            hmesh: hm.clone(),
+        let mut mfd = Manifold {
+            hmesh: sort_faces(&hmesh, &mut f_bboxes, &mut f_morton),
             bbox,
-            collider: MortonCollider::new(&f_bboxes, &f_morton)
-        }
+            collider: MortonCollider::new(&f_bboxes, &f_morton),
+            epsilon: -1.,
+            tolerance: -1.,
+        };
+        mfd.set_epsilon(K_PRECISION * mfd.bbox.scale(), false);
+        mfd
     }
 
+    pub fn set_epsilon(&mut self, min_epsilon: f64, use_single: bool) {
+        let s = self.bbox.scale();
+        let mut e = min_epsilon.max(K_PRECISION * s);
+        e = if e.is_finite() { e } else { -1. };
+        let t = if use_single { e.max(f64::EPSILON * s) } else { e };
+        self.epsilon = e;
+        self.tolerance = self.tolerance.max(t);
+    }
 }

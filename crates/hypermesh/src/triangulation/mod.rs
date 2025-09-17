@@ -2,6 +2,8 @@ pub mod common;
 pub mod ear_clip;
 pub mod polygon;
 pub mod quetry_2d_tree;
+mod test;
+
 use std::collections::{BTreeMap, VecDeque};
 use nalgebra::{Matrix2x3 as Mat23, RowVector3 as Row3};
 use crate::boolean46::TriRef;
@@ -10,29 +12,47 @@ use crate::Halfedge;
 use crate::polygon::triangulate_from_poly_idcs;
 
 pub struct Triangulator<'a> {
-    vpos:  &'a [Row3<f64>],
-    fnmls: &'a [Row3<f64>],
-    halfs: &'a [Halfedge],
-    hid_f: &'a [i32],
-    trefs: &'a [TriRef],
+    pub vpos:  &'a [Row3<f64>],
+    pub fnmls: &'a [Row3<f64>],
+    pub halfs: &'a [Halfedge],
+    pub hid_f: &'a [i32],
+    pub trefs: &'a [TriRef],
     pub epsilon: f64,
-    pub out_idcs:  Vec<Row3<usize>>,
     //out_fnmls: Vec<Row3<f64>>, // maybe not needed for the simple triangulation
     //out_trefs: Vec<TriRef>,    // same
 }
 
 impl <'a> Triangulator<'a>  {
-    pub fn triangulate(&self) -> Vec<Row3<usize>> {
-        panic!()
+    /// triangulation api function
+    pub fn triangulate(&self, allow_convex: bool) -> Vec<Row3<usize>> {
+        let mut idcs = vec![];
+        for fid in 0..self.hid_f.len() - 1 {
+            let v = self.process_face(fid, allow_convex);
+            println!("face {}: {:?}", fid, v);
+            idcs.extend(v);
+        }
+        idcs
     }
 
-    fn add_triangle(&mut self, t: &Row3<usize>) {
-        self.out_idcs.push(
-            Row3::new(
+    fn process_face(&self, fid: usize, allow_convex: bool) -> Vec<Row3<usize>> {
+        let e0 = self.hid_f[fid] as usize;
+        let e1 = self.hid_f[fid + 1] as usize;
+        match  e1 - e0 {
+            3 => { self.single_triangulate(e0) }
+            4 => { self.square_triangulate(fid) }
+            _ => {
+                //self.general_triangulate(fid, allow_convex)
+                vec![]
+            }
+        }
+    }
+
+    fn get_indices(&self, t: &Row3<usize>) -> Row3<usize> {
+        Row3::new(
             self.halfs[t.x].tail as usize,
             self.halfs[t.y].tail as usize,
             self.halfs[t.z].tail as usize,
-        ));
+        )
     }
 
     /// This function considers vertex-joint cases like Hierholzer's algorithm.
@@ -75,7 +95,7 @@ impl <'a> Triangulator<'a>  {
     }
 
 
-    fn single_triangulate(&mut self, hid: usize) {
+    fn single_triangulate(&self, hid: usize) -> Vec<Row3<usize>> {
         let mut idcs = [hid, hid + 1, hid + 2];
         let mut ts = vec![];
         let mut hs = vec![];
@@ -84,15 +104,14 @@ impl <'a> Triangulator<'a>  {
             hs.push(self.halfs[*id].head);
         }
         if hs[0] == ts[2] { idcs.swap(1, 2); }
-        self.out_idcs.push(
-            Row3::new(
-                self.halfs[idcs[0]].tail as usize,
-                self.halfs[idcs[1]].tail as usize,
-                self.halfs[idcs[2]].tail as usize,
-            ));
+        vec![Row3::new(
+            self.halfs[idcs[0]].tail as usize,
+            self.halfs[idcs[1]].tail as usize,
+            self.halfs[idcs[2]].tail as usize,
+        )]
     }
 
-    fn square_triangulate(&mut self, fid: usize) {
+    fn square_triangulate(&self, fid: usize) -> Vec<Row3<usize>> {
         let ccw = |tri: Row3<usize>| {
             is_ccw_3d(
                 &self.vpos[self.halfs[tri[0]].tail as usize],
@@ -123,25 +142,14 @@ impl <'a> Triangulator<'a>  {
             if diag0.norm() > diag1.norm() { choice = 1; }
         }
 
-        for t in tris[choice].iter() { self.add_triangle(t) }
-}
+        tris[choice].iter().map(|t| self.get_indices(t)).collect()
+    }
 
-    fn general_triangulate(&mut self, fid: usize, allow_convex: bool) {
+    fn general_triangulate(&self, fid: usize, allow_convex: bool) -> Vec<Row3<usize>> {
         let prj = get_axis_aligned_projection(&self.fnmls[fid]);
         let loops = self.assemble_halfs(self.hid_f[fid] as usize, self.hid_f[fid + 1] as usize);
         let polys = self.project_polygons(&loops, &prj);
-        for t in triangulate_from_poly_idcs(&polys, self.epsilon, allow_convex) {
-            self.add_triangle(&t);
-        }
-    }
-
-    pub fn process_face(&mut self, fid: usize, allow_convex: bool) {
-        let e0 = self.hid_f[fid] as usize;
-        let e1 = self.hid_f[fid + 1] as usize;
-        match  e1 - e0 {
-            3 => { self.single_triangulate(e0); }
-            4 => { self.square_triangulate(fid); }
-            _ => { self.general_triangulate(fid, allow_convex); }
-        }
+        triangulate_from_poly_idcs(&polys, self.epsilon, allow_convex)
+            .iter().map(|t| self.get_indices(t)).collect()
     }
 }

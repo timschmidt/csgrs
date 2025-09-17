@@ -1,6 +1,5 @@
 use nalgebra::{
     Matrix2x3 as Mat23,
-    Matrix3x2 as Mat32,
     RowVector3 as Row3,
     RowVector2 as Row2
 };
@@ -13,21 +12,21 @@ pub fn det2x2(a: &Row2<f64>, b: &Row2<f64>) -> f64 { a.x * b.y - a.y * b.x }
 pub fn get_axis_aligned_projection(normal: &Row3<f64>) -> Mat23<f64> {
     let abs = normal.abs();
     let max: f64;
-    let mut prj: Mat32<f64>;
+    let mut prj: Mat23<f64>;
 
     if abs.z > abs.x && abs.z > abs.y {
-        prj = Mat32::new(1., 0., 0., 1., 0., 0.);
+        prj = Mat23::new(1., 0., 0., 0., 1., 0.); // preserve x, y
         max = normal.z;
     } else if abs.y > abs.x {
-        prj = Mat32::new(0., 1., 0., 0., 1., 0.);
+        prj = Mat23::new(0., 0., 1., 1., 0., 0.); // preserve z, x
         max = normal.y;
     } else {
-        prj = Mat32::new(0., 0., 1., 0., 0., 1.);
+        prj = Mat23::new(0., 1., 0., 0., 0., 1.); // preserve y, z
         max = normal.x;
     }
 
     if max < 0. { prj.set_column(0, &(-prj.column(0))); }
-    prj.transpose()
+    prj
 }
 
 pub fn is_ccw_2d(p0: &Row2<f64>, p1: &Row2<f64>, p2: &Row2<f64>, t: f64) -> i32 {

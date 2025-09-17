@@ -2,7 +2,7 @@ use nalgebra::{Point3, RowVector3, Vector3};
 use std::collections::HashMap;
 use std::mem;
 use crate::boolean::Boolean3;
-use crate::{Half, Halfedge, Manifold, OpType};
+use crate::{Half, Halfedge, Manifold, OpType, Triangulator};
 use crate::bounds::BoundingBox;
 
 fn duplicate_verts(
@@ -389,18 +389,6 @@ fn append_whole_edges(
     }
 }
 
-fn compute_faces(
-    vpos: &[RowVector3<f64>],
-    half: &[Halfedge],
-    fnml: &[RowVector3<f64>],
-
-) {
-    //let process_face = || {};
-    //let general_triangulation = |fid: usize| {
-    //    let n = fnml[fid];
-    //};
-}
-
 impl<'a> Boolean3<'a> {
     pub fn get_result(&self, op: OpType) -> (Vec<RowVector3<f64>>, Vec<Halfedge>) {
         let c1 = if op == OpType::Intersect {0} else {1};
@@ -510,6 +498,18 @@ impl<'a> Boolean3<'a> {
 
         //println!("====== half_res: {}", half_res.len());
         //for h in half_res.iter() { println!("h: {:?}", h); }
+
+
+        let triangulator = Triangulator{
+            vpos: &vpos_r,
+            fnmls: &fnmls,
+            halfs: &half_res,
+            hid_f: &ih_per_f,
+            trefs: &half_tri,
+            epsilon: 1e-12, // todo temporally!!!
+        };
+
+        let res = triangulator.triangulate(true);
 
         (vpos_r, half_res)
 

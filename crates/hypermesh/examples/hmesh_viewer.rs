@@ -73,10 +73,10 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>
 ) {
 
-    let (m0, _) = tobj::load_obj("assets/models/soccerball.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    let (m1, _) = tobj::load_obj("assets/models/cube_twist.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m0, _) = tobj::load_obj("assets/models/cube_x_plus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m1, _) = tobj::load_obj("assets/models/tet_b.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
     let mut hms_ = vec![];
-    for (m, s) in vec![(m0, 1.), (m1, 0.7)] {
+    for (m, s) in vec![(m0, 1.), (m1, 1.)] {
         let mesh = &m[0].mesh;
         let pos_buf = mesh.positions.iter().map(|&v| (v * s) as f64).collect::<Vec<f64>>();
         let idx_buf = mesh.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>();

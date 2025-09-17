@@ -46,6 +46,11 @@ impl BoundingBox {
 
     pub fn size(&self) -> Row3<f64> { self.max - self.min }
 
+    pub fn scale(&self) -> f64 {
+        let s = self.size();
+        s.x.abs().max(s.y.abs()).max(s.z.abs())
+    }
+
     pub fn overlaps(&self, q: &Query) -> bool {
         match q {
             Query::Bb(b) => {
