@@ -463,6 +463,11 @@ impl Face {
         let m = self.hm.upgrade().unwrap();
         m.face_normal.fixed_view::<1,3>(self.id, 0).into()
     }
+
+    pub fn area(&self) -> f64 {
+        let m = self.hm.upgrade().unwrap();
+        m.face_area[self.id]
+    }
 }
 
 impl Half {

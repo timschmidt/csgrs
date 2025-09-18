@@ -1,4 +1,4 @@
-use nalgebra::{Point3, RowVector3, Vector3};
+use nalgebra::{RowVector3 as Row3};
 use std::collections::HashMap;
 use std::mem;
 use crate::boolean::Boolean3;
@@ -8,8 +8,8 @@ use crate::bounds::BoundingBox;
 fn duplicate_verts(
     inclusion : &[i32],
     vert_r    : &[i32],
-    vert_pos_p: &[RowVector3<f64>],
-    vert_pos_r: &mut [RowVector3<f64>],
+    vert_pos_p: &[Row3<f64>],
+    vert_pos_r: &mut [Row3<f64>],
     vid: usize
 ) {
     let n = inclusion[vid].abs() as usize;
@@ -50,7 +50,7 @@ fn size_output(
     p1q2: &Vec<[i32; 2]>,
     p2q1: &Vec<[i32; 2]>,
     invert_q: bool,
-    fnmls: &mut Vec<RowVector3<f64>>,
+    fnmls: &mut Vec<Row3<f64>>,
 ) -> (Vec<i32>, Vec<i32>) {
     let mut side_p = vec![0; mfd_p.hmesh.n_face];
     let mut side_q = vec![0; mfd_q.hmesh.n_face];
@@ -88,7 +88,7 @@ fn size_output(
     inclusive_scan(&keep_fs, &mut face_pq2r[1..], 0);
     let n_face_r = *face_pq2r.last().unwrap() as usize;
     face_pq2r.truncate(nfp + nfq);
-    fnmls.resize(n_face_r, RowVector3::zeros());
+    fnmls.resize(n_face_r, Row3::zeros());
 
     let mut fid_r = 0;
     for f in mfd_p.hmesh.faces.iter() { if side_p[f.id] > 0 { fnmls[fid_r] = f.normal().clone(); fid_r += 1; } }
@@ -217,7 +217,7 @@ fn append_partial_edges(
     half_p: &[Half],                             // halfedge of mfd_p
     vid_p2r: &[i32],                             // the table from vid of mfd_p to vid of mfd_r
     fid_p2r: &[i32],
-    pos_res: &[RowVector3<f64>],                // the vert pos of mfd_r, already fulfilled so far
+    pos_res: &[Row3<f64>],                // the vert pos of mfd_r, already fulfilled so far
     forward: bool,                               //
     half_res: &mut [Halfedge],                   // the halfedge data of mfd_r, empty yet
     half_tri: &mut [TriRef],                     // the table from halfedge of mfd_r to triangle information
@@ -299,7 +299,7 @@ fn append_partial_edges(
 }
 
 fn append_new_edges(
-    pos_res: &[RowVector3<f64>],                // the vert pos of mfd_r, already fulfilled so far
+    pos_res: &[Row3<f64>],                // the vert pos of mfd_r, already fulfilled so far
     fid_pq2r: &[i32],
     nfaces_p: usize,
     face_ptr_r: &mut[i32],
@@ -390,7 +390,7 @@ fn append_whole_edges(
 }
 
 impl<'a> Boolean3<'a> {
-    pub fn get_result(&self, op: OpType) -> (Vec<RowVector3<f64>>, Vec<Halfedge>) {
+    pub fn get_result(&self, op: OpType) -> (Vec<Row3<f64>>, Vec<Halfedge>, Vec<Row3<usize>>) {
         let c1 = if op == OpType::Intersect {0} else {1};
         let c2 = if op == OpType::Add       {1} else {0};
         let c3 = if op == OpType::Intersect {1} else {-1};
@@ -433,9 +433,9 @@ impl<'a> Boolean3<'a> {
 
         let mut vpos_p = vec![];
         let mut vpos_q = vec![];
-        let mut vpos_r = vec![RowVector3::zeros(); nv_r as usize];
-        for r in self.mfd_p.hmesh.pos.row_iter() { vpos_p.push(RowVector3::new(r[0], r[1], r[2])); }
-        for r in self.mfd_q.hmesh.pos.row_iter() { vpos_q.push(RowVector3::new(r[0], r[1], r[2])); }
+        let mut vpos_r = vec![Row3::zeros(); nv_r as usize];
+        for r in self.mfd_p.hmesh.pos.row_iter() { vpos_p.push(Row3::new(r[0], r[1], r[2])); }
+        for r in self.mfd_q.hmesh.pos.row_iter() { vpos_q.push(Row3::new(r[0], r[1], r[2])); }
 
         for i in 0..nv_p  { duplicate_verts(&i03, &vid_p2r, &vpos_p, &mut vpos_r, i); }
         for i in 0..nv_q  { duplicate_verts(&i30, &vid_q2r, &vpos_q, &mut vpos_r, i); }
@@ -509,9 +509,17 @@ impl<'a> Boolean3<'a> {
             epsilon: 1e-12, // todo temporally!!!
         };
 
+        let mut ih_per_f_diff = vec![];
+
+        for i in 0..ih_per_f.len() - 1 {
+            ih_per_f_diff.push(ih_per_f[i + 1] - ih_per_f[i]);
+        }
+
+        println!("ih_per_f: {:?}", ih_per_f);
+        println!("ih_per_f_diff: {:?}", ih_per_f_diff);
         let res = triangulator.triangulate(true);
 
-        (vpos_r, half_res)
+        (vpos_r, half_res, res)
 
         //compute_faces(&vpos_r, &half_res);
         //println!("====== half_tri");   for t in half_tri.iter() { println!("t: {:?}", t); }

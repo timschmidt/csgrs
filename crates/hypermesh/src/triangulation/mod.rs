@@ -28,7 +28,6 @@ impl <'a> Triangulator<'a>  {
         let mut idcs = vec![];
         for fid in 0..self.hid_f.len() - 1 {
             let v = self.process_face(fid, allow_convex);
-            println!("face {}: {:?}", fid, v);
             idcs.extend(v);
         }
         idcs
@@ -78,8 +77,8 @@ impl <'a> Triangulator<'a>  {
                 hid1 = hid0;
                 loops.push(Vec::new());
             }
-            loops.last_mut().unwrap().push(bgn + hid1);
-            hid1 = v2h.get_mut(&self.halfs[bgn + hid1].head).unwrap().pop_back().unwrap();
+            loops.last_mut().unwrap().push(hid1);
+            hid1 = v2h.get_mut(&self.halfs[hid1].head).unwrap().pop_back().unwrap();
             v2h.retain(|_, vq| !vq.is_empty());
         }
         loops

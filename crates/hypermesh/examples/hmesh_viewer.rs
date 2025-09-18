@@ -84,11 +84,6 @@ fn setup(
             DMatrix::from_row_slice(mesh.positions.len() / 3, 3, &pos_buf).into(),
             DMatrix::from_row_slice(mesh.indices.len() / 3, 3, &idx_buf).into()
         );
-        for f in hm.faces.iter() {
-            assert_eq!(f.id * 3 + 0, f.half().id);
-            assert_eq!(f.id * 3 + 1, f.half().next().id);
-            assert_eq!(f.id * 3 + 2, f.half().prev().id);
-        }
         hms_.push(hm);
     }
 
@@ -102,9 +97,7 @@ fn setup(
     let expand = -1.;
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
-    //println!("intersect12, forward");
     let (x12, v12) = intersect12(mfs[0], mfs[1], &mut p1q2, expand, true);
-    //println!("intersect12, backward");
     let (x21, v21) = intersect12(mfs[0], mfs[1], &mut p2q1, expand, false);
     let w03 = winding03(mfs[0], mfs[1], expand, true);
     let w30 = winding03(mfs[0], mfs[1], expand, false);
@@ -127,21 +120,29 @@ fn setup(
         pts_w.push(Vec3::new(p[0] as f32, p[1] as f32, p[2] as f32));
     }
 
-
     let boolean = Boolean3{
         mfd_p: &mfs[0], mfd_q: &mfs[1],
         p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
-    let (pos, halfs) = boolean.get_result(OpType::Subtract);
+    let (pos, halfs, tris) = boolean.get_result(OpType::Subtract);
     for h in halfs {
         let p0 = pos[h.tail as usize];
         let p1 = pos[h.head as usize];
-        //println!("p0: {:?}", p0);
-        //println!("p1: {:?}", p1);
         edges.push((
             Vec3::new(p0[0] as f32, p0[1] as f32, p0[2] as f32),
             Vec3::new(p1[0] as f32, p1[1] as f32, p1[2] as f32),
         ));
     }
+    {
+        let pos_buf: Vec<f64> = pos.iter().flat_map(|row| row.iter().copied()).collect();
+        let idx_buf: Vec<usize> = tris.iter().flat_map(|row| row.iter().copied()).collect();
+        let hm = Hmesh::new(
+            DMatrix::from_row_slice(pos.len(), 3, &pos_buf).into(),
+            DMatrix::from_row_slice(tris.len(), 3, &idx_buf).into()
+        );
+        hms_.push(hm);
+    }
+
+
 
     cmds.insert_resource(
         DrawingData{ units: vec![
@@ -150,7 +151,8 @@ fn setup(
             DrawingUnit { pts: vec![], lines: edges, boxes: vec![], col: WHITE },
         ]});
 
-    for hm in vec![&mf0.hmesh, &mf1.hmesh] {
+    //for hm in vec![&mf0.hmesh, &mf1.hmesh] {
+    for hm in vec![hms_[2].clone()] {
         let mut bm = Mesh::new(
             bevy::render::mesh::PrimitiveTopology::TriangleList,
             RenderAssetUsages::default()
