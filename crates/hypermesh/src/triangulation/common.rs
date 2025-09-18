@@ -75,8 +75,9 @@ impl Rect {
         }
     }
 
-    pub fn union(&mut self, pt: &Row2<f64>) {
-        panic!("not implemented");
+    pub fn union(&mut self, p: &Row2<f64>) {
+        self.min = Row2::new(self.min.x.min(p.x), self.min.y.min(p.y));
+        self.max = Row2::new(self.max.x.max(p.x), self.max.y.max(p.y));
     }
 
     pub fn size(&self) -> Row2<f64> {
@@ -94,7 +95,6 @@ pub struct PolyVert {
     pub pos: Row2<f64>,
     pub idx: usize
 }
-pub type SimplePolygonIdx = Vec<PolyVert>;
-pub type PolygonsIdcs = Vec<SimplePolygonIdx>;
+pub type PolygonIdx = Vec<PolyVert>;
 pub type Polygons = Vec<Vec<Row2<f64>>>;
 

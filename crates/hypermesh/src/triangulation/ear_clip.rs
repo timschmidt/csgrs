@@ -3,7 +3,7 @@ use std::cmp::{Ordering, PartialEq};
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::{Rc, Weak};
 use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
-use crate::common::{det2x2, is_ccw_2d, safe_normalize, PolyVert, PolygonsIdcs, Rect, K_BEST, K_PRECISION};
+use crate::common::{det2x2, is_ccw_2d, safe_normalize, PolyVert, PolygonIdx, Rect, K_BEST, K_PRECISION};
 use crate::quetry_2d_tree::compute_query_2d_tree;
 
 
@@ -12,14 +12,14 @@ struct Ecvt {
     pos: Row2<f64>, // vert pos
     dir: Row2<f64>, // right dir
     ear: Option<Weak<RefCell<Ecvt>>>,
-    vl:  Weak<RefCell<Ecvt>>,
-    vr:  Weak<RefCell<Ecvt>>,
+    vl:  Option<Weak<RefCell<Ecvt>>>,
+    vr:  Option<Weak<RefCell<Ecvt>>>,
     cost: f64,
 }
 
 impl Ecvt {
-    pub fn ptr_l(&self) -> EvPtr { self.vl.upgrade().unwrap() }
-    pub fn ptr_r(&self) -> EvPtr { self.vr.upgrade().unwrap() }
+    pub fn ptr_l(&self) -> EvPtr { self.vl.as_ref().unwrap().upgrade().unwrap() }
+    pub fn ptr_r(&self) -> EvPtr { self.vr.as_ref().unwrap().upgrade().unwrap() }
     pub fn pos_l(&self) -> Row2<f64> { self.ptr_l().borrow().pos }
     pub fn pos_r(&self) -> Row2<f64> { self.ptr_r().borrow().pos }
     pub fn dir_l(&self) -> Row2<f64> { self.ptr_l().borrow().dir }
@@ -27,11 +27,14 @@ impl Ecvt {
     pub fn ptr_l_of_r(&self) -> EvPtr { self.ptr_r().borrow().ptr_l() }
     pub fn is_lr_same(&self) -> bool { self.ptr_r() == self.ptr_l() }
 
+    pub fn new(idx: usize, pos: Row2<f64>) -> Self {
+        Self { idx, pos, dir: Row2::new(0., 0.), ear: None, vl: None, vr: None, cost: 0. }
+    }
+
     /// Shorter than half of epsilon, to be conservative so that it doesn't
     /// cause CW triangles that exceed epsilon due to rounding error.
     pub fn is_short(&self, epsilons: f64) -> bool {
-        let s_vr_pos = self.vr.upgrade().unwrap().borrow().pos;
-        let diff = s_vr_pos - self.pos;
+        let diff = self.pos_r() - self.pos;
         diff.dot(&diff) * 4. < epsilons * epsilons
     }
 
@@ -102,18 +105,13 @@ impl Ecvt {
         epsilon: f64,
         collider: &IdxCollider,
     ) -> f64 {
-        let s_vl_pos = self.vl.upgrade().unwrap().borrow().pos;
-        let s_vl_dir = self.vl.upgrade().unwrap().borrow().dir;
-        let s_vr_pos = self.vr.upgrade().unwrap().borrow().pos;
-        let s_vl_idx = self.vl.upgrade().unwrap().borrow().idx;
-        let s_vr_idx = self.vr.upgrade().unwrap().borrow().idx;
         let open_side = (self.pos_l() - self.pos_r()).normalize();
         let center = (self.pos_l() + self.pos_r()) * 0.5;
         let scale = 4. / open_side.dot(&open_side);
         let radius = open_side.norm() * 0.5;
         let open_side = open_side.normalize();
-        let total = s_vl_dir.dot(&self.dir) - 1. - epsilon;
-        if is_ccw_2d(&self.pos, &s_vl_pos, &s_vr_pos, epsilon) == 0 { return total; }
+        let total = self.dir_l().dot(&self.dir) - 1. - epsilon;
+        if is_ccw_2d(&self.pos, &self.pos_l(), &self.pos_r(), epsilon) == 0 { return total; }
         let mut ear_box = Rect::new(
             &Row2::new(center.x - radius, center.y - radius),
             &Row2::new(center.x + radius, center.y + radius),
@@ -189,7 +187,6 @@ impl Ord for EvPtrB {
  * within epsilon.
  */
 
-
 struct IdxCollider {
     pts: Vec<PolyVert>,
     rfs: Vec<EvPtr>,
@@ -207,7 +204,7 @@ pub struct EarClip {
 }
 
 impl EarClip {
-    pub fn new(polys: &PolygonsIdcs, epsilon: f64) -> Self {
+    pub fn new(polys: &Vec<PolygonIdx>, epsilon: f64) -> Self {
         let mut ec = Self {
             polygon: vec![],
             simples: vec![],
@@ -219,9 +216,11 @@ impl EarClip {
             epsilon,
         };
 
-        //do clip_degenerate()
-        for v in ec.polygon.iter() {}
-        for v in ec.initialize(polys).iter_mut() { ec.find_start(v); }
+        let mut starts = ec.initialize(polys);
+
+        //for v in ec.polygon.iter() { ec.clip_degenerate(); }
+        for v in starts.iter_mut() { ec.find_start(v); }
+
         ec
     }
 
@@ -247,9 +246,9 @@ impl EarClip {
     fn link(vl: &EvPtr, vr: &EvPtr) {
         let mut vl_ = vl.borrow_mut();
         let mut vr_ = vr.borrow_mut();
-        vl_.vr = Rc::downgrade(vr);
-        vr_.vl = Rc::downgrade(vl);
-        vl.borrow_mut().dir = safe_normalize(vr_.pos - vl_.pos);
+        vl_.vr = Some(Rc::downgrade(vr));
+        vr_.vl = Some(Rc::downgrade(vl));
+        vl_.dir = safe_normalize(vr_.pos - vl_.pos);
     }
 
     /// When an ear vert is clipped, its neighbors get linked, so they get unlinked
@@ -288,24 +287,13 @@ impl EarClip {
         panic!();
     }
 
-    pub fn clip_degenerate() {
-        panic!();
-    }
+    pub fn clip_degenerate(&self) { panic!(); }
 
-    fn initialize(&mut self, polys: &PolygonsIdcs) -> Vec<EvPtr> {
+    fn initialize(&mut self, polys: &Vec<PolygonIdx>) -> Vec<EvPtr> {
         let mut bgns = vec![];
-        let bgn = Rc::clone(self.polygon.first().unwrap());
         for poly in polys.iter() {
             let v = poly.first().unwrap();
-            self.polygon.push(Rc::new(RefCell::new(Ecvt{
-                idx: v.idx,
-                pos: v.pos,
-                dir: Row2::new(0., 0.),
-                ear: None,
-                vl: Rc::downgrade(&bgn),
-                vr: Rc::downgrade(&bgn),
-                cost: 0.,
-            })));
+            self.polygon.push(Rc::new(RefCell::new(Ecvt::new(v.idx, v.pos))));
             let first = Rc::clone(self.polygon.last().unwrap());
             let mut last = Rc::clone(&first);
             self.bbox.union(&first.borrow().pos);
@@ -313,15 +301,7 @@ impl EarClip {
 
             for p in poly.iter().skip(1) {
                 self.bbox.union(&p.pos);
-                self.polygon.push(Rc::new(RefCell::new(Ecvt{
-                    idx: v.idx,
-                    pos: v.pos,
-                    dir: Row2::new(0., 0.),
-                    ear: None,
-                    vl: Rc::downgrade(&bgn),
-                    vr: Rc::downgrade(&bgn),
-                    cost: 0.,
-                })));
+                self.polygon.push(Rc::new(RefCell::new(Ecvt::new(v.idx, v.pos))));
                 let next = Rc::clone(self.polygon.last().unwrap());
                 Self::link(&last, &next);
                 last = Rc::clone(&next);
@@ -440,5 +420,4 @@ impl EarClip {
         }
     }
 }
-
 

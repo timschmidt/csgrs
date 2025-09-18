@@ -500,7 +500,7 @@ impl<'a> Boolean3<'a> {
         //for h in half_res.iter() { println!("h: {:?}", h); }
 
 
-        let triangulator = Triangulator{
+        let triangulator = Triangulator {
             vpos: &vpos_r,
             fnmls: &fnmls,
             halfs: &half_res,
@@ -517,7 +517,7 @@ impl<'a> Boolean3<'a> {
 
         println!("ih_per_f: {:?}", ih_per_f);
         println!("ih_per_f_diff: {:?}", ih_per_f_diff);
-        let res = triangulator.triangulate(true);
+        let res = triangulator.triangulate(false);
 
         (vpos_r, half_res, res)
 

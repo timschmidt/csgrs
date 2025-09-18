@@ -7,7 +7,7 @@ mod test;
 use std::collections::{BTreeMap, VecDeque};
 use nalgebra::{Matrix2x3 as Mat23, RowVector3 as Row3};
 use crate::boolean46::TriRef;
-use crate::common::{get_axis_aligned_projection, is_ccw_3d, PolyVert, PolygonsIdcs};
+use crate::common::{get_axis_aligned_projection, is_ccw_3d, PolyVert, PolygonIdx};
 use crate::Halfedge;
 use crate::polygon::triangulate_from_poly_idcs;
 
@@ -40,8 +40,7 @@ impl <'a> Triangulator<'a>  {
             3 => { self.single_triangulate(e0) }
             4 => { self.square_triangulate(fid) }
             _ => {
-                //self.general_triangulate(fid, allow_convex)
-                vec![]
+                self.general_triangulate(fid, allow_convex)
             }
         }
     }
@@ -58,7 +57,10 @@ impl <'a> Triangulator<'a>  {
     /// https://algorithms.discrete.ma.tum.de/graph-algorithms/hierholzer/index_en.html
     /// But not sure when some inner loops in an outer loop case happen...
     /// Or, two separate loops could be happened.
-    fn assemble_halfs(&self, bgn: usize, num: usize) -> Vec<Vec<usize>> {
+    fn assemble_halfs(&self, fid: usize) -> Vec<Vec<usize>> {
+        let bgn = self.hid_f[fid] as usize;
+        let end = self.hid_f[fid + 1] as usize;
+        let num = end - bgn;
         let mut v2h: BTreeMap<i32, VecDeque<usize>> = BTreeMap::new();
 
         for i in bgn..bgn + num {
@@ -85,11 +87,12 @@ impl <'a> Triangulator<'a>  {
     }
 
     /// Add the vertex position projection to the indexed polygons.
-    fn project_polygons(&self, polys: &Vec<Vec<usize>>, prj: &Mat23<f64>) -> PolygonsIdcs {
-        polys.iter().map(|p|
-            p.iter().map(|&e| {
-                let pos = prj * self.vpos[self.halfs[e].tail as usize].transpose();
-                PolyVert { pos: pos.transpose(), idx: e }
+    fn project_polygons(&self, polys: &Vec<Vec<usize>>, prj: &Mat23<f64>) -> Vec<PolygonIdx> {
+        polys.iter().map(|poly|
+            poly.iter().map(|&e| {
+                let i = self.halfs[e].tail as usize;
+                let p = prj * self.vpos[i].transpose();
+                PolyVert { pos: p.transpose(), idx: e }
             }).collect()).collect()
     }
 
@@ -121,10 +124,7 @@ impl <'a> Triangulator<'a>  {
             ) >= 0
         };
 
-        let hid_bgn = self.hid_f[fid];
-        let hid_end = self.hid_f[fid + 1];
-        let hid_num = hid_end - hid_bgn;
-        let quad = &self.assemble_halfs(hid_bgn as usize, hid_num as usize)[0];
+        let quad = &self.assemble_halfs(fid)[0];
         let tris = vec![
             vec![Row3::new(quad[0], quad[1], quad[2]), Row3::new(quad[0], quad[2], quad[3])],
             vec![Row3::new(quad[1], quad[2], quad[3]), Row3::new(quad[0], quad[1], quad[3])],
@@ -145,9 +145,9 @@ impl <'a> Triangulator<'a>  {
     }
 
     fn general_triangulate(&self, fid: usize, allow_convex: bool) -> Vec<Row3<usize>> {
-        let prj = get_axis_aligned_projection(&self.fnmls[fid]);
-        let loops = self.assemble_halfs(self.hid_f[fid] as usize, self.hid_f[fid + 1] as usize);
-        let polys = self.project_polygons(&loops, &prj);
+        let proj  = get_axis_aligned_projection(&self.fnmls[fid]);
+        let loops = self.assemble_halfs(fid);
+        let polys = self.project_polygons(&loops, &proj);
         triangulate_from_poly_idcs(&polys, self.epsilon, allow_convex)
             .iter().map(|t| self.get_indices(t)).collect()
     }

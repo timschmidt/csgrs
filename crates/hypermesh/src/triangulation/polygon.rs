@@ -1,12 +1,12 @@
-use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
-use crate::common::{det2x2, PolygonsIdcs};
+use nalgebra::{RowVector3 as Row3};
+use crate::common::{det2x2, PolygonIdx};
 use crate::ear_clip::{EarClip};
 
 ///
 /// step 1: convex case
 ///
 
-fn is_convex(polygon_idcs: &PolygonsIdcs, epsilon: f64) -> bool {
+fn is_convex(polygon_idcs: &Vec<PolygonIdx>, epsilon: f64) -> bool {
     for p in polygon_idcs {
         let bgn = p.first().unwrap().pos - p.last().unwrap().pos;
         let mut end = bgn.normalize();
@@ -21,7 +21,7 @@ fn is_convex(polygon_idcs: &PolygonsIdcs, epsilon: f64) -> bool {
     true
 }
 
-fn triangulate_convex(polygon_idcs: &PolygonsIdcs) -> Vec<Row3<usize>> {
+fn triangulate_convex(polygon_idcs: &Vec<PolygonIdx>) -> Vec<Row3<usize>> {
     let mut t = Vec::with_capacity(polygon_idcs.iter().map(|p| p.len() - 2).sum());
     for p in polygon_idcs {
         let mut i = 0;
@@ -57,12 +57,17 @@ fn triangulate_convex(polygon_idcs: &PolygonsIdcs) -> Vec<Row3<usize>> {
 /// @return std::vector<ivec3> The triangles, referencing the original
 /// vertex indicies.
 pub fn triangulate_from_poly_idcs(
-    poly_idcs: &PolygonsIdcs,
+    poly_idcs: &Vec<PolygonIdx>,
     epsilon: f64,
     allow_convex: bool
 ) -> Vec<Row3<usize>> {
     let f = allow_convex && is_convex(poly_idcs, epsilon);
     if f { triangulate_convex(poly_idcs) }
-    else { EarClip::new(&poly_idcs, epsilon).triangulate() }
+    else {
+        println!("poly_idcs: {:?}", poly_idcs);
+        //EarClip::new(&poly_idcs, epsilon).triangulate()
+        let ec = EarClip::new(&poly_idcs, epsilon);
+        vec![]
+    }
 }
 
