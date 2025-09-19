@@ -10,8 +10,8 @@ use crate::IndexedMesh::vertex::IndexedVertex;
 use crate::float_types::{Real, parry3d::bounding_volume::Aabb};
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point3, Vector3};
-use std::sync::OnceLock;
 use std::fmt::Debug;
+use std::sync::OnceLock;
 
 /// **IndexedPolygon: Zero-Copy Polygon for IndexedMesh**
 ///
@@ -53,8 +53,6 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
         }
     }
 
-
-
     /// **Index-Aware Bounding Box Computation**
     ///
     /// Compute bounding box using vertex indices, accessing shared vertex storage.
@@ -79,6 +77,28 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
             }
             Aabb::new(mins, maxs)
         })
+    }
+
+    /// **CRITICAL FIX**: Compute bounding box using direct vertex array access
+    ///
+    /// This method is essential for CSG partition operations where we need to compute
+    /// bounding boxes without access to the full IndexedMesh structure.
+    pub fn bounding_box_with_vertices(&self, vertices: &[IndexedVertex]) -> Aabb {
+        let mut mins = Point3::new(Real::MAX, Real::MAX, Real::MAX);
+        let mut maxs = Point3::new(-Real::MAX, -Real::MAX, -Real::MAX);
+
+        for &idx in &self.indices {
+            if idx < vertices.len() {
+                let pos = vertices[idx].pos;
+                mins.x = mins.x.min(pos.x);
+                mins.y = mins.y.min(pos.y);
+                mins.z = mins.z.min(pos.z);
+                maxs.x = maxs.x.max(pos.x);
+                maxs.y = maxs.y.max(pos.y);
+                maxs.z = maxs.z.max(pos.z);
+            }
+        }
+        Aabb::new(mins, maxs)
     }
 
     /// **Index-Aware Polygon Flipping**
@@ -280,7 +300,10 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
         tri: [usize; 3],
     ) -> Vec<[usize; 3]> {
         // Get the three vertices of the triangle
-        if tri[0] >= mesh.vertices.len() || tri[1] >= mesh.vertices.len() || tri[2] >= mesh.vertices.len() {
+        if tri[0] >= mesh.vertices.len()
+            || tri[1] >= mesh.vertices.len()
+            || tri[2] >= mesh.vertices.len()
+        {
             return vec![tri]; // Return original if indices are invalid
         }
 
@@ -305,10 +328,10 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
 
         // Return 4 new triangles using the original and midpoint vertices
         vec![
-            [tri[0], idx01, idx20],     // Corner triangle 0
-            [idx01, tri[1], idx12],     // Corner triangle 1
-            [idx20, idx12, tri[2]],     // Corner triangle 2
-            [idx01, idx12, idx20],      // Center triangle
+            [tri[0], idx01, idx20], // Corner triangle 0
+            [idx01, tri[1], idx12], // Corner triangle 1
+            [idx20, idx12, tri[2]], // Corner triangle 2
+            [idx01, idx12, idx20],  // Center triangle
         ]
     }
 
@@ -393,15 +416,19 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
     pub fn edges<'a, T: Clone + Send + Sync + std::fmt::Debug>(
         &'a self,
         mesh: &'a IndexedMesh<T>,
-    ) -> impl Iterator<Item = (&'a crate::IndexedMesh::vertex::IndexedVertex, &'a crate::IndexedMesh::vertex::IndexedVertex)> + 'a {
+    ) -> impl Iterator<
+        Item = (
+            &'a crate::IndexedMesh::vertex::IndexedVertex,
+            &'a crate::IndexedMesh::vertex::IndexedVertex,
+        ),
+    > + 'a {
         self.indices
             .iter()
             .zip(self.indices.iter().cycle().skip(1))
             .filter_map(move |(&start_idx, &end_idx)| {
-                if let (Some(start_vertex), Some(end_vertex)) = (
-                    mesh.vertices.get(start_idx),
-                    mesh.vertices.get(end_idx)
-                ) {
+                if let (Some(start_vertex), Some(end_vertex)) =
+                    (mesh.vertices.get(start_idx), mesh.vertices.get(end_idx))
+                {
                     Some((start_vertex, end_vertex))
                 } else {
                     None
@@ -425,7 +452,7 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
                 if let (Some(v0), Some(v1), Some(v2)) = (
                     mesh.vertices.get(i0),
                     mesh.vertices.get(i1),
-                    mesh.vertices.get(i2)
+                    mesh.vertices.get(i2),
                 ) {
                     Some([*v0, *v1, *v2])
                 } else {
@@ -490,11 +517,15 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
                     let v1 = mesh.vertices[indices[1]];
                     let v2 = mesh.vertices[indices[2]];
 
-                    let plane = crate::IndexedMesh::plane::Plane::from_indexed_vertices(
-                        vec![v0, v1, v2]
-                    );
+                    let plane = crate::IndexedMesh::plane::Plane::from_indexed_vertices(vec![
+                        v0, v1, v2,
+                    ]);
 
-                    Some(IndexedPolygon::new(indices.to_vec(), plane, self.metadata.clone()))
+                    Some(IndexedPolygon::new(
+                        indices.to_vec(),
+                        plane,
+                        self.metadata.clone(),
+                    ))
                 } else {
                     None
                 }
@@ -515,9 +546,17 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
     ///
     /// **⚠️ DEPRECATED**: This method creates a dependency on the regular Mesh module.
     /// Use native IndexedPolygon operations instead for better performance and memory efficiency.
-    #[deprecated(since = "0.20.1", note = "Use native IndexedPolygon operations instead of converting to regular Polygon")]
-    pub fn to_regular_polygon(&self, vertices: &[crate::IndexedMesh::vertex::IndexedVertex]) -> crate::mesh::polygon::Polygon<S> {
-        let resolved_vertices: Vec<crate::mesh::vertex::Vertex> = self.indices.iter()
+    #[deprecated(
+        since = "0.20.1",
+        note = "Use native IndexedPolygon operations instead of converting to regular Polygon"
+    )]
+    pub fn to_regular_polygon(
+        &self,
+        vertices: &[crate::IndexedMesh::vertex::IndexedVertex],
+    ) -> crate::mesh::polygon::Polygon<S> {
+        let resolved_vertices: Vec<crate::mesh::vertex::Vertex> = self
+            .indices
+            .iter()
             .filter_map(|&idx| {
                 if idx < vertices.len() {
                     // IndexedVertex has pos field, regular Vertex needs position and normal
@@ -532,12 +571,6 @@ impl<S: Clone + Send + Sync + Debug> IndexedPolygon<S> {
 
         crate::mesh::polygon::Polygon::new(resolved_vertices, self.metadata.clone())
     }
-
-
-
-
-
-
 }
 
 /// Build orthonormal basis for 2D projection
@@ -558,23 +591,21 @@ pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real
     (u, v)
 }
 
-
-
-
-
 /// **Helper function to subdivide a triangle**
 ///
 /// Subdivides a single triangle into 4 smaller triangles by adding midpoint vertices.
 /// This matches the regular Mesh polygon.subdivide_triangle() helper function.
-pub fn subdivide_triangle(tri: [crate::IndexedMesh::vertex::IndexedVertex; 3]) -> Vec<[crate::IndexedMesh::vertex::IndexedVertex; 3]> {
+pub fn subdivide_triangle(
+    tri: [crate::IndexedMesh::vertex::IndexedVertex; 3],
+) -> Vec<[crate::IndexedMesh::vertex::IndexedVertex; 3]> {
     let v01 = tri[0].interpolate(&tri[1], 0.5);
     let v12 = tri[1].interpolate(&tri[2], 0.5);
     let v20 = tri[2].interpolate(&tri[0], 0.5);
 
     vec![
-        [tri[0], v01, v20],     // Corner triangle 0
-        [v01, tri[1], v12],     // Corner triangle 1 - FIXED: Now matches Mesh ordering
-        [v20, v12, tri[2]],     // Corner triangle 2 - FIXED: Now matches Mesh ordering
-        [v01, v12, v20],        // Center triangle
+        [tri[0], v01, v20], // Corner triangle 0
+        [v01, tri[1], v12], // Corner triangle 1 - FIXED: Now matches Mesh ordering
+        [v20, v12, tri[2]], // Corner triangle 2 - FIXED: Now matches Mesh ordering
+        [v01, v12, v20],    // Center triangle
     ]
 }

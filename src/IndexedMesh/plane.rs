@@ -1,4 +1,4 @@
-﻿//! IndexedMesh-Optimized Plane Operations
+//! IndexedMesh-Optimized Plane Operations
 //!
 //! This module implements robust geometric operations for planes optimized for
 //! IndexedMesh's indexed connectivity model while maintaining compatibility
@@ -8,8 +8,8 @@ use crate::IndexedMesh::{IndexedPolygon, vertex::IndexedVertex};
 use crate::float_types::{EPSILON, Real};
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 use robust;
-use std::fmt::Debug;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 /// **Plane-Edge Cache Key**
 ///
@@ -31,7 +31,11 @@ impl PlaneEdgeCacheKey {
     /// Create a cache key for a specific plane-edge combination
     pub fn new(plane: &Plane, idx_i: usize, idx_j: usize) -> Self {
         // Create canonical edge key (smaller index first)
-        let edge = if idx_i < idx_j { (idx_i, idx_j) } else { (idx_j, idx_i) };
+        let edge = if idx_i < idx_j {
+            (idx_i, idx_j)
+        } else {
+            (idx_j, idx_i)
+        };
 
         // Quantize plane parameters to avoid floating-point precision issues
         // **CRITICAL FIX**: Increased precision from 1e6 to 1e12 to prevent incorrect vertex sharing
@@ -52,7 +56,6 @@ impl PlaneEdgeCacheKey {
         }
     }
 }
-
 
 // Plane classification constants (matching mesh::plane constants)
 pub const COPLANAR: i8 = 0;
@@ -130,8 +133,14 @@ impl Plane {
         }
 
         let reference_plane = Plane {
-            normal: (vertices[1].pos - vertices[0].pos).cross(&(vertices[2].pos - vertices[0].pos)).normalize(),
-            w: vertices[0].pos.coords.dot(&(vertices[1].pos - vertices[0].pos).cross(&(vertices[2].pos - vertices[0].pos)).normalize()),
+            normal: (vertices[1].pos - vertices[0].pos)
+                .cross(&(vertices[2].pos - vertices[0].pos))
+                .normalize(),
+            w: vertices[0].pos.coords.dot(
+                &(vertices[1].pos - vertices[0].pos)
+                    .cross(&(vertices[2].pos - vertices[0].pos))
+                    .normalize(),
+            ),
         };
 
         if n == 3 {
@@ -229,7 +238,9 @@ impl Plane {
         let p0 = Point3::from(self.normal * (self.w / self.normal.norm_squared()));
 
         // Build an orthonormal basis {u, v} that spans the plane
-        let mut u = if self.normal.z.abs() > self.normal.x.abs() || self.normal.z.abs() > self.normal.y.abs() {
+        let mut u = if self.normal.z.abs() > self.normal.x.abs()
+            || self.normal.z.abs() > self.normal.y.abs()
+        {
             // normal is closer to ±Z ⇒ cross with X
             Vector3::x().cross(&self.normal)
         } else {
@@ -280,7 +291,11 @@ impl Plane {
     /// Classify an IndexedPolygon with respect to the plane.
     /// Returns a bitmask of COPLANAR, FRONT, and BACK.
     /// This method matches the regular Mesh classify_polygon method.
-    pub fn classify_polygon<S: Clone>(&self, polygon: &IndexedPolygon<S>, vertices: &[IndexedVertex]) -> i8 {
+    pub fn classify_polygon<S: Clone>(
+        &self,
+        polygon: &IndexedPolygon<S>,
+        vertices: &[IndexedVertex],
+    ) -> i8 {
         // Match the regular Mesh approach: check each vertex individually
         // This is more robust than plane-to-plane comparison
         let mut polygon_type: i8 = 0;
@@ -399,7 +414,11 @@ impl Plane {
                     // **CRITICAL FIX**: Use original polygon plane instead of recomputing
                     // Recomputing the plane from split vertices can introduce numerical errors
                     // that cause gaps. Regular Mesh uses the original plane logic.
-                    front.push(IndexedPolygon::new(front_indices, polygon.plane.clone(), polygon.metadata.clone()));
+                    front.push(IndexedPolygon::new(
+                        front_indices,
+                        polygon.plane.clone(),
+                        polygon.metadata.clone(),
+                    ));
                 }
                 if split_back.len() >= 3 {
                     // Add new vertices to the vertex array and get their indices
@@ -411,7 +430,11 @@ impl Plane {
                     // **CRITICAL FIX**: Use original polygon plane instead of recomputing
                     // Recomputing the plane from split vertices can introduce numerical errors
                     // that cause gaps. Regular Mesh uses the original plane logic.
-                    back.push(IndexedPolygon::new(back_indices, polygon.plane.clone(), polygon.metadata.clone()));
+                    back.push(IndexedPolygon::new(
+                        back_indices,
+                        polygon.plane.clone(),
+                        polygon.metadata.clone(),
+                    ));
                 }
             },
         }
@@ -477,7 +500,7 @@ impl Plane {
         &self,
         polygon: &IndexedPolygon<S>,
         vertices: &mut Vec<IndexedVertex>,
-        _edge_cache: &mut HashMap<PlaneEdgeCacheKey, usize>,
+        edge_cache: &mut HashMap<PlaneEdgeCacheKey, usize>,
     ) -> (
         Vec<IndexedPolygon<S>>,
         Vec<IndexedPolygon<S>>,
@@ -552,7 +575,8 @@ impl Plane {
             FRONT => front.push(polygon.clone()),
             BACK => back.push(polygon.clone()),
             SPANNING => {
-                // Polygon spans the plane - need to split it
+                // **CRITICAL FIX**: Implement exact same algorithm as regular Mesh split_polygon
+                // This ensures manifold topology preservation by maintaining correct vertex ordering
                 let mut front_indices: Vec<usize> = Vec::new();
                 let mut back_indices: Vec<usize> = Vec::new();
 
@@ -565,12 +589,10 @@ impl Plane {
                         continue;
                     }
 
-                    let vertex_i = &vertices[idx_i];
-                    let vertex_j = &vertices[idx_j];
                     let type_i = types[i];
                     let type_j = types[j];
 
-                    // Add current vertex to appropriate lists
+                    // **STEP 1**: Add current vertex to appropriate side(s) - EXACT MATCH to regular Mesh
                     if type_i != BACK {
                         front_indices.push(idx_i);
                     }
@@ -578,42 +600,64 @@ impl Plane {
                         back_indices.push(idx_i);
                     }
 
-                    // If edge crosses plane, compute intersection
+                    // **STEP 2**: Handle edge intersection - EXACT MATCH to regular Mesh
+                    // If the edge between these two vertices crosses the plane,
+                    // compute intersection and add that intersection to both sets
                     if (type_i | type_j) == SPANNING {
-                        let denom = self.normal().dot(&(vertex_j.pos - vertex_i.pos));
-                        if denom.abs() > EPSILON {
-                            let t = (self.offset() - self.normal().dot(&vertex_i.pos.coords)) / denom;
-                            // **CRITICAL FIX**: Disable edge caching to match regular Mesh behavior
-                            // Edge caching with quantization was causing gaps by incorrectly sharing vertices
-                            // that should remain separate. Regular Mesh creates new vertices for each intersection.
-                            let intersection_vertex = vertex_i.interpolate(vertex_j, t);
-                            vertices.push(intersection_vertex);
-                            let v_idx = vertices.len() - 1;
-                            front_indices.push(v_idx);
-                            back_indices.push(v_idx);
-                        }
+                        let cache_key = PlaneEdgeCacheKey::new(self, idx_i, idx_j);
+
+                        let intersection_idx = if let Some(&cached_idx) = edge_cache.get(&cache_key) {
+                            // Reuse cached intersection vertex
+                            cached_idx
+                        } else {
+                            // Compute new intersection vertex - EXACT MATCH to regular Mesh
+                            let vertex_i = &vertices[idx_i];
+                            let vertex_j = &vertices[idx_j];
+                            let denom = self.normal().dot(&(vertex_j.pos - vertex_i.pos));
+                            // Avoid dividing by zero - EXACT MATCH to regular Mesh
+                            if denom.abs() > EPSILON {
+                                let t = (self.offset() - self.normal().dot(&vertex_i.pos.coords))
+                                    / denom;
+                                let intersection_vertex = vertex_i.interpolate(vertex_j, t);
+
+                                // Add to vertex array and cache the index
+                                vertices.push(intersection_vertex);
+                                let new_idx = vertices.len() - 1;
+                                edge_cache.insert(cache_key, new_idx);
+                                new_idx
+                            } else {
+                                // Degenerate case - use first vertex
+                                idx_i
+                            }
+                        };
+
+                        // **CRITICAL**: Add intersection to BOTH polygons - EXACT MATCH to regular Mesh
+                        front_indices.push(intersection_idx);
+                        back_indices.push(intersection_idx);
                     }
                 }
 
-                // Create new polygons from vertex lists
+                // Create new polygons with proper vertex sharing
                 if front_indices.len() >= 3 {
-                    // **CRITICAL FIX**: Use original polygon plane instead of recomputing
-                    // Recomputing the plane from split vertices can introduce numerical errors
-                    // that cause gaps. Regular Mesh uses the original plane logic.
-                    front.push(IndexedPolygon::new(front_indices, polygon.plane.clone(), polygon.metadata.clone()));
+                    front.push(IndexedPolygon::new(
+                        front_indices,
+                        polygon.plane.clone(),
+                        polygon.metadata.clone(),
+                    ));
                 }
 
                 if back_indices.len() >= 3 {
-                    // **CRITICAL FIX**: Use original polygon plane instead of recomputing
-                    // Recomputing the plane from split vertices can introduce numerical errors
-                    // that cause gaps. Regular Mesh uses the original plane logic.
-                    back.push(IndexedPolygon::new(back_indices, polygon.plane.clone(), polygon.metadata.clone()));
+                    back.push(IndexedPolygon::new(
+                        back_indices,
+                        polygon.plane.clone(),
+                        polygon.metadata.clone(),
+                    ));
                 }
             },
             _ => {
                 // Fallback - shouldn't happen
                 coplanar_front.push(polygon.clone());
-            }
+            },
         }
 
         (coplanar_front, coplanar_back, front, back)
@@ -621,10 +665,25 @@ impl Plane {
 
     /// Determine the orientation of another plane relative to this plane
     /// Uses a more robust geometric approach similar to Mesh implementation
+    /// **CRITICAL FIX**: Properly handles inverted planes with opposite normals
     pub fn orient_plane(&self, other_plane: &Plane) -> i8 {
         // First check if planes are coplanar by comparing normals and distances
         let normal_dot = self.normal.dot(&other_plane.normal);
         let distance_diff = (self.w - other_plane.w).abs();
+
+        // **CRITICAL FIX**: Check for opposite orientation first
+        // If normals are nearly opposite (dot product close to -1), they're inverted planes
+        if normal_dot < -0.999 {
+            // Planes have opposite normals - this is the inverted case
+            if distance_diff < EPSILON {
+                // Same distance but opposite normals - this is a flipped coplanar plane
+                // The inverted plane should be classified as BACK relative to the original
+                return BACK;
+            } else {
+                // Different distances and opposite normals
+                return if self.w > other_plane.w { FRONT } else { BACK };
+            }
+        }
 
         if normal_dot.abs() > 0.999 && distance_diff < EPSILON {
             // Planes are coplanar - need to determine relative orientation
@@ -640,15 +699,8 @@ impl Plane {
                     COPLANAR
                 }
             } else {
-                // Opposite orientation
-                let test_distance = other_plane.w - self.normal.dot(&Point3::origin().coords);
-                if test_distance > EPSILON {
-                    BACK  // Opposite normal means flipped orientation
-                } else if test_distance < -EPSILON {
-                    FRONT
-                } else {
-                    COPLANAR
-                }
+                // This case should now be handled above, but keep for safety
+                BACK
             }
         } else {
             // Planes are not coplanar - use normal comparison

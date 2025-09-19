@@ -129,7 +129,11 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
     /// Parallel version of `build`.
     /// **FIXED**: Now takes vertices parameter to match sequential version
     #[cfg(feature = "parallel")]
-    pub fn build(&mut self, polygons: &[IndexedPolygon<S>], vertices: &mut Vec<IndexedVertex>) {
+    pub fn build(
+        &mut self,
+        polygons: &[IndexedPolygon<S>],
+        vertices: &mut Vec<IndexedVertex>,
+    ) {
         if polygons.is_empty() {
             return;
         }
@@ -150,10 +154,12 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
         let mut coplanar_back: Vec<IndexedPolygon<S>> = Vec::new();
         let mut front: Vec<IndexedPolygon<S>> = Vec::new();
         let mut back: Vec<IndexedPolygon<S>> = Vec::new();
-        let mut edge_cache: HashMap<crate::IndexedMesh::plane::PlaneEdgeCacheKey, usize> = HashMap::new();
+        let mut edge_cache: HashMap<crate::IndexedMesh::plane::PlaneEdgeCacheKey, usize> =
+            HashMap::new();
 
         for p in polygons {
-            let (cf, cb, mut fr, mut bk) = plane.split_indexed_polygon_with_cache(p, vertices, &mut edge_cache);
+            let (cf, cb, mut fr, mut bk) =
+                plane.split_indexed_polygon_with_cache(p, vertices, &mut edge_cache);
             coplanar_front.extend(cf);
             coplanar_back.extend(cb);
             front.append(&mut fr);
@@ -167,13 +173,19 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
         // Build children sequentially to avoid stack overflow from recursive join
         // The polygon splitting above already uses parallel iterators for the heavy work
         if !front.is_empty() {
-            let mut front_node = self.front.take().unwrap_or_else(|| Box::new(IndexedNode::new()));
+            let mut front_node = self
+                .front
+                .take()
+                .unwrap_or_else(|| Box::new(IndexedNode::new()));
             front_node.build(&front);
             self.front = Some(front_node);
         }
 
         if !back.is_empty() {
-            let mut back_node = self.back.take().unwrap_or_else(|| Box::new(IndexedNode::new()));
+            let mut back_node = self
+                .back
+                .take()
+                .unwrap_or_else(|| Box::new(IndexedNode::new()));
             back_node.build(&back);
             self.back = Some(back_node);
         }
@@ -181,7 +193,11 @@ impl<S: Clone + Send + Sync + Debug> IndexedNode<S> {
 
     // Parallel slice
     #[cfg(feature = "parallel")]
-    pub fn slice(&self, slicing_plane: &Plane, mesh: &IndexedMesh<S>) -> (Vec<IndexedPolygon<S>>, Vec<[IndexedVertex; 2]>) {
+    pub fn slice(
+        &self,
+        slicing_plane: &Plane,
+        mesh: &IndexedMesh<S>,
+    ) -> (Vec<IndexedPolygon<S>>, Vec<[IndexedVertex; 2]>) {
         // Collect all polygons (this can be expensive, but let's do it).
         let all_polys = self.all_polygons();
 

@@ -224,7 +224,6 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
 
         // Process polygons in this node
         for polygon in &node.polygons {
-
             // Check if polygon is coplanar with slicing plane
             let mut coplanar_vertices = 0;
             let mut intersection_edges = Vec::new();

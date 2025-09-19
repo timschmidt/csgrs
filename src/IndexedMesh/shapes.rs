@@ -370,10 +370,10 @@ impl<S: Clone + Debug + Send + Sync> IndexedMesh<S> {
 
             // Side faces (quads split into triangles)
             // Following regular Mesh winding order: [b2, b1, t1, t2]
-            let b1 = bottom_ring_start + i;      // bottom current
+            let b1 = bottom_ring_start + i; // bottom current
             let b2 = bottom_ring_start + next_i; // bottom next
-            let t1 = top_ring_start + i;         // top current
-            let t2 = top_ring_start + next_i;    // top next
+            let t1 = top_ring_start + i; // top current
+            let t2 = top_ring_start + next_i; // top next
 
             // Calculate side normal
             let side_normal = Vector3::new(

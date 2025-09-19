@@ -9,8 +9,8 @@ use csgrs::IndexedMesh::{IndexedMesh, connectivity::VertexIndexMap};
 use csgrs::mesh::plane::Plane;
 use csgrs::mesh::vertex::Vertex;
 use csgrs::traits::CSG;
-use nalgebra::{Point3, Vector3};
 use hashbrown::HashMap;
+use nalgebra::{Point3, Vector3};
 use std::fs;
 
 fn main() {
@@ -102,7 +102,7 @@ fn create_simple_cube() -> IndexedMesh<()> {
         // Bottom face (z=0) - normal (0,0,-1) - viewed from below: counter-clockwise
         csgrs::IndexedMesh::IndexedPolygon::new(
             vec![0, 3, 2, 1],
-            Plane::from_vertices(vec![
+            csgrs::IndexedMesh::plane::Plane::from_indexed_vertices(vec![
                 vertices[0].clone(),
                 vertices[3].clone(),
                 vertices[2].clone(),
@@ -112,7 +112,7 @@ fn create_simple_cube() -> IndexedMesh<()> {
         // Top face (z=1) - normal (0,0,1) - viewed from above: counter-clockwise
         csgrs::IndexedMesh::IndexedPolygon::new(
             vec![4, 5, 6, 7],
-            Plane::from_vertices(vec![
+            csgrs::IndexedMesh::plane::Plane::from_indexed_vertices(vec![
                 vertices[4].clone(),
                 vertices[5].clone(),
                 vertices[6].clone(),
@@ -122,7 +122,7 @@ fn create_simple_cube() -> IndexedMesh<()> {
         // Front face (y=0) - normal (0,-1,0) - viewed from front: counter-clockwise
         csgrs::IndexedMesh::IndexedPolygon::new(
             vec![0, 1, 5, 4],
-            Plane::from_vertices(vec![
+            csgrs::IndexedMesh::plane::Plane::from_indexed_vertices(vec![
                 vertices[0].clone(),
                 vertices[1].clone(),
                 vertices[5].clone(),
@@ -132,7 +132,7 @@ fn create_simple_cube() -> IndexedMesh<()> {
         // Back face (y=1) - normal (0,1,0) - viewed from back: counter-clockwise
         csgrs::IndexedMesh::IndexedPolygon::new(
             vec![3, 7, 6, 2],
-            Plane::from_vertices(vec![
+            csgrs::IndexedMesh::plane::Plane::from_indexed_vertices(vec![
                 vertices[3].clone(),
                 vertices[7].clone(),
                 vertices[6].clone(),
@@ -142,7 +142,7 @@ fn create_simple_cube() -> IndexedMesh<()> {
         // Left face (x=0) - normal (-1,0,0) - viewed from left: counter-clockwise
         csgrs::IndexedMesh::IndexedPolygon::new(
             vec![0, 4, 7, 3],
-            Plane::from_vertices(vec![
+            csgrs::IndexedMesh::plane::Plane::from_indexed_vertices(vec![
                 vertices[0].clone(),
                 vertices[4].clone(),
                 vertices[7].clone(),
@@ -152,7 +152,7 @@ fn create_simple_cube() -> IndexedMesh<()> {
         // Right face (x=1) - normal (1,0,0) - viewed from right: counter-clockwise
         csgrs::IndexedMesh::IndexedPolygon::new(
             vec![1, 2, 6, 5],
-            Plane::from_vertices(vec![
+            csgrs::IndexedMesh::plane::Plane::from_indexed_vertices(vec![
                 vertices[1].clone(),
                 vertices[2].clone(),
                 vertices[6].clone(),
@@ -162,7 +162,7 @@ fn create_simple_cube() -> IndexedMesh<()> {
     ];
 
     let cube = IndexedMesh {
-        vertices,
+        vertices.iter().map(|v| csgrs::IndexedMesh::vertex::IndexedVertex::from(v.clone())).collect(),
         polygons,
         bounding_box: std::sync::OnceLock::new(),
         metadata: None,

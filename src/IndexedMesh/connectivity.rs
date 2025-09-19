@@ -1,5 +1,5 @@
-use crate::float_types::Real;
 use crate::IndexedMesh::IndexedMesh;
+use crate::float_types::Real;
 use hashbrown::HashMap;
 use nalgebra::Point3;
 use std::fmt::Debug;

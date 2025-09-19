@@ -3,7 +3,6 @@
 //!
 //! ![Example CSG output][Example CSG output]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Example CSG output", "docs/csg.png"))]
-//!
 //! # Features
 //! #### Default
 //! - **f64**: use f64 as Real

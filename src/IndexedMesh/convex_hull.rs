@@ -88,10 +88,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         }
 
         // Convert vertices to IndexedVertex
-        let indexed_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> = vertices
-            .into_iter()
-            .map(|v| v.into())
-            .collect();
+        let indexed_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> =
+            vertices.into_iter().map(|v| v.into()).collect();
 
         // Update vertex normals based on adjacent faces
         let mut result = IndexedMesh {
@@ -186,10 +184,8 @@ impl<S: Clone + Send + Sync + Debug> IndexedMesh<S> {
         }
 
         // Convert vertices to IndexedVertex
-        let indexed_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> = vertices
-            .into_iter()
-            .map(|v| v.into())
-            .collect();
+        let indexed_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> =
+            vertices.into_iter().map(|v| v.into()).collect();
 
         // Create result mesh
         let mut result = IndexedMesh {
@@ -353,10 +349,8 @@ mod tests {
         ];
 
         // Convert vertices to IndexedVertex
-        let indexed_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> = vertices
-            .into_iter()
-            .map(|v| v.into())
-            .collect();
+        let indexed_vertices: Vec<crate::IndexedMesh::vertex::IndexedVertex> =
+            vertices.into_iter().map(|v| v.into()).collect();
 
         let mesh: IndexedMesh<i32> = IndexedMesh {
             vertices: indexed_vertices,
