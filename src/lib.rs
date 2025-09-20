@@ -37,6 +37,7 @@ pub mod nurbs;
 pub mod sketch;
 pub mod traits;
 pub mod voxels;
+pub mod toolpath;
 
 #[cfg(any(
     all(feature = "delaunay", feature = "earcut"),
