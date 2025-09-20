@@ -17,7 +17,7 @@
 use core::fmt::Debug;
 use nalgebra::Point3;
 
-use crate::float_types::{Real, EPSILON};
+use crate::float_types::{EPSILON, Real};
 use crate::sketch::Sketch;
 
 // ==========================
@@ -27,13 +27,13 @@ use crate::sketch::Sketch;
 /// Machine families we target.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum MachineKind {
-	#[default]
-    Fdm,  // 3 axis, fused deposition modeling (extruding) 3D printer
-    Mill, // 3 axis, spinning non-zero width cutter
+    #[default]
+    Fdm, // 3 axis, fused deposition modeling (extruding) 3D printer
+    Mill,   // 3 axis, spinning non-zero width cutter
     Router, // 2.5 axis, spinning non-zero width cutter
-    Laser, // 2.5 axis, near-zero width cutter
+    Laser,  // 2.5 axis, near-zero width cutter
     Plasma, // 2.5 axis, non-zero-width cutter with nonlinear shape properties needs startup and lead-in
-    Lathe, // 3 axis, spinning workpiece, fixed cutter
+    Lathe,  // 3 axis, spinning workpiece, fixed cutter
 }
 
 /// Unified linear/rapid move primitive. Arcs are optional; most CAM stacks linearize.
@@ -55,10 +55,44 @@ pub struct Toolpath {
 }
 
 impl Toolpath {
-    pub fn new(kind: MachineKind) -> Self { Self { kind, moves: Vec::new() } }
-    pub fn travel_to<P: Into<Point3<Real>>>(&mut self, p: P) { self.moves.push(PathMove { is_rapid: true, pos: p.into(), scalar: None, feed: None, comment: None }); }
-    pub fn cut_to<P: Into<Point3<Real>>>(&mut self, p: P, feed: Option<Real>, scalar: Option<Real>) { self.moves.push(PathMove { is_rapid: false, pos: p.into(), scalar, feed, comment: None }); }
-    pub fn annotate<S: Into<String>>(&mut self, s: S) { self.moves.push(PathMove { is_rapid: true, pos: Point3::origin(), scalar: None, feed: None, comment: Some(s.into()) }); }
+    pub fn new(kind: MachineKind) -> Self {
+        Self {
+            kind,
+            moves: Vec::new(),
+        }
+    }
+    pub fn travel_to<P: Into<Point3<Real>>>(&mut self, p: P) {
+        self.moves.push(PathMove {
+            is_rapid: true,
+            pos: p.into(),
+            scalar: None,
+            feed: None,
+            comment: None,
+        });
+    }
+    pub fn cut_to<P: Into<Point3<Real>>>(
+        &mut self,
+        p: P,
+        feed: Option<Real>,
+        scalar: Option<Real>,
+    ) {
+        self.moves.push(PathMove {
+            is_rapid: false,
+            pos: p.into(),
+            scalar,
+            feed,
+            comment: None,
+        });
+    }
+    pub fn annotate<S: Into<String>>(&mut self, s: S) {
+        self.moves.push(PathMove {
+            is_rapid: true,
+            pos: Point3::origin(),
+            scalar: None,
+            feed: None,
+            comment: Some(s.into()),
+        });
+    }
 }
 
 /// Generic tool definition (router/mill/lathe).
@@ -73,7 +107,7 @@ pub struct Tool {
 /// FDM nozzle model.
 #[derive(Clone, Debug)]
 pub struct Nozzle {
-    pub width: Real,         // track width (path spacing)
+    pub width: Real, // track width (path spacing)
     pub layer_height: Real,
     pub keepout_radii: Option<Vec<(Real, Real)>>, // Vec of keepout radius and height
 }
@@ -81,11 +115,11 @@ pub struct Nozzle {
 /// Generic feed/power bundle.
 #[derive(Clone, Debug, Default)]
 pub struct Feeds {
-    pub travel: Real,         // rapid-ish traverse (mm/min) used for non-cut moves
-    pub xy: Real,             // planar feed (mm/min)
-    pub plunge: Real,         // Z feed (mm/min) when plunging
-    pub rpm: Option<Real>,    // spindle RPM if applicable
-    pub power: Option<Real>,  // 0..1 for laser/plasma power (cut)
+    pub travel: Real,        // rapid-ish traverse (mm/min) used for non-cut moves
+    pub xy: Real,            // planar feed (mm/min)
+    pub plunge: Real,        // Z feed (mm/min) when plunging
+    pub rpm: Option<Real>,   // spindle RPM if applicable
+    pub power: Option<Real>, // 0..1 for laser/plasma power (cut)
     pub pierce_ms: Option<u64>, // pierce dwell for plasma/laser
 }
 
@@ -93,7 +127,7 @@ pub struct Feeds {
 // 2D Ring extraction
 // ==================
 
-use geo::{Geometry, MultiPolygon, CoordsIter};
+use geo::{CoordsIter, Geometry, MultiPolygon};
 
 /// Iterate all rings (exterior + holes) as `Vec<(x,y)>`. Exteriors first, then holes.
 fn rings_of<S: Clone + Send + Sync + Debug>(sk: &Sketch<S>) -> Vec<Vec<(Real, Real)>> {
@@ -101,7 +135,9 @@ fn rings_of<S: Clone + Send + Sync + Debug>(sk: &Sketch<S>) -> Vec<Vec<(Real, Re
     let mut rings = Vec::new();
     for poly in mp.0 {
         rings.push(poly.exterior().coords_iter().map(|c| (c.x, c.y)).collect());
-        for hole in poly.interiors() { rings.push(hole.coords_iter().map(|c| (c.x, c.y)).collect()); }
+        for hole in poly.interiors() {
+            rings.push(hole.coords_iter().map(|c| (c.x, c.y)).collect());
+        }
     }
     rings
 }
@@ -124,7 +160,19 @@ pub struct FdmLayerCfg {
 }
 
 impl Default for FdmLayerCfg {
-    fn default() -> Self { Self { nozzle: Nozzle { width: 0.42, layer_height: 0.2, keepout_radii: None }, perimeters: 2, hilbert_order: 6, infill_density: 0.2, e_per_mm: 0.05 } }
+    fn default() -> Self {
+        Self {
+            nozzle: Nozzle {
+                width: 0.42,
+                layer_height: 0.2,
+                keepout_radii: None,
+            },
+            perimeters: 2,
+            hilbert_order: 6,
+            infill_density: 0.2,
+            e_per_mm: 0.05,
+        }
+    }
 }
 
 /// Build a single FDM layer toolpath from a **closed** 2D `Sketch` at plane `z`.
@@ -155,7 +203,9 @@ pub fn fdm_layer_from_sketch<S: Clone + Send + Sync + Debug>(
         #[cfg(not(feature = "offset"))]
         let loop_sk = compensated.clone();
         for ring in rings_of(&loop_sk) {
-            if ring.len() < 2 { continue; }
+            if ring.len() < 2 {
+                continue;
+            }
             // travel to start
             let (x0, y0) = ring[0];
             tp.travel_to(Point3::new(x0, y0, z));
@@ -163,7 +213,11 @@ pub fn fdm_layer_from_sketch<S: Clone + Send + Sync + Debug>(
             let mut last = (x0, y0);
             for &(x, y) in ring.iter().skip(1) {
                 let seg_len = ((x - last.0).powi(2) + (y - last.1).powi(2)).sqrt();
-                tp.cut_to(Point3::new(x, y, z), Some(feeds.xy), Some(cfg.e_per_mm * seg_len));
+                tp.cut_to(
+                    Point3::new(x, y, z),
+                    Some(feeds.xy),
+                    Some(cfg.e_per_mm * seg_len),
+                );
                 last = (x, y);
             }
         }
@@ -186,15 +240,23 @@ pub fn fdm_layer_from_sketch<S: Clone + Send + Sync + Debug>(
     for geom in curve.geometry {
         if let Geometry::LineString(ls) = geom {
             let coords: Vec<_> = ls.0;
-            if coords.len() < 2 { continue; }
+            if coords.len() < 2 {
+                continue;
+            }
             let (sx, sy) = (coords[0].x, coords[0].y);
             tp.travel_to(Point3::new(sx, sy, z));
             let mut last = (sx, sy);
             for (i, c) in coords.iter().enumerate().skip(1) {
-                if i % keep_every != 0 { continue; }
+                if i % keep_every != 0 {
+                    continue;
+                }
                 let (x, y) = (c.x, c.y);
                 let seg_len = ((x - last.0).powi(2) + (y - last.1).powi(2)).sqrt();
-                tp.cut_to(Point3::new(x, y, z), Some(feeds.xy), Some(cfg.e_per_mm * seg_len));
+                tp.cut_to(
+                    Point3::new(x, y, z),
+                    Some(feeds.xy),
+                    Some(cfg.e_per_mm * seg_len),
+                );
                 last = (x, y);
             }
         }
@@ -208,12 +270,25 @@ pub fn fdm_layer_from_sketch<S: Clone + Send + Sync + Debug>(
 // ========================================
 
 #[derive(Clone, Debug)]
-pub struct LeadInOut { pub length: Real, pub radius: Real }
-impl Default for LeadInOut { fn default() -> Self { Self { length: 1.0, radius: 0.0 } } }
+pub struct LeadInOut {
+    pub length: Real,
+    pub radius: Real,
+}
+impl Default for LeadInOut {
+    fn default() -> Self {
+        Self {
+            length: 1.0,
+            radius: 0.0,
+        }
+    }
+}
 
 /// Kerf compensation side for a ring.
 #[derive(Clone, Copy, Debug)]
-pub enum KerfSide { Outside, Inside }
+pub enum KerfSide {
+    Outside,
+    Inside,
+}
 
 /// Generate a kerf‑compensated contour for 2D cutters.
 /// - `kerf` is full kerf width; we offset by ±kerf/2 toward Outside/Inside.
@@ -228,7 +303,10 @@ pub fn cut2d_contours<S: Clone + Send + Sync + Debug>(
     kind: MachineKind, // Laser or Plasma
 ) -> Toolpath {
     let mut tp = Toolpath::new(kind);
-    let sign = match side { KerfSide::Outside => 1.0, KerfSide::Inside => -1.0 };
+    let sign = match side {
+        KerfSide::Outside => 1.0,
+        KerfSide::Inside => -1.0,
+    };
     #[cfg(feature = "offset")]
     let comp = region.offset_rounded(sign * 0.5 * kerf).renormalize();
     #[cfg(not(feature = "offset"))]
@@ -237,7 +315,9 @@ pub fn cut2d_contours<S: Clone + Send + Sync + Debug>(
     let ld = lead.unwrap_or_default();
 
     for ring in rings_of(&comp) {
-        if ring.len() < 3 { continue; }
+        if ring.len() < 3 {
+            continue;
+        }
         // Optional short tangential lead‑in
         let (x0, y0) = ring[0];
         let (x1, y1) = ring[1];
@@ -249,7 +329,9 @@ pub fn cut2d_contours<S: Clone + Send + Sync + Debug>(
         let ly = y0 - uy * ld.length;
 
         tp.travel_to(Point3::new(lx, ly, z));
-        if let Some(ms) = feeds.pierce_ms { tp.annotate(format!("PIERCE {} ms", ms)); }
+        if let Some(ms) = feeds.pierce_ms {
+            tp.annotate(format!("PIERCE {} ms", ms));
+        }
 
         tp.cut_to(Point3::new(x0, y0, z), Some(feeds.xy), feeds.power); // strike in
 
@@ -275,14 +357,25 @@ pub fn cut2d_contours<S: Clone + Send + Sync + Debug>(
 #[derive(Clone, Debug)]
 pub struct PocketCfg {
     pub tool: Tool,
-    pub stepover: Real,  // usually 0.4..0.8 × tool.diameter
-    pub stepdown: Real,  // depth per pass (>0)
-    pub depth: Real,     // total positive depth (absolute value)
+    pub stepover: Real,     // usually 0.4..0.8 × tool.diameter
+    pub stepdown: Real,     // depth per pass (>0)
+    pub depth: Real,        // total positive depth (absolute value)
     pub finish_allow: Real, // radial stock to leave for finishing
 }
 
 impl Default for PocketCfg {
-    fn default() -> Self { Self { tool: Tool { diameter: 3.175, corner_radius: 0.0 }, stepover: 0.6, stepdown: 1.5, depth: 3.0, finish_allow: 0.2 } }
+    fn default() -> Self {
+        Self {
+            tool: Tool {
+                diameter: 3.175,
+                corner_radius: 0.0,
+            },
+            stepover: 0.6,
+            stepdown: 1.5,
+            depth: 3.0,
+            finish_allow: 0.2,
+        }
+    }
 }
 
 /// Concentric‐offset pocketing with Z stepdowns; emits Outside finish pass at final depth.
@@ -294,7 +387,11 @@ pub fn pocket2d<S: Clone + Send + Sync + Debug>(
     feeds: &Feeds,
     is_router: bool,
 ) -> Toolpath {
-    let mut tp = Toolpath::new(if is_router { MachineKind::Router } else { MachineKind::Mill });
+    let mut tp = Toolpath::new(if is_router {
+        MachineKind::Router
+    } else {
+        MachineKind::Mill
+    });
 
     let tool_r = 0.5 * cfg.tool.diameter;
 
@@ -307,7 +404,10 @@ pub fn pocket2d<S: Clone + Send + Sync + Debug>(
     let mut z_levels: Vec<Real> = Vec::new();
     let mut z = base_z - cfg.stepdown;
     let z_bottom = base_z - cfg.depth;
-    while z > z_bottom + EPSILON { z_levels.push(z); z -= cfg.stepdown; }
+    while z > z_bottom + EPSILON {
+        z_levels.push(z);
+        z -= cfg.stepdown;
+    }
     z_levels.push(z_bottom);
 
     // Concentric offsets inward with stepover until empty
@@ -320,10 +420,14 @@ pub fn pocket2d<S: Clone + Send + Sync + Debug>(
         let mut pass = 0usize;
         loop {
             let rings = rings_of(&area);
-            if rings.is_empty() { break; }
+            if rings.is_empty() {
+                break;
+            }
             // Walk all rings at this Z
             for ring in rings {
-                if ring.len() < 2 { continue; }
+                if ring.len() < 2 {
+                    continue;
+                }
                 // entry
                 let (x0, y0) = ring[0];
                 tp.travel_to(Point3::new(x0, y0, z_safety));
@@ -338,29 +442,51 @@ pub fn pocket2d<S: Clone + Send + Sync + Debug>(
             }
             // Next inward area
             #[cfg(feature = "offset")]
-            { area = area.offset_rounded(-radial_step).renormalize(); }
+            {
+                area = area.offset_rounded(-radial_step).renormalize();
+            }
             #[cfg(not(feature = "offset"))]
-            { break; }
+            {
+                break;
+            }
             pass += 1;
-            if pass > 10_000 { break; }
+            if pass > 10_000 {
+                break;
+            }
         }
         // Reset area for next Z (start again from outer, less risk of isolated islands per level)
         #[cfg(feature = "offset")]
-        { area = region.offset_rounded(-tool_r).renormalize(); }
+        {
+            area = region.offset_rounded(-tool_r).renormalize();
+        }
     }
 
     // Finish pass on boundary at final depth, taking finish_allow
     #[cfg(feature = "offset")]
-    let finish = region.offset_rounded(-(tool_r - cfg.finish_allow.max(0.0))).renormalize();
+    let finish = region
+        .offset_rounded(-(tool_r - cfg.finish_allow.max(0.0)))
+        .renormalize();
     #[cfg(not(feature = "offset"))]
     let finish = region.clone();
 
     for ring in rings_of(&finish) {
-        if ring.len() < 2 { continue; }
+        if ring.len() < 2 {
+            continue;
+        }
         let (x0, y0) = ring[0];
         tp.travel_to(Point3::new(x0, y0, z_safety));
-        tp.cut_to(Point3::new(x0, y0, z_levels.last().copied().unwrap_or(base_z)), Some(feeds.plunge), None);
-        for &(x, y) in ring.iter().skip(1) { tp.cut_to(Point3::new(x, y, z_levels.last().copied().unwrap_or(base_z)), Some(feeds.xy), None); }
+        tp.cut_to(
+            Point3::new(x0, y0, z_levels.last().copied().unwrap_or(base_z)),
+            Some(feeds.plunge),
+            None,
+        );
+        for &(x, y) in ring.iter().skip(1) {
+            tp.cut_to(
+                Point3::new(x, y, z_levels.last().copied().unwrap_or(base_z)),
+                Some(feeds.xy),
+                None,
+            );
+        }
         tp.travel_to(Point3::new(x0, y0, z_safety));
     }
 
@@ -373,10 +499,17 @@ pub fn pocket2d<S: Clone + Send + Sync + Debug>(
 
 #[derive(Clone, Debug)]
 pub struct LatheCfg {
-    pub doc_radial: Real,   // radial depth of cut per pass
-    pub feed: Real,         // feed along Z (mm/min)
+    pub doc_radial: Real, // radial depth of cut per pass
+    pub feed: Real,       // feed along Z (mm/min)
 }
-impl Default for LatheCfg { fn default() -> Self { Self { doc_radial: 0.5, feed: 200.0 } } }
+impl Default for LatheCfg {
+    fn default() -> Self {
+        Self {
+            doc_radial: 0.5,
+            feed: 200.0,
+        }
+    }
+}
 
 /// Interpret a 2D `Sketch` as a lathe profile in the X (radius) vs Y (Z‑axis) plane.
 /// *Assumptions*: profile is a closed polygon whose **exterior** defines final OD.
@@ -392,7 +525,11 @@ pub fn lathe_rough_from_profile<S: Clone + Send + Sync + Debug>(
 
     // Sample target radius r(z) by intersecting horizontal lines with polygon exterior
     let mp = profile_xy.to_multipolygon();
-    let poly = if mp.0.is_empty() { return tp; } else { mp.0[0].clone() };
+    let poly = if mp.0.is_empty() {
+        return tp;
+    } else {
+        mp.0[0].clone()
+    };
 
     let dz = ((z_max - z_min).abs() / 200.0).max(0.25); // ~200 steps or 0.25mm
     let mut samples: Vec<(Real, Real)> = Vec::new(); // (z, r)
@@ -409,7 +546,9 @@ pub fn lathe_rough_from_profile<S: Clone + Send + Sync + Debug>(
             // Does segment cross the horizontal line?
             if (y1 <= z && y2 >= z) || (y2 <= z && y1 >= z) {
                 let dy = y2 - y1;
-                if dy.abs() < EPSILON { xs.push(x1.max(x2)); } else {
+                if dy.abs() < EPSILON {
+                    xs.push(x1.max(x2));
+                } else {
                     let t = (z - y1) / dy; // 0..1
                     if t >= -1e-6 && t <= 1.0 + 1e-6 {
                         let x = x1 + t * (x2 - x1);
@@ -418,14 +557,19 @@ pub fn lathe_rough_from_profile<S: Clone + Send + Sync + Debug>(
                 }
             }
         }
-        if let Some(max_x) = xs.into_iter().fold(None, |acc: Option<Real>, v| Some(acc.map_or(v, |a| a.max(v)))) {
+        if let Some(max_x) = xs
+            .into_iter()
+            .fold(None, |acc: Option<Real>, v| Some(acc.map_or(v, |a| a.max(v))))
+        {
             samples.push((z, max_x.max(0.0)));
         }
         z += dz;
     }
 
     // Generate radial passes: start from stock_radius and step down by doc_radial toward r(z)
-    if samples.is_empty() { return tp; }
+    if samples.is_empty() {
+        return tp;
+    }
     let mut current_r = stock_radius;
     while current_r > 0.0 {
         // One roughing sweep along Z at constant max(current_r, r(z))
@@ -433,8 +577,12 @@ pub fn lathe_rough_from_profile<S: Clone + Send + Sync + Debug>(
         for &(zz, r_target) in &samples {
             let r_path = current_r.max(r_target);
             let x = r_path; // X = radius (diameter/2). Controller may expect diameter mode; keep radius here.
-            if first { tp.travel_to(Point3::new(x, zz, 0.0)); first = false; }
-            else { tp.cut_to(Point3::new(x, zz, 0.0), Some(cfg.feed), None); }
+            if first {
+                tp.travel_to(Point3::new(x, zz, 0.0));
+                first = false;
+            } else {
+                tp.cut_to(Point3::new(x, zz, 0.0), Some(cfg.feed), None);
+            }
         }
         // Return rapid
         if let Some(&(zz, r_target)) = samples.first() {
@@ -443,8 +591,13 @@ pub fn lathe_rough_from_profile<S: Clone + Send + Sync + Debug>(
         // Next radial step
         current_r -= cfg.doc_radial;
         // Stop when next pass would be within small tolerance from final profile everywhere
-        let worst_gap = samples.iter().map(|&(_, r)| (current_r - r).max(0.0)).fold(0.0, Real::max);
-        if worst_gap < 0.05 { break; }
+        let worst_gap = samples
+            .iter()
+            .map(|&(_, r)| (current_r - r).max(0.0))
+            .fold(0.0, Real::max);
+        if worst_gap < 0.05 {
+            break;
+        }
     }
 
     tp
@@ -460,54 +613,87 @@ pub mod gcode {
 
     #[derive(Clone, Debug, Default)]
     pub struct Post {
-        pub absolute_e: bool,   // FDM E in absolute (M82) or relative (M83)
-        pub units_mm: bool,     // G21 (true) / G20 (false)
-        pub z_safe: Real,       // default travel Z for routers/mills
+        pub absolute_e: bool, // FDM E in absolute (M82) or relative (M83)
+        pub units_mm: bool,   // G21 (true) / G20 (false)
+        pub z_safe: Real,     // default travel Z for routers/mills
     }
 
     impl Post {
         pub fn write(&self, tp: &Toolpath) -> String {
             let mut out = String::new();
-            if self.units_mm { out.push_str("G21\n"); } else { out.push_str("G20\n"); }
+            if self.units_mm {
+                out.push_str("G21\n");
+            } else {
+                out.push_str("G20\n");
+            }
             match tp.kind {
-                MachineKind::Fdm => out.push_str(if self.absolute_e { "M82\n" } else { "M83\n" }),
-                _ => {}
+                MachineKind::Fdm => {
+                    out.push_str(if self.absolute_e { "M82\n" } else { "M83\n" })
+                },
+                _ => {},
             }
             let mut last_feed: Option<Real> = None;
             let mut e_acc: Real = 0.0;
             for mv in &tp.moves {
-                if let Some(ref c) = mv.comment { out.push_str(&format!("; {}\n", c)); continue; }
+                if let Some(ref c) = mv.comment {
+                    out.push_str(&format!("; {}\n", c));
+                    continue;
+                }
                 let (x, y, z) = (mv.pos.x, mv.pos.y, mv.pos.z);
                 let f = mv.feed.or(last_feed);
                 match tp.kind {
                     MachineKind::Fdm => {
-                        if mv.is_rapid { out.push_str(&format!("G0 X{:.4} Y{:.4} Z{:.4}\n", x, y, z)); }
-                        else {
+                        if mv.is_rapid {
+                            out.push_str(&format!("G0 X{:.4} Y{:.4} Z{:.4}\n", x, y, z));
+                        } else {
                             let e = mv.scalar.unwrap_or(0.0);
                             e_acc += if self.absolute_e { e } else { e };
-                            if self.absolute_e { out.push_str(&format!("G1 X{:.4} Y{:.4} Z{:.4} E{:.5}", x, y, z, e_acc)); }
-                            else { out.push_str(&format!("G1 X{:.4} Y{:.4} Z{:.4} E{:.5}", x, y, z, e)); }
-                            if let Some(ff) = f { out.push_str(&format!(" F{:.1}", ff)); }
+                            if self.absolute_e {
+                                out.push_str(&format!(
+                                    "G1 X{:.4} Y{:.4} Z{:.4} E{:.5}",
+                                    x, y, z, e_acc
+                                ));
+                            } else {
+                                out.push_str(&format!(
+                                    "G1 X{:.4} Y{:.4} Z{:.4} E{:.5}",
+                                    x, y, z, e
+                                ));
+                            }
+                            if let Some(ff) = f {
+                                out.push_str(&format!(" F{:.1}", ff));
+                            }
                             out.push_str("\n");
                         }
-                    }
+                    },
                     MachineKind::Laser | MachineKind::Plasma => {
-                        if mv.is_rapid { out.push_str(&format!("G0 X{:.4} Y{:.4} Z{:.4}\n", x, y, z)); }
-                        else {
-                            if let Some(p) = mv.scalar { out.push_str(&format!("M3 S{:.3}\n", (p * 1000.0).clamp(0.0, 1000.0))); }
+                        if mv.is_rapid {
+                            out.push_str(&format!("G0 X{:.4} Y{:.4} Z{:.4}\n", x, y, z));
+                        } else {
+                            if let Some(p) = mv.scalar {
+                                out.push_str(&format!(
+                                    "M3 S{:.3}\n",
+                                    (p * 1000.0).clamp(0.0, 1000.0)
+                                ));
+                            }
                             out.push_str(&format!("G1 X{:.4} Y{:.4} Z{:.4}", x, y, z));
-                            if let Some(ff) = f { out.push_str(&format!(" F{:.1}", ff)); }
+                            if let Some(ff) = f {
+                                out.push_str(&format!(" F{:.1}", ff));
+                            }
                             out.push_str("\nM5\n");
                         }
-                    }
-                    _ => { // Mill / Router / Lathe
-                        if mv.is_rapid { out.push_str(&format!("G0 X{:.4} Y{:.4} Z{:.4}\n", x, y, z)); }
-                        else {
+                    },
+                    _ => {
+                        // Mill / Router / Lathe
+                        if mv.is_rapid {
+                            out.push_str(&format!("G0 X{:.4} Y{:.4} Z{:.4}\n", x, y, z));
+                        } else {
                             out.push_str(&format!("G1 X{:.4} Y{:.4} Z{:.4}", x, y, z));
-                            if let Some(ff) = f { out.push_str(&format!(" F{:.1}", ff)); }
+                            if let Some(ff) = f {
+                                out.push_str(&format!(" F{:.1}", ff));
+                            }
                             out.push_str("\n");
                         }
-                    }
+                    },
                 }
                 last_feed = f;
             }
@@ -522,10 +708,17 @@ pub mod gcode {
 
 /// Convenience: Convert a `Sketch` that represents a single closed polygon (no holes)
 /// into a planar travel+cut path at a constant Z.
-pub fn contour_only<S: Clone + Send + Sync + Debug>(sk: &Sketch<S>, z: Real, feed: Real, kind: MachineKind) -> Toolpath {
+pub fn contour_only<S: Clone + Send + Sync + Debug>(
+    sk: &Sketch<S>,
+    z: Real,
+    feed: Real,
+    kind: MachineKind,
+) -> Toolpath {
     let mut tp = Toolpath::new(kind);
     for ring in rings_of(sk) {
-        if ring.len() < 2 { continue; }
+        if ring.len() < 2 {
+            continue;
+        }
         let (x0, y0) = ring[0];
         tp.travel_to(Point3::new(x0, y0, z));
         for &(x, y) in ring.iter().skip(1) {
