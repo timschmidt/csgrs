@@ -154,3 +154,11 @@ bevymesh = [
   "dep:bevy_asset",
   "dep:wgpu-types"
 ]
+
+[[example]]
+name = "indexed_mesh_main"
+path = "examples/indexed_mesh_main.rs"
+
+[dev-dependencies]
+approx = "0.5"
+quickcheck = "1.0"
