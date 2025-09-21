@@ -55,7 +55,7 @@ pub struct Toolpath {
 }
 
 impl Toolpath {
-    pub fn new(kind: MachineKind) -> Self {
+    pub const fn new(kind: MachineKind) -> Self {
         Self {
             kind,
             moves: Vec::new(),
@@ -550,7 +550,7 @@ pub fn lathe_rough_from_profile<S: Clone + Send + Sync + Debug>(
                     xs.push(x1.max(x2));
                 } else {
                     let t = (z - y1) / dy; // 0..1
-                    if t >= -1e-6 && t <= 1.0 + 1e-6 {
+                    if (-1e-6..=1.0 + 1e-6).contains(&t) {
                         let x = x1 + t * (x2 - x1);
                         xs.push(x);
                     }
@@ -626,11 +626,8 @@ pub mod gcode {
             } else {
                 out.push_str("G20\n");
             }
-            match tp.kind {
-                MachineKind::Fdm => {
-                    out.push_str(if self.absolute_e { "M82\n" } else { "M83\n" })
-                },
-                _ => {},
+            if tp.kind == MachineKind::Fdm {
+                out.push_str(if self.absolute_e { "M82\n" } else { "M83\n" })
             }
             let mut last_feed: Option<Real> = None;
             let mut e_acc: Real = 0.0;
@@ -647,7 +644,7 @@ pub mod gcode {
                             out.push_str(&format!("G0 X{:.4} Y{:.4} Z{:.4}\n", x, y, z));
                         } else {
                             let e = mv.scalar.unwrap_or(0.0);
-                            e_acc += if self.absolute_e { e } else { e };
+                            e_acc += e;
                             if self.absolute_e {
                                 out.push_str(&format!(
                                     "G1 X{:.4} Y{:.4} Z{:.4} E{:.5}",
@@ -662,7 +659,7 @@ pub mod gcode {
                             if let Some(ff) = f {
                                 out.push_str(&format!(" F{:.1}", ff));
                             }
-                            out.push_str("\n");
+                            out.push('\n');
                         }
                     },
                     MachineKind::Laser | MachineKind::Plasma => {
@@ -691,7 +688,7 @@ pub mod gcode {
                             if let Some(ff) = f {
                                 out.push_str(&format!(" F{:.1}", ff));
                             }
-                            out.push_str("\n");
+                            out.push('\n');
                         }
                     },
                 }
