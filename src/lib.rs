@@ -35,7 +35,10 @@ pub mod io;
 pub mod mesh;
 pub mod nurbs;
 pub mod sketch;
+
+#[cfg(feature = "offset")]
 pub mod toolpath;
+
 pub mod traits;
 pub mod voxels;
 
