@@ -1,7 +1,7 @@
 pub mod common;
 pub mod ear_clip;
 pub mod polygon;
-pub mod quetry_2d_tree;
+pub mod flat_tree;
 mod test;
 
 use std::collections::{BTreeMap, VecDeque};

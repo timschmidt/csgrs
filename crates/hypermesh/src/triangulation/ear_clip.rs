@@ -4,8 +4,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::rc::{Rc, Weak};
 use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
 use crate::common::{det2x2, is_ccw_2d, safe_normalize, PolyVert, PolygonIdx, Rect, K_BEST, K_PRECISION};
-use crate::quetry_2d_tree::compute_query_2d_tree;
-
+use crate::flat_tree::{compute_flat_tree, compute_query_flat_tree};
 
 pub struct Ecvt {
     pub idx: usize,     // mesh idx, but it is more likely to say vert idx
@@ -89,8 +88,8 @@ impl Ecvt {
     /// For verts outside the ear, apply a cost based on the Delaunay condition
     /// to aid in prioritization and produce cleaner triangulations. This doesn't
     /// affect robustness but may be adjusted to improve output.
-    pub fn delaunay_cost(&self, diff: Row2<f64>, scale: f64, epsilon: f64) -> f64 {
-        -epsilon - scale * diff.dot(&diff)
+    pub fn delaunay_cost(&self, diff: &Row2<f64>, scale: f64, epsilon: f64) -> f64 {
+        -epsilon - scale * diff.dot(diff)
     }
 
     /// This is the expensive part of the algorithm, checking this ear against
@@ -101,30 +100,46 @@ impl Ecvt {
     /// costs are designed to always give values < -epsilon so they will never affect validity.
     /// The first totalCost is designed to give priority to sharper angles.
     /// Any cost < (-1 - epsilon) has satisfied the Delaunay condition.
-    pub fn ear_cost(
-        &self,
-        epsilon: f64,
-        collider: &IdxCollider,
-    ) -> f64 {
+    pub fn ear_cost(&self, epsilon: f64, collider: &IdxCollider) -> f64 {
         let open_side = (self.pos_l() - self.pos_r()).normalize();
         let center = (self.pos_l() + self.pos_r()) * 0.5;
         let scale = 4. / open_side.dot(&open_side);
         let radius = open_side.norm() * 0.5;
         let open_side = open_side.normalize();
-        let total = self.dir_l().dot(&self.dir) - 1. - epsilon;
+
+        let mut total = self.dir_l().dot(&self.dir) - 1. - epsilon;
         if is_ccw_2d(&self.pos, &self.pos_l(), &self.pos_r(), epsilon) == 0 { return total; }
+
         let mut ear_box = Rect::new(
             &Row2::new(center.x - radius, center.y - radius),
             &Row2::new(center.x + radius, center.y + radius),
         );
+
         ear_box.union(&self.pos);
         ear_box.min -= Row2::new(epsilon, epsilon);
         ear_box.max += Row2::new(epsilon, epsilon);
-        //compute_query_2d_tree(&, &ear_box, |v| {});
+
+        compute_query_flat_tree(&collider.pts, &ear_box, |v| {
+            let test = Rc::clone(&collider.rfs[v.idx]);
+            if clipped(&test) &&
+               test.borrow().idx != self.idx &&
+               test.borrow().idx != self.idx_l() &&
+               test.borrow().idx != self.idx_r()
+            {
+                let mut cost = self.cost(&test.borrow(), &open_side, epsilon);
+                if cost < -epsilon {
+                    cost = self.delaunay_cost(&(test.borrow().pos - center), scale, epsilon);
+                }
+                if cost > total { total = cost; }
+            }
+        });
         total
     }
 }
 
+/// When an ear vert is clipped, its neighbors get linked, so they get unlinked
+/// from it, but it is still linked to them.
+fn clipped(v: &EvPtr) -> bool { !Rc::ptr_eq(&v.borrow().ptr_l_of_r(), v) }
 
 type EvPtr = Rc<RefCell<Ecvt>>;
 
@@ -132,49 +147,52 @@ impl PartialEq  for Ecvt { fn eq(&self, other: &Self) -> bool { self.cost == oth
 impl PartialOrd for Ecvt { fn partial_cmp(&self, other: &Self) -> Option<Ordering> { self.cost.partial_cmp(&other.cost) } }
 
 #[derive(Clone)]
-struct EvPtrA(EvPtr);
+struct EvPtrMinCost(EvPtr);
 struct EvPtrB(EvPtr, Rect);
 
-impl Eq for EvPtrA {}
-
-impl PartialEq for EvPtrA {
+impl Eq for EvPtrMinCost {}
+impl PartialEq for EvPtrMinCost {
     fn eq(&self, other: &Self) -> bool {
-        self.0.borrow().cost == other.0.borrow().cost
+        self.0.borrow().cost == other.0.borrow().cost && Rc::ptr_eq(&self.0, &other.0)
     }
 }
-
-impl PartialOrd for EvPtrA {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.0.borrow().cost.partial_cmp(&other.0.borrow().cost)
-    }
-}
-
-impl Ord for EvPtrA {
+impl Ord for EvPtrMinCost {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.0.borrow().cost.partial_cmp(&other.0.borrow().cost).unwrap()
+        self.0.borrow().cost //todo already mutably borrowed!!
+            .partial_cmp(&other.0.borrow().cost)
+            .unwrap_or(Ordering::Equal)
+            .then_with(|| {
+                let ptr1 = Rc::as_ptr(&self.0) as usize;
+                let ptr2 = Rc::as_ptr(&other.0) as usize;
+                ptr1.cmp(&ptr2)
+            })
     }
 }
 
-impl Eq for EvPtrB {}
+impl PartialOrd for EvPtrMinCost {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        //self.0.borrow().cost.partial_cmp(&other.0.borrow().cost)
+        Some(self.cmp(other))
+    }
+}
 
+impl Eq for EvPtrB {
+}
 impl PartialEq for EvPtrB {
     fn eq(&self, other: &Self) -> bool {
         self.0.borrow().cost == other.0.borrow().cost
     }
 }
-
 impl PartialOrd for EvPtrB {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.0.borrow().cost.partial_cmp(&other.0.borrow().cost)
     }
 }
-
 impl Ord for EvPtrB {
     fn cmp(&self, other: &Self) -> Ordering {
         self.0.borrow().cost.partial_cmp(&other.0.borrow().cost).unwrap()
     }
 }
-
 
 /**
  * Ear-clipping triangulator based on David Eberly's approach from Geometric
@@ -188,16 +206,16 @@ impl Ord for EvPtrB {
  * within epsilon.
  */
 
-struct IdxCollider {
-    pts: Vec<PolyVert>,
-    rfs: Vec<EvPtr>,
+pub struct IdxCollider {
+    pub pts: Vec<PolyVert>,
+    pub rfs: Vec<EvPtr>,
 }
 
 pub struct EarClip {
     pub polygon: Vec<EvPtr>,
     pub simples: Vec<EvPtr>, // contour + recursive ccw loops
     pub contour: Vec<EvPtr>,
-    pub eque: BTreeSet<EvPtrA>,
+    pub eque:  BTreeSet<EvPtrMinCost>,
     pub holes: BTreeSet<EvPtrB>,
     pub tris: Vec<Row3<usize>>,
     pub bbox: Rect,
@@ -259,12 +277,6 @@ impl EarClip {
         vl_.dir = safe_normalize(vr_.pos - vl_.pos);
     }
 
-    /// When an ear vert is clipped, its neighbors get linked, so they get unlinked
-    /// from it, but it is still linked to them.
-    /// todo: check carefully this code
-    fn clipped(v: &EvPtr) -> bool {
-        !Rc::ptr_eq(&v.borrow().ptr_l_of_r(), v)
-    }
 
     /// Apply `func` to each unclipped vertex in a polygonal circular list starting at `first`.
     /// VertItrC Loop(VertItr first, std::function<void(VertItr)> func) const
@@ -272,10 +284,10 @@ impl EarClip {
     fn do_loop<F>(v: &mut EvPtr, mut func: F) -> Option<EvPtr> where F: FnMut(&mut EvPtr) {
         let mut w = Rc::clone(v);
         loop {
-            if Self::clipped(&w) {
+            if clipped(&w) {
                 // Update first to an unclipped vert so we will return to it instead of infinite-loop
                 *v = w.borrow().ptr_l_of_r();
-                if !Self::clipped(v) {
+                if !clipped(v) {
                     w = Rc::clone(v);
                     if Rc::ptr_eq(&w.borrow().ptr_l(), &w.borrow().ptr_r()) { return None; }
                     func(&mut w);
@@ -289,8 +301,17 @@ impl EarClip {
         }
     }
 
-    pub fn clip_ear() {
-        panic!();
+    pub fn clip_ear(&mut self, ear: &EvPtr) {
+        Self::link(&ear.borrow().ptr_l(), &ear.borrow().ptr_r());
+        if ear.borrow().idx_l() != ear.borrow().idx &&
+           ear.borrow().idx_r() != ear.borrow().idx &&
+           ear.borrow().idx_l() != ear.borrow().idx_r() {
+            self.tris.push(Row3::new(
+                ear.borrow().idx_l(),
+                ear.borrow().idx,
+                ear.borrow().idx_r())
+            );
+        }
     }
 
     pub fn clip_degenerate(&self) { panic!(); }
@@ -363,52 +384,72 @@ impl EarClip {
     /// Create a collider of all vertices in this polygon, each expanded by epsilon_.
     /// Each ear uses this BVH to quickly find a subset of vertices to check for cost.
     fn vert_collider(start: &mut EvPtr) -> IdxCollider {
-        let mut rfs: Vec<EvPtr> = vec![];
-        let mut pts: Vec<PolyVert> = vec![];
+        let mut pts = vec![];
+        let mut rfs = vec![];
         Self::do_loop(start, |v| {
             pts.push(PolyVert{ pos: v.borrow().pos, idx: rfs.len() });
             rfs.push(Rc::clone(v));
         });
 
-        // todo: build_2d_tree here...
+        compute_flat_tree(&mut pts);
         IdxCollider { pts, rfs }
     }
 
     /// Recalculate the cost of the Vert v ear,
     /// updating it in the queue by removing and reinserting it.
-    fn process_ear(&mut self, v: &mut EvPtr, c: &IdxCollider) {
+    fn process_ear(&mut self, v: &mut EvPtr, col: &IdxCollider) {
         if let Some(ear) = &v.borrow_mut().ear {
-            let ptr = EvPtrA(ear.upgrade().unwrap());
+            let ptr = EvPtrMinCost(ear.upgrade().unwrap());
             self.eque.remove(&ptr);
         }
         v.borrow_mut().ear = None;
 
+
         if v.borrow().is_short(self.epsilon) {
-            let ptr = EvPtrA(Rc::clone(v));
-            self.eque.insert(ptr.clone());
+            println!("short...");
             v.borrow_mut().cost = K_BEST;
+            let ptr = EvPtrMinCost(Rc::clone(v));
             v.borrow_mut().ear = Some(Rc::downgrade(&ptr.0));
-        } else if v.borrow().is_convex(2. * self.epsilon) {
-            let ptr = EvPtrA(Rc::clone(v));
-            self.eque.insert(ptr.clone());
-            v.borrow_mut().cost = v.borrow().ear_cost(self.epsilon, c);
-            v.borrow_mut().ear = Some(Rc::downgrade(&ptr.0));
-        } else {
-            v.borrow_mut().cost = 1.; // not used, but marks reflex verts for debug
+            self.eque.insert(ptr);
+            return;
         }
+        if v.borrow().is_convex(2. * self.epsilon) {
+            println!("convex...");
+            v.borrow_mut().cost = {v.borrow().ear_cost(self.epsilon, col)};
+            let ptr = EvPtrMinCost(Rc::clone(v));
+            v.borrow_mut().ear = Some(Rc::downgrade(&ptr.0));
+            self.eque.insert(ptr);
+            return;
+        }
+
+        println!("non short, non convex...");
+        v.borrow_mut().cost = 1.; // not used, but marks reflex verts for debug
     }
 
     pub fn triangulate_poly(&mut self, start: &mut EvPtr) {
-        let c = Self::vert_collider(start);
-        if c.rfs.is_empty() { return; }
+        println!("triangulate_poly...");
+        let col = Self::vert_collider(start);
+        if col.rfs.is_empty() { return; }
 
         let mut num_tri = -2;
         self.eque.clear();
 
+        for v in col.pts.iter() {
+            println!("pt: {:?}", v);
+        }
+        //println!("rfs: {:?}", col.rfs);
+
         let v_op = Self::do_loop(start, |v| {
-            self.process_ear(v, &c);
+            self.process_ear(v, &col);
+            //let hoge = v.borrow().ear.as_ref().unwrap().upgrade().unwrap();
+            //println!("p self: {:p}", Rc::as_ptr(v));
+            //println!("p ear:  {:p}", Rc::as_ptr(&hoge));
+            //println!("p cost: {:?}", hoge.borrow().cost);
             num_tri += 1;
         });
+
+        println!("num_tri: {}", num_tri);
+        println!("eque length: {}", self.eque.len());
 
         if let Some(mut v) = v_op {
             while num_tri > 0 {
@@ -416,10 +457,10 @@ impl EarClip {
                     v = Rc::clone(&ear.0);
                     self.eque.remove(&ear);
                 }
-                Self::clip_ear();
+                self.clip_ear(&v);
                 num_tri -= 1;
-                self.process_ear(&mut v.borrow().ptr_l(), &c);
-                self.process_ear(&mut v.borrow().ptr_r(), &c);
+                self.process_ear(&mut v.borrow().ptr_l(), &col);
+                self.process_ear(&mut v.borrow().ptr_r(), &col);
                 let ptr_r = v.borrow().ptr_r();
                 v = Rc::clone(&ptr_r);
             }

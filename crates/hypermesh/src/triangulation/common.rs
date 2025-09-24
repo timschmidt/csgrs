@@ -74,6 +74,13 @@ impl Rect {
             max: Row2::new(a.x.max(b.x), a.y.max(b.y)),
         }
     }
+    
+    pub fn contains(&self, p: &Row2<f64>) -> bool {
+        p.x >= self.min.x &&
+        p.x <= self.max.x &&
+        p.y >= self.min.y &&
+        p.y <= self.max.y
+    }
 
     pub fn union(&mut self, p: &Row2<f64>) {
         self.min = Row2::new(self.min.x.min(p.x), self.min.y.min(p.y));
