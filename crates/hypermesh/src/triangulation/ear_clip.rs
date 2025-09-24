@@ -7,25 +7,26 @@ use crate::common::{det2x2, is_ccw_2d, safe_normalize, PolyVert, PolygonIdx, Rec
 use crate::quetry_2d_tree::compute_query_2d_tree;
 
 
-struct Ecvt {
-    idx: usize,     // mesh idx, but it is more likely to say vert idx
-    pos: Row2<f64>, // vert pos
-    dir: Row2<f64>, // right dir
-    ear: Option<Weak<RefCell<Ecvt>>>,
-    vl:  Option<Weak<RefCell<Ecvt>>>,
-    vr:  Option<Weak<RefCell<Ecvt>>>,
-    cost: f64,
+pub struct Ecvt {
+    pub idx: usize,     // mesh idx, but it is more likely to say vert idx
+    pub pos: Row2<f64>, // vert pos
+    pub dir: Row2<f64>, // right dir
+    pub ear: Option<Weak<RefCell<Ecvt>>>,
+    pub vl:  Option<Weak<RefCell<Ecvt>>>,
+    pub vr:  Option<Weak<RefCell<Ecvt>>>,
+    pub cost: f64,
 }
 
 impl Ecvt {
     pub fn ptr_l(&self) -> EvPtr { self.vl.as_ref().unwrap().upgrade().unwrap() }
     pub fn ptr_r(&self) -> EvPtr { self.vr.as_ref().unwrap().upgrade().unwrap() }
+    pub fn idx_l(&self) -> usize { self.ptr_l().borrow().idx }
+    pub fn idx_r(&self) -> usize { self.ptr_r().borrow().idx }
     pub fn pos_l(&self) -> Row2<f64> { self.ptr_l().borrow().pos }
     pub fn pos_r(&self) -> Row2<f64> { self.ptr_r().borrow().pos }
     pub fn dir_l(&self) -> Row2<f64> { self.ptr_l().borrow().dir }
     pub fn dir_r(&self) -> Row2<f64> { self.ptr_r().borrow().dir }
     pub fn ptr_l_of_r(&self) -> EvPtr { self.ptr_r().borrow().ptr_l() }
-    pub fn is_lr_same(&self) -> bool { self.ptr_r() == self.ptr_l() }
 
     pub fn new(idx: usize, pos: Row2<f64>) -> Self {
         Self { idx, pos, dir: Row2::new(0., 0.), ear: None, vl: None, vr: None, cost: 0. }
@@ -193,14 +194,14 @@ struct IdxCollider {
 }
 
 pub struct EarClip {
-    polygon: Vec<EvPtr>,
-    simples: Vec<EvPtr>,
-    contour: Vec<EvPtr>,
-    eque: BTreeSet<EvPtrA>,
-    hols: BTreeSet<EvPtrB>,
-    tris: Vec<Row3<usize>>,
-    bbox: Rect,
-    epsilon: f64
+    pub polygon: Vec<EvPtr>,
+    pub simples: Vec<EvPtr>, // contour + recursive ccw loops
+    pub contour: Vec<EvPtr>,
+    pub eque: BTreeSet<EvPtrA>,
+    pub holes: BTreeSet<EvPtrB>,
+    pub tris: Vec<Row3<usize>>,
+    pub bbox: Rect,
+    pub epsilon: f64
 }
 
 impl EarClip {
@@ -210,13 +211,20 @@ impl EarClip {
             simples: vec![],
             contour: vec![],
             eque: BTreeSet::new(),
-            hols: BTreeSet::new(),
+            holes: BTreeSet::new(),
             tris: vec![],
             bbox: Rect::default(),
             epsilon,
         };
 
         let mut starts = ec.initialize(polys);
+        for v in starts.iter() {
+            println!("start: {:p}", Rc::as_ptr(v));
+        }
+
+        for v in ec.polygon.iter() {
+            println!("polygon: {:p}", Rc::as_ptr(v));
+        }
 
         //for v in ec.polygon.iter() { ec.clip_degenerate(); }
         for v in starts.iter_mut() { ec.find_start(v); }
@@ -229,7 +237,7 @@ impl EarClip {
     }
 
     pub fn triangulate(&mut self) -> Vec<Row3<usize>> {
-        let vs = self.hols.iter().map(|h| Rc::clone(&h.0)).collect::<Vec<_>>();
+        let vs = self.holes.iter().map(|h| Rc::clone(&h.0)).collect::<Vec<_>>();
         for v in vs {
             panic!("Not implemented");
             // self.cut_keyhole(&mut start); // Implement this when needed
@@ -261,25 +269,23 @@ impl EarClip {
     /// Apply `func` to each unclipped vertex in a polygonal circular list starting at `first`.
     /// VertItrC Loop(VertItr first, std::function<void(VertItr)> func) const
     /// The C++ returns `polygon_.end()` when it detects a degenerate (right == left).
-    /// In Rust, we return `None` in that case. Otherwise, we return `Some(v)` where
-    /// `v` is the iterator position at the loop end (i.e., when we come back to `first`).
     fn do_loop<F>(v: &mut EvPtr, mut func: F) -> Option<EvPtr> where F: FnMut(&mut EvPtr) {
         let mut w = Rc::clone(v);
         loop {
             if Self::clipped(&w) {
                 // Update first to an unclipped vert so we will return to it instead of infinite-loop
                 *v = w.borrow().ptr_l_of_r();
-                if !Self::clipped(&v) {
-                    w = Rc::clone(&v);
-                    if w.borrow().is_lr_same() { return None; }
+                if !Self::clipped(v) {
+                    w = Rc::clone(v);
+                    if Rc::ptr_eq(&w.borrow().ptr_l(), &w.borrow().ptr_r()) { return None; }
                     func(&mut w);
                 }
             } else {
-                if w.borrow().is_lr_same() { return None; }
+                if Rc::ptr_eq(&w.borrow().ptr_l(), &w.borrow().ptr_r()) { return None; }
                 func(&mut w);
             }
             w = { w.borrow().ptr_r() };
-            if w == *v { return Some(w); }
+            if Rc::ptr_eq(&w, v) { return Some(w); }
         }
     }
 
@@ -294,13 +300,14 @@ impl EarClip {
         for poly in polys.iter() {
             let v = poly.first().unwrap();
             self.polygon.push(Rc::new(RefCell::new(Ecvt::new(v.idx, v.pos))));
-            let first = Rc::clone(self.polygon.last().unwrap());
+
+            let first    = Rc::clone(self.polygon.last().unwrap());
             let mut last = Rc::clone(&first);
             self.bbox.union(&first.borrow().pos);
             bgns.push(Rc::clone(&first));
 
-            for p in poly.iter().skip(1) {
-                self.bbox.union(&p.pos);
+            for v in poly.iter().skip(1) {
+                self.bbox.union(&v.pos);
                 self.polygon.push(Rc::new(RefCell::new(Ecvt::new(v.idx, v.pos))));
                 let next = Rc::clone(self.polygon.last().unwrap());
                 Self::link(&last, &next);
@@ -309,7 +316,7 @@ impl EarClip {
             Self::link(&last, &first);
         }
 
-        if self.epsilon < 0. { self.bbox.scale() * K_PRECISION; }
+        if self.epsilon < 0. { self.epsilon = self.bbox.scale() * K_PRECISION; }
 
         // Slightly more than enough, since each hole can cause two extra triangles.
         self.tris.reserve(self.polygon.len() + 2 * bgns.len());
@@ -342,12 +349,11 @@ impl EarClip {
         area += comp;
         let min_area = self.epsilon * bbox.scale();
 
-        if max.is_finite() && area > -min_area {
-            let cost = 0;
-            let uuid = 0;
-            self.hols.insert(EvPtrB(Rc::clone(&bgn), bbox));
-            panic!("cost and uuid are 0");
+        if max.is_finite() && area < -min_area {
+            println!("add hole bgn...");
+            self.holes.insert(EvPtrB(Rc::clone(&bgn), bbox));
         } else {
+            println!("add outer bgn...");
             self.simples.push(Rc::clone(&bgn));
             if area > min_area { self.contour.push(Rc::clone(&bgn));}
         }

@@ -1,5 +1,7 @@
-use nalgebra::DMatrix;
+use nalgebra::{DMatrix, RowVector2 as Row2};
 use crate::{intersect12, winding03, Boolean3, Hmesh, Manifold, OpType};
+use crate::common::PolyVert;
+use crate::ear_clip::EarClip;
 
 #[test]
 fn test() {
@@ -34,4 +36,24 @@ fn test() {
         mfd_p: &mfs[0], mfd_q: &mfs[1],
         p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
     let (pos, halfs, tris) = boolean.get_result(OpType::Subtract);
+}
+
+#[test]
+fn triangulation_test_1() {
+    let loop0 = vec![
+        PolyVert{pos: Row2::new(0., 0.), idx: 0},
+        PolyVert{pos: Row2::new(2., 0.), idx: 1},
+        PolyVert{pos: Row2::new(2., 2.), idx: 2},
+        PolyVert{pos: Row2::new(0., 2.), idx: 3},
+    ];
+
+    let ec = EarClip::new(&vec![loop0], 1e-12);
+    for v in ec.polygon.iter() {
+        println!("pos : {:?}, idx: {}, idx_l: {}, idx_r: {}",
+                 v.borrow().pos, v.borrow().idx, v.borrow().idx_l(), v.borrow().idx_r());
+    }
+
+    for v in ec.simples.iter() {
+        println!("simples: {}", v.borrow().idx);
+    }
 }

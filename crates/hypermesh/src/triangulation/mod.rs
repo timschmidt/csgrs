@@ -61,7 +61,7 @@ impl <'a> Triangulator<'a>  {
         let bgn = self.hid_f[fid] as usize;
         let end = self.hid_f[fid + 1] as usize;
         let num = end - bgn;
-        let mut v2h: BTreeMap<i32, VecDeque<usize>> = BTreeMap::new();
+        let mut v2h = BTreeMap::new();
 
         for i in bgn..bgn + num {
             let id = self.halfs[i].tail;
@@ -71,7 +71,6 @@ impl <'a> Triangulator<'a>  {
         let mut loops: Vec<Vec<usize>> = vec![];
         let mut hid0 = 0;
         let mut hid1 = 0;
-
         loop {
             if hid1 == hid0 {
                 if v2h.is_empty() { break; }
