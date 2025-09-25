@@ -965,101 +965,101 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `backlash`: backlash allowance
     /// - `segments_per_flank`: tessellation resolution per tooth flank
     /// - `metadata`: optional metadata
-	pub fn involute_gear(
-		module_: Real,
-		teeth: usize,
-		pressure_angle_deg: Real,
-		clearance: Real,
-		backlash: Real,
-		segments_per_flank: usize,
-		metadata: Option<S>,
-	) -> Sketch<S> {
-		assert!(teeth >= 4, "Need at least 4 teeth");
-		assert!(segments_per_flank >= 2);
+    pub fn involute_gear(
+        module_: Real,
+        teeth: usize,
+        pressure_angle_deg: Real,
+        clearance: Real,
+        backlash: Real,
+        segments_per_flank: usize,
+        metadata: Option<S>,
+    ) -> Sketch<S> {
+        assert!(teeth >= 4, "Need at least 4 teeth");
+        assert!(segments_per_flank >= 2);
 
-		let m = module_;
-		let z = teeth as Real;
-		let pressure_angle = pressure_angle_deg.to_radians();
+        let m = module_;
+        let z = teeth as Real;
+        let pressure_angle = pressure_angle_deg.to_radians();
 
-		// Standard gear dimensions
-		let pitch_radius = 0.5 * m * z;
-		let addendum = m;
-		let dedendum = 1.25 * m + clearance;
-		let outer_radius = pitch_radius + addendum;
-		let base_radius = pitch_radius * pressure_angle.cos();
-		let _root_radius = (pitch_radius - dedendum).max(base_radius * 0.9); // avoid < base
+        // Standard gear dimensions
+        let pitch_radius = 0.5 * m * z;
+        let addendum = m;
+        let dedendum = 1.25 * m + clearance;
+        let outer_radius = pitch_radius + addendum;
+        let base_radius = pitch_radius * pressure_angle.cos();
+        let _root_radius = (pitch_radius - dedendum).max(base_radius * 0.9); // avoid < base
 
-		let angular_pitch = TAU / z;
-		let tooth_thickness_at_pitch = angular_pitch / 2.0 - backlash / pitch_radius;
-		let half_tooth_angle = tooth_thickness_at_pitch / 2.0;
+        let angular_pitch = TAU / z;
+        let tooth_thickness_at_pitch = angular_pitch / 2.0 - backlash / pitch_radius;
+        let half_tooth_angle = tooth_thickness_at_pitch / 2.0;
 
-		// Helper: generate one involute flank from r1 to r2
-		let generate_flank = |r_start: Real, r_end: Real, reverse: bool| -> Vec<(Real, Real)> {
-			let mut pts = Vec::with_capacity(segments_per_flank + 1);
-			for i in 0..=segments_per_flank {
-				let t = i as Real / segments_per_flank as Real;
-				let r = r_start + t * (r_end - r_start);
-				let phi = ((r / base_radius).powi(2) - 1.0).max(0.0).sqrt(); // involute angle
-				let (x, y) = (base_radius * (phi.cos() + phi * phi.sin()),
-							  base_radius * (phi.sin() - phi * phi.cos()));
-				pts.push((x, y));
-			}
-			if reverse {
-				pts.reverse();
-			}
-			pts
-		};
+        // Helper: generate one involute flank from r1 to r2
+        let generate_flank =
+            |r_start: Real, r_end: Real, reverse: bool| -> Vec<(Real, Real)> {
+                let mut pts = Vec::with_capacity(segments_per_flank + 1);
+                for i in 0..=segments_per_flank {
+                    let t = i as Real / segments_per_flank as Real;
+                    let r = r_start + t * (r_end - r_start);
+                    let phi = ((r / base_radius).powi(2) - 1.0).max(0.0).sqrt(); // involute angle
+                    let (x, y) = (
+                        base_radius * (phi.cos() + phi * phi.sin()),
+                        base_radius * (phi.sin() - phi * phi.cos()),
+                    );
+                    pts.push((x, y));
+                }
+                if reverse {
+                    pts.reverse();
+                }
+                pts
+            };
 
-		// Build one full tooth (right flank + arc at tip + left flank + root arc)
-		let mut tooth_profile = Vec::new();
+        // Build one full tooth (right flank + arc at tip + left flank + root arc)
+        let mut tooth_profile = Vec::new();
 
-		// Right flank: from base to outer
-		let right_flank = generate_flank(base_radius, outer_radius, false);
-		// Left flank: mirror and reverse
-		let left_flank: Vec<_> = right_flank.iter()
-			.map(|&(x, y)| (x, -y))
-			.rev()
-			.collect();
+        // Right flank: from base to outer
+        let right_flank = generate_flank(base_radius, outer_radius, false);
+        // Left flank: mirror and reverse
+        let left_flank: Vec<_> = right_flank.iter().map(|&(x, y)| (x, -y)).rev().collect();
 
-		// Rotate flanks to align with tooth center
-		let rotate = |x: Real, y: Real, angle: Real| -> (Real, Real) {
-			let c = angle.cos();
-			let s = angle.sin();
-			(x * c - y * s, x * s + y * c)
-		};
+        // Rotate flanks to align with tooth center
+        let rotate = |x: Real, y: Real, angle: Real| -> (Real, Real) {
+            let c = angle.cos();
+            let s = angle.sin();
+            (x * c - y * s, x * s + y * c)
+        };
 
-		// Angular offset from tooth center to flank start at base circle
-		let phi_base = ((pitch_radius / base_radius).powi(2) - 1.0).sqrt();
-		let inv_phi_base = phi_base - pressure_angle; // involute function value
-		let offset_angle = inv_phi_base + half_tooth_angle;
+        // Angular offset from tooth center to flank start at base circle
+        let phi_base = ((pitch_radius / base_radius).powi(2) - 1.0).sqrt();
+        let inv_phi_base = phi_base - pressure_angle; // involute function value
+        let offset_angle = inv_phi_base + half_tooth_angle;
 
-		// Apply rotation to flanks
-		for &(x, y) in &right_flank {
-			tooth_profile.push(rotate(x, y, -offset_angle));
-		}
-		for &(x, y) in &left_flank {
-			tooth_profile.push(rotate(x, y, offset_angle));
-		}
+        // Apply rotation to flanks
+        for &(x, y) in &right_flank {
+            tooth_profile.push(rotate(x, y, -offset_angle));
+        }
+        for &(x, y) in &left_flank {
+            tooth_profile.push(rotate(x, y, offset_angle));
+        }
 
-		// Close the tooth at the root with a small arc (optional but improves validity)
-		// For simplicity, we'll just connect to root circle with straight lines or small arc.
-		// But for now, connect last point to first via root radius approximation.
-		// Better: add root fillet, but we'll skip for brevity.
+        // Close the tooth at the root with a small arc (optional but improves validity)
+        // For simplicity, we'll just connect to root circle with straight lines or small arc.
+        // But for now, connect last point to first via root radius approximation.
+        // Better: add root fillet, but we'll skip for brevity.
 
-		// Now replicate around the gear
-		let mut outline = Vec::with_capacity(tooth_profile.len() * teeth + 1);
-		for i in 0..teeth {
-			let rot = i as Real * angular_pitch;
-			let c = rot.cos();
-			let s = rot.sin();
-			for &(x, y) in &tooth_profile {
-				outline.push([x * c - y * s, x * s + y * c]);
-			}
-		}
-		outline.push(outline[0]); // close
+        // Now replicate around the gear
+        let mut outline = Vec::with_capacity(tooth_profile.len() * teeth + 1);
+        for i in 0..teeth {
+            let rot = i as Real * angular_pitch;
+            let c = rot.cos();
+            let s = rot.sin();
+            for &(x, y) in &tooth_profile {
+                outline.push([x * c - y * s, x * s + y * c]);
+            }
+        }
+        outline.push(outline[0]); // close
 
-		Sketch::polygon(&outline, metadata)
-	}
+        Sketch::polygon(&outline, metadata)
+    }
 
     /// Generate an (epicyclic) cycloidal gear outline
     ///
