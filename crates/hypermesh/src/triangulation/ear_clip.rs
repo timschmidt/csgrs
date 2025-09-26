@@ -10,7 +10,7 @@ pub struct Ecvt {
     pub idx: usize,     // mesh idx, but it is more likely to say vert idx
     pub pos: Row2<f64>, // vert pos
     pub dir: Row2<f64>, // right dir
-    pub ear: Option<Weak<RefCell<Ecvt>>>,
+    pub ear: Option<Weak<RefCell<Ecvt>>>, // itr to self, just needed for quick removal from the ear queue
     pub vl:  Option<Weak<RefCell<Ecvt>>>,
     pub vr:  Option<Weak<RefCell<Ecvt>>>,
     pub cost: f64,
@@ -398,12 +398,11 @@ impl EarClip {
     /// Recalculate the cost of the Vert v ear,
     /// updating it in the queue by removing and reinserting it.
     fn process_ear(&mut self, v: &mut EvPtr, col: &IdxCollider) {
-        if let Some(ear) = &v.borrow_mut().ear {
-            let ptr = EvPtrMinCost(ear.upgrade().unwrap());
-            self.eque.remove(&ptr);
+        let taken = { let mut b = v.borrow_mut(); b.ear.take() };
+        if let Some(e) = taken {
+            println!("remove ear...");
+            self.eque.remove(&EvPtrMinCost(e.upgrade().unwrap()));
         }
-        v.borrow_mut().ear = None;
-
 
         if v.borrow().is_short(self.epsilon) {
             println!("short...");
@@ -465,6 +464,7 @@ impl EarClip {
                 v = Rc::clone(&ptr_r);
             }
         }
+        println!("tris: {:?}", self.tris);
     }
 }
 

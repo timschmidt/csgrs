@@ -47,6 +47,12 @@ fn triangulation_test_1() {
         PolyVert{pos: Row2::new(0., 2.), idx: 3},
     ];
 
+    let loop1 = vec![
+        PolyVert{pos: Row2::new(0.5, 0.5), idx: 0},
+        PolyVert{pos: Row2::new(1., 0.), idx: 1},
+        PolyVert{pos: Row2::new(1., 1.), idx: 2},
+    ];
+
     let mut ec = EarClip::new(&vec![loop0], 1e-12);
     ec.triangulate();
     for v in ec.polygon.iter() {
