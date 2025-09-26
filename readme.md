@@ -191,7 +191,7 @@ let lofted = Sketch::loft(&bottom.polygons[0], &top.polygons[0], false);
 
 `Mesh<S>` provides methods for working with 3D shapes. You can build a
 `Mesh<S>` from polygons with `Mesh::from_polygons(...)`.
-Polygons must be closed, planar, have 3 or more vertices.
+Polygons must be closed, planar, and have 3 or more vertices.
 Polygons are triangulated when being exported as an STL.
 
 ### 3D Shapes in Mesh
