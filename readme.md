@@ -19,7 +19,7 @@ library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are
 [Earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
 and
 [constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation)
-algorithms used for triangulation only work in 2D, so **csgrs** rotates
+algorithms used for triangulation work only in 2D, so **csgrs** rotates
 3D polygons into 2D for triangulation then back to 3D.
 
 ![Example CSG output](docs/csg.png)
@@ -93,8 +93,8 @@ cargo build --features="wasm" --target=wasm32-unknown-unknown --release
   - an optional metadata field (`Option<S>`) also defined by you
 
 `Sketch<S>` provides methods for working with 2D shapes made of points and lines.
-You can build a `Sketch<S>` geo Geometries with `Sketch::from_geo(...)`.
-Geometries can be open or closed, have holes, but must be planar in the XY.
+You can build a `Sketch<S>` from geo Geometries with `Sketch::from_geo(...)`.
+Geometries can be open or closed, and can have holes, but must be planar in the XY.
 `Sketch`'s are triangulated when exported as an STL, or when a Geometry is
 converted into a `Mesh<S>`.
 
