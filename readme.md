@@ -496,18 +496,6 @@ if let Some(data_mut) = poly.metadata_mut() {
 - [csgrs-egui-wasm-example](https://github.com/timschmidt/csgrs-egui-wasm-example)
 - [csgrs-druid-example](https://github.com/timschmidt/csgrs-druid-example)
 
-## Build tests
-A cargo xtask is included in the repository for testing building with various
-combinations of feature flags.  To use it, you must install cargo xtask:
-```rust
-cargo install xtask
-```
-
-To run the tests:
-```rust
-cargo xtask test-all
-```
-
 ## Roadmap
 - **Attachments** Unless you make models containing just one object attachments features can revolutionize your modeling. They will let you position components of a model relative to other components so you don't have to keep track of the positions and orientations of parts of the model. You can instead place something on the TOP of something else, perhaps aligned to the RIGHT.
 - **Rounding and filleting** Provide modules like cuboid() to make a cube with any of the edges rounded, offset_sweep() to round the ends of a linear extrusion, and prism_connector() which works with the attachments feature to create filleted prisms between a variety of objects, or even rounded holes through a single object. Also edge_profile() to apply a variety of different mask profiles to chosen edges of a cubic shape, or directly subtract 3d mask shapes from an edge of objects that are not cubes.
