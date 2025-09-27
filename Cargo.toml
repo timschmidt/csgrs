@@ -78,6 +78,7 @@ doc-image-embed = "0.2.1"
 # wasm
 [target.'cfg(any(target_arch = "wasm32", target_arch = "wasm64"))'.dependencies]
 getrandom = { version = "0.3", features = ["wasm_js"], optional = true }
+uuid = { version = "1.18", features = ["js"] }
 wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
