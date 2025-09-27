@@ -56,6 +56,7 @@ pub fn safe_normalize(v: Row2<f64>) -> Row2<f64> {
     if n.x.is_finite() && n.y.is_finite() { n } else { Row2::new(0., 0.) }
 }
 
+#[derive(Clone)]
 pub struct Rect {
     pub min: Row2<f64>,
     pub max: Row2<f64>,

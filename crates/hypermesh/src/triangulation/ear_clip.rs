@@ -3,6 +3,7 @@ use std::cmp::{Ordering, PartialEq};
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::{Rc, Weak};
 use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
+use rand::distr::uniform::SampleBorrow;
 use crate::common::{det2x2, is_ccw_2d, safe_normalize, PolyVert, PolygonIdx, Rect, K_BEST, K_PRECISION};
 use crate::flat_tree::{compute_flat_tree, compute_query_flat_tree};
 
@@ -26,6 +27,7 @@ impl Ecvt {
     pub fn dir_l(&self) -> Row2<f64> { self.ptr_l().borrow().dir }
     pub fn dir_r(&self) -> Row2<f64> { self.ptr_r().borrow().dir }
     pub fn ptr_l_of_r(&self) -> EvPtr { self.ptr_r().borrow().ptr_l() }
+    pub fn ptr_r_of_l(&self) -> EvPtr { self.ptr_l().borrow().ptr_r() }
 
     pub fn new(idx: usize, pos: Row2<f64>) -> Self {
         Self { idx, pos, dir: Row2::new(0., 0.), ear: None, vl: None, vr: None, cost: 0. }
@@ -42,8 +44,59 @@ impl Ecvt {
     /// This will walk the edges if necessary until a clear answer is found (beyond epsilon).
     /// If toLeft is true, this Vert will walk its edges to the left. This should be chosen
     /// so that the edges walk in the same general direction - tail always walks to the right.
-    pub fn inside_edge(&self, tail: &Ecvt, epsilons: f64, to_left: bool) -> bool {
-        panic!();
+    pub fn inside_edge(&self, tail: &EvPtr, epsilons: f64, to_left: bool) -> bool {
+        let p2 = epsilons * epsilons;
+        let mut nl = self.ptr_r_of_l();
+        let mut nr = tail.borrow().ptr_r();
+        let mut center = Rc::clone(&tail);
+        let mut last   = Rc::clone(&tail);
+
+        while !Rc::ptr_eq(&nl, &nr) && !Rc::ptr_eq(&tail, &nr) &&
+            (if to_left {!Rc::ptr_eq(&nl, &self.ptr_r())} else {!Rc::ptr_eq(&nl, &self.ptr_l()) })
+        {
+            let e = nl.borrow().pos - center.borrow().pos;
+            let l2 = e.dot(&e);
+            if l2 <= p2 {
+                nl = if to_left { nl.borrow().ptr_l() } else { nl.borrow().ptr_r() };
+                continue;
+            }
+
+            let e = nr.borrow().pos - center.borrow().pos;
+            let r2 = e.dot(&e);
+            if r2 <= p2 {
+                nr = { nr.borrow().ptr_r() };
+                continue;
+            }
+
+            let e = nr.borrow().pos - nl.borrow().pos;
+            if e.dot(&e) <= p2 {
+                last = Rc::clone(&center);
+                center = Rc::clone(&nl);
+                nl = if to_left { nr.borrow().ptr_l() } else { nr.borrow().ptr_r() };
+                if Rc::ptr_eq(&nl, &nr) { break; }
+                nr = { nr.borrow().ptr_r() };
+                continue;
+            }
+
+            let mut convexity = is_ccw_2d(&nl.borrow().pos, &center.borrow().pos, &nl.borrow().pos, epsilons);
+            if Rc::ptr_eq(&center, &last) {
+                convexity += is_ccw_2d(&last.borrow().pos, &center.borrow().pos, &nl.borrow().pos, epsilons)
+                           + is_ccw_2d(&nl.borrow().pos, &center.borrow().pos, &last.borrow().pos, epsilons);
+            }
+            if convexity != 0 { return convexity > 0; }
+
+            if l2 < r2 {
+                center = Rc::clone(&nl);
+                nl = if to_left { nr.borrow().ptr_l() } else { nr.borrow().ptr_r() };
+            } else {
+                center = Rc::clone(&nr);
+                nr = { nr.borrow().ptr_r() };
+            }
+            last = Rc::clone(&center);
+        }
+
+        // The whole polygon is degenerate - consider this to be convex.
+        true
     }
 
     /// Returns true for convex or collinear ears.
@@ -54,11 +107,28 @@ impl Ecvt {
     /// Subtly different from !IsConvex because IsConvex will return true for collinear
     /// non-folded verts, while IsReflex will always check until actual certainty is determined.
     pub fn is_reflex(&self, epsilon: f64) -> bool {
-        //return !left->InsideEdge(left->right, epsilon, true);
-        panic!();
+        !self.ptr_l().borrow().inside_edge(&self.ptr_r_of_l(), epsilon, true)
     }
-    pub fn inter_y2x(&self, y: f64) -> f64 {
-        panic!();
+
+    /// Returns the x-value on this edge corresponding to the start.y value,
+    /// returning NAN if the edge does not cross the value from below to above,
+    /// right of start - all within an epsilon tolerance. If onTop != 0,
+    /// this restricts which end is allowed to terminate within the epsilon band.
+    pub fn interpolate_y2x(&self, start: &Row2<f64>, on_top: i32, epsilon: f64) -> Option<f64> {
+        if (self.pos.y - start.y).abs() < epsilon {
+            if self.pos_r().y <= start.y + epsilon || on_top == 1 { return None; }
+            return Some(self.pos.x);
+        }
+        if self.pos.y < start.y - epsilon {
+            if self.pos_r().y > start.y + epsilon {
+                let aspect = (self.pos_r().x - self.pos.x) / (self.pos_r().y - self.pos.y);
+                return Some(self.pos.x + (start.y - self.pos.y) * aspect);
+            }
+
+            if self.pos_r().y < start.y - epsilon || on_top == -1 { return None; }
+            return Some(self.pos_r().x);
+        }
+        None
     }
 
     /// This finds the cost of this vert relative to one of the two closed sides of the ear.
@@ -148,7 +218,9 @@ impl PartialOrd for Ecvt { fn partial_cmp(&self, other: &Self) -> Option<Orderin
 
 #[derive(Clone)]
 struct EvPtrMinCost(EvPtr);
-struct EvPtrB(EvPtr, Rect);
+
+#[derive(Clone)]
+struct EvPtrMaxPosX(EvPtr, Rect);
 
 impl Eq for EvPtrMinCost {}
 impl PartialEq for EvPtrMinCost {
@@ -156,9 +228,12 @@ impl PartialEq for EvPtrMinCost {
         self.0.borrow().cost == other.0.borrow().cost && Rc::ptr_eq(&self.0, &other.0)
     }
 }
+impl PartialOrd for EvPtrMinCost {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
+}
 impl Ord for EvPtrMinCost {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.0.borrow().cost //todo already mutably borrowed!!
+        self.0.borrow().cost
             .partial_cmp(&other.0.borrow().cost)
             .unwrap_or(Ordering::Equal)
             .then_with(|| {
@@ -169,28 +244,26 @@ impl Ord for EvPtrMinCost {
     }
 }
 
-impl PartialOrd for EvPtrMinCost {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        //self.0.borrow().cost.partial_cmp(&other.0.borrow().cost)
-        Some(self.cmp(other))
-    }
-}
 
-impl Eq for EvPtrB {
-}
-impl PartialEq for EvPtrB {
+impl Eq for EvPtrMaxPosX {}
+impl PartialEq for EvPtrMaxPosX {
     fn eq(&self, other: &Self) -> bool {
-        self.0.borrow().cost == other.0.borrow().cost
+        self.0.borrow().pos.x == other.0.borrow().pos.x && Rc::ptr_eq(&self.0, &other.0)
     }
 }
-impl PartialOrd for EvPtrB {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.0.borrow().cost.partial_cmp(&other.0.borrow().cost)
-    }
+impl PartialOrd for EvPtrMaxPosX {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
 }
-impl Ord for EvPtrB {
+impl Ord for EvPtrMaxPosX {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.0.borrow().cost.partial_cmp(&other.0.borrow().cost).unwrap()
+        other.0.borrow().pos.x
+            .partial_cmp(&self.0.borrow().pos.x)
+            .unwrap_or(Ordering::Equal)
+            .then_with(|| {
+                let ptr1 = Rc::as_ptr(&self.0) as usize;
+                let ptr2 = Rc::as_ptr(&other.0) as usize;
+                ptr1.cmp(&ptr2)
+            })
     }
 }
 
@@ -216,7 +289,7 @@ pub struct EarClip {
     pub simples: Vec<EvPtr>, // contour + recursive ccw loops
     pub contour: Vec<EvPtr>,
     pub eque:  BTreeSet<EvPtrMinCost>,
-    pub holes: BTreeSet<EvPtrB>,
+    pub holes: BTreeSet<EvPtrMaxPosX>,
     pub tris: Vec<Row3<usize>>,
     pub bbox: Rect,
     pub epsilon: f64
@@ -244,7 +317,8 @@ impl EarClip {
             println!("polygon: {:p}", Rc::as_ptr(v));
         }
 
-        //for v in ec.polygon.iter() { ec.clip_degenerate(); }
+        let vs: Vec<_> = ec.polygon.iter().cloned().collect();
+        for v in vs { ec.clip_degenerate(&v); }
         for v in starts.iter_mut() { ec.find_start(v); }
 
         ec
@@ -255,10 +329,9 @@ impl EarClip {
     }
 
     pub fn triangulate(&mut self) -> Vec<Row3<usize>> {
-        let vs = self.holes.iter().map(|h| Rc::clone(&h.0)).collect::<Vec<_>>();
-        for v in vs {
-            panic!("Not implemented");
-            // self.cut_keyhole(&mut start); // Implement this when needed
+        let vs = self.holes.iter().cloned().collect::<Vec<_>>();
+        for mut v in vs {
+             self.cut_key_hole(&mut v);
         }
 
         let vs = self.simples.iter().map(|s| Rc::clone(s)).collect::<Vec<_>>();
@@ -314,7 +387,18 @@ impl EarClip {
         }
     }
 
-    pub fn clip_degenerate(&self) { panic!(); }
+    fn clip_degenerate(&mut self, ear: &EvPtr) {
+        if clipped(ear) || Rc::ptr_eq(&ear.borrow().ptr_l(), &ear.borrow().ptr_r()) { return; }
+        let e = self.epsilon;
+        let p  = ear.borrow().pos;
+        let pl = ear.borrow().pos_l();
+        let pr = ear.borrow().pos_r();
+        if ear.borrow().is_short(e) || (is_ccw_2d(&pl, &p, &pr, e) == 0 && (pl - p).dot(&(pr - p)) > 0.) {
+            self.clip_ear(&ear);
+            self.clip_degenerate(&ear.borrow().ptr_l());
+            self.clip_degenerate(&ear.borrow().ptr_r());
+        }
+    }
 
     fn initialize(&mut self, polys: &Vec<PolygonIdx>) -> Vec<EvPtr> {
         let mut bgns = vec![];
@@ -372,7 +456,7 @@ impl EarClip {
 
         if max.is_finite() && area < -min_area {
             println!("add hole bgn...");
-            self.holes.insert(EvPtrB(Rc::clone(&bgn), bbox));
+            self.holes.insert(EvPtrMaxPosX(Rc::clone(&bgn), bbox));
         } else {
             println!("add outer bgn...");
             self.simples.push(Rc::clone(&bgn));
@@ -393,6 +477,101 @@ impl EarClip {
 
         compute_flat_tree(&mut pts);
         IdxCollider { pts, rfs }
+    }
+
+    /// All holes must be key-holed (attached to an outer polygon) before ear clipping can commerce.
+    /// Instead of relying on sorting, which may be incorrect due to epsilon,
+    /// we check for polygon edges both ahead and behind to ensure all valid options are found.
+    fn cut_key_hole(&mut self, v: &EvPtrMaxPosX) {
+        let ep = self.epsilon;
+        let rect = &v.1;
+        let on_top =
+            if v.0.borrow().pos.y >= rect.max.y - ep { 1 }
+            else if v.0.borrow().pos.y <= self.bbox.min.y + ep { -1 }
+            else { 0 };
+
+        let mut connector: Option<EvPtr> = None;
+
+
+        for first in self.contour.iter_mut() {
+            let check_edge = |e: &mut EvPtr| {
+                let op = e.borrow().interpolate_y2x(&v.0.borrow().pos, on_top, ep);
+                if let Some(x) = op {
+                    let flag = match connector.as_ref() {
+                        None => true,
+                        Some(c) => {
+                            let f1 = is_ccw_2d(
+                                &Row2::new(x, v.0.borrow().pos.y), &c.borrow().pos, &c.borrow().pos_r(), ep
+                            ) == 1;
+                            let f2 = if c.borrow().pos.y < e.borrow().pos.y {
+                                e.borrow().inside_edge(&c, ep, false)
+                            } else {
+                                !c.borrow().inside_edge(&e, ep, false)
+                            };
+                            f1 || f2
+                        }
+                    };
+                    if v.0.borrow().inside_edge(&v.0, ep, true) || flag {
+                        connector = Some(Rc::clone(e));
+                    }
+                }
+            };
+            Self::do_loop(first, check_edge);
+        }
+
+        //connector = Self::find_closer_bridge(&v, &connector);
+    }
+
+    fn find_closer_bridge(&mut self, start: &EvPtr, e: &EvPtr) -> EvPtr {
+        let mut connector =
+            if e.borrow().pos.x < start.borrow().pos.x {
+                e.borrow().ptr_r()
+            } else if e.borrow().pos_r().x < start.borrow().pos.x {
+                Rc::clone(e)
+            } else if e.borrow().pos_r().y - start.borrow().pos.y < start.borrow().pos.y - e.borrow().pos.y {
+                Rc::clone(e)
+            } else {
+                e.borrow().ptr_r()
+            };
+        if (connector.borrow().pos.y - start.borrow().pos.y).abs() <= self.epsilon {
+            return connector;
+        }
+        let above = if connector.borrow().pos.y > start.borrow().pos.y { 1. } else { -1. };
+
+        for first in self.contour.iter_mut() {
+            Self::do_loop(first, |v| {
+                let inside = above as i32 * is_ccw_2d(&v.borrow().pos, &v.borrow().pos, &connector.borrow().pos, self.epsilon);
+                let f1 = v.borrow().pos.x > start.borrow().pos.x - self.epsilon;
+                let f2 = v.borrow().pos.y * above > start.borrow().pos.y - self.epsilon;
+                let f3 = inside == 0 &&
+                    v.borrow().pos.x < connector.borrow().pos.x &&
+                    v.borrow().pos.y * above < connector.borrow().pos.y * above;
+                let f4 = v.borrow().inside_edge(e, self.epsilon, true);
+                let f5 = v.borrow().is_reflex(self.epsilon);
+                if f1 && f2 && (inside > 0 || ( f3 && f4 && f5 )) { connector = Rc::clone(v); };
+            });
+        }
+        connector
+    }
+
+    /// Creates a keyhole between the start vert of a hole and the connector vert of an outer polygon.
+    /// To do this, both verts are duplicated and reattached. This process may create degenerate ears,
+    /// so these are clipped if necessary to keep from confusing sub_sequent key-holing operations.
+    fn join_polygons(&mut self, sta: &EvPtr, con: &EvPtr) {
+        let newSta = Rc::clone(sta);
+        let newCon = Rc::clone(con);
+        self.polygon.push(Rc::clone(sta));
+        self.polygon.push(Rc::clone(con));
+        sta.borrow().ptr_r().borrow_mut().vl = Some(Rc::downgrade(&newSta));
+        con.borrow().ptr_l().borrow_mut().vr = Some(Rc::downgrade(&newCon));
+
+        Self::link(sta, con);
+        Self::link(&newCon, &newSta);
+
+        self.clip_degenerate(sta);
+        self.clip_degenerate(&newSta);
+        self.clip_degenerate(con);
+        self.clip_degenerate(&newCon);
     }
 
     /// Recalculate the cost of the Vert v ear,
