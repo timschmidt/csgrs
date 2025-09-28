@@ -467,7 +467,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let hole_refs: Vec<&[[Real; 2]]> = holes_vec.iter().map(|h| &h[..]).collect();
 
         // Tessellate the 2D polygon
-        let triangles_2d = Self::triangulate_2d(&exterior, &hole_refs);
+        let triangles_2d = Self::triangulate_with_holes(&exterior, &hole_refs);
 
         for triangle in triangles_2d {
             let mut triangle_indices = Vec::new();
