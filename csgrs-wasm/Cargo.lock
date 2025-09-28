@@ -368,6 +368,7 @@ dependencies = [
  "csgrs",
  "js-sys",
  "nalgebra",
+ "serde-wasm-bindgen",
  "wasm-bindgen",
  "wee_alloc",
 ]
@@ -1016,6 +1017,7 @@ dependencies = [
  "num-complex",
  "num-rational",
  "num-traits 0.2.19",
+ "serde",
  "simba",
  "typenum",
 ]
@@ -1104,6 +1106,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495"
 dependencies = [
  "num-traits 0.2.19",
+ "serde",
 ]
 
 [[package]]
@@ -1490,6 +1493,17 @@ checksum = "80ece43fc6fbed4eb5392ab50c07334d3e577cbf40997ee896fe7af40bba4245"
 dependencies = [
  "serde_core",
  "serde_derive",
+]
+
+[[package]]
+name = "serde-wasm-bindgen"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8302e169f0eddcc139c70f139d19d6467353af16f9fce27e8c30158036a1e16b"
+dependencies = [
+ "js-sys",
+ "serde",
+ "wasm-bindgen",
 ]
 
 [[package]]
