@@ -68,7 +68,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
         new_sketch
     }
 
-    /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
+    /// Triangulate an outer polygon and holes into a list of triangles, each triangle is [v0, v1, v2].
     pub fn triangulate_2d(
         outer: &[[Real; 2]],
         holes: &[&[[Real; 2]]],
