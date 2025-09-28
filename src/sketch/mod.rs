@@ -6,8 +6,8 @@ use crate::mesh::Mesh;
 use crate::traits::CSG;
 use geo::algorithm::winding_order::Winding;
 use geo::{
-    AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Coord, Geometry,
-    GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
+    AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Coord, CoordsIter,
+    Geometry, GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
     orient::Direction,
 };
 use nalgebra::{Matrix4, Point3, partial_max, partial_min};
@@ -68,7 +68,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
         new_sketch
     }
 
-    /// Triangulate this polygon into a list of triangles, each triangle is [v0, v1, v2].
+    /// Triangulate an outer polygon and holes into a list of triangles, each triangle is [v0, v1, v2].
     pub fn triangulate_2d(
         outer: &[[Real; 2]],
         holes: &[&[[Real; 2]]],
@@ -134,6 +134,49 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
             }
             result
         }
+    }
+    
+    /// Triangulate all polygons in this Sketch.
+    ///
+    /// This function converts all polygons (including those from MultiPolygons) contained
+    /// in the Sketch's geometry into a list of triangles. Each triangle is represented as
+    /// a `[Point3<Real>; 3]`, where the Z-coordinate is 0.0.
+    ///
+    /// # Returns
+    ///
+    /// A `Vec<[Point3<Real>; 3]>` containing all the triangles resulting from the triangulation.
+    pub fn triangulate(&self) -> Vec<[Point3<Real>; 3]> {
+        let mut all_triangles = Vec::new();
+
+        for geom in &self.geometry {
+            match geom {
+                geo::Geometry::Polygon(poly) => {
+                    let outer: Vec<[Real; 2]> = poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
+                    let holes: Vec<Vec<[Real; 2]>> = poly.interiors().iter()
+                        .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
+                        .collect();
+                    let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
+                    let tris = Self::triangulate_2d(&outer, &hole_refs);
+                    all_triangles.extend(tris);
+                },
+                geo::Geometry::MultiPolygon(mp) => {
+                    for poly in &mp.0 {
+                        let outer: Vec<[Real; 2]> = poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
+                        let holes: Vec<Vec<[Real; 2]>> = poly.interiors().iter()
+                            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
+                            .collect();
+                        let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
+                        let tris = Self::triangulate_2d(&outer, &hole_refs);
+                        all_triangles.extend(tris);
+                    }
+                },
+                // For other geometry types (LineString, Point, etc.), we might choose to ignore them
+                // or handle them differently if needed. Currently, ignoring them.
+                _ => {}
+            }
+        }
+
+        all_triangles
     }
 
     /// Return a copy of this `Sketch` whose polygons are normalised so that
