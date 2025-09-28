@@ -7,8 +7,8 @@ use crate::traits::CSG;
 use geo::algorithm::winding_order::Winding;
 use geo::{
     AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Coord, CoordsIter,
-    Geometry, GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
-    orient::Direction,
+    Geometry, GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon,
+    Rect, orient::Direction,
 };
 use nalgebra::{Matrix4, Point3, partial_max, partial_min};
 use std::fmt::Debug;
@@ -135,7 +135,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
             result
         }
     }
-    
+
     /// Triangulate all polygons in this Sketch.
     ///
     /// This function converts all polygons (including those from MultiPolygons) contained
@@ -151,8 +151,11 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
         for geom in &self.geometry {
             match geom {
                 geo::Geometry::Polygon(poly) => {
-                    let outer: Vec<[Real; 2]> = poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
-                    let holes: Vec<Vec<[Real; 2]>> = poly.interiors().iter()
+                    let outer: Vec<[Real; 2]> =
+                        poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
+                    let holes: Vec<Vec<[Real; 2]>> = poly
+                        .interiors()
+                        .iter()
                         .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
                         .collect();
                     let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
@@ -161,18 +164,22 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
                 },
                 geo::Geometry::MultiPolygon(mp) => {
                     for poly in &mp.0 {
-                        let outer: Vec<[Real; 2]> = poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
-                        let holes: Vec<Vec<[Real; 2]>> = poly.interiors().iter()
+                        let outer: Vec<[Real; 2]> =
+                            poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
+                        let holes: Vec<Vec<[Real; 2]>> = poly
+                            .interiors()
+                            .iter()
                             .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
                             .collect();
-                        let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
+                        let hole_refs: Vec<&[[Real; 2]]> =
+                            holes.iter().map(|v| &v[..]).collect();
                         let tris = Self::triangulate_2d(&outer, &hole_refs);
                         all_triangles.extend(tris);
                     }
                 },
                 // For other geometry types (LineString, Point, etc.), we might choose to ignore them
                 // or handle them differently if needed. Currently, ignoring them.
-                _ => {}
+                _ => {},
             }
         }
 
