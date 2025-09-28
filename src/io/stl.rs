@@ -218,7 +218,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         .collect::<Vec<_>>();
 
                     // Triangulate with our existing helper:
-                    let triangles_2d = Sketch::<()>::triangulate_with_holes(&outer, &hole_refs);
+                    let triangles_2d =
+                        Sketch::<()>::triangulate_with_holes(&outer, &hole_refs);
 
                     // Write each tri as a facet in ASCII STL, with a normal of (0,0,1)
                     for tri in triangles_2d {
@@ -257,7 +258,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             .map(|hole_coords| &hole_coords[..])
                             .collect::<Vec<_>>();
 
-                        let triangles_2d = Sketch::<()>::triangulate_with_holes(&outer, &hole_refs);
+                        let triangles_2d =
+                            Sketch::<()>::triangulate_with_holes(&outer, &hole_refs);
 
                         for tri in triangles_2d {
                             out.push_str("  facet normal 0.000000 0.000000 1.000000\n");
