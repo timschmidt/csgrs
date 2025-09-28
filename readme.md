@@ -19,7 +19,7 @@ library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are
 [Earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
 and
 [constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation)
-algorithms used for triangulation only work in 2D, so **csgrs** rotates
+algorithms used for triangulation work only in 2D, so **csgrs** rotates
 3D polygons into 2D for triangulation then back to 3D.
 
 ![Example CSG output](docs/csg.png)
@@ -93,8 +93,8 @@ cargo build --features="wasm" --target=wasm32-unknown-unknown --release
   - an optional metadata field (`Option<S>`) also defined by you
 
 `Sketch<S>` provides methods for working with 2D shapes made of points and lines.
-You can build a `Sketch<S>` geo Geometries with `Sketch::from_geo(...)`.
-Geometries can be open or closed, have holes, but must be planar in the XY.
+You can build a `Sketch<S>` from geo Geometries with `Sketch::from_geo(...)`.
+Geometries can be open or closed, and can have holes, but must be planar in the XY.
 `Sketch`'s are triangulated when exported as an STL, or when a Geometry is
 converted into a `Mesh<S>`.
 
@@ -191,7 +191,7 @@ let lofted = Sketch::loft(&bottom.polygons[0], &top.polygons[0], false);
 
 `Mesh<S>` provides methods for working with 3D shapes. You can build a
 `Mesh<S>` from polygons with `Mesh::from_polygons(...)`.
-Polygons must be closed, planar, have 3 or more vertices.
+Polygons must be closed, planar, and have 3 or more vertices.
 Polygons are triangulated when being exported as an STL.
 
 ### 3D Shapes in Mesh
@@ -495,18 +495,6 @@ if let Some(data_mut) = poly.metadata_mut() {
 - [csgrs-egui-example](https://github.com/timschmidt/csgrs-egui-example)
 - [csgrs-egui-wasm-example](https://github.com/timschmidt/csgrs-egui-wasm-example)
 - [csgrs-druid-example](https://github.com/timschmidt/csgrs-druid-example)
-
-## Build tests
-A cargo xtask is included in the repository for testing building with various
-combinations of feature flags.  To use it, you must install cargo xtask:
-```rust
-cargo install xtask
-```
-
-To run the tests:
-```rust
-cargo xtask test-all
-```
 
 ## Roadmap
 - **Attachments** Unless you make models containing just one object attachments features can revolutionize your modeling. They will let you position components of a model relative to other components so you don't have to keep track of the positions and orientations of parts of the model. You can instead place something on the TOP of something else, perhaps aligned to the RIGHT.
