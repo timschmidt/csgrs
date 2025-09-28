@@ -5,7 +5,7 @@ use csgrs::mesh::{Mesh, plane::Plane, vertex::Vertex};
 use csgrs::sketch::Sketch;
 use csgrs::io::svg::{FromSVG, ToSVG};
 use csgrs::traits::CSG;
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Point3, Matrix4, Vector3};
 use serde_wasm_bindgen::from_value;
 
 // Optional: better panic messages in the browser console.
@@ -365,28 +365,29 @@ impl MeshJs {
 
         obj
     }
-
-    // Basic 3D Primitives
-    #[wasm_bindgen(js_name = cube)]
-    pub fn cube(size: Real) -> Self {
-        Self {
-            inner: Mesh::cube(size, None),
-        }
-    }
-
-    #[wasm_bindgen(js_name = sphere)]
-    pub fn sphere(radius: Real, segments_u: usize, segments_v: usize) -> Self {
-        Self {
-            inner: Mesh::sphere(radius, segments_u, segments_v, None),
-        }
-    }
-
-    #[wasm_bindgen(js_name = cylinder)]
-    pub fn cylinder(radius: Real, height: Real, segments: usize) -> Self {
-        Self {
-            inner: Mesh::cylinder(radius, height, segments, None),
-        }
-    }
+    
+    #[wasm_bindgen(js_name=vertices)]
+	pub fn vertices(&self) -> JsValue {
+		let verts = self.inner.vertices();
+		let js_array = js_sys::Array::new();
+		for v in verts {
+			let js_vert = Object::new();
+			Reflect::set(&js_vert, &"x".into(), &v.pos.x.into()).unwrap();
+			Reflect::set(&js_vert, &"y".into(), &v.pos.y.into()).unwrap();
+			Reflect::set(&js_vert, &"z".into(), &v.pos.z.into()).unwrap();
+			Reflect::set(&js_vert, &"nx".into(), &v.normal.x.into()).unwrap();
+			Reflect::set(&js_vert, &"ny".into(), &v.normal.y.into()).unwrap();
+			Reflect::set(&js_vert, &"nz".into(), &v.normal.z.into()).unwrap();
+			js_array.push(&js_vert);
+		}
+		js_array.into()
+	}
+    
+    #[wasm_bindgen(js_name=containsVertex)]
+	pub fn contains_vertex(&self, x: Real, y: Real, z: Real) -> bool {
+		let point = Point3::new(x, y, z);
+		self.inner.contains_vertex(&point)
+	}
 
     // Boolean Operations
     #[wasm_bindgen(js_name = union)]
@@ -409,8 +410,27 @@ impl MeshJs {
             inner: self.inner.intersection(&other.inner),
         }
     }
+    
+	#[wasm_bindgen(js_name = xor)]
+    pub fn xor(&self, other: &MeshJs) -> Self {
+        Self {
+            inner: self.inner.xor(&other.inner),
+        }
+    }
 
     // Transformations
+    #[wasm_bindgen(js_name=transform)]
+	pub fn transform(&self, m00: Real, m01: Real, m02: Real, m03: Real,
+					 m10: Real, m11: Real, m12: Real, m13: Real,
+					 m20: Real, m21: Real, m22: Real, m23: Real,
+					 m30: Real, m31: Real, m32: Real, m33: Real) -> Self {
+		let matrix = Matrix4::new(m00, m01, m02, m03,
+								  m10, m11, m12, m13,
+								  m20, m21, m22, m23,
+								  m30, m31, m32, m33);
+		Self { inner: self.inner.transform(&matrix) }
+	}
+    
     #[wasm_bindgen(js_name = translate)]
     pub fn translate(&self, dx: Real, dy: Real, dz: Real) -> Self {
         Self {
@@ -438,6 +458,49 @@ impl MeshJs {
             inner: self.inner.center(),
         }
     }
+    
+	#[wasm_bindgen(js_name = float)]
+    pub fn float(&self) -> Self {
+        Self {
+            inner: self.inner.float(),
+        }
+    }
+    
+    #[wasm_bindgen(js_name = inverse)]
+    pub fn inverse(&self) -> Self {
+        Self {
+            inner: self.inner.inverse(),
+        }
+    }
+    
+    #[cfg(feature = "chull-io")]
+	#[wasm_bindgen(js_name=convexHull)]
+	pub fn convex_hull(&self) -> Self {
+		Self { inner: self.inner.convex_hull() }
+	}
+
+	#[cfg(feature = "chull-io")]
+	#[wasm_bindgen(js_name=minkowskiSum)]
+	pub fn minkowski_sum(&self, other: &MeshJs) -> Self {
+		Self { inner: self.inner.minkowski_sum(&other.inner) }
+	}
+	
+	// Distribute functions
+	#[wasm_bindgen(js_name=distributeLinear)]
+	pub fn distribute_linear(&self, count: usize, dx: Real, dy: Real, dz: Real, spacing: Real) -> Self {
+		let direction = Vector3::new(dx, dy, dz);
+		Self { inner: self.inner.distribute_linear(count, direction, spacing) }
+	}
+
+	#[wasm_bindgen(js_name=distributeArc)]
+	pub fn distribute_arc(&self, count: usize, radius: Real, start_angle: Real, end_angle: Real) -> Self {
+		Self { inner: self.inner.distribute_arc(count, radius, start_angle, end_angle) }
+	}
+
+	#[wasm_bindgen(js_name=distributeGrid)]
+	pub fn distribute_grid(&self, rows: usize, cols: usize, row_spacing: Real, col_spacing: Real) -> Self {
+		Self { inner: self.inner.distribute_grid(rows, cols, row_spacing, col_spacing) }
+	}
 
     // Information
     #[wasm_bindgen(js_name = boundingBox)]
@@ -492,14 +555,6 @@ impl MeshJs {
         SketchJs { inner: sketch }
     }
 
-    // Invert
-    #[wasm_bindgen(js_name = inverse)]
-    pub fn inverse(&self) -> Self {
-        Self {
-            inner: self.inner.inverse(),
-        }
-    }
-
     // Subdivision
     #[wasm_bindgen(js_name = subdivideTriangles)]
 	pub fn subdivide_triangles(&self, levels: u32) -> Self {
@@ -512,5 +567,45 @@ impl MeshJs {
 		Self {
 			inner: self.inner.subdivide_triangles(levels_nonzero),
 		}
+	}
+	
+	#[wasm_bindgen(js_name=renormalize)]
+	pub fn renormalize(&self) -> Self {
+		let mut cloned_inner = self.inner.clone();
+		cloned_inner.renormalize(); // This modifies `cloned_inner` in-place
+		Self { inner: cloned_inner }
+	}
+	
+	#[wasm_bindgen(js_name=triangulate)]
+	pub fn triangulate(&self) -> Self {
+		Self { inner: self.inner.triangulate() }
+	}
+	
+    // 3D Shapes
+    #[wasm_bindgen(js_name = cube)]
+    pub fn cube(size: Real) -> Self {
+        Self {
+            inner: Mesh::cube(size, None),
+        }
+    }
+    
+    #[wasm_bindgen(js_name = sphere)]
+    pub fn sphere(radius: Real, segments_u: usize, segments_v: usize) -> Self {
+        Self {
+            inner: Mesh::sphere(radius, segments_u, segments_v, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = cylinder)]
+    pub fn cylinder(radius: Real, height: Real, segments: usize) -> Self {
+        Self {
+            inner: Mesh::cylinder(radius, height, segments, None),
+        }
+    }
+    
+    #[cfg(feature = "offset")]
+	#[wasm_bindgen(js_name=hilbertCurve)]
+	pub fn hilbert_curve(&self, order: usize, padding: Real) -> Self {
+		Self { inner: self.inner.hilbert_curve(order, padding) }
 	}
 }
