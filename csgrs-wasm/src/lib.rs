@@ -1,18 +1,29 @@
 use wasm_bindgen::prelude::*;
 use js_sys::{Float64Array, Uint32Array, Reflect, Object};
 use csgrs::float_types::Real;
-use csgrs::mesh::{Mesh, plane::Plane, vertex::Vertex};
+use csgrs::mesh::{Mesh, plane::Plane, polygon::Polygon, vertex::Vertex};
 use csgrs::sketch::Sketch;
 use csgrs::io::svg::{FromSVG, ToSVG};
 use csgrs::traits::CSG;
 use nalgebra::{Point3, Matrix4, Vector3};
 use serde_wasm_bindgen::from_value;
+use geo::{Geometry, GeometryCollection};
 
 // Optional: better panic messages in the browser console.
 #[cfg(feature = "console_error_panic_hook")]
 #[wasm_bindgen(start)]
 pub fn init_panic_hook() {
     console_error_panic_hook::set_once();
+}
+
+#[wasm_bindgen]
+pub struct Matrix4Js {
+    inner: Matrix4<f64>,
+}
+
+#[wasm_bindgen]
+pub struct PolygonJs {
+    inner: Polygon<()>,
 }
 
 #[wasm_bindgen]
@@ -55,155 +66,7 @@ impl SketchJs {
             inner: Sketch::new(),
         }
     }
-
-    // Basic Geometry Creation
-    #[wasm_bindgen(js_name = square)]
-    pub fn square(width: Real) -> Self {
-        Self {
-            inner: Sketch::square(width, None),
-        }
-    }
-
-    #[wasm_bindgen(js_name = circle)]
-    pub fn circle(radius: Real, segments: usize) -> Self {
-        Self {
-            inner: Sketch::circle(radius, segments, None),
-        }
-    }
-
-	#[wasm_bindgen(js_name = polygon)]
-	pub fn polygon(points: JsValue) -> Result<Self, JsValue> {
-		let points_vec: Vec<[f64; 2]> = from_value(points)
-			.map_err(|e| JsValue::from_str(&format!("Failed to parse points: {:?}", e)))?;
-
-		let points_2d: Vec<[Real; 2]> = points_vec
-			.into_iter()
-			.map(|[x, y]| [x as Real, y as Real])
-			.collect();
-
-		Ok(Self {
-			inner: Sketch::polygon(&points_2d, None),
-		})
-	}
-
-    #[wasm_bindgen(js_name = fromSVG)]
-    pub fn from_svg(svg_data: &str) -> Result<Self, JsValue> {
-        let sketch = Sketch::from_svg(svg_data)
-            .map_err(|e| JsValue::from_str(&format!("SVG parsing error: {:?}", e)))?;
-        Ok(Self { inner: sketch })
-    }
-
-    #[wasm_bindgen(js_name = toSVG)]
-    pub fn to_svg(&self) -> String {
-        self.inner.to_svg()
-    }
-
-    // Boolean Operations
-    #[wasm_bindgen(js_name = union)]
-    pub fn union(&self, other: &SketchJs) -> Self {
-        Self {
-            inner: self.inner.union(&other.inner),
-        }
-    }
-
-    #[wasm_bindgen(js_name = difference)]
-    pub fn difference(&self, other: &SketchJs) -> Self {
-        Self {
-            inner: self.inner.difference(&other.inner),
-        }
-    }
-
-    #[wasm_bindgen(js_name = intersection)]
-    pub fn intersection(&self, other: &SketchJs) -> Self {
-        Self {
-            inner: self.inner.intersection(&other.inner),
-        }
-    }
-
-    #[wasm_bindgen(js_name = xor)]
-    pub fn xor(&self, other: &SketchJs) -> Self {
-        Self {
-            inner: self.inner.xor(&other.inner),
-        }
-    }
-
-    // Transformations
-    #[wasm_bindgen(js_name = translate)]
-    pub fn translate(&self, dx: Real, dy: Real, dz: Real) -> Self {
-        Self {
-            inner: self.inner.translate(dx, dy, dz),
-        }
-    }
-
-    #[wasm_bindgen(js_name = rotate)]
-    pub fn rotate(&self, rx: Real, ry: Real, rz: Real) -> Self {
-        Self {
-            inner: self.inner.rotate(rx, ry, rz),
-        }
-    }
-
-    #[wasm_bindgen(js_name = scale)]
-    pub fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
-        Self {
-            inner: self.inner.scale(sx, sy, sz),
-        }
-    }
-
-    #[wasm_bindgen(js_name = center)]
-    pub fn center(&self) -> Self {
-        Self {
-            inner: self.inner.center(),
-        }
-    }
-
-    // Extrusion and 3D Operations
-    #[wasm_bindgen(js_name = extrude)]
-    pub fn extrude(&self, height: Real) -> MeshJs {
-        let mesh = self.inner.extrude(height);
-        MeshJs { inner: mesh }
-    }
-
-    #[wasm_bindgen(js_name = revolve)]
-    pub fn revolve(&self, angle_degrees: Real, segments: usize) -> Result<MeshJs, JsValue> {
-        let mesh = self.inner.revolve(angle_degrees, segments)
-            .map_err(|e| JsValue::from_str(&format!("Revolve failed: {:?}", e)))?;
-        Ok(MeshJs { inner: mesh })
-    }
-
-    // Offset Operations (if offset feature is enabled)
-    #[cfg(feature = "offset")]
-    #[wasm_bindgen(js_name = offset)]
-    pub fn offset(&self, distance: Real) -> Self {
-        Self {
-            inner: self.inner.offset(distance),
-        }
-    }
-
-    #[cfg(feature = "offset")]
-    #[wasm_bindgen(js_name = offsetRounded)]
-    pub fn offset_rounded(&self, distance: Real) -> Self {
-        Self {
-            inner: self.inner.offset_rounded(distance),
-        }
-    }
-
-    // Information
-	#[wasm_bindgen(js_name = boundingBox)]
-	pub fn bounding_box(&self) -> JsValue {
-		let bb = self.inner.bounding_box();
-		let min = Point3::new(bb.mins.x, bb.mins.y, bb.mins.z);
-		let max = Point3::new(bb.maxs.x, bb.maxs.y, bb.maxs.z);
-
-		let obj = Object::new();
-		let min_arr = js_sys::Array::of3(&min.x.into(), &min.y.into(), &min.z.into());
-		let max_arr = js_sys::Array::of3(&max.x.into(), &max.y.into(), &max.z.into());
-
-		Reflect::set(&obj, &"min".into(), &min_arr).unwrap();
-		Reflect::set(&obj, &"max".into(), &max_arr).unwrap();
-
-		obj.into()
-	}
-
+    
     #[wasm_bindgen(js_name = isEmpty)]
     pub fn is_empty(&self) -> bool {
         self.inner.geometry.0.is_empty()
@@ -259,6 +122,252 @@ impl SketchJs {
         Reflect::set(&obj, &"indices".into(), &idx_array).unwrap();
         obj.into()
     }
+
+	#[wasm_bindgen(js_name = polygon)]
+	pub fn polygon(points: JsValue) -> Result<Self, JsValue> {
+		let points_vec: Vec<[f64; 2]> = from_value(points)
+			.map_err(|e| JsValue::from_str(&format!("Failed to parse points: {:?}", e)))?;
+
+		let points_2d: Vec<[Real; 2]> = points_vec
+			.into_iter()
+			.map(|[x, y]| [x as Real, y as Real])
+			.collect();
+
+		Ok(Self {
+			inner: Sketch::polygon(&points_2d, None),
+		})
+	}
+	
+	/* fix to work with outer, holes as input
+	#[wasm_bindgen(js_name=triangulateWithHoles)]
+    pub fn triangulate_with_holes(outer, holes) -> Vec<JsValue> {
+        let tris = Sketch::<()>::triangulate_with_holes(outer, holes);
+        tris.into_iter()
+            .map(|tri| {
+                let points: Vec<[f64; 3]> = tri
+                    .iter()
+                    .map(|v| [v.pos.x, v.pos.y, v.pos.z])
+                    .collect();
+                JsValue::from_serde(&points).unwrap_or(JsValue::NULL)
+            })
+            .collect()
+    }
+    */
+    
+	/*
+	
+	error[E0609]: no field `pos` on type `&OPoint<f64, Const<3>>`
+   --> src/lib.rs:159:33
+    |
+159 |                     .map(|v| [v.pos.x, v.pos.y, v.pos.z])
+    |                                 ^^^ unknown field
+    |
+    = note: available field is: `coords`
+    = note: available fields are: `x`, `y`, `z`
+	
+	#[wasm_bindgen(js_name=triangulate)]
+    pub fn triangulate(&self) -> Vec<JsValue> {
+        let tris = self.inner.triangulate();
+        tris.into_iter()
+            .map(|tri| {
+                let points: Vec<[f64; 3]> = tri
+                    .iter()
+                    .map(|v| [v.pos.x, v.pos.y, v.pos.z])
+                    .collect();
+                JsValue::from_serde(&points).unwrap_or(JsValue::NULL)
+            })
+            .collect()
+    }
+    */
+
+	// IO operations
+    #[wasm_bindgen(js_name = fromSVG)]
+    pub fn from_svg(svg_data: &str) -> Result<Self, JsValue> {
+        let sketch = Sketch::from_svg(svg_data)
+            .map_err(|e| JsValue::from_str(&format!("SVG parsing error: {:?}", e)))?;
+        Ok(Self { inner: sketch })
+    }
+
+    #[wasm_bindgen(js_name = toSVG)]
+    pub fn to_svg(&self) -> String {
+        self.inner.to_svg()
+    }
+    
+    #[wasm_bindgen(js_name=fromGeo)]
+    pub fn from_geo(geo_json: &str) -> Result<SketchJs, JsValue> {
+        let geometry: Geometry<Real> = serde_json::from_str(geo_json)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse GeoJSON: {}", e)))?;
+        let sketch = Sketch::from_geo(GeometryCollection(vec![geometry]), None);
+        Ok(SketchJs { inner: sketch })
+    }
+    
+	#[wasm_bindgen(js_name=toMultiPolygon)]
+    pub fn to_multipolygon(&self) -> String {
+        let mp = self.inner.to_multipolygon();
+        serde_json::to_string(&mp).unwrap_or_else(|_| "null".to_string())
+    }
+    
+    #[wasm_bindgen(js_name=fromMesh)]
+    pub fn from_mesh(mesh_js: &MeshJs) -> SketchJs {
+        let sketch = Sketch::from(mesh_js.inner.clone());
+        SketchJs { inner: sketch }
+    }
+
+    // Boolean Operations
+    #[wasm_bindgen(js_name = union)]
+    pub fn union(&self, other: &SketchJs) -> Self {
+        Self {
+            inner: self.inner.union(&other.inner),
+        }
+    }
+
+    #[wasm_bindgen(js_name = difference)]
+    pub fn difference(&self, other: &SketchJs) -> Self {
+        Self {
+            inner: self.inner.difference(&other.inner),
+        }
+    }
+
+    #[wasm_bindgen(js_name = intersection)]
+    pub fn intersection(&self, other: &SketchJs) -> Self {
+        Self {
+            inner: self.inner.intersection(&other.inner),
+        }
+    }
+
+    #[wasm_bindgen(js_name = xor)]
+    pub fn xor(&self, other: &SketchJs) -> Self {
+        Self {
+            inner: self.inner.xor(&other.inner),
+        }
+    }
+
+    // Transformations
+	#[wasm_bindgen(js_name=transform)]
+    pub fn transform(&self, mat: &Matrix4Js) -> SketchJs {
+        Self { inner: self.inner.transform(&mat.inner), }
+    }
+    
+    #[wasm_bindgen(js_name = translate)]
+    pub fn translate(&self, dx: Real, dy: Real, dz: Real) -> Self {
+        Self {
+            inner: self.inner.translate(dx, dy, dz),
+        }
+    }
+
+    #[wasm_bindgen(js_name = rotate)]
+    pub fn rotate(&self, rx: Real, ry: Real, rz: Real) -> Self {
+        Self {
+            inner: self.inner.rotate(rx, ry, rz),
+        }
+    }
+
+    #[wasm_bindgen(js_name = scale)]
+    pub fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
+        Self {
+            inner: self.inner.scale(sx, sy, sz),
+        }
+    }
+
+    #[wasm_bindgen(js_name = center)]
+    pub fn center(&self) -> Self {
+        Self {
+            inner: self.inner.center(),
+        }
+    }
+    
+    #[wasm_bindgen(js_name=inverse)]
+    pub fn inverse(&self) -> SketchJs {
+        let sketch = self.inner.inverse();
+        Self { inner: sketch }
+    }
+    
+	#[wasm_bindgen(js_name=renormalize)]
+    pub fn renormalize(&self) -> SketchJs {
+        let sketch = self.inner.renormalize();
+        Self { inner: sketch }
+    }
+
+    // Extrusion and 3D Operations
+    #[wasm_bindgen(js_name = extrude)]
+    pub fn extrude(&self, height: Real) -> MeshJs {
+        let mesh = self.inner.extrude(height);
+        MeshJs { inner: mesh }
+    }
+
+    #[wasm_bindgen(js_name = revolve)]
+    pub fn revolve(&self, angle_degrees: Real, segments: usize) -> Result<MeshJs, JsValue> {
+        let mesh = self.inner.revolve(angle_degrees, segments)
+            .map_err(|e| JsValue::from_str(&format!("Revolve failed: {:?}", e)))?;
+        Ok(MeshJs { inner: mesh })
+    }
+
+    // Offset Operations (if offset feature is enabled)
+    #[cfg(feature = "offset")]
+    #[wasm_bindgen(js_name = offset)]
+    pub fn offset(&self, distance: Real) -> Self {
+        Self {
+            inner: self.inner.offset(distance),
+        }
+    }
+
+    #[cfg(feature = "offset")]
+    #[wasm_bindgen(js_name = offsetRounded)]
+    pub fn offset_rounded(&self, distance: Real) -> Self {
+        Self {
+            inner: self.inner.offset_rounded(distance),
+        }
+    }
+    
+    #[cfg(feature = "offset")]
+	#[wasm_bindgen(js_name=straightSkeleton)]
+    pub fn straight_skeleton(&self, orientation: f64) -> SketchJs {
+        let sketch = self.inner.straight_skeleton(orientation);
+        Self { inner: sketch }
+    }
+
+    // Bounding Box
+	#[wasm_bindgen(js_name = boundingBox)]
+	pub fn bounding_box(&self) -> JsValue {
+		let bb = self.inner.bounding_box();
+		let min = Point3::new(bb.mins.x, bb.mins.y, bb.mins.z);
+		let max = Point3::new(bb.maxs.x, bb.maxs.y, bb.maxs.z);
+
+		let obj = Object::new();
+		let min_arr = js_sys::Array::of3(&min.x.into(), &min.y.into(), &min.z.into());
+		let max_arr = js_sys::Array::of3(&max.x.into(), &max.y.into(), &max.z.into());
+
+		Reflect::set(&obj, &"min".into(), &min_arr).unwrap();
+		Reflect::set(&obj, &"max".into(), &max_arr).unwrap();
+
+		obj.into()
+	}
+	
+	#[wasm_bindgen(js_name=invalidateBoundingBox)]
+    pub fn invalidate_bounding_box(&mut self) {
+        self.inner.invalidate_bounding_box();
+    }
+    
+	// 2D Shapes
+    #[wasm_bindgen(js_name = square)]
+    pub fn square(width: Real) -> Self {
+        Self {
+            inner: Sketch::square(width, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = circle)]
+    pub fn circle(radius: Real, segments: usize) -> Self {
+        Self {
+            inner: Sketch::circle(radius, segments, None),
+        }
+    }
+    
+	#[cfg(feature = "offset")]
+	#[wasm_bindgen(js_name = hilbertCurve)]
+	pub fn hilbert_curve(&self, order: usize, padding: Real) -> Self {
+		Self { inner: self.inner.hilbert_curve(order, padding) }
+	}
 }
 
 
@@ -274,6 +383,14 @@ impl MeshJs {
         Self {
             inner: Mesh::new(),
         }
+    }
+    
+    #[wasm_bindgen(js_name=fromPolygons)]
+    pub fn from_polygons(polygons: Vec<PolygonJs>) -> MeshJs { // second parameter: Option<(&str)>
+        let poly_vec: Vec<_> = polygons.iter().map(|p| p.inner.clone()).collect();
+        //let meta_opt = metadata.map(|s| s.to_string());
+        let mesh = Mesh::from_polygons(&poly_vec, None); // add meta_opt in place of None once metadata is bound
+        MeshJs { inner: mesh }
     }
 
     /// Return an interleaved array of vertex positions (x,y,z)*.
@@ -502,7 +619,7 @@ impl MeshJs {
 		Self { inner: self.inner.distribute_grid(rows, cols, row_spacing, col_spacing) }
 	}
 
-    // Information
+    // Bounding Box
     #[wasm_bindgen(js_name = boundingBox)]
     pub fn bounding_box(&self) -> JsValue {
         let bb = self.inner.bounding_box();
@@ -513,8 +630,13 @@ impl MeshJs {
         Reflect::set(&obj, &"max".into(), &serde_wasm_bindgen::to_value(&max).unwrap()).unwrap();
         obj.into()
     }
+    
+	#[wasm_bindgen(js_name=invalidateBoundingBox)]
+    pub fn invalidate_bounding_box(&mut self) {
+        self.inner.invalidate_bounding_box();
+    }
 
-    // Export Functions
+    // IO Operations
     #[wasm_bindgen(js_name = toSTLBinary)]
     pub fn to_stl_binary(&self) -> Result<Vec<u8>, JsValue> {
         self.inner.to_stl_binary("mesh")
@@ -536,6 +658,27 @@ impl MeshJs {
     pub fn to_amf_with_color(&self, object_name: &str, units: &str, r: f64, g: f64, b: f64) -> String {
         self.inner.to_amf_with_color(object_name, units, (r as Real, g as Real, b as Real))
     }
+    
+    #[wasm_bindgen(js_name=fromSketch)]
+    pub fn from_sketch(sketch_js: &SketchJs) -> MeshJs {
+        let mesh = Mesh::from(sketch_js.inner.clone());
+        Self { inner: mesh }
+    }
+    
+    /*
+    // Metadata
+    #[wasm_bindgen(js_name=sameMetadata)]
+    pub fn same_metadata(&self, metadata: Option<&str>) -> bool {
+        let meta_opt = metadata.map(|s| s.to_string());
+        self.inner.same_metadata(meta_opt)
+    }
+    
+    #[wasm_bindgen(js_name=filterPolygonsByMetadata)]
+    pub fn filter_polygons_by_metadata(&self, needle: &str) -> MeshJs {
+        let mesh = self.inner.filter_polygons_by_metadata(needle);
+        MeshJs { inner: mesh }
+    }
+    */
 
     // Mass Properties
     #[wasm_bindgen(js_name = massProperties)]
@@ -569,14 +712,14 @@ impl MeshJs {
 		}
 	}
 	
-	#[wasm_bindgen(js_name=renormalize)]
+	#[wasm_bindgen(js_name = renormalize)]
 	pub fn renormalize(&self) -> Self {
-		let mut cloned_inner = self.inner.clone();
-		cloned_inner.renormalize(); // This modifies `cloned_inner` in-place
-		Self { inner: cloned_inner }
+		let mut inner = self.inner.clone();
+		inner.renormalize();
+		Self { inner }
 	}
 	
-	#[wasm_bindgen(js_name=triangulate)]
+	#[wasm_bindgen(js_name = triangulate)]
 	pub fn triangulate(&self) -> Self {
 		Self { inner: self.inner.triangulate() }
 	}
@@ -602,10 +745,4 @@ impl MeshJs {
             inner: Mesh::cylinder(radius, height, segments, None),
         }
     }
-    
-    #[cfg(feature = "offset")]
-	#[wasm_bindgen(js_name=hilbertCurve)]
-	pub fn hilbert_curve(&self, order: usize, padding: Real) -> Self {
-		Self { inner: self.inner.hilbert_curve(order, padding) }
-	}
 }
