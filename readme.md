@@ -101,7 +101,7 @@ converted into a `Mesh<S>`.
 ### 2D Shapes in Sketch
 
 - <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Sketch::square(width: Real, metadata: Option<S>)`**
-- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Sketch::rectangle(width: Real, length: Real, metadata: Option<S>)`**
+- <img src="docs/square.png" width="128" alt="top down view of a rectangle"/> **`Sketch::rectangle(width: Real, length: Real, metadata: Option<S>)`**
 - <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`Sketch::circle(radius: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`Sketch::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
 - <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`Sketch::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
@@ -123,14 +123,14 @@ converted into a `Mesh<S>`.
 - <img src="docs/double_flat.png" width="128" alt="top down view of a circle with two flat edges"/> **`Sketch::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
 - <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Sketch::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
 - <img src="docs/truetype.png" width="128" alt="top down view of the text 'HELLO'"/> **`Sketch::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
-- <img src="docs/metaballs_2d.png" width="128"/> **`Sketch::metaballs(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
+- <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Sketch::metaballs(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
 - <img src="docs/airfoil.png" width="128" alt="a side view of an airfoil"/> **`Sketch::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize, metadata: Option<S>)`** - [NACA 4 digit](https://en.wikipedia.org/wiki/NACA_airfoil#Four-digit_series) airfoil
 - <img src="docs/bezier_extruded.png" width="128" alt="an angled view of a bezier cirve"/> **`Sketch::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`**
 - <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`Sketch::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`**
 - <img src="docs/heart.png" width="128" alt="top down view of a cartune heart"/> **`Sketch::heart(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/crescent.png" width="128"/> **`Sketch::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: Option<S>)`** - 
-- <img src="docs/hilbert.png" width="128"/> **`Sketch::hilbert(order: usize, padding: Real)`** - fill an existing Sketch with a hilbert curve
-- <img src="docs/gear_involute.png" width="128"/> **`Sketch::involute_gear(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: Option<S>)`**
+- <img src="docs/crescent.png" width="128" alt="top down view of a crescent"/> **`Sketch::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: Option<S>)`** - 
+- <img src="docs/hilbert.png" width="128" alt="top down view of a hilbert curve"/> **`Sketch::hilbert(order: usize, padding: Real)`** - fill an existing Sketch with a hilbert curve
+- <img src="docs/gear_involute.png" width="128" alt="top down view of a involute gear profile"/> **`Sketch::involute_gear(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: Option<S>)`**
 - **`Sketch::cycloidal_gear(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 - **`Sketch::involute_rack(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: Option<S>)`** - under construction
 - **`Sketch::cycloidal_rack(module_: Real, num_teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
