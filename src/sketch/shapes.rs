@@ -290,7 +290,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             metadata,
         )
     }
-    
+
     /// Creates a 2D arrow in the XY plane.
     ///
     /// The arrow points along the positive X-axis, starting at (0,0).
@@ -316,7 +316,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         head_width: Real,
         metadata: Option<S>,
     ) -> Self {
-        if shaft_length <= 0.0 || shaft_width <= 0.0 || head_length <= 0.0 || head_width <= 0.0 {
+        if shaft_length <= 0.0 || shaft_width <= 0.0 || head_length <= 0.0 || head_width <= 0.0
+        {
             return Sketch::new();
         }
 
@@ -1182,83 +1183,83 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         Sketch::polygon(&outline, metadata)
     }
 
-/// Generate a linear involute rack profile (lying in the XY plane, pitch‑line on Y = 0).
-/// The returned polygon is CCW and spans `num_teeth` pitches along +X.
-///
-/// # Parameters
-/// - `module_`: gear module
-/// - `num_teeth`: number of teeth along the rack
-/// - `pressure_angle_deg`: pressure angle in degrees
-/// - `clearance`: additional clearance for dedendum
-/// - `backlash`: backlash allowance
-/// - `metadata`: optional metadata
-pub fn involute_rack(
-    module_: Real,
-    num_teeth: usize,
-    pressure_angle_deg: Real,
-    clearance: Real,
-    backlash: Real,
-    metadata: Option<S>,
-) -> Sketch<S> {
-    assert!(num_teeth >= 1);
-    let m = module_;
-    let p = PI * m; // linear pitch
-    let addendum = m;
-    let dedendum = 1.25 * m + clearance;
-    let tip_y = addendum;
-    let root_y = -dedendum;
-    // Tooth thickness at pitch‑line (centre) minus backlash.
-    let t = p / 2.0 - backlash;
-    let half_t = t / 2.0;
-    // For a rack, the involute flank is a straight line at pressure angle
-    let alpha = pressure_angle_deg.to_radians();
-    let tan_alpha = alpha.tan();
-    
-    // Build the complete rack profile as a single closed polygon
-    let mut outline = Vec::<[Real; 2]>::new();
-    
-    // Start at the bottom left of the first tooth
-    let first_x = -half_t - (tip_y - root_y) / tan_alpha;
-    outline.push([first_x, root_y]);
-    
-    // Build each tooth
-    for i in 0..num_teeth {
-        let tooth_center = (i as Real) * p;
-        let left_pitch = tooth_center - half_t;
-        let right_pitch = tooth_center + half_t;
-        let left_tip = left_pitch - (tip_y) / tan_alpha;
-        let right_tip = right_pitch + (tip_y) / tan_alpha;
-        
-        // Left flank (from root to tip)
-        outline.push([left_pitch, 0.0]);
-        outline.push([left_tip, tip_y]);
-        
-        // Top of tooth
-        outline.push([right_tip, tip_y]);
-        
-        // Right flank (from tip to root)
-        outline.push([right_pitch, 0.0]);
-        
-        // Bottom right (root)
-        if i < num_teeth - 1 {
-            let next_left_pitch = (i as Real + 1.0) * p - half_t;
-            let next_root_left = next_left_pitch - (tip_y - root_y) / tan_alpha;
-            outline.push([next_root_left, root_y]);
+    /// Generate a linear involute rack profile (lying in the XY plane, pitch‑line on Y = 0).
+    /// The returned polygon is CCW and spans `num_teeth` pitches along +X.
+    ///
+    /// # Parameters
+    /// - `module_`: gear module
+    /// - `num_teeth`: number of teeth along the rack
+    /// - `pressure_angle_deg`: pressure angle in degrees
+    /// - `clearance`: additional clearance for dedendum
+    /// - `backlash`: backlash allowance
+    /// - `metadata`: optional metadata
+    pub fn involute_rack(
+        module_: Real,
+        num_teeth: usize,
+        pressure_angle_deg: Real,
+        clearance: Real,
+        backlash: Real,
+        metadata: Option<S>,
+    ) -> Sketch<S> {
+        assert!(num_teeth >= 1);
+        let m = module_;
+        let p = PI * m; // linear pitch
+        let addendum = m;
+        let dedendum = 1.25 * m + clearance;
+        let tip_y = addendum;
+        let root_y = -dedendum;
+        // Tooth thickness at pitch‑line (centre) minus backlash.
+        let t = p / 2.0 - backlash;
+        let half_t = t / 2.0;
+        // For a rack, the involute flank is a straight line at pressure angle
+        let alpha = pressure_angle_deg.to_radians();
+        let tan_alpha = alpha.tan();
+
+        // Build the complete rack profile as a single closed polygon
+        let mut outline = Vec::<[Real; 2]>::new();
+
+        // Start at the bottom left of the first tooth
+        let first_x = -half_t - (tip_y - root_y) / tan_alpha;
+        outline.push([first_x, root_y]);
+
+        // Build each tooth
+        for i in 0..num_teeth {
+            let tooth_center = (i as Real) * p;
+            let left_pitch = tooth_center - half_t;
+            let right_pitch = tooth_center + half_t;
+            let left_tip = left_pitch - (tip_y) / tan_alpha;
+            let right_tip = right_pitch + (tip_y) / tan_alpha;
+
+            // Left flank (from root to tip)
+            outline.push([left_pitch, 0.0]);
+            outline.push([left_tip, tip_y]);
+
+            // Top of tooth
+            outline.push([right_tip, tip_y]);
+
+            // Right flank (from tip to root)
+            outline.push([right_pitch, 0.0]);
+
+            // Bottom right (root)
+            if i < num_teeth - 1 {
+                let next_left_pitch = (i as Real + 1.0) * p - half_t;
+                let next_root_left = next_left_pitch - (tip_y - root_y) / tan_alpha;
+                outline.push([next_root_left, root_y]);
+            }
         }
+
+        // Close the polygon by connecting back to the start
+        // Add the bottom right corner
+        let last_tooth_center = ((num_teeth - 1) as Real) * p;
+        let last_right_pitch = last_tooth_center + half_t;
+        let last_root_right = last_right_pitch + (tip_y - root_y) / tan_alpha;
+        outline.push([last_root_right, root_y]);
+
+        // Now close the polygon by going back to the start
+        outline.push([first_x, root_y]);
+
+        Sketch::polygon(&outline, metadata)
     }
-    
-    // Close the polygon by connecting back to the start
-    // Add the bottom right corner
-    let last_tooth_center = ((num_teeth - 1) as Real) * p;
-    let last_right_pitch = last_tooth_center + half_t;
-    let last_root_right = last_right_pitch + (tip_y - root_y) / tan_alpha;
-    outline.push([last_root_right, root_y]);
-    
-    // Now close the polygon by going back to the start
-    outline.push([first_x, root_y]);
-    
-    Sketch::polygon(&outline, metadata)
-}
 
     /// Generate a linear cycloidal rack profile.
     /// The cycloidal rack is generated by rolling a circle of radius `r_p` along the
