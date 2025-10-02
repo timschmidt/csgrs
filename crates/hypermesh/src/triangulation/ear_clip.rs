@@ -7,6 +7,7 @@ use rand::distr::uniform::SampleBorrow;
 use crate::common::{det2x2, is_ccw_2d, safe_normalize, PolyVert, PolygonIdx, Rect, K_BEST, K_PRECISION};
 use crate::flat_tree::{compute_flat_tree, compute_query_flat_tree};
 
+#[derive(Clone)]
 pub struct Ecvt {
     pub idx: usize,     // mesh idx, but it is more likely to say vert idx
     pub pos: Row2<f64>, // vert pos
@@ -329,13 +330,26 @@ impl EarClip {
     }
 
     pub fn triangulate(&mut self) -> Vec<Row3<usize>> {
+
+        //for v in self.polygon.iter() {
+        //    println!("polygon... ptr: {:p}, idx: {}, idx_l: {}, idx_r: {}",
+        //        Rc::as_ptr(v), v.borrow().idx, v.borrow().idx_l(), v.borrow().idx_r());
+        //}
+
         let vs = self.holes.iter().cloned().collect::<Vec<_>>();
-        for mut v in vs {
-             self.cut_key_hole(&mut v);
+        for mut v in vs { self.cut_key_hole(&mut v); }
+
+        for v in self.polygon.iter() {
+            println!("polygon... ptr: {:p}, idx: {}, idx_l: {}, idx_r: {}",
+                     Rc::as_ptr(v), v.borrow().idx, v.borrow().idx_l(), v.borrow().idx_r());
         }
 
+
         let vs = self.simples.iter().map(|s| Rc::clone(s)).collect::<Vec<_>>();
-        for mut v in vs { self.triangulate_poly(&mut v); }
+        for mut v in vs {
+            println!("======== simples idx: {}", v.borrow().idx);
+            self.triangulate_poly(&mut v);
+        }
 
         std::mem::take(&mut self.tris)
     }
@@ -350,7 +364,6 @@ impl EarClip {
         vl_.dir = safe_normalize(vr_.pos - vl_.pos);
     }
 
-
     /// Apply `func` to each unclipped vertex in a polygonal circular list starting at `first`.
     /// VertItrC Loop(VertItr first, std::function<void(VertItr)> func) const
     /// The C++ returns `polygon_.end()` when it detects a degenerate (right == left).
@@ -362,11 +375,17 @@ impl EarClip {
                 *v = w.borrow().ptr_l_of_r();
                 if !clipped(v) {
                     w = Rc::clone(v);
-                    if Rc::ptr_eq(&w.borrow().ptr_l(), &w.borrow().ptr_r()) { return None; }
+                    if Rc::ptr_eq(&w.borrow().ptr_l(), &w.borrow().ptr_r()) {
+                        println!("do loop none 1!");
+                        return None;
+                    }
                     func(&mut w);
                 }
             } else {
-                if Rc::ptr_eq(&w.borrow().ptr_l(), &w.borrow().ptr_r()) { return None; }
+                if Rc::ptr_eq(&w.borrow().ptr_l(), &w.borrow().ptr_r()) {
+                    println!("do loop none 2!");
+                    return None;
+                }
                 func(&mut w);
             }
             w = { w.borrow().ptr_r() };
@@ -394,6 +413,7 @@ impl EarClip {
         let pl = ear.borrow().pos_l();
         let pr = ear.borrow().pos_r();
         if ear.borrow().is_short(e) || (is_ccw_2d(&pl, &p, &pr, e) == 0 && (pl - p).dot(&(pr - p)) > 0.) {
+            println!("degenerate: {:p}", Rc::as_ptr(ear));
             self.clip_ear(&ear);
             self.clip_degenerate(&ear.borrow().ptr_l());
             self.clip_degenerate(&ear.borrow().ptr_r());
@@ -470,11 +490,14 @@ impl EarClip {
     fn vert_collider(start: &mut EvPtr) -> IdxCollider {
         let mut pts = vec![];
         let mut rfs = vec![];
+        //println!("start idx_l: {}, idx_r: {}", start.borrow().idx_l(), start.borrow().idx_r());
         Self::do_loop(start, |v| {
+            println!("vert: {:?}, idx: {}", v.borrow().pos, v.borrow().idx);
             pts.push(PolyVert{ pos: v.borrow().pos, idx: rfs.len() });
             rfs.push(Rc::clone(v));
         });
 
+        //println!("pts len: {}, rfs len: {}", pts.len(), rfs.len());
         compute_flat_tree(&mut pts);
         IdxCollider { pts, rfs }
     }
@@ -484,42 +507,40 @@ impl EarClip {
     /// we check for polygon edges both ahead and behind to ensure all valid options are found.
     fn cut_key_hole(&mut self, v: &EvPtrMaxPosX) {
         let ep = self.epsilon;
-        let rect = &v.1;
         let on_top =
-            if v.0.borrow().pos.y >= rect.max.y - ep { 1 }
-            else if v.0.borrow().pos.y <= self.bbox.min.y + ep { -1 }
-            else { 0 };
+            if      v.0.borrow().pos.y >= v.1.max.y - ep { 1 }
+            else if v.0.borrow().pos.y <= v.1.min.y + ep { -1 }
+            else    { 0 };
 
         let mut connector: Option<EvPtr> = None;
 
-
         for first in self.contour.iter_mut() {
-            let check_edge = |e: &mut EvPtr| {
-                let op = e.borrow().interpolate_y2x(&v.0.borrow().pos, on_top, ep);
+            Self::do_loop(first, |e| {
+                let vb = v.0.borrow();
+                let eb = e.borrow();
+                let op = eb.interpolate_y2x(&vb.pos, on_top, ep);
                 if let Some(x) = op {
                     let flag = match connector.as_ref() {
                         None => true,
                         Some(c) => {
-                            let f1 = is_ccw_2d(
-                                &Row2::new(x, v.0.borrow().pos.y), &c.borrow().pos, &c.borrow().pos_r(), ep
-                            ) == 1;
-                            let f2 = if c.borrow().pos.y < e.borrow().pos.y {
-                                e.borrow().inside_edge(&c, ep, false)
-                            } else {
-                                !c.borrow().inside_edge(&e, ep, false)
-                            };
+                            let cb = c.borrow();
+                            let f1 = is_ccw_2d(&Row2::new(x, vb.pos.y), &cb.pos, &cb.pos_r(), ep) == 1;
+                            let f2 = if cb.pos.y < eb.pos.y { eb.inside_edge(&c, ep, false) } else { !cb.inside_edge(&e, ep, false) };
                             f1 || f2
                         }
                     };
-                    if v.0.borrow().inside_edge(&v.0, ep, true) || flag {
-                        connector = Some(Rc::clone(e));
-                    }
+                    if vb.inside_edge(&v.0, ep, true) || flag { connector = Some(Rc::clone(e)); }
                 }
-            };
-            Self::do_loop(first, check_edge);
+            });
         }
 
-        //connector = Self::find_closer_bridge(&v, &connector);
+        match connector {
+            None => { self.simples.push(Rc::clone(&v.0)); },
+            Some(c) => {
+                let ptr = self.find_closer_bridge(&v.0, &c);
+                self.join_polygons(&v.0, &ptr);
+            }
+        }
     }
 
     fn find_closer_bridge(&mut self, start: &EvPtr, e: &EvPtr) -> EvPtr {
@@ -533,8 +554,9 @@ impl EarClip {
             } else {
                 e.borrow().ptr_r()
             };
+
         if (connector.borrow().pos.y - start.borrow().pos.y).abs() <= self.epsilon {
-            return connector;
+            return Rc::clone(&connector);
         }
         let above = if connector.borrow().pos.y > start.borrow().pos.y { 1. } else { -1. };
 
@@ -551,23 +573,21 @@ impl EarClip {
                 if f1 && f2 && (inside > 0 || ( f3 && f4 && f5 )) { connector = Rc::clone(v); };
             });
         }
-        connector
+        Rc::clone(&connector)
     }
 
     /// Creates a keyhole between the start vert of a hole and the connector vert of an outer polygon.
     /// To do this, both verts are duplicated and reattached. This process may create degenerate ears,
     /// so these are clipped if necessary to keep from confusing sub_sequent key-holing operations.
     fn join_polygons(&mut self, sta: &EvPtr, con: &EvPtr) {
-        let newSta = Rc::clone(sta);
-        let newCon = Rc::clone(con);
-        self.polygon.push(Rc::clone(sta));
-        self.polygon.push(Rc::clone(con));
+        let newSta = Rc::new(RefCell::new(sta.borrow().clone()));
+        let newCon = Rc::new(RefCell::new(con.borrow().clone()));
+        self.polygon.push(Rc::clone(&newSta));
+        self.polygon.push(Rc::clone(&newCon));
         sta.borrow().ptr_r().borrow_mut().vl = Some(Rc::downgrade(&newSta));
         con.borrow().ptr_l().borrow_mut().vr = Some(Rc::downgrade(&newCon));
-
         Self::link(sta, con);
         Self::link(&newCon, &newSta);
-
         self.clip_degenerate(sta);
         self.clip_degenerate(&newSta);
         self.clip_degenerate(con);
@@ -607,14 +627,17 @@ impl EarClip {
     pub fn triangulate_poly(&mut self, start: &mut EvPtr) {
         println!("triangulate_poly...");
         let col = Self::vert_collider(start);
-        if col.rfs.is_empty() { return; }
+        if col.rfs.is_empty() {
+            println!("col rfs is empty...");
+            return;
+        }
 
         let mut num_tri = -2;
         self.eque.clear();
 
-        for v in col.pts.iter() {
-            println!("pt: {:?}", v);
-        }
+        //for v in col.pts.iter() {
+        //    println!("pt: {:?}", v);
+        //}
         //println!("rfs: {:?}", col.rfs);
 
         let v_op = Self::do_loop(start, |v| {
