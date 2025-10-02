@@ -1141,16 +1141,13 @@ fn main() {
             hilbert_extruded.to_stl_ascii("hilbert"),
         );
     }
-    
-	let right_triangle = Sketch:: right_triangle(10.0, 5.0, None);
-	let _ = fs::write(
-            "stl/right_triangle.stl",
-            right_triangle.to_stl_ascii("right_triangle"),
-        );
-    
-    let arrow_2d = Sketch::arrow(20.0, 2.0, 10.0, 10.0, None);
+
+    let right_triangle = Sketch::right_triangle(10.0, 5.0, None);
     let _ = fs::write(
-            "stl/arrow_2d.stl",
-            arrow_2d.to_stl_ascii("arrow"),
-        );
+        "stl/right_triangle.stl",
+        right_triangle.to_stl_ascii("right_triangle"),
+    );
+
+    let arrow_2d = Sketch::arrow(20.0, 2.0, 10.0, 10.0, None);
+    let _ = fs::write("stl/arrow_2d.stl", arrow_2d.to_stl_ascii("arrow"));
 }
