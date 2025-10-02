@@ -541,6 +541,263 @@ impl SketchJs {
             inner: Sketch::circle(radius, segments, None),
         }
     }
+    
+    #[wasm_bindgen(js_name = rectangle)]
+    pub fn rectangle(width: Real, length: Real) -> Self {
+        Self {
+            inner: Sketch::rectangle(width, length, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = rightTriangle)]
+    pub fn right_triangle(width: Real, height: Real) -> Self {
+        Self {
+            inner: Sketch::right_triangle(width, height, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = ellipse)]
+    pub fn ellipse(width: Real, height: Real, segments: usize) -> Self {
+        Self {
+            inner: Sketch::ellipse(width, height, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = regularNGon)]
+    pub fn regular_ngon(sides: usize, radius: Real) -> Self {
+        Self {
+            inner: Sketch::regular_ngon(sides, radius, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = trapezoid)]
+    pub fn trapezoid(
+        top_width: Real,
+        bottom_width: Real,
+        height: Real,
+        top_offset: Real,
+    ) -> Self {
+        Self {
+            inner: Sketch::trapezoid(top_width, bottom_width, height, top_offset, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = star)]
+    pub fn star(num_points: usize, outer_radius: Real, inner_radius: Real) -> Self {
+        Self {
+            inner: Sketch::star(num_points, outer_radius, inner_radius, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = teardrop)]
+    pub fn teardrop(width: Real, length: Real, segments: usize) -> Self {
+        Self {
+            inner: Sketch::teardrop(width, length, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = egg)]
+    pub fn egg(width: Real, length: Real, segments: usize) -> Self {
+        Self {
+            inner: Sketch::egg(width, length, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = roundedRectangle)]
+    pub fn rounded_rectangle(
+        width: Real,
+        height: Real,
+        corner_radius: Real,
+        corner_segments: usize,
+    ) -> Self {
+        Self {
+            inner: Sketch::rounded_rectangle(width, height, corner_radius, corner_segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = squircle)]
+    pub fn squircle(width: Real, height: Real, segments: usize) -> Self {
+        Self {
+            inner: Sketch::squircle(width, height, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = keyhole)]
+    pub fn keyhole(
+        circle_radius: Real,
+        handle_width: Real,
+        handle_height: Real,
+        segments: usize,
+    ) -> Self {
+        Self {
+            inner: Sketch::keyhole(circle_radius, handle_width, handle_height, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = reuleaux)]
+    pub fn reuleaux(sides: usize, diameter: Real, circle_segments: usize) -> Self {
+        Self {
+            inner: Sketch::reuleaux(sides, diameter, circle_segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = ring)]
+    pub fn ring(id: Real, thickness: Real, segments: usize) -> Self {
+        Self {
+            inner: Sketch::ring(id, thickness, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = pieSlice)]
+    pub fn pie_slice(
+        radius: Real,
+        start_angle_deg: Real,
+        end_angle_deg: Real,
+        segments: usize,
+    ) -> Self {
+        Self {
+            inner: Sketch::pie_slice(radius, start_angle_deg, end_angle_deg, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = supershape)]
+    pub fn supershape(
+        a: Real,
+        b: Real,
+        m: Real,
+        n1: Real,
+        n2: Real,
+        n3: Real,
+        segments: usize,
+    ) -> Self {
+        Self {
+            inner: Sketch::supershape(a, b, m, n1, n2, n3, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = circleWithKeyway)]
+    pub fn circle_with_keyway(
+        radius: Real,
+        segments: usize,
+        key_width: Real,
+        key_depth: Real,
+    ) -> Self {
+        Self {
+            inner: Sketch::circle_with_keyway(radius, segments, key_width, key_depth, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = circleWithFlat)]
+    pub fn circle_with_flat(
+        radius: Real,
+        segments: usize,
+        flat_dist: Real,
+    ) -> Self {
+        Self {
+            inner: Sketch::circle_with_flat(radius, segments, flat_dist, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = circleWithTwoFlats)]
+    pub fn circle_with_two_flats(
+        radius: Real,
+        segments: usize,
+        flat_dist: Real,
+    ) -> Self {
+        Self {
+            inner: Sketch::circle_with_two_flats(radius, segments, flat_dist, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = bezier)]
+    pub fn bezier(control: JsValue, segments: usize) -> Result<Self, JsValue> {
+        let control_vec: Vec<[f64; 2]> = from_value(control)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse control points: {:?}", e)))?;
+
+        let control_2d: Vec<[Real; 2]> = control_vec
+            .into_iter()
+            .map(|[x, y]| [x as Real, y as Real])
+            .collect();
+
+        Ok(Self {
+            inner: Sketch::bezier(&control_2d, segments, None),
+        })
+    }
+
+    #[wasm_bindgen(js_name = bspline)]
+    pub fn bspline(
+        control: JsValue,
+        p: usize,
+        segments_per_span: usize,
+    ) -> Result<Self, JsValue> {
+        let control_vec: Vec<[f64; 2]> = from_value(control)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse control points: {:?}", e)))?;
+
+        let control_2d: Vec<[Real; 2]> = control_vec
+            .into_iter()
+            .map(|[x, y]| [x as Real, y as Real])
+            .collect();
+
+        Ok(Self {
+            inner: Sketch::bspline(&control_2d, p, segments_per_span, None),
+        })
+    }
+
+    #[wasm_bindgen(js_name = heart)]
+    pub fn heart(width: Real, height: Real, segments: usize) -> Self {
+        Self {
+            inner: Sketch::heart(width, height, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = crescent)]
+    pub fn crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize) -> Self {
+        Self {
+            inner: Sketch::crescent(outer_r, inner_r, offset, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = involuteGear)]
+    pub fn involute_gear(
+        module_: Real,
+        teeth: usize,
+        pressure_angle_deg: Real,
+        clearance: Real,
+        backlash: Real,
+        segments_per_flank: usize,
+    ) -> Self {
+        Self {
+            inner: Sketch::involute_gear(
+                module_,
+                teeth,
+                pressure_angle_deg,
+                clearance,
+                backlash,
+                segments_per_flank,
+                None,
+            ),
+        }
+    }
+
+    #[wasm_bindgen(js_name = airfoilNACA4)]
+    pub fn airfoil_naca4(
+        max_camber: Real,
+        camber_position: Real,
+        thickness: Real,
+        chord: Real,
+        samples: usize,
+    ) -> Self {
+        Self {
+            inner: Sketch::airfoil_naca4(
+                max_camber,
+                camber_position,
+                thickness,
+                chord,
+                samples,
+                None,
+            ),
+        }
+    }
 
     #[cfg(feature = "offset")]
     #[wasm_bindgen(js_name = hilbertCurve)]
@@ -1060,6 +1317,160 @@ impl MeshJs {
     pub fn cylinder(radius: Real, height: Real, segments: usize) -> Self {
         Self {
             inner: Mesh::cylinder(radius, height, segments, None),
+        }
+    }
+    
+    #[wasm_bindgen(js_name = cuboid)]
+    pub fn cuboid(width: Real, length: Real, height: Real) -> Self {
+        Self {
+            inner: Mesh::cuboid(width, length, height, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = frustum_ptp)]
+    pub fn frustum_ptp(
+        start_x: Real,
+        start_y: Real,
+        start_z: Real,
+        end_x: Real,
+        end_y: Real,
+        end_z: Real,
+        radius1: Real,
+        radius2: Real,
+        segments: usize,
+    ) -> Self {
+        let start = Point3::new(start_x, start_y, start_z);
+        let end = Point3::new(end_x, end_y, end_z);
+        Self {
+            inner: Mesh::frustum_ptp(start, end, radius1, radius2, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = frustum)]
+    pub fn frustum(radius1: Real, radius2: Real, height: Real, segments: usize) -> Self {
+        Self {
+            inner: Mesh::frustum(radius1, radius2, height, segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = polyhedron)]
+    pub fn polyhedron(points: JsValue, faces: JsValue) -> Result<Self, JsValue> {
+        let points_vec: Vec<[f64; 3]> = from_value(points)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse points: {:?}", e)))?;
+        let faces_vec: Vec<Vec<usize>> = from_value(faces)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse faces: {:?}", e)))?;
+
+        let points_3d: Vec<[Real; 3]> = points_vec
+            .into_iter()
+            .map(|[x, y, z]| [x as Real, y as Real, z as Real])
+            .collect();
+
+        let faces_ref: Vec<&[usize]> = faces_vec.iter().map(|f| f.as_slice()).collect();
+
+        let mesh = Mesh::polyhedron(&points_3d, &faces_ref, None)
+            .map_err(|e| JsValue::from_str(&format!("Polyhedron creation failed: {:?}", e)))?;
+
+        Ok(Self { inner: mesh })
+    }
+
+    #[wasm_bindgen(js_name = egg)]
+    pub fn egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize) -> Self {
+        Self {
+            inner: Mesh::egg(width, length, revolve_segments, outline_segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = teardrop)]
+    pub fn teardrop(width: Real, length: Real, revolve_segments: usize, shape_segments: usize) -> Self {
+        Self {
+            inner: Mesh::teardrop(width, length, revolve_segments, shape_segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = teardrop_cylinder)]
+    pub fn teardrop_cylinder(
+        width: Real,
+        length: Real,
+        height: Real,
+        shape_segments: usize,
+    ) -> Self {
+        Self {
+            inner: Mesh::teardrop_cylinder(width, length, height, shape_segments, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = ellipsoid)]
+    pub fn ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize) -> Self {
+        Self {
+            inner: Mesh::ellipsoid(rx, ry, rz, segments, stacks, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = arrow)]
+    pub fn arrow(
+        start_x: Real,
+        start_y: Real,
+        start_z: Real,
+        dir_x: Real,
+        dir_y: Real,
+        dir_z: Real,
+        segments: usize,
+        orientation: bool,
+    ) -> Self {
+        let start = Point3::new(start_x, start_y, start_z);
+        let direction = Vector3::new(dir_x, dir_y, dir_z);
+        Self {
+            inner: Mesh::arrow(start, direction, segments, orientation, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = octahedron)]
+    pub fn octahedron(radius: Real) -> Self {
+        Self {
+            inner: Mesh::octahedron(radius, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = icosahedron)]
+    pub fn icosahedron(radius: Real) -> Self {
+        Self {
+            inner: Mesh::icosahedron(radius, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = torus)]
+    pub fn torus(
+        major_r: Real,
+        minor_r: Real,
+        segments_major: usize,
+        segments_minor: usize,
+    ) -> Self {
+        Self {
+            inner: Mesh::torus(major_r, minor_r, segments_major, segments_minor, None),
+        }
+    }
+
+    #[wasm_bindgen(js_name = spur_gear_involute)]
+    pub fn spur_gear_involute(
+        module_: Real,
+        teeth: usize,
+        pressure_angle_deg: Real,
+        clearance: Real,
+        backlash: Real,
+        segments_per_flank: usize,
+        thickness: Real,
+    ) -> Self {
+        Self {
+            inner: Mesh::spur_gear_involute(
+                module_,
+                teeth,
+                pressure_angle_deg,
+                clearance,
+                backlash,
+                segments_per_flank,
+                thickness,
+                None,
+            ),
         }
     }
 
