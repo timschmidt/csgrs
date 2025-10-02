@@ -290,6 +290,54 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             metadata,
         )
     }
+    
+    /// Creates a 2D arrow in the XY plane.
+    ///
+    /// The arrow points along the positive X-axis, starting at (0,0).
+    /// It consists of a shaft and a triangular head.
+    ///
+    /// # Parameters
+    ///
+    /// - `shaft_length`: length of the arrow shaft
+    /// - `shaft_width`: width of the arrow shaft
+    /// - `head_length`: length of the arrow head (from tip to base)
+    /// - `head_width`: width of the arrow head at its base
+    /// - `metadata`: optional metadata
+    ///
+    /// # Example
+    /// ```
+    /// use csgrs::sketch::Sketch;
+    /// let arrow = Sketch::<()>::arrow(5.0, 0.5, 2.0, 1.5, None);
+    /// ```
+    pub fn arrow(
+        shaft_length: Real,
+        shaft_width: Real,
+        head_length: Real,
+        head_width: Real,
+        metadata: Option<S>,
+    ) -> Self {
+        if shaft_length <= 0.0 || shaft_width <= 0.0 || head_length <= 0.0 || head_width <= 0.0 {
+            return Sketch::new();
+        }
+
+        // Define the points for the arrow polygon
+        // The arrow points along the positive X-axis
+        let half_shaft_width = shaft_width * 0.5;
+        let half_head_width = head_width * 0.5;
+
+        let points = vec![
+            [0.0, half_shaft_width],           // Top-left of shaft
+            [shaft_length, half_shaft_width],  // Top-right of shaft
+            [shaft_length, half_head_width],   // Top-right of head base
+            [shaft_length + head_length, 0.0], // Tip of arrow
+            [shaft_length, -half_head_width],  // Bottom-right of head base
+            [shaft_length, -half_shaft_width], // Bottom-right of shaft
+            [0.0, -half_shaft_width],          // Bottom-left of shaft
+            [0.0, half_shaft_width],           // Back to top-left to close
+        ];
+
+        Sketch::polygon(&points, metadata)
+    }
 
     /// Trapezoid from (0,0) -> (bottom_width,0) -> (top_width+top_offset,height) -> (top_offset,height)
     /// Note: this is a simple shape that can represent many trapezoids or parallelograms.
@@ -966,7 +1014,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `segments_per_flank`: tessellation resolution per tooth flank
     /// - `metadata`: optional metadata
     pub fn involute_gear(
-        module_: Real,
+        module: Real,
         teeth: usize,
         pressure_angle_deg: Real,
         clearance: Real,
@@ -977,7 +1025,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         assert!(teeth >= 4, "Need at least 4 teeth");
         assert!(segments_per_flank >= 2);
 
-        let m = module_;
+        let m = module;
         let z = teeth as Real;
         let pressure_angle = pressure_angle_deg.to_radians();
 
@@ -1071,7 +1119,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `segments_per_flank`: tessellation resolution per tooth flank
     /// - `metadata`: optional metadata
     pub fn cycloidal_gear(
-        module_: Real,
+        module: Real,
         teeth: usize,
         pin_teeth: usize,
         clearance: Real,
@@ -1079,122 +1127,138 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         metadata: Option<S>,
     ) -> Sketch<S> {
         assert!(teeth >= 3 && pin_teeth >= 3);
-        let m = module_;
+        assert!(segments_per_flank >= 2);
+
         let z = teeth as Real;
-        let z_p = pin_teeth as Real; // for pin‑wheel pairing
+        let _zp = pin_teeth as Real;
+        let pitch_radius = 0.5 * module * z;
 
-        // Pitch and derived radii
-        let r_p = 0.5 * m * z; // gear pitch radius
-        let r_g = 0.5 * m * z_p; // (made‑up) mating wheel for hypocycloid – gives correct root
-        let r_pin = r_p / z; // generating circle radius (standard assumes z_p = z ± 1)
-
-        let addendum = m;
-        let dedendum = 1.25 * m + clearance;
-        let _ra = r_p + addendum;
-        let rf = (r_p - dedendum).max(0.0);
+        // Rolling circle radius: for zp = z + 1 (common case)
+        let r_roll = module / 2.0; // standard generating radius
 
         let ang_pitch = TAU / z;
-        let flank_steps = segments_per_flank.max(4);
 
-        let mut tooth_points = Vec::<(Real, Real)>::new();
+        // Total points: one epicycloid lobe + one hypocycloid valley per tooth
+        let mut outline = Vec::new();
 
-        // 1. addendum epicycloid (tip)
-        for i in 0..=flank_steps {
-            let t = (i as Real) / (flank_steps as Real);
-            let theta = t * ang_pitch / 2.0;
-            let (x, y) = epicycloid_xy(r_p, r_pin, theta);
-            tooth_points.push((x, y));
-        }
-        // 2. hypocycloid root (reverse order to keep CCW)
-        for i in (0..=flank_steps).rev() {
-            let t = (i as Real) / (flank_steps as Real);
-            let theta = t * ang_pitch / 2.0;
-            let (x, y) = hypocycloid_xy(r_g, r_pin, theta);
-            let r = (x * x + y * y).sqrt();
-            if r < rf - EPSILON {
-                tooth_points.push((rf * theta.cos(), rf * theta.sin()));
-            } else {
-                tooth_points.push((x, y));
+        for i in 0..teeth {
+            let base_angle = i as Real * ang_pitch;
+
+            // --- Epicycloid lobe (addendum) ---
+            // Sweep from -Δθ/2 to +Δθ/2 around base_angle
+            let delta = ang_pitch / 4.0;
+            for j in 0..=segments_per_flank {
+                let t = -delta + (2.0 * delta) * (j as Real / segments_per_flank as Real);
+                let k = (pitch_radius + r_roll) / r_roll;
+                let x = (pitch_radius + r_roll) * t.cos() - r_roll * (k * t).cos();
+                let y = (pitch_radius + r_roll) * t.sin() - r_roll * (k * t).sin();
+                let (x_rot, y_rot) = (
+                    x * base_angle.cos() - y * base_angle.sin(),
+                    x * base_angle.sin() + y * base_angle.cos(),
+                );
+                outline.push([x_rot, y_rot]);
+            }
+
+            // --- Hypocycloid valley (dedendum) ---
+            // Centered at base_angle + ang_pitch/2 (midway to next lobe)
+            let valley_angle = base_angle + ang_pitch / 2.0;
+            let delta_v = ang_pitch / 4.0;
+            for j in 0..=segments_per_flank {
+                let t = -delta_v + (2.0 * delta_v) * (j as Real / segments_per_flank as Real);
+                let k = (pitch_radius - r_roll) / r_roll;
+                let x = (pitch_radius - r_roll) * t.cos() + r_roll * (k * t).cos();
+                let y = (pitch_radius - r_roll) * t.sin() - r_roll * (k * t).sin();
+                // Apply clearance: scale inward slightly
+                let scale = 1.0 - clearance / pitch_radius;
+                let (x_rot, y_rot) = (
+                    scale * (x * valley_angle.cos() - y * valley_angle.sin()),
+                    scale * (x * valley_angle.sin() + y * valley_angle.cos()),
+                );
+                outline.push([x_rot, y_rot]);
             }
         }
 
-        // Replicate
-        let mut outline = Vec::<[Real; 2]>::with_capacity(tooth_points.len() * teeth + 1);
-        for k in 0..teeth {
-            let rot = (k as Real) * ang_pitch;
-            let (c, s) = (rot.cos(), rot.sin());
-            for &(x, y) in &tooth_points {
-                outline.push([x * c - y * s, x * s + y * c]);
-            }
-        }
-        outline.push(outline[0]);
-
+        outline.push(outline[0]); // close
         Sketch::polygon(&outline, metadata)
     }
 
-    /// Generate a linear involute rack profile (lying in the XY plane, pitch‑line on Y = 0).
-    /// The returned polygon is CCW and spans `num_teeth` pitches along +X.
-    ///
-    /// # Parameters
-    /// - `module_`: gear module
-    /// - `num_teeth`: number of teeth along the rack
-    /// - `pressure_angle_deg`: pressure angle in degrees
-    /// - `clearance`: additional clearance for dedendum
-    /// - `backlash`: backlash allowance
-    /// - `metadata`: optional metadata
-    pub fn involute_rack(
-        module_: Real,
-        num_teeth: usize,
-        pressure_angle_deg: Real,
-        clearance: Real,
-        backlash: Real,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
-        assert!(num_teeth >= 1);
-        let m = module_;
-        let p = PI * m; // linear pitch
-        let addendum = m;
-        let dedendum = 1.25 * m + clearance;
-        let tip_y = addendum;
-        let root_y = -dedendum;
-
-        // Tooth thickness at pitch‑line (centre) minus backlash.
-        let t = p / 2.0 - backlash;
-        let half_t = t / 2.0;
-
-        // Flank rises with slope = tan(pressure_angle)
-        let alpha = pressure_angle_deg.to_radians();
-        let rise = tip_y; // from pitch‑line (0) up to tip
-        let run = rise / alpha.tan();
-
-        // Build one tooth (start at pitch centre) – CCW
-        // Points: Root‑left → Flank‑left → Tip‑left → Tip‑right → Flank‑right → Root‑right
-        let tooth: Vec<[Real; 2]> = vec![
-            [-half_t - run, root_y], // root left beneath flank
-            [-half_t, 0.0],          // pitch left
-            [-half_t + run, tip_y],  // tip left
-            [half_t - run, tip_y],   // tip right
-            [half_t, 0.0],           // pitch right
-            [half_t + run, root_y],  // root right
-        ];
-
-        // Repeat teeth
-        let mut outline = Vec::<[Real; 2]>::with_capacity(tooth.len() * num_teeth + 4);
-        for i in 0..num_teeth {
-            let dx = (i as Real) * p;
-            for &[x, y] in &tooth {
-                outline.push([x + dx, y]);
-            }
+/// Generate a linear involute rack profile (lying in the XY plane, pitch‑line on Y = 0).
+/// The returned polygon is CCW and spans `num_teeth` pitches along +X.
+///
+/// # Parameters
+/// - `module_`: gear module
+/// - `num_teeth`: number of teeth along the rack
+/// - `pressure_angle_deg`: pressure angle in degrees
+/// - `clearance`: additional clearance for dedendum
+/// - `backlash`: backlash allowance
+/// - `metadata`: optional metadata
+pub fn involute_rack(
+    module_: Real,
+    num_teeth: usize,
+    pressure_angle_deg: Real,
+    clearance: Real,
+    backlash: Real,
+    metadata: Option<S>,
+) -> Sketch<S> {
+    assert!(num_teeth >= 1);
+    let m = module_;
+    let p = PI * m; // linear pitch
+    let addendum = m;
+    let dedendum = 1.25 * m + clearance;
+    let tip_y = addendum;
+    let root_y = -dedendum;
+    // Tooth thickness at pitch‑line (centre) minus backlash.
+    let t = p / 2.0 - backlash;
+    let half_t = t / 2.0;
+    // For a rack, the involute flank is a straight line at pressure angle
+    let alpha = pressure_angle_deg.to_radians();
+    let tan_alpha = alpha.tan();
+    
+    // Build the complete rack profile as a single closed polygon
+    let mut outline = Vec::<[Real; 2]>::new();
+    
+    // Start at the bottom left of the first tooth
+    let first_x = -half_t - (tip_y - root_y) / tan_alpha;
+    outline.push([first_x, root_y]);
+    
+    // Build each tooth
+    for i in 0..num_teeth {
+        let tooth_center = (i as Real) * p;
+        let left_pitch = tooth_center - half_t;
+        let right_pitch = tooth_center + half_t;
+        let left_tip = left_pitch - (tip_y) / tan_alpha;
+        let right_tip = right_pitch + (tip_y) / tan_alpha;
+        
+        // Left flank (from root to tip)
+        outline.push([left_pitch, 0.0]);
+        outline.push([left_tip, tip_y]);
+        
+        // Top of tooth
+        outline.push([right_tip, tip_y]);
+        
+        // Right flank (from tip to root)
+        outline.push([right_pitch, 0.0]);
+        
+        // Bottom right (root)
+        if i < num_teeth - 1 {
+            let next_left_pitch = (i as Real + 1.0) * p - half_t;
+            let next_root_left = next_left_pitch - (tip_y - root_y) / tan_alpha;
+            outline.push([next_root_left, root_y]);
         }
-
-        // Close rectangle ends (simple straight ends)
-        // add right root extension then back to first point
-        outline.push([outline.last().unwrap()[0], 0.0]);
-        outline.push([outline[0][0], 0.0]);
-        outline.push(outline[0]);
-
-        Sketch::polygon(&outline, metadata)
     }
+    
+    // Close the polygon by connecting back to the start
+    // Add the bottom right corner
+    let last_tooth_center = ((num_teeth - 1) as Real) * p;
+    let last_right_pitch = last_tooth_center + half_t;
+    let last_root_right = last_right_pitch + (tip_y - root_y) / tan_alpha;
+    outline.push([last_root_right, root_y]);
+    
+    // Now close the polygon by going back to the start
+    outline.push([first_x, root_y]);
+    
+    Sketch::polygon(&outline, metadata)
+}
 
     /// Generate a linear cycloidal rack profile.
     /// The cycloidal rack is generated by rolling a circle of radius `r_p` along the
@@ -1465,48 +1529,4 @@ fn hilbert_points(order: usize) -> Vec<(Real, Real)> {
     let mut pts = Vec::with_capacity(1usize << shift);
     recur(&mut pts, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, order);
     pts
-}
-
-// -------------------------------------------------------------------------------------------------
-// Cycloid helpers                                                                               //
-// -------------------------------------------------------------------------------------------------
-
-/// Generate epicycloid coordinates for gear tooth profiles.
-///
-/// # Parameters
-/// - `r_g`: pitch-circle radius
-/// - `r_p`: pin circle (generating circle) radius
-/// - `theta`: parameter angle
-///
-/// # Returns
-/// Cartesian coordinates (x, y) of the epicycloid point
-#[inline]
-fn epicycloid_xy(r_g: Real, r_p: Real, theta: Real) -> (Real, Real) {
-    // r_g : pitch‑circle radius, r_p : pin circle (generating circle) radius
-    // x = (r_g + r_p) (cos θ) – r_p cos((r_g + r_p)/r_p · θ)
-    // y = (r_g + r_p) (sin θ) – r_p sin((r_g + r_p)/r_p · θ)
-    let k = (r_g + r_p) / r_p;
-    (
-        (r_g + r_p) * theta.cos() - r_p * (k * theta).cos(),
-        (r_g + r_p) * theta.sin() - r_p * (k * theta).sin(),
-    )
-}
-
-/// Generate hypocycloid coordinates for gear root flanks.
-///
-/// # Parameters
-/// - `r_g`: pitch-circle radius
-/// - `r_p`: pin circle (generating circle) radius
-/// - `theta`: parameter angle
-///
-/// # Returns
-/// Cartesian coordinates (x, y) of the hypocycloid point
-#[inline]
-fn hypocycloid_xy(r_g: Real, r_p: Real, theta: Real) -> (Real, Real) {
-    // For root flank of a cycloidal tooth
-    let k = (r_g - r_p) / r_p;
-    (
-        (r_g - r_p) * theta.cos() + r_p * (k * theta).cos(),
-        (r_g - r_p) * theta.sin() - r_p * (k * theta).sin(),
-    )
 }
