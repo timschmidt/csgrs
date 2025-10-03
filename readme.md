@@ -80,6 +80,7 @@ with, `f3d cube_sphere_difference.stl`, and should look like this:
 ### Building for WASM
 
 ```shell
+cargo install wasm-pack
 wasm-pack build --release --target bundler --out-dir pkg -- --features wasm
 ```
 
