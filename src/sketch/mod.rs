@@ -68,8 +68,8 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
         new_sketch
     }
 
-    /// Triangulate an outer polygon and holes into a list of triangles, each triangle is [v0, v1, v2].
-    pub fn triangulate_2d(
+    /// Triangulate a polygon and holes into a list of triangles, each triangle is [v0, v1, v2].
+    pub fn triangulate_with_holes(
         outer: &[[Real; 2]],
         holes: &[&[[Real; 2]]],
     ) -> Vec<[Point3<Real>; 3]> {
@@ -159,7 +159,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
                         .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
                         .collect();
                     let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
-                    let tris = Self::triangulate_2d(&outer, &hole_refs);
+                    let tris = Self::triangulate_with_holes(&outer, &hole_refs);
                     all_triangles.extend(tris);
                 },
                 geo::Geometry::MultiPolygon(mp) => {
@@ -173,7 +173,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
                             .collect();
                         let hole_refs: Vec<&[[Real; 2]]> =
                             holes.iter().map(|v| &v[..]).collect();
-                        let tris = Self::triangulate_2d(&outer, &hole_refs);
+                        let tris = Self::triangulate_with_holes(&outer, &hole_refs);
                         all_triangles.extend(tris);
                     }
                 },
