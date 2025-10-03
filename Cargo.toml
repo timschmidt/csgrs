@@ -30,11 +30,11 @@ opt-level = "z"
 
 [dependencies]
 # geometry
-nalgebra = "0.33"
+nalgebra = { version = "0.33", features = ["serde-serialize"] }
 #alum = "0.6.1"
 #curvo = "0.1.52"
 robust = { version = "1.1.0", default-features = false, features = ["no_std"] }
-geo = { version = "0.29.3", default-features = false }
+geo = { version = "0.29.3", default-features = false, features = ["use-serde"] }
 geo-buf = { version = "0.1.0", optional = true } # straight-skeleton offsetting iOverlay can handle this in v2
 #geo-booleanop = "0.3.2" # alternative boolean implementation has fewer dependencies
 chull = { version = "0.2.4", optional = true }
@@ -76,10 +76,15 @@ hershey = { version = "0.1.2", optional = true }
 doc-image-embed = "0.2.1"
 
 # wasm
-[target.'cfg(any(target_arch = "wasm32", target_arch = "wasm64"))'.dependencies]
-getrandom = { version = "0.3", features = ["wasm_js"], optional = true }
-uuid = { version = "1.18", features = ["js"] }
+uuid = { version = "1.18", features = ["js"], optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
+js-sys = { version = "0.3.81", optional = true }
+serde-wasm-bindgen = { version = "0.6.5", optional = true }
+serde_json = { version = "1.0.145", optional = true }
+serde = { version = "1.0.228", optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+uuid = { version = "1.18", features = ["js"] }
 
 [features]
 default = ["f64", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
@@ -154,4 +159,12 @@ bevymesh = [
   "dep:bevy_mesh",
   "dep:bevy_asset",
   "dep:wgpu-types"
+]
+wasm = [
+  "uuid",
+  "wasm-bindgen",
+  "js-sys",
+  "serde-wasm-bindgen",
+  "serde_json",
+  "serde",
 ]

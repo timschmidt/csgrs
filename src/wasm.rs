@@ -1,14 +1,14 @@
-use csgrs::float_types::Real;
-use csgrs::io::svg::{FromSVG, ToSVG};
-use csgrs::mesh::metaballs::MetaBall;
-use csgrs::mesh::{plane::Plane, polygon::Polygon, vertex::Vertex, Mesh};
-use csgrs::sketch::Sketch;
-use csgrs::traits::CSG;
+use crate::float_types::Real;
+use crate::io::svg::{FromSVG, ToSVG};
+//use crate::mesh::metaballs::MetaBall;
+use crate::mesh::{plane::Plane, polygon::Polygon, vertex::Vertex, Mesh};
+use crate::sketch::Sketch;
+use crate::traits::CSG;
 use geo::{Geometry, GeometryCollection};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use nalgebra::{Matrix4, Point3, Vector3};
-use serde::{Deserialize, Serialize};
-use serde_wasm_bindgen::{from_value, to_value};
+//use serde::{Deserialize, Serialize};
+use serde_wasm_bindgen::{from_value}; //, to_value};
 use wasm_bindgen::prelude::*;
 
 // Optional: better panic messages in the browser console.
@@ -500,7 +500,7 @@ impl SketchJs {
 
     #[cfg(feature = "offset")]
     #[wasm_bindgen(js_name=straightSkeleton)]
-    pub fn straight_skeleton(&self, orientation: f64) -> SketchJs {
+    pub fn straight_skeleton(&self, orientation: bool) -> SketchJs {
         let sketch = self.inner.straight_skeleton(orientation);
         Self { inner: sketch }
     }
