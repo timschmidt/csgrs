@@ -101,12 +101,13 @@ converted into a `Mesh<S>`.
 ### 2D Shapes in Sketch
 
 - <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Sketch::square(width: Real, metadata: Option<S>)`**
-- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Sketch::rectangle(width: Real, length: Real, metadata: Option<S>)`**
+- <img src="docs/square.png" width="128" alt="top down view of a rectangle"/> **`Sketch::rectangle(width: Real, length: Real, metadata: Option<S>)`**
 - <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`Sketch::circle(radius: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`Sketch::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
 - <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`Sketch::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
 - <img src="docs/ellipse.png" width="128" alt="top down view of an ellipse"/> **`Sketch::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
 - <img src="docs/ngon.png" width="128" alt="top down view of a 6 sided n-gon"/> **`Sketch::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
+- <img src="docs/arrow_2d.png" width="128" alt="top down view of a 2D arrow"/> **`Sketch::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real, metadata: Option<S>)`**
 - <img src="docs/right_triangle.png" width="128" alt="top down view of a right triangle"/> **`Sketch::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
 - <img src="docs/trapezoid.png" width="128" alt="top down view of trapezoid"/> **`Sketch::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>)`**
 - <img src="docs/star.png" width="128" alt="top down view of star"/> **`Sketch::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
@@ -123,13 +124,14 @@ converted into a `Mesh<S>`.
 - <img src="docs/double_flat.png" width="128" alt="top down view of a circle with two flat edges"/> **`Sketch::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
 - <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Sketch::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
 - <img src="docs/truetype.png" width="128" alt="top down view of the text 'HELLO'"/> **`Sketch::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
-- <img src="docs/metaballs_2d.png" width="128"/> **`Sketch::metaballs(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
+- <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Sketch::metaballs(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
 - <img src="docs/airfoil.png" width="128" alt="a side view of an airfoil"/> **`Sketch::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize, metadata: Option<S>)`** - [NACA 4 digit](https://en.wikipedia.org/wiki/NACA_airfoil#Four-digit_series) airfoil
 - <img src="docs/bezier_extruded.png" width="128" alt="an angled view of a bezier cirve"/> **`Sketch::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`**
 - <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`Sketch::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`**
 - <img src="docs/heart.png" width="128" alt="top down view of a cartune heart"/> **`Sketch::heart(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/crescent.png" width="128"/> **`Sketch::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: Option<S>)`** - 
-- <img src="docs/gear_involute.png" width="128"/> **`Sketch::involute_gear(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: Option<S>)`**
+- <img src="docs/crescent.png" width="128" alt="top down view of a crescent"/> **`Sketch::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: Option<S>)`** - 
+- <img src="docs/hilbert.png" width="128" alt="top down view of a hilbert curve"/> **`Sketch::hilbert(order: usize, padding: Real)`** - fill an existing Sketch with a hilbert curve
+- <img src="docs/gear_involute.png" width="128" alt="top down view of a involute gear profile"/> **`Sketch::involute_gear(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: Option<S>)`**
 - **`Sketch::cycloidal_gear(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
 - **`Sketch::involute_rack(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: Option<S>)`** - under construction
 - **`Sketch::cycloidal_rack(module_: Real, num_teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
@@ -178,6 +180,7 @@ let lofted = Sketch::loft(&bottom.polygons[0], &top.polygons[0], false);
 - **`Sketch::straight_skeleton(&self, orientation: bool)`** - returns a Sketch containing the inside (orientation: true) or outside (orientation: false) straight skeleton
 - **`Sketch::bounding_box()`** - computes the bounding box of the shape.
 - **`Sketch::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
+- **`Sketch::triangulate()`** - subdivides the Sketch into triangles
 
 ### Mesh Structure
 
@@ -221,6 +224,7 @@ If either radius is within EPSILON of 0.0, a cone terminating at a point is cons
 - <img src="docs/gyroid.png" width="128"/> **`Mesh::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
 - <img src="docs/schwarzp.png" width="128"/> **`Mesh::schwarz_p(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Schwarz P) inside the volume of `self`
 - <img src="docs/schwarzd.png" width="128"/> **`Mesh::schwarz_d(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Schwarz D) inside the volume of `self`
+- <img src="docs/spur_gear_involute.png" width="128"/> **`Mesh::spur_gear_involute(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: Option<S>,)`** - Generate an involute spur gear
 - **`Mesh::helical_involute_gear(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: Option<S>)`** - under construction
 
 ```rust
