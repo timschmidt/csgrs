@@ -120,7 +120,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
                     .collect();
 
-                let tris = Sketch::<()>::triangulate_2d(
+                let tris = Sketch::<()>::triangulate_with_holes(
                     &exterior_coords,
                     &interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>(),
                 );
@@ -979,7 +979,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     .collect();
                 let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
 
-                let tris = Sketch::<()>::triangulate_2d(&ext, &hole_refs);
+                let tris = Sketch::<()>::triangulate_with_holes(&ext, &hole_refs);
 
                 // cap at the start of the path (flip winding)
                 for t in &tris {

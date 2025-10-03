@@ -42,6 +42,9 @@ pub mod toolpath;
 pub mod traits;
 pub mod voxels;
 
+#[cfg(feature = "wasm")]
+pub mod wasm;
+
 #[cfg(any(
     all(feature = "delaunay", feature = "earcut"),
     not(any(feature = "delaunay", feature = "earcut"))
