@@ -1,14 +1,14 @@
 use crate::float_types::Real;
 use crate::io::svg::{FromSVG, ToSVG};
 //use crate::mesh::metaballs::MetaBall;
-use crate::mesh::{plane::Plane, polygon::Polygon, vertex::Vertex, Mesh};
+use crate::mesh::{Mesh, plane::Plane, polygon::Polygon, vertex::Vertex};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{Geometry, GeometryCollection};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use nalgebra::{Matrix4, Point3, Vector3};
 //use serde::{Deserialize, Serialize};
-use serde_wasm_bindgen::{from_value}; //, to_value};
+use serde_wasm_bindgen::from_value; //, to_value};
 use wasm_bindgen::prelude::*;
 
 // Optional: better panic messages in the browser console.
@@ -541,7 +541,7 @@ impl SketchJs {
             inner: Sketch::circle(radius, segments, None),
         }
     }
-    
+
     #[wasm_bindgen(js_name = rectangle)]
     pub fn rectangle(width: Real, length: Real) -> Self {
         Self {
@@ -611,7 +611,13 @@ impl SketchJs {
         corner_segments: usize,
     ) -> Self {
         Self {
-            inner: Sketch::rounded_rectangle(width, height, corner_radius, corner_segments, None),
+            inner: Sketch::rounded_rectangle(
+                width,
+                height,
+                corner_radius,
+                corner_segments,
+                None,
+            ),
         }
     }
 
@@ -688,22 +694,14 @@ impl SketchJs {
     }
 
     #[wasm_bindgen(js_name = circleWithFlat)]
-    pub fn circle_with_flat(
-        radius: Real,
-        segments: usize,
-        flat_dist: Real,
-    ) -> Self {
+    pub fn circle_with_flat(radius: Real, segments: usize, flat_dist: Real) -> Self {
         Self {
             inner: Sketch::circle_with_flat(radius, segments, flat_dist, None),
         }
     }
 
     #[wasm_bindgen(js_name = circleWithTwoFlats)]
-    pub fn circle_with_two_flats(
-        radius: Real,
-        segments: usize,
-        flat_dist: Real,
-    ) -> Self {
+    pub fn circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real) -> Self {
         Self {
             inner: Sketch::circle_with_two_flats(radius, segments, flat_dist, None),
         }
@@ -711,8 +709,9 @@ impl SketchJs {
 
     #[wasm_bindgen(js_name = bezier)]
     pub fn bezier(control: JsValue, segments: usize) -> Result<Self, JsValue> {
-        let control_vec: Vec<[f64; 2]> = from_value(control)
-            .map_err(|e| JsValue::from_str(&format!("Failed to parse control points: {:?}", e)))?;
+        let control_vec: Vec<[f64; 2]> = from_value(control).map_err(|e| {
+            JsValue::from_str(&format!("Failed to parse control points: {:?}", e))
+        })?;
 
         let control_2d: Vec<[Real; 2]> = control_vec
             .into_iter()
@@ -730,8 +729,9 @@ impl SketchJs {
         p: usize,
         segments_per_span: usize,
     ) -> Result<Self, JsValue> {
-        let control_vec: Vec<[f64; 2]> = from_value(control)
-            .map_err(|e| JsValue::from_str(&format!("Failed to parse control points: {:?}", e)))?;
+        let control_vec: Vec<[f64; 2]> = from_value(control).map_err(|e| {
+            JsValue::from_str(&format!("Failed to parse control points: {:?}", e))
+        })?;
 
         let control_2d: Vec<[Real; 2]> = control_vec
             .into_iter()
@@ -1319,7 +1319,7 @@ impl MeshJs {
             inner: Mesh::cylinder(radius, height, segments, None),
         }
     }
-    
+
     #[wasm_bindgen(js_name = cuboid)]
     pub fn cuboid(width: Real, length: Real, height: Real) -> Self {
         Self {
@@ -1374,14 +1374,24 @@ impl MeshJs {
     }
 
     #[wasm_bindgen(js_name = egg)]
-    pub fn egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize) -> Self {
+    pub fn egg(
+        width: Real,
+        length: Real,
+        revolve_segments: usize,
+        outline_segments: usize,
+    ) -> Self {
         Self {
             inner: Mesh::egg(width, length, revolve_segments, outline_segments, None),
         }
     }
 
     #[wasm_bindgen(js_name = teardrop)]
-    pub fn teardrop(width: Real, length: Real, revolve_segments: usize, shape_segments: usize) -> Self {
+    pub fn teardrop(
+        width: Real,
+        length: Real,
+        revolve_segments: usize,
+        shape_segments: usize,
+    ) -> Self {
         Self {
             inner: Mesh::teardrop(width, length, revolve_segments, shape_segments, None),
         }
