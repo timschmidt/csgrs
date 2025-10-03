@@ -192,7 +192,7 @@ impl Ecvt {
 
         compute_query_flat_tree(&collider.pts, &ear_box, |v| {
             let test = Rc::clone(&collider.rfs[v.idx]);
-            if clipped(&test) &&
+            if !clipped(&test) &&
                test.borrow().idx != self.idx &&
                test.borrow().idx != self.idx_l() &&
                test.borrow().idx != self.idx_r()
@@ -298,7 +298,7 @@ pub struct EarClip {
 
 impl EarClip {
     pub fn new(polys: &Vec<PolygonIdx>, epsilon: f64) -> Self {
-        let mut ec = Self {
+        let mut clip = Self {
             polygon: vec![],
             simples: vec![],
             contour: vec![],
@@ -309,20 +309,16 @@ impl EarClip {
             epsilon,
         };
 
-        let mut starts = ec.initialize(polys);
-        for v in starts.iter() {
-            println!("start: {:p}", Rc::as_ptr(v));
-        }
+        let mut inits = clip.initialize(polys);
 
-        for v in ec.polygon.iter() {
-            println!("polygon: {:p}", Rc::as_ptr(v));
-        }
+        //for v in starts.iter() { println!("start: {:p}", Rc::as_ptr(v)); }
+        //for v in ec.polygon.iter() { println!("polygon: {:p}", Rc::as_ptr(v)); }
 
-        let vs: Vec<_> = ec.polygon.iter().cloned().collect();
-        for v in vs { ec.clip_degenerate(&v); }
-        for v in starts.iter_mut() { ec.find_start(v); }
+        let keys = clip.polygon.iter().cloned().collect::<Vec<_>>();
+        for v in keys { clip.clip_degenerate(&v); }
+        for v in inits.iter_mut() { clip.find_start(v); }
 
-        ec
+        clip
     }
 
     pub fn get_epsilon(&self) -> f64 {
@@ -330,38 +326,32 @@ impl EarClip {
     }
 
     pub fn triangulate(&mut self) -> Vec<Row3<usize>> {
-
-        //for v in self.polygon.iter() {
-        //    println!("polygon... ptr: {:p}, idx: {}, idx_l: {}, idx_r: {}",
-        //        Rc::as_ptr(v), v.borrow().idx, v.borrow().idx_l(), v.borrow().idx_r());
-        //}
-
         let vs = self.holes.iter().cloned().collect::<Vec<_>>();
         for mut v in vs { self.cut_key_hole(&mut v); }
 
         for v in self.polygon.iter() {
-            println!("polygon... ptr: {:p}, idx: {}, idx_l: {}, idx_r: {}",
-                     Rc::as_ptr(v), v.borrow().idx, v.borrow().idx_l(), v.borrow().idx_r());
+            println!("check polygon... ptr: {:p}, idx: {}, idx_l: {}, {:p}, idx_r: {}, {:p}",
+                     Rc::as_ptr(v),
+                     v.borrow().idx,
+                     v.borrow().idx_l(), Rc::as_ptr(&v.borrow().ptr_l()),
+                     v.borrow().idx_r(), Rc::as_ptr(&v.borrow().ptr_r())
+            );
         }
-
 
         let vs = self.simples.iter().map(|s| Rc::clone(s)).collect::<Vec<_>>();
-        for mut v in vs {
-            println!("======== simples idx: {}", v.borrow().idx);
-            self.triangulate_poly(&mut v);
-        }
+        for mut v in vs { self.triangulate_poly(&mut v); }
 
         std::mem::take(&mut self.tris)
     }
 
-    /// This function and JoinPolygons are the only functions that affect
-    /// the circular list data structure. This helps ensure it remains circular.
+    // This function and JoinPolygons are the only functions that affect
+    // the circular list data structure. This helps ensure it remains circular.
     fn link(vl: &EvPtr, vr: &EvPtr) {
-        let mut vl_ = vl.borrow_mut();
-        let mut vr_ = vr.borrow_mut();
-        vl_.vr = Some(Rc::downgrade(vr));
-        vr_.vl = Some(Rc::downgrade(vl));
-        vl_.dir = safe_normalize(vr_.pos - vl_.pos);
+        let mut bl = vl.borrow_mut();
+        let mut br = vr.borrow_mut();
+        bl.vr = Some(Rc::downgrade(vr));
+        br.vl = Some(Rc::downgrade(vl));
+        bl.dir = safe_normalize(br.pos - bl.pos);
     }
 
     /// Apply `func` to each unclipped vertex in a polygonal circular list starting at `first`.
@@ -394,15 +384,17 @@ impl EarClip {
     }
 
     pub fn clip_ear(&mut self, ear: &EvPtr) {
-        Self::link(&ear.borrow().ptr_l(), &ear.borrow().ptr_r());
-        if ear.borrow().idx_l() != ear.borrow().idx &&
-           ear.borrow().idx_r() != ear.borrow().idx &&
-           ear.borrow().idx_l() != ear.borrow().idx_r() {
-            self.tris.push(Row3::new(
-                ear.borrow().idx_l(),
-                ear.borrow().idx,
-                ear.borrow().idx_r())
-            );
+        let eb = ear.borrow();
+        Self::link(&eb.ptr_l(), &eb.ptr_r());
+
+        print!("clip ear... ");
+
+        if eb.idx_l() != eb.idx &&
+           eb.idx_r() != eb.idx &&
+           eb.idx_l() != eb.idx_r() {
+            println!("done: c: {}, l: {}, r: {}",
+                     ear.borrow().idx, ear.borrow().idx_l(), ear.borrow().idx_r());
+            self.tris.push(Row3::new(eb.idx_l(), eb.idx, eb.idx_r()));
         }
     }
 
@@ -475,10 +467,8 @@ impl EarClip {
         let min_area = self.epsilon * bbox.scale();
 
         if max.is_finite() && area < -min_area {
-            println!("add hole bgn...");
             self.holes.insert(EvPtrMaxPosX(Rc::clone(&bgn), bbox));
         } else {
-            println!("add outer bgn...");
             self.simples.push(Rc::clone(&bgn));
             if area > min_area { self.contour.push(Rc::clone(&bgn));}
         }
@@ -492,7 +482,7 @@ impl EarClip {
         let mut rfs = vec![];
         //println!("start idx_l: {}, idx_r: {}", start.borrow().idx_l(), start.borrow().idx_r());
         Self::do_loop(start, |v| {
-            println!("vert: {:?}, idx: {}", v.borrow().pos, v.borrow().idx);
+            //println!("vert: {:?}, idx: {}", v.borrow().pos, v.borrow().idx);
             pts.push(PolyVert{ pos: v.borrow().pos, idx: rfs.len() });
             rfs.push(Rc::clone(v));
         });
@@ -599,7 +589,6 @@ impl EarClip {
     fn process_ear(&mut self, v: &mut EvPtr, col: &IdxCollider) {
         let taken = { let mut b = v.borrow_mut(); b.ear.take() };
         if let Some(e) = taken {
-            println!("remove ear...");
             self.eque.remove(&EvPtrMinCost(e.upgrade().unwrap()));
         }
 
@@ -612,15 +601,17 @@ impl EarClip {
             return;
         }
         if v.borrow().is_convex(2. * self.epsilon) {
-            println!("convex...");
-            v.borrow_mut().cost = {v.borrow().ear_cost(self.epsilon, col)};
+            //println!("convex: {}", v.borrow().idx);
+            v.borrow_mut().cost = { v.borrow().ear_cost(self.epsilon, col) };
             let ptr = EvPtrMinCost(Rc::clone(v));
+            println!("reinsert to the ear queue: c: {}, l: {}, r: {}, cost: {}",
+                     v.borrow().idx, v.borrow().idx_l(), v.borrow().idx_r(), v.borrow().cost);
             v.borrow_mut().ear = Some(Rc::downgrade(&ptr.0));
             self.eque.insert(ptr);
             return;
         }
 
-        println!("non short, non convex...");
+        //println!("non short, non convex: {}", v.borrow().idx);
         v.borrow_mut().cost = 1.; // not used, but marks reflex verts for debug
     }
 
@@ -641,6 +632,12 @@ impl EarClip {
         //println!("rfs: {:?}", col.rfs);
 
         let v_op = Self::do_loop(start, |v| {
+            //println!("check polygon... idx: {}, idx_l: {}, idx_r: {}",
+            //         v.borrow().idx,
+            //         v.borrow().idx_l(),
+            //         v.borrow().idx_r(),
+            //);
+
             self.process_ear(v, &col);
             //let hoge = v.borrow().ear.as_ref().unwrap().upgrade().unwrap();
             //println!("p self: {:p}", Rc::as_ptr(v));
@@ -649,16 +646,19 @@ impl EarClip {
             num_tri += 1;
         });
 
+
         println!("num_tri: {}", num_tri);
         println!("eque length: {}", self.eque.len());
 
         if let Some(mut v) = v_op {
             while num_tri > 0 {
-                if let Some(ear) = self.eque.first().cloned() {
-                    v = Rc::clone(&ear.0);
-                    self.eque.remove(&ear);
-                }
+                if let Some(q) = self.eque.pop_first() { v = Rc::clone(&q.0); }
                 self.clip_ear(&v);
+                //println!("----check polygon... ");
+                //for v in self.polygon.iter() {
+                //    println!("    idx: {}, idx_l: {}, idx_r: {}",
+                //             v.borrow().idx, v.borrow().idx_l(), v.borrow().idx_r());
+                //}
                 num_tri -= 1;
                 self.process_ear(&mut v.borrow().ptr_l(), &col);
                 self.process_ear(&mut v.borrow().ptr_r(), &col);

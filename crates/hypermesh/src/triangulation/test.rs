@@ -47,8 +47,8 @@ fn triangulation_test_1() {
     ];
 
     let loop1 = vec![
-        PolyVert{pos: Row2::new(0.2, 0.5), idx: 5},
-        PolyVert{pos: Row2::new(0.5, 0.2), idx: 4},
+        PolyVert{pos: Row2::new(0.2, 0.8), idx: 5},
+        PolyVert{pos: Row2::new(0.8, 0.2), idx: 4},
         PolyVert{pos: Row2::new(0.2, 0.2), idx: 3},
     ];
 
