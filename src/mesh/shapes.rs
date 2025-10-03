@@ -799,7 +799,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
     #[allow(clippy::too_many_arguments)]
     pub fn spur_gear_involute(
-        module_: Real,
+        module: Real,
         teeth: usize,
         pressure_angle_deg: Real,
         clearance: Real,
@@ -809,7 +809,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         metadata: Option<S>,
     ) -> Mesh<S> {
         Sketch::involute_gear(
-            module_,
+            module,
             teeth,
             pressure_angle_deg,
             clearance,
@@ -821,7 +821,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     }
 
     pub fn spur_gear_cycloid(
-        module_: Real,
+        module: Real,
         teeth: usize,
         pin_teeth: usize,
         clearance: Real,
@@ -830,7 +830,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         metadata: Option<S>,
     ) -> Mesh<S> {
         Sketch::cycloidal_gear(
-            module_,
+            module,
             teeth,
             pin_teeth,
             clearance,
@@ -842,7 +842,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
     #[allow(clippy::too_many_arguments)]
     pub fn helical_involute_gear(
-        module_: Real,
+        module: Real,
         teeth: usize,
         pressure_angle_deg: Real,
         clearance: Real,
@@ -855,7 +855,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ) -> Mesh<S> {
         assert!(slices >= 2);
         let base_slice = Sketch::involute_gear(
-            module_,
+            module,
             teeth,
             pressure_angle_deg,
             clearance,
