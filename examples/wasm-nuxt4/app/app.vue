@@ -1,35 +1,33 @@
 <template>
-  <div >
-    
+  <div>
+    <Viewer :meshes="meshes"></Viewer>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 
 import { ref } from 'vue';
 
-const stl = ref('');
+import Viewer from '../components/Viewer.vue';
+
+import type { CsgRsMeshArrays, TresBufferGeometryAttributes } from '../types';
+
+const meshes = ref<Array<CsgRsMeshArrays>>();
 
 const loadWasm = async () => 
 {
-  
+  const timeStartLoad = performance.now();
   const csgrs = (await import('../../../pkg/csgrs.js'));    
+  console.log(`WASM load time: ${performance.now() - timeStartLoad} ms`);
   return csgrs;
 }
 
 // Ensure this code runs only on the client side
-if (process.client)
+if (import.meta.client)
 {
-  
-
   await loadWasm().then((csgrs) => 
   {
-    /*
-    // DEBUG
-    console.log(csgrs)
-    console.log(csgrs.PlaneJs);
-    */
-
+    const timeStartGeneration = performance.now();
     // Create a triangle plane mesh from 3 vertices on XY plane
     // No need for decimal points
     const plane = new csgrs.PlaneJs(
@@ -57,17 +55,24 @@ if (process.client)
     console.log(translatedCircle.boundingBox()); // { min: [90,-10,0], max: [110,10,0] }
     console.log(circle.toArrays().indices.length); // number of vertices for circle
 
-    const rectangle = csgrs.SketchJs.rectangle(50,100);
-    console.log(rectangle.boundingBox()); // { min: [0,0,0], max: [10,100,0] }
-    console.log(rectangle.toArrays().indices.length); // number of vertices for rectangle
+    const extrudedCircle = circle.extrude(30);
 
+    const sphere = csgrs.MeshJs.sphere(20, 64, 64).translate(20,0,0);
+    const box = csgrs.MeshJs.cuboid(10,10,5).translate(0,0,25);
+    const octahedron = csgrs.MeshJs.octahedron(10)
+                    .rotate(30,0,0)
+                    .translate(-10,5,20);
+    
+    const diffShape = extrudedCircle
+                        .difference(sphere)
+                        .difference(box)
+                        .difference(octahedron);
 
-    const unionShape = circle.union(rectangle);
-    console.log(unionShape.toArrays().indices.length); // number of vertices after union
+    const meshData = diffShape.to_arrays() as CsgRsMeshArrays; // TODO: no TS typing from Rust
 
-    const extruded = unionShape.extrude(20);
-    stl.value = extruded.toSTLBinary();
-
+    console.log(`Geometry generation time: ${performance.now() - timeStartGeneration} ms`);
+    
+    meshes.value = [meshData];
 
   });
 }
