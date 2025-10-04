@@ -25,7 +25,7 @@ pub fn get_axis_aligned_projection(normal: &Row3<f64>) -> Mat23<f64> {
         max = normal.x;
     }
 
-    if max < 0. { prj.set_column(0, &(-prj.column(0))); }
+    if max < 0. { prj.set_row(0, &(-prj.row(0))); }
     prj
 }
 
@@ -98,7 +98,7 @@ impl Rect {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PolyVert {
     pub pos: Row2<f64>,
     pub idx: usize
