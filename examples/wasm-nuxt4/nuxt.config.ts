@@ -3,9 +3,10 @@ import topLevelAwait from "vite-plugin-top-level-await";
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  ssr: false, // Disable server-side rendering
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  
+
   // Enable WebAssembly support
   vite: {
     server: {
@@ -24,5 +25,7 @@ export default defineNuxtConfig({
     experimental: {
       wasm: true
     }
-  }
+  },
+
+  modules: ["@tresjs/nuxt"]
 })
