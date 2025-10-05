@@ -2,10 +2,6 @@ use nalgebra::{RowVector3 as Row3};
 use crate::common::{det2x2, PolygonIdx};
 use crate::ear_clip::{EarClip};
 
-///
-/// step 1: convex case
-///
-
 fn is_convex(polygon_idcs: &Vec<PolygonIdx>, epsilon: f64) -> bool {
     for p in polygon_idcs {
         let bgn = p.first().unwrap().pos - p.last().unwrap().pos;
@@ -37,10 +33,6 @@ fn triangulate_convex(polygon_idcs: &Vec<PolygonIdx>) -> Vec<Row3<usize>> {
     t
 }
 
-///
-/// step 2: non-convex case
-///
-
 /// @brief Triangulates a set of &epsilon;-valid polygons. If the input is not
 /// &epsilon;-valid, the triangulation may overlap but will always return a
 /// manifold result that matches the input edge directions.
@@ -48,26 +40,20 @@ fn triangulate_convex(polygon_idcs: &Vec<PolygonIdx>) -> Vec<Row3<usize>> {
 /// @param polys The set of polygons, wound CCW and representing multiple
 /// polygons and/or holes. These have 2D-projected positions as well as
 /// references back to the original vertices.
-/// @param epsilon The value of &epsilon;, bounding the uncertainty of the
+/// @param epsilon The value of &epsilon, bounding the uncertainty of the
 /// input.
 /// @param allowConvex If true (default), the triangulator will use fast
 /// triangulation if the input is convex, falling back to ear-clipping if not.
-/// The triangle quality may be lower, so set to false to disable this
+/// The triangle quality may be lower, so set too false to disable this
 /// optimization.
 /// @return std::vector<ivec3> The triangles, referencing the original
 /// vertex indicies.
 pub fn triangulate_from_poly_idcs(
     poly_idcs: &Vec<PolygonIdx>,
     epsilon: f64,
-    allow_convex: bool
+    convex: bool
 ) -> Vec<Row3<usize>> {
-    let f = allow_convex && is_convex(poly_idcs, epsilon);
-    if f { triangulate_convex(poly_idcs) }
-    else {
-        println!("poly_idcs: {:?}", poly_idcs);
-        //EarClip::new(&poly_idcs, epsilon).triangulate()
-        let ec = EarClip::new(&poly_idcs, epsilon);
-        vec![]
-    }
+    if convex && is_convex(poly_idcs, epsilon) { triangulate_convex(poly_idcs) }
+    else { EarClip::new(&poly_idcs, epsilon).triangulate() }
 }
 

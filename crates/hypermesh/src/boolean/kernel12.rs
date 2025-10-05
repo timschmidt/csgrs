@@ -29,7 +29,7 @@ impl<'a> Kernel12<'a> {
             let (s, op_z) = self.k02.op(*vid, q2);
             if let Some(z) = op_z {
                 let f = (*vid == h.tail().id) == self.forward;
-                x12 += s as i32 * if f { 1 } else { -1 };
+                x12 += s * if f { 1 } else { -1 };
                 if k < 2 && (k == 0 || (s != 0) != shadows) {
                     shadows = s != 0;
                     xzy_lr0[k] = self.verts_p[*vid].pos();
@@ -52,7 +52,7 @@ impl<'a> Kernel12<'a> {
             let (s, op_xyzz) = if self.forward { self.k11.op(p1, q1f) } else { self.k11.op(q1f, p1) };
 
             if let Some(xyzz) = op_xyzz {
-                x12 -= s as i32 * if half.is_forward() { 1 } else { -1 };
+                x12 -= s * if half.is_forward() { 1 } else { -1 };
                 if k < 2 && (k == 0 || (s != 0) != shadows) {
                     shadows = s != 0;
                     xzy_lr0[k].x = xyzz.x;

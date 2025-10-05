@@ -499,7 +499,6 @@ impl<'a> Boolean3<'a> {
         //println!("====== half_res: {}", half_res.len());
         //for h in half_res.iter() { println!("h: {:?}", h); }
 
-
         let triangulator = Triangulator {
             vpos: &vpos_r,
             fnmls: &fnmls,
@@ -509,22 +508,8 @@ impl<'a> Boolean3<'a> {
             epsilon: 1e-12, // todo temporally!!!
         };
 
-        let mut ih_per_f_diff = vec![];
-
-        for i in 0..ih_per_f.len() - 1 {
-            ih_per_f_diff.push(ih_per_f[i + 1] - ih_per_f[i]);
-        }
-
-        println!("ih_per_f: {:?}", ih_per_f);
-        println!("ih_per_f_diff: {:?}", ih_per_f_diff);
         let res = triangulator.triangulate(false);
 
-        (vpos_r, half_res, res)
-
-        //compute_faces(&vpos_r, &half_res);
-        //println!("====== half_tri");   for t in half_tri.iter() { println!("t: {:?}", t); }
-        //println!("====== half_pos_p"); for h in half_pos_p.iter() { println!("h: {:?}", h); }
-        //println!("====== half_pos_q"); for h in half_pos_q.iter() { println!("h: {:?}", h); }
-        //println!("====== half_new");   for h in half_new.iter() { println!("h: {:?}", h); }
+        (vpos_r, half_res, res.unwrap())
     }
 }

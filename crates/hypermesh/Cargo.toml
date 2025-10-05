@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.100"
 rand = "0.9.2"
 nalgebra = "0.33.2"
 bvh = "0.11.0"
@@ -40,11 +41,6 @@ bevy = [
 [[example]]
 name = "main"
 path = "examples/main.rs"
-required-features = ["bevy"]
-
-[[example]]
-name = "bvh"
-path = "examples/bvh_test.rs"
 required-features = ["bevy"]
 
 [[example]]

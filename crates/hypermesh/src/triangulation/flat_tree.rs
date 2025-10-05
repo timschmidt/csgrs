@@ -26,13 +26,18 @@ pub fn compute_query_flat_tree<F>(
     rect: &Rect,
     mut func: F,
 ) where F: FnMut(&PolyVert) {
-    if pts.len() <= 8 {
-        for p in pts.iter() {
-            if rect.contains(&p.pos) { func(p);}
-        }
-        return;
+    // todo: not implemented yet
+    for p in pts.iter() {
+        if rect.contains(&p.pos) { func(p);}
     }
-    panic!("not implemented");
+    return;
+    //if pts.len() <= 8 {
+    //    for p in pts.iter() {
+    //        if rect.contains(&p.pos) { func(p);}
+    //    }
+    //    return;
+    //}
+    //panic!("not implemented");
 }
 
 /*

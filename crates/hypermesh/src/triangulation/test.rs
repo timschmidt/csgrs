@@ -45,21 +45,11 @@ fn triangulation_test_1() {
         PolyVert{pos: Row2::new(2., 0.), idx: 1},
         PolyVert{pos: Row2::new(0., 2.), idx: 2},
     ];
-
     let loop1 = vec![
         PolyVert{pos: Row2::new(0.2, 0.8), idx: 5},
         PolyVert{pos: Row2::new(0.8, 0.2), idx: 4},
         PolyVert{pos: Row2::new(0.2, 0.2), idx: 3},
     ];
-
     let mut ec = EarClip::new(&vec![loop0, loop1], 1e-12);
     ec.triangulate();
-    //for v in ec.polygon.iter() {
-    //    println!("pos : {:?}, idx: {}, idx_l: {}, idx_r: {}",
-    //             v.borrow().pos, v.borrow().idx, v.borrow().idx_l(), v.borrow().idx_r());
-    //}
-
-    //for v in ec.simples.iter() {
-    //    println!("simples: {}", v.borrow().idx);
-    //}
 }

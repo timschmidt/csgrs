@@ -3,7 +3,9 @@ pub mod ear_clip;
 pub mod polygon;
 pub mod flat_tree;
 mod test;
+mod edge_op;
 
+use anyhow::Result;
 use std::collections::{BTreeMap, VecDeque};
 use nalgebra::{Matrix2x3 as Mat23, RowVector3 as Row3};
 use crate::boolean46::TriRef;
@@ -23,25 +25,21 @@ pub struct Triangulator<'a> {
 }
 
 impl <'a> Triangulator<'a>  {
-    /// triangulation api function
-    pub fn triangulate(&self, allow_convex: bool) -> Vec<Row3<usize>> {
+    pub fn triangulate(&self, convex: bool) -> Result<Vec<Row3<usize>>> {
         let mut idcs = vec![];
         for fid in 0..self.hid_f.len() - 1 {
-            let v = self.process_face(fid, allow_convex);
-            idcs.extend(v);
+            idcs.extend(self.process_face(fid, convex));
         }
-        idcs
+        Ok(idcs)
     }
 
-    fn process_face(&self, fid: usize, allow_convex: bool) -> Vec<Row3<usize>> {
+    fn process_face(&self, fid: usize, convex: bool) -> Vec<Row3<usize>> {
         let e0 = self.hid_f[fid] as usize;
         let e1 = self.hid_f[fid + 1] as usize;
         match  e1 - e0 {
-            3 => { self.single_triangulate(e0) }
-            4 => { self.square_triangulate(fid) }
-            _ => {
-                self.general_triangulate(fid, allow_convex)
-            }
+            3 => self.single_triangulate(e0),
+            4 => self.square_triangulate(fid),
+            _ => self.general_triangulate(fid, convex),
         }
     }
 
@@ -98,13 +96,14 @@ impl <'a> Triangulator<'a>  {
 
     fn single_triangulate(&self, hid: usize) -> Vec<Row3<usize>> {
         let mut idcs = [hid, hid + 1, hid + 2];
-        let mut ts = vec![];
-        let mut hs = vec![];
+        let mut tails = vec![];
+        let mut heads = vec![];
         for id in idcs.iter() {
-            ts.push(self.halfs[*id].tail);
-            hs.push(self.halfs[*id].head);
+            tails.push(self.halfs[*id].tail);
+            heads.push(self.halfs[*id].head);
         }
-        if hs[0] == ts[2] { idcs.swap(1, 2); }
+        if heads[0] == tails[2] { idcs.swap(1, 2); }
+
         vec![Row3::new(
             self.halfs[idcs[0]].tail as usize,
             self.halfs[idcs[1]].tail as usize,
@@ -143,11 +142,11 @@ impl <'a> Triangulator<'a>  {
         tris[choice].iter().map(|t| self.get_indices(t)).collect()
     }
 
-    fn general_triangulate(&self, fid: usize, allow_convex: bool) -> Vec<Row3<usize>> {
+    fn general_triangulate(&self, fid: usize, convex: bool) -> Vec<Row3<usize>> {
         let proj  = get_axis_aligned_projection(&self.fnmls[fid]);
         let loops = self.assemble_halfs(fid);
         let polys = self.project_polygons(&loops, &proj);
-        triangulate_from_poly_idcs(&polys, self.epsilon, allow_convex)
+        triangulate_from_poly_idcs(&polys, self.epsilon, convex)
             .iter().map(|t| self.get_indices(t)).collect()
     }
 }

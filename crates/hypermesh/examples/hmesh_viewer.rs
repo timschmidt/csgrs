@@ -9,6 +9,8 @@ use nalgebra::{DMatrix, RowVector3};
 use mfd::{intersect12, winding03, Boolean3, Hmesh, Manifold, OpType};
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
 use std::sync::Arc;
+use bevy::render::render_resource::{Face, FrontFace, PolygonMode};
+use mfd::common::is_ccw_3d;
 use mfd::test_data::{gen_tet_a, gen_tet_b, gen_tet_c};
 
 #[derive(Resource)]
@@ -73,10 +75,10 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>
 ) {
 
-    let (m0, _) = tobj::load_obj("assets/models/cube_x_plus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    let (m1, _) = tobj::load_obj("assets/models/tet_b.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m0, _) = tobj::load_obj("assets/models/gargoyle.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m1, _) = tobj::load_obj("assets/models/double-torus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
     let mut hms_ = vec![];
-    for (m, s) in vec![(m0, 1.), (m1, 1.)] {
+    for (m, s) in vec![(m0, 1.), (m1, 0.7)] {
         let mesh = &m[0].mesh;
         let pos_buf = mesh.positions.iter().map(|&v| (v * s) as f64).collect::<Vec<f64>>();
         let idx_buf = mesh.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>();
@@ -132,27 +134,69 @@ fn setup(
             Vec3::new(p1[0] as f32, p1[1] as f32, p1[2] as f32),
         ));
     }
-    {
-        let pos_buf: Vec<f64> = pos.iter().flat_map(|row| row.iter().copied()).collect();
-        let idx_buf: Vec<usize> = tris.iter().flat_map(|row| row.iter().copied()).collect();
-        let hm = Hmesh::new(
-            DMatrix::from_row_slice(pos.len(), 3, &pos_buf).into(),
-            DMatrix::from_row_slice(tris.len(), 3, &idx_buf).into()
-        );
-        hms_.push(hm);
+
+    let mut normals = vec![];
+    for (i, t) in tris.iter().enumerate() {
+        let p0 = pos[t[0]];
+        let p1 = pos[t[1]];
+        let p2 = pos[t[2]];
+        let c = (p0 + p1 + p2) / 3.;
+        let n = (p1 - p0).cross(&(p2 - p0)).normalize() * 0.1;
+        normals.push((
+            Vec3::new(c[0] as f32, c[1] as f32, c[2] as f32),
+            Vec3::new((c[0] + n[0]) as f32, (c[1] + n[1]) as f32, (c[2] + n[2]) as f32),
+        ));
     }
 
+    {
+        //let pos_buf: Vec<f64> = pos.iter().flat_map(|row| row.iter().copied()).collect();
+        //let idx_buf: Vec<usize> = tris.iter().flat_map(|row| row.iter().copied()).collect();
+        //let hm = Hmesh::new(
+        //    DMatrix::from_row_slice(pos.len(), 3, &pos_buf).into(),
+        //    DMatrix::from_row_slice(tris.len(), 3, &idx_buf).into()
+        //);
+        //hms_.push(hm);
+        let mut bm = Mesh::new(
+            bevy::render::mesh::PrimitiveTopology::TriangleList,
+            RenderAssetUsages::default()
+        );
 
+        bm.insert_indices(Indices::U32(
+            tris.iter().flat_map(|t| [
+                t[0] as u32,
+                t[1] as u32,
+                t[2] as u32,
+            ]).collect()
+        ));
+        bm.insert_attribute(
+            Mesh::ATTRIBUTE_POSITION,
+            pos.iter().map(|p| [
+                p[0] as f32,
+                p[1] as f32,
+                p[2] as f32,
+            ]).collect::<Vec<_>>()
+        );
+
+        cmds.spawn((
+            Mesh3d(meshes.add(bm).clone()),
+            MeshMaterial3d(mats.add(StandardMaterial { ..default() })),
+            Transform::default(),
+            Wireframe,
+            WireframeColor { color: GRAY.into() },
+            ToggleableMesh,
+        ));
+
+    }
 
     cmds.insert_resource(
         DrawingData{ units: vec![
-            DrawingUnit { pts: pts_i, lines: vec![], boxes: vec![], col: RED },
-            DrawingUnit { pts: pts_w, lines: vec![], boxes: vec![], col: BLUE },
-            DrawingUnit { pts: vec![], lines: edges, boxes: vec![], col: WHITE },
+            //DrawingUnit { pts: pts_i, lines: vec![], boxes: vec![], col: RED },
+            //DrawingUnit { pts: pts_w, lines: vec![], boxes: vec![], col: BLUE },
+            //DrawingUnit { pts: vec![], lines: edges, boxes: vec![], col: WHITE },
+            //DrawingUnit { pts: vec![], lines: normals, boxes: vec![], col: RED },
         ]});
 
-    //for hm in vec![&mf0.hmesh, &mf1.hmesh] {
-    for hm in vec![hms_[2].clone()] {
+    for hm in vec![&mf0.hmesh, &mf1.hmesh] {
         let mut bm = Mesh::new(
             bevy::render::mesh::PrimitiveTopology::TriangleList,
             RenderAssetUsages::default()
@@ -174,14 +218,14 @@ fn setup(
             ]).collect::<Vec<_>>()
         );
 
-        cmds.spawn((
-            Mesh3d(meshes.add(bm).clone()),
-            MeshMaterial3d(mats.add(StandardMaterial { ..default() })),
-            Transform::default(),
-            Wireframe,
-            WireframeColor { color: GRAY.into() },
-            ToggleableMesh,
-        ));
+        //cmds.spawn((
+        //    Mesh3d(meshes.add(bm).clone()),
+        //    MeshMaterial3d(mats.add(StandardMaterial { ..default() })),
+        //    Transform::default(),
+        //    Wireframe,
+        //    WireframeColor { color: GRAY.into() },
+        //    ToggleableMesh,
+        //));
     }
 
     cmds.insert_resource(MfdHandle0(mf0));
