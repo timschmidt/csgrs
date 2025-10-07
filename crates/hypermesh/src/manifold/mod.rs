@@ -10,20 +10,20 @@ use crate::common::K_PRECISION;
 
 #[derive(Clone, Debug)]
 pub struct Halfedge {
-    pub tail: i32,
-    pub head: i32,
-    pub pair: i32,
+    pub tail: usize,
+    pub head: usize,
+    pub pair: usize,
 }
 
 impl Halfedge {
-    pub fn default() -> Self { Self { tail: -1, head: -1, pair: -1 } }
+    pub fn default() -> Self { Self { tail: usize::MAX, head: usize::MAX, pair: usize::MAX } }
     pub fn is_forward(&self) -> bool { self.tail < self.head }
-    pub fn has_tail(&self) -> bool { self.tail >= 0 }
-    pub fn has_head(&self) -> bool { self.head >= 0 }
-    pub fn has_pair(&self) -> bool { self.pair >= 0 }
-    pub fn no_tail(&self) -> bool { self.tail == -1 }
-    pub fn no_head(&self) -> bool { self.head == -1 }
-    pub fn no_pair(&self) -> bool { self.pair == -1 }
+    pub fn has_tail(&self) -> bool { self.tail != usize::MAX }
+    pub fn has_head(&self) -> bool { self.head != usize::MAX }
+    pub fn has_pair(&self) -> bool { self.pair != usize::MAX }
+    pub fn no_tail(&self) -> bool { self.tail == usize::MAX }
+    pub fn no_head(&self) -> bool { self.head == usize::MAX }
+    pub fn no_pair(&self) -> bool { self.pair == usize::MAX }
     // need partial eq
 }
 

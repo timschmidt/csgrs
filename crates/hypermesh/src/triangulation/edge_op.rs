@@ -1,4 +1,4 @@
-use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
+use nalgebra::{RowVector3 as Row3};
 use crate::boolean46::TriRef;
 use crate::Halfedge;
 
@@ -17,36 +17,36 @@ fn halfs_of(halfs: &[Halfedge], curr: usize) -> (usize, usize, usize) {
 }
 
 fn pair_up(halfs: &mut [Halfedge], hid0: usize, hid1: usize) {
-    halfs[hid0].pair = hid1 as i32;
-    halfs[hid1].pair = hid0 as i32;
+    halfs[hid0].pair = hid1;
+    halfs[hid1].pair = hid0;
 }
 
 fn collapse_triangle(halfs: &mut [Halfedge], hids: &(usize, usize, usize)) {
     if halfs[hids.1].no_pair() { return; }
     let pair1 = halfs[hids.1].pair;
     let pair2 = halfs[hids.2].pair;
-    halfs[pair1 as usize].pair = pair2;
-    halfs[pair2 as usize].pair = pair1;
+    halfs[pair1].pair = pair2;
+    halfs[pair2].pair = pair1;
     for i in [hids.0, hids.1, hids.2] { halfs[i] = Halfedge::default(); }
 }
 
 fn remove_if_folded(halfs: &mut [Halfedge], pos: &mut [Row3<f64>], hid: usize) {
     let (i0, i1, i2) = halfs_of(halfs, hid);
-    let (j0, j1, j2) = halfs_of(halfs, halfs[hid].pair as usize);
+    let (j0, j1, j2) = halfs_of(halfs, halfs[hid].pair);
     let nan = Row3::new(f64::MAX, f64::MAX, f64::MAX);
-    if halfs[i1].pair == -1 { return; }
+    if halfs[i1].no_pair() { return; }
 
     if halfs[i1].head == halfs[j1].head {
-        match (halfs[i1].pair == j2 as i32, halfs[i2].pair == j1 as i32) {
-            (true, true) => for i in [i0, i1, i2] { pos[halfs[i].tail as usize] = nan; },
-            (true, false) => { pos[halfs[i1].tail as usize] = nan; }
-            (false, true) => { pos[halfs[j1].tail as usize] = nan; }
+        match (halfs[i1].pair == j2, halfs[i2].pair == j1) {
+            (true, true) => for i in [i0, i1, i2] { pos[halfs[i].tail] = nan; },
+            (true, false) => { pos[halfs[i1].tail] = nan; }
+            (false, true) => { pos[halfs[j1].tail] = nan; }
             _ => {}
         }
     }
 
-    pair_up(halfs, halfs[i1].pair as usize, halfs[j2].pair as usize);
-    pair_up(halfs, halfs[i2].pair as usize, halfs[j1].pair as usize);
+    pair_up(halfs, halfs[i1].pair, halfs[j2].pair);
+    pair_up(halfs, halfs[i2].pair, halfs[j1].pair);
     for i in [i0, i1, i2] { halfs[i] = Halfedge::default(); }
     for j in [j0, j1, j2] { halfs[j] = Halfedge::default(); }
 }
@@ -80,18 +80,16 @@ struct SwappableEdge<'a> {
 impl <'a> Predecessor for ShortEdge<'a> {
     fn rec(&mut self, idx: usize) -> bool {
         let h = &self.halfs[idx];
-        let i = self.first_new_vert as i32;
+        let i = self.first_new_vert;
         if h.pair < 0 || (h.tail < i && h.head < i) { return false; }
-
-        let d = self.pos[h.head as usize] - self.pos[h.tail as usize];
-        d.norm_squared() < self.epsilon * self.epsilon
+        (self.pos[h.head] - self.pos[h.tail]).norm_squared() < self.epsilon.powi(2)
     }
 }
 
 impl <'a> Predecessor for RedundantEdge<'a> {
     fn rec(&mut self, idx: usize) -> bool {
         let h = &self.halfs[idx];
-        let i = self.first_new_vert as i32;
+        let i = self.first_new_vert;
         if h.pair < 0 || (h.tail < i && h.head < i) { return false; }
         false
     }

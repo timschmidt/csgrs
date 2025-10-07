@@ -203,9 +203,9 @@ fn pair_up(edge_pos: &mut Vec<EdgePos>) -> Vec<Halfedge> {
     let mut edges = Vec::with_capacity(ne);
     for i in 0..ne {
         edges.push(Halfedge {
-            tail: edge_pos[i].vid as i32,
-            head: edge_pos[i + ne].vid as i32,
-            pair: -1,
+            tail: edge_pos[i].vid,
+            head: edge_pos[i + ne].vid,
+            pair: usize::MAX,
         });
     }
 
@@ -284,8 +284,8 @@ fn append_partial_edges(
             let bk_edge = face_ptr_r[fid_r];
             face_ptr_r[fid_l] += 1;
             face_ptr_r[fid_r] += 1;
-            half_res[fw_edge as usize] = Halfedge{ tail: h.tail, head: h.head, pair: bk_edge };
-            half_res[bk_edge as usize] = Halfedge{ tail: h.head, head: h.tail, pair: fw_edge };
+            half_res[fw_edge as usize] = Halfedge{ tail: h.tail, head: h.head, pair: bk_edge as usize };
+            half_res[bk_edge as usize] = Halfedge{ tail: h.head, head: h.tail, pair: fw_edge as usize };
             half_tri[fw_edge as usize] = fw_tri.clone();
             half_tri[bk_edge as usize] = bk_tri.clone();
         }
@@ -331,8 +331,8 @@ fn append_new_edges(
             let bk_edge = face_ptr_r[fid_r];
             face_ptr_r[fid_l] += 1;
             face_ptr_r[fid_r] += 1;
-            half_res[fw_edge as usize] = Halfedge{tail: h.tail, head: h.head, pair: bk_edge};
-            half_res[bk_edge as usize] = Halfedge{tail: h.head, head: h.tail, pair: fw_edge};
+            half_res[fw_edge as usize] = Halfedge{tail: h.tail, head: h.head, pair: bk_edge as usize};
+            half_res[bk_edge as usize] = Halfedge{tail: h.head, head: h.tail, pair: fw_edge as usize};
             half_tri[fw_edge as usize] = fw_ref.clone();
             half_tri[bk_edge as usize] = bk_ref.clone();
         }
@@ -354,18 +354,18 @@ fn append_whole_edges(
         if !whole_flag[i] { continue; }
         let hp = half_p[i].clone();
         let mut h = Halfedge {
-            tail: hp.tail().id as i32,
-            head: hp.head().id as i32,
-            pair: hp.twin().id as i32
+            tail: hp.tail().id,
+            head: hp.head().id,
+            pair: hp.twin().id
         };
         if !h.is_forward() { continue; }
 
-        let inc = i03[h.tail as usize];
+        let inc = i03[h.tail];
         if inc == 0 { continue; }
         if inc < 0 { mem::swap(&mut h.tail, &mut h.head); }
 
-        h.tail = vid_p2r[h.tail as usize];
-        h.head = vid_p2r[h.head as usize];
+        h.tail = vid_p2r[h.tail] as usize;
+        h.head = vid_p2r[h.head] as usize;
 
         let fp_l = hp.face().id;
         let fp_r = hp.twin().face().id;
@@ -379,8 +379,8 @@ fn append_whole_edges(
             let bk_edge = face_ptr_r[fid_r as usize];
             face_ptr_r[fid_l as usize] += 1;
             face_ptr_r[fid_r as usize] += 1;
-            half_res[fw_edge as usize] = Halfedge{ tail: h.tail, head: h.head, pair: bk_edge };
-            half_res[bk_edge as usize] = Halfedge{ tail: h.head, head: h.tail, pair: fw_edge };
+            half_res[fw_edge as usize] = Halfedge{ tail: h.tail, head: h.head, pair: bk_edge as usize };
+            half_res[bk_edge as usize] = Halfedge{ tail: h.head, head: h.tail, pair: fw_edge as usize };
             half_ref[fw_edge as usize] = fw_ref.clone();
             half_ref[bk_edge as usize] = bk_ref.clone();
             h.tail += 1;
@@ -496,9 +496,6 @@ impl<'a> Boolean3<'a> {
         append_whole_edges(&i03, &self.mfd_p.hmesh.halfs, fid_p2r, &vid_p2r, &whole_flag_p, true,  &mut face_ptr_r, &mut half_res, &mut half_tri);
         append_whole_edges(&i30, &self.mfd_q.hmesh.halfs, fid_q2r, &vid_q2r, &whole_flag_q, false, &mut face_ptr_r, &mut half_res, &mut half_tri);
 
-        //println!("====== half_res: {}", half_res.len());
-        //for h in half_res.iter() { println!("h: {:?}", h); }
-
         let triangulator = Triangulator {
             vpos: &vpos_r,
             fnmls: &fnmls,
@@ -509,6 +506,8 @@ impl<'a> Boolean3<'a> {
         };
 
         let res = triangulator.triangulate(false);
+
+        //let simplifier = ;
 
         (vpos_r, half_res, res.unwrap())
     }
