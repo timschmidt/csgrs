@@ -207,11 +207,12 @@ impl Ecvt {
     }
 }
 
+type EvPtr = Rc<RefCell<Ecvt>>;
+
 /// When an ear vert is clipped, its neighbors get linked, so they get unlinked
 /// from it, but it is still linked to them.
 fn clipped(v: &EvPtr) -> bool { !Rc::ptr_eq(&v.borrow().ptr_l_of_r(), v) }
-
-type EvPtr = Rc<RefCell<Ecvt>>;
+fn folded(v: &EvPtr) -> bool { Rc::ptr_eq(&v.borrow().ptr_l(), &v.borrow().ptr_r()) }
 
 impl PartialEq  for Ecvt { fn eq(&self, other: &Self) -> bool { self.cost == other.cost } }
 impl PartialOrd for Ecvt { fn partial_cmp(&self, other: &Self) -> Option<Ordering> { self.cost.partial_cmp(&other.cost) } }
@@ -350,13 +351,14 @@ impl EarClip {
                 *v = w.borrow().ptr_l_of_r();
                 if !clipped(v) {
                     w = Rc::clone(v);
-                    if Rc::ptr_eq(&w.borrow().ptr_l(), &w.borrow().ptr_r()) { return None; }
+                    if folded(&w) { return None; }
                     func(&mut w);
                 }
             } else {
-                if Rc::ptr_eq(&w.borrow().ptr_l(), &w.borrow().ptr_r()) { return None; }
+                if folded(&w) { return None; }
                 func(&mut w);
             }
+
             w = { w.borrow().ptr_r() };
             if Rc::ptr_eq(&w, v) { return Some(w); }
         }
@@ -371,16 +373,17 @@ impl EarClip {
     }
 
     fn clip_degenerate(&mut self, ear: &EvPtr) {
-        if clipped(ear) || Rc::ptr_eq(&ear.borrow().ptr_l(), &ear.borrow().ptr_r()) { return; }
-        let e = self.epsilon;
+        if clipped(ear) || folded(&ear) { return; }
+        let eps = self.epsilon;
+        let eb = ear.borrow();
         let p  = ear.borrow().pos;
         let pl = ear.borrow().pos_l();
         let pr = ear.borrow().pos_r();
-        if ear.borrow().is_short(e) || (is_ccw_2d(&pl, &p, &pr, e) == 0 && (pl - p).dot(&(pr - p)) > 0.) {
+        if eb.is_short(eps) || (is_ccw_2d(&pl, &p, &pr, eps) == 0 && (pl - p).dot(&(pr - p)) > 0.) {
             println!("degenerate: {:p}", Rc::as_ptr(ear));
             self.clip_ear(&ear);
-            self.clip_degenerate(&ear.borrow().ptr_l());
-            self.clip_degenerate(&ear.borrow().ptr_r());
+            self.clip_degenerate(&eb.ptr_l());
+            self.clip_degenerate(&eb.ptr_r());
         }
     }
 
@@ -465,35 +468,35 @@ impl EarClip {
     /// Instead of relying on sorting, which may be incorrect due to epsilon,
     /// we check for polygon edges both ahead and behind to ensure all valid options are found.
     fn cut_key_hole(&mut self, v: &EvPtrMaxPosX) {
-        let ep = self.epsilon;
+        let vp = v.0.borrow().pos;
+        let eps = self.epsilon;
         let on_top =
-            if      v.0.borrow().pos.y >= v.1.max.y - ep { 1 }
-            else if v.0.borrow().pos.y <= v.1.min.y + ep { -1 }
+            if      vp.y >= v.1.max.y - eps { 1 }
+            else if vp.y <= v.1.min.y + eps { -1 }
             else    { 0 };
 
-        let mut connector: Option<EvPtr> = None;
+        let mut con: Option<EvPtr> = None;
 
         for first in self.contour.iter_mut() {
-            Self::do_loop(first, |e| {
+            Self::do_loop(first, |w| {
                 let vb = v.0.borrow();
-                let eb = e.borrow();
-                let op = eb.interpolate_y2x(&vb.pos, on_top, ep);
-                if let Some(x) = op {
-                    let flag = match connector.as_ref() {
+                let wb = w.borrow();
+                if let Some(x) = wb.interpolate_y2x(&vp, on_top, eps) {
+                    let flag = match con.as_ref() {
                         None => true,
                         Some(c) => {
                             let cb = c.borrow();
-                            let f1 = is_ccw_2d(&Row2::new(x, vb.pos.y), &cb.pos, &cb.pos_r(), ep) == 1;
-                            let f2 = if cb.pos.y < eb.pos.y { eb.inside_edge(&c, ep, false) } else { !cb.inside_edge(&e, ep, false) };
+                            let f1 = is_ccw_2d(&Row2::new(x, vp.y), &cb.pos, &cb.pos_r(), eps) == 1;
+                            let f2 = if cb.pos.y < wb.pos.y { wb.inside_edge(&c, eps, false) } else { !cb.inside_edge(&w, eps, false) };
                             f1 || f2
                         }
                     };
-                    if vb.inside_edge(&v.0, ep, true) || flag { connector = Some(Rc::clone(e)); }
+                    if vb.inside_edge(&v.0, eps, true) || flag { con = Some(Rc::clone(w)); }
                 }
             });
         }
 
-        match connector {
+        match con {
             None => { self.simples.push(Rc::clone(&v.0)); },
             Some(c) => {
                 let ptr = self.find_closer_bridge(&v.0, &c);
@@ -502,37 +505,35 @@ impl EarClip {
         }
     }
 
-    fn find_closer_bridge(&mut self, start: &EvPtr, e: &EvPtr) -> EvPtr {
-        let mut connector =
-            if e.borrow().pos.x < start.borrow().pos.x {
-                e.borrow().ptr_r()
-            } else if e.borrow().pos_r().x < start.borrow().pos.x {
-                Rc::clone(e)
-            } else if e.borrow().pos_r().y - start.borrow().pos.y < start.borrow().pos.y - e.borrow().pos.y {
-                Rc::clone(e)
-            } else {
-                e.borrow().ptr_r()
-            };
+    fn find_closer_bridge(&mut self, sta: &EvPtr, e: &EvPtr) -> EvPtr {
+        let eb = e.borrow();
+        let ep = e.borrow().pos;
+        let sp = sta.borrow().pos;
+        let mut con =
+            if ep.x < sp.x { eb.ptr_r() }
+            else if eb.pos_r().x < sp.x { Rc::clone(e) }
+            else if eb.pos_r().y - sp.y < sp.y - ep.y { Rc::clone(e) }
+            else { eb.ptr_r() };
 
-        if (connector.borrow().pos.y - start.borrow().pos.y).abs() <= self.epsilon {
-            return Rc::clone(&connector);
-        }
-        let above = if connector.borrow().pos.y > start.borrow().pos.y { 1. } else { -1. };
+        let cp = con.borrow().pos;
+        if (cp.y - sp.y).abs() <= self.epsilon { return Rc::clone(&con); }
 
-        for first in self.contour.iter_mut() {
-            Self::do_loop(first, |v| {
-                let inside = above as i32 * is_ccw_2d(&v.borrow().pos, &v.borrow().pos, &connector.borrow().pos, self.epsilon);
-                let f1 = v.borrow().pos.x > start.borrow().pos.x - self.epsilon;
-                let f2 = v.borrow().pos.y * above > start.borrow().pos.y - self.epsilon;
-                let f3 = inside == 0 &&
-                    v.borrow().pos.x < connector.borrow().pos.x &&
-                    v.borrow().pos.y * above < connector.borrow().pos.y * above;
-                let f4 = v.borrow().inside_edge(e, self.epsilon, true);
-                let f5 = v.borrow().is_reflex(self.epsilon);
-                if f1 && f2 && (inside > 0 || ( f3 && f4 && f5 )) { connector = Rc::clone(v); };
+        let above = if cp.y > sp.y { 1. } else { -1. };
+
+        for it in self.contour.iter_mut() {
+            Self::do_loop(it, |v| {
+                let vb = v.borrow();
+                let vp = v.borrow().pos;
+                let inside = above as i32 * is_ccw_2d(&sp, &vp, &cp, self.epsilon);
+                let f1 = vp.x > sp.x - self.epsilon;
+                let f2 = vp.y * above > sp.y - self.epsilon;
+                let f3 = inside == 0 && vp.x < cp.x && vp.y * above < cp.y * above;
+                let f4 = vb.inside_edge(e, self.epsilon, true);
+                let f5 = vb.is_reflex(self.epsilon);
+                if f1 && f2 && (inside > 0 || ( f3 && f4 && f5 )) { con = Rc::clone(v); };
             });
         }
-        Rc::clone(&connector)
+        Rc::clone(&con)
     }
 
     /// Creates a keyhole between the start vert of a hole and the connector vert of an outer polygon.
