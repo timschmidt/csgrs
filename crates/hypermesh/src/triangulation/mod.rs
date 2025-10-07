@@ -53,8 +53,8 @@ impl <'a> Triangulator<'a>  {
 
     /// This function considers vertex-joint cases like Hierholzer's algorithm.
     /// https://algorithms.discrete.ma.tum.de/graph-algorithms/hierholzer/index_en.html
-    /// But not sure when some inner loops in an outer loop case happen...
-    /// Or, two separate loops could be happened.
+    /// But not sure when some inner loops in an outer loop case happen, or two separate loops could be happened.
+    /// Solved: Inner loop is always cw, so when ear clipping comes, it is guaranteed to be a single concave loop.
     fn assemble_halfs(&self, fid: usize) -> Vec<Vec<usize>> {
         let bgn = self.hid_f[fid] as usize;
         let end = self.hid_f[fid + 1] as usize;

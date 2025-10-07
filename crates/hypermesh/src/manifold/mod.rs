@@ -2,11 +2,10 @@ pub mod bounds;
 pub mod collider;
 
 use std::sync::Arc;
-use nalgebra::{DMatrix, RowVector3, Vector3};
-use num_traits::float::FloatCore;
+use nalgebra::DMatrix;
 use bounds::BoundingBox;
 use crate::collider::{morton_code, Collider, MortonCollider};
-use crate::{Half, Hmesh};
+use crate::Hmesh;
 use crate::common::K_PRECISION;
 
 #[derive(Clone, Debug)]
@@ -19,6 +18,12 @@ pub struct Halfedge {
 impl Halfedge {
     pub fn default() -> Self { Self { tail: -1, head: -1, pair: -1 } }
     pub fn is_forward(&self) -> bool { self.tail < self.head }
+    pub fn has_tail(&self) -> bool { self.tail >= 0 }
+    pub fn has_head(&self) -> bool { self.head >= 0 }
+    pub fn has_pair(&self) -> bool { self.pair >= 0 }
+    pub fn no_tail(&self) -> bool { self.tail == -1 }
+    pub fn no_head(&self) -> bool { self.head == -1 }
+    pub fn no_pair(&self) -> bool { self.pair == -1 }
     // need partial eq
 }
 
@@ -54,7 +59,6 @@ fn sort_faces(
     for i in 0..table.len() {
         idx.set_row(i, &hmesh.idx.fixed_view::<1, 3>(table[i], 0));
     }
-    //println!("{:#}", idx);
     Hmesh::new(hmesh.pos.clone(), idx)
 }
 
