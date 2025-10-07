@@ -45,9 +45,9 @@ impl <'a> Triangulator<'a>  {
 
     fn get_indices(&self, t: &Row3<usize>) -> Row3<usize> {
         Row3::new(
-            self.halfs[t.x].tail as usize,
-            self.halfs[t.y].tail as usize,
-            self.halfs[t.z].tail as usize,
+            self.halfs[t.x].tail,
+            self.halfs[t.y].tail,
+            self.halfs[t.z].tail,
         )
     }
 
@@ -87,7 +87,7 @@ impl <'a> Triangulator<'a>  {
     fn project_polygons(&self, polys: &Vec<Vec<usize>>, prj: &Mat23<f64>) -> Vec<PolygonIdx> {
         polys.iter().map(|poly|
             poly.iter().map(|&e| {
-                let i = self.halfs[e].tail as usize;
+                let i = self.halfs[e].tail;
                 let p = prj * self.vpos[i].transpose();
                 PolyVert { pos: p.transpose(), idx: e }
             }).collect()).collect()
@@ -105,18 +105,18 @@ impl <'a> Triangulator<'a>  {
         if heads[0] == tails[2] { idcs.swap(1, 2); }
 
         vec![Row3::new(
-            self.halfs[idcs[0]].tail as usize,
-            self.halfs[idcs[1]].tail as usize,
-            self.halfs[idcs[2]].tail as usize,
+            self.halfs[idcs[0]].tail,
+            self.halfs[idcs[1]].tail,
+            self.halfs[idcs[2]].tail,
         )]
     }
 
     fn square_triangulate(&self, fid: usize) -> Vec<Row3<usize>> {
         let ccw = |tri: Row3<usize>| {
             is_ccw_3d(
-                &self.vpos[self.halfs[tri[0]].tail as usize],
-                &self.vpos[self.halfs[tri[1]].tail as usize],
-                &self.vpos[self.halfs[tri[2]].tail as usize],
+                &self.vpos[self.halfs[tri[0]].tail],
+                &self.vpos[self.halfs[tri[1]].tail],
+                &self.vpos[self.halfs[tri[2]].tail],
                 &self.fnmls[fid],
                 self.epsilon
             ) >= 0
@@ -132,10 +132,10 @@ impl <'a> Triangulator<'a>  {
         if !(ccw(tris[0][0]) && ccw(tris[0][1])) {
             choice = 1;
         } else if ccw(tris[1][0]) && ccw(tris[1][1]) {
-            let diag0 = self.vpos[self.halfs[quad[0]].tail as usize] -
-                        self.vpos[self.halfs[quad[2]].tail as usize];
-            let diag1 = self.vpos[self.halfs[quad[1]].tail as usize] -
-                        self.vpos[self.halfs[quad[3]].tail as usize];
+            let diag0 = self.vpos[self.halfs[quad[0]].tail] -
+                        self.vpos[self.halfs[quad[2]].tail];
+            let diag1 = self.vpos[self.halfs[quad[1]].tail] -
+                        self.vpos[self.halfs[quad[3]].tail];
             if diag0.norm() > diag1.norm() { choice = 1; }
         }
 

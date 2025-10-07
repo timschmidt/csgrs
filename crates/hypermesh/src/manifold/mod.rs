@@ -4,7 +4,7 @@ pub mod collider;
 use std::sync::Arc;
 use nalgebra::DMatrix;
 use bounds::BoundingBox;
-use crate::collider::{morton_code, Collider, MortonCollider};
+use crate::collider::{morton_code, MortonCollider};
 use crate::Hmesh;
 use crate::common::K_PRECISION;
 
@@ -43,7 +43,6 @@ fn get_face_morton(hmesh: &Hmesh, bbox: &BoundingBox) -> (Vec<BoundingBox>, Vec<
     }
     (fbs, fms)
 }
-
 
 fn sort_faces(
     hmesh: &Hmesh,

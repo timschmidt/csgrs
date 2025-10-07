@@ -81,7 +81,7 @@ impl <'a> Predecessor for ShortEdge<'a> {
     fn rec(&mut self, idx: usize) -> bool {
         let h = &self.halfs[idx];
         let i = self.first_new_vert;
-        if h.pair < 0 || (h.tail < i && h.head < i) { return false; }
+        if h.no_pair() || (h.tail < i && h.head < i) { return false; }
         (self.pos[h.head] - self.pos[h.tail]).norm_squared() < self.epsilon.powi(2)
     }
 }
@@ -90,7 +90,7 @@ impl <'a> Predecessor for RedundantEdge<'a> {
     fn rec(&mut self, idx: usize) -> bool {
         let h = &self.halfs[idx];
         let i = self.first_new_vert;
-        if h.pair < 0 || (h.tail < i && h.head < i) { return false; }
+        if h.no_pair() || (h.tail < i && h.head < i) { return false; }
         false
     }
 }
