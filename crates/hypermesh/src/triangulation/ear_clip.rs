@@ -341,8 +341,6 @@ impl EarClip {
     }
 
     /// Apply `func` to each unclipped vertex in a polygonal circular list starting at `first`.
-    /// VertItrC Loop(VertItr first, std::function<void(VertItr)> func) const
-    /// The C++ returns `polygon_.end()` when it detects a degenerate (right == left).
     fn do_loop<F>(v: &mut EvPtr, mut func: F) -> Option<EvPtr> where F: FnMut(&mut EvPtr) {
         let mut w = Rc::clone(v);
         loop {

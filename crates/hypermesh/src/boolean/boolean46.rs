@@ -121,6 +121,12 @@ pub struct TriRef {
     coplanar_id: i32,
 }
 
+impl TriRef {
+    pub fn same_face(&self, other: &TriRef) -> bool {
+        panic!("TriRef::same_face() is not implemented");
+    }
+}
+
 fn add_new_edge_verts(
     p1q2: &Vec<[i32; 2]>,
     i12: &[i32],

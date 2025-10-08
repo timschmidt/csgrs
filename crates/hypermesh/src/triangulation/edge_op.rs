@@ -1,5 +1,6 @@
 use nalgebra::{RowVector3 as Row3};
 use crate::boolean46::TriRef;
+use crate::common::{get_axis_aligned_projection, is_ccw_2d, is_ccw_3d};
 use crate::Halfedge;
 
 fn next_of(curr: usize) -> usize {
@@ -19,6 +20,10 @@ fn halfs_of(halfs: &[Halfedge], curr: usize) -> (usize, usize, usize) {
 fn pair_up(halfs: &mut [Halfedge], hid0: usize, hid1: usize) {
     halfs[hid0].pair = hid1;
     halfs[hid1].pair = hid0;
+}
+
+fn form_loop() {
+
 }
 
 fn collapse_triangle(halfs: &mut [Halfedge], hids: &(usize, usize, usize)) {
@@ -107,6 +112,81 @@ fn compute_flags<F>(n: usize, pred: &mut dyn Predecessor, mut func: F)->() where
     for i in store { func(i); }
 }
 
-fn collapse_edge() {
+fn collapse_edge(
+    hid: usize,
+    trefs: &[TriRef],
+    halfs: &mut [Halfedge],
+    pos: &mut [Row3<f64>],
+    fnmls: &mut [Row3<f64>],
+    store: &mut Vec<usize>,
+    epsilon: f64,
+) -> bool {
+    let tgt = &halfs[hid];
+    if tgt.no_pair() { return false; }
 
+    let head = tgt.head;
+    let tail = tgt.tail;
+    let pair = tgt.pair;
+    let p_new = pos[head];
+    let p_old = pos[tail];
+    let halfs0 = halfs_of(halfs, hid);
+    let halfs1 = halfs_of(halfs, pair);
+    let diff = p_new - p_old;
+    let flag = diff.norm_squared() < epsilon.powi(2);
+
+    // orbit start vert
+    let mut init = halfs[halfs1.1].pair;
+    if !flag {
+        let mut curr = init;
+        let mut tref0 = &trefs[pair / 3];
+        let mut p_last = pos[halfs[halfs1.1].head];
+        while curr != halfs1.0 {
+            curr = next_of(curr);
+            let p_next = pos[halfs[curr].head];
+            let tref1 = &trefs[curr / 3];
+            let ccw = |p0, p1, p2| { is_ccw_3d(p0, p1, p2, &fnmls[curr / 3], epsilon) };
+            if !tref1.same_face(&tref0) {
+                let old_ref = tref0;
+                tref0 = &trefs[hid / 3];
+                if !tref1.same_face(&tref0) { return false; }
+                if ccw(&p_last, &p_old, &p_new) != 0 { return false; } //todo: meshID check and so on...
+            }
+            if ccw(&p_next, &p_last, &p_new) < 0 { return false; }
+            p_last = p_next;
+            curr = halfs[curr].pair;
+        }
+    }
+
+    // orbit end vert
+    let mut curr = halfs[halfs0.1].pair;
+    while curr != halfs1.2 {
+        curr = next_of(curr);
+        store.push(curr);
+        curr = halfs[curr].pair;
+    }
+
+    // orbit start vert
+    let tri0 = hid / 3;
+    let tri1 = pair / 3;
+    curr = init;
+    while curr != halfs0.2 {
+        curr = next_of(curr);
+
+        let vert = halfs[curr].head;
+        let next = halfs[curr].pair;
+        for i in 0..store.len() {
+            if vert == halfs[store[i]].head {
+                form_loop();
+                init = next;
+                //store.resize();
+                break;
+            }
+        }
+        curr = next;
+    }
+    //UpdateVert(endVert, start, tri0edge[2]);
+    //CollapseTri(tri0edge);
+    //RemoveIfFolded(start);
+
+    true
 }
