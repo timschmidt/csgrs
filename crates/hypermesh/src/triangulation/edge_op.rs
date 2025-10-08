@@ -9,6 +9,10 @@ fn next_of(curr: usize) -> usize {
     curr
 }
 
+fn next_of_pair_of(curr: usize, halfs: &[Halfedge]) -> usize {
+    next_of(halfs[curr].pair)
+}
+
 /// todo: reorder is required beforehand
 /// halfedge indices of a triangle containing halfedge idx
 fn halfs_of(
@@ -101,7 +105,13 @@ fn remove_if_folded(halfs: &mut [Halfedge], pos: &mut [Row3<f64>], hid: usize) {
 }
 
 pub trait Predecessor {
-    fn rec(&mut self, idx: usize) -> bool;
+    fn hs(&self) -> &[Halfedge];
+    fn nv(&self) -> usize;
+    fn rec(&mut self, hid: usize) -> bool;
+    fn invalid(& self, hid: usize) -> bool {
+        let h = &self.hs()[hid];
+        h.no_pair() || (h.tail < self.nv() && h.head < self.nv())
+    }
 }
 
 struct ShortEdge<'a> {
@@ -113,7 +123,7 @@ struct ShortEdge<'a> {
 
 struct RedundantEdge<'a> {
     halfs: &'a[Halfedge],
-    half2face: &'a[TriRef],
+    trefs: &'a[TriRef],
     epsilon: f64,
     first_new_vert: usize,
 }
@@ -127,25 +137,50 @@ struct SwappableEdge<'a> {
 }
 
 impl <'a> Predecessor for ShortEdge<'a> {
-    fn rec(&mut self, idx: usize) -> bool {
-        let h = &self.halfs[idx];
-        let i = self.first_new_vert;
-        if h.no_pair() || (h.tail < i && h.head < i) { return false; }
-        (self.pos[h.head] - self.pos[h.tail]).norm_squared() < self.epsilon.powi(2)
+    fn hs(&self) -> &[Halfedge] { self.halfs }
+    fn nv(&self) -> usize { self.first_new_vert }
+
+    fn rec(&mut self, hid: usize) -> bool {
+        if self.invalid(hid) { return false; }
+        let h = &self.halfs[hid];
+        let d = self.pos[h.head] - self.pos[h.tail];
+        d.norm_squared() < self.epsilon.powi(2)
     }
 }
 
 impl <'a> Predecessor for RedundantEdge<'a> {
-    fn rec(&mut self, idx: usize) -> bool {
-        let h = &self.halfs[idx];
-        let i = self.first_new_vert;
-        if h.no_pair() || (h.tail < i && h.head < i) { return false; }
-        false
+    fn hs(&self) -> &[Halfedge] { self.halfs }
+    fn nv(&self) -> usize { self.first_new_vert }
+
+    // Check around a halfedges from the same tail vertex.
+    // If they consist of only two tris, then their edge is collapsable.
+    fn rec(&mut self, hid: usize) -> bool {
+        if self.invalid(hid) { return false; }
+        let cw_next = |i: usize| next_of(self.halfs[i].pair);
+        let     bgn = hid;
+        let mut cur = cw_next(bgn);
+        let     tr0 = &self.trefs[bgn / 3];
+        let mut tr1 = &self.trefs[cur / 3];
+        let mut same = tr0.same_face(tr1);
+        while cur != bgn {
+            cur = cw_next(cur);
+            let tr2 = &self.trefs[cur / 3];
+            if !tr2.same_face(tr0) &&
+               !tr2.same_face(tr1) {
+                if same { tr1 = tr2; same = false; }
+                else { return false; }
+            }
+        }
+        true
     }
 }
 
 impl <'a> Predecessor for SwappableEdge<'a> {
-    fn rec(&mut self, idx: usize) -> bool {
+    fn hs(&self) -> &[Halfedge] { self.halfs }
+    fn nv(&self) -> usize { self.first_new_vert }
+
+    fn rec(&mut self, hid: usize) -> bool {
+        if self.invalid(hid) { return false; }
         false
     }
 }
@@ -161,6 +196,15 @@ struct Simplifier<'a> {
     halfs: &'a [Halfedge],
     fnmls: &'a [Row3<f64>],
 }
+
+impl <'a> Simplifier<'a> {
+    pub fn collapse_collinear_edge(&self, epsilon: f64) {
+        //let se = RedundantEdge {halfs: self.halfs, epsilon: epsilon, trefs: &[], first_new_vert: 0};
+        //compute_flags();
+    }
+}
+
+
 
 fn collapse_edge(
     hid: usize,
@@ -224,7 +268,7 @@ fn collapse_edge(
         let next = halfs[curr].pair;
         for i in 0..store.len() {
             if vert == halfs[store[i]].head {
-                form_loop(store[i], curr, pos, halfs);
+                //form_loop(store[i], curr, pos, halfs);
                 init = next;
                 //store.resize();
                 break;
