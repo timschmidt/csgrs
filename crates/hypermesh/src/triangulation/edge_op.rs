@@ -9,99 +9,113 @@ fn next_of(curr: usize) -> usize {
     curr
 }
 
-fn next_of_pair_of(curr: usize, halfs: &[Halfedge]) -> usize {
-    next_of(halfs[curr].pair)
+trait HalfedgeOps {
+    fn next_of(&self, curr: usize) -> &Halfedge;
+    fn pair_of(&self, curr: usize) -> &Halfedge;
+    fn next_hid_of(&self, curr: usize) -> usize;
+    fn pair_hid_of(&self, curr: usize) -> usize;
+    fn head_vid_of(&self, curr: usize) -> usize;
+    fn tail_vid_of(&self, curr: usize) -> usize;
+    fn tri_hids_of(&self, curr: usize) -> (usize, usize, usize);
+    fn pair_up(&mut self, hid0: usize, hid1: usize);
+    fn update_vid_around_star(&mut self, vid: usize, bgn: usize, end: usize);
+    fn collapse_triangle(&mut self, hids: &(usize, usize, usize));
 }
 
-/// todo: reorder is required beforehand
-/// halfedge indices of a triangle containing halfedge idx
-fn halfs_of(
-    halfs: &[Halfedge], curr: usize) -> (usize, usize, usize) {
-    let next = next_of(curr);
-    let prev = next_of(next);
-    (curr, next, prev)
-}
+impl HalfedgeOps for [Halfedge] {
+    fn next_of(&self, curr: usize) -> &Halfedge { &self[self.next_hid_of(curr)] }
+    fn pair_of(&self, curr: usize) -> &Halfedge { &self[self[curr].pair] }
+    fn next_hid_of(&self, curr: usize) -> usize { let mut c = curr + 1; if c % 3 == 0 { c -= 3; } c }
+    fn pair_hid_of(&self, curr: usize) -> usize { self[curr].pair }
+    fn head_vid_of(&self, curr: usize) -> usize { self[curr].head }
+    fn tail_vid_of(&self, curr: usize) -> usize { self[curr].tail }
 
-fn pair_up(
-    hid0: usize,
-    hid1: usize,
-    halfs: &mut [Halfedge],
-) {
-    halfs[hid0].pair = hid1;
-    halfs[hid1].pair = hid0;
-}
-
-fn update_vert(
-    vid: usize, // vert id to replace
-    bgn: usize, // bgn halfedge id
-    end: usize, // end halfedge id
-    halfs: &mut [Halfedge]
-) {
-    let mut curr = bgn;
-    while curr != end {
-        halfs[curr].head = vid;
-        curr = next_of(curr);
-        halfs[curr].tail = vid;
-        curr = halfs[curr].pair;
-        assert_ne!(curr, bgn);
+    fn tri_hids_of(&self, curr: usize) -> (usize, usize, usize) {
+        let next = next_of(curr);
+        let prev = next_of(next);
+        (curr, next, prev)
     }
-}
 
-/// In the event that the edge collapse would create a non-manifold edge, instead
-/// we duplicate the two verts and attach the manifolds the other way across this edge.
-fn form_loop(
-    cur: usize,
-    end: usize,
-    pos: &mut Vec<Row3<f64>>,
-    halfs: &mut [Halfedge],
-) {
-    let bgn_vid = pos.len();
-    let end_vid = pos.len() + 1;
-    pos.push(pos[halfs[cur].tail]);
-    pos.push(pos[halfs[cur].head]);
+    fn pair_up(&mut self, hid0: usize, hid1: usize) {
+        self[hid0].pair = hid1;
+        self[hid1].pair = hid0;
+    }
 
-    let old_match = halfs[cur].pair;
-    let new_match = halfs[end].pair;
-
-    update_vert(bgn_vid, old_match, new_match, halfs);
-    update_vert(end_vid, end, cur, halfs);
-
-    halfs[cur].pair = new_match;
-    halfs[end].pair = old_match;
-    halfs[new_match].pair = cur;
-    halfs[old_match].pair = end;
-
-    remove_if_folded(halfs, pos, end);
-}
-
-fn collapse_triangle(halfs: &mut [Halfedge], hids: &(usize, usize, usize)) {
-    if halfs[hids.1].no_pair() { return; }
-    let pair1 = halfs[hids.1].pair;
-    let pair2 = halfs[hids.2].pair;
-    halfs[pair1].pair = pair2;
-    halfs[pair2].pair = pair1;
-    for i in [hids.0, hids.1, hids.2] { halfs[i] = Halfedge::default(); }
-}
-
-fn remove_if_folded(halfs: &mut [Halfedge], pos: &mut [Row3<f64>], hid: usize) {
-    let (i0, i1, i2) = halfs_of(halfs, hid);
-    let (j0, j1, j2) = halfs_of(halfs, halfs[hid].pair);
-    let nan = Row3::new(f64::MAX, f64::MAX, f64::MAX);
-    if halfs[i1].no_pair() { return; }
-
-    if halfs[i1].head == halfs[j1].head {
-        match (halfs[i1].pair == j2, halfs[i2].pair == j1) {
-            (true, true) => for i in [i0, i1, i2] { pos[halfs[i].tail] = nan; },
-            (true, false) => { pos[halfs[i1].tail] = nan; }
-            (false, true) => { pos[halfs[j1].tail] = nan; }
-            _ => {}
+    fn update_vid_around_star(
+        &mut self,
+        bgn: usize, // bgn halfedge id (incoming)
+        end: usize, // end halfedge id (incoming)
+        vid: usize, // alternative vid
+    ) {
+        let mut cur = bgn;
+        while cur != end {
+            self[cur].head = vid; cur = self.next_hid_of(cur);
+            self[cur].tail = vid; cur = self.pair_hid_of(cur);
+            assert_ne!(cur, bgn);
         }
     }
 
-    pair_up(halfs[i1].pair, halfs[j2].pair, halfs);
-    pair_up(halfs[i2].pair, halfs[j1].pair, halfs);
-    for i in [i0, i1, i2] { halfs[i] = Halfedge::default(); }
-    for j in [j0, j1, j2] { halfs[j] = Halfedge::default(); }
+    fn collapse_triangle(&mut self, hids: &(usize, usize, usize)) {
+        if self[hids.1].no_pair() { return; }
+        let pair1 = self.pair_hid_of(hids.1);
+        let pair2 = self.pair_hid_of(hids.2);
+        self[pair1].pair = pair2;
+        self[pair2].pair = pair1;
+        for i in [hids.0, hids.1, hids.2] { self[i] = Halfedge::default(); }
+    }
+}
+
+// In the event that the edge collapse would create a non-manifold edge, instead
+// we duplicate the two verts and attach the manifolds the other way across this edge.
+fn form_loop(
+    cur: usize, // halfedge id
+    end: usize,
+    pos: &mut Vec<Row3<f64>>,
+    hs: &mut [Halfedge],
+) {
+    pos.push(pos[hs.tail_vid_of(cur)]);
+    pos.push(pos[hs.head_vid_of(cur)]);
+    let bgn_vid = pos.len() - 2;
+    let end_vid = pos.len() - 1;
+
+    let old_match = hs.pair_hid_of(cur);
+    let new_match = hs.pair_hid_of(end);
+
+    hs.update_vid_around_star(old_match, new_match, bgn_vid);
+    hs.update_vid_around_star(end, cur, end_vid);
+
+    hs[cur].pair = new_match;
+    hs[new_match].pair = cur;
+
+    hs[end].pair = old_match;
+    hs[old_match].pair = end;
+
+    remove_if_folded(hs, pos, end);
+}
+
+// Removing fold paired triangles from the mesh. The process is either of:
+// 1. Non-2-manifold, two triangles are completely isolated from the mesh
+// 2. Non-2-manifold, one vertex is isolated from the mesh
+// 3. Topologically valid, but just two vertex positions are the same
+// Beware the case that triangles only connected at a vertex but not by halfedge
+// are eliminated by split_pinched_vert and dedupe_edges functions.
+fn remove_if_folded(hs: &mut [Halfedge], pos: &mut [Row3<f64>], hid: usize) {
+    let (i0, i1, i2) = hs.tri_hids_of(hid);
+    let (j0, j1, j2) = hs.tri_hids_of(hs.pair_hid_of(hid));
+
+    if hs[i1].no_pair() || hs.head_vid_of(i1) != hs.head_vid_of(j1) { return; }
+
+    let nan = Row3::new(f64::MAX, f64::MAX, f64::MAX);
+    match (hs.pair_hid_of(i1) == j2, hs.pair_hid_of(i2) == j1) {
+        (true, true)  => for i in [i0, i1, i2] { pos[hs.tail_vid_of(i)] = nan; },
+        (true, false) => { pos[hs.tail_vid_of(i1)] = nan; }
+        (false, true) => { pos[hs.tail_vid_of(j1)] = nan; }
+        _ => {} // topo valid
+    }
+    hs.pair_up(hs[i1].pair, hs[j2].pair);
+    hs.pair_up(hs[i2].pair, hs[j1].pair);
+    for i in [i0, i1, i2] { hs[i] = Halfedge::default(); }
+    for j in [j0, j1, j2] { hs[j] = Halfedge::default(); }
 }
 
 pub trait Predecessor {
@@ -204,81 +218,90 @@ impl <'a> Simplifier<'a> {
     }
 }
 
-
-
 fn collapse_edge(
     hid: usize,
     trefs: &[TriRef],
-    halfs: &mut [Halfedge],
+    hs: &mut [Halfedge],
     pos: &mut Vec<Row3<f64>>,
     fnmls: &mut [Row3<f64>],
     store: &mut Vec<usize>,
     epsilon: f64,
 ) -> bool {
-    let tgt = &halfs[hid];
-    if tgt.no_pair() { return false; }
+    if hs[hid].no_pair() { return false; }
+    let vid_keep = hs.head_vid_of(hid);
+    let pos_keep = pos[vid_keep];
+    let pos_delt = pos[hs.tail_vid_of(hid)];
+    let pair = hs.pair_hid_of(hid);
+    let n_pair = fnmls[pair / 3];
+    let tri0 = hs.tri_hids_of(hid);
+    let tri1 = hs.tri_hids_of(pair);
 
-    let head = tgt.head;
-    let tail = tgt.tail;
-    let pair = tgt.pair;
-    let p_new = pos[head];
-    let p_old = pos[tail];
-    let halfs0 = halfs_of(halfs, hid);
-    let halfs1 = halfs_of(halfs, pair);
-    let diff = p_new - p_old;
-    let flag = diff.norm_squared() < epsilon.powi(2);
+    let mut bgn = hs.pair_hid_of(tri1.1); // the bgn half heading delt vert
+    let     end = tri0.2;                 // the end half heading delt vert
 
-    // orbit start vert
-    let mut init = halfs[halfs1.1].pair;
-    if !flag {
-        let mut curr = init;
-        let mut tref0 = &trefs[pair / 3];
-        let mut p_last = pos[halfs[halfs1.1].head];
-        while curr != halfs1.0 {
-            curr = next_of(curr);
-            let p_next = pos[halfs[curr].head];
-            let tref1 = &trefs[curr / 3];
-            let ccw = |p0, p1, p2| { is_ccw_3d(p0, p1, p2, &fnmls[curr / 3], epsilon) };
-            if !tref1.same_face(&tref0) {
-                let old_ref = tref0;
-                tref0 = &trefs[hid / 3];
-                if !tref1.same_face(&tref0) { return false; }
-                if ccw(&p_last, &p_old, &p_new) != 0 { return false; } //todo: meshID check and so on...
+    // check validity by orbiting start vert ccw order
+    if (pos_keep - pos_delt).norm_squared() >= epsilon.powi(2) {
+        let mut cur = bgn;
+        let mut tr0 = &trefs[pair / 3];
+        let mut p_prev = pos[hs.head_vid_of(tri1.1)];
+        while cur != pair {
+            cur = hs.next_hid_of(cur); // incoming half around delt vert
+            let p_next = pos[hs.head_vid_of(cur)];
+            let r_curr = &trefs[cur / 3];
+            let n_curr = &fnmls[cur / 3];
+            let ccw = |p0, p1, p2| { is_ccw_3d(p0, p1, p2, n_curr, epsilon) };
+            if !r_curr.same_face(&tr0) {
+                let tr2 = tr0;
+                tr0 = &trefs[hid / 3];
+                if !r_curr.same_face(&tr0) { return false; }
+                if tr0.mesh_id != tr2.mesh_id || tr0.face_id != tr2.face_id || n_pair.dot(n_curr) < -0.5 {
+                    // Restrict collapse to co-linear edges when the edge separates faces or the edge is sharp.
+                    // This ensures large shifts are not introduced parallel to the tangent plane.
+                    if ccw(&p_prev, &pos_delt, &pos_keep) != 0 { return false; }
+                }
             }
-            if ccw(&p_next, &p_last, &p_new) < 0 { return false; }
-            p_last = p_next;
-            curr = halfs[curr].pair;
+
+            // Don't collapse edge if it would cause a triangle to invert
+            if ccw(&p_next, &p_prev, &pos_keep) < 0 { return false; }
+
+            p_prev = p_next;
+            cur = hs.pair_hid_of(cur); // outgoing half around delt vert
         }
     }
 
-    // orbit end vert
-    let mut curr = halfs[halfs0.1].pair;
-    while curr != halfs1.2 {
-        curr = next_of(curr);
-        store.push(curr);
-        curr = halfs[curr].pair;
+    // find a candidate by orbiting end verts ccw order
+    let mut curr = hs.pair_hid_of(tri0.1);
+    while curr != tri1.2 {
+        curr = hs.next_hid_of(curr);
+        store.push(curr); // storing outgoing half here
+        curr = hs.pair_hid_of(curr);
     }
 
-    // orbit start vert
-    curr = init;
-    while curr != halfs0.2 {
-        curr = next_of(curr);
-
-        let vert = halfs[curr].head;
-        let next = halfs[curr].pair;
-        for i in 0..store.len() {
-            if vert == halfs[store[i]].head {
-                //form_loop(store[i], curr, pos, halfs);
-                init = next;
-                //store.resize();
-                break;
-            }
+    let mut cur = bgn;
+    while cur != end {
+        cur      = hs.next_hid_of(cur);
+        let pair = hs.pair_hid_of(cur);
+        let head = hs.head_vid_of(cur);
+        if let Some((i, &v)) = store.iter().enumerate()
+            .find(|&(_, &s)| hs.head_vid_of(s) == head)
+        {
+            form_loop(v, cur, pos, hs);
+            bgn = pair;
+            store.truncate(i);
         }
-        curr = next;
+        cur = pair;
     }
-    update_vert(tgt.head, init, halfs0.2, halfs);
-    collapse_triangle(halfs, &halfs0);
-    remove_if_folded(halfs, pos, init);
+
+    // do collapse
+    hs.update_vid_around_star(bgn, end, vid_keep);
+    hs.collapse_triangle(&tri0);
+    remove_if_folded(hs, pos, bgn);
 
     true
 }
+
+fn swap_edge() {}
+
+fn split_pinched_vert() {}
+
+fn dedupe_edges() {}
