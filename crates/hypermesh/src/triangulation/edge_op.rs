@@ -43,8 +43,8 @@ impl HalfedgeOps for [Halfedge] {
 
     fn update_vid_around_star(
         &mut self,
-        bgn: usize, // bgn halfedge id (incoming)
-        end: usize, // end halfedge id (incoming)
+        bgn: usize, // incoming bgn halfedge id (inclusive)
+        end: usize, // incoming end halfedge id (exclusive)
         vid: usize, // alternative vid
     ) {
         let mut cur = bgn;
@@ -65,30 +65,31 @@ impl HalfedgeOps for [Halfedge] {
     }
 }
 
-// In the event that the edge collapse would create a non-manifold edge, instead
-// we duplicate the two verts and attach the manifolds the other way across this edge.
-fn form_loop(
-    cur: usize, // halfedge id
+// When bgn halfedge and end halfedge are heading to the same vertex,
+// and if collapsing the tail vertex as well, this function creates two loops.
+// Beware the needless loop is not necessarily eliminated from the mesh because
+// halfedges of the tail side might be connected to other triangles (would be folded though).
+fn form_loops(
+    bgn: usize,
     end: usize,
     pos: &mut Vec<Row3<f64>>,
-    hs: &mut [Halfedge],
+    hs:  &mut [Halfedge],
 ) {
-    pos.push(pos[hs.tail_vid_of(cur)]);
-    pos.push(pos[hs.head_vid_of(cur)]);
+    pos.push(pos[hs.tail_vid_of(bgn)]);
+    pos.push(pos[hs.head_vid_of(bgn)]);
     let bgn_vid = pos.len() - 2;
     let end_vid = pos.len() - 1;
 
-    let old_match = hs.pair_hid_of(cur);
-    let new_match = hs.pair_hid_of(end);
+    let bgn_pair = hs.pair_hid_of(bgn);
+    let end_pair = hs.pair_hid_of(end);
 
-    hs.update_vid_around_star(old_match, new_match, bgn_vid);
-    hs.update_vid_around_star(end, cur, end_vid);
+    hs.update_vid_around_star(bgn_pair, end_pair, bgn_vid);
+    hs.update_vid_around_star(end, bgn, end_vid);
 
-    hs[cur].pair = new_match;
-    hs[new_match].pair = cur;
-
-    hs[end].pair = old_match;
-    hs[old_match].pair = end;
+    hs[bgn].pair = end_pair;
+    hs[end_pair].pair = bgn;
+    hs[end].pair = bgn_pair;
+    hs[bgn_pair].pair = end;
 
     remove_if_folded(hs, pos, end);
 }
@@ -139,7 +140,7 @@ struct RedundantEdge<'a> {
     halfs: &'a[Halfedge],
     trefs: &'a[TriRef],
     epsilon: f64,
-    first_new_vert: usize,
+    new_vid: usize,
 }
 
 struct SwappableEdge<'a> {
@@ -164,7 +165,7 @@ impl <'a> Predecessor for ShortEdge<'a> {
 
 impl <'a> Predecessor for RedundantEdge<'a> {
     fn hs(&self) -> &[Halfedge] { self.halfs }
-    fn nv(&self) -> usize { self.first_new_vert }
+    fn nv(&self) -> usize { self.new_vid }
 
     // Check around a halfedges from the same tail vertex.
     // If they consist of only two tris, then their edge is collapsable.
@@ -206,15 +207,41 @@ fn compute_flags<F>(n: usize, pred: &mut dyn Predecessor, mut func: F)->() where
 }
 
 struct Simplifier<'a> {
-    pos: &'a [Row3<f64>],
-    halfs: &'a [Halfedge],
-    fnmls: &'a [Row3<f64>],
+    pos: &'a mut [Row3<f64>],
+    halfs: &'a mut [Halfedge],
+    trefs: &'a [TriRef],
+    fnmls: &'a mut [Row3<f64>],
 }
 
 impl <'a> Simplifier<'a> {
-    pub fn collapse_collinear_edge(&self, epsilon: f64) {
-        //let se = RedundantEdge {halfs: self.halfs, epsilon: epsilon, trefs: &[], first_new_vert: 0};
-        //compute_flags();
+    pub fn collapse_collinear_edge(&mut self, new_vid: usize, epsilon: f64) {
+        let mut se = RedundantEdge {
+            halfs: &self.halfs,
+            trefs: &self.trefs,
+            new_vid,
+            epsilon,
+        };
+
+        let mut n_flag = 0;
+        let mut store = vec![];
+
+        loop {
+            // todo: need to fix double mut borrow problem
+            compute_flags(self.halfs.len(), &mut se, |hid: usize| {
+                if collapse_edge(
+                    hid,
+                    &self.trefs,
+                    &mut self.halfs,
+                    &mut self.pos,
+                    &mut self.fnmls,
+                    &mut store,
+                    epsilon,
+                ) {
+                    n_flag += 1;
+                }
+            });
+            if n_flag == 0 { break; }
+        }
     }
 }
 
@@ -222,9 +249,9 @@ fn collapse_edge(
     hid: usize,
     trefs: &[TriRef],
     hs: &mut [Halfedge],
-    pos: &mut Vec<Row3<f64>>,
+    pos: &mut [Row3<f64>],
     fnmls: &mut [Row3<f64>],
-    store: &mut Vec<usize>,
+    store: &mut Vec<usize>, // storing the halfedge data for form_loops
     epsilon: f64,
 ) -> bool {
     if hs[hid].no_pair() { return false; }
@@ -254,7 +281,9 @@ fn collapse_edge(
                 let tr2 = tr0;
                 tr0 = &trefs[hid / 3];
                 if !r_curr.same_face(&tr0) { return false; }
-                if tr0.mesh_id != tr2.mesh_id || tr0.face_id != tr2.face_id || n_pair.dot(n_curr) < -0.5 {
+                if tr0.mesh_id != tr2.mesh_id ||
+                   tr0.face_id != tr2.face_id ||
+                   n_pair.dot(n_curr) < -0.5 {
                     // Restrict collapse to co-linear edges when the edge separates faces or the edge is sharp.
                     // This ensures large shifts are not introduced parallel to the tangent plane.
                     if ccw(&p_prev, &pos_delt, &pos_keep) != 0 { return false; }
@@ -282,10 +311,8 @@ fn collapse_edge(
         cur      = hs.next_hid_of(cur);
         let pair = hs.pair_hid_of(cur);
         let head = hs.head_vid_of(cur);
-        if let Some((i, &v)) = store.iter().enumerate()
-            .find(|&(_, &s)| hs.head_vid_of(s) == head)
-        {
-            form_loop(v, cur, pos, hs);
+        if let Some((i, &v)) = store.iter().enumerate().find(|&(_, &s)| hs.head_vid_of(s) == head) {
+            form_loops(v, cur, pos, hs);
             bgn = pair;
             store.truncate(i);
         }
