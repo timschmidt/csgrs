@@ -15,8 +15,13 @@ pub struct Halfedge {
     pub pair: usize,
 }
 
+impl Default for Halfedge {
+    fn default() -> Self {
+        Self { tail: usize::MAX, head: usize::MAX, pair: usize::MAX }
+    }
+}
+
 impl Halfedge {
-    pub fn default() -> Self { Self { tail: usize::MAX, head: usize::MAX, pair: usize::MAX } }
     pub fn is_forward(&self) -> bool { self.tail < self.head }
     pub fn has_tail(&self) -> bool { self.tail != usize::MAX }
     pub fn has_head(&self) -> bool { self.head != usize::MAX }
@@ -24,6 +29,11 @@ impl Halfedge {
     pub fn no_tail(&self) -> bool { self.tail == usize::MAX }
     pub fn no_head(&self) -> bool { self.head == usize::MAX }
     pub fn no_pair(&self) -> bool { self.pair == usize::MAX }
+
+    pub fn tail(&self) -> Option<usize> { if self.tail == usize::MAX { None } else { Some(self.tail) } }
+    pub fn head(&self) -> Option<usize> { if self.head == usize::MAX { None } else { Some(self.head) } }
+    pub fn pair(&self) -> Option<usize> { if self.pair == usize::MAX { None } else { Some(self.pair) } }
+
     // need partial eq
 }
 
