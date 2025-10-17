@@ -21,6 +21,7 @@ trait HalfedgeOps {
     fn pair_up(&mut self, hid0: usize, hid1: usize);
     fn update_vid_around_star(&mut self, vid: usize, bgn: usize, end: usize);
     fn collapse_triangle(&mut self, hids: &(usize, usize, usize));
+    fn loop_ccw<F>(&mut self, hid: usize, func: F) where F: FnMut(&mut [Halfedge], usize);
 }
 
 impl HalfedgeOps for [Halfedge] {
@@ -65,14 +66,14 @@ impl HalfedgeOps for [Halfedge] {
         for i in [hids.0, hids.1, hids.2] { self[i] = Halfedge::default(); }
     }
 
-}
-
-fn loop_ccw<F>(halfs: &[Halfedge], hid: usize, mut func: F )->() where F: FnMut(usize) {
-    let mut cur = hid;
-    loop {
-        cur = halfs.next_hid_of(halfs[cur].pair);
-        func(cur);
-        if cur == hid { break; }
+    fn loop_ccw<F>(&mut self, hid: usize, mut func: F) where F: FnMut(&mut [Halfedge], usize) {
+        let mut cur = hid;
+        loop {
+            if self[cur].no_tail() || self[cur].no_head() { continue; }
+            func(self, cur);
+            cur = next_of(self[cur].pair);
+            if cur == hid { break; }
+        }
     }
 }
 
@@ -324,7 +325,7 @@ fn collapse_edge(
         let pair = hs.pair_hid_of(cur);
         let head = hs.head_vid_of(cur);
         if let Some((i, &v)) = store.iter().enumerate().find(|&(_, &s)| hs.head_vid_of(s) == head) {
-            form_loops(v, cur, pos, hs);
+            //form_loops(v, cur, pos, hs);
             bgn = pair;
             store.truncate(i);
         }
@@ -368,90 +369,70 @@ fn split_pinched_vert(halfs: &mut [Halfedge], pos: &mut Vec<Row3<f64>>) {
 }
 
 // Deduplicate the given 4-manifold edge by duplicating end_vert, thus making the
-// edges distinct. Also duplicates start_vert if it becomes pinched.
-/*
+// edges distinct. Also, duplicates start_vert if it becomes pinched.
+// todo: need more detailed check.
 fn dedupe_edge(
-    edge: usize,
+    hid: usize,
     pos: &mut Vec<Row3<f64>>,
     halfs: &mut Vec<Halfedge>,
-    tri_normals: Option<&mut Vec<Row3<f64>>>,
-    tri_refs: Option<&mut Vec<TriRef>>,
+    fnmls: &mut Vec<Row3<f64>>,
+    trefs: &mut Vec<TriRef>,
 ) {
-    // 1) Orbit end_vert
-    let tail = halfs[edge].tail;
-    let head = halfs[edge].head;
-    // let end_prop = halfs[halfs.next_hid_of(edge)].prop_vert; // prop_vert not present in Rust struct, ignore for now
-    let mut current = halfs[halfs.next_hid_of(edge)].pair;
-    while current != edge {
-        let vert = halfs[current].tail;
-        if vert == tail {
-            // Single topological unit needs 2 faces added to be split
-            let new_vert = pos.len();
+    // 1: (imagine a Riemann surface)
+    // Orbit around head vert to check that the surface crosses over at the same halfedge.
+    // In that case, split the head vert and create new triangles at first.
+    // It is still crossover as a surface, but it's not a 4-manifold anymore.
+    // For here we do not care either the tail vert is attached or not (care it in the 3rd step).
+    let tail = halfs[hid].tail;
+    let head = halfs[hid].head;
+    let opp = halfs[halfs.next_hid_of(hid)].pair;
+    let mut cur = halfs[halfs.next_hid_of(hid)].pair;
+    while cur != hid {
+        if halfs.tail_vid_of(cur) == tail {
             pos.push(pos[head]);
-            // Duplicate per-face data if present
-            //let mut tri_normals_to_push = None;
-            //let mut tri_refs_to_push = None;
-            //if let Some(normals) = tri_normals.as_ref() {
-            //    tri_normals_to_push = Some(normals[next_of(current) / 3].clone());
-            //}
-            //if let Some(refs) = tri_refs.as_ref() {
-            //    tri_refs_to_push = Some(refs[next_of(current) / 3].clone());
-            //}
-            current = halfs[halfs.next_hid_of(current)].pair;
-            let opposite = { let t = halfs.next_hid_of(edge); halfs[t].pair };
-            // Update end-vertex orbit between current and opposite to new_vert
-            (&mut halfs[..]).update_vid_around_star(current, opposite, new_vert);
-            // Add two new triangles (6 halfedges)
-            // First triangle: (end_vert, new_vert, outside_vert)
-            let outside_vert = halfs[current].tail;
-            let new_h0 = halfs.len();
-            // For prop_vert, use default for now
-            halfs.push(Halfedge { tail: head, head: new_vert, ..Default::default() });
-            halfs.push(Halfedge { tail: new_vert, head: outside_vert, ..Default::default() });
-            halfs.push(Halfedge { tail: outside_vert, head: head, ..Default::default() });
-            // Pair third with halfs[current].pair, second with current
-            let pair = halfs[current].pair;
-            halfs.pair_up(new_h0 + 2, pair);
-            halfs.pair_up(new_h0 + 1, current);
-            // Second triangle: mirror across opposite
-            let old_face1 = current / 3;
-            let new_h3 = halfs.len();
-            let outside_vert2 = halfs[opposite].tail;
-            halfs.push(Halfedge { tail: new_vert, head: head, ..Default::default() });
-            halfs.push(Halfedge { tail: head, head: outside_vert2, ..Default::default() });
-            halfs.push(Halfedge { tail: outside_vert2, head: new_vert, ..Default::default() });
-            // Pair third with halfs[opposite].pair, second with opposite
-            let pair = halfs[current].pair;
-            halfs.pair_up(new_h3 + 2, pair);
-            halfs.pair_up(new_h3 + 1, opposite);
+            let copy = pos.len() - 1;
+            cur = halfs[halfs.next_hid_of(cur)].pair;
+            halfs.update_vid_around_star(cur, opp, copy);
+
+            let nh = halfs.len();
+            let pair = halfs[cur].pair;
+            halfs.push(Halfedge { tail: head, head: copy, ..Default::default() });
+            halfs.push(Halfedge { tail: copy, head: halfs.tail_vid_of(cur), ..Default::default() });
+            halfs.push(Halfedge { tail: halfs.tail_vid_of(cur), head: head, ..Default::default() });
+            halfs.pair_up(nh + 2, pair);
+            halfs.pair_up(nh + 1, cur);
+
+            let nh = halfs.len();
+            let pair = halfs[opp].pair;
+            halfs.push(Halfedge { tail: copy, head: head, ..Default::default() });
+            halfs.push(Halfedge { tail: head, head: halfs.tail_vid_of(opp), ..Default::default() });
+            halfs.push(Halfedge { tail: halfs.tail_vid_of(opp), head: copy, ..Default::default() });
+            halfs.pair_up(nh + 2, pair);
+            halfs.pair_up(nh + 1, opp);
+
             // Pair first new halfedge of second tri with first of first tri
-            halfs.pair_up(new_h3, new_h0);
+            halfs.pair_up(nh, nh - 3);
+
             // Push per-face data if present
-            if let Some(ref mut refs) = tri_refs {
-                let old_face  = current / 3;  refs.push(refs[old_face].clone());
-                let old_face2 = opposite / 3; refs.push(refs[old_face2].clone());
-            }
-            if let Some(ref mut normals) = tri_normals {
-                let old_face  = current / 3;  normals.push(normals[old_face].clone());
-                let old_face2 = opposite / 3; normals.push(normals[old_face2].clone());
-            }
+            trefs.push(trefs[cur / 3].clone());
+            fnmls.push(fnmls[cur / 3].clone());
+            trefs.push(trefs[opp / 3].clone());
+            fnmls.push(fnmls[opp / 3].clone());
             break;
         }
-        current = halfs[halfs.next_hid_of(current)].pair;
+        cur = halfs[halfs.next_hid_of(cur)].pair;
     }
-    if current == edge {
+
+    // 2: Pinch the head vert if 1 does not happen.
+    if cur == hid {
         // Separate topological unit needs no new faces to be split
         let new_vert = pos.len();
         pos.push(pos[head]);
         // Duplicate per-face data if present
-        if let Some(ref mut normals) = tri_normals {
-            normals.push(normals[head].clone());
-        }
-        if let Some(ref mut refs) = tri_refs {
-            refs.push(refs[head].clone());
-        }
+        fnmls.push(fnmls[head].clone());
+        trefs.push(trefs[head].clone());
         // Rewire the entire star around NextHalfedge(current) to new_vert
-        let start = halfs.next_hid_of(current);
+        let start = halfs.next_hid_of(cur);
         let mut e = start;
         loop {
             halfs[e].tail = new_vert;
@@ -461,13 +442,11 @@ fn dedupe_edge(
             if e == start { break; }
         }
     }
-    // 3) Orbit start_vert to check for (and split) a pinched vertex produced by the above
-    let pair = halfs[edge].pair;
+    // 3: Pinch the tail vert anyway.
+    let pair = halfs[hid].pair;
     let mut current = halfs[halfs.next_hid_of(pair)].pair;
     while current != pair {
-        if halfs[current].tail == head {
-            break; // Connected: not a pinched vert
-        }
+        if halfs[current].tail == head { break; }
         current = halfs[halfs.next_hid_of(current)].pair;
     }
     if current == pair {
@@ -475,8 +454,8 @@ fn dedupe_edge(
         let new_vert = pos.len();
         pos.push(pos[head]);
         // Duplicate per-face data if present
-        if let Some(ref mut normals) = tri_normals { normals.push(normals[head].clone()); }
-        if let Some(ref mut refs) = tri_refs { refs.push(refs[head].clone()); }
+        fnmls.push(fnmls[head].clone());
+        trefs.push(trefs[head].clone());
         let start = halfs.next_hid_of(current);
         let mut e = start;
         loop {
@@ -488,7 +467,6 @@ fn dedupe_edge(
         }
     }
 }
-*/
 
 fn dedupe_edges(halfs: &mut [Halfedge]) {
     if halfs.is_empty() { return; }
@@ -497,47 +475,32 @@ fn dedupe_edges(halfs: &mut [Halfedge]) {
         let mut dups = Vec::new();
 
         // Process halfedges grouped by the same tail (start) vertex.
+        // Use Vec for up to ~32 neighbors, then switch to a HashMap to avoid quadratic behavior.
         for hid in 0..halfs.len() {
             if local[hid] || halfs[hid].no_tail() || halfs[hid].no_head() { continue; }
-
-            // Use small Vec for up to ~32 neighbors, then switch to a HashMap to avoid quadratic behavior.
             let mut vec: Vec<(usize, usize)> = Vec::new();
             let mut map: HashMap<usize, usize> = HashMap::new();
 
-            // First pass: for the star around tail(i), find the minimal index for each head vertex.
-            let mut cur = hid;
-            loop {
-                local[cur] = true;
-                if halfs[cur].no_tail() || halfs[cur].no_head() { continue; }
-
-                let head = halfs[cur].head;
+            // 1: for the star around tail(i), find the minimal index for each head vertex.
+            halfs.loop_ccw(hid, |hs, cur|{
+                local[cur] = true; // todo: this must come before "if halfs[cur].no_tail()... { continue; }" statement!
+                let head = hs[cur].head;
                 if map.is_empty() {
                     if let Some(p) = vec.iter_mut().find(|p| p.0 == head) { p.1 = p.1.min(cur); }
                     else {
                         vec.push((head, cur));
                         if vec.len() > 32 { for (k, v) in vec.drain(..) { map.insert(k, v); } }
                     }
-                } else {
-                    map.entry(head)
-                       .and_modify(|m| { if cur < *m { *m = cur; } })
-                       .or_insert(cur);
-                }
-                cur = next_of(halfs[cur].pair);
-                if cur == hid { break; }
-            }
+                } else { map.entry(head).and_modify(|m| { if cur < *m { *m = cur; } }).or_insert(cur); }
+            });
 
-            // Second pass: flag duplicates (all with the same tail/head except the minimal-index representative).
-            let mut cur = hid;
-            loop {
-                if halfs[cur].no_tail() || halfs[cur].no_head() { continue; }
-
-                let head = halfs[cur].head;
-                let mini = if map.is_empty() { vec.iter().find(|p| p.0 == head).map(|p| p.1) } else { map.get(&head).copied() };
+            // 2: flag duplicates (all with the same tail/head except the minimal-index representative).
+            halfs.loop_ccw(hid, |hs, cur|{
+                let head = hs[cur].head;
+                let mini = if map.is_empty() { vec.iter().find(|p| p.0 == head).map(|p| p.1) }
+                           else { map.get(&head).copied() };
                 if mini.is_some_and(|id| id != cur) { dups.push(cur); }
-
-                cur = next_of(halfs[cur].pair);
-                if cur == hid { break; }
-            }
+            });
         }
 
         dups.sort_unstable();
