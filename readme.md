@@ -648,6 +648,8 @@ for Polygon
 
 > [Floating Point Visually Explained](https://fabiensanglard.net/floating_point_visually_explained/)
 
+> [Fast calculation of the distance to cubic Bezier curves on the GPU](https://blog.pkh.me/p/46-fast-calculation-of-the-distance-to-cubic-bezier-curves-on-the-gpu.html)
+
 ## License
 
 ```
