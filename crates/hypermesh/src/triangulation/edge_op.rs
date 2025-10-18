@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use nalgebra::{RowVector3 as Row3};
+use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
 use crate::boolean46::TriRef;
 use crate::common::{get_axis_aligned_projection, is_ccw_2d, is_ccw_3d};
 use crate::Halfedge;
@@ -135,7 +135,7 @@ fn remove_if_folded(hs: &mut [Halfedge], pos: &mut [Row3<f64>], hid: usize) {
 pub trait Predecessor {
     fn hs(&self) -> &[Halfedge];
     fn nv(&self) -> usize;
-    fn rec(&mut self, hid: usize) -> bool;
+    fn rec(&self, hid: usize) -> bool;
     fn invalid(& self, hid: usize) -> bool {
         let h = &self.hs()[hid];
         h.no_pair() || (h.tail < self.nv() && h.head < self.nv())
@@ -168,7 +168,7 @@ impl <'a> Predecessor for ShortEdge<'a> {
     fn hs(&self) -> &[Halfedge] { self.halfs }
     fn nv(&self) -> usize { self.first_new_vert }
 
-    fn rec(&mut self, hid: usize) -> bool {
+    fn rec(&self, hid: usize) -> bool {
         if self.invalid(hid) { return false; }
         let h = &self.halfs[hid];
         let d = self.pos[h.head] - self.pos[h.tail];
@@ -182,7 +182,7 @@ impl <'a> Predecessor for RedundantEdge<'a> {
 
     // Check around a halfedges from the same tail vertex.
     // If they consist of only two tris, then their edge is collapsable.
-    fn rec(&mut self, hid: usize) -> bool {
+    fn rec(&self, hid: usize) -> bool {
         if self.invalid(hid) { return false; }
         let cw_next = |i: usize| next_of(self.halfs[i].pair);
         let     bgn = hid;
@@ -207,17 +207,66 @@ impl <'a> Predecessor for SwappableEdge<'a> {
     fn hs(&self) -> &[Halfedge] { self.halfs }
     fn nv(&self) -> usize { self.first_new_vert }
 
-    fn rec(&mut self, hid: usize) -> bool {
-        if self.invalid(hid) { return false; }
-        false
+    fn rec(&self, hid: usize) -> bool {
+        let halfs = self.halfs;
+        let half = &halfs[hid];
+        if half.no_pair() { return false; }
+
+        // skip if all 4 involved verts are "old" (consistent with C++)
+        let n0 = halfs[next_of(hid)].head;
+        let n1 = halfs[next_of(halfs[half.pair].pair)].head;
+        if half.tail < self.first_new_vert &&
+           half.head < self.first_new_vert &&
+           n0        < self.first_new_vert &&
+           n1        < self.first_new_vert { return false; }
+
+        // Project the current tri by its normal
+        let tri  = hid / 3;
+        let (e0, e1, e2) = {
+            let e0 = hid;
+            let e1 = next_of(e0);
+            let e2 = next_of(e1);
+            (e0, e1, e2)
+        };
+        let proj = get_axis_aligned_projection(&self.fnmls[tri]);
+        let v0 = (proj * self.pos[halfs[e0].tail].transpose()).transpose();
+        let v1 = (proj * self.pos[halfs[e1].tail].transpose()).transpose();
+        let v2 = (proj * self.pos[halfs[e2].tail].transpose()).transpose();
+
+        // Only operate on the long edge of a degenerate triangle
+        if is_ccw_2d(&v0, &v1, &v2, self.tolerance) > 0 { return false; }
+        if !is01_longest_2d(&v0, &v1, &v2) { return false; }
+
+        // Switch to neighbor's projection
+        let pair = half.pair;
+        let tri_n = pair / 3;
+        let (f0, f1, f2) = {
+            let f0 = pair;
+            let f1 = next_of(f0);
+            let f2 = next_of(f1);
+            (f0, f1, f2)
+        };
+        let proj_n = get_axis_aligned_projection(&self.fnmls[tri_n]);
+        let u0 = (proj_n * self.pos[halfs[e0].tail].transpose()).transpose();
+        let u1 = (proj_n * self.pos[halfs[e1].tail].transpose()).transpose();
+        let u2 = (proj_n * self.pos[halfs[e2].tail].transpose()).transpose();
+        let _u3 = (proj_n * self.pos[halfs[f2].tail].transpose()).transpose();
+
+        // In C++ the condition is: CCW > 0 || Is01Longest(...)
+        is_ccw_2d(&u0, &u1, &u2, self.tolerance) > 0 ||
+            is01_longest_2d(&u0, &u1, &u2)
     }
 }
 
-fn compute_flags<F>(n: usize, pred: &mut dyn Predecessor, mut func: F)->() where F: FnMut(usize) {
-    let mut store = vec![];
-    for i in 0..n { if pred.rec(i) { store.push(i); } }
-    for i in store { func(i); }
-}
+//fn compute_flags<F>(
+//    n: usize,
+//    pred: &mut dyn Predecessor,
+//    mut func: F
+//)->() where F: FnMut(&mut [Halfedge], usize) {
+//    let mut store = vec![];
+//    for i in 0..n { if pred.rec(i) { store.push(i); } }
+//    for i in store { func(pred.hs(), i); }
+//}
 
 struct Simplifier<'a> {
     pos: &'a mut [Row3<f64>],
@@ -228,33 +277,100 @@ struct Simplifier<'a> {
 
 impl <'a> Simplifier<'a> {
     pub fn collapse_collinear_edge(&mut self, new_vid: usize, epsilon: f64) {
-        let mut se = RedundantEdge {
-            halfs: &self.halfs,
-            trefs: &self.trefs,
-            new_vid,
-            epsilon,
-        };
-
         let mut n_flag = 0;
         let mut store = vec![];
 
         loop {
-            // todo: need to fix double mut borrow problem
-            compute_flags(self.halfs.len(), &mut se, |hid: usize| {
+            let mut store_ = vec![];
+            for hid in 0..self.halfs.len() {
+                // todo: too redundant review generalization and then refactor
+                let se = RedundantEdge {
+                    halfs: &self.halfs,
+                    trefs: &self.trefs,
+                    new_vid,
+                    epsilon,
+                };
+                if se.rec(hid) { store_.push(hid); }
+            }
+            for hid in store_.iter() {
                 if collapse_edge(
-                    hid,
+                    *hid,
                     &self.trefs,
                     &mut self.halfs,
                     &mut self.pos,
                     &mut self.fnmls,
                     &mut store,
                     epsilon,
-                ) {
-                    n_flag += 1;
-                }
-            });
+                ) { n_flag += 1; }
+
+            }
             if n_flag == 0 { break; }
         }
+    }
+
+    // todo: need precise check...
+    pub fn swap_degenerates(&mut self, first_new_vert: usize, tolerance: f64) {
+        let nb_edges = self.halfs.len();
+        if nb_edges == 0 { return; }
+
+        let mut num_flagged = 0usize;
+        let mut scratch_edges: Vec<usize> = Vec::with_capacity(10);
+        let mut edge_swap_stack: Vec<usize> = Vec::new();
+        let mut visited: Vec<i32> = vec![-1; nb_edges];
+        let mut tag: i32 = 0;
+
+        // Phase 1: read-only pass to collect candidate edges (immutable borrows only)
+        let mut candidates: Vec<usize> = Vec::new();
+        {
+            let se = SwappableEdge {
+                pos: &*self.pos,
+                fnmls: &*self.fnmls,
+                halfs: &*self.halfs,
+                tolerance,
+                first_new_vert,
+            };
+            for i in 0..nb_edges {
+                if se.rec(i) {
+                    candidates.push(i);
+                }
+            }
+        } // <- se (and all shared borrows) drop here
+
+        // Phase 2: mutate using the collected candidates (mutable borrows)
+        for i in candidates {
+            num_flagged += 1;
+            tag += 1;
+            // NOTE: trefs is immutable in Simplifier; we clone for now so signatures match.
+            // To persist, change Simplifier.trefs to &mut [TriRef].
+            let mut trefs_tmp: Vec<TriRef> = self.trefs.to_vec();
+            recursive_edge_swap(
+                i,
+                &mut tag,
+                &mut visited,
+                &mut edge_swap_stack,
+                &mut scratch_edges,
+                self.halfs,
+                self.pos,
+                self.fnmls,
+                &mut trefs_tmp,
+                tolerance,
+            );
+            while let Some(last) = edge_swap_stack.pop() {
+                recursive_edge_swap(
+                    last,
+                    &mut tag,
+                    &mut visited,
+                    &mut edge_swap_stack,
+                    &mut scratch_edges,
+                    self.halfs,
+                    self.pos,
+                    self.fnmls,
+                    &mut trefs_tmp,
+                    tolerance,
+                );
+            }
+        }
+        let _ = num_flagged;
     }
 }
 
@@ -340,7 +456,123 @@ fn collapse_edge(
     true
 }
 
-fn swap_edge() {}
+fn is01_longest_2d(p0: &Row2<f64>, p1: &Row2<f64>, p2: &Row2<f64>) -> bool {
+    let e01 = (*p1 - *p0).norm_squared();
+    let e12 = (*p2 - *p1).norm_squared();
+    let e20 = (*p0 - *p2).norm_squared();
+    e01 > e12 && e01 > e20
+}
+
+// todo need precise check...
+fn recursive_edge_swap(
+    hid: usize,
+    tag: &mut i32,
+    visited: &mut [i32],
+    edge_swap_stack: &mut Vec<usize>,
+    edges: &mut Vec<usize>,
+    hs: &mut [Halfedge],
+    pos: &mut [Row3<f64>],
+    fnmls: &mut [Row3<f64>],
+    trefs: &mut [TriRef],
+    tol: f64,
+) {
+    if hid >= hs.len() { return; }
+    let curr = hid;
+    let pair = hs.pair_hid_of(curr);
+    if hs[curr].no_pair() || hs[pair].no_pair() { return; }
+
+    // avoid infinite recursion
+    if visited[curr] == *tag && visited[pair] == *tag { return; }
+
+    // Edges for the two adjacent triangles
+    let t0 = curr / 3;
+    let t1 = pair / 3;
+    let t0edge = hs.tri_hids_of(curr);
+    let t1edge = hs.tri_hids_of(pair);
+
+    // Build vertices (3D) for ccw/longest checks using triangle normals
+    let proj = get_axis_aligned_projection(&fnmls[t0]);
+    let v0_0 = (proj * pos[hs.tail_vid_of(t0edge.0)].transpose()).transpose();
+    let v0_1 = (proj * pos[hs.tail_vid_of(t0edge.1)].transpose()).transpose();
+    let v0_2 = (proj * pos[hs.tail_vid_of(t0edge.2)].transpose()).transpose();
+
+    // Only operate on the long edge of a degenerate triangle:
+    // C++ checks `CCW(v0,v1,v2) > 0 || !Is01Longest(v0,v1,v2)` to early-return.
+    // Here we mirror the intent with 3D predicates.
+    if is_ccw_2d(&v0_0, &v0_1, &v0_2, tol) > 0
+        || !is01_longest_2d(&v0_0, &v0_1, &v0_2) { return; }
+
+    // Switch to neighbor's frame (use neighbor normal)
+    let proj = get_axis_aligned_projection(&fnmls[t1]);
+    let u0_0 = (proj * pos[hs.tail_vid_of(t0edge.0)].transpose()).transpose();
+    let u0_1 = (proj * pos[hs.tail_vid_of(t0edge.1)].transpose()).transpose();
+    let u0_2 = (proj * pos[hs.tail_vid_of(t0edge.2)].transpose()).transpose();
+    let u0_3 = (proj * pos[hs.tail_vid_of(t1edge.2)].transpose()).transpose();
+
+    // Local closure that performs the edge swap and optional loop-formation
+    let mut swap_edge = || {
+        // The 0-verts are swapped to the opposite 2-verts.
+        let v0 = hs.tail_vid_of(t0edge.2);
+        let v1 = hs.tail_vid_of(t1edge.2);
+        hs[t0edge.0].tail = v1;
+        hs[t0edge.2].head = v1;
+        hs[t1edge.0].tail = v0;
+        hs[t1edge.2].head = v0;
+
+        // Pairing
+        hs.pair_up(t0edge.0, hs.pair_hid_of(t1edge.2));
+        hs.pair_up(t1edge.0, hs.pair_hid_of(t0edge.2));
+        hs.pair_up(t0edge.2, t1edge.2);
+
+        // Both triangles are now subsets of the neighboring triangle.
+        fnmls[t0] = fnmls[t1];
+        trefs[t0] = trefs[t1].clone();
+
+        // If the new edge already exists, duplicate the verts and split the mesh.
+        let mut h = hs.pair_hid_of(t1edge.0);
+        let head  = hs.head_vid_of(t1edge.1);
+        while h != t0edge.1 {
+            h = next_of(h);
+            if hs.head_vid_of(h) == head {
+                form_loops(t0edge.2, curr, pos.to_vec().as_mut(), hs);
+                remove_if_folded(hs, pos, t0edge.2);
+                return;
+            }
+            h = hs.pair_hid_of(h);
+        }
+    };
+
+    // Only operate if the other triangles are not degenerate.
+    let ccw_103 = is_ccw_2d(&u0_1, &u0_0, &u0_3, tol);
+    if ccw_103 <= 0 {
+        // Two facing, long-edge degenerates can swap.
+        if !is01_longest_2d(&u0_1, &u0_0, &u0_3) { return; }
+        swap_edge();
+        let e23 = u0_3 - u0_2;
+        if e23.norm_squared() < tol * tol {
+            *tag += 1;
+            collapse_edge(t0edge.2, trefs, hs, pos, fnmls, edges, tol);
+            edges.clear();
+        } else {
+            visited[curr] = *tag;
+            visited[pair] = *tag;
+            edge_swap_stack.extend_from_slice(&[t1edge.1, t1edge.0, t0edge.1, t0edge.0]);
+        }
+        return;
+    } else {
+        let ccw_032 = is_ccw_2d(&u0_0, &u0_3, &u0_2, tol);
+        let ccw_123 = is_ccw_2d(&u0_1, &u0_2, &u0_3, tol);
+        if ccw_032 <= 0 || ccw_123 <= 0 { return; }
+    }
+
+    // Normal path
+    swap_edge();
+    visited[curr] = *tag;
+    visited[pair] = *tag;
+    edge_swap_stack.extend_from_slice(&[
+        hs.pair_hid_of(t1edge.0), hs.pair_hid_of(t0edge.1)
+    ]);
+}
 
 // Split a vertex when it is pinned to two fan triangles.
 fn split_pinched_vert(halfs: &mut [Halfedge], pos: &mut Vec<Row3<f64>>) {
