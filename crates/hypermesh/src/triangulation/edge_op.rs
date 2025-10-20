@@ -4,11 +4,20 @@ use crate::boolean46::TriRef;
 use crate::common::{get_axis_aligned_projection, is_ccw_2d, is_ccw_3d};
 use crate::Halfedge;
 
+/*
 fn next_of(curr: usize) -> usize {
     let mut curr = curr + 1;
     if curr % 3 == 0 { curr -= 3;}
     curr
 }
+
+fn is01_longest_2d(p0: &Row2<f64>, p1: &Row2<f64>, p2: &Row2<f64>) -> bool {
+    let e01 = (*p1 - *p0).norm_squared();
+    let e12 = (*p2 - *p1).norm_squared();
+    let e20 = (*p0 - *p2).norm_squared();
+    e01 > e12 && e01 > e20
+}
+
 
 trait HalfedgeOps {
     fn next_of(&self, curr: usize) -> &Halfedge;
@@ -77,60 +86,6 @@ impl HalfedgeOps for [Halfedge] {
     }
 }
 
-
-// When bgn halfedge and end halfedge are heading to the same vertex,
-// and if collapsing the tail vertex as well, this function creates two loops.
-// Beware the needless loop is not necessarily eliminated from the mesh because
-// halfedges of the tail side might be connected to other triangles (would be folded though).
-fn form_loops(
-    bgn: usize,
-    end: usize,
-    pos: &mut Vec<Row3<f64>>,
-    hs:  &mut [Halfedge],
-) {
-    pos.push(pos[hs.tail_vid_of(bgn)]);
-    pos.push(pos[hs.head_vid_of(bgn)]);
-    let bgn_vid = pos.len() - 2;
-    let end_vid = pos.len() - 1;
-
-    let bgn_pair = hs.pair_hid_of(bgn);
-    let end_pair = hs.pair_hid_of(end);
-
-    hs.update_vid_around_star(bgn_pair, end_pair, bgn_vid);
-    hs.update_vid_around_star(end, bgn, end_vid);
-
-    hs[bgn].pair = end_pair;
-    hs[end_pair].pair = bgn;
-    hs[end].pair = bgn_pair;
-    hs[bgn_pair].pair = end;
-
-    remove_if_folded(hs, pos, end);
-}
-
-// Removing fold paired triangles from the mesh. The process is either of:
-// 1. Non-2-manifold, two triangles are completely isolated from the mesh
-// 2. Non-2-manifold, one vertex is isolated from the mesh
-// 3. Topologically valid, but just two vertex positions are the same
-// Beware the case that triangles only connected at a vertex but not by halfedge
-// are eliminated by split_pinched_vert and dedupe_edges functions.
-fn remove_if_folded(hs: &mut [Halfedge], pos: &mut [Row3<f64>], hid: usize) {
-    let (i0, i1, i2) = hs.tri_hids_of(hid);
-    let (j0, j1, j2) = hs.tri_hids_of(hs.pair_hid_of(hid));
-
-    if hs[i1].no_pair() || hs.head_vid_of(i1) != hs.head_vid_of(j1) { return; }
-
-    let nan = Row3::new(f64::MAX, f64::MAX, f64::MAX);
-    match (hs.pair_hid_of(i1) == j2, hs.pair_hid_of(i2) == j1) {
-        (true, true)  => for i in [i0, i1, i2] { pos[hs.tail_vid_of(i)] = nan; },
-        (true, false) => { pos[hs.tail_vid_of(i1)] = nan; }
-        (false, true) => { pos[hs.tail_vid_of(j1)] = nan; }
-        _ => {} // topo valid
-    }
-    hs.pair_up(hs[i1].pair, hs[j2].pair);
-    hs.pair_up(hs[i2].pair, hs[j1].pair);
-    for i in [i0, i1, i2] { hs[i] = Halfedge::default(); }
-    for j in [j0, j1, j2] { hs[j] = Halfedge::default(); }
-}
 
 pub trait Predecessor {
     fn hs(&self) -> &[Halfedge];
@@ -250,32 +205,180 @@ impl <'a> Predecessor for SwappableEdge<'a> {
         let u0 = (proj_n * self.pos[halfs[e0].tail].transpose()).transpose();
         let u1 = (proj_n * self.pos[halfs[e1].tail].transpose()).transpose();
         let u2 = (proj_n * self.pos[halfs[e2].tail].transpose()).transpose();
-        let _u3 = (proj_n * self.pos[halfs[f2].tail].transpose()).transpose();
 
         // In C++ the condition is: CCW > 0 || Is01Longest(...)
-        is_ccw_2d(&u0, &u1, &u2, self.tolerance) > 0 ||
-            is01_longest_2d(&u0, &u1, &u2)
+        is_ccw_2d(&u0, &u1, &u2, self.tolerance) > 0 || is01_longest_2d(&u0, &u1, &u2)
     }
 }
 
-//fn compute_flags<F>(
-//    n: usize,
-//    pred: &mut dyn Predecessor,
-//    mut func: F
-//)->() where F: FnMut(&mut [Halfedge], usize) {
-//    let mut store = vec![];
-//    for i in 0..n { if pred.rec(i) { store.push(i); } }
-//    for i in store { func(pred.hs(), i); }
-//}
-
 struct Simplifier<'a> {
-    pos: &'a mut [Row3<f64>],
-    halfs: &'a mut [Halfedge],
+    pos: &'a mut Vec<Row3<f64>>,
+    halfs: &'a mut Vec<Halfedge>,
     trefs: &'a [TriRef],
     fnmls: &'a mut [Row3<f64>],
 }
 
+fn form_loops_raw(
+    hs: &mut [Halfedge],
+    ps: &mut Vec<Row3<f64>>,
+    bgn: usize,
+    end: usize
+) {
+    ps.push(ps[hs.tail_vid_of(bgn)]);
+    ps.push(ps[hs.head_vid_of(bgn)]);
+    let bgn_vid = ps.len() - 2;
+    let end_vid = ps.len() - 1;
+
+    let bgn_pair = hs.pair_hid_of(bgn);
+    let end_pair = hs.pair_hid_of(end);
+
+    hs.update_vid_around_star(bgn_pair, end_pair, bgn_vid);
+    hs.update_vid_around_star(end, bgn, end_vid);
+
+    hs[bgn].pair = end_pair;
+    hs[end_pair].pair = bgn;
+    hs[end].pair = bgn_pair;
+    hs[bgn_pair].pair = end;
+}
+
 impl <'a> Simplifier<'a> {
+    // When bgn halfedge and end halfedge are heading to the same vertex,
+    // and if collapsing the tail vertex as well, this function creates two loops.
+    // Beware the needless loop is not necessarily eliminated from the mesh because
+    // halfedges of the tail side might be connected to other triangles (would be folded though).
+    pub fn form_loops(&mut self, bgn: usize, end: usize) {
+        let hs = &mut *self.halfs;
+        let ps = &mut *self.pos;
+
+        ps.push(ps[hs.tail_vid_of(bgn)]);
+        ps.push(ps[hs.head_vid_of(bgn)]);
+        let bgn_vid = ps.len() - 2;
+        let end_vid = ps.len() - 1;
+
+        let bgn_pair = hs.pair_hid_of(bgn);
+        let end_pair = hs.pair_hid_of(end);
+
+        hs.update_vid_around_star(bgn_pair, end_pair, bgn_vid);
+        hs.update_vid_around_star(end, bgn, end_vid);
+
+        hs[bgn].pair = end_pair;
+        hs[end_pair].pair = bgn;
+        hs[end].pair = bgn_pair;
+        hs[bgn_pair].pair = end;
+
+        self.remove_if_folded(end);
+    }
+
+    // Removing fold paired triangles from the mesh. The process is either of:
+    // 1. Non-2-manifold, two triangles are completely isolated from the mesh
+    // 2. Non-2-manifold, one vertex is isolated from the mesh
+    // 3. Topologically valid, but just two vertex positions are the same
+    // Beware the case that triangles only connected at a vertex but not by halfedge
+    // are eliminated by split_pinched_vert and dedupe_edges functions.
+    fn remove_if_folded(&mut self, hid: usize) {
+        let hs = self.halfs.as_mut_slice();
+        let ps = self.pos.as_mut_slice();
+
+        let (i0, i1, i2) = hs.tri_hids_of(hid);
+        let (j0, j1, j2) = hs.tri_hids_of(hs.pair_hid_of(hid));
+
+        if hs[i1].no_pair() || hs.head_vid_of(i1) != hs.head_vid_of(j1) { return; }
+
+        let nan = Row3::new(f64::MAX, f64::MAX, f64::MAX);
+        match (hs.pair_hid_of(i1) == j2, hs.pair_hid_of(i2) == j1) {
+            (true, true)  => for i in [i0, i1, i2] { ps[hs.tail_vid_of(i)] = nan; },
+            (true, false) => { ps[hs.tail_vid_of(i1)] = nan; }
+            (false, true) => { ps[hs.tail_vid_of(j1)] = nan; }
+            _ => {} // topo valid
+        }
+        hs.pair_up(hs[i1].pair, hs[j2].pair);
+        hs.pair_up(hs[i2].pair, hs[j1].pair);
+        for i in [i0, i1, i2] { hs[i] = Halfedge::default(); }
+        for j in [j0, j1, j2] { hs[j] = Halfedge::default(); }
+    }
+
+    fn collapse_edge(
+        &mut self,
+        hid: usize,
+        store: &mut Vec<usize>, // storing the halfedge data for form_loops
+        epsilon: f64,
+    ) -> bool {
+        let hs = &mut *self.halfs;
+        let ps = &mut *self.pos;
+
+        if hs[hid].no_pair() { return false; }
+        let vid_keep = hs.head_vid_of(hid);
+        let pos_keep = ps[vid_keep];
+        let pos_delt = ps[hs.tail_vid_of(hid)];
+        let pair = hs.pair_hid_of(hid);
+        let n_pair = self.fnmls[pair / 3];
+        let tri0 = hs.tri_hids_of(hid);
+        let tri1 = hs.tri_hids_of(pair);
+
+        let mut bgn = hs.pair_hid_of(tri1.1); // the bgn half heading delt vert
+        let     end = tri0.2;                 // the end half heading delt vert
+
+        // check validity by orbiting start vert ccw order
+        if (pos_keep - pos_delt).norm_squared() >= epsilon.powi(2) {
+            let mut cur = bgn;
+            let mut tr0 = &self.trefs[pair / 3];
+            let mut p_prev = ps[hs.head_vid_of(tri1.1)];
+            while cur != pair {
+                cur = hs.next_hid_of(cur); // incoming half around delt vert
+                let p_next = ps[hs.head_vid_of(cur)];
+                let r_curr = &self.trefs[cur / 3];
+                let n_curr = &self.fnmls[cur / 3];
+                let ccw = |p0, p1, p2| { is_ccw_3d(p0, p1, p2, n_curr, epsilon) };
+                if !r_curr.same_face(&tr0) {
+                    let tr2 = tr0;
+                    tr0 = &self.trefs[hid / 3];
+                    if !r_curr.same_face(&tr0) { return false; }
+                    if tr0.mesh_id != tr2.mesh_id ||
+                       tr0.face_id != tr2.face_id ||
+                       n_pair.dot(n_curr) < -0.5 {
+                        // Restrict collapse to co-linear edges when the edge separates faces or the edge is sharp.
+                        // This ensures large shifts are not introduced parallel to the tangent plane.
+                        if ccw(&p_prev, &pos_delt, &pos_keep) != 0 { return false; }
+                    }
+                }
+
+                // Don't collapse edge if it would cause a triangle to invert
+                if ccw(&p_next, &p_prev, &pos_keep) < 0 { return false; }
+
+                p_prev = p_next;
+                cur = hs.pair_hid_of(cur); // outgoing half around delt vert
+            }
+        }
+
+        // find a candidate by orbiting end verts ccw order
+        let mut curr = hs.pair_hid_of(tri0.1);
+        while curr != tri1.2 {
+            curr = hs.next_hid_of(curr);
+            store.push(curr); // storing outgoing half here
+            curr = hs.pair_hid_of(curr);
+        }
+
+        let mut cur = bgn;
+        while cur != end {
+            cur      = hs.next_hid_of(cur);
+            let pair = hs.pair_hid_of(cur);
+            let head = hs.head_vid_of(cur);
+            if let Some((i, &v)) = store.iter().enumerate().find(|&(_, &s)| hs.head_vid_of(s) == head) {
+                form_loops_raw(hs, ps, v, cur);
+                bgn = pair;
+                store.truncate(i);
+            }
+            cur = pair;
+        }
+
+        // do collapse
+        hs.update_vid_around_star(bgn, end, vid_keep);
+        hs.collapse_triangle(&tri0);
+        self.remove_if_folded(bgn);
+
+        true
+    }
+
     pub fn collapse_collinear_edge(&mut self, new_vid: usize, epsilon: f64) {
         let mut n_flag = 0;
         let mut store = vec![];
@@ -284,30 +387,17 @@ impl <'a> Simplifier<'a> {
             let mut store_ = vec![];
             for hid in 0..self.halfs.len() {
                 // todo: too redundant review generalization and then refactor
-                let se = RedundantEdge {
-                    halfs: &self.halfs,
-                    trefs: &self.trefs,
-                    new_vid,
-                    epsilon,
-                };
+                let se = RedundantEdge { halfs: &self.halfs, trefs: &self.trefs, new_vid, epsilon };
                 if se.rec(hid) { store_.push(hid); }
             }
             for hid in store_.iter() {
-                if collapse_edge(
-                    *hid,
-                    &self.trefs,
-                    &mut self.halfs,
-                    &mut self.pos,
-                    &mut self.fnmls,
-                    &mut store,
-                    epsilon,
-                ) { n_flag += 1; }
-
+                if self.collapse_edge(*hid, &mut store, epsilon) { n_flag += 1; }
             }
             if n_flag == 0 { break; }
         }
     }
 
+    /*
     // todo: need precise check...
     pub fn swap_degenerates(&mut self, first_new_vert: usize, tolerance: f64) {
         let nb_edges = self.halfs.len();
@@ -372,97 +462,11 @@ impl <'a> Simplifier<'a> {
         }
         let _ = num_flagged;
     }
+    */
 }
 
-fn collapse_edge(
-    hid: usize,
-    trefs: &[TriRef],
-    hs: &mut [Halfedge],
-    pos: &mut [Row3<f64>],
-    fnmls: &mut [Row3<f64>],
-    store: &mut Vec<usize>, // storing the halfedge data for form_loops
-    epsilon: f64,
-) -> bool {
-    if hs[hid].no_pair() { return false; }
-    let vid_keep = hs.head_vid_of(hid);
-    let pos_keep = pos[vid_keep];
-    let pos_delt = pos[hs.tail_vid_of(hid)];
-    let pair = hs.pair_hid_of(hid);
-    let n_pair = fnmls[pair / 3];
-    let tri0 = hs.tri_hids_of(hid);
-    let tri1 = hs.tri_hids_of(pair);
 
-    let mut bgn = hs.pair_hid_of(tri1.1); // the bgn half heading delt vert
-    let     end = tri0.2;                 // the end half heading delt vert
-
-    // check validity by orbiting start vert ccw order
-    if (pos_keep - pos_delt).norm_squared() >= epsilon.powi(2) {
-        let mut cur = bgn;
-        let mut tr0 = &trefs[pair / 3];
-        let mut p_prev = pos[hs.head_vid_of(tri1.1)];
-        while cur != pair {
-            cur = hs.next_hid_of(cur); // incoming half around delt vert
-            let p_next = pos[hs.head_vid_of(cur)];
-            let r_curr = &trefs[cur / 3];
-            let n_curr = &fnmls[cur / 3];
-            let ccw = |p0, p1, p2| { is_ccw_3d(p0, p1, p2, n_curr, epsilon) };
-            if !r_curr.same_face(&tr0) {
-                let tr2 = tr0;
-                tr0 = &trefs[hid / 3];
-                if !r_curr.same_face(&tr0) { return false; }
-                if tr0.mesh_id != tr2.mesh_id ||
-                   tr0.face_id != tr2.face_id ||
-                   n_pair.dot(n_curr) < -0.5 {
-                    // Restrict collapse to co-linear edges when the edge separates faces or the edge is sharp.
-                    // This ensures large shifts are not introduced parallel to the tangent plane.
-                    if ccw(&p_prev, &pos_delt, &pos_keep) != 0 { return false; }
-                }
-            }
-
-            // Don't collapse edge if it would cause a triangle to invert
-            if ccw(&p_next, &p_prev, &pos_keep) < 0 { return false; }
-
-            p_prev = p_next;
-            cur = hs.pair_hid_of(cur); // outgoing half around delt vert
-        }
-    }
-
-    // find a candidate by orbiting end verts ccw order
-    let mut curr = hs.pair_hid_of(tri0.1);
-    while curr != tri1.2 {
-        curr = hs.next_hid_of(curr);
-        store.push(curr); // storing outgoing half here
-        curr = hs.pair_hid_of(curr);
-    }
-
-    let mut cur = bgn;
-    while cur != end {
-        cur      = hs.next_hid_of(cur);
-        let pair = hs.pair_hid_of(cur);
-        let head = hs.head_vid_of(cur);
-        if let Some((i, &v)) = store.iter().enumerate().find(|&(_, &s)| hs.head_vid_of(s) == head) {
-            //form_loops(v, cur, pos, hs);
-            bgn = pair;
-            store.truncate(i);
-        }
-        cur = pair;
-    }
-
-    // do collapse
-    hs.update_vid_around_star(bgn, end, vid_keep);
-    hs.collapse_triangle(&tri0);
-    remove_if_folded(hs, pos, bgn);
-
-    true
-}
-
-fn is01_longest_2d(p0: &Row2<f64>, p1: &Row2<f64>, p2: &Row2<f64>) -> bool {
-    let e01 = (*p1 - *p0).norm_squared();
-    let e12 = (*p2 - *p1).norm_squared();
-    let e20 = (*p0 - *p2).norm_squared();
-    e01 > e12 && e01 > e20
-}
-
+/*
 // todo need precise check...
 fn recursive_edge_swap(
     hid: usize,
@@ -573,6 +577,7 @@ fn recursive_edge_swap(
         hs.pair_hid_of(t1edge.0), hs.pair_hid_of(t0edge.1)
     ]);
 }
+*/
 
 // Split a vertex when it is pinned to two fan triangles.
 fn split_pinched_vert(halfs: &mut [Halfedge], pos: &mut Vec<Row3<f64>>) {
@@ -748,3 +753,4 @@ fn dedupe_edges(halfs: &mut [Halfedge]) {
         if num_flagged == 0 { break; }
     }
 }
+*/
