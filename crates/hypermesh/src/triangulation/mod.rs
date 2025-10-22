@@ -3,7 +3,7 @@ pub mod ear_clip;
 pub mod polygon;
 pub mod flat_tree;
 mod test;
-mod edge_op;
+mod halfedge;
 
 use anyhow::Result;
 use std::collections::{BTreeMap, VecDeque};
@@ -20,8 +20,6 @@ pub struct Triangulator<'a> {
     pub hid_f: &'a [i32],
     pub trefs: &'a [TriRef],
     pub epsilon: f64,
-    //out_fnmls: Vec<Row3<f64>>, // maybe not needed for the simple triangulation
-    //out_trefs: Vec<TriRef>,    // same
 }
 
 impl <'a> Triangulator<'a>  {

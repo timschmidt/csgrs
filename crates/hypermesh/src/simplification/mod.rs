@@ -6,9 +6,17 @@ mod edge_dedup;
 mod edge_collapse;
 mod edge_swap;
 mod vert_split;
+use edge_collapse::*;
 
-pub fn simplify_topology() {
-
+pub fn simplify_topology(
+    hs: &mut Vec<Halfedge>,
+    ps: &mut Vec<Row3<f64>>,
+    ns: &mut [Row3<f64>],
+    rs: &mut [TriRef],
+    nv: usize,
+    ep: f64,
+) {
+    collapse_collinear_edge(hs, ps, ns, rs, nv, ep);
 }
 
 pub(in crate::simplification) fn next_of(
