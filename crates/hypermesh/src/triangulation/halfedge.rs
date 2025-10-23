@@ -3,7 +3,7 @@ use crate::Halfedge;
 
 const REMOVED_FLAG: usize = usize::MAX - 1;
 
-pub fn compute_halfs(fs: &Vec<Row3<usize>>) {
+pub fn compute_halfs(fs: &Vec<Row3<usize>>) -> Vec<Halfedge> {
     let nh = fs.len() * 3;
     let ne = nh / 2;
     let mut hs  = vec![Halfedge::default(); nh];
@@ -70,6 +70,8 @@ pub fn compute_halfs(fs: &Vec<Row3<usize>>) {
             hs[i1] = Halfedge::default();
         }
     }
+
+    hs
 }
 
 pub fn reorder_halfedges(hs: &mut [Halfedge]) {

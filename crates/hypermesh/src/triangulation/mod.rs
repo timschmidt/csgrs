@@ -2,8 +2,8 @@ pub mod common;
 pub mod ear_clip;
 pub mod polygon;
 pub mod flat_tree;
+pub mod halfedge;
 mod test;
-mod halfedge;
 
 use anyhow::Result;
 use std::collections::{BTreeMap, VecDeque};
@@ -23,12 +23,20 @@ pub struct Triangulator<'a> {
 }
 
 impl <'a> Triangulator<'a>  {
-    pub fn triangulate(&self, convex: bool) -> Result<Vec<Row3<usize>>> {
-        let mut idcs = vec![];
+    pub fn triangulate(&self, convex: bool) -> Result<(Vec<Row3<usize>>, Vec<Row3<f64>>, Vec<TriRef>)> {
+        let mut tris = vec![];
+        let mut nors = vec![];
+        let mut refs = vec![];
         for fid in 0..self.hid_f.len() - 1 {
-            idcs.extend(self.process_face(fid, convex));
+            let hid = self.hid_f[fid] as usize;
+            let t = self.process_face(fid, convex);
+            let r = self.trefs[hid].clone();
+            let n = self.fnmls[fid].clone();
+            refs.extend(vec![r; t.len()]);
+            nors.extend(vec![n; t.len()]);
+            tris.extend(t);
         }
-        Ok(idcs)
+        Ok((tris, nors, refs))
     }
 
     fn process_face(&self, fid: usize, convex: bool) -> Vec<Row3<usize>> {

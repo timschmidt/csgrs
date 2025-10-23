@@ -1,12 +1,14 @@
 pub mod bounds;
 pub mod collider;
+mod coplanar;
 
 use std::sync::Arc;
-use nalgebra::DMatrix;
+use nalgebra::{DMatrix, RowVector3};
 use bounds::BoundingBox;
 use crate::collider::{morton_code, MortonCollider};
 use crate::Hmesh;
 use crate::common::K_PRECISION;
+use crate::manifold::coplanar::compute_coplanar_idx;
 
 #[derive(Clone, Debug)]
 pub struct Halfedge {
@@ -17,7 +19,11 @@ pub struct Halfedge {
 
 impl Default for Halfedge {
     fn default() -> Self {
-        Self { tail: usize::MAX, head: usize::MAX, pair: usize::MAX }
+        Self {
+            tail: usize::MAX,
+            head: usize::MAX,
+            pair: usize::MAX
+        }
     }
 }
 
@@ -75,6 +81,7 @@ pub struct Manifold {
     pub hmesh: Arc<Hmesh>,
     pub bbox: BoundingBox,
     pub collider: MortonCollider,
+    pub coplanar: Vec<i32>,
     pub epsilon: f64,
     pub tolerance: f64,
 }
@@ -86,13 +93,25 @@ impl Manifold {
     pub fn new(hmesh: &Hmesh) -> Self {
         let bbox = BoundingBox::new_from_matrix(usize::MAX, &hmesh.pos);
         let (mut f_bboxes, mut f_morton) = get_face_morton(&hmesh, &bbox);
+
+        let hmesh_sorted = sort_faces(&hmesh, &mut f_bboxes, &mut f_morton);
+
+        let coplanar = compute_coplanar_idx(
+            &hmesh_sorted.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
+            &hmesh_sorted.faces.iter().map(|f| f.normal()).collect::<Vec<_>>(),
+            &hmesh_sorted.halfs.iter().map(|h| Halfedge{ tail: h.tail().id, head: h.head().id, pair: h.twin().id }).collect::<Vec<_>>(),
+            1e-6 // todo: temporary!
+        );
+
         let mut mfd = Manifold {
-            hmesh: sort_faces(&hmesh, &mut f_bboxes, &mut f_morton),
+            hmesh: hmesh_sorted,
             bbox,
             collider: MortonCollider::new(&f_bboxes, &f_morton),
+            coplanar,
             epsilon: -1.,
             tolerance: -1.,
         };
+
         mfd.set_epsilon(K_PRECISION * mfd.bbox.scale(), false);
         mfd
     }
