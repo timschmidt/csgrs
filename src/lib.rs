@@ -30,7 +30,7 @@
 #![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
 
 pub mod errors;
-pub mod float_types;
+pub mod math_ndsp;
 pub mod io;
 pub mod mesh;
 pub mod nurbs;
@@ -50,12 +50,6 @@ pub mod wasm;
     not(any(feature = "delaunay", feature = "earcut"))
 ))]
 compile_error!("Either 'delaunay' or 'earcut' feature must be specified, but not both");
-
-#[cfg(any(
-    all(feature = "f64", feature = "f32"),
-    not(any(feature = "f64", feature = "f32"))
-))]
-compile_error!("Either 'f64' or 'f32' feature must be specified, but not both");
 
 #[cfg(test)]
 mod tests;
