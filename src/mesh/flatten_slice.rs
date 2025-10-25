@@ -1,7 +1,7 @@
 //! Provides functions for flattening a `Mesh` against the Z=0 `Plane`
 //! or slicing a `Mesh` with an arbitrary `Plane` into a `Sketch`
 
-use crate::float_types::{EPSILON, Real};
+use crate::math_ndsp::consts::{EPSILON, Real};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;

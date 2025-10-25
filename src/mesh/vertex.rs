@@ -1,6 +1,6 @@
 //! Struct and functions for working with `Vertex`s from which `Polygon`s are composed.
 
-use crate::float_types::{PI, Real};
+use crate::math_ndsp::consts::{PI, Real};
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
 

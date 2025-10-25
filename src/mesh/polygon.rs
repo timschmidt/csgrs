@@ -1,6 +1,6 @@
 //! Struct and functions for working with planar `Polygon`s without holes
 
-use crate::float_types::{Real, parry3d::bounding_volume::Aabb};
+use crate::math_ndsp::consts::{Real, parry3d::bounding_volume::Aabb};
 use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};

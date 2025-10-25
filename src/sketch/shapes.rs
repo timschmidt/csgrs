@@ -1,6 +1,6 @@
 //! 2D Shapes as `Sketch`s
 
-use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real, TAU};
+use crate::math_ndsp::consts::{EPSILON, FRAC_PI_2, PI, Real, TAU};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{

@@ -1,6 +1,6 @@
 //! Provides a `MetaBall` struct and functions for creating a `Mesh` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::float_types::{EPSILON, Real};
+use crate::math_ndsp::consts::{EPSILON, Real};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;

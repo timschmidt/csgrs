@@ -1,5 +1,5 @@
 use crate::float_types::parry3d::bounding_volume::Aabb;
-use crate::float_types::{EPSILON, Real};
+use crate::math_ndsp::consts::{EPSILON, Real};
 use crate::mesh::plane::Plane;
 use nalgebra::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
 

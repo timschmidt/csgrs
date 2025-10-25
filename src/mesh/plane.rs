@@ -66,7 +66,7 @@
 //!
 //! Unless stated otherwise, all tolerances are governed by `float_types::EPSILON`.
 
-use crate::float_types::{EPSILON, Real};
+use crate::math_ndsp::consts::{EPSILON, Real};
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};

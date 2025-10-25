@@ -1,6 +1,6 @@
 //! `Mesh` struct and implementations of the `CSGOps` trait for `Mesh`
 
-use crate::float_types::{
+use crate::math_ndsp::consts::{
     parry3d::{
         bounding_volume::{Aabb, BoundingVolume},
         query::RayCast,

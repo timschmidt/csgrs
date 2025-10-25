@@ -1,5 +1,5 @@
 use crate::errors::ValidationError;
-use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real};
+use crate::math_ndsp::consts::{EPSILON, FRAC_PI_2, PI, Real};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;

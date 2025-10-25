@@ -1,4 +1,4 @@
-use crate::float_types::{PI, Real};
+use crate::math_ndsp::consts::{PI, Real};
 use crate::mesh::Mesh;
 use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
