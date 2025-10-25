@@ -1,6 +1,6 @@
 //! Provides a `MetaBall` struct and functions for creating a `Sketch` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::math_ndsp::consts::{EPSILON, Real};
+use crate::math_ndsp::consts::{EPSILON};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{
@@ -8,6 +8,7 @@ use geo::{
 };
 use hashbrown::HashMap;
 use std::fmt::Debug;
+type Real = f64;
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.

@@ -1,6 +1,6 @@
 //! Create `Sketch`s using single stroke Hershey fonts
 
-use crate::float_types::Real;
+type Real = f64;
 use crate::sketch::Sketch;
 use geo::{Geometry, GeometryCollection, LineString, coord};
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};

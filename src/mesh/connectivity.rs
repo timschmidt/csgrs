@@ -1,4 +1,4 @@
-use crate::float_types::Real;
+type Real = f64;
 use crate::mesh::Mesh;
 use hashbrown::HashMap;
 use nalgebra::Point3;

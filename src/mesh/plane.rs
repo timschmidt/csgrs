@@ -66,11 +66,12 @@
 //!
 //! Unless stated otherwise, all tolerances are governed by `float_types::EPSILON`.
 
-use crate::math_ndsp::consts::{EPSILON, Real};
+use crate::math_ndsp::consts::{EPSILON};
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 use robust::{Coord3D, orient3d};
+type Real = f64;
 
 /// Classification of a polygon or point that lies exactly in the plane
 /// (i.e. within `±EPSILON` of the plane).

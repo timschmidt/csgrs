@@ -1,6 +1,6 @@
 //! 2D Shapes as `Sketch`s
 
-use crate::math_ndsp::consts::{EPSILON, FRAC_PI_2, PI, Real, TAU};
+use crate::math_ndsp::consts::{EPSILON, FRAC_PI_2, PI, TAU};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{
@@ -9,6 +9,7 @@ use geo::{
 };
 use std::fmt::Debug;
 use std::sync::OnceLock;
+type Real = f64;
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Creates a 2D rectangle in the XY plane.

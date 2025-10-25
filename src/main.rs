@@ -4,7 +4,7 @@
 // Here, we do not use any shared data, so we'll bind the generic S to ().
 
 #[cfg(feature = "sdf")]
-use csgrs::float_types::Real;
+type Real = f64;
 
 use csgrs::mesh::plane::Plane;
 use csgrs::traits::CSG;

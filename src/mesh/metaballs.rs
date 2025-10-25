@@ -1,6 +1,6 @@
 //! Provides a `MetaBall` struct and functions for creating a `Mesh` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::math_ndsp::consts::{EPSILON, Real};
+use crate::math_ndsp::consts::{EPSILON};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
@@ -8,6 +8,7 @@ use crate::traits::CSG;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
+type Real = f64;
 
 #[derive(Debug, Clone)]
 pub struct MetaBall {

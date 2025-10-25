@@ -1,7 +1,7 @@
 //! 3D Shapes as `Mesh`s
 
 use crate::errors::ValidationError;
-use crate::math_ndsp::consts::{EPSILON, PI, Real, TAU};
+use crate::math_ndsp::consts::{EPSILON, PI, TAU};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
@@ -9,6 +9,7 @@ use crate::sketch::Sketch;
 use crate::traits::CSG;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
+type Real = f64;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// **Mathematical Foundations for 3D Box Geometry**

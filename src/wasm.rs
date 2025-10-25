@@ -1,4 +1,4 @@
-use crate::float_types::Real;
+type Real = f64;
 use crate::io::svg::{FromSVG, ToSVG};
 //use crate::mesh::metaballs::MetaBall;
 use crate::mesh::{Mesh, plane::Plane, polygon::Polygon, vertex::Vertex};

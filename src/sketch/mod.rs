@@ -1,6 +1,6 @@
 //! `Sketch` struct and implementations of the `CSGOps` trait for `Sketch`
 
-use crate::float_types::Real;
+type Real = f64;
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::mesh::Mesh;
 use crate::traits::CSG;

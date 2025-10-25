@@ -1,8 +1,9 @@
 //! Struct and functions for working with `Vertex`s from which `Polygon`s are composed.
 
-use crate::math_ndsp::consts::{PI, Real};
+use crate::math_ndsp::consts::{PI};
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
+type Real = f64;
 
 /// A vertex of a polygon, holding position and normal.
 #[derive(Debug, Clone, PartialEq, Copy)]

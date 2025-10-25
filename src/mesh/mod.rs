@@ -10,7 +10,7 @@ use crate::math_ndsp::consts::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
         SharedShape, TriMesh, Triangle,
     },
-    {EPSILON, Real},
+    {EPSILON},
 };
 use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
 use crate::sketch::Sketch;
@@ -20,6 +20,7 @@ use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
 use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
+type Real = f64;
 
 #[cfg(feature = "parallel")]
 use rayon::{iter::IntoParallelRefIterator, prelude::*};

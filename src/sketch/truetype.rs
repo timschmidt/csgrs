@@ -1,6 +1,6 @@
 //! Create `Sketch`s using ttf fonts
 
-use crate::float_types::Real;
+type Real = f64;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{

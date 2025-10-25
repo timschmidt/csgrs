@@ -1,11 +1,12 @@
 //! Struct and functions for working with planar `Polygon`s without holes
 
-use crate::math_ndsp::consts::{Real, parry3d::bounding_volume::Aabb};
+use crate::aabb::Aabb;
 use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point3, Vector3};
 use std::sync::OnceLock;
+type Real = f64;
 
 /// A polygon, defined by a list of vertices.
 /// - `S` is the generic metadata type, stored as `Option<S>`.

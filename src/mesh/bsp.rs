@@ -6,7 +6,7 @@ use crate::float_types::EPSILON;
 #[cfg(not(feature = "parallel"))]
 use crate::mesh::vertex::Vertex;
 
-use crate::float_types::Real;
+type Real = f64;
 use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::mesh::polygon::Polygon;
 use std::fmt::Debug;

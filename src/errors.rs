@@ -1,4 +1,4 @@
-use crate::float_types::Real;
+type Real = f64;
 use nalgebra::Point3;
 
 /// All the possible validation issues we might encounter,

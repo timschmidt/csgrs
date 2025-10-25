@@ -1,5 +1,5 @@
 use crate::errors::ValidationError;
-use crate::math_ndsp::consts::{EPSILON, FRAC_PI_2, PI, Real};
+use crate::math_ndsp::consts::{EPSILON, FRAC_PI_2, PI};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
@@ -10,6 +10,7 @@ use crate::traits::CSG;
 use geo::{Area, Geometry, HasDimensions};
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
+type Real = f64;
 
 // --------------------------------------------------------
 //   Helpers

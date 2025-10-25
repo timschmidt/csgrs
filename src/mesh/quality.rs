@@ -1,7 +1,8 @@
-use crate::math_ndsp::consts::{PI, Real};
+use crate::math_ndsp::consts::{PI};
 use crate::mesh::Mesh;
 use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
+type Real = f64;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;

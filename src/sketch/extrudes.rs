@@ -1,7 +1,7 @@
 //! Functions to extrude, revolve, loft, and otherwise transform 2D `Sketch`s into 3D `Mesh`s
 
 use crate::errors::ValidationError;
-use crate::math_ndsp::consts::{EPSILON, Real};
+use crate::math_ndsp::consts::{EPSILON};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
@@ -11,6 +11,7 @@ use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
+type Real = f64;
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
