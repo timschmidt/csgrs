@@ -4,7 +4,7 @@
 type Real = f64;
 use crate::mesh::Mesh;
 use crate::traits::CSG;
-use nalgebra::Point3;
+use crate::math_ndsp::Point3;
 use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {

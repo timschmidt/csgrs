@@ -69,7 +69,7 @@
 use crate::math_ndsp::consts::{EPSILON};
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
+use crate::math_ndsp::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 use robust::{Coord3D, orient3d};
 type Real = f64;
 

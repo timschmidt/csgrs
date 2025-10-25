@@ -1,6 +1,6 @@
 type Real = f64;
 use crate::mesh::Mesh;
-use nalgebra::Point3;
+use crate::math_ndsp::Point3;
 use std::collections::HashMap;
 use std::fmt::Debug;
 

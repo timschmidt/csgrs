@@ -2,12 +2,12 @@
 //!
 //! This module provides export functionality for Stanford PLY files,
 //! a popular format for 3D scanning, research, and mesh processing applications.
-use crate::float_types::Real;
+type Real = f64;
 
 use crate::mesh::Mesh;
 use crate::sketch::Sketch;
 use geo::CoordsIter;
-use nalgebra::{Point3, Vector3};
+use crate::math_ndsp::{Point3, Vector3};
 use std::fmt::Debug;
 use std::io::Write;
 

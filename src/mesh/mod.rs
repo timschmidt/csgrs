@@ -1,8 +1,9 @@
 //! `Mesh` struct and implementations of the `CSGOps` trait for `Mesh`
 
+use crate::aabb::Aabb;
 use crate::math_ndsp::consts::{
     parry3d::{
-        bounding_volume::{Aabb, BoundingVolume},
+        bounding_volume::{BoundingVolume},
         query::RayCast,
         shape::Shape,
     },
@@ -16,7 +17,7 @@ use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
-use nalgebra::{
+use crate::math_ndsp::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
 use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};

@@ -8,7 +8,7 @@ use crate::mesh::vertex::Vertex;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
-use nalgebra::{Point3, Vector3};
+use crate::math_ndsp::{Point3, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 type Real = f64;

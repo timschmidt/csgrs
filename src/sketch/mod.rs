@@ -1,7 +1,7 @@
 //! `Sketch` struct and implementations of the `CSGOps` trait for `Sketch`
 
 type Real = f64;
-use crate::float_types::parry3d::bounding_volume::Aabb;
+use crate::aabb::Aabb;
 use crate::mesh::Mesh;
 use crate::traits::CSG;
 use geo::algorithm::winding_order::Winding;
@@ -10,7 +10,7 @@ use geo::{
     Geometry, GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon,
     Rect, orient::Direction,
 };
-use nalgebra::{Matrix4, Point3, partial_max, partial_min};
+use crate::math_ndsp::{Matrix4, Point3, partial_max, partial_min};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 

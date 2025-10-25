@@ -7,7 +7,7 @@ use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
-use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
+use crate::math_ndsp::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 type Real = f64;
 

@@ -1,7 +1,7 @@
 //! [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node structure and operations
 
 #[cfg(not(feature = "parallel"))]
-use crate::float_types::EPSILON;
+use crate::math_ndsp::consts::EPSILON;
 
 #[cfg(not(feature = "parallel"))]
 use crate::mesh::vertex::Vertex;

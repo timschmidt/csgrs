@@ -1,10 +1,10 @@
-use crate::float_types::Real;
+type Real = f64;
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::sketch::Sketch;
 use geo::{Polygon as GeoPolygon, line_string};
-use nalgebra::{Point3, Vector3};
+use crate::math_ndsp::{Point3, Vector3};
 use std::error::Error;
 use std::fmt::Debug;
 

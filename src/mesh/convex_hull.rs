@@ -15,7 +15,7 @@ use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::traits::CSG;
 use chull::ConvexHullWrapper;
-use nalgebra::{Point3, Vector3};
+use crate::math_ndsp::{Point3, Vector3};
 use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {

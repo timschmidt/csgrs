@@ -12,7 +12,7 @@ use geo::{
     Polygon as GeoPolygon, coord, orient::Direction,
 };
 use hashbrown::HashMap;
-use nalgebra::Point3;
+use crate::math_ndsp::Point3;
 use std::fmt::Debug;
 use std::sync::OnceLock;
 type Real = f64;

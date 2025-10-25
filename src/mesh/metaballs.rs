@@ -6,7 +6,7 @@ use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::traits::CSG;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
-use nalgebra::{Point3, Vector3};
+use crate::math_ndsp::{Point3, Vector3};
 use std::fmt::Debug;
 type Real = f64;
 

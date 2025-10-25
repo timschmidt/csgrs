@@ -5,7 +5,7 @@ use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
-use nalgebra::{Point3, Vector3};
+use crate::math_ndsp::{Point3, Vector3};
 use std::fmt::Debug;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {

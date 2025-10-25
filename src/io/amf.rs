@@ -2,11 +2,11 @@
 //!
 //! This module provides export functionality for AMF (Additive Manufacturing File Format),
 //! an XML-based format specifically designed for 3D printing and additive manufacturing.
-use crate::float_types::Real;
+type Real = f64;
 use crate::mesh::Mesh;
 use crate::sketch::Sketch;
 use geo::CoordsIter;
-use nalgebra::Point3;
+use crate::math_ndsp::Point3;
 use std::fmt::Debug;
 use std::io::Write;
 

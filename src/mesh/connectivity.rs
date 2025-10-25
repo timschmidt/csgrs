@@ -1,7 +1,7 @@
 type Real = f64;
 use crate::mesh::Mesh;
 use hashbrown::HashMap;
-use nalgebra::Point3;
+use crate::math_ndsp::Point3;
 use std::fmt::Debug;
 
 /// **Mathematical Foundation: Robust Vertex Indexing for Mesh Connectivity**

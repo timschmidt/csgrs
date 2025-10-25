@@ -4,7 +4,7 @@ use crate::aabb::Aabb;
 use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
-use nalgebra::{Point3, Vector3};
+use crate::math_ndsp::{Point3, Vector3};
 use std::sync::OnceLock;
 type Real = f64;
 

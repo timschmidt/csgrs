@@ -2,7 +2,6 @@
 
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use mixed_num::traits::*;
-use core::ops::Mul;
 
 pub mod consts {
     // We keep the library on f64 for now (simple migration).

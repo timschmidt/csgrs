@@ -2,7 +2,7 @@
 
 use crate::math_ndsp::consts::{PI};
 use hashbrown::HashMap;
-use nalgebra::{Point3, Vector3};
+use crate::math_ndsp::{Point3, Vector3};
 type Real = f64;
 
 /// A vertex of a polygon, holding position and normal.
