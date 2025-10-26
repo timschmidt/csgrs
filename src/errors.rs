@@ -1,5 +1,5 @@
 type Real = f64;
-use nalgebra::Point3;
+use crate::math_ndsp::Point3;
 
 /// All the possible validation issues we might encounter,
 #[derive(Debug, Clone, PartialEq)]

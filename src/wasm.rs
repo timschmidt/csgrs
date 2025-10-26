@@ -6,7 +6,7 @@ use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{Geometry, GeometryCollection};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
-use nalgebra::{Matrix4, Point3, Vector3};
+use crate::math_ndsp::{Matrix4, Point3, Vector3};
 //use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::from_value; //, to_value};
 use wasm_bindgen::prelude::*;

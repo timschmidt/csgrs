@@ -1,7 +1,7 @@
-use crate::float_types::parry3d::bounding_volume::Aabb;
+use crate::aabb::Aabb;
 use crate::math_ndsp::consts::{EPSILON};
 use crate::mesh::plane::Plane;
-use nalgebra::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
+use crate::math_ndsp::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
 type Real = f64;
 
 /// Boolean operations + transformations
@@ -179,11 +179,11 @@ pub trait CSG: Sized + Clone {
 
                 let angle = start_rad + t * sweep;
                 let rot =
-                    nalgebra::Rotation3::from_axis_angle(&nalgebra::Vector3::z_axis(), angle)
+                    Rotation3::from_axis_angle(&Vector3::z_axis(), angle)
                         .to_homogeneous();
 
                 // translate out to radius in x
-                let trans = nalgebra::Translation3::new(radius, 0.0, 0.0).to_homogeneous();
+                let trans = Translation3::new(radius, 0.0, 0.0).to_homogeneous();
                 let mat = rot * trans;
                 self.transform(&mat)
             })
@@ -209,7 +209,7 @@ pub trait CSG: Sized + Clone {
         (0..count)
             .map(|i| {
                 let offset = step * (i as Real);
-                let trans = nalgebra::Translation3::from(offset).to_homogeneous();
+                let trans = Translation3::from(offset).to_homogeneous();
                 self.transform(&trans)
             })
             .reduce(|acc, csg| acc.union(&csg))
@@ -222,14 +222,14 @@ pub trait CSG: Sized + Clone {
         if rows < 1 || cols < 1 {
             return self.clone();
         }
-        let step_x = nalgebra::Vector3::new(dx, 0.0, 0.0);
-        let step_y = nalgebra::Vector3::new(0.0, dy, 0.0);
+        let step_x = Vector3::new(dx, 0.0, 0.0);
+        let step_y = Vector3::new(0.0, dy, 0.0);
 
         (0..rows)
             .flat_map(|r| {
                 (0..cols).map(move |c| {
                     let offset = step_x * (c as Real) + step_y * (r as Real);
-                    let trans = nalgebra::Translation3::from(offset).to_homogeneous();
+                    let trans = Translation3::from(offset).to_homogeneous();
                     self.transform(&trans)
                 })
             })

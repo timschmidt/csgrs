@@ -8,7 +8,7 @@ type Real = f64;
 
 use csgrs::mesh::plane::Plane;
 use csgrs::traits::CSG;
-use nalgebra::{Point3, Vector3};
+use crate::math_ndsp::{Point3, Vector3};
 use std::fs;
 
 #[cfg(feature = "image")]

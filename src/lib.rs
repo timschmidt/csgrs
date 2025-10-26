@@ -31,6 +31,7 @@
 
 pub mod errors;
 pub mod math_ndsp;
+pub mod aabb;
 pub mod io;
 pub mod mesh;
 pub mod nurbs;

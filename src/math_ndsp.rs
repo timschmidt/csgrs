@@ -2,6 +2,8 @@
 
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use mixed_num::traits::*;
+use mixed_num::MixedAbs;
+type Real = f64;
 
 pub mod consts {
     // We keep the library on f64 for now (simple migration).
@@ -28,7 +30,7 @@ pub struct Vector3<T> {
     pub z: T,
 }
 
-impl<T: MixedNum + MixedOps + Copy> Vector3<T> {
+impl<T: MixedNum + MixedOps + Copy + MixedAbs> Vector3<T> {
     #[inline]
     pub const fn new(x: T, y: T, z: T) -> Self { Self { x, y, z } }
 
@@ -207,17 +209,17 @@ impl<T: MixedNum + MixedOps + Copy> Matrix3<T> {
         let det = self.det();
         if det.mixed_abs() <= eps() { return None; }
         let m = &self.m;
-        let c00 =  (m[1][1]*m[2][2] - m[1][2]*m[2][1]);
+        let c00 =  m[1][1]*m[2][2] - m[1][2]*m[2][1];
         let c01 = -(m[1][0]*m[2][2] - m[1][2]*m[2][0]);
-        let c02 =  (m[1][0]*m[2][1] - m[1][1]*m[2][0]);
+        let c02 =  m[1][0]*m[2][1] - m[1][1]*m[2][0];
 
         let c10 = -(m[0][1]*m[2][2] - m[0][2]*m[2][1]);
-        let c11 =  (m[0][0]*m[2][2] - m[0][2]*m[2][0]);
+        let c11 =  m[0][0]*m[2][2] - m[0][2]*m[2][0];
         let c12 = -(m[0][0]*m[2][1] - m[0][1]*m[2][0]);
 
-        let c20 =  (m[0][1]*m[1][2] - m[0][2]*m[1][1]);
+        let c20 =  m[0][1]*m[1][2] - m[0][2]*m[1][1];
         let c21 = -(m[0][0]*m[1][2] - m[0][2]*m[1][0]);
-        let c22 =  (m[0][0]*m[1][1] - m[0][1]*m[1][0]);
+        let c22 =  m[0][0]*m[1][1] - m[0][1]*m[1][0];
 
         let adj_t = [
             [c00, c10, c20],
@@ -310,7 +312,7 @@ impl<T: MixedNum + MixedOps + Copy> Matrix3<T> {
                     Vector3::z()
                 };
                 ortho = f.cross(ortho).normalize();
-                return Self::rotation_axis_angle(ortho, (T::mixed_pi()));
+                return Self::rotation_axis_angle(ortho, T::mixed_pi());
             }
         }
         // Rodrigues without trig: R = I + [v]_x + [v]_x² * ((1 - c)/|v|²)
@@ -559,7 +561,7 @@ impl Rotation3 {
     pub fn from_axis_angle(axis: &Vector3, angle: Real) -> Self {
         let mut k = *axis;
         let n2 = k.dot(&k);
-        if n2 <= EPSILON * EPSILON {
+        if n2 <= consts::EPSILON * consts::EPSILON {
             return Self::identity();
         }
         k /= n2.sqrt(); // normalize
@@ -591,7 +593,7 @@ impl Rotation3 {
     pub fn rotation_between(a: &Vector3, b: &Vector3) -> Option<Self> {
         let la = a.norm();
         let lb = b.norm();
-        if la <= EPSILON || lb <= EPSILON {
+        if la <= consts::EPSILON || lb <= consts::EPSILON {
             return None;
         }
         let u = *a / la;
@@ -601,7 +603,7 @@ impl Rotation3 {
         let axis = u.cross(&v);
         let s = axis.norm();               // |u × v| = sin(theta)
 
-        if s <= EPSILON {
+        if s <= consts::EPSILON {
             // Collinear: either identity or 180° turn around any perpendicular axis.
             if c > 0.0 {
                 return Some(Self::identity());

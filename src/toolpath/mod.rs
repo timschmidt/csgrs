@@ -15,9 +15,10 @@
 //! - Requires `csgrs` to be compiled with the `offset` feature for kerf/tool radius comp.
 
 use core::fmt::Debug;
-use nalgebra::Point3;
+use crate::math_ndsp::Point3;
 
-use crate::float_types::{EPSILON, Real};
+type Real = f64;
+use crate::math_ndsp::consts::{EPSILON};
 use crate::sketch::Sketch;
 
 // ==========================

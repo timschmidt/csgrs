@@ -824,7 +824,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// * returns - a `Mesh<S>` containing all side quads plus automatically triangulated caps (respecting any holes).
     pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<S> {
         use crate::mesh::{Mesh, polygon::Polygon, vertex::Vertex};
-        use nalgebra::{Matrix4, Rotation3, Translation3};
+        use crate::math_ndsp::{Matrix4, Rotation3, Translation3};
 
         // sanity checks
         if path.len() < 2 || self.geometry.0.is_empty() {
