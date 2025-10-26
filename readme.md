@@ -607,6 +607,7 @@ for Polygon
   - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src for cubic and quadratic bezier
 - https://docs.rs/rgeometry/latest/rgeometry/algorithms/polygonization/fn.two_opt_moves.html and other algorithms from rgeometry crate
 - add optional root fillets, dedendum arcs, and backlash/backlash-aware spacing to gears
+- implement GL friendly io modules
 
 ## Todo shapes
 - geodesic domes / goldberg polyhedra
