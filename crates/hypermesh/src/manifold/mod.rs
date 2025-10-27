@@ -28,6 +28,7 @@ impl Default for Halfedge {
 }
 
 impl Halfedge {
+    pub fn new(tail: usize, head: usize, pair: usize) -> Self { Self { tail, head, pair } }
     pub fn is_forward(&self) -> bool { self.tail < self.head }
     pub fn has_tail(&self) -> bool { self.tail != usize::MAX }
     pub fn has_head(&self) -> bool { self.head != usize::MAX }
