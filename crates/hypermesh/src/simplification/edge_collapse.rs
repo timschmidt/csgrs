@@ -1,6 +1,6 @@
-use nalgebra::{RowVector2, RowVector3 as Row3};
+use nalgebra::{RowVector3 as Row3};
 use crate::boolean46::TriRef;
-use crate::common::{get_axis_aligned_projection, is_ccw_2d, is_ccw_3d};
+use crate::common::{is_ccw_3d};
 use crate::Halfedge;
 use super::{form_loops, next_of, remove_if_folded, HalfedgeOps};
 
@@ -91,11 +91,11 @@ pub fn collapse_edge(
     }
 
     // find a candidate by orbiting end verts ccw order
-    let mut curr = hs.pair_hid_of(tri0.1);
-    while curr != tri1.2 {
-        curr = hs.next_hid_of(curr);
-        store.push(curr); // storing outgoing half here
-        curr = hs.pair_hid_of(curr);
+    let mut cur = hs.pair_hid_of(tri0.1);
+    while cur != tri1.2 {
+        cur = hs.next_hid_of(cur);
+        store.push(cur); // storing outgoing half here
+        cur = hs.pair_hid_of(cur);
     }
 
     ps[to_rmv.tail] = Row3::new(f64::MAX, f64::MAX, f64::MAX);
@@ -130,25 +130,13 @@ pub fn collapse_collinear_edge(
     nv: usize,
     ep: f64
 ) {
-    let mut store = vec![];
-
     loop {
-        let mut n_flag = 0;
-        let mut values = vec![];
-
-        // equivalent to run_seq
-        for hid in 0..hs.len() {
-            if record(hs, rs, hid, nv) { values.push(hid); }
+        let mut flag = 0;
+        let rec = (0..hs.len()).filter(|&hid| record(hs, rs, hid, nv)).collect::<Vec<_>>();
+        for hid in rec {
+            if collapse_edge(hs, ps, ns, rs, hid, &mut vec![], ep) { flag += 1; }
         }
-
-        for hid in values {
-            if collapse_edge(hs, ps, ns, rs, hid, &mut store, ep) {
-                n_flag += 1;
-                store.clear();
-            }
-        }
-
-        if n_flag == 0 { break; }
+        if flag == 0 { break; }
     }
 }
 

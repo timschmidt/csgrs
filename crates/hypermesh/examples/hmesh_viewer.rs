@@ -49,9 +49,9 @@ fn toggle_mesh_visibility(
         };
     };
     let mut vis: Vec<_> = query.iter_mut().collect();
-    if keyboard.just_pressed(KeyCode::Space)  { cb(&mut vis[0]); cb(&mut vis[1]); }
-    if keyboard.just_pressed(KeyCode::Digit0) { cb(&mut vis[0]); }
-    if keyboard.just_pressed(KeyCode::Digit1) { cb(&mut vis[1]); }
+    if keyboard.just_pressed(KeyCode::Space)  { cb(&mut vis[1]); cb(&mut vis[2]); }
+    if keyboard.just_pressed(KeyCode::Digit0) { cb(&mut vis[1]); }
+    if keyboard.just_pressed(KeyCode::Digit1) { cb(&mut vis[2]); }
 }
 
 fn main() {
@@ -75,10 +75,10 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>
 ) {
 
-    let (m0, _) = tobj::load_obj("assets/models/gargoyle.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    let (m1, _) = tobj::load_obj("assets/models/double-torus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m0, _) = tobj::load_obj("assets/models/cube_x_plus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m1, _) = tobj::load_obj("assets/models/tet_b.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
     let mut hms_ = vec![];
-    for (m, s) in vec![(m0, 1.), (m1, 0.7)] {
+    for (m, s) in vec![(m0, 1.), (m1, 1.)] {
         let mesh = &m[0].mesh;
         let pos_buf = mesh.positions.iter().map(|&v| (v * s) as f64).collect::<Vec<f64>>();
         let idx_buf = mesh.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>();
@@ -127,8 +127,8 @@ fn setup(
         p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
     let (pos, halfs, tris) = boolean.get_result(OpType::Subtract);
     for h in halfs {
-        let p0 = pos[h.tail as usize];
-        let p1 = pos[h.head as usize];
+        let p0 = pos[h.tail];
+        let p1 = pos[h.head];
         edges.push((
             Vec3::new(p0[0] as f32, p0[1] as f32, p0[2] as f32),
             Vec3::new(p1[0] as f32, p1[1] as f32, p1[2] as f32),
@@ -218,14 +218,14 @@ fn setup(
             ]).collect::<Vec<_>>()
         );
 
-        //cmds.spawn((
-        //    Mesh3d(meshes.add(bm).clone()),
-        //    MeshMaterial3d(mats.add(StandardMaterial { ..default() })),
-        //    Transform::default(),
-        //    Wireframe,
-        //    WireframeColor { color: GRAY.into() },
-        //    ToggleableMesh,
-        //));
+        cmds.spawn((
+            Mesh3d(meshes.add(bm).clone()),
+            MeshMaterial3d(mats.add(StandardMaterial { ..default() })),
+            Transform::default(),
+            Wireframe,
+            WireframeColor { color: GRAY.into() },
+            ToggleableMesh,
+        ));
     }
 
     cmds.insert_resource(MfdHandle0(mf0));

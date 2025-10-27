@@ -2,6 +2,7 @@ pub mod hmesh;
 pub mod boolean;
 pub mod manifold;
 pub mod triangulation;
+mod simplification;
 
 pub use crate::hmesh::*;
 pub use crate::boolean::*;
