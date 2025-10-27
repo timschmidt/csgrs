@@ -10,7 +10,7 @@ use geo::{
     Geometry, GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon,
     Rect, orient::Direction,
 };
-use crate::math_ndsp::{Matrix4, Point3, partial_max, partial_min};
+use crate::math_ndsp::{Matrix4, Point3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 

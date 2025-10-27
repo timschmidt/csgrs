@@ -198,7 +198,7 @@ pub trait CSG: Sized + Clone {
     fn distribute_linear(
         &self,
         count: usize,
-        dir: nalgebra::Vector3<Real>,
+        dir: Vector3<Real>,
         spacing: Real,
     ) -> Self {
         if count < 1 {

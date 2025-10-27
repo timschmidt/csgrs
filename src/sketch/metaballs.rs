@@ -1,6 +1,7 @@
 //! Provides a `MetaBall` struct and functions for creating a `Sketch` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
 use crate::math_ndsp::consts::{EPSILON};
+use crate::math_ndsp::{Point2};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{
@@ -18,7 +19,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `padding`: extra boundary beyond each ball's radius.
     /// - `metadata`: optional user metadata.
     pub fn metaballs(
-        balls: &[(nalgebra::Point2<Real>, Real)],
+        balls: &[(Point2<Real>, Real)],
         resolution: (usize, usize),
         iso_value: Real,
         padding: Real,
@@ -56,7 +57,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // 2) Fill a grid with the summed "influence" minus iso_value
         /// **Mathematical Foundation**: 2D metaball influence I(p) = r²/(|p-c|² + ε)
         /// **Optimization**: Iterator-based computation with early termination for distant points.
-        fn scalar_field(balls: &[(nalgebra::Point2<Real>, Real)], x: Real, y: Real) -> Real {
+        fn scalar_field(balls: &[(Point2<Real>, Real)], x: Real, y: Real) -> Real {
             balls
                 .iter()
                 .map(|(center, radius)| {

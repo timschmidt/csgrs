@@ -4,14 +4,14 @@ use crate::aabb::Aabb;
 use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
-use crate::math_ndsp::{Point3, Vector3};
+use crate::math_ndsp::{Point3, Vector3, Scalar};
 use std::sync::OnceLock;
 type Real = f64;
 
 /// A polygon, defined by a list of vertices.
 /// - `S` is the generic metadata type, stored as `Option<S>`.
 #[derive(Debug, Clone)]
-pub struct Polygon<S: Clone> {
+pub struct Polygon<S: Clone, T: Scalar> {
     /// Vertices defining the Polygon's shape
     pub vertices: Vec<Vertex>,
 
@@ -19,7 +19,7 @@ pub struct Polygon<S: Clone> {
     pub plane: Plane,
 
     /// Lazily‑computed axis‑aligned bounding box of the Polygon
-    pub bounding_box: OnceLock<Aabb>,
+    pub bounding_box: OnceLock<Aabb<T>>,
 
     /// Generic metadata associated with the Polygon
     pub metadata: Option<S>,

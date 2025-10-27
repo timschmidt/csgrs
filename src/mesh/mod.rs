@@ -1,24 +1,12 @@
 //! `Mesh` struct and implementations of the `CSGOps` trait for `Mesh`
 
 use crate::aabb::Aabb;
-use crate::math_ndsp::consts::{
-    parry3d::{
-        bounding_volume::{BoundingVolume},
-        query::RayCast,
-        shape::Shape,
-    },
-    rapier3d::prelude::{
-        ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
-        SharedShape, TriMesh, Triangle,
-    },
-    {EPSILON},
-};
 use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
 use crate::math_ndsp::{
-    Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
+    Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3, Scalar
 };
 use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 type Real = f64;
@@ -49,19 +37,32 @@ pub mod smoothing;
 pub mod tpms;
 pub mod vertex;
 
+#[cfg(feature = "parry")]
+use parry3d::{
+	bounding_volume::{BoundingVolume},
+	query::RayCast,
+	shape::Shape,
+};
+
+#[cfg(feature = "rapier")]
+use rapier3d::prelude::{
+	ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
+	SharedShape, TriMesh, Triangle,
+};
+
 #[derive(Clone, Debug)]
-pub struct Mesh<S: Clone + Send + Sync + Debug> {
+pub struct Mesh<S: Clone + Send + Sync + Debug, T: Scalar> {
     /// 3D polygons for volumetric shapes
-    pub polygons: Vec<Polygon<S>>,
+    pub polygons: Vec<Polygon<S, T>>,
 
     /// Lazily calculated AABB that spans `polygons`.
-    pub bounding_box: OnceLock<Aabb>,
+    pub bounding_box: OnceLock<Aabb<T>>,
 
     /// Metadata
     pub metadata: Option<S>,
 }
 
-impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S> {
+impl<S: Clone + Send + Sync + Debug + PartialEq, T: Scalar> Mesh<S, T> {
     /// Compare just the `metadata` fields of two meshes
     #[inline]
     pub fn same_metadata(&self, other: &Self) -> bool {
@@ -70,7 +71,7 @@ impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S> {
 
     /// Example: retain only polygons whose metadata matches `needle`
     #[inline]
-    pub fn filter_polygons_by_metadata(&self, needle: &S) -> Mesh<S> {
+    pub fn filter_polygons_by_metadata(&self, needle: &S) -> Mesh<S, T> {
         let polys = self
             .polygons
             .iter()
@@ -86,9 +87,9 @@ impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> Mesh<S> {
+impl<S: Clone + Send + Sync + Debug, T: Scalar> Mesh<S, T> {
     /// Build a Mesh from an existing polygon list
-    pub fn from_polygons(polygons: &[Polygon<S>], metadata: Option<S>) -> Self {
+    pub fn from_polygons(polygons: &[Polygon<S, T>], metadata: Option<S>) -> Self {
         let mut mesh = Mesh::new();
         mesh.polygons = polygons.to_vec();
         mesh.metadata = metadata;
@@ -97,9 +98,9 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
     /// Split polygons into (may_touch, cannot_touch) using bounding‑box tests
     fn partition_polys(
-        polys: &[Polygon<S>],
+        polys: &[Polygon<S, T>],
         other_bb: &Aabb,
-    ) -> (Vec<Polygon<S>>, Vec<Polygon<S>>) {
+    ) -> (Vec<Polygon<S, T>>, Vec<Polygon<S, T>>) {
         polys
             .iter()
             .cloned()
@@ -141,7 +142,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
     /// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
     /// This results in a triangular mesh with more detail.
-    pub fn subdivide_triangles(&self, levels: NonZeroU32) -> Mesh<S> {
+    pub fn subdivide_triangles(&self, levels: NonZeroU32) -> Mesh<S, T> {
         #[cfg(feature = "parallel")]
         let new_polygons: Vec<Polygon<S>> = self
             .polygons
@@ -232,7 +233,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     /// The angle is computed as the angle between the normal vectors of the two polygons.
     ///
     /// Returns the angle in radians.
-    fn dihedral_angle(p1: &Polygon<S>, p2: &Polygon<S>) -> Real {
+    fn dihedral_angle(p1: &Polygon<S, T>, p2: &Polygon<S, T>) -> <T> {
         let n1 = p1.plane.normal();
         let n2 = p2.plane.normal();
         let dot = n1.dot(&n2).clamp(-1.0, 1.0);
@@ -270,6 +271,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     /// A `Vec` of `(Point3<Real>, Real)` where:
     /// - `Point3<Real>` is the intersection coordinate in 3D,
     /// - `Real` is the distance (the ray parameter t) from `origin`.
+    #[cfg(feature = "rapier")]
     pub fn ray_intersections(
         &self,
         origin: &Point3<Real>,
@@ -309,6 +311,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     ///
     /// ## Errors
     /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
+    #[cfg(feature = "rapier")]
     pub fn to_rapier_shape(&self) -> SharedShape {
         let (vertices, indices) = self.get_vertices_and_indices();
         let trimesh = TriMesh::new(vertices, indices).unwrap();
@@ -320,6 +323,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     ///
     /// ## Errors
     /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
+    #[cfg(feature = "parry")]
     pub fn to_trimesh(&self) -> Option<TriMesh> {
         let (vertices, indices) = self.get_vertices_and_indices();
         TriMesh::new(vertices, indices).ok()
@@ -344,6 +348,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     /// assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
     /// assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, -6.0)));
     /// ```
+    #[cfg(feature = "rapier")]
     pub fn contains_vertex(&self, point: &Point3<Real>) -> bool {
         self.ray_intersections(point, &Vector3::new(1.0, 1.0, 1.0))
             .len()
@@ -352,6 +357,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     }
 
     /// Approximate mass properties using Rapier.
+    #[cfg(feature = "rapier")]
     pub fn mass_properties(
         &self,
         density: Real,
@@ -369,6 +375,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     /// Create a Rapier rigid body + collider from this Mesh, using
     /// an axis-angle `rotation` in 3D (the vector’s length is the
     /// rotation in radians, and its direction is the axis).
+    #[cfg(feature = "rapier")]
     pub fn to_rigid_body(
         &self,
         rb_set: &mut RigidBodySet,
@@ -446,7 +453,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
+impl<S: Clone + Send + Sync + Debug, T: Scalar> CSG for Mesh<S> {
     /// Returns a new empty Mesh
     fn new() -> Self {
         Mesh {
@@ -739,7 +746,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
+impl<S: Clone + Send + Sync + Debug, T: Scalar> From<Sketch<S>> for Mesh<S> {
     /// Convert a Sketch into a Mesh.
     fn from(sketch: Sketch<S>) -> Self {
         /// Helper function to convert a geo::Polygon to a Vec<crate::mesh::polygon::Polygon>

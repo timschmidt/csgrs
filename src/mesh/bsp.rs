@@ -26,7 +26,7 @@ pub struct Node<S: Clone> {
 
     /// Polygons that lie *exactly* on `plane`
     /// (after the node has been built).
-    pub polygons: Vec<Polygon<S>>,
+    pub polygons: Vec<Polygon<S, T>>,
 }
 
 impl<S: Clone + Send + Sync + Debug> Default for Node<S> {
