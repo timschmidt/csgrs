@@ -151,7 +151,6 @@ fn find_collisions(
             }
         }
     }
-
 }
 
 fn build_internal_boxes(

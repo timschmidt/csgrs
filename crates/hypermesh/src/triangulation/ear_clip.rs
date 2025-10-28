@@ -12,7 +12,7 @@ type Row3u = RowVector3<usize>;
 
 #[derive(Clone)]
 pub struct Ecvt {
-    pub idx: usize,     // vert idx
+    pub idx: usize, // vert idx
     pub pos: Row2f, // vert pos
     pub dir: Row2f, // right dir
     pub ear: Option<Weak<RefCell<Ecvt>>>, // itr to self, just needed for quick removal from the ear queue
@@ -216,7 +216,7 @@ type EvPtr = Rc<RefCell<Ecvt>>;
 /// When an ear vert is clipped, its neighbors get linked, so they get unlinked
 /// from it, but it is still linked to them.
 fn clipped(v: &EvPtr) -> bool { !Rc::ptr_eq(&v.borrow().ptr_l_of_r(), v) }
-fn folded(v: &EvPtr) -> bool { Rc::ptr_eq(&v.borrow().ptr_l(), &v.borrow().ptr_r()) }
+fn folded(v: &EvPtr)  -> bool { Rc::ptr_eq(&v.borrow().ptr_l(), &v.borrow().ptr_r()) }
 
 impl PartialEq  for Ecvt { fn eq(&self, other: &Self) -> bool { self.cost == other.cost } }
 impl PartialOrd for Ecvt { fn partial_cmp(&self, other: &Self) -> Option<Ordering> { self.cost.partial_cmp(&other.cost) } }
@@ -272,7 +272,7 @@ impl Ord for EvPtrMaxPosX {
     }
 }
 
-/**
+/*
  * Ear-clipping triangulator based on David Eberly's approach from Geometric
  * Tools, but adjusted to handle epsilon-valid polygons, and including a
  * fallback that ensures a manifold triangulation even for overlapping polygons.
@@ -344,7 +344,7 @@ impl EarClip {
         bl.dir = safe_normalize(br.pos - bl.pos);
     }
 
-    /// Apply `func` to each unclipped vertex in a polygonal circular list starting at `first`.
+    // Apply `func` to each unclipped vertex in a polygonal circular list starting at `first`.
     fn do_loop<F>(v: &mut EvPtr, mut func: F) -> Option<EvPtr> where F: FnMut(&mut EvPtr) {
         let mut w = Rc::clone(v);
         loop {
@@ -452,8 +452,8 @@ impl EarClip {
     }
 
 
-    /// Create a collider of all vertices in this polygon, each expanded by epsilon_.
-    /// Each ear uses this BVH to quickly find a subset of vertices to check for cost.
+    // Create a collider of all vertices in this polygon, each expanded by epsilon_.
+    // Each ear uses this BVH to quickly find a subset of vertices to check for cost.
     fn vert_collider(start: &mut EvPtr) -> IdxCollider {
         let mut pts = vec![];
         let mut rfs = vec![];
@@ -466,9 +466,9 @@ impl EarClip {
         IdxCollider { pts, rfs }
     }
 
-    /// All holes must be key-holed (attached to an outer polygon) before ear clipping can commerce.
-    /// Instead of relying on sorting, which may be incorrect due to epsilon,
-    /// we check for polygon edges both ahead and behind to ensure all valid options are found.
+    // All holes must be key-holed (attached to an outer polygon) before ear clipping can commerce.
+    // Instead of relying on sorting, which may be incorrect due to epsilon,
+    // we check for polygon edges both ahead and behind to ensure all valid options are found.
     fn cut_key_hole(&mut self, v: &EvPtrMaxPosX) {
         let vp = v.0.borrow().pos;
         let eps = self.epsilon;
@@ -538,9 +538,9 @@ impl EarClip {
         Rc::clone(&con)
     }
 
-    /// Creates a keyhole between the start vert of a hole and the connector vert of an outer polygon.
-    /// To do this, both verts are duplicated and reattached. This process may create degenerate ears,
-    /// so these are clipped if necessary to keep from confusing sub_sequent key-holing operations.
+    // Creates a keyhole between the start vert of a hole and the connector vert of an outer polygon.
+    // To do this, both verts are duplicated and reattached. This process may create degenerate ears,
+    // so these are clipped if necessary to keep from confusing sub_sequent key-holing operations.
     fn join_polygons(&mut self, sta: &EvPtr, con: &EvPtr) {
         let newSta = Rc::new(RefCell::new(sta.borrow().clone()));
         let newCon = Rc::new(RefCell::new(con.borrow().clone()));
@@ -556,8 +556,8 @@ impl EarClip {
         self.clip_degenerate(&newCon);
     }
 
-    /// Recalculate the cost of the Vert v ear,
-    /// updating it in the queue by removing and reinserting it.
+    // Recalculate the cost of the Vert v ear,
+    // updating it in the queue by removing and reinserting it.
     fn process_ear(&mut self, v: &mut EvPtr, col: &IdxCollider) {
         let taken = { let mut b = v.borrow_mut(); b.ear.take() };
         if let Some(e) = taken {

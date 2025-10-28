@@ -203,7 +203,6 @@ impl <'a> Triangulator<'a>  {
         let proj  = get_axis_aligned_projection(&self.fnmls[fid]);
         let loops = self.assemble_halfs(fid);
         let polys = self.project_polygons(&loops, &proj);
-        triangulate_from_poly_idcs(&polys, self.epsilon, convex)
-            .iter().map(|t| self.get_indices(t)).collect()
+        triangulate_from_poly_idcs(&polys, self.epsilon, convex).iter().map(|t| self.get_indices(t)).collect()
     }
 }

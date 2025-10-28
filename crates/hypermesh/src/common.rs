@@ -28,18 +28,25 @@ impl Default for Halfedge {
 impl Halfedge {
     pub fn new(tail: usize, head: usize, pair: usize) -> Self { Self { tail, head, pair } }
     pub fn is_forward(&self) -> bool { self.tail < self.head }
-    pub fn has_tail(&self) -> bool { self.tail != usize::MAX }
-    pub fn has_head(&self) -> bool { self.head != usize::MAX }
-    pub fn has_pair(&self) -> bool { self.pair != usize::MAX }
-    pub fn no_tail(&self) -> bool { self.tail == usize::MAX }
-    pub fn no_head(&self) -> bool { self.head == usize::MAX }
-    pub fn no_pair(&self) -> bool { self.pair == usize::MAX }
-
+    pub fn has_tail(&self) -> bool { self.tail != usize::MAX } // todo: needless
+    pub fn has_head(&self) -> bool { self.head != usize::MAX } // todo: needless
+    pub fn has_pair(&self) -> bool { self.pair != usize::MAX } // todo: needless
+    pub fn no_tail(&self) -> bool { self.tail == usize::MAX }  // todo: needless
+    pub fn no_head(&self) -> bool { self.head == usize::MAX }  // todo: needless
+    pub fn no_pair(&self) -> bool { self.pair == usize::MAX }  // todo: needless
     pub fn tail(&self) -> Option<usize> { if self.tail == usize::MAX { None } else { Some(self.tail) } }
     pub fn head(&self) -> Option<usize> { if self.head == usize::MAX { None } else { Some(self.head) } }
     pub fn pair(&self) -> Option<usize> { if self.pair == usize::MAX { None } else { Some(self.pair) } }
     // need partial eq
 }
+
+pub fn face_of(hid: usize) -> usize { hid / 3 }
+pub fn next_of(hid: usize) -> usize {
+    let mut hid = hid + 1;
+    if hid % 3 == 0 { hid -= 3;}
+    hid
+}
+
 
 #[derive(Clone, Debug)]
 pub struct Tref {
@@ -128,12 +135,6 @@ pub fn is_ccw_3d(
 pub fn safe_normalize(v: Row2<f64>) -> Row2<f64> {
     let n = v.normalize();
     if n.x.is_finite() && n.y.is_finite() { n } else { Row2::new(0., 0.) }
-}
-
-pub fn next_of(curr: usize) -> usize {
-    let mut curr = curr + 1;
-    if curr % 3 == 0 { curr -= 3;}
-    curr
 }
 
 /*

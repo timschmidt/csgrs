@@ -146,7 +146,7 @@ fn add_new_edge_verts(
         let dir1 = direction ^ forward;
 
         for j in 0..inclusion.abs() as usize {
-            edges_pos.get_mut(&hid_p).unwrap().push(EdgePos { val: 0., vid: vid_r + j, cid: i + offset, is_tail: direction });
+            edges_pos.get_mut(&hid_p).unwrap().push(EdgePos{ val: 0., vid: vid_r + j, cid: i + offset, is_tail: direction });
         }
 
         direction = !direction;
@@ -213,7 +213,7 @@ fn append_partial_edges(
     pos_res: &[Row3f],                           // the vert pos of mfd_r, already fulfilled so far
     forward: bool,                               //
     half_res: &mut [Halfedge],                   // halfedge data of mfd_r, empty yet
-    half_tri: &mut [Tref],                     // map from halfedge in mfd_r to triangle info
+    half_tri: &mut [Tref],                       // map from halfedge in mfd_r to triangle info
     half_pos: &mut HashMap<usize, Vec<EdgePos>>, //
     face_ptr_r: &mut [i32],                      //
     whole_flag: &mut [bool],                     // a flag to find out a halfedge from mfd_p is entirely usable in mfd_r
@@ -282,13 +282,13 @@ fn append_partial_edges(
 }
 
 fn append_new_edges(
-    pos_res: &[Row3f],                                 // the vert pos of mfd_r, already fulfilled so far
+    pos_res: &[Row3f],                                     // the vert pos of mfd_r, already fulfilled so far
     fid_pq2r: &[i32],                                      //
     nfaces_p: usize,                                       //
     face_ptr_r: &mut[i32],                                 //
     half_new: &mut HashMap<(usize, usize), Vec<EdgePos>>,  //
     half_res: &mut [Halfedge],                             // the halfedge data of mfd_r, empty yet
-    half_tri: &mut [Tref],                               //
+    half_tri: &mut [Tref],                                 //
 ) {
     for v in half_new.into_iter() {
         let (fid_p, fid_q) = v.0;
@@ -375,7 +375,7 @@ fn append_whole_edges(
 fn update_reference(
     mfd_p: &Manifold,
     mfd_q: &Manifold,
-    tref: &mut [Tref]
+    tref: &mut[Tref],
 ) {
     for r in tref.iter_mut() {
         let fid = r.face_id;
