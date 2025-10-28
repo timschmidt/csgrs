@@ -1,11 +1,11 @@
-use nalgebra::RowVector3 as Row3;
-use crate::Halfedge;
+use nalgebra::RowVector3;
 use core::cmp::Ordering;
-use crate::common::next_of;
+use crate::common::{next_of, Halfedge};
+type Row3f = RowVector3<f64>;
 
 pub fn compute_coplanar_idx(
-    ps: &[Row3<f64>],
-    ns: &[Row3<f64>],
+    ps: &[Row3f],
+    ns: &[Row3f],
     hs: &[Halfedge],
     tol: f64
 ) -> Vec<i32> {

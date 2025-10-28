@@ -1,12 +1,12 @@
-use nalgebra::{RowVector3 as Row3};
-use crate::Halfedge;
-use crate::common::{TriRef, get_axis_aligned_projection, is_ccw_2d};
+use nalgebra::RowVector3;
+use crate::common::{Halfedge, Tref, get_axis_aligned_projection, is_ccw_2d};
 use super::{collapse_edge, form_loops, is01_longest_2d, next_of, remove_if_folded, HalfedgeOps};
+type Row3f = RowVector3<f64>;
 
 fn record(
     hs: &[Halfedge],
-    ps: &[Row3<f64>],
-    ns: &[Row3<f64>],
+    ps: &[Row3f],
+    ns: &[Row3f],
     hid: usize,
     oft: usize,
     tol: f64
@@ -57,9 +57,9 @@ fn record(
 // todo: need precise check...
 pub fn swap_degenerates(
     hs: &mut Vec<Halfedge>,
-    ps: &mut Vec<Row3<f64>>,
-    ns: &mut [Row3<f64>],
-    ts: &mut [TriRef],
+    ps: &mut Vec<Row3f>,
+    ns: &mut [Row3f],
+    ts: &mut [Tref],
     oft: usize,
     tol: f64
 ) {
@@ -85,9 +85,9 @@ pub fn swap_degenerates(
 // todo need precise check...
 pub fn recursive_edge_swap(
     hs: &mut Vec<Halfedge>,
-    ps: &mut Vec<Row3<f64>>,
-    ns: &mut [Row3<f64>],
-    ts: &mut [TriRef],
+    ps: &mut Vec<Row3f>,
+    ns: &mut [Row3f],
+    ts: &mut [Tref],
     hid: usize,
     tag: &mut i32,
     visited: &mut [i32],

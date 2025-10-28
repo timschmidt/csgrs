@@ -1,27 +1,28 @@
-use nalgebra::{RowVector3 as Row3};
+use nalgebra::{RowVector3};
 use std::mem;
-use crate::hmesh::{Half, Vert};
+use crate::hmesh::{Half};
 use super::intersect::intersect;
 use super::kernel02::Kernel02;
 use super::kernel11::Kernel11;
+type Row3f = RowVector3<f64>;
 
 pub struct Kernel12<'a> {
-    pub halfs_p: &'a[Half],
-    pub halfs_q: &'a[Half],
-    pub verts_p: &'a[Vert],
+    pub half_p: &'a[Half],
+    pub half_q: &'a[Half],
+    pub vpos_p: &'a[Row3f],
     pub k02: Kernel02<'a>,
     pub k11: Kernel11<'a>,
     pub forward: bool,
 }
 
 impl<'a> Kernel12<'a> {
-    pub fn op (&self, p1: usize, q2: usize) -> (i32, Option<Row3<f64>>) {
+    pub fn op (&self, p1: usize, q2: usize) -> (i32, Option<Row3f>) {
         let mut x12 = 0;
-        let mut v12: Option<Row3<f64>> = None;
-        let mut xzy_lr0 = [Row3::zeros(); 2];
-        let mut xzy_lr1 = [Row3::zeros(); 2];
+        let mut v12: Option<Row3f> = None;
+        let mut xzy_lr0 = [Row3f::zeros(); 2];
+        let mut xzy_lr1 = [Row3f::zeros(); 2];
         let mut shadows = false;
-        let h = self.halfs_p[p1].clone();
+        let h = self.half_p[p1].clone();
 
         let mut k = 0;
 
@@ -32,7 +33,7 @@ impl<'a> Kernel12<'a> {
                 x12 += s * if f { 1 } else { -1 };
                 if k < 2 && (k == 0 || (s != 0) != shadows) {
                     shadows = s != 0;
-                    xzy_lr0[k] = self.verts_p[*vid].pos();
+                    xzy_lr0[k] = self.vpos_p[*vid];
                     // Swap y and z
                     let temp = xzy_lr0[k].y;
                     xzy_lr0[k].y = xzy_lr0[k].z;
@@ -46,7 +47,7 @@ impl<'a> Kernel12<'a> {
 
         for i in 0..3 {
             let q1 = 3 * q2 + i;
-            let half = &self.halfs_q[q1];
+            let half = &self.half_q[q1];
             let q1f = if half.is_forward() { q1 } else { half.twin().id };
 
             let (s, op_xyzz) = if self.forward { self.k11.op(p1, q1f) } else { self.k11.op(q1f, p1) };
@@ -73,7 +74,7 @@ impl<'a> Kernel12<'a> {
         } else {
             assert_eq!(k, 2, "Boolean manifold error: v12");
             let xzyy = intersect(xzy_lr0[0], xzy_lr0[1], xzy_lr1[0], xzy_lr1[1]);
-            v12 = Some(Row3::new(xzyy[0], xzyy[2], xzyy[1]));
+            v12 = Some(Row3f::new(xzyy[0], xzyy[2], xzyy[1]));
         }
 
         (x12, v12)

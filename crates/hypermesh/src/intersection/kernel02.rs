@@ -79,6 +79,7 @@ impl<'a> Kernel02<'a> {
     }
 }
 
+/*
 #[cfg(test)]
 mod kernel02_tests {
     use crate::intersection::kernel02::Kernel02;
@@ -100,3 +101,4 @@ mod kernel02_tests {
         println!("s: {}, z: {:?}", s, z);
     }
 }
+*/

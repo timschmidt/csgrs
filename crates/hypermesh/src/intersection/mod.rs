@@ -13,6 +13,7 @@ use crate::intersection::kernel12::Kernel12;
 use crate::bounds::{BoundingBox, Query};
 use crate::collider::{Recorder};
 use crate::manifold::Manifold;
+type Row3f = RowVector3<f64>;
 
 /**
  * The notation in these files is abbreviated due to the complexity of the
@@ -60,12 +61,12 @@ struct Intersection12Recorder<'a> {
     pub forward: bool,
     pub p1q2: Vec<[i32; 2]>,
     pub x12: Vec<i32>,
-    pub v12: Vec<RowVector3<f64>>,
+    pub v12: Vec<Row3f>,
 }
 
 impl <'a> Recorder for Intersection12Recorder<'a> {
     fn record(&mut self, query_idx: usize, leaf_idx: usize) {
-        let h = &self.mfd_a.hmesh.halfs[query_idx]; // to buffer between query idx to element's idx, the original uses TmpEdge
+        let h = &self.mfd_a.halfs()[query_idx]; // to buffer between query idx to element's idx, the original uses TmpEdge
         let (x12, op_v12) = self.k12.op(h.id, leaf_idx);
         if let Some(v12) = op_v12 {
             //println!("hid: {}, fid: {}, x12: {}", h.id, leaf_idx, x12);
@@ -84,37 +85,37 @@ pub fn intersect12 (
     p1q2: &mut Vec<[i32; 2]>,
     expand: f64,
     forward: bool
-) -> (Vec<i32>, Vec<RowVector3<f64>>) {
+) -> (Vec<i32>, Vec<Row3f>) {
     let a = if forward { p } else { q };
     let b = if forward { q } else { p };
 
     let k02 = Kernel02{
-        vpos_p: &a.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
-        vpos_q: &b.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
-        half_q: &b.hmesh.halfs,
-        normal: &p.hmesh.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
+        vpos_p: &a.pos,
+        vpos_q: &b.pos,
+        half_q: &b.halfs(),
+        normal: &p.vert_normals,
         expand,
         forward
     };
     let k11 = Kernel11{
-        vpos_p: &p.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
-        half_p: &p.hmesh.halfs,
-        vpos_q: &q.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
-        half_q: &q.hmesh.halfs,
-        normal: &p.hmesh.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
+        vpos_p: &p.pos,
+        half_p: &p.halfs(),
+        vpos_q: &q.pos,
+        half_q: &q.halfs(),
+        normal: &p.vert_normals,
         expand,
     };
 
     let k12 = Kernel12{
-        verts_p: &a.hmesh.verts,
-        halfs_p: &a.hmesh.halfs,
-        halfs_q: &b.hmesh.halfs,
+        vpos_p: &a.pos,
+        half_p: &a.halfs(),
+        half_q: &b.halfs(),
         forward,
         k02,
         k11,
     };
 
-    let bbs = a.hmesh.halfs.iter()
+    let bbs = a.halfs().iter()
         .filter(|h| h.tail().id < h.head().id)
         .map(|h|
             Query::Bb(BoundingBox::new(h.id, &vec![h.tail().pos(), h.head().pos()]))
@@ -124,16 +125,16 @@ pub fn intersect12 (
         mfd_a: a,
         mfd_b: b,
         k12: &k12,
-        p1q2: Vec::new(),
-        x12: Vec::new(),
-        v12: Vec::new(),
+        p1q2: vec![],
+        x12: vec![],
+        v12: vec![],
         forward,
     };
 
      b.collider.collision(&bbs, &mut rec);
 
     let mut x12: Vec<i32> = vec![];
-    let mut v12: Vec<RowVector3<f64>> = vec![];
+    let mut v12: Vec<Row3f> = vec![];
     let mut seq: Vec<usize> = (0..rec.p1q2.len()).collect();
     seq.sort_by(|&a, &b| (rec.p1q2[a][0], rec.p1q2[a][1]).cmp(&(rec.p1q2[b][0], rec.p1q2[b][1])));
 
@@ -151,12 +152,12 @@ pub fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<
     let a = if forward {p} else {q};
     let b = if forward {q} else {p};
 
-    let mut w03 = vec![0; a.hmesh.verts.len()];
+    let mut w03 = vec![0; a.nv()];
     let k02 = Kernel02 {
-        vpos_p: &a.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
-        vpos_q: &b.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
-        half_q: &b.hmesh.halfs,
-        normal: &p.hmesh.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
+        vpos_p: &a.pos,
+        vpos_q: &b.pos,
+        half_q: &b.halfs(),
+        normal: &p.vert_normals,
         expand,
         forward,
     };
@@ -166,7 +167,6 @@ pub fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<
     ).collect::<Vec<_>>();
     let mut rec = SimpleRecorder::new(
         |a, b| {
-            //println!("w03, a: {}, b: {}", a, b);
             let (s02, z02) = k02.op(a, b);
             if z02.is_some() { w03[a] += s02 * if forward {1} else {-1}; }
         }
@@ -185,12 +185,12 @@ pub struct Boolean3<'a> {
     pub x21: Vec<i32>,
     pub w03: Vec<i32>,
     pub w30: Vec<i32>,
-    pub v12: Vec<RowVector3<f64>>,
-    pub v21: Vec<RowVector3<f64>>,
+    pub v12: Vec<Row3f>,
+    pub v21: Vec<Row3f>,
 }
 
 impl<'a> Boolean3<'a> {
-    /*
+/*
 fn new(&self, p: &'a Manifold, q: &'a Manifold, op :OpType) -> Self {
             self.mfd_p = p;
             self.mfd_q = q;
@@ -209,7 +209,7 @@ fn new(&self, p: &'a Manifold, q: &'a Manifold, op :OpType) -> Self {
             self.w03 = Winding03(inP, inQ, expandP_, true);
             self.w30 = Winding03(inP, inQ, expandP_, false);
             }
-    */
+*/
 }
 
 #[derive(PartialEq)]

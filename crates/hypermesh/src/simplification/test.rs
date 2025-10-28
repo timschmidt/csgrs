@@ -1,8 +1,7 @@
 
 #[test]
 fn test_collapse() {
-    use crate::common::TriRef;
-    use crate::Halfedge;
+    use crate::common::{Halfedge, Tref};
     use nalgebra::{RowVector3 as Row3};
     use super::collapse_collinear_edges;
 
@@ -126,30 +125,30 @@ fn test_collapse() {
     ];
 
     let mut refs = vec![
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 3},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 5},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 2},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 2},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 2},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 2},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 2},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 2},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 2},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 2},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 2},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 1},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 0},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 4},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 3},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 1},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 5},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 0},
-        TriRef{origin_id: -1, mesh_id: 1, face_id: 0, coplanar_id: 4},
-        TriRef{origin_id: -1, mesh_id: 2, face_id: 0, coplanar_id: 0},
-        TriRef{origin_id: -1, mesh_id: 2, face_id: 0, coplanar_id: 0},
-        TriRef{origin_id: -1, mesh_id: 2, face_id: 0, coplanar_id: 3},
-        TriRef{origin_id: -1, mesh_id: 2, face_id: 0, coplanar_id: 2},
-        TriRef{origin_id: -1, mesh_id: 2, face_id: 0, coplanar_id: 2},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -2, planar_id: 3},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 5},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 2},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 2},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 2},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 2},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 2},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 2},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 2},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 2},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 2},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 1},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 0},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 4},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 3},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 1},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 5},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 0},
+        Tref{mesh_id: 1, face_id: 0, origin_id: -1, planar_id: 4},
+        Tref{mesh_id: 2, face_id: 0, origin_id: -1, planar_id: 0},
+        Tref{mesh_id: 2, face_id: 0, origin_id: -1, planar_id: 0},
+        Tref{mesh_id: 2, face_id: 0, origin_id: -1, planar_id: 3},
+        Tref{mesh_id: 2, face_id: 0, origin_id: -1, planar_id: 2},
+        Tref{mesh_id: 2, face_id: 0, origin_id: -1, planar_id: 2},
     ];
 
     collapse_collinear_edges(

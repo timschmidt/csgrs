@@ -10,7 +10,7 @@ pub struct BoundingBox {
 #[derive(Clone, Debug)]
 pub enum Query {
     Bb(BoundingBox),
-    Pt(BoundingBox),
+    Pt(BoundingBox), // todo: temporary using BoundingBox, but it should be a point here
 }
 
 impl BoundingBox {

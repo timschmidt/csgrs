@@ -1,9 +1,7 @@
-use std::{mem, usize};
+use std::mem;
 use std::cmp::PartialEq;
 use std::sync::{Arc, Weak};
-use nalgebra::{DMatrix, RealField, RowVector3};
-pub trait FloatType: RealField + Clone {}
-
+use nalgebra::{DMatrix, RowVector3};
 
 /// Hmesh preserves the order of pos and idx in any cases.
 /// Edges are ordered so as the edge is forward (tail idx < head idx)

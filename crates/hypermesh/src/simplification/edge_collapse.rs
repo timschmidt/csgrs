@@ -1,13 +1,13 @@
-use nalgebra::{RowVector3 as Row3};
-use crate::common::{TriRef, is_ccw_3d};
-use crate::Halfedge;
+use nalgebra::{RowVector3};
+use crate::common::{Halfedge, Tref, is_ccw_3d};
 use super::{form_loops, next_of, remove_if_folded, HalfedgeOps};
+type Row3f = RowVector3<f64>;
 
 // Check around a halfedges from the same tail vertex.
 // If they consist of only two tris, then their edge is collapsable.
 fn record_if_collinear(
     hs: &[Halfedge],
-    rs: &[TriRef],
+    rs: &[Tref],
     hid: usize,
     nv: usize,
 ) -> bool {
@@ -34,7 +34,7 @@ fn record_if_collinear(
 
 fn record_if_short(
     hs: &[Halfedge],
-    ps: &[Row3<f64>],
+    ps: &[Row3f],
     hid: usize,
     nv: usize,
     ep: f64,
@@ -48,9 +48,9 @@ fn record_if_short(
 
 pub fn collapse_edge(
     hs: &mut Vec<Halfedge>,
-    ps: &mut Vec<Row3<f64>>,
-    ns: &mut [Row3<f64>],
-    rs: &mut [TriRef],
+    ps: &mut Vec<Row3f>,
+    ns: &mut [Row3f],
+    rs: &mut [Tref],
     hid: usize,
     store: &mut Vec<usize>, // storing the halfedge data for form_loops
     epsilon: f64,
@@ -111,7 +111,7 @@ pub fn collapse_edge(
         cur = hs.pair_hid_of(cur);
     }
 
-    ps[to_rmv.tail] = Row3::new(f64::MAX, f64::MAX, f64::MAX);
+    ps[to_rmv.tail] = Row3f::new(f64::MAX, f64::MAX, f64::MAX);
     hs.collapse_triangle(&tri1);
 
     let mut cur = bgn;
@@ -137,9 +137,9 @@ pub fn collapse_edge(
 
 pub fn collapse_collinear_edges(
     hs: &mut Vec<Halfedge>,
-    ps: &mut Vec<Row3<f64>>,
-    ns: &mut [Row3<f64>],
-    rs: &mut [TriRef],
+    ps: &mut Vec<Row3f>,
+    ns: &mut [Row3f],
+    rs: &mut [Tref],
     nv: usize,
     ep: f64
 ) {
@@ -156,9 +156,9 @@ pub fn collapse_collinear_edges(
 
 pub fn collapse_short_edges(
     hs: &mut Vec<Halfedge>,
-    ps: &mut Vec<Row3<f64>>,
-    ns: &mut [Row3<f64>],
-    rs: &mut [TriRef],
+    ps: &mut Vec<Row3f>,
+    ns: &mut [Row3f],
+    rs: &mut [Tref],
     nv: usize,
     ep: f64
 ) {

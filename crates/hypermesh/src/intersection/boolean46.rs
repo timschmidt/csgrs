@@ -1,21 +1,23 @@
-use nalgebra::{RowVector3 as Row3};
+use nalgebra::RowVector3;
 use std::collections::HashMap;
 use std::mem;
-use crate::{OpType};
-use crate::common::TriRef;
+use crate::OpType;
+use crate::common::{Halfedge, Tref};
 use crate::hmesh::Half;
-use crate::manifold::{Halfedge, Manifold};
+use crate::manifold::Manifold;
 use crate::bounds::BoundingBox;
 use crate::triangulation::Triangulator;
 use crate::triangulation::halfedge::{compute_halfs, reorder_halfedges};
 use crate::simplification::simplify_topology;
 use super::Boolean3;
+type Row3f = RowVector3<f64>;
+type Row3u = RowVector3<usize>;
 
 fn duplicate_verts(
     inclusion : &[i32],
     vert_r    : &[i32],
-    vert_pos_p: &[Row3<f64>],
-    vert_pos_r: &mut [Row3<f64>],
+    vert_pos_p: &[Row3f],
+    vert_pos_r: &mut [Row3f],
     vid: usize
 ) {
     let n = inclusion[vid].abs() as usize;
@@ -55,20 +57,20 @@ fn size_output(
     p1q2: &Vec<[i32; 2]>,
     p2q1: &Vec<[i32; 2]>,
     invert_q: bool,
-    fnmls: &mut Vec<Row3<f64>>,
+    fnmls: &mut Vec<Row3f>,
 ) -> (Vec<i32>, Vec<i32>) {
-    let mut side_p = vec![0; mfd_p.hmesh.n_face];
-    let mut side_q = vec![0; mfd_q.hmesh.n_face];
-    let nfp = mfd_p.hmesh.n_face;
-    let nfq = mfd_q.hmesh.n_face;
+    let mut side_p = vec![0; mfd_p.nt()];
+    let mut side_q = vec![0; mfd_q.nt()];
+    let nfp = mfd_p.nt();
+    let nfq = mfd_q.nt();
 
     // equivalent to CountVerts
-    for h in mfd_p.hmesh.halfs.iter() { side_p[h.face().id] += i03[h.tail().id].abs(); }
-    for h in mfd_q.hmesh.halfs.iter() { side_q[h.face().id] += i30[h.tail().id].abs(); }
+    for h in mfd_p.halfs().iter() { side_p[h.face().id] += i03[h.tail().id].abs(); }
+    for h in mfd_q.halfs().iter() { side_q[h.face().id] += i30[h.tail().id].abs(); }
 
     // equivalent to CountNewVerts
     for i in 0..i12.len() {
-        let h = &mfd_p.hmesh.halfs[p1q2[i][0] as usize];
+        let h = &mfd_p.halfs()[p1q2[i][0] as usize];
         let inc = i12[i].abs();
         side_p[h.face().id] += inc;
         side_p[h.twin().face().id] += inc;
@@ -76,7 +78,7 @@ fn size_output(
     }
 
     for i in 0..i21.len() {
-        let h = &mfd_q.hmesh.halfs[p2q1[i][1] as usize];
+        let h = &mfd_q.halfs()[p2q1[i][1] as usize];
         let inc = i21[i].abs();
         side_q[h.face().id] += inc;
         side_q[h.twin().face().id] += inc;
@@ -91,7 +93,7 @@ fn size_output(
     inclusive_scan(&keep_fs, &mut face_pq2r[1..], 0);
     let n_face_r = *face_pq2r.last().unwrap() as usize;
     face_pq2r.truncate(nfp + nfq);
-    fnmls.resize(n_face_r, Row3::zeros());
+    fnmls.resize(n_face_r, Row3f::zeros());
 
     let mut fid_r = 0;
     for f in mfd_p.hmesh.faces.iter() { if side_p[f.id] > 0 { fnmls[fid_r] = f.normal().clone(); fid_r += 1; } }
@@ -208,10 +210,10 @@ fn append_partial_edges(
     half_p: &[Half],                             // halfedges in mfd_p
     vid_p2r: &[i32],                             // map from vid in mfd_p to vid in mfd_r
     fid_p2r: &[i32],                             // map from fid in mfd_p to fid in mfd_r
-    pos_res: &[Row3<f64>],                       // the vert pos of mfd_r, already fulfilled so far
+    pos_res: &[Row3f],                           // the vert pos of mfd_r, already fulfilled so far
     forward: bool,                               //
     half_res: &mut [Halfedge],                   // halfedge data of mfd_r, empty yet
-    half_tri: &mut [TriRef],                     // map from halfedge in mfd_r to triangle info
+    half_tri: &mut [Tref],                     // map from halfedge in mfd_r to triangle info
     half_pos: &mut HashMap<usize, Vec<EdgePos>>, //
     face_ptr_r: &mut [i32],                      //
     whole_flag: &mut [bool],                     // a flag to find out a halfedge from mfd_p is entirely usable in mfd_r
@@ -263,8 +265,8 @@ fn append_partial_edges(
         // position advanced CCW. This is only valid if this is a retained vert;
         // it will be ignored later if the vert is new.
 
-        let fw_tri = TriRef{ mesh_id: if forward {0} else {1}, face_id: fp_l.id, origin_id: -1, coplanar_id: -1 };
-        let bk_tri = TriRef{ mesh_id: if forward {0} else {1}, face_id: fp_r.id, origin_id: -1, coplanar_id: -1 };
+        let fw_tri = Tref{ mesh_id: if forward {0} else {1}, face_id: fp_l.id, ..Default::default() };
+        let bk_tri = Tref{ mesh_id: if forward {0} else {1}, face_id: fp_r.id, ..Default::default() };
 
         for h in half_seq.iter_mut() {
             let fw_edge = face_ptr_r[fid_l];
@@ -280,13 +282,13 @@ fn append_partial_edges(
 }
 
 fn append_new_edges(
-    pos_res: &[Row3<f64>],                                 // the vert pos of mfd_r, already fulfilled so far
+    pos_res: &[Row3f],                                 // the vert pos of mfd_r, already fulfilled so far
     fid_pq2r: &[i32],                                      //
     nfaces_p: usize,                                       //
     face_ptr_r: &mut[i32],                                 //
     half_new: &mut HashMap<(usize, usize), Vec<EdgePos>>,  //
     half_res: &mut [Halfedge],                             // the halfedge data of mfd_r, empty yet
-    half_tri: &mut [TriRef],                               //
+    half_tri: &mut [Tref],                               //
 ) {
     for v in half_new.into_iter() {
         let (fid_p, fid_q) = v.0;
@@ -304,8 +306,8 @@ fn append_new_edges(
         let mut half_seq = pair_up(&mut epos);
         let fid_l = fid_pq2r[*fid_p] as usize;
         let fid_r = fid_pq2r[*fid_q + nfaces_p] as usize;
-        let fw_ref = TriRef{ mesh_id: 0, face_id: *fid_p, origin_id: -1, coplanar_id: -1 };
-        let bk_ref = TriRef{ mesh_id: 1, face_id: *fid_q, origin_id: -1, coplanar_id: -1 };
+        let fw_ref = Tref{ mesh_id: 0, face_id: *fid_p, ..Default::default() };
+        let bk_ref = Tref{ mesh_id: 1, face_id: *fid_q, ..Default::default() };
 
         for h in half_seq.iter_mut() {
             let fw_edge = face_ptr_r[fid_l];
@@ -329,7 +331,7 @@ fn append_whole_edges(
     forward: bool,
     face_ptr_r: &mut[i32],
     half_res: &mut [Halfedge],
-    half_ref: &mut [TriRef],
+    half_ref: &mut [Tref],
 ) {
     for i in 0..half_p.len() {
         if !whole_flag[i] { continue; }
@@ -352,8 +354,8 @@ fn append_whole_edges(
         let fp_r = hp.twin().face().id;
         let fid_l = fid_p2r[fp_l];
         let fid_r = fid_p2r[fp_r];
-        let fw_ref = TriRef{ mesh_id: if forward {0} else {1}, face_id: fp_l, origin_id: -1, coplanar_id: -1 };
-        let bk_ref = TriRef{ mesh_id: if forward {0} else {1}, face_id: fp_r, origin_id: -1, coplanar_id: -1 };
+        let fw_ref = Tref{ mesh_id: if forward {0} else {1}, face_id: fp_l, ..Default::default() };
+        let bk_ref = Tref{ mesh_id: if forward {0} else {1}, face_id: fp_r, ..Default::default() };
 
         for _ in 0..inc.abs() as usize {
             let fw_edge = face_ptr_r[fid_l as usize];
@@ -373,19 +375,19 @@ fn append_whole_edges(
 fn update_reference(
     mfd_p: &Manifold,
     mfd_q: &Manifold,
-    tref: &mut [TriRef]
+    tref: &mut [Tref]
 ) {
     for r in tref.iter_mut() {
         let fid = r.face_id;
         let pq = r.mesh_id == 0;
         r.face_id = 0; // todo: see original code and it's always -1
-        r.coplanar_id = if pq { mfd_p.coplanar[fid] }
-                        else  { mfd_q.coplanar[fid] };
+        r.planar_id = if pq { mfd_p.coplanar[fid] }
+                      else  { mfd_q.coplanar[fid] };
     }
 }
 
 impl<'a> Boolean3<'a> {
-    pub fn get_result(&self, op: OpType) -> (Vec<Row3<f64>>, Vec<Halfedge>, Vec<Row3<usize>>) {
+    pub fn get_result(&self, op: OpType) -> (Vec<Row3f>, Vec<Halfedge>, Vec<Row3u>) {
 
         let c1 = if op == OpType::Intersect {0} else {1};
         let c2 = if op == OpType::Add       {1} else {0};
@@ -396,11 +398,11 @@ impl<'a> Boolean3<'a> {
         let i03: Vec<i32> = self.w03.iter().map(|v| c1 + c3 * v).collect();
         let i30: Vec<i32> = self.w30.iter().map(|v| c2 + c3 * v).collect();
 
-        let nv_p = self.mfd_p.hmesh.n_vert;
-        let nh_p = self.mfd_p.hmesh.n_half;
-        let nf_p = self.mfd_p.hmesh.n_face;
-        let nv_q = self.mfd_q.hmesh.n_vert;
-        let nh_q = self.mfd_q.hmesh.n_half;
+        let nv_p = self.mfd_p.nv();
+        let nh_p = self.mfd_p.nh();
+        let nf_p = self.mfd_p.nt();
+        let nv_q = self.mfd_q.nv();
+        let nh_q = self.mfd_q.nh();
         let mut nv_r = 0;
         let mut vid_p2r = vec![0; nv_p];
         let mut vid_q2r = vec![0; nv_q];
@@ -427,22 +429,18 @@ impl<'a> Boolean3<'a> {
         }
         let nv_21 = nv_r - nv_rp - nv_rq - nv_12;
 
-        let mut vpos_p = vec![];
-        let mut vpos_q = vec![];
-        let mut vpos_r = vec![Row3::zeros(); nv_r as usize];
-        for r in self.mfd_p.hmesh.pos.row_iter() { vpos_p.push(Row3::new(r[0], r[1], r[2])); }
-        for r in self.mfd_q.hmesh.pos.row_iter() { vpos_q.push(Row3::new(r[0], r[1], r[2])); }
+        let mut vpos_r = vec![Row3f::zeros(); nv_r as usize];
 
-        for i in 0..nv_p  { duplicate_verts(&i03, &vid_p2r, &vpos_p, &mut vpos_r, i); }
-        for i in 0..nv_q  { duplicate_verts(&i30, &vid_q2r, &vpos_q, &mut vpos_r, i); }
+        for i in 0..nv_p  { duplicate_verts(&i03, &vid_p2r, &self.mfd_p.pos, &mut vpos_r, i); }
+        for i in 0..nv_q  { duplicate_verts(&i30, &vid_q2r, &self.mfd_q.pos, &mut vpos_r, i); }
         for i in 0..nv_12 { duplicate_verts(&i12, &vid_12r, &self.v12, &mut vpos_r, i as usize); }
         for i in 0..nv_21 { duplicate_verts(&i21, &vid_21r, &self.v21, &mut vpos_r, i as usize); }
 
         let mut half_pos_p: HashMap<usize, Vec<EdgePos>> = HashMap::new();
         let mut half_pos_q: HashMap<usize, Vec<EdgePos>> = HashMap::new();
         let mut half_new: HashMap<(usize, usize), Vec<EdgePos>> = HashMap::new();
-        add_new_edge_verts(&self.p1q2, &i12, &vid_12r, &self.mfd_p.hmesh.halfs, true, 0, &mut half_pos_p, &mut half_new);
-        add_new_edge_verts(&self.p2q1, &i21, &vid_21r, &self.mfd_q.hmesh.halfs, false, self.p1q2.len(), &mut half_pos_q, &mut half_new);
+        add_new_edge_verts(&self.p1q2, &i12, &vid_12r, &self.mfd_p.halfs(), true, 0, &mut half_pos_p, &mut half_new);
+        add_new_edge_verts(&self.p2q1, &i21, &vid_21r, &self.mfd_q.halfs(), false, self.p1q2.len(), &mut half_pos_q, &mut half_new);
 
         let mut fnmls = vec![];
         let (ih_per_f, fid_pq2r) = size_output(&self.mfd_p, &self.mfd_q, &i03, &i30, &i12, &i21, &self.p1q2, &self.p2q1, op == OpType::Subtract, &mut fnmls);
@@ -451,18 +449,18 @@ impl<'a> Boolean3<'a> {
         let mut face_ptr_r = ih_per_f.clone();
         let mut whole_flag_p = vec![true; nh_p];
         let mut whole_flag_q = vec![true; nh_q];
-        let mut half_tri = vec![TriRef{ mesh_id: 0, face_id: 0, origin_id: 0, coplanar_id: 0}; nh];
+        let mut half_tri = vec![Tref{ mesh_id: 0, face_id: 0, origin_id: 0, planar_id: 0}; nh];
         let mut half_res = vec![Halfedge {tail : 0, head: 0, pair: 0}; nh];
         let fid_p2r = &fid_pq2r[0..nf_p];
         let fid_q2r = &fid_pq2r[nf_p..];
 
-        append_partial_edges(&i03, &self.mfd_p.hmesh.halfs, &vid_p2r, fid_p2r, &vpos_r, true,  &mut half_res, &mut half_tri, &mut half_pos_p, &mut face_ptr_r, &mut whole_flag_p);
-        append_partial_edges(&i30, &self.mfd_q.hmesh.halfs, &vid_q2r, fid_q2r, &vpos_r, false, &mut half_res, &mut half_tri, &mut half_pos_q, &mut face_ptr_r, &mut whole_flag_q);
+        append_partial_edges(&i03, &self.mfd_p.halfs(), &vid_p2r, fid_p2r, &vpos_r, true,  &mut half_res, &mut half_tri, &mut half_pos_p, &mut face_ptr_r, &mut whole_flag_p);
+        append_partial_edges(&i30, &self.mfd_q.halfs(), &vid_q2r, fid_q2r, &vpos_r, false, &mut half_res, &mut half_tri, &mut half_pos_q, &mut face_ptr_r, &mut whole_flag_q);
 
         append_new_edges(&vpos_r, &fid_pq2r, nf_p, &mut face_ptr_r, &mut half_new, &mut half_res, &mut half_tri);
 
-        append_whole_edges(&i03, &self.mfd_p.hmesh.halfs, fid_p2r, &vid_p2r, &whole_flag_p, true,  &mut face_ptr_r, &mut half_res, &mut half_tri);
-        append_whole_edges(&i30, &self.mfd_q.hmesh.halfs, fid_q2r, &vid_q2r, &whole_flag_q, false, &mut face_ptr_r, &mut half_res, &mut half_tri);
+        append_whole_edges(&i03, &self.mfd_p.halfs(), fid_p2r, &vid_p2r, &whole_flag_p, true,  &mut face_ptr_r, &mut half_res, &mut half_tri);
+        append_whole_edges(&i30, &self.mfd_q.halfs(), fid_q2r, &vid_q2r, &whole_flag_q, false, &mut face_ptr_r, &mut half_res, &mut half_tri);
 
 
         let epsilon = 1e-12; // todo temporally!!!
@@ -505,11 +503,11 @@ impl<'a> Boolean3<'a> {
         for tri in hs.chunks_exact(3) {
             let (i0, i1, i2) = (tri[0].tail, tri[1].tail, tri[2].tail);
             if i0 == usize::MAX { continue; }
-            tris_out.push(Row3::new(i0, i1, i2));
+            tris_out.push(Row3u::new(i0, i1, i2));
         }
 
         for v in vpos_r.iter_mut() {
-            if v.x > 1e10 { *v = Row3::zeros(); }
+            if v.x > 1e10 { *v = Row3f::zeros(); }
         }
 
         let mut temp = vec![];

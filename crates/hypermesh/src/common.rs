@@ -9,18 +9,62 @@ pub const K_BEST: f64 = f64::MIN;
 
 
 #[derive(Clone, Debug)]
-pub struct TriRef {
-    pub mesh_id: usize,
-    pub origin_id: i32,
-    pub face_id: usize,
-    pub coplanar_id: i32,
+pub struct Halfedge {
+    pub tail: usize,
+    pub head: usize,
+    pub pair: usize,
 }
 
-impl TriRef {
-    pub fn same_face(&self, other: &TriRef) -> bool {
+impl Default for Halfedge {
+    fn default() -> Self {
+        Self {
+            tail: usize::MAX,
+            head: usize::MAX,
+            pair: usize::MAX
+        }
+    }
+}
+
+impl Halfedge {
+    pub fn new(tail: usize, head: usize, pair: usize) -> Self { Self { tail, head, pair } }
+    pub fn is_forward(&self) -> bool { self.tail < self.head }
+    pub fn has_tail(&self) -> bool { self.tail != usize::MAX }
+    pub fn has_head(&self) -> bool { self.head != usize::MAX }
+    pub fn has_pair(&self) -> bool { self.pair != usize::MAX }
+    pub fn no_tail(&self) -> bool { self.tail == usize::MAX }
+    pub fn no_head(&self) -> bool { self.head == usize::MAX }
+    pub fn no_pair(&self) -> bool { self.pair == usize::MAX }
+
+    pub fn tail(&self) -> Option<usize> { if self.tail == usize::MAX { None } else { Some(self.tail) } }
+    pub fn head(&self) -> Option<usize> { if self.head == usize::MAX { None } else { Some(self.head) } }
+    pub fn pair(&self) -> Option<usize> { if self.pair == usize::MAX { None } else { Some(self.pair) } }
+    // need partial eq
+}
+
+#[derive(Clone, Debug)]
+pub struct Tref {
+    pub mesh_id: usize,
+    pub face_id: usize,
+    pub origin_id: i32,
+    pub planar_id: i32,
+}
+
+impl Default for Tref {
+    fn default() -> Self {
+        Self {
+            mesh_id: usize::MAX,
+            face_id: usize::MAX,
+            origin_id: -1,
+            planar_id: -1,
+        }
+    }
+}
+
+impl Tref {
+    pub fn same_face(&self, other: &Tref) -> bool {
         self.mesh_id == other.mesh_id &&
         self.face_id == other.face_id &&
-        self.coplanar_id == other.coplanar_id
+        self.planar_id == other.planar_id
     }
 }
 
@@ -102,17 +146,17 @@ trait CsgNode {
 }
 
 struct CsgOpNode {
-    
+
 }
 
 
 struct CsgLeafNode {
-    
+
 }
 
 impl CsgNode for CsgOpNode {
     fn ToLeafNode () {
-        
+
     }
 }
 

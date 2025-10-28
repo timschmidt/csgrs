@@ -1,6 +1,5 @@
 use nalgebra::RowVector3 as Row3;
-use crate::common::next_of;
-use crate::Halfedge;
+use crate::common::{Halfedge, next_of};
 
 const REMOVED_FLAG: usize = usize::MAX - 1;
 

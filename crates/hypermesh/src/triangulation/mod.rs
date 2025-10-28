@@ -4,46 +4,49 @@ pub mod flat_tree;
 pub mod halfedge;
 mod test;
 
-use nalgebra::{Matrix2x3 as Mat23, RowVector3 as Row3, RowVector2 as Row2};
+use nalgebra::{Matrix2x3 as Mat23, RowVector3, RowVector2};
 use anyhow::Result;
 use std::collections::{BTreeMap, VecDeque};
-use crate::common::{TriRef, get_axis_aligned_projection, is_ccw_3d};
-use crate::Halfedge;
+use crate::common::{Halfedge, Tref, get_axis_aligned_projection, is_ccw_3d};
 use crate::triangulation::polygon::triangulate_from_poly_idcs;
+
+type Row2f = RowVector2<f64>;
+type Row3f = RowVector3<f64>;
+type Row3u = RowVector3<usize>;
 
 #[derive(Clone)]
 pub struct Rect {
-    pub min: Row2<f64>,
-    pub max: Row2<f64>,
+    pub min: Row2f,
+    pub max: Row2f,
 }
 
 impl Rect {
     pub fn default() -> Self {
         Self {
-            min: Row2::new(f64::MAX, f64::MAX),
-            max: Row2::new(f64::MIN, f64::MIN),
+            min: Row2f::new(f64::MAX, f64::MAX),
+            max: Row2f::new(f64::MIN, f64::MIN),
         }
     }
-    pub fn new(a: &Row2<f64>, b: &Row2<f64>) -> Self {
+    pub fn new(a: &Row2f, b: &Row2f) -> Self {
         Self {
-            min: Row2::new(a.x.min(b.x), a.y.min(b.y)),
-            max: Row2::new(a.x.max(b.x), a.y.max(b.y)),
+            min: Row2f::new(a.x.min(b.x), a.y.min(b.y)),
+            max: Row2f::new(a.x.max(b.x), a.y.max(b.y)),
         }
     }
 
-    pub fn contains(&self, p: &Row2<f64>) -> bool {
+    pub fn contains(&self, p: &Row2f) -> bool {
         p.x >= self.min.x &&
         p.x <= self.max.x &&
         p.y >= self.min.y &&
         p.y <= self.max.y
     }
 
-    pub fn union(&mut self, p: &Row2<f64>) {
-        self.min = Row2::new(self.min.x.min(p.x), self.min.y.min(p.y));
-        self.max = Row2::new(self.max.x.max(p.x), self.max.y.max(p.y));
+    pub fn union(&mut self, p: &Row2f) {
+        self.min = Row2f::new(self.min.x.min(p.x), self.min.y.min(p.y));
+        self.max = Row2f::new(self.max.x.max(p.x), self.max.y.max(p.y));
     }
 
-    pub fn size(&self) -> Row2<f64> {
+    pub fn size(&self) -> Row2f {
         self.max - self.min
     }
 
@@ -55,23 +58,23 @@ impl Rect {
 
 #[derive(Debug, Clone)]
 pub struct PolyVert {
-    pub pos: Row2<f64>,
+    pub pos: Row2f,
     pub idx: usize
 }
 pub type PolygonIdx = Vec<PolyVert>;
-pub type Polygons = Vec<Vec<Row2<f64>>>;
+pub type Polygons = Vec<Vec<Row2f>>;
 
 pub struct Triangulator<'a> {
-    pub vpos:  &'a [Row3<f64>],
-    pub fnmls: &'a [Row3<f64>],
+    pub vpos:  &'a [Row3f],
+    pub fnmls: &'a [Row3f],
     pub halfs: &'a [Halfedge],
     pub hid_f: &'a [i32],
-    pub trefs: &'a [TriRef],
+    pub trefs: &'a [Tref],
     pub epsilon: f64,
 }
 
 impl <'a> Triangulator<'a>  {
-    pub fn triangulate(&self, convex: bool) -> Result<(Vec<Row3<usize>>, Vec<Row3<f64>>, Vec<TriRef>)> {
+    pub fn triangulate(&self, convex: bool) -> Result<(Vec<Row3u>, Vec<Row3f>, Vec<Tref>)> {
         let mut tris = vec![];
         let mut nors = vec![];
         let mut refs = vec![];
@@ -87,7 +90,7 @@ impl <'a> Triangulator<'a>  {
         Ok((tris, nors, refs))
     }
 
-    fn process_face(&self, fid: usize, convex: bool) -> Vec<Row3<usize>> {
+    fn process_face(&self, fid: usize, convex: bool) -> Vec<Row3u> {
         let e0 = self.hid_f[fid] as usize;
         let e1 = self.hid_f[fid + 1] as usize;
         match  e1 - e0 {
@@ -97,8 +100,8 @@ impl <'a> Triangulator<'a>  {
         }
     }
 
-    fn get_indices(&self, t: &Row3<usize>) -> Row3<usize> {
-        Row3::new(
+    fn get_indices(&self, t: &Row3u) -> Row3u {
+        Row3u::new(
             self.halfs[t.x].tail,
             self.halfs[t.y].tail,
             self.halfs[t.z].tail,
@@ -148,7 +151,7 @@ impl <'a> Triangulator<'a>  {
     }
 
 
-    fn single_triangulate(&self, hid: usize) -> Vec<Row3<usize>> {
+    fn single_triangulate(&self, hid: usize) -> Vec<Row3u> {
         let mut idcs = [hid, hid + 1, hid + 2];
         let mut tails = vec![];
         let mut heads = vec![];
@@ -158,15 +161,15 @@ impl <'a> Triangulator<'a>  {
         }
         if heads[0] == tails[2] { idcs.swap(1, 2); }
 
-        vec![Row3::new(
+        vec![Row3u::new(
             self.halfs[idcs[0]].tail,
             self.halfs[idcs[1]].tail,
             self.halfs[idcs[2]].tail,
         )]
     }
 
-    fn square_triangulate(&self, fid: usize) -> Vec<Row3<usize>> {
-        let ccw = |tri: Row3<usize>| {
+    fn square_triangulate(&self, fid: usize) -> Vec<Row3u> {
+        let ccw = |tri: Row3u| {
             is_ccw_3d(
                 &self.vpos[self.halfs[tri[0]].tail],
                 &self.vpos[self.halfs[tri[1]].tail],
@@ -178,8 +181,8 @@ impl <'a> Triangulator<'a>  {
 
         let quad = &self.assemble_halfs(fid)[0];
         let tris = vec![
-            vec![Row3::new(quad[0], quad[1], quad[2]), Row3::new(quad[0], quad[2], quad[3])],
-            vec![Row3::new(quad[1], quad[2], quad[3]), Row3::new(quad[0], quad[1], quad[3])],
+            vec![Row3u::new(quad[0], quad[1], quad[2]), Row3u::new(quad[0], quad[2], quad[3])],
+            vec![Row3u::new(quad[1], quad[2], quad[3]), Row3u::new(quad[0], quad[1], quad[3])],
         ];
         let mut choice: usize = 0;
 
@@ -196,7 +199,7 @@ impl <'a> Triangulator<'a>  {
         tris[choice].iter().map(|t| self.get_indices(t)).collect()
     }
 
-    fn general_triangulate(&self, fid: usize, convex: bool) -> Vec<Row3<usize>> {
+    fn general_triangulate(&self, fid: usize, convex: bool) -> Vec<Row3u> {
         let proj  = get_axis_aligned_projection(&self.fnmls[fid]);
         let loops = self.assemble_halfs(fid);
         let polys = self.project_polygons(&loops, &proj);

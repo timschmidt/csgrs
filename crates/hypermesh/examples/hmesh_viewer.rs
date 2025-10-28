@@ -76,8 +76,8 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>
 ) {
 
-    let (m0, _) = tobj::load_obj("assets/models/cube_x_plus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    let (m1, _) = tobj::load_obj("assets/models/tet_b.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m0, _) = tobj::load_obj("assets/models/gargoyle.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m1, _) = tobj::load_obj("assets/models/double-torus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
     let mut hms_ = vec![];
     for (m, s) in vec![(m0, 1.), (m1, 1.)] {
         let mesh = &m[0].mesh;
@@ -114,12 +114,12 @@ fn setup(
 
     for (i, w) in w03.iter().enumerate() {
         if *w == 0 { continue; }
-        let p = mfs[0].hmesh.verts[i].pos();
+        let p = mfs[0].pos[i];
         pts_w.push(Vec3::new(p[0] as f32, p[1] as f32, p[2] as f32));
     }
     for (i, w) in w30.iter().enumerate() {
         if *w == 0 { continue; }
-        let p = mfs[1].hmesh.verts[i].pos();
+        let p = mfs[1].pos[i];
         pts_w.push(Vec3::new(p[0] as f32, p[1] as f32, p[2] as f32));
     }
 

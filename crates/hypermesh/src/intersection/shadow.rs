@@ -1,22 +1,25 @@
 use nalgebra::{RowVector2, RowVector3};
 use crate::hmesh::Half;
 use super::intersect::interpolate;
+type Row2f = RowVector2<f64>;
+type Row3f = RowVector3<f64>;
 
-pub fn shadows(p: f64, q: f64, dir: f64) -> bool { if p == q { dir < 0. } else { p < q } }
-
+pub fn shadows(p: f64, q: f64, dir: f64) -> bool {
+    if p == q { dir < 0. } else { p < q }
+}
 
 // This is equivalent to Kernel01 or X01 in the thesis
 // given vert from mfd_p and half from mfd_q, find out whether
 pub fn shadows01(
     p0: usize,
     q1: usize,
-    vpos_p: &[RowVector3<f64>],
-    vpos_q: &[RowVector3<f64>],
+    vpos_p: &[Row3f],
+    vpos_q: &[Row3f],
     hq: &[Half],
-    normal: &[RowVector3<f64>],
+    normal: &[Row3f],
     expand: f64,  // sign of normal
     reverse: bool //
-) -> Option<(i32, RowVector2<f64>)> {
+) -> Option<(i32, Row2f)> {
     let q1s = hq[q1].tail().id;
     let q1e = hq[q1].head().id;
     let p0x  = vpos_p[p0].x;

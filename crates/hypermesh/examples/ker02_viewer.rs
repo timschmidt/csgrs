@@ -257,8 +257,8 @@ fn draw_example_collection(
 
     let k02 = Kernel02 {
         vpos_p: &rand_pts,
-        vpos_q: &mf.hmesh.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
-        half_q: &mf.hmesh.halfs,
+        vpos_q: &mf.pos,
+        half_q: &mf.halfs(),
         normal: &rand_pts.iter().map(|_| RowVector3::new(0., 0., 1.)).collect::<Vec<_>>(),
         expand: 1.,
         forward: true,

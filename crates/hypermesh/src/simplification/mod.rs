@@ -1,18 +1,19 @@
-use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
-use crate::Halfedge;
-use crate::common::{TriRef, next_of};
+use nalgebra::{RowVector2, RowVector3};
+use crate::common::{Halfedge, Tref, next_of};
 mod edge_dedup;
 mod edge_swap;
 mod edge_collapse;
 mod test;
 use edge_collapse::*;
+type Row3f = RowVector3<f64>;
+type Row2f = RowVector2<f64>;
 
 
 pub fn simplify_topology(
     hs: &mut Vec<Halfedge>,
-    ps: &mut Vec<Row3<f64>>,
-    ns: &mut [Row3<f64>],
-    rs: &mut [TriRef],
+    ps: &mut Vec<Row3f>,
+    ns: &mut [Row3f],
+    rs: &mut [Tref],
     nv: usize,
     ep: f64,
 ) {
@@ -22,9 +23,9 @@ pub fn simplify_topology(
 }
 
 pub(in crate::simplification) fn is01_longest_2d(
-    p0: &Row2<f64>,
-    p1: &Row2<f64>,
-    p2: &Row2<f64>
+    p0: &Row2f,
+    p1: &Row2f,
+    p2: &Row2f
 ) -> bool {
     let e01 = (*p1 - *p0).norm_squared();
     let e12 = (*p2 - *p1).norm_squared();
@@ -38,7 +39,7 @@ pub(in crate::simplification) fn is01_longest_2d(
 // halfedges of the tail side might be connected to other triangles (would be folded though).
 pub(in crate::simplification) fn form_loops(
     hs: &mut Vec<Halfedge>,
-    ps: &mut Vec<Row3<f64>>,
+    ps: &mut Vec<Row3f>,
     bgn: usize,
     end: usize
 ) {
@@ -69,7 +70,7 @@ pub(in crate::simplification) fn form_loops(
 // are eliminated by split_pinched_vert and dedupe_edges functions.
 pub(in crate::simplification) fn remove_if_folded(
     hs: &mut [Halfedge],
-    ps: &mut Vec<Row3<f64>>,
+    ps: &mut Vec<Row3f>,
     hid: usize
 ) {
     let (i0, i1, i2) = hs.tri_hids_of(hid);
@@ -77,7 +78,7 @@ pub(in crate::simplification) fn remove_if_folded(
 
     if hs[i1].no_pair() || hs.head_vid_of(i1) != hs.head_vid_of(j1) { return; }
 
-    let nan = Row3::new(f64::MAX, f64::MAX, f64::MAX);
+    let nan = Row3f::new(f64::MAX, f64::MAX, f64::MAX);
     match (hs.pair_hid_of(i1) == j2, hs.pair_hid_of(i2) == j1) {
         (true, true)  => for i in [i0, i1, i2] { ps[hs.tail_vid_of(i)] = nan; },
         (true, false) => { ps[hs.tail_vid_of(i1)] = nan; }
@@ -93,7 +94,7 @@ pub(in crate::simplification) fn remove_if_folded(
 
 fn split_pinched_vert(
     hs: &mut [Halfedge],
-    ps: &mut Vec<Row3<f64>>
+    ps: &mut Vec<Row3f>
 ) {
     let mut v_processed = vec![false; ps.len()];
     let mut h_processed = vec![false; hs.len()];

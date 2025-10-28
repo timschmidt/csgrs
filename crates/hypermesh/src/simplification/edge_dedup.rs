@@ -1,14 +1,14 @@
-use nalgebra::{RowVector3 as Row3};
+use nalgebra::RowVector3;
 use std::collections::HashMap;
-use crate::common::TriRef;
-use crate::Halfedge;
+use crate::common::{Halfedge, Tref};
 use super::HalfedgeOps;
+type Row3f = RowVector3<f64>;
 
 fn dedupe_edge(
-    ps: &mut Vec<Row3<f64>>,
+    ps: &mut Vec<Row3f>,
     hs: &mut Vec<Halfedge>,
-    ns: &mut Vec<Row3<f64>>,
-    rs: &mut Vec<TriRef>,
+    ns: &mut Vec<Row3f>,
+    rs: &mut Vec<Tref>,
     hid: usize,
 ) {
     // 1: (imagine a Riemann surface)
@@ -102,10 +102,10 @@ fn dedupe_edge(
 }
 
 fn dedupe_edges(
-    ps: &mut Vec<Row3<f64>>,
+    ps: &mut Vec<Row3f>,
     hs: &mut Vec<Halfedge>,
-    ns: &mut Vec<Row3<f64>>,
-    rs: &mut Vec<TriRef>
+    ns: &mut Vec<Row3f>,
+    rs: &mut Vec<Tref>
 ) {
     if hs.is_empty() { return; }
     loop {
