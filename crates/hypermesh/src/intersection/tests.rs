@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use nalgebra::RowVector3;
-use crate::boolean::{intersect12, winding03, Boolean3};
+use crate::intersection::{intersect12, winding03, Boolean3};
 use crate::{Manifold, OpType};
 use crate::test_data::{gen_tet_a, gen_tet_b, gen_tet_c};
 

@@ -1,10 +1,11 @@
 use nalgebra::RowVector3 as Row3;
 use crate::Halfedge;
 use core::cmp::Ordering;
+use crate::common::next_of;
 
 pub fn compute_coplanar_idx(
     ps: &[Row3<f64>],
-    ns: &[Row3<f64>], // face normal
+    ns: &[Row3<f64>],
     hs: &[Halfedge],
     tol: f64
 ) -> Vec<i32> {
@@ -27,7 +28,6 @@ pub fn compute_coplanar_idx(
 
     let mut interior = vec![];
     for (_, t) in priority.iter() {
-        //if *t == 2 { println!("tri 2 normal: {}", ns[*t]);}
         if res[*t] != -1 { continue; }
         res[*t] = *t as i32;
 
@@ -41,13 +41,11 @@ pub fn compute_coplanar_idx(
         while let Some(hi) = interior.pop() {
             let h1 = next_of(hs[hi].pair);
             let t1 = h1 / 3;
-            //if *t == 2 { println!("tri pair: {}, normal: {}", t1, ns[t1]);}
 
             if res[t1] != -1 { continue; }
 
             if (ps[hs[h1].head] - p).dot(&n).abs() < tol {
                 res[t1] = *t as i32;
-                //if *t == 2 { println!("t1 res: {}", t1);}
                 if interior.last().copied() == Some(hs[h1].pair) { interior.pop(); }
                 else { interior.push(h1); }
                 interior.push(next_of(h1));
@@ -55,10 +53,4 @@ pub fn compute_coplanar_idx(
         }
     }
     res
-}
-
-fn next_of(curr: usize) -> usize {
-    let mut curr = curr + 1;
-    if curr % 3 == 0 { curr -= 3;}
-    curr
 }

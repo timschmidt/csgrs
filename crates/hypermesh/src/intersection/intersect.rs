@@ -1,5 +1,4 @@
 use nalgebra::{RowVector2, RowVector3, RowVector4};
-use num_traits::float::FloatCore;
 
 /**
  * These two functions (Interpolate and Intersect) are the only places where

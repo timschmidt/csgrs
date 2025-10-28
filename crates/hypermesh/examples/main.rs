@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use bevy::pbr::wireframe::{WireframePlugin, Wireframe, WireframeColor};
 use bevy::render::mesh::{Indices, VertexAttributeValues};
 use nalgebra::DMatrix;
-use mfd::Hmesh;
+use mfd::hmesh::Hmesh;
 
 fn main() {
     App::new()

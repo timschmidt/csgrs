@@ -1,7 +1,7 @@
 use nalgebra::{DMatrix, RowVector2 as Row2};
-use crate::{intersect12, winding03, Boolean3, Hmesh, Manifold, OpType};
-use crate::common::PolyVert;
-use crate::ear_clip::EarClip;
+use crate::{intersect12, winding03, Boolean3, Manifold, OpType};
+use crate::hmesh::Hmesh;
+use crate::triangulation::{ear_clip::EarClip, PolyVert};
 
 #[test]
 fn test() {

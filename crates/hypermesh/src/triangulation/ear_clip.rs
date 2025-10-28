@@ -3,8 +3,9 @@ use std::cmp::{Ordering, PartialEq};
 use std::collections::BTreeSet;
 use std::rc::{Rc, Weak};
 use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
-use crate::common::{det2x2, is_ccw_2d, safe_normalize, PolyVert, PolygonIdx, Rect, K_BEST, K_PRECISION};
-use crate::flat_tree::{compute_flat_tree, compute_query_flat_tree};
+use crate::common::{det2x2, is_ccw_2d, safe_normalize, K_BEST, K_PRECISION};
+use crate::triangulation::{PolyVert, PolygonIdx, Rect};
+use crate::triangulation::flat_tree::{compute_flat_tree, compute_query_flat_tree};
 
 #[derive(Clone)]
 pub struct Ecvt {

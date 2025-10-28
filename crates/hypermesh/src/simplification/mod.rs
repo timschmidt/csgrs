@@ -1,12 +1,12 @@
 use nalgebra::{RowVector2 as Row2, RowVector3 as Row3};
-use crate::boolean46::TriRef;
 use crate::Halfedge;
-
+use crate::common::{TriRef, next_of};
 mod edge_dedup;
-mod edge_collapse;
 mod edge_swap;
-mod vert_split;
+mod edge_collapse;
+mod test;
 use edge_collapse::*;
+
 
 pub fn simplify_topology(
     hs: &mut Vec<Halfedge>,
@@ -16,15 +16,9 @@ pub fn simplify_topology(
     nv: usize,
     ep: f64,
 ) {
-    collapse_collinear_edge(hs, ps, ns, rs, nv, ep);
-}
-
-pub(in crate::simplification) fn next_of(
-    curr: usize
-) -> usize {
-    let mut curr = curr + 1;
-    if curr % 3 == 0 { curr -= 3;}
-    curr
+    split_pinched_vert(hs, ps);
+    collapse_short_edges(hs, ps, ns, rs, nv, ep);
+    collapse_collinear_edges(hs, ps, ns, rs, nv, ep);
 }
 
 pub(in crate::simplification) fn is01_longest_2d(
@@ -94,6 +88,35 @@ pub(in crate::simplification) fn remove_if_folded(
     hs.pair_up(hs[i2].pair, hs[j1].pair);
     for i in [i0, i1, i2] { hs[i] = Halfedge::default(); }
     for j in [j0, j1, j2] { hs[j] = Halfedge::default(); }
+}
+
+
+fn split_pinched_vert(
+    hs: &mut [Halfedge],
+    ps: &mut Vec<Row3<f64>>
+) {
+    let mut v_processed = vec![false; ps.len()];
+    let mut h_processed = vec![false; hs.len()];
+
+    for hid in 0..hs.len() {
+        if h_processed[hid] { continue; }
+        let mut vid = hs[hid].tail;
+        if vid == usize::MAX { continue; }
+        if v_processed[vid] {
+            ps.push(ps[vid]);
+            vid = ps.len() - 1;
+        } else { v_processed[vid] = true; }
+
+        // loop halfedges around their tail ccw way
+        let mut cur = hid;
+        loop {
+            cur = hs.next_hid_of(hs[cur].pair);
+            h_processed[cur] = true;
+            hs[cur].tail = vid;
+            hs[hs[cur].pair].head = vid;
+            if cur == hid { break; }
+        }
+    }
 }
 
 pub(in crate::simplification) trait HalfedgeOps {

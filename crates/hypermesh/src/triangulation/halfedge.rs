@@ -1,4 +1,5 @@
 use nalgebra::RowVector3 as Row3;
+use crate::common::next_of;
 use crate::Halfedge;
 
 const REMOVED_FLAG: usize = usize::MAX - 1;
@@ -98,10 +99,3 @@ pub fn reorder_halfedges(hs: &mut [Halfedge]) {
     }
 }
 
-
-
-fn next_of(curr: usize) -> usize {
-    let mut curr = curr + 1;
-    if curr % 3 == 0 { curr -= 3;}
-    curr
-}

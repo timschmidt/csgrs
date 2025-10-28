@@ -1,9 +1,7 @@
 use nalgebra::{RowVector3 as Row3};
-use crate::boolean46::TriRef;
-use crate::common::{get_axis_aligned_projection, is_ccw_2d};
 use crate::Halfedge;
-use crate::simplification::edge_collapse::collapse_edge;
-use super::{form_loops, is01_longest_2d, next_of, remove_if_folded, HalfedgeOps};
+use crate::common::{TriRef, get_axis_aligned_projection, is_ccw_2d};
+use super::{collapse_edge, form_loops, is01_longest_2d, next_of, remove_if_folded, HalfedgeOps};
 
 fn record(
     hs: &[Halfedge],

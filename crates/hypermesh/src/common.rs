@@ -7,6 +7,24 @@ use nalgebra::{
 pub const K_PRECISION: f64 = 1e-12;
 pub const K_BEST: f64 = f64::MIN;
 
+
+#[derive(Clone, Debug)]
+pub struct TriRef {
+    pub mesh_id: usize,
+    pub origin_id: i32,
+    pub face_id: usize,
+    pub coplanar_id: i32,
+}
+
+impl TriRef {
+    pub fn same_face(&self, other: &TriRef) -> bool {
+        self.mesh_id == other.mesh_id &&
+        self.face_id == other.face_id &&
+        self.coplanar_id == other.coplanar_id
+    }
+}
+
+
 pub fn det2x2(a: &Row2<f64>, b: &Row2<f64>) -> f64 { a.x * b.y - a.y * b.x }
 
 pub fn get_axis_aligned_projection(normal: &Row3<f64>) -> Mat23<f64> {
@@ -29,7 +47,12 @@ pub fn get_axis_aligned_projection(normal: &Row3<f64>) -> Mat23<f64> {
     prj
 }
 
-pub fn is_ccw_2d(p0: &Row2<f64>, p1: &Row2<f64>, p2: &Row2<f64>, t: f64) -> i32 {
+pub fn is_ccw_2d(
+    p0: &Row2<f64>,
+    p1: &Row2<f64>,
+    p2: &Row2<f64>,
+    t: f64
+) -> i32 {
     let v1 = p1 - p0;
     let v2 = p2 - p0;
     let area = v1.x * v2.y - v1.y * v2.x;
@@ -38,7 +61,13 @@ pub fn is_ccw_2d(p0: &Row2<f64>, p1: &Row2<f64>, p2: &Row2<f64>, t: f64) -> i32 
     if area > 0. { 1 } else { -1 }
 }
 
-pub fn is_ccw_3d(p0: &Row3<f64>, p1: &Row3<f64>, p2: &Row3<f64>, n: &Row3<f64>, t: f64) -> i32 {
+pub fn is_ccw_3d(
+    p0: &Row3<f64>,
+    p1: &Row3<f64>,
+    p2: &Row3<f64>,
+    n: &Row3<f64>,
+    t: f64
+) -> i32 {
     let prj = get_axis_aligned_projection(&n);
     let p0 = prj * p0.transpose();
     let p1 = prj * p1.transpose();
@@ -51,58 +80,44 @@ pub fn is_ccw_3d(p0: &Row3<f64>, p1: &Row3<f64>, p2: &Row3<f64>, n: &Row3<f64>, 
     if area > 0. { 1 } else { -1 }
 }
 
+// todo: check not is_nan as well
 pub fn safe_normalize(v: Row2<f64>) -> Row2<f64> {
     let n = v.normalize();
     if n.x.is_finite() && n.y.is_finite() { n } else { Row2::new(0., 0.) }
 }
 
-#[derive(Clone)]
-pub struct Rect {
-    pub min: Row2<f64>,
-    pub max: Row2<f64>,
+pub fn next_of(curr: usize) -> usize {
+    let mut curr = curr + 1;
+    if curr % 3 == 0 { curr -= 3;}
+    curr
 }
 
-impl Rect {
-    pub fn default() -> Self {
-        Self {
-            min: Row2::new(f64::MAX, f64::MAX),
-            max: Row2::new(f64::MIN, f64::MIN),
-        }
+/*
+enum CsgNodeType { Union, Intersection, Difference, Leaf }
+
+trait CsgNode {
+    fn ToLeafNode () {
+
     }
-    pub fn new(a: &Row2<f64>, b: &Row2<f64>) -> Self {
-        Self {
-            min: Row2::new(a.x.min(b.x), a.y.min(b.y)),
-            max: Row2::new(a.x.max(b.x), a.y.max(b.y)),
-        }
-    }
+}
+
+struct CsgOpNode {
     
-    pub fn contains(&self, p: &Row2<f64>) -> bool {
-        p.x >= self.min.x &&
-        p.x <= self.max.x &&
-        p.y >= self.min.y &&
-        p.y <= self.max.y
-    }
+}
 
-    pub fn union(&mut self, p: &Row2<f64>) {
-        self.min = Row2::new(self.min.x.min(p.x), self.min.y.min(p.y));
-        self.max = Row2::new(self.max.x.max(p.x), self.max.y.max(p.y));
-    }
 
-    pub fn size(&self) -> Row2<f64> {
-        self.max - self.min
-    }
+struct CsgLeafNode {
+    
+}
 
-    pub fn scale(&self) -> f64 {
-        let s = self.size();
-        s.x.abs().max(s.y.abs())
+impl CsgNode for CsgOpNode {
+    fn ToLeafNode () {
+        
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct PolyVert {
-    pub pos: Row2<f64>,
-    pub idx: usize
-}
-pub type PolygonIdx = Vec<PolyVert>;
-pub type Polygons = Vec<Vec<Row2<f64>>>;
+impl CsgNode for CsgLeafNode {
 
+}
+
+*/

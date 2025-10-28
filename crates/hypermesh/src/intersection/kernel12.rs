@@ -1,9 +1,9 @@
-use nalgebra::{RowVector3};
+use nalgebra::{RowVector3 as Row3};
 use std::mem;
 use crate::hmesh::{Half, Vert};
-use crate::boolean::intersect::intersect;
-use crate::boolean::kernel02::Kernel02;
-use crate::boolean::kernel11::Kernel11;
+use super::intersect::intersect;
+use super::kernel02::Kernel02;
+use super::kernel11::Kernel11;
 
 pub struct Kernel12<'a> {
     pub halfs_p: &'a[Half],
@@ -15,11 +15,11 @@ pub struct Kernel12<'a> {
 }
 
 impl<'a> Kernel12<'a> {
-    pub fn op (&self, p1: usize, q2: usize) -> (i32, Option<RowVector3<f64>>) {
+    pub fn op (&self, p1: usize, q2: usize) -> (i32, Option<Row3<f64>>) {
         let mut x12 = 0;
-        let mut v12: Option<RowVector3<f64>> = None;
-        let mut xzy_lr0 = [RowVector3::zeros(); 2];
-        let mut xzy_lr1 = [RowVector3::zeros(); 2];
+        let mut v12: Option<Row3<f64>> = None;
+        let mut xzy_lr0 = [Row3::zeros(); 2];
+        let mut xzy_lr1 = [Row3::zeros(); 2];
         let mut shadows = false;
         let h = self.halfs_p[p1].clone();
 
@@ -73,7 +73,7 @@ impl<'a> Kernel12<'a> {
         } else {
             assert_eq!(k, 2, "Boolean manifold error: v12");
             let xzyy = intersect(xzy_lr0[0], xzy_lr0[1], xzy_lr1[0], xzy_lr1[1]);
-            v12 = Some(RowVector3::new(xzyy[0], xzyy[2], xzyy[1]));
+            v12 = Some(Row3::new(xzyy[0], xzyy[2], xzyy[1]));
         }
 
         (x12, v12)

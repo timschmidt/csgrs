@@ -6,10 +6,11 @@ use bevy::render::mesh::Indices;
 use bevy::{color::palettes::css::*, math::Isometry2d};
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use nalgebra::{DMatrix, RowVector3};
-use mfd::{intersect12, winding03, Boolean3, Hmesh, Manifold, OpType};
+use mfd::{intersect12, winding03, Boolean3, Manifold, OpType};
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
 use std::sync::Arc;
 use rand::Rng;
+use mfd::hmesh::Hmesh;
 use mfd::kernel02::Kernel02;
 use mfd::test_data::{gen_tet_a, gen_tet_b, gen_tet_c};
 

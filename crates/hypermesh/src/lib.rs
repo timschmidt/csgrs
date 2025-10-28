@@ -1,13 +1,11 @@
-pub mod hmesh;
-pub mod boolean;
+pub mod intersection;
 pub mod manifold;
 pub mod triangulation;
-mod simplification;
+pub mod simplification;
+pub mod common;
 
-pub use crate::hmesh::*;
-pub use crate::boolean::*;
+pub use crate::intersection::*;
 pub use crate::manifold::*;
-pub use crate::triangulation::*;
 
 
 

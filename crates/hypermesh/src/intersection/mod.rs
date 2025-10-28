@@ -7,9 +7,9 @@ pub mod boolean46;
 pub mod test_data;
 
 use nalgebra::{RowVector3};
-use crate::boolean::kernel02::Kernel02;
-use crate::boolean::kernel11::Kernel11;
-use crate::boolean::kernel12::Kernel12;
+use crate::intersection::kernel02::Kernel02;
+use crate::intersection::kernel11::Kernel11;
+use crate::intersection::kernel12::Kernel12;
 use crate::bounds::{BoundingBox, Query};
 use crate::collider::{Recorder};
 use crate::manifold::Manifold;

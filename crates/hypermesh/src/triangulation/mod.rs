@@ -1,17 +1,65 @@
-pub mod common;
 pub mod ear_clip;
 pub mod polygon;
 pub mod flat_tree;
 pub mod halfedge;
 mod test;
 
+use nalgebra::{Matrix2x3 as Mat23, RowVector3 as Row3, RowVector2 as Row2};
 use anyhow::Result;
 use std::collections::{BTreeMap, VecDeque};
-use nalgebra::{Matrix2x3 as Mat23, RowVector3 as Row3};
-use crate::boolean46::TriRef;
-use crate::common::{get_axis_aligned_projection, is_ccw_3d, PolyVert, PolygonIdx};
+use crate::common::{TriRef, get_axis_aligned_projection, is_ccw_3d};
 use crate::Halfedge;
-use crate::polygon::triangulate_from_poly_idcs;
+use crate::triangulation::polygon::triangulate_from_poly_idcs;
+
+#[derive(Clone)]
+pub struct Rect {
+    pub min: Row2<f64>,
+    pub max: Row2<f64>,
+}
+
+impl Rect {
+    pub fn default() -> Self {
+        Self {
+            min: Row2::new(f64::MAX, f64::MAX),
+            max: Row2::new(f64::MIN, f64::MIN),
+        }
+    }
+    pub fn new(a: &Row2<f64>, b: &Row2<f64>) -> Self {
+        Self {
+            min: Row2::new(a.x.min(b.x), a.y.min(b.y)),
+            max: Row2::new(a.x.max(b.x), a.y.max(b.y)),
+        }
+    }
+
+    pub fn contains(&self, p: &Row2<f64>) -> bool {
+        p.x >= self.min.x &&
+        p.x <= self.max.x &&
+        p.y >= self.min.y &&
+        p.y <= self.max.y
+    }
+
+    pub fn union(&mut self, p: &Row2<f64>) {
+        self.min = Row2::new(self.min.x.min(p.x), self.min.y.min(p.y));
+        self.max = Row2::new(self.max.x.max(p.x), self.max.y.max(p.y));
+    }
+
+    pub fn size(&self) -> Row2<f64> {
+        self.max - self.min
+    }
+
+    pub fn scale(&self) -> f64 {
+        let s = self.size();
+        s.x.abs().max(s.y.abs())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PolyVert {
+    pub pos: Row2<f64>,
+    pub idx: usize
+}
+pub type PolygonIdx = Vec<PolyVert>;
+pub type Polygons = Vec<Vec<Row2<f64>>>;
 
 pub struct Triangulator<'a> {
     pub vpos:  &'a [Row3<f64>],

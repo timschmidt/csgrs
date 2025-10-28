@@ -1,13 +1,13 @@
-use nalgebra::{RowVector3};
-use crate::boolean::intersect::interpolate;
-use crate::boolean::shadow::{shadows, shadows01};
-use crate::hmesh::{Vert, Half};
+use nalgebra::{RowVector3 as Row3};
+use super::intersect::interpolate;
+use super::shadow::{shadows, shadows01};
+use crate::hmesh::Half;
 
 pub struct Kernel02<'a> {
-    pub vpos_p: &'a[RowVector3<f64>],
-    pub vpos_q: &'a[RowVector3<f64>],
+    pub vpos_p: &'a[Row3<f64>],
+    pub vpos_q: &'a[Row3<f64>],
     pub half_q: &'a[Half],
-    pub normal: &'a[RowVector3<f64>],
+    pub normal: &'a[Row3<f64>],
     pub expand: f64,
     pub forward: bool
 }
@@ -19,7 +19,7 @@ impl<'a> Kernel02<'a> {
 
         // For yzzLR[k], k==0 is the left and k==1 is the right.
         let mut k = 0;
-        let mut yzz_rl = [RowVector3::zeros(); 2];
+        let mut yzz_rl = [Row3::zeros(); 2];
         // Either the left or right must shadow, but not both. This ensures the
         // intersection is between the left and right.
         let mut shadows_ = false;
@@ -57,7 +57,7 @@ impl<'a> Kernel02<'a> {
                 s02 += s01 * if self.forward == half.is_forward() {-1} else {1};
                 if k < 2 && (k == 0 || (s01 != 0) != shadows_) {
                     shadows_ = s01 != 0;
-                    yzz_rl[k] = RowVector3::new(yz01.x, yz01.y, yz01.y);
+                    yzz_rl[k] = Row3::new(yz01.x, yz01.y, yz01.y);
                     k += 1;
                 }
             }
@@ -81,8 +81,8 @@ impl<'a> Kernel02<'a> {
 
 #[cfg(test)]
 mod kernel02_tests {
-    use crate::boolean::kernel02::Kernel02;
-    use crate::boolean::test_data;
+    use crate::intersection::kernel02::Kernel02;
+    use crate::intersection::test_data;
 
     #[test]
     fn kernel02_test() {

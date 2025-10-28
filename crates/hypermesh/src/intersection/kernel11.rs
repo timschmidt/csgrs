@@ -1,26 +1,26 @@
-use nalgebra::{RowVector3, RowVector4, Vector3};
-use crate::hmesh::{Vert, Half};
-use crate::boolean::intersect::intersect;
-use crate::boolean::shadow::{shadows, shadows01};
+use nalgebra::{RowVector3 as Row3, RowVector4 as Row4};
+use crate::hmesh::Half;
+use super::intersect::intersect;
+use super::shadow::{shadows, shadows01};
 
 pub struct Kernel11<'a> {
-    pub vpos_p: &'a [RowVector3<f64>],
-    pub vpos_q: &'a [RowVector3<f64>],
+    pub vpos_p: &'a [Row3<f64>],
+    pub vpos_q: &'a [Row3<f64>],
     pub half_p: &'a [Half],
     pub half_q: &'a [Half],
-    pub normal: &'a [RowVector3<f64>],
+    pub normal: &'a [Row3<f64>],
     pub expand: f64,
 }
 
 impl<'a> Kernel11<'a> {
-    pub fn op (&self, p1: usize, q1: usize) -> (i32, Option<RowVector4<f64>>) {
+    pub fn op (&self, p1: usize, q1: usize) -> (i32, Option<Row4<f64>>) {
         let mut xyzz11 = None;
         let mut s11 = 0;
 
         // For pRL[k], qRL[k], k==0 is the left and k==1 is the right.
         let mut k = 0;
-        let mut p_rl = [RowVector3::zeros(); 2];
-        let mut q_rl = [RowVector3::zeros(); 2];
+        let mut p_rl = [Row3::zeros(); 2];
+        let mut q_rl = [Row3::zeros(); 2];
         // Either the left or right must shadow, but not both. This ensures the
         // intersection is between the left and right.
         let mut shadows_ = false;
@@ -45,7 +45,7 @@ impl<'a> Kernel11<'a> {
                 if k < 2 && (k == 0 || (s01 != 0) != shadows_) {
                     shadows_ = s01 != 0;
                     p_rl[k] = self.vpos_p[p0[i].id];
-                    q_rl[k] = RowVector3::new(p_rl[k].x, yz01.x, yz01.y);
+                    q_rl[k] = Row3::new(p_rl[k].x, yz01.x, yz01.y);
                     k += 1;
                 }
             }
@@ -67,7 +67,7 @@ impl<'a> Kernel11<'a> {
                 if k < 2 && (k == 0 || (s10 != 0) != shadows_) {
                     shadows_ = s10 != 0;
                     q_rl[k] = self.vpos_q[q0[i].id];
-                    p_rl[k] = RowVector3::new(q_rl[k].x, yz10.x, yz10.y);
+                    p_rl[k] = Row3::new(q_rl[k].x, yz10.x, yz10.y);
                     k += 1;
                 }
             }
@@ -81,9 +81,9 @@ impl<'a> Kernel11<'a> {
 
             let p1s = self.half_p[p1].tail().id;
             let p1e = self.half_p[p1].head().id;
-            let mut diff = self.vpos_p[p1s].transpose() - Vector3::new(xyzz11_.x, xyzz11_.y, xyzz11_.z);
+            let mut diff = self.vpos_p[p1s] - Row3::new(xyzz11_.x, xyzz11_.y, xyzz11_.z);
             let start2 = diff.dot(&diff);
-            diff = self.vpos_p[p1e].transpose() - Vector3::new(xyzz11_.x, xyzz11_.y, xyzz11_.z);
+            diff = self.vpos_p[p1e] - Row3::new(xyzz11_.x, xyzz11_.y, xyzz11_.z);
             let end2 = diff.dot(&diff);
             let dir = if start2 < end2 {self.normal[p1s].z} else {self.normal[p1e].z};
 
@@ -97,8 +97,8 @@ impl<'a> Kernel11<'a> {
 
 #[cfg(test)]
 mod kernel11_tests {
-    use crate::boolean::kernel11::Kernel11;
-    use crate::boolean::test_data;
+    use crate::intersection::kernel11::Kernel11;
+    use crate::intersection::test_data;
 
     #[test]
     fn kernel11_test() {

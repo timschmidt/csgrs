@@ -1,6 +1,6 @@
 use nalgebra::{RowVector2, RowVector3};
-use crate::boolean::intersect::interpolate;
-use crate::{Half};
+use crate::hmesh::Half;
+use super::intersect::interpolate;
 
 pub fn shadows(p: f64, q: f64, dir: f64) -> bool { if p == q { dir < 0. } else { p < q } }
 

@@ -1,6 +1,7 @@
 use nalgebra::{RowVector3 as Row3};
-use crate::common::{det2x2, PolygonIdx};
-use crate::ear_clip::{EarClip};
+use crate::common::{det2x2};
+use crate::triangulation::ear_clip::{EarClip};
+use crate::triangulation::PolygonIdx;
 
 fn is_convex(polygon_idcs: &Vec<PolygonIdx>, epsilon: f64) -> bool {
     for p in polygon_idcs {
@@ -33,21 +34,6 @@ fn triangulate_convex(polygon_idcs: &Vec<PolygonIdx>) -> Vec<Row3<usize>> {
     t
 }
 
-/// @brief Triangulates a set of &epsilon;-valid polygons. If the input is not
-/// &epsilon;-valid, the triangulation may overlap but will always return a
-/// manifold result that matches the input edge directions.
-///
-/// @param polys The set of polygons, wound CCW and representing multiple
-/// polygons and/or holes. These have 2D-projected positions as well as
-/// references back to the original vertices.
-/// @param epsilon The value of &epsilon, bounding the uncertainty of the
-/// input.
-/// @param allowConvex If true (default), the triangulator will use fast
-/// triangulation if the input is convex, falling back to ear-clipping if not.
-/// The triangle quality may be lower, so set too false to disable this
-/// optimization.
-/// @return std::vector<ivec3> The triangles, referencing the original
-/// vertex indicies.
 pub fn triangulate_from_poly_idcs(
     poly_idcs: &Vec<PolygonIdx>,
     epsilon: f64,

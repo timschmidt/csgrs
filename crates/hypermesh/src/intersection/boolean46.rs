@@ -1,11 +1,15 @@
 use nalgebra::{RowVector3 as Row3};
 use std::collections::HashMap;
 use std::mem;
-use crate::boolean::Boolean3;
-use crate::{Half, Halfedge, Manifold, OpType, Triangulator};
+use crate::{OpType};
+use crate::common::TriRef;
+use crate::hmesh::Half;
+use crate::manifold::{Halfedge, Manifold};
 use crate::bounds::BoundingBox;
-use crate::halfedge::{compute_halfs, reorder_halfedges};
+use crate::triangulation::Triangulator;
+use crate::triangulation::halfedge::{compute_halfs, reorder_halfedges};
 use crate::simplification::simplify_topology;
+use super::Boolean3;
 
 fn duplicate_verts(
     inclusion : &[i32],
@@ -110,22 +114,6 @@ struct EdgePos {
     vid: usize,   //
     cid: usize,   // collision_id
     is_tail: bool //
-}
-
-#[derive(Clone, Debug)]
-pub struct TriRef {
-    pub mesh_id: usize,
-    pub origin_id: i32,
-    pub face_id: usize,
-    pub coplanar_id: i32,
-}
-
-impl TriRef {
-    pub fn same_face(&self, other: &TriRef) -> bool {
-        self.mesh_id == other.mesh_id &&
-        self.face_id == other.face_id &&
-        self.coplanar_id == other.coplanar_id
-    }
 }
 
 fn add_new_edge_verts(

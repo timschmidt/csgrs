@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use nalgebra::DMatrix;
-use crate::Hmesh;
+use crate::hmesh::Hmesh;
 
 pub fn gen_tri_a() -> Arc<Hmesh> {
     let pos = vec![0., 0., 0., 1., 0., 0., 0., 1., 0.];

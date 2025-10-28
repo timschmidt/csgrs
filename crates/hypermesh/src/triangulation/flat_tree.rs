@@ -1,4 +1,4 @@
-use crate::common::{PolyVert, Rect};
+use crate::triangulation::{PolyVert, Rect};
 
 pub fn compute_flat_tree(pts: &mut [PolyVert]) {
     if pts.len() <= 8 { return; }

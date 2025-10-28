@@ -1,6 +1,3 @@
-//use bvh::aabb::{Aabb, Bounded};
-//use bvh::bounding_hierarchy::{BHShape};
-//use bvh::bvh::Bvh;
 use nalgebra::RowVector3 as Row3;
 use crate::bounds::{union_bbs, BoundingBox, Query};
 
@@ -272,7 +269,7 @@ impl MortonCollider {
 #[cfg(test)]
 mod collider_test {
     use nalgebra::RowVector3;
-    use crate::boolean::test_data;
+    use crate::intersection::test_data;
     use crate::collider::{spread_bits_3, MortonCollider};
     use crate::{intersect12, Manifold};
     use crate::bounds::BoundingBox;

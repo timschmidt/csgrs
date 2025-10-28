@@ -1,12 +1,9 @@
 use nalgebra::{RowVector3 as Row3};
 use std::collections::HashMap;
-use crate::boolean46::TriRef;
+use crate::common::TriRef;
 use crate::Halfedge;
 use super::HalfedgeOps;
 
-// Deduplicate the given 4-manifold edge by duplicating end_vert, thus making the
-// edges distinct. Also, duplicates start_vert if it becomes pinched.
-// todo: need more detailed check.
 fn dedupe_edge(
     ps: &mut Vec<Row3<f64>>,
     hs: &mut Vec<Halfedge>,
@@ -107,8 +104,8 @@ fn dedupe_edge(
 fn dedupe_edges(
     ps: &mut Vec<Row3<f64>>,
     hs: &mut Vec<Halfedge>,
-    ns: &mut Vec<Row3<f64>>, // face normals
-    rs: &mut Vec<TriRef>     // tri refs
+    ns: &mut Vec<Row3<f64>>,
+    rs: &mut Vec<TriRef>
 ) {
     if hs.is_empty() { return; }
     loop {

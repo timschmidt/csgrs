@@ -1,12 +1,13 @@
 pub mod bounds;
 pub mod collider;
+pub mod hmesh;
 mod coplanar;
 
 use std::sync::Arc;
-use nalgebra::{DMatrix, RowVector3};
+use nalgebra::{DMatrix};
 use bounds::BoundingBox;
 use crate::collider::{morton_code, MortonCollider};
-use crate::Hmesh;
+use crate::hmesh::Hmesh;
 use crate::common::K_PRECISION;
 use crate::manifold::coplanar::compute_coplanar_idx;
 
