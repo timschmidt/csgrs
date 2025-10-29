@@ -1,12 +1,12 @@
 use nalgebra::RowVector3;
 use core::cmp::Ordering;
-use crate::common::{next_of, Halfedge};
+use crate::common::{next_of, Half};
 type Row3f = RowVector3<f64>;
 
 pub fn compute_coplanar_idx(
     ps: &[Row3f],
     ns: &[Row3f],
-    hs: &[Halfedge],
+    hs: &[Half],
     tol: f64
 ) -> Vec<i32> {
     let nt = hs.len() / 3;

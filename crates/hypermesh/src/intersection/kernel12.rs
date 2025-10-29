@@ -1,15 +1,14 @@
 use nalgebra::{RowVector3};
 use std::mem;
-use crate::common::Halfedge;
-use crate::hmesh::{Half};
+use crate::common::Half;
 use super::intersect::intersect;
 use super::kernel02::Kernel02;
 use super::kernel11::Kernel11;
 type Row3f = RowVector3<f64>;
 
 pub struct Kernel12<'a> {
-    pub half_p: &'a[Halfedge],
-    pub half_q: &'a[Halfedge],
+    pub half_p: &'a[Half],
+    pub half_q: &'a[Half],
     pub vpos_p: &'a[Row3f],
     pub k02: Kernel02<'a>,
     pub k11: Kernel11<'a>,

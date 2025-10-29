@@ -6,8 +6,8 @@ use std::sync::Arc;
 use nalgebra::{DMatrix, RowVector3 as Row3};
 use bounds::BoundingBox;
 use crate::collider::{morton_code, MortonCollider};
-use crate::hmesh::{Half, Hmesh};
-use crate::common::{Halfedge, K_PRECISION};
+use crate::hmesh::Hmesh;
+use crate::common::{Half, K_PRECISION};
 use crate::manifold::coplanar::compute_coplanar_idx;
 
 
@@ -53,7 +53,7 @@ pub struct Manifold {
     pub epsilon: f64,
     pub tolerance: f64,
     pub pos: Vec<Row3<f64>>,
-    pub hs: Vec<Halfedge>,
+    pub hs: Vec<Half>,
     pub face_normals: Vec<Row3<f64>>,
     pub vert_normals: Vec<Row3<f64>>
 }
@@ -67,7 +67,7 @@ impl Manifold {
         let pos = sorted.verts.iter().map(|v| v.pos()).collect::<Vec<_>>();
         let fns = sorted.faces.iter().map(|f| f.normal()).collect::<Vec<_>>();
         let vns = sorted.verts.iter().map(|v| v.normal()).collect::<Vec<_>>();
-        let hs = sorted.halfs.iter().map(|h| Halfedge{ tail: h.tail().id, head: h.head().id, pair: h.twin().id }).collect::<Vec<_>>();
+        let hs = sorted.halfs.iter().map(|h| Half{ tail: h.tail().id, head: h.head().id, pair: h.twin().id }).collect::<Vec<_>>();
 
         let collider = MortonCollider::new(&f_bboxes, &f_morton);
 

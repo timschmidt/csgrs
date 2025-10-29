@@ -1,5 +1,5 @@
 use nalgebra::{RowVector3};
-use crate::common::Halfedge;
+use crate::common::Half;
 use super::intersect::interpolate;
 use super::shadow::{shadows, shadows01};
 type Row3f = RowVector3<f64>;
@@ -7,7 +7,7 @@ type Row3f = RowVector3<f64>;
 pub struct Kernel02<'a> {
     pub vpos_p: &'a[Row3f],
     pub vpos_q: &'a[Row3f],
-    pub half_q: &'a[Halfedge],
+    pub half_q: &'a[Half],
     pub normal: &'a[Row3f],
     pub expand: f64,
     pub forward: bool
@@ -79,27 +79,3 @@ impl<'a> Kernel02<'a> {
         (s02, z02)
     }
 }
-
-/*
-#[cfg(test)]
-mod kernel02_tests {
-    use crate::intersection::kernel02::Kernel02;
-    use crate::intersection::test_data;
-
-    #[test]
-    fn kernel02_test() {
-        let mfd_p = test_data::gen_tet_a();
-        let mfd_q = test_data::gen_tet_c();
-        let k02 = Kernel02 {
-            vpos_p: &mfd_p.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
-            vpos_q: &mfd_q.verts.iter().map(|v| v.pos()).collect::<Vec<_>>(),
-            half_q: &mfd_q.halfs,
-            normal: &mfd_p.verts.iter().map(|v| v.normal()).collect::<Vec<_>>(),
-            expand: -1.,
-            forward: false
-        };
-        let (s, z) = k02.op(3, 0);
-        println!("s: {}, z: {:?}", s, z);
-    }
-}
-*/

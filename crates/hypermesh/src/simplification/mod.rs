@@ -1,5 +1,5 @@
 use nalgebra::{RowVector2, RowVector3};
-use crate::common::{Halfedge, Tref, next_of};
+use crate::common::{Half, Tref, next_of};
 mod edge_dedup;
 mod edge_swap;
 pub mod edge_collapse;
@@ -9,7 +9,7 @@ type Row2f = RowVector2<f64>;
 
 
 pub fn simplify_topology(
-    hs: &mut Vec<Halfedge>,
+    hs: &mut Vec<Half>,
     ps: &mut Vec<Row3f>,
     ns: &mut [Row3f],
     rs: &mut [Tref],
@@ -37,7 +37,7 @@ pub(in crate::simplification) fn is01_longest_2d(
 // Beware the needless loop is not necessarily eliminated from the mesh because
 // halfedges of the tail side might be connected to other triangles (would be folded though).
 pub(in crate::simplification) fn form_loops(
-    hs: &mut Vec<Halfedge>,
+    hs: &mut Vec<Half>,
     ps: &mut Vec<Row3f>,
     bgn: usize,
     end: usize
@@ -68,7 +68,7 @@ pub(in crate::simplification) fn form_loops(
 // Beware the case that triangles only connected at a vertex but not by halfedge
 // are eliminated by split_pinched_vert and dedupe_edges functions.
 pub(in crate::simplification) fn remove_if_folded(
-    hs: &mut [Halfedge],
+    hs: &mut [Half],
     ps: &mut Vec<Row3f>,
     hid: usize
 ) {
@@ -86,13 +86,13 @@ pub(in crate::simplification) fn remove_if_folded(
     }
     hs.pair_up(hs[i1].pair, hs[j2].pair);
     hs.pair_up(hs[i2].pair, hs[j1].pair);
-    for i in [i0, i1, i2] { hs[i] = Halfedge::default(); }
-    for j in [j0, j1, j2] { hs[j] = Halfedge::default(); }
+    for i in [i0, i1, i2] { hs[i] = Half::default(); }
+    for j in [j0, j1, j2] { hs[j] = Half::default(); }
 }
 
 
 fn split_pinched_vert(
-    hs: &mut [Halfedge],
+    hs: &mut [Half],
     ps: &mut Vec<Row3f>
 ) {
     let mut v_processed = vec![false; ps.len()];
@@ -120,8 +120,8 @@ fn split_pinched_vert(
 }
 
 pub(in crate::simplification) trait HalfedgeOps {
-    fn next_of(&self, curr: usize) -> &Halfedge;
-    fn pair_of(&self, curr: usize) -> &Halfedge;
+    fn next_of(&self, curr: usize) -> &Half;
+    fn pair_of(&self, curr: usize) -> &Half;
     fn next_hid_of(&self, curr: usize) -> usize;
     fn pair_hid_of(&self, curr: usize) -> usize;
     fn head_vid_of(&self, curr: usize) -> usize;
@@ -130,12 +130,12 @@ pub(in crate::simplification) trait HalfedgeOps {
     fn pair_up(&mut self, hid0: usize, hid1: usize);
     fn update_vid_around_star(&mut self, vid: usize, bgn: usize, end: usize);
     fn collapse_triangle(&mut self, hids: &(usize, usize, usize));
-    fn loop_ccw<F>(&mut self, hid: usize, func: F) where F: FnMut(&mut [Halfedge], usize);
+    fn loop_ccw<F>(&mut self, hid: usize, func: F) where F: FnMut(&mut [Half], usize);
 }
 
-impl HalfedgeOps for [Halfedge] {
-    fn next_of(&self, curr: usize) -> &Halfedge { &self[self.next_hid_of(curr)] }
-    fn pair_of(&self, curr: usize) -> &Halfedge { &self[self[curr].pair] }
+impl HalfedgeOps for [Half] {
+    fn next_of(&self, curr: usize) -> &Half { &self[self.next_hid_of(curr)] }
+    fn pair_of(&self, curr: usize) -> &Half { &self[self[curr].pair] }
     fn next_hid_of(&self, curr: usize) -> usize { let mut c = curr + 1; if c % 3 == 0 { c -= 3; } c }
     fn pair_hid_of(&self, curr: usize) -> usize { self[curr].pair }
     fn head_vid_of(&self, curr: usize) -> usize { self[curr].head }
@@ -172,10 +172,10 @@ impl HalfedgeOps for [Halfedge] {
         let pair2 = self.pair_hid_of(hids.2);
         self[pair1].pair = pair2;
         self[pair2].pair = pair1;
-        for i in [hids.0, hids.1, hids.2] { self[i] = Halfedge::default(); }
+        for i in [hids.0, hids.1, hids.2] { self[i] = Half::default(); }
     }
 
-    fn loop_ccw<F>(&mut self, hid: usize, mut func: F) where F: FnMut(&mut [Halfedge], usize) {
+    fn loop_ccw<F>(&mut self, hid: usize, mut func: F) where F: FnMut(&mut [Half], usize) {
         let mut cur = hid;
         loop {
             if self[cur].no_tail() || self[cur].no_head() { continue; }

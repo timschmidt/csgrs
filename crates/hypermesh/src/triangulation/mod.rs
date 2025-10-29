@@ -6,7 +6,7 @@ pub mod halfedge;
 use nalgebra::{Matrix2x3 as Mat23, RowVector3, RowVector2};
 use anyhow::Result;
 use std::collections::{BTreeMap, VecDeque};
-use crate::common::{Halfedge, Tref, get_axis_aligned_projection, is_ccw_3d};
+use crate::common::{Half, Tref, get_axis_aligned_projection, is_ccw_3d};
 use crate::triangulation::polygon::triangulate_from_poly_idcs;
 
 type Row2f = RowVector2<f64>;
@@ -66,7 +66,7 @@ pub type Polygons = Vec<Vec<Row2f>>;
 pub struct Triangulator<'a> {
     pub vpos:  &'a [Row3f],
     pub fnmls: &'a [Row3f],
-    pub halfs: &'a [Halfedge],
+    pub halfs: &'a [Half],
     pub hid_f: &'a [i32],
     pub trefs: &'a [Tref],
     pub epsilon: f64,

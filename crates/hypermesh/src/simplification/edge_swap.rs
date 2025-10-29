@@ -1,10 +1,10 @@
 use nalgebra::RowVector3;
-use crate::common::{Halfedge, Tref, get_axis_aligned_projection, is_ccw_2d};
+use crate::common::{Half, Tref, get_axis_aligned_projection, is_ccw_2d};
 use super::{collapse_edge, form_loops, is01_longest_2d, next_of, remove_if_folded, HalfedgeOps};
 type Row3f = RowVector3<f64>;
 
 fn record(
-    hs: &[Halfedge],
+    hs: &[Half],
     ps: &[Row3f],
     ns: &[Row3f],
     hid: usize,
@@ -56,7 +56,7 @@ fn record(
 
 // todo: need precise check...
 pub fn swap_degenerates(
-    hs: &mut Vec<Halfedge>,
+    hs: &mut Vec<Half>,
     ps: &mut Vec<Row3f>,
     ns: &mut [Row3f],
     ts: &mut [Tref],
@@ -84,7 +84,7 @@ pub fn swap_degenerates(
 
 // todo need precise check...
 pub fn recursive_edge_swap(
-    hs: &mut Vec<Halfedge>,
+    hs: &mut Vec<Half>,
     ps: &mut Vec<Row3f>,
     ns: &mut [Row3f],
     ts: &mut [Tref],

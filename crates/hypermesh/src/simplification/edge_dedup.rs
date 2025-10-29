@@ -1,12 +1,12 @@
 use nalgebra::RowVector3;
 use std::collections::HashMap;
-use crate::common::{Halfedge, Tref};
+use crate::common::{Half, Tref};
 use super::HalfedgeOps;
 type Row3f = RowVector3<f64>;
 
 fn dedupe_edge(
     ps: &mut Vec<Row3f>,
-    hs: &mut Vec<Halfedge>,
+    hs: &mut Vec<Half>,
     ns: &mut Vec<Row3f>,
     rs: &mut Vec<Tref>,
     hid: usize,
@@ -29,17 +29,17 @@ fn dedupe_edge(
 
             let nh = hs.len();
             let pair = hs[cur].pair;
-            hs.push(Halfedge { tail: head, head: copy, ..Default::default() });
-            hs.push(Halfedge { tail: copy, head: hs.tail_vid_of(cur), ..Default::default() });
-            hs.push(Halfedge { tail: hs.tail_vid_of(cur), head: head, ..Default::default() });
+            hs.push(Half { tail: head, head: copy, ..Default::default() });
+            hs.push(Half { tail: copy, head: hs.tail_vid_of(cur), ..Default::default() });
+            hs.push(Half { tail: hs.tail_vid_of(cur), head: head, ..Default::default() });
             hs.pair_up(nh + 2, pair);
             hs.pair_up(nh + 1, cur);
 
             let nh = hs.len();
             let pair = hs[opp].pair;
-            hs.push(Halfedge { tail: copy, head: head, ..Default::default() });
-            hs.push(Halfedge { tail: head, head: hs.tail_vid_of(opp), ..Default::default() });
-            hs.push(Halfedge { tail: hs.tail_vid_of(opp), head: copy, ..Default::default() });
+            hs.push(Half { tail: copy, head: head, ..Default::default() });
+            hs.push(Half { tail: head, head: hs.tail_vid_of(opp), ..Default::default() });
+            hs.push(Half { tail: hs.tail_vid_of(opp), head: copy, ..Default::default() });
             hs.pair_up(nh + 2, pair);
             hs.pair_up(nh + 1, opp);
 
@@ -103,7 +103,7 @@ fn dedupe_edge(
 
 fn dedupe_edges(
     ps: &mut Vec<Row3f>,
-    hs: &mut Vec<Halfedge>,
+    hs: &mut Vec<Half>,
     ns: &mut Vec<Row3f>,
     rs: &mut Vec<Tref>
 ) {

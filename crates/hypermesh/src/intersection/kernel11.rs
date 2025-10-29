@@ -1,6 +1,5 @@
 use nalgebra::{RowVector3, RowVector4};
-use crate::common::Halfedge;
-use crate::hmesh::Half;
+use crate::common::Half;
 use super::intersect::intersect;
 use super::shadow::{shadows, shadows01};
 type Row3f = RowVector3<f64>;
@@ -9,8 +8,8 @@ type Row4f = RowVector4<f64>;
 pub struct Kernel11<'a> {
     pub vpos_p: &'a [Row3f],
     pub vpos_q: &'a [Row3f],
-    pub half_p: &'a [Halfedge],
-    pub half_q: &'a [Halfedge],
+    pub half_p: &'a [Half],
+    pub half_q: &'a [Half],
     pub normal: &'a [Row3f],
     pub expand: f64,
 }

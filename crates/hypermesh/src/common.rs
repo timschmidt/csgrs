@@ -1,21 +1,19 @@
-use nalgebra::{
-    Matrix2x3 as Mat23,
-    RowVector3 as Row3,
-    RowVector2 as Row2
-};
+use nalgebra::{RowVector3, RowVector2, Matrix2x3};
+type Row3f = RowVector3<f64>;
+type Row2f = RowVector2<f64>;
+type Mat23 = Matrix2x3<f64>;
 
 pub const K_PRECISION: f64 = 1e-12;
 pub const K_BEST: f64 = f64::MIN;
 
-
 #[derive(Clone, Debug)]
-pub struct Halfedge {
+pub struct Half {
     pub tail: usize,
     pub head: usize,
     pub pair: usize,
 }
 
-impl Default for Halfedge {
+impl Default for Half {
     fn default() -> Self {
         Self {
             tail: usize::MAX,
@@ -25,27 +23,19 @@ impl Default for Halfedge {
     }
 }
 
-impl Halfedge {
+impl Half {
     pub fn new(tail: usize, head: usize, pair: usize) -> Self { Self { tail, head, pair } }
     pub fn is_forward(&self) -> bool { self.tail < self.head }
-    pub fn has_tail(&self) -> bool { self.tail != usize::MAX } // todo: needless
-    pub fn has_head(&self) -> bool { self.head != usize::MAX } // todo: needless
-    pub fn has_pair(&self) -> bool { self.pair != usize::MAX } // todo: needless
     pub fn no_tail(&self) -> bool { self.tail == usize::MAX }  // todo: needless
     pub fn no_head(&self) -> bool { self.head == usize::MAX }  // todo: needless
     pub fn no_pair(&self) -> bool { self.pair == usize::MAX }  // todo: needless
-    pub fn tail(&self) -> Option<usize> { if self.tail == usize::MAX { None } else { Some(self.tail) } }
-    pub fn head(&self) -> Option<usize> { if self.head == usize::MAX { None } else { Some(self.head) } }
-    pub fn pair(&self) -> Option<usize> { if self.pair == usize::MAX { None } else { Some(self.pair) } }
-    // need partial eq
+    pub fn tail(&self) -> Option<usize> { if self.tail == usize::MAX {None} else {Some(self.tail)} }
+    pub fn head(&self) -> Option<usize> { if self.head == usize::MAX {None} else {Some(self.head)} }
+    pub fn pair(&self) -> Option<usize> { if self.pair == usize::MAX {None} else {Some(self.pair)} }
 }
 
 pub fn face_of(hid: usize) -> usize { hid / 3 }
-pub fn next_of(hid: usize) -> usize {
-    let mut hid = hid + 1;
-    if hid % 3 == 0 { hid -= 3;}
-    hid
-}
+pub fn next_of(hid: usize) -> usize { let mut i = hid + 1; if i % 3 == 0 { i -= 3;} i }
 
 
 #[derive(Clone, Debug)]
@@ -75,13 +65,12 @@ impl Tref {
     }
 }
 
+pub fn det2x2(a: &Row2f, b: &Row2f) -> f64 { a.x * b.y - a.y * b.x }
 
-pub fn det2x2(a: &Row2<f64>, b: &Row2<f64>) -> f64 { a.x * b.y - a.y * b.x }
-
-pub fn get_axis_aligned_projection(normal: &Row3<f64>) -> Mat23<f64> {
+pub fn get_axis_aligned_projection(normal: &Row3f) -> Mat23 {
     let abs = normal.abs();
     let max: f64;
-    let mut prj: Mat23<f64>;
+    let mut prj: Mat23;
 
     if abs.z > abs.x && abs.z > abs.y {
         prj = Mat23::new(1., 0., 0., 0., 1., 0.); // preserve x, y
@@ -99,9 +88,9 @@ pub fn get_axis_aligned_projection(normal: &Row3<f64>) -> Mat23<f64> {
 }
 
 pub fn is_ccw_2d(
-    p0: &Row2<f64>,
-    p1: &Row2<f64>,
-    p2: &Row2<f64>,
+    p0: &Row2f,
+    p1: &Row2f,
+    p2: &Row2f,
     t: f64
 ) -> i32 {
     let v1 = p1 - p0;
@@ -113,10 +102,10 @@ pub fn is_ccw_2d(
 }
 
 pub fn is_ccw_3d(
-    p0: &Row3<f64>,
-    p1: &Row3<f64>,
-    p2: &Row3<f64>,
-    n: &Row3<f64>,
+    p0: &Row3f,
+    p1: &Row3f,
+    p2: &Row3f,
+    n: &Row3f,
     t: f64
 ) -> i32 {
     let prj = get_axis_aligned_projection(&n);
@@ -132,9 +121,9 @@ pub fn is_ccw_3d(
 }
 
 // todo: check not is_nan as well
-pub fn safe_normalize(v: Row2<f64>) -> Row2<f64> {
+pub fn safe_normalize(v: Row2f) -> Row2f {
     let n = v.normalize();
-    if n.x.is_finite() && n.y.is_finite() { n } else { Row2::new(0., 0.) }
+    if n.x.is_finite() && n.y.is_finite() { n } else { Row2f::new(0., 0.) }
 }
 
 /*

@@ -1,12 +1,12 @@
 use nalgebra::RowVector3 as Row3;
-use crate::common::{Halfedge, next_of};
+use crate::common::{Half, next_of};
 
 const REMOVED_FLAG: usize = usize::MAX - 1;
 
-pub fn compute_halfs(fs: &Vec<Row3<usize>>) -> Vec<Halfedge> {
+pub fn compute_halfs(fs: &Vec<Row3<usize>>) -> Vec<Half> {
     let nh = fs.len() * 3;
     let ne = nh / 2;
-    let mut hs  = vec![Halfedge::default(); nh];
+    let mut hs  = vec![Half::default(); nh];
     let mut ids = (0..nh).collect::<Vec<_>>();
     let mut key = vec![0u64; nh];
 
@@ -66,15 +66,15 @@ pub fn compute_halfs(fs: &Vec<Row3<usize>>) -> Vec<Halfedge> {
             hs[i0].pair = i1;
             hs[i1].pair = i0;
         } else {
-            hs[i0] = Halfedge::default();
-            hs[i1] = Halfedge::default();
+            hs[i0] = Half::default();
+            hs[i1] = Half::default();
         }
     }
 
     hs
 }
 
-pub fn reorder_halfedges(hs: &mut [Halfedge]) {
+pub fn reorder_halfedges(hs: &mut [Half]) {
     let nt = hs.len() / 3;
 
     for t in 0..nt {

@@ -2,7 +2,7 @@ use nalgebra::RowVector3;
 use std::collections::HashMap;
 use std::mem;
 use crate::OpType;
-use crate::common::{face_of, Halfedge, Tref};
+use crate::common::{face_of, Half, Tref};
 use crate::manifold::Manifold;
 use crate::bounds::BoundingBox;
 use crate::triangulation::Triangulator;
@@ -123,7 +123,7 @@ fn add_new_edge_verts(
     p1q2: &Vec<[i32; 2]>,
     i12: &[i32],
     v12_r: &[i32],
-    halfs_p: &[Halfedge],
+    halfs_p: &[Half],
     forward: bool,
     offset: usize,
     edges_pos: &mut HashMap<usize, Vec<EdgePos>>,
@@ -167,7 +167,7 @@ fn add_new_edge_verts(
 // Creating a partial halfedges from a list of positions.
 // It's very confusing, but it's not aiming to pair twins (pair is -1).
 // It's more likely to say pairing sta-end vertex and make a halfedge
-fn pair_up(edge_pos: &mut Vec<EdgePos>) -> Vec<Halfedge> {
+fn pair_up(edge_pos: &mut Vec<EdgePos>) -> Vec<Half> {
     assert_eq!(edge_pos.len() % 2, 0);
     let ne = edge_pos.len() / 2;
     let mid_idx = {
@@ -196,7 +196,7 @@ fn pair_up(edge_pos: &mut Vec<EdgePos>) -> Vec<Halfedge> {
 
     let mut edges = Vec::with_capacity(ne);
     for i in 0..ne {
-        edges.push(Halfedge {
+        edges.push(Half {
             tail: edge_pos[i].vid,
             head: edge_pos[i + ne].vid,
             pair: usize::MAX,
@@ -208,13 +208,13 @@ fn pair_up(edge_pos: &mut Vec<EdgePos>) -> Vec<Halfedge> {
 
 fn append_partial_edges(
     i03: &[i32],                                 //
-    half_p: &[Halfedge],                         // halfedges in mfd_p
+    half_p: &[Half],                         // halfedges in mfd_p
     vpos_p: &[Row3f],
     vid_p2r: &[i32],                             // map from vid in mfd_p to vid in mfd_r
     fid_p2r: &[i32],                             // map from fid in mfd_p to fid in mfd_r
     pos_res: &[Row3f],                           // the vert pos of mfd_r, already fulfilled so far
     forward: bool,                               //
-    half_res: &mut [Halfedge],                   // halfedge data of mfd_r, empty yet
+    half_res: &mut [Half],                   // halfedge data of mfd_r, empty yet
     half_tri: &mut [Tref],                       // map from halfedge in mfd_r to triangle info
     half_pos: &mut HashMap<usize, Vec<EdgePos>>, //
     face_ptr_r: &mut [i32],                      //
@@ -275,8 +275,8 @@ fn append_partial_edges(
             let bk_edge = face_ptr_r[fid_r];
             face_ptr_r[fid_l] += 1;
             face_ptr_r[fid_r] += 1;
-            half_res[fw_edge as usize] = Halfedge{ tail: h.tail, head: h.head, pair: bk_edge as usize };
-            half_res[bk_edge as usize] = Halfedge{ tail: h.head, head: h.tail, pair: fw_edge as usize };
+            half_res[fw_edge as usize] = Half{ tail: h.tail, head: h.head, pair: bk_edge as usize };
+            half_res[bk_edge as usize] = Half{ tail: h.head, head: h.tail, pair: fw_edge as usize };
             half_tri[fw_edge as usize] = fw_tri.clone();
             half_tri[bk_edge as usize] = bk_tri.clone();
         }
@@ -289,7 +289,7 @@ fn append_new_edges(
     nfaces_p: usize,                                       //
     face_ptr_r: &mut[i32],                                 //
     half_new: &mut HashMap<(usize, usize), Vec<EdgePos>>,  //
-    half_res: &mut [Halfedge],                             // the halfedge data of mfd_r, empty yet
+    half_res: &mut [Half],                             // the halfedge data of mfd_r, empty yet
     half_tri: &mut [Tref],                                 //
 ) {
     for v in half_new.into_iter() {
@@ -314,8 +314,8 @@ fn append_new_edges(
             let bk_edge = face_ptr_r[fid_r];
             face_ptr_r[fid_l] += 1;
             face_ptr_r[fid_r] += 1;
-            half_res[fw_edge as usize] = Halfedge{tail: h.tail, head: h.head, pair: bk_edge as usize};
-            half_res[bk_edge as usize] = Halfedge{tail: h.head, head: h.tail, pair: fw_edge as usize};
+            half_res[fw_edge as usize] = Half{tail: h.tail, head: h.head, pair: bk_edge as usize};
+            half_res[bk_edge as usize] = Half{tail: h.head, head: h.tail, pair: fw_edge as usize};
             half_tri[fw_edge as usize] = fw_ref.clone();
             half_tri[bk_edge as usize] = bk_ref.clone();
         }
@@ -324,13 +324,13 @@ fn append_new_edges(
 
 fn append_whole_edges(
     i03: &[i32],
-    half_p: &[Halfedge],
+    half_p: &[Half],
     fid_p2r: &[i32],
     vid_p2r: &[i32],
     whole_flag: &[bool],
     forward: bool,
     face_ptr_r: &mut[i32],
-    half_res: &mut [Halfedge],
+    half_res: &mut [Half],
     half_ref: &mut [Tref],
 ) {
     for (i, hp) in half_p.iter().enumerate() {
@@ -356,8 +356,8 @@ fn append_whole_edges(
             let bk_edge = face_ptr_r[fid_r as usize];
             face_ptr_r[fid_l as usize] += 1;
             face_ptr_r[fid_r as usize] += 1;
-            half_res[fw_edge as usize] = Halfedge{ tail: h.tail, head: h.head, pair: bk_edge as usize };
-            half_res[bk_edge as usize] = Halfedge{ tail: h.head, head: h.tail, pair: fw_edge as usize };
+            half_res[fw_edge as usize] = Half{ tail: h.tail, head: h.head, pair: bk_edge as usize };
+            half_res[bk_edge as usize] = Half{ tail: h.head, head: h.tail, pair: fw_edge as usize };
             half_ref[fw_edge as usize] = fw_ref.clone();
             half_ref[bk_edge as usize] = bk_ref.clone();
             h.tail += 1;
@@ -381,7 +381,7 @@ fn update_reference(
 }
 
 impl<'a> Boolean3<'a> {
-    pub fn get_result(&self, op: OpType) -> (Vec<Row3f>, Vec<Halfedge>, Vec<Row3u>) {
+    pub fn get_result(&self, op: OpType) -> (Vec<Row3f>, Vec<Half>, Vec<Row3u>) {
 
         let c1 = if op == OpType::Intersect {0} else {1};
         let c2 = if op == OpType::Add       {1} else {0};
@@ -443,8 +443,8 @@ impl<'a> Boolean3<'a> {
         let mut face_ptr_r = ih_per_f.clone();
         let mut whole_flag_p = vec![true; nh_p];
         let mut whole_flag_q = vec![true; nh_q];
-        let mut half_tri = vec![Tref{ mesh_id: 0, face_id: 0, origin_id: 0, planar_id: 0}; nh];
-        let mut half_res = vec![Halfedge {tail : 0, head: 0, pair: 0}; nh];
+        let mut half_tri = vec![Tref{ mesh_id: 0, face_id: 0, origin_id: 0, planar_id: 0}; nh]; // todo: better be default()
+        let mut half_res = vec![Half{tail : 0, head: 0, pair: 0}; nh]; // todo: better be default()
         let fid_p2r = &fid_pq2r[0..nf_p];
         let fid_q2r = &fid_pq2r[nf_p..];
 
