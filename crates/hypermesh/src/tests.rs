@@ -2,7 +2,9 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 use nalgebra::{DMatrix, RowVector3};
 use crate::hmesh::Hmesh;
-use crate::{intersect12, winding03, Boolean3, Manifold, OpType};
+use crate::{Manifold, OpType};
+use crate::boolean03::{intersect12, winding03, Boolean03};
+use crate::boolean45::Boolean45;
 
 pub fn gen_tet_a() -> Arc<Hmesh> {
     let pos = vec![-0.866025, -1., 0.5, 0., -1., -1., 0.866025, -1., 0.5, 0., 1., 0.];
@@ -62,14 +64,14 @@ pub fn gen_tet_c() -> Arc<Hmesh> {
 #[cfg(test)]
 mod kernel11_tests {
     use nalgebra::RowVector4;
+    use crate::boolean03::kernel11::Kernel11;
     use crate::Manifold;
-    use crate::intersection::kernel11::Kernel11;
     use crate::tests::{gen_tet_a, gen_tet_c};
 
     #[test]
     fn kernel11_test() {
-        let mfd_p = Manifold::new(&gen_tet_a());
-        let mfd_q = Manifold::new(&gen_tet_c());
+        let mfd_p = Manifold::new(&gen_tet_a()).unwrap();
+        let mfd_q = Manifold::new(&gen_tet_c()).unwrap();
         let k11 = Kernel11 {
             vpos_p: &mfd_p.pos,
             vpos_q: &mfd_q.pos,
@@ -90,8 +92,8 @@ fn test_tet_sub_inclusion_case(){
     let expand = -1.;
     let hm_p = gen_tet_a();
     let hm_q = gen_tet_c();
-    let mfd_p = Manifold::new(&hm_p);
-    let mfd_q = Manifold::new(&hm_q);
+    let mfd_p = Manifold::new(&hm_p).unwrap();
+    let mfd_q = Manifold::new(&hm_q).unwrap();
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
     let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, expand, true);
@@ -112,12 +114,9 @@ fn test_tet_sub_inclusion_case(){
     for i in 0..3 {
         assert!((v21[i] - v21_[i]).norm() < 1e-6);
     }
-
-    let boolean = Boolean3{
-        mfd_p: &mfd_p, mfd_q: &mfd_q,
-        p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
-
-    boolean.get_result(OpType::Subtract);
+    let op = OpType::Subtract;
+    let b03 = Boolean03{ mfd_p: &mfd_p, mfd_q: &mfd_q, p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
+    let b45 = Boolean45::new(&b03, &op);
 }
 
 #[test]
@@ -125,8 +124,8 @@ fn test_tet_sub_penetration_case(){
     let expand = -1.;
     let hm_p = gen_tet_a();
     let hm_q = gen_tet_b();
-    let mfd_p = Manifold::new(&hm_p);
-    let mfd_q = Manifold::new(&hm_q);
+    let mfd_p = Manifold::new(&hm_p).unwrap();
+    let mfd_q = Manifold::new(&hm_q).unwrap();
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
     let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, -1., true);
@@ -156,11 +155,9 @@ fn test_tet_sub_penetration_case(){
         assert!((v21[i] - v21_[i]).norm() < 1e-6);
     }
 
-    let boolean = Boolean3{
-        mfd_p: &mfd_p, mfd_q: &mfd_q,
-        p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
-
-    boolean.get_result(OpType::Subtract);
+    let op = OpType::Subtract;
+    let b03 = Boolean03{ mfd_p: &mfd_p, mfd_q: &mfd_q, p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
+    let b45 = Boolean45::new(&b03, &op);
 }
 
 #[cfg(test)]
@@ -509,9 +506,9 @@ mod test_simplification {
             let b = hs[i].head;
             let c = hs[i].pair;
             let (d, e, f) = hs_out[i];
-            if h.no_tail() { assert_eq!(d, -1); } else { assert_eq!(a as i32, d); }
-            if h.no_head() { assert_eq!(e, -1); } else { assert_eq!(b as i32, e); }
-            if h.no_pair() { assert_eq!(f, -1); } else { assert_eq!(c as i32, f); }
+            if h.tail().is_none() { assert_eq!(d, -1); } else { assert_eq!(a as i32, d); }
+            if h.head().is_none() { assert_eq!(e, -1); } else { assert_eq!(b as i32, e); }
+            if h.pair().is_none() { assert_eq!(f, -1); } else { assert_eq!(c as i32, f); }
         }
 
         for i in 0..ps.len() {

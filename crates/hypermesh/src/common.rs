@@ -6,6 +6,9 @@ type Mat23 = Matrix2x3<f64>;
 pub const K_PRECISION: f64 = 1e-12;
 pub const K_BEST: f64 = f64::MIN;
 
+#[derive(PartialEq)]
+pub enum OpType { Add, Subtract, Intersect }
+
 #[derive(Clone, Debug)]
 pub struct Half {
     pub tail: usize,
@@ -26,9 +29,6 @@ impl Default for Half {
 impl Half {
     pub fn new(tail: usize, head: usize, pair: usize) -> Self { Self { tail, head, pair } }
     pub fn is_forward(&self) -> bool { self.tail < self.head }
-    pub fn no_tail(&self) -> bool { self.tail == usize::MAX }  // todo: needless
-    pub fn no_head(&self) -> bool { self.head == usize::MAX }  // todo: needless
-    pub fn no_pair(&self) -> bool { self.pair == usize::MAX }  // todo: needless
     pub fn tail(&self) -> Option<usize> { if self.tail == usize::MAX {None} else {Some(self.tail)} }
     pub fn head(&self) -> Option<usize> { if self.head == usize::MAX {None} else {Some(self.head)} }
     pub fn pair(&self) -> Option<usize> { if self.pair == usize::MAX {None} else {Some(self.pair)} }

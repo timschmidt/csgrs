@@ -12,7 +12,7 @@ fn record_if_collinear(
     nv: usize,
 ) -> bool {
     let h = &hs[hid];
-    if h.no_pair() || (h.tail < nv) { return false; }
+    if h.pair().is_none() || (h.tail < nv) { return false; }
 
     let cw_next = |i: usize| next_of(hs[i].pair);
 
@@ -40,7 +40,7 @@ fn record_if_short(
     ep: f64,
 ) -> bool {
     let h = &hs[hid];
-    if h.no_pair() || (h.tail < nv && h.head < nv) { return false; }
+    if h.pair().is_none() || (h.tail < nv && h.head < nv) { return false; }
     let d = ps[hs[hid].head] - ps[hs[hid].tail];
     d.norm_squared() < ep.powi(2)
 
@@ -57,7 +57,7 @@ pub fn collapse_edge(
 ) -> bool {
 
     let to_rmv = &hs[hid];
-    if to_rmv.no_pair() { return false; }
+    if to_rmv.pair().is_none() { return false; }
 
     let vid_keep = to_rmv.head;
     let vid_delt = to_rmv.tail;

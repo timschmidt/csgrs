@@ -15,7 +15,7 @@ pub fn compute_coplanar_idx(
 
     for t in 0..nt {
         let i = t * 3;
-        let area = if hs[i].no_tail() { 0.} else {
+        let area = if hs[i].tail().is_none() { 0.} else {
             let p0 = ps[hs[i].tail];
             let p1 = ps[hs[i].head];
             let p2 = ps[hs[i + 1].head];

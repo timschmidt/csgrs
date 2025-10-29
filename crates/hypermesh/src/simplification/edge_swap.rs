@@ -12,7 +12,7 @@ fn record(
     tol: f64
 ) -> bool {
     let half = &hs[hid];
-    if half.no_pair() { return false; }
+    if half.pair().is_none() { return false; }
 
     // skip if all 4 involved verts are "old" (consistent with C++)
     let n0 = hs[next_of(hid)].head;
@@ -98,7 +98,7 @@ pub fn recursive_edge_swap(
     if hid >= hs.len() { return; }
     let curr = hid;
     let pair = hs.pair_hid_of(curr);
-    if hs[curr].no_pair() || hs[pair].no_pair() { return; }
+    if hs[curr].pair().is_none() || hs[pair].pair().is_none() { return; }
 
     // avoid infinite recursion
     if visited[curr] == *tag && visited[pair] == *tag { return; }

@@ -115,7 +115,7 @@ fn dedupe_edges(
         // Process halfedges grouped by the same tail (start) vertex.
         // Use Vec for up to ~32 neighbors, then switch to a HashMap to avoid quadratic behavior.
         for hid in 0..hs.len() {
-            if local[hid] || hs[hid].no_tail() || hs[hid].no_head() { continue; }
+            if local[hid] || hs[hid].tail().is_none() || hs[hid].head().is_none() { continue; }
             let mut vec = Vec::<(usize, usize)>::new();
             let mut map = HashMap::<usize, usize>::new();
 

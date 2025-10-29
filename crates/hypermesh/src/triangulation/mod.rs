@@ -2,13 +2,11 @@ pub mod ear_clip;
 pub mod polygon;
 pub mod flat_tree;
 pub mod halfedge;
-
 use nalgebra::{Matrix2x3 as Mat23, RowVector3, RowVector2};
 use anyhow::Result;
 use std::collections::{BTreeMap, VecDeque};
 use crate::common::{Half, Tref, get_axis_aligned_projection, is_ccw_3d};
 use crate::triangulation::polygon::triangulate_from_poly_idcs;
-
 type Row2f = RowVector2<f64>;
 type Row3f = RowVector3<f64>;
 type Row3u = RowVector3<usize>;
@@ -107,10 +105,10 @@ impl <'a> Triangulator<'a>  {
         )
     }
 
-    /// This function considers vertex-joint cases like Hierholzer's algorithm.
-    /// https://algorithms.discrete.ma.tum.de/graph-algorithms/hierholzer/index_en.html
-    /// But not sure when some inner loops in an outer loop case happen, or two separate loops could be happened.
-    /// Solved: Inner loop is always cw, so when ear clipping comes, it is guaranteed to be a single concave loop.
+    // This function considers vertex-joint cases like Hierholzer's algorithm.
+    // https://algorithms.discrete.ma.tum.de/graph-algorithms/hierholzer/index_en.html
+    // But not sure when some inner loops in an outer loop case happen, or two separate loops could be happened.
+    // Solved: Inner loop is always cw, so when ear clipping comes, it is guaranteed to be a single concave loop.
     fn assemble_halfs(&self, fid: usize) -> Vec<Vec<usize>> {
         let bgn = self.hid_f[fid] as usize;
         let end = self.hid_f[fid + 1] as usize;
@@ -139,7 +137,7 @@ impl <'a> Triangulator<'a>  {
         loops
     }
 
-    /// Add the vertex position projection to the indexed polygons.
+    // Add the vertex position projection to the indexed polygons.
     fn project_polygons(&self, polys: &Vec<Vec<usize>>, prj: &Mat23<f64>) -> Vec<PolygonIdx> {
         polys.iter().map(|poly|
             poly.iter().map(|&e| {

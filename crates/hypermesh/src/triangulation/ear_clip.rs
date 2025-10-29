@@ -58,6 +58,7 @@ impl Ecvt {
         while !Rc::ptr_eq(&nl, &nr) && !Rc::ptr_eq(&tail, &nr) &&
             (if to_left {!Rc::ptr_eq(&nl, &self.ptr_r())} else {!Rc::ptr_eq(&nl, &self.ptr_l()) })
         {
+            println!("while2");
             let e = nl.borrow().pos - center.borrow().pos;
             let l2 = e.dot(&e);
             if l2 <= p2 {
@@ -594,6 +595,7 @@ impl EarClip {
 
         if let Some(mut v) = v_op {
             while num_tri > 0 {
+                println!("while1 num_tri : {}", num_tri);
                 if let Some(q) = self.eque.pop_first() { v = Rc::clone(&q.0); }
                 self.clip_ear(&v);
                 num_tri -= 1;

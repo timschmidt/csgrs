@@ -75,7 +75,7 @@ pub(in crate::simplification) fn remove_if_folded(
     let (i0, i1, i2) = hs.tri_hids_of(hid);
     let (j0, j1, j2) = hs.tri_hids_of(hs.pair_hid_of(hid));
 
-    if hs[i1].no_pair() || hs.head_vid_of(i1) != hs.head_vid_of(j1) { return; }
+    if hs[i1].pair().is_none() || hs.head_vid_of(i1) != hs.head_vid_of(j1) { return; }
 
     let nan = Row3f::new(f64::MAX, f64::MAX, f64::MAX);
     match (hs.pair_hid_of(i1) == j2, hs.pair_hid_of(i2) == j1) {
@@ -167,7 +167,7 @@ impl HalfedgeOps for [Half] {
     }
 
     fn collapse_triangle(&mut self, hids: &(usize, usize, usize)) {
-        if self[hids.1].no_pair() { return; }
+        if self[hids.1].pair().is_none() { return; }
         let pair1 = self.pair_hid_of(hids.1);
         let pair2 = self.pair_hid_of(hids.2);
         self[pair1].pair = pair2;
@@ -178,7 +178,7 @@ impl HalfedgeOps for [Half] {
     fn loop_ccw<F>(&mut self, hid: usize, mut func: F) where F: FnMut(&mut [Half], usize) {
         let mut cur = hid;
         loop {
-            if self[cur].no_tail() || self[cur].no_head() { continue; }
+            if self[cur].tail().is_none() || self[cur].head().is_none() { continue; }
             func(self, cur);
             cur = next_of(self[cur].pair);
             if cur == hid { break; }

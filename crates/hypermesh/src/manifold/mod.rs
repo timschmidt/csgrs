@@ -3,13 +3,13 @@ pub mod collider;
 pub mod hmesh;
 mod coplanar;
 use std::sync::Arc;
+use anyhow::anyhow;
 use nalgebra::{DMatrix, RowVector3 as Row3};
 use bounds::BoundingBox;
 use crate::collider::{morton_code, MortonCollider};
 use crate::hmesh::Hmesh;
 use crate::common::{Half, K_PRECISION};
 use crate::manifold::coplanar::compute_coplanar_idx;
-
 
 fn get_face_morton(hmesh: &Hmesh, bbox: &BoundingBox) -> (Vec<BoundingBox>, Vec<u32>) {
     assert!(hmesh.halfs.iter().all(|h| h.twin().id < usize::MAX)); // maybe not necessary
@@ -59,7 +59,7 @@ pub struct Manifold {
 }
 
 impl Manifold {
-    pub fn new(hmesh: &Hmesh) -> Self {
+    pub fn new(hmesh: &Hmesh) -> anyhow::Result<Self> {
         let bbox = BoundingBox::new_from_matrix(usize::MAX, &hmesh.pos);
         let (mut f_bboxes, mut f_morton) = get_face_morton(&hmesh, &bbox);
         let sorted = sort_faces(&hmesh, &mut f_bboxes, &mut f_morton);
@@ -78,22 +78,12 @@ impl Manifold {
             1e-6 // todo: temporary!
         );
 
-
-        let mut mfd = Manifold {
-            hmesh: sorted,
-            pos,
-            hs,
-            vert_normals: vns,
-            face_normals: fns,
-            bbox,
-            collider,
-            coplanar,
-            epsilon: -1.,
-            tolerance: -1.,
-        };
-
+        let mut mfd = Manifold { hmesh: sorted, pos, hs, vert_normals: vns, face_normals: fns, bbox, collider, coplanar, epsilon: -1., tolerance: -1. };
         mfd.set_epsilon(K_PRECISION * mfd.bbox.scale(), false);
-        mfd
+
+
+        if !mfd.is_manifold() { return Err(anyhow!("The input mesh is not manifold")); }
+        Ok(mfd)
     }
 
     pub fn nv(&self) -> usize { self.hmesh.n_vert }
@@ -107,5 +97,9 @@ impl Manifold {
         let t = if use_single { e.max(f64::EPSILON * s) } else { e };
         self.epsilon = e;
         self.tolerance = self.tolerance.max(t);
+    }
+
+    fn is_manifold(&self) -> bool {
+        true
     }
 }

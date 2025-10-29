@@ -3,39 +3,45 @@ pub mod shadow;
 pub mod kernel02;
 pub mod kernel11;
 pub mod kernel12;
-pub mod boolean46;
-
 use nalgebra::{RowVector3};
-use crate::intersection::kernel02::Kernel02;
-use crate::intersection::kernel11::Kernel11;
-use crate::intersection::kernel12::Kernel12;
-use crate::bounds::{BoundingBox, Query};
-use crate::collider::{Recorder};
+use kernel02::Kernel02;
+use kernel11::Kernel11;
+use kernel12::Kernel12;
+use crate::bounds::{BoundingBox, Query}; // todo: fix wired import
+use crate::collider::{Recorder}; // todo: same
+use crate::common::OpType;
 use crate::manifold::Manifold;
 type Row3f = RowVector3<f64>;
 
-/**
- * The notation in these files is abbreviated due to the complexity of the
- * functions involved. The key is that the input manifolds are P and Q, while
- * the output is R, and these letters in both upper and lower case refer to
- * these objects. Operations are based on dimensionality: vert: 0, edge: 1,
- * face: 2, solid: 3. X denotes a winding-number type quantity from the source
- * paper of this algorithm, while S is closely related but includes only the
- * subset of X values which "shadow" (are on the correct side of).
- *
- * Nearly everything here is sparse arrays, where, for instance, each pair in
- * p2q1 refers to a face index of P interacting with a halfedge index of Q.
- * Adjacent arrays like x21 refer to the values of X corresponding to each
- * sparse index pair.
- *
- * Note many functions are designed to work symmetrically, for instance, for both
- * p2q1 and p1q2. Inside these functions P and Q are marked as though the
- * function is forwards, but it may include a Boolean "reverse" that indicates P
- * and Q have been swapped.
- */
+pub struct Boolean03<'a> {
+    pub mfd_p: &'a Manifold,
+    pub mfd_q: &'a Manifold,
+    pub p1q2: Vec<[i32; 2]>,
+    pub p2q1: Vec<[i32; 2]>,
+    pub x12: Vec<i32>,
+    pub x21: Vec<i32>,
+    pub w03: Vec<i32>,
+    pub w30: Vec<i32>,
+    pub v12: Vec<Row3f>,
+    pub v21: Vec<Row3f>,
+}
 
-// 1st check point
-pub fn simple_boolean() {}
+impl <'a> Boolean03<'a> {
+    pub fn new(
+        mfd_p: &'a Manifold,
+        mfd_q: &'a Manifold,
+        operation: &OpType,
+    ) -> Self {
+        let expand = if operation == &OpType::Add { 1. } else { -1. };
+        let mut p1q2 = vec![];
+        let mut p2q1 = vec![];
+        let (x12, v12) = intersect12(mfd_p, mfd_q, &mut p1q2, expand, true);
+        let (x21, v21) = intersect12(mfd_p, mfd_q, &mut p2q1, expand, false);
+        let w03 = winding03(mfd_p, mfd_q, expand, true);
+        let w30 = winding03(mfd_p, mfd_q, expand, false);
+        Self { mfd_p, mfd_q, p1q2, p2q1, x12, x21, w03, w30, v12, v21 }
+    }
+}
 
 struct SimpleRecorder<F> where F: FnMut(usize, usize) {
     callback: F,
@@ -65,10 +71,8 @@ struct Intersection12Recorder<'a> {
 
 impl <'a> Recorder for Intersection12Recorder<'a> {
     fn record(&mut self, query_idx: usize, leaf_idx: usize) {
-        //let h = &self.mfd_a.halfs()[query_idx]; // to buffer between query idx to element's idx, the original uses TmpEdge
         let (x12, op_v12) = self.k12.op(query_idx, leaf_idx);
         if let Some(v12) = op_v12 {
-            //println!("hid: {}, fid: {}, x12: {}", h.id, leaf_idx, x12);
             if self.forward { self.p1q2.push([query_idx as i32, leaf_idx as i32]); }
             else            { self.p1q2.push([leaf_idx as i32, query_idx as i32]); }
             self.x12.push(x12);
@@ -76,7 +80,6 @@ impl <'a> Recorder for Intersection12Recorder<'a> {
         }
     }
 }
-
 
 pub fn intersect12 (
     p: &Manifold,
@@ -116,7 +119,7 @@ pub fn intersect12 (
 
     let bbs = a.hs.iter()
         .enumerate()
-        .filter(|(i, h)| h.tail < h.head)
+        .filter(|(_, h)| h.tail < h.head)
         .map(|(i, h)|
             Query::Bb(BoundingBox::new(i, &vec![a.pos[h.tail], a.pos[h.head]]))
             ).collect::<Vec<_>>();
@@ -133,7 +136,7 @@ pub fn intersect12 (
 
      b.collider.collision(&bbs, &mut rec);
 
-    let mut x12: Vec<i32> = vec![];
+    let mut x12: Vec<i32>   = vec![];
     let mut v12: Vec<Row3f> = vec![];
     let mut seq: Vec<usize> = (0..rec.p1q2.len()).collect();
     seq.sort_by(|&a, &b| (rec.p1q2[a][0], rec.p1q2[a][1]).cmp(&(rec.p1q2[b][0], rec.p1q2[b][1])));
@@ -146,7 +149,6 @@ pub fn intersect12 (
 
     (x12, v12)
 }
-
 
 pub fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<i32> {
     let a = if forward {p} else {q};
@@ -174,46 +176,5 @@ pub fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<
         }
     );
     b.collider.collision(&bbs, &mut rec);
-
     w03
 }
-
-pub struct Boolean3<'a> {
-    pub mfd_p: &'a Manifold,
-    pub mfd_q: &'a Manifold,
-    pub p1q2: Vec<[i32; 2]>,
-    pub p2q1: Vec<[i32; 2]>,
-    pub x12: Vec<i32>,
-    pub x21: Vec<i32>,
-    pub w03: Vec<i32>,
-    pub w30: Vec<i32>,
-    pub v12: Vec<Row3f>,
-    pub v21: Vec<Row3f>,
-}
-
-impl<'a> Boolean3<'a> {
-/*
-fn new(&self, p: &'a Manifold, q: &'a Manifold, op :OpType) -> Self {
-            self.mfd_p = p;
-            self.mfd_q = q;
-            self.expand_p = if op == OpType::Add {1.} else {0.};
-            self.valid = true;
-
-            // todo assert mfd_p has bounds
-
-            // Level 3
-            // Build up the intersection of the edges and triangles, keeping only those
-            // that intersect and  the direction the edge is passing through the triangle.
-            (self.x12, self.v12) = intersect12();
-            (self.x21, self.v21) = intersect12();
-
-            // Sum up the winding numbers of all vertices.
-            self.w03 = Winding03(inP, inQ, expandP_, true);
-            self.w30 = Winding03(inP, inQ, expandP_, false);
-            }
-*/
-}
-
-#[derive(PartialEq)]
-pub enum OpType { Add, Subtract, Intersect }
-

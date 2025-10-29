@@ -5,7 +5,8 @@ use bevy::render::mesh::Indices;
 use bevy::color::palettes::css::*;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use nalgebra::DMatrix;
-use mfd::{intersect12, winding03, Boolean3, Manifold, OpType};
+use mfd::{compute_boolean, Manifold};
+use mfd::common::OpType;
 use mfd::hmesh::Hmesh;
 
 #[derive(Resource)]
@@ -70,10 +71,10 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>
 ) {
 
-    let (m0, _) = tobj::load_obj("assets/models/gargoyle.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m0, _) = tobj::load_obj("assets/models/cube_twist.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
     let (m1, _) = tobj::load_obj("assets/models/fertility.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
     let mut hms_ = vec![];
-    for (m, s) in vec![(m0, 1.), (m1, 0.01)] {
+    for (m, s) in vec![(m0, 1.), (m1, 0.04)] {
         let mesh = &m[0].mesh;
         let pos_buf = mesh.positions.iter().map(|&v| (v * s) as f64).collect::<Vec<f64>>();
         let idx_buf = mesh.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>();
@@ -85,72 +86,11 @@ fn setup(
     }
 
 
-    //hms.push(gen_tet_a());
-    //hms.push(gen_tet_c());
-    let mf0 = Manifold::new(&hms_[0]);
-    let mf1 = Manifold::new(&hms_[1]);
-    let mfs = vec![&mf0, &mf1];
-
-    let expand = -1.;
-    let mut p1q2 = vec![];
-    let mut p2q1 = vec![];
-    let (x12, v12) = intersect12(mfs[0], mfs[1], &mut p1q2, expand, true);
-    let (x21, v21) = intersect12(mfs[0], mfs[1], &mut p2q1, expand, false);
-    let w03 = winding03(mfs[0], mfs[1], expand, true);
-    let w30 = winding03(mfs[0], mfs[1], expand, false);
-
-    let mut pts_i = Vec::new();
-    let mut pts_w = Vec::new();
-    let mut edges = Vec::new();
-
-    for p in v12.iter() { pts_i.push(Vec3::new(p[0] as f32, p[1] as f32, p[2] as f32)); }
-    for p in v21.iter() { pts_i.push(Vec3::new(p[0] as f32, p[1] as f32, p[2] as f32)); }
-
-    for (i, w) in w03.iter().enumerate() {
-        if *w == 0 { continue; }
-        let p = mfs[0].pos[i];
-        pts_w.push(Vec3::new(p[0] as f32, p[1] as f32, p[2] as f32));
-    }
-    for (i, w) in w30.iter().enumerate() {
-        if *w == 0 { continue; }
-        let p = mfs[1].pos[i];
-        pts_w.push(Vec3::new(p[0] as f32, p[1] as f32, p[2] as f32));
-    }
-
-    let boolean = Boolean3{
-        mfd_p: &mfs[0], mfd_q: &mfs[1],
-        p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
-    let (pos, halfs, tris) = boolean.get_result(OpType::Subtract);
-    for h in halfs {
-        let p0 = pos[h.tail];
-        let p1 = pos[h.head];
-        edges.push((
-            Vec3::new(p0[0] as f32, p0[1] as f32, p0[2] as f32),
-            Vec3::new(p1[0] as f32, p1[1] as f32, p1[2] as f32),
-        ));
-    }
-
-    let mut normals = vec![];
-    for (i, t) in tris.iter().enumerate() {
-        let p0 = pos[t[0]];
-        let p1 = pos[t[1]];
-        let p2 = pos[t[2]];
-        let c = (p0 + p1 + p2) / 3.;
-        let n = (p1 - p0).cross(&(p2 - p0)).normalize() * 0.1;
-        normals.push((
-            Vec3::new(c[0] as f32, c[1] as f32, c[2] as f32),
-            Vec3::new((c[0] + n[0]) as f32, (c[1] + n[1]) as f32, (c[2] + n[2]) as f32),
-        ));
-    }
+    let mf0 = Manifold::new(&hms_[0]).unwrap();
+    let mf1 = Manifold::new(&hms_[1]).unwrap();
+    let (pos, tris) = compute_boolean(&mf0, &mf1, OpType::Subtract);
 
     {
-        //let pos_buf: Vec<f64> = pos.iter().flat_map(|row| row.iter().copied()).collect();
-        //let idx_buf: Vec<usize> = tris.iter().flat_map(|row| row.iter().copied()).collect();
-        //let hm = Hmesh::new(
-        //    DMatrix::from_row_slice(pos.len(), 3, &pos_buf).into(),
-        //    DMatrix::from_row_slice(tris.len(), 3, &idx_buf).into()
-        //);
-        //hms_.push(hm);
         let mut bm = Mesh::new(
             bevy::render::mesh::PrimitiveTopology::TriangleList,
             RenderAssetUsages::default()
