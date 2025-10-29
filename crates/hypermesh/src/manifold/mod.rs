@@ -53,6 +53,7 @@ pub struct Manifold {
     pub epsilon: f64,
     pub tolerance: f64,
     pub pos: Vec<Row3<f64>>,
+    pub hs: Vec<Halfedge>,
     pub face_normals: Vec<Row3<f64>>,
     pub vert_normals: Vec<Row3<f64>>
 }
@@ -66,13 +67,14 @@ impl Manifold {
         let pos = sorted.verts.iter().map(|v| v.pos()).collect::<Vec<_>>();
         let fns = sorted.faces.iter().map(|f| f.normal()).collect::<Vec<_>>();
         let vns = sorted.verts.iter().map(|v| v.normal()).collect::<Vec<_>>();
+        let hs = sorted.halfs.iter().map(|h| Halfedge{ tail: h.tail().id, head: h.head().id, pair: h.twin().id }).collect::<Vec<_>>();
 
         let collider = MortonCollider::new(&f_bboxes, &f_morton);
 
         let coplanar = compute_coplanar_idx(
             &pos,
             &fns,
-            &sorted.halfs.iter().map(|h| Halfedge{ tail: h.tail().id, head: h.head().id, pair: h.twin().id }).collect::<Vec<_>>(),
+            &hs,
             1e-6 // todo: temporary!
         );
 
@@ -80,6 +82,7 @@ impl Manifold {
         let mut mfd = Manifold {
             hmesh: sorted,
             pos,
+            hs,
             vert_normals: vns,
             face_normals: fns,
             bbox,
@@ -96,7 +99,6 @@ impl Manifold {
     pub fn nv(&self) -> usize { self.hmesh.n_vert }
     pub fn nt(&self) -> usize { self.hmesh.n_face }
     pub fn nh(&self) -> usize { self.hmesh.n_half }
-    pub fn halfs(&self) -> &Vec<Half> { &self.hmesh.halfs }
 
     pub fn set_epsilon(&mut self, min_epsilon: f64, use_single: bool) {
         let s = self.bbox.scale();

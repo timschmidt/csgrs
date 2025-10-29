@@ -1,4 +1,5 @@
 use nalgebra::{RowVector2, RowVector3};
+use crate::common::Halfedge;
 use crate::hmesh::Half;
 use super::intersect::interpolate;
 type Row2f = RowVector2<f64>;
@@ -15,13 +16,13 @@ pub fn shadows01(
     q1: usize,
     ps_p: &[Row3f],
     ps_q: &[Row3f],
-    hs_q: &[Half],
+    hs_q: &[Halfedge],
     normal: &[Row3f],
     expand: f64,  // sign of normal
     reverse: bool //
 ) -> Option<(i32, Row2f)> {
-    let q1s = hs_q[q1].tail().id;
-    let q1e = hs_q[q1].head().id;
+    let q1s = hs_q[q1].tail;
+    let q1e = hs_q[q1].head;
     let p0x  = ps_p[p0].x;
     let q1sx = ps_q[q1s].x;
     let q1ex = ps_q[q1e].x;

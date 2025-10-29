@@ -1,13 +1,13 @@
 use nalgebra::{RowVector3};
+use crate::common::Halfedge;
 use super::intersect::interpolate;
 use super::shadow::{shadows, shadows01};
-use crate::hmesh::Half;
 type Row3f = RowVector3<f64>;
 
 pub struct Kernel02<'a> {
     pub vpos_p: &'a[Row3f],
     pub vpos_q: &'a[Row3f],
-    pub half_q: &'a[Half],
+    pub half_q: &'a[Halfedge],
     pub normal: &'a[Row3f],
     pub expand: f64,
     pub forward: bool
@@ -32,15 +32,15 @@ impl<'a> Kernel02<'a> {
         for i in 0..3 {
             let q1 = 3 * q2 + i; // make sure fid * 3 + i = hid
             let half = self.half_q[q1].clone();
-            let q1_f = if half.is_forward() { q1 } else {half.twin().id};
+            let q1_f = if half.is_forward() { q1 } else { half.pair };
 
             if !self.forward {
-                let q_vert = self.half_q[q1_f].tail();
-                let diff = pos_p - self.vpos_q[q_vert.id];
+                let q_vert = self.half_q[q1_f].tail;
+                let diff = pos_p - self.vpos_q[q_vert];
                 let metric = diff.dot(&diff);
                 if metric < min_metric {
                     min_metric = metric;
-                    closest_vid = q_vert.id;
+                    closest_vid = q_vert;
                 }
             }
 

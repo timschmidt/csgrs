@@ -66,8 +66,8 @@ struct Intersection12Recorder<'a> {
 
 impl <'a> Recorder for Intersection12Recorder<'a> {
     fn record(&mut self, query_idx: usize, leaf_idx: usize) {
-        let h = &self.mfd_a.halfs()[query_idx]; // to buffer between query idx to element's idx, the original uses TmpEdge
-        let (x12, op_v12) = self.k12.op(h.id, leaf_idx);
+        //let h = &self.mfd_a.halfs()[query_idx]; // to buffer between query idx to element's idx, the original uses TmpEdge
+        let (x12, op_v12) = self.k12.op(query_idx, leaf_idx);
         if let Some(v12) = op_v12 {
             //println!("hid: {}, fid: {}, x12: {}", h.id, leaf_idx, x12);
             if self.forward { self.p1q2.push([query_idx as i32, leaf_idx as i32]); }
@@ -92,33 +92,34 @@ pub fn intersect12 (
     let k02 = Kernel02{
         vpos_p: &a.pos,
         vpos_q: &b.pos,
-        half_q: &b.halfs(),
+        half_q: &b.hs,
         normal: &p.vert_normals,
         expand,
         forward
     };
     let k11 = Kernel11{
         vpos_p: &p.pos,
-        half_p: &p.halfs(),
+        half_p: &p.hs,
         vpos_q: &q.pos,
-        half_q: &q.halfs(),
+        half_q: &q.hs,
         normal: &p.vert_normals,
         expand,
     };
 
     let k12 = Kernel12{
         vpos_p: &a.pos,
-        half_p: &a.halfs(),
-        half_q: &b.halfs(),
+        half_p: &a.hs,
+        half_q: &b.hs,
         forward,
         k02,
         k11,
     };
 
-    let bbs = a.halfs().iter()
-        .filter(|h| h.tail().id < h.head().id)
-        .map(|h|
-            Query::Bb(BoundingBox::new(h.id, &vec![h.tail().pos(), h.head().pos()]))
+    let bbs = a.hs.iter()
+        .enumerate()
+        .filter(|(i, h)| h.tail < h.head)
+        .map(|(i, h)|
+            Query::Bb(BoundingBox::new(i, &vec![a.pos[h.tail], a.pos[h.head]]))
             ).collect::<Vec<_>>();
 
     let mut rec = Intersection12Recorder{
@@ -156,14 +157,16 @@ pub fn winding03(p: &Manifold, q: &Manifold, expand: f64, forward: bool) -> Vec<
     let k02 = Kernel02 {
         vpos_p: &a.pos,
         vpos_q: &b.pos,
-        half_q: &b.halfs(),
+        half_q: &b.hs,
         normal: &p.vert_normals,
         expand,
         forward,
     };
 
-    let bbs = a.hmesh.verts.iter().map(|v|
-        Query::Pt(BoundingBox::new(v.id, &vec![v.pos(), v.pos()]))
+    let bbs = a.pos.iter()
+        .enumerate()
+        .map(|(i, p)|
+        Query::Pt(BoundingBox::new(i, &vec![*p, *p]))
     ).collect::<Vec<_>>();
     let mut rec = SimpleRecorder::new(
         |a, b| {

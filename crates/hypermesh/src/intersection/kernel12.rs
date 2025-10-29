@@ -1,5 +1,6 @@
 use nalgebra::{RowVector3};
 use std::mem;
+use crate::common::Halfedge;
 use crate::hmesh::{Half};
 use super::intersect::intersect;
 use super::kernel02::Kernel02;
@@ -7,8 +8,8 @@ use super::kernel11::Kernel11;
 type Row3f = RowVector3<f64>;
 
 pub struct Kernel12<'a> {
-    pub half_p: &'a[Half],
-    pub half_q: &'a[Half],
+    pub half_p: &'a[Halfedge],
+    pub half_q: &'a[Halfedge],
     pub vpos_p: &'a[Row3f],
     pub k02: Kernel02<'a>,
     pub k11: Kernel11<'a>,
@@ -26,10 +27,10 @@ impl<'a> Kernel12<'a> {
 
         let mut k = 0;
 
-        for vid in [h.tail().id, h.head().id].iter() {
+        for vid in [h.tail, h.head].iter() {
             let (s, op_z) = self.k02.op(*vid, q2);
             if let Some(z) = op_z {
-                let f = (*vid == h.tail().id) == self.forward;
+                let f = (*vid == h.tail) == self.forward;
                 x12 += s * if f { 1 } else { -1 };
                 if k < 2 && (k == 0 || (s != 0) != shadows) {
                     shadows = s != 0;
@@ -48,7 +49,7 @@ impl<'a> Kernel12<'a> {
         for i in 0..3 {
             let q1 = 3 * q2 + i;
             let half = &self.half_q[q1];
-            let q1f = if half.is_forward() { q1 } else { half.twin().id };
+            let q1f = if half.is_forward() { q1 } else { half.pair };
 
             let (s, op_xyzz) = if self.forward { self.k11.op(p1, q1f) } else { self.k11.op(q1f, p1) };
 

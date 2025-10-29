@@ -258,7 +258,7 @@ fn draw_example_collection(
     let k02 = Kernel02 {
         vpos_p: &rand_pts,
         vpos_q: &mf.pos,
-        half_q: &mf.halfs(),
+        half_q: &mf.hs,
         normal: &rand_pts.iter().map(|_| RowVector3::new(0., 0., 1.)).collect::<Vec<_>>(),
         expand: 1.,
         forward: true,
