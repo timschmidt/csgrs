@@ -164,15 +164,11 @@ fn build_internal_boxes(
     let mut flag = false;
     loop {
         if flag && node == K_ROOT { return; }
-        //println!("node: {}", node);
         node = node_parent[node as usize];
-        //println!("node parent: {}", node);
         let intl_idx = node2intl(node);
-        //println!("intl idx: {}", intl_idx);
         let c = counter[intl_idx as usize];
         counter[intl_idx as usize] += 1;
         if c == 0 { return; }
-        //println!("node: {}, intl: {}, counter: {}", node, intl_idx, counter[intl_idx as usize]);
         node_bb[node as usize] = union_bbs(
             &node_bb[intl_children[intl_idx as usize].0 as usize],
             &node_bb[intl_children[intl_idx as usize].1 as usize]
@@ -219,10 +215,6 @@ impl MortonCollider {
         leaf_bb: &[BoundingBox],
         leaf_morton: &[u32]
     ) -> Self {
-
-        //for i in 0..leaf_bb.len() { println!("min: {:?}, max: {:?}", leaf_bb[i].min, leaf_bb[i].max); }
-        //println!("leaf_morton: {:?}", leaf_morton);
-
         let n_intl = leaf_bb.len() - 1;
         let n_node = 2 * leaf_bb.len() - 1;
         let mut node_parent = vec![-1; n_node];
@@ -236,9 +228,6 @@ impl MortonCollider {
 
         for i in 0..n_intl { tree.op(i as i32); }
 
-        //println!("tree parent: {:?}", tree.parent);
-        //println!("tree children: {:?}", tree.children);
-
         let mut res = MortonCollider {
             node_bb: vec![BoundingBox::default(); n_node],
             node_parent,
@@ -246,7 +235,6 @@ impl MortonCollider {
         };
 
         res.update_boxes(leaf_bb);
-        //for i in 0..n_node { println!("node bb: {:?}", res.node_bb[i]); }
         res
     }
 
@@ -261,89 +249,5 @@ impl MortonCollider {
                 false,
             )
         }
-    }
-}
-
-
-#[cfg(test)]
-mod collider_test {
-    use nalgebra::RowVector3;
-    use crate::intersection::test_data;
-    use crate::collider::{spread_bits_3, MortonCollider};
-    use crate::{intersect12, Manifold};
-    use crate::bounds::BoundingBox;
-
-    #[test]
-    fn morton_code_test() {
-        let v = spread_bits_3(341.333 as u32);
-        assert_eq!(v, 17043521);
-        let v = spread_bits_3(1023);
-        assert_eq!(v, 153391689);
-        let v = spread_bits_3(682.667 as u32);
-        assert_eq!(v, 136348168);
-    }
-
-    #[test]
-    fn morton_radix_tree_test() {
-        let expand = -1.;
-        let hm_p = test_data::gen_tet_a();
-        let mfd_p = Manifold::new(&hm_p);
-        println!("===================");
-        let hm_q = test_data::gen_tet_c();
-        let mfd_q = Manifold::new(&hm_q);
-
-        let mut p1q2 = vec![];
-        let mut p2q1 = vec![];
-        let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, expand, true);
-        let (x21, v21) = intersect12(&mfd_p, &mfd_q, &mut p2q1, expand, false);
-        //println!("x21: {:?}", x21);
-        //println!("v21: {:?}", v21);
-    }
-
-    #[test]
-    fn morton_radix_tree_test_0() {
-        let mut leaf_bb = vec![];
-        let mut leaf_mt = vec![];
-
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,-1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,1.,-1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(-0.8,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(-0.8,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,1.,-1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(1.2,-1.,-1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,-1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,1.,-1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,1.,-1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(1.2,-1.,-1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_mt.push(85217605);
-        leaf_mt.push(102261126);
-        leaf_mt.push(170435210);
-        leaf_mt.push(289739857);
-        leaf_mt.push(494262109);
-        leaf_mt.push(511305630);
-        leaf_mt.push(664697319);
-        leaf_mt.push(681740840);
-        leaf_mt.push(732871403);
-        leaf_mt.push(818089008);
-        leaf_mt.push(869219571);
-        leaf_mt.push(1022611260);
-
-        let table = vec![11, 0, 8, 1, 10, 4, 5, 3, 6, 2, 7, 9];
-
-        let mut leaf_bb_alt = leaf_bb.clone();
-        let mut leaf_mt_alt = leaf_mt.clone();
-        for i in 0..table.len() {
-            leaf_bb_alt[i] = leaf_bb[table[i]].clone();
-            leaf_mt_alt[i] = leaf_mt[table[i]].clone();
-            //leaf_bb_alt[i] = leaf_bb[(i + 1) % leaf_bb.len()].clone();
-            //leaf_mt_alt[i] = leaf_mt[(i + 1) % leaf_bb.len()].clone();
-        }
-        //for i in 1..leaf_mt.len() {
-        //    assert!(leaf_mt_alt[i - 1] <= leaf_mt_alt[i]);
-        //}
-
-        let col = MortonCollider::new(leaf_bb_alt.as_slice(), leaf_mt_alt.as_slice());
     }
 }

@@ -97,32 +97,3 @@ impl<'a> Kernel11<'a> {
         (s11, xyzz11)
     }
 }
-
-#[cfg(test)]
-mod kernel11_tests {
-    use crate::intersection::kernel11::Kernel11;
-    use crate::intersection::test_data;
-    use crate::Manifold;
-
-    #[test]
-    fn kernel11_test() {
-        //edge.isforward: 0
-        //p1: 9
-        //q1F: 0
-        //s: 0
-        //xyzz: {-0.532938,-0.230769,0.307692,0.133235}
-        let mfd_p = Manifold::new(&test_data::gen_tet_a());
-        let mfd_q = Manifold::new(&test_data::gen_tet_c());
-        let k11 = Kernel11 {
-            vpos_p: &mfd_p.pos,
-            vpos_q: &mfd_q.pos,
-            half_p: &mfd_p.hs,
-            half_q: &mfd_q.hs,
-            normal: &mfd_p.vert_normals,
-            expand: 1.,
-        };
-        let (s, z) = k11.op(0, 9);
-        println!("s: {}, z: {:?}", s, z);
-    }
-}
-

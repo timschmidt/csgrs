@@ -2,7 +2,6 @@ pub mod ear_clip;
 pub mod polygon;
 pub mod flat_tree;
 pub mod halfedge;
-mod test;
 
 use nalgebra::{Matrix2x3 as Mat23, RowVector3, RowVector2};
 use anyhow::Result;

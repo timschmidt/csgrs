@@ -42,13 +42,3 @@ bevy = [
 name = "main"
 path = "examples/main.rs"
 required-features = ["bevy"]
-
-[[example]]
-name = "hmesh"
-path = "examples/hmesh_viewer.rs"
-required-features = ["bevy"]
-
-[[example]]
-name = "ker02"
-path = "examples/ker02_viewer.rs"
-required-features = ["bevy"]

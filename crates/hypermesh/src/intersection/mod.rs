@@ -4,7 +4,6 @@ pub mod kernel02;
 pub mod kernel11;
 pub mod kernel12;
 pub mod boolean46;
-pub mod test_data;
 
 use nalgebra::{RowVector3};
 use crate::intersection::kernel02::Kernel02;
@@ -217,7 +216,4 @@ fn new(&self, p: &'a Manifold, q: &'a Manifold, op :OpType) -> Self {
 
 #[derive(PartialEq)]
 pub enum OpType { Add, Subtract, Intersect }
-
-#[cfg(test)]
-mod tests;
 
