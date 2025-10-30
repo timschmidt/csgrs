@@ -1,5 +1,5 @@
-use nalgebra::RowVector3 as Row3;
 use crate::bounds::{union_bbs, BBox, Query};
+use crate::common::{Row3f};
 
 fn spread_bits_3(v: u32) -> u32 {
     assert!(v <= 1023);
@@ -11,9 +11,9 @@ fn spread_bits_3(v: u32) -> u32 {
     v
 }
 
-pub fn morton_code(p: &Row3<f64>, bb: &BBox) -> u32 {
+pub fn morton_code(p: &Row3f, bb: &BBox) -> u32 {
     let mut xyz = (p - bb.min).component_div(&(bb.max - bb.min));
-    xyz = (1024. * xyz).sup(&Row3::zeros()).inf(&Row3::new(1023., 1023., 1023.));
+    xyz = (1024. * xyz).sup(&Row3f::zeros()).inf(&Row3f::new(1023., 1023., 1023.));
     let x = spread_bits_3(xyz.x as u32);
     let y = spread_bits_3(xyz.y as u32);
     let z = spread_bits_3(xyz.z as u32);

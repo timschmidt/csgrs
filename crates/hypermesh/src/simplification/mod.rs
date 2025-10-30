@@ -1,11 +1,8 @@
-use nalgebra::{RowVector2, RowVector3};
-use crate::common::{Half, Tref, next_of};
+use crate::common::{Half, Tref, next_of, Row3f, Row2f};
 mod edge_dedup;
 mod edge_swap;
 pub mod edge_collapse;
 use edge_collapse::*;
-type Row3f = RowVector3<f64>;
-type Row2f = RowVector2<f64>;
 
 
 pub fn simplify_topology(

@@ -1,5 +1,5 @@
 use super::kernel02::Kernel02;
-use crate::bounds::{BBox, BPos, Query};
+use crate::bounds::{BPos, Query};
 use crate::collider::Recorder;
 use crate::Manifold;
 

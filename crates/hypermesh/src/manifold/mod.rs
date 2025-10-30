@@ -4,10 +4,10 @@ pub mod hmesh;
 mod planar;
 use std::sync::Arc;
 use anyhow::anyhow;
-use nalgebra::{DMatrix, RowVector3 as Row3};
+use nalgebra::{DMatrix};
 use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider};
-use crate::common::{Half, K_PRECISION};
+use crate::common::{Half, K_PRECISION, Row3f};
 use crate::manifold::planar::compute_coplanar_idx;
 use super::hmesh::Hmesh;
 
@@ -46,13 +46,13 @@ fn sort_faces(
 }
 
 pub struct Manifold {
-    pub ps: Vec<Row3<f64>>,
+    pub ps: Vec<Row3f>,
     pub hs: Vec<Half>,
     pub nv: usize,
     pub nt: usize,
     pub nh: usize,
-    pub fns: Vec<Row3<f64>>,
-    pub vns: Vec<Row3<f64>>,
+    pub fns: Vec<Row3f>,
+    pub vns: Vec<Row3f>,
     pub bbox: BBox,
     pub collider: MortonCollider,
     pub coplanar: Vec<i32>,

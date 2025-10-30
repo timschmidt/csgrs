@@ -5,9 +5,8 @@ pub mod kernel12;
 pub mod kernel03;
 use crate::boolean03::kernel03::winding03;
 use crate::boolean03::kernel12::intersect12;
-use crate::common::OpType;
+use crate::common::{OpType, Row3f};
 use crate::manifold::Manifold;
-type Row3f = nalgebra::RowVector3<f64>;
 
 pub struct Boolean03 {
     pub p1q2: Vec<[i32; 2]>,
@@ -20,20 +19,18 @@ pub struct Boolean03 {
     pub v21: Vec<Row3f>,
 }
 
-impl Boolean03 {
-    pub fn new(
-        mfd_p: &Manifold,
-        mfd_q: &Manifold,
-        operation: &OpType,
-    ) -> Self {
-        let expand = if operation == &OpType::Add { 1. } else { -1. };
-        let mut p1q2 = vec![];
-        let mut p2q1 = vec![];
-        let (x12, v12) = intersect12(mfd_p, mfd_q, &mut p1q2, expand, true);
-        let (x21, v21) = intersect12(mfd_p, mfd_q, &mut p2q1, expand, false);
-        let w03 = winding03(mfd_p, mfd_q, expand, true);
-        let w30 = winding03(mfd_p, mfd_q, expand, false);
-        Self { p1q2, p2q1, x12, x21, w03, w30, v12, v21 }
-    }
+pub fn boolean03(
+    mfd_p: &Manifold,
+    mfd_q: &Manifold,
+    operation: &OpType,
+) -> Boolean03 {
+    let expand = if operation == &OpType::Add { 1. } else { -1. };
+    let mut p1q2 = vec![];
+    let mut p2q1 = vec![];
+    let (x12, v12) = intersect12(mfd_p, mfd_q, &mut p1q2, expand, true);
+    let (x21, v21) = intersect12(mfd_p, mfd_q, &mut p2q1, expand, false);
+    let w03 = winding03(mfd_p, mfd_q, expand, true);
+    let w30 = winding03(mfd_p, mfd_q, expand, false);
+    Boolean03 { p1q2, p2q1, x12, x21, w03, w30, v12, v21 }
 }
 

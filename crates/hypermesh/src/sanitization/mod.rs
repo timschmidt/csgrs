@@ -1,11 +1,25 @@
-use nalgebra::RowVector3 as Row3;
-use crate::common::{Half, next_of};
+use crate::common::{next_of, Half, Tref};
+use crate::{Manifold, Row3u};
 
-const REMOVED_FLAG: usize = usize::MAX - 1;
+pub fn update_reference(
+    mp: &Manifold,
+    mq: &Manifold,
+    rs: &mut[Tref],
+) {
+    for r in rs.iter_mut() {
+        let fid = r.face_id;
+        let pq = r.mesh_id == 0;
+        r.face_id = 0; // todo: see original code and it's always -1
+        r.planar_id = if pq { mp.coplanar[fid] }
+        else  { mq.coplanar[fid] };
+    }
+}
 
-pub fn compute_halfs(fs: &Vec<Row3<usize>>) -> Vec<Half> {
+pub fn compute_halfs(fs: &Vec<Row3u>) -> Vec<Half> {
     let nh = fs.len() * 3;
     let ne = nh / 2;
+    let nt = nh / 3;
+    let remove_flag = usize::MAX - 1;
     let mut hs  = vec![Half::default(); nh];
     let mut ids = (0..nh).collect::<Vec<_>>();
     let mut key = vec![0u64; nh];
@@ -42,8 +56,8 @@ pub fn compute_halfs(fs: &Vec<Row3<usize>>) -> Vec<Half> {
 
             if !(h0.tail == h1.head && h0.head == h1.tail) { break; }
             if hs[next_of(i0)].head == hs[next_of(i1)].head { // overlap
-                hs[i0].pair = REMOVED_FLAG;
-                hs[i1].pair = REMOVED_FLAG;
+                hs[i0].pair = remove_flag;
+                hs[i1].pair = remove_flag;
                 if k != j { ids.swap(j, k); }
                 break;
             }
@@ -62,7 +76,7 @@ pub fn compute_halfs(fs: &Vec<Row3<usize>>) -> Vec<Half> {
     for i in 0..ne {
         let i0 = ids[i];
         let i1 = ids[i + ne];
-        if hs[i0].pair != REMOVED_FLAG {
+        if hs[i0].pair != remove_flag {
             hs[i0].pair = i1;
             hs[i1].pair = i0;
         } else {
@@ -71,12 +85,7 @@ pub fn compute_halfs(fs: &Vec<Row3<usize>>) -> Vec<Half> {
         }
     }
 
-    hs
-}
-
-pub fn reorder_halfedges(hs: &mut [Half]) {
-    let nt = hs.len() / 3;
-
+    // reorder halfedges here...
     for t in 0..nt {
         let i = t * 3;
         let f = [hs[i].clone(), hs[i + 1].clone(), hs[i + 2].clone(), ];
@@ -90,11 +99,13 @@ pub fn reorder_halfedges(hs: &mut [Half]) {
         for i in t * 3..(t + 1) * 3 {
             let tail = hs[i].tail;
             let pair = hs[i].pair;
-            if pair == REMOVED_FLAG || pair >= hs.len() { continue; }
+            if pair == remove_flag || pair >= hs.len() { continue; }
             let j = (pair / 3) * 3;
             let f = (0..3).find(|&k| hs[j + k].head == tail);
             if let Some(k) = f { hs[i].pair = j + k; }
         }
     }
+
+    hs
 }
 

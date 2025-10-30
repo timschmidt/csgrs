@@ -1,7 +1,8 @@
-use nalgebra::{RowVector3, RowVector2, Matrix2x3};
-type Row3f = RowVector3<f64>;
-type Row2f = RowVector2<f64>;
-type Mat23 = Matrix2x3<f64>;
+pub type Row3u = nalgebra::RowVector3<usize>;
+pub type Row2f = nalgebra::RowVector2<f64>;
+pub type Row3f = nalgebra::RowVector3<f64>;
+pub type Row4f = nalgebra::RowVector4<f64>;
+pub type Mat23 = nalgebra::Matrix2x3<f64>;
 
 pub const K_PRECISION: f64 = 1e-12;
 pub const K_BEST: f64 = f64::MIN;

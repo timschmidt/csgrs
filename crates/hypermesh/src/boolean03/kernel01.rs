@@ -1,8 +1,4 @@
-use nalgebra::{RowVector2, RowVector3, RowVector4};
-use crate::common::Half;
-type Row2f = RowVector2<f64>;
-type Row3f = RowVector3<f64>;
-type Row4f = RowVector4<f64>;
+use crate::common::{Half, Row2f, Row3f, Row4f};
 
 // These two functions (Interpolate and Intersect) are the only places where
 // floating-point operations take place in the whole Boolean function. These

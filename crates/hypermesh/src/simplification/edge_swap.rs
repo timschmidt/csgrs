@@ -1,7 +1,6 @@
 use nalgebra::RowVector3;
-use crate::common::{Half, Tref, get_axis_aligned_projection, is_ccw_2d};
+use crate::common::{Half, Tref, get_axis_aligned_projection, is_ccw_2d, Row3f};
 use super::{collapse_edge, form_loops, is01_longest_2d, next_of, remove_if_folded, HalfedgeOps};
-type Row3f = RowVector3<f64>;
 
 fn record(
     hs: &[Half],

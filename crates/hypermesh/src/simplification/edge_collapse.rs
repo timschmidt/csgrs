@@ -1,7 +1,5 @@
-use nalgebra::{RowVector3};
-use crate::common::{Half, Tref, is_ccw_3d};
+use crate::common::{Half, Tref, is_ccw_3d, Row3f};
 use super::{form_loops, next_of, remove_if_folded, HalfedgeOps};
-type Row3f = RowVector3<f64>;
 
 // Check around a halfedges from the same tail vertex.
 // If they consist of only two tris, then their edge is collapsable.

@@ -4,7 +4,7 @@ use nalgebra::{DMatrix, RowVector3};
 use crate::hmesh::Hmesh;
 use crate::{Manifold, OpType};
 use crate::boolean03::{kernel03::winding03, kernel12::intersect12, Boolean03};
-use crate::boolean45::Boolean45;
+use crate::boolean45::{boolean45, Boolean45};
 
 pub fn gen_tet_a() -> Arc<Hmesh> {
     let pos = vec![-0.866025, -1., 0.5, 0., -1., -1., 0.866025, -1., 0.5, 0., 1., 0.];
@@ -89,7 +89,7 @@ fn test_tet_sub_inclusion_case(){
     }
     let op = OpType::Subtract;
     let b03 = Boolean03{ p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
-    let b45 = Boolean45::new(&mfd_p, &mfd_q, &b03, &op);
+    let b45 = boolean45(&mfd_p, &mfd_q, &b03, &op);
 }
 
 #[test]
@@ -130,7 +130,7 @@ fn test_tet_sub_penetration_case(){
 
     let op = OpType::Subtract;
     let b03 = Boolean03{ p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
-    let b45 = Boolean45::new(&mfd_p, &mfd_q, &b03, &op);
+    let b45 = boolean45(&mfd_p, &mfd_q, &b03, &op);
 }
 
 #[cfg(test)]

@@ -1,7 +1,6 @@
 use nalgebra::RowVector3;
 use core::cmp::Ordering;
-use crate::common::{next_of, Half};
-type Row3f = RowVector3<f64>;
+use crate::common::{next_of, Half, Row3f};
 
 pub fn compute_coplanar_idx(
     ps: &[Row3f],

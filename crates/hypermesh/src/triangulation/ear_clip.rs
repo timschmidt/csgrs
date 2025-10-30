@@ -2,13 +2,9 @@ use std::cell::RefCell;
 use std::cmp::{Ordering, PartialEq};
 use std::collections::BTreeSet;
 use std::rc::{Rc, Weak};
-use nalgebra::{RowVector2, RowVector3};
-use crate::common::{det2x2, is_ccw_2d, safe_normalize, K_BEST, K_PRECISION};
+use crate::common::{det2x2, is_ccw_2d, safe_normalize, K_BEST, K_PRECISION, Row2f, Row3u};
 use crate::triangulation::{PolyVert, PolygonIdx, Rect};
 use crate::triangulation::flat_tree::{compute_flat_tree, compute_query_flat_tree};
-type Row2f = RowVector2<f64>;
-type Row3f = RowVector3<f64>;
-type Row3u = RowVector3<usize>;
 
 #[derive(Clone)]
 pub struct Ecvt {
@@ -290,14 +286,14 @@ pub struct IdxCollider {
 }
 
 pub struct EarClip {
-    pub polygon: Vec<EvPtr>,
-    pub simples: Vec<EvPtr>, // contour + recursive ccw loops
-    pub contour: Vec<EvPtr>,
-    pub eque:  BTreeSet<EvPtrMinCost>,
-    pub holes: BTreeSet<EvPtrMaxPosX>,
-    pub tris: Vec<Row3u>,
-    pub bbox: Rect,
-    pub epsilon: f64
+    polygon: Vec<EvPtr>,
+    simples: Vec<EvPtr>, // contour + recursive ccw loops
+    contour: Vec<EvPtr>,
+    eque:  BTreeSet<EvPtrMinCost>,
+    holes: BTreeSet<EvPtrMaxPosX>,
+    tris: Vec<Row3u>,
+    bbox: Rect,
+    epsilon: f64
 }
 
 impl EarClip {

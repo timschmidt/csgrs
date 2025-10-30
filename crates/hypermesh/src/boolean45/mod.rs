@@ -1,11 +1,9 @@
-use nalgebra::RowVector3;
 use std::collections::HashMap;
 use std::mem;
 use crate::boolean03::Boolean03;
-use crate::common::{face_of, Half, OpType, Tref};
+use crate::common::{face_of, Half, OpType, Tref, Row3f};
 use crate::manifold::Manifold;
 use crate::bounds::BBox;
-type Row3f = RowVector3<f64>;
 
 fn duplicate_verts(
     inclusion: &[i32],
@@ -372,93 +370,91 @@ pub struct Boolean45 {
     pub nv_from_q: usize,
 }
 
-impl Boolean45 {
-    pub fn new(
-        mp: &Manifold,
-        mq: &Manifold,
-        b03: &Boolean03,
-        op: &OpType
-    ) -> Self {
-        let c1 = if op == &OpType::Intersect {0} else {1};
-        let c2 = if op == &OpType::Add       {1} else {0};
-        let c3 = if op == &OpType::Intersect {1} else {-1};
-        let i12: Vec<i32> = b03.x12.iter().map(|v| c3 * v).collect();
-        let i21: Vec<i32> = b03.x21.iter().map(|v| c3 * v).collect();
-        let i03: Vec<i32> = b03.w03.iter().map(|v| c1 + c3 * v).collect();
-        let i30: Vec<i32> = b03.w30.iter().map(|v| c2 + c3 * v).collect();
-        let nv_p = mp.nv;
-        let nh_p = mp.nh;
-        let nf_p = mp.nt;
-        let nv_q = mq.nv;
-        let nh_q = mq.nh;
-        let mut nv_r = 0;
-        let mut vid_p2r = vec![0; nv_p];
-        let mut vid_q2r = vec![0; nv_q];
-        let mut vid_12r = vec![0; b03.v12.len()];
-        let mut vid_21r = vec![0; b03.v21.len()];
+pub fn boolean45(
+    mp: &Manifold,
+    mq: &Manifold,
+    b03: &Boolean03,
+    op: &OpType
+) -> Boolean45 {
+    let c1 = if op == &OpType::Intersect {0} else {1};
+    let c2 = if op == &OpType::Add       {1} else {0};
+    let c3 = if op == &OpType::Intersect {1} else {-1};
+    let i12: Vec<i32> = b03.x12.iter().map(|v| c3 * v).collect();
+    let i21: Vec<i32> = b03.x21.iter().map(|v| c3 * v).collect();
+    let i03: Vec<i32> = b03.w03.iter().map(|v| c1 + c3 * v).collect();
+    let i30: Vec<i32> = b03.w30.iter().map(|v| c2 + c3 * v).collect();
+    let nv_p = mp.nv;
+    let nh_p = mp.nh;
+    let nf_p = mp.nt;
+    let nv_q = mq.nv;
+    let nh_q = mq.nh;
+    let mut nv_r = 0;
+    let mut vid_p2r = vec![0; nv_p];
+    let mut vid_q2r = vec![0; nv_q];
+    let mut vid_12r = vec![0; b03.v12.len()];
+    let mut vid_21r = vec![0; b03.v21.len()];
 
-        exclusive_scan(&i03.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_p2r, nv_r);
-        nv_r = vid_p2r.last().unwrap().clone().abs() + i03.last().unwrap().abs();
-        let nv_rp = nv_r;
+    exclusive_scan(&i03.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_p2r, nv_r);
+    nv_r = vid_p2r.last().unwrap().clone().abs() + i03.last().unwrap().abs();
+    let nv_rp = nv_r;
 
-        exclusive_scan(&i30.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_q2r, nv_r);
-        nv_r = vid_q2r.last().unwrap().clone().abs() + i30.last().unwrap().abs();
-        let nv_rq = nv_r - nv_rp;
+    exclusive_scan(&i30.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_q2r, nv_r);
+    nv_r = vid_q2r.last().unwrap().clone().abs() + i30.last().unwrap().abs();
+    let nv_rq = nv_r - nv_rp;
 
-        if b03.v12.len() > 0 {
-            exclusive_scan(&i12.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_12r, nv_r);
-            nv_r = vid_12r.last().unwrap().clone().abs() + i12.last().unwrap().abs();
-        }
-        let nv_12 = nv_r - nv_rp - nv_rq;
-
-        if b03.v21.len() > 0 {
-            exclusive_scan(&i21.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_21r, nv_r);
-            nv_r = vid_21r.last().unwrap().clone().abs() + i21.last().unwrap().abs();
-        }
-        let nv_21 = nv_r - nv_rp - nv_rq - nv_12;
-
-        let mut ps_r = vec![Row3f::zeros(); nv_r as usize];
-
-        for i in 0..nv_p  { duplicate_verts(&i03, &vid_p2r, &mp.ps, &mut ps_r, i); }
-        for i in 0..nv_q  { duplicate_verts(&i30, &vid_q2r, &mq.ps, &mut ps_r, i); }
-        for i in 0..nv_12 { duplicate_verts(&i12, &vid_12r, &b03.v12, &mut ps_r, i as usize); }
-        for i in 0..nv_21 { duplicate_verts(&i21, &vid_21r, &b03.v21, &mut ps_r, i as usize); }
-
-        let mut half_pos_p: HashMap<usize, Vec<EdgePos>> = HashMap::new();
-        let mut half_pos_q: HashMap<usize, Vec<EdgePos>> = HashMap::new();
-        let mut half_new: HashMap<(usize, usize), Vec<EdgePos>> = HashMap::new();
-        add_new_edge_verts(&b03.p1q2, &i12, &vid_12r, &mp.hs, true, 0, &mut half_pos_p, &mut half_new);
-        add_new_edge_verts(&b03.p2q1, &i21, &vid_21r, &mq.hs, false, b03.p1q2.len(), &mut half_pos_q, &mut half_new);
-
-        let mut fnmls = vec![];
-        let (ih_per_f, fid_pq2r) = size_output(mp, mq, &i03, &i30, &i12, &i21, &b03.p1q2, &b03.p2q1, op == &OpType::Subtract, &mut fnmls);
-
-        let nh = ih_per_f.last().unwrap().clone() as usize;
-        let mut face_ptr_r = ih_per_f.clone();
-        let mut whole_flag_p = vec![true; nh_p];
-        let mut whole_flag_q = vec![true; nh_q];
-        let mut half_tri = vec![Tref::default(); nh];
-        let mut half_res = vec![Half::default(); nh];
-        let fid_p2r = &fid_pq2r[0..nf_p];
-        let fid_q2r = &fid_pq2r[nf_p..];
-
-        append_partial_edges(&i03, &mp.hs, &mp.ps, &vid_p2r, fid_p2r, &ps_r, true,  &mut half_res, &mut half_tri, &mut half_pos_p, &mut face_ptr_r, &mut whole_flag_p);
-        append_partial_edges(&i30, &mq.hs, &mq.ps, &vid_q2r, fid_q2r, &ps_r, false, &mut half_res, &mut half_tri, &mut half_pos_q, &mut face_ptr_r, &mut whole_flag_q);
-
-        append_new_edges(&ps_r, &fid_pq2r, nf_p, &mut face_ptr_r, &mut half_new, &mut half_res, &mut half_tri);
-
-        append_whole_edges(&i03, &mp.hs, fid_p2r, &vid_p2r, &whole_flag_p, true,  &mut face_ptr_r, &mut half_res, &mut half_tri);
-        append_whole_edges(&i30, &mq.hs, fid_q2r, &vid_q2r, &whole_flag_q, false, &mut face_ptr_r, &mut half_res, &mut half_tri);
-
-        Self {
-            ps: ps_r,
-            ns: fnmls,
-            hs: half_res,
-            rs: half_tri,
-            nv_from_p: nv_rp as usize,
-            nv_from_q: nv_rq as usize,
-            initial_hid_per_faces: ih_per_f
-        }
-
+    if b03.v12.len() > 0 {
+        exclusive_scan(&i12.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_12r, nv_r);
+        nv_r = vid_12r.last().unwrap().clone().abs() + i12.last().unwrap().abs();
     }
+    let nv_12 = nv_r - nv_rp - nv_rq;
+
+    if b03.v21.len() > 0 {
+        exclusive_scan(&i21.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_21r, nv_r);
+        nv_r = vid_21r.last().unwrap().clone().abs() + i21.last().unwrap().abs();
+    }
+    let nv_21 = nv_r - nv_rp - nv_rq - nv_12;
+
+    let mut ps_r = vec![Row3f::zeros(); nv_r as usize];
+
+    for i in 0..nv_p  { duplicate_verts(&i03, &vid_p2r, &mp.ps, &mut ps_r, i); }
+    for i in 0..nv_q  { duplicate_verts(&i30, &vid_q2r, &mq.ps, &mut ps_r, i); }
+    for i in 0..nv_12 { duplicate_verts(&i12, &vid_12r, &b03.v12, &mut ps_r, i as usize); }
+    for i in 0..nv_21 { duplicate_verts(&i21, &vid_21r, &b03.v21, &mut ps_r, i as usize); }
+
+    let mut half_pos_p: HashMap<usize, Vec<EdgePos>> = HashMap::new();
+    let mut half_pos_q: HashMap<usize, Vec<EdgePos>> = HashMap::new();
+    let mut half_new: HashMap<(usize, usize), Vec<EdgePos>> = HashMap::new();
+    add_new_edge_verts(&b03.p1q2, &i12, &vid_12r, &mp.hs, true, 0, &mut half_pos_p, &mut half_new);
+    add_new_edge_verts(&b03.p2q1, &i21, &vid_21r, &mq.hs, false, b03.p1q2.len(), &mut half_pos_q, &mut half_new);
+
+    let mut fnmls = vec![];
+    let (ih_per_f, fid_pq2r) = size_output(mp, mq, &i03, &i30, &i12, &i21, &b03.p1q2, &b03.p2q1, op == &OpType::Subtract, &mut fnmls);
+
+    let nh = ih_per_f.last().unwrap().clone() as usize;
+    let mut face_ptr_r = ih_per_f.clone();
+    let mut whole_flag_p = vec![true; nh_p];
+    let mut whole_flag_q = vec![true; nh_q];
+    let mut half_tri = vec![Tref::default(); nh];
+    let mut half_res = vec![Half::default(); nh];
+    let fid_p2r = &fid_pq2r[0..nf_p];
+    let fid_q2r = &fid_pq2r[nf_p..];
+
+    append_partial_edges(&i03, &mp.hs, &mp.ps, &vid_p2r, fid_p2r, &ps_r, true,  &mut half_res, &mut half_tri, &mut half_pos_p, &mut face_ptr_r, &mut whole_flag_p);
+    append_partial_edges(&i30, &mq.hs, &mq.ps, &vid_q2r, fid_q2r, &ps_r, false, &mut half_res, &mut half_tri, &mut half_pos_q, &mut face_ptr_r, &mut whole_flag_q);
+
+    append_new_edges(&ps_r, &fid_pq2r, nf_p, &mut face_ptr_r, &mut half_new, &mut half_res, &mut half_tri);
+
+    append_whole_edges(&i03, &mp.hs, fid_p2r, &vid_p2r, &whole_flag_p, true,  &mut face_ptr_r, &mut half_res, &mut half_tri);
+    append_whole_edges(&i30, &mq.hs, fid_q2r, &vid_q2r, &whole_flag_q, false, &mut face_ptr_r, &mut half_res, &mut half_tri);
+
+    Boolean45 {
+        ps: ps_r,
+        ns: fnmls,
+        hs: half_res,
+        rs: half_tri,
+        nv_from_p: nv_rp as usize,
+        nv_from_q: nv_rq as usize,
+        initial_hid_per_faces: ih_per_f
+    }
+
 }

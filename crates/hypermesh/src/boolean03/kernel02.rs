@@ -1,7 +1,5 @@
-use nalgebra::RowVector3;
-use crate::common::Half;
+use crate::common::{Half, Row3f};
 use super::kernel01::{interpolate, shadows, shadows01};
-type Row3f = RowVector3<f64>;
 
 pub struct Kernel02<'a> {
     pub ps_p: &'a[Row3f],

@@ -1,8 +1,5 @@
-use nalgebra::{RowVector3, RowVector4};
-use crate::common::Half;
+use crate::common::{Half, Row3f, Row4f};
 use super::kernel01::{intersect, shadows, shadows01};
-type Row3f = RowVector3<f64>;
-type Row4f = RowVector4<f64>;
 
 pub struct Kernel11<'a> {
     pub ps_p: &'a [Row3f],

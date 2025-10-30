@@ -1,8 +1,6 @@
-use nalgebra::RowVector3;
 use std::collections::HashMap;
-use crate::common::{Half, Tref};
+use crate::common::{Half, Tref, Row3f};
 use super::HalfedgeOps;
-type Row3f = RowVector3<f64>;
 
 fn dedupe_edge(
     ps: &mut Vec<Row3f>,

@@ -1,13 +1,11 @@
-use nalgebra::{RowVector3};
 use std::mem;
 use crate::bounds::{BBox, Query};
 use crate::collider::Recorder;
-use crate::common::Half;
+use crate::common::{Half, Row3f};
 use crate::Manifold;
 use super::kernel01::intersect;
 use super::kernel02::Kernel02;
 use super::kernel11::Kernel11;
-type Row3f = RowVector3<f64>;
 
 pub struct Kernel12<'a> {
     pub hs_p: &'a[Half],
