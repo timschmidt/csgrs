@@ -607,6 +607,7 @@ for Polygon
   - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src for cubic and quadratic bezier
 - https://docs.rs/rgeometry/latest/rgeometry/algorithms/polygonization/fn.two_opt_moves.html and other algorithms from rgeometry crate
 - add optional root fillets, dedendum arcs, and backlash/backlash-aware spacing to gears
+- implement GL friendly io modules
 
 ## Todo shapes
 - geodesic domes / goldberg polyhedra
@@ -647,6 +648,8 @@ for Polygon
 > [Shewchuk, J.R., 1996, May. Robust adaptive floating-point geometric predicates. In Proceedings of the twelfth annual symposium on Computational geometry (pp. 141-150).](https://dl.acm.org/doi/abs/10.1145/237218.237337)
 
 > [Floating Point Visually Explained](https://fabiensanglard.net/floating_point_visually_explained/)
+
+> [Fast calculation of the distance to cubic Bezier curves on the GPU](https://blog.pkh.me/p/46-fast-calculation-of-the-distance-to-cubic-bezier-curves-on-the-gpu.html)
 
 ## License
 
