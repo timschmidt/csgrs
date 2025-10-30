@@ -4,7 +4,15 @@ Based on official nuxt4 starter template.
 
 ## Setup
 
-## CSGRS WASM
+## Use NPM
+
+```bash
+npm install
+yarn install
+# or your own package manager
+```
+
+## Local CSGRS WASM build
 
 Compile the wasm and JS directly from the main csgrs repo.
 

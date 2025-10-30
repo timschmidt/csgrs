@@ -32,7 +32,7 @@ if (import.meta.client)
       const primitiveMeshes = [ 
         csgrs.MeshJs.cuboid(15,20,25).translate(-7.5,-10,-12.5), // center at origin
         csgrs.MeshJs.sphere(15,32,32),
-        csgrs.MeshJs.cylinder(10,10,30,32),
+        csgrs.MeshJs.cylinder(10,10,30),
         csgrs.MeshJs.octahedron(15),
         csgrs.MeshJs.icosahedron(15),
         csgrs.MeshJs.egg(15,20, 16,16),
