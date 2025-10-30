@@ -11,7 +11,7 @@ export default defineNuxtConfig({
   vite: {
     server: {
       fs: {
-        allow: ['../../bin'] // Adjust the path to your WASM binary directory
+        allow: [], // ['../../bin'] // Adjust the path to your WASM binary directory
       }
     },
     plugins: [

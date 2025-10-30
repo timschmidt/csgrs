@@ -39,7 +39,7 @@ export const useCsgrsJs = () =>
     // Start loading
     wasmPromise = (async () => {
       const timeStartLoad = performance.now();
-      //const csgrs = await import('../../../pkg/csgrs.js');
+      //const csgrs = await import('../../../pkg/csgrs.js'); // use this is you build locally
       const csgrs = await import('csgrs-js/csgrs.js');
       console.log(`WASM load time: ${performance.now() - timeStartLoad} ms`);
       wasmCache = csgrs;
