@@ -1,5 +1,5 @@
 use nalgebra::RowVector3 as Row3;
-use crate::bounds::{union_bbs, BoundingBox, Query};
+use crate::bounds::{union_bbs, BBox, Query};
 
 fn spread_bits_3(v: u32) -> u32 {
     assert!(v <= 1023);
@@ -11,7 +11,7 @@ fn spread_bits_3(v: u32) -> u32 {
     v
 }
 
-pub fn morton_code(p: &Row3<f64>, bb: &BoundingBox) -> u32 {
+pub fn morton_code(p: &Row3<f64>, bb: &BBox) -> u32 {
     let mut xyz = (p - bb.min).component_div(&(bb.max - bb.min));
     xyz = (1024. * xyz).sup(&Row3::zeros()).inf(&Row3::new(1023., 1023., 1023.));
     let x = spread_bits_3(xyz.x as u32);
@@ -106,7 +106,7 @@ impl<'a> RadixTree<'a> {
 
 fn find_collisions(
     queries: &[Query], // either bb or vec3
-    node_bb: &[BoundingBox],
+    node_bb: &[BBox],
     children: &[(i32, i32)],
     query_idx: i32,
     rec: &mut dyn Recorder,
@@ -154,7 +154,7 @@ fn find_collisions(
 }
 
 fn build_internal_boxes(
-    node_bb: &mut [BoundingBox],
+    node_bb: &mut [BBox],
     counter: &mut [i32],
     node_parent: &[i32],
     intl_children: &[(i32, i32)],
@@ -182,11 +182,11 @@ pub trait Recorder {
 }
 
 pub trait Collider {
-    fn collision(&self, queries: &[BoundingBox], recorder: &mut dyn Recorder);
+    fn collision(&self, queries: &[BBox], recorder: &mut dyn Recorder);
 }
 
 pub struct MortonCollider {
-    pub node_bb: Vec<BoundingBox>,
+    pub node_bb: Vec<BBox>,
     pub node_parent: Vec<i32>,
     pub intl_children: Vec<(i32, i32)>,
 }
@@ -195,7 +195,7 @@ impl MortonCollider {
     fn num_intl(&self) -> usize { self.intl_children.len() }
     fn num_leaf(&self) -> usize { if self.intl_children.is_empty() { 0 } else { self.num_intl() + 1 } }
 
-    fn update_boxes(&mut self, leaf_bb: &[BoundingBox]) {
+    fn update_boxes(&mut self, leaf_bb: &[BBox]) {
         for (i, box_val) in leaf_bb.iter().enumerate() {
             self.node_bb[i * 2] = box_val.clone();
         }
@@ -212,7 +212,7 @@ impl MortonCollider {
     }
 
     pub fn new(
-        leaf_bb: &[BoundingBox],
+        leaf_bb: &[BBox],
         leaf_morton: &[u32]
     ) -> Self {
         let n_intl = leaf_bb.len() - 1;
@@ -229,7 +229,7 @@ impl MortonCollider {
         for i in 0..n_intl { tree.op(i as i32); }
 
         let mut res = MortonCollider {
-            node_bb: vec![BoundingBox::default(); n_node],
+            node_bb: vec![BBox::default(); n_node],
             node_parent,
             intl_children
         };

@@ -24,23 +24,19 @@ pub fn compute_boolean(
 ) -> (Vec<Row3f>, Vec<Row3u>) {
     let epsilon = 1e-12; // todo temporally!!!
 
-    let b03 = Boolean03::new(a, b, &op); println!("b03 passed");
-    let b45 = Boolean45::new(&a, &b, &b03, &op); println!("b45 passed");
+    let b03 = Boolean03::new(a, b, &op);
+    let b45 = Boolean45::new(&a, &b, &b03, &op);
     let trg = Triangulator {
-        vpos: &b45.ps,
-        fnmls: &b45.ns,
-        halfs: &b45.hs,
-        trefs: &b45.rs,
+        ps: &b45.ps,
+        ns: &b45.ns,
+        hs: &b45.hs,
+        rs: &b45.rs,
         hid_f: &b45.initial_hid_per_faces,
         epsilon
     };
 
     let (tris, mut ns, mut rs) = trg.triangulate(false).unwrap();
 
-    println!("trg passed");
-    (b45.ps, tris)
-
-    /*
     update_reference(&a, &b, &mut rs);
 
     let mut ps = b45.ps;
@@ -56,7 +52,6 @@ pub fn compute_boolean(
         b45.nv_from_p + b45.nv_from_q,
         epsilon
     );
-    println!("simplify passed");
 
     let mut tris_out = vec![];
 
@@ -78,20 +73,19 @@ pub fn compute_boolean(
     }
 
     (ps, tris_out)
-    */
 }
 
 fn update_reference(
-    mfd_p: &Manifold,
-    mfd_q: &Manifold,
-    tref: &mut[Tref],
+    p: &Manifold,
+    q: &Manifold,
+    rs: &mut[Tref],
 ) {
-    for r in tref.iter_mut() {
+    for r in rs.iter_mut() {
         let fid = r.face_id;
         let pq = r.mesh_id == 0;
         r.face_id = 0; // todo: see original code and it's always -1
-        r.planar_id = if pq { mfd_p.coplanar[fid] }
-        else  { mfd_q.coplanar[fid] };
+        r.planar_id = if pq { p.coplanar[fid] }
+        else  { q.coplanar[fid] };
     }
 }
 

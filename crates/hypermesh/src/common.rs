@@ -17,13 +17,7 @@ pub struct Half {
 }
 
 impl Default for Half {
-    fn default() -> Self {
-        Self {
-            tail: usize::MAX,
-            head: usize::MAX,
-            pair: usize::MAX
-        }
-    }
+    fn default() -> Self { Self { tail: usize::MAX, head: usize::MAX, pair: usize::MAX } }
 }
 
 impl Half {

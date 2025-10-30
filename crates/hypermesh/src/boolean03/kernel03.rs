@@ -1,5 +1,5 @@
 use super::kernel02::Kernel02;
-use crate::bounds::{BoundingBox, Query};
+use crate::bounds::{BBox, BPos, Query};
 use crate::collider::Recorder;
 use crate::Manifold;
 
@@ -20,33 +20,32 @@ impl<'a, F> Recorder for SimpleRecorder<F> where F: FnMut(usize, usize) {
 }
 
 pub fn winding03(
-    p: &Manifold,
-    q: &Manifold,
+    mp: &Manifold,
+    mq: &Manifold,
     expand: f64,
-    forward: bool
+    fwd: bool
 ) -> Vec<i32> {
-    let a = if forward {p} else {q};
-    let b = if forward {q} else {p};
+    let a = if fwd { mp } else { mq };
+    let b = if fwd { mq } else { mp };
 
-    let mut w03 = vec![0; a.nv()];
+    let mut w03 = vec![0; a.nv];
     let k02 = Kernel02 {
-        vpos_p: &a.pos,
-        vpos_q: &b.pos,
-        half_q: &b.hs,
-        normal: &p.vert_normals,
+        ps_p: &a.ps,
+        ps_q: &b.ps,
+        hs_q: &b.hs,
+        ns: &mp.vns,
         expand,
-        forward,
+        fwd,
     };
 
-    let bbs = a.pos.iter()
+    let bbs = a.ps.iter()
         .enumerate()
-        .map(|(i, p)|
-            Query::Pt(BoundingBox::new(i, &vec![*p, *p]))
-        ).collect::<Vec<_>>();
+        .map(|(i, p)| Query::Pt(BPos{id: i, pos: *p}))
+        .collect::<Vec<_>>();
     let mut rec = SimpleRecorder::new(
         |a, b| {
             let (s02, z02) = k02.op(a, b);
-            if z02.is_some() { w03[a] += s02 * if forward {1} else {-1}; }
+            if z02.is_some() { w03[a] += s02 * if fwd {1} else {-1}; }
         }
     );
     b.collider.collision(&bbs, &mut rec);

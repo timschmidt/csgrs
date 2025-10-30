@@ -1,11 +1,10 @@
-pub mod op01;
+pub mod kernel01;
 pub mod kernel02;
 pub mod kernel11;
 pub mod kernel12;
-pub mod op03;
-pub mod op12;
-use crate::boolean03::op03::winding03;
-use crate::boolean03::op12::intersect12;
+pub mod kernel03;
+use crate::boolean03::kernel03::winding03;
+use crate::boolean03::kernel12::intersect12;
 use crate::common::OpType;
 use crate::manifold::Manifold;
 type Row3f = nalgebra::RowVector3<f64>;

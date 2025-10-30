@@ -488,7 +488,8 @@ impl EarClip {
                         Some(c) => {
                             let cb = c.borrow();
                             let f1 = is_ccw_2d(&Row2f::new(x, vp.y), &cb.pos, &cb.pos_r(), eps) == 1;
-                            let f2 = if cb.pos.y < wb.pos.y { wb.inside_edge(&c, eps, false) } else { !cb.inside_edge(&w, eps, false) };
+                            let f2 = if cb.pos.y < wb.pos.y { wb.inside_edge(&c, eps, false) }
+                                     else { !cb.inside_edge(&w, eps, false) };
                             f1 || f2
                         }
                     };
@@ -541,18 +542,18 @@ impl EarClip {
     // To do this, both verts are duplicated and reattached. This process may create degenerate ears,
     // so these are clipped if necessary to keep from confusing sub_sequent key-holing operations.
     fn join_polygons(&mut self, sta: &EvPtr, con: &EvPtr) {
-        let newSta = Rc::new(RefCell::new(sta.borrow().clone()));
-        let newCon = Rc::new(RefCell::new(con.borrow().clone()));
-        self.polygon.push(Rc::clone(&newSta));
-        self.polygon.push(Rc::clone(&newCon));
-        sta.borrow().ptr_r().borrow_mut().vl = Some(Rc::downgrade(&newSta));
-        con.borrow().ptr_l().borrow_mut().vr = Some(Rc::downgrade(&newCon));
+        let new_sta = Rc::new(RefCell::new(sta.borrow().clone()));
+        let new_con = Rc::new(RefCell::new(con.borrow().clone()));
+        self.polygon.push(Rc::clone(&new_sta));
+        self.polygon.push(Rc::clone(&new_con));
+        sta.borrow().ptr_r().borrow_mut().vl = Some(Rc::downgrade(&new_sta));
+        con.borrow().ptr_l().borrow_mut().vr = Some(Rc::downgrade(&new_con));
         Self::link(sta, con);
-        Self::link(&newCon, &newSta);
+        Self::link(&new_con, &new_sta);
         self.clip_degenerate(sta);
-        self.clip_degenerate(&newSta);
+        self.clip_degenerate(&new_sta);
         self.clip_degenerate(con);
-        self.clip_degenerate(&newCon);
+        self.clip_degenerate(&new_con);
     }
 
     // Recalculate the cost of the Vert v ear,

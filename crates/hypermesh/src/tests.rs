@@ -3,60 +3,33 @@ use std::sync::Arc;
 use nalgebra::{DMatrix, RowVector3};
 use crate::hmesh::Hmesh;
 use crate::{Manifold, OpType};
-use crate::boolean03::{op03::winding03, op12::intersect12, Boolean03};
+use crate::boolean03::{kernel03::winding03, kernel12::intersect12, Boolean03};
 use crate::boolean45::Boolean45;
 
 pub fn gen_tet_a() -> Arc<Hmesh> {
     let pos = vec![-0.866025, -1., 0.5, 0., -1., -1., 0.866025, -1., 0.5, 0., 1., 0.];
     let idx = vec![0, 3, 1, 1, 2, 0, 1, 3, 2, 2, 3, 0];
-    let tails = vec![0, 3, 1, 1, 2, 0, 1, 3, 2, 2, 3, 0];
-    let heads = vec![3, 1, 0, 2, 0, 1, 3, 2, 1, 3, 0, 2];
-    let f_nor = vec![-0.840168, 0.242536, -0.485071, 0., -1., 0., 0.840168, 0.242536, -0.485071, 0., 0.242536, 0.970143];
-    let v_nor = vec![-0.798417, -0.387351, 0.460966, 0., -0.387351, -0.921932, 0.798417, -0.387351, 0.460966, 0., 1., 0.];
-    Hmesh::new_for_boolean_test(
+    Hmesh::new(
         DMatrix::from_row_slice(4, 3, &pos),
         DMatrix::from_row_slice(4, 3, &idx),
-        tails,
-        heads,
-        None,
-        DMatrix::from_row_slice(4, 3, &v_nor),
-        DMatrix::from_row_slice(4, 3, &f_nor),
     )
 }
 
 pub fn gen_tet_b() -> Arc<Hmesh> {
     let pos = vec![-1., -0.866025, 0.5, -1., 0., -1., -1., 0.866025, 0.5, 1., 0., 0.];
     let idx = vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2];
-    let tails = vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2];
-    let heads = vec![3, 0, 1, 0, 2, 1, 3, 1, 2, 3, 2, 0];
-    let f_nor = vec![0.242536, -0.840168, -0.485071, -1., 0., 0., 0.242536, 0.840168, -0.485071, 0.242536, 0., 0.970143];
-    let v_nor = vec![-0.387351, -0.798417, 0.460966, -0.387351, 0., -0.921932, -0.387351, 0.798417, 0.460966, 1., 0., 0.];
-    Hmesh::new_for_boolean_test(
+    Hmesh::new(
         DMatrix::from_row_slice(4, 3, &pos),
         DMatrix::from_row_slice(4, 3, &idx),
-        tails,
-        heads,
-        None,
-        DMatrix::from_row_slice(4, 3, &v_nor),
-        DMatrix::from_row_slice(4, 3, &f_nor),
     )
 }
 
 pub fn gen_tet_c() -> Arc<Hmesh> {
     let pos = vec![-2., -0.866025, 0.5, -2., -0., -1., -2., 0.866025, 0.5, 0., 0., 0.];
     let idx = vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2];
-    let tails = vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2];
-    let heads = vec![3, 0, 1, 0, 2, 1, 3, 1, 2, 3, 2, 0];
-    let f_nor = vec![0.242536, -0.840168, -0.485071, -1., 0., 0., 0.242536, 0.840168, -0.485071, 0.242536, 0., 0.970143];
-    let v_nor = vec![-0.387351, -0.798417, 0.460966, -0.387351, 0., -0.921932, -0.387351, 0.798417, 0.460966, 1., 0., 0.];
-    Hmesh::new_for_boolean_test(
+    Hmesh::new(
         DMatrix::from_row_slice(4, 3, &pos),
         DMatrix::from_row_slice(4, 3, &idx),
-        tails,
-        heads,
-        None,
-        DMatrix::from_row_slice(4, 3, &v_nor),
-        DMatrix::from_row_slice(4, 3, &f_nor),
     )
 }
 
@@ -73,11 +46,11 @@ mod kernel11_tests {
         let mfd_p = Manifold::new(&gen_tet_a()).unwrap();
         let mfd_q = Manifold::new(&gen_tet_c()).unwrap();
         let k11 = Kernel11 {
-            vpos_p: &mfd_p.pos,
-            vpos_q: &mfd_q.pos,
-            half_p: &mfd_p.hs,
-            half_q: &mfd_q.hs,
-            normal: &mfd_p.vert_normals,
+            ps_p: &mfd_p.ps,
+            ps_q: &mfd_q.ps,
+            hs_p: &mfd_p.hs,
+            hs_q: &mfd_q.hs,
+            ns: &mfd_p.vns,
             expand: 1.,
         };
         let (s, z) = k11.op(0, 9);
@@ -242,6 +215,38 @@ mod collider_test {
         let col = MortonCollider::new(leaf_bb_alt.as_slice(), leaf_mt_alt.as_slice());
     }
     */
+}
+
+#[cfg(test)]
+mod test_triangulation {
+    use nalgebra::{RowVector2, RowVector3};
+    use crate::triangulation::{PolyVert, PolygonIdx};
+    use crate::triangulation::ear_clip::EarClip;
+
+    #[test]
+    fn test_ear_clip() {
+        let polys = vec![
+            vec![
+                PolyVert {idx: 2120, pos: RowVector2::new(0.048238, 0.680959)},
+                PolyVert {idx: 2124, pos: RowVector2::new(-0.0145625, -0.676874)},
+                PolyVert {idx: 2123, pos: RowVector2::new(0.0245192, -0.68213)},
+                PolyVert {idx: 2119, pos: RowVector2::new(0.0482562, -0.681659)},
+            ],
+            vec![
+                PolyVert {idx: 2122, pos: RowVector2::new(-0.068635, -0.673357)},
+                PolyVert {idx: 2125, pos: RowVector2::new(-0.0487738, -0.690778)},
+                PolyVert {idx: 2121, pos: RowVector2::new(-0.02279, -0.676339)},
+            ],
+        ];
+        let res0 = vec![
+            RowVector3::new(2120, 2124, 2123),
+            RowVector3::new(2120, 2123, 2119),
+            RowVector3::new(2125, 2121, 2122)
+        ];
+
+        let res1 = EarClip::new(&polys, 1e-12).triangulate();
+        for i in 0..3 { assert_eq!(res0[i], res1[i]); }
+    }
 }
 
 #[cfg(test)]

@@ -62,11 +62,11 @@ pub type PolygonIdx = Vec<PolyVert>;
 pub type Polygons = Vec<Vec<Row2f>>;
 
 pub struct Triangulator<'a> {
-    pub vpos:  &'a [Row3f],
-    pub fnmls: &'a [Row3f],
-    pub halfs: &'a [Half],
+    pub ps:  &'a [Row3f],
+    pub ns: &'a [Row3f],
+    pub hs: &'a [Half],
+    pub rs: &'a [Tref],
     pub hid_f: &'a [i32],
-    pub trefs: &'a [Tref],
     pub epsilon: f64,
 }
 
@@ -78,8 +78,8 @@ impl <'a> Triangulator<'a>  {
         for fid in 0..self.hid_f.len() - 1 {
             let hid = self.hid_f[fid] as usize;
             let t = self.process_face(fid, convex);
-            let r = self.trefs[hid].clone();
-            let n = self.fnmls[fid].clone();
+            let r = self.rs[hid].clone();
+            let n = self.ns[fid].clone();
             refs.extend(vec![r; t.len()]);
             nors.extend(vec![n; t.len()]);
             tris.extend(t);
@@ -99,9 +99,9 @@ impl <'a> Triangulator<'a>  {
 
     fn get_indices(&self, t: &Row3u) -> Row3u {
         Row3u::new(
-            self.halfs[t.x].tail,
-            self.halfs[t.y].tail,
-            self.halfs[t.z].tail,
+            self.hs[t.x].tail,
+            self.hs[t.y].tail,
+            self.hs[t.z].tail,
         )
     }
 
@@ -116,7 +116,7 @@ impl <'a> Triangulator<'a>  {
         let mut v2h = BTreeMap::new();
 
         for i in bgn..bgn + num {
-            let id = self.halfs[i].tail;
+            let id = self.hs[i].tail;
             v2h.entry(id).or_insert_with(VecDeque::new).push_front(i);
         }
 
@@ -131,7 +131,7 @@ impl <'a> Triangulator<'a>  {
                 loops.push(Vec::new());
             }
             loops.last_mut().unwrap().push(hid1);
-            hid1 = v2h.get_mut(&self.halfs[hid1].head).unwrap().pop_back().unwrap();
+            hid1 = v2h.get_mut(&self.hs[hid1].head).unwrap().pop_back().unwrap();
             v2h.retain(|_, vq| !vq.is_empty());
         }
         loops
@@ -141,8 +141,8 @@ impl <'a> Triangulator<'a>  {
     fn project_polygons(&self, polys: &Vec<Vec<usize>>, prj: &Mat23<f64>) -> Vec<PolygonIdx> {
         polys.iter().map(|poly|
             poly.iter().map(|&e| {
-                let i = self.halfs[e].tail;
-                let p = prj * self.vpos[i].transpose();
+                let i = self.hs[e].tail;
+                let p = prj * self.ps[i].transpose();
                 PolyVert { pos: p.transpose(), idx: e }
             }).collect()).collect()
     }
@@ -153,25 +153,25 @@ impl <'a> Triangulator<'a>  {
         let mut tails = vec![];
         let mut heads = vec![];
         for id in idcs.iter() {
-            tails.push(self.halfs[*id].tail);
-            heads.push(self.halfs[*id].head);
+            tails.push(self.hs[*id].tail);
+            heads.push(self.hs[*id].head);
         }
         if heads[0] == tails[2] { idcs.swap(1, 2); }
 
         vec![Row3u::new(
-            self.halfs[idcs[0]].tail,
-            self.halfs[idcs[1]].tail,
-            self.halfs[idcs[2]].tail,
+            self.hs[idcs[0]].tail,
+            self.hs[idcs[1]].tail,
+            self.hs[idcs[2]].tail,
         )]
     }
 
     fn square_triangulate(&self, fid: usize) -> Vec<Row3u> {
         let ccw = |tri: Row3u| {
             is_ccw_3d(
-                &self.vpos[self.halfs[tri[0]].tail],
-                &self.vpos[self.halfs[tri[1]].tail],
-                &self.vpos[self.halfs[tri[2]].tail],
-                &self.fnmls[fid],
+                &self.ps[self.hs[tri[0]].tail],
+                &self.ps[self.hs[tri[1]].tail],
+                &self.ps[self.hs[tri[2]].tail],
+                &self.ns[fid],
                 self.epsilon
             ) >= 0
         };
@@ -186,10 +186,10 @@ impl <'a> Triangulator<'a>  {
         if !(ccw(tris[0][0]) && ccw(tris[0][1])) {
             choice = 1;
         } else if ccw(tris[1][0]) && ccw(tris[1][1]) {
-            let diag0 = self.vpos[self.halfs[quad[0]].tail] -
-                        self.vpos[self.halfs[quad[2]].tail];
-            let diag1 = self.vpos[self.halfs[quad[1]].tail] -
-                        self.vpos[self.halfs[quad[3]].tail];
+            let diag0 = self.ps[self.hs[quad[0]].tail] -
+                        self.ps[self.hs[quad[2]].tail];
+            let diag1 = self.ps[self.hs[quad[1]].tail] -
+                        self.ps[self.hs[quad[3]].tail];
             if diag0.norm() > diag1.norm() { choice = 1; }
         }
 
@@ -197,7 +197,7 @@ impl <'a> Triangulator<'a>  {
     }
 
     fn general_triangulate(&self, fid: usize, convex: bool) -> Vec<Row3u> {
-        let proj  = get_axis_aligned_projection(&self.fnmls[fid]);
+        let proj  = get_axis_aligned_projection(&self.ns[fid]);
         let loops = self.assemble_halfs(fid);
         let polys = self.project_polygons(&loops, &proj);
         triangulate_from_poly_idcs(&polys, self.epsilon, convex).iter().map(|t| self.get_indices(t)).collect()

@@ -1,21 +1,27 @@
 use nalgebra::{DMatrix, RowVector3 as Row3};
 
 #[derive(Clone, Debug)]
-pub struct BoundingBox {
+pub struct BBox {
     pub id: usize,
     pub min: Row3<f64>,
     pub max: Row3<f64>,
 }
 
 #[derive(Clone, Debug)]
-pub enum Query {
-    Bb(BoundingBox),
-    Pt(BoundingBox), // todo: temporary using BoundingBox, but it should be a point here
+pub struct BPos {
+    pub id: usize,
+    pub pos: Row3<f64>,
 }
 
-impl BoundingBox {
+#[derive(Clone, Debug)]
+pub enum Query {
+    Bb(BBox),
+    Pt(BPos),
+}
+
+impl BBox {
     pub fn default() -> Self {
-        BoundingBox {
+        BBox {
             id: usize::MAX,
             min: Row3::new(f64::MAX, f64::MAX, f64::MAX),
             max: Row3::new(f64::MIN, f64::MIN, f64::MIN),
@@ -23,7 +29,7 @@ impl BoundingBox {
     }
     
     pub fn new(id: usize, pts: &Vec<Row3<f64>>) -> Self {
-        let mut b = BoundingBox {
+        let mut b = BBox {
             id,
             min: Row3::new(f64::MAX, f64::MAX, f64::MAX),
             max: Row3::new(f64::MIN, f64::MIN, f64::MIN),
@@ -33,7 +39,7 @@ impl BoundingBox {
     }
 
     pub fn new_from_matrix(id: usize, pts: &DMatrix<f64>) -> Self {
-        let mut b = BoundingBox {
+        let mut b = BBox {
             id,
             min: Row3::new(f64::MAX, f64::MAX, f64::MAX),
             max: Row3::new(f64::MIN, f64::MIN, f64::MIN),
@@ -62,8 +68,10 @@ impl BoundingBox {
                 self.max.z >= b.min.z
             },
             Query::Pt(p) => {
-                self.min.x <= p.min.x && self.min.y <= p.min.y &&
-                self.max.x >= p.min.x && self.max.y >= p.min.y
+                self.min.x <= p.pos.x &&
+                self.min.y <= p.pos.y &&
+                self.max.x >= p.pos.x &&
+                self.max.y >= p.pos.y
             }
         }
     }
@@ -82,10 +90,10 @@ impl BoundingBox {
 }
 
 
-pub fn union_bbs(b0: &BoundingBox, b1: &BoundingBox) -> BoundingBox {
+pub fn union_bbs(b0: &BBox, b1: &BBox) -> BBox {
     let min = Row3::new(b0.min.x.min(b1.min.x), b0.min.y.min(b1.min.y), b0.min.z.min(b1.min.z));
     let max = Row3::new(b0.max.x.max(b1.max.x), b0.max.y.max(b1.max.y), b0.max.z.max(b1.max.z));
-    BoundingBox::new(usize::MAX, &vec![min, max])
+    BBox::new(usize::MAX, &vec![min, max])
 }
 
 

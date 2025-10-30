@@ -1,7 +1,7 @@
 use std::mem;
 use std::cmp::PartialEq;
 use std::sync::{Arc, Weak};
-use nalgebra::{DMatrix, RowVector3};
+use nalgebra::{DMatrix, RowVector3 as Row3};
 
 /// Hmesh preserves the order of pos and idx in any cases.
 /// Edges are ordered so as the edge is forward (tail idx < head idx)
@@ -119,229 +119,7 @@ fn edge_topology(
     }
 }
 
-fn new_cyclic(
-    pos: DMatrix<f64>,
-    idx: DMatrix<usize>,
-    edge2vert: DMatrix<usize>,
-    edge2face: DMatrix<usize>,
-    face2edge: DMatrix<usize>,
-    nv: usize,
-    ne: usize,
-    nf: usize,
-    nh: usize,
-    vert2half: Vec<usize>,
-    edge2half: Vec<usize>,
-    face2half: Vec<usize>,
-    next: Vec<usize>,
-    prev: Vec<usize>,
-    twin: Vec<usize>,
-    head: Vec<usize>,
-    tail: Vec<usize>,
-    edge: Vec<usize>,
-    face: Vec<usize>,
-) -> Arc<Hmesh> {
-    Arc::new_cyclic(|weak_ptr| {
-        let mut faces = vec![];
-        let mut verts = vec![];
-        let mut edges = vec![];
-        let mut halfs = vec![];
-        for i in 0..nf { faces.push(Face{id: i, hm: weak_ptr.clone()}); }
-        for i in 0..nv { verts.push(Vert{id: i, hm: weak_ptr.clone()}); }
-        for i in 0..ne { edges.push(Edge{id: i, hm: weak_ptr.clone()}); }
-        for i in 0..nh { halfs.push(Half{id: i, hm: weak_ptr.clone()}); }
-
-        let mut vert_normal  = DMatrix::<f64>::zeros(nv, 3);
-        let mut face_normal  = DMatrix::<f64>::zeros(nf, 3);
-        let mut bary_center  = DMatrix::<f64>::zeros(nf, 3);
-        let mut face_basis_x = DMatrix::<f64>::zeros(nf, 3);
-        let mut face_basis_y = DMatrix::<f64>::zeros(nf, 3);
-        let mut face_area    = vec![0.; nf];
-
-        for i in 0..nf {
-            let ih = face2half[i];
-            let p2 = pos.fixed_view::<1, 3>(head[ih], 0);
-            let p1 = pos.fixed_view::<1, 3>(tail[ih], 0);
-            let p0 = pos.fixed_view::<1, 3>(tail[prev[ih]], 0);
-            let x = p2 - p1;
-            let t = (p1 - p0) * -1.;
-            let n = x.cross(&t);
-            let c = (p0 + p1 + p2) / 3.;
-            bary_center.row_mut(i).copy_from_slice(c.as_ref());
-            face_normal.row_mut(i).copy_from_slice(n.normalize().as_ref());
-            face_basis_x.row_mut(i).copy_from_slice(x.normalize().as_ref());
-            face_basis_y.row_mut(i).copy_from_slice((-x.cross(&n)).normalize().as_ref());
-            face_area[i] = n.norm() * 0.5;
-        }
-
-        for i in 0..nf {
-            for j in 0..3 {
-                let n = vert_normal.row(idx[(i, j)]) + face_normal.row(i) * face_area[i];
-                vert_normal.row_mut(idx[(i, j)]).copy_from_slice(n.as_ref());
-            }}
-
-        for i in 0..vert_normal.nrows() {
-            if let Some(n) = vert_normal.row(i).try_normalize(0.) {
-                vert_normal.row_mut(i).copy_from(&n);
-            }
-        }
-
-        Hmesh {
-            pos,
-            idx,
-            n_vert: nv,
-            n_face: nf,
-            n_edge: ne,
-            n_half: nh,
-            n_boundary: usize::MAX, // temp. better having loop2half
-            edge2vert,
-            edge2face,
-            face2edge,
-            vert2half,
-            edge2half,
-            face2half,
-            next,
-            prev,
-            twin,
-            head,
-            tail,
-            edge,
-            face,
-            verts,
-            edges,
-            faces,
-            halfs,
-            vert_normal,
-            face_normal,
-            bary_center,
-            face_basis_x,
-            face_basis_y,
-            face_area
-        }
-    })
-}
-
-
 impl Hmesh {
-    pub fn new_for_boolean_test(
-        pos: DMatrix<f64>,
-        idx: DMatrix<usize>,
-        tail: Vec<usize>,
-        head: Vec<usize>,
-        twin_: Option<Vec<usize>>,
-        vert_normal: DMatrix<f64>,
-        face_normal: DMatrix<f64>,
-    ) -> Arc<Self> {
-        assert_eq!(tail.len(), head.len());
-        assert_eq!(tail.len() % 2, 0);
-        //assert_eq!(tail.len(), idx.nrows() * 3); // currently suppose a closed surface...
-        let mut e2v = Default::default();
-        let mut e2f = Default::default();
-        let mut f2e = Default::default();
-        edge_topology(&pos, &idx, &mut e2v, &mut e2f, &mut f2e);
-
-        let nv = pos.nrows();
-        let nf = idx.nrows();
-        let ne = e2v.nrows();
-        let nh = e2v.nrows() * 2;
-        let mut v2h = vec![usize::MAX; nv];
-        let mut e2h = vec![usize::MAX; ne];
-        let mut f2h = vec![usize::MAX; nf];
-        let mut next = vec![usize::MAX; nh];
-        let mut prev = vec![usize::MAX; nh];
-        let mut twin = vec![usize::MAX; nh];
-        let mut edge = vec![usize::MAX; nh];
-        let mut face = vec![usize::MAX; nh];
-
-        for it in 0..nf {
-            let ivs = (0..3).map(|i| idx[(it, i)]).collect::<Vec<_>>();
-            let ies = (0..3).map(|i| f2e[(it, i)]).collect::<Vec<_>>();
-            let ihs = (0..3).map(|i| (0..nh)
-                .find(|&j| tail[j] == ivs[i] && head[j] == ivs[(i + 1) % 3]).unwrap())
-                .collect::<Vec<_>>();
-            for i in 0..3 {
-                next[ihs[i]] = ihs[(i + 1) % 3];
-                prev[ihs[i]] = ihs[(i + 2) % 3];
-                edge[ihs[i]] = ies[i];
-                face[ihs[i]] = it;
-                if f2h[it]     == usize::MAX { f2h[it] = ihs[i]; }
-                if v2h[ivs[i]] == usize::MAX { v2h[ivs[i]] = ihs[i]; }
-                if e2h[ies[i]] == usize::MAX { e2h[ies[i]] = ihs[i]; }
-                else {
-                    twin[ihs[i]] = e2h[ies[i]];
-                    twin[e2h[ies[i]]] = ihs[i];
-                }
-            }
-        }
-
-        if let Some(t) = twin_ {
-            twin = t;
-        }
-
-        Arc::new_cyclic(|weak_ptr| {
-            let mut faces = vec![];
-            let mut verts = vec![];
-            let mut edges = vec![];
-            let mut halfs = vec![];
-            for i in 0..nf { faces.push(Face{id: i, hm: weak_ptr.clone()}); }
-            for i in 0..nv { verts.push(Vert{id: i, hm: weak_ptr.clone()}); }
-            for i in 0..ne { edges.push(Edge{id: i, hm: weak_ptr.clone()}); }
-            for i in 0..nh { halfs.push(Half{id: i, hm: weak_ptr.clone()}); }
-
-            let mut bary_center  = DMatrix::<f64>::zeros(nf, 3);
-            let mut face_basis_x = DMatrix::<f64>::zeros(nf, 3);
-            let mut face_basis_y = DMatrix::<f64>::zeros(nf, 3);
-            let mut face_area    = vec![0.; nf];
-
-            for i in 0..nf {
-                let ih = f2h[i];
-                let p2 = pos.fixed_view::<1, 3>(head[ih], 0);
-                let p1 = pos.fixed_view::<1, 3>(tail[ih], 0);
-                let p0 = pos.fixed_view::<1, 3>(tail[prev[ih]], 0);
-                let x = p2 - p1;
-                let t = (p1 - p0) * -1.;
-                let n = x.cross(&t);
-                let c = (p0 + p1 + p2) / 3.;
-                bary_center.row_mut(i).copy_from_slice(c.as_ref());
-                face_basis_x.row_mut(i).copy_from_slice(x.normalize().as_ref());
-                face_basis_y.row_mut(i).copy_from_slice((-x.cross(&n)).normalize().as_ref());
-                face_area[i] = n.norm() * 0.5;
-            }
-
-            Hmesh {
-                pos,
-                idx,
-                n_vert: nv,
-                n_face: nf,
-                n_edge: ne,
-                n_half: nh,
-                n_boundary: usize::MAX, // temp. better having loop2half
-                edge2vert : e2v,
-                edge2face : e2f,
-                face2edge : f2e,
-                vert2half : v2h,
-                edge2half : e2h,
-                face2half : f2h,
-                next,
-                prev,
-                twin,
-                head,
-                tail,
-                edge,
-                face,
-                verts,
-                edges,
-                faces,
-                halfs,
-                vert_normal,
-                face_normal,
-                bary_center,
-                face_basis_x,
-                face_basis_y,
-                face_area
-            }
-        })
-    }
-
     pub fn new(
         pos: DMatrix<f64>,
         idx: DMatrix<usize>,
@@ -417,64 +195,107 @@ impl Hmesh {
             ib += 1;
         }
 
-        new_cyclic(pos, idx, e2v, e2f, f2e, nv, ne, nf, nh,
-                   v2h, e2h, f2h, next, prev, twin, head, tail, edge, face)
+
+        Arc::new_cyclic(|weak_ptr| {
+            let mut faces = vec![];
+            let mut verts = vec![];
+            let mut edges = vec![];
+            let mut halfs = vec![];
+            for i in 0..nf { faces.push(Face { id: i, hm: weak_ptr.clone() }); }
+            for i in 0..nv { verts.push(Vert { id: i, hm: weak_ptr.clone() }); }
+            for i in 0..ne { edges.push(Edge { id: i, hm: weak_ptr.clone() }); }
+            for i in 0..nh { halfs.push(Half { id: i, hm: weak_ptr.clone() }); }
+
+            let mut vert_normal = DMatrix::<f64>::zeros(nv, 3);
+            let mut face_normal = DMatrix::<f64>::zeros(nf, 3);
+            let mut bary_center = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_basis_x = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_basis_y = DMatrix::<f64>::zeros(nf, 3);
+            let mut face_area = vec![0.; nf];
+
+            for i in 0..nf {
+                let ih = f2h[i];
+                let p2 = pos.fixed_view::<1, 3>(head[ih], 0);
+                let p1 = pos.fixed_view::<1, 3>(tail[ih], 0);
+                let p0 = pos.fixed_view::<1, 3>(tail[prev[ih]], 0);
+                let x = p2 - p1;
+                let t = (p1 - p0) * -1.;
+                let n = x.cross(&t);
+                let c = (p0 + p1 + p2) / 3.;
+                bary_center.row_mut(i).copy_from_slice(c.as_ref());
+                face_normal.row_mut(i).copy_from_slice(n.normalize().as_ref());
+                face_basis_x.row_mut(i).copy_from_slice(x.normalize().as_ref());
+                face_basis_y.row_mut(i).copy_from_slice((-x.cross(&n)).normalize().as_ref());
+                face_area[i] = n.norm() * 0.5;
+            }
+
+            for i in 0..nf {
+                for j in 0..3 {
+                    let n = vert_normal.row(idx[(i, j)]) + face_normal.row(i) * face_area[i];
+                    vert_normal.row_mut(idx[(i, j)]).copy_from_slice(n.as_ref());
+                }
+            }
+
+            for i in 0..vert_normal.nrows() {
+                if let Some(n) = vert_normal.row(i).try_normalize(0.) {
+                    vert_normal.row_mut(i).copy_from(&n);
+                }
+            }
+
+            Hmesh {
+                pos,
+                idx,
+                n_vert: nv,
+                n_face: nf,
+                n_edge: ne,
+                n_half: nh,
+                n_boundary: usize::MAX, // temp. better having loop2half
+                edge2vert: e2v,
+                edge2face: e2f,
+                face2edge: f2e,
+                vert2half: v2h,
+                edge2half: e2h,
+                face2half: f2h,
+                next,
+                prev,
+                twin,
+                head,
+                tail,
+                edge,
+                face,
+                verts,
+                edges,
+                faces,
+                halfs,
+                vert_normal,
+                face_normal,
+                bary_center,
+                face_basis_x,
+                face_basis_y,
+                face_area
+            }
+        })
     }
 }
 
 impl Edge {
-    pub fn half(&self) -> Half {
-        let m = self.hm.upgrade().unwrap();
-        m.halfs[m.edge2half[self.id]].clone()
-    }
-
-    pub fn vert0(&self) -> Vert {
-        let m = self.hm.upgrade().unwrap();
-        m.verts[m.edge2vert[(self.id, 0)]].clone()
-    }
-
-    pub fn vert1(&self) -> Vert {
-        let m = self.hm.upgrade().unwrap();
-        m.verts[m.edge2vert[(self.id, 1)]].clone()
-    }
+    pub fn half(&self)  -> Half { let m = self.hm.upgrade().unwrap(); m.halfs[m.edge2half[self.id]].clone() }
+    pub fn vert0(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.edge2vert[(self.id, 0)]].clone() }
+    pub fn vert1(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.edge2vert[(self.id, 1)]].clone() }
 }
 
 impl Vert {
-    pub fn pos(&self) -> RowVector3<f64> {
-        let m = self.hm.upgrade().unwrap();
-        m.pos.fixed_view::<1,3>(self.id, 0).into()
-    }
-
-    pub fn normal(&self) -> RowVector3<f64> {
-        let m = self.hm.upgrade().unwrap();
-        m.vert_normal.fixed_view::<1,3>(self.id, 0).into()
-    }
+    pub fn pos(&self)    -> Row3<f64> { let m = self.hm.upgrade().unwrap(); m.pos.fixed_view::<1,3>(self.id, 0).into() }
+    pub fn normal(&self) -> Row3<f64> { let m = self.hm.upgrade().unwrap(); m.vert_normal.fixed_view::<1,3>(self.id, 0).into() }
 }
 
 impl Face {
-    pub fn half(&self) -> Half {
-        let m = self.hm.upgrade().unwrap();
-        m.halfs[m.face2half[self.id]].clone()
-    }
-
-    pub fn normal(&self) -> RowVector3<f64> {
-        let m = self.hm.upgrade().unwrap();
-        m.face_normal.fixed_view::<1,3>(self.id, 0).into()
-    }
-
-    pub fn area(&self) -> f64 {
-        let m = self.hm.upgrade().unwrap();
-        m.face_area[self.id]
-    }
+    pub fn half(&self)   -> Half      { let m = self.hm.upgrade().unwrap(); m.halfs[m.face2half[self.id]].clone() }
+    pub fn normal(&self) -> Row3<f64> { let m = self.hm.upgrade().unwrap(); m.face_normal.fixed_view::<1,3>(self.id, 0).into() }
+    pub fn area(&self)   -> f64       { let m = self.hm.upgrade().unwrap(); m.face_area[self.id] }
 }
 
 impl Half {
-    pub fn vec(&self) -> RowVector3<f64> {
-        let m = self.hm.upgrade().unwrap();
-        let p0 = m.pos.fixed_view::<1, 3>(m.tail[self.id], 0);
-        let p1 = m.pos.fixed_view::<1, 3>(m.head[self.id], 0);
-        p1 - p0
-    }
     pub fn edge(&self) -> Edge { let m = self.hm.upgrade().unwrap(); m.edges[m.edge[self.id]].clone() }
     pub fn face(&self) -> Face { let m = self.hm.upgrade().unwrap(); m.faces[m.face[self.id]].clone() }
     pub fn tail(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.tail[self.id]].clone() }
@@ -483,12 +304,17 @@ impl Half {
     pub fn prev(&self) -> Half { let m = self.hm.upgrade().unwrap(); m.halfs[m.prev[self.id]].clone() }
     pub fn twin(&self) -> Half { let m = self.hm.upgrade().unwrap(); m.halfs[m.twin[self.id]].clone() }
 
-    pub fn is_forward(&self) -> bool { self.tail().id < self.head().id }
-
-    pub fn is_boundary(&self) -> bool { self.hm.upgrade().unwrap().face[self.id] == usize::MAX }
-    pub fn is_interior(&self) -> bool { self.hm.upgrade().unwrap().face[self.id] != usize::MAX }
-
+    pub fn is_forward(&self)   -> bool { self.tail().id < self.head().id }
+    pub fn is_boundary(&self)  -> bool { self.hm.upgrade().unwrap().face[self.id] == usize::MAX }
+    pub fn is_interior(&self)  -> bool { self.hm.upgrade().unwrap().face[self.id] != usize::MAX }
     pub fn is_canonical(&self) -> bool { self.edge().half() == *self }
+
+    pub fn vec(&self) -> Row3<f64> {
+        let m = self.hm.upgrade().unwrap();
+        let p0 = m.pos.fixed_view::<1, 3>(m.tail[self.id], 0);
+        let p1 = m.pos.fixed_view::<1, 3>(m.head[self.id], 0);
+        p1 - p0
+    }
 }
 
 macro_rules! impl_hmesh_partial_eq {

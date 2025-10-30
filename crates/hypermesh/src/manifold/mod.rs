@@ -1,20 +1,20 @@
 pub mod bounds;
 pub mod collider;
 pub mod hmesh;
-mod coplanar;
+mod planar;
 use std::sync::Arc;
 use anyhow::anyhow;
 use nalgebra::{DMatrix, RowVector3 as Row3};
-use bounds::BoundingBox;
+use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider};
-use crate::hmesh::Hmesh;
 use crate::common::{Half, K_PRECISION};
-use crate::manifold::coplanar::compute_coplanar_idx;
+use crate::manifold::planar::compute_coplanar_idx;
+use super::hmesh::Hmesh;
 
-fn get_face_morton(hmesh: &Hmesh, bbox: &BoundingBox) -> (Vec<BoundingBox>, Vec<u32>) {
+fn get_face_morton(hmesh: &Hmesh, bbox: &BBox) -> (Vec<BBox>, Vec<u32>) {
     assert!(hmesh.halfs.iter().all(|h| h.twin().id < usize::MAX)); // maybe not necessary
     let n = hmesh.faces.len();
-    let mut fbs = vec![BoundingBox::default(); n];
+    let mut fbs = vec![BBox::default(); n];
     let mut fms = vec![0; n];
     for f in hmesh.faces.iter() {
         let p0 = f.half().tail().pos();
@@ -30,7 +30,7 @@ fn get_face_morton(hmesh: &Hmesh, bbox: &BoundingBox) -> (Vec<BoundingBox>, Vec<
 
 fn sort_faces(
     hmesh: &Hmesh,
-    face_bboxes: &mut Vec<BoundingBox>,
+    face_bboxes: &mut Vec<BBox>,
     face_morton: &mut Vec<u32>
 ) -> Arc<Hmesh> {
     let mut table = (0..face_morton.len()).collect::<Vec<_>>();
@@ -46,49 +46,59 @@ fn sort_faces(
 }
 
 pub struct Manifold {
-    pub hmesh: Arc<Hmesh>,
-    pub bbox: BoundingBox,
+    pub ps: Vec<Row3<f64>>,
+    pub hs: Vec<Half>,
+    pub nv: usize,
+    pub nt: usize,
+    pub nh: usize,
+    pub fns: Vec<Row3<f64>>,
+    pub vns: Vec<Row3<f64>>,
+    pub bbox: BBox,
     pub collider: MortonCollider,
     pub coplanar: Vec<i32>,
     pub epsilon: f64,
     pub tolerance: f64,
-    pub pos: Vec<Row3<f64>>,
-    pub hs: Vec<Half>,
-    pub face_normals: Vec<Row3<f64>>,
-    pub vert_normals: Vec<Row3<f64>>
 }
 
 impl Manifold {
-    pub fn new(hmesh: &Hmesh) -> anyhow::Result<Self> {
-        let bbox = BoundingBox::new_from_matrix(usize::MAX, &hmesh.pos);
-        let (mut f_bboxes, mut f_morton) = get_face_morton(&hmesh, &bbox);
-        let sorted = sort_faces(&hmesh, &mut f_bboxes, &mut f_morton);
+    pub fn new(input: &Hmesh) -> anyhow::Result<Self> {
+        let bbox = BBox::new_from_matrix(usize::MAX, &input.pos);
+        let (mut f_bboxes, mut f_morton) = get_face_morton(&input, &bbox);
+        let hm = sort_faces(&input, &mut f_bboxes, &mut f_morton);
 
-        let pos = sorted.verts.iter().map(|v| v.pos()).collect::<Vec<_>>();
-        let fns = sorted.faces.iter().map(|f| f.normal()).collect::<Vec<_>>();
-        let vns = sorted.verts.iter().map(|v| v.normal()).collect::<Vec<_>>();
-        let hs = sorted.halfs.iter().map(|h| Half{ tail: h.tail().id, head: h.head().id, pair: h.twin().id }).collect::<Vec<_>>();
-
+        let ps = hm.verts.iter().map(|v| v.pos()).collect::<Vec<_>>();
+        let hs = hm.halfs.iter().map(|h| Half{ tail: h.tail().id, head: h.head().id, pair: h.twin().id }).collect::<Vec<_>>();
+        let fns = hm.faces.iter().map(|f| f.normal()).collect::<Vec<_>>();
+        let vns = hm.verts.iter().map(|v| v.normal()).collect::<Vec<_>>();
         let collider = MortonCollider::new(&f_bboxes, &f_morton);
 
         let coplanar = compute_coplanar_idx(
-            &pos,
+            &ps,
             &fns,
             &hs,
-            1e-6 // todo: temporary!
+            1e-12 // todo: temporary!
         );
 
-        let mut mfd = Manifold { hmesh: sorted, pos, hs, vert_normals: vns, face_normals: fns, bbox, collider, coplanar, epsilon: -1., tolerance: -1. };
+        let mut mfd = Manifold {
+            nv: hm.n_vert,
+            nt: hm.n_face,
+            nh: hm.n_half,
+            ps,
+            hs,
+            vns,
+            fns,
+            bbox,
+            collider,
+            coplanar,
+            epsilon: -1.,
+            tolerance: -1.
+        };
         mfd.set_epsilon(K_PRECISION * mfd.bbox.scale(), false);
 
 
         if !mfd.is_manifold() { return Err(anyhow!("The input mesh is not manifold")); }
         Ok(mfd)
     }
-
-    pub fn nv(&self) -> usize { self.hmesh.n_vert }
-    pub fn nt(&self) -> usize { self.hmesh.n_face }
-    pub fn nh(&self) -> usize { self.hmesh.n_half }
 
     pub fn set_epsilon(&mut self, min_epsilon: f64, use_single: bool) {
         let s = self.bbox.scale();
