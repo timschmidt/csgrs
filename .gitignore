@@ -26,6 +26,7 @@ stl/
 outputs/
 target/
 xtask/target/
+pkg/
 *.stl
 *.obj
 *.amf
