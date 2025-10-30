@@ -3,16 +3,15 @@
         <ClientOnly>
             <TresCanvas window-size clear-color="#EEE">
                 <TresPerspectiveCamera :position="[0, -50, 50]" :up="[0, 0, 1]" :look-at="[0, 0, 0]" />
-                <TresAmbientLight :intensity="0.5" />
-                <TresDirectionalLight :position="[1000, 500, 1000]" :intensity="5" />
+                <TresAmbientLight :intensity="2" />
                 <OrbitControls />
                 <!-- Make Z-axis up -->
                 <TresAxesHelper :args="[50]" :rotation="[Math.PI / 2, 0, 0]"/>
                 <TresGridHelper :args="[100, 10]" :rotation="[Math.PI / 2, 0, 0]"/>
-                <!-- render the meshes two times
-                    the first time with solid shaded faces
-                -->
+                <TresDirectionalLight :position="[1000, 500, 1000]" :intensity="5" />
+                <TresDirectionalLight :position="[-1000, -500, 1000]" :intensity="5" />
                 
+                <!-- solid faces -->
                 <TresMesh
                     v-for="(meshAttributes, index) in meshesTres" :key="index">
                     <TresBufferGeometry 
@@ -23,8 +22,10 @@
                     <TresMeshStandardMaterial 
                         color="#1565C0" 
                         :metalness="0.5" 
-                        :roughness="0.5" 
+                        :roughness="0.5"
+                        :side="2"
                         />
+                    <!-- NOTE: side does not seem to work to fix normal problems-->
                 </TresMesh>
                 
                 <!-- wireframe -->
@@ -33,7 +34,6 @@
                     v-for="(meshAttributes, index) in meshesTres" :key="index">
                     <TresBufferGeometry 
                         :position="meshAttributes.position"
-                        :normal="meshAttributes.normal"
                         :index="meshAttributes.index"
                     />
                     <TresMeshStandardMaterial 
@@ -49,6 +49,7 @@
             </TresCanvas>
             <div id="debug-controls">
                 <input type="checkbox" v-model="showWireframe">Show Wireframe</input>
+                <span class="metric" v-for="(value, key) in metrics" :key="key">{{ key }}: {{ Math.round(value) }} ms</span>
             </div>
         </ClientOnly>
     </div>
@@ -58,26 +59,27 @@
 
 import { TresCanvas } from '@tresjs/core'
 import { OrbitControls } from '@tresjs/cientos'
+import { DoubleSide } from 'three'
 
 import { ref, defineProps  } from 'vue'
 import type { CsgRsMeshArrays, TresBufferGeometryAttributes } from '../types';
 
-const showWireframe = ref(true);
+const showWireframe = ref<boolean>(false);
 
 const props = defineProps<{
-  meshes?: Array<CsgRsMeshArrays>
+  meshes?: Array<CsgRsMeshArrays>,
+  metrics?: Record<string, number> // some misc performance metrics
 }>();
 
 // Convert CsgRsMeshArrays to TresBufferGeometryAttributes
 const meshesTres = computed(() => 
 {
   if(!props || !props?.meshes) return [];
-  return props.meshes.map(mesh => {
-    console.log(mesh);
+  return toRaw(props.meshes).map(mesh => {
     return   {
         position: [new Float32Array(Array.from(mesh.positions)), 3],
         normal: [new Float32Array(Array.from(mesh.normals)), 3],
-        index: [new Uint32Array(Array.from(mesh.indices)), 1]
+        index: [new Uint32Array(Array.from(mesh.indices)), 1] // TODO: why is Tres complaining about this? 
       }  as TresBufferGeometryAttributes
   })
 })
@@ -108,6 +110,13 @@ h1 {
 #debug-controls input 
 {
     margin-right: 1em;
+}
+
+.metric {
+    display: inline-block;
+    margin-left: 1em;
+    color: black;
+    opacity:0.8;
 }
 
 </style>
