@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-app",
+  "name": "csgrs-js-wasm",
   "type": "module",
   "private": true,
   "scripts": {
@@ -10,7 +10,11 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@tresjs/cientos": "^5.0.0",
+    "@tresjs/nuxt": "^5.0.1",
+    "csgrs-js": "^0.20.1",
     "nuxt": "^4.0.3",
+    "three": "^0.180.0",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1"
   },
