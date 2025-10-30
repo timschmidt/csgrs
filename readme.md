@@ -608,6 +608,7 @@ for Polygon
 - https://docs.rs/rgeometry/latest/rgeometry/algorithms/polygonization/fn.two_opt_moves.html and other algorithms from rgeometry crate
 - add optional root fillets, dedendum arcs, and backlash/backlash-aware spacing to gears
 - implement GL friendly io modules
+- exhaustively test all polys within intersecting bounding boxes for intersection during booleans, eliminating remaining excess poly production
 
 ## Todo shapes
 - geodesic domes / goldberg polyhedra
