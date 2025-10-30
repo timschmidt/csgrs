@@ -1,7 +1,6 @@
 use nalgebra::{RowVector3};
 use crate::common::Half;
-use super::intersect::interpolate;
-use super::shadow::{shadows, shadows01};
+use super::op01::{interpolate, shadows, shadows01};
 type Row3f = RowVector3<f64>;
 
 pub struct Kernel02<'a> {

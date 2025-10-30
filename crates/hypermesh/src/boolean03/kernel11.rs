@@ -1,7 +1,6 @@
 use nalgebra::{RowVector3, RowVector4};
 use crate::common::Half;
-use super::intersect::intersect;
-use super::shadow::{shadows, shadows01};
+use super::op01::{intersect, shadows, shadows01};
 type Row3f = RowVector3<f64>;
 type Row4f = RowVector4<f64>;
 

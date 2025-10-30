@@ -1,7 +1,7 @@
 use nalgebra::{RowVector3};
 use std::mem;
 use crate::common::Half;
-use super::intersect::intersect;
+use super::op01::intersect;
 use super::kernel02::Kernel02;
 use super::kernel11::Kernel11;
 type Row3f = RowVector3<f64>;

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use nalgebra::{DMatrix, RowVector3};
 use crate::hmesh::Hmesh;
 use crate::{Manifold, OpType};
-use crate::boolean03::{intersect12, winding03, Boolean03};
+use crate::boolean03::{op03::winding03, op12::intersect12, Boolean03};
 use crate::boolean45::Boolean45;
 
 pub fn gen_tet_a() -> Arc<Hmesh> {
@@ -115,8 +115,8 @@ fn test_tet_sub_inclusion_case(){
         assert!((v21[i] - v21_[i]).norm() < 1e-6);
     }
     let op = OpType::Subtract;
-    let b03 = Boolean03{ mfd_p: &mfd_p, mfd_q: &mfd_q, p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
-    let b45 = Boolean45::new(&b03, &op);
+    let b03 = Boolean03{ p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
+    let b45 = Boolean45::new(&mfd_p, &mfd_q, &b03, &op);
 }
 
 #[test]
@@ -156,8 +156,8 @@ fn test_tet_sub_penetration_case(){
     }
 
     let op = OpType::Subtract;
-    let b03 = Boolean03{ mfd_p: &mfd_p, mfd_q: &mfd_q, p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
-    let b45 = Boolean45::new(&b03, &op);
+    let b03 = Boolean03{ p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
+    let b45 = Boolean45::new(&mfd_p, &mfd_q, &b03, &op);
 }
 
 #[cfg(test)]

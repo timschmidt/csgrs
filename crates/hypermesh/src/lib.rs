@@ -24,10 +24,8 @@ pub fn compute_boolean(
 ) -> (Vec<Row3f>, Vec<Row3u>) {
     let epsilon = 1e-12; // todo temporally!!!
 
-    let b03 = Boolean03::new(a, b, &op);
-    println!("b03 passed");
-    let b45 = Boolean45::new(&b03, &op);
-    println!("b45 passed");
+    let b03 = Boolean03::new(a, b, &op); println!("b03 passed");
+    let b45 = Boolean45::new(&a, &b, &b03, &op); println!("b45 passed");
     let trg = Triangulator {
         vpos: &b45.ps,
         fnmls: &b45.ns,
