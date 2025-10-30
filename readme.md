@@ -609,6 +609,7 @@ for Polygon
 - add optional root fillets, dedendum arcs, and backlash/backlash-aware spacing to gears
 - implement GL friendly io modules
 - exhaustively test all polys within intersecting bounding boxes for intersection during booleans, eliminating remaining excess poly production
+- investigate indexed triangulation with spade, earcutr for eliminating floating point instability due to rotation
 
 ## Todo shapes
 - geodesic domes / goldberg polyhedra
