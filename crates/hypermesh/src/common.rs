@@ -7,6 +7,7 @@ pub type Mat23 = nalgebra::Matrix2x3<f64>;
 pub const K_PRECISION: f64 = 1e-12;
 pub const K_BEST: f64 = f64::MIN;
 
+
 #[derive(PartialEq)]
 pub enum OpType { Add, Subtract, Intersect }
 
@@ -23,6 +24,7 @@ impl Default for Half {
 
 impl Half {
     pub fn new(tail: usize, head: usize, pair: usize) -> Self { Self { tail, head, pair } }
+    pub fn new_without_pair(tail: usize, head: usize) -> Self { Self { tail, head, pair: usize::MAX } }
     pub fn is_forward(&self) -> bool { self.tail < self.head }
     pub fn tail(&self) -> Option<usize> { if self.tail == usize::MAX {None} else {Some(self.tail)} }
     pub fn head(&self) -> Option<usize> { if self.head == usize::MAX {None} else {Some(self.head)} }
@@ -67,14 +69,14 @@ pub fn get_axis_aligned_projection(normal: &Row3f) -> Mat23 {
     let max: f64;
     let mut prj: Mat23;
 
-    if abs.z > abs.x && abs.z > abs.y {
-        prj = Mat23::new(1., 0., 0., 0., 1., 0.); // preserve x, y
+    if abs.z > abs.x && abs.z > abs.y { // preserve x, y
+        prj = Mat23::new(1., 0., 0., 0., 1., 0.);
         max = normal.z;
-    } else if abs.y > abs.x {
-        prj = Mat23::new(0., 0., 1., 1., 0., 0.); // preserve z, x
+    } else if abs.y > abs.x { // preserve z, x
+        prj = Mat23::new(0., 0., 1., 1., 0., 0.);
         max = normal.y;
-    } else {
-        prj = Mat23::new(0., 1., 0., 0., 0., 1.); // preserve y, z
+    } else { // preserve y, z
+        prj = Mat23::new(0., 1., 0., 0., 0., 1.);
         max = normal.x;
     }
 

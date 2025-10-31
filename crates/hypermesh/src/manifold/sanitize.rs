@@ -1,22 +1,10 @@
-use crate::common::{next_of, Half, Tref};
-use crate::{Manifold, Row3u};
+use crate::bounds::BBox;
+use crate::collider::{morton_code, K_NO_CODE};
+use crate::common::{next_of, Half, Row3f};
+use crate::Row3u;
 
-pub fn update_reference(
-    mp: &Manifold,
-    mq: &Manifold,
-    rs: &mut[Tref],
-) {
-    for r in rs.iter_mut() {
-        let fid = r.face_id;
-        let pq = r.mesh_id == 0;
-        r.face_id = 0; // todo: see original code and it's always -1
-        r.planar_id = if pq { mp.coplanar[fid] }
-        else  { mq.coplanar[fid] };
-    }
-}
-
-pub fn compute_halfs(fs: &Vec<Row3u>) -> Vec<Half> {
-    let nh = fs.len() * 3;
+pub fn compute_halfs(ts: &Vec<Row3u>) -> Vec<Half> {
+    let nh = ts.len() * 3;
     let ne = nh / 2;
     let nt = nh / 3;
     let remove_flag = usize::MAX - 1;
@@ -24,12 +12,12 @@ pub fn compute_halfs(fs: &Vec<Row3u>) -> Vec<Half> {
     let mut ids = (0..nh).collect::<Vec<_>>();
     let mut key = vec![0u64; nh];
 
-    for t in 0..fs.len() {
+    for t in 0..ts.len() {
         for i in 0..3 {
             let j = (i + 1) % 3;
             let e = t * 3 + i;
-            let i0 = fs[t][i];
-            let i1 = fs[t][j];
+            let i0 = ts[t][i];
+            let i1 = ts[t][j];
             hs[e].tail = i0;
             hs[e].head = i1;
             let a = std::cmp::min(i0, i1) as u64;
@@ -85,7 +73,7 @@ pub fn compute_halfs(fs: &Vec<Row3u>) -> Vec<Half> {
         }
     }
 
-    // reorder halfedges here...
+    // reorder halfedges: step 1
     for t in 0..nt {
         let i = t * 3;
         let f = [hs[i].clone(), hs[i + 1].clone(), hs[i + 2].clone(), ];
@@ -95,6 +83,7 @@ pub fn compute_halfs(fs: &Vec<Row3u>) -> Vec<Half> {
         for j in 0..3 { hs[i + j] = f[(mini + j) % 3].clone(); }
     }
 
+    // reorder halfedges: step 2
     for t in 0..nt {
         for i in t * 3..(t + 1) * 3 {
             let tail = hs[i].tail;
@@ -105,7 +94,35 @@ pub fn compute_halfs(fs: &Vec<Row3u>) -> Vec<Half> {
             if let Some(k) = f { hs[i].pair = j + k; }
         }
     }
-
     hs
+}
+
+pub fn sanitize_unused_verts(
+    ps: &mut Vec<Row3f>,
+    hs: &mut Vec<Half>
+) {
+    let bb = BBox::new(None, ps);
+    let mt = ps.iter().map(|p| morton_code(&p, &bb)).collect::<Vec<_>>();
+
+    let mut new2old = (0..ps.len()).collect::<Vec<_>>();
+    let mut old2new = vec![0; ps.len()];
+    new2old.sort_by_key(|&i| mt[i]);
+    for (new, &old) in new2old.iter().enumerate() { old2new[old] = new; }
+
+    // reindex verts
+    for h in hs.iter_mut() {
+        if h.pair().is_none() { continue; }
+        h.tail = old2new[h.tail];
+        h.head = old2new[h.head];
+    }
+
+    // truncate pos container
+    let nv = new2old
+        .iter()
+        .position(|&v| mt[v] >= K_NO_CODE)
+        .unwrap_or(new2old.len());
+
+    new2old.truncate(nv);
+    *ps = new2old.iter().map(|&i| ps[i]).collect::<Vec<_>>();
 }
 

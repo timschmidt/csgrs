@@ -71,8 +71,8 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>
 ) {
 
-    let (m0, _) = tobj::load_obj("assets/models/cube_twist.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    let (m1, _) = tobj::load_obj("assets/models/fertility_004.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m0, _) = tobj::load_obj("assets/models/cube_x_plus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m1, _) = tobj::load_obj("assets/models/tet_b.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
     let mut hms_ = vec![];
     for (m, s) in vec![(m0, 1.), (m1, 1.)] {
         let mesh = &m[0].mesh;
@@ -123,7 +123,7 @@ fn setup(
 
         cmds.spawn((
             Mesh3d(meshes.add(bm).clone()),
-            MeshMaterial3d(mats.add(StandardMaterial { ..default() })),
+            MeshMaterial3d(mats.add(StandardMaterial { ..default()})),
             Transform::default(),
             Wireframe,
             WireframeColor { color: GRAY.into() },

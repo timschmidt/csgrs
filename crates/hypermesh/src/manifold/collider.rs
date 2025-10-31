@@ -1,5 +1,10 @@
 use crate::bounds::{union_bbs, BBox, Query};
-use crate::common::{Row3f};
+use crate::common::Row3f;
+
+pub const K_NO_CODE: u32 = 0xFFFFFFFF;
+const K_INITIAL_LENGTH: i32 = 128;
+const K_LENGTH_MULTIPLE: i32 = 4;
+const K_ROOT: i32 = 1;
 
 fn spread_bits_3(v: u32) -> u32 {
     assert!(v <= 1023);
@@ -12,6 +17,7 @@ fn spread_bits_3(v: u32) -> u32 {
 }
 
 pub fn morton_code(p: &Row3f, bb: &BBox) -> u32 {
+    if p.x.is_nan() { return K_NO_CODE; }
     let mut xyz = (p - bb.min).component_div(&(bb.max - bb.min));
     xyz = (1024. * xyz).sup(&Row3f::zeros()).inf(&Row3f::new(1023., 1023., 1023.));
     let x = spread_bits_3(xyz.x as u32);
@@ -20,9 +26,6 @@ pub fn morton_code(p: &Row3f, bb: &BBox) -> u32 {
     x * 4 + y * 2 + z
 }
 
-const K_INITIAL_LENGTH: i32 = 128;
-const K_LENGTH_MULTIPLE: i32 = 4;
-const K_ROOT: i32 = 1;
 
 fn is_leaf(node: i32) -> bool { node % 2 == 0 }
 fn is_intl(node: i32) -> bool { node % 2 == 1 }
@@ -105,7 +108,7 @@ impl<'a> RadixTree<'a> {
 }
 
 fn find_collisions(
-    queries: &[Query], // either bb or vec3
+    queries: &[Query],
     node_bb: &[BBox],
     children: &[(i32, i32)],
     query_idx: i32,
@@ -126,8 +129,8 @@ fn find_collisions(
                 // todo temporally use q instead of query_idx
                 //rec.record(query_idx as usize, leaf_idx as usize);
                 match q {
-                    Query::Bb(q_bb) => { rec.record(q_bb.id, leaf_idx as usize); },
-                    Query::Pt(q_pt) => { rec.record(q_pt.id, leaf_idx as usize); }
+                    Query::Bb(q_bb) => { if let Some(id) = q_bb.id { rec.record(id, leaf_idx as usize); }},
+                    Query::Pt(q_pt) => { if let Some(id) = q_pt.id { rec.record(id, leaf_idx as usize); }}
                 }
             }
         }

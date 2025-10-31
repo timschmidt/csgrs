@@ -220,7 +220,7 @@ mod collider_test {
 #[cfg(test)]
 mod test_triangulation {
     use nalgebra::{RowVector2, RowVector3};
-    use crate::triangulation::{PolyVert, PolygonIdx};
+    use crate::triangulation::{PolyVert};
     use crate::triangulation::ear_clip::EarClip;
 
     #[test]

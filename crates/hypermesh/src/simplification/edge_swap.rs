@@ -1,6 +1,5 @@
-use nalgebra::RowVector3;
 use crate::common::{Half, Tref, get_axis_aligned_projection, is_ccw_2d, Row3f};
-use super::{collapse_edge, form_loops, is01_longest_2d, next_of, remove_if_folded, HalfedgeOps};
+use super::{collapse_edge, form_loops, head_of, is01_longest_2d, next_of, pair_of, pair_up, remove_if_folded, tail_of, tri_hids_of};
 
 fn record(
     hs: &[Half],
@@ -15,7 +14,7 @@ fn record(
 
     // skip if all 4 involved verts are "old" (consistent with C++)
     let n0 = hs[next_of(hid)].head;
-    let n1 = hs[next_of(hs[half.pair].pair)].head;
+    let n1 = hs[next_of(hs[half.pair].pair)].head; // todo: check if this is correct
     if half.tail < oft && half.head < oft && n0 < oft && n1 < oft { return false; }
 
     // Project the current tri by its normal
@@ -54,7 +53,7 @@ fn record(
 }
 
 // todo: need precise check...
-pub fn swap_degenerates(
+fn swap_degenerates(
     hs: &mut Vec<Half>,
     ps: &mut Vec<Row3f>,
     ns: &mut [Row3f],
@@ -96,7 +95,7 @@ pub fn recursive_edge_swap(
 ) {
     if hid >= hs.len() { return; }
     let curr = hid;
-    let pair = hs.pair_hid_of(curr);
+    let pair = pair_of(hs, curr);
     if hs[curr].pair().is_none() || hs[pair].pair().is_none() { return; }
 
     // avoid infinite recursion
@@ -105,14 +104,14 @@ pub fn recursive_edge_swap(
     // Edges for the two adjacent triangles
     let t0 = curr / 3;
     let t1 = pair / 3;
-    let t0edge = hs.tri_hids_of(curr);
-    let t1edge = hs.tri_hids_of(pair);
+    let t0edge = tri_hids_of(curr);
+    let t1edge = tri_hids_of(pair);
 
     // Build vertices (3D) for ccw/the longest checks using triangle normals
     let proj = get_axis_aligned_projection(&ns[t0]);
-    let v0_0 = (proj * ps[hs.tail_vid_of(t0edge.0)].transpose()).transpose();
-    let v0_1 = (proj * ps[hs.tail_vid_of(t0edge.1)].transpose()).transpose();
-    let v0_2 = (proj * ps[hs.tail_vid_of(t0edge.2)].transpose()).transpose();
+    let v0_0 = (proj * ps[tail_of(hs, t0edge.0)].transpose()).transpose();
+    let v0_1 = (proj * ps[tail_of(hs, t0edge.1)].transpose()).transpose();
+    let v0_2 = (proj * ps[tail_of(hs, t0edge.2)].transpose()).transpose();
 
     // Only operate on the long edge of a degenerate triangle:
     // C++ checks `CCW(v0,v1,v2) > 0 || !Is01Longest(v0,v1,v2)` to early-return.
@@ -122,43 +121,43 @@ pub fn recursive_edge_swap(
 
     // Switch to neighbor's frame (use neighbor normal)
     let proj = get_axis_aligned_projection(&ns[t1]);
-    let u0_0 = (proj * ps[hs.tail_vid_of(t0edge.0)].transpose()).transpose();
-    let u0_1 = (proj * ps[hs.tail_vid_of(t0edge.1)].transpose()).transpose();
-    let u0_2 = (proj * ps[hs.tail_vid_of(t0edge.2)].transpose()).transpose();
-    let u0_3 = (proj * ps[hs.tail_vid_of(t1edge.2)].transpose()).transpose();
+    let u0_0 = (proj * ps[tail_of(hs, t0edge.0)].transpose()).transpose();
+    let u0_1 = (proj * ps[tail_of(hs, t0edge.1)].transpose()).transpose();
+    let u0_2 = (proj * ps[tail_of(hs, t0edge.2)].transpose()).transpose();
+    let u0_3 = (proj * ps[tail_of(hs, t1edge.2)].transpose()).transpose();
 
     // Local closure that performs the edge swap and optional loop-formation
     let mut swap_edge = || {
         // The 0-verts are swapped to the opposite 2-verts.
-        let v0 = hs.tail_vid_of(t0edge.2);
-        let v1 = hs.tail_vid_of(t1edge.2);
+        let v0 = tail_of(hs, t0edge.2);
+        let v1 = tail_of(hs, t1edge.2);
         hs[t0edge.0].tail = v1;
         hs[t0edge.2].head = v1;
         hs[t1edge.0].tail = v0;
         hs[t1edge.2].head = v0;
 
         // Pairing
-        let pair0 = hs.pair_hid_of(t1edge.2);
-        let pair1 = hs.pair_hid_of(t0edge.2);
-        hs.pair_up(t0edge.0, pair0);
-        hs.pair_up(t1edge.0, pair1);
-        hs.pair_up(t0edge.2, t1edge.2);
+        let pair0 = pair_of(hs, t1edge.2);
+        let pair1 = pair_of(hs, t0edge.2);
+        pair_up(hs, t0edge.0, pair0);
+        pair_up(hs, t1edge.0, pair1);
+        pair_up(hs, t0edge.2, t1edge.2);
 
         // Both triangles are now subsets of the neighboring triangle.
         ns[t0] = ns[t1];
         ts[t0] = ts[t1].clone();
 
         // If the new edge already exists, duplicate the verts and split the mesh.
-        let mut h = hs.pair_hid_of(t1edge.0);
-        let head  = hs.head_vid_of(t1edge.1);
+        let mut h = pair_of(hs, t1edge.0);
+        let head  = head_of(hs, t1edge.1);
         while h != t0edge.1 {
             h = next_of(h);
-            if hs.head_vid_of(h) == head {
+            if head_of(hs, h) == head {
                 form_loops(hs, ps, t0edge.2, curr);
                 remove_if_folded(hs, ps, t0edge.2);
                 return;
             }
-            h = hs.pair_hid_of(h);
+            h = pair_of(hs, h);
         }
     };
 
@@ -190,6 +189,6 @@ pub fn recursive_edge_swap(
     visited[curr] = *tag;
     visited[pair] = *tag;
     edge_swap_stack.extend_from_slice(&[
-        hs.pair_hid_of(t1edge.0), hs.pair_hid_of(t0edge.1)
+        pair_of(hs, t1edge.0), pair_of(hs, t0edge.1)
     ]);
 }

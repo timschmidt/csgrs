@@ -7,18 +7,17 @@ use crate::bounds::BBox;
 
 fn duplicate_verts(
     inclusion: &[i32],
-    vert_r: &[i32],
+    vt_r: &[i32],
     ps_p: &[Row3f],
     ps_r: &mut [Row3f],
     vid: usize
 ) {
     let n = inclusion[vid].abs() as usize;
     for i in 0..n {
-        ps_r[vert_r[vid] as usize + i] = ps_p[vid];
+        ps_r[vt_r[vid] as usize + i] = ps_p[vid];
     }
 }
 
-// consider moving this to a util function module
 fn inclusive_scan(input: &[i32], output: &mut [i32], offset: i32) {
     if input.is_empty() || output.is_empty() { return; }
     let mut sum = offset;
@@ -28,7 +27,6 @@ fn inclusive_scan(input: &[i32], output: &mut [i32], offset: i32) {
     }
 }
 
-// consider moving this to a util function module
 fn exclusive_scan(input: &[i32], output: &mut [i32], offset: i32) {
     if input.is_empty() || output.is_empty() { return; }
     let mut sum = offset;
@@ -48,8 +46,8 @@ fn size_output(
     i21: &[i32],
     p1q2: &Vec<[i32; 2]>,
     p2q1: &Vec<[i32; 2]>,
-    invert_q: bool,
     fns: &mut Vec<Row3f>,
+    inv: bool, // whether to invert mesh of q
 ) -> (Vec<i32>, Vec<i32>) {
     let mut side_p = vec![0; mp.nt];
     let mut side_q = vec![0; mq.nt];
@@ -80,20 +78,18 @@ fn size_output(
     // a map from face_p and face_q to face_r
     let mut face_pq2r = vec![0; mp.nt + mq.nt + 1];
     let side_pq = [&side_p[..], &side_q[..]].concat();
-    let keep_fs = side_pq.iter().map(|&x| if x > 0 { 1 } else { 0 }).collect::<Vec<i32>>();
+    let keep_fs = side_pq.iter().map(|&x| if x > 0 { 1 } else { 0 }).collect::<Vec<_>>();
 
     inclusive_scan(&keep_fs, &mut face_pq2r[1..], 0);
-    let n_face_r = *face_pq2r.last().unwrap() as usize;
+    let nf_r = *face_pq2r.last().unwrap() as usize;
     face_pq2r.truncate(mp.nt + mq.nt);
-    fns.resize(n_face_r, Row3f::zeros());
+    fns.resize(nf_r, Row3f::zeros());
 
     let mut fid_r = 0;
     for (i, n) in mp.fns.iter().enumerate() { if side_p[i] > 0 { fns[fid_r] = *n; fid_r += 1; } }
-    for (i, n) in mq.fns.iter().enumerate() { if side_q[i] > 0 { fns[fid_r] = *n * if invert_q {-1.} else {1.}; fid_r += 1; } }
+    for (i, n) in mq.fns.iter().enumerate() { if side_q[i] > 0 { fns[fid_r] = *n * if inv {-1.} else {1.}; fid_r += 1; } }
 
-    // starting half idx per face todo: very suspicious...
-    //mfd_r.halfs = vec![Halfedge::default(); face_pq2r.iter().sum::<i32>() as usize];
-    let truncated = side_pq.iter().filter(|s| **s > 0).map(|s| *s).collect::<Vec<i32>>();
+    let truncated = side_pq.iter().filter(|s| **s > 0).map(|s| *s).collect::<Vec<_>>();
     let mut ih_per_f = vec![0; truncated.len()];
 
     inclusive_scan(&truncated, &mut ih_per_f, 0);
@@ -102,11 +98,12 @@ fn size_output(
     (ih_per_f, face_pq2r)
 }
 
+// Sort of intermediate data store for halfedge creation
 #[derive(Clone, Debug)]
-struct EdgePos {
+struct EdgePt {
     val: f64,     // dot value of edge
-    vid: usize,   //
-    cid: usize,   // collision_id
+    vid: usize,   // vertex id
+    cid: usize,   // collision id
     is_tail: bool //
 }
 
@@ -115,123 +112,100 @@ fn add_new_edge_verts(
     i12: &[i32],
     v12_r: &[i32],
     hs_p: &[Half],
+    pt_old: &mut HashMap<usize, Vec<EdgePt>>,
+    pt_new: &mut HashMap<(usize, usize), Vec<EdgePt>>,
     fwd: bool,
-    offset: usize,
-    edges_pos: &mut HashMap<usize, Vec<EdgePos>>,
-    edges_new: &mut HashMap<(usize, usize), Vec<EdgePos>>,
+    oft: usize,
 ) {
     for i in 0..p1q2.len() {
         let hid_p = p1q2[i][if fwd {0} else {1}] as usize;
         let fid_q = p1q2[i][if fwd {1} else {0}] as usize;
         let vid_r = v12_r[i] as usize;
-        let inclusion = i12[i];
-
+        let inc = i12[i];
         let hid0 = hid_p;
         let hid1 = hs_p[hid_p].pair;
         let key_l = if fwd { (face_of(hid0), fid_q) } else { (fid_q, face_of(hid0)) };
         let key_r = if fwd { (face_of(hid1), fid_q) } else { (fid_q, face_of(hid1)) };
-        let mut direction = inclusion < 0;
-        edges_pos.entry(hid_p).or_insert_with(Vec::new);
-        edges_new.entry(key_l).or_insert_with(Vec::new);
-        edges_new.entry(key_r).or_insert_with(Vec::new);
-        let dir0 = direction ^ !fwd;
-        let dir1 = direction ^ fwd;
-
-        for j in 0..inclusion.abs() as usize {
-            edges_pos.get_mut(&hid_p).unwrap().push(EdgePos{ val: 0., vid: vid_r + j, cid: i + offset, is_tail: direction });
-        }
-
-        direction = !direction;
-
-        for j in 0..inclusion.abs() as usize {
-            edges_new.get_mut(&key_r).unwrap().push(EdgePos{ val: 0., vid: vid_r + j, cid: i + offset, is_tail: dir0 });
-        }
-
-        direction = !direction;
-
-        for j in 0..inclusion.abs() as usize {
-            edges_new.get_mut(&key_l).unwrap().push(EdgePos{ val: 0., vid: vid_r + j, cid: i + offset, is_tail: dir1 });
-        }
+        let dir = inc < 0;
+        pt_old.entry(hid_p).or_insert_with(Vec::new);
+        pt_new.entry(key_l).or_insert_with(Vec::new);
+        pt_new.entry(key_r).or_insert_with(Vec::new);
+        let dir0 = dir ^ !fwd;
+        let dir1 = dir ^ fwd;
+        let inc_ = inc.abs() as usize;
+        for j in 0..inc_ { pt_old.get_mut(&hid_p).unwrap().push(EdgePt{ val: 0., vid: vid_r + j, cid: i + oft, is_tail: dir  }); }
+        for j in 0..inc_ { pt_new.get_mut(&key_r).unwrap().push(EdgePt{ val: 0., vid: vid_r + j, cid: i + oft, is_tail: dir0 }); }
+        for j in 0..inc_ { pt_new.get_mut(&key_l).unwrap().push(EdgePt{ val: 0., vid: vid_r + j, cid: i + oft, is_tail: dir1 }); }
     }
 }
 
 // Creating a partial halfedges from a list of positions.
 // It's very confusing, but it's not aiming to pair twins (pair is -1).
 // It's more likely to say pairing sta-end vertex and make a halfedge
-fn pair_up(edge_pos: &mut Vec<EdgePos>) -> Vec<Half> {
-    assert_eq!(edge_pos.len() % 2, 0);
-    let ne = edge_pos.len() / 2;
+fn pair_up(pts: &mut Vec<EdgePt>) -> Vec<Half> {
+    assert_eq!(pts.len() % 2, 0);
+    let nh = pts.len() / 2;
     let mid_idx = {
         let mut sta_idx = 0;
-        let mut end_idx = edge_pos.len();
+        let mut end_idx = pts.len();
 
         while sta_idx < end_idx {
-            if edge_pos[sta_idx].is_tail {
-                sta_idx += 1;
-            } else {
-                end_idx -= 1;
-                edge_pos.swap(sta_idx, end_idx);
-            }
+            if pts[sta_idx].is_tail { sta_idx += 1; }
+            else { end_idx -= 1; pts.swap(sta_idx, end_idx); }
         }
         sta_idx
     };
 
-    let cmp = |a: &EdgePos, b: &EdgePos| {
+    let cmp = |a: &EdgePt, b: &EdgePt| {
         a.val.partial_cmp(&b.val)
             .unwrap_or(std::cmp::Ordering::Equal)
             .then_with(|| a.cid.cmp(&b.cid))
     };
+    pts[..mid_idx].sort_by(cmp);
+    pts[mid_idx..].sort_by(cmp);
 
-    edge_pos[..mid_idx].sort_by(cmp);
-    edge_pos[mid_idx..].sort_by(cmp);
-
-    let mut edges = Vec::with_capacity(ne);
-    for i in 0..ne {
-        edges.push(Half {
-            tail: edge_pos[i].vid,
-            head: edge_pos[i + ne].vid,
-            pair: usize::MAX,
-        });
+    let mut edges = Vec::with_capacity(nh);
+    for i in 0..nh {
+        edges.push(Half::new_without_pair(pts[i].vid, pts[i + nh].vid));
     }
-
     edges
 }
 
 // kernel22
 fn append_partial_edges(
-    i03: &[i32],                                 //
-    half_p: &[Half],                             // halfedges in mfd_p
-    vpos_p: &[Row3f],                            //
-    vid_p2r: &[i32],                             // map from vid in mfd_p to vid in mfd_r
-    fid_p2r: &[i32],                             // map from fid in mfd_p to fid in mfd_r
-    pos_res: &[Row3f],                           // the vert pos of mfd_r, already fulfilled so far
-    forward: bool,                               //
-    half_res: &mut [Half],                       // halfedge data of mfd_r, empty yet
-    half_tri: &mut [Tref],                       // map from halfedge in mfd_r to triangle info
-    half_pos: &mut HashMap<usize, Vec<EdgePos>>, //
-    face_ptr_r: &mut [i32],                      //
-    whole_flag: &mut [bool],                     // a flag to find out a halfedge from mfd_p is entirely usable in mfd_r
+    i03: &[i32],                            //
+    hs_p: &[Half],                          // halfedges in mfd_p
+    ps_p: &[Row3f],                         //
+    ps_r: &[Row3f],                         // the vert pos of mfd_r, already fulfilled so far
+    vid_p2r: &[i32],                        // map from vid in mfd_p to vid in mfd_r
+    fid_p2r: &[i32],                        // map from fid in mfd_p to fid in mfd_r
+    fwd: bool,                              //
+    hs_r: &mut [Half],                      // halfedge data of mfd_r, empty yet
+    rs_r: &mut [Tref],                      // map from halfedge in mfd_r to triangle info
+    pt_p: &mut HashMap<usize, Vec<EdgePt>>, //
+    face_ptr_r: &mut [i32],                 //
+    whole_flag: &mut [bool],                // a flag to find out a halfedge from mfd_p is entirely usable in mfd_r
 ) {
-    for e in half_pos {
+    for e in pt_p {
         let hid_p = e.0.clone();
         let mut hpos_p = e.1;
-        let h = &half_p[hid_p];
+        let h = &hs_p[hid_p];
         whole_flag[hid_p] = false;
         whole_flag[h.pair] = false;
 
         // assigning 0-1 value to hpos_p
-        let dif = vpos_p[h.head] - vpos_p[h.tail];
+        let dif = ps_p[h.head] - ps_p[h.tail];
         for p in hpos_p.iter_mut() {
-            p.val = dif.dot(&pos_res[p.vid]);
+            p.val = dif.dot(&ps_r[p.vid]);
         }
 
         let inc_tail = i03[h.tail]; // mostly 0 or 1
         let inc_head = i03[h.head]; // mostly 0 or 1
-        let p_tail = pos_res[vid_p2r[h.tail] as usize];
-        let p_head = pos_res[vid_p2r[h.head] as usize];
+        let p_tail = ps_r[vid_p2r[h.tail] as usize];
+        let p_head = ps_r[vid_p2r[h.head] as usize];
 
         for i in 0..inc_tail.abs() as usize {
-            hpos_p.push(EdgePos{
+            hpos_p.push(EdgePt{
                 val: p_tail.dot(&dif),
                 vid: vid_p2r[h.tail] as usize + i,
                 cid: usize::MAX,
@@ -240,7 +214,7 @@ fn append_partial_edges(
         }
 
         for i in 0..inc_head.abs() as usize {
-            hpos_p.push(EdgePos{
+            hpos_p.push(EdgePt{
                 val: p_head.dot(&dif),
                 vid: vid_p2r[h.head] as usize + i,
                 cid: usize::MAX,
@@ -259,58 +233,58 @@ fn append_partial_edges(
         // position advanced CCW. This is only valid if this is a retained vert;
         // it will be ignored later if the vert is new.
 
-        let fw_tri = Tref{ mesh_id: if forward {0} else {1}, face_id: fp_l, ..Default::default() };
-        let bk_tri = Tref{ mesh_id: if forward {0} else {1}, face_id: fp_r, ..Default::default() };
+        let fw_tri = Tref{ mesh_id: if fwd {0} else {1}, face_id: fp_l, ..Default::default() };
+        let bk_tri = Tref{ mesh_id: if fwd {0} else {1}, face_id: fp_r, ..Default::default() };
 
         for h in half_seq.iter_mut() {
             let fw_edge = face_ptr_r[fid_l] as usize;
             let bk_edge = face_ptr_r[fid_r] as usize;
             face_ptr_r[fid_l] += 1;
             face_ptr_r[fid_r] += 1;
-            half_res[fw_edge] = Half{ tail: h.tail, head: h.head, pair: bk_edge };
-            half_res[bk_edge] = Half{ tail: h.head, head: h.tail, pair: fw_edge };
-            half_tri[fw_edge] = fw_tri.clone();
-            half_tri[bk_edge] = bk_tri.clone();
+            hs_r[fw_edge] = Half::new(h.tail, h.head, bk_edge);
+            hs_r[bk_edge] = Half::new(h.head, h.tail, fw_edge);
+            rs_r[fw_edge] = fw_tri.clone();
+            rs_r[bk_edge] = bk_tri.clone();
         }
     }
 }
 
 // kernel13
 fn append_new_edges(
-    pos_res: &[Row3f],                                     // the vert pos of mfd_r, already fulfilled so far
-    fid_pq2r: &[i32],                                      //
-    nfaces_p: usize,                                       //
-    face_ptr_r: &mut[i32],                                 //
-    half_new: &mut HashMap<(usize, usize), Vec<EdgePos>>,  //
-    half_res: &mut [Half],                                 // the halfedge data of mfd_r, empty yet
-    half_tri: &mut [Tref],                                 //
+    ps_r: &[Row3f],                                    // the vert pos of mfd_r, already fulfilled so far
+    fid_pq2r: &[i32],                                  //
+    nf_p: usize,                                       // num of faces in mfd_p
+    face_ptr_r: &mut[i32],                             //
+    pt_new: &mut HashMap<(usize, usize), Vec<EdgePt>>, //
+    hs_r: &mut [Half],                                 // the halfedge data of mfd_r, empty yet
+    rs_r: &mut [Tref],                                 //
 ) {
-    for v in half_new.into_iter() {
+    for v in pt_new.into_iter() {
         let (fid_p, fid_q) = v.0;
         let mut epos = v.1;
-        let mut bbox = BBox::new(usize::MAX, &vec![]);
-        for p in epos.iter() { bbox.union(&pos_res[p.vid]); }
+        let mut bbox = BBox::new(None, &vec![]);
+        for p in epos.iter() { bbox.union(&ps_r[p.vid]); }
 
         let d = bbox.longest_dim();
         for p in epos.iter_mut() {
-            p.val = pos_res[p.vid][d];
+            p.val = ps_r[p.vid][d];
         }
 
         let mut half_seq = pair_up(&mut epos);
         let fid_l = fid_pq2r[*fid_p] as usize;
-        let fid_r = fid_pq2r[*fid_q + nfaces_p] as usize;
-        let fw_ref = Tref{ mesh_id: 0, face_id: *fid_p, ..Default::default() };
-        let bk_ref = Tref{ mesh_id: 1, face_id: *fid_q, ..Default::default() };
+        let fid_r = fid_pq2r[*fid_q + nf_p] as usize;
+        let fw_ref = Tref { mesh_id: 0, face_id: *fid_p, ..Default::default() };
+        let bk_ref = Tref { mesh_id: 1, face_id: *fid_q, ..Default::default() };
 
         for h in half_seq.iter_mut() {
-            let fw_edge = face_ptr_r[fid_l];
-            let bk_edge = face_ptr_r[fid_r];
+            let fw_edge = face_ptr_r[fid_l] as usize;
+            let bk_edge = face_ptr_r[fid_r] as usize;
             face_ptr_r[fid_l] += 1;
             face_ptr_r[fid_r] += 1;
-            half_res[fw_edge as usize] = Half{tail: h.tail, head: h.head, pair: bk_edge as usize};
-            half_res[bk_edge as usize] = Half{tail: h.head, head: h.tail, pair: fw_edge as usize};
-            half_tri[fw_edge as usize] = fw_ref.clone();
-            half_tri[bk_edge as usize] = bk_ref.clone();
+            hs_r[fw_edge] = Half::new(h.tail, h.head, bk_edge);
+            hs_r[bk_edge] = Half::new(h.head, h.tail, fw_edge);
+            rs_r[fw_edge] = fw_ref.clone();
+            rs_r[bk_edge] = bk_ref.clone();
         }
     }
 }
@@ -322,10 +296,10 @@ fn append_whole_edges(
     fid_p2r: &[i32],
     vid_p2r: &[i32],
     whole_flag: &[bool],
-    forward: bool,
+    fwd: bool,
     face_ptr_r: &mut[i32],
-    half_res: &mut [Half],
-    half_ref: &mut [Tref],
+    hs_r: &mut [Half],
+    rs_r: &mut [Tref],
 ) {
     for (i, hp) in half_p.iter().enumerate() {
         if !whole_flag[i] || !hp.is_forward() { continue; }
@@ -340,20 +314,20 @@ fn append_whole_edges(
 
         let fp_l = face_of(i);
         let fp_r = face_of(hp.pair);
-        let fid_l = fid_p2r[fp_l];
-        let fid_r = fid_p2r[fp_r];
-        let fw_ref = Tref{ mesh_id: if forward {0} else {1}, face_id: fp_l, ..Default::default() };
-        let bk_ref = Tref{ mesh_id: if forward {0} else {1}, face_id: fp_r, ..Default::default() };
+        let fid_l = fid_p2r[fp_l] as usize;
+        let fid_r = fid_p2r[fp_r] as usize;
+        let fw_ref = Tref{ mesh_id: if fwd {0} else {1}, face_id: fp_l, ..Default::default() };
+        let bk_ref = Tref{ mesh_id: if fwd {0} else {1}, face_id: fp_r, ..Default::default() };
 
         for _ in 0..inc.abs() as usize {
-            let fw_edge = face_ptr_r[fid_l as usize];
-            let bk_edge = face_ptr_r[fid_r as usize];
-            face_ptr_r[fid_l as usize] += 1;
-            face_ptr_r[fid_r as usize] += 1;
-            half_res[fw_edge as usize] = Half{ tail: h.tail, head: h.head, pair: bk_edge as usize };
-            half_res[bk_edge as usize] = Half{ tail: h.head, head: h.tail, pair: fw_edge as usize };
-            half_ref[fw_edge as usize] = fw_ref.clone();
-            half_ref[bk_edge as usize] = bk_ref.clone();
+            let fw_edge = face_ptr_r[fid_l] as usize;
+            let bk_edge = face_ptr_r[fid_r] as usize;
+            face_ptr_r[fid_l] += 1;
+            face_ptr_r[fid_r] += 1;
+            hs_r[fw_edge] = Half::new(h.tail, h.head, bk_edge);
+            hs_r[bk_edge] = Half::new(h.head, h.tail, fw_edge);
+            rs_r[fw_edge] = fw_ref.clone();
+            rs_r[bk_edge] = bk_ref.clone();
             h.tail += 1;
             h.head += 1;
         }
@@ -421,37 +395,38 @@ pub fn boolean45(
     for i in 0..nv_12 { duplicate_verts(&i12, &vid_12r, &b03.v12, &mut ps_r, i as usize); }
     for i in 0..nv_21 { duplicate_verts(&i21, &vid_21r, &b03.v21, &mut ps_r, i as usize); }
 
-    let mut half_pos_p: HashMap<usize, Vec<EdgePos>> = HashMap::new();
-    let mut half_pos_q: HashMap<usize, Vec<EdgePos>> = HashMap::new();
-    let mut half_new: HashMap<(usize, usize), Vec<EdgePos>> = HashMap::new();
-    add_new_edge_verts(&b03.p1q2, &i12, &vid_12r, &mp.hs, true, 0, &mut half_pos_p, &mut half_new);
-    add_new_edge_verts(&b03.p2q1, &i21, &vid_21r, &mq.hs, false, b03.p1q2.len(), &mut half_pos_q, &mut half_new);
+    let mut pt_p: HashMap<usize, Vec<EdgePt>> = HashMap::new();
+    let mut pt_q: HashMap<usize, Vec<EdgePt>> = HashMap::new();
+    let mut pt_new: HashMap<(usize, usize), Vec<EdgePt>> = HashMap::new();
+    add_new_edge_verts(&b03.p1q2, &i12, &vid_12r, &mp.hs, &mut pt_p, &mut pt_new, true, 0);
+    add_new_edge_verts(&b03.p2q1, &i21, &vid_21r, &mq.hs, &mut pt_q, &mut pt_new, false, b03.p1q2.len());
 
-    let mut fnmls = vec![];
-    let (ih_per_f, fid_pq2r) = size_output(mp, mq, &i03, &i30, &i12, &i21, &b03.p1q2, &b03.p2q1, op == &OpType::Subtract, &mut fnmls);
+    let mut ns_r = vec![];
+    let inv = op == &OpType::Subtract;
+    let (ih_per_f, fid_pq2r) = size_output(mp, mq, &i03, &i30, &i12, &i21, &b03.p1q2, &b03.p2q1, &mut ns_r, inv);
 
     let nh = ih_per_f.last().unwrap().clone() as usize;
     let mut face_ptr_r = ih_per_f.clone();
     let mut whole_flag_p = vec![true; nh_p];
     let mut whole_flag_q = vec![true; nh_q];
-    let mut half_tri = vec![Tref::default(); nh];
-    let mut half_res = vec![Half::default(); nh];
+    let mut rs_r = vec![Tref::default(); nh];
+    let mut hs_r = vec![Half::default(); nh];
     let fid_p2r = &fid_pq2r[0..nf_p];
     let fid_q2r = &fid_pq2r[nf_p..];
 
-    append_partial_edges(&i03, &mp.hs, &mp.ps, &vid_p2r, fid_p2r, &ps_r, true,  &mut half_res, &mut half_tri, &mut half_pos_p, &mut face_ptr_r, &mut whole_flag_p);
-    append_partial_edges(&i30, &mq.hs, &mq.ps, &vid_q2r, fid_q2r, &ps_r, false, &mut half_res, &mut half_tri, &mut half_pos_q, &mut face_ptr_r, &mut whole_flag_q);
+    append_partial_edges(&i03, &mp.hs, &mp.ps, &ps_r, &vid_p2r, fid_p2r, true,  &mut hs_r, &mut rs_r, &mut pt_p, &mut face_ptr_r, &mut whole_flag_p);
+    append_partial_edges(&i30, &mq.hs, &mq.ps, &ps_r, &vid_q2r, fid_q2r, false, &mut hs_r, &mut rs_r, &mut pt_q, &mut face_ptr_r, &mut whole_flag_q);
 
-    append_new_edges(&ps_r, &fid_pq2r, nf_p, &mut face_ptr_r, &mut half_new, &mut half_res, &mut half_tri);
+    append_new_edges(&ps_r, &fid_pq2r, nf_p, &mut face_ptr_r, &mut pt_new, &mut hs_r, &mut rs_r);
 
-    append_whole_edges(&i03, &mp.hs, fid_p2r, &vid_p2r, &whole_flag_p, true,  &mut face_ptr_r, &mut half_res, &mut half_tri);
-    append_whole_edges(&i30, &mq.hs, fid_q2r, &vid_q2r, &whole_flag_q, false, &mut face_ptr_r, &mut half_res, &mut half_tri);
+    append_whole_edges(&i03, &mp.hs, fid_p2r, &vid_p2r, &whole_flag_p, true,  &mut face_ptr_r, &mut hs_r, &mut rs_r);
+    append_whole_edges(&i30, &mq.hs, fid_q2r, &vid_q2r, &whole_flag_q, false, &mut face_ptr_r, &mut hs_r, &mut rs_r);
 
     Boolean45 {
         ps: ps_r,
-        ns: fnmls,
-        hs: half_res,
-        rs: half_tri,
+        ns: ns_r,
+        hs: hs_r,
+        rs: rs_r,
         nv_from_p: nv_rp as usize,
         nv_from_q: nv_rq as usize,
         initial_hid_per_faces: ih_per_f

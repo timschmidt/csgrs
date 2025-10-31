@@ -1,54 +1,54 @@
-use crate::common::{Half, Tref, next_of, Row3f, Row2f};
-mod edge_dedup;
-mod edge_swap;
+pub mod edge_dedup;
+pub mod edge_swap;
 pub mod edge_collapse;
-use edge_collapse::*;
-
+use crate::common::{Half, Tref, next_of, Row3f, Row2f};
+use edge_collapse::{collapse_edge, collapse_short_edges, collapse_collinear_edges};
+use edge_dedup::dedupe_edges;
 
 pub fn simplify_topology(
     hs: &mut Vec<Half>,
     ps: &mut Vec<Row3f>,
-    ns: &mut [Row3f],
-    rs: &mut [Tref],
+    ns: &mut Vec<Row3f>,
+    rs: &mut Vec<Tref>,
     nv: usize,
-    ep: f64,
+    eps: f64,
 ) {
     split_pinched_vert(hs, ps);
-    collapse_short_edges(hs, ps, ns, rs, nv, ep);
-    collapse_collinear_edges(hs, ps, ns, rs, nv, ep);
+    dedupe_edges(ps, hs, ns, rs);
+    collapse_short_edges(hs, ps, ns, rs, nv, eps);
+    collapse_collinear_edges(hs, ps, ns, rs, nv, eps);
 }
 
-pub(in crate::simplification) fn is01_longest_2d(
-    p0: &Row2f,
-    p1: &Row2f,
-    p2: &Row2f
-) -> bool {
-    let e01 = (*p1 - *p0).norm_squared();
-    let e12 = (*p2 - *p1).norm_squared();
-    let e20 = (*p0 - *p2).norm_squared();
-    e01 > e12 && e01 > e20
+fn head_of(hs: &[Half], hid: usize) -> usize { hs[hid].head }
+fn tail_of(hs: &[Half], hid: usize) -> usize { hs[hid].tail }
+fn pair_of(hs: &[Half], hid: usize) -> usize { hs[hid].pair }
+fn pair_up(hs: &mut[Half], hid0: usize, hid1: usize) { hs[hid0].pair = hid1; hs[hid1].pair = hid0; }
+fn tri_hids_of(curr: usize) -> (usize, usize, usize) {
+    let next = next_of(curr);
+    let prev = next_of(next);
+    (curr, next, prev)
 }
 
 // When bgn halfedge and end halfedge are heading to the same vertex,
 // and if collapsing the tail vertex as well, this function creates two loops.
 // Beware the needless loop is not necessarily eliminated from the mesh because
 // halfedges of the tail side might be connected to other triangles (would be folded though).
-pub(in crate::simplification) fn form_loops(
+fn form_loops(
     hs: &mut Vec<Half>,
     ps: &mut Vec<Row3f>,
     bgn: usize,
     end: usize
 ) {
-    ps.push(ps[hs.tail_vid_of(bgn)]);
-    ps.push(ps[hs.head_vid_of(bgn)]);
+    ps.push(ps[tail_of(hs, bgn)]);
+    ps.push(ps[head_of(hs, bgn)]);
     let bgn_vid = ps.len() - 2;
     let end_vid = ps.len() - 1;
 
-    let bgn_pair = hs.pair_hid_of(bgn);
-    let end_pair = hs.pair_hid_of(end);
+    let bgn_pair = pair_of(hs, bgn);
+    let end_pair = pair_of(hs, end);
 
-    hs.update_vid_around_star(bgn_pair, end_pair, bgn_vid);
-    hs.update_vid_around_star(end, bgn, end_vid);
+    update_vid_around_star(hs, bgn_pair, end_pair, bgn_vid);
+    update_vid_around_star(hs, end, bgn, end_vid);
 
     hs[bgn].pair = end_pair;
     hs[end_pair].pair = bgn;
@@ -64,29 +64,28 @@ pub(in crate::simplification) fn form_loops(
 // 3. Topologically valid, but just two vertex positions are the same
 // Beware the case that triangles only connected at a vertex but not by halfedge
 // are eliminated by split_pinched_vert and dedupe_edges functions.
-pub(in crate::simplification) fn remove_if_folded(
+fn remove_if_folded(
     hs: &mut [Half],
     ps: &mut Vec<Row3f>,
     hid: usize
 ) {
-    let (i0, i1, i2) = hs.tri_hids_of(hid);
-    let (j0, j1, j2) = hs.tri_hids_of(hs.pair_hid_of(hid));
+    let (i0, i1, i2) = tri_hids_of(hid);
+    let (j0, j1, j2) = tri_hids_of(pair_of(hs, hid));
 
-    if hs[i1].pair().is_none() || hs.head_vid_of(i1) != hs.head_vid_of(j1) { return; }
+    if hs[i1].pair().is_none() || head_of(hs, i1) != head_of(hs, j1) { return; }
 
-    let nan = Row3f::new(f64::MAX, f64::MAX, f64::MAX);
-    match (hs.pair_hid_of(i1) == j2, hs.pair_hid_of(i2) == j1) {
-        (true, true)  => for i in [i0, i1, i2] { ps[hs.tail_vid_of(i)] = nan; },
-        (true, false) => { ps[hs.tail_vid_of(i1)] = nan; }
-        (false, true) => { ps[hs.tail_vid_of(j1)] = nan; }
+    let nan = Row3f::new(f64::NAN, f64::NAN, f64::NAN);
+    match (pair_of(hs, i1) == j2, pair_of(hs, i2) == j1) {
+        (true, true)  => for i in [i0, i1, i2] { ps[tail_of(hs, i)] = nan; },
+        (true, false) => { ps[tail_of(hs, i1)] = nan; }
+        (false, true) => { ps[tail_of(hs, j1)] = nan; }
         _ => {} // topo valid
     }
-    hs.pair_up(hs[i1].pair, hs[j2].pair);
-    hs.pair_up(hs[i2].pair, hs[j1].pair);
+    pair_up(hs, hs[i1].pair, hs[j2].pair);
+    pair_up(hs, hs[i2].pair, hs[j1].pair);
     for i in [i0, i1, i2] { hs[i] = Half::default(); }
     for j in [j0, j1, j2] { hs[j] = Half::default(); }
 }
-
 
 fn split_pinched_vert(
     hs: &mut [Half],
@@ -107,7 +106,7 @@ fn split_pinched_vert(
         // loop halfedges around their tail ccw way
         let mut cur = hid;
         loop {
-            cur = hs.next_hid_of(hs[cur].pair);
+            cur = next_of(hs[cur].pair);
             h_processed[cur] = true;
             hs[cur].tail = vid;
             hs[hs[cur].pair].head = vid;
@@ -116,69 +115,40 @@ fn split_pinched_vert(
     }
 }
 
-pub(in crate::simplification) trait HalfedgeOps {
-    fn next_of(&self, curr: usize) -> &Half;
-    fn pair_of(&self, curr: usize) -> &Half;
-    fn next_hid_of(&self, curr: usize) -> usize;
-    fn pair_hid_of(&self, curr: usize) -> usize;
-    fn head_vid_of(&self, curr: usize) -> usize;
-    fn tail_vid_of(&self, curr: usize) -> usize;
-    fn tri_hids_of(&self, curr: usize) -> (usize, usize, usize);
-    fn pair_up(&mut self, hid0: usize, hid1: usize);
-    fn update_vid_around_star(&mut self, vid: usize, bgn: usize, end: usize);
-    fn collapse_triangle(&mut self, hids: &(usize, usize, usize));
-    fn loop_ccw<F>(&mut self, hid: usize, func: F) where F: FnMut(&mut [Half], usize);
-}
-
-impl HalfedgeOps for [Half] {
-    fn next_of(&self, curr: usize) -> &Half { &self[self.next_hid_of(curr)] }
-    fn pair_of(&self, curr: usize) -> &Half { &self[self[curr].pair] }
-    fn next_hid_of(&self, curr: usize) -> usize { let mut c = curr + 1; if c % 3 == 0 { c -= 3; } c }
-    fn pair_hid_of(&self, curr: usize) -> usize { self[curr].pair }
-    fn head_vid_of(&self, curr: usize) -> usize { self[curr].head }
-    fn tail_vid_of(&self, curr: usize) -> usize { self[curr].tail }
-
-    fn tri_hids_of(&self, curr: usize) -> (usize, usize, usize) {
-        let next = next_of(curr);
-        let prev = next_of(next);
-        (curr, next, prev)
-    }
-
-    fn pair_up(&mut self, hid0: usize, hid1: usize) {
-        self[hid0].pair = hid1;
-        self[hid1].pair = hid0;
-    }
-
-    fn update_vid_around_star(
-        &mut self,
-        bgn: usize, // incoming bgn halfedge id (inclusive)
-        end: usize, // incoming end halfedge id (exclusive)
-        vid: usize, // alternative vid
-    ) {
-        let mut cur = bgn;
-        while cur != end {
-            self[cur].head = vid; cur = self.next_hid_of(cur);
-            self[cur].tail = vid; cur = self.pair_hid_of(cur);
-            assert_ne!(cur, bgn);
-        }
-    }
-
-    fn collapse_triangle(&mut self, hids: &(usize, usize, usize)) {
-        if self[hids.1].pair().is_none() { return; }
-        let pair1 = self.pair_hid_of(hids.1);
-        let pair2 = self.pair_hid_of(hids.2);
-        self[pair1].pair = pair2;
-        self[pair2].pair = pair1;
-        for i in [hids.0, hids.1, hids.2] { self[i] = Half::default(); }
-    }
-
-    fn loop_ccw<F>(&mut self, hid: usize, mut func: F) where F: FnMut(&mut [Half], usize) {
-        let mut cur = hid;
-        loop {
-            if self[cur].tail().is_none() || self[cur].head().is_none() { continue; }
-            func(self, cur);
-            cur = next_of(self[cur].pair);
-            if cur == hid { break; }
-        }
+fn update_vid_around_star(
+    hs: &mut [Half],
+    bgn: usize, // incoming bgn halfedge id (inclusive)
+    end: usize, // incoming end halfedge id (exclusive)
+    vid: usize, // alternative vid
+) {
+    let mut cur = bgn;
+    while cur != end {
+        hs[cur].head = vid; cur = next_of(cur);
+        hs[cur].tail = vid; cur = pair_of(hs, cur);
+        assert_ne!(cur, bgn);
     }
 }
+
+fn collapse_triangle(
+    hs: &mut [Half],
+    hids: &(usize, usize, usize)
+) {
+    if hs[hids.1].pair().is_none() { return; }
+    let pair1 = pair_of(hs, hids.1);
+    let pair2 = pair_of(hs, hids.2);
+    hs[pair1].pair = pair2;
+    hs[pair2].pair = pair1;
+    for i in [hids.0, hids.1, hids.2] { hs[i] = Half::default(); }
+}
+
+fn is01_longest_2d(
+    p0: &Row2f,
+    p1: &Row2f,
+    p2: &Row2f
+) -> bool {
+    let e01 = (*p1 - *p0).norm_squared();
+    let e12 = (*p2 - *p1).norm_squared();
+    let e20 = (*p0 - *p2).norm_squared();
+    e01 > e12 && e01 > e20
+}
+

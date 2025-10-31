@@ -114,7 +114,7 @@ pub fn intersect12 (
     let bbs = a.hs.iter()
         .enumerate()
         .filter(|(_, h)| h.tail < h.head)
-        .map(|(i, h)| Query::Bb(BBox::new(i, &vec![a.ps[h.tail], a.ps[h.head]])))
+        .map(|(i, h)| Query::Bb(BBox::new(Some(i), &vec![a.ps[h.tail], a.ps[h.head]])))
         .collect::<Vec<_>>();
 
     let mut rec = Intersection12Recorder{ k12: &k12, x12: vec![], v12: vec![], p1q2: vec![], fwd };

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use crate::common::{Half, Tref, Row3f};
-use super::HalfedgeOps;
+use crate::common::{Half, Tref, Row3f, next_of};
+use super::{pair_up, tail_of, update_vid_around_star};
 
 fn dedupe_edge(
     ps: &mut Vec<Row3f>,
@@ -16,33 +16,33 @@ fn dedupe_edge(
     // For here we do not care either the tail vert is attached or not (care it in the 3rd step).
     let tail = hs[hid].tail;
     let head = hs[hid].head;
-    let opp = hs[hs.next_hid_of(hid)].pair;
-    let mut cur = hs[hs.next_hid_of(hid)].pair;
+    let opp = hs[next_of(hid)].pair;
+    let mut cur = hs[next_of(hid)].pair;
     while cur != hid {
-        if hs.tail_vid_of(cur) == tail {
+        if tail_of(hs, cur) == tail {
             ps.push(ps[head]);
             let copy = ps.len() - 1;
-            cur = hs[hs.next_hid_of(cur)].pair;
-            hs.update_vid_around_star(cur, opp, copy);
+            cur = hs[next_of(cur)].pair;
+            update_vid_around_star(hs, cur, opp, copy);
 
             let nh = hs.len();
             let pair = hs[cur].pair;
             hs.push(Half { tail: head, head: copy, ..Default::default() });
-            hs.push(Half { tail: copy, head: hs.tail_vid_of(cur), ..Default::default() });
-            hs.push(Half { tail: hs.tail_vid_of(cur), head: head, ..Default::default() });
-            hs.pair_up(nh + 2, pair);
-            hs.pair_up(nh + 1, cur);
+            hs.push(Half { tail: copy, head: tail_of(hs, cur), ..Default::default() });
+            hs.push(Half { tail: tail_of(hs, cur), head, ..Default::default() });
+            pair_up(hs, nh + 2, pair);
+            pair_up(hs, nh + 1, cur);
 
             let nh = hs.len();
             let pair = hs[opp].pair;
-            hs.push(Half { tail: copy, head: head, ..Default::default() });
-            hs.push(Half { tail: head, head: hs.tail_vid_of(opp), ..Default::default() });
-            hs.push(Half { tail: hs.tail_vid_of(opp), head: copy, ..Default::default() });
-            hs.pair_up(nh + 2, pair);
-            hs.pair_up(nh + 1, opp);
+            hs.push(Half { tail: copy, head, ..Default::default() });
+            hs.push(Half { tail: head, head: tail_of(hs, opp), ..Default::default() });
+            hs.push(Half { tail: tail_of(hs, opp), head: copy, ..Default::default() });
+            pair_up(hs, nh + 2, pair);
+            pair_up(hs, nh + 1, opp);
 
             // Pair first new halfedge of second tri with first of first tri
-            hs.pair_up(nh, nh - 3);
+            pair_up(hs, nh, nh - 3);
 
             // Push per-face data if present
             rs.push(rs[cur / 3].clone());
@@ -51,7 +51,7 @@ fn dedupe_edge(
             ns.push(ns[opp / 3].clone());
             break;
         }
-        cur = hs[hs.next_hid_of(cur)].pair;
+        cur = hs[next_of(cur)].pair;
     }
 
     // 2: Pinch the head vert if 1 does not happen.
@@ -63,43 +63,43 @@ fn dedupe_edge(
         ns.push(ns[head].clone());
         rs.push(rs[head].clone());
         // Rewire the entire star around NextHalfedge(current) to new_vert
-        let start = hs.next_hid_of(cur);
+        let start = next_of(cur);
         let mut e = start;
         loop {
             hs[e].tail = new_vert;
             let p = hs[e].pair;
             hs[p].head = new_vert;
-            e = hs.next_hid_of(p);
+            e = next_of(p);
             if e == start { break; }
         }
     }
     // 3: Pinch the tail vert anyway.
     let pair = hs[hid].pair;
-    let mut current = hs[hs.next_hid_of(pair)].pair;
-    while current != pair {
-        if hs[current].tail == head { break; }
-        current = hs[hs.next_hid_of(current)].pair;
+    let mut curr = hs[next_of(pair)].pair;
+    while curr != pair {
+        if hs[curr].tail == head { break; }
+        curr = hs[next_of(curr)].pair;
     }
-    if current == pair {
+    if curr == pair {
         // Split the pinched vert the previous split created.
         let new_vert = ps.len();
         ps.push(ps[head]);
         // Duplicate per-face data if present
         ns.push(ns[head].clone());
         rs.push(rs[head].clone());
-        let start = hs.next_hid_of(current);
-        let mut e = start;
+        let bgn = next_of(curr);
+        let mut e = bgn;
         loop {
             hs[e].tail = new_vert;
             let p = hs[e].pair;
             hs[p].head = new_vert;
-            e = hs.next_hid_of(p);
-            if e == start { break; }
+            e = next_of(p);
+            if e == bgn { break; }
         }
     }
 }
 
-fn dedupe_edges(
+pub fn dedupe_edges(
     ps: &mut Vec<Row3f>,
     hs: &mut Vec<Half>,
     ns: &mut Vec<Row3f>,
@@ -118,8 +118,10 @@ fn dedupe_edges(
             let mut map = HashMap::<usize, usize>::new();
 
             // 1: for the star around tail(i), find the minimal index for each head vertex.
-            hs.loop_ccw(hid, |hs, cur|{
-                local[cur] = true; // todo: this must come before "if halfs[cur].no_tail()... { continue; }" statement!
+            let mut cur = hid;
+            loop {
+                local[cur] = true;
+                if hs[cur].tail().is_none() || hs[cur].head().is_none() { continue; }
                 let head = hs[cur].head;
                 if map.is_empty() {
                     if let Some(p) = vec.iter_mut().find(|p| p.0 == head) { p.1 = p.1.min(cur); }
@@ -128,15 +130,21 @@ fn dedupe_edges(
                         if vec.len() > 32 { for (k, v) in vec.drain(..) { map.insert(k, v); } }
                     }
                 } else { map.entry(head).and_modify(|m| { if cur < *m { *m = cur; } }).or_insert(cur); }
-            });
+                cur = next_of(hs[cur].pair);
+                if cur == hid { break; }
+            }
 
             // 2: flag duplicates (all with the same tail/head except the minimal-index representative).
-            hs.loop_ccw(hid, |hs, cur|{
+            let mut cur = hid;
+            loop {
+                if hs[cur].tail().is_none() || hs[cur].head().is_none() { continue; }
                 let head = hs[cur].head;
                 let mini = if map.is_empty() { vec.iter().find(|p| p.0 == head).map(|p| p.1) }
                            else { map.get(&head).copied() };
                 if mini.is_some_and(|id| id != cur) { dups.push(cur); }
-            });
+                cur = next_of(hs[cur].pair);
+                if cur == hid { break; }
+            }
         }
 
         dups.sort_unstable();

@@ -40,7 +40,7 @@ pub fn winding03(
 
     let bbs = a.ps.iter()
         .enumerate()
-        .map(|(i, p)| Query::Pt(BPos{id: i, pos: *p}))
+        .map(|(i, p)| Query::Pt(BPos{id: Some(i), pos: *p}))
         .collect::<Vec<_>>();
     let mut rec = SimpleRecorder::new(
         |a, b| {

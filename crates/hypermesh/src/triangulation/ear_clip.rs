@@ -3,14 +3,14 @@ use std::cmp::{Ordering, PartialEq};
 use std::collections::BTreeSet;
 use std::rc::{Rc, Weak};
 use crate::common::{det2x2, is_ccw_2d, safe_normalize, K_BEST, K_PRECISION, Row2f, Row3u};
-use crate::triangulation::{PolyVert, PolygonIdx, Rect};
-use crate::triangulation::flat_tree::{compute_flat_tree, compute_query_flat_tree};
+use crate::triangulation::PolyVert;
+use super::flat_tree::{compute_flat_tree, compute_query_flat_tree, Rect};
 
 #[derive(Clone)]
 pub struct Ecvt {
-    pub idx: usize, // vert idx
-    pub pos: Row2f, // vert pos
-    pub dir: Row2f, // right dir
+    pub idx: usize,                       // vert idx
+    pub pos: Row2f,                       // vert pos
+    pub dir: Row2f,                       // right dir
     pub ear: Option<Weak<RefCell<Ecvt>>>, // itr to self, just needed for quick removal from the ear queue
     pub vl:  Option<Weak<RefCell<Ecvt>>>,
     pub vr:  Option<Weak<RefCell<Ecvt>>>,
@@ -33,17 +33,17 @@ impl Ecvt {
         Self { idx, pos, dir: Row2f::new(0., 0.), ear: None, vl: None, vr: None, cost: 0. }
     }
 
-    /// Shorter than half of epsilon, to be conservative so that it doesn't
-    /// cause CW triangles that exceed epsilon due to rounding error.
+    // Shorter than half of epsilon, to be conservative so that it doesn't
+    // cause CW triangles that exceed epsilon due to rounding error.
     pub fn is_short(&self, epsilons: f64) -> bool {
         let diff = self.pos_r() - self.pos;
         diff.dot(&diff) * 4. < epsilons * epsilons
     }
 
-    /// Returns true if Vert is on inside the edge that goes from tail to tail->right.
-    /// This will walk the edges if necessary until a clear answer is found (beyond epsilon).
-    /// If toLeft is true, this Vert will walk its edges to the left. This should be chosen
-    /// so that the edges walk in the same general direction - tail always walks to the right.
+    // Returns true if Vert is on inside the edge that goes from tail to tail->right.
+    // This will walk the edges if necessary until a clear answer is found (beyond epsilon).
+    // If toLeft is true, this Vert will walk its edges to the left. This should be chosen
+    // so that the edges walk in the same general direction - tail always walks to the right.
     pub fn inside_edge(&self, tail: &EvPtr, epsilons: f64, to_left: bool) -> bool {
         let p2 = epsilons * epsilons;
         let mut nl = self.ptr_r_of_l();
@@ -99,21 +99,21 @@ impl Ecvt {
         true
     }
 
-    /// Returns true for convex or collinear ears.
+    // Returns true for convex or collinear ears.
     pub fn is_convex(&self, epsilon: f64) -> bool {
         is_ccw_2d(&self.pos_l(), &self.pos, &self.pos_r(), epsilon) > 0
     }
 
-    /// Subtly different from !IsConvex because IsConvex will return true for collinear
-    /// non-folded verts, while IsReflex will always check until actual certainty is determined.
+    // Subtly different from !IsConvex because IsConvex will return true for collinear
+    // non-folded verts, while IsReflex will always check until actual certainty is determined.
     pub fn is_reflex(&self, epsilon: f64) -> bool {
         !self.ptr_l().borrow().inside_edge(&self.ptr_r_of_l(), epsilon, true)
     }
 
-    /// Returns the x-value on this edge corresponding to the start.y value,
-    /// returning NAN if the edge does not cross the value from below to above,
-    /// right of start - all within an epsilon tolerance. If onTop != 0,
-    /// this restricts which end is allowed to terminate within the epsilon band.
+    // Returns the x-value on this edge corresponding to the start.y value,
+    // returning NAN if the edge does not cross the value from below to above,
+    // right of start - all within an epsilon tolerance. If onTop != 0,
+    // this restricts which end is allowed to terminate within the epsilon band.
     pub fn interpolate_y2x(&self, start: &Row2f, on_top: i32, epsilon: f64) -> Option<f64> {
         if (self.pos.y - start.y).abs() < epsilon {
             if self.pos_r().y <= start.y + epsilon || on_top == 1 { return None; }
@@ -131,9 +131,9 @@ impl Ecvt {
         None
     }
 
-    /// This finds the cost of this vert relative to one of the two closed sides of the ear.
-    /// Points are valid even when they touch, so long as their edge goes to the outside.
-    /// No need to check the other side, since all verts are processed in the EarCost loop.
+    // This finds the cost of this vert relative to one of the two closed sides of the ear.
+    // Points are valid even when they touch, so long as their edge goes to the outside.
+    // No need to check the other side, since all verts are processed in the EarCost loop.
     pub fn signed_dist(&self, pair: &Ecvt, unit: Row2f, epsilon: f64) -> f64 {
         let d = det2x2(&unit, &(pair.pos - self.pos));
         if d.abs() < epsilon {
@@ -145,8 +145,8 @@ impl Ecvt {
         d
     }
 
-    /// Find the cost of Vert v within this ear, where openSide is the unit
-    /// vector from Verts right to left - passed in for reuse.
+    // Find the cost of Vert v within this ear, where openSide is the unit
+    // vector from Verts right to left - passed in for reuse.
     pub fn cost(&self, pair: &Ecvt, open_side: &Row2f, epsilon: f64) -> f64 {
         let c0 = self.signed_dist(pair, self.dir, epsilon);
         let c1 = self.signed_dist(pair, self.dir_l(), epsilon);
@@ -155,21 +155,21 @@ impl Ecvt {
     }
 
 
-    /// For verts outside the ear, apply a cost based on the Delaunay condition
-    /// to aid in prioritization and produce cleaner triangulations. This doesn't
-    /// affect robustness but may be adjusted to improve output.
+    // For verts outside the ear, apply a cost based on the Delaunay condition
+    // to aid in prioritization and produce cleaner triangulations. This doesn't
+    // affect robustness but may be adjusted to improve output.
     pub fn delaunay_cost(&self, diff: &Row2f, scale: f64, epsilon: f64) -> f64 {
         -epsilon - scale * diff.dot(diff)
     }
 
-    /// This is the expensive part of the algorithm, checking this ear against
-    /// every Vert to ensure none are inside. The Collider brings the total
-    /// triangulator cost down from O(n^2) to O(nlogn) for most large polygons.
-    /// Think of a cost as vaguely a distance metric - 0 is right on the edge of being invalid.
-    /// Cost > epsilon is definitely invalid. Cost < -epsilon is definitely valid, so all improvement
-    /// costs are designed to always give values < -epsilon so they will never affect validity.
-    /// The first totalCost is designed to give priority to sharper angles.
-    /// Any cost < (-1 - epsilon) has satisfied the Delaunay condition.
+    // This is the expensive part of the algorithm, checking this ear against
+    // every Vert to ensure none are inside. The Collider brings the total
+    // triangulator cost down from O(n^2) to O(nlogn) for most large polygons.
+    // Think of a cost as vaguely a distance metric - 0 is right on the edge of being invalid.
+    // Cost > epsilon is definitely invalid. Cost < -epsilon is definitely valid, so all improvement
+    // costs are designed to always give values < -epsilon so they will never affect validity.
+    // The first totalCost is designed to give priority to sharper angles.
+    // Any cost < (-1 - epsilon) has satisfied the Delaunay condition.
     pub fn ear_cost(&self, epsilon: f64, collider: &IdxCollider) -> f64 {
         let open_side = (self.pos_l() - self.pos_r()).normalize();
         let center = (self.pos_l() + self.pos_r()) * 0.5;
@@ -209,19 +209,16 @@ impl Ecvt {
 
 type EvPtr = Rc<RefCell<Ecvt>>;
 
-/// When an ear vert is clipped, its neighbors get linked, so they get unlinked
-/// from it, but it is still linked to them.
+// When an ear vert is clipped, its neighbors get linked, so they get unlinked
+// from it, but it is still linked to them.
 fn clipped(v: &EvPtr) -> bool { !Rc::ptr_eq(&v.borrow().ptr_l_of_r(), v) }
 fn folded(v: &EvPtr)  -> bool { Rc::ptr_eq(&v.borrow().ptr_l(), &v.borrow().ptr_r()) }
 
 impl PartialEq  for Ecvt { fn eq(&self, other: &Self) -> bool { self.cost == other.cost } }
 impl PartialOrd for Ecvt { fn partial_cmp(&self, other: &Self) -> Option<Ordering> { self.cost.partial_cmp(&other.cost) } }
 
-#[derive(Clone)]
-struct EvPtrMinCost(EvPtr);
-
-#[derive(Clone)]
-struct EvPtrMaxPosX(EvPtr, Rect);
+#[derive(Clone)] struct EvPtrMinCost(EvPtr);
+#[derive(Clone)] struct EvPtrMaxPosX(EvPtr, Rect);
 
 impl Eq for EvPtrMinCost {}
 impl PartialEq for EvPtrMinCost {
@@ -244,7 +241,6 @@ impl Ord for EvPtrMinCost {
             })
     }
 }
-
 
 impl Eq for EvPtrMaxPosX {}
 impl PartialEq for EvPtrMaxPosX {
@@ -297,7 +293,7 @@ pub struct EarClip {
 }
 
 impl EarClip {
-    pub fn new(polys: &Vec<PolygonIdx>, epsilon: f64) -> Self {
+    pub fn new(polys: &Vec<Vec<PolyVert>>, epsilon: f64) -> Self {
         let mut clip = Self {
             polygon: vec![],
             simples: vec![],
@@ -385,7 +381,7 @@ impl EarClip {
         }
     }
 
-    fn initialize(&mut self, polys: &Vec<PolygonIdx>) -> Vec<EvPtr> {
+    fn initialize(&mut self, polys: &Vec<Vec<PolyVert>>) -> Vec<EvPtr> {
         let mut bgns = vec![];
         for poly in polys.iter() {
             let v = poly.first().unwrap();

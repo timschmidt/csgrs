@@ -1,4 +1,5 @@
-use crate::triangulation::{PolyVert, Rect};
+use crate::common::Row2f;
+use crate::triangulation::{PolyVert};
 
 pub fn compute_flat_tree(pts: &mut [PolyVert]) {
     if pts.len() <= 8 { return; }
@@ -127,3 +128,45 @@ pub fn query_two_d_tree<F>(points: &[PolyVert], r: Rect, mut f: F) where F: FnMu
     }
 }
 */
+
+#[derive(Clone)]
+pub struct Rect {
+    pub min: Row2f,
+    pub max: Row2f,
+}
+
+impl Rect {
+    pub fn default() -> Self {
+        Self {
+            min: Row2f::new(f64::MAX, f64::MAX),
+            max: Row2f::new(f64::MIN, f64::MIN),
+        }
+    }
+    pub fn new(a: &Row2f, b: &Row2f) -> Self {
+        Self {
+            min: Row2f::new(a.x.min(b.x), a.y.min(b.y)),
+            max: Row2f::new(a.x.max(b.x), a.y.max(b.y)),
+        }
+    }
+
+    pub fn contains(&self, p: &Row2f) -> bool {
+        p.x >= self.min.x &&
+            p.x <= self.max.x &&
+            p.y >= self.min.y &&
+            p.y <= self.max.y
+    }
+
+    pub fn union(&mut self, p: &Row2f) {
+        self.min = Row2f::new(self.min.x.min(p.x), self.min.y.min(p.y));
+        self.max = Row2f::new(self.max.x.max(p.x), self.max.y.max(p.y));
+    }
+
+    pub fn size(&self) -> Row2f {
+        self.max - self.min
+    }
+
+    pub fn scale(&self) -> f64 {
+        let s = self.size();
+        s.x.abs().max(s.y.abs())
+    }
+}

@@ -1,5 +1,5 @@
 use crate::common::{Half, Tref, is_ccw_3d, Row3f};
-use super::{form_loops, next_of, remove_if_folded, HalfedgeOps};
+use super::{collapse_triangle, form_loops, head_of, next_of, pair_of, remove_if_folded, tri_hids_of, update_vid_around_star};
 
 // Check around a halfedges from the same tail vertex.
 // If they consist of only two tris, then their edge is collapsable.
@@ -62,20 +62,20 @@ pub fn collapse_edge(
     let pos_keep = ps[vid_keep];
     let pos_delt = ps[vid_delt];
 
-    let tri0 = hs.tri_hids_of(hid);
-    let tri1 = hs.tri_hids_of(to_rmv.pair);
+    let tri0 = tri_hids_of(hid);
+    let tri1 = tri_hids_of(to_rmv.pair);
 
-    let mut bgn = hs.pair_hid_of(tri1.1); // the bgn half heading delt vert
+    let mut bgn = pair_of(hs, tri1.1); // the bgn half heading delt vert
     let     end = tri0.2;                 // the end half heading delt vert
 
     // check validity by orbiting start vert ccw order
     if (pos_keep - pos_delt).norm_squared() >= epsilon.powi(2) {
         let mut cur = bgn;
         let mut tr0 = &rs[to_rmv.pair / 3];
-        let mut p_prev = ps[hs.head_vid_of(tri1.1)];
+        let mut p_prev = ps[head_of(hs, tri1.1)];
         while cur != to_rmv.pair {
-            cur = hs.next_hid_of(cur); // incoming half around delt vert
-            let p_next = ps[hs.head_vid_of(cur)];
+            cur = next_of(cur); // incoming half around delt vert
+            let p_next = ps[head_of(hs, cur)];
             let r_curr = &rs[cur / 3];
             let n_curr = &ns[cur / 3];
             let n_pair = &ns[to_rmv.pair / 3];
@@ -97,27 +97,27 @@ pub fn collapse_edge(
             if ccw(&p_next, &p_prev, &pos_keep) < 0 { return false; }
 
             p_prev = p_next;
-            cur = hs.pair_hid_of(cur); // outgoing half around delt vert
+            cur = pair_of(hs, cur); // outgoing half around delt vert
         }
     }
 
     // find a candidate by orbiting end verts ccw order
-    let mut cur = hs.pair_hid_of(tri0.1);
+    let mut cur = pair_of(hs, tri0.1);
     while cur != tri1.2 {
-        cur = hs.next_hid_of(cur);
+        cur = next_of(cur);
         store.push(cur); // storing outgoing half here
-        cur = hs.pair_hid_of(cur);
+        cur = pair_of(hs, cur);
     }
 
-    ps[to_rmv.tail] = Row3f::new(f64::MAX, f64::MAX, f64::MAX);
-    hs.collapse_triangle(&tri1);
+    ps[to_rmv.tail] = Row3f::new(f64::NAN, f64::NAN, f64::NAN);
+    collapse_triangle(hs, &tri1);
 
     let mut cur = bgn;
     while cur != end {
-        cur      = hs.next_hid_of(cur);
-        let pair = hs.pair_hid_of(cur);
-        let head = hs.head_vid_of(cur);
-        if let Some((i, &v)) = store.iter().enumerate().find(|&(_, &s)| hs.head_vid_of(s) == head) {
+        cur      = next_of(cur);
+        let pair = pair_of(hs, cur);
+        let head = head_of(hs, cur);
+        if let Some((i, &v)) = store.iter().enumerate().find(|&(_, &s)| head_of(hs, s) == head) {
             form_loops(hs, ps, v, cur);
             bgn = pair;
             store.truncate(i);
@@ -126,10 +126,9 @@ pub fn collapse_edge(
     }
 
     // do collapse
-    hs.update_vid_around_star(bgn, end, vid_keep);
-    hs.collapse_triangle(&tri0);
+    update_vid_around_star(hs, bgn, end, vid_keep);
+    collapse_triangle(hs, &tri0);
     remove_if_folded(hs, ps, bgn);
-
     true
 }
 
@@ -144,11 +143,12 @@ pub fn collapse_collinear_edges(
     loop {
         let mut flag = 0;
         let rec = (0..hs.len())
-            .filter(|&hid| record_if_collinear(hs, rs, hid, nv)).collect::<Vec<_>>();
+            .filter(|&hid| record_if_collinear(hs, rs, hid, nv))
+            .collect::<Vec<_>>();
         for hid in rec {
             if collapse_edge(hs, ps, ns, rs, hid, &mut vec![], ep) { flag += 1; }
         }
-        if flag == 0 { break; }
+        if flag == 0 { break; } else { println!("{} collinear edge collapsed", flag);}
     }
 }
 
@@ -162,10 +162,12 @@ pub fn collapse_short_edges(
 ) {
     loop {
         let mut flag = 0;
-        let rec = (0..hs.len()).filter(|&hid| record_if_short(hs, ps, hid, nv, ep)).collect::<Vec<_>>();
+        let rec = (0..hs.len())
+            .filter(|&hid| record_if_short(hs, ps, hid, nv, ep))
+            .collect::<Vec<_>>();
         for hid in rec {
             if collapse_edge(hs, ps, ns, rs, hid, &mut vec![], ep) { flag += 1; }
         }
-        if flag == 0 { break; }
+        if flag == 0 { break; } else { println!("{} short edges collapsed", flag);}
     }
 }

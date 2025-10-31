@@ -2,34 +2,31 @@ use nalgebra::DMatrix;
 use crate::common::{Row3f};
 
 #[derive(Clone, Debug)]
+pub enum Query { Bb(BBox), Pt(BPos) }
+
+#[derive(Clone, Debug)]
 pub struct BBox {
-    pub id: usize,
+    pub id: Option<usize>,
     pub min: Row3f,
     pub max: Row3f,
 }
 
 #[derive(Clone, Debug)]
 pub struct BPos {
-    pub id: usize,
+    pub id: Option<usize>,
     pub pos: Row3f,
-}
-
-#[derive(Clone, Debug)]
-pub enum Query {
-    Bb(BBox),
-    Pt(BPos),
 }
 
 impl BBox {
     pub fn default() -> Self {
         BBox {
-            id: usize::MAX,
+            id: None,
             min: Row3f::new(f64::MAX, f64::MAX, f64::MAX),
             max: Row3f::new(f64::MIN, f64::MIN, f64::MIN),
         }
     }
     
-    pub fn new(id: usize, pts: &Vec<Row3f>) -> Self {
+    pub fn new(id: Option<usize>, pts: &Vec<Row3f>) -> Self {
         let mut b = BBox {
             id,
             min: Row3f::new(f64::MAX, f64::MAX, f64::MAX),
@@ -39,9 +36,9 @@ impl BBox {
         b
     }
 
-    pub fn new_from_matrix(id: usize, pts: &DMatrix<f64>) -> Self {
+    pub fn new_from_matrix(pts: &DMatrix<f64>) -> Self {
         let mut b = BBox {
-            id,
+            id: None,
             min: Row3f::new(f64::MAX, f64::MAX, f64::MAX),
             max: Row3f::new(f64::MIN, f64::MIN, f64::MIN),
         };
@@ -78,6 +75,7 @@ impl BBox {
     }
 
     pub fn union(&mut self, p: &Row3f) {
+        if p.x.is_nan() { return; }
         self.min = Row3f::new(self.min.x.min(p.x), self.min.y.min(p.y), self.min.z.min(p.z));
         self.max = Row3f::new(self.max.x.max(p.x), self.max.y.max(p.y), self.max.z.max(p.z));
     }
@@ -94,7 +92,7 @@ impl BBox {
 pub fn union_bbs(b0: &BBox, b1: &BBox) -> BBox {
     let min = Row3f::new(b0.min.x.min(b1.min.x), b0.min.y.min(b1.min.y), b0.min.z.min(b1.min.z));
     let max = Row3f::new(b0.max.x.max(b1.max.x), b0.max.y.max(b1.max.y), b0.max.z.max(b1.max.z));
-    BBox::new(usize::MAX, &vec![min, max])
+    BBox::new(None, &vec![min, max])
 }
 
 
