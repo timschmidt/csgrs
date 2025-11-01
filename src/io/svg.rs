@@ -383,7 +383,7 @@ pub trait FromSVG: Sized {
     fn from_svg(doc: &str) -> Result<Self, IoError>;
 }
 
-impl FromSVG for Sketch<()> {
+impl<T> FromSVG for Sketch<(), T> {
     fn from_svg(doc: &str) -> Result<Self, IoError> {
         use svg::node::element::tag::{self, Type::*};
         use svg::parser::Event;

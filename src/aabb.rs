@@ -6,15 +6,28 @@ pub struct Aabb<T: Scalar> {
     pub maxs: Point3<T>,
 }
 
-impl<T> Aabb<T> {
+impl<T: Scalar + PartialOrd> Aabb<T> {
     #[inline]
     pub const fn new(mins: Point3<T>, maxs: Point3<T>) -> Self {
         Self { mins, maxs }
     }
     
-    pub fn intersects(&self, other: &Aabb<T>) -> bool {
-        self.max.x >= other.min.x && self.min.x <= other.max.x &&
-        self.max.y >= other.min.y && self.min.y <= other.max.y &&
-        self.max.z >= other.min.z && self.min.z <= other.max.z
+    #[inline]
+    pub fn intersects(&self, other: &Self) -> bool {
+        self.maxs.x >= other.mins.x
+            && self.mins.x <= other.maxs.x
+            && self.maxs.y >= other.mins.y
+            && self.mins.y <= other.maxs.y
+            && self.maxs.z >= other.mins.z
+            && self.mins.z <= other.maxs.z
+    }
+
+    #[inline]
+    pub fn center(&self) -> Point3<T> {
+        Point3::new(
+            (self.mins.x + self.maxs.x) / T::mixed_from(2.0),
+            (self.mins.y + self.maxs.y) / T::mixed_from(2.0),
+            (self.mins.z + self.maxs.z) / T::mixed_from(2.0),
+        )
     }
 }
