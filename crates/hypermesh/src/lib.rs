@@ -7,26 +7,25 @@ mod boolean03;
 mod boolean45;
 use crate::boolean03::boolean03;
 use crate::boolean45::boolean45;
-use crate::common::{OpType, Row3u};
+use crate::common::OpType;
 use crate::simplification::simplify_topology;
 use crate::triangulation::triangulate;
 pub use crate::manifold::*;
-use crate::sanitize::{compute_halfs, cleanup_unused_verts};
 
 pub fn compute_boolean(
     a: &Manifold,
     b: &Manifold,
     op: OpType,
 ) -> anyhow::Result<Manifold> {
-    let eps = 1e-12; // todo temporally, must calculated from a and b
+    let eps = a.eps.max(b.eps);
+    let tol = a.tol.max(b.tol);
 
     let     b03 = boolean03(a, b, &op);
     let mut b45 = boolean45(a, b, &b03, &op);
     let mut trg = triangulate(a, b, &b45, eps)?;
-    let mut hs = compute_halfs(&trg.ts);
 
     simplify_topology(
-        &mut hs,
+        &mut trg.hs,
         &mut b45.ps,
         &mut trg.ns,
         &mut trg.rs,
@@ -34,11 +33,16 @@ pub fn compute_boolean(
         eps
     );
 
-    cleanup_unused_verts(&mut b45.ps, &mut hs);
+    cleanup_unused_verts(
+        &mut b45.ps,
+        &mut trg.hs
+    );
 
     Manifold::new(
         &b45.ps.iter().flatten().copied().collect::<Vec<_>>(),
-        &hs.iter().map(|h| h.tail).collect::<Vec<_>>(),
+        &trg.hs.iter().map(|h| h.tail).collect::<Vec<_>>(),
+        Some(eps),
+        Some(tol)
     )
 }
 

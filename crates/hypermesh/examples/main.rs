@@ -77,7 +77,7 @@ fn setup(
         let mesh = &m[0].mesh;
         let pos_buf = mesh.positions.iter().map(|&v| (v * s) as f64).collect::<Vec<f64>>();
         let idx_buf = mesh.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>();
-        let mf = Manifold::new(&pos_buf, &idx_buf).unwrap();
+        let mf = Manifold::new(&pos_buf, &idx_buf, None, None).unwrap();
         mfs.push(mf);
     }
 

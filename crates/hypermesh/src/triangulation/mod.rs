@@ -3,14 +3,14 @@ pub mod flat_tree;
 use anyhow::Result;
 use std::collections::{BTreeMap, VecDeque};
 use crate::boolean45::Boolean45;
-use crate::common::{Half, Tref, get_axis_aligned_projection, is_ccw_3d, Row3f, Row3u, Row2f, Mat23};
+use crate::common::{Half, Tref, get_axis_aligned_projection, is_ccw_3d, Row3f, Row3u, Row2f, next_of};
 use crate::Manifold;
 use crate::triangulation::ear_clip::EarClip;
 
 pub struct Triangulation {
-    pub ts: Vec<Row3u>,
-    pub ns: Vec<Row3f>,
+    pub hs: Vec<Half>,
     pub rs: Vec<Tref>,
+    pub ns: Vec<Row3f>,
 }
 
 pub fn triangulate(
@@ -32,7 +32,7 @@ pub fn triangulate(
         ts.extend(t);
     }
     update_reference(mp, mq, &mut rs);
-    Ok(Triangulation { ts, ns, rs })
+    Ok(Triangulation { hs: compute_halfs(&mut ts), ns, rs })
 }
 
 fn process_face(
@@ -47,25 +47,6 @@ fn process_face(
         4 =>  square_triangulate(&b45, fid, eps),
         _ => general_triangulate(&b45, fid, eps),
     }
-}
-
-fn update_reference(
-    mp: &Manifold,
-    mq: &Manifold,
-    rs: &mut[Tref],
-) {
-    for r in rs.iter_mut() {
-        let fid = r.face_id;
-        let pq = r.mesh_id == 0;
-        r.face_id = 0; // todo: see original code and it's always -1
-        r.planar_id = if pq { mp.coplanar[fid] }
-        else  { mq.coplanar[fid] };
-    }
-}
-
-
-fn get_indices(hs: &[Half], t: &Row3u) -> Row3u {
-    Row3u::new(hs[t.x].tail, hs[t.y].tail, hs[t.z].tail)
 }
 
 // This function considers vertex-joint cases like Hierholzer's algorithm.
@@ -150,7 +131,11 @@ fn square_triangulate(
         if diag0.norm() > diag1.norm() { choice = 1; }
     }
 
-    tris[choice].iter().map(|t| get_indices(&b45.hs, t)).collect()
+    tris[choice].iter().map(|t| Row3u::new(
+        b45.hs[t.x].tail,
+        b45.hs[t.y].tail,
+        b45.hs[t.z].tail
+    )).collect()
 }
 
 fn general_triangulate(
@@ -160,9 +145,19 @@ fn general_triangulate(
 ) -> Vec<Row3u> {
     let proj  = get_axis_aligned_projection(&b45.ns[fid]);
     let loops = assemble_halfs(&b45.hs, &b45.initial_hid_per_faces, fid);
-    let polys = project_polygons(&b45.hs, &b45.ps, &loops, &proj);
-    let tris  = EarClip::new(&polys, eps).triangulate();
-    tris.iter().map(|t| get_indices(&b45.hs, t)).collect()
+    let polys = loops.iter().map(|poly|
+        poly.iter().map(|&e| {
+            let i = b45.hs[e].tail;
+            let p = (proj * b45.ps[i].transpose()).transpose();
+            PolyVert { pos: p, idx: e }
+        }).collect::<Vec<_>>()
+    ).collect::<Vec<_>>();
+
+    EarClip::new(&polys, eps).triangulate().iter().map(|t| Row3u::new(
+        b45.hs[t.x].tail,
+        b45.hs[t.y].tail,
+        b45.hs[t.z].tail
+    )).collect()
 }
 
 
@@ -172,20 +167,112 @@ pub struct PolyVert {
     pub idx: usize
 }
 
-// Add the vertex position projection to the indexed polygons.
-fn project_polygons(
-    hs: &[Half],
-    ps: &[Row3f],
-    polys: &Vec<Vec<usize>>,
-    prj: &Mat23
-) -> Vec<Vec<PolyVert>> {
-    polys.iter().map(|poly|
-        poly.iter().map(|&e| {
-            let i = hs[e].tail;
-            let p = prj * ps[i].transpose();
-            PolyVert { pos: p.transpose(), idx: e }
-        }).collect()).collect()
+fn update_reference(
+    mp: &Manifold,
+    mq: &Manifold,
+    rs: &mut[Tref],
+) {
+    for r in rs.iter_mut() {
+        let fid = r.face_id;
+        let pq = r.mesh_id == 0;
+        r.face_id = 0; // todo: see original code and it's always -1
+        r.planar_id = if pq { mp.coplanar[fid] }
+        else  { mq.coplanar[fid] };
+    }
 }
 
+fn compute_halfs(ts: &Vec<Row3u>) -> Vec<Half> {
+    let nh = ts.len() * 3;
+    let ne = nh / 2;
+    let nt = nh / 3;
+    let remove_flag = usize::MAX - 1;
+    let mut hs  = vec![Half::default(); nh];
+    let mut ids = (0..nh).collect::<Vec<_>>();
+    let mut key = vec![0u64; nh];
+
+    for t in 0..ts.len() {
+        for i in 0..3 {
+            let j = (i + 1) % 3;
+            let e = t * 3 + i;
+            let i0 = ts[t][i];
+            let i1 = ts[t][j];
+            hs[e].tail = i0;
+            hs[e].head = i1;
+            let a = std::cmp::min(i0, i1) as u64;
+            let b = std::cmp::max(i0, i1) as u64;
+            let f = if i0 < i1 { 1u64 } else { 0u64 } << 63;
+            key[e] = f | (a << 32) | b;
+        }
+    }
+
+    ids.sort_by_key(|&i| key[i]);
+
+    // By sorting forward and backward halfedges by key,
+    // now halfedges of the same mini ids are sorted in a sequence.
+    // It treats the triangle overlap case here, also considers 4-manifold case.
+    let mut step = |i: usize, consecutive_ini: usize| -> usize {
+        let i0 = ids[i];
+        let h0 = hs[i0].clone();
+        let j = i + ne;
+        let mut k = consecutive_ini + ne;
+        loop {
+            if k >= nh { break; }
+            let i1 = ids[k];
+            let h1 = hs[i1].clone();
+
+            if !(h0.tail == h1.head && h0.head == h1.tail) { break; }
+            if hs[next_of(i0)].head == hs[next_of(i1)].head { // overlap
+                hs[i0].pair = remove_flag;
+                hs[i1].pair = remove_flag;
+                if k != j { ids.swap(j, k); }
+                break;
+            }
+            k += 1;
+        }
+
+        if i + 1 == ne { return consecutive_ini; }
+        let i2 = ids[i + 1];
+        let h2 = hs[i2].clone();
+        if h0.tail == h2.tail && h0.head == h2.head { consecutive_ini } else { i + 1 }
+    };
+
+    let mut ini = 0;
+    for i in 0..ne { ini = step(i, ini); }
+
+    for i in 0..ne {
+        let i0 = ids[i];
+        let i1 = ids[i + ne];
+        if hs[i0].pair != remove_flag {
+            hs[i0].pair = i1;
+            hs[i1].pair = i0;
+        } else {
+            hs[i0] = Half::default();
+            hs[i1] = Half::default();
+        }
+    }
+
+    // reorder halfedges: step 1
+    for t in 0..nt {
+        let i = t * 3;
+        let f = [hs[i].clone(), hs[i + 1].clone(), hs[i + 2].clone(), ];
+        let mut mini = 0;
+        if f[1].tail < f[mini].tail { mini = 1; }
+        if f[2].tail < f[mini].tail { mini = 2; }
+        for j in 0..3 { hs[i + j] = f[(mini + j) % 3].clone(); }
+    }
+
+    // reorder halfedges: step 2
+    for t in 0..nt {
+        for i in t * 3..(t + 1) * 3 {
+            let tail = hs[i].tail;
+            let pair = hs[i].pair;
+            if pair == remove_flag || pair >= hs.len() { continue; }
+            let j = (pair / 3) * 3;
+            let f = (0..3).find(|&k| hs[j + k].head == tail);
+            if let Some(k) = f { hs[i].pair = j + k; }
+        }
+    }
+    hs
+}
 
 

@@ -9,21 +9,27 @@ use crate::boolean45::{boolean45, Boolean45};
 pub fn gen_tet_a() -> Manifold {
     Manifold::new(
         &vec![-0.866025, -1., 0.5, 0., -1., -1., 0.866025, -1., 0.5, 0., 1., 0.],
-        &vec![0, 3, 1, 1, 2, 0, 1, 3, 2, 2, 3, 0]
+        &vec![0, 3, 1, 1, 2, 0, 1, 3, 2, 2, 3, 0],
+        None,
+        None,
     ).unwrap()
 }
 
 pub fn gen_tet_b() -> Manifold {
     Manifold::new(
         &vec![-1., -0.866025, 0.5, -1., 0., -1., -1., 0.866025, 0.5, 1., 0., 0.],
-        &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2]
+        &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2],
+        None,
+        None,
     ).unwrap()
 }
 
 pub fn gen_tet_c() -> Manifold {
     Manifold::new(
         &vec![-2., -0.866025, 0.5, -2., -0., -1., -2., 0.866025, 0.5, 0., 0., 0.],
-        &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2]
+        &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2],
+        None,
+        None,
     ).unwrap()
 }
 

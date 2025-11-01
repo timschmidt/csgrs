@@ -1,18 +1,18 @@
-use std::collections::HashMap;
 use std::mem;
+use std::collections::HashMap;
 use crate::boolean03::Boolean03;
 use crate::common::{face_of, Half, OpType, Tref, Row3f};
 use crate::manifold::Manifold;
 use crate::bounds::BBox;
 
 fn duplicate_verts(
-    inclusion: &[i32],
+    inc : &[i32],
     vt_r: &[i32],
     ps_p: &[Row3f],
-    ps_r: &mut [Row3f],
+    ps_r: &mut[Row3f],
     vid: usize
 ) {
-    let n = inclusion[vid].abs() as usize;
+    let n = inc[vid].abs() as usize;
     for i in 0..n {
         ps_r[vt_r[vid] as usize + i] = ps_p[vid];
     }
@@ -171,7 +171,6 @@ fn pair_up(pts: &mut Vec<EdgePt>) -> Vec<Half> {
     edges
 }
 
-// kernel22
 fn append_partial_edges(
     i03: &[i32],                            //
     hs_p: &[Half],                          // halfedges in mfd_p
@@ -249,7 +248,6 @@ fn append_partial_edges(
     }
 }
 
-// kernel13
 fn append_new_edges(
     ps_r: &[Row3f],                                    // the vert pos of mfd_r, already fulfilled so far
     fid_pq2r: &[i32],                                  //
@@ -289,7 +287,6 @@ fn append_new_edges(
     }
 }
 
-// kernel31
 fn append_whole_edges(
     i03: &[i32],
     half_p: &[Half],

@@ -1,14 +1,13 @@
 pub mod hmesh;
 pub mod bounds;
 pub mod collider;
-pub mod sanitize;
 use std::cmp::Ordering;
 use std::sync::Arc;
 use anyhow::anyhow;
 use nalgebra::{DMatrix};
 use bounds::BBox;
-use crate::collider::{morton_code, MortonCollider};
-use crate::common::{Half, K_PRECISION, Row3f, Row3u, next_of};
+use crate::collider::{morton_code, MortonCollider, K_NO_CODE};
+use crate::common::{Half, K_PRECISION, Row3f, next_of};
 use super::hmesh::Hmesh;
 
 pub struct Manifold {
@@ -30,6 +29,8 @@ impl Manifold {
     pub fn new(
         pos: &Vec<f64>,
         idx: &Vec<usize>,
+        eps: Option<f64>,
+        tol: Option<f64>,
     ) -> anyhow::Result<Self> {
         let m0 = Hmesh::new(
             DMatrix::from_row_slice(pos.len() / 3, 3, &pos),
@@ -44,7 +45,10 @@ impl Manifold {
         let fns = hm.faces.iter().map(|f| f.normal()).collect::<Vec<_>>();
         let vns = hm.verts.iter().map(|v| v.normal()).collect::<Vec<_>>();
 
-        let (eps, tol) = compute_epsilon_and_tolerance(&bb, K_PRECISION * bb.scale(), -1., false);
+        let mut e = K_PRECISION * bb.scale();
+        e = if e.is_finite() { e } else { -1. };
+        let eps = if eps.is_some() { eps.unwrap() } else { e };
+        let tol = if tol.is_some() { tol.unwrap() } else { e };
         let collider = MortonCollider::new(&f_bb, &f_mt);
         let coplanar = compute_coplanar_idx(&ps, &fns, &hs, eps);
 
@@ -76,9 +80,6 @@ impl Manifold {
         self.tol = self.tol.max(t);
     }
 
-    pub fn finish(&mut self) {
-    }
-
     fn is_manifold(&self) -> bool {
         self.hs.iter().enumerate().all(|(i, h)| {
             if h.tail().is_none() || h.head().is_none() { return true; }
@@ -95,19 +96,6 @@ impl Manifold {
             }
         })
     }
-}
-
-fn compute_epsilon_and_tolerance(
-    bb: &BBox,
-    min_eps: f64,
-    min_tol: f64,
-    use_single: bool
-) -> (f64, f64) {
-    let s = bb.scale();
-    let mut e = min_eps.max(K_PRECISION * s);
-    e = if e.is_finite() { e } else { -1. };
-    let t = if use_single { e.max(f64::EPSILON * s) } else { e };
-    (e, min_tol.max(t))
 }
 
 fn compute_face_morton(hmesh: &Hmesh, bb: &BBox) -> (Vec<BBox>, Vec<u32>) {
@@ -194,5 +182,36 @@ fn compute_coplanar_idx(
         }
     }
     res
+}
+
+pub fn cleanup_unused_verts(
+    ps: &mut Vec<Row3f>,
+    hs: &mut Vec<Half>
+) {
+    let bb = BBox::new(None, ps);
+    let mt = ps.iter().map(|p| morton_code(&p, &bb)).collect::<Vec<_>>();
+
+    let mut new2old = (0..ps.len()).collect::<Vec<_>>();
+    let mut old2new = vec![0; ps.len()];
+    new2old.sort_by_key(|&i| mt[i]);
+    for (new, &old) in new2old.iter().enumerate() { old2new[old] = new; }
+
+    // reindex verts
+    for h in hs.iter_mut() {
+        if h.pair().is_none() { continue; }
+        h.tail = old2new[h.tail];
+        h.head = old2new[h.head];
+    }
+
+    // truncate pos container
+    let nv = new2old
+        .iter()
+        .position(|&v| mt[v] >= K_NO_CODE)
+        .unwrap_or(new2old.len());
+
+    new2old.truncate(nv);
+
+    *ps = new2old.iter().map(|&i| ps[i]).collect::<Vec<_>>();
+    *hs = hs.iter().filter(|h| h.pair().is_some()).map(|h| h.clone()).collect::<Vec<_>>();
 }
 
