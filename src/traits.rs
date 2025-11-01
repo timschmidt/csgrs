@@ -1,7 +1,7 @@
 use crate::aabb::Aabb;
 use crate::math_ndsp::consts::{EPSILON};
 use crate::mesh::plane::Plane;
-use crate::math_ndsp::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
+use crate::math_ndsp::{Matrix3, Matrix4, Rotation3, Translation3, Vector3, Scalar};
 type Real = f64;
 
 /// Boolean operations + transformations
@@ -13,7 +13,7 @@ pub trait CSG: Sized + Clone {
     fn xor(&self, other: &Self) -> Self;
     fn transform(&self, matrix: &Matrix4<Real>) -> Self;
     fn inverse(&self) -> Self;
-    fn bounding_box(&self) -> Aabb;
+    fn bounding_box(&self) -> Aabb<T>;
     fn invalidate_bounding_box(&mut self);
 
     /// Returns a new Self translated by vector.
@@ -118,7 +118,7 @@ pub trait CSG: Sized + Clone {
     /// the orientation of polygons, affecting inside/outside semantics in CSG.
     ///
     /// Returns a new Self whose geometry is mirrored accordingly.
-    fn mirror(&self, plane: Plane) -> Self {
+    fn mirror(&self, plane: Plane<T>) -> Self {
         // Normal might not be unit, so compute its length:
         let len = plane.normal().norm();
         if len.abs() < EPSILON {

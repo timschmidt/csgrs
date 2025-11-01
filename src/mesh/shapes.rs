@@ -11,7 +11,7 @@ use crate::math_ndsp::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 type Real = f64;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// **Mathematical Foundations for 3D Box Geometry**
     ///
     /// This module implements mathematically rigorous algorithms for generating
@@ -51,7 +51,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// - **Surface Area**: A = 2(wl + wh + lh)
     /// - **Diagonal**: d = √(w² + l² + h²)
     /// - **Centroid**: (w/2, l/2, h/2)
-    pub fn cuboid(width: Real, length: Real, height: Real, metadata: Option<S>) -> Mesh<S> {
+    pub fn cuboid(width: Real, length: Real, height: Real, metadata: Option<S>) -> Mesh<S, T> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
         let p000 = Point3::new(0.0, 0.0, 0.0);
@@ -149,7 +149,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         Mesh::from_polygons(&[bottom, top, front, back, left, right], metadata)
     }
 
-    pub fn cube(width: Real, metadata: Option<S>) -> Mesh<S> {
+    pub fn cube(width: Real, metadata: Option<S>) -> Mesh<S, T> {
         Self::cuboid(width, width, width, metadata)
     }
 
@@ -213,7 +213,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         segments: usize,
         stacks: usize,
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         let mut polygons = Vec::new();
 
         for i in 0..segments {
@@ -286,7 +286,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         radius2: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         // Compute the axis and check that start and end do not coincide.
         let s = start.coords;
         let e = end.coords;
@@ -395,7 +395,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         height: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         Mesh::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
@@ -413,7 +413,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         height: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         Mesh::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
@@ -459,7 +459,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         points: &[[Real; 3]],
         faces: &[&[usize]],
         metadata: Option<S>,
-    ) -> Result<Mesh<S>, ValidationError> {
+    ) -> Result<Mesh<S, T>, ValidationError> {
         let mut polygons = Vec::new();
 
         for face in faces {
@@ -630,7 +630,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         segments: usize,
         orientation: bool,
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         // Compute the arrow's total length.
         let arrow_length = direction.norm();
         if arrow_length < EPSILON {
@@ -808,7 +808,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         segments_per_flank: usize,
         thickness: Real,
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         Sketch::involute_gear(
             module,
             teeth,
@@ -829,7 +829,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         segments_per_flank: usize,
         thickness: Real,
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         Sketch::cycloidal_gear(
             module,
             teeth,
@@ -853,7 +853,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         helix_angle_deg: Real, // β
         slices: usize,         // ≥ 2 – axial divisions
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         assert!(slices >= 2);
         let base_slice = Sketch::involute_gear(
             module,

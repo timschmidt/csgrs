@@ -131,7 +131,7 @@ pub struct Feeds {
 use geo::{CoordsIter, Geometry, MultiPolygon};
 
 /// Iterate all rings (exterior + holes) as `Vec<(x,y)>`. Exteriors first, then holes.
-fn rings_of<S: Clone + Send + Sync + Debug>(sk: &Sketch<S>) -> Vec<Vec<(Real, Real)>> {
+fn rings_of<S: Clone + Send + Sync + Debug, T>(sk: &Sketch<S, T>) -> Vec<Vec<(Real, Real)>> {
     let mp: MultiPolygon<Real> = sk.to_multipolygon();
     let mut rings = Vec::new();
     for poly in mp.0 {
@@ -182,8 +182,8 @@ impl Default for FdmLayerCfg {
 /// 1) centerline compensation (offset by −nozzle_width/2)
 /// 2) N inward perimeter offsets
 /// 3) Hilbert infill clipped to remaining area
-pub fn fdm_layer_from_sketch<S: Clone + Send + Sync + Debug>(
-    region: &Sketch<S>,
+pub fn fdm_layer_from_sketch<S: Clone + Send + Sync + Debug, T>(
+    region: &Sketch<S, T>,
     z: Real,
     cfg: &FdmLayerCfg,
     feeds: &Feeds,
@@ -294,8 +294,8 @@ pub enum KerfSide {
 /// Generate a kerf‑compensated contour for 2D cutters.
 /// - `kerf` is full kerf width; we offset by ±kerf/2 toward Outside/Inside.
 /// - For exteriors we usually cut Outside; for holes (CW) we usually cut Inside.
-pub fn cut2d_contours<S: Clone + Send + Sync + Debug>(
-    region: &Sketch<S>,
+pub fn cut2d_contours<S: Clone + Send + Sync + Debug, T>(
+    region: &Sketch<S, T>,
     z: Real,
     kerf: Real,
     side: KerfSide,
@@ -380,8 +380,8 @@ impl Default for PocketCfg {
 }
 
 /// Concentric‐offset pocketing with Z stepdowns; emits Outside finish pass at final depth.
-pub fn pocket2d<S: Clone + Send + Sync + Debug>(
-    region: &Sketch<S>,
+pub fn pocket2d<S: Clone + Send + Sync + Debug, T>(
+    region: &Sketch<S, T>,
     z_safety: Real,
     base_z: Real, // top surface Z (e.g. 0), pocket goes toward negative (base_z − depth)
     cfg: &PocketCfg,
@@ -515,8 +515,8 @@ impl Default for LatheCfg {
 /// Interpret a 2D `Sketch` as a lathe profile in the X (radius) vs Y (Z‑axis) plane.
 /// *Assumptions*: profile is a closed polygon whose **exterior** defines final OD.
 /// We generate simple roughing passes from initial stock radius down to profile.
-pub fn lathe_rough_from_profile<S: Clone + Send + Sync + Debug>(
-    profile_xy: &Sketch<S>,
+pub fn lathe_rough_from_profile<S: Clone + Send + Sync + Debug, T>(
+    profile_xy: &Sketch<S, T>,
     z_min: Real,
     z_max: Real,
     stock_radius: Real,
@@ -706,8 +706,8 @@ pub mod gcode {
 
 /// Convenience: Convert a `Sketch` that represents a single closed polygon (no holes)
 /// into a planar travel+cut path at a constant Z.
-pub fn contour_only<S: Clone + Send + Sync + Debug>(
-    sk: &Sketch<S>,
+pub fn contour_only<S: Clone + Send + Sync + Debug, T>(
+    sk: &Sketch<S, T>,
     z: Real,
     feed: Real,
     kind: MachineKind,

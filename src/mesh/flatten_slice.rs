@@ -17,13 +17,13 @@ use std::fmt::Debug;
 use std::sync::OnceLock;
 type Real = f64;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
     /// unifies them into one or more 2D polygons, and returns a purely 2D Sketch.
     ///
     /// - All `polygons` in the Mesh are tessellated, projected into XY, and unioned.
     /// - The output is a Sketch containing the final 2D shape.
-    pub fn flatten(&self) -> Sketch<S> {
+    pub fn flatten(&self) -> Sketch<S, T> {
         // Convert all 3D polygons into a collection of 2D polygons
         let mut flattened_3d = Vec::new(); // will store geo::Polygon<Real>
 
@@ -96,7 +96,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// //   - Possibly an open or closed polygon(s) at z=0
     /// //   - Or empty if no intersection
     /// ```
-    pub fn slice(&self, plane: Plane) -> Sketch<S> {
+    pub fn slice(&self, plane: Plane<T>) -> Sketch<S, T> {
         // Build a BSP from all of our polygons:
         let node = Node::from_polygons(&self.polygons.clone());
 

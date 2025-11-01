@@ -12,7 +12,7 @@ use core2::io::Cursor;
 
 use stl_io;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// Export to ASCII STL
     /// Convert this Mesh to an **ASCII STL** string with the given `name`.
     ///
@@ -117,7 +117,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
     /// Create a Mesh object from STL data using 'stl_io'.
     #[cfg(feature = "stl-io")]
-    pub fn from_stl(stl_data: &[u8], metadata: Option<S>) -> Result<Mesh<S>, std::io::Error> {
+    pub fn from_stl(stl_data: &[u8], metadata: Option<S>) -> Result<Mesh<S, T>, std::io::Error> {
         // Create an in-memory cursor from the STL data
         let mut cursor = Cursor::new(stl_data);
 
@@ -176,7 +176,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     }
 }
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Export to ASCII STL
     /// Convert this Sketch to an **ASCII STL** string with the given 'name'.
     ///

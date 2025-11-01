@@ -16,7 +16,7 @@ use dxf::Drawing;
 #[cfg(feature = "dxf-io")]
 use dxf::entities::*;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// Import a Mesh object from DXF data.
     ///
     /// ## Parameters
@@ -26,7 +26,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// ## Returns
     /// A `Result` containing the Mesh object or an error if parsing fails.
     #[cfg(feature = "dxf-io")]
-    pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>) -> Result<Mesh<S>, Box<dyn Error>> {
+    pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>) -> Result<Mesh<S, T>, Box<dyn Error>> {
         // Load the DXF drawing from the provided data
         let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
 

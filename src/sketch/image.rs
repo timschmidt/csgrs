@@ -6,7 +6,7 @@ use crate::traits::CSG;
 use image::GrayImage;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Builds a new Sketch from the "on" pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.
     ///

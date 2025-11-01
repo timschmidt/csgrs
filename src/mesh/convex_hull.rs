@@ -18,9 +18,9 @@ use chull::ConvexHullWrapper;
 use crate::math_ndsp::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// Compute the convex hull of all vertices in this Mesh.
-    pub fn convex_hull(&self) -> Mesh<S> {
+    pub fn convex_hull(&self) -> Mesh<S, T> {
         // Gather all (x, y, z) coordinates from the polygons
         let points: Vec<Point3<Real>> = self
             .polygons
@@ -64,7 +64,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// the Minkowski sum of the convex hulls of A and B.
     ///
     /// **Algorithm**: O(|A| × |B|) vertex combinations followed by O(n log n) convex hull computation.
-    pub fn minkowski_sum(&self, other: &Mesh<S>) -> Mesh<S> {
+    pub fn minkowski_sum(&self, other: &Mesh<S, T>) -> Mesh<S, T> {
         // Collect all vertices (x, y, z) from self
         let verts_a: Vec<Point3<Real>> = self
             .polygons
@@ -103,7 +103,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let (verts, indices) = hull.vertices_indices();
 
         // Reconstruct polygons with proper normal vector calculation
-        let polygons: Vec<Polygon<S>> = indices
+        let polygons: Vec<Polygon<S, T>> = indices
             .chunks_exact(3)
             .filter_map(|tri| {
                 let v0 = &verts[tri[0]];

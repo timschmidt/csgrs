@@ -11,7 +11,7 @@ use std::fmt::Debug;
 use std::sync::OnceLock;
 type Real = f64;
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Creates a 2D rectangle in the XY plane.
     ///
     /// # Parameters
@@ -410,7 +410,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         length: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         if segments < 2 || width < EPSILON || length < EPSILON {
             return Sketch::new();
         }
@@ -436,7 +436,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
-    pub fn egg(width: Real, length: Real, segments: usize, metadata: Option<S>) -> Sketch<S> {
+    pub fn egg(width: Real, length: Real, segments: usize, metadata: Option<S>) -> Sketch<S, T> {
         if segments < 3 {
             return Sketch::new();
         }
@@ -506,7 +506,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         height: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         if segments < 3 {
             return Sketch::new();
         }
@@ -539,7 +539,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         handle_height: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         if segments < 3 {
             return Sketch::new();
         }
@@ -573,7 +573,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         diameter: Real,
         circle_segments: usize,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         if sides < 3 || circle_segments < 6 || diameter <= EPSILON {
             return Sketch::new();
         }
@@ -611,7 +611,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
     /// Outer diameter = `id + 2*thickness`. This yields an annulus in the XY plane.
     /// `segments` controls how smooth the outer/inner circles are.
-    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>) -> Sketch<S> {
+    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>) -> Sketch<S, T> {
         if id <= 0.0 || thickness <= 0.0 || segments < 3 {
             return Sketch::new();
         }
@@ -636,7 +636,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         end_angle_deg: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         if segments < 1 {
             return Sketch::new();
         }
@@ -678,7 +678,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         n3: Real,
         segments: usize,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         if segments < 3 {
             return Sketch::new();
         }
@@ -729,7 +729,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         key_width: Real,
         key_depth: Real,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         // 1. Full circle
         let circle = Sketch::circle(radius, segments, metadata.clone());
 
@@ -751,7 +751,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         segments: usize,
         flat_dist: Real,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         // 1. Full circle
         let circle = Sketch::circle(radius, segments, metadata.clone());
 
@@ -775,7 +775,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         segments: usize,
         flat_dist: Real,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         // 1. Full circle
         let circle = Sketch::circle(radius, segments, metadata.clone());
 
@@ -1023,7 +1023,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         backlash: Real,
         segments_per_flank: usize,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         assert!(teeth >= 4, "Need at least 4 teeth");
         assert!(segments_per_flank >= 2);
 
@@ -1127,7 +1127,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         clearance: Real,
         segments_per_flank: usize,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         assert!(teeth >= 3 && pin_teeth >= 3);
         assert!(segments_per_flank >= 2);
 
@@ -1201,7 +1201,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         clearance: Real,
         backlash: Real,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         assert!(num_teeth >= 1);
         let m = module_;
         let p = PI * m; // linear pitch
@@ -1281,7 +1281,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         clearance: Real,
         segments_per_flank: usize,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         assert!(num_teeth >= 1 && segments_per_flank >= 4);
         let m = module_;
         let p = PI * m;
@@ -1351,7 +1351,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         chord: Real,
         samples: usize,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         let max_camber_percentage = max_camber / 100.0;
         let camber_pos = camber_position / 10.0;
 
@@ -1423,7 +1423,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `order`: recursion order (number of points ≈ 4^order).
     /// - `padding`: optional inset from the bounding-box edges (same units as the sketch).
     ///   Returns a new `Sketch` containing only the inside segments as `LineString`s.
-    pub fn hilbert_curve(&self, order: usize, padding: Real) -> Sketch<S> {
+    pub fn hilbert_curve(&self, order: usize, padding: Real) -> Sketch<S, T> {
         if order == 0 {
             return Sketch::new();
         }

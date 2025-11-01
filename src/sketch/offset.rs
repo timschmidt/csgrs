@@ -144,7 +144,7 @@ fn skel_multi_poly(mpoly: &MultiPolygon<Real>, inward: bool) -> Vec<LineString<R
         .collect()
 }
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// **Mathematical Foundation: Sharp Corner Polygon Offsetting**
     ///
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using georust.
@@ -185,7 +185,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// **Note**: Sharp corners may create very acute angles for large offset distances.
     #[allow(clippy::unnecessary_cast)]
-    pub fn offset(&self, distance: Real) -> Sketch<S> {
+    pub fn offset(&self, distance: Real) -> Sketch<S, T> {
         let offset_geoms = self
             .geometry
             .iter()
@@ -268,7 +268,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - **MultiPolygon**: Buffer directly preserving holes
     /// - **Other geometries**: Excluded from processing
     #[allow(clippy::unnecessary_cast)]
-    pub fn offset_rounded(&self, distance: Real) -> Sketch<S> {
+    pub fn offset_rounded(&self, distance: Real) -> Sketch<S, T> {
         let offset_geoms = self
             .geometry
             .iter()
@@ -311,7 +311,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// + `orientation`: determines the region where the straight skeleton created. The value of this `boolean` variable will be:
     ///     * `true` to create the straight skeleton on the inward region of the polygon, and,
     ///     * `false` to create on the outward region of the polygon.
-    pub fn straight_skeleton(&self, orientation: bool) -> Sketch<S> {
+    pub fn straight_skeleton(&self, orientation: bool) -> Sketch<S, T> {
         let skeleton = self
             .geometry
             .iter()

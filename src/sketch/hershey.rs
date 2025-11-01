@@ -7,7 +7,7 @@ use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Creates **2D line-stroke text** in the XY plane using a Hershey font.
     ///
     /// Each glyph’s strokes become one or more `LineString<Real>` entries in `geometry`.
@@ -27,7 +27,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         font: &Font,
         size: Real,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         let mut all_strokes = Vec::new();
         let mut cursor_x: Real = 0.0;
 

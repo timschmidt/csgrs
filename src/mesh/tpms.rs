@@ -7,7 +7,7 @@ use crate::traits::CSG;
 use crate::math_ndsp::Point3;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// **Generic helper** – build a TPMS inside `self` from the provided SDF.
     ///
     /// * `sdf_fn`     – smooth signed‑distance field _f(p)_; 0‑level set is the surface
@@ -23,7 +23,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         resolution: (usize, usize, usize),
         iso_value: Real,
         metadata: Option<S>,
-    ) -> Mesh<S>
+    ) -> Mesh<S, T>
     where
         F: Fn(&Point3<Real>) -> Real + Send + Sync,
     {
@@ -48,7 +48,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         period: Real,
         iso_value: Real,
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let period_inv = 1.0 / period;
         self.tpms_from_sdf(
@@ -82,7 +82,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         period: Real,
         iso_value: Real,
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let period_inv = 1.0 / period;
         self.tpms_from_sdf(
@@ -111,7 +111,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         period: Real,
         iso_value: Real,
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let period_inv = 1.0 / period;
         self.tpms_from_sdf(

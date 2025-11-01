@@ -13,29 +13,29 @@ use std::fmt::Debug;
 
 /// A [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node, containing polygons plus optional front/back subtrees
 #[derive(Debug, Clone)]
-pub struct Node<S: Clone> {
+pub struct Node<S: Clone, T> {
     /// Splitting plane for this node *or* **None** for a leaf that
     /// only stores polygons.
-    pub plane: Option<Plane>,
+    pub plane: Option<Plane<T>>,
 
     /// Polygons in *front* half‑spaces.
-    pub front: Option<Box<Node<S>>>,
+    pub front: Option<Box<Node<S, T>>>,
 
     /// Polygons in *back* half‑spaces.
-    pub back: Option<Box<Node<S>>>,
+    pub back: Option<Box<Node<S, T>>>,
 
     /// Polygons that lie *exactly* on `plane`
     /// (after the node has been built).
     pub polygons: Vec<Polygon<S, T>>,
 }
 
-impl<S: Clone + Send + Sync + Debug> Default for Node<S> {
+impl<S: Clone + Send + Sync + Debug, T> Default for Node<S, T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> Node<S> {
+impl<S: Clone + Send + Sync + Debug, T> Node<S, T> {
     /// Create a new empty BSP node
     pub const fn new() -> Self {
         Self {
@@ -47,7 +47,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
     }
 
     /// Creates a new BSP node from polygons
-    pub fn from_polygons(polygons: &[Polygon<S>]) -> Self {
+    pub fn from_polygons(polygons: &[Polygon<S, T>]) -> Self {
         let mut node = Self::new();
         if !polygons.is_empty() {
             node.build(polygons);
@@ -74,7 +74,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
         std::mem::swap(&mut self.front, &mut self.back);
     }
 
-    pub fn pick_best_splitting_plane(&self, polygons: &[Polygon<S>]) -> Plane {
+    pub fn pick_best_splitting_plane(&self, polygons: &[Polygon<S, T>]) -> Plane<T> {
         const K_SPANS: Real = 8.0; // Weight for spanning polygons
         const K_BALANCE: Real = 1.0; // Weight for front/back balance
 
@@ -115,7 +115,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
     /// Polygons entirely in BACK half-space are clipped (removed).
     /// **Algorithm**: O(n log d) where n is polygon count, d is tree depth.
     #[cfg(not(feature = "parallel"))]
-    pub fn clip_polygons(&self, polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
+    pub fn clip_polygons(&self, polygons: &[Polygon<S, T>]) -> Vec<Polygon<S, T>> {
         // If this node has no plane (i.e. it’s empty), just return
         if self.plane.is_none() {
             return polygons.to_vec();
@@ -161,7 +161,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
     /// Remove all polygons in this BSP tree that are inside the other BSP tree
     #[cfg(not(feature = "parallel"))]
-    pub fn clip_to(&mut self, bsp: &Node<S>) {
+    pub fn clip_to(&mut self, bsp: &Node<S, T>) {
         self.polygons = bsp.clip_polygons(&self.polygons);
         if let Some(ref mut front) = self.front {
             front.clip_to(bsp);
@@ -173,7 +173,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
     /// Return all polygons in this BSP tree using an iterative approach,
     /// avoiding potential stack overflow of recursive approach
-    pub fn all_polygons(&self) -> Vec<Polygon<S>> {
+    pub fn all_polygons(&self) -> Vec<Polygon<S, T>> {
         let mut result = Vec::new();
         let mut stack = vec![self];
 
@@ -192,7 +192,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
     /// Build a BSP tree from the given polygons
     #[cfg(not(feature = "parallel"))]
-    pub fn build(&mut self, polygons: &[Polygon<S>]) {
+    pub fn build(&mut self, polygons: &[Polygon<S, T>]) {
         if polygons.is_empty() {
             return;
         }
@@ -238,7 +238,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
     /// - All polygons that are coplanar with the plane (within EPSILON),
     /// - A list of line‐segment intersections (each a [Vertex; 2]) from polygons that span the plane.
     #[cfg(not(feature = "parallel"))]
-    pub fn slice(&self, slicing_plane: &Plane) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
+    pub fn slice(&self, slicing_plane: &Plane<T>) -> (Vec<Polygon<S, T>>, Vec<[Vertex; 2]>) {
         let all_polys = self.all_polygons();
 
         let mut coplanar_polygons = Vec::new();

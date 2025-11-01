@@ -51,7 +51,7 @@ use rapier3d::prelude::{
 };
 
 #[derive(Clone, Debug)]
-pub struct Mesh<S: Clone + Send + Sync + Debug, T: Scalar> {
+pub struct Mesh<S: Clone + Send + Sync + Debug, T> {
     /// 3D polygons for volumetric shapes
     pub polygons: Vec<Polygon<S, T>>,
 
@@ -99,7 +99,7 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> Mesh<S, T> {
     /// Split polygons into (may_touch, cannot_touch) using bounding‑box tests
     fn partition_polys(
         polys: &[Polygon<S, T>],
-        other_bb: &Aabb,
+        other_bb: &Aabb<T>,
     ) -> (Vec<Polygon<S, T>>, Vec<Polygon<S, T>>) {
         polys
             .iter()
@@ -126,7 +126,7 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> Mesh<S, T> {
     }
 
     /// Triangulate each polygon in the Mesh returning a Mesh containing triangles
-    pub fn triangulate(&self) -> Mesh<S> {
+    pub fn triangulate(&self) -> Mesh<S, T> {
         let triangles = self
             .polygons
             .iter()
@@ -233,7 +233,7 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> Mesh<S, T> {
     /// The angle is computed as the angle between the normal vectors of the two polygons.
     ///
     /// Returns the angle in radians.
-    fn dihedral_angle(p1: &Polygon<S, T>, p2: &Polygon<S, T>) -> <T> {
+    fn dihedral_angle(p1: &Polygon<S, T>, p2: &Polygon<S, T>) -> T {
         let n1 = p1.plane.normal();
         let n2 = p2.plane.normal();
         let dot = n1.dot(&n2).clamp(-1.0, 1.0);
@@ -453,7 +453,7 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> Mesh<S, T> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug, T: Scalar> CSG for Mesh<S> {
+impl<S: Clone + Send + Sync + Debug, T> CSG for Mesh<S, T> {
     /// Returns a new empty Mesh
     fn new() -> Self {
         Mesh {
@@ -476,7 +476,7 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> CSG for Mesh<S> {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    fn union(&self, other: &Mesh<S>) -> Mesh<S> {
+    fn union(&self, other: &Mesh<S, T>) -> Mesh<S, T> {
         // avoid splitting obvious non‑intersecting faces
         let (a_clip, a_passthru) =
             Self::partition_polys(&self.polygons, &other.bounding_box());
@@ -518,7 +518,7 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> CSG for Mesh<S> {
     ///          |       |
     ///          +-------+
     /// ```
-    fn difference(&self, other: &Mesh<S>) -> Mesh<S> {
+    fn difference(&self, other: &Mesh<S, T>) -> Mesh<S, T> {
         // avoid splitting obvious non‑intersecting faces
         let (a_clip, a_passthru) =
             Self::partition_polys(&self.polygons, &other.bounding_box());
@@ -572,7 +572,7 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> CSG for Mesh<S> {
     ///          |       |
     ///          +-------+
     /// ```
-    fn intersection(&self, other: &Mesh<S>) -> Mesh<S> {
+    fn intersection(&self, other: &Mesh<S, T>) -> Mesh<S, T> {
         let mut a = Node::from_polygons(&self.polygons);
         let mut b = Node::from_polygons(&other.polygons);
 
@@ -605,7 +605,7 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> CSG for Mesh<S> {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    fn xor(&self, other: &Mesh<S>) -> Mesh<S> {
+    fn xor(&self, other: &Mesh<S, T>) -> Mesh<S, T> {
         // 3D and 2D xor:
         // A \ B
         let a_sub_b = self.difference(other);
@@ -650,7 +650,7 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> CSG for Mesh<S> {
     /// - **Plane Updates**: O(n) plane reconstructions from transformed vertices
     ///
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D
-    fn transform(&self, mat: &Matrix4<Real>) -> Mesh<S> {
+    fn transform(&self, mat: &Matrix4<Real>) -> Mesh<S, T> {
         // Compute inverse transpose for normal transformation
         let mat_inv_transpose = match mat.try_inverse() {
             Some(inv) => inv.transpose(),
@@ -696,7 +696,7 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> CSG for Mesh<S> {
     }
 
     /// Returns a [`parry3d::bounding_volume::Aabb`] indicating the 3D bounds of all `polygons`.
-    fn bounding_box(&self) -> Aabb {
+    fn bounding_box(&self) -> Aabb<T> {
         *self.bounding_box.get_or_init(|| {
             // Track overall min/max in x, y, z among all 3D polygons
             let mut min_x = Real::MAX;
@@ -737,7 +737,7 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> CSG for Mesh<S> {
     }
 
     /// Invert this Mesh (flip inside vs. outside)
-    fn inverse(&self) -> Mesh<S> {
+    fn inverse(&self) -> Mesh<S, T> {
         let mut mesh = self.clone();
         for p in &mut mesh.polygons {
             p.flip();
@@ -746,14 +746,14 @@ impl<S: Clone + Send + Sync + Debug, T: Scalar> CSG for Mesh<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug, T: Scalar> From<Sketch<S>> for Mesh<S> {
+impl<S: Clone + Send + Sync + Debug, T: Scalar> From<Sketch<S, T>> for Mesh<S, T> {
     /// Convert a Sketch into a Mesh.
-    fn from(sketch: Sketch<S>) -> Self {
+    fn from(sketch: Sketch<S, T>) -> Self {
         /// Helper function to convert a geo::Polygon to a Vec<crate::mesh::polygon::Polygon>
-        fn geo_poly_to_csg_polys<S: Clone + Debug + Send + Sync>(
+        fn geo_poly_to_csg_polys<S: Clone + Debug + Send + Sync, T>(
             poly2d: &GeoPolygon<Real>,
             metadata: &Option<S>,
-        ) -> Vec<Polygon<S>> {
+        ) -> Vec<Polygon<S, T>> {
             let mut all_polygons = Vec::new();
 
             // Handle the exterior ring

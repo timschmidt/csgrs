@@ -10,7 +10,7 @@ use crate::math_ndsp::Point3;
 use std::fmt::Debug;
 use std::io::Write;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// Export this Mesh to AMF format as a string
     ///
     /// Creates an AMF (Additive Manufacturing File Format) file containing:
@@ -246,7 +246,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     }
 }
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Export this Mesh to AMF format as a string
     ///
     /// Creates an AMF (Additive Manufacturing File Format) file containing:

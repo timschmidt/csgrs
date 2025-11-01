@@ -18,7 +18,7 @@ struct PlyVertex {
     normal: Vector3<Real>,
 }
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// Export this Mesh to PLY format as a string
     ///
     /// Creates a Stanford PLY file containing:
@@ -121,7 +121,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     }
 }
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Export this Sketch to PLY format as a string
     ///
     /// Creates a Stanford PLY file containing:

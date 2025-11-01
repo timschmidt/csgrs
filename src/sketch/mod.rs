@@ -33,18 +33,18 @@ pub mod offset;
 pub mod truetype;
 
 #[derive(Clone, Debug)]
-pub struct Sketch<S> {
+pub struct Sketch<S, T> {
     /// 2D points, lines, polylines, polygons, and multipolygons
     pub geometry: GeometryCollection<Real>,
 
     /// Lazily calculated AABB that spans `geometry`.
-    pub bounding_box: OnceLock<Aabb>,
+    pub bounding_box: OnceLock<Aabb<T>>,
 
     /// Metadata
     pub metadata: Option<S>,
 }
 
-impl<S: Clone + Send + Sync + Debug> Sketch<S> {
+impl<S: Clone + Send + Sync + Debug, T> Sketch<S, T> {
     /// Take the [`geo::Polygon`]'s from the `CSG`'s geometry collection
     pub fn to_multipolygon(&self) -> MultiPolygon<Real> {
         let polygons = self
@@ -61,7 +61,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
     }
 
     /// Create a Sketch from a `geo::GeometryCollection`.
-    pub fn from_geo(geometry: GeometryCollection<Real>, metadata: Option<S>) -> Sketch<S> {
+    pub fn from_geo(geometry: GeometryCollection<Real>, metadata: Option<S>) -> Sketch<S, T> {
         let mut new_sketch = Sketch::new();
         new_sketch.geometry = geometry;
         new_sketch.metadata = metadata;
@@ -188,7 +188,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
 
     /// Return a copy of this `Sketch` whose polygons are normalised so that
     /// exterior rings wind counter-clockwise and interior rings clockwise.
-    pub fn renormalize(&self) -> Sketch<S> {
+    pub fn renormalize(&self) -> Sketch<S, T> {
         // Re-build the collection, orienting only what’s supported.
         let oriented_geoms: Vec<Geometry<Real>> = self
             .geometry
@@ -213,7 +213,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
+impl<S: Clone + Send + Sync + Debug, T> CSG for Sketch<S, T> {
     /// Returns a new empty Sketch
     fn new() -> Self {
         Sketch {
@@ -236,7 +236,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    fn union(&self, other: &Sketch<S>) -> Sketch<S> {
+    fn union(&self, other: &Sketch<S, T>) -> Sketch<S, T> {
         // Extract multipolygon from geometry
         let polys1 = self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
@@ -287,7 +287,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     ///          |       |
     ///          +-------+
     /// ```
-    fn difference(&self, other: &Sketch<S>) -> Sketch<S> {
+    fn difference(&self, other: &Sketch<S, T>) -> Sketch<S, T> {
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
 
@@ -328,7 +328,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     ///          |       |
     ///          +-------+
     /// ```
-    fn intersection(&self, other: &Sketch<S>) -> Sketch<S> {
+    fn intersection(&self, other: &Sketch<S, T>) -> Sketch<S, T> {
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
 
@@ -376,7 +376,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    fn xor(&self, other: &Sketch<S>) -> Sketch<S> {
+    fn xor(&self, other: &Sketch<S, T>) -> Sketch<S, T> {
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
 
@@ -412,7 +412,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     /// Apply an arbitrary 3D transform (as a 4x4 matrix) to both polygons and polylines.
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D,
     /// and the 2D polylines are updated by ignoring the resulting z after transform.
-    fn transform(&self, mat: &Matrix4<Real>) -> Sketch<S> {
+    fn transform(&self, mat: &Matrix4<Real>) -> Sketch<S, T> {
         let mut sketch = self.clone();
 
         // Convert the top-left 2×2 submatrix + translation of a 4×4 into a geo::AffineTransform
@@ -453,7 +453,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
 
     /// Returns a [`parry3d::bounding_volume::Aabb`] containing:
     /// The 2D bounding rectangle of `self.geometry`, interpreted at z=0.
-    fn bounding_box(&self) -> Aabb {
+    fn bounding_box(&self) -> Aabb<T> {
         *self.bounding_box.get_or_init(|| {
             // Track overall min/max in x, y, z among all 3D polygons and the 2D geometry’s bounding_rect.
             let mut min_x = Real::MAX;
@@ -500,7 +500,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     }
 
     /// Invert this Sketch (flip inside vs. outside)
-    fn inverse(&self) -> Sketch<S> {
+    fn inverse(&self) -> Sketch<S, T> {
         // Re-build the collection, orienting only what’s supported.
         let oriented_geoms: Vec<Geometry<Real>> = self
             .geometry
@@ -542,8 +542,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for Sketch<S> {
-    fn from(mesh: Mesh<S>) -> Self {
+impl<S: Clone + Send + Sync + Debug, T> From<Mesh<S, T>> for Sketch<S, T> {
+    fn from(mesh: Mesh<S, T>) -> Self {
         // If mesh is empty, return empty Sketch
         if mesh.polygons.is_empty() {
             return Sketch::new();

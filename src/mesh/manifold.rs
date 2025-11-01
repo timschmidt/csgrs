@@ -4,7 +4,7 @@ use crate::math_ndsp::Point3;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// Checks if the Mesh object is manifold.
     ///
     /// This function defines a comparison function which takes EPSILON into account

@@ -1129,7 +1129,7 @@ impl<T: Scalar> Rotation3<T> {
 
     /// Create a rotation from an (optionally non-unit) axis and angle (radians).
     /// Matches nalgebra’s `Rotation3::from_axis_angle`.
-    pub fn from_axis_angle(axis: &Vector3, angle: T) -> Self {
+    pub fn from_axis_angle(axis: &Vector3<T>, angle: T) -> Self {
         let mut k = *axis;
         let n2 = k.dot(&k);
         if n2 <= consts::EPSILON * consts::EPSILON {
@@ -1161,7 +1161,7 @@ impl<T: Scalar> Rotation3<T> {
 
     /// Small, numerically robust equivalent of nalgebra’s `rotation_between`.
     /// Returns `None` if an input is near-zero length.
-    pub fn rotation_between(a: &Vector3, b: &Vector3) -> Option<Self> {
+    pub fn rotation_between(a: &Vector3<T>, b: &Vector3<T>) -> Option<Self> {
         let la = a.norm();
         let lb = b.norm();
         if la <= consts::EPSILON || lb <= consts::EPSILON {
@@ -1203,17 +1203,17 @@ impl<T: Scalar> Rotation3<T> {
     }
 }
 
-impl core::ops::Mul for Rotation3 {
-    type Output = Rotation3;
+impl<T> core::ops::Mul for Rotation3<T> {
+    type Output = Rotation3<T>;
     #[inline]
-    fn mul(self, rhs: Rotation3) -> Rotation3 {
+    fn mul(self, rhs: Rotation3<T>) -> Rotation3<T> {
         Rotation3 { mat: self.mat * rhs.mat }
     }
 }
 
 impl<T: Scalar> From<Matrix3<T>> for Rotation3<T> {
     #[inline]
-    fn from(mat: Matrix3) -> Self { Self { mat } }
+    fn from(mat: Matrix3<T>) -> Self { Self { mat } }
 }
 
 // ------------------------------------------------------------
@@ -1236,7 +1236,7 @@ impl<T: Scalar> Translation3<T> {
 
     /// Matches nalgebra’s `Translation3::from(Vector3)`.
     #[inline]
-    pub fn from(v: Vector3) -> Self {
+    pub fn from(v: Vector3<T>) -> Self {
         Self { v }
     }
 
@@ -1248,7 +1248,7 @@ impl<T: Scalar> Translation3<T> {
 
 impl<T: Scalar> From<Vector3<T>> for Translation3<T> {
     #[inline]
-    fn from(v: Vector3) -> Self { Self { v } }
+    fn from(v: Vector3<T>) -> Self { Self { v } }
 }
 
 // ------------------------------------------------------------
@@ -1259,7 +1259,7 @@ pub struct Isometry3<T> {
     pub rotation: Rotation3<T>,
 }
 
-impl Isometry3 {
+impl<T> Isometry3<T> {
     #[inline]
     pub fn identity() -> Self {
         Self { translation: Translation3::identity(),
@@ -1268,7 +1268,7 @@ impl Isometry3 {
 
     /// Keep nalgebra’s call site working: `Isometry3::from_parts(Translation3, rot.into())`.
     #[inline]
-    pub fn from_parts<R>(translation: Translation3, rotation: R) -> Self
+    pub fn from_parts<R>(translation: Translation3<T>, rotation: R) -> Self
     where
         R: Into<Rotation3>,
     {
@@ -1276,7 +1276,7 @@ impl Isometry3 {
     }
 
     #[inline]
-    pub fn to_homogeneous(&self) -> Matrix4 {
+    pub fn to_homogeneous(&self) -> Matrix4<T> {
         Matrix4::from_rotation_translation(self.rotation.mat, self.translation.v)
     }
 
@@ -1290,7 +1290,7 @@ impl Isometry3 {
 
     /// Vector transform (ignores translation): v' = R·v
     #[inline]
-    pub fn transform_vector(&self, v: &Vector3) -> Vector3 {
+    pub fn transform_vector(&self, v: &Vector3<T>) -> Vector3<T> {
         self.rotation.mat * *v
     }
 }

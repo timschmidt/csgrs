@@ -91,13 +91,13 @@ pub const SPANNING: i8 = 3;
 
 /// A plane in 3D space defined by three points
 #[derive(Debug, Clone)]
-pub struct Plane {
+pub struct Plane<T> {
     pub point_a: Point3<Real>,
     pub point_b: Point3<Real>,
     pub point_c: Point3<Real>,
 }
 
-impl PartialEq for Plane {
+impl<T> PartialEq for Plane<T> {
     fn eq(&self, other: &Self) -> bool {
         if self.point_a == other.point_a
             && self.point_b == other.point_b
@@ -136,14 +136,14 @@ fn point_to_coord3d(point: Point3<Real>) -> robust::Coord3D<Real> {
     }
 }
 
-impl Plane {
+impl<T> Plane<T> {
     /// Tries to pick three vertices that span the largest area triangle
     /// (maximally well-spaced) and returns a plane defined by them.
     /// Care is taken to preserve the original winding of the vertices.
     ///
     /// Cost: O(n^2)
     /// A lower cost option may be a grid sub-sampled farthest pair search
-    pub fn from_vertices(vertices: Vec<Vertex>) -> Plane {
+    pub fn from_vertices(vertices: Vec<Vertex>) -> Plane<T> {
         let n = vertices.len();
         let reference_plane = Plane {
             point_a: vertices[0].pos,
@@ -249,7 +249,7 @@ impl Plane {
     }
 
     #[inline]
-    pub fn orient_plane(&self, other: &Plane) -> i8 {
+    pub fn orient_plane(&self, other: &Plane<T>) -> i8 {
         // pick one vertex of the coplanar polygon and move along its normal
         let test_point = other.point_a + other.normal();
         self.orient_point(&test_point)
@@ -318,7 +318,7 @@ impl Plane {
 
     /// Classify a polygon with respect to the plane.
     /// Returns a bitmask of `COPLANAR`, `FRONT`, and `BACK`.
-    pub fn classify_polygon<S: Clone>(&self, polygon: &Polygon<S>) -> i8 {
+    pub fn classify_polygon<S: Clone, T>(&self, polygon: &Polygon<S, T>) -> i8 {
         let mut polygon_type: i8 = 0;
         for vertex in &polygon.vertices {
             polygon_type |= self.orient_point(&vertex.pos);
@@ -331,12 +331,12 @@ impl Plane {
     #[allow(clippy::type_complexity)]
     pub fn split_polygon<S: Clone + Send + Sync>(
         &self,
-        polygon: &Polygon<S>,
+        polygon: &Polygon<S, T>,
     ) -> (
-        Vec<Polygon<S>>,
-        Vec<Polygon<S>>,
-        Vec<Polygon<S>>,
-        Vec<Polygon<S>>,
+        Vec<Polygon<S, T>>,
+        Vec<Polygon<S, T>>,
+        Vec<Polygon<S, T>>,
+        Vec<Polygon<S, T>>,
     ) {
         let mut coplanar_front = Vec::new();
         let mut coplanar_back = Vec::new();

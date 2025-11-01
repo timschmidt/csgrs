@@ -8,16 +8,16 @@ use crate::mesh::vertex::Vertex;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
-use crate::math_ndsp::{Point3, Vector3};
+use crate::math_ndsp::{Point3, Vector3, Scalar};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 type Real = f64;
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
     /// This is just a convenience wrapper around extrude_vector using Vector3::new(0.0, 0.0, height)
-    pub fn extrude(&self, height: Real) -> Mesh<S> {
+    pub fn extrude(&self, height: Real) -> Mesh<S, T> {
         self.extrude_vector(Vector3::new(0.0, 0.0, height))
     }
 
@@ -85,7 +85,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// # Parameters
     /// - `direction`: 3D vector defining extrusion direction and magnitude
-    pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<S> {
+    pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<S, T> {
         if direction.norm() < EPSILON {
             return Mesh::new();
         }
@@ -109,7 +109,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         geom: &geo::Geometry<Real>,
         direction: Vector3<Real>,
         metadata: &Option<S>,
-        out_polygons: &mut Vec<Polygon<S>>,
+        out_polygons: &mut Vec<Polygon<S, T>>,
     ) {
         match geom {
             geo::Geometry::Polygon(poly) => {
@@ -258,10 +258,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///   - The `top` polygon,
     ///   - `n` rectangular side polygons bridging each edge of `bottom` to the corresponding edge of `top`.
     pub fn loft(
-        bottom: &Polygon<S>,
-        top: &Polygon<S>,
+        bottom: &Polygon<S, T>,
+        top: &Polygon<S, T>,
         flip_bottom_polygon: bool,
-    ) -> Result<Mesh<S>, ValidationError> {
+    ) -> Result<Mesh<S, T>, ValidationError> {
         let n = bottom.vertices.len();
         if n != top.vertices.len() {
             return Err(ValidationError::MismatchedVertices);
@@ -556,7 +556,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         &self,
         angle_degs: Real,
         segments: usize,
-    ) -> Result<Mesh<S>, ValidationError> {
+    ) -> Result<Mesh<S, T>, ValidationError> {
         if segments < 2 {
             return Err(ValidationError::InvalidArguments);
         }
@@ -588,13 +588,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // - `angle_radians`: total revolve sweep in radians.
         // - `segments`: how many discrete slices around the revolve.
         // - `metadata`: user metadata to attach to side polygons.
-        fn revolve_ring<S: Clone + Send + Sync>(
+        fn revolve_ring<S: Clone + Send + Sync, T>(
             ring_coords: &[geo::Coord<Real>],
             ring_is_ccw: bool,
             angle_radians: Real,
             segments: usize,
             metadata: &Option<S>,
-        ) -> Vec<Polygon<S>> {
+        ) -> Vec<Polygon<S, T>> {
             if ring_coords.len() < 2 {
                 return vec![];
             }
@@ -650,12 +650,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Build a single “cap” polygon from ring_coords at a given angle (0 or angle_radians).
         //  - revolve each 2D point by `angle`, produce a 3D ring
         //  - if `flip` is true, reverse the ring so the normal is inverted
-        fn build_cap_polygon<S: Clone + Send + Sync>(
+        fn build_cap_polygon<S: Clone + Send + Sync, T>(
             ring_coords: &[geo::Coord<Real>],
             angle: Real,
             flip: bool,
             metadata: &Option<S>,
-        ) -> Option<Polygon<S>> {
+        ) -> Option<Polygon<S, T>> {
             if ring_coords.len() < 3 {
                 return None;
             }
@@ -822,7 +822,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// * `path` - ordered list of 3-D points.  If the first and last points coincide (‖p[0] − p[n]‖ < EPSILON) the path is treated as **closed** and no caps are added.
     ///
     /// * returns - a `Mesh<S>` containing all side quads plus automatically triangulated caps (respecting any holes).
-    pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<S> {
+    pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<S, T> {
         use crate::mesh::{Mesh, polygon::Polygon, vertex::Vertex};
         use crate::math_ndsp::{Matrix4, Rotation3, Translation3};
 
@@ -1033,11 +1033,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 /// Helper to build a single Polygon from a “slice” of 3D points.
 ///
 /// If `flip_winding` is true, we reverse the vertex order (so the polygon’s normal flips).
-fn _polygon_from_slice<S: Clone + Send + Sync>(
+fn _polygon_from_slice<S: Clone + Send + Sync, T>(
     slice_pts: &[Point3<Real>],
     flip_winding: bool,
     metadata: Option<S>,
-) -> Polygon<S> {
+) -> Polygon<S, T> {
     if slice_pts.len() < 3 {
         // degenerate polygon
         return Polygon::new(vec![], metadata);

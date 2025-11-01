@@ -8,7 +8,7 @@ use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use crate::math_ndsp::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// Return a Mesh created by meshing a signed distance field within a bounding box
     ///
     /// ```
@@ -33,7 +33,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         max_pt: Point3<Real>,
         iso_value: Real,
         metadata: Option<S>,
-    ) -> Mesh<S>
+    ) -> Mesh<S, T>
     where
         // F is a closure or function that takes a 3D point and returns the signed distance.
         // Must be `Sync`/`Send` if you want to parallelize the sampling.

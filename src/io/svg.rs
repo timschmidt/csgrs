@@ -539,7 +539,7 @@ pub trait ToSVG {
     fn to_svg(&self) -> String;
 }
 
-impl<S: Clone> ToSVG for Sketch<S> {
+impl<S: Clone, T> ToSVG for Sketch<S, T> {
     fn to_svg(&self) -> String {
         use geo::Geometry::*;
         use svg::node::element;

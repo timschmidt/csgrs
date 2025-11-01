@@ -47,7 +47,7 @@ fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
     balls.iter().map(|ball| ball.influence(p)).sum()
 }
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// **Creates a Mesh from a list of metaballs** by sampling a 3D grid and using marching cubes.
     ///
     /// - `balls`: slice of metaball definitions (center + radius).
@@ -60,7 +60,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         iso_value: Real,
         padding: Real,
         metadata: Option<S>,
-    ) -> Mesh<S> {
+    ) -> Mesh<S, T> {
         if balls.is_empty() {
             return Mesh::new();
         }

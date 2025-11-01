@@ -13,7 +13,7 @@ use crate::math_ndsp::{Point3, Vector3};
 use std::fmt::Debug;
 use std::io::{BufRead, Write};
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// Export this Mesh to OBJ format as a string
     ///
     /// Creates a Wavefront OBJ file containing:
@@ -142,7 +142,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn from_obj<R: BufRead>(reader: R, metadata: Option<S>) -> std::io::Result<Mesh<S>> {
+    pub fn from_obj<R: BufRead>(reader: R, metadata: Option<S>) -> std::io::Result<Mesh<S, T>> {
         let mut vertices = Vec::new();
         let mut normals = Vec::new();
         let mut polygons = Vec::new();
@@ -295,7 +295,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     }
 }
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Export this Mesh to OBJ format as a string
     ///
     /// Creates a Wavefront OBJ file containing:

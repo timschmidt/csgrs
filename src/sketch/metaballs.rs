@@ -11,7 +11,7 @@ use hashbrown::HashMap;
 use std::fmt::Debug;
 type Real = f64;
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
     /// - `balls`: array of (center, radius).
     /// - `resolution`: (nx, ny) grid resolution for marching squares.
@@ -24,7 +24,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         iso_value: Real,
         padding: Real,
         metadata: Option<S>,
-    ) -> Sketch<S> {
+    ) -> Sketch<S, T> {
         let (nx, ny) = resolution;
         if balls.is_empty() || nx < 2 || ny < 2 {
             return Sketch::new();

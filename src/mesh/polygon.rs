@@ -16,7 +16,7 @@ pub struct Polygon<S: Clone, T: Scalar> {
     pub vertices: Vec<Vertex>,
 
     /// The plane on which this Polygon lies, used for splitting
-    pub plane: Plane,
+    pub plane: Plane<T>,
 
     /// Lazily‑computed axis‑aligned bounding box of the Polygon
     pub bounding_box: OnceLock<Aabb<T>>,
@@ -25,7 +25,7 @@ pub struct Polygon<S: Clone, T: Scalar> {
     pub metadata: Option<S>,
 }
 
-impl<S: Clone + PartialEq> PartialEq for Polygon<S> {
+impl<S: Clone + PartialEq, T: Scalar> PartialEq for Polygon<S, T> {
     fn eq(&self, other: &Self) -> bool {
         self.vertices == other.vertices
             && self.plane == other.plane
@@ -34,13 +34,13 @@ impl<S: Clone + PartialEq> PartialEq for Polygon<S> {
 }
 
 #[allow(unused)]
-impl<S: Clone + Send + Sync + PartialEq> Polygon<S> {
+impl<S: Clone + Send + Sync + PartialEq, T: Scalar> Polygon<S, T> {
     fn same_metadata(&self, metadata: Option<S>) -> bool {
         self.metadata == metadata
     }
 }
 
-impl<S: Clone + Send + Sync> Polygon<S> {
+impl<S: Clone + Send + Sync, T: Scalar> Polygon<S, T> {
     /// Create a polygon from vertices
     pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
         assert!(vertices.len() >= 3, "degenerate polygon");
@@ -56,7 +56,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
     }
 
     /// Axis aligned bounding box of this Polygon (cached after first call)
-    pub fn bounding_box(&self) -> Aabb {
+    pub fn bounding_box(&self) -> Aabb<T> {
         *self.bounding_box.get_or_init(|| {
             let mut mins = Point3::new(Real::MAX, Real::MAX, Real::MAX);
             let mut maxs = Point3::new(-Real::MAX, -Real::MAX, -Real::MAX);
@@ -315,7 +315,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
     pub fn subdivide_to_polygons(
         &self,
         subdivisions: core::num::NonZeroU32,
-    ) -> Vec<Polygon<S>> {
+    ) -> Vec<Polygon<S, T>> {
         self.subdivide_triangles(subdivisions)
             .into_iter()
             .map(|tri| {
