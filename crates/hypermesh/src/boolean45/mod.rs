@@ -392,9 +392,9 @@ pub fn boolean45(
     for i in 0..nv_12 { duplicate_verts(&i12, &vid_12r, &b03.v12, &mut ps_r, i as usize); }
     for i in 0..nv_21 { duplicate_verts(&i21, &vid_21r, &b03.v21, &mut ps_r, i as usize); }
 
-    let mut pt_p: HashMap<usize, Vec<EdgePt>> = HashMap::new();
-    let mut pt_q: HashMap<usize, Vec<EdgePt>> = HashMap::new();
-    let mut pt_new: HashMap<(usize, usize), Vec<EdgePt>> = HashMap::new();
+    let mut pt_p   = HashMap::new();
+    let mut pt_q   = HashMap::new();
+    let mut pt_new = HashMap::new();
     add_new_edge_verts(&b03.p1q2, &i12, &vid_12r, &mp.hs, &mut pt_p, &mut pt_new, true, 0);
     add_new_edge_verts(&b03.p2q1, &i21, &vid_21r, &mq.hs, &mut pt_q, &mut pt_new, false, b03.p1q2.len());
 

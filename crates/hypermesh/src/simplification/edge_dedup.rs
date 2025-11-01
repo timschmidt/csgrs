@@ -27,17 +27,17 @@ fn dedupe_edge(
 
             let nh = hs.len();
             let pair = hs[cur].pair;
-            hs.push(Half { tail: head, head: copy, ..Default::default() });
-            hs.push(Half { tail: copy, head: tail_of(hs, cur), ..Default::default() });
-            hs.push(Half { tail: tail_of(hs, cur), head, ..Default::default() });
+            hs.push(Half{ tail: head, head: copy, ..Default::default()});
+            hs.push(Half{ tail: copy, head: tail_of(hs, cur), ..Default::default()});
+            hs.push(Half{ tail: tail_of(hs, cur), head, ..Default::default()});
             pair_up(hs, nh + 2, pair);
             pair_up(hs, nh + 1, cur);
 
             let nh = hs.len();
             let pair = hs[opp].pair;
-            hs.push(Half { tail: copy, head, ..Default::default() });
-            hs.push(Half { tail: head, head: tail_of(hs, opp), ..Default::default() });
-            hs.push(Half { tail: tail_of(hs, opp), head: copy, ..Default::default() });
+            hs.push(Half{ tail: copy, head, ..Default::default()});
+            hs.push(Half{ tail: head, head: tail_of(hs, opp), ..Default::default()});
+            hs.push(Half{ tail: tail_of(hs, opp), head: copy, ..Default::default()});
             pair_up(hs, nh + 2, pair);
             pair_up(hs, nh + 1, opp);
 
@@ -150,13 +150,11 @@ pub fn dedupe_edges(
         dups.sort_unstable();
         dups.dedup();
 
-        let mut num_flagged = 0usize;
+        let mut flag = 0usize;
         for &hid in &dups {
             dedupe_edge(ps, hs, ns, rs, hid);
-            let _ = hid;
-            num_flagged += 1;
+            flag += 1;
         }
-
-        if num_flagged == 0 { break; }
+        if flag > 0 { println!("{} dedup", flag); } else { break; }
     }
 }

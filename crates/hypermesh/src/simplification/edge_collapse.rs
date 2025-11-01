@@ -140,16 +140,14 @@ pub fn collapse_collinear_edges(
     nv: usize,
     ep: f64
 ) {
-    loop {
-        let mut flag = 0;
-        let rec = (0..hs.len())
-            .filter(|&hid| record_if_collinear(hs, rs, hid, nv))
-            .collect::<Vec<_>>();
-        for hid in rec {
-            if collapse_edge(hs, ps, ns, rs, hid, &mut vec![], ep) { flag += 1; }
-        }
-        if flag == 0 { break; } else { println!("{} collinear edge collapsed", flag);}
+    let mut flag = 0;
+    let rec = (0..hs.len())
+        .filter(|&hid| record_if_collinear(hs, rs, hid, nv))
+        .collect::<Vec<_>>();
+    for hid in rec {
+        if collapse_edge(hs, ps, ns, rs, hid, &mut vec![], ep) { flag += 1; }
     }
+    if flag > 0 { println!("{} collinear edge collapsed", flag);}
 }
 
 pub fn collapse_short_edges(

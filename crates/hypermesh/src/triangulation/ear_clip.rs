@@ -54,6 +54,7 @@ impl Ecvt {
         while !Rc::ptr_eq(&nl, &nr) && !Rc::ptr_eq(&tail, &nr) &&
             (if to_left {!Rc::ptr_eq(&nl, &self.ptr_r())} else {!Rc::ptr_eq(&nl, &self.ptr_l()) })
         {
+            println!("while2");
             let e = nl.borrow().pos - center.borrow().pos;
             let l2 = e.dot(&e);
             if l2 <= p2 {
@@ -212,7 +213,7 @@ type EvPtr = Rc<RefCell<Ecvt>>;
 // When an ear vert is clipped, its neighbors get linked, so they get unlinked
 // from it, but it is still linked to them.
 fn clipped(v: &EvPtr) -> bool { !Rc::ptr_eq(&v.borrow().ptr_l_of_r(), v) }
-fn folded(v: &EvPtr)  -> bool { Rc::ptr_eq(&v.borrow().ptr_l(), &v.borrow().ptr_r()) }
+fn folded (v: &EvPtr) -> bool { Rc::ptr_eq(&v.borrow().ptr_l(), &v.borrow().ptr_r()) }
 
 impl PartialEq  for Ecvt { fn eq(&self, other: &Self) -> bool { self.cost == other.cost } }
 impl PartialOrd for Ecvt { fn partial_cmp(&self, other: &Self) -> Option<Ordering> { self.cost.partial_cmp(&other.cost) } }

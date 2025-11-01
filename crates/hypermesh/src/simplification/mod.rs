@@ -4,6 +4,7 @@ pub mod edge_collapse;
 use crate::common::{Half, Tref, next_of, Row3f, Row2f};
 use edge_collapse::{collapse_edge, collapse_short_edges, collapse_collinear_edges};
 use edge_dedup::dedupe_edges;
+use crate::simplification::edge_swap::swap_degenerates;
 
 pub fn simplify_topology(
     hs: &mut Vec<Half>,
@@ -17,6 +18,7 @@ pub fn simplify_topology(
     dedupe_edges(ps, hs, ns, rs);
     collapse_short_edges(hs, ps, ns, rs, nv, eps);
     collapse_collinear_edges(hs, ps, ns, rs, nv, eps);
+    swap_degenerates(hs, ps, ns, rs, nv, eps);
 }
 
 fn head_of(hs: &[Half], hid: usize) -> usize { hs[hid].head }
@@ -129,10 +131,7 @@ fn update_vid_around_star(
     }
 }
 
-fn collapse_triangle(
-    hs: &mut [Half],
-    hids: &(usize, usize, usize)
-) {
+fn collapse_triangle(hs: &mut [Half], hids: &(usize, usize, usize)) {
     if hs[hids.1].pair().is_none() { return; }
     let pair1 = pair_of(hs, hids.1);
     let pair2 = pair_of(hs, hids.2);
