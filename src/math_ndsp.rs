@@ -609,13 +609,13 @@ impl<T: MixedNum + MixedOps + Copy + MixedAbs> Vector3<T> {
     pub fn zeros() -> Self where T: MixedZero { Self::new(T::mixed_zero(), T::mixed_zero(), T::mixed_zero()) }
 
     #[inline]
-    pub fn x() -> Self where T: MixedZero + MixedOne { Self::new(T::mixed_one(), T::mixed_zero(), T::mixed_zero()) }
+    pub fn x_axis() -> Self where T: MixedZero + MixedOne { Self::new(T::mixed_one(), T::mixed_zero(), T::mixed_zero()) }
 
     #[inline]
-    pub fn y() -> Self where T: MixedZero + MixedOne { Self::new(T::mixed_zero(), T::mixed_one(), T::mixed_zero()) }
+    pub fn y_axis() -> Self where T: MixedZero + MixedOne { Self::new(T::mixed_zero(), T::mixed_one(), T::mixed_zero()) }
 
     #[inline]
-    pub fn z() -> Self where T: MixedZero + MixedOne { Self::new(T::mixed_zero(), T::mixed_zero(), T::mixed_one()) }
+    pub fn z_axis() -> Self where T: MixedZero + MixedOne { Self::new(T::mixed_zero(), T::mixed_zero(), T::mixed_one()) }
 
     #[inline]
     pub fn dot(self, rhs: Self) -> T { self.x*rhs.x + self.y*rhs.y + self.z*rhs.z }

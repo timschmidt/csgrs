@@ -1,8 +1,7 @@
 use crate::aabb::Aabb;
-use crate::math_ndsp::consts::{EPSILON};
+use crate::math_ndsp::consts::{Num, EPSILON};
 use crate::mesh::plane::Plane;
 use crate::math_ndsp::{Matrix3, Matrix4, Rotation3, Translation3, Vector3, Scalar};
-type Real = f64;
 
 /// Boolean operations + transformations
 pub trait CSG: Sized + Clone {
@@ -11,18 +10,18 @@ pub trait CSG: Sized + Clone {
     fn difference(&self, other: &Self) -> Self;
     fn intersection(&self, other: &Self) -> Self;
     fn xor(&self, other: &Self) -> Self;
-    fn transform(&self, matrix: &Matrix4<Real>) -> Self;
+    fn transform(&self, matrix: &Matrix4<Num>) -> Self;
     fn inverse(&self) -> Self;
-    fn bounding_box(&self) -> Aabb<T>;
+    fn bounding_box(&self) -> Aabb<Num>;
     fn invalidate_bounding_box(&mut self);
 
     /// Returns a new Self translated by vector.
-    fn translate_vector(&self, vector: Vector3<Real>) -> Self {
+    fn translate_vector(&self, vector: Vector3<Num>) -> Self {
         self.transform(&Translation3::from(vector).to_homogeneous())
     }
 
     /// Returns a new Self translated by x, y, and z.
-    fn translate(&self, x: Real, y: Real, z: Real) -> Self {
+    fn translate(&self, x: Num, y: Num, z: Num) -> Self {
         self.translate_vector(Vector3::new(x, y, z))
     }
 
@@ -58,7 +57,7 @@ pub trait CSG: Sized + Clone {
     }
 
     /// Rotates Self by x_degrees, y_degrees, z_degrees
-    fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
+    fn rotate(&self, x_deg: Num, y_deg: Num, z_deg: Num) -> Self {
         let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg.to_radians());
         let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg.to_radians());
         let rz = Rotation3::from_axis_angle(&Vector3::z_axis(), z_deg.to_radians());
@@ -69,8 +68,8 @@ pub trait CSG: Sized + Clone {
     }
 
     /// Scales Self by scale_x, scale_y, scale_z
-    fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
-        let mat4 = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
+    fn scale(&self, sx: Num, sy: Num, sz: Num) -> Self {
+        let mat4 = Matrix4::scaling(sx, sy, sz);
         self.transform(&mat4)
     }
 
@@ -158,9 +157,9 @@ pub trait CSG: Sized + Clone {
     fn distribute_arc(
         &self,
         count: usize,
-        radius: Real,
-        start_angle_deg: Real,
-        end_angle_deg: Real,
+        radius: Num,
+        start_angle_deg: Num,
+        end_angle_deg: Num,
     ) -> Self {
         if count < 1 {
             return self.clone();
@@ -174,7 +173,7 @@ pub trait CSG: Sized + Clone {
                 let t = if count == 1 {
                     0.5
                 } else {
-                    i as Real / ((count - 1) as Real)
+                    i as Num / ((count - 1) as Num)
                 };
 
                 let angle = start_rad + t * sweep;
@@ -198,8 +197,8 @@ pub trait CSG: Sized + Clone {
     fn distribute_linear(
         &self,
         count: usize,
-        dir: Vector3<Real>,
-        spacing: Real,
+        dir: Vector3<Num>,
+        spacing: Num,
     ) -> Self {
         if count < 1 {
             return self.clone();
@@ -208,7 +207,7 @@ pub trait CSG: Sized + Clone {
 
         (0..count)
             .map(|i| {
-                let offset = step * (i as Real);
+                let offset = step * (i as Num);
                 let trans = Translation3::from(offset).to_homogeneous();
                 self.transform(&trans)
             })
@@ -218,7 +217,7 @@ pub trait CSG: Sized + Clone {
 
     /// Distribute Self in a grid of `rows x cols`, with spacing dx, dy in XY plane.
     /// top-left or bottom-left depends on your usage of row/col iteration.
-    fn distribute_grid(&self, rows: usize, cols: usize, dx: Real, dy: Real) -> Self {
+    fn distribute_grid(&self, rows: usize, cols: usize, dx: Num, dy: Num) -> Self {
         if rows < 1 || cols < 1 {
             return self.clone();
         }
@@ -228,7 +227,7 @@ pub trait CSG: Sized + Clone {
         (0..rows)
             .flat_map(|r| {
                 (0..cols).map(move |c| {
-                    let offset = step_x * (c as Real) + step_y * (r as Real);
+                    let offset = step_x * (c as Num) + step_y * (r as Num);
                     let trans = Translation3::from(offset).to_homogeneous();
                     self.transform(&trans)
                 })
