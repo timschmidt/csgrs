@@ -8,7 +8,7 @@ use anyhow::anyhow;
 use nalgebra::{DMatrix};
 use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider};
-use crate::common::{Half, K_PRECISION, Row3f, next_of};
+use crate::common::{Half, K_PRECISION, Row3f, Row3u, next_of};
 use super::hmesh::Hmesh;
 
 pub struct Manifold {
@@ -27,13 +27,20 @@ pub struct Manifold {
 }
 
 impl Manifold {
-    pub fn new(input: &Hmesh) -> anyhow::Result<Self> {
-        let bb = BBox::new_from_matrix(&input.pos);
-        let (mut f_bb, mut f_mt) = compute_face_morton(&input, &bb);
-        let hm = sort_faces(&input, &mut f_bb, &mut f_mt);
+    pub fn new(
+        pos: &Vec<f64>,
+        idx: &Vec<usize>,
+    ) -> anyhow::Result<Self> {
+        let m0 = Hmesh::new(
+            DMatrix::from_row_slice(pos.len() / 3, 3, &pos),
+            DMatrix::from_row_slice(idx.len() / 3, 3, &idx)
+        );
+        let bb = BBox::new_from_matrix(&m0.pos);
+        let (mut f_bb, mut f_mt) = compute_face_morton(&m0, &bb);
+        let hm = sort_faces(&m0, &mut f_bb, &mut f_mt);
 
         let ps = hm.verts.iter().map(|v| v.pos()).collect::<Vec<_>>();
-        let hs = hm.halfs.iter().map(|h| Half{ tail: h.tail().id, head: h.head().id, pair: h.twin().id }).collect::<Vec<_>>();
+        let hs = hm.halfs.iter().map(|h| Half::new(h.tail().id,h.head().id,h.twin().id)).collect::<Vec<_>>();
         let fns = hm.faces.iter().map(|f| f.normal()).collect::<Vec<_>>();
         let vns = hm.verts.iter().map(|v| v.normal()).collect::<Vec<_>>();
 
@@ -73,7 +80,20 @@ impl Manifold {
     }
 
     fn is_manifold(&self) -> bool {
-        true
+        self.hs.iter().enumerate().all(|(i, h)| {
+            if h.tail().is_none() || h.head().is_none() { return true; }
+            return match h.pair() {
+                None => { false },
+                Some(pair) => {
+                    let mut good = true;
+                    good &= self.hs[pair].pair() == Some(i);
+                    good &= h.tail != h.head;
+                    good &= h.tail == self.hs[pair].head;
+                    good &= h.head == self.hs[pair].tail;
+                    good
+                }
+            }
+        })
     }
 }
 

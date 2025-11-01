@@ -6,31 +6,25 @@ use crate::{Manifold, OpType};
 use crate::boolean03::{kernel03::winding03, kernel12::intersect12, Boolean03};
 use crate::boolean45::{boolean45, Boolean45};
 
-pub fn gen_tet_a() -> Arc<Hmesh> {
-    let pos = vec![-0.866025, -1., 0.5, 0., -1., -1., 0.866025, -1., 0.5, 0., 1., 0.];
-    let idx = vec![0, 3, 1, 1, 2, 0, 1, 3, 2, 2, 3, 0];
-    Hmesh::new(
-        DMatrix::from_row_slice(4, 3, &pos),
-        DMatrix::from_row_slice(4, 3, &idx),
-    )
+pub fn gen_tet_a() -> Manifold {
+    Manifold::new(
+        &vec![-0.866025, -1., 0.5, 0., -1., -1., 0.866025, -1., 0.5, 0., 1., 0.],
+        &vec![0, 3, 1, 1, 2, 0, 1, 3, 2, 2, 3, 0]
+    ).unwrap()
 }
 
-pub fn gen_tet_b() -> Arc<Hmesh> {
-    let pos = vec![-1., -0.866025, 0.5, -1., 0., -1., -1., 0.866025, 0.5, 1., 0., 0.];
-    let idx = vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2];
-    Hmesh::new(
-        DMatrix::from_row_slice(4, 3, &pos),
-        DMatrix::from_row_slice(4, 3, &idx),
-    )
+pub fn gen_tet_b() -> Manifold {
+    Manifold::new(
+        &vec![-1., -0.866025, 0.5, -1., 0., -1., -1., 0.866025, 0.5, 1., 0., 0.],
+        &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2]
+    ).unwrap()
 }
 
-pub fn gen_tet_c() -> Arc<Hmesh> {
-    let pos = vec![-2., -0.866025, 0.5, -2., -0., -1., -2., 0.866025, 0.5, 0., 0., 0.];
-    let idx = vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2];
-    Hmesh::new(
-        DMatrix::from_row_slice(4, 3, &pos),
-        DMatrix::from_row_slice(4, 3, &idx),
-    )
+pub fn gen_tet_c() -> Manifold {
+    Manifold::new(
+        &vec![-2., -0.866025, 0.5, -2., -0., -1., -2., 0.866025, 0.5, 0., 0., 0.],
+        &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2]
+    ).unwrap()
 }
 
 
@@ -43,8 +37,8 @@ mod kernel11_tests {
 
     #[test]
     fn kernel11_test() {
-        let mfd_p = Manifold::new(&gen_tet_a()).unwrap();
-        let mfd_q = Manifold::new(&gen_tet_c()).unwrap();
+        let mfd_p = gen_tet_a();
+        let mfd_q = gen_tet_c();
         let k11 = Kernel11 {
             ps_p: &mfd_p.ps,
             ps_q: &mfd_q.ps,
@@ -63,10 +57,8 @@ mod kernel11_tests {
 #[test]
 fn test_tet_sub_inclusion_case(){
     let expand = -1.;
-    let hm_p = gen_tet_a();
-    let hm_q = gen_tet_c();
-    let mfd_p = Manifold::new(&hm_p).unwrap();
-    let mfd_q = Manifold::new(&hm_q).unwrap();
+    let mfd_p = gen_tet_a();
+    let mfd_q = gen_tet_c();
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
     let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, expand, true);
@@ -95,10 +87,8 @@ fn test_tet_sub_inclusion_case(){
 #[test]
 fn test_tet_sub_penetration_case(){
     let expand = -1.;
-    let hm_p = gen_tet_a();
-    let hm_q = gen_tet_b();
-    let mfd_p = Manifold::new(&hm_p).unwrap();
-    let mfd_q = Manifold::new(&hm_q).unwrap();
+    let mfd_p = gen_tet_a();
+    let mfd_q = gen_tet_b();
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
     let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, -1., true);

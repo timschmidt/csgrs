@@ -97,7 +97,7 @@ pub fn compute_halfs(ts: &Vec<Row3u>) -> Vec<Half> {
     hs
 }
 
-pub fn sanitize_unused_verts(
+pub fn cleanup_unused_verts(
     ps: &mut Vec<Row3f>,
     hs: &mut Vec<Half>
 ) {
@@ -123,6 +123,8 @@ pub fn sanitize_unused_verts(
         .unwrap_or(new2old.len());
 
     new2old.truncate(nv);
+
     *ps = new2old.iter().map(|&i| ps[i]).collect::<Vec<_>>();
+    *hs = hs.iter().filter(|h| h.pair().is_some()).map(|h| h.clone()).collect::<Vec<_>>();
 }
 

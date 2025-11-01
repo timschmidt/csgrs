@@ -4,10 +4,8 @@ use bevy::pbr::wireframe::{WireframePlugin, Wireframe, WireframeColor};
 use bevy::render::mesh::Indices;
 use bevy::color::palettes::css::*;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use nalgebra::DMatrix;
 use mfd::{compute_boolean, Manifold};
 use mfd::common::OpType;
-use mfd::hmesh::Hmesh;
 
 #[derive(Resource)]
 struct MfdHandle0(Manifold);
@@ -72,23 +70,20 @@ fn setup(
 ) {
 
     let (m0, _) = tobj::load_obj("assets/models/cube_x_plus.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    let (m1, _) = tobj::load_obj("assets/models/tet_b.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    let mut hms_ = vec![];
-    for (m, s) in vec![(m0, 1.), (m1, 1.)] {
+    let (m1, _) = tobj::load_obj("assets/models/fertility_004.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let (m2, _) = tobj::load_obj("assets/models/gargoyle.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let mut mfs = vec![];
+    for (m, s) in vec![(m0, 1.), (m1, 1.), (m2, 2.)] {
         let mesh = &m[0].mesh;
         let pos_buf = mesh.positions.iter().map(|&v| (v * s) as f64).collect::<Vec<f64>>();
         let idx_buf = mesh.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>();
-        let hm = Hmesh::new(
-            DMatrix::from_row_slice(mesh.positions.len() / 3, 3, &pos_buf).into(),
-            DMatrix::from_row_slice(mesh.indices.len() / 3, 3, &idx_buf).into()
-        );
-        hms_.push(hm);
+        let mf = Manifold::new(&pos_buf, &idx_buf).unwrap();
+        mfs.push(mf);
     }
 
 
-    let mf0 = Manifold::new(&hms_[0]).unwrap();
-    let mf1 = Manifold::new(&hms_[1]).unwrap();
-    let (pos, tris) = compute_boolean(&mf0, &mf1, OpType::Subtract);
+    let res0 = compute_boolean(&mfs[0], &mfs[1], OpType::Subtract).unwrap();
+    let res1 = compute_boolean(&res0, &mfs[2], OpType::Subtract).unwrap();
     //let mut edges = vec![];
     //for h in temp.iter() {
     //    let p0 = pos[h.x];
@@ -106,19 +101,10 @@ fn setup(
         );
 
         bm.insert_indices(Indices::U32(
-            tris.iter().flat_map(|t| [
-                t[0] as u32,
-                t[1] as u32,
-                t[2] as u32,
-            ]).collect()
-        ));
+            res1.hs.chunks(3).flat_map(|t| [t[0].tail as u32, t[1].tail as u32, t[2].tail as u32]).collect()));
         bm.insert_attribute(
             Mesh::ATTRIBUTE_POSITION,
-            pos.iter().map(|p| [
-                p[0] as f32,
-                p[1] as f32,
-                p[2] as f32,
-            ]).collect::<Vec<_>>()
+            res1.ps.iter().map(|p| [p[0] as f32, p[1] as f32, p[2] as f32]).collect::<Vec<_>>()
         );
 
         cmds.spawn((
@@ -141,38 +127,31 @@ fn setup(
             //DrawingUnit { pts: vec![], lines: normals, boxes: vec![], col: RED },
         ]});
 
-    for hm in hms_ {
+    for mf in mfs.iter() {
         let mut bm = Mesh::new(
             bevy::render::mesh::PrimitiveTopology::TriangleList,
             RenderAssetUsages::default()
         );
 
-        bm.insert_indices(Indices::U32(
-            (0..hm.idx.nrows()).flat_map(|i| [
-                hm.idx[(i, 0)] as u32,
-                hm.idx[(i, 1)] as u32,
-                hm.idx[(i, 2)] as u32,
-            ]).collect()
-        ));
+        bm.insert_indices(Indices::U32(mf.hs.iter().map(|h| h.tail as u32).collect()));
         bm.insert_attribute(
             Mesh::ATTRIBUTE_POSITION,
-            (0..hm.pos.nrows()).map(|i| [
-                hm.pos[(i, 0)] as f32,
-                hm.pos[(i, 1)] as f32,
-                hm.pos[(i, 2)] as f32,
-            ]).collect::<Vec<_>>()
+            mf.ps.iter().map(|p| [p.x as f32, p.y as f32, p.z as f32]).collect::<Vec<_>>()
         );
 
-        cmds.spawn((
-            Mesh3d(meshes.add(bm).clone()),
-            MeshMaterial3d(mats.add(StandardMaterial { ..default() })),
-            Transform::default(),
-            Wireframe,
-            WireframeColor { color: GRAY.into() },
-            ToggleableMesh,
-        ));
+        //cmds.spawn((
+        //    Mesh3d(meshes.add(bm).clone()),
+        //    MeshMaterial3d(mats.add(StandardMaterial { ..default() })),
+        //    Transform::default(),
+        //    Wireframe,
+        //    WireframeColor { color: GRAY.into() },
+        //    ToggleableMesh,
+        //));
     }
 
+
+    let mf1 = mfs.pop().expect("missing second manifold");
+    let mf0 = mfs.pop().expect("missing first manifold");
     cmds.insert_resource(MfdHandle0(mf0));
     cmds.insert_resource(MfdHandle1(mf1));
     cmds.spawn((PointLight::default(), Transform::from_xyz(3., 4., 3.)));
