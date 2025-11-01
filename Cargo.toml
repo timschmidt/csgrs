@@ -39,8 +39,8 @@ geo-buf = { version = "0.1.0", optional = true } # straight-skeleton offsetting 
 chull = { version = "0.2.4", optional = true }
 
 # bevy mesh conversion
-bevy_mesh = { version = "0.16", optional = true }
-bevy_asset = { version = "0.16", optional = true }
+bevy_mesh = { version = "0.17", optional = true }
+bevy_asset = { version = "0.17", optional = true }
 wgpu-types = { version = "24", optional = true, default-features = false }
 
 # utils
