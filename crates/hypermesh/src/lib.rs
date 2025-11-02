@@ -2,9 +2,9 @@ pub mod manifold;
 pub mod triangulation;
 pub mod simplification;
 pub mod common;
+pub mod boolean03;
+pub mod boolean45;
 mod tests;
-mod boolean03;
-mod boolean45;
 use crate::boolean03::boolean03;
 use crate::boolean45::boolean45;
 use crate::common::OpType;
@@ -45,4 +45,5 @@ pub fn compute_boolean(
         Some(tol)
     )
 }
+
 

@@ -1,6 +1,5 @@
-use bevy::render::render_resource::encase::private::RuntimeSizedArray;
 use crate::common::{Half, Tref, get_axis_aligned_projection, is_ccw_2d, Row3f};
-use super::{collapse_edge, form_loops, head_of, is01_longest_2d, next_of, pair_of, pair_up, remove_if_folded, tail_of, tri_hids_of};
+use super::{collapse_edge, form_loops, head_of, is01_longest_2d, next_of, pair_of, pair_up, remove_if_folded, tail_of, hids_of};
 
 fn record(
     hs: &[Half],
@@ -19,7 +18,7 @@ fn record(
     let n1 = hs[next_of(h1)].head;
     if h.tail < oft && h.head < oft && n0 < oft && n1 < oft { return false; }
 
-    let (e0, e1, e2) = tri_hids_of(h0);
+    let (e0, e1, e2) = hids_of(h0);
     let p = get_axis_aligned_projection(&ns[h0 / 3]);
     let a = (p * ps[hs[e0].tail].transpose()).transpose();
     let b = (p * ps[hs[e1].tail].transpose()).transpose();
@@ -27,7 +26,7 @@ fn record(
 
     if is_ccw_2d(&a, &b, &c, tol) > 0 || !is01_longest_2d(&a, &b, &c) { return false; }
 
-    let (e0, e1, e2) = tri_hids_of(h1);
+    let (e0, e1, e2) = hids_of(h1);
     let p = get_axis_aligned_projection(&ns[h1 / 3]);
     let a = (p * ps[hs[e0].tail].transpose()).transpose();
     let b = (p * ps[hs[e1].tail].transpose()).transpose();
@@ -60,21 +59,21 @@ fn recursive_edge_swap(
 
     let t0 = h0 / 3;
     let t1 = h1 / 3;
-    let t0e = tri_hids_of(h0);
-    let t1e = tri_hids_of(h1);
+    let t0e = hids_of(h0);
+    let t1e = hids_of(h1);
 
-    let proj = get_axis_aligned_projection(&ns[t0]);
-    let v0 = (proj * ps[tail_of(hs, t0e.0)].transpose()).transpose();
-    let v1 = (proj * ps[tail_of(hs, t0e.1)].transpose()).transpose();
-    let v2 = (proj * ps[tail_of(hs, t0e.2)].transpose()).transpose();
+    let pr = get_axis_aligned_projection(&ns[t0]);
+    let v0 = (pr * ps[tail_of(hs, t0e.0)].transpose()).transpose();
+    let v1 = (pr * ps[tail_of(hs, t0e.1)].transpose()).transpose();
+    let v2 = (pr * ps[tail_of(hs, t0e.2)].transpose()).transpose();
 
     if is_ccw_2d(&v0, &v1, &v2, tol) > 0 || !is01_longest_2d(&v0, &v1, &v2) { return; }
 
-    let proj = get_axis_aligned_projection(&ns[t1]);
-    let u0 = (proj * ps[tail_of(hs, t0e.0)].transpose()).transpose();
-    let u1 = (proj * ps[tail_of(hs, t0e.1)].transpose()).transpose();
-    let u2 = (proj * ps[tail_of(hs, t0e.2)].transpose()).transpose();
-    let u3 = (proj * ps[tail_of(hs, t1e.2)].transpose()).transpose();
+    let pr = get_axis_aligned_projection(&ns[t1]);
+    let u0 = (pr * ps[tail_of(hs, t0e.0)].transpose()).transpose();
+    let u1 = (pr * ps[tail_of(hs, t0e.1)].transpose()).transpose();
+    let u2 = (pr * ps[tail_of(hs, t0e.2)].transpose()).transpose();
+    let u3 = (pr * ps[tail_of(hs, t1e.2)].transpose()).transpose();
 
     let mut swap_edge = || {
         // The 0-verts are swapped to the opposite 2-verts.
@@ -116,7 +115,7 @@ fn recursive_edge_swap(
         swap_edge();
         if (u3 - u2).norm_squared() < tol * tol {
             *tag += 1;
-            collapse_edge(hs, ps, ns, ts, t0e.2, edges, tol);
+            collapse_edge(hs, ps, ns, ts, t0e.2, tol, edges);
             edges.clear();
         } else {
             visit[h0] = *tag;

@@ -9,7 +9,7 @@ fn duplicate_verts(
     inc : &[i32],
     vt_r: &[i32],
     ps_p: &[Row3f],
-    ps_r: &mut[Row3f],
+    ps_r: &mut [Row3f],
     vid: usize
 ) {
     let n = inc[vid].abs() as usize;
@@ -428,5 +428,4 @@ pub fn boolean45(
         nv_from_q: nv_rq as usize,
         initial_hid_per_faces: ih_per_f
     }
-
 }

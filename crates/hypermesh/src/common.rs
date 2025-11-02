@@ -64,32 +64,20 @@ impl Tref {
 
 pub fn det2x2(a: &Row2f, b: &Row2f) -> f64 { a.x * b.y - a.y * b.x }
 
-pub fn get_axis_aligned_projection(normal: &Row3f) -> Mat23 {
-    let abs = normal.abs();
-    let max: f64;
-    let mut prj: Mat23;
+pub fn get_axis_aligned_projection(n: &Row3f) -> Mat23 {
+    let a = n.abs();
+    let m: f64;
+    let mut p: Mat23;
 
-    if abs.z > abs.x && abs.z > abs.y { // preserve x, y
-        prj = Mat23::new(1., 0., 0., 0., 1., 0.);
-        max = normal.z;
-    } else if abs.y > abs.x { // preserve z, x
-        prj = Mat23::new(0., 0., 1., 1., 0., 0.);
-        max = normal.y;
-    } else { // preserve y, z
-        prj = Mat23::new(0., 1., 0., 0., 0., 1.);
-        max = normal.x;
-    }
+    if a.z > a.x && a.z > a.y { p = Mat23::new(1., 0., 0., 0., 1., 0.); m = n.z; } // preserve x, y
+    else if a.y > a.x         { p = Mat23::new(0., 0., 1., 1., 0., 0.); m = n.y; } // preserve z, x
+    else                      { p = Mat23::new(0., 1., 0., 0., 0., 1.); m = n.x; } // preserve y, z
 
-    if max < 0. { prj.set_row(0, &(-prj.row(0))); }
-    prj
+    if m < 0. { p.set_row(0, &(-p.row(0))); }
+    p
 }
 
-pub fn is_ccw_2d(
-    p0: &Row2f,
-    p1: &Row2f,
-    p2: &Row2f,
-    t: f64
-) -> i32 {
+pub fn is_ccw_2d(p0: &Row2f, p1: &Row2f, p2: &Row2f, t: f64) -> i32 {
     let v1 = p1 - p0;
     let v2 = p2 - p0;
     let area = v1.x * v2.y - v1.y * v2.x;
@@ -98,23 +86,14 @@ pub fn is_ccw_2d(
     if area > 0. { 1 } else { -1 }
 }
 
-pub fn is_ccw_3d(
-    p0: &Row3f,
-    p1: &Row3f,
-    p2: &Row3f,
-    n: &Row3f,
-    t: f64
-) -> i32 {
-    let prj = get_axis_aligned_projection(&n);
-    let p0 = prj * p0.transpose();
-    let p1 = prj * p1.transpose();
-    let p2 = prj * p2.transpose();
-    let v1 = p1 - p0;
-    let v2 = p2 - p0;
-    let area = v1.x * v2.y - v1.y * v2.x;
-    let base = v1.norm_squared().max(v2.norm_squared());
-    if area.powi(2) * 4. <= base * t.powi(2) { return 0; }
-    if area > 0. { 1 } else { -1 }
+pub fn is_ccw_3d(p0: &Row3f, p1: &Row3f, p2: &Row3f, n: &Row3f, t: f64) -> i32 {
+    let p = get_axis_aligned_projection(&n);
+    is_ccw_2d(
+        &(p * p0.transpose()).transpose(),
+        &(p * p1.transpose()).transpose(),
+        &(p * p2.transpose()).transpose(),
+        t
+    )
 }
 
 // todo: check not is_nan as well

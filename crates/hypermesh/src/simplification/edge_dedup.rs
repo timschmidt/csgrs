@@ -27,17 +27,17 @@ fn dedupe_edge(
 
             let nh = hs.len();
             let pair = hs[cur].pair;
-            hs.push(Half{ tail: head, head: copy, ..Default::default()});
-            hs.push(Half{ tail: copy, head: tail_of(hs, cur), ..Default::default()});
-            hs.push(Half{ tail: tail_of(hs, cur), head, ..Default::default()});
+            hs.push(Half::new_without_pair(head, copy));
+            hs.push(Half::new_without_pair(copy, tail_of(hs, cur)));
+            hs.push(Half::new_without_pair(tail_of(hs, cur), head));
             pair_up(hs, nh + 2, pair);
             pair_up(hs, nh + 1, cur);
 
             let nh = hs.len();
             let pair = hs[opp].pair;
-            hs.push(Half{ tail: copy, head, ..Default::default()});
-            hs.push(Half{ tail: head, head: tail_of(hs, opp), ..Default::default()});
-            hs.push(Half{ tail: tail_of(hs, opp), head: copy, ..Default::default()});
+            hs.push(Half::new_without_pair(copy, head));
+            hs.push(Half::new_without_pair(head, tail_of(hs, opp)));
+            hs.push(Half::new_without_pair(tail_of(hs, opp), copy));
             pair_up(hs, nh + 2, pair);
             pair_up(hs, nh + 1, opp);
 

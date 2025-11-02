@@ -21,15 +21,11 @@ pub fn simplify_topology(
     swap_degenerates(hs, ps, ns, rs, nv, eps);
 }
 
-fn head_of(hs: &[Half], hid: usize) -> usize { hs[hid].head }
-fn tail_of(hs: &[Half], hid: usize) -> usize { hs[hid].tail }
-fn pair_of(hs: &[Half], hid: usize) -> usize { hs[hid].pair }
-fn pair_up(hs: &mut[Half], hid0: usize, hid1: usize) { hs[hid0].pair = hid1; hs[hid1].pair = hid0; }
-fn tri_hids_of(curr: usize) -> (usize, usize, usize) {
-    let next = next_of(curr);
-    let prev = next_of(next);
-    (curr, next, prev)
-}
+fn head_of(hs: &[Half], i: usize) -> usize { hs[i].head }
+fn tail_of(hs: &[Half], i: usize) -> usize { hs[i].tail }
+fn pair_of(hs: &[Half], i: usize) -> usize { hs[i].pair }
+fn pair_up(hs: &mut[Half], i: usize, j: usize) { hs[i].pair = j; hs[j].pair = i; }
+fn hids_of(i: usize) -> (usize, usize, usize) { let j = next_of(i); let k = next_of(j); (i, j, k) }
 
 // When bgn halfedge and end halfedge are heading to the same vertex,
 // and if collapsing the tail vertex as well, this function creates two loops.
@@ -71,8 +67,8 @@ fn remove_if_folded(
     ps: &mut Vec<Row3f>,
     hid: usize
 ) {
-    let (i0, i1, i2) = tri_hids_of(hid);
-    let (j0, j1, j2) = tri_hids_of(pair_of(hs, hid));
+    let (i0, i1, i2) = hids_of(hid);
+    let (j0, j1, j2) = hids_of(pair_of(hs, hid));
 
     if hs[i1].pair().is_none() || head_of(hs, i1) != head_of(hs, j1) { return; }
 
