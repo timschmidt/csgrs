@@ -2,7 +2,6 @@
 
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use mixed_num::traits::*;
-type Real = f64;
 use mixed_num::{
     MixedAbs, MixedNum, MixedOne, MixedOps, MixedPi, MixedSqrt, MixedTrigonometry, MixedZero,
     MixedNumConversion,
@@ -44,12 +43,12 @@ fn eps<T: Scalar>() -> T { T::mixed_from(1e-9) }
 
 pub mod consts {
     // We keep the library on f64 for now (simple migration).
-    pub type Num = f64;
+    pub type Real = f64;
 
-    pub const EPSILON: Num     = 1.0e-8;
-    pub const PI: Num          = core::f64::consts::PI;
-    pub const TAU: Num         = core::f64::consts::TAU;
-    pub const FRAC_PI_2: Num   = core::f64::consts::FRAC_PI_2;
+    pub const EPSILON: Real     = 1.0e-8;
+    pub const PI: Real          = core::f64::consts::PI;
+    pub const TAU: Real         = core::f64::consts::TAU;
+    pub const FRAC_PI_2: Real   = core::f64::consts::FRAC_PI_2;
 }
 
 /* ----------------------------- Vector2 / Point2 ----------------------------- */
@@ -1139,7 +1138,7 @@ impl<T: Scalar> Rotation3<T> {
 
         let (s, c) = angle.sin_cos();
         let (kx, ky, kz) = (k.x, k.y, k.z);
-        let one_c = Real::ONE - c;
+        let one_c = consts::Real::ONE - c;
 
         // Rodrigues’ formula
         let r00 = c + one_c * kx * kx;
@@ -1181,14 +1180,14 @@ impl<T: Scalar> Rotation3<T> {
             } else {
                 // 180°: pick any vector not parallel to u
                 let mut pick = if u.x.abs() < u.y.abs() && u.x.abs() < u.z.abs() {
-                    Vector3::new(Real::ONE, 0.0, 0.0)
+                    Vector3::new(consts::Real::ONE, 0.0, 0.0)
                 } else if u.y.abs() < u.z.abs() {
-                    Vector3::new(0.0, Real::ONE, 0.0)
+                    Vector3::new(0.0, consts::Real::ONE, 0.0)
                 } else {
-                    Vector3::new(0.0, 0.0, Real::ONE)
+                    Vector3::new(0.0, 0.0, consts::Real::ONE)
                 };
                 let axis = u.cross(&pick).normalized();
-                return Some(Self::from_axis_angle(&axis, core::f64::consts::PI as Real));
+                return Some(Self::from_axis_angle(&axis, core::f64::consts::PI as consts::Real));
             }
         }
 
@@ -1230,7 +1229,7 @@ impl<T: Scalar> Translation3<T> {
     }
 
     #[inline]
-    pub fn new(x: Real, y: Real, z: Real) -> Self {
+    pub fn new(x: consts::Real, y: consts::Real, z: consts::Real) -> Self {
         Self { v: Vector3::new(x, y, z) }
     }
 
@@ -1282,7 +1281,7 @@ impl<T> Isometry3<T> {
 
     /// Point transform: p' = R·p + t
     #[inline]
-    pub fn transform_point(&self, p: &Point3<Real>) -> Point3<Real> {
+    pub fn transform_point(&self, p: &Point3<consts::Real>) -> Point3<consts::Real> {
         let r = self.rotation.mat * p.to_vector3();
         let q = r + self.translation.v;
         Point3::new(q.x, q.y, q.z)

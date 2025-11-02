@@ -1,5 +1,5 @@
 use crate::aabb::Aabb;
-use crate::math_ndsp::consts::{Num, EPSILON};
+use crate::math_ndsp::consts::{Real, EPSILON};
 use crate::mesh::plane::Plane;
 use crate::math_ndsp::{Matrix3, Matrix4, Rotation3, Translation3, Vector3, Scalar};
 
@@ -10,18 +10,18 @@ pub trait CSG: Sized + Clone {
     fn difference(&self, other: &Self) -> Self;
     fn intersection(&self, other: &Self) -> Self;
     fn xor(&self, other: &Self) -> Self;
-    fn transform(&self, matrix: &Matrix4<Num>) -> Self;
+    fn transform(&self, matrix: &Matrix4<Real>) -> Self;
     fn inverse(&self) -> Self;
-    fn bounding_box(&self) -> Aabb<Num>;
+    fn bounding_box(&self) -> Aabb<T>;
     fn invalidate_bounding_box(&mut self);
 
     /// Returns a new Self translated by vector.
-    fn translate_vector(&self, vector: Vector3<Num>) -> Self {
+    fn translate_vector(&self, vector: Vector3<Real>) -> Self {
         self.transform(&Translation3::from(vector).to_homogeneous())
     }
 
     /// Returns a new Self translated by x, y, and z.
-    fn translate(&self, x: Num, y: Num, z: Num) -> Self {
+    fn translate(&self, x: Real, y: Real, z: Real) -> Self {
         self.translate_vector(Vector3::new(x, y, z))
     }
 
@@ -57,7 +57,7 @@ pub trait CSG: Sized + Clone {
     }
 
     /// Rotates Self by x_degrees, y_degrees, z_degrees
-    fn rotate(&self, x_deg: Num, y_deg: Num, z_deg: Num) -> Self {
+    fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
         let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg.to_radians());
         let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg.to_radians());
         let rz = Rotation3::from_axis_angle(&Vector3::z_axis(), z_deg.to_radians());
@@ -68,7 +68,7 @@ pub trait CSG: Sized + Clone {
     }
 
     /// Scales Self by scale_x, scale_y, scale_z
-    fn scale(&self, sx: Num, sy: Num, sz: Num) -> Self {
+    fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
         let mat4 = Matrix4::scaling(sx, sy, sz);
         self.transform(&mat4)
     }
@@ -137,15 +137,17 @@ pub trait CSG: Sized + Clone {
 
         // Build the reflection matrix about a plane normal n at the origin
         // R = I - 2 n n^T
-        let mut reflect_4 = Matrix4::identity();
-        let reflect_3 = Matrix3::identity() - 2.0 * n * n.transpose();
-        reflect_4.fixed_view_mut::<3, 3>(0, 0).copy_from(&reflect_3);
+        //let mut reflect_4 = Matrix4::identity();
+        //let reflect_3 = Matrix3::identity() - 2.0 * n * n.transpose();
+        let reflect_3 = Matrix3::reflection_about_unit_normal(n);
+        let r4 = Matrix4::from_matrix3_and_translation(reflect_3, Vector3::zeros());
+        //reflect_4.fixed_view_mut::<3, 3>(0, 0).copy_from(&reflect_3);
 
         // Translate back
         let t2 = Translation3::from(offset).to_homogeneous(); // pull the plane back out
 
         // Combine into a single 4×4
-        let mirror_mat = t2 * reflect_4 * t1;
+        let mirror_mat = t2 * r4 * t1;
 
         // Apply to all polygons
         self.transform(&mirror_mat).inverse()
@@ -157,9 +159,9 @@ pub trait CSG: Sized + Clone {
     fn distribute_arc(
         &self,
         count: usize,
-        radius: Num,
-        start_angle_deg: Num,
-        end_angle_deg: Num,
+        radius: Real,
+        start_angle_deg: Real,
+        end_angle_deg: Real,
     ) -> Self {
         if count < 1 {
             return self.clone();
@@ -173,7 +175,7 @@ pub trait CSG: Sized + Clone {
                 let t = if count == 1 {
                     0.5
                 } else {
-                    i as Num / ((count - 1) as Num)
+                    i as Real / ((count - 1) as Real)
                 };
 
                 let angle = start_rad + t * sweep;
@@ -197,8 +199,8 @@ pub trait CSG: Sized + Clone {
     fn distribute_linear(
         &self,
         count: usize,
-        dir: Vector3<Num>,
-        spacing: Num,
+        dir: Vector3<Real>,
+        spacing: Real,
     ) -> Self {
         if count < 1 {
             return self.clone();
@@ -207,7 +209,7 @@ pub trait CSG: Sized + Clone {
 
         (0..count)
             .map(|i| {
-                let offset = step * (i as Num);
+                let offset = step * (i as Real);
                 let trans = Translation3::from(offset).to_homogeneous();
                 self.transform(&trans)
             })
@@ -217,7 +219,7 @@ pub trait CSG: Sized + Clone {
 
     /// Distribute Self in a grid of `rows x cols`, with spacing dx, dy in XY plane.
     /// top-left or bottom-left depends on your usage of row/col iteration.
-    fn distribute_grid(&self, rows: usize, cols: usize, dx: Num, dy: Num) -> Self {
+    fn distribute_grid(&self, rows: usize, cols: usize, dx: Real, dy: Real) -> Self {
         if rows < 1 || cols < 1 {
             return self.clone();
         }
@@ -227,7 +229,7 @@ pub trait CSG: Sized + Clone {
         (0..rows)
             .flat_map(|r| {
                 (0..cols).map(move |c| {
-                    let offset = step_x * (c as Num) + step_y * (r as Num);
+                    let offset = step_x * (c as Real) + step_y * (r as Real);
                     let trans = Translation3::from(offset).to_homogeneous();
                     self.transform(&trans)
                 })

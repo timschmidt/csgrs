@@ -2,13 +2,11 @@
 //
 // Minimal example of each function of csgrs (which is now generic over the shared-data type S).
 // Here, we do not use any shared data, so we'll bind the generic S to ().
-
-#[cfg(feature = "sdf")]
-type Real = f64;
-
 use csgrs::mesh::plane::Plane;
 use csgrs::traits::CSG;
 use crate::math_ndsp::{Point3, Vector3};
+use crate::math_ndsp::consts{Real};
+
 use std::fs;
 
 #[cfg(feature = "image")]

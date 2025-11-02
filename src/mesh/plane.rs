@@ -92,9 +92,9 @@ pub const SPANNING: i8 = 3;
 /// A plane in 3D space defined by three points
 #[derive(Debug, Clone)]
 pub struct Plane<T> {
-    pub point_a: Point3<Real>,
-    pub point_b: Point3<Real>,
-    pub point_c: Point3<Real>,
+    pub point_a: Point3<T>,
+    pub point_b: Point3<T>,
+    pub point_c: Point3<T>,
 }
 
 impl<T> PartialEq for Plane<T> {
@@ -128,7 +128,7 @@ impl<T> PartialEq for Plane<T> {
     }
 }
 
-fn point_to_coord3d(point: Point3<Real>) -> robust::Coord3D<Real> {
+fn point_to_coord3d(point: Point3<T>) -> robust::Coord3D<f64> {
     robust::Coord3D {
         x: point.coords.x,
         y: point.coords.y,
@@ -219,7 +219,7 @@ impl<T> Plane<T> {
     /// and signed offset *o* (in the sense `n · p == o`).
     ///
     /// If `normal` is close to zero the function fails
-    pub fn from_normal(normal: Vector3<Real>, offset: Real) -> Self {
+    pub fn from_normal(normal: Vector3<T>, offset: T) -> Self {
         let n2 = normal.norm_squared();
         if n2 < EPSILON * EPSILON {
             panic!(); // degenerate normal
@@ -256,7 +256,7 @@ impl<T> Plane<T> {
     }
 
     #[inline]
-    pub fn orient_point(&self, point: &Point3<Real>) -> i8 {
+    pub fn orient_point(&self, point: &Point3<T>) -> i8 {
         // Returns a positive value if the point `pd` lies below the plane passing through `pa`, `pb`, and `pc`
         // ("below" is defined so that `pa`, `pb`, and `pc` appear in counterclockwise order when viewed from above the plane).
         // Returns a negative value if `pd` lies above the plane.
@@ -296,7 +296,7 @@ impl<T> Plane<T> {
     /// Return the (right‑handed) unit normal **n** of the plane
     /// `((b‑a) × (c‑a)).normalize()`.
     #[inline]
-    pub fn normal(&self) -> Vector3<Real> {
+    pub fn normal(&self) -> Vector3<T> {
         let n = (self.point_b - self.point_a).cross(&(self.point_c - self.point_a));
         let len = n.norm();
         if len < EPSILON {
@@ -308,7 +308,7 @@ impl<T> Plane<T> {
 
     /// Signed offset of the plane from the origin: `d = n · a`.
     #[inline]
-    pub fn offset(&self) -> Real {
+    pub fn offset(&self) -> T {
         self.normal().dot(&self.point_a.coords)
     }
 
@@ -431,7 +431,7 @@ impl<T> Plane<T> {
     ///
     /// The transformation preserves distances and angles, enabling 2D algorithms
     /// to be applied to 3D planar geometry.
-    pub fn to_xy_transform(&self) -> (Matrix4<Real>, Matrix4<Real>) {
+    pub fn to_xy_transform(&self) -> (Matrix4<T>, Matrix4<T>) {
         // Normal
         let n = self.normal();
         let n_len = n.norm();

@@ -1,6 +1,6 @@
 //! 2D Shapes as `Sketch`s
 
-use crate::math_ndsp::consts::{Num, EPSILON, FRAC_PI_2, PI, TAU};
+use crate::math_ndsp::consts::{Real, EPSILON, FRAC_PI_2, PI, TAU};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{
@@ -24,7 +24,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// use csgrs::sketch::Sketch;
     /// let sq2 = Sketch::<()>::rectangle(2.0, 3.0, None);
     /// ```
-    pub fn rectangle(width: Num, length: Num, metadata: Option<S>) -> Self {
+    pub fn rectangle(width: Real, length: Real, metadata: Option<S>) -> Self {
         // In geo, a Polygon is basically (outer: LineString, Vec<LineString> for holes).
         let outer = line_string![
             (x: 0.0,     y: 0.0),
@@ -50,7 +50,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     ///
     /// # Example
     /// let sq2 = Sketch::square(2.0, None);
-    pub fn square(width: Num, metadata: Option<S>) -> Self {
+    pub fn square(width: Real, metadata: Option<S>) -> Self {
         Self::rectangle(width, width, metadata)
     }
 
@@ -96,13 +96,13 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// - `radius`: Circle radius (must be > 0)
     /// - `segments`: Number of polygon edges (minimum 3 for valid geometry)
     /// - `metadata`: Optional metadata attached to the shape
-    pub fn circle(radius: Num, segments: usize, metadata: Option<S>) -> Self {
+    pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 3 {
             return Sketch::new();
         }
-        let mut coords: Vec<(Num, Num)> = (0..segments)
+        let mut coords: Vec<(Real, Real)> = (0..segments)
             .map(|i| {
-                let theta = 2.0 * PI * (i as Num) / (segments as Num);
+                let theta = 2.0 * PI * (i as Real) / (segments as Real);
                 (radius * theta.cos(), radius * theta.sin())
             })
             .collect();
@@ -117,7 +117,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     }
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
-    pub fn right_triangle(width: Num, height: Num, metadata: Option<S>) -> Self {
+    pub fn right_triangle(width: Real, height: Real, metadata: Option<S>) -> Self {
         let line_string = LineString::new(vec![
             coord! {x: 0.0, y: 0.0},
             coord! {x: width, y: 0.0},
@@ -137,11 +137,11 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// # Example
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     /// let poly2d = Sketch::polygon(&pts, metadata);
-    pub fn polygon(points: &[[Num; 2]], metadata: Option<S>) -> Self {
+    pub fn polygon(points: &[[Real; 2]], metadata: Option<S>) -> Self {
         if points.len() < 3 {
             return Sketch::new();
         }
-        let mut coords: Vec<(Num, Num)> = points.iter().map(|p| (p[0], p[1])).collect();
+        let mut coords: Vec<(Real, Real)> = points.iter().map(|p| (p[0], p[1])).collect();
         // close
         if coords[0] != *coords.last().unwrap() {
             coords.push(coords[0]);
@@ -201,15 +201,15 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// - `height`: Full height (diameter) along y-axis  
     /// - `segments`: Number of polygon edges (minimum 3)
     /// - `metadata`: Optional metadata
-    pub fn ellipse(width: Num, height: Num, segments: usize, metadata: Option<S>) -> Self {
+    pub fn ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 3 {
             return Sketch::new();
         }
         let rx = 0.5 * width;
         let ry = 0.5 * height;
-        let mut coords: Vec<(Num, Num)> = (0..segments)
+        let mut coords: Vec<(Real, Real)> = (0..segments)
             .map(|i| {
-                let theta = TAU * (i as Num) / (segments as Num);
+                let theta = TAU * (i as Real) / (segments as Real);
                 (rx * theta.cos(), ry * theta.sin())
             })
             .collect();
@@ -273,13 +273,13 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// - `sides`: Number of polygon edges (≥ 3)
     /// - `radius`: Circumscribed circle radius
     /// - `metadata`: Optional metadata
-    pub fn regular_ngon(sides: usize, radius: Num, metadata: Option<S>) -> Self {
+    pub fn regular_ngon(sides: usize, radius: Real, metadata: Option<S>) -> Self {
         if sides < 3 {
             return Sketch::new();
         }
-        let mut coords: Vec<(Num, Num)> = (0..sides)
+        let mut coords: Vec<(Real, Real)> = (0..sides)
             .map(|i| {
-                let theta = TAU * (i as Num) / (sides as Num);
+                let theta = TAU * (i as Real) / (sides as Real);
                 (radius * theta.cos(), radius * theta.sin())
             })
             .collect();
@@ -310,10 +310,10 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// let arrow = Sketch::<()>::arrow(5.0, 0.5, 2.0, 1.5, None);
     /// ```
     pub fn arrow(
-        shaft_length: Num,
-        shaft_width: Num,
-        head_length: Num,
-        head_width: Num,
+        shaft_length: Real,
+        shaft_width: Real,
+        head_length: Real,
+        head_width: Real,
         metadata: Option<S>,
     ) -> Self {
         if shaft_length <= 0.0 || shaft_width <= 0.0 || head_length <= 0.0 || head_width <= 0.0
@@ -343,10 +343,10 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Trapezoid from (0,0) -> (bottom_width,0) -> (top_width+top_offset,height) -> (top_offset,height)
     /// Note: this is a simple shape that can represent many trapezoids or parallelograms.
     pub fn trapezoid(
-        top_width: Num,
-        bottom_width: Num,
-        height: Num,
-        top_offset: Num,
+        top_width: Real,
+        bottom_width: Real,
+        height: Real,
+        top_offset: Real,
         metadata: Option<S>,
     ) -> Self {
         let coords = vec![
@@ -367,17 +367,17 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// The star is centered at (0,0).
     pub fn star(
         num_points: usize,
-        outer_radius: Num,
-        inner_radius: Num,
+        outer_radius: Real,
+        inner_radius: Real,
         metadata: Option<S>,
     ) -> Self {
         if num_points < 2 {
             return Sketch::new();
         }
-        let step = TAU / (num_points as Num);
-        let mut coords: Vec<(Num, Num)> = (0..num_points)
+        let step = TAU / (num_points as Real);
+        let mut coords: Vec<(Real, Real)> = (0..num_points)
             .flat_map(|i| {
-                let theta_out = i as Num * step;
+                let theta_out = i as Real * step;
                 let outer_point =
                     (outer_radius * theta_out.cos(), outer_radius * theta_out.sin());
 
@@ -405,8 +405,8 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// This is just one of many possible "teardrop" definitions.
     // todo: center on focus of the arc
     pub fn teardrop(
-        width: Num,
-        length: Num,
+        width: Real,
+        length: Real,
         segments: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
@@ -419,7 +419,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
         let mut coords = vec![(0.0, 0.0)]; // Start at the tip
         coords.extend((0..=half_seg).map(|i| {
-            let t = PI * (i as Num / half_seg as Num); // Corrected angle for semi-circle
+            let t = PI * (i as Real / half_seg as Real); // Corrected angle for semi-circle
             let x = -r * t.cos();
             let y = center_y + r * t.sin();
             (x, y)
@@ -435,15 +435,15 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
-    pub fn egg(width: Num, length: Num, segments: usize, metadata: Option<S>) -> Sketch<S, T> {
+    pub fn egg(width: Real, length: Real, segments: usize, metadata: Option<S>) -> Sketch<S, T> {
         if segments < 3 {
             return Sketch::new();
         }
         let rx = 0.5 * width;
         let ry = 0.5 * length;
-        let mut coords: Vec<(Num, Num)> = (0..segments)
+        let mut coords: Vec<(Real, Real)> = (0..segments)
             .map(|i| {
-                let theta = TAU * (i as Num) / (segments as Num);
+                let theta = TAU * (i as Real) / (segments as Real);
                 // toy distortion approach
                 let distort = 1.0 + 0.2 * theta.cos();
                 let x = rx * theta.sin();
@@ -463,9 +463,9 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
     /// `corner_segments` controls the smoothness of each rounded corner.
     pub fn rounded_rectangle(
-        width: Num,
-        height: Num,
-        corner_radius: Num,
+        width: Real,
+        height: Real,
+        corner_radius: Real,
         corner_segments: usize,
         metadata: Option<S>,
     ) -> Self {
@@ -474,16 +474,16 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
             return Sketch::rectangle(width, height, metadata);
         }
         // We'll approximate each 90° corner with `corner_segments` arcs
-        let step = FRAC_PI_2 / corner_segments as Num;
+        let step = FRAC_PI_2 / corner_segments as Real;
 
         let corner = |cx, cy, start_angle| {
             (0..=corner_segments).map(move |i| {
-                let angle: Num = start_angle + (i as Num) * step;
+                let angle: Real = start_angle + (i as Real) * step;
                 (cx + r * angle.cos(), cy + r * angle.sin())
             })
         };
 
-        let mut coords: Vec<(Num, Num)> = corner(r, r, PI) // Bottom-left
+        let mut coords: Vec<(Real, Real)> = corner(r, r, PI) // Bottom-left
             .chain(corner(width - r, r, 1.5 * PI)) // Bottom-right
             .chain(corner(width - r, height - r, 0.0)) // Top-right
             .chain(corner(r, height - r, 0.5 * PI)) // Top-left
@@ -501,8 +501,8 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
     /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
     pub fn squircle(
-        width: Num,
-        height: Num,
+        width: Real,
+        height: Real,
         segments: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
@@ -512,9 +512,9 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let rx = 0.5 * width;
         let ry = 0.5 * height;
         let m = 4.0;
-        let mut coords: Vec<(Num, Num)> = (0..segments)
+        let mut coords: Vec<(Real, Real)> = (0..segments)
             .map(|i| {
-                let t = TAU * (i as Num) / (segments as Num);
+                let t = TAU * (i as Real) / (segments as Real);
                 let ct = t.cos().abs().powf(2.0 / m) * t.cos().signum();
                 let st = t.sin().abs().powf(2.0 / m) * t.sin().signum();
                 (rx * ct, ry * st)
@@ -533,9 +533,9 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// This does *not* have a hole.  If you want a literal hole, you'd do difference ops.
     /// Here we do union of a circle and a rectangle.
     pub fn keyhole(
-        circle_radius: Num,
-        handle_width: Num,
-        handle_height: Num,
+        circle_radius: Real,
+        handle_width: Real,
+        handle_height: Real,
         segments: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
@@ -569,7 +569,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// retain constant width, even-sided ones do not but are still smooth).
     pub fn reuleaux(
         sides: usize,
-        diameter: Num,
+        diameter: Real,
         circle_segments: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
@@ -581,12 +581,12 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         //            s
         //   R = -------------
         //        2 sin(π/n)
-        let r_circ = diameter / (2.0 * (PI / sides as Num).sin());
+        let r_circ = diameter / (2.0 * (PI / sides as Real).sin());
 
         // Pre-compute vertex positions of the regular n-gon
-        let verts: Vec<(Num, Num)> = (0..sides)
+        let verts: Vec<(Real, Real)> = (0..sides)
             .map(|i| {
-                let theta = TAU * (i as Num) / (sides as Num);
+                let theta = TAU * (i as Real) / (sides as Real);
                 (r_circ * theta.cos(), r_circ * theta.sin())
             })
             .collect();
@@ -610,7 +610,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
     /// Outer diameter = `id + 2*thickness`. This yields an annulus in the XY plane.
     /// `segments` controls how smooth the outer/inner circles are.
-    pub fn ring(id: Num, thickness: Num, segments: usize, metadata: Option<S>) -> Sketch<S, T> {
+    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>) -> Sketch<S, T> {
         if id <= 0.0 || thickness <= 0.0 || segments < 3 {
             return Sketch::new();
         }
@@ -630,9 +630,9 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// - `segments`: how many segments to use to approximate the arc.
     /// - `metadata`: optional user metadata for this polygon.
     pub fn pie_slice(
-        radius: Num,
-        start_angle_deg: Num,
-        end_angle_deg: Num,
+        radius: Real,
+        start_angle_deg: Real,
+        end_angle_deg: Real,
         segments: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
@@ -648,7 +648,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let mut coords = Vec::with_capacity(segments + 2);
         coords.push((0.0, 0.0));
         for i in 0..=segments {
-            let t = i as Num / (segments as Num);
+            let t = i as Real / (segments as Real);
             let angle = start_rad + t * sweep;
             let x = radius * angle.cos();
             let y = radius * angle.sin();
@@ -669,12 +669,12 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Adjust as needed for your use-case.
     #[allow(clippy::too_many_arguments)]
     pub fn supershape(
-        a: Num,
-        b: Num,
-        m: Num,
-        n1: Num,
-        n2: Num,
-        n3: Num,
+        a: Real,
+        b: Real,
+        m: Real,
+        n1: Real,
+        n2: Real,
+        n3: Real,
         segments: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
@@ -684,14 +684,14 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
         // The typical superformula radius function
         fn supershape_r(
-            theta: Num,
-            a: Num,
-            b: Num,
-            m: Num,
-            n1: Num,
-            n2: Num,
-            n3: Num,
-        ) -> Num {
+            theta: Real,
+            a: Real,
+            b: Real,
+            m: Real,
+            n1: Real,
+            n2: Real,
+            n3: Real,
+        ) -> Real {
             // r(θ) = [ |cos(mθ/4)/a|^n2 + |sin(mθ/4)/b|^n3 ]^(-1/n1)
             let t = m * theta * 0.25;
             let cos_t = t.cos().abs();
@@ -703,7 +703,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
         let mut coords = Vec::with_capacity(segments + 1);
         for i in 0..segments {
-            let frac = i as Num / (segments as Num);
+            let frac = i as Real / (segments as Real);
             let theta = TAU * frac;
             let r = supershape_r(theta, a, b, m, n1, n2, n3);
 
@@ -723,10 +723,10 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
     /// Creates a 2D circle with a rectangular keyway slot cut out on the +X side.
     pub fn circle_with_keyway(
-        radius: Num,
+        radius: Real,
         segments: usize,
-        key_width: Num,
-        key_depth: Num,
+        key_width: Real,
+        key_depth: Real,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
         // 1. Full circle
@@ -746,9 +746,9 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// `radius` is the circle radius,
     /// `flat_dist` is how far from the center the flat chord is placed.
     pub fn circle_with_flat(
-        radius: Num,
+        radius: Real,
         segments: usize,
-        flat_dist: Num,
+        flat_dist: Real,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
         // 1. Full circle
@@ -770,9 +770,9 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// `flat_dist` => half-distance between flats measured from the center.
     ///   - chord at y=+flat_dist  and  chord at y=-flat_dist
     pub fn circle_with_two_flats(
-        radius: Num,
+        radius: Real,
         segments: usize,
-        flat_dist: Num,
+        flat_dist: Real,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
         // 1. Full circle
@@ -800,13 +800,13 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     ///
     /// * `control`: list of 2-D control points
     /// * `segments`: number of straight-line segments used for the tessellation
-    pub fn bezier(control: &[[Num; 2]], segments: usize, metadata: Option<S>) -> Self {
+    pub fn bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>) -> Self {
         if control.len() < 2 || segments < 1 {
             return Sketch::new();
         }
 
         /// Evaluates a Bézier curve at a given parameter `t` using de Casteljau's algorithm.
-        fn de_casteljau(control: &[[Num; 2]], t: Num) -> (Num, Num) {
+        fn de_casteljau(control: &[[Real; 2]], t: Real) -> (Real, Real) {
             let mut points = control.to_vec();
             let n = points.len();
 
@@ -819,9 +819,9 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
             (points[0][0], points[0][1])
         }
 
-        let pts: Vec<(Num, Num)> = (0..=segments)
+        let pts: Vec<(Real, Real)> = (0..=segments)
             .map(|i| {
-                let t = i as Num / segments as Num;
+                let t = i as Real / segments as Real;
                 de_casteljau(control, t)
             })
             .collect();
@@ -833,7 +833,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         };
 
         let geometry = if is_closed {
-            let ring: LineString<Num> = pts.into();
+            let ring: LineString<Real> = pts.into();
             Geometry::Polygon(GeoPolygon::new(ring, vec![]))
         } else {
             Geometry::LineString(pts.into())
@@ -849,7 +849,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// * `p`:       spline degree (e.g. 3 for a cubic)  
     /// * `segments_per_span`: tessellation resolution inside every knot span
     pub fn bspline(
-        control: &[[Num; 2]],
+        control: &[[Real; 2]],
         p: usize,
         segments_per_span: usize,
         metadata: Option<S>,
@@ -861,19 +861,19 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let n = control.len() - 1;
         let m = n + p + 1; // knot count
         // open-uniform knot vector: 0,0,…,0,1,2,…,n-p-1,(n-p),…,(n-p)
-        let mut knot = Vec::<Num>::with_capacity(m + 1);
+        let mut knot = Vec::<Real>::with_capacity(m + 1);
         for i in 0..=m {
             if i <= p {
                 knot.push(0.0);
             } else if i >= m - p {
-                knot.push((n - p) as Num);
+                knot.push((n - p) as Real);
             } else {
-                knot.push((i - p) as Num);
+                knot.push((i - p) as Real);
             }
         }
 
         // Cox-de Boor basis evaluation
-        fn basis(i: usize, p: usize, u: Num, knot: &[Num]) -> Num {
+        fn basis(i: usize, p: usize, u: Real, knot: &[Real]) -> Real {
             if p == 0 {
                 return if u >= knot[i] && u < knot[i + 1] {
                     1.0
@@ -897,17 +897,17 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         }
 
         let span_count = n - p; // #inner knot spans
-        let _max_u = span_count as Num; // parametric upper bound
-        let dt = 1.0 / segments_per_span as Num; // step in local span coords
+        let _max_u = span_count as Real; // parametric upper bound
+        let dt = 1.0 / segments_per_span as Real; // step in local span coords
 
-        let mut pts = Vec::<(Num, Num)>::new();
+        let mut pts = Vec::<(Real, Real)>::new();
         for span in 0..=span_count {
             for s in 0..=segments_per_span {
                 if span == span_count && s == segments_per_span {
                     // avoid duplicating final knot value
                     continue;
                 }
-                let u = span as Num + s as Num * dt; // global param
+                let u = span as Real + s as Real * dt; // global param
                 let mut x = 0.0;
                 let mut y = 0.0;
                 for (idx, &[px, py]) in control.iter().enumerate() {
@@ -922,7 +922,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < EPSILON
             && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < EPSILON;
         if !closed {
-            let ls: LineString<Num> = pts.into();
+            let ls: LineString<Real> = pts.into();
             let mut gc = GeometryCollection::default();
             gc.0.push(Geometry::LineString(ls));
             return Sketch::from_geo(gc, metadata);
@@ -935,17 +935,17 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// 2-D heart outline (closed polygon) sized to `width` × `height`.
     ///
     /// `segments` controls smoothness (≥ 8 recommended).
-    pub fn heart(width: Num, height: Num, segments: usize, metadata: Option<S>) -> Self {
+    pub fn heart(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
         if segments < 8 {
             return Sketch::new();
         }
 
-        let step = TAU / segments as Num;
+        let step = TAU / segments as Real;
 
         // classic analytic “cardioid-style” heart
-        let mut pts: Vec<(Num, Num)> = (0..segments)
+        let mut pts: Vec<(Real, Real)> = (0..segments)
             .map(|i| {
-                let t = i as Num * step;
+                let t = i as Real * step;
                 let x = 16.0 * (t.sin().powi(3));
                 let y = 13.0 * t.cos()
                     - 5.0 * (2.0 * t).cos()
@@ -957,16 +957,16 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         pts.push(pts[0]); // close
 
         // normalise & scale to desired bounding box ---------------------
-        let (min_x, max_x) = pts.iter().fold((Num::MAX, -Num::MAX), |(lo, hi), &(x, _)| {
+        let (min_x, max_x) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(x, _)| {
             (lo.min(x), hi.max(x))
         });
-        let (min_y, max_y) = pts.iter().fold((Num::MAX, -Num::MAX), |(lo, hi), &(_, y)| {
+        let (min_y, max_y) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(_, y)| {
             (lo.min(y), hi.max(y))
         });
         let s_x = width / (max_x - min_x);
         let s_y = height / (max_y - min_y);
 
-        let coords: Vec<(Num, Num)> = pts
+        let coords: Vec<(Real, Real)> = pts
             .into_iter()
             .map(|(x, y)| ((x - min_x) * s_x, (y - min_y) * s_y))
             .collect();
@@ -987,9 +987,9 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// let cres = Sketch::<()>::crescent(2.0, 1.4, 0.8, 64, None);
     /// ```
     pub fn crescent(
-        outer_r: Num,
-        inner_r: Num,
-        offset: Num,
+        outer_r: Real,
+        inner_r: Real,
+        offset: Real,
         segments: usize,
         metadata: Option<S>,
     ) -> Self {
@@ -1015,11 +1015,11 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// - `segments_per_flank`: tessellation resolution per tooth flank
     /// - `metadata`: optional metadata
     pub fn involute_gear(
-        module: Num,
+        module: Real,
         teeth: usize,
-        pressure_angle_deg: Num,
-        clearance: Num,
-        backlash: Num,
+        pressure_angle_deg: Real,
+        clearance: Real,
+        backlash: Real,
         segments_per_flank: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
@@ -1027,7 +1027,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         assert!(segments_per_flank >= 2);
 
         let m = module;
-        let z = teeth as Num;
+        let z = teeth as Real;
         let pressure_angle = pressure_angle_deg.to_radians();
 
         // Standard gear dimensions
@@ -1044,10 +1044,10 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
         // Helper: generate one involute flank from r1 to r2
         let generate_flank =
-            |r_start: Num, r_end: Num, reverse: bool| -> Vec<(Num, Num)> {
+            |r_start: Real, r_end: Real, reverse: bool| -> Vec<(Real, Real)> {
                 let mut pts = Vec::with_capacity(segments_per_flank + 1);
                 for i in 0..=segments_per_flank {
-                    let t = i as Num / segments_per_flank as Num;
+                    let t = i as Real / segments_per_flank as Real;
                     let r = r_start + t * (r_end - r_start);
                     let phi = ((r / base_radius).powi(2) - 1.0).max(0.0).sqrt(); // involute angle
                     let (x, y) = (
@@ -1071,7 +1071,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let left_flank: Vec<_> = right_flank.iter().map(|&(x, y)| (x, -y)).rev().collect();
 
         // Rotate flanks to align with tooth center
-        let rotate = |x: Num, y: Num, angle: Num| -> (Num, Num) {
+        let rotate = |x: Real, y: Real, angle: Real| -> (Real, Real) {
             let c = angle.cos();
             let s = angle.sin();
             (x * c - y * s, x * s + y * c)
@@ -1098,7 +1098,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         // Now replicate around the gear
         let mut outline = Vec::with_capacity(tooth_profile.len() * teeth + 1);
         for i in 0..teeth {
-            let rot = i as Num * angular_pitch;
+            let rot = i as Real * angular_pitch;
             let c = rot.cos();
             let s = rot.sin();
             for &(x, y) in &tooth_profile {
@@ -1120,18 +1120,18 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// - `segments_per_flank`: tessellation resolution per tooth flank
     /// - `metadata`: optional metadata
     pub fn cycloidal_gear(
-        module: Num,
+        module: Real,
         teeth: usize,
         pin_teeth: usize,
-        clearance: Num,
+        clearance: Real,
         segments_per_flank: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
         assert!(teeth >= 3 && pin_teeth >= 3);
         assert!(segments_per_flank >= 2);
 
-        let z = teeth as Num;
-        let _zp = pin_teeth as Num;
+        let z = teeth as Real;
+        let _zp = pin_teeth as Real;
         let pitch_radius = 0.5 * module * z;
 
         // Rolling circle radius: for zp = z + 1 (common case)
@@ -1143,13 +1143,13 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let mut outline = Vec::new();
 
         for i in 0..teeth {
-            let base_angle = i as Num * ang_pitch;
+            let base_angle = i as Real * ang_pitch;
 
             // --- Epicycloid lobe (addendum) ---
             // Sweep from -Δθ/2 to +Δθ/2 around base_angle
             let delta = ang_pitch / 4.0;
             for j in 0..=segments_per_flank {
-                let t = -delta + (2.0 * delta) * (j as Num / segments_per_flank as Num);
+                let t = -delta + (2.0 * delta) * (j as Real / segments_per_flank as Real);
                 let k = (pitch_radius + r_roll) / r_roll;
                 let x = (pitch_radius + r_roll) * t.cos() - r_roll * (k * t).cos();
                 let y = (pitch_radius + r_roll) * t.sin() - r_roll * (k * t).sin();
@@ -1165,7 +1165,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
             let valley_angle = base_angle + ang_pitch / 2.0;
             let delta_v = ang_pitch / 4.0;
             for j in 0..=segments_per_flank {
-                let t = -delta_v + (2.0 * delta_v) * (j as Num / segments_per_flank as Num);
+                let t = -delta_v + (2.0 * delta_v) * (j as Real / segments_per_flank as Real);
                 let k = (pitch_radius - r_roll) / r_roll;
                 let x = (pitch_radius - r_roll) * t.cos() + r_roll * (k * t).cos();
                 let y = (pitch_radius - r_roll) * t.sin() - r_roll * (k * t).sin();
@@ -1194,11 +1194,11 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// - `backlash`: backlash allowance
     /// - `metadata`: optional metadata
     pub fn involute_rack(
-        module_: Num,
+        module_: Real,
         num_teeth: usize,
-        pressure_angle_deg: Num,
-        clearance: Num,
-        backlash: Num,
+        pressure_angle_deg: Real,
+        clearance: Real,
+        backlash: Real,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
         assert!(num_teeth >= 1);
@@ -1216,7 +1216,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let tan_alpha = alpha.tan();
 
         // Build the complete rack profile as a single closed polygon
-        let mut outline = Vec::<[Num; 2]>::new();
+        let mut outline = Vec::<[Real; 2]>::new();
 
         // Start at the bottom left of the first tooth
         let first_x = -half_t - (tip_y - root_y) / tan_alpha;
@@ -1224,7 +1224,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
         // Build each tooth
         for i in 0..num_teeth {
-            let tooth_center = (i as Num) * p;
+            let tooth_center = (i as Real) * p;
             let left_pitch = tooth_center - half_t;
             let right_pitch = tooth_center + half_t;
             let left_tip = left_pitch - (tip_y) / tan_alpha;
@@ -1242,7 +1242,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
             // Bottom right (root)
             if i < num_teeth - 1 {
-                let next_left_pitch = (i as Num + 1.0) * p - half_t;
+                let next_left_pitch = (i as Real + 1.0) * p - half_t;
                 let next_root_left = next_left_pitch - (tip_y - root_y) / tan_alpha;
                 outline.push([next_root_left, root_y]);
             }
@@ -1250,7 +1250,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
         // Close the polygon by connecting back to the start
         // Add the bottom right corner
-        let last_tooth_center = ((num_teeth - 1) as Num) * p;
+        let last_tooth_center = ((num_teeth - 1) as Real) * p;
         let last_right_pitch = last_tooth_center + half_t;
         let last_root_right = last_right_pitch + (tip_y - root_y) / tan_alpha;
         outline.push([last_root_right, root_y]);
@@ -1274,10 +1274,10 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// - `segments_per_flank`: tessellation resolution per tooth flank
     /// - `metadata`: optional metadata
     pub fn cycloidal_rack(
-        module_: Num,
+        module_: Real,
         num_teeth: usize,
-        generating_radius: Num, // usually = module_/2
-        clearance: Num,
+        generating_radius: Real, // usually = module_/2
+        clearance: Real,
         segments_per_flank: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
@@ -1295,16 +1295,16 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         // We scale t so that y range equals addendum (= m)
         let scale = addendum / (2.0 * r);
 
-        let mut flank: Vec<[Num; 2]> = Vec::with_capacity(segments_per_flank);
+        let mut flank: Vec<[Real; 2]> = Vec::with_capacity(segments_per_flank);
         for i in 0..=segments_per_flank {
-            let t = PI * (i as Num) / (segments_per_flank as Num); // 0..π gives half‑trochoid
+            let t = PI * (i as Real) / (segments_per_flank as Real); // 0..π gives half‑trochoid
             let x = r * (t - t.sin());
             let y = r * (1.0 - t.cos());
             flank.push([x * scale, y * scale]);
         }
 
         // Build one tooth (CCW): left flank, mirrored right flank, root bridge
-        let mut tooth: Vec<[Num; 2]> = Vec::with_capacity(flank.len() * 2 + 2);
+        let mut tooth: Vec<[Real; 2]> = Vec::with_capacity(flank.len() * 2 + 2);
         // Left side (reverse so CCW)
         for &[x, y] in flank.iter().rev() {
             tooth.push([-x, y]);
@@ -1319,9 +1319,9 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         tooth.push([-bridge, root_y]);
 
         // Repeat
-        let mut outline = Vec::<[Num; 2]>::with_capacity(tooth.len() * num_teeth + 1);
+        let mut outline = Vec::<[Real; 2]>::with_capacity(tooth.len() * num_teeth + 1);
         for k in 0..num_teeth {
-            let dx = (k as Num) * p;
+            let dx = (k as Real) * p;
             for &[x, y] in &tooth {
                 outline.push([x + dx, y]);
             }
@@ -1344,10 +1344,10 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// The function returns a single closed polygon lying in the *XY* plane with its
     /// leading edge at the origin and the chord running along +X.
     pub fn airfoil_naca4(
-        max_camber: Num,
-        camber_position: Num,
-        thickness: Num,
-        chord: Num,
+        max_camber: Real,
+        camber_position: Real,
+        thickness: Real,
+        chord: Real,
         samples: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
@@ -1355,14 +1355,14 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let camber_pos = camber_position / 10.0;
 
         // thickness half-profile
-        let half_profile = |x: Num| -> Num {
+        let half_profile = |x: Real| -> Real {
             5.0 * thickness / 100.0
                 * (0.2969 * x.sqrt() - 0.1260 * x - 0.3516 * x * x + 0.2843 * x * x * x
                     - 0.1015 * x * x * x * x)
         };
 
         // mean-camber line & slope
-        let camber = |x: Num| -> (Num, Num) {
+        let camber = |x: Real| -> (Real, Real) {
             if x < camber_pos {
                 let yc = max_camber_percentage / (camber_pos * camber_pos)
                     * (2.0 * camber_pos * x - x * x);
@@ -1379,12 +1379,12 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         };
 
         // sample upper & lower surfaces
-        let n = samples as Num;
-        let mut coords: Vec<(Num, Num)> = Vec::with_capacity(2 * samples + 1);
+        let n = samples as Real;
+        let mut coords: Vec<(Real, Real)> = Vec::with_capacity(2 * samples + 1);
 
         // leading-edge → trailing-edge (upper)
         for i in 0..=samples {
-            let xc = i as Num / n; // 0–1
+            let xc = i as Real / n; // 0–1
             let x = xc * chord; // physical
             let t = half_profile(xc);
             let (yc_val, dy) = camber(xc);
@@ -1397,7 +1397,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
         // trailing-edge → leading-edge (lower)
         for i in (1..samples).rev() {
-            let xc = i as Num / n;
+            let xc = i as Real / n;
             let x = xc * chord;
             let t = half_profile(xc);
             let (yc_val, dy) = camber(xc);
@@ -1422,7 +1422,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// - `order`: recursion order (number of points ≈ 4^order).
     /// - `padding`: optional inset from the bounding-box edges (same units as the sketch).
     ///   Returns a new `Sketch` containing only the inside segments as `LineString`s.
-    pub fn hilbert_curve(&self, order: usize, padding: Num) -> Sketch<S, T> {
+    pub fn hilbert_curve(&self, order: usize, padding: Real) -> Sketch<S, T> {
         if order == 0 {
             return Sketch::new();
         }
@@ -1442,7 +1442,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
         // Generate normalized Hilbert points in [0,1]^2, then scale/translate.
         let pts_norm = hilbert_points(order);
-        let pts: Vec<(Num, Num)> = pts_norm
+        let pts: Vec<(Real, Real)> = pts_norm
             .into_iter()
             .map(|(u, v)| (ox + u * sx, oy + v * sy))
             .collect();
@@ -1451,8 +1451,8 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let shell = self.to_multipolygon();
         let has_shell = !shell.0.is_empty();
 
-        let mut runs: Vec<Vec<(Num, Num)>> = Vec::new();
-        let mut run: Vec<(Num, Num)> = Vec::new();
+        let mut runs: Vec<Vec<(Real, Real)>> = Vec::new();
+        let mut run: Vec<(Real, Real)> = Vec::new();
 
         for w in pts.windows(2) {
             let a = w[0];
@@ -1491,19 +1491,19 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
 /// Generate Hilbert-curve points normalized to the unit square.
 /// Order `n` yields 4^n points, ordered along the path.
-fn hilbert_points(order: usize) -> Vec<(Num, Num)> {
+fn hilbert_points(order: usize) -> Vec<(Real, Real)> {
     #[allow(
         clippy::too_many_arguments,
         reason = "This should be refactored in the future, but it's blocking CI at the moment."
     )]
     fn recur(
-        out: &mut Vec<(Num, Num)>,
-        x0: Num,
-        y0: Num,
-        xi: Num,
-        xj: Num,
-        yi: Num,
-        yj: Num,
+        out: &mut Vec<(Real, Real)>,
+        x0: Real,
+        y0: Real,
+        xi: Real,
+        xj: Real,
+        yi: Real,
+        yj: Real,
         n: usize,
     ) {
         if n == 0 {
