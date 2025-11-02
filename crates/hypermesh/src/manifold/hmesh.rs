@@ -1,6 +1,7 @@
 use std::mem;
 use std::cmp::PartialEq;
 use std::sync::{Arc, Weak};
+use anyhow::anyhow;
 use nalgebra::{DMatrix, RowVector3 as Row3};
 
 /// Hmesh preserves the order of pos and idx in any cases.
@@ -50,9 +51,9 @@ fn edge_topology(
     edge2vert: &mut DMatrix<usize>,
     edge2face: &mut DMatrix<usize>,
     face2edge: &mut DMatrix<usize>,
-) {
-    assert!(pos.nrows() > 0 && pos.ncols() > 0);
-    assert!(idx.nrows() > 0 && idx.ncols() > 0);
+) -> anyhow::Result<()> {
+    if pos.nrows() == 0 || pos.ncols() == 0 { return Err(anyhow!("empty pos matrix")); }
+    if idx.nrows() == 0 || idx.ncols() == 0 { return Err(anyhow!("empty idx matrix")); }
 
     let mut ett: Vec<[usize; 4]> = vec![];
 
@@ -117,17 +118,18 @@ fn edge_topology(
             edge2face[(i,1)] = tmp;
         }
     }
+    Ok(())
 }
 
 impl Hmesh {
     pub fn new(
         pos: DMatrix<f64>,
         idx: DMatrix<usize>,
-    ) -> Arc<Self> {
+    ) -> anyhow::Result<Arc<Self>> {
         let mut e2v = Default::default();
         let mut e2f = Default::default();
         let mut f2e = Default::default();
-        edge_topology(&pos, &idx, &mut e2v, &mut e2f, &mut f2e);
+        edge_topology(&pos, &idx, &mut e2v, &mut e2f, &mut f2e)?;
 
         let nv = pos.nrows();
         let nf = idx.nrows();
@@ -195,8 +197,7 @@ impl Hmesh {
             ib += 1;
         }
 
-
-        Arc::new_cyclic(|weak_ptr| {
+        Ok(Arc::new_cyclic(|weak_ptr| {
             let mut faces = vec![];
             let mut verts = vec![];
             let mut edges = vec![];
@@ -274,7 +275,7 @@ impl Hmesh {
                 face_basis_y,
                 face_area
             }
-        })
+        }))
     }
 }
 
@@ -348,7 +349,7 @@ fn minimal_quad_case() {
     pos.row_mut(3).copy_from_slice(&[0., 1., 0.]);
     idx.row_mut(0).copy_from_slice(&[0, 1, 2]);
     idx.row_mut(1).copy_from_slice(&[2, 3, 0]);
-    let hmesh = Hmesh::new(pos, idx);
+    let hmesh = Hmesh::new(pos, idx).unwrap();
     assert_eq!(hmesh.n_vert, 4);
     assert_eq!(hmesh.n_face, 2);
     assert_eq!(hmesh.n_edge, 5);
@@ -377,7 +378,7 @@ fn quad_with_hole_case() {
 
     let pos: DMatrix<f64>   = DMatrix::from_row_slice(mesh.positions.len() / 3, 3, &pos_buf).into();
     let idx: DMatrix<usize> = DMatrix::from_row_slice(mesh.indices.len() / 3, 3, &idx_buf).into();
-    let hmesh = Hmesh::new(pos, idx);
+    let hmesh = Hmesh::new(pos, idx).unwrap();
     assert_eq!(hmesh.n_vert, 16);
     assert_eq!(hmesh.n_face, 16);
     assert_eq!(hmesh.n_edge, 32);

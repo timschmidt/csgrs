@@ -35,10 +35,10 @@ impl Manifold {
         let m0 = Hmesh::new(
             DMatrix::from_row_slice(pos.len() / 3, 3, &pos),
             DMatrix::from_row_slice(idx.len() / 3, 3, &idx)
-        );
+        )?;
         let bb = BBox::new_from_matrix(&m0.pos);
         let (mut f_bb, mut f_mt) = compute_face_morton(&m0, &bb);
-        let hm = sort_faces(&m0, &mut f_bb, &mut f_mt);
+        let hm = sort_faces(&m0, &mut f_bb, &mut f_mt)?;
 
         let ps = hm.verts.iter().map(|v| v.pos()).collect::<Vec<_>>();
         let hs = hm.halfs.iter().map(|h| Half::new(h.tail().id,h.head().id,h.twin().id)).collect::<Vec<_>>();
@@ -119,7 +119,7 @@ fn sort_faces(
     hmesh: &Hmesh,
     f_bboxes: &mut Vec<BBox>,
     f_morton: &mut Vec<u32>
-) -> Arc<Hmesh> {
+) -> anyhow::Result<Arc<Hmesh>> {
     let mut table = (0..f_morton.len()).collect::<Vec<_>>();
     table.sort_by_key(|&i| f_morton[i]);
     *f_bboxes = table.iter().map(|&i| f_bboxes[i].clone()).collect::<Vec<_>>();

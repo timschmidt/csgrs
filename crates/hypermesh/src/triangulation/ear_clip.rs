@@ -263,6 +263,28 @@ impl Ord for EvPtrMaxPosX {
     }
 }
 
+// Apply `func` to each unclipped vertex in a polygonal circular list starting at `v`.
+fn do_loop<F>(v: &mut EvPtr, mut func: F) -> Option<EvPtr> where F: FnMut(&mut EvPtr) {
+    let mut w = Rc::clone(v);
+    loop {
+        if clipped(&w) {
+            // Update first to an unclipped vert so we will return to it instead of infinite-loop
+            *v = w.borrow().ptr_l_of_r();
+            if !clipped(v) {
+                w = Rc::clone(v);
+                if folded(&w) { return None; }
+                func(&mut w);
+            }
+        } else {
+            if folded(&w) { return None; }
+            func(&mut w);
+        }
+
+        w = { w.borrow().ptr_r() };
+        if Rc::ptr_eq(&w, v) { return Some(w); }
+    }
+}
+
 /*
  * Ear-clipping triangulator based on David Eberly's approach from Geometric
  * Tools, but adjusted to handle epsilon-valid polygons, and including a
@@ -313,10 +335,6 @@ impl EarClip {
         clip
     }
 
-    pub fn get_epsilon(&self) -> f64 {
-        panic!("Not implemented");
-    }
-
     pub fn triangulate(&mut self) -> Vec<Row3u> {
         //println!("hole size: {}", self.holes.len());
         //println!("simples size: {}", self.simples.len());
@@ -339,27 +357,6 @@ impl EarClip {
         bl.dir = safe_normalize(br.pos - bl.pos);
     }
 
-    // Apply `func` to each unclipped vertex in a polygonal circular list starting at `first`.
-    fn do_loop<F>(v: &mut EvPtr, mut func: F) -> Option<EvPtr> where F: FnMut(&mut EvPtr) {
-        let mut w = Rc::clone(v);
-        loop {
-            if clipped(&w) {
-                // Update first to an unclipped vert so we will return to it instead of infinite-loop
-                *v = w.borrow().ptr_l_of_r();
-                if !clipped(v) {
-                    w = Rc::clone(v);
-                    if folded(&w) { return None; }
-                    func(&mut w);
-                }
-            } else {
-                if folded(&w) { return None; }
-                func(&mut w);
-            }
-
-            w = { w.borrow().ptr_r() };
-            if Rc::ptr_eq(&w, v) { return Some(w); }
-        }
-    }
 
     pub fn clip_ear(&mut self, ear: &EvPtr) {
         Self::link(&ear.borrow().ptr_l(), &ear.borrow().ptr_r());
@@ -433,7 +430,7 @@ impl EarClip {
             }
         };
 
-        if Self::do_loop(first, add_point).is_none() { return; }
+        if do_loop(first, add_point).is_none() { return; }
         area += comp;
         let min_area = self.eps * bbox.scale();
 
@@ -451,7 +448,7 @@ impl EarClip {
     fn vert_collider(start: &mut EvPtr) -> IdxCollider {
         let mut pts = vec![];
         let mut rfs = vec![];
-        Self::do_loop(start, |v| {
+        do_loop(start, |v| {
             pts.push(PolyVert{ pos: v.borrow().pos, idx: rfs.len() });
             rfs.push(Rc::clone(v));
         });
@@ -476,7 +473,7 @@ impl EarClip {
         println!("find con bgn");
         println!("contour size: {}", self.contour.len());
         for first in self.contour.iter_mut() {
-            Self::do_loop(first, |e| {
+            do_loop(first, |e| {
                 println!("edge {}", e.borrow().idx);
                 let eb = e.borrow();
                 if let Some(x) = eb.interpolate_y2x(&vp, on_top, eps) {
@@ -529,7 +526,7 @@ impl EarClip {
         let above = if cp.y > sp.y { 1. } else { -1. };
 
         for it in self.contour.iter_mut() {
-            Self::do_loop(it, |v| {
+            do_loop(it, |v| {
                 let vb = v.borrow();
                 let vp = v.borrow().pos;
                 let inside = above as i32 * is_ccw_2d(&sp, &vp, &cp, self.eps);
@@ -596,7 +593,7 @@ impl EarClip {
         let mut num_tri = -2;
         self.eque.clear();
 
-        let v_op = Self::do_loop(start, |v| { self.process_ear(v, &col); num_tri += 1; });
+        let v_op = do_loop(start, |v| { self.process_ear(v, &col); num_tri += 1; });
 
         if let Some(mut v) = v_op {
             while num_tri > 0 {
