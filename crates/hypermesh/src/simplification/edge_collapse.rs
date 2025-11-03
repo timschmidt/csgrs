@@ -82,8 +82,8 @@ pub fn collapse_edge(
                 let tr2 = tr0;
                 tr0 = &rs[hid / 3];
                 if !r_curr.same_face(&tr0) { return false; }
-                if tr0.mesh_id != tr2.mesh_id ||
-                   tr0.face_id != tr2.face_id ||
+                if tr0.mid != tr2.mid ||
+                   tr0.fid != tr2.fid ||
                    n_pair.dot(n_curr) < -0.5 {
                     // Restrict collapse to co-linear edges when the edge separates faces or the edge is sharp.
                     // This ensures large shifts are not introduced parallel to the tangent plane.

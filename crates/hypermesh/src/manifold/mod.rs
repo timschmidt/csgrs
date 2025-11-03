@@ -4,12 +4,13 @@ pub mod collider;
 use std::cmp::Ordering;
 use std::sync::Arc;
 use anyhow::anyhow;
-use nalgebra::{DMatrix};
+use nalgebra::{DMatrix, Matrix3};
 use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider, K_NO_CODE};
 use crate::common::{Half, K_PRECISION, Row3f, next_of};
 use super::hmesh::Hmesh;
 
+#[derive(Clone)]
 pub struct Manifold {
     pub ps: Vec<Row3f>,
     pub hs: Vec<Half>,
@@ -27,8 +28,8 @@ pub struct Manifold {
 
 impl Manifold {
     pub fn new(
-        pos: &Vec<f64>,
-        idx: &Vec<usize>,
+        pos: &[f64],
+        idx: &[usize],
         eps: Option<f64>,
         tol: Option<f64>,
     ) -> anyhow::Result<Self> {
@@ -80,7 +81,7 @@ impl Manifold {
         self.tol = self.tol.max(t);
     }
 
-    fn is_manifold(&self) -> bool {
+    pub fn is_manifold(&self) -> bool {
         self.hs.iter().enumerate().all(|(i, h)| {
             if h.tail().is_none() || h.head().is_none() { return true; }
             return match h.pair() {
@@ -95,6 +96,25 @@ impl Manifold {
                 }
             }
         })
+    }
+    pub fn translate(&mut self, t: Row3f) {
+        for p in &mut self.ps { *p += t; }
+    }
+
+    pub fn scale(&mut self, s: Row3f) {
+        for p in &mut self.ps { *p = Row3f::new(p.x * s.x, p.y * s.y, p.z * s.z); }
+    }
+    pub fn rotate(&mut self, r: Row3f) {
+        let xc = r.x.cos();
+        let xs = r.x.sin();
+        let yc = r.y.cos();
+        let ys = r.y.sin();
+        let zc = r.z.cos();
+        let zs = r.z.sin();
+        let rx = Matrix3::new(1.0, 0.0, 0.0, 0.0, xc, xs, 0.0, -xs, xc);
+        let ry = Matrix3::new(yc, 0.0, -ys, 0.0, 1.0, 0.0, ys, 0.0, zc);
+        let rz = Matrix3::new(zc, zs, 0.0, -zs, zc, 0.0, 0.0, 0.0, 1.0);
+        for p in &mut self.ps { *p = (rz * ry * rx * p.transpose()).transpose(); }
     }
 }
 

@@ -173,10 +173,10 @@ fn update_reference(
     rs: &mut[Tref],
 ) {
     for r in rs.iter_mut() {
-        let fid = r.face_id;
-        let pq = r.mesh_id == 0;
-        r.face_id = 0; // todo: see original code and it's always -1
-        r.planar_id = if pq { mp.coplanar[fid] }
+        let fid = r.fid;
+        let pq = r.mid == 0;
+        r.fid = 0; // todo: see original code and it's always -1
+        r.pid = if pq { mp.coplanar[fid] }
         else  { mq.coplanar[fid] };
     }
 }

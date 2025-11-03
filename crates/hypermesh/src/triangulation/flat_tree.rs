@@ -151,22 +151,18 @@ impl Rect {
 
     pub fn contains(&self, p: &Row2f) -> bool {
         p.x >= self.min.x &&
-            p.x <= self.max.x &&
-            p.y >= self.min.y &&
-            p.y <= self.max.y
+        p.x <= self.max.x &&
+        p.y >= self.min.y &&
+        p.y <= self.max.y
     }
+
+    pub fn size(&self) -> Row2f { self.max - self.min }
+
+    pub fn scale(&self) -> f64 { let s = self.size();s.x.abs().max(s.y.abs()) }
 
     pub fn union(&mut self, p: &Row2f) {
         self.min = Row2f::new(self.min.x.min(p.x), self.min.y.min(p.y));
         self.max = Row2f::new(self.max.x.max(p.x), self.max.y.max(p.y));
     }
 
-    pub fn size(&self) -> Row2f {
-        self.max - self.min
-    }
-
-    pub fn scale(&self) -> f64 {
-        let s = self.size();
-        s.x.abs().max(s.y.abs())
-    }
 }

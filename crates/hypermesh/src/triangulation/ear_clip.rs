@@ -35,9 +35,8 @@ impl Ecvt {
 
     // Shorter than half of epsilon, to be conservative so that it doesn't
     // cause CW triangles that exceed epsilon due to rounding error.
-    pub fn is_short(&self, epsilons: f64) -> bool {
-        let diff = self.pos_r() - self.pos;
-        diff.dot(&diff) * 4. < epsilons * epsilons
+    pub fn is_short(&self, eps: f64) -> bool {
+        (self.pos_r() - self.pos).norm_squared() * 4. < eps.powi(2)
     }
 
     // Returns true if Vert is on inside the edge that goes from tail to tail->right.
@@ -157,8 +156,8 @@ impl Ecvt {
     // For verts outside the ear, apply a cost based on the Delaunay condition
     // to aid in prioritization and produce cleaner triangulations. This doesn't
     // affect robustness but may be adjusted to improve output.
-    pub fn delaunay_cost(&self, diff: &Row2f, scale: f64, eps: f64) -> f64 {
-        -eps - scale * diff.norm_squared()
+    pub fn delaunay_cost(&self, diff: &Row2f, scl: f64, eps: f64) -> f64 {
+        -eps - scl * diff.norm_squared()
     }
 
     // This is the expensive part of the algorithm, checking this ear against
@@ -306,7 +305,7 @@ pub struct EarClip {
     polygon: Vec<EvPtr>,
     simples: Vec<EvPtr>, // contour + recursive ccw loops
     contour: Vec<EvPtr>,
-    eque:  BTreeSet<EvPtrMinCost>,
+    queue: BTreeSet<EvPtrMinCost>,
     holes: BTreeSet<EvPtrMaxPosX>,
     tris: Vec<Row3u>,
     bbox: Rect,
@@ -319,7 +318,7 @@ impl EarClip {
             polygon: vec![],
             simples: vec![],
             contour: vec![],
-            eque: BTreeSet::new(),
+            queue: BTreeSet::new(),
             holes: BTreeSet::new(),
             tris: vec![],
             bbox: Rect::default(),
@@ -545,18 +544,18 @@ impl EarClip {
     // To do this, both verts are duplicated and reattached. This process may create degenerate ears,
     // so these are clipped if necessary to keep from confusing sub_sequent key-holing operations.
     fn join_polygons(&mut self, sta: &EvPtr, con: &EvPtr) {
-        let new_sta = Rc::new(RefCell::new(sta.borrow().clone()));
-        let new_con = Rc::new(RefCell::new(con.borrow().clone()));
-        self.polygon.push(Rc::clone(&new_sta));
-        self.polygon.push(Rc::clone(&new_con));
-        sta.borrow().ptr_r().borrow_mut().vl = Some(Rc::downgrade(&new_sta));
-        con.borrow().ptr_l().borrow_mut().vr = Some(Rc::downgrade(&new_con));
+        let sta1 = Rc::new(RefCell::new(sta.borrow().clone()));
+        let con1 = Rc::new(RefCell::new(con.borrow().clone()));
+        self.polygon.push(Rc::clone(&sta1));
+        self.polygon.push(Rc::clone(&con1));
+        sta.borrow().ptr_r().borrow_mut().vl = Some(Rc::downgrade(&sta1));
+        con.borrow().ptr_l().borrow_mut().vr = Some(Rc::downgrade(&con1));
         Self::link(sta, con);
-        Self::link(&new_con, &new_sta);
+        Self::link(&con1, &sta1);
         self.clip_degenerate(sta);
-        self.clip_degenerate(&new_sta);
+        self.clip_degenerate(&sta1);
         self.clip_degenerate(con);
-        self.clip_degenerate(&new_con);
+        self.clip_degenerate(&con1);
     }
 
     // Recalculate the cost of the Vert v ear,
@@ -564,7 +563,7 @@ impl EarClip {
     fn process_ear(&mut self, v: &mut EvPtr, col: &IdxCollider) {
         let taken = { let mut b = v.borrow_mut(); b.ear.take() };
         if let Some(e) = taken {
-            self.eque.remove(&EvPtrMinCost(e.upgrade().unwrap()));
+            self.queue.remove(&EvPtrMinCost(e.upgrade().unwrap()));
         }
 
         if v.borrow().is_short(self.eps) {
@@ -572,14 +571,14 @@ impl EarClip {
             v.borrow_mut().cost = K_BEST;
             let ptr = EvPtrMinCost(Rc::clone(v));
             v.borrow_mut().ear = Some(Rc::downgrade(&ptr.0));
-            self.eque.insert(ptr);
+            self.queue.insert(ptr);
             return;
         }
         if v.borrow().is_convex(2. * self.eps) {
             v.borrow_mut().cost = { v.borrow().ear_cost(self.eps, col) };
             let ptr = EvPtrMinCost(Rc::clone(v));
             v.borrow_mut().ear = Some(Rc::downgrade(&ptr.0));
-            self.eque.insert(ptr);
+            self.queue.insert(ptr);
             return;
         }
 
@@ -591,13 +590,13 @@ impl EarClip {
         if col.rfs.is_empty() { return; }
 
         let mut num_tri = -2;
-        self.eque.clear();
+        self.queue.clear();
 
         let v_op = do_loop(start, |v| { self.process_ear(v, &col); num_tri += 1; });
 
         if let Some(mut v) = v_op {
             while num_tri > 0 {
-                if let Some(q) = self.eque.pop_first() { v = Rc::clone(&q.0); }
+                if let Some(q) = self.queue.pop_first() { v = Rc::clone(&q.0); }
                 self.clip_ear(&v);
                 num_tri -= 1;
                 self.process_ear(&mut v.borrow().ptr_l(), &col);

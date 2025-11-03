@@ -232,8 +232,8 @@ fn append_partial_edges(
         // position advanced CCW. This is only valid if this is a retained vert;
         // it will be ignored later if the vert is new.
 
-        let fw_tri = Tref{ mesh_id: if fwd {0} else {1}, face_id: fp_l, ..Default::default() };
-        let bk_tri = Tref{ mesh_id: if fwd {0} else {1}, face_id: fp_r, ..Default::default() };
+        let fw_tri = Tref{ mid: if fwd {0} else {1}, fid: fp_l, ..Default::default() };
+        let bk_tri = Tref{ mid: if fwd {0} else {1}, fid: fp_r, ..Default::default() };
 
         for h in half_seq.iter_mut() {
             let fw_edge = face_ptr_r[fid_l] as usize;
@@ -271,8 +271,8 @@ fn append_new_edges(
         let mut half_seq = pair_up(&mut epos);
         let fid_l = fid_pq2r[*fid_p] as usize;
         let fid_r = fid_pq2r[*fid_q + nf_p] as usize;
-        let fw_ref = Tref { mesh_id: 0, face_id: *fid_p, ..Default::default() };
-        let bk_ref = Tref { mesh_id: 1, face_id: *fid_q, ..Default::default() };
+        let fw_ref = Tref { mid: 0, fid: *fid_p, ..Default::default() };
+        let bk_ref = Tref { mid: 1, fid: *fid_q, ..Default::default() };
 
         for h in half_seq.iter_mut() {
             let fw_edge = face_ptr_r[fid_l] as usize;
@@ -295,8 +295,8 @@ fn append_whole_edges(
     whole_flag: &[bool],
     fwd: bool,
     face_ptr_r: &mut[i32],
-    hs_r: &mut [Half],
-    rs_r: &mut [Tref],
+    hs_r: &mut[Half],
+    rs_r: &mut[Tref],
 ) {
     for (i, hp) in half_p.iter().enumerate() {
         if !whole_flag[i] || !hp.is_forward() { continue; }
@@ -313,8 +313,8 @@ fn append_whole_edges(
         let fp_r = face_of(hp.pair);
         let fid_l = fid_p2r[fp_l] as usize;
         let fid_r = fid_p2r[fp_r] as usize;
-        let fw_ref = Tref{ mesh_id: if fwd {0} else {1}, face_id: fp_l, ..Default::default() };
-        let bk_ref = Tref{ mesh_id: if fwd {0} else {1}, face_id: fp_r, ..Default::default() };
+        let fw_ref = Tref{ mid: if fwd {0} else {1}, fid: fp_l, ..Default::default() };
+        let bk_ref = Tref{ mid: if fwd {0} else {1}, fid: fp_r, ..Default::default() };
 
         for _ in 0..inc.abs() as usize {
             let fw_edge = face_ptr_r[fid_l] as usize;

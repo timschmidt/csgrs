@@ -168,13 +168,13 @@ fn build_internal_boxes(
     loop {
         if flag && node == K_ROOT { return; }
         node = node_parent[node as usize];
-        let intl_idx = node2intl(node);
-        let c = counter[intl_idx as usize];
-        counter[intl_idx as usize] += 1;
+        let intl_idx = node2intl(node) as usize;
+        let c = counter[intl_idx];
+        counter[intl_idx] += 1;
         if c == 0 { return; }
         node_bb[node as usize] = union_bbs(
-            &node_bb[intl_children[intl_idx as usize].0 as usize],
-            &node_bb[intl_children[intl_idx as usize].1 as usize]
+            &node_bb[intl_children[intl_idx].0 as usize],
+            &node_bb[intl_children[intl_idx].1 as usize]
         );
         flag = true;
     }
@@ -188,6 +188,7 @@ pub trait Collider {
     fn collision(&self, queries: &[BBox], recorder: &mut dyn Recorder);
 }
 
+#[derive(Clone)]
 pub struct MortonCollider {
     pub node_bb: Vec<BBox>,
     pub node_parent: Vec<i32>,

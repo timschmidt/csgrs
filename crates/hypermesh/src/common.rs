@@ -37,28 +37,22 @@ pub fn next_of(hid: usize) -> usize { let mut i = hid + 1; if i % 3 == 0 { i -= 
 
 #[derive(Clone, Debug)]
 pub struct Tref {
-    pub mesh_id: usize,
-    pub face_id: usize,
-    pub origin_id: i32,
-    pub planar_id: i32,
+    pub mid: usize, // mesh id
+    pub fid: usize, // face id
+    pub pid: i32,   // planer id
 }
 
 impl Default for Tref {
     fn default() -> Self {
-        Self {
-            mesh_id: usize::MAX,
-            face_id: usize::MAX,
-            origin_id: -1,
-            planar_id: -1,
-        }
+        Self { mid: usize::MAX, fid: usize::MAX, pid: -1 }
     }
 }
 
 impl Tref {
     pub fn same_face(&self, other: &Tref) -> bool {
-        self.mesh_id == other.mesh_id &&
-        self.face_id == other.face_id &&
-        self.planar_id == other.planar_id
+        self.mid == other.mid &&
+        self.fid == other.fid &&
+        self.pid == other.pid
     }
 }
 
@@ -96,10 +90,11 @@ pub fn is_ccw_3d(p0: &Row3f, p1: &Row3f, p2: &Row3f, n: &Row3f, t: f64) -> i32 {
     )
 }
 
-// todo: check not is_nan as well
 pub fn safe_normalize(v: Row2f) -> Row2f {
     let n = v.normalize();
-    if n.x.is_finite() && n.y.is_finite() { n } else { Row2f::new(0., 0.) }
+    if n.x.is_finite() && !n.x.is_nan() &&
+       n.y.is_finite() && !n.y.is_nan() { n }
+    else { Row2f::new(0., 0.) }
 }
 
 /*
