@@ -47,7 +47,7 @@ impl<T> Scalar for T where
 }
 
 // Integer power (avoid `.powi()` calls)
-#[inline] pub fn powi<T: Scalar>(mut x: T, mut e: i32) -> T {
+#[inline] pub fn powi<T: Scalar>(x: T, mut e: i32) -> T {
     if e == 0 { return one() }
     let mut base = x;
     let mut acc = one();

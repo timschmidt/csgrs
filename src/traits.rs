@@ -1,37 +1,41 @@
 use crate::aabb::Aabb;
 use crate::mesh::plane::Plane;
+use mixed_num::{MixedAbs, MixedPi, MixedZero};
 use crate::math_ndsp::{Matrix3, Matrix4, Rotation3, Translation3, Vector3, Scalar, eps};
 
 /// Boolean operations + transformations
 pub trait CSG: Sized + Clone {
+	type Scalar: Scalar;
+	
     fn new() -> Self;
     fn union(&self, other: &Self) -> Self;
     fn difference(&self, other: &Self) -> Self;
     fn intersection(&self, other: &Self) -> Self;
     fn xor(&self, other: &Self) -> Self;
-    fn transform(&self, matrix: &Matrix4<Real>) -> Self;
+    fn transform(&self, matrix: &Matrix4<Self::Scalar>) -> Self;
     fn inverse(&self) -> Self;
-    fn bounding_box(&self) -> Aabb<T>;
+    fn bounding_box(&self) -> Aabb<Self::Scalar>;
     fn invalidate_bounding_box(&mut self);
 
     /// Returns a new Self translated by vector.
-    fn translate_vector(&self, vector: Vector3<Real>) -> Self {
+    fn translate_vector(&self, vector: Vector3<Self::Scalar>) -> Self {
         self.transform(&Translation3::from(vector).to_homogeneous())
     }
 
     /// Returns a new Self translated by x, y, and z.
-    fn translate(&self, x: Real, y: Real, z: Real) -> Self {
+    fn translate(&self, x: Self::Scalar, y: Self::Scalar, z: Self::Scalar) -> Self {
         self.translate_vector(Vector3::new(x, y, z))
     }
 
     /// Returns a new Self translated so that its bounding-box center is at the origin (0,0,0).
     fn center(&self) -> Self {
         let aabb = self.bounding_box();
+        let c2 = self::Scalar::mixed_from(0.5);
 
         // Compute the AABB center
-        let center_x = (aabb.mins.x + aabb.maxs.x) * 0.5;
-        let center_y = (aabb.mins.y + aabb.maxs.y) * 0.5;
-        let center_z = (aabb.mins.z + aabb.maxs.z) * 0.5;
+        let center_x = (aabb.mins.x + aabb.maxs.x) * c2;
+        let center_y = (aabb.mins.y + aabb.maxs.y) * c2;
+        let center_z = (aabb.mins.z + aabb.maxs.z) * c2;
 
         // Translate so that the bounding-box center goes to the origin
         self.translate(-center_x, -center_y, -center_z)
@@ -52,14 +56,15 @@ pub trait CSG: Sized + Clone {
     fn float(&self) -> Self {
         let aabb = self.bounding_box();
         let min_z = aabb.mins.z;
-        self.translate(0.0, 0.0, -min_z)
+        self.translate(Self::Scalar::mixed_zero(), Self::Scalar::mixed_zero(), -min_z)
     }
 
     /// Rotates Self by x_degrees, y_degrees, z_degrees
-    fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
-        let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg.to_radians());
-        let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg.to_radians());
-        let rz = Rotation3::from_axis_angle(&Vector3::z_axis(), z_deg.to_radians());
+    fn rotate(&self, x_deg: Self::Scalar, y_deg: Self::Scalar, z_deg: Self::Scalar) -> Self {
+		let deg2rad = Self::Scalar::mixed_pi() / Self::Scalar::mixed_from(180.0);
+        let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg * deg2rad);
+        let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg * deg2rad);
+        let rz = Rotation3::from_axis_angle(&Vector3::z_axis(), z_deg * deg2rad);
 
         // Compose them in the desired order
         let rot = rz * ry * rx;
@@ -67,7 +72,7 @@ pub trait CSG: Sized + Clone {
     }
 
     /// Scales Self by scale_x, scale_y, scale_z
-    fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
+    fn scale(&self, sx: Self::Scalar, sy: Self::Scalar, sz: Self::Scalar) -> Self {
         let mat4 = Matrix4::scaling(sx, sy, sz);
         self.transform(&mat4)
     }
@@ -116,10 +121,10 @@ pub trait CSG: Sized + Clone {
     /// the orientation of polygons, affecting inside/outside semantics in CSG.
     ///
     /// Returns a new Self whose geometry is mirrored accordingly.
-    fn mirror(&self, plane: Plane<T>) -> Self {
+    fn mirror(&self, plane: Plane<Self::Scalar>) -> Self {
         // Normal might not be unit, so compute its length:
         let len = plane.normal().norm();
-        if len.abs() < eps::<T>() {
+        if len.mixed_abs() <= eps::<Self::Scalar>() {
             // Degenerate plane? Just return clone (no transform)
             return self.clone();
         }
@@ -139,7 +144,7 @@ pub trait CSG: Sized + Clone {
         //let mut reflect_4 = Matrix4::identity();
         //let reflect_3 = Matrix3::identity() - 2.0 * n * n.transpose();
         let reflect_3 = Matrix3::reflection_about_unit_normal(n);
-        let r4 = Matrix4::from_matrix3_and_translation(reflect_3, Vector3::zeros());
+        let r4 = Matrix4::from_matrix3_and_translation(reflect_3, Vector3::mixed_zeroes());
         //reflect_4.fixed_view_mut::<3, 3>(0, 0).copy_from(&reflect_3);
 
         // Translate back
@@ -158,23 +163,25 @@ pub trait CSG: Sized + Clone {
     fn distribute_arc(
         &self,
         count: usize,
-        radius: Real,
-        start_angle_deg: Real,
-        end_angle_deg: Real,
+        radius: Self::Scalar,
+        start_angle_deg: Self::Scalar,
+        end_angle_deg: Self::Scalar,
     ) -> Self {
         if count < 1 {
             return self.clone();
         }
-        let start_rad = start_angle_deg.to_radians();
-        let end_rad = end_angle_deg.to_radians();
+        let deg2rad = Self::Scalar::mixed_pi() / Self::Scalar::mixed_from(180.0);
+        let start_rad = start_angle_deg * deg2rad;
+        let end_rad = end_angle_deg * deg2rad;
         let sweep = end_rad - start_rad;
 
         (0..count)
             .map(|i| {
                 let t = if count == 1 {
-                    0.5
+                    Self::Scalar::mixed_from(0.5)
                 } else {
-                    i as Real / ((count - 1) as Real)
+                    Self::Scalar::mixed_from(i)
+                        / Self::Scalar::mixed_from((count - 1))
                 };
 
                 let angle = start_rad + t * sweep;
@@ -183,7 +190,7 @@ pub trait CSG: Sized + Clone {
                         .to_homogeneous();
 
                 // translate out to radius in x
-                let trans = Translation3::new(radius, 0.0, 0.0).to_homogeneous();
+                let trans = Translation3::new(radius, Self::Scalar::mixed_zero(), Self::Scalar::mixed_zero()).to_homogeneous();
                 let mat = rot * trans;
                 self.transform(&mat)
             })
@@ -198,8 +205,8 @@ pub trait CSG: Sized + Clone {
     fn distribute_linear(
         &self,
         count: usize,
-        dir: Vector3<Real>,
-        spacing: Real,
+        dir: Vector3<Self::Scalar>,
+        spacing: Self::Scalar,
     ) -> Self {
         if count < 1 {
             return self.clone();
@@ -208,8 +215,8 @@ pub trait CSG: Sized + Clone {
 
         (0..count)
             .map(|i| {
-                let offset = step * (i as Real);
-                let trans = Translation3::from(offset).to_homogeneous();
+                let offset = Self::Scalar::mixed_from(i);
+                let trans = Translation3::from(offset * step).to_homogeneous();
                 self.transform(&trans)
             })
             .reduce(|acc, csg| acc.union(&csg))
@@ -218,17 +225,19 @@ pub trait CSG: Sized + Clone {
 
     /// Distribute Self in a grid of `rows x cols`, with spacing dx, dy in XY plane.
     /// top-left or bottom-left depends on your usage of row/col iteration.
-    fn distribute_grid(&self, rows: usize, cols: usize, dx: Real, dy: Real) -> Self {
+    fn distribute_grid(&self, rows: usize, cols: usize, dx: Self::Scalar, dy: Self::Scalar) -> Self {
         if rows < 1 || cols < 1 {
             return self.clone();
         }
-        let step_x = Vector3::new(dx, 0.0, 0.0);
-        let step_y = Vector3::new(0.0, dy, 0.0);
+        let step_x = Vector3::new(dx, Self::Scalar::mixed_zero(), Self::Scalar::mixed_zero());
+        let step_y = Vector3::new(Self::Scalar::mixed_zero(), dy, Self::Scalar::mixed_zero());
 
         (0..rows)
             .flat_map(|r| {
                 (0..cols).map(move |c| {
-                    let offset = step_x * (c as Real) + step_y * (r as Real);
+                    let rx = Self::Scalar::mixed_from(c);
+                    let ry = Self::Scalar::mixed_from(r);
+                    let offset = step_x * rx + step_y * ry;
                     let trans = Translation3::from(offset).to_homogeneous();
                     self.transform(&trans)
                 })

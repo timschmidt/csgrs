@@ -1,5 +1,5 @@
 use crate::errors::ValidationError;
-use crate::math_ndsp::consts::{FRAC_PI_2, PI};
+use crate::math_ndsp::consts::{FRAC_PI_2};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
@@ -2159,7 +2159,7 @@ fn test_mesh_quality_analysis() {
         );
         assert!(quality.area > 0.0, "Triangle area should be positive");
         assert!(quality.min_angle > 0.0, "Minimum angle should be positive");
-        assert!(quality.max_angle < PI, "Maximum angle should be less than π");
+        assert!(quality.max_angle < T::mixed_pi(), "Maximum angle should be less than π");
     }
 
     // Compute overall mesh quality metrics
@@ -2296,7 +2296,7 @@ fn test_vertex_distance_operations() {
     // Test normal angle
     let angle = v1.normal_angle_to(&v2);
     assert!(
-        (angle - PI / 2.0).abs() < 1e-10,
+        (angle - T::mixed_pi() / 2.0).abs() < 1e-10,
         "Angle between x and y normals should be π/2"
     );
 }

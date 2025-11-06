@@ -1,4 +1,3 @@
-type Real = f64;
 use crate::math_ndsp::Point3;
 
 /// All the possible validation issues we might encounter,
