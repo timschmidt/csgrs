@@ -1,7 +1,6 @@
 use crate::aabb::Aabb;
-use crate::math_ndsp::consts::{Real, EPSILON};
 use crate::mesh::plane::Plane;
-use crate::math_ndsp::{Matrix3, Matrix4, Rotation3, Translation3, Vector3, Scalar};
+use crate::math_ndsp::{Matrix3, Matrix4, Rotation3, Translation3, Vector3, Scalar, eps};
 
 /// Boolean operations + transformations
 pub trait CSG: Sized + Clone {
@@ -120,7 +119,7 @@ pub trait CSG: Sized + Clone {
     fn mirror(&self, plane: Plane<T>) -> Self {
         // Normal might not be unit, so compute its length:
         let len = plane.normal().norm();
-        if len.abs() < EPSILON {
+        if len.abs() < eps::<T>() {
             // Degenerate plane? Just return clone (no transform)
             return self.clone();
         }

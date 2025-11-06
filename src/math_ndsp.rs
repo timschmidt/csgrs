@@ -38,17 +38,33 @@ impl<T> Scalar for T where
 {}
 
 /// A small generic epsilon helper
-#[inline]
-fn eps<T: Scalar>() -> T { T::mixed_from(1e-9) }
+#[inline] pub fn eps<T: Scalar>() -> T { T::mixed_from(1e-9) }
+#[inline] pub fn zero<T: Scalar>() -> T { T::mixed_zero() }
+#[inline] pub fn one<T: Scalar>()  -> T { T::mixed_one() }
+#[inline] pub fn two<T: Scalar>()  -> T { T::mixed_from(2.0) }
+#[inline] pub fn deg_to_rad<T: Scalar>(deg: T) -> T {
+    deg * (T::mixed_pi() / T::mixed_from(180.0))
+}
+
+// Integer power (avoid `.powi()` calls)
+#[inline] pub fn powi<T: Scalar>(mut x: T, mut e: i32) -> T {
+    if e == 0 { return one() }
+    let mut base = x;
+    let mut acc = one();
+    let neg = e < 0;
+    if neg { e = -e; }
+    while e > 0 { if (e & 1) != 0 { acc = acc * base; } base = base * base; e >>= 1; }
+    if neg { one::<T>() / acc } else { acc }
+}
+
+// Generic min/max (avoid f64::min/max and NaN surprises)
+#[inline] pub fn min<T: Scalar + PartialOrd>(a: T, b: T) -> T { if a <= b { a } else { b } }
+#[inline] pub fn max<T: Scalar + PartialOrd>(a: T, b: T) -> T { if a >= b { a } else { b } }
 
 pub mod consts {
-    // We keep the library on f64 for now (simple migration).
-    pub type Real = f64;
-
-    pub const EPSILON: Real     = 1.0e-8;
-    pub const PI: Real          = core::f64::consts::PI;
-    pub const TAU: Real         = core::f64::consts::TAU;
-    pub const FRAC_PI_2: Real   = core::f64::consts::FRAC_PI_2;
+    pub const PI: f64          = core::f64::consts::PI;
+    pub const TAU: f64         = core::f64::consts::TAU;
+    pub const FRAC_PI_2: f64   = core::f64::consts::FRAC_PI_2;
 }
 
 /* ----------------------------- Vector2 / Point2 ----------------------------- */
