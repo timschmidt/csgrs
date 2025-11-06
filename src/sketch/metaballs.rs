@@ -1,7 +1,6 @@
 //! Provides a `MetaBall` struct and functions for creating a `Sketch` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::math_ndsp::consts::{EPSILON};
-use crate::math_ndsp::{Point2};
+use crate::math_ndsp::{Point2, eps};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{
@@ -9,7 +8,6 @@ use geo::{
 };
 use hashbrown::HashMap;
 use std::fmt::Debug;
-type Real = f64;
 
 impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
@@ -70,7 +68,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
                     if distance_sq > threshold_distance_sq {
                         0.0
                     } else {
-                        let denominator = distance_sq + EPSILON;
+                        let denominator = distance_sq + eps::<T>();
                         (radius * radius) / denominator
                     }
                 })
@@ -96,7 +94,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
                            (x2, y2, v2): (Real, Real, Real)|
          -> (Real, Real) {
             let denom = (v2 - v1).abs();
-            if denom < EPSILON {
+            if denom < eps::<T>() {
                 (x1, y1)
             } else {
                 let t = -v1 / (v2 - v1); // crossing at 0

@@ -66,12 +66,10 @@
 //!
 //! Unless stated otherwise, all tolerances are governed by `float_types::EPSILON`.
 
-use crate::math_ndsp::consts::{EPSILON};
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-use crate::math_ndsp::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
+use crate::math_ndsp::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3, eps};
 use robust::{Coord3D, orient3d};
-type Real = f64;
 
 /// Classification of a polygon or point that lies exactly in the plane
 /// (i.e. within `±EPSILON` of the plane).
@@ -169,7 +167,7 @@ impl<T> Plane<T> {
         let p0 = vertices[i0].pos;
         let p1 = vertices[i1].pos;
         let dir = p1 - p0;
-        if dir.norm_squared() < EPSILON * EPSILON {
+        if dir.norm_squared() < eps::<T>() * eps::<T>() {
             return reference_plane; // everything almost coincident
         }
 
@@ -187,7 +185,7 @@ impl<T> Plane<T> {
             return reference_plane;
         };
 
-        let i2 = if max_area2 > EPSILON * EPSILON {
+        let i2 = if max_area2 > eps::<T>() * eps::<T>() {
             i2
         } else {
             return reference_plane; // all vertices collinear
@@ -221,7 +219,7 @@ impl<T> Plane<T> {
     /// If `normal` is close to zero the function fails
     pub fn from_normal(normal: Vector3<T>, offset: T) -> Self {
         let n2 = normal.norm_squared();
-        if n2 < EPSILON * EPSILON {
+        if n2 < eps::<T>() * eps::<T>() {
             panic!(); // degenerate normal
         }
 
@@ -284,9 +282,9 @@ impl<T> Plane<T> {
             },
         );
         #[allow(clippy::useless_conversion)]
-        if sign > EPSILON.into() {
+        if sign > eps::<T>().into() {
             BACK
-        } else if sign < (-EPSILON).into() {
+        } else if sign < (-eps::<T>()).into() {
             FRONT
         } else {
             COPLANAR
@@ -299,7 +297,7 @@ impl<T> Plane<T> {
     pub fn normal(&self) -> Vector3<T> {
         let n = (self.point_b - self.point_a).cross(&(self.point_c - self.point_a));
         let len = n.norm();
-        if len < EPSILON {
+        if len < eps::<T>() {
             Vector3::zeros()
         } else {
             n / len
@@ -396,7 +394,7 @@ impl<T> Plane<T> {
                     if (type_i | type_j) == SPANNING {
                         let denom = normal.dot(&(vertex_j.pos - vertex_i.pos));
                         // Avoid dividing by zero
-                        if denom.abs() > EPSILON {
+                        if denom.abs() > eps::<T>() {
                             let intersection =
                                 (self.offset() - normal.dot(&vertex_i.pos.coords)) / denom;
                             let vertex_new = vertex_i.interpolate(vertex_j, intersection);
@@ -435,7 +433,7 @@ impl<T> Plane<T> {
         // Normal
         let n = self.normal();
         let n_len = n.norm();
-        if n_len < EPSILON {
+        if n_len < eps::<T>() {
             // Degenerate plane, return identity
             return (Matrix4::identity(), Matrix4::identity());
         }

@@ -1,6 +1,4 @@
 //! `Sketch` struct and implementations of the `CSGOps` trait for `Sketch`
-
-type Real = f64;
 use crate::aabb::Aabb;
 use crate::mesh::Mesh;
 use crate::traits::CSG;

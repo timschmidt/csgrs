@@ -15,9 +15,6 @@ use crate::mesh::Polygon;
 #[cfg(feature = "parallel")]
 use crate::mesh::Vertex;
 
-#[cfg(feature = "parallel")]
-use crate::math_ndsp::consts::EPSILON;
-
 impl<S: Clone + Send + Sync + Debug, T> Node<S, T> {
     /// Invert all polygons in the BSP tree using iterative approach to avoid stack overflow
     #[cfg(feature = "parallel")]
@@ -212,7 +209,7 @@ impl<S: Clone + Send + Sync + Debug, T> Node<S, T> {
                                 // The param intersection at which plane intersects the edge [vi -> vj].
                                 // Avoid dividing by zero:
                                 let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
-                                if denom.abs() > EPSILON {
+                                if denom.abs() > eps::<T>() {
                                     let intersection = (slicing_plane.offset()
                                         - slicing_plane.normal().dot(&vi.pos.coords))
                                         / denom;

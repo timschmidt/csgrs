@@ -41,7 +41,6 @@
 //!
 //! All operations preserve the 3D polygon structure while applying 2D offsetting
 //! to the planar projections stored in the geometry collection.
-type Real = f64;
 use crate::sketch::Sketch;
 use geo::{Coord, Geometry, GeometryCollection, LineString, MultiPolygon, Point, Polygon};
 use geo_buf::{

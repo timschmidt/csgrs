@@ -13,12 +13,8 @@
 //!
 //! ### Feature flags
 //! - Requires `csgrs` to be compiled with the `offset` feature for kerf/tool radius comp.
-
 use core::fmt::Debug;
-use crate::math_ndsp::Point3;
-
-type Real = f64;
-use crate::math_ndsp::consts::{EPSILON};
+use crate::math_ndsp::{Point3, eps};
 use crate::sketch::Sketch;
 
 // ==========================
@@ -324,8 +320,8 @@ pub fn cut2d_contours<S: Clone + Send + Sync + Debug, T>(
         let (x1, y1) = ring[1];
         let dir = ((x1 - x0), (y1 - y0));
         let len = (dir.0 * dir.0 + dir.1 * dir.1).sqrt();
-        let ux = if len > EPSILON { dir.0 / len } else { 1.0 };
-        let uy = if len > EPSILON { dir.1 / len } else { 0.0 };
+        let ux = if len > eps::<T>() { dir.0 / len } else { 1.0 };
+        let uy = if len > eps::<T>() { dir.1 / len } else { 0.0 };
         let lx = x0 - ux * ld.length;
         let ly = y0 - uy * ld.length;
 
@@ -405,7 +401,7 @@ pub fn pocket2d<S: Clone + Send + Sync + Debug, T>(
     let mut z_levels: Vec<Real> = Vec::new();
     let mut z = base_z - cfg.stepdown;
     let z_bottom = base_z - cfg.depth;
-    while z > z_bottom + EPSILON {
+    while z > z_bottom + eps::<T>() {
         z_levels.push(z);
         z -= cfg.stepdown;
     }
@@ -413,7 +409,7 @@ pub fn pocket2d<S: Clone + Send + Sync + Debug, T>(
 
     // Concentric offsets inward with stepover until empty
     #[cfg(feature = "offset")]
-    let radial_step = cfg.stepover.max(EPSILON) * cfg.tool.diameter; // fraction * D
+    let radial_step = cfg.stepover.max(eps::<T>()) * cfg.tool.diameter; // fraction * D
     #[cfg(not(feature = "offset"))]
     let radial_step = cfg.tool.diameter * cfg.stepover;
 
@@ -536,7 +532,7 @@ pub fn lathe_rough_from_profile<S: Clone + Send + Sync + Debug, T>(
     let mut samples: Vec<(Real, Real)> = Vec::new(); // (z, r)
     let mut z = z_min.min(z_max);
     let z_end = z_min.max(z_max);
-    while z <= z_end + EPSILON {
+    while z <= z_end + eps::<T>() {
         // Walk edges, find intersections with y = z, choose max x (outer radius)
         let mut xs: Vec<Real> = Vec::new();
         let ext = poly.exterior();
@@ -547,7 +543,7 @@ pub fn lathe_rough_from_profile<S: Clone + Send + Sync + Debug, T>(
             // Does segment cross the horizontal line?
             if (y1 <= z && y2 >= z) || (y2 <= z && y1 >= z) {
                 let dy = y2 - y1;
-                if dy.abs() < EPSILON {
+                if dy.abs() < eps::<T>() {
                     xs.push(x1.max(x2));
                 } else {
                     let t = (z - y1) / dy; // 0..1

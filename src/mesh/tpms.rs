@@ -1,7 +1,6 @@
 //! Triply‑Periodic Minimal Surfaces rewritten to leverage the generic
 //! signed‑distance mesher in `sdf.rs`.
 
-type Real = f64;
 use crate::mesh::Mesh;
 use crate::traits::CSG;
 use crate::math_ndsp::Point3;

@@ -2,7 +2,6 @@
 //!
 //! This module provides import and export functionality for Wavefront OBJ files,
 //! a widely-supported 3D file format used by many modeling and rendering applications.
-type Real = f64;
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;

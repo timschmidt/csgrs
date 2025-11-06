@@ -1,8 +1,6 @@
-use crate::math_ndsp::consts::{PI};
 use crate::mesh::Mesh;
 use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
-type Real = f64;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -195,7 +193,7 @@ impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
         let aspect_ratio = circumradius / inradius;
 
         // Quality score: weighted combination of metrics
-        let angle_quality = (min_angle / (PI / 6.0)).min(1.0); // Normalized to 30°
+        let angle_quality = (min_angle / (T::mixed_pi() / 6.0)).min(1.0); // Normalized to 30°
         let shape_quality = (1.0 / aspect_ratio).min(1.0);
         let edge_quality = (3.0 / edge_ratio).min(1.0);
 

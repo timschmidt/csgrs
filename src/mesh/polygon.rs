@@ -6,7 +6,6 @@ use crate::mesh::vertex::Vertex;
 use geo::{LineString, Polygon as GeoPolygon, coord};
 use crate::math_ndsp::{Point3, Vector3, Scalar};
 use std::sync::OnceLock;
-type Real = f64;
 
 /// A polygon, defined by a list of vertices.
 /// - `S` is the generic metadata type, stored as `Option<S>`.

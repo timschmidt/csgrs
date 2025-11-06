@@ -1,17 +1,15 @@
 //! Functions to extrude, revolve, loft, and otherwise transform 2D `Sketch`s into 3D `Mesh`s
 
 use crate::errors::ValidationError;
-use crate::math_ndsp::consts::{EPSILON};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
-use crate::math_ndsp::{Point3, Vector3, Scalar};
+use crate::math_ndsp::{Point3, Vector3, Scalar, eps};
 use std::fmt::Debug;
 use std::sync::OnceLock;
-type Real = f64;
 
 impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
@@ -86,7 +84,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// # Parameters
     /// - `direction`: 3D vector defining extrusion direction and magnitude
     pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<S, T> {
-        if direction.norm() < EPSILON {
+        if direction.norm() < eps::<T>() {
             return Mesh::new();
         }
 
@@ -346,7 +344,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
             return CSG::new();
         }
         let height = direction.norm();
-        if height < EPSILON {
+        if height < eps::<T>() {
             // no real extrusion
             return CSG::new();
         }
@@ -453,11 +451,11 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         // Step 3) If direction is not along +Z, rotate final mesh so +Z aligns with your direction
         // (This is optional or can be done up front. Typical OpenSCAD style is to do everything
         // along +Z, then rotate the final.)
-        if (axis_dir - Vector3::z()).norm() > EPSILON {
+        if (axis_dir - Vector3::z()).norm() > eps::<T>() {
             // rotate from +Z to axis_dir
             let rot_axis = Vector3::z().cross(&axis_dir);
             let sin_theta = rot_axis.norm();
-            if sin_theta > EPSILON {
+            if sin_theta > eps::<T>() {
                 let cos_theta = Vector3::z().dot(&axis_dir);
                 let angle = cos_theta.acos();
                 let rot = Rotation3::from_axis_angle(&Unit::new_normalize(rot_axis), angle);
@@ -612,7 +610,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
                 let c_j = ring_coords[i + 1];
 
                 // If these two points are the same, skip degenerate edge
-                if (c_i.x - c_j.x).abs() < EPSILON && (c_i.y - c_j.y).abs() < EPSILON {
+                if (c_i.x - c_j.x).abs() < eps::<T>() && (c_i.y - c_j.y).abs() < eps::<T>() {
                     continue;
                 }
 
@@ -669,9 +667,9 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
             // (the last point in a Geo ring is typically the same as the first)
             let last = pts_3d.last().unwrap();
             let first = pts_3d.first().unwrap();
-            if (last.x - first.x).abs() > EPSILON
-                || (last.y - first.y).abs() > EPSILON
-                || (last.z - first.z).abs() > EPSILON
+            if (last.x - first.x).abs() > eps::<T>()
+                || (last.y - first.y).abs() > eps::<T>()
+                || (last.z - first.z).abs() > eps::<T>()
             {
                 pts_3d.push(*first);
             }
@@ -699,7 +697,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         // 2) Iterate over each geometry (Polygon or MultiPolygon),
         //    revolve the side walls, and possibly add caps if angle_degs < 360.
         //----------------------------------------------------------------------
-        let full_revolve = (angle_degs - 360.0).abs() < EPSILON; // or angle_degs >= 359.999..., etc.
+        let full_revolve = (angle_degs - 360.0).abs() < eps::<T>(); // or angle_degs >= 359.999..., etc.
         let do_caps = !full_revolve && (angle_degs > 0.0);
 
         for geom in &self.geometry {
@@ -819,7 +817,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     /// aims the sketch’s +Z at the local path tangent,
     /// stitches side walls, and caps open ends.
     ///
-    /// * `path` - ordered list of 3-D points.  If the first and last points coincide (‖p[0] − p[n]‖ < EPSILON) the path is treated as **closed** and no caps are added.
+    /// * `path` - ordered list of 3-D points.  If the first and last points coincide (‖p[0] − p[n]‖ < eps::<T>()) the path is treated as **closed** and no caps are added.
     ///
     /// * returns - a `Mesh<S>` containing all side quads plus automatically triangulated caps (respecting any holes).
     pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<S, T> {
@@ -831,14 +829,14 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
             return Mesh::new();
         }
         let n_path = path.len();
-        let path_is_closed = (path[0] - path[n_path - 1]).norm() < EPSILON;
+        let path_is_closed = (path[0] - path[n_path - 1]).norm() < eps::<T>();
 
         // pre-compute a transform for each path vertex
         let mut slice_xforms: Vec<Matrix4<Real>> = Vec::with_capacity(n_path);
 
         // first slice
         let mut dir_prev = (path[1] - path[0]).normalize();
-        if dir_prev.norm_squared() < EPSILON * EPSILON {
+        if dir_prev.norm_squared() < eps::<T>() * eps::<T>() {
             dir_prev = Vector3::z();
         }
         let mut orientation = Rotation3::rotation_between(&Vector3::z(), &dir_prev)
@@ -854,7 +852,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
             } else {
                 (path[(i + 1) % n_path] - path[i]).normalize()
             };
-            if dir_curr.norm_squared() < EPSILON * EPSILON {
+            if dir_curr.norm_squared() < eps::<T>() * eps::<T>() {
                 dir_curr = dir_prev;
             }
 

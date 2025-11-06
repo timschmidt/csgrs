@@ -1,4 +1,3 @@
-type Real = f64;
 use crate::mesh::Mesh;
 use crate::math_ndsp::Point3;
 use std::collections::HashMap;

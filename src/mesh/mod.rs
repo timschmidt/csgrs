@@ -6,10 +6,9 @@ use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
 use crate::math_ndsp::{
-    Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3, Scalar
+    Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3, Scalar, eps
 };
 use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
-type Real = f64;
 
 #[cfg(feature = "parallel")]
 use rayon::{iter::IntoParallelRefIterator, prelude::*};

@@ -1,7 +1,6 @@
 //! Provides functions for flattening a `Mesh` against the Z=0 `Plane`
 //! or slicing a `Mesh` with an arbitrary `Plane` into a `Sketch`
 
-use crate::math_ndsp::consts::{EPSILON};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
@@ -12,10 +11,9 @@ use geo::{
     Polygon as GeoPolygon, coord, orient::Direction,
 };
 use hashbrown::HashMap;
-use crate::math_ndsp::Point3;
+use crate::math_ndsp::{Point3, eps};
 use std::fmt::Debug;
 use std::sync::OnceLock;
-type Real = f64;
 
 impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),

@@ -1,15 +1,13 @@
 //! 3D Shapes as `Mesh`s
 
 use crate::errors::ValidationError;
-use crate::math_ndsp::consts::{EPSILON, PI, TAU};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
-use crate::math_ndsp::{Matrix4, Point3, Rotation3, Translation3, Vector3};
+use crate::math_ndsp::{Matrix4, Point3, Rotation3, Translation3, Vector3, eps};
 use std::fmt::Debug;
-type Real = f64;
 
 impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     /// **Mathematical Foundations for 3D Box Geometry**
@@ -237,10 +235,10 @@ impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
                 let p0 = j as Real / stacks as Real;
                 let p1 = (j + 1) as Real / stacks as Real;
 
-                let theta0 = t0 * TAU;
-                let theta1 = t1 * TAU;
-                let phi0 = p0 * PI;
-                let phi1 = p1 * PI;
+                let theta0 = t0 * T::mixed_tau();
+                let theta1 = t1 * T::mixed_tau();
+                let phi0 = p0 * T::mixed_pi();
+                let phi1 = p1 * T::mixed_pi();
 
                 vertices.push(vertex(theta0, phi0));
                 if j > 0 {
@@ -291,7 +289,7 @@ impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
         let s = start.coords;
         let e = end.coords;
         let ray = e - s;
-        if ray.norm_squared() < EPSILON {
+        if ray.norm_squared() < eps::<T>() {
             return Mesh::new();
         }
         let axis_z = ray.normalize();
@@ -315,7 +313,7 @@ impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
         let point = |stack: Real, slice: Real, normal_blend: Real| {
             // Linear interpolation of radius.
             let r = radius1 * (1.0 - stack) + radius2 * stack;
-            let angle = slice * TAU;
+            let angle = slice * T::mixed_tau();
             let radial_dir = axis_x * angle.cos() + axis_y * angle.sin();
             let pos = s + ray * stack + radial_dir * r;
             let normal = radial_dir * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
@@ -325,8 +323,8 @@ impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
         let mut polygons = Vec::new();
 
         // Special-case flags for degenerate faces.
-        let bottom_degenerate = radius1.abs() < EPSILON;
-        let top_degenerate = radius2.abs() < EPSILON;
+        let bottom_degenerate = radius1.abs() < eps::<T>();
+        let top_degenerate = radius2.abs() < eps::<T>();
 
         // If both faces are degenerate, we cannot build a meaningful volume.
         if bottom_degenerate && top_degenerate {
@@ -633,7 +631,7 @@ impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     ) -> Mesh<S, T> {
         // Compute the arrow's total length.
         let arrow_length = direction.norm();
-        if arrow_length < EPSILON {
+        if arrow_length < eps::<T>() {
             return Mesh::new();
         }
         // Compute the unit direction.

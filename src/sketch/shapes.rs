@@ -1,6 +1,6 @@
 //! 2D Shapes as `Sketch`s
-
-use crate::math_ndsp::consts::{Real, EPSILON, FRAC_PI_2, PI, TAU};
+use crate::math_ndsp::consts::{FRAC_PI_2};
+use crate::math_ndsp::{eps};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{
@@ -102,7 +102,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         }
         let mut coords: Vec<(Real, Real)> = (0..segments)
             .map(|i| {
-                let theta = 2.0 * PI * (i as Real) / (segments as Real);
+                let theta = 2.0 * T::mixed_pi() * (i as Real) / (segments as Real);
                 (radius * theta.cos(), radius * theta.sin())
             })
             .collect();
@@ -209,7 +209,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let ry = 0.5 * height;
         let mut coords: Vec<(Real, Real)> = (0..segments)
             .map(|i| {
-                let theta = TAU * (i as Real) / (segments as Real);
+                let theta = T::mixed_tau() * (i as Real) / (segments as Real);
                 (rx * theta.cos(), ry * theta.sin())
             })
             .collect();
@@ -279,7 +279,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         }
         let mut coords: Vec<(Real, Real)> = (0..sides)
             .map(|i| {
-                let theta = TAU * (i as Real) / (sides as Real);
+                let theta = T::mixed_tau() * (i as Real) / (sides as Real);
                 (radius * theta.cos(), radius * theta.sin())
             })
             .collect();
@@ -374,7 +374,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         if num_points < 2 {
             return Sketch::new();
         }
-        let step = TAU / (num_points as Real);
+        let step = T::mixed_tau() / (num_points as Real);
         let mut coords: Vec<(Real, Real)> = (0..num_points)
             .flat_map(|i| {
                 let theta_out = i as Real * step;
@@ -410,7 +410,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         segments: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
-        if segments < 2 || width < EPSILON || length < EPSILON {
+        if segments < 2 || width < eps::<T>() || length < eps::<T>() {
             return Sketch::new();
         }
         let r = 0.5 * width;
@@ -419,7 +419,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
         let mut coords = vec![(0.0, 0.0)]; // Start at the tip
         coords.extend((0..=half_seg).map(|i| {
-            let t = PI * (i as Real / half_seg as Real); // Corrected angle for semi-circle
+            let t = T::mixed_pi() * (i as Real / half_seg as Real); // Corrected angle for semi-circle
             let x = -r * t.cos();
             let y = center_y + r * t.sin();
             (x, y)
@@ -443,7 +443,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let ry = 0.5 * length;
         let mut coords: Vec<(Real, Real)> = (0..segments)
             .map(|i| {
-                let theta = TAU * (i as Real) / (segments as Real);
+                let theta = T::mixed_tau() * (i as Real) / (segments as Real);
                 // toy distortion approach
                 let distort = 1.0 + 0.2 * theta.cos();
                 let x = rx * theta.sin();
@@ -470,7 +470,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         metadata: Option<S>,
     ) -> Self {
         let r = corner_radius.min(width * 0.5).min(height * 0.5);
-        if r <= EPSILON {
+        if r <= eps::<T>() {
             return Sketch::rectangle(width, height, metadata);
         }
         // We'll approximate each 90° corner with `corner_segments` arcs
@@ -483,10 +483,10 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
             })
         };
 
-        let mut coords: Vec<(Real, Real)> = corner(r, r, PI) // Bottom-left
-            .chain(corner(width - r, r, 1.5 * PI)) // Bottom-right
+        let mut coords: Vec<(Real, Real)> = corner(r, r, T::mixed_pi()) // Bottom-left
+            .chain(corner(width - r, r, 1.5 * T::mixed_pi())) // Bottom-right
             .chain(corner(width - r, height - r, 0.0)) // Top-right
-            .chain(corner(r, height - r, 0.5 * PI)) // Top-left
+            .chain(corner(r, height - r, 0.5 * T::mixed_pi())) // Top-left
             .collect();
 
         coords.push(coords[0]); // close
@@ -514,7 +514,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let m = 4.0;
         let mut coords: Vec<(Real, Real)> = (0..segments)
             .map(|i| {
-                let t = TAU * (i as Real) / (segments as Real);
+                let t = T::mixed_tau() * (i as Real) / (segments as Real);
                 let ct = t.cos().abs().powf(2.0 / m) * t.cos().signum();
                 let st = t.sin().abs().powf(2.0 / m) * t.sin().signum();
                 (rx * ct, ry * st)
@@ -573,7 +573,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         circle_segments: usize,
         metadata: Option<S>,
     ) -> Sketch<S, T> {
-        if sides < 3 || circle_segments < 6 || diameter <= EPSILON {
+        if sides < 3 || circle_segments < 6 || diameter <= eps::<T>() {
             return Sketch::new();
         }
 
@@ -581,12 +581,12 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         //            s
         //   R = -------------
         //        2 sin(π/n)
-        let r_circ = diameter / (2.0 * (PI / sides as Real).sin());
+        let r_circ = diameter / (2.0 * (T::mixed_pi() / sides as Real).sin());
 
         // Pre-compute vertex positions of the regular n-gon
         let verts: Vec<(Real, Real)> = (0..sides)
             .map(|i| {
-                let theta = TAU * (i as Real) / (sides as Real);
+                let theta = T::mixed_tau() * (i as Real) / (sides as Real);
                 (r_circ * theta.cos(), r_circ * theta.sin())
             })
             .collect();
@@ -704,7 +704,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let mut coords = Vec::with_capacity(segments + 1);
         for i in 0..segments {
             let frac = i as Real / (segments as Real);
-            let theta = TAU * frac;
+            let theta = T::mixed_tau() * frac;
             let r = supershape_r(theta, a, b, m, n1, n2, n3);
 
             let x = r * theta.cos();
@@ -829,7 +829,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let is_closed = {
             let first = pts[0];
             let last = pts[segments];
-            (first.0 - last.0).abs() < EPSILON && (first.1 - last.1).abs() < EPSILON
+            (first.0 - last.0).abs() < eps::<T>() && (first.1 - last.1).abs() < eps::<T>()
         };
 
         let geometry = if is_closed {
@@ -883,12 +883,12 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
             }
             let denom1 = knot[i + p] - knot[i];
             let denom2 = knot[i + p + 1] - knot[i + 1];
-            let term1 = if denom1.abs() < EPSILON {
+            let term1 = if denom1.abs() < eps::<T>() {
                 0.0
             } else {
                 (u - knot[i]) / denom1 * basis(i, p - 1, u, knot)
             };
-            let term2 = if denom2.abs() < EPSILON {
+            let term2 = if denom2.abs() < eps::<T>() {
                 0.0
             } else {
                 (knot[i + p + 1] - u) / denom2 * basis(i + 1, p - 1, u, knot)
@@ -919,8 +919,8 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
             }
         }
 
-        let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < EPSILON
-            && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < EPSILON;
+        let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < eps::<T>()
+            && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < eps::<T>();
         if !closed {
             let ls: LineString<Real> = pts.into();
             let mut gc = GeometryCollection::default();
@@ -940,7 +940,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
             return Sketch::new();
         }
 
-        let step = TAU / segments as Real;
+        let step = T::mixed_tau() / segments as Real;
 
         // classic analytic “cardioid-style” heart
         let mut pts: Vec<(Real, Real)> = (0..segments)
@@ -993,7 +993,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         segments: usize,
         metadata: Option<S>,
     ) -> Self {
-        if outer_r <= inner_r + EPSILON || segments < 6 {
+        if outer_r <= inner_r + eps::<T>() || segments < 6 {
             return Sketch::new();
         }
 
@@ -1038,7 +1038,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         let base_radius = pitch_radius * pressure_angle.cos();
         let _root_radius = (pitch_radius - dedendum).max(base_radius * 0.9); // avoid < base
 
-        let angular_pitch = TAU / z;
+        let angular_pitch = T::mixed_tau() / z;
         let tooth_thickness_at_pitch = angular_pitch / 2.0 - backlash / pitch_radius;
         let half_tooth_angle = tooth_thickness_at_pitch / 2.0;
 
@@ -1137,7 +1137,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         // Rolling circle radius: for zp = z + 1 (common case)
         let r_roll = module / 2.0; // standard generating radius
 
-        let ang_pitch = TAU / z;
+        let ang_pitch = T::mixed_tau() / z;
 
         // Total points: one epicycloid lobe + one hypocycloid valley per tooth
         let mut outline = Vec::new();
@@ -1203,7 +1203,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     ) -> Sketch<S, T> {
         assert!(num_teeth >= 1);
         let m = module_;
-        let p = PI * m; // linear pitch
+        let p = T::mixed_pi() * m; // linear pitch
         let addendum = m;
         let dedendum = 1.25 * m + clearance;
         let tip_y = addendum;
@@ -1283,7 +1283,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
     ) -> Sketch<S, T> {
         assert!(num_teeth >= 1 && segments_per_flank >= 4);
         let m = module_;
-        let p = PI * m;
+        let p = T::mixed_pi() * m;
         let addendum = m;
         let dedendum = 1.25 * m + clearance;
         let _tip_y = addendum;
@@ -1297,7 +1297,7 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
 
         let mut flank: Vec<[Real; 2]> = Vec::with_capacity(segments_per_flank);
         for i in 0..=segments_per_flank {
-            let t = PI * (i as Real) / (segments_per_flank as Real); // 0..π gives half‑trochoid
+            let t = T::mixed_pi() * (i as Real) / (segments_per_flank as Real); // 0..π gives half‑trochoid
             let x = r * (t - t.sin());
             let y = r * (1.0 - t.cos());
             flank.push([x * scale, y * scale]);
@@ -1433,12 +1433,12 @@ impl<S: Clone + Debug + Send + Sync, T> Sketch<S, T> {
         // Bounding box and usable region (with padding).
         let min = rect.min();
         let max = rect.max();
-        let w = (max.x - min.x).max(EPSILON);
-        let h = (max.y - min.y).max(EPSILON);
+        let w = (max.x - min.x).max(eps::<T>());
+        let h = (max.y - min.y).max(eps::<T>());
         let ox = min.x + padding;
         let oy = min.y + padding;
-        let sx = (w - 2.0 * padding).max(EPSILON);
-        let sy = (h - 2.0 * padding).max(EPSILON);
+        let sx = (w - 2.0 * padding).max(eps::<T>());
+        let sy = (h - 2.0 * padding).max(eps::<T>());
 
         // Generate normalized Hilbert points in [0,1]^2, then scale/translate.
         let pts_norm = hilbert_points(order);

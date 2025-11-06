@@ -1,4 +1,3 @@
-type Real = f64;
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;

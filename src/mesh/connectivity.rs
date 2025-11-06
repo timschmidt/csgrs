@@ -1,4 +1,3 @@
-type Real = f64;
 use crate::mesh::Mesh;
 use hashbrown::HashMap;
 use crate::math_ndsp::Point3;
@@ -13,16 +12,16 @@ use std::fmt::Debug;
 #[derive(Debug, Clone)]
 pub struct VertexIndexMap {
     /// Maps vertex positions to global indices (with epsilon tolerance)
-    pub position_to_index: Vec<(Point3<Real>, usize)>,
+    pub position_to_index: Vec<(Point3<T>, usize)>,
     /// Maps global indices to representative positions
-    pub index_to_position: HashMap<usize, Point3<Real>>,
+    pub index_to_position: HashMap<usize, Point3<T>>,
     /// Spatial tolerance for vertex matching
     pub epsilon: Real,
 }
 
 impl VertexIndexMap {
     /// Create a new vertex index map with specified tolerance
-    pub fn new(epsilon: Real) -> Self {
+    pub fn new(epsilon: T) -> Self {
         Self {
             position_to_index: Vec::new(),
             index_to_position: HashMap::new(),
@@ -75,7 +74,7 @@ impl<S: Clone + Debug + Send + Sync, T> Mesh<S, T> {
     ///
     /// Returns (vertex_map, adjacency_graph) for robust mesh processing.
     pub fn build_connectivity(&self) -> (VertexIndexMap, HashMap<usize, Vec<usize>>) {
-        let mut vertex_map = VertexIndexMap::new(Real::EPSILON * 100.0); // Tolerance for vertex matching
+        let mut vertex_map = VertexIndexMap::new(eps::<T>() * 100.0); // Tolerance for vertex matching
         let mut adjacency: HashMap<usize, Vec<usize>> = HashMap::new();
 
         // First pass: build vertex index mapping

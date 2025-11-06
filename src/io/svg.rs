@@ -4,8 +4,6 @@ use geo::{
     BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon,
 };
 use svg::node::element::path;
-
-type Real = f64;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 
