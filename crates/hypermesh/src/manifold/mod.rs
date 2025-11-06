@@ -97,25 +97,6 @@ impl Manifold {
             }
         })
     }
-    pub fn translate(&mut self, t: Row3f) {
-        for p in &mut self.ps { *p += t; }
-    }
-
-    pub fn scale(&mut self, s: Row3f) {
-        for p in &mut self.ps { *p = Row3f::new(p.x * s.x, p.y * s.y, p.z * s.z); }
-    }
-    pub fn rotate(&mut self, r: Row3f) {
-        let xc = r.x.cos();
-        let xs = r.x.sin();
-        let yc = r.y.cos();
-        let ys = r.y.sin();
-        let zc = r.z.cos();
-        let zs = r.z.sin();
-        let rx = Matrix3::new(1.0, 0.0, 0.0, 0.0, xc, xs, 0.0, -xs, xc);
-        let ry = Matrix3::new(yc, 0.0, -ys, 0.0, 1.0, 0.0, ys, 0.0, zc);
-        let rz = Matrix3::new(zc, zs, 0.0, -zs, zc, 0.0, 0.0, 0.0, 1.0);
-        for p in &mut self.ps { *p = (rz * ry * rx * p.transpose()).transpose(); }
-    }
 }
 
 fn compute_face_morton(hmesh: &Hmesh, bb: &BBox) -> (Vec<BBox>, Vec<u32>) {

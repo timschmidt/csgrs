@@ -27,8 +27,8 @@ impl<'a> Kernel11<'a> {
         for i in 0..2 {
             let s = shadows01(
                 p0[i], q1,
-                self.ps_p,
-                self.ps_q,
+                &self.ps_p,
+                &self.ps_q,
                 &self.hs_q,
                 &self.ns,
                 self.expand,
@@ -49,9 +49,9 @@ impl<'a> Kernel11<'a> {
         for i in 0..2 {
             let s = shadows01(
                 q0[i], p1,
-                self.ps_q,
-                self.ps_p,
-                self.hs_p,
+                &self.ps_q,
+                &self.ps_p,
+                &self.hs_p,
                 &self.ns,
                 self.expand,
                 true

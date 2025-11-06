@@ -1,6 +1,7 @@
 use super::kernel02::Kernel02;
-use crate::bounds::{BPos, Query};
+use crate::bounds::{BBox, BPos, Query};
 use crate::collider::Recorder;
+use crate::common::Row2f;
 use crate::Manifold;
 
 struct SimpleRecorder<F> where F: FnMut(usize, usize) {
@@ -40,7 +41,7 @@ pub fn winding03(
 
     let bbs = a.ps.iter()
         .enumerate()
-        .map(|(i, p)| Query::Pt(BPos{id: Some(i), pos: *p}))
+        .map(|(i, p)| Query::Pt(BPos{id: Some(i), pos: Row2f::new(p.x, p.y)}))
         .collect::<Vec<_>>();
     let mut rec = SimpleRecorder::new(
         |a, b| {

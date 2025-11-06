@@ -1,5 +1,5 @@
 use nalgebra::DMatrix;
-use crate::common::{Row3f};
+use crate::common::{Row2f, Row3f};
 
 #[derive(Clone, Debug)]
 pub enum Query { Bb(BBox), Pt(BPos) }
@@ -14,7 +14,7 @@ pub struct BBox {
 #[derive(Clone, Debug)]
 pub struct BPos {
     pub id: Option<usize>,
-    pub pos: Row3f,
+    pub pos: Row2f,
 }
 
 impl BBox {
@@ -58,14 +58,10 @@ impl BBox {
     pub fn overlaps(&self, q: &Query) -> bool {
         match q {
             Query::Bb(b) => {
-                self.min.x <= b.max.x &&
-                self.min.y <= b.max.y &&
-                self.min.z <= b.max.z &&
-                self.max.x >= b.min.x &&
-                self.max.y >= b.min.y &&
-                self.max.z >= b.min.z
+                self.min.x <= b.max.x && self.min.y <= b.max.y && self.min.z <= b.max.z &&
+                self.max.x >= b.min.x && self.max.y >= b.min.y && self.max.z >= b.min.z
             },
-            Query::Pt(p) => {
+            Query::Pt(p) => { // only evaluates xy axis
                 self.min.x <= p.pos.x &&
                 self.min.y <= p.pos.y &&
                 self.max.x >= p.pos.x &&

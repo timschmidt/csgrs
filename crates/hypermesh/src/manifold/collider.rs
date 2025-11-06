@@ -27,10 +27,8 @@ pub fn morton_code(p: &Row3f, bb: &BBox) -> u32 {
 }
 
 
-fn is_leaf(node: i32) -> bool { node % 2 == 0 }
-fn is_intl(node: i32) -> bool { node % 2 == 1 }
-fn node2intl(node: i32) -> i32 { assert!(is_intl(node)); (node - 1) / 2 }
-fn node2leaf(node: i32) -> i32 { assert!(is_leaf(node)); node / 2 }
+fn node2intl(node: i32) -> Option<i32> { if node % 2 == 1 { Some((node - 1) / 2) } else { None } }
+fn node2leaf(node: i32) -> Option<i32> { if node % 2 == 0 { Some(node / 2) } else { None } }
 fn intl2node(intl: i32) -> i32 { intl * 2 + 1 }
 fn leaf2node(leaf: i32) -> i32 { leaf * 2 }
 fn prefix_length(a: u32, b: u32) -> u32 { (a ^ b).leading_zeros() } // need check
@@ -66,9 +64,8 @@ impl<'a> RadixTree<'a> {
             if self.prefix_length(i, i + dir * (len + stp)) > common { len += stp; }
             stp /= 2;
         }
-
         i + dir * len
-    }
+   }
 
     fn find_split(&self, bgn: i32, end: i32) -> i32 {
         let common = self.prefix_length(bgn, end);
@@ -107,55 +104,6 @@ impl<'a> RadixTree<'a> {
     }
 }
 
-fn find_collisions(
-    queries: &[Query],
-    node_bb: &[BBox],
-    children: &[(i32, i32)],
-    query_idx: i32,
-    rec: &mut dyn Recorder,
-    self_collision: bool,
-) {
-    // depth-first search
-    let mut stack = [0; 64];
-    let mut top = -1i32;
-    let mut node = K_ROOT;
-
-    let mut rec_collision = |node, query_idx: i32| {
-        let overlap = node_bb[node as usize].overlaps(&queries[query_idx as usize]);
-        if overlap && is_leaf(node) {
-            let leaf_idx = node2leaf(node);
-            if !self_collision || leaf_idx != query_idx {
-                let q = &queries[query_idx as usize];
-                // todo temporally use q instead of query_idx
-                //rec.record(query_idx as usize, leaf_idx as usize);
-                match q {
-                    Query::Bb(q_bb) => { if let Some(id) = q_bb.id { rec.record(id, leaf_idx as usize); }},
-                    Query::Pt(q_pt) => { if let Some(id) = q_pt.id { rec.record(id, leaf_idx as usize); }}
-                }
-            }
-        }
-        overlap && is_intl(node) //should traverse into node
-    };
-
-    loop {
-        let intl = node2intl(node);
-        let (c1, c2) = children[intl as usize];
-        let traverse1 = rec_collision(c1, query_idx);
-        let traverse2 = rec_collision(c2, query_idx);
-        if !traverse1 && !traverse2 {
-            if top < 0 { break; } // done
-            node = stack[top as usize];
-            top -= 1;
-        } else {
-            node = if traverse1 { c1 } else { c2 }; // go here next
-            if traverse1 && traverse2 {
-                top += 1;
-                stack[top as usize] = c2; // save the other for later
-            }
-        }
-    }
-}
-
 fn build_internal_boxes(
     node_bb: &mut [BBox],
     counter: &mut [i32],
@@ -168,7 +116,7 @@ fn build_internal_boxes(
     loop {
         if flag && node == K_ROOT { return; }
         node = node_parent[node as usize];
-        let intl_idx = node2intl(node) as usize;
+        let intl_idx = node2intl(node).unwrap() as usize;
         let c = counter[intl_idx];
         counter[intl_idx] += 1;
         if c == 0 { return; }
@@ -248,10 +196,57 @@ impl MortonCollider {
                 &queries,
                 &self.node_bb,
                 &self.intl_children,
-                i as i32,
+                i,
                 recorder,
                 false,
             )
         }
     }
 }
+
+fn find_collisions(
+    queries: &[Query],
+    node_bb: &[BBox],
+    children: &[(i32, i32)],
+    query_idx: usize, // query index
+    rec: &mut dyn Recorder,
+    self_collision: bool,
+) {
+    // depth-first search
+    let mut stack = [0; 64];
+    let mut top = -1i32;
+    let mut node = K_ROOT;
+
+    let mut rec = |node: i32| {
+        let q = &queries[query_idx];
+        let overlap = node_bb[node as usize].overlaps(q);
+        if overlap && let Some(il) = node2leaf(node) {
+            if !self_collision || il != query_idx as i32 {
+                match q {
+                    Query::Bb(q) => { if let Some(iq) = q.id { rec.record(iq, il as usize); }},
+                    Query::Pt(q) => { if let Some(iq) = q.id { rec.record(iq, il as usize); }},
+                }
+            }
+        }
+        overlap && node2intl(node).is_some() //should traverse into node
+    };
+
+    loop {
+        let intl = node2intl(node).unwrap();
+        let (c1, c2) = children[intl as usize];
+        let traverse1 = rec(c1);
+        let traverse2 = rec(c2);
+        if !traverse1 && !traverse2 {
+            if top < 0 { break; } // done
+            node = stack[top as usize];
+            top -= 1;
+        } else {
+            node = if traverse1 { c1 } else { c2 }; // go here next
+            if traverse1 && traverse2 {
+                top += 1;
+                stack[top as usize] = c2; // save the other for later
+            }
+        }
+    }
+}
+

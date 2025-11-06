@@ -1,18 +1,19 @@
+use nalgebra::Matrix3;
 use boolean::common::{Row2f, Row3f};
 use boolean::{compute_boolean, Manifold};
 
-const cube_ps: [f64; 24] = [
-    0.0, 0.0, 0.0,
-    0.0, 0.0, 1.0,
-    0.0, 1.0, 0.0,
-    0.0, 1.0, 1.0,
-    1.0, 0.0, 0.0,
-    1.0, 0.0, 1.0,
-    1.0, 1.0, 0.0,
-    1.0, 1.0, 1.0
+pub const cube_ps: [f64; 24] = [
+    -0.5, -0.5, -0.5,
+    -0.5, -0.5, 0.5,
+    -0.5, 0.5, -0.5,
+    -0.5, 0.5, 0.5,
+    0.5, -0.5, -0.5,
+    0.5, -0.5, 0.5,
+    0.5, 0.5, -0.5,
+    0.5, 0.5, 0.5
 ];
 
-const cube_ts: [usize; 36] = [
+pub const cube_ts: [usize; 36] = [
     1, 0, 4, 2, 4, 0,
     1, 3, 0, 3, 1, 5,
     3, 2, 0, 3, 7, 2,
@@ -20,6 +21,26 @@ const cube_ts: [usize; 36] = [
     6, 4, 2, 7, 6, 2,
     7, 3, 5, 7, 5, 6
 ];
+
+pub fn translate(mat: &mut Vec<Row3f>, t: Row3f) {
+    for p in mat.iter_mut() { *p += t; }
+}
+
+pub fn scale(mat: &mut Vec<Row3f>, s: Row3f) {
+    for p in mat.iter_mut() { *p = Row3f::new(p.x * s.x, p.y * s.y, p.z * s.z); }
+}
+pub fn rotate(mat: &mut Vec<Row3f>, r: Row3f) {
+    let xc = r.x.cos();
+    let xs = r.x.sin();
+    let yc = r.y.cos();
+    let ys = r.y.sin();
+    let zc = r.z.cos();
+    let zs = r.z.sin();
+    let rx = Matrix3::new(1.0, 0.0, 0.0, 0.0, xc, xs, 0.0, -xs, xc);
+    let ry = Matrix3::new(yc, 0.0, -ys, 0.0, 1.0, 0.0, ys, 0.0, zc);
+    let rz = Matrix3::new(zc, zs, 0.0, -zs, zc, 0.0, 0.0, 0.0, 1.0);
+    for p in mat.iter_mut() { *p = (rz * ry * rx * p.transpose()).transpose(); }
+}
 
 pub fn fractal(
     hole : &Manifold,
@@ -30,9 +51,13 @@ pub fn fractal(
     depth_max: usize,
 ) {
     let w = w / 3.;
-    let mut hole = hole.clone();
-    hole.scale(Row3f::new(w, w, 1.));
-    hole.translate(Row3f::new(p.x, p.y, 0.));
+    let mut ps = hole.ps.clone();
+    let ts = hole.hs.iter().map(|h| h.tail).collect::<Vec<usize>>();
+    scale(&mut ps, Row3f::new(w, w, 1.));
+    translate(&mut ps, Row3f::new(p.x, p.y, 0.));
+    let mut flat = vec![];
+    for p in ps { flat.push(p.x);flat.push(p.y);flat.push(p.z); }
+    let hole = Manifold::new(&flat, &ts, None, None).unwrap();
     holes.push(hole.clone());
 
     if depth == depth_max { return; }
@@ -60,18 +85,17 @@ pub fn compose(ms: &Vec<Manifold>) -> anyhow::Result<Manifold> {
         for p in m.ps.iter() { ps.push(p.x); ps.push(p.y); ps.push(p.z); }
         offset += m.nv;
     }
-    println!("compose: {} vertices, {} faces", ps.len() / 3, ts.len() / 3);
     Manifold::new(&ps, &ts, None, None)
 }
 
 pub fn menger_sponge(n: usize) -> anyhow::Result<Manifold> {
-    let mut cube = Manifold::new(&cube_ps, &cube_ts, None, None)?;
-    println!("menger_sponge: {} vertices, {} faces", cube.ps.len(), cube.hs.len() / 3);
+    let pos = cube_ps.chunks(3).map(|p| Row3f::new(p[0], p[1], p[2])).collect::<Vec<_>>();
+    let mut flat = vec![];
+    for p in pos { flat.push(p.x);flat.push(p.y);flat.push(p.z); }
+    let cube = Manifold::new(&flat, &cube_ts, None, None)?;
 
-    cube.translate(-Row3f::new(0.5, 0.5, 0.5));
-    //cube.scale(Row3f::new(3., 3., 3.));
     let mut holes = vec![];
-    fractal(&cube, &mut holes, Row2f::new(0., 0.), 1., 1, 1);
+    fractal(&cube, &mut holes, Row2f::new(0., 0.), 1., 1, n);
     let sum = compose(&holes)?;
     compute_boolean(&cube, &sum, boolean::common::OpType::Subtract)
 }

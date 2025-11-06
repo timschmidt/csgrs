@@ -20,17 +20,17 @@ pub struct Boolean03 {
 }
 
 pub fn boolean03(
-    mfd_p: &Manifold,
-    mfd_q: &Manifold,
+    mp: &Manifold,
+    mq: &Manifold,
     operation: &OpType,
 ) -> Boolean03 {
     let expand = if operation == &OpType::Add { 1. } else { -1. };
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
-    let (x12, v12) = intersect12(mfd_p, mfd_q, &mut p1q2, expand, true);
-    let (x21, v21) = intersect12(mfd_p, mfd_q, &mut p2q1, expand, false);
-    let w03 = winding03(mfd_p, mfd_q, expand, true);
-    let w30 = winding03(mfd_p, mfd_q, expand, false);
+    let (x12, v12) = intersect12(mp, mq, &mut p1q2, expand, true);
+    let (x21, v21) = intersect12(mp, mq, &mut p2q1, expand, false);
+    let w03 = winding03(mp, mq, expand, true);
+    let w30 = winding03(mp, mq, expand, false);
     Boolean03 { p1q2, p2q1, x12, x21, w03, w30, v12, v21 }
 }
 
