@@ -158,7 +158,11 @@ impl Rect {
 
     pub fn size(&self) -> Row2f { self.max - self.min }
 
-    pub fn scale(&self) -> f64 { let s = self.size();s.x.abs().max(s.y.abs()) }
+    pub fn scale(&self) -> f64 {
+        let a_min = self.min.x.abs().max(self.min.y.abs());
+        let a_max = self.max.x.abs().max(self.max.y.abs());
+        a_min.max(a_max)
+    }
 
     pub fn union(&mut self, p: &Row2f) {
         self.min = Row2f::new(self.min.x.min(p.x), self.min.y.min(p.y));

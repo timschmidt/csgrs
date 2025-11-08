@@ -45,6 +45,8 @@ fn process_face(
     match e1 - e0 {
         3 =>  single_triangulate(&b45, e0),
         4 =>  square_triangulate(&b45, fid, eps),
+        //3 => vec![],
+        //4 => vec![],
         _ => general_triangulate(&b45, fid, eps),
     }
 }
@@ -143,15 +145,36 @@ fn general_triangulate(
     fid: usize,
     eps: f64
 ) -> Vec<Row3u> {
+    //if fid != 1 { return vec![]; }
     let proj  = get_axis_aligned_projection(&b45.ns[fid]);
     let loops = assemble_halfs(&b45.hs, &b45.initial_hid_per_faces, fid);
-    let polys = loops.iter().map(|poly|
+
+    //for loop_ in loops.iter() {
+    //    println!("----------------loop");
+    //    for e in loop_.iter() {
+    //        let i = b45.hs[*e].tail;
+    //        let p = (proj * b45.ps[i].transpose()).transpose();
+    //        println!("poly e: {}, idx: {}, p: {:?}", e, i, p);
+    //    }
+    //}
+
+    let mut polys = loops.iter().map(|poly|
         poly.iter().map(|&e| {
             let i = b45.hs[e].tail;
             let p = (proj * b45.ps[i].transpose()).transpose();
             PolyVert { pos: p, idx: e }
         }).collect::<Vec<_>>()
     ).collect::<Vec<_>>();
+
+
+    let mut temps = vec![];
+    for poly in polys.iter() {
+        let mut temp = vec![];
+        for p in poly.iter() { temp.push(PolyVert{idx: p.idx, pos: p.pos + Row2f::new(0.0, -0.0)}); }
+        temps.push(temp);
+    }
+    //for p in polys[2].iter() { temp2.push(PolyVert{idx: p.idx, pos: p.pos + Row2f::new(0.0, -0.0)}); }
+    //for p in polys[3].iter() { temp3.push(PolyVert{idx: p.idx, pos: p.pos + Row2f::new(0.0, -0.0)}); }
 
     EarClip::new(&polys, eps).triangulate().iter().map(|t| Row3u::new(
         b45.hs[t.x].tail,
@@ -274,5 +297,6 @@ fn compute_halfs(ts: &Vec<Row3u>) -> Vec<Half> {
     }
     hs
 }
+
 
 
