@@ -12,15 +12,14 @@ pub(in crate::manifold) struct Hmesh {
     pub n_face: usize,
     pub n_edge: usize,
     pub n_half: usize,
-    pub n_boundary: usize,
     pub pos: DMatrix<f64>,
     pub idx: DMatrix<usize>,
-    pub edge2vert: DMatrix<usize>,
-    pub edge2face: DMatrix<usize>,
-    pub face2edge: DMatrix<usize>,
-    pub vert2half: Vec<usize>,
-    pub edge2half: Vec<usize>,
-    pub face2half: Vec<usize>,
+    pub e2v: DMatrix<usize>,
+    pub e2f: DMatrix<usize>,
+    pub f2e: DMatrix<usize>,
+    pub v2h: Vec<usize>,
+    pub e2h: Vec<usize>,
+    pub f2h: Vec<usize>,
     pub next: Vec<usize>,
     pub prev: Vec<usize>,
     pub twin: Vec<usize>,
@@ -250,13 +249,12 @@ impl Hmesh {
                 n_face: nf,
                 n_edge: ne,
                 n_half: nh,
-                n_boundary: usize::MAX, // temp. better having loop2half
-                edge2vert: e2v,
-                edge2face: e2f,
-                face2edge: f2e,
-                vert2half: v2h,
-                edge2half: e2h,
-                face2half: f2h,
+                e2v,
+                e2f,
+                f2e,
+                v2h,
+                e2h,
+                f2h,
                 next,
                 prev,
                 twin,
@@ -280,9 +278,9 @@ impl Hmesh {
 }
 
 impl Edge {
-    pub fn half(&self)  -> Half { let m = self.hm.upgrade().unwrap(); m.halfs[m.edge2half[self.id]].clone() }
-    pub fn vert0(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.edge2vert[(self.id, 0)]].clone() }
-    pub fn vert1(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.edge2vert[(self.id, 1)]].clone() }
+    pub fn half(&self)  -> Half { let m = self.hm.upgrade().unwrap(); m.halfs[m.e2h[self.id]].clone() }
+    pub fn vert0(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.e2v[(self.id, 0)]].clone() }
+    pub fn vert1(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.e2v[(self.id, 1)]].clone() }
 }
 
 impl Vert {
@@ -291,7 +289,7 @@ impl Vert {
 }
 
 impl Face {
-    pub fn half(&self)   -> Half      { let m = self.hm.upgrade().unwrap(); m.halfs[m.face2half[self.id]].clone() }
+    pub fn half(&self)   -> Half      { let m = self.hm.upgrade().unwrap(); m.halfs[m.f2h[self.id]].clone() }
     pub fn normal(&self) -> Row3<f64> { let m = self.hm.upgrade().unwrap(); m.face_normal.fixed_view::<1,3>(self.id, 0).into() }
     pub fn area(&self)   -> f64       { let m = self.hm.upgrade().unwrap(); m.face_area[self.id] }
 }
@@ -358,46 +356,17 @@ fn minimal_quad_case() {
 
 #[test]
 fn quad_with_hole_case() {
-    let pos = [
-        -1.000000, 0.000000, 1.000000,
-        -0.333333, 0.000000, 1.000000,
-        0.333333, 0.000000, 1.000000,
-        1.000000, 0.000000, 1.000000,
-        -1.000000, 0.000000, 0.333333,
-        -0.333333, 0.000000, 0.333333,
-        0.333333, 0.000000, 0.333333,
-        1.000000, 0.000000, 0.333333,
-        -1.000000, 0.000000, -0.333333,
-        -0.333333, 0.000000, -0.333333,
-        0.333333, 0.000000, -0.333333,
-        1.000000, 0.000000, -0.333333,
-        -1.000000, 0.000000, -1.000000,
-        -0.333333, 0.000000, -1.000000,
-        0.333333, 0.000000, -1.000000,
-        1.000000, 0.000000, -1.000000,
-    ];
-    let idx = [
-        1, 4, 0,
-        2, 5, 1,
-        3, 6, 2,
-        5, 8, 4,
-        7, 10, 6,
-        9, 12, 8,
-        10, 13, 9,
-        11, 14, 10,
-        1, 5, 4,
-        2, 6, 5,
-        3, 7, 6,
-        5, 9, 8,
-        7, 11, 10,
-        9, 13, 12,
-        10, 14, 13,
-        11, 15, 14,
-    ];
+    let p = 1. / 3.;
+    let pos = [-1., 0., 1., -p, 0., 1., p, 0., 1., 1., 0., 1., -1., 0., p, -p,
+               0., p, p, 0., p, 1., 0., p, -1., 0., -p, -p, 0., -p, p, 0., -p,
+               1., 0., -p, -1., 0., -1., -p, 0., -1., p, 0., -1., 1., 0., -1.];
+    let idx = [1, 4, 0, 2, 5, 1, 3, 6, 2, 5, 8, 4, 7, 10, 6, 9, 12, 8, 10, 13, 9, 11, 14, 10,
+               1, 5, 4, 2, 6, 5, 3, 7, 6, 5, 9, 8, 7, 11, 10, 9, 13, 12, 10, 14, 13, 11, 15, 14];
 
-    let pos: DMatrix<f64>   = DMatrix::from_row_slice(pos.len() / 3, 3, &pos).into();
-    let idx: DMatrix<usize> = DMatrix::from_row_slice(idx.len() / 3, 3, &idx).into();
-    let hmesh = Hmesh::new(pos, idx).unwrap();
+    let hmesh = Hmesh::new(
+        DMatrix::from_row_slice(pos.len() / 3, 3, &pos).into(),
+        DMatrix::from_row_slice(idx.len() / 3, 3, &idx).into()
+    ).unwrap();
     assert_eq!(hmesh.n_vert, 16);
     assert_eq!(hmesh.n_face, 16);
     assert_eq!(hmesh.n_edge, 32);

@@ -338,10 +338,8 @@ impl EarClip {
     pub fn triangulate(&mut self) -> Vec<Row3u> {
         let vs = self.holes.iter().cloned().collect::<Vec<_>>();
         for mut v in vs { self.cut_key_hole(&mut v); }
-        //println!("cut holes done");
         let vs = self.simples.iter().map(|s| Rc::clone(s)).collect::<Vec<_>>();
         for mut v in vs { self.triangulate_poly(&mut v); }
-        //println!("cut simples done");
         std::mem::take(&mut self.tris)
     }
 
@@ -524,9 +522,7 @@ impl EarClip {
                 let f3 = inside == 0 && vp.x < con.borrow().pos.x && vp.y * above < con.borrow().pos.y * above;
                 let f4 = vb.inside_edge(end, self.eps, true);
                 let f5 = vb.is_reflex(self.eps);
-                if f1 && f2 && (inside > 0 || f3) && f4 && f5 {
-                    con = Rc::clone(v);
-                };
+                if f1 && f2 && (inside > 0 || f3) && f4 && f5 { con = Rc::clone(v); };
             });
         }
         Rc::clone(&con)

@@ -28,8 +28,7 @@ fn setup(
     mut mats: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>
 ) {
-    let res = menger_sponge(3);
-
+    let res = menger_sponge(4);
     cmds.spawn((PointLight::default(), Transform::from_xyz(3., 4., 3.)));
     cmds.spawn((Transform::from_translation(Vec3::new(0., 1.5, 5.)), PanOrbitCamera::default(),));
     let mut m = Mesh::new(bevy::render::mesh::PrimitiveTopology::TriangleList, RenderAssetUsages::default());

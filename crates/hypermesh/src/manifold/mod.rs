@@ -4,10 +4,10 @@ pub mod collider;
 use std::cmp::Ordering;
 use std::sync::Arc;
 use anyhow::anyhow;
-use nalgebra::{DMatrix, Matrix3};
+use nalgebra::DMatrix;
 use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider, K_NO_CODE};
-use crate::common::{Half, K_PRECISION, Row3f, next_of, Row3u};
+use crate::common::{Half, K_PRECISION, Row3f, next_of};
 use super::hmesh::Hmesh;
 
 #[derive(Clone)]
