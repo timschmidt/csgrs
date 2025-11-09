@@ -358,18 +358,45 @@ fn minimal_quad_case() {
 
 #[test]
 fn quad_with_hole_case() {
-    let (models, _) = tobj::load_obj(
-        "assets/models/quad_with_hole.obj",
-        &tobj::LoadOptions { ..Default::default() },
-    ).expect("Failed to OBJ load file");
-    let model = &models[0];
-    let mesh = &model.mesh;
+    let pos = [
+        -1.000000, 0.000000, 1.000000,
+        -0.333333, 0.000000, 1.000000,
+        0.333333, 0.000000, 1.000000,
+        1.000000, 0.000000, 1.000000,
+        -1.000000, 0.000000, 0.333333,
+        -0.333333, 0.000000, 0.333333,
+        0.333333, 0.000000, 0.333333,
+        1.000000, 0.000000, 0.333333,
+        -1.000000, 0.000000, -0.333333,
+        -0.333333, 0.000000, -0.333333,
+        0.333333, 0.000000, -0.333333,
+        1.000000, 0.000000, -0.333333,
+        -1.000000, 0.000000, -1.000000,
+        -0.333333, 0.000000, -1.000000,
+        0.333333, 0.000000, -1.000000,
+        1.000000, 0.000000, -1.000000,
+    ];
+    let idx = [
+        1, 4, 0,
+        2, 5, 1,
+        3, 6, 2,
+        5, 8, 4,
+        7, 10, 6,
+        9, 12, 8,
+        10, 13, 9,
+        11, 14, 10,
+        1, 5, 4,
+        2, 6, 5,
+        3, 7, 6,
+        5, 9, 8,
+        7, 11, 10,
+        9, 13, 12,
+        10, 14, 13,
+        11, 15, 14,
+    ];
 
-    let pos_buf: Vec<f64>   = mesh.positions.iter().map(|&v| v as f64).collect();
-    let idx_buf: Vec<usize> = mesh.indices.iter().map(|&v| v as usize).collect();
-
-    let pos: DMatrix<f64>   = DMatrix::from_row_slice(mesh.positions.len() / 3, 3, &pos_buf).into();
-    let idx: DMatrix<usize> = DMatrix::from_row_slice(mesh.indices.len() / 3, 3, &idx_buf).into();
+    let pos: DMatrix<f64>   = DMatrix::from_row_slice(pos.len() / 3, 3, &pos).into();
+    let idx: DMatrix<usize> = DMatrix::from_row_slice(idx.len() / 3, 3, &idx).into();
     let hmesh = Hmesh::new(pos, idx).unwrap();
     assert_eq!(hmesh.n_vert, 16);
     assert_eq!(hmesh.n_face, 16);
