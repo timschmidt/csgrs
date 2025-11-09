@@ -135,7 +135,7 @@ mod test_triangulation {
 
 #[cfg(test)]
 mod test_simplification {
-    use crate::simplification::edge_collapse::collapse_collinear_edges;
+    use crate::simplification::collapse::collapse_collinear_edges;
 
     #[test]
     fn test_collapse() {

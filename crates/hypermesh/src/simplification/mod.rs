@@ -1,10 +1,10 @@
-pub mod edge_dedup;
-pub mod edge_swap;
-pub mod edge_collapse;
+pub mod dedup;
+pub mod re_swap;
+pub mod collapse;
 use crate::common::{Half, Tref, next_of, Row3f, Row2f};
-use edge_collapse::{collapse_edge, collapse_short_edges, collapse_collinear_edges};
-use edge_dedup::dedupe_edges;
-use crate::simplification::edge_swap::swap_degenerates;
+use collapse::{collapse_edge, collapse_short_edges, collapse_collinear_edges};
+use dedup::dedupe_edges;
+use crate::simplification::re_swap::swap_degenerates;
 
 pub fn simplify_topology(
     hs: &mut Vec<Half>,
