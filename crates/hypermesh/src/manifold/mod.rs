@@ -107,7 +107,6 @@ impl Manifold {
 }
 
 fn compute_face_morton(hmesh: &Hmesh, bb: &BBox) -> (Vec<BBox>, Vec<u32>) {
-    assert!(hmesh.halfs.iter().all(|h| h.twin().id < usize::MAX)); // maybe not necessary
     let n = hmesh.faces.len();
     let mut bbs = vec![BBox::default(); n];
     let mut mts = vec![0; n];

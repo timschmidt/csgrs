@@ -12,7 +12,7 @@ use bevy::color::palettes::css::*;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use boolean::Manifold;
 use boolean::common::{Row2f, Row3f};
-use crate::utils::{compose, fractal, menger_sponge, rotate, translate};
+use crate::utils::{menger_sponge};
 
 #[derive(Resource)] struct MfdHandle0(Manifold);
 #[derive(Resource)] struct MfdHandle1(Manifold);
@@ -48,9 +48,9 @@ fn toggle_mesh_visibility(
         };
     };
     let mut vis: Vec<_> = query.iter_mut().collect();
-    if keyboard.just_pressed(KeyCode::Space)  { cb(&mut vis[0]); cb(&mut vis[1]); }
-    if keyboard.just_pressed(KeyCode::Digit0) { cb(&mut vis[0]); }
-    if keyboard.just_pressed(KeyCode::Digit1) { cb(&mut vis[1]); }
+    //if keyboard.just_pressed(KeyCode::Space)  { cb(&mut vis[0]); cb(&mut vis[1]); }
+    //if keyboard.just_pressed(KeyCode::Digit0) { cb(&mut vis[0]); }
+    //if keyboard.just_pressed(KeyCode::Digit1) { cb(&mut vis[1]); }
 }
 
 fn main() {
@@ -85,7 +85,7 @@ fn setup(
     //    mfs.push(mf);
     //}
 
-    let res = menger_sponge(4);
+    let res = menger_sponge(3);
 
     cmds.insert_resource(
         DrawingData{ units: vec![

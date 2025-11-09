@@ -361,14 +361,7 @@ impl EarClip {
         let i  = ear.borrow().idx;
         let il = ear.borrow().idx_l();
         let ir = ear.borrow().idx_r();
-        if il != i && ir != i && il != ir {
-            //if self.tris.len() < 154 { // todo: mark 2
-            //    //println!("ear: idx: {}, pos: {:?}, left: {:?}, right: {:?}",
-            //    //         i, ear.borrow().pos, ear.borrow().pos_l(), ear.borrow().pos_r());
-            //    self.tris.push(Row3u::new(il, i, ir));
-            //}
-            self.tris.push(Row3u::new(il, i, ir));
-        }
+        if il != i && ir != i && il != ir { self.tris.push(Row3u::new(il, i, ir)); }
     }
 
     fn clip_degenerate(&mut self, ear: &EvPtr) {
@@ -379,7 +372,6 @@ impl EarClip {
         let pl = ear.borrow().pos_l();
         let pr = ear.borrow().pos_r();
         if eb.is_short(eps) || (is_ccw_2d(&pl, &p, &pr, eps) == 0 && (pl - p).dot(&(pr - p)) > 0.) {
-            //println!("degenerate: {:p}", Rc::as_ptr(ear));
             self.clip_ear(&ear);
             self.clip_degenerate(&eb.ptr_l());
             self.clip_degenerate(&eb.ptr_r());
@@ -390,7 +382,6 @@ impl EarClip {
         let mut bgns = vec![];
         for poly in polys.iter() {
             let v = poly.first().unwrap();
-            //println!("poly first idx: {:?}", v.idx);
             self.polygon.push(Rc::new(RefCell::new(Ecvt::new(v.idx, v.pos))));
 
             let first    = Rc::clone(self.polygon.last().unwrap());
@@ -399,7 +390,6 @@ impl EarClip {
             bgns.push(Rc::clone(&first));
 
             for v in poly.iter().skip(1) {
-                //println!("poly idx: {:?}", v.idx);
                 self.bbox.union(&v.pos);
                 self.polygon.push(Rc::new(RefCell::new(Ecvt::new(v.idx, v.pos))));
                 let next = Rc::clone(self.polygon.last().unwrap());
@@ -423,7 +413,7 @@ impl EarClip {
         let mut max = f64::MIN;
         let mut bbox = Rect::default();
         let mut area = 0.;
-        let mut comp = 0.; // For Kahan summation
+        let mut comp = 0.; // For Kahan's summation
 
         let add_point = |v: &mut EvPtr| {
             bbox.union(&v.borrow().pos);
@@ -443,9 +433,7 @@ impl EarClip {
         let min_area = self.eps * size.x.max(size.y);
 
         if max.is_finite() && area < -min_area {
-            //if self.holes.len() < 1 {
-                self.holes.insert(EvPtrMaxPosX(Rc::clone(&bgn), bbox));
-            //}
+            self.holes.insert(EvPtrMaxPosX(Rc::clone(&bgn), bbox));
         } else {
             self.simples.push(Rc::clone(&bgn));
             if area > min_area { self.contour.push(Rc::clone(&bgn));}
@@ -480,11 +468,8 @@ impl EarClip {
 
         let mut con: Option<EvPtr> = None;
 
-        //println!("find con bgn");
-        //println!("contour size: {}", self.contour.len());
         for first in self.contour.iter_mut() {
             do_loop(first, |v| {
-                //println!("edge {}", e.borrow().idx);
                 let vb = v.borrow();
                 if let Some(x) = vb.interpolate_y2x(&p_bgn, on_top, eps) {
                     let flag = match &con {
@@ -505,8 +490,8 @@ impl EarClip {
         match con {
             None => { self.simples.push(Rc::clone(&bgn.0)); },
             Some(c) => {
-                let ptr = self.find_closer_bridge(&bgn.0, &c);
-                self.join_polygons(&bgn.0, &ptr);
+                let p = self.find_closer_bridge(&bgn.0, &c);
+                self.join_polygons(&bgn.0, &p);
             }
         }
     }
@@ -525,12 +510,6 @@ impl EarClip {
             else if eb.pos_r().y - p_bgn.y > p_bgn.y - p_end.y { Rc::clone(end) }
             else { eb.ptr_r() };
 
-        //println!("find con end 2: {:?}, {:?}", bgn.borrow().pos, con.borrow().pos);
-
-        //if (bgn.borrow().pos - Row2f::new(0.12962962962962962, -0.31481481481481477)).norm_squared() < 1e-6 {
-        //    return Rc::clone(&con);
-        //}
-
         if (con.borrow().pos.y - p_bgn.y).abs() <= self.eps { return Rc::clone(&con); }
 
         let above = if con.borrow().pos.y > p_bgn.y { 1. } else { -1. };
@@ -539,7 +518,6 @@ impl EarClip {
             do_loop(first, |v| {
                 let vb = v.borrow();
                 let vp = v.borrow().pos;
-                //println!("find con end i: {:?}", v.borrow().pos);
                 let inside = above as i32 * is_ccw_2d(&p_bgn, &vp, &con.borrow().pos, self.eps);
                 let f1 = vp.x > p_bgn.x - self.eps;
                 let f2 = vp.y * above > p_bgn.y *above - self.eps;
@@ -581,7 +559,6 @@ impl EarClip {
         }
 
         if v.borrow().is_short(self.eps) {
-            //println!("short...");
             v.borrow_mut().cost = K_BEST;
             let ptr = EvPtrMinCost(Rc::clone(v));
             v.borrow_mut().ear = Some(Rc::downgrade(&ptr.0));

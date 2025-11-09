@@ -7,7 +7,7 @@ use nalgebra::{DMatrix, RowVector3 as Row3};
 /// Hmesh preserves the order of pos and idx in any cases.
 /// Edges are ordered so as the edge is forward (tail idx < head idx)
 #[derive(Debug, Clone)]
-pub struct Hmesh {
+pub(in crate::manifold) struct Hmesh {
     pub n_vert: usize,
     pub n_face: usize,
     pub n_edge: usize,
@@ -40,10 +40,10 @@ pub struct Hmesh {
     pub face_area: Vec<f64>,
 }
 
-#[derive(Debug, Clone)] pub struct Vert { pub hm: Weak<Hmesh>, pub id: usize }
-#[derive(Debug, Clone)] pub struct Edge { pub hm: Weak<Hmesh>, pub id: usize }
-#[derive(Debug, Clone)] pub struct Face { pub hm: Weak<Hmesh>, pub id: usize }
-#[derive(Debug, Clone)] pub struct Half { pub hm: Weak<Hmesh>, pub id: usize }
+#[derive(Debug, Clone)] pub(in crate::manifold) struct Vert { pub hm: Weak<Hmesh>, pub id: usize }
+#[derive(Debug, Clone)] pub(in crate::manifold) struct Edge { pub hm: Weak<Hmesh>, pub id: usize }
+#[derive(Debug, Clone)] pub(in crate::manifold) struct Face { pub hm: Weak<Hmesh>, pub id: usize }
+#[derive(Debug, Clone)] pub(in crate::manifold) struct Half { pub hm: Weak<Hmesh>, pub id: usize }
 
 fn edge_topology(
     pos: &DMatrix<f64>,
@@ -354,14 +354,6 @@ fn minimal_quad_case() {
     assert_eq!(hmesh.n_face, 2);
     assert_eq!(hmesh.n_edge, 5);
     assert_eq!(hmesh.n_half, 10);
-
-    for h in hmesh.halfs.iter() {
-        let p1 = h.tail().pos();
-        let p2 = h.head().pos();
-        println!("id: {}, next: {}. prev: {}, twin: {}, tail: {:?}, head: {:?}, boundary: {}",
-                 h.id, h.next().id, h.prev().id, h.twin().id, p1, p2, h.is_boundary());
-    }
-
 }
 
 #[test]
@@ -383,9 +375,4 @@ fn quad_with_hole_case() {
     assert_eq!(hmesh.n_face, 16);
     assert_eq!(hmesh.n_edge, 32);
     assert_eq!(hmesh.n_vert + hmesh.n_face - hmesh.n_edge, 0);
-
-    for h in hmesh.halfs.iter() {
-        println!("id: {}, next: {}. prev: {}, twin: {}, boundary: {}",
-                 h.id, h.next().id, h.prev().id, h.twin().id, h.is_boundary());
-    }
 }

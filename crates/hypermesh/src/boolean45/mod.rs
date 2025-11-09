@@ -228,7 +228,7 @@ fn append_partial_edges(
         let fid_r = fid_p2r[fp_r] as usize;
 
         // Negative inclusion means the halfedges are reversed, which means our
-        // reference is now to the endVert instead of the startVert, which is one
+        // reference is now to the head instead of the tail, which is one
         // position advanced CCW. This is only valid if this is a retained vert;
         // it will be ignored later if the vert is new.
 

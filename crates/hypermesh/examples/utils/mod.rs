@@ -2,18 +2,18 @@ use std::f64::consts::PI;
 use boolean::common::{Row2f, Row3f};
 use boolean::{compute_boolean, Manifold};
 
-pub const CUBE_PS: [f64; 24] = [
+const CUBE_PS: [f64; 24] = [
     -0.5, -0.5, -0.5,
-    -0.5, -0.5, 0.5,
-    -0.5, 0.5, -0.5,
-    -0.5, 0.5, 0.5,
-    0.5, -0.5, -0.5,
-    0.5, -0.5, 0.5,
-    0.5, 0.5, -0.5,
-    0.5, 0.5, 0.5
+    -0.5, -0.5,  0.5,
+    -0.5,  0.5, -0.5,
+    -0.5,  0.5,  0.5,
+     0.5, -0.5, -0.5,
+     0.5, -0.5,  0.5,
+     0.5,  0.5, -0.5,
+     0.5,  0.5,  0.5
 ];
 
-pub const CUBE_TS: [usize; 36] = [
+const CUBE_TS: [usize; 36] = [
     1, 0, 4, 2, 4, 0,
     1, 3, 0, 3, 1, 5,
     3, 2, 0, 3, 7, 2,
@@ -22,20 +22,20 @@ pub const CUBE_TS: [usize; 36] = [
     7, 3, 5, 7, 5, 6
 ];
 
-pub fn translate(mat: &mut Vec<Row3f>, t: Row3f) {
+fn translate(mat: &mut Vec<Row3f>, t: Row3f) {
     for p in mat.iter_mut() { *p += t; }
 }
 
-pub fn scale(mat: &mut Vec<Row3f>, s: Row3f) {
+fn scale(mat: &mut Vec<Row3f>, s: Row3f) {
     for p in mat.iter_mut() { *p = Row3f::new(p.x * s.x, p.y * s.y, p.z * s.z); }
 }
 
-pub fn rotate(mat: &mut Vec<Row3f>, r: &Row3f) {
+fn rotate(mat: &mut Vec<Row3f>, r: &Row3f) {
     let r = nalgebra::Rotation3::from_euler_angles(r.x, r.y, r.z);
     for p in mat.iter_mut() { *p =(r * p.transpose()).transpose(); }
 }
 
-pub fn fractal(
+fn fractal(
     hole : &Manifold,
     holes: &mut Vec<Manifold>,
     p: Row2f,
@@ -86,11 +86,7 @@ pub fn compose(ms: &Vec<Manifold>) -> anyhow::Result<Manifold> {
 }
 
 pub fn menger_sponge(n: usize) -> Manifold {
-    let pos = CUBE_PS.chunks(3).map(|p| Row3f::new(p[0], p[1], p[2])).collect::<Vec<_>>();
-    let mut flat = vec![];
-    for p in pos { flat.push(p.x); flat.push(p.y); flat.push(p.z); }
-    let res = Manifold::new(&flat, &CUBE_TS).unwrap();
-
+    let res = Manifold::new(&CUBE_PS, &CUBE_TS).unwrap();
     let mut holes = vec![];
     fractal(&res, &mut holes, Row2f::new(0., 0.), 1., 1, n);
     let holes_z = compose(&holes).unwrap();

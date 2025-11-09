@@ -188,28 +188,34 @@ impl MortonCollider {
         res
     }
 
-    pub fn collision(&self, queries: &[Query], recorder: &mut dyn Recorder) {
+    pub fn collision<F>(
+        &self,
+        queries: &[Query],
+        //recorder: &mut dyn Recorder
+        record:&mut F
+    ) where F: FnMut(usize, usize) {
         for i in 0..queries.len() {
             find_collisions(
                 &queries,
                 &self.node_bb,
                 &self.intl_children,
                 i,
-                recorder,
+                record,
                 false,
             )
         }
     }
 }
 
-fn find_collisions(
+fn find_collisions<F>(
     queries: &[Query],
     node_bb: &[BBox],
     children: &[(i32, i32)],
     query_idx: usize, // query index
-    rec: &mut dyn Recorder,
+    record: &mut F,
+    //rec: &mut dyn Recorder,
     self_collision: bool,
-) {
+) where F: FnMut(usize, usize) {
     // depth-first search
     let mut stack = [0; 64];
     let mut top = -1i32;
@@ -221,8 +227,8 @@ fn find_collisions(
         if overlap && let Some(il) = node2leaf(node) {
             if !self_collision || il != query_idx as i32 {
                 match q {
-                    Query::Bb(q) => { if let Some(iq) = q.id { rec.record(iq, il as usize); }},
-                    Query::Pt(q) => { if let Some(iq) = q.id { rec.record(iq, il as usize); }},
+                    Query::Bb(q) => { if let Some(iq) = q.id { record(iq, il as usize); }},
+                    Query::Pt(q) => { if let Some(iq) = q.id { record(iq, il as usize); }},
                 }
             }
         }

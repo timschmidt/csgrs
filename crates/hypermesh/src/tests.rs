@@ -1,216 +1,104 @@
-use std::collections::BTreeMap;
-use std::sync::Arc;
-use nalgebra::{DMatrix, RowVector3};
-use crate::hmesh::Hmesh;
-use crate::{Manifold, OpType};
-use crate::boolean03::{kernel03::winding03, kernel12::intersect12, Boolean03};
-use crate::boolean45::{boolean45, Boolean45};
-
-pub fn gen_tet_a() -> Manifold {
-    Manifold::new(
-        &vec![-0.866025, -1., 0.5, 0., -1., -1., 0.866025, -1., 0.5, 0., 1., 0.],
-        &vec![0, 3, 1, 1, 2, 0, 1, 3, 2, 2, 3, 0],
-        None,
-        None,
-    ).unwrap()
-}
-
-pub fn gen_tet_b() -> Manifold {
-    Manifold::new(
-        &vec![-1., -0.866025, 0.5, -1., 0., -1., -1., 0.866025, 0.5, 1., 0., 0.],
-        &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2],
-        None,
-        None,
-    ).unwrap()
-}
-
-pub fn gen_tet_c() -> Manifold {
-    Manifold::new(
-        &vec![-2., -0.866025, 0.5, -2., -0., -1., -2., 0.866025, 0.5, 0., 0., 0.],
-        &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2],
-        None,
-        None,
-    ).unwrap()
-}
-
 
 #[cfg(test)]
-mod kernel11_tests {
-    use nalgebra::RowVector4;
-    use crate::boolean03::kernel11::Kernel11;
+mod test_intersection {
+    use nalgebra::RowVector3;
+    use crate::boolean03::Boolean03;
+    use crate::boolean03::kernel03::winding03;
+    use crate::boolean03::kernel12::intersect12;
+    use crate::boolean45::boolean45;
+    use crate::common::OpType;
     use crate::Manifold;
-    use crate::tests::{gen_tet_a, gen_tet_c};
+
+    pub fn gen_tet_a() -> Manifold {
+        Manifold::new(
+            &vec![-0.866025, -1., 0.5, 0., -1., -1., 0.866025, -1., 0.5, 0., 1., 0.],
+            &vec![0, 3, 1, 1, 2, 0, 1, 3, 2, 2, 3, 0],
+        ).unwrap()
+    }
+
+    pub fn gen_tet_b() -> Manifold {
+        Manifold::new(
+            &vec![-1., -0.866025, 0.5, -1., 0., -1., -1., 0.866025, 0.5, 1., 0., 0.],
+            &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2],
+        ).unwrap()
+    }
+
+    pub fn gen_tet_c() -> Manifold {
+        Manifold::new(
+            &vec![-2., -0.866025, 0.5, -2., -0., -1., -2., 0.866025, 0.5, 0., 0., 0.],
+            &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2],
+        ).unwrap()
+    }
+
 
     #[test]
-    fn kernel11_test() {
+    fn test_tet_sub_inclusion_case(){
+        let expand = -1.;
         let mfd_p = gen_tet_a();
         let mfd_q = gen_tet_c();
-        let k11 = Kernel11 {
-            ps_p: &mfd_p.ps,
-            ps_q: &mfd_q.ps,
-            hs_p: &mfd_p.hs,
-            hs_q: &mfd_q.hs,
-            ns: &mfd_p.vns,
-            expand: 1.,
-        };
-        let (s, z) = k11.op(0, 9);
-        assert_eq!(s, 0);
-        assert!(z.is_some() && (z.unwrap() - RowVector4::new(-0.532938,-0.230769,0.307692,0.133235)).norm() < 1e-6);
-    }
-}
-
-
-#[test]
-fn test_tet_sub_inclusion_case(){
-    let expand = -1.;
-    let mfd_p = gen_tet_a();
-    let mfd_q = gen_tet_c();
-    let mut p1q2 = vec![];
-    let mut p2q1 = vec![];
-    let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, expand, true);
-    let (x21, v21) = intersect12(&mfd_p, &mfd_q, &mut p2q1, expand, false);
-    let w03 = winding03(&mfd_p, &mfd_q, expand, true);
-    let w30 = winding03(&mfd_p, &mfd_q, expand, false);
-
-    assert_eq!(w03, vec![0, 0, 0, 0]);
-    assert_eq!(w30, vec![0, 0, 0, 1]);
-    assert_eq!(x12.len(), 0);
-    assert_eq!(v12.len(), 0);
-    assert_eq!(x21, vec![-1, -1, -1]);
-    let v21_ = vec![
-        RowVector3::new(-0.224009, 0., -0.112005),
-        RowVector3::new(-0.294367, 0.127465, 0.0735918),
-        RowVector3::new(-0.395087, -0.171077, 0.0987716),
-    ];
-    for i in 0..3 {
-        assert!((v21[i] - v21_[i]).norm() < 1e-6);
-    }
-    let op = OpType::Subtract;
-    let b03 = Boolean03{ p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
-    let b45 = boolean45(&mfd_p, &mfd_q, &b03, &op);
-}
-
-#[test]
-fn test_tet_sub_penetration_case(){
-    let expand = -1.;
-    let mfd_p = gen_tet_a();
-    let mfd_q = gen_tet_b();
-    let mut p1q2 = vec![];
-    let mut p2q1 = vec![];
-    let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, -1., true);
-    let (x21, v21) = intersect12(&mfd_p, &mfd_q, &mut p2q1, -1., false);
-    let w03 = winding03(&mfd_p, &mfd_q, expand, true);
-    let w30 = winding03(&mfd_p, &mfd_q, expand, false);
-
-    let v12_ = vec![
-        RowVector3::new(-0.763707, -0.763707, 0.440927),
-        RowVector3::new(-0.242656, 0.439609, 0.140098),
-        RowVector3::new(0.,0.,-0.5),
-        RowVector3::new(0.,0.,-0.5)
-    ];
-    let v21_ = vec![
-        RowVector3::new(0.302169,0.302169,0.174458),
-        RowVector3::new(0.439609,-0.242656,0.140098),
-        RowVector3::new(0.302169,0.302169,0.174458),
-        RowVector3::new(-0.763707,-0.763707,0.440927)
-    ];
-
-    assert_eq!(w03, vec![0, 0, 0, 0]);
-    assert_eq!(w30, vec![0, 0, 0, 0]);
-    assert_eq!(x12, vec![-1, 1, -1, 1]);
-    assert_eq!(x21, vec![1, 1, -1, -1]);
-    for i in 0..3 {
-        assert!((v12[i] - v12_[i]).norm() < 1e-6);
-        assert!((v21[i] - v21_[i]).norm() < 1e-6);
-    }
-
-    let op = OpType::Subtract;
-    let b03 = Boolean03{ p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
-    let b45 = boolean45(&mfd_p, &mfd_q, &b03, &op);
-}
-
-#[cfg(test)]
-mod collider_test {
-    /*
-    use nalgebra::RowVector3;
-    use crate::collider::{, MortonCollider};
-    use crate::{intersect12, Manifold};
-    use crate::bounds::BoundingBox;
-
-    #[test]
-    fn morton_code_test() {
-        let v = spread_bits_3(341.333 as u32);
-        assert_eq!(v, 17043521);
-        let v = spread_bits_3(1023);
-        assert_eq!(v, 153391689);
-        let v = spread_bits_3(682.667 as u32);
-        assert_eq!(v, 136348168);
-    }
-
-    #[test]
-    fn morton_radix_tree_test() {
-        let expand = -1.;
-        let hm_p = test_data::gen_tet_a();
-        let mfd_p = Manifold::new(&hm_p);
-        println!("===================");
-        let hm_q = test_data::gen_tet_c();
-        let mfd_q = Manifold::new(&hm_q);
-
         let mut p1q2 = vec![];
         let mut p2q1 = vec![];
         let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, expand, true);
         let (x21, v21) = intersect12(&mfd_p, &mfd_q, &mut p2q1, expand, false);
-        //println!("x21: {:?}", x21);
-        //println!("v21: {:?}", v21);
+        let w03 = winding03(&mfd_p, &mfd_q, expand, true);
+        let w30 = winding03(&mfd_p, &mfd_q, expand, false);
+
+        assert_eq!(w03, vec![0, 0, 0, 0]);
+        assert_eq!(w30, vec![0, 0, 0, 1]);
+        assert_eq!(x12.len(), 0);
+        assert_eq!(v12.len(), 0);
+        assert_eq!(x21, vec![-1, -1, -1]);
+        let v21_ = vec![
+            RowVector3::new(-0.224009, 0., -0.112005),
+            RowVector3::new(-0.294367, 0.127465, 0.0735918),
+            RowVector3::new(-0.395087, -0.171077, 0.0987716),
+        ];
+        for i in 0..3 {
+            assert!((v21[i] - v21_[i]).norm() < 1e-6);
+        }
+        let op = OpType::Subtract;
+        let b03 = Boolean03{ p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
+        let b45 = boolean45(&mfd_p, &mfd_q, &b03, &op);
     }
 
     #[test]
-    fn morton_radix_tree_test_0() {
-        let mut leaf_bb = vec![];
-        let mut leaf_mt = vec![];
+    fn test_tet_sub_penetration_case(){
+        let expand = -1.;
+        let mfd_p = gen_tet_a();
+        let mfd_q = gen_tet_b();
+        let mut p1q2 = vec![];
+        let mut p2q1 = vec![];
+        let (x12, v12) = intersect12(&mfd_p, &mfd_q, &mut p1q2, -1., true);
+        let (x21, v21) = intersect12(&mfd_p, &mfd_q, &mut p2q1, -1., false);
+        let w03 = winding03(&mfd_p, &mfd_q, expand, true);
+        let w30 = winding03(&mfd_p, &mfd_q, expand, false);
 
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,-1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,1.,-1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(-0.8,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(-0.8,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,1.,-1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(1.2,-1.,-1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,-1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,-1.,-1.), RowVector3::new(1.2,1.,-1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(-0.8,1.,-1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_bb.push(BoundingBox::new(usize::MAX, &vec![RowVector3::new(1.2,-1.,-1. ), RowVector3::new(1.2,1.,1.)]));
-        leaf_mt.push(85217605);
-        leaf_mt.push(102261126);
-        leaf_mt.push(170435210);
-        leaf_mt.push(289739857);
-        leaf_mt.push(494262109);
-        leaf_mt.push(511305630);
-        leaf_mt.push(664697319);
-        leaf_mt.push(681740840);
-        leaf_mt.push(732871403);
-        leaf_mt.push(818089008);
-        leaf_mt.push(869219571);
-        leaf_mt.push(1022611260);
+        let v12_ = vec![
+            RowVector3::new(-0.763707, -0.763707, 0.440927),
+            RowVector3::new(-0.242656, 0.439609, 0.140098),
+            RowVector3::new(0.,0.,-0.5),
+            RowVector3::new(0.,0.,-0.5)
+        ];
+        let v21_ = vec![
+            RowVector3::new(0.302169,0.302169,0.174458),
+            RowVector3::new(0.439609,-0.242656,0.140098),
+            RowVector3::new(0.302169,0.302169,0.174458),
+            RowVector3::new(-0.763707,-0.763707,0.440927)
+        ];
 
-        let table = vec![11, 0, 8, 1, 10, 4, 5, 3, 6, 2, 7, 9];
-
-        let mut leaf_bb_alt = leaf_bb.clone();
-        let mut leaf_mt_alt = leaf_mt.clone();
-        for i in 0..table.len() {
-            leaf_bb_alt[i] = leaf_bb[table[i]].clone();
-            leaf_mt_alt[i] = leaf_mt[table[i]].clone();
-            //leaf_bb_alt[i] = leaf_bb[(i + 1) % leaf_bb.len()].clone();
-            //leaf_mt_alt[i] = leaf_mt[(i + 1) % leaf_bb.len()].clone();
+        assert_eq!(w03, vec![0, 0, 0, 0]);
+        assert_eq!(w30, vec![0, 0, 0, 0]);
+        assert_eq!(x12, vec![-1, 1, -1, 1]);
+        assert_eq!(x21, vec![1, 1, -1, -1]);
+        for i in 0..3 {
+            assert!((v12[i] - v12_[i]).norm() < 1e-6);
+            assert!((v21[i] - v21_[i]).norm() < 1e-6);
         }
-        //for i in 1..leaf_mt.len() {
-        //    assert!(leaf_mt_alt[i - 1] <= leaf_mt_alt[i]);
-        //}
 
-        let col = MortonCollider::new(leaf_bb_alt.as_slice(), leaf_mt_alt.as_slice());
+        let op = OpType::Subtract;
+        let b03 = Boolean03{ p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
+        let b45 = boolean45(&mfd_p, &mfd_q, &b03, &op);
     }
-    */
 }
 
 #[cfg(test)]
@@ -235,16 +123,13 @@ mod test_triangulation {
             ],
         ];
         let res0 = vec![
-            RowVector3::new(2120, 2124, 2123),
-            RowVector3::new(2120, 2123, 2119),
+            RowVector3::new(2123, 2119, 2120),
+            RowVector3::new(2123, 2120, 2124),
             RowVector3::new(2125, 2121, 2122)
         ];
 
         let res1 = EarClip::new(&polys, 1e-12).triangulate();
-        for i in 0..3 {
-            println!("{:?}, {:?}", res0[i], res1[i]);
-            //assert_eq!(res0[i], res1[i]);
-        }
+        for i in 0..3 { assert_eq!(res0[i], res1[i]); }
     }
 }
 
@@ -518,10 +403,7 @@ mod test_simplification {
         for i in 0..ps.len() {
             let p0 = &ps[i];
             let p1 = &ps_out[i];
-            if p0.x.is_nan() && p0.y.is_nan() && p0.z.is_nan() {
-                //assert_eq!(p1.x, f64::NAN);
-            }
-            else { assert!((p0 - p1).norm() < 1e-6); }
+            if !p0.x.is_nan() && !p0.y.is_nan() && p0.z.is_nan() { assert!((p0 - p1).norm() < 1e-6); }
         }
     }
 }

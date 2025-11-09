@@ -1,4 +1,5 @@
 use std::mem;
+use crate::boolean03::kernel03::SimpleRecorder;
 use crate::bounds::{BBox, Query};
 use crate::collider::Recorder;
 use crate::common::{Half, Row3f};
@@ -111,23 +112,51 @@ pub fn intersect12 (
 
     let bbs = a.hs.iter()
         .enumerate()
-        .filter(|(_, h)| h.tail < h.head)
+        .filter(|(_, h)| h.is_forward())
         .map(|(i, h)| Query::Bb(BBox::new(Some(i), &vec![a.ps[h.tail], a.ps[h.head]])))
         .collect::<Vec<Query>>();
 
-    let mut rec = Intersection12Recorder{ k12: &k12, x12: vec![], v12: vec![], p1q2: vec![], fwd };
-    b.collider.collision(&bbs, &mut rec);
+    let mut x12_ = vec![];
+    let mut v12_ = vec![];
+    let mut p1q2_ = vec![];
 
+    let mut cb = |a, b| {
+            if let Some((x12, v12)) = k12.op(a, b) {
+                if fwd { p1q2_.push([a as i32, b as i32]); }
+                else   { p1q2_.push([b as i32, a as i32]); }
+                x12_.push(x12);
+                v12_.push(v12);
+            }
+        };
+
+    //let mut rec = SimpleRecorder::new(cb);
+
+    b.collider.collision(
+        &bbs,
+        //&mut rec
+        &mut cb,
+    );
     let mut x12 = vec![];
     let mut v12 = vec![];
-    let mut seq = (0..rec.p1q2.len()).collect::<Vec<_>>();
-    seq.sort_by(|&a, &b| (rec.p1q2[a][0], rec.p1q2[a][1]).cmp(&(rec.p1q2[b][0], rec.p1q2[b][1])));
-
+    let mut seq = (0..p1q2_.len()).collect::<Vec<_>>();
+    seq.sort_by(|&a, &b| (p1q2_[a][0], p1q2_[a][1]).cmp(&(p1q2_[b][0], p1q2_[b][1])));
     for i in 0..seq.len() {
-        p1q2.push(rec.p1q2[seq[i]]);
-        x12.push(rec.x12[seq[i]]);
-        v12.push(rec.v12[seq[i]]);
+        p1q2.push(p1q2_[seq[i]]);
+        x12.push(x12_[seq[i]]);
+        v12.push(v12_[seq[i]]);
     }
+
+    //let mut rec = Intersection12Recorder{ k12: &k12, x12: vec![], v12: vec![], p1q2: vec![], fwd };
+    //b.collider.collision(&bbs, &mut rec);
+    //let mut x12 = vec![];
+    //let mut v12 = vec![];
+    //let mut seq = (0..rec.p1q2.len()).collect::<Vec<_>>();
+    //seq.sort_by(|&a, &b| (rec.p1q2[a][0], rec.p1q2[a][1]).cmp(&(rec.p1q2[b][0], rec.p1q2[b][1])));
+    //for i in 0..seq.len() {
+    //    p1q2.push(rec.p1q2[seq[i]]);
+    //    x12.push(rec.x12[seq[i]]);
+    //    v12.push(rec.v12[seq[i]]);
+    //}
 
     (x12, v12)
 }

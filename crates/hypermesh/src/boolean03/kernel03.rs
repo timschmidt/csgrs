@@ -4,12 +4,12 @@ use crate::collider::Recorder;
 use crate::common::Row2f;
 use crate::Manifold;
 
-struct SimpleRecorder<F> where F: FnMut(usize, usize) {
+pub struct SimpleRecorder<F> where F: FnMut(usize, usize) {
     callback: F,
 }
 
 impl<F> SimpleRecorder<F> where F: FnMut(usize, usize) {
-    fn new(callback: F) -> Self {
+    pub fn new(callback: F) -> Self {
         Self { callback }
     }
 }
@@ -43,12 +43,16 @@ pub fn winding03(
         .enumerate()
         .map(|(i, p)| Query::Pt(BPos{id: Some(i), pos: Row2f::new(p.x, p.y)}))
         .collect::<Vec<_>>();
-    let mut rec = SimpleRecorder::new(
-        |a, b| {
+    let mut cb = |a, b| {
             let (s02, z02) = k02.op(a, b);
             if z02.is_some() { w03[a] += s02 * if fwd {1} else {-1}; }
-        }
+        };
+
+    //let mut rec = SimpleRecorder::new(cb);
+    b.collider.collision(
+        &bbs,
+        //&mut rec
+        &mut cb,
     );
-    b.collider.collision(&bbs, &mut rec);
     w03
 }
