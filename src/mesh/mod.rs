@@ -136,6 +136,131 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         Mesh::from_polygons(&triangles, self.metadata.clone())
     }
+    
+	/// Triangulate all polygons and then exhaustively fix T-junctions by
+    /// inserting missing edge points into adjacent triangles that share the edge.
+    pub fn triangulate_conforming(&self) -> Vec<[Vertex; 3]> {
+        // 1) Triangulate each polygon independently (as before)
+        let mut tris: Vec<[Vertex; 3]> = Vec::new();
+        for poly in &self.polygons {
+            tris.extend(poly.triangulate());
+        }
+
+        // Helpers -------------------------------------------------------------
+
+        #[inline]
+        fn sqr(x: Real) -> Real { x * x }
+
+        #[inline]
+        fn area2(a: &Point3<Real>, b: &Point3<Real>, c: &Point3<Real>) -> Real {
+            (b - a).cross(&(c - a)).norm()
+        }
+
+        #[inline]
+        fn nearly_equal(a: &Point3<Real>, b: &Point3<Real>) -> bool {
+            (a - b).norm_squared() <= sqr(EPSILON)
+        }
+
+        /// Returns Some(t in (0,1)) if p lies on the segment a-b (colinear & between), else None.
+        fn param_on_segment(a: &Point3<Real>, b: &Point3<Real>, p: &Point3<Real>) -> Option<Real> {
+            let ab = b - a;
+            let ap = p - a;
+            let ab_len2 = ab.norm_squared();
+            if ab_len2 <= sqr(EPSILON) {
+                return None;
+            }
+
+            // Colinearity test via cross product magnitude
+            let cross_n = ap.cross(&ab).norm();
+            if cross_n > (ab_len2.sqrt() * EPSILON) {
+                return None;
+            }
+
+            // Between-ness via projection parameter t
+            let t = ap.dot(&ab) / ab_len2;
+            // Keep some margin away from endpoints to avoid degenerate splits
+            let margin = 8.0 * EPSILON;
+            if t > margin && t < 1.0 - margin {
+                Some(t)
+            } else {
+                None
+            }
+        }
+
+        /// Build a vertex at `pos_p` by interpolating along (va->vb) using parameter t for normals.
+        fn make_edge_vertex(va: &Vertex, vb: &Vertex, pos_p: Point3<Real>, t: Real) -> Vertex {
+            let interp_n = (va.normal + (vb.normal - va.normal) * t).normalize();
+            Vertex::new(pos_p, interp_n)
+        }
+
+        // 2) Exhaustively split triangles to remove T-junctions ----------------
+        'outer: loop {
+            // Gather all vertices (no dedup necessary)
+            let all_vs: Vec<Vertex> = tris.iter().flat_map(|t| t).copied().collect();
+
+            for tri_i in 0..tris.len() {
+                // We’ll borrow then potentially replace this triangle
+                let tri = tris[tri_i];
+                let v = tri;
+
+                // Triangle edges as (idx_a, idx_b, idx_c)
+                const EDGES: [(usize, usize, usize); 3] = [(0, 1, 2), (1, 2, 0), (2, 0, 1)];
+
+                for &(ia, ib, ic) in &EDGES {
+                    let (va, vb, vc) = (v[ia], v[ib], v[ic]);
+
+                    // Skip degenerate/near-zero edges
+                    if (vb.pos - va.pos).norm_squared() <= sqr(EPSILON) {
+                        continue;
+                    }
+
+                    for p in &all_vs {
+                        // Skip triangle's own vertices & endpoints
+                        if nearly_equal(&p.pos, &va.pos) || nearly_equal(&p.pos, &vb.pos) || nearly_equal(&p.pos, &vc.pos) {
+                            continue;
+                        }
+
+                        // Skip if the point is not in (the small-thickness) plane of this triangle
+                        // (helps avoid splitting against unrelated colinear-but-off-plane points)
+                        let tri_n = (vb.pos - va.pos).cross(&(vc.pos - va.pos));
+                        let tri_n_len = tri_n.norm();
+                        if tri_n_len > EPSILON {
+                            let plane_dist = tri_n.dot(&(p.pos - va.pos)).abs() / tri_n_len;
+                            if plane_dist > 16.0 * EPSILON { // slightly looser tolerance
+                                continue;
+                            }
+                        }
+
+                        // Check if p lies on edge (va, vb)
+                        if let Some(t) = param_on_segment(&va.pos, &vb.pos, &p.pos) {
+                            // Interpolate a new vertex for THIS triangle along edge (va-vb)
+                            let new_v = make_edge_vertex(&va, &vb, p.pos, t);
+
+                            // Replace tri (va,vb,vc) by two: (va,new_v,vc) + (new_v,vb,vc)
+                            // Make sure both triangles are non-degenerate
+                            let t1 = [va, new_v, vc];
+                            let t2 = [new_v, vb, vc];
+
+                            if area2(&t1[0].pos, &t1[1].pos, &t1[2].pos) <= EPSILON { continue; }
+                            if area2(&t2[0].pos, &t2[1].pos, &t2[2].pos) <= EPSILON { continue; }
+
+                            // Commit the split: replace current tri with t1, push t2
+                            tris[tri_i] = t1;
+                            tris.push(t2);
+
+                            // Restart to keep indices valid and to keep the procedure exhaustive
+                            continue 'outer;
+                        }
+                    }
+                }
+            }
+
+            // No more splits done in this pass
+            break;
+        }
+
+        tris
+    }
 
     /// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
     /// This results in a triangular mesh with more detail.
