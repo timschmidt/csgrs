@@ -1,7 +1,5 @@
 use std::mem;
-use crate::boolean03::kernel03::SimpleRecorder;
 use crate::bounds::{BBox, Query};
-use crate::collider::Recorder;
 use crate::common::{Half, Row3f};
 use crate::Manifold;
 use super::kernel01::intersect;
@@ -22,20 +20,18 @@ impl<'a> Kernel12<'a> {
         let mut x12 = 0;
         let mut xzy_lr0 = [Row3f::zeros(); 2];
         let mut xzy_lr1 = [Row3f::zeros(); 2];
-        let mut shadows = false;
+        let mut shadow_ = false;
         let h = self.hs_p[p1].clone();
 
         let mut k = 0;
 
         for vid in [h.tail, h.head].iter() {
-            let (s, op_z) = self.k02.op(*vid, q2);
-            if let Some(z) = op_z {
+            if let Some((s, z)) = self.k02.op(*vid, q2) {
                 let f = (*vid == h.tail) == self.fwd;
                 x12 += s * if f { 1 } else { -1 };
-                if k < 2 && (k == 0 || (s != 0) != shadows) {
-                    shadows = s != 0;
+                if k < 2 && (k == 0 || (s != 0) != shadow_) {
+                    shadow_ = s != 0;
                     xzy_lr0[k] = self.ps_p[*vid];
-                    // Swap y and z
                     let temp = xzy_lr0[k].y;
                     xzy_lr0[k].y = xzy_lr0[k].z;
                     xzy_lr0[k].z = temp;
@@ -53,8 +49,8 @@ impl<'a> Kernel12<'a> {
             let op = if self.fwd { self.k11.op(p1, q1f) } else { self.k11.op(q1f, p1) };
             if let Some((s, xyzz)) = op {
                 x12 -= s * if h.is_forward() { 1 } else { -1 };
-                if k < 2 && (k == 0 || (s != 0) != shadows) {
-                    shadows = s != 0;
+                if k < 2 && (k == 0 || (s != 0) != shadow_) {
+                    shadow_ = s != 0;
                     xzy_lr0[k].x = xyzz.x;
                     xzy_lr0[k].y = xyzz.z;
                     xzy_lr0[k].z = xyzz.y;
@@ -77,7 +73,7 @@ impl<'a> Kernel12<'a> {
 pub fn intersect12 (
     mp: &Manifold,
     mq: &Manifold,
-    p1q2: &mut Vec<[i32; 2]>,
+    p1q2: &mut Vec<[usize; 2]>,
     expand: f64,
     fwd: bool
 ) -> (Vec<i32>, Vec<Row3f>) {
@@ -116,28 +112,22 @@ pub fn intersect12 (
         .map(|(i, h)| Query::Bb(BBox::new(Some(i), &vec![a.ps[h.tail], a.ps[h.head]])))
         .collect::<Vec<Query>>();
 
-    let mut x12_ = vec![];
-    let mut v12_ = vec![];
+    let mut x12_  = vec![];
+    let mut v12_  = vec![];
     let mut p1q2_ = vec![];
-
-    let mut cb = |a, b| {
-            if let Some((x12, v12)) = k12.op(a, b) {
-                if fwd { p1q2_.push([a as i32, b as i32]); }
-                else   { p1q2_.push([b as i32, a as i32]); }
-                x12_.push(x12);
-                v12_.push(v12);
+    let mut x12 = vec![];
+    let mut v12 = vec![];
+    let mut rec = |a, b| {
+            if let Some((x, v)) = k12.op(a, b) {
+                if fwd { p1q2_.push([a, b]); }
+                else   { p1q2_.push([b, a]); }
+                x12_.push(x);
+                v12_.push(v);
             }
         };
 
-    //let mut rec = SimpleRecorder::new(cb);
+    b.collider.collision(&bbs, &mut rec);
 
-    b.collider.collision(
-        &bbs,
-        //&mut rec
-        &mut cb,
-    );
-    let mut x12 = vec![];
-    let mut v12 = vec![];
     let mut seq = (0..p1q2_.len()).collect::<Vec<_>>();
     seq.sort_by(|&a, &b| (p1q2_[a][0], p1q2_[a][1]).cmp(&(p1q2_[b][0], p1q2_[b][1])));
     for i in 0..seq.len() {
@@ -146,37 +136,5 @@ pub fn intersect12 (
         v12.push(v12_[seq[i]]);
     }
 
-    //let mut rec = Intersection12Recorder{ k12: &k12, x12: vec![], v12: vec![], p1q2: vec![], fwd };
-    //b.collider.collision(&bbs, &mut rec);
-    //let mut x12 = vec![];
-    //let mut v12 = vec![];
-    //let mut seq = (0..rec.p1q2.len()).collect::<Vec<_>>();
-    //seq.sort_by(|&a, &b| (rec.p1q2[a][0], rec.p1q2[a][1]).cmp(&(rec.p1q2[b][0], rec.p1q2[b][1])));
-    //for i in 0..seq.len() {
-    //    p1q2.push(rec.p1q2[seq[i]]);
-    //    x12.push(rec.x12[seq[i]]);
-    //    v12.push(rec.v12[seq[i]]);
-    //}
-
     (x12, v12)
 }
-
-struct Intersection12Recorder<'a> {
-    pub k12: &'a Kernel12<'a>,
-    pub fwd: bool,
-    pub x12: Vec<i32>,
-    pub v12: Vec<Row3f>,
-    pub p1q2: Vec<[i32; 2]>,
-}
-
-impl <'a> Recorder for Intersection12Recorder<'a> {
-    fn record(&mut self, query_idx: usize, leaf_idx: usize) {
-        if let Some((x12, v12)) = self.k12.op(query_idx, leaf_idx) {
-            if self.fwd { self.p1q2.push([query_idx as i32, leaf_idx as i32]); }
-            else        { self.p1q2.push([leaf_idx as i32, query_idx as i32]); }
-            self.x12.push(x12);
-            self.v12.push(v12);
-        }
-    }
-}
-

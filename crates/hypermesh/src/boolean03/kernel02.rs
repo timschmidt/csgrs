@@ -11,7 +11,7 @@ pub struct Kernel02<'a> {
 }
 
 impl<'a> Kernel02<'a> {
-    pub fn op (&self, p0: usize, q2: usize) -> (i32, Option<f64>) {
+    pub fn op (&self, p0: usize, q2: usize) -> Option<(i32, f64)> {
         let mut s02 = 0;
         let exp = self.expand;
         let fwd = self.fwd;
@@ -53,13 +53,13 @@ impl<'a> Kernel02<'a> {
             }
         }
 
-        if s02 == 0 { return (0, None); }
+        if s02 == 0 { return None; }
 
         assert_eq!(k, 2, "Boolean manifold error: s02");
         let p = self.ps_p[p0];
         let z02 = interpolate(yzz_rl[0], yzz_rl[1], p.y)[1];
         if fwd { if !shadows(p.z, z02, exp * self.ns[p0].z) { s02 = 0; } }
         else   { if !shadows(z02, p.z, exp * self.ns[closest_vid].z) { s02 = 0; } }
-        (s02, Some(z02))
+        Some((s02, z02))
     }
 }

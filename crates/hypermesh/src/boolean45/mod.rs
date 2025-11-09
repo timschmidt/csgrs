@@ -44,8 +44,8 @@ fn size_output(
     i30: &[i32],
     i12: &[i32],
     i21: &[i32],
-    p1q2: &Vec<[i32; 2]>,
-    p2q1: &Vec<[i32; 2]>,
+    p1q2: &Vec<[usize; 2]>,
+    p2q1: &Vec<[usize; 2]>,
     fns: &mut Vec<Row3f>,
     inv: bool, // whether to invert mesh of q
 ) -> (Vec<i32>, Vec<i32>) {
@@ -58,21 +58,21 @@ fn size_output(
 
     // equivalent to CountNewVerts
     for i in 0..i12.len() {
-        let hid0 = p1q2[i][0] as usize;
+        let hid0 = p1q2[i][0];
         let hid1 = mp.hs[hid0].pair;
         let inc = i12[i].abs();
         side_p[face_of(hid0)] += inc;
         side_p[face_of(hid1)] += inc;
-        side_q[p1q2[i][1] as usize] += inc;
+        side_q[p1q2[i][1]] += inc;
     }
 
     for i in 0..i21.len() {
-        let hid0 = p2q1[i][1] as usize;
+        let hid0 = p2q1[i][1];
         let hid1 = mq.hs[hid0].pair;
         let inc = i21[i].abs();
         side_q[face_of(hid0)] += inc;
         side_q[face_of(hid1)] += inc;
-        side_p[p2q1[i][0] as usize] += inc;
+        side_p[p2q1[i][0]] += inc;
     }
 
     // a map from face_p and face_q to face_r
@@ -108,7 +108,7 @@ struct EdgePt {
 }
 
 fn add_new_edge_verts(
-    p1q2: &Vec<[i32; 2]>,
+    p1q2: &Vec<[usize; 2]>,
     i12: &[i32],
     v12_r: &[i32],
     hs_p: &[Half],
@@ -118,8 +118,8 @@ fn add_new_edge_verts(
     oft: usize,
 ) {
     for i in 0..p1q2.len() {
-        let hid_p = p1q2[i][if fwd {0} else {1}] as usize;
-        let fid_q = p1q2[i][if fwd {1} else {0}] as usize;
+        let hid_p = p1q2[i][if fwd {0} else {1}];
+        let fid_q = p1q2[i][if fwd {1} else {0}];
         let vid_r = v12_r[i] as usize;
         let inc = i12[i];
         let hid0 = hid_p;
@@ -185,11 +185,10 @@ fn append_partial_edges(
     face_ptr_r: &mut [i32],                 //
     whole_flag: &mut [bool],                // a flag to find out a halfedge from mfd_p is entirely usable in mfd_r
 ) {
-    for e in pt_p {
-        let hid_p = e.0.clone();
-        let mut hpos_p = e.1;
-        let h = &hs_p[hid_p];
-        whole_flag[hid_p] = false;
+    for (hid_p, pt) in pt_p {
+        let mut hpos_p = pt;
+        let h = &hs_p[*hid_p];
+        whole_flag[*hid_p] = false;
         whole_flag[h.pair] = false;
 
         // assigning 0-1 value to hpos_p
@@ -222,7 +221,7 @@ fn append_partial_edges(
         }
 
         let mut half_seq = pair_up(&mut hpos_p);
-        let fp_l = face_of(hid_p);
+        let fp_l = face_of(*hid_p);
         let fp_r = face_of(h.pair);
         let fid_l = fid_p2r[fp_l] as usize;
         let fid_r = fid_p2r[fp_r] as usize;
@@ -257,18 +256,17 @@ fn append_new_edges(
     hs_r: &mut [Half],                                 // the halfedge data of mfd_r, empty yet
     rs_r: &mut [Tref],                                 //
 ) {
-    for v in pt_new.into_iter() {
-        let (fid_p, fid_q) = v.0;
-        let mut epos = v.1;
-        let mut bbox = BBox::new(None, &vec![]);
-        for p in epos.iter() { bbox.union(&ps_r[p.vid]); }
+    for ((fid_p, fid_q), pt_init) in pt_new.into_iter() {
+        let mut pt = pt_init;
+        let mut bb = BBox::default();
+        for p in pt.iter() { bb.union(&ps_r[p.vid]); }
 
-        let d = bbox.longest_dim();
-        for p in epos.iter_mut() {
+        let d = bb.longest_dim();
+        for p in pt.iter_mut() {
             p.val = ps_r[p.vid][d];
         }
 
-        let mut half_seq = pair_up(&mut epos);
+        let mut half_seq = pair_up(&mut pt);
         let fid_l = fid_pq2r[*fid_p] as usize;
         let fid_r = fid_pq2r[*fid_q + nf_p] as usize;
         let fw_ref = Tref { mid: 0, fid: *fid_p, ..Default::default() };

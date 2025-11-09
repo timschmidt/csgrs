@@ -15,7 +15,7 @@ impl<'a> Kernel11<'a> {
         let mut k = 0;
         let mut p_rl = [Row3f::zeros(); 2];
         let mut q_rl = [Row3f::zeros(); 2];
-        let mut shadow = false;
+        let mut shadow_ = false;
         let mut s11 = 0;
 
         let p0 = [self.hs_p[p1].tail, self.hs_p[p1].head];
@@ -34,8 +34,8 @@ impl<'a> Kernel11<'a> {
 
             if let Some((s01, yz01)) = s {
                 s11 += s01 * if i == 0 {-1} else {1};
-                if k < 2 && (k == 0 || (s01 != 0) != shadow) {
-                    shadow = s01 != 0;
+                if k < 2 && (k == 0 || (s01 != 0) != shadow_) {
+                    shadow_ = s01 != 0;
                     p_rl[k] = self.ps_p[p0[i]];
                     q_rl[k] = Row3f::new(p_rl[k].x, yz01.x, yz01.y);
                     k += 1;
@@ -56,8 +56,8 @@ impl<'a> Kernel11<'a> {
 
             if let Some((s10, yz10)) = s {
                 s11 += s10 * if i == 0 {-1} else {1};
-                if k < 2 && (k == 0 || (s10 != 0) != shadow) {
-                    shadow = s10 != 0;
+                if k < 2 && (k == 0 || (s10 != 0) != shadow_) {
+                    shadow_ = s10 != 0;
                     q_rl[k] = self.ps_q[q0[i]];
                     p_rl[k] = Row3f::new(q_rl[k].x, yz10.x, yz10.y);
                     k += 1;
@@ -71,11 +71,11 @@ impl<'a> Kernel11<'a> {
         let xyzz11 = intersect(p_rl[0], p_rl[1], q_rl[0], q_rl[1]);
         let p1s = self.hs_p[p1].tail;
         let p1e = self.hs_p[p1].head;
-        let d1 = self.ps_p[p1s] - Row3f::new(xyzz11.x, xyzz11.y, xyzz11.z);
-        let d2 = self.ps_p[p1e] - Row3f::new(xyzz11.x, xyzz11.y, xyzz11.z);
-        let bgn2 = d1.norm_squared();
-        let end2 = d2.norm_squared();
-        let dir = if bgn2 < end2 {self.ns[p1s].z} else {self.ns[p1e].z};
+        let d1  = self.ps_p[p1s] - Row3f::new(xyzz11.x, xyzz11.y, xyzz11.z);
+        let d2  = self.ps_p[p1e] - Row3f::new(xyzz11.x, xyzz11.y, xyzz11.z);
+        let b2  = d1.norm_squared();
+        let e2  = d2.norm_squared();
+        let dir = if b2 < e2 {self.ns[p1s].z} else {self.ns[p1e].z};
 
         if !shadows(xyzz11.z, xyzz11.w, self.expand * dir) { s11 = 0; }
         Some((s11, xyzz11))

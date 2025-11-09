@@ -126,14 +126,6 @@ fn build_internal_boxes(
     }
 }
 
-pub trait Recorder {
-    fn record(&mut self, query_idx: usize, leaf_idx: usize);
-}
-
-pub trait Collider {
-    fn collision(&self, queries: &[BBox], recorder: &mut dyn Recorder);
-}
-
 #[derive(Clone)]
 pub struct MortonCollider {
     pub node_bb: Vec<BBox>,
@@ -188,12 +180,7 @@ impl MortonCollider {
         res
     }
 
-    pub fn collision<F>(
-        &self,
-        queries: &[Query],
-        //recorder: &mut dyn Recorder
-        record:&mut F
-    ) where F: FnMut(usize, usize) {
+    pub fn collision<F>(&self, queries: &[Query], record:&mut F) where F: FnMut(usize, usize) {
         for i in 0..queries.len() {
             find_collisions(
                 &queries,
@@ -211,9 +198,8 @@ fn find_collisions<F>(
     queries: &[Query],
     node_bb: &[BBox],
     children: &[(i32, i32)],
-    query_idx: usize, // query index
+    query_idx: usize,
     record: &mut F,
-    //rec: &mut dyn Recorder,
     self_collision: bool,
 ) where F: FnMut(usize, usize) {
     // depth-first search

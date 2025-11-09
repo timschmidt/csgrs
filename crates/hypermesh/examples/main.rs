@@ -85,7 +85,7 @@ fn setup(
     //    mfs.push(mf);
     //}
 
-    let res = menger_sponge(3);
+    let res = menger_sponge(4);
 
     cmds.insert_resource(
         DrawingData{ units: vec![

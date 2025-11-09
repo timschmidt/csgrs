@@ -9,8 +9,8 @@ use crate::common::{OpType, Row3f};
 use crate::manifold::Manifold;
 
 pub struct Boolean03 {
-    pub p1q2: Vec<[i32; 2]>,
-    pub p2q1: Vec<[i32; 2]>,
+    pub p1q2: Vec<[usize; 2]>,
+    pub p2q1: Vec<[usize; 2]>,
     pub x12: Vec<i32>,
     pub x21: Vec<i32>,
     pub w03: Vec<i32>,

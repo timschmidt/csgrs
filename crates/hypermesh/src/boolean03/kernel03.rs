@@ -1,24 +1,7 @@
 use super::kernel02::Kernel02;
-use crate::bounds::{BBox, BPos, Query};
-use crate::collider::Recorder;
+use crate::bounds::{BPos, Query};
 use crate::common::Row2f;
 use crate::Manifold;
-
-pub struct SimpleRecorder<F> where F: FnMut(usize, usize) {
-    callback: F,
-}
-
-impl<F> SimpleRecorder<F> where F: FnMut(usize, usize) {
-    pub fn new(callback: F) -> Self {
-        Self { callback }
-    }
-}
-
-impl<'a, F> Recorder for SimpleRecorder<F> where F: FnMut(usize, usize) {
-    fn record(&mut self, query_idx: usize, leaf_idx: usize) {
-        (self.callback)(query_idx, leaf_idx);
-    }
-}
 
 pub fn winding03(
     mp: &Manifold,
@@ -39,20 +22,12 @@ pub fn winding03(
         fwd,
     };
 
-    let bbs = a.ps.iter()
-        .enumerate()
-        .map(|(i, p)| Query::Pt(BPos{id: Some(i), pos: Row2f::new(p.x, p.y)}))
-        .collect::<Vec<_>>();
-    let mut cb = |a, b| {
-            let (s02, z02) = k02.op(a, b);
-            if z02.is_some() { w03[a] += s02 * if fwd {1} else {-1}; }
-        };
-
-    //let mut rec = SimpleRecorder::new(cb);
     b.collider.collision(
-        &bbs,
-        //&mut rec
-        &mut cb,
+        & a.ps.iter().enumerate()
+            .map(|(i, p)| Query::Pt(BPos{id: Some(i), pos: Row2f::new(p.x, p.y)}))
+            .collect::<Vec<_>>(),
+        &mut |a, b| if let Some((s, _)) = k02.op(a, b) { w03[a] += s * if fwd { 1 } else { -1 }; }
     );
+
     w03
 }
