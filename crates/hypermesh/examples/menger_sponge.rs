@@ -30,7 +30,7 @@ fn setup(
 ) {
     let res = menger_sponge(4);
     cmds.spawn((PointLight::default(), Transform::from_xyz(3., 4., 3.)));
-    cmds.spawn((Transform::from_translation(Vec3::new(0., 1.5, 5.)), PanOrbitCamera::default(),));
+    cmds.spawn((Transform::from_translation(Vec3::new(0., 0., 2.)), PanOrbitCamera::default(),));
     let mut m = Mesh::new(bevy::render::mesh::PrimitiveTopology::TriangleList, RenderAssetUsages::default());
     m.insert_indices(Indices::U32(res.hs.chunks(3).flat_map(|t| [t[0].tail as u32, t[1].tail as u32, t[2].tail as u32]).collect()));
     m.insert_attribute(Mesh::ATTRIBUTE_POSITION, res.ps.iter().map(|p| [p[0] as f32, p[1] as f32, p[2] as f32]).collect::<Vec<_>>());

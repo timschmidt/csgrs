@@ -2,6 +2,7 @@
 name = "boolean"
 version = "0.1.0"
 edition = "2024"
+authors = ["saki komikado"]
 
 [dependencies]
 anyhow = "1.0.100"

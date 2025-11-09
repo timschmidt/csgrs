@@ -40,7 +40,7 @@ fn setup(
             &m.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>(),
         ).unwrap());
     }
-    let res = compute_boolean(&mfs[0], &mfs[1], OpType::Intersect).unwrap();
+    let res = compute_boolean(&mfs[0], &mfs[1], OpType::Subtract).unwrap();
     mfs.push(res);
 
     for (i, mf) in mfs.iter().enumerate() {
