@@ -11,13 +11,10 @@ pub struct Kernel11<'a> {
 }
 
 impl<'a> Kernel11<'a> {
-    pub fn op (&self, p1: usize, q1: usize) -> (i32, Option<Row4f>) {
-        // For pRL[k], qRL[k], k==0 is the left and k==1 is the right.
+    pub fn op (&self, p1: usize, q1: usize) -> Option<(i32, Row4f)> {
         let mut k = 0;
         let mut p_rl = [Row3f::zeros(); 2];
         let mut q_rl = [Row3f::zeros(); 2];
-        // Either the left or right must shadow, but not both. This ensures the
-        // intersection is between the left and right.
         let mut shadow = false;
         let mut s11 = 0;
 
@@ -34,7 +31,7 @@ impl<'a> Kernel11<'a> {
                 self.expand,
                 false
             );
-            // If the value is NaN, then these do not overlap.
+
             if let Some((s01, yz01)) = s {
                 s11 += s01 * if i == 0 {-1} else {1};
                 if k < 2 && (k == 0 || (s01 != 0) != shadow) {
@@ -56,7 +53,7 @@ impl<'a> Kernel11<'a> {
                 self.expand,
                 true
             );
-            // If the value is NaN, then these do not overlap.
+
             if let Some((s10, yz10)) = s {
                 s11 += s10 * if i == 0 {-1} else {1};
                 if k < 2 && (k == 0 || (s10 != 0) != shadow) {
@@ -68,7 +65,7 @@ impl<'a> Kernel11<'a> {
             }
         }
 
-        if s11 == 0 { return (0, None); } // No intersection
+        if s11 == 0 { return None; }
 
         assert_eq!(k, 2, "Boolean manifold error: s11");
         let xyzz11 = intersect(p_rl[0], p_rl[1], q_rl[0], q_rl[1]);
@@ -81,6 +78,6 @@ impl<'a> Kernel11<'a> {
         let dir = if bgn2 < end2 {self.ns[p1s].z} else {self.ns[p1e].z};
 
         if !shadows(xyzz11.z, xyzz11.w, self.expand * dir) { s11 = 0; }
-        (s11, Some(xyzz11))
+        Some((s11, xyzz11))
     }
 }

@@ -28,7 +28,7 @@ impl<'a> Kernel02<'a> {
         let pos_p = self.ps_p[p0];
 
         for i in 0..3 {
-            let q1 = 3 * q2 + i; // make sure fid * 3 + i = hid
+            let q1 = 3 * q2 + i;
             let half = self.hs_q[q1].clone();
             let q1_f = if half.is_forward() { q1 } else { half.pair };
 
@@ -42,7 +42,7 @@ impl<'a> Kernel02<'a> {
                 }
             }
 
-            // If the value is NaN, then these do not overlap.
+            // If the value is None, then these do not overlap
             if let Some((s01, yz01)) = shadows01(p0, q1_f, self.ps_p, self.ps_q, self.hs_q, self.ns, exp, !fwd) {
                 s02 += s01 * if fwd == half.is_forward() {-1} else {1};
                 if k < 2 && (k == 0 || (s01 != 0) != shadows_) {
@@ -53,7 +53,7 @@ impl<'a> Kernel02<'a> {
             }
         }
 
-        if s02 == 0 { return (0, None); } // No intersection
+        if s02 == 0 { return (0, None); }
 
         assert_eq!(k, 2, "Boolean manifold error: s02");
         let p = self.ps_p[p0];

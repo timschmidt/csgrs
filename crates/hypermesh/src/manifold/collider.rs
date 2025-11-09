@@ -26,13 +26,11 @@ pub fn morton_code(p: &Row3f, bb: &BBox) -> u32 {
     x * 4 + y * 2 + z
 }
 
-
 fn node2intl(node: i32) -> Option<i32> { if node % 2 == 1 { Some((node - 1) / 2) } else { None } }
 fn node2leaf(node: i32) -> Option<i32> { if node % 2 == 0 { Some(node / 2) } else { None } }
 fn intl2node(intl: i32) -> i32 { intl * 2 + 1 }
 fn leaf2node(leaf: i32) -> i32 { leaf * 2 }
-fn prefix_length(a: u32, b: u32) -> u32 { (a ^ b).leading_zeros() } // need check
-
+fn prefix_length(a: u32, b: u32) -> u32 { (a ^ b).leading_zeros() }
 
 struct RadixTree<'a> {
     parent:  &'a mut [i32],

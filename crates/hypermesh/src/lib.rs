@@ -13,16 +13,16 @@ use crate::triangulation::triangulate;
 pub use crate::manifold::*;
 
 pub fn compute_boolean(
-    a: &Manifold,
-    b: &Manifold,
+    mp: &Manifold,
+    mq: &Manifold,
     op: OpType,
 ) -> anyhow::Result<Manifold> {
-    let eps = a.eps.max(b.eps);
-    let tol = a.tol.max(b.tol);
+    let eps = mp.eps.max(mq.eps);
+    let tol = mp.tol.max(mq.tol);
 
-    let     b03 = boolean03(a, b, &op);
-    let mut b45 = boolean45(a, b, &b03, &op);
-    let mut trg = triangulate(a, b, &b45, eps)?;
+    let     b03 = boolean03(mp, mq, &op);
+    let mut b45 = boolean45(mp, mq, &b03, &op);
+    let mut trg = triangulate(mp, mq, &b45, eps)?;
 
     simplify_topology(
         &mut trg.hs,
@@ -33,12 +33,9 @@ pub fn compute_boolean(
         eps
     );
 
-    cleanup_unused_verts(
-        &mut b45.ps,
-        &mut trg.hs
-    );
+    cleanup_unused_verts(&mut b45.ps, &mut trg.hs);
 
-    Manifold::new(
+    Manifold::new_with_precision(
         &b45.ps.iter().flatten().copied().collect::<Vec<_>>(),
         &trg.hs.iter().map(|h| h.tail).collect::<Vec<_>>(),
         Some(eps),

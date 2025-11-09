@@ -336,8 +336,6 @@ impl EarClip {
     }
 
     pub fn triangulate(&mut self) -> Vec<Row3u> {
-        println!("hole size: {}", self.holes.len());
-        println!("simples size: {}", self.simples.len());
         let vs = self.holes.iter().cloned().collect::<Vec<_>>();
         for mut v in vs { self.cut_key_hole(&mut v); }
         //println!("cut holes done");
@@ -508,15 +506,6 @@ impl EarClip {
             None => { self.simples.push(Rc::clone(&bgn.0)); },
             Some(c) => {
                 let ptr = self.find_closer_bridge(&bgn.0, &c);
-                if (bgn.0.borrow().pos - Row2f::new(0.4629629629629629, 0.24074074074074073)).norm_squared() < 1e-6  {
-                    println!("find con: {:?}, init: {:?}, closer: {:?}", bgn.0.borrow().pos, c.borrow().pos, ptr.borrow().pos);
-                }
-                //println!("find con end n: {:?}, {:?}", bgn.0.borrow().pos, ptr.borrow().pos);
-                //if (bgn.0.borrow().pos - Row2f::new(0.12962962962962962, -0.31481481481481477)).norm_squared() < 1e-6 {
-                //    self.join_polygons(&bgn.0, &c);
-                //}else {
-                //    self.join_polygons(&bgn.0, &ptr);
-                //}
                 self.join_polygons(&bgn.0, &ptr);
             }
         }
@@ -559,14 +548,8 @@ impl EarClip {
                 let f5 = vb.is_reflex(self.eps);
                 if f1 && f2 && (inside > 0 || f3) && f4 && f5 {
                     con = Rc::clone(v);
-                    if (bgn.borrow().pos - Row2f::new(0.4629629629629629, 0.24074074074074073)).norm_squared() < 1e-6 {
-                        println!("con in loop: {:?}, {:?}", bgn.borrow().pos, con.borrow().pos);
-                    }
                 };
             });
-        }
-        if (bgn.borrow().pos - Row2f::new(0.4629629629629629, 0.24074074074074073)).norm_squared() < 1e-6 {
-            println!("con in end: {:?}, {:?}", bgn.borrow().pos, con.borrow().pos);
         }
         Rc::clone(&con)
     }
@@ -617,7 +600,6 @@ impl EarClip {
     }
 
     pub fn triangulate_poly(&mut self, start: &mut EvPtr) {
-        println!("triangulate poly starts.....");
         let col = Self::vert_collider(start);
         if col.rfs.is_empty() { return; }
 

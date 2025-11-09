@@ -17,7 +17,7 @@ pub struct Kernel12<'a> {
 }
 
 impl<'a> Kernel12<'a> {
-    pub fn op (&self, p1: usize, q2: usize) -> (i32, Option<Row3f>) {
+    pub fn op (&self, p1: usize, q2: usize) -> Option<(i32, Row3f)> {
         let mut x12 = 0;
         let mut xzy_lr0 = [Row3f::zeros(); 2];
         let mut xzy_lr1 = [Row3f::zeros(); 2];
@@ -47,13 +47,11 @@ impl<'a> Kernel12<'a> {
 
         for i in 0..3 {
             let q1 = 3 * q2 + i;
-            let half = &self.hs_q[q1];
-            let q1f = if half.is_forward() { q1 } else { half.pair };
-
-            let (s, op_xyzz) = if self.fwd { self.k11.op(p1, q1f) } else { self.k11.op(q1f, p1) };
-
-            if let Some(xyzz) = op_xyzz {
-                x12 -= s * if half.is_forward() { 1 } else { -1 };
+            let h = &self.hs_q[q1];
+            let q1f = if h.is_forward() { q1 } else { h.pair };
+            let op = if self.fwd { self.k11.op(p1, q1f) } else { self.k11.op(q1f, p1) };
+            if let Some((s, xyzz)) = op {
+                x12 -= s * if h.is_forward() { 1 } else { -1 };
                 if k < 2 && (k == 0 || (s != 0) != shadows) {
                     shadows = s != 0;
                     xzy_lr0[k].x = xyzz.x;
@@ -67,11 +65,11 @@ impl<'a> Kernel12<'a> {
             }
         }
 
-        if x12 == 0 { return (0, None); } // No intersection
+        if x12 == 0 { return None }
 
         assert_eq!(k, 2, "Boolean manifold error: v12");
         let xzyy = intersect(xzy_lr0[0], xzy_lr0[1], xzy_lr1[0], xzy_lr1[1]);
-        (x12, Some(Row3f::new(xzyy[0], xzyy[2], xzyy[1])))
+        Some((x12, Row3f::new(xzyy[0], xzyy[2], xzyy[1])))
     }
 }
 
@@ -113,15 +111,8 @@ pub fn intersect12 (
 
     let bbs = a.hs.iter()
         .enumerate()
-        //.filter(|(_, h)| h.tail < h.head)
-        //.map(|(i, h)| Query::Bb(BBox::new(Some(i), &vec![a.ps[h.tail], a.ps[h.head]])))
-        .map(|(i, h)| {
-            return if h.tail < h.head {
-                Query::Bb(BBox::new(Some(i), &vec![a.ps[h.tail], a.ps[h.head]]))
-            } else {
-                Query::Bb(BBox::default())
-            }
-        })
+        .filter(|(_, h)| h.tail < h.head)
+        .map(|(i, h)| Query::Bb(BBox::new(Some(i), &vec![a.ps[h.tail], a.ps[h.head]])))
         .collect::<Vec<Query>>();
 
     let mut rec = Intersection12Recorder{ k12: &k12, x12: vec![], v12: vec![], p1q2: vec![], fwd };
@@ -151,8 +142,7 @@ struct Intersection12Recorder<'a> {
 
 impl <'a> Recorder for Intersection12Recorder<'a> {
     fn record(&mut self, query_idx: usize, leaf_idx: usize) {
-        let (x12, op_v12) = self.k12.op(query_idx, leaf_idx);
-        if let Some(v12) = op_v12 {
+        if let Some((x12, v12)) = self.k12.op(query_idx, leaf_idx) {
             if self.fwd { self.p1q2.push([query_idx as i32, leaf_idx as i32]); }
             else        { self.p1q2.push([leaf_idx as i32, query_idx as i32]); }
             self.x12.push(x12);

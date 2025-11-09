@@ -7,7 +7,7 @@ use anyhow::anyhow;
 use nalgebra::{DMatrix, Matrix3};
 use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider, K_NO_CODE};
-use crate::common::{Half, K_PRECISION, Row3f, next_of};
+use crate::common::{Half, K_PRECISION, Row3f, next_of, Row3u};
 use super::hmesh::Hmesh;
 
 #[derive(Clone)]
@@ -28,6 +28,13 @@ pub struct Manifold {
 
 impl Manifold {
     pub fn new(
+        pos: &[f64],
+        idx: &[usize],
+    ) -> anyhow::Result<Self> {
+        Self::new_with_precision(pos, idx, None, None)
+    }
+
+    pub fn new_with_precision(
         pos: &[f64],
         idx: &[usize],
         eps: Option<f64>,

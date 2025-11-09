@@ -8,18 +8,13 @@ use crate::common::{Half, Row2f, Row3f, Row4f};
 pub fn interpolate(pl: Row3f, pr: Row3f, x: f64) -> Row2f {
     let dx_l = x - pl.x;
     let dx_r = x - pr.x;
-    let use_l = dx_l.abs() < dx_r.abs();
     let diff = pr - pl;
-    let lambda = if use_l { dx_l / diff.x } else { dx_r / diff.x };
+    let use_l = dx_l.abs() < dx_r.abs();
+    let lambda = if use_l { dx_l } else { dx_r } / diff.x ;
 
-    if lambda.is_infinite() || // todo: need to consider how to handle 0 divide case
-       diff.y.is_infinite() ||
-       diff.z.is_infinite() ||
-       lambda.is_nan() ||
-       diff.y.is_nan() ||
-       diff.z.is_nan() {
-        return Row2f::new(pl.y, pl.z);
-    }
+    if lambda.is_infinite() || lambda.is_nan() ||
+       diff.y.is_infinite() || diff.y.is_nan() ||
+       diff.z.is_infinite() || diff.z.is_nan() { return Row2f::new(pl.y, pl.z); }
 
     Row2f::new(
         lambda * diff.y + if use_l { pl.y } else { pr.y },
@@ -55,8 +50,8 @@ pub fn shadows(p: f64, q: f64, dir: f64) -> bool {
     if p == q { dir < 0. } else { p < q }
 }
 
-// This is equivalent to Kernel01 or X01 in the thesis
-// given vert from mfd_p and half from mfd_q, find out whether
+// This is equivalent to Kernel01 or X01 in the thesis.
+// Expand represents the sign of the normal.
 pub fn shadows01(
     p0: usize,
     q1: usize,
@@ -64,8 +59,8 @@ pub fn shadows01(
     ps_q: &[Row3f],
     hs_q: &[Half],
     ns: &[Row3f],
-    expand: f64,  // sign of normal
-    reverse: bool //
+    expand: f64,
+    reverse: bool
 ) -> Option<(i32, Row2f)> {
     let q1s = hs_q[q1].tail;
     let q1e = hs_q[q1].head;

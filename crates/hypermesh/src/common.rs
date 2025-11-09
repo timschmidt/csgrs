@@ -99,30 +99,9 @@ pub fn safe_normalize(v: Row2f) -> Row2f {
 
 /*
 enum CsgNodeType { Union, Intersection, Difference, Leaf }
-
-trait CsgNode {
-    fn ToLeafNode () {
-
-    }
-}
-
-struct CsgOpNode {
-
-}
-
-
-struct CsgLeafNode {
-
-}
-
-impl CsgNode for CsgOpNode {
-    fn ToLeafNode () {
-
-    }
-}
-
-impl CsgNode for CsgLeafNode {
-
-}
-
+trait CsgNode { fn ToLeafNode () { } }
+struct CsgOpNode { }
+struct CsgLeafNode { }
+impl CsgNode for CsgOpNode { fn ToLeafNode () { } }
+impl CsgNode for CsgLeafNode { }
 */
