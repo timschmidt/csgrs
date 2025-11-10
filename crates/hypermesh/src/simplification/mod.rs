@@ -11,9 +11,11 @@ pub fn simplify_topology(
     ps: &mut Vec<Row3f>,
     ns: &mut Vec<Row3f>,
     rs: &mut Vec<Tref>,
-    nv: usize,
+    nv_from_p: usize,
+    nv_from_q: usize,
     eps: f64,
 ) {
+    let nv = nv_from_p + nv_from_q;
     split_pinched_vert(hs, ps);
     dedupe_edges(ps, hs, ns, rs);
     collapse_short_edges(hs, ps, ns, rs, nv, eps);

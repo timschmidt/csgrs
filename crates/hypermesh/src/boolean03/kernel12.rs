@@ -80,8 +80,8 @@ pub fn intersect12 (
     let ma = if fwd { mp } else { mq };
     let mb = if fwd { mq } else { mp };
 
-    let k02 = Kernel02{ ps_p: &ma.ps, ps_q: &mb.ps, hs_q: &mb.hs, ns: &mp.vns, expand, fwd };
-    let k11 = Kernel11{ ps_p: &mp.ps, ps_q: &mq.ps, hs_p: &mp.hs, hs_q: &mq.hs, ns: &mp.vns, expand };
+    let k02 = Kernel02{ ps_p: &ma.ps, ps_q: &mb.ps, hs_q: &mb.hs, ns: &mp.vert_normals, expand, fwd };
+    let k11 = Kernel11{ ps_p: &mp.ps, ps_q: &mq.ps, hs_p: &mp.hs, hs_q: &mq.hs, ns: &mp.vert_normals, expand };
     let k12 = Kernel12{ ps_p: &ma.ps, hs_p: &ma.hs, hs_q: &mb.hs, fwd, k02, k11 };
 
     let bbs = ma.hs.iter()

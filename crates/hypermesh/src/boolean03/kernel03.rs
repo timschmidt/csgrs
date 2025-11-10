@@ -17,13 +17,13 @@ pub fn winding03(
         ps_p: &ma.ps,
         ps_q: &mb.ps,
         hs_q: &mb.hs,
-        ns: &mp.vns,
+        ns: &mp.vert_normals,
         expand,
         fwd,
     };
 
     mb.collider.collision(
-        & ma.ps.iter().enumerate()
+        &ma.ps.iter().enumerate()
             .map(|(i, p)| Query::Pt(BPos{id: Some(i), pos: Row2f::new(p.x, p.y)}))
             .collect::<Vec<_>>(),
         &mut |a, b| if let Some((s, _)) = k02.op(a, b) { w03[a] += s * if fwd { 1 } else { -1 }; }

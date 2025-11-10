@@ -164,9 +164,8 @@ impl MortonCollider {
         let mut tree = RadixTree {
             parent: &mut node_parent,
             children: &mut intl_children,
-            leaf_morton: &leaf_morton,
+            leaf_morton,
         };
-
 
         for i in 0..n_intl { tree.op(i as i32); }
 

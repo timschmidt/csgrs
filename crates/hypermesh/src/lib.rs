@@ -7,7 +7,7 @@ pub mod boolean45;
 mod tests;
 use crate::boolean03::boolean03;
 use crate::boolean45::boolean45;
-use crate::common::OpType;
+use crate::common::{OpType, Row3u};
 use crate::simplification::simplify_topology;
 use crate::triangulation::triangulate;
 pub use crate::manifold::*;
@@ -29,18 +29,26 @@ pub fn compute_boolean(
         &mut b45.ps,
         &mut trg.ns,
         &mut trg.rs,
-        b45.nv_from_p + b45.nv_from_q,
+        b45.nv_from_p,
+        b45.nv_from_q,
         eps
     );
 
-    cleanup_unused_verts(&mut b45.ps, &mut trg.hs);
+    cleanup_unused_verts(
+        &mut b45.ps,
+        &mut trg.hs
+    );
 
-    Manifold::new_with_precision(
-        &b45.ps.iter().flatten().copied().collect::<Vec<_>>(),
-        &trg.hs.iter().map(|h| h.tail).collect::<Vec<_>>(),
+    Manifold::new_impl(
+        &b45.ps,
+        &trg.hs
+            .chunks(3)
+            .map(|hs| Row3u::new(hs[0].tail, hs[1].tail, hs[2].tail))
+            .collect(),
         Some(eps),
         Some(tol)
     )
 }
+
 
 

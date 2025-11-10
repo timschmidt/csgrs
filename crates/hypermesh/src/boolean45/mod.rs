@@ -49,8 +49,8 @@ fn size_output(
     fns: &mut Vec<Row3f>,
     inv: bool, // whether to invert mesh of q
 ) -> (Vec<i32>, Vec<i32>) {
-    let mut side_p = vec![0; mp.nt];
-    let mut side_q = vec![0; mq.nt];
+    let mut side_p = vec![0; mp.nf];
+    let mut side_q = vec![0; mq.nf];
 
     // equivalent to CountVerts
     for (i, h) in mp.hs.iter().enumerate() { side_p[face_of(i)] += i03[h.tail].abs(); }
@@ -76,18 +76,18 @@ fn size_output(
     }
 
     // a map from face_p and face_q to face_r
-    let mut face_pq2r = vec![0; mp.nt + mq.nt + 1];
+    let mut face_pq2r = vec![0; mp.nf + mq.nf + 1];
     let side_pq = [&side_p[..], &side_q[..]].concat();
     let keep_fs = side_pq.iter().map(|&x| if x > 0 { 1 } else { 0 }).collect::<Vec<_>>();
 
     inclusive_scan(&keep_fs, &mut face_pq2r[1..], 0);
     let nf_r = *face_pq2r.last().unwrap() as usize;
-    face_pq2r.truncate(mp.nt + mq.nt);
+    face_pq2r.truncate(mp.nf + mq.nf);
     fns.resize(nf_r, Row3f::zeros());
 
     let mut fid_r = 0;
-    for (i, n) in mp.fns.iter().enumerate() { if side_p[i] > 0 { fns[fid_r] = *n; fid_r += 1; } }
-    for (i, n) in mq.fns.iter().enumerate() { if side_q[i] > 0 { fns[fid_r] = *n * if inv {-1.} else {1.}; fid_r += 1; } }
+    for (i, n) in mp.face_normals.iter().enumerate() { if side_p[i] > 0 { fns[fid_r] = *n; fid_r += 1; } }
+    for (i, n) in mq.face_normals.iter().enumerate() { if side_q[i] > 0 { fns[fid_r] = *n * if inv {-1.} else {1.}; fid_r += 1; } }
 
     let truncated = side_pq.iter().filter(|s| **s > 0).map(|s| *s).collect::<Vec<_>>();
     let mut ih_per_f = vec![0; truncated.len()];
@@ -193,17 +193,15 @@ fn append_partial_edges(
 
         // assigning 0-1 value to hpos_p
         let dif = ps_p[h.head] - ps_p[h.tail];
-        for p in hpos_p.iter_mut() {
-            p.val = dif.dot(&ps_r[p.vid]);
-        }
+        for p in hpos_p.iter_mut() { p.val = dif.dot(&ps_r[p.vid]); }
 
-        let inc_tail = i03[h.tail]; // mostly 0 or 1
-        let inc_head = i03[h.head]; // mostly 0 or 1
+        let i_tail = i03[h.tail]; // mostly 0 or 1
+        let i_head = i03[h.head]; // mostly 0 or 1
         let p_tail = ps_r[vid_p2r[h.tail] as usize];
         let p_head = ps_r[vid_p2r[h.head] as usize];
 
-        for i in 0..inc_tail.abs() as usize { hpos_p.push(EdgePt{ val: p_tail.dot(&dif), vid: vid_p2r[h.tail] as usize + i, cid: usize::MAX, is_tail: inc_tail > 0 }); }
-        for i in 0..inc_head.abs() as usize { hpos_p.push(EdgePt{ val: p_head.dot(&dif), vid: vid_p2r[h.head] as usize + i, cid: usize::MAX, is_tail: inc_head < 0 }); }
+        for i in 0..i_tail.abs() as usize { hpos_p.push(EdgePt{ val: p_tail.dot(&dif), vid: vid_p2r[h.tail] as usize + i, cid: usize::MAX, is_tail: i_tail > 0 }); }
+        for i in 0..i_head.abs() as usize { hpos_p.push(EdgePt{ val: p_head.dot(&dif), vid: vid_p2r[h.head] as usize + i, cid: usize::MAX, is_tail: i_head < 0 }); }
 
         let mut half_seq = pair_up(&mut hpos_p);
         let fp_l = face_of(*hid_p);
@@ -319,7 +317,7 @@ pub struct Boolean45 {
     pub ns: Vec<Row3f>,
     pub hs: Vec<Half>,
     pub rs: Vec<Tref>,
-    pub initial_hid_per_faces: Vec<i32>,
+    pub hid_per_f: Vec<i32>,
     pub nv_from_p: usize,
     pub nv_from_q: usize,
 }
@@ -337,41 +335,36 @@ pub fn boolean45(
     let i21: Vec<i32> = b03.x21.iter().map(|v| c3 * v).collect();
     let i03: Vec<i32> = b03.w03.iter().map(|v| c1 + c3 * v).collect();
     let i30: Vec<i32> = b03.w30.iter().map(|v| c2 + c3 * v).collect();
-    let nv_p = mp.nv;
-    let nh_p = mp.nh;
-    let nf_p = mp.nt;
-    let nv_q = mq.nv;
-    let nh_q = mq.nh;
-    let mut nv_r = 0;
-    let mut vid_p2r = vec![0; nv_p];
-    let mut vid_q2r = vec![0; nv_q];
+    let mut nv = 0;
+    let mut vid_p2r = vec![0; mp.nv];
+    let mut vid_q2r = vec![0; mq.nv];
     let mut vid_12r = vec![0; b03.v12.len()];
     let mut vid_21r = vec![0; b03.v21.len()];
 
-    exclusive_scan(&i03.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_p2r, nv_r);
-    nv_r = vid_p2r.last().unwrap().clone().abs() + i03.last().unwrap().abs();
-    let nv_rp = nv_r;
+    exclusive_scan(&i03.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_p2r, nv);
+    nv = vid_p2r.last().unwrap().clone().abs() + i03.last().unwrap().abs();
+    let nv_rp = nv;
 
-    exclusive_scan(&i30.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_q2r, nv_r);
-    nv_r = vid_q2r.last().unwrap().clone().abs() + i30.last().unwrap().abs();
-    let nv_rq = nv_r - nv_rp;
+    exclusive_scan(&i30.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_q2r, nv);
+    nv = vid_q2r.last().unwrap().clone().abs() + i30.last().unwrap().abs();
+    let nv_rq = nv - nv_rp;
 
     if b03.v12.len() > 0 {
-        exclusive_scan(&i12.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_12r, nv_r);
-        nv_r = vid_12r.last().unwrap().clone().abs() + i12.last().unwrap().abs();
+        exclusive_scan(&i12.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_12r, nv);
+        nv = vid_12r.last().unwrap().clone().abs() + i12.last().unwrap().abs();
     }
-    let nv_12 = nv_r - nv_rp - nv_rq;
+    let nv_12 = nv - nv_rp - nv_rq;
 
     if b03.v21.len() > 0 {
-        exclusive_scan(&i21.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_21r, nv_r);
-        nv_r = vid_21r.last().unwrap().clone().abs() + i21.last().unwrap().abs();
+        exclusive_scan(&i21.iter().map(|i| i.abs()).collect::<Vec<_>>(), &mut vid_21r, nv);
+        nv = vid_21r.last().unwrap().clone().abs() + i21.last().unwrap().abs();
     }
-    let nv_21 = nv_r - nv_rp - nv_rq - nv_12;
+    let nv_21 = nv - nv_rp - nv_rq - nv_12;
 
-    let mut ps_r = vec![Row3f::zeros(); nv_r as usize];
+    let mut ps_r = vec![Row3f::zeros(); nv as usize];
 
-    for i in 0..nv_p  { duplicate_verts(&i03, &vid_p2r, &mp.ps, &mut ps_r, i); }
-    for i in 0..nv_q  { duplicate_verts(&i30, &vid_q2r, &mq.ps, &mut ps_r, i); }
+    for i in 0..mp.nv { duplicate_verts(&i03, &vid_p2r, &mp.ps, &mut ps_r, i); }
+    for i in 0..mq.nv { duplicate_verts(&i30, &vid_q2r, &mq.ps, &mut ps_r, i); }
     for i in 0..nv_12 { duplicate_verts(&i12, &vid_12r, &b03.v12, &mut ps_r, i as usize); }
     for i in 0..nv_21 { duplicate_verts(&i21, &vid_21r, &b03.v21, &mut ps_r, i as usize); }
 
@@ -383,21 +376,21 @@ pub fn boolean45(
 
     let mut ns_r = vec![];
     let inv = op == &OpType::Subtract;
-    let (ih_per_f, fid_pq2r) = size_output(mp, mq, &i03, &i30, &i12, &i21, &b03.p1q2, &b03.p2q1, &mut ns_r, inv);
+    let (hid_per_f, fid_pq2r) = size_output(mp, mq, &i03, &i30, &i12, &i21, &b03.p1q2, &b03.p2q1, &mut ns_r, inv);
 
-    let nh = ih_per_f.last().unwrap().clone() as usize;
-    let mut face_ptr_r = ih_per_f.clone();
-    let mut whole_flag_p = vec![true; nh_p];
-    let mut whole_flag_q = vec![true; nh_q];
+    let nh = hid_per_f.last().unwrap().clone() as usize;
+    let mut face_ptr_r = hid_per_f.clone();
+    let mut whole_flag_p = vec![true; mp.nh];
+    let mut whole_flag_q = vec![true; mq.nh];
     let mut rs_r = vec![Tref::default(); nh];
     let mut hs_r = vec![Half::default(); nh];
-    let fid_p2r = &fid_pq2r[0..nf_p];
-    let fid_q2r = &fid_pq2r[nf_p..];
+    let fid_p2r = &fid_pq2r[0..mp.nf];
+    let fid_q2r = &fid_pq2r[mp.nf..];
 
     append_partial_edges(&i03, &mp.hs, &mp.ps, &ps_r, &vid_p2r, fid_p2r, true,  &mut hs_r, &mut rs_r, &mut pt_p, &mut face_ptr_r, &mut whole_flag_p);
     append_partial_edges(&i30, &mq.hs, &mq.ps, &ps_r, &vid_q2r, fid_q2r, false, &mut hs_r, &mut rs_r, &mut pt_q, &mut face_ptr_r, &mut whole_flag_q);
 
-    append_new_edges(&ps_r, &fid_pq2r, nf_p, &mut face_ptr_r, &mut pt_new, &mut hs_r, &mut rs_r);
+    append_new_edges(&ps_r, &fid_pq2r, mp.nf, &mut face_ptr_r, &mut pt_new, &mut hs_r, &mut rs_r);
 
     append_whole_edges(&i03, &mp.hs, fid_p2r, &vid_p2r, &whole_flag_p, true,  &mut face_ptr_r, &mut hs_r, &mut rs_r);
     append_whole_edges(&i30, &mq.hs, fid_q2r, &vid_q2r, &whole_flag_q, false, &mut face_ptr_r, &mut hs_r, &mut rs_r);
@@ -407,8 +400,8 @@ pub fn boolean45(
         ns: ns_r,
         hs: hs_r,
         rs: rs_r,
+        hid_per_f,
         nv_from_p: nv_rp as usize,
         nv_from_q: nv_rq as usize,
-        initial_hid_per_faces: ih_per_f
     }
 }

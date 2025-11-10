@@ -73,9 +73,6 @@ fn toggle_mesh_visibility(
         };
     };
     let mut vis: Vec<_> = query.iter_mut().collect();
-    if keyboard.just_pressed(KeyCode::Space)  {
-        cb(&mut vis[0]);
-        cb(&mut vis[1]);
-    }
+    if keyboard.just_pressed(KeyCode::Space)  { cb(&mut vis[0]); cb(&mut vis[1]); }
 }
 

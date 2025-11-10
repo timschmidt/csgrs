@@ -1,4 +1,3 @@
-use nalgebra::DMatrix;
 use crate::common::{Row2f, Row3f};
 
 #[derive(Clone, Debug)]
@@ -33,18 +32,6 @@ impl BBox {
             max: Row3f::new(f64::MIN, f64::MIN, f64::MIN),
         };
         for pt in pts { b.union(pt); }
-        b
-    }
-
-    pub fn new_from_matrix(pts: &DMatrix<f64>) -> Self {
-        let mut b = BBox {
-            id: None,
-            min: Row3f::new(f64::MAX, f64::MAX, f64::MAX),
-            max: Row3f::new(f64::MIN, f64::MIN, f64::MIN),
-        };
-        for i in 0..pts.nrows() {
-            b.union(&pts.fixed_view::<1, 3>(i, 0).into_owned());
-        }
         b
     }
 

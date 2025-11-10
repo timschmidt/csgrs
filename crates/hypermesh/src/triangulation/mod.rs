@@ -22,8 +22,8 @@ pub fn triangulate(
     let mut ts = vec![];
     let mut ns = vec![];
     let mut rs = vec![];
-    for fid in 0..b45.initial_hid_per_faces.len() - 1 {
-        let hid = b45.initial_hid_per_faces[fid] as usize;
+    for fid in 0..b45.hid_per_f.len() - 1 {
+        let hid = b45.hid_per_f[fid] as usize;
         let t = process_face(&b45, fid, eps);
         let r = b45.rs[hid].clone();
         let n = b45.ns[fid].clone();
@@ -40,8 +40,8 @@ fn process_face(
     fid: usize,
     eps: f64
 ) -> Vec<Row3u> {
-    let e0 = b45.initial_hid_per_faces[fid] as usize;
-    let e1 = b45.initial_hid_per_faces[fid + 1] as usize;
+    let e0 = b45.hid_per_f[fid] as usize;
+    let e1 = b45.hid_per_f[fid + 1] as usize;
     match e1 - e0 {
         3 =>  single_triangulate(&b45, e0),
         4 =>  square_triangulate(&b45, fid, eps),
@@ -116,7 +116,7 @@ fn square_triangulate(
         ) >= 0
     };
 
-    let q = &assemble_halfs(&b45.hs, &b45.initial_hid_per_faces, fid)[0];
+    let q = &assemble_halfs(&b45.hs, &b45.hid_per_f, fid)[0];
     let tris = vec![
         vec![Row3u::new(q[0], q[1], q[2]), Row3u::new(q[0], q[2], q[3])],
         vec![Row3u::new(q[1], q[2], q[3]), Row3u::new(q[0], q[1], q[3])],
@@ -144,14 +144,14 @@ fn general_triangulate(
     eps: f64
 ) -> Vec<Row3u> {
     let proj  = get_axis_aligned_projection(&b45.ns[fid]);
-    let loops = assemble_halfs(&b45.hs, &b45.initial_hid_per_faces, fid);
+    let loops = assemble_halfs(&b45.hs, &b45.hid_per_f, fid);
     let polys = loops.iter().map(|poly|
         poly.iter().map(|&e| {
             let i = b45.hs[e].tail;
             let p = (proj * b45.ps[i].transpose()).transpose();
             Pt { pos: p, idx: e }
-        }).collect::<Vec<_>>()
-    ).collect::<Vec<_>>();
+        }).collect()
+    ).collect();
 
     EarClip::new(&polys, eps).triangulate().iter().map(|t| Row3u::new(
         b45.hs[t.x].tail,

@@ -47,9 +47,9 @@ pub(in crate::manifold) struct Hmesh {
 fn edge_topology(
     pos: &DMatrix<f64>,
     idx: &DMatrix<usize>,
-    edge2vert: &mut DMatrix<usize>,
-    edge2face: &mut DMatrix<usize>,
-    face2edge: &mut DMatrix<usize>,
+    e2v: &mut DMatrix<usize>,
+    e2f: &mut DMatrix<usize>,
+    f2e: &mut DMatrix<usize>,
 ) -> anyhow::Result<()> {
     if pos.nrows() == 0 || pos.ncols() == 0 { return Err(anyhow!("empty pos matrix")); }
     if idx.nrows() == 0 || idx.ncols() == 0 { return Err(anyhow!("empty idx matrix")); }
@@ -70,9 +70,9 @@ fn edge_topology(
         if !(ett[i][0] == ett[i + 1][0] && ett[i][1] == ett[i + 1][1]) { ne += 1; }
     }
 
-    edge2vert.resize_mut(ne, 2, usize::MAX);
-    edge2face.resize_mut(ne, 2, usize::MAX);
-    face2edge.resize_mut(idx.nrows(), 3, usize::MAX);
+    e2v.resize_mut(ne, 2, usize::MAX);
+    e2f.resize_mut(ne, 2, usize::MAX);
+    f2e.resize_mut(idx.nrows(), 3, usize::MAX);
     ne = 0;
 
     let mut i = 0;
@@ -80,19 +80,19 @@ fn edge_topology(
         if i == ett.len() - 1 || !((ett[i][0] == ett[i+1][0]) && (ett[i][1] == ett[i + 1][1])) {
             // Border edge
             let [v1, v2, i, j] = ett[i];
-            edge2vert[(ne, 0)] = v1;
-            edge2vert[(ne, 1)] = v2;
-            edge2face[(ne, 0)] = i;
-            face2edge[(i, j)] = ne;
+            e2v[(ne, 0)] = v1;
+            e2v[(ne, 1)] = v2;
+            e2f[(ne, 0)] = i;
+            f2e[(i, j)] = ne;
         } else {
             let r1 = ett[i];
             let r2 = ett[i + 1];
-            edge2vert[(ne, 0)] = r1[0];
-            edge2vert[(ne, 1)] = r1[1];
-            edge2face[(ne, 0)] = r1[2];
-            edge2face[(ne, 1)] = r2[2];
-            face2edge[(r1[2],r1[3])] = ne;
-            face2edge[(r2[2],r2[3])] = ne;
+            e2v[(ne, 0)] = r1[0];
+            e2v[(ne, 1)] = r1[1];
+            e2f[(ne, 0)] = r1[2];
+            e2f[(ne, 1)] = r2[2];
+            f2e[(r1[2],r1[3])] = ne;
+            f2e[(r2[2],r2[3])] = ne;
             i += 1; // skip the next one
         }
         ne += 1;
@@ -101,20 +101,20 @@ fn edge_topology(
 
     // Sort the relation EF, accordingly to EV
     // the first one is the face on the left of the edge
-    for i in 0..edge2face.nrows() {
-        let fid = edge2face[(i, 0)];
+    for i in 0..e2f.nrows() {
+        let fid = e2f[(i, 0)];
         let mut flip = true;
         // search for edge EV.row(i)
         for j in 0..3 {
-            if idx[(fid, j)] == edge2vert[(i, 0)] && idx[(fid,(j + 1) % 3)] == edge2vert[(i, 1)] {
+            if idx[(fid, j)] == e2v[(i, 0)] && idx[(fid,(j + 1) % 3)] == e2v[(i, 1)] {
                 flip = false;
             }
         }
 
         if flip {
-            let tmp = edge2face[(i,0)];
-            edge2face[(i,0)] = edge2face[(i,1)];
-            edge2face[(i,1)] = tmp;
+            let tmp = e2f[(i,0)];
+            e2f[(i,0)] = e2f[(i,1)];
+            e2f[(i,1)] = tmp;
         }
     }
     Ok(())
