@@ -104,22 +104,22 @@ mod test_intersection {
 #[cfg(test)]
 mod test_triangulation {
     use nalgebra::{RowVector2, RowVector3};
-    use crate::triangulation::{PolyVert};
+    use crate::triangulation::Pt;
     use crate::triangulation::ear_clip::EarClip;
 
     #[test]
     fn test_ear_clip() {
         let polys = vec![
             vec![
-                PolyVert {idx: 2120, pos: RowVector2::new(0.048238, 0.680959)},
-                PolyVert {idx: 2124, pos: RowVector2::new(-0.0145625, -0.676874)},
-                PolyVert {idx: 2123, pos: RowVector2::new(0.0245192, -0.68213)},
-                PolyVert {idx: 2119, pos: RowVector2::new(0.0482562, -0.681659)},
+                Pt {idx: 2120, pos: RowVector2::new(0.048238, 0.680959)},
+                Pt {idx: 2124, pos: RowVector2::new(-0.0145625, -0.676874)},
+                Pt {idx: 2123, pos: RowVector2::new(0.0245192, -0.68213)},
+                Pt {idx: 2119, pos: RowVector2::new(0.0482562, -0.681659)},
             ],
             vec![
-                PolyVert {idx: 2122, pos: RowVector2::new(-0.068635, -0.673357)},
-                PolyVert {idx: 2125, pos: RowVector2::new(-0.0487738, -0.690778)},
-                PolyVert {idx: 2121, pos: RowVector2::new(-0.02279, -0.676339)},
+                Pt {idx: 2122, pos: RowVector2::new(-0.068635, -0.673357)},
+                Pt {idx: 2125, pos: RowVector2::new(-0.0487738, -0.690778)},
+                Pt {idx: 2121, pos: RowVector2::new(-0.02279, -0.676339)},
             ],
         ];
         let res0 = vec![

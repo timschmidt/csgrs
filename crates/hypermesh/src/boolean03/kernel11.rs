@@ -22,7 +22,7 @@ impl<'a> Kernel11<'a> {
         let q0 = [self.hs_q[q1].tail, self.hs_q[q1].head];
 
         for i in 0..2 {
-            let s = shadows01(
+            if let Some((s, yz)) = shadows01(
                 p0[i], q1,
                 &self.ps_p,
                 &self.ps_q,
@@ -30,21 +30,19 @@ impl<'a> Kernel11<'a> {
                 &self.ns,
                 self.expand,
                 false
-            );
-
-            if let Some((s01, yz01)) = s {
-                s11 += s01 * if i == 0 {-1} else {1};
-                if k < 2 && (k == 0 || (s01 != 0) != shadow_) {
-                    shadow_ = s01 != 0;
+            ) {
+                s11 += s * if i == 0 { -1 } else { 1 };
+                if k < 2 && (k == 0 || (s != 0) != shadow_) {
+                    shadow_ = s != 0;
                     p_rl[k] = self.ps_p[p0[i]];
-                    q_rl[k] = Row3f::new(p_rl[k].x, yz01.x, yz01.y);
+                    q_rl[k] = Row3f::new(p_rl[k].x, yz.x, yz.y);
                     k += 1;
                 }
             }
         }
 
         for i in 0..2 {
-            let s = shadows01(
+            if let Some((s, yz)) = shadows01(
                 q0[i], p1,
                 &self.ps_q,
                 &self.ps_p,
@@ -52,14 +50,12 @@ impl<'a> Kernel11<'a> {
                 &self.ns,
                 self.expand,
                 true
-            );
-
-            if let Some((s10, yz10)) = s {
-                s11 += s10 * if i == 0 {-1} else {1};
-                if k < 2 && (k == 0 || (s10 != 0) != shadow_) {
-                    shadow_ = s10 != 0;
+            ) {
+                s11 += s * if i == 0 { -1 } else { 1 };
+                if k < 2 && (k == 0 || (s != 0) != shadow_) {
+                    shadow_ = s != 0;
                     q_rl[k] = self.ps_q[q0[i]];
-                    p_rl[k] = Row3f::new(q_rl[k].x, yz10.x, yz10.y);
+                    p_rl[k] = Row3f::new(q_rl[k].x, yz.x, yz.y);
                     k += 1;
                 }
             }

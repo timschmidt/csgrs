@@ -1,12 +1,12 @@
 use crate::common::Row2f;
-use crate::triangulation::{PolyVert};
+use crate::triangulation::Pt;
 
-pub fn compute_flat_tree(pts: &mut [PolyVert]) {
+pub fn compute_flat_tree(pts: &mut [Pt]) {
     if pts.len() <= 8 { return; }
     compute_flat_tree_impl(pts, true);
 }
 
-fn compute_flat_tree_impl(pts: &mut [PolyVert], sort_x: bool) {
+fn compute_flat_tree_impl(pts: &mut [Pt], sort_x: bool) {
     let eq = std::cmp::Ordering::Equal;
     if sort_x { pts.sort_by(|a, b| a.pos.x.partial_cmp(&b.pos.x).unwrap_or(eq)); }
     else      { pts.sort_by(|a, b| a.pos.y.partial_cmp(&b.pos.y).unwrap_or(eq)); }
@@ -22,10 +22,10 @@ fn compute_flat_tree_impl(pts: &mut [PolyVert], sort_x: bool) {
 }
 
 pub fn compute_query_flat_tree<F>(
-    pts: &[PolyVert],
+    pts: &[Pt],
     rect: &Rect,
     mut func: F,
-) where F: FnMut(&PolyVert) {
+) where F: FnMut(&Pt) {
     for p in pts.iter() {
         if rect.contains(&p.pos) { func(p);}
     }

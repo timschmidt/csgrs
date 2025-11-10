@@ -149,7 +149,7 @@ fn general_triangulate(
         poly.iter().map(|&e| {
             let i = b45.hs[e].tail;
             let p = (proj * b45.ps[i].transpose()).transpose();
-            PolyVert { pos: p, idx: e }
+            Pt { pos: p, idx: e }
         }).collect::<Vec<_>>()
     ).collect::<Vec<_>>();
 
@@ -162,7 +162,7 @@ fn general_triangulate(
 
 
 #[derive(Debug, Clone)]
-pub struct PolyVert {
+pub struct Pt {
     pub pos: Row2f,
     pub idx: usize
 }
@@ -175,7 +175,7 @@ fn update_reference(
     for r in rs.iter_mut() {
         let fid = r.fid;
         let pq = r.mid == 0;
-        r.fid = 0; // todo: see original code and it's always -1
+        r.fid = 0; // see the original code and it's always -1
         r.pid = if pq { mp.coplanar[fid] }
         else  { mq.coplanar[fid] };
     }

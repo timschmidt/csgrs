@@ -202,23 +202,8 @@ fn append_partial_edges(
         let p_tail = ps_r[vid_p2r[h.tail] as usize];
         let p_head = ps_r[vid_p2r[h.head] as usize];
 
-        for i in 0..inc_tail.abs() as usize {
-            hpos_p.push(EdgePt{
-                val: p_tail.dot(&dif),
-                vid: vid_p2r[h.tail] as usize + i,
-                cid: usize::MAX,
-                is_tail: inc_tail > 0
-            });
-        }
-
-        for i in 0..inc_head.abs() as usize {
-            hpos_p.push(EdgePt{
-                val: p_head.dot(&dif),
-                vid: vid_p2r[h.head] as usize + i,
-                cid: usize::MAX,
-                is_tail: inc_head < 0
-            });
-        }
+        for i in 0..inc_tail.abs() as usize { hpos_p.push(EdgePt{ val: p_tail.dot(&dif), vid: vid_p2r[h.tail] as usize + i, cid: usize::MAX, is_tail: inc_tail > 0 }); }
+        for i in 0..inc_head.abs() as usize { hpos_p.push(EdgePt{ val: p_head.dot(&dif), vid: vid_p2r[h.head] as usize + i, cid: usize::MAX, is_tail: inc_head < 0 }); }
 
         let mut half_seq = pair_up(&mut hpos_p);
         let fp_l = face_of(*hid_p);

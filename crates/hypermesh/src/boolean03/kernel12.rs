@@ -77,39 +77,17 @@ pub fn intersect12 (
     expand: f64,
     fwd: bool
 ) -> (Vec<i32>, Vec<Row3f>) {
-    let a = if fwd { mp } else { mq };
-    let b = if fwd { mq } else { mp };
+    let ma = if fwd { mp } else { mq };
+    let mb = if fwd { mq } else { mp };
 
-    let k02 = Kernel02{
-        ps_p: &a.ps,
-        ps_q: &b.ps,
-        hs_q: &b.hs,
-        ns: &mp.vns,
-        expand,
-        fwd
-    };
-    let k11 = Kernel11{
-        ps_p: &mp.ps,
-        ps_q: &mq.ps,
-        hs_p: &mp.hs,
-        hs_q: &mq.hs,
-        ns: &mp.vns,
-        expand,
-    };
+    let k02 = Kernel02{ ps_p: &ma.ps, ps_q: &mb.ps, hs_q: &mb.hs, ns: &mp.vns, expand, fwd };
+    let k11 = Kernel11{ ps_p: &mp.ps, ps_q: &mq.ps, hs_p: &mp.hs, hs_q: &mq.hs, ns: &mp.vns, expand };
+    let k12 = Kernel12{ ps_p: &ma.ps, hs_p: &ma.hs, hs_q: &mb.hs, fwd, k02, k11 };
 
-    let k12 = Kernel12{
-        ps_p: &a.ps,
-        hs_p: &a.hs,
-        hs_q: &b.hs,
-        fwd,
-        k02,
-        k11,
-    };
-
-    let bbs = a.hs.iter()
+    let bbs = ma.hs.iter()
         .enumerate()
         .filter(|(_, h)| h.is_forward())
-        .map(|(i, h)| Query::Bb(BBox::new(Some(i), &vec![a.ps[h.tail], a.ps[h.head]])))
+        .map(|(i, h)| Query::Bb(BBox::new(Some(i), &vec![ma.ps[h.tail], ma.ps[h.head]])))
         .collect::<Vec<Query>>();
 
     let mut x12_  = vec![];
@@ -126,7 +104,7 @@ pub fn intersect12 (
             }
         };
 
-    b.collider.collision(&bbs, &mut rec);
+    mb.collider.collision(&bbs, &mut rec);
 
     let mut seq = (0..p1q2_.len()).collect::<Vec<_>>();
     seq.sort_by(|&a, &b| (p1q2_[a][0], p1q2_[a][1]).cmp(&(p1q2_[b][0], p1q2_[b][1])));
