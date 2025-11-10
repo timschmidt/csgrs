@@ -396,8 +396,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     #[cfg(feature = "bevymesh")]
     pub fn to_bevy_mesh(&self) -> bevy_mesh::Mesh {
         use bevy_asset::RenderAssetUsages;
-        use bevy_mesh::{Indices, Mesh};
-        use wgpu_types::PrimitiveTopology;
+        use bevy_mesh::{PrimitiveTopology, Indices, Mesh};
 
         let triangulated_mesh = &self.triangulate();
         let polygons = &triangulated_mesh.polygons;
