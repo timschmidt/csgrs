@@ -24,6 +24,7 @@ const examplePages = ref(
      '/': { label: 'Hello Boolean', description: 'With CSGs you can subtract, add/union and intersect meshes to create complex shapes.' },
      primitives: { label: 'Primitives', description: 'Create basic 3D shapes like boxes, spheres, cylinders, tori and gyroids.' },  
      'animated-booleans' : { label: 'Animated booleans', description: 'Booleans can be fast enough to animate smoothly!' },
+     'array-boolean' : { label: 'Array boolean', description: 'An array of a lot of boxes with subtracted big box' },
      'bigger-boolean' : { label: 'Bigger boolean', description: 'More complex shape boolean operations.' },
      sketch : { label: 'Sketch 2D shapes', description: 'Create 2D sketches and extrude them into 3D meshes.' },
   }
