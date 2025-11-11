@@ -1,4 +1,3 @@
-mod utils;
 use bevy::asset::RenderAssetUsages;
 use bevy::prelude::*;
 use bevy::pbr::wireframe::{WireframePlugin, Wireframe, WireframeColor};
@@ -30,13 +29,15 @@ fn setup(
     mut mats: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>
 ) {
-    let (m0, _) = tobj::load_obj("assets/models/fertility.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
-    let (m1, _) = tobj::load_obj("assets/models/rolling_stage.obj", &tobj::LoadOptions { ..Default::default() }).expect("failed");
+    let obj_path_1 = "path/to/obj/file";
+    let obj_path_2 = "path/to/obj/file";
+    let (m0, _) = tobj::load_obj(obj_path_1, &tobj::LoadOptions { ..Default::default() }).expect("Failed to load the first obj file");
+    let (m1, _) = tobj::load_obj(obj_path_2, &tobj::LoadOptions { ..Default::default() }).expect("Failed to load the second obj file");
 
     let mut mfs = vec![];
-    for (m, s) in vec![(&m0[0].mesh, 0.014), (&m1[0].mesh, 1.)] {
+    for m in vec![&m0[0].mesh, &m1[0].mesh] {
         mfs.push(Manifold::new(
-            &m.positions.iter().map(|&v| (v * s) as f64).collect::<Vec<f64>>(),
+            &m.positions.iter().map(|&v| v as f64).collect::<Vec<f64>>(),
             &m.indices.iter().map(|&v| v as usize).collect::<Vec<usize>>(),
         ).unwrap());
     }
