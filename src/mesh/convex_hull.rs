@@ -9,7 +9,7 @@
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
 
-use crate::float_types::Real;
+use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
@@ -120,7 +120,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 let normal = edge1.cross(&edge2);
 
                 // Filter out degenerate triangles
-                if normal.norm_squared() > Real::EPSILON {
+                if normal.norm_squared() > tolerance() {
                     let normalized_normal = normal.normalize();
                     let vv0 = Vertex::new(p0, normalized_normal);
                     let vv1 = Vertex::new(p1, normalized_normal);

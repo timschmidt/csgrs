@@ -1,7 +1,7 @@
 //! 3D Shapes as `Mesh`s
 
 use crate::errors::ValidationError;
-use crate::float_types::{EPSILON, PI, Real, TAU};
+use crate::float_types::{PI, Real, TAU, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
@@ -258,7 +258,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
     /// Constructs a frustum between `start` and `end` with bottom radius = `radius1` and
     /// top radius = `radius2`. In the normal case, it creates side quads and cap triangles.
-    /// However, if one of the radii is 0 (within EPSILON), then the degenerate face is treated
+    /// However, if one of the radii is 0 (within tolerance), then the degenerate face is treated
     /// as a single point and the side is stitched using triangles.
     ///
     /// # Parameters
@@ -290,7 +290,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let s = start.coords;
         let e = end.coords;
         let ray = e - s;
-        if ray.norm_squared() < EPSILON {
+        if ray.norm_squared() < tolerance() {
             return Mesh::new();
         }
         let axis_z = ray.normalize();
@@ -324,8 +324,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut polygons = Vec::new();
 
         // Special-case flags for degenerate faces.
-        let bottom_degenerate = radius1.abs() < EPSILON;
-        let top_degenerate = radius2.abs() < EPSILON;
+        let bottom_degenerate = radius1.abs() < tolerance();
+        let top_degenerate = radius2.abs() < tolerance();
 
         // If both faces are degenerate, we cannot build a meaningful volume.
         if bottom_degenerate && top_degenerate {
@@ -632,7 +632,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ) -> Mesh<S> {
         // Compute the arrow's total length.
         let arrow_length = direction.norm();
-        if arrow_length < EPSILON {
+        if arrow_length < tolerance() {
             return Mesh::new();
         }
         // Compute the unit direction.

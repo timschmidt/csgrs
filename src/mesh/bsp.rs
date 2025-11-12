@@ -1,7 +1,7 @@
 //! [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node structure and operations
 
 #[cfg(not(feature = "parallel"))]
-use crate::float_types::EPSILON;
+use crate::float_types::tolerance;
 
 #[cfg(not(feature = "parallel"))]
 use crate::mesh::vertex::Vertex;
@@ -235,7 +235,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
     }
 
     /// Slices this BSP node with `slicing_plane`, returning:
-    /// - All polygons that are coplanar with the plane (within EPSILON),
+    /// - All polygons that are coplanar with the plane (within tolerance),
     /// - A list of line‐segment intersections (each a [Vertex; 2]) from polygons that span the plane.
     #[cfg(not(feature = "parallel"))]
     pub fn slice(&self, slicing_plane: &Plane) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
@@ -283,7 +283,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
                             if (ti | tj) == SPANNING {
                                 let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
-                                if denom.abs() > EPSILON {
+                                if denom.abs() > tolerance() {
                                     let intersection = (slicing_plane.offset()
                                         - slicing_plane.normal().dot(&vi.pos.coords))
                                         / denom;

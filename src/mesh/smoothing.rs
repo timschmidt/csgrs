@@ -1,4 +1,4 @@
-use crate::float_types::Real;
+use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
@@ -24,7 +24,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// - **Volume Preservation**: Better volume preservation than local smoothing
     ///
     /// ## **Algorithm Improvements**
-    /// - **Epsilon-based Vertex Matching**: Robust floating-point coordinate handling
+    /// - **Tolerance-based Vertex Matching**: Robust floating-point coordinate handling
     /// - **Manifold Preservation**: Ensures mesh topology is maintained
     /// - **Feature Detection**: Can preserve sharp features based on neighbor count
     pub fn laplacian_smooth(
@@ -380,7 +380,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             let keep_triangle = if i < qualities.len() {
                 let quality = &qualities[i];
                 quality.quality_score >= min_quality
-                    && quality.area > Real::EPSILON
+                    && quality.area > tolerance()
                     && quality.min_angle > (5.0 as Real).to_radians()
                     && quality.aspect_ratio < 20.0
             } else {

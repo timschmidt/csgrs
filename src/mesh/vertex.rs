@@ -1,6 +1,6 @@
 //! Struct and functions for working with `Vertex`s from which `Polygon`s are composed.
 
-use crate::float_types::{PI, Real};
+use crate::float_types::{PI, Real, tolerance};
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
 
@@ -119,7 +119,7 @@ impl Vertex {
         let dot = n0.dot(&n1).clamp(-1.0, 1.0);
 
         // If normals are nearly parallel, use linear interpolation
-        if (dot.abs() - 1.0).abs() < Real::EPSILON {
+        if (dot.abs() - 1.0).abs() < tolerance() {
             let new_normal = (self.normal + (other.normal - self.normal) * t).normalize();
             return Vertex::new(new_pos, new_normal);
         }
@@ -127,7 +127,7 @@ impl Vertex {
         let omega = dot.acos();
         let sin_omega = omega.sin();
 
-        if sin_omega.abs() < Real::EPSILON {
+        if sin_omega.abs() < tolerance() {
             // Fallback to linear interpolation
             let new_normal = (self.normal + (other.normal - self.normal) * t).normalize();
             return Vertex::new(new_pos, new_normal);
@@ -192,7 +192,7 @@ impl Vertex {
         }
 
         let total_weight: Real = vertices.iter().map(|(_, w)| *w).sum();
-        if total_weight < Real::EPSILON {
+        if total_weight < tolerance() {
             return None;
         }
 
@@ -205,7 +205,7 @@ impl Vertex {
             .iter()
             .fold(Vector3::zeros(), |acc, (v, w)| acc + v.normal * (*w));
 
-        let normalized_normal = if weighted_normal.norm() > Real::EPSILON {
+        let normalized_normal = if weighted_normal.norm() > tolerance() {
             weighted_normal.normalize()
         } else {
             Vector3::z() // Fallback normal
@@ -233,7 +233,7 @@ impl Vertex {
     ) -> Vertex {
         // Ensure barycentric coordinates sum to 1 (normalize if needed)
         let total = u + v + w;
-        let (u, v, w) = if total.abs() > Real::EPSILON {
+        let (u, v, w) = if total.abs() > tolerance() {
             (u / total, v / total, w / total)
         } else {
             (1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0) // Fallback to centroid
@@ -298,7 +298,7 @@ impl Vertex {
                 let cos_angle = edge1.normalize().dot(&edge2.normalize());
                 let sin_angle = edge1.normalize().cross(&edge2.normalize()).norm();
 
-                if sin_angle > Real::EPSILON {
+                if sin_angle > tolerance() {
                     cot_sum += cos_angle / sin_angle;
                     weight_count += 1;
                 }
@@ -353,7 +353,7 @@ impl Vertex {
     /// **Mathematical Foundation: Position-Based Vertex Lookup**
     ///
     /// Simplified connectivity analysis that searches for the vertex in the adjacency map
-    /// by position matching (with epsilon tolerance). This is slower but more convenient
+    /// by position matching (with tolerance). This is slower but more convenient
     /// when you don't have the global vertex index readily available.
     ///
     /// **Note**: This is a convenience method. For performance-critical applications,
@@ -417,7 +417,7 @@ impl Vertex {
 
         // Discrete mean curvature
         let angle_deficit = 2.0 * PI - angle_sum;
-        if mixed_area > Real::EPSILON {
+        if mixed_area > tolerance() {
             angle_deficit / mixed_area
         } else {
             0.0
@@ -551,7 +551,7 @@ impl VertexCluster {
         let avg_normal = vertices
             .iter()
             .fold(Vector3::zeros(), |acc, v| acc + v.normal);
-        let normalized_normal = if avg_normal.norm() > Real::EPSILON {
+        let normalized_normal = if avg_normal.norm() > tolerance() {
             avg_normal.normalize()
         } else {
             Vector3::z()

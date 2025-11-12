@@ -1,6 +1,6 @@
 //! Create `Sketch`s using ttf fonts
 
-use crate::float_types::Real;
+use crate::float_types::{Real, tolerance};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{
@@ -271,8 +271,7 @@ impl OutlineFlattener {
             // If the last point != the first, close it.
             let first = self.current[0];
             let last = self.current[n - 1];
-            if (first.0 - last.0).abs() > Real::EPSILON
-                || (first.1 - last.1).abs() > Real::EPSILON
+            if (first.0 - last.0).abs() > tolerance() || (first.1 - last.1).abs() > tolerance()
             {
                 self.current.push(first);
             }

@@ -15,12 +15,47 @@ pub type Real = f32;
 #[cfg(feature = "f64")]
 pub type Real = f64;
 
-/// A small epsilon for geometric comparisons, adjusted per precision.
-#[cfg(feature = "f32")]
-pub const EPSILON: Real = 1e-4;
-/// A small epsilon for geometric comparisons, adjusted per precision.
-#[cfg(feature = "f64")]
-pub const EPSILON: Real = 1e-8;
+use core::str::FromStr;
+use std::sync::OnceLock;
+
+/// Lazily-initialized tolerance used across the crate.
+/// Defaults depend on precision (`f32` vs `f64`), but can be overridden:
+///  1) **Build-time**: set env var `CSGRS_TOLERANCE` (e.g. `CSGRS_TOLERANCE=1e-6 cargo build`)
+///  2) **Runtime**: call [`set_tolerance`] once before using the library
+static TOLERANCE_CELL: OnceLock<Real> = OnceLock::new();
+
+#[inline]
+fn default_tolerance() -> Real {
+    #[cfg(feature = "f32")]
+    {
+        1e-4
+    }
+    #[cfg(feature = "f64")]
+    {
+        1e-6
+    }
+}
+
+/// Returns the current epsilon value.
+/// If not set yet, it tries `CSGRS_EPSILON` (parsed as the active `Real`) and
+/// falls back to a sensible default.
+pub fn tolerance() -> Real {
+    *TOLERANCE_CELL.get_or_init(|| {
+        // Compile-time env if provided, inherited by dependencies
+        if let Some(environment_variable) = option_env!("CSGRS_TOLERANCE") {
+            if let Ok(value) = Real::from_str(environment_variable) {
+                return value.max(Real::EPSILON);
+            }
+        }
+        default_tolerance()
+    })
+}
+
+/// Set epsilon programmatically once (subsequent calls are ignored).
+/// Call near program start: `csgrs::float_types::set_epsilon(1e-6);`
+pub fn set_tolerance(value: Real) {
+    let _ = TOLERANCE_CELL.set(value.max(Real::EPSILON));
+}
 
 // Pi
 /// Archimedes' constant (π)

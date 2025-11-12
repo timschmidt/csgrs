@@ -1,5 +1,5 @@
 use crate::float_types::parry3d::bounding_volume::Aabb;
-use crate::float_types::{EPSILON, Real};
+use crate::float_types::{Real, tolerance};
 use crate::mesh::plane::Plane;
 use nalgebra::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
 
@@ -120,7 +120,7 @@ pub trait CSG: Sized + Clone {
     fn mirror(&self, plane: Plane) -> Self {
         // Normal might not be unit, so compute its length:
         let len = plane.normal().norm();
-        if len.abs() < EPSILON {
+        if len.abs() < tolerance() {
             // Degenerate plane? Just return clone (no transform)
             return self.clone();
         }
