@@ -1,6 +1,6 @@
 //! Provides a `MetaBall` struct and functions for creating a `Sketch` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::float_types::{EPSILON, Real};
+use crate::float_types::{Real, tolerance};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{
@@ -68,7 +68,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     if distance_sq > threshold_distance_sq {
                         0.0
                     } else {
-                        let denominator = distance_sq + EPSILON;
+                        let denominator = distance_sq + tolerance();
                         (radius * radius) / denominator
                     }
                 })
@@ -94,7 +94,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                            (x2, y2, v2): (Real, Real, Real)|
          -> (Real, Real) {
             let denom = (v2 - v1).abs();
-            if denom < EPSILON {
+            if denom < tolerance() {
                 (x1, y1)
             } else {
                 let t = -v1 / (v2 - v1); // crossing at 0

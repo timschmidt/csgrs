@@ -1,5 +1,5 @@
 use crate::errors::ValidationError;
-use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real};
+use crate::float_types::{FRAC_PI_2, PI, Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
@@ -178,12 +178,12 @@ fn test_vertex_interpolate() {
     let v1 = Vertex::new(Point3::origin(), Vector3::x());
     let v2 = Vertex::new(Point3::new(2.0, 2.0, 2.0), Vector3::y());
     let v_mid = v1.interpolate(&v2, 0.5);
-    assert!(approx_eq(v_mid.pos.x, 1.0, EPSILON));
-    assert!(approx_eq(v_mid.pos.y, 1.0, EPSILON));
-    assert!(approx_eq(v_mid.pos.z, 1.0, EPSILON));
-    assert!(approx_eq(v_mid.normal.x, 0.5, EPSILON));
-    assert!(approx_eq(v_mid.normal.y, 0.5, EPSILON));
-    assert!(approx_eq(v_mid.normal.z, 0.0, EPSILON));
+    assert!(approx_eq(v_mid.pos.x, 1.0, tolerance()));
+    assert!(approx_eq(v_mid.pos.y, 1.0, tolerance()));
+    assert!(approx_eq(v_mid.pos.z, 1.0, tolerance()));
+    assert!(approx_eq(v_mid.normal.x, 0.5, tolerance()));
+    assert!(approx_eq(v_mid.normal.y, 0.5, tolerance()));
+    assert!(approx_eq(v_mid.normal.z, 0.0, tolerance()));
 }
 
 // ------------------------------------------------------------
@@ -227,13 +227,13 @@ fn test_plane_split_polygon() {
     assert!(front_poly.vertices.len() >= 3);
     assert!(back_poly.vertices.len() >= 3);
 
-    // Quick check: all front vertices should have y >= 0 (within an epsilon).
+    // Quick check: all front vertices should have y >= 0 (within a tolerance).
     for v in &front_poly.vertices {
-        assert!(v.pos.y >= -EPSILON);
+        assert!(v.pos.y >= -tolerance());
     }
-    // All back vertices should have y <= 0 (within an epsilon).
+    // All back vertices should have y <= 0 (within a tolerance).
     for v in &back_poly.vertices {
-        assert!(v.pos.y <= EPSILON);
+        assert!(v.pos.y <= tolerance());
     }
 }
 
@@ -251,9 +251,9 @@ fn test_polygon_new() {
     assert_eq!(poly.vertices.len(), 3);
     assert_eq!(poly.metadata, None);
     // Plane normal should be +Z for the above points
-    assert!(approx_eq(poly.plane.normal().x, 0.0, EPSILON));
-    assert!(approx_eq(poly.plane.normal().y, 0.0, EPSILON));
-    assert!(approx_eq(poly.plane.normal().z, 1.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal().x, 0.0, tolerance()));
+    assert!(approx_eq(poly.plane.normal().y, 0.0, tolerance()));
+    assert!(approx_eq(poly.plane.normal().z, 1.0, tolerance()));
 }
 
 #[test]
@@ -273,17 +273,17 @@ fn test_polygon_flip() {
     assert!(approx_eq(
         poly.plane.normal().x,
         -plane_normal_before.x,
-        EPSILON
+        tolerance()
     ));
     assert!(approx_eq(
         poly.plane.normal().y,
         -plane_normal_before.y,
-        EPSILON
+        tolerance()
     ));
     assert!(approx_eq(
         poly.plane.normal().z,
         -plane_normal_before.z,
-        EPSILON
+        tolerance()
     ));
 }
 
@@ -339,11 +339,11 @@ fn test_polygon_recalc_plane_and_normals() {
         None,
     );
     poly.set_new_normal();
-    assert!(approx_eq(poly.plane.normal().z, 1.0, EPSILON));
+    assert!(approx_eq(poly.plane.normal().z, 1.0, tolerance()));
     for v in &poly.vertices {
-        assert!(approx_eq(v.normal.x, 0.0, EPSILON));
-        assert!(approx_eq(v.normal.y, 0.0, EPSILON));
-        assert!(approx_eq(v.normal.z, 1.0, EPSILON));
+        assert!(approx_eq(v.normal.x, 0.0, tolerance()));
+        assert!(approx_eq(v.normal.y, 0.0, tolerance()));
+        assert!(approx_eq(v.normal.z, 1.0, tolerance()));
     }
 }
 
@@ -385,9 +385,9 @@ fn test_node_invert() {
     node.invert();
     // The plane normal should be flipped, polygons should be flipped, and front/back swapped (they were None).
     let flipped_normal = node.plane.as_ref().unwrap().normal();
-    assert!(approx_eq(flipped_normal.x, -original_normal.x, EPSILON));
-    assert!(approx_eq(flipped_normal.y, -original_normal.y, EPSILON));
-    assert!(approx_eq(flipped_normal.z, -original_normal.z, EPSILON));
+    assert!(approx_eq(flipped_normal.x, -original_normal.x, tolerance()));
+    assert!(approx_eq(flipped_normal.y, -original_normal.y, tolerance()));
+    assert!(approx_eq(flipped_normal.z, -original_normal.z, tolerance()));
     // We shouldn't lose polygons by inverting
     assert_eq!(node.polygons.len(), original_count);
     // If we invert back, we should get the same geometry
@@ -590,10 +590,10 @@ fn test_csg_intersect() {
     // The intersection bounding box should be smaller than or equal to each
     let bb_cube = c1.bounding_box();
     let bb_sphere = c2.bounding_box();
-    assert!(bb_isect.mins.x >= bb_cube.mins.x - EPSILON);
-    assert!(bb_isect.mins.x >= bb_sphere.mins.x - EPSILON);
-    assert!(bb_isect.maxs.x <= bb_cube.maxs.x + EPSILON);
-    assert!(bb_isect.maxs.x <= bb_sphere.maxs.x + EPSILON);
+    assert!(bb_isect.mins.x >= bb_cube.mins.x - tolerance());
+    assert!(bb_isect.mins.x >= bb_sphere.mins.x - tolerance());
+    assert!(bb_isect.maxs.x <= bb_cube.maxs.x + tolerance());
+    assert!(bb_isect.maxs.x <= bb_sphere.maxs.x + tolerance());
 }
 
 #[test]
@@ -630,17 +630,17 @@ fn test_csg_inverse() {
     assert!(approx_eq(
         orig_poly.plane.normal().x,
         -inv_poly.plane.normal().x,
-        EPSILON
+        tolerance()
     ));
     assert!(approx_eq(
         orig_poly.plane.normal().y,
         -inv_poly.plane.normal().y,
-        EPSILON
+        tolerance()
     ));
     assert!(approx_eq(
         orig_poly.plane.normal().z,
         -inv_poly.plane.normal().z,
-        EPSILON
+        tolerance()
     ));
     assert_eq!(
         c1.polygons.len(),
@@ -657,8 +657,8 @@ fn test_csg_cube() {
     assert_eq!(c.polygons.len(), 6);
     // Check bounding box
     let bb = c.bounding_box();
-    assert!(approx_eq(bb.mins.x, 0.0, EPSILON));
-    assert!(approx_eq(bb.maxs.x, 2.0, EPSILON));
+    assert!(approx_eq(bb.mins.x, 0.0, tolerance()));
+    assert!(approx_eq(bb.maxs.x, 2.0, tolerance()));
 }
 
 // --------------------------------------------------------
@@ -731,15 +731,15 @@ fn test_csg_transform_translate_rotate_scale() {
 
     // Quick bounding box checks
     let bb_t = translated.bounding_box();
-    assert!(approx_eq(bb_t.mins.x, -1.0 + 1.0, EPSILON));
-    assert!(approx_eq(bb_t.mins.y, -1.0 + 2.0, EPSILON));
-    assert!(approx_eq(bb_t.mins.z, -1.0 + 3.0, EPSILON));
+    assert!(approx_eq(bb_t.mins.x, -1.0 + 1.0, tolerance()));
+    assert!(approx_eq(bb_t.mins.y, -1.0 + 2.0, tolerance()));
+    assert!(approx_eq(bb_t.mins.z, -1.0 + 3.0, tolerance()));
 
     let bb_s = scaled.bounding_box();
-    assert!(approx_eq(bb_s.mins.x, -2.0, EPSILON)); // scaled by 2 in X
-    assert!(approx_eq(bb_s.maxs.x, 2.0, EPSILON));
-    assert!(approx_eq(bb_s.mins.y, -1.0, EPSILON));
-    assert!(approx_eq(bb_s.maxs.y, 1.0, EPSILON));
+    assert!(approx_eq(bb_s.mins.x, -2.0, tolerance())); // scaled by 2 in X
+    assert!(approx_eq(bb_s.maxs.x, 2.0, tolerance()));
+    assert!(approx_eq(bb_s.mins.y, -1.0, tolerance()));
+    assert!(approx_eq(bb_s.maxs.y, 1.0, tolerance()));
 
     // For rotated, let's just check one polygon's vertices to see if z got mapped to y, etc.
     // (A thorough check would be more geometry-based.)
@@ -760,8 +760,8 @@ fn test_csg_mirror() {
     let mirror_x = c.mirror(plane_x);
     let bb_mx = mirror_x.bounding_box();
     // The original cube was from x=0..2, so mirrored across X=0 should be -2..0
-    assert!(approx_eq(bb_mx.mins.x, -2.0, EPSILON));
-    assert!(approx_eq(bb_mx.maxs.x, 0.0, EPSILON));
+    assert!(approx_eq(bb_mx.mins.x, -2.0, tolerance()));
+    assert!(approx_eq(bb_mx.maxs.x, 0.0, tolerance()));
 }
 
 #[test]
@@ -810,9 +810,9 @@ fn test_csg_renormalize() {
     // Now each polygon's vertices should match the plane's normal
     for poly in &cube.polygons {
         for v in &poly.vertices {
-            assert!(approx_eq(v.normal.x, poly.plane.normal().x, EPSILON));
-            assert!(approx_eq(v.normal.y, poly.plane.normal().y, EPSILON));
-            assert!(approx_eq(v.normal.z, poly.plane.normal().z, EPSILON));
+            assert!(approx_eq(v.normal.x, poly.plane.normal().x, tolerance()));
+            assert!(approx_eq(v.normal.y, poly.plane.normal().y, tolerance()));
+            assert!(approx_eq(v.normal.z, poly.plane.normal().z, tolerance()));
         }
     }
 }
@@ -827,8 +827,8 @@ fn test_csg_ray_intersections() {
     // Expect 2 intersections with the cube's side at x=-1 and x=1
     assert_eq!(hits.len(), 2);
     // The distances should be 1 unit from -2.0 -> -1 => t=1, and from -2.0 -> +1 => t=3
-    assert!(approx_eq(hits[0].1, 1.0, EPSILON));
-    assert!(approx_eq(hits[1].1, 3.0, EPSILON));
+    assert!(approx_eq(hits[0].1, 1.0, tolerance()));
+    assert!(approx_eq(hits[1].1, 3.0, tolerance()));
 }
 
 #[test]
@@ -871,8 +871,8 @@ fn test_csg_extrude() {
     assert_eq!(extruded.polygons.len(), 8);
     // Check bounding box
     let bb = extruded.bounding_box();
-    assert!(approx_eq(bb.mins.z, 0.0, EPSILON));
-    assert!(approx_eq(bb.maxs.z, 5.0, EPSILON));
+    assert!(approx_eq(bb.mins.z, 0.0, tolerance()));
+    assert!(approx_eq(bb.maxs.z, 5.0, tolerance()));
 }
 
 #[test]
@@ -982,7 +982,7 @@ fn test_csg_to_rigid_body() {
     );
     let rb = rb_set.get(handle).unwrap();
     let pos = rb.translation();
-    assert!(approx_eq(pos.x, 10.0, EPSILON));
+    assert!(approx_eq(pos.x, 10.0, tolerance()));
 }
 
 #[test]
@@ -1515,8 +1515,8 @@ fn test_union_of_extruded_shapes() {
 
     // Its bounding box should span at least from z=0 to z=1.5
     let bbox = unioned.bounding_box();
-    assert!(bbox.mins.z <= 0.0 + EPSILON);
-    assert!(bbox.maxs.z >= 1.5 - EPSILON);
+    assert!(bbox.mins.z <= 0.0 + tolerance());
+    assert!(bbox.maxs.z >= 1.5 - tolerance());
 }
 
 #[test]
@@ -1537,7 +1537,7 @@ fn test_flatten_cube() {
     let bbox = flattened.bounding_box();
     let thickness = bbox.maxs.z - bbox.mins.z;
     assert!(
-        thickness.abs() < EPSILON,
+        thickness.abs() < tolerance(),
         "Flattened shape should have negligible thickness in z"
     );
 }

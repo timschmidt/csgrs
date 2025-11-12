@@ -453,6 +453,42 @@ if (mesh_obj.is_manifold()){
 }
 ```
 
+## Tolerance
+
+To account for error inherent in the storage of IEEE754 floating point numbers, and to maintain the speed of geometric calculations, `csgrs` provides a tunable tolerance value which can be set at compile time or once at the beginning of runtime as follows:
+
+* **Shell**:
+
+  ```bash
+  CSGRS_TOLERANCE=1e-6 cargo build
+  ```
+
+* **Cargo config** (project- or user-level `.cargo/config.toml`):
+
+  ```toml
+  [env]
+  CSGRS_TOLERANCE = "1e-6"
+  ```
+
+* **Build script in the *dependent* crate** (`build.rs`):
+
+  ```rust
+  fn main() {
+      println!("cargo:rustc-env=CSGRS_TOLERANCE=1e-6");
+  }
+  ```
+
+* **Runtime override** (in their `main`):
+
+  ```rust
+  fn main() {
+      csgrs::float_types::set_tolerance(1e-6);
+      // ... rest of the program ...
+  }
+  ```
+
+> `set_tolerance` is a one-shot setter; subsequent calls are ignored. Use it at program start.
+
 ## Working with Metadata
 
 `Mesh<S>` and `Sketch<S>` are generic over `S: Clone`. Each polygon in a `Mesh<S>` and each `Mesh<S>` and `Sketch<S>` have an optional `metadata: Option<S>`.  

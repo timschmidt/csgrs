@@ -1,4 +1,4 @@
-use crate::float_types::Real;
+use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use hashbrown::HashMap;
 use nalgebra::Point3;
@@ -6,13 +6,13 @@ use std::fmt::Debug;
 
 /// **Mathematical Foundation: Robust Vertex Indexing for Mesh Connectivity**
 ///
-/// Handles floating-point coordinate comparison with epsilon tolerance:
+/// Handles floating-point coordinate comparison with tolerance:
 /// - **Spatial Hashing**: Groups nearby vertices for efficient lookup
-/// - **Epsilon Matching**: Considers vertices within ε distance as identical
+/// - **Tolerance Matching**: Considers vertices within tolerance as identical
 /// - **Global Indexing**: Maintains consistent vertex indices across mesh
 #[derive(Debug, Clone)]
 pub struct VertexIndexMap {
-    /// Maps vertex positions to global indices (with epsilon tolerance)
+    /// Maps vertex positions to global indices (with tolerance)
     pub position_to_index: Vec<(Point3<Real>, usize)>,
     /// Maps global indices to representative positions
     pub index_to_position: HashMap<usize, Point3<Real>>,
@@ -75,7 +75,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     ///
     /// Returns (vertex_map, adjacency_graph) for robust mesh processing.
     pub fn build_connectivity(&self) -> (VertexIndexMap, HashMap<usize, Vec<usize>>) {
-        let mut vertex_map = VertexIndexMap::new(Real::EPSILON * 100.0); // Tolerance for vertex matching
+        let mut vertex_map = VertexIndexMap::new(tolerance() * 100.0); // Tolerance for vertex matching
         let mut adjacency: HashMap<usize, Vec<usize>> = HashMap::new();
 
         // First pass: build vertex index mapping

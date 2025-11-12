@@ -1,6 +1,6 @@
 //! Provides a `MetaBall` struct and functions for creating a `Mesh` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::float_types::{EPSILON, Real};
+use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
@@ -33,8 +33,8 @@ impl MetaBall {
             return 0.0;
         }
 
-        // Numerically stable influence calculation with epsilon
-        let denominator = distance_squared + EPSILON;
+        // Numerically stable influence calculation with tolerance
+        let denominator = distance_squared + tolerance();
         (self.radius * self.radius) / denominator
     }
 }

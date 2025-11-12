@@ -2,7 +2,7 @@
 //!
 //! This module provides export functionality for AMF (Additive Manufacturing File Format),
 //! an XML-based format specifically designed for 3D printing and additive manufacturing.
-use crate::float_types::Real;
+use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::sketch::Sketch;
 use geo::CoordsIter;
@@ -515,11 +515,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
 // Helper function to add unique vertex and return its index for AMF
 fn add_unique_vertex_amf(vertices: &mut Vec<Point3<Real>>, vertex: Point3<Real>) -> usize {
-    const EPSILON: Real = 1e-6;
-
     // Check if vertex already exists (within tolerance)
     for (i, existing) in vertices.iter().enumerate() {
-        if (existing.coords - vertex.coords).norm() < EPSILON {
+        if (existing.coords - vertex.coords).norm() < tolerance() {
             return i;
         }
     }

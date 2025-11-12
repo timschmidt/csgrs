@@ -1,6 +1,6 @@
 //! 2D Shapes as `Sketch`s
 
-use crate::float_types::{EPSILON, FRAC_PI_2, PI, Real, TAU};
+use crate::float_types::{FRAC_PI_2, PI, Real, TAU, tolerance};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{
@@ -410,7 +410,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         segments: usize,
         metadata: Option<S>,
     ) -> Sketch<S> {
-        if segments < 2 || width < EPSILON || length < EPSILON {
+        if segments < 2 || width < tolerance() || length < tolerance() {
             return Sketch::new();
         }
         let r = 0.5 * width;
@@ -470,7 +470,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         metadata: Option<S>,
     ) -> Self {
         let r = corner_radius.min(width * 0.5).min(height * 0.5);
-        if r <= EPSILON {
+        if r <= tolerance() {
             return Sketch::rectangle(width, height, metadata);
         }
         // We'll approximate each 90° corner with `corner_segments` arcs
@@ -573,7 +573,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         circle_segments: usize,
         metadata: Option<S>,
     ) -> Sketch<S> {
-        if sides < 3 || circle_segments < 6 || diameter <= EPSILON {
+        if sides < 3 || circle_segments < 6 || diameter <= tolerance() {
             return Sketch::new();
         }
 
@@ -829,7 +829,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let is_closed = {
             let first = pts[0];
             let last = pts[segments];
-            (first.0 - last.0).abs() < EPSILON && (first.1 - last.1).abs() < EPSILON
+            (first.0 - last.0).abs() < tolerance() && (first.1 - last.1).abs() < tolerance()
         };
 
         let geometry = if is_closed {
@@ -883,12 +883,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             }
             let denom1 = knot[i + p] - knot[i];
             let denom2 = knot[i + p + 1] - knot[i + 1];
-            let term1 = if denom1.abs() < EPSILON {
+            let term1 = if denom1.abs() < tolerance() {
                 0.0
             } else {
                 (u - knot[i]) / denom1 * basis(i, p - 1, u, knot)
             };
-            let term2 = if denom2.abs() < EPSILON {
+            let term2 = if denom2.abs() < tolerance() {
                 0.0
             } else {
                 (knot[i + p + 1] - u) / denom2 * basis(i + 1, p - 1, u, knot)
@@ -919,8 +919,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             }
         }
 
-        let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < EPSILON
-            && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < EPSILON;
+        let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < tolerance()
+            && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < tolerance();
         if !closed {
             let ls: LineString<Real> = pts.into();
             let mut gc = GeometryCollection::default();
@@ -993,7 +993,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         segments: usize,
         metadata: Option<S>,
     ) -> Self {
-        if outer_r <= inner_r + EPSILON || segments < 6 {
+        if outer_r <= inner_r + tolerance() || segments < 6 {
             return Sketch::new();
         }
 
@@ -1433,12 +1433,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Bounding box and usable region (with padding).
         let min = rect.min();
         let max = rect.max();
-        let w = (max.x - min.x).max(EPSILON);
-        let h = (max.y - min.y).max(EPSILON);
+        let w = (max.x - min.x).max(tolerance());
+        let h = (max.y - min.y).max(tolerance());
         let ox = min.x + padding;
         let oy = min.y + padding;
-        let sx = (w - 2.0 * padding).max(EPSILON);
-        let sy = (h - 2.0 * padding).max(EPSILON);
+        let sx = (w - 2.0 * padding).max(tolerance());
+        let sy = (h - 2.0 * padding).max(tolerance());
 
         // Generate normalized Hilbert points in [0,1]^2, then scale/translate.
         let pts_norm = hilbert_points(order);

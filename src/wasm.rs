@@ -569,18 +569,18 @@ impl SketchJs {
             inner: Sketch::regular_ngon(sides, radius, None),
         }
     }
-    
+
     #[wasm_bindgen(js_name = arrow)]
-	pub fn arrow(
+    pub fn arrow(
         shaft_length: Real,
         shaft_width: Real,
         head_length: Real,
         head_width: Real,
     ) -> Self {
-		Self {
+        Self {
             inner: Sketch::arrow(shaft_length, shaft_width, head_length, head_width, None),
         }
-	}
+    }
 
     #[wasm_bindgen(js_name = trapezoid)]
     pub fn trapezoid(

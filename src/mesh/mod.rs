@@ -10,7 +10,7 @@ use crate::float_types::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
         SharedShape, TriMesh, Triangle,
     },
-    {EPSILON, Real},
+    {Real, tolerance},
 };
 use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
 use crate::sketch::Sketch;
@@ -297,7 +297,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         // 4) Sort hits by ascending distance (toi):
         hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
         // 5) remove duplicate hits if they fall within tolerance
-        hits.dedup_by(|a, b| (a.1 - b.1).abs() < EPSILON);
+        hits.dedup_by(|a, b| (a.1 - b.1).abs() < tolerance());
 
         hits
     }
@@ -396,7 +396,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     #[cfg(feature = "bevymesh")]
     pub fn to_bevy_mesh(&self) -> bevy_mesh::Mesh {
         use bevy_asset::RenderAssetUsages;
-        use bevy_mesh::{PrimitiveTopology, Indices, Mesh};
+        use bevy_mesh::{Indices, Mesh, PrimitiveTopology};
 
         let triangulated_mesh = &self.triangulate();
         let polygons = &triangulated_mesh.polygons;

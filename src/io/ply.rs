@@ -2,8 +2,7 @@
 //!
 //! This module provides export functionality for Stanford PLY files,
 //! a popular format for 3D scanning, research, and mesh processing applications.
-use crate::float_types::Real;
-
+use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::sketch::Sketch;
 use geo::CoordsIter;
@@ -266,12 +265,10 @@ fn add_unique_vertex_ply(
     position: Point3<Real>,
     normal: Vector3<Real>,
 ) -> usize {
-    const EPSILON: Real = 1e-6;
-
     // Check if vertex already exists (within tolerance)
     for (i, existing) in vertices.iter().enumerate() {
-        if (existing.position.coords - position.coords).norm() < EPSILON
-            && (existing.normal - normal).norm() < EPSILON
+        if (existing.position.coords - position.coords).norm() < tolerance()
+            && (existing.normal - normal).norm() < tolerance()
         {
             return i;
         }

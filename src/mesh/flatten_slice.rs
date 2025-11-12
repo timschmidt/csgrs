@@ -1,7 +1,7 @@
 //! Provides functions for flattening a `Mesh` against the Z=0 `Plane`
 //! or slicing a `Mesh` with an arbitrary `Plane` into a `Sketch`
 
-use crate::float_types::{EPSILON, Real};
+use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
@@ -124,9 +124,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 continue;
             }
 
-            // check if first and last point are within EPSILON of each other
+            // check if first and last point are within tolerance of each other
             let dist_sq = (chain[0].pos - chain[n - 1].pos).norm_squared();
-            if dist_sq < EPSILON * EPSILON {
+            if dist_sq < tolerance() * tolerance() {
                 // Force them to be exactly the same, closing the line
                 chain[n - 1] = chain[0];
             }
@@ -175,11 +175,11 @@ fn make_key(pos: &Point3<Real>) -> EndKey {
 
 /// Take a list of intersection edges `[Vertex;2]` and merge them into polylines.
 /// Each edge is a line segment between two 3D points.  We want to "knit" them together by
-/// matching endpoints that lie within EPSILON of each other, forming either open or closed chains.
+/// matching endpoints that lie within tolerance of each other, forming either open or closed chains.
 ///
 /// This returns a `Vec` of polylines, where each polyline is a `Vec<Vertex>`.
 fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
-    // We will store adjacency by a "key" that identifies an endpoint up to EPSILON,
+    // We will store adjacency by a "key" that identifies an endpoint up to tolerance,
     // then link edges that share the same key.
 
     // Adjacency map: key -> list of (edge_index, is_start_or_end)
@@ -260,7 +260,7 @@ fn extend_chain_forward(
             let next_vertex = &edges[edge_idx][other_end_idx];
 
             // But we must also confirm that the last_v is indeed edges[edge_idx][end_idx]
-            // (within EPSILON) which we have checked via the key, so likely yes.
+            // (within tolerance) which we have checked via the key, so likely yes.
 
             // Mark visited
             visited[edge_idx] = true;

@@ -1,4 +1,4 @@
-use crate::float_types::{PI, Real};
+use crate::float_types::{PI, Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::vertex::Vertex;
 use std::fmt::Debug;
@@ -143,7 +143,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let len_ca = ca.norm();
 
         // Handle degenerate cases
-        if len_ab < Real::EPSILON || len_bc < Real::EPSILON || len_ca < Real::EPSILON {
+        if len_ab < tolerance() || len_bc < tolerance() || len_ca < tolerance() {
             return TriangleQuality {
                 aspect_ratio: Real::INFINITY,
                 min_angle: 0.0,
@@ -157,7 +157,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // Triangle area using cross product
         let area = 0.5 * ab.cross(&(-ca)).norm();
 
-        if area < Real::EPSILON {
+        if area < tolerance() {
             return TriangleQuality {
                 aspect_ratio: Real::INFINITY,
                 min_angle: 0.0,

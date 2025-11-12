@@ -7,7 +7,7 @@ use std::fmt::Debug;
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Checks if the Mesh object is manifold.
     ///
-    /// This function defines a comparison function which takes EPSILON into account
+    /// This function defines a comparison function which takes tolerance into account
     /// for Real coordinates, builds a hashmap key from the string representation of
     /// the coordinates, triangulates the Mesh polygons, gathers each of their three edges,
     /// counts how many times each edge appears across all triangles,
