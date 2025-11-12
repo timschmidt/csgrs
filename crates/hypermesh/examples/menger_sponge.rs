@@ -36,7 +36,6 @@ fn setup(
 
     println!(">>>>>>>>>>>>>> Compute a menger sponge of level {}, elapsed time: {:?}", num, now.elapsed());
 
-    cmds.spawn((PointLight::default(), Transform::from_xyz(3., 4., 3.)));
     cmds.spawn((DirectionalLight::default(), Transform::from_xyz(3., 4., 3.)));
     cmds.spawn((Transform::from_translation(Vec3::new(0., 0., 2.)), PanOrbitCamera::default(),));
 
@@ -60,10 +59,10 @@ fn setup(
 
     cmds.spawn((
         Mesh3d(meshes.add(m).clone()),
-        MeshMaterial3d(mats.add(StandardMaterial { base_color: GRAY.into(), ..default()})),
+        MeshMaterial3d(mats.add(StandardMaterial { base_color: GRAY.into(), ..default() })),
         Transform::default(),
         Wireframe,
-        WireframeColor { color: GRAY.into() },
+        WireframeColor { color: Srgba::rgb(0.3, 0.3, 0.3).into() },
         ToggleableMesh,
     ));
 }
