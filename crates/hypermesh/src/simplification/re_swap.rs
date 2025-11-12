@@ -31,6 +31,10 @@ fn record(
     let a = (p * ps[hs[e0].tail].transpose()).transpose();
     let b = (p * ps[hs[e1].tail].transpose()).transpose();
     let c = (p * ps[hs[e2].tail].transpose()).transpose();
+    //let p = get_axis_aligned_projection(&ns[h1 / 3]).transpose();
+    //let a = ps[hs[e0].tail] * p;
+    //let b = ps[hs[e1].tail] * p;
+    //let c = ps[hs[e2].tail] * p;
 
     is_ccw_2d(&a, &b, &c, tol) > 0 || is01_longest_2d(&a, &b, &c)
 }

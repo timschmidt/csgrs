@@ -1,13 +1,18 @@
 [package]
-name = "boolean"
+name = "meshbool"
 version = "0.1.0"
 edition = "2024"
-authors = ["saki komikado"]
+description = "Robust 3D mesh boolean library"
+license = "MPL-2"
+readme = "README.md"
+authors = ["Saki Komikado <komietty@gmail.com>"]
+keywords = ["geometry", "physics"]
+categories = ["game-development", "graphics", "mathematics", "simulation"]
+exclude = ["/examples", ".gitignore"]
 
 [dependencies]
 anyhow = "1.0.100"
 nalgebra = "0.34.1"
-rayon = "1.11.0"
 
 tobj = {version = "4.0.3", optional = true}
 bevy = { version = "0.16.1", optional = true }
@@ -20,7 +25,6 @@ default = []
 bevy = [
     "dep:tobj",
     "dep:bevy",
-    "dep:bevy_obj",
     "dep:bevy_obj",
     "dep:bevy_panorbit_camera",
 ]

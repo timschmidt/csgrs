@@ -6,7 +6,7 @@ mod test_intersection {
     use crate::boolean03::kernel03::winding03;
     use crate::boolean03::kernel12::intersect12;
     use crate::boolean45::boolean45;
-    use crate::common::OpType;
+    use crate::OpType;
     use crate::Manifold;
 
     pub fn gen_tet_a() -> Manifold {
@@ -262,30 +262,30 @@ mod test_simplification {
         ];
 
         let mut refs = vec![
-            Tref{mid: 1, fid: 0, pid: 3},
-            Tref{mid: 1, fid: 0, pid: 5},
-            Tref{mid: 1, fid: 0, pid: 2},
-            Tref{mid: 1, fid: 0, pid: 2},
-            Tref{mid: 1, fid: 0, pid: 2},
-            Tref{mid: 1, fid: 0, pid: 2},
-            Tref{mid: 1, fid: 0, pid: 2},
-            Tref{mid: 1, fid: 0, pid: 2},
-            Tref{mid: 1, fid: 0, pid: 2},
-            Tref{mid: 1, fid: 0, pid: 2},
-            Tref{mid: 1, fid: 0, pid: 2},
-            Tref{mid: 1, fid: 0, pid: 1},
-            Tref{mid: 1, fid: 0, pid: 0},
-            Tref{mid: 1, fid: 0, pid: 4},
-            Tref{mid: 1, fid: 0, pid: 3},
-            Tref{mid: 1, fid: 0, pid: 1},
-            Tref{mid: 1, fid: 0, pid: 5},
-            Tref{mid: 1, fid: 0, pid: 0},
-            Tref{mid: 1, fid: 0, pid: 4},
-            Tref{mid: 2, fid: 0, pid: 0},
-            Tref{mid: 2, fid: 0, pid: 0},
-            Tref{mid: 2, fid: 0, pid: 3},
-            Tref{mid: 2, fid: 0, pid: 2},
-            Tref{mid: 2, fid: 0, pid: 2},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 3},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 5},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 2},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 2},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 2},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 2},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 2},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 2},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 2},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 2},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 2},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 1},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 0},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 4},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 3},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 1},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 5},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 0},
+            Tref{oid: 0, mid: 1, fid: 0, pid: 4},
+            Tref{oid: 0, mid: 2, fid: 0, pid: 0},
+            Tref{oid: 0, mid: 2, fid: 0, pid: 0},
+            Tref{oid: 0, mid: 2, fid: 0, pid: 3},
+            Tref{oid: 0, mid: 2, fid: 0, pid: 2},
+            Tref{oid: 0, mid: 2, fid: 0, pid: 2},
         ];
 
         collapse_collinear_edges(

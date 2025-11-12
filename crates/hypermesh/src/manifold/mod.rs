@@ -22,6 +22,7 @@ pub struct Manifold {
     pub bounding_box: BBox,       //
     pub face_normals: Vec<Row3f>, //
     pub vert_normals: Vec<Row3f>, //
+    pub original_idx: Vec<usize>, //
     pub collider: MortonCollider, //
     pub coplanar: Vec<i32>,       // indices of coplanar faces
 }
@@ -65,6 +66,7 @@ impl Manifold {
             bounding_box: bb,
             vert_normals: vns,
             face_normals: fns,
+            original_idx: vec![],
             eps,
             tol,
             collider,

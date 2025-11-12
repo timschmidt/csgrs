@@ -1,9 +1,10 @@
 use std::mem;
 use std::collections::HashMap;
 use crate::boolean03::Boolean03;
-use crate::common::{face_of, Half, OpType, Tref, Row3f};
+use crate::common::{face_of, Half, Tref, Row3f};
 use crate::manifold::Manifold;
 use crate::bounds::BBox;
+use crate::OpType;
 
 fn duplicate_verts(
     inc : &[i32],

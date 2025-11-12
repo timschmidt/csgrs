@@ -7,10 +7,10 @@ pub mod boolean45;
 mod tests;
 use crate::boolean03::boolean03;
 use crate::boolean45::boolean45;
-use crate::common::{OpType, Row3u};
 use crate::simplification::simplify_topology;
 use crate::triangulation::triangulate;
 pub use crate::manifold::*;
+pub use crate::common::*;
 
 pub fn compute_boolean(
     mp: &Manifold,

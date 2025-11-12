@@ -37,6 +37,7 @@ pub fn next_of(hid: usize) -> usize { let mut i = hid + 1; if i % 3 == 0 { i -= 
 
 #[derive(Clone, Debug)]
 pub struct Tref {
+    pub oid: usize, // original instance id,
     pub mid: usize, // mesh id
     pub fid: usize, // face id
     pub pid: i32,   // planer id
@@ -44,7 +45,12 @@ pub struct Tref {
 
 impl Default for Tref {
     fn default() -> Self {
-        Self { mid: usize::MAX, fid: usize::MAX, pid: -1 }
+        Self {
+            oid: usize::MAX,
+            mid: usize::MAX,
+            fid: usize::MAX,
+            pid: -1
+        }
     }
 }
 
