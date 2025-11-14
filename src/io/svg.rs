@@ -4,7 +4,7 @@ use geo::{
     BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon,
 };
 use svg::node::element::path;
-
+use std::fmt::Debug;
 use crate::float_types::Real;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
@@ -379,12 +379,12 @@ impl<F: CoordNum> PathBuilder<F> {
 }
 
 #[allow(unused)]
-pub trait FromSVG: Sized {
-    fn from_svg(doc: &str) -> Result<Self, IoError>;
+pub trait FromSVG<S>: Sized {
+    fn from_svg(doc: &str, metadata: Option<S>) -> Result<Self, IoError>;
 }
 
-impl FromSVG for Sketch<()> {
-    fn from_svg(doc: &str) -> Result<Self, IoError> {
+impl<S> FromSVG<S> for Sketch<S> where S: Clone + Send + Sync + Debug, {
+    fn from_svg(doc: &str, metadata: Option<S>) -> Result<Self, IoError> {
         use svg::node::element::tag::{self, Type::*};
         use svg::parser::Event;
 
@@ -402,7 +402,7 @@ impl FromSVG for Sketch<()> {
             };
         }
 
-        let mut sketch_union = Sketch::<()>::new();
+        let mut sketch_union = Sketch::<S>::new();
 
         for event in svg::read(doc)? {
             match event {
@@ -448,7 +448,7 @@ impl FromSVG for Sketch<()> {
                     for ls in mls.0.into_iter() {
                         if ls.is_closed() {
                             let polygon = Polygon::new(ls, vec![]);
-                            let sketch = Self::from_geo(polygon.into(), None);
+                            let sketch = Self::from_geo(polygon.into(), metadata.clone());
                             sketch_union = sketch_union.union(&sketch);
                         }
                     }
@@ -462,7 +462,7 @@ impl FromSVG for Sketch<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let sketch = Self::circle(r, segments, None).translate(cx, cy, 0.0);
+                    let sketch = Self::circle(r, segments, metadata.clone()).translate(cx, cy, 0.0);
                     sketch_union = sketch_union.union(&sketch);
                 },
 
@@ -481,7 +481,7 @@ impl FromSVG for Sketch<()> {
                     let segments = (r.ceil() as usize).max(6);
 
                     let sketch =
-                        Self::rounded_rectangle(w, h, r, segments, None).translate(x, y, 0.0);
+                        Self::rounded_rectangle(w, h, r, segments, metadata.clone()).translate(x, y, 0.0);
                     sketch_union = sketch_union.union(&sketch);
                 },
 
@@ -494,7 +494,7 @@ impl FromSVG for Sketch<()> {
                     // TODO: add a way for the user to configure this?
                     let segments = (rx.max(ry).ceil() as usize).max(6);
 
-                    let sketch = Self::ellipse(rx * 2.0, ry * 2.0, segments, None)
+                    let sketch = Self::ellipse(rx * 2.0, ry * 2.0, segments, metadata.clone())
                         .translate(cx, cy, 0.0);
                     sketch_union = sketch_union.union(&sketch);
                 },
@@ -511,7 +511,7 @@ impl FromSVG for Sketch<()> {
                 Event::Tag(tag::Polygon, Empty, attrs) => {
                     let points = expect_attr!(attrs, "points")?;
                     let polygon = Polygon::new(svg_points_to_line_string(points)?, vec![]);
-                    let sketch = Self::from_geo(polygon.into(), None);
+                    let sketch = Self::from_geo(polygon.into(), metadata.clone());
                     sketch_union = sketch_union.union(&sketch);
                 },
 
