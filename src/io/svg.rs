@@ -949,7 +949,7 @@ mod tests {
 </svg>
         "#;
 
-        let sketch = Sketch::from_svg(svg_in).unwrap();
+        let sketch = Sketch::from_svg(svg_in, None).unwrap();
         let svg_out = sketch.to_svg();
 
         assert_eq!(svg_in.trim(), svg_out.trim());
