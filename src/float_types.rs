@@ -25,7 +25,7 @@ use std::sync::OnceLock;
 static TOLERANCE_CELL: OnceLock<Real> = OnceLock::new();
 
 #[inline]
-fn default_tolerance() -> Real {
+const fn default_tolerance() -> Real {
     #[cfg(feature = "f32")]
     {
         1e-4
