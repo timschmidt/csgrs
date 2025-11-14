@@ -70,9 +70,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             d = svg_path
         );
 
-        if let Ok(parsed) = <Sketch<()>>::from_svg(&svg_doc) {
-            // Re‑use the extracted geometry but attach the requested metadata.
-            Sketch::from_geo(parsed.geometry.clone(), metadata)
+        if let Ok(parsed) = <Sketch<S>>::from_svg(&svg_doc, metadata) {
+            parsed
         } else {
             Sketch::new()
         }

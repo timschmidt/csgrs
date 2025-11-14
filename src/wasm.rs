@@ -8,7 +8,8 @@ use geo::{Geometry, GeometryCollection};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use nalgebra::{Matrix4, Point3, Vector3};
 //use serde::{Deserialize, Serialize};
-use serde_wasm_bindgen::from_value; //, to_value};
+use serde_wasm_bindgen::{from_value, to_value};
+use serde_json::Value as JsonValue;
 use wasm_bindgen::prelude::*;
 
 // Optional: better panic messages in the browser console.
@@ -16,6 +17,37 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(start)]
 pub fn init_panic_hook() {
     console_error_panic_hook::set_once();
+}
+
+fn js_metadata_to_string(metadata: JsValue) -> Result<Option<String>, JsValue> {
+    if metadata.is_undefined() || metadata.is_null() {
+        return Ok(None);
+    }
+
+    // Convert arbitrary JS value -> serde_json::Value
+    let json: JsonValue = from_value(metadata).map_err(|e| {
+        JsValue::from_str(&format!("Failed to serialize metadata from JS: {:?}", e))
+    })?;
+
+    // Store it as a JSON string in Rust metadata
+    let s = serde_json::to_string(&json).map_err(|e| {
+        JsValue::from_str(&format!("Failed to stringify metadata as JSON: {}", e))
+    })?;
+
+    Ok(Some(s))
+}
+
+fn metadata_to_js(metadata: Option<&String>) -> JsValue {
+    match metadata {
+        None => JsValue::NULL,
+        Some(s) => {
+            // Parse the stored JSON string back into a JS value
+            match serde_json::from_str::<JsonValue>(s) {
+                Ok(json) => to_value(&json).unwrap_or(JsValue::NULL),
+                Err(_) => JsValue::NULL,
+            }
+        }
+    }
 }
 
 /*
@@ -206,12 +238,12 @@ impl PlaneJs {
 
 #[wasm_bindgen]
 pub struct PolygonJs {
-    inner: Polygon<()>,
+    inner: Polygon<String>,
 }
 
 #[wasm_bindgen]
 pub struct SketchJs {
-    inner: Sketch<()>,
+    inner: Sketch<String>,
 }
 
 #[wasm_bindgen]
@@ -280,7 +312,7 @@ impl SketchJs {
     }
 
     #[wasm_bindgen(js_name = polygon)]
-    pub fn polygon(points: JsValue) -> Result<Self, JsValue> {
+    pub fn polygon(points: JsValue, metadata: JsValue) -> Result<Self, JsValue> {
         let points_vec: Vec<[f64; 2]> = from_value(points)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse points: {:?}", e)))?;
 
@@ -288,9 +320,11 @@ impl SketchJs {
             .into_iter()
             .map(|[x, y]| [x as Real, y as Real])
             .collect();
+            
+		let meta = js_metadata_to_string(metadata)?;
 
         Ok(Self {
-            inner: Sketch::polygon(&points_2d, None),
+            inner: Sketch::polygon(&points_2d, meta),
         })
     }
 
@@ -338,8 +372,9 @@ impl SketchJs {
 
     // IO operations
     #[wasm_bindgen(js_name = fromSVG)]
-    pub fn from_svg(svg_data: &str) -> Result<Self, JsValue> {
-        let sketch = Sketch::from_svg(svg_data)
+    pub fn from_svg(svg_data: &str, metadata: JsValue) -> Result<Self, JsValue> {
+		let meta = js_metadata_to_string(metadata)?;
+        let sketch = Sketch::from_svg(svg_data, meta)
             .map_err(|e| JsValue::from_str(&format!("SVG parsing error: {:?}", e)))?;
         Ok(Self { inner: sketch })
     }
@@ -350,10 +385,11 @@ impl SketchJs {
     }
 
     #[wasm_bindgen(js_name=fromGeo)]
-    pub fn from_geo(geo_json: &str) -> Result<SketchJs, JsValue> {
+    pub fn from_geo(geo_json: &str, metadata: JsValue) -> Result<SketchJs, JsValue> {
         let geometry: Geometry<Real> = serde_json::from_str(geo_json)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse GeoJSON: {}", e)))?;
-        let sketch = Sketch::from_geo(GeometryCollection(vec![geometry]), None);
+		let meta = js_metadata_to_string(metadata)?;
+        let sketch = Sketch::from_geo(GeometryCollection(vec![geometry]), meta);
         Ok(SketchJs { inner: sketch })
     }
 
@@ -529,44 +565,50 @@ impl SketchJs {
 
     // 2D Shapes
     #[wasm_bindgen(js_name = square)]
-    pub fn square(width: Real) -> Self {
+    pub fn square(width: Real, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::square(width, None),
+            inner: Sketch::square(width, meta),
         }
     }
 
     #[wasm_bindgen(js_name = circle)]
-    pub fn circle(radius: Real, segments: usize) -> Self {
+    pub fn circle(radius: Real, segments: usize, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::circle(radius, segments, None),
+            inner: Sketch::circle(radius, segments, meta),
         }
     }
 
     #[wasm_bindgen(js_name = rectangle)]
-    pub fn rectangle(width: Real, length: Real) -> Self {
+    pub fn rectangle(width: Real, length: Real, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::rectangle(width, length, None),
+            inner: Sketch::rectangle(width, length, meta),
         }
     }
 
     #[wasm_bindgen(js_name = rightTriangle)]
-    pub fn right_triangle(width: Real, height: Real) -> Self {
+    pub fn right_triangle(width: Real, height: Real, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::right_triangle(width, height, None),
+            inner: Sketch::right_triangle(width, height, meta),
         }
     }
 
     #[wasm_bindgen(js_name = ellipse)]
-    pub fn ellipse(width: Real, height: Real, segments: usize) -> Self {
+    pub fn ellipse(width: Real, height: Real, segments: usize, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::ellipse(width, height, segments, None),
+            inner: Sketch::ellipse(width, height, segments, meta),
         }
     }
 
     #[wasm_bindgen(js_name = regularNGon)]
-    pub fn regular_ngon(sides: usize, radius: Real) -> Self {
+    pub fn regular_ngon(sides: usize, radius: Real, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::regular_ngon(sides, radius, None),
+            inner: Sketch::regular_ngon(sides, radius, meta),
         }
     }
 
@@ -576,9 +618,11 @@ impl SketchJs {
         shaft_width: Real,
         head_length: Real,
         head_width: Real,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::arrow(shaft_length, shaft_width, head_length, head_width, None),
+            inner: Sketch::arrow(shaft_length, shaft_width, head_length, head_width, meta),
         }
     }
 
@@ -588,30 +632,35 @@ impl SketchJs {
         bottom_width: Real,
         height: Real,
         top_offset: Real,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::trapezoid(top_width, bottom_width, height, top_offset, None),
+            inner: Sketch::trapezoid(top_width, bottom_width, height, top_offset, meta),
         }
     }
 
     #[wasm_bindgen(js_name = star)]
-    pub fn star(num_points: usize, outer_radius: Real, inner_radius: Real) -> Self {
+    pub fn star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::star(num_points, outer_radius, inner_radius, None),
+            inner: Sketch::star(num_points, outer_radius, inner_radius, meta),
         }
     }
 
     #[wasm_bindgen(js_name = teardrop)]
-    pub fn teardrop(width: Real, length: Real, segments: usize) -> Self {
+    pub fn teardrop(width: Real, length: Real, segments: usize, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::teardrop(width, length, segments, None),
+            inner: Sketch::teardrop(width, length, segments, meta),
         }
     }
 
     #[wasm_bindgen(js_name = egg)]
-    pub fn egg(width: Real, length: Real, segments: usize) -> Self {
+    pub fn egg(width: Real, length: Real, segments: usize, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::egg(width, length, segments, None),
+            inner: Sketch::egg(width, length, segments, meta),
         }
     }
 
@@ -621,22 +670,25 @@ impl SketchJs {
         height: Real,
         corner_radius: Real,
         corner_segments: usize,
+        metadata: JsValue
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
             inner: Sketch::rounded_rectangle(
                 width,
                 height,
                 corner_radius,
                 corner_segments,
-                None,
+                meta,
             ),
         }
     }
 
     #[wasm_bindgen(js_name = squircle)]
-    pub fn squircle(width: Real, height: Real, segments: usize) -> Self {
+    pub fn squircle(width: Real, height: Real, segments: usize, metadata: JsValue,) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::squircle(width, height, segments, None),
+            inner: Sketch::squircle(width, height, segments, meta),
         }
     }
 
@@ -646,23 +698,27 @@ impl SketchJs {
         handle_width: Real,
         handle_height: Real,
         segments: usize,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::keyhole(circle_radius, handle_width, handle_height, segments, None),
+            inner: Sketch::keyhole(circle_radius, handle_width, handle_height, segments, meta),
         }
     }
 
     #[wasm_bindgen(js_name = reuleaux)]
-    pub fn reuleaux(sides: usize, diameter: Real, circle_segments: usize) -> Self {
+    pub fn reuleaux(sides: usize, diameter: Real, circle_segments: usize, metadata: JsValue,) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::reuleaux(sides, diameter, circle_segments, None),
+            inner: Sketch::reuleaux(sides, diameter, circle_segments, meta),
         }
     }
 
     #[wasm_bindgen(js_name = ring)]
-    pub fn ring(id: Real, thickness: Real, segments: usize) -> Self {
+    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: JsValue,) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::ring(id, thickness, segments, None),
+            inner: Sketch::ring(id, thickness, segments, meta),
         }
     }
 
@@ -672,9 +728,11 @@ impl SketchJs {
         start_angle_deg: Real,
         end_angle_deg: Real,
         segments: usize,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::pie_slice(radius, start_angle_deg, end_angle_deg, segments, None),
+            inner: Sketch::pie_slice(radius, start_angle_deg, end_angle_deg, segments, meta),
         }
     }
 
@@ -687,9 +745,11 @@ impl SketchJs {
         n2: Real,
         n3: Real,
         segments: usize,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::supershape(a, b, m, n1, n2, n3, segments, None),
+            inner: Sketch::supershape(a, b, m, n1, n2, n3, segments, meta),
         }
     }
 
@@ -699,28 +759,32 @@ impl SketchJs {
         segments: usize,
         key_width: Real,
         key_depth: Real,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::circle_with_keyway(radius, segments, key_width, key_depth, None),
+            inner: Sketch::circle_with_keyway(radius, segments, key_width, key_depth, meta),
         }
     }
 
     #[wasm_bindgen(js_name = circleWithFlat)]
-    pub fn circle_with_flat(radius: Real, segments: usize, flat_dist: Real) -> Self {
+    pub fn circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::circle_with_flat(radius, segments, flat_dist, None),
+            inner: Sketch::circle_with_flat(radius, segments, flat_dist, meta),
         }
     }
 
     #[wasm_bindgen(js_name = circleWithTwoFlats)]
-    pub fn circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real) -> Self {
+    pub fn circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: JsValue,) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::circle_with_two_flats(radius, segments, flat_dist, None),
+            inner: Sketch::circle_with_two_flats(radius, segments, flat_dist, meta),
         }
     }
 
     #[wasm_bindgen(js_name = bezier)]
-    pub fn bezier(control: JsValue, segments: usize) -> Result<Self, JsValue> {
+    pub fn bezier(control: JsValue, segments: usize, metadata: JsValue,) -> Result<Self, JsValue> {
         let control_vec: Vec<[f64; 2]> = from_value(control).map_err(|e| {
             JsValue::from_str(&format!("Failed to parse control points: {:?}", e))
         })?;
@@ -729,9 +793,11 @@ impl SketchJs {
             .into_iter()
             .map(|[x, y]| [x as Real, y as Real])
             .collect();
+            
+		let meta = js_metadata_to_string(metadata)?;
 
         Ok(Self {
-            inner: Sketch::bezier(&control_2d, segments, None),
+            inner: Sketch::bezier(&control_2d, segments, meta),
         })
     }
 
@@ -740,6 +806,7 @@ impl SketchJs {
         control: JsValue,
         p: usize,
         segments_per_span: usize,
+        metadata: JsValue,
     ) -> Result<Self, JsValue> {
         let control_vec: Vec<[f64; 2]> = from_value(control).map_err(|e| {
             JsValue::from_str(&format!("Failed to parse control points: {:?}", e))
@@ -750,22 +817,26 @@ impl SketchJs {
             .map(|[x, y]| [x as Real, y as Real])
             .collect();
 
+		let meta = js_metadata_to_string(metadata)?;
+
         Ok(Self {
-            inner: Sketch::bspline(&control_2d, p, segments_per_span, None),
+            inner: Sketch::bspline(&control_2d, p, segments_per_span, meta),
         })
     }
 
     #[wasm_bindgen(js_name = heart)]
-    pub fn heart(width: Real, height: Real, segments: usize) -> Self {
+    pub fn heart(width: Real, height: Real, segments: usize, metadata: JsValue,) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::heart(width, height, segments, None),
+            inner: Sketch::heart(width, height, segments, meta),
         }
     }
 
     #[wasm_bindgen(js_name = crescent)]
-    pub fn crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize) -> Self {
+    pub fn crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Sketch::crescent(outer_r, inner_r, offset, segments, None),
+            inner: Sketch::crescent(outer_r, inner_r, offset, segments, meta),
         }
     }
 
@@ -777,7 +848,9 @@ impl SketchJs {
         clearance: Real,
         backlash: Real,
         segments_per_flank: usize,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
             inner: Sketch::involute_gear(
                 module_,
@@ -786,7 +859,7 @@ impl SketchJs {
                 clearance,
                 backlash,
                 segments_per_flank,
-                None,
+                meta,
             ),
         }
     }
@@ -798,7 +871,9 @@ impl SketchJs {
         thickness: Real,
         chord: Real,
         samples: usize,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
             inner: Sketch::airfoil_naca4(
                 max_camber,
@@ -806,7 +881,7 @@ impl SketchJs {
                 thickness,
                 chord,
                 samples,
-                None,
+                meta,
             ),
         }
     }
@@ -822,7 +897,7 @@ impl SketchJs {
 
 #[wasm_bindgen]
 pub struct MeshJs {
-    inner: Mesh<()>,
+    inner: Mesh<String>,
 }
 
 #[wasm_bindgen]
@@ -833,11 +908,10 @@ impl MeshJs {
     }
 
     #[wasm_bindgen(js_name=fromPolygons)]
-    pub fn from_polygons(polygons: Vec<PolygonJs>) -> MeshJs {
-        // second parameter: Option<(&str)>
+    pub fn from_polygons(polygons: Vec<PolygonJs>, metadata: JsValue) -> MeshJs {
         let poly_vec: Vec<_> = polygons.iter().map(|p| p.inner.clone()).collect();
-        //let meta_opt = metadata.map(|s| s.to_string());
-        let mesh = Mesh::from_polygons(&poly_vec, None); // add meta_opt in place of None once metadata is bound
+        let meta = js_metadata_to_string(metadata)?;
+        let mesh = Mesh::from_polygons(&poly_vec, meta);
         MeshJs { inner: mesh }
     }
 
@@ -1252,20 +1326,20 @@ impl MeshJs {
         Self { inner: mesh }
     }
 
-    /*
+
     // Metadata
     #[wasm_bindgen(js_name=sameMetadata)]
-    pub fn same_metadata(&self, metadata: Option<&str>) -> bool {
-        let meta_opt = metadata.map(|s| s.to_string());
-        self.inner.same_metadata(meta_opt)
+    pub fn same_metadata(&self, metadata: JsValue) -> bool {
+		let meta = js_metadata_to_string(metadata)?;
+        self.inner.same_metadata(meta)
     }
 
     #[wasm_bindgen(js_name=filterPolygonsByMetadata)]
-    pub fn filter_polygons_by_metadata(&self, needle: &str) -> MeshJs {
-        let mesh = self.inner.filter_polygons_by_metadata(needle);
+    pub fn filter_polygons_by_metadata(&self, needle: JsValue) -> MeshJs {
+		let meta = js_metadata_to_string(metadata)?;
+        let mesh = self.inner.filter_polygons_by_metadata(meta);
         MeshJs { inner: mesh }
     }
-    */
 
     // Mass Properties
     #[wasm_bindgen(js_name = massProperties)]
@@ -1312,30 +1386,34 @@ impl MeshJs {
 
     // 3D Shapes
     #[wasm_bindgen(js_name = cube)]
-    pub fn cube(size: Real) -> Self {
+    pub fn cube(size: Real, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::cube(size, None),
+            inner: Mesh::cube(size, meta),
         }
     }
 
     #[wasm_bindgen(js_name = sphere)]
-    pub fn sphere(radius: Real, segments_u: usize, segments_v: usize) -> Self {
+    pub fn sphere(radius: Real, segments_u: usize, segments_v: usize, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::sphere(radius, segments_u, segments_v, None),
+            inner: Mesh::sphere(radius, segments_u, segments_v, meta),
         }
     }
 
     #[wasm_bindgen(js_name = cylinder)]
-    pub fn cylinder(radius: Real, height: Real, segments: usize) -> Self {
+    pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::cylinder(radius, height, segments, None),
+            inner: Mesh::cylinder(radius, height, segments, meta),
         }
     }
 
     #[wasm_bindgen(js_name = cuboid)]
-    pub fn cuboid(width: Real, length: Real, height: Real) -> Self {
+    pub fn cuboid(width: Real, length: Real, height: Real, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::cuboid(width, length, height, None),
+            inner: Mesh::cuboid(width, length, height, meta),
         }
     }
 
@@ -1350,23 +1428,26 @@ impl MeshJs {
         radius1: Real,
         radius2: Real,
         segments: usize,
+        metadata: JsValue
     ) -> Self {
         let start = Point3::new(start_x, start_y, start_z);
         let end = Point3::new(end_x, end_y, end_z);
+        let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::frustum_ptp(start, end, radius1, radius2, segments, None),
+            inner: Mesh::frustum_ptp(start, end, radius1, radius2, segments, meta),
         }
     }
 
     #[wasm_bindgen(js_name = frustum)]
-    pub fn frustum(radius1: Real, radius2: Real, height: Real, segments: usize) -> Self {
+    pub fn frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::frustum(radius1, radius2, height, segments, None),
+            inner: Mesh::frustum(radius1, radius2, height, segments, meta),
         }
     }
 
     #[wasm_bindgen(js_name = polyhedron)]
-    pub fn polyhedron(points: JsValue, faces: JsValue) -> Result<Self, JsValue> {
+    pub fn polyhedron(points: JsValue, faces: JsValue, metadata: JsValue) -> Result<Self, JsValue> {
         let points_vec: Vec<[f64; 3]> = from_value(points)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse points: {:?}", e)))?;
         let faces_vec: Vec<Vec<usize>> = from_value(faces)
@@ -1378,8 +1459,10 @@ impl MeshJs {
             .collect();
 
         let faces_ref: Vec<&[usize]> = faces_vec.iter().map(|f| f.as_slice()).collect();
+        
+        let meta = js_metadata_to_string(metadata)?;
 
-        let mesh = Mesh::polyhedron(&points_3d, &faces_ref, None)
+        let mesh = Mesh::polyhedron(&points_3d, &faces_ref, meta)
             .map_err(|e| JsValue::from_str(&format!("Polyhedron creation failed: {:?}", e)))?;
 
         Ok(Self { inner: mesh })
@@ -1391,9 +1474,11 @@ impl MeshJs {
         length: Real,
         revolve_segments: usize,
         outline_segments: usize,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::egg(width, length, revolve_segments, outline_segments, None),
+            inner: Mesh::egg(width, length, revolve_segments, outline_segments, meta),
         }
     }
 
@@ -1403,9 +1488,11 @@ impl MeshJs {
         length: Real,
         revolve_segments: usize,
         shape_segments: usize,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::teardrop(width, length, revolve_segments, shape_segments, None),
+            inner: Mesh::teardrop(width, length, revolve_segments, shape_segments, meta),
         }
     }
 
@@ -1415,16 +1502,19 @@ impl MeshJs {
         length: Real,
         height: Real,
         shape_segments: usize,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::teardrop_cylinder(width, length, height, shape_segments, None),
+            inner: Mesh::teardrop_cylinder(width, length, height, shape_segments, meta),
         }
     }
 
     #[wasm_bindgen(js_name = ellipsoid)]
-    pub fn ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize) -> Self {
+    pub fn ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::ellipsoid(rx, ry, rz, segments, stacks, None),
+            inner: Mesh::ellipsoid(rx, ry, rz, segments, stacks, meta),
         }
     }
 
@@ -1438,25 +1528,29 @@ impl MeshJs {
         dir_z: Real,
         segments: usize,
         orientation: bool,
+        metadata: JsValue,
     ) -> Self {
         let start = Point3::new(start_x, start_y, start_z);
         let direction = Vector3::new(dir_x, dir_y, dir_z);
+        let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::arrow(start, direction, segments, orientation, None),
+            inner: Mesh::arrow(start, direction, segments, orientation, meta),
         }
     }
 
     #[wasm_bindgen(js_name = octahedron)]
-    pub fn octahedron(radius: Real) -> Self {
+    pub fn octahedron(radius: Real, metadata: JsValue) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::octahedron(radius, None),
+            inner: Mesh::octahedron(radius, meta),
         }
     }
 
     #[wasm_bindgen(js_name = icosahedron)]
-    pub fn icosahedron(radius: Real) -> Self {
+    pub fn icosahedron(radius: Real, metadata: JsValue,) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::icosahedron(radius, None),
+            inner: Mesh::icosahedron(radius, meta),
         }
     }
 
@@ -1466,9 +1560,11 @@ impl MeshJs {
         minor_r: Real,
         segments_major: usize,
         segments_minor: usize,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
-            inner: Mesh::torus(major_r, minor_r, segments_major, segments_minor, None),
+            inner: Mesh::torus(major_r, minor_r, segments_major, segments_minor, meta),
         }
     }
 
@@ -1481,7 +1577,9 @@ impl MeshJs {
         backlash: Real,
         segments_per_flank: usize,
         thickness: Real,
+        metadata: JsValue,
     ) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         Self {
             inner: Mesh::spur_gear_involute(
                 module_,
@@ -1491,34 +1589,37 @@ impl MeshJs {
                 backlash,
                 segments_per_flank,
                 thickness,
-                None,
+                meta,
             ),
         }
     }
 
     #[wasm_bindgen(js_name=gyroid)]
-    pub fn gyroid(&self, resolution: u32, scale: Real, iso_value: Real) -> Self {
+    pub fn gyroid(&self, resolution: u32, scale: Real, iso_value: Real, metadata: JsValue,) -> Self {
+        let meta = js_metadata_to_string(metadata)?;
         let gyroid_mesh =
             self.inner
-                .gyroid(resolution.try_into().unwrap(), scale, iso_value, None);
+                .gyroid(resolution.try_into().unwrap(), scale, iso_value, meta);
         Self { inner: gyroid_mesh }
     }
 
     #[wasm_bindgen(js_name=schwarzP)]
-    pub fn schwarz_p(&self, resolution: u32, scale: Real, iso_value: Real) -> Self {
+    pub fn schwarz_p(&self, resolution: u32, scale: Real, iso_value: Real, metadata: JsValue,) -> Self {
+        let meta = js_metadata_to_string(metadata)?;
         let schwarzp_mesh =
             self.inner
-                .schwarz_p(resolution.try_into().unwrap(), scale, iso_value, None);
+                .schwarz_p(resolution.try_into().unwrap(), scale, iso_value, meta);
         Self {
             inner: schwarzp_mesh,
         }
     }
 
     #[wasm_bindgen(js_name=schwarzD)]
-    pub fn schwarz_d(&self, resolution: u32, scale: Real, iso_value: Real) -> Self {
+    pub fn schwarz_d(&self, resolution: u32, scale: Real, iso_value: Real, metadata: JsValue,) -> Self {
+		let meta = js_metadata_to_string(metadata)?;
         let schwarzd_mesh =
             self.inner
-                .schwarz_d(resolution.try_into().unwrap(), scale, iso_value, None);
+                .schwarz_d(resolution.try_into().unwrap(), scale, iso_value, meta);
         Self {
             inner: schwarzd_mesh,
         }
