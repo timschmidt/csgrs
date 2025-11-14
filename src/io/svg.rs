@@ -1,13 +1,13 @@
 //! SVG input and output.
 
-use geo::{
-    BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon,
-};
-use svg::node::element::path;
-use std::fmt::Debug;
 use crate::float_types::Real;
 use crate::sketch::Sketch;
 use crate::traits::CSG;
+use geo::{
+    BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon,
+};
+use std::fmt::Debug;
+use svg::node::element::path;
 
 use super::IoError;
 
@@ -383,7 +383,10 @@ pub trait FromSVG<S>: Sized {
     fn from_svg(doc: &str, metadata: Option<S>) -> Result<Self, IoError>;
 }
 
-impl<S> FromSVG<S> for Sketch<S> where S: Clone + Send + Sync + Debug, {
+impl<S> FromSVG<S> for Sketch<S>
+where
+    S: Clone + Send + Sync + Debug,
+{
     fn from_svg(doc: &str, metadata: Option<S>) -> Result<Self, IoError> {
         use svg::node::element::tag::{self, Type::*};
         use svg::parser::Event;
@@ -462,7 +465,8 @@ impl<S> FromSVG<S> for Sketch<S> where S: Clone + Send + Sync + Debug, {
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let sketch = Self::circle(r, segments, metadata.clone()).translate(cx, cy, 0.0);
+                    let sketch =
+                        Self::circle(r, segments, metadata.clone()).translate(cx, cy, 0.0);
                     sketch_union = sketch_union.union(&sketch);
                 },
 
@@ -480,8 +484,8 @@ impl<S> FromSVG<S> for Sketch<S> where S: Clone + Send + Sync + Debug, {
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let sketch =
-                        Self::rounded_rectangle(w, h, r, segments, metadata.clone()).translate(x, y, 0.0);
+                    let sketch = Self::rounded_rectangle(w, h, r, segments, metadata.clone())
+                        .translate(x, y, 0.0);
                     sketch_union = sketch_union.union(&sketch);
                 },
 
