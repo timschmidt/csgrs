@@ -258,43 +258,32 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         let triangle_count = triangles.len();
 
-        let mut indices: Vec<u32> = Vec::with_capacity(triangle_count);
-        let mut vertices: Vec<GraphicsMeshVertex> = Vec::with_capacity(triangle_count);
+        let mut indices: Vec<u32> = Vec::with_capacity(triangle_count * 3);
+        let mut vertices: Vec<GraphicsMeshVertex> = Vec::with_capacity(triangle_count * 3);
         const VERT_DIM_SIZE: usize = std::mem::size_of::<[f32; 3]>();
         let mut vertices_hash: HashMap<([u8; VERT_DIM_SIZE], [u8; VERT_DIM_SIZE]), u32> =
-            HashMap::with_capacity(triangle_count);
+            HashMap::with_capacity(triangle_count * 3);
 
         let mut i_new_vertex: u32 = 0;
 
         for triangle in triangles {
             for vertex in triangle.vertices {
-                let pos_x = vertex.pos.x as f32;
-                let pos_y = vertex.pos.y as f32;
-                let pos_z = vertex.pos.z as f32;
+                let pos_xyz: [f32; 3] = vertex.pos.cast::<f32>().coords.into();
+                let norm_xyz: [f32; 3] = vertex.normal.cast::<f32>().into();
 
-                let norm_x = vertex.normal.x as f32;
-                let norm_y = vertex.normal.y as f32;
-                let norm_z = vertex.normal.z as f32;
+                let pos_xyz_bytes: [u8; VERT_DIM_SIZE] = cast(pos_xyz);
+                let norm_xyz_bytes: [u8; VERT_DIM_SIZE] = cast(norm_xyz);
 
-                let pos_xyz = [pos_x, pos_y, pos_z];
-                let norm_xyz = [norm_x, norm_y, norm_z];
-
-                let pos_xyz_bytes: [u8; std::mem::size_of::<[f32; 3]>()] = cast(pos_xyz);
-                let norm_xyz_bytes: [u8; std::mem::size_of::<[f32; 3]>()] = cast(norm_xyz);
-
-                let vertex_f32 = (pos_xyz, norm_xyz);
                 let vertex_f32_bytes = (pos_xyz_bytes, norm_xyz_bytes);
 
-                if let Some(i_vertex) = vertices_hash.get(&vertex_f32_bytes) {
-                    indices.push(*i_vertex);
-                } else {
-                    vertices_hash.insert(vertex_f32_bytes, i_new_vertex);
-                    vertices.push(vertex_f32);
-
-                    indices.push(i_new_vertex);
-
+                let index = *vertices_hash.entry(vertex_f32_bytes).or_insert_with(|| {
+                    let new_index = i_new_vertex;
+                    vertices.push((pos_xyz, norm_xyz));
                     i_new_vertex += 1;
-                }
+                    new_index
+                });
+
+                indices.push(index);
             }
         }
 
