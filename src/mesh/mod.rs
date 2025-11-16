@@ -258,8 +258,6 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         let triangle_count = triangles.len();
 
-        //let crc_hasher = BuildCrcHasher::default();
-
         let mut indices: Vec<u32> = Vec::with_capacity(triangle_count);
         let mut vertices: Vec<GraphicsMeshVertex> = Vec::with_capacity(triangle_count);
         const VERT_DIM_SIZE: usize = std::mem::size_of::<[f32; 3]>();
