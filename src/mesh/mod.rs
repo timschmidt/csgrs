@@ -20,7 +20,7 @@ use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
-use std::{cmp::PartialEq, collections::{HashMap}, fmt::Debug, num::NonZeroU32, sync::OnceLock};
+use std::{cmp::PartialEq, collections::HashMap, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 
 #[cfg(feature = "parallel")]
 use rayon::{iter::IntoParallelRefIterator, prelude::*};
@@ -55,7 +55,7 @@ pub type GraphicsMeshVertex = ([f32; 3], [f32; 3]);
 /// normals.
 #[derive(Debug, Clone)]
 pub struct GraphicsMesh {
-    /// Vertices contain both position and normal 
+    /// Vertices contain both position and normal
     pub vertices: Vec<GraphicsMeshVertex>,
     pub indices: Vec<u32>,
 }
@@ -262,8 +262,9 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         let mut indices: Vec<u32> = Vec::with_capacity(triangle_count);
         let mut vertices: Vec<GraphicsMeshVertex> = Vec::with_capacity(triangle_count);
-        const VERT_DIM_SIZE: usize = std::mem::size_of::<[f32;3]>();
-        let mut vertices_hash: HashMap<([u8; VERT_DIM_SIZE], [u8; VERT_DIM_SIZE]), u32> = HashMap::with_capacity(triangle_count);
+        const VERT_DIM_SIZE: usize = std::mem::size_of::<[f32; 3]>();
+        let mut vertices_hash: HashMap<([u8; VERT_DIM_SIZE], [u8; VERT_DIM_SIZE]), u32> =
+            HashMap::with_capacity(triangle_count);
 
         let mut i_new_vertex: u32 = 0;
 
@@ -280,8 +281,8 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
                 let pos_xyz = [pos_x, pos_y, pos_z];
                 let norm_xyz = [norm_x, norm_y, norm_z];
 
-                let pos_xyz_bytes: [u8; std::mem::size_of::<[f32;3]>()] = cast(pos_xyz);
-                let norm_xyz_bytes: [u8; std::mem::size_of::<[f32;3]>()] = cast(norm_xyz);
+                let pos_xyz_bytes: [u8; std::mem::size_of::<[f32; 3]>()] = cast(pos_xyz);
+                let norm_xyz_bytes: [u8; std::mem::size_of::<[f32; 3]>()] = cast(norm_xyz);
 
                 let vertex_f32 = (pos_xyz, norm_xyz);
                 let vertex_f32_bytes = (pos_xyz_bytes, norm_xyz_bytes);
@@ -291,7 +292,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
                 } else {
                     vertices_hash.insert(vertex_f32_bytes, i_new_vertex);
                     vertices.push(vertex_f32);
-                    
+
                     indices.push(i_new_vertex);
 
                     i_new_vertex += 1;
@@ -301,10 +302,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         vertices.shrink_to_fit();
 
-        GraphicsMesh {
-            vertices,
-            indices
-        }
+        GraphicsMesh { vertices, indices }
     }
 
     /// Extracts vertices and indices from the Mesh's tessellated polygons.
@@ -327,7 +325,6 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         (vertices, indices)
     }
-
 
     /// Casts a ray defined by `origin` + t * `direction` against all triangles
     /// of this Mesh and returns a list of (intersection_point, distance),
