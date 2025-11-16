@@ -82,6 +82,7 @@ js-sys = { version = "0.3.81", optional = true }
 serde-wasm-bindgen = { version = "0.6.5", optional = true }
 serde_json = { version = "1.0.145", optional = true }
 serde = { version = "1.0.228", optional = true }
+bytemuck = "1.24.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 uuid = { version = "1.18", features = ["js"] }

@@ -15,11 +15,12 @@ use crate::float_types::{
 use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
+use bytemuck::cast;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
-use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
+use std::{cmp::PartialEq, collections::{HashMap}, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 
 #[cfg(feature = "parallel")]
 use rayon::{iter::IntoParallelRefIterator, prelude::*};
@@ -46,6 +47,18 @@ pub mod smoothing;
 #[cfg(feature = "sdf")]
 pub mod tpms;
 pub mod vertex;
+
+/// Stored as `(position: [f32; 3], normal: [f32; 3])`
+pub type GraphicsMeshVertex = ([f32; 3], [f32; 3]);
+
+/// Mesh ready for rendering. Uses f32s and provides vertices, indices and
+/// normals.
+#[derive(Debug, Clone)]
+pub struct GraphicsMesh {
+    /// Vertices contain both position and normal 
+    pub vertices: Vec<GraphicsMeshVertex>,
+    pub indices: Vec<u32>,
+}
 
 #[derive(Clone, Debug)]
 pub struct Mesh<S: Clone + Send + Sync + Debug> {
@@ -237,7 +250,66 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         dot.acos()
     }
 
+    /// Converts a mesh to a graphics mesh which is more appropriate for rendering.
+    ///
+    /// Allocates a hashmap and a storage vec for removing redundant vertices.
+    pub fn build_graphics_mesh(&self) -> GraphicsMesh {
+        let triangles = self.triangulate().polygons;
+
+        let triangle_count = triangles.len();
+
+        //let crc_hasher = BuildCrcHasher::default();
+
+        let mut indices: Vec<u32> = Vec::with_capacity(triangle_count);
+        let mut vertices: Vec<GraphicsMeshVertex> = Vec::with_capacity(triangle_count);
+        const VERT_DIM_SIZE: usize = std::mem::size_of::<[f32;3]>();
+        let mut vertices_hash: HashMap<([u8; VERT_DIM_SIZE], [u8; VERT_DIM_SIZE]), u32> = HashMap::with_capacity(triangle_count);
+
+        let mut i_new_vertex: u32 = 0;
+
+        for triangle in triangles {
+            for vertex in triangle.vertices {
+                let pos_x = vertex.pos.x as f32;
+                let pos_y = vertex.pos.y as f32;
+                let pos_z = vertex.pos.z as f32;
+
+                let norm_x = vertex.normal.x as f32;
+                let norm_y = vertex.normal.y as f32;
+                let norm_z = vertex.normal.z as f32;
+
+                let pos_xyz = [pos_x, pos_y, pos_z];
+                let norm_xyz = [norm_x, norm_y, norm_z];
+
+                let pos_xyz_bytes: [u8; std::mem::size_of::<[f32;3]>()] = cast(pos_xyz);
+                let norm_xyz_bytes: [u8; std::mem::size_of::<[f32;3]>()] = cast(norm_xyz);
+
+                let vertex_f32 = (pos_xyz, norm_xyz);
+                let vertex_f32_bytes = (pos_xyz_bytes, norm_xyz_bytes);
+
+                if let Some(i_vertex) = vertices_hash.get(&vertex_f32_bytes) {
+                    indices.push(*i_vertex);
+                } else {
+                    vertices_hash.insert(vertex_f32_bytes, i_new_vertex);
+                    vertices.push(vertex_f32);
+                    
+                    indices.push(i_new_vertex);
+
+                    i_new_vertex += 1;
+                }
+            }
+        }
+
+        vertices.shrink_to_fit();
+
+        GraphicsMesh {
+            vertices,
+            indices
+        }
+    }
+
     /// Extracts vertices and indices from the Mesh's tessellated polygons.
+    ///
+    /// Implementation does *not* remove redundant vertices.
     pub fn get_vertices_and_indices(&self) -> (Vec<Point3<Real>>, Vec<[u32; 3]>) {
         let tri_csg = self.triangulate();
         let vertices = tri_csg
@@ -255,6 +327,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
         (vertices, indices)
     }
+
 
     /// Casts a ray defined by `origin` + t * `direction` against all triangles
     /// of this Mesh and returns a list of (intersection_point, distance),
