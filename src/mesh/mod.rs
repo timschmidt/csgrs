@@ -230,7 +230,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     /// The angle is computed as the angle between the normal vectors of the two polygons.
     ///
     /// Returns the angle in radians.
-    fn dihedral_angle(p1: &Polygon<S>, p2: &Polygon<S>) -> Real {
+    pub fn dihedral_angle(p1: &Polygon<S>, p2: &Polygon<S>) -> Real {
         let n1 = p1.plane.normal();
         let n2 = p2.plane.normal();
         let dot = n1.dot(&n2).clamp(-1.0, 1.0);
@@ -238,7 +238,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     }
 
     /// Extracts vertices and indices from the Mesh's tessellated polygons.
-    fn get_vertices_and_indices(&self) -> (Vec<Point3<Real>>, Vec<[u32; 3]>) {
+    pub fn get_vertices_and_indices(&self) -> (Vec<Point3<Real>>, Vec<[u32; 3]>) {
         let tri_csg = self.triangulate();
         let vertices = tri_csg
             .polygons
