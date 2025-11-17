@@ -3,6 +3,7 @@
 use crate::float_types::Real;
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::mesh::Mesh;
+use crate::mesh::vertex::Vertex;
 use crate::traits::CSG;
 use geo::algorithm::winding_order::Winding;
 use geo::{
@@ -42,6 +43,9 @@ pub struct Sketch<S> {
 
     /// Metadata
     pub metadata: Option<S>,
+
+    /// Origin of the sketch in 3D space
+    pub origin: Vertex,
 }
 
 impl<S: Clone + Send + Sync + Debug> Sketch<S> {
@@ -209,7 +213,22 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
             geometry: GeometryCollection(oriented_geoms),
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
+    }
+
+    #[inline]
+    /// Set the origin of a Sketch
+    pub fn set_origin(&mut self, origin: Vertex) {
+        self.origin = origin;
+    }
+
+    #[inline]
+    /// Specifies the origin during creation of a Sketch.
+    pub fn origin(mut self, origin: Vertex) -> Self {
+        self.set_origin(origin);
+
+        self
     }
 }
 
@@ -220,6 +239,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: GeometryCollection::default(),
             bounding_box: OnceLock::new(),
             metadata: None,
+            origin: Default::default(),
         }
     }
 
@@ -271,6 +291,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: final_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 
@@ -312,6 +333,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: final_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 
@@ -359,6 +381,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: final_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 
@@ -406,6 +429,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: final_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 
@@ -538,6 +562,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: GeometryCollection(oriented_geoms),
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 }
@@ -594,6 +619,7 @@ impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for Sketch<S> {
             geometry: new_gc,
             bounding_box: OnceLock::new(),
             metadata: None,
+            origin: mesh.origin,
         }
     }
 }

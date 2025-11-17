@@ -69,6 +69,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             geometry: new_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 
@@ -154,6 +155,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             geometry: new_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 }

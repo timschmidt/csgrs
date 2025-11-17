@@ -605,6 +605,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             geometry: shape.geometry,
             bounding_box: OnceLock::new(),
             metadata,
+            origin: Default::default(),
         }
     }
 

@@ -100,6 +100,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             polygons: out,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 
@@ -810,6 +811,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             polygons: new_polygons,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         })
     }
 

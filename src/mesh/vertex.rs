@@ -11,6 +11,12 @@ pub struct Vertex {
     pub normal: Vector3<Real>,
 }
 
+impl Default for Vertex {
+    fn default() -> Self {
+        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 1.0))
+    }
+}
+
 impl Vertex {
     /// Create a new [`Vertex`].
     ///
