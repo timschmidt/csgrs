@@ -35,24 +35,28 @@ pub mod truetype;
 
 pub(crate) type OriginTransformVecQuat = (Vector3<Real>, (UnitQuaternion<Real>, Option<UnitQuaternion<Real>>));
 
-#[inline]
-pub(crate) fn apply_origin_tranform(in_vertex: Vertex, origin_tranform: OriginTransformVecQuat) -> Vertex {
-    let (pos_transform, rotation_quats) = origin_tranform;
-    let (quat1, quat2) = rotation_quats;
+#[macro_export]
+macro_rules! apply_origin_transform {
+    ($in_vertex:expr, $origin_transform:expr) => {
+        {
+            let (pos_transform, rotation_quats) = $origin_transform;
+            let (quat1, quat2) = rotation_quats;
 
-    let mut out_vertex = Vertex::default();
+            let mut out_vertex = Vertex::default();
 
-    out_vertex.pos.coords = quat1 * in_vertex.pos.coords;
-    out_vertex.normal = quat1 * in_vertex.normal;
+            out_vertex.pos.coords = quat1 * $in_vertex.pos.coords;
+            out_vertex.normal = quat1 * $in_vertex.normal;
 
-    if let Some(quat2) = quat2 {
-        out_vertex.pos.coords = quat2 * in_vertex.pos.coords;
-        out_vertex.normal = quat2 * in_vertex.normal;
-    }
-    
-    out_vertex.pos.coords += pos_transform;
+            if let Some(quat2) = quat2 {
+                out_vertex.pos.coords = quat2 * $in_vertex.pos.coords;
+                out_vertex.normal = quat2 * $in_vertex.normal;
+            }
+            
+            out_vertex.pos.coords += pos_transform;
 
-    out_vertex
+            out_vertex
+        }
+    };
 }
 
 #[derive(Clone, Debug)]
