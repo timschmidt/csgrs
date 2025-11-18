@@ -1,13 +1,13 @@
 use crate::float_types::Real;
 use crate::io::svg::{FromSVG, ToSVG};
-//use crate::mesh::metaballs::MetaBall;
+// use crate::mesh::metaballs::MetaBall;
 use crate::mesh::{Mesh, plane::Plane, polygon::Polygon, vertex::Vertex};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{Geometry, GeometryCollection};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use nalgebra::{Matrix4, Point3, Vector3};
-//use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
@@ -50,43 +50,41 @@ fn metadata_to_js(metadata: Option<&String>) -> JsValue {
     }
 }
 
-/*
-#[wasm_bindgen]
-#[derive(Serialize, Deserialize)]
-pub struct MetaBallJs {
-    inner: MetaBall,
-}
-
-#[wasm_bindgen]
-impl MetaBallJs {
-    #[wasm_bindgen(constructor)]
-    pub fn new(center_x: Real, center_y: Real, center_z: Real, radius: Real) -> Self {
-        let center = Point3::new(center_x, center_y, center_z);
-        let meta_ball = MetaBall::new(center, radius);
-        Self { inner: meta_ball }
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn center_x(&self) -> Real {
-        self.inner.center.x
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn center_y(&self) -> Real {
-        self.inner.center.y
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn center_z(&self) -> Real {
-        self.inner.center.z
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn radius(&self) -> Real {
-        self.inner.radius
-    }
-}
-*/
+// #[wasm_bindgen]
+// #[derive(Serialize, Deserialize)]
+// pub struct MetaBallJs {
+// inner: MetaBall,
+// }
+//
+// #[wasm_bindgen]
+// impl MetaBallJs {
+// #[wasm_bindgen(constructor)]
+// pub fn new(center_x: Real, center_y: Real, center_z: Real, radius: Real) -> Self {
+// let center = Point3::new(center_x, center_y, center_z);
+// let meta_ball = MetaBall::new(center, radius);
+// Self { inner: meta_ball }
+// }
+//
+// #[wasm_bindgen(getter)]
+// pub fn center_x(&self) -> Real {
+// self.inner.center.x
+// }
+//
+// #[wasm_bindgen(getter)]
+// pub fn center_y(&self) -> Real {
+// self.inner.center.y
+// }
+//
+// #[wasm_bindgen(getter)]
+// pub fn center_z(&self) -> Real {
+// self.inner.center.z
+// }
+//
+// #[wasm_bindgen(getter)]
+// pub fn radius(&self) -> Real {
+// self.inner.radius
+// }
+// }
 
 #[wasm_bindgen]
 pub struct Matrix4Js {
@@ -205,7 +203,7 @@ impl PlaneJs {
 
     // Split a polygon with the plane, returning the result as an object
     //#[wasm_bindgen(js_name=splitPolygon)]
-    //pub fn split_polygon(&self, polygon_js: &PolygonJs) -> JsValue {}
+    // pub fn split_polygon(&self, polygon_js: &PolygonJs) -> JsValue {}
 
     // Get the transformation matrices to project this plane onto the XY-plane and back
     #[wasm_bindgen(js_name=toXYTransform)]
@@ -328,47 +326,42 @@ impl SketchJs {
         })
     }
 
-    /*
-    #[wasm_bindgen(js_name=triangulateWithHoles)]
-    pub fn triangulate_with_holes(outer, holes) -> Vec<JsValue> {
-        let tris = Sketch::<()>::triangulate_with_holes(outer, holes);
-        tris.into_iter()
-            .map(|tri| {
-                let points: Vec<[f64; 3]> = tri
-                    .iter()
-                    .map(|v| [v.x, v.y, v.z])
-                    .collect();
-                JsValue::from_serde(&points).unwrap_or(JsValue::NULL)
-            })
-            .collect()
-    }
-    */
+    // #[wasm_bindgen(js_name=triangulateWithHoles)]
+    // pub fn triangulate_with_holes(outer, holes) -> Vec<JsValue> {
+    // let tris = Sketch::<()>::triangulate_with_holes(outer, holes);
+    // tris.into_iter()
+    // .map(|tri| {
+    // let points: Vec<[f64; 3]> = tri
+    // .iter()
+    // .map(|v| [v.x, v.y, v.z])
+    // .collect();
+    // JsValue::from_serde(&points).unwrap_or(JsValue::NULL)
+    // })
+    // .collect()
+    // }
 
-    /*
-
-        error[E0609]: no field `pos` on type `&OPoint<f64, Const<3>>`
-       --> src/lib.rs:159:33
-        |
-    159 |                     .map(|v| [v.pos.x, v.pos.y, v.pos.z])
-        |                                 ^^^ unknown field
-        |
-        = note: available field is: `coords`
-        = note: available fields are: `x`, `y`, `z`
-
-        #[wasm_bindgen(js_name=triangulate)]
-        pub fn triangulate(&self) -> Vec<JsValue> {
-            let tris = self.inner.triangulate();
-            tris.into_iter()
-                .map(|tri| {
-                    let points: Vec<[f64; 3]> = tri
-                        .iter()
-                        .map(|v| [v.pos.x, v.pos.y, v.pos.z])
-                        .collect();
-                    JsValue::from_serde(&points).unwrap_or(JsValue::NULL)
-                })
-                .collect()
-        }
-        */
+    // error[E0609]: no field `pos` on type `&OPoint<f64, Const<3>>`
+    // --> src/lib.rs:159:33
+    // |
+    // 159 |                     .map(|v| [v.pos.x, v.pos.y, v.pos.z])
+    // |                                 ^^^ unknown field
+    // |
+    // = note: available field is: `coords`
+    // = note: available fields are: `x`, `y`, `z`
+    //
+    // #[wasm_bindgen(js_name=triangulate)]
+    // pub fn triangulate(&self) -> Vec<JsValue> {
+    // let tris = self.inner.triangulate();
+    // tris.into_iter()
+    // .map(|tri| {
+    // let points: Vec<[f64; 3]> = tri
+    // .iter()
+    // .map(|v| [v.pos.x, v.pos.y, v.pos.z])
+    // .collect();
+    // JsValue::from_serde(&points).unwrap_or(JsValue::NULL)
+    // })
+    // .collect()
+    // }
 
     // IO operations
     #[wasm_bindgen(js_name = fromSVG)]
@@ -1694,16 +1687,14 @@ impl MeshJs {
         }
     }
 
-    /*
-    #[wasm_bindgen(js_name=metaballs)]
-    pub fn metaballs(balls: JsValue, resolution_x: u32, resolution_y: u32, resolution_z: u32, iso_value: Real, padding: Real) -> Self {
-        // Parse the list of MetaBallJs objects or raw data.
-        let balls_vec: Vec<MetaBallJs> = from_value(balls).unwrap_or_else(|_| vec![]);
-        let meta_balls: Vec<MetaBall> = balls_vec.into_iter().map(|b| b.inner).collect();
-
-        let resolution = (resolution_x.try_into().unwrap(), resolution_y.try_into().unwrap(), resolution_z.try_into().unwrap());
-        let metaball_mesh = Mesh::metaballs(&meta_balls, resolution, iso_value, padding, None);
-        Self { inner: metaball_mesh }
-    }
-    */
+    // #[wasm_bindgen(js_name=metaballs)]
+    // pub fn metaballs(balls: JsValue, resolution_x: u32, resolution_y: u32, resolution_z: u32, iso_value: Real, padding: Real) -> Self {
+    // Parse the list of MetaBallJs objects or raw data.
+    // let balls_vec: Vec<MetaBallJs> = from_value(balls).unwrap_or_else(|_| vec![]);
+    // let meta_balls: Vec<MetaBall> = balls_vec.into_iter().map(|b| b.inner).collect();
+    //
+    // let resolution = (resolution_x.try_into().unwrap(), resolution_y.try_into().unwrap(), resolution_z.try_into().unwrap());
+    // let metaball_mesh = Mesh::metaballs(&meta_balls, resolution, iso_value, padding, None);
+    // Self { inner: metaball_mesh }
+    // }
 }

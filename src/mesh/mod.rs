@@ -16,10 +16,10 @@ use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
+use hashbrown::HashMap;
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
-use hashbrown::HashMap;
 use std::{
     cmp::{Ordering, PartialEq},
     fmt::Debug,
@@ -127,8 +127,8 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             .flat_map(|p| p.vertices.clone())
             .collect()
     }
-    
-	/// Pre-pass to remove T-junctions between polygons by inserting
+
+    /// Pre-pass to remove T-junctions between polygons by inserting
     /// missing vertices on shared / colinear overlapping edges.
     ///
     /// For each vertex of each polygon, we look for edges of *other*
@@ -210,9 +210,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
                         let new_vertex = Vertex::new(vert.pos, poly_j.plane.normal());
 
                         // Register the split
-                        let entry = edge_splits[j]
-                            .entry(edge_start)
-                            .or_insert_with(Vec::new);
+                        let entry = edge_splits[j].entry(edge_start).or_insert_with(Vec::new);
 
                         // Avoid duplicate splits (same t / same position)
                         let mut already_present = false;
@@ -252,9 +250,9 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             let extra_vertices: usize = splits_map.values().map(|v| v.len()).sum();
             let mut new_vertices = Vec::with_capacity(n + extra_vertices);
 
-            for edge_start in 0..n {
+            for (edge_start, vertex) in original.iter().enumerate() {
                 // Always keep the original starting vertex of the edge
-                new_vertices.push(original[edge_start]);
+                new_vertices.push(*vertex);
 
                 if let Some(splits) = splits_map.get(&edge_start) {
                     // Sort new points along the edge
@@ -274,18 +272,18 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             // We changed geometry; the cached AABB may no longer valid.
             // However, inserted vertices should always lie on an existing edge,
             // so we shouldn't need to update the bounding box
-            //poly.bounding_box = OnceLock::new();
+            // poly.bounding_box = OnceLock::new();
         }
     }
 
     /// Triangulate each polygon in the Mesh returning a Mesh containing triangles
     pub fn triangulate(&self) -> Mesh<S> {
-		// Work on a local copy so we do not mutate the original mesh.
+        // Work on a local copy so we do not mutate the original mesh.
         let mut polygons = self.polygons.clone();
 
         // Fix T-junctions by inserting shared-edge vertices.
         Self::fix_t_junctions_on_shared_edges(&mut polygons);
-		
+
         let triangles = polygons
             .iter()
             .flat_map(|poly| {

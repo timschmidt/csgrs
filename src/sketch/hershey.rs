@@ -21,7 +21,6 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// # Returns
     /// A new `Sketch` where each glyph stroke is a `Geometry::LineString` in `geometry`.
-    ///
     pub fn from_hershey(
         text: &str,
         font: &Font,
