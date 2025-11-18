@@ -5,7 +5,7 @@ use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::Vertex;
-use crate::sketch::Sketch;
+use crate::sketch::{OriginTransformVecQuat, Sketch, apply_origin_tranform};
 use crate::traits::CSG;
 use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
 use nalgebra::{Point3, Vector3};
@@ -13,6 +13,7 @@ use std::fmt::Debug;
 use std::sync::OnceLock;
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+    #[inline]
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
     /// This is just a convenience wrapper around extrude_vector using Vector3::new(0.0, 0.0, height)
@@ -89,11 +90,14 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             return Mesh::new();
         }
 
+        // !TODO! Find a way to avoid re-allocating so much
         // Collect 3-D polygons generated from every `geo` geometry in the sketch
         let mut out: Vec<Polygon<S>> = Vec::new();
 
+        let origin_tranform = self.prepare_origin_vec_and_quat();
+
         for geom in &self.geometry {
-            Self::extrude_geometry(geom, direction, &self.metadata, &mut out);
+            Self::extrude_geometry(geom, direction, &origin_tranform, &self.metadata, &mut out);
         }
 
         Mesh {
@@ -108,6 +112,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     fn extrude_geometry(
         geom: &geo::Geometry<Real>,
         direction: Vector3<Real>,
+        origin_tranform: &OriginTransformVecQuat,
         metadata: &Option<S>,
         out_polygons: &mut Vec<Polygon<S>>,
     ) {
@@ -128,9 +133,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
                 // bottom
                 for tri in &tris {
-                    let v0 = Vertex::new(tri[2], -Vector3::z());
-                    let v1 = Vertex::new(tri[1], -Vector3::z());
-                    let v2 = Vertex::new(tri[0], -Vector3::z());
+                    let v0 = apply_origin_tranform(Vertex::new(tri[2], -Vector3::z()), origin_tranform);
+                    let v1 = apply_origin_tranform(Vertex::new(tri[1], -Vector3::z()), origin_tranform);
+                    let v2 = apply_origin_tranform(Vertex::new(tri[0], -Vector3::z()), origin_tranform);
                     out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
                 }
                 // top
@@ -138,9 +143,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     let p0 = tri[0] + direction;
                     let p1 = tri[1] + direction;
                     let p2 = tri[2] + direction;
-                    let v0 = Vertex::new(p0, Vector3::z());
-                    let v1 = Vertex::new(p1, Vector3::z());
-                    let v2 = Vertex::new(p2, Vector3::z());
+                    let v0 = apply_origin_tranform(Vertex::new(p0, Vector3::z()), origin_tranform);
+                    let v1 = apply_origin_tranform(Vertex::new(p1, Vector3::z()), origin_tranform);
+                    let v2 = apply_origin_tranform(Vertex::new(p2, Vector3::z()), origin_tranform);
                     out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
                 }
 
@@ -157,10 +162,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         let t_j = b_j + direction;
                         out_polygons.push(Polygon::new(
                             vec![
-                                Vertex::new(b_i, Vector3::zeros()),
-                                Vertex::new(b_j, Vector3::zeros()),
-                                Vertex::new(t_j, Vector3::zeros()),
-                                Vertex::new(t_i, Vector3::zeros()),
+                                apply_origin_tranform(Vertex::new(b_i, Vector3::zeros()), origin_tranform),
+                                apply_origin_tranform(Vertex::new(b_j, Vector3::zeros()), origin_tranform),
+                                apply_origin_tranform(Vertex::new(t_j, Vector3::zeros()), origin_tranform),
+                                apply_origin_tranform(Vertex::new(t_i, Vector3::zeros()), origin_tranform),
                             ],
                             metadata.clone(),
                         ));
@@ -172,6 +177,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     Self::extrude_geometry(
                         &geo::Geometry::Polygon(poly.clone()),
                         direction,
+                        origin_tranform,
                         metadata,
                         out_polygons,
                     );
@@ -179,7 +185,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             },
             geo::Geometry::GeometryCollection(gc) => {
                 for sub in &gc.0 {
-                    Self::extrude_geometry(sub, direction, metadata, out_polygons);
+                    Self::extrude_geometry(sub, direction, origin_tranform, metadata, out_polygons);
                 }
             },
             geo::Geometry::LineString(ls) => {
@@ -196,10 +202,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     let normal = (b_j - b_i).cross(&(t_i - b_i)).normalize();
                     out_polygons.push(Polygon::new(
                         vec![
-                            Vertex::new(b_i, normal),
-                            Vertex::new(b_j, normal),
-                            Vertex::new(t_j, normal),
-                            Vertex::new(t_i, normal),
+                            apply_origin_tranform(Vertex::new(b_i, normal), origin_tranform),
+                            apply_origin_tranform(Vertex::new(b_j, normal), origin_tranform),
+                            apply_origin_tranform(Vertex::new(t_j, normal), origin_tranform),
+                            apply_origin_tranform(Vertex::new(t_i, normal), origin_tranform),
                         ],
                         metadata.clone(),
                     ));
@@ -216,10 +222,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 let normal = (b1 - b0).cross(&(t0 - b0)).normalize();
                 out_polygons.push(Polygon::new(
                     vec![
-                        Vertex::new(b0, normal),
-                        Vertex::new(b1, normal),
-                        Vertex::new(t1, normal),
-                        Vertex::new(t0, normal),
+                        apply_origin_tranform(Vertex::new(b0, normal), origin_tranform),
+                        apply_origin_tranform(Vertex::new(b1, normal), origin_tranform),
+                        apply_origin_tranform(Vertex::new(t1, normal), origin_tranform),
+                        apply_origin_tranform(Vertex::new(t0, normal), origin_tranform),
                     ],
                     metadata.clone(),
                 ));
@@ -231,6 +237,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 Self::extrude_geometry(
                     &geo::Geometry::Polygon(poly2d),
                     direction,
+                    origin_tranform,
                     metadata,
                     out_polygons,
                 );
@@ -242,6 +249,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 Self::extrude_geometry(
                     &geo::Geometry::Polygon(poly2d),
                     direction,
+                    origin_tranform,
                     metadata,
                     out_polygons,
                 );
