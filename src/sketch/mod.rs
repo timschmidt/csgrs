@@ -42,8 +42,6 @@ pub(crate) fn apply_origin_tranform(in_vertex: Vertex, origin_tranform: &OriginT
 
     let mut out_vertex = Vertex::default();
 
-    out_vertex.pos = in_vertex.pos + pos_transform;
-
     out_vertex.pos.coords = quat1 * in_vertex.pos.coords;
     out_vertex.normal = quat1 * in_vertex.normal;
 
@@ -51,6 +49,8 @@ pub(crate) fn apply_origin_tranform(in_vertex: Vertex, origin_tranform: &OriginT
         out_vertex.pos.coords = quat2 * in_vertex.pos.coords;
         out_vertex.normal = quat2 * in_vertex.normal;
     }
+    
+    out_vertex.pos.coords += pos_transform;
 
     out_vertex
 }
