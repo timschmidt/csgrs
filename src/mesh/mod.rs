@@ -17,10 +17,18 @@ use crate::sketch::Sketch;
 use crate::traits::CSG;
 use bytemuck::cast;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
+use hashbrown::HashMap;
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
-use std::{cmp::PartialEq, collections::HashMap, fmt::Debug, num::NonZeroU32, sync::OnceLock};
+
+use std::{
+    cmp::{Ordering, PartialEq},
+    collections::HashMap,
+    fmt::Debug,
+    num::NonZeroU32,
+    sync::OnceLock,
+};
 
 #[cfg(feature = "parallel")]
 use rayon::{iter::IntoParallelRefIterator, prelude::*};
@@ -135,10 +143,163 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             .collect()
     }
 
+    /// Pre-pass to remove T-junctions between polygons by inserting
+    /// missing vertices on shared / colinear overlapping edges.
+    ///
+    /// For each vertex of each polygon, we look for edges of *other*
+    /// polygons on which that vertex lies (within a tolerance). If we
+    /// find such an edge and the vertex is strictly inside that edge,
+    /// we schedule a split of that edge and insert the vertex there.
+    ///
+    /// This works even when two polygons' edges do not share endpoints
+    /// but are colinear and overlapping, because the overlapping
+    /// endpoints lie strictly in the interior of the opposite segment.
+    fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<S>]) {
+        let eps = tolerance();
+        let eps2 = eps * eps;
+
+        if polygons.len() < 2 {
+            return;
+        }
+
+        let poly_count = polygons.len();
+
+        // edge_splits[poly_index][edge_start_index] = Vec<(t along edge, Vertex)>
+        let mut edge_splits: Vec<HashMap<usize, Vec<(Real, Vertex)>>> =
+            vec![HashMap::new(); poly_count];
+
+        // Detection pass: find vertices that lie on other polygons' edges
+        for (i, poly_i) in polygons.iter().enumerate() {
+            if poly_i.vertices.len() < 2 {
+                continue;
+            }
+
+            for vert in &poly_i.vertices {
+                for (j, poly_j) in polygons.iter().enumerate() {
+                    if i == j || poly_j.vertices.len() < 2 {
+                        continue;
+                    }
+
+                    let verts_j = &poly_j.vertices;
+                    let n_j = verts_j.len();
+
+                    for edge_start in 0..n_j {
+                        let a = &verts_j[edge_start];
+                        let b = &verts_j[(edge_start + 1) % n_j];
+
+                        // Edge vector AB
+                        let ab = b.pos - a.pos;
+                        let ab_len_sq = ab.norm_squared();
+                        if ab_len_sq < eps2 {
+                            // Degenerate edge
+                            continue;
+                        }
+
+                        // Vectors from endpoints to the candidate vertex
+                        let av = vert.pos - a.pos;
+                        let bv = vert.pos - b.pos;
+
+                        // Skip if vertex is basically at one of the endpoints
+                        if av.norm_squared() < eps2 || bv.norm_squared() < eps2 {
+                            continue;
+                        }
+
+                        // Parametric coordinate of the projection of vert onto AB
+                        let t = ab.dot(&av) / ab_len_sq;
+
+                        // Only consider points strictly inside the segment (avoid ends)
+                        if t <= eps || t >= 1.0 - eps {
+                            continue;
+                        }
+
+                        // Closest point on AB to vert
+                        let projected = a.pos + ab * t;
+
+                        // Check that the vertex actually lies on the segment (within eps)
+                        if (vert.pos - projected).norm_squared() > eps2 {
+                            continue;
+                        }
+
+                        // We now know vert lies on edge (a, b) of polygon j.
+                        // Create a vertex consistent with polygon j's plane.
+                        let new_vertex = Vertex::new(vert.pos, poly_j.plane.normal());
+
+                        // Register the split
+                        let entry = edge_splits[j].entry(edge_start).or_insert_with(Vec::new);
+
+                        // Avoid duplicate splits (same t / same position)
+                        let mut already_present = false;
+                        for (existing_t, existing_v) in entry.iter() {
+                            if (existing_t - t).abs() < eps {
+                                already_present = true;
+                                break;
+                            }
+
+                            if (existing_v.pos - new_vertex.pos).norm_squared() < eps2 {
+                                already_present = true;
+                                break;
+                            }
+                        }
+
+                        if !already_present {
+                            entry.push((t, new_vertex));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Application pass: actually split edges and rebuild polygon vertex lists
+        for (poly_index, poly) in polygons.iter_mut().enumerate() {
+            let splits_map = &edge_splits[poly_index];
+            if splits_map.is_empty() {
+                continue;
+            }
+
+            let original = poly.vertices.clone();
+            let n = original.len();
+            if n < 2 {
+                continue;
+            }
+
+            let extra_vertices: usize = splits_map.values().map(|v| v.len()).sum();
+            let mut new_vertices = Vec::with_capacity(n + extra_vertices);
+
+            for (edge_start, vertex) in original.iter().enumerate() {
+                // Always keep the original starting vertex of the edge
+                new_vertices.push(*vertex);
+
+                if let Some(splits) = splits_map.get(&edge_start) {
+                    // Sort new points along the edge
+                    let mut splits_sorted = splits.clone();
+                    splits_sorted.sort_by(|(t_a, _), (t_b, _)| {
+                        t_a.partial_cmp(t_b).unwrap_or(Ordering::Equal)
+                    });
+
+                    // Insert them in parametric order between edge_start and edge_start+1
+                    for (_, v) in splits_sorted {
+                        new_vertices.push(v);
+                    }
+                }
+            }
+
+            poly.vertices = new_vertices;
+            // We changed geometry; the cached AABB may no longer valid.
+            // However, inserted vertices should always lie on an existing edge,
+            // so we shouldn't need to update the bounding box
+            // poly.bounding_box = OnceLock::new();
+        }
+    }
+
     /// Triangulate each polygon in the Mesh returning a Mesh containing triangles
     pub fn triangulate(&self) -> Mesh<S> {
-        let triangles = self
-            .polygons
+        // Work on a local copy so we do not mutate the original mesh.
+        let mut polygons = self.polygons.clone();
+
+        // Fix T-junctions by inserting shared-edge vertices.
+        Self::fix_t_junctions_on_shared_edges(&mut polygons);
+
+        let triangles = polygons
             .iter()
             .flat_map(|poly| {
                 poly.triangulate().into_iter().map(move |triangle| {

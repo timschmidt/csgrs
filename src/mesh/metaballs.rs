@@ -126,6 +126,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         }
         impl fast_surface_nets::ndshape::Shape<3> for GridShape {
             type Coord = u32;
+
             #[inline]
             fn as_array(&self) -> [Self::Coord; 3] {
                 [self.nx, self.ny, self.nz]

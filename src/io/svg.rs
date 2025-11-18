@@ -384,8 +384,7 @@ pub trait FromSVG<S>: Sized {
 }
 
 impl<S> FromSVG<S> for Sketch<S>
-where
-    S: Clone + Send + Sync + Debug,
+where S: Clone + Send + Sync + Debug
 {
     fn from_svg(doc: &str, metadata: Option<S>) -> Result<Self, IoError> {
         use svg::node::element::tag::{self, Type::*};

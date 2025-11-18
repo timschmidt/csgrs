@@ -32,7 +32,7 @@ pub enum MachineKind {
     Mill,   // 3 axis, spinning non-zero width cutter
     Router, // 2.5 axis, spinning non-zero width cutter
     Laser,  // 2.5 axis, near-zero width cutter
-    Plasma, // 2.5 axis, non-zero-width cutter with nonlinear shape properties needs startup and lead-in
+    Plasma, /* 2.5 axis, non-zero-width cutter with nonlinear shape properties needs startup and lead-in */
     Lathe,  // 3 axis, spinning workpiece, fixed cutter
 }
 
@@ -61,6 +61,7 @@ impl Toolpath {
             moves: Vec::new(),
         }
     }
+
     pub fn travel_to<P: Into<Point3<Real>>>(&mut self, p: P) {
         self.moves.push(PathMove {
             is_rapid: true,
@@ -70,6 +71,7 @@ impl Toolpath {
             comment: None,
         });
     }
+
     pub fn cut_to<P: Into<Point3<Real>>>(
         &mut self,
         p: P,
@@ -84,6 +86,7 @@ impl Toolpath {
             comment: None,
         });
     }
+
     pub fn annotate<S: Into<String>>(&mut self, s: S) {
         self.moves.push(PathMove {
             is_rapid: true,
