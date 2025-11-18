@@ -606,6 +606,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             bounding_box: OnceLock::new(),
             metadata,
             origin: Default::default(),
+            origin_transform: Sketch::<S>::prepare_origin_vec_and_quat(Default::default()),
         }
     }
 

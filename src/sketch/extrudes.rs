@@ -94,10 +94,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Collect 3-D polygons generated from every `geo` geometry in the sketch
         let mut out: Vec<Polygon<S>> = Vec::new();
 
-        let origin_tranform = self.prepare_origin_vec_and_quat();
-
         for geom in &self.geometry {
-            Self::extrude_geometry(geom, direction, &origin_tranform, &self.metadata, &mut out);
+            Self::extrude_geometry(geom, direction, self.origin_transform, &self.metadata, &mut out);
         }
 
         Mesh {
@@ -112,7 +110,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     fn extrude_geometry(
         geom: &geo::Geometry<Real>,
         direction: Vector3<Real>,
-        origin_tranform: &OriginTransformVecQuat,
+        origin_tranform: OriginTransformVecQuat,
         metadata: &Option<S>,
         out_polygons: &mut Vec<Polygon<S>>,
     ) {

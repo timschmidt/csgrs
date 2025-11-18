@@ -216,6 +216,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
             origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 
@@ -300,6 +301,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
             origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 
@@ -339,6 +341,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
             origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 }
