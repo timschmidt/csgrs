@@ -15,13 +15,16 @@ use crate::float_types::{
 use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
+use bytemuck::cast;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
 use hashbrown::HashMap;
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
+
 use std::{
     cmp::{Ordering, PartialEq},
+    collections::HashMap,
     fmt::Debug,
     num::NonZeroU32,
     sync::OnceLock,
@@ -52,6 +55,18 @@ pub mod smoothing;
 #[cfg(feature = "sdf")]
 pub mod tpms;
 pub mod vertex;
+
+/// Stored as `(position: [f32; 3], normal: [f32; 3])`
+pub type GraphicsMeshVertex = ([f32; 3], [f32; 3]);
+
+/// Mesh ready for rendering. Uses f32s and provides vertices, indices and
+/// normals.
+#[derive(Debug, Clone)]
+pub struct GraphicsMesh {
+    /// Vertices contain both position and normal
+    pub vertices: Vec<GraphicsMeshVertex>,
+    pub indices: Vec<u32>,
+}
 
 #[derive(Clone, Debug)]
 pub struct Mesh<S: Clone + Send + Sync + Debug> {
@@ -396,7 +411,51 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         dot.acos()
     }
 
+    /// Converts a mesh to a graphics mesh which is more appropriate for rendering.
+    ///
+    /// Allocates a hashmap and a storage vec for removing redundant vertices.
+    pub fn build_graphics_mesh(&self) -> GraphicsMesh {
+        let triangles = self.triangulate().polygons;
+
+        let triangle_count = triangles.len();
+
+        let mut indices: Vec<u32> = Vec::with_capacity(triangle_count * 3);
+        let mut vertices: Vec<GraphicsMeshVertex> = Vec::with_capacity(triangle_count * 3);
+        const VERT_DIM_SIZE: usize = std::mem::size_of::<[f32; 3]>();
+        let mut vertices_hash: HashMap<([u8; VERT_DIM_SIZE], [u8; VERT_DIM_SIZE]), u32> =
+            HashMap::with_capacity(triangle_count * 3);
+
+        let mut i_new_vertex: u32 = 0;
+
+        for triangle in triangles {
+            for vertex in triangle.vertices {
+                let pos_xyz: [f32; 3] = vertex.pos.cast::<f32>().coords.into();
+                let norm_xyz: [f32; 3] = vertex.normal.cast::<f32>().into();
+
+                let pos_xyz_bytes: [u8; VERT_DIM_SIZE] = cast(pos_xyz);
+                let norm_xyz_bytes: [u8; VERT_DIM_SIZE] = cast(norm_xyz);
+
+                let vertex_f32_bytes = (pos_xyz_bytes, norm_xyz_bytes);
+
+                let index = *vertices_hash.entry(vertex_f32_bytes).or_insert_with(|| {
+                    let new_index = i_new_vertex;
+                    vertices.push((pos_xyz, norm_xyz));
+                    i_new_vertex += 1;
+                    new_index
+                });
+
+                indices.push(index);
+            }
+        }
+
+        vertices.shrink_to_fit();
+
+        GraphicsMesh { vertices, indices }
+    }
+
     /// Extracts vertices and indices from the Mesh's tessellated polygons.
+    ///
+    /// Implementation does *not* remove redundant vertices.
     pub fn get_vertices_and_indices(&self) -> (Vec<Point3<Real>>, Vec<[u32; 3]>) {
         let tri_csg = self.triangulate();
         let vertices = tri_csg
