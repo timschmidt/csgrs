@@ -1,5 +1,5 @@
 # boolmesh
-![demo](examples/docs/demo.png)
+![demo](https://raw.githubusercontent.com/komietty/boolmesh/main/examples/docs/demo.png)
 Boolmesh is a pure Rust library for performing robust and efficient mesh boolean operations.
 It is a full-from-scratch Rust implementation inspired by [Elalish’s Manifold](https://manifoldcad.org/docs/html/classmanifold_1_1_manifold.html), well known for its robustness and now part of OpenSCAD.
 
