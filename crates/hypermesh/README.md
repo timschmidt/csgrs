@@ -4,7 +4,7 @@ Boolmesh is a pure Rust library for performing robust and efficient mesh boolean
 It is a full-from-scratch Rust implementation inspired by [Elalish’s Manifold](https://manifoldcad.org/docs/html/classmanifold_1_1_manifold.html), well known for its robustness and now part of OpenSCAD.
 
 The codebase is clean and minimal, with dependencies only on `anyhow` and `nalgebra`.
-Besides being robust, Boolmesh is also very fast — for example, generating a Menger Sponge of depth 4 (the model shown on the right) takes only around 8 seconds on an Apple Silicon M4, without multi-threading.
+Besides being robust, Boolmesh is also very fast — for example, generating a Menger Sponge of depth 4 (the model shown on the top) takes only around 8 seconds on an Apple Silicon M4, without multi-threading.
 
 ## Usage
 The usage is intentionally simple, as the library exposes only one main function for end users.
