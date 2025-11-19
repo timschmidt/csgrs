@@ -6,7 +6,7 @@ use bevy::asset::RenderAssetUsages;
 use bevy::render::mesh::PrimitiveTopology;
 use bevy::color::palettes::css::*;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use meshbool::{compute_boolean, Manifold, OpType, Row2f, Row3f};
+use boolmesh::{compute_boolean, Manifold, OpType, Row2f, Row3f};
 
 #[derive(Component)]
 struct ToggleableMesh;

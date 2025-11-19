@@ -1,6 +1,6 @@
 [package]
-name = "meshbool"
-version = "0.1.1"
+name = "boolmesh"
+version = "0.1.2"
 edition = "2024"
 description = "Robust 3D mesh boolean library"
 license = "MPL-2.0"

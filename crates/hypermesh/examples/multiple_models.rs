@@ -4,7 +4,7 @@ use bevy::pbr::wireframe::{WireframePlugin, Wireframe, WireframeColor};
 use bevy::render::mesh::PrimitiveTopology;
 use bevy::color::palettes::css::*;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use meshbool::{compute_boolean, Manifold, OpType};
+use boolmesh::{compute_boolean, Manifold, OpType};
 
 #[derive(Component)]
 struct ToggleableMesh;
