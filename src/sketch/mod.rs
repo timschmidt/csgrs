@@ -34,26 +34,19 @@ pub mod offset;
 #[cfg(feature = "truetype-text")]
 pub mod truetype;
 
-pub(crate) type OriginTransformVecQuat = (
-    Vector3<Real>,
-    (UnitQuaternion<Real>, Option<UnitQuaternion<Real>>),
-);
+/// Position transform, rotation quaternion
+pub(crate) type OriginTransformVecQuat = (Vector3<Real>, UnitQuaternion<Real>);
 
 #[macro_export]
 macro_rules! apply_origin_transform {
     ($in_vertex:expr, $origin_transform:expr) => {{
         let (pos_transform, rotation_quats) = $origin_transform;
-        let (quat1, quat2) = rotation_quats;
+        let quat = rotation_quats;
 
         let mut out_vertex = Vertex::default();
 
-        out_vertex.pos.coords = quat1 * $in_vertex.pos.coords;
-        out_vertex.normal = quat1 * $in_vertex.normal;
-
-        if let Some(quat2) = quat2 {
-            out_vertex.pos.coords = quat2 * $in_vertex.pos.coords;
-            out_vertex.normal = quat2 * $in_vertex.normal;
-        }
+        out_vertex.pos.coords = quat * $in_vertex.pos.coords;
+        out_vertex.normal = quat * $in_vertex.normal;
 
         out_vertex.pos.coords += pos_transform;
 
@@ -64,15 +57,11 @@ macro_rules! apply_origin_transform {
 macro_rules! apply_origin_transform_graphicpoint {
     ($in_point:expr, $origin_transform:expr) => {{
         let (pos_transform, rotation_quats) = $origin_transform;
-        let (quat1, quat2) = rotation_quats;
+        let quat = rotation_quats;
 
         let mut out_point = Point3::new(0.0, 0.0, 0.0);
 
-        out_point.coords = quat1 * $in_point.coords;
-
-        if let Some(quat2) = quat2 {
-            out_point.coords = quat2 * $in_point.coords;
-        }
+        out_point.coords = quat * $in_point.coords;
 
         out_point.coords += pos_transform;
 
@@ -334,9 +323,9 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
 
         let pos_transform = origin.pos - default_origin.pos;
 
-        let rotation_quats =
+        let rotation_quat =
             match UnitQuaternion::rotation_between(&default_origin.normal, &origin.normal) {
-                Some(quat) => (quat, None),
+                Some(quat) => quat,
                 None => {
                     // Assumes the default normal is +Z. We'll do +Y
                     let inter_origin = Vector3::new(0.0, 1.0, 0.0);
@@ -350,11 +339,11 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
                         UnitQuaternion::rotation_between(&inter_origin, &origin.normal)
                             .unwrap();
 
-                    (quat1, Some(quat2))
+                    quat2 * quat1
                 },
             };
 
-        (pos_transform, rotation_quats)
+        (pos_transform, rotation_quat)
     }
 
     /// Create graphic line strings from the edges of the sketch
