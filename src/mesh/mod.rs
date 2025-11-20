@@ -63,6 +63,9 @@ pub struct Mesh<S: Clone + Send + Sync + Debug> {
 
     /// Metadata
     pub metadata: Option<S>,
+
+    /// Origin
+    pub origin: Vertex,
 }
 
 impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S> {
@@ -86,6 +89,7 @@ impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S> {
             polygons: polys,
             bounding_box: std::sync::OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 }
@@ -609,6 +613,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
             polygons: Vec::new(),
             bounding_box: OnceLock::new(),
             metadata: None,
+            origin: Default::default(),
         }
     }
 
@@ -651,6 +656,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
             polygons: final_polys,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 
@@ -705,6 +711,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
             polygons: final_polys,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 
@@ -737,6 +744,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
             polygons: a.all_polygons(),
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
         }
     }
 
@@ -950,6 +958,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
             polygons: final_polygons,
             bounding_box: OnceLock::new(),
             metadata: None,
+            origin: sketch.origin,
         }
     }
 }

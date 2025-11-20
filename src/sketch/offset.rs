@@ -215,6 +215,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             geometry: new_collection,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 
@@ -298,6 +300,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             geometry: new_collection,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 
@@ -336,6 +340,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             geometry: new_collection,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 }
