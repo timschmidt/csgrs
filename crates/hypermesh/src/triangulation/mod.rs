@@ -2,6 +2,7 @@ pub mod ear_clip;
 pub mod flat_tree;
 use anyhow::Result;
 use std::collections::{BTreeMap, VecDeque};
+use rayon::prelude::*;
 use crate::boolean45::Boolean45;
 use crate::common::{Half, Tref, get_axis_aligned_projection, is_ccw_3d, Row3f, Row3u, Row2f, next_of};
 use crate::Manifold;
@@ -19,18 +20,26 @@ pub fn triangulate(
     b45: &Boolean45,
     eps: f64
 ) -> Result<Triangulation> {
-    let mut ts = vec![];
-    let mut ns = vec![];
-    let mut rs = vec![];
-    for fid in 0..b45.hid_per_f.len() - 1 {
-        let hid = b45.hid_per_f[fid] as usize;
-        let t = process_face(&b45, fid, eps);
-        let r = b45.rs[hid].clone();
-        let n = b45.ns[fid].clone();
-        rs.extend(vec![r; t.len()]);
-        ns.extend(vec![n; t.len()]);
-        ts.extend(t);
-    }
+
+    let (mut ts, mut rs, ns) = (0..b45.hid_per_f.len() - 1)
+        .into_par_iter()
+        .map(|fid| {
+            let hid = b45.hid_per_f[fid] as usize;
+            let ts_ = process_face(&b45, fid, eps);
+            let rs_ = vec![b45.rs[hid].clone(); ts_.len()];
+            let ns_ = vec![b45.ns[fid].clone(); ts_.len()];
+            (ts_, rs_, ns_)
+        })
+        .reduce(
+            || (vec![], vec![], vec![]),
+            |mut acc, (mut ts_, mut rs_, mut ns_)| {
+                acc.0.append(&mut ts_);
+                acc.1.append(&mut rs_);
+                acc.2.append(&mut ns_);
+                acc
+            },
+        );
+
     update_reference(mp, mq, &mut rs);
     Ok(Triangulation { hs: compute_halfs(&mut ts), ns, rs })
 }

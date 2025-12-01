@@ -20,9 +20,22 @@ pub fn compute_boolean(
     let eps = mp.eps.max(mq.eps);
     let tol = mp.tol.max(mq.tol);
 
+    let now = std::time::Instant::now();
+
     let     b03 = boolean03(mp, mq, &op);
+
+    println!("b03: {:?}", now.elapsed());
+    let now = std::time::Instant::now();
+
     let mut b45 = boolean45(mp, mq, &b03, &op);
+
+    println!("b45: {:?}", now.elapsed());
+    let now = std::time::Instant::now();
+
     let mut trg = triangulate(mp, mq, &b45, eps)?;
+
+    println!("trg: {:?}", now.elapsed());
+    let now = std::time::Instant::now();
 
     simplify_topology(
         &mut trg.hs,
@@ -34,10 +47,15 @@ pub fn compute_boolean(
         eps
     );
 
+    println!("smp: {:?}", now.elapsed());
+    let now = std::time::Instant::now();
+
     cleanup_unused_verts(
         &mut b45.ps,
         &mut trg.hs
     );
+
+    println!("cln: {:?}", now.elapsed());
 
     Manifold::new_impl(
         &b45.ps,
@@ -49,6 +67,8 @@ pub fn compute_boolean(
         Some(tol)
     )
 }
+
+
 
 
 

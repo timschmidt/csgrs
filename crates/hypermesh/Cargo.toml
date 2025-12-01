@@ -13,6 +13,7 @@ exclude = ["/examples", ".gitignore"]
 [dependencies]
 anyhow = "1.0.100"
 nalgebra = "0.34.1"
+rayon = "1.11.0"
 
 tobj = {version = "4.0.3", optional = true}
 bevy = { version = "0.16.1", optional = true }

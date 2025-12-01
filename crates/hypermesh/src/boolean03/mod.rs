@@ -27,10 +27,23 @@ pub fn boolean03(
     let expand = if operation == &OpType::Add { 1. } else { -1. };
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
-    let (x12, v12) = intersect12(mp, mq, &mut p1q2, expand, true);
-    let (x21, v21) = intersect12(mp, mq, &mut p2q1, expand, false);
-    let w03 = winding03(mp, mq, expand, true);
-    let w30 = winding03(mp, mq, expand, false);
+    //let (x12, v12) = intersect12(mp, mq, &mut p1q2, expand, true);
+    //let (x21, v21) = intersect12(mp, mq, &mut p2q1, expand, false);
+    //let w03 = winding03(mp, mq, expand, true);
+    //let w30 = winding03(mp, mq, expand, false);
+
+    let ((x12, v12, w03), (x21, v21, w30)) = rayon::join(
+        || {
+            let i = intersect12(mp, mq, &mut p1q2, expand, true);
+            let w = winding03(mp, mq, expand, true);
+            (i.0, i.1, w)
+        },
+        || {
+            let i = intersect12(mp, mq, &mut p2q1, expand, false);
+            let w = winding03(mp, mq, expand, false);
+            (i.0, i.1, w)
+        },
+    );
     Boolean03 { p1q2, p2q1, x12, x21, w03, w30, v12, v21 }
 }
 

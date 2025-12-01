@@ -1,4 +1,5 @@
 use std::mem;
+use rayon::prelude::*;
 use crate::bounds::{BBox, Query};
 use crate::common::{Half, Row3f};
 use crate::Manifold;
