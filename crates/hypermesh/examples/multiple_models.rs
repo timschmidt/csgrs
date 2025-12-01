@@ -4,7 +4,7 @@ use bevy::pbr::wireframe::{WireframePlugin, Wireframe, WireframeColor};
 use bevy::render::mesh::PrimitiveTopology;
 use bevy::color::palettes::css::*;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use boolmesh::{compute_boolean, Manifold, OpType};
+use boolmesh::{Real, compute_boolean, Manifold, OpType};
 
 #[derive(Component)]
 struct ToggleableMesh;
@@ -28,15 +28,17 @@ fn setup(
     mut mats: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>
 ) {
-    let obj_path_1 = "/path/to/obj/file.obj";
-    let obj_path_2 = "/path/to/obj/file.obj";
+    //let obj_path_1 = "/path/to/obj/file.obj";
+    //let obj_path_2 = "/path/to/obj/file.obj";
+    let obj_path_1 = "/Users/saki/dev/models/gargoyle.obj";
+    let obj_path_2 = "/Users/saki/dev/models/double-torus.obj";
     let (m0, _) = tobj::load_obj(obj_path_1, &tobj::LoadOptions { ..Default::default() }).expect("Failed to load the first obj file");
     let (m1, _) = tobj::load_obj(obj_path_2, &tobj::LoadOptions { ..Default::default() }).expect("Failed to load the second obj file");
 
     let mut mfs = vec![];
     for m in vec![&m0[0].mesh, &m1[0].mesh] {
         mfs.push(Manifold::new(
-            &m.positions.iter().map(|&v| v as f64).collect::<Vec<_>>(),
+            &m.positions.iter().map(|&v| v as Real).collect::<Vec<_>>(),
             &m.indices.iter().map(|&v| v as usize).collect::<Vec<_>>(),
         ).unwrap());
     }
@@ -47,16 +49,16 @@ fn setup(
         let mut pos = vec![];
         let mut vns = vec![];
         for (fid, hs) in mf.hs.chunks(3).enumerate() {
-            let p0 = mf.ps[hs[0].tail].cast::<f32>();
-            let p1 = mf.ps[hs[1].tail].cast::<f32>();
-            let p2 = mf.ps[hs[2].tail].cast::<f32>();
-            let n  = mf.face_normals[fid].cast::<f32>();
-            pos.push([p0.x, p0.y, p0.z]);
-            pos.push([p1.x, p1.y, p1.z]);
-            pos.push([p2.x, p2.y, p2.z]);
-            vns.push([n.x, n.y, n.z]);
-            vns.push([n.x, n.y, n.z]);
-            vns.push([n.x, n.y, n.z]);
+            let p0 = mf.ps[hs[0].tail];
+            let p1 = mf.ps[hs[1].tail];
+            let p2 = mf.ps[hs[2].tail];
+            let n  = mf.face_normals[fid];
+            pos.push([p0.x as f32, p0.y as f32, p0.z as f32]);
+            pos.push([p1.x as f32, p1.y as f32, p1.z as f32]);
+            pos.push([p2.x as f32, p2.y as f32, p2.z as f32]);
+            vns.push([n.x as f32, n.y as f32, n.z as f32]);
+            vns.push([n.x as f32, n.y as f32, n.z as f32]);
+            vns.push([n.x as f32, n.y as f32, n.z as f32]);
         }
         m.insert_attribute(Mesh::ATTRIBUTE_POSITION, pos);
         m.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vns);

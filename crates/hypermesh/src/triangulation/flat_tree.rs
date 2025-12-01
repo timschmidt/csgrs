@@ -1,4 +1,4 @@
-use crate::common::Row2f;
+use crate::{Real, Vec2};
 use crate::triangulation::Pt;
 
 pub fn compute_flat_tree(pts: &mut [Pt]) {
@@ -130,42 +130,42 @@ pub fn query_two_d_tree<F>(points: &[PolyVert], r: Rect, mut f: F) where F: FnMu
 
 #[derive(Clone)]
 pub struct Rect {
-    pub min: Row2f,
-    pub max: Row2f,
+    pub min: Vec2,
+    pub max: Vec2,
 }
 
 impl Rect {
     pub fn default() -> Self {
         Self {
-            min: Row2f::new(f64::MAX, f64::MAX),
-            max: Row2f::new(f64::MIN, f64::MIN),
+            min: Vec2::new(Real::MAX, Real::MAX),
+            max: Vec2::new(Real::MIN, Real::MIN),
         }
     }
-    pub fn new(a: &Row2f, b: &Row2f) -> Self {
+    pub fn new(a: &Vec2, b: &Vec2) -> Self {
         Self {
-            min: Row2f::new(a.x.min(b.x), a.y.min(b.y)),
-            max: Row2f::new(a.x.max(b.x), a.y.max(b.y)),
+            min: Vec2::new(a.x.min(b.x), a.y.min(b.y)),
+            max: Vec2::new(a.x.max(b.x), a.y.max(b.y)),
         }
     }
 
-    pub fn contains(&self, p: &Row2f) -> bool {
+    pub fn contains(&self, p: &Vec2) -> bool {
         p.x >= self.min.x &&
         p.x <= self.max.x &&
         p.y >= self.min.y &&
         p.y <= self.max.y
     }
 
-    pub fn size(&self) -> Row2f { self.max - self.min }
+    pub fn size(&self) -> Vec2 { self.max - self.min }
 
-    pub fn scale(&self) -> f64 {
+    pub fn scale(&self) -> Real {
         let a_min = self.min.x.abs().max(self.min.y.abs());
         let a_max = self.max.x.abs().max(self.max.y.abs());
         a_min.max(a_max)
     }
 
-    pub fn union(&mut self, p: &Row2f) {
-        self.min = Row2f::new(self.min.x.min(p.x), self.min.y.min(p.y));
-        self.max = Row2f::new(self.max.x.max(p.x), self.max.y.max(p.y));
+    pub fn union(&mut self, p: &Vec2) {
+        self.min = Vec2::new(self.min.x.min(p.x), self.min.y.min(p.y));
+        self.max = Vec2::new(self.max.x.max(p.x), self.max.y.max(p.y));
     }
 
 }

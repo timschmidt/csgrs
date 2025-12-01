@@ -2,19 +2,19 @@ use std::cell::RefCell;
 use std::cmp::{Ordering, PartialEq};
 use std::collections::BTreeSet;
 use std::rc::{Rc, Weak};
-use crate::common::{det2x2, is_ccw_2d, safe_normalize, K_BEST, K_PRECISION, Row2f, Row3u};
+use crate::{det2x2, is_ccw_2d, safe_normalize, K_BEST, K_PRECISION, Real, Vec2, Vec3u};
 use super::flat_tree::{compute_flat_tree, compute_query_flat_tree, Rect};
 use crate::triangulation::Pt;
 
 #[derive(Clone, Debug)]
 pub struct Ecvt {
     pub idx: usize,                       // vert idx
-    pub pos: Row2f,                       // vert pos
-    pub dir: Row2f,                       // right dir
+    pub pos: Vec2,                        // vert pos
+    pub dir: Vec2,                        // right dir
     pub ear: Option<Weak<RefCell<Ecvt>>>, // itr to self, just needed for quick removal from the ear queue
     pub vl:  Option<Weak<RefCell<Ecvt>>>,
     pub vr:  Option<Weak<RefCell<Ecvt>>>,
-    pub cost: f64,
+    pub cost: Real,
 }
 
 impl Ecvt {
@@ -22,28 +22,28 @@ impl Ecvt {
     pub fn ptr_r(&self) -> EvPtr { self.vr.as_ref().unwrap().upgrade().unwrap() }
     pub fn idx_l(&self) -> usize { self.ptr_l().borrow().idx }
     pub fn idx_r(&self) -> usize { self.ptr_r().borrow().idx }
-    pub fn pos_l(&self) -> Row2f { self.ptr_l().borrow().pos }
-    pub fn pos_r(&self) -> Row2f { self.ptr_r().borrow().pos }
-    pub fn dir_l(&self) -> Row2f { self.ptr_l().borrow().dir }
-    pub fn dir_r(&self) -> Row2f { self.ptr_r().borrow().dir }
+    pub fn pos_l(&self) -> Vec2 { self.ptr_l().borrow().pos }
+    pub fn pos_r(&self) -> Vec2 { self.ptr_r().borrow().pos }
+    pub fn dir_l(&self) -> Vec2 { self.ptr_l().borrow().dir }
+    pub fn dir_r(&self) -> Vec2 { self.ptr_r().borrow().dir }
     pub fn ptr_l_of_r(&self) -> EvPtr { self.ptr_r().borrow().ptr_l() }
     pub fn ptr_r_of_l(&self) -> EvPtr { self.ptr_l().borrow().ptr_r() }
 
-    pub fn new(idx: usize, pos: Row2f) -> Self {
-        Self { idx, pos, dir: Row2f::new(0., 0.), ear: None, vl: None, vr: None, cost: 0. }
+    pub fn new(idx: usize, pos: Vec2) -> Self {
+        Self { idx, pos, dir: Vec2::new(0., 0.), ear: None, vl: None, vr: None, cost: 0. }
     }
 
     // Shorter than half of epsilon, to be conservative so that it doesn't
     // cause CW triangles that exceed epsilon due to rounding error.
-    pub fn is_short(&self, eps: f64) -> bool {
-        (self.pos_r() - self.pos).norm_squared() * 4. < eps.powi(2)
+    pub fn is_short(&self, eps: Real) -> bool {
+        (self.pos_r() - self.pos).length_squared() * 4. < eps.powi(2)
     }
 
     // Returns true if Vert is on inside the edge that goes from tail to tail->right.
     // This will walk the edges if necessary until a clear answer is found (beyond epsilon).
     // If toLeft is true, this Vert will walk its edges to the left. This should be chosen
     // so that the edges walk in the same general direction - tail always walks to the right.
-    pub fn inside_edge(&self, pair: &EvPtr, eps: f64, to_left: bool) -> bool {
+    pub fn inside_edge(&self, pair: &EvPtr, eps: Real, to_left: bool) -> bool {
         let mut nl = self.ptr_r_of_l();     // next left
         let mut nr = pair.borrow().ptr_r(); // next right
         let mut ct = Rc::clone(&pair);      // center
@@ -53,8 +53,8 @@ impl Ecvt {
               !Rc::ptr_eq(&pair, &nr) &&
               !Rc::ptr_eq(&nl, &(if to_left { self.ptr_r() } else { self.ptr_l() }))
         {
-            let l2 = (nl.borrow().pos - ct.borrow().pos).norm_squared();
-            let r2 = (nr.borrow().pos - ct.borrow().pos).norm_squared();
+            let l2 = (nl.borrow().pos - ct.borrow().pos).length_squared();
+            let r2 = (nr.borrow().pos - ct.borrow().pos).length_squared();
 
             if l2 <= eps.powi(2) {
                 nl = if to_left { nl.borrow().ptr_l() } else { nl.borrow().ptr_r() };
@@ -67,7 +67,7 @@ impl Ecvt {
             }
 
             let e = nr.borrow().pos - nl.borrow().pos;
-            if e.norm_squared() <= eps.powi(2) {
+            if e.length_squared() <= eps.powi(2) {
                 lt = Rc::clone(&ct);
                 ct = Rc::clone(&nl);
                 nl = if to_left { nl.borrow().ptr_l() } else { nl.borrow().ptr_r() };
@@ -98,13 +98,13 @@ impl Ecvt {
     }
 
     // Returns true for convex or collinear ears.
-    pub fn is_convex(&self, eps: f64) -> bool {
+    pub fn is_convex(&self, eps: Real) -> bool {
         is_ccw_2d(&self.pos_l(), &self.pos, &self.pos_r(), eps) >= 0
     }
 
     // Subtly different from !IsConvex because IsConvex will return true for collinear
     // non-folded verts, while IsReflex will always check until actual certainty is determined.
-    pub fn is_reflex(&self, eps: f64) -> bool {
+    pub fn is_reflex(&self, eps: Real) -> bool {
         !self.ptr_l().borrow().inside_edge(&self.ptr_r_of_l(), eps, true)
     }
 
@@ -112,7 +112,7 @@ impl Ecvt {
     // returning NAN if the edge does not cross the value from below to above,
     // right of start - all within an epsilon tolerance. If onTop != 0,
     // this restricts which end is allowed to terminate within the epsilon band.
-    pub fn interpolate_y2x(&self, bgn: &Row2f, on_top: i32, eps: f64) -> Option<f64> {
+    pub fn interpolate_y2x(&self, bgn: &Vec2, on_top: i32, eps: Real) -> Option<Real> {
         if (self.pos.y - bgn.y).abs() <= eps {
             if self.pos_r().y <= bgn.y + eps || on_top == 1 { return None; }
             return Some(self.pos.x);
@@ -132,7 +132,7 @@ impl Ecvt {
     // This finds the cost of this vert relative to one of the two closed sides of the ear.
     // Points are valid even when they touch, so long as their edge goes to the outside.
     // No need to check the other side, since all verts are processed in the EarCost loop.
-    pub fn signed_dist(&self, pair: &Ecvt, unit: Row2f, eps: f64) -> f64 {
+    pub fn signed_dist(&self, pair: &Ecvt, unit: Vec2, eps: Real) -> Real {
         let d = det2x2(&unit, &(pair.pos - self.pos));
         if d.abs() < eps {
             let dr = det2x2(&unit, &(pair.pos_r() - self.pos));
@@ -145,7 +145,7 @@ impl Ecvt {
 
     // Find the cost of Vert v within this ear, where openSide is the unit
     // vector from Verts right to left - passed in for reuse.
-    pub fn cost(&self, pair: &Ecvt, open_side: &Row2f, eps: f64) -> f64 {
+    pub fn cost(&self, pair: &Ecvt, open_side: &Vec2, eps: Real) -> Real {
         let c0 = self.signed_dist(pair, self.dir, eps);
         let c1 = self.signed_dist(pair, self.dir_l(), eps);
         let co = det2x2(open_side, &(pair.pos - self.pos_r()));
@@ -155,8 +155,8 @@ impl Ecvt {
     // For verts outside the ear, apply a cost based on the Delaunay condition
     // to aid in prioritization and produce cleaner triangulations. This doesn't
     // affect robustness but may be adjusted to improve output.
-    pub fn delaunay_cost(&self, diff: &Row2f, scl: f64, eps: f64) -> f64 {
-        -eps - scl * diff.norm_squared()
+    pub fn delaunay_cost(&self, diff: &Vec2, scl: Real, eps: Real) -> Real {
+        -eps - scl * diff.length_squared()
     }
 
     // This is the expensive part of the algorithm, checking this ear against
@@ -167,24 +167,24 @@ impl Ecvt {
     // costs are designed to always give values < -epsilon so they will never affect validity.
     // The first totalCost is designed to give priority to sharper angles.
     // Any cost < (-1 - epsilon) has satisfied the Delaunay condition.
-    pub fn ear_cost(&self, eps: f64, collider: &IdxCollider) -> f64 {
+    pub fn ear_cost(&self, eps: Real, collider: &IdxCollider) -> Real {
         let dif = self.pos_l() - self.pos_r();
-        let len = dif.norm();
-        let scl = if len > eps { 4. / len.powf(2.) } else { f64::MAX };
+        let len = dif.length();
+        let scl = if len > eps { 4. / len.powf(2.) } else { Real::MAX };
         let center = (self.pos_l() + self.pos_r()) * 0.5;
         let radius = len * 0.5;
         let open_side = dif.normalize();
 
-        let mut total = self.dir_l().dot(&self.dir) - 1. - eps;
+        let mut total = self.dir_l().dot(self.dir) - 1. - eps;
         if is_ccw_2d(&self.pos, &self.pos_l(), &self.pos_r(), eps) == 0 { return total; }
 
         let mut bb = Rect::new(
-            &Row2f::new(center.x - radius, center.y - radius),
-            &Row2f::new(center.x + radius, center.y + radius),
+            &Vec2::new(center.x - radius, center.y - radius),
+            &Vec2::new(center.x + radius, center.y + radius),
         );
         bb.union(&self.pos);
-        bb.min -= Row2f::new(eps, eps);
-        bb.max += Row2f::new(eps, eps);
+        bb.min -= Vec2::new(eps, eps);
+        bb.max += Vec2::new(eps, eps);
 
         compute_query_flat_tree(&collider.pts, &bb, |v| {
             let test = Rc::clone(&collider.rfs[v.idx]);
@@ -306,13 +306,13 @@ pub struct EarClip {
     contour: Vec<EvPtr>,
     queue: BTreeSet<EvPtrMinCost>,
     holes: BTreeSet<EvPtrMaxPosX>,
-    tris: Vec<Row3u>,
+    tris: Vec<Vec3u>,
     bbox: Rect,
-    eps: f64
+    eps: Real
 }
 
 impl EarClip {
-    pub fn new(polys: &Vec<Vec<Pt>>, eps: f64) -> Self {
+    pub fn new(polys: &Vec<Vec<Pt>>, eps: Real) -> Self {
         let mut clip = Self {
             polygon: vec![],
             simples: vec![],
@@ -333,7 +333,7 @@ impl EarClip {
         clip
     }
 
-    pub fn triangulate(&mut self) -> Vec<Row3u> {
+    pub fn triangulate(&mut self) -> Vec<Vec3u> {
         let vs = self.holes.iter().cloned().collect::<Vec<_>>();
         for mut v in vs { self.cut_key_hole(&mut v); }
         let vs = self.simples.iter().map(|s| Rc::clone(s)).collect::<Vec<_>>();
@@ -357,7 +357,7 @@ impl EarClip {
         let i  = ear.borrow().idx;
         let il = ear.borrow().idx_l();
         let ir = ear.borrow().idx_r();
-        if il != i && ir != i && il != ir { self.tris.push(Row3u::new(il, i, ir)); }
+        if il != i && ir != i && il != ir { self.tris.push(Vec3u::new(il, i, ir)); }
     }
 
     fn clip_degenerate(&mut self, ear: &EvPtr) {
@@ -367,7 +367,7 @@ impl EarClip {
         let p  = ear.borrow().pos;
         let pl = ear.borrow().pos_l();
         let pr = ear.borrow().pos_r();
-        if eb.is_short(eps) || (is_ccw_2d(&pl, &p, &pr, eps) == 0 && (pl - p).dot(&(pr - p)) > 0.) {
+        if eb.is_short(eps) || (is_ccw_2d(&pl, &p, &pr, eps) == 0 && (pl - p).dot(pr - p) > 0.) {
             self.clip_ear(&ear);
             self.clip_degenerate(&eb.ptr_l());
             self.clip_degenerate(&eb.ptr_r());
@@ -406,7 +406,7 @@ impl EarClip {
     fn find_start(&mut self, first: &mut EvPtr) {
         let origin = first.borrow().pos;
         let mut bgn = Rc::clone(first);
-        let mut max = f64::MIN;
+        let mut max = Real::MIN;
         let mut bbox = Rect::default();
         let mut area = 0.;
         let mut comp = 0.; // For Kahan's summation
@@ -472,7 +472,7 @@ impl EarClip {
                         None => true,
                         Some(c) => {
                             let cb = c.borrow();
-                            let f1 = is_ccw_2d(&Row2f::new(x, p_bgn.y), &cb.pos, &cb.pos_r(), eps) == 1;
+                            let f1 = is_ccw_2d(&Vec2::new(x, p_bgn.y), &cb.pos, &cb.pos_r(), eps) == 1;
                             let f2 = if cb.pos.y < vb.pos.y {  vb.inside_edge(c, eps, false) }
                                                        else { !cb.inside_edge(v, eps, false) };
                             f1 || f2

@@ -1,11 +1,10 @@
-use crate::common::{Half, Row2f, Row3f, Row4f};
-
+use crate::common::{Half, Real, Vec2, Vec3, Vec4};
 // These two functions (Interpolate and Intersect) are the only places where
 // floating-point operations take place in the whole Boolean function. These
 // are carefully designed to minimize rounding error and to remove it at edge
 // cases to ensure consistency.
 
-pub fn interpolate(pl: Row3f, pr: Row3f, x: f64) -> Row2f {
+pub fn interpolate(pl: Vec3, pr: Vec3, x: Real) -> Vec2 {
     let dx_l = x - pl.x;
     let dx_r = x - pr.x;
     let diff = pr - pl;
@@ -14,20 +13,20 @@ pub fn interpolate(pl: Row3f, pr: Row3f, x: f64) -> Row2f {
 
     if lambda.is_infinite() || lambda.is_nan() ||
        diff.y.is_infinite() || diff.y.is_nan() ||
-       diff.z.is_infinite() || diff.z.is_nan() { return Row2f::new(pl.y, pl.z); }
+       diff.z.is_infinite() || diff.z.is_nan() { return Vec2::new(pl.y, pl.z); }
 
-    Row2f::new(
+    Vec2::new(
         lambda * diff.y + if use_l { pl.y } else { pr.y },
         lambda * diff.z + if use_l { pl.z } else { pr.z }
     )
 }
 
 pub fn intersect(
-    pl: Row3f,
-    pr: Row3f,
-    ql: Row3f,
-    qr: Row3f,
-) -> Row4f {
+    pl: Vec3,
+    pr: Vec3,
+    ql: Vec3,
+    qr: Vec3,
+) -> Vec4 {
     let dy_l = ql.y - pl.y;
     let dy_r = qr.y - pr.y;
     assert!(dy_l * dy_r <= 0., "Boolean manifold error: no intersection");
@@ -35,7 +34,7 @@ pub fn intersect(
     let dx = pr.x - pl.x;
     let mut lambda = if use_l {dy_l} else {dy_r} / (dy_l - dy_r);
     if lambda.is_infinite() || lambda.is_nan() { lambda = 0.; }
-    let mut xyzz = Row4f::default();
+    let mut xyzz = Vec4::default();
     xyzz.x = lambda * dx + if use_l {pl.x} else {pr.x};
     let p_dy = pr.y - pl.y;
     let q_dy = qr.y - ql.y;
@@ -46,7 +45,7 @@ pub fn intersect(
     xyzz
 }
 
-pub fn shadows(p: f64, q: f64, dir: f64) -> bool {
+pub fn shadows(p: Real, q: Real, dir: Real) -> bool {
     if p == q { dir < 0. } else { p < q }
 }
 
@@ -55,13 +54,13 @@ pub fn shadows(p: f64, q: f64, dir: f64) -> bool {
 pub fn shadows01(
     p0: usize,
     q1: usize,
-    ps_p: &[Row3f],
-    ps_q: &[Row3f],
+    ps_p: &[Vec3],
+    ps_q: &[Vec3],
     hs_q: &[Half],
-    ns: &[Row3f],
-    expand: f64,
+    ns: &[Vec3],
+    expand: Real,
     reverse: bool
-) -> Option<(i32, Row2f)> {
+) -> Option<(i32, Vec2)> {
     let q1s = hs_q[q1].tail;
     let q1e = hs_q[q1].head;
     let p0x  = ps_p[p0].x;
@@ -89,8 +88,8 @@ pub fn shadows01(
         if reverse {
             let d1 = ps_q[q1s] - ps_p[p0];
             let d2 = ps_q[q1e] - ps_p[p0];
-            let sta2 = d1.norm_squared();
-            let end2 = d2.norm_squared();
+            let sta2 = d1.length_squared();
+            let end2 = d2.length_squared();
             let dir = if sta2 < end2 { ns[q1s].y } else { ns[q1e].y };
             if !shadows(yz01[0], ps_p[p0].y, expand * dir) { s01 = 0; }
         } else {

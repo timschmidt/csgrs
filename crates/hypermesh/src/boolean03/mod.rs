@@ -5,7 +5,7 @@ pub mod kernel12;
 pub mod kernel03;
 use crate::boolean03::kernel03::winding03;
 use crate::boolean03::kernel12::intersect12;
-use crate::common::{OpType, Row3f};
+use crate::common::{OpType, Vec3};
 use crate::manifold::Manifold;
 
 pub struct Boolean03 {
@@ -15,8 +15,8 @@ pub struct Boolean03 {
     pub x21: Vec<i32>,
     pub w03: Vec<i32>,
     pub w30: Vec<i32>,
-    pub v12: Vec<Row3f>,
-    pub v21: Vec<Row3f>,
+    pub v12: Vec<Vec3>,
+    pub v21: Vec<Vec3>,
 }
 
 pub fn boolean03(

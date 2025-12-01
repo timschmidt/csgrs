@@ -61,7 +61,7 @@ pub fn compute_boolean(
         &b45.ps,
         &trg.hs
             .chunks(3)
-            .map(|hs| Row3u::new(hs[0].tail, hs[1].tail, hs[2].tail))
+            .map(|hs| Vec3u::new(hs[0].tail, hs[1].tail, hs[2].tail))
             .collect(),
         Some(eps),
         Some(tol)

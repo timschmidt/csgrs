@@ -1,4 +1,4 @@
-use crate::common::{Half, Tref, is_ccw_3d, Row3f};
+use crate::{Real, Half, Tref, is_ccw_3d, Vec3};
 use super::{collapse_triangle, form_loops, head_of, next_of, pair_of, remove_if_folded, hids_of, update_vid_around_star};
 
 // Check around a halfedges from the same tail vertex.
@@ -31,24 +31,24 @@ fn record_if_collinear(
 
 fn record_if_short(
     hs: &[Half],
-    ps: &[Row3f],
+    ps: &[Vec3],
     hid: usize,
     nv: usize,
-    ep: f64,
+    ep: Real,
 ) -> bool {
     let h = &hs[hid];
     if h.pair().is_none() || (h.tail < nv && h.head < nv) { return false; }
-    (ps[hs[hid].head] - ps[hs[hid].tail]).norm_squared() < ep.powi(2)
+    (ps[hs[hid].head] - ps[hs[hid].tail]).length_squared() < ep.powi(2)
 
 }
 
 pub fn collapse_edge(
     hs: &mut Vec<Half>,
-    ps: &mut Vec<Row3f>,
-    ns: &mut [Row3f],
+    ps: &mut Vec<Vec3>,
+    ns: &mut [Vec3],
     rs: &mut [Tref],
     hid: usize,
-    eps: f64,
+    eps: Real,
     store: &mut Vec<usize>, // storing the halfedge data for form_loops
 ) -> bool {
 
@@ -67,7 +67,7 @@ pub fn collapse_edge(
     let     end = t0.2;              // the end half heading delt vert
 
     // check validity by orbiting start vert ccw order
-    if (pos_keep - pos_delt).norm_squared() >= eps.powi(2) {
+    if (pos_keep - pos_delt).length_squared() >= eps.powi(2) {
         let mut cur = bgn;
         let mut tr0 = &rs[to_rmv.pair / 3];
         let mut p_prev = ps[head_of(hs, t1.1)];
@@ -84,7 +84,7 @@ pub fn collapse_edge(
                 if !r_curr.same_face(&tr0) { return false; }
                 if tr0.mid != tr2.mid ||
                    tr0.fid != tr2.fid ||
-                   n_pair.dot(n_curr) < -0.5 {
+                   n_pair.dot(*n_curr) < -0.5 {
                     // Restrict collapse to co-linear edges when the edge separates faces or the edge is sharp.
                     // This ensures large shifts are not introduced parallel to the tangent plane.
                     if ccw(&p_prev, &pos_delt, &pos_keep) != 0 { return false; }
@@ -107,7 +107,7 @@ pub fn collapse_edge(
         cur = pair_of(hs, cur);
     }
 
-    ps[to_rmv.tail] = Row3f::new(f64::NAN, f64::NAN, f64::NAN);
+    ps[to_rmv.tail] = Vec3::new(Real::NAN, Real::NAN, Real::NAN);
     collapse_triangle(hs, &t1);
 
     let mut cur = bgn;
@@ -132,11 +132,11 @@ pub fn collapse_edge(
 
 pub fn collapse_collinear_edges(
     hs: &mut Vec<Half>,
-    ps: &mut Vec<Row3f>,
-    ns: &mut [Row3f],
+    ps: &mut Vec<Vec3>,
+    ns: &mut [Vec3],
     rs: &mut [Tref],
     nv: usize,
-    ep: f64
+    ep: Real
 ) {
     let mut flag = 0;
     let rec = (0..hs.len())
@@ -145,16 +145,16 @@ pub fn collapse_collinear_edges(
     for hid in rec {
         if collapse_edge(hs, ps, ns, rs, hid, ep, &mut vec![]) { flag += 1; }
     }
-    //if flag > 0 { println!("{} collinear edge collapsed", flag);}
+    if flag > 0 { println!("{} collinear edge collapsed", flag);}
 }
 
 pub fn collapse_short_edges(
     hs: &mut Vec<Half>,
-    ps: &mut Vec<Row3f>,
-    ns: &mut [Row3f],
+    ps: &mut Vec<Vec3>,
+    ns: &mut [Vec3],
     rs: &mut [Tref],
     nv: usize,
-    ep: f64
+    ep: Real
 ) {
     loop {
         let mut flag = 0;
@@ -165,6 +165,6 @@ pub fn collapse_short_edges(
             if collapse_edge(hs, ps, ns, rs, hid, ep, &mut vec![]) { flag += 1; }
         }
         if flag == 0 { break; }
-        //else { println!("{} short edges collapsed", flag);}
+        else { println!("{} short edges collapsed", flag);}
     }
 }

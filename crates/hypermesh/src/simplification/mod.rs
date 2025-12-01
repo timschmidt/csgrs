@@ -1,19 +1,19 @@
 pub mod dedup;
 pub mod re_swap;
 pub mod collapse;
-use crate::common::{Half, Tref, next_of, Row3f, Row2f};
+use crate::{Real, Half, Tref, next_of, Vec2, Vec3};
 use collapse::{collapse_edge, collapse_short_edges, collapse_collinear_edges};
 use dedup::dedupe_edges;
 use crate::simplification::re_swap::swap_degenerates;
 
 pub fn simplify_topology(
     hs: &mut Vec<Half>,
-    ps: &mut Vec<Row3f>,
-    ns: &mut Vec<Row3f>,
+    ps: &mut Vec<Vec3>,
+    ns: &mut Vec<Vec3>,
     rs: &mut Vec<Tref>,
     nv_from_p: usize,
     nv_from_q: usize,
-    eps: f64,
+    eps: Real,
 ) {
     let nv = nv_from_p + nv_from_q;
     split_pinched_vert(hs, ps);
@@ -35,7 +35,7 @@ fn hids_of(i: usize) -> (usize, usize, usize) { let j = next_of(i); let k = next
 // halfedges of the tail side might be connected to other triangles (would be folded though).
 fn form_loops(
     hs: &mut Vec<Half>,
-    ps: &mut Vec<Row3f>,
+    ps: &mut Vec<Vec3>,
     bgn: usize,
     end: usize
 ) {
@@ -66,7 +66,7 @@ fn form_loops(
 // are eliminated by split_pinched_vert and dedupe_edges functions.
 fn remove_if_folded(
     hs: &mut [Half],
-    ps: &mut Vec<Row3f>,
+    ps: &mut Vec<Vec3>,
     hid: usize
 ) {
     let (i0, i1, i2) = hids_of(hid);
@@ -74,7 +74,7 @@ fn remove_if_folded(
 
     if hs[i1].pair().is_none() || head_of(hs, i1) != head_of(hs, j1) { return; }
 
-    let nan = Row3f::new(f64::NAN, f64::NAN, f64::NAN);
+    let nan = Vec3::new(Real::NAN, Real::NAN, Real::NAN);
     match (pair_of(hs, i1) == j2, pair_of(hs, i2) == j1) {
         (true, true)  => for i in [i0, i1, i2] { ps[tail_of(hs, i)] = nan; },
         (true, false) => { ps[tail_of(hs, i1)] = nan; }
@@ -89,7 +89,7 @@ fn remove_if_folded(
 
 fn split_pinched_vert(
     hs: &mut [Half],
-    ps: &mut Vec<Row3f>
+    ps: &mut Vec<Vec3>
 ) {
     let mut v_processed = vec![false; ps.len()];
     let mut h_processed = vec![false; hs.len()];
@@ -139,13 +139,13 @@ fn collapse_triangle(hs: &mut [Half], hids: &(usize, usize, usize)) {
 }
 
 fn is01_longest_2d(
-    p0: &Row2f,
-    p1: &Row2f,
-    p2: &Row2f
+    p0: &Vec2,
+    p1: &Vec2,
+    p2: &Vec2
 ) -> bool {
-    let e01 = (*p1 - *p0).norm_squared();
-    let e12 = (*p2 - *p1).norm_squared();
-    let e20 = (*p0 - *p2).norm_squared();
+    let e01 = (*p1 - *p0).length_squared();
+    let e12 = (*p2 - *p1).length_squared();
+    let e20 = (*p0 - *p2).length_squared();
     e01 > e12 && e01 > e20
 }
 

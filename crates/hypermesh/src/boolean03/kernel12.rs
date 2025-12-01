@@ -1,7 +1,6 @@
 use std::mem;
-use rayon::prelude::*;
 use crate::bounds::{BBox, Query};
-use crate::common::{Half, Row3f};
+use crate::common::{Half, Real, Vec3};
 use crate::Manifold;
 use super::kernel01::intersect;
 use super::kernel02::Kernel02;
@@ -10,17 +9,17 @@ use super::kernel11::Kernel11;
 pub struct Kernel12<'a> {
     pub hs_p: &'a[Half],
     pub hs_q: &'a[Half],
-    pub ps_p: &'a[Row3f],
+    pub ps_p: &'a[Vec3],
     pub k02: Kernel02<'a>,
     pub k11: Kernel11<'a>,
     pub fwd: bool,
 }
 
 impl<'a> Kernel12<'a> {
-    pub fn op (&self, p1: usize, q2: usize) -> Option<(i32, Row3f)> {
+    pub fn op (&self, p1: usize, q2: usize) -> Option<(i32, Vec3)> {
         let mut x12 = 0;
-        let mut xzy_lr0 = [Row3f::zeros(); 2];
-        let mut xzy_lr1 = [Row3f::zeros(); 2];
+        let mut xzy_lr0 = [Vec3::ZERO; 2];
+        let mut xzy_lr1 = [Vec3::ZERO; 2];
         let mut shadow_ = false;
         let h = self.hs_p[p1].clone();
 
@@ -67,7 +66,7 @@ impl<'a> Kernel12<'a> {
 
         assert_eq!(k, 2, "Boolean manifold error: v12");
         let xzyy = intersect(xzy_lr0[0], xzy_lr0[1], xzy_lr1[0], xzy_lr1[1]);
-        Some((x12, Row3f::new(xzyy[0], xzyy[2], xzyy[1])))
+        Some((x12, Vec3::new(xzyy[0], xzyy[2], xzyy[1])))
     }
 }
 
@@ -75,9 +74,9 @@ pub fn intersect12 (
     mp: &Manifold,
     mq: &Manifold,
     p1q2: &mut Vec<[usize; 2]>,
-    expand: f64,
+    expand: Real,
     fwd: bool
-) -> (Vec<i32>, Vec<Row3f>) {
+) -> (Vec<i32>, Vec<Vec3>) {
     let ma = if fwd { mp } else { mq };
     let mb = if fwd { mq } else { mp };
 

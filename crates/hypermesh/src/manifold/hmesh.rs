@@ -3,6 +3,7 @@ use std::cmp::PartialEq;
 use std::sync::{Arc, Weak};
 use anyhow::anyhow;
 use nalgebra::{DMatrix, RowVector3 as Row3};
+use crate::{Real};
 
 /// Hmesh preserves the order of pos and idx in any cases.
 /// Edges are ordered so as the edge is forward (tail idx < head idx)
@@ -12,7 +13,7 @@ pub(in crate::manifold) struct Hmesh {
     pub n_face: usize,
     pub n_edge: usize,
     pub n_half: usize,
-    pub pos: DMatrix<f64>,
+    pub pos: DMatrix<Real>,
     pub idx: DMatrix<usize>,
     pub e2v: DMatrix<usize>,
     pub e2f: DMatrix<usize>,
@@ -31,12 +32,8 @@ pub(in crate::manifold) struct Hmesh {
     pub edges: Vec<Edge>,
     pub faces: Vec<Face>,
     pub halfs: Vec<Half>,
-    pub vert_normal: DMatrix<f64>,
-    pub face_normal: DMatrix<f64>,
-    pub bary_center: DMatrix<f64>,
-    pub face_basis_x: DMatrix<f64>,
-    pub face_basis_y: DMatrix<f64>,
-    pub face_area: Vec<f64>,
+    pub vert_normal: DMatrix<Real>,
+    pub face_normal: DMatrix<Real>,
 }
 
 #[derive(Debug, Clone)] pub(in crate::manifold) struct Vert { pub hm: Weak<Hmesh>, pub id: usize }
@@ -45,7 +42,7 @@ pub(in crate::manifold) struct Hmesh {
 #[derive(Debug, Clone)] pub(in crate::manifold) struct Half { pub hm: Weak<Hmesh>, pub id: usize }
 
 fn edge_topology(
-    pos: &DMatrix<f64>,
+    pos: &DMatrix<Real>,
     idx: &DMatrix<usize>,
     e2v: &mut DMatrix<usize>,
     e2f: &mut DMatrix<usize>,
@@ -122,7 +119,7 @@ fn edge_topology(
 
 impl Hmesh {
     pub fn new(
-        pos: DMatrix<f64>,
+        pos: DMatrix<Real>,
         idx: DMatrix<usize>,
     ) -> anyhow::Result<Arc<Self>> {
         let mut e2v = Default::default();
@@ -206,11 +203,8 @@ impl Hmesh {
             for i in 0..ne { edges.push(Edge { id: i, hm: weak_ptr.clone() }); }
             for i in 0..nh { halfs.push(Half { id: i, hm: weak_ptr.clone() }); }
 
-            let mut vert_normal = DMatrix::<f64>::zeros(nv, 3);
-            let mut face_normal = DMatrix::<f64>::zeros(nf, 3);
-            let mut bary_center = DMatrix::<f64>::zeros(nf, 3);
-            let mut face_basis_x = DMatrix::<f64>::zeros(nf, 3);
-            let mut face_basis_y = DMatrix::<f64>::zeros(nf, 3);
+            let mut vert_normal = DMatrix::<Real>::zeros(nv, 3);
+            let mut face_normal = DMatrix::<Real>::zeros(nf, 3);
             let mut face_area = vec![0.; nf];
 
             for i in 0..nf {
@@ -222,10 +216,7 @@ impl Hmesh {
                 let t = (p1 - p0) * -1.;
                 let n = x.cross(&t);
                 let c = (p0 + p1 + p2) / 3.;
-                bary_center.row_mut(i).copy_from_slice(c.as_ref());
                 face_normal.row_mut(i).copy_from_slice(n.normalize().as_ref());
-                face_basis_x.row_mut(i).copy_from_slice(x.normalize().as_ref());
-                face_basis_y.row_mut(i).copy_from_slice((-x.cross(&n)).normalize().as_ref());
                 face_area[i] = n.norm() * 0.5;
             }
 
@@ -268,10 +259,6 @@ impl Hmesh {
                 halfs,
                 vert_normal,
                 face_normal,
-                bary_center,
-                face_basis_x,
-                face_basis_y,
-                face_area
             }
         }))
     }
@@ -284,14 +271,13 @@ impl Edge {
 }
 
 impl Vert {
-    pub fn pos(&self)    -> Row3<f64> { let m = self.hm.upgrade().unwrap(); m.pos.fixed_view::<1,3>(self.id, 0).into() }
-    pub fn normal(&self) -> Row3<f64> { let m = self.hm.upgrade().unwrap(); m.vert_normal.fixed_view::<1,3>(self.id, 0).into() }
+    pub fn pos(&self)    -> Row3<Real> { let m = self.hm.upgrade().unwrap(); m.pos.fixed_view::<1,3>(self.id, 0).into() }
+    pub fn normal(&self) -> Row3<Real> { let m = self.hm.upgrade().unwrap(); m.vert_normal.fixed_view::<1,3>(self.id, 0).into() }
 }
 
 impl Face {
     pub fn half(&self)   -> Half      { let m = self.hm.upgrade().unwrap(); m.halfs[m.f2h[self.id]].clone() }
-    pub fn normal(&self) -> Row3<f64> { let m = self.hm.upgrade().unwrap(); m.face_normal.fixed_view::<1,3>(self.id, 0).into() }
-    pub fn area(&self)   -> f64       { let m = self.hm.upgrade().unwrap(); m.face_area[self.id] }
+    pub fn normal(&self) -> Row3<Real> { let m = self.hm.upgrade().unwrap(); m.face_normal.fixed_view::<1,3>(self.id, 0).into() }
 }
 
 impl Half {
@@ -308,7 +294,7 @@ impl Half {
     pub fn is_interior(&self)  -> bool { self.hm.upgrade().unwrap().face[self.id] != usize::MAX }
     pub fn is_canonical(&self) -> bool { self.edge().half() == *self }
 
-    pub fn vec(&self) -> Row3<f64> {
+    pub fn vec(&self) -> Row3<Real> {
         let m = self.hm.upgrade().unwrap();
         let p0 = m.pos.fixed_view::<1, 3>(m.tail[self.id], 0);
         let p1 = m.pos.fixed_view::<1, 3>(m.head[self.id], 0);

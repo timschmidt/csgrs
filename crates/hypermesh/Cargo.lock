@@ -1468,6 +1468,7 @@ dependencies = [
  "bevy",
  "bevy_obj",
  "bevy_panorbit_camera",
+ "glam 0.30.9",
  "nalgebra",
  "rayon",
  "tobj",

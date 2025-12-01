@@ -1,13 +1,13 @@
-use crate::common::{Half, Tref, get_axis_aligned_projection, is_ccw_2d, Row3f};
+use crate::{Real, Vec3, Half, Tref, get_axis_aligned_projection, is_ccw_2d, compute_aa_proj};
 use super::{collapse_edge, form_loops, head_of, is01_longest_2d, next_of, pair_of, pair_up, remove_if_folded, tail_of, hids_of};
 
 fn record(
     hs: &[Half],
-    ps: &[Row3f],
-    ns: &[Row3f],
+    ps: &[Vec3],
+    ns: &[Vec3],
     hid: usize,
     oft: usize,
-    tol: f64
+    tol: Real
 ) -> bool {
     let h = &hs[hid];
     if h.pair().is_none() { return false; }
@@ -20,17 +20,23 @@ fn record(
 
     let (e0, e1, e2) = hids_of(h0);
     let p = get_axis_aligned_projection(&ns[h0 / 3]);
-    let a = (p * ps[hs[e0].tail].transpose()).transpose();
-    let b = (p * ps[hs[e1].tail].transpose()).transpose();
-    let c = (p * ps[hs[e2].tail].transpose()).transpose();
+    //let a = (p * ps[hs[e0].tail].transpose()).transpose();
+    //let b = (p * ps[hs[e1].tail].transpose()).transpose();
+    //let c = (p * ps[hs[e2].tail].transpose()).transpose();
+    let a = compute_aa_proj(&p, &ps[hs[e0].tail]);
+    let b = compute_aa_proj(&p, &ps[hs[e1].tail]);
+    let c = compute_aa_proj(&p, &ps[hs[e2].tail]);
 
     if is_ccw_2d(&a, &b, &c, tol) > 0 || !is01_longest_2d(&a, &b, &c) { return false; }
 
     let (e0, e1, e2) = hids_of(h1);
     let p = get_axis_aligned_projection(&ns[h1 / 3]);
-    let a = (p * ps[hs[e0].tail].transpose()).transpose();
-    let b = (p * ps[hs[e1].tail].transpose()).transpose();
-    let c = (p * ps[hs[e2].tail].transpose()).transpose();
+    //let a = (p * ps[hs[e0].tail].transpose()).transpose();
+    //let b = (p * ps[hs[e1].tail].transpose()).transpose();
+    //let c = (p * ps[hs[e2].tail].transpose()).transpose();
+    let a = compute_aa_proj(&p, &ps[hs[e0].tail]);
+    let b = compute_aa_proj(&p, &ps[hs[e1].tail]);
+    let c = compute_aa_proj(&p, &ps[hs[e2].tail]);
     //let p = get_axis_aligned_projection(&ns[h1 / 3]).transpose();
     //let a = ps[hs[e0].tail] * p;
     //let b = ps[hs[e1].tail] * p;
@@ -41,15 +47,15 @@ fn record(
 
 fn recursive_edge_swap(
     hs: &mut Vec<Half>,
-    ps: &mut Vec<Row3f>,
-    ns: &mut [Row3f],
+    ps: &mut Vec<Vec3>,
+    ns: &mut [Vec3],
     ts: &mut [Tref],
     hid: usize,
     tag: &mut i32,
     visit: &mut [i32],
     stack: &mut Vec<usize>,
     edges: &mut Vec<usize>,
-    tol: f64,
+    tol: Real,
 ) {
     if hid >= hs.len() { return; }
     let h0 = hid;
@@ -67,17 +73,24 @@ fn recursive_edge_swap(
     let t1e = hids_of(h1);
 
     let pr = get_axis_aligned_projection(&ns[t0]);
-    let v0 = (pr * ps[tail_of(hs, t0e.0)].transpose()).transpose();
-    let v1 = (pr * ps[tail_of(hs, t0e.1)].transpose()).transpose();
-    let v2 = (pr * ps[tail_of(hs, t0e.2)].transpose()).transpose();
+    //let v0 = (pr * ps[tail_of(hs, t0e.0)].transpose()).transpose();
+    //let v1 = (pr * ps[tail_of(hs, t0e.1)].transpose()).transpose();
+    //let v2 = (pr * ps[tail_of(hs, t0e.2)].transpose()).transpose();
+    let v0 = compute_aa_proj(&pr, &ps[tail_of(hs, t0e.0)]);
+    let v1 = compute_aa_proj(&pr, &ps[tail_of(hs, t0e.1)]);
+    let v2 = compute_aa_proj(&pr, &ps[tail_of(hs, t0e.2)]);
 
     if is_ccw_2d(&v0, &v1, &v2, tol) > 0 || !is01_longest_2d(&v0, &v1, &v2) { return; }
 
     let pr = get_axis_aligned_projection(&ns[t1]);
-    let u0 = (pr * ps[tail_of(hs, t0e.0)].transpose()).transpose();
-    let u1 = (pr * ps[tail_of(hs, t0e.1)].transpose()).transpose();
-    let u2 = (pr * ps[tail_of(hs, t0e.2)].transpose()).transpose();
-    let u3 = (pr * ps[tail_of(hs, t1e.2)].transpose()).transpose();
+    //let u0 = (pr * ps[tail_of(hs, t0e.0)].transpose()).transpose();
+    //let u1 = (pr * ps[tail_of(hs, t0e.1)].transpose()).transpose();
+    //let u2 = (pr * ps[tail_of(hs, t0e.2)].transpose()).transpose();
+    //let u3 = (pr * ps[tail_of(hs, t1e.2)].transpose()).transpose();
+    let u0 = compute_aa_proj(&pr, &ps[tail_of(hs, t0e.0)]);
+    let u1 = compute_aa_proj(&pr, &ps[tail_of(hs, t0e.1)]);
+    let u2 = compute_aa_proj(&pr, &ps[tail_of(hs, t0e.2)]);
+    let u3 = compute_aa_proj(&pr, &ps[tail_of(hs, t1e.2)]);
 
     let mut swap_edge = || {
         // The 0-verts are swapped to the opposite 2-verts.
@@ -117,7 +130,7 @@ fn recursive_edge_swap(
         if !is01_longest_2d(&u1, &u0, &u3) { return; }
         // Two facing, long-edge degenerates can swap.
         swap_edge();
-        if (u3 - u2).norm_squared() < tol * tol {
+        if (u3 - u2).length_squared() < tol * tol {
             *tag += 1;
             collapse_edge(hs, ps, ns, ts, t0e.2, tol, edges);
             edges.clear();
@@ -138,11 +151,11 @@ fn recursive_edge_swap(
 
 pub fn swap_degenerates(
     hs: &mut Vec<Half>,
-    ps: &mut Vec<Row3f>,
-    ns: &mut [Row3f],
+    ps: &mut Vec<Vec3>,
+    ns: &mut [Vec3],
     ts: &mut [Tref],
     oft: usize,
-    tol: f64
+    tol: Real
 ) {
     if hs.len() == 0 { return; }
     let mut tag = 0;
@@ -162,6 +175,6 @@ pub fn swap_degenerates(
             recursive_edge_swap(hs, ps, ns, ts, last, &mut tag, &mut visit, &mut stack, &mut buff, tol);
         }
     }
-    //if flag > 0 { println!("{} edge swapped", flag);}
+    if flag > 0 { println!("{} edge swapped", flag);}
 }
 
