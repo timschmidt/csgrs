@@ -1,10 +1,10 @@
 pub mod hmesh;
 pub mod bounds;
 pub mod collider;
+
 use std::cmp::Ordering;
 use std::sync::Arc;
 use anyhow::anyhow;
-use nalgebra::DMatrix;
 use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider, K_NO_CODE};
 use crate::{Real, Half, Vec3, Vec3u, K_PRECISION, next_of};
@@ -44,34 +44,26 @@ impl Manifold {
     ) -> anyhow::Result<Self> {
         let bb = BBox::new(None, &pos);
         let (mut f_bb, mut f_mt) = compute_face_morton(&pos, &idx, &bb);
-        let hm  = sort_faces(&pos, &idx, &mut f_bb, &mut f_mt)?;
-        //let ps  = hm.verts.iter().map(|v| v.pos()).collect::<Vec<_>>();
-        //let hs  = hm.halfs.iter().map(|h| Half::new(h.tail().id,h.head().id,h.twin().id)).collect::<Vec<_>>();
-        //let fns = hm.faces.iter().map(|f| f.normal()).collect::<Vec<_>>();
-        //let vns = hm.verts.iter().map(|v| v.normal()).collect::<Vec<_>>();
-
-        // todo fix!
-        let ps  = hm.verts.iter().map(|v| Vec3::new(v.pos().x, v.pos().y, v.pos().z)).collect::<Vec<_>>();
-        let hs  = hm.halfs.iter().map(|h| Half::new(h.tail().id,h.head().id,h.twin().id)).collect::<Vec<_>>();
-        let fns = hm.faces.iter().map(|f| Vec3::new(f.normal().x, f.normal().y, f.normal().z)).collect::<Vec<_>>();
-        let vns = hm.verts.iter().map(|v| Vec3::new(v.normal().x, v.normal().y, v.normal().z)).collect::<Vec<_>>();
+        let hm = sort_faces(&pos, &idx, &mut f_bb, &mut f_mt)?;
+        let ps = pos.clone();
+        let hs = hm.half.iter().map(|&i| Half::new(hm.tail[i], hm.head[i], hm.twin[i])).collect::<Vec<_>>();
 
         let mut e = K_PRECISION * bb.scale();
         e = if e.is_finite() { e } else { -1. };
         let eps = if eps.is_some() { eps.unwrap() } else { e };
         let tol = if tol.is_some() { tol.unwrap() } else { e };
         let collider = MortonCollider::new(&f_bb, &f_mt);
-        let coplanar = compute_coplanar_idx(&ps, &fns, &hs, eps);
+        let coplanar = compute_coplanar_idx(&ps, &hm.fns, &hs, eps);
 
         let mfd = Manifold {
-            nv: hm.n_vert,
-            nf: hm.n_face,
-            nh: hm.n_half,
+            nv: hm.nv,
+            nf: hm.nf,
+            nh: hm.nh,
             ps,
             hs,
             bounding_box: bb,
-            vert_normals: vns,
-            face_normals: fns,
+            vert_normals: hm.vns,
+            face_normals: hm.fns,
             original_idx: vec![],
             eps,
             tol,
@@ -137,19 +129,13 @@ fn sort_faces(
     idx: &[Vec3u],
     face_bboxes: &mut Vec<BBox>,
     face_morton: &mut Vec<u32>
-) -> anyhow::Result<Arc<Hmesh>> {
+) -> anyhow::Result<Hmesh> {
     let mut map = (0..face_morton.len()).collect::<Vec<_>>();
     map.sort_by_key(|&i| face_morton[i]);
     *face_bboxes = map.iter().map(|&i| face_bboxes[i].clone()).collect::<Vec<_>>();
     *face_morton = map.iter().map(|&i| face_morton[i]).collect::<Vec<_>>();
 
-    let mut idx_ = DMatrix::<usize>::zeros(map.len(), 3);
-    let mut pos_ = DMatrix::<Real>::zeros(pos.len(), 3);
-    //for i in 0..pos.len() { pos_.set_row(i, &pos[i]); }
-    //for i in 0..map.len() { idx_.set_row(i, &idx[map[i]]); }
-    for i in 0..pos.len() { pos_.set_row(i, &nalgebra::RowVector3::new(pos[i].x, pos[i].y, pos[i].z)); }
-    for i in 0..map.len() { idx_.set_row(i, &nalgebra::RowVector3::new(idx[map[i]].x, idx[map[i]].y, idx[map[i]].z)); }
-    Hmesh::new(pos_, idx_)
+    Hmesh::new(pos, &map.iter().map(|&i| idx[i]).collect::<Vec<_>>())
 }
 
 fn compute_coplanar_idx(

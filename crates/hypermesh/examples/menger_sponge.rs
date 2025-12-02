@@ -1,12 +1,12 @@
 use std::f64::consts::PI;
 use std::time::Instant;
+use boolmesh::{compute_boolean, Manifold, OpType, Real, Vec2 as V2, Vec3 as V3, Mat3};
 use bevy::prelude::*;
 use bevy::pbr::wireframe::{WireframePlugin, Wireframe, WireframeColor};
 use bevy::asset::RenderAssetUsages;
 use bevy::render::mesh::PrimitiveTopology;
 use bevy::color::palettes::css::*;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use boolmesh::{compute_boolean, Manifold, OpType, Real, Vec2 as V2, Vec3 as V3};
 
 #[derive(Component)]
 struct ToggleableMesh;
@@ -98,14 +98,9 @@ fn scale(mat: &mut Vec<V3>, s: V3) {
     for p in mat.iter_mut() { *p = V3::new(p.x * s.x, p.y * s.y, p.z * s.z); }
 }
 
-fn rotate(mat: &mut Vec<V3>, r: &V3) {
-    let r = nalgebra::Rotation3::from_euler_angles(r.x, r.y, r.z);
-    for p in mat.iter_mut() {
-        let pp = nalgebra::RowVector3::new(p.x, p.y, p.z);
-        let aa =(r * pp.transpose()).transpose();
-        *p = V3::new(aa[0], aa[1], aa[2]);
-        //*p =(r * pp.transpose()).transpose();
-    }
+fn rotate(mat: &mut Vec<V3>, rot: &V3) {
+    let r = Mat3::from_euler(glam::EulerRot::XYZ, rot.x, rot.y, rot.z);
+    for p in mat.iter_mut() { *p = r * *p; }
 }
 
 fn fractal(

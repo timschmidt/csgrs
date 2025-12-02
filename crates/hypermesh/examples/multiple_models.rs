@@ -1,10 +1,10 @@
+use boolmesh::{Real, compute_boolean, Manifold, OpType};
 use bevy::asset::RenderAssetUsages;
 use bevy::prelude::*;
 use bevy::pbr::wireframe::{WireframePlugin, Wireframe, WireframeColor};
 use bevy::render::mesh::PrimitiveTopology;
 use bevy::color::palettes::css::*;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use boolmesh::{Real, compute_boolean, Manifold, OpType};
 
 #[derive(Component)]
 struct ToggleableMesh;

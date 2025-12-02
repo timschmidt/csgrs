@@ -12,7 +12,6 @@ exclude = ["/examples", ".gitignore"]
 
 [dependencies]
 anyhow = "1.0.100"
-nalgebra = "0.34.1"
 rayon = "1.11.0"
 glam = "0.30.9"
 
