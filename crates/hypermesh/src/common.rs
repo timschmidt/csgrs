@@ -1,4 +1,4 @@
-//#[cfg(feature = "f32")]
+#[cfg(feature = "f32")]
 mod precision {
     pub type Vec2 = glam::Vec2;
     pub type Vec3 = glam::Vec3A;
@@ -7,14 +7,14 @@ mod precision {
     pub const K_PRECISION: Real = 1e-4;
 }
 
-//#[cfg(not(feature = "f32"))]
-//mod precision {
-//    pub type Vec2 = glam::DVec2;
-//    pub type Vec3 = glam::DVec3;
-//    pub type Vec4 = glam::DVec4;
-//    pub type Real = f64;
-//    pub const K_PRECISION: f64 = 1e-12;
-//}
+#[cfg(not(feature = "f32"))]
+mod precision {
+    pub type Vec2 = glam::DVec2;
+    pub type Vec3 = glam::DVec3;
+    pub type Vec4 = glam::DVec4;
+    pub type Real = f64;
+    pub const K_PRECISION: f64 = 1e-12;
+}
 
 pub type Vec3u = glam::USizeVec3;
 pub use precision::{Real, Vec2, Vec3, Vec4, K_PRECISION};
