@@ -82,7 +82,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// ```
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
         use core2::io::Cursor;
-        use stl_io::{write_stl, Normal, Triangle, Vertex};
+        use stl_io::{Normal, Triangle, Vertex, write_stl};
 
         // Use mesh-level triangulation so T-junction fixing is applied.
         let tri_mesh = self.triangulate();
