@@ -27,30 +27,37 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// # }
     /// ```
     pub fn to_stl_ascii(&self, name: &str) -> String {
+        // Use mesh-level triangulation so T-junction fixing is applied.
+        let tri_mesh = self.triangulate();
+
         let mut out = String::new();
         out.push_str(&format!("solid {name}\n"));
 
-        // Write out all *3D* polygons
-        for poly in &self.polygons {
-            // Ensure the polygon is tessellated, since STL is triangle-based.
-            let triangles = poly.triangulate();
-            // A typical STL uses the face normal; we can take the polygon's plane normal:
-            let normal = poly.plane.normal().normalize();
-            for tri in triangles {
-                out.push_str(&format!(
-                    "  facet normal {:.6} {:.6} {:.6}\n",
-                    normal.x, normal.y, normal.z
-                ));
-                out.push_str("    outer loop\n");
-                for vertex in &tri {
-                    out.push_str(&format!(
-                        "      vertex {:.6} {:.6} {:.6}\n",
-                        vertex.pos.x, vertex.pos.y, vertex.pos.z
-                    ));
-                }
-                out.push_str("    endloop\n");
-                out.push_str("  endfacet\n");
+        // Each polygon in tri_mesh should be a triangle
+        for poly in &tri_mesh.polygons {
+            // Skip any degenerate polygons just in case
+            if poly.vertices.len() != 3 {
+                continue;
             }
+
+            // Face normal from the polygon's plane
+            let normal = poly.plane.normal().normalize();
+
+            out.push_str(&format!(
+                "  facet normal {:.6} {:.6} {:.6}\n",
+                normal.x, normal.y, normal.z
+            ));
+            out.push_str("    outer loop\n");
+
+            for v in &poly.vertices {
+                out.push_str(&format!(
+                    "      vertex {:.6} {:.6} {:.6}\n",
+                    v.pos.x, v.pos.y, v.pos.z
+                ));
+            }
+
+            out.push_str("    endloop\n");
+            out.push_str("  endfacet\n");
         }
 
         out.push_str(&format!("endsolid {name}\n"));
@@ -75,41 +82,46 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// ```
     pub fn to_stl_binary(&self, _name: &str) -> std::io::Result<Vec<u8>> {
         use core2::io::Cursor;
-        use stl_io::{Normal, Triangle, Vertex, write_stl};
+        use stl_io::{write_stl, Normal, Triangle, Vertex};
+
+        // Use mesh-level triangulation so T-junction fixing is applied.
+        let tri_mesh = self.triangulate();
 
         let mut triangles = Vec::new();
 
-        // Triangulate all 3D polygons in self.polygons
-        for poly in &self.polygons {
+        for poly in &tri_mesh.polygons {
+            // Skip any degenerate polygons just in case
+            if poly.vertices.len() != 3 {
+                continue;
+            }
+
             let normal = poly.plane.normal().normalize();
-            // Convert polygon to triangles
-            let tri_list = poly.triangulate();
+
             #[allow(clippy::unnecessary_cast)]
-            for tri in tri_list {
+            {
                 triangles.push(Triangle {
                     normal: Normal::new([normal.x as f32, normal.y as f32, normal.z as f32]),
                     vertices: [
                         Vertex::new([
-                            tri[0].pos.x as f32,
-                            tri[0].pos.y as f32,
-                            tri[0].pos.z as f32,
+                            poly.vertices[0].pos.x as f32,
+                            poly.vertices[0].pos.y as f32,
+                            poly.vertices[0].pos.z as f32,
                         ]),
                         Vertex::new([
-                            tri[1].pos.x as f32,
-                            tri[1].pos.y as f32,
-                            tri[1].pos.z as f32,
+                            poly.vertices[1].pos.x as f32,
+                            poly.vertices[1].pos.y as f32,
+                            poly.vertices[1].pos.z as f32,
                         ]),
                         Vertex::new([
-                            tri[2].pos.x as f32,
-                            tri[2].pos.y as f32,
-                            tri[2].pos.z as f32,
+                            poly.vertices[2].pos.x as f32,
+                            poly.vertices[2].pos.y as f32,
+                            poly.vertices[2].pos.z as f32,
                         ]),
                     ],
                 });
             }
         }
 
-        // Encode into a binary STL buffer
         let mut cursor = Cursor::new(Vec::new());
         write_stl(&mut cursor, triangles.iter())?;
         Ok(cursor.into_inner())
