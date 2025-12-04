@@ -194,6 +194,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
                         // Only consider points strictly inside the segment (avoid ends)
                         if t <= eps || t >= 1.0 - eps {
+                            // Too close to edge endpoints
                             continue;
                         }
 
@@ -202,6 +203,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
                         // Check that the vertex actually lies on the segment (within eps)
                         if (vert.pos - projected).norm_squared() > eps2 {
+                            // Not actually on the edge
                             continue;
                         }
 
@@ -248,6 +250,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             }
 
             let extra_vertices: usize = splits_map.values().map(|v| v.len()).sum();
+
             let mut new_vertices = Vec::with_capacity(n + extra_vertices);
 
             for (edge_start, vertex) in original.iter().enumerate() {
