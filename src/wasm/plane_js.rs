@@ -2,6 +2,7 @@ use crate::float_types::Real;
 use crate::mesh::{plane::Plane, vertex::Vertex};
 use crate::wasm::{
     matrix_js::Matrix4Js, point_js::Point3Js, polygon_js::PolygonJs, vector_js::Vector3Js,
+    vertex_js::VertexJs,
 };
 use nalgebra::{Point3, Vector3};
 use wasm_bindgen::prelude::*;
@@ -13,9 +14,23 @@ pub struct PlaneJs {
 
 #[wasm_bindgen]
 impl PlaneJs {
+    #[wasm_bindgen(js_name = FromVertices)]
+    pub fn from_vertices(vertices: Vec<VertexJs>) -> PlaneJs {
+        // Require at least 3 vertices (Plane::from_vertices will index [0..2])
+        if vertices.len() < 3 {
+            panic!("Plane.fromVertices requires at least 3 vertices");
+        }
+
+        // Strip the JS wrappers to get the underlying Vertex<Real> values
+        let verts: Vec<Vertex> = vertices.into_iter().map(|v| v.inner).collect();
+
+        let plane = Plane::from_vertices(verts);
+        PlaneJs { inner: plane }
+    }
+
     // Constructor: Create a plane from three vertices
-    #[wasm_bindgen(constructor)]
-    pub fn new_from_vertices(
+    #[wasm_bindgen(js_name = FromComponents)]
+    pub fn new_from_components(
         ax: f64,
         ay: f64,
         az: f64,
@@ -41,7 +56,7 @@ impl PlaneJs {
         Self { inner: plane }
     }
 
-    #[wasm_bindgen(js_name = newFromPoints)]
+    #[wasm_bindgen(js_name = FromPoints)]
     pub fn new_from_points(a: &Point3Js, b: &Point3Js, c: &Point3Js) -> Self {
         let point_a: Point3<f64> = (&*a).into();
         let point_b: Point3<f64> = (&*b).into();
