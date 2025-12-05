@@ -859,18 +859,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_obj"
-version = "0.16.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2e7ff43bb4ade2ca3ce6fd3bb8179019b6f25fe3f18aea1dc1428e7a1a25f56"
-dependencies = [
- "bevy",
- "serde",
- "thiserror 2.0.12",
- "tobj",
-]
-
-[[package]]
 name = "bevy_panorbit_camera"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1456,10 +1444,9 @@ dependencies = [
 
 [[package]]
 name = "boolmesh"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "bevy",
- "bevy_obj",
  "bevy_panorbit_camera",
  "glam 0.30.9",
  "rayon",
@@ -4064,7 +4051,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04aca6092e5978e708ee784e8ab9b5cf3cdb598b28f99a2f257446e7081a7025"
 dependencies = [
  "ahash",
- "futures-lite",
 ]
 
 [[package]]

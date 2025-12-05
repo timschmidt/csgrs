@@ -1,12 +1,10 @@
-/*
 #[cfg(test)]
 mod test_intersection {
-    use nalgebra::RowVector3;
     use crate::boolean03::Boolean03;
     use crate::boolean03::kernel03::winding03;
     use crate::boolean03::kernel12::intersect12;
     use crate::boolean45::boolean45;
-    use crate::OpType;
+    use crate::{OpType, Vec3};
     use crate::Manifold;
 
     pub fn gen_tet_a() -> Manifold {
@@ -49,12 +47,12 @@ mod test_intersection {
         assert_eq!(v12.len(), 0);
         assert_eq!(x21, vec![-1, -1, -1]);
         let v21_ = vec![
-            RowVector3::new(-0.224009, 0., -0.112005),
-            RowVector3::new(-0.294367, 0.127465, 0.0735918),
-            RowVector3::new(-0.395087, -0.171077, 0.0987716),
+            Vec3::new(-0.224009, 0., -0.112005),
+            Vec3::new(-0.294367, 0.127465, 0.0735918),
+            Vec3::new(-0.395087, -0.171077, 0.0987716),
         ];
         for i in 0..3 {
-            assert!((v21[i] - v21_[i]).norm() < 1e-6);
+            assert!((v21[i] - v21_[i]).length() < 1e-6);
         }
         let op = OpType::Subtract;
         let b03 = Boolean03{ p1q2, p2q1, x12, x21, w03, w30, v12, v21 };
@@ -74,16 +72,16 @@ mod test_intersection {
         let w30 = winding03(&mfd_p, &mfd_q, expand, false);
 
         let v12_ = vec![
-            RowVector3::new(-0.763707, -0.763707, 0.440927),
-            RowVector3::new(-0.242656, 0.439609, 0.140098),
-            RowVector3::new(0.,0.,-0.5),
-            RowVector3::new(0.,0.,-0.5)
+            Vec3::new(-0.763707, -0.763707, 0.440927),
+            Vec3::new(-0.242656, 0.439609, 0.140098),
+            Vec3::new(0.,0.,-0.5),
+            Vec3::new(0.,0.,-0.5)
         ];
         let v21_ = vec![
-            RowVector3::new(0.302169,0.302169,0.174458),
-            RowVector3::new(0.439609,-0.242656,0.140098),
-            RowVector3::new(0.302169,0.302169,0.174458),
-            RowVector3::new(-0.763707,-0.763707,0.440927)
+            Vec3::new(0.302169,0.302169,0.174458),
+            Vec3::new(0.439609,-0.242656,0.140098),
+            Vec3::new(0.302169,0.302169,0.174458),
+            Vec3::new(-0.763707,-0.763707,0.440927)
         ];
 
         assert_eq!(w03, vec![0, 0, 0, 0]);
@@ -91,8 +89,8 @@ mod test_intersection {
         assert_eq!(x12, vec![-1, 1, -1, 1]);
         assert_eq!(x21, vec![1, 1, -1, -1]);
         for i in 0..3 {
-            assert!((v12[i] - v12_[i]).norm() < 1e-6);
-            assert!((v21[i] - v21_[i]).norm() < 1e-6);
+            assert!((v12[i] - v12_[i]).length() < 1e-6);
+            assert!((v21[i] - v21_[i]).length() < 1e-6);
         }
 
         let op = OpType::Subtract;
@@ -103,29 +101,29 @@ mod test_intersection {
 
 #[cfg(test)]
 mod test_triangulation {
-    use nalgebra::{RowVector2, RowVector3};
     use crate::triangulation::Pt;
     use crate::triangulation::ear_clip::EarClip;
+    use crate::{Vec2, Vec3, Vec3u};
 
     #[test]
     fn test_ear_clip() {
         let polys = vec![
             vec![
-                Pt {idx: 2120, pos: RowVector2::new(0.048238, 0.680959)},
-                Pt {idx: 2124, pos: RowVector2::new(-0.0145625, -0.676874)},
-                Pt {idx: 2123, pos: RowVector2::new(0.0245192, -0.68213)},
-                Pt {idx: 2119, pos: RowVector2::new(0.0482562, -0.681659)},
+                Pt {idx: 2120, pos: Vec2::new(0.048238, 0.680959)},
+                Pt {idx: 2124, pos: Vec2::new(-0.0145625, -0.676874)},
+                Pt {idx: 2123, pos: Vec2::new(0.0245192, -0.68213)},
+                Pt {idx: 2119, pos: Vec2::new(0.0482562, -0.681659)},
             ],
             vec![
-                Pt {idx: 2122, pos: RowVector2::new(-0.068635, -0.673357)},
-                Pt {idx: 2125, pos: RowVector2::new(-0.0487738, -0.690778)},
-                Pt {idx: 2121, pos: RowVector2::new(-0.02279, -0.676339)},
+                Pt {idx: 2122, pos: Vec2::new(-0.068635, -0.673357)},
+                Pt {idx: 2125, pos: Vec2::new(-0.0487738, -0.690778)},
+                Pt {idx: 2121, pos: Vec2::new(-0.02279, -0.676339)},
             ],
         ];
         let res0 = vec![
-            RowVector3::new(2123, 2119, 2120),
-            RowVector3::new(2123, 2120, 2124),
-            RowVector3::new(2125, 2121, 2122)
+            Vec3u::new(2123, 2119, 2120),
+            Vec3u::new(2123, 2120, 2124),
+            Vec3u::new(2125, 2121, 2122)
         ];
 
         let res1 = EarClip::new(&polys, 1e-12).triangulate();
@@ -136,11 +134,11 @@ mod test_triangulation {
 #[cfg(test)]
 mod test_simplification {
     use crate::simplification::collapse::collapse_collinear_edges;
+    use crate::Vec3;
 
     #[test]
     fn test_collapse() {
         use crate::common::{Half, Tref};
-        use nalgebra::{RowVector3 as Row3};
 
         let mut hs = vec![
             Half::new(0, 4, 5),
@@ -218,47 +216,47 @@ mod test_simplification {
         ];
 
         let mut ps = vec![
-            Row3::new(-0.8, -1., -1.),
-            Row3::new(-0.8, -1., 1.),
-            Row3::new(-0.8, 1., -1.),
-            Row3::new(-0.8, 1., 1.),
-            Row3::new(1.2, -1., -1.),
-            Row3::new(1.2, -1., 1.),
-            Row3::new(1.2, 1., -1.),
-            Row3::new(1.2, 1., 1.),
-            Row3::new(0., 0., 0.),
-            Row3::new(-0.8, -0.14641, -0.14641),
-            Row3::new(-0.8, 0.2, 0.2),
-            Row3::new(-0.8, -0.34641, 0.2),
-            Row3::new(-0.8, 0., -0.4),
-            Row3::new(-0.8, 0.34641, 0.2),
+            Vec3::new(-0.8, -1., -1.),
+            Vec3::new(-0.8, -1., 1.),
+            Vec3::new(-0.8, 1., -1.),
+            Vec3::new(-0.8, 1., 1.),
+            Vec3::new(1.2, -1., -1.),
+            Vec3::new(1.2, -1., 1.),
+            Vec3::new(1.2, 1., -1.),
+            Vec3::new(1.2, 1., 1.),
+            Vec3::new(0., 0., 0.),
+            Vec3::new(-0.8, -0.14641, -0.14641),
+            Vec3::new(-0.8, 0.2, 0.2),
+            Vec3::new(-0.8, -0.34641, 0.2),
+            Vec3::new(-0.8, 0., -0.4),
+            Vec3::new(-0.8, 0.34641, 0.2),
         ];
 
         let mut ns = vec![
-            Row3::new(-0., -1., -0.),
-            Row3::new(-0., -0., -1.),
-            Row3::new(-1., -0., 0.),
-            Row3::new(-1., -0., 0.),
-            Row3::new(-1., -0., 0.),
-            Row3::new(-1., -0., 0.),
-            Row3::new(-1., -0., -0.),
-            Row3::new(-1., -0., -0.),
-            Row3::new(-1., -0., -0.),
-            Row3::new(-1., -0., -0.),
-            Row3::new(-1., -0., -0.),
-            Row3::new(0., 0., 1.),
-            Row3::new(0., 1., 0.),
-            Row3::new(1., 0., 0.),
-            Row3::new(0., -1., 0.),
-            Row3::new(-0., 0., 1.),
-            Row3::new(0., 0., -1.),
-            Row3::new(-0., 1., 0.),
-            Row3::new(1., 0., -0.),
-            Row3::new(-0.242536, 0.840168, 0.485071),
-            Row3::new(-0.242536, 0.840168, 0.485071),
-            Row3::new(-0.242536, -0.840168, 0.485071),
-            Row3::new(-0.242536, -3.22877e-20, -0.970143),
-            Row3::new(-0.242536, -3.22877e-20, -0.970143),
+            Vec3::new(-0., -1., -0.),
+            Vec3::new(-0., -0., -1.),
+            Vec3::new(-1., -0., 0.),
+            Vec3::new(-1., -0., 0.),
+            Vec3::new(-1., -0., 0.),
+            Vec3::new(-1., -0., 0.),
+            Vec3::new(-1., -0., -0.),
+            Vec3::new(-1., -0., -0.),
+            Vec3::new(-1., -0., -0.),
+            Vec3::new(-1., -0., -0.),
+            Vec3::new(-1., -0., -0.),
+            Vec3::new(0., 0., 1.),
+            Vec3::new(0., 1., 0.),
+            Vec3::new(1., 0., 0.),
+            Vec3::new(0., -1., 0.),
+            Vec3::new(-0., 0., 1.),
+            Vec3::new(0., 0., -1.),
+            Vec3::new(-0., 1., 0.),
+            Vec3::new(1., 0., -0.),
+            Vec3::new(-0.242536, 0.840168, 0.485071),
+            Vec3::new(-0.242536, 0.840168, 0.485071),
+            Vec3::new(-0.242536, -0.840168, 0.485071),
+            Vec3::new(-0.242536, -3.22877e-20, -0.970143),
+            Vec3::new(-0.242536, -3.22877e-20, -0.970143),
         ];
 
         let mut refs = vec![
@@ -373,20 +371,20 @@ mod test_simplification {
         ];
 
         let ps_out = vec![
-            Row3::new(-0.8, -1., -1.),
-            Row3::new(-0.8, -1., 1.),
-            Row3::new(-0.8, 1., -1.),
-            Row3::new(-0.8, 1., 1.),
-            Row3::new(1.2, -1., -1.),
-            Row3::new(1.2, -1., 1.),
-            Row3::new(1.2, 1., -1.),
-            Row3::new(1.2, 1., 1.),
-            Row3::new(0., 0., 0.),
-            Row3::new(f64::NAN, f64::NAN, f64::NAN),
-            Row3::new(f64::NAN, f64::NAN, f64::NAN),
-            Row3::new(-0.8, -0.34641, 0.2),
-            Row3::new(-0.8, 0., -0.4),
-            Row3::new(-0.8, 0.34641, 0.2),
+            Vec3::new(-0.8, -1., -1.),
+            Vec3::new(-0.8, -1., 1.),
+            Vec3::new(-0.8, 1., -1.),
+            Vec3::new(-0.8, 1., 1.),
+            Vec3::new(1.2, -1., -1.),
+            Vec3::new(1.2, -1., 1.),
+            Vec3::new(1.2, 1., -1.),
+            Vec3::new(1.2, 1., 1.),
+            Vec3::new(0., 0., 0.),
+            Vec3::new(f64::NAN, f64::NAN, f64::NAN),
+            Vec3::new(f64::NAN, f64::NAN, f64::NAN),
+            Vec3::new(-0.8, -0.34641, 0.2),
+            Vec3::new(-0.8, 0., -0.4),
+            Vec3::new(-0.8, 0.34641, 0.2),
         ];
 
         for i in 0..hs.len() {
@@ -403,8 +401,7 @@ mod test_simplification {
         for i in 0..ps.len() {
             let p0 = &ps[i];
             let p1 = &ps_out[i];
-            if !p0.x.is_nan() && !p0.y.is_nan() && p0.z.is_nan() { assert!((p0 - p1).norm() < 1e-6); }
+            if !p0.x.is_nan() && !p0.y.is_nan() && p0.z.is_nan() { assert!((p0 - p1).length() < 1e-6); }
         }
     }
 }
-*/
