@@ -41,9 +41,9 @@ impl PlaneJs {
         cy: f64,
         cz: f64,
     ) -> Self {
-        let point_a = Point3::new(ax, ay, az);
-        let point_b = Point3::new(bx, by, bz);
-        let point_c = Point3::new(cx, cy, cz);
+        let point_a: Point3<Real> = Point3::new(ax as Real, ay as Real, az as Real);
+        let point_b: Point3<Real> = Point3::new(bx as Real, by as Real, bz as Real);
+        let point_c: Point3<Real> = Point3::new(cx as Real, cy as Real, cz as Real);
 
         let normal = (point_b - point_a).cross(&(point_c - point_a)).normalize();
 
@@ -58,9 +58,9 @@ impl PlaneJs {
 
     #[wasm_bindgen(js_name = FromPoints)]
     pub fn new_from_points(a: &Point3Js, b: &Point3Js, c: &Point3Js) -> Self {
-        let point_a: Point3<f64> = (&*a).into();
-        let point_b: Point3<f64> = (&*b).into();
-        let point_c: Point3<f64> = (&*c).into();
+        let point_a: Point3<Real> = a.into();
+        let point_b: Point3<Real> = b.into();
+        let point_c: Point3<Real> = c.into();
 
         let normal = (point_b - point_a).cross(&(point_c - point_a)).normalize();
 
@@ -69,21 +69,20 @@ impl PlaneJs {
         let vertex_c = Vertex::new(point_c, normal);
 
         let plane = Plane::from_vertices(vec![vertex_a, vertex_b, vertex_c]);
-
         Self { inner: plane }
     }
 
     // Constructor: Create a plane from a normal vector and an offset
-    #[wasm_bindgen(js_name=newFromNormalComponents)]
-    pub fn new_from_normal_components(nx: f64, ny: f64, nz: f64, offset: f64) -> Self {
-        let normal = Vector3::new(nx, ny, nz);
+    #[wasm_bindgen(js_name = newFromNormalComponents)]
+    pub fn new_from_normal_components(nx: f64, ny: f64, nz: f64, offset: Real) -> Self {
+        let normal: Vector3<Real> = Vector3::new(nx as Real, ny as Real, nz as Real);
         let plane = Plane::from_normal(normal, offset);
         Self { inner: plane }
     }
 
     #[wasm_bindgen(js_name = newFromNormal)]
-    pub fn new_from_normal(normal: &Vector3Js, offset: f64) -> Self {
-        let n: Vector3<f64> = normal.into();
+    pub fn new_from_normal(normal: &Vector3Js, offset: Real) -> Self {
+        let n: Vector3<Real> = normal.into();
         let plane = Plane::from_normal(n, offset);
         Self { inner: plane }
     }
@@ -98,7 +97,7 @@ impl PlaneJs {
     // Get the plane's offset (distance from origin along the normal)
     #[wasm_bindgen(js_name=offset)]
     pub fn offset(&self) -> f64 {
-        self.inner.offset()
+        self.inner.offset() as f64
     }
 
     // Flip the plane's orientation (negate normal and offset)
@@ -117,7 +116,7 @@ impl PlaneJs {
     // Orient a point relative to the plane (FRONT, BACK, COPLANAR)
     #[wasm_bindgen(js_name=orientPointComponents)]
     pub fn orient_point_components(&self, x: f64, y: f64, z: f64) -> i8 {
-        let point = Point3::new(x, y, z);
+        let point: Point3<Real> = Point3::new(x as Real, y as Real, z as Real);
         self.inner.orient_point(&point)
     }
 

@@ -8,7 +8,7 @@ use crate::wasm::{
 };
 use geo::{Geometry, GeometryCollection};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Matrix4, Point3, Vector3};
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::prelude::*;
 
@@ -208,8 +208,44 @@ impl SketchJs {
         }
     }
 
+    #[wasm_bindgen(js_name = transformComponents)]
+    pub fn transform_components(
+        &self,
+        m00: Real,
+        m01: Real,
+        m02: Real,
+        m03: Real,
+        m10: Real,
+        m11: Real,
+        m12: Real,
+        m13: Real,
+        m20: Real,
+        m21: Real,
+        m22: Real,
+        m23: Real,
+        m30: Real,
+        m31: Real,
+        m32: Real,
+        m33: Real,
+    ) -> SketchJs {
+        let matrix = Matrix4::new(
+            m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33,
+        );
+        SketchJs {
+            inner: self.inner.transform(&matrix),
+        }
+    }
+
     #[wasm_bindgen(js_name = translate)]
-    pub fn translate(&self, dx: Real, dy: Real, dz: Real) -> Self {
+    pub fn translate(&self, offset: &Vector3Js) -> Self {
+        let v: Vector3<Real> = offset.into();
+        Self {
+            inner: self.inner.translate(v.x, v.y, v.z),
+        }
+    }
+
+    #[wasm_bindgen(js_name = translateComponents)]
+    pub fn translate_components(&self, dx: Real, dy: Real, dz: Real) -> Self {
         Self {
             inner: self.inner.translate(dx, dy, dz),
         }
