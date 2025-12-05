@@ -2,8 +2,8 @@ use crate::float_types::Real;
 use crate::mesh::{Mesh, plane::Plane};
 use crate::traits::CSG;
 use crate::wasm::{
-    js_metadata_to_string, point_js::Point3Js, polygon_js::PolygonJs, sketch_js::SketchJs,
-    vector_js::Vector3Js,
+    js_metadata_to_string, plane_js::PlaneJs, point_js::Point3Js, polygon_js::PolygonJs,
+    sketch_js::SketchJs, vector_js::Vector3Js,
 };
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use nalgebra::{Matrix4, Point3, Vector3};
@@ -141,8 +141,14 @@ impl MeshJs {
         js_array.into()
     }
 
-    #[wasm_bindgen(js_name=containsVertex)]
-    pub fn contains_vertex(&self, x: Real, y: Real, z: Real) -> bool {
+    #[wasm_bindgen(js_name = containsVertex)]
+    pub fn contains_vertex(&self, p: &Point3Js) -> bool {
+        let point: Point3<Real> = p.into();
+        self.inner.contains_vertex(&point)
+    }
+
+    #[wasm_bindgen(js_name=containsVertexComponents)]
+    pub fn contains_vertex_components(&self, x: Real, y: Real, z: Real) -> bool {
         let point = Point3::new(x, y, z);
         self.inner.contains_vertex(&point)
     }
@@ -269,8 +275,14 @@ impl MeshJs {
         SketchJs { inner: sketch }
     }
 
-    #[wasm_bindgen(js_name=slice)]
-    pub fn slice(
+    #[wasm_bindgen(js_name = slice)]
+    pub fn slice(&self, plane: &PlaneJs) -> SketchJs {
+        let sketch = self.inner.slice(plane.into());
+        SketchJs { inner: sketch }
+    }
+
+    #[wasm_bindgen(js_name=sliceComponents)]
+    pub fn slice_components(
         &self,
         normal_x: Real,
         normal_y: Real,
