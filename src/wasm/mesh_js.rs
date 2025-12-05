@@ -128,16 +128,20 @@ impl MeshJs {
     pub fn vertices(&self) -> JsValue {
         let verts = self.inner.vertices();
         let js_array = js_sys::Array::new();
+
         for v in verts {
             let js_vert = Object::new();
-            Reflect::set(&js_vert, &"x".into(), &v.pos.x.into()).unwrap();
-            Reflect::set(&js_vert, &"y".into(), &v.pos.y.into()).unwrap();
-            Reflect::set(&js_vert, &"z".into(), &v.pos.z.into()).unwrap();
-            Reflect::set(&js_vert, &"nx".into(), &v.normal.x.into()).unwrap();
-            Reflect::set(&js_vert, &"ny".into(), &v.normal.y.into()).unwrap();
-            Reflect::set(&js_vert, &"nz".into(), &v.normal.z.into()).unwrap();
+
+            // Wrap position and normal in Point3Js / Vector3Js
+            let pos_js = Point3Js::from(v.pos);
+            let norm_js = Vector3Js::from(v.normal);
+
+            Reflect::set(&js_vert, &"position".into(), &JsValue::from(pos_js)).unwrap();
+            Reflect::set(&js_vert, &"normal".into(), &JsValue::from(norm_js)).unwrap();
+
             js_array.push(&js_vert);
         }
+
         js_array.into()
     }
 
@@ -480,13 +484,11 @@ impl MeshJs {
     pub fn mass_properties(&self, density: Real) -> JsValue {
         let (mass, com, _frame) = self.inner.mass_properties(density);
         let obj = Object::new();
+
+        let com_js = Point3Js::from(com);
+
         Reflect::set(&obj, &"mass".into(), &mass.into()).unwrap();
-        Reflect::set(
-            &obj,
-            &"centerOfMass".into(),
-            &serde_wasm_bindgen::to_value(&com).unwrap(),
-        )
-        .unwrap();
+        Reflect::set(&obj, &"centerOfMass".into(), &JsValue::from(com_js)).unwrap();
         obj.into()
     }
 
@@ -676,21 +678,17 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = arrow)]
     pub fn arrow(
-        start_x: Real,
-        start_y: Real,
-        start_z: Real,
-        dir_x: Real,
-        dir_y: Real,
-        dir_z: Real,
+        start: &Point3Js,
+        direction: &Vector3Js,
         segments: usize,
         orientation: bool,
         metadata: JsValue,
     ) -> Self {
-        let start = Point3::new(start_x, start_y, start_z);
-        let direction = Vector3::new(dir_x, dir_y, dir_z);
+        let start: Point3<Real> = start.into();
+        let dir: Vector3<Real> = direction.into();
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::arrow(start, direction, segments, orientation, meta),
+            inner: Mesh::arrow(start, dir, segments, orientation, meta),
         }
     }
 
