@@ -1,5 +1,6 @@
 use crate::float_types::Real;
 use crate::mesh::vertex::Vertex;
+use crate::wasm::{point_js::Point3Js, vector_js::Vector3Js};
 use nalgebra::{Point3, Vector3};
 use wasm_bindgen::prelude::*;
 
@@ -18,6 +19,16 @@ impl VertexJs {
                 Vector3::new(0.0, 0.0, 1.0), // default normal
             ),
         }
+    }
+
+    #[wasm_bindgen(js_name = position)]
+    pub fn position(&self) -> Point3Js {
+        Point3Js::from(self.inner.pos)
+    }
+
+    #[wasm_bindgen(js_name = normal)]
+    pub fn normal(&self) -> Vector3Js {
+        Vector3Js::from(self.inner.normal)
     }
 
     pub fn to_array(&self) -> Vec<f64> {

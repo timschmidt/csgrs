@@ -2,14 +2,14 @@ use serde_json::Value as JsonValue;
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::prelude::*;
 
-pub mod point_js;
-pub mod vector_js;
 pub mod matrix_js;
 pub mod mesh_js;
 pub mod metaballs_js;
 pub mod plane_js;
+pub mod point_js;
 pub mod polygon_js;
 pub mod sketch_js;
+pub mod vector_js;
 pub mod vertex_js;
 
 // Optional: better panic messages in the browser console.

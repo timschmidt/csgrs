@@ -1,5 +1,5 @@
 use crate::mesh::{plane::Plane, vertex::Vertex};
-use crate::wasm::polygon_js::PolygonJs;
+use crate::wasm::{point_js::Point3Js, polygon_js::PolygonJs, vector_js::Vector3Js};
 use nalgebra::{Point3, Vector3};
 use wasm_bindgen::prelude::*;
 
@@ -38,6 +38,23 @@ impl PlaneJs {
         Self { inner: plane }
     }
 
+    #[wasm_bindgen(js_name = newFromPoints)]
+    pub fn new_from_points(a: &Point3Js, b: &Point3Js, c: &Point3Js) -> Self {
+        let point_a: Point3<f64> = (&*a).into();
+        let point_b: Point3<f64> = (&*b).into();
+        let point_c: Point3<f64> = (&*c).into();
+
+        let normal = (point_b - point_a).cross(&(point_c - point_a)).normalize();
+
+        let vertex_a = Vertex::new(point_a, normal);
+        let vertex_b = Vertex::new(point_b, normal);
+        let vertex_c = Vertex::new(point_c, normal);
+
+        let plane = Plane::from_vertices(vec![vertex_a, vertex_b, vertex_c]);
+
+        Self { inner: plane }
+    }
+
     // Constructor: Create a plane from a normal vector and an offset
     #[wasm_bindgen(js_name=newFromNormal)]
     pub fn new_from_normal(nx: f64, ny: f64, nz: f64, offset: f64) -> Self {
@@ -46,11 +63,18 @@ impl PlaneJs {
         Self { inner: plane }
     }
 
+    #[wasm_bindgen(js_name = newFromNormalVector)]
+    pub fn new_from_normal_vector(normal: &Vector3Js, offset: f64) -> Self {
+        let n: Vector3<f64> = normal.into();
+        let plane = Plane::from_normal(n, offset);
+        Self { inner: plane }
+    }
+
     // Get the plane's normal vector as an array [nx, ny, nz]
     #[wasm_bindgen(js_name=normal)]
-    pub fn normal(&self) -> JsValue {
+    pub fn normal(&self) -> Vector3Js {
         let n = self.inner.normal();
-        serde_wasm_bindgen::to_value(&[n.x, n.y, n.z]).unwrap()
+        Vector3Js::from(n)
     }
 
     // Get the plane's offset (distance from origin along the normal)
