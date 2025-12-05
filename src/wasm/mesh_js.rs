@@ -1,7 +1,10 @@
 use crate::float_types::Real;
 use crate::mesh::{Mesh, plane::Plane};
 use crate::traits::CSG;
-use crate::wasm::{js_metadata_to_string, polygon_js::PolygonJs, sketch_js::SketchJs};
+use crate::wasm::{
+    js_metadata_to_string, point_js::Point3Js, polygon_js::PolygonJs, sketch_js::SketchJs,
+    vector_js::Vector3Js,
+};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use nalgebra::{Matrix4, Point3, Vector3};
 use serde_wasm_bindgen::from_value;
@@ -343,6 +346,19 @@ impl MeshJs {
         }
     }
 
+    #[wasm_bindgen(js_name = distributeLinearVector)]
+    pub fn distribute_linear_vector(
+        &self,
+        count: usize,
+        direction: &Vector3Js,
+        spacing: Real,
+    ) -> Self {
+        let dir: Vector3<Real> = direction.into();
+        Self {
+            inner: self.inner.distribute_linear(count, dir, spacing),
+        }
+    }
+
     #[wasm_bindgen(js_name=distributeArc)]
     pub fn distribute_arc(
         &self,
@@ -377,21 +393,12 @@ impl MeshJs {
     #[wasm_bindgen(js_name = boundingBox)]
     pub fn bounding_box(&self) -> JsValue {
         let bb = self.inner.bounding_box();
-        let min = Point3::new(bb.mins.x, bb.mins.y, bb.mins.z);
-        let max = Point3::new(bb.maxs.x, bb.maxs.y, bb.maxs.z);
+        let min_js = Point3Js::from(bb.mins);
+        let max_js = Point3Js::from(bb.maxs);
+
         let obj = Object::new();
-        Reflect::set(
-            &obj,
-            &"min".into(),
-            &serde_wasm_bindgen::to_value(&min).unwrap(),
-        )
-        .unwrap();
-        Reflect::set(
-            &obj,
-            &"max".into(),
-            &serde_wasm_bindgen::to_value(&max).unwrap(),
-        )
-        .unwrap();
+        Reflect::set(&obj, &"min".into(), &JsValue::from(min_js)).unwrap();
+        Reflect::set(&obj, &"max".into(), &JsValue::from(max_js)).unwrap();
         obj.into()
     }
 

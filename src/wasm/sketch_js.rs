@@ -2,7 +2,9 @@ use crate::float_types::Real;
 use crate::io::svg::{FromSVG, ToSVG};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
-use crate::wasm::{js_metadata_to_string, matrix_js::Matrix4Js, mesh_js::MeshJs};
+use crate::wasm::{
+    js_metadata_to_string, matrix_js::Matrix4Js, mesh_js::MeshJs, vector_js::Vector3Js,
+};
 use geo::{Geometry, GeometryCollection};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use nalgebra::{Point3, Vector3};
@@ -261,9 +263,16 @@ impl SketchJs {
         Ok(MeshJs { inner: mesh })
     }
 
-    #[wasm_bindgen(js_name=extrudeVector)]
-    pub fn extrude_vector(&self, dx: Real, dy: Real, dz: Real) -> MeshJs {
+    #[wasm_bindgen(js_name=extrudeVectorComponents)]
+    pub fn extrude_vector_components(&self, dx: Real, dy: Real, dz: Real) -> MeshJs {
         let direction = Vector3::new(dx, dy, dz);
+        let mesh = self.inner.extrude_vector(direction);
+        MeshJs { inner: mesh }
+    }
+
+    #[wasm_bindgen(js_name = extrudeVector)]
+    pub fn extrude_vector(&self, dir: &Vector3Js) -> MeshJs {
+        let direction: Vector3<Real> = dir.into();
         let mesh = self.inner.extrude_vector(direction);
         MeshJs { inner: mesh }
     }
