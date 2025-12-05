@@ -2,8 +2,8 @@ use crate::float_types::Real;
 use crate::mesh::{Mesh, plane::Plane};
 use crate::traits::CSG;
 use crate::wasm::{
-    js_metadata_to_string, plane_js::PlaneJs, point_js::Point3Js, polygon_js::PolygonJs,
-    sketch_js::SketchJs, vector_js::Vector3Js,
+    js_metadata_to_string, matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js,
+    polygon_js::PolygonJs, sketch_js::SketchJs, vector_js::Vector3Js,
 };
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use nalgebra::{Matrix4, Point3, Vector3};
@@ -78,7 +78,7 @@ impl MeshJs {
     }
 
     /// Convert a mesh to arrays of positions, normals, and indices
-    #[wasm_bindgen(js_name = to_arrays)]
+    #[wasm_bindgen(js_name = toArrays)]
     pub fn to_arrays(&self) -> js_sys::Object {
         let tri = &self.inner.triangulate();
 
@@ -151,9 +151,9 @@ impl MeshJs {
         self.inner.contains_vertex(&point)
     }
 
-    #[wasm_bindgen(js_name=containsVertexComponents)]
+    #[wasm_bindgen(js_name = containsVertexComponents)]
     pub fn contains_vertex_components(&self, x: Real, y: Real, z: Real) -> bool {
-        let point = Point3::new(x, y, z);
+        let point: Point3<Real> = Point3::new(x, y, z);
         self.inner.contains_vertex(&point)
     }
 
@@ -187,8 +187,15 @@ impl MeshJs {
     }
 
     // Transformations
-    #[wasm_bindgen(js_name=transform)]
-    pub fn transform(
+    #[wasm_bindgen(js_name = transform)]
+    pub fn transform(&self, mat: &Matrix4Js) -> Self {
+        Self {
+            inner: self.inner.transform(&mat.inner),
+        }
+    }
+
+    #[wasm_bindgen(js_name = transformComponents)]
+    pub fn transform_components(
         &self,
         m00: Real,
         m01: Real,
@@ -216,7 +223,15 @@ impl MeshJs {
     }
 
     #[wasm_bindgen(js_name = translate)]
-    pub fn translate(&self, dx: Real, dy: Real, dz: Real) -> Self {
+    pub fn translate(&self, offset: &Vector3Js) -> Self {
+        let v: Vector3<Real> = offset.into();
+        Self {
+            inner: self.inner.translate(v.x, v.y, v.z),
+        }
+    }
+
+    #[wasm_bindgen(js_name = translateComponents)]
+    pub fn translate_components(&self, dx: Real, dy: Real, dz: Real) -> Self {
         Self {
             inner: self.inner.translate(dx, dy, dz),
         }
@@ -347,8 +362,21 @@ impl MeshJs {
     }
 
     // Distribute functions
-    #[wasm_bindgen(js_name=distributeLinear)]
+    #[wasm_bindgen(js_name = distributeLinear)]
     pub fn distribute_linear(
+        &self,
+        count: usize,
+        direction: &Vector3Js,
+        spacing: Real,
+    ) -> Self {
+        let dir: Vector3<Real> = direction.into();
+        Self {
+            inner: self.inner.distribute_linear(count, dir, spacing),
+        }
+    }
+
+    #[wasm_bindgen(js_name = distributeLinearComponents)]
+    pub fn distribute_linear_components(
         &self,
         count: usize,
         dx: Real,
@@ -359,19 +387,6 @@ impl MeshJs {
         let direction = Vector3::new(dx, dy, dz);
         Self {
             inner: self.inner.distribute_linear(count, direction, spacing),
-        }
-    }
-
-    #[wasm_bindgen(js_name = distributeLinearVector)]
-    pub fn distribute_linear_vector(
-        &self,
-        count: usize,
-        direction: &Vector3Js,
-        spacing: Real,
-    ) -> Self {
-        let dir: Vector3<Real> = direction.into();
-        Self {
-            inner: self.inner.distribute_linear(count, dir, spacing),
         }
     }
 
@@ -560,6 +575,23 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = frustum_ptp)]
     pub fn frustum_ptp(
+        start: &Point3Js,
+        end: &Point3Js,
+        radius1: Real,
+        radius2: Real,
+        segments: usize,
+        metadata: JsValue,
+    ) -> Self {
+        let start: Point3<Real> = start.into();
+        let end: Point3<Real> = end.into();
+        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+        Self {
+            inner: Mesh::frustum_ptp(start, end, radius1, radius2, segments, meta),
+        }
+    }
+
+    #[wasm_bindgen(js_name = frustum_ptpComponents)]
+    pub fn frustum_ptp_components(
         start_x: Real,
         start_y: Real,
         start_z: Real,
@@ -571,8 +603,8 @@ impl MeshJs {
         segments: usize,
         metadata: JsValue,
     ) -> Self {
-        let start = Point3::new(start_x, start_y, start_z);
-        let end = Point3::new(end_x, end_y, end_z);
+        let start: Point3<Real> = Point3::new(start_x, start_y, start_z);
+        let end: Point3<Real> = Point3::new(end_x, end_y, end_z);
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
             inner: Mesh::frustum_ptp(start, end, radius1, radius2, segments, meta),

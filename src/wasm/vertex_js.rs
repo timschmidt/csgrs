@@ -21,6 +21,15 @@ impl VertexJs {
         }
     }
 
+    #[wasm_bindgen(js_name = fromPositionNormal)]
+    pub fn from_position_normal(position: &Point3Js, normal: &Vector3Js) -> VertexJs {
+        let pos: Point3<Real> = position.into();
+        let n: Vector3<Real> = normal.into();
+        VertexJs {
+            inner: Vertex::new(pos, n),
+        }
+    }
+
     #[wasm_bindgen(js_name = position)]
     pub fn position(&self) -> Point3Js {
         Point3Js::from(self.inner.pos)
