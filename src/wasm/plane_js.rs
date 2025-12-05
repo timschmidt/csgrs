@@ -1,5 +1,8 @@
+use crate::float_types::Real;
 use crate::mesh::{plane::Plane, vertex::Vertex};
-use crate::wasm::{point_js::Point3Js, polygon_js::PolygonJs, vector_js::Vector3Js};
+use crate::wasm::{
+    matrix_js::Matrix4Js, point_js::Point3Js, polygon_js::PolygonJs, vector_js::Vector3Js,
+};
 use nalgebra::{Point3, Vector3};
 use wasm_bindgen::prelude::*;
 
@@ -56,15 +59,15 @@ impl PlaneJs {
     }
 
     // Constructor: Create a plane from a normal vector and an offset
-    #[wasm_bindgen(js_name=newFromNormal)]
-    pub fn new_from_normal(nx: f64, ny: f64, nz: f64, offset: f64) -> Self {
+    #[wasm_bindgen(js_name=newFromNormalComponents)]
+    pub fn new_from_normal_components(nx: f64, ny: f64, nz: f64, offset: f64) -> Self {
         let normal = Vector3::new(nx, ny, nz);
         let plane = Plane::from_normal(normal, offset);
         Self { inner: plane }
     }
 
-    #[wasm_bindgen(js_name = newFromNormalVector)]
-    pub fn new_from_normal_vector(normal: &Vector3Js, offset: f64) -> Self {
+    #[wasm_bindgen(js_name = newFromNormal)]
+    pub fn new_from_normal(normal: &Vector3Js, offset: f64) -> Self {
         let n: Vector3<f64> = normal.into();
         let plane = Plane::from_normal(n, offset);
         Self { inner: plane }
@@ -90,8 +93,15 @@ impl PlaneJs {
     }
 
     // Orient a point relative to the plane (FRONT, BACK, COPLANAR)
-    #[wasm_bindgen(js_name=orientPoint)]
-    pub fn orient_point(&self, x: f64, y: f64, z: f64) -> i8 {
+    #[wasm_bindgen(js_name = orientPoint)]
+    pub fn orient_point(&self, p: &Point3Js) -> i8 {
+        let point: Point3<Real> = p.into();
+        self.inner.orient_point(&point)
+    }
+
+    // Orient a point relative to the plane (FRONT, BACK, COPLANAR)
+    #[wasm_bindgen(js_name=orientPointComponents)]
+    pub fn orient_point_components(&self, x: f64, y: f64, z: f64) -> i8 {
         let point = Point3::new(x, y, z);
         self.inner.orient_point(&point)
     }
@@ -117,26 +127,25 @@ impl PlaneJs {
     pub fn to_xy_transform(&self) -> JsValue {
         let (to_xy, from_xy) = self.inner.to_xy_transform();
 
-        // Convert Matrix4 to flat arrays for easier JS consumption
-        let to_xy_flat: Vec<f64> =
-            to_xy.as_slice().iter().copied().map(|v| v as f64).collect();
-        let from_xy_flat: Vec<f64> =
-            from_xy.as_slice().iter().copied().map(|v| v as f64).collect();
+        let to_xy_js = Matrix4Js { inner: to_xy };
+        let from_xy_js = Matrix4Js { inner: from_xy };
 
         let obj = js_sys::Object::new();
-        js_sys::Reflect::set(
-            &obj,
-            &"toXY".into(),
-            &js_sys::Float64Array::from(to_xy_flat.as_slice()),
-        )
-        .unwrap();
-        js_sys::Reflect::set(
-            &obj,
-            &"fromXY".into(),
-            &js_sys::Float64Array::from(from_xy_flat.as_slice()),
-        )
-        .unwrap();
-
+        js_sys::Reflect::set(&obj, &"toXY".into(), &JsValue::from(to_xy_js)).unwrap();
+        js_sys::Reflect::set(&obj, &"fromXY".into(), &JsValue::from(from_xy_js)).unwrap();
         obj.into()
+    }
+}
+
+// Rust-only conversions (not visible to JS)
+impl From<Plane> for PlaneJs {
+    fn from(p: Plane) -> Self {
+        PlaneJs { inner: p }
+    }
+}
+
+impl From<&PlaneJs> for Plane {
+    fn from(p: &PlaneJs) -> Self {
+        p.inner.clone()
     }
 }

@@ -3,7 +3,8 @@ use crate::io::svg::{FromSVG, ToSVG};
 use crate::sketch::Sketch;
 use crate::traits::CSG;
 use crate::wasm::{
-    js_metadata_to_string, matrix_js::Matrix4Js, mesh_js::MeshJs, vector_js::Vector3Js,
+    js_metadata_to_string, matrix_js::Matrix4Js, mesh_js::MeshJs, point_js::Point3Js,
+    vector_js::Vector3Js,
 };
 use geo::{Geometry, GeometryCollection};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
@@ -277,8 +278,16 @@ impl SketchJs {
         MeshJs { inner: mesh }
     }
 
-    #[wasm_bindgen(js_name=sweep)]
-    pub fn sweep(&self, path: JsValue) -> MeshJs {
+    #[wasm_bindgen(js_name = sweep)]
+    pub fn sweep(&self, path: Vec<Point3Js>) -> MeshJs {
+        // Move the inner nalgebra points out of the wrappers.
+        let path_points: Vec<Point3<Real>> = path.into_iter().map(|p| p.inner).collect();
+        let mesh = self.inner.sweep(&path_points);
+        MeshJs { inner: mesh }
+    }
+
+    #[wasm_bindgen(js_name=sweepComponents)]
+    pub fn sweep_components(&self, path: JsValue) -> MeshJs {
         // Parse the path from a JS array of [x, y, z] coordinates.
         let path_vec: Vec<[f64; 3]> = from_value(path).unwrap_or_else(|_| vec![]);
         let path_points: Vec<Point3<Real>> = path_vec
@@ -317,16 +326,13 @@ impl SketchJs {
     #[wasm_bindgen(js_name = boundingBox)]
     pub fn bounding_box(&self) -> JsValue {
         let bb = self.inner.bounding_box();
-        let min = Point3::new(bb.mins.x, bb.mins.y, bb.mins.z);
-        let max = Point3::new(bb.maxs.x, bb.maxs.y, bb.maxs.z);
+
+        let min_js = Point3Js::from(bb.mins);
+        let max_js = Point3Js::from(bb.maxs);
 
         let obj = Object::new();
-        let min_arr = js_sys::Array::of3(&min.x.into(), &min.y.into(), &min.z.into());
-        let max_arr = js_sys::Array::of3(&max.x.into(), &max.y.into(), &max.z.into());
-
-        Reflect::set(&obj, &"min".into(), &min_arr).unwrap();
-        Reflect::set(&obj, &"max".into(), &max_arr).unwrap();
-
+        Reflect::set(&obj, &"min".into(), &JsValue::from(min_js)).unwrap();
+        Reflect::set(&obj, &"max".into(), &JsValue::from(max_js)).unwrap();
         obj.into()
     }
 
