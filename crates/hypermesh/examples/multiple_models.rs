@@ -28,10 +28,8 @@ fn setup(
     mut mats: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>
 ) {
-    //let obj_path_1 = "/path/to/obj/file.obj";
-    //let obj_path_2 = "/path/to/obj/file.obj";
-    let obj_path_1 = "/Users/saki/dev/models/gargoyle.obj";
-    let obj_path_2 = "/Users/saki/dev/models/double-torus.obj";
+    let obj_path_1 = "examples/models/gargoyle.obj";
+    let obj_path_2 = "examples/models/double-torus.obj";
     let (m0, _) = tobj::load_obj(obj_path_1, &tobj::LoadOptions { ..Default::default() }).expect("Failed to load the first obj file");
     let (m1, _) = tobj::load_obj(obj_path_2, &tobj::LoadOptions { ..Default::default() }).expect("Failed to load the second obj file");
 
