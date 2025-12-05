@@ -72,3 +72,16 @@ impl Matrix4Js {
         ]
     }
 }
+
+// Rust-only conversions
+impl From<Matrix4<Real>> for Matrix4Js {
+    fn from(v: Matrix4<Real>) -> Self {
+        Matrix4Js { inner: v }
+    }
+}
+
+impl From<&Matrix4Js> for Matrix4<Real> {
+    fn from(v: &Matrix4Js) -> Self {
+        v.inner
+    }
+}
