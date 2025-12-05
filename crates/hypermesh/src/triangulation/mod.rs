@@ -2,13 +2,13 @@ pub mod ear_clip;
 pub mod flat_tree;
 pub mod tri_halfs;
 
-use anyhow::Result;
 use std::collections::{BTreeMap, VecDeque};
-use rayon::prelude::*;
 use crate::boolean45::Boolean45;
-use crate::{compute_aa_proj, Manifold, Vec2, Vec3, Vec3u, Half, Tref, get_axis_aligned_projection, is_ccw_3d, next_of, Real};
+use crate::{Manifold, Vec2, Vec3, Vec3u, Half, Tref, get_aa_proj_matrix, compute_aa_proj, is_ccw_3d, Real};
 use crate::triangulation::ear_clip::EarClip;
-use crate::triangulation::tri_halfs::{tri_halfs, tri_halfs_multi};
+use crate::triangulation::tri_halfs::tri_halfs_single;
+#[cfg(feature = "rayon")] use rayon::prelude::*;
+#[cfg(feature = "rayon")] use crate::triangulation::tri_halfs::tri_halfs_multi;
 
 pub struct Triangulation {
     pub hs: Vec<Half>,
@@ -20,30 +20,47 @@ pub fn triangulate(
     mp: &Manifold,
     mq: &Manifold,
     b45: &Boolean45,
-    eps: Real
-) -> Result<Triangulation> {
+    eps: Real,
+) -> Result<Triangulation, String> {
+    let mut ts = vec![];
+    let mut ns = vec![];
+    let mut rs = vec![];
 
-    let (mut ts, mut rs, ns) = (0..b45.hid_per_f.len() - 1)
-        .into_par_iter()
-        .map(|fid| {
-            let hid = b45.hid_per_f[fid] as usize;
-            let ts_ = process_face(&b45, fid, eps);
-            let rs_ = vec![b45.rs[hid].clone(); ts_.len()];
-            let ns_ = vec![b45.ns[fid].clone(); ts_.len()];
-            (ts_, rs_, ns_)
-        })
-        .reduce(
-            || (vec![], vec![], vec![]),
-            |mut acc, (mut ts_, mut rs_, mut ns_)| {
-                acc.0.append(&mut ts_);
-                acc.1.append(&mut rs_);
-                acc.2.append(&mut ns_);
-                acc
-            },
-        );
+    #[cfg(feature = "rayon")]
+    {
+        (ts, rs, ns) = (0..b45.hid_per_f.len() - 1)
+            .into_par_iter()
+            .map(|fid| {
+                let hid = b45.hid_per_f[fid] as usize;
+                let ts_ = process_face(&b45, fid, eps);
+                let rs_ = vec![b45.rs[hid].clone(); ts_.len()];
+                let ns_ = vec![b45.ns[fid].clone(); ts_.len()];
+                (ts_, rs_, ns_)
+            })
+            .reduce(
+                || (vec![], vec![], vec![]),
+                |mut acc, (mut ts_, mut rs_, mut ns_)| {
+                    acc.0.append(&mut ts_);
+                    acc.1.append(&mut rs_);
+                    acc.2.append(&mut ns_);
+                    acc
+                },
+            );
+        update_reference(mp, mq, &mut rs);
+        return Ok(Triangulation { hs: tri_halfs_multi(&mut ts), ns, rs });
+    }
 
+    for fid in 0..b45.hid_per_f.len() - 1 {
+        let hid = b45.hid_per_f[fid] as usize;
+        let t = process_face(&b45, fid, eps);
+        let r = b45.rs[hid].clone();
+        let n = b45.ns[fid].clone();
+        rs.extend(vec![r; t.len()]);
+        ns.extend(vec![n; t.len()]);
+        ts.extend(t);
+    }
     update_reference(mp, mq, &mut rs);
-    Ok(Triangulation { hs: tri_halfs_multi(&mut ts), ns, rs })
+    Ok(Triangulation { hs: tri_halfs_single(&mut ts), ns, rs })
 }
 
 fn process_face(
@@ -154,12 +171,11 @@ fn general_triangulate(
     fid: usize,
     eps: Real
 ) -> Vec<Vec3u> {
-    let proj  = get_axis_aligned_projection(&b45.ns[fid]);
+    let proj  = get_aa_proj_matrix(&b45.ns[fid]);
     let loops = assemble_halfs(&b45.hs, &b45.hid_per_f, fid);
     let polys = loops.iter().map(|poly|
         poly.iter().map(|&e| {
             let i = b45.hs[e].tail;
-            //let p = (proj * b45.ps[i].transpose()).transpose();
             let p = compute_aa_proj(&proj, &b45.ps[i]);
             Pt { pos: p, idx: e }
         }).collect()

@@ -12,30 +12,36 @@ use crate::triangulation::triangulate;
 pub use crate::manifold::*;
 pub use crate::common::*;
 
+pub fn compute_boolean_from_raw_data(
+    pos0: Vec<Real>,
+    idx0: Vec<usize>,
+    pos1: Vec<Real>,
+    idx1: Vec<usize>,
+    op_type: usize
+) -> Result<Manifold, String>{
+    let mp = Manifold::new(&pos0, &idx0)?;
+    let mq = Manifold::new(&pos1, &idx1)?;
+    let op = match op_type {
+        0 => OpType::Add,
+        1 => OpType::Subtract,
+        2 => OpType::Intersect,
+        _ => return Err("Invalid op_type".into())
+    };
+
+    compute_boolean(&mp, &mq, op)
+}
+
 pub fn compute_boolean(
     mp: &Manifold,
     mq: &Manifold,
     op: OpType,
-) -> anyhow::Result<Manifold> {
+) -> Result<Manifold, String> {
     let eps = mp.eps.max(mq.eps);
     let tol = mp.tol.max(mq.tol);
 
-    let now = std::time::Instant::now();
-
     let     b03 = boolean03(mp, mq, &op);
-
-    println!("b03: {:?}", now.elapsed());
-    let now = std::time::Instant::now();
-
     let mut b45 = boolean45(mp, mq, &b03, &op);
-
-    println!("b45: {:?}", now.elapsed());
-    let now = std::time::Instant::now();
-
     let mut trg = triangulate(mp, mq, &b45, eps)?;
-
-    println!("trg: {:?}", now.elapsed());
-    let now = std::time::Instant::now();
 
     simplify_topology(
         &mut trg.hs,
@@ -47,15 +53,10 @@ pub fn compute_boolean(
         eps
     );
 
-    println!("smp: {:?}", now.elapsed());
-    let now = std::time::Instant::now();
-
     cleanup_unused_verts(
         &mut b45.ps,
         &mut trg.hs
     );
-
-    println!("cln: {:?}", now.elapsed());
 
     Manifold::new_impl(
         &b45.ps,

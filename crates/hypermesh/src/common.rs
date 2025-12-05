@@ -23,6 +23,7 @@ pub type Vec3u = glam::USizeVec3;
 pub use precision::{Real, Vec2, Vec3, Vec4, Mat3, K_PRECISION};
 pub const K_BEST: Real = Real::MIN;
 
+
 #[derive(PartialEq)]
 pub enum OpType { Add, Subtract, Intersect }
 
@@ -79,7 +80,7 @@ impl Tref {
 
 pub fn det2x2(a: &Vec2, b: &Vec2) -> Real { a.x * b.y - a.y * b.x }
 
-pub fn get_axis_aligned_projection(n: &Vec3) -> (Vec3, Vec3) {
+pub fn get_aa_proj_matrix(n: &Vec3) -> (Vec3, Vec3) {
     let a = n.abs();
     let m: Real;
     let r1: Vec3;
@@ -92,8 +93,8 @@ pub fn get_axis_aligned_projection(n: &Vec3) -> (Vec3, Vec3) {
     if m < 0. { (-r1, r2) } else { (r1, r2) }
 }
 
-pub fn compute_aa_proj(mat: &(Vec3, Vec3), val: &Vec3) -> Vec2 {
-    Vec2::new(mat.0.dot(*val), mat.1.dot(*val))
+pub fn compute_aa_proj(p: &(Vec3, Vec3), v: &Vec3) -> Vec2 {
+    Vec2::new(p.0.dot(*v), p.1.dot(*v))
 }
 
 pub fn is_ccw_2d(p0: &Vec2, p1: &Vec2, p2: &Vec2, t: Real) -> i32 {
@@ -106,7 +107,7 @@ pub fn is_ccw_2d(p0: &Vec2, p1: &Vec2, p2: &Vec2, t: Real) -> i32 {
 }
 
 pub fn is_ccw_3d(p0: &Vec3, p1: &Vec3, p2: &Vec3, n: &Vec3, t: Real) -> i32 {
-    let p = get_axis_aligned_projection(&n);
+    let p = get_aa_proj_matrix(&n);
     is_ccw_2d(
         &compute_aa_proj(&p, p0),
         &compute_aa_proj(&p, p1),

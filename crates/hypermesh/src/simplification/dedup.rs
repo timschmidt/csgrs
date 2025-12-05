@@ -155,6 +155,7 @@ pub fn dedupe_edges(
             dedupe_edge(ps, hs, ns, rs, hid);
             flag += 1;
         }
-        if flag > 0 { println!("{} dedup", flag); } else { break; }
+        if flag == 0 { break; }
+        //else { println!("{} dedup", flag); }
     }
 }

@@ -3,8 +3,6 @@ pub mod bounds;
 pub mod collider;
 
 use std::cmp::Ordering;
-use std::sync::Arc;
-use anyhow::anyhow;
 use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider, K_NO_CODE};
 use crate::{Real, Half, Vec3, Vec3u, K_PRECISION, next_of};
@@ -28,7 +26,7 @@ pub struct Manifold {
 }
 
 impl Manifold {
-    pub fn new(pos: &[Real], idx: &[usize]) -> anyhow::Result<Self> {
+    pub fn new(pos: &[Real], idx: &[usize]) -> Result<Self, String> {
         Self::new_impl(
             &pos.chunks(3).map(|p| Vec3::new(p[0], p[1], p[2])).collect(),
             &idx.chunks(3).map(|i| Vec3u::new(i[0], i[1], i[2])).collect(),
@@ -41,7 +39,7 @@ impl Manifold {
         idx: &Vec<Vec3u>,
         eps: Option<Real>,
         tol: Option<Real>,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, String> {
         let bb = BBox::new(None, &pos);
         let (mut f_bb, mut f_mt) = compute_face_morton(&pos, &idx, &bb);
         let hm = sort_faces(&pos, &idx, &mut f_bb, &mut f_mt)?;
@@ -71,7 +69,7 @@ impl Manifold {
             coplanar,
         };
 
-        if !mfd.is_manifold() { return Err(anyhow!("The input mesh is not manifold")); }
+        if !mfd.is_manifold() { return Err("The input mesh is not manifold".into()); }
         Ok(mfd)
     }
 
@@ -129,7 +127,7 @@ fn sort_faces(
     idx: &[Vec3u],
     face_bboxes: &mut Vec<BBox>,
     face_morton: &mut Vec<u32>
-) -> anyhow::Result<Hmesh> {
+) -> Result<Hmesh, String> {
     let mut map = (0..face_morton.len()).collect::<Vec<_>>();
     map.sort_by_key(|&i| face_morton[i]);
     *face_bboxes = map.iter().map(|&i| face_bboxes[i].clone()).collect::<Vec<_>>();

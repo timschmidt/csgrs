@@ -141,7 +141,7 @@ fn fractal(
     }
 }
 
-pub fn compose(ms: &Vec<Manifold>) -> anyhow::Result<Manifold> {
+pub fn compose(ms: &Vec<Manifold>) -> Result<Manifold, String> {
     let mut ps = vec![];
     let mut ts = vec![];
     let mut offset = 0;

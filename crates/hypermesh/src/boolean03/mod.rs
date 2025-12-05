@@ -27,23 +27,30 @@ pub fn boolean03(
     let expand = if operation == &OpType::Add { 1. } else { -1. };
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
-    //let (x12, v12) = intersect12(mp, mq, &mut p1q2, expand, true);
-    //let (x21, v21) = intersect12(mp, mq, &mut p2q1, expand, false);
-    //let w03 = winding03(mp, mq, expand, true);
-    //let w30 = winding03(mp, mq, expand, false);
+    let x12;
+    let v12;
+    let x21;
+    let v21;
+    let w03;
+    let w30;
 
-    let ((x12, v12, w03), (x21, v21, w30)) = rayon::join(
-        || {
-            let i = intersect12(mp, mq, &mut p1q2, expand, true);
-            let w = winding03(mp, mq, expand, true);
-            (i.0, i.1, w)
-        },
-        || {
-            let i = intersect12(mp, mq, &mut p2q1, expand, false);
-            let w = winding03(mp, mq, expand, false);
-            (i.0, i.1, w)
-        },
-    );
+    #[cfg(feature = "rayon")]
+    {
+        (((x12, v12), w03), ((x21, v21), w30)) = rayon::join(
+            || (intersect12(mp, mq, &mut p1q2, expand, true),  winding03(mp, mq, expand, true)),
+            || (intersect12(mp, mq, &mut p2q1, expand, false), winding03(mp, mq, expand, false)),
+        );
+    }
+
+    #[cfg(not(feature = "rayon"))]
+    {
+        (x12, v12) = intersect12(mp, mq, &mut p1q2, expand, true);
+        (x21, v21) = intersect12(mp, mq, &mut p2q1, expand, false);
+        w03 = winding03(mp, mq, expand, true);
+        w30 = winding03(mp, mq, expand, false);
+
+    }
+
     Boolean03 { p1q2, p2q1, x12, x21, w03, w30, v12, v21 }
 }
 

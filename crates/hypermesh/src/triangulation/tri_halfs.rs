@@ -1,9 +1,10 @@
-use rayon::prelude::*;
-use rayon::slice::ParallelSliceMut;
 use crate::{next_of, Half, Vec3u};
+#[cfg(feature = "rayon")] use rayon::prelude::*;
+#[cfg(feature = "rayon")] use rayon::slice::ParallelSliceMut;
+
 const REMOVE_FLAG: usize = usize::MAX - 1;
 
-pub fn tri_halfs(ts: &Vec<Vec3u>) -> Vec<Half> {
+pub fn tri_halfs_single(ts: &Vec<Vec3u>) -> Vec<Half> {
     let nh = ts.len() * 3;
     let ne = nh / 2;
     let nt = nh / 3;
@@ -67,6 +68,7 @@ pub fn tri_halfs(ts: &Vec<Vec3u>) -> Vec<Half> {
     hs
 }
 
+#[cfg(feature = "rayon")]
 pub fn tri_halfs_multi(ts: &Vec<Vec3u>) -> Vec<Half> {
     let nh = ts.len() * 3;
     let ne = nh / 2;

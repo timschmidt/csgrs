@@ -1,5 +1,3 @@
-use std::mem;
-use anyhow::anyhow;
 use crate::{Vec3, Vec2u, Vec3u};
 
 /// Hmesh preserves the order of pos and idx in any cases.
@@ -23,9 +21,9 @@ fn edge_topology(
     e2v: &mut Vec<Vec2u>,
     e2f: &mut Vec<Vec2u>,
     f2e: &mut Vec<Vec3u>,
-) -> anyhow::Result<()> {
-    if pos.len() == 0 { return Err(anyhow!("empty pos matrix")); }
-    if idx.len() == 0 { return Err(anyhow!("empty idx matrix")); }
+) -> Result<(), String> {
+    if pos.len() == 0 { return Err("empty pos matrix".into()); }
+    if idx.len() == 0 { return Err("empty idx matrix".into()); }
 
     let mut ett: Vec<[usize; 4]> = vec![];
 
@@ -33,7 +31,7 @@ fn edge_topology(
         for j in 0..3 {
             let mut v1 = idx[i][j];
             let mut v2 = idx[i][(j + 1) % 3];
-            if v1 > v2 { mem::swap(&mut v1, &mut v2); }
+            if v1 > v2 { std::mem::swap(&mut v1, &mut v2); }
             ett.push([v1, v2, i, j]);
         }}
     ett.sort();
@@ -94,7 +92,7 @@ impl Hmesh {
     pub fn new(
         pos: &[Vec3],
         idx: &[Vec3u],
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, String> {
         let mut e2v = Default::default();
         let mut e2f = Default::default();
         let mut f2e = Default::default();
@@ -139,7 +137,7 @@ impl Hmesh {
         }
 
         if twin.iter().any(|v| v == &usize::MAX) {
-            return Err(anyhow!("Input mesh must not contain boundary edges."));
+            return Err("Input mesh must not contain boundary edges.".into());
         }
 
         let mut half = vec![];
