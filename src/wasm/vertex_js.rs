@@ -40,7 +40,7 @@ impl VertexJs {
         Vector3Js::from(self.inner.normal)
     }
 
-	#[wasm_bindgen(js_name = toArray)]
+    #[wasm_bindgen(js_name = toArray)]
     pub fn to_array(&self) -> Vec<f64> {
         vec![
             self.inner.pos.x as f64,
