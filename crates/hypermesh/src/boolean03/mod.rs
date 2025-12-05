@@ -5,7 +5,7 @@ pub mod kernel12;
 pub mod kernel03;
 use crate::boolean03::kernel03::winding03;
 use crate::boolean03::kernel12::intersect12;
-use crate::common::{OpType, Row3f};
+use crate::common::{OpType, Vec3};
 use crate::manifold::Manifold;
 
 pub struct Boolean03 {
@@ -15,8 +15,8 @@ pub struct Boolean03 {
     pub x21: Vec<i32>,
     pub w03: Vec<i32>,
     pub w30: Vec<i32>,
-    pub v12: Vec<Row3f>,
-    pub v21: Vec<Row3f>,
+    pub v12: Vec<Vec3>,
+    pub v21: Vec<Vec3>,
 }
 
 pub fn boolean03(
@@ -27,10 +27,30 @@ pub fn boolean03(
     let expand = if operation == &OpType::Add { 1. } else { -1. };
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
-    let (x12, v12) = intersect12(mp, mq, &mut p1q2, expand, true);
-    let (x21, v21) = intersect12(mp, mq, &mut p2q1, expand, false);
-    let w03 = winding03(mp, mq, expand, true);
-    let w30 = winding03(mp, mq, expand, false);
+    let x12;
+    let v12;
+    let x21;
+    let v21;
+    let w03;
+    let w30;
+
+    #[cfg(feature = "rayon")]
+    {
+        (((x12, v12), w03), ((x21, v21), w30)) = rayon::join(
+            || (intersect12(mp, mq, &mut p1q2, expand, true),  winding03(mp, mq, expand, true)),
+            || (intersect12(mp, mq, &mut p2q1, expand, false), winding03(mp, mq, expand, false)),
+        );
+    }
+
+    #[cfg(not(feature = "rayon"))]
+    {
+        (x12, v12) = intersect12(mp, mq, &mut p1q2, expand, true);
+        (x21, v21) = intersect12(mp, mq, &mut p2q1, expand, false);
+        w03 = winding03(mp, mq, expand, true);
+        w30 = winding03(mp, mq, expand, false);
+
+    }
+
     Boolean03 { p1q2, p2q1, x12, x21, w03, w30, v12, v21 }
 }
 

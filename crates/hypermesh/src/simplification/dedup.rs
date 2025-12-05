@@ -1,11 +1,11 @@
 use std::collections::HashMap;
-use crate::common::{Half, Tref, Row3f, next_of};
+use crate::common::{Half, Tref, Vec3, next_of};
 use super::{pair_up, tail_of, update_vid_around_star};
 
 fn dedupe_edge(
-    ps: &mut Vec<Row3f>,
+    ps: &mut Vec<Vec3>,
     hs: &mut Vec<Half>,
-    ns: &mut Vec<Row3f>,
+    ns: &mut Vec<Vec3>,
     rs: &mut Vec<Tref>,
     hid: usize,
 ) {
@@ -100,9 +100,9 @@ fn dedupe_edge(
 }
 
 pub fn dedupe_edges(
-    ps: &mut Vec<Row3f>,
+    ps: &mut Vec<Vec3>,
     hs: &mut Vec<Half>,
-    ns: &mut Vec<Row3f>,
+    ns: &mut Vec<Vec3>,
     rs: &mut Vec<Tref>
 ) {
     if hs.is_empty() { return; }
@@ -155,6 +155,7 @@ pub fn dedupe_edges(
             dedupe_edge(ps, hs, ns, rs, hid);
             flag += 1;
         }
-        if flag > 0 { println!("{} dedup", flag); } else { break; }
+        if flag == 0 { break; }
+        //else { println!("{} dedup", flag); }
     }
 }

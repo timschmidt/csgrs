@@ -1,12 +1,12 @@
 use super::kernel02::Kernel02;
 use crate::bounds::{BPos, Query};
-use crate::common::Row2f;
+use crate::common::{Real, Vec2};
 use crate::Manifold;
 
 pub fn winding03(
     mp: &Manifold,
     mq: &Manifold,
-    expand: f64,
+    expand: Real,
     fwd: bool
 ) -> Vec<i32> {
     let ma = if fwd { mp } else { mq };
@@ -24,7 +24,7 @@ pub fn winding03(
 
     mb.collider.collision(
         &ma.ps.iter().enumerate()
-            .map(|(i, p)| Query::Pt(BPos{id: Some(i), pos: Row2f::new(p.x, p.y)}))
+            .map(|(i, p)| Query::Pt(BPos{id: Some(i), pos: Vec2::new(p.x, p.y)}))
             .collect::<Vec<_>>(),
         &mut |a, b| if let Some((s, _)) = k02.op(a, b) { w03[a] += s * if fwd { 1 } else { -1 }; }
     );

@@ -1,11 +1,27 @@
-pub type Row3u = nalgebra::RowVector3<usize>;
-pub type Row2f = nalgebra::RowVector2<f64>;
-pub type Row3f = nalgebra::RowVector3<f64>;
-pub type Row4f = nalgebra::RowVector4<f64>;
-pub type Mat23 = nalgebra::Matrix2x3<f64>;
+#[cfg(feature = "f32")]
+mod precision {
+    pub type Vec2 = glam::Vec2;
+    pub type Vec3 = glam::Vec3A;
+    pub type Vec4 = glam::Vec4;
+    pub type Mat3 = glam::Mat3A;
+    pub type Real = f32;
+    pub const K_PRECISION: Real = 1e-4;
+}
 
-pub const K_PRECISION: f64 = 1e-12;
-pub const K_BEST: f64 = f64::MIN;
+#[cfg(not(feature = "f32"))]
+mod precision {
+    pub type Vec2 = glam::DVec2;
+    pub type Vec3 = glam::DVec3;
+    pub type Vec4 = glam::DVec4;
+    pub type Mat3 = glam::DMat3;
+    pub type Real = f64;
+    pub const K_PRECISION: f64 = 1e-12;
+}
+
+pub type Vec2u = glam::USizeVec2;
+pub type Vec3u = glam::USizeVec3;
+pub use precision::{Real, Vec2, Vec3, Vec4, Mat3, K_PRECISION};
+pub const K_BEST: Real = Real::MIN;
 
 
 #[derive(PartialEq)]
@@ -62,45 +78,49 @@ impl Tref {
     }
 }
 
-pub fn det2x2(a: &Row2f, b: &Row2f) -> f64 { a.x * b.y - a.y * b.x }
+pub fn det2x2(a: &Vec2, b: &Vec2) -> Real { a.x * b.y - a.y * b.x }
 
-pub fn get_axis_aligned_projection(n: &Row3f) -> Mat23 {
+pub fn get_aa_proj_matrix(n: &Vec3) -> (Vec3, Vec3) {
     let a = n.abs();
-    let m: f64;
-    let mut p: Mat23;
+    let m: Real;
+    let r1: Vec3;
+    let r2: Vec3;
 
-    if a.z > a.x && a.z > a.y { p = Mat23::new(1., 0., 0., 0., 1., 0.); m = n.z; } // preserve x, y
-    else if a.y > a.x         { p = Mat23::new(0., 0., 1., 1., 0., 0.); m = n.y; } // preserve z, x
-    else                      { p = Mat23::new(0., 1., 0., 0., 0., 1.); m = n.x; } // preserve y, z
+    if a.z > a.x && a.z > a.y { r1 = Vec3::new(1., 0., 0.); r2 = Vec3::new(0., 1., 0.); m = n.z; } // preserve x, y
+    else if a.y > a.x         { r1 = Vec3::new(0., 0., 1.); r2 = Vec3::new(1., 0., 0.); m = n.y; } // preserve z, x
+    else                      { r1 = Vec3::new(0., 1., 0.); r2 = Vec3::new(0., 0., 1.); m = n.x; } // preserve y, z
 
-    if m < 0. { p.set_row(0, &(-p.row(0))); }
-    p
+    if m < 0. { (-r1, r2) } else { (r1, r2) }
 }
 
-pub fn is_ccw_2d(p0: &Row2f, p1: &Row2f, p2: &Row2f, t: f64) -> i32 {
+pub fn compute_aa_proj(p: &(Vec3, Vec3), v: &Vec3) -> Vec2 {
+    Vec2::new(p.0.dot(*v), p.1.dot(*v))
+}
+
+pub fn is_ccw_2d(p0: &Vec2, p1: &Vec2, p2: &Vec2, t: Real) -> i32 {
     let v1 = p1 - p0;
     let v2 = p2 - p0;
     let area = v1.x * v2.y - v1.y * v2.x;
-    let base = v1.norm_squared().max(v2.norm_squared());
+    let base = v1.length_squared().max(v2.length_squared());
     if area.powi(2) * 4. <= base * t.powi(2) { return 0; }
     if area > 0. { 1 } else { -1 }
 }
 
-pub fn is_ccw_3d(p0: &Row3f, p1: &Row3f, p2: &Row3f, n: &Row3f, t: f64) -> i32 {
-    let p = get_axis_aligned_projection(&n);
+pub fn is_ccw_3d(p0: &Vec3, p1: &Vec3, p2: &Vec3, n: &Vec3, t: Real) -> i32 {
+    let p = get_aa_proj_matrix(&n);
     is_ccw_2d(
-        &(p * p0.transpose()).transpose(),
-        &(p * p1.transpose()).transpose(),
-        &(p * p2.transpose()).transpose(),
+        &compute_aa_proj(&p, p0),
+        &compute_aa_proj(&p, p1),
+        &compute_aa_proj(&p, p2),
         t
     )
 }
 
-pub fn safe_normalize(v: Row2f) -> Row2f {
+pub fn safe_normalize(v: Vec2) -> Vec2 {
     let n = v.normalize();
     if n.x.is_finite() && !n.x.is_nan() &&
        n.y.is_finite() && !n.y.is_nan() { n }
-    else { Row2f::new(0., 0.) }
+    else { Vec2::new(0., 0.) }
 }
 
 /*

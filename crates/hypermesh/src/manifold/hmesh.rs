@@ -1,66 +1,37 @@
-use std::mem;
-use std::cmp::PartialEq;
-use std::sync::{Arc, Weak};
-use anyhow::anyhow;
-use nalgebra::{DMatrix, RowVector3 as Row3};
+use crate::{Vec3, Vec2u, Vec3u};
 
 /// Hmesh preserves the order of pos and idx in any cases.
 /// Edges are ordered so as the edge is forward (tail idx < head idx)
 #[derive(Debug, Clone)]
 pub(in crate::manifold) struct Hmesh {
-    pub n_vert: usize,
-    pub n_face: usize,
-    pub n_edge: usize,
-    pub n_half: usize,
-    pub pos: DMatrix<f64>,
-    pub idx: DMatrix<usize>,
-    pub e2v: DMatrix<usize>,
-    pub e2f: DMatrix<usize>,
-    pub f2e: DMatrix<usize>,
-    pub v2h: Vec<usize>,
-    pub e2h: Vec<usize>,
-    pub f2h: Vec<usize>,
-    pub next: Vec<usize>,
-    pub prev: Vec<usize>,
+    pub nv: usize,
+    pub nf: usize,
+    pub nh: usize,
     pub twin: Vec<usize>,
     pub head: Vec<usize>,
     pub tail: Vec<usize>,
-    pub edge: Vec<usize>,
-    pub face: Vec<usize>,
-    pub verts: Vec<Vert>,
-    pub edges: Vec<Edge>,
-    pub faces: Vec<Face>,
-    pub halfs: Vec<Half>,
-    pub vert_normal: DMatrix<f64>,
-    pub face_normal: DMatrix<f64>,
-    pub bary_center: DMatrix<f64>,
-    pub face_basis_x: DMatrix<f64>,
-    pub face_basis_y: DMatrix<f64>,
-    pub face_area: Vec<f64>,
+    pub half: Vec<usize>,
+    pub vns: Vec<Vec3>,
+    pub fns: Vec<Vec3>,
 }
 
-#[derive(Debug, Clone)] pub(in crate::manifold) struct Vert { pub hm: Weak<Hmesh>, pub id: usize }
-#[derive(Debug, Clone)] pub(in crate::manifold) struct Edge { pub hm: Weak<Hmesh>, pub id: usize }
-#[derive(Debug, Clone)] pub(in crate::manifold) struct Face { pub hm: Weak<Hmesh>, pub id: usize }
-#[derive(Debug, Clone)] pub(in crate::manifold) struct Half { pub hm: Weak<Hmesh>, pub id: usize }
-
 fn edge_topology(
-    pos: &DMatrix<f64>,
-    idx: &DMatrix<usize>,
-    e2v: &mut DMatrix<usize>,
-    e2f: &mut DMatrix<usize>,
-    f2e: &mut DMatrix<usize>,
-) -> anyhow::Result<()> {
-    if pos.nrows() == 0 || pos.ncols() == 0 { return Err(anyhow!("empty pos matrix")); }
-    if idx.nrows() == 0 || idx.ncols() == 0 { return Err(anyhow!("empty idx matrix")); }
+    pos: &[Vec3],
+    idx: &[Vec3u],
+    e2v: &mut Vec<Vec2u>,
+    e2f: &mut Vec<Vec2u>,
+    f2e: &mut Vec<Vec3u>,
+) -> Result<(), String> {
+    if pos.len() == 0 { return Err("empty pos matrix".into()); }
+    if idx.len() == 0 { return Err("empty idx matrix".into()); }
 
     let mut ett: Vec<[usize; 4]> = vec![];
 
-    for i in 0..idx.nrows() {
+    for i in 0..idx.len() {
         for j in 0..3 {
-            let mut v1 = idx[(i, j)];
-            let mut v2 = idx[(i, (j + 1) % 3)];
-            if v1 > v2 { mem::swap(&mut v1, &mut v2); }
+            let mut v1 = idx[i][j];
+            let mut v2 = idx[i][(j + 1) % 3];
+            if v1 > v2 { std::mem::swap(&mut v1, &mut v2); }
             ett.push([v1, v2, i, j]);
         }}
     ett.sort();
@@ -70,9 +41,9 @@ fn edge_topology(
         if !(ett[i][0] == ett[i + 1][0] && ett[i][1] == ett[i + 1][1]) { ne += 1; }
     }
 
-    e2v.resize_mut(ne, 2, usize::MAX);
-    e2f.resize_mut(ne, 2, usize::MAX);
-    f2e.resize_mut(idx.nrows(), 3, usize::MAX);
+    e2v.resize(ne, Vec2u::MAX);
+    e2f.resize(ne, Vec2u::MAX);
+    f2e.resize(idx.len(), Vec3u::MAX);
     ne = 0;
 
     let mut i = 0;
@@ -80,41 +51,38 @@ fn edge_topology(
         if i == ett.len() - 1 || !((ett[i][0] == ett[i+1][0]) && (ett[i][1] == ett[i + 1][1])) {
             // Border edge
             let [v1, v2, i, j] = ett[i];
-            e2v[(ne, 0)] = v1;
-            e2v[(ne, 1)] = v2;
-            e2f[(ne, 0)] = i;
-            f2e[(i, j)] = ne;
+            e2v[ne][0] = v1;
+            e2v[ne][1] = v2;
+            e2f[ne][0] = i;
+            f2e[i][j]  = ne;
         } else {
             let r1 = ett[i];
             let r2 = ett[i + 1];
-            e2v[(ne, 0)] = r1[0];
-            e2v[(ne, 1)] = r1[1];
-            e2f[(ne, 0)] = r1[2];
-            e2f[(ne, 1)] = r2[2];
-            f2e[(r1[2],r1[3])] = ne;
-            f2e[(r2[2],r2[3])] = ne;
+            e2v[ne][0] = r1[0];
+            e2v[ne][1] = r1[1];
+            e2f[ne][0] = r1[2];
+            e2f[ne][1] = r2[2];
+            f2e[r1[2]][r1[3]] = ne;
+            f2e[r2[2]][r2[3]] = ne;
             i += 1; // skip the next one
         }
         ne += 1;
         i += 1;
     }
 
-    // Sort the relation EF, accordingly to EV
-    // the first one is the face on the left of the edge
-    for i in 0..e2f.nrows() {
-        let fid = e2f[(i, 0)];
+    for i in 0..e2f.len() {
+        let fid = e2f[i][0];
         let mut flip = true;
-        // search for edge EV.row(i)
         for j in 0..3 {
-            if idx[(fid, j)] == e2v[(i, 0)] && idx[(fid,(j + 1) % 3)] == e2v[(i, 1)] {
+            if idx[fid][j] == e2v[i][0] && idx[fid][(j + 1) % 3] == e2v[i][1] {
                 flip = false;
             }
         }
 
         if flip {
-            let tmp = e2f[(i,0)];
-            e2f[(i,0)] = e2f[(i,1)];
-            e2f[(i,1)] = tmp;
+            let tmp = e2f[i][0];
+            e2f[i][0] = e2f[i][1];
+            e2f[i][1] = tmp;
         }
     }
     Ok(())
@@ -122,18 +90,18 @@ fn edge_topology(
 
 impl Hmesh {
     pub fn new(
-        pos: DMatrix<f64>,
-        idx: DMatrix<usize>,
-    ) -> anyhow::Result<Arc<Self>> {
+        pos: &[Vec3],
+        idx: &[Vec3u],
+    ) -> Result<Self, String> {
         let mut e2v = Default::default();
         let mut e2f = Default::default();
         let mut f2e = Default::default();
-        edge_topology(&pos, &idx, &mut e2v, &mut e2f, &mut f2e)?;
+        edge_topology(pos, idx, &mut e2v, &mut e2f, &mut f2e)?;
 
-        let nv = pos.nrows();
-        let nf = idx.nrows();
-        let ne = e2v.nrows();
-        let nh = e2v.nrows() * 2;
+        let nv = pos.len();
+        let nf = idx.len();
+        let ne = e2v.len();
+        let nh = e2v.len() * 2;
         let np = 3;
         let mut v2h = vec![usize::MAX; nv];
         let mut e2h = vec![usize::MAX; ne];
@@ -149,12 +117,12 @@ impl Hmesh {
         for it in 0..nf {
             for ip in 0..np {
                 let ih_bgn = it * np;
-                let iv = idx[(it, ip)];
-                let ie = f2e[(it, ip)];
+                let iv = idx[it][ip];
+                let ie = f2e[it][ip];
                 let ih = ih_bgn + ip;
                 next[ih] = ih_bgn + (ip + 1) % np;
                 prev[ih] = ih_bgn + (ip + np - 1) % np;
-                head[ih] = idx[(it, (ip + 1) % np)];
+                head[ih] = idx[it][(ip + 1) % np];
                 tail[ih] = iv;
                 edge[ih] = ie;
                 face[ih] = it;
@@ -168,207 +136,36 @@ impl Hmesh {
             }
         }
 
-        // setup boundaries
-        let mut ib = nf * np;
-        for ih in 0..nf * np {
-            if twin[ih] != usize::MAX { continue; }
-            let mut jh = ih;
-            let jb = ib;
-            'outer: loop {
-                tail[ib] = head[jh];
-                head[ib] = tail[jh];
-                edge[ib] = edge[jh];
-                prev[ib] = ib - 1;
-                next[ib] = ib + 1;
-                twin[jh] = ib;
-                twin[ib] = jh;
-
-                jh = prev[jh];
-                while twin[jh] != usize::MAX {
-                    if jh == ih {break 'outer; }
-                    jh = prev[twin[jh]];
-                }
-                ib += 1;
-            }
-            prev[jb] = ib;
-            next[ib] = jb;
-            //loop2half.push_back(jB);
-            ib += 1;
+        if twin.iter().any(|v| v == &usize::MAX) {
+            return Err("Input mesh must not contain boundary edges.".into());
         }
 
-        Ok(Arc::new_cyclic(|weak_ptr| {
-            let mut faces = vec![];
-            let mut verts = vec![];
-            let mut edges = vec![];
-            let mut halfs = vec![];
-            for i in 0..nf { faces.push(Face { id: i, hm: weak_ptr.clone() }); }
-            for i in 0..nv { verts.push(Vert { id: i, hm: weak_ptr.clone() }); }
-            for i in 0..ne { edges.push(Edge { id: i, hm: weak_ptr.clone() }); }
-            for i in 0..nh { halfs.push(Half { id: i, hm: weak_ptr.clone() }); }
+        let mut half = vec![];
+        for i in 0..nh { half.push(i); }
+        let mut vns = vec![Vec3::ZERO; nv];
+        let mut fns = vec![Vec3::ZERO; nf];
+        let mut fas = vec![0.; nf];
 
-            let mut vert_normal = DMatrix::<f64>::zeros(nv, 3);
-            let mut face_normal = DMatrix::<f64>::zeros(nf, 3);
-            let mut bary_center = DMatrix::<f64>::zeros(nf, 3);
-            let mut face_basis_x = DMatrix::<f64>::zeros(nf, 3);
-            let mut face_basis_y = DMatrix::<f64>::zeros(nf, 3);
-            let mut face_area = vec![0.; nf];
-
-            for i in 0..nf {
-                let ih = f2h[i];
-                let p2 = pos.fixed_view::<1, 3>(head[ih], 0);
-                let p1 = pos.fixed_view::<1, 3>(tail[ih], 0);
-                let p0 = pos.fixed_view::<1, 3>(tail[prev[ih]], 0);
-                let x = p2 - p1;
-                let t = (p1 - p0) * -1.;
-                let n = x.cross(&t);
-                let c = (p0 + p1 + p2) / 3.;
-                bary_center.row_mut(i).copy_from_slice(c.as_ref());
-                face_normal.row_mut(i).copy_from_slice(n.normalize().as_ref());
-                face_basis_x.row_mut(i).copy_from_slice(x.normalize().as_ref());
-                face_basis_y.row_mut(i).copy_from_slice((-x.cross(&n)).normalize().as_ref());
-                face_area[i] = n.norm() * 0.5;
-            }
-
-            for i in 0..nf {
-                for j in 0..3 {
-                    let n = vert_normal.row(idx[(i, j)]) + face_normal.row(i) * face_area[i];
-                    vert_normal.row_mut(idx[(i, j)]).copy_from_slice(n.as_ref());
-                }
-            }
-
-            for i in 0..vert_normal.nrows() {
-                if let Some(n) = vert_normal.row(i).try_normalize(0.) {
-                    vert_normal.row_mut(i).copy_from(&n);
-                }
-            }
-
-            Hmesh {
-                pos,
-                idx,
-                n_vert: nv,
-                n_face: nf,
-                n_edge: ne,
-                n_half: nh,
-                e2v,
-                e2f,
-                f2e,
-                v2h,
-                e2h,
-                f2h,
-                next,
-                prev,
-                twin,
-                head,
-                tail,
-                edge,
-                face,
-                verts,
-                edges,
-                faces,
-                halfs,
-                vert_normal,
-                face_normal,
-                bary_center,
-                face_basis_x,
-                face_basis_y,
-                face_area
-            }
-        }))
-    }
-}
-
-impl Edge {
-    pub fn half(&self)  -> Half { let m = self.hm.upgrade().unwrap(); m.halfs[m.e2h[self.id]].clone() }
-    pub fn vert0(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.e2v[(self.id, 0)]].clone() }
-    pub fn vert1(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.e2v[(self.id, 1)]].clone() }
-}
-
-impl Vert {
-    pub fn pos(&self)    -> Row3<f64> { let m = self.hm.upgrade().unwrap(); m.pos.fixed_view::<1,3>(self.id, 0).into() }
-    pub fn normal(&self) -> Row3<f64> { let m = self.hm.upgrade().unwrap(); m.vert_normal.fixed_view::<1,3>(self.id, 0).into() }
-}
-
-impl Face {
-    pub fn half(&self)   -> Half      { let m = self.hm.upgrade().unwrap(); m.halfs[m.f2h[self.id]].clone() }
-    pub fn normal(&self) -> Row3<f64> { let m = self.hm.upgrade().unwrap(); m.face_normal.fixed_view::<1,3>(self.id, 0).into() }
-    pub fn area(&self)   -> f64       { let m = self.hm.upgrade().unwrap(); m.face_area[self.id] }
-}
-
-impl Half {
-    pub fn edge(&self) -> Edge { let m = self.hm.upgrade().unwrap(); m.edges[m.edge[self.id]].clone() }
-    pub fn face(&self) -> Face { let m = self.hm.upgrade().unwrap(); m.faces[m.face[self.id]].clone() }
-    pub fn tail(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.tail[self.id]].clone() }
-    pub fn head(&self) -> Vert { let m = self.hm.upgrade().unwrap(); m.verts[m.head[self.id]].clone() }
-    pub fn next(&self) -> Half { let m = self.hm.upgrade().unwrap(); m.halfs[m.next[self.id]].clone() }
-    pub fn prev(&self) -> Half { let m = self.hm.upgrade().unwrap(); m.halfs[m.prev[self.id]].clone() }
-    pub fn twin(&self) -> Half { let m = self.hm.upgrade().unwrap(); m.halfs[m.twin[self.id]].clone() }
-
-    pub fn is_forward(&self)   -> bool { self.tail().id < self.head().id }
-    pub fn is_boundary(&self)  -> bool { self.hm.upgrade().unwrap().face[self.id] == usize::MAX }
-    pub fn is_interior(&self)  -> bool { self.hm.upgrade().unwrap().face[self.id] != usize::MAX }
-    pub fn is_canonical(&self) -> bool { self.edge().half() == *self }
-
-    pub fn vec(&self) -> Row3<f64> {
-        let m = self.hm.upgrade().unwrap();
-        let p0 = m.pos.fixed_view::<1, 3>(m.tail[self.id], 0);
-        let p1 = m.pos.fixed_view::<1, 3>(m.head[self.id], 0);
-        p1 - p0
-    }
-}
-
-macro_rules! impl_hmesh_partial_eq {
-    ($t:ty) => {
-        impl PartialEq for $t {
-            fn eq(&self, other: &Self) -> bool {
-                if self.id != other.id {return false;}
-                match (self.hm.upgrade(), other.hm.upgrade()) {
-                    (Some(a), Some(b)) => Arc::ptr_eq(&a, &b),_ => false,
-                }
-            }
+        for i in 0..nf {
+            let ih = f2h[i];
+            let p2 = pos[head[ih]];
+            let p1 = pos[tail[ih]];
+            let p0 = pos[tail[prev[ih]]];
+            let x = p2 - p1;
+            let t = (p1 - p0) * -1.;
+            let n = x.cross(t);
+            fns[i] = n.normalize();
+            fas[i] = n.length() * 0.5;
         }
 
-        impl Eq for $t {}
-    };
-}
+        for i in 0..nf {
+        for j in 0..3  {
+            let vi = idx[i][j];
+            vns[vi] += fns[i] * fas[i];
+        }}
 
-impl_hmesh_partial_eq!(Half);
-impl_hmesh_partial_eq!(Vert);
-impl_hmesh_partial_eq!(Edge);
-impl_hmesh_partial_eq!(Face);
+        for n in &mut vns { *n = n.normalize_or_zero(); }
 
-
-#[test]
-fn minimal_quad_case() {
-    let mut pos = DMatrix::zeros(4, 3);
-    let mut idx = DMatrix::zeros(2, 3);
-    pos.row_mut(0).copy_from_slice(&[0., 0., 0.]);
-    pos.row_mut(1).copy_from_slice(&[1., 0., 0.]);
-    pos.row_mut(2).copy_from_slice(&[1., 1., 0.]);
-    pos.row_mut(3).copy_from_slice(&[0., 1., 0.]);
-    idx.row_mut(0).copy_from_slice(&[0, 1, 2]);
-    idx.row_mut(1).copy_from_slice(&[2, 3, 0]);
-    let hmesh = Hmesh::new(pos, idx).unwrap();
-    assert_eq!(hmesh.n_vert, 4);
-    assert_eq!(hmesh.n_face, 2);
-    assert_eq!(hmesh.n_edge, 5);
-    assert_eq!(hmesh.n_half, 10);
-}
-
-#[test]
-fn quad_with_hole_case() {
-    let p = 1. / 3.;
-    let pos = [-1., 0., 1., -p, 0., 1., p, 0., 1., 1., 0., 1., -1., 0., p, -p,
-               0., p, p, 0., p, 1., 0., p, -1., 0., -p, -p, 0., -p, p, 0., -p,
-               1., 0., -p, -1., 0., -1., -p, 0., -1., p, 0., -1., 1., 0., -1.];
-    let idx = [1, 4, 0, 2, 5, 1, 3, 6, 2, 5, 8, 4, 7, 10, 6, 9, 12, 8, 10, 13, 9, 11, 14, 10,
-               1, 5, 4, 2, 6, 5, 3, 7, 6, 5, 9, 8, 7, 11, 10, 9, 13, 12, 10, 14, 13, 11, 15, 14];
-
-    let hmesh = Hmesh::new(
-        DMatrix::from_row_slice(pos.len() / 3, 3, &pos).into(),
-        DMatrix::from_row_slice(idx.len() / 3, 3, &idx).into()
-    ).unwrap();
-    assert_eq!(hmesh.n_vert, 16);
-    assert_eq!(hmesh.n_face, 16);
-    assert_eq!(hmesh.n_edge, 32);
-    assert_eq!(hmesh.n_vert + hmesh.n_face - hmesh.n_edge, 0);
+        Ok(Hmesh{ nv, nf, nh, twin, head, tail, half, vns, fns })
+    }
 }

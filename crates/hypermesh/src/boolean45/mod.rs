@@ -1,7 +1,7 @@
 use std::mem;
 use std::collections::HashMap;
 use crate::boolean03::Boolean03;
-use crate::common::{face_of, Half, Tref, Row3f};
+use crate::common::{Real, Vec3, Half, Tref, face_of};
 use crate::manifold::Manifold;
 use crate::bounds::BBox;
 use crate::OpType;
@@ -9,8 +9,8 @@ use crate::OpType;
 fn duplicate_verts(
     inc : &[i32],
     vt_r: &[i32],
-    ps_p: &[Row3f],
-    ps_r: &mut [Row3f],
+    ps_p: &[Vec3],
+    ps_r: &mut [Vec3],
     vid: usize
 ) {
     let n = inc[vid].abs() as usize;
@@ -47,7 +47,7 @@ fn size_output(
     i21: &[i32],
     p1q2: &Vec<[usize; 2]>,
     p2q1: &Vec<[usize; 2]>,
-    fns: &mut Vec<Row3f>,
+    fns: &mut Vec<Vec3>,
     inv: bool, // whether to invert mesh of q
 ) -> (Vec<i32>, Vec<i32>) {
     let mut side_p = vec![0; mp.nf];
@@ -84,7 +84,7 @@ fn size_output(
     inclusive_scan(&keep_fs, &mut face_pq2r[1..], 0);
     let nf_r = *face_pq2r.last().unwrap() as usize;
     face_pq2r.truncate(mp.nf + mq.nf);
-    fns.resize(nf_r, Row3f::zeros());
+    fns.resize(nf_r, Vec3::ZERO);
 
     let mut fid_r = 0;
     for (i, n) in mp.face_normals.iter().enumerate() { if side_p[i] > 0 { fns[fid_r] = *n; fid_r += 1; } }
@@ -102,7 +102,7 @@ fn size_output(
 // Sort of intermediate data store for halfedge creation
 #[derive(Clone, Debug)]
 struct EdgePt {
-    val: f64,     // dot value of edge
+    val: Real,    // dot value of edge
     vid: usize,   // vertex id
     cid: usize,   // collision id
     is_tail: bool //
@@ -175,8 +175,8 @@ fn pair_up(pts: &mut Vec<EdgePt>) -> Vec<Half> {
 fn append_partial_edges(
     i03: &[i32],                            //
     hs_p: &[Half],                          // halfedges in mfd_p
-    ps_p: &[Row3f],                         //
-    ps_r: &[Row3f],                         // the vert pos of mfd_r, already fulfilled so far
+    ps_p: &[Vec3],                         //
+    ps_r: &[Vec3],                         // the vert pos of mfd_r, already fulfilled so far
     vid_p2r: &[i32],                        // map from vid in mfd_p to vid in mfd_r
     fid_p2r: &[i32],                        // map from fid in mfd_p to fid in mfd_r
     fwd: bool,                              //
@@ -194,15 +194,15 @@ fn append_partial_edges(
 
         // assigning 0-1 value to hpos_p
         let dif = ps_p[h.head] - ps_p[h.tail];
-        for p in hpos_p.iter_mut() { p.val = dif.dot(&ps_r[p.vid]); }
+        for p in hpos_p.iter_mut() { p.val = dif.dot(ps_r[p.vid]); }
 
         let i_tail = i03[h.tail]; // mostly 0 or 1
         let i_head = i03[h.head]; // mostly 0 or 1
         let p_tail = ps_r[vid_p2r[h.tail] as usize];
         let p_head = ps_r[vid_p2r[h.head] as usize];
 
-        for i in 0..i_tail.abs() as usize { hpos_p.push(EdgePt{ val: p_tail.dot(&dif), vid: vid_p2r[h.tail] as usize + i, cid: usize::MAX, is_tail: i_tail > 0 }); }
-        for i in 0..i_head.abs() as usize { hpos_p.push(EdgePt{ val: p_head.dot(&dif), vid: vid_p2r[h.head] as usize + i, cid: usize::MAX, is_tail: i_head < 0 }); }
+        for i in 0..i_tail.abs() as usize { hpos_p.push(EdgePt{ val: p_tail.dot(dif), vid: vid_p2r[h.tail] as usize + i, cid: usize::MAX, is_tail: i_tail > 0 }); }
+        for i in 0..i_head.abs() as usize { hpos_p.push(EdgePt{ val: p_head.dot(dif), vid: vid_p2r[h.head] as usize + i, cid: usize::MAX, is_tail: i_head < 0 }); }
 
         let mut half_seq = pair_up(&mut hpos_p);
         let fp_l = face_of(*hid_p);
@@ -232,7 +232,7 @@ fn append_partial_edges(
 }
 
 fn append_new_edges(
-    ps_r: &[Row3f],                                    // the vert pos of mfd_r, already fulfilled so far
+    ps_r: &[Vec3],                                    // the vert pos of mfd_r, already fulfilled so far
     fid_pq2r: &[i32],                                  //
     nf_p: usize,                                       // num of faces in mfd_p
     face_ptr_r: &mut[i32],                             //
@@ -314,8 +314,8 @@ fn append_whole_edges(
 }
 
 pub struct Boolean45 {
-    pub ps: Vec<Row3f>,
-    pub ns: Vec<Row3f>,
+    pub ps: Vec<Vec3>,
+    pub ns: Vec<Vec3>,
     pub hs: Vec<Half>,
     pub rs: Vec<Tref>,
     pub hid_per_f: Vec<i32>,
@@ -362,7 +362,7 @@ pub fn boolean45(
     }
     let nv_21 = nv - nv_rp - nv_rq - nv_12;
 
-    let mut ps_r = vec![Row3f::zeros(); nv as usize];
+    let mut ps_r = vec![Vec3::ZERO; nv as usize];
 
     for i in 0..mp.nv { duplicate_verts(&i03, &vid_p2r, &mp.ps, &mut ps_r, i); }
     for i in 0..mq.nv { duplicate_verts(&i30, &vid_q2r, &mq.ps, &mut ps_r, i); }

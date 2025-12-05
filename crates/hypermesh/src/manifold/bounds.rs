@@ -1,4 +1,4 @@
-use crate::common::{Row2f, Row3f};
+use crate::{Real, Vec2, Vec3};
 
 #[derive(Clone, Debug)]
 pub enum Query { Bb(BBox), Pt(BPos) }
@@ -6,38 +6,38 @@ pub enum Query { Bb(BBox), Pt(BPos) }
 #[derive(Clone, Debug)]
 pub struct BBox {
     pub id: Option<usize>,
-    pub min: Row3f,
-    pub max: Row3f,
+    pub min: Vec3,
+    pub max: Vec3,
 }
 
 #[derive(Clone, Debug)]
 pub struct BPos {
     pub id: Option<usize>,
-    pub pos: Row2f,
+    pub pos: Vec2,
 }
 
 impl BBox {
     pub fn default() -> Self {
         BBox {
             id: None,
-            min: Row3f::new(f64::MAX, f64::MAX, f64::MAX),
-            max: Row3f::new(f64::MIN, f64::MIN, f64::MIN),
+            min: Vec3::new(Real::MAX, Real::MAX, Real::MAX),
+            max: Vec3::new(Real::MIN, Real::MIN, Real::MIN),
         }
     }
     
-    pub fn new(id: Option<usize>, pts: &Vec<Row3f>) -> Self {
+    pub fn new(id: Option<usize>, pts: &Vec<Vec3>) -> Self {
         let mut b = BBox {
             id,
-            min: Row3f::new(f64::MAX, f64::MAX, f64::MAX),
-            max: Row3f::new(f64::MIN, f64::MIN, f64::MIN),
+            min: Vec3::new(Real::MAX, Real::MAX, Real::MAX),
+            max: Vec3::new(Real::MIN, Real::MIN, Real::MIN),
         };
         for pt in pts { b.union(pt); }
         b
     }
 
-    pub fn size(&self) -> Row3f { self.max - self.min }
+    pub fn size(&self) -> Vec3 { self.max - self.min }
 
-    pub fn scale(&self) -> f64 {
+    pub fn scale(&self) -> Real {
         let s = self.size();
         s.x.abs().max(s.y.abs()).max(s.z.abs())
     }
@@ -57,10 +57,10 @@ impl BBox {
         }
     }
 
-    pub fn union(&mut self, p: &Row3f) {
+    pub fn union(&mut self, p: &Vec3) {
         if p.x.is_nan() { return; }
-        self.min = Row3f::new(self.min.x.min(p.x), self.min.y.min(p.y), self.min.z.min(p.z));
-        self.max = Row3f::new(self.max.x.max(p.x), self.max.y.max(p.y), self.max.z.max(p.z));
+        self.min = Vec3::new(self.min.x.min(p.x), self.min.y.min(p.y), self.min.z.min(p.z));
+        self.max = Vec3::new(self.max.x.max(p.x), self.max.y.max(p.y), self.max.z.max(p.z));
     }
 
     pub fn longest_dim(&self) -> usize {
@@ -73,8 +73,8 @@ impl BBox {
 
 
 pub fn union_bbs(b0: &BBox, b1: &BBox) -> BBox {
-    let min = Row3f::new(b0.min.x.min(b1.min.x), b0.min.y.min(b1.min.y), b0.min.z.min(b1.min.z));
-    let max = Row3f::new(b0.max.x.max(b1.max.x), b0.max.y.max(b1.max.y), b0.max.z.max(b1.max.z));
+    let min = Vec3::new(b0.min.x.min(b1.min.x), b0.min.y.min(b1.min.y), b0.min.z.min(b1.min.z));
+    let max = Vec3::new(b0.max.x.max(b1.max.x), b0.max.y.max(b1.max.y), b0.max.z.max(b1.max.z));
     BBox::new(None, &vec![min, max])
 }
 

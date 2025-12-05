@@ -1,5 +1,5 @@
 use crate::bounds::{union_bbs, BBox, Query};
-use crate::common::Row3f;
+use crate::common::Vec3;
 
 pub const K_NO_CODE: u32 = 0xFFFFFFFF;
 const K_INITIAL_LENGTH: i32 = 128;
@@ -16,10 +16,10 @@ fn spread_bits_3(v: u32) -> u32 {
     v
 }
 
-pub fn morton_code(p: &Row3f, bb: &BBox) -> u32 {
+pub fn morton_code(p: &Vec3, bb: &BBox) -> u32 {
     if p.x.is_nan() { return K_NO_CODE; }
-    let mut xyz = (p - bb.min).component_div(&(bb.max - bb.min));
-    xyz = (1024. * xyz).sup(&Row3f::zeros()).inf(&Row3f::new(1023., 1023., 1023.));
+    let mut xyz = (p - bb.min) / (bb.max - bb.min);
+    xyz = (1024. * xyz).max(Vec3::ZERO).min(Vec3::new(1023., 1023., 1023.));
     let x = spread_bits_3(xyz.x as u32);
     let y = spread_bits_3(xyz.y as u32);
     let z = spread_bits_3(xyz.z as u32);

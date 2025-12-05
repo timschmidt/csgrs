@@ -1,71 +1,67 @@
 pub mod hmesh;
 pub mod bounds;
 pub mod collider;
+
 use std::cmp::Ordering;
-use std::sync::Arc;
-use anyhow::anyhow;
-use nalgebra::DMatrix;
 use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider, K_NO_CODE};
-use crate::common::{Half, K_PRECISION, Row3f, next_of, Row3u};
+use crate::{Real, Half, Vec3, Vec3u, K_PRECISION, next_of};
 use super::hmesh::Hmesh;
 
 #[derive(Clone)]
 pub struct Manifold {
-    pub ps: Vec<Row3f>,           // positions
+    pub ps: Vec<Vec3>,            // positions
     pub hs: Vec<Half>,            // halfedges
     pub nv: usize,                // number of vertices
     pub nf: usize,                // number of faces
     pub nh: usize,                // number of halfedges
-    pub eps: f64,                 // epsilon
-    pub tol: f64,                 // tolerance
+    pub eps: Real,                 // epsilon
+    pub tol: Real,                 // tolerance
     pub bounding_box: BBox,       //
-    pub face_normals: Vec<Row3f>, //
-    pub vert_normals: Vec<Row3f>, //
+    pub face_normals: Vec<Vec3>,  //
+    pub vert_normals: Vec<Vec3>,  //
     pub original_idx: Vec<usize>, //
     pub collider: MortonCollider, //
     pub coplanar: Vec<i32>,       // indices of coplanar faces
 }
 
 impl Manifold {
-    pub fn new(pos: &[f64], idx: &[usize]) -> anyhow::Result<Self> {
+    pub fn new(pos: &[Real], idx: &[usize]) -> Result<Self, String> {
         Self::new_impl(
-            &pos.chunks(3).map(|p| Row3f::new(p[0], p[1], p[2])).collect(),
-            &idx.chunks(3).map(|i| Row3u::new(i[0], i[1], i[2])).collect(),
+            &pos.chunks(3).map(|p| Vec3::new(p[0], p[1], p[2])).collect(),
+            &idx.chunks(3).map(|i| Vec3u::new(i[0], i[1], i[2])).collect(),
             None, None
         )
     }
 
     pub fn new_impl(
-        pos: &Vec<Row3f>,
-        idx: &Vec<Row3u>,
-        eps: Option<f64>,
-        tol: Option<f64>,
-    ) -> anyhow::Result<Self> {
+        pos: &Vec<Vec3>,
+        idx: &Vec<Vec3u>,
+        eps: Option<Real>,
+        tol: Option<Real>,
+    ) -> Result<Self, String> {
         let bb = BBox::new(None, &pos);
         let (mut f_bb, mut f_mt) = compute_face_morton(&pos, &idx, &bb);
-        let hm  = sort_faces(&pos, &idx, &mut f_bb, &mut f_mt)?;
-        let ps  = hm.verts.iter().map(|v| v.pos()).collect::<Vec<_>>();
-        let hs  = hm.halfs.iter().map(|h| Half::new(h.tail().id,h.head().id,h.twin().id)).collect::<Vec<_>>();
-        let fns = hm.faces.iter().map(|f| f.normal()).collect::<Vec<_>>();
-        let vns = hm.verts.iter().map(|v| v.normal()).collect::<Vec<_>>();
+        let hm = sort_faces(&pos, &idx, &mut f_bb, &mut f_mt)?;
+        let ps = pos.clone();
+        let hs = hm.half.iter().map(|&i| Half::new(hm.tail[i], hm.head[i], hm.twin[i])).collect::<Vec<_>>();
 
         let mut e = K_PRECISION * bb.scale();
         e = if e.is_finite() { e } else { -1. };
         let eps = if eps.is_some() { eps.unwrap() } else { e };
         let tol = if tol.is_some() { tol.unwrap() } else { e };
         let collider = MortonCollider::new(&f_bb, &f_mt);
-        let coplanar = compute_coplanar_idx(&ps, &fns, &hs, eps);
+        let coplanar = compute_coplanar_idx(&ps, &hm.fns, &hs, eps);
 
         let mfd = Manifold {
-            nv: hm.n_vert,
-            nf: hm.n_face,
-            nh: hm.n_half,
+            nv: hm.nv,
+            nf: hm.nf,
+            nh: hm.nh,
             ps,
             hs,
             bounding_box: bb,
-            vert_normals: vns,
-            face_normals: fns,
+            vert_normals: hm.vns,
+            face_normals: hm.fns,
             original_idx: vec![],
             eps,
             tol,
@@ -73,17 +69,17 @@ impl Manifold {
             coplanar,
         };
 
-        if !mfd.is_manifold() { return Err(anyhow!("The input mesh is not manifold")); }
+        if !mfd.is_manifold() { return Err("The input mesh is not manifold".into()); }
         Ok(mfd)
     }
 
     pub fn get_indices(&self) -> Vec<usize> { self.hs.iter().map(|h| h.tail).collect::<Vec<_>>() }
 
-    pub fn set_epsilon(&mut self, min_epsilon: f64, use_single: bool) {
+    pub fn set_epsilon(&mut self, min_epsilon: Real, use_single: bool) {
         let scl = self.bounding_box.scale();
         let mut e = min_epsilon.max(K_PRECISION * scl);
         e = if e.is_finite() { e } else { -1. };
-        let t = if use_single { e.max(f64::EPSILON * scl) } else { e };
+        let t = if use_single { e.max(Real::EPSILON * scl) } else { e };
         self.eps = e;
         self.tol = self.tol.max(t);
     }
@@ -107,8 +103,8 @@ impl Manifold {
 }
 
 fn compute_face_morton(
-    pos: &[Row3f],
-    idx: &[Row3u],
+    pos: &[Vec3],
+    idx: &[Vec3u],
     bb: &BBox
 ) -> (Vec<BBox>, Vec<u32>) {
     let n = idx.len();
@@ -127,28 +123,24 @@ fn compute_face_morton(
 }
 
 fn sort_faces(
-    pos: &[Row3f],
-    idx: &[Row3u],
+    pos: &[Vec3],
+    idx: &[Vec3u],
     face_bboxes: &mut Vec<BBox>,
     face_morton: &mut Vec<u32>
-) -> anyhow::Result<Arc<Hmesh>> {
+) -> Result<Hmesh, String> {
     let mut map = (0..face_morton.len()).collect::<Vec<_>>();
     map.sort_by_key(|&i| face_morton[i]);
     *face_bboxes = map.iter().map(|&i| face_bboxes[i].clone()).collect::<Vec<_>>();
     *face_morton = map.iter().map(|&i| face_morton[i]).collect::<Vec<_>>();
 
-    let mut idx_ = DMatrix::<usize>::zeros(map.len(), 3);
-    let mut pos_ = DMatrix::<f64>::zeros(pos.len(), 3);
-    for i in 0..pos.len() { pos_.set_row(i, &pos[i]); }
-    for i in 0..map.len() { idx_.set_row(i, &idx[map[i]]); }
-    Hmesh::new(pos_, idx_)
+    Hmesh::new(pos, &map.iter().map(|&i| idx[i]).collect::<Vec<_>>())
 }
 
 fn compute_coplanar_idx(
-    ps: &[Row3f],
-    ns: &[Row3f],
+    ps: &[Vec3],
+    ns: &[Vec3],
     hs: &[Half],
-    tol: f64
+    tol: Real
 ) -> Vec<i32> {
     let nt = hs.len() / 3;
     let mut priority = vec![];
@@ -160,7 +152,7 @@ fn compute_coplanar_idx(
             let p0 = ps[hs[i].tail];
             let p1 = ps[hs[i].head];
             let p2 = ps[hs[i + 1].head];
-            (p1 - p0).cross(&(p2 - p0)).norm_squared()
+            (p1 - p0).cross(p2 - p0).length_squared()
         };
         priority.push((area, t));
     }
@@ -185,7 +177,7 @@ fn compute_coplanar_idx(
 
             if res[t1] != -1 { continue; }
 
-            if (ps[hs[h1].head] - p).dot(&n).abs() < tol {
+            if (ps[hs[h1].head] - p).dot(n).abs() < tol {
                 res[t1] = *t as i32;
                 if interior.last().copied() == Some(hs[h1].pair) { interior.pop(); }
                 else { interior.push(h1); }
@@ -197,7 +189,7 @@ fn compute_coplanar_idx(
 }
 
 pub fn cleanup_unused_verts(
-    ps: &mut Vec<Row3f>,
+    ps: &mut Vec<Vec3>,
     hs: &mut Vec<Half>
 ) {
     let bb = BBox::new(None, ps);
