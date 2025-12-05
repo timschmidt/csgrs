@@ -1,11 +1,11 @@
 use crate::float_types::Real;
 use crate::mesh::{Mesh, plane::Plane};
-use nalgebra::{Matrix4, Point3, Vector3};
 use crate::traits::CSG;
-use wasm_bindgen::prelude::*;
-use serde_wasm_bindgen::{from_value};
-use crate::wasm::{polygon::PolygonJs, js_metadata_to_string, sketch::SketchJs};
+use crate::wasm::{js_metadata_to_string, polygon_js::PolygonJs, sketch_js::SketchJs};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
+use nalgebra::{Matrix4, Point3, Vector3};
+use serde_wasm_bindgen::from_value;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct MeshJs {
@@ -440,21 +440,21 @@ impl MeshJs {
 
     // Metadata
     #[wasm_bindgen(js_name = sameMetadata)]
-	pub fn same_metadata(&self, other: &MeshJs) -> bool {
-		self.inner.same_metadata(&other.inner)
-	}
+    pub fn same_metadata(&self, other: &MeshJs) -> bool {
+        self.inner.same_metadata(&other.inner)
+    }
 
     #[wasm_bindgen(js_name=filterPolygonsByMetadata)]
     pub fn filter_polygons_by_metadata(&self, needle: JsValue) -> MeshJs {
-		let meta = js_metadata_to_string(needle).unwrap_or(None);
+        let meta = js_metadata_to_string(needle).unwrap_or(None);
 
-		if let Some(ref s) = meta {
-			let mesh = self.inner.filter_polygons_by_metadata(s);
-			MeshJs { inner: mesh }
-		} else {
-			MeshJs { inner: Mesh::new() }
-		}
-	}
+        if let Some(ref s) = meta {
+            let mesh = self.inner.filter_polygons_by_metadata(s);
+            MeshJs { inner: mesh }
+        } else {
+            MeshJs { inner: Mesh::new() }
+        }
+    }
 
     // Mass Properties
     #[wasm_bindgen(js_name = massProperties)]

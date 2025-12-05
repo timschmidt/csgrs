@@ -2,13 +2,13 @@ use serde_json::Value as JsonValue;
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::prelude::*;
 
-pub mod matrix;
-pub mod mesh;
-pub mod metaballs;
-pub mod plane;
-pub mod polygon;
-pub mod sketch;
-pub mod vertex;
+pub mod matrix_js;
+pub mod mesh_js;
+pub mod metaballs_js;
+pub mod plane_js;
+pub mod polygon_js;
+pub mod sketch_js;
+pub mod vertex_js;
 
 // Optional: better panic messages in the browser console.
 #[cfg(feature = "console_error_panic_hook")]
@@ -34,9 +34,3 @@ fn js_metadata_to_string(metadata: JsValue) -> Result<Option<String>, JsValue> {
 
     Ok(Some(s))
 }
-
-
-
-
-
-

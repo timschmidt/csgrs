@@ -1,7 +1,7 @@
 use crate::mesh::{plane::Plane, vertex::Vertex};
-use wasm_bindgen::prelude::*;
+use crate::wasm::polygon_js::PolygonJs;
 use nalgebra::{Point3, Vector3};
-use crate::wasm::polygon::PolygonJs;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct PlaneJs {

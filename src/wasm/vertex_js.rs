@@ -1,7 +1,7 @@
 use crate::float_types::Real;
 use crate::mesh::vertex::Vertex;
-use wasm_bindgen::prelude::*;
 use nalgebra::{Point3, Vector3};
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct VertexJs {

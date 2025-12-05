@@ -1,13 +1,13 @@
 use crate::float_types::Real;
-use nalgebra::{Point3, Vector3};
 use crate::io::svg::{FromSVG, ToSVG};
 use crate::sketch::Sketch;
-use geo::{Geometry, GeometryCollection};
 use crate::traits::CSG;
-use wasm_bindgen::prelude::*;
-use serde_wasm_bindgen::from_value;
+use crate::wasm::{js_metadata_to_string, matrix_js::Matrix4Js, mesh_js::MeshJs};
+use geo::{Geometry, GeometryCollection};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
-use crate::wasm::{js_metadata_to_string, mesh::MeshJs, matrix::Matrix4Js};
+use nalgebra::{Point3, Vector3};
+use serde_wasm_bindgen::from_value;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct SketchJs {
