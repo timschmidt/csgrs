@@ -12,13 +12,8 @@ pub struct VertexJs {
 #[wasm_bindgen]
 impl VertexJs {
     #[wasm_bindgen(constructor)]
-    pub fn new(x: f64, y: f64, z: f64) -> VertexJs {
-        VertexJs {
-            inner: Vertex::new(
-                Point3::new(x as Real, y as Real, z as Real),
-                Vector3::new(0.0, 0.0, 1.0), // default normal
-            ),
-        }
+    pub fn new(position: &Point3Js, normal: &Vector3Js) -> VertexJs {
+        VertexJs::from_position_normal(position, normal)
     }
 
     #[wasm_bindgen(js_name = fromPositionNormal)]
@@ -27,6 +22,16 @@ impl VertexJs {
         let n: Vector3<Real> = normal.into();
         VertexJs {
             inner: Vertex::new(pos, n),
+        }
+    }
+
+    #[wasm_bindgen(js_name = fromComponents)]
+    pub fn from_components(x: f64, y: f64, z: f64) -> VertexJs {
+        VertexJs {
+            inner: Vertex::new(
+                Point3::new(x as Real, y as Real, z as Real),
+                Vector3::new(0.0, 0.0, 1.0), // default normal
+            ),
         }
     }
 

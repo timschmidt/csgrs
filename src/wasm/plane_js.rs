@@ -14,6 +14,11 @@ pub struct PlaneJs {
 
 #[wasm_bindgen]
 impl PlaneJs {
+    #[wasm_bindgen(constructor)]
+    pub fn new(vertices: Vec<VertexJs>) -> PlaneJs {
+        PlaneJs::from_vertices(vertices)
+    }
+
     #[wasm_bindgen(js_name = FromVertices)]
     pub fn from_vertices(vertices: Vec<VertexJs>) -> PlaneJs {
         // Require at least 3 vertices (Plane::from_vertices will index [0..2])
