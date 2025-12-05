@@ -52,3 +52,16 @@ impl VertexJs {
         ]
     }
 }
+
+// Rust-only conversions
+impl From<Vertex> for VertexJs {
+    fn from(v: Vertex) -> Self {
+        VertexJs { inner: v }
+    }
+}
+
+impl From<&VertexJs> for Vertex {
+    fn from(v: &VertexJs) -> Self {
+        v.inner
+    }
+}
