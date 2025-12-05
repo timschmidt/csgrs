@@ -679,7 +679,7 @@ impl MeshJs {
         }
     }
 
-    #[wasm_bindgen(js_name = teardrop_cylinder)]
+    #[wasm_bindgen(js_name = teardropCylinder)]
     pub fn teardrop_cylinder(
         width: Real,
         length: Real,
@@ -754,7 +754,7 @@ impl MeshJs {
         }
     }
 
-    #[wasm_bindgen(js_name = spur_gear_involute)]
+    #[wasm_bindgen(js_name = spurGearInvolute)]
     pub fn spur_gear_involute(
         module_: Real,
         teeth: usize,

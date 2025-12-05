@@ -30,7 +30,7 @@ impl PlaneJs {
 
     // Constructor: Create a plane from three vertices
     #[wasm_bindgen(js_name = FromComponents)]
-    pub fn new_from_components(
+    pub fn from_components(
         ax: f64,
         ay: f64,
         az: f64,
@@ -57,7 +57,7 @@ impl PlaneJs {
     }
 
     #[wasm_bindgen(js_name = FromPoints)]
-    pub fn new_from_points(a: &Point3Js, b: &Point3Js, c: &Point3Js) -> Self {
+    pub fn from_points(a: &Point3Js, b: &Point3Js, c: &Point3Js) -> Self {
         let point_a: Point3<Real> = a.into();
         let point_b: Point3<Real> = b.into();
         let point_c: Point3<Real> = c.into();
@@ -73,15 +73,15 @@ impl PlaneJs {
     }
 
     // Constructor: Create a plane from a normal vector and an offset
-    #[wasm_bindgen(js_name = newFromNormalComponents)]
-    pub fn new_from_normal_components(nx: f64, ny: f64, nz: f64, offset: Real) -> Self {
+    #[wasm_bindgen(js_name = FromNormalComponents)]
+    pub fn from_normal_components(nx: f64, ny: f64, nz: f64, offset: Real) -> Self {
         let normal: Vector3<Real> = Vector3::new(nx as Real, ny as Real, nz as Real);
         let plane = Plane::from_normal(normal, offset);
         Self { inner: plane }
     }
 
-    #[wasm_bindgen(js_name = newFromNormal)]
-    pub fn new_from_normal(normal: &Vector3Js, offset: Real) -> Self {
+    #[wasm_bindgen(js_name = FromNormal)]
+    pub fn from_normal(normal: &Vector3Js, offset: Real) -> Self {
         let n: Vector3<Real> = normal.into();
         let plane = Plane::from_normal(n, offset);
         Self { inner: plane }
