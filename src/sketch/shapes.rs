@@ -1119,67 +1119,116 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `clearance`: additional clearance for dedendum
     /// - `segments_per_flank`: tessellation resolution per tooth flank
     /// - `metadata`: optional metadata
+    ///
+    /// * Each tooth is defined in its own local angular frame around a centre
+    ///   angle φ_c.
+    /// * The tooth profile is defined in polar coordinates r(φ), symmetric
+    ///   about φ_c, so tips sit directly above their bases.
+    ///
+    /// It is not a mathematically exact epicycloid/hypocycloid construction
+    /// (like Sparks/Daniels), but produces a clean, non-self-intersecting,
+    /// cycloidal-looking gear that meshes reasonably with the matching
+    /// cycloidal rack.
     pub fn cycloidal_gear(
         module: Real,
         teeth: usize,
-        pin_teeth: usize,
+        _pin_teeth: usize,        // kept for API symmetry, not used in this approx
         clearance: Real,
         segments_per_flank: usize,
         metadata: Option<S>,
     ) -> Sketch<S> {
-        assert!(teeth >= 3 && pin_teeth >= 3);
+        assert!(teeth >= 3);
         assert!(segments_per_flank >= 2);
 
         let z = teeth as Real;
-        let _zp = pin_teeth as Real;
-        let pitch_radius = 0.5 * module * z;
+        let m = module;
 
-        // Rolling circle radius: for zp = z + 1 (common case)
-        let r_roll = module / 2.0; // standard generating radius
+        // Basic radii (same conventions as involute_gear).
+        let pitch_radius = 0.5 * m * z;
+        let addendum = m;
+        let dedendum = 1.25 * m + clearance;
+        let outer_radius = pitch_radius + addendum;
+        let root_radius = (pitch_radius - dedendum).max(tolerance());
 
+        // Angular pitch between tooth centres.
         let ang_pitch = TAU / z;
 
-        // Total points: one epicycloid lobe + one hypocycloid valley per tooth
-        let mut outline = Vec::new();
+        // We give each tooth half the pitch for material, half for space.
+        // So tooth half-angle at the pitch circle is:
+        let half_tooth_angle = ang_pitch * 0.25;
+
+        // Total angular span per tooth profile (from left gap to right gap):
+        let _span_per_tooth = 2.0 * half_tooth_angle;
+
+        // Helper: "cycloidal-ish" bump shape for the addendum.
+        //
+        // φ_offset ∈ [-half_tooth_angle, +half_tooth_angle] (angle from tooth centre).
+        // We map that to u ∈ [-1, +1] and use a smooth bump with zero slope at
+        // the edges and tip.
+        fn addendum_profile(
+            pitch_radius: Real,
+            outer_radius: Real,
+            half_tooth_angle: Real,
+            phi_offset: Real,
+        ) -> Real {
+            let u = phi_offset / half_tooth_angle; // -1 .. +1
+            // Smooth, cycloidal-like bump:  (1 - cos(π * (1 - |u|))) / 2
+            // This is 0 at |u| = 1 and 1 at u = 0, with C¹ continuity.
+            let t = (PI * (1.0 - u.abs())).max(0.0).min(PI);
+            let bump = 0.5 * (1.0 - t.cos()); // 0 .. 1
+            pitch_radius + bump * (outer_radius - pitch_radius)
+        }
+
+        // Precompute how many angular samples per tooth we want.
+        // Two flanks per tooth, so total samples per tooth:
+        let samples_per_tooth = 2 * segments_per_flank + 2; // +2 for including endpoints
+
+        let mut outline: Vec<[Real; 2]> =
+            Vec::with_capacity(samples_per_tooth * teeth + 1);
 
         for i in 0..teeth {
-            let base_angle = i as Real * ang_pitch;
+            let tooth_center_angle = (i as Real) * ang_pitch;
 
-            // --- Epicycloid lobe (addendum) ---
-            // Sweep from -Δθ/2 to +Δθ/2 around base_angle
-            let delta = ang_pitch / 4.0;
+            // 1. ADDENDUM (tip region) – go CCW from left flank to right flank.
+            //
+            // We sample φ over the tooth-material region:
+            //   φ ∈ [φ_c - half_tooth_angle, φ_c + half_tooth_angle]
             for j in 0..=segments_per_flank {
-                let t = -delta + (2.0 * delta) * (j as Real / segments_per_flank as Real);
-                let k = (pitch_radius + r_roll) / r_roll;
-                let x = (pitch_radius + r_roll) * t.cos() - r_roll * (k * t).cos();
-                let y = (pitch_radius + r_roll) * t.sin() - r_roll * (k * t).sin();
-                let (x_rot, y_rot) = (
-                    x * base_angle.cos() - y * base_angle.sin(),
-                    x * base_angle.sin() + y * base_angle.cos(),
+                let t = j as Real / (segments_per_flank as Real);
+                let phi = tooth_center_angle
+                    - half_tooth_angle
+                    + t * (2.0 * half_tooth_angle);
+                let phi_offset = phi - tooth_center_angle;
+
+                let r = addendum_profile(
+                    pitch_radius,
+                    outer_radius,
+                    half_tooth_angle,
+                    phi_offset,
                 );
-                outline.push([x_rot, y_rot]);
+
+                outline.push([r * phi.cos(), r * phi.sin()]);
             }
 
-            // --- Hypocycloid valley (dedendum) ---
-            // Centered at base_angle + ang_pitch/2 (midway to next lobe)
-            let valley_angle = base_angle + ang_pitch / 2.0;
-            let delta_v = ang_pitch / 4.0;
+            // 2. ROOT REGION – simple circular arc on root_radius between
+            //    this tooth's right gap and the next tooth's left gap.
+            //
+            // Right gap angle for this tooth:
+            let right_gap_angle = tooth_center_angle + half_tooth_angle;
+            // Left gap angle for next tooth (wrap around at 2π):
+            let next_center_angle = tooth_center_angle + ang_pitch;
+            let next_left_gap_angle = next_center_angle - half_tooth_angle;
+
             for j in 0..=segments_per_flank {
-                let t = -delta_v + (2.0 * delta_v) * (j as Real / segments_per_flank as Real);
-                let k = (pitch_radius - r_roll) / r_roll;
-                let x = (pitch_radius - r_roll) * t.cos() + r_roll * (k * t).cos();
-                let y = (pitch_radius - r_roll) * t.sin() - r_roll * (k * t).sin();
-                // Apply clearance: scale inward slightly
-                let scale = 1.0 - clearance / pitch_radius;
-                let (x_rot, y_rot) = (
-                    scale * (x * valley_angle.cos() - y * valley_angle.sin()),
-                    scale * (x * valley_angle.sin() + y * valley_angle.cos()),
-                );
-                outline.push([x_rot, y_rot]);
+                let t = j as Real / (segments_per_flank as Real);
+                let phi = right_gap_angle + t * (next_left_gap_angle - right_gap_angle);
+                outline.push([root_radius * phi.cos(), root_radius * phi.sin()]);
             }
         }
 
-        outline.push(outline[0]); // close
+        // Close the polygon
+        outline.push(outline[0]);
+
         Sketch::polygon(&outline, metadata)
     }
 
