@@ -22,9 +22,9 @@ pub struct Boolean03 {
 pub fn boolean03(
     mp: &Manifold,
     mq: &Manifold,
-    operation: &OpType,
+    op: &OpType,
 ) -> Boolean03 {
-    let expand = if operation == &OpType::Add { 1. } else { -1. };
+    let e = if op == &OpType::Add { 1. } else { -1. };
     let mut p1q2 = vec![];
     let mut p2q1 = vec![];
     let x12;
@@ -34,21 +34,16 @@ pub fn boolean03(
     let w03;
     let w30;
 
-    #[cfg(feature = "rayon")]
-    {
+    #[cfg(feature = "rayon")] {
         (((x12, v12), w03), ((x21, v21), w30)) = rayon::join(
-            || (intersect12(mp, mq, &mut p1q2, expand, true),  winding03(mp, mq, expand, true)),
-            || (intersect12(mp, mq, &mut p2q1, expand, false), winding03(mp, mq, expand, false)),
+            || rayon::join(|| intersect12(mp, mq, &mut p1q2, e, true),  || winding03(mp, mq, e, true) ),
+            || rayon::join(|| intersect12(mp, mq, &mut p2q1, e, false), || winding03(mp, mq, e, false)),
         );
     }
 
-    #[cfg(not(feature = "rayon"))]
-    {
-        (x12, v12) = intersect12(mp, mq, &mut p1q2, expand, true);
-        (x21, v21) = intersect12(mp, mq, &mut p2q1, expand, false);
-        w03 = winding03(mp, mq, expand, true);
-        w30 = winding03(mp, mq, expand, false);
-
+    #[cfg(not(feature = "rayon"))] {
+        ((x12, v12), w03) = (intersect12(mp, mq, &mut p1q2, e, true),  winding03(mp, mq, e, true) );
+        ((x21, v21), w30) = (intersect12(mp, mq, &mut p2q1, e, false), winding03(mp, mq, e, false));
     }
 
     Boolean03 { p1q2, p2q1, x12, x21, w03, w30, v12, v21 }

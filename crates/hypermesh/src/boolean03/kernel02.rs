@@ -1,4 +1,4 @@
-use crate::common::{Real, Half, Vec3};
+use crate::{Real, Half, Vec3};
 use super::kernel01::{interpolate, shadows, shadows01};
 
 pub struct Kernel02<'a> {

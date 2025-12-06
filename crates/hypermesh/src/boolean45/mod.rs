@@ -175,8 +175,8 @@ fn pair_up(pts: &mut Vec<EdgePt>) -> Vec<Half> {
 fn append_partial_edges(
     i03: &[i32],                            //
     hs_p: &[Half],                          // halfedges in mfd_p
-    ps_p: &[Vec3],                         //
-    ps_r: &[Vec3],                         // the vert pos of mfd_r, already fulfilled so far
+    ps_p: &[Vec3],                          //
+    ps_r: &[Vec3],                          // the vert pos of mfd_r, already fulfilled so far
     vid_p2r: &[i32],                        // map from vid in mfd_p to vid in mfd_r
     fid_p2r: &[i32],                        // map from fid in mfd_p to fid in mfd_r
     fwd: bool,                              //
@@ -232,7 +232,7 @@ fn append_partial_edges(
 }
 
 fn append_new_edges(
-    ps_r: &[Vec3],                                    // the vert pos of mfd_r, already fulfilled so far
+    ps_r: &[Vec3],                                     // the vert pos of mfd_r, already fulfilled so far
     fid_pq2r: &[i32],                                  //
     nf_p: usize,                                       // num of faces in mfd_p
     face_ptr_r: &mut[i32],                             //

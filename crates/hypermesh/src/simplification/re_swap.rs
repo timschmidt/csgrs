@@ -148,6 +148,7 @@ pub fn swap_degenerates(
     let rec = (0..hs.len())
         .filter(|&hid| record(hs, ps, ns, hid, oft, tol))
         .collect::<Vec<_>>();
+
     for hid in rec {
         _flag += 1;
         tag += 1;

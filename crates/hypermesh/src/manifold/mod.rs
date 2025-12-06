@@ -7,6 +7,7 @@ use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider, K_NO_CODE};
 use crate::{Real, Half, Vec3, Vec3u, K_PRECISION, next_of};
 use super::hmesh::Hmesh;
+#[cfg(feature = "rayon")] use rayon::prelude::*;
 
 #[derive(Clone)]
 pub struct Manifold {
@@ -110,15 +111,35 @@ fn compute_face_morton(
     let n = idx.len();
     let mut bbs = vec![BBox::default(); n];
     let mut mts = vec![0; n];
-    for (i, f) in idx.iter().enumerate() {
-        let p0 = pos[f.x];
-        let p1 = pos[f.y];
-        let p2 = pos[f.z];
-        bbs[i].union(&p0);
-        bbs[i].union(&p1);
-        bbs[i].union(&p2);
-        mts[i] = morton_code(&((p0 + p1 + p2) / 3.), bb);
+
+    #[cfg(feature = "rayon")] {
+        bbs.par_iter_mut()
+            .zip(mts.par_iter_mut())
+            .zip(idx.par_iter())
+            .for_each(|((bb_, mt_), f)| {
+                let p0 = pos[f.x];
+                let p1 = pos[f.y];
+                let p2 = pos[f.z];
+                bb_.union(&p0);
+                bb_.union(&p1);
+                bb_.union(&p2);
+                *mt_ = morton_code(&((p0 + p1 + p2) / 3.), bb);
+            });
     }
+
+    #[cfg(not(feature = "rayon"))] {
+        for (i, f) in idx.iter().enumerate() {
+            let p0 = pos[f.x];
+            let p1 = pos[f.y];
+            let p2 = pos[f.z];
+            bbs[i].union(&p0);
+            bbs[i].union(&p1);
+            bbs[i].union(&p2);
+            mts[i] = morton_code(&((p0 + p1 + p2) / 3.), bb);
+        }
+    }
+
+
     (bbs, mts)
 }
 

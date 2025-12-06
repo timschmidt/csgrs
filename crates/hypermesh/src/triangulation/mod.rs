@@ -26,8 +26,7 @@ pub fn triangulate(
     let mut ns = vec![];
     let mut rs = vec![];
 
-    #[cfg(feature = "rayon")]
-    {
+    #[cfg(feature = "rayon")] {
         (ts, rs, ns) = (0..b45.hid_per_f.len() - 1)
             .into_par_iter()
             .map(|fid| {

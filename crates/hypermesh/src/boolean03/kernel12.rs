@@ -1,10 +1,10 @@
-use std::mem;
 use crate::bounds::{BBox, Query};
 use crate::common::{Half, Real, Vec3};
 use crate::Manifold;
 use super::kernel01::intersect;
 use super::kernel02::Kernel02;
 use super::kernel11::Kernel11;
+#[cfg(feature = "rayon")] use rayon::prelude::*;
 
 pub struct Kernel12<'a> {
     pub hs_p: &'a[Half],
@@ -56,7 +56,7 @@ impl<'a> Kernel12<'a> {
                     xzy_lr0[k].z = xyzz.y;
                     xzy_lr1[k] = xzy_lr0[k];
                     xzy_lr1[k].y = xyzz.w;
-                    if !self.fwd { mem::swap(&mut xzy_lr0[k].y, &mut xzy_lr1[k].y); }
+                    if !self.fwd { std::mem::swap(&mut xzy_lr0[k].y, &mut xzy_lr1[k].y); }
                     k += 1;
                 }
             }
@@ -84,10 +84,18 @@ pub fn intersect12 (
     let k11 = Kernel11{ ps_p: &mp.ps, ps_q: &mq.ps, hs_p: &mp.hs, hs_q: &mq.hs, ns: &mp.vert_normals, expand };
     let k12 = Kernel12{ ps_p: &ma.ps, hs_p: &ma.hs, hs_q: &mb.hs, fwd, k02, k11 };
 
+    //#[cfg(feature = "rayon")]
+    //let bbs = ma.hs.par_iter()
+    //    .enumerate()
+    //    .filter_map(|(i, h)| {
+    //        if h.is_forward() { Some(Query::Bb(BBox::new(Some(i), &[ma.ps[h.tail], ma.ps[h.head]]))) }
+    //        else { None }
+    //    }).collect::<Vec<Query>>();
+    //#[cfg(not(feature = "rayon"))]
     let bbs = ma.hs.iter()
         .enumerate()
         .filter(|(_, h)| h.is_forward())
-        .map(|(i, h)| Query::Bb(BBox::new(Some(i), &vec![ma.ps[h.tail], ma.ps[h.head]])))
+        .map(|(i, h)| Query::Bb(BBox::new(Some(i), &[ma.ps[h.tail], ma.ps[h.head]])))
         .collect::<Vec<Query>>();
 
     let mut x12_  = vec![];
@@ -107,7 +115,12 @@ pub fn intersect12 (
     mb.collider.collision(&bbs, &mut rec);
 
     let mut seq = (0..p1q2_.len()).collect::<Vec<_>>();
+
+    //#[cfg(feature = "rayon")]
+    //seq.par_sort_by(|&a, &b| (p1q2_[a][0], p1q2_[a][1]).cmp(&(p1q2_[b][0], p1q2_[b][1])));
+    //#[cfg(not(feature = "rayon"))]
     seq.sort_by(|&a, &b| (p1q2_[a][0], p1q2_[a][1]).cmp(&(p1q2_[b][0], p1q2_[b][1])));
+
     for i in 0..seq.len() {
         p1q2.push(p1q2_[seq[i]]);
         x12.push(x12_[seq[i]]);

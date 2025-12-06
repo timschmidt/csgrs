@@ -25,7 +25,7 @@ impl BBox {
         }
     }
     
-    pub fn new(id: Option<usize>, pts: &Vec<Vec3>) -> Self {
+    pub fn new(id: Option<usize>, pts: &[Vec3]) -> Self {
         let mut b = BBox {
             id,
             min: Vec3::new(Real::MAX, Real::MAX, Real::MAX),

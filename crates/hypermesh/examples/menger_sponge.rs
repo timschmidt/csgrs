@@ -15,7 +15,6 @@ struct ToggleableMesh;
 struct MyRoundGizmos {}
 
 fn main() {
-    println!("precision: {}", Real::EPSILON);
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(WireframePlugin::default())
