@@ -1166,18 +1166,21 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // We map that to u ∈ [-1, +1] and use a smooth bump with zero slope at
         // the edges and tip.
         fn addendum_profile(
-            pitch_radius: Real,
-            outer_radius: Real,
-            half_tooth_angle: Real,
-            phi_offset: Real,
-        ) -> Real {
-            let u = phi_offset / half_tooth_angle; // -1 .. +1
-            // Smooth, cycloidal-like bump:  (1 - cos(π * (1 - |u|))) / 2
-            // This is 0 at |u| = 1 and 1 at u = 0, with C¹ continuity.
-            let t = (PI * (1.0 - u.abs())).max(0.0).min(PI);
-            let bump = 0.5 * (1.0 - t.cos()); // 0 .. 1
-            pitch_radius + bump * (outer_radius - pitch_radius)
-        }
+			pitch_radius: Real,
+			outer_radius: Real,
+			half_tooth_angle: Real,
+			phi_offset: Real,
+		) -> Real {
+			// Normalised offset from tooth centre: u ∈ [-1, 1]
+			let u = (phi_offset / half_tooth_angle).clamp(-1.0, 1.0);
+
+			// Strictly convex bump: 0 at |u| = 1, 1 at u = 0
+			// p controls how “fat” the tip is; p = 2 is a good starting point.
+			let p = 2.0;
+			let bump = 1.0 - u.abs().powf(p);
+
+			pitch_radius + bump * (outer_radius - pitch_radius)
+		}
 
         // Precompute how many angular samples per tooth we want.
         // Two flanks per tooth, so total samples per tooth:
