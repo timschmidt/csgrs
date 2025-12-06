@@ -43,7 +43,7 @@ fn record_if_short(
 }
 
 pub fn collapse_edge(
-    hs: &mut Vec<Half>,
+    hs: &mut [Half],
     ps: &mut Vec<Vec3>,
     ns: &mut [Vec3],
     rs: &mut [Tref],
@@ -107,7 +107,7 @@ pub fn collapse_edge(
         cur = pair_of(hs, cur);
     }
 
-    ps[to_rmv.tail] = Vec3::new(Real::NAN, Real::NAN, Real::NAN);
+    ps[to_rmv.tail] = Vec3::NAN;
     collapse_triangle(hs, &t1);
 
     let mut cur = bgn;
@@ -131,7 +131,7 @@ pub fn collapse_edge(
 }
 
 pub fn collapse_collinear_edges(
-    hs: &mut Vec<Half>,
+    hs: &mut [Half],
     ps: &mut Vec<Vec3>,
     ns: &mut [Vec3],
     rs: &mut [Tref],
@@ -149,7 +149,7 @@ pub fn collapse_collinear_edges(
 }
 
 pub fn collapse_short_edges(
-    hs: &mut Vec<Half>,
+    hs: &mut [Half],
     ps: &mut Vec<Vec3>,
     ns: &mut [Vec3],
     rs: &mut [Tref],

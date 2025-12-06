@@ -45,8 +45,8 @@ fn size_output(
     i30: &[i32],
     i12: &[i32],
     i21: &[i32],
-    p1q2: &Vec<[usize; 2]>,
-    p2q1: &Vec<[usize; 2]>,
+    p1q2: &[[usize; 2]],
+    p2q1: &[[usize; 2]],
     fns: &mut Vec<Vec3>,
     inv: bool, // whether to invert mesh of q
 ) -> (Vec<i32>, Vec<i32>) {
@@ -109,7 +109,7 @@ struct EdgePt {
 }
 
 fn add_new_edge_verts(
-    p1q2: &Vec<[usize; 2]>,
+    p1q2: &[[usize; 2]],
     i12: &[i32],
     v12_r: &[i32],
     hs_p: &[Half],

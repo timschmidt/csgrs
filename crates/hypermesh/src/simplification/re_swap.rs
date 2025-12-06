@@ -34,7 +34,7 @@ fn record(
 }
 
 fn recursive_edge_swap(
-    hs: &mut Vec<Half>,
+    hs: &mut [Half],
     ps: &mut Vec<Vec3>,
     ns: &mut [Vec3],
     ts: &mut [Tref],
@@ -131,7 +131,7 @@ fn recursive_edge_swap(
 }
 
 pub fn swap_degenerates(
-    hs: &mut Vec<Half>,
+    hs: &mut [Half],
     ps: &mut Vec<Vec3>,
     ns: &mut [Vec3],
     ts: &mut [Tref],

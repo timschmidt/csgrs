@@ -34,7 +34,7 @@ fn hids_of(i: usize) -> (usize, usize, usize) { let j = next_of(i); let k = next
 // Beware the needless loop is not necessarily eliminated from the mesh because
 // halfedges of the tail side might be connected to other triangles (would be folded though).
 fn form_loops(
-    hs: &mut Vec<Half>,
+    hs: &mut [Half],
     ps: &mut Vec<Vec3>,
     bgn: usize,
     end: usize
@@ -66,7 +66,7 @@ fn form_loops(
 // are eliminated by split_pinched_vert and dedupe_edges functions.
 fn remove_if_folded(
     hs: &mut [Half],
-    ps: &mut Vec<Vec3>,
+    ps: &mut [Vec3],
     hid: usize
 ) {
     let (i0, i1, i2) = hids_of(hid);
@@ -74,11 +74,10 @@ fn remove_if_folded(
 
     if hs[i1].pair().is_none() || head_of(hs, i1) != head_of(hs, j1) { return; }
 
-    let nan = Vec3::new(Real::NAN, Real::NAN, Real::NAN);
     match (pair_of(hs, i1) == j2, pair_of(hs, i2) == j1) {
-        (true, true)  => for i in [i0, i1, i2] { ps[tail_of(hs, i)] = nan; },
-        (true, false) => { ps[tail_of(hs, i1)] = nan; }
-        (false, true) => { ps[tail_of(hs, j1)] = nan; }
+        (true, true)  => for i in [i0, i1, i2] { ps[tail_of(hs, i)] = Vec3::NAN; },
+        (true, false) => { ps[tail_of(hs, i1)] = Vec3::NAN; }
+        (false, true) => { ps[tail_of(hs, j1)] = Vec3::NAN; }
         _ => {} // topo valid
     }
     pair_up(hs, hs[i1].pair, hs[j2].pair);

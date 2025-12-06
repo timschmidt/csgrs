@@ -1,6 +1,5 @@
 use crate::{next_of, Half, Vec3u};
 #[cfg(feature = "rayon")] use rayon::prelude::*;
-#[cfg(feature = "rayon")] use rayon::slice::ParallelSliceMut;
 
 const REMOVE_FLAG: usize = usize::MAX - 1;
 
@@ -138,7 +137,7 @@ pub fn tri_halfs_multi(ts: &Vec<Vec3u>) -> Vec<Half> {
 // By sorting forward and backward halfedges by key,
 // now halfedges of the same mini ids are sorted in a sequence.
 // It treats the triangle overlap case here, also considers 4-manifold case.
-fn step (
+fn step(
     is: &mut Vec<usize>,
     hs: &mut Vec<Half>,
     i: usize,
