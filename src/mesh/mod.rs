@@ -53,6 +53,19 @@ pub mod smoothing;
 pub mod tpms;
 pub mod vertex;
 
+fn point_in_aabb_with_tolerance(
+    p: &Point3<Real>,
+    bb: & Aabb,
+    eps: Real,
+) -> bool {
+    p.x >= bb.mins.x - eps
+        && p.x <= bb.maxs.x + eps
+        && p.y >= bb.mins.y - eps
+        && p.y <= bb.maxs.y + eps
+        && p.z >= bb.mins.z - eps
+        && p.z <= bb.maxs.z + eps
+}
+
 #[derive(Clone, Debug)]
 pub struct Mesh<S: Clone + Send + Sync + Debug> {
     /// 3D polygons for volumetric shapes
@@ -140,298 +153,357 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     /// but are colinear and overlapping, because the overlapping
     /// endpoints lie strictly in the interior of the opposite segment.
     #[cfg(not(feature = "parallel"))]
-    fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<S>]) {
-        let eps = tolerance();
-        let eps2 = eps * eps;
+	fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<S>]) {
+		let eps = tolerance();
+		let eps2 = eps * eps;
 
-        if polygons.len() < 2 {
-            return;
-        }
+		let poly_count = polygons.len();
+		if poly_count < 2 {
+			return;
+		}
 
-        let poly_count = polygons.len();
+		// Precompute per-polygon AABBs.
+		let poly_aabbs: Vec<Aabb> = polygons
+			.iter()
+			.map(|p| p.bounding_box())
+			.collect();
 
-        // edge_splits[poly_index][edge_start_index] = Vec<(t along edge, Vertex)>
-        let mut edge_splits: Vec<HashMap<usize, Vec<(Real, Vertex)>>> =
-            vec![HashMap::new(); poly_count];
+		// Precompute polygon neighbors using AABB intersection.
+		//
+		// neighbors[i] = all j != i such that Aabb(i) intersects Aabb(j).
+		let mut neighbors: Vec<Vec<usize>> = vec![Vec::new(); poly_count];
+		for i in 0..poly_count {
+			for j in (i + 1)..poly_count {
+				if poly_aabbs[i].intersects(&poly_aabbs[j]) {
+					neighbors[i].push(j);
+					neighbors[j].push(i);
+				}
+			}
+		}
 
-        // Detection pass: find vertices that lie on other polygons' edges
-        for (i, poly_i) in polygons.iter().enumerate() {
-            if poly_i.vertices.len() < 2 {
-                continue;
-            }
+		// edge_splits[poly_index][edge_start_index] = Vec<(t along edge, Vertex)>
+		let mut edge_splits: Vec<HashMap<usize, Vec<(Real, Vertex)>>> =
+			vec![HashMap::new(); poly_count];
 
-            for vert in &poly_i.vertices {
-                for (j, poly_j) in polygons.iter().enumerate() {
-                    if i == j || poly_j.vertices.len() < 2 {
-                        continue;
-                    }
+		// Detection pass: find vertices that lie on other polygons' edges.
+		for i in 0..poly_count {
+			let poly_i = &polygons[i];
+			if poly_i.vertices.len() < 2 {
+				continue;
+			}
 
-                    let verts_j = &poly_j.vertices;
-                    let n_j = verts_j.len();
+			// If this polygon has no AABB neighbors, it can't form T-junctions
+			// with any other polygon.
+			if neighbors[i].is_empty() {
+				continue;
+			}
 
-                    for edge_start in 0..n_j {
-                        let a = &verts_j[edge_start];
-                        let b = &verts_j[(edge_start + 1) % n_j];
+			for vert in &poly_i.vertices {
+				// Only test against polygons whose AABBs intersect poly_i’s AABB.
+				for &j in &neighbors[i] {
+					let poly_j = &polygons[j];
+					if poly_j.vertices.len() < 2 {
+						continue;
+					}
 
-                        // Edge vector AB
-                        let ab = b.pos - a.pos;
-                        let ab_len_sq = ab.norm_squared();
-                        if ab_len_sq < eps2 {
-                            // Degenerate edge
-                            continue;
-                        }
+					// Fast reject: if the vertex lies outside polygon j’s AABB
+					// (with tolerance), it cannot lie on any edge of j.
+					if !point_in_aabb_with_tolerance(&vert.pos, &poly_aabbs[j], eps) {
+						continue;
+					}
 
-                        // Vectors from endpoints to the candidate vertex
-                        let av = vert.pos - a.pos;
-                        let bv = vert.pos - b.pos;
+					let verts_j = &poly_j.vertices;
+					let n_j = verts_j.len();
 
-                        // Skip if vertex is basically at one of the endpoints
-                        if av.norm_squared() < eps2 || bv.norm_squared() < eps2 {
-                            continue;
-                        }
+					for edge_start in 0..n_j {
+						let a = &verts_j[edge_start];
+						let b = &verts_j[(edge_start + 1) % n_j];
 
-                        // Parametric coordinate of the projection of vert onto AB
-                        let t = ab.dot(&av) / ab_len_sq;
+						// Edge vector AB
+						let ab = b.pos - a.pos;
+						let ab_len_sq = ab.norm_squared();
+						if ab_len_sq < eps2 {
+							// Degenerate edge
+							continue;
+						}
 
-                        // Only consider points strictly inside the segment (avoid ends)
-                        if t <= eps || t >= 1.0 - eps {
-                            // Too close to edge endpoints
-                            continue;
-                        }
+						// Vectors from endpoints to the candidate vertex
+						let av = vert.pos - a.pos;
+						let bv = vert.pos - b.pos;
 
-                        // Closest point on AB to vert
-                        let projected = a.pos + ab * t;
+						// Skip if vertex is basically at one of the endpoints
+						if av.norm_squared() < eps2 || bv.norm_squared() < eps2 {
+							continue;
+						}
 
-                        // Check that the vertex actually lies on the segment (within eps)
-                        if (vert.pos - projected).norm_squared() > eps2 {
-                            // Not actually on the edge
-                            continue;
-                        }
+						// Parametric coordinate of the projection of vert onto AB
+						let t = ab.dot(&av) / ab_len_sq;
 
-                        // We now know vert lies on edge (a, b) of polygon j.
-                        // Create a vertex consistent with polygon j's plane.
-                        let new_vertex = Vertex::new(vert.pos, poly_j.plane.normal());
+						// Only consider points strictly inside the segment (avoid ends)
+						if t <= eps || t >= 1.0 - eps {
+							// Too close to edge endpoints
+							continue;
+						}
 
-                        // Register the split
-                        let entry = edge_splits[j].entry(edge_start).or_insert_with(Vec::new);
+						// Closest point on AB to vert
+						let projected = a.pos + ab * t;
 
-                        // Avoid duplicate splits (same t / same position)
-                        let mut already_present = false;
-                        for (existing_t, existing_v) in entry.iter() {
-                            if (existing_t - t).abs() < eps {
-                                already_present = true;
-                                break;
-                            }
+						// Check that the vertex actually lies on the segment (within eps)
+						if (vert.pos - projected).norm_squared() > eps2 {
+							// Not actually on the edge
+							continue;
+						}
 
-                            if (existing_v.pos - new_vertex.pos).norm_squared() < eps2 {
-                                already_present = true;
-                                break;
-                            }
-                        }
+						// We now know vert lies on edge (a, b) of polygon j.
+						// Create a vertex consistent with polygon j's plane.
+						let new_vertex = Vertex::new(vert.pos, poly_j.plane.normal());
 
-                        if !already_present {
-                            entry.push((t, new_vertex));
-                        }
-                    }
-                }
-            }
-        }
+						// Register the split
+						let entry = edge_splits[j]
+							.entry(edge_start)
+							.or_insert_with(Vec::new);
 
-        // Application pass: actually split edges and rebuild polygon vertex lists
-        for (poly_index, poly) in polygons.iter_mut().enumerate() {
-            let splits_map = &edge_splits[poly_index];
-            if splits_map.is_empty() {
-                continue;
-            }
+						// Avoid duplicate splits (same t / same position)
+						let mut already_present = false;
+						for (existing_t, existing_v) in entry.iter() {
+							if (existing_t - t).abs() < eps {
+								already_present = true;
+								break;
+							}
 
-            let original = poly.vertices.clone();
-            let n = original.len();
-            if n < 2 {
-                continue;
-            }
+							if (existing_v.pos - new_vertex.pos).norm_squared() < eps2 {
+								already_present = true;
+								break;
+							}
+						}
 
-            let extra_vertices: usize = splits_map.values().map(|v| v.len()).sum();
+						if !already_present {
+							entry.push((t, new_vertex));
+						}
+					}
+				}
+			}
+		}
 
-            let mut new_vertices = Vec::with_capacity(n + extra_vertices);
+		// Application pass: actually split edges and rebuild polygon vertex lists
+		for (poly_index, poly) in polygons.iter_mut().enumerate() {
+			let splits_map = &edge_splits[poly_index];
+			if splits_map.is_empty() {
+				continue;
+			}
 
-            for (edge_start, vertex) in original.iter().enumerate() {
-                // Always keep the original starting vertex of the edge
-                new_vertices.push(*vertex);
+			let original = poly.vertices.clone();
+			let n = original.len();
+			if n < 2 {
+				continue;
+			}
 
-                if let Some(splits) = splits_map.get(&edge_start) {
-                    // Sort new points along the edge
-                    let mut splits_sorted = splits.clone();
-                    splits_sorted.sort_by(|(t_a, _), (t_b, _)| {
-                        t_a.partial_cmp(t_b).unwrap_or(Ordering::Equal)
-                    });
+			let extra_vertices: usize = splits_map.values().map(|v| v.len()).sum();
 
-                    // Insert them in parametric order between edge_start and edge_start+1
-                    for (_, v) in splits_sorted {
-                        new_vertices.push(v);
-                    }
-                }
-            }
+			let mut new_vertices = Vec::with_capacity(n + extra_vertices);
 
-            poly.vertices = new_vertices;
-            // We changed geometry; the cached AABB may no longer valid.
-            // However, inserted vertices should always lie on an existing edge,
-            // so we shouldn't need to update the bounding box
-            // poly.bounding_box = OnceLock::new();
-        }
-    }
+			for (edge_start, vertex) in original.iter().enumerate() {
+				// Always keep the original starting vertex of the edge
+				new_vertices.push(*vertex);
+
+				if let Some(splits) = splits_map.get(&edge_start) {
+					// Sort new points along the edge
+					let mut splits_sorted = splits.clone();
+					splits_sorted.sort_by(|(t_a, _), (t_b, _)| {
+						t_a.partial_cmp(t_b).unwrap_or(Ordering::Equal)
+					});
+
+					// Insert them in parametric order between edge_start and edge_start+1
+					for (_, v) in splits_sorted {
+						new_vertices.push(v);
+					}
+				}
+			}
+
+			poly.vertices = new_vertices;
+			// Inserted vertices lie on existing edges, so the polygon AABB
+			// should remain valid and we don't need to reset poly.bounding_box.
+		}
+	}
 
     #[cfg(feature = "parallel")]
-    fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<S>]) {
-        use rayon::prelude::*;
+	fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<S>]) {
+		use rayon::prelude::*;
 
-        let eps = tolerance();
-        let eps2 = eps * eps;
+		let eps = tolerance();
+		let eps2 = eps * eps;
 
-        if polygons.len() < 2 {
-            return;
-        }
+		let poly_count = polygons.len();
+		if poly_count < 2 {
+			return;
+		}
 
-        // --- Detection pass (parallel) ---
-        // Immutable view of polygons for detection.
-        let edge_splits: Vec<HashMap<usize, Vec<(Real, Vertex)>>> = {
-            let polys: &[Polygon<S>] = &*polygons;
+		// Immutable view of polygons for detection.
+		let polys: &[Polygon<S>] = &*polygons;
 
-            polys
-                .par_iter()
-                .enumerate()
-                .map(|(j, poly_j)| {
-                    let mut splits_map: HashMap<usize, Vec<(Real, Vertex)>> = HashMap::new();
+		// Precompute per-polygon AABBs.
+		let poly_aabbs: Vec<Aabb> = polys
+			.iter()
+			.map(|p| p.bounding_box())
+			.collect();
 
-                    let verts_j = &poly_j.vertices;
-                    let n_j = verts_j.len();
-                    if n_j < 2 {
-                        return splits_map;
-                    }
+		// Precompute polygon neighbors using AABB intersection.
+		//
+		// neighbors[i] = all j != i such that Aabb(i) intersects Aabb(j).
+		let mut neighbors: Vec<Vec<usize>> = vec![Vec::new(); poly_count];
+		for i in 0..poly_count {
+			for j in (i + 1)..poly_count {
+				if poly_aabbs[i].intersects(&poly_aabbs[j]) {
+					neighbors[i].push(j);
+					neighbors[j].push(i);
+				}
+			}
+		}
 
-                    for edge_start in 0..n_j {
-                        let a = &verts_j[edge_start];
-                        let b = &verts_j[(edge_start + 1) % n_j];
+		// --- Detection pass (parallel) ---
+		let edge_splits: Vec<HashMap<usize, Vec<(Real, Vertex)>>> = (0..poly_count)
+			.into_par_iter()
+			.map(|j| {
+				let poly_j = &polys[j];
+				let mut splits_map: HashMap<usize, Vec<(Real, Vertex)>> = HashMap::new();
 
-                        // Edge vector AB
-                        let ab = b.pos - a.pos;
-                        let ab_len_sq = ab.norm_squared();
-                        if ab_len_sq < eps2 {
-                            // Degenerate edge
-                            continue;
-                        }
+				let verts_j = &poly_j.vertices;
+				let n_j = verts_j.len();
+				if n_j < 2 {
+					return splits_map;
+				}
 
-                        // Test all vertices of all *other* polygons against this edge
-                        for (i, poly_i) in polys.iter().enumerate() {
-                            if i == j || poly_i.vertices.len() < 2 {
-                                continue;
-                            }
+				let bb_j = &poly_aabbs[j];
 
-                            for vert in &poly_i.vertices {
-                                // Vectors from endpoints to the candidate vertex
-                                let av = vert.pos - a.pos;
-                                let bv = vert.pos - b.pos;
+				for edge_start in 0..n_j {
+					let a = &verts_j[edge_start];
+					let b = &verts_j[(edge_start + 1) % n_j];
 
-                                // Skip if vertex is basically at one of the endpoints
-                                if av.norm_squared() < eps2 || bv.norm_squared() < eps2 {
-                                    continue;
-                                }
+					// Edge vector AB
+					let ab = b.pos - a.pos;
+					let ab_len_sq = ab.norm_squared();
+					if ab_len_sq < eps2 {
+						// Degenerate edge
+						continue;
+					}
 
-                                // Parametric coordinate of the projection of vert onto AB
-                                let t = ab.dot(&av) / ab_len_sq;
+					// Test all vertices of AABB-neighboring polygons only.
+					for &i in &neighbors[j] {
+						let poly_i = &polys[i];
+						if poly_i.vertices.len() < 2 {
+							continue;
+						}
 
-                                // Only consider points strictly inside the segment (avoid ends)
-                                if t <= eps || t >= 1.0 - eps {
-                                    // Too close to edge endpoints
-                                    continue;
-                                }
+						for vert in &poly_i.vertices {
+							// Fast reject: vertex must at least lie inside poly_j’s AABB
+							// (with tolerance), otherwise it cannot be on any edge of j.
+							if !point_in_aabb_with_tolerance(&vert.pos, bb_j, eps) {
+								continue;
+							}
 
-                                // Closest point on AB to vert
-                                let projected = a.pos + ab * t;
+							// Vectors from endpoints to the candidate vertex
+							let av = vert.pos - a.pos;
+							let bv = vert.pos - b.pos;
 
-                                // Check that the vertex actually lies on the segment (within eps)
-                                if (vert.pos - projected).norm_squared() > eps2 {
-                                    // Not actually on the edge
-                                    continue;
-                                }
+							// Skip if vertex is basically at one of the endpoints
+							if av.norm_squared() < eps2 || bv.norm_squared() < eps2 {
+								continue;
+							}
 
-                                // We now know vert lies on edge (a, b) of polygon j.
-                                // Create a vertex consistent with polygon j's plane.
-                                let new_vertex = Vertex::new(vert.pos, poly_j.plane.normal());
+							// Parametric coordinate of the projection of vert onto AB
+							let t = ab.dot(&av) / ab_len_sq;
 
-                                // Register the split
-                                let entry =
-                                    splits_map.entry(edge_start).or_insert_with(Vec::new);
+							// Only consider points strictly inside the segment (avoid ends)
+							if t <= eps || t >= 1.0 - eps {
+								// Too close to edge endpoints
+								continue;
+							}
 
-                                // Avoid duplicate splits (same t / same position)
-                                let mut already_present = false;
-                                for (existing_t, existing_v) in entry.iter() {
-                                    if (existing_t - t).abs() < eps {
-                                        already_present = true;
-                                        break;
-                                    }
+							// Closest point on AB to vert
+							let projected = a.pos + ab * t;
 
-                                    if (existing_v.pos - new_vertex.pos).norm_squared() < eps2
-                                    {
-                                        already_present = true;
-                                        break;
-                                    }
-                                }
+							// Check that the vertex actually lies on the segment (within eps)
+							if (vert.pos - projected).norm_squared() > eps2 {
+								// Not actually on the edge
+								continue;
+							}
 
-                                if !already_present {
-                                    entry.push((t, new_vertex));
-                                }
-                            }
-                        }
-                    }
+							// We now know vert lies on edge (a, b) of polygon j.
+							// Create a vertex consistent with polygon j's plane.
+							let new_vertex = Vertex::new(vert.pos, poly_j.plane.normal());
 
-                    splits_map
-                })
-                .collect()
-        };
+							// Register the split
+							let entry =
+								splits_map.entry(edge_start).or_insert_with(Vec::new);
 
-        // --- Application pass (parallel) ---
-        polygons
-            .par_iter_mut()
-            .enumerate()
-            .for_each(|(poly_index, poly)| {
-                let splits_map = &edge_splits[poly_index];
-                if splits_map.is_empty() {
-                    return;
-                }
+							// Avoid duplicate splits (same t / same position)
+							let mut already_present = false;
+							for (existing_t, existing_v) in entry.iter() {
+								if (existing_t - t).abs() < eps {
+									already_present = true;
+									break;
+								}
 
-                let original = poly.vertices.clone();
-                let n = original.len();
-                if n < 2 {
-                    return;
-                }
+								if (existing_v.pos - new_vertex.pos).norm_squared() < eps2 {
+									already_present = true;
+									break;
+								}
+							}
 
-                let extra_vertices: usize = splits_map.values().map(|v| v.len()).sum();
+							if !already_present {
+								entry.push((t, new_vertex));
+							}
+						}
+					}
+				}
 
-                let mut new_vertices = Vec::with_capacity(n + extra_vertices);
+				splits_map
+			})
+			.collect();
 
-                for (edge_start, vertex) in original.iter().enumerate() {
-                    // Always keep the original starting vertex of the edge
-                    new_vertices.push(*vertex);
+		// --- Application pass (parallel) ---
+		polygons
+			.par_iter_mut()
+			.enumerate()
+			.for_each(|(poly_index, poly)| {
+				let splits_map = &edge_splits[poly_index];
+				if splits_map.is_empty() {
+					return;
+				}
 
-                    if let Some(splits) = splits_map.get(&edge_start) {
-                        // Sort new points along the edge
-                        let mut splits_sorted = splits.clone();
-                        splits_sorted.sort_by(|(t_a, _), (t_b, _)| {
-                            t_a.partial_cmp(t_b).unwrap_or(Ordering::Equal)
-                        });
+				let original = poly.vertices.clone();
+				let n = original.len();
+				if n < 2 {
+					return;
+				}
 
-                        // Insert them in parametric order between edge_start and edge_start+1
-                        for (_, v) in splits_sorted {
-                            new_vertices.push(v);
-                        }
-                    }
-                }
+				let extra_vertices: usize = splits_map.values().map(|v| v.len()).sum();
 
-                poly.vertices = new_vertices;
-                // Inserted vertices lie on existing edges, so the polygon AABB
-                // remains valid and we don't need to reset poly.bounding_box.
-            });
-    }
+				let mut new_vertices = Vec::with_capacity(n + extra_vertices);
+
+				for (edge_start, vertex) in original.iter().enumerate() {
+					// Always keep the original starting vertex of the edge
+					new_vertices.push(*vertex);
+
+					if let Some(splits) = splits_map.get(&edge_start) {
+						// Sort new points along the edge
+						let mut splits_sorted = splits.clone();
+						splits_sorted.sort_by(|(t_a, _), (t_b, _)| {
+							t_a.partial_cmp(t_b).unwrap_or(Ordering::Equal)
+						});
+
+						// Insert them in parametric order between edge_start and edge_start+1
+						for (_, v) in splits_sorted {
+							new_vertices.push(v);
+						}
+					}
+				}
+
+				poly.vertices = new_vertices;
+				// Inserted vertices lie on existing edges, so the polygon AABB
+				// remains valid and we don't need to reset poly.bounding_box.
+			});
+	}
 
     /// Triangulate each polygon in the Mesh returning a Mesh containing triangles
     pub fn triangulate(&self) -> Mesh<S> {
