@@ -1132,7 +1132,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     pub fn cycloidal_gear(
         module: Real,
         teeth: usize,
-        _pin_teeth: usize,        // kept for API symmetry, not used in this approx
+        _pin_teeth: usize, // kept for API symmetry, not used in this approx
         clearance: Real,
         segments_per_flank: usize,
         metadata: Option<S>,
@@ -1166,28 +1166,27 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // We map that to u ∈ [-1, +1] and use a smooth bump with zero slope at
         // the edges and tip.
         fn addendum_profile(
-			pitch_radius: Real,
-			outer_radius: Real,
-			half_tooth_angle: Real,
-			phi_offset: Real,
-		) -> Real {
-			// Normalised offset from tooth centre: u ∈ [-1, 1]
-			let u = (phi_offset / half_tooth_angle).clamp(-1.0, 1.0);
+            pitch_radius: Real,
+            outer_radius: Real,
+            half_tooth_angle: Real,
+            phi_offset: Real,
+        ) -> Real {
+            // Normalised offset from tooth centre: u ∈ [-1, 1]
+            let u = (phi_offset / half_tooth_angle).clamp(-1.0, 1.0);
 
-			// Strictly convex bump: 0 at |u| = 1, 1 at u = 0
-			// p controls how “fat” the tip is; p = 2 is a good starting point.
-			let p = 2.0;
-			let bump = 1.0 - u.abs().powf(p);
+            // Strictly convex bump: 0 at |u| = 1, 1 at u = 0
+            // p controls how “fat” the tip is; p = 2 is a good starting point.
+            let p = 2.0;
+            let bump = 1.0 - u.abs().powf(p);
 
-			pitch_radius + bump * (outer_radius - pitch_radius)
-		}
+            pitch_radius + bump * (outer_radius - pitch_radius)
+        }
 
         // Precompute how many angular samples per tooth we want.
         // Two flanks per tooth, so total samples per tooth:
         let samples_per_tooth = 2 * segments_per_flank + 2; // +2 for including endpoints
 
-        let mut outline: Vec<[Real; 2]> =
-            Vec::with_capacity(samples_per_tooth * teeth + 1);
+        let mut outline: Vec<[Real; 2]> = Vec::with_capacity(samples_per_tooth * teeth + 1);
 
         for i in 0..teeth {
             let tooth_center_angle = (i as Real) * ang_pitch;
@@ -1198,17 +1197,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             //   φ ∈ [φ_c - half_tooth_angle, φ_c + half_tooth_angle]
             for j in 0..=segments_per_flank {
                 let t = j as Real / (segments_per_flank as Real);
-                let phi = tooth_center_angle
-                    - half_tooth_angle
-                    + t * (2.0 * half_tooth_angle);
+                let phi = tooth_center_angle - half_tooth_angle + t * (2.0 * half_tooth_angle);
                 let phi_offset = phi - tooth_center_angle;
 
-                let r = addendum_profile(
-                    pitch_radius,
-                    outer_radius,
-                    half_tooth_angle,
-                    phi_offset,
-                );
+                let r =
+                    addendum_profile(pitch_radius, outer_radius, half_tooth_angle, phi_offset);
 
                 outline.push([r * phi.cos(), r * phi.sin()]);
             }
