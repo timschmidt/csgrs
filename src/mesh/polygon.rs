@@ -3,7 +3,6 @@
 use crate::float_types::{Real, parry3d::bounding_volume::Aabb};
 use crate::mesh::plane::Plane;
 use crate::mesh::vertex::Vertex;
-use geo::{LineString, Polygon as GeoPolygon, coord};
 use nalgebra::{Point3, Vector3};
 use std::sync::OnceLock;
 
@@ -143,41 +142,49 @@ impl<S: Clone + Send + Sync> Polygon<S> {
 
         #[cfg(feature = "earcut")]
         {
-            // Flatten each vertex to 2D
-            let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
-            for vert in &self.vertices {
-                let offset = vert.pos.coords - origin_3d.coords;
-                let x = offset.dot(&u);
-                let y = offset.dot(&v);
-                all_vertices_2d.push(coord! {x: x, y: y});
-            }
+			use earcutr::earcut;
+		
+            // 1. Build flattened 2D coordinates, in the same order as `self.vertices`.
+			let mut flat_2d = Vec::with_capacity(self.vertices.len() * 2);
+			for vert in &self.vertices {
+				let offset = vert.pos.coords - origin_3d.coords;
+				let x = offset.dot(&u);
+				let y = offset.dot(&v);
+				flat_2d.push(x);
+				flat_2d.push(y);
+			}
 
-            use geo::TriangulateEarcut;
-            let triangulation = GeoPolygon::new(LineString::new(all_vertices_2d), Vec::new())
-                .earcut_triangles_raw();
-            let triangle_indices = triangulation.triangle_indices;
-            let vertices = triangulation.vertices;
+			// 2. Run earcut: indices are into `flat_2d` as (x0, y0, x1, y1, …).
+			let holes: Vec<usize> = Vec::new(); // you said: no holes
+			let indices = earcut(&flat_2d, &holes, 2).expect("no triangle indices returned");
 
-            // Convert back into 3D triangles
-            let mut triangles = Vec::with_capacity(triangle_indices.len() / 3);
-            for tri_chunk in triangle_indices.chunks_exact(3) {
-                let mut tri_vertices =
-                    [Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0)); 3];
-                for (k, &idx) in tri_chunk.iter().enumerate() {
-                    let base = idx * 2;
-                    let x = vertices[base];
-                    let y = vertices[base + 1];
-                    let pos_3d = origin_3d.coords + (x * u) + (y * v);
-                    tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
-                }
-                triangles.push(tri_vertices);
-            }
-            triangles
+			// 3. Build triangles using *original* vertices.
+			let mut triangles = Vec::with_capacity(indices.len() / 3);
+			for tri in indices.chunks_exact(3) {
+				let i0 = tri[0] as usize;
+				let i1 = tri[1] as usize;
+				let i2 = tri[2] as usize;
+
+				triangles.push([
+					self.vertices[i0], // <-- reuse original Vertex, no re-projection
+					self.vertices[i1],
+					self.vertices[i2],
+				]);
+			}
+
+			triangles
         }
 
         #[cfg(feature = "delaunay")]
         {
-            use geo::TriangulateSpade;
+            use spade::{
+                AngleLimit,
+                ConstrainedDelaunayTriangulation,
+                Point2 as SpadePoint2,
+                RefinementParameters,
+                Triangulation as SpadeTriangulation,
+            };
+            use geo::coord;
 
             // Flatten each vertex to 2D
             // Here we clamp values within spade's minimum allowed value of  0.0 to 0.0
@@ -198,39 +205,88 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                     && x_clamped.is_finite()
                     && y_clamped.is_finite())
                 {
-                    // at least one coordinate was NaN/±∞ – ignore this triangle
+                    // at least one coordinate was NaN/±∞ – skip this vertex
                     continue;
                 }
-                all_vertices_2d.push(coord! {x: x_clamped, y: y_clamped});
+
+                all_vertices_2d.push(coord! { x: x_clamped, y: y_clamped });
             }
 
-            let polygon_2d = GeoPolygon::new(
-                LineString::new(all_vertices_2d),
-                // no holes if your polygon is always simple
-                Vec::new(),
-            );
-            let Ok(tris) = polygon_2d.constrained_triangulation(Default::default()) else {
+            if all_vertices_2d.len() < 3 {
                 return Vec::new();
+            }
+
+            // Build constrained Delaunay triangulation in Spade
+
+            // Spade vertices
+            let vertices_spade: Vec<SpadePoint2<Real>> = all_vertices_2d
+                .iter()
+                .map(|c| SpadePoint2::new(c.x, c.y))
+                .collect();
+
+            let n = vertices_spade.len();
+            if n < 3 {
+                return Vec::new();
+            }
+
+            // Constraint edges: closed ring along the polygon boundary
+            let edges: Vec<[usize; 2]> = (0..n)
+                .map(|i| [i, (i + 1) % n])
+                .collect();
+
+            // Build CDT with constraints in one go
+            let mut cdt = match ConstrainedDelaunayTriangulation::<SpadePoint2<Real>>::bulk_load_cdt(
+                vertices_spade,
+                edges,
+            ) {
+                Ok(cdt) => cdt,
+                Err(_) => {
+                    // Invalid coordinates / constraints – nothing we can do here
+                    return Vec::new();
+                }
             };
 
-            let mut final_triangles = Vec::with_capacity(tris.len());
-            for tri2d in tris {
-                // tri2d is a geo::Triangle in 2D
-                // Convert each corner from (x,y) to 3D again
-                let [coord_a, coord_b, coord_c] = [tri2d.0, tri2d.1, tri2d.2];
-                let pos_a_3d = origin_3d.coords + coord_a.x * u + coord_a.y * v;
-                let pos_b_3d = origin_3d.coords + coord_b.x * u + coord_b.y * v;
-                let pos_c_3d = origin_3d.coords + coord_c.x * u + coord_c.y * v;
+            // Refine the CDT with a 20° angle limit
+            let refinement = RefinementParameters::<Real>::new()
+                .with_angle_limit(AngleLimit::from_deg(5.0))
+                // never insert steiner points on edges, so that we don't introduce new T junctions
+                .keep_constraint_edges()
+                // our polygon forms a closed shape; this makes refinement ignore
+                // faces outside the polygon when deciding where to insert Steiner points
+                .exclude_outer_faces(true);
 
-                final_triangles.push([
-                    Vertex::new(Point3::from(pos_a_3d), normal_3d),
-                    Vertex::new(Point3::from(pos_b_3d), normal_3d),
-                    Vertex::new(Point3::from(pos_c_3d), normal_3d),
-                ]);
+            let _result = cdt.refine(refinement);
+            // We should inspect `_result.refinement_complete`
+            // and react if refinement ran out of additional vertices.
+
+            // Extract triangles back out of Spade and lift to 3D
+            let mut final_triangles = Vec::new();
+
+            for face in cdt.inner_faces() {
+                // Each face is a triangle; get its three vertices
+                let verts = face.vertices(); // [VertexHandle; 3]
+
+                let mut tri_vertices = [
+                    Vertex::new(
+                        Point3::new(0.0, 0.0, 0.0),
+                        Vector3::new(0.0, 0.0, 0.0),
+                    );
+                    3
+                ];
+
+                // Map each 2D vertex back to 3D via the plane basis
+                for (k, v_handle) in verts.iter().enumerate() {
+                    let p = v_handle.position(); // &Point2<Real>
+                    let pos_3d = origin_3d.coords + p.x * u + p.y * v;
+                    tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
+                }
+
+                final_triangles.push(tri_vertices);
             }
+
             final_triangles
-        }
-    }
+		}
+	}
 
     /// **Mathematical Foundation: Triangle Subdivision for Mesh Refinement**
     ///
