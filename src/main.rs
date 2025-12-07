@@ -3,9 +3,7 @@
 // Minimal example of each function of csgrs (which is now generic over the shared-data type S).
 // Here, we do not use any shared data, so we'll bind the generic S to ().
 
-#[cfg(feature = "sdf")]
 use csgrs::float_types::Real;
-
 use csgrs::mesh::plane::Plane;
 use csgrs::traits::CSG;
 use nalgebra::{Point3, Vector3};
