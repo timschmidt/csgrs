@@ -17,6 +17,7 @@ use boolmesh::{
 
 use nalgebra::{Matrix4, Point3};
 use std::{fmt::Debug, sync::OnceLock};
+use crate::mesh::Mesh;
 
 /// A solid represented by boolmesh’s `Manifold`, wired into csgrs’ `CSG` trait.
 ///
@@ -247,3 +248,47 @@ impl<S: Clone + Send + Sync + Debug> CSG for BMesh<S> {
     }
 }
 
+impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for BMesh<S> {
+    fn from(mesh: Mesh<S>) -> Self {
+        // Keep the metadata from the original mesh
+        let metadata = mesh.metadata.clone();
+
+        // Triangulate the mesh (this also fixes T-junctions etc. via your existing code)
+        let tri_mesh = mesh.triangulate();
+
+        // Extract vertices and triangle indices from the triangulated mesh
+        let (vertices, indices) = tri_mesh.get_vertices_and_indices();
+
+        // Flatten vertices into boolmesh's `Vec<Real>` layout: [x0, y0, z0, x1, y1, z1, ...]
+        let mut pos_bool: Vec<boolmesh::Real> = Vec::with_capacity(vertices.len() * 3);
+        for v in &vertices {
+            pos_bool.push(v.x as boolmesh::Real);
+            pos_bool.push(v.y as boolmesh::Real);
+            pos_bool.push(v.z as boolmesh::Real);
+        }
+
+        // Flatten triangle indices into `Vec<usize>`
+        let mut idx_bool: Vec<usize> = Vec::with_capacity(indices.len() * 3);
+        for tri in &indices {
+            idx_bool.push(tri[0] as usize);
+            idx_bool.push(tri[1] as usize);
+            idx_bool.push(tri[2] as usize);
+        }
+
+        // If there are no triangles, treat as empty BMesh
+        let manifold = if idx_bool.is_empty() {
+            None
+        } else {
+            Some(
+                Manifold::new(&pos_bool, &idx_bool)
+                    .expect("boolmesh::Manifold::new failed when converting from Mesh"),
+            )
+        };
+
+        BMesh {
+            manifold,
+            bounding_box: OnceLock::new(),
+            metadata,
+        }
+    }
+}
