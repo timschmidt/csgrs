@@ -58,6 +58,7 @@ hashbrown = { version = "0.15" }
 fast-surface-nets = { version = "0.2.1", optional = true }
 contour_tracing = { version = "1.0.12", features = ["array"], optional = true }
 either = "1.15"
+base64 = { version = "0.22", optional = true }
 # doc
 #doc-image-embed = "0.2" # fork of https://crates.io/crates/embed-doc-image - should be upstreamed.
 
@@ -89,7 +90,7 @@ serde = { version = "1.0.228", optional = true }
 uuid = { version = "1.18", features = ["js"] }
 
 [features]
-default = ["f64", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "earcut", "truetype-text", "hershey-text"]
+default = ["f64", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
 parallel = [
   "rayon",
   "geo/multithreading",
@@ -130,6 +131,9 @@ ply-io = [
 amf-io = [
   # AMF format support - no external dependencies needed
 ]
+gltf-io = [
+  "base64",
+]
 truetype-text = [
   "ttf-parser",
   "ttf-utils",
@@ -153,6 +157,7 @@ offset = [
 ]
 delaunay = [
   "spade",
+  "geo/spade",
 ]
 earcut = [
   "earcutr",

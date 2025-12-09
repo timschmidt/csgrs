@@ -16,6 +16,9 @@ mod ply;
 #[cfg(feature = "amf-io")]
 mod amf;
 
+#[cfg(feature = "gltf-io")]
+mod gltf;
+
 /// Generic I/O and format‑conversion errors.
 ///
 /// Many I/O features are behind cargo feature‑flags.  
