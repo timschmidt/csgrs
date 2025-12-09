@@ -26,6 +26,7 @@ use std::{
     num::NonZeroU32,
     sync::OnceLock,
 };
+use crate::bmesh::BMesh;
 
 #[cfg(feature = "parallel")]
 use rayon::{iter::IntoParallelRefIterator, prelude::*};
@@ -1167,5 +1168,54 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
             bounding_box: OnceLock::new(),
             metadata: None,
         }
+    }
+}
+
+impl<S: Clone + Send + Sync + Debug> From<BMesh<S>> for Mesh<S> {
+    fn from(bmesh: BMesh<S>) -> Self {
+        // Empty BMesh -> empty Mesh
+        let Some(manifold) = bmesh.manifold else {
+            return Mesh::<S>::new();
+        };
+
+        // Convert boolmesh vertices (glam) into nalgebra points
+        let mut points: Vec<Point3<Real>> = Vec::with_capacity(manifold.ps.len());
+        for p in &manifold.ps {
+            points.push(Point3::new(p.x as Real, p.y as Real, p.z as Real));
+        }
+
+        // Each 3 half-edges in hs correspond to 1 triangle face
+        let mut polygons: Vec<Polygon<S>> = Vec::with_capacity(manifold.hs.len() / 3);
+
+        for halfs in manifold.hs.chunks_exact(3) {
+            let i0 = halfs[0].tail;
+            let i1 = halfs[1].tail;
+            let i2 = halfs[2].tail;
+
+            // Safeguard against invalid indices
+            if i0 >= points.len() || i1 >= points.len() || i2 >= points.len() {
+                continue;
+            }
+
+            let p0 = points[i0];
+            let p1 = points[i1];
+            let p2 = points[i2];
+
+            // Compute triangle normal
+            let e1: Vector3<Real> = p1 - p0;
+            let e2: Vector3<Real> = p2 - p0;
+            let mut n = e1.cross(&e2);
+            if let Some(unit) = n.try_normalize(1e-12) {
+                n = unit;
+            }
+
+            let v0 = Vertex::new(p0, n);
+            let v1 = Vertex::new(p1, n);
+            let v2 = Vertex::new(p2, n);
+
+            polygons.push(Polygon::new(vec![v0, v1, v2], bmesh.metadata.clone()));
+        }
+
+        Mesh::from_polygons(&polygons, bmesh.metadata.clone())
     }
 }
