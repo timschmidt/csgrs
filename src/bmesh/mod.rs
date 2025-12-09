@@ -80,7 +80,7 @@ impl<S: Clone + Send + Sync + Debug> BMesh<S> {
             (Some(mp), Some(mq)) => {
                 let m = compute_boolean(mp, mq, op)
                     .unwrap_or_else(|e| {
-                        // You may want to change this to a different error strategy.
+                        // We may want to change this to a different error strategy.
                         panic!("BMesh boolean operation failed: {e}");
                     });
 
@@ -253,7 +253,7 @@ impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for BMesh<S> {
         // Keep the metadata from the original mesh
         let metadata = mesh.metadata.clone();
 
-        // Triangulate the mesh (this also fixes T-junctions etc. via your existing code)
+        // Triangulate the mesh
         let tri_mesh = mesh.triangulate();
 
         // Extract vertices and triangle indices from the triangulated mesh
