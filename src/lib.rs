@@ -44,6 +44,9 @@ pub mod voxels;
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
+#[cfg(feature = "bmesh")]
+pub mod bmesh;
+
 #[cfg(any(
     all(feature = "delaunay", feature = "earcut"),
     not(any(feature = "delaunay", feature = "earcut"))

@@ -692,6 +692,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "boolmesh"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b5aa3212490ed069459e3dd111c438dcba37714f23e58687103384fd350d66b"
+dependencies = [
+ "glam 0.30.9",
+]
+
+[[package]]
 name = "built"
 version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -976,6 +985,7 @@ dependencies = [
  "base64",
  "bevy_asset",
  "bevy_mesh",
+ "boolmesh",
  "chull",
  "contour_tracing",
  "core2",

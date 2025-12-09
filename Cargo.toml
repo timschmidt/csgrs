@@ -40,6 +40,7 @@ geo-buf = { version = "0.1.0", optional = true } # straight-skeleton offsetting 
 chull = { version = "0.2.4", optional = true }
 spade = { version = "2.15.0", optional = true }
 earcutr = { version = "0.5.0", optional = true }
+boolmesh = { version = "0.1.4", optional = true }
 
 rapier3d-f64 = { version = "0.24.0", optional = true }
 rapier3d = { version = "0.24.0", optional = true }
@@ -90,7 +91,7 @@ serde = { version = "1.0.228", optional = true }
 uuid = { version = "1.18", features = ["js"] }
 
 [features]
-default = ["f64", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
+default = ["f64", "bmesh", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
 parallel = [
   "rayon",
   "geo/multithreading",
@@ -107,6 +108,9 @@ f64 = [
 f32 = [
   "rapier3d",
   "parry3d",
+]
+bmesh = [
+  "boolmesh",
 ]
 # convex hull and minkowski sum
 chull-io = [
