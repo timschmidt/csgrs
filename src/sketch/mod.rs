@@ -2,7 +2,10 @@
 
 use crate::float_types::Real;
 use crate::float_types::parry3d::bounding_volume::Aabb;
+
+#[cfg(feature = "mesh")]
 use crate::mesh::Mesh;
+
 use crate::traits::CSG;
 use geo::algorithm::winding_order::Winding;
 use geo::{
@@ -542,6 +545,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     }
 }
 
+#[cfg(feature = "mesh")]
 impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for Sketch<S> {
     fn from(mesh: Mesh<S>) -> Self {
         // If mesh is empty, return empty Sketch
