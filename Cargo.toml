@@ -91,7 +91,7 @@ serde = { version = "1.0.228", optional = true }
 uuid = { version = "1.18", features = ["js"] }
 
 [features]
-default = ["f64", "bmesh", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
+default = ["f64", "bmesh", "mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
 parallel = [
   "rayon",
   "geo/multithreading",
@@ -108,6 +108,15 @@ f64 = [
 f32 = [
   "rapier3d",
   "parry3d",
+]
+mesh = [
+  # BSP backed Mesh datatype
+]
+mesh-bbopt = [
+  # Enable bounding box optimization for Mesh BSP
+]
+sketch = [
+  # geo backed Sketch datatype
 ]
 bmesh = [
   "boolmesh",

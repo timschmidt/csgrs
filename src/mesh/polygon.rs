@@ -130,11 +130,15 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         }
 
         // A polygon that is already a triangle: no need to call earcut/spade.
-        // Returning it directly avoids robustness problems with very thin
-        // triangles and makes the fast-path cheaper.
-        if self.vertices.len() == 3 {
-            return vec![[self.vertices[0], self.vertices[1], self.vertices[2]]];
-        }
+		// Returning it directly avoids robustness problems with very thin
+		// triangles and makes the fast-path cheaper.
+		if self.vertices.len() == 3 {
+			let a = self.vertices[0];
+			let b = self.vertices[1];
+			let c = self.vertices[2];
+
+			return vec![[a, b, c]];
+		}
 
         let normal_3d = self.plane.normal().normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
@@ -165,11 +169,11 @@ impl<S: Clone + Send + Sync> Polygon<S> {
 				let i1 = tri[1] as usize;
 				let i2 = tri[2] as usize;
 
-				triangles.push([
-					self.vertices[i0], // <-- reuse original Vertex, no re-projection
-					self.vertices[i1],
-					self.vertices[i2],
-				]);
+				let a = self.vertices[i0];
+				let b = self.vertices[i1];
+				let c = self.vertices[i2];
+
+				triangles.push([a, b, c]); // reuse original triangle vertices without projection
 			}
 
 			triangles
@@ -280,9 +284,9 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                     let pos_3d = origin_3d.coords + p.x * u + p.y * v;
                     tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
                 }
-
+                
                 final_triangles.push(tri_vertices);
-            }
+			}
 
             final_triangles
 		}

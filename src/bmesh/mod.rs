@@ -17,6 +17,8 @@ use boolmesh::{
 
 use nalgebra::{Matrix4, Point3};
 use std::{fmt::Debug, sync::OnceLock};
+
+#[cfg(feature = "mesh")]
 use crate::mesh::Mesh;
 
 /// A solid represented by boolmesh’s `Manifold`, wired into csgrs’ `CSG` trait.
