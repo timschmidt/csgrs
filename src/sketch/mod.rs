@@ -6,7 +6,7 @@ use crate::float_types::parry3d::bounding_volume::Aabb;
 #[cfg(feature = "mesh")]
 use crate::mesh::Mesh;
 
-use crate::traits::CSG;
+use crate::csg::CSG;
 use geo::algorithm::winding_order::Winding;
 use geo::{
     AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Coord, CoordsIter,
@@ -34,6 +34,8 @@ pub mod offset;
 
 #[cfg(feature = "truetype-text")]
 pub mod truetype;
+
+pub mod triangulated;
 
 #[derive(Clone, Debug)]
 pub struct Sketch<S> {

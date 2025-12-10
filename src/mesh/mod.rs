@@ -21,7 +21,7 @@ use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
 #[cfg(feature = "sketch")]
 use crate::sketch::Sketch;
 
-use crate::traits::CSG;
+use crate::csg::CSG;
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
@@ -63,6 +63,7 @@ pub mod smoothing;
 #[cfg(feature = "sdf")]
 pub mod tpms;
 pub mod vertex;
+pub mod triangulated;
 
 #[derive(Clone, Debug)]
 pub struct Mesh<S: Clone + Send + Sync + Debug> {

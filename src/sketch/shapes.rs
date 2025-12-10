@@ -2,7 +2,7 @@
 
 use crate::float_types::{FRAC_PI_2, PI, Real, TAU, tolerance};
 use crate::sketch::Sketch;
-use crate::traits::CSG;
+use crate::csg::CSG;
 use geo::{
     BoundingRect, Contains, Geometry, GeometryCollection, LineString, Orient, Point,
     Polygon as GeoPolygon, coord, line_string, orient::Direction,

@@ -7,7 +7,7 @@ use crate::float_types::{
     parry3d::bounding_volume::Aabb,
     Real,
 };
-use crate::traits::CSG;
+use crate::csg::CSG;
 
 use boolmesh::{
     compute_boolean,
@@ -20,6 +20,8 @@ use std::{fmt::Debug, sync::OnceLock};
 
 #[cfg(feature = "mesh")]
 use crate::mesh::Mesh;
+
+pub mod triangulated;
 
 /// A solid represented by boolmesh’s `Manifold`, wired into csgrs’ `CSG` trait.
 ///

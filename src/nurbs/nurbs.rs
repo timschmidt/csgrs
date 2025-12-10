@@ -37,7 +37,7 @@ use curvo::prelude::KnotStyle;
 use crate::float_types::{parry3d::bounding_volume::Aabb, Real};
 use curvo::prelude::FloatingPoint;
 use curvo::region::{CompoundCurve, Region};
-use crate::traits::CSGOps;
+use crate::csg::CSGOps;
 
 use nalgebra::{Matrix4, Point3, Translation3, Vector3};
 

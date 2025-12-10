@@ -1,7 +1,7 @@
 use crate::float_types::Real;
 use crate::io::svg::{FromSVG, ToSVG};
 use crate::sketch::Sketch;
-use crate::traits::CSG;
+use crate::csg::CSG;
 use crate::wasm::{
     js_metadata_to_string, matrix_js::Matrix4Js, mesh_js::MeshJs, point_js::Point3Js,
     vector_js::Vector3Js,

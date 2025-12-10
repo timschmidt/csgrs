@@ -38,7 +38,8 @@ pub mod sketch;
 #[cfg(feature = "offset")]
 pub mod toolpath;
 
-pub mod traits;
+pub mod csg;
+pub mod triangulated;
 pub mod voxels;
 
 #[cfg(feature = "wasm")]

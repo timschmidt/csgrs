@@ -2,7 +2,7 @@
 
 use crate::float_types::{Real, tolerance};
 use crate::sketch::Sketch;
-use crate::traits::CSG;
+use crate::csg::CSG;
 use geo::{
     CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord,
 };
