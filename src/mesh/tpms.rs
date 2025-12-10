@@ -3,7 +3,7 @@
 
 use crate::float_types::Real;
 use crate::mesh::Mesh;
-use crate::traits::CSG;
+use crate::csg::CSG;
 use nalgebra::Point3;
 use std::fmt::Debug;
 

@@ -6,7 +6,7 @@ use crate::mesh::plane::Plane;
 use crate::mesh::polygon::Polygon;
 use crate::mesh::vertex::{Vertex, VertexCluster};
 use crate::sketch::Sketch;
-use crate::traits::CSG;
+use crate::csg::CSG;
 use geo::{Area, Geometry, HasDimensions};
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};

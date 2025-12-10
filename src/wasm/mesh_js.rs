@@ -1,6 +1,6 @@
 use crate::float_types::Real;
 use crate::mesh::{Mesh, plane::Plane};
-use crate::traits::CSG;
+use crate::csg::CSG;
 use crate::wasm::{
     js_metadata_to_string, matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js,
     polygon_js::PolygonJs, sketch_js::SketchJs, vector_js::Vector3Js,

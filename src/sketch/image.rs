@@ -2,7 +2,7 @@
 
 use crate::io::svg::FromSVG;
 use crate::sketch::Sketch;
-use crate::traits::CSG;
+use crate::csg::CSG;
 use image::GrayImage;
 use std::fmt::Debug;
 

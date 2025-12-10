@@ -1,17 +1,13 @@
-
-#![doc = " glTF 2.0 file format support for Mesh and Sketch objects"]
+#![doc = " glTF 2.0 file format support"]
 #![doc = ""]
 #![doc = " This module provides export functionality for glTF 2.0 files,"]
 #![doc = " a modern, efficient, and widely supported 3D asset format."]
 
 use crate::float_types::{tolerance, Real};
-use crate::mesh::Mesh;
-use crate::sketch::Sketch;
-use geo::CoordsIter;
+use crate::triangulated::Triangulated3D;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use std::io::Write;
-
 use base64::engine::general_purpose::STANDARD as BASE64_ENGINE;
 use base64::Engine;
 
@@ -37,6 +33,26 @@ fn add_unique_vertex_gltf(
     }
     vertices.push(GltfVertex { position, normal });
     (vertices.len() - 1) as u32
+}
+
+fn build_gltf_buffers<T: Triangulated3D>(
+    shape: &T,
+) -> (Vec<GltfVertex>, Vec<u32>) {
+    let mut vertices = Vec::<GltfVertex>::new();
+    let mut indices  = Vec::<u32>::new();
+
+    shape.visit_triangles(|tri| {
+        for v in tri {
+            let idx = add_unique_vertex_gltf(
+                &mut vertices,
+                v.position,
+                v.normal,
+            );
+            indices.push(idx);
+        }
+    });
+
+    (vertices, indices)
 }
 
 /// Build a glTF 2.0 JSON document with a single mesh & single scene,
@@ -159,63 +175,12 @@ fn gltf_from_vertices(
     json
 }
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
-    #[doc = " Export this Mesh to glTF 2.0 format as a string"]
-    #[doc = ""]
-    #[doc = " Creates a glTF 2.0 (.gltf) JSON file containing:"]
-    #[doc = " 1. All 3D polygons from `self.polygons` (tessellated to triangles)"]
-    #[doc = " 2. POSITION and NORMAL attributes and triangle indices"]
-    #[doc = " 3. A single mesh / single node / single scene"]
-    #[doc = ""]
-    #[doc = " The binary data is embedded as a base64 buffer in the JSON file."]
-    #[doc = ""]
-    #[doc = " # Arguments"]
-    #[doc = " * `object_name` - Name for the mesh object in the glTF file"]
-    #[doc = ""]
-    #[doc = " # Example"]
-    #[doc = " ```"]
-    #[doc = " use csgrs::mesh::Mesh;"]
-    #[doc = " let csg: Mesh<()> = Mesh::cube(10.0, None);"]
-    #[doc = " let gltf_content = csg.to_gltf(\"my_cube\");"]
-    #[doc = " println!(\"{}\", gltf_content);"]
-    #[doc = " ```"]
+impl<S: Clone + Debug + Send + Sync> crate::mesh::Mesh<S> {
     pub fn to_gltf(&self, object_name: &str) -> String {
-        let mut vertices = Vec::<GltfVertex>::new();
-        let mut indices = Vec::<u32>::new();
-
-        for poly in &self.polygons {
-            let triangles = poly.triangulate();
-            let normal = poly.plane.normal().normalize();
-
-            for triangle in triangles {
-                for vertex in triangle {
-                    let idx =
-                        add_unique_vertex_gltf(&mut vertices, vertex.pos, normal);
-                    indices.push(idx);
-                }
-            }
-        }
-
+        let (vertices, indices) = build_gltf_buffers(self);
         gltf_from_vertices(&vertices, &indices, object_name)
     }
 
-    #[doc = " Export this Mesh to a glTF 2.0 file"]
-    #[doc = ""]
-    #[doc = " # Arguments"]
-    #[doc = " * `writer` - Where to write the glTF JSON data"]
-    #[doc = " * `object_name` - Name for the object in the glTF file"]
-    #[doc = ""]
-    #[doc = " # Example"]
-    #[doc = " ```"]
-    #[doc = " use csgrs::mesh::Mesh;"]
-    #[doc = " use std::fs::File;"]
-    #[doc = " # fn main() -> Result<(), Box<dyn std::error::Error>> {"]
-    #[doc = " let csg: Mesh<()> = Mesh::cube(10.0, None);"]
-    #[doc = " let mut file = File::create(\"stl/output.gltf\")?;"]
-    #[doc = " csg.write_gltf(&mut file, \"my_mesh\")?;"]
-    #[doc = " # Ok(())"]
-    #[doc = " # }"]
-    #[doc = " ```"]
     pub fn write_gltf<W: Write>(
         &self,
         writer: &mut W,
@@ -226,68 +191,12 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     }
 }
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
-    #[doc = " Export this Sketch to glTF 2.0 format as a string"]
-    #[doc = ""]
-    #[doc = " Creates a glTF 2.0 (.gltf) JSON file containing:"]
-    #[doc = " 1. All 2D polygons from `self.geometry` triangulated and placed at Z=0"]
-    #[doc = " 2. POSITION and NORMAL attributes and triangle indices"]
-    #[doc = " 3. A single mesh / single node / single scene"]
-    #[doc = ""]
-    #[doc = " The binary data is embedded as a base64 buffer in the JSON file."]
-    #[doc = ""]
-    #[doc = " # Arguments"]
-    #[doc = " * `object_name` - Name for the object in the glTF file"]
-    #[doc = ""]
-    #[doc = " # Example"]
-    #[doc = " ```"]
-    #[doc = " use csgrs::sketch::Sketch;"]
-    #[doc = " let sketch: Sketch<()> = Sketch::square(2.0, None);"]
-    #[doc = " let gltf_content = sketch.to_gltf(\"my_sketch\");"]
-    #[doc = " println!(\"{}\", gltf_content);"]
-    #[doc = " ```"]
+impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
     pub fn to_gltf(&self, object_name: &str) -> String {
-        let mut vertices = Vec::<GltfVertex>::new();
-        let mut indices = Vec::<u32>::new();
-
-        for geom in &self.geometry.0 {
-            match geom {
-                geo::Geometry::Polygon(poly2d) => {
-                    self.add_2d_polygon_to_gltf(poly2d, &mut vertices, &mut indices);
-                }
-                geo::Geometry::MultiPolygon(mp) => {
-                    for poly2d in &mp.0 {
-                        self.add_2d_polygon_to_gltf(
-                            poly2d,
-                            &mut vertices,
-                            &mut indices,
-                        );
-                    }
-                }
-                _ => {}
-            }
-        }
-
+        let (vertices, indices) = build_gltf_buffers(self);
         gltf_from_vertices(&vertices, &indices, object_name)
     }
 
-    #[doc = " Export this Sketch to a glTF 2.0 file"]
-    #[doc = ""]
-    #[doc = " # Arguments"]
-    #[doc = " * `writer` - Where to write the glTF JSON data"]
-    #[doc = " * `object_name` - Name for the object in the glTF file"]
-    #[doc = ""]
-    #[doc = " # Example"]
-    #[doc = " ```"]
-    #[doc = " use csgrs::sketch::Sketch;"]
-    #[doc = " use std::fs::File;"]
-    #[doc = " # fn main() -> Result<(), Box<dyn std::error::Error>> {"]
-    #[doc = " let sketch: Sketch<()> = Sketch::square(2.0, None);"]
-    #[doc = " let mut file = File::create(\"stl/output.gltf\")?;"]
-    #[doc = " sketch.write_gltf(&mut file, \"my_sketch\")?;"]
-    #[doc = " # Ok(())"]
-    #[doc = " # }"]
-    #[doc = " ```"]
     pub fn write_gltf<W: Write>(
         &self,
         writer: &mut W,
@@ -296,38 +205,20 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let gltf_content = self.to_gltf(object_name);
         writer.write_all(gltf_content.as_bytes())
     }
+}
 
-    fn add_2d_polygon_to_gltf(
+impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
+    pub fn to_gltf(&self, object_name: &str) -> String {
+        let (vertices, indices) = build_gltf_buffers(self);
+        gltf_from_vertices(&vertices, &indices, object_name)
+    }
+
+    pub fn write_gltf<W: Write>(
         &self,
-        poly2d: &geo::Polygon<Real>,
-        vertices: &mut Vec<GltfVertex>,
-        indices: &mut Vec<u32>,
-    ) {
-        let exterior: Vec<[Real; 2]> = poly2d
-            .exterior()
-            .coords_iter()
-            .map(|c| [c.x, c.y])
-            .collect();
-
-        let holes_vec: Vec<Vec<[Real; 2]>> = poly2d
-            .interiors()
-            .iter()
-            .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
-            .collect();
-
-        let hole_refs: Vec<&[[Real; 2]]> =
-            holes_vec.iter().map(|h| &h[..]).collect();
-
-        let triangles_2d = Self::triangulate_with_holes(&exterior, &hole_refs);
-        let normal = Vector3::new(0.0, 0.0, 1.0);
-
-        for triangle in triangles_2d {
-            for point in triangle {
-                let vertex_3d = Point3::new(point.x, point.y, point.z);
-                let idx =
-                    add_unique_vertex_gltf(vertices, vertex_3d, normal);
-                indices.push(idx);
-            }
-        }
+        writer: &mut W,
+        object_name: &str,
+    ) -> std::io::Result<()> {
+        let gltf_content = self.to_gltf(object_name);
+        writer.write_all(gltf_content.as_bytes())
     }
 }
