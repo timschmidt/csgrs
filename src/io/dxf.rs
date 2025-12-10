@@ -9,11 +9,8 @@ use nalgebra::{Point3, Vector3};
 use std::error::Error;
 use std::fmt::Debug;
 
-#[cfg(any(feature = "stl-io", feature = "dxf-io"))]
 use core2::io::Cursor;
-#[cfg(feature = "dxf-io")]
 use dxf::Drawing;
-#[cfg(feature = "dxf-io")]
 use dxf::entities::*;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
@@ -25,7 +22,6 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     #[doc = ""]
     #[doc = " ## Returns"]
     #[doc = " A `Result` containing the Mesh object or an error if parsing fails."]
-    #[cfg(feature = "dxf-io")]
     pub fn from_dxf(
         dxf_data: &[u8],
         metadata: Option<S>,
@@ -115,7 +111,6 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 #[doc = ""]
 #[doc = " # Returns"]
 #[doc = " A `Result` containing the DXF file as a byte vector or an error if exporting fails."]
-#[cfg(feature = "dxf-io")]
 pub fn to_dxf<T: Triangulated3D>(shape: &T) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut drawing = Drawing::new();
 
@@ -154,21 +149,18 @@ pub fn to_dxf<T: Triangulated3D>(shape: &T) -> Result<Vec<u8>, Box<dyn Error>> {
 }
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
-    #[cfg(feature = "dxf-io")]
     pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
         self::to_dxf(self)
     }
 }
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {
-    #[cfg(feature = "dxf-io")]
     pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
         self::to_dxf(self)
     }
 }
 
 impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
-    #[cfg(feature = "dxf-io")]
     pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
         self::to_dxf(self)
     }
