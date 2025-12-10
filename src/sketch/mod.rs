@@ -565,10 +565,10 @@ impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for Sketch<S> {
             // Project them onto XY => build a 2D polygon (triangle).
             for tri in triangles {
                 let ring = vec![
-                    (tri[0].pos.x, tri[0].pos.y),
-                    (tri[1].pos.x, tri[1].pos.y),
-                    (tri[2].pos.x, tri[2].pos.y),
-                    (tri[0].pos.x, tri[0].pos.y), // close ring explicitly
+                    (tri[0].position.x, tri[0].position.y),
+                    (tri[1].position.x, tri[1].position.y),
+                    (tri[2].position.x, tri[2].position.y),
+                    (tri[0].position.x, tri[0].position.y), // close ring explicitly
                 ];
                 let polygon_2d = geo::Polygon::new(LineString::from(ring), vec![]);
                 flattened_3d.push(polygon_2d);

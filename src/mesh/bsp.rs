@@ -4,7 +4,7 @@
 use crate::float_types::tolerance;
 
 #[cfg(not(feature = "parallel"))]
-use crate::mesh::vertex::Vertex;
+use crate::vertex::Vertex;
 
 use crate::float_types::Real;
 use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
@@ -254,7 +254,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
             let types: Vec<_> = poly
                 .vertices
                 .iter()
-                .map(|vertex| slicing_plane.orient_point(&vertex.pos))
+                .map(|vertex| slicing_plane.orient_point(&vertex.position))
                 .collect();
 
             let polygon_type = types.iter().fold(0, |acc, &vertex_type| acc | vertex_type);
@@ -282,10 +282,10 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                             let vj = &poly.vertices[j];
 
                             if (ti | tj) == SPANNING {
-                                let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
+                                let denom = slicing_plane.normal().dot(&(vj.position - vi.position));
                                 if denom.abs() > tolerance() {
                                     let intersection = (slicing_plane.offset()
-                                        - slicing_plane.normal().dot(&vi.pos.coords))
+                                        - slicing_plane.normal().dot(&vi.position.coords))
                                         / denom;
                                     Some(vi.interpolate(vj, intersection))
                                 } else {

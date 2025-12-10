@@ -1,12 +1,13 @@
 use crate::bmesh::BMesh;
 use crate::float_types::Real;
 use nalgebra::{Point3, Vector3};
-use crate::triangulated::{TriVertex, Triangulated3D};
+use crate::triangulated::Triangulated3D;
+use crate::vertex::Vertex;
 
 impl<S: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for BMesh<S> {
     fn visit_triangles<F>(&self, mut f: F)
     where
-        F: FnMut([TriVertex; 3]),
+        F: FnMut([Vertex; 3]),
     {
         let Some(m) = &self.manifold else { return; };
 
@@ -33,9 +34,9 @@ impl<S: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for BMesh<S> {
             };
 
             f([
-                TriVertex { position: p[0], normal: n },
-                TriVertex { position: p[1], normal: n },
-                TriVertex { position: p[2], normal: n },
+                Vertex { position: p[0], normal: n },
+                Vertex { position: p[1], normal: n },
+                Vertex { position: p[2], normal: n },
             ]);
         }
     }

@@ -12,7 +12,7 @@
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
-use crate::mesh::vertex::Vertex;
+use crate::vertex::Vertex;
 use crate::csg::CSG;
 use chull::ConvexHullWrapper;
 use nalgebra::{Point3, Vector3};
@@ -25,7 +25,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let points: Vec<Point3<Real>> = self
             .polygons
             .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
+            .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
             .collect();
 
         let points_for_hull: Vec<Vec<Real>> =
@@ -69,14 +69,14 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let verts_a: Vec<Point3<Real>> = self
             .polygons
             .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
+            .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
             .collect();
 
         // Collect all vertices from other
         let verts_b: Vec<Point3<Real>> = other
             .polygons
             .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.pos))
+            .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
             .collect();
 
         if verts_a.is_empty() || verts_b.is_empty() {

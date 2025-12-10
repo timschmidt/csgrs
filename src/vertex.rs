@@ -1,4 +1,4 @@
-//! Struct and functions for working with `Vertex`s from which `Polygon`s are composed.
+//! Struct and functions for working with `Vertex`s.
 
 use crate::float_types::{PI, Real, tolerance};
 use hashbrown::HashMap;
@@ -7,22 +7,22 @@ use nalgebra::{Point3, Vector3};
 /// A vertex of a polygon, holding position and normal.
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Vertex {
-    pub pos: Point3<Real>,
+    pub position: Point3<Real>,
     pub normal: Vector3<Real>,
 }
 
 impl Vertex {
     /// Create a new [`Vertex`].
     ///
-    /// * `pos`    – the position in model space  
+    /// * `position`    – the position in model space  
     /// * `normal` – (optionally non‑unit) normal; it will be **copied verbatim**, so make sure it is oriented the way you need it for lighting / BSP tests.
     #[inline]
-    pub const fn new(mut pos: Point3<Real>, mut normal: Vector3<Real>) -> Self {
+    pub const fn new(mut position: Point3<Real>, mut normal: Vector3<Real>) -> Self {
         // Sanitise position
         // Nasty loop unrolling to allow for const-context evaluations.
         // Can be replaced with proper for _ in _ {} loops once
         // https://github.com/rust-lang/rust/issues/87575 is merged
-        let [[x, y, z]]: &mut [[_; 3]; 1] = &mut pos.coords.data.0;
+        let [[x, y, z]]: &mut [[_; 3]; 1] = &mut position.coords.data.0;
 
         if !x.is_finite() {
             *x = 0.0;
@@ -47,7 +47,7 @@ impl Vertex {
             *nz = 0.0;
         }
 
-        Vertex { pos, normal }
+        Vertex { position, normal }
     }
 
     /// Flip vertex normal
@@ -82,11 +82,11 @@ impl Vertex {
     /// for most geometric operations but may require renormalization for lighting calculations.
     pub fn interpolate(&self, other: &Vertex, t: Real) -> Vertex {
         // For positions (Point3): p(t) = p0 + t * (p1 - p0)
-        let new_pos = self.pos + (other.pos - self.pos) * t;
+        let new_position = self.position + (other.position - self.position) * t;
 
         // For normals (Vector3): n(t) = n0 + t * (n1 - n0)
         let new_normal = self.normal + (other.normal - self.normal) * t;
-        Vertex::new(new_pos, new_normal)
+        Vertex::new(new_position, new_normal)
     }
 
     /// **Mathematical Foundation: Spherical Linear Interpolation (SLERP) for Normals**
@@ -110,7 +110,7 @@ impl Vertex {
     /// calculations and smooth shading applications.
     pub fn slerp_interpolate(&self, other: &Vertex, t: Real) -> Vertex {
         // Linear interpolation for position
-        let new_pos = self.pos + (other.pos - self.pos) * t;
+        let new_position = self.position + (other.position - self.position) * t;
 
         // Spherical linear interpolation for normals
         let n0 = self.normal.normalize();
@@ -121,7 +121,7 @@ impl Vertex {
         // If normals are nearly parallel, use linear interpolation
         if (dot.abs() - 1.0).abs() < tolerance() {
             let new_normal = (self.normal + (other.normal - self.normal) * t).normalize();
-            return Vertex::new(new_pos, new_normal);
+            return Vertex::new(new_position, new_normal);
         }
 
         let omega = dot.acos();
@@ -130,14 +130,14 @@ impl Vertex {
         if sin_omega.abs() < tolerance() {
             // Fallback to linear interpolation
             let new_normal = (self.normal + (other.normal - self.normal) * t).normalize();
-            return Vertex::new(new_pos, new_normal);
+            return Vertex::new(new_position, new_normal);
         }
 
         let a = ((1.0 - t) * omega).sin() / sin_omega;
         let b = (t * omega).sin() / sin_omega;
 
         let new_normal = (a * n0 + b * n1).normalize();
-        Vertex::new(new_pos, new_normal)
+        Vertex::new(new_position, new_normal)
     }
 
     /// **Mathematical Foundation: Distance Metrics**
@@ -147,7 +147,7 @@ impl Vertex {
     /// d(v₁, v₂) = |p₁ - p₂| = √((x₁-x₂)² + (y₁-y₂)² + (z₁-z₂)²)
     /// ```
     pub fn distance_to(&self, other: &Vertex) -> Real {
-        (self.pos - other.pos).norm()
+        (self.position - other.position).norm()
     }
 
     /// **Mathematical Foundation: Squared Distance Optimization**
@@ -159,7 +159,7 @@ impl Vertex {
     ///
     /// Useful for distance comparisons without expensive square root operation.
     pub fn distance_squared_to(&self, other: &Vertex) -> Real {
-        (self.pos - other.pos).norm_squared()
+        (self.position - other.position).norm_squared()
     }
 
     /// **Mathematical Foundation: Normal Vector Angular Difference**
@@ -196,9 +196,9 @@ impl Vertex {
             return None;
         }
 
-        let weighted_pos = vertices
+        let weighted_position = vertices
             .iter()
-            .fold(Point3::origin(), |acc, (v, w)| acc + v.pos.coords * (*w))
+            .fold(Point3::origin(), |acc, (v, w)| acc + v.position.coords * (*w))
             / total_weight;
 
         let weighted_normal = vertices
@@ -211,7 +211,7 @@ impl Vertex {
             Vector3::z() // Fallback normal
         };
 
-        Some(Vertex::new(Point3::from(weighted_pos), normalized_normal))
+        Some(Vertex::new(Point3::from(weighted_position), normalized_normal))
     }
 
     /// **Mathematical Foundation: Barycentric Coordinates Interpolation**
@@ -239,11 +239,11 @@ impl Vertex {
             (1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0) // Fallback to centroid
         };
 
-        let new_pos = Point3::from(u * v1.pos.coords + v * v2.pos.coords + w * v3.pos.coords);
+        let new_position = Point3::from(u * v1.position.coords + v * v2.position.coords + w * v3.position.coords);
 
         let new_normal = (u * v1.normal + v * v2.normal + w * v3.normal).normalize();
 
-        Vertex::new(new_pos, new_normal)
+        Vertex::new(new_position, new_normal)
     }
 
     /// **Mathematical Foundation: Edge-Length-Based Weighting**
@@ -275,26 +275,26 @@ impl Vertex {
             let v3 = triangle_vertices[(i + 2) % triangle_vertices.len()];
 
             // Check if this triangle contains our edge
-            let contains_edge = (v1.pos == center.pos && v2.pos == neighbor.pos)
-                || (v2.pos == center.pos && v3.pos == neighbor.pos)
-                || (v3.pos == center.pos && v1.pos == neighbor.pos)
-                || (v1.pos == neighbor.pos && v2.pos == center.pos)
-                || (v2.pos == neighbor.pos && v3.pos == center.pos)
-                || (v3.pos == neighbor.pos && v1.pos == center.pos);
+            let contains_edge = (v1.position == center.position && v2.position == neighbor.position)
+                || (v2.position == center.position && v3.position == neighbor.position)
+                || (v3.position == center.position && v1.position == neighbor.position)
+                || (v1.position == neighbor.position && v2.position == center.position)
+                || (v2.position == neighbor.position && v3.position == center.position)
+                || (v3.position == neighbor.position && v1.position == center.position);
 
             if contains_edge {
                 // Find the vertex opposite to the edge
-                let opposite = if v1.pos != center.pos && v1.pos != neighbor.pos {
+                let opposite = if v1.position != center.position && v1.position != neighbor.position {
                     v1
-                } else if v2.pos != center.pos && v2.pos != neighbor.pos {
+                } else if v2.position != center.position && v2.position != neighbor.position {
                     v2
                 } else {
                     v3
                 };
 
                 // Compute cotangent of angle at opposite vertex
-                let edge1 = center.pos - opposite.pos;
-                let edge2 = neighbor.pos - opposite.pos;
+                let edge1 = center.position - opposite.position;
+                let edge2 = neighbor.position - opposite.position;
                 let cos_angle = edge1.normalize().dot(&edge2.normalize());
                 let sin_angle = edge1.normalize().cross(&edge2.normalize()).norm();
 
@@ -366,8 +366,8 @@ impl Vertex {
     ) -> (usize, Real) {
         // Find the vertex index by position matching
         let mut vertex_index = None;
-        for (&idx, &pos) in vertex_positions {
-            if (self.pos - pos).norm() < epsilon {
+        for (&idx, &position) in vertex_positions {
+            if (self.position - position).norm() < epsilon {
                 vertex_index = Some(idx);
                 break;
             }
@@ -401,8 +401,8 @@ impl Vertex {
             let prev = &neighbors[(i + neighbors.len() - 1) % neighbors.len()];
             let next = &neighbors[(i + 1) % neighbors.len()];
 
-            let v1 = (prev.pos - self.pos).normalize();
-            let v2 = (next.pos - self.pos).normalize();
+            let v1 = (prev.position - self.position).normalize();
+            let v2 = (next.position - self.position).normalize();
 
             let dot = v1.dot(&v2).clamp(-1.0, 1.0);
             angle_sum += dot.acos();
@@ -461,8 +461,8 @@ impl Vertex {
         let mut neighbor_normals = Vec::new();
 
         for &neighbor_idx in neighbors {
-            if let Some(&neighbor_pos) = vertex_positions.get(&neighbor_idx) {
-                let edge_length = (self.pos - neighbor_pos).norm();
+            if let Some(&neighbor_position) = vertex_positions.get(&neighbor_idx) {
+                let edge_length = (self.position - neighbor_position).norm();
                 edge_lengths.push(edge_length);
 
                 if let Some(&neighbor_normal) = vertex_normals.get(&neighbor_idx) {
@@ -544,7 +544,7 @@ impl VertexCluster {
         // Compute centroid position
         let centroid = vertices
             .iter()
-            .fold(Point3::origin(), |acc, v| acc + v.pos.coords)
+            .fold(Point3::origin(), |acc, v| acc + v.position.coords)
             / vertices.len() as Real;
 
         // Compute average normal
@@ -560,7 +560,7 @@ impl VertexCluster {
         // Compute bounding radius
         let radius = vertices
             .iter()
-            .map(|v| (v.pos - Point3::from(centroid)).norm())
+            .map(|v| (v.position - Point3::from(centroid)).norm())
             .fold(0.0, |a: Real, b| a.max(b));
 
         Some(VertexCluster {
@@ -591,7 +591,7 @@ mod test {
             Vector3::new(Real::INFINITY, Real::NEG_INFINITY, Real::NEG_INFINITY),
         );
 
-        assert!(vertex.pos.iter().copied().all(Real::is_finite));
+        assert!(vertex.position.iter().copied().all(Real::is_finite));
         assert!(vertex.normal.iter().copied().all(Real::is_finite));
     }
 }

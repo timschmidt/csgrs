@@ -5,22 +5,17 @@
 
 use crate::float_types::{tolerance, Real};
 use crate::triangulated::Triangulated3D;
+use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use std::io::Write;
 use base64::engine::general_purpose::STANDARD as BASE64_ENGINE;
 use base64::Engine;
 
-#[derive(Clone)]
-struct GltfVertex {
-    position: Point3<Real>,
-    normal: Vector3<Real>,
-}
-
 /// Add a vertex to the list, reusing an existing one if position and normal
 /// are within `tolerance()`.
 fn add_unique_vertex_gltf(
-    vertices: &mut Vec<GltfVertex>,
+    vertices: &mut Vec<Vertex>,
     position: Point3<Real>,
     normal: Vector3<Real>,
 ) -> u32 {
@@ -31,14 +26,14 @@ fn add_unique_vertex_gltf(
             return i as u32;
         }
     }
-    vertices.push(GltfVertex { position, normal });
+    vertices.push(Vertex { position, normal });
     (vertices.len() - 1) as u32
 }
 
 fn build_gltf_buffers<T: Triangulated3D>(
     shape: &T,
-) -> (Vec<GltfVertex>, Vec<u32>) {
-    let mut vertices = Vec::<GltfVertex>::new();
+) -> (Vec<Vertex>, Vec<u32>) {
+    let mut vertices = Vec::<Vertex>::new();
     let mut indices  = Vec::<u32>::new();
 
     shape.visit_triangles(|tri| {
@@ -60,7 +55,7 @@ fn build_gltf_buffers<T: Triangulated3D>(
 ///
 /// All binary data is stored in a single buffer as a base64-embedded data URI.
 fn gltf_from_vertices(
-    vertices: &[GltfVertex],
+    vertices: &[Vertex],
     indices: &[u32],
     object_name: &str,
 ) -> String {

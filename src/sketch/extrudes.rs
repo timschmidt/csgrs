@@ -4,7 +4,7 @@ use crate::errors::ValidationError;
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
-use crate::mesh::vertex::Vertex;
+use crate::vertex::Vertex;
 use crate::sketch::Sketch;
 use crate::csg::CSG;
 use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
@@ -464,8 +464,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     // let mut final_polys = Vec::with_capacity(polygons_3d.len());
     // for mut poly in polygons_3d {
     // for v in &mut poly.vertices {
-    // let pos4 = mat * nalgebra::Vector4::new(v.pos.x, v.pos.y, v.pos.z, 1.0);
-    // v.pos = Point3::new(pos4.x / pos4.w, pos4.y / pos4.w, pos4.z / pos4.w);
+    // let pos4 = mat * nalgebra::Vector4::new(v.position.x, v.position.y, v.position.z, 1.0);
+    // v.position = Point3::new(pos4.x / pos4.w, pos4.y / pos4.w, pos4.z / pos4.w);
     // }
     // poly.set_new_normal();
     // final_polys.push(poly);
@@ -635,7 +635,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         vec![b_j, b_i, t_i, t_j]
                     }
                     .into_iter()
-                    .map(|pos| Vertex::new(pos, Vector3::zeros()))
+                    .map(|position| Vertex::new(position, Vector3::zeros()))
                     .collect();
 
                     out_polygons.push(Polygon::new(quad_verts, metadata.clone()));
@@ -820,7 +820,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// * returns - a `Mesh<S>` containing all side quads plus automatically triangulated caps (respecting any holes).
     pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<S> {
-        use crate::mesh::{Mesh, polygon::Polygon, vertex::Vertex};
+        use crate::mesh::{Mesh, polygon::Polygon};
+		use crate::vertex::Vertex;
         use nalgebra::{Matrix4, Rotation3, Translation3};
 
         // sanity checks

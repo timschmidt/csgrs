@@ -68,7 +68,7 @@
 
 use crate::float_types::{Real, tolerance};
 use crate::mesh::polygon::Polygon;
-use crate::mesh::vertex::Vertex;
+use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 use robust::{Coord3D, orient3d};
 
@@ -145,9 +145,9 @@ impl Plane {
     pub fn from_vertices(vertices: Vec<Vertex>) -> Plane {
         let n = vertices.len();
         let reference_plane = Plane {
-            point_a: vertices[0].pos,
-            point_b: vertices[1].pos,
-            point_c: vertices[2].pos,
+            point_a: vertices[0].position,
+            point_b: vertices[1].position,
+            point_c: vertices[2].position,
         };
         if n == 3 {
             return reference_plane;
@@ -157,7 +157,7 @@ impl Plane {
         let Some((i0, i1, _)) = (0..n)
             .flat_map(|i| (i + 1..n).map(move |j| (i, j)))
             .map(|(i, j)| {
-                let d2 = (vertices[i].pos - vertices[j].pos).norm_squared();
+                let d2 = (vertices[i].position - vertices[j].position).norm_squared();
                 (i, j, d2)
             })
             .max_by(|a, b| a.2.total_cmp(&b.2))
@@ -165,8 +165,8 @@ impl Plane {
             return reference_plane;
         };
 
-        let p0 = vertices[i0].pos;
-        let p1 = vertices[i1].pos;
+        let p0 = vertices[i0].position;
+        let p1 = vertices[i1].position;
         let dir = p1 - p0;
         if dir.norm_squared() < tolerance() * tolerance() {
             return reference_plane; // everything almost coincident
@@ -178,7 +178,7 @@ impl Plane {
             .enumerate()
             .filter(|(idx, _)| *idx != i0 && *idx != i1)
             .map(|(idx, v)| {
-                let a2 = (v.pos - p0).cross(&dir).norm_squared(); // ∝ area²
+                let a2 = (v.position - p0).cross(&dir).norm_squared(); // ∝ area²
                 (idx, a2)
             })
             .max_by(|a, b| a.1.total_cmp(&b.1))
@@ -191,7 +191,7 @@ impl Plane {
         } else {
             return reference_plane; // all vertices collinear
         };
-        let p2 = vertices[i2].pos;
+        let p2 = vertices[i2].position;
 
         // build plane, then orient it to match original winding
         let mut plane_hq = Plane {
@@ -204,7 +204,7 @@ impl Plane {
         let reference_normal = vertices.iter().zip(vertices.iter().cycle().skip(1)).fold(
             Vector3::zeros(),
             |acc, (curr, next)| {
-                acc + (curr.pos - Point3::origin()).cross(&(next.pos - Point3::origin()))
+                acc + (curr.position - Point3::origin()).cross(&(next.position - Point3::origin()))
             },
         );
 
@@ -320,7 +320,7 @@ impl Plane {
     pub fn classify_polygon<S: Clone>(&self, polygon: &Polygon<S>) -> i8 {
         let mut polygon_type: i8 = 0;
         for vertex in &polygon.vertices {
-            polygon_type |= self.orient_point(&vertex.pos);
+            polygon_type |= self.orient_point(&vertex.position);
         }
         polygon_type
     }
@@ -347,7 +347,7 @@ impl Plane {
         let types: Vec<i8> = polygon
             .vertices
             .iter()
-            .map(|v| self.orient_point(&v.pos))
+            .map(|v| self.orient_point(&v.position))
             .collect();
         let polygon_type = types.iter().fold(0, |acc, &t| acc | t);
 
@@ -393,11 +393,11 @@ impl Plane {
                     // If the edge between these two vertices crosses the plane,
                     // compute intersection and add that intersection to both sets
                     if (type_i | type_j) == SPANNING {
-                        let denom = normal.dot(&(vertex_j.pos - vertex_i.pos));
+                        let denom = normal.dot(&(vertex_j.position - vertex_i.position));
                         // Avoid dividing by zero
                         if denom.abs() > tolerance() {
                             let intersection =
-                                (self.offset() - normal.dot(&vertex_i.pos.coords)) / denom;
+                                (self.offset() - normal.dot(&vertex_i.position.coords)) / denom;
                             let vertex_new = vertex_i.interpolate(vertex_j, intersection);
                             split_front.push(vertex_new);
                             split_back.push(vertex_new);
@@ -473,35 +473,35 @@ impl Plane {
 fn test_plane_orientation() {
     let vertices = [
         Vertex {
-            pos: Point3::new(1152.0, 256.0, 512.0),
+            position: Point3::new(1152.0, 256.0, 512.0),
             normal: Vector3::new(0., 1., 0.),
         },
         Vertex {
-            pos: Point3::new(1152.0, 256.0, 256.0),
+            position: Point3::new(1152.0, 256.0, 256.0),
             normal: Vector3::new(0., 1., 0.),
         },
         Vertex {
-            pos: Point3::new(768.0, 256.0, 256.0),
+            position: Point3::new(768.0, 256.0, 256.0),
             normal: Vector3::new(0., 1., 0.),
         },
         Vertex {
-            pos: Point3::new(768.0, 256.0, 512.0),
+            position: Point3::new(768.0, 256.0, 512.0),
             normal: Vector3::new(0., 1., 0.),
         },
         Vertex {
-            pos: Point3::new(896.0, 256.0, 512.0),
+            position: Point3::new(896.0, 256.0, 512.0),
             normal: Vector3::new(0., 1., 0.),
         },
         Vertex {
-            pos: Point3::new(896.0, 256.0, 384.0),
+            position: Point3::new(896.0, 256.0, 384.0),
             normal: Vector3::new(0., 1., 0.),
         },
         Vertex {
-            pos: Point3::new(1024.0, 256.0, 384.0),
+            position: Point3::new(1024.0, 256.0, 384.0),
             normal: Vector3::new(0., 1., 0.),
         },
         Vertex {
-            pos: Point3::new(1024.0, 256.0, 512.0),
+            position: Point3::new(1024.0, 256.0, 512.0),
             normal: Vector3::new(0., 1., 0.),
         },
     ];

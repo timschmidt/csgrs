@@ -61,7 +61,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 let mut triangle_indices = Vec::new();
 
                 for vertex in triangle {
-                    let vertex_idx = add_unique_vertex_amf(&mut vertices, vertex.pos);
+                    let vertex_idx = add_unique_vertex_amf(&mut vertices, vertex.position);
                     triangle_indices.push(vertex_idx);
                 }
 
@@ -197,7 +197,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 let mut triangle_indices = Vec::new();
 
                 for vertex in triangle {
-                    let vertex_idx = add_unique_vertex_amf(&mut vertices, vertex.pos);
+                    let vertex_idx = add_unique_vertex_amf(&mut vertices, vertex.position);
                     triangle_indices.push(vertex_idx);
                 }
 

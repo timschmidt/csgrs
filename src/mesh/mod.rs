@@ -16,7 +16,8 @@ use crate::float_types::{
 #[cfg(feature = "mesh-bbopt")]
 use crate::float_types::bounding_volume::BoundingVolume;
 
-use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon, vertex::Vertex};
+use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon};
+use crate::vertex::Vertex;
 
 #[cfg(feature = "sketch")]
 use crate::sketch::Sketch;
@@ -62,7 +63,6 @@ pub mod shapes;
 pub mod smoothing;
 #[cfg(feature = "sdf")]
 pub mod tpms;
-pub mod vertex;
 pub mod triangulated;
 
 #[derive(Clone, Debug)]
@@ -261,7 +261,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         let vertices = tri_csg
             .polygons
             .iter()
-            .flat_map(|p| [p.vertices[0].pos, p.vertices[1].pos, p.vertices[2].pos])
+            .flat_map(|p| [p.vertices[0].position, p.vertices[1].position, p.vertices[2].position])
             .collect();
 
         let indices = (0..tri_csg.polygons.len())
@@ -299,9 +299,9 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             .iter()
             .flat_map(|poly| poly.triangulate())
             .filter_map(|tri| {
-                let a = tri[0].pos;
-                let b = tri[1].pos;
-                let c = tri[2].pos;
+                let a = tri[0].position;
+                let b = tri[1].position;
+                let c = tri[2].position;
                 let triangle = Triangle::new(a, b, c);
                 triangle
                     .cast_ray_and_get_normal(&iso, &ray, Real::MAX, true)
@@ -435,7 +435,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
             // push 3 positions/normals
             for v in &poly.vertices {
-                positions_32.push([v.pos.x as f32, v.pos.y as f32, v.pos.z as f32]);
+                positions_32.push([v.position.x as f32, v.position.y as f32, v.position.z as f32]);
                 normals_32.push([v.normal.x as f32, v.normal.y as f32, v.normal.z as f32]);
             }
 
@@ -715,9 +715,9 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
         for poly in &mut mesh.polygons {
             for vert in &mut poly.vertices {
                 // Transform position using homogeneous coordinates
-                let hom_pos = mat * vert.pos.to_homogeneous();
-                match Point3::from_homogeneous(hom_pos) {
-                    Some(transformed_pos) => vert.pos = transformed_pos,
+                let hom_position = mat * vert.position.to_homogeneous();
+                match Point3::from_homogeneous(hom_position) {
+                    Some(transformed_position) => vert.position = transformed_position,
                     None => {
                         eprintln!(
                             "Warning: Invalid homogeneous coordinates after transformation, skipping vertex"
@@ -757,13 +757,13 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
             // 1) Gather from the 3D polygons
             for poly in &self.polygons {
                 for v in &poly.vertices {
-                    min_x = *partial_min(&min_x, &v.pos.x).unwrap();
-                    min_y = *partial_min(&min_y, &v.pos.y).unwrap();
-                    min_z = *partial_min(&min_z, &v.pos.z).unwrap();
+                    min_x = *partial_min(&min_x, &v.position.x).unwrap();
+                    min_y = *partial_min(&min_y, &v.position.y).unwrap();
+                    min_z = *partial_min(&min_z, &v.position.z).unwrap();
 
-                    max_x = *partial_max(&max_x, &v.pos.x).unwrap();
-                    max_y = *partial_max(&max_y, &v.pos.y).unwrap();
-                    max_z = *partial_max(&max_z, &v.pos.z).unwrap();
+                    max_x = *partial_max(&max_x, &v.position.x).unwrap();
+                    max_y = *partial_max(&max_y, &v.position.y).unwrap();
+                    max_z = *partial_max(&max_z, &v.position.z).unwrap();
                 }
             }
 

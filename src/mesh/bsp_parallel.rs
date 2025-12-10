@@ -184,7 +184,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                 let mut types = Vec::with_capacity(vcount);
 
                 for vertex in &poly.vertices {
-                    let vertex_type = slicing_plane.orient_point(&vertex.pos);
+                    let vertex_type = slicing_plane.orient_point(&vertex.position);
                     polygon_type |= vertex_type;
                     types.push(vertex_type);
                 }
@@ -211,10 +211,10 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                             if (ti | tj) == SPANNING {
                                 // The param intersection at which plane intersects the edge [vi -> vj].
                                 // Avoid dividing by zero:
-                                let denom = slicing_plane.normal().dot(&(vj.pos - vi.pos));
+                                let denom = slicing_plane.normal().dot(&(vj.position - vi.position));
                                 if denom.abs() > tolerance() {
                                     let intersection = (slicing_plane.offset()
-                                        - slicing_plane.normal().dot(&vi.pos.coords))
+                                        - slicing_plane.normal().dot(&vi.position.coords))
                                         / denom;
                                     // Interpolate:
                                     let intersect_vert = vi.interpolate(vj, intersection);

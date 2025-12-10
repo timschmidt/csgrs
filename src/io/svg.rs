@@ -46,7 +46,7 @@ impl<F: CoordNum> PathBuilder<F> {
     }
 
     /// Get the current position to be used for relative moves.
-    fn get_pos(&self) -> Coord<F> {
+    fn get_position(&self) -> Coord<F> {
         self.inner
             .0
             .last()
@@ -69,7 +69,7 @@ impl<F: CoordNum> PathBuilder<F> {
             .unwrap_or(false);
 
         if start_new_path {
-            self.inner.0.push(LineString::new(vec![self.get_pos()]));
+            self.inner.0.push(LineString::new(vec![self.get_position()]));
         }
 
         self.inner.0.last_mut().ok_or_else(|| {
@@ -87,8 +87,8 @@ impl<F: CoordNum> PathBuilder<F> {
     /// Start a new path at `delta` relative to the last point.
     /// If and only if this is the first command, the point is treated as absolute coordinates.
     pub fn move_by(&mut self, delta: Coord<F>) {
-        let pos = self.get_pos();
-        self.inner.0.push(LineString::new(vec![pos + delta]));
+        let position = self.get_position();
+        self.inner.0.push(LineString::new(vec![position + delta]));
     }
 
     /// Extend the current path to the `point`.
@@ -102,16 +102,16 @@ impl<F: CoordNum> PathBuilder<F> {
     /// Extend the current path by `delta` relative to the current point.
     /// Can not be the first command.
     pub fn line_by(&mut self, delta: Coord<F>) -> Result<(), IoError> {
-        let pos = self.get_pos();
+        let position = self.get_position();
         let line = self.get_path_mut_or_fail()?;
-        line.0.push(pos + delta);
+        line.0.push(position + delta);
         Ok(())
     }
 
     /// Extend the current path with a horizontal move to `x`.
     /// Can not be the first command.
     pub fn hline_to(&mut self, x: F) -> Result<(), IoError> {
-        let Coord { y, .. } = self.get_pos();
+        let Coord { y, .. } = self.get_position();
         let line = self.get_path_mut_or_fail()?;
         line.0.push(Coord { x, y });
         Ok(())
@@ -120,7 +120,7 @@ impl<F: CoordNum> PathBuilder<F> {
     /// Extend the current path with a horizontal move by `dx` relative to the current point.
     /// Can not be the first command.
     pub fn hline_by(&mut self, dx: F) -> Result<(), IoError> {
-        let Coord { x, y } = self.get_pos();
+        let Coord { x, y } = self.get_position();
         let line = self.get_path_mut_or_fail()?;
         line.0.push(Coord { x: x + dx, y });
         Ok(())
@@ -129,7 +129,7 @@ impl<F: CoordNum> PathBuilder<F> {
     /// Extend the current path with a vertical move to `y`.
     /// Can not be the first command.
     pub fn vline_to(&mut self, y: F) -> Result<(), IoError> {
-        let Coord { x, .. } = self.get_pos();
+        let Coord { x, .. } = self.get_position();
         let line = self.get_path_mut_or_fail()?;
         line.0.push(Coord { x, y });
         Ok(())
@@ -138,7 +138,7 @@ impl<F: CoordNum> PathBuilder<F> {
     /// Extend the current path with a vertical move by `dy` relative to the current point.
     /// Can not be the first command.
     pub fn vline_by(&mut self, dy: F) -> Result<(), IoError> {
-        let Coord { x, y } = self.get_pos();
+        let Coord { x, y } = self.get_position();
         let line = self.get_path_mut_or_fail()?;
         line.0.push(Coord { x, y: y + dy });
         Ok(())
