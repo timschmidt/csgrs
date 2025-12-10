@@ -44,8 +44,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             // Each tri is 3 vertices: [v0, v1, v2]
             // We'll look at edges (0->1, 1->2, 2->0).
             for &(i0, i1) in &[(0, 1), (1, 2), (2, 0)] {
-                let p0 = quantize_point(&poly.vertices[i0].pos);
-                let p1 = quantize_point(&poly.vertices[i1].pos);
+                let p0 = quantize_point(&poly.vertices[i0].position);
+                let p1 = quantize_point(&poly.vertices[i1].position);
 
                 // Order them so (p0, p1) and (p1, p0) become the same key
                 let (a_key, b_key) = if (p0.0, p0.1, p0.2) < (p1.0, p1.1, p1.2) {

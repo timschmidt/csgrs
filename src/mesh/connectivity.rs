@@ -31,18 +31,18 @@ impl VertexIndexMap {
     }
 
     /// Get or create an index for a vertex position
-    pub fn get_or_create_index(&mut self, pos: Point3<Real>) -> usize {
+    pub fn get_or_create_index(&mut self, position: Point3<Real>) -> usize {
         // Look for existing vertex within epsilon tolerance
-        for (existing_pos, existing_index) in &self.position_to_index {
-            if (pos - existing_pos).norm() < self.epsilon {
+        for (existing_position, existing_index) in &self.position_to_index {
+            if (position - existing_position).norm() < self.epsilon {
                 return *existing_index;
             }
         }
 
         // Create new index
         let new_index = self.position_to_index.len();
-        self.position_to_index.push((pos, new_index));
-        self.index_to_position.insert(new_index, pos);
+        self.position_to_index.push((position, new_index));
+        self.index_to_position.insert(new_index, position);
         new_index
     }
 
@@ -81,7 +81,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // First pass: build vertex index mapping
         for polygon in &self.polygons {
             for vertex in &polygon.vertices {
-                vertex_map.get_or_create_index(vertex.pos);
+                vertex_map.get_or_create_index(vertex.position);
             }
         }
 
@@ -91,7 +91,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
             // Get indices for this polygon's vertices
             for vertex in &polygon.vertices {
-                let index = vertex_map.get_or_create_index(vertex.pos);
+                let index = vertex_map.get_or_create_index(vertex.position);
                 vertex_indices.push(index);
             }
 

@@ -40,7 +40,7 @@ pub enum MachineKind {
 #[derive(Clone, Debug)]
 pub struct PathMove {
     pub is_rapid: bool,
-    pub pos: Point3<Real>,
+    pub position: Point3<Real>,
     /// Optional extruder E (FDM) or power percentage (Laser/Plasma: 0..1)
     pub scalar: Option<Real>,
     /// Feed (mm/min) for cutting moves; `None` means keep last feed
@@ -65,7 +65,7 @@ impl Toolpath {
     pub fn travel_to<P: Into<Point3<Real>>>(&mut self, p: P) {
         self.moves.push(PathMove {
             is_rapid: true,
-            pos: p.into(),
+            position: p.into(),
             scalar: None,
             feed: None,
             comment: None,
@@ -80,7 +80,7 @@ impl Toolpath {
     ) {
         self.moves.push(PathMove {
             is_rapid: false,
-            pos: p.into(),
+            position: p.into(),
             scalar,
             feed,
             comment: None,
@@ -90,7 +90,7 @@ impl Toolpath {
     pub fn annotate<S: Into<String>>(&mut self, s: S) {
         self.moves.push(PathMove {
             is_rapid: true,
-            pos: Point3::origin(),
+            position: Point3::origin(),
             scalar: None,
             feed: None,
             comment: Some(s.into()),
@@ -639,7 +639,7 @@ pub mod gcode {
                     out.push_str(&format!("; {}\n", c));
                     continue;
                 }
-                let (x, y, z) = (mv.pos.x, mv.pos.y, mv.pos.z);
+                let (x, y, z) = (mv.position.x, mv.position.y, mv.position.z);
                 let f = mv.feed.or(last_feed);
                 match tp.kind {
                     MachineKind::Fdm => {

@@ -2,7 +2,7 @@
 
 use crate::float_types::{Real, parry3d::bounding_volume::Aabb};
 use crate::mesh::plane::Plane;
-use crate::mesh::vertex::Vertex;
+use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 use std::sync::OnceLock;
 
@@ -59,12 +59,12 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             let mut mins = Point3::new(Real::MAX, Real::MAX, Real::MAX);
             let mut maxs = Point3::new(-Real::MAX, -Real::MAX, -Real::MAX);
             for v in &self.vertices {
-                mins.x = mins.x.min(v.pos.x);
-                mins.y = mins.y.min(v.pos.y);
-                mins.z = mins.z.min(v.pos.z);
-                maxs.x = maxs.x.max(v.pos.x);
-                maxs.y = maxs.y.max(v.pos.y);
-                maxs.z = maxs.z.max(v.pos.z);
+                mins.x = mins.x.min(v.position.x);
+                mins.y = mins.y.min(v.position.y);
+                mins.z = mins.z.min(v.position.z);
+                maxs.x = maxs.x.max(v.position.x);
+                maxs.y = maxs.y.max(v.position.y);
+                maxs.z = maxs.z.max(v.position.z);
             }
             Aabb::new(mins, maxs)
         })
@@ -142,7 +142,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
 
         let normal_3d = self.plane.normal().normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
-        let origin_3d = self.vertices[0].pos;
+        let origin_3d = self.vertices[0].position;
 
         #[cfg(feature = "earcut")]
         {
@@ -151,7 +151,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             // 1. Build flattened 2D coordinates, in the same order as `self.vertices`.
 			let mut flat_2d = Vec::with_capacity(self.vertices.len() * 2);
 			for vert in &self.vertices {
-				let offset = vert.pos.coords - origin_3d.coords;
+				let offset = vert.position.coords - origin_3d.coords;
 				let x = offset.dot(&u);
 				let y = offset.dot(&v);
 				flat_2d.push(x);
@@ -197,7 +197,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             const MIN_ALLOWED_VALUE: Real = 1.793662034335766e-43; // 1.0 * 2^-142
             let mut all_vertices_2d = Vec::with_capacity(self.vertices.len());
             for vert in &self.vertices {
-                let offset = vert.pos.coords - origin_3d.coords;
+                let offset = vert.position.coords - origin_3d.coords;
                 let x = offset.dot(&u);
                 let x_clamped = if x.abs() < MIN_ALLOWED_VALUE { 0.0 } else { x };
                 let y = offset.dot(&v);
@@ -393,7 +393,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
 
         let mut points = Vec::new();
         for vertex in &self.vertices {
-            points.push(vertex.pos);
+            points.push(vertex.position);
         }
         let mut normal = Vector3::zeros();
 

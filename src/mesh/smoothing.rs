@@ -1,7 +1,7 @@
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
-use crate::mesh::vertex::Vertex;
+use crate::vertex::Vertex;
 use nalgebra::Point3;
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -42,9 +42,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             for polygon in &smoothed_polygons {
                 for vertex in &polygon.vertices {
                     // Find the global index for this position (with tolerance)
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.pos);
+                    for (position, idx) in &vertex_map.position_to_index {
+                        if (vertex.position - position).norm() < vertex_map.epsilon {
+                            current_positions.insert(*idx, vertex.position);
                             break;
                         }
                     }
@@ -54,11 +54,11 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             // Compute Laplacian for each vertex
             let mut laplacian_updates: HashMap<usize, Point3<Real>> = HashMap::new();
             for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(&current_pos) = current_positions.get(&vertex_idx) {
+                if let Some(&current_position) = current_positions.get(&vertex_idx) {
                     // Check if this is a boundary vertex
                     if preserve_boundaries && neighbors.len() < 4 {
                         // Boundary vertex - skip smoothing
-                        laplacian_updates.insert(vertex_idx, current_pos);
+                        laplacian_updates.insert(vertex_idx, current_position);
                         continue;
                     }
 
@@ -67,19 +67,19 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     let mut valid_neighbors = 0;
 
                     for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_pos) = current_positions.get(&neighbor_idx) {
-                            neighbor_sum += neighbor_pos.coords;
+                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx) {
+                            neighbor_sum += neighbor_position.coords;
                             valid_neighbors += 1;
                         }
                     }
 
                     if valid_neighbors > 0 {
                         let neighbor_avg = neighbor_sum / valid_neighbors as Real;
-                        let laplacian = neighbor_avg - current_pos;
-                        let new_pos = current_pos + laplacian * lambda;
-                        laplacian_updates.insert(vertex_idx, new_pos);
+                        let laplacian = neighbor_avg - current_position;
+                        let new_position = current_position + laplacian * lambda;
+                        laplacian_updates.insert(vertex_idx, new_position);
                     } else {
-                        laplacian_updates.insert(vertex_idx, current_pos);
+                        laplacian_updates.insert(vertex_idx, current_position);
                     }
                 }
             }
@@ -88,10 +88,10 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             for polygon in &mut smoothed_polygons {
                 for vertex in &mut polygon.vertices {
                     // Find the global index for this vertex
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            if let Some(&new_pos) = laplacian_updates.get(idx) {
-                                vertex.pos = new_pos;
+                    for (position, idx) in &vertex_map.position_to_index {
+                        if (vertex.position - position).norm() < vertex_map.epsilon {
+                            if let Some(&new_position) = laplacian_updates.get(idx) {
+                                vertex.position = new_position;
                             }
                             break;
                         }
@@ -145,9 +145,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             let mut current_positions: HashMap<usize, Point3<Real>> = HashMap::new();
             for polygon in &smoothed_polygons {
                 for vertex in &polygon.vertices {
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.pos);
+                    for (position, idx) in &vertex_map.position_to_index {
+                        if (vertex.position - position).norm() < vertex_map.epsilon {
+                            current_positions.insert(*idx, vertex.position);
                             break;
                         }
                     }
@@ -156,35 +156,35 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
             let mut updates: HashMap<usize, Point3<Real>> = HashMap::new();
             for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(&current_pos) = current_positions.get(&vertex_idx) {
+                if let Some(&current_position) = current_positions.get(&vertex_idx) {
                     if preserve_boundaries && neighbors.len() < 4 {
-                        updates.insert(vertex_idx, current_pos);
+                        updates.insert(vertex_idx, current_position);
                         continue;
                     }
 
                     let mut neighbor_sum = Point3::origin();
                     let mut valid_neighbors = 0;
                     for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_pos) = current_positions.get(&neighbor_idx) {
-                            neighbor_sum += neighbor_pos.coords;
+                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx) {
+                            neighbor_sum += neighbor_position.coords;
                             valid_neighbors += 1;
                         }
                     }
 
                     if valid_neighbors > 0 {
                         let neighbor_avg = neighbor_sum / valid_neighbors as Real;
-                        let laplacian = neighbor_avg - current_pos;
-                        updates.insert(vertex_idx, current_pos + laplacian * lambda);
+                        let laplacian = neighbor_avg - current_position;
+                        updates.insert(vertex_idx, current_position + laplacian * lambda);
                     }
                 }
             }
 
             for polygon in &mut smoothed_polygons {
                 for vertex in &mut polygon.vertices {
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            if let Some(&new_pos) = updates.get(idx) {
-                                vertex.pos = new_pos;
+                    for (position, idx) in &vertex_map.position_to_index {
+                        if (vertex.position - position).norm() < vertex_map.epsilon {
+                            if let Some(&new_position) = updates.get(idx) {
+                                vertex.position = new_position;
                             }
                             break;
                         }
@@ -196,9 +196,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             current_positions.clear();
             for polygon in &smoothed_polygons {
                 for vertex in &polygon.vertices {
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.pos);
+                    for (position, idx) in &vertex_map.position_to_index {
+                        if (vertex.position - position).norm() < vertex_map.epsilon {
+                            current_positions.insert(*idx, vertex.position);
                             break;
                         }
                     }
@@ -207,35 +207,35 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
             updates.clear();
             for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(&current_pos) = current_positions.get(&vertex_idx) {
+                if let Some(&current_position) = current_positions.get(&vertex_idx) {
                     if preserve_boundaries && neighbors.len() < 4 {
-                        updates.insert(vertex_idx, current_pos);
+                        updates.insert(vertex_idx, current_position);
                         continue;
                     }
 
                     let mut neighbor_sum = Point3::origin();
                     let mut valid_neighbors = 0;
                     for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_pos) = current_positions.get(&neighbor_idx) {
-                            neighbor_sum += neighbor_pos.coords;
+                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx) {
+                            neighbor_sum += neighbor_position.coords;
                             valid_neighbors += 1;
                         }
                     }
 
                     if valid_neighbors > 0 {
                         let neighbor_avg = neighbor_sum / valid_neighbors as Real;
-                        let laplacian = neighbor_avg - current_pos;
-                        updates.insert(vertex_idx, current_pos + laplacian * mu);
+                        let laplacian = neighbor_avg - current_position;
+                        updates.insert(vertex_idx, current_position + laplacian * mu);
                     }
                 }
             }
 
             for polygon in &mut smoothed_polygons {
                 for vertex in &mut polygon.vertices {
-                    for (pos, idx) in &vertex_map.position_to_index {
-                        if (vertex.pos - pos).norm() < vertex_map.epsilon {
-                            if let Some(&new_pos) = updates.get(idx) {
-                                vertex.pos = new_pos;
+                    for (position, idx) in &vertex_map.position_to_index {
+                        if (vertex.position - position).norm() < vertex_map.epsilon {
+                            if let Some(&new_position) = updates.get(idx) {
+                                vertex.position = new_position;
                             }
                             break;
                         }
@@ -281,7 +281,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         for (poly_idx, poly) in self.polygons.iter().enumerate() {
             for vertex in &poly.vertices {
-                let v_idx = vertex_map.get_or_create_index(vertex.pos);
+                let v_idx = vertex_map.get_or_create_index(vertex.position);
                 polygon_map.entry(v_idx).or_default().push(poly_idx);
             }
         }
@@ -302,8 +302,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             // Curvature check
             if !should_refine {
                 'edge_loop: for edge in polygon.edges() {
-                    let v1_idx = vertex_map.get_or_create_index(edge.0.pos);
-                    let v2_idx = vertex_map.get_or_create_index(edge.1.pos);
+                    let v1_idx = vertex_map.get_or_create_index(edge.0.position);
+                    let v2_idx = vertex_map.get_or_create_index(edge.1.position);
 
                     if let (Some(p1_indices), Some(p2_indices)) =
                         (polygon_map.get(&v1_idx), polygon_map.get(&v2_idx))
@@ -350,7 +350,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut max_length: Real = 0.0;
         for i in 0..vertices.len() {
             let j = (i + 1) % vertices.len();
-            let edge_length = (vertices[j].pos - vertices[i].pos).norm();
+            let edge_length = (vertices[j].position - vertices[i].position).norm();
             max_length = max_length.max(edge_length);
         }
         max_length

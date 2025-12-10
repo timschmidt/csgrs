@@ -5,7 +5,7 @@ use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
-use crate::mesh::vertex::Vertex;
+use crate::vertex::Vertex;
 use crate::sketch::Sketch;
 use geo::{
     BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
@@ -33,10 +33,10 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             // Project them onto XY => build a 2D polygon (triangle).
             for tri in triangles {
                 let ring = vec![
-                    (tri[0].pos.x, tri[0].pos.y),
-                    (tri[1].pos.x, tri[1].pos.y),
-                    (tri[2].pos.x, tri[2].pos.y),
-                    (tri[0].pos.x, tri[0].pos.y), // close ring explicitly
+                    (tri[0].position.x, tri[0].position.y),
+                    (tri[1].position.x, tri[1].position.y),
+                    (tri[2].position.x, tri[2].position.y),
+                    (tri[0].position.x, tri[0].position.y), // close ring explicitly
                 ];
                 let polygon_2d = geo::Polygon::new(LineString::from(ring), vec![]);
                 flattened_3d.push(polygon_2d);
@@ -125,7 +125,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
 
             // check if first and last point are within tolerance of each other
-            let dist_sq = (chain[0].pos - chain[n - 1].pos).norm_squared();
+            let dist_sq = (chain[0].position - chain[n - 1].position).norm_squared();
             if dist_sq < tolerance() * tolerance() {
                 // Force them to be exactly the same, closing the line
                 chain[n - 1] = chain[0];
@@ -135,7 +135,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 chain
                     .iter()
                     .map(|vertex| {
-                        coord! {x: vertex.pos.x, y: vertex.pos.y}
+                        coord! {x: vertex.position.x, y: vertex.position.y}
                     })
                     .collect(),
             );
@@ -169,8 +169,8 @@ fn quantize(x: Real) -> i64 {
 }
 
 /// Convert a Vertex's position to an EndKey
-fn make_key(pos: &Point3<Real>) -> EndKey {
-    EndKey(quantize(pos.x), quantize(pos.y), quantize(pos.z))
+fn make_key(position: &Point3<Real>) -> EndKey {
+    EndKey(quantize(position.x), quantize(position.y), quantize(position.z))
 }
 
 /// Take a list of intersection edges `[Vertex;2]` and merge them into polylines.
@@ -189,7 +189,7 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
     // Collect all endpoints
     for (i, edge) in edges.iter().enumerate() {
         for (end_idx, v) in edge.iter().enumerate() {
-            let k = make_key(&v.pos);
+            let k = make_key(&v.position);
             adjacency.entry(k).or_default().push((i, end_idx));
         }
     }
@@ -240,7 +240,7 @@ fn extend_chain_forward(
     loop {
         // The chain's current end point:
         let last_v = chain.last().unwrap();
-        let key = make_key(&last_v.pos);
+        let key = make_key(&last_v.position);
 
         // Find candidate edges that share this endpoint
         let Some(candidates) = adjacency.get(&key) else {

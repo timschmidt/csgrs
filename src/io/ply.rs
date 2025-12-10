@@ -4,18 +4,12 @@
 //! a popular format for 3D scanning, research, and mesh processing applications.
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
+use crate::vertex::Vertex;
 use crate::sketch::Sketch;
 use geo::CoordsIter;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use std::io::Write;
-
-// Helper struct for PLY vertex with normal
-#[derive(Clone)]
-struct PlyVertex {
-    position: Point3<Real>,
-    normal: Vector3<Real>,
-}
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// Export this Mesh to PLY format as a string
@@ -50,7 +44,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
                 for vertex in triangle {
                     let vertex_idx =
-                        add_unique_vertex_ply(&mut vertices, vertex.pos, vertex.normal);
+                        add_unique_vertex_ply(&mut vertices, vertex.position, vertex.normal);
                     face_indices.push(vertex_idx);
                 }
 
@@ -221,7 +215,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     fn add_2d_polygon_to_ply(
         &self,
         poly2d: &geo::Polygon<Real>,
-        vertices: &mut Vec<PlyVertex>,
+        vertices: &mut Vec<Vertex>,
         faces: &mut Vec<Vec<usize>>,
     ) {
         // Get the exterior ring
@@ -261,7 +255,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
 // Helper function to add unique vertex with normal for PLY
 fn add_unique_vertex_ply(
-    vertices: &mut Vec<PlyVertex>,
+    vertices: &mut Vec<Vertex>,
     position: Point3<Real>,
     normal: Vector3<Real>,
 ) -> usize {
@@ -275,6 +269,6 @@ fn add_unique_vertex_ply(
     }
 
     // Add new vertex
-    vertices.push(PlyVertex { position, normal });
+    vertices.push(Vertex { position, normal });
     vertices.len() - 1
 }

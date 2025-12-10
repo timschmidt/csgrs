@@ -4,7 +4,7 @@ use crate::errors::ValidationError;
 use crate::float_types::{PI, Real, TAU, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
-use crate::mesh::vertex::Vertex;
+use crate::vertex::Vertex;
 use crate::sketch::Sketch;
 use crate::csg::CSG;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
@@ -316,9 +316,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             let r = radius1 * (1.0 - stack) + radius2 * stack;
             let angle = slice * TAU;
             let radial_dir = axis_x * angle.cos() + axis_y * angle.sin();
-            let pos = s + ray * stack + radial_dir * r;
+            let position = s + ray * stack + radial_dir * r;
             let normal = radial_dir * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
-            Vertex::new(Point3::from(pos), normal.normalize())
+            Vertex::new(Point3::from(position), normal.normalize())
         };
 
         let mut polygons = Vec::new();

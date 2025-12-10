@@ -1,6 +1,6 @@
 use crate::float_types::{PI, Real, tolerance};
 use crate::mesh::Mesh;
-use crate::mesh::vertex::Vertex;
+use crate::vertex::Vertex;
 use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]
@@ -129,9 +129,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             };
         }
 
-        let a = vertices[0].pos;
-        let b = vertices[1].pos;
-        let c = vertices[2].pos;
+        let a = vertices[0].position;
+        let b = vertices[1].position;
+        let c = vertices[2].position;
 
         // Edge vectors and lengths
         let ab = b - a;
@@ -263,9 +263,9 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             .flat_map(|poly| {
                 poly.vertices
                     .windows(2)
-                    .map(|w| (w[1].pos - w[0].pos).norm())
+                    .map(|w| (w[1].position - w[0].position).norm())
                     .chain(std::iter::once(
-                        (poly.vertices[0].pos - poly.vertices.last().unwrap().pos).norm(),
+                        (poly.vertices[0].position - poly.vertices.last().unwrap().position).norm(),
                     ))
             })
             .collect();

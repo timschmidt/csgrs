@@ -1,7 +1,7 @@
 use crate::float_types::Real;
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
-use crate::mesh::vertex::Vertex;
+use crate::vertex::Vertex;
 use crate::sketch::Sketch;
 use geo::{Polygon as GeoPolygon, line_string};
 use nalgebra::{Point3, Vector3};
@@ -151,24 +151,24 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 let face = dxf::entities::Face3D::new(
                     // 3DFACE expects four vertices, but for triangles, the fourth is the same as the third
                     dxf::Point::new(
-                        tri[0].pos.x as f64,
-                        tri[0].pos.y as f64,
-                        tri[0].pos.z as f64,
+                        tri[0].position.x as f64,
+                        tri[0].position.y as f64,
+                        tri[0].position.z as f64,
                     ),
                     dxf::Point::new(
-                        tri[1].pos.x as f64,
-                        tri[1].pos.y as f64,
-                        tri[1].pos.z as f64,
+                        tri[1].position.x as f64,
+                        tri[1].position.y as f64,
+                        tri[1].position.z as f64,
                     ),
                     dxf::Point::new(
-                        tri[2].pos.x as f64,
-                        tri[2].pos.y as f64,
-                        tri[2].pos.z as f64,
+                        tri[2].position.x as f64,
+                        tri[2].position.y as f64,
+                        tri[2].position.z as f64,
                     ),
                     dxf::Point::new(
-                        tri[2].pos.x as f64,
-                        tri[2].pos.y as f64,
-                        tri[2].pos.z as f64,
+                        tri[2].position.x as f64,
+                        tri[2].position.y as f64,
+                        tri[2].position.z as f64,
                     ), // Duplicate for triangular face
                 );
 

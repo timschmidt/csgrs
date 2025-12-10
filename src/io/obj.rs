@@ -5,7 +5,7 @@
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::polygon::Polygon;
-use crate::mesh::vertex::Vertex;
+use crate::vertex::Vertex;
 use crate::sketch::Sketch;
 use geo::CoordsIter;
 use nalgebra::{Point3, Vector3};
@@ -55,7 +55,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                 let normal_idx = add_unique_normal(&mut normals, normal);
 
                 for vertex in triangle {
-                    let vertex_idx = add_unique_vertex(&mut vertices, vertex.pos);
+                    let vertex_idx = add_unique_vertex(&mut vertices, vertex.position);
                     face_indices.push((vertex_idx, normal_idx));
                 }
 
