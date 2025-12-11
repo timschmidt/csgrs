@@ -1,4 +1,5 @@
-use crate::mesh::{polygon::Polygon, vertex::Vertex};
+use crate::mesh::polygon::Polygon;
+use crate::vertex::Vertex;
 use crate::wasm::{
     js_metadata_to_string, plane_js::PlaneJs, point_js::Point3Js, vector_js::Vector3Js,
     vertex_js::VertexJs,
@@ -112,9 +113,9 @@ impl PolygonJs {
         let mut data = Vec::with_capacity(self.inner.vertices.len() * 6);
 
         for v in &self.inner.vertices {
-            data.push(v.pos.x as f64);
-            data.push(v.pos.y as f64);
-            data.push(v.pos.z as f64);
+            data.push(v.position.x as f64);
+            data.push(v.position.y as f64);
+            data.push(v.position.z as f64);
             data.push(v.normal.x as f64);
             data.push(v.normal.y as f64);
             data.push(v.normal.z as f64);
