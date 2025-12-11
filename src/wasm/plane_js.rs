@@ -1,5 +1,6 @@
 use crate::float_types::Real;
-use crate::mesh::{plane::Plane, vertex::Vertex};
+use crate::mesh::plane::Plane;
+use crate::vertex::Vertex;
 use crate::wasm::{
     matrix_js::Matrix4Js, point_js::Point3Js, polygon_js::PolygonJs, vector_js::Vector3Js,
     vertex_js::VertexJs,

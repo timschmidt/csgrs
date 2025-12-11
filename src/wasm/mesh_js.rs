@@ -34,8 +34,8 @@ impl MeshJs {
     #[wasm_bindgen(js_name = positions)]
     pub fn positions(&self) -> Float64Array {
         let obj = self.to_arrays();
-        let pos = Reflect::get(&obj, &"positions".into()).unwrap();
-        pos.dyn_into::<Float64Array>().unwrap()
+        let position = Reflect::get(&obj, &"positions".into()).unwrap();
+        position.dyn_into::<Float64Array>().unwrap()
     }
 
     /// Return an interleaved array of vertex normals (nx,ny,nz)*.
@@ -66,11 +66,11 @@ impl MeshJs {
         for poly in &self.inner.polygons {
             for vertex in &poly.vertices {
                 if !vertices.iter().any(|v: &Point3<f64>| {
-                    (v.x - vertex.pos.x).abs() < 1e-8
-                        && (v.y - vertex.pos.y).abs() < 1e-8
-                        && (v.z - vertex.pos.z).abs() < 1e-8
+                    (v.x - vertex.position.x).abs() < 1e-8
+                        && (v.y - vertex.position.y).abs() < 1e-8
+                        && (v.z - vertex.position.z).abs() < 1e-8
                 }) {
-                    vertices.push(vertex.pos);
+                    vertices.push(vertex.position);
                 }
             }
         }
@@ -90,7 +90,7 @@ impl MeshJs {
         let mut idx: u32 = 0;
         for p in &tri.polygons {
             for v in &p.vertices {
-                positions.extend_from_slice(&[v.pos.x as f64, v.pos.y as f64, v.pos.z as f64]);
+                positions.extend_from_slice(&[v.position.x as f64, v.position.y as f64, v.position.z as f64]);
                 normals.extend_from_slice(&[
                     v.normal.x as f64,
                     v.normal.y as f64,
@@ -133,7 +133,7 @@ impl MeshJs {
             let js_vert = Object::new();
 
             // Wrap position and normal in Point3Js / Vector3Js
-            let pos_js = Point3Js::from(v.pos);
+            let pos_js = Point3Js::from(v.position);
             let norm_js = Vector3Js::from(v.normal);
 
             Reflect::set(&js_vert, &"position".into(), &JsValue::from(pos_js)).unwrap();
@@ -468,6 +468,11 @@ impl MeshJs {
     ) -> String {
         self.inner
             .to_amf_with_color(object_name, units, (r as Real, g as Real, b as Real))
+    }
+    
+	#[wasm_bindgen(js_name = toGLTF)]
+    pub fn to_gltf(&self, object_name: &str) -> String {
+        self.inner.to_gltf(object_name)
     }
 
     #[wasm_bindgen(js_name=fromSketch)]
