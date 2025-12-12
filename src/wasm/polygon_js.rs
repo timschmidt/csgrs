@@ -1,4 +1,4 @@
-use crate::mesh::polygon::Polygon;
+use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use crate::wasm::{
     js_metadata_to_string, plane_js::PlaneJs, point_js::Point3Js, vector_js::Vector3Js,

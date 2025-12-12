@@ -10,7 +10,7 @@ use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use rayon::prelude::*;
 
 #[cfg(feature = "parallel")]
-use crate::mesh::Polygon;
+use crate::Polygon;
 
 #[cfg(feature = "parallel")]
 use crate::mesh::Vertex;

@@ -3,7 +3,7 @@
 use crate::errors::ValidationError;
 use crate::float_types::{PI, Real, TAU, tolerance};
 use crate::mesh::Mesh;
-use crate::mesh::polygon::Polygon;
+use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use crate::sketch::Sketch;
 use crate::csg::CSG;
