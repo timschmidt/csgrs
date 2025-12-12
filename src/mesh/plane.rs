@@ -67,7 +67,7 @@
 //! Unless stated otherwise, all tolerances are governed by `float_types::tolerance()`.
 
 use crate::float_types::{Real, tolerance};
-use crate::mesh::polygon::Polygon;
+use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
 use robust::{Coord3D, orient3d};

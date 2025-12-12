@@ -1,6 +1,6 @@
 use crate::float_types::Real;
 use crate::mesh::Mesh;
-use crate::mesh::polygon::Polygon;
+use crate::polygon::Polygon;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
 use crate::sketch::Sketch;

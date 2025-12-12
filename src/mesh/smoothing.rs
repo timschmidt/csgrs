@@ -1,6 +1,6 @@
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
-use crate::mesh::polygon::Polygon;
+use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::Point3;
 use std::collections::HashMap;

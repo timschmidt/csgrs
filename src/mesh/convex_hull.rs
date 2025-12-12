@@ -11,7 +11,7 @@
 
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
-use crate::mesh::polygon::Polygon;
+use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use crate::csg::CSG;
 use chull::ConvexHullWrapper;

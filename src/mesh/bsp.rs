@@ -8,7 +8,7 @@ use crate::vertex::Vertex;
 
 use crate::float_types::Real;
 use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
-use crate::mesh::polygon::Polygon;
+use crate::polygon::Polygon;
 use std::fmt::Debug;
 
 /// A [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node, containing polygons plus optional front/back subtrees

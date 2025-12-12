@@ -3,12 +3,12 @@
 use crate::errors::ValidationError;
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
-use crate::mesh::polygon::Polygon;
+use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use crate::sketch::Sketch;
 use crate::csg::CSG;
 use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Point3, Vector3, Matrix4, Rotation3, Translation3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -820,10 +820,6 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// * returns - a `Mesh<S>` containing all side quads plus automatically triangulated caps (respecting any holes).
     pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<S> {
-        use crate::mesh::{Mesh, polygon::Polygon};
-		use crate::vertex::Vertex;
-        use nalgebra::{Matrix4, Rotation3, Translation3};
-
         // sanity checks
         if path.len() < 2 || self.geometry.0.is_empty() {
             return Mesh::new();

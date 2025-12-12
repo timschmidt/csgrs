@@ -16,7 +16,8 @@ use crate::float_types::{
 #[cfg(feature = "mesh-bbopt")]
 use crate::float_types::bounding_volume::BoundingVolume;
 
-use crate::mesh::{bsp::Node, plane::Plane, polygon::Polygon};
+use crate::mesh::{bsp::Node, plane::Plane};
+use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 
 #[cfg(feature = "sketch")]
@@ -52,8 +53,6 @@ pub mod flatten_slice;
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
 pub mod plane;
-pub mod polygon;
-
 pub mod connectivity;
 pub mod manifold;
 pub mod quality;
