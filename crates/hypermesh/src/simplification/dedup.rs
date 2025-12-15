@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::common::{Half, Tref, Vec3, next_of};
+use crate::{Half, Tref, Vec3, next_of};
 use super::{pair_up, tail_of, update_vid_around_star};
 
 fn dedupe_edge(

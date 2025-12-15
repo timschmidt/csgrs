@@ -1,8 +1,7 @@
 use std::mem;
 use std::collections::HashMap;
+use crate::{Manifold, Real, Vec3, Half, Tref, face_of};
 use crate::boolean03::Boolean03;
-use crate::common::{Real, Vec3, Half, Tref, face_of};
-use crate::manifold::Manifold;
 use crate::bounds::BBox;
 use crate::OpType;
 

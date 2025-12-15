@@ -1,4 +1,4 @@
-use crate::common::{Half, Real, Vec3, Vec4};
+use crate::{Half, Real, Vec3, Vec4};
 use super::kernel01::{intersect, shadows, shadows01};
 
 pub struct Kernel11<'a> {

@@ -3,7 +3,7 @@ use crate::{next_of, Half, Vec3u};
 
 const REMOVE_FLAG: usize = usize::MAX - 1;
 
-pub fn tri_halfs_single(ts: &Vec<Vec3u>) -> Vec<Half> {
+pub fn tri_halfs_single(ts: &[Vec3u]) -> Vec<Half> {
     let nh = ts.len() * 3;
     let ne = nh / 2;
     let nt = nh / 3;
@@ -68,7 +68,7 @@ pub fn tri_halfs_single(ts: &Vec<Vec3u>) -> Vec<Half> {
 }
 
 #[cfg(feature = "rayon")]
-pub fn tri_halfs_multi(ts: &Vec<Vec3u>) -> Vec<Half> {
+pub fn tri_halfs_multi(ts: &[Vec3u]) -> Vec<Half> {
     let nh = ts.len() * 3;
     let ne = nh / 2;
     let nt = nh / 3;
@@ -138,8 +138,8 @@ pub fn tri_halfs_multi(ts: &Vec<Vec3u>) -> Vec<Half> {
 // now halfedges of the same mini ids are sorted in a sequence.
 // It treats the triangle overlap case here, also considers 4-manifold case.
 fn step(
-    is: &mut Vec<usize>,
-    hs: &mut Vec<Half>,
+    is: &mut [usize],
+    hs: &mut [Half],
     i: usize,
     consecutive_ini: usize,
 ) -> usize {

@@ -1,9 +1,9 @@
-use boolmesh::{Real, compute_boolean, Manifold, OpType};
-use bevy::asset::RenderAssetUsages;
+use boolmesh::prelude::*;
 use bevy::prelude::*;
 use bevy::pbr::wireframe::{WireframePlugin, Wireframe, WireframeColor};
-use bevy::render::mesh::PrimitiveTopology;
 use bevy::color::palettes::css::*;
+use bevy::asset::RenderAssetUsages;
+use bevy::render::mesh::PrimitiveTopology;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 
 #[derive(Component)]
@@ -36,7 +36,7 @@ fn setup(
     let mut mfs = vec![];
     for m in vec![&m0[0].mesh, &m1[0].mesh] {
         mfs.push(Manifold::new(
-            &m.positions.iter().map(|&v| v as Real).collect::<Vec<_>>(),
+            &m.positions.iter().map(|&v| v as f64).collect::<Vec<_>>(),
             &m.indices.iter().map(|&v| v as usize).collect::<Vec<_>>(),
         ).unwrap());
     }

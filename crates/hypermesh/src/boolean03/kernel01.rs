@@ -1,4 +1,4 @@
-use crate::common::{Half, Real, Vec2, Vec3, Vec4};
+use crate::{Half, Real, Vec2, Vec3, Vec4};
 // These two functions (Interpolate and Intersect) are the only places where
 // floating-point operations take place in the whole Boolean function. These
 // are carefully designed to minimize rounding error and to remove it at edge

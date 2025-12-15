@@ -1,34 +1,25 @@
-pub mod manifold;
-pub mod triangulation;
-pub mod simplification;
-pub mod common;
-pub mod boolean03;
-pub mod boolean45;
+mod manifold;
+mod triangulation;
+mod simplification;
+mod common;
+mod boolean03;
+mod boolean45;
+mod compose;
 mod tests;
+
 use crate::boolean03::boolean03;
 use crate::boolean45::boolean45;
 use crate::simplification::simplify_topology;
 use crate::triangulation::triangulate;
-pub use crate::manifold::*;
-pub use crate::common::*;
+use crate::common::*;
+use crate::manifold::*;
 
-pub fn compute_boolean_from_raw_data(
-    pos0: Vec<Real>,
-    idx0: Vec<usize>,
-    pos1: Vec<Real>,
-    idx1: Vec<usize>,
-    op_type: usize
-) -> Result<Manifold, String>{
-    let mp = Manifold::new(&pos0, &idx0)?;
-    let mq = Manifold::new(&pos1, &idx1)?;
-    let op = match op_type {
-        0 => OpType::Add,
-        1 => OpType::Subtract,
-        2 => OpType::Intersect,
-        _ => return Err("Invalid op_type".into())
-    };
-
-    compute_boolean(&mp, &mq, op)
+pub use crate::common::{Real, Vec2, Vec3, Vec4, Mat3, K_PRECISION};
+pub mod prelude {
+    pub use crate::common::OpType;
+    pub use crate::manifold::Manifold;
+    pub use crate::compute_boolean;
+    pub use crate::compose::{compose, translate, scale, rotate, fractal};
 }
 
 pub fn compute_boolean(
@@ -59,15 +50,30 @@ pub fn compute_boolean(
     );
 
     Manifold::new_impl(
-        &b45.ps,
-        &trg.hs
-            .chunks(3)
-            .map(|hs| Vec3u::new(hs[0].tail, hs[1].tail, hs[2].tail))
-            .collect(),
+        b45.ps,
+        trg.hs.chunks(3).map(|hs| Vec3u::new(hs[0].tail, hs[1].tail, hs[2].tail)).collect(),
         Some(eps),
         Some(tol)
     )
 }
+
+//pub fn compute_boolean_from_raw_data(
+//    pos0: &[Real],
+//    idx0: &[usize],
+//    pos1: &[Real],
+//    idx1: &[usize],
+//    op_type: usize
+//) -> Result<Manifold, String>{
+//    let mp = Manifold::new(&pos0, &idx0)?;
+//    let mq = Manifold::new(&pos1, &idx1)?;
+//    let op = match op_type {
+//        0 => OpType::Add,
+//        1 => OpType::Subtract,
+//        2 => OpType::Intersect,
+//        _ => return Err("Invalid op_type".into())
+//    };
+//    compute_boolean(&mp, &mq, op)
+//}
 
 
 

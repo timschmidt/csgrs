@@ -1,7 +1,6 @@
 use super::kernel02::Kernel02;
 use crate::bounds::{BPos, Query};
-use crate::common::{Real, Vec2};
-use crate::Manifold;
+use crate::{Real, Vec2, Manifold};
 
 pub fn winding03(
     mp: &Manifold,

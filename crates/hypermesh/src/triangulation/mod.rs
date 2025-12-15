@@ -22,12 +22,9 @@ pub fn triangulate(
     b45: &Boolean45,
     eps: Real,
 ) -> Result<Triangulation, String> {
-    let mut ts = vec![];
-    let mut ns = vec![];
-    let mut rs = vec![];
 
     #[cfg(feature = "rayon")] {
-        (ts, rs, ns) = (0..b45.hid_per_f.len() - 1)
+        let (mut ts, mut rs, ns) = (0..b45.hid_per_f.len() - 1)
             .into_par_iter()
             .map(|fid| {
                 let hid = b45.hid_per_f[fid] as usize;
@@ -46,20 +43,27 @@ pub fn triangulate(
                 },
             );
         update_reference(mp, mq, &mut rs);
-        return Ok(Triangulation { hs: tri_halfs_multi(&mut ts), ns, rs });
+        Ok(Triangulation { hs: tri_halfs_multi(&mut ts), ns, rs })
     }
 
-    for fid in 0..b45.hid_per_f.len() - 1 {
-        let hid = b45.hid_per_f[fid] as usize;
-        let t = process_face(&b45, fid, eps);
-        let r = b45.rs[hid].clone();
-        let n = b45.ns[fid].clone();
-        rs.extend(vec![r; t.len()]);
-        ns.extend(vec![n; t.len()]);
-        ts.extend(t);
+    #[cfg(not(feature = "rayon"))] {
+        let mut ts = vec![];
+        let mut ns = vec![];
+        let mut rs = vec![];
+
+        for fid in 0..b45.hid_per_f.len() - 1 {
+            let hid = b45.hid_per_f[fid] as usize;
+            let t = crate::triangulation::process_face(&b45, fid, eps);
+            let r = b45.rs[hid].clone();
+            let n = b45.ns[fid].clone();
+            rs.extend(vec![r; t.len()]);
+            ns.extend(vec![n; t.len()]);
+            ts.extend(t);
+        }
+        crate::triangulation::update_reference(mp, mq, &mut rs);
+        Ok(Triangulation { hs: crate::triangulation::tri_halfs::tri_halfs_single(&mut ts), ns, rs })
     }
-    update_reference(mp, mq, &mut rs);
-    Ok(Triangulation { hs: tri_halfs_single(&mut ts), ns, rs })
+
 }
 
 fn process_face(
@@ -76,10 +80,6 @@ fn process_face(
     }
 }
 
-// This function considers vertex-joint cases like Hierholzer's algorithm.
-// https://algorithms.discrete.ma.tum.de/graph-algorithms/hierholzer/index_en.html
-// But not sure when some inner loops in an outer loop case happen, or two separate loops could be happened.
-// Solved: Inner loop is always cw, so when ear clipping comes, it is guaranteed to be a single concave loop.
 fn assemble_halfs(hs: &[Half], hid_f: &[i32], fid: usize) -> Vec<Vec<usize>> {
     let bgn = hid_f[fid] as usize;
     let end = hid_f[fid + 1] as usize;

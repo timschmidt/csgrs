@@ -1,5 +1,5 @@
+use crate::Vec3;
 use crate::bounds::{union_bbs, BBox, Query};
-use crate::common::Vec3;
 
 pub const K_NO_CODE: u32 = 0xFFFFFFFF;
 const K_INITIAL_LENGTH: i32 = 128;

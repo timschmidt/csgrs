@@ -1,12 +1,12 @@
 use std::f64::consts::PI;
 use std::time::Instant;
-use boolmesh::{compute_boolean, Manifold, OpType, Real, Vec2 as V2, Vec3 as V3, Mat3};
 use bevy::prelude::*;
 use bevy::pbr::wireframe::{WireframePlugin, Wireframe, WireframeColor};
 use bevy::asset::RenderAssetUsages;
 use bevy::render::mesh::PrimitiveTopology;
 use bevy::color::palettes::css::*;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
+use boolmesh::prelude::*;
 
 #[derive(Component)]
 struct ToggleableMesh;
@@ -67,9 +67,7 @@ fn setup(
     ));
 }
 
-//--------------------------------------------------------------------------------------------------
-
-const CUBE_PS: [Real; 24] = [
+const CUBE_PS: [f64; 24] = [
     -0.5, -0.5, -0.5,
     -0.5, -0.5,  0.5,
     -0.5,  0.5, -0.5,
@@ -89,90 +87,27 @@ const CUBE_TS: [usize; 36] = [
     7, 3, 5, 7, 5, 6
 ];
 
-fn translate(mat: &mut Vec<V3>, t: V3) {
-    for p in mat.iter_mut() { *p += t; }
-}
-
-fn scale(mat: &mut Vec<V3>, s: V3) {
-    for p in mat.iter_mut() { *p = V3::new(p.x * s.x, p.y * s.y, p.z * s.z); }
-}
-
-fn rotate(mat: &mut Vec<V3>, rot: &V3) {
-    let r = Mat3::from_euler(glam::EulerRot::XYZ, rot.x, rot.y, rot.z);
-    for p in mat.iter_mut() { *p = r * *p; }
-}
-
-fn fractal(
-    hole : &Manifold,
-    holes: &mut Vec<Manifold>,
-    p: V2,
-    w: Real,
-    depth: usize,
-    depth_max: usize,
-) {
-    let w = w / 3.;
-    let mut ps = hole.ps.clone();
-    let ts = hole.hs.iter().map(|h| h.tail).collect::<Vec<usize>>();
-    scale(&mut ps, V3::new(w, w, 1.));
-    translate(&mut ps, V3::new(p.x, p.y, 0.));
-    let mut flat = vec![];
-    for p in ps {
-        flat.push(p.x);
-        flat.push(p.y);
-        flat.push(p.z);
-    }
-    let copy = Manifold::new(&flat, &ts).unwrap();
-    holes.push(copy);
-
-    if depth == depth_max { return; }
-
-    for offset in vec![
-        V2::new(-w, -w),
-        V2::new(-w, 0.),
-        V2::new(-w, w),
-        V2::new(0., w),
-        V2::new(w, w),
-        V2::new(w, 0.),
-        V2::new(w, -w),
-        V2::new(0., -w)
-    ] {
-        fractal(&hole, holes, p + offset, w, depth + 1, depth_max);
-    }
-}
-
-pub fn compose(ms: &Vec<Manifold>) -> Result<Manifold, String> {
-    let mut ps = vec![];
-    let mut ts = vec![];
-    let mut offset = 0;
-    for m in ms {
-        for h in m.hs.iter() { ts.push(h.tail + offset); }
-        for p in m.ps.iter() { ps.push(p.x); ps.push(p.y); ps.push(p.z); }
-        offset += m.nv;
-    }
-    Manifold::new(&ps, &ts)
-}
-
 pub fn menger_sponge(n: usize) -> Manifold {
     let res = Manifold::new(&CUBE_PS, &CUBE_TS).unwrap();
     let mut holes = vec![];
-    fractal(&res, &mut holes, V2::new(0., 0.), 1., 1, n);
+    fractal(&res, &mut holes, 0., 0., 1., 1, n);
     let holes_z = compose(&holes).unwrap();
 
-    let rot = |r: &V3| {
+    let rot = |rx, ry, rz| {
         let ts = holes_z.hs.iter().map(|h| h.tail).collect::<Vec<_>>();
         let mut ps = holes_z.ps.clone();
-        rotate(&mut ps, r);
+        rotate(&mut ps, rx, ry, rz);
         let mut flat = vec![];
         for p in ps {
-            flat.push(if (p.x - 0.5).abs() < 1e-4 { 0.5 } else if (p.x + 0.5).abs() < 1e-4 { -0.5 } else { p.x });
-            flat.push(if (p.y - 0.5).abs() < 1e-4 { 0.5 } else if (p.y + 0.5).abs() < 1e-4 { -0.5 } else { p.y });
-            flat.push(if (p.z - 0.5).abs() < 1e-4 { 0.5 } else if (p.z + 0.5).abs() < 1e-4 { -0.5 } else { p.z });
+            flat.push(if (p.x - 0.5).abs() < 1e-4 { 0.5 } else if (p.x + 0.5).abs() < 1e-4 { -0.5 } else { p.x as f64});
+            flat.push(if (p.y - 0.5).abs() < 1e-4 { 0.5 } else if (p.y + 0.5).abs() < 1e-4 { -0.5 } else { p.y as f64});
+            flat.push(if (p.z - 0.5).abs() < 1e-4 { 0.5 } else if (p.z + 0.5).abs() < 1e-4 { -0.5 } else { p.z as f64});
         }
         Manifold::new(&flat, &ts).unwrap()
     };
 
-    let holes_x = rot(&V3::new(PI as Real / 2., 0., 0.));
-    let holes_y = rot(&V3::new(0., PI as Real / 2., 0.));
+    let holes_x = rot(PI / 2., 0., 0.);
+    let holes_y = rot(0., PI / 2., 0.);
 
     let res = compute_boolean(&res, &holes_z, OpType::Subtract).unwrap();
     let res = compute_boolean(&res, &holes_x, OpType::Subtract).unwrap();

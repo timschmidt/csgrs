@@ -163,7 +163,7 @@ impl Ecvt {
     // every Vert to ensure none are inside. The Collider brings the total
     // triangulator cost down from O(n^2) to O(nlogn) for most large polygons.
     // Think of a cost as vaguely a distance metric - 0 is right on the edge of being invalid.
-    // Cost > epsilon is definitely invalid. Cost < -epsilon is definitely valid, so all improvement
+    // Cost > epsilon is definitely invalid. cost < -epsilon is definitely valid, so all improvement
     // costs are designed to always give values < -epsilon so they will never affect validity.
     // The first totalCost is designed to give priority to sharper angles.
     // Any cost < (-1 - epsilon) has satisfied the Delaunay condition.
@@ -182,7 +182,7 @@ impl Ecvt {
             &Vec2::new(center.x - radius, center.y - radius),
             &Vec2::new(center.x + radius, center.y + radius),
         );
-        bb.union(&self.pos);
+        bb.union(self.pos);
         bb.min -= Vec2::new(eps, eps);
         bb.max += Vec2::new(eps, eps);
 
@@ -286,7 +286,7 @@ fn do_loop<F>(v: &mut EvPtr, mut func: F) -> Option<EvPtr> where F: FnMut(&mut E
 /*
  * Ear-clipping triangulator based on David Eberly's approach from Geometric
  * Tools, but adjusted to handle epsilon-valid polygons, and including a
- * fallback that ensures a manifold triangulation even for overlapping polygons.
+ * fallback that ensures manifold triangulation even for overlapping polygons.
  * This is reduced from an O(n^2) algorithm by means of our BVH Collider.
  *
  * The main adjustments for robustness involve clipping the sharpest ears first
@@ -382,11 +382,11 @@ impl EarClip {
 
             let first    = Rc::clone(self.polygon.last().unwrap());
             let mut last = Rc::clone(&first);
-            self.bbox.union(&first.borrow().pos);
+            self.bbox.union(first.borrow().pos);
             bgns.push(Rc::clone(&first));
 
             for v in poly.iter().skip(1) {
-                self.bbox.union(&v.pos);
+                self.bbox.union(v.pos);
                 self.polygon.push(Rc::new(RefCell::new(Ecvt::new(v.idx, v.pos))));
                 let next = Rc::clone(self.polygon.last().unwrap());
                 Self::link(&last, &next);
@@ -412,7 +412,7 @@ impl EarClip {
         let mut comp = 0.; // For Kahan's summation
 
         let add_point = |v: &mut EvPtr| {
-            bbox.union(&v.borrow().pos);
+            bbox.union(v.borrow().pos);
             let tmp0 = det2x2(&(v.borrow().pos - origin), &(v.borrow().pos_r() - origin));
             let tmp1 = area + tmp0;
             comp += (area - tmp1) + tmp0;

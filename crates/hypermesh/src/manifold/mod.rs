@@ -16,8 +16,8 @@ pub struct Manifold {
     pub nv: usize,                // number of vertices
     pub nf: usize,                // number of faces
     pub nh: usize,                // number of halfedges
-    pub eps: Real,                 // epsilon
-    pub tol: Real,                 // tolerance
+    pub eps: Real,                // epsilon
+    pub tol: Real,                // tolerance
     pub bounding_box: BBox,       //
     pub face_normals: Vec<Vec3>,  //
     pub vert_normals: Vec<Vec3>,  //
@@ -27,24 +27,23 @@ pub struct Manifold {
 }
 
 impl Manifold {
-    pub fn new(pos: &[Real], idx: &[usize]) -> Result<Self, String> {
+    pub fn new(pos: &[f64], idx: &[usize]) -> Result<Self, String> {
         Self::new_impl(
-            &pos.chunks(3).map(|p| Vec3::new(p[0], p[1], p[2])).collect(),
-            &idx.chunks(3).map(|i| Vec3u::new(i[0], i[1], i[2])).collect(),
+            pos.chunks(3).map(|p| Vec3::new(p[0] as Real, p[1] as Real, p[2] as Real)).collect(),
+            idx.chunks(3).map(|i| Vec3u::new(i[0], i[1], i[2])).collect(),
             None, None
         )
     }
 
     pub fn new_impl(
-        pos: &Vec<Vec3>,
-        idx: &Vec<Vec3u>,
+        ps : Vec<Vec3>,
+        idx: Vec<Vec3u>,
         eps: Option<Real>,
         tol: Option<Real>,
     ) -> Result<Self, String> {
-        let bb = BBox::new(None, &pos);
-        let (mut f_bb, mut f_mt) = compute_face_morton(&pos, &idx, &bb);
-        let hm = sort_faces(&pos, &idx, &mut f_bb, &mut f_mt)?;
-        let ps = pos.clone();
+        let bb = BBox::new(None, &ps);
+        let (mut f_bb, mut f_mt) = compute_face_morton(&ps, &idx, &bb);
+        let hm = sort_faces(&ps, &idx, &mut f_bb, &mut f_mt)?;
         let hs = hm.half.iter().map(|&i| Half::new(hm.tail[i], hm.head[i], hm.twin[i])).collect::<Vec<_>>();
 
         let mut e = K_PRECISION * bb.scale();

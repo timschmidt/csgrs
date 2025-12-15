@@ -1,6 +1,5 @@
+use crate::{Manifold, Half, Real, Vec3};
 use crate::bounds::{BBox, Query};
-use crate::common::{Half, Real, Vec3};
-use crate::Manifold;
 use super::kernel01::intersect;
 use super::kernel02::Kernel02;
 use super::kernel11::Kernel11;
