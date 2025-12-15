@@ -1,3 +1,6 @@
+//--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
+//--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
+
 use super::kernel02::Kernel02;
 use crate::bounds::{BPos, Query};
 use crate::{Real, Vec2, Manifold};

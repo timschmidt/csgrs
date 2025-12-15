@@ -2,6 +2,7 @@
 
 [![License: MPL-2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Crates.io](https://img.shields.io/crates/v/boolmesh.svg)](https://crates.io/crates/boolmesh)
+[![Docs.rs](https://img.shields.io/docsrs/boolmesh)](https://docs.rs/boolmesh)
 
 ![demo](https://raw.githubusercontent.com/komietty/boolmesh/main/examples/docs/demo.png)
 Boolmesh is a pure Rust library for performing robust and efficient mesh boolean operations. It is a full-from-scratch Rust implementation inspired by [Elalish’s Manifold](https://manifoldcad.org/docs/html/classmanifold_1_1_manifold.html), which is well known for its robustness and is now part of OpenSCAD.

@@ -1,3 +1,6 @@
+//--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
+//--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
+
 use std::collections::HashMap;
 use crate::{Half, Tref, Vec3, next_of};
 use super::{pair_up, tail_of, update_vid_around_star};

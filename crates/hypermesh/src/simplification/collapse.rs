@@ -1,3 +1,6 @@
+//--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
+//--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
+
 use crate::{Real, Half, Tref, is_ccw_3d, Vec3};
 use super::{collapse_triangle, form_loops, head_of, next_of, pair_of, remove_if_folded, hids_of, update_vid_around_star};
 

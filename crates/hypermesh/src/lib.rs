@@ -1,3 +1,6 @@
+//--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
+//--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
+
 mod manifold;
 mod triangulation;
 mod simplification;
@@ -15,6 +18,7 @@ use crate::common::*;
 use crate::manifold::*;
 
 pub use crate::common::{Real, Vec2, Vec3, Vec4, Mat3, K_PRECISION};
+
 pub mod prelude {
     pub use crate::common::OpType;
     pub use crate::manifold::Manifold;

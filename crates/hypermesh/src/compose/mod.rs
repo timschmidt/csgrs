@@ -1,3 +1,6 @@
+//--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
+//--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
+
 use crate::{Manifold, Vec3, Mat3, Real};
 
 pub fn translate(mat: &mut Vec<Vec3>, x: f64, y: f64, z: f64) {

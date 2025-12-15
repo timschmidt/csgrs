@@ -1,3 +1,6 @@
+//--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
+//--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
+
 use crate::{Manifold, Half, Real, Vec3};
 use crate::bounds::{BBox, Query};
 use super::kernel01::intersect;

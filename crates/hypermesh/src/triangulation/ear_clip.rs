@@ -1,3 +1,6 @@
+//--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
+//--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
+
 use std::cell::RefCell;
 use std::cmp::{Ordering, PartialEq};
 use std::collections::BTreeSet;
