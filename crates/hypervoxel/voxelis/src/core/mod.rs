@@ -10,4 +10,4 @@ pub use block_id::BlockId;
 pub use lod::Lod;
 pub use max_depth::MaxDepth;
 pub use traversal_depth::TraversalDepth;
-pub use voxel::VoxelTrait;
+pub use voxel::{ByteConversion, VoxelTrait};
