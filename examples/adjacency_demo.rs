@@ -62,7 +62,7 @@ fn main() {
 
     for &vertex_idx in adjacency_map.keys().take(10) {
         let (valence, regularity) =
-            csgrs::mesh::vertex::Vertex::analyze_connectivity_with_index(
+            csgrs::vertex::Vertex::analyze_connectivity_with_index(
                 vertex_idx,
                 &adjacency_map,
             );
@@ -85,7 +85,7 @@ fn main() {
     println!("\n5. Laplacian smoothing using global connectivity:");
 
     // Track a specific vertex to show position changes
-    let test_vertex_pos = sphere.polygons[0].vertices[0].pos;
+    let test_vertex_pos = sphere.polygons[0].vertices[0].position;
     println!(
         "   Original test vertex position: ({:.3}, {:.3}, {:.3})",
         test_vertex_pos.x, test_vertex_pos.y, test_vertex_pos.z
@@ -95,8 +95,8 @@ fn main() {
     let smoothed_weak = sphere.laplacian_smooth(0.1, 1, false);
     let smoothed_strong = sphere.laplacian_smooth(0.3, 1, false);
 
-    let weak_pos = smoothed_weak.polygons[0].vertices[0].pos;
-    let strong_pos = smoothed_strong.polygons[0].vertices[0].pos;
+    let weak_pos = smoothed_weak.polygons[0].vertices[0].position;
+    let strong_pos = smoothed_strong.polygons[0].vertices[0].position;
 
     println!(
         "   After weak smoothing (λ=0.1): ({:.3}, {:.3}, {:.3})",

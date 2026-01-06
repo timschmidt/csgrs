@@ -4,7 +4,7 @@
 //! OBJ (universal format), PLY (research/scanning), and AMF (3D printing format).
 //! These formats can be opened in most 3D modeling software, CAD programs, and 3D viewers.
 use csgrs::mesh::Mesh;
-use csgrs::traits::CSG;
+use csgrs::csg::CSG;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Multi-Format Export Demo");
