@@ -1052,7 +1052,7 @@ fn main() {
     // let _ = fs::write("stl/helical.stl", helical.to_stl_ascii("helical"));
 
     // Bézier curve demo
-    #[cfg(feature = "stl-io")]
+    #[cfg(any(feature = "stl-io", feature = "bevymesh"))]
     {
         let bezier_ctrl = &[
             [0.0, 0.0], // P0
@@ -1061,15 +1061,22 @@ fn main() {
             [4.0, 0.0], // P3
         ];
         let bezier_2d = Sketch::bezier(bezier_ctrl, 128, None);
-        let _ = fs::write("stl/bezier_2d.stl", bezier_2d.to_stl_ascii("bezier_2d"));
 
         // give it a little “body” so we can see it in a solid viewer
         let bezier_3d = bezier_2d.extrude(0.25);
-        let _ = fs::write(
-            "stl/bezier_extruded.stl",
-            bezier_3d.to_stl_ascii("bezier_extruded"),
-        );
-    }
+
+        #[cfg(feature = "stl-io")]
+        {
+            let _ = fs::write("stl/bezier_2d.stl", bezier_2d.to_stl_ascii("bezier_2d"));
+            let _ = fs::write(
+                "stl/bezier_extruded.stl",
+                bezier_3d.to_stl_ascii("bezier_extruded"),
+            );
+        }
+
+        #[cfg(feature = "bevymesh")]
+        println!("{:#?}", bezier_3d.to_bevy_mesh());
+    };
 
     // B-spline demo
     #[cfg(feature = "stl-io")]
@@ -1085,9 +1092,6 @@ fn main() {
         );
         let _ = fs::write("stl/bspline_2d.stl", bspline_2d.to_stl_ascii("bspline_2d"));
     }
-
-    #[cfg(feature = "bevymesh")]
-    println!("{:#?}", bezier_3d.to_bevy_mesh());
 
     // a quick thickening just like the Bézier
     // let bspline_3d = bspline_2d.extrude(0.25);
