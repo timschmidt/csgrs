@@ -114,3 +114,6 @@ impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
         self::to_stl_binary(self, name)
     }
 }
+
+// TODO: re-impl Mesh::from_stl
+// was used in crate::tests::test_csg_to_stl_and_from_stl_file
