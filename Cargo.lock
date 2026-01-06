@@ -693,9 +693,9 @@ dependencies = [
 
 [[package]]
 name = "boolmesh"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b5aa3212490ed069459e3dd111c438dcba37714f23e58687103384fd350d66b"
+checksum = "0c24cf27b7b6478b2e2f082878c1ef77c4e06f902014a5ffb2cc5ab302084924"
 dependencies = [
  "glam 0.30.9",
 ]
