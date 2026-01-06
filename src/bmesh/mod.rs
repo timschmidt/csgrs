@@ -11,8 +11,7 @@ use crate::csg::CSG;
 
 use boolmesh::{
     compute_boolean,
-    Manifold,
-    OpType,
+    prelude::{Manifold, OpType},
 };
 
 use nalgebra::{Matrix4, Point3};
