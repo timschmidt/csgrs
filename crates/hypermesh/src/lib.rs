@@ -23,7 +23,7 @@ pub mod prelude {
     pub use crate::common::OpType;
     pub use crate::manifold::Manifold;
     pub use crate::compute_boolean;
-    pub use crate::compose::{compose, translate, scale, rotate, fractal};
+    pub use crate::compose::{compose, translate, scale, rotate, fractal, extrude};
 }
 
 pub fn compute_boolean(
