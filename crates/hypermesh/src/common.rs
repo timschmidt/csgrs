@@ -126,6 +126,13 @@ pub fn safe_normalize(v: Vec2) -> Vec2 {
     else { Vec2::new(0., 0.) }
 }
 
+pub fn compute_orthogonal(n: Vec3) -> Vec3 {
+    let b = if n.x.abs() < 0.9
+         { Vec3::new(1., 0., 0.) }
+    else { Vec3::new(0., 1., 0.) };
+    n.cross(b).normalize()
+}
+
 /*
 enum CsgNodeType { Union, Intersection, Difference, Leaf }
 trait CsgNode { fn ToLeafNode () { } }

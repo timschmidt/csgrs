@@ -1,6 +1,9 @@
 //--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
 
+pub mod cone;
+pub use cone::*;
+
 use crate::{Manifold, Vec2, Vec3, Mat3, Real};
 use crate::common::{compute_aa_proj, get_aa_proj_matrix, Vec3u};
 use crate::triangulation::ear_clip::EarClip;
@@ -34,14 +37,13 @@ pub fn extrude(pts: &Vec<Vec3>, offset: f64, eps: f64) -> Result<Manifold, Strin
     let n = Vec3::new(0., 0., 1.);
     let proj = get_aa_proj_matrix(&n);
     let poly = pts.iter().enumerate().map(|(i, p)| Pt {pos: compute_aa_proj(&proj, p), idx: i}).collect::<Vec<_>>();
-    let idcs = EarClip::new(&vec![poly], eps).triangulate();
-    for idx in idcs.iter() { println!("idx: {}", idx); }
+    let idcs = EarClip::new(&vec![poly], eps as Real).triangulate();
 
     let mut oft_ps = vec![];
     let mut oft_ts = vec![];
     let n = pts.len();
     for p in pts.iter()  { oft_ps.push(p.clone()); }
-    for p in pts.iter()  { oft_ps.push(p + Vec3::new(0., 0., offset)); }
+    for p in pts.iter()  { oft_ps.push(p + Vec3::new(0., 0., offset as Real)); }
     for i in idcs.iter() { oft_ts.push(Vec3u::new(i.z, i.y, i.x)); }
     for i in idcs.iter() { oft_ts.push(Vec3u::new(i.x + n, i.y + n, i.z + n)); }
     for i in 0..n {
