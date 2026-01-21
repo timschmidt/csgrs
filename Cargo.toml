@@ -48,9 +48,9 @@ parry3d-f64  = { version = "0.25.3", optional = true }
 parry3d  = { version = "0.25.3", optional = true }
 
 # bevy mesh conversion
-bevy_mesh = { version = "0.17", optional = true }
-bevy_asset = { version = "0.17", optional = true }
-wgpu-types = { version = "24", optional = true, default-features = false }
+bevy_mesh = { version = "0.18", optional = true }
+bevy_asset = { version = "0.18", optional = true }
+wgpu-types = { version = "27", optional = true, default-features = false }
 
 # utils
 rayon = { version = "1.10", optional = true }
