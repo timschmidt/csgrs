@@ -30,7 +30,8 @@ pub mod prelude {
         rotate,
         fractal,
         extrude,
-        generate_cone
+        generate_cone,
+        generate_cube,
     };
 }
 

@@ -2,7 +2,10 @@
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
 
 pub mod cone;
+pub mod cube;
+
 pub use cone::*;
+pub use cube::*;
 
 use crate::{Manifold, Vec2, Vec3, Mat3, Real};
 use crate::common::{compute_aa_proj, get_aa_proj_matrix, Vec3u};
