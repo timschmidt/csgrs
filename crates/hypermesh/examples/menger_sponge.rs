@@ -70,36 +70,20 @@ fn setup(
     ));
 }
 
-const CUBE_PS: [f64; 24] = [
-    -0.5, -0.5, -0.5,
-    -0.5, -0.5,  0.5,
-    -0.5,  0.5, -0.5,
-    -0.5,  0.5,  0.5,
-    0.5, -0.5, -0.5,
-    0.5, -0.5,  0.5,
-    0.5,  0.5, -0.5,
-    0.5,  0.5,  0.5
-];
-
-const CUBE_TS: [usize; 36] = [
-    1, 0, 4, 2, 4, 0,
-    1, 3, 0, 3, 1, 5,
-    3, 2, 0, 3, 7, 2,
-    5, 4, 6, 5, 1, 4,
-    6, 4, 2, 7, 6, 2,
-    7, 3, 5, 7, 5, 6
-];
-
 pub fn menger_sponge(n: usize) -> Manifold {
-    let res = Manifold::new(&CUBE_PS, &CUBE_TS).unwrap();
+    let res = generate_cube().unwrap();
     let mut holes = vec![];
     fractal(&res, &mut holes, 0., 0., 1., 1, n);
     let holes_z = compose(&holes).unwrap();
 
-    let rot = |rx, ry, rz| {
+    let rot = |rx: f64, ry: f64, rz: f64| {
         let ts = holes_z.hs.iter().map(|h| h.tail).collect::<Vec<_>>();
         let mut ps = holes_z.ps.clone();
-        rotate(&mut ps, rx, ry, rz);
+        let x = rx as boolmesh::Real;
+        let y = ry as boolmesh::Real;
+        let z = rz as boolmesh::Real;
+        let r = boolmesh::Mat3::from_euler(glam::EulerRot::XYZ, x, y, z);
+        for p in ps.iter_mut() { *p = r * *p; }
         let mut flat = vec![];
         for p in ps {
             flat.push(if (p.x - 0.5).abs() < 1e-4 { 0.5 } else if (p.x + 0.5).abs() < 1e-4 { -0.5 } else { p.x as f64});

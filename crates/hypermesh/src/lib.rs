@@ -25,13 +25,12 @@ pub mod prelude {
     pub use crate::compute_boolean;
     pub use crate::compose::{
         compose,
-        translate,
-        scale,
-        rotate,
         fractal,
         extrude,
         generate_cone,
         generate_cube,
+        generate_icosphere,
+        generate_torus,
     };
 }
 
