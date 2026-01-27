@@ -1,13 +1,13 @@
 [package]
 name = "boolmesh"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 description = "Robust 3D mesh boolean library"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Saki Komikado <komietty@gmail.com>"]
-keywords = ["geometry", "graphics", "modeling"]
-categories = ["game-development", "graphics", "mathematics", "simulation"]
+keywords = ["3d", "geometry", "graphics", "modeling"]
+categories = ["algorithms", "mathematics", "graphics", "simulation", "game-development"]
 exclude = ["/examples", ".gitignore"]
 
 [dependencies]

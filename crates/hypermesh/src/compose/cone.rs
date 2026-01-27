@@ -1,3 +1,6 @@
+//--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
+//--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
+
 use std::f64::consts::PI;
 use crate::{Manifold, Vec3, Real, compute_orthogonal};
 use crate::common::Vec3u;
