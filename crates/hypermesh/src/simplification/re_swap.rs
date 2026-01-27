@@ -93,7 +93,7 @@ fn recursive_edge_swap(
 
         // Both triangles are now subsets of the neighboring triangle.
         ns[t0] = ns[t1];
-        ts[t0] = ts[t1].clone();
+        ts[t0] = ts[t1];
 
         // If the new edge already exists, duplicate the verts and split the mesh.
         let mut h = pair_of(hs, t1e.0);
@@ -141,7 +141,7 @@ pub fn swap_degenerates(
     oft: usize,
     tol: Real
 ) {
-    if hs.len() == 0 { return; }
+    if hs.is_empty() { return; }
     let mut tag = 0;
     let mut _flag = 0;
     let mut buff = Vec::with_capacity(10);

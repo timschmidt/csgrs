@@ -1,5 +1,6 @@
 //--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
+#![allow(clippy::unnecessary_cast)]
 
 pub mod cone;
 pub mod cube;
@@ -20,7 +21,7 @@ pub fn extrude(pts: &[Vec3], offset: Vec3) -> Result<Manifold, String> {
     let n = Vec3::new(0., 0., 1.);
     let proj = get_aa_proj_matrix(&n);
     let poly = pts.iter().enumerate().map(|(i, p)| Pt {pos: compute_aa_proj(&proj, p), idx: i}).collect::<Vec<_>>();
-    let idcs = EarClip::new(&vec![poly], K_PRECISION).triangulate();
+    let idcs = EarClip::new(&[poly], K_PRECISION).triangulate();
 
     let mut oft_ps = vec![];
     let mut oft_ts = vec![];

@@ -51,10 +51,10 @@ impl Half {
 }
 
 pub fn face_of(hid: usize) -> usize { hid / 3 }
-pub fn next_of(hid: usize) -> usize { let mut i = hid + 1; if i % 3 == 0 { i -= 3;} i }
+pub fn next_of(hid: usize) -> usize { let mut i = hid + 1; if i.is_multiple_of(3) { i -= 3;} i }
 
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct Tref {
     pub oid: usize, // original instance id,
     pub mid: usize, // mesh id
@@ -110,7 +110,7 @@ pub fn is_ccw_2d(p0: &Vec2, p1: &Vec2, p2: &Vec2, t: Real) -> i32 {
 }
 
 pub fn is_ccw_3d(p0: &Vec3, p1: &Vec3, p2: &Vec3, n: &Vec3, t: Real) -> i32 {
-    let p = get_aa_proj_matrix(&n);
+    let p = get_aa_proj_matrix(n);
     is_ccw_2d(
         &compute_aa_proj(&p, p0),
         &compute_aa_proj(&p, p1),

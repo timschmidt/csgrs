@@ -37,7 +37,7 @@ impl<'a> Kernel12<'a> {
                     let temp = xzy_lr0[k].y;
                     xzy_lr0[k].y = xzy_lr0[k].z;
                     xzy_lr0[k].z = temp;
-                    xzy_lr1[k] = xzy_lr0[k].clone();
+                    xzy_lr1[k] = xzy_lr0[k];
                     xzy_lr1[k].y = z;
                     k += 1;
                 }

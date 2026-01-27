@@ -56,15 +56,15 @@ pub fn triangulate(
 
         for fid in 0..b45.hid_per_f.len() - 1 {
             let hid = b45.hid_per_f[fid] as usize;
-            let t = crate::triangulation::process_face(&b45, fid, eps);
-            let r = b45.rs[hid].clone();
-            let n = b45.ns[fid].clone();
+            let t = process_face(b45, fid, eps);
+            let r = b45.rs[hid];
+            let n = b45.ns[fid];
             rs.extend(vec![r; t.len()]);
             ns.extend(vec![n; t.len()]);
             ts.extend(t);
         }
-        crate::triangulation::update_reference(mp, mq, &mut rs);
-        Ok(Triangulation { hs: crate::triangulation::tri_halfs::tri_halfs_single(&mut ts), ns, rs })
+        update_reference(mp, mq, &mut rs);
+        Ok(Triangulation { hs: tri_halfs_single(&ts), ns, rs })
     }
 
 }
@@ -77,9 +77,9 @@ fn process_face(
     let e0 = b45.hid_per_f[fid] as usize;
     let e1 = b45.hid_per_f[fid + 1] as usize;
     match e1 - e0 {
-        3 =>  single_triangulate(&b45, e0),
-        4 =>  square_triangulate(&b45, fid, eps),
-        _ => general_triangulate(&b45, fid, eps),
+        3 =>  single_triangulate(b45, e0),
+        4 =>  square_triangulate(b45, fid, eps),
+        _ => general_triangulate(b45, fid, eps),
     }
 }
 
@@ -181,7 +181,7 @@ fn general_triangulate(
             let p = compute_aa_proj(&proj, &b45.ps[i]);
             Pt { pos: p, idx: e }
         }).collect()
-    ).collect();
+    ).collect::<Vec<Vec<_>>>();
 
     EarClip::new(&polys, eps).triangulate().iter().map(|t| Vec3u::new(
         b45.hs[t.x].tail,

@@ -48,10 +48,10 @@ fn dedupe_edge(
             pair_up(hs, nh, nh - 3);
 
             // Push per-face data if present
-            rs.push(rs[cur / 3].clone());
-            ns.push(ns[cur / 3].clone());
-            rs.push(rs[opp / 3].clone());
-            ns.push(ns[opp / 3].clone());
+            rs.push(rs[cur / 3]);
+            ns.push(ns[cur / 3]);
+            rs.push(rs[opp / 3]);
+            ns.push(ns[opp / 3]);
             break;
         }
         cur = hs[next_of(cur)].pair;
@@ -63,8 +63,8 @@ fn dedupe_edge(
         let new_vert = ps.len();
         ps.push(ps[head]);
         // Duplicate per-face data if present
-        ns.push(ns[head].clone());
-        rs.push(rs[head].clone());
+        ns.push(ns[head]);
+        rs.push(rs[head]);
         // Rewire the entire star around NextHalfedge(current) to new_vert
         let start = next_of(cur);
         let mut e = start;
@@ -88,8 +88,8 @@ fn dedupe_edge(
         let new_vert = ps.len();
         ps.push(ps[head]);
         // Duplicate per-face data if present
-        ns.push(ns[head].clone());
-        rs.push(rs[head].clone());
+        ns.push(ns[head]);
+        rs.push(rs[head]);
         let bgn = next_of(curr);
         let mut e = bgn;
         loop {

@@ -1,5 +1,6 @@
 //--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
+#![allow(clippy::needless_range_loop)]
 
 use crate::{Vec3, Vec2u, Vec3u};
 #[cfg(feature = "rayon")] use rayon::prelude::*;
@@ -26,8 +27,8 @@ fn edge_topology(
     e2f: &mut Vec<Vec2u>,
     f2e: &mut Vec<Vec3u>,
 ) -> Result<(), String> {
-    if pos.len() == 0 { return Err("empty pos matrix".into()); }
-    if idx.len() == 0 { return Err("empty idx matrix".into()); }
+    if pos.is_empty() { return Err("empty pos matrix".into()); }
+    if idx.is_empty() { return Err("empty idx matrix".into()); }
 
     let mut ett: Vec<[usize; 4]> = vec![];
 

@@ -1,5 +1,6 @@
 //--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
+#![allow(clippy::needless_range_loop)]
 
 use crate::{Half, Real, Vec3, Vec4};
 use super::kernel01::{intersect, shadows, shadows01};
@@ -27,10 +28,10 @@ impl<'a> Kernel11<'a> {
         for i in 0..2 {
             if let Some((s, yz)) = shadows01(
                 p0[i], q1,
-                &self.ps_p,
-                &self.ps_q,
-                &self.hs_q,
-                &self.ns,
+                self.ps_p,
+                self.ps_q,
+                self.hs_q,
+                self.ns,
                 self.expand,
                 false
             ) {
@@ -47,10 +48,10 @@ impl<'a> Kernel11<'a> {
         for i in 0..2 {
             if let Some((s, yz)) = shadows01(
                 q0[i], p1,
-                &self.ps_q,
-                &self.ps_p,
-                &self.hs_p,
-                &self.ns,
+                self.ps_q,
+                self.ps_p,
+                self.hs_p,
+                self.ns,
                 self.expand,
                 true
             ) {

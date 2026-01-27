@@ -51,8 +51,8 @@ impl Manifold {
 
         let mut e = K_PRECISION * bb.scale();
         e = if e.is_finite() { e } else { -1. };
-        let eps = if eps.is_some() { eps.unwrap() } else { e };
-        let tol = if tol.is_some() { tol.unwrap() } else { e };
+        let eps = if let Some(e_) = eps { e_ } else { e };
+        let tol = if let Some(t_) = tol { t_ } else { e };
         let collider = MortonCollider::new(&f_bb, &f_mt);
         let coplanar = compute_coplanar_idx(&ps, &hm.fns, &hs, eps);
 
@@ -92,7 +92,7 @@ impl Manifold {
     pub fn is_manifold(&self) -> bool {
         self.hs.iter().enumerate().all(|(i, h)| {
             if h.tail().is_none() || h.head().is_none() { return true; }
-            return match h.pair() {
+            match h.pair() {
                 None => { false },
                 Some(pair) => {
                     let mut good = true;
@@ -235,7 +235,7 @@ pub fn cleanup_unused_verts(
     hs: &mut Vec<Half>
 ) {
     let bb = BBox::new(None, ps);
-    let mt = ps.iter().map(|p| morton_code(&p, &bb)).collect::<Vec<_>>();
+    let mt = ps.iter().map(|p| morton_code(p, &bb)).collect::<Vec<_>>();
 
     let mut new2old = (0..ps.len()).collect::<Vec<_>>();
     let mut old2new = vec![0; ps.len()];
@@ -258,6 +258,6 @@ pub fn cleanup_unused_verts(
     new2old.truncate(nv);
 
     *ps = new2old.iter().map(|&i| ps[i]).collect();
-    *hs = hs.iter().filter(|h| h.pair().is_some()).map(|h| h.clone()).collect();
+    *hs = hs.iter().filter(|h| h.pair().is_some()).cloned().collect();
 }
 
