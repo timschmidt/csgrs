@@ -10,13 +10,13 @@ pub use cube::*;
 pub use sphere::*;
 pub use torus::*;
 
-use crate::{Manifold, Vec3, Real, K_PRECISION};
+use crate::{Manifold, Vec3, K_PRECISION};
 use crate::common::{compute_aa_proj, get_aa_proj_matrix, Vec3u};
 use crate::triangulation::ear_clip::EarClip;
 use crate::triangulation::Pt;
 
 /// A simple extrude function that extrudes a polyline along the z-axis.
-pub fn extrude(pts: &Vec<Vec3>, offset: Vec3) -> Result<Manifold, String> {
+pub fn extrude(pts: &[Vec3], offset: Vec3) -> Result<Manifold, String> {
     let n = Vec3::new(0., 0., 1.);
     let proj = get_aa_proj_matrix(&n);
     let poly = pts.iter().enumerate().map(|(i, p)| Pt {pos: compute_aa_proj(&proj, p), idx: i}).collect::<Vec<_>>();
@@ -25,7 +25,7 @@ pub fn extrude(pts: &Vec<Vec3>, offset: Vec3) -> Result<Manifold, String> {
     let mut oft_ps = vec![];
     let mut oft_ts = vec![];
     let n = pts.len();
-    for p in pts.iter()  { oft_ps.push(p.clone()); }
+    for p in pts.iter()  { oft_ps.push(*p); }
     for p in pts.iter()  { oft_ps.push(p + offset); }
     for i in idcs.iter() { oft_ts.push(Vec3u::new(i.z, i.y, i.x)); }
     for i in idcs.iter() { oft_ts.push(Vec3u::new(i.x + n, i.y + n, i.z + n)); }
@@ -70,7 +70,7 @@ pub fn fractal(
 
     if depth == depth_max { return; }
 
-    for xy in vec![
+    for xy in [
         (x - w, y - w),
         (x - w, y    ),
         (x - w, y + w),
@@ -80,6 +80,6 @@ pub fn fractal(
         (x + w, y - w),
         (x    , y - w)
     ] {
-        fractal(&hole, holes, xy.0, xy.1, w, depth + 1, depth_max);
+        fractal(hole, holes, xy.0, xy.1, w, depth + 1, depth_max);
     }
 }

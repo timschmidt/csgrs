@@ -31,10 +31,10 @@ fn edge_topology(
 
     let mut ett: Vec<[usize; 4]> = vec![];
 
-    for i in 0..idx.len() {
+    for (i, idx_) in idx.iter().enumerate() {
     for j in 0..3 {
-        let mut v1 = idx[i][j];
-        let mut v2 = idx[i][(j + 1) % 3];
+        let mut v1 = idx_[j];
+        let mut v2 = idx_[(j + 1) % 3];
         if v1 > v2 { std::mem::swap(&mut v1, &mut v2); }
         ett.push([v1, v2, i, j]);
     }}
