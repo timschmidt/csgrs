@@ -5,6 +5,7 @@ edition = "2024"
 description = "Robust 3D mesh boolean library"
 license = "MPL-2.0"
 readme = "README.md"
+repository = "https://github.com/komietty/boolmesh"
 authors = ["Saki Komikado <komietty@gmail.com>"]
 keywords = ["3d", "geometry", "graphics", "modeling"]
 categories = ["algorithms", "mathematics", "graphics", "simulation", "game-development"]
