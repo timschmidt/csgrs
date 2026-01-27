@@ -33,8 +33,10 @@ fn setup(
 
     let mut mfd0 = generate_cylinder(1., 1., 30, 10).unwrap();
     let mut mfd1 = generate_uv_sphere(30, 30).unwrap();
+    let mut mfd2 = generate_torus(1., 0.1, 30, 30).unwrap();
     mfd1.translate(0., 0.5, 0.);
     let res = compute_boolean(&mfd0, &mfd1, OpType::Add).unwrap();
+    let res = compute_boolean(&res,  &mfd2, OpType::Subtract).unwrap();
 
     cmds.spawn((DirectionalLight::default(), Transform::from_xyz(30., 40., 30.)));
     cmds.spawn((Transform::from_translation(Vec3::new(0., 0., 2.)), PanOrbitCamera::default(),));

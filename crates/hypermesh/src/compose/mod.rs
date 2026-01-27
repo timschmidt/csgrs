@@ -19,7 +19,6 @@ use crate::common::{compute_aa_proj, get_aa_proj_matrix, Vec3u};
 use crate::triangulation::ear_clip::EarClip;
 use crate::triangulation::Pt;
 
-/// A simple extrude function that extrudes a polyline along the z-axis.
 pub fn extrude(pts: &[Vec3], offset: Vec3) -> Result<Manifold, String> {
     let n = Vec3::new(0., 0., 1.);
     let proj = get_aa_proj_matrix(&n);
