@@ -8,11 +8,11 @@ pub mod collider;
 use std::cmp::Ordering;
 use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider, K_NO_CODE};
-use crate::{Real, Half, Vec3, Vec3u, K_PRECISION, next_of};
+use crate::{Real, Half, Vec3, Vec3u, K_PRECISION, next_of, Mat3};
 use super::hmesh::Hmesh;
 #[cfg(feature = "rayon")] use rayon::prelude::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Manifold {
     pub ps: Vec<Vec3>,            // positions
     pub hs: Vec<Half>,            // halfedges
@@ -76,7 +76,9 @@ impl Manifold {
         Ok(mfd)
     }
 
-    pub fn get_indices(&self) -> Vec<usize> { self.hs.iter().map(|h| h.tail).collect::<Vec<_>>() }
+    pub fn get_indices(&self) -> Vec<Vec3u> {
+        self.hs.chunks(3).map(|cs| Vec3u::new(cs[0].tail, cs[1].tail, cs[2].tail)).collect()
+    }
 
     pub fn set_epsilon(&mut self, min_epsilon: Real, use_single: bool) {
         let scl = self.bounding_box.scale();
@@ -102,6 +104,23 @@ impl Manifold {
                 }
             }
         })
+    }
+
+    pub fn translate(&mut self, x: f64, y: f64, z: f64) {
+        let t = Vec3::new(x as Real, y as Real, z as Real);
+        let p = self.ps.iter().map(|p| *p + t).collect();
+        *self = Manifold::new_impl(p, self.get_indices(), None, None).unwrap();
+    }
+
+    pub fn rotate(&mut self, x: f64, y: f64, z: f64) {
+        let r = Mat3::from_euler(glam::EulerRot::XYZ, x as Real, y as Real, z as Real);
+        let p = self.ps.iter().map(|p| r * *p).collect();
+        *self = Manifold::new_impl(p, self.get_indices(), None, None).unwrap();
+    }
+
+    pub fn scale(&mut self, x: f64, y: f64, z: f64) {
+        let p = self.ps.iter().map(|p| Vec3::new(p.x * x as Real, p.y * y as Real, p.z * z as Real)).collect();
+        *self = Manifold::new_impl(p, self.get_indices(), None, None).unwrap();
     }
 }
 

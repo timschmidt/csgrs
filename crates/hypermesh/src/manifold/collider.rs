@@ -129,7 +129,7 @@ fn build_internal_boxes(
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MortonCollider {
     pub node_bb: Vec<BBox>,
     pub node_parent: Vec<i32>,

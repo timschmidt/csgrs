@@ -147,7 +147,7 @@ fn square_triangulate(
     };
 
     let q = &assemble_halfs(&b45.hs, &b45.hid_per_f, fid)[0];
-    let tris = vec![
+    let tris = [
         vec![Vec3u::new(q[0], q[1], q[2]), Vec3u::new(q[0], q[2], q[3])],
         vec![Vec3u::new(q[1], q[2], q[3]), Vec3u::new(q[0], q[1], q[3])],
     ];
