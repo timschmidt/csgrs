@@ -39,3 +39,8 @@ required-features = ["bevy"]
 name = "multiple_models"
 path = "examples/multiple_models.rs"
 required-features = ["bevy"]
+
+[[example]]
+name = "primitives_demo"
+path = "examples/primitives_demo.rs"
+required-features = ["bevy"]

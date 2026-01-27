@@ -6,10 +6,13 @@ pub mod cone;
 pub mod cube;
 pub mod sphere;
 pub mod torus;
+pub mod cylinder;
+
 pub use cone::*;
 pub use cube::*;
 pub use sphere::*;
 pub use torus::*;
+pub use cylinder::*;
 
 use crate::{Manifold, Vec3, K_PRECISION};
 use crate::common::{compute_aa_proj, get_aa_proj_matrix, Vec3u};

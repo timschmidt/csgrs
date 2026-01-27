@@ -33,8 +33,10 @@ pub mod prelude {
         extrude,
         generate_cone,
         generate_cube,
-        generate_icosphere,
         generate_torus,
+        generate_cylinder,
+        generate_uv_sphere,
+        generate_icosphere,
     };
 }
 
