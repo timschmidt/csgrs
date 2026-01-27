@@ -96,7 +96,7 @@ pub fn query_two_d_tree<F>(pts: &[Pt], r: Rect, mut f: F) where F: FnMut(&Pt) {
         } else {
             cur = rect_r;
             bgn = mid_idx + 1;
-            len = len - (mid_oft + 1);
+            len -= mid_oft + 1;
             lev += 1;
         }
     }

@@ -78,11 +78,7 @@ impl<'a> RadixTree<'a> {
         loop {
             step = (step + 1) >> 1; // divide by 2, rounding up
             let new_split = split + step;
-            if new_split < end {
-                if self.prefix_length(bgn, new_split) > common {
-                    split = new_split;
-                }
-            }
+            if new_split < end && self.prefix_length(bgn, new_split) > common { split = new_split; }
             if step <= 1 { break; }
         }
 
@@ -185,7 +181,7 @@ impl MortonCollider {
     pub fn collision<F>(&self, queries: &[Query], record:&mut F) where F: FnMut(usize, usize) {
         for i in 0..queries.len() {
             find_collisions(
-                &queries,
+                queries,
                 &self.node_bb,
                 &self.intl_children,
                 i,

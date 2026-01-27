@@ -14,12 +14,12 @@ pub fn tri_halfs_single(ts: &[Vec3u]) -> Vec<Half> {
     let mut is = (0..nh).collect::<Vec<_>>();
     let mut ky = vec![0u64; nh];
 
-    for t in 0..ts.len() {
+    for (tid, t) in ts.iter().enumerate() {
         for i in 0..3 {
             let j = (i + 1) % 3;
-            let e = t * 3 + i;
-            let i0 = ts[t][i];
-            let i1 = ts[t][j];
+            let e = tid * 3 + i;
+            let i0 = t[i];
+            let i1 = t[j];
             hs[e].tail = i0;
             hs[e].head = i1;
             let a = std::cmp::min(i0, i1) as u64;

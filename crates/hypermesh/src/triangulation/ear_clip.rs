@@ -49,11 +49,11 @@ impl Ecvt {
     pub fn inside_edge(&self, pair: &EvPtr, eps: Real, to_left: bool) -> bool {
         let mut nl = self.ptr_r_of_l();     // next left
         let mut nr = pair.borrow().ptr_r(); // next right
-        let mut ct = Rc::clone(&pair);      // center
-        let mut lt = Rc::clone(&pair);      // last
+        let mut ct = Rc::clone(pair);       // center
+        let mut lt = Rc::clone(pair);       // last
 
         while !Rc::ptr_eq(&nl, &nr) &&
-              !Rc::ptr_eq(&pair, &nr) &&
+              !Rc::ptr_eq(pair, &nr) &&
               !Rc::ptr_eq(&nl, &(if to_left { self.ptr_r() } else { self.ptr_l() }))
         {
             let l2 = (nl.borrow().pos - ct.borrow().pos).length_squared();
@@ -315,7 +315,7 @@ pub struct EarClip {
 }
 
 impl EarClip {
-    pub fn new(polys: &Vec<Vec<Pt>>, eps: Real) -> Self {
+    pub fn new(polys: &[Vec<Pt>], eps: Real) -> Self {
         let mut clip = Self {
             polygon: vec![],
             simples: vec![],
@@ -329,7 +329,7 @@ impl EarClip {
 
         let mut inits = clip.initialize(polys);
 
-        let keys = clip.polygon.iter().cloned().collect::<Vec<_>>();
+        let keys = clip.polygon.to_vec();
         for v in keys { clip.clip_degenerate(&v); }
         for v in inits.iter_mut() { clip.find_start(v); }
 
@@ -338,8 +338,8 @@ impl EarClip {
 
     pub fn triangulate(&mut self) -> Vec<Vec3u> {
         let vs = self.holes.iter().cloned().collect::<Vec<_>>();
-        for mut v in vs { self.cut_key_hole(&mut v); }
-        let vs = self.simples.iter().map(|s| Rc::clone(s)).collect::<Vec<_>>();
+        for v in vs { self.cut_key_hole(&v); }
+        let vs = self.simples.iter().map(Rc::clone).collect::<Vec<_>>();
         for mut v in vs { self.triangulate_poly(&mut v); }
         std::mem::take(&mut self.tris)
     }
@@ -364,20 +364,20 @@ impl EarClip {
     }
 
     fn clip_degenerate(&mut self, ear: &EvPtr) {
-        if clipped(ear) || folded(&ear) { return; }
+        if clipped(ear) || folded(ear) { return; }
         let eps = self.eps;
         let eb = ear.borrow();
         let p  = ear.borrow().pos;
         let pl = ear.borrow().pos_l();
         let pr = ear.borrow().pos_r();
         if eb.is_short(eps) || (is_ccw_2d(&pl, &p, &pr, eps) == 0 && (pl - p).dot(pr - p) > 0.) {
-            self.clip_ear(&ear);
+            self.clip_ear(ear);
             self.clip_degenerate(&eb.ptr_l());
             self.clip_degenerate(&eb.ptr_r());
         }
     }
 
-    fn initialize(&mut self, polys: &Vec<Vec<Pt>>) -> Vec<EvPtr> {
+    fn initialize(&mut self, polys: &[Vec<Pt>]) -> Vec<EvPtr> {
         let mut bgns = vec![];
         for poly in polys.iter() {
             let v = poly.first().unwrap();
@@ -481,7 +481,7 @@ impl EarClip {
                             f1 || f2
                         }
                     };
-                    if bgn.0.borrow().inside_edge(&v, eps, true) && flag { con = Some(Rc::clone(v)); }
+                    if bgn.0.borrow().inside_edge(v, eps, true) && flag { con = Some(Rc::clone(v)); }
                 }
             });
         }

@@ -81,10 +81,10 @@ pub fn collapse_edge(
             let n_curr = &ns[cur / 3];
             let n_pair = &ns[to_rmv.pair / 3];
             let ccw = |p0, p1, p2| is_ccw_3d(p0, p1, p2, n_curr, eps);
-            if !r_curr.same_face(&tr0) {
+            if !r_curr.same_face(tr0) {
                 let tr2 = tr0;
                 tr0 = &rs[hid / 3];
-                if !r_curr.same_face(&tr0) { return false; }
+                if !r_curr.same_face(tr0) { return false; }
                 if tr0.mid != tr2.mid ||
                    tr0.fid != tr2.fid ||
                    n_pair.dot(*n_curr) < -0.5 {
