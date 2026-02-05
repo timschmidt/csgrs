@@ -2,7 +2,8 @@
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
 #![allow(clippy::needless_range_loop)]
 
-use crate::{Vec3, Vec2u, Vec3u};
+use std::f64::consts::PI;
+use crate::{Vec3, Vec2u, Vec3u, Real};
 #[cfg(feature = "rayon")] use rayon::prelude::*;
 
 /// Hmesh preserves the order of pos and idx in any cases.
@@ -148,22 +149,16 @@ impl Hmesh {
         for i in 0..nh { half.push(i); }
         let mut vns = vec![Vec3::ZERO; nv];
         let mut fns = vec![Vec3::ZERO; nf];
-        let mut fas = vec![0.; nf];
 
         #[cfg(feature = "rayon")]
-        fns.par_iter_mut()
-            .zip(fas.par_iter_mut())
-            .enumerate()
-            .for_each(|(i, (fn_, fa_))| {
+        fns.par_iter_mut().enumerate().for_each(|(i, n)| {
                 let ih = f2h[i];
                 let p2 = pos[head[ih]];
                 let p1 = pos[tail[ih]];
                 let p0 = pos[tail[prev[ih]]];
                 let x = p2 - p1;
                 let t = (p1 - p0) * -1.;
-                let n = x.cross(t);
-                *fn_ = n.normalize();
-                *fa_ = n.length() * 0.5;
+                *n = x.cross(t).normalize();
             });
 
         #[cfg(not(feature = "rayon"))]
@@ -174,16 +169,23 @@ impl Hmesh {
             let p0 = pos[tail[prev[ih]]];
             let x = p2 - p1;
             let t = (p1 - p0) * -1.;
-            let n = x.cross(t);
-            fns[i] = n.normalize();
-            fas[i] = n.length() * 0.5;
+            fns[i] = x.cross(t).normalize();
         }
-
 
         for i in 0..nf {
         for j in 0..3  {
-            let vi = idx[i][j];
-            vns[vi] += fns[i] * fas[i];
+            let i_curr = idx[i][j];
+            let v_prev = pos[idx[i][(j + 2) % 3]];
+            let v_curr = pos[i_curr];
+            let v_next = pos[idx[i][(j + 1) % 3]];
+            let e_curr = (v_next - v_curr).normalize();
+            let e_prev = (v_curr - v_prev).normalize();
+            if e_curr.is_nan() || e_prev.is_nan() { continue; }
+            let dot = -e_prev.dot(e_curr);
+            let phi = if      dot >=  1. { 0. }
+                      else if dot <= -1. { PI as Real }
+                      else               { dot.acos() };
+            vns[i_curr] += fns[i] * phi;
         }}
 
 
