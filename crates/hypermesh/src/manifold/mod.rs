@@ -6,6 +6,7 @@ pub mod bounds;
 pub mod collider;
 
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use bounds::BBox;
 use crate::collider::{morton_code, MortonCollider, K_NO_CODE};
 use crate::{Real, Half, Vec3, Vec3u, K_PRECISION, next_of, Mat3};
@@ -44,6 +45,7 @@ impl Manifold {
         eps: Option<Real>,
         tol: Option<Real>,
     ) -> Result<Self, String> {
+        let (ps, idx) = dedup_verts(&ps, &idx, 1e-6);
         let bb = BBox::new(None, &ps);
         let (mut f_bb, mut f_mt) = compute_face_morton(&ps, &idx, &bb);
         let hm = sort_faces(&ps, &idx, &mut f_bb, &mut f_mt)?;
@@ -228,6 +230,38 @@ fn compute_coplanar_idx(
         }
     }
     res
+}
+
+pub fn dedup_verts(
+    pos: &[Vec3],
+    idx: &[Vec3u],
+    eps: f64,
+) -> (Vec<Vec3>, Vec<Vec3u>) {
+    debug_assert!(eps > 0.);
+    let mut hash  = HashMap::with_capacity(pos.len());
+    let mut weld  = Vec::with_capacity(pos.len());
+    let mut remap = vec![0; pos.len()];
+    let e = eps.max(K_PRECISION);
+
+    for (i, p) in pos.iter().enumerate() {
+        let k = (
+            (p.x / e).round() as i64,
+            (p.y / e).round() as i64,
+            (p.z / e).round() as i64
+        );
+
+        if let Some(&wid) = hash.get(&k) { remap[i] = wid; }
+        else {
+            let wid = weld.len();
+            weld.push(*p);
+            hash.insert(k, wid);
+            remap[i] = wid;
+        }
+    }
+
+    (weld, idx.iter()
+        .map(|&is| Vec3u::new(remap[is.x], remap[is.y], remap[is.z]))
+        .filter(|&is| is.x != is.y && is.y != is.z && is.z != is.x).collect())
 }
 
 pub fn cleanup_unused_verts(
