@@ -101,7 +101,7 @@ fn recursive_edge_swap(
         while h != t0e.1 {
             h = next_of(h);
             if head_of(hs, h) == head {
-                form_loops(hs, ps, t0e.2, h0);
+                form_loops(hs, ps, t0e.2, h);
                 remove_if_folded(hs, ps, t0e.2);
                 return;
             }
