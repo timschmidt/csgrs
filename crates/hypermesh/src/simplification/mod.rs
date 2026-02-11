@@ -7,7 +7,7 @@ pub mod collapse;
 use crate::{Real, Half, Tref, next_of, Vec2, Vec3};
 use collapse::{collapse_edge, collapse_short_edges, collapse_collinear_edges};
 use dedup::dedupe_edges;
-use crate::simplification::re_swap::swap_degenerates;
+use re_swap::swap_degenerates;
 
 pub fn simplify_topology(
     hs: &mut Vec<Half>,

@@ -158,7 +158,10 @@ pub fn dedupe_edges(
             dedupe_edge(ps, hs, ns, rs, hid);
             flag += 1;
         }
+
         if flag == 0 { break; }
-        //else { println!("{} dedup", flag); }
+
+        #[cfg(feature = "verbose")]
+        println!("{} dedup", flag);
     }
 }

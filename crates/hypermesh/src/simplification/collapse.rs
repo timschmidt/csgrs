@@ -148,7 +148,9 @@ pub fn collapse_collinear_edges(
     for hid in rec {
         if collapse_edge(hs, ps, ns, rs, hid, ep, &mut vec![]) { _flag += 1; }
     }
-    // if _flag > 0 { println!("{} collinear edge collapsed", _flag);}
+
+    #[cfg(feature = "verbose")]
+    if _flag > 0 { println!("{} collinear edge collapsed", _flag);}
 }
 
 pub fn collapse_short_edges(
@@ -168,6 +170,8 @@ pub fn collapse_short_edges(
             if collapse_edge(hs, ps, ns, rs, hid, ep, &mut vec![]) { flag += 1; }
         }
         if flag == 0 { break; }
-        //else { println!("{} short edges collapsed", flag);}
+
+        #[cfg(feature = "verbose")]
+        println!("{} short edges collapsed", flag);
     }
 }

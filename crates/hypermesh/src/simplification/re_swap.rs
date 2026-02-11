@@ -160,6 +160,7 @@ pub fn swap_degenerates(
             recursive_edge_swap(hs, ps, ns, ts, last, &mut tag, &mut visit, &mut stack, &mut buff, tol);
         }
     }
-    //if _flag > 0 { println!("{} edge swapped", _flag);}
+    #[cfg(feature = "verbose")]
+    if _flag > 0 { println!("{} edge swapped", _flag);}
 }
 
