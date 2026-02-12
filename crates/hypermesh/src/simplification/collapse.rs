@@ -21,11 +21,11 @@ fn record_if_collinear(
     let mut cur = cw_next(bgn);
     let     r0 = &rs[bgn / 3];
     let mut r1 = &rs[cur / 3];
-    let mut same = r0.same_face(r1);
+    let mut same = is_coplanar(r0, r1);
     while cur != bgn {
         cur = cw_next(cur);
         let r2 = &rs[cur / 3];
-        if !r2.same_face(r0) && !r2.same_face(r1) {
+        if !is_coplanar(r2, r0) && !is_coplanar(r2, r1) {
             if same { r1 = r2; same = false; } else { return false; }
         }
     }
@@ -81,13 +81,11 @@ pub fn collapse_edge(
             let n_curr = &ns[cur / 3];
             let n_pair = &ns[to_rmv.pair / 3];
             let ccw = |p0, p1, p2| is_ccw_3d(p0, p1, p2, n_curr, eps);
-            if !r_curr.same_face(tr0) {
+            if !is_coplanar(r_curr, tr0) {
                 let tr2 = tr0;
                 tr0 = &rs[hid / 3];
-                if !r_curr.same_face(tr0) { return false; }
-                if tr0.mid != tr2.mid ||
-                   tr0.fid != tr2.fid ||
-                   n_pair.dot(*n_curr) < -0.5 {
+                if !is_coplanar(r_curr, tr0) { return false; }
+                if tr0.mid != tr2.mid || n_pair.dot(*n_curr) < -0.5 {
                     // Restrict collapse to co-linear edges when the edge separates faces or the edge is sharp.
                     // This ensures large shifts are not introduced parallel to the tangent plane.
                     if ccw(&p_prev, &pos_delt, &pos_keep) != 0 { return false; }
@@ -175,3 +173,6 @@ pub fn collapse_short_edges(
         println!("{} short edges collapsed", flag);
     }
 }
+
+#[inline]
+fn is_coplanar(t0: &Tref, t1: &Tref) -> bool { t0.mid == t1.mid && t0.pid == t1.pid }

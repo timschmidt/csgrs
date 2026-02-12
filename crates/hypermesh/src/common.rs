@@ -56,7 +56,6 @@ pub fn next_of(hid: usize) -> usize { let mut i = hid + 1; if i.is_multiple_of(3
 
 #[derive(Clone, Debug, Copy)]
 pub struct Tref {
-    pub oid: usize, // original instance id,
     pub mid: usize, // mesh id
     pub fid: usize, // face id
     pub pid: i32,   // planer id
@@ -65,19 +64,10 @@ pub struct Tref {
 impl Default for Tref {
     fn default() -> Self {
         Self {
-            oid: usize::MAX,
             mid: usize::MAX,
             fid: usize::MAX,
             pid: -1
         }
-    }
-}
-
-impl Tref {
-    pub fn same_face(&self, other: &Tref) -> bool {
-        self.mid == other.mid &&
-        self.fid == other.fid &&
-        self.pid == other.pid
     }
 }
 
