@@ -408,3 +408,35 @@ mod test_simplification {
         }
     }
 }
+
+#[cfg(test)]
+mod test_mesh_cleanup {
+    use crate::prelude::Manifold;
+
+    #[test]
+    fn test_dedup_verts() {
+        let pos = vec![
+           -0.866025, -1., 0.5, // duplicated
+            0., -1., -1.,
+            0.866025, -1., 0.5, // duplicated 2
+           -0.866025, -1., 0.5, // duplicated
+            0., 1., 0.,
+            0.866025, -1., 0.5, // duplicated 2
+        ];
+        let idx = vec![
+            0, 4, 1,
+            0, 3, 1, // collapsed
+            0, 3, 2, // collapsed
+            0, 3, 4, // collapsed
+            1, 2, 0,
+            1, 4, 2,
+            2, 4, 0,
+            2, 5, 0, // collapsed
+            5, 2, 1, // collapsed
+        ];
+        let mfd = Manifold::new(&pos, &idx).unwrap();
+
+        assert_eq!(mfd.nv, 4);
+        assert_eq!(mfd.nf, 4);
+    }
+}
