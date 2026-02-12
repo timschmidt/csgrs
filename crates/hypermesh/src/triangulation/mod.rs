@@ -205,7 +205,6 @@ fn update_reference(
     for r in rs.iter_mut() {
         let fid = r.fid;
         let pq  = r.mid == 0;
-        r.fid = 0; // see the original code and it's always -1
         r.pid = if pq { mp.coplanar[fid] } else { mq.coplanar[fid] };
     }
 }
