@@ -42,7 +42,7 @@ impl Class {
         true
     }
 
-    // Any logarithmn can be added
+    // Any logarithm can be added
     fn is_ln(&self) -> bool {
         matches!(self, Ln(_))
     }
