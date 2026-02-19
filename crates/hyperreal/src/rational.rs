@@ -475,6 +475,12 @@ impl Rational {
     }
 }
 
+impl AsRef<Rational> for Rational {
+    fn as_ref(&self) -> &Rational {
+        self
+    }
+}
+
 use core::fmt;
 
 impl fmt::Display for Rational {
@@ -586,15 +592,16 @@ impl std::str::FromStr for Rational {
 
 use core::ops::*;
 
-impl Add for Rational {
-    type Output = Self;
+impl<T: AsRef<Rational>> Add<T> for &Rational {
+    type Output = Rational;
 
-    fn add(self, other: Self) -> Self {
+    fn add(self, other: T) -> Self::Output {
         use std::cmp::Ordering::*;
 
+        let other = other.as_ref();
         let denominator = &self.denominator * &other.denominator;
-        let a = self.numerator * other.denominator;
-        let b = other.numerator * self.denominator;
+        let a = &self.numerator * &other.denominator;
+        let b = &other.numerator * &self.denominator;
         let (sign, numerator) = match (self.sign, other.sign) {
             (any, NoSign) => (any, a),
             (NoSign, any) => (any, b),
@@ -603,16 +610,34 @@ impl Add for Rational {
             (x, y) => match a.cmp(&b) {
                 Greater => (x, a - b),
                 Equal => {
-                    return Self::zero();
+                    return Self::Output::zero();
                 }
                 Less => (y, b - a),
             },
         };
-        Self::maybe_reduce(Self {
+        Self::Output::maybe_reduce(Self::Output {
             sign,
             numerator,
             denominator,
         })
+    }
+}
+
+impl<T: AsRef<Rational>> Add<T> for Rational {
+    type Output = Self;
+
+    fn add(self, other: T) -> Self {
+        &self + other.as_ref()
+    }
+}
+
+impl Neg for &Rational {
+    type Output = Rational;
+
+    fn neg(self) -> Self::Output {
+        let mut ret = self.clone();
+        ret.sign = -ret.sign;
+        ret
     }
 }
 
@@ -620,29 +645,35 @@ impl Neg for Rational {
     type Output = Self;
 
     fn neg(self) -> Self {
-        Self {
-            sign: -self.sign,
-            ..self
-        }
+        (&self).neg()
     }
 }
 
-impl Sub for Rational {
-    type Output = Self;
+impl<T: AsRef<Rational>> Sub<T> for &Rational {
+    type Output = Rational;
 
-    fn sub(self, other: Self) -> Self {
-        self + -other
+    fn sub(self, other: T) -> Self::Output {
+        self + &-other.as_ref()
     }
 }
 
-impl Mul for Rational {
+impl<T: AsRef<Rational>> Sub<T> for Rational {
     type Output = Self;
 
-    fn mul(self, other: Self) -> Self {
+    fn sub(self, other: T) -> Self {
+        self + -other.as_ref()
+    }
+}
+
+impl<T: AsRef<Rational>> Mul<T> for &Rational {
+    type Output = Rational;
+
+    fn mul(self, other: T) -> Self::Output {
+        let other = other.as_ref();
         let sign = self.sign * other.sign;
-        let numerator = self.numerator * other.numerator;
-        let denominator = self.denominator * other.denominator;
-        Self::maybe_reduce(Self {
+        let numerator = &self.numerator * &other.numerator;
+        let denominator = &self.denominator * &other.denominator;
+        Self::Output::maybe_reduce(Self::Output {
             sign,
             numerator,
             denominator,
@@ -650,37 +681,42 @@ impl Mul for Rational {
     }
 }
 
-impl MulAssign for Rational {
-    fn mul_assign(&mut self, other: Self) {
-        let sign = self.sign * other.sign;
-        self.sign = sign;
-        self.numerator *= other.numerator;
-        self.denominator *= other.denominator;
-    }
-}
-
-impl MulAssign<&Rational> for Rational {
-    fn mul_assign(&mut self, other: &Rational) {
-        let sign = self.sign * other.sign;
-        self.sign = sign;
-        self.numerator = &self.numerator * &other.numerator;
-        self.denominator = &self.denominator * &other.denominator;
-    }
-}
-
-impl Div for Rational {
+impl<T: AsRef<Rational>> Mul<T> for Rational {
     type Output = Self;
 
-    fn div(self, other: Self) -> Self {
+    fn mul(self, other: T) -> Self {
+        &self * other.as_ref()
+    }
+}
+
+impl<T: AsRef<Rational>> MulAssign<T> for Rational {
+    fn mul_assign(&mut self, other: T) {
+        *self = &*self * other.as_ref();
+    }
+}
+
+impl<T: AsRef<Rational>> Div<T> for &Rational {
+    type Output = Rational;
+
+    fn div(self, other: T) -> Self::Output {
+        let other = other.as_ref();
         assert_ne!(other.numerator, BigUint::ZERO);
         let sign = self.sign * other.sign;
-        let numerator = self.numerator * other.denominator;
-        let denominator = self.denominator * other.numerator;
-        Self::maybe_reduce(Self {
+        let numerator = &self.numerator * &other.denominator;
+        let denominator = &self.denominator * &other.numerator;
+        Self::Output::maybe_reduce(Self::Output {
             sign,
             numerator,
             denominator,
         })
+    }
+}
+
+impl<T: AsRef<Rational>> Div<T> for Rational {
+    type Output = Self;
+
+    fn div(self, other: T) -> Self {
+        &self / other.as_ref()
     }
 }
 
@@ -951,5 +987,29 @@ mod tests {
         let zero = Rational::zero();
         let err = zero.inverse().unwrap_err();
         assert_eq!(err, Problem::DivideByZero);
+    }
+
+    #[test]
+    fn operations_work_on_refs_on_rhs() {
+        let a = Rational::new(2);
+        let b = Rational::new(3);
+        let c = Rational::new(6);
+        assert_eq!(a.clone() * &b, c.clone());
+        assert_eq!(c.clone() / &b, a.clone());
+        assert_eq!(c.clone() - &a, Rational::new(4));
+        assert_eq!(-&c, Rational::new(-6));
+        assert_eq!(a.clone() + &b, Rational::new(5));
+    }
+
+    #[test]
+    fn operations_work_on_refs() {
+        let a = Rational::new(2);
+        let b = Rational::new(3);
+        let c = Rational::new(6);
+        assert_eq!(&a * &b, c.clone());
+        assert_eq!(&c / &b, a.clone());
+        assert_eq!(&c - &a, Rational::new(4));
+        assert_eq!(-&c, Rational::new(-6));
+        assert_eq!(&a + &b, Rational::new(5));
     }
 }
