@@ -4,7 +4,7 @@ use num::bigint::{BigInt, BigUint, Sign};
 mod convert;
 mod test;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 enum Class {
     One,             // Exactly one
     Pi,              // Exactly pi
@@ -18,6 +18,8 @@ enum Class {
 }
 
 use Class::*;
+use serde::Deserialize;
+use serde::Serialize;
 
 // We can't tell whether an Irrational value is ever equal to anything
 impl PartialEq for Class {
@@ -128,11 +130,12 @@ pub type Signal = Arc<AtomicBool>;
 /// let answer = nine.sqrt().unwrap();
 /// assert_eq!(answer, three);
 /// ```
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Real {
     rational: Rational,
     class: Class,
     computable: Computable,
+    #[serde(skip)]
     signal: Option<Signal>,
 }
 

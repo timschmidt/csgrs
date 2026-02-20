@@ -2,6 +2,7 @@ use crate::Problem;
 use num::bigint::Sign::{self, *};
 use num::{BigInt, BigUint, bigint::ToBigInt, bigint::ToBigUint};
 use num::{One, Zero};
+use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
 
 pub(crate) mod convert;
@@ -48,7 +49,7 @@ pub(crate) mod convert;
 /// assert_eq!(four, Rational::new(4));
 /// ```
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Rational {
     sign: Sign,
     numerator: BigUint,

@@ -4,9 +4,11 @@ use crate::computable::{Precision, Signal, scale, shift, should_stop, signed};
 use num::bigint::{Sign, ToBigInt};
 use num::{BigInt, BigUint, Signed};
 use num::{One, Zero};
+use serde::Deserialize;
+use serde::Serialize;
 use std::ops::Deref;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) enum Approximation {
     Int(BigInt),
     Inverse(Computable),
