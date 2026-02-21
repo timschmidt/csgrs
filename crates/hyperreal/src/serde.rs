@@ -1,5 +1,7 @@
-use crate::real::Real;
-use ciborium::{de, ser};
+use std::str::FromStr;
+
+use crate::{Problem, real::Real};
+use ciborium::{Value, de, ser};
 use serde_json;
 
 impl Real {
@@ -36,6 +38,28 @@ impl Real {
     /// Deserializes a Real from a CBOR byte slice.
     pub fn from_bytes(bytes: &[u8]) -> Self {
         de::from_reader(bytes).unwrap()
+    }
+}
+
+impl TryFrom<Value> for Real {
+    type Error = Problem;
+
+    /// Attempt to convert from a CBOR Value. We accept floats, integers, and strings, and serialized Reals.
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        match value {
+            Value::Integer(x) => {
+                let val: i64 = x.try_into().map_err(|_| Problem::BadInteger)?;
+                Ok(val.into())
+            }
+            Value::Float(x) => x.try_into(),
+            Value::Text(x) => Real::from_str(&x),
+            _ => {
+                // In this branch, we should be whatever type ciborium decided to use for `Real`.
+                // Try a fallible conversion. If it fails, we're done.
+                let ret: Real = value.deserialized().map_err(|_| Problem::ParseError)?;
+                Ok(ret)
+            }
+        }
     }
 }
 
@@ -114,5 +138,39 @@ mod tests {
         let y = x.to_bytes();
         let z = Real::from_bytes(&y);
         assert_eq!(x, z);
+    }
+
+    #[test]
+    fn cbor_value_try_into() {
+        use ciborium::value::Value;
+
+        // CBOR Real
+        let x = Real::new(Rational::new(5));
+        let mut buf = Vec::new();
+        ser::into_writer(&x, &mut buf).unwrap();
+        let value: Value = de::from_reader(buf.as_slice()).unwrap();
+        let y: Real = value.try_into().unwrap();
+        assert_eq!(x, y);
+
+        // CBOR Integer
+        let mut buf = Vec::new();
+        ser::into_writer(&5, &mut buf).unwrap();
+        let value: Value = de::from_reader(buf.as_slice()).unwrap();
+        let y: Real = value.try_into().unwrap();
+        assert_eq!(x, y);
+
+        // CBOR String
+        let mut buf = Vec::new();
+        ser::into_writer(&"5", &mut buf).unwrap();
+        let value: Value = de::from_reader(buf.as_slice()).unwrap();
+        let y: Real = value.try_into().unwrap();
+        assert_eq!(x, y);
+
+        // CBOR Float
+        let mut buf = Vec::new();
+        ser::into_writer(&5.0, &mut buf).unwrap();
+        let value: Value = de::from_reader(buf.as_slice()).unwrap();
+        let y: Real = value.try_into().unwrap();
+        assert_eq!(x, y);
     }
 }
