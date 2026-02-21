@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
-use crate::{Problem, real::Real};
+use crate::{Problem, Rational, real::Real};
 use ciborium::{Value, de, ser};
+use num::BigInt;
 use serde_json;
 
 impl Real {
@@ -53,6 +54,27 @@ impl TryFrom<&Value> for Real {
             }
             Value::Float(x) => (*x).try_into(),
             Value::Text(x) => Real::from_str(x),
+            Value::Array(x) if x.len() == 2 => {
+                fn as_big_int(value: &Value) -> Result<BigInt, Problem> {
+                    match value {
+                        Value::Integer(n) => {
+                            let val: i64 = (*n).try_into().map_err(|_| Problem::BadInteger)?;
+                            Ok(BigInt::from(val))
+                        }
+                        Value::Text(x) => {
+                            let val: BigInt = x.parse().map_err(|_| Problem::BadInteger)?;
+                            Ok(val)
+                        }
+                        _ => Err(Problem::ParseError),
+                    }
+                }
+                // If we receive an array of length 2, we attempt to interpret it as the numerator and denominator of a Rational.
+                let numerator = as_big_int(&x[0])?;
+                let denominator = as_big_int(&x[1])?;
+                Ok(Real::new(
+                    Rational::from_bigint(numerator) / Rational::from_bigint(denominator),
+                ))
+            }
             _ => {
                 // In this branch, we should be whatever type ciborium decided to use for `Real`.
                 // Try a fallible conversion. If it fails, we're done.
@@ -177,6 +199,20 @@ mod tests {
         // CBOR Float
         let mut buf = Vec::new();
         ser::into_writer(&5.0, &mut buf).unwrap();
+        let value: Value = de::from_reader(buf.as_slice()).unwrap();
+        let y: Real = value.try_into().unwrap();
+        assert_eq!(x, y);
+
+        // CBOR Pair of Integers
+        let mut buf = Vec::new();
+        ser::into_writer(&(10, 2), &mut buf).unwrap();
+        let value: Value = de::from_reader(buf.as_slice()).unwrap();
+        let y: Real = value.try_into().unwrap();
+        assert_eq!(x, y);
+
+        // CBOR Pair of Integers and Strings
+        let mut buf = Vec::new();
+        ser::into_writer(&(10, "2"), &mut buf).unwrap();
         let value: Value = de::from_reader(buf.as_slice()).unwrap();
         let y: Real = value.try_into().unwrap();
         assert_eq!(x, y);
