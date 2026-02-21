@@ -41,18 +41,18 @@ impl Real {
     }
 }
 
-impl TryFrom<Value> for Real {
+impl TryFrom<&Value> for Real {
     type Error = Problem;
 
     /// Attempt to convert from a CBOR Value. We accept floats, integers, and strings, and serialized Reals.
-    fn try_from(value: Value) -> Result<Self, Self::Error> {
+    fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::Integer(x) => {
-                let val: i64 = x.try_into().map_err(|_| Problem::BadInteger)?;
+                let val: i64 = (*x).try_into().map_err(|_| Problem::BadInteger)?;
                 Ok(val.into())
             }
-            Value::Float(x) => x.try_into(),
-            Value::Text(x) => Real::from_str(&x),
+            Value::Float(x) => (*x).try_into(),
+            Value::Text(x) => Real::from_str(x),
             _ => {
                 // In this branch, we should be whatever type ciborium decided to use for `Real`.
                 // Try a fallible conversion. If it fails, we're done.
@@ -60,6 +60,14 @@ impl TryFrom<Value> for Real {
                 Ok(ret)
             }
         }
+    }
+}
+
+impl TryFrom<Value> for Real {
+    type Error = Problem;
+
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        Self::try_from(&value)
     }
 }
 
@@ -171,6 +179,13 @@ mod tests {
         ser::into_writer(&5.0, &mut buf).unwrap();
         let value: Value = de::from_reader(buf.as_slice()).unwrap();
         let y: Real = value.try_into().unwrap();
+        assert_eq!(x, y);
+
+        // Reference to CBOR Integer
+        let mut buf = Vec::new();
+        ser::into_writer(&5, &mut buf).unwrap();
+        let value: Value = de::from_reader(buf.as_slice()).unwrap();
+        let y: Real = (&value).try_into().unwrap();
         assert_eq!(x, y);
     }
 }
