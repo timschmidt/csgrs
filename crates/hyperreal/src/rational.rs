@@ -9,13 +9,13 @@ pub(crate) mod convert;
 
 /// Ratio of two integers
 ///
-/// This type is a [`Sign`]ed ratio between two [`BigUint`]
+/// This type is functionally a [`Sign`] with a ratio between two [`BigUint`]
 /// (the numerator and denominator). The numerator and denominator are finite.
 ///
 /// The "ordinary" floating point numbers are rationals, but when converted
 /// the exact rational may not be what you intuitively expected. It's obvious
 /// that one third isn't represented exactly as an f64, but not everybody
-/// will realize that 0.3 isn't either.
+/// will realise that 0.3 isn't either.
 ///
 /// # Examples
 ///
@@ -447,7 +447,7 @@ impl Rational {
         result
     }
 
-    /// Integer exponentiation. Raise this Rational to an integer exponent.
+    /// Integer exponeniation. Raise this Rational to an integer exponent.
     pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
         const TOO_MANY_BITS: u64 = 1000;
         // Arguably wrong if self is also zero
