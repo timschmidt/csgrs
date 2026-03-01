@@ -216,6 +216,17 @@ mod tests {
     }
 
     #[test]
+    fn pow_of_sine() {
+        let sin_10 = Real::new(Rational::new(10)).sin();
+        let answer = (sin_10.clone()).pow(Real::new(Rational::new(2))).unwrap();
+        assert!(closest_f64(
+            answer,
+            // Value from wolframalpha.com
+            0.29595896909330400696886606953617752145
+        ));
+    }
+
+    #[test]
     fn curves() {
         let eighty = Rational::fraction(80, 100).unwrap();
         let twenty = Rational::fraction(20, 100).unwrap();

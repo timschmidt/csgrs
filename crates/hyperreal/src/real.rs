@@ -776,6 +776,8 @@ impl Real {
             Sign::NoSign => None,
             Sign::Plus => Some(value.ln().multiply(Computable::integer(exp)).exp()),
             Sign::Minus => {
+                // Take the power of the positive version and negate it afterwards.
+                let value = value.negate();
                 let odd = exp.bit(0);
                 let exp = Computable::integer(exp);
                 if odd {
