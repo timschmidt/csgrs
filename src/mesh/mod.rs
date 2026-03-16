@@ -797,6 +797,21 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
 impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
     /// Convert a Sketch into a Mesh.
     fn from(sketch: Sketch<S>) -> Self {
+        /// Helper function to convert a geo::LineString to a Vec<crate::vertex::Vertex>
+        fn geo_line_string_to_vertices(
+            line_string: &geo::LineString,
+        ) -> Vec<Vertex> {
+            let mut vertices: Vec<_> = line_string
+                .coords_iter()
+                .map(|c| Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()))
+                .collect();
+            // LineString can closed, which means first and last Coords are the same
+            // but crate::mesh::polygon::Polygon expects can't have conflicting edges so we need to remove last Vertex
+            if matches!((vertices.first(), vertices.last()), (Some(first), Some(last)) if first == last) {
+                vertices.pop();
+            }
+            vertices
+        }
         /// Helper function to convert a geo::Polygon to a Vec<crate::mesh::polygon::Polygon>
         fn geo_poly_to_csg_polys<S: Clone + Debug + Send + Sync>(
             poly2d: &GeoPolygon<Real>,
@@ -805,11 +820,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
             let mut all_polygons = Vec::new();
 
             // Handle the exterior ring
-            let outer_vertices_3d: Vec<_> = poly2d
-                .exterior()
-                .coords_iter()
-                .map(|c| Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()))
-                .collect();
+            let outer_vertices_3d = geo_line_string_to_vertices(poly2d.exterior());
 
             if outer_vertices_3d.len() >= 3 {
                 all_polygons.push(Polygon::new(outer_vertices_3d, metadata.clone()));
@@ -817,10 +828,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
 
             // Handle interior rings (holes)
             for ring in poly2d.interiors() {
-                let hole_vertices_3d: Vec<_> = ring
-                    .coords_iter()
-                    .map(|c| Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()))
-                    .collect();
+                let hole_vertices_3d =geo_line_string_to_vertices(ring);
                 if hole_vertices_3d.len() >= 3 {
                     all_polygons.push(Polygon::new(hole_vertices_3d, metadata.clone()));
                 }
