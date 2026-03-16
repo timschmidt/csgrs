@@ -807,7 +807,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
                 .collect();
             // LineString can closed, which means first and last Coords are the same
             // but crate::mesh::polygon::Polygon expects can't have conflicting edges so we need to remove last Vertex
-            if matches!((vertices.first(), vertices.last()), (Some(first), Some(last)) if first == last) {
+            if vertices.first() == vertices.last() {
                 vertices.pop();
             }
             vertices
@@ -828,7 +828,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
 
             // Handle interior rings (holes)
             for ring in poly2d.interiors() {
-                let hole_vertices_3d =geo_line_string_to_vertices(ring);
+                let hole_vertices_3d = geo_line_string_to_vertices(ring);
                 if hole_vertices_3d.len() >= 3 {
                     all_polygons.push(Polygon::new(hole_vertices_3d, metadata.clone()));
                 }
