@@ -9,7 +9,7 @@ use nalgebra::{Point3, Vector3};
 use std::error::Error;
 use std::fmt::Debug;
 
-use core2::io::Cursor;
+use std::io::Cursor;
 use dxf::Drawing;
 use dxf::entities::*;
 
