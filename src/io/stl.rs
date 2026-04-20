@@ -1,6 +1,6 @@
 use crate::triangulated::Triangulated3D;
 use std::fmt::Debug;
-use core2::io::Cursor;
+use std::io::Cursor;
 use stl_io;
 
 /// Export to ASCII STL

@@ -64,8 +64,6 @@ base64 = { version = "0.22", optional = true }
 #doc-image-embed = "0.2" # fork of https://crates.io/crates/embed-doc-image - should be upstreamed.
 
 # io/load
-# core2 = { version = "0.4.0", default_features = false, features = ["alloc"] } # no-std, still throws errors
-core2 = { version = "0.4", features = ["alloc"] }
 dxf = { version = "0.6", optional = true }
 stl_io = { version = "0.8", optional = true }
 image = { version = "0.25", optional = true }
