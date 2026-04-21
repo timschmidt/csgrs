@@ -12,7 +12,7 @@ matrices using `Real` throughout.
 - Re-exports `realistic::{Real, Rational, Problem}`.
 - Constants and scalar helpers: `zero`, `one`, `e`, `pi`, `tau`, `i`,
   `reciprocal`, `reciprocal_checked`, `pow`, `powi`.
-- Elementary functions: `exp`, `ln`, `sqrt`, `sin`, `cos`, `tan`.
+- Elementary functions: `exp`, `ln`, `log10`, `sqrt`, `sin`, `cos`, `tan`.
 - Hyperbolic functions: `sinh`, `cosh`, `tanh`.
 - Inverse trigonometric and hyperbolic helpers: `asin`, `acos`, `atan`, `asinh`,
   `acosh`, `atanh`.
@@ -53,7 +53,7 @@ realistic = "0.8.1"
 ### Scalars
 
 ```rust
-use realistic_blas::{ln, pi, sqrt, tau, Real};
+use realistic_blas::{ln, log10, pi, sqrt, tau, Real};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -65,6 +65,7 @@ assert_eq!(three, r(3));
 
 assert_eq!(tau(), r(2) * pi());
 assert_eq!(ln(realistic_blas::e()).unwrap(), r(1));
+assert_eq!(log10(r(100)).unwrap(), r(2));
 ```
 
 Many operations are fallible because `Real` arithmetic can fail for invalid

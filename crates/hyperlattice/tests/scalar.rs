@@ -2,9 +2,9 @@ mod common;
 
 use common::{abort_signal, r, unknown_zero};
 use realistic_blas::{
-    BlasProblem, Problem, Rational, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln, one,
-    pi, powi, reciprocal, reciprocal_checked, reciprocal_checked_with_abort, sin, sqrt, tan, tau,
-    zero, zero_status, zero_status_with_abort,
+    BlasProblem, Problem, Rational, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln,
+    log10, log10_with_abort, one, pi, powi, reciprocal, reciprocal_checked,
+    reciprocal_checked_with_abort, sin, sqrt, tan, tau, zero, zero_status, zero_status_with_abort,
 };
 
 #[test]
@@ -13,6 +13,10 @@ fn scalar_functions() {
     assert_eq!(sqrt(9.into()).unwrap(), r(3));
     assert_eq!(sin(pi()), zero());
     assert_eq!(ln(realistic_blas::e()).unwrap(), one());
+    assert_eq!(log10(r(100)).unwrap(), r(2));
+
+    let signal = abort_signal();
+    assert_eq!(log10_with_abort(r(1_000), &signal).unwrap(), r(3));
 }
 
 #[test]
@@ -21,6 +25,8 @@ fn scalar_functions_reject_invalid_domains() {
     assert_eq!(sqrt((-1).into()), Err(Problem::SqrtNegative));
     assert_eq!(ln(zero()), Err(Problem::NotANumber));
     assert_eq!(ln((-1).into()), Err(Problem::NotANumber));
+    assert_eq!(log10(zero()), Err(Problem::NotANumber));
+    assert_eq!(log10((-1).into()), Err(Problem::NotANumber));
     assert_eq!(asin(r(2)), Err(Problem::NotANumber));
     assert_eq!(acos(r(2)), Err(Problem::NotANumber));
     assert_eq!(acosh(zero()), Err(Problem::NotANumber));

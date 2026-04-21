@@ -154,6 +154,14 @@ pub fn ln(value: Real) -> BlasResult<Real> {
     value.ln()
 }
 
+pub fn log10(value: Real) -> BlasResult<Real> {
+    value.log10()
+}
+
+pub fn log10_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
+    with_abort(value, signal).log10()
+}
+
 pub fn sqrt(value: Real) -> BlasResult<Real> {
     value.sqrt()
 }
