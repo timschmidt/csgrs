@@ -2,6 +2,13 @@
 name = "realistic_blas"
 version = "0.1.0"
 edition = "2024"
+description = "A small Rust linear algebra library built around realistic::Real, a real-number type with symbolic and computable-number behavior."
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/timschmidt/realistic_blas"
+readme = "README.md"
+keywords = ["math", "trigonometry", "scientific", "calculator", "blas", "engineering", "CAD", "linear algebra", "matrices", "vectors"]
+categories = ["mathematics"]
 
 [dependencies]
 realistic = "0.8.1"
