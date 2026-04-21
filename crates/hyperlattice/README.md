@@ -72,17 +72,17 @@ realistic_blas = {
 ```rust
 use realistic_blas::{ln, log10, pi, sqrt, tau, Scalar};
 
-fn r(value: i32) -> Scalar {
+fn s(value: i32) -> Scalar {
     value.into()
 }
 
 let nine: Scalar = 9.into();
 let three = sqrt(nine).unwrap();
-assert_eq!(three, r(3));
+assert_eq!(three, s(3));
 
-assert_eq!(tau(), r(2) * pi());
-assert_eq!(ln(realistic_blas::e()).unwrap(), r(1));
-assert_eq!(log10(r(100)).unwrap(), r(2));
+assert_eq!(tau(), s(2) * pi());
+assert_eq!(ln(realistic_blas::e()).unwrap(), s(1));
+assert_eq!(log10(s(100)).unwrap(), s(2));
 ```
 
 Many operations are fallible because scalar arithmetic can fail for invalid
@@ -129,21 +129,21 @@ assert_eq!((i() ^ 2).unwrap(), minus_one);
 ```rust
 use realistic_blas::{one, Scalar, Vector3};
 
-fn r(value: i32) -> Scalar {
+fn s(value: i32) -> Scalar {
     value.into()
 }
 
-let v = Vector3::new([r(3), r(4), r(0)]);
-let offset = v.clone() + r(10);
+let v = Vector3::new([s(3), s(4), s(0)]);
+let offset = v.clone() + s(10);
 
-assert_eq!(v.dot(&v), r(25));
-assert_eq!(offset, Vector3::new([r(13), r(14), r(10)]));
+assert_eq!(v.dot(&v), s(25));
+assert_eq!(offset, Vector3::new([s(13), s(14), s(10)]));
 
 let unit = v.normalize().unwrap();
 assert_eq!(unit.dot(&unit), one());
 
 let half = realistic_blas::Rational::fraction(1, 2).unwrap().into();
-let displayed = Vector3::new([half, r(2), r(3)]);
+let displayed = Vector3::new([half, s(2), s(3)]);
 assert_eq!(format!("{displayed}"), "[1/2, 2, 3]");
 assert_eq!(format!("{displayed:#}"), "[0.5, 2, 3]");
 ```
@@ -153,24 +153,24 @@ assert_eq!(format!("{displayed:#}"), "[0.5, 2, 3]");
 ```rust
 use realistic_blas::{Matrix3, Scalar};
 
-fn r(value: i32) -> Scalar {
+fn s(value: i32) -> Scalar {
     value.into()
 }
 
 let matrix = Matrix3::new([
-    [r(1), r(2), r(3)],
-    [r(0), r(1), r(4)],
-    [r(5), r(6), r(0)],
+    [s(1), s(2), s(3)],
+    [s(0), s(1), s(4)],
+    [s(5), s(6), s(0)],
 ]);
-let incremented = matrix.clone() + r(1);
+let incremented = matrix.clone() + s(1);
 
-assert_eq!(matrix.determinant(), r(1));
+assert_eq!(matrix.determinant(), s(1));
 assert_eq!(
     incremented,
     Matrix3::new([
-        [r(2), r(3), r(4)],
-        [r(1), r(2), r(5)],
-        [r(6), r(7), r(1)],
+        [s(2), s(3), s(4)],
+        [s(1), s(2), s(5)],
+        [s(6), s(7), s(1)],
     ])
 );
 assert_eq!(matrix.clone() * matrix.clone().inverse().unwrap(), Matrix3::identity());
@@ -188,12 +188,12 @@ center value.
 ```rust
 use realistic_blas::{Matrix3, Rational, Scalar};
 
-fn r(value: i32) -> Scalar {
+fn s(value: i32) -> Scalar {
     value.into()
 }
 
 let half = Rational::fraction(1, 2).unwrap().into();
-let matrix = Matrix3::new([[half, r(2), r(3)], [r(4), r(5), r(6)], [r(7), r(8), r(9)]]);
+let matrix = Matrix3::new([[half, s(2), s(3)], [s(4), s(5), s(6)], [s(7), s(8), s(9)]]);
 
 assert_eq!(format!("{matrix}"), "[[1/2, 2, 3], [4, 5, 6], [7, 8, 9]]");
 assert_eq!(format!("{matrix:#}"), "[[0.5, 2, 3], [4, 5, 6], [7, 8, 9]]");
