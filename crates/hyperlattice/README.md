@@ -284,16 +284,16 @@ suite runs both comparison backends at 128-bit precision.
 
 | Benchmark | Approx | Realistic from f64 | Realistic rational | astro-float 128 | arpfloat 128 | Realistic / approx | Realistic / astro-float | Realistic / arpfloat |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `vectors/vec3 dot` | 6.5817 ns | 4.3719 us | 6.4025 us | 300.43 ns | 774.93 ns | 664.25x | 14.55x | 5.64x |
-| `vectors/vec3 magnitude` | 10.666 ns | 7.7430 us | 10.341 us | 5.9370 us | 15.191 us | 725.95x | 1.30x | 0.51x |
-| `vectors/vec3 normalize` | 21.842 ns | 13.011 us | 12.946 us | 6.3309 us | 20.011 us | 595.69x | 2.06x | 0.65x |
-| `matrix3/mat3 determinant` | 15.538 ns | 13.755 us | 3.4195 us | 1.0582 us | 2.7976 us | 885.25x | 13.00x | 4.92x |
-| `matrix3/mat3 inverse` | 62.620 ns | 57.843 us | 13.926 us | 3.2653 us | 11.848 us | 923.71x | 17.71x | 4.88x |
-| `matrix3/mat3 mul mat3` | 79.095 ns | 41.502 us | 13.155 us | 2.8473 us | 8.4258 us | 524.71x | 14.58x | 4.93x |
-| `matrix3/mat3 transform vec3` | 14.680 ns | 15.135 us | 12.516 us | 1.0826 us | 2.8223 us | 1030.99x | 13.98x | 5.36x |
-| `matrix4/mat4 determinant` | 76.469 ns | 10.802 us | 10.408 us | 4.5383 us | 9.3198 us | 141.26x | 2.38x | 1.16x |
-| `matrix4/mat4 inverse` | 186.00 ns | 37.252 us | 37.471 us | 11.700 us | 35.721 us | 200.28x | 3.18x | 1.04x |
-| `matrix4/mat4 mul mat4` | 127.96 ns | 16.268 us | 15.914 us | 6.2112 us | 16.689 us | 127.13x | 2.62x | 0.97x |
-| `matrix4/mat4 transform vec4` | 24.160 ns | 5.1388 us | 5.0105 us | 1.9113 us | 4.3858 us | 212.70x | 2.69x | 1.17x |
-| `scalar_trig/sin` | 11.601 ns | 1.7896 us | 1.7596 us | 12.192 us | 268.29 us | 154.26x | 0.15x | 0.0067x |
-| `scalar_trig/cos` | 11.980 ns | 448.50 ns | 417.47 ns | 10.052 us | 174.27 us | 37.44x | 0.04x | 0.0026x |
+| `vec3 dot` | 6.5817 ns | 4.3719 us | 6.4025 us | 300.43 ns | 774.93 ns | 664.25x | 14.55x | 5.64x |
+| `vec3 magnitude` | 10.666 ns | 7.7430 us | 10.341 us | 5.9370 us | 15.191 us | 725.95x | 1.30x | 0.51x |
+| `vec3 normalize` | 21.842 ns | 13.011 us | 12.946 us | 6.3309 us | 20.011 us | 595.69x | 2.06x | 0.65x |
+| `mat3 determinant` | 15.538 ns | 13.755 us | 3.4195 us | 1.0582 us | 2.7976 us | 885.25x | 13.00x | 4.92x |
+| `mat3 inverse` | 62.620 ns | 57.843 us | 13.926 us | 3.2653 us | 11.848 us | 923.71x | 17.71x | 4.88x |
+| `mat3 mul mat3` | 79.095 ns | 41.502 us | 13.155 us | 2.8473 us | 8.4258 us | 524.71x | 14.58x | 4.93x |
+| `mat3 transform vec3` | 14.680 ns | 15.135 us | 12.516 us | 1.0826 us | 2.8223 us | 1030.99x | 13.98x | 5.36x |
+| `mat4 determinant` | 76.469 ns | 10.802 us | 10.408 us | 4.5383 us | 9.3198 us | 141.26x | 2.38x | 1.16x |
+| `mat4 inverse` | 186.00 ns | 37.252 us | 37.471 us | 11.700 us | 35.721 us | 200.28x | 3.18x | 1.04x |
+| `mat4 mul mat4` | 127.96 ns | 16.268 us | 15.914 us | 6.2112 us | 16.689 us | 127.13x | 2.62x | 0.97x |
+| `mat4 transform vec4` | 24.160 ns | 5.1388 us | 5.0105 us | 1.9113 us | 4.3858 us | 212.70x | 2.69x | 1.17x |
+| `scalar sin` | 11.601 ns | 1.7896 us | 1.7596 us | 12.192 us | 268.29 us | 154.26x | 0.15x | 0.0067x |
+| `scalar cos` | 11.980 ns | 448.50 ns | 417.47 ns | 10.052 us | 174.27 us | 37.44x | 0.04x | 0.0026x |
