@@ -10,6 +10,10 @@ use crate::scalar::{
 };
 use crate::{AbortSignal, BlasResult, CheckedBlasResult, Scalar};
 
+fn multiply_by(value: Scalar, factor: &Scalar) -> Scalar {
+    value * factor.clone()
+}
+
 /// Three-dimensional vector.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vector3(
@@ -39,14 +43,23 @@ macro_rules! impl_vector {
 
             /// Returns the dot product with `rhs`.
             pub fn dot(&self, rhs: &Self) -> Scalar {
-                (0..$n).fold(zero(), |acc, i| acc + self.0[i].clone() * rhs.0[i].clone())
+                let mut sum = self.0[0].clone() * rhs.0[0].clone();
+                for i in 1..$n {
+                    sum = sum + self.0[i].clone() * rhs.0[i].clone();
+                }
+                sum
             }
 
             /// Returns the dot product after attaching an abort signal to operands.
             pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Scalar {
-                (0..$n).fold(zero(), |acc, i| {
-                    acc + clone_with_abort(&self.0[i], signal) * clone_with_abort(&rhs.0[i], signal)
-                })
+                let mut sum =
+                    clone_with_abort(&self.0[0], signal) * clone_with_abort(&rhs.0[0], signal);
+                for i in 1..$n {
+                    sum = sum
+                        + clone_with_abort(&self.0[i], signal)
+                            * clone_with_abort(&rhs.0[i], signal);
+                }
+                sum
             }
 
             /// Returns the Euclidean magnitude.
@@ -67,9 +80,10 @@ macro_rules! impl_vector {
             pub fn normalize(&self) -> BlasResult<Self> {
                 let mag = self.magnitude()?;
                 reject_definite_zero(&mag)?;
+                let inv_mag = mag.inverse()?;
                 let mut values = self.0.clone();
                 for value in &mut values {
-                    *value = (value.clone() / mag.clone())?;
+                    *value = multiply_by(value.clone(), &inv_mag);
                 }
                 Ok(Self(values))
             }
@@ -78,9 +92,10 @@ macro_rules! impl_vector {
             pub fn normalize_checked(&self) -> CheckedBlasResult<Self> {
                 let mag = self.magnitude()?;
                 require_known_nonzero(&mag)?;
+                let inv_mag = mag.inverse()?;
                 let mut values = self.0.clone();
                 for value in &mut values {
-                    *value = (value.clone() / mag.clone())?;
+                    *value = multiply_by(value.clone(), &inv_mag);
                 }
                 Ok(Self(values))
             }
@@ -92,9 +107,10 @@ macro_rules! impl_vector {
             ) -> CheckedBlasResult<Self> {
                 let mag = self.magnitude_with_abort(signal)?;
                 require_known_nonzero_with_abort(&mag, signal)?;
+                let inv_mag = mag.inverse()?;
                 let mut values = self.0.clone();
                 for value in &mut values {
-                    *value = (value.clone() / mag.clone())?;
+                    *value = multiply_by(value.clone(), &inv_mag);
                 }
                 Ok(Self(values))
             }
@@ -102,9 +118,10 @@ macro_rules! impl_vector {
             /// Divides every component by `rhs` after rejecting unknown-zero divisors.
             pub fn div_scalar_checked(self, rhs: Scalar) -> CheckedBlasResult<Self> {
                 require_known_nonzero(&rhs)?;
+                let inv_rhs = rhs.inverse()?;
                 let mut values = self.0;
                 for value in &mut values {
-                    *value = (value.clone() / rhs.clone())?;
+                    *value = multiply_by(value.clone(), &inv_rhs);
                 }
                 Ok(Self(values))
             }
@@ -117,9 +134,10 @@ macro_rules! impl_vector {
             ) -> CheckedBlasResult<Self> {
                 let rhs = with_abort(rhs, signal);
                 require_known_nonzero_with_abort(&rhs, signal)?;
+                let inv_rhs = rhs.inverse()?;
                 let mut values = self.0;
                 for value in &mut values {
-                    *value = (value.clone() / rhs.clone())?;
+                    *value = multiply_by(value.clone(), &inv_rhs);
                 }
                 Ok(Self(values))
             }
@@ -209,9 +227,10 @@ macro_rules! impl_vector {
 
             fn div(self, rhs: Scalar) -> Self::Output {
                 reject_definite_zero(&rhs)?;
+                let inv_rhs = rhs.inverse()?;
                 let mut values = self.0;
                 for value in &mut values {
-                    *value = (value.clone() / rhs.clone())?;
+                    *value = multiply_by(value.clone(), &inv_rhs);
                 }
                 Ok(Self(values))
             }

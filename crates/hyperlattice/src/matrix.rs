@@ -11,6 +11,10 @@ use crate::scalar::{
 use crate::vector::{Vector3, Vector4};
 use crate::{AbortSignal, BlasResult, CheckedBlasResult, Problem, Scalar};
 
+fn multiply_by(value: Scalar, factor: &Scalar) -> Scalar {
+    value * factor.clone()
+}
+
 /// Three-by-three row-major matrix.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Matrix3(
@@ -43,9 +47,10 @@ fn invert_matrix<const N: usize>(matrix: [[Scalar; N]; N]) -> BlasResult<[[Scala
         }
 
         let pivot_value = left[col][col].clone();
+        let inv_pivot = pivot_value.inverse()?;
         for j in 0..N {
-            left[col][j] = (left[col][j].clone() / pivot_value.clone())?;
-            right[col][j] = (right[col][j].clone() / pivot_value.clone())?;
+            left[col][j] = multiply_by(left[col][j].clone(), &inv_pivot);
+            right[col][j] = multiply_by(right[col][j].clone(), &inv_pivot);
         }
 
         for row in 0..N {
@@ -91,9 +96,10 @@ fn invert_matrix_checked<const N: usize>(
 
         let pivot_value = left[col][col].clone();
         require_known_nonzero(&pivot_value)?;
+        let inv_pivot = pivot_value.inverse()?;
         for j in 0..N {
-            left[col][j] = (left[col][j].clone() / pivot_value.clone())?;
-            right[col][j] = (right[col][j].clone() / pivot_value.clone())?;
+            left[col][j] = multiply_by(left[col][j].clone(), &inv_pivot);
+            right[col][j] = multiply_by(right[col][j].clone(), &inv_pivot);
         }
 
         for row in 0..N {
@@ -141,9 +147,10 @@ fn invert_matrix_checked_with_abort<const N: usize>(
 
         let pivot_value = clone_with_abort(&left[col][col], signal);
         require_known_nonzero_with_abort(&pivot_value, signal)?;
+        let inv_pivot = pivot_value.inverse()?;
         for j in 0..N {
-            left[col][j] = (left[col][j].clone() / pivot_value.clone())?;
-            right[col][j] = (right[col][j].clone() / pivot_value.clone())?;
+            left[col][j] = multiply_by(left[col][j].clone(), &inv_pivot);
+            right[col][j] = multiply_by(right[col][j].clone(), &inv_pivot);
         }
 
         for row in 0..N {
@@ -267,11 +274,46 @@ fn multiply_arrays<const N: usize>(
 ) -> [[Scalar; N]; N] {
     from_fn(|row| {
         from_fn(|col| {
-            (0..N).fold(zero(), |acc, k| {
-                acc + left[row][k].clone() * right[k][col].clone()
-            })
+            let mut sum = left[row][0].clone() * right[0][col].clone();
+            for k in 1..N {
+                sum = sum + left[row][k].clone() * right[k][col].clone();
+            }
+            sum
         })
     })
+}
+
+fn invert_matrix3(matrix: [[Scalar; 3]; 3]) -> BlasResult<[[Scalar; 3]; 3]> {
+    let m = &matrix;
+    let det = m[0][0].clone()
+        * (m[1][1].clone() * m[2][2].clone() - m[1][2].clone() * m[2][1].clone())
+        - m[0][1].clone() * (m[1][0].clone() * m[2][2].clone() - m[1][2].clone() * m[2][0].clone())
+        + m[0][2].clone() * (m[1][0].clone() * m[2][1].clone() - m[1][1].clone() * m[2][0].clone());
+    let inv_det = det.inverse()?;
+
+    let c00 = m[1][1].clone() * m[2][2].clone() - m[1][2].clone() * m[2][1].clone();
+    let c01 = m[0][2].clone() * m[2][1].clone() - m[0][1].clone() * m[2][2].clone();
+    let c02 = m[0][1].clone() * m[1][2].clone() - m[0][2].clone() * m[1][1].clone();
+    let c10 = m[1][2].clone() * m[2][0].clone() - m[1][0].clone() * m[2][2].clone();
+    let c11 = m[0][0].clone() * m[2][2].clone() - m[0][2].clone() * m[2][0].clone();
+    let c12 = m[0][2].clone() * m[1][0].clone() - m[0][0].clone() * m[1][2].clone();
+    let c20 = m[1][0].clone() * m[2][1].clone() - m[1][1].clone() * m[2][0].clone();
+    let c21 = m[0][1].clone() * m[2][0].clone() - m[0][0].clone() * m[2][1].clone();
+    let c22 = m[0][0].clone() * m[1][1].clone() - m[0][1].clone() * m[1][0].clone();
+
+    Ok([
+        [
+            c00 * inv_det.clone(),
+            c01 * inv_det.clone(),
+            c02 * inv_det.clone(),
+        ],
+        [
+            c10 * inv_det.clone(),
+            c11 * inv_det.clone(),
+            c12 * inv_det.clone(),
+        ],
+        [c20 * inv_det.clone(), c21 * inv_det.clone(), c22 * inv_det],
+    ])
 }
 
 macro_rules! impl_matrix {
@@ -313,14 +355,6 @@ macro_rules! impl_matrix {
                 self.inverse_checked()
             }
 
-            /// Returns the matrix inverse using Gauss-Jordan elimination.
-            ///
-            /// The ordinary path rejects definite-zero pivots and otherwise
-            /// propagates scalar arithmetic errors from the selected backend.
-            pub fn inverse(self) -> BlasResult<Self> {
-                Ok(Self(invert_matrix(self.0)?))
-            }
-
             /// Returns the matrix inverse after rejecting unknown-zero pivots.
             pub fn inverse_checked(self) -> CheckedBlasResult<Self> {
                 Ok(Self(invert_matrix_checked(self.0)?))
@@ -360,10 +394,11 @@ macro_rules! impl_matrix {
             /// Divides every entry by `rhs` after rejecting unknown-zero divisors.
             pub fn div_scalar_checked(self, rhs: Scalar) -> CheckedBlasResult<Self> {
                 require_known_nonzero(&rhs)?;
+                let inv_rhs = rhs.inverse()?;
                 let mut values = self.0;
                 for row in &mut values {
                     for value in row {
-                        *value = (value.clone() / rhs.clone())?;
+                        *value = multiply_by(value.clone(), &inv_rhs);
                     }
                 }
                 Ok(Self(values))
@@ -377,10 +412,11 @@ macro_rules! impl_matrix {
             ) -> CheckedBlasResult<Self> {
                 let rhs = with_abort(rhs, signal);
                 require_known_nonzero_with_abort(&rhs, signal)?;
+                let inv_rhs = rhs.inverse()?;
                 let mut values = self.0;
                 for row in &mut values {
                     for value in row {
-                        *value = (value.clone() / rhs.clone())?;
+                        *value = multiply_by(value.clone(), &inv_rhs);
                     }
                 }
                 Ok(Self(values))
@@ -505,10 +541,11 @@ macro_rules! impl_matrix {
 
             fn div(self, rhs: Scalar) -> Self::Output {
                 reject_definite_zero(&rhs)?;
+                let inv_rhs = rhs.inverse()?;
                 let mut values = self.0;
                 for row in &mut values {
                     for value in row {
-                        *value = (value.clone() / rhs.clone())?;
+                        *value = multiply_by(value.clone(), &inv_rhs);
                     }
                 }
                 Ok(Self(values))
@@ -536,9 +573,11 @@ macro_rules! impl_matrix {
 
             fn mul(self, rhs: $vector) -> Self::Output {
                 $vector(from_fn(|row| {
-                    (0..$n).fold(zero(), |acc, col| {
-                        acc + self.0[row][col].clone() * rhs.0[col].clone()
-                    })
+                    let mut sum = self.0[row][0].clone() * rhs.0[0].clone();
+                    for col in 1..$n {
+                        sum = sum + self.0[row][col].clone() * rhs.0[col].clone();
+                    }
+                    sum
                 }))
             }
         }
@@ -557,6 +596,14 @@ impl_matrix!(Matrix3, Vector3, 3);
 impl_matrix!(Matrix4, Vector4, 4);
 
 impl Matrix3 {
+    /// Returns the matrix inverse using the adjugate and determinant.
+    ///
+    /// The ordinary path rejects a definite-zero determinant and otherwise
+    /// propagates scalar arithmetic errors from the selected backend.
+    pub fn inverse(self) -> BlasResult<Self> {
+        Ok(Self(invert_matrix3(self.0)?))
+    }
+
     /// Returns the determinant.
     pub fn determinant(&self) -> Scalar {
         let m = &self.0;
@@ -569,6 +616,14 @@ impl Matrix3 {
 }
 
 impl Matrix4 {
+    /// Returns the matrix inverse using Gauss-Jordan elimination.
+    ///
+    /// The ordinary path rejects definite-zero pivots and otherwise propagates
+    /// scalar arithmetic errors from the selected backend.
+    pub fn inverse(self) -> BlasResult<Self> {
+        Ok(Self(invert_matrix(self.0)?))
+    }
+
     /// Returns the determinant.
     pub fn determinant(&self) -> Scalar {
         let m = &self.0;

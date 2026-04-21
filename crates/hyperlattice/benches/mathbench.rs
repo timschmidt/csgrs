@@ -1,6 +1,8 @@
 use std::hint::black_box;
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+#[cfg(feature = "realistic-backend")]
+use realistic_blas::Rational;
 use realistic_blas::{Matrix3, Matrix4, Scalar, Vector3, Vector4};
 
 #[cfg(feature = "realistic-backend")]
@@ -708,6 +710,11 @@ fn s(value: f64) -> Scalar {
     Scalar::try_from(value).unwrap()
 }
 
+#[cfg(feature = "realistic-backend")]
+fn q(numerator: i64, denominator: u64) -> Scalar {
+    Rational::fraction(numerator, denominator).unwrap().into()
+}
+
 fn sample_vec3() -> SampleVec3 {
     SampleVec3 {
         x: 1.23456789012345,
@@ -783,6 +790,72 @@ fn blas_mat4(value: SampleMat4) -> Matrix4 {
     Matrix4::new(value.m.map(|row| row.map(s)))
 }
 
+#[cfg(feature = "realistic-backend")]
+fn blas_vec3_rational() -> Vector3 {
+    Vector3::new([
+        q(123_456_789_012_345, 100_000_000_000_000),
+        q(-234_567_890_123_456, 100_000_000_000_000),
+        q(345_678_901_234_567, 100_000_000_000_000),
+    ])
+}
+
+#[cfg(feature = "realistic-backend")]
+fn blas_vec3_b_rational() -> Vector3 {
+    Vector3::new([
+        q(-98_765_432_101_234, 100_000_000_000_000),
+        q(421_098_765_432_109, 100_000_000_000_000),
+        q(-567_890_123_456_789, 100_000_000_000_000),
+    ])
+}
+
+#[cfg(feature = "realistic-backend")]
+fn blas_vec4_rational() -> Vector4 {
+    Vector4::new([3.into(), 4.into(), 5.into(), 1.into()])
+}
+
+#[cfg(feature = "realistic-backend")]
+fn blas_mat3_rational() -> Matrix3 {
+    Matrix3::new([
+        [q(12, 10), q(3, 10), q(-7, 10)],
+        [q(21, 10), q(-15, 10), q(9, 10)],
+        [q(4, 10), q(33, 10), q(22, 10)],
+    ])
+}
+
+#[cfg(feature = "realistic-backend")]
+fn blas_mat3_b_rational() -> Matrix3 {
+    Matrix3::new([
+        [q(-8, 10), q(11, 10), q(5, 10)],
+        [q(27, 10), q(6, 10), q(-14, 10)],
+        [q(32, 10), q(-9, 10), q(18, 10)],
+    ])
+}
+
+#[cfg(feature = "realistic-backend")]
+fn blas_mat4_rational() -> Matrix4 {
+    Matrix4::new([
+        [1.into(), 2.into(), 3.into(), 4.into()],
+        [0.into(), 1.into(), 4.into(), 2.into()],
+        [5.into(), 6.into(), 0.into(), 1.into()],
+        [2.into(), 7.into(), 1.into(), 3.into()],
+    ])
+}
+
+#[cfg(feature = "realistic-backend")]
+fn blas_mat4_b_rational() -> Matrix4 {
+    Matrix4::new([
+        [2.into(), 0.into(), 1.into(), 3.into()],
+        [3.into(), 5.into(), 7.into(), 11.into()],
+        [11.into(), 13.into(), 17.into(), 19.into()],
+        [23.into(), 29.into(), 31.into(), 37.into()],
+    ])
+}
+
+#[cfg(feature = "realistic-backend")]
+fn trig_rational() -> Scalar {
+    q(12_345_678_901_234_567, 10_000_000_000_000_000)
+}
+
 fn bench_vectors(c: &mut Criterion) {
     let mut group = c.benchmark_group("vectors");
     let lhs = sample_vec3();
@@ -799,6 +872,21 @@ fn bench_vectors(c: &mut Criterion) {
     group.bench_function(format!("{BLAS_BACKEND}/vec3 normalize"), |b| {
         b.iter(|| black_box(black_box(&blas_lhs).normalize().unwrap()))
     });
+
+    #[cfg(feature = "realistic-backend")]
+    {
+        let rational_lhs = blas_vec3_rational();
+        let rational_rhs = blas_vec3_b_rational();
+        group.bench_function("realistic-rational/vec3 dot", |b| {
+            b.iter(|| black_box(black_box(&rational_lhs).dot(black_box(&rational_rhs))))
+        });
+        group.bench_function("realistic-rational/vec3 magnitude", |b| {
+            b.iter(|| black_box(black_box(&rational_lhs).magnitude().unwrap()))
+        });
+        group.bench_function("realistic-rational/vec3 normalize", |b| {
+            b.iter(|| black_box(black_box(&rational_lhs).normalize().unwrap()))
+        });
+    }
 
     let mut astro_ctx = astro_backend::Ctx::new(128);
     let astro_lhs = astro_backend::Vec3::new(&astro_ctx, lhs.x, lhs.y, lhs.z);
@@ -853,6 +941,27 @@ fn bench_matrix3(c: &mut Criterion) {
     group.bench_function(format!("{BLAS_BACKEND}/mat3 transform vec3"), |b| {
         b.iter(|| black_box(black_box(blas_lhs.clone()) * black_box(blas_vector.clone())))
     });
+
+    #[cfg(feature = "realistic-backend")]
+    {
+        let rational_lhs = blas_mat3_rational();
+        let rational_rhs = blas_mat3_b_rational();
+        let rational_vector = blas_vec3_rational();
+        group.bench_function("realistic-rational/mat3 determinant", |b| {
+            b.iter(|| black_box(black_box(&rational_lhs).determinant()))
+        });
+        group.bench_function("realistic-rational/mat3 inverse", |b| {
+            b.iter(|| black_box(black_box(rational_lhs.clone()).inverse().unwrap()))
+        });
+        group.bench_function("realistic-rational/mat3 mul mat3", |b| {
+            b.iter(|| black_box(black_box(rational_lhs.clone()) * black_box(rational_rhs.clone())))
+        });
+        group.bench_function("realistic-rational/mat3 transform vec3", |b| {
+            b.iter(|| {
+                black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()))
+            })
+        });
+    }
 
     let astro_ctx = astro_backend::Ctx::new(128);
     let astro_lhs = astro_backend::Mat3::new(&astro_ctx, lhs.m);
@@ -913,6 +1022,27 @@ fn bench_matrix4(c: &mut Criterion) {
         b.iter(|| black_box(black_box(blas_lhs.clone()) * black_box(blas_vector.clone())))
     });
 
+    #[cfg(feature = "realistic-backend")]
+    {
+        let rational_lhs = blas_mat4_rational();
+        let rational_rhs = blas_mat4_b_rational();
+        let rational_vector = blas_vec4_rational();
+        group.bench_function("realistic-rational/mat4 determinant", |b| {
+            b.iter(|| black_box(black_box(&rational_lhs).determinant()))
+        });
+        group.bench_function("realistic-rational/mat4 inverse", |b| {
+            b.iter(|| black_box(black_box(rational_lhs.clone()).inverse().unwrap()))
+        });
+        group.bench_function("realistic-rational/mat4 mul mat4", |b| {
+            b.iter(|| black_box(black_box(rational_lhs.clone()) * black_box(rational_rhs.clone())))
+        });
+        group.bench_function("realistic-rational/mat4 transform vec4", |b| {
+            b.iter(|| {
+                black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()))
+            })
+        });
+    }
+
     let astro_ctx = astro_backend::Ctx::new(128);
     let astro_lhs = astro_backend::Mat4::new(&astro_ctx, lhs.m);
     let astro_rhs = astro_backend::Mat4::new(&astro_ctx, rhs.m);
@@ -961,6 +1091,17 @@ fn bench_scalar_trig(c: &mut Criterion) {
     group.bench_function(format!("{BLAS_BACKEND}/cos"), |b| {
         b.iter(|| black_box(realistic_blas::cos(black_box(blas_value.clone()))))
     });
+
+    #[cfg(feature = "realistic-backend")]
+    {
+        let rational_value = trig_rational();
+        group.bench_function("realistic-rational/sin", |b| {
+            b.iter(|| black_box(realistic_blas::sin(black_box(rational_value.clone()))))
+        });
+        group.bench_function("realistic-rational/cos", |b| {
+            b.iter(|| black_box(realistic_blas::cos(black_box(rational_value.clone()))))
+        });
+    }
 
     let mut astro_ctx = astro_backend::Ctx::new(128);
     let astro_value = astro_ctx.f(value);
