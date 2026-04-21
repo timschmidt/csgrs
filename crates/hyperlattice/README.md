@@ -11,19 +11,24 @@ matrices using `Real` throughout.
 
 - Re-exports `realistic::{Real, Rational, Problem}`.
 - Constants and scalar helpers: `zero`, `one`, `e`, `pi`, `tau`, `i`,
-  `reciprocal`, `pow`, `powi`.
+  `reciprocal`, `reciprocal_checked`, `pow`, `powi`.
 - Elementary functions: `exp`, `ln`, `sqrt`, `sin`, `cos`, `tan`.
 - Hyperbolic functions: `sinh`, `cosh`, `tanh`.
 - Inverse trigonometric and hyperbolic helpers: `asin`, `acos`, `atan`, `asinh`,
   `acosh`, `atanh`.
-- `Complex` with arithmetic, reciprocal, conjugate, and integer powers.
+- `ZeroStatus`, `BlasProblem`, and `CheckedBlasResult` for APIs that reject
+  unknown zero conditions instead of proceeding optimistically.
+- `Complex` with arithmetic, reciprocal, checked reciprocal, conjugate, and
+  integer powers.
 - `Vector3` and `Vector4` with componentwise vector/vector arithmetic,
   componentwise vector/scalar addition and subtraction, scalar multiplication
-  and division, dot product, magnitude, and normalization.
+  and division, checked scalar division, dot product, magnitude, normalization,
+  and checked normalization.
 - `Matrix3` and `Matrix4` with componentwise matrix/matrix arithmetic,
   componentwise matrix/scalar addition and subtraction, matrix multiplication,
-  scalar division, matrix division, integer powers via `^`, transpose,
-  determinant, inverse, and reciprocal.
+  scalar division, checked scalar division, matrix division, checked matrix
+  division, integer powers via `^`, checked integer powers, transpose,
+  determinant, inverse, checked inverse, reciprocal, and checked reciprocal.
 
 ## Install
 
@@ -64,6 +69,12 @@ domains, division by zero, or unsupported conversions. Fallible helpers return:
 
 ```rust
 type BlasResult<T> = Result<T, realistic_blas::Problem>;
+```
+
+Checked helpers reject definite zero and unknown-zero cases:
+
+```rust
+type CheckedBlasResult<T> = Result<T, realistic_blas::BlasProblem>;
 ```
 
 ### Complex Numbers
@@ -139,8 +150,13 @@ inverse hyperbolic methods. The inverse helper functions in this crate convert
 through `f64` and then back into `Real`, so they are approximate rather than
 symbolic.
 
-Matrix inversion uses Gauss-Jordan elimination. A matrix is treated as singular
-when no definitely non-zero pivot can be found.
+Division-sensitive operations have two API paths. The ordinary path rejects
+values that are definitely zero and proceeds otherwise. The checked path uses
+`zero_status` and rejects both definite zero and `ZeroStatus::Unknown`.
+
+Matrix inversion uses Gauss-Jordan elimination. Ordinary inversion picks a pivot
+that is not definitely zero. Checked inversion requires a pivot classified as
+`ZeroStatus::NonZero`.
 
 Scalar addition and subtraction are implemented as `Vector3 + Real`,
 `Vector4 - Real`, `Matrix3 + Real`, and similar left-hand vector/matrix forms.

@@ -1,8 +1,8 @@
 use std::array::from_fn;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
 
-use crate::scalar::zero;
-use crate::{BlasResult, Problem, Real};
+use crate::scalar::{reject_definite_zero, require_known_nonzero, zero};
+use crate::{BlasProblem, BlasResult, CheckedBlasResult, Real};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vector3(pub [Real; 3]);
@@ -31,11 +31,24 @@ macro_rules! impl_vector {
 
             pub fn normalize(&self) -> BlasResult<Self> {
                 let mag = self.magnitude()?;
-                if mag.definitely_zero() {
-                    return Err(Problem::DivideByZero);
-                }
+                reject_definite_zero(&mag)?;
                 Ok(Self(from_fn(|i| {
                     (self.0[i].clone() / mag.clone()).unwrap()
+                })))
+            }
+
+            pub fn normalize_checked(&self) -> CheckedBlasResult<Self> {
+                let mag = self.magnitude().map_err(BlasProblem::from)?;
+                require_known_nonzero(&mag)?;
+                Ok(Self(from_fn(|i| {
+                    (self.0[i].clone() / mag.clone()).unwrap()
+                })))
+            }
+
+            pub fn div_scalar_checked(self, rhs: Real) -> CheckedBlasResult<Self> {
+                require_known_nonzero(&rhs)?;
+                Ok(Self(from_fn(|i| {
+                    (self.0[i].clone() / rhs.clone()).unwrap()
                 })))
             }
         }
@@ -106,9 +119,7 @@ macro_rules! impl_vector {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Real) -> Self::Output {
-                if rhs.definitely_zero() {
-                    return Err(Problem::DivideByZero);
-                }
+                reject_definite_zero(&rhs)?;
                 Ok(Self(from_fn(|i| {
                     (self.0[i].clone() / rhs.clone()).unwrap()
                 })))

@@ -2,6 +2,41 @@ pub use realistic::{Problem, Rational, Real};
 
 pub type BlasResult<T> = Result<T, Problem>;
 
+use std::error::Error;
+use std::fmt;
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum BlasProblem {
+    Real(Problem),
+    UnknownZero,
+}
+
+impl From<Problem> for BlasProblem {
+    fn from(problem: Problem) -> Self {
+        Self::Real(problem)
+    }
+}
+
+impl fmt::Display for BlasProblem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Real(problem) => problem.fmt(f),
+            Self::UnknownZero => f.write_str("zero status is unknown"),
+        }
+    }
+}
+
+impl Error for BlasProblem {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Real(problem) => Some(problem),
+            Self::UnknownZero => None,
+        }
+    }
+}
+
+pub type CheckedBlasResult<T> = Result<T, BlasProblem>;
+
 mod complex;
 mod matrix;
 mod scalar;
@@ -103,5 +138,119 @@ mod tests {
         assert_eq!(sqrt(9.into()).unwrap(), r(3));
         assert_eq!(sin(pi()), zero());
         assert_eq!(ln(e()).unwrap(), one());
+    }
+
+    #[test]
+    fn zero_status_classifies_basic_values() {
+        assert_eq!(zero_status(&zero()), ZeroStatus::Zero);
+        assert_eq!(zero_status(&r(7)), ZeroStatus::NonZero);
+        assert_eq!(zero_status(&pi()), ZeroStatus::NonZero);
+
+        let one = r(1);
+        let unknown = sin(one.clone()) - sin(one);
+        assert_eq!(zero_status(&unknown), ZeroStatus::Unknown);
+    }
+
+    #[test]
+    fn checked_scalar_reciprocal_rejects_zero() {
+        assert_eq!(
+            reciprocal_checked(zero()),
+            Err(BlasProblem::Real(Problem::DivideByZero))
+        );
+        assert_eq!(
+            reciprocal_checked(r(4)).unwrap(),
+            Rational::fraction(1, 4).unwrap()
+        );
+    }
+
+    #[test]
+    fn checked_scalar_reciprocal_rejects_unknown_zero() {
+        let one = r(1);
+        let unknown = sin(one.clone()) - sin(one);
+
+        assert_eq!(reciprocal_checked(unknown), Err(BlasProblem::UnknownZero));
+    }
+
+    #[test]
+    fn checked_vector_operations_reject_zero_divisors() {
+        let vector = Vector3::new([r(1), r(2), r(3)]);
+
+        assert_eq!(
+            Vector3::zero().normalize_checked(),
+            Err(BlasProblem::Real(Problem::DivideByZero))
+        );
+        assert_eq!(
+            vector.clone().div_scalar_checked(zero()),
+            Err(BlasProblem::Real(Problem::DivideByZero))
+        );
+        assert_eq!(
+            vector.div_scalar_checked(r(2)).unwrap(),
+            Vector3::new([
+                Rational::fraction(1, 2).unwrap().into(),
+                r(1),
+                Rational::fraction(3, 2).unwrap().into(),
+            ])
+        );
+    }
+
+    #[test]
+    fn checked_vector_operations_reject_unknown_zero_divisors() {
+        let one = r(1);
+        let unknown = sin(one.clone()) - sin(one);
+        let vector = Vector3::new([r(1), r(2), r(3)]);
+
+        assert_eq!(
+            vector.div_scalar_checked(unknown),
+            Err(BlasProblem::UnknownZero)
+        );
+    }
+
+    #[test]
+    fn checked_matrix_inverse_rejects_singular_matrices() {
+        let singular = Matrix3::new([[r(1), r(2), r(3)], [r(1), r(2), r(3)], [r(0), r(0), r(1)]]);
+        let invertible = Matrix3::new([[r(1), r(2), r(3)], [r(0), r(1), r(4)], [r(5), r(6), r(0)]]);
+
+        assert_eq!(
+            singular.inverse_checked(),
+            Err(BlasProblem::Real(Problem::DivideByZero))
+        );
+        assert_eq!(
+            invertible.clone() * invertible.clone().inverse_checked().unwrap(),
+            Matrix3::identity()
+        );
+    }
+
+    #[test]
+    fn checked_matrix_inverse_rejects_unknown_zero_pivots() {
+        let one = r(1);
+        let unknown = sin(one.clone()) - sin(one);
+        let matrix = Matrix3::new([
+            [unknown, r(0), r(0)],
+            [r(0), r(1), r(0)],
+            [r(0), r(0), r(1)],
+        ]);
+
+        assert_eq!(matrix.inverse_checked(), Err(BlasProblem::UnknownZero));
+    }
+
+    #[test]
+    fn checked_complex_operations_reject_zero_denominators() {
+        let value = Complex::new(r(3), r(4));
+
+        assert_eq!(
+            Complex::zero().reciprocal_checked(),
+            Err(BlasProblem::Real(Problem::DivideByZero))
+        );
+        assert_eq!(
+            value.clone().div_real_checked(zero()),
+            Err(BlasProblem::Real(Problem::DivideByZero))
+        );
+        assert_eq!(
+            value.div_real_checked(r(2)).unwrap(),
+            Complex::new(
+                Rational::fraction(3, 2).unwrap().into(),
+                Rational::fraction(2, 1).unwrap().into()
+            )
+        );
     }
 }

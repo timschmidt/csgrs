@@ -1,8 +1,44 @@
+use num::bigint::Sign;
+
 use crate::complex::Complex;
-use crate::{BlasResult, Problem, Real};
+use crate::{BlasProblem, BlasResult, CheckedBlasResult, Problem, Real};
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum ZeroStatus {
+    Zero,
+    NonZero,
+    Unknown,
+}
 
 pub(crate) fn two() -> Real {
     2.into()
+}
+
+pub fn zero_status(value: &Real) -> ZeroStatus {
+    if value.definitely_zero() {
+        ZeroStatus::Zero
+    } else {
+        match value.best_sign() {
+            Sign::Plus | Sign::Minus => ZeroStatus::NonZero,
+            Sign::NoSign => ZeroStatus::Unknown,
+        }
+    }
+}
+
+pub(crate) fn reject_definite_zero(value: &Real) -> BlasResult<()> {
+    if value.definitely_zero() {
+        Err(Problem::DivideByZero)
+    } else {
+        Ok(())
+    }
+}
+
+pub(crate) fn require_known_nonzero(value: &Real) -> CheckedBlasResult<()> {
+    match zero_status(value) {
+        ZeroStatus::Zero => Err(BlasProblem::Real(Problem::DivideByZero)),
+        ZeroStatus::NonZero => Ok(()),
+        ZeroStatus::Unknown => Err(BlasProblem::UnknownZero),
+    }
 }
 
 fn real_from_f64(value: f64) -> BlasResult<Real> {
@@ -41,6 +77,11 @@ pub fn i() -> Complex {
 
 pub fn reciprocal(value: Real) -> BlasResult<Real> {
     value.inverse()
+}
+
+pub fn reciprocal_checked(value: Real) -> CheckedBlasResult<Real> {
+    require_known_nonzero(&value)?;
+    value.inverse().map_err(BlasProblem::from)
 }
 
 pub fn pow(base: Real, exponent: Real) -> BlasResult<Real> {

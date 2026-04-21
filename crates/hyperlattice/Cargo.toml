@@ -11,4 +11,5 @@ keywords = ["math", "trigonometry", "scientific", "calculator", "blas", "enginee
 categories = ["mathematics"]
 
 [dependencies]
+num = "0.4.3"
 realistic = "0.8.1"

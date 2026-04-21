@@ -94,5 +94,6 @@ dependencies = [
 name = "realistic_blas"
 version = "0.1.0"
 dependencies = [
+ "num",
  "realistic",
 ]

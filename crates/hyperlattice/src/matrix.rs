@@ -1,9 +1,11 @@
 use std::array::from_fn;
 use std::ops::{Add, BitXor, Div, Index, IndexMut, Mul, Neg, Sub};
 
-use crate::scalar::{one, zero};
+use crate::scalar::{
+    ZeroStatus, one, reject_definite_zero, require_known_nonzero, zero, zero_status,
+};
 use crate::vector::{Vector3, Vector4};
-use crate::{BlasResult, Problem, Real};
+use crate::{BlasProblem, BlasResult, CheckedBlasResult, Problem, Real};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Matrix3(pub [[Real; 3]; 3]);
@@ -49,6 +51,56 @@ fn invert_matrix<const N: usize>(matrix: [[Real; N]; N]) -> BlasResult<[[Real; N
     Ok(right)
 }
 
+fn invert_matrix_checked<const N: usize>(
+    matrix: [[Real; N]; N],
+) -> CheckedBlasResult<[[Real; N]; N]> {
+    let mut left = matrix;
+    let mut right: [[Real; N]; N] =
+        from_fn(|row| from_fn(|col| if row == col { one() } else { zero() }));
+
+    for col in 0..N {
+        let Some(pivot) = (col..N).find(|&row| zero_status(&left[row][col]) == ZeroStatus::NonZero)
+        else {
+            let has_unknown =
+                (col..N).any(|row| zero_status(&left[row][col]) == ZeroStatus::Unknown);
+            return if has_unknown {
+                Err(BlasProblem::UnknownZero)
+            } else {
+                Err(BlasProblem::Real(Problem::DivideByZero))
+            };
+        };
+        if pivot != col {
+            left.swap(col, pivot);
+            right.swap(col, pivot);
+        }
+
+        let pivot_value = left[col][col].clone();
+        require_known_nonzero(&pivot_value)?;
+        for j in 0..N {
+            left[col][j] =
+                (left[col][j].clone() / pivot_value.clone()).map_err(BlasProblem::from)?;
+            right[col][j] =
+                (right[col][j].clone() / pivot_value.clone()).map_err(BlasProblem::from)?;
+        }
+
+        for row in 0..N {
+            if row == col {
+                continue;
+            }
+            let factor = left[row][col].clone();
+            if factor.definitely_zero() {
+                continue;
+            }
+            for j in 0..N {
+                left[row][j] = left[row][j].clone() - factor.clone() * left[col][j].clone();
+                right[row][j] = right[row][j].clone() - factor.clone() * right[col][j].clone();
+            }
+        }
+    }
+
+    Ok(right)
+}
+
 fn matrix_power<const N: usize>(base: [[Real; N]; N], exponent: i32) -> BlasResult<[[Real; N]; N]> {
     if exponent == 0 {
         return Ok(from_fn(|row| {
@@ -61,6 +113,38 @@ fn matrix_power<const N: usize>(base: [[Real; N]; N], exponent: i32) -> BlasResu
         from_fn(|row| from_fn(|col| if row == col { one() } else { zero() }));
     let mut factor = if exponent < 0 {
         invert_matrix(base)?
+    } else {
+        base
+    };
+
+    while exp > 0 {
+        if exp & 1 == 1 {
+            result = multiply_arrays(result, factor.clone());
+        }
+        exp >>= 1;
+        if exp > 0 {
+            factor = multiply_arrays(factor.clone(), factor);
+        }
+    }
+
+    Ok(result)
+}
+
+fn matrix_power_checked<const N: usize>(
+    base: [[Real; N]; N],
+    exponent: i32,
+) -> CheckedBlasResult<[[Real; N]; N]> {
+    if exponent == 0 {
+        return Ok(from_fn(|row| {
+            from_fn(|col| if row == col { one() } else { zero() })
+        }));
+    }
+
+    let mut exp = exponent.unsigned_abs();
+    let mut result: [[Real; N]; N] =
+        from_fn(|row| from_fn(|col| if row == col { one() } else { zero() }));
+    let mut factor = if exponent < 0 {
+        invert_matrix_checked(base)?
     } else {
         base
     };
@@ -113,12 +197,35 @@ macro_rules! impl_matrix {
                 self.inverse()
             }
 
+            pub fn reciprocal_checked(self) -> CheckedBlasResult<Self> {
+                self.inverse_checked()
+            }
+
             pub fn inverse(self) -> BlasResult<Self> {
                 Ok(Self(invert_matrix(self.0)?))
             }
 
+            pub fn inverse_checked(self) -> CheckedBlasResult<Self> {
+                Ok(Self(invert_matrix_checked(self.0)?))
+            }
+
             pub fn powi(self, exponent: i32) -> BlasResult<Self> {
                 Ok(Self(matrix_power(self.0, exponent)?))
+            }
+
+            pub fn powi_checked(self, exponent: i32) -> CheckedBlasResult<Self> {
+                Ok(Self(matrix_power_checked(self.0, exponent)?))
+            }
+
+            pub fn div_scalar_checked(self, rhs: Real) -> CheckedBlasResult<Self> {
+                require_known_nonzero(&rhs)?;
+                Ok(Self(from_fn(|row| {
+                    from_fn(|col| (self.0[row][col].clone() / rhs.clone()).unwrap())
+                })))
+            }
+
+            pub fn div_matrix_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
+                Ok(Self(multiply_arrays(self.0, rhs.inverse_checked()?.0)))
             }
         }
 
@@ -198,9 +305,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Real) -> Self::Output {
-                if rhs.definitely_zero() {
-                    return Err(Problem::DivideByZero);
-                }
+                reject_definite_zero(&rhs)?;
                 Ok(Self(from_fn(|row| {
                     from_fn(|col| (self.0[row][col].clone() / rhs.clone()).unwrap())
                 })))
