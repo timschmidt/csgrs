@@ -11,8 +11,9 @@ error bounds and unknown-zero conditions.
 
 ## Features
 
-- Re-exports `realistic::{Real, Rational}` for explicit construction and
-  interop. Library operations use crate-owned `Scalar` and `Problem`.
+- Re-exports `realistic::{Real, Rational}` for explicit construction and interop
+  when `realistic-backend` is enabled. Library operations use crate-owned
+  `Scalar` and `Problem`.
 - Constants and scalar helpers: `zero`, `one`, `e`, `pi`, `tau`, `i`,
   `reciprocal`, `reciprocal_checked`, `pow`, `powi`.
 - Elementary functions: `exp`, `ln`, `log10`, `sqrt`, `sin`, `cos`, `tan`.
@@ -47,14 +48,15 @@ Add the crate to your project:
 realistic_blas = { path = "path/to/realistic_blas" }
 ```
 
-This project depends on:
+The default feature set enables the realistic backend, which depends on:
 
 ```toml
 realistic = "0.8.1"
+num = "0.4.3"
 ```
 
-The default feature set uses the realistic backend. To use the approximate
-`f64 + epsilon` backend:
+The approximate `f64 + epsilon` backend has no normal dependencies on
+`realistic` or `num`. To use it:
 
 ```toml
 [dependencies]
@@ -64,6 +66,10 @@ realistic_blas = {
     features = ["approx-backend"],
 }
 ```
+
+The `realistic-backend` and `approx-backend` features are mutually exclusive.
+`cargo --all-features` is therefore expected to fail with a feature-selection
+error.
 
 ## Examples
 
@@ -127,7 +133,7 @@ assert_eq!((i() ^ 2).unwrap(), minus_one);
 ### Vectors
 
 ```rust
-use realistic_blas::{one, Scalar, Vector3};
+use realistic_blas::{one, Rational, Scalar, Vector3};
 
 fn s(value: i32) -> Scalar {
     value.into()
@@ -142,7 +148,7 @@ assert_eq!(offset, Vector3::new([s(13), s(14), s(10)]));
 let unit = v.normalize().unwrap();
 assert_eq!(unit.dot(&unit), one());
 
-let half = realistic_blas::Rational::fraction(1, 2).unwrap().into();
+let half = Rational::fraction(1, 2).unwrap().into();
 let displayed = Vector3::new([half, s(2), s(3)]);
 assert_eq!(format!("{displayed}"), "[1/2, 2, 3]");
 assert_eq!(format!("{displayed:#}"), "[0.5, 2, 3]");
@@ -199,6 +205,10 @@ assert_eq!(format!("{matrix}"), "[[1/2, 2, 3], [4, 5, 6], [7, 8, 9]]");
 assert_eq!(format!("{matrix:#}"), "[[0.5, 2, 3], [4, 5, 6], [7, 8, 9]]");
 ```
 
+The formatting examples above use the default realistic backend. With the approx
+backend, `Rational` is not available and normal formatting prints approximate
+decimal center values.
+
 ## Source Layout
 
 The crate root re-exports the public API from focused modules:
@@ -222,11 +232,12 @@ with an interval containing zero reports `ZeroStatus::Unknown`, so checked
 division, normalization, and matrix inversion exercise the same unknown-zero API
 surface as the realistic backend.
 
-Division-sensitive operations have two API paths. The ordinary path rejects
-values that are definitely zero and proceeds otherwise. The checked path uses
+Division-sensitive operations have two API paths. The checked path uses
 `zero_status` and rejects both definite zero and `ZeroStatus::Unknown`.
 Abort-aware checked variants attach an `AbortSignal` before running those zero
-classification checks.
+classification checks. The default realistic backend keeps the ordinary path
+optimistic where possible; the approx backend may return `Problem::UnknownZero`
+from ordinary arithmetic when an interval contains zero.
 
 Matrix inversion uses Gauss-Jordan elimination. Ordinary inversion picks a pivot
 that is not definitely zero. Checked inversion requires a pivot classified as
@@ -234,9 +245,9 @@ that is not definitely zero. Checked inversion requires a pivot classified as
 
 Scalar addition and subtraction are implemented as `Vector3 + Scalar`,
 `Vector4 - Scalar`, `Matrix3 + Scalar`, and similar left-hand vector/matrix
-forms. The reverse forms, such as `Scalar + Vector3`, cannot be implemented directly
-because Rust's orphan rules forbid implementing a standard-library trait for an
-external left-hand type.
+forms. The reverse forms, such as `Scalar + Vector3`, cannot be implemented
+directly because Rust's orphan rules forbid implementing a standard-library
+trait for an external left-hand type.
 
 ## Development
 
@@ -249,6 +260,9 @@ cargo test --all-targets --no-default-features --features approx-backend
 cargo clippy --all-targets -- -D warnings
 cargo clippy --all-targets --no-default-features --features approx-backend -- -D warnings
 ```
+
+Do not use `--all-features` for normal validation because the backend features
+are intentionally mutually exclusive.
 
 Run the Criterion benchmark suite:
 

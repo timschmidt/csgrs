@@ -4,6 +4,7 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
+#[cfg(feature = "realistic-backend")]
 pub use realistic::{Rational, Real};
 
 pub type AbortSignal = Arc<AtomicBool>;
@@ -26,6 +27,7 @@ pub enum Problem {
     UnknownZero,
 }
 
+#[cfg(feature = "realistic-backend")]
 impl From<realistic::Problem> for Problem {
     fn from(problem: realistic::Problem) -> Self {
         match problem {
@@ -64,12 +66,14 @@ mod backend;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Scalar(crate::backend::BackendScalar);
 
+#[cfg(feature = "realistic-backend")]
 impl PartialEq<Rational> for Scalar {
     fn eq(&self, rhs: &Rational) -> bool {
         self == &Self::from(rhs.clone())
     }
 }
 
+#[cfg(feature = "realistic-backend")]
 impl PartialEq<Scalar> for Rational {
     fn eq(&self, rhs: &Scalar) -> bool {
         rhs == self
@@ -77,6 +81,7 @@ impl PartialEq<Scalar> for Rational {
 }
 
 impl Scalar {
+    #[cfg(feature = "realistic-backend")]
     pub fn new(rational: Rational) -> Self {
         rational.into()
     }
@@ -165,12 +170,14 @@ impl fmt::Display for Scalar {
     }
 }
 
+#[cfg(feature = "realistic-backend")]
 impl From<Real> for Scalar {
     fn from(value: Real) -> Self {
         Self(value.into())
     }
 }
 
+#[cfg(feature = "realistic-backend")]
 impl From<Rational> for Scalar {
     fn from(value: Rational) -> Self {
         Self(value.into())

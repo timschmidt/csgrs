@@ -1,3 +1,6 @@
+#[cfg(all(feature = "realistic-backend", feature = "approx-backend"))]
+compile_error!("realistic-backend and approx-backend are mutually exclusive");
+
 #[cfg(feature = "realistic-backend")]
 mod realistic;
 

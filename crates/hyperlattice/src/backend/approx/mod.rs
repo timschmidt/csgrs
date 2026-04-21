@@ -49,8 +49,23 @@ impl BackendScalar {
     }
 
     pub(crate) fn pow(self, exponent: Self) -> BlasResult<Self> {
-        if self.value - self.epsilon < 0.0 && exponent.epsilon > 0.0 {
-            return Err(Problem::NotANumber);
+        let lower = self.value - self.epsilon;
+        let upper = self.value + self.epsilon;
+        let exponent_is_known_integer = exponent.epsilon == 0.0 && exponent.value.fract() == 0.0;
+
+        if lower < 0.0 && !exponent_is_known_integer {
+            return if upper < 0.0 {
+                Err(Problem::NotANumber)
+            } else {
+                Err(Problem::UnknownZero)
+            };
+        }
+        if exponent.value < 0.0 {
+            match self.zero_status() {
+                ZeroStatus::Zero => return Err(Problem::DivideByZero),
+                ZeroStatus::Unknown => return Err(Problem::UnknownZero),
+                ZeroStatus::NonZero => {}
+            }
         }
         let center = self.value.powf(exponent.value);
         Self::from_unary(center, self.epsilon + exponent.epsilon)
@@ -179,18 +194,6 @@ impl PartialEq for BackendScalar {
 impl fmt::Display for BackendScalar {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.value)
-    }
-}
-
-impl From<realistic::Real> for BackendScalar {
-    fn from(value: realistic::Real) -> Self {
-        Self::rounded(f64::from(value))
-    }
-}
-
-impl From<realistic::Rational> for BackendScalar {
-    fn from(value: realistic::Rational) -> Self {
-        Self::from(realistic::Real::from(value))
     }
 }
 

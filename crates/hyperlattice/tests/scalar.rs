@@ -1,10 +1,10 @@
 mod common;
 
-use common::{abort_signal, r, unknown_zero};
+use common::{abort_signal, frac, r, unknown_zero};
 use realistic_blas::{
-    Problem, Rational, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln, log10,
-    log10_with_abort, one, pi, powi, reciprocal, reciprocal_checked, reciprocal_checked_with_abort,
-    sin, sqrt, tan, tau, zero, zero_status, zero_status_with_abort,
+    Problem, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln, log10, log10_with_abort,
+    one, pi, powi, reciprocal, reciprocal_checked, reciprocal_checked_with_abort, sin, sqrt, tan,
+    tau, zero, zero_status, zero_status_with_abort,
 };
 
 #[test]
@@ -54,10 +54,7 @@ fn zero_status_classifies_basic_values() {
 #[test]
 fn checked_scalar_reciprocal_rejects_zero() {
     assert_eq!(reciprocal_checked(zero()), Err(Problem::DivideByZero));
-    assert_eq!(
-        reciprocal_checked(r(4)).unwrap(),
-        Rational::fraction(1, 4).unwrap()
-    );
+    assert_eq!(reciprocal_checked(r(4)).unwrap(), frac(1, 4));
 }
 
 #[test]
@@ -79,10 +76,21 @@ fn checked_scalar_reciprocal_rejects_unknown_zero() {
 fn approx_scalar_tracks_unknown_zero_intervals() {
     let near_zero = realistic_blas::Scalar::approx(0.0, 0.25).unwrap();
     let nonzero = realistic_blas::Scalar::approx(1.0, 0.25).unwrap();
+    let negative_interval = realistic_blas::Scalar::approx(-4.0, 1.0).unwrap();
+    let mixed_interval = realistic_blas::Scalar::approx(1.0, 2.0).unwrap();
+    let half = realistic_blas::Scalar::try_from(0.5).unwrap();
 
     assert_eq!(zero_status(&near_zero), ZeroStatus::Unknown);
     assert_eq!(zero_status(&nonzero), ZeroStatus::NonZero);
     assert_eq!(reciprocal_checked(near_zero), Err(Problem::UnknownZero));
+    assert_eq!(
+        realistic_blas::pow(negative_interval, half.clone()),
+        Err(Problem::NotANumber)
+    );
+    assert_eq!(
+        realistic_blas::pow(mixed_interval, half),
+        Err(Problem::UnknownZero)
+    );
 }
 
 #[test]

@@ -1,7 +1,7 @@
 mod common;
 
-use common::{abort_signal, r, unknown_zero};
-use realistic_blas::{Matrix3, Matrix4, Problem, Rational, Vector4, zero};
+use common::{abort_signal, frac, r, unknown_zero};
+use realistic_blas::{Matrix3, Matrix4, Problem, Vector4, zero};
 
 fn assert_singular_error<T: std::fmt::Debug>(result: Result<T, Problem>) {
     assert!(matches!(
@@ -45,8 +45,8 @@ fn matrix_scalar_add_and_subtract_are_componentwise() {
 
 #[test]
 fn matrix_display_forwards_real_formatting() {
-    let half = Rational::fraction(1, 2).unwrap().into();
-    let quarter = Rational::fraction(1, 4).unwrap().into();
+    let half = frac(1, 2);
+    let quarter = frac(1, 4);
     let matrix = Matrix3::new([
         [half, r(2), r(3)],
         [r(4), quarter, r(6)],

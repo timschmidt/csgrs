@@ -11,15 +11,15 @@ keywords = ["math", "blas", "matrices", "vectors", "linear-algebra"]
 categories = ["mathematics"]
 
 [dependencies]
-num = "0.4.3"
-realistic = "0.8.1"
+num = { version = "0.4.3", optional = true }
+realistic = { version = "0.8.1", optional = true }
 
 [dev-dependencies]
 criterion = "0.7.0"
 
 [features]
 default = ["realistic-backend"]
-realistic-backend = []
+realistic-backend = ["dep:num", "dep:realistic"]
 approx-backend = []
 
 [[bench]]

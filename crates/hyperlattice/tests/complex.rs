@@ -1,7 +1,7 @@
 mod common;
 
-use common::r;
-use realistic_blas::{Complex, Problem, Rational, i, zero};
+use common::{frac, r};
+use realistic_blas::{Complex, Problem, i, zero};
 
 #[test]
 fn complex_i_squared() {
@@ -10,7 +10,7 @@ fn complex_i_squared() {
 
 #[test]
 fn complex_display_forwards_real_formatting() {
-    let value = Complex::new(Rational::fraction(1, 2).unwrap().into(), r(2));
+    let value = Complex::new(frac(1, 2), r(2));
 
     #[cfg(feature = "realistic-backend")]
     assert_eq!(format!("{value}"), "(1/2 + 2i)");
@@ -38,9 +38,6 @@ fn checked_complex_operations_reject_zero_denominators() {
     );
     assert_eq!(
         value.div_real_checked(r(2)).unwrap(),
-        Complex::new(
-            Rational::fraction(3, 2).unwrap().into(),
-            Rational::fraction(2, 1).unwrap().into()
-        )
+        Complex::new(frac(3, 2), frac(2, 1))
     );
 }

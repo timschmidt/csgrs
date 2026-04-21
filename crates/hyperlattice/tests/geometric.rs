@@ -1,12 +1,7 @@
-use realistic_blas::{Matrix3, Matrix4, Rational, Scalar, Vector3, Vector4};
+mod common;
 
-fn r(value: i32) -> Scalar {
-    value.into()
-}
-
-fn frac(numerator: i64, denominator: u64) -> Scalar {
-    Scalar::new(Rational::fraction(numerator, denominator).unwrap())
-}
+use common::{frac, r};
+use realistic_blas::{Matrix3, Matrix4, Vector3, Vector4};
 
 fn translation_2d(x: i32, y: i32) -> Matrix3 {
     Matrix3::new([[r(1), r(0), r(x)], [r(0), r(1), r(y)], [r(0), r(0), r(1)]])
