@@ -1,4 +1,5 @@
 use std::array::from_fn;
+use std::fmt;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
 
 use crate::scalar::{
@@ -102,6 +103,23 @@ macro_rules! impl_vector {
         impl IndexMut<usize> for $name {
             fn index_mut(&mut self, index: usize) -> &mut Self::Output {
                 &mut self.0[index]
+            }
+        }
+
+        impl fmt::Display for $name {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                f.write_str("[")?;
+                for i in 0..$n {
+                    if i > 0 {
+                        f.write_str(", ")?;
+                    }
+                    if f.alternate() {
+                        write!(f, "{:#}", self.0[i])?;
+                    } else {
+                        write!(f, "{}", self.0[i])?;
+                    }
+                }
+                f.write_str("]")
             }
         }
 

@@ -34,6 +34,18 @@ fn vector_scalar_add_and_subtract_are_componentwise() {
 }
 
 #[test]
+fn vector_display_forwards_real_formatting() {
+    let vector = Vector3::new([
+        Rational::fraction(1, 2).unwrap().into(),
+        r(2),
+        Rational::fraction(3, 4).unwrap().into(),
+    ]);
+
+    assert_eq!(format!("{vector}"), "[1/2, 2, 3/4]");
+    assert_eq!(format!("{vector:#}"), "[0.5, 2, 0.75]");
+}
+
+#[test]
 fn checked_vector_operations_reject_zero_divisors() {
     let vector = Vector3::new([r(1), r(2), r(3)]);
 

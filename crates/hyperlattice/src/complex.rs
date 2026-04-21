@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::{Add, BitXor, Div, Mul, Neg, Sub};
 
 use crate::scalar::{one, require_known_nonzero, zero};
@@ -126,6 +127,16 @@ impl Complex {
 impl From<Real> for Complex {
     fn from(value: Real) -> Self {
         Self::new(value, zero())
+    }
+}
+
+impl fmt::Display for Complex {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "({:#} + {:#}i)", self.re, self.im)
+        } else {
+            write!(f, "({} + {}i)", self.re, self.im)
+        }
     }
 }
 

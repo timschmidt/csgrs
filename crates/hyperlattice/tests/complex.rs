@@ -9,6 +9,14 @@ fn complex_i_squared() {
 }
 
 #[test]
+fn complex_display_forwards_real_formatting() {
+    let value = Complex::new(Rational::fraction(1, 2).unwrap().into(), r(2));
+
+    assert_eq!(format!("{value}"), "(1/2 + 2i)");
+    assert_eq!(format!("{value:#}"), "(0.5 + 2i)");
+}
+
+#[test]
 fn checked_complex_operations_reject_zero_denominators() {
     let value = Complex::new(r(3), r(4));
 

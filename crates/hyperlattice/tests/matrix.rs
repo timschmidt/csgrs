@@ -1,7 +1,7 @@
 mod common;
 
 use common::{abort_signal, r, unknown_zero};
-use realistic_blas::{BlasProblem, Matrix3, Matrix4, Problem, Vector4, zero};
+use realistic_blas::{BlasProblem, Matrix3, Matrix4, Problem, Rational, Vector4, zero};
 
 #[test]
 fn matrix3_inverse_and_power() {
@@ -33,6 +33,23 @@ fn matrix_scalar_add_and_subtract_are_componentwise() {
     assert_eq!(
         matrix - r(2),
         Matrix3::new([[r(-1), r(0), r(1)], [r(2), r(3), r(4)], [r(5), r(6), r(7)],])
+    );
+}
+
+#[test]
+fn matrix_display_forwards_real_formatting() {
+    let half = Rational::fraction(1, 2).unwrap().into();
+    let quarter = Rational::fraction(1, 4).unwrap().into();
+    let matrix = Matrix3::new([
+        [half, r(2), r(3)],
+        [r(4), quarter, r(6)],
+        [r(7), r(8), r(9)],
+    ]);
+
+    assert_eq!(format!("{matrix}"), "[[1/2, 2, 3], [4, 1/4, 6], [7, 8, 9]]");
+    assert_eq!(
+        format!("{matrix:#}"),
+        "[[0.5, 2, 3], [4, 0.25, 6], [7, 8, 9]]"
     );
 }
 

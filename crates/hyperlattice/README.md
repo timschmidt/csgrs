@@ -21,17 +21,19 @@ matrices using `Real` throughout.
 - `AbortSignal` and `_with_abort` variants for zero-sensitive or conversion
   APIs that may need cancellable `Real` evaluation.
 - `Complex` with arithmetic, reciprocal, checked reciprocal, conjugate, and
-  integer powers.
+  integer powers, plus symbolic and alternate decimal display formatting.
 - `Vector3` and `Vector4` with componentwise vector/vector arithmetic,
   componentwise vector/scalar addition and subtraction, scalar multiplication
   and division, checked scalar division, dot product, magnitude, normalization,
-  checked normalization, and abort-aware checked division/normalization.
+  checked normalization, abort-aware checked division/normalization, and
+  symbolic and alternate decimal display formatting.
 - `Matrix3` and `Matrix4` with componentwise matrix/matrix arithmetic,
   componentwise matrix/scalar addition and subtraction, matrix multiplication,
   scalar division, checked scalar division, matrix division, checked matrix
   division, integer powers via `^`, checked integer powers, transpose,
   determinant, inverse, checked inverse, reciprocal, checked reciprocal, and
-  abort-aware checked division/inversion/power helpers.
+  abort-aware checked division/inversion/power helpers, and symbolic and
+  alternate decimal display formatting.
 
 ## Install
 
@@ -123,6 +125,11 @@ assert_eq!(offset, Vector3::new([r(13), r(14), r(10)]));
 
 let unit = v.normalize().unwrap();
 assert_eq!(unit.dot(&unit), one());
+
+let half = realistic_blas::Rational::fraction(1, 2).unwrap().into();
+let displayed = Vector3::new([half, r(2), r(3)]);
+assert_eq!(format!("{displayed}"), "[1/2, 2, 3]");
+assert_eq!(format!("{displayed:#}"), "[0.5, 2, 3]");
 ```
 
 ### Matrices
@@ -152,6 +159,26 @@ assert_eq!(
 );
 assert_eq!(matrix.clone() * matrix.clone().inverse().unwrap(), Matrix3::identity());
 assert_eq!((matrix.clone() ^ 0).unwrap(), Matrix3::identity());
+```
+
+## Formatting
+
+`Complex`, `Vector3`, `Vector4`, `Matrix3`, and `Matrix4` implement `Display`.
+Normal formatting forwards each component to `Real`'s symbolic display, while
+alternate formatting forwards to `Real`'s decimal display:
+
+```rust
+use realistic_blas::{Matrix3, Rational, Real};
+
+fn r(value: i32) -> Real {
+    value.into()
+}
+
+let half = Rational::fraction(1, 2).unwrap().into();
+let matrix = Matrix3::new([[half, r(2), r(3)], [r(4), r(5), r(6)], [r(7), r(8), r(9)]]);
+
+assert_eq!(format!("{matrix}"), "[[1/2, 2, 3], [4, 5, 6], [7, 8, 9]]");
+assert_eq!(format!("{matrix:#}"), "[[0.5, 2, 3], [4, 5, 6], [7, 8, 9]]");
 ```
 
 ## Source Layout
