@@ -69,3 +69,14 @@ fn checked_matrix_inverse_rejects_unknown_zero_pivots() {
 
     assert_eq!(matrix.inverse_checked(), Err(BlasProblem::UnknownZero));
 }
+
+#[test]
+fn ordinary_matrix_inverse_prefers_known_nonzero_pivots() {
+    let matrix = Matrix3::new([
+        [unknown_zero(), r(0), r(1)],
+        [r(1), r(1), r(0)],
+        [r(0), r(1), r(1)],
+    ]);
+
+    assert!(matrix.inverse().is_ok());
+}

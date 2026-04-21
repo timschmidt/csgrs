@@ -7,7 +7,7 @@ authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/timschmidt/realistic_blas"
 readme = "README.md"
-keywords = ["math", "trigonometry", "scientific", "calculator", "blas", "engineering", "CAD", "linear algebra", "matrices", "vectors"]
+keywords = ["math", "blas", "matrices", "vectors", "linear-algebra"]
 categories = ["mathematics"]
 
 [dependencies]

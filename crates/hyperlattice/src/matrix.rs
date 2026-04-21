@@ -19,7 +19,10 @@ fn invert_matrix<const N: usize>(matrix: [[Real; N]; N]) -> BlasResult<[[Real; N
         from_fn(|row| from_fn(|col| if row == col { one() } else { zero() }));
 
     for col in 0..N {
-        let Some(pivot) = (col..N).find(|&row| !left[row][col].definitely_zero()) else {
+        let pivot = (col..N)
+            .find(|&row| zero_status(&left[row][col]) == ZeroStatus::NonZero)
+            .or_else(|| (col..N).find(|&row| zero_status(&left[row][col]) == ZeroStatus::Unknown));
+        let Some(pivot) = pivot else {
             return Err(Problem::DivideByZero);
         };
         if pivot != col {
