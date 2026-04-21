@@ -260,3 +260,24 @@ cargo bench --bench mathbench --no-default-features --features approx-backend
 The benchmark names mirror a small mathbench-style subset: vector dot,
 magnitude, normalize, matrix determinant, inverse, matrix multiplication, and
 matrix-vector transforms for 3x3/4x4 types.
+
+### Benchmark Results
+
+The following Criterion median estimates were collected on an AMD Ryzen 7
+5800X3D on Fedora. These compare this crate's two scalar backends on the same
+benchmark harness; they are not direct comparisons with `glam`, `nalgebra`, or
+other libraries.
+
+| Benchmark | Approx backend | Realistic backend | Realistic / approx |
+| --- | ---: | ---: | ---: |
+| `vectors/vec3 dot` | 6.8619 ns | 609.01 ns | 88.75x |
+| `vectors/vec3 magnitude` | 9.6809 ns | 1.4922 us | 154.14x |
+| `vectors/vec3 normalize` | 19.098 ns | 2.9369 us | 153.78x |
+| `matrix3/mat3 determinant` | 15.249 ns | 1.3687 us | 89.76x |
+| `matrix3/mat3 inverse` | 133.97 ns | 13.716 us | 102.38x |
+| `matrix3/mat3 mul mat3` | 82.130 ns | 8.5127 us | 103.65x |
+| `matrix3/mat3 transform vec3` | 16.118 ns | 3.1718 us | 196.79x |
+| `matrix4/mat4 determinant` | 75.086 ns | 9.9648 us | 132.71x |
+| `matrix4/mat4 inverse` | 211.09 ns | 36.519 us | 173.00x |
+| `matrix4/mat4 mul mat4` | 93.295 ns | 17.547 us | 188.08x |
+| `matrix4/mat4 transform vec4` | 39.862 ns | 5.4086 us | 135.68x |
