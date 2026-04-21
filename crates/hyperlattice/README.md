@@ -272,51 +272,26 @@ cargo bench --bench mathbench --no-default-features --features approx-backend
 ```
 
 The benchmark names mirror a small mathbench-style subset: vector dot,
-magnitude, normalize, matrix determinant, inverse, matrix multiplication, and
-matrix-vector transforms for 3x3/4x4 types.
+magnitude, normalize, matrix determinant, inverse, matrix multiplication,
+matrix-vector transforms for 3x3/4x4 types, and scalar trigonometric functions.
 
 ### Benchmark Results
 
 The following Criterion median estimates were collected on an AMD Ryzen 7
-5800X3D on Fedora. These compare this crate's two scalar backends on the same
-benchmark harness; they are not direct comparisons with `glam`, `nalgebra`, or
-other libraries.
+5800X3D on Fedora. They compare this crate's two scalar backends with
+`astro-float` at 192-bit precision and `arpfloat` at 128-bit precision on
+matching vector and matrix3 operations. Matrix4 rows are crate-backend-only.
 
-| Benchmark | Approx backend | Realistic backend | Realistic / approx |
-| --- | ---: | ---: | ---: |
-| `vectors/vec3 dot` | 6.8619 ns | 609.01 ns | 88.75x |
-| `vectors/vec3 magnitude` | 9.6809 ns | 1.4922 us | 154.14x |
-| `vectors/vec3 normalize` | 19.098 ns | 2.9369 us | 153.78x |
-| `matrix3/mat3 determinant` | 15.249 ns | 1.3687 us | 89.76x |
-| `matrix3/mat3 inverse` | 133.97 ns | 13.716 us | 102.38x |
-| `matrix3/mat3 mul mat3` | 82.130 ns | 8.5127 us | 103.65x |
-| `matrix3/mat3 transform vec3` | 16.118 ns | 3.1718 us | 196.79x |
-| `matrix4/mat4 determinant` | 75.086 ns | 9.9648 us | 132.71x |
-| `matrix4/mat4 inverse` | 211.09 ns | 36.519 us | 173.00x |
-| `matrix4/mat4 mul mat4` | 93.295 ns | 17.547 us | 188.08x |
-| `matrix4/mat4 transform vec4` | 39.862 ns | 5.4086 us | 135.68x |
-
-`mathbench` also includes comparison benchmarks using plain `f64`,
-`astro-float` at 192-bit precision, and `arpfloat` at 128-bit precision. The
-following medians were collected from that comparison set:
-
-| Benchmark | f64 | astro-float 192 | arpfloat 128 |
-| --- | ---: | ---: | ---: |
-| `vectors/vec3 dot` | 8.2649 ns | 312.90 ns | 709.05 ns |
-| `vectors/vec3 magnitude` | 12.876 ns | 5.9507 us | 14.792 us |
-| `vectors/vec3 normalize` | 4.2443 ns | 6.5895 us | 19.499 us |
-| `matrix3/mat3 determinant` | 11.572 ns | 1.0606 us | 2.5633 us |
-| `matrix3/mat3 inverse` | 17.015 ns | 3.4726 us | 10.776 us |
-| `matrix3/mat3 mul mat3` | 9.4438 ns | 3.0285 us | 8.0513 us |
-| `matrix3/mat3 transform vec3` | 3.0250 ns | 1.1490 us | 2.6641 us |
-| `scalar_trig/sin` | 7.0987 ns | 12.875 us | 260.99 us |
-| `scalar_trig/cos` | 10.137 ns | 12.383 us | 169.80 us |
-
-Scalar sine medians by arbitrary-precision backend and precision:
-
-| Precision | astro-float sin | arpfloat sin |
-| --- | ---: | ---: |
-| 128-bit | 11.797 us | 260.10 us |
-| 160-bit | 12.936 us | 327.42 us |
-| 192-bit | 12.942 us | 390.63 us |
-| 256-bit | 15.540 us | 591.93 us |
+| Benchmark | Approx backend | Realistic backend | astro-float 192 | arpfloat 128 | Realistic / approx |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `vectors/vec3 dot` | 6.8619 ns | 609.01 ns | 312.90 ns | 709.05 ns | 88.75x |
+| `vectors/vec3 magnitude` | 9.6809 ns | 1.4922 us | 5.9507 us | 14.792 us | 154.14x |
+| `vectors/vec3 normalize` | 19.098 ns | 2.9369 us | 6.5895 us | 19.499 us | 153.78x |
+| `matrix3/mat3 determinant` | 15.249 ns | 1.3687 us | 1.0606 us | 2.5633 us | 89.76x |
+| `matrix3/mat3 inverse` | 133.97 ns | 13.716 us | 3.4726 us | 10.776 us | 102.38x |
+| `matrix3/mat3 mul mat3` | 82.130 ns | 8.5127 us | 3.0285 us | 8.0513 us | 103.65x |
+| `matrix3/mat3 transform vec3` | 16.118 ns | 3.1718 us | 1.1490 us | 2.6641 us | 196.79x |
+| `matrix4/mat4 determinant` | 75.086 ns | 9.9648 us | N/A | N/A | 132.71x |
+| `matrix4/mat4 inverse` | 211.09 ns | 36.519 us | N/A | N/A | 173.00x |
+| `matrix4/mat4 mul mat4` | 93.295 ns | 17.547 us | N/A | N/A | 188.08x |
+| `matrix4/mat4 transform vec4` | 39.862 ns | 5.4086 us | N/A | N/A | 135.68x |

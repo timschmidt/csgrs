@@ -9,89 +9,15 @@ const BLAS_BACKEND: &str = "realistic";
 const BLAS_BACKEND: &str = "approx";
 
 #[derive(Clone, Copy, Debug)]
-struct Vec3f64 {
+struct SampleVec3 {
     x: f64,
     y: f64,
     z: f64,
 }
 
 #[derive(Clone, Copy, Debug)]
-struct Mat3f64 {
+struct SampleMat3 {
     m: [[f64; 3]; 3],
-}
-
-impl Vec3f64 {
-    fn dot(&self, rhs: &Self) -> f64 {
-        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
-    }
-
-    fn magnitude(&self) -> f64 {
-        self.dot(self).sqrt()
-    }
-
-    fn normalize(&self) -> Self {
-        let mag = self.magnitude();
-        Self {
-            x: self.x / mag,
-            y: self.y / mag,
-            z: self.z / mag,
-        }
-    }
-}
-
-impl Mat3f64 {
-    fn determinant(&self) -> f64 {
-        let m = &self.m;
-        m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
-            - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
-            + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])
-    }
-
-    fn inverse(&self) -> Self {
-        let m = &self.m;
-        let det = self.determinant();
-        let inv_det = 1.0 / det;
-
-        Self {
-            m: [
-                [
-                    (m[1][1] * m[2][2] - m[1][2] * m[2][1]) * inv_det,
-                    (m[0][2] * m[2][1] - m[0][1] * m[2][2]) * inv_det,
-                    (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * inv_det,
-                ],
-                [
-                    (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * inv_det,
-                    (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * inv_det,
-                    (m[0][2] * m[1][0] - m[0][0] * m[1][2]) * inv_det,
-                ],
-                [
-                    (m[1][0] * m[2][1] - m[1][1] * m[2][0]) * inv_det,
-                    (m[0][1] * m[2][0] - m[0][0] * m[2][1]) * inv_det,
-                    (m[0][0] * m[1][1] - m[0][1] * m[1][0]) * inv_det,
-                ],
-            ],
-        }
-    }
-
-    fn mul_mat3(&self, rhs: &Self) -> Self {
-        let mut out = [[0.0; 3]; 3];
-        for (row_index, row) in out.iter_mut().enumerate() {
-            for (col_index, value) in row.iter_mut().enumerate() {
-                *value = self.m[row_index][0] * rhs.m[0][col_index]
-                    + self.m[row_index][1] * rhs.m[1][col_index]
-                    + self.m[row_index][2] * rhs.m[2][col_index];
-            }
-        }
-        Self { m: out }
-    }
-
-    fn transform_vec3(&self, v: &Vec3f64) -> Vec3f64 {
-        Vec3f64 {
-            x: self.m[0][0] * v.x + self.m[0][1] * v.y + self.m[0][2] * v.z,
-            y: self.m[1][0] * v.x + self.m[1][1] * v.y + self.m[1][2] * v.z,
-            z: self.m[2][0] * v.x + self.m[2][1] * v.y + self.m[2][2] * v.z,
-        }
-    }
 }
 
 mod astro_backend {
@@ -491,39 +417,39 @@ fn s(value: f64) -> Scalar {
     Scalar::try_from(value).unwrap()
 }
 
-fn sample_vec3() -> Vec3f64 {
-    Vec3f64 {
+fn sample_vec3() -> SampleVec3 {
+    SampleVec3 {
         x: 1.23456789012345,
         y: -2.34567890123456,
         z: 3.45678901234567,
     }
 }
 
-fn sample_vec3_b() -> Vec3f64 {
-    Vec3f64 {
+fn sample_vec3_b() -> SampleVec3 {
+    SampleVec3 {
         x: -0.98765432101234,
         y: 4.21098765432109,
         z: -5.67890123456789,
     }
 }
 
-fn sample_mat3() -> Mat3f64 {
-    Mat3f64 {
+fn sample_mat3() -> SampleMat3 {
+    SampleMat3 {
         m: [[1.2, 0.3, -0.7], [2.1, -1.5, 0.9], [0.4, 3.3, 2.2]],
     }
 }
 
-fn sample_mat3_b() -> Mat3f64 {
-    Mat3f64 {
+fn sample_mat3_b() -> SampleMat3 {
+    SampleMat3 {
         m: [[-0.8, 1.1, 0.5], [2.7, 0.6, -1.4], [3.2, -0.9, 1.8]],
     }
 }
 
-fn blas_vec3(value: Vec3f64) -> Vector3 {
+fn blas_vec3(value: SampleVec3) -> Vector3 {
     Vector3::new([s(value.x), s(value.y), s(value.z)])
 }
 
-fn blas_mat3(value: Mat3f64) -> Matrix3 {
+fn blas_mat3(value: SampleMat3) -> Matrix3 {
     Matrix3::new(value.m.map(|row| row.map(s)))
 }
 
@@ -553,16 +479,6 @@ fn bench_vectors(c: &mut Criterion) {
     let mut group = c.benchmark_group("vectors");
     let lhs = sample_vec3();
     let rhs = sample_vec3_b();
-
-    group.bench_function("f64/vec3 dot", |b| {
-        b.iter(|| black_box(lhs).dot(black_box(&rhs)))
-    });
-    group.bench_function("f64/vec3 magnitude", |b| {
-        b.iter(|| black_box(lhs).magnitude())
-    });
-    group.bench_function("f64/vec3 normalize", |b| {
-        b.iter(|| black_box(lhs).normalize())
-    });
 
     let blas_lhs = blas_vec3(lhs);
     let blas_rhs = blas_vec3(rhs);
@@ -613,17 +529,6 @@ fn bench_matrix3(c: &mut Criterion) {
     let lhs = sample_mat3();
     let rhs = sample_mat3_b();
     let vector = sample_vec3();
-
-    group.bench_function("f64/mat3 determinant", |b| {
-        b.iter(|| black_box(lhs).determinant())
-    });
-    group.bench_function("f64/mat3 inverse", |b| b.iter(|| black_box(lhs).inverse()));
-    group.bench_function("f64/mat3 mul mat3", |b| {
-        b.iter(|| black_box(lhs).mul_mat3(black_box(&rhs)))
-    });
-    group.bench_function("f64/mat3 transform vec3", |b| {
-        b.iter(|| black_box(lhs).transform_vec3(black_box(&vector)))
-    });
 
     let blas_lhs = blas_mat3(lhs);
     let blas_rhs = blas_mat3(rhs);
@@ -703,9 +608,6 @@ fn bench_matrix4(c: &mut Criterion) {
 fn bench_scalar_trig(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_trig");
     let value = 1.2345678901234567_f64;
-
-    group.bench_function("f64/sin", |b| b.iter(|| black_box(value).sin()));
-    group.bench_function("f64/cos", |b| b.iter(|| black_box(value).cos()));
 
     let blas_value = s(value);
     group.bench_function(format!("{BLAS_BACKEND}/sin"), |b| {
