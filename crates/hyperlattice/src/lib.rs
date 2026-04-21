@@ -141,6 +141,22 @@ mod tests {
     }
 
     #[test]
+    fn scalar_functions_reject_invalid_domains() {
+        assert_eq!(reciprocal(zero()), Err(Problem::DivideByZero));
+        assert_eq!(sqrt((-1).into()), Err(Problem::SqrtNegative));
+        assert_eq!(ln(zero()), Err(Problem::NotANumber));
+        assert_eq!(ln((-1).into()), Err(Problem::NotANumber));
+        assert_eq!(asin(r(2)), Err(Problem::NotANumber));
+        assert_eq!(acos(r(2)), Err(Problem::NotANumber));
+        assert_eq!(acosh(zero()), Err(Problem::NotANumber));
+        assert_eq!(atanh(one()), Err(Problem::Infinity));
+        assert_eq!(powi(zero(), 0), Err(Problem::NotANumber));
+
+        let half_pi = (pi() / r(2)).unwrap();
+        assert_eq!(tan(half_pi), Err(Problem::NotANumber));
+    }
+
+    #[test]
     fn zero_status_classifies_basic_values() {
         assert_eq!(zero_status(&zero()), ZeroStatus::Zero);
         assert_eq!(zero_status(&r(7)), ZeroStatus::NonZero);
@@ -175,6 +191,8 @@ mod tests {
     fn checked_vector_operations_reject_zero_divisors() {
         let vector = Vector3::new([r(1), r(2), r(3)]);
 
+        assert_eq!(Vector3::zero().normalize(), Err(Problem::DivideByZero));
+        assert_eq!(vector.clone() / zero(), Err(Problem::DivideByZero));
         assert_eq!(
             Vector3::zero().normalize_checked(),
             Err(BlasProblem::Real(Problem::DivideByZero))
@@ -210,6 +228,14 @@ mod tests {
         let singular = Matrix3::new([[r(1), r(2), r(3)], [r(1), r(2), r(3)], [r(0), r(0), r(1)]]);
         let invertible = Matrix3::new([[r(1), r(2), r(3)], [r(0), r(1), r(4)], [r(5), r(6), r(0)]]);
 
+        assert_eq!(singular.clone().inverse(), Err(Problem::DivideByZero));
+        assert_eq!(singular.clone().reciprocal(), Err(Problem::DivideByZero));
+        assert_eq!(singular.clone().powi(-1), Err(Problem::DivideByZero));
+        assert_eq!(
+            Matrix3::identity() / singular.clone(),
+            Err(Problem::DivideByZero)
+        );
+        assert_eq!(Matrix3::identity() / zero(), Err(Problem::DivideByZero));
         assert_eq!(
             singular.inverse_checked(),
             Err(BlasProblem::Real(Problem::DivideByZero))
@@ -237,6 +263,14 @@ mod tests {
     fn checked_complex_operations_reject_zero_denominators() {
         let value = Complex::new(r(3), r(4));
 
+        assert_eq!(Complex::zero().reciprocal(), Err(Problem::DivideByZero));
+        assert_eq!(value.clone() / Complex::zero(), Err(Problem::DivideByZero));
+        assert_eq!(value.clone() / zero(), Err(Problem::DivideByZero));
+        assert_eq!(Complex::zero().powi(-1), Err(Problem::DivideByZero));
+        assert_eq!(
+            Complex::zero().powi_checked(0),
+            Err(BlasProblem::Real(Problem::NotANumber))
+        );
         assert_eq!(
             Complex::zero().reciprocal_checked(),
             Err(BlasProblem::Real(Problem::DivideByZero))
