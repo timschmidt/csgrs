@@ -282,7 +282,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7
 `astro-float` and `arpfloat` comparison backends. The `mathbench` comparison
 suite runs both comparison backends at 128-bit precision.
 
-| Benchmark | Approx backend | Realistic from f64 | Realistic rational | astro-float 128 | arpfloat 128 | Realistic f64 / approx | Realistic f64 / astro-float | Realistic f64 / arpfloat |
+| Benchmark | Approx | Realistic from f64 | Realistic rational | astro-float 128 | arpfloat 128 | Realistic / approx | Realistic / astro-float | Realistic / arpfloat |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `vectors/vec3 dot` | 6.5817 ns | 4.3719 us | 6.4025 us | 300.43 ns | 774.93 ns | 664.25x | 14.55x | 5.64x |
 | `vectors/vec3 magnitude` | 10.666 ns | 7.7430 us | 10.341 us | 5.9370 us | 15.191 us | 725.95x | 1.30x | 0.51x |
