@@ -1,9 +1,10 @@
 mod common;
 
-use common::{r, unknown_zero};
+use common::{abort_signal, r, unknown_zero};
 use realistic_blas::{
-    BlasProblem, Problem, Rational, ZeroStatus, acos, acosh, asin, atanh, ln, one, pi, powi,
-    reciprocal, reciprocal_checked, sin, sqrt, tan, tau, zero, zero_status,
+    BlasProblem, Problem, Rational, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln, one,
+    pi, powi, reciprocal, reciprocal_checked, reciprocal_checked_with_abort, sin, sqrt, tan, tau,
+    zero, zero_status, zero_status_with_abort,
 };
 
 #[test]
@@ -36,6 +37,12 @@ fn zero_status_classifies_basic_values() {
     assert_eq!(zero_status(&r(7)), ZeroStatus::NonZero);
     assert_eq!(zero_status(&pi()), ZeroStatus::NonZero);
     assert_eq!(zero_status(&unknown_zero()), ZeroStatus::Unknown);
+
+    let signal = abort_signal();
+    assert_eq!(
+        zero_status_with_abort(&unknown_zero(), &signal),
+        ZeroStatus::Unknown
+    );
 }
 
 #[test]
@@ -56,4 +63,17 @@ fn checked_scalar_reciprocal_rejects_unknown_zero() {
         reciprocal_checked(unknown_zero()),
         Err(BlasProblem::UnknownZero)
     );
+
+    let signal = abort_signal();
+    assert_eq!(
+        reciprocal_checked_with_abort(unknown_zero(), &signal),
+        Err(BlasProblem::UnknownZero)
+    );
+}
+
+#[test]
+fn inverse_scalar_helpers_accept_abort_signal() {
+    let signal = abort_signal();
+
+    assert_eq!(asin_with_abort(zero(), &signal).unwrap(), zero());
 }

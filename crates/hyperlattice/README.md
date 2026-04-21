@@ -18,17 +18,20 @@ matrices using `Real` throughout.
   `acosh`, `atanh`.
 - `ZeroStatus`, `BlasProblem`, and `CheckedBlasResult` for APIs that reject
   unknown zero conditions instead of proceeding optimistically.
+- `AbortSignal` and `_with_abort` variants for zero-sensitive or conversion
+  APIs that may need cancellable `Real` evaluation.
 - `Complex` with arithmetic, reciprocal, checked reciprocal, conjugate, and
   integer powers.
 - `Vector3` and `Vector4` with componentwise vector/vector arithmetic,
   componentwise vector/scalar addition and subtraction, scalar multiplication
   and division, checked scalar division, dot product, magnitude, normalization,
-  and checked normalization.
+  checked normalization, and abort-aware checked division/normalization.
 - `Matrix3` and `Matrix4` with componentwise matrix/matrix arithmetic,
   componentwise matrix/scalar addition and subtraction, matrix multiplication,
   scalar division, checked scalar division, matrix division, checked matrix
   division, integer powers via `^`, checked integer powers, transpose,
-  determinant, inverse, checked inverse, reciprocal, and checked reciprocal.
+  determinant, inverse, checked inverse, reciprocal, checked reciprocal, and
+  abort-aware checked division/inversion/power helpers.
 
 ## Install
 
@@ -75,6 +78,22 @@ Checked helpers reject definite zero and unknown-zero cases:
 
 ```rust
 type CheckedBlasResult<T> = Result<T, realistic_blas::BlasProblem>;
+```
+
+For computations that may force `Real` evaluation, callers can attach a
+cancellation flag before calling into `realistic_blas`, or use the provided
+abort-aware checked helpers:
+
+```rust
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+use realistic_blas::{AbortSignal, Vector3};
+
+let signal: AbortSignal = Arc::new(AtomicBool::new(false));
+let vector = Vector3::new([3.into(), 4.into(), 0.into()]);
+let unit = vector.normalize_checked_with_abort(&signal).unwrap();
+
+signal.store(true, std::sync::atomic::Ordering::Relaxed);
 ```
 
 ### Complex Numbers
@@ -153,6 +172,8 @@ symbolic.
 Division-sensitive operations have two API paths. The ordinary path rejects
 values that are definitely zero and proceeds otherwise. The checked path uses
 `zero_status` and rejects both definite zero and `ZeroStatus::Unknown`.
+Abort-aware checked variants attach an `AbortSignal` before running those zero
+classification checks.
 
 Matrix inversion uses Gauss-Jordan elimination. Ordinary inversion picks a pivot
 that is not definitely zero. Checked inversion requires a pivot classified as

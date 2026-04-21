@@ -1,6 +1,6 @@
 mod common;
 
-use common::{r, unknown_zero};
+use common::{abort_signal, r, unknown_zero};
 use realistic_blas::{BlasProblem, Matrix3, Matrix4, Problem, Vector4, zero};
 
 #[test]
@@ -40,6 +40,7 @@ fn matrix_scalar_add_and_subtract_are_componentwise() {
 fn checked_matrix_inverse_rejects_singular_matrices() {
     let singular = Matrix3::new([[r(1), r(2), r(3)], [r(1), r(2), r(3)], [r(0), r(0), r(1)]]);
     let invertible = Matrix3::new([[r(1), r(2), r(3)], [r(0), r(1), r(4)], [r(5), r(6), r(0)]]);
+    let signal = abort_signal();
 
     assert_eq!(singular.clone().inverse(), Err(Problem::DivideByZero));
     assert_eq!(singular.clone().reciprocal(), Err(Problem::DivideByZero));
@@ -57,6 +58,21 @@ fn checked_matrix_inverse_rejects_singular_matrices() {
         invertible.clone() * invertible.clone().inverse_checked().unwrap(),
         Matrix3::identity()
     );
+    assert_eq!(
+        invertible.clone()
+            * invertible
+                .clone()
+                .inverse_checked_with_abort(&signal)
+                .unwrap(),
+        Matrix3::identity()
+    );
+    assert_eq!(
+        invertible
+            .clone()
+            .powi_checked_with_abort(-1, &signal)
+            .unwrap(),
+        invertible.inverse_checked_with_abort(&signal).unwrap()
+    );
 }
 
 #[test]
@@ -66,8 +82,35 @@ fn checked_matrix_inverse_rejects_unknown_zero_pivots() {
         [r(0), r(1), r(0)],
         [r(0), r(0), r(1)],
     ]);
+    let signal = abort_signal();
 
-    assert_eq!(matrix.inverse_checked(), Err(BlasProblem::UnknownZero));
+    assert_eq!(
+        matrix.clone().inverse_checked(),
+        Err(BlasProblem::UnknownZero)
+    );
+    assert_eq!(
+        matrix.clone().inverse_checked_with_abort(&signal),
+        Err(BlasProblem::UnknownZero)
+    );
+    assert_eq!(
+        Matrix3::identity().div_matrix_checked_with_abort(matrix, &signal),
+        Err(BlasProblem::UnknownZero)
+    );
+}
+
+#[test]
+fn checked_matrix_scalar_division_accepts_abort_signal() {
+    let matrix = Matrix3::new([
+        [r(2), r(4), r(6)],
+        [r(8), r(10), r(12)],
+        [r(14), r(16), r(18)],
+    ]);
+    let signal = abort_signal();
+
+    assert_eq!(
+        matrix.div_scalar_checked_with_abort(r(2), &signal).unwrap(),
+        Matrix3::new([[r(1), r(2), r(3)], [r(4), r(5), r(6)], [r(7), r(8), r(9)]])
+    );
 }
 
 #[test]

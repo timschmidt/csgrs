@@ -4,6 +4,10 @@ pub type BlasResult<T> = Result<T, Problem>;
 
 use std::error::Error;
 use std::fmt;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+
+pub type AbortSignal = Arc<AtomicBool>;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum BlasProblem {

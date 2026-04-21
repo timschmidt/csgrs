@@ -1,8 +1,11 @@
 use std::array::from_fn;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
 
-use crate::scalar::{reject_definite_zero, require_known_nonzero, zero};
-use crate::{BlasProblem, BlasResult, CheckedBlasResult, Real};
+use crate::scalar::{
+    clone_with_abort, reject_definite_zero, require_known_nonzero,
+    require_known_nonzero_with_abort, with_abort, zero,
+};
+use crate::{AbortSignal, BlasProblem, BlasResult, CheckedBlasResult, Real};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vector3(pub [Real; 3]);
@@ -25,8 +28,18 @@ macro_rules! impl_vector {
                 (0..$n).fold(zero(), |acc, i| acc + self.0[i].clone() * rhs.0[i].clone())
             }
 
+            pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Real {
+                (0..$n).fold(zero(), |acc, i| {
+                    acc + clone_with_abort(&self.0[i], signal) * clone_with_abort(&rhs.0[i], signal)
+                })
+            }
+
             pub fn magnitude(&self) -> BlasResult<Real> {
                 self.dot(self).sqrt()
+            }
+
+            pub fn magnitude_with_abort(&self, signal: &AbortSignal) -> BlasResult<Real> {
+                with_abort(self.dot_with_abort(self, signal), signal).sqrt()
             }
 
             pub fn normalize(&self) -> BlasResult<Self> {
@@ -45,8 +58,33 @@ macro_rules! impl_vector {
                 })))
             }
 
+            pub fn normalize_checked_with_abort(
+                &self,
+                signal: &AbortSignal,
+            ) -> CheckedBlasResult<Self> {
+                let mag = self
+                    .magnitude_with_abort(signal)
+                    .map_err(BlasProblem::from)?;
+                require_known_nonzero_with_abort(&mag, signal)?;
+                Ok(Self(from_fn(|i| {
+                    (self.0[i].clone() / mag.clone()).unwrap()
+                })))
+            }
+
             pub fn div_scalar_checked(self, rhs: Real) -> CheckedBlasResult<Self> {
                 require_known_nonzero(&rhs)?;
+                Ok(Self(from_fn(|i| {
+                    (self.0[i].clone() / rhs.clone()).unwrap()
+                })))
+            }
+
+            pub fn div_scalar_checked_with_abort(
+                self,
+                rhs: Real,
+                signal: &AbortSignal,
+            ) -> CheckedBlasResult<Self> {
+                let rhs = with_abort(rhs, signal);
+                require_known_nonzero_with_abort(&rhs, signal)?;
                 Ok(Self(from_fn(|i| {
                     (self.0[i].clone() / rhs.clone()).unwrap()
                 })))
