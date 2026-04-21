@@ -1,51 +1,68 @@
+//! Complex numbers backed by [`Scalar`](crate::Scalar).
+
 use std::fmt;
 use std::ops::{Add, BitXor, Div, Mul, Neg, Sub};
 
 use crate::scalar::{one, require_known_nonzero, zero};
 use crate::{BlasResult, CheckedBlasResult, Problem, Scalar};
 
+/// Complex scalar with real and imaginary components.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Complex {
+    /// Real component.
     pub re: Scalar,
+    /// Imaginary component.
     pub im: Scalar,
 }
 
 impl Complex {
+    /// Constructs a complex value from real and imaginary components.
     pub fn new(re: Scalar, im: Scalar) -> Self {
         Self { re, im }
     }
 
+    /// Returns `0 + 0i`.
     pub fn zero() -> Self {
         Self::new(zero(), zero())
     }
 
+    /// Returns `1 + 0i`.
     pub fn one() -> Self {
         Self::new(one(), zero())
     }
 
+    /// Returns the imaginary unit `0 + 1i`.
     pub fn i() -> Self {
         Self::new(zero(), one())
     }
 
+    /// Returns the complex conjugate.
     pub fn conjugate(self) -> Self {
         Self::new(self.re, -self.im)
     }
 
+    /// Returns `re^2 + im^2`.
     pub fn norm_squared(&self) -> Scalar {
         self.re.clone() * self.re.clone() + self.im.clone() * self.im.clone()
     }
 
+    /// Returns the multiplicative inverse.
     pub fn reciprocal(self) -> BlasResult<Self> {
         let denom = self.norm_squared();
         Ok(Self::new((self.re / denom.clone())?, ((-self.im) / denom)?))
     }
 
+    /// Returns the multiplicative inverse after rejecting unknown-zero norms.
     pub fn reciprocal_checked(self) -> CheckedBlasResult<Self> {
         let denom = self.norm_squared();
         require_known_nonzero(&denom)?;
         Ok(Self::new((self.re / denom.clone())?, ((-self.im) / denom)?))
     }
 
+    /// Raises this complex value to an integer exponent.
+    ///
+    /// Negative exponents require the result to be invertible. `0^0` returns
+    /// [`Problem::NotANumber`].
     pub fn powi(self, exponent: i64) -> BlasResult<Self> {
         if exponent == 0 {
             if self.re.definitely_zero() && self.im.definitely_zero() {
@@ -74,6 +91,7 @@ impl Complex {
         }
     }
 
+    /// Raises this complex value to an integer exponent with checked inversion.
     pub fn powi_checked(self, exponent: i64) -> CheckedBlasResult<Self> {
         if exponent == 0 {
             if self.re.definitely_zero() && self.im.definitely_zero() {
@@ -102,6 +120,7 @@ impl Complex {
         }
     }
 
+    /// Divides by another complex value after rejecting unknown-zero norms.
     pub fn div_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
         let denom = rhs.norm_squared();
         require_known_nonzero(&denom)?;
@@ -112,6 +131,7 @@ impl Complex {
         ))
     }
 
+    /// Divides by a real scalar after rejecting unknown-zero divisors.
     pub fn div_real_checked(self, rhs: Scalar) -> CheckedBlasResult<Self> {
         require_known_nonzero(&rhs)?;
         Ok(Self::new((self.re / rhs.clone())?, (self.im / rhs)?))

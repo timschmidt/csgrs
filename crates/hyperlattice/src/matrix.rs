@@ -1,3 +1,5 @@
+//! Fixed-size row-major matrices over [`Scalar`](crate::Scalar).
+
 use std::array::from_fn;
 use std::fmt;
 use std::ops::{Add, BitXor, Div, Index, IndexMut, Mul, Neg, Sub};
@@ -9,11 +11,19 @@ use crate::scalar::{
 use crate::vector::{Vector3, Vector4};
 use crate::{AbortSignal, BlasResult, CheckedBlasResult, Problem, Scalar};
 
+/// Three-by-three row-major matrix.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Matrix3(pub [[Scalar; 3]; 3]);
+pub struct Matrix3(
+    /// Matrix entries in row-major order.
+    pub [[Scalar; 3]; 3],
+);
 
+/// Four-by-four row-major matrix.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Matrix4(pub [[Scalar; 4]; 4]);
+pub struct Matrix4(
+    /// Matrix entries in row-major order.
+    pub [[Scalar; 4]; 4],
+);
 
 fn invert_matrix<const N: usize>(matrix: [[Scalar; N]; N]) -> BlasResult<[[Scalar; N]; N]> {
     let mut left = matrix;
@@ -267,40 +277,56 @@ fn multiply_arrays<const N: usize>(
 macro_rules! impl_matrix {
     ($name:ident, $vector:ident, $n:expr) => {
         impl $name {
+            /// Constructs a matrix from row-major entries.
             pub fn new(values: [[Scalar; $n]; $n]) -> Self {
                 Self(values)
             }
 
+            /// Returns the zero matrix.
             pub fn zero() -> Self {
                 Self(from_fn(|_| from_fn(|_| zero())))
             }
 
+            /// Returns the identity matrix.
             pub fn identity() -> Self {
                 Self(from_fn(|row| {
                     from_fn(|col| if row == col { one() } else { zero() })
                 }))
             }
 
+            /// Returns the transpose.
             pub fn transpose(&self) -> Self {
                 Self(from_fn(|row| from_fn(|col| self.0[col][row].clone())))
             }
 
+            /// Returns the matrix inverse.
+            ///
+            /// This is equivalent to [`inverse`](Self::inverse).
             pub fn reciprocal(self) -> BlasResult<Self> {
                 self.inverse()
             }
 
+            /// Returns the checked matrix inverse.
+            ///
+            /// This is equivalent to [`inverse_checked`](Self::inverse_checked).
             pub fn reciprocal_checked(self) -> CheckedBlasResult<Self> {
                 self.inverse_checked()
             }
 
+            /// Returns the matrix inverse using Gauss-Jordan elimination.
+            ///
+            /// The ordinary path rejects definite-zero pivots and otherwise
+            /// propagates scalar arithmetic errors from the selected backend.
             pub fn inverse(self) -> BlasResult<Self> {
                 Ok(Self(invert_matrix(self.0)?))
             }
 
+            /// Returns the matrix inverse after rejecting unknown-zero pivots.
             pub fn inverse_checked(self) -> CheckedBlasResult<Self> {
                 Ok(Self(invert_matrix_checked(self.0)?))
             }
 
+            /// Returns the checked matrix inverse after attaching an abort signal.
             pub fn inverse_checked_with_abort(
                 self,
                 signal: &AbortSignal,
@@ -308,14 +334,19 @@ macro_rules! impl_matrix {
                 Ok(Self(invert_matrix_checked_with_abort(self.0, signal)?))
             }
 
+            /// Raises the matrix to an integer power.
+            ///
+            /// Negative exponents invert the matrix first.
             pub fn powi(self, exponent: i32) -> BlasResult<Self> {
                 Ok(Self(matrix_power(self.0, exponent)?))
             }
 
+            /// Raises the matrix to an integer power using checked inversion.
             pub fn powi_checked(self, exponent: i32) -> CheckedBlasResult<Self> {
                 Ok(Self(matrix_power_checked(self.0, exponent)?))
             }
 
+            /// Raises the matrix to an integer power after attaching an abort signal.
             pub fn powi_checked_with_abort(
                 self,
                 exponent: i32,
@@ -326,6 +357,7 @@ macro_rules! impl_matrix {
                 )?))
             }
 
+            /// Divides every entry by `rhs` after rejecting unknown-zero divisors.
             pub fn div_scalar_checked(self, rhs: Scalar) -> CheckedBlasResult<Self> {
                 require_known_nonzero(&rhs)?;
                 let mut values = self.0;
@@ -337,6 +369,7 @@ macro_rules! impl_matrix {
                 Ok(Self(values))
             }
 
+            /// Divides every entry by `rhs` after attaching an abort signal.
             pub fn div_scalar_checked_with_abort(
                 self,
                 rhs: Scalar,
@@ -353,10 +386,12 @@ macro_rules! impl_matrix {
                 Ok(Self(values))
             }
 
+            /// Divides by another matrix using checked inversion of the divisor.
             pub fn div_matrix_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
                 Ok(Self(multiply_arrays(self.0, rhs.inverse_checked()?.0)))
             }
 
+            /// Divides by another matrix using abort-aware checked inversion.
             pub fn div_matrix_checked_with_abort(
                 self,
                 rhs: Self,
@@ -522,6 +557,7 @@ impl_matrix!(Matrix3, Vector3, 3);
 impl_matrix!(Matrix4, Vector4, 4);
 
 impl Matrix3 {
+    /// Returns the determinant.
     pub fn determinant(&self) -> Scalar {
         let m = &self.0;
         m[0][0].clone() * (m[1][1].clone() * m[2][2].clone() - m[1][2].clone() * m[2][1].clone())
@@ -533,6 +569,7 @@ impl Matrix3 {
 }
 
 impl Matrix4 {
+    /// Returns the determinant.
     pub fn determinant(&self) -> Scalar {
         let m = &self.0;
         (0..4).fold(zero(), |acc, col| {

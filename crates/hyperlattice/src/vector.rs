@@ -1,3 +1,5 @@
+//! Fixed-size vectors over [`Scalar`](crate::Scalar).
+
 use std::array::from_fn;
 use std::fmt;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
@@ -8,41 +10,60 @@ use crate::scalar::{
 };
 use crate::{AbortSignal, BlasResult, CheckedBlasResult, Scalar};
 
+/// Three-dimensional vector.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Vector3(pub [Scalar; 3]);
+pub struct Vector3(
+    /// Components stored in `[x, y, z]` order.
+    pub [Scalar; 3],
+);
 
+/// Four-dimensional vector.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Vector4(pub [Scalar; 4]);
+pub struct Vector4(
+    /// Components stored in `[x, y, z, w]` order.
+    pub [Scalar; 4],
+);
 
 macro_rules! impl_vector {
     ($name:ident, $n:expr) => {
         impl $name {
+            /// Constructs a vector from its component array.
             pub fn new(values: [Scalar; $n]) -> Self {
                 Self(values)
             }
 
+            /// Returns the zero vector.
             pub fn zero() -> Self {
                 Self(from_fn(|_| zero()))
             }
 
+            /// Returns the dot product with `rhs`.
             pub fn dot(&self, rhs: &Self) -> Scalar {
                 (0..$n).fold(zero(), |acc, i| acc + self.0[i].clone() * rhs.0[i].clone())
             }
 
+            /// Returns the dot product after attaching an abort signal to operands.
             pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Scalar {
                 (0..$n).fold(zero(), |acc, i| {
                     acc + clone_with_abort(&self.0[i], signal) * clone_with_abort(&rhs.0[i], signal)
                 })
             }
 
+            /// Returns the Euclidean magnitude.
             pub fn magnitude(&self) -> BlasResult<Scalar> {
                 self.dot(self).sqrt()
             }
 
+            /// Returns the Euclidean magnitude after attaching an abort signal.
             pub fn magnitude_with_abort(&self, signal: &AbortSignal) -> BlasResult<Scalar> {
                 with_abort(self.dot_with_abort(self, signal), signal).sqrt()
             }
 
+            /// Returns a unit vector in the same direction.
+            ///
+            /// This rejects definite zero magnitudes before division. If the
+            /// scalar backend rejects a divisor for another reason, that
+            /// [`Problem`](crate::Problem) is propagated.
             pub fn normalize(&self) -> BlasResult<Self> {
                 let mag = self.magnitude()?;
                 reject_definite_zero(&mag)?;
@@ -53,6 +74,7 @@ macro_rules! impl_vector {
                 Ok(Self(values))
             }
 
+            /// Returns a unit vector after rejecting zero and unknown-zero magnitudes.
             pub fn normalize_checked(&self) -> CheckedBlasResult<Self> {
                 let mag = self.magnitude()?;
                 require_known_nonzero(&mag)?;
@@ -63,6 +85,7 @@ macro_rules! impl_vector {
                 Ok(Self(values))
             }
 
+            /// Returns a checked unit vector after attaching an abort signal.
             pub fn normalize_checked_with_abort(
                 &self,
                 signal: &AbortSignal,
@@ -76,6 +99,7 @@ macro_rules! impl_vector {
                 Ok(Self(values))
             }
 
+            /// Divides every component by `rhs` after rejecting unknown-zero divisors.
             pub fn div_scalar_checked(self, rhs: Scalar) -> CheckedBlasResult<Self> {
                 require_known_nonzero(&rhs)?;
                 let mut values = self.0;
@@ -85,6 +109,7 @@ macro_rules! impl_vector {
                 Ok(Self(values))
             }
 
+            /// Divides every component by `rhs` after attaching an abort signal.
             pub fn div_scalar_checked_with_abort(
                 self,
                 rhs: Scalar,
