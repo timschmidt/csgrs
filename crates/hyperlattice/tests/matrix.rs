@@ -134,6 +134,14 @@ fn checked_matrix_scalar_division_accepts_abort_signal() {
     );
 }
 
+#[cfg(not(feature = "realistic-backend"))]
+#[test]
+fn ordinary_matrix_scalar_division_returns_unknown_zero() {
+    let divisor = realistic_blas::Scalar::approx(0.0, 0.25).unwrap();
+
+    assert_eq!(Matrix3::identity() / divisor, Err(Problem::UnknownZero));
+}
+
 #[test]
 fn ordinary_matrix_inverse_prefers_known_nonzero_pivots() {
     let matrix = Matrix3::new([

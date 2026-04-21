@@ -99,19 +99,20 @@ impl BackendScalar {
     }
 
     pub(crate) fn sqrt(self) -> BlasResult<Self> {
-        if self.value + self.epsilon < 0.0 {
+        let lower = self.value - self.epsilon;
+        let upper = self.value + self.epsilon;
+        if upper < 0.0 {
             return Err(Problem::SqrtNegative);
         }
-        if self.value - self.epsilon < 0.0 {
+        if lower < 0.0 {
             return Err(Problem::UnknownZero);
         }
-        let center = self.value.sqrt();
-        let slope = if center == 0.0 {
-            0.0
-        } else {
-            1.0 / (2.0 * center)
-        };
-        Self::from_unary(center, self.epsilon * slope)
+
+        let lower_sqrt = lower.sqrt();
+        let upper_sqrt = upper.sqrt();
+        let value = (lower_sqrt + upper_sqrt) / 2.0;
+        let epsilon = (upper_sqrt - lower_sqrt) / 2.0;
+        Self::from_unary(value, epsilon)
     }
 
     pub(crate) fn sin(self) -> Self {

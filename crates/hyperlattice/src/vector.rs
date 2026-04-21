@@ -46,17 +46,21 @@ macro_rules! impl_vector {
             pub fn normalize(&self) -> BlasResult<Self> {
                 let mag = self.magnitude()?;
                 reject_definite_zero(&mag)?;
-                Ok(Self(from_fn(|i| {
-                    (self.0[i].clone() / mag.clone()).unwrap()
-                })))
+                let mut values = self.0.clone();
+                for value in &mut values {
+                    *value = (value.clone() / mag.clone())?;
+                }
+                Ok(Self(values))
             }
 
             pub fn normalize_checked(&self) -> CheckedBlasResult<Self> {
                 let mag = self.magnitude()?;
                 require_known_nonzero(&mag)?;
-                Ok(Self(from_fn(|i| {
-                    (self.0[i].clone() / mag.clone()).unwrap()
-                })))
+                let mut values = self.0.clone();
+                for value in &mut values {
+                    *value = (value.clone() / mag.clone())?;
+                }
+                Ok(Self(values))
             }
 
             pub fn normalize_checked_with_abort(
@@ -65,16 +69,20 @@ macro_rules! impl_vector {
             ) -> CheckedBlasResult<Self> {
                 let mag = self.magnitude_with_abort(signal)?;
                 require_known_nonzero_with_abort(&mag, signal)?;
-                Ok(Self(from_fn(|i| {
-                    (self.0[i].clone() / mag.clone()).unwrap()
-                })))
+                let mut values = self.0.clone();
+                for value in &mut values {
+                    *value = (value.clone() / mag.clone())?;
+                }
+                Ok(Self(values))
             }
 
             pub fn div_scalar_checked(self, rhs: Scalar) -> CheckedBlasResult<Self> {
                 require_known_nonzero(&rhs)?;
-                Ok(Self(from_fn(|i| {
-                    (self.0[i].clone() / rhs.clone()).unwrap()
-                })))
+                let mut values = self.0;
+                for value in &mut values {
+                    *value = (value.clone() / rhs.clone())?;
+                }
+                Ok(Self(values))
             }
 
             pub fn div_scalar_checked_with_abort(
@@ -84,9 +92,11 @@ macro_rules! impl_vector {
             ) -> CheckedBlasResult<Self> {
                 let rhs = with_abort(rhs, signal);
                 require_known_nonzero_with_abort(&rhs, signal)?;
-                Ok(Self(from_fn(|i| {
-                    (self.0[i].clone() / rhs.clone()).unwrap()
-                })))
+                let mut values = self.0;
+                for value in &mut values {
+                    *value = (value.clone() / rhs.clone())?;
+                }
+                Ok(Self(values))
             }
         }
 
@@ -174,9 +184,11 @@ macro_rules! impl_vector {
 
             fn div(self, rhs: Scalar) -> Self::Output {
                 reject_definite_zero(&rhs)?;
-                Ok(Self(from_fn(|i| {
-                    (self.0[i].clone() / rhs.clone()).unwrap()
-                })))
+                let mut values = self.0;
+                for value in &mut values {
+                    *value = (value.clone() / rhs.clone())?;
+                }
+                Ok(Self(values))
             }
         }
     };

@@ -78,6 +78,7 @@ fn approx_scalar_tracks_unknown_zero_intervals() {
     let nonzero = realistic_blas::Scalar::approx(1.0, 0.25).unwrap();
     let negative_interval = realistic_blas::Scalar::approx(-4.0, 1.0).unwrap();
     let mixed_interval = realistic_blas::Scalar::approx(1.0, 2.0).unwrap();
+    let touching_zero = realistic_blas::Scalar::approx(0.25, 0.25).unwrap();
     let half = realistic_blas::Scalar::try_from(0.5).unwrap();
 
     assert_eq!(zero_status(&near_zero), ZeroStatus::Unknown);
@@ -90,6 +91,11 @@ fn approx_scalar_tracks_unknown_zero_intervals() {
     assert_eq!(
         realistic_blas::pow(mixed_interval, half),
         Err(Problem::UnknownZero)
+    );
+
+    assert_eq!(
+        zero_status(&realistic_blas::sqrt(touching_zero).unwrap()),
+        ZeroStatus::Unknown
     );
 }
 

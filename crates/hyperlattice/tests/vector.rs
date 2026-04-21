@@ -78,3 +78,12 @@ fn checked_vector_operations_reject_unknown_zero_divisors() {
         Err(Problem::UnknownZero)
     );
 }
+
+#[cfg(not(feature = "realistic-backend"))]
+#[test]
+fn ordinary_vector_scalar_division_returns_unknown_zero() {
+    let vector = Vector3::new([r(1), r(2), r(3)]);
+    let divisor = realistic_blas::Scalar::approx(0.0, 0.25).unwrap();
+
+    assert_eq!(vector / divisor, Err(Problem::UnknownZero));
+}

@@ -328,9 +328,13 @@ macro_rules! impl_matrix {
 
             pub fn div_scalar_checked(self, rhs: Scalar) -> CheckedBlasResult<Self> {
                 require_known_nonzero(&rhs)?;
-                Ok(Self(from_fn(|row| {
-                    from_fn(|col| (self.0[row][col].clone() / rhs.clone()).unwrap())
-                })))
+                let mut values = self.0;
+                for row in &mut values {
+                    for value in row {
+                        *value = (value.clone() / rhs.clone())?;
+                    }
+                }
+                Ok(Self(values))
             }
 
             pub fn div_scalar_checked_with_abort(
@@ -340,9 +344,13 @@ macro_rules! impl_matrix {
             ) -> CheckedBlasResult<Self> {
                 let rhs = with_abort(rhs, signal);
                 require_known_nonzero_with_abort(&rhs, signal)?;
-                Ok(Self(from_fn(|row| {
-                    from_fn(|col| (self.0[row][col].clone() / rhs.clone()).unwrap())
-                })))
+                let mut values = self.0;
+                for row in &mut values {
+                    for value in row {
+                        *value = (value.clone() / rhs.clone())?;
+                    }
+                }
+                Ok(Self(values))
             }
 
             pub fn div_matrix_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
@@ -462,9 +470,13 @@ macro_rules! impl_matrix {
 
             fn div(self, rhs: Scalar) -> Self::Output {
                 reject_definite_zero(&rhs)?;
-                Ok(Self(from_fn(|row| {
-                    from_fn(|col| (self.0[row][col].clone() / rhs.clone()).unwrap())
-                })))
+                let mut values = self.0;
+                for row in &mut values {
+                    for value in row {
+                        *value = (value.clone() / rhs.clone())?;
+                    }
+                }
+                Ok(Self(values))
             }
         }
 
