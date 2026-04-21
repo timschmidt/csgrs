@@ -1,3 +1,3 @@
 fn main() {
-    println!("Hello, world!");
+    println!("realistic_blas provides Real-based vectors and matrices.");
 }
