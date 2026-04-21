@@ -14,7 +14,14 @@ categories = ["mathematics"]
 num = "0.4.3"
 realistic = "0.8.1"
 
+[dev-dependencies]
+criterion = "0.7.0"
+
 [features]
 default = ["realistic-backend"]
 realistic-backend = []
 approx-backend = []
+
+[[bench]]
+name = "mathbench"
+harness = false

@@ -249,3 +249,14 @@ cargo test --all-targets --no-default-features --features approx-backend
 cargo clippy --all-targets -- -D warnings
 cargo clippy --all-targets --no-default-features --features approx-backend -- -D warnings
 ```
+
+Run the Criterion benchmark suite:
+
+```sh
+cargo bench --bench mathbench
+cargo bench --bench mathbench --no-default-features --features approx-backend
+```
+
+The benchmark names mirror a small mathbench-style subset: vector dot,
+magnitude, normalize, matrix determinant, inverse, matrix multiplication, and
+matrix-vector transforms for 3x3/4x4 types.
