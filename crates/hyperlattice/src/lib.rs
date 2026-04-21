@@ -335,11 +335,27 @@ macro_rules! impl_vector {
             }
         }
 
+        impl Add<Real> for $name {
+            type Output = Self;
+
+            fn add(self, rhs: Real) -> Self::Output {
+                Self(from_fn(|i| self.0[i].clone() + rhs.clone()))
+            }
+        }
+
         impl Sub for $name {
             type Output = Self;
 
             fn sub(self, rhs: Self) -> Self::Output {
                 Self(from_fn(|i| self.0[i].clone() - rhs.0[i].clone()))
+            }
+        }
+
+        impl Sub<Real> for $name {
+            type Output = Self;
+
+            fn sub(self, rhs: Real) -> Self::Output {
+                Self(from_fn(|i| self.0[i].clone() - rhs.clone()))
             }
         }
 
@@ -518,12 +534,32 @@ macro_rules! impl_matrix {
             }
         }
 
+        impl Add<Real> for $name {
+            type Output = Self;
+
+            fn add(self, rhs: Real) -> Self::Output {
+                Self(from_fn(|row| {
+                    from_fn(|col| self.0[row][col].clone() + rhs.clone())
+                }))
+            }
+        }
+
         impl Sub for $name {
             type Output = Self;
 
             fn sub(self, rhs: Self) -> Self::Output {
                 Self(from_fn(|row| {
                     from_fn(|col| self.0[row][col].clone() - rhs.0[row][col].clone())
+                }))
+            }
+        }
+
+        impl Sub<Real> for $name {
+            type Output = Self;
+
+            fn sub(self, rhs: Real) -> Self::Output {
+                Self(from_fn(|row| {
+                    from_fn(|col| self.0[row][col].clone() - rhs.clone())
                 }))
             }
         }
@@ -645,6 +681,20 @@ mod tests {
     }
 
     #[test]
+    fn vector_scalar_add_and_subtract_are_componentwise() {
+        let vector = Vector4::new([1.into(), 2.into(), 3.into(), 4.into()]);
+
+        assert_eq!(
+            vector.clone() + r(10),
+            Vector4::new([11.into(), 12.into(), 13.into(), 14.into()])
+        );
+        assert_eq!(
+            vector - r(1),
+            Vector4::new([0.into(), 1.into(), 2.into(), 3.into()])
+        );
+    }
+
+    #[test]
     fn matrix3_inverse_and_power() {
         let matrix = Matrix3::new([
             [1.into(), 2.into(), 3.into()],
@@ -665,6 +715,32 @@ mod tests {
     fn matrix4_identity_and_vector_multiply() {
         let vector = Vector4::new([1.into(), 2.into(), 3.into(), 4.into()]);
         assert_eq!(Matrix4::identity() * vector.clone(), vector);
+    }
+
+    #[test]
+    fn matrix_scalar_add_and_subtract_are_componentwise() {
+        let matrix = Matrix3::new([
+            [1.into(), 2.into(), 3.into()],
+            [4.into(), 5.into(), 6.into()],
+            [7.into(), 8.into(), 9.into()],
+        ]);
+
+        assert_eq!(
+            matrix.clone() + r(1),
+            Matrix3::new([
+                [2.into(), 3.into(), 4.into()],
+                [5.into(), 6.into(), 7.into()],
+                [8.into(), 9.into(), 10.into()],
+            ])
+        );
+        assert_eq!(
+            matrix - r(2),
+            Matrix3::new([
+                [(-1).into(), 0.into(), 1.into()],
+                [2.into(), 3.into(), 4.into()],
+                [5.into(), 6.into(), 7.into()],
+            ])
+        );
     }
 
     #[test]
