@@ -1,0 +1,121 @@
+use std::array::from_fn;
+use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
+
+use crate::scalar::zero;
+use crate::{BlasResult, Problem, Real};
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Vector3(pub [Real; 3]);
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Vector4(pub [Real; 4]);
+
+macro_rules! impl_vector {
+    ($name:ident, $n:expr) => {
+        impl $name {
+            pub fn new(values: [Real; $n]) -> Self {
+                Self(values)
+            }
+
+            pub fn zero() -> Self {
+                Self(from_fn(|_| zero()))
+            }
+
+            pub fn dot(&self, rhs: &Self) -> Real {
+                (0..$n).fold(zero(), |acc, i| acc + self.0[i].clone() * rhs.0[i].clone())
+            }
+
+            pub fn magnitude(&self) -> BlasResult<Real> {
+                self.dot(self).sqrt()
+            }
+
+            pub fn normalize(&self) -> BlasResult<Self> {
+                let mag = self.magnitude()?;
+                if mag.definitely_zero() {
+                    return Err(Problem::DivideByZero);
+                }
+                Ok(Self(from_fn(|i| {
+                    (self.0[i].clone() / mag.clone()).unwrap()
+                })))
+            }
+        }
+
+        impl Index<usize> for $name {
+            type Output = Real;
+
+            fn index(&self, index: usize) -> &Self::Output {
+                &self.0[index]
+            }
+        }
+
+        impl IndexMut<usize> for $name {
+            fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+                &mut self.0[index]
+            }
+        }
+
+        impl Add for $name {
+            type Output = Self;
+
+            fn add(self, rhs: Self) -> Self::Output {
+                Self(from_fn(|i| self.0[i].clone() + rhs.0[i].clone()))
+            }
+        }
+
+        impl Add<Real> for $name {
+            type Output = Self;
+
+            fn add(self, rhs: Real) -> Self::Output {
+                Self(from_fn(|i| self.0[i].clone() + rhs.clone()))
+            }
+        }
+
+        impl Sub for $name {
+            type Output = Self;
+
+            fn sub(self, rhs: Self) -> Self::Output {
+                Self(from_fn(|i| self.0[i].clone() - rhs.0[i].clone()))
+            }
+        }
+
+        impl Sub<Real> for $name {
+            type Output = Self;
+
+            fn sub(self, rhs: Real) -> Self::Output {
+                Self(from_fn(|i| self.0[i].clone() - rhs.clone()))
+            }
+        }
+
+        impl Neg for $name {
+            type Output = Self;
+
+            fn neg(self) -> Self::Output {
+                Self(from_fn(|i| -self.0[i].clone()))
+            }
+        }
+
+        impl Mul<Real> for $name {
+            type Output = Self;
+
+            fn mul(self, rhs: Real) -> Self::Output {
+                Self(from_fn(|i| self.0[i].clone() * rhs.clone()))
+            }
+        }
+
+        impl Div<Real> for $name {
+            type Output = BlasResult<Self>;
+
+            fn div(self, rhs: Real) -> Self::Output {
+                if rhs.definitely_zero() {
+                    return Err(Problem::DivideByZero);
+                }
+                Ok(Self(from_fn(|i| {
+                    (self.0[i].clone() / rhs.clone()).unwrap()
+                })))
+            }
+        }
+    };
+}
+
+impl_vector!(Vector3, 3);
+impl_vector!(Vector4, 4);

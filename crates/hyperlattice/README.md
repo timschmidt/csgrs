@@ -47,12 +47,16 @@ realistic = "0.8.1"
 ```rust
 use realistic_blas::{ln, pi, sqrt, tau, Real};
 
+fn r(value: i32) -> Real {
+    value.into()
+}
+
 let nine: Real = 9.into();
 let three = sqrt(nine).unwrap();
-assert_eq!(three, 3.into());
+assert_eq!(three, r(3));
 
-assert_eq!(tau(), 2.into() * pi());
-assert_eq!(ln(realistic_blas::e()).unwrap(), 1.into());
+assert_eq!(tau(), r(2) * pi());
+assert_eq!(ln(realistic_blas::e()).unwrap(), r(1));
 ```
 
 Many operations are fallible because `Real` arithmetic can fail for invalid
@@ -74,13 +78,17 @@ assert_eq!((i() ^ 2).unwrap(), minus_one);
 ### Vectors
 
 ```rust
-use realistic_blas::{one, Vector3};
+use realistic_blas::{one, Real, Vector3};
 
-let v = Vector3::new([3.into(), 4.into(), 0.into()]);
-let offset = v.clone() + 10.into();
+fn r(value: i32) -> Real {
+    value.into()
+}
 
-assert_eq!(v.dot(&v), 25.into());
-assert_eq!(offset, Vector3::new([13.into(), 14.into(), 10.into()]));
+let v = Vector3::new([r(3), r(4), r(0)]);
+let offset = v.clone() + r(10);
+
+assert_eq!(v.dot(&v), r(25));
+assert_eq!(offset, Vector3::new([r(13), r(14), r(10)]));
 
 let unit = v.normalize().unwrap();
 assert_eq!(unit.dot(&unit), one());
@@ -89,27 +97,40 @@ assert_eq!(unit.dot(&unit), one());
 ### Matrices
 
 ```rust
-use realistic_blas::Matrix3;
+use realistic_blas::{Matrix3, Real};
+
+fn r(value: i32) -> Real {
+    value.into()
+}
 
 let matrix = Matrix3::new([
-    [1.into(), 2.into(), 3.into()],
-    [0.into(), 1.into(), 4.into()],
-    [5.into(), 6.into(), 0.into()],
+    [r(1), r(2), r(3)],
+    [r(0), r(1), r(4)],
+    [r(5), r(6), r(0)],
 ]);
-let incremented = matrix.clone() + 1.into();
+let incremented = matrix.clone() + r(1);
 
-assert_eq!(matrix.determinant(), 1.into());
+assert_eq!(matrix.determinant(), r(1));
 assert_eq!(
     incremented,
     Matrix3::new([
-        [2.into(), 3.into(), 4.into()],
-        [1.into(), 2.into(), 5.into()],
-        [6.into(), 7.into(), 1.into()],
+        [r(2), r(3), r(4)],
+        [r(1), r(2), r(5)],
+        [r(6), r(7), r(1)],
     ])
 );
 assert_eq!(matrix.clone() * matrix.clone().inverse().unwrap(), Matrix3::identity());
 assert_eq!((matrix.clone() ^ 0).unwrap(), Matrix3::identity());
 ```
+
+## Source Layout
+
+The crate root re-exports the public API from focused modules:
+
+- `src/scalar.rs`: scalar constants and functions around `Real`.
+- `src/complex.rs`: `Complex` and complex arithmetic.
+- `src/vector.rs`: `Vector3`, `Vector4`, and vector operations.
+- `src/matrix.rs`: `Matrix3`, `Matrix4`, and matrix operations.
 
 ## Notes
 
