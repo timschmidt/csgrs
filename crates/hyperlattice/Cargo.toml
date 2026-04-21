@@ -2,7 +2,7 @@
 name = "realistic_blas"
 version = "0.1.0"
 edition = "2024"
-description = "A small Rust linear algebra library built around realistic::Real, a real-number type with symbolic and computable-number behavior."
+description = "A small Rust linear algebra library with a crate-owned Scalar type and realistic or approximate backends."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/timschmidt/realistic_blas"
@@ -13,3 +13,8 @@ categories = ["mathematics"]
 [dependencies]
 num = "0.4.3"
 realistic = "0.8.1"
+
+[features]
+default = ["realistic-backend"]
+realistic-backend = []
+approx-backend = []

@@ -1,7 +1,7 @@
 mod common;
 
 use common::{abort_signal, r, unknown_zero};
-use realistic_blas::{BlasProblem, Problem, Rational, Vector3, Vector4, one, zero};
+use realistic_blas::{Problem, Rational, Vector3, Vector4, one, zero};
 
 #[test]
 fn vector_dot_and_normalize() {
@@ -41,7 +41,10 @@ fn vector_display_forwards_real_formatting() {
         Rational::fraction(3, 4).unwrap().into(),
     ]);
 
+    #[cfg(feature = "realistic-backend")]
     assert_eq!(format!("{vector}"), "[1/2, 2, 3/4]");
+    #[cfg(not(feature = "realistic-backend"))]
+    assert_eq!(format!("{vector}"), "[0.5, 2, 0.75]");
     assert_eq!(format!("{vector:#}"), "[0.5, 2, 0.75]");
 }
 
@@ -53,11 +56,11 @@ fn checked_vector_operations_reject_zero_divisors() {
     assert_eq!(vector.clone() / zero(), Err(Problem::DivideByZero));
     assert_eq!(
         Vector3::zero().normalize_checked(),
-        Err(BlasProblem::Real(Problem::DivideByZero))
+        Err(Problem::DivideByZero)
     );
     assert_eq!(
         vector.clone().div_scalar_checked(zero()),
-        Err(BlasProblem::Real(Problem::DivideByZero))
+        Err(Problem::DivideByZero)
     );
     assert_eq!(
         vector.div_scalar_checked(r(2)).unwrap(),
@@ -76,10 +79,10 @@ fn checked_vector_operations_reject_unknown_zero_divisors() {
 
     assert_eq!(
         vector.clone().div_scalar_checked(unknown_zero()),
-        Err(BlasProblem::UnknownZero)
+        Err(Problem::UnknownZero)
     );
     assert_eq!(
         vector.div_scalar_checked_with_abort(unknown_zero(), &signal),
-        Err(BlasProblem::UnknownZero)
+        Err(Problem::UnknownZero)
     );
 }

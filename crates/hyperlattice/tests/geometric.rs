@@ -1,11 +1,11 @@
-use realistic_blas::{Matrix3, Matrix4, Rational, Real, Vector3, Vector4};
+use realistic_blas::{Matrix3, Matrix4, Rational, Scalar, Vector3, Vector4};
 
-fn r(value: i32) -> Real {
+fn r(value: i32) -> Scalar {
     value.into()
 }
 
-fn frac(numerator: i64, denominator: u64) -> Real {
-    Real::new(Rational::fraction(numerator, denominator).unwrap())
+fn frac(numerator: i64, denominator: u64) -> Scalar {
+    Scalar::new(Rational::fraction(numerator, denominator).unwrap())
 }
 
 fn translation_2d(x: i32, y: i32) -> Matrix3 {

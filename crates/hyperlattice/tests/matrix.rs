@@ -1,7 +1,14 @@
 mod common;
 
 use common::{abort_signal, r, unknown_zero};
-use realistic_blas::{BlasProblem, Matrix3, Matrix4, Problem, Rational, Vector4, zero};
+use realistic_blas::{Matrix3, Matrix4, Problem, Rational, Vector4, zero};
+
+fn assert_singular_error<T: std::fmt::Debug>(result: Result<T, Problem>) {
+    assert!(matches!(
+        result,
+        Err(Problem::DivideByZero | Problem::UnknownZero)
+    ));
+}
 
 #[test]
 fn matrix3_inverse_and_power() {
@@ -46,7 +53,13 @@ fn matrix_display_forwards_real_formatting() {
         [r(7), r(8), r(9)],
     ]);
 
+    #[cfg(feature = "realistic-backend")]
     assert_eq!(format!("{matrix}"), "[[1/2, 2, 3], [4, 1/4, 6], [7, 8, 9]]");
+    #[cfg(not(feature = "realistic-backend"))]
+    assert_eq!(
+        format!("{matrix}"),
+        "[[0.5, 2, 3], [4, 0.25, 6], [7, 8, 9]]"
+    );
     assert_eq!(
         format!("{matrix:#}"),
         "[[0.5, 2, 3], [4, 0.25, 6], [7, 8, 9]]"
@@ -59,18 +72,12 @@ fn checked_matrix_inverse_rejects_singular_matrices() {
     let invertible = Matrix3::new([[r(1), r(2), r(3)], [r(0), r(1), r(4)], [r(5), r(6), r(0)]]);
     let signal = abort_signal();
 
-    assert_eq!(singular.clone().inverse(), Err(Problem::DivideByZero));
-    assert_eq!(singular.clone().reciprocal(), Err(Problem::DivideByZero));
-    assert_eq!(singular.clone().powi(-1), Err(Problem::DivideByZero));
-    assert_eq!(
-        Matrix3::identity() / singular.clone(),
-        Err(Problem::DivideByZero)
-    );
+    assert_singular_error(singular.clone().inverse());
+    assert_singular_error(singular.clone().reciprocal());
+    assert_singular_error(singular.clone().powi(-1));
+    assert_singular_error(Matrix3::identity() / singular.clone());
     assert_eq!(Matrix3::identity() / zero(), Err(Problem::DivideByZero));
-    assert_eq!(
-        singular.inverse_checked(),
-        Err(BlasProblem::Real(Problem::DivideByZero))
-    );
+    assert_singular_error(singular.inverse_checked());
     assert_eq!(
         invertible.clone() * invertible.clone().inverse_checked().unwrap(),
         Matrix3::identity()
@@ -101,17 +108,14 @@ fn checked_matrix_inverse_rejects_unknown_zero_pivots() {
     ]);
     let signal = abort_signal();
 
-    assert_eq!(
-        matrix.clone().inverse_checked(),
-        Err(BlasProblem::UnknownZero)
-    );
+    assert_eq!(matrix.clone().inverse_checked(), Err(Problem::UnknownZero));
     assert_eq!(
         matrix.clone().inverse_checked_with_abort(&signal),
-        Err(BlasProblem::UnknownZero)
+        Err(Problem::UnknownZero)
     );
     assert_eq!(
         Matrix3::identity().div_matrix_checked_with_abort(matrix, &signal),
-        Err(BlasProblem::UnknownZero)
+        Err(Problem::UnknownZero)
     );
 }
 

@@ -1,23 +1,26 @@
 # realistic_blas
 
-`realistic_blas` is a small Rust linear algebra library built around
-[`realistic::Real`](https://crates.io/crates/realistic), a real-number type with
-symbolic and computable-number behavior.
+`realistic_blas` is a small Rust linear algebra library built around a
+crate-owned `Scalar` type.
 
 The crate provides scalar helpers, complex numbers, 3D/4D vectors, and 3x3/4x4
-matrices using `Real` throughout.
+matrices using `Scalar` throughout. By default, `Scalar` is backed by
+[`realistic::Real`](https://crates.io/crates/realistic). The optional
+`approx-backend` uses an `f64` value plus an `f64` epsilon to model approximate
+error bounds and unknown-zero conditions.
 
 ## Features
 
-- Re-exports `realistic::{Real, Rational, Problem}`.
+- Re-exports `realistic::{Real, Rational}` for explicit construction and
+  interop. Library operations use crate-owned `Scalar` and `Problem`.
 - Constants and scalar helpers: `zero`, `one`, `e`, `pi`, `tau`, `i`,
   `reciprocal`, `reciprocal_checked`, `pow`, `powi`.
 - Elementary functions: `exp`, `ln`, `log10`, `sqrt`, `sin`, `cos`, `tan`.
 - Hyperbolic functions: `sinh`, `cosh`, `tanh`.
 - Inverse trigonometric and hyperbolic helpers: `asin`, `acos`, `atan`, `asinh`,
   `acosh`, `atanh`.
-- `ZeroStatus`, `BlasProblem`, and `CheckedBlasResult` for APIs that reject
-  unknown zero conditions instead of proceeding optimistically.
+- `ZeroStatus`, `Problem`, and `CheckedBlasResult` for APIs that reject unknown
+  zero conditions instead of proceeding optimistically.
 - `AbortSignal` and `_with_abort` variants for zero-sensitive or conversion
   APIs that may need cancellable `Real` evaluation.
 - `Complex` with arithmetic, reciprocal, checked reciprocal, conjugate, and
@@ -50,18 +53,30 @@ This project depends on:
 realistic = "0.8.1"
 ```
 
+The default feature set uses the realistic backend. To use the approximate
+`f64 + epsilon` backend:
+
+```toml
+[dependencies]
+realistic_blas = {
+    path = "path/to/realistic_blas",
+    default-features = false,
+    features = ["approx-backend"],
+}
+```
+
 ## Examples
 
 ### Scalars
 
 ```rust
-use realistic_blas::{ln, log10, pi, sqrt, tau, Real};
+use realistic_blas::{ln, log10, pi, sqrt, tau, Scalar};
 
-fn r(value: i32) -> Real {
+fn r(value: i32) -> Scalar {
     value.into()
 }
 
-let nine: Real = 9.into();
+let nine: Scalar = 9.into();
 let three = sqrt(nine).unwrap();
 assert_eq!(three, r(3));
 
@@ -70,8 +85,9 @@ assert_eq!(ln(realistic_blas::e()).unwrap(), r(1));
 assert_eq!(log10(r(100)).unwrap(), r(2));
 ```
 
-Many operations are fallible because `Real` arithmetic can fail for invalid
-domains, division by zero, or unsupported conversions. Fallible helpers return:
+Many operations are fallible because scalar arithmetic can fail for invalid
+domains, division by zero, unknown zero conditions, or unsupported conversions.
+Fallible helpers return:
 
 ```rust
 type BlasResult<T> = Result<T, realistic_blas::Problem>;
@@ -80,12 +96,12 @@ type BlasResult<T> = Result<T, realistic_blas::Problem>;
 Checked helpers reject definite zero and unknown-zero cases:
 
 ```rust
-type CheckedBlasResult<T> = Result<T, realistic_blas::BlasProblem>;
+type CheckedBlasResult<T> = Result<T, realistic_blas::Problem>;
 ```
 
-For computations that may force `Real` evaluation, callers can attach a
-cancellation flag before calling into `realistic_blas`, or use the provided
-abort-aware checked helpers:
+For computations that may force realistic backend evaluation, callers can attach
+a cancellation flag before calling into `realistic_blas`, or use the provided
+abort-aware checked helpers. The approx backend accepts these APIs as no-ops.
 
 ```rust
 use std::sync::Arc;
@@ -111,9 +127,9 @@ assert_eq!((i() ^ 2).unwrap(), minus_one);
 ### Vectors
 
 ```rust
-use realistic_blas::{one, Real, Vector3};
+use realistic_blas::{one, Scalar, Vector3};
 
-fn r(value: i32) -> Real {
+fn r(value: i32) -> Scalar {
     value.into()
 }
 
@@ -135,9 +151,9 @@ assert_eq!(format!("{displayed:#}"), "[0.5, 2, 3]");
 ### Matrices
 
 ```rust
-use realistic_blas::{Matrix3, Real};
+use realistic_blas::{Matrix3, Scalar};
 
-fn r(value: i32) -> Real {
+fn r(value: i32) -> Scalar {
     value.into()
 }
 
@@ -164,13 +180,15 @@ assert_eq!((matrix.clone() ^ 0).unwrap(), Matrix3::identity());
 ## Formatting
 
 `Complex`, `Vector3`, `Vector4`, `Matrix3`, and `Matrix4` implement `Display`.
-Normal formatting forwards each component to `Real`'s symbolic display, while
-alternate formatting forwards to `Real`'s decimal display:
+With the realistic backend, normal formatting forwards each component to
+`Real`'s symbolic display, while alternate formatting forwards to `Real`'s
+decimal display. With the approx backend, both forms display the approximate
+center value.
 
 ```rust
-use realistic_blas::{Matrix3, Rational, Real};
+use realistic_blas::{Matrix3, Rational, Scalar};
 
-fn r(value: i32) -> Real {
+fn r(value: i32) -> Scalar {
     value.into()
 }
 
@@ -185,17 +203,24 @@ assert_eq!(format!("{matrix:#}"), "[[0.5, 2, 3], [4, 5, 6], [7, 8, 9]]");
 
 The crate root re-exports the public API from focused modules:
 
-- `src/scalar.rs`: scalar constants and functions around `Real`.
+- `src/scalar.rs`: scalar constants and functions around `Scalar`.
 - `src/complex.rs`: `Complex` and complex arithmetic.
 - `src/vector.rs`: `Vector3`, `Vector4`, and vector operations.
 - `src/matrix.rs`: `Matrix3`, `Matrix4`, and matrix operations.
+- `src/backend/realistic`: realistic-backed `Scalar` implementation.
+- `src/backend/approx`: approximate `f64 + epsilon` `Scalar` implementation.
 
 ## Notes
 
-`realistic::Real` does not currently expose native inverse trigonometric or
-inverse hyperbolic methods. The inverse helper functions in this crate convert
-through `f64` and then back into `Real`, so they are approximate rather than
-symbolic.
+When the realistic backend is selected, `realistic::Real` does not currently
+expose native inverse trigonometric or inverse hyperbolic methods. The inverse
+helper functions convert through `f64` and then back into `Scalar`, so they are
+approximate rather than symbolic.
+
+The approx backend stores a center value and an absolute error bound. A scalar
+with an interval containing zero reports `ZeroStatus::Unknown`, so checked
+division, normalization, and matrix inversion exercise the same unknown-zero API
+surface as the realistic backend.
 
 Division-sensitive operations have two API paths. The ordinary path rejects
 values that are definitely zero and proceeds otherwise. The checked path uses
@@ -207,9 +232,9 @@ Matrix inversion uses Gauss-Jordan elimination. Ordinary inversion picks a pivot
 that is not definitely zero. Checked inversion requires a pivot classified as
 `ZeroStatus::NonZero`.
 
-Scalar addition and subtraction are implemented as `Vector3 + Real`,
-`Vector4 - Real`, `Matrix3 + Real`, and similar left-hand vector/matrix forms.
-The reverse forms, such as `Real + Vector3`, cannot be implemented directly
+Scalar addition and subtraction are implemented as `Vector3 + Scalar`,
+`Vector4 - Scalar`, `Matrix3 + Scalar`, and similar left-hand vector/matrix
+forms. The reverse forms, such as `Scalar + Vector3`, cannot be implemented directly
 because Rust's orphan rules forbid implementing a standard-library trait for an
 external left-hand type.
 
@@ -219,6 +244,8 @@ Run the standard checks:
 
 ```sh
 cargo fmt --check
-cargo test
-cargo clippy --all-targets --all-features -- -D warnings
+cargo test --all-targets
+cargo test --all-targets --no-default-features --features approx-backend
+cargo clippy --all-targets -- -D warnings
+cargo clippy --all-targets --no-default-features --features approx-backend -- -D warnings
 ```

@@ -1,7 +1,5 @@
-use num::bigint::Sign;
-
 use crate::complex::Complex;
-use crate::{AbortSignal, BlasProblem, BlasResult, CheckedBlasResult, Problem, Real};
+use crate::{AbortSignal, BlasResult, CheckedBlasResult, Problem, Scalar};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum ZeroStatus {
@@ -10,35 +8,28 @@ pub enum ZeroStatus {
     Unknown,
 }
 
-pub(crate) fn two() -> Real {
+pub(crate) fn two() -> Scalar {
     2.into()
 }
 
-pub(crate) fn with_abort(mut value: Real, signal: &AbortSignal) -> Real {
+pub(crate) fn with_abort(mut value: Scalar, signal: &AbortSignal) -> Scalar {
     value.abort(signal.clone());
     value
 }
 
-pub(crate) fn clone_with_abort(value: &Real, signal: &AbortSignal) -> Real {
+pub(crate) fn clone_with_abort(value: &Scalar, signal: &AbortSignal) -> Scalar {
     with_abort(value.clone(), signal)
 }
 
-pub fn zero_status(value: &Real) -> ZeroStatus {
-    if value.definitely_zero() {
-        ZeroStatus::Zero
-    } else {
-        match value.best_sign() {
-            Sign::Plus | Sign::Minus => ZeroStatus::NonZero,
-            Sign::NoSign => ZeroStatus::Unknown,
-        }
-    }
+pub fn zero_status(value: &Scalar) -> ZeroStatus {
+    value.zero_status()
 }
 
-pub fn zero_status_with_abort(value: &Real, signal: &AbortSignal) -> ZeroStatus {
+pub fn zero_status_with_abort(value: &Scalar, signal: &AbortSignal) -> ZeroStatus {
     zero_status(&clone_with_abort(value, signal))
 }
 
-pub(crate) fn reject_definite_zero(value: &Real) -> BlasResult<()> {
+pub(crate) fn reject_definite_zero(value: &Scalar) -> BlasResult<()> {
     if value.definitely_zero() {
         Err(Problem::DivideByZero)
     } else {
@@ -46,79 +37,82 @@ pub(crate) fn reject_definite_zero(value: &Real) -> BlasResult<()> {
     }
 }
 
-pub(crate) fn require_known_nonzero(value: &Real) -> CheckedBlasResult<()> {
+pub(crate) fn require_known_nonzero(value: &Scalar) -> CheckedBlasResult<()> {
     match zero_status(value) {
-        ZeroStatus::Zero => Err(BlasProblem::Real(Problem::DivideByZero)),
+        ZeroStatus::Zero => Err(Problem::DivideByZero),
         ZeroStatus::NonZero => Ok(()),
-        ZeroStatus::Unknown => Err(BlasProblem::UnknownZero),
+        ZeroStatus::Unknown => Err(Problem::UnknownZero),
     }
 }
 
 pub(crate) fn require_known_nonzero_with_abort(
-    value: &Real,
+    value: &Scalar,
     signal: &AbortSignal,
 ) -> CheckedBlasResult<()> {
     match zero_status_with_abort(value, signal) {
-        ZeroStatus::Zero => Err(BlasProblem::Real(Problem::DivideByZero)),
+        ZeroStatus::Zero => Err(Problem::DivideByZero),
         ZeroStatus::NonZero => Ok(()),
-        ZeroStatus::Unknown => Err(BlasProblem::UnknownZero),
+        ZeroStatus::Unknown => Err(Problem::UnknownZero),
     }
 }
 
-fn real_from_f64(value: f64) -> BlasResult<Real> {
+fn real_from_f64(value: f64) -> BlasResult<Scalar> {
     if value.is_nan() {
         return Err(Problem::NotANumber);
     }
     if value.is_infinite() {
         return Err(Problem::Infinity);
     }
-    Real::try_from(value)
+    Scalar::try_from(value)
 }
 
-pub fn zero() -> Real {
-    Real::zero()
+pub fn zero() -> Scalar {
+    Scalar::zero()
 }
 
-pub fn one() -> Real {
-    1.into()
+pub fn one() -> Scalar {
+    Scalar::one()
 }
 
-pub fn e() -> Real {
-    Real::e()
+pub fn e() -> Scalar {
+    Scalar::e()
 }
 
-pub fn pi() -> Real {
-    Real::pi()
+pub fn pi() -> Scalar {
+    Scalar::pi()
 }
 
-pub fn tau() -> Real {
-    two() * Real::pi()
+pub fn tau() -> Scalar {
+    two() * Scalar::pi()
 }
 
 pub fn i() -> Complex {
     Complex::i()
 }
 
-pub fn reciprocal(value: Real) -> BlasResult<Real> {
+pub fn reciprocal(value: Scalar) -> BlasResult<Scalar> {
     value.inverse()
 }
 
-pub fn reciprocal_checked(value: Real) -> CheckedBlasResult<Real> {
+pub fn reciprocal_checked(value: Scalar) -> CheckedBlasResult<Scalar> {
     require_known_nonzero(&value)?;
-    value.inverse().map_err(BlasProblem::from)
+    value.inverse()
 }
 
-pub fn reciprocal_checked_with_abort(value: Real, signal: &AbortSignal) -> CheckedBlasResult<Real> {
+pub fn reciprocal_checked_with_abort(
+    value: Scalar,
+    signal: &AbortSignal,
+) -> CheckedBlasResult<Scalar> {
     let value = with_abort(value, signal);
     require_known_nonzero_with_abort(&value, signal)?;
-    value.inverse().map_err(BlasProblem::from)
+    value.inverse()
 }
 
-pub fn pow(base: Real, exponent: Real) -> BlasResult<Real> {
+pub fn pow(base: Scalar, exponent: Scalar) -> BlasResult<Scalar> {
     base.pow(exponent)
 }
 
-pub fn powi(base: Real, exponent: i64) -> BlasResult<Real> {
+pub fn powi(base: Scalar, exponent: i64) -> BlasResult<Scalar> {
     if exponent == 0 {
         if base.definitely_zero() {
             return Err(Problem::NotANumber);
@@ -146,98 +140,98 @@ pub fn powi(base: Real, exponent: i64) -> BlasResult<Real> {
     }
 }
 
-pub fn exp(value: Real) -> BlasResult<Real> {
+pub fn exp(value: Scalar) -> BlasResult<Scalar> {
     value.exp()
 }
 
-pub fn ln(value: Real) -> BlasResult<Real> {
+pub fn ln(value: Scalar) -> BlasResult<Scalar> {
     value.ln()
 }
 
-pub fn log10(value: Real) -> BlasResult<Real> {
+pub fn log10(value: Scalar) -> BlasResult<Scalar> {
     value.log10()
 }
 
-pub fn log10_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
+pub fn log10_with_abort(value: Scalar, signal: &AbortSignal) -> BlasResult<Scalar> {
     with_abort(value, signal).log10()
 }
 
-pub fn sqrt(value: Real) -> BlasResult<Real> {
+pub fn sqrt(value: Scalar) -> BlasResult<Scalar> {
     value.sqrt()
 }
 
-pub fn sin(value: Real) -> Real {
+pub fn sin(value: Scalar) -> Scalar {
     value.sin()
 }
 
-pub fn cos(value: Real) -> Real {
+pub fn cos(value: Scalar) -> Scalar {
     value.cos()
 }
 
-pub fn tan(value: Real) -> BlasResult<Real> {
+pub fn tan(value: Scalar) -> BlasResult<Scalar> {
     value.tan()
 }
 
-pub fn sinh(value: Real) -> BlasResult<Real> {
+pub fn sinh(value: Scalar) -> BlasResult<Scalar> {
     let positive = value.clone().exp()?;
     let negative = (-value).exp()?;
     (positive - negative) / two()
 }
 
-pub fn cosh(value: Real) -> BlasResult<Real> {
+pub fn cosh(value: Scalar) -> BlasResult<Scalar> {
     let positive = value.clone().exp()?;
     let negative = (-value).exp()?;
     (positive + negative) / two()
 }
 
-pub fn tanh(value: Real) -> BlasResult<Real> {
+pub fn tanh(value: Scalar) -> BlasResult<Scalar> {
     sinh(value.clone())? / cosh(value)?
 }
 
-pub fn asin(value: Real) -> BlasResult<Real> {
+pub fn asin(value: Scalar) -> BlasResult<Scalar> {
     real_from_f64(f64::from(value).asin())
 }
 
-pub fn asin_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
+pub fn asin_with_abort(value: Scalar, signal: &AbortSignal) -> BlasResult<Scalar> {
     real_from_f64(f64::from(with_abort(value, signal)).asin())
 }
 
-pub fn acos(value: Real) -> BlasResult<Real> {
+pub fn acos(value: Scalar) -> BlasResult<Scalar> {
     real_from_f64(f64::from(value).acos())
 }
 
-pub fn acos_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
+pub fn acos_with_abort(value: Scalar, signal: &AbortSignal) -> BlasResult<Scalar> {
     real_from_f64(f64::from(with_abort(value, signal)).acos())
 }
 
-pub fn atan(value: Real) -> BlasResult<Real> {
+pub fn atan(value: Scalar) -> BlasResult<Scalar> {
     real_from_f64(f64::from(value).atan())
 }
 
-pub fn atan_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
+pub fn atan_with_abort(value: Scalar, signal: &AbortSignal) -> BlasResult<Scalar> {
     real_from_f64(f64::from(with_abort(value, signal)).atan())
 }
 
-pub fn asinh(value: Real) -> BlasResult<Real> {
+pub fn asinh(value: Scalar) -> BlasResult<Scalar> {
     real_from_f64(f64::from(value).asinh())
 }
 
-pub fn asinh_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
+pub fn asinh_with_abort(value: Scalar, signal: &AbortSignal) -> BlasResult<Scalar> {
     real_from_f64(f64::from(with_abort(value, signal)).asinh())
 }
 
-pub fn acosh(value: Real) -> BlasResult<Real> {
+pub fn acosh(value: Scalar) -> BlasResult<Scalar> {
     real_from_f64(f64::from(value).acosh())
 }
 
-pub fn acosh_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
+pub fn acosh_with_abort(value: Scalar, signal: &AbortSignal) -> BlasResult<Scalar> {
     real_from_f64(f64::from(with_abort(value, signal)).acosh())
 }
 
-pub fn atanh(value: Real) -> BlasResult<Real> {
+pub fn atanh(value: Scalar) -> BlasResult<Scalar> {
     real_from_f64(f64::from(value).atanh())
 }
 
-pub fn atanh_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
+pub fn atanh_with_abort(value: Scalar, signal: &AbortSignal) -> BlasResult<Scalar> {
     real_from_f64(f64::from(with_abort(value, signal)).atanh())
 }

@@ -2,16 +2,16 @@ use std::fmt;
 use std::ops::{Add, BitXor, Div, Mul, Neg, Sub};
 
 use crate::scalar::{one, require_known_nonzero, zero};
-use crate::{BlasProblem, BlasResult, CheckedBlasResult, Problem, Real};
+use crate::{BlasResult, CheckedBlasResult, Problem, Scalar};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Complex {
-    pub re: Real,
-    pub im: Real,
+    pub re: Scalar,
+    pub im: Scalar,
 }
 
 impl Complex {
-    pub fn new(re: Real, im: Real) -> Self {
+    pub fn new(re: Scalar, im: Scalar) -> Self {
         Self { re, im }
     }
 
@@ -31,7 +31,7 @@ impl Complex {
         Self::new(self.re, -self.im)
     }
 
-    pub fn norm_squared(&self) -> Real {
+    pub fn norm_squared(&self) -> Scalar {
         self.re.clone() * self.re.clone() + self.im.clone() * self.im.clone()
     }
 
@@ -43,10 +43,7 @@ impl Complex {
     pub fn reciprocal_checked(self) -> CheckedBlasResult<Self> {
         let denom = self.norm_squared();
         require_known_nonzero(&denom)?;
-        Ok(Self::new(
-            (self.re / denom.clone()).map_err(BlasProblem::from)?,
-            ((-self.im) / denom).map_err(BlasProblem::from)?,
-        ))
+        Ok(Self::new((self.re / denom.clone())?, ((-self.im) / denom)?))
     }
 
     pub fn powi(self, exponent: i64) -> BlasResult<Self> {
@@ -80,7 +77,7 @@ impl Complex {
     pub fn powi_checked(self, exponent: i64) -> CheckedBlasResult<Self> {
         if exponent == 0 {
             if self.re.definitely_zero() && self.im.definitely_zero() {
-                return Err(BlasProblem::Real(Problem::NotANumber));
+                return Err(Problem::NotANumber);
             }
             return Ok(Self::one());
         }
@@ -109,23 +106,20 @@ impl Complex {
         let denom = rhs.norm_squared();
         require_known_nonzero(&denom)?;
         Ok(Self::new(
-            ((self.re.clone() * rhs.re.clone() + self.im.clone() * rhs.im.clone()) / denom.clone())
-                .map_err(BlasProblem::from)?,
-            ((self.im * rhs.re - self.re * rhs.im) / denom).map_err(BlasProblem::from)?,
+            ((self.re.clone() * rhs.re.clone() + self.im.clone() * rhs.im.clone())
+                / denom.clone())?,
+            ((self.im * rhs.re - self.re * rhs.im) / denom)?,
         ))
     }
 
-    pub fn div_real_checked(self, rhs: Real) -> CheckedBlasResult<Self> {
+    pub fn div_real_checked(self, rhs: Scalar) -> CheckedBlasResult<Self> {
         require_known_nonzero(&rhs)?;
-        Ok(Self::new(
-            (self.re / rhs.clone()).map_err(BlasProblem::from)?,
-            (self.im / rhs).map_err(BlasProblem::from)?,
-        ))
+        Ok(Self::new((self.re / rhs.clone())?, (self.im / rhs)?))
     }
 }
 
-impl From<Real> for Complex {
-    fn from(value: Real) -> Self {
+impl From<Scalar> for Complex {
+    fn from(value: Scalar) -> Self {
         Self::new(value, zero())
     }
 }
@@ -187,10 +181,10 @@ impl Div for Complex {
     }
 }
 
-impl Div<Real> for Complex {
+impl Div<Scalar> for Complex {
     type Output = BlasResult<Self>;
 
-    fn div(self, rhs: Real) -> Self::Output {
+    fn div(self, rhs: Scalar) -> Self::Output {
         Ok(Self::new((self.re / rhs.clone())?, (self.im / rhs)?))
     }
 }

@@ -6,18 +6,18 @@ use crate::scalar::{
     clone_with_abort, reject_definite_zero, require_known_nonzero,
     require_known_nonzero_with_abort, with_abort, zero,
 };
-use crate::{AbortSignal, BlasProblem, BlasResult, CheckedBlasResult, Real};
+use crate::{AbortSignal, BlasResult, CheckedBlasResult, Scalar};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Vector3(pub [Real; 3]);
+pub struct Vector3(pub [Scalar; 3]);
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Vector4(pub [Real; 4]);
+pub struct Vector4(pub [Scalar; 4]);
 
 macro_rules! impl_vector {
     ($name:ident, $n:expr) => {
         impl $name {
-            pub fn new(values: [Real; $n]) -> Self {
+            pub fn new(values: [Scalar; $n]) -> Self {
                 Self(values)
             }
 
@@ -25,21 +25,21 @@ macro_rules! impl_vector {
                 Self(from_fn(|_| zero()))
             }
 
-            pub fn dot(&self, rhs: &Self) -> Real {
+            pub fn dot(&self, rhs: &Self) -> Scalar {
                 (0..$n).fold(zero(), |acc, i| acc + self.0[i].clone() * rhs.0[i].clone())
             }
 
-            pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Real {
+            pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Scalar {
                 (0..$n).fold(zero(), |acc, i| {
                     acc + clone_with_abort(&self.0[i], signal) * clone_with_abort(&rhs.0[i], signal)
                 })
             }
 
-            pub fn magnitude(&self) -> BlasResult<Real> {
+            pub fn magnitude(&self) -> BlasResult<Scalar> {
                 self.dot(self).sqrt()
             }
 
-            pub fn magnitude_with_abort(&self, signal: &AbortSignal) -> BlasResult<Real> {
+            pub fn magnitude_with_abort(&self, signal: &AbortSignal) -> BlasResult<Scalar> {
                 with_abort(self.dot_with_abort(self, signal), signal).sqrt()
             }
 
@@ -52,7 +52,7 @@ macro_rules! impl_vector {
             }
 
             pub fn normalize_checked(&self) -> CheckedBlasResult<Self> {
-                let mag = self.magnitude().map_err(BlasProblem::from)?;
+                let mag = self.magnitude()?;
                 require_known_nonzero(&mag)?;
                 Ok(Self(from_fn(|i| {
                     (self.0[i].clone() / mag.clone()).unwrap()
@@ -63,16 +63,14 @@ macro_rules! impl_vector {
                 &self,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
-                let mag = self
-                    .magnitude_with_abort(signal)
-                    .map_err(BlasProblem::from)?;
+                let mag = self.magnitude_with_abort(signal)?;
                 require_known_nonzero_with_abort(&mag, signal)?;
                 Ok(Self(from_fn(|i| {
                     (self.0[i].clone() / mag.clone()).unwrap()
                 })))
             }
 
-            pub fn div_scalar_checked(self, rhs: Real) -> CheckedBlasResult<Self> {
+            pub fn div_scalar_checked(self, rhs: Scalar) -> CheckedBlasResult<Self> {
                 require_known_nonzero(&rhs)?;
                 Ok(Self(from_fn(|i| {
                     (self.0[i].clone() / rhs.clone()).unwrap()
@@ -81,7 +79,7 @@ macro_rules! impl_vector {
 
             pub fn div_scalar_checked_with_abort(
                 self,
-                rhs: Real,
+                rhs: Scalar,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
                 let rhs = with_abort(rhs, signal);
@@ -93,7 +91,7 @@ macro_rules! impl_vector {
         }
 
         impl Index<usize> for $name {
-            type Output = Real;
+            type Output = Scalar;
 
             fn index(&self, index: usize) -> &Self::Output {
                 &self.0[index]
@@ -131,10 +129,10 @@ macro_rules! impl_vector {
             }
         }
 
-        impl Add<Real> for $name {
+        impl Add<Scalar> for $name {
             type Output = Self;
 
-            fn add(self, rhs: Real) -> Self::Output {
+            fn add(self, rhs: Scalar) -> Self::Output {
                 Self(from_fn(|i| self.0[i].clone() + rhs.clone()))
             }
         }
@@ -147,10 +145,10 @@ macro_rules! impl_vector {
             }
         }
 
-        impl Sub<Real> for $name {
+        impl Sub<Scalar> for $name {
             type Output = Self;
 
-            fn sub(self, rhs: Real) -> Self::Output {
+            fn sub(self, rhs: Scalar) -> Self::Output {
                 Self(from_fn(|i| self.0[i].clone() - rhs.clone()))
             }
         }
@@ -163,18 +161,18 @@ macro_rules! impl_vector {
             }
         }
 
-        impl Mul<Real> for $name {
+        impl Mul<Scalar> for $name {
             type Output = Self;
 
-            fn mul(self, rhs: Real) -> Self::Output {
+            fn mul(self, rhs: Scalar) -> Self::Output {
                 Self(from_fn(|i| self.0[i].clone() * rhs.clone()))
             }
         }
 
-        impl Div<Real> for $name {
+        impl Div<Scalar> for $name {
             type Output = BlasResult<Self>;
 
-            fn div(self, rhs: Real) -> Self::Output {
+            fn div(self, rhs: Scalar) -> Self::Output {
                 reject_definite_zero(&rhs)?;
                 Ok(Self(from_fn(|i| {
                     (self.0[i].clone() / rhs.clone()).unwrap()

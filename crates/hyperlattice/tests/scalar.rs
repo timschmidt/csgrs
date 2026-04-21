@@ -2,9 +2,9 @@ mod common;
 
 use common::{abort_signal, r, unknown_zero};
 use realistic_blas::{
-    BlasProblem, Problem, Rational, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln,
-    log10, log10_with_abort, one, pi, powi, reciprocal, reciprocal_checked,
-    reciprocal_checked_with_abort, sin, sqrt, tan, tau, zero, zero_status, zero_status_with_abort,
+    Problem, Rational, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln, log10,
+    log10_with_abort, one, pi, powi, reciprocal, reciprocal_checked, reciprocal_checked_with_abort,
+    sin, sqrt, tan, tau, zero, zero_status, zero_status_with_abort,
 };
 
 #[test]
@@ -53,10 +53,7 @@ fn zero_status_classifies_basic_values() {
 
 #[test]
 fn checked_scalar_reciprocal_rejects_zero() {
-    assert_eq!(
-        reciprocal_checked(zero()),
-        Err(BlasProblem::Real(Problem::DivideByZero))
-    );
+    assert_eq!(reciprocal_checked(zero()), Err(Problem::DivideByZero));
     assert_eq!(
         reciprocal_checked(r(4)).unwrap(),
         Rational::fraction(1, 4).unwrap()
@@ -67,14 +64,25 @@ fn checked_scalar_reciprocal_rejects_zero() {
 fn checked_scalar_reciprocal_rejects_unknown_zero() {
     assert_eq!(
         reciprocal_checked(unknown_zero()),
-        Err(BlasProblem::UnknownZero)
+        Err(Problem::UnknownZero)
     );
 
     let signal = abort_signal();
     assert_eq!(
         reciprocal_checked_with_abort(unknown_zero(), &signal),
-        Err(BlasProblem::UnknownZero)
+        Err(Problem::UnknownZero)
     );
+}
+
+#[cfg(not(feature = "realistic-backend"))]
+#[test]
+fn approx_scalar_tracks_unknown_zero_intervals() {
+    let near_zero = realistic_blas::Scalar::approx(0.0, 0.25).unwrap();
+    let nonzero = realistic_blas::Scalar::approx(1.0, 0.25).unwrap();
+
+    assert_eq!(zero_status(&near_zero), ZeroStatus::Unknown);
+    assert_eq!(zero_status(&nonzero), ZeroStatus::NonZero);
+    assert_eq!(reciprocal_checked(near_zero), Err(Problem::UnknownZero));
 }
 
 #[test]
