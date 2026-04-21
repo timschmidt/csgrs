@@ -17,11 +17,13 @@ matrices using `Real` throughout.
 - Inverse trigonometric and hyperbolic helpers: `asin`, `acos`, `atan`, `asinh`,
   `acosh`, `atanh`.
 - `Complex` with arithmetic, reciprocal, conjugate, and integer powers.
-- `Vector3` and `Vector4` with arithmetic, scalar division, dot product,
-  magnitude, and normalization.
-- `Matrix3` and `Matrix4` with arithmetic, multiplication, scalar division,
-  matrix division, integer powers via `^`, transpose, determinant, inverse, and
-  reciprocal.
+- `Vector3` and `Vector4` with componentwise vector/vector arithmetic,
+  componentwise vector/scalar addition and subtraction, scalar multiplication
+  and division, dot product, magnitude, and normalization.
+- `Matrix3` and `Matrix4` with componentwise matrix/matrix arithmetic,
+  componentwise matrix/scalar addition and subtraction, matrix multiplication,
+  scalar division, matrix division, integer powers via `^`, transpose,
+  determinant, inverse, and reciprocal.
 
 ## Install
 
@@ -75,8 +77,10 @@ assert_eq!((i() ^ 2).unwrap(), minus_one);
 use realistic_blas::{one, Vector3};
 
 let v = Vector3::new([3.into(), 4.into(), 0.into()]);
+let offset = v.clone() + 10.into();
 
 assert_eq!(v.dot(&v), 25.into());
+assert_eq!(offset, Vector3::new([13.into(), 14.into(), 10.into()]));
 
 let unit = v.normalize().unwrap();
 assert_eq!(unit.dot(&unit), one());
@@ -92,8 +96,17 @@ let matrix = Matrix3::new([
     [0.into(), 1.into(), 4.into()],
     [5.into(), 6.into(), 0.into()],
 ]);
+let incremented = matrix.clone() + 1.into();
 
 assert_eq!(matrix.determinant(), 1.into());
+assert_eq!(
+    incremented,
+    Matrix3::new([
+        [2.into(), 3.into(), 4.into()],
+        [1.into(), 2.into(), 5.into()],
+        [6.into(), 7.into(), 1.into()],
+    ])
+);
 assert_eq!(matrix.clone() * matrix.clone().inverse().unwrap(), Matrix3::identity());
 assert_eq!((matrix.clone() ^ 0).unwrap(), Matrix3::identity());
 ```
@@ -107,6 +120,12 @@ symbolic.
 
 Matrix inversion uses Gauss-Jordan elimination. A matrix is treated as singular
 when no definitely non-zero pivot can be found.
+
+Scalar addition and subtraction are implemented as `Vector3 + Real`,
+`Vector4 - Real`, `Matrix3 + Real`, and similar left-hand vector/matrix forms.
+The reverse forms, such as `Real + Vector3`, cannot be implemented directly
+because Rust's orphan rules forbid implementing a standard-library trait for an
+external left-hand type.
 
 ## Development
 
