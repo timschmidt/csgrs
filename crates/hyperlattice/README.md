@@ -7,9 +7,9 @@ The crate provides scalar helpers, complex numbers, 3D/4D vectors, and 3x3/4x4
 matrices using `Scalar` throughout. `Scalar`, `Complex`, `Vector3`, `Vector4`,
 `Matrix3`, and `Matrix4` are generic over a backend marker and default to the
 feature-selected `DefaultBackend`. By default, `Scalar` is backed by
-[`realistic::Real`](https://crates.io/crates/realistic). The optional
-`approx-backend` uses an `f64` value plus an `f64` epsilon to model approximate
-error bounds and unknown-zero conditions.
+[`realistic::Real`](https://crates.io/crates/realistic), while the approximate
+backend is also available explicitly. `approx-backend` uses an `f64` value plus
+an `f64` epsilon to model approximate error bounds and unknown-zero conditions.
 
 ## Features
 
@@ -52,7 +52,7 @@ Add the crate to your project:
 realistic_blas = { path = "path/to/realistic_blas" }
 ```
 
-The default feature set enables the realistic backend, which depends on:
+The default feature set enables both backends. The realistic backend depends on:
 
 ```toml
 realistic = "0.8.1"
@@ -72,10 +72,10 @@ realistic_blas = {
 ```
 
 Backend features gate availability rather than changing the shared API shape.
-The default feature set enables `realistic-backend`; when both
-`realistic-backend` and `approx-backend` are enabled, `DefaultBackend` remains
-`RealisticBackend` and approximate values can be requested explicitly with
-types such as `Scalar<ApproxBackend>` or `Vector3<ApproxBackend>`.
+When both `realistic-backend` and `approx-backend` are enabled,
+`DefaultBackend` remains `RealisticBackend` and approximate values can be
+requested explicitly with types such as `Scalar<ApproxBackend>` or
+`Vector3<ApproxBackend>`.
 
 ## Examples
 
@@ -290,8 +290,8 @@ Run the Criterion benchmark suite:
 
 ```sh
 cargo bench --bench mathbench
-cargo bench --bench mathbench --no-default-features --features approx-backend
 ```
 
 See [benchmarks.md](benchmarks.md) for operation coverage and benchmark
-results.
+results. A completed `cargo bench --bench mathbench` run rewrites that file
+from Criterion's saved median estimates.
