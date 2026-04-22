@@ -1670,6 +1670,10 @@ fn q(numerator: i64, denominator: u64) -> RealisticScalar {
     Rational::fraction(numerator, denominator).unwrap().into()
 }
 
+fn qr(value: f64) -> RealisticScalar {
+    format!("{value:.17}").parse::<Rational>().unwrap().into()
+}
+
 fn sample_vec3() -> SampleVec3 {
     SampleVec3 {
         x: 1.23456789012345,
@@ -1950,24 +1954,60 @@ fn next_case<'a, T>(cases: &'a [T], cursor: &Cell<usize>) -> &'a T {
 }
 
 fn blas_vec3<B: Backend>(value: SampleVec3) -> Vector3<B> {
-    Vector3::new([s::<B>(value.x), s::<B>(value.y), s::<B>(value.z)])
+    blas_vec3_with(value, s::<B>)
+}
+
+fn blas_vec3_with<B, F>(value: SampleVec3, make_scalar: F) -> Vector3<B>
+where
+    B: Backend,
+    F: Copy + Fn(f64) -> Scalar<B>,
+{
+    Vector3::new([
+        make_scalar(value.x),
+        make_scalar(value.y),
+        make_scalar(value.z),
+    ])
 }
 
 fn blas_vec4<B: Backend>(value: SampleVec4) -> Vector4<B> {
+    blas_vec4_with(value, s::<B>)
+}
+
+fn blas_vec4_with<B, F>(value: SampleVec4, make_scalar: F) -> Vector4<B>
+where
+    B: Backend,
+    F: Copy + Fn(f64) -> Scalar<B>,
+{
     Vector4::new([
-        s::<B>(value.x),
-        s::<B>(value.y),
-        s::<B>(value.z),
-        s::<B>(value.w),
+        make_scalar(value.x),
+        make_scalar(value.y),
+        make_scalar(value.z),
+        make_scalar(value.w),
     ])
 }
 
 fn blas_mat3<B: Backend>(value: SampleMat3) -> Matrix3<B> {
-    Matrix3::new(value.m.map(|row| row.map(s::<B>)))
+    blas_mat3_with(value, s::<B>)
+}
+
+fn blas_mat3_with<B, F>(value: SampleMat3, make_scalar: F) -> Matrix3<B>
+where
+    B: Backend,
+    F: Copy + Fn(f64) -> Scalar<B>,
+{
+    Matrix3::new(value.m.map(|row| row.map(make_scalar)))
 }
 
 fn blas_mat4<B: Backend>(value: SampleMat4) -> Matrix4<B> {
-    Matrix4::new(value.m.map(|row| row.map(s::<B>)))
+    blas_mat4_with(value, s::<B>)
+}
+
+fn blas_mat4_with<B, F>(value: SampleMat4, make_scalar: F) -> Matrix4<B>
+where
+    B: Backend,
+    F: Copy + Fn(f64) -> Scalar<B>,
+{
+    Matrix4::new(value.m.map(|row| row.map(make_scalar)))
 }
 
 fn blas_vec3_rational() -> Vector3<RealisticBackend> {
@@ -2544,61 +2584,70 @@ fn abort_signal() -> realistic_blas::AbortSignal {
     std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false))
 }
 
-fn bench_scalar_operations_for<B: Backend>(
+fn bench_scalar_operations_for<B, F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
-) {
+    make_scalar: F,
+) where
+    B: Backend,
+    F: Copy + Fn(f64) -> Scalar<B>,
+{
     let arithmetic_cases = [
-        (s::<B>(2.5), s::<B>(1.25)),
-        (s::<B>(1.0e-12), s::<B>(-1.0e-12)),
-        (s::<B>(1.0e9), s::<B>(1.0e-9)),
-        (s::<B>(-2.75), s::<B>(0.125)),
+        (make_scalar(2.5), make_scalar(1.25)),
+        (make_scalar(1.0e-12), make_scalar(-1.0e-12)),
+        (make_scalar(1.0e9), make_scalar(1.0e-9)),
+        (make_scalar(-2.75), make_scalar(0.125)),
     ];
     let pow_cases = [
-        (s::<B>(2.5), s::<B>(1.25)),
-        (s::<B>(1.0e-12), s::<B>(3.5)),
-        (s::<B>(1.0e9), s::<B>(0.25)),
+        (make_scalar(2.5), make_scalar(1.25)),
+        (make_scalar(1.0e-12), make_scalar(3.5)),
+        (make_scalar(1.0e9), make_scalar(0.25)),
         (
-            s::<B>(std::f64::consts::E),
-            s::<B>(std::f64::consts::FRAC_1_PI),
+            make_scalar(std::f64::consts::E),
+            make_scalar(std::f64::consts::FRAC_1_PI),
         ),
     ];
     let reciprocal_cases = [
-        s::<B>(1.25),
-        s::<B>(1.0e-12),
-        s::<B>(-1.0e12),
-        s::<B>(std::f64::consts::PI),
+        make_scalar(1.25),
+        make_scalar(1.0e-12),
+        make_scalar(-1.0e12),
+        make_scalar(std::f64::consts::PI),
     ];
     let positive_cases = [
-        s::<B>(9.0),
-        s::<B>(1.0e-12),
-        s::<B>(1.0e12),
-        s::<B>(std::f64::consts::E),
+        make_scalar(9.0),
+        make_scalar(1.0e-12),
+        make_scalar(1.0e12),
+        make_scalar(std::f64::consts::E),
     ];
     let trig_cases = [
-        s::<B>(0.5),
-        s::<B>(std::f64::consts::PI / 7.0),
-        s::<B>(1.0e6),
-        s::<B>(1000.0 * std::f64::consts::PI + 1.0e-20),
+        make_scalar(0.5),
+        make_scalar(std::f64::consts::PI / 7.0),
+        make_scalar(1.0e6),
+        make_scalar(1000.0 * std::f64::consts::PI + 1.0e-20),
     ];
-    let hyperbolic_cases = [s::<B>(0.5), s::<B>(-1.0e-12), s::<B>(20.0), s::<B>(-20.0)];
+    let hyperbolic_cases = [
+        make_scalar(0.5),
+        make_scalar(-1.0e-12),
+        make_scalar(20.0),
+        make_scalar(-20.0),
+    ];
     let unit_interval_cases = [
-        s::<B>(0.5),
-        s::<B>(-0.999_999),
-        s::<B>(0.999_999),
-        s::<B>(1.0e-12),
+        make_scalar(0.5),
+        make_scalar(-0.999_999),
+        make_scalar(0.999_999),
+        make_scalar(1.0e-12),
     ];
     let acosh_cases = [
-        s::<B>(9.0),
-        s::<B>(1.0 + 1.0e-12),
-        s::<B>(1.0e6),
-        s::<B>(std::f64::consts::E),
+        make_scalar(9.0),
+        make_scalar(1.0 + 1.0e-12),
+        make_scalar(1.0e6),
+        make_scalar(std::f64::consts::E),
     ];
     let zero_status_cases = [
-        s::<B>(2.5),
+        make_scalar(2.5),
         Scalar::<B>::zero(),
-        s::<B>(1.0e-12),
-        s::<B>(-1.0e12),
+        make_scalar(1.0e-12),
+        make_scalar(-1.0e12),
     ];
     let signal = abort_signal();
 
@@ -3260,37 +3309,49 @@ fn bench_arp_scalar_operations(
 
 fn bench_scalar_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_ops");
-    bench_scalar_operations_for::<ApproxBackend>(&mut group, "approx");
-    bench_scalar_operations_for::<RealisticBackend>(&mut group, "realistic");
+    bench_scalar_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
+    bench_scalar_operations_for::<RealisticBackend, _>(
+        &mut group,
+        "realistic",
+        s::<RealisticBackend>,
+    );
+    bench_scalar_operations_for::<RealisticBackend, _>(&mut group, "realistic-rational", qr);
     bench_astro_scalar_operations(&mut group, "astro128");
     bench_arp_scalar_operations(&mut group, "arp128");
     group.finish();
 }
 
-fn bench_complex_operations_for<B: Backend>(
+fn bench_complex_operations_for<B, F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
-) {
+    make_scalar: F,
+) where
+    B: Backend,
+    F: Copy + Fn(f64) -> Scalar<B>,
+{
     let lhs_cases = [
-        Complex::new(s::<B>(3.0), s::<B>(4.0)),
-        Complex::new(s::<B>(1.0e-9), s::<B>(-1.0e-9)),
-        Complex::new(s::<B>(1.0e9), s::<B>(-1.0)),
-        Complex::new(s::<B>(std::f64::consts::PI), s::<B>(-std::f64::consts::E)),
+        Complex::new(make_scalar(3.0), make_scalar(4.0)),
+        Complex::new(make_scalar(1.0e-9), make_scalar(-1.0e-9)),
+        Complex::new(make_scalar(1.0e9), make_scalar(-1.0)),
+        Complex::new(
+            make_scalar(std::f64::consts::PI),
+            make_scalar(-std::f64::consts::E),
+        ),
     ];
     let rhs_cases = [
-        Complex::new(s::<B>(1.5), s::<B>(-2.0)),
-        Complex::new(s::<B>(-1.0e-9), s::<B>(2.0e-9)),
-        Complex::new(s::<B>(-1.0e9), s::<B>(2.0)),
+        Complex::new(make_scalar(1.5), make_scalar(-2.0)),
+        Complex::new(make_scalar(-1.0e-9), make_scalar(2.0e-9)),
+        Complex::new(make_scalar(-1.0e9), make_scalar(2.0)),
         Complex::new(
-            s::<B>(std::f64::consts::SQRT_2),
-            s::<B>(std::f64::consts::FRAC_1_PI),
+            make_scalar(std::f64::consts::SQRT_2),
+            make_scalar(std::f64::consts::FRAC_1_PI),
         ),
     ];
     let real_cases = [
-        s::<B>(2.0),
-        s::<B>(1.0e-9),
-        s::<B>(-1.0e9),
-        s::<B>(std::f64::consts::PI),
+        make_scalar(2.0),
+        make_scalar(1.0e-9),
+        make_scalar(-1.0e9),
+        make_scalar(std::f64::consts::PI),
     ];
 
     group.bench_function(format!("{label}/zero"), |b| {
@@ -3439,8 +3500,13 @@ fn bench_complex_operations_for<B: Backend>(
 
 fn bench_complex_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("complex_ops");
-    bench_complex_operations_for::<ApproxBackend>(&mut group, "approx");
-    bench_complex_operations_for::<RealisticBackend>(&mut group, "realistic");
+    bench_complex_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
+    bench_complex_operations_for::<RealisticBackend, _>(
+        &mut group,
+        "realistic",
+        s::<RealisticBackend>,
+    );
+    bench_complex_operations_for::<RealisticBackend, _>(&mut group, "realistic-rational", qr);
     bench_astro_complex_operations(&mut group, "astro128");
     bench_arp_complex_operations(&mut group, "arp128");
     group.finish();
@@ -3690,26 +3756,30 @@ fn bench_arp_complex_operations(
     });
 }
 
-fn bench_vector_operations_for<B: Backend>(
+fn bench_vector_operations_for<B, F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
-) {
-    let lhs3_cases = sample_vec3_cases().map(blas_vec3::<B>);
-    let rhs3_cases = sample_vec3_b_cases().map(blas_vec3::<B>);
-    let lhs4_cases = sample_vec4_cases().map(blas_vec4::<B>);
-    let rhs4_cases = sample_vec4_b_cases().map(blas_vec4::<B>);
+    make_scalar: F,
+) where
+    B: Backend,
+    F: Copy + Fn(f64) -> Scalar<B>,
+{
+    let lhs3_cases = sample_vec3_cases().map(|value| blas_vec3_with(value, make_scalar));
+    let rhs3_cases = sample_vec3_b_cases().map(|value| blas_vec3_with(value, make_scalar));
+    let lhs4_cases = sample_vec4_cases().map(|value| blas_vec4_with(value, make_scalar));
+    let rhs4_cases = sample_vec4_b_cases().map(|value| blas_vec4_with(value, make_scalar));
     let scalar_cases = [
-        s::<B>(2.0),
-        s::<B>(1.0e-9),
-        s::<B>(-1.0e9),
-        s::<B>(std::f64::consts::PI),
+        make_scalar(2.0),
+        make_scalar(1.0e-9),
+        make_scalar(-1.0e9),
+        make_scalar(std::f64::consts::PI),
     ];
     let signal = abort_signal();
 
     group.bench_function(format!("{label}/vec3 new"), |b| {
         let raw_cases = sample_vec3_cases();
         let cursor = Cell::new(0);
-        b.iter(|| black_box(blas_vec3::<B>(*next_case(&raw_cases, &cursor))))
+        b.iter(|| black_box(blas_vec3_with(*next_case(&raw_cases, &cursor), make_scalar)))
     });
     group.bench_function(format!("{label}/vec3 zero"), |b| {
         b.iter(|| black_box(Vector3::<B>::zero()))
@@ -3922,8 +3992,13 @@ fn bench_vector_operations_for<B: Backend>(
 
 fn bench_vector_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("vector_ops");
-    bench_vector_operations_for::<ApproxBackend>(&mut group, "approx");
-    bench_vector_operations_for::<RealisticBackend>(&mut group, "realistic");
+    bench_vector_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
+    bench_vector_operations_for::<RealisticBackend, _>(
+        &mut group,
+        "realistic",
+        s::<RealisticBackend>,
+    );
+    bench_vector_operations_for::<RealisticBackend, _>(&mut group, "realistic-rational", qr);
     bench_astro_vector_operations(&mut group, "astro128");
     bench_arp_vector_operations(&mut group, "arp128");
     group.finish();
@@ -4213,26 +4288,30 @@ fn bench_arp_vector_operations(
     }
 }
 
-fn bench_matrix_operations_for<B: Backend>(
+fn bench_matrix_operations_for<B, F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
-) {
-    let lhs3_cases = sample_mat3_cases().map(blas_mat3::<B>);
-    let rhs3_cases = sample_mat3_b_cases().map(blas_mat3::<B>);
-    let lhs4_cases = sample_mat4_cases().map(blas_mat4::<B>);
-    let rhs4_cases = sample_mat4_b_cases().map(blas_mat4::<B>);
+    make_scalar: F,
+) where
+    B: Backend,
+    F: Copy + Fn(f64) -> Scalar<B>,
+{
+    let lhs3_cases = sample_mat3_cases().map(|value| blas_mat3_with(value, make_scalar));
+    let rhs3_cases = sample_mat3_b_cases().map(|value| blas_mat3_with(value, make_scalar));
+    let lhs4_cases = sample_mat4_cases().map(|value| blas_mat4_with(value, make_scalar));
+    let rhs4_cases = sample_mat4_b_cases().map(|value| blas_mat4_with(value, make_scalar));
     let scalar_cases = [
-        s::<B>(2.0),
-        s::<B>(1.0e-9),
-        s::<B>(-1.0e9),
-        s::<B>(std::f64::consts::PI),
+        make_scalar(2.0),
+        make_scalar(1.0e-9),
+        make_scalar(-1.0e9),
+        make_scalar(std::f64::consts::PI),
     ];
     let signal = abort_signal();
 
     group.bench_function(format!("{label}/mat3 new"), |b| {
         let raw_cases = sample_mat3_cases();
         let cursor = Cell::new(0);
-        b.iter(|| black_box(blas_mat3::<B>(*next_case(&raw_cases, &cursor))))
+        b.iter(|| black_box(blas_mat3_with(*next_case(&raw_cases, &cursor), make_scalar)))
     });
     group.bench_function(format!("{label}/mat3 zero"), |b| {
         b.iter(|| black_box(Matrix3::<B>::zero()))
@@ -4557,8 +4636,13 @@ fn bench_matrix_operations_for<B: Backend>(
 
 fn bench_matrix_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("matrix_ops");
-    bench_matrix_operations_for::<ApproxBackend>(&mut group, "approx");
-    bench_matrix_operations_for::<RealisticBackend>(&mut group, "realistic");
+    bench_matrix_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
+    bench_matrix_operations_for::<RealisticBackend, _>(
+        &mut group,
+        "realistic",
+        s::<RealisticBackend>,
+    );
+    bench_matrix_operations_for::<RealisticBackend, _>(&mut group, "realistic-rational", qr);
     bench_astro_matrix_operations(&mut group, "astro128");
     bench_arp_matrix_operations(&mut group, "arp128");
     group.finish();
