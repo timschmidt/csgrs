@@ -11,8 +11,23 @@ use crate::scalar::{
 use crate::vector::{Vector3, Vector4};
 use crate::{AbortSignal, BlasResult, CheckedBlasResult, Problem, Scalar};
 
-fn multiply_by(value: Scalar, factor: &Scalar) -> Scalar {
-    value * factor.clone()
+fn ordinary_pivot<const N: usize>(left: &[[Scalar; N]; N], col: usize) -> Option<usize> {
+    let mut unknown = None;
+    match zero_status(&left[col][col]) {
+        ZeroStatus::NonZero => return Some(col),
+        ZeroStatus::Unknown => unknown = Some(col),
+        ZeroStatus::Zero => {}
+    }
+
+    for (row, values) in left.iter().enumerate().skip(col + 1) {
+        match zero_status(&values[col]) {
+            ZeroStatus::NonZero => return Some(row),
+            ZeroStatus::Unknown if unknown.is_none() => unknown = Some(row),
+            ZeroStatus::Zero | ZeroStatus::Unknown => {}
+        }
+    }
+
+    unknown
 }
 
 /// Three-by-three row-major matrix.
@@ -35,9 +50,7 @@ fn invert_matrix<const N: usize>(matrix: [[Scalar; N]; N]) -> BlasResult<[[Scala
         from_fn(|row| from_fn(|col| if row == col { one() } else { zero() }));
 
     for col in 0..N {
-        let pivot = (col..N)
-            .find(|&row| zero_status(&left[row][col]) == ZeroStatus::NonZero)
-            .or_else(|| (col..N).find(|&row| zero_status(&left[row][col]) == ZeroStatus::Unknown));
+        let pivot = ordinary_pivot(&left, col);
         let Some(pivot) = pivot else {
             return Err(Problem::DivideByZero);
         };
@@ -49,8 +62,8 @@ fn invert_matrix<const N: usize>(matrix: [[Scalar; N]; N]) -> BlasResult<[[Scala
         let pivot_value = left[col][col].clone();
         let inv_pivot = pivot_value.inverse()?;
         for j in 0..N {
-            left[col][j] = multiply_by(left[col][j].clone(), &inv_pivot);
-            right[col][j] = multiply_by(right[col][j].clone(), &inv_pivot);
+            left[col][j] = left[col][j].clone().mul_cached(&inv_pivot);
+            right[col][j] = right[col][j].clone().mul_cached(&inv_pivot);
         }
 
         for row in 0..N {
@@ -98,8 +111,8 @@ fn invert_matrix_checked<const N: usize>(
         require_known_nonzero(&pivot_value)?;
         let inv_pivot = pivot_value.inverse()?;
         for j in 0..N {
-            left[col][j] = multiply_by(left[col][j].clone(), &inv_pivot);
-            right[col][j] = multiply_by(right[col][j].clone(), &inv_pivot);
+            left[col][j] = left[col][j].clone().mul_cached(&inv_pivot);
+            right[col][j] = right[col][j].clone().mul_cached(&inv_pivot);
         }
 
         for row in 0..N {
@@ -149,8 +162,8 @@ fn invert_matrix_checked_with_abort<const N: usize>(
         require_known_nonzero_with_abort(&pivot_value, signal)?;
         let inv_pivot = pivot_value.inverse()?;
         for j in 0..N {
-            left[col][j] = multiply_by(left[col][j].clone(), &inv_pivot);
-            right[col][j] = multiply_by(right[col][j].clone(), &inv_pivot);
+            left[col][j] = left[col][j].clone().mul_cached(&inv_pivot);
+            right[col][j] = right[col][j].clone().mul_cached(&inv_pivot);
         }
 
         for row in 0..N {
@@ -316,6 +329,113 @@ fn invert_matrix3(matrix: [[Scalar; 3]; 3]) -> BlasResult<[[Scalar; 3]; 3]> {
     ])
 }
 
+fn matrix4_factors(m: &[[Scalar; 4]; 4]) -> ([Scalar; 6], [Scalar; 6]) {
+    let s = [
+        m[0][0].clone() * m[1][1].clone() - m[1][0].clone() * m[0][1].clone(),
+        m[0][0].clone() * m[1][2].clone() - m[1][0].clone() * m[0][2].clone(),
+        m[0][0].clone() * m[1][3].clone() - m[1][0].clone() * m[0][3].clone(),
+        m[0][1].clone() * m[1][2].clone() - m[1][1].clone() * m[0][2].clone(),
+        m[0][1].clone() * m[1][3].clone() - m[1][1].clone() * m[0][3].clone(),
+        m[0][2].clone() * m[1][3].clone() - m[1][2].clone() * m[0][3].clone(),
+    ];
+    let c = [
+        m[2][0].clone() * m[3][1].clone() - m[3][0].clone() * m[2][1].clone(),
+        m[2][0].clone() * m[3][2].clone() - m[3][0].clone() * m[2][2].clone(),
+        m[2][0].clone() * m[3][3].clone() - m[3][0].clone() * m[2][3].clone(),
+        m[2][1].clone() * m[3][2].clone() - m[3][1].clone() * m[2][2].clone(),
+        m[2][1].clone() * m[3][3].clone() - m[3][1].clone() * m[2][3].clone(),
+        m[2][2].clone() * m[3][3].clone() - m[3][2].clone() * m[2][3].clone(),
+    ];
+    (s, c)
+}
+
+fn determinant4(m: &[[Scalar; 4]; 4]) -> Scalar {
+    let (s, c) = matrix4_factors(m);
+    s[0].clone() * c[5].clone() - s[1].clone() * c[4].clone()
+        + s[2].clone() * c[3].clone()
+        + s[3].clone() * c[2].clone()
+        - s[4].clone() * c[1].clone()
+        + s[5].clone() * c[0].clone()
+}
+
+fn invert_matrix4(matrix: [[Scalar; 4]; 4]) -> BlasResult<[[Scalar; 4]; 4]> {
+    let m = &matrix;
+    let (s, c) = matrix4_factors(m);
+    let det = s[0].clone() * c[5].clone() - s[1].clone() * c[4].clone()
+        + s[2].clone() * c[3].clone()
+        + s[3].clone() * c[2].clone()
+        - s[4].clone() * c[1].clone()
+        + s[5].clone() * c[0].clone();
+    let inv_det = det.inverse()?;
+
+    Ok([
+        [
+            (m[1][1].clone() * c[5].clone() - m[1][2].clone() * c[4].clone()
+                + m[1][3].clone() * c[3].clone())
+            .mul_cached(&inv_det),
+            (m[0][2].clone() * c[4].clone()
+                - m[0][1].clone() * c[5].clone()
+                - m[0][3].clone() * c[3].clone())
+            .mul_cached(&inv_det),
+            (m[3][1].clone() * s[5].clone() - m[3][2].clone() * s[4].clone()
+                + m[3][3].clone() * s[3].clone())
+            .mul_cached(&inv_det),
+            (m[2][2].clone() * s[4].clone()
+                - m[2][1].clone() * s[5].clone()
+                - m[2][3].clone() * s[3].clone())
+            .mul_cached(&inv_det),
+        ],
+        [
+            (m[1][2].clone() * c[2].clone()
+                - m[1][0].clone() * c[5].clone()
+                - m[1][3].clone() * c[1].clone())
+            .mul_cached(&inv_det),
+            (m[0][0].clone() * c[5].clone() - m[0][2].clone() * c[2].clone()
+                + m[0][3].clone() * c[1].clone())
+            .mul_cached(&inv_det),
+            (m[3][2].clone() * s[2].clone()
+                - m[3][0].clone() * s[5].clone()
+                - m[3][3].clone() * s[1].clone())
+            .mul_cached(&inv_det),
+            (m[2][0].clone() * s[5].clone() - m[2][2].clone() * s[2].clone()
+                + m[2][3].clone() * s[1].clone())
+            .mul_cached(&inv_det),
+        ],
+        [
+            (m[1][0].clone() * c[4].clone() - m[1][1].clone() * c[2].clone()
+                + m[1][3].clone() * c[0].clone())
+            .mul_cached(&inv_det),
+            (m[0][1].clone() * c[2].clone()
+                - m[0][0].clone() * c[4].clone()
+                - m[0][3].clone() * c[0].clone())
+            .mul_cached(&inv_det),
+            (m[3][0].clone() * s[4].clone() - m[3][1].clone() * s[2].clone()
+                + m[3][3].clone() * s[0].clone())
+            .mul_cached(&inv_det),
+            (m[2][1].clone() * s[2].clone()
+                - m[2][0].clone() * s[4].clone()
+                - m[2][3].clone() * s[0].clone())
+            .mul_cached(&inv_det),
+        ],
+        [
+            (m[1][1].clone() * c[1].clone()
+                - m[1][0].clone() * c[3].clone()
+                - m[1][2].clone() * c[0].clone())
+            .mul_cached(&inv_det),
+            (m[0][0].clone() * c[3].clone() - m[0][1].clone() * c[1].clone()
+                + m[0][2].clone() * c[0].clone())
+            .mul_cached(&inv_det),
+            (m[3][1].clone() * s[1].clone()
+                - m[3][0].clone() * s[3].clone()
+                - m[3][2].clone() * s[0].clone())
+            .mul_cached(&inv_det),
+            (m[2][0].clone() * s[3].clone() - m[2][1].clone() * s[1].clone()
+                + m[2][2].clone() * s[0].clone())
+            .mul_cached(&inv_det),
+        ],
+    ])
+}
+
 macro_rules! impl_matrix {
     ($name:ident, $vector:ident, $n:expr) => {
         impl $name {
@@ -398,7 +518,7 @@ macro_rules! impl_matrix {
                 let mut values = self.0;
                 for row in &mut values {
                     for value in row {
-                        *value = multiply_by(value.clone(), &inv_rhs);
+                        *value = value.clone().mul_cached(&inv_rhs);
                     }
                 }
                 Ok(Self(values))
@@ -416,7 +536,7 @@ macro_rules! impl_matrix {
                 let mut values = self.0;
                 for row in &mut values {
                     for value in row {
-                        *value = multiply_by(value.clone(), &inv_rhs);
+                        *value = value.clone().mul_cached(&inv_rhs);
                     }
                 }
                 Ok(Self(values))
@@ -545,7 +665,7 @@ macro_rules! impl_matrix {
                 let mut values = self.0;
                 for row in &mut values {
                     for value in row {
-                        *value = multiply_by(value.clone(), &inv_rhs);
+                        *value = value.clone().mul_cached(&inv_rhs);
                     }
                 }
                 Ok(Self(values))
@@ -616,26 +736,16 @@ impl Matrix3 {
 }
 
 impl Matrix4 {
-    /// Returns the matrix inverse using Gauss-Jordan elimination.
+    /// Returns the matrix inverse using a fixed-size cofactor expansion.
     ///
-    /// The ordinary path rejects definite-zero pivots and otherwise propagates
+    /// The ordinary path rejects a definite-zero determinant and propagates
     /// scalar arithmetic errors from the selected backend.
     pub fn inverse(self) -> BlasResult<Self> {
-        Ok(Self(invert_matrix(self.0)?))
+        Ok(Self(invert_matrix4(self.0)?))
     }
 
     /// Returns the determinant.
     pub fn determinant(&self) -> Scalar {
-        let m = &self.0;
-        (0..4).fold(zero(), |acc, col| {
-            let minor: [[Scalar; 3]; 3] = from_fn(|r| {
-                from_fn(|c| {
-                    let source_col = if c < col { c } else { c + 1 };
-                    m[r + 1][source_col].clone()
-                })
-            });
-            let term = m[0][col].clone() * Matrix3(minor).determinant();
-            if col % 2 == 0 { acc + term } else { acc - term }
-        })
+        determinant4(&self.0)
     }
 }

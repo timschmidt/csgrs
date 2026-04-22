@@ -10,10 +10,6 @@ use crate::scalar::{
 };
 use crate::{AbortSignal, BlasResult, CheckedBlasResult, Scalar};
 
-fn multiply_by(value: Scalar, factor: &Scalar) -> Scalar {
-    value * factor.clone()
-}
-
 /// Three-dimensional vector.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vector3(
@@ -83,7 +79,7 @@ macro_rules! impl_vector {
                 let inv_mag = mag.inverse()?;
                 let mut values = self.0.clone();
                 for value in &mut values {
-                    *value = multiply_by(value.clone(), &inv_mag);
+                    *value = value.clone().mul_cached(&inv_mag);
                 }
                 Ok(Self(values))
             }
@@ -95,7 +91,7 @@ macro_rules! impl_vector {
                 let inv_mag = mag.inverse()?;
                 let mut values = self.0.clone();
                 for value in &mut values {
-                    *value = multiply_by(value.clone(), &inv_mag);
+                    *value = value.clone().mul_cached(&inv_mag);
                 }
                 Ok(Self(values))
             }
@@ -110,7 +106,7 @@ macro_rules! impl_vector {
                 let inv_mag = mag.inverse()?;
                 let mut values = self.0.clone();
                 for value in &mut values {
-                    *value = multiply_by(value.clone(), &inv_mag);
+                    *value = value.clone().mul_cached(&inv_mag);
                 }
                 Ok(Self(values))
             }
@@ -121,7 +117,7 @@ macro_rules! impl_vector {
                 let inv_rhs = rhs.inverse()?;
                 let mut values = self.0;
                 for value in &mut values {
-                    *value = multiply_by(value.clone(), &inv_rhs);
+                    *value = value.clone().mul_cached(&inv_rhs);
                 }
                 Ok(Self(values))
             }
@@ -137,7 +133,7 @@ macro_rules! impl_vector {
                 let inv_rhs = rhs.inverse()?;
                 let mut values = self.0;
                 for value in &mut values {
-                    *value = multiply_by(value.clone(), &inv_rhs);
+                    *value = value.clone().mul_cached(&inv_rhs);
                 }
                 Ok(Self(values))
             }
@@ -230,7 +226,7 @@ macro_rules! impl_vector {
                 let inv_rhs = rhs.inverse()?;
                 let mut values = self.0;
                 for value in &mut values {
-                    *value = multiply_by(value.clone(), &inv_rhs);
+                    *value = value.clone().mul_cached(&inv_rhs);
                 }
                 Ok(Self(values))
             }

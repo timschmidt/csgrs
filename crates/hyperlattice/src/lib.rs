@@ -202,6 +202,10 @@ impl Scalar {
         self.0.inverse().map(Self)
     }
 
+    pub(crate) fn mul_cached(self, factor: &Self) -> Self {
+        self * factor.clone()
+    }
+
     /// Raises this scalar to a scalar exponent.
     pub fn pow(self, exponent: Self) -> BlasResult<Self> {
         self.0.pow(exponent.0).map(Self)

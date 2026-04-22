@@ -30,6 +30,22 @@ fn matrix4_identity_and_vector_multiply() {
 }
 
 #[test]
+fn matrix4_inverse_and_determinant_handle_general_integer_matrix() {
+    let matrix = Matrix4::new([
+        [r(1), r(2), r(3), r(4)],
+        [r(0), r(1), r(4), r(2)],
+        [r(5), r(6), r(0), r(1)],
+        [r(2), r(7), r(1), r(3)],
+    ]);
+
+    assert_eq!(matrix.determinant(), r(-198));
+    assert_eq!(
+        matrix.clone() * matrix.inverse().unwrap(),
+        Matrix4::identity()
+    );
+}
+
+#[test]
 fn matrix_scalar_add_and_subtract_are_componentwise() {
     let matrix = Matrix3::new([[r(1), r(2), r(3)], [r(4), r(5), r(6)], [r(7), r(8), r(9)]]);
 
