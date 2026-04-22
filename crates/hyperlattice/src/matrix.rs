@@ -33,6 +33,46 @@ fn ordinary_pivot<B: Backend, const N: usize>(
     unknown
 }
 
+fn identity_array<B: Backend, const N: usize>() -> [[Scalar<B>; N]; N] {
+    from_fn(|row| {
+        from_fn(|col| {
+            if row == col {
+                Scalar::one()
+            } else {
+                Scalar::zero()
+            }
+        })
+    })
+}
+
+fn transpose_array<B: Backend, const N: usize>(matrix: [[Scalar<B>; N]; N]) -> [[Scalar<B>; N]; N] {
+    from_fn(|row| from_fn(|col| matrix[col][row].clone()))
+}
+
+fn checked_pivot<B: Backend, const N: usize, F>(
+    left: &[[Scalar<B>; N]; N],
+    col: usize,
+    mut classify: F,
+) -> CheckedBlasResult<usize>
+where
+    F: FnMut(&Scalar<B>) -> ZeroStatus,
+{
+    let mut has_unknown = false;
+    for (row, values) in left.iter().enumerate().skip(col) {
+        match classify(&values[col]) {
+            ZeroStatus::NonZero => return Ok(row),
+            ZeroStatus::Unknown => has_unknown = true,
+            ZeroStatus::Zero => {}
+        }
+    }
+
+    if has_unknown {
+        Err(Problem::UnknownZero)
+    } else {
+        Err(Problem::DivideByZero)
+    }
+}
+
 /// Three-by-three row-major matrix.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Matrix3<B: Backend = DefaultBackend>(
@@ -51,15 +91,7 @@ fn invert_matrix<B: Backend, const N: usize>(
     matrix: [[Scalar<B>; N]; N],
 ) -> BlasResult<[[Scalar<B>; N]; N]> {
     let mut left = matrix;
-    let mut right: [[Scalar<B>; N]; N] = from_fn(|row| {
-        from_fn(|col| {
-            if row == col {
-                Scalar::one()
-            } else {
-                Scalar::zero()
-            }
-        })
-    });
+    let mut right = identity_array();
 
     for col in 0..N {
         let pivot = ordinary_pivot(&left, col);
@@ -96,39 +128,99 @@ fn invert_matrix<B: Backend, const N: usize>(
     Ok(right)
 }
 
-fn invert_matrix_checked<B: Backend, const N: usize>(
-    matrix: [[Scalar<B>; N]; N],
-) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
-    let mut left = matrix;
-    let mut right: [[Scalar<B>; N]; N] = from_fn(|row| {
-        from_fn(|col| {
-            if row == col {
-                Scalar::one()
-            } else {
-                Scalar::zero()
-            }
-        })
-    });
+fn solve_left_system<B: Backend, const N: usize>(
+    coefficients: [[Scalar<B>; N]; N],
+    rhs: [[Scalar<B>; N]; N],
+) -> BlasResult<[[Scalar<B>; N]; N]> {
+    let mut left = coefficients;
+    let mut right = rhs;
 
     for col in 0..N {
-        let Some(pivot) = (col..N).find(|&row| zero_status(&left[row][col]) == ZeroStatus::NonZero)
-        else {
-            let has_unknown =
-                (col..N).any(|row| zero_status(&left[row][col]) == ZeroStatus::Unknown);
-            return if has_unknown {
-                Err(Problem::UnknownZero)
-            } else {
-                Err(Problem::DivideByZero)
-            };
+        let pivot = ordinary_pivot(&left, col);
+        let Some(pivot) = pivot else {
+            return Err(Problem::DivideByZero);
         };
         if pivot != col {
             left.swap(col, pivot);
             right.swap(col, pivot);
         }
 
-        let pivot_value = left[col][col].clone();
-        require_known_nonzero(&pivot_value)?;
-        let inv_pivot = pivot_value.inverse()?;
+        let inv_pivot = left[col][col].clone().inverse()?;
+        for j in 0..N {
+            left[col][j] = left[col][j].clone().mul_cached(&inv_pivot);
+            right[col][j] = right[col][j].clone().mul_cached(&inv_pivot);
+        }
+
+        for row in 0..N {
+            if row == col {
+                continue;
+            }
+            let factor = left[row][col].clone();
+            if factor.definitely_zero() {
+                continue;
+            }
+            for j in 0..N {
+                left[row][j] = left[row][j].clone() - factor.clone() * left[col][j].clone();
+                right[row][j] = right[row][j].clone() - factor.clone() * right[col][j].clone();
+            }
+        }
+    }
+
+    Ok(right)
+}
+
+fn invert_matrix_checked<B: Backend, const N: usize>(
+    matrix: [[Scalar<B>; N]; N],
+) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
+    let mut left = matrix;
+    let mut right = identity_array();
+
+    for col in 0..N {
+        let pivot = checked_pivot(&left, col, zero_status)?;
+        if pivot != col {
+            left.swap(col, pivot);
+            right.swap(col, pivot);
+        }
+
+        let inv_pivot = left[col][col].clone().inverse()?;
+        for j in 0..N {
+            left[col][j] = left[col][j].clone().mul_cached(&inv_pivot);
+            right[col][j] = right[col][j].clone().mul_cached(&inv_pivot);
+        }
+
+        for row in 0..N {
+            if row == col {
+                continue;
+            }
+            let factor = left[row][col].clone();
+            if factor.definitely_zero() {
+                continue;
+            }
+            for j in 0..N {
+                left[row][j] = left[row][j].clone() - factor.clone() * left[col][j].clone();
+                right[row][j] = right[row][j].clone() - factor.clone() * right[col][j].clone();
+            }
+        }
+    }
+
+    Ok(right)
+}
+
+fn solve_left_system_checked<B: Backend, const N: usize>(
+    coefficients: [[Scalar<B>; N]; N],
+    rhs: [[Scalar<B>; N]; N],
+) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
+    let mut left = coefficients;
+    let mut right = rhs;
+
+    for col in 0..N {
+        let pivot = checked_pivot(&left, col, zero_status)?;
+        if pivot != col {
+            left.swap(col, pivot);
+            right.swap(col, pivot);
+        }
+
+        let inv_pivot = left[col][col].clone().inverse()?;
         for j in 0..N {
             left[col][j] = left[col][j].clone().mul_cached(&inv_pivot);
             right[col][j] = right[col][j].clone().mul_cached(&inv_pivot);
@@ -157,35 +249,56 @@ fn invert_matrix_checked_with_abort<B: Backend, const N: usize>(
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
     let mut left = matrix;
-    let mut right: [[Scalar<B>; N]; N] = from_fn(|row| {
-        from_fn(|col| {
-            if row == col {
-                Scalar::one()
-            } else {
-                Scalar::zero()
-            }
-        })
-    });
+    let mut right = identity_array();
 
     for col in 0..N {
-        let Some(pivot) = (col..N)
-            .find(|&row| zero_status_with_abort(&left[row][col], signal) == ZeroStatus::NonZero)
-        else {
-            let has_unknown = (col..N)
-                .any(|row| zero_status_with_abort(&left[row][col], signal) == ZeroStatus::Unknown);
-            return if has_unknown {
-                Err(Problem::UnknownZero)
-            } else {
-                Err(Problem::DivideByZero)
-            };
-        };
+        let pivot = checked_pivot(&left, col, |value| zero_status_with_abort(value, signal))?;
         if pivot != col {
             left.swap(col, pivot);
             right.swap(col, pivot);
         }
 
         let pivot_value = clone_with_abort(&left[col][col], signal);
-        require_known_nonzero_with_abort(&pivot_value, signal)?;
+        let inv_pivot = pivot_value.inverse()?;
+        for j in 0..N {
+            left[col][j] = left[col][j].clone().mul_cached(&inv_pivot);
+            right[col][j] = right[col][j].clone().mul_cached(&inv_pivot);
+        }
+
+        for row in 0..N {
+            if row == col {
+                continue;
+            }
+            let factor = left[row][col].clone();
+            if factor.definitely_zero() {
+                continue;
+            }
+            for j in 0..N {
+                left[row][j] = left[row][j].clone() - factor.clone() * left[col][j].clone();
+                right[row][j] = right[row][j].clone() - factor.clone() * right[col][j].clone();
+            }
+        }
+    }
+
+    Ok(right)
+}
+
+fn solve_left_system_checked_with_abort<B: Backend, const N: usize>(
+    coefficients: [[Scalar<B>; N]; N],
+    rhs: [[Scalar<B>; N]; N],
+    signal: &AbortSignal,
+) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
+    let mut left = coefficients;
+    let mut right = rhs;
+
+    for col in 0..N {
+        let pivot = checked_pivot(&left, col, |value| zero_status_with_abort(value, signal))?;
+        if pivot != col {
+            left.swap(col, pivot);
+            right.swap(col, pivot);
+        }
+
+        let pivot_value = clone_with_abort(&left[col][col], signal);
         let inv_pivot = pivot_value.inverse()?;
         for j in 0..N {
             left[col][j] = left[col][j].clone().mul_cached(&inv_pivot);
@@ -215,27 +328,11 @@ fn matrix_power<B: Backend, const N: usize>(
     exponent: i32,
 ) -> BlasResult<[[Scalar<B>; N]; N]> {
     if exponent == 0 {
-        return Ok(from_fn(|row| {
-            from_fn(|col| {
-                if row == col {
-                    Scalar::one()
-                } else {
-                    Scalar::zero()
-                }
-            })
-        }));
+        return Ok(identity_array());
     }
 
     let mut exp = exponent.unsigned_abs();
-    let mut result: [[Scalar<B>; N]; N] = from_fn(|row| {
-        from_fn(|col| {
-            if row == col {
-                Scalar::one()
-            } else {
-                Scalar::zero()
-            }
-        })
-    });
+    let mut result = identity_array();
     let mut factor = if exponent < 0 {
         invert_matrix(base)?
     } else {
@@ -260,27 +357,11 @@ fn matrix_power_checked<B: Backend, const N: usize>(
     exponent: i32,
 ) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
     if exponent == 0 {
-        return Ok(from_fn(|row| {
-            from_fn(|col| {
-                if row == col {
-                    Scalar::one()
-                } else {
-                    Scalar::zero()
-                }
-            })
-        }));
+        return Ok(identity_array());
     }
 
     let mut exp = exponent.unsigned_abs();
-    let mut result: [[Scalar<B>; N]; N] = from_fn(|row| {
-        from_fn(|col| {
-            if row == col {
-                Scalar::one()
-            } else {
-                Scalar::zero()
-            }
-        })
-    });
+    let mut result = identity_array();
     let mut factor = if exponent < 0 {
         invert_matrix_checked(base)?
     } else {
@@ -306,27 +387,11 @@ fn matrix_power_checked_with_abort<B: Backend, const N: usize>(
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
     if exponent == 0 {
-        return Ok(from_fn(|row| {
-            from_fn(|col| {
-                if row == col {
-                    Scalar::one()
-                } else {
-                    Scalar::zero()
-                }
-            })
-        }));
+        return Ok(identity_array());
     }
 
     let mut exp = exponent.unsigned_abs();
-    let mut result: [[Scalar<B>; N]; N] = from_fn(|row| {
-        from_fn(|col| {
-            if row == col {
-                Scalar::one()
-            } else {
-                Scalar::zero()
-            }
-        })
-    });
+    let mut result = identity_array();
     let mut factor = if exponent < 0 {
         invert_matrix_checked_with_abort(base, signal)?
     } else {
@@ -361,14 +426,40 @@ fn multiply_arrays<B: Backend, const N: usize>(
     })
 }
 
+fn right_divide_arrays<B: Backend, const N: usize>(
+    left: [[Scalar<B>; N]; N],
+    right: [[Scalar<B>; N]; N],
+) -> BlasResult<[[Scalar<B>; N]; N]> {
+    Ok(transpose_array(solve_left_system(
+        transpose_array(right),
+        transpose_array(left),
+    )?))
+}
+
+fn right_divide_arrays_checked<B: Backend, const N: usize>(
+    left: [[Scalar<B>; N]; N],
+    right: [[Scalar<B>; N]; N],
+) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
+    Ok(transpose_array(solve_left_system_checked(
+        transpose_array(right),
+        transpose_array(left),
+    )?))
+}
+
+fn right_divide_arrays_checked_with_abort<B: Backend, const N: usize>(
+    left: [[Scalar<B>; N]; N],
+    right: [[Scalar<B>; N]; N],
+    signal: &AbortSignal,
+) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
+    Ok(transpose_array(solve_left_system_checked_with_abort(
+        transpose_array(right),
+        transpose_array(left),
+        signal,
+    )?))
+}
+
 fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scalar<B>; 3]; 3]> {
     let m = &matrix;
-    let det = m[0][0].clone()
-        * (m[1][1].clone() * m[2][2].clone() - m[1][2].clone() * m[2][1].clone())
-        - m[0][1].clone() * (m[1][0].clone() * m[2][2].clone() - m[1][2].clone() * m[2][0].clone())
-        + m[0][2].clone() * (m[1][0].clone() * m[2][1].clone() - m[1][1].clone() * m[2][0].clone());
-    let inv_det = det.inverse()?;
-
     let c00 = m[1][1].clone() * m[2][2].clone() - m[1][2].clone() * m[2][1].clone();
     let c01 = m[0][2].clone() * m[2][1].clone() - m[0][1].clone() * m[2][2].clone();
     let c02 = m[0][1].clone() * m[1][2].clone() - m[0][2].clone() * m[1][1].clone();
@@ -378,6 +469,10 @@ fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scala
     let c20 = m[1][0].clone() * m[2][1].clone() - m[1][1].clone() * m[2][0].clone();
     let c21 = m[0][1].clone() * m[2][0].clone() - m[0][0].clone() * m[2][1].clone();
     let c22 = m[0][0].clone() * m[1][1].clone() - m[0][1].clone() * m[1][0].clone();
+    let det = m[0][0].clone() * c00.clone()
+        + m[0][1].clone() * c10.clone()
+        + m[0][2].clone() * c20.clone();
+    let inv_det = det.inverse()?;
 
     Ok([
         [
@@ -615,7 +710,7 @@ macro_rules! impl_matrix {
 
             /// Divides by another matrix using checked inversion of the divisor.
             pub fn div_matrix_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
-                Ok(Self(multiply_arrays(self.0, rhs.inverse_checked()?.0)))
+                Ok(Self(right_divide_arrays_checked(self.0, rhs.0)?))
             }
 
             /// Divides by another matrix using abort-aware checked inversion.
@@ -624,10 +719,9 @@ macro_rules! impl_matrix {
                 rhs: Self,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
-                Ok(Self(multiply_arrays(
-                    self.0,
-                    rhs.inverse_checked_with_abort(signal)?.0,
-                )))
+                Ok(Self(right_divide_arrays_checked_with_abort(
+                    self.0, rhs.0, signal,
+                )?))
             }
         }
 
@@ -755,7 +849,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Self) -> Self::Output {
-                Ok(Self(multiply_arrays(self.0, rhs.inverse()?.0)))
+                Ok(Self(right_divide_arrays(self.0, rhs.0)?))
             }
         }
 

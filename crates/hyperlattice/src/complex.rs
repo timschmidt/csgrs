@@ -48,15 +48,22 @@ impl<B: Backend> Complex<B> {
 
     /// Returns the multiplicative inverse.
     pub fn reciprocal(self) -> BlasResult<Self> {
-        let denom = self.norm_squared();
-        Ok(Self::new((self.re / denom.clone())?, ((-self.im) / denom)?))
+        let inv_denom = self.norm_squared().inverse()?;
+        Ok(Self::new(
+            self.re.mul_cached(&inv_denom),
+            (-self.im).mul_cached(&inv_denom),
+        ))
     }
 
     /// Returns the multiplicative inverse after rejecting unknown-zero norms.
     pub fn reciprocal_checked(self) -> CheckedBlasResult<Self> {
         let denom = self.norm_squared();
         require_known_nonzero(&denom)?;
-        Ok(Self::new((self.re / denom.clone())?, ((-self.im) / denom)?))
+        let inv_denom = denom.inverse()?;
+        Ok(Self::new(
+            self.re.mul_cached(&inv_denom),
+            (-self.im).mul_cached(&inv_denom),
+        ))
     }
 
     /// Raises this complex value to an integer exponent.
@@ -124,17 +131,23 @@ impl<B: Backend> Complex<B> {
     pub fn div_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
         let denom = rhs.norm_squared();
         require_known_nonzero(&denom)?;
+        let inv_denom = denom.inverse()?;
+        let re = self.re.clone() * rhs.re.clone() + self.im.clone() * rhs.im.clone();
+        let im = self.im * rhs.re - self.re * rhs.im;
         Ok(Self::new(
-            ((self.re.clone() * rhs.re.clone() + self.im.clone() * rhs.im.clone())
-                / denom.clone())?,
-            ((self.im * rhs.re - self.re * rhs.im) / denom)?,
+            re.mul_cached(&inv_denom),
+            im.mul_cached(&inv_denom),
         ))
     }
 
     /// Divides by a real scalar after rejecting unknown-zero divisors.
     pub fn div_real_checked(self, rhs: Scalar<B>) -> CheckedBlasResult<Self> {
         require_known_nonzero(&rhs)?;
-        Ok(Self::new((self.re / rhs.clone())?, (self.im / rhs)?))
+        let inv_rhs = rhs.inverse()?;
+        Ok(Self::new(
+            self.re.mul_cached(&inv_rhs),
+            self.im.mul_cached(&inv_rhs),
+        ))
     }
 }
 
@@ -192,11 +205,12 @@ impl<B: Backend> Div for Complex<B> {
     type Output = BlasResult<Self>;
 
     fn div(self, rhs: Self) -> Self::Output {
-        let denom = rhs.norm_squared();
+        let inv_denom = rhs.norm_squared().inverse()?;
+        let re = self.re.clone() * rhs.re.clone() + self.im.clone() * rhs.im.clone();
+        let im = self.im * rhs.re - self.re * rhs.im;
         Ok(Self::new(
-            ((self.re.clone() * rhs.re.clone() + self.im.clone() * rhs.im.clone())
-                / denom.clone())?,
-            ((self.im * rhs.re - self.re * rhs.im) / denom)?,
+            re.mul_cached(&inv_denom),
+            im.mul_cached(&inv_denom),
         ))
     }
 }
@@ -205,7 +219,11 @@ impl<B: Backend> Div<Scalar<B>> for Complex<B> {
     type Output = BlasResult<Self>;
 
     fn div(self, rhs: Scalar<B>) -> Self::Output {
-        Ok(Self::new((self.re / rhs.clone())?, (self.im / rhs)?))
+        let inv_rhs = rhs.inverse()?;
+        Ok(Self::new(
+            self.re.mul_cached(&inv_rhs),
+            self.im.mul_cached(&inv_rhs),
+        ))
     }
 }
 

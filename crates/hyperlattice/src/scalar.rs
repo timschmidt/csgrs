@@ -228,7 +228,9 @@ pub fn cosh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
 
 /// Returns the hyperbolic tangent of `value`.
 pub fn tanh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    sinh(value.clone())? / cosh(value)?
+    let positive = value.clone().exp()?;
+    let negative = (-value).exp()?;
+    (positive.clone() - negative.clone()) / (positive + negative)
 }
 
 /// Returns the inverse sine of `value`.

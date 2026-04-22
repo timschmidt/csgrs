@@ -116,6 +116,59 @@ fn checked_matrix_inverse_rejects_singular_matrices() {
 }
 
 #[test]
+fn matrix3_division_solves_right_division() {
+    let numerator = Matrix3::new([[r(3), r(1), r(4)], [r(1), r(5), r(9)], [r(2), r(6), r(5)]]);
+    let divisor = Matrix3::new([[r(2), r(0), r(1)], [r(1), r(3), r(0)], [r(0), r(2), r(1)]]);
+
+    let quotient = (numerator.clone() / divisor.clone()).unwrap();
+
+    assert_eq!(quotient * divisor, numerator);
+}
+
+#[test]
+fn checked_matrix3_division_matches_ordinary_right_division() {
+    let numerator = Matrix3::new([[r(4), r(2), r(7)], [r(0), r(3), r(1)], [r(5), r(8), r(6)]]);
+    let divisor = Matrix3::new([[r(1), r(2), r(0)], [r(0), r(1), r(3)], [r(2), r(0), r(1)]]);
+    let signal = abort_signal();
+
+    let ordinary = (numerator.clone() / divisor.clone()).unwrap();
+
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_checked(divisor.clone())
+            .unwrap(),
+        ordinary
+    );
+    assert_eq!(
+        numerator
+            .div_matrix_checked_with_abort(divisor, &signal)
+            .unwrap(),
+        ordinary
+    );
+}
+
+#[test]
+fn matrix4_division_solves_right_division() {
+    let numerator = Matrix4::new([
+        [r(1), r(3), r(5), r(7)],
+        [r(2), r(4), r(6), r(8)],
+        [r(9), r(7), r(5), r(3)],
+        [r(8), r(6), r(4), r(2)],
+    ]);
+    let divisor = Matrix4::new([
+        [r(2), r(0), r(1), r(0)],
+        [r(1), r(3), r(0), r(1)],
+        [r(0), r(2), r(1), r(0)],
+        [r(1), r(0), r(0), r(2)],
+    ]);
+
+    let quotient = (numerator.clone() / divisor.clone()).unwrap();
+
+    assert_eq!(quotient * divisor, numerator);
+}
+
+#[test]
 fn checked_matrix_inverse_rejects_unknown_zero_pivots() {
     let matrix = Matrix3::new([
         [unknown_zero(), r(0), r(0)],
