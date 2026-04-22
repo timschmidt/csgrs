@@ -851,11 +851,6 @@ fn blas_mat4_b_rational() -> Matrix4 {
     ])
 }
 
-#[cfg(feature = "realistic-backend")]
-fn trig_rational() -> Scalar {
-    q(12_345_678_901_234_567, 10_000_000_000_000_000)
-}
-
 fn bench_vectors(c: &mut Criterion) {
     let mut group = c.benchmark_group("vectors");
     let lhs = sample_vec3();
@@ -1080,46 +1075,104 @@ fn bench_matrix4(c: &mut Criterion) {
     group.finish();
 }
 
+#[derive(Clone, Copy)]
+struct TrigCase {
+    name: &'static str,
+    value: f64,
+}
+
+fn trig_cases() -> [TrigCase; 6] {
+    [
+        TrigCase {
+            name: "0.1",
+            value: 0.1,
+        },
+        TrigCase {
+            name: "1.23456789",
+            value: 1.23456789,
+        },
+        TrigCase {
+            name: "1e6",
+            value: 1.0e6,
+        },
+        TrigCase {
+            name: "1e30",
+            value: 1.0e30,
+        },
+        TrigCase {
+            name: "pi_7",
+            value: std::f64::consts::PI / 7.0,
+        },
+        TrigCase {
+            name: "1000pi_eps",
+            value: 1000.0 * std::f64::consts::PI + 1.0e-20,
+        },
+    ]
+}
+
+#[cfg(feature = "realistic-backend")]
+fn one_e_minus_20() -> Scalar {
+    "0.00000000000000000001".parse::<Rational>().unwrap().into()
+}
+
+#[cfg(feature = "realistic-backend")]
+fn trig_rational(case: TrigCase) -> Scalar {
+    match case.name {
+        "0.1" => q(1, 10),
+        "1.23456789" => q(123_456_789, 100_000_000),
+        "1e6" => 1_000_000.into(),
+        "1e30" => 1_000_000_000_000_000_000_000_000_000_000_i128.into(),
+        "pi_7" => (Scalar::pi() / Scalar::from(7)).unwrap(),
+        "1000pi_eps" => Scalar::pi() * Scalar::from(1000) + one_e_minus_20(),
+        _ => unreachable!("all trig cases are covered"),
+    }
+}
+
 fn bench_scalar_trig(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_trig");
-    let value = 1.2345678901234567_f64;
 
-    let blas_value = s(value);
-    group.bench_function(format!("{BLAS_BACKEND}/sin"), |b| {
-        b.iter(|| black_box(realistic_blas::sin(black_box(blas_value.clone()))))
-    });
-    group.bench_function(format!("{BLAS_BACKEND}/cos"), |b| {
-        b.iter(|| black_box(realistic_blas::cos(black_box(blas_value.clone()))))
-    });
+    for case in trig_cases() {
+        let blas_value = s(case.value);
+        group.bench_function(format!("{BLAS_BACKEND}/{}/sin", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::sin(black_box(blas_value.clone()))))
+        });
+        group.bench_function(format!("{BLAS_BACKEND}/{}/cos", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::cos(black_box(blas_value.clone()))))
+        });
 
-    #[cfg(feature = "realistic-backend")]
-    {
-        let rational_value = trig_rational();
-        group.bench_function("realistic-rational/sin", |b| {
-            b.iter(|| black_box(realistic_blas::sin(black_box(rational_value.clone()))))
-        });
-        group.bench_function("realistic-rational/cos", |b| {
-            b.iter(|| black_box(realistic_blas::cos(black_box(rational_value.clone()))))
-        });
+        #[cfg(feature = "realistic-backend")]
+        {
+            let rational_value = trig_rational(case);
+            group.bench_function(format!("realistic-rational/{}/sin", case.name), |b| {
+                b.iter(|| black_box(realistic_blas::sin(black_box(rational_value.clone()))))
+            });
+            group.bench_function(format!("realistic-rational/{}/cos", case.name), |b| {
+                b.iter(|| black_box(realistic_blas::cos(black_box(rational_value.clone()))))
+            });
+        }
     }
 
     let mut astro_ctx = astro_backend::Ctx::new(128);
-    let astro_value = astro_ctx.f(value);
-    group.bench_function("astro128/sin", |b| {
-        b.iter(|| astro_ctx.sin(black_box(&astro_value)))
-    });
-    group.bench_function("astro128/cos", |b| {
-        b.iter(|| astro_ctx.cos(black_box(&astro_value)))
-    });
+    for case in trig_cases() {
+        let astro_value = astro_ctx.f(case.value);
+        group.bench_function(format!("astro128/{}/sin", case.name), |b| {
+            b.iter(|| astro_ctx.sin(black_box(&astro_value)))
+        });
+        group.bench_function(format!("astro128/{}/cos", case.name), |b| {
+            b.iter(|| astro_ctx.cos(black_box(&astro_value)))
+        });
+    }
 
     let arp_ctx = arp_backend::Ctx::new(128);
-    let arp_value = arp_ctx.f(value);
-    group.bench_function("arp128/sin", |b| {
-        b.iter(|| arp_ctx.sin(black_box(&arp_value)))
-    });
-    group.bench_function("arp128/cos", |b| {
-        b.iter(|| arp_ctx.cos(black_box(&arp_value)))
-    });
+    for case in trig_cases() {
+        let arp_value = arp_ctx.f(case.value);
+        group.bench_function(format!("arp128/{}/sin", case.name), |b| {
+            b.iter(|| arp_ctx.sin(black_box(&arp_value)))
+        });
+        group.bench_function(format!("arp128/{}/cos", case.name), |b| {
+            b.iter(|| arp_ctx.cos(black_box(&arp_value)))
+        });
+    }
 
     group.finish();
 }
