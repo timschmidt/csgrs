@@ -22,11 +22,11 @@ fn scalar_functions() {
 #[test]
 fn scalar_functions_reject_invalid_domains() {
     assert_eq!(reciprocal(zero()), Err(Problem::DivideByZero));
-    assert_eq!(sqrt((-1).into()), Err(Problem::SqrtNegative));
+    assert_eq!(sqrt(r(-1)), Err(Problem::SqrtNegative));
     assert_eq!(ln(zero()), Err(Problem::NotANumber));
-    assert_eq!(ln((-1).into()), Err(Problem::NotANumber));
+    assert_eq!(ln(r(-1)), Err(Problem::NotANumber));
     assert_eq!(log10(zero()), Err(Problem::NotANumber));
-    assert_eq!(log10((-1).into()), Err(Problem::NotANumber));
+    assert_eq!(log10(r(-1)), Err(Problem::NotANumber));
     assert_eq!(asin(r(2)), Err(Problem::NotANumber));
     assert_eq!(acos(r(2)), Err(Problem::NotANumber));
     assert_eq!(acosh(zero()), Err(Problem::NotANumber));

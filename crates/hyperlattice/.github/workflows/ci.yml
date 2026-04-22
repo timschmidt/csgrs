@@ -23,6 +23,8 @@ jobs:
             args: ""
           - name: approx
             args: "--no-default-features --features approx-backend"
+          - name: all-backends
+            args: "--all-features"
 
     steps:
       - name: Checkout

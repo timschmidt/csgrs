@@ -3,7 +3,7 @@ use std::hint::black_box;
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 #[cfg(feature = "realistic-backend")]
 use realistic_blas::Rational;
-use realistic_blas::{Matrix3, Matrix4, Scalar, Vector3, Vector4};
+use realistic_blas::{Complex, DefaultBackend, Matrix3, Matrix4, Scalar, Vector3, Vector4};
 
 #[cfg(feature = "realistic-backend")]
 const BLAS_BACKEND: &str = "realistic";
@@ -1122,8 +1122,8 @@ fn trig_rational(case: TrigCase) -> Scalar {
         "1.23456789" => q(123_456_789, 100_000_000),
         "1e6" => 1_000_000.into(),
         "1e30" => 1_000_000_000_000_000_000_000_000_000_000_i128.into(),
-        "pi_7" => (Scalar::pi() / Scalar::from(7)).unwrap(),
-        "1000pi_eps" => Scalar::pi() * Scalar::from(1000) + one_e_minus_20(),
+        "pi_7" => (Scalar::<DefaultBackend>::pi() / Scalar::from(7)).unwrap(),
+        "1000pi_eps" => Scalar::<DefaultBackend>::pi() * Scalar::from(1000) + one_e_minus_20(),
         _ => unreachable!("all trig cases are covered"),
     }
 }
@@ -1177,6 +1177,540 @@ fn bench_scalar_trig(c: &mut Criterion) {
     group.finish();
 }
 
+fn abort_signal() -> realistic_blas::AbortSignal {
+    std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false))
+}
+
+fn bench_scalar_operations(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scalar_ops");
+    let lhs = s(2.5);
+    let rhs = s(1.25);
+    let positive = s(9.0);
+    let trig = s(0.5);
+    let signal = abort_signal();
+
+    group.bench_function(format!("{BLAS_BACKEND}/zero"), |b| {
+        b.iter(|| black_box(Scalar::<DefaultBackend>::zero()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/one"), |b| {
+        b.iter(|| black_box(Scalar::<DefaultBackend>::one()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/e"), |b| {
+        b.iter(|| black_box(Scalar::<DefaultBackend>::e()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/pi"), |b| {
+        b.iter(|| black_box(Scalar::<DefaultBackend>::pi()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/tau"), |b| {
+        b.iter(|| black_box(realistic_blas::tau()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/add"), |b| {
+        b.iter(|| black_box(black_box(lhs.clone()) + black_box(rhs.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/sub"), |b| {
+        b.iter(|| black_box(black_box(lhs.clone()) - black_box(rhs.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/neg"), |b| {
+        b.iter(|| black_box(-black_box(lhs.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mul"), |b| {
+        b.iter(|| black_box(black_box(lhs.clone()) * black_box(rhs.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/div"), |b| {
+        b.iter(|| black_box((black_box(lhs.clone()) / black_box(rhs.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/reciprocal"), |b| {
+        b.iter(|| black_box(realistic_blas::reciprocal(black_box(rhs.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/reciprocal_checked"), |b| {
+        b.iter(|| black_box(realistic_blas::reciprocal_checked(black_box(rhs.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/reciprocal_checked_abort"), |b| {
+        b.iter(|| {
+            black_box(
+                realistic_blas::reciprocal_checked_with_abort(black_box(rhs.clone()), &signal)
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/pow"), |b| {
+        b.iter(|| {
+            black_box(realistic_blas::pow(black_box(lhs.clone()), black_box(rhs.clone())).unwrap())
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/powi"), |b| {
+        b.iter(|| black_box(realistic_blas::powi(black_box(lhs.clone()), 5).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/exp"), |b| {
+        b.iter(|| black_box(realistic_blas::exp(black_box(rhs.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/ln"), |b| {
+        b.iter(|| black_box(realistic_blas::ln(black_box(positive.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/log10"), |b| {
+        b.iter(|| black_box(realistic_blas::log10(black_box(positive.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/log10_abort"), |b| {
+        b.iter(|| {
+            black_box(
+                realistic_blas::log10_with_abort(black_box(positive.clone()), &signal).unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/sqrt"), |b| {
+        b.iter(|| black_box(realistic_blas::sqrt(black_box(positive.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/sin"), |b| {
+        b.iter(|| black_box(realistic_blas::sin(black_box(trig.clone()))))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/cos"), |b| {
+        b.iter(|| black_box(realistic_blas::cos(black_box(trig.clone()))))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/tan"), |b| {
+        b.iter(|| black_box(realistic_blas::tan(black_box(trig.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/sinh"), |b| {
+        b.iter(|| black_box(realistic_blas::sinh(black_box(trig.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/cosh"), |b| {
+        b.iter(|| black_box(realistic_blas::cosh(black_box(trig.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/tanh"), |b| {
+        b.iter(|| black_box(realistic_blas::tanh(black_box(trig.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/asin"), |b| {
+        b.iter(|| black_box(realistic_blas::asin(black_box(trig.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/asin_abort"), |b| {
+        b.iter(|| {
+            black_box(realistic_blas::asin_with_abort(black_box(trig.clone()), &signal).unwrap())
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/acos"), |b| {
+        b.iter(|| black_box(realistic_blas::acos(black_box(trig.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/acos_abort"), |b| {
+        b.iter(|| {
+            black_box(realistic_blas::acos_with_abort(black_box(trig.clone()), &signal).unwrap())
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/atan"), |b| {
+        b.iter(|| black_box(realistic_blas::atan(black_box(trig.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/atan_abort"), |b| {
+        b.iter(|| {
+            black_box(realistic_blas::atan_with_abort(black_box(trig.clone()), &signal).unwrap())
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/asinh"), |b| {
+        b.iter(|| black_box(realistic_blas::asinh(black_box(trig.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/asinh_abort"), |b| {
+        b.iter(|| {
+            black_box(realistic_blas::asinh_with_abort(black_box(trig.clone()), &signal).unwrap())
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/acosh"), |b| {
+        b.iter(|| black_box(realistic_blas::acosh(black_box(positive.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/acosh_abort"), |b| {
+        b.iter(|| {
+            black_box(
+                realistic_blas::acosh_with_abort(black_box(positive.clone()), &signal).unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/atanh"), |b| {
+        b.iter(|| black_box(realistic_blas::atanh(black_box(trig.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/atanh_abort"), |b| {
+        b.iter(|| {
+            black_box(realistic_blas::atanh_with_abort(black_box(trig.clone()), &signal).unwrap())
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/zero_status"), |b| {
+        b.iter(|| black_box(realistic_blas::zero_status(black_box(&lhs))))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/zero_status_abort"), |b| {
+        b.iter(|| {
+            black_box(realistic_blas::zero_status_with_abort(
+                black_box(&lhs),
+                &signal,
+            ))
+        })
+    });
+
+    group.finish();
+}
+
+fn bench_complex_operations(c: &mut Criterion) {
+    let mut group = c.benchmark_group("complex_ops");
+    let lhs = Complex::new(s(3.0), s(4.0));
+    let rhs = Complex::new(s(1.5), s(-2.0));
+    let real = s(2.0);
+
+    group.bench_function(format!("{BLAS_BACKEND}/zero"), |b| {
+        b.iter(|| black_box(Complex::<DefaultBackend>::zero()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/one"), |b| {
+        b.iter(|| black_box(Complex::<DefaultBackend>::one()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/i"), |b| {
+        b.iter(|| black_box(Complex::<DefaultBackend>::i()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/free_i"), |b| {
+        b.iter(|| black_box(realistic_blas::i()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/conjugate"), |b| {
+        b.iter(|| black_box(black_box(lhs.clone()).conjugate()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/norm_squared"), |b| {
+        b.iter(|| black_box(black_box(&lhs).norm_squared()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/reciprocal"), |b| {
+        b.iter(|| black_box(black_box(lhs.clone()).reciprocal().unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/reciprocal_checked"), |b| {
+        b.iter(|| black_box(black_box(lhs.clone()).reciprocal_checked().unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/powi"), |b| {
+        b.iter(|| black_box(black_box(lhs.clone()).powi(5).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/powi_checked"), |b| {
+        b.iter(|| black_box(black_box(lhs.clone()).powi_checked(5).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/div_checked"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs.clone())
+                    .div_checked(black_box(rhs.clone()))
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/div_real_checked"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs.clone())
+                    .div_real_checked(black_box(real.clone()))
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/from_scalar"), |b| {
+        b.iter(|| black_box(Complex::from(black_box(real.clone()))))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/add"), |b| {
+        b.iter(|| black_box(black_box(lhs.clone()) + black_box(rhs.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/sub"), |b| {
+        b.iter(|| black_box(black_box(lhs.clone()) - black_box(rhs.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/neg"), |b| {
+        b.iter(|| black_box(-black_box(lhs.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mul"), |b| {
+        b.iter(|| black_box(black_box(lhs.clone()) * black_box(rhs.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/div"), |b| {
+        b.iter(|| black_box((black_box(lhs.clone()) / black_box(rhs.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/div_real"), |b| {
+        b.iter(|| black_box((black_box(lhs.clone()) / black_box(real.clone())).unwrap()))
+    });
+
+    group.finish();
+}
+
+fn bench_vector_operations(c: &mut Criterion) {
+    let mut group = c.benchmark_group("vector_ops");
+    let lhs3 = blas_vec3(sample_vec3());
+    let rhs3 = blas_vec3(sample_vec3_b());
+    let lhs4 = blas_vec4(sample_vec4());
+    let rhs4 = Vector4::new([s(-1.0), s(2.0), s(-3.0), s(4.0)]);
+    let scalar = s(2.0);
+    let signal = abort_signal();
+
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 new"), |b| {
+        b.iter(|| black_box(Vector3::new([s(1.0), s(2.0), s(3.0)])))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 zero"), |b| {
+        b.iter(|| black_box(Vector3::<DefaultBackend>::zero()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 dot_abort"), |b| {
+        b.iter(|| black_box(black_box(&lhs3).dot_with_abort(black_box(&rhs3), &signal)))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 magnitude_abort"), |b| {
+        b.iter(|| black_box(black_box(&lhs3).magnitude_with_abort(&signal).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 normalize_checked"), |b| {
+        b.iter(|| black_box(black_box(&lhs3).normalize_checked().unwrap()))
+    });
+    group.bench_function(
+        format!("{BLAS_BACKEND}/vec3 normalize_checked_abort"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(&lhs3)
+                        .normalize_checked_with_abort(&signal)
+                        .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 div_scalar_checked"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs3.clone())
+                    .div_scalar_checked(black_box(scalar.clone()))
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(
+        format!("{BLAS_BACKEND}/vec3 div_scalar_checked_abort"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(lhs3.clone())
+                        .div_scalar_checked_with_abort(black_box(scalar.clone()), &signal)
+                        .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 add"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()) + black_box(rhs3.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 add_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()) + black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 sub"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()) - black_box(rhs3.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 sub_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()) - black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 neg"), |b| {
+        b.iter(|| black_box(-black_box(lhs3.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 mul_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()) * black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec3 div_scalar"), |b| {
+        b.iter(|| black_box((black_box(lhs3.clone()) / black_box(scalar.clone())).unwrap()))
+    });
+
+    group.bench_function(format!("{BLAS_BACKEND}/vec4 dot"), |b| {
+        b.iter(|| black_box(black_box(&lhs4).dot(black_box(&rhs4))))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec4 magnitude"), |b| {
+        b.iter(|| black_box(black_box(&lhs4).magnitude().unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec4 normalize"), |b| {
+        b.iter(|| black_box(black_box(&lhs4).normalize().unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec4 add"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()) + black_box(rhs4.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec4 add_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()) + black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec4 sub"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()) - black_box(rhs4.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec4 sub_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()) - black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec4 neg"), |b| {
+        b.iter(|| black_box(-black_box(lhs4.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec4 mul_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()) * black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/vec4 div_scalar"), |b| {
+        b.iter(|| black_box((black_box(lhs4.clone()) / black_box(scalar.clone())).unwrap()))
+    });
+
+    group.finish();
+}
+
+fn bench_matrix_operations(c: &mut Criterion) {
+    let mut group = c.benchmark_group("matrix_ops");
+    let lhs3 = blas_mat3(sample_mat3());
+    let rhs3 = blas_mat3(sample_mat3_b());
+    let lhs4 = blas_mat4(sample_mat4());
+    let rhs4 = blas_mat4(sample_mat4_b());
+    let scalar = s(2.0);
+    let signal = abort_signal();
+
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 new"), |b| {
+        b.iter(|| black_box(blas_mat3(sample_mat3())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 zero"), |b| {
+        b.iter(|| black_box(Matrix3::<DefaultBackend>::zero()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 identity"), |b| {
+        b.iter(|| black_box(Matrix3::<DefaultBackend>::identity()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 transpose"), |b| {
+        b.iter(|| black_box(black_box(&lhs3).transpose()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 reciprocal"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()).reciprocal().unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 reciprocal_checked"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()).reciprocal_checked().unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 inverse_checked"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()).inverse_checked().unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 inverse_checked_abort"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs3.clone())
+                    .inverse_checked_with_abort(&signal)
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 powi"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()).powi(3).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 powi_checked"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()).powi_checked(3).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 powi_checked_abort"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs3.clone())
+                    .powi_checked_with_abort(3, &signal)
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 div_scalar_checked"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs3.clone())
+                    .div_scalar_checked(black_box(scalar.clone()))
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(
+        format!("{BLAS_BACKEND}/mat3 div_scalar_checked_abort"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(lhs3.clone())
+                        .div_scalar_checked_with_abort(black_box(scalar.clone()), &signal)
+                        .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 div_matrix_checked"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs3.clone())
+                    .div_matrix_checked(black_box(rhs3.clone()))
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(
+        format!("{BLAS_BACKEND}/mat3 div_matrix_checked_abort"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(lhs3.clone())
+                        .div_matrix_checked_with_abort(black_box(rhs3.clone()), &signal)
+                        .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 add"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()) + black_box(rhs3.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 add_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()) + black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 sub"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()) - black_box(rhs3.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 sub_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()) - black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 neg"), |b| {
+        b.iter(|| black_box(-black_box(lhs3.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 mul_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs3.clone()) * black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 div_scalar"), |b| {
+        b.iter(|| black_box((black_box(lhs3.clone()) / black_box(scalar.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 div_matrix"), |b| {
+        b.iter(|| black_box((black_box(lhs3.clone()) / black_box(rhs3.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat3 bitxor"), |b| {
+        b.iter(|| black_box((black_box(lhs3.clone()) ^ 3).unwrap()))
+    });
+
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 zero"), |b| {
+        b.iter(|| black_box(Matrix4::<DefaultBackend>::zero()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 identity"), |b| {
+        b.iter(|| black_box(Matrix4::<DefaultBackend>::identity()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 transpose"), |b| {
+        b.iter(|| black_box(black_box(&lhs4).transpose()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 reciprocal"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()).reciprocal().unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 reciprocal_checked"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()).reciprocal_checked().unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 powi"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()).powi(3).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 powi_checked"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()).powi_checked(3).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 add"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()) + black_box(rhs4.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 add_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()) + black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 sub"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()) - black_box(rhs4.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 sub_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()) - black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 neg"), |b| {
+        b.iter(|| black_box(-black_box(lhs4.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 mul_scalar"), |b| {
+        b.iter(|| black_box(black_box(lhs4.clone()) * black_box(scalar.clone())))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 div_scalar"), |b| {
+        b.iter(|| black_box((black_box(lhs4.clone()) / black_box(scalar.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 div_matrix"), |b| {
+        b.iter(|| black_box((black_box(lhs4.clone()) / black_box(rhs4.clone())).unwrap()))
+    });
+    group.bench_function(format!("{BLAS_BACKEND}/mat4 bitxor"), |b| {
+        b.iter(|| black_box((black_box(lhs4.clone()) ^ 3).unwrap()))
+    });
+
+    group.finish();
+}
+
 fn bench_precisions(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_trig_by_precision");
     let value = 1.2345678901234567_f64;
@@ -1210,6 +1744,10 @@ criterion_group!(
     bench_matrix3,
     bench_matrix4,
     bench_scalar_trig,
+    bench_scalar_operations,
+    bench_complex_operations,
+    bench_vector_operations,
+    bench_matrix_operations,
     bench_precisions
 );
 criterion_main!(benches);

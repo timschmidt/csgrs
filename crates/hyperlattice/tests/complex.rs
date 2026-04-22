@@ -22,14 +22,24 @@ fn complex_display_forwards_real_formatting() {
 #[test]
 fn checked_complex_operations_reject_zero_denominators() {
     let value = Complex::new(r(3), r(4));
+    let zero_complex: Complex = Complex::zero();
 
-    assert_eq!(Complex::zero().reciprocal(), Err(Problem::DivideByZero));
-    assert_eq!(value.clone() / Complex::zero(), Err(Problem::DivideByZero));
-    assert_eq!(value.clone() / zero(), Err(Problem::DivideByZero));
-    assert_eq!(Complex::zero().powi(-1), Err(Problem::DivideByZero));
-    assert_eq!(Complex::zero().powi_checked(0), Err(Problem::NotANumber));
     assert_eq!(
-        Complex::zero().reciprocal_checked(),
+        zero_complex.clone().reciprocal(),
+        Err(Problem::DivideByZero)
+    );
+    assert_eq!(
+        value.clone() / zero_complex.clone(),
+        Err(Problem::DivideByZero)
+    );
+    assert_eq!(value.clone() / zero(), Err(Problem::DivideByZero));
+    assert_eq!(zero_complex.clone().powi(-1), Err(Problem::DivideByZero));
+    assert_eq!(
+        zero_complex.clone().powi_checked(0),
+        Err(Problem::NotANumber)
+    );
+    assert_eq!(
+        zero_complex.reciprocal_checked(),
         Err(Problem::DivideByZero)
     );
     assert_eq!(

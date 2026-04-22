@@ -47,13 +47,11 @@ fn vector_display_forwards_real_formatting() {
 #[test]
 fn checked_vector_operations_reject_zero_divisors() {
     let vector = Vector3::new([r(1), r(2), r(3)]);
+    let zero_vector: Vector3 = Vector3::zero();
 
-    assert_eq!(Vector3::zero().normalize(), Err(Problem::DivideByZero));
+    assert_eq!(zero_vector.clone().normalize(), Err(Problem::DivideByZero));
     assert_eq!(vector.clone() / zero(), Err(Problem::DivideByZero));
-    assert_eq!(
-        Vector3::zero().normalize_checked(),
-        Err(Problem::DivideByZero)
-    );
+    assert_eq!(zero_vector.normalize_checked(), Err(Problem::DivideByZero));
     assert_eq!(
         vector.clone().div_scalar_checked(zero()),
         Err(Problem::DivideByZero)

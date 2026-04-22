@@ -4,7 +4,9 @@
 crate-owned `Scalar` type.
 
 The crate provides scalar helpers, complex numbers, 3D/4D vectors, and 3x3/4x4
-matrices using `Scalar` throughout. By default, `Scalar` is backed by
+matrices using `Scalar` throughout. `Scalar`, `Complex`, `Vector3`, `Vector4`,
+`Matrix3`, and `Matrix4` are generic over a backend marker and default to the
+feature-selected `DefaultBackend`. By default, `Scalar` is backed by
 [`realistic::Real`](https://crates.io/crates/realistic). The optional
 `approx-backend` uses an `f64` value plus an `f64` epsilon to model approximate
 error bounds and unknown-zero conditions.
@@ -14,6 +16,8 @@ error bounds and unknown-zero conditions.
 - Re-exports `realistic::{Real, Rational}` for explicit construction and interop
   when `realistic-backend` is enabled. Library operations use crate-owned
   `Scalar` and `Problem`.
+- Exposes `RealisticBackend`, `ApproxBackend`, and `DefaultBackend` markers so
+  both backends can be used in one build when both backend features are enabled.
 - Constants and scalar helpers: `zero`, `one`, `e`, `pi`, `tau`, `i`,
   `reciprocal`, `reciprocal_checked`, `pow`, `powi`.
 - Elementary functions: `exp`, `ln`, `log10`, `sqrt`, `sin`, `cos`, `tan`.
@@ -67,9 +71,11 @@ realistic_blas = {
 }
 ```
 
-The `realistic-backend` and `approx-backend` features are mutually exclusive.
-`cargo --all-features` is therefore expected to fail with a feature-selection
-error.
+Backend features gate availability rather than changing the shared API shape.
+The default feature set enables `realistic-backend`; when both
+`realistic-backend` and `approx-backend` are enabled, `DefaultBackend` remains
+`RealisticBackend` and approximate values can be requested explicitly with
+types such as `Scalar<ApproxBackend>` or `Vector3<ApproxBackend>`.
 
 ## Examples
 
@@ -89,6 +95,20 @@ assert_eq!(three, s(3));
 assert_eq!(tau(), s(2) * pi());
 assert_eq!(ln(realistic_blas::e()).unwrap(), s(1));
 assert_eq!(log10(s(100)).unwrap(), s(2));
+```
+
+### Explicit Backends
+
+```rust
+use realistic_blas::{ApproxBackend, RealisticBackend, Scalar, Vector3};
+
+let exact: Scalar<RealisticBackend> = Scalar::try_from(1.25).unwrap();
+let approx: Scalar<ApproxBackend> = Scalar::<ApproxBackend>::approx(1.25, 0.01).unwrap();
+
+let exact_vector = Vector3::<RealisticBackend>::new([exact.clone(), exact.clone(), exact]);
+let approx_vector = Vector3::<ApproxBackend>::new([approx.clone(), approx.clone(), approx]);
+
+assert_eq!(exact_vector.0.len(), approx_vector.0.len());
 ```
 
 Many operations are fallible because scalar arithmetic can fail for invalid
@@ -256,13 +276,15 @@ Run the standard checks:
 ```sh
 cargo fmt --check
 cargo test --all-targets
+cargo test --all-targets --all-features
 cargo test --all-targets --no-default-features --features approx-backend
 cargo clippy --all-targets -- -D warnings
+cargo clippy --all-targets --all-features -- -D warnings
 cargo clippy --all-targets --no-default-features --features approx-backend -- -D warnings
 ```
 
-Do not use `--all-features` for normal validation because the backend features
-are intentionally mutually exclusive.
+Use `--all-features` to validate that explicit backend type parameters can use
+the realistic and approximate backends in the same build.
 
 Run the Criterion benchmark suite:
 
@@ -271,39 +293,5 @@ cargo bench --bench mathbench
 cargo bench --bench mathbench --no-default-features --features approx-backend
 ```
 
-The benchmark names mirror a small mathbench-style subset: vector dot,
-magnitude, normalize, matrix determinant, inverse, matrix multiplication,
-matrix-vector transforms for 3x3/4x4 types, and scalar trigonometric functions.
-
-### Benchmark Results
-
-The following Criterion median estimates were collected on an AMD Ryzen 7
-5800X3D on Fedora. They compare this crate's two scalar backends with
-`astro-float` and `arpfloat` comparison backends. The `mathbench` comparison
-suite runs both comparison backends at 128-bit precision.
-
-| Benchmark | Approx | Realistic from f64 | Realistic rational | astro-float 128 | arpfloat 128 | Realistic f64 / approx | Realistic f64 / astro | Realistic f64 / arp |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `vec3 dot` | 6.57 ns | 4.38 us | 6.32 us | 301.70 ns | 764.51 ns | 666.32x | 14.50x | 5.72x |
-| `vec3 mag` | 10.73 ns | 7.64 us | 10.15 us | 5.88 us | 15.03 us | 711.73x | 1.30x | 0.51x |
-| `vec3 norm` | 21.95 ns | 13.04 us | 13.20 us | 6.35 us | 19.98 us | 594.17x | 2.05x | 0.65x |
-| `mat3 det` | 15.51 ns | 13.78 us | 3.42 us | 1.05 us | 2.71 us | 888.37x | 13.11x | 5.08x |
-| `mat3 inv` | 62.15 ns | 59.15 us | 14.05 us | 3.31 us | 12.29 us | 951.72x | 17.86x | 4.81x |
-| `mat3 mul` | 79.12 ns | 41.61 us | 13.27 us | 2.90 us | 8.79 us | 525.89x | 14.33x | 4.73x |
-| `mat3 x vec3` | 14.87 ns | 15.20 us | 12.39 us | 1.13 us | 2.87 us | 1021.72x | 13.45x | 5.30x |
-| `mat4 det` | 46.62 ns | 5.40 us | 5.36 us | 4.65 us | 9.31 us | 115.79x | 1.16x | 0.58x |
-| `mat4 inv` | 131.64 ns | 19.92 us | 19.39 us | 11.77 us | 35.04 us | 151.35x | 1.69x | 0.57x |
-| `mat4 mul` | 138.62 ns | 15.51 us | 15.14 us | 6.19 us | 16.93 us | 111.90x | 2.51x | 0.92x |
-| `mat4 x vec4` | 24.61 ns | 5.14 us | 5.06 us | 1.90 us | 4.31 us | 208.65x | 2.70x | 1.19x |
-| `sin 0.1` | 10.84 ns | 2.25 us | 2.40 us | 10.42 us | 124.97 us | 207.12x | 0.22x | 0.02x |
-| `cos 0.1` | 11.57 ns | 225.34 ns | 224.45 ns | 10.05 us | 25.53 us | 19.48x | 0.02x | 0.01x |
-| `sin 1.23456789` | 11.70 ns | 1.88 us | 1.89 us | 11.89 us | 264.47 us | 160.72x | 0.16x | 0.01x |
-| `cos 1.23456789` | 11.97 ns | 415.14 ns | 420.92 ns | 10.16 us | 171.65 us | 34.67x | 0.04x | 0.00x |
-| `sin 1e6` | 12.56 ns | 35.17 us | 35.24 us | 15.92 us | 267.64 us | 2800.21x | 2.21x | 0.13x |
-| `cos 1e6` | 12.32 ns | 21.64 us | 22.01 us | 13.54 us | 171.76 us | 1756.35x | 1.60x | 0.13x |
-| `sin 1e30` | 65.99 ns | 186.54 us | 185.02 us | 18.71 us | 275.44 us | 2826.92x | 9.97x | 0.68x |
-| `cos 1e30` | 68.18 ns | 139.53 us | 137.80 us | 15.35 us | 172.42 us | 2046.61x | 9.09x | 0.81x |
-| `sin pi_7` | 11.67 ns | 2.41 us | 4.35 us | 11.59 us | 124.49 us | 206.50x | 0.21x | 0.02x |
-| `cos pi_7` | 11.62 ns | 214.98 ns | 4.49 us | 10.32 us | 27.50 us | 18.51x | 0.02x | 0.01x |
-| `sin 1000pi_eps` | 11.84 ns | 23.04 us | 33.87 us | 16.00 us | 264.31 us | 1945.37x | 1.44x | 0.09x |
-| `cos 1000pi_eps` | 12.29 ns | 13.79 us | 24.52 us | 13.54 us | 155.22 us | 1122.38x | 1.02x | 0.09x |
+See [benchmarks.md](benchmarks.md) for operation coverage and benchmark
+results.

@@ -1,14 +1,23 @@
 use std::fmt;
 use std::ops::{Add, Mul, Neg, Sub};
 
+use crate::backend::{Backend, BackendScalar as BackendScalarTrait};
 use crate::{AbortSignal, BlasResult, Problem, ZeroStatus};
 
 const ROUNDING_EPSILON: f64 = f64::EPSILON;
 
 #[derive(Clone, Debug)]
-pub(crate) struct BackendScalar {
+pub struct BackendScalar {
     pub(crate) value: f64,
     pub(crate) epsilon: f64,
+}
+
+/// Backend marker for approximate `f64` values with absolute error bounds.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ApproxBackend;
+
+impl Backend for ApproxBackend {
+    type Repr = BackendScalar;
 }
 
 impl BackendScalar {
@@ -22,33 +31,56 @@ impl BackendScalar {
         Ok(Self { value, epsilon })
     }
 
-    pub(crate) fn zero() -> Self {
+    fn rounded(value: f64) -> Self {
+        Self {
+            value,
+            epsilon: ROUNDING_EPSILON * value.abs(),
+        }
+    }
+
+    fn rounded_with_input(value: f64, input_epsilon: f64) -> Self {
+        Self {
+            value,
+            epsilon: input_epsilon + ROUNDING_EPSILON * value.abs(),
+        }
+    }
+
+    fn from_unary(value: f64, propagated_epsilon: f64) -> BlasResult<Self> {
+        Self::new(
+            value,
+            propagated_epsilon.abs() + ROUNDING_EPSILON * value.abs(),
+        )
+    }
+}
+
+impl BackendScalarTrait for BackendScalar {
+    fn zero() -> Self {
         Self {
             value: 0.0,
             epsilon: 0.0,
         }
     }
 
-    pub(crate) fn one() -> Self {
+    fn one() -> Self {
         Self {
             value: 1.0,
             epsilon: 0.0,
         }
     }
 
-    pub(crate) fn e() -> Self {
+    fn e() -> Self {
         Self::rounded(std::f64::consts::E)
     }
 
-    pub(crate) fn pi() -> Self {
+    fn pi() -> Self {
         Self::rounded(std::f64::consts::PI)
     }
 
-    pub(crate) fn inverse(self) -> BlasResult<Self> {
+    fn inverse(self) -> BlasResult<Self> {
         Self::one().div(self)
     }
 
-    pub(crate) fn pow(self, exponent: Self) -> BlasResult<Self> {
+    fn pow(self, exponent: Self) -> BlasResult<Self> {
         let lower = self.value - self.epsilon;
         let upper = self.value + self.epsilon;
         let exponent_is_known_integer = exponent.epsilon == 0.0 && exponent.value.fract() == 0.0;
@@ -71,11 +103,11 @@ impl BackendScalar {
         Self::from_unary(center, self.epsilon + exponent.epsilon)
     }
 
-    pub(crate) fn exp(self) -> BlasResult<Self> {
+    fn exp(self) -> BlasResult<Self> {
         Self::from_unary(self.value.exp(), self.epsilon)
     }
 
-    pub(crate) fn ln(self) -> BlasResult<Self> {
+    fn ln(self) -> BlasResult<Self> {
         if self.value + self.epsilon <= 0.0 {
             return Err(Problem::NotANumber);
         }
@@ -85,7 +117,7 @@ impl BackendScalar {
         Self::from_unary(self.value.ln(), self.epsilon / self.value.abs())
     }
 
-    pub(crate) fn log10(self) -> BlasResult<Self> {
+    fn log10(self) -> BlasResult<Self> {
         if self.value + self.epsilon <= 0.0 {
             return Err(Problem::NotANumber);
         }
@@ -98,7 +130,7 @@ impl BackendScalar {
         )
     }
 
-    pub(crate) fn sqrt(self) -> BlasResult<Self> {
+    fn sqrt(self) -> BlasResult<Self> {
         let lower = self.value - self.epsilon;
         let upper = self.value + self.epsilon;
         if upper < 0.0 {
@@ -115,15 +147,15 @@ impl BackendScalar {
         Self::from_unary(value, epsilon)
     }
 
-    pub(crate) fn sin(self) -> Self {
+    fn sin(self) -> Self {
         Self::rounded_with_input(self.value.sin(), self.epsilon)
     }
 
-    pub(crate) fn cos(self) -> Self {
+    fn cos(self) -> Self {
         Self::rounded_with_input(self.value.cos(), self.epsilon)
     }
 
-    pub(crate) fn tan(self) -> BlasResult<Self> {
+    fn tan(self) -> BlasResult<Self> {
         let cos = self.value.cos();
         if cos.abs() <= self.epsilon {
             return Err(Problem::NotANumber);
@@ -131,7 +163,7 @@ impl BackendScalar {
         Self::from_unary(self.value.tan(), self.epsilon / (cos * cos).abs())
     }
 
-    pub(crate) fn div(self, rhs: Self) -> BlasResult<Self> {
+    fn div(self, rhs: Self) -> BlasResult<Self> {
         match rhs.zero_status() {
             ZeroStatus::Zero => return Err(Problem::DivideByZero),
             ZeroStatus::Unknown => return Err(Problem::UnknownZero),
@@ -144,11 +176,11 @@ impl BackendScalar {
         Self::new(center, epsilon + ROUNDING_EPSILON * center.abs())
     }
 
-    pub(crate) fn definitely_zero(&self) -> bool {
+    fn definitely_zero(&self) -> bool {
         self.value == 0.0 && self.epsilon == 0.0
     }
 
-    pub(crate) fn zero_status(&self) -> ZeroStatus {
+    fn zero_status(&self) -> ZeroStatus {
         if self.definitely_zero() {
             ZeroStatus::Zero
         } else if self.value.abs() > self.epsilon {
@@ -158,31 +190,10 @@ impl BackendScalar {
         }
     }
 
-    pub(crate) fn abort(&mut self, _signal: AbortSignal) {}
+    fn abort(&mut self, _signal: AbortSignal) {}
 
-    pub(crate) fn into_f64(self) -> f64 {
+    fn into_f64(self) -> f64 {
         self.value
-    }
-
-    fn rounded(value: f64) -> Self {
-        Self {
-            value,
-            epsilon: ROUNDING_EPSILON * value.abs(),
-        }
-    }
-
-    fn rounded_with_input(value: f64, input_epsilon: f64) -> Self {
-        Self {
-            value,
-            epsilon: input_epsilon + ROUNDING_EPSILON * value.abs(),
-        }
-    }
-
-    fn from_unary(value: f64, propagated_epsilon: f64) -> BlasResult<Self> {
-        Self::new(
-            value,
-            propagated_epsilon.abs() + ROUNDING_EPSILON * value.abs(),
-        )
     }
 }
 

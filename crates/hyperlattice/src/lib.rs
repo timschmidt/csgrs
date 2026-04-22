@@ -1,15 +1,18 @@
 //! Scalar-centered linear algebra primitives with selectable numeric backends.
 //!
 //! `realistic_blas` exposes a crate-owned [`Scalar`] type, complex numbers,
-//! 3D/4D vectors, and 3x3/4x4 matrices. The default `realistic-backend` stores
-//! scalars as `realistic::Real` values and re-exports `Real` and `Rational` for
-//! explicit interop. The `approx-backend` stores an `f64` center value plus an
-//! absolute `f64` error bound, which lets tests and callers exercise
-//! unknown-zero paths without depending on computable-real evaluation.
+//! 3D/4D vectors, and 3x3/4x4 matrices. These types are generic over a backend
+//! marker and default to [`DefaultBackend`]. The default `realistic-backend`
+//! stores scalars as `realistic::Real` values and re-exports `Real` and
+//! `Rational` for explicit interop. The `approx-backend` stores an `f64` center
+//! value plus an absolute `f64` error bound, which lets tests and callers
+//! exercise unknown-zero paths without depending on computable-real evaluation.
 //!
-//! Backend features are mutually exclusive. The default feature set enables
+//! Backend features gate backend availability. The default feature set enables
 //! `realistic-backend`; use `default-features = false, features =
-//! ["approx-backend"]` to select the approximate backend.
+//! ["approx-backend"]` to make the approximate backend the default, or enable
+//! both features and use [`Scalar`] with [`RealisticBackend`] and
+//! [`ApproxBackend`] explicitly.
 //!
 //! Most arithmetic that can fail returns [`BlasResult`]. Checked APIs use
 //! [`ZeroStatus`] and reject both definite zero and unknown-zero divisors,
@@ -128,73 +131,71 @@ pub type BlasProblem = Problem;
 
 mod backend;
 
+#[cfg(feature = "approx-backend")]
+pub use backend::ApproxBackend;
+pub use backend::DefaultBackend;
+#[cfg(feature = "realistic-backend")]
+pub use backend::RealisticBackend;
+pub use backend::{Backend, BackendScalar};
+
 /// Crate-owned scalar value used throughout the public API.
 ///
-/// `Scalar` hides the selected backend while preserving a shared arithmetic
-/// surface. The default realistic backend wraps `realistic::Real`; the approx
-/// backend stores a center value plus an absolute error bound.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Scalar(crate::backend::BackendScalar);
+/// The backend type parameter selects the representation and arithmetic
+/// behavior. The default backend is [`DefaultBackend`], which resolves to the
+/// realistic backend when the default feature set is enabled.
+pub struct Scalar<B: Backend = DefaultBackend>(B::Repr);
+
+impl<B: Backend> Clone for Scalar<B> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+impl<B: Backend> fmt::Debug for Scalar<B> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl<B: Backend> PartialEq for Scalar<B> {
+    fn eq(&self, rhs: &Self) -> bool {
+        self.0 == rhs.0
+    }
+}
 
 #[cfg(feature = "realistic-backend")]
-impl PartialEq<Rational> for Scalar {
+impl PartialEq<Rational> for Scalar<RealisticBackend> {
     fn eq(&self, rhs: &Rational) -> bool {
         self == &Self::from(rhs.clone())
     }
 }
 
 #[cfg(feature = "realistic-backend")]
-impl PartialEq<Scalar> for Rational {
-    fn eq(&self, rhs: &Scalar) -> bool {
+impl PartialEq<Scalar<RealisticBackend>> for Rational {
+    fn eq(&self, rhs: &Scalar<RealisticBackend>) -> bool {
         rhs == self
     }
 }
 
-impl Scalar {
-    /// Constructs a scalar from a realistic rational value.
-    ///
-    /// This constructor is only available with the `realistic-backend` feature.
-    #[cfg(feature = "realistic-backend")]
-    pub fn new(rational: Rational) -> Self {
-        rational.into()
-    }
-
-    /// Constructs a scalar from an approximate center value and error bound.
-    ///
-    /// With the approx backend, `epsilon` must be finite and non-negative and
-    /// is stored as the scalar's absolute error bound. With the realistic
-    /// backend, `epsilon` is ignored and `value` is converted to `Real`.
-    pub fn approx(value: f64, epsilon: f64) -> BlasResult<Self> {
-        #[cfg(all(not(feature = "realistic-backend"), feature = "approx-backend"))]
-        {
-            crate::backend::BackendScalar::new(value, epsilon).map(Self)
-        }
-
-        #[cfg(feature = "realistic-backend")]
-        {
-            let _ = epsilon;
-            Self::try_from(value)
-        }
-    }
-
+impl<B: Backend> Scalar<B> {
     /// Returns the additive identity.
     pub fn zero() -> Self {
-        Self(crate::backend::BackendScalar::zero())
+        Self(B::Repr::zero())
     }
 
     /// Returns the multiplicative identity.
     pub fn one() -> Self {
-        Self(crate::backend::BackendScalar::one())
+        Self(B::Repr::one())
     }
 
     /// Returns Euler's number.
     pub fn e() -> Self {
-        Self(crate::backend::BackendScalar::e())
+        Self(B::Repr::e())
     }
 
     /// Returns pi.
     pub fn pi() -> Self {
-        Self(crate::backend::BackendScalar::pi())
+        Self(B::Repr::pi())
     }
 
     /// Returns the multiplicative inverse of this scalar.
@@ -268,21 +269,52 @@ impl Scalar {
     }
 }
 
-impl fmt::Display for Scalar {
+#[cfg(feature = "realistic-backend")]
+impl Scalar<RealisticBackend> {
+    /// Constructs a scalar from a realistic rational value.
+    pub fn new(rational: Rational) -> Self {
+        rational.into()
+    }
+}
+
+#[cfg(feature = "approx-backend")]
+impl Scalar<ApproxBackend> {
+    /// Constructs an approximate scalar from a center value and error bound.
+    ///
+    /// `epsilon` must be finite and non-negative and is stored as the scalar's
+    /// absolute error bound.
+    pub fn approx(value: f64, epsilon: f64) -> BlasResult<Self> {
+        crate::backend::ApproxScalarRepr::new(value, epsilon).map(Self)
+    }
+}
+
+#[cfg(feature = "realistic-backend")]
+impl Scalar<RealisticBackend> {
+    /// Constructs a realistic scalar from an approximate center value.
+    ///
+    /// The `epsilon` argument is accepted for API compatibility and ignored
+    /// because `Real` values do not store an interval error bound.
+    pub fn approx(value: f64, epsilon: f64) -> BlasResult<Self> {
+        let _ = epsilon;
+        Self::try_from(value)
+    }
+}
+
+impl<B: Backend> fmt::Display for Scalar<B> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
 #[cfg(feature = "realistic-backend")]
-impl From<Real> for Scalar {
+impl From<Real> for Scalar<RealisticBackend> {
     fn from(value: Real) -> Self {
         Self(value.into())
     }
 }
 
 #[cfg(feature = "realistic-backend")]
-impl From<Rational> for Scalar {
+impl From<Rational> for Scalar<RealisticBackend> {
     fn from(value: Rational) -> Self {
         Self(value.into())
     }
@@ -291,7 +323,7 @@ impl From<Rational> for Scalar {
 macro_rules! impl_integer_conversion {
     ($($ty:ty),* $(,)?) => {
         $(
-            impl From<$ty> for Scalar {
+            impl<B: Backend> From<$ty> for Scalar<B> {
                 fn from(value: $ty) -> Self {
                     Self(value.into())
                 }
@@ -302,29 +334,29 @@ macro_rules! impl_integer_conversion {
 
 impl_integer_conversion!(i8, i16, i32, i64, i128, u8, u16, u32, u64, u128);
 
-impl TryFrom<f32> for Scalar {
+impl<B: Backend> TryFrom<f32> for Scalar<B> {
     type Error = Problem;
 
     fn try_from(value: f32) -> Result<Self, Self::Error> {
-        crate::backend::BackendScalar::try_from(value).map(Self)
+        B::Repr::try_from(value).map(Self)
     }
 }
 
-impl TryFrom<f64> for Scalar {
+impl<B: Backend> TryFrom<f64> for Scalar<B> {
     type Error = Problem;
 
     fn try_from(value: f64) -> Result<Self, Self::Error> {
-        crate::backend::BackendScalar::try_from(value).map(Self)
+        B::Repr::try_from(value).map(Self)
     }
 }
 
-impl From<Scalar> for f64 {
-    fn from(value: Scalar) -> Self {
+impl<B: Backend> From<Scalar<B>> for f64 {
+    fn from(value: Scalar<B>) -> Self {
         value.0.into_f64()
     }
 }
 
-impl Add for Scalar {
+impl<B: Backend> Add for Scalar<B> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -332,7 +364,7 @@ impl Add for Scalar {
     }
 }
 
-impl Sub for Scalar {
+impl<B: Backend> Sub for Scalar<B> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -340,7 +372,7 @@ impl Sub for Scalar {
     }
 }
 
-impl Neg for Scalar {
+impl<B: Backend> Neg for Scalar<B> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -348,7 +380,7 @@ impl Neg for Scalar {
     }
 }
 
-impl Mul for Scalar {
+impl<B: Backend> Mul for Scalar<B> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -356,7 +388,7 @@ impl Mul for Scalar {
     }
 }
 
-impl Div for Scalar {
+impl<B: Backend> Div for Scalar<B> {
     type Output = BlasResult<Self>;
 
     fn div(self, rhs: Self) -> Self::Output {

@@ -5,13 +5,16 @@ use std::fmt;
 use std::ops::{Add, BitXor, Div, Index, IndexMut, Mul, Neg, Sub};
 
 use crate::scalar::{
-    ZeroStatus, clone_with_abort, one, reject_definite_zero, require_known_nonzero,
-    require_known_nonzero_with_abort, with_abort, zero, zero_status, zero_status_with_abort,
+    ZeroStatus, clone_with_abort, reject_definite_zero, require_known_nonzero,
+    require_known_nonzero_with_abort, with_abort, zero_status, zero_status_with_abort,
 };
 use crate::vector::{Vector3, Vector4};
-use crate::{AbortSignal, BlasResult, CheckedBlasResult, Problem, Scalar};
+use crate::{AbortSignal, Backend, BlasResult, CheckedBlasResult, DefaultBackend, Problem, Scalar};
 
-fn ordinary_pivot<const N: usize>(left: &[[Scalar; N]; N], col: usize) -> Option<usize> {
+fn ordinary_pivot<B: Backend, const N: usize>(
+    left: &[[Scalar<B>; N]; N],
+    col: usize,
+) -> Option<usize> {
     let mut unknown = None;
     match zero_status(&left[col][col]) {
         ZeroStatus::NonZero => return Some(col),
@@ -32,22 +35,31 @@ fn ordinary_pivot<const N: usize>(left: &[[Scalar; N]; N], col: usize) -> Option
 
 /// Three-by-three row-major matrix.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Matrix3(
+pub struct Matrix3<B: Backend = DefaultBackend>(
     /// Matrix entries in row-major order.
-    pub [[Scalar; 3]; 3],
+    pub [[Scalar<B>; 3]; 3],
 );
 
 /// Four-by-four row-major matrix.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Matrix4(
+pub struct Matrix4<B: Backend = DefaultBackend>(
     /// Matrix entries in row-major order.
-    pub [[Scalar; 4]; 4],
+    pub [[Scalar<B>; 4]; 4],
 );
 
-fn invert_matrix<const N: usize>(matrix: [[Scalar; N]; N]) -> BlasResult<[[Scalar; N]; N]> {
+fn invert_matrix<B: Backend, const N: usize>(
+    matrix: [[Scalar<B>; N]; N],
+) -> BlasResult<[[Scalar<B>; N]; N]> {
     let mut left = matrix;
-    let mut right: [[Scalar; N]; N] =
-        from_fn(|row| from_fn(|col| if row == col { one() } else { zero() }));
+    let mut right: [[Scalar<B>; N]; N] = from_fn(|row| {
+        from_fn(|col| {
+            if row == col {
+                Scalar::one()
+            } else {
+                Scalar::zero()
+            }
+        })
+    });
 
     for col in 0..N {
         let pivot = ordinary_pivot(&left, col);
@@ -84,12 +96,19 @@ fn invert_matrix<const N: usize>(matrix: [[Scalar; N]; N]) -> BlasResult<[[Scala
     Ok(right)
 }
 
-fn invert_matrix_checked<const N: usize>(
-    matrix: [[Scalar; N]; N],
-) -> CheckedBlasResult<[[Scalar; N]; N]> {
+fn invert_matrix_checked<B: Backend, const N: usize>(
+    matrix: [[Scalar<B>; N]; N],
+) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
     let mut left = matrix;
-    let mut right: [[Scalar; N]; N] =
-        from_fn(|row| from_fn(|col| if row == col { one() } else { zero() }));
+    let mut right: [[Scalar<B>; N]; N] = from_fn(|row| {
+        from_fn(|col| {
+            if row == col {
+                Scalar::one()
+            } else {
+                Scalar::zero()
+            }
+        })
+    });
 
     for col in 0..N {
         let Some(pivot) = (col..N).find(|&row| zero_status(&left[row][col]) == ZeroStatus::NonZero)
@@ -133,13 +152,20 @@ fn invert_matrix_checked<const N: usize>(
     Ok(right)
 }
 
-fn invert_matrix_checked_with_abort<const N: usize>(
-    matrix: [[Scalar; N]; N],
+fn invert_matrix_checked_with_abort<B: Backend, const N: usize>(
+    matrix: [[Scalar<B>; N]; N],
     signal: &AbortSignal,
-) -> CheckedBlasResult<[[Scalar; N]; N]> {
+) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
     let mut left = matrix;
-    let mut right: [[Scalar; N]; N] =
-        from_fn(|row| from_fn(|col| if row == col { one() } else { zero() }));
+    let mut right: [[Scalar<B>; N]; N] = from_fn(|row| {
+        from_fn(|col| {
+            if row == col {
+                Scalar::one()
+            } else {
+                Scalar::zero()
+            }
+        })
+    });
 
     for col in 0..N {
         let Some(pivot) = (col..N)
@@ -184,19 +210,32 @@ fn invert_matrix_checked_with_abort<const N: usize>(
     Ok(right)
 }
 
-fn matrix_power<const N: usize>(
-    base: [[Scalar; N]; N],
+fn matrix_power<B: Backend, const N: usize>(
+    base: [[Scalar<B>; N]; N],
     exponent: i32,
-) -> BlasResult<[[Scalar; N]; N]> {
+) -> BlasResult<[[Scalar<B>; N]; N]> {
     if exponent == 0 {
         return Ok(from_fn(|row| {
-            from_fn(|col| if row == col { one() } else { zero() })
+            from_fn(|col| {
+                if row == col {
+                    Scalar::one()
+                } else {
+                    Scalar::zero()
+                }
+            })
         }));
     }
 
     let mut exp = exponent.unsigned_abs();
-    let mut result: [[Scalar; N]; N] =
-        from_fn(|row| from_fn(|col| if row == col { one() } else { zero() }));
+    let mut result: [[Scalar<B>; N]; N] = from_fn(|row| {
+        from_fn(|col| {
+            if row == col {
+                Scalar::one()
+            } else {
+                Scalar::zero()
+            }
+        })
+    });
     let mut factor = if exponent < 0 {
         invert_matrix(base)?
     } else {
@@ -216,19 +255,32 @@ fn matrix_power<const N: usize>(
     Ok(result)
 }
 
-fn matrix_power_checked<const N: usize>(
-    base: [[Scalar; N]; N],
+fn matrix_power_checked<B: Backend, const N: usize>(
+    base: [[Scalar<B>; N]; N],
     exponent: i32,
-) -> CheckedBlasResult<[[Scalar; N]; N]> {
+) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
     if exponent == 0 {
         return Ok(from_fn(|row| {
-            from_fn(|col| if row == col { one() } else { zero() })
+            from_fn(|col| {
+                if row == col {
+                    Scalar::one()
+                } else {
+                    Scalar::zero()
+                }
+            })
         }));
     }
 
     let mut exp = exponent.unsigned_abs();
-    let mut result: [[Scalar; N]; N] =
-        from_fn(|row| from_fn(|col| if row == col { one() } else { zero() }));
+    let mut result: [[Scalar<B>; N]; N] = from_fn(|row| {
+        from_fn(|col| {
+            if row == col {
+                Scalar::one()
+            } else {
+                Scalar::zero()
+            }
+        })
+    });
     let mut factor = if exponent < 0 {
         invert_matrix_checked(base)?
     } else {
@@ -248,20 +300,33 @@ fn matrix_power_checked<const N: usize>(
     Ok(result)
 }
 
-fn matrix_power_checked_with_abort<const N: usize>(
-    base: [[Scalar; N]; N],
+fn matrix_power_checked_with_abort<B: Backend, const N: usize>(
+    base: [[Scalar<B>; N]; N],
     exponent: i32,
     signal: &AbortSignal,
-) -> CheckedBlasResult<[[Scalar; N]; N]> {
+) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
     if exponent == 0 {
         return Ok(from_fn(|row| {
-            from_fn(|col| if row == col { one() } else { zero() })
+            from_fn(|col| {
+                if row == col {
+                    Scalar::one()
+                } else {
+                    Scalar::zero()
+                }
+            })
         }));
     }
 
     let mut exp = exponent.unsigned_abs();
-    let mut result: [[Scalar; N]; N] =
-        from_fn(|row| from_fn(|col| if row == col { one() } else { zero() }));
+    let mut result: [[Scalar<B>; N]; N] = from_fn(|row| {
+        from_fn(|col| {
+            if row == col {
+                Scalar::one()
+            } else {
+                Scalar::zero()
+            }
+        })
+    });
     let mut factor = if exponent < 0 {
         invert_matrix_checked_with_abort(base, signal)?
     } else {
@@ -281,10 +346,10 @@ fn matrix_power_checked_with_abort<const N: usize>(
     Ok(result)
 }
 
-fn multiply_arrays<const N: usize>(
-    left: [[Scalar; N]; N],
-    right: [[Scalar; N]; N],
-) -> [[Scalar; N]; N] {
+fn multiply_arrays<B: Backend, const N: usize>(
+    left: [[Scalar<B>; N]; N],
+    right: [[Scalar<B>; N]; N],
+) -> [[Scalar<B>; N]; N] {
     from_fn(|row| {
         from_fn(|col| {
             let mut sum = left[row][0].clone() * right[0][col].clone();
@@ -296,7 +361,7 @@ fn multiply_arrays<const N: usize>(
     })
 }
 
-fn invert_matrix3(matrix: [[Scalar; 3]; 3]) -> BlasResult<[[Scalar; 3]; 3]> {
+fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scalar<B>; 3]; 3]> {
     let m = &matrix;
     let det = m[0][0].clone()
         * (m[1][1].clone() * m[2][2].clone() - m[1][2].clone() * m[2][1].clone())
@@ -329,7 +394,7 @@ fn invert_matrix3(matrix: [[Scalar; 3]; 3]) -> BlasResult<[[Scalar; 3]; 3]> {
     ])
 }
 
-fn matrix4_factors(m: &[[Scalar; 4]; 4]) -> ([Scalar; 6], [Scalar; 6]) {
+fn matrix4_factors<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> ([Scalar<B>; 6], [Scalar<B>; 6]) {
     let s = [
         m[0][0].clone() * m[1][1].clone() - m[1][0].clone() * m[0][1].clone(),
         m[0][0].clone() * m[1][2].clone() - m[1][0].clone() * m[0][2].clone(),
@@ -349,7 +414,7 @@ fn matrix4_factors(m: &[[Scalar; 4]; 4]) -> ([Scalar; 6], [Scalar; 6]) {
     (s, c)
 }
 
-fn determinant4(m: &[[Scalar; 4]; 4]) -> Scalar {
+fn determinant4<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> Scalar<B> {
     let (s, c) = matrix4_factors(m);
     s[0].clone() * c[5].clone() - s[1].clone() * c[4].clone()
         + s[2].clone() * c[3].clone()
@@ -358,7 +423,7 @@ fn determinant4(m: &[[Scalar; 4]; 4]) -> Scalar {
         + s[5].clone() * c[0].clone()
 }
 
-fn invert_matrix4(matrix: [[Scalar; 4]; 4]) -> BlasResult<[[Scalar; 4]; 4]> {
+fn invert_matrix4<B: Backend>(matrix: [[Scalar<B>; 4]; 4]) -> BlasResult<[[Scalar<B>; 4]; 4]> {
     let m = &matrix;
     let (s, c) = matrix4_factors(m);
     let det = s[0].clone() * c[5].clone() - s[1].clone() * c[4].clone()
@@ -438,21 +503,27 @@ fn invert_matrix4(matrix: [[Scalar; 4]; 4]) -> BlasResult<[[Scalar; 4]; 4]> {
 
 macro_rules! impl_matrix {
     ($name:ident, $vector:ident, $n:expr) => {
-        impl $name {
+        impl<B: Backend> $name<B> {
             /// Constructs a matrix from row-major entries.
-            pub fn new(values: [[Scalar; $n]; $n]) -> Self {
+            pub fn new(values: [[Scalar<B>; $n]; $n]) -> Self {
                 Self(values)
             }
 
             /// Returns the zero matrix.
             pub fn zero() -> Self {
-                Self(from_fn(|_| from_fn(|_| zero())))
+                Self(from_fn(|_| from_fn(|_| Scalar::zero())))
             }
 
             /// Returns the identity matrix.
             pub fn identity() -> Self {
                 Self(from_fn(|row| {
-                    from_fn(|col| if row == col { one() } else { zero() })
+                    from_fn(|col| {
+                        if row == col {
+                            Scalar::one()
+                        } else {
+                            Scalar::zero()
+                        }
+                    })
                 }))
             }
 
@@ -512,7 +583,7 @@ macro_rules! impl_matrix {
             }
 
             /// Divides every entry by `rhs` after rejecting unknown-zero divisors.
-            pub fn div_scalar_checked(self, rhs: Scalar) -> CheckedBlasResult<Self> {
+            pub fn div_scalar_checked(self, rhs: Scalar<B>) -> CheckedBlasResult<Self> {
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 let mut values = self.0;
@@ -527,7 +598,7 @@ macro_rules! impl_matrix {
             /// Divides every entry by `rhs` after attaching an abort signal.
             pub fn div_scalar_checked_with_abort(
                 self,
-                rhs: Scalar,
+                rhs: Scalar<B>,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
                 let rhs = with_abort(rhs, signal);
@@ -560,21 +631,21 @@ macro_rules! impl_matrix {
             }
         }
 
-        impl Index<usize> for $name {
-            type Output = [Scalar; $n];
+        impl<B: Backend> Index<usize> for $name<B> {
+            type Output = [Scalar<B>; $n];
 
             fn index(&self, index: usize) -> &Self::Output {
                 &self.0[index]
             }
         }
 
-        impl IndexMut<usize> for $name {
+        impl<B: Backend> IndexMut<usize> for $name<B> {
             fn index_mut(&mut self, index: usize) -> &mut Self::Output {
                 &mut self.0[index]
             }
         }
 
-        impl fmt::Display for $name {
+        impl<B: Backend> fmt::Display for $name<B> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 f.write_str("[")?;
                 for row in 0..$n {
@@ -598,7 +669,7 @@ macro_rules! impl_matrix {
             }
         }
 
-        impl Add for $name {
+        impl<B: Backend> Add for $name<B> {
             type Output = Self;
 
             fn add(self, rhs: Self) -> Self::Output {
@@ -608,17 +679,17 @@ macro_rules! impl_matrix {
             }
         }
 
-        impl Add<Scalar> for $name {
+        impl<B: Backend> Add<Scalar<B>> for $name<B> {
             type Output = Self;
 
-            fn add(self, rhs: Scalar) -> Self::Output {
+            fn add(self, rhs: Scalar<B>) -> Self::Output {
                 Self(from_fn(|row| {
                     from_fn(|col| self.0[row][col].clone() + rhs.clone())
                 }))
             }
         }
 
-        impl Sub for $name {
+        impl<B: Backend> Sub for $name<B> {
             type Output = Self;
 
             fn sub(self, rhs: Self) -> Self::Output {
@@ -628,17 +699,17 @@ macro_rules! impl_matrix {
             }
         }
 
-        impl Sub<Scalar> for $name {
+        impl<B: Backend> Sub<Scalar<B>> for $name<B> {
             type Output = Self;
 
-            fn sub(self, rhs: Scalar) -> Self::Output {
+            fn sub(self, rhs: Scalar<B>) -> Self::Output {
                 Self(from_fn(|row| {
                     from_fn(|col| self.0[row][col].clone() - rhs.clone())
                 }))
             }
         }
 
-        impl Neg for $name {
+        impl<B: Backend> Neg for $name<B> {
             type Output = Self;
 
             fn neg(self) -> Self::Output {
@@ -646,20 +717,20 @@ macro_rules! impl_matrix {
             }
         }
 
-        impl Mul<Scalar> for $name {
+        impl<B: Backend> Mul<Scalar<B>> for $name<B> {
             type Output = Self;
 
-            fn mul(self, rhs: Scalar) -> Self::Output {
+            fn mul(self, rhs: Scalar<B>) -> Self::Output {
                 Self(from_fn(|row| {
                     from_fn(|col| self.0[row][col].clone() * rhs.clone())
                 }))
             }
         }
 
-        impl Div<Scalar> for $name {
+        impl<B: Backend> Div<Scalar<B>> for $name<B> {
             type Output = BlasResult<Self>;
 
-            fn div(self, rhs: Scalar) -> Self::Output {
+            fn div(self, rhs: Scalar<B>) -> Self::Output {
                 reject_definite_zero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 let mut values = self.0;
@@ -672,7 +743,7 @@ macro_rules! impl_matrix {
             }
         }
 
-        impl Mul for $name {
+        impl<B: Backend> Mul for $name<B> {
             type Output = Self;
 
             fn mul(self, rhs: Self) -> Self::Output {
@@ -680,7 +751,7 @@ macro_rules! impl_matrix {
             }
         }
 
-        impl Div for $name {
+        impl<B: Backend> Div for $name<B> {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Self) -> Self::Output {
@@ -688,10 +759,10 @@ macro_rules! impl_matrix {
             }
         }
 
-        impl Mul<$vector> for $name {
-            type Output = $vector;
+        impl<B: Backend> Mul<$vector<B>> for $name<B> {
+            type Output = $vector<B>;
 
-            fn mul(self, rhs: $vector) -> Self::Output {
+            fn mul(self, rhs: $vector<B>) -> Self::Output {
                 $vector(from_fn(|row| {
                     let mut sum = self.0[row][0].clone() * rhs.0[0].clone();
                     for col in 1..$n {
@@ -702,7 +773,7 @@ macro_rules! impl_matrix {
             }
         }
 
-        impl BitXor<i32> for $name {
+        impl<B: Backend> BitXor<i32> for $name<B> {
             type Output = BlasResult<Self>;
 
             fn bitxor(self, rhs: i32) -> Self::Output {
@@ -715,7 +786,7 @@ macro_rules! impl_matrix {
 impl_matrix!(Matrix3, Vector3, 3);
 impl_matrix!(Matrix4, Vector4, 4);
 
-impl Matrix3 {
+impl<B: Backend> Matrix3<B> {
     /// Returns the matrix inverse using the adjugate and determinant.
     ///
     /// The ordinary path rejects a definite-zero determinant and otherwise
@@ -725,7 +796,7 @@ impl Matrix3 {
     }
 
     /// Returns the determinant.
-    pub fn determinant(&self) -> Scalar {
+    pub fn determinant(&self) -> Scalar<B> {
         let m = &self.0;
         m[0][0].clone() * (m[1][1].clone() * m[2][2].clone() - m[1][2].clone() * m[2][1].clone())
             - m[0][1].clone()
@@ -735,7 +806,7 @@ impl Matrix3 {
     }
 }
 
-impl Matrix4 {
+impl<B: Backend> Matrix4<B> {
     /// Returns the matrix inverse using a fixed-size cofactor expansion.
     ///
     /// The ordinary path rejects a definite-zero determinant and propagates
@@ -745,7 +816,7 @@ impl Matrix4 {
     }
 
     /// Returns the determinant.
-    pub fn determinant(&self) -> Scalar {
+    pub fn determinant(&self) -> Scalar<B> {
         determinant4(&self.0)
     }
 }

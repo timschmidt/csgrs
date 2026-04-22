@@ -3,73 +3,82 @@ use std::ops::{Add, Mul, Neg, Sub};
 
 use num::bigint::Sign;
 
+use crate::backend::{Backend, BackendScalar as BackendScalarTrait};
 use crate::{AbortSignal, BlasResult, Problem, ZeroStatus};
 
 #[derive(Clone, Debug)]
-pub(crate) struct BackendScalar(pub(crate) realistic::Real);
+pub struct BackendScalar(pub(crate) realistic::Real);
 
-impl BackendScalar {
-    pub(crate) fn zero() -> Self {
+/// Backend marker for exact computable reals from the `realistic` crate.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RealisticBackend;
+
+impl Backend for RealisticBackend {
+    type Repr = BackendScalar;
+}
+
+impl BackendScalarTrait for BackendScalar {
+    fn zero() -> Self {
         Self(realistic::Real::zero())
     }
 
-    pub(crate) fn one() -> Self {
+    fn one() -> Self {
         Self(1.into())
     }
 
-    pub(crate) fn e() -> Self {
+    fn e() -> Self {
         Self(realistic::Real::e())
     }
 
-    pub(crate) fn pi() -> Self {
+    fn pi() -> Self {
         Self(realistic::Real::pi())
     }
 
-    pub(crate) fn inverse(self) -> BlasResult<Self> {
+    fn inverse(self) -> BlasResult<Self> {
         self.0.inverse().map(Self).map_err(Problem::from)
     }
 
-    pub(crate) fn pow(self, exponent: Self) -> BlasResult<Self> {
+    fn pow(self, exponent: Self) -> BlasResult<Self> {
         self.0.pow(exponent.0).map(Self).map_err(Problem::from)
     }
 
-    pub(crate) fn exp(self) -> BlasResult<Self> {
+    fn exp(self) -> BlasResult<Self> {
         self.0.exp().map(Self).map_err(Problem::from)
     }
 
-    pub(crate) fn ln(self) -> BlasResult<Self> {
+    fn ln(self) -> BlasResult<Self> {
         self.0.ln().map(Self).map_err(Problem::from)
     }
 
-    pub(crate) fn log10(self) -> BlasResult<Self> {
+    fn log10(self) -> BlasResult<Self> {
         self.0.log10().map(Self).map_err(Problem::from)
     }
 
-    pub(crate) fn sqrt(self) -> BlasResult<Self> {
+    fn sqrt(self) -> BlasResult<Self> {
         self.0.sqrt().map(Self).map_err(Problem::from)
     }
 
-    pub(crate) fn sin(self) -> Self {
+    fn sin(self) -> Self {
         Self(self.0.sin())
     }
 
-    pub(crate) fn cos(self) -> Self {
+    fn cos(self) -> Self {
         Self(self.0.cos())
     }
 
-    pub(crate) fn tan(self) -> BlasResult<Self> {
+    fn tan(self) -> BlasResult<Self> {
         self.0.tan().map(Self).map_err(Problem::from)
     }
 
-    pub(crate) fn div(self, rhs: Self) -> BlasResult<Self> {
+    fn div(self, rhs: Self) -> BlasResult<Self> {
         (self.0 / rhs.0).map(Self).map_err(Problem::from)
     }
 
-    pub(crate) fn definitely_zero(&self) -> bool {
+    fn definitely_zero(&self) -> bool {
         self.0.definitely_zero()
     }
 
-    pub(crate) fn zero_status(&self) -> ZeroStatus {
+    fn zero_status(&self) -> ZeroStatus {
         if self.0.definitely_zero() {
             ZeroStatus::Zero
         } else {
@@ -80,11 +89,11 @@ impl BackendScalar {
         }
     }
 
-    pub(crate) fn abort(&mut self, signal: AbortSignal) {
+    fn abort(&mut self, signal: AbortSignal) {
         self.0.abort(signal);
     }
 
-    pub(crate) fn into_f64(self) -> f64 {
+    fn into_f64(self) -> f64 {
         f64::from(self.0)
     }
 }

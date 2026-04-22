@@ -3,37 +3,37 @@
 use std::fmt;
 use std::ops::{Add, BitXor, Div, Mul, Neg, Sub};
 
-use crate::scalar::{one, require_known_nonzero, zero};
-use crate::{BlasResult, CheckedBlasResult, Problem, Scalar};
+use crate::scalar::require_known_nonzero;
+use crate::{Backend, BlasResult, CheckedBlasResult, DefaultBackend, Problem, Scalar};
 
 /// Complex scalar with real and imaginary components.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Complex {
+pub struct Complex<B: Backend = DefaultBackend> {
     /// Real component.
-    pub re: Scalar,
+    pub re: Scalar<B>,
     /// Imaginary component.
-    pub im: Scalar,
+    pub im: Scalar<B>,
 }
 
-impl Complex {
+impl<B: Backend> Complex<B> {
     /// Constructs a complex value from real and imaginary components.
-    pub fn new(re: Scalar, im: Scalar) -> Self {
+    pub fn new(re: Scalar<B>, im: Scalar<B>) -> Self {
         Self { re, im }
     }
 
     /// Returns `0 + 0i`.
     pub fn zero() -> Self {
-        Self::new(zero(), zero())
+        Self::new(Scalar::zero(), Scalar::zero())
     }
 
     /// Returns `1 + 0i`.
     pub fn one() -> Self {
-        Self::new(one(), zero())
+        Self::new(Scalar::one(), Scalar::zero())
     }
 
     /// Returns the imaginary unit `0 + 1i`.
     pub fn i() -> Self {
-        Self::new(zero(), one())
+        Self::new(Scalar::zero(), Scalar::one())
     }
 
     /// Returns the complex conjugate.
@@ -42,7 +42,7 @@ impl Complex {
     }
 
     /// Returns `re^2 + im^2`.
-    pub fn norm_squared(&self) -> Scalar {
+    pub fn norm_squared(&self) -> Scalar<B> {
         self.re.clone() * self.re.clone() + self.im.clone() * self.im.clone()
     }
 
@@ -132,19 +132,19 @@ impl Complex {
     }
 
     /// Divides by a real scalar after rejecting unknown-zero divisors.
-    pub fn div_real_checked(self, rhs: Scalar) -> CheckedBlasResult<Self> {
+    pub fn div_real_checked(self, rhs: Scalar<B>) -> CheckedBlasResult<Self> {
         require_known_nonzero(&rhs)?;
         Ok(Self::new((self.re / rhs.clone())?, (self.im / rhs)?))
     }
 }
 
-impl From<Scalar> for Complex {
-    fn from(value: Scalar) -> Self {
-        Self::new(value, zero())
+impl<B: Backend> From<Scalar<B>> for Complex<B> {
+    fn from(value: Scalar<B>) -> Self {
+        Self::new(value, Scalar::zero())
     }
 }
 
-impl fmt::Display for Complex {
+impl<B: Backend> fmt::Display for Complex<B> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
             write!(f, "({:#} + {:#}i)", self.re, self.im)
@@ -154,7 +154,7 @@ impl fmt::Display for Complex {
     }
 }
 
-impl Add for Complex {
+impl<B: Backend> Add for Complex<B> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -162,7 +162,7 @@ impl Add for Complex {
     }
 }
 
-impl Sub for Complex {
+impl<B: Backend> Sub for Complex<B> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -170,7 +170,7 @@ impl Sub for Complex {
     }
 }
 
-impl Neg for Complex {
+impl<B: Backend> Neg for Complex<B> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -178,7 +178,7 @@ impl Neg for Complex {
     }
 }
 
-impl Mul for Complex {
+impl<B: Backend> Mul for Complex<B> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -188,7 +188,7 @@ impl Mul for Complex {
     }
 }
 
-impl Div for Complex {
+impl<B: Backend> Div for Complex<B> {
     type Output = BlasResult<Self>;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -201,15 +201,15 @@ impl Div for Complex {
     }
 }
 
-impl Div<Scalar> for Complex {
+impl<B: Backend> Div<Scalar<B>> for Complex<B> {
     type Output = BlasResult<Self>;
 
-    fn div(self, rhs: Scalar) -> Self::Output {
+    fn div(self, rhs: Scalar<B>) -> Self::Output {
         Ok(Self::new((self.re / rhs.clone())?, (self.im / rhs)?))
     }
 }
 
-impl BitXor<i64> for Complex {
+impl<B: Backend> BitXor<i64> for Complex<B> {
     type Output = BlasResult<Self>;
 
     fn bitxor(self, rhs: i64) -> Self::Output {
