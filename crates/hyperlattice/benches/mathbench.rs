@@ -203,12 +203,26 @@ mod astro_backend {
         pub m: [[BigFloat; 4]; 4],
     }
 
+    #[derive(Clone)]
+    pub struct Complex {
+        pub re: BigFloat,
+        pub im: BigFloat,
+    }
+
     impl Vec3 {
         pub fn new(ctx: &Ctx, x: f64, y: f64, z: f64) -> Self {
             Self {
                 x: ctx.f(x),
                 y: ctx.f(y),
                 z: ctx.f(z),
+            }
+        }
+
+        pub fn zero(ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.zero(),
+                y: ctx.zero(),
+                z: ctx.zero(),
             }
         }
 
@@ -227,10 +241,154 @@ mod astro_backend {
 
         pub fn normalize(&self, ctx: &Ctx) -> Self {
             let magnitude = self.magnitude(ctx);
+            self.div_scalar(&magnitude, ctx)
+        }
+
+        pub fn add(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
-                x: ctx.div(&self.x, &magnitude),
-                y: ctx.div(&self.y, &magnitude),
-                z: ctx.div(&self.z, &magnitude),
+                x: ctx.add(&self.x, &rhs.x),
+                y: ctx.add(&self.y, &rhs.y),
+                z: ctx.add(&self.z, &rhs.z),
+            }
+        }
+
+        pub fn add_scalar(&self, scalar: &BigFloat, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.add(&self.x, scalar),
+                y: ctx.add(&self.y, scalar),
+                z: ctx.add(&self.z, scalar),
+            }
+        }
+
+        pub fn sub(&self, rhs: &Self, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.sub(&self.x, &rhs.x),
+                y: ctx.sub(&self.y, &rhs.y),
+                z: ctx.sub(&self.z, &rhs.z),
+            }
+        }
+
+        pub fn sub_scalar(&self, scalar: &BigFloat, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.sub(&self.x, scalar),
+                y: ctx.sub(&self.y, scalar),
+                z: ctx.sub(&self.z, scalar),
+            }
+        }
+
+        pub fn neg(&self, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.neg(&self.x),
+                y: ctx.neg(&self.y),
+                z: ctx.neg(&self.z),
+            }
+        }
+
+        pub fn mul_scalar(&self, scalar: &BigFloat, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.mul(&self.x, scalar),
+                y: ctx.mul(&self.y, scalar),
+                z: ctx.mul(&self.z, scalar),
+            }
+        }
+
+        pub fn div_scalar(&self, scalar: &BigFloat, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.div(&self.x, scalar),
+                y: ctx.div(&self.y, scalar),
+                z: ctx.div(&self.z, scalar),
+            }
+        }
+    }
+
+    impl Vec4 {
+        pub fn new(ctx: &Ctx, x: f64, y: f64, z: f64, w: f64) -> Self {
+            Self {
+                x: ctx.f(x),
+                y: ctx.f(y),
+                z: ctx.f(z),
+                w: ctx.f(w),
+            }
+        }
+
+        pub fn dot(&self, rhs: &Self, ctx: &Ctx) -> BigFloat {
+            let x = ctx.mul(&self.x, &rhs.x);
+            let y = ctx.mul(&self.y, &rhs.y);
+            let z = ctx.mul(&self.z, &rhs.z);
+            let w = ctx.mul(&self.w, &rhs.w);
+            ctx.add(&ctx.add(&x, &y), &ctx.add(&z, &w))
+        }
+
+        pub fn magnitude(&self, ctx: &Ctx) -> BigFloat {
+            let dot = self.dot(self, ctx);
+            ctx.sqrt(&dot)
+        }
+
+        pub fn normalize(&self, ctx: &Ctx) -> Self {
+            let magnitude = self.magnitude(ctx);
+            self.div_scalar(&magnitude, ctx)
+        }
+
+        pub fn add(&self, rhs: &Self, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.add(&self.x, &rhs.x),
+                y: ctx.add(&self.y, &rhs.y),
+                z: ctx.add(&self.z, &rhs.z),
+                w: ctx.add(&self.w, &rhs.w),
+            }
+        }
+
+        pub fn add_scalar(&self, scalar: &BigFloat, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.add(&self.x, scalar),
+                y: ctx.add(&self.y, scalar),
+                z: ctx.add(&self.z, scalar),
+                w: ctx.add(&self.w, scalar),
+            }
+        }
+
+        pub fn sub(&self, rhs: &Self, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.sub(&self.x, &rhs.x),
+                y: ctx.sub(&self.y, &rhs.y),
+                z: ctx.sub(&self.z, &rhs.z),
+                w: ctx.sub(&self.w, &rhs.w),
+            }
+        }
+
+        pub fn sub_scalar(&self, scalar: &BigFloat, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.sub(&self.x, scalar),
+                y: ctx.sub(&self.y, scalar),
+                z: ctx.sub(&self.z, scalar),
+                w: ctx.sub(&self.w, scalar),
+            }
+        }
+
+        pub fn neg(&self, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.neg(&self.x),
+                y: ctx.neg(&self.y),
+                z: ctx.neg(&self.z),
+                w: ctx.neg(&self.w),
+            }
+        }
+
+        pub fn mul_scalar(&self, scalar: &BigFloat, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.mul(&self.x, scalar),
+                y: ctx.mul(&self.y, scalar),
+                z: ctx.mul(&self.z, scalar),
+                w: ctx.mul(&self.w, scalar),
+            }
+        }
+
+        pub fn div_scalar(&self, scalar: &BigFloat, ctx: &Ctx) -> Self {
+            Self {
+                x: ctx.div(&self.x, scalar),
+                y: ctx.div(&self.y, scalar),
+                z: ctx.div(&self.z, scalar),
+                w: ctx.div(&self.w, scalar),
             }
         }
     }
@@ -243,6 +401,26 @@ mod astro_backend {
                     [ctx.f(m[1][0]), ctx.f(m[1][1]), ctx.f(m[1][2])],
                     [ctx.f(m[2][0]), ctx.f(m[2][1]), ctx.f(m[2][2])],
                 ],
+            }
+        }
+
+        pub fn zero(ctx: &Ctx) -> Self {
+            Self {
+                m: core::array::from_fn(|_| core::array::from_fn(|_| ctx.zero())),
+            }
+        }
+
+        pub fn identity(ctx: &Ctx) -> Self {
+            Self {
+                m: core::array::from_fn(|row| {
+                    core::array::from_fn(|col| if row == col { ctx.one() } else { ctx.zero() })
+                }),
+            }
+        }
+
+        pub fn transpose(&self) -> Self {
+            Self {
+                m: core::array::from_fn(|row| core::array::from_fn(|col| self.m[col][row].clone())),
             }
         }
 
@@ -335,16 +513,50 @@ mod astro_backend {
 
             Vec3 { x, y, z }
         }
-    }
 
-    impl Vec4 {
-        pub fn new(ctx: &Ctx, x: f64, y: f64, z: f64, w: f64) -> Self {
+        pub fn map_scalar(
+            &self,
+            scalar: &BigFloat,
+            ctx: &Ctx,
+            op: fn(&Ctx, &BigFloat, &BigFloat) -> BigFloat,
+        ) -> Self {
             Self {
-                x: ctx.f(x),
-                y: ctx.f(y),
-                z: ctx.f(z),
-                w: ctx.f(w),
+                m: self
+                    .m
+                    .clone()
+                    .map(|row| row.map(|value| op(ctx, &value, scalar))),
             }
+        }
+
+        pub fn combine(
+            &self,
+            rhs: &Self,
+            ctx: &Ctx,
+            op: fn(&Ctx, &BigFloat, &BigFloat) -> BigFloat,
+        ) -> Self {
+            Self {
+                m: core::array::from_fn(|row| {
+                    core::array::from_fn(|col| op(ctx, &self.m[row][col], &rhs.m[row][col]))
+                }),
+            }
+        }
+
+        pub fn neg(&self, ctx: &Ctx) -> Self {
+            Self {
+                m: self.m.clone().map(|row| row.map(|value| ctx.neg(&value))),
+            }
+        }
+
+        pub fn div_matrix(&self, rhs: &Self, ctx: &Ctx) -> Self {
+            self.mul_mat3(&rhs.inverse(ctx), ctx)
+        }
+
+        pub fn powi(&self, exponent: usize, ctx: &Ctx) -> Self {
+            let mut acc = Self::identity(ctx);
+            for _ in 0..exponent {
+                acc = acc.mul_mat3(self, ctx);
+            }
+            acc
         }
     }
 
@@ -377,6 +589,26 @@ mod astro_backend {
                         ctx.f(m[3][3]),
                     ],
                 ],
+            }
+        }
+
+        pub fn zero(ctx: &Ctx) -> Self {
+            Self {
+                m: core::array::from_fn(|_| core::array::from_fn(|_| ctx.zero())),
+            }
+        }
+
+        pub fn identity(ctx: &Ctx) -> Self {
+            Self {
+                m: core::array::from_fn(|row| {
+                    core::array::from_fn(|col| if row == col { ctx.one() } else { ctx.zero() })
+                }),
+            }
+        }
+
+        pub fn transpose(&self) -> Self {
+            Self {
+                m: core::array::from_fn(|row| core::array::from_fn(|col| self.m[col][row].clone())),
             }
         }
 
@@ -459,6 +691,154 @@ mod astro_backend {
                 y: transform_row(1),
                 z: transform_row(2),
                 w: transform_row(3),
+            }
+        }
+
+        pub fn map_scalar(
+            &self,
+            scalar: &BigFloat,
+            ctx: &Ctx,
+            op: fn(&Ctx, &BigFloat, &BigFloat) -> BigFloat,
+        ) -> Self {
+            Self {
+                m: self
+                    .m
+                    .clone()
+                    .map(|row| row.map(|value| op(ctx, &value, scalar))),
+            }
+        }
+
+        pub fn combine(
+            &self,
+            rhs: &Self,
+            ctx: &Ctx,
+            op: fn(&Ctx, &BigFloat, &BigFloat) -> BigFloat,
+        ) -> Self {
+            Self {
+                m: core::array::from_fn(|row| {
+                    core::array::from_fn(|col| op(ctx, &self.m[row][col], &rhs.m[row][col]))
+                }),
+            }
+        }
+
+        pub fn neg(&self, ctx: &Ctx) -> Self {
+            Self {
+                m: self.m.clone().map(|row| row.map(|value| ctx.neg(&value))),
+            }
+        }
+
+        pub fn div_matrix(&self, rhs: &Self, ctx: &Ctx) -> Self {
+            self.mul_mat4(&rhs.inverse(ctx), ctx)
+        }
+
+        pub fn powi(&self, exponent: usize, ctx: &Ctx) -> Self {
+            let mut acc = Self::identity(ctx);
+            for _ in 0..exponent {
+                acc = acc.mul_mat4(self, ctx);
+            }
+            acc
+        }
+    }
+
+    impl Complex {
+        pub fn new(ctx: &Ctx, re: f64, im: f64) -> Self {
+            Self {
+                re: ctx.f(re),
+                im: ctx.f(im),
+            }
+        }
+
+        pub fn zero(ctx: &Ctx) -> Self {
+            Self {
+                re: ctx.zero(),
+                im: ctx.zero(),
+            }
+        }
+
+        pub fn one(ctx: &Ctx) -> Self {
+            Self {
+                re: ctx.one(),
+                im: ctx.zero(),
+            }
+        }
+
+        pub fn i(ctx: &Ctx) -> Self {
+            Self {
+                re: ctx.zero(),
+                im: ctx.one(),
+            }
+        }
+
+        pub fn from_scalar(value: &BigFloat, ctx: &Ctx) -> Self {
+            Self {
+                re: value.clone(),
+                im: ctx.zero(),
+            }
+        }
+
+        pub fn conjugate(&self, ctx: &Ctx) -> Self {
+            Self {
+                re: self.re.clone(),
+                im: ctx.neg(&self.im),
+            }
+        }
+
+        pub fn norm_squared(&self, ctx: &Ctx) -> BigFloat {
+            ctx.add(&ctx.mul(&self.re, &self.re), &ctx.mul(&self.im, &self.im))
+        }
+
+        pub fn reciprocal(&self, ctx: &Ctx) -> Self {
+            let denom = self.norm_squared(ctx);
+            Self {
+                re: ctx.div(&self.re, &denom),
+                im: ctx.div(&ctx.neg(&self.im), &denom),
+            }
+        }
+
+        pub fn powi(&self, exponent: usize, ctx: &Ctx) -> Self {
+            let mut acc = Self::one(ctx);
+            for _ in 0..exponent {
+                acc = acc.mul(self, ctx);
+            }
+            acc
+        }
+
+        pub fn add(&self, rhs: &Self, ctx: &Ctx) -> Self {
+            Self {
+                re: ctx.add(&self.re, &rhs.re),
+                im: ctx.add(&self.im, &rhs.im),
+            }
+        }
+
+        pub fn sub(&self, rhs: &Self, ctx: &Ctx) -> Self {
+            Self {
+                re: ctx.sub(&self.re, &rhs.re),
+                im: ctx.sub(&self.im, &rhs.im),
+            }
+        }
+
+        pub fn neg(&self, ctx: &Ctx) -> Self {
+            Self {
+                re: ctx.neg(&self.re),
+                im: ctx.neg(&self.im),
+            }
+        }
+
+        pub fn mul(&self, rhs: &Self, ctx: &Ctx) -> Self {
+            Self {
+                re: ctx.sub(&ctx.mul(&self.re, &rhs.re), &ctx.mul(&self.im, &rhs.im)),
+                im: ctx.add(&ctx.mul(&self.re, &rhs.im), &ctx.mul(&self.im, &rhs.re)),
+            }
+        }
+
+        pub fn div(&self, rhs: &Self, ctx: &Ctx) -> Self {
+            self.mul(&rhs.reciprocal(ctx), ctx)
+        }
+
+        pub fn div_real(&self, rhs: &BigFloat, ctx: &Ctx) -> Self {
+            Self {
+                re: ctx.div(&self.re, rhs),
+                im: ctx.div(&self.im, rhs),
             }
         }
     }
@@ -627,6 +1007,12 @@ mod arp_backend {
     #[derive(Clone)]
     pub struct Mat4 {
         pub m: [[Float; 4]; 4],
+    }
+
+    #[derive(Clone)]
+    pub struct Complex {
+        pub re: Float,
+        pub im: Float,
     }
 
     impl Vec3 {
@@ -886,6 +1272,392 @@ mod arp_backend {
                 z: transform_row(2),
                 w: transform_row(3),
             }
+        }
+    }
+}
+
+impl arp_backend::Vec3 {
+    fn zero(ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.zero(),
+            y: ctx.zero(),
+            z: ctx.zero(),
+        }
+    }
+
+    fn add(&self, rhs: &Self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.add(&self.x, &rhs.x),
+            y: ctx.add(&self.y, &rhs.y),
+            z: ctx.add(&self.z, &rhs.z),
+        }
+    }
+
+    fn add_scalar(&self, scalar: &arpfloat::Float, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.add(&self.x, scalar),
+            y: ctx.add(&self.y, scalar),
+            z: ctx.add(&self.z, scalar),
+        }
+    }
+
+    fn sub(&self, rhs: &Self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.sub(&self.x, &rhs.x),
+            y: ctx.sub(&self.y, &rhs.y),
+            z: ctx.sub(&self.z, &rhs.z),
+        }
+    }
+
+    fn sub_scalar(&self, scalar: &arpfloat::Float, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.sub(&self.x, scalar),
+            y: ctx.sub(&self.y, scalar),
+            z: ctx.sub(&self.z, scalar),
+        }
+    }
+
+    fn neg(&self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.neg(&self.x),
+            y: ctx.neg(&self.y),
+            z: ctx.neg(&self.z),
+        }
+    }
+
+    fn mul_scalar(&self, scalar: &arpfloat::Float, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.mul(&self.x, scalar),
+            y: ctx.mul(&self.y, scalar),
+            z: ctx.mul(&self.z, scalar),
+        }
+    }
+
+    fn div_scalar(&self, scalar: &arpfloat::Float, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.div(&self.x, scalar),
+            y: ctx.div(&self.y, scalar),
+            z: ctx.div(&self.z, scalar),
+        }
+    }
+}
+
+impl arp_backend::Vec4 {
+    fn dot(&self, rhs: &Self, ctx: &arp_backend::Ctx) -> arpfloat::Float {
+        let x = ctx.mul(&self.x, &rhs.x);
+        let y = ctx.mul(&self.y, &rhs.y);
+        let z = ctx.mul(&self.z, &rhs.z);
+        let w = ctx.mul(&self.w, &rhs.w);
+        ctx.add(&ctx.add(&x, &y), &ctx.add(&z, &w))
+    }
+
+    fn magnitude(&self, ctx: &arp_backend::Ctx) -> arpfloat::Float {
+        let dot = self.dot(self, ctx);
+        ctx.sqrt(&dot)
+    }
+
+    fn normalize(&self, ctx: &arp_backend::Ctx) -> Self {
+        let magnitude = self.magnitude(ctx);
+        self.div_scalar(&magnitude, ctx)
+    }
+
+    fn add(&self, rhs: &Self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.add(&self.x, &rhs.x),
+            y: ctx.add(&self.y, &rhs.y),
+            z: ctx.add(&self.z, &rhs.z),
+            w: ctx.add(&self.w, &rhs.w),
+        }
+    }
+
+    fn add_scalar(&self, scalar: &arpfloat::Float, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.add(&self.x, scalar),
+            y: ctx.add(&self.y, scalar),
+            z: ctx.add(&self.z, scalar),
+            w: ctx.add(&self.w, scalar),
+        }
+    }
+
+    fn sub(&self, rhs: &Self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.sub(&self.x, &rhs.x),
+            y: ctx.sub(&self.y, &rhs.y),
+            z: ctx.sub(&self.z, &rhs.z),
+            w: ctx.sub(&self.w, &rhs.w),
+        }
+    }
+
+    fn sub_scalar(&self, scalar: &arpfloat::Float, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.sub(&self.x, scalar),
+            y: ctx.sub(&self.y, scalar),
+            z: ctx.sub(&self.z, scalar),
+            w: ctx.sub(&self.w, scalar),
+        }
+    }
+
+    fn neg(&self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.neg(&self.x),
+            y: ctx.neg(&self.y),
+            z: ctx.neg(&self.z),
+            w: ctx.neg(&self.w),
+        }
+    }
+
+    fn mul_scalar(&self, scalar: &arpfloat::Float, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.mul(&self.x, scalar),
+            y: ctx.mul(&self.y, scalar),
+            z: ctx.mul(&self.z, scalar),
+            w: ctx.mul(&self.w, scalar),
+        }
+    }
+
+    fn div_scalar(&self, scalar: &arpfloat::Float, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            x: ctx.div(&self.x, scalar),
+            y: ctx.div(&self.y, scalar),
+            z: ctx.div(&self.z, scalar),
+            w: ctx.div(&self.w, scalar),
+        }
+    }
+}
+
+impl arp_backend::Mat3 {
+    fn zero(ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            m: core::array::from_fn(|_| core::array::from_fn(|_| ctx.zero())),
+        }
+    }
+
+    fn identity(ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            m: core::array::from_fn(|row| {
+                core::array::from_fn(|col| if row == col { ctx.one() } else { ctx.zero() })
+            }),
+        }
+    }
+
+    fn transpose(&self) -> Self {
+        Self {
+            m: core::array::from_fn(|row| core::array::from_fn(|col| self.m[col][row].clone())),
+        }
+    }
+
+    fn map_scalar(
+        &self,
+        scalar: &arpfloat::Float,
+        ctx: &arp_backend::Ctx,
+        op: fn(&arp_backend::Ctx, &arpfloat::Float, &arpfloat::Float) -> arpfloat::Float,
+    ) -> Self {
+        Self {
+            m: self
+                .m
+                .clone()
+                .map(|row| row.map(|value| op(ctx, &value, scalar))),
+        }
+    }
+
+    fn combine(
+        &self,
+        rhs: &Self,
+        ctx: &arp_backend::Ctx,
+        op: fn(&arp_backend::Ctx, &arpfloat::Float, &arpfloat::Float) -> arpfloat::Float,
+    ) -> Self {
+        Self {
+            m: core::array::from_fn(|row| {
+                core::array::from_fn(|col| op(ctx, &self.m[row][col], &rhs.m[row][col]))
+            }),
+        }
+    }
+
+    fn neg(&self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            m: self.m.clone().map(|row| row.map(|value| ctx.neg(&value))),
+        }
+    }
+
+    fn div_matrix(&self, rhs: &Self, ctx: &arp_backend::Ctx) -> Self {
+        self.mul_mat3(&rhs.inverse(ctx), ctx)
+    }
+
+    fn powi(&self, exponent: usize, ctx: &arp_backend::Ctx) -> Self {
+        let mut acc = Self::identity(ctx);
+        for _ in 0..exponent {
+            acc = acc.mul_mat3(self, ctx);
+        }
+        acc
+    }
+}
+
+impl arp_backend::Mat4 {
+    fn zero(ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            m: core::array::from_fn(|_| core::array::from_fn(|_| ctx.zero())),
+        }
+    }
+
+    fn identity(ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            m: core::array::from_fn(|row| {
+                core::array::from_fn(|col| if row == col { ctx.one() } else { ctx.zero() })
+            }),
+        }
+    }
+
+    fn transpose(&self) -> Self {
+        Self {
+            m: core::array::from_fn(|row| core::array::from_fn(|col| self.m[col][row].clone())),
+        }
+    }
+
+    fn map_scalar(
+        &self,
+        scalar: &arpfloat::Float,
+        ctx: &arp_backend::Ctx,
+        op: fn(&arp_backend::Ctx, &arpfloat::Float, &arpfloat::Float) -> arpfloat::Float,
+    ) -> Self {
+        Self {
+            m: self
+                .m
+                .clone()
+                .map(|row| row.map(|value| op(ctx, &value, scalar))),
+        }
+    }
+
+    fn combine(
+        &self,
+        rhs: &Self,
+        ctx: &arp_backend::Ctx,
+        op: fn(&arp_backend::Ctx, &arpfloat::Float, &arpfloat::Float) -> arpfloat::Float,
+    ) -> Self {
+        Self {
+            m: core::array::from_fn(|row| {
+                core::array::from_fn(|col| op(ctx, &self.m[row][col], &rhs.m[row][col]))
+            }),
+        }
+    }
+
+    fn neg(&self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            m: self.m.clone().map(|row| row.map(|value| ctx.neg(&value))),
+        }
+    }
+
+    fn div_matrix(&self, rhs: &Self, ctx: &arp_backend::Ctx) -> Self {
+        self.mul_mat4(&rhs.inverse(ctx), ctx)
+    }
+
+    fn powi(&self, exponent: usize, ctx: &arp_backend::Ctx) -> Self {
+        let mut acc = Self::identity(ctx);
+        for _ in 0..exponent {
+            acc = acc.mul_mat4(self, ctx);
+        }
+        acc
+    }
+}
+
+impl arp_backend::Complex {
+    fn new(ctx: &arp_backend::Ctx, re: f64, im: f64) -> Self {
+        Self {
+            re: ctx.f(re),
+            im: ctx.f(im),
+        }
+    }
+
+    fn zero(ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            re: ctx.zero(),
+            im: ctx.zero(),
+        }
+    }
+
+    fn one(ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            re: ctx.one(),
+            im: ctx.zero(),
+        }
+    }
+
+    fn i(ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            re: ctx.zero(),
+            im: ctx.one(),
+        }
+    }
+
+    fn from_scalar(value: &arpfloat::Float, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            re: value.clone(),
+            im: ctx.zero(),
+        }
+    }
+
+    fn conjugate(&self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            re: self.re.clone(),
+            im: ctx.neg(&self.im),
+        }
+    }
+
+    fn norm_squared(&self, ctx: &arp_backend::Ctx) -> arpfloat::Float {
+        ctx.add(&ctx.mul(&self.re, &self.re), &ctx.mul(&self.im, &self.im))
+    }
+
+    fn reciprocal(&self, ctx: &arp_backend::Ctx) -> Self {
+        let denom = self.norm_squared(ctx);
+        Self {
+            re: ctx.div(&self.re, &denom),
+            im: ctx.div(&ctx.neg(&self.im), &denom),
+        }
+    }
+
+    fn powi(&self, exponent: usize, ctx: &arp_backend::Ctx) -> Self {
+        let mut acc = Self::one(ctx);
+        for _ in 0..exponent {
+            acc = acc.mul(self, ctx);
+        }
+        acc
+    }
+
+    fn add(&self, rhs: &Self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            re: ctx.add(&self.re, &rhs.re),
+            im: ctx.add(&self.im, &rhs.im),
+        }
+    }
+
+    fn sub(&self, rhs: &Self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            re: ctx.sub(&self.re, &rhs.re),
+            im: ctx.sub(&self.im, &rhs.im),
+        }
+    }
+
+    fn neg(&self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            re: ctx.neg(&self.re),
+            im: ctx.neg(&self.im),
+        }
+    }
+
+    fn mul(&self, rhs: &Self, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            re: ctx.sub(&ctx.mul(&self.re, &rhs.re), &ctx.mul(&self.im, &rhs.im)),
+            im: ctx.add(&ctx.mul(&self.re, &rhs.im), &ctx.mul(&self.im, &rhs.re)),
+        }
+    }
+
+    fn div(&self, rhs: &Self, ctx: &arp_backend::Ctx) -> Self {
+        self.mul(&rhs.reciprocal(ctx), ctx)
+    }
+
+    fn div_real(&self, rhs: &arpfloat::Float, ctx: &arp_backend::Ctx) -> Self {
+        Self {
+            re: ctx.div(&self.re, rhs),
+            im: ctx.div(&self.im, rhs),
         }
     }
 }
@@ -2669,7 +3441,253 @@ fn bench_complex_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("complex_ops");
     bench_complex_operations_for::<ApproxBackend>(&mut group, "approx");
     bench_complex_operations_for::<RealisticBackend>(&mut group, "realistic");
+    bench_astro_complex_operations(&mut group, "astro128");
+    bench_arp_complex_operations(&mut group, "arp128");
     group.finish();
+}
+
+fn bench_astro_complex_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    let ctx = astro_backend::Ctx::new(128);
+    let lhs_cases = [
+        astro_backend::Complex::new(&ctx, 3.0, 4.0),
+        astro_backend::Complex::new(&ctx, 1.0e-9, -1.0e-9),
+        astro_backend::Complex::new(&ctx, 1.0e9, -1.0),
+        astro_backend::Complex::new(&ctx, std::f64::consts::PI, -std::f64::consts::E),
+    ];
+    let rhs_cases = [
+        astro_backend::Complex::new(&ctx, 1.5, -2.0),
+        astro_backend::Complex::new(&ctx, -1.0e-9, 2.0e-9),
+        astro_backend::Complex::new(&ctx, -1.0e9, 2.0),
+        astro_backend::Complex::new(&ctx, std::f64::consts::SQRT_2, std::f64::consts::FRAC_1_PI),
+    ];
+    let real_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
+
+    group.bench_function(format!("{label}/zero"), |b| {
+        b.iter(|| black_box(astro_backend::Complex::zero(&ctx)))
+    });
+    group.bench_function(format!("{label}/one"), |b| {
+        b.iter(|| black_box(astro_backend::Complex::one(&ctx)))
+    });
+    group.bench_function(format!("{label}/i"), |b| {
+        b.iter(|| black_box(astro_backend::Complex::i(&ctx)))
+    });
+    group.bench_function(format!("{label}/free_i"), |b| {
+        b.iter(|| black_box(astro_backend::Complex::i(&ctx)))
+    });
+    group.bench_function(format!("{label}/conjugate"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs_cases, &cursor).conjugate(&ctx)))
+    });
+    group.bench_function(format!("{label}/norm_squared"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs_cases, &cursor).norm_squared(&ctx)))
+    });
+    for name in ["reciprocal", "reciprocal_checked"] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs_cases, &cursor).reciprocal(&ctx)))
+        });
+    }
+    for name in ["powi", "powi_checked"] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs_cases, &cursor).powi(5, &ctx)))
+        });
+    }
+    group.bench_function(format!("{label}/div_checked"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].div(&rhs_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/div_real_checked"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].div_real(&real_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/from_scalar"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(astro_backend::Complex::from_scalar(
+                next_case(&real_cases, &cursor),
+                &ctx,
+            ))
+        })
+    });
+    group.bench_function(format!("{label}/add"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].add(&rhs_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/sub"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].sub(&rhs_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/neg"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs_cases, &cursor).neg(&ctx)))
+    });
+    group.bench_function(format!("{label}/mul"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].mul(&rhs_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/div"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].div(&rhs_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/div_real"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].div_real(&real_cases[index], &ctx))
+        })
+    });
+}
+
+fn bench_arp_complex_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    let ctx = arp_backend::Ctx::new(128);
+    let lhs_cases = [
+        arp_backend::Complex::new(&ctx, 3.0, 4.0),
+        arp_backend::Complex::new(&ctx, 1.0e-9, -1.0e-9),
+        arp_backend::Complex::new(&ctx, 1.0e9, -1.0),
+        arp_backend::Complex::new(&ctx, std::f64::consts::PI, -std::f64::consts::E),
+    ];
+    let rhs_cases = [
+        arp_backend::Complex::new(&ctx, 1.5, -2.0),
+        arp_backend::Complex::new(&ctx, -1.0e-9, 2.0e-9),
+        arp_backend::Complex::new(&ctx, -1.0e9, 2.0),
+        arp_backend::Complex::new(&ctx, std::f64::consts::SQRT_2, std::f64::consts::FRAC_1_PI),
+    ];
+    let real_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
+
+    group.bench_function(format!("{label}/zero"), |b| {
+        b.iter(|| black_box(arp_backend::Complex::zero(&ctx)))
+    });
+    group.bench_function(format!("{label}/one"), |b| {
+        b.iter(|| black_box(arp_backend::Complex::one(&ctx)))
+    });
+    group.bench_function(format!("{label}/i"), |b| {
+        b.iter(|| black_box(arp_backend::Complex::i(&ctx)))
+    });
+    group.bench_function(format!("{label}/free_i"), |b| {
+        b.iter(|| black_box(arp_backend::Complex::i(&ctx)))
+    });
+    group.bench_function(format!("{label}/conjugate"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs_cases, &cursor).conjugate(&ctx)))
+    });
+    group.bench_function(format!("{label}/norm_squared"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs_cases, &cursor).norm_squared(&ctx)))
+    });
+    for name in ["reciprocal", "reciprocal_checked"] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs_cases, &cursor).reciprocal(&ctx)))
+        });
+    }
+    for name in ["powi", "powi_checked"] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs_cases, &cursor).powi(5, &ctx)))
+        });
+    }
+    group.bench_function(format!("{label}/div_checked"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].div(&rhs_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/div_real_checked"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].div_real(&real_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/from_scalar"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(arp_backend::Complex::from_scalar(
+                next_case(&real_cases, &cursor),
+                &ctx,
+            ))
+        })
+    });
+    group.bench_function(format!("{label}/add"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].add(&rhs_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/sub"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].sub(&rhs_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/neg"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs_cases, &cursor).neg(&ctx)))
+    });
+    group.bench_function(format!("{label}/mul"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].mul(&rhs_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/div"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].div(&rhs_cases[index], &ctx))
+        })
+    });
+    group.bench_function(format!("{label}/div_real"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs_cases.len());
+            black_box(lhs_cases[index].div_real(&real_cases[index], &ctx))
+        })
+    });
 }
 
 fn bench_vector_operations_for<B: Backend>(
@@ -2906,7 +3924,293 @@ fn bench_vector_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("vector_ops");
     bench_vector_operations_for::<ApproxBackend>(&mut group, "approx");
     bench_vector_operations_for::<RealisticBackend>(&mut group, "realistic");
+    bench_astro_vector_operations(&mut group, "astro128");
+    bench_arp_vector_operations(&mut group, "arp128");
     group.finish();
+}
+
+fn bench_astro_vector_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    let ctx = astro_backend::Ctx::new(128);
+    let lhs3_cases =
+        sample_vec3_cases().map(|value| astro_backend::Vec3::new(&ctx, value.x, value.y, value.z));
+    let rhs3_cases = sample_vec3_b_cases()
+        .map(|value| astro_backend::Vec3::new(&ctx, value.x, value.y, value.z));
+    let lhs4_cases = sample_vec4_cases()
+        .map(|value| astro_backend::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
+    let rhs4_cases = sample_vec4_b_cases()
+        .map(|value| astro_backend::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
+    let scalar_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
+
+    group.bench_function(format!("{label}/vec3 new"), |b| {
+        let raw_cases = sample_vec3_cases();
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let value = *next_case(&raw_cases, &cursor);
+            black_box(astro_backend::Vec3::new(&ctx, value.x, value.y, value.z))
+        })
+    });
+    group.bench_function(format!("{label}/vec3 zero"), |b| {
+        b.iter(|| black_box(astro_backend::Vec3::zero(&ctx)))
+    });
+    group.bench_function(format!("{label}/vec3 dot_abort"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs3_cases.len());
+            black_box(lhs3_cases[index].dot(&rhs3_cases[index], &ctx))
+        })
+    });
+    for name in [
+        "vec3 magnitude_abort",
+        "vec3 normalize_checked",
+        "vec3 normalize_checked_abort",
+    ] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let value = next_case(&lhs3_cases, &cursor);
+                black_box(if name == "vec3 magnitude_abort" {
+                    let magnitude = value.magnitude(&ctx);
+                    astro_backend::Vec3 {
+                        x: magnitude,
+                        y: ctx.zero(),
+                        z: ctx.zero(),
+                    }
+                } else {
+                    value.normalize(&ctx)
+                })
+            })
+        });
+    }
+    for name in ["vec3 div_scalar_checked", "vec3 div_scalar_checked_abort"] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(lhs3_cases[index].div_scalar(&scalar_cases[index], &ctx))
+            })
+        });
+    }
+    for name in [
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+        "div_scalar",
+    ] {
+        group.bench_function(format!("{label}/vec3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(match name {
+                    "add" => lhs3_cases[index].add(&rhs3_cases[index], &ctx),
+                    "add_scalar" => lhs3_cases[index].add_scalar(&scalar_cases[index], &ctx),
+                    "sub" => lhs3_cases[index].sub(&rhs3_cases[index], &ctx),
+                    "sub_scalar" => lhs3_cases[index].sub_scalar(&scalar_cases[index], &ctx),
+                    "neg" => lhs3_cases[index].neg(&ctx),
+                    "mul_scalar" => lhs3_cases[index].mul_scalar(&scalar_cases[index], &ctx),
+                    _ => lhs3_cases[index].div_scalar(&scalar_cases[index], &ctx),
+                })
+            })
+        });
+    }
+    for name in [
+        "dot",
+        "magnitude",
+        "normalize",
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+        "div_scalar",
+    ] {
+        group.bench_function(format!("{label}/vec4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs4_cases.len());
+                black_box(match name {
+                    "dot" => {
+                        let dot = lhs4_cases[index].dot(&rhs4_cases[index], &ctx);
+                        astro_backend::Vec4 {
+                            x: dot,
+                            y: ctx.zero(),
+                            z: ctx.zero(),
+                            w: ctx.zero(),
+                        }
+                    }
+                    "magnitude" => {
+                        let magnitude = lhs4_cases[index].magnitude(&ctx);
+                        astro_backend::Vec4 {
+                            x: magnitude,
+                            y: ctx.zero(),
+                            z: ctx.zero(),
+                            w: ctx.zero(),
+                        }
+                    }
+                    "normalize" => lhs4_cases[index].normalize(&ctx),
+                    "add" => lhs4_cases[index].add(&rhs4_cases[index], &ctx),
+                    "add_scalar" => lhs4_cases[index].add_scalar(&scalar_cases[index], &ctx),
+                    "sub" => lhs4_cases[index].sub(&rhs4_cases[index], &ctx),
+                    "sub_scalar" => lhs4_cases[index].sub_scalar(&scalar_cases[index], &ctx),
+                    "neg" => lhs4_cases[index].neg(&ctx),
+                    "mul_scalar" => lhs4_cases[index].mul_scalar(&scalar_cases[index], &ctx),
+                    _ => lhs4_cases[index].div_scalar(&scalar_cases[index], &ctx),
+                })
+            })
+        });
+    }
+}
+
+fn bench_arp_vector_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    let ctx = arp_backend::Ctx::new(128);
+    let lhs3_cases =
+        sample_vec3_cases().map(|value| arp_backend::Vec3::new(&ctx, value.x, value.y, value.z));
+    let rhs3_cases =
+        sample_vec3_b_cases().map(|value| arp_backend::Vec3::new(&ctx, value.x, value.y, value.z));
+    let lhs4_cases = sample_vec4_cases()
+        .map(|value| arp_backend::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
+    let rhs4_cases = sample_vec4_b_cases()
+        .map(|value| arp_backend::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
+    let scalar_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
+
+    group.bench_function(format!("{label}/vec3 new"), |b| {
+        let raw_cases = sample_vec3_cases();
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let value = *next_case(&raw_cases, &cursor);
+            black_box(arp_backend::Vec3::new(&ctx, value.x, value.y, value.z))
+        })
+    });
+    group.bench_function(format!("{label}/vec3 zero"), |b| {
+        b.iter(|| black_box(arp_backend::Vec3::zero(&ctx)))
+    });
+    group.bench_function(format!("{label}/vec3 dot_abort"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs3_cases.len());
+            black_box(lhs3_cases[index].dot(&rhs3_cases[index], &ctx))
+        })
+    });
+    for name in [
+        "vec3 magnitude_abort",
+        "vec3 normalize_checked",
+        "vec3 normalize_checked_abort",
+    ] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let value = next_case(&lhs3_cases, &cursor);
+                black_box(if name == "vec3 magnitude_abort" {
+                    let magnitude = value.magnitude(&ctx);
+                    arp_backend::Vec3 {
+                        x: magnitude,
+                        y: ctx.zero(),
+                        z: ctx.zero(),
+                    }
+                } else {
+                    value.normalize(&ctx)
+                })
+            })
+        });
+    }
+    for name in ["vec3 div_scalar_checked", "vec3 div_scalar_checked_abort"] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(lhs3_cases[index].div_scalar(&scalar_cases[index], &ctx))
+            })
+        });
+    }
+    for name in [
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+        "div_scalar",
+    ] {
+        group.bench_function(format!("{label}/vec3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(match name {
+                    "add" => lhs3_cases[index].add(&rhs3_cases[index], &ctx),
+                    "add_scalar" => lhs3_cases[index].add_scalar(&scalar_cases[index], &ctx),
+                    "sub" => lhs3_cases[index].sub(&rhs3_cases[index], &ctx),
+                    "sub_scalar" => lhs3_cases[index].sub_scalar(&scalar_cases[index], &ctx),
+                    "neg" => lhs3_cases[index].neg(&ctx),
+                    "mul_scalar" => lhs3_cases[index].mul_scalar(&scalar_cases[index], &ctx),
+                    _ => lhs3_cases[index].div_scalar(&scalar_cases[index], &ctx),
+                })
+            })
+        });
+    }
+    for name in [
+        "dot",
+        "magnitude",
+        "normalize",
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+        "div_scalar",
+    ] {
+        group.bench_function(format!("{label}/vec4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs4_cases.len());
+                black_box(match name {
+                    "dot" => {
+                        let dot = lhs4_cases[index].dot(&rhs4_cases[index], &ctx);
+                        arp_backend::Vec4 {
+                            x: dot,
+                            y: ctx.zero(),
+                            z: ctx.zero(),
+                            w: ctx.zero(),
+                        }
+                    }
+                    "magnitude" => {
+                        let magnitude = lhs4_cases[index].magnitude(&ctx);
+                        arp_backend::Vec4 {
+                            x: magnitude,
+                            y: ctx.zero(),
+                            z: ctx.zero(),
+                            w: ctx.zero(),
+                        }
+                    }
+                    "normalize" => lhs4_cases[index].normalize(&ctx),
+                    "add" => lhs4_cases[index].add(&rhs4_cases[index], &ctx),
+                    "add_scalar" => lhs4_cases[index].add_scalar(&scalar_cases[index], &ctx),
+                    "sub" => lhs4_cases[index].sub(&rhs4_cases[index], &ctx),
+                    "sub_scalar" => lhs4_cases[index].sub_scalar(&scalar_cases[index], &ctx),
+                    "neg" => lhs4_cases[index].neg(&ctx),
+                    "mul_scalar" => lhs4_cases[index].mul_scalar(&scalar_cases[index], &ctx),
+                    _ => lhs4_cases[index].div_scalar(&scalar_cases[index], &ctx),
+                })
+            })
+        });
+    }
 }
 
 fn bench_matrix_operations_for<B: Backend>(
@@ -3255,7 +4559,395 @@ fn bench_matrix_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("matrix_ops");
     bench_matrix_operations_for::<ApproxBackend>(&mut group, "approx");
     bench_matrix_operations_for::<RealisticBackend>(&mut group, "realistic");
+    bench_astro_matrix_operations(&mut group, "astro128");
+    bench_arp_matrix_operations(&mut group, "arp128");
     group.finish();
+}
+
+fn bench_astro_matrix_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    let ctx = astro_backend::Ctx::new(128);
+    let lhs3_cases = sample_mat3_cases().map(|value| astro_backend::Mat3::new(&ctx, value.m));
+    let rhs3_cases = sample_mat3_b_cases().map(|value| astro_backend::Mat3::new(&ctx, value.m));
+    let lhs4_cases = sample_mat4_cases().map(|value| astro_backend::Mat4::new(&ctx, value.m));
+    let rhs4_cases = sample_mat4_b_cases().map(|value| astro_backend::Mat4::new(&ctx, value.m));
+    let scalar_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
+
+    group.bench_function(format!("{label}/mat3 new"), |b| {
+        let raw_cases = sample_mat3_cases();
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(astro_backend::Mat3::new(
+                &ctx,
+                next_case(&raw_cases, &cursor).m,
+            ))
+        })
+    });
+    group.bench_function(format!("{label}/mat3 zero"), |b| {
+        b.iter(|| black_box(astro_backend::Mat3::zero(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat3 identity"), |b| {
+        b.iter(|| black_box(astro_backend::Mat3::identity(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat3 transpose"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs3_cases, &cursor).transpose()))
+    });
+    for name in [
+        "reciprocal",
+        "reciprocal_checked",
+        "inverse_checked",
+        "inverse_checked_abort",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs3_cases, &cursor).inverse(&ctx)))
+        });
+    }
+    for name in ["powi", "powi_checked", "powi_checked_abort", "bitxor"] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs3_cases, &cursor).powi(3, &ctx)))
+        });
+    }
+    for name in [
+        "div_scalar_checked",
+        "div_scalar_checked_abort",
+        "div_scalar",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(lhs3_cases[index].map_scalar(
+                    &scalar_cases[index],
+                    &ctx,
+                    astro_backend::Ctx::div,
+                ))
+            })
+        });
+    }
+    for name in [
+        "div_matrix_checked",
+        "div_matrix_checked_abort",
+        "div_matrix",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(lhs3_cases[index].div_matrix(&rhs3_cases[index], &ctx))
+            })
+        });
+    }
+    for name in [
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(match name {
+                    "add" => {
+                        lhs3_cases[index].combine(&rhs3_cases[index], &ctx, astro_backend::Ctx::add)
+                    }
+                    "add_scalar" => lhs3_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        astro_backend::Ctx::add,
+                    ),
+                    "sub" => {
+                        lhs3_cases[index].combine(&rhs3_cases[index], &ctx, astro_backend::Ctx::sub)
+                    }
+                    "sub_scalar" => lhs3_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        astro_backend::Ctx::sub,
+                    ),
+                    "neg" => lhs3_cases[index].neg(&ctx),
+                    _ => lhs3_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        astro_backend::Ctx::mul,
+                    ),
+                })
+            })
+        });
+    }
+
+    group.bench_function(format!("{label}/mat4 zero"), |b| {
+        b.iter(|| black_box(astro_backend::Mat4::zero(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat4 identity"), |b| {
+        b.iter(|| black_box(astro_backend::Mat4::identity(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat4 transpose"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs4_cases, &cursor).transpose()))
+    });
+    for name in ["reciprocal", "reciprocal_checked"] {
+        group.bench_function(format!("{label}/mat4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs4_cases, &cursor).inverse(&ctx)))
+        });
+    }
+    for name in ["powi", "powi_checked", "bitxor"] {
+        group.bench_function(format!("{label}/mat4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs4_cases, &cursor).powi(3, &ctx)))
+        });
+    }
+    for name in [
+        "div_scalar",
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+        "div_matrix",
+    ] {
+        group.bench_function(format!("{label}/mat4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs4_cases.len());
+                black_box(match name {
+                    "div_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        astro_backend::Ctx::div,
+                    ),
+                    "add" => {
+                        lhs4_cases[index].combine(&rhs4_cases[index], &ctx, astro_backend::Ctx::add)
+                    }
+                    "add_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        astro_backend::Ctx::add,
+                    ),
+                    "sub" => {
+                        lhs4_cases[index].combine(&rhs4_cases[index], &ctx, astro_backend::Ctx::sub)
+                    }
+                    "sub_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        astro_backend::Ctx::sub,
+                    ),
+                    "neg" => lhs4_cases[index].neg(&ctx),
+                    "mul_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        astro_backend::Ctx::mul,
+                    ),
+                    _ => lhs4_cases[index].div_matrix(&rhs4_cases[index], &ctx),
+                })
+            })
+        });
+    }
+}
+
+fn bench_arp_matrix_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    let ctx = arp_backend::Ctx::new(128);
+    let lhs3_cases = sample_mat3_cases().map(|value| arp_backend::Mat3::new(&ctx, value.m));
+    let rhs3_cases = sample_mat3_b_cases().map(|value| arp_backend::Mat3::new(&ctx, value.m));
+    let lhs4_cases = sample_mat4_cases().map(|value| arp_backend::Mat4::new(&ctx, value.m));
+    let rhs4_cases = sample_mat4_b_cases().map(|value| arp_backend::Mat4::new(&ctx, value.m));
+    let scalar_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
+
+    group.bench_function(format!("{label}/mat3 new"), |b| {
+        let raw_cases = sample_mat3_cases();
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(arp_backend::Mat3::new(
+                &ctx,
+                next_case(&raw_cases, &cursor).m,
+            ))
+        })
+    });
+    group.bench_function(format!("{label}/mat3 zero"), |b| {
+        b.iter(|| black_box(arp_backend::Mat3::zero(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat3 identity"), |b| {
+        b.iter(|| black_box(arp_backend::Mat3::identity(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat3 transpose"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs3_cases, &cursor).transpose()))
+    });
+    for name in [
+        "reciprocal",
+        "reciprocal_checked",
+        "inverse_checked",
+        "inverse_checked_abort",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs3_cases, &cursor).inverse(&ctx)))
+        });
+    }
+    for name in ["powi", "powi_checked", "powi_checked_abort", "bitxor"] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs3_cases, &cursor).powi(3, &ctx)))
+        });
+    }
+    for name in [
+        "div_scalar_checked",
+        "div_scalar_checked_abort",
+        "div_scalar",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(lhs3_cases[index].map_scalar(
+                    &scalar_cases[index],
+                    &ctx,
+                    arp_backend::Ctx::div,
+                ))
+            })
+        });
+    }
+    for name in [
+        "div_matrix_checked",
+        "div_matrix_checked_abort",
+        "div_matrix",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(lhs3_cases[index].div_matrix(&rhs3_cases[index], &ctx))
+            })
+        });
+    }
+    for name in [
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(match name {
+                    "add" => {
+                        lhs3_cases[index].combine(&rhs3_cases[index], &ctx, arp_backend::Ctx::add)
+                    }
+                    "add_scalar" => lhs3_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        arp_backend::Ctx::add,
+                    ),
+                    "sub" => {
+                        lhs3_cases[index].combine(&rhs3_cases[index], &ctx, arp_backend::Ctx::sub)
+                    }
+                    "sub_scalar" => lhs3_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        arp_backend::Ctx::sub,
+                    ),
+                    "neg" => lhs3_cases[index].neg(&ctx),
+                    _ => lhs3_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        arp_backend::Ctx::mul,
+                    ),
+                })
+            })
+        });
+    }
+
+    group.bench_function(format!("{label}/mat4 zero"), |b| {
+        b.iter(|| black_box(arp_backend::Mat4::zero(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat4 identity"), |b| {
+        b.iter(|| black_box(arp_backend::Mat4::identity(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat4 transpose"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs4_cases, &cursor).transpose()))
+    });
+    for name in ["reciprocal", "reciprocal_checked"] {
+        group.bench_function(format!("{label}/mat4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs4_cases, &cursor).inverse(&ctx)))
+        });
+    }
+    for name in ["powi", "powi_checked", "bitxor"] {
+        group.bench_function(format!("{label}/mat4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs4_cases, &cursor).powi(3, &ctx)))
+        });
+    }
+    for name in [
+        "div_scalar",
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+        "div_matrix",
+    ] {
+        group.bench_function(format!("{label}/mat4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs4_cases.len());
+                black_box(match name {
+                    "div_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        arp_backend::Ctx::div,
+                    ),
+                    "add" => {
+                        lhs4_cases[index].combine(&rhs4_cases[index], &ctx, arp_backend::Ctx::add)
+                    }
+                    "add_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        arp_backend::Ctx::add,
+                    ),
+                    "sub" => {
+                        lhs4_cases[index].combine(&rhs4_cases[index], &ctx, arp_backend::Ctx::sub)
+                    }
+                    "sub_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        arp_backend::Ctx::sub,
+                    ),
+                    "neg" => lhs4_cases[index].neg(&ctx),
+                    "mul_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        arp_backend::Ctx::mul,
+                    ),
+                    _ => lhs4_cases[index].div_matrix(&rhs4_cases[index], &ctx),
+                })
+            })
+        });
+    }
 }
 
 fn bench_precisions(c: &mut Criterion) {
