@@ -1,7 +1,7 @@
-use crate::Rational;
 use crate::computable::approximation::Approximation;
+use crate::Rational;
 use core::cmp::Ordering;
-use num::{BigInt, BigUint, bigint::Sign};
+use num::{bigint::Sign, BigInt, BigUint};
 use num::{One, Zero};
 use std::cell::RefCell;
 use std::ops::Deref;
@@ -17,8 +17,8 @@ enum Cache {
     Valid((Precision, BigInt)),
 }
 
-use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 
 pub type Signal = Arc<AtomicBool>;
 
@@ -49,7 +49,7 @@ mod rationals {
 
 mod signed {
     use num::One;
-    use num::{BigInt, bigint::ToBigInt};
+    use num::{bigint::ToBigInt, BigInt};
     use std::sync::LazyLock;
 
     pub(super) static MINUS_ONE: LazyLock<BigInt> =
@@ -72,7 +72,7 @@ mod signed {
 
 mod unsigned {
     use num::One;
-    use num::{BigUint, bigint::ToBigUint};
+    use num::{bigint::ToBigUint, BigUint};
     use std::sync::LazyLock;
 
     pub(super) static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
@@ -160,6 +160,50 @@ impl Computable {
         }
     }
 
+    /// Calculate nearby multiple of pi/2.
+    fn half_pi_multiple(&self) -> BigInt {
+        let mut rough_appr = self.approx(-1);
+        let mut multiple = &rough_appr / signed::THREE.deref();
+
+        loop {
+            let adj = Self::pi()
+                .shift_right(1)
+                .multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
+            let sum = self.clone().add(adj);
+            rough_appr = sum.approx(-1);
+
+            let abs_rough_appr = rough_appr.magnitude();
+            if abs_rough_appr < unsigned::TWO.deref() {
+                return multiple;
+            }
+
+            let mut delta = &rough_appr / signed::THREE.deref();
+            if delta.is_zero() {
+                delta = match rough_appr.sign() {
+                    Sign::Minus => signed::MINUS_ONE.clone(),
+                    _ => signed::ONE.clone(),
+                };
+            }
+            multiple += delta;
+        }
+    }
+
+    fn medium_half_pi_multiple(rough_appr: &BigInt) -> BigInt {
+        let positive = rough_appr.sign() != Sign::Minus;
+        let magnitude = rough_appr.magnitude();
+        let multiple = if magnitude < unsigned::FIVE.deref() {
+            signed::ONE.clone()
+        } else {
+            signed::TWO.clone()
+        };
+
+        if positive {
+            multiple
+        } else {
+            -multiple
+        }
+    }
+
     /// Cosine of this number.
     pub fn cos(self) -> Computable {
         let rough_appr = self.approx(-1);
@@ -191,7 +235,47 @@ impl Computable {
 
     /// Sine of this number.
     pub fn sin(self) -> Computable {
-        Self::pi().shift_right(1).add(self.negate()).cos()
+        let rough_appr = self.approx(-1);
+        let abs_rough_appr = rough_appr.magnitude();
+
+        if abs_rough_appr < unsigned::TWO.deref() {
+            return Self {
+                internal: Box::new(Approximation::PrescaledSin(self)),
+                cache: RefCell::new(Cache::Invalid),
+                signal: None,
+            };
+        }
+
+        if abs_rough_appr < unsigned::SIX.deref() {
+            let multiplier = Self::medium_half_pi_multiple(&rough_appr);
+            if multiplier == *signed::ONE {
+                return Self::pi().shift_right(1).add(self.negate()).cos();
+            } else if multiplier == *signed::MINUS_ONE {
+                return Self::pi().shift_right(1).add(self).cos().negate();
+            } else if multiplier == *signed::TWO {
+                return Self::pi().add(self.negate()).sin();
+            } else {
+                return Self::pi().add(self).sin().negate();
+            }
+        }
+
+        let multiplier = Self::half_pi_multiple(&self);
+        let adjustment = Self::pi()
+            .shift_right(1)
+            .multiply(Self::rational(Rational::from_bigint(multiplier.clone())).negate());
+        let reduced = self.add(adjustment);
+        let quadrant =
+            ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref()) % signed::FOUR.deref();
+
+        if quadrant.is_zero() {
+            reduced.sin()
+        } else if quadrant == *signed::ONE {
+            reduced.cos()
+        } else if quadrant == *signed::TWO {
+            reduced.sin().negate()
+        } else {
+            reduced.cos().negate()
+        }
     }
 
     /// Tangent of this number.
@@ -759,6 +843,12 @@ mod tests {
         assert!(error <= max_error);
     }
 
+    fn assert_close(left: Computable, right: Computable, p: Precision, max_error: i32) {
+        let error = (left.approx(p) - right.approx(p)).abs();
+        let max_error = BigInt::from(max_error);
+        assert!(error <= max_error);
+    }
+
     fn pi_times(r: Rational) -> Computable {
         Computable::pi().multiply(Computable::rational(r))
     }
@@ -824,13 +914,13 @@ mod tests {
         for r in ["-12", "-3/5", "0", "1/5", "3", "123"] {
             let r: Rational = r.parse().unwrap();
             let c = Computable::rational(r);
-            assert_eq!(c.clone().sin().approx(-40), shifted_cos_sin(c).approx(-40));
+            assert_close(c.clone().sin(), shifted_cos_sin(c), -40, 1);
         }
 
         for r in ["-7/3", "-1/2", "1/2", "2", "41/6"] {
             let r: Rational = r.parse().unwrap();
             let c = pi_times(r);
-            assert_eq!(c.clone().sin().approx(-40), shifted_cos_sin(c).approx(-40));
+            assert_close(c.clone().sin(), shifted_cos_sin(c), -40, 1);
         }
     }
 

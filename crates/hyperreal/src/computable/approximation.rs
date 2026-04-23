@@ -1,6 +1,6 @@
+use crate::computable::{scale, shift, should_stop, signed, Precision, Signal};
 use crate::Computable;
 use crate::Rational;
-use crate::computable::{Precision, Signal, scale, shift, should_stop, signed};
 use num::bigint::{Sign, ToBigInt};
 use num::{BigInt, BigUint, Signed};
 use num::{One, Zero};
@@ -21,6 +21,7 @@ pub(super) enum Approximation {
     PrescaledLn(Computable),
     IntegralAtan(BigInt),
     PrescaledCos(Computable),
+    PrescaledSin(Computable),
 }
 
 impl Approximation {
@@ -41,6 +42,7 @@ impl Approximation {
             PrescaledLn(c) => ln(signal, c, p),
             IntegralAtan(i) => atan(signal, i, p),
             PrescaledCos(c) => cos(signal, c, p),
+            PrescaledSin(c) => sin(signal, c, p),
         }
     }
 }
@@ -285,6 +287,55 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
     let mut n = 0;
     let mut current_term = signed::ONE.deref() << (-calc_precision);
+    let mut current_sum = current_term.clone();
+
+    while current_term.abs() > max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+
+        /* current_term = - current_term * op * op / n * (n - 1)   */
+        current_term = scale(current_term * &op_appr, op_prec);
+        current_term = scale(current_term * &op_appr, op_prec);
+        let divisor = ToBigInt::to_bigint(&-n).unwrap() * ToBigInt::to_bigint(&(n - 1)).unwrap();
+        current_term /= divisor;
+
+        current_sum += &current_term;
+    }
+    scale(current_sum, calc_precision - p)
+}
+
+// Compute sine of |c| < 1
+// uses a Taylor series expansion.
+fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    if p >= 1 {
+        return Zero::zero();
+    }
+    let iterations_needed = -p / 2 + 4;
+
+    if should_stop(signal) {
+        return Zero::zero();
+    }
+
+    //  Claim: each intermediate term is accurate
+    //  to 2*2^calc_precision.
+    //  Total rounding error in series computation is
+    //  2*iterations_needed*2^calc_precision,
+    //  exclusive of error in op.
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4; // for error in op, truncation.
+    let op_prec = p - 2;
+    let op_appr = c.approx_signal(signal, op_prec);
+
+    // Error in argument results in error of < 1/4 ulp.
+    // Cumulative arithmetic rounding error is < 1/16 ulp.
+    // Series truncation error < 1/16 ulp.
+    // Final rounding error is <= 1/2 ulp.
+    // Thus final error is < 1 ulp.
+
+    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    let mut n = 1;
+    let mut current_term = scale(op_appr.clone(), op_prec - calc_precision);
     let mut current_sum = current_term.clone();
 
     while current_term.abs() > max_trunc_error {
