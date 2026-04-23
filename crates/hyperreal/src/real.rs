@@ -210,15 +210,23 @@ fn tan_curve(r: Rational) -> (bool, Rational) {
 // 0 < r < 0.5
 // Never actually used for exact zero or half
 fn curve(r: Rational) -> (bool, Rational) {
+    if r.sign() == Sign::Minus {
+        let (neg, s) = curve(r.neg());
+        return (!neg, s);
+    }
     let whole = r.shifted_big_integer(0);
     let mut s = r.fract();
-    if s.sign() == Sign::Minus {
-        s = s.neg();
-    }
     if s > *rationals::HALF {
         s = Rational::one() - s;
     }
     (whole.bit(0), s)
+}
+
+fn sin_pi_neg(r: Rational) -> bool {
+    if r.sign() == Sign::Minus {
+        return !sin_pi_neg(r.neg());
+    }
+    r.shifted_big_integer(0).bit(0)
 }
 
 impl Real {
@@ -616,8 +624,7 @@ impl Real {
                     r = Some(Self::new(Rational::fraction(1, 2).unwrap()));
                 }
                 if let Some(real) = r {
-                    let whole = self.rational.shifted_big_integer(0);
-                    if whole.bit(0) {
+                    if sin_pi_neg(self.rational.clone()) {
                         return real.neg();
                     } else {
                         return real;

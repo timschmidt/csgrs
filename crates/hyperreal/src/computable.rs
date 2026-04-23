@@ -540,6 +540,7 @@ fn scale(n: BigInt, p: Precision) -> BigInt {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use num::Signed;
 
     #[test]
     fn compare() {
@@ -748,6 +749,89 @@ mod tests {
         let cos = one.cos();
         let correct: BigInt = "2320580734".parse().unwrap();
         assert_eq!(cos.approx(-32), correct);
+    }
+
+    fn assert_approx(c: Computable, p: Precision, expected: &str, max_error: i32) {
+        let actual = c.approx(p);
+        let expected: BigInt = expected.parse().unwrap();
+        let error = (actual - expected).abs();
+        let max_error = BigInt::from(max_error);
+        assert!(error <= max_error);
+    }
+
+    fn pi_times(r: Rational) -> Computable {
+        Computable::pi().multiply(Computable::rational(r))
+    }
+
+    fn shifted_cos_sin(c: Computable) -> Computable {
+        pi_times(Rational::fraction(1, 2).unwrap())
+            .add(c.negate())
+            .cos()
+    }
+
+    #[test]
+    fn sin_small_arguments() {
+        let one_fifth = Computable::rational(Rational::fraction(1, 5).unwrap());
+        assert_approx(one_fifth.sin(), -32, "853278278", 1);
+
+        let zero = Computable::rational(Rational::zero());
+        assert_eq!(BigInt::zero(), zero.sin().approx(-32));
+    }
+
+    #[test]
+    fn sin_medium_arguments() {
+        let three: BigInt = "3".parse().unwrap();
+        let three = Computable::integer(three);
+        assert_approx(three.sin(), -32, "606105819", 1);
+    }
+
+    #[test]
+    fn sin_large_arguments() {
+        let one_two_three: BigInt = "123".parse().unwrap();
+        let one_two_three = Computable::integer(one_two_three);
+        assert_approx(one_two_three.sin(), -32, "-1975270452", 1);
+    }
+
+    #[test]
+    fn sin_negative_arguments() {
+        let negative_three_fifths = Computable::rational(Rational::fraction(-3, 5).unwrap());
+        assert_approx(negative_three_fifths.sin(), -32, "-2425120957", 1);
+    }
+
+    #[test]
+    fn sin_near_pi_multiples() {
+        let epsilon = Computable::rational(Rational::fraction(1, 64).unwrap());
+        let pi_plus_epsilon = Computable::pi().add(epsilon.clone());
+        let two_pi_minus_epsilon = pi_times(Rational::new(2)).add(epsilon.clone().negate());
+
+        assert_approx(pi_plus_epsilon.sin(), -32, "-67106133", 1);
+        assert_approx(two_pi_minus_epsilon.sin(), -32, "-67106133", 1);
+    }
+
+    #[test]
+    fn sin_near_half_pi() {
+        let epsilon = Computable::rational(Rational::fraction(1, 64).unwrap());
+        let half_pi = pi_times(Rational::fraction(1, 2).unwrap());
+        let half_pi_plus_epsilon = half_pi.clone().add(epsilon.clone());
+        let half_pi_minus_epsilon = half_pi.add(epsilon.negate());
+
+        assert_approx(half_pi_plus_epsilon.sin(), -32, "4294443019", 1);
+        assert_approx(half_pi_minus_epsilon.sin(), -32, "4294443019", 1);
+    }
+
+    #[test]
+    fn sin_matches_shifted_cos_identity() {
+        for r in ["-12", "-3/5", "0", "1/5", "3", "123"] {
+            let r: Rational = r.parse().unwrap();
+            let c = Computable::rational(r);
+            assert_eq!(c.clone().sin().approx(-40), shifted_cos_sin(c).approx(-40));
+        }
+
+        for r in ["-7/3", "-1/2", "1/2", "2", "41/6"] {
+            let r: Rational = r.parse().unwrap();
+            let c = pi_times(r);
+            assert_eq!(c.clone().sin().approx(-40), shifted_cos_sin(c).approx(-40));
+        }
     }
 
     #[test]
