@@ -1,6 +1,6 @@
 [package]
 name = "realistic_blas"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 description = "A small Rust linear algebra library with a crate-owned Scalar type and realistic or approximate backends."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
