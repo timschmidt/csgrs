@@ -78,19 +78,7 @@ impl<B: Backend> Complex<B> {
             return Ok(Self::one());
         }
 
-        let mut exp = exponent.unsigned_abs();
-        let mut result = Self::one();
-        let mut factor = self;
-        while exp > 0 {
-            if exp & 1 == 1 {
-                result = result * factor.clone();
-            }
-            exp >>= 1;
-            if exp > 0 {
-                factor = factor.clone() * factor;
-            }
-        }
-
+        let result = complex_powi_positive(self, exponent.unsigned_abs());
         if exponent < 0 {
             result.reciprocal()
         } else {
@@ -107,19 +95,7 @@ impl<B: Backend> Complex<B> {
             return Ok(Self::one());
         }
 
-        let mut exp = exponent.unsigned_abs();
-        let mut result = Self::one();
-        let mut factor = self;
-        while exp > 0 {
-            if exp & 1 == 1 {
-                result = result * factor.clone();
-            }
-            exp >>= 1;
-            if exp > 0 {
-                factor = factor.clone() * factor;
-            }
-        }
-
+        let result = complex_powi_positive(self, exponent.unsigned_abs());
         if exponent < 0 {
             result.reciprocal_checked()
         } else {
@@ -149,6 +125,47 @@ impl<B: Backend> Complex<B> {
             self.im.mul_cached(&inv_rhs),
         ))
     }
+}
+
+fn complex_powi_positive<B: Backend>(base: Complex<B>, exponent: u64) -> Complex<B> {
+    match exponent {
+        1 => base,
+        2 => base.clone() * base,
+        3 => {
+            let square = base.clone() * base.clone();
+            square * base
+        }
+        4 => {
+            let square = base.clone() * base;
+            square.clone() * square
+        }
+        5 => {
+            let square = base.clone() * base.clone();
+            let fourth = square.clone() * square;
+            fourth * base
+        }
+        _ => complex_powi_by_squaring(base, exponent),
+    }
+}
+
+fn complex_powi_by_squaring<B: Backend>(base: Complex<B>, exponent: u64) -> Complex<B> {
+    let mut exp = exponent;
+    let mut result = None;
+    let mut factor = base;
+    while exp > 0 {
+        if exp & 1 == 1 {
+            result = Some(match result {
+                Some(result) => result * factor.clone(),
+                None => factor.clone(),
+            });
+        }
+        exp >>= 1;
+        if exp > 0 {
+            factor = factor.clone() * factor;
+        }
+    }
+
+    result.expect("non-zero exponent sets at least one result bit")
 }
 
 impl<B: Backend> From<Scalar<B>> for Complex<B> {

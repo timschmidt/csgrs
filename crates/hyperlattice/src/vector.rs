@@ -24,6 +24,42 @@ pub struct Vector4<B: Backend = DefaultBackend>(
     pub [Scalar<B>; 4],
 );
 
+fn map_array2<B: Backend, const N: usize, F>(
+    left: [Scalar<B>; N],
+    right: [Scalar<B>; N],
+    mut op: F,
+) -> [Scalar<B>; N]
+where
+    F: FnMut(Scalar<B>, Scalar<B>) -> Scalar<B>,
+{
+    let mut right = right.into_iter();
+    left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
+}
+
+fn map_array_scalar<B: Backend, const N: usize, F>(
+    values: [Scalar<B>; N],
+    scalar: Scalar<B>,
+    mut op: F,
+) -> [Scalar<B>; N]
+where
+    F: FnMut(Scalar<B>, Scalar<B>) -> Scalar<B>,
+{
+    let mut values = values.into_iter();
+    let mut scalar = Some(scalar);
+    from_fn(|i| {
+        let value = values.next().expect("from_fn stays within array length");
+        let rhs = if i + 1 == N {
+            scalar.take().expect("last element consumes scalar")
+        } else {
+            scalar
+                .as_ref()
+                .expect("scalar exists until last element")
+                .clone()
+        };
+        op(value, rhs)
+    })
+}
+
 macro_rules! impl_vector {
     ($name:ident, $n:expr) => {
         impl<B: Backend> $name<B> {
@@ -35,27 +71,6 @@ macro_rules! impl_vector {
             /// Returns the zero vector.
             pub fn zero() -> Self {
                 Self(from_fn(|_| Scalar::zero()))
-            }
-
-            /// Returns the dot product with `rhs`.
-            pub fn dot(&self, rhs: &Self) -> Scalar<B> {
-                let mut sum = self.0[0].clone() * rhs.0[0].clone();
-                for i in 1..$n {
-                    sum = sum + self.0[i].clone() * rhs.0[i].clone();
-                }
-                sum
-            }
-
-            /// Returns the dot product after attaching an abort signal to operands.
-            pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Scalar<B> {
-                let mut sum =
-                    clone_with_abort(&self.0[0], signal) * clone_with_abort(&rhs.0[0], signal);
-                for i in 1..$n {
-                    sum = sum
-                        + clone_with_abort(&self.0[i], signal)
-                            * clone_with_abort(&rhs.0[i], signal);
-                }
-                sum
             }
 
             /// Returns the Euclidean magnitude.
@@ -77,11 +92,15 @@ macro_rules! impl_vector {
                 let mag = self.magnitude()?;
                 reject_definite_zero(&mag)?;
                 let inv_mag = mag.inverse()?;
-                let mut values = self.0.clone();
-                for value in &mut values {
-                    *value = value.clone().mul_cached(&inv_mag);
+                if B::MOVE_ELEMENTWISE {
+                    Ok(Self(self.0.clone().map(|value| value.mul_cached(&inv_mag))))
+                } else {
+                    let mut values = self.0.clone();
+                    for value in &mut values {
+                        *value = value.clone().mul_cached(&inv_mag);
+                    }
+                    Ok(Self(values))
                 }
-                Ok(Self(values))
             }
 
             /// Returns a unit vector after rejecting zero and unknown-zero magnitudes.
@@ -89,11 +108,15 @@ macro_rules! impl_vector {
                 let mag = self.magnitude()?;
                 require_known_nonzero(&mag)?;
                 let inv_mag = mag.inverse()?;
-                let mut values = self.0.clone();
-                for value in &mut values {
-                    *value = value.clone().mul_cached(&inv_mag);
+                if B::MOVE_ELEMENTWISE {
+                    Ok(Self(self.0.clone().map(|value| value.mul_cached(&inv_mag))))
+                } else {
+                    let mut values = self.0.clone();
+                    for value in &mut values {
+                        *value = value.clone().mul_cached(&inv_mag);
+                    }
+                    Ok(Self(values))
                 }
-                Ok(Self(values))
             }
 
             /// Returns a checked unit vector after attaching an abort signal.
@@ -104,22 +127,30 @@ macro_rules! impl_vector {
                 let mag = self.magnitude_with_abort(signal)?;
                 require_known_nonzero_with_abort(&mag, signal)?;
                 let inv_mag = mag.inverse()?;
-                let mut values = self.0.clone();
-                for value in &mut values {
-                    *value = value.clone().mul_cached(&inv_mag);
+                if B::MOVE_ELEMENTWISE {
+                    Ok(Self(self.0.clone().map(|value| value.mul_cached(&inv_mag))))
+                } else {
+                    let mut values = self.0.clone();
+                    for value in &mut values {
+                        *value = value.clone().mul_cached(&inv_mag);
+                    }
+                    Ok(Self(values))
                 }
-                Ok(Self(values))
             }
 
             /// Divides every component by `rhs` after rejecting unknown-zero divisors.
             pub fn div_scalar_checked(self, rhs: Scalar<B>) -> CheckedBlasResult<Self> {
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
-                let mut values = self.0;
-                for value in &mut values {
-                    *value = value.clone().mul_cached(&inv_rhs);
+                if B::MOVE_ELEMENTWISE {
+                    Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
+                } else {
+                    let mut values = self.0;
+                    for value in &mut values {
+                        *value = value.clone().mul_cached(&inv_rhs);
+                    }
+                    Ok(Self(values))
                 }
-                Ok(Self(values))
             }
 
             /// Divides every component by `rhs` after attaching an abort signal.
@@ -131,11 +162,15 @@ macro_rules! impl_vector {
                 let rhs = with_abort(rhs, signal);
                 require_known_nonzero_with_abort(&rhs, signal)?;
                 let inv_rhs = rhs.inverse()?;
-                let mut values = self.0;
-                for value in &mut values {
-                    *value = value.clone().mul_cached(&inv_rhs);
+                if B::MOVE_ELEMENTWISE {
+                    Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
+                } else {
+                    let mut values = self.0;
+                    for value in &mut values {
+                        *value = value.clone().mul_cached(&inv_rhs);
+                    }
+                    Ok(Self(values))
                 }
-                Ok(Self(values))
             }
         }
 
@@ -174,7 +209,11 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn add(self, rhs: Self) -> Self::Output {
-                Self(from_fn(|i| self.0[i].clone() + rhs.0[i].clone()))
+                if B::MOVE_ELEMENTWISE {
+                    Self(map_array2(self.0, rhs.0, |lhs, rhs| lhs + rhs))
+                } else {
+                    Self(from_fn(|i| self.0[i].clone() + rhs.0[i].clone()))
+                }
             }
         }
 
@@ -182,7 +221,11 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn add(self, rhs: Scalar<B>) -> Self::Output {
-                Self(from_fn(|i| self.0[i].clone() + rhs.clone()))
+                if B::MOVE_ELEMENTWISE {
+                    Self(map_array_scalar(self.0, rhs, |lhs, rhs| lhs + rhs))
+                } else {
+                    Self(from_fn(|i| self.0[i].clone() + rhs.clone()))
+                }
             }
         }
 
@@ -190,7 +233,11 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn sub(self, rhs: Self) -> Self::Output {
-                Self(from_fn(|i| self.0[i].clone() - rhs.0[i].clone()))
+                if B::MOVE_ELEMENTWISE {
+                    Self(map_array2(self.0, rhs.0, |lhs, rhs| lhs - rhs))
+                } else {
+                    Self(from_fn(|i| self.0[i].clone() - rhs.0[i].clone()))
+                }
             }
         }
 
@@ -198,7 +245,11 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn sub(self, rhs: Scalar<B>) -> Self::Output {
-                Self(from_fn(|i| self.0[i].clone() - rhs.clone()))
+                if B::MOVE_ELEMENTWISE {
+                    Self(map_array_scalar(self.0, rhs, |lhs, rhs| lhs - rhs))
+                } else {
+                    Self(from_fn(|i| self.0[i].clone() - rhs.clone()))
+                }
             }
         }
 
@@ -206,7 +257,11 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn neg(self) -> Self::Output {
-                Self(from_fn(|i| -self.0[i].clone()))
+                if B::MOVE_ELEMENTWISE {
+                    Self(self.0.map(|value| -value))
+                } else {
+                    Self(from_fn(|i| -self.0[i].clone()))
+                }
             }
         }
 
@@ -214,7 +269,11 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn mul(self, rhs: Scalar<B>) -> Self::Output {
-                Self(from_fn(|i| self.0[i].clone() * rhs.clone()))
+                if B::MOVE_ELEMENTWISE {
+                    Self(map_array_scalar(self.0, rhs, |lhs, rhs| lhs * rhs))
+                } else {
+                    Self(from_fn(|i| self.0[i].clone() * rhs.clone()))
+                }
             }
         }
 
@@ -224,11 +283,15 @@ macro_rules! impl_vector {
             fn div(self, rhs: Scalar<B>) -> Self::Output {
                 reject_definite_zero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
-                let mut values = self.0;
-                for value in &mut values {
-                    *value = value.clone().mul_cached(&inv_rhs);
+                if B::MOVE_ELEMENTWISE {
+                    Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
+                } else {
+                    let mut values = self.0;
+                    for value in &mut values {
+                        *value = value.clone().mul_cached(&inv_rhs);
+                    }
+                    Ok(Self(values))
                 }
-                Ok(Self(values))
             }
         }
     };
@@ -236,3 +299,40 @@ macro_rules! impl_vector {
 
 impl_vector!(Vector3, 3);
 impl_vector!(Vector4, 4);
+
+impl<B: Backend> Vector3<B> {
+    /// Returns the dot product with `rhs`.
+    pub fn dot(&self, rhs: &Self) -> Scalar<B> {
+        Scalar::dot3(
+            [&self.0[0], &self.0[1], &self.0[2]],
+            [&rhs.0[0], &rhs.0[1], &rhs.0[2]],
+        )
+    }
+
+    /// Returns the dot product after attaching an abort signal to operands.
+    pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Scalar<B> {
+        let p0 = clone_with_abort(&self.0[0], signal) * clone_with_abort(&rhs.0[0], signal);
+        let p1 = clone_with_abort(&self.0[1], signal) * clone_with_abort(&rhs.0[1], signal);
+        let p2 = clone_with_abort(&self.0[2], signal) * clone_with_abort(&rhs.0[2], signal);
+        (p0 + p1) + p2
+    }
+}
+
+impl<B: Backend> Vector4<B> {
+    /// Returns the dot product with `rhs`.
+    pub fn dot(&self, rhs: &Self) -> Scalar<B> {
+        Scalar::dot4(
+            [&self.0[0], &self.0[1], &self.0[2], &self.0[3]],
+            [&rhs.0[0], &rhs.0[1], &rhs.0[2], &rhs.0[3]],
+        )
+    }
+
+    /// Returns the dot product after attaching an abort signal to operands.
+    pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Scalar<B> {
+        let p0 = clone_with_abort(&self.0[0], signal) * clone_with_abort(&rhs.0[0], signal);
+        let p1 = clone_with_abort(&self.0[1], signal) * clone_with_abort(&rhs.0[1], signal);
+        let p2 = clone_with_abort(&self.0[2], signal) * clone_with_abort(&rhs.0[2], signal);
+        let p3 = clone_with_abort(&self.0[3], signal) * clone_with_abort(&rhs.0[3], signal);
+        (p0 + p1) + (p2 + p3)
+    }
+}

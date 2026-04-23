@@ -126,9 +126,6 @@ pub type BlasResult<T> = Result<T, Problem>;
 /// Result type used by APIs that reject unknown-zero conditions.
 pub type CheckedBlasResult<T> = BlasResult<T>;
 
-/// Backwards-compatible alias for [`Problem`].
-pub type BlasProblem = Problem;
-
 mod backend;
 
 #[cfg(feature = "approx-backend")]
@@ -203,8 +200,25 @@ impl<B: Backend> Scalar<B> {
         self.0.inverse().map(Self)
     }
 
+    #[inline]
     pub(crate) fn mul_cached(self, factor: &Self) -> Self {
         self * factor.clone()
+    }
+
+    #[inline]
+    pub(crate) fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        Self(B::Repr::dot3(
+            [&left[0].0, &left[1].0, &left[2].0],
+            [&right[0].0, &right[1].0, &right[2].0],
+        ))
+    }
+
+    #[inline]
+    pub(crate) fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        Self(B::Repr::dot4(
+            [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
+            [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
+        ))
     }
 
     /// Raises this scalar to a scalar exponent.
@@ -359,6 +373,7 @@ impl<B: Backend> From<Scalar<B>> for f64 {
 impl<B: Backend> Add for Scalar<B> {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0)
     }
@@ -367,6 +382,7 @@ impl<B: Backend> Add for Scalar<B> {
 impl<B: Backend> Sub for Scalar<B> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
         Self(self.0 - rhs.0)
     }
@@ -375,6 +391,7 @@ impl<B: Backend> Sub for Scalar<B> {
 impl<B: Backend> Neg for Scalar<B> {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         Self(-self.0)
     }
@@ -383,6 +400,7 @@ impl<B: Backend> Neg for Scalar<B> {
 impl<B: Backend> Mul for Scalar<B> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
         Self(self.0 * rhs.0)
     }
@@ -391,6 +409,7 @@ impl<B: Backend> Mul for Scalar<B> {
 impl<B: Backend> Div for Scalar<B> {
     type Output = BlasResult<Self>;
 
+    #[inline]
     fn div(self, rhs: Self) -> Self::Output {
         self.0.div(rhs.0).map(Self)
     }

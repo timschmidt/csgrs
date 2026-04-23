@@ -149,12 +149,43 @@ pub fn powi<B: Backend>(base: Scalar<B>, exponent: i64) -> BlasResult<Scalar<B>>
         return Ok(Scalar::<B>::one());
     }
 
-    let mut exp = exponent.unsigned_abs();
-    let mut result = Scalar::<B>::one();
+    let exp = exponent.unsigned_abs();
+    let positive = match (B::SPECIALIZE_SCALAR_POWI, exp) {
+        (_, 1) => base,
+        (true, 2) => base.clone() * base,
+        (true, 3) => {
+            let square = base.clone() * base.clone();
+            square * base
+        }
+        (true, 4) => {
+            let square = base.clone() * base;
+            square.clone() * square
+        }
+        (true, 5) => {
+            let square = base.clone() * base.clone();
+            let fourth = square.clone() * square;
+            fourth * base
+        }
+        _ => powi_by_squaring(base, exp),
+    };
+
+    if exponent < 0 {
+        positive.inverse()
+    } else {
+        Ok(positive)
+    }
+}
+
+fn powi_by_squaring<B: Backend>(base: Scalar<B>, exponent: u64) -> Scalar<B> {
+    let mut exp = exponent;
+    let mut result = None;
     let mut factor = base;
     while exp > 0 {
         if exp & 1 == 1 {
-            result = result * factor.clone();
+            result = Some(match result {
+                Some(result) => result * factor.clone(),
+                None => factor.clone(),
+            });
         }
         exp >>= 1;
         if exp > 0 {
@@ -162,11 +193,7 @@ pub fn powi<B: Backend>(base: Scalar<B>, exponent: i64) -> BlasResult<Scalar<B>>
         }
     }
 
-    if exponent < 0 {
-        result.inverse()
-    } else {
-        Ok(result)
-    }
+    result.expect("non-zero exponent sets at least one result bit")
 }
 
 /// Returns `e` raised to `value`.

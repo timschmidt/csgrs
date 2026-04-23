@@ -53,6 +53,13 @@ impl BackendScalar {
     }
 }
 
+fn product_epsilon(left: &BackendScalar, right: &BackendScalar, product: f64) -> f64 {
+    left.value.abs() * right.epsilon
+        + right.value.abs() * left.epsilon
+        + left.epsilon * right.epsilon
+        + ROUNDING_EPSILON * product.abs()
+}
+
 impl BackendScalarTrait for BackendScalar {
     fn zero() -> Self {
         Self {
@@ -101,6 +108,35 @@ impl BackendScalarTrait for BackendScalar {
         }
         let center = self.value.powf(exponent.value);
         Self::from_unary(center, self.epsilon + exponent.epsilon)
+    }
+
+    fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        let p0 = left[0].value * right[0].value;
+        let p1 = left[1].value * right[1].value;
+        let p2 = left[2].value * right[2].value;
+        let sum01 = p0 + p1;
+        let value = sum01 + p2;
+        let epsilon = product_epsilon(left[0], right[0], p0)
+            + product_epsilon(left[1], right[1], p1)
+            + product_epsilon(left[2], right[2], p2)
+            + ROUNDING_EPSILON * (sum01.abs() + value.abs());
+        Self { value, epsilon }
+    }
+
+    fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        let p0 = left[0].value * right[0].value;
+        let p1 = left[1].value * right[1].value;
+        let p2 = left[2].value * right[2].value;
+        let p3 = left[3].value * right[3].value;
+        let sum01 = p0 + p1;
+        let sum23 = p2 + p3;
+        let value = sum01 + sum23;
+        let epsilon = product_epsilon(left[0], right[0], p0)
+            + product_epsilon(left[1], right[1], p1)
+            + product_epsilon(left[2], right[2], p2)
+            + product_epsilon(left[3], right[3], p3)
+            + ROUNDING_EPSILON * (sum01.abs() + sum23.abs() + value.abs());
+        Self { value, epsilon }
     }
 
     fn exp(self) -> BlasResult<Self> {
@@ -245,6 +281,7 @@ impl TryFrom<f64> for BackendScalar {
 impl Add for BackendScalar {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: Self) -> Self::Output {
         let value = self.value + rhs.value;
         Self {
@@ -257,6 +294,7 @@ impl Add for BackendScalar {
 impl Sub for BackendScalar {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
         let value = self.value - rhs.value;
         Self {
@@ -269,6 +307,7 @@ impl Sub for BackendScalar {
 impl Neg for BackendScalar {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         Self {
             value: -self.value,
@@ -280,12 +319,10 @@ impl Neg for BackendScalar {
 impl Mul for BackendScalar {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
         let value = self.value * rhs.value;
-        let epsilon = self.value.abs() * rhs.epsilon
-            + rhs.value.abs() * self.epsilon
-            + self.epsilon * rhs.epsilon
-            + ROUNDING_EPSILON * value.abs();
+        let epsilon = product_epsilon(&self, &rhs, value);
         Self { value, epsilon }
     }
 }

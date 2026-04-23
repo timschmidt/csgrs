@@ -12,7 +12,7 @@ use crate::{AbortSignal, BlasResult, Problem, ZeroStatus};
 #[cfg(feature = "approx-backend")]
 pub use approx::ApproxBackend;
 #[cfg(feature = "approx-backend")]
-pub(crate) use approx::BackendScalar as ApproxScalarRepr;
+pub(super) use approx::BackendScalar as ApproxScalarRepr;
 #[cfg(feature = "realistic-backend")]
 pub use realistic::RealisticBackend;
 
@@ -33,6 +33,21 @@ compile_error!("enable either realistic-backend or approx-backend");
 /// still controlled by Cargo features; enabling a feature makes its marker
 /// type available.
 pub trait Backend: Clone + fmt::Debug + PartialEq + 'static {
+    /// Whether owned elementwise vector and matrix operators should move
+    /// entries instead of cloning from indexed arrays.
+    ///
+    /// This is faster for backends where cloning scalar expression graphs is
+    /// expensive, but slower for compact scalar representations where indexed
+    /// fixed-size arrays optimize better.
+    const MOVE_ELEMENTWISE: bool = false;
+
+    /// Whether scalar integer powers should use hand-specialized small
+    /// exponents before falling back to exponentiation by squaring.
+    ///
+    /// This helps backends with expensive scalar clones and expression graph
+    /// construction, but can be slower for compact scalar representations.
+    const SPECIALIZE_SCALAR_POWI: bool = false;
+
     /// Opaque scalar representation owned by the backend.
     type Repr: BackendScalar;
 }
@@ -76,6 +91,21 @@ pub trait BackendScalar:
     fn inverse(self) -> BlasResult<Self>;
     /// Raises this value to a scalar exponent.
     fn pow(self, exponent: Self) -> BlasResult<Self>;
+    /// Returns the three-lane dot product.
+    fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        let p0 = left[0].clone() * right[0].clone();
+        let p1 = left[1].clone() * right[1].clone();
+        let p2 = left[2].clone() * right[2].clone();
+        (p0 + p1) + p2
+    }
+    /// Returns the four-lane dot product.
+    fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        let p0 = left[0].clone() * right[0].clone();
+        let p1 = left[1].clone() * right[1].clone();
+        let p2 = left[2].clone() * right[2].clone();
+        let p3 = left[3].clone() * right[3].clone();
+        (p0 + p1) + (p2 + p3)
+    }
     /// Returns `e` raised to this value.
     fn exp(self) -> BlasResult<Self>;
     /// Returns the natural logarithm.

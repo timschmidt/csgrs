@@ -1,10 +1,26 @@
 use std::fmt;
 use std::ops::{Add, Mul, Neg, Sub};
+use std::sync::{Mutex, OnceLock};
 
 use num::bigint::Sign;
 
 use crate::backend::{Backend, BackendScalar as BackendScalarTrait};
 use crate::{AbortSignal, BlasResult, Problem, ZeroStatus};
+
+static ZERO: OnceLock<Mutex<BackendScalar>> = OnceLock::new();
+static ONE: OnceLock<Mutex<BackendScalar>> = OnceLock::new();
+static E: OnceLock<Mutex<BackendScalar>> = OnceLock::new();
+static PI: OnceLock<Mutex<BackendScalar>> = OnceLock::new();
+
+fn cached(
+    cell: &'static OnceLock<Mutex<BackendScalar>>,
+    init: fn() -> BackendScalar,
+) -> BackendScalar {
+    cell.get_or_init(|| Mutex::new(init()))
+        .lock()
+        .expect("realistic constant cache lock poisoned")
+        .clone()
+}
 
 #[derive(Clone, Debug)]
 pub struct BackendScalar(pub(crate) realistic::Real);
@@ -14,24 +30,27 @@ pub struct BackendScalar(pub(crate) realistic::Real);
 pub struct RealisticBackend;
 
 impl Backend for RealisticBackend {
+    const MOVE_ELEMENTWISE: bool = true;
+    const SPECIALIZE_SCALAR_POWI: bool = true;
+
     type Repr = BackendScalar;
 }
 
 impl BackendScalarTrait for BackendScalar {
     fn zero() -> Self {
-        Self(realistic::Real::zero())
+        cached(&ZERO, || Self(realistic::Real::zero()))
     }
 
     fn one() -> Self {
-        Self(1.into())
+        cached(&ONE, || Self(1.into()))
     }
 
     fn e() -> Self {
-        Self(realistic::Real::e())
+        cached(&E, || Self(realistic::Real::e()))
     }
 
     fn pi() -> Self {
-        Self(realistic::Real::pi())
+        cached(&PI, || Self(realistic::Real::pi()))
     }
 
     fn inverse(self) -> BlasResult<Self> {
@@ -163,6 +182,7 @@ impl TryFrom<f64> for BackendScalar {
 impl Add for BackendScalar {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0)
     }
@@ -171,6 +191,7 @@ impl Add for BackendScalar {
 impl Sub for BackendScalar {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
         Self(self.0 - rhs.0)
     }
@@ -179,6 +200,7 @@ impl Sub for BackendScalar {
 impl Neg for BackendScalar {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         Self(-self.0)
     }
@@ -187,6 +209,7 @@ impl Neg for BackendScalar {
 impl Mul for BackendScalar {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
         Self(self.0 * rhs.0)
     }
