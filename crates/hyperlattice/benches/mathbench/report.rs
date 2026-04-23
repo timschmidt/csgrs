@@ -25,6 +25,78 @@ fn scalar_trig_rows() -> Vec<BenchRow> {
         .collect()
 }
 
+fn borrowed_op_rows() -> Vec<BenchRow> {
+    let mut rows = Vec::new();
+    for op in ["add", "sub", "mul", "div"] {
+        for mode in ["owned_ref", "ref_owned", "refs"] {
+            rows.push(BenchRow {
+                title: Box::leak(format!("scalar {op} {mode}").into_boxed_str()),
+                group: "borrowed_ops",
+                id: Box::leak(format!("scalar {op} {mode}").into_boxed_str()),
+            });
+        }
+    }
+    for dim in ["vec3", "vec4"] {
+        for op in ["add refs", "sub refs", "neg ref"] {
+            rows.push(BenchRow {
+                title: Box::leak(format!("{dim} {op}").into_boxed_str()),
+                group: "borrowed_ops",
+                id: Box::leak(format!("{dim} {op}").into_boxed_str()),
+            });
+        }
+        for op in [
+            "add_scalar_ref",
+            "sub_scalar_ref",
+            "mul_scalar_ref",
+            "div_scalar_ref",
+        ] {
+            rows.push(BenchRow {
+                title: Box::leak(format!("{dim} {op}").into_boxed_str()),
+                group: "borrowed_ops",
+                id: Box::leak(format!("{dim} {op}").into_boxed_str()),
+            });
+        }
+    }
+    for dim in ["mat3", "mat4"] {
+        for op in ["add refs", "sub refs", "mul refs", "div refs", "neg ref"] {
+            rows.push(BenchRow {
+                title: Box::leak(format!("{dim} {op}").into_boxed_str()),
+                group: "borrowed_ops",
+                id: Box::leak(format!("{dim} {op}").into_boxed_str()),
+            });
+        }
+        for op in [
+            "add_scalar_ref",
+            "sub_scalar_ref",
+            "mul_scalar_ref",
+            "div_scalar_ref",
+        ] {
+            rows.push(BenchRow {
+                title: Box::leak(format!("{dim} {op}").into_boxed_str()),
+                group: "borrowed_ops",
+                id: Box::leak(format!("{dim} {op}").into_boxed_str()),
+            });
+        }
+    }
+    for op in [
+        "mat3 transform_vec refs",
+        "mat4 transform_vec refs",
+        "complex add refs",
+        "complex sub refs",
+        "complex mul refs",
+        "complex div refs",
+        "complex neg ref",
+        "complex div_real_ref",
+    ] {
+        rows.push(BenchRow {
+            title: op,
+            group: "borrowed_ops",
+            id: op,
+        });
+    }
+    rows
+}
+
 const SCALAR_OP_ROWS: &[BenchRow] = &[
     BenchRow {
         title: "zero",
@@ -904,7 +976,8 @@ fn render_benchmarks_md(estimates: &BTreeMap<String, f64>) -> String {
     out.push_str("- Scalar construction/constants, arithmetic, reciprocal, powers, exponentials, logarithms, square root, trigonometric and hyperbolic functions, inverse helpers, zero-status checks, and abort-aware variants.\n");
     out.push_str("- Complex construction/constants, conjugate, norm squared, reciprocal, powers, checked division, scalar conversion, arithmetic, and real scalar division.\n");
     out.push_str("- Vector construction, zero, dot product, magnitude, normalization, vector/vector arithmetic, vector/scalar arithmetic, scalar division, and checked/abort-aware variants for 3D and 4D vectors.\n");
-    out.push_str("- Matrix construction, zero, identity, transpose, determinant, inverse, reciprocal, powers, matrix/matrix arithmetic, matrix/scalar arithmetic, matrix/vector transformation, scalar division, matrix division, and checked/abort-aware variants for 3x3 and 4x4 matrices.\n\n");
+    out.push_str("- Matrix construction, zero, identity, transpose, determinant, inverse, reciprocal, powers, matrix/matrix arithmetic, matrix/scalar arithmetic, matrix/vector transformation, scalar division, matrix division, and checked/abort-aware variants for 3x3 and 4x4 matrices.\n");
+    out.push_str("- Borrowed API operator coverage for scalar, vector, matrix, matrix/vector, and complex reference combinations.\n\n");
     out.push_str("## Benchmark Results\n\nThe following Criterion median estimates were collected on an AMD Ryzen 7 5800X3D on Fedora. Values are formatted to two digits after the decimal.\n\n");
     out.push_str("### Scalar Operations\n\n#### Scalar Trigonometric Comparisons\n\n");
     out.push_str(&render_table(estimates, &scalar_trig_rows()));
@@ -920,6 +993,8 @@ fn render_benchmarks_md(estimates: &BTreeMap<String, f64>) -> String {
     out.push_str(&render_table(estimates, MATRIX_COMPARISON_ROWS));
     out.push_str("\n#### Matrix API Operations\n\n");
     out.push_str(&render_table(estimates, MATRIX_OP_ROWS));
+    out.push_str("\n### Borrowed API Operations\n\n");
+    out.push_str(&render_table(estimates, &borrowed_op_rows()));
     out.push_str("\n### Precision Scaling\n\n");
     out.push_str(&render_precision_table(estimates));
     out

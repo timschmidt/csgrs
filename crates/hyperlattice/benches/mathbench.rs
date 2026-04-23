@@ -15,6 +15,7 @@ include!("mathbench/scalar_ops.rs");
 include!("mathbench/complex_ops.rs");
 include!("mathbench/vector_ops.rs");
 include!("mathbench/matrix_ops.rs");
+include!("mathbench/borrowed_ops.rs");
 include!("mathbench/precision.rs");
 include!("mathbench/report.rs");
 
@@ -33,6 +34,7 @@ fn main() {
     bench_complex_operations(&mut criterion);
     bench_vector_operations(&mut criterion);
     bench_matrix_operations(&mut criterion);
+    bench_borrowed_operations(&mut criterion);
     bench_precisions(&mut criterion);
     criterion.final_summary();
     update_benchmarks_doc();

@@ -12,7 +12,7 @@ categories = ["mathematics"]
 
 [dependencies]
 num = { version = "0.4.3", optional = true }
-realistic = { version = "0.8.1", optional = true }
+realistic = { git = "https://github.com/timschmidt/realistic", optional = true }
 
 [dev-dependencies]
 arpfloat = { version = "0.1.11", default-features = false, features = ["std"] }

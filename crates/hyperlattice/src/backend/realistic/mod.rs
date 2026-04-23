@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::{Add, Mul, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::sync::{Mutex, OnceLock};
 
 use num::bigint::Sign;
@@ -59,6 +59,22 @@ impl BackendScalarTrait for BackendScalar {
 
     fn pow(self, exponent: Self) -> BlasResult<Self> {
         self.0.pow(exponent.0).map(Self).map_err(Problem::from)
+    }
+
+    fn add_ref(self, rhs: &Self) -> Self {
+        Self(&self.0 + &rhs.0)
+    }
+
+    fn sub_ref(self, rhs: &Self) -> Self {
+        Self(&self.0 - &rhs.0)
+    }
+
+    fn mul_ref(self, rhs: &Self) -> Self {
+        Self(&self.0 * &rhs.0)
+    }
+
+    fn div_ref(self, rhs: &Self) -> BlasResult<Self> {
+        (&self.0 / &rhs.0).map(Self).map_err(Problem::from)
     }
 
     fn exp(self) -> BlasResult<Self> {
@@ -212,5 +228,41 @@ impl Mul for BackendScalar {
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
         Self(self.0 * rhs.0)
+    }
+}
+
+impl Add<&BackendScalar> for BackendScalar {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rhs: &BackendScalar) -> Self::Output {
+        Self(&self.0 + &rhs.0)
+    }
+}
+
+impl Sub<&BackendScalar> for BackendScalar {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rhs: &BackendScalar) -> Self::Output {
+        Self(&self.0 - &rhs.0)
+    }
+}
+
+impl Mul<&BackendScalar> for BackendScalar {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rhs: &BackendScalar) -> Self::Output {
+        Self(&self.0 * &rhs.0)
+    }
+}
+
+impl Div<&BackendScalar> for BackendScalar {
+    type Output = Result<Self, Problem>;
+
+    #[inline]
+    fn div(self, rhs: &BackendScalar) -> Self::Output {
+        (&self.0 / &rhs.0).map(Self).map_err(Problem::from)
     }
 }

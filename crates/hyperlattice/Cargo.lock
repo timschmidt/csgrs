@@ -476,8 +476,7 @@ dependencies = [
 [[package]]
 name = "realistic"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "665a6b0736cf93a249d0728809824f3ab421243ec29c4212d982413f29406c19"
+source = "git+https://github.com/timschmidt/realistic#2995ac25bc8142de72cdde04de673fa976d4039a"
 dependencies = [
  "num",
 ]

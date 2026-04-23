@@ -91,6 +91,22 @@ pub trait BackendScalar:
     fn inverse(self) -> BlasResult<Self>;
     /// Raises this value to a scalar exponent.
     fn pow(self, exponent: Self) -> BlasResult<Self>;
+    /// Adds a borrowed right-hand operand.
+    fn add_ref(self, rhs: &Self) -> Self {
+        self + rhs.clone()
+    }
+    /// Subtracts a borrowed right-hand operand.
+    fn sub_ref(self, rhs: &Self) -> Self {
+        self - rhs.clone()
+    }
+    /// Multiplies by a borrowed right-hand operand.
+    fn mul_ref(self, rhs: &Self) -> Self {
+        self * rhs.clone()
+    }
+    /// Divides by a borrowed right-hand operand.
+    fn div_ref(self, rhs: &Self) -> BlasResult<Self> {
+        self.div(rhs.clone())
+    }
     /// Returns the three-lane dot product.
     fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
         let p0 = left[0].clone() * right[0].clone();

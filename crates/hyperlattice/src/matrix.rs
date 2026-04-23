@@ -760,12 +760,50 @@ macro_rules! impl_matrix {
             }
         }
 
+        impl<B: Backend> Add<&$name<B>> for $name<B> {
+            type Output = Self;
+
+            fn add(self, rhs: &$name<B>) -> Self::Output {
+                self + rhs.clone()
+            }
+        }
+
+        impl<B: Backend> Add<$name<B>> for &$name<B> {
+            type Output = $name<B>;
+
+            fn add(self, rhs: $name<B>) -> Self::Output {
+                self.clone() + rhs
+            }
+        }
+
+        impl<B: Backend> Add<&$name<B>> for &$name<B> {
+            type Output = $name<B>;
+
+            fn add(self, rhs: &$name<B>) -> Self::Output {
+                self.clone() + rhs
+            }
+        }
+
         impl<B: Backend> Add<Scalar<B>> for $name<B> {
             type Output = Self;
 
             fn add(self, rhs: Scalar<B>) -> Self::Output {
                 if B::MOVE_ELEMENTWISE {
                     Self(map_matrix_scalar(self.0, rhs, |lhs, rhs| lhs + rhs))
+                } else {
+                    Self(from_fn(|row| {
+                        from_fn(|col| self.0[row][col].clone() + rhs.clone())
+                    }))
+                }
+            }
+        }
+
+        impl<B: Backend> Add<&Scalar<B>> for $name<B> {
+            type Output = Self;
+
+            fn add(self, rhs: &Scalar<B>) -> Self::Output {
+                if B::MOVE_ELEMENTWISE {
+                    Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
                 } else {
                     Self(from_fn(|row| {
                         from_fn(|col| self.0[row][col].clone() + rhs.clone())
@@ -788,12 +826,50 @@ macro_rules! impl_matrix {
             }
         }
 
+        impl<B: Backend> Sub<&$name<B>> for $name<B> {
+            type Output = Self;
+
+            fn sub(self, rhs: &$name<B>) -> Self::Output {
+                self - rhs.clone()
+            }
+        }
+
+        impl<B: Backend> Sub<$name<B>> for &$name<B> {
+            type Output = $name<B>;
+
+            fn sub(self, rhs: $name<B>) -> Self::Output {
+                self.clone() - rhs
+            }
+        }
+
+        impl<B: Backend> Sub<&$name<B>> for &$name<B> {
+            type Output = $name<B>;
+
+            fn sub(self, rhs: &$name<B>) -> Self::Output {
+                self.clone() - rhs
+            }
+        }
+
         impl<B: Backend> Sub<Scalar<B>> for $name<B> {
             type Output = Self;
 
             fn sub(self, rhs: Scalar<B>) -> Self::Output {
                 if B::MOVE_ELEMENTWISE {
                     Self(map_matrix_scalar(self.0, rhs, |lhs, rhs| lhs - rhs))
+                } else {
+                    Self(from_fn(|row| {
+                        from_fn(|col| self.0[row][col].clone() - rhs.clone())
+                    }))
+                }
+            }
+        }
+
+        impl<B: Backend> Sub<&Scalar<B>> for $name<B> {
+            type Output = Self;
+
+            fn sub(self, rhs: &Scalar<B>) -> Self::Output {
+                if B::MOVE_ELEMENTWISE {
+                    Self(self.0.map(|row| row.map(|value| value.sub_cached(rhs))))
                 } else {
                     Self(from_fn(|row| {
                         from_fn(|col| self.0[row][col].clone() - rhs.clone())
@@ -814,12 +890,34 @@ macro_rules! impl_matrix {
             }
         }
 
+        impl<B: Backend> Neg for &$name<B> {
+            type Output = $name<B>;
+
+            fn neg(self) -> Self::Output {
+                -self.clone()
+            }
+        }
+
         impl<B: Backend> Mul<Scalar<B>> for $name<B> {
             type Output = Self;
 
             fn mul(self, rhs: Scalar<B>) -> Self::Output {
                 if B::MOVE_ELEMENTWISE {
                     Self(map_matrix_scalar(self.0, rhs, |lhs, rhs| lhs * rhs))
+                } else {
+                    Self(from_fn(|row| {
+                        from_fn(|col| self.0[row][col].clone() * rhs.clone())
+                    }))
+                }
+            }
+        }
+
+        impl<B: Backend> Mul<&Scalar<B>> for $name<B> {
+            type Output = Self;
+
+            fn mul(self, rhs: &Scalar<B>) -> Self::Output {
+                if B::MOVE_ELEMENTWISE {
+                    Self(self.0.map(|row| row.map(|value| value.mul_cached(rhs))))
                 } else {
                     Self(from_fn(|row| {
                         from_fn(|col| self.0[row][col].clone() * rhs.clone())
@@ -851,6 +949,29 @@ macro_rules! impl_matrix {
             }
         }
 
+        impl<B: Backend> Div<&Scalar<B>> for $name<B> {
+            type Output = BlasResult<Self>;
+
+            fn div(self, rhs: &Scalar<B>) -> Self::Output {
+                reject_definite_zero(rhs)?;
+                let inv_rhs = rhs.clone().inverse()?;
+                if B::MOVE_ELEMENTWISE {
+                    Ok(Self(
+                        self.0
+                            .map(|row| row.map(|value| value.mul_cached(&inv_rhs))),
+                    ))
+                } else {
+                    let mut values = self.0;
+                    for row in &mut values {
+                        for value in row {
+                            *value = value.clone().mul_cached(&inv_rhs);
+                        }
+                    }
+                    Ok(Self(values))
+                }
+            }
+        }
+
         impl<B: Backend> Mul for $name<B> {
             type Output = Self;
 
@@ -859,11 +980,59 @@ macro_rules! impl_matrix {
             }
         }
 
+        impl<B: Backend> Mul<&$name<B>> for $name<B> {
+            type Output = Self;
+
+            fn mul(self, rhs: &$name<B>) -> Self::Output {
+                self * rhs.clone()
+            }
+        }
+
+        impl<B: Backend> Mul<$name<B>> for &$name<B> {
+            type Output = $name<B>;
+
+            fn mul(self, rhs: $name<B>) -> Self::Output {
+                self.clone() * rhs
+            }
+        }
+
+        impl<B: Backend> Mul<&$name<B>> for &$name<B> {
+            type Output = $name<B>;
+
+            fn mul(self, rhs: &$name<B>) -> Self::Output {
+                self.clone() * rhs
+            }
+        }
+
         impl<B: Backend> Div for $name<B> {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Self) -> Self::Output {
                 Ok(Self(right_divide_arrays(self.0, rhs.0)?))
+            }
+        }
+
+        impl<B: Backend> Div<&$name<B>> for $name<B> {
+            type Output = BlasResult<Self>;
+
+            fn div(self, rhs: &$name<B>) -> Self::Output {
+                self / rhs.clone()
+            }
+        }
+
+        impl<B: Backend> Div<$name<B>> for &$name<B> {
+            type Output = BlasResult<$name<B>>;
+
+            fn div(self, rhs: $name<B>) -> Self::Output {
+                self.clone() / rhs
+            }
+        }
+
+        impl<B: Backend> Div<&$name<B>> for &$name<B> {
+            type Output = BlasResult<$name<B>>;
+
+            fn div(self, rhs: &$name<B>) -> Self::Output {
+                self.clone() / rhs
             }
         }
 
@@ -882,6 +1051,30 @@ macro_rules! impl_matrix {
                         p0 + (p1 + p2)
                     }
                 }))
+            }
+        }
+
+        impl<B: Backend> Mul<&$vector<B>> for $name<B> {
+            type Output = $vector<B>;
+
+            fn mul(self, rhs: &$vector<B>) -> Self::Output {
+                self * rhs.clone()
+            }
+        }
+
+        impl<B: Backend> Mul<$vector<B>> for &$name<B> {
+            type Output = $vector<B>;
+
+            fn mul(self, rhs: $vector<B>) -> Self::Output {
+                self.clone() * rhs
+            }
+        }
+
+        impl<B: Backend> Mul<&$vector<B>> for &$name<B> {
+            type Output = $vector<B>;
+
+            fn mul(self, rhs: &$vector<B>) -> Self::Output {
+                self.clone() * rhs
             }
         }
 

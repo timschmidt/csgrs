@@ -202,7 +202,17 @@ impl<B: Backend> Scalar<B> {
 
     #[inline]
     pub(crate) fn mul_cached(self, factor: &Self) -> Self {
-        self * factor.clone()
+        Self(self.0.mul_ref(&factor.0))
+    }
+
+    #[inline]
+    pub(crate) fn add_cached(self, rhs: &Self) -> Self {
+        Self(self.0.add_ref(&rhs.0))
+    }
+
+    #[inline]
+    pub(crate) fn sub_cached(self, rhs: &Self) -> Self {
+        Self(self.0.sub_ref(&rhs.0))
     }
 
     #[inline]
@@ -412,6 +422,114 @@ impl<B: Backend> Div for Scalar<B> {
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
         self.0.div(rhs.0).map(Self)
+    }
+}
+
+impl<B: Backend> Add<&Scalar<B>> for Scalar<B> {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rhs: &Scalar<B>) -> Self::Output {
+        Self(self.0.add_ref(&rhs.0))
+    }
+}
+
+impl<B: Backend> Add<Scalar<B>> for &Scalar<B> {
+    type Output = Scalar<B>;
+
+    #[inline]
+    fn add(self, rhs: Scalar<B>) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl<B: Backend> Add<&Scalar<B>> for &Scalar<B> {
+    type Output = Scalar<B>;
+
+    #[inline]
+    fn add(self, rhs: &Scalar<B>) -> Self::Output {
+        self.clone() + rhs
+    }
+}
+
+impl<B: Backend> Sub<&Scalar<B>> for Scalar<B> {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rhs: &Scalar<B>) -> Self::Output {
+        Self(self.0.sub_ref(&rhs.0))
+    }
+}
+
+impl<B: Backend> Sub<Scalar<B>> for &Scalar<B> {
+    type Output = Scalar<B>;
+
+    #[inline]
+    fn sub(self, rhs: Scalar<B>) -> Self::Output {
+        self.clone() - rhs
+    }
+}
+
+impl<B: Backend> Sub<&Scalar<B>> for &Scalar<B> {
+    type Output = Scalar<B>;
+
+    #[inline]
+    fn sub(self, rhs: &Scalar<B>) -> Self::Output {
+        self.clone() - rhs
+    }
+}
+
+impl<B: Backend> Mul<&Scalar<B>> for Scalar<B> {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rhs: &Scalar<B>) -> Self::Output {
+        Self(self.0.mul_ref(&rhs.0))
+    }
+}
+
+impl<B: Backend> Mul<Scalar<B>> for &Scalar<B> {
+    type Output = Scalar<B>;
+
+    #[inline]
+    fn mul(self, rhs: Scalar<B>) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl<B: Backend> Mul<&Scalar<B>> for &Scalar<B> {
+    type Output = Scalar<B>;
+
+    #[inline]
+    fn mul(self, rhs: &Scalar<B>) -> Self::Output {
+        self.clone() * rhs
+    }
+}
+
+impl<B: Backend> Div<&Scalar<B>> for Scalar<B> {
+    type Output = BlasResult<Self>;
+
+    #[inline]
+    fn div(self, rhs: &Scalar<B>) -> Self::Output {
+        self.0.div_ref(&rhs.0).map(Self)
+    }
+}
+
+impl<B: Backend> Div<Scalar<B>> for &Scalar<B> {
+    type Output = BlasResult<Scalar<B>>;
+
+    #[inline]
+    fn div(self, rhs: Scalar<B>) -> Self::Output {
+        self.clone() / rhs
+    }
+}
+
+impl<B: Backend> Div<&Scalar<B>> for &Scalar<B> {
+    type Output = BlasResult<Scalar<B>>;
+
+    #[inline]
+    fn div(self, rhs: &Scalar<B>) -> Self::Output {
+        self.clone() / rhs
     }
 }
 
