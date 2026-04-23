@@ -1,6 +1,6 @@
-use crate::computable::{scale, shift, should_stop, signed, Precision, Signal};
 use crate::Computable;
 use crate::Rational;
+use crate::computable::{Precision, Signal, scale, shift, should_stop, signed};
 use num::bigint::{Sign, ToBigInt};
 use num::{BigInt, BigUint, Signed};
 use num::{One, Zero};

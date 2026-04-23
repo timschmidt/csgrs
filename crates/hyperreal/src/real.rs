@@ -42,7 +42,7 @@ impl Class {
         true
     }
 
-    // Any logarithmn can be added
+    // Any logarithm can be added
     fn is_ln(&self) -> bool {
         matches!(self, Ln(_))
     }
@@ -184,6 +184,12 @@ impl Real {
             computable: Computable::e(one),
             signal: None,
         }
+    }
+}
+
+impl AsRef<Real> for Real {
+    fn as_ref(&self) -> &Real {
+        self
     }
 }
 
@@ -1066,23 +1072,27 @@ impl Real {
     }
 }
 
-impl Add for Real {
-    type Output = Self;
+impl<T: AsRef<Real>> Add<T> for &Real {
+    type Output = Real;
 
-    fn add(self, other: Self) -> Self {
+    fn add(self, other: T) -> Self::Output {
+        let other = other.as_ref().clone();
         if self.class == other.class {
-            let rational = self.rational + other.rational;
+            let rational = &self.rational + &other.rational;
             if rational.sign() == Sign::NoSign {
-                return Self::zero();
+                return Self::Output::zero();
             } else {
-                return Self { rational, ..self };
+                return Self::Output {
+                    rational,
+                    ..self.clone()
+                };
             }
         }
         if self.definitely_zero() {
             return other;
         }
         if other.definitely_zero() {
-            return self;
+            return self.clone();
         }
         if self.class.is_ln() && other.class.is_ln() {
             let Ln(b) = self.class.clone() else {
@@ -1091,22 +1101,31 @@ impl Add for Real {
             let Ln(d) = other.class.clone() else {
                 unreachable!()
             };
-            if let Ok(r) = Self::simple_log_sum(self.rational.clone(), b, other.rational.clone(), d)
+            if let Ok(r) =
+                Self::Output::simple_log_sum(self.rational.clone(), b, other.rational.clone(), d)
             {
-                if let Ok(simple) = Self::ln_rational(r) {
+                if let Ok(simple) = Self::Output::ln_rational(r) {
                     return simple;
                 }
             }
         }
-        let left = self.fold();
-        let right = other.fold();
+        let left = self.clone().fold();
+        let right = other.clone().fold();
         let computable = Computable::add(left, right);
-        Self {
+        Self::Output {
             rational: Rational::one(),
             class: Irrational,
             computable,
             signal: None,
         }
+    }
+}
+
+impl<T: AsRef<Real>> Add<T> for Real {
+    type Output = Self;
+
+    fn add(self, other: T) -> Self {
+        &self + other.as_ref()
     }
 }
 
@@ -1121,19 +1140,39 @@ impl Neg for Real {
     }
 }
 
-impl Sub for Real {
+impl Neg for &Real {
+    type Output = Real;
+
+    fn neg(self) -> Self::Output {
+        let mut ret = self.clone();
+        ret.rational = -ret.rational;
+        ret
+    }
+}
+
+impl<T: AsRef<Real>> Sub<T> for &Real {
+    type Output = Real;
+
+    fn sub(self, other: T) -> Self::Output {
+        self + -other.as_ref()
+    }
+}
+
+impl<T: AsRef<Real>> Sub<T> for Real {
     type Output = Self;
 
-    fn sub(self, other: Self) -> Self {
-        self + -other
+    fn sub(self, other: T) -> Self {
+        &self + -other.as_ref()
     }
 }
 
 impl Real {
-    fn multiply_sqrts(x: Rational, y: Rational) -> Self {
+    fn multiply_sqrts<T: AsRef<Rational>>(x: T, y: T) -> Self {
+        let x = x.as_ref();
+        let y = y.as_ref();
         if x == y {
             Self {
-                rational: x,
+                rational: x.clone(),
                 class: One,
                 computable: Computable::one(),
                 signal: None,
@@ -1167,33 +1206,40 @@ impl Real {
     }
 }
 
-impl Mul for Real {
-    type Output = Self;
+impl<T: AsRef<Real>> Mul<T> for &Real {
+    type Output = Real;
 
-    fn mul(self, other: Self) -> Self {
+    fn mul(self, other: T) -> Self::Output {
+        let other = other.as_ref();
         if self.definitely_zero() || other.definitely_zero() {
-            return Self::zero();
+            return Self::Output::zero();
         }
         if self.class == One {
-            let rational = self.rational * other.rational;
-            return Self { rational, ..other };
+            let rational = &self.rational * &other.rational;
+            return Self::Output {
+                rational,
+                ..other.clone()
+            };
         }
         if other.class == One {
-            let rational = self.rational * other.rational;
-            return Self { rational, ..self };
+            let rational = &self.rational * &other.rational;
+            return Self::Output {
+                rational,
+                ..self.clone()
+            };
         }
-        match (self.class, other.class) {
+        match (&self.class, &other.class) {
             (Sqrt(r), Sqrt(s)) => {
-                let square = Self::multiply_sqrts(r, s);
-                Self {
-                    rational: square.rational * self.rational * other.rational,
+                let square = Self::Output::multiply_sqrts(r, s);
+                Self::Output {
+                    rational: &square.rational * &self.rational * &other.rational,
                     ..square
                 }
             }
             (Exp(r), Exp(s)) => {
                 let (class, computable) = Class::make_exp(r + s);
-                let rational = self.rational * other.rational;
-                Self {
+                let rational = &self.rational * &other.rational;
+                Self::Output {
                     rational,
                     class,
                     computable,
@@ -1201,8 +1247,8 @@ impl Mul for Real {
                 }
             }
             (Pi, Pi) => {
-                let rational = self.rational * other.rational;
-                Self {
+                let rational = &self.rational * &other.rational;
+                Self::Output {
                     rational,
                     class: Irrational,
                     computable: Computable::square(Computable::pi()),
@@ -1210,11 +1256,14 @@ impl Mul for Real {
                 }
             }
             _ => {
-                let rational = self.rational * other.rational;
-                Self {
+                let rational = &self.rational * &other.rational;
+                Self::Output {
                     rational,
                     class: Irrational,
-                    computable: Computable::multiply(self.computable, other.computable),
+                    computable: Computable::multiply(
+                        self.computable.clone(),
+                        other.computable.clone(),
+                    ),
                     signal: None,
                 }
             }
@@ -1222,45 +1271,57 @@ impl Mul for Real {
     }
 }
 
-impl Div for Real {
-    type Output = Result<Self, Problem>;
+impl<T: AsRef<Real>> Mul<T> for Real {
+    type Output = Self;
 
-    fn div(self, other: Self) -> Result<Self, Problem> {
+    fn mul(self, other: T) -> Self {
+        &self * other.as_ref()
+    }
+}
+
+impl<T: AsRef<Real>> Div<T> for &Real {
+    type Output = Result<Real, Problem>;
+
+    fn div(self, other: T) -> Self::Output {
         use num::bigint::ToBigInt;
 
+        let other = other.as_ref();
         if other.definitely_zero() {
             return Err(Problem::DivideByZero);
         }
         if self.definitely_zero() {
-            return Ok(Self::zero());
+            return Ok(Real::zero());
         }
         if self.class == other.class {
-            let rational = self.rational / other.rational;
-            return Ok(Self::new(rational));
+            let rational = &self.rational / &other.rational;
+            return Ok(Real::new(rational));
         }
         if other.class == One {
-            let rational = self.rational / other.rational;
-            return Ok(Self { rational, ..self });
+            let rational = &self.rational / &other.rational;
+            return Ok(Real {
+                rational,
+                ..self.clone()
+            });
         }
 
         // Simplify ln(x) / ln(10) to just log10(x)
         if other.class.is_ln() && self.class.is_ln() {
             if let Ln(s) = other.class.clone() {
                 if s == *rationals::TEN {
-                    let Ln(r) = self.class else {
+                    let Ln(r) = &self.class else {
                         unreachable!();
                     };
-                    let rational = self.rational / other.rational;
-                    let computable = self.computable.multiply(
+                    let rational = &self.rational / &other.rational;
+                    let computable = self.computable.clone().multiply(
                         Computable::integer(ToBigInt::to_bigint(&10).unwrap())
                             .ln()
                             .inverse(),
                     );
-                    return Ok(Self {
+                    return Ok(Real {
                         rational,
-                        class: Log10(r),
-                        computable,
-                        ..self
+                        class: Log10(r.clone()),
+                        computable: computable.clone(),
+                        ..self.clone()
                     });
                 }
             } else {
@@ -1268,8 +1329,16 @@ impl Div for Real {
             }
         }
 
-        let inverted = other.inverse()?;
+        let inverted = other.clone().inverse()?;
         Ok(self * inverted)
+    }
+}
+
+impl<T: AsRef<Real>> Div<T> for Real {
+    type Output = Result<Self, Problem>;
+
+    fn div(self, other: T) -> Self::Output {
+        &self / other.as_ref()
     }
 }
 
@@ -1293,5 +1362,22 @@ impl PartialEq<Rational> for Real {
 impl PartialEq<Real> for Rational {
     fn eq(&self, other: &Real) -> bool {
         other.class == Class::One && *self == other.rational
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn operations_work_on_refs() {
+        let a = Real::new(Rational::new(2));
+        let b = Real::new(Rational::new(3));
+        let c = Real::new(Rational::new(6));
+        assert_eq!(&a * &b, c.clone());
+        assert_eq!(&c / &b, Ok(a.clone()));
+        assert_eq!(&c - &a, Real::new(Rational::new(4)));
+        assert_eq!(-&c, Real::new(Rational::new(-6)));
+        assert_eq!(&a + &b, Real::new(Rational::new(5)));
     }
 }

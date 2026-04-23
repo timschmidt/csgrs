@@ -1,3 +1,40 @@
+//! A Lisp-like expression parser for mathematical expressions.
+//!
+//! This module parses and evaluates prefix-notation expressions with operators like
+//! `+`, `-`, `*`, `/`, `sqrt`, `sin`, `cos`, `pow`, etc.
+//!
+//! # Examples
+//!
+//! Basic arithmetic:
+//!
+//! ```
+//! # use realistic::Simple;
+//! use std::collections::HashMap;
+//! let expr: Simple = "(+ 1 2 3)".parse().unwrap();
+//! let result = expr.evaluate(&HashMap::new()).unwrap();
+//! assert_eq!(result.to_string(), "6");
+//! ```
+//!
+//! Nested expressions:
+//!
+//! ```
+//! # use realistic::Simple;
+//! use std::collections::HashMap;
+//! let expr: Simple = "(* (+ 1 2) (- 5 3))".parse().unwrap();
+//! let result = expr.evaluate(&HashMap::new()).unwrap();
+//! assert_eq!(result.to_string(), "6");
+//! ```
+//!
+//! Mathematical constants and functions:
+//!
+//! ```
+//! # use realistic::Simple;
+//! use std::collections::HashMap;
+//! let expr: Simple = "(√ (+ pi pi))".parse().unwrap();
+//! let result = expr.evaluate(&HashMap::new()).unwrap();
+//! assert_eq!(format!("{result:.4e}"), "2.5066e0");
+//! ```
+
 use crate::{Problem, Rational, Real};
 use std::collections::HashMap;
 use std::iter::Peekable;
@@ -38,6 +75,14 @@ impl Operand {
     }
 }
 
+/// An expression consisting of an operator and operands.
+/// These are typically constructed by parsing a string.
+///
+/// ```rust
+/// # use realistic::Simple;
+/// let expression: Simple = "(+ 1 4)".parse().unwrap();
+/// assert_eq!(format!("{:?}", expression), "Simple { op: Plus, operands: [Literal(Rational { sign: Plus, numerator: 1, denominator: 1 }), Literal(Rational { sign: Plus, numerator: 4, denominator: 1 })] }");
+/// ```
 #[derive(Clone, Debug, PartialEq)]
 pub struct Simple {
     op: Operator,
