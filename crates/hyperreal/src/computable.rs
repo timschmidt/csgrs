@@ -110,71 +110,82 @@ impl Computable {
         Self::exp(rational)
     }
 
+    fn integer_ratio_nearest(&self, divisor: Computable) -> BigInt {
+        let quotient = self.clone().multiply(divisor.inverse());
+        scale(quotient.approx(-4), -4)
+    }
+
     /// Natural Exponential function, raise Euler's Number to this number.
     pub fn exp(self) -> Computable {
         let low_prec: Precision = -4;
         let rough_appr: BigInt = self.approx(low_prec);
-        if rough_appr.sign() == Sign::Minus {
-            return self.negate().exp().inverse();
-        }
-        // At precision -4, an approximation greater than 8 implies x > 0.5.
-        if rough_appr > *signed::EIGHT {
-            let square_root = self.shift_right(1).exp();
-            square_root.square()
-        } else {
-            Self {
-                internal: Box::new(Approximation::PrescaledExp(self)),
-                cache: RefCell::new(Cache::Invalid),
-                signal: None,
+        // At precision -4, an approximation outside +/-8 implies |x| > 0.5.
+        if rough_appr > *signed::EIGHT || rough_appr < -signed::EIGHT.clone() {
+            let ln2 = Self::ln2();
+            let mut multiple = self.integer_ratio_nearest(ln2.clone());
+
+            loop {
+                let adjustment =
+                    ln2.clone().multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
+                let reduced = self.clone().add(adjustment);
+                let reduced_appr = reduced.approx(low_prec);
+
+                if reduced_appr > *signed::EIGHT {
+                    multiple += 1;
+                    continue;
+                }
+                if reduced_appr < -signed::EIGHT.clone() {
+                    multiple -= 1;
+                    continue;
+                }
+
+                return Self {
+                    internal: Box::new(Approximation::PrescaledExp(reduced)),
+                    cache: RefCell::new(Cache::Invalid),
+                    signal: None,
+                }
+                .shift_left(multiple.try_into().expect("binary exponent should fit in i32"));
             }
+        }
+
+        Self {
+            internal: Box::new(Approximation::PrescaledExp(self)),
+            cache: RefCell::new(Cache::Invalid),
+            signal: None,
         }
     }
 
     /// Calculate nearby multiple of pi.
     fn pi_multiple(&self) -> BigInt {
-        let mut rough_appr = self.approx(-1);
-        let mut multiple = rough_appr / signed::SIX.deref();
+        let mut multiple = self.integer_ratio_nearest(Self::pi());
+        let adjustment =
+            Self::pi().multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
+        let rough_appr = self.clone().add(adjustment).approx(-1);
 
-        loop {
-            let adj = Self::pi()
-                .multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
-            let sum = self.clone().add(adj);
-            rough_appr = sum.approx(-1);
-            multiple += &rough_appr / signed::SIX.deref();
-
-            let abs_rough_appr = rough_appr.magnitude();
-            if abs_rough_appr < unsigned::SIX.deref() {
-                return multiple;
-            }
+        if rough_appr >= *signed::SIX {
+            multiple += 1;
+        } else if rough_appr <= -signed::SIX.clone() {
+            multiple -= 1;
         }
+
+        multiple
     }
 
     /// Calculate nearby multiple of pi/2.
     fn half_pi_multiple(&self) -> BigInt {
-        let mut rough_appr = self.approx(-1);
-        let mut multiple = &rough_appr / signed::THREE.deref();
+        let half_pi = Self::pi().shift_right(1);
+        let mut multiple = self.integer_ratio_nearest(half_pi.clone());
+        let adjustment =
+            half_pi.multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
+        let rough_appr = self.clone().add(adjustment).approx(-1);
 
-        loop {
-            let adj = Self::pi()
-                .shift_right(1)
-                .multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
-            let sum = self.clone().add(adj);
-            rough_appr = sum.approx(-1);
-
-            let abs_rough_appr = rough_appr.magnitude();
-            if abs_rough_appr < unsigned::TWO.deref() {
-                return multiple;
-            }
-
-            let mut delta = &rough_appr / signed::THREE.deref();
-            if delta.is_zero() {
-                delta = match rough_appr.sign() {
-                    Sign::Minus => signed::MINUS_ONE.clone(),
-                    _ => signed::ONE.clone(),
-                };
-            }
-            multiple += delta;
+        if rough_appr >= *signed::TWO {
+            multiple += 1;
+        } else if rough_appr <= -signed::TWO.clone() {
+            multiple -= 1;
         }
+
+        multiple
     }
 
     fn medium_half_pi_multiple(rough_appr: &BigInt) -> BigInt {
@@ -313,6 +324,21 @@ impl Computable {
 
     /// Natural logarithm of this number.
     pub fn ln(self) -> Computable {
+        if let Approximation::Ratio(r) = &*self.internal {
+            if r.sign() == Sign::Plus {
+                let (shift, reduced) = r.factor_two_powers();
+                if shift != 0 {
+                    let reduced_ln = if reduced == Rational::one() {
+                        Self::integer(BigInt::zero())
+                    } else {
+                        Self::rational(reduced).ln()
+                    };
+                    let shift: BigInt = shift.into();
+                    return reduced_ln.add(Self::integer(shift).multiply(Self::ln2()));
+                }
+            }
+        }
+
         // Sixteenths, ie 8 == 0.5, 24 == 1.5
         let low_ln_limit = signed::EIGHT.deref();
         let high_ln_limit = signed::TWENTY_FOUR.deref();
@@ -644,6 +670,7 @@ fn scale(n: BigInt, p: Precision) -> BigInt {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use num::bigint::BigUint;
     use num::Signed;
 
     #[test]
@@ -862,6 +889,18 @@ mod tests {
     }
 
     #[test]
+    fn exp_large_argument_reduces_by_ln2() {
+        let exponent = BigInt::from(200);
+        let offset = Computable::rational(Rational::fraction(7, 20).unwrap());
+        let value = Computable::ln2()
+            .multiply(Computable::integer(exponent.clone()))
+            .add(offset.clone());
+        let expected = offset.exp().shift_left(200);
+
+        assert_close(value.exp(), expected, -80, 2);
+    }
+
+    #[test]
     fn cos_zero() {
         let zero = Computable::rational(Rational::zero());
         let cos = zero.cos();
@@ -967,6 +1006,25 @@ mod tests {
     }
 
     #[test]
+    fn huge_trig_arguments_reduce_correctly() {
+        let huge_multiple = BigInt::from(1_u8) << 200;
+        let offset = Computable::rational(Rational::fraction(7, 5).unwrap());
+        let huge = Computable::pi()
+            .multiply(Computable::integer(huge_multiple))
+            .add(offset.clone());
+
+        assert_eq!(
+            huge.clone().sin().compare_absolute(&offset.clone().sin(), -80),
+            Ordering::Equal
+        );
+        assert_eq!(
+            huge.clone().cos().compare_absolute(&offset.clone().cos(), -80),
+            Ordering::Equal
+        );
+        assert_eq!(huge.tan().compare_absolute(&offset.tan(), -72), Ordering::Equal);
+    }
+
+    #[test]
     fn tan_small_and_medium_arguments() {
         let one_fifth = Computable::rational(Rational::fraction(1, 5).unwrap());
         assert_approx(one_fifth.tan(), -32, "870632973", 2);
@@ -996,6 +1054,28 @@ mod tests {
         let value = Computable::rational(Rational::new(1024));
         let ten = Computable::rational(Rational::new(10));
         assert_close(value.ln(), ten.multiply(Computable::ln2()), -40, 2);
+    }
+
+    #[test]
+    fn ln_tiny_power_of_two() {
+        let denominator = BigUint::from(1_u8) << 10;
+        let value = Computable::rational(
+            Rational::from_bigint_fraction(BigInt::from(1), denominator).unwrap(),
+        );
+        let ten = Computable::rational(Rational::new(10));
+        assert_close(value.ln(), ten.multiply(Computable::ln2()).negate(), -40, 2);
+    }
+
+    #[test]
+    fn ln_exact_binary_scaled_rational() {
+        let denominator = BigUint::from(1_u8) << 10;
+        let value = Computable::rational(
+            Rational::from_bigint_fraction(BigInt::from(3), denominator).unwrap(),
+        );
+        let expected = Computable::rational(Rational::new(3))
+            .ln()
+            .add(Computable::rational(Rational::new(-10)).multiply(Computable::ln2()));
+        assert_close(value.ln(), expected, -40, 2);
     }
 
     #[test]

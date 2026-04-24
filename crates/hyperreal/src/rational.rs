@@ -242,6 +242,30 @@ impl Rational {
         &self.denominator
     }
 
+    pub(crate) fn factor_two_powers(&self) -> (i32, Self) {
+        let mut numerator = self.numerator.clone();
+        let mut denominator = self.denominator.clone();
+        let mut shift = 0_i32;
+
+        while (&numerator % &*TWO).is_zero() && !numerator.is_zero() {
+            numerator /= &*TWO;
+            shift += 1;
+        }
+        while (&denominator % &*TWO).is_zero() {
+            denominator /= &*TWO;
+            shift -= 1;
+        }
+
+        (
+            shift,
+            Self {
+                sign: self.sign,
+                numerator,
+                denominator,
+            },
+        )
+    }
+
     /// Is this Rational better understood as a fraction?
     ///
     /// If a decimal expansion of this fraction would never end this is true.
