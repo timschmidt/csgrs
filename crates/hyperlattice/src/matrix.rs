@@ -53,30 +53,6 @@ where
     left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
 }
 
-fn map_array_scalar<B: Backend, const N: usize, F>(
-    values: [Scalar<B>; N],
-    scalar: Scalar<B>,
-    mut op: F,
-) -> [Scalar<B>; N]
-where
-    F: FnMut(Scalar<B>, Scalar<B>) -> Scalar<B>,
-{
-    let mut values = values.into_iter();
-    let mut scalar = Some(scalar);
-    from_fn(|i| {
-        let value = values.next().expect("from_fn stays within array length");
-        let rhs = if i + 1 == N {
-            scalar.take().expect("last element consumes scalar")
-        } else {
-            scalar
-                .as_ref()
-                .expect("scalar exists until last element")
-                .clone()
-        };
-        op(value, rhs)
-    })
-}
-
 fn map_matrix2<B: Backend, const N: usize, F>(
     left: [[Scalar<B>; N]; N],
     right: [[Scalar<B>; N]; N],
@@ -92,30 +68,6 @@ where
             right.next().expect("matrices have equal row counts"),
             &mut op,
         )
-    })
-}
-
-fn map_matrix_scalar<B: Backend, const N: usize, F>(
-    matrix: [[Scalar<B>; N]; N],
-    scalar: Scalar<B>,
-    mut op: F,
-) -> [[Scalar<B>; N]; N]
-where
-    F: FnMut(Scalar<B>, Scalar<B>) -> Scalar<B>,
-{
-    let mut rows = matrix.into_iter();
-    let mut scalar = Some(scalar);
-    from_fn(|row| {
-        let values = rows.next().expect("from_fn stays within matrix row count");
-        let row_scalar = if row + 1 == N {
-            scalar.take().expect("last row consumes scalar")
-        } else {
-            scalar
-                .as_ref()
-                .expect("scalar exists until last row")
-                .clone()
-        };
-        map_array_scalar(values, row_scalar, &mut op)
     })
 }
 
@@ -788,12 +740,17 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: Scalar<B>) -> Self::Output {
+                let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
-                    Self(map_matrix_scalar(self.0, rhs, |lhs, rhs| lhs + rhs))
+                    Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
                 } else {
-                    Self(from_fn(|row| {
-                        from_fn(|col| self.0[row][col].clone() + rhs.clone())
-                    }))
+                    let mut values = self.0;
+                    for row in &mut values {
+                        for value in row {
+                            *value = value.clone().add_cached(rhs);
+                        }
+                    }
+                    Self(values)
                 }
             }
         }
@@ -854,12 +811,17 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: Scalar<B>) -> Self::Output {
+                let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
-                    Self(map_matrix_scalar(self.0, rhs, |lhs, rhs| lhs - rhs))
+                    Self(self.0.map(|row| row.map(|value| value.sub_cached(rhs))))
                 } else {
-                    Self(from_fn(|row| {
-                        from_fn(|col| self.0[row][col].clone() - rhs.clone())
-                    }))
+                    let mut values = self.0;
+                    for row in &mut values {
+                        for value in row {
+                            *value = value.clone().sub_cached(rhs);
+                        }
+                    }
+                    Self(values)
                 }
             }
         }
@@ -902,12 +864,17 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: Scalar<B>) -> Self::Output {
+                let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
-                    Self(map_matrix_scalar(self.0, rhs, |lhs, rhs| lhs * rhs))
+                    Self(self.0.map(|row| row.map(|value| value.mul_cached(rhs))))
                 } else {
-                    Self(from_fn(|row| {
-                        from_fn(|col| self.0[row][col].clone() * rhs.clone())
-                    }))
+                    let mut values = self.0;
+                    for row in &mut values {
+                        for value in row {
+                            *value = value.clone().mul_cached(rhs);
+                        }
+                    }
+                    Self(values)
                 }
             }
         }
@@ -1041,14 +1008,15 @@ macro_rules! impl_matrix {
 
             fn mul(self, rhs: $vector<B>) -> Self::Output {
                 $vector(from_fn(|row| {
-                    let p0 = self.0[row][0].clone() * rhs.0[0].clone();
-                    let p1 = self.0[row][1].clone() * rhs.0[1].clone();
-                    let p2 = self.0[row][2].clone() * rhs.0[2].clone();
+                    let left = [&self.0[row][0], &self.0[row][1], &self.0[row][2]];
+                    let right = [&rhs.0[0], &rhs.0[1], &rhs.0[2]];
                     if let (Some(lhs), Some(rhs)) = (self.0[row].get(3), rhs.0.get(3)) {
-                        let p3 = lhs.clone() * rhs.clone();
-                        (p0 + p1) + (p2 + p3)
+                        Scalar::dot4(
+                            [left[0], left[1], left[2], lhs],
+                            [right[0], right[1], right[2], rhs],
+                        )
                     } else {
-                        p0 + (p1 + p2)
+                        Scalar::dot3(left, right)
                     }
                 }))
             }

@@ -36,30 +36,6 @@ where
     left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
 }
 
-fn map_array_scalar<B: Backend, const N: usize, F>(
-    values: [Scalar<B>; N],
-    scalar: Scalar<B>,
-    mut op: F,
-) -> [Scalar<B>; N]
-where
-    F: FnMut(Scalar<B>, Scalar<B>) -> Scalar<B>,
-{
-    let mut values = values.into_iter();
-    let mut scalar = Some(scalar);
-    from_fn(|i| {
-        let value = values.next().expect("from_fn stays within array length");
-        let rhs = if i + 1 == N {
-            scalar.take().expect("last element consumes scalar")
-        } else {
-            scalar
-                .as_ref()
-                .expect("scalar exists until last element")
-                .clone()
-        };
-        op(value, rhs)
-    })
-}
-
 macro_rules! impl_vector {
     ($name:ident, $n:expr) => {
         impl<B: Backend> $name<B> {
@@ -245,10 +221,15 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn add(self, rhs: Scalar<B>) -> Self::Output {
+                let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
-                    Self(map_array_scalar(self.0, rhs, |lhs, rhs| lhs + rhs))
+                    Self(self.0.map(|value| value.add_cached(rhs)))
                 } else {
-                    Self(from_fn(|i| self.0[i].clone() + rhs.clone()))
+                    let mut values = self.0;
+                    for value in &mut values {
+                        *value = value.clone().add_cached(rhs);
+                    }
+                    Self(values)
                 }
             }
         }
@@ -305,10 +286,15 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn sub(self, rhs: Scalar<B>) -> Self::Output {
+                let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
-                    Self(map_array_scalar(self.0, rhs, |lhs, rhs| lhs - rhs))
+                    Self(self.0.map(|value| value.sub_cached(rhs)))
                 } else {
-                    Self(from_fn(|i| self.0[i].clone() - rhs.clone()))
+                    let mut values = self.0;
+                    for value in &mut values {
+                        *value = value.clone().sub_cached(rhs);
+                    }
+                    Self(values)
                 }
             }
         }
@@ -349,10 +335,15 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn mul(self, rhs: Scalar<B>) -> Self::Output {
+                let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
-                    Self(map_array_scalar(self.0, rhs, |lhs, rhs| lhs * rhs))
+                    Self(self.0.map(|value| value.mul_cached(rhs)))
                 } else {
-                    Self(from_fn(|i| self.0[i].clone() * rhs.clone()))
+                    let mut values = self.0;
+                    for value in &mut values {
+                        *value = value.clone().mul_cached(rhs);
+                    }
+                    Self(values)
                 }
             }
         }

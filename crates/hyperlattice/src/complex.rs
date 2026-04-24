@@ -43,7 +43,7 @@ impl<B: Backend> Complex<B> {
 
     /// Returns `re^2 + im^2`.
     pub fn norm_squared(&self) -> Scalar<B> {
-        self.re.clone() * self.re.clone() + self.im.clone() * self.im.clone()
+        self.re.clone().mul_cached(&self.re) + self.im.clone().mul_cached(&self.im)
     }
 
     /// Returns the multiplicative inverse.
@@ -108,8 +108,8 @@ impl<B: Backend> Complex<B> {
         let denom = rhs.norm_squared();
         require_known_nonzero(&denom)?;
         let inv_denom = denom.inverse()?;
-        let re = self.re.clone() * rhs.re.clone() + self.im.clone() * rhs.im.clone();
-        let im = self.im * rhs.re - self.re * rhs.im;
+        let re = self.re.clone().mul_cached(&rhs.re) + self.im.clone().mul_cached(&rhs.im);
+        let im = self.im.mul_cached(&rhs.re) - self.re.mul_cached(&rhs.im);
         Ok(Self::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),
@@ -268,8 +268,8 @@ impl<B: Backend> Mul for Complex<B> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        let re = self.re.clone() * rhs.re.clone() - self.im.clone() * rhs.im.clone();
-        let im = self.re * rhs.im + self.im * rhs.re;
+        let re = self.re.clone().mul_cached(&rhs.re) - self.im.clone().mul_cached(&rhs.im);
+        let im = self.re.mul_cached(&rhs.im) + self.im.mul_cached(&rhs.re);
         Self::new(re, im)
     }
 }
@@ -303,8 +303,8 @@ impl<B: Backend> Div for Complex<B> {
 
     fn div(self, rhs: Self) -> Self::Output {
         let inv_denom = rhs.norm_squared().inverse()?;
-        let re = self.re.clone() * rhs.re.clone() + self.im.clone() * rhs.im.clone();
-        let im = self.im * rhs.re - self.re * rhs.im;
+        let re = self.re.clone().mul_cached(&rhs.re) + self.im.clone().mul_cached(&rhs.im);
+        let im = self.im.mul_cached(&rhs.re) - self.re.mul_cached(&rhs.im);
         Ok(Self::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),

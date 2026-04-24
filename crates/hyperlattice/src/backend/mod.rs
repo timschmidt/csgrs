@@ -109,18 +109,18 @@ pub trait BackendScalar:
     }
     /// Returns the three-lane dot product.
     fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
-        let p0 = left[0].clone() * right[0].clone();
-        let p1 = left[1].clone() * right[1].clone();
-        let p2 = left[2].clone() * right[2].clone();
-        (p0 + p1) + p2
+        let p0 = left[0].clone().mul_ref(right[0]);
+        let p1 = left[1].clone().mul_ref(right[1]);
+        let p2 = left[2].clone().mul_ref(right[2]);
+        p0.add_ref(&p1).add_ref(&p2)
     }
     /// Returns the four-lane dot product.
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
-        let p0 = left[0].clone() * right[0].clone();
-        let p1 = left[1].clone() * right[1].clone();
-        let p2 = left[2].clone() * right[2].clone();
-        let p3 = left[3].clone() * right[3].clone();
-        (p0 + p1) + (p2 + p3)
+        let p0 = left[0].clone().mul_ref(right[0]);
+        let p1 = left[1].clone().mul_ref(right[1]);
+        let p2 = left[2].clone().mul_ref(right[2]);
+        let p3 = left[3].clone().mul_ref(right[3]);
+        p0.add_ref(&p1).add_ref(&p2.add_ref(&p3))
     }
     /// Returns `e` raised to this value.
     fn exp(self) -> BlasResult<Self>;
