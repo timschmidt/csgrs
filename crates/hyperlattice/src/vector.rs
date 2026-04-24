@@ -4,10 +4,7 @@ use std::array::from_fn;
 use std::fmt;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
 
-use crate::scalar::{
-    clone_with_abort, reject_definite_zero, require_known_nonzero,
-    require_known_nonzero_with_abort, with_abort,
-};
+use crate::scalar::{clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort};
 use crate::{AbortSignal, Backend, BlasResult, CheckedBlasResult, DefaultBackend, Scalar};
 
 /// Three-dimensional vector.
@@ -101,7 +98,7 @@ macro_rules! impl_vector {
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
                 let mag = self.magnitude_with_abort(signal)?;
-                require_known_nonzero_with_abort(&mag, signal)?;
+                require_known_nonzero(&mag)?;
                 let inv_mag = mag.inverse()?;
                 if B::MOVE_ELEMENTWISE {
                     Ok(Self(self.0.clone().map(|value| value.mul_cached(&inv_mag))))
@@ -136,7 +133,7 @@ macro_rules! impl_vector {
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
                 let rhs = with_abort(rhs, signal);
-                require_known_nonzero_with_abort(&rhs, signal)?;
+                require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 if B::MOVE_ELEMENTWISE {
                     Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))

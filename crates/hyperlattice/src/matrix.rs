@@ -5,8 +5,8 @@ use std::fmt;
 use std::ops::{Add, BitXor, Div, Index, IndexMut, Mul, Neg, Sub};
 
 use crate::scalar::{
-    ZeroStatus, clone_with_abort, reject_definite_zero, require_known_nonzero,
-    require_known_nonzero_with_abort, with_abort, zero_status, zero_status_with_abort,
+    ZeroStatus, clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort,
+    zero_status, zero_status_with_abort,
 };
 use crate::vector::{Vector3, Vector4};
 use crate::{AbortSignal, Backend, BlasResult, CheckedBlasResult, DefaultBackend, Problem, Scalar};
@@ -188,10 +188,13 @@ macro_rules! impl_solve_left_system_fixed {
                 }
 
                 let inv_pivot = left[col][col].clone().inverse()?;
-                $(
-                    left[col][$i] = left[col][$i].clone().mul_cached(&inv_pivot);
-                    right[col][$i] = right[col][$i].clone().mul_cached(&inv_pivot);
-                )+
+                for i in 0..$n {
+                    right[col][i] = right[col][i].clone().mul_cached(&inv_pivot);
+                }
+                left[col][col] = Scalar::one();
+                for i in (col + 1)..$n {
+                    left[col][i] = left[col][i].clone().mul_cached(&inv_pivot);
+                }
                 let pivot_left = left[col].clone();
                 let pivot_right = right[col].clone();
 
@@ -203,12 +206,15 @@ macro_rules! impl_solve_left_system_fixed {
                     if factor.definitely_zero() {
                         continue;
                     }
-                    $(
-                        let left_correction = pivot_left[$i].clone().mul_cached(&factor);
-                        let right_correction = pivot_right[$i].clone().mul_cached(&factor);
-                        left[row][$i] = left[row][$i].clone() - left_correction;
-                        right[row][$i] = right[row][$i].clone() - right_correction;
-                    )+
+                    left[row][col] = Scalar::zero();
+                    for i in (col + 1)..$n {
+                        let left_correction = pivot_left[i].clone().mul_cached(&factor);
+                        left[row][i] = left[row][i].clone() - left_correction;
+                    }
+                    for i in 0..$n {
+                        let right_correction = pivot_right[i].clone().mul_cached(&factor);
+                        right[row][i] = right[row][i].clone() - right_correction;
+                    }
                 }
             }
 
@@ -230,10 +236,13 @@ macro_rules! impl_solve_left_system_fixed {
                 }
 
                 let inv_pivot = left[col][col].clone().inverse()?;
-                $(
-                    left[col][$i] = left[col][$i].clone().mul_cached(&inv_pivot);
-                    right[col][$i] = right[col][$i].clone().mul_cached(&inv_pivot);
-                )+
+                for i in 0..$n {
+                    right[col][i] = right[col][i].clone().mul_cached(&inv_pivot);
+                }
+                left[col][col] = Scalar::one();
+                for i in (col + 1)..$n {
+                    left[col][i] = left[col][i].clone().mul_cached(&inv_pivot);
+                }
                 let pivot_left = left[col].clone();
                 let pivot_right = right[col].clone();
 
@@ -245,12 +254,15 @@ macro_rules! impl_solve_left_system_fixed {
                     if factor.definitely_zero() {
                         continue;
                     }
-                    $(
-                        let left_correction = pivot_left[$i].clone().mul_cached(&factor);
-                        let right_correction = pivot_right[$i].clone().mul_cached(&factor);
-                        left[row][$i] = left[row][$i].clone() - left_correction;
-                        right[row][$i] = right[row][$i].clone() - right_correction;
-                    )+
+                    left[row][col] = Scalar::zero();
+                    for i in (col + 1)..$n {
+                        let left_correction = pivot_left[i].clone().mul_cached(&factor);
+                        left[row][i] = left[row][i].clone() - left_correction;
+                    }
+                    for i in 0..$n {
+                        let right_correction = pivot_right[i].clone().mul_cached(&factor);
+                        right[row][i] = right[row][i].clone() - right_correction;
+                    }
                 }
             }
 
@@ -273,10 +285,13 @@ macro_rules! impl_solve_left_system_fixed {
                 }
 
                 let inv_pivot = clone_with_abort(&left[col][col], signal).inverse()?;
-                $(
-                    left[col][$i] = left[col][$i].clone().mul_cached(&inv_pivot);
-                    right[col][$i] = right[col][$i].clone().mul_cached(&inv_pivot);
-                )+
+                for i in 0..$n {
+                    right[col][i] = right[col][i].clone().mul_cached(&inv_pivot);
+                }
+                left[col][col] = Scalar::one();
+                for i in (col + 1)..$n {
+                    left[col][i] = left[col][i].clone().mul_cached(&inv_pivot);
+                }
                 let pivot_left = left[col].clone();
                 let pivot_right = right[col].clone();
 
@@ -288,12 +303,15 @@ macro_rules! impl_solve_left_system_fixed {
                     if factor.definitely_zero() {
                         continue;
                     }
-                    $(
-                        let left_correction = pivot_left[$i].clone().mul_cached(&factor);
-                        let right_correction = pivot_right[$i].clone().mul_cached(&factor);
-                        left[row][$i] = left[row][$i].clone() - left_correction;
-                        right[row][$i] = right[row][$i].clone() - right_correction;
-                    )+
+                    left[row][col] = Scalar::zero();
+                    for i in (col + 1)..$n {
+                        let left_correction = pivot_left[i].clone().mul_cached(&factor);
+                        left[row][i] = left[row][i].clone() - left_correction;
+                    }
+                    for i in 0..$n {
+                        let right_correction = pivot_right[i].clone().mul_cached(&factor);
+                        right[row][i] = right[row][i].clone() - right_correction;
+                    }
                 }
             }
 
@@ -525,11 +543,7 @@ fn determinant3<B: Backend>(m: &[[Scalar<B>; 3]; 3]) -> Scalar<B> {
     let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
     let c10 = mul_sub(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
     let c20 = mul_sub(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
-    m[0][0]
-        .clone()
-        .mul_cached(&c00)
-        .add_cached(&m[0][1].clone().mul_cached(&c10))
-        .add_cached(&m[0][2].clone().mul_cached(&c20))
+    Scalar::dot3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20])
 }
 
 fn matrix3_adjugate_and_determinant<B: Backend>(
@@ -545,11 +559,7 @@ fn matrix3_adjugate_and_determinant<B: Backend>(
     let c20 = mul_sub(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
     let c21 = mul_sub(&m[0][1], &m[2][0], &m[0][0], &m[2][1]);
     let c22 = mul_sub(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
-    let det = m[0][0]
-        .clone()
-        .mul_cached(&c00)
-        .add_cached(&m[0][1].clone().mul_cached(&c10))
-        .add_cached(&m[0][2].clone().mul_cached(&c20));
+    let det = Scalar::dot3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20]);
     ([[c00, c01, c02], [c10, c11, c12], [c20, c21, c22]], det)
 }
 
@@ -573,8 +583,9 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
     let (adjugate, det) = matrix3_adjugate_and_determinant(&matrix);
-    require_known_nonzero_with_abort(&det, signal)?;
-    let inv_det = with_abort(det, signal).inverse()?;
+    let det = with_abort(det, signal);
+    require_known_nonzero(&det)?;
+    let inv_det = det.inverse()?;
     Ok(scale_matrix3(adjugate, &inv_det))
 }
 
@@ -676,8 +687,9 @@ fn invert_matrix4_checked_with_abort<B: Backend>(
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
     let (s, c) = matrix4_factors(&matrix);
     let det = determinant4_from_factors(&s, &c);
-    require_known_nonzero_with_abort(&det, signal)?;
-    let inv_det = with_abort(det, signal).inverse()?;
+    let det = with_abort(det, signal);
+    require_known_nonzero(&det)?;
+    let inv_det = det.inverse()?;
     Ok(matrix4_scaled_adjugate_from_factors(
         &matrix, &s, &c, &inv_det,
     ))
@@ -798,7 +810,7 @@ macro_rules! impl_matrix {
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
                 let rhs = with_abort(rhs, signal);
-                require_known_nonzero_with_abort(&rhs, signal)?;
+                require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 if B::MOVE_ELEMENTWISE {
                     Ok(Self(

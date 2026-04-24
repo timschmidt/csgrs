@@ -75,6 +75,12 @@ fn checked_vector_operations_reject_unknown_zero_divisors() {
         vector.div_scalar_checked_with_abort(unknown_zero(), &signal),
         Err(Problem::UnknownZero)
     );
+
+    let unknown_vector = Vector3::new([unknown_zero(), r(0), r(0)]);
+    assert_eq!(
+        unknown_vector.normalize_checked_with_abort(&signal),
+        Err(Problem::UnknownZero)
+    );
 }
 
 #[cfg(not(feature = "realistic-backend"))]
