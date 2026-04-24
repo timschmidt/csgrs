@@ -35,18 +35,6 @@ pub struct Computable {
     signal: Option<Signal>,
 }
 
-mod rationals {
-    use crate::Rational;
-    use std::sync::LazyLock;
-
-    pub(super) static SHORT_9: LazyLock<Rational> =
-        LazyLock::new(|| Rational::fraction(1, 9).unwrap());
-    pub(super) static SHORT_24: LazyLock<Rational> =
-        LazyLock::new(|| Rational::fraction(1, 24).unwrap());
-    pub(super) static SHORT_80: LazyLock<Rational> =
-        LazyLock::new(|| Rational::fraction(1, 80).unwrap());
-}
-
 mod signed {
     use num::One;
     use num::{BigInt, bigint::ToBigInt};
@@ -124,12 +112,13 @@ impl Computable {
 
     /// Natural Exponential function, raise Euler's Number to this number.
     pub fn exp(self) -> Computable {
-        let low_prec: Precision = -10;
+        let low_prec: Precision = -4;
         let rough_appr: BigInt = self.approx(low_prec);
         if rough_appr.sign() == Sign::Minus {
             return self.negate().exp().inverse();
         }
-        if rough_appr > *signed::TWO {
+        // At precision -4, an approximation greater than 8 implies x > 0.5.
+        if rough_appr > *signed::EIGHT {
             let square_root = self.shift_right(1).exp();
             square_root.square()
         } else {
@@ -281,17 +270,15 @@ impl Computable {
     }
 
     fn ln2() -> Self {
-        let prescaled_9 = Self::rational(rationals::SHORT_9.clone()).prescaled_ln();
-        let prescaled_24 = Self::rational(rationals::SHORT_24.clone()).prescaled_ln();
-        let prescaled_80 = Self::rational(rationals::SHORT_80.clone()).prescaled_ln();
+        let prescaled_9 = Self::rational(Rational::fraction(1, 9).unwrap()).prescaled_ln();
+        let prescaled_24 = Self::rational(Rational::fraction(1, 24).unwrap()).prescaled_ln();
+        let prescaled_80 = Self::rational(Rational::fraction(1, 80).unwrap()).prescaled_ln();
 
         let ln2_1 = Self::integer(signed::SEVEN.clone()).multiply(prescaled_9);
         let ln2_2 = Self::integer(signed::TWO.clone()).multiply(prescaled_24);
         let ln2_3 = Self::integer(signed::THREE.clone()).multiply(prescaled_80);
 
-        let neg_ln2_2 = ln2_2.negate();
-
-        ln2_1.add(neg_ln2_2).add(ln2_3)
+        ln2_1.add(ln2_2.negate()).add(ln2_3)
     }
 
     /// Natural logarithm of this number.
@@ -316,7 +303,7 @@ impl Computable {
                 let quarter = self.sqrt().sqrt().ln();
                 return quarter.shift_left(2);
             } else {
-                let extra_bits: i32 = (rough_appr.bits() - 3).try_into().expect(
+                let extra_bits: i32 = (rough_appr.bits() - 5).try_into().expect(
                     "Approximation should have few enough bits to fit in a 32-bit signed integer",
                 );
                 let scaled_result = self.shift_right(extra_bits).ln();
@@ -466,9 +453,12 @@ impl Computable {
     pub fn approx_signal(&self, signal: &Option<Signal>, p: Precision) -> BigInt {
         // Check precision is OK?
 
-        if let Cache::Valid((cache_prec, cache_appr)) = self.cache.clone().into_inner() {
-            if p >= cache_prec {
-                return scale(cache_appr, cache_prec - p);
+        {
+            let cache = self.cache.borrow();
+            if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
+                if p >= *cache_prec {
+                    return scale(cache_appr.clone(), *cache_prec - p);
+                }
             }
         }
         let result = self.internal.approximate(signal, p);
@@ -477,10 +467,13 @@ impl Computable {
     }
 
     pub fn sign(&self) -> Sign {
-        if let Cache::Valid((_prec, cache_appr)) = self.cache.clone().into_inner() {
-            let sign = cache_appr.sign();
-            if sign != Sign::NoSign {
-                return sign;
+        {
+            let cache = self.cache.borrow();
+            if let Cache::Valid((_prec, cache_appr)) = &*cache {
+                let sign = cache_appr.sign();
+                if sign != Sign::NoSign {
+                    return sign;
+                }
             }
         }
         let mut sign = Sign::NoSign;
@@ -494,8 +487,9 @@ impl Computable {
     }
 
     fn cached(&self) -> Option<(Precision, BigInt)> {
-        if let Cache::Valid((cache_prec, cache_appr)) = self.cache.clone().into_inner() {
-            Some((cache_prec, cache_appr))
+        let cache = self.cache.borrow();
+        if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
+            Some((*cache_prec, cache_appr.clone()))
         } else {
             None
         }
@@ -816,6 +810,22 @@ mod tests {
     }
 
     #[test]
+    fn exp_and_ln_round_trip() {
+        let seven_fifths = Computable::rational(Rational::fraction(7, 5).unwrap());
+        assert_close(seven_fifths.clone().exp().ln(), seven_fifths, -40, 2);
+    }
+
+    #[test]
+    fn exp_negative_is_inverse() {
+        let eleven_tenths = Computable::rational(Rational::fraction(11, 10).unwrap());
+        let product = eleven_tenths
+            .clone()
+            .exp()
+            .multiply(eleven_tenths.negate().exp());
+        assert_close(product, Computable::one(), -40, 2);
+    }
+
+    #[test]
     fn cos_zero() {
         let zero = Computable::rational(Rational::zero());
         let cos = zero.cos();
@@ -921,12 +931,28 @@ mod tests {
     }
 
     #[test]
+    fn tan_small_and_medium_arguments() {
+        let one_fifth = Computable::rational(Rational::fraction(1, 5).unwrap());
+        assert_approx(one_fifth.tan(), -32, "870632973", 2);
+
+        let seven_fifths = Computable::rational(Rational::fraction(7, 5).unwrap());
+        assert_approx(seven_fifths.tan(), -32, "24901720944", 2);
+    }
+
+    #[test]
     fn ln_sqrt_pi() {
         let pi = Computable::pi();
         let sqrt = Computable::sqrt(pi);
         let ln = Computable::ln(sqrt);
         let correct: BigInt = "629321910077".parse().unwrap();
         assert_eq!(ln.approx(-40), correct);
+    }
+
+    #[test]
+    fn ln_large_power_of_two() {
+        let value = Computable::rational(Rational::new(1024));
+        let ten = Computable::rational(Rational::new(10));
+        assert_close(value.ln(), ten.multiply(Computable::ln2()), -40, 2);
     }
 
     #[test]

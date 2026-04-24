@@ -1,7 +1,7 @@
 use crate::Computable;
 use crate::Rational;
 use crate::computable::{Precision, Signal, scale, shift, should_stop, signed};
-use num::bigint::{Sign, ToBigInt};
+use num::bigint::Sign;
 use num::{BigInt, BigUint, Signed};
 use num::{One, Zero};
 use std::ops::Deref;
@@ -277,6 +277,7 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let calc_precision = p - bound_log2(2 * iterations_needed) - 4; // for error in op, truncation.
     let op_prec = p - 2;
     let op_appr = c.approx_signal(signal, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
 
     // Error in argument results in error of < 1/4 ulp.
     // Cumulative arithmetic rounding error is < 1/16 ulp.
@@ -295,10 +296,9 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         }
         n += 2;
 
-        /* current_term = - current_term * op * op / n * (n - 1)   */
-        current_term = scale(current_term * &op_appr, op_prec);
-        current_term = scale(current_term * &op_appr, op_prec);
-        let divisor = ToBigInt::to_bigint(&-n).unwrap() * ToBigInt::to_bigint(&(n - 1)).unwrap();
+        /* current_term = - current_term * op_squared / n * (n - 1)   */
+        current_term = scale(current_term * &op_squared, op_prec);
+        let divisor: BigInt = (-(n * (n - 1))).into();
         current_term /= divisor;
 
         current_sum += &current_term;
@@ -326,6 +326,7 @@ fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let calc_precision = p - bound_log2(2 * iterations_needed) - 4; // for error in op, truncation.
     let op_prec = p - 2;
     let op_appr = c.approx_signal(signal, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
 
     // Error in argument results in error of < 1/4 ulp.
     // Cumulative arithmetic rounding error is < 1/16 ulp.
@@ -344,10 +345,9 @@ fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         }
         n += 2;
 
-        /* current_term = - current_term * op * op / n * (n - 1)   */
-        current_term = scale(current_term * &op_appr, op_prec);
-        current_term = scale(current_term * &op_appr, op_prec);
-        let divisor = ToBigInt::to_bigint(&-n).unwrap() * ToBigInt::to_bigint(&(n - 1)).unwrap();
+        /* current_term = - current_term * op_squared / n * (n - 1)   */
+        current_term = scale(current_term * &op_squared, op_prec);
+        let divisor: BigInt = (-(n * (n - 1))).into();
         current_term /= divisor;
 
         current_sum += &current_term;

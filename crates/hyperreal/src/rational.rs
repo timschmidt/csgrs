@@ -437,10 +437,14 @@ impl Rational {
             return Self::one();
         }
         let mut result = Self::one();
-        for b in (0..(exp.bits())).rev() {
-            result *= result.clone();
+        let mut factor = self.clone();
+        let bits = exp.bits();
+        for b in 0..bits {
             if exp.bit(b) {
-                result *= self;
+                result *= &factor;
+            }
+            if b + 1 < bits {
+                factor = &factor * &factor;
             }
         }
         result
@@ -644,8 +648,9 @@ impl Neg for &Rational {
 impl Neg for Rational {
     type Output = Self;
 
-    fn neg(self) -> Self {
-        (&self).neg()
+    fn neg(mut self) -> Self {
+        self.sign = -self.sign;
+        self
     }
 }
 
@@ -653,7 +658,31 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
     type Output = Rational;
 
     fn sub(self, other: T) -> Self::Output {
-        self + &-other.as_ref()
+        use std::cmp::Ordering::*;
+
+        let other = other.as_ref();
+        let denominator = &self.denominator * &other.denominator;
+        let a = &self.numerator * &other.denominator;
+        let b = &other.numerator * &self.denominator;
+        let (sign, numerator) = match (self.sign, other.sign) {
+            (any, NoSign) => (any, a),
+            (NoSign, Plus) => (Minus, b),
+            (NoSign, Minus) => (Plus, b),
+            (Plus, Minus) => (Plus, a + b),
+            (Minus, Plus) => (Minus, a + b),
+            (x, y) => match a.cmp(&b) {
+                Greater => (x, a - b),
+                Equal => {
+                    return Self::Output::zero();
+                }
+                Less => (-y, b - a),
+            },
+        };
+        Self::Output::maybe_reduce(Self::Output {
+            sign,
+            numerator,
+            denominator,
+        })
     }
 }
 
@@ -661,7 +690,7 @@ impl<T: AsRef<Rational>> Sub<T> for Rational {
     type Output = Self;
 
     fn sub(self, other: T) -> Self {
-        self + -other.as_ref()
+        &self - other.as_ref()
     }
 }
 

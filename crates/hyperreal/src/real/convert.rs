@@ -48,21 +48,35 @@ impl TryFrom<f64> for Real {
 }
 
 impl Real {
-    pub(crate) fn fold(self) -> Computable {
+    pub(crate) fn fold_ref(&self) -> Computable {
         use crate::real::{Class, rationals};
 
         let mut c = if self.rational == *rationals::ONE {
-            self.computable
+            self.computable.clone()
         } else if self.class == Class::One {
-            Computable::rational(self.rational)
+            Computable::rational(self.rational.clone())
         } else {
-            Computable::rational(self.rational).multiply(self.computable)
+            Computable::rational(self.rational.clone()).multiply(self.computable.clone())
         };
 
-        if let Some(s) = self.signal {
+        if let Some(s) = &self.signal {
             c.abort(s.clone());
         }
         c
+    }
+
+    pub(crate) fn fold(self) -> Computable {
+        use crate::real::rationals;
+
+        if self.rational == *rationals::ONE {
+            let mut c = self.computable;
+            if let Some(s) = self.signal {
+                c.abort(s.clone());
+            }
+            c
+        } else {
+            self.fold_ref()
+        }
     }
 }
 

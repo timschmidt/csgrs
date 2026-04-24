@@ -8,3 +8,18 @@ edition = "2024"
 
 [dependencies]
 num = { version = "0.4.3", features = ["num-bigint"] }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "borrowed_ops"
+harness = false
+
+[[bench]]
+name = "library_perf"
+harness = false
+
+[[bench]]
+name = "numerical_micro"
+harness = false

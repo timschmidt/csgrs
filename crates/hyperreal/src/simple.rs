@@ -232,28 +232,32 @@ impl Simple {
         }
     }
 
-    fn operator(chars: &mut Peekable<Chars>) -> Result<Operator, &'static str> {
-        let mut op = String::new();
-
-        while let Some(c) = chars.peek() {
-            match c {
-                'A'..='Z' | 'a'..='z' => op.push(*c),
-                _ => break,
+    fn eat_keyword(chars: &mut Peekable<Chars>, suffix: &str) -> bool {
+        for expected in suffix.chars() {
+            match chars.peek() {
+                Some(c) if *c == expected => {
+                    chars.next();
+                }
+                _ => return false,
             }
-            chars.next();
         }
-        op.make_ascii_lowercase();
+        !matches!(chars.peek(), Some('A'..='Z' | 'a'..='z'))
+    }
 
+    fn operator(chars: &mut Peekable<Chars>) -> Result<Operator, &'static str> {
         use Operator::*;
-        match op.as_str() {
-            "log" | "log10" => Ok(Log10),
-            "ln" | "l" => Ok(Ln),
-            "exp" | "e" => Ok(Exp),
-            "sqrt" | "s" => Ok(Sqrt),
-            "cos" => Ok(Cos),
-            "sin" => Ok(Sin),
-            "pow" => Ok(Pow),
-            "tan" => Ok(Tan),
+        let Some(first) = chars.next() else {
+            return Err("No such operator");
+        };
+        match first {
+            'l' if Self::eat_keyword(chars, "og10") || Self::eat_keyword(chars, "og") => Ok(Log10),
+            'l' if Self::eat_keyword(chars, "n") || Self::eat_keyword(chars, "") => Ok(Ln),
+            'e' if Self::eat_keyword(chars, "xp") || Self::eat_keyword(chars, "") => Ok(Exp),
+            's' if Self::eat_keyword(chars, "qrt") || Self::eat_keyword(chars, "") => Ok(Sqrt),
+            'c' if Self::eat_keyword(chars, "os") => Ok(Cos),
+            's' if Self::eat_keyword(chars, "in") => Ok(Sin),
+            'p' if Self::eat_keyword(chars, "ow") => Ok(Pow),
+            't' if Self::eat_keyword(chars, "an") => Ok(Tan),
             _ => Err("No such operator"),
         }
     }
@@ -398,6 +402,28 @@ mod tests {
     fn missing_close() {
         let xpr: Result<Simple, &str> = "(+ (* (e 4) (e 6))".parse();
         assert_eq!(xpr, Err("Incomplete expression"))
+    }
+
+    #[test]
+    fn parse_named_operators() {
+        let cases = [
+            "(ln 5)",
+            "(l 5)",
+            "(log 5)",
+            "(log10 5)",
+            "(exp 5)",
+            "(e 5)",
+            "(sqrt 5)",
+            "(s 5)",
+            "(cos 5)",
+            "(sin 5)",
+            "(tan 5)",
+            "(pow 5 2)",
+        ];
+        for case in cases {
+            let parsed: Result<Simple, &str> = case.parse();
+            assert!(parsed.is_ok(), "{case}");
+        }
     }
 
     #[test]

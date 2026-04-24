@@ -67,6 +67,108 @@ mod rationals {
     pub(super) static TEN: LazyLock<Rational> = LazyLock::new(|| Rational::new(10));
 }
 
+mod constants {
+    use crate::real::Class;
+    use crate::{Computable, Rational, Real};
+    thread_local! {
+        static HALF: Real = Real::new(Rational::fraction(1, 2).unwrap());
+        static SQRT_TWO_OVER_TWO: Real = Real {
+            rational: Rational::fraction(1, 2).unwrap(),
+            class: Class::Sqrt(Rational::new(2)),
+            computable: Computable::sqrt_rational(Rational::new(2)),
+            signal: None,
+        };
+        static SQRT_THREE_OVER_TWO: Real = Real {
+            rational: Rational::fraction(1, 2).unwrap(),
+            class: Class::Sqrt(Rational::new(3)),
+            computable: Computable::sqrt_rational(Rational::new(3)),
+            signal: None,
+        };
+        static SQRT_THREE: Real = Real {
+            rational: Rational::one(),
+            class: Class::Sqrt(Rational::new(3)),
+            computable: Computable::sqrt_rational(Rational::new(3)),
+            signal: None,
+        };
+        static SQRT_THREE_OVER_THREE: Real = Real {
+            rational: Rational::fraction(1, 3).unwrap(),
+            class: Class::Sqrt(Rational::new(3)),
+            computable: Computable::sqrt_rational(Rational::new(3)),
+            signal: None,
+        };
+        static LN2: Real = Real {
+            rational: Rational::one(),
+            class: Class::Ln(Rational::new(2)),
+            computable: Computable::ln(Computable::rational(Rational::new(2))),
+            signal: None,
+        };
+        static LN3: Real = Real {
+            rational: Rational::one(),
+            class: Class::Ln(Rational::new(3)),
+            computable: Computable::ln(Computable::rational(Rational::new(3))),
+            signal: None,
+        };
+        static LN5: Real = Real {
+            rational: Rational::one(),
+            class: Class::Ln(Rational::new(5)),
+            computable: Computable::ln(Computable::rational(Rational::new(5))),
+            signal: None,
+        };
+        static LN6: Real = Real {
+            rational: Rational::one(),
+            class: Class::Ln(Rational::new(6)),
+            computable: Computable::ln(Computable::rational(Rational::new(6))),
+            signal: None,
+        };
+        static LN7: Real = Real {
+            rational: Rational::one(),
+            class: Class::Ln(Rational::new(7)),
+            computable: Computable::ln(Computable::rational(Rational::new(7))),
+            signal: None,
+        };
+        static LN10: Real = Real {
+            rational: Rational::one(),
+            class: Class::Ln(Rational::new(10)),
+            computable: Computable::ln(Computable::rational(Rational::new(10))),
+            signal: None,
+        };
+    }
+
+    pub(super) fn half() -> Real {
+        HALF.with(|real| real.clone())
+    }
+
+    pub(super) fn sqrt_two_over_two() -> Real {
+        SQRT_TWO_OVER_TWO.with(|real| real.clone())
+    }
+
+    pub(super) fn sqrt_three_over_two() -> Real {
+        SQRT_THREE_OVER_TWO.with(|real| real.clone())
+    }
+
+    pub(super) fn sqrt_three() -> Real {
+        SQRT_THREE.with(|real| real.clone())
+    }
+
+    pub(super) fn sqrt_three_over_three() -> Real {
+        SQRT_THREE_OVER_THREE.with(|real| real.clone())
+    }
+
+    pub(super) fn scaled_ln(base: u32, coefficient: i64) -> Option<Real> {
+        let mut value = match base {
+            2 => LN2.with(|real| real.clone()),
+            3 => LN3.with(|real| real.clone()),
+            5 => LN5.with(|real| real.clone()),
+            6 => LN6.with(|real| real.clone()),
+            7 => LN7.with(|real| real.clone()),
+            10 => LN10.with(|real| real.clone()),
+            _ => return None,
+        };
+        value.rational = Rational::new(coefficient);
+        Some(value)
+    }
+}
+
 mod signed {
     use num::{BigInt, bigint::ToBigInt};
     use std::sync::LazyLock;
@@ -86,9 +188,6 @@ mod unsigned {
         LazyLock::new(|| ToBigUint::to_biguint(&4).unwrap());
     pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&6).unwrap());
 }
-
-use std::sync::LazyLock;
-static LN10: LazyLock<Class> = LazyLock::new(|| Ln(Rational::new(10)));
 
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
@@ -341,6 +440,47 @@ impl Real {
         })
     }
 
+    fn inverse_ref(&self) -> Result<Self, Problem> {
+        if self.definitely_zero() {
+            return Err(Problem::DivideByZero);
+        }
+        match &self.class {
+            One => Ok(Self::new(self.rational.clone().inverse()?)),
+            Sqrt(sqrt) => {
+                if let Some(sqrt) = sqrt.to_big_integer() {
+                    let rational = (&self.rational * Rational::from_bigint(sqrt)).inverse()?;
+                    return Ok(Self {
+                        rational,
+                        class: self.class.clone(),
+                        computable: self.computable.clone(),
+                        signal: None,
+                    });
+                }
+                Ok(Self {
+                    rational: self.rational.clone().inverse()?,
+                    class: Irrational,
+                    computable: Computable::inverse(self.computable.clone()),
+                    signal: None,
+                })
+            }
+            Exp(exp) => {
+                let exp = Neg::neg(exp.clone());
+                Ok(Self {
+                    rational: self.rational.clone().inverse()?,
+                    class: Exp(exp.clone()),
+                    computable: Computable::e(exp),
+                    signal: None,
+                })
+            }
+            _ => Ok(Self {
+                rational: self.rational.clone().inverse()?,
+                class: Irrational,
+                computable: Computable::inverse(self.computable.clone()),
+                signal: None,
+            }),
+        }
+    }
+
     /// The square root of this Real, or a [`Problem`] if that's impossible,
     /// in particular Problem::SqrtNegative if this Real is negative.
     pub fn sqrt(self) -> Result<Real, Problem> {
@@ -436,15 +576,7 @@ impl Real {
 
     /// The base 10 logarithm of this Real or Problem::NotANumber if this Real is negative.
     pub fn log10(self) -> Result<Real, Problem> {
-        use num::bigint::ToBigInt;
-
-        self.ln()?
-            / Self {
-                rational: Rational::one(),
-                class: LN10.clone(),
-                computable: Computable::ln(Computable::integer(ToBigInt::to_bigint(&10).unwrap())),
-                signal: None,
-            }
+        self.ln()? / constants::scaled_ln(10, 1).unwrap()
     }
 
     // Find Some(m) integral log with respect to this base or else None
@@ -511,14 +643,7 @@ impl Real {
 
         for base in [2, 3, 5, 6, 7, 10] {
             if let Some(n) = Self::integer_log(n, base) {
-                let r = Rational::new(base as i64);
-                let new = Computable::rational(r.clone());
-                return Some(Self {
-                    rational: Rational::new(n as i64),
-                    class: Ln(r),
-                    computable: Computable::ln(new),
-                    signal: None,
-                });
+                return constants::scaled_ln(base, n as i64);
             }
         }
 
@@ -611,23 +736,13 @@ impl Real {
                     r = Some(Self::new(Rational::one()));
                 }
                 if d == unsigned::THREE.deref() {
-                    r = Some(Self {
-                        rational: Rational::fraction(1, 2).unwrap(),
-                        class: Sqrt(Rational::new(3)),
-                        computable: Computable::sqrt_rational(Rational::new(3)),
-                        signal: None,
-                    });
+                    r = Some(constants::sqrt_three_over_two());
                 }
                 if d == unsigned::FOUR.deref() {
-                    r = Some(Self {
-                        rational: Rational::fraction(1, 2).unwrap(),
-                        class: Sqrt(Rational::new(2)),
-                        computable: Computable::sqrt_rational(Rational::new(2)),
-                        signal: None,
-                    });
+                    r = Some(constants::sqrt_two_over_two());
                 }
                 if d == unsigned::SIX.deref() {
-                    r = Some(Self::new(Rational::fraction(1, 2).unwrap()));
+                    r = Some(constants::half());
                 }
                 if let Some(real) = r {
                     if sin_pi_neg(self.rational.clone()) {
@@ -719,23 +834,13 @@ impl Real {
                     return Err(Problem::NotANumber);
                 }
                 if d == unsigned::THREE.deref() {
-                    r = Some(Self {
-                        rational: Rational::one(),
-                        class: Sqrt(Rational::new(3)),
-                        computable: Computable::sqrt_rational(Rational::new(3)),
-                        signal: None,
-                    });
+                    r = Some(constants::sqrt_three());
                 }
                 if d == unsigned::FOUR.deref() {
                     r = Some(Self::new(Rational::one()));
                 }
                 if d == unsigned::SIX.deref() {
-                    r = Some(Self {
-                        rational: Rational::fraction(1, 3).unwrap(),
-                        class: Sqrt(Rational::new(3)),
-                        computable: Computable::sqrt_rational(Rational::new(3)),
-                        signal: None,
-                    });
+                    r = Some(constants::sqrt_three_over_three());
                 }
                 if let Some(real) = r {
                     if neg {
@@ -771,14 +876,15 @@ impl Real {
     }
 
     fn recursive_powi(base: &Real, exp: &BigUint) -> Self {
-        if exp == unsigned::ONE.deref() {
-            return base.clone();
-        }
         let mut result = Self::new(Rational::one());
-        for b in (0..(exp.bits())).rev() {
-            result = result.clone() * result;
+        let mut factor = base.clone();
+        let bits = exp.bits();
+        for b in 0..bits {
             if exp.bit(b) {
-                result = result * base.clone();
+                result = result * factor.clone();
+            }
+            if b + 1 < bits {
+                factor = factor.clone() * factor;
             }
         }
         result
@@ -993,7 +1099,7 @@ impl Real {
     /// Format this Real as a decimal rather than rational.
     /// Scientific notation will be used if the value is very large or small.
     pub fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let folded = self.clone().fold();
+        let folded = self.fold_ref();
         match folded.iter_msd_stop(-20) {
             Some(-19..60) => fmt::Display::fmt(&folded, f),
             _ => fmt::LowerExp::fmt(&folded, f),
@@ -1003,14 +1109,14 @@ impl Real {
 
 impl fmt::UpperExp for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let folded = self.clone().fold();
+        let folded = self.fold_ref();
         folded.fmt(f)
     }
 }
 
 impl fmt::LowerExp for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let folded = self.clone().fold();
+        let folded = self.fold_ref();
         folded.fmt(f)
     }
 }
@@ -1076,20 +1182,24 @@ impl<T: AsRef<Real>> Add<T> for &Real {
     type Output = Real;
 
     fn add(self, other: T) -> Self::Output {
-        let other = other.as_ref().clone();
+        let other = other.as_ref();
         if self.class == other.class {
             let rational = &self.rational + &other.rational;
             if rational.sign() == Sign::NoSign {
                 return Self::Output::zero();
-            } else {
-                return Self::Output {
-                    rational,
-                    ..self.clone()
-                };
             }
+            if self.class == One {
+                return Self::Output::new(rational);
+            }
+            return Self::Output {
+                rational,
+                class: self.class.clone(),
+                computable: self.computable.clone(),
+                signal: self.signal.clone(),
+            };
         }
         if self.definitely_zero() {
-            return other;
+            return other.clone();
         }
         if other.definitely_zero() {
             return self.clone();
@@ -1109,8 +1219,8 @@ impl<T: AsRef<Real>> Add<T> for &Real {
                 }
             }
         }
-        let left = self.clone().fold();
-        let right = other.clone().fold();
+        let left = self.fold_ref();
+        let right = other.fold_ref();
         let computable = Computable::add(left, right);
         Self::Output {
             rational: Rational::one(),
@@ -1154,7 +1264,52 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
     type Output = Real;
 
     fn sub(self, other: T) -> Self::Output {
-        self + -other.as_ref()
+        let other = other.as_ref();
+        if self.class == other.class {
+            let rational = &self.rational - &other.rational;
+            if rational.sign() == Sign::NoSign {
+                return Self::Output::zero();
+            }
+            if self.class == One {
+                return Self::Output::new(rational);
+            }
+            return Self::Output {
+                rational,
+                class: self.class.clone(),
+                computable: self.computable.clone(),
+                signal: self.signal.clone(),
+            };
+        }
+        if other.definitely_zero() {
+            return self.clone();
+        }
+        if self.definitely_zero() {
+            return -other;
+        }
+        if self.class.is_ln() && other.class.is_ln() {
+            let Ln(b) = self.class.clone() else {
+                unreachable!()
+            };
+            let Ln(d) = other.class.clone() else {
+                unreachable!()
+            };
+            if let Ok(r) =
+                Self::Output::simple_log_sum(self.rational.clone(), b, -other.rational.clone(), d)
+            {
+                if let Ok(simple) = Self::Output::ln_rational(r) {
+                    return simple;
+                }
+            }
+        }
+        let left = self.fold_ref();
+        let right = other.fold_ref().negate();
+        let computable = Computable::add(left, right);
+        Self::Output {
+            rational: Rational::one(),
+            class: Irrational,
+            computable,
+            signal: None,
+        }
     }
 }
 
@@ -1162,7 +1317,7 @@ impl<T: AsRef<Real>> Sub<T> for Real {
     type Output = Self;
 
     fn sub(self, other: T) -> Self {
-        &self + -other.as_ref()
+        &self - other.as_ref()
     }
 }
 
@@ -1216,16 +1371,26 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
         }
         if self.class == One {
             let rational = &self.rational * &other.rational;
+            if other.class == One {
+                return Self::Output::new(rational);
+            }
             return Self::Output {
                 rational,
-                ..other.clone()
+                class: other.class.clone(),
+                computable: other.computable.clone(),
+                signal: other.signal.clone(),
             };
         }
         if other.class == One {
             let rational = &self.rational * &other.rational;
+            if self.class == One {
+                return Self::Output::new(rational);
+            }
             return Self::Output {
                 rational,
-                ..self.clone()
+                class: self.class.clone(),
+                computable: self.computable.clone(),
+                signal: self.signal.clone(),
             };
         }
         match (&self.class, &other.class) {
@@ -1283,8 +1448,6 @@ impl<T: AsRef<Real>> Div<T> for &Real {
     type Output = Result<Real, Problem>;
 
     fn div(self, other: T) -> Self::Output {
-        use num::bigint::ToBigInt;
-
         let other = other.as_ref();
         if other.definitely_zero() {
             return Err(Problem::DivideByZero);
@@ -1298,9 +1461,14 @@ impl<T: AsRef<Real>> Div<T> for &Real {
         }
         if other.class == One {
             let rational = &self.rational / &other.rational;
+            if self.class == One {
+                return Ok(Real::new(rational));
+            }
             return Ok(Real {
                 rational,
-                ..self.clone()
+                class: self.class.clone(),
+                computable: self.computable.clone(),
+                signal: self.signal.clone(),
             });
         }
 
@@ -1312,11 +1480,8 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                         unreachable!();
                     };
                     let rational = &self.rational / &other.rational;
-                    let computable = self.computable.clone().multiply(
-                        Computable::integer(ToBigInt::to_bigint(&10).unwrap())
-                            .ln()
-                            .inverse(),
-                    );
+                    let ln10 = constants::scaled_ln(10, 1).unwrap();
+                    let computable = self.computable.clone().multiply(ln10.computable.inverse());
                     return Ok(Real {
                         rational,
                         class: Log10(r.clone()),
@@ -1329,7 +1494,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             }
         }
 
-        let inverted = other.clone().inverse()?;
+        let inverted = other.inverse_ref()?;
         Ok(self * inverted)
     }
 }
