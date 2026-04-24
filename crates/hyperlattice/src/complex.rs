@@ -196,7 +196,7 @@ impl<B: Backend> Add<&Complex<B>> for Complex<B> {
     type Output = Self;
 
     fn add(self, rhs: &Complex<B>) -> Self::Output {
-        self + rhs.clone()
+        Self::new(self.re.add_cached(&rhs.re), self.im.add_cached(&rhs.im))
     }
 }
 
@@ -204,7 +204,10 @@ impl<B: Backend> Add<Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn add(self, rhs: Complex<B>) -> Self::Output {
-        self.clone() + rhs
+        Complex::new(
+            self.re.clone().add_cached(&rhs.re),
+            self.im.clone().add_cached(&rhs.im),
+        )
     }
 }
 
@@ -212,7 +215,10 @@ impl<B: Backend> Add<&Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn add(self, rhs: &Complex<B>) -> Self::Output {
-        self.clone() + rhs
+        Complex::new(
+            self.re.clone().add_cached(&rhs.re),
+            self.im.clone().add_cached(&rhs.im),
+        )
     }
 }
 
@@ -228,7 +234,7 @@ impl<B: Backend> Sub<&Complex<B>> for Complex<B> {
     type Output = Self;
 
     fn sub(self, rhs: &Complex<B>) -> Self::Output {
-        self - rhs.clone()
+        Self::new(self.re.sub_cached(&rhs.re), self.im.sub_cached(&rhs.im))
     }
 }
 
@@ -236,7 +242,7 @@ impl<B: Backend> Sub<Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn sub(self, rhs: Complex<B>) -> Self::Output {
-        self.clone() - rhs
+        Complex::new(self.re.clone() - rhs.re, self.im.clone() - rhs.im)
     }
 }
 
@@ -244,7 +250,10 @@ impl<B: Backend> Sub<&Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn sub(self, rhs: &Complex<B>) -> Self::Output {
-        self.clone() - rhs
+        Complex::new(
+            self.re.clone().sub_cached(&rhs.re),
+            self.im.clone().sub_cached(&rhs.im),
+        )
     }
 }
 
@@ -260,7 +269,7 @@ impl<B: Backend> Neg for &Complex<B> {
     type Output = Complex<B>;
 
     fn neg(self) -> Self::Output {
-        -self.clone()
+        Complex::new(-self.re.clone(), -self.im.clone())
     }
 }
 
@@ -278,7 +287,9 @@ impl<B: Backend> Mul<&Complex<B>> for Complex<B> {
     type Output = Self;
 
     fn mul(self, rhs: &Complex<B>) -> Self::Output {
-        self * rhs.clone()
+        let re = self.re.clone().mul_cached(&rhs.re) - self.im.clone().mul_cached(&rhs.im);
+        let im = self.re.mul_cached(&rhs.im) + self.im.mul_cached(&rhs.re);
+        Self::new(re, im)
     }
 }
 
@@ -286,7 +297,9 @@ impl<B: Backend> Mul<Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn mul(self, rhs: Complex<B>) -> Self::Output {
-        self.clone() * rhs
+        let re = self.re.clone().mul_cached(&rhs.re) - self.im.clone().mul_cached(&rhs.im);
+        let im = self.re.clone().mul_cached(&rhs.im) + self.im.clone().mul_cached(&rhs.re);
+        Complex::new(re, im)
     }
 }
 
@@ -294,7 +307,9 @@ impl<B: Backend> Mul<&Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn mul(self, rhs: &Complex<B>) -> Self::Output {
-        self.clone() * rhs
+        let re = self.re.clone().mul_cached(&rhs.re) - self.im.clone().mul_cached(&rhs.im);
+        let im = self.re.clone().mul_cached(&rhs.im) + self.im.clone().mul_cached(&rhs.re);
+        Complex::new(re, im)
     }
 }
 
@@ -316,7 +331,13 @@ impl<B: Backend> Div<&Complex<B>> for Complex<B> {
     type Output = BlasResult<Self>;
 
     fn div(self, rhs: &Complex<B>) -> Self::Output {
-        self / rhs.clone()
+        let inv_denom = rhs.norm_squared().inverse()?;
+        let re = self.re.clone().mul_cached(&rhs.re) + self.im.clone().mul_cached(&rhs.im);
+        let im = self.im.mul_cached(&rhs.re) - self.re.mul_cached(&rhs.im);
+        Ok(Self::new(
+            re.mul_cached(&inv_denom),
+            im.mul_cached(&inv_denom),
+        ))
     }
 }
 
@@ -324,7 +345,13 @@ impl<B: Backend> Div<Complex<B>> for &Complex<B> {
     type Output = BlasResult<Complex<B>>;
 
     fn div(self, rhs: Complex<B>) -> Self::Output {
-        self.clone() / rhs
+        let inv_denom = rhs.norm_squared().inverse()?;
+        let re = self.re.clone().mul_cached(&rhs.re) + self.im.clone().mul_cached(&rhs.im);
+        let im = self.im.clone().mul_cached(&rhs.re) - self.re.clone().mul_cached(&rhs.im);
+        Ok(Complex::new(
+            re.mul_cached(&inv_denom),
+            im.mul_cached(&inv_denom),
+        ))
     }
 }
 
@@ -332,7 +359,13 @@ impl<B: Backend> Div<&Complex<B>> for &Complex<B> {
     type Output = BlasResult<Complex<B>>;
 
     fn div(self, rhs: &Complex<B>) -> Self::Output {
-        self.clone() / rhs
+        let inv_denom = rhs.norm_squared().inverse()?;
+        let re = self.re.clone().mul_cached(&rhs.re) + self.im.clone().mul_cached(&rhs.im);
+        let im = self.im.clone().mul_cached(&rhs.re) - self.re.clone().mul_cached(&rhs.im);
+        Ok(Complex::new(
+            re.mul_cached(&inv_denom),
+            im.mul_cached(&inv_denom),
+        ))
     }
 }
 

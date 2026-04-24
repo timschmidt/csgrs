@@ -197,7 +197,11 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
-                self + rhs.clone()
+                let mut rhs = rhs.0.iter();
+                Self(
+                    self.0
+                        .map(|lhs| lhs.add_cached(rhs.next().expect("vectors have equal length"))),
+                )
             }
         }
 
@@ -205,7 +209,13 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn add(self, rhs: $name<B>) -> Self::Output {
-                self.clone() + rhs
+                let mut left = self.0.iter();
+                $name(rhs.0.map(|rhs| {
+                    left.next()
+                        .expect("vectors have equal length")
+                        .clone()
+                        .add_cached(&rhs)
+                }))
             }
         }
 
@@ -213,7 +223,7 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
-                self.clone() + rhs
+                $name(from_fn(|i| self.0[i].clone().add_cached(&rhs.0[i])))
             }
         }
 
@@ -262,7 +272,11 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
-                self - rhs.clone()
+                let mut rhs = rhs.0.iter();
+                Self(
+                    self.0
+                        .map(|lhs| lhs.sub_cached(rhs.next().expect("vectors have equal length"))),
+                )
             }
         }
 
@@ -270,7 +284,11 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn sub(self, rhs: $name<B>) -> Self::Output {
-                self.clone() - rhs
+                let mut left = self.0.iter();
+                $name(
+                    rhs.0
+                        .map(|rhs| left.next().expect("vectors have equal length").clone() - rhs),
+                )
             }
         }
 
@@ -278,7 +296,7 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
-                self.clone() - rhs
+                $name(from_fn(|i| self.0[i].clone().sub_cached(&rhs.0[i])))
             }
         }
 
@@ -327,7 +345,7 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn neg(self) -> Self::Output {
-                -self.clone()
+                $name(from_fn(|i| -self.0[i].clone()))
             }
         }
 

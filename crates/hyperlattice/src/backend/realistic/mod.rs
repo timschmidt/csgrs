@@ -1,25 +1,24 @@
+use std::cell::OnceCell;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
-use std::sync::{Mutex, OnceLock};
 
 use num::bigint::Sign;
 
 use crate::backend::{Backend, BackendScalar as BackendScalarTrait};
 use crate::{AbortSignal, BlasResult, Problem, ZeroStatus};
 
-static ZERO: OnceLock<Mutex<BackendScalar>> = OnceLock::new();
-static ONE: OnceLock<Mutex<BackendScalar>> = OnceLock::new();
-static E: OnceLock<Mutex<BackendScalar>> = OnceLock::new();
-static PI: OnceLock<Mutex<BackendScalar>> = OnceLock::new();
+thread_local! {
+    static ZERO: OnceCell<BackendScalar> = const { OnceCell::new() };
+    static ONE: OnceCell<BackendScalar> = const { OnceCell::new() };
+    static E: OnceCell<BackendScalar> = const { OnceCell::new() };
+    static PI: OnceCell<BackendScalar> = const { OnceCell::new() };
+}
 
 fn cached(
-    cell: &'static OnceLock<Mutex<BackendScalar>>,
+    cell: &'static std::thread::LocalKey<OnceCell<BackendScalar>>,
     init: fn() -> BackendScalar,
 ) -> BackendScalar {
-    cell.get_or_init(|| Mutex::new(init()))
-        .lock()
-        .expect("realistic constant cache lock poisoned")
-        .clone()
+    cell.with(|slot| slot.get_or_init(init).clone())
 }
 
 #[derive(Clone, Debug)]
@@ -75,6 +74,24 @@ impl BackendScalarTrait for BackendScalar {
 
     fn div_ref(self, rhs: &Self) -> BlasResult<Self> {
         (&self.0 / &rhs.0).map(Self).map_err(Problem::from)
+    }
+
+    fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        let p0 = &left[0].0 * &right[0].0;
+        let p1 = &left[1].0 * &right[1].0;
+        let p2 = &left[2].0 * &right[2].0;
+        let sum01 = &p0 + &p1;
+        Self(&sum01 + &p2)
+    }
+
+    fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        let p0 = &left[0].0 * &right[0].0;
+        let p1 = &left[1].0 * &right[1].0;
+        let p2 = &left[2].0 * &right[2].0;
+        let p3 = &left[3].0 * &right[3].0;
+        let sum01 = &p0 + &p1;
+        let sum23 = &p2 + &p3;
+        Self(&sum01 + &sum23)
     }
 
     fn exp(self) -> BlasResult<Self> {

@@ -24,7 +24,14 @@ fn identity_array<B: Backend, const N: usize>() -> [[Scalar<B>; N]; N] {
 }
 
 fn transpose_array<B: Backend, const N: usize>(matrix: [[Scalar<B>; N]; N]) -> [[Scalar<B>; N]; N] {
-    from_fn(|row| from_fn(|col| matrix[col][row].clone()))
+    let mut matrix = matrix.map(|row| row.map(Some));
+    from_fn(|row| {
+        from_fn(|col| {
+            matrix[col][row]
+                .take()
+                .expect("owned transpose visits each entry once")
+        })
+    })
 }
 
 /// Three-by-three row-major matrix.
@@ -156,149 +163,218 @@ where
     }
 }
 
-fn solve_left_system<B: Backend, const N: usize>(
-    coefficients: [[Scalar<B>; N]; N],
-    rhs: [[Scalar<B>; N]; N],
-) -> BlasResult<[[Scalar<B>; N]; N]> {
-    let mut left = coefficients;
-    let mut right = rhs;
+macro_rules! impl_solve_left_system_fixed {
+    (
+        $solve_fn:ident,
+        $solve_checked_fn:ident,
+        $solve_abort_fn:ident,
+        $n:expr,
+        [$($i:tt),+ $(,)?]
+    ) => {
+        fn $solve_fn<B: Backend>(
+            coefficients: [[Scalar<B>; $n]; $n],
+            rhs: [[Scalar<B>; $n]; $n],
+        ) -> BlasResult<[[Scalar<B>; $n]; $n]> {
+            let mut left = coefficients;
+            let mut right = rhs;
 
-    for col in 0..N {
-        let Some(pivot) = ordinary_pivot(&left, col) else {
-            return Err(Problem::DivideByZero);
-        };
-        if pivot != col {
-            left.swap(col, pivot);
-            right.swap(col, pivot);
+            for col in 0..$n {
+                let Some(pivot) = ordinary_pivot(&left, col) else {
+                    return Err(Problem::DivideByZero);
+                };
+                if pivot != col {
+                    left.swap(col, pivot);
+                    right.swap(col, pivot);
+                }
+
+                let inv_pivot = left[col][col].clone().inverse()?;
+                $(
+                    left[col][$i] = left[col][$i].clone().mul_cached(&inv_pivot);
+                    right[col][$i] = right[col][$i].clone().mul_cached(&inv_pivot);
+                )+
+                let pivot_left = left[col].clone();
+                let pivot_right = right[col].clone();
+
+                for row in 0..$n {
+                    if row == col {
+                        continue;
+                    }
+                    let factor = left[row][col].clone();
+                    if factor.definitely_zero() {
+                        continue;
+                    }
+                    $(
+                        let left_correction = pivot_left[$i].clone().mul_cached(&factor);
+                        let right_correction = pivot_right[$i].clone().mul_cached(&factor);
+                        left[row][$i] = left[row][$i].clone() - left_correction;
+                        right[row][$i] = right[row][$i].clone() - right_correction;
+                    )+
+                }
+            }
+
+            Ok(right)
         }
 
-        let inv_pivot = left[col][col].clone().inverse()?;
-        for j in 0..N {
-            left[col][j] = left[col][j].clone().mul_cached(&inv_pivot);
-            right[col][j] = right[col][j].clone().mul_cached(&inv_pivot);
+        fn $solve_checked_fn<B: Backend>(
+            coefficients: [[Scalar<B>; $n]; $n],
+            rhs: [[Scalar<B>; $n]; $n],
+        ) -> CheckedBlasResult<[[Scalar<B>; $n]; $n]> {
+            let mut left = coefficients;
+            let mut right = rhs;
+
+            for col in 0..$n {
+                let pivot = checked_pivot(&left, col, zero_status)?;
+                if pivot != col {
+                    left.swap(col, pivot);
+                    right.swap(col, pivot);
+                }
+
+                let inv_pivot = left[col][col].clone().inverse()?;
+                $(
+                    left[col][$i] = left[col][$i].clone().mul_cached(&inv_pivot);
+                    right[col][$i] = right[col][$i].clone().mul_cached(&inv_pivot);
+                )+
+                let pivot_left = left[col].clone();
+                let pivot_right = right[col].clone();
+
+                for row in 0..$n {
+                    if row == col {
+                        continue;
+                    }
+                    let factor = left[row][col].clone();
+                    if factor.definitely_zero() {
+                        continue;
+                    }
+                    $(
+                        let left_correction = pivot_left[$i].clone().mul_cached(&factor);
+                        let right_correction = pivot_right[$i].clone().mul_cached(&factor);
+                        left[row][$i] = left[row][$i].clone() - left_correction;
+                        right[row][$i] = right[row][$i].clone() - right_correction;
+                    )+
+                }
+            }
+
+            Ok(right)
         }
 
-        for row in 0..N {
-            if row == col {
-                continue;
-            }
-            let factor = left[row][col].clone();
-            if factor.definitely_zero() {
-                continue;
-            }
-            for j in 0..N {
-                left[row][j] = left[row][j].clone() - factor.clone() * left[col][j].clone();
-                right[row][j] = right[row][j].clone() - factor.clone() * right[col][j].clone();
-            }
-        }
-    }
+        fn $solve_abort_fn<B: Backend>(
+            coefficients: [[Scalar<B>; $n]; $n],
+            rhs: [[Scalar<B>; $n]; $n],
+            signal: &AbortSignal,
+        ) -> CheckedBlasResult<[[Scalar<B>; $n]; $n]> {
+            let mut left = coefficients;
+            let mut right = rhs;
 
-    Ok(right)
+            for col in 0..$n {
+                let pivot = checked_pivot(&left, col, |value| zero_status_with_abort(value, signal))?;
+                if pivot != col {
+                    left.swap(col, pivot);
+                    right.swap(col, pivot);
+                }
+
+                let inv_pivot = clone_with_abort(&left[col][col], signal).inverse()?;
+                $(
+                    left[col][$i] = left[col][$i].clone().mul_cached(&inv_pivot);
+                    right[col][$i] = right[col][$i].clone().mul_cached(&inv_pivot);
+                )+
+                let pivot_left = left[col].clone();
+                let pivot_right = right[col].clone();
+
+                for row in 0..$n {
+                    if row == col {
+                        continue;
+                    }
+                    let factor = left[row][col].clone();
+                    if factor.definitely_zero() {
+                        continue;
+                    }
+                    $(
+                        let left_correction = pivot_left[$i].clone().mul_cached(&factor);
+                        let right_correction = pivot_right[$i].clone().mul_cached(&factor);
+                        left[row][$i] = left[row][$i].clone() - left_correction;
+                        right[row][$i] = right[row][$i].clone() - right_correction;
+                    )+
+                }
+            }
+
+            Ok(right)
+        }
+    };
 }
 
-fn solve_left_system_checked<B: Backend, const N: usize>(
-    coefficients: [[Scalar<B>; N]; N],
-    rhs: [[Scalar<B>; N]; N],
-) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
-    let mut left = coefficients;
-    let mut right = rhs;
+impl_solve_left_system_fixed!(
+    solve_left_system3,
+    solve_left_system3_checked,
+    solve_left_system3_checked_with_abort,
+    3,
+    [0, 1, 2]
+);
+impl_solve_left_system_fixed!(
+    solve_left_system4,
+    solve_left_system4_checked,
+    solve_left_system4_checked_with_abort,
+    4,
+    [0, 1, 2, 3]
+);
 
-    for col in 0..N {
-        let pivot = checked_pivot(&left, col, zero_status)?;
-        if pivot != col {
-            left.swap(col, pivot);
-            right.swap(col, pivot);
-        }
-
-        let inv_pivot = left[col][col].clone().inverse()?;
-        for j in 0..N {
-            left[col][j] = left[col][j].clone().mul_cached(&inv_pivot);
-            right[col][j] = right[col][j].clone().mul_cached(&inv_pivot);
-        }
-
-        for row in 0..N {
-            if row == col {
-                continue;
-            }
-            let factor = left[row][col].clone();
-            if factor.definitely_zero() {
-                continue;
-            }
-            for j in 0..N {
-                left[row][j] = left[row][j].clone() - factor.clone() * left[col][j].clone();
-                right[row][j] = right[row][j].clone() - factor.clone() * right[col][j].clone();
-            }
-        }
-    }
-
-    Ok(right)
-}
-
-fn solve_left_system_checked_with_abort<B: Backend, const N: usize>(
-    coefficients: [[Scalar<B>; N]; N],
-    rhs: [[Scalar<B>; N]; N],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
-    let mut left = coefficients;
-    let mut right = rhs;
-
-    for col in 0..N {
-        let pivot = checked_pivot(&left, col, |value| zero_status_with_abort(value, signal))?;
-        if pivot != col {
-            left.swap(col, pivot);
-            right.swap(col, pivot);
-        }
-
-        let inv_pivot = clone_with_abort(&left[col][col], signal).inverse()?;
-        for j in 0..N {
-            left[col][j] = left[col][j].clone().mul_cached(&inv_pivot);
-            right[col][j] = right[col][j].clone().mul_cached(&inv_pivot);
-        }
-
-        for row in 0..N {
-            if row == col {
-                continue;
-            }
-            let factor = left[row][col].clone();
-            if factor.definitely_zero() {
-                continue;
-            }
-            for j in 0..N {
-                left[row][j] = left[row][j].clone() - factor.clone() * left[col][j].clone();
-                right[row][j] = right[row][j].clone() - factor.clone() * right[col][j].clone();
-            }
-        }
-    }
-
-    Ok(right)
-}
-
-fn right_divide_arrays<B: Backend, const N: usize>(
-    left: [[Scalar<B>; N]; N],
-    right: [[Scalar<B>; N]; N],
-) -> BlasResult<[[Scalar<B>; N]; N]> {
-    Ok(transpose_array(solve_left_system(
+fn right_divide_matrix3<B: Backend>(
+    left: [[Scalar<B>; 3]; 3],
+    right: [[Scalar<B>; 3]; 3],
+) -> BlasResult<[[Scalar<B>; 3]; 3]> {
+    Ok(transpose_array(solve_left_system3(
         transpose_array(right),
         transpose_array(left),
     )?))
 }
 
-fn right_divide_arrays_checked<B: Backend, const N: usize>(
-    left: [[Scalar<B>; N]; N],
-    right: [[Scalar<B>; N]; N],
-) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
-    Ok(transpose_array(solve_left_system_checked(
+fn right_divide_matrix3_checked<B: Backend>(
+    left: [[Scalar<B>; 3]; 3],
+    right: [[Scalar<B>; 3]; 3],
+) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
+    Ok(transpose_array(solve_left_system3_checked(
         transpose_array(right),
         transpose_array(left),
     )?))
 }
 
-fn right_divide_arrays_checked_with_abort<B: Backend, const N: usize>(
-    left: [[Scalar<B>; N]; N],
-    right: [[Scalar<B>; N]; N],
+fn right_divide_matrix3_checked_with_abort<B: Backend>(
+    left: [[Scalar<B>; 3]; 3],
+    right: [[Scalar<B>; 3]; 3],
     signal: &AbortSignal,
-) -> CheckedBlasResult<[[Scalar<B>; N]; N]> {
-    Ok(transpose_array(solve_left_system_checked_with_abort(
+) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
+    Ok(transpose_array(solve_left_system3_checked_with_abort(
+        transpose_array(right),
+        transpose_array(left),
+        signal,
+    )?))
+}
+
+fn right_divide_matrix4<B: Backend>(
+    left: [[Scalar<B>; 4]; 4],
+    right: [[Scalar<B>; 4]; 4],
+) -> BlasResult<[[Scalar<B>; 4]; 4]> {
+    Ok(transpose_array(solve_left_system4(
+        transpose_array(right),
+        transpose_array(left),
+    )?))
+}
+
+fn right_divide_matrix4_checked<B: Backend>(
+    left: [[Scalar<B>; 4]; 4],
+    right: [[Scalar<B>; 4]; 4],
+) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
+    Ok(transpose_array(solve_left_system4_checked(
+        transpose_array(right),
+        transpose_array(left),
+    )?))
+}
+
+fn right_divide_matrix4_checked_with_abort<B: Backend>(
+    left: [[Scalar<B>; 4]; 4],
+    right: [[Scalar<B>; 4]; 4],
+    signal: &AbortSignal,
+) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
+    Ok(transpose_array(solve_left_system4_checked_with_abort(
         transpose_array(right),
         transpose_array(left),
         signal,
@@ -311,16 +387,77 @@ fn multiply_arrays<B: Backend, const N: usize>(
 ) -> [[Scalar<B>; N]; N] {
     from_fn(|row| {
         from_fn(|col| {
-            let p0 = left[row][0].clone() * right[0][col].clone();
-            let p1 = left[row][1].clone() * right[1][col].clone();
-            let p2 = left[row][2].clone() * right[2][col].clone();
+            let left_terms = [&left[row][0], &left[row][1], &left[row][2]];
+            let right_terms = [&right[0][col], &right[1][col], &right[2][col]];
             if let (Some(lhs), Some(rhs_row)) = (left[row].get(3), right.get(3)) {
-                let p3 = lhs.clone() * rhs_row[col].clone();
+                Scalar::dot4(
+                    [left_terms[0], left_terms[1], left_terms[2], lhs],
+                    [
+                        right_terms[0],
+                        right_terms[1],
+                        right_terms[2],
+                        &rhs_row[col],
+                    ],
+                )
+            } else {
+                Scalar::dot3(left_terms, right_terms)
+            }
+        })
+    })
+}
+
+fn multiply_arrays_rhs_ref<B: Backend, const N: usize>(
+    left: [[Scalar<B>; N]; N],
+    right: &[[Scalar<B>; N]; N],
+) -> [[Scalar<B>; N]; N] {
+    from_fn(|row| {
+        from_fn(|col| {
+            let p0 = left[row][0].clone().mul_cached(&right[0][col]);
+            let p1 = left[row][1].clone().mul_cached(&right[1][col]);
+            let p2 = left[row][2].clone().mul_cached(&right[2][col]);
+            if let Some(lhs) = left[row].get(3) {
+                let p3 = lhs.clone().mul_cached(&right[3][col]);
                 (p0 + p1) + (p2 + p3)
             } else {
                 p0 + (p1 + p2)
             }
         })
+    })
+}
+
+fn multiply_arrays_ref<B: Backend, const N: usize>(
+    left: &[[Scalar<B>; N]; N],
+    right: &[[Scalar<B>; N]; N],
+) -> [[Scalar<B>; N]; N] {
+    from_fn(|row| {
+        from_fn(|col| {
+            let p0 = left[row][0].clone().mul_cached(&right[0][col]);
+            let p1 = left[row][1].clone().mul_cached(&right[1][col]);
+            let p2 = left[row][2].clone().mul_cached(&right[2][col]);
+            if let Some(lhs) = left[row].get(3) {
+                let p3 = lhs.clone().mul_cached(&right[3][col]);
+                (p0 + p1) + (p2 + p3)
+            } else {
+                p0 + (p1 + p2)
+            }
+        })
+    })
+}
+
+fn transform_vector_rhs_ref<B: Backend, const N: usize>(
+    left: &[[Scalar<B>; N]; N],
+    right: &[Scalar<B>; N],
+) -> [Scalar<B>; N] {
+    from_fn(|row| {
+        let p0 = left[row][0].clone().mul_cached(&right[0]);
+        let p1 = left[row][1].clone().mul_cached(&right[1]);
+        let p2 = left[row][2].clone().mul_cached(&right[2]);
+        if let (Some(lhs), Some(rhs)) = (left[row].get(3), right.get(3)) {
+            let p3 = lhs.clone().mul_cached(rhs);
+            (p0 + p1) + (p2 + p3)
+        } else {
+            p0 + (p1 + p2)
+        }
     })
 }
 
@@ -331,29 +468,88 @@ fn scale_matrix3<B: Backend>(
     matrix.map(|row| row.map(|value| value.mul_cached(factor)))
 }
 
+#[inline]
+fn mul_sub<B: Backend>(
+    left_a: &Scalar<B>,
+    right_a: &Scalar<B>,
+    left_b: &Scalar<B>,
+    right_b: &Scalar<B>,
+) -> Scalar<B> {
+    left_a
+        .clone()
+        .mul_cached(right_a)
+        .sub_cached(&left_b.clone().mul_cached(right_b))
+}
+
+#[inline]
+fn mul_add<B: Backend>(
+    left_a: &Scalar<B>,
+    right_a: &Scalar<B>,
+    left_b: &Scalar<B>,
+    right_b: &Scalar<B>,
+) -> Scalar<B> {
+    left_a
+        .clone()
+        .mul_cached(right_a)
+        .add_cached(&left_b.clone().mul_cached(right_b))
+}
+
+#[inline]
+fn mul_add_sub<B: Backend>(
+    left_a: &Scalar<B>,
+    right_a: &Scalar<B>,
+    left_b: &Scalar<B>,
+    right_b: &Scalar<B>,
+    left_c: &Scalar<B>,
+    right_c: &Scalar<B>,
+) -> Scalar<B> {
+    mul_add(left_a, right_a, left_b, right_b).sub_cached(&left_c.clone().mul_cached(right_c))
+}
+
+#[inline]
+fn mul_sub_add<B: Backend>(
+    left_a: &Scalar<B>,
+    right_a: &Scalar<B>,
+    left_b: &Scalar<B>,
+    right_b: &Scalar<B>,
+    left_c: &Scalar<B>,
+    right_c: &Scalar<B>,
+) -> Scalar<B> {
+    left_a
+        .clone()
+        .mul_cached(right_a)
+        .sub_cached(&mul_add(left_b, right_b, left_c, right_c))
+}
+
 fn determinant3<B: Backend>(m: &[[Scalar<B>; 3]; 3]) -> Scalar<B> {
-    let c00 = m[1][1].clone() * m[2][2].clone() - m[1][2].clone() * m[2][1].clone();
-    let c10 = m[1][2].clone() * m[2][0].clone() - m[1][0].clone() * m[2][2].clone();
-    let c20 = m[1][0].clone() * m[2][1].clone() - m[1][1].clone() * m[2][0].clone();
-    m[0][0].clone() * c00 + m[0][1].clone() * c10 + m[0][2].clone() * c20
+    let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
+    let c10 = mul_sub(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
+    let c20 = mul_sub(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
+    m[0][0]
+        .clone()
+        .mul_cached(&c00)
+        .add_cached(&m[0][1].clone().mul_cached(&c10))
+        .add_cached(&m[0][2].clone().mul_cached(&c20))
 }
 
 fn matrix3_adjugate_and_determinant<B: Backend>(
     matrix: &[[Scalar<B>; 3]; 3],
 ) -> ([[Scalar<B>; 3]; 3], Scalar<B>) {
     let m = &matrix;
-    let c00 = m[1][1].clone() * m[2][2].clone() - m[1][2].clone() * m[2][1].clone();
-    let c01 = m[0][2].clone() * m[2][1].clone() - m[0][1].clone() * m[2][2].clone();
-    let c02 = m[0][1].clone() * m[1][2].clone() - m[0][2].clone() * m[1][1].clone();
-    let c10 = m[1][2].clone() * m[2][0].clone() - m[1][0].clone() * m[2][2].clone();
-    let c11 = m[0][0].clone() * m[2][2].clone() - m[0][2].clone() * m[2][0].clone();
-    let c12 = m[0][2].clone() * m[1][0].clone() - m[0][0].clone() * m[1][2].clone();
-    let c20 = m[1][0].clone() * m[2][1].clone() - m[1][1].clone() * m[2][0].clone();
-    let c21 = m[0][1].clone() * m[2][0].clone() - m[0][0].clone() * m[2][1].clone();
-    let c22 = m[0][0].clone() * m[1][1].clone() - m[0][1].clone() * m[1][0].clone();
-    let det = m[0][0].clone() * c00.clone()
-        + m[0][1].clone() * c10.clone()
-        + m[0][2].clone() * c20.clone();
+    let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
+    let c01 = mul_sub(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
+    let c02 = mul_sub(&m[0][1], &m[1][2], &m[0][2], &m[1][1]);
+    let c10 = mul_sub(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
+    let c11 = mul_sub(&m[0][0], &m[2][2], &m[0][2], &m[2][0]);
+    let c12 = mul_sub(&m[0][2], &m[1][0], &m[0][0], &m[1][2]);
+    let c20 = mul_sub(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
+    let c21 = mul_sub(&m[0][1], &m[2][0], &m[0][0], &m[2][1]);
+    let c22 = mul_sub(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
+    let det = m[0][0]
+        .clone()
+        .mul_cached(&c00)
+        .add_cached(&m[0][1].clone().mul_cached(&c10))
+        .add_cached(&m[0][2].clone().mul_cached(&c20));
     ([[c00, c01, c02], [c10, c11, c12], [c20, c21, c22]], det)
 }
 
@@ -384,32 +580,34 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
 
 fn matrix4_factors<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> ([Scalar<B>; 6], [Scalar<B>; 6]) {
     let s = [
-        m[0][0].clone() * m[1][1].clone() - m[1][0].clone() * m[0][1].clone(),
-        m[0][0].clone() * m[1][2].clone() - m[1][0].clone() * m[0][2].clone(),
-        m[0][0].clone() * m[1][3].clone() - m[1][0].clone() * m[0][3].clone(),
-        m[0][1].clone() * m[1][2].clone() - m[1][1].clone() * m[0][2].clone(),
-        m[0][1].clone() * m[1][3].clone() - m[1][1].clone() * m[0][3].clone(),
-        m[0][2].clone() * m[1][3].clone() - m[1][2].clone() * m[0][3].clone(),
+        mul_sub(&m[0][0], &m[1][1], &m[1][0], &m[0][1]),
+        mul_sub(&m[0][0], &m[1][2], &m[1][0], &m[0][2]),
+        mul_sub(&m[0][0], &m[1][3], &m[1][0], &m[0][3]),
+        mul_sub(&m[0][1], &m[1][2], &m[1][1], &m[0][2]),
+        mul_sub(&m[0][1], &m[1][3], &m[1][1], &m[0][3]),
+        mul_sub(&m[0][2], &m[1][3], &m[1][2], &m[0][3]),
     ];
     let c = [
-        m[2][0].clone() * m[3][1].clone() - m[3][0].clone() * m[2][1].clone(),
-        m[2][0].clone() * m[3][2].clone() - m[3][0].clone() * m[2][2].clone(),
-        m[2][0].clone() * m[3][3].clone() - m[3][0].clone() * m[2][3].clone(),
-        m[2][1].clone() * m[3][2].clone() - m[3][1].clone() * m[2][2].clone(),
-        m[2][1].clone() * m[3][3].clone() - m[3][1].clone() * m[2][3].clone(),
-        m[2][2].clone() * m[3][3].clone() - m[3][2].clone() * m[2][3].clone(),
+        mul_sub(&m[2][0], &m[3][1], &m[3][0], &m[2][1]),
+        mul_sub(&m[2][0], &m[3][2], &m[3][0], &m[2][2]),
+        mul_sub(&m[2][0], &m[3][3], &m[3][0], &m[2][3]),
+        mul_sub(&m[2][1], &m[3][2], &m[3][1], &m[2][2]),
+        mul_sub(&m[2][1], &m[3][3], &m[3][1], &m[2][3]),
+        mul_sub(&m[2][2], &m[3][3], &m[3][2], &m[2][3]),
     ];
     (s, c)
 }
 
 fn determinant4_from_factors<B: Backend>(s: &[Scalar<B>; 6], c: &[Scalar<B>; 6]) -> Scalar<B> {
-    let p0 = s[0].clone() * c[5].clone();
-    let p1 = s[1].clone() * c[4].clone();
-    let p2 = s[2].clone() * c[3].clone();
-    let p3 = s[3].clone() * c[2].clone();
-    let p4 = s[4].clone() * c[1].clone();
-    let p5 = s[5].clone() * c[0].clone();
-    ((p0 + p2) + (p3 + p5)) - (p1 + p4)
+    let p0 = s[0].clone().mul_cached(&c[5]);
+    let p1 = s[1].clone().mul_cached(&c[4]);
+    let p2 = s[2].clone().mul_cached(&c[3]);
+    let p3 = s[3].clone().mul_cached(&c[2]);
+    let p4 = s[4].clone().mul_cached(&c[1]);
+    let p5 = s[5].clone().mul_cached(&c[0]);
+    p0.add_cached(&p2)
+        .add_cached(&p3.add_cached(&p5))
+        .sub_cached(&p1.add_cached(&p4))
 }
 
 fn determinant4<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> Scalar<B> {
@@ -425,60 +623,28 @@ fn matrix4_scaled_adjugate_from_factors<B: Backend>(
 ) -> [[Scalar<B>; 4]; 4] {
     [
         [
-            ((m[1][1].clone() * c[5].clone() + m[1][3].clone() * c[3].clone())
-                - m[1][2].clone() * c[4].clone())
-            .mul_cached(inv_det),
-            (m[0][2].clone() * c[4].clone()
-                - (m[0][1].clone() * c[5].clone() + m[0][3].clone() * c[3].clone()))
-            .mul_cached(inv_det),
-            ((m[3][1].clone() * s[5].clone() + m[3][3].clone() * s[3].clone())
-                - m[3][2].clone() * s[4].clone())
-            .mul_cached(inv_det),
-            (m[2][2].clone() * s[4].clone()
-                - (m[2][1].clone() * s[5].clone() + m[2][3].clone() * s[3].clone()))
-            .mul_cached(inv_det),
+            mul_add_sub(&m[1][1], &c[5], &m[1][3], &c[3], &m[1][2], &c[4]).mul_cached(inv_det),
+            mul_sub_add(&m[0][2], &c[4], &m[0][1], &c[5], &m[0][3], &c[3]).mul_cached(inv_det),
+            mul_add_sub(&m[3][1], &s[5], &m[3][3], &s[3], &m[3][2], &s[4]).mul_cached(inv_det),
+            mul_sub_add(&m[2][2], &s[4], &m[2][1], &s[5], &m[2][3], &s[3]).mul_cached(inv_det),
         ],
         [
-            (m[1][2].clone() * c[2].clone()
-                - (m[1][0].clone() * c[5].clone() + m[1][3].clone() * c[1].clone()))
-            .mul_cached(inv_det),
-            ((m[0][0].clone() * c[5].clone() + m[0][3].clone() * c[1].clone())
-                - m[0][2].clone() * c[2].clone())
-            .mul_cached(inv_det),
-            (m[3][2].clone() * s[2].clone()
-                - (m[3][0].clone() * s[5].clone() + m[3][3].clone() * s[1].clone()))
-            .mul_cached(inv_det),
-            ((m[2][0].clone() * s[5].clone() + m[2][3].clone() * s[1].clone())
-                - m[2][2].clone() * s[2].clone())
-            .mul_cached(inv_det),
+            mul_sub_add(&m[1][2], &c[2], &m[1][0], &c[5], &m[1][3], &c[1]).mul_cached(inv_det),
+            mul_add_sub(&m[0][0], &c[5], &m[0][3], &c[1], &m[0][2], &c[2]).mul_cached(inv_det),
+            mul_sub_add(&m[3][2], &s[2], &m[3][0], &s[5], &m[3][3], &s[1]).mul_cached(inv_det),
+            mul_add_sub(&m[2][0], &s[5], &m[2][3], &s[1], &m[2][2], &s[2]).mul_cached(inv_det),
         ],
         [
-            ((m[1][0].clone() * c[4].clone() + m[1][3].clone() * c[0].clone())
-                - m[1][1].clone() * c[2].clone())
-            .mul_cached(inv_det),
-            (m[0][1].clone() * c[2].clone()
-                - (m[0][0].clone() * c[4].clone() + m[0][3].clone() * c[0].clone()))
-            .mul_cached(inv_det),
-            ((m[3][0].clone() * s[4].clone() + m[3][3].clone() * s[0].clone())
-                - m[3][1].clone() * s[2].clone())
-            .mul_cached(inv_det),
-            (m[2][1].clone() * s[2].clone()
-                - (m[2][0].clone() * s[4].clone() + m[2][3].clone() * s[0].clone()))
-            .mul_cached(inv_det),
+            mul_add_sub(&m[1][0], &c[4], &m[1][3], &c[0], &m[1][1], &c[2]).mul_cached(inv_det),
+            mul_sub_add(&m[0][1], &c[2], &m[0][0], &c[4], &m[0][3], &c[0]).mul_cached(inv_det),
+            mul_add_sub(&m[3][0], &s[4], &m[3][3], &s[0], &m[3][1], &s[2]).mul_cached(inv_det),
+            mul_sub_add(&m[2][1], &s[2], &m[2][0], &s[4], &m[2][3], &s[0]).mul_cached(inv_det),
         ],
         [
-            (m[1][1].clone() * c[1].clone()
-                - (m[1][0].clone() * c[3].clone() + m[1][2].clone() * c[0].clone()))
-            .mul_cached(inv_det),
-            ((m[0][0].clone() * c[3].clone() + m[0][2].clone() * c[0].clone())
-                - m[0][1].clone() * c[1].clone())
-            .mul_cached(inv_det),
-            (m[3][1].clone() * s[1].clone()
-                - (m[3][0].clone() * s[3].clone() + m[3][2].clone() * s[0].clone()))
-            .mul_cached(inv_det),
-            ((m[2][0].clone() * s[3].clone() + m[2][2].clone() * s[0].clone())
-                - m[2][1].clone() * s[1].clone())
-            .mul_cached(inv_det),
+            mul_sub_add(&m[1][1], &c[1], &m[1][0], &c[3], &m[1][2], &c[0]).mul_cached(inv_det),
+            mul_add_sub(&m[0][0], &c[3], &m[0][2], &c[0], &m[0][1], &c[1]).mul_cached(inv_det),
+            mul_sub_add(&m[3][1], &s[1], &m[3][0], &s[3], &m[3][2], &s[0]).mul_cached(inv_det),
+            mul_add_sub(&m[2][0], &s[3], &m[2][2], &s[0], &m[2][1], &s[1]).mul_cached(inv_det),
         ],
     ]
 }
@@ -518,7 +684,14 @@ fn invert_matrix4_checked_with_abort<B: Backend>(
 }
 
 macro_rules! impl_matrix {
-    ($name:ident, $vector:ident, $n:expr) => {
+    (
+        $name:ident,
+        $vector:ident,
+        $n:expr,
+        $div_fn:ident,
+        $div_checked_fn:ident,
+        $div_checked_abort_fn:ident
+    ) => {
         impl<B: Backend> $name<B> {
             /// Constructs a matrix from row-major entries.
             pub fn new(values: [[Scalar<B>; $n]; $n]) -> Self {
@@ -645,7 +818,7 @@ macro_rules! impl_matrix {
 
             /// Divides by another matrix using checked inversion of the divisor.
             pub fn div_matrix_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
-                Ok(Self(right_divide_arrays_checked(self.0, rhs.0)?))
+                Ok(Self($div_checked_fn(self.0, rhs.0)?))
             }
 
             /// Divides by another matrix using abort-aware checked inversion.
@@ -654,9 +827,7 @@ macro_rules! impl_matrix {
                 rhs: Self,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
-                Ok(Self(right_divide_arrays_checked_with_abort(
-                    self.0, rhs.0, signal,
-                )?))
+                Ok(Self($div_checked_abort_fn(self.0, rhs.0, signal)?))
             }
         }
 
@@ -716,7 +887,9 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
-                self + rhs.clone()
+                Self(from_fn(|row| {
+                    from_fn(|col| self.0[row][col].clone().add_cached(&rhs.0[row][col]))
+                }))
             }
         }
 
@@ -724,7 +897,9 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn add(self, rhs: $name<B>) -> Self::Output {
-                self.clone() + rhs
+                $name(from_fn(|row| {
+                    from_fn(|col| self.0[row][col].clone().add_cached(&rhs.0[row][col]))
+                }))
             }
         }
 
@@ -732,7 +907,9 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
-                self.clone() + rhs
+                $name(from_fn(|row| {
+                    from_fn(|col| self.0[row][col].clone().add_cached(&rhs.0[row][col]))
+                }))
             }
         }
 
@@ -787,7 +964,9 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
-                self - rhs.clone()
+                Self(from_fn(|row| {
+                    from_fn(|col| self.0[row][col].clone().sub_cached(&rhs.0[row][col]))
+                }))
             }
         }
 
@@ -795,7 +974,9 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn sub(self, rhs: $name<B>) -> Self::Output {
-                self.clone() - rhs
+                $name(from_fn(|row| {
+                    from_fn(|col| self.0[row][col].clone() - rhs.0[row][col].clone())
+                }))
             }
         }
 
@@ -803,7 +984,9 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
-                self.clone() - rhs
+                $name(from_fn(|row| {
+                    from_fn(|col| self.0[row][col].clone().sub_cached(&rhs.0[row][col]))
+                }))
             }
         }
 
@@ -856,7 +1039,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn neg(self) -> Self::Output {
-                -self.clone()
+                $name(from_fn(|row| from_fn(|col| -self.0[row][col].clone())))
             }
         }
 
@@ -951,7 +1134,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: &$name<B>) -> Self::Output {
-                self * rhs.clone()
+                Self(multiply_arrays_rhs_ref(self.0, &rhs.0))
             }
         }
 
@@ -959,7 +1142,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn mul(self, rhs: $name<B>) -> Self::Output {
-                self.clone() * rhs
+                $name(multiply_arrays_ref(&self.0, &rhs.0))
             }
         }
 
@@ -967,7 +1150,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn mul(self, rhs: &$name<B>) -> Self::Output {
-                self.clone() * rhs
+                $name(multiply_arrays_ref(&self.0, &rhs.0))
             }
         }
 
@@ -975,7 +1158,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Self) -> Self::Output {
-                Ok(Self(right_divide_arrays(self.0, rhs.0)?))
+                Ok(Self($div_fn(self.0, rhs.0)?))
             }
         }
 
@@ -1026,7 +1209,7 @@ macro_rules! impl_matrix {
             type Output = $vector<B>;
 
             fn mul(self, rhs: &$vector<B>) -> Self::Output {
-                self * rhs.clone()
+                $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
 
@@ -1034,7 +1217,7 @@ macro_rules! impl_matrix {
             type Output = $vector<B>;
 
             fn mul(self, rhs: $vector<B>) -> Self::Output {
-                self.clone() * rhs
+                $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
 
@@ -1042,7 +1225,7 @@ macro_rules! impl_matrix {
             type Output = $vector<B>;
 
             fn mul(self, rhs: &$vector<B>) -> Self::Output {
-                self.clone() * rhs
+                $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
 
@@ -1056,8 +1239,22 @@ macro_rules! impl_matrix {
     };
 }
 
-impl_matrix!(Matrix3, Vector3, 3);
-impl_matrix!(Matrix4, Vector4, 4);
+impl_matrix!(
+    Matrix3,
+    Vector3,
+    3,
+    right_divide_matrix3,
+    right_divide_matrix3_checked,
+    right_divide_matrix3_checked_with_abort
+);
+impl_matrix!(
+    Matrix4,
+    Vector4,
+    4,
+    right_divide_matrix4,
+    right_divide_matrix4_checked,
+    right_divide_matrix4_checked_with_abort
+);
 
 impl<B: Backend> Matrix3<B> {
     /// Returns the matrix inverse using the adjugate and determinant.
