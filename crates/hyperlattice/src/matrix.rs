@@ -168,8 +168,7 @@ macro_rules! impl_solve_left_system_fixed {
         $solve_fn:ident,
         $solve_checked_fn:ident,
         $solve_abort_fn:ident,
-        $n:expr,
-        [$($i:tt),+ $(,)?]
+        $n:expr
     ) => {
         fn $solve_fn<B: Backend>(
             coefficients: [[Scalar<B>; $n]; $n],
@@ -278,7 +277,8 @@ macro_rules! impl_solve_left_system_fixed {
             let mut right = rhs;
 
             for col in 0..$n {
-                let pivot = checked_pivot(&left, col, |value| zero_status_with_abort(value, signal))?;
+                let pivot =
+                    checked_pivot(&left, col, |value| zero_status_with_abort(value, signal))?;
                 if pivot != col {
                     left.swap(col, pivot);
                     right.swap(col, pivot);
@@ -324,15 +324,13 @@ impl_solve_left_system_fixed!(
     solve_left_system3,
     solve_left_system3_checked,
     solve_left_system3_checked_with_abort,
-    3,
-    [0, 1, 2]
+    3
 );
 impl_solve_left_system_fixed!(
     solve_left_system4,
     solve_left_system4_checked,
     solve_left_system4_checked_with_abort,
-    4,
-    [0, 1, 2, 3]
+    4
 );
 
 fn right_divide_matrix3<B: Backend>(
