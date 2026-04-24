@@ -73,6 +73,13 @@ impl Operand {
             Operand::SubExpression(xpr) => xpr.evaluate(names),
         }
     }
+
+    fn literal(&self) -> Option<&Rational> {
+        match self {
+            Operand::Literal(n) => Some(n),
+            _ => None,
+        }
+    }
 }
 
 /// An expression consisting of an operator and operands.
@@ -104,13 +111,10 @@ fn parse_problem(problem: Problem) -> &'static str {
 
 impl Simple {
     fn lookup(name: &str, names: &Symbols) -> Result<Real, Problem> {
-        if let Some(value) = names.get(name) {
-            return Ok(value.clone());
-        }
         match name {
             "pi" => Ok(Real::pi()),
             "e" => Ok(Real::e()),
-            _ => Err(Problem::NotFound),
+            _ => names.get(name).cloned().ok_or(Problem::NotFound),
         }
     }
 
@@ -118,8 +122,22 @@ impl Simple {
         use Operator::*;
         match self.op {
             Plus => {
-                let mut value = Real::zero();
-                for operand in &self.operands {
+                if let Some(first) = self.operands.first().and_then(Operand::literal) {
+                    let mut value = first.clone();
+                    let literals = self.operands.iter().skip(1);
+                    if literals.clone().all(|operand| operand.literal().is_some()) {
+                        for operand in literals {
+                            value = value + operand.literal().unwrap();
+                        }
+                        return Ok(Real::new(value));
+                    }
+                }
+                let mut operands = self.operands.iter();
+                let Some(first) = operands.next() else {
+                    return Ok(Real::zero());
+                };
+                let mut value = first.value(names)?;
+                for operand in operands {
                     value = value + operand.value(names)?;
                 }
                 Ok(value)
@@ -128,10 +146,23 @@ impl Simple {
                 0 => Err(Problem::InsufficientParameters),
                 1 => {
                     let operand = self.operands.first().unwrap();
+                    if let Some(literal) = operand.literal() {
+                        return Ok(Real::new(-literal.clone()));
+                    }
                     let value = -(operand.value(names)?);
                     Ok(value)
                 }
                 _ => {
+                    if let Some(first) = self.operands.first().and_then(Operand::literal) {
+                        let mut value = first.clone();
+                        let literals = self.operands.iter().skip(1);
+                        if literals.clone().all(|operand| operand.literal().is_some()) {
+                            for operand in literals {
+                                value = value - operand.literal().unwrap();
+                            }
+                            return Ok(Real::new(value));
+                        }
+                    }
                     let mut value: Real = self.operands.first().unwrap().value(names)?;
                     let operands = self.operands.iter().skip(1);
                     for operand in operands {
@@ -141,8 +172,22 @@ impl Simple {
                 }
             },
             Star => {
-                let mut value = Real::new(Rational::one());
-                for operand in &self.operands {
+                if let Some(first) = self.operands.first().and_then(Operand::literal) {
+                    let mut value = first.clone();
+                    let literals = self.operands.iter().skip(1);
+                    if literals.clone().all(|operand| operand.literal().is_some()) {
+                        for operand in literals {
+                            value = value * operand.literal().unwrap();
+                        }
+                        return Ok(Real::new(value));
+                    }
+                }
+                let mut operands = self.operands.iter();
+                let Some(first) = operands.next() else {
+                    return Ok(Real::new(Rational::one()));
+                };
+                let mut value = first.value(names)?;
+                for operand in operands {
                     value = value * operand.value(names)?;
                 }
                 Ok(value)
@@ -151,9 +196,26 @@ impl Simple {
                 0 => Err(Problem::InsufficientParameters),
                 1 => {
                     let operand = self.operands.first().unwrap();
+                    if let Some(literal) = operand.literal() {
+                        return Ok(Real::new(literal.clone().inverse()?));
+                    }
                     operand.value(names)?.inverse()
                 }
                 _ => {
+                    if let Some(first) = self.operands.first().and_then(Operand::literal) {
+                        let mut value = first.clone();
+                        let literals = self.operands.iter().skip(1);
+                        if literals.clone().all(|operand| operand.literal().is_some()) {
+                            for operand in literals {
+                                let literal = operand.literal().unwrap();
+                                if literal.sign() == num::bigint::Sign::NoSign {
+                                    return Err(Problem::DivideByZero);
+                                }
+                                value = value / literal;
+                            }
+                            return Ok(Real::new(value));
+                        }
+                    }
                     let mut value: Real = self.operands.first().unwrap().value(names)?;
                     let operands = self.operands.iter().skip(1);
                     for operand in operands {

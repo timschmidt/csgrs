@@ -20,10 +20,23 @@ fn bench_real_format(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_real_constants(c: &mut Criterion) {
+    let mut group = c.benchmark_group("real_constants");
+
+    group.bench_function("pi", |b| b.iter(|| black_box(Real::pi())));
+    group.bench_function("e", |b| b.iter(|| black_box(Real::e())));
+
+    group.finish();
+}
+
 fn bench_simple(c: &mut Criterion) {
     let mut group = c.benchmark_group("simple");
     let source = "(* (+ pi pi) (pow (+ 3/2 4/7) 9/2) (sin (/ 1 5)))";
     let parsed: Simple = source.parse().unwrap();
+    let constants_source = "(+ pi e pi e pi e pi e)";
+    let constants_parsed: Simple = constants_source.parse().unwrap();
+    let exact_source = "(/ (* (+ 7/5 11/7 13/9) (- 19/11 1/3)) 23/17)";
+    let exact_parsed: Simple = exact_source.parse().unwrap();
 
     group.bench_function("parse_nested", |b| {
         b.iter(|| black_box(black_box(source).parse::<Simple>().unwrap()))
@@ -31,6 +44,20 @@ fn bench_simple(c: &mut Criterion) {
     group.bench_function("eval_nested", |b| {
         b.iter_batched(
             || parsed.clone(),
+            |expr| black_box(expr.evaluate(&Default::default()).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("eval_constants", |b| {
+        b.iter_batched(
+            || constants_parsed.clone(),
+            |expr| black_box(expr.evaluate(&Default::default()).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("eval_exact", |b| {
+        b.iter_batched(
+            || exact_parsed.clone(),
             |expr| black_box(expr.evaluate(&Default::default()).unwrap()),
             BatchSize::SmallInput,
         )
@@ -183,6 +210,7 @@ fn bench_real_exact_exp_log10(c: &mut Criterion) {
 criterion_group!(
     benches,
     bench_real_format,
+    bench_real_constants,
     bench_simple,
     bench_real_powi,
     bench_rational_powi,

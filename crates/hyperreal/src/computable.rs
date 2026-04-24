@@ -265,8 +265,34 @@ impl Computable {
 
     /// Tangent of this number.
     pub fn tan(self) -> Computable {
-        let c = self.clone().cos().inverse();
-        self.sin().multiply(c)
+        let rough_appr = self.approx(-1);
+        if rough_appr.sign() == Sign::Minus {
+            return self.negate().tan().negate();
+        }
+
+        let abs_rough_appr = rough_appr.magnitude();
+
+        if abs_rough_appr < unsigned::TWO.deref() {
+            return Self {
+                internal: Box::new(Approximation::PrescaledTan(self)),
+                cache: RefCell::new(Cache::Invalid),
+                signal: None,
+            };
+        }
+
+        if abs_rough_appr < unsigned::FIVE.deref() {
+            let complement = Self::pi().shift_right(1).add(self.negate());
+            return complement.tan().inverse();
+        }
+
+        if abs_rough_appr < unsigned::SIX.deref() {
+            return Self::pi().add(self.negate()).tan().negate();
+        }
+
+        let multiplier = Self::pi_multiple(&self);
+        let adjustment =
+            Self::pi().multiply(Self::rational(Rational::from_bigint(multiplier)).negate());
+        self.add(adjustment).tan()
     }
 
     fn ln2() -> Self {
@@ -826,6 +852,12 @@ mod tests {
     }
 
     #[test]
+    fn exp_near_prescaled_limit_round_trip() {
+        let half = Computable::rational(Rational::fraction(1, 2).unwrap());
+        assert_close(half.clone().exp().ln(), half, -40, 2);
+    }
+
+    #[test]
     fn cos_zero() {
         let zero = Computable::rational(Rational::zero());
         let cos = zero.cos();
@@ -940,6 +972,13 @@ mod tests {
     }
 
     #[test]
+    fn tan_near_half_pi() {
+        let epsilon = Computable::rational(Rational::fraction(1, 64).unwrap());
+        let near_half_pi = pi_times(Rational::fraction(1, 2).unwrap()).add(epsilon.negate());
+        assert_approx(near_half_pi.tan(), -32, "274855536959", 8);
+    }
+
+    #[test]
     fn ln_sqrt_pi() {
         let pi = Computable::pi();
         let sqrt = Computable::sqrt(pi);
@@ -953,6 +992,19 @@ mod tests {
         let value = Computable::rational(Rational::new(1024));
         let ten = Computable::rational(Rational::new(10));
         assert_close(value.ln(), ten.multiply(Computable::ln2()), -40, 2);
+    }
+
+    #[test]
+    fn sqrt_square_round_trip() {
+        let two = Computable::rational(Rational::new(2));
+        let sqrt_two = two.clone().sqrt();
+        assert_close(sqrt_two.square(), two, -40, 2);
+    }
+
+    #[test]
+    fn ln_near_prescaled_limit_round_trip() {
+        let value = Computable::rational(Rational::fraction(47, 32).unwrap());
+        assert_close(value.clone().ln().exp(), value, -40, 2);
     }
 
     #[test]

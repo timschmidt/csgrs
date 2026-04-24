@@ -22,6 +22,7 @@ pub(super) enum Approximation {
     IntegralAtan(BigInt),
     PrescaledCos(Computable),
     PrescaledSin(Computable),
+    PrescaledTan(Computable),
 }
 
 impl Approximation {
@@ -43,6 +44,7 @@ impl Approximation {
             IntegralAtan(i) => atan(signal, i, p),
             PrescaledCos(c) => cos(signal, c, p),
             PrescaledSin(c) => sin(signal, c, p),
+            PrescaledTan(c) => tan(signal, c, p),
         }
     }
 }
@@ -189,14 +191,14 @@ fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
     let mut current_term = scaled_1.clone();
     let mut sum = scaled_1;
-    let mut n = BigInt::zero();
+    let mut n: i32 = 0;
 
     while current_term.abs() > max_trunc_error {
         if should_stop(signal) {
             break;
         }
-        n += signed::ONE.deref();
-        current_term = scale(current_term * &op_appr, op_prec) / &n;
+        n += 1;
+        current_term = scale(current_term * &op_appr, op_prec) / n;
         sum += &current_term;
     }
 
@@ -204,8 +206,8 @@ fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 }
 
 fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
-    let fp_prec: i32 = 50;
-    let fp_op_prec: i32 = 60;
+    let fp_prec: i32 = 140;
+    let fp_op_prec: i32 = 150;
 
     let max_prec_needed = 2 * p - 1;
     let msd = c.msd(max_prec_needed).unwrap_or(Precision::MIN);
@@ -355,30 +357,66 @@ fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     scale(current_sum, calc_precision - p)
 }
 
+// Compute tangent of |c| < 1.
+// This uses the direct quotient tan(x) = sin(x) / cos(x),
+// but computes both approximations locally to avoid building
+// separate Computable trees for sin, cos, inverse, and multiply.
+fn tan(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let working_prec = p - 4;
+    let sin_appr = sin(signal, c, working_prec);
+    let cos_appr = cos(signal, c, working_prec);
+    let abs_cos = cos_appr.abs();
+
+    if abs_cos.is_zero() {
+        panic!("ArithmeticException");
+    }
+
+    let scaled_numerator = sin_appr << -p;
+    let adjustment = &abs_cos >> 1;
+
+    if scaled_numerator.sign() == Sign::Minus {
+        let rounded: BigInt = ((-scaled_numerator) + adjustment) / abs_cos;
+        -rounded
+    } else {
+        (scaled_numerator + adjustment) / abs_cos
+    }
+}
+
 // Compute an approximation of ln(1+x) to precision p.
 // This assumes |x| < 1/2.
-// It uses a Taylor series expansion.
-// Unfortunately there appears to be no way to take
-// advantage of old information.
-// Note: this is known to be a bad algorithm for
-// floating point.  Unfortunately, other alternatives
-// appear to require precomputed tabular information.
+// It uses ln(1+x) = 2 * atanh(x / (2 + x)),
+// whose odd-power series converges substantially faster
+// than the direct Taylor series when x is near 1/2.
 fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     if p >= 0 {
         return Zero::zero();
     }
 
-    let iterations_needed = -p;
-    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
-    let op_prec = p - 3;
+    let iterations_needed = -p / 2 + 4;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 6;
+    let op_prec = calc_precision - 3;
     let op_appr = c.approx_signal(signal, op_prec);
+    let scaled_x = scale(op_appr, op_prec - calc_precision);
+    let scaled_one = signed::ONE.deref() << -calc_precision;
+    let denominator = (&scaled_one << 1) + &scaled_x;
 
-    let mut x_nth = scale(op_appr.clone(), op_prec - calc_precision);
-    let mut current_term = x_nth.clone();
+    let numerator = &scaled_x << -calc_precision;
+    let y: BigInt = if numerator.sign() == Sign::Minus {
+        let rounded: BigInt = ((-&numerator) + (&denominator >> 1)) / &denominator;
+        -rounded
+    } else {
+        (&numerator + (&denominator >> 1)) / &denominator
+    };
+
+    let y_squared = scale(&y * &y, calc_precision);
+    let mut current_power = y.clone();
+    let mut current_term = y.clone();
     let mut sum = current_term.clone();
-
     let mut n = 1;
-    let mut sign = 1;
 
     let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
 
@@ -386,16 +424,13 @@ fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         if should_stop(signal) {
             break;
         }
-        n += 1;
-        sign = -sign;
-        x_nth = scale(&x_nth * &op_appr, op_prec);
-
-        let divisor: BigInt = (n * sign).into();
-        current_term = &x_nth / divisor;
+        n += 2;
+        current_power = scale(current_power * &y_squared, calc_precision);
+        current_term = &current_power / n;
         sum += &current_term;
     }
 
-    scale(sum, calc_precision - p)
+    scale(sum << 1, calc_precision - p)
 }
 
 // Approximate the Arctangent of 1/n where n is some small integer > base

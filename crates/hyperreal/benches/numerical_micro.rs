@@ -52,6 +52,20 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
         b.iter(|| black_box(exp_cached.approx(p)))
     });
 
+    let exp_near_limit_input = Computable::rational(Rational::fraction(1, 2).unwrap());
+    group.bench_function("exp_near_limit_cold_p128", |b| {
+        b.iter_batched(
+            || exp_near_limit_input.clone().exp(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let exp_near_limit_cached = exp_near_limit_input.clone().exp();
+    exp_near_limit_cached.approx(p);
+    group.bench_function("exp_near_limit_cached_p128", |b| {
+        b.iter(|| black_box(exp_near_limit_cached.approx(p)))
+    });
+
     let ln_input = Computable::rational(Rational::fraction(11, 7).unwrap());
     group.bench_function("ln_cold_p128", |b| {
         b.iter_batched(
@@ -78,6 +92,20 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
     ln_large_cached.approx(p);
     group.bench_function("ln_large_cached_p128", |b| {
         b.iter(|| black_box(ln_large_cached.approx(p)))
+    });
+
+    let ln_near_limit_input = Computable::rational(Rational::fraction(47, 32).unwrap());
+    group.bench_function("ln_near_limit_cold_p128", |b| {
+        b.iter_batched(
+            || ln_near_limit_input.clone().ln(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let ln_near_limit_cached = ln_near_limit_input.clone().ln();
+    ln_near_limit_cached.approx(p);
+    group.bench_function("ln_near_limit_cached_p128", |b| {
+        b.iter(|| black_box(ln_near_limit_cached.approx(p)))
     });
 
     let sqrt_input = Computable::rational(Rational::new(2));
@@ -132,6 +160,22 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
     tan_cached.approx(trig_p);
     group.bench_function("tan_cached_p96", |b| {
         b.iter(|| black_box(tan_cached.approx(trig_p)))
+    });
+
+    let tan_near_half_pi_input = Computable::pi()
+        .multiply(Computable::rational(Rational::fraction(1, 2).unwrap()))
+        .add(Computable::rational(Rational::fraction(1, 64).unwrap()).negate());
+    group.bench_function("tan_near_half_pi_cold_p96", |b| {
+        b.iter_batched(
+            || tan_near_half_pi_input.clone().tan(),
+            |value: Computable| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let tan_near_half_pi_cached = tan_near_half_pi_input.clone().tan();
+    tan_near_half_pi_cached.approx(trig_p);
+    group.bench_function("tan_near_half_pi_cached_p96", |b| {
+        b.iter(|| black_box(tan_near_half_pi_cached.approx(trig_p)))
     });
 
     group.finish();
