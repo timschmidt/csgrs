@@ -23,6 +23,7 @@ pub(super) enum Approximation {
     PrescaledCos(Computable),
     PrescaledSin(Computable),
     PrescaledTan(Computable),
+    PrescaledCot(Computable),
 }
 
 impl Approximation {
@@ -45,6 +46,7 @@ impl Approximation {
             PrescaledCos(c) => cos(signal, c, p),
             PrescaledSin(c) => sin(signal, c, p),
             PrescaledTan(c) => tan(signal, c, p),
+            PrescaledCot(c) => cot(signal, c, p),
         }
     }
 }
@@ -366,7 +368,7 @@ fn tan(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         return Zero::zero();
     }
 
-    let working_prec = p - 4;
+    let working_prec = p - 8;
     let sin_appr = sin(signal, c, working_prec);
     let cos_appr = cos(signal, c, working_prec);
     let abs_cos = cos_appr.abs();
@@ -383,6 +385,34 @@ fn tan(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         -rounded
     } else {
         (scaled_numerator + adjustment) / abs_cos
+    }
+}
+
+// Compute cotangent of |c| < 1.
+// This mirrors tan(x) = sin(x) / cos(x), but flips the quotient so
+// tan(pi/2 - x) can avoid building an extra inverse Computable node.
+fn cot(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let working_prec = p - 8;
+    let sin_appr = sin(signal, c, working_prec);
+    let cos_appr = cos(signal, c, working_prec);
+    let abs_sin = sin_appr.abs();
+
+    if abs_sin.is_zero() {
+        panic!("ArithmeticException");
+    }
+
+    let scaled_numerator = cos_appr << -p;
+    let adjustment = &abs_sin >> 1;
+
+    if scaled_numerator.sign() == Sign::Minus {
+        let rounded: BigInt = ((-scaled_numerator) + adjustment) / abs_sin;
+        -rounded
+    } else {
+        (scaled_numerator + adjustment) / abs_sin
     }
 }
 

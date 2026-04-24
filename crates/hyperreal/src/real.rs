@@ -870,9 +870,8 @@ impl Real {
             }
             _ => (),
         }
-        let s = self.clone().sin();
-        let c = self.cos();
-        s / c
+
+        Ok(self.make_computable(Computable::tan))
     }
 
     fn recursive_powi(base: &Real, exp: &BigUint) -> Self {
@@ -1366,6 +1365,9 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
 
     fn mul(self, other: T) -> Self::Output {
         let other = other.as_ref();
+        if self.class == One && other.class == One {
+            return Self::Output::new(&self.rational * &other.rational);
+        }
         if self.definitely_zero() || other.definitely_zero() {
             return Self::Output::zero();
         }

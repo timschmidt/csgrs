@@ -227,6 +227,14 @@ mod tests {
     }
 
     #[test]
+    fn tan_irrational_argument() {
+        let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
+        let answer = sqrt_two.tan().unwrap();
+        let actual: f64 = answer.into();
+        assert!((actual - 6.3341191670421955).abs() < 1e-12, "{actual}");
+    }
+
+    #[test]
     fn powi() {
         let base: Real = 4.into();
         let five_over_two: Real = "5/2".parse().unwrap();

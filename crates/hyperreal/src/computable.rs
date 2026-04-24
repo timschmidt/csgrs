@@ -282,7 +282,11 @@ impl Computable {
 
         if abs_rough_appr < unsigned::FIVE.deref() {
             let complement = Self::pi().shift_right(1).add(self.negate());
-            return complement.tan().inverse();
+            return Self {
+                internal: Box::new(Approximation::PrescaledCot(complement)),
+                cache: RefCell::new(Cache::Invalid),
+                signal: None,
+            };
         }
 
         if abs_rough_appr < unsigned::SIX.deref() {

@@ -37,6 +37,8 @@ fn bench_simple(c: &mut Criterion) {
     let constants_parsed: Simple = constants_source.parse().unwrap();
     let exact_source = "(/ (* (+ 7/5 11/7 13/9) (- 19/11 1/3)) 23/17)";
     let exact_parsed: Simple = exact_source.parse().unwrap();
+    let pow_exact_source = "(pow (+ 3/2 4/7) 9/2)";
+    let pow_exact_parsed: Simple = pow_exact_source.parse().unwrap();
 
     group.bench_function("parse_nested", |b| {
         b.iter(|| black_box(black_box(source).parse::<Simple>().unwrap()))
@@ -58,6 +60,13 @@ fn bench_simple(c: &mut Criterion) {
     group.bench_function("eval_exact", |b| {
         b.iter_batched(
             || exact_parsed.clone(),
+            |expr| black_box(expr.evaluate(&Default::default()).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("eval_pow_exact", |b| {
+        b.iter_batched(
+            || pow_exact_parsed.clone(),
             |expr| black_box(expr.evaluate(&Default::default()).unwrap()),
             BatchSize::SmallInput,
         )
@@ -130,6 +139,45 @@ fn bench_real_exact_trig(c: &mut Criterion) {
         b.iter_batched(
             || pi_fifth.clone(),
             |value| black_box(value.tan().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+fn bench_real_general_trig(c: &mut Criterion) {
+    let mut group = c.benchmark_group("real_general_trig");
+    let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
+    let pi = Real::pi();
+    let irrational_pi_mix = (pi * sqrt_two.clone()) / Real::new(Rational::new(5));
+    let irrational_pi_mix = irrational_pi_mix.unwrap();
+
+    group.bench_function("tan_sqrt_2_specialized", |b| {
+        b.iter_batched(
+            || sqrt_two.clone(),
+            |value| black_box(value.tan().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("tan_sqrt_2_quotient", |b| {
+        b.iter_batched(
+            || sqrt_two.clone(),
+            |value| black_box((value.clone().sin() / value.cos()).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("tan_pi_sqrt_2_over_5_specialized", |b| {
+        b.iter_batched(
+            || irrational_pi_mix.clone(),
+            |value| black_box(value.tan().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("tan_pi_sqrt_2_over_5_quotient", |b| {
+        b.iter_batched(
+            || irrational_pi_mix.clone(),
+            |value| black_box((value.clone().sin() / value.cos()).unwrap()),
             BatchSize::SmallInput,
         )
     });
@@ -215,6 +263,7 @@ criterion_group!(
     bench_real_powi,
     bench_rational_powi,
     bench_real_exact_trig,
+    bench_real_general_trig,
     bench_real_exact_ln,
     bench_real_exact_exp_log10
 );
