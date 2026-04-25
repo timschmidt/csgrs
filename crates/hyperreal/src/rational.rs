@@ -266,6 +266,28 @@ impl Rational {
         )
     }
 
+    pub(crate) fn msd_exact(&self) -> Option<i32> {
+        if self.sign == NoSign {
+            return None;
+        }
+
+        let numerator_bits = self.numerator.bits() as i32;
+        let denominator_bits = self.denominator.bits() as i32;
+        let candidate = numerator_bits - denominator_bits;
+
+        let below = if candidate >= 0 {
+            self.numerator < (&self.denominator << candidate as usize)
+        } else {
+            (&self.numerator << (-candidate) as usize) < self.denominator
+        };
+
+        if below {
+            Some(candidate - 1)
+        } else {
+            Some(candidate)
+        }
+    }
+
     /// Is this Rational better understood as a fraction?
     ///
     /// If a decimal expansion of this fraction would never end this is true.

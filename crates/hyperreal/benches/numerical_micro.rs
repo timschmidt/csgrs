@@ -2,6 +2,30 @@ use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main
 use num::bigint::{BigInt, BigUint};
 use realistic::{Computable, Rational};
 
+fn deep_add_chain(depth: usize) -> Computable {
+    let mut value = Computable::one();
+    for _ in 0..depth {
+        value = value.add(Computable::one());
+    }
+    value
+}
+
+fn deep_multiply_chain(depth: usize) -> Computable {
+    let mut value = Computable::one();
+    for _ in 0..depth {
+        value = value.multiply(Computable::one());
+    }
+    value
+}
+
+fn deep_multiply_identity_chain(depth: usize) -> Computable {
+    let mut value = Computable::pi();
+    for _ in 0..depth {
+        value = value.multiply(Computable::one());
+    }
+    value
+}
+
 fn bench_computable_cache(c: &mut Criterion) {
     let mut group = c.benchmark_group("computable_cache");
     let ratio = Computable::rational(Rational::fraction(355, 113).unwrap());
@@ -221,6 +245,31 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
         b.iter_batched(
             || huge_trig_input.clone().tan(),
             |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let deep_add = deep_add_chain(5000);
+    group.bench_function("deep_add_chain_cold_p128", |b| {
+        b.iter_batched(
+            || deep_add.clone(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let deep_multiply = deep_multiply_chain(5000);
+    group.bench_function("deep_multiply_chain_cold_p128", |b| {
+        b.iter_batched(
+            || deep_multiply.clone(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let deep_multiply_identity = deep_multiply_identity_chain(5000);
+    group.bench_function("deep_multiply_identity_chain_cold_p128", |b| {
+        b.iter_batched(
+            || deep_multiply_identity.clone(),
+            |value| black_box(value.approx(p)),
             BatchSize::SmallInput,
         )
     });

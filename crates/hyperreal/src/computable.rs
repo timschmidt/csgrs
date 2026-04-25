@@ -3,8 +3,7 @@ use crate::computable::approximation::Approximation;
 use core::cmp::Ordering;
 use num::{BigInt, BigUint, bigint::Sign};
 use num::{One, Zero};
-use std::cell::RefCell;
-use std::ops::Deref;
+use std::{cell::RefCell, ops::{Deref, Neg}};
 
 mod approximation;
 mod format;
@@ -108,6 +107,14 @@ impl Computable {
     pub(crate) fn e(r: Rational) -> Self {
         let rational = Self::rational(r);
         Self::exp(rational)
+    }
+
+    fn exact_rational(&self) -> Option<Rational> {
+        match &*self.internal {
+            Approximation::Int(n) => Some(Rational::from_bigint(n.clone())),
+            Approximation::Ratio(r) => Some(r.clone()),
+            _ => None,
+        }
     }
 
     fn integer_ratio_nearest(&self, divisor: Computable) -> BigInt {
@@ -405,6 +412,9 @@ impl Computable {
 
     /// Negate this number.
     pub fn negate(self) -> Computable {
+        if let Some(rational) = self.exact_rational() {
+            return Self::rational(rational.neg());
+        }
         Self {
             internal: Box::new(Approximation::Negate(self)),
             cache: RefCell::new(Cache::Invalid),
@@ -414,6 +424,11 @@ impl Computable {
 
     /// Multiplicative inverse of this number.
     pub fn inverse(self) -> Computable {
+        if let Some(rational) = self.exact_rational() {
+            if let Ok(inverse) = rational.inverse() {
+                return Self::rational(inverse);
+            }
+        }
         Self {
             internal: Box::new(Approximation::Inverse(self)),
             cache: RefCell::new(Cache::Invalid),
@@ -439,6 +454,9 @@ impl Computable {
 
     /// Square of this number.
     pub fn square(self) -> Self {
+        if let Some(rational) = self.exact_rational() {
+            return Self::rational(rational.clone() * rational);
+        }
         Self {
             internal: Box::new(Approximation::Square(self)),
             cache: RefCell::new(Cache::Invalid),
@@ -448,6 +466,23 @@ impl Computable {
 
     /// Multiply this number by some other number.
     pub fn multiply(self, other: Computable) -> Computable {
+        let left_exact = self.exact_rational();
+        let right_exact = other.exact_rational();
+
+        if matches!(left_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign)
+            || matches!(right_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign)
+        {
+            return Self::rational(Rational::zero());
+        }
+        if matches!(left_exact.as_ref(), Some(r) if *r == Rational::one()) {
+            return other;
+        }
+        if matches!(right_exact.as_ref(), Some(r) if *r == Rational::one()) {
+            return self;
+        }
+        if let (Some(left), Some(right)) = (left_exact, right_exact) {
+            return Self::rational(left * right);
+        }
         Self {
             internal: Box::new(Approximation::Multiply(self, other)),
             cache: RefCell::new(Cache::Invalid),
@@ -458,6 +493,18 @@ impl Computable {
     /// Add some other number to this number.
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, other: Computable) -> Computable {
+        let left_exact = self.exact_rational();
+        let right_exact = other.exact_rational();
+
+        if matches!(left_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign) {
+            return other;
+        }
+        if matches!(right_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign) {
+            return self;
+        }
+        if let (Some(left), Some(right)) = (left_exact, right_exact) {
+            return Self::rational(left + right);
+        }
         Self {
             internal: Box::new(Approximation::Add(self, other)),
             cache: RefCell::new(Cache::Invalid),
@@ -507,19 +554,91 @@ impl Computable {
 
     /// Like `approx` but specifying an atomic abort/ stop signal.
     pub fn approx_signal(&self, signal: &Option<Signal>, p: Precision) -> BigInt {
-        // Check precision is OK?
+        enum Frame<'a> {
+            Eval(&'a Computable, Precision),
+            FinishNegate(&'a Computable, Precision),
+            FinishAdd(&'a Computable, Precision),
+            FinishOffset(&'a Computable, Precision),
+        }
 
-        {
-            let cache = self.cache.borrow();
+        fn cached_at(node: &Computable, p: Precision) -> Option<BigInt> {
+            let cache = node.cache.borrow();
             if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
                 if p >= *cache_prec {
-                    return scale(cache_appr.clone(), *cache_prec - p);
+                    return Some(scale(cache_appr.clone(), *cache_prec - p));
+                }
+            }
+            None
+        }
+
+        if let Some(cached) = cached_at(self, p) {
+            return cached;
+        }
+
+        if !matches!(
+            &*self.internal,
+            Approximation::Negate(_)
+                | Approximation::Add(_, _)
+                | Approximation::Offset(_, _)
+        ) {
+            let result = self.internal.approximate(signal, p);
+            self.cache.replace(Cache::Valid((p, result.clone())));
+            return result;
+        }
+
+        let mut frames = vec![Frame::Eval(self, p)];
+        let mut values: Vec<BigInt> = Vec::new();
+
+        while let Some(frame) = frames.pop() {
+            match frame {
+                Frame::Eval(node, prec) => {
+                    if let Some(cached) = cached_at(node, prec) {
+                        values.push(cached);
+                        continue;
+                    }
+
+                    match &*node.internal {
+                        Approximation::Negate(child) => {
+                            frames.push(Frame::FinishNegate(node, prec));
+                            frames.push(Frame::Eval(child, prec));
+                        }
+                        Approximation::Add(left, right) => {
+                            frames.push(Frame::FinishAdd(node, prec));
+                            frames.push(Frame::Eval(right, prec - 2));
+                            frames.push(Frame::Eval(left, prec - 2));
+                        }
+                        Approximation::Offset(child, n) => {
+                            frames.push(Frame::FinishOffset(node, prec));
+                            frames.push(Frame::Eval(child, prec - *n));
+                        }
+                        _ => {
+                            let result = node.internal.approximate(signal, prec);
+                            node.cache.replace(Cache::Valid((prec, result.clone())));
+                            values.push(result);
+                        }
+                    }
+                }
+                Frame::FinishNegate(node, prec) => {
+                    let result = -values.pop().expect("negate child result should exist");
+                    node.cache.replace(Cache::Valid((prec, result.clone())));
+                    values.push(result);
+                }
+                Frame::FinishAdd(node, prec) => {
+                    let right = values.pop().expect("add rhs result should exist");
+                    let left = values.pop().expect("add lhs result should exist");
+                    let result = scale(left + right, -2);
+                    node.cache.replace(Cache::Valid((prec, result.clone())));
+                    values.push(result);
+                }
+                Frame::FinishOffset(node, prec) => {
+                    let result = values.pop().expect("offset child result should exist");
+                    node.cache.replace(Cache::Valid((prec, result.clone())));
+                    values.push(result);
                 }
             }
         }
-        let result = self.internal.approximate(signal, p);
-        self.cache.replace(Cache::Valid((p, result.clone())));
-        result
+
+        values.pop().expect("evaluation should produce a result")
     }
 
     pub fn sign(&self) -> Sign {
@@ -593,6 +712,20 @@ impl Computable {
 
     /// MSD - or perhaps None if as yet undiscovered and less than p.
     fn msd(&self, p: Precision) -> Option<Precision> {
+        match &*self.internal {
+            Approximation::Int(n) => {
+                return if n.sign() == Sign::NoSign {
+                    None
+                } else {
+                    Some(n.magnitude().bits() as Precision - 1)
+                };
+            }
+            Approximation::Ratio(r) => return r.msd_exact(),
+            Approximation::Negate(child) => return child.msd(p),
+            Approximation::Offset(child, n) => return child.msd(p - *n).map(|msd| msd + *n),
+            _ => (),
+        }
+
         let cache = self.cached();
         let mut try_once = false;
 
@@ -790,7 +923,7 @@ mod tests {
         let fifteen: BigInt = "15".parse().unwrap();
         let a = Computable::integer(fifteen.clone());
         let b = Computable::negate(a);
-        let answer: BigInt = "-8".parse().unwrap();
+        let answer: BigInt = "-7".parse().unwrap();
         assert_eq!(answer, b.approx(1));
     }
 
@@ -1003,6 +1136,42 @@ mod tests {
             let c = pi_times(r);
             assert_close(c.clone().sin(), shifted_cos_sin(c), -40, 1);
         }
+    }
+
+    #[test]
+    fn deep_add_chain_approximates_without_recursive_walk() {
+        let mut value = Computable::one();
+        for _ in 0..5000 {
+            value = value.add(Computable::one());
+        }
+
+        assert_eq!(value.approx(0), BigInt::from(5001));
+    }
+
+    #[test]
+    fn deep_multiply_chain_of_ones_stays_exact() {
+        let mut value = Computable::one();
+        for _ in 0..5000 {
+            value = value.multiply(Computable::one());
+        }
+
+        assert_eq!(value.approx(0), BigInt::from(1));
+    }
+
+    #[test]
+    fn deep_multiply_chain_by_one_preserves_irrational() {
+        let mut value = Computable::pi();
+        for _ in 0..5000 {
+            value = value.multiply(Computable::one());
+        }
+
+        assert_close(value, Computable::pi(), -40, 2);
+    }
+
+    #[test]
+    fn rational_msd_exact_for_small_fraction() {
+        let third = Computable::rational(Rational::fraction(1, 3).unwrap());
+        assert_eq!(third.msd(-4), Some(-2));
     }
 
     #[test]
