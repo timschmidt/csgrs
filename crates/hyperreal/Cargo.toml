@@ -22,4 +22,8 @@ harness = false
 
 [[bench]]
 name = "numerical_micro"
+criterion = "0.5.1"
+
+[[bench]]
+name = "float_convert"
 harness = false

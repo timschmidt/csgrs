@@ -40,6 +40,34 @@ fn signed(n: Rational, neg: bool) -> Rational {
     if neg { -n } else { n }
 }
 
+fn pow2_fraction_u32(numerator: u32, denominator_shift: u32, neg: bool) -> Rational {
+    if numerator == 0 {
+        return Rational::zero();
+    }
+    let shift = numerator.trailing_zeros().min(denominator_shift);
+    let numerator = numerator >> shift;
+    let denominator = BigUint::one() << (denominator_shift - shift);
+    let numerator: BigInt = numerator.into();
+    signed(
+        Rational::from_bigint_fraction(numerator, denominator).unwrap(),
+        neg,
+    )
+}
+
+fn pow2_fraction_u64(numerator: u64, denominator_shift: u32, neg: bool) -> Rational {
+    if numerator == 0 {
+        return Rational::zero();
+    }
+    let shift = numerator.trailing_zeros().min(denominator_shift);
+    let numerator = numerator >> shift;
+    let denominator = BigUint::one() << (denominator_shift - shift);
+    let numerator: BigInt = numerator.into();
+    signed(
+        Rational::from_bigint_fraction(numerator, denominator).unwrap(),
+        neg,
+    )
+}
+
 impl TryFrom<f32> for Rational {
     type Error = Problem;
 
@@ -58,22 +86,12 @@ impl TryFrom<f32> for Rational {
                 if sig == 0 {
                     Ok(Rational::zero())
                 } else {
-                    let numerator: BigInt = sig.into();
-                    let denominator = BigUint::one() << 149;
-                    Ok(signed(
-                        Rational::from_bigint_fraction(numerator, denominator).unwrap(),
-                        neg,
-                    ))
+                    Ok(pow2_fraction_u32(sig, 149, neg))
                 }
             }
             1..=150 => {
                 let n = SIG_BITS + 1 + sig;
-                let numerator: BigInt = n.into();
-                let denominator = BigUint::one() << (150 - exp);
-                Ok(signed(
-                    Rational::from_bigint_fraction(numerator, denominator).unwrap(),
-                    neg,
-                ))
+                Ok(pow2_fraction_u32(n, 150 - exp, neg))
             }
             151..=254 => {
                 let n = SIG_BITS + 1 + sig;
@@ -111,22 +129,12 @@ impl TryFrom<f64> for Rational {
                 if sig == 0 {
                     Ok(Rational::zero())
                 } else {
-                    let numerator: BigInt = sig.into();
-                    let denominator = BigUint::one() << 1074;
-                    Ok(signed(
-                        Rational::from_bigint_fraction(numerator, denominator).unwrap(),
-                        neg,
-                    ))
+                    Ok(pow2_fraction_u64(sig, 1074, neg))
                 }
             }
             1..=1075 => {
                 let n = SIG_BITS + 1 + sig;
-                let numerator: BigInt = n.into();
-                let denominator = BigUint::one() << (1075 - exp);
-                Ok(signed(
-                    Rational::from_bigint_fraction(numerator, denominator).unwrap(),
-                    neg,
-                ))
+                Ok(pow2_fraction_u64(n, (1075 - exp) as u32, neg))
             }
             1076..=2046 => {
                 let n = SIG_BITS + 1 + sig;
@@ -245,5 +253,18 @@ mod tests {
         let a: Rational = f.try_into().unwrap();
         let correct = Rational::fraction(5559999489367579, 4503599627370496).unwrap();
         assert_eq!(a, correct);
+    }
+
+    #[test]
+    fn reduced_binary_fraction_f64() {
+        let value: Rational = 0.75_f64.try_into().unwrap();
+        assert_eq!(value, Rational::fraction(3, 4).unwrap());
+    }
+
+    #[test]
+    fn reduced_subnormal_f64() {
+        let value: Rational = f64::from_bits(2).try_into().unwrap();
+        let correct = Rational::from_bigint_fraction(BigInt::from(1), BigUint::one() << 1073).unwrap();
+        assert_eq!(value, correct);
     }
 }
