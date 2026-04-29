@@ -3,15 +3,20 @@ use crate::computable::approximation::Approximation;
 use core::cmp::Ordering;
 use num::{BigInt, BigUint, bigint::Sign};
 use num::{One, Zero};
-use std::{cell::RefCell, ops::{Deref, Neg}};
+use serde::{Deserialize, Serialize};
+use std::{
+    cell::RefCell,
+    ops::{Deref, Neg},
+};
 
 mod approximation;
 mod format;
 
 pub type Precision = i32;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 enum Cache {
+    #[default]
     Invalid,
     Valid((Precision, BigInt)),
 }
@@ -27,10 +32,12 @@ fn should_stop(signal: &Option<Signal>) -> bool {
 }
 
 /// Computable approximation of a Real number.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Computable {
     internal: Box<Approximation>,
+    #[serde(skip)]
     cache: RefCell<Cache>,
+    #[serde(skip)]
     signal: Option<Signal>,
 }
 
@@ -710,7 +717,7 @@ impl Computable {
         }
     }
 
-    /// MSD - or perhaps None if as yet undiscovered and less than p.
+    /// Most Significant Digit - or perhaps None if as yet undiscovered and less than p.
     fn msd(&self, p: Precision) -> Option<Precision> {
         match &*self.internal {
             Approximation::Int(n) => {

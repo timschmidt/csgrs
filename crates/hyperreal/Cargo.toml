@@ -7,7 +7,10 @@ version = "0.8.1"
 edition = "2024"
 
 [dependencies]
-num = { version = "0.4.3", features = ["num-bigint"] }
+ciborium = "0.2.2"
+num = { version = "0.4.3", features = ["num-bigint", "serde"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
 
 [dev-dependencies]
 criterion = "0.5"
@@ -22,7 +25,7 @@ harness = false
 
 [[bench]]
 name = "numerical_micro"
-criterion = "0.5.1"
+harness = false
 
 [[bench]]
 name = "float_convert"
