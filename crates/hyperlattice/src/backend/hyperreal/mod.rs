@@ -22,13 +22,13 @@ fn cached(
 }
 
 #[derive(Clone, Debug)]
-pub struct BackendScalar(pub(crate) realistic::Real);
+pub struct BackendScalar(pub(crate) hyperreal::Real);
 
-/// Backend marker for exact computable reals from the `realistic` crate.
+/// Backend marker for exact computable reals from the `hyperreal` crate.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RealisticBackend;
+pub struct HyperrealBackend;
 
-impl Backend for RealisticBackend {
+impl Backend for HyperrealBackend {
     const MOVE_ELEMENTWISE: bool = true;
     const SPECIALIZE_SCALAR_POWI: bool = true;
 
@@ -37,7 +37,7 @@ impl Backend for RealisticBackend {
 
 impl BackendScalarTrait for BackendScalar {
     fn zero() -> Self {
-        cached(&ZERO, || Self(realistic::Real::zero()))
+        cached(&ZERO, || Self(hyperreal::Real::zero()))
     }
 
     fn one() -> Self {
@@ -45,11 +45,11 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn e() -> Self {
-        cached(&E, || Self(realistic::Real::e()))
+        cached(&E, || Self(hyperreal::Real::e()))
     }
 
     fn pi() -> Self {
-        cached(&PI, || Self(realistic::Real::pi()))
+        cached(&PI, || Self(hyperreal::Real::pi()))
     }
 
     fn inverse(self) -> BlasResult<Self> {
@@ -166,14 +166,14 @@ impl fmt::Display for BackendScalar {
     }
 }
 
-impl From<realistic::Real> for BackendScalar {
-    fn from(value: realistic::Real) -> Self {
+impl From<hyperreal::Real> for BackendScalar {
+    fn from(value: hyperreal::Real) -> Self {
         Self(value)
     }
 }
 
-impl From<realistic::Rational> for BackendScalar {
-    fn from(value: realistic::Rational) -> Self {
+impl From<hyperreal::Rational> for BackendScalar {
+    fn from(value: hyperreal::Rational) -> Self {
         Self(value.into())
     }
 }
@@ -196,7 +196,7 @@ impl TryFrom<f32> for BackendScalar {
     type Error = Problem;
 
     fn try_from(value: f32) -> Result<Self, Self::Error> {
-        realistic::Real::try_from(value)
+        hyperreal::Real::try_from(value)
             .map(Self)
             .map_err(Problem::from)
     }
@@ -206,7 +206,7 @@ impl TryFrom<f64> for BackendScalar {
     type Error = Problem;
 
     fn try_from(value: f64) -> Result<Self, Self::Error> {
-        realistic::Real::try_from(value)
+        hyperreal::Real::try_from(value)
             .map(Self)
             .map_err(Problem::from)
     }

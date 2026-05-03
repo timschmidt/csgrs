@@ -37,9 +37,9 @@ fn vector_scalar_add_and_subtract_are_componentwise() {
 fn vector_display_forwards_real_formatting() {
     let vector = Vector3::new([frac(1, 2), r(2), frac(3, 4)]);
 
-    #[cfg(feature = "realistic-backend")]
+    #[cfg(feature = "hyperreal-backend")]
     assert_eq!(format!("{vector}"), "[1/2, 2, 3/4]");
-    #[cfg(not(feature = "realistic-backend"))]
+    #[cfg(not(feature = "hyperreal-backend"))]
     assert_eq!(format!("{vector}"), "[0.5, 2, 0.75]");
     assert_eq!(format!("{vector:#}"), "[0.5, 2, 0.75]");
 }
@@ -83,7 +83,7 @@ fn checked_vector_operations_reject_unknown_zero_divisors() {
     );
 }
 
-#[cfg(not(feature = "realistic-backend"))]
+#[cfg(not(feature = "hyperreal-backend"))]
 #[test]
 fn ordinary_vector_scalar_division_returns_unknown_zero() {
     let vector = Vector3::new([r(1), r(2), r(3)]);

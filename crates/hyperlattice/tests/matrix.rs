@@ -69,9 +69,9 @@ fn matrix_display_forwards_real_formatting() {
         [r(7), r(8), r(9)],
     ]);
 
-    #[cfg(feature = "realistic-backend")]
+    #[cfg(feature = "hyperreal-backend")]
     assert_eq!(format!("{matrix}"), "[[1/2, 2, 3], [4, 1/4, 6], [7, 8, 9]]");
-    #[cfg(not(feature = "realistic-backend"))]
+    #[cfg(not(feature = "hyperreal-backend"))]
     assert_eq!(
         format!("{matrix}"),
         "[[0.5, 2, 3], [4, 0.25, 6], [7, 8, 9]]"
@@ -203,7 +203,7 @@ fn checked_matrix_scalar_division_accepts_abort_signal() {
     );
 }
 
-#[cfg(not(feature = "realistic-backend"))]
+#[cfg(not(feature = "hyperreal-backend"))]
 #[test]
 fn ordinary_matrix_scalar_division_returns_unknown_zero() {
     let divisor = realistic_blas::Scalar::approx(0.0, 0.25).unwrap();

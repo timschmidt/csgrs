@@ -347,13 +347,14 @@ fn bench_matrix_operations_for<B, F>(
 fn bench_matrix_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("matrix_ops");
     bench_matrix_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
-    bench_matrix_operations_for::<RealisticBackend, _>(
+    bench_matrix_operations_for::<HyperrealBackend, _>(
         &mut group,
         "realistic",
-        s::<RealisticBackend>,
+        s::<HyperrealBackend>,
     );
-    bench_matrix_operations_for::<RealisticBackend, _>(&mut group, "realistic-rational", qr);
+    bench_matrix_operations_for::<HyperrealBackend, _>(&mut group, "realistic-rational", qr);
     bench_astro_matrix_operations(&mut group, "astro128");
+    bench_symbolica_matrix_operations(&mut group, "symbolica128");
     bench_arp_matrix_operations(&mut group, "arp128");
     group.finish();
 }
@@ -744,3 +745,187 @@ fn bench_arp_matrix_operations(
     }
 }
 
+fn bench_symbolica_matrix_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    let ctx = symbolica_backend::Ctx::new(128);
+    let lhs3_cases = sample_mat3_cases().map(|value| symbolica_backend::Mat3::new(&ctx, value.m));
+    let rhs3_cases = sample_mat3_b_cases().map(|value| symbolica_backend::Mat3::new(&ctx, value.m));
+    let lhs4_cases = sample_mat4_cases().map(|value| symbolica_backend::Mat4::new(&ctx, value.m));
+    let rhs4_cases = sample_mat4_b_cases().map(|value| symbolica_backend::Mat4::new(&ctx, value.m));
+    let scalar_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
+
+    group.bench_function(format!("{label}/mat3 new"), |b| {
+        let raw_cases = sample_mat3_cases();
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(symbolica_backend::Mat3::new(
+                &ctx,
+                next_case(&raw_cases, &cursor).m,
+            ))
+        })
+    });
+    group.bench_function(format!("{label}/mat3 zero"), |b| {
+        b.iter(|| black_box(symbolica_backend::Mat3::zero(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat3 identity"), |b| {
+        b.iter(|| black_box(symbolica_backend::Mat3::identity(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat3 transpose"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs3_cases, &cursor).transpose()))
+    });
+    for name in [
+        "reciprocal",
+        "reciprocal_checked",
+        "inverse_checked",
+        "inverse_checked_abort",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs3_cases, &cursor).inverse(&ctx)))
+        });
+    }
+    for name in ["powi", "powi_checked", "powi_checked_abort", "bitxor"] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs3_cases, &cursor).powi(3, &ctx)))
+        });
+    }
+    for name in [
+        "div_scalar_checked",
+        "div_scalar_checked_abort",
+        "div_scalar",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(lhs3_cases[index].map_scalar(
+                    &scalar_cases[index],
+                    &ctx,
+                    symbolica_backend::Ctx::div,
+                ))
+            })
+        });
+    }
+    for name in [
+        "div_matrix_checked",
+        "div_matrix_checked_abort",
+        "div_matrix",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(lhs3_cases[index].div_matrix(&rhs3_cases[index], &ctx))
+            })
+        });
+    }
+    for name in [
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+    ] {
+        group.bench_function(format!("{label}/mat3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(match name {
+                    "add" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, symbolica_backend::Ctx::add),
+                    "add_scalar" => lhs3_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        symbolica_backend::Ctx::add,
+                    ),
+                    "sub" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, symbolica_backend::Ctx::sub),
+                    "sub_scalar" => lhs3_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        symbolica_backend::Ctx::sub,
+                    ),
+                    "neg" => lhs3_cases[index].neg(&ctx),
+                    _ => lhs3_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        symbolica_backend::Ctx::mul,
+                    ),
+                })
+            })
+        });
+    }
+
+    group.bench_function(format!("{label}/mat4 zero"), |b| {
+        b.iter(|| black_box(symbolica_backend::Mat4::zero(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat4 identity"), |b| {
+        b.iter(|| black_box(symbolica_backend::Mat4::identity(&ctx)))
+    });
+    group.bench_function(format!("{label}/mat4 transpose"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs4_cases, &cursor).transpose()))
+    });
+    for name in ["reciprocal", "reciprocal_checked"] {
+        group.bench_function(format!("{label}/mat4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs4_cases, &cursor).inverse(&ctx)))
+        });
+    }
+    for name in ["powi", "powi_checked", "bitxor"] {
+        group.bench_function(format!("{label}/mat4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(next_case(&lhs4_cases, &cursor).powi(3, &ctx)))
+        });
+    }
+    for name in [
+        "div_scalar",
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+        "div_matrix",
+    ] {
+        group.bench_function(format!("{label}/mat4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs4_cases.len());
+                black_box(match name {
+                    "div_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        symbolica_backend::Ctx::div,
+                    ),
+                    "add" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, symbolica_backend::Ctx::add),
+                    "add_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        symbolica_backend::Ctx::add,
+                    ),
+                    "sub" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, symbolica_backend::Ctx::sub),
+                    "sub_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        symbolica_backend::Ctx::sub,
+                    ),
+                    "neg" => lhs4_cases[index].neg(&ctx),
+                    "mul_scalar" => lhs4_cases[index].map_scalar(
+                        &scalar_cases[index],
+                        &ctx,
+                        symbolica_backend::Ctx::mul,
+                    ),
+                    _ => lhs4_cases[index].div_matrix(&rhs4_cases[index], &ctx),
+                })
+            })
+        });
+    }
+}

@@ -7,16 +7,16 @@ The crate provides scalar helpers, complex numbers, 3D/4D vectors, and 3x3/4x4
 matrices using `Scalar` throughout. `Scalar`, `Complex`, `Vector3`, `Vector4`,
 `Matrix3`, and `Matrix4` are generic over a backend marker and default to the
 feature-selected `DefaultBackend`. By default, `Scalar` is backed by
-[`realistic::Real`](https://crates.io/crates/realistic), while the approximate
+[`hyperreal::Real`](https://crates.io/crates/hyperreal), while the approximate
 backend is also available explicitly. `approx-backend` uses an `f64` value plus
 an `f64` epsilon to model approximate error bounds and unknown-zero conditions.
 
 ## Features
 
-- Re-exports `realistic::{Real, Rational}` for explicit construction and interop
-  when `realistic-backend` is enabled. Library operations use crate-owned
+- Re-exports `hyperreal::{Real, Rational}` for explicit construction and interop
+  when `hyperreal-backend` is enabled. Library operations use crate-owned
   `Scalar` and `Problem`.
-- Exposes `RealisticBackend`, `ApproxBackend`, and `DefaultBackend` markers so
+- Exposes `HyperrealBackend`, `ApproxBackend`, and `DefaultBackend` markers so
   both backends can be used in one build when both backend features are enabled.
 - Constants and scalar helpers: `zero`, `one`, `e`, `pi`, `tau`, `i`,
   `reciprocal`, `reciprocal_checked`, `pow`, `powi`.
@@ -52,15 +52,15 @@ Add the crate to your project:
 realistic_blas = { path = "path/to/realistic_blas" }
 ```
 
-The default feature set enables both backends. The realistic backend depends on:
+The default feature set enables both backends. The hyperreal backend depends on:
 
 ```toml
-realistic = "0.8.1"
+hyperreal = "0.9.1"
 num = "0.4.3"
 ```
 
 The approximate `f64 + epsilon` backend has no normal dependencies on
-`realistic` or `num`. To use it:
+`hyperreal` or `num`. To use it:
 
 ```toml
 [dependencies]
@@ -72,8 +72,8 @@ realistic_blas = {
 ```
 
 Backend features gate availability rather than changing the shared API shape.
-When both `realistic-backend` and `approx-backend` are enabled,
-`DefaultBackend` remains `RealisticBackend` and approximate values can be
+When both `hyperreal-backend` and `approx-backend` are enabled,
+`DefaultBackend` remains `HyperrealBackend` and approximate values can be
 requested explicitly with types such as `Scalar<ApproxBackend>` or
 `Vector3<ApproxBackend>`.
 
@@ -100,12 +100,12 @@ assert_eq!(log10(s(100)).unwrap(), s(2));
 ### Explicit Backends
 
 ```rust
-use realistic_blas::{ApproxBackend, RealisticBackend, Scalar, Vector3};
+use realistic_blas::{ApproxBackend, HyperrealBackend, Scalar, Vector3};
 
-let exact: Scalar<RealisticBackend> = Scalar::try_from(1.25).unwrap();
+let exact: Scalar<HyperrealBackend> = Scalar::try_from(1.25).unwrap();
 let approx: Scalar<ApproxBackend> = Scalar::<ApproxBackend>::approx(1.25, 0.01).unwrap();
 
-let exact_vector = Vector3::<RealisticBackend>::new([exact.clone(), exact.clone(), exact]);
+let exact_vector = Vector3::<HyperrealBackend>::new([exact.clone(), exact.clone(), exact]);
 let approx_vector = Vector3::<ApproxBackend>::new([approx.clone(), approx.clone(), approx]);
 
 assert_eq!(exact_vector.0.len(), approx_vector.0.len());
@@ -125,7 +125,7 @@ Checked helpers reject definite zero and unknown-zero cases:
 type CheckedBlasResult<T> = Result<T, realistic_blas::Problem>;
 ```
 
-For computations that may force realistic backend evaluation, callers can attach
+For computations that may force hyperreal backend evaluation, callers can attach
 a cancellation flag before calling into `realistic_blas`, or use the provided
 abort-aware checked helpers. The approx backend accepts these APIs as no-ops.
 
@@ -225,7 +225,7 @@ assert_eq!(format!("{matrix}"), "[[1/2, 2, 3], [4, 5, 6], [7, 8, 9]]");
 assert_eq!(format!("{matrix:#}"), "[[0.5, 2, 3], [4, 5, 6], [7, 8, 9]]");
 ```
 
-The formatting examples above use the default realistic backend. With the approx
+The formatting examples above use the default hyperreal backend. With the approx
 backend, `Rational` is not available and normal formatting prints approximate
 decimal center values.
 
@@ -237,12 +237,12 @@ The crate root re-exports the public API from focused modules:
 - `src/complex.rs`: `Complex` and complex arithmetic.
 - `src/vector.rs`: `Vector3`, `Vector4`, and vector operations.
 - `src/matrix.rs`: `Matrix3`, `Matrix4`, and matrix operations.
-- `src/backend/realistic`: realistic-backed `Scalar` implementation.
+- `src/backend/hyperreal`: hyperreal-backed `Scalar` implementation.
 - `src/backend/approx`: approximate `f64 + epsilon` `Scalar` implementation.
 
 ## Notes
 
-When the realistic backend is selected, `realistic::Real` does not currently
+When the hyperreal backend is selected, `hyperreal::Real` does not currently
 expose native inverse trigonometric or inverse hyperbolic methods. The inverse
 helper functions convert through `f64` and then back into `Scalar`, so they are
 approximate rather than symbolic.
@@ -250,12 +250,12 @@ approximate rather than symbolic.
 The approx backend stores a center value and an absolute error bound. A scalar
 with an interval containing zero reports `ZeroStatus::Unknown`, so checked
 division, normalization, and matrix inversion exercise the same unknown-zero API
-surface as the realistic backend.
+surface as the hyperreal backend.
 
 Division-sensitive operations have two API paths. The checked path uses
 `zero_status` and rejects both definite zero and `ZeroStatus::Unknown`.
 Abort-aware checked variants attach an `AbortSignal` before running those zero
-classification checks. The default realistic backend keeps the ordinary path
+classification checks. The default hyperreal backend keeps the ordinary path
 optimistic where possible; the approx backend may return `Problem::UnknownZero`
 from ordinary arithmetic when an interval contains zero.
 

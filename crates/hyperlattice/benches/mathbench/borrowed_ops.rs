@@ -276,11 +276,11 @@ fn bench_borrowed_operations_for<B, F>(
 fn bench_borrowed_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("borrowed_ops");
     bench_borrowed_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
-    bench_borrowed_operations_for::<RealisticBackend, _>(
+    bench_borrowed_operations_for::<HyperrealBackend, _>(
         &mut group,
         "realistic",
-        s::<RealisticBackend>,
+        s::<HyperrealBackend>,
     );
-    bench_borrowed_operations_for::<RealisticBackend, _>(&mut group, "realistic-rational", qr);
+    bench_borrowed_operations_for::<HyperrealBackend, _>(&mut group, "realistic-rational", qr);
     group.finish();
 }

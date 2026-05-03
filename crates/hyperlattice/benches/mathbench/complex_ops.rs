@@ -178,12 +178,12 @@ fn bench_complex_operations_for<B, F>(
 fn bench_complex_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("complex_ops");
     bench_complex_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
-    bench_complex_operations_for::<RealisticBackend, _>(
+    bench_complex_operations_for::<HyperrealBackend, _>(
         &mut group,
         "realistic",
-        s::<RealisticBackend>,
+        s::<HyperrealBackend>,
     );
-    bench_complex_operations_for::<RealisticBackend, _>(&mut group, "realistic-rational", qr);
+    bench_complex_operations_for::<HyperrealBackend, _>(&mut group, "realistic-rational", qr);
     bench_astro_complex_operations(&mut group, "astro128");
     bench_arp_complex_operations(&mut group, "arp128");
     group.finish();
@@ -432,4 +432,3 @@ fn bench_arp_complex_operations(
         })
     });
 }
-

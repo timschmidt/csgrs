@@ -38,7 +38,7 @@ pub fn zero_status<B: Backend>(value: &Scalar<B>) -> ZeroStatus {
 
 /// Classifies a scalar after attaching an abort signal.
 ///
-/// With the realistic backend, this allows long-running zero checks to observe
+/// With the hyperreal backend, this allows long-running zero checks to observe
 /// cancellation. With the approx backend, the signal is accepted as a no-op.
 pub fn zero_status_with_abort<B: Backend>(value: &Scalar<B>, signal: &AbortSignal) -> ZeroStatus {
     zero_status(&clone_with_abort(value, signal))
@@ -263,7 +263,7 @@ pub fn tanh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
 /// Returns the inverse sine of `value`.
 ///
 /// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the realistic backend.
+/// symbolic with the hyperreal backend.
 pub fn asin<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
     real_from_f64(f64::from(value).asin())
 }
@@ -279,7 +279,7 @@ pub fn asin_with_abort<B: Backend>(
 /// Returns the inverse cosine of `value`.
 ///
 /// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the realistic backend.
+/// symbolic with the hyperreal backend.
 pub fn acos<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
     real_from_f64(f64::from(value).acos())
 }
@@ -295,7 +295,7 @@ pub fn acos_with_abort<B: Backend>(
 /// Returns the inverse tangent of `value`.
 ///
 /// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the realistic backend.
+/// symbolic with the hyperreal backend.
 pub fn atan<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
     real_from_f64(f64::from(value).atan())
 }
@@ -311,7 +311,7 @@ pub fn atan_with_abort<B: Backend>(
 /// Returns the inverse hyperbolic sine of `value`.
 ///
 /// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the realistic backend.
+/// symbolic with the hyperreal backend.
 pub fn asinh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
     real_from_f64(f64::from(value).asinh())
 }
@@ -327,7 +327,7 @@ pub fn asinh_with_abort<B: Backend>(
 /// Returns the inverse hyperbolic cosine of `value`.
 ///
 /// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the realistic backend.
+/// symbolic with the hyperreal backend.
 pub fn acosh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
     real_from_f64(f64::from(value).acosh())
 }
@@ -343,7 +343,7 @@ pub fn acosh_with_abort<B: Backend>(
 /// Returns the inverse hyperbolic tangent of `value`.
 ///
 /// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the realistic backend.
+/// symbolic with the hyperreal backend.
 pub fn atanh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
     real_from_f64(f64::from(value).atanh())
 }

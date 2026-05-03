@@ -2,16 +2,16 @@
 //!
 //! `realistic_blas` exposes a crate-owned [`Scalar`] type, complex numbers,
 //! 3D/4D vectors, and 3x3/4x4 matrices. These types are generic over a backend
-//! marker and default to [`DefaultBackend`]. The default `realistic-backend`
-//! stores scalars as `realistic::Real` values and re-exports `Real` and
+//! marker and default to [`DefaultBackend`]. The default `hyperreal-backend`
+//! stores scalars as `hyperreal::Real` values and re-exports `Real` and
 //! `Rational` for explicit interop. The `approx-backend` stores an `f64` center
 //! value plus an absolute `f64` error bound, which lets tests and callers
 //! exercise unknown-zero paths without depending on computable-real evaluation.
 //!
 //! Backend features gate backend availability. The default feature set enables
-//! `realistic-backend`; use `default-features = false, features =
+//! `hyperreal-backend`; use `default-features = false, features =
 //! ["approx-backend"]` to make the approximate backend the default, or enable
-//! both features and use [`Scalar`] with [`RealisticBackend`] and
+//! both features and use [`Scalar`] with [`HyperrealBackend`] and
 //! [`ApproxBackend`] explicitly.
 //!
 //! Most arithmetic that can fail returns [`BlasResult`]. Checked APIs use
@@ -43,19 +43,19 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
-#[cfg(feature = "realistic-backend")]
-pub use realistic::{Rational, Real};
+#[cfg(feature = "hyperreal-backend")]
+pub use hyperreal::{Rational, Real};
 
 /// Shared cancellation signal used by abort-aware APIs.
 ///
-/// With the realistic backend, the signal is attached to cloned `Real` values
+/// With the hyperreal backend, the signal is attached to cloned `Real` values
 /// before operations that may evaluate unknown computable reals. The approx
 /// backend accepts the same API as a no-op.
 pub type AbortSignal = Arc<AtomicBool>;
 
 /// Error type returned by fallible scalar, complex, vector, and matrix APIs.
 ///
-/// Most variants mirror errors from `realistic::Problem`; `UnknownZero` is
+/// Most variants mirror errors from `hyperreal::Problem`; `UnknownZero` is
 /// crate-owned and indicates that a checked operation could not prove a divisor
 /// or pivot was non-zero.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -90,23 +90,23 @@ pub enum Problem {
     UnknownZero,
 }
 
-#[cfg(feature = "realistic-backend")]
-impl From<realistic::Problem> for Problem {
-    fn from(problem: realistic::Problem) -> Self {
+#[cfg(feature = "hyperreal-backend")]
+impl From<hyperreal::Problem> for Problem {
+    fn from(problem: hyperreal::Problem) -> Self {
         match problem {
-            realistic::Problem::ParseError => Self::ParseError,
-            realistic::Problem::SqrtNegative => Self::SqrtNegative,
-            realistic::Problem::DivideByZero => Self::DivideByZero,
-            realistic::Problem::NotFound => Self::NotFound,
-            realistic::Problem::InsufficientParameters => Self::InsufficientParameters,
-            realistic::Problem::NotANumber => Self::NotANumber,
-            realistic::Problem::Infinity => Self::Infinity,
-            realistic::Problem::BadFraction => Self::BadFraction,
-            realistic::Problem::BadDecimal => Self::BadDecimal,
-            realistic::Problem::BadInteger => Self::BadInteger,
-            realistic::Problem::OutOfRange => Self::OutOfRange,
-            realistic::Problem::NotAnInteger => Self::NotAnInteger,
-            realistic::Problem::Exhausted => Self::Exhausted,
+            hyperreal::Problem::ParseError => Self::ParseError,
+            hyperreal::Problem::SqrtNegative => Self::SqrtNegative,
+            hyperreal::Problem::DivideByZero => Self::DivideByZero,
+            hyperreal::Problem::NotFound => Self::NotFound,
+            hyperreal::Problem::InsufficientParameters => Self::InsufficientParameters,
+            hyperreal::Problem::NotANumber => Self::NotANumber,
+            hyperreal::Problem::Infinity => Self::Infinity,
+            hyperreal::Problem::BadFraction => Self::BadFraction,
+            hyperreal::Problem::BadDecimal => Self::BadDecimal,
+            hyperreal::Problem::BadInteger => Self::BadInteger,
+            hyperreal::Problem::OutOfRange => Self::OutOfRange,
+            hyperreal::Problem::NotAnInteger => Self::NotAnInteger,
+            hyperreal::Problem::Exhausted => Self::Exhausted,
             _ => Self::Exhausted,
         }
     }
@@ -131,15 +131,15 @@ mod backend;
 #[cfg(feature = "approx-backend")]
 pub use backend::ApproxBackend;
 pub use backend::DefaultBackend;
-#[cfg(feature = "realistic-backend")]
-pub use backend::RealisticBackend;
+#[cfg(feature = "hyperreal-backend")]
+pub use backend::HyperrealBackend;
 pub use backend::{Backend, BackendScalar};
 
 /// Crate-owned scalar value used throughout the public API.
 ///
 /// The backend type parameter selects the representation and arithmetic
 /// behavior. The default backend is [`DefaultBackend`], which resolves to the
-/// realistic backend when the default feature set is enabled.
+/// hyperreal backend when the default feature set is enabled.
 pub struct Scalar<B: Backend = DefaultBackend>(B::Repr);
 
 impl<B: Backend> Clone for Scalar<B> {
@@ -160,16 +160,16 @@ impl<B: Backend> PartialEq for Scalar<B> {
     }
 }
 
-#[cfg(feature = "realistic-backend")]
-impl PartialEq<Rational> for Scalar<RealisticBackend> {
+#[cfg(feature = "hyperreal-backend")]
+impl PartialEq<Rational> for Scalar<HyperrealBackend> {
     fn eq(&self, rhs: &Rational) -> bool {
         self == &Self::from(rhs.clone())
     }
 }
 
-#[cfg(feature = "realistic-backend")]
-impl PartialEq<Scalar<RealisticBackend>> for Rational {
-    fn eq(&self, rhs: &Scalar<RealisticBackend>) -> bool {
+#[cfg(feature = "hyperreal-backend")]
+impl PartialEq<Scalar<HyperrealBackend>> for Rational {
+    fn eq(&self, rhs: &Scalar<HyperrealBackend>) -> bool {
         rhs == self
     }
 }
@@ -286,16 +286,16 @@ impl<B: Backend> Scalar<B> {
 
     /// Attaches a cancellation signal to this scalar where the backend supports it.
     ///
-    /// This affects realistic backend evaluation. It is a no-op on the approx
+    /// This affects hyperreal backend evaluation. It is a no-op on the approx
     /// backend.
     pub fn abort(&mut self, signal: AbortSignal) {
         self.0.abort(signal);
     }
 }
 
-#[cfg(feature = "realistic-backend")]
-impl Scalar<RealisticBackend> {
-    /// Constructs a scalar from a realistic rational value.
+#[cfg(feature = "hyperreal-backend")]
+impl Scalar<HyperrealBackend> {
+    /// Constructs a scalar from a hyperreal rational value.
     pub fn new(rational: Rational) -> Self {
         rational.into()
     }
@@ -312,9 +312,9 @@ impl Scalar<ApproxBackend> {
     }
 }
 
-#[cfg(feature = "realistic-backend")]
-impl Scalar<RealisticBackend> {
-    /// Constructs a realistic scalar from an approximate center value.
+#[cfg(feature = "hyperreal-backend")]
+impl Scalar<HyperrealBackend> {
+    /// Constructs a hyperreal scalar from an approximate center value.
     ///
     /// The `epsilon` argument is accepted for API compatibility and ignored
     /// because `Real` values do not store an interval error bound.
@@ -330,15 +330,15 @@ impl<B: Backend> fmt::Display for Scalar<B> {
     }
 }
 
-#[cfg(feature = "realistic-backend")]
-impl From<Real> for Scalar<RealisticBackend> {
+#[cfg(feature = "hyperreal-backend")]
+impl From<Real> for Scalar<HyperrealBackend> {
     fn from(value: Real) -> Self {
         Self(value.into())
     }
 }
 
-#[cfg(feature = "realistic-backend")]
-impl From<Rational> for Scalar<RealisticBackend> {
+#[cfg(feature = "hyperreal-backend")]
+impl From<Rational> for Scalar<HyperrealBackend> {
     fn from(value: Rational) -> Self {
         Self(value.into())
     }

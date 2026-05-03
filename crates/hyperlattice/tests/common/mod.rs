@@ -8,7 +8,7 @@ pub fn r(value: i32) -> Scalar {
 }
 
 #[allow(dead_code)]
-#[cfg(feature = "realistic-backend")]
+#[cfg(feature = "hyperreal-backend")]
 pub fn frac(numerator: i64, denominator: u64) -> Scalar {
     realistic_blas::Rational::fraction(numerator, denominator)
         .unwrap()
@@ -16,7 +16,7 @@ pub fn frac(numerator: i64, denominator: u64) -> Scalar {
 }
 
 #[allow(dead_code)]
-#[cfg(not(feature = "realistic-backend"))]
+#[cfg(not(feature = "hyperreal-backend"))]
 pub fn frac(numerator: i64, denominator: u64) -> Scalar {
     Scalar::try_from(numerator as f64 / denominator as f64).unwrap()
 }

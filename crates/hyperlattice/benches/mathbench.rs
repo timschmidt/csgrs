@@ -3,10 +3,10 @@ use std::{cell::Cell, collections::BTreeMap, fs, hint::black_box, path::Path};
 use criterion::{BenchmarkGroup, BenchmarkId, Criterion};
 use realistic_blas::Rational;
 use realistic_blas::{
-    ApproxBackend, Backend, Complex, Matrix3, Matrix4, RealisticBackend, Scalar, Vector3, Vector4,
+    ApproxBackend, Backend, Complex, HyperrealBackend, Matrix3, Matrix4, Scalar, Vector3, Vector4,
 };
 
-type RealisticScalar = Scalar<RealisticBackend>;
+type HyperrealScalar = Scalar<HyperrealBackend>;
 
 include!("mathbench/backends.rs");
 include!("mathbench/fixtures.rs");

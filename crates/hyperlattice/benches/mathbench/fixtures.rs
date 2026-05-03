@@ -359,7 +359,7 @@ where
     Matrix4::new(value.m.map(|row| row.map(make_scalar)))
 }
 
-fn blas_vec3_rational() -> Vector3<RealisticBackend> {
+fn blas_vec3_rational() -> Vector3<HyperrealBackend> {
     Vector3::new([
         q(123_456_789_012_345, 100_000_000_000_000),
         q(-234_567_890_123_456, 100_000_000_000_000),
@@ -367,7 +367,7 @@ fn blas_vec3_rational() -> Vector3<RealisticBackend> {
     ])
 }
 
-fn blas_vec3_b_rational() -> Vector3<RealisticBackend> {
+fn blas_vec3_b_rational() -> Vector3<HyperrealBackend> {
     Vector3::new([
         q(-98_765_432_101_234, 100_000_000_000_000),
         q(421_098_765_432_109, 100_000_000_000_000),
@@ -375,11 +375,11 @@ fn blas_vec3_b_rational() -> Vector3<RealisticBackend> {
     ])
 }
 
-fn blas_vec4_rational() -> Vector4<RealisticBackend> {
+fn blas_vec4_rational() -> Vector4<HyperrealBackend> {
     Vector4::new([3.into(), 4.into(), 5.into(), 1.into()])
 }
 
-fn blas_mat3_rational() -> Matrix3<RealisticBackend> {
+fn blas_mat3_rational() -> Matrix3<HyperrealBackend> {
     Matrix3::new([
         [q(12, 10), q(3, 10), q(-7, 10)],
         [q(21, 10), q(-15, 10), q(9, 10)],
@@ -387,7 +387,7 @@ fn blas_mat3_rational() -> Matrix3<RealisticBackend> {
     ])
 }
 
-fn blas_mat3_b_rational() -> Matrix3<RealisticBackend> {
+fn blas_mat3_b_rational() -> Matrix3<HyperrealBackend> {
     Matrix3::new([
         [q(-8, 10), q(11, 10), q(5, 10)],
         [q(27, 10), q(6, 10), q(-14, 10)],
@@ -395,7 +395,7 @@ fn blas_mat3_b_rational() -> Matrix3<RealisticBackend> {
     ])
 }
 
-fn blas_mat4_rational() -> Matrix4<RealisticBackend> {
+fn blas_mat4_rational() -> Matrix4<HyperrealBackend> {
     Matrix4::new([
         [1.into(), 2.into(), 3.into(), 4.into()],
         [0.into(), 1.into(), 4.into(), 2.into()],
@@ -404,7 +404,7 @@ fn blas_mat4_rational() -> Matrix4<RealisticBackend> {
     ])
 }
 
-fn blas_mat4_b_rational() -> Matrix4<RealisticBackend> {
+fn blas_mat4_b_rational() -> Matrix4<HyperrealBackend> {
     Matrix4::new([
         [2.into(), 0.into(), 1.into(), 3.into()],
         [3.into(), 5.into(), 7.into(), 11.into()],

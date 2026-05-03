@@ -12,9 +12,9 @@ fn complex_i_squared() {
 fn complex_display_forwards_real_formatting() {
     let value = Complex::new(frac(1, 2), r(2));
 
-    #[cfg(feature = "realistic-backend")]
+    #[cfg(feature = "hyperreal-backend")]
     assert_eq!(format!("{value}"), "(1/2 + 2i)");
-    #[cfg(not(feature = "realistic-backend"))]
+    #[cfg(not(feature = "hyperreal-backend"))]
     assert_eq!(format!("{value}"), "(0.5 + 2i)");
     assert_eq!(format!("{value:#}"), "(0.5 + 2i)");
 }

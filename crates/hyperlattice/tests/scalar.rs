@@ -71,7 +71,7 @@ fn checked_scalar_reciprocal_rejects_unknown_zero() {
     );
 }
 
-#[cfg(not(feature = "realistic-backend"))]
+#[cfg(not(feature = "hyperreal-backend"))]
 #[test]
 fn approx_scalar_tracks_unknown_zero_intervals() {
     let near_zero = realistic_blas::Scalar::approx(0.0, 0.25).unwrap();

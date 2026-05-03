@@ -1,5 +1,5 @@
-#[cfg(feature = "realistic-backend")]
-mod realistic;
+#[cfg(feature = "hyperreal-backend")]
+mod hyperreal;
 
 #[cfg(feature = "approx-backend")]
 mod approx;
@@ -13,18 +13,18 @@ use crate::{AbortSignal, BlasResult, Problem, ZeroStatus};
 pub use approx::ApproxBackend;
 #[cfg(feature = "approx-backend")]
 pub(super) use approx::BackendScalar as ApproxScalarRepr;
-#[cfg(feature = "realistic-backend")]
-pub use realistic::RealisticBackend;
+#[cfg(feature = "hyperreal-backend")]
+pub use hyperreal::HyperrealBackend;
 
-#[cfg(feature = "realistic-backend")]
+#[cfg(feature = "hyperreal-backend")]
 /// Default backend used when no explicit backend type parameter is supplied.
-pub type DefaultBackend = RealisticBackend;
-#[cfg(all(not(feature = "realistic-backend"), feature = "approx-backend"))]
+pub type DefaultBackend = HyperrealBackend;
+#[cfg(all(not(feature = "hyperreal-backend"), feature = "approx-backend"))]
 /// Default backend used when only the approx backend feature is enabled.
 pub type DefaultBackend = ApproxBackend;
 
-#[cfg(not(any(feature = "realistic-backend", feature = "approx-backend")))]
-compile_error!("enable either realistic-backend or approx-backend");
+#[cfg(not(any(feature = "hyperreal-backend", feature = "approx-backend")))]
+compile_error!("enable either hyperreal-backend or approx-backend");
 
 /// Numeric backend marker used by [`Scalar`](crate::Scalar).
 ///

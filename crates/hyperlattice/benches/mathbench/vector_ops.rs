@@ -235,13 +235,14 @@ fn bench_vector_operations_for<B, F>(
 fn bench_vector_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("vector_ops");
     bench_vector_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
-    bench_vector_operations_for::<RealisticBackend, _>(
+    bench_vector_operations_for::<HyperrealBackend, _>(
         &mut group,
         "realistic",
-        s::<RealisticBackend>,
+        s::<HyperrealBackend>,
     );
-    bench_vector_operations_for::<RealisticBackend, _>(&mut group, "realistic-rational", qr);
+    bench_vector_operations_for::<HyperrealBackend, _>(&mut group, "realistic-rational", qr);
     bench_astro_vector_operations(&mut group, "astro128");
+    bench_symbolica_vector_operations(&mut group, "symbolica128");
     bench_arp_vector_operations(&mut group, "arp128");
     group.finish();
 }
@@ -393,10 +394,10 @@ fn bench_arp_vector_operations(
     label: &str,
 ) {
     let ctx = arp_backend::Ctx::new(128);
-    let lhs3_cases =
-        sample_vec3_cases().map(|value| arp_backend::Vec3::new(&ctx, value.x, value.y, value.z));
-    let rhs3_cases =
-        sample_vec3_b_cases().map(|value| arp_backend::Vec3::new(&ctx, value.x, value.y, value.z));
+    let lhs3_cases = sample_vec3_cases()
+        .map(|value| arp_backend::Vec3::new(&ctx, value.x, value.y, value.z));
+    let rhs3_cases = sample_vec3_b_cases()
+        .map(|value| arp_backend::Vec3::new(&ctx, value.x, value.y, value.z));
     let lhs4_cases = sample_vec4_cases()
         .map(|value| arp_backend::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
     let rhs4_cases = sample_vec4_b_cases()
@@ -422,46 +423,26 @@ fn bench_arp_vector_operations(
             black_box(lhs3_cases[index].dot(&rhs3_cases[index], &ctx))
         })
     });
-    for name in [
-        "vec3 magnitude_abort",
-        "vec3 normalize_checked",
-        "vec3 normalize_checked_abort",
-    ] {
-        group.bench_function(format!("{label}/{name}"), |b| {
+    group.bench_function(format!("{label}/vec3 magnitude_abort"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(next_case(&lhs3_cases, &cursor).magnitude(&ctx)))
+    });
+    for name in ["normalize_checked", "normalize_checked_abort", "normalize"] {
+        group.bench_function(format!("{label}/vec3 {name}"), |b| {
             let cursor = Cell::new(0);
-            b.iter(|| {
-                let value = next_case(&lhs3_cases, &cursor);
-                black_box(if name == "vec3 magnitude_abort" {
-                    let magnitude = value.magnitude(&ctx);
-                    arp_backend::Vec3 {
-                        x: magnitude,
-                        y: ctx.zero(),
-                        z: ctx.zero(),
-                    }
-                } else {
-                    value.normalize(&ctx)
-                })
-            })
-        });
-    }
-    for name in ["vec3 div_scalar_checked", "vec3 div_scalar_checked_abort"] {
-        group.bench_function(format!("{label}/{name}"), |b| {
-            let cursor = Cell::new(0);
-            b.iter(|| {
-                let index = cursor.get();
-                cursor.set((index + 1) % lhs3_cases.len());
-                black_box(lhs3_cases[index].div_scalar(&scalar_cases[index], &ctx))
-            })
+            b.iter(|| black_box(next_case(&lhs3_cases, &cursor).normalize(&ctx)))
         });
     }
     for name in [
+        "div_scalar_checked",
+        "div_scalar_checked_abort",
+        "div_scalar",
         "add",
         "add_scalar",
         "sub",
         "sub_scalar",
         "neg",
         "mul_scalar",
-        "div_scalar",
     ] {
         group.bench_function(format!("{label}/vec3 {name}"), |b| {
             let cursor = Cell::new(0);
@@ -469,13 +450,15 @@ fn bench_arp_vector_operations(
                 let index = cursor.get();
                 cursor.set((index + 1) % lhs3_cases.len());
                 black_box(match name {
+                    "div_scalar_checked" | "div_scalar_checked_abort" | "div_scalar" => {
+                        lhs3_cases[index].div_scalar(&scalar_cases[index], &ctx)
+                    }
                     "add" => lhs3_cases[index].add(&rhs3_cases[index], &ctx),
                     "add_scalar" => lhs3_cases[index].add_scalar(&scalar_cases[index], &ctx),
                     "sub" => lhs3_cases[index].sub(&rhs3_cases[index], &ctx),
                     "sub_scalar" => lhs3_cases[index].sub_scalar(&scalar_cases[index], &ctx),
                     "neg" => lhs3_cases[index].neg(&ctx),
-                    "mul_scalar" => lhs3_cases[index].mul_scalar(&scalar_cases[index], &ctx),
-                    _ => lhs3_cases[index].div_scalar(&scalar_cases[index], &ctx),
+                    _ => lhs3_cases[index].mul_scalar(&scalar_cases[index], &ctx),
                 })
             })
         });
@@ -530,3 +513,130 @@ fn bench_arp_vector_operations(
     }
 }
 
+fn bench_symbolica_vector_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    let ctx = symbolica_backend::Ctx::new(128);
+    let lhs3_cases = sample_vec3_cases()
+        .map(|value| symbolica_backend::Vec3::new(&ctx, value.x, value.y, value.z));
+    let rhs3_cases = sample_vec3_b_cases()
+        .map(|value| symbolica_backend::Vec3::new(&ctx, value.x, value.y, value.z));
+    let lhs4_cases = sample_vec4_cases()
+        .map(|value| symbolica_backend::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
+    let rhs4_cases = sample_vec4_b_cases()
+        .map(|value| symbolica_backend::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
+    let scalar_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
+
+    group.bench_function(format!("{label}/vec3 new"), |b| {
+        let raw_cases = sample_vec3_cases();
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let value = *next_case(&raw_cases, &cursor);
+            black_box(symbolica_backend::Vec3::new(&ctx, value.x, value.y, value.z))
+        })
+    });
+    group.bench_function(format!("{label}/vec3 zero"), |b| {
+        b.iter(|| black_box(symbolica_backend::Vec3::zero(&ctx)))
+    });
+    group.bench_function(format!("{label}/vec3 dot_abort"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs3_cases.len());
+            black_box(lhs3_cases[index].dot(&rhs3_cases[index], &ctx))
+        })
+    });
+    for name in ["vec3 magnitude_abort", "vec3 normalize_checked", "vec3 normalize_checked_abort"] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let value = next_case(&lhs3_cases, &cursor);
+                black_box(if name == "vec3 magnitude_abort" {
+                    let magnitude = value.magnitude(&ctx);
+                    symbolica_backend::Vec3 {
+                        x: magnitude,
+                        y: ctx.zero(),
+                        z: ctx.zero(),
+                    }
+                } else {
+                    value.normalize(&ctx)
+                })
+            })
+        });
+    }
+    for name in [
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+        "div_scalar",
+    ] {
+        group.bench_function(format!("{label}/vec3 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs3_cases.len());
+                black_box(match name {
+                    "add" => lhs3_cases[index].add(&rhs3_cases[index], &ctx),
+                    "add_scalar" => lhs3_cases[index].add_scalar(&scalar_cases[index], &ctx),
+                    "sub" => lhs3_cases[index].sub(&rhs3_cases[index], &ctx),
+                    "sub_scalar" => lhs3_cases[index].sub_scalar(&scalar_cases[index], &ctx),
+                    "neg" => lhs3_cases[index].neg(&ctx),
+                    "mul_scalar" => lhs3_cases[index].mul_scalar(&scalar_cases[index], &ctx),
+                    _ => lhs3_cases[index].div_scalar(&scalar_cases[index], &ctx),
+                })
+            })
+        });
+    }
+    for name in [
+        "dot",
+        "magnitude",
+        "normalize",
+        "add",
+        "add_scalar",
+        "sub",
+        "sub_scalar",
+        "neg",
+        "mul_scalar",
+        "div_scalar",
+    ] {
+        group.bench_function(format!("{label}/vec4 {name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs4_cases.len());
+                black_box(match name {
+                    "dot" => {
+                        let dot = lhs4_cases[index].dot(&rhs4_cases[index], &ctx);
+                        symbolica_backend::Vec4 {
+                            x: dot,
+                            y: ctx.zero(),
+                            z: ctx.zero(),
+                            w: ctx.zero(),
+                        }
+                    }
+                    "magnitude" => {
+                        let magnitude = lhs4_cases[index].magnitude(&ctx);
+                        symbolica_backend::Vec4 {
+                            x: magnitude,
+                            y: ctx.zero(),
+                            z: ctx.zero(),
+                            w: ctx.zero(),
+                        }
+                    }
+                    "normalize" => lhs4_cases[index].normalize(&ctx),
+                    "add" => lhs4_cases[index].add(&rhs4_cases[index], &ctx),
+                    "add_scalar" => lhs4_cases[index].add_scalar(&scalar_cases[index], &ctx),
+                    "sub" => lhs4_cases[index].sub(&rhs4_cases[index], &ctx),
+                    "sub_scalar" => lhs4_cases[index].sub_scalar(&scalar_cases[index], &ctx),
+                    "neg" => lhs4_cases[index].neg(&ctx),
+                    "mul_scalar" => lhs4_cases[index].mul_scalar(&scalar_cases[index], &ctx),
+                    _ => lhs4_cases[index].div_scalar(&scalar_cases[index], &ctx),
+                })
+            })
+        });
+    }
+}

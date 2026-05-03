@@ -724,14 +724,171 @@ fn bench_arp_scalar_operations(
 fn bench_scalar_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_ops");
     bench_scalar_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
-    bench_scalar_operations_for::<RealisticBackend, _>(
+    bench_scalar_operations_for::<HyperrealBackend, _>(
         &mut group,
         "realistic",
-        s::<RealisticBackend>,
+        s::<HyperrealBackend>,
     );
-    bench_scalar_operations_for::<RealisticBackend, _>(&mut group, "realistic-rational", qr);
+    bench_scalar_operations_for::<HyperrealBackend, _>(&mut group, "realistic-rational", qr);
     bench_astro_scalar_operations(&mut group, "astro128");
+    bench_symbolica_scalar_operations(&mut group, "symbolica128");
     bench_arp_scalar_operations(&mut group, "arp128");
     group.finish();
 }
 
+fn bench_symbolica_scalar_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    let ctx = symbolica_backend::Ctx::new(128);
+    let arithmetic_cases = [
+        (2.5, 1.25),
+        (1.0e-12, -1.0e-12),
+        (1.0e9, 1.0e-9),
+        (-2.75, 0.125),
+    ]
+    .map(|(lhs, rhs)| (ctx.f(lhs), ctx.f(rhs)));
+    let pow_cases = [
+        (2.5, 1.25),
+        (1.0e-12, 3.5),
+        (1.0e9, 0.25),
+        (std::f64::consts::E, std::f64::consts::FRAC_1_PI),
+    ]
+    .map(|(lhs, rhs)| (ctx.f(lhs), ctx.f(rhs)));
+    let reciprocal_cases = [1.25, 1.0e-12, -1.0e12, std::f64::consts::PI].map(|value| ctx.f(value));
+    let positive_cases = [9.0, 1.0e-12, 1.0e12, std::f64::consts::E].map(|value| ctx.f(value));
+    let trig_cases = [
+        0.5,
+        std::f64::consts::PI / 7.0,
+        1.0e6,
+        1000.0 * std::f64::consts::PI + 1.0e-20,
+    ]
+    .map(|value| ctx.f(value));
+    let hyperbolic_cases = [0.5, -1.0e-12, 20.0, -20.0].map(|value| ctx.f(value));
+    let unit_interval_cases = [0.5, -0.999_999, 0.999_999, 1.0e-12].map(|value| ctx.f(value));
+    let acosh_cases = [9.0, 1.0 + 1.0e-12, 1.0e6, std::f64::consts::E].map(|value| ctx.f(value));
+    let zero_status_cases = [ctx.f(2.5), ctx.zero(), ctx.f(1.0e-12), ctx.f(-1.0e12)];
+
+    group.bench_function(format!("{label}/zero"), |b| b.iter(|| black_box(ctx.zero())));
+    group.bench_function(format!("{label}/one"), |b| b.iter(|| black_box(ctx.one())));
+    group.bench_function(format!("{label}/e"), |b| b.iter(|| black_box(ctx.e())));
+    group.bench_function(format!("{label}/pi"), |b| b.iter(|| black_box(ctx.pi())));
+    group.bench_function(format!("{label}/tau"), |b| b.iter(|| black_box(ctx.tau())));
+    group.bench_function(format!("{label}/add"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let (lhs, rhs) = next_case(&arithmetic_cases, &cursor);
+            black_box(ctx.add(black_box(lhs), black_box(rhs)))
+        })
+    });
+    group.bench_function(format!("{label}/sub"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let (lhs, rhs) = next_case(&arithmetic_cases, &cursor);
+            black_box(ctx.sub(black_box(lhs), black_box(rhs)))
+        })
+    });
+    group.bench_function(format!("{label}/neg"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(ctx.neg(black_box(next_case(&reciprocal_cases, &cursor)))))
+    });
+    group.bench_function(format!("{label}/mul"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let (lhs, rhs) = next_case(&arithmetic_cases, &cursor);
+            black_box(ctx.mul(black_box(lhs), black_box(rhs)))
+        })
+    });
+    group.bench_function(format!("{label}/div"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let (lhs, rhs) = next_case(&arithmetic_cases, &cursor);
+            black_box(ctx.div(black_box(lhs), black_box(rhs)))
+        })
+    });
+    for name in [
+        "reciprocal",
+        "reciprocal_checked",
+        "reciprocal_checked_abort",
+    ] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(ctx.reciprocal(black_box(next_case(&reciprocal_cases, &cursor)))))
+        });
+    }
+    group.bench_function(format!("{label}/pow"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let (lhs, rhs) = next_case(&pow_cases, &cursor);
+            black_box(ctx.pow(black_box(lhs), black_box(rhs)))
+        })
+    });
+    group.bench_function(format!("{label}/powi"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(ctx.powi(black_box(next_case(&reciprocal_cases, &cursor)), 5)))
+    });
+    group.bench_function(format!("{label}/exp"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| black_box(ctx.exp(black_box(next_case(&unit_interval_cases, &cursor)))))
+    });
+    for name in ["ln", "log10", "log10_abort", "sqrt"] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let value = black_box(next_case(&positive_cases, &cursor));
+                black_box(match name {
+                    "ln" => ctx.ln(value),
+                    "sqrt" => ctx.sqrt(value),
+                    _ => ctx.log10(value),
+                })
+            })
+        });
+    }
+    for (name, values) in [
+        ("sin", &trig_cases[..]),
+        ("cos", &trig_cases[..]),
+        ("tan", &trig_cases[..]),
+        ("sinh", &hyperbolic_cases[..]),
+        ("cosh", &hyperbolic_cases[..]),
+        ("tanh", &hyperbolic_cases[..]),
+        ("asin", &unit_interval_cases[..]),
+        ("asin_abort", &unit_interval_cases[..]),
+        ("acos", &unit_interval_cases[..]),
+        ("acos_abort", &unit_interval_cases[..]),
+        ("atan", &trig_cases[..]),
+        ("atan_abort", &trig_cases[..]),
+        ("asinh", &trig_cases[..]),
+        ("asinh_abort", &trig_cases[..]),
+        ("acosh", &acosh_cases[..]),
+        ("acosh_abort", &acosh_cases[..]),
+        ("atanh", &unit_interval_cases[..]),
+        ("atanh_abort", &unit_interval_cases[..]),
+    ] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let value = black_box(next_case(values, &cursor));
+                black_box(match name {
+                    "sin" => ctx.sin(value),
+                    "cos" => ctx.cos(value),
+                    "tan" => ctx.tan(value),
+                    "sinh" => ctx.sinh(value),
+                    "cosh" => ctx.cosh(value),
+                    "tanh" => ctx.tanh(value),
+                    "asin" | "asin_abort" => ctx.asin(value),
+                    "acos" | "acos_abort" => ctx.acos(value),
+                    "atan" | "atan_abort" => ctx.atan(value),
+                    "asinh" | "asinh_abort" => ctx.asinh(value),
+                    "acosh" | "acosh_abort" => ctx.acosh(value),
+                    _ => ctx.atanh(value),
+                })
+            })
+        });
+    }
+    for name in ["zero_status", "zero_status_abort"] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| black_box(ctx.is_zero(black_box(next_case(&zero_status_cases, &cursor)))))
+        });
+    }
+}
