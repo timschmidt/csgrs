@@ -40,7 +40,7 @@ The evaluator refactor plan lives in [`evaluator-refactor.md`](./evaluator-refac
 
 ```toml
 [dependencies]
-hyperreal = "0.8.1"
+hyperreal = "0.9.1"
 ```
 
 ## Examples

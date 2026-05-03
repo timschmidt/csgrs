@@ -244,18 +244,17 @@ impl Rational {
     }
 
     pub(crate) fn factor_two_powers(&self) -> (i32, Self) {
-        let mut numerator = self.numerator.clone();
-        let mut denominator = self.denominator.clone();
-        let mut shift = 0_i32;
-
-        while (&numerator % &*TWO).is_zero() && !numerator.is_zero() {
-            numerator /= &*TWO;
-            shift += 1;
-        }
-        while (&denominator % &*TWO).is_zero() {
-            denominator /= &*TWO;
-            shift -= 1;
-        }
+        let numerator_shift = self.numerator.trailing_zeros().unwrap_or(0);
+        let denominator_shift = self
+            .denominator
+            .trailing_zeros()
+            .expect("Rational denominators are never zero");
+        let shift = i32::try_from(numerator_shift).expect("shift should fit in i32")
+            - i32::try_from(denominator_shift).expect("shift should fit in i32");
+        let numerator = &self.numerator
+            >> usize::try_from(numerator_shift).expect("shift should fit in usize");
+        let denominator = &self.denominator
+            >> usize::try_from(denominator_shift).expect("shift should fit in usize");
 
         (
             shift,

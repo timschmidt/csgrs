@@ -452,32 +452,29 @@ impl Simple {
         }
     }
 
-    fn eat_keyword(chars: &mut Peekable<Chars>, suffix: &str) -> bool {
-        for expected in suffix.chars() {
-            match chars.peek() {
-                Some(c) if *c == expected => {
-                    chars.next();
-                }
-                _ => return false,
+    fn consume_operator_token(chars: &mut Peekable<Chars>) -> String {
+        let mut token = String::new();
+        while let Some(c) = chars.peek() {
+            match c {
+                'A'..='Z' | 'a'..='z' | '0'..='9' => token.push(*c),
+                _ => break,
             }
+            chars.next();
         }
-        !matches!(chars.peek(), Some('A'..='Z' | 'a'..='z'))
+        token
     }
 
     fn operator(chars: &mut Peekable<Chars>) -> Result<Operator, &'static str> {
         use Operator::*;
-        let Some(first) = chars.next() else {
-            return Err("No such operator");
-        };
-        match first {
-            'l' if Self::eat_keyword(chars, "og10") || Self::eat_keyword(chars, "og") => Ok(Log10),
-            'l' if Self::eat_keyword(chars, "n") || Self::eat_keyword(chars, "") => Ok(Ln),
-            'e' if Self::eat_keyword(chars, "xp") || Self::eat_keyword(chars, "") => Ok(Exp),
-            's' if Self::eat_keyword(chars, "qrt") || Self::eat_keyword(chars, "") => Ok(Sqrt),
-            'c' if Self::eat_keyword(chars, "os") => Ok(Cos),
-            's' if Self::eat_keyword(chars, "in") => Ok(Sin),
-            'p' if Self::eat_keyword(chars, "ow") => Ok(Pow),
-            't' if Self::eat_keyword(chars, "an") => Ok(Tan),
+        match Self::consume_operator_token(chars).as_str() {
+            "log10" | "log" => Ok(Log10),
+            "ln" | "l" => Ok(Ln),
+            "exp" | "e" => Ok(Exp),
+            "sqrt" | "s" => Ok(Sqrt),
+            "cos" => Ok(Cos),
+            "sin" => Ok(Sin),
+            "pow" => Ok(Pow),
+            "tan" => Ok(Tan),
             _ => Err("No such operator"),
         }
     }
@@ -733,6 +730,17 @@ mod tests {
         assert!(result.is_integer());
         let ans = format!("{result}");
         assert_eq!(ans, "10");
+    }
+
+    #[test]
+    fn log_aliases_parse_as_log10() {
+        let empty = HashMap::new();
+        for case in ["(log 100)", "(log10 100)"] {
+            let xpr: Simple = case.parse().unwrap();
+            let result = xpr.evaluate(&empty).unwrap();
+            assert!(result.is_integer(), "{case}");
+            assert_eq!(format!("{result}"), "2", "{case}");
+        }
     }
 
     #[test]

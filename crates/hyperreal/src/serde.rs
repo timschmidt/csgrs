@@ -14,8 +14,8 @@ impl Real {
     }
 
     /// Deserializes a Real from a JSON string.
-    pub fn from_json(json: &str) -> Self {
-        serde_json::from_str(json).unwrap()
+    pub fn from_json(json: &str) -> Result<Self, Problem> {
+        serde_json::from_str(json).map_err(|_| Problem::ParseError)
     }
 
     /// Serializes the Real to a CBOR byte vector.
@@ -27,7 +27,7 @@ impl Real {
     /// use hyperreal::Real;
     /// let x = Real::new(5.into());
     /// let bytes = x.to_bytes();
-    /// let y = Real::from_bytes(&bytes);
+    /// let y = Real::from_bytes(&bytes).unwrap();
     /// assert_eq!(x, y);
     /// ```
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -37,8 +37,8 @@ impl Real {
     }
 
     /// Deserializes a Real from a CBOR byte slice.
-    pub fn from_bytes(bytes: &[u8]) -> Self {
-        de::from_reader(bytes).unwrap()
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Problem> {
+        de::from_reader(bytes).map_err(|_| Problem::ParseError)
     }
 }
 
@@ -162,11 +162,11 @@ mod tests {
     fn test_round_trip_functions() {
         let x = Real::new(Rational::new(5));
         let json = x.to_json();
-        let y = Real::from_json(&json);
+        let y = Real::from_json(&json).unwrap();
         assert_eq!(x, y);
 
         let y = x.to_bytes();
-        let z = Real::from_bytes(&y);
+        let z = Real::from_bytes(&y).unwrap();
         assert_eq!(x, z);
     }
 
