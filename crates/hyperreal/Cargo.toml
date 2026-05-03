@@ -3,8 +3,10 @@ name = "hyperreal"
 description = "Exact rational and computable real arithmetic in Rust"
 license = "Apache-2.0"
 repository = "https://github.com/timschmidt/hyperreal/"
-version = "0.8.1"
+version = "0.9.0"
 edition = "2024"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+readme = "README.md"
 
 [dependencies]
 ciborium = "0.2.2"
