@@ -1,118 +1,158 @@
-# Realistic
+# Hyperreal
 
-Realistic is an implementation of Hans Boehm's ["Towards an API for the Real Numbers"](https://dl.acm.org/doi/pdf/10.1145/3385412.3386037) paper
+Hyperreal is a Rust library for exact rational arithmetic and computable real arithmetic. It started from Hans Boehm's "Towards an API for the Real Numbers" model and has since grown into a more performance-focused Rust implementation with symbolic tracking, exact shortcuts, borrowed arithmetic support, and a benchmark suite for the hot numerical paths.
 
-The core idea here is that while by definition almost all Real numbers are non-computable and so we can't expect them to be well behaved in
-our computer, many useful Real numbers are quite well behaved if we provide a better API.
+## What it provides
 
-The Real type in this crate represents a number which is a composite of a rational (a ratio between two potentially large integers) and some
-real value which we may not be able to compute exactly and so must be approximated for display, but which sometimes has a precise description
-we can track to take advantage of in further calculations.
+- `Rational`
+  - arbitrary-precision rational values
+  - exact arithmetic
+  - conversions to and from integers and IEEE-754 floats
+- `Computable`
+  - lazy real-number evaluation to requested precision
+  - transcendental functions such as `exp`, `ln`, `sqrt`, `sin`, `cos`, and `tan`
+  - caching, structural simplification, and targeted argument reduction
+- `Real`
+  - a higher-level real type that combines exact rational structure with computable irrational parts
+  - symbolic handling for common classes such as square roots, logarithms, exponentials, and rational multiples of `pi`
+- `Simple`
+  - a small Lisp-like expression parser and evaluator for interactive use
 
-The built-in example interactive evaluates [Simple Expressions](#simple-expressions) entered by hand and displays the answer
+## Current state
 
-## Unfinished
+The project is no longer just a straight Java port. The current codebase includes:
 
-Most features from the Java are now replicated or have equivalent functionality in realistic, but there is still tidying up to do.
+- direct and benchmarked transcendental fast paths
+- exact and symbolic trig/log shortcuts
+- borrowed `Rational` and `Real` arithmetic APIs
+- Criterion benchmark suites for:
+  - library-level behavior
+  - numerical kernels
+  - borrowed-vs-owned arithmetic
+  - float conversion
+- ongoing evaluator work to separate:
+  - exact public semantics
+  - planning-only sign / MSD facts used for internal scheduling
 
-## Unfaithful
+The evaluator refactor plan lives in [`evaluator-refactor.md`](./evaluator-refactor.md).
 
-To the extent this implementation reflects the intent of the original paper, credit should go to the author of that paper, Hans Boehm.
+## Installation
 
-On the other hand, if you encounter bugs or inadequacies in this code, chances are blame for those lies entirely with me as its programmer
+```toml
+[dependencies]
+hyperreal = "0.8.1"
+```
 
-In some places the natural way to express the API in Rust differs from Java and I intend to explain such deviations below. In several places
-the Java uses recursion but I expressed the same algorithm with iteration in Rust, sometimes taking the opportunity to incorporate the signal
-checking early termination.
+## Examples
 
-### Naming
+### Exact rationals
 
-The Java class BoundedRational is `Rational` in realistic, while UnifiedReal is `Real`, CRPropery is named `Class` and CR is `Computable`.
+```rust
+use hyperreal::Rational;
 
-`Rational::to_big_integer` has a different name because in Rust `as` signifies that this conversion is cheap
+let a = Rational::fraction(7, 8).unwrap();
+let b = Rational::fraction(9, 10).unwrap();
+let c = a + b;
 
-In some places these APIs provide a `Problem` where the Java throws various Exception classes. Some programming errors will panic but
-ordinary arithmetic operations should only fail with a `Problem` such as `Problem::DivideByZero`.
+assert_eq!(c, Rational::fraction(79, 40).unwrap());
+```
 
-Many APIs use `Option<T>` where the analogous Java relies on nullability, others use `Result<Real, Problem>` to reflect the possibility of
-unrecoverable errors during either parsing or approximation of results.
+### Real arithmetic
 
-### Conversions
+```rust
+use hyperreal::{Rational, Real};
 
-Where applicable the Rust conversion APIs (From, Into, TryFrom, TryInto) are made available for these types.
+let x = Real::new(Rational::new(2)).sqrt().unwrap();
+let y = Real::new(Rational::new(3)).sqrt().unwrap();
+let z = x * y;
 
-You can convert f32 or f64 (IEEE floating point values) into a Rational or Real. You can convert a Real back to the closest floating point
-value. This should round trip correctly, note that these convert to the closest binary fraction *not* to the decimal fraction as displayed.
-Conversions from f32 or f64 are fallible, as both NaN and Infinity do not have equivalents in these types.
+let approx: f64 = z.into();
+assert!(approx > 2.44 && approx < 2.45);
+```
 
-You can convert any of the integer types (such as i8 or u128) into a Rational or Real, this is an infallible conversion. You can also
-convert a Rational to any of the integer types, however if the Rational isn't an integer, or is outside the range of the integer target type
-this conversion fails with the appropriate Problem.
+### Computable values
 
-### Arithmetic operators on Rational and Real
+```rust
+use hyperreal::{Computable, Rational};
 
-Unlike Java, Rust has "Operator overloading" or rather, we can implement many arithmetic operators for user defined types. This means that
-where the Java API provides named functions, in many cases the Rust API provides operators, such as + (impl Add) and * (impl Multiply)
+let x = Computable::rational(Rational::fraction(7, 5).unwrap()).sin();
+let approx = x.approx(-40);
 
-I have chosen not to provide this capability for Computable, this might be revisited later
+assert_ne!(approx, 0.into());
+```
+
+### Simple expressions
+
+```rust
+use hyperreal::Simple;
+
+let expr: Simple = "(* (+ pi pi) (sin (/ 1 5)))".parse().unwrap();
+let value = expr.evaluate(&Default::default()).unwrap();
+
+let _: f64 = value.into();
+```
+
+## Simple expression language
+
+`Simple` uses a Lisp-like syntax:
+
+- arithmetic: `+`, `-`, `*`, `/`
+- roots and powers: `sqrt`, `pow`, `^`
+- logs and exponentials: `ln`, `log10`, `exp`, `e`
+- trig: `sin`, `cos`, `tan`
+
+Examples:
+
+```text
+(+ 1 2 3 4)
+(* (+ pi pi) (sin (/ 1 5)))
+(pow (+ 3/2 4/7) 9/2)
+(sqrt 9)
+```
+
+Numeric literals may be:
+
+- integers: `42`
+- decimals: `2.75`
+- fractions: `11/7`
+
+Built-in names include `pi` and `e`.
+
+## Conversions
+
+Hyperreal supports Rust conversion traits where they make sense:
+
+- integer types -> `Rational` / `Real`
+- `f32` / `f64` -> `Rational` / `Real` via exact IEEE-754 decoding
+- `Real` -> `f32` / `f64` via nearest representable floating-point value
+
+Float conversions are fallible on `NaN` and infinities.
+
+## Serialization
+
+The crate includes `serde` support. `Computable` serializes its expression structure, but not transient runtime state such as approximation caches or abort signals.
 
 ## Performance
 
-No attempt has been made to measure the current performance of this Rust, compare it against the Java, or against similar code. Although the
-code was not specifically written with performance in mind, some care was taken to avoid needless re-calculations even beyond the core idea of
-the Computable type.
+Performance is now an explicit project goal.
 
-Because some Computable reals would evaluate forever, you may want to use the Real::abort method before trying to evaluate a Real, this enables
-you to hook a signal (for example from a user interface thread) to the evaluation logic, in places which may run forever it will periodically
-check for your signal to abort the calculation.
+Current work in the tree includes:
 
+- specialized transcendental kernels
+- faster large-argument reduction for trig and `exp`
+- exact rational and symbolic shortcuts
+- borrowed arithmetic improvements
+- benchmark-guided evaluator refactoring
 
-# Simple Expressions
+Benchmark targets:
 
-Parsing for a simple fairly human readable expression syntax is provided, this syntax has a LISP-like structure with each list consisting of
-exactly one operator, then one or more sub-expressions consisting of either another list, a numeric literal or a name. The type for a parsed
-expression of this type is named Simple.
+- `cargo bench --bench library_perf`
+- `cargo bench --bench numerical_micro`
+- `cargo bench --bench borrowed_ops`
+- `cargo bench --bench float_convert`
 
-We can parse these expressions in the usual way, and we can evaluate such an expression.
+## Notes
 
-Currently the provided operators are the + - * and / expected in programming for addition, subtraction, multiplication and division
-plus e or exp for the natural exponenitation, l or ln for the natural log, log or log10 for the log to base 10, pow or ^ for exponentiation,
-and s, sqrt or √ for square roots.
-
-The cosine (cos) sine (sin) and tangent (tan) functions are provided and expressions which reduce to sin() or tan() of some rational multiple of
-pi are tracked.
-
-
-
-(ln (exp 1)) == (e (l 1)) == 1
-
-(sqrt 9) == 3
-
-(cos (* pi 2.5)) == 0
-
-Numeric literals are written in decimal, 2.75 is exactly two and three quarters. The underscore is ignored, so 10\_000 means the same as 10000
-
-You may also write a fraction, including improper fractions such as 11/7 or 4/3 and this will be recognised as a rational number
-
-Today the built-in names are only e (the mathematical constant and base of the natural logarithm) and pi (the mathematical constant π)
-
-However in the built-in evaluator names are also given to the previous answer (last) and all numbered answers (#1, #2 and so on)
-
-When results are not integral, scientific notation is used to display the decimal fraction
-
-
-(+ 1 2 3 4) == 10
-
-(* 1 2 3 4) == 24
-
-(- 1) == -1  negates the number
-
-(- 1 2) == -1  basic subtraction
-
-(= 1 2 3) == -4  all subsequent arguments are also subtracted
-
-(/ 1) == 1  inverts the number
-
-(/ 1 2) == 0.5  basic division
-
-(/ 1 2 3) == a sixth, all subsequent arguments are also divided
+- Some computations are intentionally lazy and may run for a long time if you request difficult values at high precision.
+- `Real::abort` can be used to attach an external stop signal to long-running evaluation.
+- Public APIs are being tightened so exact facts and planner-only facts stay separate; this matters for both correctness and WASM stack-safety work.

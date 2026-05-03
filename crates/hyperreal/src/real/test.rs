@@ -166,6 +166,74 @@ mod tests {
         assert_eq!(two_pi.clone().cos(), one);
     }
 
+    fn pi_fraction(n: i64, d: u64) -> Real {
+        Real::new(Rational::fraction(n, d).unwrap()) * Real::pi()
+    }
+
+    #[test]
+    fn sin_pi_rational_multiples() {
+        let zero = Real::zero();
+        let one: Real = 1.into();
+        let minus_one: Real = (-1).into();
+        let half: Real = "1/2".parse().unwrap();
+        let minus_half: Real = "-1/2".parse().unwrap();
+        let sqrt_two_over_two = Real::new(Rational::fraction(1, 2).unwrap())
+            * Real::new(Rational::new(2)).sqrt().unwrap();
+        let sqrt_three_over_two = Real::new(Rational::fraction(1, 2).unwrap())
+            * Real::new(Rational::new(3)).sqrt().unwrap();
+
+        assert_eq!(pi_fraction(0, 1).sin(), zero);
+        assert_eq!(pi_fraction(1, 6).sin(), half);
+        assert_eq!(pi_fraction(1, 4).sin(), sqrt_two_over_two);
+        assert_eq!(pi_fraction(1, 3).sin(), sqrt_three_over_two);
+        assert_eq!(pi_fraction(1, 2).sin(), one);
+        assert_eq!(pi_fraction(5, 6).sin(), half);
+        assert_eq!(pi_fraction(7, 6).sin(), minus_half);
+        assert_eq!(pi_fraction(3, 2).sin(), minus_one);
+        assert_eq!(pi_fraction(-1, 6).sin(), minus_half);
+        assert_eq!(pi_fraction(2, 1).sin(), zero);
+    }
+
+    #[test]
+    fn sin_pi_rational_multiples_fold_to_same_curve() {
+        assert_eq!(pi_fraction(1, 5).sin(), pi_fraction(4, 5).sin());
+        assert_eq!(pi_fraction(6, 5).sin(), -pi_fraction(1, 5).sin());
+        assert_eq!(pi_fraction(-4, 5).sin(), -pi_fraction(1, 5).sin());
+        assert_eq!(pi_fraction(11, 5).sin(), pi_fraction(1, 5).sin());
+    }
+
+    #[test]
+    fn cos_pi_rational_multiples_shift_through_sin() {
+        let zero = Real::zero();
+        let one: Real = 1.into();
+        let minus_one: Real = (-1).into();
+        let half: Real = "1/2".parse().unwrap();
+        let minus_half: Real = "-1/2".parse().unwrap();
+        let sqrt_two_over_two = Real::new(Rational::fraction(1, 2).unwrap())
+            * Real::new(Rational::new(2)).sqrt().unwrap();
+        let sqrt_three_over_two = Real::new(Rational::fraction(1, 2).unwrap())
+            * Real::new(Rational::new(3)).sqrt().unwrap();
+
+        assert_eq!(pi_fraction(0, 1).cos(), one);
+        assert_eq!(pi_fraction(1, 6).cos(), sqrt_three_over_two);
+        assert_eq!(pi_fraction(1, 4).cos(), sqrt_two_over_two);
+        assert_eq!(pi_fraction(1, 3).cos(), half);
+        assert_eq!(pi_fraction(1, 2).cos(), zero);
+        assert_eq!(pi_fraction(2, 3).cos(), minus_half);
+        assert_eq!(pi_fraction(1, 1).cos(), minus_one);
+        assert_eq!(pi_fraction(3, 2).cos(), zero);
+        assert_eq!(pi_fraction(-1, 3).cos(), half);
+        assert_eq!(pi_fraction(2, 1).cos(), one);
+    }
+
+    #[test]
+    fn tan_irrational_argument() {
+        let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
+        let answer = sqrt_two.tan().unwrap();
+        let actual: f64 = answer.into();
+        assert!((actual - 6.3341191670421955).abs() < 1e-12, "{actual}");
+    }
+
     #[test]
     fn powi() {
         let base: Real = 4.into();
@@ -230,13 +298,17 @@ mod tests {
     fn curves() {
         let eighty = Rational::fraction(80, 100).unwrap();
         let twenty = Rational::fraction(20, 100).unwrap();
-        assert_eq!(curve(eighty), (false, twenty));
+        assert_eq!(curve(eighty), (false, twenty.clone()));
         let forty = Rational::fraction(40, 100).unwrap();
         let sixty = Rational::fraction(60, 100).unwrap();
         assert_eq!(curve(sixty), (false, forty));
         let otf = Rational::fraction(124, 100).unwrap();
         let tf = Rational::fraction(24, 100).unwrap();
-        assert_eq!(curve(otf), (true, tf));
+        assert_eq!(curve(otf), (true, tf.clone()));
+        let minus_twenty = Rational::fraction(-20, 100).unwrap();
+        assert_eq!(curve(minus_twenty), (true, twenty));
+        let minus_otf = Rational::fraction(-124, 100).unwrap();
+        assert_eq!(curve(minus_otf), (false, tf));
     }
 
     #[test]

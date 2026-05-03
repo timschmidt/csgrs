@@ -12,3 +12,5 @@ pub use crate::simple::Simple;
 
 mod problem;
 pub use crate::problem::Problem;
+
+mod serde;

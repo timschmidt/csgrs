@@ -2,6 +2,7 @@ use crate::Problem;
 use num::bigint::Sign::{self, *};
 use num::{BigInt, BigUint, bigint::ToBigInt, bigint::ToBigUint};
 use num::{One, Zero};
+use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
 
 pub(crate) mod convert;
@@ -20,26 +21,26 @@ pub(crate) mod convert;
 ///
 /// Parsing a rational from a simple fraction
 /// ```
-/// use realistic::Rational;
+/// use hyperreal::Rational;
 /// let half: Rational = "9/18".parse().unwrap();
 /// ```
 ///
 /// Parsing a decimal fraction
 /// ```
-/// use realistic::Rational;
+/// use hyperreal::Rational;
 /// let point_two_five: Rational = "0.25".parse().unwrap();
 /// ```
 ///
 /// Converting a 64-bit floating point number
 /// ```
-/// use realistic::Rational;
+/// use hyperreal::Rational;
 /// let r: Rational = 0.3_f64.try_into().unwrap();
 /// assert!(r != Rational::fraction(3, 10).unwrap());
 /// ```
 ///
 /// Simple arithmetic
 /// ```
-/// use realistic::Rational;
+/// use hyperreal::Rational;
 /// let quarter = Rational::fraction(1, 4).unwrap();
 /// let eighteen = Rational::new(18);
 /// let two = Rational::one() + Rational::one();
@@ -48,7 +49,7 @@ pub(crate) mod convert;
 /// assert_eq!(four, Rational::new(4));
 /// ```
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Rational {
     sign: Sign,
     numerator: BigUint,
@@ -142,7 +143,7 @@ impl Rational {
     /// # Example
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let five = Rational::new(5);
     /// let a_fifth = Rational::fraction(1, 5).unwrap();
     /// assert_eq!(five.clone().inverse().unwrap(), a_fifth);
@@ -164,7 +165,7 @@ impl Rational {
     /// # Example
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// assert!(Rational::new(5).is_integer());
     /// assert!(Rational::fraction(16, 4).unwrap().is_integer());
     /// assert!(!Rational::fraction(5, 4).unwrap().is_integer());
@@ -180,7 +181,7 @@ impl Rational {
     /// # Examples
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let approx_pi = Rational::fraction(22, 7).unwrap();
     /// let three = Rational::new(3);
     /// assert_eq!(approx_pi.trunc(), three);
@@ -190,7 +191,7 @@ impl Rational {
     /// with suitable range
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let fraction = Rational::new(172) / Rational::new(9);
     /// let int: u8 = fraction.trunc().try_into().unwrap();
     /// assert_eq!(int, 19);
@@ -214,14 +215,14 @@ impl Rational {
     /// # Examples
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let approx_pi = Rational::fraction(22, 7).unwrap();
     /// let a_seventh = Rational::fraction(1, 7).unwrap();
     /// assert_eq!(approx_pi.fract(), a_seventh);
     /// ```
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let backward = Rational::fraction(-53, 9).unwrap();
     /// let fract = Rational::fraction(-8, 9).unwrap();
     /// assert_eq!(backward.fract(), fract);
@@ -242,6 +243,65 @@ impl Rational {
         &self.denominator
     }
 
+    pub(crate) fn factor_two_powers(&self) -> (i32, Self) {
+        let mut numerator = self.numerator.clone();
+        let mut denominator = self.denominator.clone();
+        let mut shift = 0_i32;
+
+        while (&numerator % &*TWO).is_zero() && !numerator.is_zero() {
+            numerator /= &*TWO;
+            shift += 1;
+        }
+        while (&denominator % &*TWO).is_zero() {
+            denominator /= &*TWO;
+            shift -= 1;
+        }
+
+        (
+            shift,
+            Self {
+                sign: self.sign,
+                numerator,
+                denominator,
+            },
+        )
+    }
+
+    pub(crate) fn power_of_two_shift(&self) -> Option<(i32, Sign)> {
+        if self.sign == NoSign {
+            return None;
+        }
+
+        let (shift, reduced) = self.factor_two_powers();
+        if reduced.numerator == *ONE.deref() && reduced.denominator == *ONE.deref() {
+            Some((shift, reduced.sign))
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn msd_exact(&self) -> Option<i32> {
+        if self.sign == NoSign {
+            return None;
+        }
+
+        let numerator_bits = self.numerator.bits() as i32;
+        let denominator_bits = self.denominator.bits() as i32;
+        let candidate = numerator_bits - denominator_bits;
+
+        let below = if candidate >= 0 {
+            self.numerator < (&self.denominator << candidate as usize)
+        } else {
+            (&self.numerator << (-candidate) as usize) < self.denominator
+        };
+
+        if below {
+            Some(candidate - 1)
+        } else {
+            Some(candidate)
+        }
+    }
+
     /// Is this Rational better understood as a fraction?
     ///
     /// If a decimal expansion of this fraction would never end this is true.
@@ -249,7 +309,7 @@ impl Rational {
     /// # Example
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let third = Rational::fraction(1, 3).unwrap();
     /// assert!(third.prefer_fraction());
     /// ```
@@ -273,7 +333,7 @@ impl Rational {
     /// # Example
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// use num::bigint::ToBigInt;
     /// let seven_fifths = Rational::fraction(7, 5).unwrap();
     /// let eleven = ToBigInt::to_bigint(&11).unwrap();
@@ -339,20 +399,12 @@ impl Rational {
 
     // Some(root) squared is n, otherwise None
     fn try_perfect(n: BigUint) -> Option<BigUint> {
-        use crate::Computable;
-        use std::cmp::Ordering::*;
-
-        let r = Self {
-            sign: Plus,
-            numerator: n.clone(),
-            denominator: BigUint::one(),
-        };
-        let sqrt = Computable::sqrt_rational(r);
-        let root = ToBigUint::to_biguint(&sqrt.approx(0)).expect("should be an unsigned integer");
+        let root = n.sqrt();
         let square = &root * &root;
-        match n.cmp(&square) {
-            Equal => Some(root),
-            _ => None,
+        if square == n {
+            Some(root)
+        } else {
+            None
         }
     }
 
@@ -437,10 +489,14 @@ impl Rational {
             return Self::one();
         }
         let mut result = Self::one();
-        for b in (0..(exp.bits())).rev() {
-            result *= result.clone();
+        let mut factor = self.clone();
+        let bits = exp.bits();
+        for b in 0..bits {
             if exp.bit(b) {
-                result *= self;
+                result *= &factor;
+            }
+            if b + 1 < bits {
+                factor = &factor * &factor;
             }
         }
         result
@@ -472,6 +528,12 @@ impl Rational {
             Plus => Ok(self.pow_up(exp.magnitude())),
             NoSign => unreachable!(),
         }
+    }
+}
+
+impl AsRef<Rational> for Rational {
+    fn as_ref(&self) -> &Rational {
+        self
     }
 }
 
@@ -586,15 +648,16 @@ impl std::str::FromStr for Rational {
 
 use core::ops::*;
 
-impl Add for Rational {
-    type Output = Self;
+impl<T: AsRef<Rational>> Add<T> for &Rational {
+    type Output = Rational;
 
-    fn add(self, other: Self) -> Self {
+    fn add(self, other: T) -> Self::Output {
         use std::cmp::Ordering::*;
 
+        let other = other.as_ref();
         let denominator = &self.denominator * &other.denominator;
-        let a = self.numerator * other.denominator;
-        let b = other.numerator * self.denominator;
+        let a = &self.numerator * &other.denominator;
+        let b = &other.numerator * &self.denominator;
         let (sign, numerator) = match (self.sign, other.sign) {
             (any, NoSign) => (any, a),
             (NoSign, any) => (any, b),
@@ -603,46 +666,71 @@ impl Add for Rational {
             (x, y) => match a.cmp(&b) {
                 Greater => (x, a - b),
                 Equal => {
-                    return Self::zero();
+                    return Self::Output::zero();
                 }
                 Less => (y, b - a),
             },
         };
-        Self::maybe_reduce(Self {
+        Self::Output::maybe_reduce(Self::Output {
             sign,
             numerator,
             denominator,
         })
+    }
+}
+
+impl<T: AsRef<Rational>> Add<T> for Rational {
+    type Output = Self;
+
+    fn add(self, other: T) -> Self {
+        &self + other.as_ref()
+    }
+}
+
+impl Neg for &Rational {
+    type Output = Rational;
+
+    fn neg(self) -> Self::Output {
+        let mut ret = self.clone();
+        ret.sign = -ret.sign;
+        ret
     }
 }
 
 impl Neg for Rational {
     type Output = Self;
 
-    fn neg(self) -> Self {
-        Self {
-            sign: -self.sign,
-            ..self
-        }
+    fn neg(mut self) -> Self {
+        self.sign = -self.sign;
+        self
     }
 }
 
-impl Sub for Rational {
-    type Output = Self;
+impl<T: AsRef<Rational>> Sub<T> for &Rational {
+    type Output = Rational;
 
-    fn sub(self, other: Self) -> Self {
-        self + -other
-    }
-}
+    fn sub(self, other: T) -> Self::Output {
+        use std::cmp::Ordering::*;
 
-impl Mul for Rational {
-    type Output = Self;
-
-    fn mul(self, other: Self) -> Self {
-        let sign = self.sign * other.sign;
-        let numerator = self.numerator * other.numerator;
-        let denominator = self.denominator * other.denominator;
-        Self::maybe_reduce(Self {
+        let other = other.as_ref();
+        let denominator = &self.denominator * &other.denominator;
+        let a = &self.numerator * &other.denominator;
+        let b = &other.numerator * &self.denominator;
+        let (sign, numerator) = match (self.sign, other.sign) {
+            (any, NoSign) => (any, a),
+            (NoSign, Plus) => (Minus, b),
+            (NoSign, Minus) => (Plus, b),
+            (Plus, Minus) => (Plus, a + b),
+            (Minus, Plus) => (Minus, a + b),
+            (x, y) => match a.cmp(&b) {
+                Greater => (x, a - b),
+                Equal => {
+                    return Self::Output::zero();
+                }
+                Less => (-y, b - a),
+            },
+        };
+        Self::Output::maybe_reduce(Self::Output {
             sign,
             numerator,
             denominator,
@@ -650,37 +738,66 @@ impl Mul for Rational {
     }
 }
 
-impl MulAssign for Rational {
-    fn mul_assign(&mut self, other: Self) {
-        let sign = self.sign * other.sign;
-        self.sign = sign;
-        self.numerator *= other.numerator;
-        self.denominator *= other.denominator;
-    }
-}
-
-impl MulAssign<&Rational> for Rational {
-    fn mul_assign(&mut self, other: &Rational) {
-        let sign = self.sign * other.sign;
-        self.sign = sign;
-        self.numerator = &self.numerator * &other.numerator;
-        self.denominator = &self.denominator * &other.denominator;
-    }
-}
-
-impl Div for Rational {
+impl<T: AsRef<Rational>> Sub<T> for Rational {
     type Output = Self;
 
-    fn div(self, other: Self) -> Self {
+    fn sub(self, other: T) -> Self {
+        &self - other.as_ref()
+    }
+}
+
+impl<T: AsRef<Rational>> Mul<T> for &Rational {
+    type Output = Rational;
+
+    fn mul(self, other: T) -> Self::Output {
+        let other = other.as_ref();
+        let sign = self.sign * other.sign;
+        let numerator = &self.numerator * &other.numerator;
+        let denominator = &self.denominator * &other.denominator;
+        Self::Output::maybe_reduce(Self::Output {
+            sign,
+            numerator,
+            denominator,
+        })
+    }
+}
+
+impl<T: AsRef<Rational>> Mul<T> for Rational {
+    type Output = Self;
+
+    fn mul(self, other: T) -> Self {
+        &self * other.as_ref()
+    }
+}
+
+impl<T: AsRef<Rational>> MulAssign<T> for Rational {
+    fn mul_assign(&mut self, other: T) {
+        *self = &*self * other.as_ref();
+    }
+}
+
+impl<T: AsRef<Rational>> Div<T> for &Rational {
+    type Output = Rational;
+
+    fn div(self, other: T) -> Self::Output {
+        let other = other.as_ref();
         assert_ne!(other.numerator, BigUint::ZERO);
         let sign = self.sign * other.sign;
-        let numerator = self.numerator * other.denominator;
-        let denominator = self.denominator * other.numerator;
-        Self::maybe_reduce(Self {
+        let numerator = &self.numerator * &other.denominator;
+        let denominator = &self.denominator * &other.numerator;
+        Self::Output::maybe_reduce(Self::Output {
             sign,
             numerator,
             denominator,
         })
+    }
+}
+
+impl<T: AsRef<Rational>> Div<T> for Rational {
+    type Output = Self;
+
+    fn div(self, other: T) -> Self {
+        &self / other.as_ref()
     }
 }
 
@@ -951,5 +1068,29 @@ mod tests {
         let zero = Rational::zero();
         let err = zero.inverse().unwrap_err();
         assert_eq!(err, Problem::DivideByZero);
+    }
+
+    #[test]
+    fn operations_work_on_refs_on_rhs() {
+        let a = Rational::new(2);
+        let b = Rational::new(3);
+        let c = Rational::new(6);
+        assert_eq!(a.clone() * &b, c.clone());
+        assert_eq!(c.clone() / &b, a.clone());
+        assert_eq!(c.clone() - &a, Rational::new(4));
+        assert_eq!(-&c, Rational::new(-6));
+        assert_eq!(a.clone() + &b, Rational::new(5));
+    }
+
+    #[test]
+    fn operations_work_on_refs() {
+        let a = Rational::new(2);
+        let b = Rational::new(3);
+        let c = Rational::new(6);
+        assert_eq!(&a * &b, c.clone());
+        assert_eq!(&c / &b, a.clone());
+        assert_eq!(&c - &a, Rational::new(4));
+        assert_eq!(-&c, Rational::new(-6));
+        assert_eq!(&a + &b, Rational::new(5));
     }
 }

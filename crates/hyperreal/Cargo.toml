@@ -1,10 +1,32 @@
 [package]
-name = "realistic"
-description = "Towards an API for the Real Numbers"
+name = "hyperreal"
+description = "Exact rational and computable real arithmetic in Rust"
 license = "Apache-2.0"
-repository = "https://github.com/tialaramex/realistic/"
+repository = "https://github.com/timschmidt/hyperreal/"
 version = "0.8.1"
 edition = "2024"
 
 [dependencies]
-num = { version = "0.4.3", features = ["num-bigint"] }
+ciborium = "0.2.2"
+num = { version = "0.4.3", features = ["num-bigint", "serde"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "borrowed_ops"
+harness = false
+
+[[bench]]
+name = "library_perf"
+harness = false
+
+[[bench]]
+name = "numerical_micro"
+harness = false
+
+[[bench]]
+name = "float_convert"
+harness = false
