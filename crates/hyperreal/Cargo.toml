@@ -1,8 +1,8 @@
 [package]
-name = "realistic"
-description = "Towards an API for the Real Numbers"
+name = "hyperreal"
+description = "Exact rational and computable real arithmetic in Rust"
 license = "Apache-2.0"
-repository = "https://github.com/tialaramex/realistic/"
+repository = "https://github.com/timschmidt/hyperreal/"
 version = "0.8.1"
 edition = "2024"
 

@@ -21,26 +21,26 @@ pub(crate) mod convert;
 ///
 /// Parsing a rational from a simple fraction
 /// ```
-/// use realistic::Rational;
+/// use hyperreal::Rational;
 /// let half: Rational = "9/18".parse().unwrap();
 /// ```
 ///
 /// Parsing a decimal fraction
 /// ```
-/// use realistic::Rational;
+/// use hyperreal::Rational;
 /// let point_two_five: Rational = "0.25".parse().unwrap();
 /// ```
 ///
 /// Converting a 64-bit floating point number
 /// ```
-/// use realistic::Rational;
+/// use hyperreal::Rational;
 /// let r: Rational = 0.3_f64.try_into().unwrap();
 /// assert!(r != Rational::fraction(3, 10).unwrap());
 /// ```
 ///
 /// Simple arithmetic
 /// ```
-/// use realistic::Rational;
+/// use hyperreal::Rational;
 /// let quarter = Rational::fraction(1, 4).unwrap();
 /// let eighteen = Rational::new(18);
 /// let two = Rational::one() + Rational::one();
@@ -143,7 +143,7 @@ impl Rational {
     /// # Example
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let five = Rational::new(5);
     /// let a_fifth = Rational::fraction(1, 5).unwrap();
     /// assert_eq!(five.clone().inverse().unwrap(), a_fifth);
@@ -165,7 +165,7 @@ impl Rational {
     /// # Example
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// assert!(Rational::new(5).is_integer());
     /// assert!(Rational::fraction(16, 4).unwrap().is_integer());
     /// assert!(!Rational::fraction(5, 4).unwrap().is_integer());
@@ -181,7 +181,7 @@ impl Rational {
     /// # Examples
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let approx_pi = Rational::fraction(22, 7).unwrap();
     /// let three = Rational::new(3);
     /// assert_eq!(approx_pi.trunc(), three);
@@ -191,7 +191,7 @@ impl Rational {
     /// with suitable range
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let fraction = Rational::new(172) / Rational::new(9);
     /// let int: u8 = fraction.trunc().try_into().unwrap();
     /// assert_eq!(int, 19);
@@ -215,14 +215,14 @@ impl Rational {
     /// # Examples
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let approx_pi = Rational::fraction(22, 7).unwrap();
     /// let a_seventh = Rational::fraction(1, 7).unwrap();
     /// assert_eq!(approx_pi.fract(), a_seventh);
     /// ```
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let backward = Rational::fraction(-53, 9).unwrap();
     /// let fract = Rational::fraction(-8, 9).unwrap();
     /// assert_eq!(backward.fract(), fract);
@@ -267,6 +267,19 @@ impl Rational {
         )
     }
 
+    pub(crate) fn power_of_two_shift(&self) -> Option<(i32, Sign)> {
+        if self.sign == NoSign {
+            return None;
+        }
+
+        let (shift, reduced) = self.factor_two_powers();
+        if reduced.numerator == *ONE.deref() && reduced.denominator == *ONE.deref() {
+            Some((shift, reduced.sign))
+        } else {
+            None
+        }
+    }
+
     pub(crate) fn msd_exact(&self) -> Option<i32> {
         if self.sign == NoSign {
             return None;
@@ -296,7 +309,7 @@ impl Rational {
     /// # Example
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// let third = Rational::fraction(1, 3).unwrap();
     /// assert!(third.prefer_fraction());
     /// ```
@@ -320,7 +333,7 @@ impl Rational {
     /// # Example
     ///
     /// ```
-    /// use realistic::Rational;
+    /// use hyperreal::Rational;
     /// use num::bigint::ToBigInt;
     /// let seven_fifths = Rational::fraction(7, 5).unwrap();
     /// let eleven = ToBigInt::to_bigint(&11).unwrap();
@@ -386,20 +399,12 @@ impl Rational {
 
     // Some(root) squared is n, otherwise None
     fn try_perfect(n: BigUint) -> Option<BigUint> {
-        use crate::Computable;
-        use std::cmp::Ordering::*;
-
-        let r = Self {
-            sign: Plus,
-            numerator: n.clone(),
-            denominator: BigUint::one(),
-        };
-        let sqrt = Computable::sqrt_rational(r);
-        let root = ToBigUint::to_biguint(&sqrt.approx(0)).expect("should be an unsigned integer");
+        let root = n.sqrt();
         let square = &root * &root;
-        match n.cmp(&square) {
-            Equal => Some(root),
-            _ => None,
+        if square == n {
+            Some(root)
+        } else {
+            None
         }
     }
 

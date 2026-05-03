@@ -24,7 +24,7 @@ impl Real {
     ///
     /// Example:
     /// ```
-    /// use realistic::Real;
+    /// use hyperreal::Real;
     /// let x = Real::new(5.into());
     /// let bytes = x.to_bytes();
     /// let y = Real::from_bytes(&bytes);

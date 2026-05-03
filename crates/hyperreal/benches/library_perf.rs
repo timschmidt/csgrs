@@ -1,6 +1,6 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use num::bigint::BigInt;
-use realistic::{Rational, Real, Simple};
+use hyperreal::{Rational, Real, Simple};
 
 fn bench_real_format(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_format");
@@ -37,6 +37,8 @@ fn bench_simple(c: &mut Criterion) {
     let constants_parsed: Simple = constants_source.parse().unwrap();
     let exact_source = "(/ (* (+ 7/5 11/7 13/9) (- 19/11 1/3)) 23/17)";
     let exact_parsed: Simple = exact_source.parse().unwrap();
+    let nested_exact_source = "(* (+ (/ 7 5) (/ 11 7) (/ 13 9)) (pow (+ 5/4 3/8) 9) (/ (- 19/11 1/3) (+ 1/7 2/7)))";
+    let nested_exact_parsed: Simple = nested_exact_source.parse().unwrap();
 
     group.bench_function("parse_nested", |b| {
         b.iter(|| black_box(black_box(source).parse::<Simple>().unwrap()))
@@ -58,6 +60,13 @@ fn bench_simple(c: &mut Criterion) {
     group.bench_function("eval_exact", |b| {
         b.iter_batched(
             || exact_parsed.clone(),
+            |expr| black_box(expr.evaluate(&Default::default()).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("eval_nested_exact", |b| {
+        b.iter_batched(
+            || nested_exact_parsed.clone(),
             |expr| black_box(expr.evaluate(&Default::default()).unwrap()),
             BatchSize::SmallInput,
         )

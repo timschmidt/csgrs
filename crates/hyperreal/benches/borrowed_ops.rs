@@ -1,5 +1,5 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
-use realistic::{Rational, Real};
+use hyperreal::{Rational, Real};
 
 fn rational(n: i64, d: u64) -> Rational {
     Rational::fraction(n, d).unwrap()

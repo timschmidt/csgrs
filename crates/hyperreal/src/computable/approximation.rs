@@ -78,73 +78,119 @@ fn inverse(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 }
 
 fn add(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
+    let extra = 4;
+    let cutoff = p - extra;
+    let (sign1, msd1) = c1.planning_sign_and_msd();
+    let (sign2, msd2) = c2.planning_sign_and_msd();
+    if sign1 == Some(Sign::NoSign) {
+        return c2.approx_signal(signal, p);
+    }
+    if sign2 == Some(Sign::NoSign) {
+        return c1.approx_signal(signal, p);
+    }
+    let msd1 = msd1.unwrap_or_else(|| c1.msd(cutoff));
+    let msd2 = msd2.unwrap_or_else(|| c2.msd(cutoff));
+
+    match (msd1, msd2) {
+        (None, None) => return Zero::zero(),
+        (None, Some(_)) if sign2.is_some_and(|sign| sign != Sign::NoSign) => {
+            return scale(c2.approx_signal(signal, p - extra), -extra);
+        }
+        (Some(_), None) if sign1.is_some_and(|sign| sign != Sign::NoSign) => {
+            return scale(c1.approx_signal(signal, p - extra), -extra);
+        }
+        (Some(left), Some(_right))
+            if sign1 == sign2
+                && sign2.is_some_and(|sign| sign != Sign::NoSign)
+                && left < cutoff =>
+        {
+            return scale(c2.approx_signal(signal, p - extra), -extra);
+        }
+        (Some(_left), Some(right))
+            if sign1 == sign2
+                && sign1.is_some_and(|sign| sign != Sign::NoSign)
+                && right < cutoff =>
+        {
+            return scale(c1.approx_signal(signal, p - extra), -extra);
+        }
+        _ => (),
+    }
+
     scale(
         c1.approx_signal(signal, p - 2) + c2.approx_signal(signal, p - 2),
         -2,
     )
 }
 
+fn msd_from_appr(prec: Precision, appr: &BigInt) -> Precision {
+    prec + appr.magnitude().bits() as Precision - 1
+}
+
+fn multiply_with_known_msd(
+    signal: &Option<Signal>,
+    known: &Computable,
+    known_msd: Precision,
+    other: &Computable,
+    p: Precision,
+) -> BigInt {
+    let prec_other = p - known_msd - 3;
+    let appr_other = other.approx_signal(signal, prec_other);
+
+    if appr_other.sign() == Sign::NoSign {
+        return Zero::zero();
+    }
+
+    let msd_other = msd_from_appr(prec_other, &appr_other);
+    let prec_known = p - msd_other - 3;
+    let appr_known = known.approx_signal(signal, prec_known);
+
+    let scale_digits = prec_known + prec_other - p;
+    scale(appr_known * appr_other, scale_digits)
+}
+
 fn multiply(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
     let half_prec = (p >> 1) - 1;
+    let (sign1, msd1) = c1.planning_sign_and_msd();
+    let (sign2, msd2) = c2.planning_sign_and_msd();
+    if sign1 == Some(Sign::NoSign) || sign2 == Some(Sign::NoSign) {
+        return Zero::zero();
+    }
+    let msd1 = msd1.unwrap_or_else(|| c1.msd(half_prec));
+    let msd2 = msd2.unwrap_or_else(|| c2.msd(half_prec));
 
-    match c1.msd(half_prec) {
-        None => match c2.msd(half_prec) {
-            None => Zero::zero(),
-            Some(msd_op2) => {
-                let prec1 = p - msd_op2 - 3;
-                let appr1 = c1.approx_signal(signal, prec1);
-
-                if appr1.sign() == Sign::NoSign {
-                    return Zero::zero();
-                }
-
-                let msd_op1 = c1.known_msd();
-                let prec2 = p - msd_op1 - 3;
-                let appr2 = c2.approx_signal(signal, prec2);
-
-                let scale_digits = prec2 + prec1 - p;
-                scale(appr2 * appr1, scale_digits)
-            }
-        },
-        Some(msd_op1) => {
-            let prec2 = p - msd_op1 - 3;
-            let appr2 = c2.approx_signal(signal, prec2);
-
-            if appr2.sign() == Sign::NoSign {
-                return Zero::zero();
-            }
-
-            let msd_op2 = c2.known_msd();
-            let prec1 = p - msd_op2 - 3;
-            let appr1 = c1.approx_signal(signal, prec1);
-
-            let scale_digits = prec1 + prec2 - p;
-            scale(appr1 * appr2, scale_digits)
+    match (msd1, msd2) {
+        (None, None) => Zero::zero(),
+        (Some(msd_op1), None) => multiply_with_known_msd(signal, c1, msd_op1, c2, p),
+        (None, Some(msd_op2)) => multiply_with_known_msd(signal, c2, msd_op2, c1, p),
+        (Some(msd_op1), Some(msd_op2)) if msd_op2 > msd_op1 => {
+            multiply_with_known_msd(signal, c2, msd_op2, c1, p)
         }
+        (Some(msd_op1), Some(_msd_op2)) => multiply_with_known_msd(signal, c1, msd_op1, c2, p),
     }
 }
 
 fn square(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let half_prec = (p >> 1) - 1;
-    let prec2 = match c.msd(half_prec) {
+    let (sign, msd) = c.planning_sign_and_msd();
+    if sign == Some(Sign::NoSign) {
+        return Zero::zero();
+    }
+    let msd = match msd.unwrap_or_else(|| c.msd(half_prec)) {
         None => {
             return Zero::zero();
         }
-        Some(msd) => p - msd - 3,
+        Some(msd) => msd,
     };
+    let prec = p - msd - 3;
 
-    let appr2 = c.approx_signal(signal, prec2);
+    let appr = c.approx_signal(signal, prec);
 
-    if appr2.sign() == Sign::NoSign {
+    if appr.sign() == Sign::NoSign {
         return Zero::zero();
     }
 
-    let msd_op2 = c.known_msd();
-    let prec1 = p - msd_op2 - 3;
-    let appr1 = c.approx_signal(signal, prec1);
-
-    let scale_digits = prec1 + prec2 - p;
-    scale(appr1 * appr2, scale_digits)
+    let scale_digits = prec + prec - p;
+    scale(&appr * &appr, scale_digits)
 }
 
 fn ratio(r: &Rational, p: Precision) -> BigInt {
@@ -214,7 +260,10 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let fp_op_prec: i32 = 150;
 
     let max_prec_needed = 2 * p - 1;
-    let msd = c.msd(max_prec_needed).unwrap_or(Precision::MIN);
+    let msd = c
+        .planning_msd()
+        .unwrap_or_else(|| c.msd(max_prec_needed))
+        .unwrap_or(Precision::MIN);
 
     if msd <= max_prec_needed {
         return Zero::zero();

@@ -8,7 +8,7 @@
 //! Basic arithmetic:
 //!
 //! ```
-//! # use realistic::Simple;
+//! # use hyperreal::Simple;
 //! use std::collections::HashMap;
 //! let expr: Simple = "(+ 1 2 3)".parse().unwrap();
 //! let result = expr.evaluate(&HashMap::new()).unwrap();
@@ -18,7 +18,7 @@
 //! Nested expressions:
 //!
 //! ```
-//! # use realistic::Simple;
+//! # use hyperreal::Simple;
 //! use std::collections::HashMap;
 //! let expr: Simple = "(* (+ 1 2) (- 5 3))".parse().unwrap();
 //! let result = expr.evaluate(&HashMap::new()).unwrap();
@@ -28,7 +28,7 @@
 //! Mathematical constants and functions:
 //!
 //! ```
-//! # use realistic::Simple;
+//! # use hyperreal::Simple;
 //! use std::collections::HashMap;
 //! let expr: Simple = "(√ (+ pi pi))".parse().unwrap();
 //! let result = expr.evaluate(&HashMap::new()).unwrap();
@@ -74,10 +74,26 @@ impl Operand {
         }
     }
 
+    fn exact_value(&self, names: &Symbols) -> Result<Option<Rational>, Problem> {
+        match self {
+            Operand::Literal(n) => Ok(Some(n.clone())),
+            Operand::Symbol(s) => Ok(Simple::lookup_exact(s, names)),
+            Operand::SubExpression(xpr) => xpr.evaluate_exact(names),
+        }
+    }
+
     fn literal(&self) -> Option<&Rational> {
         match self {
             Operand::Literal(n) => Some(n),
             _ => None,
+        }
+    }
+
+    fn could_be_exact(&self) -> bool {
+        match self {
+            Operand::Literal(_) => true,
+            Operand::Symbol(s) => s != "pi" && s != "e",
+            Operand::SubExpression(xpr) => xpr.could_evaluate_exact(),
         }
     }
 }
@@ -86,7 +102,7 @@ impl Operand {
 /// These are typically constructed by parsing a string.
 ///
 /// ```rust
-/// # use realistic::Simple;
+/// # use hyperreal::Simple;
 /// let expression: Simple = "(+ 1 4)".parse().unwrap();
 /// assert_eq!(format!("{:?}", expression), "Simple { op: Plus, operands: [Literal(Rational { sign: Plus, numerator: 1, denominator: 1 }), Literal(Rational { sign: Plus, numerator: 4, denominator: 1 })] }");
 /// ```
@@ -118,10 +134,122 @@ impl Simple {
         }
     }
 
+    fn lookup_exact(name: &str, names: &Symbols) -> Option<Rational> {
+        match name {
+            "pi" | "e" => None,
+            _ => names.get(name).and_then(Real::exact_rational).cloned(),
+        }
+    }
+
+    fn evaluate_exact(&self, names: &Symbols) -> Result<Option<Rational>, Problem> {
+        use Operator::*;
+        match self.op {
+            Plus => {
+                let mut operands = self.operands.iter();
+                let Some(first) = operands.next() else {
+                    return Ok(Some(Rational::zero()));
+                };
+                let Some(mut value) = first.exact_value(names)? else {
+                    return Ok(None);
+                };
+                for operand in operands {
+                    let Some(exact) = operand.exact_value(names)? else {
+                        return Ok(None);
+                    };
+                    value = value + exact;
+                }
+                Ok(Some(value))
+            }
+            Minus => match self.operands.len() {
+                0 => Err(Problem::InsufficientParameters),
+                1 => Ok(self.operands[0].exact_value(names)?.map(|value| -value)),
+                _ => {
+                    let Some(mut value) = self.operands[0].exact_value(names)? else {
+                        return Ok(None);
+                    };
+                    for operand in self.operands.iter().skip(1) {
+                        let Some(exact) = operand.exact_value(names)? else {
+                            return Ok(None);
+                        };
+                        value = value - exact;
+                    }
+                    Ok(Some(value))
+                }
+            },
+            Star => {
+                let mut operands = self.operands.iter();
+                let Some(first) = operands.next() else {
+                    return Ok(Some(Rational::one()));
+                };
+                let Some(mut value) = first.exact_value(names)? else {
+                    return Ok(None);
+                };
+                for operand in operands {
+                    let Some(exact) = operand.exact_value(names)? else {
+                        return Ok(None);
+                    };
+                    value = value * exact;
+                }
+                Ok(Some(value))
+            }
+            Slash => match self.operands.len() {
+                0 => Err(Problem::InsufficientParameters),
+                1 => Ok(self.operands[0]
+                    .exact_value(names)?
+                    .map(|value| value.inverse())
+                    .transpose()?),
+                _ => {
+                    let Some(mut value) = self.operands[0].exact_value(names)? else {
+                        return Ok(None);
+                    };
+                    for operand in self.operands.iter().skip(1) {
+                        let Some(exact) = operand.exact_value(names)? else {
+                            return Ok(None);
+                        };
+                        if exact.sign() == num::bigint::Sign::NoSign {
+                            return Err(Problem::DivideByZero);
+                        }
+                        value = value / exact;
+                    }
+                    Ok(Some(value))
+                }
+            },
+            Pow => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let Some(base) = self.operands[0].exact_value(names)? else {
+                    return Ok(None);
+                };
+                let Some(exponent) = self.operands[1].exact_value(names)? else {
+                    return Ok(None);
+                };
+                let Some(exponent) = exponent.to_big_integer() else {
+                    return Ok(None);
+                };
+                Ok(Some(base.powi(exponent)?))
+            }
+            _ => Ok(None),
+        }
+    }
+
+    fn could_evaluate_exact(&self) -> bool {
+        use Operator::*;
+        match self.op {
+            Plus | Minus | Star | Slash | Pow => self.operands.iter().all(Operand::could_be_exact),
+            _ => false,
+        }
+    }
+
     pub fn evaluate(&self, names: &Symbols) -> Result<Real, Problem> {
         use Operator::*;
         match self.op {
             Plus => {
+                if self.could_evaluate_exact()
+                    && let Some(value) = self.evaluate_exact(names)?
+                {
+                    return Ok(Real::new(value));
+                }
                 if let Some(first) = self.operands.first().and_then(Operand::literal) {
                     let mut value = first.clone();
                     let literals = self.operands.iter().skip(1);
@@ -145,6 +273,11 @@ impl Simple {
             Minus => match self.operands.len() {
                 0 => Err(Problem::InsufficientParameters),
                 1 => {
+                    if self.could_evaluate_exact()
+                        && let Some(value) = self.evaluate_exact(names)?
+                    {
+                        return Ok(Real::new(value));
+                    }
                     let operand = self.operands.first().unwrap();
                     if let Some(literal) = operand.literal() {
                         return Ok(Real::new(-literal.clone()));
@@ -153,6 +286,11 @@ impl Simple {
                     Ok(value)
                 }
                 _ => {
+                    if self.could_evaluate_exact()
+                        && let Some(value) = self.evaluate_exact(names)?
+                    {
+                        return Ok(Real::new(value));
+                    }
                     if let Some(first) = self.operands.first().and_then(Operand::literal) {
                         let mut value = first.clone();
                         let literals = self.operands.iter().skip(1);
@@ -172,6 +310,11 @@ impl Simple {
                 }
             },
             Star => {
+                if self.could_evaluate_exact()
+                    && let Some(value) = self.evaluate_exact(names)?
+                {
+                    return Ok(Real::new(value));
+                }
                 if let Some(first) = self.operands.first().and_then(Operand::literal) {
                     let mut value = first.clone();
                     let literals = self.operands.iter().skip(1);
@@ -195,6 +338,11 @@ impl Simple {
             Slash => match self.operands.len() {
                 0 => Err(Problem::InsufficientParameters),
                 1 => {
+                    if self.could_evaluate_exact()
+                        && let Some(value) = self.evaluate_exact(names)?
+                    {
+                        return Ok(Real::new(value));
+                    }
                     let operand = self.operands.first().unwrap();
                     if let Some(literal) = operand.literal() {
                         return Ok(Real::new(literal.clone().inverse()?));
@@ -202,6 +350,11 @@ impl Simple {
                     operand.value(names)?.inverse()
                 }
                 _ => {
+                    if self.could_evaluate_exact()
+                        && let Some(value) = self.evaluate_exact(names)?
+                    {
+                        return Ok(Real::new(value));
+                    }
                     if let Some(first) = self.operands.first().and_then(Operand::literal) {
                         let mut value = first.clone();
                         let literals = self.operands.iter().skip(1);
@@ -283,6 +436,11 @@ impl Simple {
             Pow => {
                 if self.operands.len() != 2 {
                     return Err(Problem::ParseError);
+                }
+                if self.could_evaluate_exact()
+                    && let Some(value) = self.evaluate_exact(names)?
+                {
+                    return Ok(Real::new(value));
                 }
                 let op1 = &self.operands[0];
                 let op2 = &self.operands[1];
@@ -459,6 +617,7 @@ impl std::str::FromStr for Simple {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn missing_close() {
@@ -615,5 +774,25 @@ mod tests {
         let result = xpr.evaluate(&empty).unwrap();
         let m79: Real = "-7.9".parse().unwrap();
         assert_eq!(result, m79);
+    }
+
+    #[test]
+    fn nested_exact_subexpressions() {
+        let empty = HashMap::new();
+        let xpr: Simple = "(/ (* (+ 1/2 1/3) (- 7/5 2/5)) (+ 1/7 2/7))"
+            .parse()
+            .unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
+        assert_eq!(result, Real::new(Rational::fraction(35, 18).unwrap()));
+    }
+
+    #[test]
+    fn exact_symbol_subexpressions() {
+        let mut names = HashMap::new();
+        names.insert("x".to_string(), Real::new(Rational::fraction(3, 2).unwrap()));
+        names.insert("y".to_string(), Real::new(Rational::fraction(5, 4).unwrap()));
+        let xpr: Simple = "(* (+ x 1/2) (/ y 5/2))".parse().unwrap();
+        let result = xpr.evaluate(&names).unwrap();
+        assert_eq!(result, Real::new(Rational::one()));
     }
 }

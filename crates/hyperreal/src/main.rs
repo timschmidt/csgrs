@@ -1,4 +1,4 @@
-use realistic::{Problem, Real, Simple};
+use hyperreal::{Problem, Real, Simple};
 use std::collections::HashMap;
 use std::io;
 

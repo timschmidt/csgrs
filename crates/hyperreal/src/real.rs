@@ -205,25 +205,25 @@ pub type Signal = Arc<AtomicBool>;
 ///
 /// Even a normal rational can be parsed as a Real
 /// ```
-/// use realistic::{Real, Rational};
+/// use hyperreal::{Real, Rational};
 /// let half: Real = "0.5".parse().unwrap();
 /// assert_eq!(half, Rational::fraction(1, 2).unwrap());
 /// ```
 ///
 /// Simple arithmetic
 /// ```
-/// use realistic::Real;
+/// use hyperreal::Real;
 /// let two_pi = Real::pi() + Real::pi();
 /// let four: Real = "4".parse().unwrap();
 /// let four_pi = four * Real::pi();
 /// let answer = (four_pi / two_pi).unwrap();
-/// let two = realistic::Rational::new(2);
+/// let two = hyperreal::Rational::new(2);
 /// assert_eq!(answer, Real::new(two));
 /// ```
 ///
 /// Conversion
 /// ```
-/// use realistic::{Real, Rational};
+/// use hyperreal::{Real, Rational};
 /// let nine: Real = 9.into();
 /// let three = Rational::new(3);
 /// let answer = nine.sqrt().unwrap();
@@ -343,6 +343,13 @@ impl Real {
         self.rational.sign() == Sign::NoSign
     }
 
+    pub(crate) fn exact_rational(&self) -> Option<&Rational> {
+        match self.class {
+            One => Some(&self.rational),
+            _ => None,
+        }
+    }
+
     /// Are two Reals definitely unequal?
     pub fn definitely_not_equal(&self, other: &Self) -> bool {
         if self.rational.sign() == Sign::NoSign {
@@ -395,7 +402,7 @@ impl Real {
     ///
     /// Example
     /// ```
-    /// use realistic::{Rational,Real};
+    /// use hyperreal::{Rational,Real};
     /// let five = Real::new(Rational::new(5));
     /// let a_fifth = Real::new(Rational::fraction(1, 5).unwrap());
     /// assert_eq!(five.inverse(), Ok(a_fifth));

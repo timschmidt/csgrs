@@ -1,5 +1,5 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use realistic::Rational;
+use hyperreal::Rational;
 
 fn bench_float_convert(c: &mut Criterion) {
     let mut group = c.benchmark_group("float_convert");
