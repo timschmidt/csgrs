@@ -11,7 +11,7 @@ use std::ops::Deref;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) enum Approximation {
     Int(BigInt),
-    E,
+    Constant(SharedConstant),
     Inverse(Computable),
     Negate(Computable),
     Add(Computable, Computable),
@@ -29,13 +29,46 @@ pub(super) enum Approximation {
     PrescaledCot(Computable),
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub(super) enum SharedConstant {
+    E,
+    Pi,
+    Ln2,
+    Ln3,
+    Ln5,
+    Ln6,
+    Ln7,
+    Ln10,
+    Sqrt2,
+    Sqrt3,
+}
+
+impl SharedConstant {
+    pub(super) const COUNT: usize = 10;
+
+    pub(super) fn cache_index(self) -> usize {
+        match self {
+            Self::E => 0,
+            Self::Pi => 1,
+            Self::Ln2 => 2,
+            Self::Ln3 => 3,
+            Self::Ln5 => 4,
+            Self::Ln6 => 5,
+            Self::Ln7 => 6,
+            Self::Ln10 => 7,
+            Self::Sqrt2 => 8,
+            Self::Sqrt3 => 9,
+        }
+    }
+}
+
 impl Approximation {
     pub fn approximate(&self, signal: &Option<Signal>, p: Precision) -> BigInt {
         use Approximation::*;
 
         match self {
             Int(i) => scale(i.clone(), -p),
-            E => e(p),
+            Constant(c) => c.approximate(signal, p),
             Inverse(c) => inverse(signal, c, p),
             Negate(c) => -c.approx_signal(signal, p),
             Add(c1, c2) => add(signal, c1, c2, p),
@@ -53,6 +86,68 @@ impl Approximation {
             PrescaledCot(c) => cot(signal, c, p),
         }
     }
+}
+
+impl SharedConstant {
+    fn approximate(self, signal: &Option<Signal>, p: Precision) -> BigInt {
+        match self {
+            Self::E => e(p),
+            Self::Pi => pi(signal, p),
+            Self::Ln2 => ln2(signal, p),
+            Self::Ln3 => ln_constant(signal, Rational::new(3), p),
+            Self::Ln5 => ln_constant(signal, Rational::new(5), p),
+            Self::Ln6 => ln_constant(signal, Rational::new(6), p),
+            Self::Ln7 => ln_constant(signal, Rational::new(7), p),
+            Self::Ln10 => ln_constant(signal, Rational::new(10), p),
+            Self::Sqrt2 => sqrt_constant(signal, Rational::new(2), p),
+            Self::Sqrt3 => sqrt_constant(signal, Rational::new(3), p),
+        }
+    }
+}
+
+fn raw(kind: Approximation) -> Computable {
+    Computable {
+        internal: Box::new(kind),
+        cache: std::cell::RefCell::new(crate::computable::Cache::Invalid),
+        bound: std::cell::RefCell::new(crate::computable::BoundCache::Invalid),
+        exact_sign: std::cell::RefCell::new(crate::computable::ExactSignCache::Invalid),
+        signal: None,
+    }
+}
+
+fn pi(signal: &Option<Signal>, p: Precision) -> BigInt {
+    let atan5 = Computable::prescaled_atan(BigInt::from(5_u8));
+    let atan_239 = Computable::prescaled_atan(BigInt::from(239_u16));
+    let four = Computable::integer(BigInt::from(4_u8));
+    let four_atan5 = four.clone().multiply(atan5);
+    let sum = four_atan5.add(atan_239.negate());
+    four.multiply(sum).approx_signal(signal, p)
+}
+
+fn ln2(signal: &Option<Signal>, p: Precision) -> BigInt {
+    let prescaled_9 = raw(Approximation::PrescaledLn(Computable::rational(
+        Rational::fraction(1, 9).unwrap(),
+    )));
+    let prescaled_24 = raw(Approximation::PrescaledLn(Computable::rational(
+        Rational::fraction(1, 24).unwrap(),
+    )));
+    let prescaled_80 = raw(Approximation::PrescaledLn(Computable::rational(
+        Rational::fraction(1, 80).unwrap(),
+    )));
+
+    let ln2_1 = Computable::integer(BigInt::from(7_u8)).multiply(prescaled_9);
+    let ln2_2 = Computable::integer(BigInt::from(2_u8)).multiply(prescaled_24);
+    let ln2_3 = Computable::integer(BigInt::from(3_u8)).multiply(prescaled_80);
+
+    ln2_1.add(ln2_2.negate()).add(ln2_3).approx_signal(signal, p)
+}
+
+fn ln_constant(signal: &Option<Signal>, n: Rational, p: Precision) -> BigInt {
+    Computable::rational(n).ln().approx_signal(signal, p)
+}
+
+fn sqrt_constant(signal: &Option<Signal>, n: Rational, p: Precision) -> BigInt {
+    raw(Approximation::Sqrt(Computable::rational(n))).approx_signal(signal, p)
 }
 
 fn e_terms_for_precision(p: Precision) -> u32 {

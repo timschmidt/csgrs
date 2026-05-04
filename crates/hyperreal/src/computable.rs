@@ -1,5 +1,5 @@
 use crate::Rational;
-use crate::computable::approximation::Approximation;
+use crate::computable::approximation::{Approximation, SharedConstant};
 use core::cmp::Ordering;
 use num::{BigInt, BigUint, bigint::Sign};
 use num::{One, Zero};
@@ -273,6 +273,22 @@ impl BoundInfo {
     }
 }
 
+impl SharedConstant {
+    fn bound_info(self) -> BoundInfo {
+        let msd = match self {
+            SharedConstant::E | SharedConstant::Pi | SharedConstant::Ln10 => Some(1),
+            SharedConstant::Ln2 => Some(-1),
+            SharedConstant::Ln3
+            | SharedConstant::Ln5
+            | SharedConstant::Ln6
+            | SharedConstant::Ln7
+            | SharedConstant::Sqrt2
+            | SharedConstant::Sqrt3 => Some(0),
+        };
+        BoundInfo::with_sign(Sign::Plus, msd)
+    }
+}
+
 fn negate_sign(sign: Sign) -> Sign {
     match sign {
         Sign::Plus => Sign::Minus,
@@ -292,7 +308,8 @@ fn should_stop(signal: &Option<Signal>) -> bool {
 }
 
 thread_local! {
-    static E_CACHE: RefCell<Cache> = RefCell::new(Cache::Invalid);
+    static SHARED_CONSTANT_CACHES: RefCell<Vec<Cache>> =
+        RefCell::new(vec![Cache::Invalid; SharedConstant::COUNT]);
 }
 
 /// Computable approximation of a Real number.
@@ -318,18 +335,13 @@ mod signed {
         LazyLock::new(|| ToBigInt::to_bigint(&-1).unwrap());
     pub(super) static ONE: LazyLock<BigInt> = LazyLock::new(BigInt::one);
     pub(super) static TWO: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&2).unwrap());
-    pub(super) static THREE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&3).unwrap());
     pub(super) static FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&4).unwrap());
-    pub(super) static FIVE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&5).unwrap());
     pub(super) static SIX: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&6).unwrap());
-    pub(super) static SEVEN: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&7).unwrap());
     pub(super) static EIGHT: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&8).unwrap());
     pub(super) static TWENTY_FOUR: LazyLock<BigInt> =
         LazyLock::new(|| ToBigInt::to_bigint(&24).unwrap());
     pub(super) static SIXTY_FOUR: LazyLock<BigInt> =
         LazyLock::new(|| ToBigInt::to_bigint(&64).unwrap());
-    pub(super) static TWO_THREE_NINE: LazyLock<BigInt> =
-        LazyLock::new(|| ToBigInt::to_bigint(&239).unwrap());
 }
 
 mod unsigned {
@@ -360,21 +372,40 @@ impl Computable {
 
     /// Approximate π, the ratio of a circle's circumference to its diameter.
     pub fn pi() -> Computable {
-        let atan5 = Self::prescaled_atan(signed::FIVE.clone());
-        let atan_239 = Self::prescaled_atan(signed::TWO_THREE_NINE.clone());
-        let four = Self::integer(signed::FOUR.clone());
-        let four_atan5 = Self::multiply(four, atan5);
-        let neg = Self::negate(atan_239);
-        let sum = Self::add(four_atan5, neg);
-        let four = Self::integer(signed::FOUR.clone());
-        Self::multiply(four, sum)
+        Self::shared_constant(SharedConstant::Pi)
     }
 
     pub(crate) fn e_constant() -> Computable {
+        Self::shared_constant(SharedConstant::E)
+    }
+
+    pub(crate) fn ln_constant(base: u32) -> Option<Computable> {
+        let constant = match base {
+            2 => SharedConstant::Ln2,
+            3 => SharedConstant::Ln3,
+            5 => SharedConstant::Ln5,
+            6 => SharedConstant::Ln6,
+            7 => SharedConstant::Ln7,
+            10 => SharedConstant::Ln10,
+            _ => return None,
+        };
+        Some(Self::shared_constant(constant))
+    }
+
+    pub(crate) fn sqrt_constant(n: i64) -> Option<Computable> {
+        let constant = match n {
+            2 => SharedConstant::Sqrt2,
+            3 => SharedConstant::Sqrt3,
+            _ => return None,
+        };
+        Some(Self::shared_constant(constant))
+    }
+
+    fn shared_constant(constant: SharedConstant) -> Computable {
         Self {
-            internal: Box::new(Approximation::E),
+            internal: Box::new(Approximation::Constant(constant)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Valid(BoundInfo::with_sign(Sign::Plus, Some(1)))),
+            bound: RefCell::new(BoundCache::Valid(constant.bound_info())),
             exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
@@ -402,18 +433,20 @@ impl Computable {
         }
     }
 
-    fn is_e_constant(&self) -> bool {
-        matches!(&*self.internal, Approximation::E)
+    fn shared_constant_kind(&self) -> Option<SharedConstant> {
+        match &*self.internal {
+            Approximation::Constant(constant) => Some(*constant),
+            _ => None,
+        }
     }
 
     fn cached_at_precision(&self, p: Precision) -> Option<BigInt> {
-        let cached = if self.is_e_constant() {
-            E_CACHE.with(|cache| {
-                let cache = cache.borrow();
-                if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
-                    Some((*cache_prec, cache_appr.clone()))
-                } else {
-                    None
+        let cached = if let Some(constant) = self.shared_constant_kind() {
+            SHARED_CONSTANT_CACHES.with(|caches| {
+                let caches = caches.borrow();
+                match &caches[constant.cache_index()] {
+                    Cache::Valid((cache_prec, cache_appr)) => Some((*cache_prec, cache_appr.clone())),
+                    Cache::Invalid => None,
                 }
             })
         } else {
@@ -433,8 +466,10 @@ impl Computable {
     }
 
     fn store_cache_value(&self, p: Precision, value: BigInt) {
-        if self.is_e_constant() {
-            E_CACHE.with(|cache| cache.replace(Cache::Valid((p, value))));
+        if let Some(constant) = self.shared_constant_kind() {
+            SHARED_CONSTANT_CACHES.with(|caches| {
+                caches.borrow_mut()[constant.cache_index()] = Cache::Valid((p, value));
+            });
         } else {
             self.cache.replace(Cache::Valid((p, value)));
         }
@@ -478,7 +513,7 @@ impl Computable {
             } else {
                 BoundInfo::with_sign(n.sign(), Some(n.magnitude().bits() as Precision - 1))
             }),
-            Approximation::E => Some(BoundInfo::with_sign(Sign::Plus, Some(1))),
+            Approximation::Constant(constant) => Some(constant.bound_info()),
             Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
             Approximation::Negate(child) => {
                 child.cheap_bound_shallow(budget - 1).map(BoundInfo::negate)
@@ -546,7 +581,7 @@ impl Computable {
                 } else {
                     BoundInfo::with_sign(n.sign(), Some(n.magnitude().bits() as Precision - 1))
                 }),
-                Approximation::E => Some(BoundInfo::with_sign(Sign::Plus, Some(1))),
+                Approximation::Constant(constant) => Some(constant.bound_info()),
                 Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
                 Approximation::Negate(_)
                 | Approximation::Offset(_, _)
@@ -686,7 +721,7 @@ impl Computable {
 
             match &*node.internal {
                 Approximation::Int(n) => Some(Some(n.sign())),
-                Approximation::E => Some(Some(Sign::Plus)),
+                Approximation::Constant(_) => Some(Some(Sign::Plus)),
                 Approximation::Ratio(r) => Some(Some(r.sign())),
                 Approximation::IntegralAtan(n) => Some(Some(n.sign())),
                 Approximation::Negate(_)
@@ -1082,15 +1117,7 @@ impl Computable {
     }
 
     fn ln2() -> Self {
-        let prescaled_9 = Self::rational(Rational::fraction(1, 9).unwrap()).prescaled_ln();
-        let prescaled_24 = Self::rational(Rational::fraction(1, 24).unwrap()).prescaled_ln();
-        let prescaled_80 = Self::rational(Rational::fraction(1, 80).unwrap()).prescaled_ln();
-
-        let ln2_1 = Self::integer(signed::SEVEN.clone()).multiply(prescaled_9);
-        let ln2_2 = Self::integer(signed::TWO.clone()).multiply(prescaled_24);
-        let ln2_3 = Self::integer(signed::THREE.clone()).multiply(prescaled_80);
-
-        ln2_1.add(ln2_2.negate()).add(ln2_3)
+        Self::shared_constant(SharedConstant::Ln2)
     }
 
     /// Natural logarithm of this number.
@@ -1582,13 +1609,12 @@ impl Computable {
     }
 
     fn cached(&self) -> Option<(Precision, BigInt)> {
-        if self.is_e_constant() {
-            E_CACHE.with(|cache| {
-                let cache = cache.borrow();
-                if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
-                    Some((*cache_prec, cache_appr.clone()))
-                } else {
-                    None
+        if let Some(constant) = self.shared_constant_kind() {
+            SHARED_CONSTANT_CACHES.with(|caches| {
+                let caches = caches.borrow();
+                match &caches[constant.cache_index()] {
+                    Cache::Valid((cache_prec, cache_appr)) => Some((*cache_prec, cache_appr.clone())),
+                    Cache::Invalid => None,
                 }
             })
         } else {
@@ -1844,7 +1870,7 @@ mod tests {
         assert_eq!(three, a.approx(0));
         assert_eq!(six, a.approx(-1));
         assert_eq!(thirteen, a.approx(-2));
-        assert_eq!(Cache::Valid((-7, four_zero_two)), a.cache.into_inner());
+        assert_eq!(Some((-7, four_zero_two)), a.cached());
     }
 
     #[test]
@@ -1912,7 +1938,35 @@ mod tests {
     #[test]
     fn exp_one_uses_dedicated_e_constant() {
         let e = Computable::rational(Rational::one()).exp();
-        assert!(matches!(&*e.internal, Approximation::E));
+        assert!(matches!(
+            &*e.internal,
+            Approximation::Constant(SharedConstant::E)
+        ));
+    }
+
+    #[test]
+    fn pi_cache_is_shared() {
+        let pi = Computable::pi();
+        assert!(pi.cached().is_none());
+        let _ = pi.approx(-32);
+
+        let cached = Computable::pi()
+            .cached()
+            .expect("pi cache should be shared across instances");
+        assert!(cached.0 <= -32);
+    }
+
+    #[test]
+    fn ln_constant_cache_is_shared() {
+        let ln2 = Computable::ln_constant(2).unwrap();
+        assert!(ln2.cached().is_none());
+        let _ = ln2.approx(-32);
+
+        let cached = Computable::ln_constant(2)
+            .unwrap()
+            .cached()
+            .expect("ln constant cache should be shared across instances");
+        assert!(cached.0 <= -32);
     }
 
     #[test]

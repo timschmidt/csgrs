@@ -77,61 +77,61 @@ mod constants {
         static SQRT_TWO_OVER_TWO: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Sqrt(Rational::new(2)),
-            computable: Computable::sqrt_rational(Rational::new(2)),
+            computable: Computable::sqrt_constant(2).unwrap(),
             signal: None,
         };
         static SQRT_THREE_OVER_TWO: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Sqrt(Rational::new(3)),
-            computable: Computable::sqrt_rational(Rational::new(3)),
+            computable: Computable::sqrt_constant(3).unwrap(),
             signal: None,
         };
         static SQRT_THREE: Real = Real {
             rational: Rational::one(),
             class: Class::Sqrt(Rational::new(3)),
-            computable: Computable::sqrt_rational(Rational::new(3)),
+            computable: Computable::sqrt_constant(3).unwrap(),
             signal: None,
         };
         static SQRT_THREE_OVER_THREE: Real = Real {
             rational: Rational::fraction(1, 3).unwrap(),
             class: Class::Sqrt(Rational::new(3)),
-            computable: Computable::sqrt_rational(Rational::new(3)),
+            computable: Computable::sqrt_constant(3).unwrap(),
             signal: None,
         };
         static LN2: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(2)),
-            computable: Computable::ln(Computable::rational(Rational::new(2))),
+            computable: Computable::ln_constant(2).unwrap(),
             signal: None,
         };
         static LN3: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(3)),
-            computable: Computable::ln(Computable::rational(Rational::new(3))),
+            computable: Computable::ln_constant(3).unwrap(),
             signal: None,
         };
         static LN5: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(5)),
-            computable: Computable::ln(Computable::rational(Rational::new(5))),
+            computable: Computable::ln_constant(5).unwrap(),
             signal: None,
         };
         static LN6: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(6)),
-            computable: Computable::ln(Computable::rational(Rational::new(6))),
+            computable: Computable::ln_constant(6).unwrap(),
             signal: None,
         };
         static LN7: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(7)),
-            computable: Computable::ln(Computable::rational(Rational::new(7))),
+            computable: Computable::ln_constant(7).unwrap(),
             signal: None,
         };
         static LN10: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(10)),
-            computable: Computable::ln(Computable::rational(Rational::new(10))),
+            computable: Computable::ln_constant(10).unwrap(),
             signal: None,
         };
         static E: Real = Real {
