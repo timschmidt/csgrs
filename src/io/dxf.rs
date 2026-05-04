@@ -160,6 +160,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     }
 }
 
+#[cfg(feature = "bmesh")]
 impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
     pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
         self::to_dxf(self)

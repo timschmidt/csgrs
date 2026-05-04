@@ -106,6 +106,7 @@ impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
     }
 }
 
+#[cfg(feature = "bmesh")]
 impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
     pub fn to_stl_ascii(&self, name: &str) -> String {
         self::to_stl_ascii(self, name)
