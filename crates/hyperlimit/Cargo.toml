@@ -1,0 +1,15 @@
+[package]
+name = "predicated"
+version = "0.1.0"
+edition = "2024"
+description = "Geometry-oriented robust predicates with structural scalar awareness."
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+
+[features]
+default = ["std"]
+std = []
+hyperreal = []
+robust = []
+interval = []
