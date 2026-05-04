@@ -143,7 +143,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn definitely_zero(&self) -> bool {
-        self.0.definitely_zero()
+        self.structural_facts().zero == ZeroStatus::Zero
     }
 
     fn zero_status(&self) -> ZeroStatus {

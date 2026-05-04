@@ -56,10 +56,12 @@ fn scalar_structural_facts_classify_basic_values() {
     let zero_facts = zero().structural_facts();
     assert_eq!(zero_facts.sign, Some(ScalarSign::Zero));
     assert_eq!(zero_facts.zero, ZeroStatus::Zero);
+    assert!(zero().definitely_zero());
 
     let positive_facts = r(7).structural_facts();
     assert_eq!(positive_facts.sign, Some(ScalarSign::Positive));
     assert_eq!(positive_facts.zero, ZeroStatus::NonZero);
+    assert!(!r(7).definitely_zero());
 
     let negative_facts = r(-7).structural_facts();
     assert_eq!(negative_facts.sign, Some(ScalarSign::Negative));
