@@ -537,6 +537,7 @@ mod tests {
         feature = "robust",
         feature = "geogram",
         feature = "hyperreal",
+        feature = "interval",
         feature = "realistic-blas"
     ))]
     use crate::predicate::Certainty;
@@ -628,6 +629,40 @@ mod tests {
         assert_eq!(
             orient2d_with_policy(&a, &b, &c, PredicatePolicy::STRICT),
             PredicateOutcome::decided(Sign::Zero, Certainty::Exact, Escalation::Structural)
+        );
+    }
+
+    #[cfg(feature = "interval")]
+    #[test]
+    fn interval_orientation_uses_interval_sign_without_fallback() {
+        let zero = inari::const_interval!(0.0, 0.0);
+        let one = inari::const_interval!(1.0, 1.0);
+        let y = inari::const_interval!(1.0, 2.0);
+
+        let a = Point2::new(zero, zero);
+        let b = Point2::new(one, zero);
+        let c = Point2::new(zero, y);
+
+        assert_eq!(
+            orient2d_with_policy(&a, &b, &c, PredicatePolicy::STRICT),
+            PredicateOutcome::decided(Sign::Positive, Certainty::Filtered, Escalation::Structural)
+        );
+    }
+
+    #[cfg(feature = "interval")]
+    #[test]
+    fn interval_orientation_does_not_fallback_to_midpoints() {
+        let zero = inari::const_interval!(0.0, 0.0);
+        let one = inari::const_interval!(1.0, 1.0);
+        let spanning = inari::const_interval!(-1.0, 1.0);
+
+        let a = Point2::new(zero, zero);
+        let b = Point2::new(one, zero);
+        let c = Point2::new(zero, spanning);
+
+        assert_eq!(
+            orient2d_with_policy(&a, &b, &c, PredicatePolicy::STRICT),
+            PredicateOutcome::unknown(RefinementNeed::RobustFallback, Escalation::Undecided)
         );
     }
 

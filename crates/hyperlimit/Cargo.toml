@@ -8,6 +8,7 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 geogram_predicates = { git = "https://github.com/glennDittmann/geogram_predicates.git", branch = "dev-rust-port", default-features = false, optional = true }
 hyperreal = { version = "0.10", optional = true }
+inari = { version = "2", default-features = false, optional = true }
 realistic_blas = { version = "0.3", optional = true }
 robust = { version = "1.2", optional = true }
 
@@ -16,6 +17,6 @@ default = ["std"]
 std = []
 geogram = ["dep:geogram_predicates"]
 hyperreal = ["dep:hyperreal"]
+interval = ["dep:inari"]
 realistic-blas = ["dep:realistic_blas"]
 robust = ["dep:robust"]
-interval = []

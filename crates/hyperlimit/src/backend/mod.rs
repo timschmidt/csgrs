@@ -8,6 +8,9 @@ pub mod geogram;
 #[cfg(feature = "hyperreal")]
 pub mod hyperreal;
 
+#[cfg(feature = "interval")]
+pub mod interval;
+
 #[cfg(feature = "realistic-blas")]
 pub mod realistic_blas;
 

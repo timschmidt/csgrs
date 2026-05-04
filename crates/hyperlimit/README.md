@@ -238,3 +238,118 @@ Because some features pull optional external crates, it can be useful to test th
 ## License
 
 The repository includes an MIT license file. The package metadata currently declares `MIT OR Apache-2.0`, so check both `LICENSE` and `Cargo.toml` before publishing or redistributing modified packages.
+=======
+`predicated` is a geometry-oriented predicate layer for robust 2D/3D
+classification. It sits between semantics-rich scalar crates such as
+`hyperreal`, interval arithmetic from `inari`, vector/matrix crates such as
+`realistic_blas`, and application geometry kernels.
+
+The crate focuses on proving signs and classifications, not on exposing a full
+geometry kernel. If a scalar can expose facts such as known sign, exact zero,
+provable nonzero status, exact rational state, magnitude bounds, or bounded
+refinement, `predicated` uses those facts before paying for fallback paths.
+
+## Predicate Pipeline
+
+Predicates use an explicit escalation pipeline:
+
+1. Structural sign and zero facts on the final scalar expression.
+2. Structural determinant term checks and magnitude-dominance filters.
+3. Conservative floating or interval-derived filters.
+4. Exact-rational/backend exact sign paths when available and allowed.
+5. Bounded scalar refinement when available and allowed.
+6. Robust fallback through Geogram or `robust` for finite point coordinates.
+7. Approximate signs only when `PredicatePolicy::allow_approximate` is enabled.
+8. `PredicateOutcome::Unknown` when no permitted stage proves the result.
+
+The outcome records both certainty and the stage that decided the result.
+Strict policy does not return approximate topology.
+
+## Public Predicates
+
+Current predicate helpers include:
+
+- `orient2d`
+- `orient3d`
+- `incircle2d`
+- `insphere3d`
+- `classify_point_line`
+- `classify_point_plane`
+- `classify_point_oriented_plane`
+
+Each predicate has a `_with_policy` variant for explicit escalation control.
+
+## Features
+
+- `std`: default feature.
+- `hyperreal`: implements `StructuralScalar` and `PredicateScalar` for
+  `hyperreal::Real`.
+- `realistic-blas`: implements those traits for `realistic_blas::Scalar<B>`.
+- `interval`: implements those traits for `inari::Interval`.
+- `robust`: enables adaptive finite-`f64` fallback using the `robust` crate.
+- `geogram`: enables fallback using the `dev-rust-port` branch of
+  `geogram_predicates`.
+
+When both `geogram` and `robust` are enabled, Geogram is preferred for fallback.
+For Geogram in-circle and in-sphere, `predicated` calls both SOS perturbation
+polarities and returns `Sign::Zero` when they disagree, preserving unperturbed
+boundary semantics.
+
+## Scalar Backends
+
+### Primitive Floats
+
+`f32` and `f64` are supported without optional features. They provide finite
+approximations and basic magnitude facts. Degenerate strict predicates return
+`Unknown` unless a robust fallback feature is enabled.
+
+### hyperreal
+
+With `hyperreal`, predicates consume the current `hyperreal` structural API:
+sign, zero knowledge, exact rational state, magnitude bits, finite `f64`
+approximations, and bounded sign refinement.
+
+### realistic_blas
+
+With `realistic-blas`, predicates consume facts forwarded by
+`realistic_blas::Scalar<B>`. Geometry policy remains in this crate; matrix and
+vector operations remain in `realistic_blas`.
+
+### inari Intervals
+
+With `interval`, `inari::Interval` values become predicate scalars. Intervals
+that exclude zero provide filtered sign knowledge, singleton zero provides exact
+zero, and finite interval magnitude bounds feed determinant term filters.
+
+`to_f64` is intentionally exposed only for singleton finite intervals. This
+prevents robust/geogram fallback from accidentally classifying an interval
+midpoint when the interval still represents multiple possible values.
+
+`inari` 2.0.0 requires Haswell-class SIMD on x86-64. Build interval-enabled
+targets with a suitable CPU flag, for example:
+
+```sh
+RUSTFLAGS='-Ctarget-cpu=haswell' cargo test --features interval
+```
+
+## Crate Layout
+
+- `scalar`: scalar capability traits and structural facts.
+- `predicate`: predicate outcomes, signs, escalation metadata, and policies.
+- `resolve`: shared sign-resolution pipeline.
+- `filter`: conservative floating filters.
+- `orient`: orientation, line-side, incircle, and insphere predicates.
+- `plane`: point/plane classification helpers.
+- `classify`: geometry classification enums.
+- `backend`: optional backend adapters.
+- `error`: shared error/result types.
+
+## Why This Crate Exists
+
+Pure robust predicate crates are excellent fallback engines, but they start from
+opaque primitive coordinates. `predicated` owns geometry-specific policy around
+when to avoid fallback because the scalar layer already proves enough, when to
+refine, and when to return `Unknown`.
+
+This is separate from `realistic_blas` because vector and matrix crates should
+not grow application-specific geometry robustness policy.

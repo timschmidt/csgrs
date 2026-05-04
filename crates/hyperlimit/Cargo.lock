@@ -63,6 +63,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
+name = "forward_ref"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8cbd1169bd7b4a0a20d92b9af7a7e0422888bd38a6f5ec29c1fd8c1558a272e"
+
+[[package]]
 name = "geogram_predicates"
 version = "0.2.1"
 source = "git+https://github.com/glennDittmann/geogram_predicates.git?branch=dev-rust-port#49544d8138838849dfe46fc592644bd5d98f2e45"
@@ -112,6 +118,16 @@ dependencies = [
  "num",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "inari"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4048200fd855870ab456160b71ebeefdf0d4c70e24e5242513a232cc4beb9f7"
+dependencies = [
+ "cfg-if",
+ "forward_ref",
 ]
 
 [[package]]
@@ -251,6 +267,7 @@ version = "0.1.0"
 dependencies = [
  "geogram_predicates",
  "hyperreal",
+ "inari",
  "realistic_blas",
  "robust",
 ]
