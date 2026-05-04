@@ -15,6 +15,7 @@ stl
 # Editor-specific files
 .vscode/
 .idea/
+.codex
 
 # OS-specific files
 .DS_Store

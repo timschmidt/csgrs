@@ -22,6 +22,7 @@
 //! - **hershey-text**: create `Sketch`s using Hershey fonts (`.jhf`)
 //! - **image-io**: make `Sketch`s from images
 //! - **earcut**: use `geo`s `earcutr` feature for triangulation
+//! - **delaunay-rs**: use the `delaunay` crate for point-set triangulation
 //! - **bevymesh**: for conversion to a bevy `Mesh`
 
 #![forbid(unsafe_code)]
@@ -52,9 +53,13 @@ pub mod bmesh;
 
 #[cfg(any(
     all(feature = "delaunay", feature = "earcut"),
-    not(any(feature = "delaunay", feature = "earcut"))
+    all(feature = "delaunay", feature = "delaunay-rs"),
+    all(feature = "earcut", feature = "delaunay-rs"),
+    not(any(feature = "delaunay", feature = "earcut", feature = "delaunay-rs"))
 ))]
-compile_error!("Either 'delaunay' or 'earcut' feature must be specified, but not both");
+compile_error!(
+    "Exactly one triangulation feature must be specified: 'delaunay', 'earcut', or 'delaunay-rs'"
+);
 
 #[cfg(any(
     all(feature = "f64", feature = "f32"),

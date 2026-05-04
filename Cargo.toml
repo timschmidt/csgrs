@@ -5,7 +5,7 @@ edition = "2024"
 description = "Constructive solid geometry (CSG) on meshes using BSP trees in Rust"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 # msrv
-rust-version = "1.87.0"
+rust-version = "1.95.0"
 
 license = "MIT"
 repository = "https://github.com/timschmidt/csgrs"
@@ -40,6 +40,7 @@ geo-buf = { version = "0.1.0", optional = true } # straight-skeleton offsetting 
 chull = { version = "0.2.4", optional = true }
 spade = { version = "2.15.0", optional = true }
 earcutr = { version = "0.5.0", optional = true }
+delaunay-triangulator = { package = "delaunay", version = "0.7.6", optional = true }
 boolmesh = { version = "0.1.5", optional = true }
 
 rapier3d-f64 = { version = "0.31.0", optional = true }
@@ -169,6 +170,9 @@ offset = [
 delaunay = [
   "spade",
   "geo/spade",
+]
+delaunay-rs = [
+  "dep:delaunay-triangulator",
 ]
 earcut = [
   "earcutr",

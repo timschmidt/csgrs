@@ -1,6 +1,6 @@
 //! Struct and functions for working with planar `Polygon`s without holes
 
-use crate::float_types::{Real, parry3d::bounding_volume::Aabb};
+use crate::float_types::{parry3d::bounding_volume::Aabb, Real};
 use crate::mesh::plane::Plane;
 use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
@@ -123,6 +123,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
     /// The choice between algorithms depends on build features:
     /// - `earcut`: Fast for simple polygons, handles concave shapes
     /// - `delaunay`: Better triangle quality, more robust for complex geometry
+    /// - `delaunay-rs`: Point-set Delaunay triangulation filtered to the polygon interior
     pub fn triangulate(&self) -> Vec<[Vertex; 3]> {
         // If polygon has fewer than 3 vertices, nothing to tessellate
         if self.vertices.len() < 3 {
@@ -130,15 +131,25 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         }
 
         // A polygon that is already a triangle: no need to call earcut/spade.
-		// Returning it directly avoids robustness problems with very thin
-		// triangles and makes the fast-path cheaper.
-		if self.vertices.len() == 3 {
-			let a = self.vertices[0];
-			let b = self.vertices[1];
-			let c = self.vertices[2];
+        // Returning it directly avoids robustness problems with very thin
+        // triangles and makes the fast-path cheaper.
+        if self.vertices.len() == 3 {
+            let a = self.vertices[0];
+            let b = self.vertices[1];
+            let c = self.vertices[2];
 
-			return vec![[a, b, c]];
-		}
+            return vec![[a, b, c]];
+        }
+
+        #[cfg(feature = "delaunay-rs")]
+        if self.vertices.len() == 4 {
+            let a = self.vertices[0];
+            let b = self.vertices[1];
+            let c = self.vertices[2];
+            let d = self.vertices[3];
+
+            return vec![[a, b, c], [a, c, d]];
+        }
 
         let normal_3d = self.plane.normal().normalize();
         let (u, v) = build_orthonormal_basis(normal_3d);
@@ -146,49 +157,46 @@ impl<S: Clone + Send + Sync> Polygon<S> {
 
         #[cfg(feature = "earcut")]
         {
-			use earcutr::earcut;
-		
+            use earcutr::earcut;
+
             // 1. Build flattened 2D coordinates, in the same order as `self.vertices`.
-			let mut flat_2d = Vec::with_capacity(self.vertices.len() * 2);
-			for vert in &self.vertices {
-				let offset = vert.position.coords - origin_3d.coords;
-				let x = offset.dot(&u);
-				let y = offset.dot(&v);
-				flat_2d.push(x);
-				flat_2d.push(y);
-			}
+            let mut flat_2d = Vec::with_capacity(self.vertices.len() * 2);
+            for vert in &self.vertices {
+                let offset = vert.position.coords - origin_3d.coords;
+                let x = offset.dot(&u);
+                let y = offset.dot(&v);
+                flat_2d.push(x);
+                flat_2d.push(y);
+            }
 
-			// 2. Run earcut: indices are into `flat_2d` as (x0, y0, x1, y1, …).
-			let holes: Vec<usize> = Vec::new(); // you said: no holes
-			let indices = earcut(&flat_2d, &holes, 2).expect("no triangle indices returned");
+            // 2. Run earcut: indices are into `flat_2d` as (x0, y0, x1, y1, …).
+            let holes: Vec<usize> = Vec::new(); // you said: no holes
+            let indices = earcut(&flat_2d, &holes, 2).expect("no triangle indices returned");
 
-			// 3. Build triangles using *original* vertices.
-			let mut triangles = Vec::with_capacity(indices.len() / 3);
-			for tri in indices.chunks_exact(3) {
-				let i0 = tri[0] as usize;
-				let i1 = tri[1] as usize;
-				let i2 = tri[2] as usize;
+            // 3. Build triangles using *original* vertices.
+            let mut triangles = Vec::with_capacity(indices.len() / 3);
+            for tri in indices.chunks_exact(3) {
+                let i0 = tri[0] as usize;
+                let i1 = tri[1] as usize;
+                let i2 = tri[2] as usize;
 
-				let a = self.vertices[i0];
-				let b = self.vertices[i1];
-				let c = self.vertices[i2];
+                let a = self.vertices[i0];
+                let b = self.vertices[i1];
+                let c = self.vertices[i2];
 
-				triangles.push([a, b, c]); // reuse original triangle vertices without projection
-			}
+                triangles.push([a, b, c]); // reuse original triangle vertices without projection
+            }
 
-			triangles
+            triangles
         }
 
         #[cfg(feature = "delaunay")]
         {
-            use spade::{
-                AngleLimit,
-                ConstrainedDelaunayTriangulation,
-                Point2 as SpadePoint2,
-                RefinementParameters,
-                Triangulation as SpadeTriangulation,
-            };
             use geo::coord;
+            use spade::{
+                AngleLimit, ConstrainedDelaunayTriangulation, Point2 as SpadePoint2,
+                RefinementParameters, Triangulation as SpadeTriangulation,
+            };
 
             // Flatten each vertex to 2D
             // Here we clamp values within spade's minimum allowed value of  0.0 to 0.0
@@ -234,21 +242,20 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             }
 
             // Constraint edges: closed ring along the polygon boundary
-            let edges: Vec<[usize; 2]> = (0..n)
-                .map(|i| [i, (i + 1) % n])
-                .collect();
+            let edges: Vec<[usize; 2]> = (0..n).map(|i| [i, (i + 1) % n]).collect();
 
             // Build CDT with constraints in one go
-            let mut cdt = match ConstrainedDelaunayTriangulation::<SpadePoint2<Real>>::bulk_load_cdt(
-                vertices_spade,
-                edges,
-            ) {
-                Ok(cdt) => cdt,
-                Err(_) => {
-                    // Invalid coordinates / constraints – nothing we can do here
-                    return Vec::new();
-                }
-            };
+            let mut cdt =
+                match ConstrainedDelaunayTriangulation::<SpadePoint2<Real>>::bulk_load_cdt(
+                    vertices_spade,
+                    edges,
+                ) {
+                    Ok(cdt) => cdt,
+                    Err(_) => {
+                        // Invalid coordinates / constraints – nothing we can do here
+                        return Vec::new();
+                    },
+                };
 
             // Refine the CDT with a 20° angle limit
             let refinement = RefinementParameters::<Real>::new()
@@ -270,13 +277,8 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                 // Each face is a triangle; get its three vertices
                 let verts = face.vertices(); // [VertexHandle; 3]
 
-                let mut tri_vertices = [
-                    Vertex::new(
-                        Point3::new(0.0, 0.0, 0.0),
-                        Vector3::new(0.0, 0.0, 0.0),
-                    );
-                    3
-                ];
+                let mut tri_vertices =
+                    [Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0)); 3];
 
                 // Map each 2D vertex back to 3D via the plane basis
                 for (k, v_handle) in verts.iter().enumerate() {
@@ -284,13 +286,118 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                     let pos_3d = origin_3d.coords + p.x * u + p.y * v;
                     tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
                 }
-                
+
                 final_triangles.push(tri_vertices);
-			}
+            }
 
             final_triangles
-		}
-	}
+        }
+
+        #[cfg(feature = "delaunay-rs")]
+        {
+            use delaunay_triangulator::core::{
+                vertex::Vertex as DelaunayVertex,
+            };
+            use delaunay_triangulator::triangulation::delaunay::DelaunayTriangulation;
+            use geo::{Intersects, LineString, Point as GeoPoint, Polygon as GeoPolygon};
+
+            let mut vertices_2d = Vec::with_capacity(self.vertices.len());
+            for vert in &self.vertices {
+                let offset = vert.position.coords - origin_3d.coords;
+                let x = offset.dot(&u);
+                let y = offset.dot(&v);
+                if x.is_finite() && y.is_finite() {
+                    vertices_2d.push([x, y]);
+                }
+            }
+
+            if vertices_2d.len() < 3 {
+                return Vec::new();
+            }
+
+            let polygon_2d = GeoPolygon::new(
+                LineString::from(vertices_2d.iter().map(|&[x, y]| (x, y)).collect::<Vec<_>>()),
+                Vec::new(),
+            );
+
+            vertices_2d.dedup_by(|a, b| a[0] == b[0] && a[1] == b[1]);
+            if vertices_2d.len() > 1
+                && vertices_2d.first().copied() == vertices_2d.last().copied()
+            {
+                vertices_2d.pop();
+            }
+            if vertices_2d.len() < 3 {
+                return Vec::new();
+            }
+
+            let delaunay_vertices: Vec<DelaunayVertex<f64, (), 2>> = vertices_2d
+                .iter()
+                .map(|&[x, y]| delaunay_triangulator::vertex!([x as f64, y as f64]))
+                .collect();
+            let Ok(dt) = DelaunayTriangulation::<_, (), (), 2>::new(&delaunay_vertices)
+            else {
+                return Vec::new();
+            };
+
+            let mut triangles = Vec::with_capacity(dt.number_of_cells());
+            for (cell_key, _) in dt.cells() {
+                let Some(verts) = dt.cell_vertices(cell_key) else {
+                    continue;
+                };
+                if verts.len() != 3 {
+                    continue;
+                }
+
+                let Some(coords) = verts
+                    .iter()
+                    .map(|&key| dt.vertex_coords(key))
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    continue;
+                };
+
+                let sample_points = [
+                    GeoPoint::new(
+                        ((coords[0][0] + coords[1][0] + coords[2][0]) / 3.0) as Real,
+                        ((coords[0][1] + coords[1][1] + coords[2][1]) / 3.0) as Real,
+                    ),
+                    GeoPoint::new(
+                        ((coords[0][0] + coords[1][0]) / 2.0) as Real,
+                        ((coords[0][1] + coords[1][1]) / 2.0) as Real,
+                    ),
+                    GeoPoint::new(
+                        ((coords[1][0] + coords[2][0]) / 2.0) as Real,
+                        ((coords[1][1] + coords[2][1]) / 2.0) as Real,
+                    ),
+                    GeoPoint::new(
+                        ((coords[2][0] + coords[0][0]) / 2.0) as Real,
+                        ((coords[2][1] + coords[0][1]) / 2.0) as Real,
+                    ),
+                ];
+                if !sample_points.iter().all(|point| polygon_2d.intersects(point)) {
+                    continue;
+                }
+
+                let mut tri_vertices =
+                    [Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0)); 3];
+
+                for (k, coord) in coords.iter().enumerate() {
+                    let pos_3d = origin_3d.coords + (coord[0] as Real) * u + (coord[1] as Real) * v;
+                    tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
+                }
+
+                let winding_normal = (tri_vertices[1].position - tri_vertices[0].position)
+                    .cross(&(tri_vertices[2].position - tri_vertices[0].position));
+                if winding_normal.dot(&normal_3d) < 0.0 {
+                    tri_vertices.swap(1, 2);
+                }
+
+                triangles.push(tri_vertices);
+            }
+
+            triangles
+        }
+    }
 
     /// **Mathematical Foundation: Triangle Subdivision for Mesh Refinement**
     ///
