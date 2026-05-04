@@ -124,6 +124,7 @@ impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
     }
 }
 
+#[cfg(feature = "bmesh")]
 impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
     #[doc = " Export this BMesh to PLY format as a string"]
     pub fn to_ply(&self, comment: &str) -> String {

@@ -24,6 +24,7 @@ use crate::vertex::Vertex;
 use crate::sketch::Sketch;
 
 use crate::csg::CSG;
+#[cfg(feature = "sketch")]
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
@@ -799,7 +800,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
     fn from(sketch: Sketch<S>) -> Self {
         /// Helper function to convert a geo::LineString to a Vec<crate::vertex::Vertex>
         fn geo_line_string_to_vertices(
-            line_string: &geo::LineString,
+            line_string: &geo::LineString<Real>,
         ) -> Vec<Vertex> {
             let mut vertices: Vec<_> = line_string
                 .coords_iter()

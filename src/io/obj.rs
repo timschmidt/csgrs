@@ -283,6 +283,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     }
 }
 
+#[cfg(feature = "bmesh")]
 impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
     #[doc = " Export this BMesh to OBJ format as a string"]
     pub fn to_obj(&self, object_name: &str) -> String {

@@ -202,6 +202,7 @@ impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
     }
 }
 
+#[cfg(feature = "bmesh")]
 impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
     pub fn to_gltf(&self, object_name: &str) -> String {
         let (vertices, indices) = build_gltf_buffers(self);
