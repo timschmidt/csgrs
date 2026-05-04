@@ -1,0 +1,755 @@
+//! Render per-pixel predicate plots.
+//!
+//! Usage:
+//!
+//! ```sh
+//! cargo run --example predicate_plots -- --out doc/predicate-plots --size 512
+//! RUSTFLAGS='-Ctarget-cpu=haswell' cargo run --example predicate_plots --features geogram,robust,hyperreal,realistic-blas,interval -- --backend all --out doc/predicate-plots --size 512
+//! ```
+//!
+//! Images are written as dependency-free PNG files.
+
+use std::env;
+use std::fs::{self, File};
+use std::io::{self, Write};
+use std::path::{Path, PathBuf};
+
+#[cfg(any(feature = "hyperreal", feature = "realistic-blas"))]
+use predicated::PredicateScalar;
+use predicated::orient::{
+    classify_point_line_with_policy, incircle2d_with_policy, insphere3d_with_policy,
+    orient2d_with_policy,
+};
+use predicated::plane::{
+    Plane3, classify_point_oriented_plane_with_policy, classify_point_plane_with_policy,
+};
+use predicated::{
+    Certainty, Escalation, LineSide, PlaneSide, Point2, Point3, PredicateOutcome, PredicatePolicy,
+    Sign,
+};
+
+const DEFAULT_SIZE: usize = 512;
+const WORLD_MIN: f64 = -1.35;
+const WORLD_MAX: f64 = 1.35;
+
+#[derive(Clone, Copy)]
+struct PlotConfig {
+    name: &'static str,
+    policy: PredicatePolicy,
+}
+
+fn main() -> io::Result<()> {
+    let args = Args::parse()?;
+    fs::create_dir_all(&args.out_dir)?;
+
+    let mut manifest = String::new();
+    manifest.push_str("predicated predicate plot demo\n");
+    manifest.push_str(&format!("size: {}x{}\n", args.size, args.size));
+    manifest.push_str(&format!("backend selection: {}\n", args.backend));
+    manifest.push_str("colors: blue=positive/left/above, orange=negative/right/below, white=zero/on, black=unknown\n\n");
+
+    let configs = [
+        PlotConfig {
+            name: "strict",
+            policy: PredicatePolicy::STRICT,
+        },
+        PlotConfig {
+            name: "approximate",
+            policy: PredicatePolicy::APPROXIMATE,
+        },
+        PlotConfig {
+            name: "strict_no_fallback",
+            policy: PredicatePolicy {
+                allow_robust_fallback: false,
+                ..PredicatePolicy::STRICT
+            },
+        },
+    ];
+
+    if args.wants("f64") {
+        for config in configs {
+            render_f64_plots(&args.out_dir, args.size, config, &mut manifest)?;
+        }
+    }
+
+    #[cfg(feature = "hyperreal")]
+    if args.wants("hyperreal") {
+        for config in configs {
+            render_scalar_plots(
+                &args.out_dir,
+                args.size,
+                "hyperreal",
+                "hyperreal::Real",
+                config,
+                real,
+                &mut manifest,
+            )?;
+        }
+    }
+
+    #[cfg(not(feature = "hyperreal"))]
+    if args.backend == "hyperreal" {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "--backend hyperreal requires the hyperreal feature",
+        ));
+    }
+
+    #[cfg(feature = "realistic-blas")]
+    if args.wants("realistic_blas") {
+        for config in configs {
+            render_scalar_plots(
+                &args.out_dir,
+                args.size,
+                "realistic_blas",
+                "realistic_blas::Scalar<DefaultBackend>",
+                config,
+                realistic_scalar,
+                &mut manifest,
+            )?;
+        }
+    }
+
+    #[cfg(not(feature = "realistic-blas"))]
+    if args.backend == "realistic_blas" {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "--backend realistic_blas requires the realistic-blas feature",
+        ));
+    }
+
+    #[cfg(feature = "interval")]
+    if args.wants("interval") {
+        render_interval_plots(&args.out_dir, args.size, &mut manifest)?;
+    }
+
+    #[cfg(not(feature = "interval"))]
+    if args.backend == "interval" {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "--backend interval requires the interval feature",
+        ));
+    }
+
+    let manifest_path = args.out_dir.join("manifest.txt");
+    fs::write(manifest_path, manifest)?;
+    Ok(())
+}
+
+fn render_f64_plots(
+    out_dir: &Path,
+    size: usize,
+    config: PlotConfig,
+    manifest: &mut String,
+) -> io::Result<()> {
+    let a = Point2::new(-0.85, -0.55);
+    let b = Point2::new(0.9, 0.45);
+
+    write_plot(
+        out_dir,
+        size,
+        &format!("f64_orient2d_{}.png", config.name),
+        |x, y| {
+            color_sign(orient2d_with_policy(
+                &a,
+                &b,
+                &Point2::new(x, y),
+                config.policy,
+            ))
+        },
+        manifest,
+        "f64 orient2d over moving third point",
+    )?;
+
+    write_plot(
+        out_dir,
+        size,
+        &format!("f64_line_side_{}.png", config.name),
+        |x, y| {
+            color_line_side(classify_point_line_with_policy(
+                &a,
+                &b,
+                &Point2::new(x, y),
+                config.policy,
+            ))
+        },
+        manifest,
+        "f64 line-side classification over moving point",
+    )?;
+
+    let ca = Point2::new(-0.7, -0.45);
+    let cb = Point2::new(0.75, -0.35);
+    let cc = Point2::new(-0.05, 0.85);
+
+    write_plot(
+        out_dir,
+        size,
+        &format!("f64_incircle2d_{}.png", config.name),
+        |x, y| {
+            color_sign(incircle2d_with_policy(
+                &ca,
+                &cb,
+                &cc,
+                &Point2::new(x, y),
+                config.policy,
+            ))
+        },
+        manifest,
+        "f64 incircle over moving fourth point",
+    )?;
+
+    let plane = Plane3::new(Point3::new(0.8, -0.55, 0.0), -0.05);
+    write_plot(
+        out_dir,
+        size,
+        &format!("f64_explicit_plane_{}.png", config.name),
+        |x, y| {
+            color_plane_side(classify_point_plane_with_policy(
+                &Point3::new(x, y, 0.0),
+                &plane,
+                config.policy,
+            ))
+        },
+        manifest,
+        "f64 explicit plane equation sampled on z=0",
+    )?;
+
+    let pa = Point3::new(-0.85, -0.7, -0.25);
+    let pb = Point3::new(0.9, -0.35, 0.35);
+    let pc = Point3::new(-0.35, 0.85, 0.05);
+    write_plot(
+        out_dir,
+        size,
+        &format!("f64_oriented_plane_{}.png", config.name),
+        |x, y| {
+            color_plane_side(classify_point_oriented_plane_with_policy(
+                &pa,
+                &pb,
+                &pc,
+                &Point3::new(x, y, 0.0),
+                config.policy,
+            ))
+        },
+        manifest,
+        "f64 oriented plane through three points sampled on z=0",
+    )?;
+
+    let sa = Point3::new(0.82, 0.0, 0.0);
+    let sb = Point3::new(-0.82, 0.0, 0.0);
+    let sc = Point3::new(0.0, 0.82, 0.0);
+    let sd = Point3::new(0.0, 0.0, 0.82);
+    write_plot(
+        out_dir,
+        size,
+        &format!("f64_insphere3d_{}.png", config.name),
+        |x, y| {
+            color_sign(insphere3d_with_policy(
+                &sa,
+                &sb,
+                &sc,
+                &sd,
+                &Point3::new(x, y, 0.0),
+                config.policy,
+            ))
+        },
+        manifest,
+        "f64 insphere over moving fifth point on z=0",
+    )
+}
+
+#[cfg(any(feature = "hyperreal", feature = "realistic-blas"))]
+fn render_scalar_plots<S>(
+    out_dir: &Path,
+    size: usize,
+    prefix: &str,
+    label: &str,
+    config: PlotConfig,
+    scalar: fn(f64) -> S,
+    manifest: &mut String,
+) -> io::Result<()>
+where
+    S: PredicateScalar,
+{
+    let a = Point2::new(scalar(-0.85), scalar(-0.55));
+    let b = Point2::new(scalar(0.9), scalar(0.45));
+
+    write_plot(
+        out_dir,
+        size,
+        &format!("{prefix}_orient2d_{}.png", config.name),
+        |x, y| {
+            color_sign(orient2d_with_policy(
+                &a,
+                &b,
+                &Point2::new(scalar(x), scalar(y)),
+                config.policy,
+            ))
+        },
+        manifest,
+        &format!("{label} orient2d over moving third point"),
+    )?;
+
+    write_plot(
+        out_dir,
+        size,
+        &format!("{prefix}_line_side_{}.png", config.name),
+        |x, y| {
+            color_line_side(classify_point_line_with_policy(
+                &a,
+                &b,
+                &Point2::new(scalar(x), scalar(y)),
+                config.policy,
+            ))
+        },
+        manifest,
+        &format!("{label} line-side classification over moving point"),
+    )?;
+
+    let ca = Point2::new(scalar(-0.7), scalar(-0.45));
+    let cb = Point2::new(scalar(0.75), scalar(-0.35));
+    let cc = Point2::new(scalar(-0.05), scalar(0.85));
+    write_plot(
+        out_dir,
+        size,
+        &format!("{prefix}_incircle2d_{}.png", config.name),
+        |x, y| {
+            color_sign(incircle2d_with_policy(
+                &ca,
+                &cb,
+                &cc,
+                &Point2::new(scalar(x), scalar(y)),
+                config.policy,
+            ))
+        },
+        manifest,
+        &format!("{label} incircle over moving fourth point"),
+    )?;
+
+    let plane = Plane3::new(
+        Point3::new(scalar(0.8), scalar(-0.55), scalar(0.0)),
+        scalar(-0.05),
+    );
+    write_plot(
+        out_dir,
+        size,
+        &format!("{prefix}_explicit_plane_{}.png", config.name),
+        |x, y| {
+            color_plane_side(classify_point_plane_with_policy(
+                &Point3::new(scalar(x), scalar(y), scalar(0.0)),
+                &plane,
+                config.policy,
+            ))
+        },
+        manifest,
+        &format!("{label} explicit plane equation sampled on z=0"),
+    )?;
+
+    let pa = Point3::new(scalar(-0.85), scalar(-0.7), scalar(-0.25));
+    let pb = Point3::new(scalar(0.9), scalar(-0.35), scalar(0.35));
+    let pc = Point3::new(scalar(-0.35), scalar(0.85), scalar(0.05));
+    write_plot(
+        out_dir,
+        size,
+        &format!("{prefix}_oriented_plane_{}.png", config.name),
+        |x, y| {
+            color_plane_side(classify_point_oriented_plane_with_policy(
+                &pa,
+                &pb,
+                &pc,
+                &Point3::new(scalar(x), scalar(y), scalar(0.0)),
+                config.policy,
+            ))
+        },
+        manifest,
+        &format!("{label} oriented plane through three points sampled on z=0"),
+    )?;
+
+    let sa = Point3::new(scalar(0.82), scalar(0.0), scalar(0.0));
+    let sb = Point3::new(scalar(-0.82), scalar(0.0), scalar(0.0));
+    let sc = Point3::new(scalar(0.0), scalar(0.82), scalar(0.0));
+    let sd = Point3::new(scalar(0.0), scalar(0.0), scalar(0.82));
+    write_plot(
+        out_dir,
+        size,
+        &format!("{prefix}_insphere3d_{}.png", config.name),
+        |x, y| {
+            color_sign(insphere3d_with_policy(
+                &sa,
+                &sb,
+                &sc,
+                &sd,
+                &Point3::new(scalar(x), scalar(y), scalar(0.0)),
+                config.policy,
+            ))
+        },
+        manifest,
+        &format!("{label} insphere over moving fifth point on z=0"),
+    )
+}
+
+#[cfg(feature = "interval")]
+fn render_interval_plots(out_dir: &Path, size: usize, manifest: &mut String) -> io::Result<()> {
+    let config = PlotConfig {
+        name: "interval_cells_strict",
+        policy: PredicatePolicy::STRICT,
+    };
+
+    let a = Point2::new(interval(-0.85, -0.85), interval(-0.55, -0.55));
+    let b = Point2::new(interval(0.9, 0.9), interval(0.45, 0.45));
+    write_cell_plot(
+        out_dir,
+        size,
+        "interval_orient2d_cells_strict.png",
+        |x0, x1, y0, y1| {
+            color_sign(orient2d_with_policy(
+                &a,
+                &b,
+                &Point2::new(interval(x0, x1), interval(y0, y1)),
+                config.policy,
+            ))
+        },
+        manifest,
+        "inari interval orient2d using each pixel as an interval cell",
+    )?;
+
+    let ca = Point2::new(interval(-0.7, -0.7), interval(-0.45, -0.45));
+    let cb = Point2::new(interval(0.75, 0.75), interval(-0.35, -0.35));
+    let cc = Point2::new(interval(-0.05, -0.05), interval(0.85, 0.85));
+    write_cell_plot(
+        out_dir,
+        size,
+        "interval_incircle2d_cells_strict.png",
+        |x0, x1, y0, y1| {
+            color_sign(incircle2d_with_policy(
+                &ca,
+                &cb,
+                &cc,
+                &Point2::new(interval(x0, x1), interval(y0, y1)),
+                config.policy,
+            ))
+        },
+        manifest,
+        "inari interval incircle using each pixel as an interval cell",
+    )?;
+
+    let plane = Plane3::new(
+        Point3::new(
+            interval(0.8, 0.8),
+            interval(-0.55, -0.55),
+            interval(0.0, 0.0),
+        ),
+        interval(-0.05, -0.05),
+    );
+    write_cell_plot(
+        out_dir,
+        size,
+        "interval_explicit_plane_cells_strict.png",
+        |x0, x1, y0, y1| {
+            color_plane_side(classify_point_plane_with_policy(
+                &Point3::new(interval(x0, x1), interval(y0, y1), interval(0.0, 0.0)),
+                &plane,
+                config.policy,
+            ))
+        },
+        manifest,
+        "inari interval explicit plane using each pixel as an interval cell",
+    )
+}
+
+fn write_plot(
+    out_dir: &Path,
+    size: usize,
+    name: &str,
+    mut sample: impl FnMut(f64, f64) -> [u8; 3],
+    manifest: &mut String,
+    description: &str,
+) -> io::Result<()> {
+    write_png_plot(out_dir, size, name, |ix, iy| {
+        let (x, y) = pixel_center(size, ix, iy);
+        sample(x, y)
+    })?;
+    manifest.push_str(&format!("{name}: {description}\n"));
+    Ok(())
+}
+
+#[cfg(feature = "interval")]
+fn write_cell_plot(
+    out_dir: &Path,
+    size: usize,
+    name: &str,
+    mut sample: impl FnMut(f64, f64, f64, f64) -> [u8; 3],
+    manifest: &mut String,
+    description: &str,
+) -> io::Result<()> {
+    write_png_plot(out_dir, size, name, |ix, iy| {
+        let (x0, x1, y0, y1) = pixel_cell(size, ix, iy);
+        sample(x0, x1, y0, y1)
+    })?;
+    manifest.push_str(&format!("{name}: {description}\n"));
+    Ok(())
+}
+
+fn write_png_plot(
+    out_dir: &Path,
+    size: usize,
+    name: &str,
+    mut sample: impl FnMut(usize, usize) -> [u8; 3],
+) -> io::Result<()> {
+    let path = out_dir.join(name);
+    let mut pixels = Vec::with_capacity(size * size * 3);
+    for iy in 0..size {
+        for ix in 0..size {
+            pixels.extend_from_slice(&sample(ix, iy));
+        }
+    }
+    write_png(&path, size, size, &pixels)
+}
+
+fn pixel_center(size: usize, ix: usize, iy: usize) -> (f64, f64) {
+    let step = (WORLD_MAX - WORLD_MIN) / size as f64;
+    let x = WORLD_MIN + (ix as f64 + 0.5) * step;
+    let y = WORLD_MAX - (iy as f64 + 0.5) * step;
+    (x, y)
+}
+
+#[cfg(feature = "interval")]
+fn pixel_cell(size: usize, ix: usize, iy: usize) -> (f64, f64, f64, f64) {
+    let step = (WORLD_MAX - WORLD_MIN) / size as f64;
+    let x0 = WORLD_MIN + ix as f64 * step;
+    let x1 = x0 + step;
+    let y1 = WORLD_MAX - iy as f64 * step;
+    let y0 = y1 - step;
+    (x0, x1, y0, y1)
+}
+
+fn color_sign(outcome: PredicateOutcome<Sign>) -> [u8; 3] {
+    match outcome {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => color_decision(value, certainty, stage),
+        PredicateOutcome::Unknown { .. } => UNKNOWN,
+    }
+}
+
+fn color_line_side(outcome: PredicateOutcome<LineSide>) -> [u8; 3] {
+    match outcome {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => {
+            let sign = match value {
+                LineSide::Right => Sign::Negative,
+                LineSide::On => Sign::Zero,
+                LineSide::Left => Sign::Positive,
+            };
+            color_decision(sign, certainty, stage)
+        }
+        PredicateOutcome::Unknown { .. } => UNKNOWN,
+    }
+}
+
+fn color_plane_side(outcome: PredicateOutcome<PlaneSide>) -> [u8; 3] {
+    match outcome {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => {
+            let sign = match value {
+                PlaneSide::Below => Sign::Negative,
+                PlaneSide::On => Sign::Zero,
+                PlaneSide::Above => Sign::Positive,
+            };
+            color_decision(sign, certainty, stage)
+        }
+        PredicateOutcome::Unknown { .. } => UNKNOWN,
+    }
+}
+
+fn color_decision(sign: Sign, certainty: Certainty, stage: Escalation) -> [u8; 3] {
+    let base = match sign {
+        Sign::Negative => NEGATIVE,
+        Sign::Zero => ZERO,
+        Sign::Positive => POSITIVE,
+    };
+
+    match (certainty, stage) {
+        (Certainty::Approximate, _) => blend(base, [118, 118, 118], 0.32),
+        (_, Escalation::RobustFallback) => blend(base, [255, 255, 255], 0.18),
+        (_, Escalation::Refined | Escalation::Exact) => blend(base, [255, 255, 255], 0.1),
+        _ => base,
+    }
+}
+
+#[cfg(feature = "interval")]
+fn interval(inf: f64, sup: f64) -> inari::Interval {
+    inari::Interval::try_from((inf, sup)).expect("valid demo interval")
+}
+
+#[cfg(feature = "hyperreal")]
+fn real(value: f64) -> hyperreal::Real {
+    hyperreal::Real::try_from(value).expect("valid demo real")
+}
+
+#[cfg(feature = "realistic-blas")]
+fn realistic_scalar(value: f64) -> realistic_blas::Scalar<realistic_blas::DefaultBackend> {
+    realistic_blas::Scalar::try_from(value).expect("valid demo scalar")
+}
+
+fn write_png(path: &Path, width: usize, height: usize, rgb: &[u8]) -> io::Result<()> {
+    let mut writer = File::create(path)?;
+    writer.write_all(b"\x89PNG\r\n\x1a\n")?;
+
+    let mut ihdr = Vec::with_capacity(13);
+    ihdr.extend_from_slice(&(width as u32).to_be_bytes());
+    ihdr.extend_from_slice(&(height as u32).to_be_bytes());
+    ihdr.extend_from_slice(&[8, 2, 0, 0, 0]);
+    write_png_chunk(&mut writer, b"IHDR", &ihdr)?;
+
+    let mut scanlines = Vec::with_capacity(height * (1 + width * 3));
+    for row in 0..height {
+        scanlines.push(0);
+        let start = row * width * 3;
+        scanlines.extend_from_slice(&rgb[start..start + width * 3]);
+    }
+
+    let mut zlib = Vec::with_capacity(scanlines.len() + scanlines.len() / 65_535 * 5 + 10);
+    zlib.extend_from_slice(&[0x78, 0x01]);
+    let chunk_count = scanlines.len().div_ceil(65_535);
+    for (index, chunk) in scanlines.chunks(65_535).enumerate() {
+        let final_block = index + 1 == chunk_count;
+        zlib.push(u8::from(final_block));
+        let len = chunk.len() as u16;
+        zlib.extend_from_slice(&len.to_le_bytes());
+        zlib.extend_from_slice(&(!len).to_le_bytes());
+        zlib.extend_from_slice(chunk);
+    }
+    zlib.extend_from_slice(&adler32(&scanlines).to_be_bytes());
+    write_png_chunk(&mut writer, b"IDAT", &zlib)?;
+    write_png_chunk(&mut writer, b"IEND", &[])
+}
+
+fn write_png_chunk(writer: &mut File, kind: &[u8; 4], data: &[u8]) -> io::Result<()> {
+    writer.write_all(&(data.len() as u32).to_be_bytes())?;
+    writer.write_all(kind)?;
+    writer.write_all(data)?;
+    let mut crc_data = Vec::with_capacity(kind.len() + data.len());
+    crc_data.extend_from_slice(kind);
+    crc_data.extend_from_slice(data);
+    writer.write_all(&crc32(&crc_data).to_be_bytes())
+}
+
+fn adler32(data: &[u8]) -> u32 {
+    const MOD: u32 = 65_521;
+    let mut a = 1;
+    let mut b = 0;
+    for byte in data {
+        a = (a + u32::from(*byte)) % MOD;
+        b = (b + a) % MOD;
+    }
+    (b << 16) | a
+}
+
+fn crc32(data: &[u8]) -> u32 {
+    let mut crc = 0xffff_ffff;
+    for byte in data {
+        crc ^= u32::from(*byte);
+        for _ in 0..8 {
+            let mask = 0u32.wrapping_sub(crc & 1);
+            crc = (crc >> 1) ^ (0xedb8_8320 & mask);
+        }
+    }
+    !crc
+}
+
+fn blend(a: [u8; 3], b: [u8; 3], t: f64) -> [u8; 3] {
+    [mix(a[0], b[0], t), mix(a[1], b[1], t), mix(a[2], b[2], t)]
+}
+
+fn mix(a: u8, b: u8, t: f64) -> u8 {
+    ((a as f64 * (1.0 - t) + b as f64 * t).round()).clamp(0.0, 255.0) as u8
+}
+
+const POSITIVE: [u8; 3] = [46, 118, 220];
+const NEGATIVE: [u8; 3] = [226, 98, 28];
+const ZERO: [u8; 3] = [246, 246, 246];
+const UNKNOWN: [u8; 3] = [18, 18, 18];
+
+struct Args {
+    out_dir: PathBuf,
+    size: usize,
+    backend: String,
+}
+
+impl Args {
+    fn parse() -> io::Result<Self> {
+        let mut out_dir = PathBuf::from("doc/predicate-plots");
+        let mut size = DEFAULT_SIZE;
+        let mut backend = String::from("f64");
+        let mut args = env::args().skip(1);
+
+        while let Some(arg) = args.next() {
+            match arg.as_str() {
+                "--out" => {
+                    let value = args.next().ok_or_else(|| {
+                        io::Error::new(io::ErrorKind::InvalidInput, "--out requires a path")
+                    })?;
+                    out_dir = PathBuf::from(value);
+                }
+                "--size" => {
+                    let value = args.next().ok_or_else(|| {
+                        io::Error::new(io::ErrorKind::InvalidInput, "--size requires a number")
+                    })?;
+                    size = value.parse().map_err(|_| {
+                        io::Error::new(io::ErrorKind::InvalidInput, "--size must be a number")
+                    })?;
+                    if size < 512 {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            "--size must be at least 512",
+                        ));
+                    }
+                }
+                "--backend" => {
+                    backend = args.next().ok_or_else(|| {
+                        io::Error::new(io::ErrorKind::InvalidInput, "--backend requires a value")
+                    })?;
+                    if !matches!(
+                        backend.as_str(),
+                        "f64" | "hyperreal" | "realistic_blas" | "interval" | "all"
+                    ) {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            "--backend must be one of: f64, hyperreal, realistic_blas, interval, all",
+                        ));
+                    }
+                }
+                "--help" | "-h" => {
+                    println!(
+                        "usage: cargo run --example predicate_plots -- [--backend NAME] [--out DIR] [--size N]\n\nNAME is one of: f64, hyperreal, realistic_blas, interval, all.\nN must be at least 512. Images are written as PNG files."
+                    );
+                    std::process::exit(0);
+                }
+                _ => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidInput,
+                        format!("unknown argument: {arg}"),
+                    ));
+                }
+            }
+        }
+
+        Ok(Self {
+            out_dir,
+            size,
+            backend,
+        })
+    }
+
+    fn wants(&self, backend: &str) -> bool {
+        self.backend == "all" || self.backend == backend
+    }
+}

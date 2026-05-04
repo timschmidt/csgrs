@@ -311,6 +311,19 @@ cargo clippy --all-targets
 RUSTFLAGS='-Ctarget-cpu=haswell' cargo clippy --all-targets --features geogram,robust,hyperreal,realistic-blas,interval
 ```
 
+Render per-pixel predicate demo plots:
+
+```sh
+cargo run --example predicate_plots -- --out doc/predicate-plots --size 512
+RUSTFLAGS='-Ctarget-cpu=haswell' cargo run --example predicate_plots --features geogram,robust,hyperreal,realistic-blas,interval -- --backend all --out doc/predicate-plots --size 512
+```
+
+The demo writes PNG images and a `manifest.txt`. Colors encode decided
+positive/left/above, negative/right/below, zero/on-boundary, and unknown
+predicate outcomes.
+
+See [plots.md](plots.md) for the plot gallery and per-image notes.
+
 ## License
 
 The package metadata declares `MIT OR Apache-2.0`. Check the repository license
