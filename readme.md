@@ -19,8 +19,11 @@ library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are
 [Earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
 and
 [constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation)
+and
+[delaunay](https://crates.io/crates/delaunay)
 algorithms used for triangulation work only in 2D, so **csgrs** rotates
-3D polygons into 2D for triangulation then back to 3D.
+3D polygons into 2D for triangulation then back to 3D. Enable exactly one
+triangulation feature: `delaunay` (spade), `earcut`, or `delaunay-rs`.
 
 ![Example CSG output](docs/csg.png)
 
@@ -645,7 +648,7 @@ for Polygon
 - add optional root fillets, dedendum arcs, and backlash/backlash-aware spacing to gears
 - implement GL friendly io modules
 - exhaustively test all polys within intersecting bounding boxes for intersection during booleans, eliminating remaining excess poly production
-- investigate indexed triangulation with spade, earcutr for eliminating floating point instability due to rotation
+- investigate indexed triangulation with spade, earcutr, or delaunay for eliminating floating point instability due to rotation
 
 ## Todo shapes
 - geodesic domes / goldberg polyhedra

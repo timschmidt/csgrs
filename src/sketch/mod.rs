@@ -1,7 +1,7 @@
 //! `Sketch` struct and implementations of the `CSGOps` trait for `Sketch`
 
-use crate::float_types::Real;
 use crate::float_types::parry3d::bounding_volume::Aabb;
+use crate::float_types::Real;
 
 #[cfg(feature = "mesh")]
 use crate::mesh::Mesh;
@@ -9,11 +9,11 @@ use crate::mesh::Mesh;
 use crate::csg::CSG;
 use geo::algorithm::winding_order::Winding;
 use geo::{
-    AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Coord, CoordsIter,
-    Geometry, GeometryCollection, LineString, MultiPolygon, Orient, Polygon as GeoPolygon,
-    Rect, orient::Direction,
+    orient::Direction, AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect,
+    Coord, CoordsIter, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
+    Polygon as GeoPolygon, Rect,
 };
-use nalgebra::{Matrix4, Point3, partial_max, partial_min};
+use nalgebra::{partial_max, partial_min, Matrix4, Point3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -137,6 +137,92 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
                     Point3::new(c.x, c.y, 0.0),
                 ]);
             }
+            result
+        }
+
+        #[cfg(feature = "delaunay-rs")]
+        {
+            use delaunay_triangulator::core::{
+                vertex::Vertex as DelaunayVertex,
+            };
+            use delaunay_triangulator::triangulation::delaunay::DelaunayTriangulation;
+            use geo::{Intersects, Point as GeoPoint};
+
+            let mut all_points = Vec::<[Real; 2]>::new();
+            let mut add_ring = |ring: &[[Real; 2]]| {
+                for &point in ring {
+                    if point[0].is_finite()
+                        && point[1].is_finite()
+                        && !all_points.contains(&point)
+                    {
+                        all_points.push(point);
+                    }
+                }
+            };
+            add_ring(outer);
+            for hole in holes {
+                add_ring(hole);
+            }
+
+            if all_points.len() < 3 {
+                return Vec::new();
+            }
+
+            let delaunay_vertices: Vec<DelaunayVertex<f64, (), 2>> = all_points
+                .iter()
+                .map(|&[x, y]| delaunay_triangulator::vertex!([x as f64, y as f64]))
+                .collect();
+            let Ok(dt) = DelaunayTriangulation::<_, (), (), 2>::new(&delaunay_vertices)
+            else {
+                return Vec::new();
+            };
+
+            let mut result = Vec::with_capacity(dt.number_of_cells());
+            for (cell_key, _) in dt.cells() {
+                let Some(verts) = dt.cell_vertices(cell_key) else {
+                    continue;
+                };
+                if verts.len() != 3 {
+                    continue;
+                }
+
+                let Some(coords) = verts
+                    .iter()
+                    .map(|&key| dt.vertex_coords(key))
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    continue;
+                };
+
+                let sample_points = [
+                    GeoPoint::new(
+                        ((coords[0][0] + coords[1][0] + coords[2][0]) / 3.0) as Real,
+                        ((coords[0][1] + coords[1][1] + coords[2][1]) / 3.0) as Real,
+                    ),
+                    GeoPoint::new(
+                        ((coords[0][0] + coords[1][0]) / 2.0) as Real,
+                        ((coords[0][1] + coords[1][1]) / 2.0) as Real,
+                    ),
+                    GeoPoint::new(
+                        ((coords[1][0] + coords[2][0]) / 2.0) as Real,
+                        ((coords[1][1] + coords[2][1]) / 2.0) as Real,
+                    ),
+                    GeoPoint::new(
+                        ((coords[2][0] + coords[0][0]) / 2.0) as Real,
+                        ((coords[2][1] + coords[0][1]) / 2.0) as Real,
+                    ),
+                ];
+                if !sample_points.iter().all(|point| polygon.intersects(point)) {
+                    continue;
+                }
+
+                result.push([
+                    Point3::new(coords[0][0] as Real, coords[0][1] as Real, 0.0),
+                    Point3::new(coords[1][0] as Real, coords[1][1] as Real, 0.0),
+                    Point3::new(coords[2][0] as Real, coords[2][1] as Real, 0.0),
+                ]);
+            }
+
             result
         }
     }
