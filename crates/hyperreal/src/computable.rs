@@ -291,6 +291,10 @@ fn should_stop(signal: &Option<Signal>) -> bool {
     signal.as_ref().is_some_and(|s| s.load(Relaxed))
 }
 
+thread_local! {
+    static E_CACHE: RefCell<Cache> = RefCell::new(Cache::Invalid);
+}
+
 /// Computable approximation of a Real number.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Computable {
@@ -366,6 +370,16 @@ impl Computable {
         Self::multiply(four, sum)
     }
 
+    pub(crate) fn e_constant() -> Computable {
+        Self {
+            internal: Box::new(Approximation::E),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Valid(BoundInfo::with_sign(Sign::Plus, Some(1)))),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            signal: None,
+        }
+    }
+
     /// Any Rational.
     pub fn rational(r: Rational) -> Computable {
         Self {
@@ -380,8 +394,50 @@ impl Computable {
 
 impl Computable {
     pub(crate) fn e(r: Rational) -> Self {
-        let rational = Self::rational(r);
-        Self::exp(rational)
+        if r == Rational::one() {
+            Self::e_constant()
+        } else {
+            let rational = Self::rational(r);
+            Self::exp(rational)
+        }
+    }
+
+    fn is_e_constant(&self) -> bool {
+        matches!(&*self.internal, Approximation::E)
+    }
+
+    fn cached_at_precision(&self, p: Precision) -> Option<BigInt> {
+        let cached = if self.is_e_constant() {
+            E_CACHE.with(|cache| {
+                let cache = cache.borrow();
+                if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
+                    Some((*cache_prec, cache_appr.clone()))
+                } else {
+                    None
+                }
+            })
+        } else {
+            let cache = self.cache.borrow();
+            if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
+                Some((*cache_prec, cache_appr.clone()))
+            } else {
+                None
+            }
+        }?;
+
+        if p >= cached.0 {
+            Some(scale(cached.1, cached.0 - p))
+        } else {
+            None
+        }
+    }
+
+    fn store_cache_value(&self, p: Precision, value: BigInt) {
+        if self.is_e_constant() {
+            E_CACHE.with(|cache| cache.replace(Cache::Valid((p, value))));
+        } else {
+            self.cache.replace(Cache::Valid((p, value)));
+        }
     }
 
     fn cached_bound(&self) -> Option<BoundInfo> {
@@ -422,6 +478,7 @@ impl Computable {
             } else {
                 BoundInfo::with_sign(n.sign(), Some(n.magnitude().bits() as Precision - 1))
             }),
+            Approximation::E => Some(BoundInfo::with_sign(Sign::Plus, Some(1))),
             Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
             Approximation::Negate(child) => {
                 child.cheap_bound_shallow(budget - 1).map(BoundInfo::negate)
@@ -489,6 +546,7 @@ impl Computable {
                 } else {
                     BoundInfo::with_sign(n.sign(), Some(n.magnitude().bits() as Precision - 1))
                 }),
+                Approximation::E => Some(BoundInfo::with_sign(Sign::Plus, Some(1))),
                 Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
                 Approximation::Negate(_)
                 | Approximation::Offset(_, _)
@@ -628,6 +686,7 @@ impl Computable {
 
             match &*node.internal {
                 Approximation::Int(n) => Some(Some(n.sign())),
+                Approximation::E => Some(Some(Sign::Plus)),
                 Approximation::Ratio(r) => Some(Some(r.sign())),
                 Approximation::IntegralAtan(n) => Some(Some(n.sign())),
                 Approximation::Negate(_)
@@ -807,6 +866,9 @@ impl Computable {
 
     /// Natural Exponential function, raise Euler's Number to this number.
     pub fn exp(self) -> Computable {
+        if self.exact_rational().as_ref().is_some_and(|r| *r == Rational::one()) {
+            return Self::e_constant();
+        }
         if self.exact_rational().is_some_and(|r| r.sign() == Sign::NoSign) {
             return Self::one();
         }
@@ -832,14 +894,9 @@ impl Computable {
                     continue;
                 }
 
-                return Self {
-                    internal: Box::new(Approximation::PrescaledExp(reduced)),
-                    cache: RefCell::new(Cache::Invalid),
-                    bound: RefCell::new(BoundCache::Invalid),
-                    exact_sign: RefCell::new(ExactSignCache::Invalid),
-                    signal: None,
-                }
-                .shift_left(multiple.try_into().expect("binary exponent should fit in i32"));
+                return reduced
+                    .exp()
+                    .shift_left(multiple.try_into().expect("binary exponent should fit in i32"));
             }
         }
 
@@ -1427,17 +1484,7 @@ impl Computable {
             FinishOffset(&'a Computable, Precision),
         }
 
-        fn cached_at(node: &Computable, p: Precision) -> Option<BigInt> {
-            let cache = node.cache.borrow();
-            if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
-                if p >= *cache_prec {
-                    return Some(scale(cache_appr.clone(), *cache_prec - p));
-                }
-            }
-            None
-        }
-
-        if let Some(cached) = cached_at(self, p) {
+        if let Some(cached) = self.cached_at_precision(p) {
             return cached;
         }
 
@@ -1448,7 +1495,7 @@ impl Computable {
                 | Approximation::Offset(_, _)
         ) {
             let result = self.internal.approximate(signal, p);
-            self.cache.replace(Cache::Valid((p, result.clone())));
+            self.store_cache_value(p, result.clone());
             return result;
         }
 
@@ -1458,7 +1505,7 @@ impl Computable {
         while let Some(frame) = frames.pop() {
             match frame {
                 Frame::Eval(node, prec) => {
-                    if let Some(cached) = cached_at(node, prec) {
+                    if let Some(cached) = node.cached_at_precision(prec) {
                         values.push(cached);
                         continue;
                     }
@@ -1479,26 +1526,26 @@ impl Computable {
                         }
                         _ => {
                             let result = node.internal.approximate(signal, prec);
-                            node.cache.replace(Cache::Valid((prec, result.clone())));
+                            node.store_cache_value(prec, result.clone());
                             values.push(result);
                         }
                     }
                 }
                 Frame::FinishNegate(node, prec) => {
                     let result = -values.pop().expect("negate child result should exist");
-                    node.cache.replace(Cache::Valid((prec, result.clone())));
+                    node.store_cache_value(prec, result.clone());
                     values.push(result);
                 }
                 Frame::FinishAdd(node, prec) => {
                     let right = values.pop().expect("add rhs result should exist");
                     let left = values.pop().expect("add lhs result should exist");
                     let result = scale(left + right, -2);
-                    node.cache.replace(Cache::Valid((prec, result.clone())));
+                    node.store_cache_value(prec, result.clone());
                     values.push(result);
                 }
                 Frame::FinishOffset(node, prec) => {
                     let result = values.pop().expect("offset child result should exist");
-                    node.cache.replace(Cache::Valid((prec, result.clone())));
+                    node.store_cache_value(prec, result.clone());
                     values.push(result);
                 }
             }
@@ -1535,11 +1582,22 @@ impl Computable {
     }
 
     fn cached(&self) -> Option<(Precision, BigInt)> {
-        let cache = self.cache.borrow();
-        if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
-            Some((*cache_prec, cache_appr.clone()))
+        if self.is_e_constant() {
+            E_CACHE.with(|cache| {
+                let cache = cache.borrow();
+                if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
+                    Some((*cache_prec, cache_appr.clone()))
+                } else {
+                    None
+                }
+            })
         } else {
-            None
+            let cache = self.cache.borrow();
+            if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
+                Some((*cache_prec, cache_appr.clone()))
+            } else {
+                None
+            }
         }
     }
 
@@ -1837,6 +1895,24 @@ mod tests {
         let five = Rational::new(5);
         let e = Computable::e(five);
         assert_eq!(e.iter_msd(), 7);
+    }
+
+    #[test]
+    fn e_constant_cache_is_shared() {
+        let e = Computable::e_constant();
+        assert!(e.cached().is_none());
+        let _ = e.approx(-32);
+
+        let cached = Computable::e_constant()
+            .cached()
+            .expect("e cache should be shared across instances");
+        assert!(cached.0 <= -32);
+    }
+
+    #[test]
+    fn exp_one_uses_dedicated_e_constant() {
+        let e = Computable::rational(Rational::one()).exp();
+        assert!(matches!(&*e.internal, Approximation::E));
     }
 
     #[test]

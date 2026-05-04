@@ -11,6 +11,7 @@ use std::ops::Deref;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) enum Approximation {
     Int(BigInt),
+    E,
     Inverse(Computable),
     Negate(Computable),
     Add(Computable, Computable),
@@ -34,6 +35,7 @@ impl Approximation {
 
         match self {
             Int(i) => scale(i.clone(), -p),
+            E => e(p),
             Inverse(c) => inverse(signal, c, p),
             Negate(c) => -c.approx_signal(signal, p),
             Add(c1, c2) => add(signal, c1, c2, p),
@@ -51,6 +53,54 @@ impl Approximation {
             PrescaledCot(c) => cot(signal, c, p),
         }
     }
+}
+
+fn e_terms_for_precision(p: Precision) -> u32 {
+    let needed_bits = if p < 0 { (-p) as u64 + 4 } else { 4 };
+    let mut factorial = BigUint::one();
+    let mut n = 0_u32;
+    loop {
+        let next = &factorial * BigUint::from(n + 1);
+        if next.bits() > needed_bits {
+            return n;
+        }
+        factorial = next;
+        n += 1;
+    }
+}
+
+// Returns (P, Q) for sum_{k=a}^{b-1} 1 / prod_{j=a}^k j == P / Q
+fn e_binary_split(a: u32, b: u32) -> (BigUint, BigUint) {
+    if b - a == 1 {
+        return (BigUint::one(), BigUint::from(a));
+    }
+
+    let mid = a + (b - a) / 2;
+    let (left_p, left_q) = e_binary_split(a, mid);
+    let (right_p, right_q) = e_binary_split(mid, b);
+    (left_p * &right_q + right_p, left_q * right_q)
+}
+
+fn rounded_ratio(numerator: BigUint, denominator: BigUint, p: Precision) -> BigInt {
+    if p <= 0 {
+        let shift = usize::try_from(-p).expect("precision shift should fit in usize");
+        let dividend = numerator << shift;
+        BigInt::from((dividend + (&denominator >> 1)) / denominator)
+    } else {
+        let shift = usize::try_from(p).expect("precision shift should fit in usize");
+        let scaled_denominator = denominator << shift;
+        BigInt::from((numerator + (&scaled_denominator >> 1)) / scaled_denominator)
+    }
+}
+
+fn e(p: Precision) -> BigInt {
+    let terms = e_terms_for_precision(p);
+    if terms == 0 {
+        return rounded_ratio(BigUint::one(), BigUint::one(), p);
+    }
+
+    let (tail_p, tail_q) = e_binary_split(1, terms + 1);
+    rounded_ratio(tail_q.clone() + tail_p, tail_q, p)
 }
 
 fn inverse(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {

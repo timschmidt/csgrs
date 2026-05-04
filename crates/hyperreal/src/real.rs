@@ -134,6 +134,12 @@ mod constants {
             computable: Computable::ln(Computable::rational(Rational::new(10))),
             signal: None,
         };
+        static E: Real = Real {
+            rational: Rational::one(),
+            class: Class::Exp(Rational::one()),
+            computable: Computable::e_constant(),
+            signal: None,
+        };
     }
 
     pub(super) fn half() -> Real {
@@ -168,6 +174,10 @@ mod constants {
         };
         value.rational = Rational::new(coefficient);
         Some(value)
+    }
+
+    pub(super) fn e() -> Real {
+        E.with(|real| real.clone())
     }
 }
 
@@ -279,13 +289,7 @@ impl Real {
 
     /// e, Euler's number and the base of the natural logarithm function.
     pub fn e() -> Real {
-        let one = Rational::one();
-        Self {
-            rational: one.clone(),
-            class: Exp(one.clone()),
-            computable: Computable::e(one),
-            signal: None,
-        }
+        constants::e()
     }
 }
 
