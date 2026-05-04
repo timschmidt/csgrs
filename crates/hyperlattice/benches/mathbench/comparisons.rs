@@ -42,18 +42,18 @@ fn bench_vectors(c: &mut Criterion) {
     let rhs_cases = sample_vec3_b_cases();
 
     bench_blas_vectors::<ApproxBackend>(&mut group, "approx", lhs_cases, rhs_cases);
-    bench_blas_vectors::<HyperrealBackend>(&mut group, "realistic", lhs_cases, rhs_cases);
+    bench_blas_vectors::<HyperrealBackend>(&mut group, "hyperreal", lhs_cases, rhs_cases);
 
     {
         let rational_lhs = blas_vec3_rational();
         let rational_rhs = blas_vec3_b_rational();
-        group.bench_function("realistic-rational/vec3 dot", |b| {
+        group.bench_function("hyperreal-rational/vec3 dot", |b| {
             b.iter(|| black_box(black_box(&rational_lhs).dot(black_box(&rational_rhs))))
         });
-        group.bench_function("realistic-rational/vec3 magnitude", |b| {
+        group.bench_function("hyperreal-rational/vec3 magnitude", |b| {
             b.iter(|| black_box(black_box(&rational_lhs).magnitude().unwrap()))
         });
-        group.bench_function("realistic-rational/vec3 normalize", |b| {
+        group.bench_function("hyperreal-rational/vec3 normalize", |b| {
             b.iter(|| black_box(black_box(&rational_lhs).normalize().unwrap()))
         });
     }
@@ -81,12 +81,39 @@ fn bench_vectors(c: &mut Criterion) {
         b.iter(|| black_box(next_case(&astro_lhs_cases, &cursor).clone()).normalize(&astro_ctx))
     });
 
+    let numerica_ctx = numerica_backend::Ctx::new(128);
+    let numerica_lhs_cases =
+        lhs_cases.map(|value| numerica_backend::Vec3::new(&numerica_ctx, value.x, value.y, value.z));
+    let numerica_rhs_cases =
+        rhs_cases.map(|value| numerica_backend::Vec3::new(&numerica_ctx, value.x, value.y, value.z));
+    group.bench_function("numerica128/vec3 dot", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % numerica_lhs_cases.len());
+            black_box(numerica_lhs_cases[index].clone())
+                .dot(black_box(&numerica_rhs_cases[index]), &numerica_ctx)
+        })
+    });
+    group.bench_function("numerica128/vec3 magnitude", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&numerica_lhs_cases, &cursor).clone()).magnitude(&numerica_ctx)
+        })
+    });
+    group.bench_function("numerica128/vec3 normalize", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&numerica_lhs_cases, &cursor).clone()).normalize(&numerica_ctx)
+        })
+    });
+
     let symbolica_ctx = symbolica_backend::Ctx::new(128);
     let symbolica_lhs_cases =
         lhs_cases.map(|value| symbolica_backend::Vec3::new(&symbolica_ctx, value.x, value.y, value.z));
     let symbolica_rhs_cases =
         rhs_cases.map(|value| symbolica_backend::Vec3::new(&symbolica_ctx, value.x, value.y, value.z));
-    group.bench_function("symbolica128/vec3 dot", |b| {
+    group.bench_function("symbolica/vec3 dot", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             let index = cursor.get();
@@ -95,39 +122,17 @@ fn bench_vectors(c: &mut Criterion) {
                 .dot(black_box(&symbolica_rhs_cases[index]), &symbolica_ctx)
         })
     });
-    group.bench_function("symbolica128/vec3 magnitude", |b| {
+    group.bench_function("symbolica/vec3 magnitude", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(next_case(&symbolica_lhs_cases, &cursor).clone()).magnitude(&symbolica_ctx)
         })
     });
-    group.bench_function("symbolica128/vec3 normalize", |b| {
+    group.bench_function("symbolica/vec3 normalize", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(next_case(&symbolica_lhs_cases, &cursor).clone()).normalize(&symbolica_ctx)
         })
-    });
-
-    let arp_ctx = arp_backend::Ctx::new(128);
-    let arp_lhs_cases =
-        lhs_cases.map(|value| arp_backend::Vec3::new(&arp_ctx, value.x, value.y, value.z));
-    let arp_rhs_cases =
-        rhs_cases.map(|value| arp_backend::Vec3::new(&arp_ctx, value.x, value.y, value.z));
-    group.bench_function("arp128/vec3 dot", |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| {
-            let index = cursor.get();
-            cursor.set((index + 1) % arp_lhs_cases.len());
-            black_box(arp_lhs_cases[index].clone()).dot(black_box(&arp_rhs_cases[index]), &arp_ctx)
-        })
-    });
-    group.bench_function("arp128/vec3 magnitude", |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| black_box(next_case(&arp_lhs_cases, &cursor).clone()).magnitude(&arp_ctx))
-    });
-    group.bench_function("arp128/vec3 normalize", |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| black_box(next_case(&arp_lhs_cases, &cursor).clone()).normalize(&arp_ctx))
     });
 
     // Keep the mutable astro context live in this group so its constants cache
@@ -192,7 +197,7 @@ fn bench_matrix3(c: &mut Criterion) {
     bench_blas_matrix3::<ApproxBackend>(&mut group, "approx", lhs_cases, rhs_cases, vector_cases);
     bench_blas_matrix3::<HyperrealBackend>(
         &mut group,
-        "realistic",
+        "hyperreal",
         lhs_cases,
         rhs_cases,
         vector_cases,
@@ -202,16 +207,16 @@ fn bench_matrix3(c: &mut Criterion) {
         let rational_lhs = blas_mat3_rational();
         let rational_rhs = blas_mat3_b_rational();
         let rational_vector = blas_vec3_rational();
-        group.bench_function("realistic-rational/mat3 determinant", |b| {
+        group.bench_function("hyperreal-rational/mat3 determinant", |b| {
             b.iter(|| black_box(black_box(&rational_lhs).determinant()))
         });
-        group.bench_function("realistic-rational/mat3 inverse", |b| {
+        group.bench_function("hyperreal-rational/mat3 inverse", |b| {
             b.iter(|| black_box(black_box(rational_lhs.clone()).inverse().unwrap()))
         });
-        group.bench_function("realistic-rational/mat3 mul mat3", |b| {
+        group.bench_function("hyperreal-rational/mat3 mul mat3", |b| {
             b.iter(|| black_box(black_box(rational_lhs.clone()) * black_box(rational_rhs.clone())))
         });
-        group.bench_function("realistic-rational/mat3 transform vec3", |b| {
+        group.bench_function("hyperreal-rational/mat3 transform vec3", |b| {
             b.iter(|| {
                 black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()))
             })
@@ -250,6 +255,45 @@ fn bench_matrix3(c: &mut Criterion) {
         })
     });
 
+    let numerica_ctx = numerica_backend::Ctx::new(128);
+    let numerica_lhs_cases =
+        lhs_cases.map(|value| numerica_backend::Mat3::new(&numerica_ctx, value.m));
+    let numerica_rhs_cases =
+        rhs_cases.map(|value| numerica_backend::Mat3::new(&numerica_ctx, value.m));
+    let numerica_vector_cases = vector_cases
+        .map(|value| numerica_backend::Vec3::new(&numerica_ctx, value.x, value.y, value.z));
+    group.bench_function("numerica128/mat3 determinant", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&numerica_lhs_cases, &cursor).clone())
+                .determinant(&numerica_ctx)
+        })
+    });
+    group.bench_function("numerica128/mat3 inverse", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&numerica_lhs_cases, &cursor).clone()).inverse(&numerica_ctx)
+        })
+    });
+    group.bench_function("numerica128/mat3 mul mat3", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % numerica_lhs_cases.len());
+            black_box(numerica_lhs_cases[index].clone())
+                .mul_mat3(black_box(&numerica_rhs_cases[index]), &numerica_ctx)
+        })
+    });
+    group.bench_function("numerica128/mat3 transform vec3", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % numerica_lhs_cases.len());
+            black_box(numerica_lhs_cases[index].clone())
+                .transform_vec3(black_box(&numerica_vector_cases[index]), &numerica_ctx)
+        })
+    });
+
     let symbolica_ctx = symbolica_backend::Ctx::new(128);
     let symbolica_lhs_cases =
         lhs_cases.map(|value| symbolica_backend::Mat3::new(&symbolica_ctx, value.m));
@@ -257,20 +301,20 @@ fn bench_matrix3(c: &mut Criterion) {
         rhs_cases.map(|value| symbolica_backend::Mat3::new(&symbolica_ctx, value.m));
     let symbolica_vector_cases = vector_cases
         .map(|value| symbolica_backend::Vec3::new(&symbolica_ctx, value.x, value.y, value.z));
-    group.bench_function("symbolica128/mat3 determinant", |b| {
+    group.bench_function("symbolica/mat3 determinant", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(next_case(&symbolica_lhs_cases, &cursor).clone())
                 .determinant(&symbolica_ctx)
         })
     });
-    group.bench_function("symbolica128/mat3 inverse", |b| {
+    group.bench_function("symbolica/mat3 inverse", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(next_case(&symbolica_lhs_cases, &cursor).clone()).inverse(&symbolica_ctx)
         })
     });
-    group.bench_function("symbolica128/mat3 mul mat3", |b| {
+    group.bench_function("symbolica/mat3 mul mat3", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             let index = cursor.get();
@@ -279,45 +323,13 @@ fn bench_matrix3(c: &mut Criterion) {
                 .mul_mat3(black_box(&symbolica_rhs_cases[index]), &symbolica_ctx)
         })
     });
-    group.bench_function("symbolica128/mat3 transform vec3", |b| {
+    group.bench_function("symbolica/mat3 transform vec3", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % symbolica_lhs_cases.len());
             black_box(symbolica_lhs_cases[index].clone())
                 .transform_vec3(black_box(&symbolica_vector_cases[index]), &symbolica_ctx)
-        })
-    });
-
-    let arp_ctx = arp_backend::Ctx::new(128);
-    let arp_lhs_cases = lhs_cases.map(|value| arp_backend::Mat3::new(&arp_ctx, value.m));
-    let arp_rhs_cases = rhs_cases.map(|value| arp_backend::Mat3::new(&arp_ctx, value.m));
-    let arp_vector_cases =
-        vector_cases.map(|value| arp_backend::Vec3::new(&arp_ctx, value.x, value.y, value.z));
-    group.bench_function("arp128/mat3 determinant", |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| black_box(next_case(&arp_lhs_cases, &cursor).clone()).determinant(&arp_ctx))
-    });
-    group.bench_function("arp128/mat3 inverse", |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| black_box(next_case(&arp_lhs_cases, &cursor).clone()).inverse(&arp_ctx))
-    });
-    group.bench_function("arp128/mat3 mul mat3", |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| {
-            let index = cursor.get();
-            cursor.set((index + 1) % arp_lhs_cases.len());
-            black_box(arp_lhs_cases[index].clone())
-                .mul_mat3(black_box(&arp_rhs_cases[index]), &arp_ctx)
-        })
-    });
-    group.bench_function("arp128/mat3 transform vec3", |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| {
-            let index = cursor.get();
-            cursor.set((index + 1) % arp_lhs_cases.len());
-            black_box(arp_lhs_cases[index].clone())
-                .transform_vec3(black_box(&arp_vector_cases[index]), &arp_ctx)
         })
     });
 
@@ -380,7 +392,7 @@ fn bench_matrix4(c: &mut Criterion) {
     bench_blas_matrix4::<ApproxBackend>(&mut group, "approx", lhs_cases, rhs_cases, vector_cases);
     bench_blas_matrix4::<HyperrealBackend>(
         &mut group,
-        "realistic",
+        "hyperreal",
         lhs_cases,
         rhs_cases,
         vector_cases,
@@ -390,16 +402,16 @@ fn bench_matrix4(c: &mut Criterion) {
         let rational_lhs = blas_mat4_rational();
         let rational_rhs = blas_mat4_b_rational();
         let rational_vector = blas_vec4_rational();
-        group.bench_function("realistic-rational/mat4 determinant", |b| {
+        group.bench_function("hyperreal-rational/mat4 determinant", |b| {
             b.iter(|| black_box(black_box(&rational_lhs).determinant()))
         });
-        group.bench_function("realistic-rational/mat4 inverse", |b| {
+        group.bench_function("hyperreal-rational/mat4 inverse", |b| {
             b.iter(|| black_box(black_box(rational_lhs.clone()).inverse().unwrap()))
         });
-        group.bench_function("realistic-rational/mat4 mul mat4", |b| {
+        group.bench_function("hyperreal-rational/mat4 mul mat4", |b| {
             b.iter(|| black_box(black_box(rational_lhs.clone()) * black_box(rational_rhs.clone())))
         });
-        group.bench_function("realistic-rational/mat4 transform vec4", |b| {
+        group.bench_function("hyperreal-rational/mat4 transform vec4", |b| {
             b.iter(|| {
                 black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()))
             })
@@ -438,6 +450,46 @@ fn bench_matrix4(c: &mut Criterion) {
         })
     });
 
+    let numerica_ctx = numerica_backend::Ctx::new(128);
+    let numerica_lhs_cases =
+        lhs_cases.map(|value| numerica_backend::Mat4::new(&numerica_ctx, value.m));
+    let numerica_rhs_cases =
+        rhs_cases.map(|value| numerica_backend::Mat4::new(&numerica_ctx, value.m));
+    let numerica_vector_cases = vector_cases.map(|value| {
+        numerica_backend::Vec4::new(&numerica_ctx, value.x, value.y, value.z, value.w)
+    });
+    group.bench_function("numerica128/mat4 determinant", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&numerica_lhs_cases, &cursor).clone())
+                .determinant(&numerica_ctx)
+        })
+    });
+    group.bench_function("numerica128/mat4 inverse", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&numerica_lhs_cases, &cursor).clone()).inverse(&numerica_ctx)
+        })
+    });
+    group.bench_function("numerica128/mat4 mul mat4", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % numerica_lhs_cases.len());
+            black_box(numerica_lhs_cases[index].clone())
+                .mul_mat4(black_box(&numerica_rhs_cases[index]), &numerica_ctx)
+        })
+    });
+    group.bench_function("numerica128/mat4 transform vec4", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % numerica_lhs_cases.len());
+            black_box(numerica_lhs_cases[index].clone())
+                .transform_vec4(black_box(&numerica_vector_cases[index]), &numerica_ctx)
+        })
+    });
+
     let symbolica_ctx = symbolica_backend::Ctx::new(128);
     let symbolica_lhs_cases =
         lhs_cases.map(|value| symbolica_backend::Mat4::new(&symbolica_ctx, value.m));
@@ -446,20 +498,20 @@ fn bench_matrix4(c: &mut Criterion) {
     let symbolica_vector_cases = vector_cases.map(|value| {
         symbolica_backend::Vec4::new(&symbolica_ctx, value.x, value.y, value.z, value.w)
     });
-    group.bench_function("symbolica128/mat4 determinant", |b| {
+    group.bench_function("symbolica/mat4 determinant", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(next_case(&symbolica_lhs_cases, &cursor).clone())
                 .determinant(&symbolica_ctx)
         })
     });
-    group.bench_function("symbolica128/mat4 inverse", |b| {
+    group.bench_function("symbolica/mat4 inverse", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(next_case(&symbolica_lhs_cases, &cursor).clone()).inverse(&symbolica_ctx)
         })
     });
-    group.bench_function("symbolica128/mat4 mul mat4", |b| {
+    group.bench_function("symbolica/mat4 mul mat4", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             let index = cursor.get();
@@ -468,45 +520,13 @@ fn bench_matrix4(c: &mut Criterion) {
                 .mul_mat4(black_box(&symbolica_rhs_cases[index]), &symbolica_ctx)
         })
     });
-    group.bench_function("symbolica128/mat4 transform vec4", |b| {
+    group.bench_function("symbolica/mat4 transform vec4", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % symbolica_lhs_cases.len());
             black_box(symbolica_lhs_cases[index].clone())
                 .transform_vec4(black_box(&symbolica_vector_cases[index]), &symbolica_ctx)
-        })
-    });
-
-    let arp_ctx = arp_backend::Ctx::new(128);
-    let arp_lhs_cases = lhs_cases.map(|value| arp_backend::Mat4::new(&arp_ctx, value.m));
-    let arp_rhs_cases = rhs_cases.map(|value| arp_backend::Mat4::new(&arp_ctx, value.m));
-    let arp_vector_cases = vector_cases
-        .map(|value| arp_backend::Vec4::new(&arp_ctx, value.x, value.y, value.z, value.w));
-    group.bench_function("arp128/mat4 determinant", |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| black_box(next_case(&arp_lhs_cases, &cursor).clone()).determinant(&arp_ctx))
-    });
-    group.bench_function("arp128/mat4 inverse", |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| black_box(next_case(&arp_lhs_cases, &cursor).clone()).inverse(&arp_ctx))
-    });
-    group.bench_function("arp128/mat4 mul mat4", |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| {
-            let index = cursor.get();
-            cursor.set((index + 1) % arp_lhs_cases.len());
-            black_box(arp_lhs_cases[index].clone())
-                .mul_mat4(black_box(&arp_rhs_cases[index]), &arp_ctx)
-        })
-    });
-    group.bench_function("arp128/mat4 transform vec4", |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| {
-            let index = cursor.get();
-            cursor.set((index + 1) % arp_lhs_cases.len());
-            black_box(arp_lhs_cases[index].clone())
-                .transform_vec4(black_box(&arp_vector_cases[index]), &arp_ctx)
         })
     });
 
@@ -583,14 +603,14 @@ fn bench_scalar_trig(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_trig");
 
     bench_blas_scalar_trig::<ApproxBackend>(&mut group, "approx");
-    bench_blas_scalar_trig::<HyperrealBackend>(&mut group, "realistic");
+    bench_blas_scalar_trig::<HyperrealBackend>(&mut group, "hyperreal");
 
     for case in trig_cases() {
         let rational_value = trig_rational(case);
-        group.bench_function(format!("realistic-rational/{}/sin", case.name), |b| {
+        group.bench_function(format!("hyperreal-rational/{}/sin", case.name), |b| {
             b.iter(|| black_box(realistic_blas::sin(black_box(rational_value.clone()))))
         });
-        group.bench_function(format!("realistic-rational/{}/cos", case.name), |b| {
+        group.bench_function(format!("hyperreal-rational/{}/cos", case.name), |b| {
             b.iter(|| black_box(realistic_blas::cos(black_box(rational_value.clone()))))
         });
     }
@@ -606,25 +626,25 @@ fn bench_scalar_trig(c: &mut Criterion) {
         });
     }
 
-    let symbolica_ctx = symbolica_backend::Ctx::new(128);
+    let numerica_ctx = numerica_backend::Ctx::new(128);
     for case in trig_cases() {
-        let symbolica_value = symbolica_ctx.f(case.value);
-        group.bench_function(format!("symbolica128/{}/sin", case.name), |b| {
-            b.iter(|| symbolica_ctx.sin(black_box(&symbolica_value)))
+        let numerica_value = numerica_ctx.f(case.value);
+        group.bench_function(format!("numerica128/{}/sin", case.name), |b| {
+            b.iter(|| numerica_ctx.sin(black_box(&numerica_value)))
         });
-        group.bench_function(format!("symbolica128/{}/cos", case.name), |b| {
-            b.iter(|| symbolica_ctx.cos(black_box(&symbolica_value)))
+        group.bench_function(format!("numerica128/{}/cos", case.name), |b| {
+            b.iter(|| numerica_ctx.cos(black_box(&numerica_value)))
         });
     }
 
-    let arp_ctx = arp_backend::Ctx::new(128);
+    let symbolica_ctx = symbolica_backend::Ctx::new(128);
     for case in trig_cases() {
-        let arp_value = arp_ctx.f(case.value);
-        group.bench_function(format!("arp128/{}/sin", case.name), |b| {
-            b.iter(|| arp_ctx.sin(black_box(&arp_value)))
+        let symbolica_value = symbolica_ctx.f(case.value);
+        group.bench_function(format!("symbolica/{}/sin", case.name), |b| {
+            b.iter(|| symbolica_ctx.sin(black_box(&symbolica_value)))
         });
-        group.bench_function(format!("arp128/{}/cos", case.name), |b| {
-            b.iter(|| arp_ctx.cos(black_box(&arp_value)))
+        group.bench_function(format!("symbolica/{}/cos", case.name), |b| {
+            b.iter(|| symbolica_ctx.cos(black_box(&symbolica_value)))
         });
     }
 

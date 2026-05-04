@@ -1,4 +1,4 @@
-use std::{cell::Cell, collections::BTreeMap, fs, hint::black_box, path::Path};
+use std::{cell::Cell, collections::BTreeMap, env, fs, hint::black_box, path::Path};
 
 use criterion::{BenchmarkGroup, BenchmarkId, Criterion};
 use realistic_blas::Rational;
@@ -19,11 +19,40 @@ include!("mathbench/borrowed_ops.rs");
 include!("mathbench/precision.rs");
 include!("mathbench/report.rs");
 
+fn initialize_symbolica() {
+    if let Some(key) = load_symbolica_license_key() {
+        let _ = symbolica::LicenseManager::set_license_key(&key);
+    } else if !symbolica::LicenseManager::is_licensed() {
+        // Example fallback for users who want the bench to request a hobbyist key:
+        // let _ = symbolica::LicenseManager::request_hobbyist_license("YOUR_NAME", "YOUR_EMAIL");
+    }
+
+    // In restricted mode, Symbolica builds Rayon’s global pool the first time
+    // its workspace is touched. Do that here on the benchmark thread before
+    // Criterion or another dependency initializes Rayon first.
+    let _ = symbolica::state::Workspace::get_local();
+}
+
+fn load_symbolica_license_key() -> Option<String> {
+    env::var("SYMBOLICA_LICENSE_KEY")
+        .ok()
+        .map(|key| key.trim().to_owned())
+        .filter(|key| !key.is_empty())
+        .or_else(|| {
+            fs::read_to_string(".symbolica-license")
+                .ok()
+                .map(|key| key.trim().to_owned())
+                .filter(|key| !key.is_empty())
+        })
+}
+
 fn main() {
     if std::env::args().any(|arg| arg == "--update-benchmarks-md") {
         update_benchmarks_doc();
         return;
     }
+
+    initialize_symbolica();
 
     let mut criterion = Criterion::default().configure_from_args();
     bench_vectors(&mut criterion);

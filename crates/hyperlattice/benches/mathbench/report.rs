@@ -811,26 +811,6 @@ const PRECISION_ROWS: &[BenchRow] = &[
         group: "scalar_trig_by_precision",
         id: "astro_sin/256",
     },
-    BenchRow {
-        title: "arp sin 128",
-        group: "scalar_trig_by_precision",
-        id: "arp_sin/128",
-    },
-    BenchRow {
-        title: "arp sin 160",
-        group: "scalar_trig_by_precision",
-        id: "arp_sin/160",
-    },
-    BenchRow {
-        title: "arp sin 192",
-        group: "scalar_trig_by_precision",
-        id: "arp_sin/192",
-    },
-    BenchRow {
-        title: "arp sin 256",
-        group: "scalar_trig_by_precision",
-        id: "arp_sin/256",
-    },
 ];
 
 fn estimate_key(group: &str, variant: &str, id: &str) -> String {
@@ -926,28 +906,30 @@ fn format_ratio(numerator: Option<f64>, denominator: Option<f64>) -> String {
 
 fn render_table(estimates: &BTreeMap<String, f64>, rows: &[BenchRow]) -> String {
     let mut out = String::new();
-    out.push_str("| Benchmark | Approx | Realistic from f64 | Realistic rational | astro-float 128 | symbolica 128 | arpfloat 128 | Realistic f64 / approx | Realistic f64 / astro | Realistic f64 / symbolica | Realistic f64 / arp |\n");
+    out.push_str("| Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |\n");
     out.push_str("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n");
     for row in rows {
         let approx = estimate_value(estimates, row.group, "approx", row.id);
-        let realistic = estimate_value(estimates, row.group, "realistic", row.id);
-        let rational = estimate_value(estimates, row.group, "realistic-rational", row.id);
+        let hyperreal = estimate_value(estimates, row.group, "hyperreal", row.id)
+            .or_else(|| estimate_value(estimates, row.group, "realistic", row.id));
+        let rational = estimate_value(estimates, row.group, "hyperreal-rational", row.id)
+            .or_else(|| estimate_value(estimates, row.group, "realistic-rational", row.id));
         let astro = estimate_value(estimates, row.group, "astro128", row.id);
-        let symbolica = estimate_value(estimates, row.group, "symbolica128", row.id);
-        let arp = estimate_value(estimates, row.group, "arp128", row.id);
+        let numerica = estimate_value(estimates, row.group, "numerica128", row.id);
+        let symbolica = estimate_value(estimates, row.group, "symbolica", row.id);
         out.push_str(&format!(
             "| `{}` | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
             row.title,
             format_duration(approx),
-            format_duration(realistic),
+            format_duration(hyperreal),
             format_duration(rational),
             format_duration(astro),
+            format_duration(numerica),
             format_duration(symbolica),
-            format_duration(arp),
-            format_ratio(realistic, approx),
-            format_ratio(realistic, astro),
-            format_ratio(realistic, symbolica),
-            format_ratio(realistic, arp),
+            format_ratio(hyperreal, approx),
+            format_ratio(hyperreal, astro),
+            format_ratio(hyperreal, numerica),
+            format_ratio(hyperreal, symbolica),
         ));
     }
     out
@@ -973,7 +955,7 @@ fn render_benchmarks_md(estimates: &BTreeMap<String, f64>) -> String {
     out.push_str(
         "# Benchmarks\n\nRun the Criterion benchmark suite:\n\n```sh\ncargo bench --bench mathbench\n```\n\nRefresh this file from existing Criterion estimates without rerunning the full suite:\n\n```sh\ncargo bench --bench mathbench -- --update-benchmarks-md\n```\n\n",
     );
-    out.push_str("The `mathbench` suite benchmarks both crate backends and writes this file from Criterion's median estimates after a real benchmark run. The `astro-float`, `symbolica`, and `arpfloat` comparison columns run at 128-bit precision. Missing cells mean that the corresponding estimate was not present in `target/criterion` when this file was generated, or that the external library does not expose a directly comparable operation in this suite.\n\n");
+    out.push_str("The `mathbench` suite benchmarks both crate backends and writes this file from Criterion's median estimates after a real benchmark run. The `astro-float 128` and `numerica128` comparison columns run at 128-bit precision, while the `symbolica` column exercises Symbolica's symbolic expression engine. Missing cells mean that the corresponding estimate was not present in `target/criterion` when this file was generated, or that the external library does not expose a directly comparable operation in this suite.\n\n");
     out.push_str("Each benchmarked operation rotates through adversarial inputs for its valid domain: near-zero values, large and tiny magnitudes, cancellation-prone vectors, near-singular matrices, and range-reduction-heavy trigonometric arguments.\n\n");
     out.push_str("## Operation Coverage\n\n");
     out.push_str("- Scalar construction/constants, arithmetic, reciprocal, powers, exponentials, logarithms, square root, trigonometric and hyperbolic functions, inverse helpers, zero-status checks, and abort-aware variants.\n");

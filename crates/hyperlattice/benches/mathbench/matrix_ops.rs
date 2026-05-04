@@ -349,13 +349,13 @@ fn bench_matrix_operations(c: &mut Criterion) {
     bench_matrix_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
     bench_matrix_operations_for::<HyperrealBackend, _>(
         &mut group,
-        "realistic",
+        "hyperreal",
         s::<HyperrealBackend>,
     );
-    bench_matrix_operations_for::<HyperrealBackend, _>(&mut group, "realistic-rational", qr);
+    bench_matrix_operations_for::<HyperrealBackend, _>(&mut group, "hyperreal-rational", qr);
     bench_astro_matrix_operations(&mut group, "astro128");
-    bench_symbolica_matrix_operations(&mut group, "symbolica128");
-    bench_arp_matrix_operations(&mut group, "arp128");
+    bench_numerica_matrix_operations(&mut group, "numerica128");
+    bench_symbolica_matrix_operations(&mut group, "symbolica");
     group.finish();
 }
 
@@ -552,32 +552,32 @@ fn bench_astro_matrix_operations(
     }
 }
 
-fn bench_arp_matrix_operations(
+fn bench_numerica_matrix_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
 ) {
-    let ctx = arp_backend::Ctx::new(128);
-    let lhs3_cases = sample_mat3_cases().map(|value| arp_backend::Mat3::new(&ctx, value.m));
-    let rhs3_cases = sample_mat3_b_cases().map(|value| arp_backend::Mat3::new(&ctx, value.m));
-    let lhs4_cases = sample_mat4_cases().map(|value| arp_backend::Mat4::new(&ctx, value.m));
-    let rhs4_cases = sample_mat4_b_cases().map(|value| arp_backend::Mat4::new(&ctx, value.m));
+    let ctx = numerica_backend::Ctx::new(128);
+    let lhs3_cases = sample_mat3_cases().map(|value| numerica_backend::Mat3::new(&ctx, value.m));
+    let rhs3_cases = sample_mat3_b_cases().map(|value| numerica_backend::Mat3::new(&ctx, value.m));
+    let lhs4_cases = sample_mat4_cases().map(|value| numerica_backend::Mat4::new(&ctx, value.m));
+    let rhs4_cases = sample_mat4_b_cases().map(|value| numerica_backend::Mat4::new(&ctx, value.m));
     let scalar_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
 
     group.bench_function(format!("{label}/mat3 new"), |b| {
         let raw_cases = sample_mat3_cases();
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(arp_backend::Mat3::new(
+            black_box(numerica_backend::Mat3::new(
                 &ctx,
                 next_case(&raw_cases, &cursor).m,
             ))
         })
     });
     group.bench_function(format!("{label}/mat3 zero"), |b| {
-        b.iter(|| black_box(arp_backend::Mat3::zero(&ctx)))
+        b.iter(|| black_box(numerica_backend::Mat3::zero(&ctx)))
     });
     group.bench_function(format!("{label}/mat3 identity"), |b| {
-        b.iter(|| black_box(arp_backend::Mat3::identity(&ctx)))
+        b.iter(|| black_box(numerica_backend::Mat3::identity(&ctx)))
     });
     group.bench_function(format!("{label}/mat3 transpose"), |b| {
         let cursor = Cell::new(0);
@@ -613,7 +613,7 @@ fn bench_arp_matrix_operations(
                 black_box(lhs3_cases[index].map_scalar(
                     &scalar_cases[index],
                     &ctx,
-                    arp_backend::Ctx::div,
+                    numerica_backend::Ctx::div,
                 ))
             })
         });
@@ -646,27 +646,23 @@ fn bench_arp_matrix_operations(
                 let index = cursor.get();
                 cursor.set((index + 1) % lhs3_cases.len());
                 black_box(match name {
-                    "add" => {
-                        lhs3_cases[index].combine(&rhs3_cases[index], &ctx, arp_backend::Ctx::add)
-                    }
+                    "add" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, numerica_backend::Ctx::add),
                     "add_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        arp_backend::Ctx::add,
+                        numerica_backend::Ctx::add,
                     ),
-                    "sub" => {
-                        lhs3_cases[index].combine(&rhs3_cases[index], &ctx, arp_backend::Ctx::sub)
-                    }
+                    "sub" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, numerica_backend::Ctx::sub),
                     "sub_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        arp_backend::Ctx::sub,
+                        numerica_backend::Ctx::sub,
                     ),
                     "neg" => lhs3_cases[index].neg(&ctx),
                     _ => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        arp_backend::Ctx::mul,
+                        numerica_backend::Ctx::mul,
                     ),
                 })
             })
@@ -674,10 +670,10 @@ fn bench_arp_matrix_operations(
     }
 
     group.bench_function(format!("{label}/mat4 zero"), |b| {
-        b.iter(|| black_box(arp_backend::Mat4::zero(&ctx)))
+        b.iter(|| black_box(numerica_backend::Mat4::zero(&ctx)))
     });
     group.bench_function(format!("{label}/mat4 identity"), |b| {
-        b.iter(|| black_box(arp_backend::Mat4::identity(&ctx)))
+        b.iter(|| black_box(numerica_backend::Mat4::identity(&ctx)))
     });
     group.bench_function(format!("{label}/mat4 transpose"), |b| {
         let cursor = Cell::new(0);
@@ -714,29 +710,25 @@ fn bench_arp_matrix_operations(
                     "div_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        arp_backend::Ctx::div,
+                        numerica_backend::Ctx::div,
                     ),
-                    "add" => {
-                        lhs4_cases[index].combine(&rhs4_cases[index], &ctx, arp_backend::Ctx::add)
-                    }
+                    "add" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, numerica_backend::Ctx::add),
                     "add_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        arp_backend::Ctx::add,
+                        numerica_backend::Ctx::add,
                     ),
-                    "sub" => {
-                        lhs4_cases[index].combine(&rhs4_cases[index], &ctx, arp_backend::Ctx::sub)
-                    }
+                    "sub" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, numerica_backend::Ctx::sub),
                     "sub_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        arp_backend::Ctx::sub,
+                        numerica_backend::Ctx::sub,
                     ),
                     "neg" => lhs4_cases[index].neg(&ctx),
                     "mul_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        arp_backend::Ctx::mul,
+                        numerica_backend::Ctx::mul,
                     ),
                     _ => lhs4_cases[index].div_matrix(&rhs4_cases[index], &ctx),
                 })

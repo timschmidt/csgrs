@@ -562,11 +562,26 @@ fn bench_astro_scalar_operations(
     }
 }
 
-fn bench_arp_scalar_operations(
+fn bench_scalar_operations(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scalar_ops");
+    bench_scalar_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
+    bench_scalar_operations_for::<HyperrealBackend, _>(
+        &mut group,
+        "hyperreal",
+        s::<HyperrealBackend>,
+    );
+    bench_scalar_operations_for::<HyperrealBackend, _>(&mut group, "hyperreal-rational", qr);
+    bench_astro_scalar_operations(&mut group, "astro128");
+    bench_numerica_scalar_operations(&mut group, "numerica128");
+    bench_symbolica_scalar_operations(&mut group, "symbolica");
+    group.finish();
+}
+
+fn bench_numerica_scalar_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
 ) {
-    let ctx = arp_backend::Ctx::new(128);
+    let ctx = numerica_backend::Ctx::new(128);
     let arithmetic_cases = [
         (2.5, 1.25),
         (1.0e-12, -1.0e-12),
@@ -595,9 +610,7 @@ fn bench_arp_scalar_operations(
     let acosh_cases = [9.0, 1.0 + 1.0e-12, 1.0e6, std::f64::consts::E].map(|value| ctx.f(value));
     let zero_status_cases = [ctx.f(2.5), ctx.zero(), ctx.f(1.0e-12), ctx.f(-1.0e12)];
 
-    group.bench_function(format!("{label}/zero"), |b| {
-        b.iter(|| black_box(ctx.zero()))
-    });
+    group.bench_function(format!("{label}/zero"), |b| b.iter(|| black_box(ctx.zero())));
     group.bench_function(format!("{label}/one"), |b| b.iter(|| black_box(ctx.one())));
     group.bench_function(format!("{label}/e"), |b| b.iter(|| black_box(ctx.e())));
     group.bench_function(format!("{label}/pi"), |b| b.iter(|| black_box(ctx.pi())));
@@ -719,21 +732,6 @@ fn bench_arp_scalar_operations(
             b.iter(|| black_box(ctx.is_zero(black_box(next_case(&zero_status_cases, &cursor)))))
         });
     }
-}
-
-fn bench_scalar_operations(c: &mut Criterion) {
-    let mut group = c.benchmark_group("scalar_ops");
-    bench_scalar_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
-    bench_scalar_operations_for::<HyperrealBackend, _>(
-        &mut group,
-        "realistic",
-        s::<HyperrealBackend>,
-    );
-    bench_scalar_operations_for::<HyperrealBackend, _>(&mut group, "realistic-rational", qr);
-    bench_astro_scalar_operations(&mut group, "astro128");
-    bench_symbolica_scalar_operations(&mut group, "symbolica128");
-    bench_arp_scalar_operations(&mut group, "arp128");
-    group.finish();
 }
 
 fn bench_symbolica_scalar_operations(

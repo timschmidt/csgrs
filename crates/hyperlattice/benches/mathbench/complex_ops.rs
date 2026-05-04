@@ -180,12 +180,12 @@ fn bench_complex_operations(c: &mut Criterion) {
     bench_complex_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
     bench_complex_operations_for::<HyperrealBackend, _>(
         &mut group,
-        "realistic",
+        "hyperreal",
         s::<HyperrealBackend>,
     );
-    bench_complex_operations_for::<HyperrealBackend, _>(&mut group, "realistic-rational", qr);
+    bench_complex_operations_for::<HyperrealBackend, _>(&mut group, "hyperreal-rational", qr);
     bench_astro_complex_operations(&mut group, "astro128");
-    bench_arp_complex_operations(&mut group, "arp128");
+    bench_symbolica_complex_operations(&mut group, "symbolica");
     group.finish();
 }
 
@@ -311,36 +311,36 @@ fn bench_astro_complex_operations(
     });
 }
 
-fn bench_arp_complex_operations(
+fn bench_symbolica_complex_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
 ) {
-    let ctx = arp_backend::Ctx::new(128);
+    let ctx = symbolica_backend::Ctx::new(128);
     let lhs_cases = [
-        arp_backend::Complex::new(&ctx, 3.0, 4.0),
-        arp_backend::Complex::new(&ctx, 1.0e-9, -1.0e-9),
-        arp_backend::Complex::new(&ctx, 1.0e9, -1.0),
-        arp_backend::Complex::new(&ctx, std::f64::consts::PI, -std::f64::consts::E),
+        symbolica_backend::Complex::new(&ctx, 3.0, 4.0),
+        symbolica_backend::Complex::new(&ctx, 1.0e-9, -1.0e-9),
+        symbolica_backend::Complex::new(&ctx, 1.0e9, -1.0),
+        symbolica_backend::Complex::new(&ctx, std::f64::consts::PI, -std::f64::consts::E),
     ];
     let rhs_cases = [
-        arp_backend::Complex::new(&ctx, 1.5, -2.0),
-        arp_backend::Complex::new(&ctx, -1.0e-9, 2.0e-9),
-        arp_backend::Complex::new(&ctx, -1.0e9, 2.0),
-        arp_backend::Complex::new(&ctx, std::f64::consts::SQRT_2, std::f64::consts::FRAC_1_PI),
+        symbolica_backend::Complex::new(&ctx, 1.5, -2.0),
+        symbolica_backend::Complex::new(&ctx, -1.0e-9, 2.0e-9),
+        symbolica_backend::Complex::new(&ctx, -1.0e9, 2.0),
+        symbolica_backend::Complex::new(&ctx, std::f64::consts::SQRT_2, std::f64::consts::FRAC_1_PI),
     ];
     let real_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
 
     group.bench_function(format!("{label}/zero"), |b| {
-        b.iter(|| black_box(arp_backend::Complex::zero(&ctx)))
+        b.iter(|| black_box(symbolica_backend::Complex::zero(&ctx)))
     });
     group.bench_function(format!("{label}/one"), |b| {
-        b.iter(|| black_box(arp_backend::Complex::one(&ctx)))
+        b.iter(|| black_box(symbolica_backend::Complex::one(&ctx)))
     });
     group.bench_function(format!("{label}/i"), |b| {
-        b.iter(|| black_box(arp_backend::Complex::i(&ctx)))
+        b.iter(|| black_box(symbolica_backend::Complex::i(&ctx)))
     });
     group.bench_function(format!("{label}/free_i"), |b| {
-        b.iter(|| black_box(arp_backend::Complex::i(&ctx)))
+        b.iter(|| black_box(symbolica_backend::Complex::i(&ctx)))
     });
     group.bench_function(format!("{label}/conjugate"), |b| {
         let cursor = Cell::new(0);
@@ -381,47 +381,30 @@ fn bench_arp_complex_operations(
     group.bench_function(format!("{label}/from_scalar"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(arp_backend::Complex::from_scalar(
-                next_case(&real_cases, &cursor),
+            black_box(symbolica_backend::Complex::from_scalar(
+                black_box(next_case(&real_cases, &cursor)),
                 &ctx,
             ))
         })
     });
-    group.bench_function(format!("{label}/add"), |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| {
-            let index = cursor.get();
-            cursor.set((index + 1) % lhs_cases.len());
-            black_box(lhs_cases[index].add(&rhs_cases[index], &ctx))
-        })
-    });
-    group.bench_function(format!("{label}/sub"), |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| {
-            let index = cursor.get();
-            cursor.set((index + 1) % lhs_cases.len());
-            black_box(lhs_cases[index].sub(&rhs_cases[index], &ctx))
-        })
-    });
+    for name in ["add", "sub", "mul", "div"] {
+        group.bench_function(format!("{label}/{name}"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs_cases.len());
+                black_box(match name {
+                    "add" => lhs_cases[index].add(&rhs_cases[index], &ctx),
+                    "sub" => lhs_cases[index].sub(&rhs_cases[index], &ctx),
+                    "mul" => lhs_cases[index].mul(&rhs_cases[index], &ctx),
+                    _ => lhs_cases[index].div(&rhs_cases[index], &ctx),
+                })
+            })
+        });
+    }
     group.bench_function(format!("{label}/neg"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| black_box(next_case(&lhs_cases, &cursor).neg(&ctx)))
-    });
-    group.bench_function(format!("{label}/mul"), |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| {
-            let index = cursor.get();
-            cursor.set((index + 1) % lhs_cases.len());
-            black_box(lhs_cases[index].mul(&rhs_cases[index], &ctx))
-        })
-    });
-    group.bench_function(format!("{label}/div"), |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| {
-            let index = cursor.get();
-            cursor.set((index + 1) % lhs_cases.len());
-            black_box(lhs_cases[index].div(&rhs_cases[index], &ctx))
-        })
     });
     group.bench_function(format!("{label}/div_real"), |b| {
         let cursor = Cell::new(0);
