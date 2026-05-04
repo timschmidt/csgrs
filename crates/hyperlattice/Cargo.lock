@@ -448,7 +448,9 @@ checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
 
 [[package]]
 name = "hyperreal"
-version = "0.9.1"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b55d28a05e7b3e009696ea3ae0c2779d6aca9112065748ae61f15e5a848286b"
 dependencies = [
  "ciborium",
  "num",
@@ -868,7 +870,7 @@ dependencies = [
 
 [[package]]
 name = "realistic_blas"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "astro-float",
  "criterion",
