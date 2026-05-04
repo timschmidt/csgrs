@@ -1,6 +1,6 @@
 # Hyperreal
 
-Hyperreal is a Rust library for exact rational arithmetic and computable real arithmetic. It started from Hans Boehm's "Towards an API for the Real Numbers" model and has since grown into a more performance-focused Rust implementation with symbolic tracking, exact shortcuts, borrowed arithmetic support, and a benchmark suite for the hot numerical paths.
+Hyperreal is a Rust library for exact rational arithmetic and computable real arithmetic. It started from Hans Boehm's "Towards an API for the Real Numbers" model and has since grown into a more performance-focused Rust implementation with symbolic tracking, exact shortcuts, structural inspection APIs, borrowed arithmetic support, and a benchmark suite for the hot numerical paths.
 
 ## What it provides
 
@@ -12,9 +12,19 @@ Hyperreal is a Rust library for exact rational arithmetic and computable real ar
   - lazy real-number evaluation to requested precision
   - transcendental functions such as `exp`, `ln`, `sqrt`, `sin`, `cos`, and `tan`
   - caching, structural simplification, and targeted argument reduction
+  - conservative structural facts through `structural_facts`
+  - bounded sign refinement through `sign_until`
 - `Real`
   - a higher-level real type that combines exact rational structure with computable irrational parts
   - symbolic handling for common classes such as square roots, logarithms, exponentials, and rational multiples of `pi`
+  - public exact-rational access through `exact_rational`
+  - conservative sign, zero, exactness, and magnitude facts through `structural_facts`
+  - borrowed finite `f64` approximation through `to_f64_approx`
+- Structural fact types
+  - `RealSign`
+  - `ZeroKnowledge`
+  - `MagnitudeBits`
+  - `RealStructuralFacts`
 - `Simple`
   - a small Lisp-like expression parser and evaluator for interactive use
 
@@ -25,14 +35,15 @@ The project is no longer just a straight Java port. The current codebase include
 - direct and benchmarked transcendental fast paths
 - exact and symbolic trig/log shortcuts
 - borrowed `Rational` and `Real` arithmetic APIs
+- public structural inspection for robust downstream filtering and predicates
+- bounded sign refinement that stops at the requested precision floor
+- owned exact-rational access that does not expose internal representation
 - Criterion benchmark suites for:
   - library-level behavior
   - numerical kernels
   - borrowed-vs-owned arithmetic
   - float conversion
-- ongoing evaluator work to separate:
-  - exact public semantics
-  - planning-only sign / MSD facts used for internal scheduling
+- internal separation between public exact facts and planner-only evaluator facts
 
 The evaluator refactor plan lives in [`evaluator-refactor.md`](./evaluator-refactor.md).
 
@@ -81,6 +92,24 @@ let approx = x.approx(-40);
 assert_ne!(approx, 0.into());
 ```
 
+### Structural inspection
+
+```rust
+use hyperreal::{Rational, Real, RealSign, ZeroKnowledge};
+
+let value = Real::new(Rational::new(2)).sqrt().unwrap();
+let facts = value.structural_facts();
+
+assert_eq!(facts.sign, Some(RealSign::Positive));
+assert_eq!(facts.zero, ZeroKnowledge::NonZero);
+assert!(!facts.exact_rational);
+
+let sign = value.refine_sign_until(-64);
+assert_eq!(sign, Some(RealSign::Positive));
+```
+
+Structural facts are conservative. A missing sign or magnitude means the value was not proven by cheap structural inspection; it does not imply the fact is false. Bounded sign refinement may populate approximation caches, but it terminates at or before the requested precision floor.
+
 ### Simple expressions
 
 ```rust
@@ -125,8 +154,9 @@ Hyperreal supports Rust conversion traits where they make sense:
 - integer types -> `Rational` / `Real`
 - `f32` / `f64` -> `Rational` / `Real` via exact IEEE-754 decoding
 - `Real` -> `f32` / `f64` via nearest representable floating-point value
+- `Real::to_f64_approx()` for a borrowed, finite-only approximation useful for filtering
 
-Float conversions are fallible on `NaN` and infinities.
+Float conversions from IEEE-754 values are fallible on `NaN` and infinities. `Real::to_f64_approx()` returns `None` when no finite `f64` approximation can be produced, including overflow to infinity; values too small for `f64` may underflow to `Some(0.0)`.
 
 ## Serialization
 
@@ -141,6 +171,7 @@ Current work in the tree includes:
 - specialized transcendental kernels
 - faster large-argument reduction for trig and `exp`
 - exact rational and symbolic shortcuts
+- structural fact and bounded sign-refinement shortcuts
 - borrowed arithmetic improvements
 - benchmark-guided evaluator refactoring
 
@@ -155,4 +186,5 @@ Benchmark targets:
 
 - Some computations are intentionally lazy and may run for a long time if you request difficult values at high precision.
 - `Real::abort` can be used to attach an external stop signal to long-running evaluation.
-- Public APIs are being tightened so exact facts and planner-only facts stay separate; this matters for both correctness and WASM stack-safety work.
+- Public structural APIs expose conservative numeric facts without exposing private evaluator internals.
+- Planner-only evaluator facts remain private; downstream crates should use `structural_facts`, `exact_rational`, `refine_sign_until`, and `sign_until`.
