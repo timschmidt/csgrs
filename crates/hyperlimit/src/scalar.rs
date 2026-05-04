@@ -70,6 +70,10 @@ pub trait StructuralScalar: Sized {
     fn magnitude_bounds(&self) -> Option<MagnitudeBounds> {
         self.scalar_facts().magnitude
     }
+
+    fn refine_sign_until(&self, _min_precision: i32) -> SignKnowledge {
+        SignKnowledge::Unknown
+    }
 }
 
 /// Numeric operations needed by the starter predicates.

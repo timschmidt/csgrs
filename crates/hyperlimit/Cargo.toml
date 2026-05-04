@@ -6,10 +6,16 @@ description = "Geometry-oriented robust predicates with structural scalar awaren
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+geogram_predicates = { git = "https://github.com/glennDittmann/geogram_predicates.git", branch = "dev-rust-port", default-features = false, optional = true }
+hyperreal = { version = "0.10", optional = true }
+realistic_blas = { version = "0.3", optional = true }
+robust = { version = "1.2", optional = true }
 
 [features]
 default = ["std"]
 std = []
-hyperreal = []
-robust = []
+geogram = ["dep:geogram_predicates"]
+hyperreal = ["dep:hyperreal"]
+realistic-blas = ["dep:realistic_blas"]
+robust = ["dep:robust"]
 interval = []

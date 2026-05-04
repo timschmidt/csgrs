@@ -12,11 +12,12 @@ pub mod filter;
 pub mod orient;
 pub mod plane;
 pub mod predicate;
+mod resolve;
 pub mod scalar;
 
 pub use classify::{LineSide, PlaneSide};
-pub use orient::{Point2, Point3, orient2d, orient3d};
-pub use plane::{Plane3, classify_point_plane};
+pub use orient::{Point2, Point3, classify_point_line, incircle2d, insphere3d, orient2d, orient3d};
+pub use plane::{Plane3, classify_point_oriented_plane, classify_point_plane};
 pub use predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, Sign, SignKnowledge,
 };

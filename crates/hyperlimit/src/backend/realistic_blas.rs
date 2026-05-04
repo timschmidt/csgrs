@@ -1,10 +1,12 @@
-//! Adapter for `hyperreal` structural scalar facts.
+//! Adapter for `realistic_blas::Scalar` structural scalar facts.
 
 use crate::backend::BackendCapabilities;
+#[cfg(feature = "hyperreal")]
+use crate::backend::hyperreal::magnitude_bits_to_bounds;
 use crate::predicate::{Sign, SignKnowledge};
 use crate::scalar::{MagnitudeBounds, PredicateScalar, ScalarFacts, StructuralScalar};
 
-/// Capabilities exposed by `hyperreal` 0.10's structural APIs.
+/// Capabilities forwarded through `realistic_blas::Scalar`.
 pub const CAPABILITIES: BackendCapabilities = BackendCapabilities {
     structural_signs: true,
     exact_zero: true,
@@ -14,16 +16,16 @@ pub const CAPABILITIES: BackendCapabilities = BackendCapabilities {
     robust_fallback: false,
 };
 
-impl StructuralScalar for hyperreal::Real {
+impl<B: realistic_blas::Backend> StructuralScalar for realistic_blas::Scalar<B> {
     fn scalar_facts(&self) -> ScalarFacts {
         let facts = self.structural_facts();
         ScalarFacts {
             sign: facts.sign.map(map_sign),
-            exact_zero: Some(matches!(facts.zero, hyperreal::ZeroKnowledge::Zero)),
+            exact_zero: Some(matches!(facts.zero, realistic_blas::ZeroStatus::Zero)),
             provably_nonzero: match facts.zero {
-                hyperreal::ZeroKnowledge::Zero => Some(false),
-                hyperreal::ZeroKnowledge::NonZero => Some(true),
-                hyperreal::ZeroKnowledge::Unknown => None,
+                realistic_blas::ZeroStatus::Zero => Some(false),
+                realistic_blas::ZeroStatus::NonZero => Some(true),
+                realistic_blas::ZeroStatus::Unknown => None,
             },
             exact: Some(facts.exact_rational),
             rational_only: Some(facts.exact_rational),
@@ -45,25 +47,31 @@ impl StructuralScalar for hyperreal::Real {
     }
 }
 
-impl PredicateScalar for hyperreal::Real {
+impl<B: realistic_blas::Backend> PredicateScalar for realistic_blas::Scalar<B> {
     fn to_f64(&self) -> Option<f64> {
         self.to_f64_approx()
     }
 }
 
-fn map_sign(sign: hyperreal::RealSign) -> Sign {
+fn map_sign(sign: realistic_blas::ScalarSign) -> Sign {
     match sign {
-        hyperreal::RealSign::Negative => Sign::Negative,
-        hyperreal::RealSign::Zero => Sign::Zero,
-        hyperreal::RealSign::Positive => Sign::Positive,
+        realistic_blas::ScalarSign::Negative => Sign::Negative,
+        realistic_blas::ScalarSign::Zero => Sign::Zero,
+        realistic_blas::ScalarSign::Positive => Sign::Positive,
     }
 }
 
-fn map_magnitude(magnitude: hyperreal::MagnitudeBits) -> Option<MagnitudeBounds> {
-    magnitude_bits_to_bounds(magnitude.msd, magnitude.exact_msd)
+fn map_magnitude(magnitude: realistic_blas::ScalarMagnitudeBits) -> Option<MagnitudeBounds> {
+    magnitude_bits_to_bounds_local(magnitude.msd, magnitude.exact_msd)
 }
 
-pub(crate) fn magnitude_bits_to_bounds(msd: i32, exact_msd: bool) -> Option<MagnitudeBounds> {
+#[cfg(feature = "hyperreal")]
+fn magnitude_bits_to_bounds_local(msd: i32, exact_msd: bool) -> Option<MagnitudeBounds> {
+    magnitude_bits_to_bounds(msd, exact_msd)
+}
+
+#[cfg(not(feature = "hyperreal"))]
+fn magnitude_bits_to_bounds_local(msd: i32, exact_msd: bool) -> Option<MagnitudeBounds> {
     let upper_exp = msd.checked_add(1)?;
     let abs_upper = pow2(upper_exp)?;
     let abs_lower = if exact_msd { pow2(msd)? } else { 0.0 };
@@ -73,6 +81,7 @@ pub(crate) fn magnitude_bits_to_bounds(msd: i32, exact_msd: bool) -> Option<Magn
     })
 }
 
+#[cfg(not(feature = "hyperreal"))]
 fn pow2(exp: i32) -> Option<f64> {
     let value = 2.0_f64.powi(exp);
     value.is_finite().then_some(value)

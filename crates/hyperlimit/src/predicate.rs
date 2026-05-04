@@ -145,6 +145,8 @@ pub struct PredicatePolicy {
     pub allow_exact: bool,
     /// Permit scalar refinement when available.
     pub allow_refinement: bool,
+    /// Lowest binary precision scalar refinement may request.
+    pub max_refinement_precision: Option<i32>,
 }
 
 impl PredicatePolicy {
@@ -154,6 +156,7 @@ impl PredicatePolicy {
         allow_robust_fallback: true,
         allow_exact: true,
         allow_refinement: true,
+        max_refinement_precision: Some(-512),
     };
 
     /// Useful for prototyping, debugging, and visual previews.
@@ -162,6 +165,7 @@ impl PredicatePolicy {
         allow_robust_fallback: false,
         allow_exact: false,
         allow_refinement: false,
+        max_refinement_precision: None,
     };
 }
 

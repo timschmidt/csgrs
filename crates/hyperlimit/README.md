@@ -54,24 +54,29 @@ geometry robustness policy: sidedness, orientation, coplanarity, splitting, BSP
 classification, and intersection decisions. Keeping this layer separate avoids
 turning the linear algebra layer into an application-specific geometry kernel.
 
-## Hyperreal Integration
+## Hyperreal and realistic_blas Integration
 
-The `StructuralScalar` and `PredicateScalar` traits model the facts a
-Hyperreal-aware backend could expose:
+The `StructuralScalar` and `PredicateScalar` traits consume facts exposed by
+`hyperreal` and forwarded through `realistic_blas`:
 
 - known sign
 - exact zero / provably nonzero
-- exact vs approximate state
-- rational-only state
+- exact rational state
 - magnitude bounds
 - refinement until sign is decided
 
-The initial `backend::hyperreal` module is a compile-time sketch. It names the
-adapter shape without forcing this crate to depend on a particular `hyperreal`
-API before that API is stable.
+Enable the `hyperreal` feature to implement the predicate scalar traits for
+`hyperreal::Real`. Enable the `realistic-blas` feature to implement them for
+`realistic_blas::Scalar<B>`.
 
 ## Status
 
-This is a starter architecture. The first concrete backend supports `f64` and
-uses conservative filters plus explicit `Unknown` results. Future work should
-wire in `robust`, interval arithmetic, and Hyperreal-native refinement.
+This is a starter architecture. The first concrete backend supports primitive
+floating point and uses conservative filters plus explicit `Unknown` results.
+Enabling the `robust` feature wires in adaptive orientation fallback for finite
+`f64`-convertible coordinates, plus incircle/insphere fallback. Enabling the
+`geogram` feature uses the `dev-rust-port` branch of `geogram_predicates` for
+orientation fallback and is preferred for orientation when both fallback
+features are enabled. Enabling `hyperreal` or `realistic-blas` uses structural
+sign, zero, magnitude, and bounded refinement facts before fallback. Future work
+should add interval arithmetic.

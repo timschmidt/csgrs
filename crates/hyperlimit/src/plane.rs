@@ -1,10 +1,11 @@
 //! Plane classification helpers.
 
 use crate::classify::PlaneSide;
-use crate::orient::Point3;
+use crate::orient::{Point3, orient3d_with_policy};
 use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign, SignKnowledge,
+    Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign, SignKnowledge,
 };
+use crate::resolve::{map_outcome, resolve_scalar_sign};
 use crate::scalar::PredicateScalar;
 
 /// Plane represented by `normal . point + offset = 0`.
@@ -39,28 +40,51 @@ pub fn classify_point_plane_with_policy<S: PredicateScalar>(
         + plane.normal.z.clone() * point.z.clone()
         + plane.offset.clone();
 
-    match value.known_sign() {
-        SignKnowledge::Known { sign, certainty } => {
-            PredicateOutcome::decided(PlaneSide::from(sign), certainty, Escalation::Structural)
-        }
-        SignKnowledge::NonZero | SignKnowledge::Unknown => {
-            classify_point_plane_filter(point, plane)
-                .or_else(|| {
-                    if policy.allow_approximate {
-                        let sign = Sign::from_f64(value.to_f64()?)?;
-                        Some(PredicateOutcome::decided(
-                            PlaneSide::from(sign),
-                            Certainty::Approximate,
-                            Escalation::Undecided,
-                        ))
-                    } else {
-                        None
-                    }
-                })
-                .unwrap_or_else(|| {
-                    PredicateOutcome::unknown(RefinementNeed::RobustFallback, Escalation::Undecided)
-                })
-        }
+    map_outcome(
+        resolve_scalar_sign(
+            &value,
+            policy,
+            || {
+                classify_point_plane_filter(point, plane)
+                    .map(|outcome| map_outcome(outcome, sign_from_plane_side))
+            },
+            || None,
+            RefinementNeed::ScalarRefinement,
+        ),
+        PlaneSide::from,
+    )
+}
+
+/// Classify a point relative to the oriented plane through `a`, `b`, and `c`.
+pub fn classify_point_oriented_plane<S: PredicateScalar>(
+    a: &Point3<S>,
+    b: &Point3<S>,
+    c: &Point3<S>,
+    point: &Point3<S>,
+) -> PredicateOutcome<PlaneSide> {
+    classify_point_oriented_plane_with_policy(a, b, c, point, PredicatePolicy::default())
+}
+
+/// Classify a point relative to the oriented plane through `a`, `b`, and `c`
+/// with an explicit escalation policy.
+pub fn classify_point_oriented_plane_with_policy<S: PredicateScalar>(
+    a: &Point3<S>,
+    b: &Point3<S>,
+    c: &Point3<S>,
+    point: &Point3<S>,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PlaneSide> {
+    map_outcome(
+        orient3d_with_policy(a, b, c, point, policy),
+        PlaneSide::from,
+    )
+}
+
+fn sign_from_plane_side(side: PlaneSide) -> Sign {
+    match side {
+        PlaneSide::Below => Sign::Negative,
+        PlaneSide::On => Sign::Zero,
+        PlaneSide::Above => Sign::Positive,
     }
 }
 
@@ -104,6 +128,35 @@ mod tests {
         assert_eq!(
             classify_point_plane(&Point3::new(0.0, 0.0, 1.0), &plane).value(),
             Some(PlaneSide::Below)
+        );
+    }
+
+    #[test]
+    fn classifies_point_oriented_plane_from_points() {
+        let a = Point3::new(0.0, 0.0, 0.0);
+        let b = Point3::new(1.0, 0.0, 0.0);
+        let c = Point3::new(0.0, 1.0, 0.0);
+
+        assert_eq!(
+            classify_point_oriented_plane(&a, &b, &c, &Point3::new(0.0, 0.0, 1.0)).value(),
+            Some(PlaneSide::Below)
+        );
+    }
+
+    #[cfg(feature = "hyperreal")]
+    #[test]
+    fn classifies_point_plane_with_hyperreal_filter_before_refinement() {
+        use crate::predicate::{Certainty, Escalation};
+
+        let plane = Plane3::new(
+            Point3::new(hyperreal::Real::from(1), 0.into(), 0.into()),
+            (-4).into(),
+        );
+        let point = Point3::new(hyperreal::Real::pi(), 0.into(), 0.into());
+
+        assert_eq!(
+            classify_point_plane(&point, &plane),
+            PredicateOutcome::decided(PlaneSide::Below, Certainty::Filtered, Escalation::Filter)
         );
     }
 }

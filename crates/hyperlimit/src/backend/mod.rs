@@ -2,8 +2,17 @@
 
 pub mod approx;
 
+#[cfg(feature = "geogram")]
+pub mod geogram;
+
 #[cfg(feature = "hyperreal")]
 pub mod hyperreal;
+
+#[cfg(feature = "realistic-blas")]
+pub mod realistic_blas;
+
+#[cfg(feature = "robust")]
+pub mod robust;
 
 /// Capabilities a backend can advertise to predicate pipelines.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
