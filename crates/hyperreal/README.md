@@ -27,6 +27,7 @@ Hyperreal is a Rust library for exact rational arithmetic and computable real ar
   - `RealStructuralFacts`
 - `Simple`
   - a small Lisp-like expression parser and evaluator for interactive use
+  - enabled by the default `simple` Cargo feature
 
 ## Current state
 
@@ -53,6 +54,17 @@ The evaluator refactor plan lives in [`evaluator-refactor.md`](./evaluator-refac
 [dependencies]
 hyperreal = "0.9.1"
 ```
+
+To build only the numeric library without the `Simple` expression parser:
+
+```toml
+[dependencies]
+hyperreal = { version = "0.9.1", default-features = false }
+```
+
+Cargo features:
+
+- `simple` (default): builds and exports `Simple` and the package calculator binary.
 
 ## Examples
 
@@ -123,7 +135,7 @@ let _: f64 = value.into();
 
 ## Simple expression language
 
-`Simple` uses a Lisp-like syntax:
+`Simple` is enabled by the default `simple` feature and uses a Lisp-like syntax:
 
 - arithmetic: `+`, `-`, `*`, `/`
 - roots and powers: `sqrt`, `pow`, `^`

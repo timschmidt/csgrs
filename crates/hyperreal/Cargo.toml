@@ -7,6 +7,10 @@ version = "0.9.1"
 edition = "2024"
 readme = "README.md"
 
+[features]
+default = ["simple"]
+simple = []
+
 [dependencies]
 ciborium = "0.2.2"
 num = { version = "0.4.3", features = ["num-bigint", "serde"] }
@@ -16,6 +20,11 @@ serde_json = "1.0.149"
 [dev-dependencies]
 criterion = "0.5"
 
+[[bin]]
+name = "hyperreal"
+path = "src/main.rs"
+required-features = ["simple"]
+
 [[bench]]
 name = "borrowed_ops"
 harness = false
@@ -23,6 +32,7 @@ harness = false
 [[bench]]
 name = "library_perf"
 harness = false
+required-features = ["simple"]
 
 [[bench]]
 name = "numerical_micro"

@@ -10,7 +10,9 @@ pub use crate::computable::Computable;
 mod real;
 pub use crate::real::Real;
 
+#[cfg(feature = "simple")]
 mod simple;
+#[cfg(feature = "simple")]
 pub use crate::simple::Simple;
 
 mod problem;
