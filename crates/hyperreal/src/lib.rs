@@ -1,6 +1,9 @@
 mod rational;
 pub use crate::rational::Rational;
 
+mod structural;
+pub use crate::structural::{MagnitudeBits, RealSign, RealStructuralFacts, ZeroKnowledge};
+
 mod computable;
 pub use crate::computable::Computable;
 

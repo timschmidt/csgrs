@@ -1,4 +1,6 @@
-use crate::{Computable, Problem, Rational};
+use crate::{
+    Computable, MagnitudeBits, Problem, Rational, RealSign, RealStructuralFacts, ZeroKnowledge,
+};
 use num::bigint::{BigInt, BigUint, Sign};
 
 mod convert;
@@ -347,11 +349,74 @@ impl Real {
         self.rational.sign() == Sign::NoSign
     }
 
-    pub(crate) fn exact_rational(&self) -> Option<&Rational> {
+    /// Return this value as an owned exact rational when that is structurally known.
+    pub fn exact_rational(&self) -> Option<Rational> {
         match self.class {
-            One => Some(&self.rational),
+            One => Some(self.rational.clone()),
             _ => None,
         }
+    }
+
+    /// Conservatively inspect public structural facts about this value.
+    pub fn structural_facts(&self) -> RealStructuralFacts {
+        let exact = self.exact_rational();
+        if let Some(rational) = exact {
+            return facts_from_rational(&rational, true);
+        }
+
+        let rational_sign = self.rational.sign();
+        if rational_sign == Sign::NoSign {
+            return facts_from_rational(&self.rational, false);
+        }
+
+        let computable = self.computable.structural_facts();
+        let sign = match self.class {
+            One => Some(real_sign_from_num(rational_sign)),
+            Pi | Sqrt(_) | Exp(_) | Ln(_) | Log10(_) | SinPi(_) | TanPi(_) => {
+                Some(real_sign_from_num(rational_sign))
+            }
+            Irrational => {
+                multiply_public_sign(Some(real_sign_from_num(rational_sign)), computable.sign)
+            }
+        };
+
+        let zero = match sign {
+            Some(RealSign::Zero) => ZeroKnowledge::Zero,
+            Some(RealSign::Negative | RealSign::Positive) => ZeroKnowledge::NonZero,
+            None if matches!(computable.zero, ZeroKnowledge::NonZero) => ZeroKnowledge::NonZero,
+            None => ZeroKnowledge::Unknown,
+        };
+
+        let magnitude = match (self.rational.msd_exact(), computable.magnitude) {
+            (Some(rational_msd), Some(magnitude)) => Some(MagnitudeBits {
+                msd: rational_msd + magnitude.msd,
+                exact_msd: magnitude.exact_msd,
+            }),
+            _ => computable.magnitude,
+        };
+
+        RealStructuralFacts {
+            sign,
+            zero,
+            exact_rational: false,
+            magnitude,
+        }
+    }
+
+    /// Try to prove the sign without refining past `min_precision`.
+    pub fn refine_sign_until(&self, min_precision: i32) -> Option<RealSign> {
+        let facts = self.structural_facts();
+        if let Some(sign) = facts.sign {
+            return Some(sign);
+        }
+        if self.rational.sign() == Sign::NoSign {
+            return Some(RealSign::Zero);
+        }
+        let computable_sign = self.computable.sign_until(min_precision)?;
+        multiply_public_sign(
+            Some(real_sign_from_num(self.rational.sign())),
+            Some(computable_sign),
+        )
     }
 
     /// Are two Reals definitely unequal?
@@ -1103,6 +1168,45 @@ impl Real {
     /// Should we display this Real as a fraction ?
     pub fn prefer_fraction(&self) -> bool {
         self.class == One && self.rational.prefer_fraction()
+    }
+}
+
+fn real_sign_from_num(sign: Sign) -> RealSign {
+    match sign {
+        Sign::Minus => RealSign::Negative,
+        Sign::NoSign => RealSign::Zero,
+        Sign::Plus => RealSign::Positive,
+    }
+}
+
+fn multiply_public_sign(left: Option<RealSign>, right: Option<RealSign>) -> Option<RealSign> {
+    match (left?, right?) {
+        (RealSign::Zero, _) | (_, RealSign::Zero) => Some(RealSign::Zero),
+        (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
+            Some(RealSign::Positive)
+        }
+        (RealSign::Positive, RealSign::Negative) | (RealSign::Negative, RealSign::Positive) => {
+            Some(RealSign::Negative)
+        }
+    }
+}
+
+fn facts_from_rational(rational: &Rational, exact_rational: bool) -> RealStructuralFacts {
+    let sign = real_sign_from_num(rational.sign());
+    let magnitude = rational.msd_exact().map(|msd| MagnitudeBits {
+        msd,
+        exact_msd: true,
+    });
+
+    RealStructuralFacts {
+        sign: Some(sign),
+        zero: if sign == RealSign::Zero {
+            ZeroKnowledge::Zero
+        } else {
+            ZeroKnowledge::NonZero
+        },
+        exact_rational,
+        magnitude,
     }
 }
 

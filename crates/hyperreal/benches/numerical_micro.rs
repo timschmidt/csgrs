@@ -1,7 +1,7 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
-use num::bigint::{BigInt, BigUint};
-use num::Signed;
 use hyperreal::{Computable, Rational};
+use num::Signed;
+use num::bigint::{BigInt, BigUint};
 use std::ops::Neg;
 
 fn deep_add_chain(depth: usize) -> Computable {
@@ -274,12 +274,22 @@ fn bench_computable_bounds(c: &mut Criterion) {
     group.bench_function("deep_structural_bound_sign_cached", |b| {
         b.iter(|| black_box(structural_bound_cached.sign()))
     });
+    group.bench_function("deep_structural_bound_facts_cached", |b| {
+        b.iter(|| black_box(structural_bound_cached.structural_facts()))
+    });
 
     let perturbed = perturbed_scaled_product_chain(200);
     group.bench_function("perturbed_scaled_product_sign", |b| {
         b.iter_batched(
             || perturbed.clone(),
             |value| black_box(value.sign()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("perturbed_scaled_product_sign_until", |b| {
+        b.iter_batched(
+            || perturbed.clone(),
+            |value| black_box(value.sign_until(-128)),
             BatchSize::SmallInput,
         )
     });
@@ -315,9 +325,11 @@ fn bench_computable_compare(c: &mut Criterion) {
 
     let base = Computable::pi();
     base.approx(-16);
-    let huge =
-        base.clone()
-            .multiply(Computable::rational(Rational::from_bigint(BigInt::from(1_u8) << 200)));
+    let huge = base
+        .clone()
+        .multiply(Computable::rational(Rational::from_bigint(
+            BigInt::from(1_u8) << 200,
+        )));
     group.bench_function("compare_to_exact_msd_gap", |b| {
         b.iter(|| black_box(huge.compare_to(&base)))
     });

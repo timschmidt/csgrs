@@ -137,7 +137,7 @@ impl Simple {
     fn lookup_exact(name: &str, names: &Symbols) -> Option<Rational> {
         match name {
             "pi" | "e" => None,
-            _ => names.get(name).and_then(Real::exact_rational).cloned(),
+            _ => names.get(name).and_then(Real::exact_rational),
         }
     }
 

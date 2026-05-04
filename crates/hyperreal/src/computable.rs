@@ -1,9 +1,9 @@
-use crate::Rational;
 use crate::computable::approximation::{Approximation, SharedConstant};
+use crate::{MagnitudeBits, Rational, RealSign, RealStructuralFacts, ZeroKnowledge};
 use core::cmp::Ordering;
+use num::Signed;
 use num::{BigInt, BigUint, bigint::Sign};
 use num::{One, Zero};
-use num::Signed;
 use serde::{Deserialize, Serialize};
 use std::{
     cell::RefCell,
@@ -201,13 +201,12 @@ impl BoundInfo {
             ) => {
                 let sign = match (left_sign.clone(), right_sign.clone()) {
                     (Some(left), Some(right)) if left == right => Some(left),
-                    (Some(Sign::Plus), Some(Sign::Minus)) | (Some(Sign::Minus), Some(Sign::Plus)) => {
-                        match (left_msd, right_msd) {
-                            (Some(left), Some(right)) if left > right + 1 => left_sign,
-                            (Some(left), Some(right)) if right > left + 1 => right_sign,
-                            _ => None,
-                        }
-                    }
+                    (Some(Sign::Plus), Some(Sign::Minus))
+                    | (Some(Sign::Minus), Some(Sign::Plus)) => match (left_msd, right_msd) {
+                        (Some(left), Some(right)) if left > right + 1 => left_sign,
+                        (Some(left), Some(right)) if right > left + 1 => right_sign,
+                        _ => None,
+                    },
                     _ => None,
                 };
                 let msd = match (left_sign, right_sign, left_msd, right_msd) {
@@ -271,6 +270,20 @@ impl BoundInfo {
             Self::Unknown => None,
         }
     }
+
+    fn magnitude_bits(&self) -> Option<MagnitudeBits> {
+        match self {
+            Self::NonZero {
+                msd: Some(msd),
+                exact_msd,
+                ..
+            } => Some(MagnitudeBits {
+                msd: *msd,
+                exact_msd: *exact_msd,
+            }),
+            _ => None,
+        }
+    }
 }
 
 impl SharedConstant {
@@ -294,6 +307,14 @@ fn negate_sign(sign: Sign) -> Sign {
         Sign::Plus => Sign::Minus,
         Sign::Minus => Sign::Plus,
         Sign::NoSign => Sign::NoSign,
+    }
+}
+
+fn public_sign(sign: Sign) -> RealSign {
+    match sign {
+        Sign::Minus => RealSign::Negative,
+        Sign::NoSign => RealSign::Zero,
+        Sign::Plus => RealSign::Positive,
     }
 }
 
@@ -445,7 +466,9 @@ impl Computable {
             SHARED_CONSTANT_CACHES.with(|caches| {
                 let caches = caches.borrow();
                 match &caches[constant.cache_index()] {
-                    Cache::Valid((cache_prec, cache_appr)) => Some((*cache_prec, cache_appr.clone())),
+                    Cache::Valid((cache_prec, cache_appr)) => {
+                        Some((*cache_prec, cache_appr.clone()))
+                    }
                     Cache::Invalid => None,
                 }
             })
@@ -490,12 +513,13 @@ impl Computable {
     }
 
     fn bound_from_approx(prec: Precision, appr: &BigInt) -> BoundInfo {
-        if appr.sign() == Sign::NoSign {
-            BoundInfo::Zero
+        if appr.abs() <= BigInt::one() {
+            BoundInfo::Unknown
         } else {
-            BoundInfo::with_sign(
+            BoundInfo::with_sign_msd(
                 appr.sign(),
                 Some(prec + appr.magnitude().bits() as Precision - 1),
+                false,
             )
         }
     }
@@ -521,9 +545,9 @@ impl Computable {
             Approximation::Offset(child, n) => child
                 .cheap_bound_shallow(budget - 1)
                 .map(|bound| bound.map_msd(|value| value + *n)),
-            Approximation::Inverse(child) => {
-                child.cheap_bound_shallow(budget - 1).map(BoundInfo::inverse)
-            }
+            Approximation::Inverse(child) => child
+                .cheap_bound_shallow(budget - 1)
+                .map(BoundInfo::inverse),
             Approximation::Square(child) => {
                 child.cheap_bound_shallow(budget - 1).map(BoundInfo::square)
             }
@@ -676,7 +700,9 @@ impl Computable {
             }
         }
 
-        let result = values.pop().expect("bound evaluation should produce a result");
+        let result = values
+            .pop()
+            .expect("bound evaluation should produce a result");
         self.store_bound(&result);
         result
     }
@@ -876,7 +902,6 @@ impl Computable {
         result
     }
 
-
     pub(super) fn planning_msd(&self) -> Option<Option<Precision>> {
         self.cheap_bound().planning_msd()
     }
@@ -901,10 +926,17 @@ impl Computable {
 
     /// Natural Exponential function, raise Euler's Number to this number.
     pub fn exp(self) -> Computable {
-        if self.exact_rational().as_ref().is_some_and(|r| *r == Rational::one()) {
+        if self
+            .exact_rational()
+            .as_ref()
+            .is_some_and(|r| *r == Rational::one())
+        {
             return Self::e_constant();
         }
-        if self.exact_rational().is_some_and(|r| r.sign() == Sign::NoSign) {
+        if self
+            .exact_rational()
+            .is_some_and(|r| r.sign() == Sign::NoSign)
+        {
             return Self::one();
         }
         let low_prec: Precision = -4;
@@ -915,8 +947,9 @@ impl Computable {
             let mut multiple = self.integer_ratio_nearest(ln2.clone());
 
             loop {
-                let adjustment =
-                    ln2.clone().multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
+                let adjustment = ln2
+                    .clone()
+                    .multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
                 let reduced = self.clone().add(adjustment);
                 let reduced_appr = reduced.approx(low_prec);
 
@@ -929,9 +962,11 @@ impl Computable {
                     continue;
                 }
 
-                return reduced
-                    .exp()
-                    .shift_left(multiple.try_into().expect("binary exponent should fit in i32"));
+                return reduced.exp().shift_left(
+                    multiple
+                        .try_into()
+                        .expect("binary exponent should fit in i32"),
+                );
             }
         }
 
@@ -991,7 +1026,10 @@ impl Computable {
 
     /// Cosine of this number.
     pub fn cos(self) -> Computable {
-        if self.exact_rational().is_some_and(|r| r.sign() == Sign::NoSign) {
+        if self
+            .exact_rational()
+            .is_some_and(|r| r.sign() == Sign::NoSign)
+        {
             return Self::one();
         }
         let rough_appr = self.approx(-1);
@@ -1025,7 +1063,10 @@ impl Computable {
 
     /// Sine of this number.
     pub fn sin(self) -> Computable {
-        if self.exact_rational().is_some_and(|r| r.sign() == Sign::NoSign) {
+        if self
+            .exact_rational()
+            .is_some_and(|r| r.sign() == Sign::NoSign)
+        {
             return Self::rational(Rational::zero());
         }
         let rough_appr = self.approx(-1);
@@ -1075,7 +1116,10 @@ impl Computable {
 
     /// Tangent of this number.
     pub fn tan(self) -> Computable {
-        if self.exact_rational().is_some_and(|r| r.sign() == Sign::NoSign) {
+        if self
+            .exact_rational()
+            .is_some_and(|r| r.sign() == Sign::NoSign)
+        {
             return Self::rational(Rational::zero());
         }
         let rough_appr = self.approx(-1);
@@ -1343,10 +1387,16 @@ impl Computable {
         }
         if let Approximation::Multiply(left, right) = &*self.internal {
             if let Some(scale) = left.exact_rational() {
-                return right.clone().square().multiply(Self::rational(scale.clone() * scale));
+                return right
+                    .clone()
+                    .square()
+                    .multiply(Self::rational(scale.clone() * scale));
             }
             if let Some(scale) = right.exact_rational() {
-                return left.clone().square().multiply(Self::rational(scale.clone() * scale));
+                return left
+                    .clone()
+                    .square()
+                    .multiply(Self::rational(scale.clone() * scale));
             }
         }
         Self {
@@ -1517,9 +1567,7 @@ impl Computable {
 
         if !matches!(
             &*self.internal,
-            Approximation::Negate(_)
-                | Approximation::Add(_, _)
-                | Approximation::Offset(_, _)
+            Approximation::Negate(_) | Approximation::Add(_, _) | Approximation::Offset(_, _)
         ) {
             let result = self.internal.approximate(signal, p);
             self.store_cache_value(p, result.clone());
@@ -1581,6 +1629,112 @@ impl Computable {
         values.pop().expect("evaluation should produce a result")
     }
 
+    /// Conservatively inspect cached and structural numeric facts.
+    pub fn structural_facts(&self) -> RealStructuralFacts {
+        let exact = self.exact_rational();
+        let exact_bound = exact.as_ref().map(BoundInfo::from_rational);
+
+        let mut sign = self.exact_sign().map(public_sign);
+        if sign.is_none()
+            && let Some((_, appr)) = self.cached()
+            && appr.abs() > BigInt::one()
+        {
+            sign = Some(public_sign(appr.sign()));
+        }
+
+        let bound = self.cheap_bound();
+        if sign.is_none() {
+            sign = bound.known_sign().map(public_sign);
+        }
+        if sign.is_none() {
+            sign = exact_bound
+                .as_ref()
+                .and_then(BoundInfo::known_sign)
+                .map(public_sign);
+        }
+
+        let zero = match sign {
+            Some(RealSign::Zero) => ZeroKnowledge::Zero,
+            Some(RealSign::Negative | RealSign::Positive) => ZeroKnowledge::NonZero,
+            None => {
+                if matches!(&bound, BoundInfo::Zero)
+                    || matches!(&exact_bound, Some(BoundInfo::Zero))
+                {
+                    ZeroKnowledge::Zero
+                } else if matches!(&bound, BoundInfo::NonZero { .. })
+                    || matches!(&exact_bound, Some(BoundInfo::NonZero { .. }))
+                {
+                    ZeroKnowledge::NonZero
+                } else {
+                    ZeroKnowledge::Unknown
+                }
+            }
+        };
+
+        let magnitude = bound
+            .magnitude_bits()
+            .or_else(|| exact_bound.as_ref().and_then(BoundInfo::magnitude_bits));
+
+        RealStructuralFacts {
+            sign,
+            zero,
+            exact_rational: exact.is_some(),
+            magnitude,
+        }
+    }
+
+    /// Try to prove the sign without refining past `min_precision`.
+    pub fn sign_until(&self, min_precision: Precision) -> Option<RealSign> {
+        if let Some(sign) = self.exact_sign() {
+            return Some(public_sign(sign));
+        }
+        if let Some((_, appr)) = self.cached()
+            && appr.abs() > BigInt::one()
+        {
+            let sign = appr.sign();
+            self.exact_sign.replace(ExactSignCache::Valid(sign));
+            return Some(public_sign(sign));
+        }
+
+        match self.cheap_bound().known_sign() {
+            Some(sign) => return Some(public_sign(sign)),
+            None => {}
+        }
+
+        let start = if min_precision > 0 { min_precision } else { 0 };
+        let mut p = start;
+        loop {
+            let appr = self.approx(p);
+            if appr.abs() > BigInt::one() {
+                let sign = appr.sign();
+                self.exact_sign.replace(ExactSignCache::Valid(sign));
+                return Some(public_sign(sign));
+            }
+
+            if p <= min_precision {
+                break;
+            }
+            let next = (p * 3) / 2 - 16;
+            p = if next < min_precision {
+                min_precision
+            } else {
+                next
+            };
+            if should_stop(&self.signal) {
+                break;
+            }
+        }
+
+        if self
+            .exact_rational()
+            .is_some_and(|r| r.sign() == Sign::NoSign)
+        {
+            Some(RealSign::Zero)
+        } else {
+            None
+        }
+    }
+
     pub fn sign(&self) -> Sign {
         if let Some(sign) = self.exact_sign() {
             return sign;
@@ -1613,7 +1767,9 @@ impl Computable {
             SHARED_CONSTANT_CACHES.with(|caches| {
                 let caches = caches.borrow();
                 match &caches[constant.cache_index()] {
-                    Cache::Valid((cache_prec, cache_appr)) => Some((*cache_prec, cache_appr.clone())),
+                    Cache::Valid((cache_prec, cache_appr)) => {
+                        Some((*cache_prec, cache_appr.clone()))
+                    }
                     Cache::Invalid => None,
                 }
             })
@@ -1636,17 +1792,21 @@ impl Computable {
         }
         if let (Some(left), Some(right)) = (self.exact_sign(), other.exact_sign()) {
             match (left, right) {
-                (Sign::Minus, Sign::Plus | Sign::NoSign)
-                | (Sign::NoSign, Sign::Plus) => return Ordering::Less,
-                (Sign::Plus, Sign::Minus | Sign::NoSign)
-                | (Sign::NoSign, Sign::Minus) => return Ordering::Greater,
+                (Sign::Minus, Sign::Plus | Sign::NoSign) | (Sign::NoSign, Sign::Plus) => {
+                    return Ordering::Less;
+                }
+                (Sign::Plus, Sign::Minus | Sign::NoSign) | (Sign::NoSign, Sign::Minus) => {
+                    return Ordering::Greater;
+                }
                 _ => {}
             }
 
             if matches!(left, Sign::Plus | Sign::Minus)
                 && left == right
-                && let (Some(Some(left_msd)), Some(Some(right_msd))) =
-                    (self.cheap_bound().known_msd(), other.cheap_bound().known_msd())
+                && let (Some(Some(left_msd)), Some(Some(right_msd))) = (
+                    self.cheap_bound().known_msd(),
+                    other.cheap_bound().known_msd(),
+                )
                 && left_msd != right_msd
             {
                 return match left {
@@ -1690,9 +1850,10 @@ impl Computable {
             (Some(_), Some(Sign::NoSign)) => return Ordering::Greater,
             _ => {}
         }
-        if let (Some(Some(left_msd)), Some(Some(right_msd))) =
-            (self.cheap_bound().known_msd(), other.cheap_bound().known_msd())
-        {
+        if let (Some(Some(left_msd)), Some(Some(right_msd))) = (
+            self.cheap_bound().known_msd(),
+            other.cheap_bound().known_msd(),
+        ) {
             if left_msd >= tolerance + 1 && right_msd <= tolerance - 1 {
                 return Ordering::Greater;
             }
@@ -1808,8 +1969,8 @@ fn scale(n: BigInt, p: Precision) -> BigInt {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use num::bigint::BigUint;
     use num::Signed;
+    use num::bigint::BigUint;
 
     #[test]
     fn compare() {
@@ -2088,7 +2249,9 @@ mod tests {
         base.approx(-16);
         let huge = base
             .clone()
-            .multiply(Computable::rational(Rational::from_bigint(BigInt::from(1_u8) << 200)));
+            .multiply(Computable::rational(Rational::from_bigint(
+                BigInt::from(1_u8) << 200,
+            )));
         assert_eq!(huge.compare_to(&base), Ordering::Greater);
         assert_eq!(base.compare_to(&huge), Ordering::Less);
 
@@ -2115,7 +2278,9 @@ mod tests {
         base.approx(-16);
         let huge = base
             .clone()
-            .multiply(Computable::rational(Rational::from_bigint(BigInt::from(1_u8) << 200)));
+            .multiply(Computable::rational(Rational::from_bigint(
+                BigInt::from(1_u8) << 200,
+            )));
         assert_eq!(huge.compare_absolute(&base, -40), Ordering::Greater);
         assert_eq!(base.compare_absolute(&huge, -40), Ordering::Less);
     }
@@ -2304,9 +2469,8 @@ mod tests {
             .multiply(scale.clone())
             .multiply(scale.clone())
             .multiply(scale);
-        let expected = Computable::pi().multiply(Computable::rational(
-            Rational::fraction(343, 512).unwrap(),
-        ));
+        let expected =
+            Computable::pi().multiply(Computable::rational(Rational::fraction(343, 512).unwrap()));
         assert_close(combined, expected, -60, 2);
     }
 
@@ -2356,8 +2520,8 @@ mod tests {
             .multiply(Computable::rational(Rational::fraction(7, 8).unwrap()))
             .square()
             .sqrt();
-        let expected = Computable::pi()
-            .multiply(Computable::rational(Rational::fraction(7, 8).unwrap()));
+        let expected =
+            Computable::pi().multiply(Computable::rational(Rational::fraction(7, 8).unwrap()));
         assert_eq!(value.sign(), Sign::Plus);
         assert_eq!(value.msd(-4), Some(1));
         assert_close(value, expected, -60, 2);
@@ -2368,7 +2532,10 @@ mod tests {
         let value = Computable::rational(Rational::fraction(-3, 8).unwrap())
             .square()
             .sqrt();
-        assert_eq!(value.approx(-8), Computable::rational(Rational::fraction(3, 8).unwrap()).approx(-8));
+        assert_eq!(
+            value.approx(-8),
+            Computable::rational(Rational::fraction(3, 8).unwrap()).approx(-8)
+        );
     }
 
     #[test]
@@ -2418,7 +2585,8 @@ mod tests {
 
     #[test]
     fn multiply_by_power_of_two_fraction_collapses_to_shift() {
-        let value = Computable::pi().multiply(Computable::rational(Rational::fraction(1, 8).unwrap()));
+        let value =
+            Computable::pi().multiply(Computable::rational(Rational::fraction(1, 8).unwrap()));
         let expected = Computable::pi().shift_right(3);
         assert_close(value, expected, -60, 2);
     }
@@ -2433,7 +2601,9 @@ mod tests {
 
     #[test]
     fn square_of_power_of_two_scaled_value_collapses_to_shifted_square() {
-        let value = Computable::pi().multiply(Computable::rational(Rational::new(8))).square();
+        let value = Computable::pi()
+            .multiply(Computable::rational(Rational::new(8)))
+            .square();
         let expected = Computable::pi().square().shift_left(6);
         assert_close(value, expected, -60, 2);
     }
@@ -2472,7 +2642,59 @@ mod tests {
         assert_close(value, expected, -60, 2);
     }
 
+    #[test]
+    fn structural_facts_for_exact_rationals() {
+        let zero = Computable::rational(Rational::zero()).structural_facts();
+        assert_eq!(zero.sign, Some(RealSign::Zero));
+        assert_eq!(zero.zero, ZeroKnowledge::Zero);
+        assert!(zero.exact_rational);
+        assert_eq!(zero.magnitude, None);
 
+        let negative = Computable::rational(Rational::fraction(-7, 8).unwrap()).structural_facts();
+        assert_eq!(negative.sign, Some(RealSign::Negative));
+        assert_eq!(negative.zero, ZeroKnowledge::NonZero);
+        assert!(negative.exact_rational);
+        assert_eq!(
+            negative.magnitude,
+            Some(MagnitudeBits {
+                msd: -1,
+                exact_msd: true,
+            })
+        );
+    }
+
+    #[test]
+    fn structural_facts_for_shared_constant() {
+        let facts = Computable::pi().structural_facts();
+        assert_eq!(facts.sign, Some(RealSign::Positive));
+        assert_eq!(facts.zero, ZeroKnowledge::NonZero);
+        assert!(!facts.exact_rational);
+        assert_eq!(
+            facts.magnitude,
+            Some(MagnitudeBits {
+                msd: 1,
+                exact_msd: true,
+            })
+        );
+    }
+
+    #[test]
+    fn sign_until_respects_precision_floor() {
+        let near_pi = Computable::pi().add(Computable::rational(Rational::new(-3)));
+
+        assert_eq!(near_pi.sign_until(0), None);
+        assert_eq!(near_pi.sign_until(-8), Some(RealSign::Positive));
+    }
+
+    #[test]
+    fn sign_until_uses_structural_bounds_without_refinement() {
+        let value = Computable::pi()
+            .multiply(Computable::rational(Rational::fraction(-7, 8).unwrap()))
+            .inverse()
+            .negate();
+
+        assert_eq!(value.sign_until(0), Some(RealSign::Positive));
+    }
 
     #[test]
     fn add_with_dominant_term_has_structural_bound() {
@@ -2485,7 +2707,9 @@ mod tests {
     #[test]
     fn add_ignores_tiny_term_at_target_precision() {
         let big = Computable::pi();
-        let tiny = Computable::rational(Rational::from_bigint_fraction(BigInt::from(1), BigUint::from(1_u8) << 200).unwrap());
+        let tiny = Computable::rational(
+            Rational::from_bigint_fraction(BigInt::from(1), BigUint::from(1_u8) << 200).unwrap(),
+        );
         assert_eq!(
             big.clone().add(tiny).compare_absolute(&big, -128),
             Ordering::Equal
@@ -2523,14 +2747,21 @@ mod tests {
             .add(offset.clone());
 
         assert_eq!(
-            huge.clone().sin().compare_absolute(&offset.clone().sin(), -80),
+            huge.clone()
+                .sin()
+                .compare_absolute(&offset.clone().sin(), -80),
             Ordering::Equal
         );
         assert_eq!(
-            huge.clone().cos().compare_absolute(&offset.clone().cos(), -80),
+            huge.clone()
+                .cos()
+                .compare_absolute(&offset.clone().cos(), -80),
             Ordering::Equal
         );
-        assert_eq!(huge.tan().compare_absolute(&offset.tan(), -72), Ordering::Equal);
+        assert_eq!(
+            huge.tan().compare_absolute(&offset.tan(), -72),
+            Ordering::Equal
+        );
     }
 
     #[test]

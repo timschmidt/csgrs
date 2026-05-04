@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod tests {
     use super::super::curve;
-    use crate::{Problem, Rational, Real};
+    use crate::{
+        MagnitudeBits, Problem, Rational, Real, RealSign, RealStructuralFacts, ZeroKnowledge,
+    };
 
     #[test]
     fn zero() {
@@ -232,6 +234,61 @@ mod tests {
         let answer = sqrt_two.tan().unwrap();
         let actual: f64 = answer.into();
         assert!((actual - 6.3341191670421955).abs() < 1e-12, "{actual}");
+    }
+
+    #[test]
+    fn exact_rational_is_owned_and_public() {
+        let value = Real::new(Rational::fraction(9, 18).unwrap());
+        assert_eq!(
+            value.exact_rational(),
+            Some(Rational::fraction(1, 2).unwrap())
+        );
+
+        let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
+        assert_eq!(sqrt_two.exact_rational(), None);
+
+        let exp_ln_8 = Real::new(Rational::new(8)).ln().unwrap().exp().unwrap();
+        assert_eq!(exp_ln_8.exact_rational(), Some(Rational::new(8)));
+    }
+
+    #[test]
+    fn real_structural_facts_for_rational_and_constants() {
+        let negative = Real::new(Rational::fraction(-7, 8).unwrap()).structural_facts();
+        assert_eq!(
+            negative,
+            RealStructuralFacts {
+                sign: Some(RealSign::Negative),
+                zero: ZeroKnowledge::NonZero,
+                exact_rational: true,
+                magnitude: Some(MagnitudeBits {
+                    msd: -1,
+                    exact_msd: true,
+                }),
+            }
+        );
+
+        let pi = Real::pi().structural_facts();
+        assert_eq!(pi.sign, Some(RealSign::Positive));
+        assert_eq!(pi.zero, ZeroKnowledge::NonZero);
+        assert!(!pi.exact_rational);
+        assert_eq!(pi.magnitude.map(|m| m.msd), Some(1));
+
+        let e = Real::e().structural_facts();
+        assert_eq!(e.sign, Some(RealSign::Positive));
+        assert_eq!(e.zero, ZeroKnowledge::NonZero);
+    }
+
+    #[test]
+    fn real_refine_sign_until_handles_refined_and_unresolved_cases() {
+        let tiny = Real::new(
+            Rational::from_bigint_fraction(num::BigInt::from(1), num::BigUint::from(1_u8) << 64)
+                .unwrap(),
+        );
+        let near_pi = Real::pi() - tiny;
+        assert_eq!(near_pi.refine_sign_until(-8), Some(RealSign::Positive));
+
+        let unresolved = Real::pi() - Real::new(Rational::new(3));
+        assert_eq!(unresolved.refine_sign_until(0), None);
     }
 
     #[test]

@@ -1,3 +1,4 @@
+use crate::RealSign;
 use crate::{Computable, Problem, Rational, Real};
 use num::bigint::ToBigInt;
 
@@ -222,6 +223,38 @@ impl From<Real> for f64 {
         let exp_bits: u64 = exp << EXP_BITS.trailing_zeros();
         let bits = neg_bits | exp_bits | sig_bits;
         f64::from_bits(bits)
+    }
+}
+
+impl Real {
+    /// Return a finite borrowed `f64` approximation, or `None` on overflow.
+    pub fn to_f64_approx(&self) -> Option<f64> {
+        const NEG_BITS: u64 = 0x8000_0000_0000_0000;
+        const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
+
+        let c = self.fold_ref();
+        let sign = match self.refine_sign_until(-1075) {
+            Some(sign) => sign,
+            None => return Some(0.0),
+        };
+        let neg = match sign {
+            RealSign::Zero => return Some(0.0),
+            RealSign::Positive => 0,
+            RealSign::Negative => 1,
+        };
+
+        let Some(msd) = c.iter_msd_stop(-1075) else {
+            return Some(0.0);
+        };
+        if msd > 1023 {
+            return None;
+        }
+        let (sig_bits, exp) = sig_exp_64(c, msd);
+        let neg_bits: u64 = neg << NEG_BITS.trailing_zeros();
+        let exp_bits: u64 = exp << EXP_BITS.trailing_zeros();
+        let bits = neg_bits | exp_bits | sig_bits;
+        let value = f64::from_bits(bits);
+        value.is_finite().then_some(value)
     }
 }
 
@@ -453,5 +486,26 @@ mod tests {
         let r = Real::new(max_u64);
         let d: f64 = r.try_into().unwrap();
         assert_eq!(d, u64::MAX as f64);
+    }
+
+    #[test]
+    fn borrowed_f64_approx_finite_values() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        assert_eq!(half.to_f64_approx(), Some(0.5));
+
+        let pi = Real::pi().to_f64_approx().unwrap();
+        assert!(std::f64::consts::PI.to_bits().abs_diff(pi.to_bits()) < 2);
+    }
+
+    #[test]
+    fn borrowed_f64_approx_underflow_and_overflow() {
+        let tiny = Real::new(
+            Rational::from_bigint_fraction(BigInt::from(1), num::BigUint::from(1_u8) << 1200)
+                .unwrap(),
+        );
+        assert_eq!(tiny.to_f64_approx(), Some(0.0));
+
+        let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 1200));
+        assert_eq!(huge.to_f64_approx(), None);
     }
 }
