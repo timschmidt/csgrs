@@ -284,6 +284,24 @@ impl<B: Backend> Scalar<B> {
         self.0.zero_status()
     }
 
+    /// Returns conservative structural facts exposed by this scalar's backend.
+    pub fn structural_facts(&self) -> ScalarFacts {
+        self.0.structural_facts()
+    }
+
+    /// Tries to prove this scalar's sign without refining beyond `min_precision`.
+    ///
+    /// Backends without refinement support return only signs already known from
+    /// structural facts.
+    pub fn refine_sign_until(&self, min_precision: i32) -> Option<ScalarSign> {
+        self.0.refine_sign_until(min_precision)
+    }
+
+    /// Returns a borrowed finite `f64` approximation when one is available.
+    pub fn to_f64_approx(&self) -> Option<f64> {
+        self.0.to_f64_approx()
+    }
+
     /// Attaches a cancellation signal to this scalar where the backend supports it.
     ///
     /// This affects hyperreal backend evaluation. It is a no-op on the approx

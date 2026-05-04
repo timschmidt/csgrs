@@ -2,10 +2,10 @@ use std::cell::OnceCell;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use num::bigint::Sign;
-
 use crate::backend::{Backend, BackendScalar as BackendScalarTrait};
-use crate::{AbortSignal, BlasResult, Problem, ZeroStatus};
+use crate::{
+    AbortSignal, BlasResult, Problem, ScalarFacts, ScalarMagnitudeBits, ScalarSign, ZeroStatus,
+};
 
 thread_local! {
     static ZERO: OnceCell<BackendScalar> = const { OnceCell::new() };
@@ -19,6 +19,22 @@ fn cached(
     init: fn() -> BackendScalar,
 ) -> BackendScalar {
     cell.with(|slot| slot.get_or_init(init).clone())
+}
+
+fn map_sign(sign: hyperreal::RealSign) -> ScalarSign {
+    match sign {
+        hyperreal::RealSign::Negative => ScalarSign::Negative,
+        hyperreal::RealSign::Zero => ScalarSign::Zero,
+        hyperreal::RealSign::Positive => ScalarSign::Positive,
+    }
+}
+
+fn map_zero(zero: hyperreal::ZeroKnowledge) -> ZeroStatus {
+    match zero {
+        hyperreal::ZeroKnowledge::Zero => ZeroStatus::Zero,
+        hyperreal::ZeroKnowledge::NonZero => ZeroStatus::NonZero,
+        hyperreal::ZeroKnowledge::Unknown => ZeroStatus::Unknown,
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -131,14 +147,24 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn zero_status(&self) -> ZeroStatus {
-        if self.0.definitely_zero() {
-            ZeroStatus::Zero
-        } else {
-            match self.0.best_sign() {
-                Sign::Plus | Sign::Minus => ZeroStatus::NonZero,
-                Sign::NoSign => ZeroStatus::Unknown,
-            }
+        self.structural_facts().zero
+    }
+
+    fn structural_facts(&self) -> ScalarFacts {
+        let facts = self.0.structural_facts();
+        ScalarFacts {
+            sign: facts.sign.map(map_sign),
+            zero: map_zero(facts.zero),
+            exact_rational: facts.exact_rational,
+            magnitude: facts.magnitude.map(|m| ScalarMagnitudeBits {
+                msd: m.msd,
+                exact_msd: m.exact_msd,
+            }),
         }
+    }
+
+    fn refine_sign_until(&self, min_precision: i32) -> Option<ScalarSign> {
+        self.0.refine_sign_until(min_precision).map(map_sign)
     }
 
     fn abort(&mut self, signal: AbortSignal) {
@@ -147,6 +173,10 @@ impl BackendScalarTrait for BackendScalar {
 
     fn into_f64(self) -> f64 {
         f64::from(self.0)
+    }
+
+    fn to_f64_approx(&self) -> Option<f64> {
+        self.0.to_f64_approx()
     }
 }
 

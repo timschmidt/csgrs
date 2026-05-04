@@ -2,7 +2,9 @@ use std::fmt;
 use std::ops::{Add, Mul, Neg, Sub};
 
 use crate::backend::{Backend, BackendScalar as BackendScalarTrait};
-use crate::{AbortSignal, BlasResult, Problem, ZeroStatus};
+use crate::{
+    AbortSignal, BlasResult, Problem, ScalarFacts, ScalarMagnitudeBits, ScalarSign, ZeroStatus,
+};
 
 const ROUNDING_EPSILON: f64 = f64::EPSILON;
 
@@ -226,10 +228,48 @@ impl BackendScalarTrait for BackendScalar {
         }
     }
 
+    fn structural_facts(&self) -> ScalarFacts {
+        let zero = self.zero_status();
+        let sign = if self.definitely_zero() {
+            Some(ScalarSign::Zero)
+        } else if self.value - self.epsilon > 0.0 {
+            Some(ScalarSign::Positive)
+        } else if self.value + self.epsilon < 0.0 {
+            Some(ScalarSign::Negative)
+        } else {
+            None
+        };
+        let magnitude = match zero {
+            ZeroStatus::NonZero => {
+                let lower = (self.value.abs() - self.epsilon).max(0.0);
+                if lower > 0.0 && lower.is_finite() {
+                    Some(ScalarMagnitudeBits {
+                        msd: lower.log2().floor() as i32,
+                        exact_msd: self.epsilon == 0.0,
+                    })
+                } else {
+                    None
+                }
+            }
+            ZeroStatus::Zero | ZeroStatus::Unknown => None,
+        };
+
+        ScalarFacts {
+            sign,
+            zero,
+            exact_rational: false,
+            magnitude,
+        }
+    }
+
     fn abort(&mut self, _signal: AbortSignal) {}
 
     fn into_f64(self) -> f64 {
         self.value
+    }
+
+    fn to_f64_approx(&self) -> Option<f64> {
+        self.value.is_finite().then_some(self.value)
     }
 }
 

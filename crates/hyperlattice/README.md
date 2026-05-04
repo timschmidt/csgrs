@@ -1,15 +1,24 @@
 # realistic_blas
 
 `realistic_blas` is a small Rust linear algebra library built around a
-crate-owned `Scalar` type.
+crate-owned `Scalar` type. It is the vector/matrix layer in the local geometry
+stack, sitting between semantics-rich scalar backends such as `hyperreal` and
+geometry-policy crates such as `predicated`.
 
 The crate provides scalar helpers, complex numbers, 3D/4D vectors, and 3x3/4x4
 matrices using `Scalar` throughout. `Scalar`, `Complex`, `Vector3`, `Vector4`,
 `Matrix3`, and `Matrix4` are generic over a backend marker and default to the
 feature-selected `DefaultBackend`. By default, `Scalar` is backed by
-[`hyperreal::Real`](https://crates.io/crates/hyperreal), while the approximate
+`hyperreal::Real` from the sibling `../hyperreal` checkout. The approximate
 backend is also available explicitly. `approx-backend` uses an `f64` value plus
 an `f64` epsilon to model approximate error bounds and unknown-zero conditions.
+
+The crate intentionally does not own robust geometry predicates such as
+`orient2d`, `orient3d`, or point/plane classification. Instead it exposes
+backend-neutral scalar facts so a predicate layer can exploit known sign,
+zero/non-zero status, exact-rational availability, magnitude hints, and
+borrowed finite approximations without depending directly on a backend's
+private representation.
 
 ## Features
 
@@ -26,6 +35,11 @@ an `f64` epsilon to model approximate error bounds and unknown-zero conditions.
   `acosh`, `atanh`.
 - `ZeroStatus`, `Problem`, and `CheckedBlasResult` for APIs that reject unknown
   zero conditions instead of proceeding optimistically.
+- `ScalarSign`, `ScalarFacts`, and `ScalarMagnitudeBits` for conservative
+  backend-neutral structural facts used by robust predicate layers.
+- Borrowed scalar inspection via `Scalar::structural_facts`,
+  `Scalar::refine_sign_until`, and `Scalar::to_f64_approx`. These APIs are the
+  current handoff surface for `predicated`.
 - `AbortSignal` and `_with_abort` variants for zero-sensitive or conversion
   APIs that may need cancellable `Real` evaluation.
 - `Complex` with arithmetic, reciprocal, checked reciprocal, conjugate, and
@@ -55,9 +69,17 @@ realistic_blas = { path = "path/to/realistic_blas" }
 The default feature set enables both backends. The hyperreal backend depends on:
 
 ```toml
-hyperreal = "0.9.1"
+hyperreal = { path = "../hyperreal" }
 num = "0.4.3"
 ```
+
+This repository currently tracks the sibling GitHub checkout of `hyperreal`
+because the predicate-oriented structural APIs are newer than the crates.io
+release with the same version number.
+
+If you are using this repository outside the sibling checkout layout, update the
+`hyperreal` dependency in `Cargo.toml` to point at the corresponding Git
+revision once those APIs are published where your build can resolve them.
 
 The approximate `f64 + epsilon` backend has no normal dependencies on
 `hyperreal` or `num`. To use it:
@@ -140,6 +162,32 @@ let unit = vector.normalize_checked_with_abort(&signal).unwrap();
 
 signal.store(true, std::sync::atomic::Ordering::Relaxed);
 ```
+
+### Structural Scalar Facts
+
+`Scalar` exposes backend-neutral facts for downstream robust predicate crates.
+These APIs are borrowed and conservative: missing sign or magnitude information
+means the backend did not prove the fact cheaply.
+
+```rust
+use realistic_blas::{ScalarSign, ZeroStatus, pi};
+
+let facts = pi().structural_facts();
+assert_eq!(facts.sign, Some(ScalarSign::Positive));
+assert_eq!(facts.zero, ZeroStatus::NonZero);
+assert!(!facts.exact_rational);
+
+let approx = pi().to_f64_approx().unwrap();
+assert!(approx > 3.0 && approx < 4.0);
+```
+
+The Hyperreal backend forwards `Real::structural_facts`,
+`Real::refine_sign_until`, and `Real::to_f64_approx`. The approx backend derives
+the same public facts from its stored `value +/- epsilon` interval.
+
+`realistic_blas` only forwards facts. Predicate escalation policy, robust
+fallbacks, exact determinant paths, and topology classification belong in
+`predicated` or another geometry-specific crate.
 
 ### Complex Numbers
 
@@ -233,7 +281,8 @@ decimal center values.
 
 The crate root re-exports the public API from focused modules:
 
-- `src/scalar.rs`: scalar constants and functions around `Scalar`.
+- `src/scalar.rs`: scalar constants, functions, zero status, and structural
+  fact types around `Scalar`.
 - `src/complex.rs`: `Complex` and complex arithmetic.
 - `src/vector.rs`: `Vector3`, `Vector4`, and vector operations.
 - `src/matrix.rs`: `Matrix3`, `Matrix4`, and matrix operations.
@@ -241,6 +290,16 @@ The crate root re-exports the public API from focused modules:
 - `src/backend/approx`: approximate `f64 + epsilon` `Scalar` implementation.
 
 ## Notes
+
+### Current Integration State
+
+- `realistic_blas` has implemented its part of the predicate-integration plan:
+  scalar fact forwarding through `Scalar<B>`.
+- The Hyperreal backend uses the upstream structural API from the sibling
+  checkout.
+- The approx backend maps its interval model into conservative `ScalarFacts`.
+- Full robust predicate implementation is not in this crate. The next layer is
+  expected to consume these APIs from `predicated`.
 
 When the hyperreal backend is selected, `hyperreal::Real` does not currently
 expose native inverse trigonometric or inverse hyperbolic methods. The inverse

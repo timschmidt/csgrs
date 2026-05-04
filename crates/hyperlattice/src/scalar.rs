@@ -18,6 +18,43 @@ pub enum ZeroStatus {
     Unknown,
 }
 
+/// Exact sign knowledge exposed through [`Scalar`](crate::Scalar).
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum ScalarSign {
+    /// The scalar is definitely negative.
+    Negative,
+    /// The scalar is definitely zero.
+    Zero,
+    /// The scalar is definitely positive.
+    Positive,
+}
+
+/// Known most-significant binary digit for a non-zero scalar.
+///
+/// `exact_msd` is true when `msd` is known exactly. When it is false, `msd` is
+/// a conservative backend-provided bound suitable for filtering but not for
+/// reconstructing the value.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct ScalarMagnitudeBits {
+    /// Most-significant binary digit or conservative binary magnitude bound.
+    pub msd: i32,
+    /// Whether [`ScalarMagnitudeBits::msd`] is exact.
+    pub exact_msd: bool,
+}
+
+/// Conservative scalar facts available without exposing backend internals.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct ScalarFacts {
+    /// Known sign, if the backend can prove it.
+    pub sign: Option<ScalarSign>,
+    /// Known zero/non-zero status.
+    pub zero: ZeroStatus,
+    /// Whether an exact rational representation is structurally available.
+    pub exact_rational: bool,
+    /// Conservative binary magnitude information for known non-zero values.
+    pub magnitude: Option<ScalarMagnitudeBits>,
+}
+
 pub(crate) fn two<B: Backend>() -> Scalar<B> {
     2.into()
 }

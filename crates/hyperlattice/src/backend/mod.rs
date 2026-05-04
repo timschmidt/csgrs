@@ -7,7 +7,7 @@ mod approx;
 use std::fmt;
 use std::ops::{Add, Mul, Neg, Sub};
 
-use crate::{AbortSignal, BlasResult, Problem, ZeroStatus};
+use crate::{AbortSignal, BlasResult, Problem, ScalarFacts, ScalarSign, ZeroStatus};
 
 #[cfg(feature = "approx-backend")]
 pub use approx::ApproxBackend;
@@ -142,8 +142,31 @@ pub trait BackendScalar:
     fn definitely_zero(&self) -> bool;
     /// Classifies whether this value is zero.
     fn zero_status(&self) -> ZeroStatus;
+    /// Returns conservative structural facts about this value.
+    fn structural_facts(&self) -> ScalarFacts {
+        let zero = self.zero_status();
+        let sign = match zero {
+            ZeroStatus::Zero => Some(ScalarSign::Zero),
+            ZeroStatus::NonZero | ZeroStatus::Unknown => None,
+        };
+        ScalarFacts {
+            sign,
+            zero,
+            exact_rational: false,
+            magnitude: None,
+        }
+    }
+    /// Tries to prove the sign without refining beyond the requested precision.
+    fn refine_sign_until(&self, _min_precision: i32) -> Option<ScalarSign> {
+        self.structural_facts().sign
+    }
     /// Attaches a backend-specific abort signal.
     fn abort(&mut self, signal: AbortSignal);
     /// Converts this value into an `f64`.
     fn into_f64(self) -> f64;
+    /// Returns a borrowed finite `f64` approximation when one is available.
+    fn to_f64_approx(&self) -> Option<f64> {
+        let value = self.clone().into_f64();
+        value.is_finite().then_some(value)
+    }
 }

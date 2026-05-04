@@ -2,9 +2,9 @@ mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
 use realistic_blas::{
-    Problem, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln, log10, log10_with_abort,
-    one, pi, powi, reciprocal, reciprocal_checked, reciprocal_checked_with_abort, sin, sqrt, tan,
-    tau, zero, zero_status, zero_status_with_abort,
+    Problem, ScalarFacts, ScalarSign, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln,
+    log10, log10_with_abort, one, pi, powi, reciprocal, reciprocal_checked,
+    reciprocal_checked_with_abort, sin, sqrt, tan, tau, zero, zero_status, zero_status_with_abort,
 };
 
 #[test]
@@ -49,6 +49,68 @@ fn zero_status_classifies_basic_values() {
         zero_status_with_abort(&unknown_zero(), &signal),
         ZeroStatus::Unknown
     );
+}
+
+#[test]
+fn scalar_structural_facts_classify_basic_values() {
+    let zero_facts = zero().structural_facts();
+    assert_eq!(zero_facts.sign, Some(ScalarSign::Zero));
+    assert_eq!(zero_facts.zero, ZeroStatus::Zero);
+
+    let positive_facts = r(7).structural_facts();
+    assert_eq!(positive_facts.sign, Some(ScalarSign::Positive));
+    assert_eq!(positive_facts.zero, ZeroStatus::NonZero);
+
+    let negative_facts = r(-7).structural_facts();
+    assert_eq!(negative_facts.sign, Some(ScalarSign::Negative));
+    assert_eq!(negative_facts.zero, ZeroStatus::NonZero);
+
+    assert_eq!(zero().refine_sign_until(-64), Some(ScalarSign::Zero));
+    assert_eq!(r(9).refine_sign_until(-64), Some(ScalarSign::Positive));
+    assert_eq!(r(-9).refine_sign_until(-64), Some(ScalarSign::Negative));
+}
+
+#[test]
+fn scalar_to_f64_approx_is_borrowed() {
+    let value = r(7);
+    assert_eq!(value.to_f64_approx(), Some(7.0));
+    assert_eq!(value, r(7));
+}
+
+#[cfg(feature = "hyperreal-backend")]
+#[test]
+fn hyperreal_scalar_forwards_symbolic_structural_facts() {
+    let pi_facts = pi().structural_facts();
+    assert_eq!(pi_facts.sign, Some(ScalarSign::Positive));
+    assert_eq!(pi_facts.zero, ZeroStatus::NonZero);
+    assert!(!pi_facts.exact_rational);
+    assert!(pi_facts.magnitude.is_some());
+
+    let sqrt_two = sqrt(r(2)).unwrap();
+    let sqrt_facts = sqrt_two.structural_facts();
+    assert_eq!(sqrt_facts.sign, Some(ScalarSign::Positive));
+    assert_eq!(sqrt_facts.zero, ZeroStatus::NonZero);
+    assert!(!sqrt_facts.exact_rational);
+
+    let rational_facts = frac(1, 2).structural_facts();
+    assert_eq!(rational_facts.sign, Some(ScalarSign::Positive));
+    assert_eq!(rational_facts.zero, ZeroStatus::NonZero);
+    assert!(rational_facts.exact_rational);
+}
+
+#[cfg(feature = "hyperreal-backend")]
+#[test]
+fn hyperreal_scalar_keeps_unknown_structural_facts_unknown() {
+    assert_eq!(
+        unknown_zero().structural_facts(),
+        ScalarFacts {
+            sign: None,
+            zero: ZeroStatus::Unknown,
+            exact_rational: false,
+            magnitude: None,
+        }
+    );
+    assert_eq!(unknown_zero().refine_sign_until(-1), None);
 }
 
 #[test]
@@ -97,6 +159,39 @@ fn approx_scalar_tracks_unknown_zero_intervals() {
         zero_status(&realistic_blas::sqrt(touching_zero).unwrap()),
         ZeroStatus::Unknown
     );
+}
+
+#[cfg(not(feature = "hyperreal-backend"))]
+#[test]
+fn approx_scalar_structural_facts_track_intervals() {
+    let near_zero = realistic_blas::Scalar::approx(0.0, 0.25).unwrap();
+    let positive = realistic_blas::Scalar::approx(4.0, 0.25).unwrap();
+    let negative = realistic_blas::Scalar::approx(-4.0, 0.25).unwrap();
+
+    assert_eq!(
+        near_zero.structural_facts(),
+        ScalarFacts {
+            sign: None,
+            zero: ZeroStatus::Unknown,
+            exact_rational: false,
+            magnitude: None,
+        }
+    );
+
+    let positive_facts = positive.structural_facts();
+    assert_eq!(positive_facts.sign, Some(ScalarSign::Positive));
+    assert_eq!(positive_facts.zero, ZeroStatus::NonZero);
+    assert!(!positive_facts.exact_rational);
+    assert!(positive_facts.magnitude.is_some());
+    assert_eq!(positive.to_f64_approx(), Some(4.0));
+    assert_eq!(positive.refine_sign_until(-64), Some(ScalarSign::Positive));
+
+    let negative_facts = negative.structural_facts();
+    assert_eq!(negative_facts.sign, Some(ScalarSign::Negative));
+    assert_eq!(negative_facts.zero, ZeroStatus::NonZero);
+    assert!(!negative_facts.exact_rational);
+    assert!(negative_facts.magnitude.is_some());
+    assert_eq!(negative.to_f64_approx(), Some(-4.0));
 }
 
 #[test]
