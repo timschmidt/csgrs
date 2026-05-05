@@ -9,9 +9,9 @@ The crate provides scalar helpers, complex numbers, 3D/4D vectors, and 3x3/4x4
 matrices using `Scalar` throughout. `Scalar`, `Complex`, `Vector3`, `Vector4`,
 `Matrix3`, and `Matrix4` are generic over a backend marker and default to the
 feature-selected `DefaultBackend`. By default, `Scalar` is backed by
-`hyperreal::Real` from the sibling `../hyperreal` checkout. The approximate
-backend is also available explicitly. `approx-backend` uses an `f64` value plus
-an `f64` epsilon to model approximate error bounds and unknown-zero conditions.
+`hyperreal::Real` from the published `hyperreal` crate. The approximate backend
+is also available explicitly. `approx-backend` uses an `f64` value plus an `f64`
+epsilon to model approximate error bounds and unknown-zero conditions.
 
 The crate intentionally does not own robust geometry predicates such as
 `orient2d`, `orient3d`, or point/plane classification. Instead it exposes
@@ -69,17 +69,9 @@ realistic_blas = { path = "path/to/realistic_blas" }
 The default feature set enables both backends. The hyperreal backend depends on:
 
 ```toml
-hyperreal = { path = "../hyperreal" }
+hyperreal = "0.10.0"
 num = "0.4.3"
 ```
-
-This repository currently tracks the sibling GitHub checkout of `hyperreal`
-because the predicate-oriented structural APIs are newer than the crates.io
-release with the same version number.
-
-If you are using this repository outside the sibling checkout layout, update the
-`hyperreal` dependency in `Cargo.toml` to point at the corresponding Git
-revision once those APIs are published where your build can resolve them.
 
 The approximate `f64 + epsilon` backend has no normal dependencies on
 `hyperreal` or `num`. To use it:
@@ -295,8 +287,7 @@ The crate root re-exports the public API from focused modules:
 
 - `realistic_blas` has implemented its part of the predicate-integration plan:
   scalar fact forwarding through `Scalar<B>`.
-- The Hyperreal backend uses the upstream structural API from the sibling
-  checkout.
+- The Hyperreal backend uses the upstream structural API from `hyperreal`.
 - The approx backend maps its interval model into conservative `ScalarFacts`.
 - Full robust predicate implementation is not in this crate. The next layer is
   expected to consume these APIs from `predicated`.
