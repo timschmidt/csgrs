@@ -513,7 +513,21 @@ mod tests {
         );
         assert_eq!(tiny.to_f64_approx(), Some(0.0));
 
+        let negative_tiny = -tiny;
+        assert_eq!(negative_tiny.to_f64_approx(), Some(0.0));
+
         let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 1200));
         assert_eq!(huge.to_f64_approx(), None);
+
+        let negative_huge = -huge;
+        assert_eq!(negative_huge.to_f64_approx(), None);
+    }
+
+    #[test]
+    fn borrowed_f64_approx_tracks_negative_finite_values() {
+        let value = -(Real::new(Rational::new(2)).sqrt().unwrap());
+        let approx = value.to_f64_approx().unwrap();
+        assert!(approx.is_sign_negative());
+        assert!((approx + std::f64::consts::SQRT_2).abs() < 1e-15);
     }
 }

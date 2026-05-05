@@ -97,6 +97,7 @@ impl TryFrom<Value> for Real {
 mod tests {
     use super::*;
     use crate::rational::Rational;
+    use std::cmp::Ordering;
 
     #[test]
     fn rational_json_serde() {
@@ -156,6 +157,44 @@ mod tests {
             x.fold().compare_absolute(&y.fold(), 10),
             std::cmp::Ordering::Equal
         );
+    }
+
+    #[test]
+    fn inverse_function_results_round_trip_serde() {
+        let values = [
+            Real::new(Rational::fraction(7, 10).unwrap())
+                .asin()
+                .unwrap(),
+            Real::new(Rational::fraction(7, 10).unwrap())
+                .acos()
+                .unwrap(),
+            Real::new(Rational::new(2)).sqrt().unwrap().atan().unwrap(),
+            Real::new(Rational::new(2)).sqrt().unwrap().asinh().unwrap(),
+            Real::new(Rational::new(2)).sqrt().unwrap().acosh().unwrap(),
+            Real::new(Rational::fraction(-1, 2).unwrap())
+                .atanh()
+                .unwrap(),
+        ];
+
+        for value in values {
+            let json = value.to_json();
+            let from_json = Real::from_json(&json).unwrap();
+            assert_eq!(
+                value
+                    .fold_ref()
+                    .compare_absolute(&from_json.fold_ref(), -80),
+                Ordering::Equal
+            );
+
+            let bytes = value.to_bytes();
+            let from_bytes = Real::from_bytes(&bytes).unwrap();
+            assert_eq!(
+                value
+                    .fold_ref()
+                    .compare_absolute(&from_bytes.fold_ref(), -80),
+                Ordering::Equal
+            );
+        }
     }
 
     #[test]

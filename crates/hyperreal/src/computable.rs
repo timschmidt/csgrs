@@ -752,7 +752,7 @@ impl Computable {
                 Approximation::Constant(_) => Some(Some(Sign::Plus)),
                 Approximation::Ratio(r) => Some(Some(r.sign())),
                 Approximation::IntegralAtan(n) => Some(Some(n.sign())),
-                Approximation::PrescaledAtan(child) => child.exact_sign().map(Some),
+                Approximation::PrescaledAtan(child) => Some(child.exact_sign()),
                 Approximation::Negate(_)
                 | Approximation::Offset(_, _)
                 | Approximation::Inverse(_)
