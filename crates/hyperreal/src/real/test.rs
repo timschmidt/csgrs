@@ -487,8 +487,16 @@ mod tests {
             0.29567304756342244
         ));
         assert!(closest_f64(
+            Real::new(Rational::new(2)).sqrt().unwrap().asinh().unwrap(),
+            1.1462158347805889
+        ));
+        assert!(closest_f64(
             Real::new(Rational::new(2)).acosh().unwrap(),
             1.3169578969248166
+        ));
+        assert!(closest_f64(
+            Real::new(Rational::new(2)).sqrt().unwrap().acosh().unwrap(),
+            0.881373587019543
         ));
         assert!(closest_f64(
             Real::new(Rational::fraction(3, 10).unwrap())

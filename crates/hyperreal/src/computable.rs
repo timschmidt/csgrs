@@ -1245,6 +1245,10 @@ impl Computable {
         }
     }
 
+    pub(crate) fn ln_1p(self) -> Self {
+        self.prescaled_ln()
+    }
+
     pub(crate) fn sqrt_rational(r: Rational) -> Self {
         let rational = Self::rational(r);
         Self::sqrt(rational)

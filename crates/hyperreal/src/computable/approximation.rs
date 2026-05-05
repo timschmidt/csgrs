@@ -409,7 +409,7 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let fp_prec: i32 = 140;
     let fp_op_prec: i32 = 150;
 
-    let max_prec_needed = 2 * p - 1;
+    let max_prec_needed = p.saturating_mul(2).saturating_sub(1);
     let msd = c
         .planning_msd()
         .unwrap_or_else(|| c.msd(max_prec_needed))

@@ -1081,6 +1081,23 @@ impl Real {
         if let Some(exact) = self.asin_exact() {
             return Ok(exact);
         }
+        if self.class == One {
+            let magnitude = if self.rational.sign() == Sign::Minus {
+                self.rational.clone().neg()
+            } else {
+                self.rational.clone()
+            };
+            if magnitude > *rationals::ONE {
+                return Err(Problem::NotANumber);
+            }
+
+            return Ok(self.make_computable(|value| {
+                let denominator = Computable::one()
+                    .add(value.clone().square().negate())
+                    .sqrt();
+                value.multiply(denominator.inverse()).atan()
+            }));
+        }
 
         let one = Self::new(Rational::one());
         let radicand = one.clone() - self.clone().powi(BigInt::from(2_u8))?;
@@ -1093,11 +1110,13 @@ impl Real {
 
     /// The inverse cosine of this Real, or [`Problem::NotANumber`] outside [-1, 1].
     pub fn acos(self) -> Result<Real, Problem> {
-        if self == Self::new(Rational::one()) {
-            return Ok(Self::zero());
-        }
-        if self == Self::new(Rational::new(-1)) {
-            return Ok(Self::pi());
+        if self.class == One {
+            if self.rational == *rationals::ONE {
+                return Ok(Self::zero());
+            }
+            if self.rational == Rational::new(-1) {
+                return Ok(Self::pi());
+            }
         }
         if let Some(asin) = self.asin_exact() {
             return Ok(Self::pi_fraction(1, 2) - asin);
@@ -1117,23 +1136,65 @@ impl Real {
 
     /// The inverse hyperbolic sine of this Real.
     pub fn asinh(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            return Ok(Self::zero());
+        }
+        if self.best_sign() == Sign::Minus {
+            return Ok(self.neg().asinh()?.neg());
+        }
+        if self.fold_ref().approx(-4) <= BigInt::from(64_u8) {
+            return Ok(self.make_computable(|value| {
+                let square = value.clone().square();
+                let denominator = square
+                    .clone()
+                    .add(Computable::one())
+                    .sqrt()
+                    .add(Computable::one());
+                value.add(square.multiply(denominator.inverse())).ln_1p()
+            }));
+        }
         let one = Self::new(Rational::one());
         (self.clone() + (self.clone().powi(BigInt::from(2_u8))? + one).sqrt()?).ln()
     }
 
     /// The inverse hyperbolic cosine of this Real, or [`Problem::NotANumber`] for values < 1.
     pub fn acosh(self) -> Result<Real, Problem> {
+        if self.class == One && self.rational == *rationals::ONE {
+            return Ok(Self::zero());
+        }
         let one = Self::new(Rational::one());
         let radicand = self.clone().powi(BigInt::from(2_u8))? - one;
         let root = radicand.sqrt().map_err(|problem| match problem {
             Problem::SqrtNegative => Problem::NotANumber,
             other => other,
         })?;
+        if self.fold_ref().approx(-4) <= BigInt::from(64_u8) {
+            return Ok(
+                (self - Self::new(Rational::one()) + root).make_computable(Computable::ln_1p)
+            );
+        }
         (self + root).ln()
     }
 
     /// The inverse hyperbolic tangent of this Real, or [`Problem::NotANumber`] outside (-1, 1).
     pub fn atanh(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            return Ok(Self::zero());
+        }
+        if self.class == One {
+            let magnitude = if self.rational.sign() == Sign::Minus {
+                self.rational.clone().neg()
+            } else {
+                self.rational.clone()
+            };
+            if magnitude >= *rationals::ONE {
+                return Err(Problem::NotANumber);
+            }
+
+            let one = Rational::one();
+            let ratio = (one.clone() + self.rational.clone()) / (one - self.rational);
+            return Ok(Self::ln_rational(ratio)? * Self::new(Rational::fraction(1, 2).unwrap()));
+        }
         let one = Self::new(Rational::one());
         let numerator = one.clone() + self.clone();
         let denominator = one - self;
