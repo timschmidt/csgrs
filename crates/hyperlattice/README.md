@@ -69,7 +69,7 @@ realistic_blas = { path = "path/to/realistic_blas" }
 The default feature set enables both backends. The hyperreal backend depends on:
 
 ```toml
-hyperreal = "0.10.0"
+hyperreal = "0.10.1"
 num = "0.4.3"
 ```
 
@@ -287,15 +287,16 @@ The crate root re-exports the public API from focused modules:
 
 - `realistic_blas` has implemented its part of the predicate-integration plan:
   scalar fact forwarding through `Scalar<B>`.
-- The Hyperreal backend uses the upstream structural API from `hyperreal`.
+- The Hyperreal backend uses the upstream structural and inverse elementary
+  function APIs from `hyperreal`.
 - The approx backend maps its interval model into conservative `ScalarFacts`.
 - Full robust predicate implementation is not in this crate. The next layer is
   expected to consume these APIs from `predicated`.
 
-When the hyperreal backend is selected, `hyperreal::Real` does not currently
-expose native inverse trigonometric or inverse hyperbolic methods. The inverse
-helper functions convert through `f64` and then back into `Scalar`, so they are
-approximate rather than symbolic.
+When the hyperreal backend is selected, inverse trigonometric and inverse
+hyperbolic helpers dispatch to native `hyperreal::Real` methods, preserving
+exact symbolic paths where `hyperreal` can represent them. The approx backend
+implements the same helpers with its local `f64 + epsilon` interval model.
 
 The approx backend stores a center value and an absolute error bound. A scalar
 with an interval containing zero reports `ZeroStatus::Unknown`, so checked

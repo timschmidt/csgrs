@@ -138,6 +138,36 @@ impl BackendScalarTrait for BackendScalar {
         self.0.tan().map(Self).map_err(Problem::from)
     }
 
+    fn asin(self) -> BlasResult<Self> {
+        self.0.asin().map(Self).map_err(Problem::from)
+    }
+
+    fn acos(self) -> BlasResult<Self> {
+        self.0.acos().map(Self).map_err(Problem::from)
+    }
+
+    fn atan(self) -> BlasResult<Self> {
+        self.0.atan().map(Self).map_err(Problem::from)
+    }
+
+    fn asinh(self) -> BlasResult<Self> {
+        self.0.asinh().map(Self).map_err(Problem::from)
+    }
+
+    fn acosh(self) -> BlasResult<Self> {
+        self.0.acosh().map(Self).map_err(Problem::from)
+    }
+
+    fn atanh(self) -> BlasResult<Self> {
+        self.0.atanh().map(Self).map_err(|problem| {
+            let problem = Problem::from(problem);
+            match problem {
+                Problem::DivideByZero => Problem::Infinity,
+                problem => problem,
+            }
+        })
+    }
+
     fn div(self, rhs: Self) -> BlasResult<Self> {
         (self.0 / rhs.0).map(Self).map_err(Problem::from)
     }

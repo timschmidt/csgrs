@@ -136,6 +136,18 @@ pub trait BackendScalar:
     fn cos(self) -> Self;
     /// Returns the tangent.
     fn tan(self) -> BlasResult<Self>;
+    /// Returns the inverse sine.
+    fn asin(self) -> BlasResult<Self>;
+    /// Returns the inverse cosine.
+    fn acos(self) -> BlasResult<Self>;
+    /// Returns the inverse tangent.
+    fn atan(self) -> BlasResult<Self>;
+    /// Returns the inverse hyperbolic sine.
+    fn asinh(self) -> BlasResult<Self>;
+    /// Returns the inverse hyperbolic cosine.
+    fn acosh(self) -> BlasResult<Self>;
+    /// Returns the inverse hyperbolic tangent.
+    fn atanh(self) -> BlasResult<Self>;
     /// Divides this value by another value.
     fn div(self, rhs: Self) -> BlasResult<Self>;
     /// Returns whether this value is definitely zero.

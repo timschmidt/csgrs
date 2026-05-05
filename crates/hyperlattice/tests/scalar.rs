@@ -115,6 +115,16 @@ fn hyperreal_scalar_keeps_unknown_structural_facts_unknown() {
     assert_eq!(unknown_zero().refine_sign_until(-1), None);
 }
 
+#[cfg(feature = "hyperreal-backend")]
+#[test]
+fn hyperreal_inverse_trig_helpers_preserve_exact_paths() {
+    assert_eq!(asin(frac(1, 2)).unwrap(), (pi() / r(6)).unwrap());
+    assert_eq!(acos(frac(1, 2)).unwrap(), (pi() / r(3)).unwrap());
+    assert_eq!(realistic_blas::atan(one()).unwrap(), (pi() / r(4)).unwrap());
+
+    assert_eq!(one().atan().unwrap(), (pi() / r(4)).unwrap());
+}
+
 #[test]
 fn checked_scalar_reciprocal_rejects_zero() {
     assert_eq!(reciprocal_checked(zero()), Err(Problem::DivideByZero));

@@ -108,16 +108,6 @@ pub(crate) fn require_known_nonzero_with_abort<B: Backend>(
     }
 }
 
-fn real_from_f64<B: Backend>(value: f64) -> BlasResult<Scalar<B>> {
-    if value.is_nan() {
-        return Err(Problem::NotANumber);
-    }
-    if value.is_infinite() {
-        return Err(Problem::Infinity);
-    }
-    Scalar::<B>::try_from(value)
-}
-
 /// Returns the additive identity.
 pub fn zero() -> Scalar {
     Scalar::zero()
@@ -298,11 +288,8 @@ pub fn tanh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
 }
 
 /// Returns the inverse sine of `value`.
-///
-/// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the hyperreal backend.
 pub fn asin<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(value).asin())
+    value.asin()
 }
 
 /// Returns the inverse sine after attaching an abort signal.
@@ -310,15 +297,12 @@ pub fn asin_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(with_abort(value, signal)).asin())
+    with_abort(value, signal).asin()
 }
 
 /// Returns the inverse cosine of `value`.
-///
-/// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the hyperreal backend.
 pub fn acos<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(value).acos())
+    value.acos()
 }
 
 /// Returns the inverse cosine after attaching an abort signal.
@@ -326,15 +310,12 @@ pub fn acos_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(with_abort(value, signal)).acos())
+    with_abort(value, signal).acos()
 }
 
 /// Returns the inverse tangent of `value`.
-///
-/// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the hyperreal backend.
 pub fn atan<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(value).atan())
+    value.atan()
 }
 
 /// Returns the inverse tangent after attaching an abort signal.
@@ -342,15 +323,12 @@ pub fn atan_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(with_abort(value, signal)).atan())
+    with_abort(value, signal).atan()
 }
 
 /// Returns the inverse hyperbolic sine of `value`.
-///
-/// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the hyperreal backend.
 pub fn asinh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(value).asinh())
+    value.asinh()
 }
 
 /// Returns the inverse hyperbolic sine after attaching an abort signal.
@@ -358,15 +336,12 @@ pub fn asinh_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(with_abort(value, signal)).asinh())
+    with_abort(value, signal).asinh()
 }
 
 /// Returns the inverse hyperbolic cosine of `value`.
-///
-/// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the hyperreal backend.
 pub fn acosh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(value).acosh())
+    value.acosh()
 }
 
 /// Returns the inverse hyperbolic cosine after attaching an abort signal.
@@ -374,15 +349,12 @@ pub fn acosh_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(with_abort(value, signal)).acosh())
+    with_abort(value, signal).acosh()
 }
 
 /// Returns the inverse hyperbolic tangent of `value`.
-///
-/// This helper converts through `f64`, so it is approximate rather than
-/// symbolic with the hyperreal backend.
 pub fn atanh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(value).atanh())
+    value.atanh()
 }
 
 /// Returns the inverse hyperbolic tangent after attaching an abort signal.
@@ -390,5 +362,5 @@ pub fn atanh_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
-    real_from_f64(f64::from(with_abort(value, signal)).atanh())
+    with_abort(value, signal).atanh()
 }

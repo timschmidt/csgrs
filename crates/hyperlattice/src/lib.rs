@@ -271,6 +271,36 @@ impl<B: Backend> Scalar<B> {
         self.0.tan().map(Self)
     }
 
+    /// Returns the inverse sine.
+    pub fn asin(self) -> BlasResult<Self> {
+        self.0.asin().map(Self)
+    }
+
+    /// Returns the inverse cosine.
+    pub fn acos(self) -> BlasResult<Self> {
+        self.0.acos().map(Self)
+    }
+
+    /// Returns the inverse tangent.
+    pub fn atan(self) -> BlasResult<Self> {
+        self.0.atan().map(Self)
+    }
+
+    /// Returns the inverse hyperbolic sine.
+    pub fn asinh(self) -> BlasResult<Self> {
+        self.0.asinh().map(Self)
+    }
+
+    /// Returns the inverse hyperbolic cosine.
+    pub fn acosh(self) -> BlasResult<Self> {
+        self.0.acosh().map(Self)
+    }
+
+    /// Returns the inverse hyperbolic tangent.
+    pub fn atanh(self) -> BlasResult<Self> {
+        self.0.atanh().map(Self)
+    }
+
     /// Returns whether this scalar is definitely zero.
     ///
     /// This is an optimistic predicate. Use [`Scalar::zero_status`] or

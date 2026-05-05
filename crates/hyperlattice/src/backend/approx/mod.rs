@@ -201,6 +201,93 @@ impl BackendScalarTrait for BackendScalar {
         Self::from_unary(self.value.tan(), self.epsilon / (cos * cos).abs())
     }
 
+    fn asin(self) -> BlasResult<Self> {
+        let lower = self.value - self.epsilon;
+        let upper = self.value + self.epsilon;
+        if upper < -1.0 || lower > 1.0 {
+            return Err(Problem::NotANumber);
+        }
+        if lower < -1.0 || upper > 1.0 {
+            return Err(Problem::UnknownZero);
+        }
+        if self.epsilon == 0.0 {
+            return Self::from_unary(self.value.asin(), 0.0);
+        }
+        Self::from_unary(
+            self.value.asin(),
+            self.epsilon / (1.0 - self.value * self.value).sqrt(),
+        )
+    }
+
+    fn acos(self) -> BlasResult<Self> {
+        let lower = self.value - self.epsilon;
+        let upper = self.value + self.epsilon;
+        if upper < -1.0 || lower > 1.0 {
+            return Err(Problem::NotANumber);
+        }
+        if lower < -1.0 || upper > 1.0 {
+            return Err(Problem::UnknownZero);
+        }
+        if self.epsilon == 0.0 {
+            return Self::from_unary(self.value.acos(), 0.0);
+        }
+        Self::from_unary(
+            self.value.acos(),
+            self.epsilon / (1.0 - self.value * self.value).sqrt(),
+        )
+    }
+
+    fn atan(self) -> BlasResult<Self> {
+        Self::from_unary(
+            self.value.atan(),
+            self.epsilon / (1.0 + self.value * self.value),
+        )
+    }
+
+    fn asinh(self) -> BlasResult<Self> {
+        Self::from_unary(
+            self.value.asinh(),
+            self.epsilon / (1.0 + self.value * self.value).sqrt(),
+        )
+    }
+
+    fn acosh(self) -> BlasResult<Self> {
+        let lower = self.value - self.epsilon;
+        let upper = self.value + self.epsilon;
+        if upper < 1.0 {
+            return Err(Problem::NotANumber);
+        }
+        if lower < 1.0 {
+            return Err(Problem::UnknownZero);
+        }
+        if self.epsilon == 0.0 {
+            return Self::from_unary(self.value.acosh(), 0.0);
+        }
+        Self::from_unary(
+            self.value.acosh(),
+            self.epsilon / ((self.value - 1.0).sqrt() * (self.value + 1.0).sqrt()),
+        )
+    }
+
+    fn atanh(self) -> BlasResult<Self> {
+        let lower = self.value - self.epsilon;
+        let upper = self.value + self.epsilon;
+        if lower <= -1.0 || upper >= 1.0 {
+            if self.epsilon == 0.0 && self.value.abs() == 1.0 {
+                return Err(Problem::Infinity);
+            }
+            return if upper < -1.0 || lower > 1.0 {
+                Err(Problem::NotANumber)
+            } else {
+                Err(Problem::UnknownZero)
+            };
+        }
+        Self::from_unary(
+            self.value.atanh(),
+            self.epsilon / (1.0 - self.value * self.value).abs(),
+        )
+    }
+
     fn div(self, rhs: Self) -> BlasResult<Self> {
         match rhs.zero_status() {
             ZeroStatus::Zero => return Err(Problem::DivideByZero),
