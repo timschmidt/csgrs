@@ -359,9 +359,8 @@ impl Real {
 
     /// Conservatively inspect public structural facts about this value.
     pub fn structural_facts(&self) -> RealStructuralFacts {
-        let exact = self.exact_rational();
-        if let Some(rational) = exact {
-            return facts_from_rational(&rational, true);
+        if matches!(self.class, One) {
+            return facts_from_rational(&self.rational, true);
         }
 
         let rational_sign = self.rational.sign();
@@ -400,6 +399,19 @@ impl Real {
             zero,
             exact_rational: false,
             magnitude,
+        }
+    }
+
+    /// Conservatively report whether structural inspection proves this value is zero.
+    pub fn zero_status(&self) -> ZeroKnowledge {
+        match self.rational.sign() {
+            Sign::NoSign => ZeroKnowledge::Zero,
+            Sign::Minus | Sign::Plus => match self.class {
+                One | Pi | Sqrt(_) | Exp(_) | Ln(_) | Log10(_) | SinPi(_) | TanPi(_) => {
+                    ZeroKnowledge::NonZero
+                }
+                Irrational => self.computable.zero_status(),
+            },
         }
     }
 

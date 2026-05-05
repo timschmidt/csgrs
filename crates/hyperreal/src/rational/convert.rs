@@ -264,7 +264,8 @@ mod tests {
     #[test]
     fn reduced_subnormal_f64() {
         let value: Rational = f64::from_bits(2).try_into().unwrap();
-        let correct = Rational::from_bigint_fraction(BigInt::from(1), BigUint::one() << 1073).unwrap();
+        let correct =
+            Rational::from_bigint_fraction(BigInt::from(1), BigUint::one() << 1073).unwrap();
         assert_eq!(value, correct);
     }
 }

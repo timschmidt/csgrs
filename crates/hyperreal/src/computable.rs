@@ -1539,6 +1539,33 @@ impl Computable {
         }
     }
 
+    pub(crate) fn multiply_rational(self, scale: Rational) -> Computable {
+        if scale.sign() == Sign::NoSign {
+            return Self::rational(Rational::zero());
+        }
+        if scale == Rational::one() {
+            return self;
+        }
+        if scale == Rational::one().neg() {
+            return self.negate();
+        }
+        if let Some((shift, sign)) = scale.power_of_two_shift() {
+            let shifted = self.shift_left(shift);
+            return if sign == Sign::Minus {
+                shifted.negate()
+            } else {
+                shifted
+            };
+        }
+        Self {
+            internal: Box::new(Approximation::Multiply(Self::rational(scale), self)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
     /// Add some other number to this number.
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, other: Computable) -> Computable {
@@ -1733,6 +1760,23 @@ impl Computable {
             zero,
             exact_rational: exact.is_some(),
             magnitude,
+        }
+    }
+
+    /// Conservatively report whether structural inspection proves this value is zero.
+    pub fn zero_status(&self) -> ZeroKnowledge {
+        if let Some(sign) = self.exact_sign() {
+            return if sign == Sign::NoSign {
+                ZeroKnowledge::Zero
+            } else {
+                ZeroKnowledge::NonZero
+            };
+        }
+
+        match self.cheap_bound() {
+            BoundInfo::Zero => ZeroKnowledge::Zero,
+            BoundInfo::NonZero { .. } => ZeroKnowledge::NonZero,
+            BoundInfo::Unknown => ZeroKnowledge::Unknown,
         }
     }
 
@@ -2729,6 +2773,23 @@ mod tests {
                 exact_msd: true,
             })
         );
+    }
+
+    #[test]
+    fn zero_status_uses_structural_facts_without_refinement() {
+        assert_eq!(
+            Computable::rational(Rational::zero()).zero_status(),
+            ZeroKnowledge::Zero
+        );
+        assert_eq!(
+            Computable::rational(Rational::fraction(-7, 8).unwrap()).zero_status(),
+            ZeroKnowledge::NonZero
+        );
+        assert_eq!(Computable::pi().zero_status(), ZeroKnowledge::NonZero);
+
+        let unknown =
+            Computable::pi().add(Computable::rational(Rational::fraction(-22, 7).unwrap()));
+        assert_eq!(unknown.zero_status(), ZeroKnowledge::Unknown);
     }
 
     #[test]

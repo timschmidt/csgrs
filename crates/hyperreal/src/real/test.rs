@@ -107,6 +107,20 @@ mod tests {
     }
 
     #[test]
+    fn zero_status_uses_structural_facts_without_refinement() {
+        assert_eq!(Real::zero().zero_status(), ZeroKnowledge::Zero);
+        assert_eq!(
+            Real::new(Rational::fraction(-7, 8).unwrap()).zero_status(),
+            ZeroKnowledge::NonZero
+        );
+        assert_eq!(Real::pi().zero_status(), ZeroKnowledge::NonZero);
+        assert_eq!(Real::e().zero_status(), ZeroKnowledge::NonZero);
+
+        let unknown = Real::pi() - Real::new(Rational::fraction(22, 7).unwrap());
+        assert_eq!(unknown.zero_status(), ZeroKnowledge::Unknown);
+    }
+
+    #[test]
     fn ln_zero() {
         let zero = Real::zero();
         assert_eq!(zero.ln(), Err(Problem::NotANumber));

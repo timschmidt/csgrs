@@ -851,8 +851,14 @@ mod tests {
     #[test]
     fn exact_symbol_subexpressions() {
         let mut names = HashMap::new();
-        names.insert("x".to_string(), Real::new(Rational::fraction(3, 2).unwrap()));
-        names.insert("y".to_string(), Real::new(Rational::fraction(5, 4).unwrap()));
+        names.insert(
+            "x".to_string(),
+            Real::new(Rational::fraction(3, 2).unwrap()),
+        );
+        names.insert(
+            "y".to_string(),
+            Real::new(Rational::fraction(5, 4).unwrap()),
+        );
         let xpr: Simple = "(* (+ x 1/2) (/ y 5/2))".parse().unwrap();
         let result = xpr.evaluate(&names).unwrap();
         assert_eq!(result, Real::new(Rational::one()));

@@ -119,6 +119,26 @@ impl Rational {
         self.reduce()
     }
 
+    fn reduce_with_possible_divisor(self, possible_divisor: &BigUint) -> Self {
+        if self.sign == NoSign || self.numerator.is_zero() {
+            return Self::zero();
+        }
+        if self.denominator == *ONE.deref() || possible_divisor == &*ONE {
+            return self;
+        }
+
+        let divisor = num::Integer::gcd(&self.numerator, possible_divisor);
+        if divisor == *ONE.deref() {
+            self
+        } else {
+            Self {
+                sign: self.sign,
+                numerator: self.numerator / &divisor,
+                denominator: self.denominator / divisor,
+            }
+        }
+    }
+
     fn reduce(self) -> Self {
         if self.denominator == *ONE.deref() {
             return self;
@@ -251,8 +271,8 @@ impl Rational {
             .expect("Rational denominators are never zero");
         let shift = i32::try_from(numerator_shift).expect("shift should fit in i32")
             - i32::try_from(denominator_shift).expect("shift should fit in i32");
-        let numerator = &self.numerator
-            >> usize::try_from(numerator_shift).expect("shift should fit in usize");
+        let numerator =
+            &self.numerator >> usize::try_from(numerator_shift).expect("shift should fit in usize");
         let denominator = &self.denominator
             >> usize::try_from(denominator_shift).expect("shift should fit in usize");
 
@@ -400,11 +420,7 @@ impl Rational {
     fn try_perfect(n: BigUint) -> Option<BigUint> {
         let root = n.sqrt();
         let square = &root * &root;
-        if square == n {
-            Some(root)
-        } else {
-            None
-        }
+        if square == n { Some(root) } else { None }
     }
 
     // (root squared times rest) = n
@@ -654,12 +670,20 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
         use std::cmp::Ordering::*;
 
         let other = other.as_ref();
-        let denominator = &self.denominator * &other.denominator;
-        let a = &self.numerator * &other.denominator;
-        let b = &other.numerator * &self.denominator;
+        if self.sign == NoSign {
+            return other.clone();
+        }
+        if other.sign == NoSign {
+            return self.clone();
+        }
+
+        let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
+        let left_scale = &other.denominator / &common_denominator;
+        let right_scale = &self.denominator / &common_denominator;
+        let denominator = &self.denominator * &left_scale;
+        let a = &self.numerator * &left_scale;
+        let b = &other.numerator * &right_scale;
         let (sign, numerator) = match (self.sign, other.sign) {
-            (any, NoSign) => (any, a),
-            (NoSign, any) => (any, b),
             (Plus, Plus) => (Plus, a + b),
             (Minus, Minus) => (Minus, a + b),
             (x, y) => match a.cmp(&b) {
@@ -670,11 +694,12 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
                 Less => (y, b - a),
             },
         };
-        Self::Output::maybe_reduce(Self::Output {
+        Self::Output {
             sign,
             numerator,
             denominator,
-        })
+        }
+        .reduce_with_possible_divisor(&common_denominator)
     }
 }
 
@@ -712,13 +737,20 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
         use std::cmp::Ordering::*;
 
         let other = other.as_ref();
-        let denominator = &self.denominator * &other.denominator;
-        let a = &self.numerator * &other.denominator;
-        let b = &other.numerator * &self.denominator;
+        if other.sign == NoSign {
+            return self.clone();
+        }
+        if self.sign == NoSign {
+            return -other;
+        }
+
+        let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
+        let left_scale = &other.denominator / &common_denominator;
+        let right_scale = &self.denominator / &common_denominator;
+        let denominator = &self.denominator * &left_scale;
+        let a = &self.numerator * &left_scale;
+        let b = &other.numerator * &right_scale;
         let (sign, numerator) = match (self.sign, other.sign) {
-            (any, NoSign) => (any, a),
-            (NoSign, Plus) => (Minus, b),
-            (NoSign, Minus) => (Plus, b),
             (Plus, Minus) => (Plus, a + b),
             (Minus, Plus) => (Minus, a + b),
             (x, y) => match a.cmp(&b) {
@@ -729,11 +761,12 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
                 Less => (-y, b - a),
             },
         };
-        Self::Output::maybe_reduce(Self::Output {
+        Self::Output {
             sign,
             numerator,
             denominator,
-        })
+        }
+        .reduce_with_possible_divisor(&common_denominator)
     }
 }
 

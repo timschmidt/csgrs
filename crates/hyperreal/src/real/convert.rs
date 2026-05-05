@@ -57,7 +57,9 @@ impl Real {
         } else if self.class == Class::One {
             Computable::rational(self.rational.clone())
         } else {
-            Computable::rational(self.rational.clone()).multiply(self.computable.clone())
+            self.computable
+                .clone()
+                .multiply_rational(self.rational.clone())
         };
 
         if let Some(s) = &self.signal {
@@ -75,8 +77,14 @@ impl Real {
                 c.abort(s.clone());
             }
             c
+        } else if self.class == crate::real::Class::One {
+            Computable::rational(self.rational)
         } else {
-            self.fold_ref()
+            let mut c = self.computable.multiply_rational(self.rational);
+            if let Some(s) = self.signal {
+                c.abort(s);
+            }
+            c
         }
     }
 }

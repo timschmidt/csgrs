@@ -141,7 +141,10 @@ fn ln2(signal: &Option<Signal>, p: Precision) -> BigInt {
     let ln2_2 = Computable::integer(BigInt::from(2_u8)).multiply(prescaled_24);
     let ln2_3 = Computable::integer(BigInt::from(3_u8)).multiply(prescaled_80);
 
-    ln2_1.add(ln2_2.negate()).add(ln2_3).approx_signal(signal, p)
+    ln2_1
+        .add(ln2_2.negate())
+        .add(ln2_3)
+        .approx_signal(signal, p)
 }
 
 fn ln_constant(signal: &Option<Signal>, n: Rational, p: Precision) -> BigInt {

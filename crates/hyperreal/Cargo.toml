@@ -41,3 +41,7 @@ harness = false
 [[bench]]
 name = "float_convert"
 harness = false
+
+[[bench]]
+name = "scalar_micro"
+harness = false
