@@ -39,6 +39,9 @@ pub enum Certainty {
     Exact,
     /// The result follows from a conservative numeric filter.
     Filtered,
+    /// The result follows from adaptive robust arithmetic on projected finite
+    /// floating-point coordinates.
+    RobustFloat,
     /// The result is approximate and should not be used for irreversible topology.
     Approximate,
 }

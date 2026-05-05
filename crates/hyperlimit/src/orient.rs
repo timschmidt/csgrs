@@ -815,7 +815,11 @@ mod tests {
         #[cfg(any(feature = "robust", feature = "geogram"))]
         assert_eq!(
             orient2d_with_policy(&a, &b, &c, PredicatePolicy::STRICT),
-            PredicateOutcome::decided(Sign::Zero, Certainty::Exact, Escalation::RobustFallback)
+            PredicateOutcome::decided(
+                Sign::Zero,
+                Certainty::RobustFloat,
+                Escalation::RobustFallback
+            )
         );
     }
 

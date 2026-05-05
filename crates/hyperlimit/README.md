@@ -125,8 +125,10 @@ match orient2d(&a, &b, &c) {
 
 `certainty` is one of:
 
-- `Exact`: known by structural/exact information or exact robust fallback.
+- `Exact`: known by structural/exact information or exact predicate evaluation.
 - `Filtered`: known by a conservative numeric, interval, or magnitude filter.
+- `RobustFloat`: known by an adaptive robust predicate after projecting inputs
+  to finite `f64` coordinates.
 - `Approximate`: known only by an approximate sign. Approximate results are
   opt-in.
 

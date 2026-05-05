@@ -107,7 +107,7 @@ fn finite(value: f64) -> Option<f64> {
 fn sign_outcome(value: geogram_predicates::Sign) -> Option<PredicateOutcome<Sign>> {
     Some(PredicateOutcome::decided(
         map_sign(value),
-        Certainty::Exact,
+        Certainty::RobustFloat,
         Escalation::RobustFallback,
     ))
 }
@@ -121,7 +121,7 @@ fn sign_outcome_from_sos(
     } else {
         Some(PredicateOutcome::decided(
             Sign::Zero,
-            Certainty::Exact,
+            Certainty::RobustFloat,
             Escalation::RobustFallback,
         ))
     }

@@ -97,7 +97,7 @@ fn finite(value: f64) -> Option<f64> {
 fn sign_outcome(value: f64) -> Option<PredicateOutcome<Sign>> {
     Some(PredicateOutcome::decided(
         Sign::from_f64(value)?,
-        Certainty::Exact,
+        Certainty::RobustFloat,
         Escalation::RobustFallback,
     ))
 }
