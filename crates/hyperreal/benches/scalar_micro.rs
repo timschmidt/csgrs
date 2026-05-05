@@ -260,15 +260,23 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             },
             BenchDoc {
                 name: "real_clone_pair",
-                description: "Clones two `Real` values.",
+                description: "Clones two scaled transcendental `Real` values.",
+            },
+            BenchDoc {
+                name: "real_unscaled_add_refs",
+                description: "Adds borrowed unscaled transcendental `Real` values.",
+            },
+            BenchDoc {
+                name: "real_unscaled_add_owned",
+                description: "Adds owned unscaled transcendental `Real` values.",
             },
             BenchDoc {
                 name: "real_add_refs",
-                description: "Adds `Real` references.",
+                description: "Adds borrowed scaled transcendental `Real` values.",
             },
             BenchDoc {
                 name: "real_add_owned",
-                description: "Adds owned `Real` values.",
+                description: "Adds owned scaled transcendental `Real` values.",
             },
         ],
     },
@@ -482,6 +490,8 @@ fn bench_borrowed_op_overhead(c: &mut Criterion) {
     let mut group = c.benchmark_group("borrowed_op_overhead");
     let rational_lhs = rational(123_456_789, 987_654_321);
     let rational_rhs = rational(987_654_321, 123_456_789);
+    let real_unscaled_lhs = Real::pi();
+    let real_unscaled_rhs = Real::e();
     let real_lhs = Real::pi() * real(7, 8);
     let real_rhs = Real::e() * real(5, 6);
 
@@ -505,6 +515,16 @@ fn bench_borrowed_op_overhead(c: &mut Criterion) {
     });
     group.bench_function("real_clone_pair", |b| {
         b.iter(|| black_box((black_box(&real_lhs).clone(), black_box(&real_rhs).clone())))
+    });
+    group.bench_function("real_unscaled_add_refs", |b| {
+        b.iter(|| black_box(black_box(&real_unscaled_lhs) + black_box(&real_unscaled_rhs)))
+    });
+    group.bench_function("real_unscaled_add_owned", |b| {
+        b.iter_batched(
+            || (real_unscaled_lhs.clone(), real_unscaled_rhs.clone()),
+            |(left, right)| black_box(left + right),
+            BatchSize::SmallInput,
+        )
     });
     group.bench_function("real_add_refs", |b| {
         b.iter(|| black_box(black_box(&real_lhs) + black_box(&real_rhs)))

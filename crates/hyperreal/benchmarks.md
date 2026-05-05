@@ -80,7 +80,7 @@ Speed of public structural queries across exact, transcendental, and composite `
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `structural_query_speed/zero_zero_status` | 1.35 ns | 1.30 ns - 1.41 ns | Checks zero/nonzero facts for exact zero. |
+| `structural_query_speed/zero_zero_status` | 0.73 ns | 0.72 ns - 0.74 ns | Checks zero/nonzero facts for exact zero. |
 | `structural_query_speed/zero_sign_query` | 3.42 ns | 3.41 ns - 3.43 ns | Reads sign facts for exact zero. |
 | `structural_query_speed/zero_msd_query` | 5.40 ns | 5.40 ns - 5.41 ns | Reads magnitude facts for exact zero. |
 | `structural_query_speed/zero_structural_facts` | 6.21 ns | 6.19 ns - 6.23 ns | Computes full structural facts for exact zero. |
@@ -145,9 +145,11 @@ Borrowed versus owned operation overhead for rational and real operands.
 | `borrowed_op_overhead/rational_clone_pair` | 43.10 ns | 43.03 ns - 43.18 ns | Clones two rational values. |
 | `borrowed_op_overhead/rational_add_refs` | 370.66 ns | 369.20 ns - 372.23 ns | Adds rational references. |
 | `borrowed_op_overhead/rational_add_owned` | 417.29 ns | 397.75 ns - 455.38 ns | Adds owned rational values. |
-| `borrowed_op_overhead/real_clone_pair` | 513.17 ns | 511.95 ns - 514.68 ns | Clones two `Real` values. |
-| `borrowed_op_overhead/real_add_refs` | 1.397 us | 1.388 us - 1.407 us | Adds `Real` references. |
-| `borrowed_op_overhead/real_add_owned` | 968.72 ns | 965.43 ns - 972.48 ns | Adds owned `Real` values. |
+| `borrowed_op_overhead/real_clone_pair` | 513.17 ns | 511.95 ns - 514.68 ns | Clones two scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_unscaled_add_refs` | 347.33 ns | 343.67 ns - 351.71 ns | Adds borrowed unscaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_unscaled_add_owned` | 183.60 ns | 182.24 ns - 184.87 ns | Adds owned unscaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_add_refs` | 1.142 us | 1.119 us - 1.171 us | Adds borrowed scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_add_owned` | 909.80 ns | 901.40 ns - 919.58 ns | Adds owned scaled transcendental `Real` values. |
 
 ### `dense_algebra`
 

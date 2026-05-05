@@ -345,6 +345,7 @@ fn sin_pi_neg(r: Rational) -> bool {
 
 impl Real {
     /// Is this Real exactly zero?
+    #[inline]
     pub fn definitely_zero(&self) -> bool {
         self.rational.sign() == Sign::NoSign
     }
@@ -358,6 +359,7 @@ impl Real {
     }
 
     /// Conservatively inspect public structural facts about this value.
+    #[inline]
     pub fn structural_facts(&self) -> RealStructuralFacts {
         if matches!(self.class, One) {
             return facts_from_rational(&self.rational, true);
@@ -403,6 +405,7 @@ impl Real {
     }
 
     /// Conservatively report whether structural inspection proves this value is zero.
+    #[inline]
     pub fn zero_status(&self) -> ZeroKnowledge {
         match self.rational.sign() {
             Sign::NoSign => ZeroKnowledge::Zero,

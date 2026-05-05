@@ -10,13 +10,14 @@ Hyperreal is a Rust library for exact rational arithmetic and computable real ar
   - conversions to and from integers and IEEE-754 floats
 - `Computable`
   - lazy real-number evaluation to requested precision
-  - transcendental functions such as `exp`, `ln`, `sqrt`, `sin`, `cos`, and `tan`
+  - transcendental functions such as `exp`, `ln`, `sqrt`, `sin`, `cos`, `tan`, and inverse trig/hyperbolic kernels
   - caching, structural simplification, and targeted argument reduction
   - conservative structural facts through `structural_facts`
   - bounded sign refinement through `sign_until`
 - `Real`
   - a higher-level real type that combines exact rational structure with computable irrational parts
   - symbolic handling for common classes such as square roots, logarithms, exponentials, and rational multiples of `pi`
+  - exact inverse trig shortcuts and inverse hyperbolic construction with domain checks
   - public exact-rational access through `exact_rational`
   - conservative sign, zero, exactness, and magnitude facts through `structural_facts`
   - borrowed finite `f64` approximation through `to_f64_approx`
@@ -34,32 +35,32 @@ Hyperreal is a Rust library for exact rational arithmetic and computable real ar
 The project is no longer just a straight Java port. The current codebase includes:
 
 - direct and benchmarked transcendental fast paths
-- exact and symbolic trig/log shortcuts
+- exact and symbolic trig, inverse trig, log, exp, and inverse hyperbolic shortcuts
 - borrowed `Rational` and `Real` arithmetic APIs
 - public structural inspection for robust downstream filtering and predicates
 - bounded sign refinement that stops at the requested precision floor
 - owned exact-rational access that does not expose internal representation
+- benchmark documentation generated into [`benchmarks.md`](./benchmarks.md), including current Criterion means and confidence intervals
 - Criterion benchmark suites for:
   - library-level behavior
   - numerical kernels
   - borrowed-vs-owned arithmetic
   - float conversion
+  - scalar structural and arithmetic microbenchmarks
 - internal separation between public exact facts and planner-only evaluator facts
-
-The evaluator refactor plan lives in [`evaluator-refactor.md`](./evaluator-refactor.md).
 
 ## Installation
 
 ```toml
 [dependencies]
-hyperreal = "0.10.1"
+hyperreal = "0.10.3"
 ```
 
 To build only the numeric library without the `Simple` expression parser:
 
 ```toml
 [dependencies]
-hyperreal = { version = "0.10.1", default-features = false }
+hyperreal = { version = "0.10.3", default-features = false }
 ```
 
 Cargo features:
@@ -182,20 +183,24 @@ Performance is now an explicit project goal.
 Current work in the tree includes:
 
 - specialized transcendental kernels
-- faster large-argument reduction for trig and `exp`
-- exact rational and symbolic shortcuts
-- structural fact and bounded sign-refinement shortcuts
-- borrowed arithmetic improvements
-- benchmark-guided evaluator refactoring
+- faster large-argument reduction for trig, inverse trig, and `exp`
+- exact rational, symbolic, and domain-error shortcuts
+- stable inverse hyperbolic construction paths
+- structural fact and bounded sign-refinement shortcuts, including very fast public zero-status checks for exact values
+- borrowed arithmetic improvements, with separate benchmarks for exact, symbolic, scaled, and unscaled public paths
+- allocation-free detection of power-of-two rational scales in scalar folding paths
+- benchmark-guided evaluator and public-wrapper refactoring
 
 Benchmark targets:
 
-- Benchmark output reference: [`benchmarks.md`](./benchmarks.md)
+- Benchmark output reference with current Criterion values: [`benchmarks.md`](./benchmarks.md)
 - `cargo bench --bench library_perf`
 - `cargo bench --bench numerical_micro`
 - `cargo bench --bench borrowed_ops`
 - `cargo bench --bench float_convert`
 - `cargo bench --bench scalar_micro`
+
+The generated benchmark reference is useful for spotting which layer a slowdown belongs to. For example, `borrowed_ops` covers direct owned-vs-borrowed arithmetic, while `scalar_micro` separates exact structural queries, unscaled public `Real` addition, and scaled public `Real` addition.
 
 ## Notes
 

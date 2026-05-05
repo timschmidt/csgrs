@@ -49,6 +49,7 @@ impl TryFrom<f64> for Real {
 }
 
 impl Real {
+    #[inline]
     pub(crate) fn fold_ref(&self) -> Computable {
         use crate::real::{Class, rationals};
 
@@ -68,6 +69,7 @@ impl Real {
         c
     }
 
+    #[inline]
     pub(crate) fn fold(self) -> Computable {
         use crate::real::rationals;
 

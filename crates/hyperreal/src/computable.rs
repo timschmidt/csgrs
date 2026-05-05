@@ -1768,6 +1768,7 @@ impl Computable {
     }
 
     /// Conservatively report whether structural inspection proves this value is zero.
+    #[inline]
     pub fn zero_status(&self) -> ZeroKnowledge {
         if let Some(sign) = self.exact_sign() {
             return if sign == Sign::NoSign {

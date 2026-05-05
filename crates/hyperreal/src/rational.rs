@@ -286,17 +286,31 @@ impl Rational {
         )
     }
 
+    #[inline]
     pub(crate) fn power_of_two_shift(&self) -> Option<(i32, Sign)> {
         if self.sign == NoSign {
             return None;
         }
 
-        let (shift, reduced) = self.factor_two_powers();
-        if reduced.numerator == *ONE.deref() && reduced.denominator == *ONE.deref() {
-            Some((shift, reduced.sign))
-        } else {
-            None
+        let numerator_shift = self
+            .numerator
+            .trailing_zeros()
+            .expect("Rational numerators are never zero for non-zero signs");
+        if numerator_shift != self.numerator.bits() - 1 {
+            return None;
         }
+
+        let denominator_shift = self
+            .denominator
+            .trailing_zeros()
+            .expect("Rational denominators are never zero");
+        if denominator_shift != self.denominator.bits() - 1 {
+            return None;
+        }
+
+        let numerator_shift = i32::try_from(numerator_shift).ok()?;
+        let denominator_shift = i32::try_from(denominator_shift).ok()?;
+        Some((numerator_shift - denominator_shift, self.sign))
     }
 
     pub(crate) fn msd_exact(&self) -> Option<i32> {
@@ -377,6 +391,7 @@ impl Rational {
     }
 
     /// The [`Sign`] of this value.
+    #[inline]
     pub fn sign(&self) -> Sign {
         self.sign
     }
@@ -1065,6 +1080,25 @@ mod tests {
         assert!(!half.prefer_fraction());
         let third: Rational = "2/6".parse().unwrap();
         assert!(third.prefer_fraction());
+    }
+
+    #[test]
+    fn power_of_two_shift_detects_only_power_of_two_ratios() {
+        assert_eq!(
+            Rational::fraction(8, 1).unwrap().power_of_two_shift(),
+            Some((3, Plus))
+        );
+        assert_eq!(
+            Rational::fraction(1, 8).unwrap().power_of_two_shift(),
+            Some((-3, Plus))
+        );
+        assert_eq!(
+            Rational::fraction(-4, 32).unwrap().power_of_two_shift(),
+            Some((-3, Minus))
+        );
+        assert_eq!(Rational::fraction(7, 8).unwrap().power_of_two_shift(), None);
+        assert_eq!(Rational::fraction(5, 6).unwrap().power_of_two_shift(), None);
+        assert_eq!(Rational::zero().power_of_two_shift(), None);
     }
 
     #[test]
