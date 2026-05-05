@@ -30,6 +30,9 @@ Currently implemented:
 - Optional adapters for `robust`, `geogram_predicates`, `hyperreal`,
   `realistic_blas`, and `inari`.
 
+See [benchmarks.md](benchmarks.md) for the generated Criterion benchmark
+summary across predicates and scalar representations.
+
 Robust fallback paths require finite coordinates that can be converted to `f64`.
 For interval inputs, only singleton finite intervals are exposed to `f64`
 fallback to avoid classifying interval midpoints as if they were exact points.
