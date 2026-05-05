@@ -568,6 +568,69 @@ fn trig_cases() -> [TrigCase; 6] {
     ]
 }
 
+fn inverse_unit_cases() -> [TrigCase; 4] {
+    [
+        TrigCase {
+            name: "0.5",
+            value: 0.5,
+        },
+        TrigCase {
+            name: "neg_0.999999",
+            value: -0.999_999,
+        },
+        TrigCase {
+            name: "0.999999",
+            value: 0.999_999,
+        },
+        TrigCase {
+            name: "1e-12",
+            value: 1.0e-12,
+        },
+    ]
+}
+
+fn inverse_real_cases() -> [TrigCase; 4] {
+    [
+        TrigCase {
+            name: "0.5",
+            value: 0.5,
+        },
+        TrigCase {
+            name: "neg_1e-12",
+            value: -1.0e-12,
+        },
+        TrigCase {
+            name: "1e6",
+            value: 1.0e6,
+        },
+        TrigCase {
+            name: "neg_1e6",
+            value: -1.0e6,
+        },
+    ]
+}
+
+fn inverse_acosh_cases() -> [TrigCase; 4] {
+    [
+        TrigCase {
+            name: "9",
+            value: 9.0,
+        },
+        TrigCase {
+            name: "1_plus_1e-12",
+            value: 1.0 + 1.0e-12,
+        },
+        TrigCase {
+            name: "1e6",
+            value: 1.0e6,
+        },
+        TrigCase {
+            name: "e",
+            value: std::f64::consts::E,
+        },
+    ]
+}
+
 fn one_e_minus_20() -> HyperrealScalar {
     "0.00000000000000000001".parse::<Rational>().unwrap().into()
 }
@@ -584,6 +647,22 @@ fn trig_rational(case: TrigCase) -> HyperrealScalar {
     }
 }
 
+fn inverse_rational(case: TrigCase) -> HyperrealScalar {
+    match case.name {
+        "0.5" => q(1, 2),
+        "neg_0.999999" => q(-999_999, 1_000_000),
+        "0.999999" => q(999_999, 1_000_000),
+        "1e-12" => q(1, 1_000_000_000_000),
+        "neg_1e-12" => q(-1, 1_000_000_000_000),
+        "1e6" => 1_000_000.into(),
+        "neg_1e6" => (-1_000_000).into(),
+        "9" => 9.into(),
+        "1_plus_1e-12" => q(1_000_000_000_001, 1_000_000_000_000),
+        "e" => HyperrealScalar::e(),
+        _ => unreachable!("all inverse cases are covered"),
+    }
+}
+
 fn bench_blas_scalar_trig<B: Backend>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -595,6 +674,33 @@ fn bench_blas_scalar_trig<B: Backend>(
         });
         group.bench_function(format!("{label}/{}/cos", case.name), |b| {
             b.iter(|| black_box(realistic_blas::cos(black_box(blas_value.clone()))))
+        });
+    }
+    for case in inverse_unit_cases() {
+        let blas_value = s::<B>(case.value);
+        group.bench_function(format!("{label}/{}/asin", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::asin(black_box(blas_value.clone())).unwrap()))
+        });
+        group.bench_function(format!("{label}/{}/acos", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::acos(black_box(blas_value.clone())).unwrap()))
+        });
+        group.bench_function(format!("{label}/{}/atanh", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::atanh(black_box(blas_value.clone())).unwrap()))
+        });
+    }
+    for case in inverse_real_cases() {
+        let blas_value = s::<B>(case.value);
+        group.bench_function(format!("{label}/{}/atan", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::atan(black_box(blas_value.clone())).unwrap()))
+        });
+        group.bench_function(format!("{label}/{}/asinh", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::asinh(black_box(blas_value.clone())).unwrap()))
+        });
+    }
+    for case in inverse_acosh_cases() {
+        let blas_value = s::<B>(case.value);
+        group.bench_function(format!("{label}/{}/acosh", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::acosh(black_box(blas_value.clone())).unwrap()))
         });
     }
 }
@@ -614,6 +720,33 @@ fn bench_scalar_trig(c: &mut Criterion) {
             b.iter(|| black_box(realistic_blas::cos(black_box(rational_value.clone()))))
         });
     }
+    for case in inverse_unit_cases() {
+        let rational_value = inverse_rational(case);
+        group.bench_function(format!("hyperreal-rational/{}/asin", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::asin(black_box(rational_value.clone())).unwrap()))
+        });
+        group.bench_function(format!("hyperreal-rational/{}/acos", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::acos(black_box(rational_value.clone())).unwrap()))
+        });
+        group.bench_function(format!("hyperreal-rational/{}/atanh", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::atanh(black_box(rational_value.clone())).unwrap()))
+        });
+    }
+    for case in inverse_real_cases() {
+        let rational_value = inverse_rational(case);
+        group.bench_function(format!("hyperreal-rational/{}/atan", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::atan(black_box(rational_value.clone())).unwrap()))
+        });
+        group.bench_function(format!("hyperreal-rational/{}/asinh", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::asinh(black_box(rational_value.clone())).unwrap()))
+        });
+    }
+    for case in inverse_acosh_cases() {
+        let rational_value = inverse_rational(case);
+        group.bench_function(format!("hyperreal-rational/{}/acosh", case.name), |b| {
+            b.iter(|| black_box(realistic_blas::acosh(black_box(rational_value.clone())).unwrap()))
+        });
+    }
 
     let mut astro_ctx = astro_backend::Ctx::new(128);
     for case in trig_cases() {
@@ -623,6 +756,33 @@ fn bench_scalar_trig(c: &mut Criterion) {
         });
         group.bench_function(format!("astro128/{}/cos", case.name), |b| {
             b.iter(|| astro_ctx.cos(black_box(&astro_value)))
+        });
+    }
+    for case in inverse_unit_cases() {
+        let astro_value = astro_ctx.f(case.value);
+        group.bench_function(format!("astro128/{}/asin", case.name), |b| {
+            b.iter(|| astro_ctx.asin(black_box(&astro_value)))
+        });
+        group.bench_function(format!("astro128/{}/acos", case.name), |b| {
+            b.iter(|| astro_ctx.acos(black_box(&astro_value)))
+        });
+        group.bench_function(format!("astro128/{}/atanh", case.name), |b| {
+            b.iter(|| astro_ctx.atanh(black_box(&astro_value)))
+        });
+    }
+    for case in inverse_real_cases() {
+        let astro_value = astro_ctx.f(case.value);
+        group.bench_function(format!("astro128/{}/atan", case.name), |b| {
+            b.iter(|| astro_ctx.atan(black_box(&astro_value)))
+        });
+        group.bench_function(format!("astro128/{}/asinh", case.name), |b| {
+            b.iter(|| astro_ctx.asinh(black_box(&astro_value)))
+        });
+    }
+    for case in inverse_acosh_cases() {
+        let astro_value = astro_ctx.f(case.value);
+        group.bench_function(format!("astro128/{}/acosh", case.name), |b| {
+            b.iter(|| astro_ctx.acosh(black_box(&astro_value)))
         });
     }
 
@@ -636,6 +796,33 @@ fn bench_scalar_trig(c: &mut Criterion) {
             b.iter(|| numerica_ctx.cos(black_box(&numerica_value)))
         });
     }
+    for case in inverse_unit_cases() {
+        let numerica_value = numerica_ctx.f(case.value);
+        group.bench_function(format!("numerica128/{}/asin", case.name), |b| {
+            b.iter(|| numerica_ctx.asin(black_box(&numerica_value)))
+        });
+        group.bench_function(format!("numerica128/{}/acos", case.name), |b| {
+            b.iter(|| numerica_ctx.acos(black_box(&numerica_value)))
+        });
+        group.bench_function(format!("numerica128/{}/atanh", case.name), |b| {
+            b.iter(|| numerica_ctx.atanh(black_box(&numerica_value)))
+        });
+    }
+    for case in inverse_real_cases() {
+        let numerica_value = numerica_ctx.f(case.value);
+        group.bench_function(format!("numerica128/{}/atan", case.name), |b| {
+            b.iter(|| numerica_ctx.atan(black_box(&numerica_value)))
+        });
+        group.bench_function(format!("numerica128/{}/asinh", case.name), |b| {
+            b.iter(|| numerica_ctx.asinh(black_box(&numerica_value)))
+        });
+    }
+    for case in inverse_acosh_cases() {
+        let numerica_value = numerica_ctx.f(case.value);
+        group.bench_function(format!("numerica128/{}/acosh", case.name), |b| {
+            b.iter(|| numerica_ctx.acosh(black_box(&numerica_value)))
+        });
+    }
 
     let symbolica_ctx = symbolica_backend::Ctx::new(128);
     for case in trig_cases() {
@@ -645,6 +832,33 @@ fn bench_scalar_trig(c: &mut Criterion) {
         });
         group.bench_function(format!("symbolica/{}/cos", case.name), |b| {
             b.iter(|| symbolica_ctx.cos(black_box(&symbolica_value)))
+        });
+    }
+    for case in inverse_unit_cases() {
+        let symbolica_value = symbolica_ctx.f(case.value);
+        group.bench_function(format!("symbolica/{}/asin", case.name), |b| {
+            b.iter(|| symbolica_ctx.asin(black_box(&symbolica_value)))
+        });
+        group.bench_function(format!("symbolica/{}/acos", case.name), |b| {
+            b.iter(|| symbolica_ctx.acos(black_box(&symbolica_value)))
+        });
+        group.bench_function(format!("symbolica/{}/atanh", case.name), |b| {
+            b.iter(|| symbolica_ctx.atanh(black_box(&symbolica_value)))
+        });
+    }
+    for case in inverse_real_cases() {
+        let symbolica_value = symbolica_ctx.f(case.value);
+        group.bench_function(format!("symbolica/{}/atan", case.name), |b| {
+            b.iter(|| symbolica_ctx.atan(black_box(&symbolica_value)))
+        });
+        group.bench_function(format!("symbolica/{}/asinh", case.name), |b| {
+            b.iter(|| symbolica_ctx.asinh(black_box(&symbolica_value)))
+        });
+    }
+    for case in inverse_acosh_cases() {
+        let symbolica_value = symbolica_ctx.f(case.value);
+        group.bench_function(format!("symbolica/{}/acosh", case.name), |b| {
+            b.iter(|| symbolica_ctx.acosh(black_box(&symbolica_value)))
         });
     }
 

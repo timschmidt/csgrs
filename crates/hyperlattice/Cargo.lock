@@ -448,9 +448,9 @@ checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
 
 [[package]]
 name = "hyperreal"
-version = "0.10.1"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7467aef13266ae54ad2453e9e290f58f6c11e18b67b68e9f8d4fff742ce043d0"
+checksum = "7ece8585da3a45ce2e99f3c486247ce49d70bf9bb06cc299fcbf4029411f52ca"
 dependencies = [
  "ciborium",
  "num",
