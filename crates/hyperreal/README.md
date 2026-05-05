@@ -190,10 +190,12 @@ Current work in the tree includes:
 
 Benchmark targets:
 
+- Benchmark output reference: [`benchmarks.md`](./benchmarks.md)
 - `cargo bench --bench library_perf`
 - `cargo bench --bench numerical_micro`
 - `cargo bench --bench borrowed_ops`
 - `cargo bench --bench float_convert`
+- `cargo bench --bench scalar_micro`
 
 ## Notes
 

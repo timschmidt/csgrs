@@ -2,7 +2,403 @@ use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main
 use hyperreal::{Rational, Real, Simple};
 use num::bigint::BigInt;
 
+#[path = "support/bench_docs.rs"]
+mod bench_docs;
+
+use bench_docs::{BenchDoc, BenchGroupDoc};
+
+const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
+    BenchGroupDoc {
+        name: "real_format",
+        description: "Formatting costs for important irrational `Real` values.",
+        benches: &[
+            BenchDoc {
+                name: "pi_lower_exp_32",
+                description: "Formats pi with 32 digits in lower-exponential form.",
+            },
+            BenchDoc {
+                name: "pi_display_alt_32",
+                description: "Formats pi with alternate decimal display at 32 digits.",
+            },
+            BenchDoc {
+                name: "sqrt_two_display_alt_32",
+                description: "Formats sqrt(2) with alternate decimal display at 32 digits.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "real_constants",
+        description: "Construction cost for shared mathematical constants.",
+        benches: &[
+            BenchDoc {
+                name: "pi",
+                description: "Constructs the symbolic pi value.",
+            },
+            BenchDoc {
+                name: "e",
+                description: "Constructs the symbolic Euler constant value.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "simple",
+        description: "Parser and evaluator costs for the `Simple` expression language.",
+        benches: &[
+            BenchDoc {
+                name: "parse_nested",
+                description: "Parses a nested expression with powers, trig, and constants.",
+            },
+            BenchDoc {
+                name: "eval_nested",
+                description: "Evaluates a parsed mixed symbolic/numeric expression.",
+            },
+            BenchDoc {
+                name: "eval_constants",
+                description: "Evaluates repeated built-in constants.",
+            },
+            BenchDoc {
+                name: "eval_exact",
+                description: "Evaluates a rational-only expression through exact shortcuts.",
+            },
+            BenchDoc {
+                name: "eval_nested_exact",
+                description: "Evaluates a nested rational-only expression through exact shortcuts.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "real_powi",
+        description: "Integer exponentiation for exact and irrational `Real` values.",
+        benches: &[
+            BenchDoc {
+                name: "exact_17",
+                description: "Raises an exact rational-backed `Real` to the 17th power.",
+            },
+            BenchDoc {
+                name: "irrational_17",
+                description: "Raises sqrt(3) to the 17th power with symbolic simplification.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "rational_powi",
+        description: "Integer exponentiation for `Rational`.",
+        benches: &[BenchDoc {
+            name: "exact_17",
+            description: "Raises a rational value to the 17th power.",
+        }],
+    },
+    BenchGroupDoc {
+        name: "real_exact_trig",
+        description: "Exact and symbolic trig construction for known pi multiples.",
+        benches: &[
+            BenchDoc {
+                name: "sin_pi_6",
+                description: "Computes sin(pi/6) via exact shortcut.",
+            },
+            BenchDoc {
+                name: "cos_pi_3",
+                description: "Computes cos(pi/3) via exact shortcut.",
+            },
+            BenchDoc {
+                name: "tan_pi_5",
+                description: "Builds tan(pi/5), a nontrivial symbolic tangent.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "real_general_trig",
+        description: "General trig construction for irrational arguments.",
+        benches: &[
+            BenchDoc {
+                name: "tan_sqrt_2",
+                description: "Builds tan(sqrt(2)).",
+            },
+            BenchDoc {
+                name: "tan_pi_sqrt_2_over_5",
+                description: "Builds tangent of an irrational multiple of pi.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "real_exact_inverse_trig",
+        description: "Exact inverse trig shortcuts and symbolic inverse trig recognition.",
+        benches: &[
+            BenchDoc {
+                name: "asin_1_2",
+                description: "Recognizes asin(1/2) as pi/6.",
+            },
+            BenchDoc {
+                name: "asin_minus_1_2",
+                description: "Recognizes asin(-1/2) as -pi/6.",
+            },
+            BenchDoc {
+                name: "asin_sqrt_2_over_2",
+                description: "Recognizes asin(sqrt(2)/2) as pi/4.",
+            },
+            BenchDoc {
+                name: "asin_sin_pi_5",
+                description: "Inverts a symbolic sin(pi/5).",
+            },
+            BenchDoc {
+                name: "acos_1",
+                description: "Recognizes acos(1) as zero.",
+            },
+            BenchDoc {
+                name: "acos_minus_1",
+                description: "Recognizes acos(-1) as pi.",
+            },
+            BenchDoc {
+                name: "acos_1_2",
+                description: "Recognizes acos(1/2) as pi/3.",
+            },
+            BenchDoc {
+                name: "atan_1",
+                description: "Recognizes atan(1) as pi/4.",
+            },
+            BenchDoc {
+                name: "atan_sqrt_3_over_3",
+                description: "Recognizes atan(sqrt(3)/3) as pi/6.",
+            },
+            BenchDoc {
+                name: "atan_tan_pi_5",
+                description: "Inverts a symbolic tan(pi/5).",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "real_general_inverse_trig",
+        description: "General inverse trig construction, domain errors, and atan range reduction.",
+        benches: &[
+            BenchDoc {
+                name: "asin_7_10",
+                description: "Builds asin(7/10) through the rational-specialized path.",
+            },
+            BenchDoc {
+                name: "asin_sqrt_2_over_3",
+                description: "Builds asin(sqrt(2)/3) through the general path.",
+            },
+            BenchDoc {
+                name: "acos_7_10",
+                description: "Builds acos(7/10) through the rational-specialized asin path.",
+            },
+            BenchDoc {
+                name: "acos_sqrt_2_over_3",
+                description: "Builds acos(sqrt(2)/3) through the general path.",
+            },
+            BenchDoc {
+                name: "asin_11_10_error",
+                description: "Rejects rational asin input outside [-1, 1].",
+            },
+            BenchDoc {
+                name: "acos_11_10_error",
+                description: "Rejects rational acos input outside [-1, 1].",
+            },
+            BenchDoc {
+                name: "atan_8",
+                description: "Builds atan(8), exercising large-argument reduction.",
+            },
+            BenchDoc {
+                name: "atan_sqrt_2",
+                description: "Builds atan(sqrt(2)).",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "real_inverse_hyperbolic",
+        description: "Inverse hyperbolic construction, exact exits, stable ln1p forms, and domain errors.",
+        benches: &[
+            BenchDoc {
+                name: "asinh_0",
+                description: "Recognizes asinh(0) as zero.",
+            },
+            BenchDoc {
+                name: "asinh_1_2",
+                description: "Builds asinh(1/2) through the stable moderate-input path.",
+            },
+            BenchDoc {
+                name: "asinh_sqrt_2",
+                description: "Builds asinh(sqrt(2)) without cancellation-prone log construction.",
+            },
+            BenchDoc {
+                name: "asinh_minus_1_2",
+                description: "Uses odd symmetry for negative asinh input.",
+            },
+            BenchDoc {
+                name: "asinh_1_000_000",
+                description: "Builds asinh for a large positive rational.",
+            },
+            BenchDoc {
+                name: "acosh_1",
+                description: "Recognizes acosh(1) as zero.",
+            },
+            BenchDoc {
+                name: "acosh_2",
+                description: "Builds acosh(2) through the stable moderate-input path.",
+            },
+            BenchDoc {
+                name: "acosh_sqrt_2",
+                description: "Builds acosh(sqrt(2)) through square-root domain specialization.",
+            },
+            BenchDoc {
+                name: "acosh_1_000_000",
+                description: "Builds acosh for a large positive rational.",
+            },
+            BenchDoc {
+                name: "atanh_0",
+                description: "Recognizes atanh(0) as zero.",
+            },
+            BenchDoc {
+                name: "atanh_1_2",
+                description: "Builds exact-rational atanh(1/2).",
+            },
+            BenchDoc {
+                name: "atanh_minus_1_2",
+                description: "Builds exact-rational atanh(-1/2).",
+            },
+            BenchDoc {
+                name: "atanh_9_10",
+                description: "Builds exact-rational atanh near the upper domain boundary.",
+            },
+            BenchDoc {
+                name: "atanh_1_error",
+                description: "Rejects atanh(1) at the rational domain boundary.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "simple_inverse_functions",
+        description: "Parsed/evaluated inverse trig and inverse hyperbolic expressions that should succeed.",
+        benches: &[
+            BenchDoc {
+                name: "asin_1_2",
+                description: "Evaluates `(asin 1/2)`.",
+            },
+            BenchDoc {
+                name: "acos_1_2",
+                description: "Evaluates `(acos 1/2)`.",
+            },
+            BenchDoc {
+                name: "atan_1",
+                description: "Evaluates `(atan 1)`.",
+            },
+            BenchDoc {
+                name: "asin_general",
+                description: "Evaluates `(asin 7/10)`.",
+            },
+            BenchDoc {
+                name: "acos_general",
+                description: "Evaluates `(acos 7/10)`.",
+            },
+            BenchDoc {
+                name: "atan_general",
+                description: "Evaluates `(atan 8)`.",
+            },
+            BenchDoc {
+                name: "asinh_1_2",
+                description: "Evaluates `(asinh 1/2)`.",
+            },
+            BenchDoc {
+                name: "asinh_sqrt_2",
+                description: "Evaluates `(asinh (sqrt 2))`.",
+            },
+            BenchDoc {
+                name: "acosh_2",
+                description: "Evaluates `(acosh 2)`.",
+            },
+            BenchDoc {
+                name: "acosh_sqrt_2",
+                description: "Evaluates `(acosh (sqrt 2))`.",
+            },
+            BenchDoc {
+                name: "atanh_1_2",
+                description: "Evaluates `(atanh 1/2)`.",
+            },
+            BenchDoc {
+                name: "atanh_minus_1_2",
+                description: "Evaluates `(atanh -1/2)`.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "simple_inverse_error_functions",
+        description: "Parsed/evaluated inverse function expressions that should fail quickly with `NotANumber`.",
+        benches: &[
+            BenchDoc {
+                name: "asin_11_10",
+                description: "Rejects `(asin 11/10)`.",
+            },
+            BenchDoc {
+                name: "acos_sqrt_2",
+                description: "Rejects `(acos (sqrt 2))`.",
+            },
+            BenchDoc {
+                name: "acosh_0",
+                description: "Rejects `(acosh 0)`.",
+            },
+            BenchDoc {
+                name: "acosh_minus_2",
+                description: "Rejects `(acosh -2)`.",
+            },
+            BenchDoc {
+                name: "atanh_1",
+                description: "Rejects `(atanh 1)`.",
+            },
+            BenchDoc {
+                name: "atanh_sqrt_2",
+                description: "Rejects `(atanh (sqrt 2))`.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "real_exact_ln",
+        description: "Exact logarithm construction and simplification for rational inputs.",
+        benches: &[
+            BenchDoc {
+                name: "ln_1024",
+                description: "Recognizes ln(1024) as 10 ln(2).",
+            },
+            BenchDoc {
+                name: "ln_1_8",
+                description: "Recognizes ln(1/8) as -3 ln(2).",
+            },
+            BenchDoc {
+                name: "ln_1000",
+                description: "Simplifies ln(1000) via small integer logarithm factors.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "real_exact_exp_log10",
+        description: "Exact inverse relationships among exp, ln, and log10.",
+        benches: &[
+            BenchDoc {
+                name: "exp_ln_1000",
+                description: "Simplifies exp(ln(1000)) back to 1000.",
+            },
+            BenchDoc {
+                name: "exp_ln_1_8",
+                description: "Simplifies exp(ln(1/8)) back to 1/8.",
+            },
+            BenchDoc {
+                name: "log10_1000",
+                description: "Recognizes log10(1000) as 3.",
+            },
+            BenchDoc {
+                name: "log10_1_1000",
+                description: "Recognizes log10(1/1000) as -3.",
+            },
+        ],
+    },
+];
+
 fn bench_real_format(c: &mut Criterion) {
+    bench_docs::write_benchmark_docs(
+        "library_perf",
+        "Library-level Criterion benchmarks for public `Rational`, `Real`, and `Simple` behavior.",
+        LIBRARY_PERF_GROUPS,
+    );
+
     let mut group = c.benchmark_group("real_format");
     let pi = Real::pi();
     let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();

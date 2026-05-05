@@ -4,6 +4,402 @@ use num::Signed;
 use num::bigint::{BigInt, BigUint};
 use std::ops::Neg;
 
+#[path = "support/bench_docs.rs"]
+mod bench_docs;
+
+use bench_docs::{BenchDoc, BenchGroupDoc};
+
+const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
+    BenchGroupDoc {
+        name: "computable_cache",
+        description: "Cold versus cached approximation of basic `Computable` expressions.",
+        benches: &[
+            BenchDoc {
+                name: "ratio_approx_cold_p128",
+                description: "Approximates a rational value at p=-128 from a fresh clone.",
+            },
+            BenchDoc {
+                name: "ratio_approx_cached_p128",
+                description: "Repeats an already cached rational approximation at p=-128.",
+            },
+            BenchDoc {
+                name: "pi_approx_cold_p128",
+                description: "Approximates pi at p=-128 from a fresh clone.",
+            },
+            BenchDoc {
+                name: "pi_approx_cached_p128",
+                description: "Repeats an already cached pi approximation at p=-128.",
+            },
+            BenchDoc {
+                name: "pi_plus_tiny_cold_p128",
+                description: "Approximates pi plus a tiny exact rational perturbation.",
+            },
+            BenchDoc {
+                name: "pi_minus_tiny_cold_p128",
+                description: "Approximates pi minus a tiny exact rational perturbation.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "computable_bounds",
+        description: "Structural sign and bound discovery for deep or perturbed computable trees.",
+        benches: &[
+            BenchDoc {
+                name: "deep_scaled_product_sign",
+                description: "Finds the sign of a deep scaled product.",
+            },
+            BenchDoc {
+                name: "scaled_square_sign",
+                description: "Finds the sign of repeated squaring with exact scale factors.",
+            },
+            BenchDoc {
+                name: "sqrt_scaled_square_sign",
+                description: "Finds the sign after taking a square root of a scaled square.",
+            },
+            BenchDoc {
+                name: "deep_structural_bound_sign",
+                description: "Finds sign through repeated multiply/inverse/negate structural transformations.",
+            },
+            BenchDoc {
+                name: "deep_structural_bound_sign_cached",
+                description: "Reads the cached sign of the deep structural-bound chain.",
+            },
+            BenchDoc {
+                name: "deep_structural_bound_facts_cached",
+                description: "Reads cached structural facts for the deep structural-bound chain.",
+            },
+            BenchDoc {
+                name: "perturbed_scaled_product_sign",
+                description: "Finds sign for a deeply scaled value with a tiny perturbation.",
+            },
+            BenchDoc {
+                name: "perturbed_scaled_product_sign_until",
+                description: "Refines sign for the perturbed scaled product only to p=-128.",
+            },
+            BenchDoc {
+                name: "pi_minus_tiny_sign",
+                description: "Finds sign for pi minus a tiny exact rational.",
+            },
+            BenchDoc {
+                name: "pi_minus_tiny_sign_cached",
+                description: "Reads cached sign for pi minus a tiny exact rational.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "computable_compare",
+        description: "Ordering and absolute-comparison shortcuts.",
+        benches: &[
+            BenchDoc {
+                name: "compare_to_opposite_sign",
+                description: "Compares values with known opposite signs.",
+            },
+            BenchDoc {
+                name: "compare_to_exact_msd_gap",
+                description: "Compares values with a large exact magnitude gap.",
+            },
+            BenchDoc {
+                name: "compare_absolute_exact_rational",
+                description: "Compares absolute values of exact rationals.",
+            },
+            BenchDoc {
+                name: "compare_absolute_dominant_add",
+                description: "Compares a dominant term against the same term plus a tiny addend.",
+            },
+            BenchDoc {
+                name: "compare_absolute_exact_msd_gap",
+                description: "Compares absolute values with a large exact magnitude gap.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "computable_transcendentals",
+        description: "Low-level approximation kernels and deep expression-tree stress cases.",
+        benches: &[
+            BenchDoc {
+                name: "legacy_exp_one_p128",
+                description: "Runs the legacy direct exp series for input 1 at p=-128.",
+            },
+            BenchDoc {
+                name: "e_constant_cold_p128",
+                description: "Approximates the shared e constant from a fresh clone.",
+            },
+            BenchDoc {
+                name: "e_constant_cached_p128",
+                description: "Repeats a cached approximation of e.",
+            },
+            BenchDoc {
+                name: "legacy_exp_half_p128",
+                description: "Runs the legacy direct exp series for input 1/2 at p=-128.",
+            },
+            BenchDoc {
+                name: "exp_cold_p128",
+                description: "Approximates exp(7/5) from a fresh clone.",
+            },
+            BenchDoc {
+                name: "exp_cached_p128",
+                description: "Repeats a cached exp(7/5) approximation.",
+            },
+            BenchDoc {
+                name: "exp_large_cold_p128",
+                description: "Approximates exp(128), exercising large-argument reduction.",
+            },
+            BenchDoc {
+                name: "exp_half_cold_p128",
+                description: "Approximates exp(1/2).",
+            },
+            BenchDoc {
+                name: "exp_near_limit_cold_p128",
+                description: "Approximates exp near a prescaling threshold.",
+            },
+            BenchDoc {
+                name: "exp_near_limit_cached_p128",
+                description: "Repeats a cached near-threshold exp approximation.",
+            },
+            BenchDoc {
+                name: "exp_zero_cold_p128",
+                description: "Approximates exp(0).",
+            },
+            BenchDoc {
+                name: "ln_cold_p128",
+                description: "Approximates ln(11/7).",
+            },
+            BenchDoc {
+                name: "ln_cached_p128",
+                description: "Repeats a cached ln(11/7) approximation.",
+            },
+            BenchDoc {
+                name: "ln_large_cold_p128",
+                description: "Approximates ln(1024), exercising large-input reduction.",
+            },
+            BenchDoc {
+                name: "ln_large_cached_p128",
+                description: "Repeats a cached ln(1024) approximation.",
+            },
+            BenchDoc {
+                name: "ln_tiny_cold_p128",
+                description: "Approximates ln(2^-1024), exercising tiny-input reduction.",
+            },
+            BenchDoc {
+                name: "ln_near_limit_cold_p128",
+                description: "Approximates ln near the prescaled-ln limit.",
+            },
+            BenchDoc {
+                name: "ln_near_limit_cached_p128",
+                description: "Repeats a cached near-limit ln approximation.",
+            },
+            BenchDoc {
+                name: "ln_one_cold_p128",
+                description: "Approximates ln(1).",
+            },
+            BenchDoc {
+                name: "sqrt_cold_p128",
+                description: "Approximates sqrt(2).",
+            },
+            BenchDoc {
+                name: "sqrt_cached_p128",
+                description: "Repeats a cached sqrt(2) approximation.",
+            },
+            BenchDoc {
+                name: "sqrt_single_scaled_square_cold_p128",
+                description: "Builds and approximates sqrt((7*pi/8)^2).",
+            },
+            BenchDoc {
+                name: "sin_cold_p96",
+                description: "Approximates sin(7/5).",
+            },
+            BenchDoc {
+                name: "sin_cached_p96",
+                description: "Repeats a cached sin(7/5) approximation.",
+            },
+            BenchDoc {
+                name: "cos_cold_p96",
+                description: "Approximates cos(7/5).",
+            },
+            BenchDoc {
+                name: "cos_cached_p96",
+                description: "Repeats a cached cos(7/5) approximation.",
+            },
+            BenchDoc {
+                name: "tan_cold_p96",
+                description: "Approximates tan(7/5).",
+            },
+            BenchDoc {
+                name: "tan_cached_p96",
+                description: "Repeats a cached tan(7/5) approximation.",
+            },
+            BenchDoc {
+                name: "sin_zero_cold_p96",
+                description: "Approximates sin(0).",
+            },
+            BenchDoc {
+                name: "cos_zero_cold_p96",
+                description: "Approximates cos(0).",
+            },
+            BenchDoc {
+                name: "tan_zero_cold_p96",
+                description: "Approximates tan(0).",
+            },
+            BenchDoc {
+                name: "tan_near_half_pi_cold_p96",
+                description: "Approximates tangent near pi/2.",
+            },
+            BenchDoc {
+                name: "tan_near_half_pi_cached_p96",
+                description: "Repeats cached tangent near pi/2.",
+            },
+            BenchDoc {
+                name: "sin_huge_cold_p96",
+                description: "Approximates sine of a huge pi multiple plus offset.",
+            },
+            BenchDoc {
+                name: "cos_huge_cold_p96",
+                description: "Approximates cosine of a huge pi multiple plus offset.",
+            },
+            BenchDoc {
+                name: "tan_huge_cold_p96",
+                description: "Approximates tangent of a huge pi multiple plus offset.",
+            },
+            BenchDoc {
+                name: "asin_cold_p96",
+                description: "Approximates a computable asin expression.",
+            },
+            BenchDoc {
+                name: "asin_cached_p96",
+                description: "Repeats a cached computable asin approximation.",
+            },
+            BenchDoc {
+                name: "acos_cold_p96",
+                description: "Approximates a computable acos expression.",
+            },
+            BenchDoc {
+                name: "acos_cached_p96",
+                description: "Repeats a cached computable acos approximation.",
+            },
+            BenchDoc {
+                name: "atan_cold_p96",
+                description: "Approximates atan(7/10).",
+            },
+            BenchDoc {
+                name: "atan_cached_p96",
+                description: "Repeats a cached atan(7/10) approximation.",
+            },
+            BenchDoc {
+                name: "atan_large_cold_p96",
+                description: "Approximates atan(8), exercising argument reduction.",
+            },
+            BenchDoc {
+                name: "asin_zero_cold_p96",
+                description: "Approximates asin(0) expression.",
+            },
+            BenchDoc {
+                name: "atan_zero_cold_p96",
+                description: "Approximates atan(0).",
+            },
+            BenchDoc {
+                name: "asinh_cold_p128",
+                description: "Approximates a computable asinh expression.",
+            },
+            BenchDoc {
+                name: "asinh_cached_p128",
+                description: "Repeats a cached computable asinh approximation.",
+            },
+            BenchDoc {
+                name: "acosh_cold_p128",
+                description: "Approximates a computable acosh expression.",
+            },
+            BenchDoc {
+                name: "acosh_cached_p128",
+                description: "Repeats a cached computable acosh approximation.",
+            },
+            BenchDoc {
+                name: "atanh_cold_p128",
+                description: "Approximates a computable atanh expression.",
+            },
+            BenchDoc {
+                name: "atanh_cached_p128",
+                description: "Repeats a cached computable atanh approximation.",
+            },
+            BenchDoc {
+                name: "asinh_zero_cold_p128",
+                description: "Approximates asinh(0) expression.",
+            },
+            BenchDoc {
+                name: "atanh_zero_cold_p128",
+                description: "Approximates atanh(0) expression.",
+            },
+            BenchDoc {
+                name: "deep_add_chain_cold_p128",
+                description: "Approximates a 5000-node addition chain.",
+            },
+            BenchDoc {
+                name: "deep_multiply_chain_cold_p128",
+                description: "Approximates a 5000-node multiply-by-one chain.",
+            },
+            BenchDoc {
+                name: "deep_multiply_identity_chain_cold_p128",
+                description: "Approximates a deep identity multiplication chain around pi.",
+            },
+            BenchDoc {
+                name: "deep_scaled_product_chain_cold_p128",
+                description: "Approximates a deep product of exact scale factors.",
+            },
+            BenchDoc {
+                name: "perturbed_scaled_product_chain_cold_p128",
+                description: "Approximates a deep scaled product with a tiny perturbation.",
+            },
+            BenchDoc {
+                name: "scaled_square_chain_cold_p128",
+                description: "Approximates repeated squaring of a scaled irrational.",
+            },
+            BenchDoc {
+                name: "asymmetric_product_bad_order_cold_p128",
+                description: "Approximates an asymmetric product order stress case.",
+            },
+            BenchDoc {
+                name: "sqrt_scaled_square_chain_cold_p128",
+                description: "Approximates sqrt of a scaled-square chain.",
+            },
+            BenchDoc {
+                name: "warmed_zero_product_cold_p128",
+                description: "Approximates a product involving a warmed zero sum.",
+            },
+            BenchDoc {
+                name: "inverse_scaled_product_chain_cold_p128",
+                description: "Approximates the inverse of a deep scaled product.",
+            },
+            BenchDoc {
+                name: "deep_inverse_pair_chain_cold_p128",
+                description: "Approximates a chain of inverse(inverse(x)) pairs.",
+            },
+            BenchDoc {
+                name: "deep_negated_square_chain_cold_p128",
+                description: "Approximates repeated negate-square-sqrt transformations.",
+            },
+            BenchDoc {
+                name: "deep_negative_one_product_chain_cold_p128",
+                description: "Approximates repeated multiplication by -1.",
+            },
+            BenchDoc {
+                name: "deep_half_product_chain_cold_p128",
+                description: "Approximates repeated multiplication by 1/2.",
+            },
+            BenchDoc {
+                name: "deep_half_square_chain_cold_p128",
+                description: "Approximates repeated squaring after scaling by 1/2.",
+            },
+            BenchDoc {
+                name: "deep_sqrt_square_chain_cold_p128",
+                description: "Approximates repeated sqrt-square simplification.",
+            },
+            BenchDoc {
+                name: "inverse_half_product_chain_cold_p128",
+                description: "Approximates the inverse of a deep half-product chain.",
+            },
+        ],
+    },
+];
+
 fn deep_add_chain(depth: usize) -> Computable {
     let mut value = Computable::one();
     for _ in 0..depth {
@@ -217,6 +613,12 @@ fn warmed_zero_sum() -> Computable {
 }
 
 fn bench_computable_cache(c: &mut Criterion) {
+    bench_docs::write_benchmark_docs(
+        "numerical_micro",
+        "Low-level `Computable` microbenchmarks for approximation kernels, caches, structural facts, comparisons, and deep evaluator trees.",
+        NUMERICAL_MICRO_GROUPS,
+    );
+
     let mut group = c.benchmark_group("computable_cache");
     let ratio = Computable::rational(Rational::fraction(355, 113).unwrap());
     let pi = Computable::pi();
