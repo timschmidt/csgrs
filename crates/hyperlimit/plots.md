@@ -18,6 +18,12 @@ Full backend plot set:
 RUSTFLAGS='-Ctarget-cpu=haswell' cargo run --example predicate_plots --features geogram,robust,hyperreal,realistic-blas,interval -- --backend all --out doc/predicate-plots --size 512
 ```
 
+Regenerate only the floating-point zoom companions:
+
+```sh
+RUSTFLAGS='-Ctarget-cpu=haswell' cargo run --example predicate_plots --features geogram,robust,hyperreal,realistic-blas,interval -- --backend all --out doc/predicate-plots --size 512 --zoom-only
+```
+
 `inari` 2.0.0 requires Haswell-class SIMD on x86-64, so the full command uses
 `RUSTFLAGS='-Ctarget-cpu=haswell'`.
 
@@ -35,6 +41,55 @@ Individual backend batches can be rendered with `--backend f64`,
 
 The generated `manifest.txt` in the output directory lists every image and its
 description.
+
+## Floating-Point Zoom Companions
+
+Each regular plot has a matching `_fp_zoom.png` image centered on a predicate
+boundary with a `1e-15` world-space span. These zooms use the approximate,
+no-fallback policy so the raw floating-point decision surface is visible.
+For scalar backend batches, `--zoom-only` aliases the corresponding f64 zoom
+render because this section is specifically a floating-point precision probe.
+
+### F64 Zooms
+
+| Predicate | Strict Zoom | Approximate Zoom | Strict, No Fallback Zoom |
+| --- | --- | --- | --- |
+| `orient2d` | ![](doc/predicate-plots/f64_orient2d_strict_fp_zoom.png) | ![](doc/predicate-plots/f64_orient2d_approximate_fp_zoom.png) | ![](doc/predicate-plots/f64_orient2d_strict_no_fallback_fp_zoom.png) |
+| line side | ![](doc/predicate-plots/f64_line_side_strict_fp_zoom.png) | ![](doc/predicate-plots/f64_line_side_approximate_fp_zoom.png) | ![](doc/predicate-plots/f64_line_side_strict_no_fallback_fp_zoom.png) |
+| `incircle2d` | ![](doc/predicate-plots/f64_incircle2d_strict_fp_zoom.png) | ![](doc/predicate-plots/f64_incircle2d_approximate_fp_zoom.png) | ![](doc/predicate-plots/f64_incircle2d_strict_no_fallback_fp_zoom.png) |
+| explicit plane on `z=0` | ![](doc/predicate-plots/f64_explicit_plane_strict_fp_zoom.png) | ![](doc/predicate-plots/f64_explicit_plane_approximate_fp_zoom.png) | ![](doc/predicate-plots/f64_explicit_plane_strict_no_fallback_fp_zoom.png) |
+| oriented plane on `z=0` | ![](doc/predicate-plots/f64_oriented_plane_strict_fp_zoom.png) | ![](doc/predicate-plots/f64_oriented_plane_approximate_fp_zoom.png) | ![](doc/predicate-plots/f64_oriented_plane_strict_no_fallback_fp_zoom.png) |
+| `insphere3d` cross-section | ![](doc/predicate-plots/f64_insphere3d_strict_fp_zoom.png) | ![](doc/predicate-plots/f64_insphere3d_approximate_fp_zoom.png) | ![](doc/predicate-plots/f64_insphere3d_strict_no_fallback_fp_zoom.png) |
+
+### hyperreal Zooms
+
+| Predicate | Strict Zoom | Approximate Zoom | Strict, No Fallback Zoom |
+| --- | --- | --- | --- |
+| `orient2d` | ![](doc/predicate-plots/hyperreal_orient2d_strict_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_orient2d_approximate_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_orient2d_strict_no_fallback_fp_zoom.png) |
+| line side | ![](doc/predicate-plots/hyperreal_line_side_strict_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_line_side_approximate_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_line_side_strict_no_fallback_fp_zoom.png) |
+| `incircle2d` | ![](doc/predicate-plots/hyperreal_incircle2d_strict_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_incircle2d_approximate_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_incircle2d_strict_no_fallback_fp_zoom.png) |
+| explicit plane on `z=0` | ![](doc/predicate-plots/hyperreal_explicit_plane_strict_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_explicit_plane_approximate_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_explicit_plane_strict_no_fallback_fp_zoom.png) |
+| oriented plane on `z=0` | ![](doc/predicate-plots/hyperreal_oriented_plane_strict_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_oriented_plane_approximate_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_oriented_plane_strict_no_fallback_fp_zoom.png) |
+| `insphere3d` cross-section | ![](doc/predicate-plots/hyperreal_insphere3d_strict_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_insphere3d_approximate_fp_zoom.png) | ![](doc/predicate-plots/hyperreal_insphere3d_strict_no_fallback_fp_zoom.png) |
+
+### realistic_blas Zooms
+
+| Predicate | Strict Zoom | Approximate Zoom | Strict, No Fallback Zoom |
+| --- | --- | --- | --- |
+| `orient2d` | ![](doc/predicate-plots/realistic_blas_orient2d_strict_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_orient2d_approximate_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_orient2d_strict_no_fallback_fp_zoom.png) |
+| line side | ![](doc/predicate-plots/realistic_blas_line_side_strict_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_line_side_approximate_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_line_side_strict_no_fallback_fp_zoom.png) |
+| `incircle2d` | ![](doc/predicate-plots/realistic_blas_incircle2d_strict_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_incircle2d_approximate_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_incircle2d_strict_no_fallback_fp_zoom.png) |
+| explicit plane on `z=0` | ![](doc/predicate-plots/realistic_blas_explicit_plane_strict_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_explicit_plane_approximate_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_explicit_plane_strict_no_fallback_fp_zoom.png) |
+| oriented plane on `z=0` | ![](doc/predicate-plots/realistic_blas_oriented_plane_strict_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_oriented_plane_approximate_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_oriented_plane_strict_no_fallback_fp_zoom.png) |
+| `insphere3d` cross-section | ![](doc/predicate-plots/realistic_blas_insphere3d_strict_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_insphere3d_approximate_fp_zoom.png) | ![](doc/predicate-plots/realistic_blas_insphere3d_strict_no_fallback_fp_zoom.png) |
+
+### Interval Zooms
+
+| Predicate | Strict Cell Zoom |
+| --- | --- |
+| `orient2d` | ![](doc/predicate-plots/interval_orient2d_cells_strict_fp_zoom.png) |
+| `incircle2d` | ![](doc/predicate-plots/interval_incircle2d_cells_strict_fp_zoom.png) |
+| explicit plane on `z=0` | ![](doc/predicate-plots/interval_explicit_plane_cells_strict_fp_zoom.png) |
 
 ## F64 Predicates
 

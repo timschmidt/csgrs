@@ -31,11 +31,39 @@ use predicated::{
 const DEFAULT_SIZE: usize = 512;
 const WORLD_MIN: f64 = -1.35;
 const WORLD_MAX: f64 = 1.35;
+const FP_ZOOM_SPAN: f64 = 1.0e-15;
+
+const ORIENT_LINE_ZOOM: ZoomView = ZoomView::new(0.025, -0.05, FP_ZOOM_SPAN);
+const INCIRCLE_ZOOM: ZoomView = ZoomView::new(-0.7, -0.45, FP_ZOOM_SPAN);
+const EXPLICIT_PLANE_ZOOM: ZoomView = ZoomView::new(0.0625, 0.0, FP_ZOOM_SPAN);
+const ORIENTED_PLANE_ZOOM: ZoomView = ZoomView::new(
+    -0.120_833_333_333_333_33,
+    -0.554_166_666_666_666_7,
+    FP_ZOOM_SPAN,
+);
+const INSPHERE_ZOOM: ZoomView = ZoomView::new(0.82, 0.0, FP_ZOOM_SPAN);
 
 #[derive(Clone, Copy)]
 struct PlotConfig {
     name: &'static str,
     policy: PredicatePolicy,
+}
+
+#[derive(Clone, Copy)]
+struct ZoomView {
+    center_x: f64,
+    center_y: f64,
+    span: f64,
+}
+
+impl ZoomView {
+    const fn new(center_x: f64, center_y: f64, span: f64) -> Self {
+        Self {
+            center_x,
+            center_y,
+            span,
+        }
+    }
 }
 
 fn main() -> io::Result<()> {
@@ -68,22 +96,39 @@ fn main() -> io::Result<()> {
 
     if args.wants("f64") {
         for config in configs {
-            render_f64_plots(&args.out_dir, args.size, config, &mut manifest)?;
+            render_f64_plots(
+                &args.out_dir,
+                args.size,
+                config,
+                !args.zoom_only,
+                &mut manifest,
+            )?;
         }
     }
 
     #[cfg(feature = "hyperreal")]
     if args.wants("hyperreal") {
         for config in configs {
-            render_scalar_plots(
-                &args.out_dir,
-                args.size,
-                "hyperreal",
-                "hyperreal::Real",
-                config,
-                real,
-                &mut manifest,
-            )?;
+            if args.zoom_only {
+                copy_f64_zoom_aliases(
+                    &args.out_dir,
+                    "hyperreal",
+                    "hyperreal::Real",
+                    config,
+                    &mut manifest,
+                )?;
+            } else {
+                render_scalar_plots(
+                    &args.out_dir,
+                    args.size,
+                    "hyperreal",
+                    "hyperreal::Real",
+                    config,
+                    true,
+                    real,
+                    &mut manifest,
+                )?;
+            }
         }
     }
 
@@ -98,15 +143,26 @@ fn main() -> io::Result<()> {
     #[cfg(feature = "realistic-blas")]
     if args.wants("realistic_blas") {
         for config in configs {
-            render_scalar_plots(
-                &args.out_dir,
-                args.size,
-                "realistic_blas",
-                "realistic_blas::Scalar<DefaultBackend>",
-                config,
-                realistic_scalar,
-                &mut manifest,
-            )?;
+            if args.zoom_only {
+                copy_f64_zoom_aliases(
+                    &args.out_dir,
+                    "realistic_blas",
+                    "realistic_blas::Scalar<DefaultBackend>",
+                    config,
+                    &mut manifest,
+                )?;
+            } else {
+                render_scalar_plots(
+                    &args.out_dir,
+                    args.size,
+                    "realistic_blas",
+                    "realistic_blas::Scalar<DefaultBackend>",
+                    config,
+                    true,
+                    realistic_scalar,
+                    &mut manifest,
+                )?;
+            }
         }
     }
 
@@ -120,7 +176,7 @@ fn main() -> io::Result<()> {
 
     #[cfg(feature = "interval")]
     if args.wants("interval") {
-        render_interval_plots(&args.out_dir, args.size, &mut manifest)?;
+        render_interval_plots(&args.out_dir, args.size, !args.zoom_only, &mut manifest)?;
     }
 
     #[cfg(not(feature = "interval"))]
@@ -140,37 +196,37 @@ fn render_f64_plots(
     out_dir: &Path,
     size: usize,
     config: PlotConfig,
+    render_normal: bool,
     manifest: &mut String,
 ) -> io::Result<()> {
     let a = Point2::new(-0.85, -0.55);
     let b = Point2::new(0.9, 0.45);
 
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("f64_orient2d_{}.png", config.name),
-        |x, y| {
-            color_sign(orient2d_with_policy(
-                &a,
-                &b,
-                &Point2::new(x, y),
-                config.policy,
-            ))
-        },
+        ORIENT_LINE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| color_sign(orient2d_with_policy(&a, &b, &Point2::new(x, y), policy)),
         manifest,
         "f64 orient2d over moving third point",
     )?;
 
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("f64_line_side_{}.png", config.name),
-        |x, y| {
+        ORIENT_LINE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| {
             color_line_side(classify_point_line_with_policy(
                 &a,
                 &b,
                 &Point2::new(x, y),
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -181,17 +237,20 @@ fn render_f64_plots(
     let cb = Point2::new(0.75, -0.35);
     let cc = Point2::new(-0.05, 0.85);
 
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("f64_incircle2d_{}.png", config.name),
-        |x, y| {
+        INCIRCLE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| {
             color_sign(incircle2d_with_policy(
                 &ca,
                 &cb,
                 &cc,
                 &Point2::new(x, y),
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -199,15 +258,18 @@ fn render_f64_plots(
     )?;
 
     let plane = Plane3::new(Point3::new(0.8, -0.55, 0.0), -0.05);
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("f64_explicit_plane_{}.png", config.name),
-        |x, y| {
+        EXPLICIT_PLANE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| {
             color_plane_side(classify_point_plane_with_policy(
                 &Point3::new(x, y, 0.0),
                 &plane,
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -217,17 +279,20 @@ fn render_f64_plots(
     let pa = Point3::new(-0.85, -0.7, -0.25);
     let pb = Point3::new(0.9, -0.35, 0.35);
     let pc = Point3::new(-0.35, 0.85, 0.05);
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("f64_oriented_plane_{}.png", config.name),
-        |x, y| {
+        ORIENTED_PLANE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| {
             color_plane_side(classify_point_oriented_plane_with_policy(
                 &pa,
                 &pb,
                 &pc,
                 &Point3::new(x, y, 0.0),
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -238,23 +303,62 @@ fn render_f64_plots(
     let sb = Point3::new(-0.82, 0.0, 0.0);
     let sc = Point3::new(0.0, 0.82, 0.0);
     let sd = Point3::new(0.0, 0.0, 0.82);
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("f64_insphere3d_{}.png", config.name),
-        |x, y| {
+        INSPHERE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| {
             color_sign(insphere3d_with_policy(
                 &sa,
                 &sb,
                 &sc,
                 &sd,
                 &Point3::new(x, y, 0.0),
-                config.policy,
+                policy,
             ))
         },
         manifest,
         "f64 insphere over moving fifth point on z=0",
     )
+}
+
+#[cfg(any(feature = "hyperreal", feature = "realistic-blas"))]
+fn copy_f64_zoom_aliases(
+    out_dir: &Path,
+    prefix: &str,
+    label: &str,
+    config: PlotConfig,
+    manifest: &mut String,
+) -> io::Result<()> {
+    let predicates = [
+        ("orient2d", "orient2d over moving third point"),
+        ("line_side", "line-side classification over moving point"),
+        ("incircle2d", "incircle over moving fourth point"),
+        ("explicit_plane", "explicit plane equation sampled on z=0"),
+        (
+            "oriented_plane",
+            "oriented plane through three points sampled on z=0",
+        ),
+        ("insphere3d", "insphere over moving fifth point on z=0"),
+    ];
+
+    for (predicate, description) in predicates {
+        let name = format!("{prefix}_{predicate}_{}.png", config.name);
+        let zoom_name = zoom_name(&name);
+        let source = out_dir.join(format!("f64_{predicate}_{}_fp_zoom.png", config.name));
+        let destination = out_dir.join(&zoom_name);
+        fs::copy(&source, &destination)?;
+
+        manifest.push_str(&format!("{name}: {label} {description}\n"));
+        manifest.push_str(&format!(
+            "{zoom_name}: {label} {description}, floating-point zoom with span {FP_ZOOM_SPAN}\n"
+        ));
+    }
+
+    Ok(())
 }
 
 #[cfg(any(feature = "hyperreal", feature = "realistic-blas"))]
@@ -264,6 +368,7 @@ fn render_scalar_plots<S>(
     prefix: &str,
     label: &str,
     config: PlotConfig,
+    render_normal: bool,
     scalar: fn(f64) -> S,
     manifest: &mut String,
 ) -> io::Result<()>
@@ -273,32 +378,38 @@ where
     let a = Point2::new(scalar(-0.85), scalar(-0.55));
     let b = Point2::new(scalar(0.9), scalar(0.45));
 
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("{prefix}_orient2d_{}.png", config.name),
-        |x, y| {
+        ORIENT_LINE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| {
             color_sign(orient2d_with_policy(
                 &a,
                 &b,
                 &Point2::new(scalar(x), scalar(y)),
-                config.policy,
+                policy,
             ))
         },
         manifest,
         &format!("{label} orient2d over moving third point"),
     )?;
 
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("{prefix}_line_side_{}.png", config.name),
-        |x, y| {
+        ORIENT_LINE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| {
             color_line_side(classify_point_line_with_policy(
                 &a,
                 &b,
                 &Point2::new(scalar(x), scalar(y)),
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -308,17 +419,20 @@ where
     let ca = Point2::new(scalar(-0.7), scalar(-0.45));
     let cb = Point2::new(scalar(0.75), scalar(-0.35));
     let cc = Point2::new(scalar(-0.05), scalar(0.85));
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("{prefix}_incircle2d_{}.png", config.name),
-        |x, y| {
+        INCIRCLE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| {
             color_sign(incircle2d_with_policy(
                 &ca,
                 &cb,
                 &cc,
                 &Point2::new(scalar(x), scalar(y)),
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -329,15 +443,18 @@ where
         Point3::new(scalar(0.8), scalar(-0.55), scalar(0.0)),
         scalar(-0.05),
     );
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("{prefix}_explicit_plane_{}.png", config.name),
-        |x, y| {
+        EXPLICIT_PLANE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| {
             color_plane_side(classify_point_plane_with_policy(
                 &Point3::new(scalar(x), scalar(y), scalar(0.0)),
                 &plane,
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -347,17 +464,20 @@ where
     let pa = Point3::new(scalar(-0.85), scalar(-0.7), scalar(-0.25));
     let pb = Point3::new(scalar(0.9), scalar(-0.35), scalar(0.35));
     let pc = Point3::new(scalar(-0.35), scalar(0.85), scalar(0.05));
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("{prefix}_oriented_plane_{}.png", config.name),
-        |x, y| {
+        ORIENTED_PLANE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| {
             color_plane_side(classify_point_oriented_plane_with_policy(
                 &pa,
                 &pb,
                 &pc,
                 &Point3::new(scalar(x), scalar(y), scalar(0.0)),
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -368,18 +488,21 @@ where
     let sb = Point3::new(scalar(-0.82), scalar(0.0), scalar(0.0));
     let sc = Point3::new(scalar(0.0), scalar(0.82), scalar(0.0));
     let sd = Point3::new(scalar(0.0), scalar(0.0), scalar(0.82));
-    write_plot(
+    write_plot_pair(
         out_dir,
         size,
         &format!("{prefix}_insphere3d_{}.png", config.name),
-        |x, y| {
+        INSPHERE_ZOOM,
+        config.policy,
+        render_normal,
+        |x, y, policy| {
             color_sign(insphere3d_with_policy(
                 &sa,
                 &sb,
                 &sc,
                 &sd,
                 &Point3::new(scalar(x), scalar(y), scalar(0.0)),
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -388,7 +511,12 @@ where
 }
 
 #[cfg(feature = "interval")]
-fn render_interval_plots(out_dir: &Path, size: usize, manifest: &mut String) -> io::Result<()> {
+fn render_interval_plots(
+    out_dir: &Path,
+    size: usize,
+    render_normal: bool,
+    manifest: &mut String,
+) -> io::Result<()> {
     let config = PlotConfig {
         name: "interval_cells_strict",
         policy: PredicatePolicy::STRICT,
@@ -396,16 +524,19 @@ fn render_interval_plots(out_dir: &Path, size: usize, manifest: &mut String) -> 
 
     let a = Point2::new(interval(-0.85, -0.85), interval(-0.55, -0.55));
     let b = Point2::new(interval(0.9, 0.9), interval(0.45, 0.45));
-    write_cell_plot(
+    write_cell_plot_pair(
         out_dir,
         size,
         "interval_orient2d_cells_strict.png",
-        |x0, x1, y0, y1| {
+        ORIENT_LINE_ZOOM,
+        config.policy,
+        render_normal,
+        |x0, x1, y0, y1, policy| {
             color_sign(orient2d_with_policy(
                 &a,
                 &b,
                 &Point2::new(interval(x0, x1), interval(y0, y1)),
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -415,17 +546,20 @@ fn render_interval_plots(out_dir: &Path, size: usize, manifest: &mut String) -> 
     let ca = Point2::new(interval(-0.7, -0.7), interval(-0.45, -0.45));
     let cb = Point2::new(interval(0.75, 0.75), interval(-0.35, -0.35));
     let cc = Point2::new(interval(-0.05, -0.05), interval(0.85, 0.85));
-    write_cell_plot(
+    write_cell_plot_pair(
         out_dir,
         size,
         "interval_incircle2d_cells_strict.png",
-        |x0, x1, y0, y1| {
+        INCIRCLE_ZOOM,
+        config.policy,
+        render_normal,
+        |x0, x1, y0, y1, policy| {
             color_sign(incircle2d_with_policy(
                 &ca,
                 &cb,
                 &cc,
                 &Point2::new(interval(x0, x1), interval(y0, y1)),
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -440,15 +574,18 @@ fn render_interval_plots(out_dir: &Path, size: usize, manifest: &mut String) -> 
         ),
         interval(-0.05, -0.05),
     );
-    write_cell_plot(
+    write_cell_plot_pair(
         out_dir,
         size,
         "interval_explicit_plane_cells_strict.png",
-        |x0, x1, y0, y1| {
+        EXPLICIT_PLANE_ZOOM,
+        config.policy,
+        render_normal,
+        |x0, x1, y0, y1, policy| {
             color_plane_side(classify_point_plane_with_policy(
                 &Point3::new(interval(x0, x1), interval(y0, y1), interval(0.0, 0.0)),
                 &plane,
-                config.policy,
+                policy,
             ))
         },
         manifest,
@@ -456,36 +593,70 @@ fn render_interval_plots(out_dir: &Path, size: usize, manifest: &mut String) -> 
     )
 }
 
-fn write_plot(
+fn write_plot_pair(
     out_dir: &Path,
     size: usize,
     name: &str,
-    mut sample: impl FnMut(f64, f64) -> [u8; 3],
+    zoom: ZoomView,
+    normal_policy: PredicatePolicy,
+    render_normal: bool,
+    mut sample: impl FnMut(f64, f64, PredicatePolicy) -> [u8; 3],
     manifest: &mut String,
     description: &str,
 ) -> io::Result<()> {
-    write_png_plot(out_dir, size, name, |ix, iy| {
-        let (x, y) = pixel_center(size, ix, iy);
-        sample(x, y)
-    })?;
+    if render_normal {
+        write_png_plot(out_dir, size, name, |ix, iy| {
+            let (x, y) = pixel_center(size, ix, iy);
+            sample(x, y, normal_policy)
+        })?;
+    }
     manifest.push_str(&format!("{name}: {description}\n"));
+
+    if !render_normal {
+        let zoom_name = zoom_name(name);
+        write_png_plot(out_dir, size, &zoom_name, |ix, iy| {
+            let (x, y) = pixel_center_in_view(size, ix, iy, zoom);
+            sample(x, y, PredicatePolicy::APPROXIMATE)
+        })?;
+        manifest.push_str(&format!(
+            "{zoom_name}: {description}, floating-point zoom centered at ({}, {}) with span {}\n",
+            zoom.center_x, zoom.center_y, zoom.span
+        ));
+    }
     Ok(())
 }
 
 #[cfg(feature = "interval")]
-fn write_cell_plot(
+fn write_cell_plot_pair(
     out_dir: &Path,
     size: usize,
     name: &str,
-    mut sample: impl FnMut(f64, f64, f64, f64) -> [u8; 3],
+    zoom: ZoomView,
+    normal_policy: PredicatePolicy,
+    render_normal: bool,
+    mut sample: impl FnMut(f64, f64, f64, f64, PredicatePolicy) -> [u8; 3],
     manifest: &mut String,
     description: &str,
 ) -> io::Result<()> {
-    write_png_plot(out_dir, size, name, |ix, iy| {
-        let (x0, x1, y0, y1) = pixel_cell(size, ix, iy);
-        sample(x0, x1, y0, y1)
-    })?;
+    if render_normal {
+        write_png_plot(out_dir, size, name, |ix, iy| {
+            let (x0, x1, y0, y1) = pixel_cell(size, ix, iy);
+            sample(x0, x1, y0, y1, normal_policy)
+        })?;
+    }
     manifest.push_str(&format!("{name}: {description}\n"));
+
+    if !render_normal {
+        let zoom_name = zoom_name(name);
+        write_png_plot(out_dir, size, &zoom_name, |ix, iy| {
+            let (x0, x1, y0, y1) = pixel_cell_in_view(size, ix, iy, zoom);
+            sample(x0, x1, y0, y1, PredicatePolicy::APPROXIMATE)
+        })?;
+        manifest.push_str(&format!(
+            "{zoom_name}: {description}, floating-point zoom centered at ({}, {}) with span {}\n",
+            zoom.center_x, zoom.center_y, zoom.span
+        ));
+    }
     Ok(())
 }
 
@@ -512,6 +683,13 @@ fn pixel_center(size: usize, ix: usize, iy: usize) -> (f64, f64) {
     (x, y)
 }
 
+fn pixel_center_in_view(size: usize, ix: usize, iy: usize, view: ZoomView) -> (f64, f64) {
+    let step = view.span / size as f64;
+    let x = view.center_x - view.span / 2.0 + (ix as f64 + 0.5) * step;
+    let y = view.center_y + view.span / 2.0 - (iy as f64 + 0.5) * step;
+    (x, y)
+}
+
 #[cfg(feature = "interval")]
 fn pixel_cell(size: usize, ix: usize, iy: usize) -> (f64, f64, f64, f64) {
     let step = (WORLD_MAX - WORLD_MIN) / size as f64;
@@ -520,6 +698,23 @@ fn pixel_cell(size: usize, ix: usize, iy: usize) -> (f64, f64, f64, f64) {
     let y1 = WORLD_MAX - iy as f64 * step;
     let y0 = y1 - step;
     (x0, x1, y0, y1)
+}
+
+#[cfg(feature = "interval")]
+fn pixel_cell_in_view(size: usize, ix: usize, iy: usize, view: ZoomView) -> (f64, f64, f64, f64) {
+    let step = view.span / size as f64;
+    let x0 = view.center_x - view.span / 2.0 + ix as f64 * step;
+    let x1 = x0 + step;
+    let y1 = view.center_y + view.span / 2.0 - iy as f64 * step;
+    let y0 = y1 - step;
+    (x0, x1, y0, y1)
+}
+
+fn zoom_name(name: &str) -> String {
+    let Some(stem) = name.strip_suffix(".png") else {
+        return format!("{name}_fp_zoom");
+    };
+    format!("{stem}_fp_zoom.png")
 }
 
 fn color_sign(outcome: PredicateOutcome<Sign>) -> [u8; 3] {
@@ -682,6 +877,7 @@ struct Args {
     out_dir: PathBuf,
     size: usize,
     backend: String,
+    zoom_only: bool,
 }
 
 impl Args {
@@ -689,6 +885,7 @@ impl Args {
         let mut out_dir = PathBuf::from("doc/predicate-plots");
         let mut size = DEFAULT_SIZE;
         let mut backend = String::from("f64");
+        let mut zoom_only = false;
         let mut args = env::args().skip(1);
 
         while let Some(arg) = args.next() {
@@ -727,9 +924,12 @@ impl Args {
                         ));
                     }
                 }
+                "--zoom-only" => {
+                    zoom_only = true;
+                }
                 "--help" | "-h" => {
                     println!(
-                        "usage: cargo run --example predicate_plots -- [--backend NAME] [--out DIR] [--size N]\n\nNAME is one of: f64, hyperreal, realistic_blas, interval, all.\nN must be at least 512. Images are written as PNG files."
+                        "usage: cargo run --example predicate_plots -- [--backend NAME] [--out DIR] [--size N] [--zoom-only]\n\nNAME is one of: f64, hyperreal, realistic_blas, interval, all.\nN must be at least 512. Images are written as PNG files."
                     );
                     std::process::exit(0);
                 }
@@ -746,6 +946,7 @@ impl Args {
             out_dir,
             size,
             backend,
+            zoom_only,
         })
     }
 
