@@ -6,7 +6,7 @@ use crate::predicate::{
     Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign, SignKnowledge,
 };
 use crate::resolve::{map_outcome, resolve_scalar_sign, signed_term_filter};
-use crate::scalar::PredicateScalar;
+use crate::scalar::{BorrowedPredicateScalar, PredicateScalar};
 
 /// 2D point with scalar coordinates.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -36,7 +36,7 @@ impl<S> Point3<S> {
 }
 
 /// Orientation of three 2D points.
-pub fn orient2d<S: PredicateScalar>(
+pub fn orient2d<S: BorrowedPredicateScalar>(
     a: &Point2<S>,
     b: &Point2<S>,
     c: &Point2<S>,
@@ -45,19 +45,19 @@ pub fn orient2d<S: PredicateScalar>(
 }
 
 /// Orientation of three 2D points with an explicit escalation policy.
-pub fn orient2d_with_policy<S: PredicateScalar>(
+pub fn orient2d_with_policy<S: BorrowedPredicateScalar>(
     a: &Point2<S>,
     b: &Point2<S>,
     c: &Point2<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
-    let abx = b.x.clone() - a.x.clone();
-    let aby = b.y.clone() - a.y.clone();
-    let acx = c.x.clone() - a.x.clone();
-    let acy = c.y.clone() - a.y.clone();
-    let left = abx.clone() * acy.clone();
-    let right = aby.clone() * acx.clone();
-    let det = left.clone() - right.clone();
+    let abx = sub(&b.x, &a.x);
+    let aby = sub(&b.y, &a.y);
+    let acx = sub(&c.x, &a.x);
+    let acy = sub(&c.y, &a.y);
+    let left = mul(&abx, &acy);
+    let right = mul(&aby, &acx);
+    let det = sub(&left, &right);
 
     resolve_scalar_sign(
         &det,
@@ -74,7 +74,7 @@ pub fn orient2d_with_policy<S: PredicateScalar>(
 
 /// Orientation of four 3D points. Positive means `d` is on the positive side
 /// of the oriented plane through `a`, `b`, and `c`.
-pub fn orient3d<S: PredicateScalar>(
+pub fn orient3d<S: BorrowedPredicateScalar>(
     a: &Point3<S>,
     b: &Point3<S>,
     c: &Point3<S>,
@@ -84,27 +84,40 @@ pub fn orient3d<S: PredicateScalar>(
 }
 
 /// Orientation of four 3D points with an explicit escalation policy.
-pub fn orient3d_with_policy<S: PredicateScalar>(
+pub fn orient3d_with_policy<S: BorrowedPredicateScalar>(
     a: &Point3<S>,
     b: &Point3<S>,
     c: &Point3<S>,
     d: &Point3<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
-    let adx = a.x.clone() - d.x.clone();
-    let ady = a.y.clone() - d.y.clone();
-    let adz = a.z.clone() - d.z.clone();
-    let bdx = b.x.clone() - d.x.clone();
-    let bdy = b.y.clone() - d.y.clone();
-    let bdz = b.z.clone() - d.z.clone();
-    let cdx = c.x.clone() - d.x.clone();
-    let cdy = c.y.clone() - d.y.clone();
-    let cdz = c.z.clone() - d.z.clone();
+    let adx = sub(&a.x, &d.x);
+    let ady = sub(&a.y, &d.y);
+    let adz = sub(&a.z, &d.z);
+    let bdx = sub(&b.x, &d.x);
+    let bdy = sub(&b.y, &d.y);
+    let bdz = sub(&b.z, &d.z);
+    let cdx = sub(&c.x, &d.x);
+    let cdy = sub(&c.y, &d.y);
+    let cdz = sub(&c.z, &d.z);
 
-    let t0 = adx.clone() * (bdy.clone() * cdz.clone() - bdz.clone() * cdy.clone());
-    let t1 = ady.clone() * (bdz.clone() * cdx.clone() - bdx.clone() * cdz.clone());
-    let t2 = adz.clone() * (bdx.clone() * cdy.clone() - bdy.clone() * cdx.clone());
-    let det = t0.clone() + t1.clone() + t2.clone();
+    let bdy_cdz = mul(&bdy, &cdz);
+    let bdz_cdy = mul(&bdz, &cdy);
+    let c0 = sub(&bdy_cdz, &bdz_cdy);
+    let t0 = mul(&adx, &c0);
+
+    let bdz_cdx = mul(&bdz, &cdx);
+    let bdx_cdz = mul(&bdx, &cdz);
+    let c1 = sub(&bdz_cdx, &bdx_cdz);
+    let t1 = mul(&ady, &c1);
+
+    let bdx_cdy = mul(&bdx, &cdy);
+    let bdy_cdx = mul(&bdy, &cdx);
+    let c2 = sub(&bdx_cdy, &bdy_cdx);
+    let t2 = mul(&adz, &c2);
+
+    let t01 = add(&t0, &t1);
+    let det = add(&t01, &t2);
 
     resolve_scalar_sign(
         &det,
@@ -124,7 +137,7 @@ pub fn orient3d_with_policy<S: PredicateScalar>(
 }
 
 /// Classify `point` relative to the oriented line from `from` to `to`.
-pub fn classify_point_line<S: PredicateScalar>(
+pub fn classify_point_line<S: BorrowedPredicateScalar>(
     from: &Point2<S>,
     to: &Point2<S>,
     point: &Point2<S>,
@@ -134,7 +147,7 @@ pub fn classify_point_line<S: PredicateScalar>(
 
 /// Classify `point` relative to the oriented line from `from` to `to` with an
 /// explicit escalation policy.
-pub fn classify_point_line_with_policy<S: PredicateScalar>(
+pub fn classify_point_line_with_policy<S: BorrowedPredicateScalar>(
     from: &Point2<S>,
     to: &Point2<S>,
     point: &Point2<S>,
@@ -151,7 +164,7 @@ pub fn classify_point_line_with_policy<S: PredicateScalar>(
 /// Positive means `d` lies inside the oriented circumcircle through `a`, `b`,
 /// and `c` when those three points are counter-clockwise. Reversing the
 /// orientation of `a`, `b`, and `c` reverses the sign.
-pub fn incircle2d<S: PredicateScalar>(
+pub fn incircle2d<S: BorrowedPredicateScalar>(
     a: &Point2<S>,
     b: &Point2<S>,
     c: &Point2<S>,
@@ -161,33 +174,47 @@ pub fn incircle2d<S: PredicateScalar>(
 }
 
 /// In-circle predicate for four 2D points with an explicit escalation policy.
-pub fn incircle2d_with_policy<S: PredicateScalar>(
+pub fn incircle2d_with_policy<S: BorrowedPredicateScalar>(
     a: &Point2<S>,
     b: &Point2<S>,
     c: &Point2<S>,
     d: &Point2<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
-    let adx = a.x.clone() - d.x.clone();
-    let ady = a.y.clone() - d.y.clone();
-    let bdx = b.x.clone() - d.x.clone();
-    let bdy = b.y.clone() - d.y.clone();
-    let cdx = c.x.clone() - d.x.clone();
-    let cdy = c.y.clone() - d.y.clone();
+    let adx = sub(&a.x, &d.x);
+    let ady = sub(&a.y, &d.y);
+    let bdx = sub(&b.x, &d.x);
+    let bdy = sub(&b.y, &d.y);
+    let cdx = sub(&c.x, &d.x);
+    let cdy = sub(&c.y, &d.y);
 
-    let adx2 = adx.clone() * adx.clone();
-    let ady2 = ady.clone() * ady.clone();
-    let bdx2 = bdx.clone() * bdx.clone();
-    let bdy2 = bdy.clone() * bdy.clone();
-    let cdx2 = cdx.clone() * cdx.clone();
-    let cdy2 = cdy.clone() * cdy.clone();
-    let alift = adx2 + ady2;
-    let blift = bdx2 + bdy2;
-    let clift = cdx2 + cdy2;
+    let adx2 = mul(&adx, &adx);
+    let ady2 = mul(&ady, &ady);
+    let bdx2 = mul(&bdx, &bdx);
+    let bdy2 = mul(&bdy, &bdy);
+    let cdx2 = mul(&cdx, &cdx);
+    let cdy2 = mul(&cdy, &cdy);
+    let alift = add(&adx2, &ady2);
+    let blift = add(&bdx2, &bdy2);
+    let clift = add(&cdx2, &cdy2);
 
-    let det = alift.clone() * (bdx.clone() * cdy.clone() - cdx.clone() * bdy.clone())
-        + blift.clone() * (cdx.clone() * ady.clone() - adx.clone() * cdy.clone())
-        + clift.clone() * (adx.clone() * bdy.clone() - bdx.clone() * ady.clone());
+    let bdx_cdy = mul(&bdx, &cdy);
+    let cdx_bdy = mul(&cdx, &bdy);
+    let minor_a = sub(&bdx_cdy, &cdx_bdy);
+    let term_a = mul(&alift, &minor_a);
+
+    let cdx_ady = mul(&cdx, &ady);
+    let adx_cdy = mul(&adx, &cdy);
+    let minor_b = sub(&cdx_ady, &adx_cdy);
+    let term_b = mul(&blift, &minor_b);
+
+    let adx_bdy = mul(&adx, &bdy);
+    let bdx_ady = mul(&bdx, &ady);
+    let minor_c = sub(&adx_bdy, &bdx_ady);
+    let term_c = mul(&clift, &minor_c);
+
+    let term_ab = add(&term_a, &term_b);
+    let det = add(&term_ab, &term_c);
 
     resolve_scalar_sign(
         &det,
@@ -204,7 +231,7 @@ pub fn incircle2d_with_policy<S: PredicateScalar>(
 /// Positive means `e` lies inside the oriented circumsphere through `a`, `b`,
 /// `c`, and `d` when the tetrahedron orientation matches the robust backend's
 /// convention. Reversing that orientation reverses the sign.
-pub fn insphere3d<S: PredicateScalar>(
+pub fn insphere3d<S: BorrowedPredicateScalar>(
     a: &Point3<S>,
     b: &Point3<S>,
     c: &Point3<S>,
@@ -215,7 +242,7 @@ pub fn insphere3d<S: PredicateScalar>(
 }
 
 /// In-sphere predicate for five 3D points with an explicit escalation policy.
-pub fn insphere3d_with_policy<S: PredicateScalar>(
+pub fn insphere3d_with_policy<S: BorrowedPredicateScalar>(
     a: &Point3<S>,
     b: &Point3<S>,
     c: &Point3<S>,
@@ -223,39 +250,99 @@ pub fn insphere3d_with_policy<S: PredicateScalar>(
     e: &Point3<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
-    let aex = a.x.clone() - e.x.clone();
-    let bex = b.x.clone() - e.x.clone();
-    let cex = c.x.clone() - e.x.clone();
-    let dex = d.x.clone() - e.x.clone();
-    let aey = a.y.clone() - e.y.clone();
-    let bey = b.y.clone() - e.y.clone();
-    let cey = c.y.clone() - e.y.clone();
-    let dey = d.y.clone() - e.y.clone();
-    let aez = a.z.clone() - e.z.clone();
-    let bez = b.z.clone() - e.z.clone();
-    let cez = c.z.clone() - e.z.clone();
-    let dez = d.z.clone() - e.z.clone();
+    let aex = sub(&a.x, &e.x);
+    let bex = sub(&b.x, &e.x);
+    let cex = sub(&c.x, &e.x);
+    let dex = sub(&d.x, &e.x);
+    let aey = sub(&a.y, &e.y);
+    let bey = sub(&b.y, &e.y);
+    let cey = sub(&c.y, &e.y);
+    let dey = sub(&d.y, &e.y);
+    let aez = sub(&a.z, &e.z);
+    let bez = sub(&b.z, &e.z);
+    let cez = sub(&c.z, &e.z);
+    let dez = sub(&d.z, &e.z);
 
-    let ab = aex.clone() * bey.clone() - bex.clone() * aey.clone();
-    let bc = bex.clone() * cey.clone() - cex.clone() * bey.clone();
-    let cd = cex.clone() * dey.clone() - dex.clone() * cey.clone();
-    let da = dex.clone() * aey.clone() - aex.clone() * dey.clone();
-    let ac = aex.clone() * cey.clone() - cex.clone() * aey.clone();
-    let bd = bex.clone() * dey.clone() - dex.clone() * bey.clone();
+    let aex_bey = mul(&aex, &bey);
+    let bex_aey = mul(&bex, &aey);
+    let ab = sub(&aex_bey, &bex_aey);
 
-    let abc = aez.clone() * bc.clone() - bez.clone() * ac.clone() + cez.clone() * ab.clone();
-    let bcd = bez.clone() * cd.clone() - cez.clone() * bd.clone() + dez.clone() * bc.clone();
-    let cda = cez.clone() * da.clone() + dez.clone() * ac.clone() + aez.clone() * cd.clone();
-    let dab = dez.clone() * ab.clone() + aez.clone() * bd.clone() + bez.clone() * da.clone();
+    let bex_cey = mul(&bex, &cey);
+    let cex_bey = mul(&cex, &bey);
+    let bc = sub(&bex_cey, &cex_bey);
 
-    let alift = aex.clone() * aex + aey.clone() * aey + aez.clone() * aez;
-    let blift = bex.clone() * bex + bey.clone() * bey + bez.clone() * bez;
-    let clift = cex.clone() * cex + cey.clone() * cey + cez.clone() * cez;
-    let dlift = dex.clone() * dex + dey.clone() * dey + dez.clone() * dez;
+    let cex_dey = mul(&cex, &dey);
+    let dex_cey = mul(&dex, &cey);
+    let cd = sub(&cex_dey, &dex_cey);
 
-    let left = dlift.clone() * abc + blift.clone() * cda;
-    let right = clift.clone() * dab + alift.clone() * bcd;
-    let det = left.clone() - right.clone();
+    let dex_aey = mul(&dex, &aey);
+    let aex_dey = mul(&aex, &dey);
+    let da = sub(&dex_aey, &aex_dey);
+
+    let aex_cey = mul(&aex, &cey);
+    let cex_aey = mul(&cex, &aey);
+    let ac = sub(&aex_cey, &cex_aey);
+
+    let bex_dey = mul(&bex, &dey);
+    let dex_bey = mul(&dex, &bey);
+    let bd = sub(&bex_dey, &dex_bey);
+
+    let aez_bc = mul(&aez, &bc);
+    let bez_ac = mul(&bez, &ac);
+    let cez_ab = mul(&cez, &ab);
+    let abc_minus = sub(&aez_bc, &bez_ac);
+    let abc = add(&abc_minus, &cez_ab);
+
+    let bez_cd = mul(&bez, &cd);
+    let cez_bd = mul(&cez, &bd);
+    let dez_bc = mul(&dez, &bc);
+    let bcd_minus = sub(&bez_cd, &cez_bd);
+    let bcd = add(&bcd_minus, &dez_bc);
+
+    let cez_da = mul(&cez, &da);
+    let dez_ac = mul(&dez, &ac);
+    let aez_cd = mul(&aez, &cd);
+    let cda_partial = add(&cez_da, &dez_ac);
+    let cda = add(&cda_partial, &aez_cd);
+
+    let dez_ab = mul(&dez, &ab);
+    let aez_bd = mul(&aez, &bd);
+    let bez_da = mul(&bez, &da);
+    let dab_partial = add(&dez_ab, &aez_bd);
+    let dab = add(&dab_partial, &bez_da);
+
+    let aex2 = mul(&aex, &aex);
+    let aey2 = mul(&aey, &aey);
+    let aez2 = mul(&aez, &aez);
+    let alift_xy = add(&aex2, &aey2);
+    let alift = add(&alift_xy, &aez2);
+
+    let bex2 = mul(&bex, &bex);
+    let bey2 = mul(&bey, &bey);
+    let bez2 = mul(&bez, &bez);
+    let blift_xy = add(&bex2, &bey2);
+    let blift = add(&blift_xy, &bez2);
+
+    let cex2 = mul(&cex, &cex);
+    let cey2 = mul(&cey, &cey);
+    let cez2 = mul(&cez, &cez);
+    let clift_xy = add(&cex2, &cey2);
+    let clift = add(&clift_xy, &cez2);
+
+    let dex2 = mul(&dex, &dex);
+    let dey2 = mul(&dey, &dey);
+    let dez2 = mul(&dez, &dez);
+    let dlift_xy = add(&dex2, &dey2);
+    let dlift = add(&dlift_xy, &dez2);
+
+    let dlift_abc = mul(&dlift, &abc);
+    let blift_cda = mul(&blift, &cda);
+    let left = add(&dlift_abc, &blift_cda);
+
+    let clift_dab = mul(&clift, &dab);
+    let alift_bcd = mul(&alift, &bcd);
+    let right = add(&clift_dab, &alift_bcd);
+    let det = sub(&left, &right);
 
     resolve_scalar_sign(
         &det,
@@ -265,6 +352,18 @@ pub fn insphere3d_with_policy<S: PredicateScalar>(
         || fallback_insphere3d_if_allowed(a, b, c, d, e, policy),
         RefinementNeed::RobustFallback,
     )
+}
+
+fn add<S: BorrowedPredicateScalar>(left: &S, right: &S) -> S {
+    left.add_ref(right)
+}
+
+fn sub<S: BorrowedPredicateScalar>(left: &S, right: &S) -> S {
+    left.sub_ref(right)
+}
+
+fn mul<S: BorrowedPredicateScalar>(left: &S, right: &S) -> S {
+    left.mul_ref(right)
 }
 
 fn exact_orient2d<S: PredicateScalar>(
@@ -572,6 +671,10 @@ fn orient3d_filter<S: PredicateScalar>(
 
 #[cfg(test)]
 mod tests {
+    use core::cell::Cell;
+    use core::ops::{Add, Mul, Sub};
+    use std::rc::Rc;
+
     use super::*;
     #[cfg(any(
         feature = "robust",
@@ -581,6 +684,100 @@ mod tests {
         feature = "realistic-blas"
     ))]
     use crate::predicate::Certainty;
+    use crate::scalar::{MagnitudeBounds, ScalarFacts, StructuralScalar};
+
+    #[derive(Debug)]
+    struct CloneCountingScalar {
+        value: f64,
+        clones: Rc<Cell<usize>>,
+    }
+
+    impl CloneCountingScalar {
+        fn new(value: f64, clones: Rc<Cell<usize>>) -> Self {
+            Self { value, clones }
+        }
+
+        fn derived(value: f64, clones: &Rc<Cell<usize>>) -> Self {
+            Self {
+                value,
+                clones: Rc::clone(clones),
+            }
+        }
+    }
+
+    impl Clone for CloneCountingScalar {
+        fn clone(&self) -> Self {
+            self.clones.set(self.clones.get() + 1);
+            Self::derived(self.value, &self.clones)
+        }
+    }
+
+    impl StructuralScalar for CloneCountingScalar {
+        fn scalar_facts(&self) -> ScalarFacts {
+            ScalarFacts {
+                sign: None,
+                exact_zero: None,
+                provably_nonzero: None,
+                exact: Some(false),
+                rational_only: Some(false),
+                magnitude: Some(MagnitudeBounds::exact(self.value.abs())),
+            }
+        }
+    }
+
+    impl crate::scalar::PredicateScalar for CloneCountingScalar {
+        fn to_f64(&self) -> Option<f64> {
+            Some(self.value)
+        }
+    }
+
+    impl Add for CloneCountingScalar {
+        type Output = Self;
+
+        fn add(self, rhs: Self) -> Self::Output {
+            Self::derived(self.value + rhs.value, &self.clones)
+        }
+    }
+
+    impl Sub for CloneCountingScalar {
+        type Output = Self;
+
+        fn sub(self, rhs: Self) -> Self::Output {
+            Self::derived(self.value - rhs.value, &self.clones)
+        }
+    }
+
+    impl Mul for CloneCountingScalar {
+        type Output = Self;
+
+        fn mul(self, rhs: Self) -> Self::Output {
+            Self::derived(self.value * rhs.value, &self.clones)
+        }
+    }
+
+    impl<'b> Add<&'b CloneCountingScalar> for &CloneCountingScalar {
+        type Output = CloneCountingScalar;
+
+        fn add(self, rhs: &'b CloneCountingScalar) -> Self::Output {
+            CloneCountingScalar::derived(self.value + rhs.value, &self.clones)
+        }
+    }
+
+    impl<'b> Sub<&'b CloneCountingScalar> for &CloneCountingScalar {
+        type Output = CloneCountingScalar;
+
+        fn sub(self, rhs: &'b CloneCountingScalar) -> Self::Output {
+            CloneCountingScalar::derived(self.value - rhs.value, &self.clones)
+        }
+    }
+
+    impl<'b> Mul<&'b CloneCountingScalar> for &CloneCountingScalar {
+        type Output = CloneCountingScalar;
+
+        fn mul(self, rhs: &'b CloneCountingScalar) -> Self::Output {
+            CloneCountingScalar::derived(self.value * rhs.value, &self.clones)
+        }
+    }
 
     #[test]
     fn orient2d_classifies_simple_triangle() {
@@ -589,6 +786,18 @@ mod tests {
         let c = Point2::new(0.0, 1.0);
 
         assert_eq!(orient2d(&a, &b, &c).value(), Some(Sign::Positive));
+    }
+
+    #[test]
+    fn orient2d_uses_borrowed_arithmetic_without_cloning_scalars() {
+        let clones = Rc::new(Cell::new(0));
+        let scalar = |value| CloneCountingScalar::new(value, Rc::clone(&clones));
+        let a = Point2::new(scalar(0.0), scalar(0.0));
+        let b = Point2::new(scalar(1.0), scalar(0.0));
+        let c = Point2::new(scalar(0.0), scalar(1.0));
+
+        assert_eq!(orient2d(&a, &b, &c).value(), Some(Sign::Positive));
+        assert_eq!(clones.get(), 0);
     }
 
     #[test]

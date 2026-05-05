@@ -6,7 +6,7 @@ use crate::predicate::{
     Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign, SignKnowledge,
 };
 use crate::resolve::{map_outcome, resolve_scalar_sign};
-use crate::scalar::PredicateScalar;
+use crate::scalar::{BorrowedPredicateScalar, PredicateScalar};
 
 /// Plane represented by `normal . point + offset = 0`.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -22,7 +22,7 @@ impl<S> Plane3<S> {
 }
 
 /// Classify a point relative to a plane.
-pub fn classify_point_plane<S: PredicateScalar>(
+pub fn classify_point_plane<S: BorrowedPredicateScalar>(
     point: &Point3<S>,
     plane: &Plane3<S>,
 ) -> PredicateOutcome<PlaneSide> {
@@ -30,15 +30,17 @@ pub fn classify_point_plane<S: PredicateScalar>(
 }
 
 /// Classify a point relative to a plane with an explicit escalation policy.
-pub fn classify_point_plane_with_policy<S: PredicateScalar>(
+pub fn classify_point_plane_with_policy<S: BorrowedPredicateScalar>(
     point: &Point3<S>,
     plane: &Plane3<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSide> {
-    let value = plane.normal.x.clone() * point.x.clone()
-        + plane.normal.y.clone() * point.y.clone()
-        + plane.normal.z.clone() * point.z.clone()
-        + plane.offset.clone();
+    let x_term = mul(&plane.normal.x, &point.x);
+    let y_term = mul(&plane.normal.y, &point.y);
+    let z_term = mul(&plane.normal.z, &point.z);
+    let xy = add(&x_term, &y_term);
+    let xyz = add(&xy, &z_term);
+    let value = add(&xyz, &plane.offset);
 
     map_outcome(
         resolve_scalar_sign(
@@ -57,7 +59,7 @@ pub fn classify_point_plane_with_policy<S: PredicateScalar>(
 }
 
 /// Classify a point relative to the oriented plane through `a`, `b`, and `c`.
-pub fn classify_point_oriented_plane<S: PredicateScalar>(
+pub fn classify_point_oriented_plane<S: BorrowedPredicateScalar>(
     a: &Point3<S>,
     b: &Point3<S>,
     c: &Point3<S>,
@@ -68,7 +70,7 @@ pub fn classify_point_oriented_plane<S: PredicateScalar>(
 
 /// Classify a point relative to the oriented plane through `a`, `b`, and `c`
 /// with an explicit escalation policy.
-pub fn classify_point_oriented_plane_with_policy<S: PredicateScalar>(
+pub fn classify_point_oriented_plane_with_policy<S: BorrowedPredicateScalar>(
     a: &Point3<S>,
     b: &Point3<S>,
     c: &Point3<S>,
@@ -87,6 +89,14 @@ fn sign_from_plane_side(side: PlaneSide) -> Sign {
         PlaneSide::On => Sign::Zero,
         PlaneSide::Above => Sign::Positive,
     }
+}
+
+fn add<S: BorrowedPredicateScalar>(left: &S, right: &S) -> S {
+    left.add_ref(right)
+}
+
+fn mul<S: BorrowedPredicateScalar>(left: &S, right: &S) -> S {
+    left.mul_ref(right)
 }
 
 fn classify_point_plane_filter<S: PredicateScalar>(

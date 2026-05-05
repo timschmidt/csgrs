@@ -188,6 +188,11 @@ predicates:
 - `Add`, `Sub`, and `Mul`
 - `to_f64()` for filters and fallback adapters
 
+`BorrowedPredicateScalar` adds borrowed `add_ref`, `sub_ref`, and `mul_ref`
+operations used by predicate kernels to reduce clone pressure in rich scalar
+backends. Types that already implement `Add`, `Sub`, and `Mul` for borrowed
+operands receive this trait through a blanket implementation.
+
 Primitive `f32` and `f64` implement these traits. Rich scalar backends can
 implement them to let the predicate layer exploit more information before
 falling back.
@@ -265,8 +270,8 @@ RUSTFLAGS='-Ctarget-cpu=haswell' cargo test --features interval
 
 ## Module Map
 
-- `scalar`: `StructuralScalar`, `PredicateScalar`, `ScalarFacts`, and
-  `MagnitudeBounds`.
+- `scalar`: `StructuralScalar`, `PredicateScalar`, `BorrowedPredicateScalar`,
+  `ScalarFacts`, and `MagnitudeBounds`.
 - `predicate`: `Sign`, `Certainty`, `SignKnowledge`, `Escalation`,
   `PredicateOutcome`, `RefinementNeed`, and `PredicatePolicy`.
 - `filter`: conservative determinant sign filters.

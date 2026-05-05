@@ -15,7 +15,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 #[cfg(any(feature = "hyperreal", feature = "realistic-blas"))]
-use predicated::PredicateScalar;
+use predicated::BorrowedPredicateScalar;
 use predicated::orient::{
     classify_point_line_with_policy, incircle2d_with_policy, insphere3d_with_policy,
     orient2d_with_policy,
@@ -268,7 +268,7 @@ fn render_scalar_plots<S>(
     manifest: &mut String,
 ) -> io::Result<()>
 where
-    S: PredicateScalar,
+    S: BorrowedPredicateScalar,
 {
     let a = Point2::new(scalar(-0.85), scalar(-0.55));
     let b = Point2::new(scalar(0.9), scalar(0.45));

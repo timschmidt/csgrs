@@ -1,5 +1,7 @@
 //! Scalar capabilities used by geometry predicates.
 
+use core::ops::{Add, Mul, Sub};
+
 use crate::predicate::{Sign, SignKnowledge};
 
 /// Conservative magnitude bounds.
@@ -84,12 +86,44 @@ pub trait PredicateScalar:
     StructuralScalar
     + Clone
     + core::fmt::Debug
-    + core::ops::Add<Output = Self>
-    + core::ops::Sub<Output = Self>
-    + core::ops::Mul<Output = Self>
+    + Add<Output = Self>
+    + Sub<Output = Self>
+    + Mul<Output = Self>
 {
     /// Convert to `f64` for cheap filters. Returning `None` disables that stage.
     fn to_f64(&self) -> Option<f64>;
+}
+
+/// Predicate scalar with borrowed arithmetic.
+///
+/// Predicate kernels use this trait to build intermediate determinant terms
+/// from borrowed operands. This avoids cloning every coordinate and
+/// subexpression for scalar backends where cloning is materially more expensive
+/// than primitive numeric copies.
+pub trait BorrowedPredicateScalar: PredicateScalar {
+    fn add_ref(&self, rhs: &Self) -> Self;
+
+    fn sub_ref(&self, rhs: &Self) -> Self;
+
+    fn mul_ref(&self, rhs: &Self) -> Self;
+}
+
+impl<T> BorrowedPredicateScalar for T
+where
+    T: PredicateScalar,
+    for<'a, 'b> &'a T: Add<&'b T, Output = T> + Sub<&'b T, Output = T> + Mul<&'b T, Output = T>,
+{
+    fn add_ref(&self, rhs: &Self) -> Self {
+        self + rhs
+    }
+
+    fn sub_ref(&self, rhs: &Self) -> Self {
+        self - rhs
+    }
+
+    fn mul_ref(&self, rhs: &Self) -> Self {
+        self * rhs
+    }
 }
 
 macro_rules! impl_float_scalar {

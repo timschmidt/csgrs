@@ -21,4 +21,6 @@ pub use plane::{Plane3, classify_point_oriented_plane, classify_point_plane};
 pub use predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, Sign, SignKnowledge,
 };
-pub use scalar::{MagnitudeBounds, PredicateScalar, ScalarFacts, StructuralScalar};
+pub use scalar::{
+    BorrowedPredicateScalar, MagnitudeBounds, PredicateScalar, ScalarFacts, StructuralScalar,
+};

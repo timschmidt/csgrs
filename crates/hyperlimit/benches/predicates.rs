@@ -2,7 +2,7 @@ mod benchmark_report;
 
 use criterion::{BenchmarkId, Criterion, black_box};
 use predicated::{
-    LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome, PredicateScalar, Sign,
+    BorrowedPredicateScalar, LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome, Sign,
     classify_point_line, classify_point_oriented_plane, classify_point_plane, incircle2d,
     insphere3d, orient2d, orient3d,
 };
@@ -42,7 +42,7 @@ fn bench_predicates(c: &mut Criterion) {
 
 fn bench_representation<S>(c: &mut Criterion, label: &'static str, scalar: fn(f64) -> S)
 where
-    S: PredicateScalar + 'static,
+    S: BorrowedPredicateScalar + 'static,
 {
     bench_orient2d(c, label, scalar);
     bench_line_side(c, label, scalar);
@@ -55,7 +55,7 @@ where
 
 fn bench_orient2d<S>(c: &mut Criterion, label: &'static str, scalar: fn(f64) -> S)
 where
-    S: PredicateScalar + 'static,
+    S: BorrowedPredicateScalar + 'static,
 {
     let mut group = c.benchmark_group("orient2d");
     for workload in Workload::ALL {
@@ -83,7 +83,7 @@ where
 
 fn bench_line_side<S>(c: &mut Criterion, label: &'static str, scalar: fn(f64) -> S)
 where
-    S: PredicateScalar + 'static,
+    S: BorrowedPredicateScalar + 'static,
 {
     let mut group = c.benchmark_group("classify_point_line");
     for workload in Workload::ALL {
@@ -111,7 +111,7 @@ where
 
 fn bench_orient3d<S>(c: &mut Criterion, label: &'static str, scalar: fn(f64) -> S)
 where
-    S: PredicateScalar + 'static,
+    S: BorrowedPredicateScalar + 'static,
 {
     let mut group = c.benchmark_group("orient3d");
     for workload in Workload::ALL {
@@ -140,7 +140,7 @@ where
 
 fn bench_explicit_plane<S>(c: &mut Criterion, label: &'static str, scalar: fn(f64) -> S)
 where
-    S: PredicateScalar + 'static,
+    S: BorrowedPredicateScalar + 'static,
 {
     let mut group = c.benchmark_group("classify_point_plane");
     for workload in Workload::ALL {
@@ -167,7 +167,7 @@ where
 
 fn bench_oriented_plane<S>(c: &mut Criterion, label: &'static str, scalar: fn(f64) -> S)
 where
-    S: PredicateScalar + 'static,
+    S: BorrowedPredicateScalar + 'static,
 {
     let mut group = c.benchmark_group("classify_point_oriented_plane");
     for workload in Workload::ALL {
@@ -196,7 +196,7 @@ where
 
 fn bench_incircle2d<S>(c: &mut Criterion, label: &'static str, scalar: fn(f64) -> S)
 where
-    S: PredicateScalar + 'static,
+    S: BorrowedPredicateScalar + 'static,
 {
     let mut group = c.benchmark_group("incircle2d");
     for workload in Workload::ALL {
@@ -225,7 +225,7 @@ where
 
 fn bench_insphere3d<S>(c: &mut Criterion, label: &'static str, scalar: fn(f64) -> S)
 where
-    S: PredicateScalar + 'static,
+    S: BorrowedPredicateScalar + 'static,
 {
     let mut group = c.benchmark_group("insphere3d");
     for workload in Workload::ALL {
