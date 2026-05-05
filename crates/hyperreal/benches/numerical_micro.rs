@@ -166,6 +166,42 @@ fn inverse_scaled_product_chain(depth: usize) -> Computable {
     deep_scaled_product_chain(depth).inverse()
 }
 
+fn computable_asin(value: Computable) -> Computable {
+    let one = Computable::one();
+    let denominator = one.add(value.clone().square().negate()).sqrt();
+    value.multiply(denominator.inverse()).atan()
+}
+
+fn computable_acos(value: Computable) -> Computable {
+    Computable::pi()
+        .multiply(Computable::rational(Rational::fraction(1, 2).unwrap()))
+        .add(computable_asin(value).negate())
+}
+
+fn computable_asinh(value: Computable) -> Computable {
+    value
+        .clone()
+        .add(value.square().add(Computable::one()).sqrt())
+        .ln()
+}
+
+fn computable_acosh(value: Computable) -> Computable {
+    value
+        .clone()
+        .add(value.square().add(Computable::one().negate()).sqrt())
+        .ln()
+}
+
+fn computable_atanh(value: Computable) -> Computable {
+    let one = Computable::one();
+    let numerator = one.clone().add(value.clone());
+    let denominator = one.add(value.negate());
+    numerator
+        .multiply(denominator.inverse())
+        .ln()
+        .multiply(Computable::rational(Rational::fraction(1, 2).unwrap()))
+}
+
 fn asymmetric_product_bad_order() -> Computable {
     let small = deep_scaled_product_chain(50);
     let large_scale = Computable::rational(Rational::from_bigint(BigInt::from(1_u8) << 200));
@@ -627,6 +663,128 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
         b.iter_batched(
             || huge_trig_input.clone().tan(),
             |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let inverse_trig_input = Computable::rational(Rational::fraction(7, 10).unwrap());
+    group.bench_function("asin_cold_p96", |b| {
+        b.iter_batched(
+            || computable_asin(inverse_trig_input.clone()),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let asin_cached = computable_asin(inverse_trig_input.clone());
+    asin_cached.approx(trig_p);
+    group.bench_function("asin_cached_p96", |b| {
+        b.iter(|| black_box(asin_cached.approx(trig_p)))
+    });
+
+    group.bench_function("acos_cold_p96", |b| {
+        b.iter_batched(
+            || computable_acos(inverse_trig_input.clone()),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let acos_cached = computable_acos(inverse_trig_input.clone());
+    acos_cached.approx(trig_p);
+    group.bench_function("acos_cached_p96", |b| {
+        b.iter(|| black_box(acos_cached.approx(trig_p)))
+    });
+
+    group.bench_function("atan_cold_p96", |b| {
+        b.iter_batched(
+            || inverse_trig_input.clone().atan(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let atan_cached = inverse_trig_input.clone().atan();
+    atan_cached.approx(trig_p);
+    group.bench_function("atan_cached_p96", |b| {
+        b.iter(|| black_box(atan_cached.approx(trig_p)))
+    });
+
+    let atan_large_input = Computable::rational(Rational::new(8));
+    group.bench_function("atan_large_cold_p96", |b| {
+        b.iter_batched(
+            || atan_large_input.clone().atan(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let zero_inverse_trig_input = Computable::rational(Rational::zero());
+    group.bench_function("asin_zero_cold_p96", |b| {
+        b.iter_batched(
+            || computable_asin(zero_inverse_trig_input.clone()),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan_zero_cold_p96", |b| {
+        b.iter_batched(
+            || zero_inverse_trig_input.clone().atan(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let hyperbolic_input = Computable::rational(Rational::fraction(1, 2).unwrap());
+    group.bench_function("asinh_cold_p128", |b| {
+        b.iter_batched(
+            || computable_asinh(hyperbolic_input.clone()),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let asinh_cached = computable_asinh(hyperbolic_input.clone());
+    asinh_cached.approx(p);
+    group.bench_function("asinh_cached_p128", |b| {
+        b.iter(|| black_box(asinh_cached.approx(p)))
+    });
+
+    let acosh_input = Computable::rational(Rational::new(2));
+    group.bench_function("acosh_cold_p128", |b| {
+        b.iter_batched(
+            || computable_acosh(acosh_input.clone()),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let acosh_cached = computable_acosh(acosh_input.clone());
+    acosh_cached.approx(p);
+    group.bench_function("acosh_cached_p128", |b| {
+        b.iter(|| black_box(acosh_cached.approx(p)))
+    });
+
+    group.bench_function("atanh_cold_p128", |b| {
+        b.iter_batched(
+            || computable_atanh(hyperbolic_input.clone()),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let atanh_cached = computable_atanh(hyperbolic_input.clone());
+    atanh_cached.approx(p);
+    group.bench_function("atanh_cached_p128", |b| {
+        b.iter(|| black_box(atanh_cached.approx(p)))
+    });
+
+    let zero_hyperbolic_input = Computable::rational(Rational::zero());
+    group.bench_function("asinh_zero_cold_p128", |b| {
+        b.iter_batched(
+            || computable_asinh(zero_hyperbolic_input.clone()),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atanh_zero_cold_p128", |b| {
+        b.iter_batched(
+            || computable_atanh(zero_hyperbolic_input.clone()),
+            |value| black_box(value.approx(p)),
             BatchSize::SmallInput,
         )
     });

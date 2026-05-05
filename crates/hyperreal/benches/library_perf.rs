@@ -1,6 +1,6 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
-use num::bigint::BigInt;
 use hyperreal::{Rational, Real, Simple};
+use num::bigint::BigInt;
 
 fn bench_real_format(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_format");
@@ -37,7 +37,8 @@ fn bench_simple(c: &mut Criterion) {
     let constants_parsed: Simple = constants_source.parse().unwrap();
     let exact_source = "(/ (* (+ 7/5 11/7 13/9) (- 19/11 1/3)) 23/17)";
     let exact_parsed: Simple = exact_source.parse().unwrap();
-    let nested_exact_source = "(* (+ (/ 7 5) (/ 11 7) (/ 13 9)) (pow (+ 5/4 3/8) 9) (/ (- 19/11 1/3) (+ 1/7 2/7)))";
+    let nested_exact_source =
+        "(* (+ (/ 7 5) (/ 11 7) (/ 13 9)) (pow (+ 5/4 3/8) 9) (/ (- 19/11 1/3) (+ 1/7 2/7)))";
     let nested_exact_parsed: Simple = nested_exact_source.parse().unwrap();
 
     group.bench_function("parse_nested", |b| {
@@ -171,6 +172,252 @@ fn bench_real_general_trig(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_real_exact_inverse_trig(c: &mut Criterion) {
+    let mut group = c.benchmark_group("real_exact_inverse_trig");
+    let half = Real::new(Rational::fraction(1, 2).unwrap());
+    let minus_half = Real::new(Rational::fraction(-1, 2).unwrap());
+    let one = Real::new(Rational::one());
+    let minus_one = Real::new(Rational::new(-1));
+    let sqrt_two_over_two =
+        Real::new(Rational::fraction(1, 2).unwrap()) * Real::new(Rational::new(2)).sqrt().unwrap();
+    let sqrt_three_over_three =
+        Real::new(Rational::fraction(1, 3).unwrap()) * Real::new(Rational::new(3)).sqrt().unwrap();
+    let sin_pi_fifth = (Real::pi() * Real::new(Rational::fraction(1, 5).unwrap())).sin();
+    let tan_pi_fifth = (Real::pi() * Real::new(Rational::fraction(1, 5).unwrap()))
+        .tan()
+        .unwrap();
+
+    group.bench_function("asin_1_2", |b| {
+        b.iter_batched(
+            || half.clone(),
+            |value| black_box(value.asin().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asin_minus_1_2", |b| {
+        b.iter_batched(
+            || minus_half.clone(),
+            |value| black_box(value.asin().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asin_sqrt_2_over_2", |b| {
+        b.iter_batched(
+            || sqrt_two_over_two.clone(),
+            |value| black_box(value.asin().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asin_sin_pi_5", |b| {
+        b.iter_batched(
+            || sin_pi_fifth.clone(),
+            |value| black_box(value.asin().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acos_1", |b| {
+        b.iter_batched(
+            || one.clone(),
+            |value| black_box(value.acos().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acos_minus_1", |b| {
+        b.iter_batched(
+            || minus_one.clone(),
+            |value| black_box(value.acos().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acos_1_2", |b| {
+        b.iter_batched(
+            || half.clone(),
+            |value| black_box(value.acos().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan_1", |b| {
+        b.iter_batched(
+            || one.clone(),
+            |value| black_box(value.atan().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan_sqrt_3_over_3", |b| {
+        b.iter_batched(
+            || sqrt_three_over_three.clone(),
+            |value| black_box(value.atan().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan_tan_pi_5", |b| {
+        b.iter_batched(
+            || tan_pi_fifth.clone(),
+            |value| black_box(value.atan().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+fn bench_real_general_inverse_trig(c: &mut Criterion) {
+    let mut group = c.benchmark_group("real_general_inverse_trig");
+    let rational_in_domain = Real::new(Rational::fraction(7, 10).unwrap());
+    let irrational_in_domain =
+        Real::new(Rational::new(2)).sqrt().unwrap() / Real::new(Rational::new(3));
+    let irrational_in_domain = irrational_in_domain.unwrap();
+    let atan_large = Real::new(Rational::new(8));
+    let atan_irrational = Real::new(Rational::new(2)).sqrt().unwrap();
+
+    group.bench_function("asin_7_10", |b| {
+        b.iter_batched(
+            || rational_in_domain.clone(),
+            |value| black_box(value.asin().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asin_sqrt_2_over_3", |b| {
+        b.iter_batched(
+            || irrational_in_domain.clone(),
+            |value| black_box(value.asin().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acos_7_10", |b| {
+        b.iter_batched(
+            || rational_in_domain.clone(),
+            |value| black_box(value.acos().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acos_sqrt_2_over_3", |b| {
+        b.iter_batched(
+            || irrational_in_domain.clone(),
+            |value| black_box(value.acos().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan_8", |b| {
+        b.iter_batched(
+            || atan_large.clone(),
+            |value| black_box(value.atan().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan_sqrt_2", |b| {
+        b.iter_batched(
+            || atan_irrational.clone(),
+            |value| black_box(value.atan().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+fn bench_real_inverse_hyperbolic(c: &mut Criterion) {
+    let mut group = c.benchmark_group("real_inverse_hyperbolic");
+    let zero = Real::zero();
+    let half = Real::new(Rational::fraction(1, 2).unwrap());
+    let minus_half = Real::new(Rational::fraction(-1, 2).unwrap());
+    let two = Real::new(Rational::new(2));
+    let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
+
+    group.bench_function("asinh_0", |b| {
+        b.iter_batched(
+            || zero.clone(),
+            |value| black_box(value.asinh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asinh_1_2", |b| {
+        b.iter_batched(
+            || half.clone(),
+            |value| black_box(value.asinh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asinh_sqrt_2", |b| {
+        b.iter_batched(
+            || sqrt_two.clone(),
+            |value| black_box(value.asinh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acosh_1", |b| {
+        b.iter_batched(
+            || Real::new(Rational::one()),
+            |value| black_box(value.acosh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acosh_2", |b| {
+        b.iter_batched(
+            || two.clone(),
+            |value| black_box(value.acosh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acosh_sqrt_2", |b| {
+        b.iter_batched(
+            || sqrt_two.clone(),
+            |value| black_box(value.acosh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atanh_0", |b| {
+        b.iter_batched(
+            || zero.clone(),
+            |value| black_box(value.atanh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atanh_1_2", |b| {
+        b.iter_batched(
+            || half.clone(),
+            |value| black_box(value.atanh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atanh_minus_1_2", |b| {
+        b.iter_batched(
+            || minus_half.clone(),
+            |value| black_box(value.atanh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+fn bench_simple_inverse_functions(c: &mut Criterion) {
+    let mut group = c.benchmark_group("simple_inverse_functions");
+    let expressions: [(&str, Simple); 9] = [
+        ("asin_1_2", "(asin 1/2)".parse().unwrap()),
+        ("acos_1_2", "(acos 1/2)".parse().unwrap()),
+        ("atan_1", "(atan 1)".parse().unwrap()),
+        ("asin_general", "(asin 7/10)".parse().unwrap()),
+        ("acos_general", "(acos 7/10)".parse().unwrap()),
+        ("atan_general", "(atan 8)".parse().unwrap()),
+        ("asinh_1_2", "(asinh 1/2)".parse().unwrap()),
+        ("acosh_2", "(acosh 2)".parse().unwrap()),
+        ("atanh_1_2", "(atanh 1/2)".parse().unwrap()),
+    ];
+
+    for (name, expr) in expressions {
+        group.bench_function(name, |b| {
+            b.iter_batched(
+                || expr.clone(),
+                |expr| black_box(expr.evaluate(&Default::default()).unwrap()),
+                BatchSize::SmallInput,
+            )
+        });
+    }
+
+    group.finish();
+}
+
 fn bench_real_exact_ln(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_exact_ln");
     let ln_1024 = Real::new(Rational::new(1024));
@@ -250,6 +497,10 @@ criterion_group!(
     bench_rational_powi,
     bench_real_exact_trig,
     bench_real_general_trig,
+    bench_real_exact_inverse_trig,
+    bench_real_general_inverse_trig,
+    bench_real_inverse_hyperbolic,
+    bench_simple_inverse_functions,
     bench_real_exact_ln,
     bench_real_exact_exp_log10
 );
