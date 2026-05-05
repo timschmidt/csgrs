@@ -264,6 +264,7 @@ fn bench_real_exact_inverse_trig(c: &mut Criterion) {
 fn bench_real_general_inverse_trig(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_general_inverse_trig");
     let rational_in_domain = Real::new(Rational::fraction(7, 10).unwrap());
+    let rational_out_of_domain = Real::new(Rational::fraction(11, 10).unwrap());
     let irrational_in_domain =
         Real::new(Rational::new(2)).sqrt().unwrap() / Real::new(Rational::new(3));
     let irrational_in_domain = irrational_in_domain.unwrap();
@@ -298,6 +299,20 @@ fn bench_real_general_inverse_trig(c: &mut Criterion) {
             BatchSize::SmallInput,
         )
     });
+    group.bench_function("asin_11_10_error", |b| {
+        b.iter_batched(
+            || rational_out_of_domain.clone(),
+            |value| black_box(value.asin().unwrap_err()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acos_11_10_error", |b| {
+        b.iter_batched(
+            || rational_out_of_domain.clone(),
+            |value| black_box(value.acos().unwrap_err()),
+            BatchSize::SmallInput,
+        )
+    });
     group.bench_function("atan_8", |b| {
         b.iter_batched(
             || atan_large.clone(),
@@ -321,7 +336,9 @@ fn bench_real_inverse_hyperbolic(c: &mut Criterion) {
     let zero = Real::zero();
     let half = Real::new(Rational::fraction(1, 2).unwrap());
     let minus_half = Real::new(Rational::fraction(-1, 2).unwrap());
+    let nine_tenths = Real::new(Rational::fraction(9, 10).unwrap());
     let two = Real::new(Rational::new(2));
+    let million = Real::new(Rational::new(1_000_000));
     let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
 
     group.bench_function("asinh_0", |b| {
@@ -341,6 +358,20 @@ fn bench_real_inverse_hyperbolic(c: &mut Criterion) {
     group.bench_function("asinh_sqrt_2", |b| {
         b.iter_batched(
             || sqrt_two.clone(),
+            |value| black_box(value.asinh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asinh_minus_1_2", |b| {
+        b.iter_batched(
+            || minus_half.clone(),
+            |value| black_box(value.asinh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asinh_1_000_000", |b| {
+        b.iter_batched(
+            || million.clone(),
             |value| black_box(value.asinh().unwrap()),
             BatchSize::SmallInput,
         )
@@ -366,6 +397,13 @@ fn bench_real_inverse_hyperbolic(c: &mut Criterion) {
             BatchSize::SmallInput,
         )
     });
+    group.bench_function("acosh_1_000_000", |b| {
+        b.iter_batched(
+            || million.clone(),
+            |value| black_box(value.acosh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
     group.bench_function("atanh_0", |b| {
         b.iter_batched(
             || zero.clone(),
@@ -387,13 +425,27 @@ fn bench_real_inverse_hyperbolic(c: &mut Criterion) {
             BatchSize::SmallInput,
         )
     });
+    group.bench_function("atanh_9_10", |b| {
+        b.iter_batched(
+            || nine_tenths.clone(),
+            |value| black_box(value.atanh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atanh_1_error", |b| {
+        b.iter_batched(
+            || Real::new(Rational::one()),
+            |value| black_box(value.atanh().unwrap_err()),
+            BatchSize::SmallInput,
+        )
+    });
 
     group.finish();
 }
 
 fn bench_simple_inverse_functions(c: &mut Criterion) {
     let mut group = c.benchmark_group("simple_inverse_functions");
-    let expressions: [(&str, Simple); 9] = [
+    let expressions: [(&str, Simple); 12] = [
         ("asin_1_2", "(asin 1/2)".parse().unwrap()),
         ("acos_1_2", "(acos 1/2)".parse().unwrap()),
         ("atan_1", "(atan 1)".parse().unwrap()),
@@ -401,8 +453,11 @@ fn bench_simple_inverse_functions(c: &mut Criterion) {
         ("acos_general", "(acos 7/10)".parse().unwrap()),
         ("atan_general", "(atan 8)".parse().unwrap()),
         ("asinh_1_2", "(asinh 1/2)".parse().unwrap()),
+        ("asinh_sqrt_2", "(asinh (sqrt 2))".parse().unwrap()),
         ("acosh_2", "(acosh 2)".parse().unwrap()),
+        ("acosh_sqrt_2", "(acosh (sqrt 2))".parse().unwrap()),
         ("atanh_1_2", "(atanh 1/2)".parse().unwrap()),
+        ("atanh_minus_1_2", "(atanh -1/2)".parse().unwrap()),
     ];
 
     for (name, expr) in expressions {

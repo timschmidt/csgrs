@@ -475,6 +475,29 @@ mod tests {
     }
 
     #[test]
+    fn inverse_trig_domain_boundaries() {
+        assert_eq!(
+            Real::new(Rational::new(1)).asin().unwrap(),
+            pi_fraction(1, 2)
+        );
+        assert_eq!(
+            Real::new(Rational::new(-1)).asin().unwrap(),
+            pi_fraction(-1, 2)
+        );
+        assert_eq!(Real::new(Rational::new(1)).acos().unwrap(), Real::zero());
+        assert_eq!(Real::new(Rational::new(-1)).acos().unwrap(), Real::pi());
+
+        for value in [
+            Real::new(Rational::fraction(11, 10).unwrap()),
+            Real::new(Rational::fraction(-11, 10).unwrap()),
+            Real::new(Rational::new(2)).sqrt().unwrap(),
+        ] {
+            assert_eq!(value.clone().asin(), Err(Problem::NotANumber));
+            assert_eq!(value.acos(), Err(Problem::NotANumber));
+        }
+    }
+
+    #[test]
     fn inverse_hyperbolic_values() {
         assert_eq!(Real::zero().asinh().unwrap(), Real::zero());
         assert_eq!(Real::zero().atanh().unwrap(), Real::zero());
@@ -504,6 +527,42 @@ mod tests {
                 .unwrap(),
             0.3095196042031117
         ));
+    }
+
+    #[test]
+    fn inverse_hyperbolic_domain_boundaries() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let ln_three_over_two = Real::new(Rational::new(3)).ln().unwrap()
+            * Real::new(Rational::fraction(1, 2).unwrap());
+
+        assert_eq!(half.clone().atanh().unwrap(), ln_three_over_two);
+        assert!(closest_f64(
+            Real::new(Rational::fraction(-1, 2).unwrap())
+                .atanh()
+                .unwrap(),
+            -0.5493061443340548
+        ));
+        assert!(closest_f64(
+            Real::new(Rational::new(-2)).asinh().unwrap(),
+            -1.4436354751788103
+        ));
+
+        for value in [
+            Real::new(Rational::new(1)),
+            Real::new(Rational::new(-1)),
+            Real::new(Rational::fraction(11, 10).unwrap()),
+            Real::new(Rational::fraction(-11, 10).unwrap()),
+        ] {
+            assert_eq!(value.atanh(), Err(Problem::NotANumber));
+        }
+
+        for value in [
+            Real::zero(),
+            Real::new(Rational::fraction(1, 2).unwrap()),
+            Real::new(Rational::new(-2)),
+        ] {
+            assert_eq!(value.acosh(), Err(Problem::NotANumber));
+        }
     }
 
     #[test]

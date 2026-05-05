@@ -1159,8 +1159,24 @@ impl Real {
 
     /// The inverse hyperbolic cosine of this Real, or [`Problem::NotANumber`] for values < 1.
     pub fn acosh(self) -> Result<Real, Problem> {
-        if self.class == One && self.rational == *rationals::ONE {
-            return Ok(Self::zero());
+        if self.class == One {
+            if self.rational == *rationals::ONE {
+                return Ok(Self::zero());
+            }
+            if self.rational < *rationals::ONE {
+                return Err(Problem::NotANumber);
+            }
+        } else if let Sqrt(r) = &self.class {
+            if self.rational.sign() == Sign::Minus
+                || self.rational.clone() * self.rational.clone() * r.clone() < *rationals::ONE
+            {
+                return Err(Problem::NotANumber);
+            }
+        } else {
+            let one = Self::new(Rational::one());
+            if (self.clone() - one).best_sign() == Sign::Minus {
+                return Err(Problem::NotANumber);
+            }
         }
         let one = Self::new(Rational::one());
         let radicand = self.clone().powi(BigInt::from(2_u8))? - one;
