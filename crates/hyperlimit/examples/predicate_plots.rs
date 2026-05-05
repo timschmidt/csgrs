@@ -9,6 +9,7 @@
 //!
 //! Images are written as dependency-free PNG files.
 
+use std::collections::BTreeSet;
 use std::env;
 use std::fs::{self, File};
 use std::io::{self, Write};
@@ -29,6 +30,8 @@ use predicated::{
 };
 
 const DEFAULT_SIZE: usize = 512;
+const DEFAULT_OUT_DIR: &str = "doc/predicate-plots";
+const PLOTS_MD: &str = "plots.md";
 const WORLD_MIN: f64 = -1.35;
 const WORLD_MAX: f64 = 1.35;
 const FP_ZOOM_SPAN: f64 = 1.0e-15;
@@ -68,6 +71,10 @@ impl ZoomView {
 
 fn main() -> io::Result<()> {
     let args = Args::parse()?;
+    if args.check_gallery {
+        return validate_plots_md(&args.out_dir);
+    }
+
     fs::create_dir_all(&args.out_dir)?;
 
     let mut manifest = String::new();
@@ -189,6 +196,9 @@ fn main() -> io::Result<()> {
 
     let manifest_path = args.out_dir.join("manifest.txt");
     fs::write(manifest_path, manifest)?;
+    if args.should_validate_gallery() {
+        validate_plots_md(&args.out_dir)?;
+    }
     Ok(())
 }
 
@@ -860,6 +870,114 @@ fn crc32(data: &[u8]) -> u32 {
     !crc
 }
 
+fn validate_plots_md(out_dir: &Path) -> io::Result<()> {
+    let plots_md = Path::new(PLOTS_MD);
+    if !plots_md.exists() {
+        return Ok(());
+    }
+
+    let manifest = fs::read_to_string(out_dir.join("manifest.txt"))?;
+    let gallery = fs::read_to_string(plots_md)?;
+    let out_dir = out_dir.to_string_lossy().replace('\\', "/");
+    let expected_prefix = format!("./{out_dir}/");
+    let legacy_prefix = format!("{out_dir}/");
+
+    let expected: BTreeSet<&str> = manifest
+        .lines()
+        .filter_map(|line| line.split_once(':').map(|(name, _)| name))
+        .filter(|name| name.ends_with(".png"))
+        .collect();
+
+    let mut missing = Vec::new();
+    for name in &expected {
+        let reference = format!("![{name}]({expected_prefix}{name})");
+        if !gallery.contains(&reference) {
+            missing.push((*name).to_string());
+        }
+    }
+
+    let mut extra = Vec::new();
+    let mut malformed = Vec::new();
+    for image in markdown_images(&gallery) {
+        let name = image
+            .path
+            .strip_prefix(&expected_prefix)
+            .or_else(|| image.path.strip_prefix(&legacy_prefix));
+        let Some(name) = name else {
+            continue;
+        };
+
+        if !expected.contains(name) {
+            extra.push(name.to_string());
+        }
+
+        let expected_path = format!("{expected_prefix}{name}");
+        if image.alt != name || image.path != expected_path {
+            malformed.push(image.raw);
+        }
+    }
+
+    if missing.is_empty() && extra.is_empty() && malformed.is_empty() {
+        return Ok(());
+    }
+
+    let mut message = String::from("plots.md is out of sync with the generated plot manifest");
+    append_limited_list(&mut message, "missing explicit references", &missing);
+    append_limited_list(&mut message, "extra references", &extra);
+    append_limited_list(&mut message, "non-canonical references", &malformed);
+
+    Err(io::Error::new(io::ErrorKind::InvalidData, message))
+}
+
+struct MarkdownImage {
+    alt: String,
+    path: String,
+    raw: String,
+}
+
+fn markdown_images(markdown: &str) -> Vec<MarkdownImage> {
+    let mut images = Vec::new();
+    let mut cursor = 0;
+
+    while let Some(start) = markdown[cursor..].find("![") {
+        let start = cursor + start;
+        let alt_start = start + 2;
+        let Some(alt_end_offset) = markdown[alt_start..].find("](") else {
+            break;
+        };
+        let alt_end = alt_start + alt_end_offset;
+        let path_start = alt_end + 2;
+        let Some(path_end_offset) = markdown[path_start..].find(')') else {
+            break;
+        };
+        let path_end = path_start + path_end_offset;
+        let raw_end = path_end + 1;
+
+        images.push(MarkdownImage {
+            alt: markdown[alt_start..alt_end].to_string(),
+            path: markdown[path_start..path_end].to_string(),
+            raw: markdown[start..raw_end].to_string(),
+        });
+        cursor = raw_end;
+    }
+
+    images
+}
+
+fn append_limited_list(message: &mut String, label: &str, items: &[String]) {
+    if items.is_empty() {
+        return;
+    }
+
+    message.push_str(&format!("\n{label}:"));
+    for item in items.iter().take(8) {
+        message.push_str(&format!("\n  - {item}"));
+    }
+    if items.len() > 8 {
+        message.push_str(&format!("\n  - ... and {} more", items.len() - 8));
+    }
+}
+
 fn blend(a: [u8; 3], b: [u8; 3], t: f64) -> [u8; 3] {
     [mix(a[0], b[0], t), mix(a[1], b[1], t), mix(a[2], b[2], t)]
 }
@@ -878,14 +996,16 @@ struct Args {
     size: usize,
     backend: String,
     zoom_only: bool,
+    check_gallery: bool,
 }
 
 impl Args {
     fn parse() -> io::Result<Self> {
-        let mut out_dir = PathBuf::from("doc/predicate-plots");
+        let mut out_dir = PathBuf::from(DEFAULT_OUT_DIR);
         let mut size = DEFAULT_SIZE;
         let mut backend = String::from("f64");
         let mut zoom_only = false;
+        let mut check_gallery = false;
         let mut args = env::args().skip(1);
 
         while let Some(arg) = args.next() {
@@ -927,9 +1047,12 @@ impl Args {
                 "--zoom-only" => {
                     zoom_only = true;
                 }
+                "--check-gallery" => {
+                    check_gallery = true;
+                }
                 "--help" | "-h" => {
                     println!(
-                        "usage: cargo run --example predicate_plots -- [--backend NAME] [--out DIR] [--size N] [--zoom-only]\n\nNAME is one of: f64, hyperreal, realistic_blas, interval, all.\nN must be at least 512. Images are written as PNG files."
+                        "usage: cargo run --example predicate_plots -- [--backend NAME] [--out DIR] [--size N] [--zoom-only] [--check-gallery]\n\nNAME is one of: f64, hyperreal, realistic_blas, interval, all.\nN must be at least 512. Images are written as PNG files."
                     );
                     std::process::exit(0);
                 }
@@ -947,7 +1070,12 @@ impl Args {
             size,
             backend,
             zoom_only,
+            check_gallery,
         })
+    }
+
+    fn should_validate_gallery(&self) -> bool {
+        self.backend == "all" && !self.zoom_only && self.out_dir == Path::new(DEFAULT_OUT_DIR)
     }
 
     fn wants(&self, backend: &str) -> bool {
