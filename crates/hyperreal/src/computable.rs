@@ -1207,10 +1207,24 @@ impl Computable {
                 let quarter = self.sqrt().sqrt().ln();
                 return quarter.shift_left(2);
             } else {
-                let extra_bits: i32 = (rough_appr.bits() - 5).try_into().expect(
+                let mut extra_bits: i32 = (rough_appr.bits() - 5).try_into().expect(
                     "Approximation should have few enough bits to fit in a 32-bit signed integer",
                 );
-                let scaled_result = self.shift_right(extra_bits).ln();
+
+                let mut scaled = self.clone().shift_right(extra_bits);
+                let mut scaled_rough = scaled.approx(low_prec);
+                // The final branch below computes ln(1+x), and requires |x| < 1/2.
+                // A bit-length estimate can leave scaled values in [1.5, 2), so
+                // verify the low-precision scaled value before recursing.
+                while scaled_rough >= *high_ln_limit {
+                    extra_bits = extra_bits.checked_add(1).expect(
+                        "Approximation should have few enough bits to fit in a 32-bit signed integer",
+                    );
+                    scaled = self.clone().shift_right(extra_bits);
+                    scaled_rough = scaled.approx(low_prec);
+                }
+
+                let scaled_result = scaled.ln();
                 let extra: BigInt = extra_bits.into();
                 return scaled_result.add(Self::integer(extra).multiply(Self::ln2()));
             }

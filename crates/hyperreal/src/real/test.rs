@@ -390,6 +390,20 @@ mod tests {
     }
 
     #[test]
+    fn ln_large_positive_does_not_panic() {
+        let ln = Real::from(1_000_001_i32).ln().unwrap();
+        assert!(closest_f64(ln, 13.815511557963774));
+    }
+
+    #[test]
+    fn ln_large_computable_positive_does_not_panic() {
+        let value = Real::from(100_i32) + Real::from(2_i32).sqrt().unwrap();
+        let ln = value.ln().unwrap();
+        let actual: f64 = ln.into();
+        assert!((actual - 4.619213444287964).abs() < 1e-6);
+    }
+
+    #[test]
     fn integer_logs() {
         for (n, log) in [
             (1, 0),
@@ -468,5 +482,24 @@ mod tests {
                 .unwrap(),
             0.3095196042031117
         ));
+    }
+
+    #[test]
+    fn asinh_large_positive_does_not_panic() {
+        let y = Real::from(1_000_000_i32).asinh();
+        assert!(y.is_ok());
+        let actual: f64 = y.unwrap().into();
+        assert!((actual - 14.508657738524219).abs() < 1e-12);
+    }
+
+    #[test]
+    fn asinh_large_negative_and_float_do_not_panic() {
+        let negative = Real::from(-1_000_000_i32).asinh().unwrap();
+        let actual: f64 = negative.into();
+        assert!((actual + 14.508657738524219).abs() < 1e-12);
+
+        let from_float = Real::try_from(1.0e6_f64).unwrap().asinh().unwrap();
+        let actual: f64 = from_float.into();
+        assert!((actual - 14.508657738524219).abs() < 1e-12);
     }
 }
