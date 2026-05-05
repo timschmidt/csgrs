@@ -55,6 +55,12 @@ enum Operator {
     Cos,
     Sin,
     Tan,
+    Acos,
+    Asin,
+    Atan,
+    Acosh,
+    Asinh,
+    Atanh,
     Pow,
 }
 
@@ -433,6 +439,42 @@ impl Simple {
                 let value = operand.value(names)?.tan()?;
                 Ok(value)
             }
+            Acos => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.acos()
+            }
+            Asin => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.asin()
+            }
+            Atan => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.atan()
+            }
+            Acosh => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.acosh()
+            }
+            Asinh => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.asinh()
+            }
+            Atanh => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.atanh()
+            }
             Pow => {
                 if self.operands.len() != 2 {
                     return Err(Problem::ParseError);
@@ -475,6 +517,12 @@ impl Simple {
             "sin" => Ok(Sin),
             "pow" => Ok(Pow),
             "tan" => Ok(Tan),
+            "acos" => Ok(Acos),
+            "asin" => Ok(Asin),
+            "atan" => Ok(Atan),
+            "acosh" => Ok(Acosh),
+            "asinh" => Ok(Asinh),
+            "atanh" => Ok(Atanh),
             _ => Err("No such operator"),
         }
     }
@@ -636,6 +684,12 @@ mod tests {
             "(cos 5)",
             "(sin 5)",
             "(tan 5)",
+            "(acos 1/2)",
+            "(asin 1/2)",
+            "(atan 1)",
+            "(acosh 1)",
+            "(asinh 0)",
+            "(atanh 0)",
             "(pow 5 2)",
         ];
         for case in cases {

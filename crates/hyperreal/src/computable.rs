@@ -359,6 +359,8 @@ mod signed {
     pub(super) static FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&4).unwrap());
     pub(super) static SIX: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&6).unwrap());
     pub(super) static EIGHT: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&8).unwrap());
+    pub(super) static SIXTEEN: LazyLock<BigInt> =
+        LazyLock::new(|| ToBigInt::to_bigint(&16).unwrap());
     pub(super) static TWENTY_FOUR: LazyLock<BigInt> =
         LazyLock::new(|| ToBigInt::to_bigint(&24).unwrap());
     pub(super) static SIXTY_FOUR: LazyLock<BigInt> =
@@ -750,6 +752,7 @@ impl Computable {
                 Approximation::Constant(_) => Some(Some(Sign::Plus)),
                 Approximation::Ratio(r) => Some(Some(r.sign())),
                 Approximation::IntegralAtan(n) => Some(Some(n.sign())),
+                Approximation::PrescaledAtan(child) => child.exact_sign().map(Some),
                 Approximation::Negate(_)
                 | Approximation::Offset(_, _)
                 | Approximation::Inverse(_)
@@ -1298,6 +1301,42 @@ impl Computable {
             exact_sign: RefCell::new(ExactSignCache::Invalid),
             signal: None,
         }
+    }
+
+    /// Arctangent of this number.
+    pub fn atan(self) -> Computable {
+        if let Some(rational) = self.exact_rational() {
+            if rational.sign() == Sign::NoSign {
+                return Self::rational(Rational::zero());
+            }
+        }
+        if self.exact_sign() == Some(Sign::Minus) {
+            return self.negate().atan().negate();
+        }
+
+        let rough_appr = self.approx(-4);
+        if rough_appr <= *signed::EIGHT {
+            return Self {
+                internal: Box::new(Approximation::PrescaledAtan(self)),
+                cache: RefCell::new(Cache::Invalid),
+                bound: RefCell::new(BoundCache::Invalid),
+                exact_sign: RefCell::new(ExactSignCache::Invalid),
+                signal: None,
+            };
+        }
+
+        let one = Self::one();
+        let half = one.clone().shift_right(1);
+        if rough_appr <= *signed::SIXTEEN {
+            let numerator = self.clone().add(half.clone().negate());
+            let denominator = one.add(self.multiply(half));
+            return Self::prescaled_atan(BigInt::from(2_u8))
+                .add(numerator.multiply(denominator.inverse()).atan());
+        }
+
+        Self::pi()
+            .shift_right(1)
+            .add(self.inverse().atan().negate())
     }
 
     /// Negate this number.

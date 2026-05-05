@@ -953,6 +953,181 @@ impl Real {
         Ok(self.make_computable(Computable::tan))
     }
 
+    fn pi_fraction(n: i64, d: u64) -> Real {
+        Self::new(Rational::fraction(n, d).unwrap()) * Self::pi()
+    }
+
+    fn asin_exact(&self) -> Option<Real> {
+        if self.definitely_zero() {
+            return Some(Self::zero());
+        }
+
+        match &self.class {
+            One => {
+                if self.rational == *rationals::ONE {
+                    Some(Self::pi_fraction(1, 2))
+                } else if self.rational == Rational::new(-1) {
+                    Some(Self::pi_fraction(-1, 2))
+                } else if self.rational == *rationals::HALF {
+                    Some(Self::pi_fraction(1, 6))
+                } else if self.rational == -rationals::HALF.clone() {
+                    Some(Self::pi_fraction(-1, 6))
+                } else {
+                    None
+                }
+            }
+            Sqrt(r) => {
+                let sign = self.rational.sign();
+                let magnitude = if sign == Sign::Minus {
+                    self.rational.clone().neg()
+                } else {
+                    self.rational.clone()
+                };
+                let angle = if *r == Rational::new(2) && magnitude == *rationals::HALF {
+                    Some(Rational::fraction(1, 4).unwrap())
+                } else if *r == Rational::new(3) && magnitude == *rationals::HALF {
+                    Some(Rational::fraction(1, 3).unwrap())
+                } else {
+                    None
+                }?;
+
+                let angle = if sign == Sign::Minus {
+                    angle.neg()
+                } else {
+                    angle
+                };
+                Some(Self::new(angle) * Self::pi())
+            }
+            SinPi(r) => {
+                if self.rational == *rationals::ONE {
+                    Some(Self::new(r.clone()) * Self::pi())
+                } else if self.rational == Rational::new(-1) {
+                    Some(Self::new(r.clone().neg()) * Self::pi())
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
+    fn atan_exact(&self) -> Option<Real> {
+        if self.definitely_zero() {
+            return Some(Self::zero());
+        }
+
+        match &self.class {
+            One => {
+                if self.rational == *rationals::ONE {
+                    Some(Self::pi_fraction(1, 4))
+                } else if self.rational == Rational::new(-1) {
+                    Some(Self::pi_fraction(-1, 4))
+                } else {
+                    None
+                }
+            }
+            Sqrt(r) => {
+                if *r != Rational::new(3) {
+                    return None;
+                }
+                let sign = self.rational.sign();
+                let magnitude = if sign == Sign::Minus {
+                    self.rational.clone().neg()
+                } else {
+                    self.rational.clone()
+                };
+                let angle = if magnitude == *rationals::ONE {
+                    Some(Rational::fraction(1, 3).unwrap())
+                } else if magnitude == Rational::fraction(1, 3).unwrap() {
+                    Some(Rational::fraction(1, 6).unwrap())
+                } else {
+                    None
+                }?;
+
+                let angle = if sign == Sign::Minus {
+                    angle.neg()
+                } else {
+                    angle
+                };
+                Some(Self::new(angle) * Self::pi())
+            }
+            TanPi(r) => {
+                if self.rational == *rationals::ONE {
+                    Some(Self::new(r.clone()) * Self::pi())
+                } else if self.rational == Rational::new(-1) {
+                    Some(Self::new(r.clone().neg()) * Self::pi())
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
+    /// The inverse sine of this Real, or [`Problem::NotANumber`] outside [-1, 1].
+    pub fn asin(self) -> Result<Real, Problem> {
+        if let Some(exact) = self.asin_exact() {
+            return Ok(exact);
+        }
+
+        let one = Self::new(Rational::one());
+        let radicand = one.clone() - self.clone().powi(BigInt::from(2_u8))?;
+        let denominator = radicand.sqrt().map_err(|problem| match problem {
+            Problem::SqrtNegative => Problem::NotANumber,
+            other => other,
+        })?;
+        (self / denominator)?.atan()
+    }
+
+    /// The inverse cosine of this Real, or [`Problem::NotANumber`] outside [-1, 1].
+    pub fn acos(self) -> Result<Real, Problem> {
+        if self == Self::new(Rational::one()) {
+            return Ok(Self::zero());
+        }
+        if self == Self::new(Rational::new(-1)) {
+            return Ok(Self::pi());
+        }
+        if let Some(asin) = self.asin_exact() {
+            return Ok(Self::pi_fraction(1, 2) - asin);
+        }
+
+        Ok(Self::pi_fraction(1, 2) - self.asin()?)
+    }
+
+    /// The inverse tangent of this Real.
+    pub fn atan(self) -> Result<Real, Problem> {
+        if let Some(exact) = self.atan_exact() {
+            return Ok(exact);
+        }
+
+        Ok(self.make_computable(Computable::atan))
+    }
+
+    /// The inverse hyperbolic sine of this Real.
+    pub fn asinh(self) -> Result<Real, Problem> {
+        let one = Self::new(Rational::one());
+        (self.clone() + (self.clone().powi(BigInt::from(2_u8))? + one).sqrt()?).ln()
+    }
+
+    /// The inverse hyperbolic cosine of this Real, or [`Problem::NotANumber`] for values < 1.
+    pub fn acosh(self) -> Result<Real, Problem> {
+        let one = Self::new(Rational::one());
+        let radicand = self.clone().powi(BigInt::from(2_u8))? - one;
+        let root = radicand.sqrt().map_err(|problem| match problem {
+            Problem::SqrtNegative => Problem::NotANumber,
+            other => other,
+        })?;
+        (self + root).ln()
+    }
+
+    /// The inverse hyperbolic tangent of this Real, or [`Problem::NotANumber`] outside (-1, 1).
+    pub fn atanh(self) -> Result<Real, Problem> {
+        let one = Self::new(Rational::one());
+        let numerator = one.clone() + self.clone();
+        let denominator = one - self;
+        Ok((numerator / denominator)?.ln()? * Self::new(Rational::fraction(1, 2).unwrap()))
+    }
+
     fn recursive_powi(base: &Real, exp: &BigUint) -> Self {
         let mut result = Self::new(Rational::one());
         let mut factor = base.clone();

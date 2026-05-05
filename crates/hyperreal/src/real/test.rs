@@ -403,4 +403,70 @@ mod tests {
             assert_eq!(answer, Rational::new(log));
         }
     }
+
+    #[test]
+    fn inverse_trig_exact_values() {
+        assert_eq!(
+            Real::new(Rational::fraction(1, 2).unwrap()).asin().unwrap(),
+            pi_fraction(1, 6)
+        );
+        assert_eq!(
+            Real::new(Rational::fraction(1, 2).unwrap()).acos().unwrap(),
+            pi_fraction(1, 3)
+        );
+        assert_eq!(
+            Real::new(Rational::new(1)).atan().unwrap(),
+            pi_fraction(1, 4)
+        );
+
+        let sine = pi_fraction(1, 5).sin();
+        assert_eq!(sine.asin().unwrap(), pi_fraction(1, 5));
+
+        let tangent = pi_fraction(1, 5).tan().unwrap();
+        assert_eq!(tangent.atan().unwrap(), pi_fraction(1, 5));
+    }
+
+    #[test]
+    fn inverse_trig_general_values() {
+        assert!(closest_f64(
+            Real::new(Rational::fraction(3, 10).unwrap())
+                .asin()
+                .unwrap(),
+            0.3046926540153975
+        ));
+        assert!(closest_f64(
+            Real::new(Rational::fraction(3, 10).unwrap())
+                .acos()
+                .unwrap(),
+            1.266103672779499
+        ));
+        assert!(closest_f64(
+            Real::new(Rational::new(2)).atan().unwrap(),
+            1.1071487177940904
+        ));
+    }
+
+    #[test]
+    fn inverse_hyperbolic_values() {
+        assert_eq!(Real::zero().asinh().unwrap(), Real::zero());
+        assert_eq!(Real::zero().atanh().unwrap(), Real::zero());
+        assert_eq!(Real::new(Rational::new(1)).acosh().unwrap(), Real::zero());
+
+        assert!(closest_f64(
+            Real::new(Rational::fraction(3, 10).unwrap())
+                .asinh()
+                .unwrap(),
+            0.29567304756342244
+        ));
+        assert!(closest_f64(
+            Real::new(Rational::new(2)).acosh().unwrap(),
+            1.3169578969248166
+        ));
+        assert!(closest_f64(
+            Real::new(Rational::fraction(3, 10).unwrap())
+                .atanh()
+                .unwrap(),
+            0.3095196042031117
+        ));
+    }
 }

@@ -52,14 +52,14 @@ The evaluator refactor plan lives in [`evaluator-refactor.md`](./evaluator-refac
 
 ```toml
 [dependencies]
-hyperreal = "0.9.1"
+hyperreal = "0.10.1"
 ```
 
 To build only the numeric library without the `Simple` expression parser:
 
 ```toml
 [dependencies]
-hyperreal = { version = "0.9.1", default-features = false }
+hyperreal = { version = "0.10.1", default-features = false }
 ```
 
 Cargo features:
@@ -140,7 +140,8 @@ let _: f64 = value.into();
 - arithmetic: `+`, `-`, `*`, `/`
 - roots and powers: `sqrt`, `pow`, `^`
 - logs and exponentials: `ln`, `log10`, `exp`, `e`
-- trig: `sin`, `cos`, `tan`
+- trig: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`
+- inverse hyperbolic: `asinh`, `acosh`, `atanh`
 
 Examples:
 

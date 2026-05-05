@@ -23,6 +23,7 @@ pub(super) enum Approximation {
     Sqrt(Computable),
     PrescaledLn(Computable),
     IntegralAtan(BigInt),
+    PrescaledAtan(Computable),
     PrescaledCos(Computable),
     PrescaledSin(Computable),
     PrescaledTan(Computable),
@@ -80,6 +81,7 @@ impl Approximation {
             Sqrt(c) => sqrt(signal, c, p),
             PrescaledLn(c) => ln(signal, c, p),
             IntegralAtan(i) => atan(signal, i, p),
+            PrescaledAtan(c) => atan_computable(signal, c, p),
             PrescaledCos(c) => cos(signal, c, p),
             PrescaledSin(c) => sin(signal, c, p),
             PrescaledTan(c) => tan(signal, c, p),
@@ -704,6 +706,37 @@ fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
         sign = -sign;
         let signed_n: BigInt = (n * sign).into();
         current_term = &current_power / signed_n;
+        sum += &current_term;
+    }
+
+    scale(sum, calc_precision - p)
+}
+
+// Approximate atan(c) for |c| < 1/2.
+fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let iterations_needed: i32 = -p / 2 + 4;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
+    let op_prec = calc_precision - 3;
+    let op_appr = c.approx_signal(signal, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    let mut current_term = scale(op_appr, op_prec - calc_precision);
+    let mut sum = current_term.clone();
+    let mut n = 1;
+
+    while current_term.abs() > max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+        current_term = scale(current_term * &op_squared, op_prec);
+        current_term *= -(n - 2);
+        current_term /= n;
         sum += &current_term;
     }
 
