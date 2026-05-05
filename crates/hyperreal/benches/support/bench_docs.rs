@@ -21,7 +21,7 @@ pub fn write_benchmark_docs(
     let path = root.join("benchmarks.md");
     let begin = format!("<!-- BEGIN {bench_binary} -->");
     let end = format!("<!-- END {bench_binary} -->");
-    let section = render_section(bench_binary, description, groups, &begin, &end);
+    let section = render_section(root, bench_binary, description, groups, &begin, &end);
     let current = fs::read_to_string(&path).unwrap_or_else(|_| default_document());
     let next = replace_section(&current, &begin, &end, &section);
 
@@ -34,12 +34,13 @@ fn default_document() -> String {
     [
         "# Benchmark Reference\n",
         "This file is updated by the Criterion benchmark binaries. Run `cargo bench` to refresh the benchmark output catalogue.\n",
-        "The timings themselves are emitted by Criterion under `target/criterion/`; this file documents the benchmark IDs and what each one measures.\n",
+        "Each table includes the latest Criterion mean and 95% confidence interval when results are available. Raw Criterion reports remain under `target/criterion/`.\n",
     ]
     .join("\n")
 }
 
 fn render_section(
+    root: &Path,
     bench_binary: &str,
     description: &str,
     groups: &[BenchGroupDoc],
@@ -57,12 +58,24 @@ fn render_section(
         out.push_str(&format!("### `{}`\n\n", group.name));
         out.push_str(group.description);
         out.push_str("\n\n");
-        out.push_str("| Benchmark output | What it measures |\n");
-        out.push_str("| --- | --- |\n");
+        out.push_str("| Benchmark output | Mean | 95% CI | What it measures |\n");
+        out.push_str("| --- | ---: | ---: | --- |\n");
         for bench in group.benches {
+            let estimate = read_estimate(root, group.name, bench.name);
+            let (mean, interval) = match estimate {
+                Some(estimate) => (
+                    format_duration(estimate.mean),
+                    format!(
+                        "{} - {}",
+                        format_duration(estimate.lower),
+                        format_duration(estimate.upper)
+                    ),
+                ),
+                None => ("not run".to_owned(), "not run".to_owned()),
+            };
             out.push_str(&format!(
-                "| `{}/{}` | {} |\n",
-                group.name, bench.name, bench.description
+                "| `{}/{}` | {} | {} | {} |\n",
+                group.name, bench.name, mean, interval, bench.description
             ));
         }
         out.push('\n');
@@ -71,6 +84,52 @@ fn render_section(
     out.push_str(end);
     out.push('\n');
     out
+}
+
+struct Estimate {
+    mean: f64,
+    lower: f64,
+    upper: f64,
+}
+
+fn read_estimate(root: &Path, group: &str, bench: &str) -> Option<Estimate> {
+    let path = root
+        .join("target")
+        .join("criterion")
+        .join(group)
+        .join(bench)
+        .join("new")
+        .join("estimates.json");
+    let json = fs::read_to_string(path).ok()?;
+    let mean_section = json.get(json.find("\"mean\":")?..)?;
+    let mean = extract_number_after(mean_section, "\"point_estimate\":")?;
+    let lower = extract_number_after(mean_section, "\"lower_bound\":")?;
+    let upper = extract_number_after(mean_section, "\"upper_bound\":")?;
+    Some(Estimate { mean, lower, upper })
+}
+
+fn extract_number_after(input: &str, marker: &str) -> Option<f64> {
+    let rest = input.get(input.find(marker)? + marker.len()..)?;
+    let start = rest.find(|c: char| c == '-' || c == '+' || c == '.' || c.is_ascii_digit())?;
+    let rest = &rest[start..];
+    let end = rest
+        .find(|c: char| {
+            !(c == '-' || c == '+' || c == '.' || c == 'e' || c == 'E' || c.is_ascii_digit())
+        })
+        .unwrap_or(rest.len());
+    rest[..end].parse().ok()
+}
+
+fn format_duration(nanos: f64) -> String {
+    if nanos < 1_000.0 {
+        format!("{nanos:.2} ns")
+    } else if nanos < 1_000_000.0 {
+        format!("{:.3} us", nanos / 1_000.0)
+    } else if nanos < 1_000_000_000.0 {
+        format!("{:.3} ms", nanos / 1_000_000.0)
+    } else {
+        format!("{:.3} s", nanos / 1_000_000_000.0)
+    }
 }
 
 fn replace_section(current: &str, begin: &str, end: &str, section: &str) -> String {
