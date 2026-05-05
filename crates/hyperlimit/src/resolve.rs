@@ -6,16 +6,22 @@ use crate::predicate::{
 use crate::scalar::{MagnitudeBounds, PredicateScalar};
 
 /// Resolve a scalar sign through the common predicate pipeline.
+///
+/// `exact` is the predicate-level exact evaluation hook. It should do actual
+/// exact determinant/sign work for the whole predicate, while scalar facts only
+/// certify signs that are already exposed by the computed scalar value.
 pub(crate) fn resolve_scalar_sign<S: PredicateScalar>(
     value: &S,
     policy: PredicatePolicy,
     filter: impl FnOnce() -> Option<PredicateOutcome<Sign>>,
+    exact: impl FnOnce() -> Option<Sign>,
     fallback: impl FnOnce() -> Option<PredicateOutcome<Sign>>,
     unknown_need: RefinementNeed,
 ) -> PredicateOutcome<Sign> {
     decide_scalar_sign(value, Escalation::Structural)
         .or_else(filter)
         .or_else(|| exact_scalar_sign_if_allowed(value, policy))
+        .or_else(|| exact_evaluation_if_allowed(policy, exact))
         .or_else(|| refine_scalar_sign_if_allowed(value, policy))
         .or_else(fallback)
         .or_else(|| approximate_if_allowed(value, policy))
@@ -85,6 +91,17 @@ fn exact_scalar_sign_if_allowed<S: PredicateScalar>(
         )),
         SignKnowledge::NonZero | SignKnowledge::Unknown => None,
     }
+}
+
+fn exact_evaluation_if_allowed(
+    policy: PredicatePolicy,
+    exact: impl FnOnce() -> Option<Sign>,
+) -> Option<PredicateOutcome<Sign>> {
+    if !policy.allow_exact {
+        return None;
+    }
+
+    exact().map(|sign| PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact))
 }
 
 fn refine_scalar_sign_if_allowed<S: PredicateScalar>(
@@ -180,6 +197,7 @@ fn multiply_sign(left: Sign, right: Sign) -> Sign {
 
 #[cfg(test)]
 mod tests {
+    use core::cell::Cell;
     use core::ops::{Add, Mul, Sub};
 
     use super::*;
@@ -210,6 +228,20 @@ mod tests {
                     Sign::Zero => 0.0,
                     Sign::Positive => abs_lower,
                 },
+            }
+        }
+
+        fn exact_without_known_sign(value: f64) -> Self {
+            Self {
+                facts: ScalarFacts {
+                    sign: None,
+                    exact_zero: Some(false),
+                    provably_nonzero: None,
+                    exact: Some(true),
+                    rational_only: Some(true),
+                    magnitude: Some(MagnitudeBounds::exact(value.abs())),
+                },
+                value,
             }
         }
     }
@@ -272,5 +304,51 @@ mod tests {
                 Escalation::Filter
             ))
         );
+    }
+
+    #[test]
+    fn resolve_scalar_sign_uses_exact_evaluation_callback() {
+        let value = FactScalar::exact_without_known_sign(3.0);
+
+        assert_eq!(
+            resolve_scalar_sign(
+                &value,
+                PredicatePolicy::STRICT,
+                || None,
+                || Some(Sign::Positive),
+                || None,
+                RefinementNeed::ExactArithmetic,
+            ),
+            PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
+        );
+    }
+
+    #[test]
+    fn resolve_scalar_sign_does_not_call_exact_evaluation_when_policy_disallows_exact() {
+        let value = FactScalar::exact_without_known_sign(3.0);
+        let called = Cell::new(false);
+        let policy = PredicatePolicy {
+            allow_exact: false,
+            allow_refinement: false,
+            allow_robust_fallback: false,
+            allow_approximate: false,
+            ..PredicatePolicy::STRICT
+        };
+
+        assert_eq!(
+            resolve_scalar_sign(
+                &value,
+                policy,
+                || None,
+                || {
+                    called.set(true);
+                    Some(Sign::Positive)
+                },
+                || None,
+                RefinementNeed::ExactArithmetic,
+            ),
+            PredicateOutcome::unknown(RefinementNeed::ExactArithmetic, Escalation::Undecided)
+        );
+        assert!(!called.get());
     }
 }

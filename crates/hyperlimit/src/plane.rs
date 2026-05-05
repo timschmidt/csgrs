@@ -49,6 +49,7 @@ pub fn classify_point_plane_with_policy<S: PredicateScalar>(
                     .map(|outcome| map_outcome(outcome, sign_from_plane_side))
             },
             || None,
+            || None,
             RefinementNeed::ScalarRefinement,
         ),
         PlaneSide::from,

@@ -66,6 +66,7 @@ pub fn orient2d_with_policy<S: PredicateScalar>(
             signed_term_filter(&[(&left, Sign::Positive), (&right, Sign::Negative)])
                 .or_else(|| orient2d_filter(&abx, &aby, &acx, &acy))
         },
+        || exact_orient2d(a, b, c),
         || fallback_orient2d_if_allowed(a, b, c, policy),
         RefinementNeed::RobustFallback,
     )
@@ -116,6 +117,7 @@ pub fn orient3d_with_policy<S: PredicateScalar>(
             ])
             .or_else(|| orient3d_filter(&adx, &ady, &adz, &bdx, &bdy, &bdz, &cdx, &cdy, &cdz))
         },
+        || exact_orient3d(a, b, c, d),
         || fallback_orient3d_if_allowed(a, b, c, d, policy),
         RefinementNeed::RobustFallback,
     )
@@ -191,6 +193,7 @@ pub fn incircle2d_with_policy<S: PredicateScalar>(
         &det,
         policy,
         || None,
+        || exact_incircle2d(a, b, c, d),
         || fallback_incircle2d_if_allowed(a, b, c, d, policy),
         RefinementNeed::RobustFallback,
     )
@@ -258,9 +261,46 @@ pub fn insphere3d_with_policy<S: PredicateScalar>(
         &det,
         policy,
         || signed_term_filter(&[(&left, Sign::Positive), (&right, Sign::Negative)]),
+        || exact_insphere3d(a, b, c, d, e),
         || fallback_insphere3d_if_allowed(a, b, c, d, e, policy),
         RefinementNeed::RobustFallback,
     )
+}
+
+fn exact_orient2d<S: PredicateScalar>(
+    _a: &Point2<S>,
+    _b: &Point2<S>,
+    _c: &Point2<S>,
+) -> Option<Sign> {
+    None
+}
+
+fn exact_orient3d<S: PredicateScalar>(
+    _a: &Point3<S>,
+    _b: &Point3<S>,
+    _c: &Point3<S>,
+    _d: &Point3<S>,
+) -> Option<Sign> {
+    None
+}
+
+fn exact_incircle2d<S: PredicateScalar>(
+    _a: &Point2<S>,
+    _b: &Point2<S>,
+    _c: &Point2<S>,
+    _d: &Point2<S>,
+) -> Option<Sign> {
+    None
+}
+
+fn exact_insphere3d<S: PredicateScalar>(
+    _a: &Point3<S>,
+    _b: &Point3<S>,
+    _c: &Point3<S>,
+    _d: &Point3<S>,
+    _e: &Point3<S>,
+) -> Option<Sign> {
+    None
 }
 
 #[cfg(feature = "robust")]

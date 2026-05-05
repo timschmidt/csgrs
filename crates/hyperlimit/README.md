@@ -145,11 +145,13 @@ The shared sign-resolution path attempts stages in this order:
 
 1. Ask the scalar or final intermediate value for a structural sign.
 2. Run predicate-specific structural term and conservative numeric filters.
-3. Use exact/rational scalar facts when allowed by policy.
-4. Ask the scalar to refine its sign when allowed by policy.
-5. Use robust backend fallback when available and allowed by policy.
-6. Return an approximate sign only if the policy explicitly allows it.
-7. Otherwise return `PredicateOutcome::Unknown`.
+3. Use exact/rational scalar sign facts when allowed by policy.
+4. Use an exact predicate backend evaluation hook when available and allowed by
+   policy.
+5. Ask the scalar to refine its sign when allowed by policy.
+6. Use robust backend fallback when available and allowed by policy.
+7. Return an approximate sign only if the policy explicitly allows it.
+8. Otherwise return `PredicateOutcome::Unknown`.
 
 The default policy is `PredicatePolicy::STRICT`, which does not return
 approximate topology. `PredicatePolicy::APPROXIMATE` is useful for previews and
