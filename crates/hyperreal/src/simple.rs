@@ -839,6 +839,39 @@ mod tests {
     }
 
     #[test]
+    fn inverse_function_domain_errors_propagate() {
+        let empty = HashMap::new();
+        for case in [
+            "(asin 11/10)",
+            "(acos -11/10)",
+            "(asin (sqrt 2))",
+            "(acos (sqrt 2))",
+            "(acosh 0)",
+            "(acosh -2)",
+            "(atanh 1)",
+            "(atanh -1)",
+            "(atanh (sqrt 2))",
+        ] {
+            let xpr: Simple = case.parse().unwrap();
+            assert_eq!(xpr.evaluate(&empty), Err(Problem::NotANumber), "{case}");
+        }
+    }
+
+    #[test]
+    fn inverse_function_nested_valid_values_evaluate() {
+        let empty = HashMap::new();
+        for (case, expected) in [
+            ("(asinh (sqrt 2))", "1.14621583478058884390039365567401e0"),
+            ("(acosh (sqrt 2))", "8.81373587019543025232609324979792e-1"),
+            ("(atanh -1/2)", "-5.49306144334054845697622618461263e-1"),
+        ] {
+            let xpr: Simple = case.parse().unwrap();
+            let result = xpr.evaluate(&empty).unwrap();
+            assert_eq!(format!("{result:.32e}"), expected, "{case}");
+        }
+    }
+
+    #[test]
     fn nested_exact_subexpressions() {
         let empty = HashMap::new();
         let xpr: Simple = "(/ (* (+ 1/2 1/3) (- 7/5 2/5)) (+ 1/7 2/7))"

@@ -559,10 +559,25 @@ mod tests {
         for value in [
             Real::zero(),
             Real::new(Rational::fraction(1, 2).unwrap()),
+            Real::new(Rational::fraction(1, 2).unwrap())
+                * Real::new(Rational::new(2)).sqrt().unwrap(),
+            -Real::new(Rational::new(2)).sqrt().unwrap(),
             Real::new(Rational::new(-2)),
         ] {
             assert_eq!(value.acosh(), Err(Problem::NotANumber));
         }
+
+        assert!(closest_f64(
+            (Real::new(Rational::fraction(1, 2).unwrap())
+                * Real::new(Rational::new(2)).sqrt().unwrap())
+            .atanh()
+            .unwrap(),
+            0.881373587019543
+        ));
+        assert_eq!(
+            Real::new(Rational::new(2)).sqrt().unwrap().atanh(),
+            Err(Problem::NotANumber)
+        );
     }
 
     #[test]

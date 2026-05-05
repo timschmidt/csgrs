@@ -473,6 +473,30 @@ fn bench_simple_inverse_functions(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_simple_inverse_error_functions(c: &mut Criterion) {
+    let mut group = c.benchmark_group("simple_inverse_error_functions");
+    let expressions: [(&str, Simple); 6] = [
+        ("asin_11_10", "(asin 11/10)".parse().unwrap()),
+        ("acos_sqrt_2", "(acos (sqrt 2))".parse().unwrap()),
+        ("acosh_0", "(acosh 0)".parse().unwrap()),
+        ("acosh_minus_2", "(acosh -2)".parse().unwrap()),
+        ("atanh_1", "(atanh 1)".parse().unwrap()),
+        ("atanh_sqrt_2", "(atanh (sqrt 2))".parse().unwrap()),
+    ];
+
+    for (name, expr) in expressions {
+        group.bench_function(name, |b| {
+            b.iter_batched(
+                || expr.clone(),
+                |expr| black_box(expr.evaluate(&Default::default()).unwrap_err()),
+                BatchSize::SmallInput,
+            )
+        });
+    }
+
+    group.finish();
+}
+
 fn bench_real_exact_ln(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_exact_ln");
     let ln_1024 = Real::new(Rational::new(1024));
@@ -556,6 +580,7 @@ criterion_group!(
     bench_real_general_inverse_trig,
     bench_real_inverse_hyperbolic,
     bench_simple_inverse_functions,
+    bench_simple_inverse_error_functions,
     bench_real_exact_ln,
     bench_real_exact_exp_log10
 );

@@ -1098,6 +1098,11 @@ impl Real {
                 value.multiply(denominator.inverse()).atan()
             }));
         }
+        if let Sqrt(r) = &self.class
+            && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
+        {
+            return Err(Problem::NotANumber);
+        }
 
         let one = Self::new(Rational::one());
         let radicand = one.clone() - self.clone().powi(BigInt::from(2_u8))?;
@@ -1210,6 +1215,11 @@ impl Real {
             let one = Rational::one();
             let ratio = (one.clone() + self.rational.clone()) / (one - self.rational);
             return Ok(Self::ln_rational(ratio)? * Self::new(Rational::fraction(1, 2).unwrap()));
+        }
+        if let Sqrt(r) = &self.class
+            && self.rational.clone() * self.rational.clone() * r.clone() >= *rationals::ONE
+        {
+            return Err(Problem::NotANumber);
         }
         let one = Self::new(Rational::one());
         let numerator = one.clone() + self.clone();
