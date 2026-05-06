@@ -18,26 +18,11 @@ pub const CAPABILITIES: BackendCapabilities = BackendCapabilities {
 
 impl<B: realistic_blas::Backend> StructuralScalar for realistic_blas::Scalar<B> {
     fn scalar_facts(&self) -> ScalarFacts {
-        let facts = self.structural_facts();
-        ScalarFacts {
-            sign: facts.sign.map(map_sign),
-            exact_zero: Some(matches!(facts.zero, realistic_blas::ZeroStatus::Zero)),
-            provably_nonzero: match facts.zero {
-                realistic_blas::ZeroStatus::Zero => Some(false),
-                realistic_blas::ZeroStatus::NonZero => Some(true),
-                realistic_blas::ZeroStatus::Unknown => None,
-            },
-            exact: Some(facts.exact_rational),
-            rational_only: Some(facts.exact_rational),
-            magnitude: facts.magnitude.and_then(map_magnitude),
-        }
+        scalar_facts_from_realistic_blas(self.structural_facts())
     }
 
     fn known_sign(&self) -> SignKnowledge {
-        match self.structural_facts().sign {
-            Some(sign) => SignKnowledge::exact(map_sign(sign)),
-            None => self.scalar_facts().sign_knowledge(),
-        }
+        scalar_facts_from_realistic_blas(self.structural_facts()).sign_knowledge()
     }
 
     fn refine_sign_until(&self, min_precision: i32) -> SignKnowledge {
@@ -48,8 +33,14 @@ impl<B: realistic_blas::Backend> StructuralScalar for realistic_blas::Scalar<B> 
 }
 
 impl<B: realistic_blas::Backend> PredicateScalar for realistic_blas::Scalar<B> {
+    #[inline]
     fn to_f64(&self) -> Option<f64> {
         self.to_f64_approx()
+    }
+
+    #[inline(always)]
+    fn prefer_f64_filter_before_arithmetic() -> bool {
+        true
     }
 }
 
@@ -63,6 +54,21 @@ fn map_sign(sign: realistic_blas::ScalarSign) -> Sign {
 
 fn map_magnitude(magnitude: realistic_blas::ScalarMagnitudeBits) -> Option<MagnitudeBounds> {
     magnitude_bits_to_bounds_local(magnitude.msd, magnitude.exact_msd)
+}
+
+fn scalar_facts_from_realistic_blas(facts: realistic_blas::ScalarFacts) -> ScalarFacts {
+    ScalarFacts {
+        sign: facts.sign.map(map_sign),
+        exact_zero: Some(matches!(facts.zero, realistic_blas::ZeroStatus::Zero)),
+        provably_nonzero: match facts.zero {
+            realistic_blas::ZeroStatus::Zero => Some(false),
+            realistic_blas::ZeroStatus::NonZero => Some(true),
+            realistic_blas::ZeroStatus::Unknown => None,
+        },
+        exact: Some(facts.exact_rational),
+        rational_only: Some(facts.exact_rational),
+        magnitude: facts.magnitude.and_then(map_magnitude),
+    }
 }
 
 #[cfg(feature = "hyperreal")]

@@ -35,6 +35,12 @@ pub fn classify_point_plane_with_policy<S: BorrowedPredicateScalar>(
     plane: &Plane3<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSide> {
+    if S::prefer_f64_filter_before_arithmetic()
+        && let Some(outcome) = classify_point_plane_filter(point, plane)
+    {
+        return outcome;
+    }
+
     let x_term = mul(&plane.normal.x, &point.x);
     let y_term = mul(&plane.normal.y, &point.y);
     let z_term = mul(&plane.normal.z, &point.z);

@@ -9,6 +9,10 @@ use predicated::{
 
 const BATCH: usize = 512;
 
+type Orient3Case<S> = (Point3<S>, Point3<S>, Point3<S>, Point3<S>);
+type Incircle2Case<S> = (Point2<S>, Point2<S>, Point2<S>, Point2<S>);
+type Insphere3Case<S> = (Point3<S>, Point3<S>, Point3<S>, Point3<S>, Point3<S>);
+
 #[derive(Clone, Copy)]
 enum Workload {
     Easy,
@@ -332,10 +336,7 @@ fn orient2d_cases<S>(
     cases
 }
 
-fn orient3d_cases<S>(
-    workload: Workload,
-    scalar: fn(f64) -> S,
-) -> Vec<(Point3<S>, Point3<S>, Point3<S>, Point3<S>)> {
+fn orient3d_cases<S>(workload: Workload, scalar: fn(f64) -> S) -> Vec<Orient3Case<S>> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
         let t = unit(i);
@@ -388,10 +389,7 @@ fn explicit_plane_cases<S>(
     cases
 }
 
-fn oriented_plane_cases<S>(
-    workload: Workload,
-    scalar: fn(f64) -> S,
-) -> Vec<(Point3<S>, Point3<S>, Point3<S>, Point3<S>)>
+fn oriented_plane_cases<S>(workload: Workload, scalar: fn(f64) -> S) -> Vec<Orient3Case<S>>
 where
     S: Clone,
 {
@@ -416,10 +414,7 @@ where
     cases
 }
 
-fn incircle2d_cases<S>(
-    workload: Workload,
-    scalar: fn(f64) -> S,
-) -> Vec<(Point2<S>, Point2<S>, Point2<S>, Point2<S>)>
+fn incircle2d_cases<S>(workload: Workload, scalar: fn(f64) -> S) -> Vec<Incircle2Case<S>>
 where
     S: Clone,
 {
@@ -428,7 +423,7 @@ where
     let c = point2(-0.82, 0.0, scalar);
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
-        let theta = 6.283_185_307_179_586 * unit(i);
+        let theta = std::f64::consts::TAU * unit(i);
         let r = match workload {
             Workload::Easy => 0.35 + 0.45 * unit(i.wrapping_mul(11).wrapping_add(1)),
             Workload::NearDegenerate => 0.82 + alternating_eps(i, 1.0e-12),
@@ -439,10 +434,7 @@ where
     cases
 }
 
-fn insphere3d_cases<S>(
-    workload: Workload,
-    scalar: fn(f64) -> S,
-) -> Vec<(Point3<S>, Point3<S>, Point3<S>, Point3<S>, Point3<S>)>
+fn insphere3d_cases<S>(workload: Workload, scalar: fn(f64) -> S) -> Vec<Insphere3Case<S>>
 where
     S: Clone,
 {
@@ -452,7 +444,7 @@ where
     let d = point3(0.0, 0.0, 0.82, scalar);
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
-        let theta = 6.283_185_307_179_586 * unit(i);
+        let theta = std::f64::consts::TAU * unit(i);
         let z = -0.6 + 1.2 * unit(i.wrapping_mul(37).wrapping_add(13));
         let r = match workload {
             Workload::Easy => 0.25 + 0.35 * unit(i.wrapping_mul(7).wrapping_add(1)),
@@ -563,7 +555,7 @@ fn unit(index: usize) -> f64 {
 }
 
 fn alternating_eps(index: usize, magnitude: f64) -> f64 {
-    if index % 2 == 0 {
+    if index.is_multiple_of(2) {
         magnitude
     } else {
         -magnitude

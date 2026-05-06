@@ -92,6 +92,13 @@ pub trait PredicateScalar:
 {
     /// Convert to `f64` for cheap filters. Returning `None` disables that stage.
     fn to_f64(&self) -> Option<f64>;
+
+    /// Whether predicate kernels should try `f64` filters before constructing
+    /// scalar arithmetic expressions.
+    #[inline]
+    fn prefer_f64_filter_before_arithmetic() -> bool {
+        false
+    }
 }
 
 /// Predicate scalar with borrowed arithmetic.
@@ -127,7 +134,7 @@ where
 }
 
 macro_rules! impl_float_scalar {
-    ($ty:ty) => {
+    ($ty:ty, $prefer_filter:expr) => {
         impl StructuralScalar for $ty {
             fn scalar_facts(&self) -> ScalarFacts {
                 ScalarFacts {
@@ -146,6 +153,7 @@ macro_rules! impl_float_scalar {
         }
 
         impl PredicateScalar for $ty {
+            #[inline]
             fn to_f64(&self) -> Option<f64> {
                 if self.is_nan() {
                     None
@@ -153,9 +161,14 @@ macro_rules! impl_float_scalar {
                     Some(*self as f64)
                 }
             }
+
+            #[inline(always)]
+            fn prefer_f64_filter_before_arithmetic() -> bool {
+                $prefer_filter
+            }
         }
     };
 }
 
-impl_float_scalar!(f32);
-impl_float_scalar!(f64);
+impl_float_scalar!(f32, false);
+impl_float_scalar!(f64, false);

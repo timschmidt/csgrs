@@ -372,6 +372,7 @@ fn copy_f64_zoom_aliases(
 }
 
 #[cfg(any(feature = "hyperreal", feature = "realistic-blas"))]
+#[allow(clippy::too_many_arguments)]
 fn render_scalar_plots<S>(
     out_dir: &Path,
     size: usize,
@@ -603,6 +604,7 @@ fn render_interval_plots(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn write_plot_pair(
     out_dir: &Path,
     size: usize,

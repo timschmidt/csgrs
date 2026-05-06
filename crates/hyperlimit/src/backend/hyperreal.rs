@@ -16,26 +16,11 @@ pub const CAPABILITIES: BackendCapabilities = BackendCapabilities {
 
 impl StructuralScalar for hyperreal::Real {
     fn scalar_facts(&self) -> ScalarFacts {
-        let facts = self.structural_facts();
-        ScalarFacts {
-            sign: facts.sign.map(map_sign),
-            exact_zero: Some(matches!(facts.zero, hyperreal::ZeroKnowledge::Zero)),
-            provably_nonzero: match facts.zero {
-                hyperreal::ZeroKnowledge::Zero => Some(false),
-                hyperreal::ZeroKnowledge::NonZero => Some(true),
-                hyperreal::ZeroKnowledge::Unknown => None,
-            },
-            exact: Some(facts.exact_rational),
-            rational_only: Some(facts.exact_rational),
-            magnitude: facts.magnitude.and_then(map_magnitude),
-        }
+        scalar_facts_from_hyperreal(self.structural_facts())
     }
 
     fn known_sign(&self) -> SignKnowledge {
-        match self.structural_facts().sign {
-            Some(sign) => SignKnowledge::exact(map_sign(sign)),
-            None => self.scalar_facts().sign_knowledge(),
-        }
+        scalar_facts_from_hyperreal(self.structural_facts()).sign_knowledge()
     }
 
     fn refine_sign_until(&self, min_precision: i32) -> SignKnowledge {
@@ -46,8 +31,14 @@ impl StructuralScalar for hyperreal::Real {
 }
 
 impl PredicateScalar for hyperreal::Real {
+    #[inline]
     fn to_f64(&self) -> Option<f64> {
         self.to_f64_approx()
+    }
+
+    #[inline(always)]
+    fn prefer_f64_filter_before_arithmetic() -> bool {
+        true
     }
 }
 
@@ -61,6 +52,21 @@ fn map_sign(sign: hyperreal::RealSign) -> Sign {
 
 fn map_magnitude(magnitude: hyperreal::MagnitudeBits) -> Option<MagnitudeBounds> {
     magnitude_bits_to_bounds(magnitude.msd, magnitude.exact_msd)
+}
+
+fn scalar_facts_from_hyperreal(facts: hyperreal::RealStructuralFacts) -> ScalarFacts {
+    ScalarFacts {
+        sign: facts.sign.map(map_sign),
+        exact_zero: Some(matches!(facts.zero, hyperreal::ZeroKnowledge::Zero)),
+        provably_nonzero: match facts.zero {
+            hyperreal::ZeroKnowledge::Zero => Some(false),
+            hyperreal::ZeroKnowledge::NonZero => Some(true),
+            hyperreal::ZeroKnowledge::Unknown => None,
+        },
+        exact: Some(facts.exact_rational),
+        rational_only: Some(facts.exact_rational),
+        magnitude: facts.magnitude.and_then(map_magnitude),
+    }
 }
 
 pub(crate) fn magnitude_bits_to_bounds(msd: i32, exact_msd: bool) -> Option<MagnitudeBounds> {

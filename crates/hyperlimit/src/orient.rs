@@ -51,6 +51,12 @@ pub fn orient2d_with_policy<S: BorrowedPredicateScalar>(
     c: &Point2<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
+    if S::prefer_f64_filter_before_arithmetic()
+        && let Some(outcome) = orient2d_point_filter(a, b, c)
+    {
+        return outcome;
+    }
+
     let abx = sub(&b.x, &a.x);
     let aby = sub(&b.y, &a.y);
     let acx = sub(&c.x, &a.x);
@@ -91,6 +97,12 @@ pub fn orient3d_with_policy<S: BorrowedPredicateScalar>(
     d: &Point3<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
+    if S::prefer_f64_filter_before_arithmetic()
+        && let Some(outcome) = orient3d_point_filter(a, b, c, d)
+    {
+        return outcome;
+    }
+
     let adx = sub(&a.x, &d.x);
     let ady = sub(&a.y, &d.y);
     let adz = sub(&a.z, &d.z);
@@ -181,6 +193,12 @@ pub fn incircle2d_with_policy<S: BorrowedPredicateScalar>(
     d: &Point2<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
+    if S::prefer_f64_filter_before_arithmetic()
+        && let Some(outcome) = incircle2d_point_filter(a, b, c, d)
+    {
+        return outcome;
+    }
+
     let adx = sub(&a.x, &d.x);
     let ady = sub(&a.y, &d.y);
     let bdx = sub(&b.x, &d.x);
@@ -250,6 +268,12 @@ pub fn insphere3d_with_policy<S: BorrowedPredicateScalar>(
     e: &Point3<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
+    if S::prefer_f64_filter_before_arithmetic()
+        && let Some(outcome) = insphere3d_point_filter(a, b, c, d, e)
+    {
+        return outcome;
+    }
+
     let aex = sub(&a.x, &e.x);
     let bex = sub(&b.x, &e.x);
     let cex = sub(&c.x, &e.x);
@@ -615,7 +639,40 @@ fn orient2d_filter<S: PredicateScalar>(
 
     let det = abx.mul_add(acy, -(aby * acx));
     let scale = abx.abs() * acy.abs() + aby.abs() * acx.abs();
-    match det_sign_filter(det, scale, 8.0) {
+    sign_filter_outcome(det, scale, 8.0)
+}
+
+fn orient2d_point_filter<S: PredicateScalar>(
+    a: &Point2<S>,
+    b: &Point2<S>,
+    c: &Point2<S>,
+) -> Option<PredicateOutcome<Sign>> {
+    let ax = a.x.to_f64()?;
+    let ay = a.y.to_f64()?;
+    let bx = b.x.to_f64()?;
+    let by = b.y.to_f64()?;
+    let cx = c.x.to_f64()?;
+    let cy = c.y.to_f64()?;
+
+    let abx = bx - ax;
+    let aby = by - ay;
+    let acx = cx - ax;
+    let acy = cy - ay;
+    orient2d_float_filter(abx, aby, acx, acy)
+}
+
+fn orient2d_float_filter(abx: f64, aby: f64, acx: f64, acy: f64) -> Option<PredicateOutcome<Sign>> {
+    let det = abx.mul_add(acy, -(aby * acx));
+    let scale = abx.abs() * acy.abs() + aby.abs() * acx.abs();
+    sign_filter_outcome(det, scale, 8.0)
+}
+
+fn sign_filter_outcome(
+    det: f64,
+    scale: f64,
+    epsilon_multiplier: f64,
+) -> Option<PredicateOutcome<Sign>> {
+    match det_sign_filter(det, scale, epsilon_multiplier) {
         SignKnowledge::Known { sign, certainty } => Some(PredicateOutcome::decided(
             sign,
             certainty,
@@ -647,6 +704,54 @@ fn orient3d_filter<S: PredicateScalar>(
     let cdy = cdy.to_f64()?;
     let cdz = cdz.to_f64()?;
 
+    orient3d_float_filter(adx, ady, adz, bdx, bdy, bdz, cdx, cdy, cdz)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn orient3d_point_filter<S: PredicateScalar>(
+    a: &Point3<S>,
+    b: &Point3<S>,
+    c: &Point3<S>,
+    d: &Point3<S>,
+) -> Option<PredicateOutcome<Sign>> {
+    let ax = a.x.to_f64()?;
+    let ay = a.y.to_f64()?;
+    let az = a.z.to_f64()?;
+    let bx = b.x.to_f64()?;
+    let by = b.y.to_f64()?;
+    let bz = b.z.to_f64()?;
+    let cx = c.x.to_f64()?;
+    let cy = c.y.to_f64()?;
+    let cz = c.z.to_f64()?;
+    let dx = d.x.to_f64()?;
+    let dy = d.y.to_f64()?;
+    let dz = d.z.to_f64()?;
+
+    orient3d_float_filter(
+        ax - dx,
+        ay - dy,
+        az - dz,
+        bx - dx,
+        by - dy,
+        bz - dz,
+        cx - dx,
+        cy - dy,
+        cz - dz,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn orient3d_float_filter(
+    adx: f64,
+    ady: f64,
+    adz: f64,
+    bdx: f64,
+    bdy: f64,
+    bdz: f64,
+    cdx: f64,
+    cdy: f64,
+    cdz: f64,
+) -> Option<PredicateOutcome<Sign>> {
     let bdxcdy = bdx * cdy;
     let cdxbdy = cdx * bdy;
     let cdxady = cdx * ady;
@@ -659,14 +764,115 @@ fn orient3d_filter<S: PredicateScalar>(
         + bdz.abs() * (cdxady.abs() + adxcdy.abs())
         + cdz.abs() * (adxbdy.abs() + bdxady.abs());
 
-    match det_sign_filter(det, scale, 32.0) {
-        SignKnowledge::Known { sign, certainty } => Some(PredicateOutcome::decided(
-            sign,
-            certainty,
-            Escalation::Filter,
-        )),
-        SignKnowledge::NonZero | SignKnowledge::Unknown => None,
-    }
+    sign_filter_outcome(det, scale, 32.0)
+}
+
+fn incircle2d_point_filter<S: PredicateScalar>(
+    a: &Point2<S>,
+    b: &Point2<S>,
+    c: &Point2<S>,
+    d: &Point2<S>,
+) -> Option<PredicateOutcome<Sign>> {
+    let ax = a.x.to_f64()?;
+    let ay = a.y.to_f64()?;
+    let bx = b.x.to_f64()?;
+    let by = b.y.to_f64()?;
+    let cx = c.x.to_f64()?;
+    let cy = c.y.to_f64()?;
+    let dx = d.x.to_f64()?;
+    let dy = d.y.to_f64()?;
+
+    let adx = ax - dx;
+    let ady = ay - dy;
+    let bdx = bx - dx;
+    let bdy = by - dy;
+    let cdx = cx - dx;
+    let cdy = cy - dy;
+
+    let alift = adx * adx + ady * ady;
+    let blift = bdx * bdx + bdy * bdy;
+    let clift = cdx * cdx + cdy * cdy;
+
+    let bdx_cdy = bdx * cdy;
+    let cdx_bdy = cdx * bdy;
+    let cdx_ady = cdx * ady;
+    let adx_cdy = adx * cdy;
+    let adx_bdy = adx * bdy;
+    let bdx_ady = bdx * ady;
+
+    let term_a = alift * (bdx_cdy - cdx_bdy);
+    let term_b = blift * (cdx_ady - adx_cdy);
+    let term_c = clift * (adx_bdy - bdx_ady);
+    let det = term_a + term_b + term_c;
+    let scale = alift.abs() * (bdx_cdy.abs() + cdx_bdy.abs())
+        + blift.abs() * (cdx_ady.abs() + adx_cdy.abs())
+        + clift.abs() * (adx_bdy.abs() + bdx_ady.abs());
+
+    sign_filter_outcome(det, scale, 64.0)
+}
+
+fn insphere3d_point_filter<S: PredicateScalar>(
+    a: &Point3<S>,
+    b: &Point3<S>,
+    c: &Point3<S>,
+    d: &Point3<S>,
+    e: &Point3<S>,
+) -> Option<PredicateOutcome<Sign>> {
+    let ax = a.x.to_f64()?;
+    let ay = a.y.to_f64()?;
+    let az = a.z.to_f64()?;
+    let bx = b.x.to_f64()?;
+    let by = b.y.to_f64()?;
+    let bz = b.z.to_f64()?;
+    let cx = c.x.to_f64()?;
+    let cy = c.y.to_f64()?;
+    let cz = c.z.to_f64()?;
+    let dx = d.x.to_f64()?;
+    let dy = d.y.to_f64()?;
+    let dz = d.z.to_f64()?;
+    let ex = e.x.to_f64()?;
+    let ey = e.y.to_f64()?;
+    let ez = e.z.to_f64()?;
+
+    let aex = ax - ex;
+    let bex = bx - ex;
+    let cex = cx - ex;
+    let dex = dx - ex;
+    let aey = ay - ey;
+    let bey = by - ey;
+    let cey = cy - ey;
+    let dey = dy - ey;
+    let aez = az - ez;
+    let bez = bz - ez;
+    let cez = cz - ez;
+    let dez = dz - ez;
+
+    let ab = aex * bey - bex * aey;
+    let bc = bex * cey - cex * bey;
+    let cd = cex * dey - dex * cey;
+    let da = dex * aey - aex * dey;
+    let ac = aex * cey - cex * aey;
+    let bd = bex * dey - dex * bey;
+
+    let abc = aez * bc - bez * ac + cez * ab;
+    let bcd = bez * cd - cez * bd + dez * bc;
+    let cda = cez * da + dez * ac + aez * cd;
+    let dab = dez * ab + aez * bd + bez * da;
+
+    let alift = aex * aex + aey * aey + aez * aez;
+    let blift = bex * bex + bey * bey + bez * bez;
+    let clift = cex * cex + cey * cey + cez * cez;
+    let dlift = dex * dex + dey * dey + dez * dez;
+
+    let left = dlift * abc + blift * cda;
+    let right = clift * dab + alift * bcd;
+    let det = left - right;
+    let scale = dlift.abs() * abc.abs()
+        + blift.abs() * cda.abs()
+        + clift.abs() * dab.abs()
+        + alift.abs() * bcd.abs();
+
+    sign_filter_outcome(det, scale, 256.0)
 }
 
 #[cfg(test)]
@@ -690,17 +896,32 @@ mod tests {
     struct CloneCountingScalar {
         value: f64,
         clones: Rc<Cell<usize>>,
+        ops: Rc<Cell<usize>>,
     }
 
     impl CloneCountingScalar {
         fn new(value: f64, clones: Rc<Cell<usize>>) -> Self {
-            Self { value, clones }
-        }
-
-        fn derived(value: f64, clones: &Rc<Cell<usize>>) -> Self {
             Self {
                 value,
-                clones: Rc::clone(clones),
+                clones,
+                ops: Rc::new(Cell::new(0)),
+            }
+        }
+
+        fn with_ops(value: f64, ops: Rc<Cell<usize>>) -> Self {
+            Self {
+                value,
+                clones: Rc::new(Cell::new(0)),
+                ops,
+            }
+        }
+
+        fn derived_from(value: f64, source: &Self) -> Self {
+            source.ops.set(source.ops.get() + 1);
+            Self {
+                value,
+                clones: Rc::clone(&source.clones),
+                ops: Rc::clone(&source.ops),
             }
         }
     }
@@ -708,7 +929,11 @@ mod tests {
     impl Clone for CloneCountingScalar {
         fn clone(&self) -> Self {
             self.clones.set(self.clones.get() + 1);
-            Self::derived(self.value, &self.clones)
+            Self {
+                value: self.value,
+                clones: Rc::clone(&self.clones),
+                ops: Rc::clone(&self.ops),
+            }
         }
     }
 
@@ -729,13 +954,17 @@ mod tests {
         fn to_f64(&self) -> Option<f64> {
             Some(self.value)
         }
+
+        fn prefer_f64_filter_before_arithmetic() -> bool {
+            true
+        }
     }
 
     impl Add for CloneCountingScalar {
         type Output = Self;
 
         fn add(self, rhs: Self) -> Self::Output {
-            Self::derived(self.value + rhs.value, &self.clones)
+            Self::derived_from(self.value + rhs.value, &self)
         }
     }
 
@@ -743,7 +972,7 @@ mod tests {
         type Output = Self;
 
         fn sub(self, rhs: Self) -> Self::Output {
-            Self::derived(self.value - rhs.value, &self.clones)
+            Self::derived_from(self.value - rhs.value, &self)
         }
     }
 
@@ -751,7 +980,7 @@ mod tests {
         type Output = Self;
 
         fn mul(self, rhs: Self) -> Self::Output {
-            Self::derived(self.value * rhs.value, &self.clones)
+            Self::derived_from(self.value * rhs.value, &self)
         }
     }
 
@@ -759,7 +988,7 @@ mod tests {
         type Output = CloneCountingScalar;
 
         fn add(self, rhs: &'b CloneCountingScalar) -> Self::Output {
-            CloneCountingScalar::derived(self.value + rhs.value, &self.clones)
+            CloneCountingScalar::derived_from(self.value + rhs.value, self)
         }
     }
 
@@ -767,7 +996,7 @@ mod tests {
         type Output = CloneCountingScalar;
 
         fn sub(self, rhs: &'b CloneCountingScalar) -> Self::Output {
-            CloneCountingScalar::derived(self.value - rhs.value, &self.clones)
+            CloneCountingScalar::derived_from(self.value - rhs.value, self)
         }
     }
 
@@ -775,7 +1004,7 @@ mod tests {
         type Output = CloneCountingScalar;
 
         fn mul(self, rhs: &'b CloneCountingScalar) -> Self::Output {
-            CloneCountingScalar::derived(self.value * rhs.value, &self.clones)
+            CloneCountingScalar::derived_from(self.value * rhs.value, self)
         }
     }
 
@@ -798,6 +1027,54 @@ mod tests {
 
         assert_eq!(orient2d(&a, &b, &c).value(), Some(Sign::Positive));
         assert_eq!(clones.get(), 0);
+    }
+
+    #[test]
+    fn orient2d_easy_case_uses_float_filter_before_scalar_arithmetic() {
+        let ops = Rc::new(Cell::new(0));
+        let scalar = |value| CloneCountingScalar::with_ops(value, Rc::clone(&ops));
+        let a = Point2::new(scalar(0.0), scalar(0.0));
+        let b = Point2::new(scalar(1.0), scalar(0.0));
+        let c = Point2::new(scalar(0.0), scalar(1.0));
+
+        assert_eq!(
+            orient2d(&a, &b, &c),
+            PredicateOutcome::decided(Sign::Positive, Certainty::Filtered, Escalation::Filter)
+        );
+        assert_eq!(ops.get(), 0);
+    }
+
+    #[test]
+    fn incircle2d_easy_case_uses_float_filter_before_scalar_arithmetic() {
+        let ops = Rc::new(Cell::new(0));
+        let scalar = |value| CloneCountingScalar::with_ops(value, Rc::clone(&ops));
+        let a = Point2::new(scalar(0.0), scalar(0.0));
+        let b = Point2::new(scalar(1.0), scalar(0.0));
+        let c = Point2::new(scalar(0.0), scalar(1.0));
+        let d = Point2::new(scalar(0.25), scalar(0.25));
+
+        assert_eq!(
+            incircle2d(&a, &b, &c, &d),
+            PredicateOutcome::decided(Sign::Positive, Certainty::Filtered, Escalation::Filter)
+        );
+        assert_eq!(ops.get(), 0);
+    }
+
+    #[test]
+    fn insphere3d_easy_case_uses_float_filter_before_scalar_arithmetic() {
+        let ops = Rc::new(Cell::new(0));
+        let scalar = |value| CloneCountingScalar::with_ops(value, Rc::clone(&ops));
+        let a = Point3::new(scalar(1.0), scalar(0.0), scalar(0.0));
+        let b = Point3::new(scalar(0.0), scalar(1.0), scalar(0.0));
+        let c = Point3::new(scalar(0.0), scalar(0.0), scalar(1.0));
+        let d = Point3::new(scalar(-1.0), scalar(0.0), scalar(0.0));
+        let e = Point3::new(scalar(0.0), scalar(0.0), scalar(0.0));
+
+        assert_eq!(
+            insphere3d(&a, &b, &c, &d, &e),
+            PredicateOutcome::decided(Sign::Positive, Certainty::Filtered, Escalation::Filter)
+        );
+        assert_eq!(ops.get(), 0);
     }
 
     #[test]
