@@ -42,6 +42,9 @@ fn bench_predicates(c: &mut Criterion) {
 
     #[cfg(feature = "interval")]
     bench_interval_representation(c);
+
+    #[cfg(feature = "parallel")]
+    bench_parallel_batches(c);
 }
 
 fn bench_representation<S>(c: &mut Criterion, label: &'static str, scalar: fn(f64) -> S)
@@ -255,6 +258,87 @@ where
         );
     }
     group.finish();
+}
+
+#[cfg(feature = "parallel")]
+fn bench_parallel_batches(c: &mut Criterion) {
+    let mut orient3 = c.benchmark_group("batch_orient3d");
+    for workload in Workload::ALL {
+        let cases = orient3d_cases(workload, f64_scalar);
+        orient3.bench_with_input(
+            BenchmarkId::new("f64_sequential", workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let outcomes = predicated::orient3d_batch(black_box(cases));
+                    black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
+                });
+            },
+        );
+        orient3.bench_with_input(
+            BenchmarkId::new("f64_parallel", workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let outcomes = predicated::orient3d_batch_parallel(black_box(cases));
+                    black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
+                });
+            },
+        );
+    }
+    orient3.finish();
+
+    let mut incircle = c.benchmark_group("batch_incircle2d");
+    for workload in Workload::ALL {
+        let cases = incircle2d_cases(workload, f64_scalar);
+        incircle.bench_with_input(
+            BenchmarkId::new("f64_sequential", workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let outcomes = predicated::incircle2d_batch(black_box(cases));
+                    black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
+                });
+            },
+        );
+        incircle.bench_with_input(
+            BenchmarkId::new("f64_parallel", workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let outcomes = predicated::incircle2d_batch_parallel(black_box(cases));
+                    black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
+                });
+            },
+        );
+    }
+    incircle.finish();
+
+    let mut insphere = c.benchmark_group("batch_insphere3d");
+    for workload in Workload::ALL {
+        let cases = insphere3d_cases(workload, f64_scalar);
+        insphere.bench_with_input(
+            BenchmarkId::new("f64_sequential", workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let outcomes = predicated::insphere3d_batch(black_box(cases));
+                    black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
+                });
+            },
+        );
+        insphere.bench_with_input(
+            BenchmarkId::new("f64_parallel", workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let outcomes = predicated::insphere3d_batch_parallel(black_box(cases));
+                    black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
+                });
+            },
+        );
+    }
+    insphere.finish();
 }
 
 #[cfg(feature = "interval")]

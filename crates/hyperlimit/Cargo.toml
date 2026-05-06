@@ -10,6 +10,7 @@ geogram_predicates = { git = "https://github.com/glennDittmann/geogram_predicate
 hyperreal = { version = "0.10.4", optional = true }
 #hyperreal = { path = "../hyperreal/", optional = true }
 inari = { version = "2", default-features = false, optional = true }
+rayon = { version = "1.10", optional = true }
 realistic_blas = { version = "0.3.1", optional = true }
 #realistic_blas = { path = "../realistic_blas/", optional = true }
 robust = { version = "1.2", optional = true }
@@ -24,6 +25,7 @@ std = []
 geogram = ["dep:geogram_predicates"]
 hyperreal = ["dep:hyperreal"]
 interval = ["dep:inari"]
+parallel = ["std", "dep:rayon"]
 realistic-blas = ["dep:realistic_blas"]
 robust = ["dep:robust"]
 

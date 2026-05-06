@@ -8,6 +8,21 @@ use crate::predicate::{
 use crate::resolve::{map_outcome, resolve_scalar_sign, signed_term_filter};
 use crate::scalar::{BorrowedPredicateScalar, PredicateScalar};
 
+pub use crate::batch::{
+    Incircle2dCase, Insphere3dCase, Orient2dCase, Orient3dCase, classify_point_line_batch,
+    classify_point_line_batch_with_policy, incircle2d_batch, incircle2d_batch_with_policy,
+    insphere3d_batch, insphere3d_batch_with_policy, orient2d_batch, orient2d_batch_with_policy,
+    orient3d_batch, orient3d_batch_with_policy,
+};
+#[cfg(feature = "parallel")]
+pub use crate::batch::{
+    classify_point_line_batch_parallel, classify_point_line_batch_parallel_with_policy,
+    incircle2d_batch_parallel, incircle2d_batch_parallel_with_policy, insphere3d_batch_parallel,
+    insphere3d_batch_parallel_with_policy, orient2d_batch_parallel,
+    orient2d_batch_parallel_with_policy, orient3d_batch_parallel,
+    orient3d_batch_parallel_with_policy,
+};
+
 /// 2D point with scalar coordinates.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Point2<S> {
@@ -889,13 +904,6 @@ mod tests {
     use std::rc::Rc;
 
     use super::*;
-    #[cfg(any(
-        feature = "robust",
-        feature = "geogram",
-        feature = "hyperreal",
-        feature = "interval",
-        feature = "realistic-blas"
-    ))]
     use crate::predicate::Certainty;
     use crate::scalar::{MagnitudeBounds, ScalarFacts, StructuralScalar};
 

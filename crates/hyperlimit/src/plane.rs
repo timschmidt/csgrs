@@ -8,6 +8,18 @@ use crate::predicate::{
 use crate::resolve::{map_outcome, resolve_scalar_sign};
 use crate::scalar::{BorrowedPredicateScalar, PredicateScalar};
 
+pub use crate::batch::{
+    Orient3dCase, PointPlaneCase, classify_point_oriented_plane_batch,
+    classify_point_oriented_plane_batch_with_policy, classify_point_plane_batch,
+    classify_point_plane_batch_with_policy,
+};
+#[cfg(feature = "parallel")]
+pub use crate::batch::{
+    classify_point_oriented_plane_batch_parallel,
+    classify_point_oriented_plane_batch_parallel_with_policy, classify_point_plane_batch_parallel,
+    classify_point_plane_batch_parallel_with_policy,
+};
+
 /// Plane represented by `normal . point + offset = 0`.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Plane3<S> {

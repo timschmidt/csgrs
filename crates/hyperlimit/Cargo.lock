@@ -508,6 +508,7 @@ dependencies = [
  "geogram_predicates",
  "hyperreal",
  "inari",
+ "rayon",
  "realistic_blas",
  "robust",
  "serde_json",
