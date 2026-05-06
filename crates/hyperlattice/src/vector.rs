@@ -33,6 +33,18 @@ where
     left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
 }
 
+fn map_array_ref<B: Backend, const N: usize, F>(
+    left: [Scalar<B>; N],
+    right: &[Scalar<B>; N],
+    mut op: F,
+) -> [Scalar<B>; N]
+where
+    F: FnMut(Scalar<B>, &Scalar<B>) -> Scalar<B>,
+{
+    let mut right = right.iter();
+    left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
+}
+
 macro_rules! impl_vector {
     ($name:ident, $n:expr) => {
         impl<B: Backend> $name<B> {
@@ -170,11 +182,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
-                let mut rhs = rhs.0.iter();
-                Self(
-                    self.0
-                        .map(|lhs| lhs.add_cached(rhs.next().expect("vectors have equal length"))),
-                )
+                Self(map_array_ref(self.0, &rhs.0, Scalar::add_cached))
             }
         }
 
@@ -183,12 +191,10 @@ macro_rules! impl_vector {
 
             fn add(self, rhs: $name<B>) -> Self::Output {
                 let mut left = self.0.iter();
-                $name(rhs.0.map(|rhs| {
-                    left.next()
-                        .expect("vectors have equal length")
-                        .clone()
-                        .add_cached(&rhs)
-                }))
+                $name(
+                    rhs.0
+                        .map(|rhs| left.next().expect("vectors have equal length") + rhs),
+                )
             }
         }
 
@@ -221,11 +227,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn add(self, rhs: &Scalar<B>) -> Self::Output {
-                if B::MOVE_ELEMENTWISE {
-                    Self(self.0.map(|value| value.add_cached(rhs)))
-                } else {
-                    Self(from_fn(|i| self.0[i].clone() + rhs.clone()))
-                }
+                Self(self.0.map(|value| value.add_cached(rhs)))
             }
         }
 
@@ -245,11 +247,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
-                let mut rhs = rhs.0.iter();
-                Self(
-                    self.0
-                        .map(|lhs| lhs.sub_cached(rhs.next().expect("vectors have equal length"))),
-                )
+                Self(map_array_ref(self.0, &rhs.0, Scalar::sub_cached))
             }
         }
 
@@ -294,11 +292,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn sub(self, rhs: &Scalar<B>) -> Self::Output {
-                if B::MOVE_ELEMENTWISE {
-                    Self(self.0.map(|value| value.sub_cached(rhs)))
-                } else {
-                    Self(from_fn(|i| self.0[i].clone() - rhs.clone()))
-                }
+                Self(self.0.map(|value| value.sub_cached(rhs)))
             }
         }
 
@@ -343,11 +337,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn mul(self, rhs: &Scalar<B>) -> Self::Output {
-                if B::MOVE_ELEMENTWISE {
-                    Self(self.0.map(|value| value.mul_cached(rhs)))
-                } else {
-                    Self(from_fn(|i| self.0[i].clone() * rhs.clone()))
-                }
+                Self(self.0.map(|value| value.mul_cached(rhs)))
             }
         }
 

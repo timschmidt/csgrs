@@ -2,6 +2,7 @@
 
 use crate::complex::Complex;
 use crate::{AbortSignal, Backend, BlasResult, CheckedBlasResult, Problem, Scalar};
+use std::sync::atomic::Ordering;
 
 /// Classification of whether a scalar is zero.
 ///
@@ -78,6 +79,11 @@ pub fn zero_status<B: Backend>(value: &Scalar<B>) -> ZeroStatus {
 /// With the hyperreal backend, this allows long-running zero checks to observe
 /// cancellation. With the approx backend, the signal is accepted as a no-op.
 pub fn zero_status_with_abort<B: Backend>(value: &Scalar<B>, signal: &AbortSignal) -> ZeroStatus {
+    let status = zero_status(value);
+    if status != ZeroStatus::Unknown || !signal.load(Ordering::Relaxed) {
+        return status;
+    }
+
     zero_status(&clone_with_abort(value, signal))
 }
 

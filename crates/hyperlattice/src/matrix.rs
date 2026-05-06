@@ -61,6 +61,18 @@ where
     left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
 }
 
+fn map_array_ref<B: Backend, const N: usize, F>(
+    left: [Scalar<B>; N],
+    right: &[Scalar<B>; N],
+    mut op: F,
+) -> [Scalar<B>; N]
+where
+    F: FnMut(Scalar<B>, &Scalar<B>) -> Scalar<B>,
+{
+    let mut right = right.iter();
+    left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
+}
+
 fn map_matrix2<B: Backend, const N: usize, F>(
     left: [[Scalar<B>; N]; N],
     right: [[Scalar<B>; N]; N],
@@ -76,6 +88,39 @@ where
             right.next().expect("matrices have equal row counts"),
             &mut op,
         )
+    })
+}
+
+fn map_matrix_ref<B: Backend, const N: usize, F>(
+    left: [[Scalar<B>; N]; N],
+    right: &[[Scalar<B>; N]; N],
+    mut op: F,
+) -> [[Scalar<B>; N]; N]
+where
+    F: FnMut(Scalar<B>, &Scalar<B>) -> Scalar<B>,
+{
+    let mut right = right.iter();
+    left.map(|lhs_row| {
+        map_array_ref(
+            lhs_row,
+            right.next().expect("matrices have equal row counts"),
+            &mut op,
+        )
+    })
+}
+
+fn map_matrix_left_ref<B: Backend, const N: usize, F>(
+    left: &[[Scalar<B>; N]; N],
+    right: [[Scalar<B>; N]; N],
+    mut op: F,
+) -> [[Scalar<B>; N]; N]
+where
+    F: FnMut(&Scalar<B>, Scalar<B>) -> Scalar<B>,
+{
+    let mut left = left.iter();
+    right.map(|rhs_row| {
+        let mut left_row = left.next().expect("matrices have equal row counts").iter();
+        rhs_row.map(|rhs| op(left_row.next().expect("arrays have equal length"), rhs))
     })
 }
 
@@ -225,7 +270,11 @@ macro_rules! impl_solve_left_system_fixed {
                         subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
                     for i in 0..$n {
-                        subtract_scaled_entry_in_place(&mut right[row][i], &pivot_right[i], &factor);
+                        subtract_scaled_entry_in_place(
+                            &mut right[row][i],
+                            &pivot_right[i],
+                            &factor,
+                        );
                     }
                 }
             }
@@ -271,7 +320,11 @@ macro_rules! impl_solve_left_system_fixed {
                         subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
                     for i in 0..$n {
-                        subtract_scaled_entry_in_place(&mut right[row][i], &pivot_right[i], &factor);
+                        subtract_scaled_entry_in_place(
+                            &mut right[row][i],
+                            &pivot_right[i],
+                            &factor,
+                        );
                     }
                 }
             }
@@ -319,7 +372,11 @@ macro_rules! impl_solve_left_system_fixed {
                         subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
                     for i in 0..$n {
-                        subtract_scaled_entry_in_place(&mut right[row][i], &pivot_right[i], &factor);
+                        subtract_scaled_entry_in_place(
+                            &mut right[row][i],
+                            &pivot_right[i],
+                            &factor,
+                        );
                     }
                 }
             }
@@ -904,9 +961,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
-                Self(from_fn(|row| {
-                    from_fn(|col| self.0[row][col].clone().add_cached(&rhs.0[row][col]))
-                }))
+                Self(map_matrix_ref(self.0, &rhs.0, Scalar::add_cached))
             }
         }
 
@@ -914,9 +969,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn add(self, rhs: $name<B>) -> Self::Output {
-                $name(from_fn(|row| {
-                    from_fn(|col| &self.0[row][col] + &rhs.0[row][col])
-                }))
+                $name(map_matrix_left_ref(&self.0, rhs.0, |lhs, rhs| lhs + rhs))
             }
         }
 
@@ -953,13 +1006,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: &Scalar<B>) -> Self::Output {
-                if B::MOVE_ELEMENTWISE {
-                    Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
-                } else {
-                    Self(from_fn(|row| {
-                        from_fn(|col| self.0[row][col].clone() + rhs.clone())
-                    }))
-                }
+                Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
             }
         }
 
@@ -981,9 +1028,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
-                Self(from_fn(|row| {
-                    from_fn(|col| self.0[row][col].clone().sub_cached(&rhs.0[row][col]))
-                }))
+                Self(map_matrix_ref(self.0, &rhs.0, Scalar::sub_cached))
             }
         }
 
@@ -991,9 +1036,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn sub(self, rhs: $name<B>) -> Self::Output {
-                $name(from_fn(|row| {
-                    from_fn(|col| &self.0[row][col] - &rhs.0[row][col])
-                }))
+                $name(map_matrix_left_ref(&self.0, rhs.0, |lhs, rhs| lhs - rhs))
             }
         }
 
@@ -1030,13 +1073,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: &Scalar<B>) -> Self::Output {
-                if B::MOVE_ELEMENTWISE {
-                    Self(self.0.map(|row| row.map(|value| value.sub_cached(rhs))))
-                } else {
-                    Self(from_fn(|row| {
-                        from_fn(|col| self.0[row][col].clone() - rhs.clone())
-                    }))
-                }
+                Self(self.0.map(|row| row.map(|value| value.sub_cached(rhs))))
             }
         }
 
@@ -1083,13 +1120,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: &Scalar<B>) -> Self::Output {
-                if B::MOVE_ELEMENTWISE {
-                    Self(self.0.map(|row| row.map(|value| value.mul_cached(rhs))))
-                } else {
-                    Self(from_fn(|row| {
-                        from_fn(|col| self.0[row][col].clone() * rhs.clone())
-                    }))
-                }
+                Self(self.0.map(|row| row.map(|value| value.mul_cached(rhs))))
             }
         }
 
