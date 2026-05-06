@@ -424,6 +424,16 @@ impl Computable {
         Some(Self::shared_constant(constant))
     }
 
+    pub(crate) fn prescaled_sin(value: Computable) -> Computable {
+        Self {
+            internal: Box::new(Approximation::PrescaledSin(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
     fn shared_constant(constant: SharedConstant) -> Computable {
         Self {
             internal: Box::new(Approximation::Constant(constant)),

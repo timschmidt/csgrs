@@ -840,18 +840,19 @@ impl Real {
                     let (neg, r) = curve(self.rational);
                     let new =
                         Computable::multiply(Computable::pi(), Computable::rational(r.clone()));
+                    let computable = Computable::prescaled_sin(new);
                     if neg {
                         return Self {
                             rational: Rational::new(-1),
                             class: SinPi(r),
-                            computable: Computable::sin(new),
+                            computable,
                             signal: None,
                         };
                     } else {
                         return Self {
                             rational: Rational::one(),
                             class: SinPi(r),
-                            computable: Computable::sin(new),
+                            computable,
                             signal: None,
                         };
                     }
@@ -1178,18 +1179,19 @@ impl Real {
                 return Err(Problem::NotANumber);
             }
         }
-        let one = Self::new(Rational::one());
-        let radicand = self.clone().powi(BigInt::from(2_u8))? - one;
-        let root = radicand.sqrt().map_err(|problem| match problem {
-            Problem::SqrtNegative => Problem::NotANumber,
-            other => other,
-        })?;
         if self.fold_ref().approx(-4) <= BigInt::from(64_u8) {
-            return Ok(
-                (self - Self::new(Rational::one()) + root).make_computable(Computable::ln_1p)
-            );
+            return Ok(self.make_computable(|value| {
+                let one = Computable::one();
+                let shifted = value.clone().add(one.clone().negate());
+                let radicand = value.square().add(one.negate());
+                shifted.add(radicand.sqrt()).ln_1p()
+            }));
         }
-        (self + root).ln()
+        Ok(self.make_computable(|value| {
+            let one = Computable::one();
+            let radicand = value.clone().square().add(one.negate());
+            value.add(radicand.sqrt()).ln()
+        }))
     }
 
     /// The inverse hyperbolic tangent of this Real.
