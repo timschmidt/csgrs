@@ -478,7 +478,7 @@ impl<B: Backend> Add<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn add(self, rhs: &Scalar<B>) -> Self::Output {
-        Self(self.0.add_ref(&rhs.0))
+        Self(B::Repr::add_owned_ref(self.0, &rhs.0))
     }
 }
 
@@ -487,7 +487,7 @@ impl<B: Backend> Add<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn add(self, rhs: Scalar<B>) -> Self::Output {
-        rhs + self
+        Scalar(B::Repr::add_ref_owned(&self.0, rhs.0))
     }
 }
 
@@ -505,7 +505,7 @@ impl<B: Backend> Sub<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: &Scalar<B>) -> Self::Output {
-        Self(self.0.sub_ref(&rhs.0))
+        Self(B::Repr::sub_owned_ref(self.0, &rhs.0))
     }
 }
 
@@ -514,7 +514,7 @@ impl<B: Backend> Sub<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: Scalar<B>) -> Self::Output {
-        Scalar(B::Repr::sub_refs(&self.0, &rhs.0))
+        Scalar(B::Repr::sub_ref_owned(&self.0, rhs.0))
     }
 }
 
@@ -532,7 +532,7 @@ impl<B: Backend> Mul<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn mul(self, rhs: &Scalar<B>) -> Self::Output {
-        Self(self.0.mul_ref(&rhs.0))
+        Self(B::Repr::mul_owned_ref(self.0, &rhs.0))
     }
 }
 
@@ -541,7 +541,7 @@ impl<B: Backend> Mul<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn mul(self, rhs: Scalar<B>) -> Self::Output {
-        rhs * self
+        Scalar(B::Repr::mul_ref_owned(&self.0, rhs.0))
     }
 }
 
@@ -559,7 +559,7 @@ impl<B: Backend> Div<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn div(self, rhs: &Scalar<B>) -> Self::Output {
-        self.0.div_ref(&rhs.0).map(Self)
+        B::Repr::div_owned_ref(self.0, &rhs.0).map(Self)
     }
 }
 
@@ -568,7 +568,7 @@ impl<B: Backend> Div<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn div(self, rhs: Scalar<B>) -> Self::Output {
-        B::Repr::div_refs(&self.0, &rhs.0).map(Scalar)
+        B::Repr::div_ref_owned(&self.0, rhs.0).map(Scalar)
     }
 }
 

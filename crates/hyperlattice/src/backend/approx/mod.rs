@@ -122,6 +122,16 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     #[inline]
+    fn add_owned_ref(left: Self, right: &Self) -> Self {
+        Self::add_refs(&left, right)
+    }
+
+    #[inline]
+    fn add_ref_owned(left: &Self, right: Self) -> Self {
+        Self::add_refs(left, &right)
+    }
+
+    #[inline]
     fn sub_refs(left: &Self, right: &Self) -> Self {
         let value = left.value - right.value;
         Self {
@@ -131,10 +141,30 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     #[inline]
+    fn sub_owned_ref(left: Self, right: &Self) -> Self {
+        Self::sub_refs(&left, right)
+    }
+
+    #[inline]
+    fn sub_ref_owned(left: &Self, right: Self) -> Self {
+        Self::sub_refs(left, &right)
+    }
+
+    #[inline]
     fn mul_refs(left: &Self, right: &Self) -> Self {
         let value = left.value * right.value;
         let epsilon = product_epsilon(left, right, value);
         Self { value, epsilon }
+    }
+
+    #[inline]
+    fn mul_owned_ref(left: Self, right: &Self) -> Self {
+        Self::mul_refs(&left, right)
+    }
+
+    #[inline]
+    fn mul_ref_owned(left: &Self, right: Self) -> Self {
+        Self::mul_refs(left, &right)
     }
 
     #[inline]
@@ -149,6 +179,16 @@ impl BackendScalarTrait for BackendScalar {
         let denom = right.value.abs() - right.epsilon;
         let epsilon = left.epsilon / denom + left.value.abs() * right.epsilon / (denom * denom);
         Self::new(center, epsilon + ROUNDING_EPSILON * center.abs())
+    }
+
+    #[inline]
+    fn div_owned_ref(left: Self, right: &Self) -> BlasResult<Self> {
+        Self::div_refs(&left, right)
+    }
+
+    #[inline]
+    fn div_ref_owned(left: &Self, right: Self) -> BlasResult<Self> {
+        Self::div_refs(left, &right)
     }
 
     #[inline]

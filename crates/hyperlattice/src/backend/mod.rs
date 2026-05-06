@@ -96,6 +96,16 @@ pub trait BackendScalar:
     fn add_ref(self, rhs: &Self) -> Self {
         self + rhs.clone()
     }
+    /// Adds an owned left-hand operand and a borrowed right-hand operand.
+    #[inline]
+    fn add_owned_ref(left: Self, right: &Self) -> Self {
+        left.add_ref(right)
+    }
+    /// Adds a borrowed left-hand operand and an owned right-hand operand.
+    #[inline]
+    fn add_ref_owned(left: &Self, right: Self) -> Self {
+        Self::add_refs(left, &right)
+    }
     /// Adds two borrowed operands.
     #[inline]
     fn add_refs(left: &Self, right: &Self) -> Self {
@@ -105,6 +115,16 @@ pub trait BackendScalar:
     #[inline]
     fn sub_ref(self, rhs: &Self) -> Self {
         self - rhs.clone()
+    }
+    /// Subtracts a borrowed right-hand operand from an owned left-hand operand.
+    #[inline]
+    fn sub_owned_ref(left: Self, right: &Self) -> Self {
+        left.sub_ref(right)
+    }
+    /// Subtracts an owned right-hand operand from a borrowed left-hand operand.
+    #[inline]
+    fn sub_ref_owned(left: &Self, right: Self) -> Self {
+        Self::sub_refs(left, &right)
     }
     /// Subtracts two borrowed operands.
     #[inline]
@@ -116,6 +136,16 @@ pub trait BackendScalar:
     fn mul_ref(self, rhs: &Self) -> Self {
         self * rhs.clone()
     }
+    /// Multiplies an owned left-hand operand by a borrowed right-hand operand.
+    #[inline]
+    fn mul_owned_ref(left: Self, right: &Self) -> Self {
+        left.mul_ref(right)
+    }
+    /// Multiplies a borrowed left-hand operand by an owned right-hand operand.
+    #[inline]
+    fn mul_ref_owned(left: &Self, right: Self) -> Self {
+        Self::mul_refs(left, &right)
+    }
     /// Multiplies two borrowed operands.
     #[inline]
     fn mul_refs(left: &Self, right: &Self) -> Self {
@@ -125,6 +155,16 @@ pub trait BackendScalar:
     #[inline]
     fn div_ref(self, rhs: &Self) -> BlasResult<Self> {
         self.div(rhs.clone())
+    }
+    /// Divides an owned left-hand operand by a borrowed right-hand operand.
+    #[inline]
+    fn div_owned_ref(left: Self, right: &Self) -> BlasResult<Self> {
+        left.div_ref(right)
+    }
+    /// Divides a borrowed left-hand operand by an owned right-hand operand.
+    #[inline]
+    fn div_ref_owned(left: &Self, right: Self) -> BlasResult<Self> {
+        Self::div_refs(left, &right)
     }
     /// Divides two borrowed operands.
     #[inline]

@@ -1,6 +1,6 @@
 [package]
 name = "realistic_blas"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2024"
 description = "A small Rust linear algebra library with a crate-owned Scalar type and realistic or approximate backends."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -12,8 +12,8 @@ categories = ["mathematics"]
 
 [dependencies]
 num = { version = "0.4.3", optional = true }
-#hyperreal = { version = "0.10.2", optional = true }
-hyperreal = { path = "../hyperreal/", optional = true }
+hyperreal = { version = "0.10.4", optional = true }
+#hyperreal = { path = "../hyperreal/", optional = true }
 
 [dev-dependencies]
 astro-float = "0.9.5"

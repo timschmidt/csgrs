@@ -20,6 +20,37 @@ zero/non-zero status, exact-rational availability, magnitude hints, and
 borrowed finite approximations without depending directly on a backend's
 private representation.
 
+In the current stack:
+
+- `hyperreal` supplies the default exact/symbolic scalar backend.
+- `realistic_blas` owns complex, vector, and matrix algebra over that scalar
+  abstraction, plus an explicit approximate backend for comparison and
+  lighter-weight workflows.
+- `predicated` consumes scalar facts from `realistic_blas::Scalar<B>` when
+  geometric predicates need policy, robust fallback, or exact sign escalation.
+
+This crate deliberately preserves those boundaries. It forwards introspection
+facts from scalar backends, but it does not decide geometry topology or robust
+predicate escalation policy.
+
+## Current status
+
+`realistic_blas` is an experimental but actively benchmarked `0.3.1` crate. The
+current focus is ergonomic exact/symbolic algebra over small fixed-size
+objects, not raw dense linear algebra throughput. Recent work has reduced clone
+pressure in borrowed and mixed owned/borrowed scalar paths, added backend hooks
+for borrowed arithmetic, and made scalar introspection cheap enough for
+predicate filters to call frequently.
+
+The benchmark suite compares:
+
+- exact/symbolic hyperreal-backed scalar, vector, matrix, and trig operations
+- the approximate backend
+- external numeric libraries used as throughput reference points
+- borrowed, owned, and mixed scalar operation forms
+
+See [`benchmarks.md`](./benchmarks.md) for the generated Criterion summary.
+
 ## Features
 
 - Re-exports `hyperreal::{Real, Rational}` for explicit construction and interop
@@ -59,17 +90,27 @@ private representation.
 
 ## Install
 
-Add the crate to your project:
+From the local sibling checkout used by this stack:
 
 ```toml
 [dependencies]
-realistic_blas = { path = "path/to/realistic_blas" }
+realistic_blas = { path = "../realistic_blas" }
 ```
 
-The default feature set enables both backends. The hyperreal backend depends on:
+When using a published release, depend on the matching crate version:
 
 ```toml
-hyperreal = "0.10.1"
+[dependencies]
+realistic_blas = "0.3.1"
+```
+
+The default feature set enables both backends. In this workspace the
+`hyperreal-backend` feature depends on the sibling `hyperreal` crate; when
+published, it should use the matching published `hyperreal` version. The
+current local stack is aligned with:
+
+```toml
+hyperreal = "0.10.4"
 num = "0.4.3"
 ```
 
@@ -79,7 +120,7 @@ The approximate `f64 + epsilon` backend has no normal dependencies on
 ```toml
 [dependencies]
 realistic_blas = {
-    path = "path/to/realistic_blas",
+    path = "../realistic_blas",
     default-features = false,
     features = ["approx-backend"],
 }
@@ -180,6 +221,16 @@ the same public facts from its stored `value +/- epsilon` interval.
 `realistic_blas` only forwards facts. Predicate escalation policy, robust
 fallbacks, exact determinant paths, and topology classification belong in
 `predicated` or another geometry-specific crate.
+
+## Relationship to the other crates
+
+- Use `hyperreal` directly when you need exact rational, symbolic, or computable
+  scalar arithmetic without vectors or matrices.
+- Use `realistic_blas` when you need small fixed-size vectors, matrices,
+  complex numbers, and scalar functions over either exact/symbolic or
+  approximate scalar backends.
+- Use `predicated` when you need geometry predicates, classification, and
+  provenance for how a sign/topology decision was made.
 
 ### Complex Numbers
 

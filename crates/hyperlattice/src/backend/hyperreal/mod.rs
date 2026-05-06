@@ -82,6 +82,16 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     #[inline]
+    fn add_owned_ref(left: Self, right: &Self) -> Self {
+        Self(left.0 + &right.0)
+    }
+
+    #[inline]
+    fn add_ref_owned(left: &Self, right: Self) -> Self {
+        Self(&left.0 + right.0)
+    }
+
+    #[inline]
     fn add_refs(left: &Self, right: &Self) -> Self {
         Self(&left.0 + &right.0)
     }
@@ -89,6 +99,16 @@ impl BackendScalarTrait for BackendScalar {
     #[inline]
     fn sub_ref(self, rhs: &Self) -> Self {
         Self(&self.0 - &rhs.0)
+    }
+
+    #[inline]
+    fn sub_owned_ref(left: Self, right: &Self) -> Self {
+        Self(left.0 - &right.0)
+    }
+
+    #[inline]
+    fn sub_ref_owned(left: &Self, right: Self) -> Self {
+        Self(&left.0 - right.0)
     }
 
     #[inline]
@@ -102,6 +122,16 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     #[inline]
+    fn mul_owned_ref(left: Self, right: &Self) -> Self {
+        Self(left.0 * &right.0)
+    }
+
+    #[inline]
+    fn mul_ref_owned(left: &Self, right: Self) -> Self {
+        Self(&left.0 * right.0)
+    }
+
+    #[inline]
     fn mul_refs(left: &Self, right: &Self) -> Self {
         Self(&left.0 * &right.0)
     }
@@ -109,6 +139,16 @@ impl BackendScalarTrait for BackendScalar {
     #[inline]
     fn div_ref(self, rhs: &Self) -> BlasResult<Self> {
         (&self.0 / &rhs.0).map(Self).map_err(Problem::from)
+    }
+
+    #[inline]
+    fn div_owned_ref(left: Self, right: &Self) -> BlasResult<Self> {
+        (left.0 / &right.0).map(Self).map_err(Problem::from)
+    }
+
+    #[inline]
+    fn div_ref_owned(left: &Self, right: Self) -> BlasResult<Self> {
+        (&left.0 / right.0).map(Self).map_err(Problem::from)
     }
 
     #[inline]
